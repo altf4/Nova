@@ -1,0 +1,137 @@
+//============================================================================
+// Name        : Suspect.cpp
+// Author      : DataSoft Corporation
+// Copyright   :
+// Description : Suspect object for use in the NOVA utility
+//============================================================================/*
+
+#include "Suspect.h"
+#include <arpa/inet.h>
+#include <sstream>
+
+using namespace std;
+namespace Nova{
+namespace ClassificationEngine{
+
+//Blank Constructor
+Suspect::Suspect()
+{
+	IP_address.s_addr = 0;
+	classification = 0;
+	needs_classification_update = true;
+	needs_feature_update = true;
+	flaggedByAlarm = false;
+	features = NULL;
+	annPoint = annAllocPt(DIMENSION);
+	evidence.clear();
+}
+
+//Destructor. Has to delete the FeatureSet object within.
+Suspect::~Suspect()
+{
+	if(features != NULL)
+	{
+		delete features;
+		features = NULL;
+	}
+	for ( uint i = 0; i < evidence.size(); i++ )
+	{
+		if(evidence[i] != NULL)
+		{
+			delete evidence[i];
+		}
+	}
+	if(annPoint != NULL)
+	{
+		annDeallocPt(annPoint);
+	}
+}
+
+//Constructor from a TrafficEvent
+Suspect::Suspect(TrafficEvent *event)
+{
+	this->IP_address = event->src_IP;
+	this->classification = -1;
+	this->features = new FeatureSet();
+	this->annPoint = NULL;
+	this->flaggedByAlarm = false;
+	this->AddEvidence(event);
+}
+
+//Converts suspect into a human readable string and returns it
+string Suspect::ToString()
+{
+	stringstream ss;
+	if(&IP_address != NULL)
+	{
+		ss << "Suspect: "<< inet_ntoa(IP_address) << "\n";
+	}
+	else
+	{
+		ss << "Suspect: Null IP\n";
+	}
+	if((features != NULL) && (features->features != NULL))
+	{
+		ss << "\tDistinct IP's contacted: " << features->features[DISTINCT_IP_COUNT] << "\n";
+		ss << "\tDistinct Ports's contacted: "  <<  features->features[DISTINCT_PORT_COUNT]  <<  "\n";
+		ss <<  "\tRatio of Haystack to Host Events: " << features->features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO]  <<  "\n";
+		ss <<  "\tFrequency of Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+		ss << "\tMean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
+	}
+	else
+	{
+		ss << "\tNull Feature Set\n";
+	}
+	ss <<  "\tClassification: " <<  classification <<  "\n";
+//	ss << "\tHaystack hits: " << features->haystackEvents << "\n";
+//	ss << "\tHost hits: " << features->hostEvents << "\n";
+	return ss.str();
+}
+
+//Add an additional piece of evidence to this suspect
+//	Does not take actions like reclassifying or calculating features.
+void Suspect::AddEvidence(TrafficEvent *event)
+{
+	this->evidence.push_back(event);
+	this->needs_classification_update = true;
+	this->needs_feature_update = true;
+}
+
+//Calculates the feature set for this suspect
+void Suspect::CalculateFeatures(bool isTraining)
+{
+	//Clear any existing feature data
+	this->features->ClearFeatureSet();
+	//For-each piece of evidence
+	for(uint i = 0; i < this->evidence.size(); i++)
+	{
+		this->features->CalculateDistinctIPCount(this->evidence[i]);
+		this->features->CalculateDistinctPortCount(this->evidence[i]);
+		this->features->CalculateHaystackToHostEventRatio(this->evidence[i]);
+		this->features->CalculateHaystackEventFrequency(this->evidence[i]);
+		this->features->CalculatePacketSizeMean(this->evidence[i]);
+	}
+	this->needs_feature_update = false;
+	if(isTraining)
+	{
+		//Calculate classification on the basis of how many Evil Events it has
+		uint sum = 0;
+		for(uint j = 0; j < evidence.size(); j++)
+		{
+			if( evidence[j]->isHostile )
+			{
+				sum++;
+			}
+		}
+		if(sum > ( evidence.size() / 2 ) )
+		{
+			classification = 1;
+		}
+		else
+		{
+			classification = 0;
+		}
+	}
+}
+}
+}
