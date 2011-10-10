@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
+#include <boost/archive/text_oarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -26,7 +27,7 @@ pthread_mutex_t SessionMutex = PTHREAD_MUTEX_INITIALIZER;
 LoggerPtr m_logger(Logger::getLogger("main"));
 
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
-const char *dev; //Interface name, read from config file
+string dev; //Interface name, read from config file
 string honeydConfigPath;
 
 /// Callback function that is passed to pcap_loop(..) and called each time
@@ -71,11 +72,11 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 		else if(ip_hdr->ip_p == 6)
 		{
 			tcp_hdr = (struct tcphdr *)((char*)ip_hdr + sizeof(struct ip));
-			int src_port = ntohs(tcp_hdr->source);
-			char tcp_socket[40];
+			int dest_port = ntohs(tcp_hdr->dest);
+			char tcp_socket[55];
 
-			bzero(tcp_socket, 40);
-			snprintf(tcp_socket, 40, "%d-%d", ip_hdr->ip_src.s_addr, src_port);
+			bzero(tcp_socket, 55);
+			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
 			pthread_mutex_lock(&SessionMutex);
 
 			//If this is a new entry...
@@ -130,17 +131,16 @@ int main(int argc, char *argv[])
 	int ret;
 	bpf_u_int32 maskp;				/* subnet mask */
 	bpf_u_int32 netp; 				/* ip          */
-
-	string honeydConfigPath;
 	int c;
 
 	//Path name variable for config file, set to a default
-	char* nConfig = (char*)"Config/NovaConfig_HS.txt";
+	char* nConfig = (char*)"Config/NOVAConfig_HS.txt";
+	string line; //used for input checking
 
 	vector <string> haystackAddresses;
 	string haystackAddresses_csv = "";
 
-	while ((c = getopt (argc, argv, ":i:c:l:")) != -1)
+	while ((c = getopt (argc, argv, ":n:l:")) != -1)
 	{
 		switch(c)
 		{
@@ -149,7 +149,11 @@ int main(int argc, char *argv[])
 			case 'n':
 				if(optarg != NULL)
 				{
-					nConfig = optarg;
+					line = string(optarg);
+					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".txt"))
+					{
+						nConfig = (char *)optarg;
+					}
 				}
 				else
 				{
@@ -163,7 +167,11 @@ int main(int argc, char *argv[])
 			case 'l':
 				if(optarg != NULL)
 				{
-					DOMConfigurator::configure(optarg);
+					line = string(optarg);
+					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".xml"))
+					{
+						DOMConfigurator::configure(optarg);
+					}
 				}
 				else
 				{
@@ -202,7 +210,7 @@ int main(int argc, char *argv[])
 	pcap_t *handle;
 
 	//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-	handle = pcap_open_live(dev, BUFSIZ, 0, 1000, errbuf);
+	handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
 
 	if(handle == NULL)
 	{
@@ -212,7 +220,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* ask pcap for the network address and mask of the device */
-	ret = pcap_lookupnet(dev, &netp, &maskp, errbuf);
+	ret = pcap_lookupnet(dev.c_str(), &netp, &maskp, errbuf);
 
 	if(ret == -1)
 	{
@@ -259,7 +267,7 @@ int main(int argc, char *argv[])
 
 	//"Main Loop"
 	//Runs the function "Packet_Handler" every time a packet is received
-    pcap_loop(handle, atoi(argv[1]), Packet_Handler, NULL);
+    pcap_loop(handle, -1, Packet_Handler, NULL);
 	return 0;
 }
 
@@ -282,7 +290,6 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 			{
 				if(it->second.back().pcap_header.ts.tv_sec + tcpTime < currentTime)
 				{
-					LOG4CXX_INFO(m_logger, "Found an old session!");
 					TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first]), FROM_HAYSTACK_DP);
 					SendToCE(event);
 
@@ -338,6 +345,7 @@ bool Nova::Haystack::SendToCE(TrafficEvent *event)
 		perror("send");
 		return false;
 	}
+	close(socketFD);
     return true;
 }
 
@@ -347,7 +355,7 @@ string Nova::Haystack::Usage()
 	string usage_tips = "Nova Haystack Module\n";
 	usage_tips += "\tUsage:Haystack Module -l <log config file> -n <NOVA config file> \n";
 	usage_tips += "\t-l: Path to LOG4CXX config xml file.\n";
-	usage_tips += "\t-n: Path to NOVA config txt file. (Config/NOVACONFIG_HS.txt by default)\n";
+	usage_tips += "\t-n: Path to NOVA config txt file. (Config/NOVAConfig_HS.txt by default)\n";
 
 	return usage_tips;
 }
@@ -413,36 +421,48 @@ void Haystack::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				dev = line.c_str();
-				verify[0]=true;
+				if(line.size() > 0)
+				{
+					dev = line;
+					verify[0]=true;
+				}
 				continue;
 			}
 			prefix = "HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				honeydConfigPath = line;
-				verify[1]=true;
+				if(line.size() > 0)
+				{
+					honeydConfigPath = line;
+					verify[1]=true;
+				}
 				continue;
 			}
 			prefix = "TCP_TIMEOUT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				tcpTime = atoi(line.c_str());
-				verify[2]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					tcpTime = atoi(line.c_str());
+					verify[2]=true;
+				}
 				continue;
 			}
 			prefix = "TCP_CHECK_FREQ";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				tcpFreq = atoi(line.c_str());
-				verify[3]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					tcpFreq = atoi(line.c_str());
+					verify[3]=true;
+				}
 				continue;
 			}
 			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix))
+			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
 				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file" << errno);
 				continue;

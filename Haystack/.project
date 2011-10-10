@@ -3,6 +3,10 @@
 	<name>Haystack</name>
 	<comment></comment>
 	<projects>
+		<project>ClassificationEngine</project>
+		<project>DoppelgangerModule</project>
+		<project>LocalTrafficMonitor</project>
+		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

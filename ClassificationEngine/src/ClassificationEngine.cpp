@@ -16,6 +16,7 @@
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
+#include <boost/archive/text_iarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -66,7 +67,8 @@ int main(int argc,char *argv[])
 
 
 	//Path name variable for config file, set to a default
-	char* nConfig = (char*)"Config/NovaConfig_CE.txt";
+	char* nConfig = (char*)"Config/NOVAConfig_CE.txt";
+	string line; //used for input checking
 
 	struct sockaddr_un localIPCAddress;
 
@@ -74,7 +76,7 @@ int main(int argc,char *argv[])
 	pthread_t trainingLoopThread;
 	pthread_t silentAlarmListenThread;
 
-	while((c = getopt (argc,argv,":t:c:i:l:")) != -1)
+	while((c = getopt (argc,argv,":n:l:")) != -1)
 	{
 		switch(c)
 		{
@@ -83,7 +85,11 @@ int main(int argc,char *argv[])
 			case 'n':
 				if(optarg != NULL)
 				{
-					nConfig = optarg;
+					line = string(optarg);
+					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".txt"))
+					{
+						nConfig = (char *)optarg;
+					}
 				}
 				else
 				{
@@ -97,7 +103,11 @@ int main(int argc,char *argv[])
 			case 'l':
 				if(optarg != NULL)
 				{
-					DOMConfigurator::configure(optarg);
+					line = string(optarg);
+					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".xml"))
+					{
+						DOMConfigurator::configure(optarg);
+					}
 				}
 				else
 				{
@@ -510,7 +520,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	{
 		int i = 0;
 
-		while (!myfile.eof())
+		while (!myfile.eof() && (i < maxPts))
 		{
 			if(myfile.peek() == EOF)
 			{
@@ -537,10 +547,10 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			dataPtsWithClass[i]->classification = atoi(line.data());
 			i++;
 		}
-		myfile.close();
 		nPts = i;
 	}
 	else LOG4CXX_INFO(m_logger,"Unable to open file");
+	myfile.close();
 }
 
 //Writes dataPtsWithClass out to a file specified by outFilePath
@@ -559,9 +569,9 @@ void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 			myfile << it->second->classification;
 			myfile << "\n";
 		}
-		myfile.close();
 	}
 	else LOG4CXX_INFO(m_logger, "Unable to open file\n");
+	myfile.close();
 }
 
 //Returns usage tips
@@ -570,7 +580,7 @@ string Nova::ClassificationEngine::Usage()
 	string usageString = "Nova Classification Engine!\n";
 	usageString += "\tUsage: ClassificationEngine -l LogConfigPath -n NOVAConfigPath \n";
 	usageString += "\t-l: Path to LOG4CXX config xml file.\n";
-	usageString += "\t-n: Path to NOVA config txt file. (Config/NOVACONFIG_CE.txt by default)\n";
+	usageString += "\t-n: Path to NOVA config txt file. (Config/NOVAConfig_CE.txt by default)\n";
 	return usageString;
 }
 
@@ -756,12 +766,13 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 	{
 		ia >> tempEvent;
 	}
-	catch(...)
+	catch(boost::archive::archive_exception e)
 	{
-		LOG4CXX_ERROR(m_logger,"Error in parsing received TrafficEvent.");
+		LOG4CXX_ERROR(m_logger,"Error in parsing received TrafficEvent: " + string(e.what()));
 		return false;
 	}
 	tempEvent->copyTo(event);
+	close(connectionSocket);
 	return true;
 }
 
@@ -786,25 +797,32 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				hostAddrString = getLocalIP(line.c_str());
-				if(hostAddrString.size() == 0)
+				if(line.size() > 0)
 				{
-					LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!" << errno );
-					exit(1);
-				}
+					hostAddrString = getLocalIP(line.c_str());
+					if(hostAddrString.size() == 0)
+					{
+						LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!" << errno );
+						exit(1);
+					}
 
-				inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
-				verify[0]=true;
+					inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
+					verify[0]=true;
+				}
 				continue;
+
 			}
 
 			prefix = "DATAFILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				dataFile = line;
-				outFile = line.c_str();
-				verify[1]=true;
+				if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".txt"))
+				{
+					dataFile = line;
+					outFile = line.c_str();
+					verify[1]=true;
+				}
 				continue;
 			}
 
@@ -812,8 +830,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				ipcMaxConnections = atoi(line.c_str());
-				verify[2]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					ipcMaxConnections = atoi(line.c_str());
+					verify[2]=true;
+				}
 				continue;
 			}
 
@@ -821,8 +842,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				broadcastAddr = line;
-				verify[3]=true;
+				if(line.size() > 6 && line.size() <  16)
+				{
+					broadcastAddr = line;
+					verify[3]=true;
+				}
 				continue;
 			}
 
@@ -830,8 +854,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				sAlarmPort = atoi(line.c_str());
-				verify[4]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					sAlarmPort = atoi(line.c_str());
+					verify[4]=true;
+				}
 				continue;
 			}
 
@@ -839,8 +866,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				k = atoi(line.c_str());
-				verify[5]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					k = atoi(line.c_str());
+					verify[5]=true;
+				}
 				continue;
 			}
 
@@ -848,8 +878,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				eps = atof(line.c_str());
-				verify[6]=true;
+				if(atof(line.c_str()) >= 0)
+				{
+					eps = atof(line.c_str());
+					verify[6]=true;
+				}
 				continue;
 			}
 
@@ -857,8 +890,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				maxPts = atoi(line.c_str());
-				verify[7]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					maxPts = atoi(line.c_str());
+					verify[7]=true;
+				}
 				continue;
 			}
 
@@ -866,8 +902,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				classificationTimeout = atoi(line.c_str());
-				verify[8]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					classificationTimeout = atoi(line.c_str());
+					verify[8]=true;
+				}
 				continue;
 			}
 
@@ -875,8 +914,11 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				trainingTimeout = atoi(line.c_str());
-				verify[9]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					trainingTimeout = atoi(line.c_str());
+					verify[9]=true;
+				}
 				continue;
 			}
 
@@ -884,21 +926,27 @@ void ClassificationEngine::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				maxFeatureVal = atoi(line.c_str());
-				verify[10]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					maxFeatureVal = atoi(line.c_str());
+					verify[10]=true;
+				}
 				continue;
 			}
 			prefix = "IS_TRAINING";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				isTraining = atoi(line.c_str());
-				verify[11]=true;
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				{
+					isTraining = atoi(line.c_str());
+					verify[11]=true;
+				}
 				continue;
 			}
 
 			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix))
+			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
 				LOG4CXX_INFO(m_logger, "Unexpected entry in NOVA configuration file" << errno );
 				continue;

@@ -33,9 +33,9 @@
 #define TRAFFIC_EVENT_MAX_SIZE 1028
 
 //From the Haystack or Doppelganger Module
-#define FROM_HAYSTACK_DP	0
+#define FROM_HAYSTACK_DP	1
 //From the Local Traffic Monitor
-#define FROM_LTM			1
+#define FROM_LTM			0
 
 using namespace std;
 namespace Nova{

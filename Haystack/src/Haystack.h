@@ -36,7 +36,7 @@ void *TCPTimeout( void *ptr );
 bool SendToCE( TrafficEvent *event );
 
 ///Parse through the honeyd config file and get the list of IP addresses used
-vector <string> GetHaystackAddresses(string honeydConfigPath);
+vector <string> GetHaystackAddresses(string honeyDConfigPath);
 
 ///Usage tips
 string Usage();

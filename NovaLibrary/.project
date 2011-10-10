@@ -3,6 +3,10 @@
 	<name>NovaLibrary</name>
 	<comment></comment>
 	<projects>
+		<project>ClassificationEngine</project>
+		<project>DoppelgangerModule</project>
+		<project>Haystack</project>
+		<project>LocalTrafficMonitor</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

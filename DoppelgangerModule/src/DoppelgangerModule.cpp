@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <log4cxx/xml/domconfigurator.h>
 #include <fstream>
+#include <boost/archive/text_iarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -45,14 +46,14 @@ int main(int argc, char *argv[])
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
 
 	//Path name variable for config file, set to a default
-	char* nConfig = (char*)"Config/NovaConfig_DM.txt";
+	char* nConfig = (char*)"Config/NOVAConfig_DM.txt";
 
 	//Hash table for keeping track of suspects
 	//	the bool represents if the suspect is hostile or not
 	typedef std::tr1::unordered_map<in_addr_t, bool> SuspectHashTable;
 	SuspectHashTable SuspectTable;
 
-	while ((c = getopt (argc, argv, ":i:d:l:")) != -1)
+	while ((c = getopt (argc, argv, ":n:l:")) != -1)
 	{
 		switch(c)
 		{

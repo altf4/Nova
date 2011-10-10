@@ -14,6 +14,8 @@
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
+#include <boost/archive/text_oarchive.hpp>
+
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -24,7 +26,7 @@ int tcpTime; //TCP_TIMEOUT Measured in seconds
 int tcpFreq; //TCP_CHECK_FREQ Measured in seconds
 static LocalTrafficMonitor::TCPSessionHashTable SessionTable;
 
-const char *dev; //Interface name, read from config file
+string dev; //Interface name, read from config file
 
 pthread_mutex_t SessionMutex = PTHREAD_MUTEX_INITIALIZER;
 LoggerPtr m_logger(Logger::getLogger("main"));
@@ -61,7 +63,7 @@ void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap
 		//IF UDP or ICMP
 		if(ip_hdr->ip_p == 17 || ip_hdr->ip_p == 1)
 		{
-			event = new TrafficEvent(packet_info, FROM_LTM);
+			event = new Nova::TrafficEvent(packet_info, FROM_LTM);
 			SendToCE(event);
 			delete event;
 			event = NULL;
@@ -71,11 +73,11 @@ void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap
 		else if(ip_hdr->ip_p == 6)
 		{
 			tcp_hdr = (struct tcphdr *)((char*)ip_hdr + sizeof(struct ip) );
-			int src_port = ntohs(tcp_hdr->source);
-			char tcp_socket[40];
+			int dest_port = ntohs(tcp_hdr->dest);
+			char tcp_socket[55];
 
-			bzero(tcp_socket, 40);
-			sprintf(tcp_socket, "%d-%d", ip_hdr->ip_src.s_addr, src_port);
+			bzero(tcp_socket, 55);
+			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
 			pthread_mutex_lock( &SessionMutex );
 
 			//If this is a new entry...
@@ -131,7 +133,8 @@ int main(int argc, char *argv[])
 	int ret;
 
 	//Path name variable for config file, set to a default
-	char* nConfig = (char*)"Config/NovaConfig_LTM.txt";
+	char* nConfig = (char*)"Config/NOVAConfig_LTM.txt";
+	string line; //used for input checking
 
 	bpf_u_int32 maskp;				/* subnet mask */
 	bpf_u_int32 netp; 				/* ip          */
@@ -139,7 +142,7 @@ int main(int argc, char *argv[])
 	string hostAddress;
 	int c;
 
-	while((c = getopt (argc, argv, ":i:c:l:")) != -1)
+	while((c = getopt (argc, argv, ":n:l:")) != -1)
 	{
 		switch(c)
 		{
@@ -148,7 +151,11 @@ int main(int argc, char *argv[])
 			case 'n':
 				if(optarg != NULL)
 				{
-					nConfig = optarg;
+					line = string(optarg);
+					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".txt"))
+					{
+						nConfig = (char *)optarg;
+					}
 				}
 				else
 				{
@@ -162,7 +169,11 @@ int main(int argc, char *argv[])
 			case 'l':
 				if(optarg != NULL)
 				{
-					DOMConfigurator::configure(optarg);
+					line = string(optarg);
+					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".xml"))
+					{
+						DOMConfigurator::configure(optarg);
+					}
 				}
 				else
 				{
@@ -201,16 +212,16 @@ int main(int argc, char *argv[])
 	pcap_t *handle;
 
 	//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-	handle = pcap_open_live(dev, BUFSIZ, 0, 1000, errbuf);
+	handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
 
 	if(handle == NULL)
 	{
-		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+		fprintf(stderr, "Couldn't open device %s: %s\n", dev.c_str(), errbuf);
 		return(2);
 	}
 
 	/* ask pcap for the network address and mask of the device */
-	ret = pcap_lookupnet(dev, &netp, &maskp, errbuf);
+	ret = pcap_lookupnet(dev.c_str(), &netp, &maskp, errbuf);
 
 	if(ret == -1)
 	{
@@ -218,7 +229,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	hostAddress = getLocalIP(dev);
+	hostAddress = getLocalIP(dev.c_str());
 
 	if(hostAddress.empty())
 	{
@@ -247,7 +258,7 @@ int main(int argc, char *argv[])
 
 	//"Main Loop"
 	//Runs the function "Packet_Handler" every time a packet is received
-    pcap_loop(handle, atoi(dev), Packet_Handler, NULL);
+    pcap_loop(handle, -1, Packet_Handler, NULL);
 	return 0;
 }
 
@@ -272,7 +283,6 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 			{
 				if( it->second.back().pcap_header.ts.tv_sec + tcpTime < currentTime)
 				{
-					LOG4CXX_INFO(m_logger,  "Found an old session!");
 					TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first]), FROM_LTM );
 					SendToCE(event);
 
@@ -327,6 +337,7 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 		perror("send");
 		return false;
 	}
+	close(socketFD);
     return true;
 }
 
@@ -378,7 +389,7 @@ string Nova::LocalTrafficMonitor::Usage()
 	string usage_tips = "Local Traffic Monitor Module\n";
 	usage_tips += "\tUsage:Local Traffic Monitor Module -l <log config file> -n <NOVA config file> \n";
 	usage_tips += "\t-l: Path to LOG4CXX config xml file.\n";
-	usage_tips += "\t-n: Path to NOVA config txt file. (Config/NOVACONFIG_LTM.txt by default)\n";
+	usage_tips += "\t-n: Path to NOVA config txt file. (Config/NOVAConfig_LTM.txt by default)\n";
 	return usage_tips;
 }
 
@@ -402,8 +413,11 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				dev = line.c_str();
-				verify[0]=true;
+				if(line.size() > 0)
+				{
+					dev = line;
+					verify[0]=true;
+				}
 				continue;
 
 			}
@@ -411,21 +425,27 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				tcpTime = atoi(line.c_str());
-				verify[1]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					tcpTime = atoi(line.c_str());
+					verify[1]=true;
+				}
 				continue;
 			}
 			prefix = "TCP_CHECK_FREQ";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				tcpFreq = atoi(line.c_str());
-				verify[2]=true;
+				if(atoi(line.c_str()) > 0)
+				{
+					tcpFreq = atoi(line.c_str());
+					verify[2]=true;
+				}
 				continue;
 
 			}
 			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix))
+			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
 				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file" << errno);
 				continue;
