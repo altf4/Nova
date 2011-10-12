@@ -1,3 +1,4 @@
 INTERFACE eth0
 # Make sure DOPPELGANGER_IP is not in use
 DOPPELGANGER_IP 10.0.0.1
+ENABLED 1

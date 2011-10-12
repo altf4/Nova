@@ -78,7 +78,7 @@ private:
 		ar & needs_classification_update;
 		ar & needs_feature_update;
 		ar & features;
-		for(int i = 0; i < DIMENSION; i++)
+		for(uint i = 0; i < DIMENSION; i++)
 		{
 			ar & annPoint[i];
 		}

@@ -63,14 +63,14 @@ class TrafficEvent
 		in_port_t dst_port;
 
 		///Total amount of IP layer bytes sent to the victim
-		int IP_total_data_bytes;
+		uint IP_total_data_bytes;
 
 		///A vector of the sizes of the IP layers of
 		vector <int> IP_packet_sizes;
 
 		///The IP proto type number
 		///	IE: 6 == TCP, 17 == UDP, 1 == ICMP, etc...
-		int IP_protocol;
+		uint IP_protocol;
 
 		///ICMP specific values
 		///IE:	0,0 = Ping reply
@@ -83,7 +83,7 @@ class TrafficEvent
 		int ICMP_code;
 
 		///Packets involved in this event
-		int packet_count;
+		uint packet_count;
 
 		///Did this event originate from the Haystack?
 		///	False for from the host machine
@@ -145,7 +145,13 @@ struct Packet
 	///	Meta information about packet
 	struct pcap_pkthdr pcap_header;
 	///	Pointer to an IP header
-	struct ip *ip_hdr;
+	struct ip ip_hdr;
+	/// Pointer to a TCP Header
+	struct tcphdr tcp_hdr;
+	/// Pointer to a UDP Header
+	struct udphdr udp_hdr;
+	/// Pointer to an ICMP Header
+	struct icmphdr icmp_hdr;
 };
 }
 

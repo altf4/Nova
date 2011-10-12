@@ -6,17 +6,18 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
-#include <sys/msg.h>
 #include <TrafficEvent.h>
 #include <errno.h>
 #include <fstream>
 #include "Point.h"
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <signal.h>
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -57,13 +58,24 @@ istream* queryIn = NULL;			//input for query points
 
 const char *outFile;				//output for data points during training
 
+void *outPtr;
+
 LoggerPtr m_logger(Logger::getLogger("main"));
 
 int maxFeatureValues[dim];
 
+
+void siginthandler(int param)
+{
+	//Append suspect data to the datafile before exit
+	WriteDataPointsToFile((char*)outPtr);
+	exit(1);
+}
+
 int main(int argc,char *argv[])
 {
 	int c, IPCsock, len;
+
 
 
 	//Path name variable for config file, set to a default
@@ -140,6 +152,7 @@ int main(int argc,char *argv[])
 
 	//Runs the configuration loader
 	LoadConfig(nConfig);
+	outPtr = (void *)outFile;
 
 	//Are we Training or Classifying?
 	if(isTraining)
@@ -157,6 +170,7 @@ int main(int argc,char *argv[])
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		perror("socket");
+		close(IPCsock);
 		exit(1);
 	}
 
@@ -169,12 +183,14 @@ int main(int argc,char *argv[])
     if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
     {
         perror("bind");
+		close(IPCsock);
         exit(1);
     }
 
     if(listen(IPCsock, ipcMaxConnections) == -1)
     {
         perror("listen");
+		close(IPCsock);
         exit(1);
     }
 
@@ -184,6 +200,8 @@ int main(int argc,char *argv[])
 		TrafficEvent *event = new TrafficEvent();
 		if( ReceiveTrafficEvent(IPCsock,TRAFFIC_EVENT_MTYPE,event) == false)
 		{
+			delete event;
+			event = NULL;
 			continue;
 		}
 
@@ -206,6 +224,7 @@ int main(int argc,char *argv[])
 
 	//Shouldn't get here!
 	LOG4CXX_ERROR(m_logger,"Main thread ended. Shouldn't get here!!!");
+	close(IPCsock);
 	return 1;
 }
 
@@ -252,7 +271,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 //Thread for calculating training data, and writing to file.
 void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 {
-
+	signal(SIGINT, siginthandler);
 	//Training Loop
 	while(true)
 	{
@@ -268,9 +287,6 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 
 		//	Writes into Suspect ANNPoints
 		CopyDataToAnnPoints();
-
-		//Output to file
-		WriteDataPointsToFile((char*)ptr);
 		pthread_mutex_unlock(&SuspectMutex);
 	}
 
@@ -293,12 +309,14 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	if((sockfd = socket(PF_INET,SOCK_DGRAM,0)) == -1)
 	{
 		perror("socket");
+		close(sockfd);
 		exit(1);
 	}
 
 	if(setsockopt(sockfd,SOL_SOCKET,SO_BROADCAST,&broadcast,sizeof broadcast) == -1)
 	{
 		perror("setsockopt - SO_SOCKET ");
+		close(sockfd);
 		exit(1);
 	}
 
@@ -310,6 +328,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	if(bind(sockfd,(struct sockaddr*) &sendaddr,sizeof sendaddr) == -1)
 	{
 		perror("bind");
+		close(sockfd);
 		exit(1);
 	}
 
@@ -321,6 +340,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		if ((numbytes = recvfrom(sockfd,buf,sizeof buf,0,(struct sockaddr *)&sendaddr,(socklen_t *)&addr_len)) == -1)
 		{
 			perror("recvfrom");
+			close(sockfd);
 			exit(1);
 		}
 
@@ -354,12 +374,14 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			}
 			pthread_mutex_unlock(&SuspectMutex);
 		}
-		catch(...)
+		catch(boost::archive::archive_exception e)
 		{
-			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm");
+			close(sockfd);
+			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: "+string(e.what()));
 		}
 		delete suspect;
 	}
+	close(sockfd);
 	LOG4CXX_INFO(m_logger,"Silent Alarm thread ended. Shouldn't get here!!!");
 	return NULL;
 }
@@ -556,7 +578,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 //Writes dataPtsWithClass out to a file specified by outFilePath
 void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 {
-	ofstream myfile (outFilePath.data());
+	ofstream myfile (outFilePath.data(), ios::app);
 
 	if (myfile.is_open())
 	{
@@ -592,7 +614,7 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
 
-	int  nifaces, i;
+	uint  nifaces, i;
 	memset(&ifconf,0,sizeof(ifconf));
 
 	ifconf.ifc_buf = (char*)(ifreqs);
@@ -604,6 +626,7 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 	if(sock < 0)
 	{
 		perror("socket");
+		close(sock);
 		return NULL;
 	}
 
@@ -632,62 +655,44 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
-    // ugly struct hack required by msgsnd
-    struct RawMessage
-    {
-        long mtype;
-        char mdata[ MAX_MSG_SIZE ];
-    };
-
     stringstream ss;
-	key_t key;
-	int msqid;
-
 	boost::archive::text_oarchive oa(ss);
-	oa << suspect;
-	//TODO: WTF, this temp var shouldn't be needed, but it is. Sometimes 'ss' will just change on you
-	//	from somewhere else in code. Makes me worried about the Boost Serialize library...
-	// See ticket #10
 
+	int socketFD, len;
+	struct sockaddr_un remote;
+
+	//Serialize the data into a simple char buffer
+	oa << suspect;
 	string temp = ss.str();
+
 	const char* data = temp.c_str();
 	int dataLen = temp.size();
 
-	struct RawMessage msg;
-    msg.mtype = 5;
-
-    if( dataLen >  MAX_MSG_SIZE)
-    {
-    	LOG4CXX_INFO(m_logger, "Error. Alarm message too big!! Size: " <<  dataLen);
-    	return;
-    }
-
-    memcpy(msg.mdata, data, dataLen);
-
-	//Send to Doppelganger Module
-	key = ftok(KEY_ALARM_FILENAME,'c');
-
-	if(key == -1)
+	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG4CXX_INFO(m_logger,"Obtaining an IPC key returned error!");
-		perror("ftok");
+		perror("socket");
+		close(socketFD);
 		return;
 	}
 
-	msqid = msgget(key, 0666 | IPC_CREAT);
+	remote.sun_family = AF_UNIX;
+	strcpy(remote.sun_path, KEY_ALARM_FILENAME);
+	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
-	if(msqid == -1)
+	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
-		LOG4CXX_INFO(m_logger,"Obtaining an IPC message Queue ID returned error!");
-		perror("msgget");
+		perror("connect");
+		close(socketFD);
 		return;
 	}
 
-	if( msgsnd(msqid, &msg, dataLen + sizeof(long), 0) == -1)
+	if (send(socketFD, data, dataLen, 0) == -1)
 	{
-		LOG4CXX_INFO(m_logger,"Error in IPC Queue: " << errno);
-		perror("msgsnd");
+		perror("send");
+		close(socketFD);
+		return;
 	}
+	close(socketFD);
 
 	//Send Silent Alarm to other Nova Instances
 	int sockfd, broadcast = 1;
@@ -703,19 +708,22 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	{
 		LOG4CXX_INFO(m_logger,"ERROR opening socket: " << errno);
 		perror("socket");
+		close(sockfd);
 		return;
 	}
 
 	if((setsockopt(sockfd,SOL_SOCKET,SO_BROADCAST,&broadcast,sizeof broadcast)) == -1)
 	{
 		perror("setsockopt - SO_SOCKET ");
+		close(sockfd);
 		return;
 	}
 
-	if( sendto(sockfd,&(msg.mdata),dataLen,0,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) == -1)
+	if( sendto(sockfd,data,dataLen,0,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) == -1)
 	{
 		LOG4CXX_INFO(m_logger,"Error in UDP Send: " << errno);
 		perror("send");
+		close(sockfd);
 		return;
 	}
 }
@@ -725,34 +733,28 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, TrafficEvent *event)
 {
 	struct sockaddr_un remote;
-    int socketSize, connectionSocket, bytesRead;
-    char buffer[1024];
+    int socketSize, connectionSocket;
+    int bytesRead;
+    char buffer[MAX_MSG_SIZE];
 
-    vector<char> wholeData;
     socketSize = sizeof(remote);
 
     //Blocking call
     if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
     {
         perror("accept");
+		close(connectionSocket);
         return false;
     }
-    do
+    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
     {
-    	//Read in up to 1024 characters
-    	bytesRead = recv(connectionSocket, buffer, 1024, 0 );
-
-    	if( bytesRead > 0 )
-    	{
-    		//Accumulate that into the larger whole
-			wholeData.insert(wholeData.end(), buffer, buffer + bytesRead);
-    	}
-    //Keep going as long as we have read the full read amount.
-    	//If it's less, then that means it was our last read, so exit the loop
-    }while(bytesRead == 1024);
+        perror("recv");
+		close(connectionSocket);
+        return NULL;
+    }
 
 	stringstream ss;
-	ss << wholeData.data();
+	ss << buffer;
 
 	boost::archive::text_iarchive ia(ss);
 	// Read into a temp object then copy. We do this b/c the ">>" operator for
@@ -769,6 +771,7 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 	catch(boost::archive::archive_exception e)
 	{
 		LOG4CXX_ERROR(m_logger,"Error in parsing received TrafficEvent: " + string(e.what()));
+		close(connectionSocket);
 		return false;
 	}
 	tempEvent->copyTo(event);
@@ -780,7 +783,7 @@ void ClassificationEngine::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
 	bool verify[12];
-	for(int i = 0; i < 12; i++)
+	for(uint i = 0; i < 12; i++)
 		verify[i] = false;
 
 	string line;
@@ -955,7 +958,7 @@ void ClassificationEngine::LoadConfig(char* input)
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(int i = 0; i < 12; i++)
+		for(uint i = 0; i < 12; i++)
 		{
 			v &= verify[i];
 		}

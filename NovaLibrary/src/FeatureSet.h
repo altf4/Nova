@@ -78,8 +78,8 @@ private:
 	//Temporary variables used to calculate Features
 	set<int> IPTable;
 	set<int> portTable;
-	int haystackEvents;
-	int hostEvents;
+	uint haystackEvents;
+	uint hostEvents;
 	time_t startTime ;
 	time_t endTime;
 	//Number of packets total
@@ -93,7 +93,7 @@ private:
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
 	{
-		for(int i=0; i < DIMENSION; i++)
+		for(uint i=0; i < DIMENSION; i++)
 		{
 			ar & features[i];
 		}

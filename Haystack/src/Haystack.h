@@ -44,8 +44,15 @@ string Usage();
 ///Hash table for current TCP Sessions
 ///Table key is the source network socket, comprised of IP and Port in string format
 ///	IE: "192.168.1.1-8080"
+
+struct Session
+{
+	bool fin;
+	vector<struct Packet> session;
+};
+
 ///The Value is a vector of IP headers
-typedef std::tr1::unordered_map<string, vector<struct Packet> > TCPSessionHashTable;
+typedef std::tr1::unordered_map<string, struct Session> TCPSessionHashTable;
 }
 }
 

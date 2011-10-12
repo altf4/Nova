@@ -16,9 +16,7 @@ namespace Nova{
 // int component_source is one of FROM_HAYSTACK or FROM_LTM
 TrafficEvent::TrafficEvent(struct Packet packet, int component_source)
 {
-	struct udphdr *udp_hdr; 				/* The TCP header */
-	struct icmphdr *icmp_hdr; 				/* The TCP header */
-	struct ip *ip_hdr = packet.ip_hdr;
+	struct ip *ip_hdr = &packet.ip_hdr;
 	if(ip_hdr == NULL)
 	{
 		return;
@@ -27,33 +25,31 @@ TrafficEvent::TrafficEvent(struct Packet packet, int component_source)
 	this->start_timestamp = packet.pcap_header.ts.tv_sec;
 	this->end_timestamp = packet.pcap_header.ts.tv_sec;
 	this->packet_count = 1;
-	this->dst_IP = ip_hdr->ip_dst;
-	this->src_IP = ip_hdr->ip_src;
-	this->IP_protocol = ip_hdr->ip_p;
+	this->dst_IP = packet.ip_hdr.ip_dst;
+	this->src_IP = packet.ip_hdr.ip_src;
+	this->IP_protocol = packet.ip_hdr.ip_p;
 	//If UDP
-	if(ip_hdr->ip_p == 17)
+	if(packet.ip_hdr.ip_p == 17)
 	{
-		udp_hdr = (struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-		this->dst_port = ntohs(udp_hdr->dest);
-		this->src_port = ntohs(udp_hdr->source);
-		this->IP_total_data_bytes = ntohs(ip_hdr->ip_len);
+		this->dst_port = ntohs(packet.udp_hdr.dest);
+		this->src_port = ntohs(packet.udp_hdr.source);
+		this->IP_total_data_bytes = ntohs(packet.ip_hdr.ip_len);
 		this->ICMP_type = -1;
 		this->ICMP_code = -1;
 	}
 	//If ICMP
-	else if(ip_hdr->ip_p == 1)
+	else if(packet.ip_hdr.ip_p == 1)
 	{
-		icmp_hdr = (struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-		this->ICMP_type = icmp_hdr->type;
-		this->ICMP_code = icmp_hdr->code;
-		this->IP_total_data_bytes = ntohs(ip_hdr->ip_len);
+		this->ICMP_type = packet.icmp_hdr.type;
+		this->ICMP_code = packet.icmp_hdr.code;
+		this->IP_total_data_bytes = ntohs(packet.ip_hdr.ip_len);
 		this->dst_port = -1;
 		this->src_port = -1;
 	}
-	this->IP_packet_sizes.push_back(ntohs(ip_hdr->ip_len));
+	this->IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
 	this->from_haystack = component_source;
 	//Set known hostility, only used in training
-	if(  (ntohs(ip_hdr->ip_off) & IP_RF) == 0) //Evil bit
+	if(  (ntohs(packet.ip_hdr.ip_off) & IP_RF) == 0) //Evil bit
 	{
 		this->isHostile = false;
 	}
@@ -67,15 +63,16 @@ TrafficEvent::TrafficEvent(struct Packet packet, int component_source)
 // int component_source is one of FROM_HAYSTACK or FROM_LTM
 TrafficEvent::TrafficEvent( vector<struct Packet>  *list, int component_source)
 {
+	struct Packet *packet = &list->front();
 	this->start_timestamp = list->front().pcap_header.ts.tv_sec;
 	this->end_timestamp = list->back().pcap_header.ts.tv_sec;
 	this->packet_count = list->size();
-	this->dst_IP = list->front().ip_hdr->ip_dst;
-	this->src_IP = list->front().ip_hdr->ip_src;
+	this->dst_IP = packet->ip_hdr.ip_dst;
+	this->src_IP = packet->ip_hdr.ip_src;
 	//Really complicated casting which grabs the dst and src ports
-	this->dst_port =  ntohs(((struct tcphdr *)(((char*)list->front().ip_hdr) + (sizeof (struct ip))))->dest);
-	this->src_port =  ntohs(((struct tcphdr *)(((char*)list->front().ip_hdr) + (sizeof (struct ip))))->source);
-	this->IP_protocol = list->front().ip_hdr->ip_p;
+	this->dst_port =  ntohs(packet->tcp_hdr.dest);
+	this->src_port =  ntohs(packet->tcp_hdr.source);
+	this->IP_protocol = packet->ip_hdr.ip_p;
 	if( this->IP_protocol != 6 )
 	{
 		cout << "Error with TCP protocol in list.\n";
@@ -84,9 +81,9 @@ TrafficEvent::TrafficEvent( vector<struct Packet>  *list, int component_source)
 	this->IP_total_data_bytes = 0;
 	for(uint i = 0; i < list->size(); i++)
 	{
-		this->IP_total_data_bytes += ntohs((*list)[i].ip_hdr->ip_len);
-		this->IP_packet_sizes.push_back(ntohs((*list)[i].ip_hdr->ip_len));
-		//cout << ntohs((*list)[i].ip_hdr->ip_len) << "\n";
+		this->IP_total_data_bytes += ntohs((*list)[i].ip_hdr.ip_len);
+		this->IP_packet_sizes.push_back(ntohs((*list)[i].ip_hdr.ip_len));
+		//cout << ntohs((*list)[i].packet->ip_hdr.ip_len) << "\n";
 	}
 	this->from_haystack = component_source;
 	//Set known hostility, only used in training
@@ -195,7 +192,7 @@ bool TrafficEvent::ArePacketsHostile( vector<struct Packet>  *list)
 	uint sum = 0;
 	for(uint i = 0; i < list->size(); i++)
 	{
-		if((((*list)[i].ip_hdr->ip_off) ^ IP_RF) == 0) //Evil bit
+		if((((*list)[i].ip_hdr.ip_off) ^ IP_RF) == 0) //Evil bit
 		{
 			sum++;
 		}

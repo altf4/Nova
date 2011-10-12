@@ -24,7 +24,7 @@ using namespace ClassificationEngine;
 string getLocalIP(const char *dev);
 
 ///Listens over IPC for a Silent Alarm, blocking on no answer
-Suspect *ReceiveAlarm();
+Suspect *ReceiveAlarm(int alarmSock);
 
 //Returns usage tips
 string Usage();

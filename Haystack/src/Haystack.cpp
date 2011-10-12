@@ -23,6 +23,7 @@ int tcpTime; //TCP_TIMEOUT measured in seconds
 int tcpFreq; //TCP_CHECK_FREQ measured in seconds
 static TCPSessionHashTable SessionTable;
 
+
 pthread_mutex_t SessionMutex = PTHREAD_MUTEX_INITIALIZER;
 LoggerPtr m_logger(Logger::getLogger("main"));
 
@@ -36,9 +37,9 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 {
 	struct ether_header *ethernet;  	/* net/ethernet.h */
 	struct ip *ip_hdr; 					/* The IP header */
-	struct tcphdr *tcp_hdr; 			/* The TCP header */
 
 	TrafficEvent *event;
+	struct Packet temp;
 
 	if(packet == NULL)
 	{
@@ -55,24 +56,32 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 		ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
 
 		//Prepare Packet structure
-		struct Packet packet_info;
-		packet_info.ip_hdr = ip_hdr;
-		packet_info.pcap_header = *pkthdr;
+		struct Packet *packet_info = &temp;
+		packet_info->ip_hdr = *ip_hdr;
+		packet_info->pcap_header = *pkthdr;
 
 		//IF UDP or ICMP
-		if(ip_hdr->ip_p == 17 || ip_hdr->ip_p == 1)
+		if(ip_hdr->ip_p == 17 )
 		{
-			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
+			packet_info->udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
+			event = new Nova::TrafficEvent(*packet_info, FROM_HAYSTACK_DP);
 			SendToCE(event);
 			delete event;
 			event = NULL;
 		}
-
+		else if(ip_hdr->ip_p == 1)
+		{
+			packet_info->icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
+			event = new Nova::TrafficEvent(*packet_info, FROM_HAYSTACK_DP);
+			SendToCE(event);
+			delete event;
+			event = NULL;
+		}
 		//If TCP...
 		else if(ip_hdr->ip_p == 6)
 		{
-			tcp_hdr = (struct tcphdr *)((char*)ip_hdr + sizeof(struct ip));
-			int dest_port = ntohs(tcp_hdr->dest);
+			packet_info->tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
+			int dest_port = ntohs(packet_info->tcp_hdr.dest);
 			char tcp_socket[55];
 
 			bzero(tcp_socket, 55);
@@ -80,10 +89,11 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 			pthread_mutex_lock(&SessionMutex);
 
 			//If this is a new entry...
-			if( SessionTable[tcp_socket].size() == 0)
+			if( SessionTable[tcp_socket].session.size() == 0)
 			{
 				//Insert packet into Hash Table
-				SessionTable[tcp_socket].push_back(packet_info);
+				SessionTable[tcp_socket].session.push_back(*packet_info);
+				SessionTable[tcp_socket].fin = false;
 			}
 
 			//If there is already a session in progress for the given LogEntry
@@ -92,21 +102,15 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 				//If Session is ending
 				//TODO: The session may continue a few packets after the FIN. Account for this case.
 				//See ticket #15
-				if(tcp_hdr->fin)
+				if(packet_info->tcp_hdr.fin)
 				{
-					SessionTable[tcp_socket].push_back(packet_info);
-					event = new TrafficEvent( &(SessionTable[tcp_socket]), FROM_HAYSTACK_DP);
-					SendToCE(event);
-
-					//Delete the vector
-					SessionTable[tcp_socket].clear();
-					delete event;
-					event = NULL;
+					SessionTable[tcp_socket].session.push_back(*packet_info);
+					SessionTable[tcp_socket].fin = true;
 				}
 				else
 				{
 					//Add this new packet to the session vector
-					SessionTable[tcp_socket].push_back(packet_info);
+					SessionTable[tcp_socket].session.push_back(*packet_info);
 				}
 			}
 			pthread_mutex_unlock(&SessionMutex);
@@ -280,27 +284,47 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 	{
 		//Check only once every TCP_CHECK_FREQ seconds
 		sleep(tcpFreq);
-		pthread_mutex_lock(&SessionMutex);
-
 		time_t currentTime = time(NULL);
-		for (TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++)
-		{
-			//If this session is timed out (and it exists)
-			if(it->second.size() > 0)
-			{
-				if(it->second.back().pcap_header.ts.tv_sec + tcpTime < currentTime)
-				{
-					TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first]), FROM_HAYSTACK_DP);
-					SendToCE(event);
+		time_t packetTime;
 
-					//Delete the vector
-					SessionTable[it->first].clear();
-					delete event;
-					event = NULL;
+		pthread_mutex_lock(&SessionMutex);
+		for ( TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
+		{
+
+			if(it->second.session.size() > 0)
+			{
+				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
+				// If it exists)
+				if(packetTime + 2 < currentTime)
+				{
+					//If session has been finished for more than two seconds
+					if(it->second.fin == true)
+					{
+						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
+						SendToCE(event);
+
+						SessionTable[it->first].session.clear();
+						SessionTable[it->first].fin = false;
+
+						delete event;
+						event = NULL;
+					}
+					//If this session is timed out
+					else if(packetTime + tcpTime < currentTime)
+					{
+						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
+						SendToCE(event);
+
+						SessionTable[it->first].session.clear();
+						SessionTable[it->first].fin = false;
+
+						delete event;
+						event = NULL;
+					}
 				}
 			}
 		}
-		pthread_mutex_unlock(&SessionMutex);
+		pthread_mutex_unlock( &SessionMutex );
 	}
 	//Shouldn't get here
 	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted");
@@ -327,6 +351,7 @@ bool Nova::Haystack::SendToCE(TrafficEvent *event)
 	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		perror("socket");
+		close(socketFD);
 		return false;
 	}
 
@@ -337,12 +362,14 @@ bool Nova::Haystack::SendToCE(TrafficEvent *event)
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
 		perror("connect");
+		close(socketFD);
 		return false;
 	}
 
 	if (send(socketFD, data, dataLen, 0) == -1)
 	{
 		perror("send");
+		close(socketFD);
 		return false;
 	}
 	close(socketFD);
@@ -405,7 +432,7 @@ void Haystack::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
 	bool verify[4];
-	for(int i = 0; i < 4; i++)
+	for(uint i = 0; i < 4; i++)
 		verify[i] = false;
 
 	string line;
@@ -471,7 +498,7 @@ void Haystack::LoadConfig(char* input)
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(int i = 0; i < 4; i++)
+		for(uint i = 0; i < 4; i++)
 		{
 			v &= verify[i];
 		}

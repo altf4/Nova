@@ -36,92 +36,95 @@ LoggerPtr m_logger(Logger::getLogger("main"));
 void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
 	struct ether_header *ethernet;  	/* net/ethernet.h */
-	struct ip *ip_hdr; 					/* The IP header */
-	struct tcphdr *tcp_hdr; 			/* The TCP header */
+		struct ip *ip_hdr; 					/* The IP header */
 
-	TrafficEvent *event;
+		TrafficEvent *event;
+		struct Packet temp;
 
-	if(packet == NULL)
-	{
-		LOG4CXX_ERROR(m_logger, "Didn't grab packet!\n");
-		return;
-	}
-
-	/* lets start with the ether header... */
-	ethernet = (struct ether_header *) packet;
-
-	/* Do a couple of checks to see what packet type we have..*/
-	if (ntohs (ethernet->ether_type) == ETHERTYPE_IP)
-	{
-		ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
-
-		//Prepare Packet structure
-		struct Packet packet_info;
-		packet_info.ip_hdr = ip_hdr;
-		packet_info.pcap_header = *pkthdr;
-
-		//IF UDP or ICMP
-		if(ip_hdr->ip_p == 17 || ip_hdr->ip_p == 1)
+		if(packet == NULL)
 		{
-			event = new Nova::TrafficEvent(packet_info, FROM_LTM);
-			SendToCE(event);
-			delete event;
-			event = NULL;
+			LOG4CXX_ERROR(m_logger, "Didn't grab packet!");
+			return;
 		}
 
-		//If TCP...
-		else if(ip_hdr->ip_p == 6)
+		/* let's start with the ether header... */
+		ethernet = (struct ether_header *) packet;
+
+		/* Do a couple of checks to see what packet type we have..*/
+		if (ntohs (ethernet->ether_type) == ETHERTYPE_IP)
 		{
-			tcp_hdr = (struct tcphdr *)((char*)ip_hdr + sizeof(struct ip) );
-			int dest_port = ntohs(tcp_hdr->dest);
-			char tcp_socket[55];
+			ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
 
-			bzero(tcp_socket, 55);
-			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
-			pthread_mutex_lock( &SessionMutex );
+			//Prepare Packet structure
+			struct Packet *packet_info = &temp;
+			packet_info->ip_hdr = *ip_hdr;
+			packet_info->pcap_header = *pkthdr;
 
-			//If this is a new entry...
-			if( SessionTable[tcp_socket].size() == 0)
+			//IF UDP or ICMP
+			if(ip_hdr->ip_p == 17 )
 			{
-				//Insert TCP header into Hash Table
-				SessionTable[tcp_socket].push_back(packet_info);
+				packet_info->udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
+				event = new Nova::TrafficEvent(*packet_info, FROM_HAYSTACK_DP);
+				SendToCE(event);
+				delete event;
+				event = NULL;
 			}
-
-			//If there is already a session in progress for the given LogEntry
-			else
+			else if(ip_hdr->ip_p == 1)
 			{
-				//If Session is ending
-				//TODO: The session may continue a few packets after the FIN. Account for this case.
-				//See ticket #15
-				if(tcp_hdr->fin)
-				{
-					SessionTable[tcp_socket].push_back(packet_info);
-					event = new TrafficEvent( &(SessionTable[tcp_socket]), FROM_LTM);
-					SendToCE(event);
+				packet_info->icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
+				event = new Nova::TrafficEvent(*packet_info, FROM_HAYSTACK_DP);
+				SendToCE(event);
+				delete event;
+				event = NULL;
+			}
+			//If TCP...
+			else if(ip_hdr->ip_p == 6)
+			{
+				packet_info->tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
+				int dest_port = ntohs(packet_info->tcp_hdr.dest);
+				char tcp_socket[55];
 
-					//Delete the vector
-					SessionTable[tcp_socket].clear();
-					delete event;
-					event = NULL;
+				bzero(tcp_socket, 55);
+				snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
+				pthread_mutex_lock(&SessionMutex);
+
+				//If this is a new entry...
+				if( SessionTable[tcp_socket].session.size() == 0)
+				{
+					//Insert packet into Hash Table
+					SessionTable[tcp_socket].session.push_back(*packet_info);
+					SessionTable[tcp_socket].fin = false;
 				}
+
+				//If there is already a session in progress for the given LogEntry
 				else
 				{
-					//Add this new packet to the session vector
-					SessionTable[tcp_socket].push_back(packet_info);
+					//If Session is ending
+					//TODO: The session may continue a few packets after the FIN. Account for this case.
+					//See ticket #15
+					if(packet_info->tcp_hdr.fin)
+					{
+						SessionTable[tcp_socket].session.push_back(*packet_info);
+						SessionTable[tcp_socket].fin = true;
+					}
+					else
+					{
+						//Add this new packet to the session vector
+						SessionTable[tcp_socket].session.push_back(*packet_info);
+					}
 				}
+				pthread_mutex_unlock(&SessionMutex);
 			}
-			pthread_mutex_unlock( &SessionMutex );
 		}
-	}
-	else  if (ntohs (ethernet->ether_type) == ETHERTYPE_ARP)
-	{
-		return;
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
-		return;
-	}
+		else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
+		{
+			return;
+		}
+		else
+		{
+			LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
+			return;
+		}
 }
 
 int main(int argc, char *argv[])
@@ -271,25 +274,43 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 	{
 		//Check only once every TCP_CHECK_FREQ seconds
 		sleep(tcpFreq);
-
-		//cout << "Checking for old sessions...\n";
-		pthread_mutex_lock(&SessionMutex);
 		time_t currentTime = time(NULL);
+		time_t packetTime;
 
+		pthread_mutex_lock(&SessionMutex);
 		for ( TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
 		{
-			//If this session is timed out (and it exists)
-			if( it->second.size() > 0)
+			if(it->second.session.size() > 0)
 			{
-				if( it->second.back().pcap_header.ts.tv_sec + tcpTime < currentTime)
+				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
+				// If it exists)
+				if(packetTime + 2 < currentTime)
 				{
-					TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first]), FROM_LTM );
-					SendToCE(event);
+					//If session has been finished for more than two seconds
+					if(it->second.fin == true)
+					{
+						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
+						SendToCE(event);
 
-					//Delete the vector
-					SessionTable[it->first].clear();
-					delete event;
-					event = NULL;
+						SessionTable[it->first].session.clear();
+						SessionTable[it->first].fin = false;
+
+						delete event;
+						event = NULL;
+					}
+					//If this session is timed out
+					else if(packetTime + tcpTime < currentTime)
+					{
+
+						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
+						SendToCE(event);
+
+						SessionTable[it->first].session.clear();
+						SessionTable[it->first].fin = false;
+
+						delete event;
+						event = NULL;
+					}
 				}
 			}
 		}
@@ -320,6 +341,7 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 	if((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		perror("socket");
+		close(socketFD);
 		return false;
 	}
 
@@ -330,11 +352,13 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 	if(connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
 		perror("connect");
+		close(socketFD);
 		return false;
 	}
 	if(send(socketFD, data, dataLen, 0) == -1)
 	{
 		perror("send");
+		close(socketFD);
 		return false;
 	}
 	close(socketFD);
@@ -346,7 +370,7 @@ string Nova::LocalTrafficMonitor::getLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
-	int nifaces, i;
+	uint nifaces, i;
 
 	memset(&ifconf,0,sizeof(ifconf));
 	ifconf.ifc_buf = (char*) (ifreqs);
@@ -358,6 +382,7 @@ string Nova::LocalTrafficMonitor::getLocalIP(const char *dev)
 	if(sock < 0)
 	{
 		perror("socket");
+		close(sock);
 		return (NULL);
 	}
 
@@ -397,7 +422,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
 	bool verify[3];
-	for(int i = 0; i < 3; i++)
+	for(uint i = 0; i < 3; i++)
 		verify[i] = false;
 
 	string line;
@@ -454,7 +479,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(int i = 0; i < 3; i++)
+		for(uint i = 0; i < 3; i++)
 		{
 			v &= verify[i];
 		}

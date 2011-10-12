@@ -9,7 +9,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <arpa/inet.h>
-#include <sys/msg.h>
+#include <sys/un.h>
 #include <errno.h>
 #include <signal.h>
 #include <log4cxx/xml/domconfigurator.h>
@@ -27,6 +27,7 @@ LoggerPtr m_logger(Logger::getLogger("main"));
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
 string hostAddrString, doppelgangerAddrString;
 struct sockaddr_in hostAddr, loopbackAddr;
+bool isEnabled;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -105,12 +106,53 @@ int main(int argc, char *argv[])
 		}
 	}
 	LoadConfig(nConfig);
+
+	string commandLine;
+
+	//system commands to allow DM to function.
+	commandLine = "iptables -A FORWARD -i lo -j DROP";
+	system(commandLine.c_str());
+	commandLine = "route add -host "+doppelgangerAddrString+" dev lo";
+	system(commandLine.c_str());
+	commandLine = "iptables -t nat -F";
+	system(commandLine.c_str());
+
 	Suspect *suspect;
+
+    int alarmSocket, len;
+    struct sockaddr_un remote;
+
+    if((alarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+    {
+    		perror("socket");
+    		close(alarmSocket);
+    		exit(1);
+    }
+    remote.sun_family = AF_UNIX;
+
+    strcpy(remote.sun_path, KEY_ALARM_FILENAME);
+    unlink(remote.sun_path);
+
+    len = strlen(remote.sun_path) + sizeof(remote.sun_family);
+    if(bind(alarmSocket,(struct sockaddr *)&remote,len) == -1)
+    {
+        perror("bind");
+		close(alarmSocket);
+        exit(1);
+    }
+
+    if(listen(alarmSocket, 5) == -1)
+    {
+        perror("listen");
+		close(alarmSocket);
+        exit(1);
+    }
+
 	//"Main Loop"
 	while(true)
 	{
-		string commandLine;
-		suspect  = ReceiveAlarm();
+
+		suspect  = ReceiveAlarm(alarmSocket);
 
 		if(suspect == NULL)
 		{
@@ -149,11 +191,11 @@ int main(int argc, char *argv[])
 		}
 
 		SuspectTable[suspect->IP_address.s_addr] = isBadGuy;
-		if(isBadGuy)
+		if(isBadGuy&&isEnabled)
 		{
 			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
-			commandLine += "iptables -t nat -A PREROUTING -d ";
+			commandLine = "iptables -t nat -A PREROUTING -d ";
 			commandLine += hostAddrString;
 			commandLine += " -s ";
 			commandLine += suspectAddr;
@@ -166,7 +208,7 @@ int main(int argc, char *argv[])
 		{
 			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
-			commandLine += "iptables -t nat -D PREROUTING -d ";
+			commandLine = "iptables -t nat -D PREROUTING -d ";
 			commandLine += hostAddrString;
 			commandLine += " -s ";
 			commandLine += suspectAddr;
@@ -185,7 +227,7 @@ string Nova::DoppelgangerModule::getLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
-	int  nifaces, i;
+	uint  nifaces, i;
 
 	memset(&ifconf,0,sizeof(ifconf));
 	ifconf.ifc_buf = (char*) (ifreqs);
@@ -197,6 +239,7 @@ string Nova::DoppelgangerModule::getLocalIP(const char *dev)
 	if(sock < 0)
 	{
 		perror("socket");
+		close(sock);
 		return NULL;
 	}
 
@@ -223,71 +266,53 @@ string Nova::DoppelgangerModule::getLocalIP(const char *dev)
 }
 
 //Listens over IPC for a Silent Alarm, blocking on no answer
-Suspect *Nova::DoppelgangerModule::ReceiveAlarm()
+Suspect *Nova::DoppelgangerModule::ReceiveAlarm(int alarmSock)
 {
-	// ugly struct hack required by msgrcv
-	struct RawMessage
-	{
-		long mtype;
-		char mdata[MAX_MSG_SIZE];
-	};
 
-	struct RawMessage msg;
-	ssize_t bytes_read;
-	key_t key;
+	struct sockaddr_un remote;
+    int socketSize, connectionSocket;
+    int bytesRead;
+    char buf[MAX_MSG_SIZE];
 
-	int msqid;
-	size_t data_offset = sizeof(msg.mtype);
+    socketSize = sizeof(remote);
 
-	// Allocate a buffer of the correct size for message
-	//vector<char> msgbuf(MAX_MSG_SIZE + data_offset);
-	key = ftok(KEY_ALARM_FILENAME, 'c');
 
-	if(key == -1)
-	{
-		LOG4CXX_ERROR(m_logger,"Obtaining an IPC key returned error!");
-		exit(1);
+    //Blocking call
+    if ((connectionSocket = accept(alarmSock, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    {
+        perror("accept");
+		close(connectionSocket);
+        return NULL;
+    }
+    if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
+    {
+        perror("recv");
+		close(connectionSocket);
+        return NULL;
+    }
 
-	}
-
-	msqid = msgget(key, 0666 | IPC_CREAT);
-
-	if(msqid == -1)
-	{
-		LOG4CXX_ERROR(m_logger,"Obtaining an IPC message Queue ID returned error!");
-		exit(1);
-	}
-
-	// Read raw message
-	if((bytes_read = msgrcv(msqid,&msg,MAX_MSG_SIZE - data_offset, 0, 0)) < 0)
-	{
-		LOG4CXX_ERROR(m_logger,"Error in IPC Queue" << errno);
-		perror("msgsnd");
-	}
-
-	msg.mdata[bytes_read] = 0;
-	Suspect *suspect = new Suspect();
+	Suspect * suspect = new Suspect();
 
 	try
 	{
-		// create and open an archive for input
 		stringstream ss;
-		ss << msg.mdata;
+		ss << buf;
 		boost::archive::text_iarchive ia(ss);
-
+		// create and open an archive for input
 		// read class state from archive
 		ia >> suspect;
 		// archive and stream closed when destructors are called
 	}
-	catch(...)
+	catch(boost::archive::archive_exception e)
 	{
-		LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm");
+		LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: "+string(e.what()));
 		if(suspect != NULL)
 		{
 			delete suspect;
 			suspect = NULL;
 		}
 	}
+	close(connectionSocket);
 	return suspect;
 }
 
@@ -322,8 +347,8 @@ bool Nova::DoppelgangerModule::IsSuspectHostile(Suspect *suspect)
 void DoppelgangerModule::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
-	bool verify[2];
-	for(int i = 0; i < 2; i++)
+	bool verify[3];
+	for(uint i = 0; i < 3; i++)
 		verify[i] = false;
 
 	string line;
@@ -373,6 +398,17 @@ void DoppelgangerModule::LoadConfig(char* input)
 				verify[1]=true;
 				continue;
 			}
+			prefix = "ENABLED";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				{
+					isEnabled = atoi(line.c_str());
+					verify[2]=true;
+				}
+				continue;
+			}
 			prefix = "#";
 			if(line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -383,7 +419,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(int i = 0; i < 2; i++)
+		for(uint i = 0; i < 3; i++)
 		{
 			v &= verify[i];
 		}

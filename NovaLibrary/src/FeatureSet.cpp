@@ -62,14 +62,8 @@ void FeatureSet::CalculateHaystackToHostEventRatio(TrafficEvent *event)
 	{
 		hostEvents++;
 	}
-	if(hostEvents != 0)
-	{
-		features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO] = (double)haystackEvents / (double)hostEvents;
-	}
-	else
-	{
-		features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO] = 10000;
-	}
+	features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO] = (double)haystackEvents / (double)(hostEvents+1);
+	//HostEvents +1 to handle infinity case, be aware data will be skewed accordingly
 }
 
 //Side effect warning!! Run this function after CalculateHaystackToHostEventRatio.
