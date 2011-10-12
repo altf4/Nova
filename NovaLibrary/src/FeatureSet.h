@@ -73,6 +73,9 @@ public:
 	void CalculatePacketSizeMean(TrafficEvent *event);
 	///Calculates a feature, given a new piece of evidence
 	void CalculatePacketSizeVariance(TrafficEvent *event);
+	///Updates all the member variables, given a new piece of evidence
+	void UpdateMemberVariables(TrafficEvent *event);
+
 
 private:
 	//Temporary variables used to calculate Features

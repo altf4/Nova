@@ -54,14 +54,6 @@ void FeatureSet::CalculateDistinctPortCount( TrafficEvent *event )
 //Side effect warning!! Run this function before CalculateHaystackEventFrequency.
 void FeatureSet::CalculateHaystackToHostEventRatio(TrafficEvent *event)
 {
-	if(event->from_haystack)
-	{
-		haystackEvents++;
-	}
-	else
-	{
-		hostEvents++;
-	}
 	features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO] = (double)haystackEvents / (double)(hostEvents+1);
 	//HostEvents +1 to handle infinity case, be aware data will be skewed accordingly
 }
@@ -88,8 +80,6 @@ void FeatureSet::CalculateHaystackEventFrequency(TrafficEvent *event)
 //Calculates Packet Size Mean for a new piece of evidence
 void FeatureSet::CalculatePacketSizeMean(TrafficEvent *event)
 {
-	packetCount += event->packet_count;
-	bytesTotal += event->IP_total_data_bytes;
 	features[PACKET_SIZE_MEAN] = (double)bytesTotal / (double)packetCount;
 }
 
@@ -114,6 +104,24 @@ void FeatureSet::CalculatePacketSizeVariance(TrafficEvent *event)
 	}
 	variance = variance / count;
 	features[PACKET_SIZE_VARIANCE] = variance;
+}
+
+///Increments all the member variables that might be used in different
+///methods of the FeatureSet class, this must be called first before
+///any other feature calculations are performed.
+void FeatureSet::UpdateMemberVariables(TrafficEvent *event)
+{
+	if(event->from_haystack)
+	{
+		haystackEvents++;
+	}
+	else
+	{
+		hostEvents++;
+	}
+
+	packetCount += event->packet_count;
+	bytesTotal += event->IP_total_data_bytes;
 }
 }
 }

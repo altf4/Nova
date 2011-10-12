@@ -105,6 +105,8 @@ void Suspect::CalculateFeatures(bool isTraining)
 	//For-each piece of evidence
 	for(uint i = 0; i < this->evidence.size(); i++)
 	{
+		//Must be called first to update the member variables
+		this->features->UpdateMemberVariables(this->evidence[i]);
 		this->features->CalculateDistinctIPCount(this->evidence[i]);
 		this->features->CalculateDistinctPortCount(this->evidence[i]);
 		this->features->CalculateHaystackToHostEventRatio(this->evidence[i]);
