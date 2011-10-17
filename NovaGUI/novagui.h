@@ -34,7 +34,16 @@ public:
     void drawSuspects();
 
 private slots:
-    void on_CEUpdate_clicked();
+
+	void on_CELoadButton_clicked();
+	void on_CESaveButton_clicked();
+	void on_DMLoadButton_clicked();
+	void on_DMSaveButton_clicked();
+	void on_HSLoadButton_clicked();
+	void on_HSSaveButton_clicked();
+    void on_LTMLoadButton_clicked();
+    void on_LTMSaveButton_clicked();
+
 
 private:
 
