@@ -10,7 +10,7 @@
 
   <!-- Output the log message to log file -->
   <appender name="ClassificationEngineFileAppender" class="org.apache.log4j.FileAppender">
-    <param name="file" value="Log/ClassificationEngine.log" />
+    <param name="file" value="../Logs/ClassificationEngine.log" />
     <param name="append" value="false" />
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d %-5p [%t:%x] %C{2} (%F:%L) - %m%n" />

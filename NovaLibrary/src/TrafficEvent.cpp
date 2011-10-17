@@ -49,14 +49,7 @@ TrafficEvent::TrafficEvent(struct Packet packet, int component_source)
 	this->IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
 	this->from_haystack = component_source;
 	//Set known hostility, only used in training
-	if(  (ntohs(packet.ip_hdr.ip_off) & IP_RF) == 0) //Evil bit
-	{
-		this->isHostile = false;
-	}
-	else
-	{
-		this->isHostile = true;
-	}
+	this->isHostile = component_source;
 }
 
 //TCP Constructor
@@ -87,7 +80,7 @@ TrafficEvent::TrafficEvent( vector<struct Packet>  *list, int component_source)
 	}
 	this->from_haystack = component_source;
 	//Set known hostility, only used in training
-	this->isHostile = ArePacketsHostile(list);
+	this->isHostile = component_source;
 }
 
 //Used in serialization

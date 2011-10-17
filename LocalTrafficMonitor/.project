@@ -6,6 +6,7 @@
 		<project>ClassificationEngine</project>
 		<project>DoppelgangerModule</project>
 		<project>Haystack</project>
+		<project>NovaGUI</project>
 		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
