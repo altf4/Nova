@@ -100,16 +100,21 @@ void Suspect::AddEvidence(TrafficEvent *event)
 //Calculates the feature set for this suspect
 void Suspect::CalculateFeatures(bool isTraining)
 {
+	TrafficEvent *event;
 	//Clear any existing feature data
-	this->features->ClearFeatureSet();
+	for(uint i = 0; i < this->evidence.size(); i++)
+	{
+		this->features->UpdateEvidence(this->evidence[i]);
+	}
+	this->evidence.clear();
 	//For-each piece of evidence
 	for(uint i = 0; i < this->evidence.size(); i++)
 	{
-		this->features->CalculateDistinctIPCount(this->evidence[i]);
-		this->features->CalculateDistinctPortCount(this->evidence[i]);
-		this->features->CalculateHaystackToHostEventRatio(this->evidence[i]);
-		this->features->CalculateHaystackEventFrequency(this->evidence[i]);
-		this->features->CalculatePacketSizeMean(this->evidence[i]);
+		this->features->CalculateDistinctIPCount();
+		this->features->CalculateDistinctPortCount();
+		this->features->CalculateHaystackToHostEventRatio();
+		this->features->CalculateHaystackEventFrequency();
+		this->features->CalculatePacketSizeVariance();
 	}
 	this->needs_feature_update = false;
 	if(isTraining)
