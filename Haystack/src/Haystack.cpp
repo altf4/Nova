@@ -23,8 +23,8 @@ int tcpTime; //TCP_TIMEOUT measured in seconds
 int tcpFreq; //TCP_CHECK_FREQ measured in seconds
 static TCPSessionHashTable SessionTable;
 
+pthread_rwlock_t lock;
 
-pthread_mutex_t SessionMutex = PTHREAD_MUTEX_INITIALIZER;
 LoggerPtr m_logger(Logger::getLogger("main"));
 
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
@@ -86,8 +86,8 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 
 			bzero(tcp_socket, 55);
 			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
-			pthread_mutex_lock(&SessionMutex);
 
+			pthread_rwlock_wrlock(&lock);
 			//If this is a new entry...
 			if( SessionTable[tcp_socket].session.size() == 0)
 			{
@@ -113,7 +113,7 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 					SessionTable[tcp_socket].session.push_back(*packet_info);
 				}
 			}
-			pthread_mutex_unlock(&SessionMutex);
+			pthread_rwlock_unlock(&lock);
 		}
 	}
 	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
@@ -129,6 +129,7 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 
 int main(int argc, char *argv[])
 {
+	pthread_rwlock_init(&lock, NULL);
 	pthread_t TCP_timeout_thread;
 	char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -287,7 +288,7 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 		time_t currentTime = time(NULL);
 		time_t packetTime;
 
-		pthread_mutex_lock(&SessionMutex);
+		pthread_rwlock_rdlock(&lock);
 		for ( TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
 		{
 
@@ -303,8 +304,12 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
 						SendToCE(event);
 
+						pthread_rwlock_unlock(&lock);
+						pthread_rwlock_wrlock(&lock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
+						pthread_rwlock_unlock(&lock);
+						pthread_rwlock_rdlock(&lock);
 
 						delete event;
 						event = NULL;
@@ -315,8 +320,12 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
 						SendToCE(event);
 
+						pthread_rwlock_unlock(&lock);
+						pthread_rwlock_wrlock(&lock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
+						pthread_rwlock_unlock(&lock);
+						pthread_rwlock_rdlock(&lock);
 
 						delete event;
 						event = NULL;
@@ -324,7 +333,7 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 				}
 			}
 		}
-		pthread_mutex_unlock( &SessionMutex );
+		pthread_rwlock_unlock(&lock);
 	}
 	//Shouldn't get here
 	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted");
