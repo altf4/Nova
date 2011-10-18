@@ -35,42 +35,31 @@ void FeatureSet::ClearFeatureSet()
 	{
 		features[i] = 0;
 	}
+	packetSizes.clear();
 }
 
 //Calculates the distinct_ip_count for a new piece of evidence
-void FeatureSet::CalculateDistinctIPCount( TrafficEvent *event )
+void FeatureSet::CalculateDistinctIPCount()
 {
-	IPTable.insert(event->dst_IP.s_addr);
 	features[DISTINCT_IP_COUNT] = IPTable.size();
 }
 
 //Calculates the distinct_port_count for a new piece of evidence
-void FeatureSet::CalculateDistinctPortCount( TrafficEvent *event )
+void FeatureSet::CalculateDistinctPortCount()
 {
-	portTable.insert(event->dst_port);
 	features[DISTINCT_PORT_COUNT] = portTable.size();
 }
 
 //Side effect warning!! Run this function before CalculateHaystackEventFrequency.
-void FeatureSet::CalculateHaystackToHostEventRatio(TrafficEvent *event)
+void FeatureSet::CalculateHaystackToHostEventRatio()
 {
 	features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO] = (double)haystackEvents / (double)(hostEvents+1);
 	//HostEvents +1 to handle infinity case, be aware data will be skewed accordingly
 }
 
 //Side effect warning!! Run this function after CalculateHaystackToHostEventRatio.
-void FeatureSet::CalculateHaystackEventFrequency(TrafficEvent *event)
+void FeatureSet::CalculateHaystackEventFrequency()
 {
-	//Accumulate to find the lowest Start time and biggest end time.
-	if( event->start_timestamp < startTime)
-	{
-		startTime = event->start_timestamp;
-	}
-	if( event->end_timestamp > endTime)
-	{
-		endTime = event->end_timestamp;
-	}
-
 	if(endTime - startTime > 0)
 	{
 		features[HAYSTACK_EVENT_FREQUENCY] = ((double)haystackEvents) / (endTime - startTime);
@@ -78,24 +67,20 @@ void FeatureSet::CalculateHaystackEventFrequency(TrafficEvent *event)
 }
 
 //Calculates Packet Size Mean for a new piece of evidence
-void FeatureSet::CalculatePacketSizeMean(TrafficEvent *event)
+void FeatureSet::CalculatePacketSizeMean()
 {
 	features[PACKET_SIZE_MEAN] = (double)bytesTotal / (double)packetCount;
 }
 
 //Calculates Packet Size Variance for a new piece of evidence
-void FeatureSet::CalculatePacketSizeVariance(TrafficEvent *event)
+void FeatureSet::CalculatePacketSizeVariance()
 {
 	double count = this->packetSizes.size();
 	double mean = 0;
 	double variance = 0;
 	//Calculate mean
-	double sum = 0;
-	for(uint i = 0; i < count; i++)
-	{
-		sum += this->packetSizes[i];
-	}
-	mean = sum / count;
+	CalculatePacketSizeMean();
+	mean = features[PACKET_SIZE_MEAN];
 	//Calculate variance
 	for(uint i = 0; i < count; i++)
 	{
@@ -106,11 +91,14 @@ void FeatureSet::CalculatePacketSizeVariance(TrafficEvent *event)
 	features[PACKET_SIZE_VARIANCE] = variance;
 }
 
-///Increments all the member variables that might be used in different
-///methods of the FeatureSet class, this must be called first before
-///any other feature calculations are performed.
-void FeatureSet::UpdateMemberVariables(TrafficEvent *event)
+void FeatureSet::UpdateEvidence(TrafficEvent *event)
 {
+	packetCount += event->packet_count;
+	bytesTotal += event->IP_total_data_bytes;
+	portTable.insert(event->dst_port);
+	IPTable.insert(event->dst_IP.s_addr);
+	packetSizes.push_back(event->IP_total_data_bytes);
+	//Accumulate to find the lowest Start time and biggest end time.
 	if(event->from_haystack)
 	{
 		haystackEvents++;
@@ -119,9 +107,14 @@ void FeatureSet::UpdateMemberVariables(TrafficEvent *event)
 	{
 		hostEvents++;
 	}
-
-	packetCount += event->packet_count;
-	bytesTotal += event->IP_total_data_bytes;
+	if( event->start_timestamp < startTime)
+	{
+		startTime = event->start_timestamp;
+	}
+	if( event->end_timestamp > endTime)
+	{
+		endTime = event->end_timestamp;
+	}
 }
 }
 }

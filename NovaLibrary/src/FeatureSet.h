@@ -61,21 +61,20 @@ public:
 	FeatureSet();
 	///Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
-	///Calculates a feature, given a new piece of evidence
-	void CalculateDistinctIPCount( TrafficEvent *event );
-	///Calculates a feature, given a new piece of evidence
-	void CalculateDistinctPortCount( TrafficEvent *event );
-	///Calculates a feature, given a new piece of evidence
-	void CalculateHaystackToHostEventRatio(TrafficEvent *event);
-	///Calculates a feature, given a new piece of evidence
-	void CalculateHaystackEventFrequency(TrafficEvent *event);
-	///Calculates a feature, given a new piece of evidence
-	void CalculatePacketSizeMean(TrafficEvent *event);
-	///Calculates a feature, given a new piece of evidence
-	void CalculatePacketSizeVariance(TrafficEvent *event);
-	///Updates all the member variables, given a new piece of evidence
-	void UpdateMemberVariables(TrafficEvent *event);
-
+	///Calculates a feature
+	void CalculateDistinctIPCount();
+	///Calculates a feature
+	void CalculateDistinctPortCount();
+	///Calculates a feature
+	void CalculateHaystackToHostEventRatio();
+	///Calculates a feature
+	void CalculateHaystackEventFrequency();
+	///Calculates a feature
+	void CalculatePacketSizeMean();
+	///Calculates a feature
+	void CalculatePacketSizeVariance();
+	/// Processes incoming evidence before calculating the features
+	void UpdateEvidence(TrafficEvent *event);
 
 private:
 	//Temporary variables used to calculate Features

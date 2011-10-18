@@ -72,17 +72,17 @@ string Suspect::ToString()
 	}
 	if((features != NULL) && (features->features != NULL))
 	{
-		ss << "\tDistinct IP's contacted: " << features->features[DISTINCT_IP_COUNT] << "\n";
-		ss << "\tDistinct Ports's contacted: "  <<  features->features[DISTINCT_PORT_COUNT]  <<  "\n";
-		ss <<  "\tRatio of Haystack to Host Events: " << features->features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO]  <<  "\n";
-		ss <<  "\tFrequency of Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-		ss << "\tMean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
+		ss << " Distinct IP's contacted: " << features->features[DISTINCT_IP_COUNT] << "\n";
+		ss << " Distinct Ports's contacted: "  <<  features->features[DISTINCT_PORT_COUNT]  <<  "\n";
+		ss <<  " Ratio of Haystack to Host Events: " << features->features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO]  <<  "\n";
+		ss <<  " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+		ss << " Mean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
 	}
 	else
 	{
-		ss << "\tNull Feature Set\n";
+		ss << " Null Feature Set\n";
 	}
-	ss <<  "\tClassification: " <<  classification <<  "\n";
+	ss <<  " Classification: " <<  classification <<  "\n";
 //	ss << "\tHaystack hits: " << features->haystackEvents << "\n";
 //	ss << "\tHost hits: " << features->hostEvents << "\n";
 	return ss.str();
@@ -100,23 +100,31 @@ void Suspect::AddEvidence(TrafficEvent *event)
 //Calculates the feature set for this suspect
 void Suspect::CalculateFeatures(bool isTraining)
 {
+	TrafficEvent *event;
 	//Clear any existing feature data
-	this->features->ClearFeatureSet();
-	//For-each piece of evidence
 	for(uint i = 0; i < this->evidence.size(); i++)
 	{
-		//Must be called first to update the member variables
-		this->features->UpdateMemberVariables(this->evidence[i]);
-		this->features->CalculateDistinctIPCount(this->evidence[i]);
-		this->features->CalculateDistinctPortCount(this->evidence[i]);
-		this->features->CalculateHaystackToHostEventRatio(this->evidence[i]);
-		this->features->CalculateHaystackEventFrequency(this->evidence[i]);
-		this->features->CalculatePacketSizeMean(this->evidence[i]);
+		this->features->UpdateEvidence(this->evidence[i]);
 	}
+	this->evidence.clear();
+	//For-each piece of evidence
+	this->features->CalculateDistinctIPCount();
+	this->features->CalculateDistinctPortCount();
+	this->features->CalculateHaystackToHostEventRatio();
+	this->features->CalculateHaystackEventFrequency();
+	this->features->CalculatePacketSizeVariance();
 	this->needs_feature_update = false;
 	if(isTraining)
 	{
-		//Calculate classification on the basis of how many Evil Events it has
+		if(this->features->features[3] > 2)
+		{
+			classification = 1;
+		}
+		else
+		{
+			classification = 0;
+		}
+		/*//Calculate classification on the basis of how many Evil Events it has
 		uint sum = 0;
 		for(uint j = 0; j < evidence.size(); j++)
 		{
@@ -132,7 +140,8 @@ void Suspect::CalculateFeatures(bool isTraining)
 		else
 		{
 			classification = 0;
-		}
+		}*/
+
 	}
 }
 }
