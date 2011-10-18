@@ -26,7 +26,8 @@ using namespace Nova;
 using namespace ClassificationEngine;
 
 static SuspectHashTable suspects;
-pthread_mutex_t SuspectMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_rwlock_t lock;
+
 //NOT normalized
 vector <Point*> dataPtsWithClass;
 bool isTraining = false;
@@ -68,7 +69,7 @@ int maxFeatureValues[dim];
 void siginthandler(int param)
 {
 	//Append suspect data to the datafile before exit
-	WriteDataPointsToFile((char*)outPtr);
+	//WriteDataPointsToFile((char*)outPtr);
 	exit(1);
 }
 
@@ -76,7 +77,7 @@ int main(int argc,char *argv[])
 {
 	int c, IPCsock, len;
 
-
+	pthread_rwlock_init(&lock, NULL);
 
 	//Path name variable for config file, set to a default
 	char* nConfig = (char*)"Config/NOVAConfig_CE.txt";
@@ -175,7 +176,8 @@ int main(int argc,char *argv[])
 	}
 
 	localIPCAddress.sun_family = AF_UNIX;
-
+	ofstream key(KEY_FILENAME);
+	key.close();
 	strcpy(localIPCAddress.sun_path, KEY_FILENAME);
 	unlink(localIPCAddress.sun_path);
 	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
@@ -208,17 +210,17 @@ int main(int argc,char *argv[])
 		//If this is a new Suspect
 		if(suspects.count(event->src_IP.s_addr) == 0)
 		{
-			pthread_mutex_lock(&SuspectMutex);
+			pthread_rwlock_wrlock(&lock);
 			suspects[event->src_IP.s_addr] = new Suspect(event);
-			pthread_mutex_unlock(&SuspectMutex);
+			pthread_rwlock_unlock(&lock);
 		}
 
 		//A returning suspect
 		else
 		{
-			pthread_mutex_lock( &SuspectMutex );
+			pthread_rwlock_wrlock(&lock);
 			suspects[event->src_IP.s_addr]->AddEvidence(event);
-			pthread_mutex_unlock(&SuspectMutex);
+			pthread_rwlock_unlock(&lock);
 		}
 	}
 
@@ -236,31 +238,41 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 	while(true)
 	{
 		sleep(classificationTimeout);
-		pthread_mutex_lock(&SuspectMutex);
+		pthread_rwlock_rdlock(&lock);
 
 		//Calculate the "true" Feature Set for each Suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
 			if(it->second->needs_feature_update)
 			{
+				pthread_rwlock_unlock(&lock);
+				pthread_rwlock_wrlock(&lock);
 				it->second->CalculateFeatures(isTraining);
+				pthread_rwlock_unlock(&lock);
+				pthread_rwlock_rdlock(&lock);
 			}
 		}
 
 		//Calculate the normalized feature sets, actually used by ANN
 		//	Writes into Suspect ANNPoints
+		pthread_rwlock_unlock(&lock);
 		NormalizeDataPoints(maxFeatureVal);
-
+		pthread_rwlock_rdlock(&lock);
 		//Perform classification on each suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
 			if(it->second->needs_classification_update)
 			{
+				pthread_rwlock_unlock(&lock);
+				pthread_rwlock_wrlock(&lock);
 				Classify(it->second);
 				cout << it->second->ToString();
+				SendToUI(it->second);
+				pthread_rwlock_unlock(&lock);
+				pthread_rwlock_rdlock(&lock);
 			}
 		}
-		pthread_mutex_unlock(&SuspectMutex);
+		pthread_rwlock_unlock(&lock);
 	}
 	//Shouldn't get here!
 	LOG4CXX_ERROR(m_logger,"Main thread ended. Shouldn't get here!!!");
@@ -272,24 +284,44 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 {
 	signal(SIGINT, siginthandler);
+
 	//Training Loop
 	while(true)
 	{
 		sleep(trainingTimeout);
-		pthread_mutex_lock(&SuspectMutex);
-
-		//Calculate the "true" Feature Set for each Suspect
-		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+		pthread_rwlock_wrlock(&lock);
+		ofstream myfile (string(outFile).data(), ios::app);
+		if (myfile.is_open())
 		{
-			it->second->CalculateFeatures(isTraining);
-			cout << it->second->ToString();
+			//Calculate the "true" Feature Set for each Suspect
+			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+			{
+				if(it->second->needs_feature_update)
+				{
+					it->second->CalculateFeatures(isTraining);
+					if( it->second->annPoint == NULL)
+					{
+						it->second->annPoint = annAllocPt(DIMENSION);
+					}
+					for(int j=0; j < dim; j++)
+					{
+						it->second->annPoint[j] = it->second->features->features[j];
+						myfile << it->second->annPoint[j] << " ";
+					}
+					myfile << it->second->classification;
+					myfile << "\n";
+					cout << it->second->ToString();
+					SendToUI(it->second);
+				}
+			}
+			//	Writes into Suspect ANNPoints
+
+			//WriteDataPointsToFile((char*)outPtr);
 		}
-
-		//	Writes into Suspect ANNPoints
-		CopyDataToAnnPoints();
-		pthread_mutex_unlock(&SuspectMutex);
+		else LOG4CXX_INFO(m_logger, "Unable to open file\n");
+		myfile.close();
+		pthread_rwlock_unlock(&lock);
 	}
-
 	//Shouldn't get here!
 	LOG4CXX_ERROR(m_logger,"Training thread ended. Shouldn't get here!!!");
 	return NULL;
@@ -362,17 +394,21 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			// read class state from archive
 			ia >> suspect;
 			LOG4CXX_INFO(m_logger,"Received a Silent Alarm!\n" << suspect->ToString());
-			pthread_mutex_lock(&SuspectMutex);
+			pthread_rwlock_rdlock(&lock);
 
 			for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 			{
 				if(it->second->IP_address.s_addr == suspect->IP_address.s_addr)
 				{
+					pthread_rwlock_unlock(&lock);
+					pthread_rwlock_wrlock(&lock);
 					it->second->flaggedByAlarm = true;
+					pthread_rwlock_unlock(&lock);
+					pthread_rwlock_rdlock(&lock);
 					break;
 				}
 			}
-			pthread_mutex_unlock(&SuspectMutex);
+			pthread_rwlock_unlock(&lock);
 		}
 		catch(boost::archive::archive_exception e)
 		{
@@ -458,14 +494,7 @@ void Nova::ClassificationEngine::CopyDataToAnnPoints()
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
 		//Create the ANN Point, if needed
-		if( it->second->annPoint == NULL)
-		{
-			it->second->annPoint = annAllocPt(DIMENSION);
-		}
-		for(int i = 0; i < dim; i++)
-		{
-			it->second->annPoint[i] = it->second->features->features[i];
-		}
+
 	}
 }
 
@@ -512,7 +541,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints(int maxVal)
 		{
 			if(maxFeatureValues[j] != 0)
 			{
-				normalizedDataPts[i][j] = (int)((dataPts[i][j] / maxFeatureValues[j]) * maxVal);
+				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]) * maxVal);
 			}
 		}
 	}
@@ -676,6 +705,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	}
 
 	remote.sun_family = AF_UNIX;
+	ofstream key(KEY_ALARM_FILENAME);
+	key.close();
 	strcpy(remote.sun_path, KEY_ALARM_FILENAME);
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
@@ -778,6 +809,51 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 	close(connectionSocket);
 	return true;
 }
+
+//Send a silent alarm about the argument suspect
+void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
+{
+
+    stringstream ss;
+	boost::archive::text_oarchive oa(ss);
+
+	int socketFD, len;
+	struct sockaddr_un remote;
+
+	//Serialize the data into a simple char buffer
+	oa << suspect;
+	string temp = ss.str();
+
+	const char* data = temp.c_str();
+	int dataLen = temp.size();
+
+	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	{
+		perror("socket");
+		close(socketFD);
+		return;
+	}
+
+	remote.sun_family = AF_UNIX;
+	strcpy(remote.sun_path, CE_FILENAME);
+	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
+
+	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
+	{
+		perror("connect");
+		close(socketFD);
+		return;
+	}
+
+	if (send(socketFD, data, dataLen, 0) == -1)
+	{
+		perror("send");
+		close(socketFD);
+		return;
+	}
+	close(socketFD);
+}
+
 
 void ClassificationEngine::LoadConfig(char* input)
 {

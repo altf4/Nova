@@ -16,11 +16,14 @@
 //TODO: Make Nova create this file on startup or installation.
 ///	Filename of the file to be used as an IPC key
 // See ticket #12
+
 #define KEY_FILENAME "/etc/NovaIPCKey"
 ///	Filename of the file to be used as an Doppelganger IPC key
 #define KEY_ALARM_FILENAME "/etc/NovaDoppIPCKey"
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
+///	Filename of the file to be used as an Classification Engine IPC key
+#define CE_FILENAME "/etc/CEKey"
 //dimension
 #define DIM 5
 
@@ -70,6 +73,9 @@ void SilentAlarm(Suspect *suspect);
 ///Receive a TrafficEvent from another local component.
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 bool ReceiveTrafficEvent(int socket, long msg_type, TrafficEvent *event);
+
+//Sends output to the UI
+void SendToUI(Suspect *suspect);
 
 //Loads configuration variables from NOVAConfig_CE.txt or specified config file
 void LoadConfig(char* input);

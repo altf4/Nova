@@ -1,0 +1,878 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>NovaGUIClass</class>
+ <widget class="QMainWindow" name="NovaGUIClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>811</width>
+      <height>561</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>3</number>
+    </property>
+    <widget class="QWidget" name="Suspects">
+     <attribute name="title">
+      <string>Suspects</string>
+     </attribute>
+     <widget class="QListWidget" name="benignList">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>301</width>
+        <height>471</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="bListLabel">
+      <property name="geometry">
+       <rect>
+        <x>90</x>
+        <y>20</y>
+        <width>111</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Benign Suspects</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="hListLabel">
+      <property name="geometry">
+       <rect>
+        <x>440</x>
+        <y>20</y>
+        <width>111</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string> Hostile Suspects</string>
+      </property>
+     </widget>
+     <widget class="QListWidget" name="hostileList">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>50</y>
+        <width>301</width>
+        <height>471</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="CETab">
+     <attribute name="title">
+      <string>Classification Engine</string>
+     </attribute>
+     <widget class="QPushButton" name="CELoadButton">
+      <property name="geometry">
+       <rect>
+        <x>600</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Load</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CETrainingTimeoutEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>410</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEInterfaceLabel">
+      <property name="geometry">
+       <rect>
+        <x>530</x>
+        <y>140</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string> Interface</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEIPCMaxConnectLabel">
+      <property name="geometry">
+       <rect>
+        <x>460</x>
+        <y>200</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Max IPC Connections</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="CESaveButton">
+      <property name="geometry">
+       <rect>
+        <x>700</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Save</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEMaxFeatureValEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>440</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEConfigLabel">
+      <property name="geometry">
+       <rect>
+        <x>670</x>
+        <y>110</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Config</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEEnableTrainingEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>470</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEDatafileLabel">
+      <property name="geometry">
+       <rect>
+        <x>510</x>
+        <y>170</y>
+        <width>81</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Data File Path</string>
+      </property>
+     </widget>
+     <widget class="Line" name="CELine_2">
+      <property name="geometry">
+       <rect>
+        <x>590</x>
+        <y>140</y>
+        <width>20</width>
+        <height>351</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEMaxPtsEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>350</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEClassificationTimeoutEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>380</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEEPSEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>320</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEBroadcastAddrEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>230</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CESilentAlarmPortEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>260</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEKEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>290</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEInterfaceEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>140</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEIPCMaxConnectEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>200</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="CEDatafileEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>170</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEBroadcastAddrLabel">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>230</y>
+        <width>121</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Broadcast Address</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CESilentAlarmPortLabel">
+      <property name="geometry">
+       <rect>
+        <x>490</x>
+        <y>260</y>
+        <width>101</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Silent Alarm Port</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEKLabel">
+      <property name="geometry">
+       <rect>
+        <x>580</x>
+        <y>290</y>
+        <width>16</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>K</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEEPSLabel">
+      <property name="geometry">
+       <rect>
+        <x>570</x>
+        <y>320</y>
+        <width>21</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>EPS</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEMaxPtsLabel">
+      <property name="geometry">
+       <rect>
+        <x>540</x>
+        <y>350</y>
+        <width>51</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Max PTS</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEClassificationTimeoutLabel">
+      <property name="geometry">
+       <rect>
+        <x>460</x>
+        <y>380</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Classification Timeout</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CETrainingTimeoutLabel">
+      <property name="geometry">
+       <rect>
+        <x>490</x>
+        <y>410</y>
+        <width>101</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Training Timeout</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEMaxFeatureValLabel">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>440</y>
+        <width>111</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Max Feature Value</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="CEEnableTrainingLabel">
+      <property name="geometry">
+       <rect>
+        <x>460</x>
+        <y>470</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Enable Training Mode</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="DMTab">
+     <attribute name="title">
+      <string>Doppelganger Module</string>
+     </attribute>
+     <widget class="QPlainTextEdit" name="DMInterfaceEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>410</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="Line" name="DMLine">
+      <property name="geometry">
+       <rect>
+        <x>590</x>
+        <y>410</y>
+        <width>16</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="DMIPLabel">
+      <property name="geometry">
+       <rect>
+        <x>490</x>
+        <y>440</y>
+        <width>101</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Doppelganger IP</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="DMInterfaceLabel">
+      <property name="geometry">
+       <rect>
+        <x>530</x>
+        <y>410</y>
+        <width>71</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string> Interface</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="DMIPEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>440</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="DMEnabledLabel">
+      <property name="geometry">
+       <rect>
+        <x>460</x>
+        <y>470</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Enable Doppelganger</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="DMEnabledEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>470</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="DMSaveButton">
+      <property name="geometry">
+       <rect>
+        <x>700</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Save</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="DMConfigLabel">
+      <property name="geometry">
+       <rect>
+        <x>650</x>
+        <y>380</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Config</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="DMLoadButton">
+      <property name="geometry">
+       <rect>
+        <x>600</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Load</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="HSTab">
+     <attribute name="title">
+      <string>Haystack Monitor</string>
+     </attribute>
+     <widget class="QLabel" name="HSConfigLabel">
+      <property name="geometry">
+       <rect>
+        <x>650</x>
+        <y>330</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Config</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="HSFreqEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>470</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="HSLoadButton">
+      <property name="geometry">
+       <rect>
+        <x>600</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Load</string>
+      </property>
+     </widget>
+     <widget class="Line" name="HSLine">
+      <property name="geometry">
+       <rect>
+        <x>590</x>
+        <y>380</y>
+        <width>20</width>
+        <height>111</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="HSInterfaceLabel">
+      <property name="geometry">
+       <rect>
+        <x>530</x>
+        <y>380</y>
+        <width>71</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string> Interface</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="HSTimeoutEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>440</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="HSSaveButton">
+      <property name="geometry">
+       <rect>
+        <x>700</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Save</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="HSInterfaceEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>380</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="HSTimeoutLabel">
+      <property name="geometry">
+       <rect>
+        <x>510</x>
+        <y>440</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>TCP Timeout</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="HSFreqLabel">
+      <property name="geometry">
+       <rect>
+        <x>470</x>
+        <y>470</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Timeout Frequency</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="HSHoneyDConfigEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>410</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="HSHoneyDConfigLabel">
+      <property name="geometry">
+       <rect>
+        <x>440</x>
+        <y>410</y>
+        <width>151</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string> HoneyD Config File Path</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="LTMTab">
+     <attribute name="title">
+      <string>Local Traffic Monitor</string>
+     </attribute>
+     <widget class="QPlainTextEdit" name="LTMInterfaceEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>410</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="LTMTimeoutEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>440</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="LTMFreqEdit">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>470</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="LTMInterfaceLabel">
+      <property name="geometry">
+       <rect>
+        <x>530</x>
+        <y>410</y>
+        <width>71</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string> Interface</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="LTMTimeoutLabel">
+      <property name="geometry">
+       <rect>
+        <x>510</x>
+        <y>440</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>TCP Timeout</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="LTMFreqLabel">
+      <property name="geometry">
+       <rect>
+        <x>470</x>
+        <y>470</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Timeout Frequency</string>
+      </property>
+     </widget>
+     <widget class="Line" name="LTMLine">
+      <property name="geometry">
+       <rect>
+        <x>590</x>
+        <y>410</y>
+        <width>16</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="LTMSaveButton">
+      <property name="geometry">
+       <rect>
+        <x>700</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Save</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="LTMConfigLabel">
+      <property name="geometry">
+       <rect>
+        <x>650</x>
+        <y>380</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Config</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="LTMLoadButton">
+      <property name="geometry">
+       <rect>
+        <x>600</x>
+        <y>500</y>
+        <width>81</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Load</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuClassification_Engine">
+    <property name="title">
+     <string>Classification Engine</string>
+    </property>
+    <addaction name="actionTodo"/>
+   </widget>
+   <widget class="QMenu" name="menuDoppelganger_Module">
+    <property name="title">
+     <string>Doppelganger Module</string>
+    </property>
+    <addaction name="actionTodo_2"/>
+   </widget>
+   <widget class="QMenu" name="menuHaystack_Monitor">
+    <property name="title">
+     <string>Haystack Monitor</string>
+    </property>
+    <addaction name="actionTodo_3"/>
+   </widget>
+   <widget class="QMenu" name="menuLocal_Traffic_Monitor">
+    <property name="title">
+     <string>Local Traffic Monitor</string>
+    </property>
+    <addaction name="actionTodo_4"/>
+   </widget>
+   <addaction name="menuClassification_Engine"/>
+   <addaction name="menuDoppelganger_Module"/>
+   <addaction name="menuHaystack_Monitor"/>
+   <addaction name="menuLocal_Traffic_Monitor"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionTodo">
+   <property name="text">
+    <string>Todo</string>
+   </property>
+  </action>
+  <action name="actionTodo_2">
+   <property name="text">
+    <string>Todo</string>
+   </property>
+  </action>
+  <action name="actionTodo_3">
+   <property name="text">
+    <string>Todo</string>
+   </property>
+  </action>
+  <action name="actionTodo_4">
+   <property name="text">
+    <string>Todo</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

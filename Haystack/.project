@@ -6,6 +6,7 @@
 		<project>ClassificationEngine</project>
 		<project>DoppelgangerModule</project>
 		<project>LocalTrafficMonitor</project>
+		<project>NovaGUI</project>
 		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
