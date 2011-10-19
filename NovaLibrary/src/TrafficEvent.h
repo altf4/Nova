@@ -1,8 +1,9 @@
 //============================================================================
 // Name        : TrafficEvent.h
 // Author      : DataSoft Corporation
-// Copyright   :
-// Description : Network traffic events for use in the NOVA utility
+// Copyright   : GNU GPL v3
+// Description : Information on a single or set of packets that allows for
+//					identification and classification of the sender.
 //============================================================================/*
 
 #include <time.h>

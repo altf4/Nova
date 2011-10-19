@@ -1,8 +1,8 @@
 //============================================================================
 // Name        : DoppelgangerModule.h
 // Author      : DataSoft Corporation
-// Copyright   :
-// Description : 	Nova utility for disguising a real system
+// Copyright   : GNU GPL v3
+// Description : Nova utility for disguising a real system
 //============================================================================
 
 #include "Suspect.h"

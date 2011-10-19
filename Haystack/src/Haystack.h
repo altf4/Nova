@@ -1,9 +1,9 @@
 //============================================================================
 // Name        : Haystack.h
 // Author      : DataSoft Corporation
-// Copyright   :
-// Description : 	Nova utility for transforming Honeyd log files into
-//						ScanEvents usable by Nova's Classification Engine.
+// Copyright   : GNU GPL v3
+// Description : Nova utility for transforming Honeyd log files into
+//					TrafficEvents usable by Nova's Classification Engine.
 //============================================================================
 
 #ifndef HAYSTACK_H_

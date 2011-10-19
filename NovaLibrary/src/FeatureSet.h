@@ -1,8 +1,9 @@
 //============================================================================
 // Name        : FeatureSet.h
 // Author      : DataSoft Corporation
-// Copyright   :
-// Description : A set of features for use in the NOVA utility
+// Copyright   : GNU GPL v3
+// Description : Maintains and calculates distinct features for individual Suspects
+//					for use in classification of the Suspect.
 //============================================================================/*
 
 #ifndef FEATURESET_H_
