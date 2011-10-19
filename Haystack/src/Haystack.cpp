@@ -359,7 +359,7 @@ bool Nova::Haystack::SendToCE(TrafficEvent *event)
 
 	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		perror("socket");
+    	LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
@@ -370,14 +370,14 @@ bool Nova::Haystack::SendToCE(TrafficEvent *event)
 
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
-		perror("connect");
+    	LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
 
 	if (send(socketFD, data, dataLen, 0) == -1)
 	{
-		perror("send");
+    	LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
@@ -406,7 +406,6 @@ vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 	if( honeydConfFile == NULL)
 	{
 		LOG4CXX_ERROR(m_logger, "Error opening log file. Does it exist?");
-		perror("fopen");
 		exit(1);
 	}
 
@@ -500,7 +499,7 @@ void Haystack::LoadConfig(char* input)
 			prefix = "#";
 			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
-				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file" << errno);
+				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file");
 				continue;
 			}
 		}
@@ -514,17 +513,17 @@ void Haystack::LoadConfig(char* input)
 
 		if(v == false)
 		{
-			LOG4CXX_ERROR(m_logger,"One or more values have not been set" << errno);
+			LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
 			exit(1);
 		}
 		else
 		{
-			LOG4CXX_INFO(m_logger,"Config loaded successfully" << errno);
+			LOG4CXX_INFO(m_logger,"Config loaded successfully.");
 		}
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger, "No configuration file detected." << errno );
+		LOG4CXX_INFO(m_logger, "No configuration file detected.");
 		exit(1);
 	}
 }

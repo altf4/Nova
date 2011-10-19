@@ -170,7 +170,7 @@ int main(int argc,char *argv[])
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		perror("socket");
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -184,14 +184,14 @@ int main(int argc,char *argv[])
 
     if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
     {
-        perror("bind");
-		close(IPCsock);
+    	LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+    	close(IPCsock);
         exit(1);
     }
 
     if(listen(IPCsock, ipcMaxConnections) == -1)
     {
-        perror("listen");
+    	LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
 		close(IPCsock);
         exit(1);
     }
@@ -340,14 +340,14 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(PF_INET,SOCK_DGRAM,0)) == -1)
 	{
-		perror("socket");
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
 
 	if(setsockopt(sockfd,SOL_SOCKET,SO_BROADCAST,&broadcast,sizeof broadcast) == -1)
 	{
-		perror("setsockopt - SO_SOCKET ");
+		LOG4CXX_ERROR(m_logger, "setsockopt - SO_SOCKET: " << strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
@@ -359,7 +359,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	if(bind(sockfd,(struct sockaddr*) &sendaddr,sizeof sendaddr) == -1)
 	{
-		perror("bind");
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
@@ -371,7 +371,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		//Do the actual "listen"
 		if ((numbytes = recvfrom(sockfd,buf,sizeof buf,0,(struct sockaddr *)&sendaddr,(socklen_t *)&addr_len)) == -1)
 		{
-			perror("recvfrom");
+			LOG4CXX_ERROR(m_logger, "recvfrom: " << strerror(errno));
 			close(sockfd);
 			exit(1);
 		}
@@ -654,14 +654,14 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 
 	if(sock < 0)
 	{
-		perror("socket");
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sock);
 		return NULL;
 	}
 
 	if((rval = ioctl(sock,SIOCGIFCONF,(char*)&ifconf)) < 0 )
 	{
-		perror("ioctl(SIOGIFCONF)");
+		LOG4CXX_ERROR(m_logger, "ioctl(SIOGIFCONF): " << strerror(errno));
 	}
 
 	close(sock);
@@ -699,7 +699,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		perror("socket");
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(socketFD);
 		return;
 	}
@@ -712,14 +712,14 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
-		perror("connect");
+		LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
 		close(socketFD);
 		return;
 	}
 
 	if (send(socketFD, data, dataLen, 0) == -1)
 	{
-		perror("send");
+		LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
 		close(socketFD);
 		return;
 	}
@@ -737,23 +737,22 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 	if (sockfd < 0)
 	{
-		LOG4CXX_INFO(m_logger,"ERROR opening socket: " << errno);
-		perror("socket");
+		LOG4CXX_INFO(m_logger,"ERROR opening socket: " << strerror(errno));
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sockfd);
 		return;
 	}
 
 	if((setsockopt(sockfd,SOL_SOCKET,SO_BROADCAST,&broadcast,sizeof broadcast)) == -1)
 	{
-		perror("setsockopt - SO_SOCKET ");
+		LOG4CXX_ERROR(m_logger, "setsockopt - SO_SOCKET: " << strerror(errno));
 		close(sockfd);
 		return;
 	}
 
 	if( sendto(sockfd,data,dataLen,0,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) == -1)
 	{
-		LOG4CXX_INFO(m_logger,"Error in UDP Send: " << errno);
-		perror("send");
+		LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
 		close(sockfd);
 		return;
 	}
@@ -773,13 +772,13 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
     //Blocking call
     if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
     {
-        perror("accept");
+		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		close(connectionSocket);
         return false;
     }
     if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
     {
-        perror("recv");
+		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(connectionSocket);
         return NULL;
     }
@@ -829,7 +828,7 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 
 	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		perror("socket");
+		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(socketFD);
 		return;
 	}
@@ -840,14 +839,14 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
-		perror("connect");
+		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
 		close(socketFD);
 		return;
 	}
 
 	if (send(socketFD, data, dataLen, 0) == -1)
 	{
-		perror("send");
+		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(socketFD);
 		return;
 	}
@@ -881,7 +880,7 @@ void ClassificationEngine::LoadConfig(char* input)
 					hostAddrString = getLocalIP(line.c_str());
 					if(hostAddrString.size() == 0)
 					{
-						LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!" << errno );
+						LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
 						exit(1);
 					}
 
@@ -1027,7 +1026,7 @@ void ClassificationEngine::LoadConfig(char* input)
 			prefix = "#";
 			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
-				LOG4CXX_INFO(m_logger, "Unexpected entry in NOVA configuration file" << errno );
+				LOG4CXX_INFO(m_logger, "Unexpected entry in NOVA configuration file.");
 				continue;
 			}
 		}
@@ -1041,17 +1040,17 @@ void ClassificationEngine::LoadConfig(char* input)
 
 		if(v == false)
 		{
-			LOG4CXX_ERROR(m_logger, "One or more values have not been set" << errno );
+			LOG4CXX_ERROR(m_logger, "One or more values have not been set.");
 			exit(1);
 		}
 		else
 		{
-			LOG4CXX_INFO(m_logger, "Config loaded successfully" << errno );
+			LOG4CXX_INFO(m_logger, "Config loaded successfully.");
 		}
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger, "No configuration file detected." << errno );
+		LOG4CXX_INFO(m_logger, "No configuration file detected.");
 		exit(1);
 	}
 	config.close();

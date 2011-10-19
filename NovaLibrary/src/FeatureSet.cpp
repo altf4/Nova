@@ -16,7 +16,21 @@ namespace ClassificationEngine{
 //Empty constructor
 FeatureSet::FeatureSet()
 {
-
+	//Temp variables
+	startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
+	endTime = 0;
+	IPTable.clear();
+	portTable.clear();
+	haystackEvents = 0;
+	hostEvents = 0;
+	packetCount = 0;
+	bytesTotal = 0;
+	//Features
+	for(int i = 0; i < DIMENSION; i++)
+	{
+		features[i] = 0;
+	}
+	packetSizes.clear();
 }
 
 //Clears out the current values, and also any temp variables used to calculate them

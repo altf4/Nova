@@ -124,9 +124,9 @@ int main(int argc, char *argv[])
 
     if((alarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
     {
-    		perror("socket");
-    		close(alarmSocket);
-    		exit(1);
+		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		close(alarmSocket);
+		exit(1);
     }
     remote.sun_family = AF_UNIX;
 
@@ -136,14 +136,14 @@ int main(int argc, char *argv[])
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
     if(bind(alarmSocket,(struct sockaddr *)&remote,len) == -1)
     {
-        perror("bind");
+		LOG4CXX_ERROR(m_logger,"bind: " << strerror(errno));
 		close(alarmSocket);
         exit(1);
     }
 
     if(listen(alarmSocket, 5) == -1)
     {
-        perror("listen");
+		LOG4CXX_ERROR(m_logger,"listen: " << strerror(errno));
 		close(alarmSocket);
         exit(1);
     }
@@ -238,14 +238,14 @@ string Nova::DoppelgangerModule::getLocalIP(const char *dev)
 
 	if(sock < 0)
 	{
-		perror("socket");
+		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(sock);
 		return NULL;
 	}
 
 	if((rval = ioctl(sock, SIOCGIFCONF , (char*) &ifconf)) < 0 )
 	{
-		perror("ioctl(SIOGIFCONF)");
+		LOG4CXX_ERROR(m_logger,"ioctl(SIOGIFCONF): " << strerror(errno));
 	}
 
 	close(sock);
@@ -280,13 +280,13 @@ Suspect *Nova::DoppelgangerModule::ReceiveAlarm(int alarmSock)
     //Blocking call
     if ((connectionSocket = accept(alarmSock, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
     {
-        perror("accept");
+		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		close(connectionSocket);
         return NULL;
     }
     if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
     {
-        perror("recv");
+    	LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(connectionSocket);
         return NULL;
     }
@@ -391,7 +391,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 
 					if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
 					{
-						LOG4CXX_ERROR(m_logger,"Invalid doppelganger IP address!" << errno);
+						LOG4CXX_ERROR(m_logger,"Invalid doppelganger IP address!");
 						exit(1);
 					}
 				}
@@ -412,7 +412,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 			prefix = "#";
 			if(line.substr(0,prefix.size()).compare(prefix))
 			{
-				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file" << errno);
+				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file.");
 				continue;
 			}
 		}
@@ -426,17 +426,17 @@ void DoppelgangerModule::LoadConfig(char* input)
 
 		if(v == false)
 		{
-			LOG4CXX_ERROR(m_logger,"One or more values have not been set" << errno);
+			LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
 			exit(1);
 		}
 		else
 		{
-			LOG4CXX_INFO(m_logger,"Config loaded successfully" << errno);
+			LOG4CXX_INFO(m_logger,"Config loaded successfully.");
 		}
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger, "No configuration file detected!" << errno );
+		LOG4CXX_INFO(m_logger, "No configuration file detected!" );
 		exit(1);
 	}
 }
