@@ -350,7 +350,7 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 
 	if((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		perror("socket");
+    	LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
@@ -361,13 +361,13 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 
 	if(connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
-		perror("connect");
+    	LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
 	if(send(socketFD, data, dataLen, 0) == -1)
 	{
-		perror("send");
+    	LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
@@ -391,14 +391,14 @@ string Nova::LocalTrafficMonitor::getLocalIP(const char *dev)
 
 	if(sock < 0)
 	{
-		perror("socket");
+    	LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sock);
 		return (NULL);
 	}
 
 	if((rval = ioctl(sock, SIOCGIFCONF , (char*) &ifconf  )) < 0)
 	{
-		perror("ioctl(SIOGIFCONF)");
+    	LOG4CXX_ERROR(m_logger, "ioctl(SIOGIFCONF): " << strerror(errno));
 	}
 
 	close(sock);
@@ -482,7 +482,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 			prefix = "#";
 			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
-				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file" << errno);
+				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file.");
 				continue;
 			}
 		}
@@ -496,17 +496,17 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 
 		if(v == false)
 		{
-			LOG4CXX_ERROR(m_logger,"One or more values have not been set" << errno);
+			LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
 			exit(1);
 		}
 		else
 		{
-			LOG4CXX_INFO(m_logger,"Config loaded successfully" << errno);
+			LOG4CXX_INFO(m_logger,"Config loaded successfully.");
 		}
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger, "No configuration file detected." << errno );
+		LOG4CXX_INFO(m_logger, "No configuration file detected." );
 		exit(1);
 	}
 	config.close();

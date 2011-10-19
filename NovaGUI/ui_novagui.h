@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'novagui.ui'
 **
-** Created: Mon Oct 17 14:47:48 2011
+** Created: Wed Oct 19 15:02:44 2011
 **      by: Qt User Interface Compiler version 4.7.4
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
