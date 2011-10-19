@@ -1,8 +1,9 @@
 //============================================================================
 // Name        : Suspect.cpp
 // Author      : DataSoft Corporation
-// Copyright   :
-// Description : Suspect object for use in the NOVA utility
+// Copyright   : GNU GPL v3
+// Description : A Suspect object with identifying information and traffic
+//					features so that each entity can be monitored and classified.
 //============================================================================/*
 
 #include "Suspect.h"

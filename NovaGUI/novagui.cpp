@@ -1,3 +1,10 @@
+//============================================================================
+// Name        : novagui.cpp
+// Author      : DataSoft Corporation
+// Copyright   : GNU GPL v3
+// Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
+//============================================================================/*
+
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <QtGui>

@@ -8,7 +8,7 @@ SOURCES += main.cpp \
     novagui.cpp
 FORMS += novagui.ui
 RESOURCES +=
-INCLUDEPATH += /home/victim/Code/NovaGit/nova/NovaLibrary/src
-LIBS += /home/victim/Code/NovaGit/nova/NovaLibrary/Debug/libNovaLibrary.a \
+INCLUDEPATH += /home/victim/Code/NovaGit/Nova/NovaLibrary/src
+LIBS += /home/victim/Code/NovaGit/Nova/NovaLibrary/Debug/libNovaLibrary.a \
 /usr/lib/libboost_serialization.a \
 /usr/lib/libann.a

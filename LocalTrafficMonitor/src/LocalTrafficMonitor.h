@@ -1,8 +1,9 @@
 //============================================================================
 // Name        : LocalTrafficMonitor.h
 // Author      : DataSoft Corporation
-// Copyright   :
-// Description : Monitors local network traffic
+// Copyright   : GNU GPL v3
+// Description : Monitors local network traffic and sends detailed TrafficEvents
+//					to the Classification Engine.
 //============================================================================/*
 
 #ifndef LOCALTRAFFICMONITOR_H_

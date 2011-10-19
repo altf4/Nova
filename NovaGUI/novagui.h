@@ -1,3 +1,10 @@
+//============================================================================
+// Name        : novagui.h
+// Author      : DataSoft Corporation
+// Copyright   : GNU GPL v3
+// Description : Header file for the main NovaGUI component
+//============================================================================/*
+
 #ifndef NOVAGUI_H
 #define NOVAGUI_H
 

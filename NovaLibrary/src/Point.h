@@ -1,8 +1,9 @@
 //============================================================================
 // Name        : Point.h
 // Author      : DataSoft Corporation
-// Copyright   :
-// Description : Point object for use in the NOVA utility
+// Copyright   : GNU GPL v3
+// Description : Points paired with a classification for use in the Approximate
+//					Nearest Neighbor Algorithm.
 //============================================================================/*
 
 #include "Suspect.h"

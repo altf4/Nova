@@ -1,3 +1,10 @@
+//============================================================================
+// Name        : main.cpp
+// Author      : DataSoft Corporation
+// Copyright   : GNU GPL v3
+// Description : Creates and runs the NovaGUI object
+//============================================================================/*
+
 #include "novagui.h"
 #include "ui_novagui.h"
 #include <QtGui>

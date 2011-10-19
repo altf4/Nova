@@ -1,7 +1,7 @@
 //============================================================================
 // Name        : ClassificationEngine.cpp
 // Author      : DataSoft Corporation
-// Copyright   : 
+// Copyright   : GNU GPL v3
 // Description : Classifies suspects as either hostile or benign then takes appropriate action
 //============================================================================
 
