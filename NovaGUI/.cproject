@@ -115,18 +115,6 @@
 				</profile>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.pathentry">
-				<pathentry kind="src" path=""/>
-				<pathentry kind="out" path=""/>
-				<pathentry kind="lib" library="/home/victim/Code/Nova/dave-dev-branch/NovaLibrary/Debug/libNovaLibrary.a" path=""/>
-				<pathentry kind="prj" path="/NovaLibrary"/>
-				<pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
-				<pathentry kind="lib" library="/usr/lib/libboost_serialization.a" path=""/>
-				<pathentry kind="prj" path="/LocalTrafficMonitor"/>
-				<pathentry kind="prj" path="/DoppelgangerModule"/>
-				<pathentry kind="prj" path="/ClassificationEngine"/>
-				<pathentry kind="prj" path="/Haystack"/>
-				<pathentry kind="lib" library="/usr/lib/liblog4cxx.a" path=""/>
-				<pathentry kind="lib" library="/usr/lib/libann.a" path=""/>
 				<pathentry base-path="/home/victim/Programs/Qt/Desktop/Qt/474/gcc/include" include="" kind="inc" path="" system="true"/>
 				<pathentry base-path="/home/victim/Programs/Qt/Desktop/Qt/474/gcc/include" include="QtDesigner" kind="inc" path="" system="true"/>
 				<pathentry base-path="/home/victim/Programs/Qt/Desktop/Qt/474/gcc/include" include="QtWebKit" kind="inc" path="" system="true"/>
@@ -149,6 +137,18 @@
 				<pathentry base-path="/home/victim/Programs/Qt/Desktop/Qt/474/gcc/include" include="QtScript" kind="inc" path="" system="true"/>
 				<pathentry base-path="/home/victim/Programs/Qt/Desktop/Qt/474/gcc/include" include="QtDBus" kind="inc" path="" system="true"/>
 				<pathentry base-path="/home/victim/Programs/Qt/Desktop/Qt/474/gcc/include" include="QtDeclarative" kind="inc" path="" system="true"/>
+				<pathentry kind="src" path=""/>
+				<pathentry kind="out" path=""/>
+				<pathentry kind="lib" library="/home/victim/Code/Nova/dave-dev-branch/NovaLibrary/Debug/libNovaLibrary.a" path=""/>
+				<pathentry kind="prj" path="/NovaLibrary"/>
+				<pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
+				<pathentry kind="lib" library="/usr/lib/libboost_serialization.a" path=""/>
+				<pathentry kind="prj" path="/LocalTrafficMonitor"/>
+				<pathentry kind="prj" path="/DoppelgangerModule"/>
+				<pathentry kind="prj" path="/ClassificationEngine"/>
+				<pathentry kind="prj" path="/Haystack"/>
+				<pathentry kind="lib" library="/usr/lib/liblog4cxx.a" path=""/>
+				<pathentry kind="lib" library="/usr/lib/libann.a" path=""/>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>

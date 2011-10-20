@@ -67,6 +67,9 @@ void *CEListen(void *ptr);
 ///Socket closing workaround for namespace issue.
 void sclose(int sock);
 
+//Opens the socket and creates a thread to listen on it.
+void openSocket(NovaGUI *window);
+
 
 
 #endif // NOVAGUI_H
