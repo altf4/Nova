@@ -219,8 +219,7 @@ int main(int argc, char *argv[])
 
 	if(handle == NULL)
 	{
-		//cerr << "Couldn't open device: " << dev << "\n" << errbuf;
-		LOG4CXX_ERROR(m_logger, "Couldn't open device: " << dev << "\n" << errbuf);
+		LOG4CXX_ERROR(m_logger, "Couldn't open device: " << dev << ": " << errbuf);
 		return(2);
 	}
 
@@ -229,7 +228,6 @@ int main(int argc, char *argv[])
 
 	if(ret == -1)
 	{
-		cerr << errbuf;
 		LOG4CXX_ERROR(m_logger, errbuf);
 		exit(1);
 	}
@@ -254,7 +252,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	cout << haystackAddresses_csv << "\n";
+	LOG4CXX_INFO(m_logger, haystackAddresses_csv);
 
 	if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 	{

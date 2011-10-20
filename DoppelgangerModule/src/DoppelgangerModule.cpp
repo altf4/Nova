@@ -151,7 +151,6 @@ int main(int argc, char *argv[])
 	//"Main Loop"
 	while(true)
 	{
-
 		suspect  = ReceiveAlarm(alarmSocket);
 
 		if(suspect == NULL)
@@ -305,7 +304,7 @@ Suspect *Nova::DoppelgangerModule::ReceiveAlarm(int alarmSock)
 	}
 	catch(boost::archive::archive_exception e)
 	{
-		LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: "+string(e.what()));
+		LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
 		if(suspect != NULL)
 		{
 			delete suspect;

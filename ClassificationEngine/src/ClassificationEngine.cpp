@@ -318,7 +318,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 
 			//WriteDataPointsToFile((char*)outPtr);
 		}
-		else LOG4CXX_INFO(m_logger, "Unable to open file\n");
+		else LOG4CXX_INFO(m_logger, "Unable to open file.");
 		myfile.close();
 		pthread_rwlock_unlock(&lock);
 	}
@@ -413,7 +413,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		catch(boost::archive::archive_exception e)
 		{
 			close(sockfd);
-			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: "+string(e.what()));
+			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: " << string(e.what()));
 		}
 		delete suspect;
 	}
@@ -529,19 +529,28 @@ void Nova::ClassificationEngine::NormalizeDataPoints(int maxVal)
 			{
 				it->second->annPoint[i] = (int)(it->second->features->features[i] / maxFeatureValues[i]) * maxVal;
 			}
+			else
+			{
+				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+			}
 		}
 	}
 
 	//Normalize the data points
 	//Foreach data point
-	for(int i = 0;i < nPts;i++)
+	for(int j = 0;j < dim;j++)
 	{
 		//Foreach feature within the data point
-		for(int j=0;j < dim;j++)
+		for(int i=0;i < nPts;i++)
 		{
 			if(maxFeatureValues[j] != 0)
 			{
 				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]) * maxVal);
+			}
+			else
+			{
+				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				break;
 			}
 		}
 	}
@@ -600,7 +609,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 		}
 		nPts = i;
 	}
-	else LOG4CXX_INFO(m_logger,"Unable to open file");
+	else LOG4CXX_ERROR(m_logger,"Unable to open file.");
 	myfile.close();
 }
 
@@ -621,7 +630,7 @@ void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 			myfile << "\n";
 		}
 	}
-	else LOG4CXX_INFO(m_logger, "Unable to open file\n");
+	else LOG4CXX_ERROR(m_logger, "Unable to open file.");
 	myfile.close();
 }
 
@@ -800,7 +809,7 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 	}
 	catch(boost::archive::archive_exception e)
 	{
-		LOG4CXX_ERROR(m_logger,"Error in parsing received TrafficEvent: " + string(e.what()));
+		LOG4CXX_ERROR(m_logger,"Error in parsing received TrafficEvent: " << string(e.what()));
 		close(connectionSocket);
 		return false;
 	}

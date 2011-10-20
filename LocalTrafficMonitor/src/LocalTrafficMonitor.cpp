@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 
 	if(handle == NULL)
 	{
-		fprintf(stderr, "Couldn't open device %s: %s\n", dev.c_str(), errbuf);
+		LOG4CXX_ERROR(m_logger, "Couldn't open device " << dev << ": " << errbuf);
 		return(2);
 	}
 
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
 
 	if(ret == -1)
 	{
-		printf("%s\n",errbuf);
+		LOG4CXX_ERROR(m_logger, errbuf);
 		exit(1);
 	}
 
@@ -245,17 +245,17 @@ int main(int argc, char *argv[])
 	//Form the Filter Expression String
 	bzero(filter_exp, 64);
 	snprintf(filter_exp, 64, "dst host %s", hostAddress.data());
-	LOG4CXX_INFO(m_logger,  filter_exp);
+	LOG4CXX_INFO(m_logger, filter_exp);
 
 	if (pcap_compile(handle, &fp, filter_exp, 0, maskp) == -1)
 	{
-		fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+		LOG4CXX_ERROR(m_logger, "Couldn't parse filter " << filter_exp << ": " << pcap_geterr(handle));
 		return(2);
 	}
 
 	if (pcap_setfilter(handle, &fp) == -1)
 	{
-		fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
+		LOG4CXX_ERROR(m_logger, "Couldn't install filter " << filter_exp << ": " << pcap_geterr(handle));
 		return(2);
 	}
 

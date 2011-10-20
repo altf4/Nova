@@ -6,6 +6,7 @@
 //============================================================================/*
 
 #include <sys/un.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <QtGui>
 #include <QApplication>
@@ -38,41 +39,12 @@ NovaGUI::NovaGUI(QWidget *parent)
 	//Might need locks later
 	pthread_rwlock_init(&lock, NULL);
 	ui.setupUi(this);
-	struct sockaddr_un CE_IPCAddress;
-	int len;
-	pthread_t CEListenThread;
 	DOMConfigurator::configure("Config/Log4cxxConfig_GUI.xml");
-
-
-	if((CEsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-		sclose(CEsock);
-		exit(1);
-	}
-
-	CE_IPCAddress.sun_family = AF_UNIX;
-
-	ofstream key(CE_FILENAME);
-	key.close();
-	strcpy(CE_IPCAddress.sun_path, CE_FILENAME);
-	unlink(CE_IPCAddress.sun_path);
-	len = strlen(CE_IPCAddress.sun_path) + sizeof(CE_IPCAddress.sun_family);
-
-	if(bind(CEsock,(struct sockaddr *)&CE_IPCAddress,len) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
-		sclose(CEsock);
-		exit(1);
-	}
-
-	if(listen(CEsock, 5) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
-		sclose(CEsock);
-		exit(1);
-	}
-	pthread_create(&CEListenThread,NULL,CEListen, this);
+	//Not sure why this is needed, but it seems to take care of the error
+	// the abstracted Qt operations of QObject::connect sometimes throws an
+	// error complaining about queueing objects of type 'QItemSelection'
+	qRegisterMetaType<QItemSelection>("QItemSelection");
+	openSocket(this);
 }
 
 NovaGUI::~NovaGUI()
@@ -183,8 +155,6 @@ void NovaGUI::drawSuspects()
 			//If Benign
 			if(it->second->classification == 0)
 			{
-				//Create a Separator
-				new QListWidgetItem(this->ui.benignList);
 				//Create the Suspect
 				item = NULL;
 				item = new QListWidgetItem(this->ui.benignList);
@@ -195,8 +165,6 @@ void NovaGUI::drawSuspects()
 			//If Hostile
 			else
 			{
-				//Create a Separator
-				new QListWidgetItem(this->ui.hostileList);
 				//Create the Suspect
 				item = NULL;
 				item = new QListWidgetItem(this->ui.hostileList);
@@ -592,6 +560,43 @@ void NovaGUI::on_LTMSaveButton_clicked()
 	}
 	config.close();
 
+}
+
+void openSocket(NovaGUI *window)
+{
+	struct sockaddr_un CE_IPCAddress;
+	int len;
+	pthread_t CEListenThread;
+
+	if((CEsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		close(CEsock);
+		exit(1);
+	}
+
+	CE_IPCAddress.sun_family = AF_UNIX;
+
+	ofstream key(CE_FILENAME);
+	key.close();
+	strcpy(CE_IPCAddress.sun_path, CE_FILENAME);
+	unlink(CE_IPCAddress.sun_path);
+	len = strlen(CE_IPCAddress.sun_path) + sizeof(CE_IPCAddress.sun_family);
+
+	if(bind(CEsock,(struct sockaddr *)&CE_IPCAddress,len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		close(CEsock);
+		exit(1);
+	}
+
+	if(listen(CEsock, 5) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		close(CEsock);
+		exit(1);
+	}
+	pthread_create(&CEListenThread,NULL,CEListen, window);
 }
 
 void sclose(int sock)
