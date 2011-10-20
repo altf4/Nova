@@ -13,15 +13,22 @@
 #include <sstream>
 #include <QString>
 #include <fstream>
+#include <log4cxx/xml/domconfigurator.h>
+#include <errno.h>
+
 
 using namespace std;
 using namespace Nova;
 using namespace ClassificationEngine;
+using namespace log4cxx;
+using namespace log4cxx::xml;
 
 int CEsock;
 static SuspectHashTable SuspectTable;
 //Might need locks later
 pthread_rwlock_t lock;
+
+LoggerPtr m_logger(Logger::getLogger("main"));
 
 
 
@@ -34,12 +41,14 @@ NovaGUI::NovaGUI(QWidget *parent)
 	struct sockaddr_un CE_IPCAddress;
 	int len;
 	pthread_t CEListenThread;
+	DOMConfigurator::configure("Config/Log4cxxConfig_GUI.xml");
+
 
 	if((CEsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-			perror("socket");
-			sclose(CEsock);
-			exit(1);
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		sclose(CEsock);
+		exit(1);
 	}
 
 	CE_IPCAddress.sun_family = AF_UNIX;
@@ -52,16 +61,16 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	if(bind(CEsock,(struct sockaddr *)&CE_IPCAddress,len) == -1)
 	{
-			perror("bind");
-			sclose(CEsock);
-			exit(1);
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		sclose(CEsock);
+		exit(1);
 	}
 
 	if(listen(CEsock, 5) == -1)
 	{
-			perror("listen");
-			sclose(CEsock);
-			exit(1);
+		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		sclose(CEsock);
+		exit(1);
 	}
 	pthread_create(&CEListenThread,NULL,CEListen, this);
 }
@@ -94,7 +103,7 @@ bool NovaGUI::ReceiveCE(int socket)
 	    //Blocking call
 	    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
 	    {
-	        perror("accept");
+			LOG4CXX_ERROR(m_logger, "accept: " << strerror(errno));
 			sclose(connectionSocket);
 	        return false;
 	    }
@@ -105,7 +114,7 @@ bool NovaGUI::ReceiveCE(int socket)
 	    }
 	    else if(bytesRead == 1)
 	    {
-	        perror("recv");
+			LOG4CXX_ERROR(m_logger, "recv: " << strerror(errno));
 			sclose(connectionSocket);
 	        return false;
 	    }
@@ -124,9 +133,9 @@ bool NovaGUI::ReceiveCE(int socket)
 			// archive and stream closed when destructors are called
 			updateSuspect(suspect);
 		}
-		catch(...)
+		catch(boost::archive::archive_exception e)
 		{
-			cout << "Error interpreting received Suspect." <<endl;
+			LOG4CXX_ERROR(m_logger, "Error interpreting received Suspect: " << string(e.what()));
 		}
 		return true;
 }
@@ -195,6 +204,10 @@ void NovaGUI::drawSuspects()
 				item->setForeground(rbrush);
 				item->setText(str);
 			}
+		}
+		else
+		{
+			LOG4CXX_INFO(m_logger, "NULL pointer in SuspectTable");
 		}
 	}
 	pthread_rwlock_unlock(&lock);
@@ -324,6 +337,7 @@ void NovaGUI::on_CELoadButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error loading from Classification Engine config file.");
 		exit(1);
 	}
 	config.close();
@@ -350,6 +364,7 @@ void NovaGUI::on_CESaveButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error writing to Classification Engine config file.");
 		exit(1);
 	}
 	config.close();
@@ -402,6 +417,7 @@ void NovaGUI::on_DMLoadButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error loading from Doppelganger Module config file.");
 		exit(1);
 	}
 	config.close();
@@ -419,6 +435,7 @@ void NovaGUI::on_DMSaveButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error writing to Doppelganger Module config file.");
 		exit(1);
 	}
 	config.close();
@@ -480,6 +497,7 @@ void NovaGUI::on_HSLoadButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error loading from Haystack Monitor config file.");
 		exit(1);
 	}
 	config.close();
@@ -498,6 +516,7 @@ void NovaGUI::on_HSSaveButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error writing to Haystack Monitor config file.");
 		exit(1);
 	}
 	config.close();
@@ -550,6 +569,7 @@ void NovaGUI::on_LTMLoadButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error loading from Local Traffic Monitor config file.");
 		exit(1);
 	}
 	config.close();
@@ -567,6 +587,7 @@ void NovaGUI::on_LTMSaveButton_clicked()
 	}
 	else
 	{
+		LOG4CXX_ERROR(m_logger, "Error writing to Local Traffic Monitor config file.");
 		exit(1);
 	}
 	config.close();
