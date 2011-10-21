@@ -26,6 +26,9 @@
 #define CE_FILENAME "/etc/CEKey"
 //dimension
 #define DIM 4
+//Number of lines expected in the CE config file
+#define CONFIG_FILE_LINE_COUNT 13
+
 
 namespace Nova{
 namespace ClassificationEngine{
