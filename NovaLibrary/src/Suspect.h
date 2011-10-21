@@ -30,6 +30,9 @@ public:
 	///		-1 indicates no classification or error.
 	double classification;
 
+	/// Is the classification above the current threshold? IE: What conclusion has the CE come to?
+	bool isHostile;
+
 	/// Does the classification need updating?
 	///		IE: Has the evidence changed since last it was calculated?
 	bool needs_classification_update;

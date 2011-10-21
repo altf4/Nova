@@ -22,6 +22,7 @@ Suspect::Suspect()
 	needs_classification_update = true;
 	needs_feature_update = true;
 	flaggedByAlarm = false;
+	isHostile = false;
 	features = NULL;
 	annPoint = annAllocPt(DIMENSION);
 	evidence.clear();
@@ -53,6 +54,7 @@ Suspect::Suspect(TrafficEvent *event)
 {
 	this->IP_address = event->src_IP;
 	this->classification = -1;
+	this->isHostile = false;
 	this->features = new FeatureSet();
 	this->annPoint = NULL;
 	this->flaggedByAlarm = false;
@@ -75,8 +77,14 @@ string Suspect::ToString()
 	{
 		ss << " Haystack Traffic Distribution: " << features->features[IP_TRAFFIC_DISTRIBUTION] << "\n";
 		ss << " Port Traffic Distribution: "  <<  features->features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-		ss <<  " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+		ss << " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
 		ss << " Mean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
+		ss << " Suspect is ";
+		if(!isHostile)
+		{
+			ss << "not ";
+		}
+		ss << "hostile";
 		//ss << " Packet Size Variance: " << features->features[PACKET_SIZE_VARIANCE] << "\n";
 	}
 	else
