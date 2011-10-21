@@ -13,6 +13,7 @@
 #include "novagui.h"
 #include <sstream>
 #include <QString>
+#include <QChar>
 #include <fstream>
 #include <log4cxx/xml/domconfigurator.h>
 #include <errno.h>
@@ -62,58 +63,70 @@ void *CEListen(void *ptr)
 	return NULL;
 }
 
+void *CEDraw(void *ptr)
+{
+	while(true)
+	{
+		((NovaGUI*)ptr)->drawSuspects();
+		sleep(5);
+	}
+	return NULL;
+}
+
 bool NovaGUI::ReceiveCE(int socket)
 {
-		struct sockaddr_un remote;
-	    int socketSize, connectionSocket;
-	    int bytesRead;
-	    char buf[MAX_MSG_SIZE];
+	struct sockaddr_un remote;
+	int socketSize, connectionSocket;
+	int bytesRead;
+	char buf[MAX_MSG_SIZE];
 
-	    socketSize = sizeof(remote);
+	socketSize = sizeof(remote);
 
 
-	    //Blocking call
-	    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
-	    {
-			LOG4CXX_ERROR(m_logger, "accept: " << strerror(errno));
-			sclose(connectionSocket);
-	        return false;
-	    }
-	    if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == 0)
-	    {
-	    	return false;
-
-	    }
-	    else if(bytesRead == 1)
-	    {
-			LOG4CXX_ERROR(m_logger, "recv: " << strerror(errno));
-			sclose(connectionSocket);
-	        return false;
-	    }
-
-		Suspect* suspect = new Suspect();
-
+	//Blocking call
+	if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "accept: " << strerror(errno));
 		sclose(connectionSocket);
-		try
-		{
-			stringstream ss;
-			ss << buf;
-			boost::archive::text_iarchive ia(ss);
-			// create and open an archive for input
-			// read class state from archive
-			ia >> suspect;
-			// archive and stream closed when destructors are called
-			updateSuspect(suspect);
-		}
-		catch(boost::archive::archive_exception e)
-		{
-			LOG4CXX_ERROR(m_logger, "Error interpreting received Suspect: " << string(e.what()));
-		}
-		return true;
+		return false;
+	}
+	if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == 0)
+	{
+		return false;
+
+	}
+	else if(bytesRead == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "recv: " << strerror(errno));
+		sclose(connectionSocket);
+		return false;
+	}
+
+	Suspect* suspect = new Suspect();
+
+	sclose(connectionSocket);
+	try
+	{
+		stringstream ss;
+		ss << buf;
+		boost::archive::text_iarchive ia(ss);
+		// create and open an archive for input
+		// read class state from archive
+		ia >> suspect;
+		// archive and stream closed when destructors are called
+		updateSuspect(suspect);
+	}
+	catch(boost::archive::archive_exception e)
+	{
+		LOG4CXX_ERROR(m_logger, "Error interpreting received Suspect: " << string(e.what()));
+		return false;
+	}
+	return true;
 }
 
 void NovaGUI::updateSuspect(Suspect* suspect)
 {
+
 	if(suspect == NULL) return;
 
 	pthread_rwlock_wrlock(&lock);
@@ -131,7 +144,6 @@ void NovaGUI::updateSuspect(Suspect* suspect)
 		SuspectTable[suspect->IP_address.s_addr] = suspect;
 	}
 	pthread_rwlock_unlock(&lock);
-	drawSuspects();
 }
 
 void NovaGUI::drawSuspects()
@@ -141,7 +153,8 @@ void NovaGUI::drawSuspects()
 	gbrush.setStyle(Qt::NoBrush);
 	QBrush rbrush(QColor(200, 0, 0, 255));
 	rbrush.setStyle(Qt::NoBrush);
-	QListWidgetItem *item;
+	QListWidgetItem * item;
+
 	this->ui.benignList->clear();
 	this->ui.hostileList->clear();
 	QString str;
@@ -151,26 +164,26 @@ void NovaGUI::drawSuspects()
 	{
 		if(it->second != NULL)
 		{
-			str = (QString)it->second->ToString().c_str();
+			if ((str = (QString)it->second->ToString().c_str()) == NULL)
+			{
+				LOG4CXX_INFO(m_logger, "Suspect parsed to a null string");
+				continue;
+			}
 			//If Benign
 			if(it->second->classification == 0)
 			{
 				//Create the Suspect
-				item = NULL;
-				item = new QListWidgetItem(this->ui.benignList);
+				item = new QListWidgetItem(str, this->ui.benignList, 0);
 				item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 				item->setForeground(gbrush);
-				item->setText(str);
 			}
 			//If Hostile
 			else
 			{
 				//Create the Suspect
-				item = NULL;
-				item = new QListWidgetItem(this->ui.hostileList);
+				item = new QListWidgetItem(str, this->ui.hostileList, 0);
 				item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 				item->setForeground(rbrush);
-				item->setText(str);
 			}
 		}
 		else
@@ -567,6 +580,8 @@ void openSocket(NovaGUI *window)
 	struct sockaddr_un CE_IPCAddress;
 	int len;
 	pthread_t CEListenThread;
+	pthread_t CEDrawThread;
+
 
 	if((CEsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
@@ -590,13 +605,14 @@ void openSocket(NovaGUI *window)
 		exit(1);
 	}
 
-	if(listen(CEsock, 5) == -1)
+	if(listen(CEsock, 50) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
 		close(CEsock);
 		exit(1);
 	}
 	pthread_create(&CEListenThread,NULL,CEListen, window);
+	pthread_create(&CEDrawThread,NULL,CEDraw, window);
 }
 
 void sclose(int sock)

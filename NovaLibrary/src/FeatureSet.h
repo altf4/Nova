@@ -13,21 +13,18 @@
 #include <vector>
 #include <set>
 
-///The number of distinct IP addresses that the Suspect has contacted
-#define DISTINCT_IP_COUNT 0
+///The traffic distribution across the haystacks relative to host traffic
+#define IP_TRAFFIC_DISTRIBUTION 0
 
-///The number of distinct ports that the Suspect has contacted
-#define DISTINCT_PORT_COUNT 1
+///The traffic distribution across ports contacted
+#define PORT_TRAFFIC_DISTRIBUTION 1
 
 ///Number of ScanEvents that the suspect is responsible for per second
 #define HAYSTACK_EVENT_FREQUENCY 2
 
-///Ratio of received ScanEvents to TrafficEvents
-#define HAYSTACK_EVENT_TO_HOST_EVENT_RATIO 3
-
 ///Measures the distribution of packet sizes
-#define PACKET_SIZE_MEAN 4
-#define PACKET_SIZE_VARIANCE 5
+#define PACKET_SIZE_MEAN 3
+#define PACKET_SIZE_VARIANCE 4
 
 ///A measure of how uniform the Suspect's port distributions are
 /// 0 - 10. Low value means low uniformity, high means high uniformity.
@@ -44,10 +41,13 @@
 
 //TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
 ///	This is the number of features in a feature set.
-#define DIMENSION 5
+#define DIMENSION 4
 
 namespace Nova{
 namespace ClassificationEngine{
+
+typedef std::tr1::unordered_map<in_addr_t, uint > IP_Table;
+typedef std::tr1::unordered_map<in_port_t, uint > Port_Table;
 
 ///A Feature Set represents a point in N dimensional space, which the Classification Engine uses to
 ///	determine a classification. Each member of the FeatureSet class represents one of these dimensions.
@@ -63,9 +63,9 @@ public:
 	///Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
 	///Calculates a feature
-	void CalculateDistinctIPCount();
+	void CalculateIPTrafficDistribution();
 	///Calculates a feature
-	void CalculateDistinctPortCount();
+	void CalculatePortTrafficDistribution();
 	///Calculates a feature
 	void CalculateHaystackToHostEventRatio();
 	///Calculates a feature
@@ -79,8 +79,17 @@ public:
 
 private:
 	//Temporary variables used to calculate Features
-	set<int> IPTable;
-	set<int> portTable;
+
+	//Table of IP addresses and associated packet counts
+	IP_Table IPTable;
+	//Max packet count to an IP, used for normalizing
+	uint IPMax;
+
+	//Table of Ports and associated packet counts
+	Port_Table portTable;
+	//Max packet count to a port, used for normalizing
+	uint portMax;
+
 	uint haystackEvents;
 	uint hostEvents;
 	time_t startTime ;
@@ -89,7 +98,9 @@ private:
 	uint packetCount;
 	//Total number of bytes in all packets
 	uint bytesTotal;
-	//A vector of each packet's size
+
+	//A vector containing the sum of the packet sizes for each event
+	//Not really a vector of packet sizes as tcp events can contain many packets
 	vector <int> packetSizes;
 
     friend class boost::serialization::access;

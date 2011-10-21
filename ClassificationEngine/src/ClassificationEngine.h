@@ -25,7 +25,7 @@
 ///	Filename of the file to be used as an Classification Engine IPC key
 #define CE_FILENAME "/etc/CEKey"
 //dimension
-#define DIM 5
+#define DIM 4
 
 namespace Nova{
 namespace ClassificationEngine{
