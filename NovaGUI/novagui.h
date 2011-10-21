@@ -63,6 +63,8 @@ typedef std::tr1::unordered_map<in_addr_t, Suspect*> SuspectHashTable;
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);
+/// Updates the suspect list every so often.
+void *CEDraw(void *ptr);
 
 ///Socket closing workaround for namespace issue.
 void sclose(int sock);

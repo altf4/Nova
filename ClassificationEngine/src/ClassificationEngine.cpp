@@ -252,11 +252,12 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 				pthread_rwlock_rdlock(&lock);
 			}
 		}
-
+		pthread_rwlock_unlock(&lock);
+		pthread_rwlock_wrlock(&lock);
 		//Calculate the normalized feature sets, actually used by ANN
 		//	Writes into Suspect ANNPoints
-		pthread_rwlock_unlock(&lock);
 		NormalizeDataPoints(maxFeatureVal);
+		pthread_rwlock_unlock(&lock);
 		pthread_rwlock_rdlock(&lock);
 		//Perform classification on each suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
@@ -512,7 +513,6 @@ void Nova::ClassificationEngine::NormalizeDataPoints(int maxVal)
 			}
 		}
 	}
-
 	//Normalize the suspect points
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
@@ -527,7 +527,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints(int maxVal)
 		{
 			if(maxFeatureValues[0] != 0)
 			{
-				it->second->annPoint[i] = (int)(it->second->features->features[i] / maxFeatureValues[i]) * maxVal;
+				it->second->annPoint[i] = (double)(it->second->features->features[i] / maxFeatureValues[i]) * maxVal;
 			}
 			else
 			{
