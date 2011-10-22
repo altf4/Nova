@@ -24,30 +24,26 @@
 
 ///Measures the distribution of packet sizes
 #define PACKET_SIZE_MEAN 3
-#define PACKET_SIZE_VARIANCE 4
+#define PACKET_SIZE_DEVIATION 4
 
-///A measure of how uniform the Suspect's port distributions are
-/// 0 - 10. Low value means low uniformity, high means high uniformity.
-#define PORT_UNIFORMITY 6
-
-///Measures the distribution of packet counts over IPs
-#define PACKET_COUNT_ACROSS_IPS_VARIANCE 7
-
-///Measures the distribution of packet counts over ports
-#define PACKET_COUNT_ACROSS_PORTS_VARIANCE 8
+/// Number of distinct IP addresses contacted
+#define DISTINCT_IPS 5
+/// Number of distinct ports contacted
+#define DISTINCT_PORTS 6
 
 ///Measures the distribution of intervals between events
-#define EVENT_INTERVAL_VARIANCE 9
+#define EVENT_INTERVAL_VARIANCE 7
 
 //TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
 ///	This is the number of features in a feature set.
-#define DIMENSION 4
+#define DIMENSION 7
 
 namespace Nova{
 namespace ClassificationEngine{
 
 typedef std::tr1::unordered_map<in_addr_t, uint > IP_Table;
 typedef std::tr1::unordered_map<in_port_t, uint > Port_Table;
+typedef std::tr1::unordered_map<int, uint > Packet_Table;
 
 ///A Feature Set represents a point in N dimensional space, which the Classification Engine uses to
 ///	determine a classification. Each member of the FeatureSet class represents one of these dimensions.
@@ -66,20 +62,24 @@ public:
 	void CalculateIPTrafficDistribution();
 	///Calculates a feature
 	void CalculatePortTrafficDistribution();
-	///Calculates a feature
-	void CalculateHaystackToHostEventRatio();
+	///Calculates distinct IPs contacted
+	void CalculateDistinctIPs();
+	///Calculates distinct ports contacted
+	void CalculateDistinctPorts();
 	///Calculates a feature
 	void CalculateHaystackEventFrequency();
 	///Calculates a feature
 	void CalculatePacketSizeMean();
 	///Calculates a feature
-	void CalculatePacketSizeVariance();
+	void CalculatePacketSizeDeviation();
 	/// Processes incoming evidence before calculating the features
 	void UpdateEvidence(TrafficEvent *event);
 
 private:
 	//Temporary variables used to calculate Features
 
+	//Table of Packet sizes and counts for variance calc
+	Packet_Table packTable;
 	//Table of IP addresses and associated packet counts
 	IP_Table IPTable;
 	//Max packet count to an IP, used for normalizing

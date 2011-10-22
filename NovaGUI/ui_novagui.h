@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'novagui.ui'
 **
-** Created: Thu Oct 20 18:19:32 2011
+** Created: Fri Oct 21 16:24:51 2011
 **      by: Qt User Interface Compiler version 4.7.4
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -375,7 +375,7 @@ public:
 
         retranslateUi(NovaGUIClass);
 
-        tabWidget->setCurrentIndex(0);
+        tabWidget->setCurrentIndex(3);
 
 
         QMetaObject::connectSlotsByName(NovaGUIClass);
@@ -383,7 +383,7 @@ public:
 
     void retranslateUi(QMainWindow *NovaGUIClass)
     {
-        NovaGUIClass->setWindowTitle(QApplication::translate("NovaGUIClass", "Nova", 0, QApplication::UnicodeUTF8));
+        NovaGUIClass->setWindowTitle(QApplication::translate("NovaGUIClass", "MainWindow", 0, QApplication::UnicodeUTF8));
         actionTodo->setText(QApplication::translate("NovaGUIClass", "Todo", 0, QApplication::UnicodeUTF8));
         actionTodo_2->setText(QApplication::translate("NovaGUIClass", "Todo", 0, QApplication::UnicodeUTF8));
         actionTodo_3->setText(QApplication::translate("NovaGUIClass", "Todo", 0, QApplication::UnicodeUTF8));

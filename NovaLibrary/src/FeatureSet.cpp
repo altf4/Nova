@@ -21,6 +21,7 @@ FeatureSet::FeatureSet()
 	endTime = 0;
 	IPTable.clear();
 	portTable.clear();
+	packTable.clear();
 	haystackEvents = 0;
 	hostEvents = 0;
 	packetCount = 0;
@@ -35,7 +36,7 @@ FeatureSet::FeatureSet()
 	packetSizes.clear();
 }
 
-//Clears out the current values, and also any temp variables used to calculate them
+///Clears out the current values, and also any temp variables used to calculate them
 void FeatureSet::ClearFeatureSet()
 {
 	//Temp variables
@@ -56,8 +57,18 @@ void FeatureSet::ClearFeatureSet()
 	}
 	packetSizes.clear();
 }
+///Calculates distinct IPs contacted
+void FeatureSet::CalculateDistinctIPs()
+{
+	features[DISTINCT_IPS] = IPTable.size();
+}
+///Calculates distinct ports contacted
+void FeatureSet::CalculateDistinctPorts()
+{
+	features[DISTINCT_PORTS] = portTable.size();
+}
 
-//Calculates the distinct_ip_count for a new piece of evidence
+///Calculates the ip traffic distribution for the suspect
 void FeatureSet::CalculateIPTrafficDistribution()
 {
 	features[IP_TRAFFIC_DISTRIBUTION] = 0;
@@ -71,17 +82,9 @@ void FeatureSet::CalculateIPTrafficDistribution()
 		features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)IPMax);
 	}
 	features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION] / (double)IPTable.size();
-	if(IPTable.size() < 10)
-	{
-		features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION]*IPTable.size();
-	}
-	else
-	{
-		features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION]*10;
-	}
 }
 
-//Calculates the distinct_port_count for a new piece of evidence
+///Calculates the port traffic distribution for the suspect
 void FeatureSet::CalculatePortTrafficDistribution()
 {
 	features[PORT_TRAFFIC_DISTRIBUTION] = 0;
@@ -90,24 +93,8 @@ void FeatureSet::CalculatePortTrafficDistribution()
 		features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)portMax);
 	}
 	features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION] / (double)portTable.size();
-	if(portTable.size() < 10)
-	{
-		features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION]*portTable.size();
-	}
-	else
-	{
-		features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION]*10;
-	}
 }
 
-//Side effect warning!! Run this function before CalculateHaystackEventFrequency.
-/*void FeatureSet::CalculateHaystackToHostEventRatio()
-{
-	features[HAYSTACK_EVENT_TO_HOST_EVENT_RATIO] = (double)haystackEvents / (double)(hostEvents+1);
-	//HostEvents +1 to handle infinity case, be aware data will be skewed accordingly
-}*/
-
-//Side effect warning!! Run this function after CalculateHaystackToHostEventRatio.
 void FeatureSet::CalculateHaystackEventFrequency()
 {
 	if(endTime - startTime > 0)
@@ -116,30 +103,28 @@ void FeatureSet::CalculateHaystackEventFrequency()
 	}
 }
 
-//Calculates Packet Size Mean for a new piece of evidence
+///Calculates Packet Size Mean for a suspect
 void FeatureSet::CalculatePacketSizeMean()
 {
 	features[PACKET_SIZE_MEAN] = (double)bytesTotal / (double)packetCount;
 }
 
-//Calculates Packet Size Variance for a new piece of evidence
-void FeatureSet::CalculatePacketSizeVariance()
+///Calculates Packet Size Variance for a suspect
+void FeatureSet::CalculatePacketSizeDeviation()
 {
-	//double count = this->packetSizes.size();
-	//double mean = 0;
-	//double variance = 0;
+	double count = this->packetSizes.size();
+	double mean = 0;
+	double variance = 0;
 	//Calculate mean
 	CalculatePacketSizeMean();
-	//mean = features[PACKET_SIZE_MEAN];
+	mean = features[PACKET_SIZE_MEAN];
 	//Calculate variance
-	/*for(uint i = 0; i < count; i++)
+	for(uint i = 0; i < count; i++)
 	{
 		// (x - mean)^2
-		variance += pow(((double)this->packetSizes[i] - mean), 2);
+		variance += (packTable[this->packetSizes[i]]*pow(((double)this->packetSizes[i] - mean), 2))/count;
 	}
-	variance = variance / count;
-	features[PACKET_SIZE_VARIANCE] = variance;*/
-	features[PACKET_SIZE_VARIANCE] = 0;
+	features[PACKET_SIZE_DEVIATION] = sqrt(variance);
 }
 
 void FeatureSet::UpdateEvidence(TrafficEvent *event)
@@ -169,7 +154,11 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 		portMax = portTable[event->dst_port];
 	}
 
-	packetSizes.push_back(event->IP_total_data_bytes);
+	for(uint i = 0; i < event->IP_packet_sizes.size(); i++)
+	{
+		packTable[event->IP_packet_sizes[i]]++;
+		packetSizes.push_back(event->IP_packet_sizes[i]);
+	}
 	//Accumulate to find the lowest Start time and biggest end time.
 	if(event->from_haystack)
 	{
