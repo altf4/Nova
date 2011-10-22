@@ -73,11 +73,13 @@ string Suspect::ToString()
 	}
 	if((features != NULL) && (features->features != NULL))
 	{
+		ss << " Distinct IPs Contacted: " << features->features[DISTINCT_IPS] << "\n";
 		ss << " Haystack Traffic Distribution: " << features->features[IP_TRAFFIC_DISTRIBUTION] << "\n";
+		ss << " Distinct Ports Contacted: " << features->features[DISTINCT_PORTS] << "\n";
 		ss << " Port Traffic Distribution: "  <<  features->features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
 		ss <<  " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
 		ss << " Mean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
-		//ss << " Packet Size Variance: " << features->features[PACKET_SIZE_VARIANCE] << "\n";
+		ss << " Packet Size Variance: " << features->features[PACKET_SIZE_DEVIATION] << "\n";
 	}
 	else
 	{
@@ -108,14 +110,16 @@ void Suspect::CalculateFeatures(bool isTraining)
 	}
 	this->evidence.clear();
 	//For-each piece of evidence
+	this->features->CalculateDistinctIPs();
+	this->features->CalculateDistinctPorts();
 	this->features->CalculateIPTrafficDistribution();
 	this->features->CalculatePortTrafficDistribution();
 	this->features->CalculateHaystackEventFrequency();
-	this->features->CalculatePacketSizeVariance();
+	this->features->CalculatePacketSizeDeviation();
 	this->needs_feature_update = false;
 	if(isTraining)
 	{
-		if(this->features->features[0] > 2)
+		if(this->features->features[5] > 2)
 		{
 			classification = 1;
 		}
