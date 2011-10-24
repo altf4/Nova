@@ -48,6 +48,7 @@ TrafficEvent::TrafficEvent(struct Packet packet, int component_source)
 		this->src_port = -1;
 	}
 	this->IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
+	this->packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
 	this->from_haystack = component_source;
 	//Set known hostility, only used in training
 	this->isHostile = component_source;
@@ -77,6 +78,7 @@ TrafficEvent::TrafficEvent( vector<struct Packet>  *list, int component_source)
 	{
 		this->IP_total_data_bytes += ntohs((*list)[i].ip_hdr.ip_len);
 		this->IP_packet_sizes.push_back(ntohs((*list)[i].ip_hdr.ip_len));
+		this->packet_intervals.push_back((*list)[i].pcap_header.ts.tv_sec);
 		//cout << ntohs((*list)[i].packet->ip_hdr.ip_len) << "\n";
 	}
 	this->from_haystack = component_source;
@@ -213,6 +215,7 @@ void TrafficEvent::copyTo(TrafficEvent *toEvent)
 	for(uint i = 0; i < this->IP_packet_sizes.size(); i++)
 	{
 		toEvent->IP_packet_sizes.push_back(this->IP_packet_sizes[i]);
+		toEvent->packet_intervals.push_back(this->packet_intervals[i]);
 	}
 	toEvent->IP_protocol = this->IP_protocol;
 	toEvent->ICMP_type = this->ICMP_type;

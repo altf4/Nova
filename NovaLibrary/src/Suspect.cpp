@@ -80,6 +80,8 @@ string Suspect::ToString()
 		ss <<  " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
 		ss << " Mean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
 		ss << " Packet Size Variance: " << features->features[PACKET_SIZE_DEVIATION] << "\n";
+		ss << " Mean Packet Interval: " << features->features[PACKET_INTERVAL_MEAN] << "\n";
+		ss << " Packet Interval Variance: " << features->features[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
 	else
 	{
@@ -116,6 +118,8 @@ void Suspect::CalculateFeatures(bool isTraining)
 	this->features->CalculatePortTrafficDistribution();
 	this->features->CalculateHaystackEventFrequency();
 	this->features->CalculatePacketSizeDeviation();
+	this->features->CalculatePacketIntervalDeviation();
+
 	this->needs_feature_update = false;
 	if(isTraining)
 	{

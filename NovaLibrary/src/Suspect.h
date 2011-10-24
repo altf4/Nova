@@ -8,7 +8,7 @@
 
 #ifndef SUSPECT_H_
 #define SUSPECT_H_
-#define DIMENSION 7
+#define DIMENSION 9
 
 #include "FeatureSet.h"
 #include <ANN/ANN.h>

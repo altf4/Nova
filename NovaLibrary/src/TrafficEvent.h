@@ -68,6 +68,8 @@ class TrafficEvent
 
 		///A vector of the sizes of the IP layers of
 		vector <int> IP_packet_sizes;
+		///A vector of start times for all packets in a tcp session
+		vector <time_t> packet_intervals;
 
 		///The IP proto type number
 		///	IE: 6 == TCP, 17 == UDP, 1 == ICMP, etc...
@@ -131,6 +133,7 @@ class TrafficEvent
 			ar & dst_port;
 			ar & IP_total_data_bytes;
 			ar & IP_packet_sizes;
+			ar & packet_intervals;
 			ar & IP_protocol;
 			ar & ICMP_type;
 			ar & ICMP_code;

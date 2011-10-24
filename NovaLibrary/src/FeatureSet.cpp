@@ -103,6 +103,31 @@ void FeatureSet::CalculateHaystackEventFrequency()
 	}
 }
 
+
+void FeatureSet::CalculatePacketIntervalMean()
+{
+	features[PACKET_INTERVAL_MEAN] = ((double)(endTime - startTime) / (double)(packetCount));
+}
+
+void FeatureSet::CalculatePacketIntervalDeviation()
+{
+	//since we have n-1 intervals between n packets
+	double count = packetCount-1;
+	double mean = 0;
+	double variance = 0;
+	double interval = 0;
+	CalculatePacketIntervalMean();
+	mean = features[PACKET_INTERVAL_MEAN];
+
+	for(uint i = 0; i < count-1; i++)
+	{
+		interval = this->packet_intervals[i+1]-this->packet_intervals[i];
+		// (x - mean)^2
+		variance += (pow((interval - mean), 2))/count;
+	}
+	features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
+}
+
 ///Calculates Packet Size Mean for a suspect
 void FeatureSet::CalculatePacketSizeMean()
 {
@@ -112,7 +137,7 @@ void FeatureSet::CalculatePacketSizeMean()
 ///Calculates Packet Size Variance for a suspect
 void FeatureSet::CalculatePacketSizeDeviation()
 {
-	double count = this->packetSizes.size();
+	double count = packetCount;
 	double mean = 0;
 	double variance = 0;
 	//Calculate mean
@@ -158,6 +183,7 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	{
 		packTable[event->IP_packet_sizes[i]]++;
 		packetSizes.push_back(event->IP_packet_sizes[i]);
+		packet_intervals.push_back(event->packet_intervals[i]);
 	}
 	//Accumulate to find the lowest Start time and biggest end time.
 	if(event->from_haystack)
