@@ -31,12 +31,16 @@
 /// Number of distinct ports contacted
 #define DISTINCT_PORTS 6
 
-///Measures the distribution of intervals between events
-#define EVENT_INTERVAL_VARIANCE 7
+///Measures the distribution of intervals between packets
+#define PACKET_INTERVAL_MEAN 7
+///Measures the distribution of intervals between packets
+#define PACKET_INTERVAL_DEVIATION 8
+
+
 
 //TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
 ///	This is the number of features in a feature set.
-#define DIMENSION 7
+#define DIMENSION 9
 
 namespace Nova{
 namespace ClassificationEngine{
@@ -72,6 +76,10 @@ public:
 	void CalculatePacketSizeMean();
 	///Calculates a feature
 	void CalculatePacketSizeDeviation();
+	///Calculates a feature
+	void CalculatePacketIntervalMean();
+	///Calculates a feature
+	void CalculatePacketIntervalDeviation();
 	/// Processes incoming evidence before calculating the features
 	void UpdateEvidence(TrafficEvent *event);
 
@@ -99,9 +107,10 @@ private:
 	//Total number of bytes in all packets
 	uint bytesTotal;
 
-	//A vector containing the sum of the packet sizes for each event
-	//Not really a vector of packet sizes as tcp events can contain many packets
+	///A vector of packet sizes for the event
 	vector <int> packetSizes;
+	///A vector of packet arrival times for tracking traffic over time.
+	vector <time_t> packet_intervals;
 
     friend class boost::serialization::access;
 	template<class Archive>
