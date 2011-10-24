@@ -269,15 +269,15 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_wrlock(&lock);
 
-				oldClassification = it->second->classification;
+				oldClassification = it->second->isHostile;
 
 				Classify(it->second);
 				cout << it->second->ToString();
 
-				//If the classification changed
-				if( oldClassification != it->second->classification)
+				//If the hostility changed
+				if( oldClassification != it->second->isHostile)
 				{
-
+					SilentAlarm(it->second);
 				}
 
 				SendToUI(it->second);
@@ -498,7 +498,11 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 
 	if( suspect->classification > classificationThreshold)
 	{
-		//TODO: calculate!!!
+		suspect->isHostile = true;
+	}
+	else
+	{
+		suspect->isHostile = false;
 	}
 
 	delete [] nnIdx;							// clean things up
@@ -1041,6 +1045,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				}
 				continue;
 			}
+
 			prefix = "IS_TRAINING";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
