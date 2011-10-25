@@ -173,14 +173,13 @@ int main(int argc, char *argv[])
 		// Otherwise rules can accumulate in IPtables. Then when you go to delete one,
 		// there will still be more left over and it won't seem to have worked.
 
-		//Figure out if the suspect is hostile or not
-		bool isBadGuy = IsSuspectHostile(suspect);
+
 
 		//If the suspect already exists in our table
 		if(SuspectTable.find(suspect->IP_address.s_addr) != SuspectTable.end())
 		{
 			//If hostility hasn't changed
-			if(SuspectTable[suspect->IP_address.s_addr] == isBadGuy)
+			if(SuspectTable[suspect->IP_address.s_addr] == suspect->isHostile)
 			{
 				//Do nothing. This means no change has happened since last alarm
 				delete suspect;
@@ -189,8 +188,8 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		SuspectTable[suspect->IP_address.s_addr] = isBadGuy;
-		if(isBadGuy&&isEnabled)
+		SuspectTable[suspect->IP_address.s_addr] = suspect->isHostile;
+		if(suspect->isHostile && isEnabled)
 		{
 			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
@@ -326,22 +325,6 @@ string Nova::DoppelgangerModule::Usage()
 	return usage_tips;
 }
 
-//Returns if Suspect is hostile or not
-bool Nova::DoppelgangerModule::IsSuspectHostile(Suspect *suspect)
-{
-	double multiplier = 1;
-
-	if( suspect->flaggedByAlarm )
-	{
-		multiplier = 2;
-	}
-
-	if( (suspect->classification * multiplier) >= .5  )
-	{
-		return true;
-	}
-	return false;
-}
 
 void DoppelgangerModule::LoadConfig(char* input)
 {

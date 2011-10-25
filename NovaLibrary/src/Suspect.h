@@ -79,6 +79,7 @@ private:
 	{
 		ar & IP_address.s_addr;
 		ar & classification;
+		ar & isHostile;
 		ar & needs_classification_update;
 		ar & needs_feature_update;
 		ar & features;
