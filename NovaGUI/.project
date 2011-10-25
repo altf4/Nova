@@ -3,11 +3,6 @@
 	<name>NovaGUI</name>
 	<comment></comment>
 	<projects>
-		<project>ClassificationEngine</project>
-		<project>DoppelgangerModule</project>
-		<project>Haystack</project>
-		<project>LocalTrafficMonitor</project>
-		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -69,7 +64,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.environment</key>
-					<value>NOVA=home/victim/Code/NovaGit/Nova|PATH=/home/victim/Programs/Qt/Desktop/Qt/474/gcc/bin:${env_var:PATH}:/home/david/Programs/Qt/Desktop/Qt/474/gcc/bin:${env_var:PATH}|</value>
+					<value>PATH=/home/victim/Programs/Qt/Desktop/Qt/474/gcc/bin:${env_var:PATH}:/home/david/Programs/Qt/Desktop/Qt/474/gcc/bin:${env_var:PATH}|NOVA=/home/victim/Code/NovaGit/Nova:${env_var:NOVA}|</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.stopOnError</key>
