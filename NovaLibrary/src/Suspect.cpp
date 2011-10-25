@@ -134,10 +134,12 @@ void Suspect::CalculateFeatures(bool isTraining)
 		if(this->features->features[5] > 2)
 		{
 			classification = 1;
+			isHostile = true;
 		}
 		else
 		{
 			classification = 0;
+			isHostile = false;
 		}
 	}
 }
