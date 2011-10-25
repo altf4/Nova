@@ -3,11 +3,6 @@
 	<name>ClassificationEngine</name>
 	<comment></comment>
 	<projects>
-		<project>DoppelgangerModule</project>
-		<project>Haystack</project>
-		<project>LocalTrafficMonitor</project>
-		<project>NovaGUI</project>
-		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
