@@ -30,6 +30,8 @@ LoggerPtr m_logger(Logger::getLogger("main"));
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
 string dev; //Interface name, read from config file
 string honeydConfigPath;
+string pcapPath; //Pcap file to read from instead of live packet capture.
+bool usePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
 
 /// Callback function that is passed to pcap_loop(..) and called each time
 /// a packet is recieved
@@ -213,6 +215,7 @@ int main(int argc, char *argv[])
 	struct bpf_program fp;			/* The compiled filter expression */
 	char filter_exp[64];
 	pcap_t *handle;
+	pcap_t *phandle;
 
 	//Open in non-promiscuous mode, since we only want traffic destined for the host machine
 	handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
@@ -268,6 +271,34 @@ int main(int argc, char *argv[])
 
 	pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
 
+	//If we're reading from a packet capture file
+	if(usePcapFile)
+	{
+		phandle = pcap_open_offline(pcapPath.c_str(), errbuf);
+
+		if(phandle == NULL)
+		{
+			LOG4CXX_ERROR(m_logger, "Couldn't open file: " << pcapPath << ": " << errbuf);
+			return(2);
+		}
+		if (pcap_compile(phandle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
+			exit(1);
+		}
+
+		if (pcap_setfilter(phandle, &fp) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
+			exit(1);
+		}
+	}
+
+	//First process any packets in the file
+	pcap_loop(phandle, -1, Packet_Handler,NULL);
+	//Set the boolean to live capture mode so it won't interfere with live capture
+	usePcapFile = false;
+
 	//"Main Loop"
 	//Runs the function "Packet_Handler" every time a packet is received
     pcap_loop(handle, -1, Packet_Handler, NULL);
@@ -293,6 +324,11 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 			if(it->second.session.size() > 0)
 			{
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
+				//If were reading packets from a file, assume all packets have been loaded and go beyond timeout threshhold
+				if(usePcapFile)
+				{
+					currentTime = packetTime+3+tcpTime;
+				}
 				// If it exists)
 				if(packetTime + 2 < currentTime)
 				{
@@ -437,8 +473,8 @@ vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 void Haystack::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
-	bool verify[4];
-	for(uint i = 0; i < 4; i++)
+	bool verify[6];
+	for(uint i = 0; i < 6; i++)
 		verify[i] = false;
 
 	string line;
@@ -494,6 +530,28 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
+			prefix = "READ_PCAP";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				{
+					usePcapFile = atoi(line.c_str());
+					verify[4]=true;
+				}
+				continue;
+			}
+			prefix = "PCAP_FILE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0)
+				{
+					pcapPath = line;
+					verify[5]=true;
+				}
+				continue;
+			}
 			prefix = "#";
 			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
@@ -504,7 +562,7 @@ void Haystack::LoadConfig(char* input)
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(uint i = 0; i < 4; i++)
+		for(uint i = 0; i < 6; i++)
 		{
 			v &= verify[i];
 		}
