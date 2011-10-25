@@ -120,7 +120,6 @@ private:
 		{
 			ar & features[i];
 		}
-
 	}
 };
 }

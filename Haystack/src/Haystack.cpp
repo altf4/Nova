@@ -215,25 +215,8 @@ int main(int argc, char *argv[])
 	struct bpf_program fp;			/* The compiled filter expression */
 	char filter_exp[64];
 	pcap_t *handle;
-	pcap_t *phandle;
 
-	//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-	handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
 
-	if(handle == NULL)
-	{
-		LOG4CXX_ERROR(m_logger, "Couldn't open device: " << dev << ": " << errbuf);
-		return(2);
-	}
-
-	/* ask pcap for the network address and mask of the device */
-	ret = pcap_lookupnet(dev.c_str(), &netp, &maskp, errbuf);
-
-	if(ret == -1)
-	{
-		LOG4CXX_ERROR(m_logger, errbuf);
-		exit(1);
-	}
 
 	haystackAddresses = GetHaystackAddresses(honeydConfigPath);
 
@@ -257,51 +240,70 @@ int main(int argc, char *argv[])
 
 	LOG4CXX_INFO(m_logger, haystackAddresses_csv);
 
-	if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
-		exit(1);
-	}
-
-	if (pcap_setfilter(handle, &fp) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
-		exit(1);
-	}
-
-	pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
-
 	//If we're reading from a packet capture file
 	if(usePcapFile)
 	{
-		phandle = pcap_open_offline(pcapPath.c_str(), errbuf);
+		handle = pcap_open_offline(pcapPath.c_str(), errbuf);
 
-		if(phandle == NULL)
+		if(handle == NULL)
 		{
 			LOG4CXX_ERROR(m_logger, "Couldn't open file: " << pcapPath << ": " << errbuf);
 			return(2);
 		}
-		if (pcap_compile(phandle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
 			LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
 			exit(1);
 		}
 
-		if (pcap_setfilter(phandle, &fp) == -1)
+		if (pcap_setfilter(handle, &fp) == -1)
 		{
 			LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
 			exit(1);
 		}
+		//First process any packets in the file then close all the sessions
+		pcap_loop(handle, -1, Packet_Handler,NULL);
+		TCPTimeout(NULL);
 	}
+	else
+	{
+		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
+		handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
 
-	//First process any packets in the file
-	pcap_loop(phandle, -1, Packet_Handler,NULL);
-	//Set the boolean to live capture mode so it won't interfere with live capture
-	usePcapFile = false;
+		if(handle == NULL)
+		{
+			LOG4CXX_ERROR(m_logger, "Couldn't open device: " << dev << ": " << errbuf);
+			return(2);
+		}
 
-	//"Main Loop"
-	//Runs the function "Packet_Handler" every time a packet is received
-    pcap_loop(handle, -1, Packet_Handler, NULL);
+		/* ask pcap for the network address and mask of the device */
+		ret = pcap_lookupnet(dev.c_str(), &netp, &maskp, errbuf);
+
+		if(ret == -1)
+		{
+			LOG4CXX_ERROR(m_logger, errbuf);
+			exit(1);
+		}
+
+		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
+			exit(1);
+		}
+
+		if (pcap_setfilter(handle, &fp) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
+			exit(1);
+		}
+
+		pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
+
+
+		//"Main Loop"
+		//Runs the function "Packet_Handler" every time a packet is received
+	    pcap_loop(handle, -1, Packet_Handler, NULL);
+	}
 	return 0;
 }
 
@@ -310,10 +312,8 @@ int main(int argc, char *argv[])
 ///	This thread looks for old tcp sessions and declares them terminated
 void *Nova::Haystack::TCPTimeout(void *ptr)
 {
-	while(1)
+	do
 	{
-		//Check only once every TCP_CHECK_FREQ seconds
-		sleep(tcpFreq);
 		time_t currentTime = time(NULL);
 		time_t packetTime;
 
@@ -368,7 +368,9 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 			}
 		}
 		pthread_rwlock_unlock(&lock);
-	}
+		//Check only once every TCP_CHECK_FREQ seconds
+		sleep(tcpFreq);
+	}while(!usePcapFile);
 	//Shouldn't get here
 	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted");
 	return NULL;
