@@ -170,7 +170,7 @@ void NovaGUI::drawSuspects()
 				continue;
 			}
 			//If Benign
-			if(it->second->classification == 0)
+			if(it->second->isHostile == false)
 			{
 				//Create the Suspect
 				item = new QListWidgetItem(str, this->ui.benignList, 0);

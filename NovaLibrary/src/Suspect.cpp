@@ -22,6 +22,7 @@ Suspect::Suspect()
 	needs_classification_update = true;
 	needs_feature_update = true;
 	flaggedByAlarm = false;
+	isHostile = false;
 	features = NULL;
 	annPoint = annAllocPt(DIMENSION);
 	evidence.clear();
@@ -53,6 +54,7 @@ Suspect::Suspect(TrafficEvent *event)
 {
 	this->IP_address = event->src_IP;
 	this->classification = -1;
+	this->isHostile = false;
 	this->features = new FeatureSet();
 	this->annPoint = NULL;
 	this->flaggedByAlarm = false;
@@ -77,11 +79,17 @@ string Suspect::ToString()
 		ss << " Haystack Traffic Distribution: " << features->features[IP_TRAFFIC_DISTRIBUTION] << "\n";
 		ss << " Distinct Ports Contacted: " << features->features[DISTINCT_PORTS] << "\n";
 		ss << " Port Traffic Distribution: "  <<  features->features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-		ss <<  " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+		ss << " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
 		ss << " Mean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
 		ss << " Packet Size Variance: " << features->features[PACKET_SIZE_DEVIATION] << "\n";
 		ss << " Mean Packet Interval: " << features->features[PACKET_INTERVAL_MEAN] << "\n";
 		ss << " Packet Interval Variance: " << features->features[PACKET_INTERVAL_DEVIATION] << "\n";
+		ss << " Suspect is ";
+		if(!isHostile)
+		{
+			ss << "not ";
+		}
+		ss << "hostile\n";
 	}
 	else
 	{
@@ -131,24 +139,6 @@ void Suspect::CalculateFeatures(bool isTraining)
 		{
 			classification = 0;
 		}
-		/*//Calculate classification on the basis of how many Evil Events it has
-		uint sum = 0;
-		for(uint j = 0; j < evidence.size(); j++)
-		{
-			if( evidence[j]->isHostile )
-			{
-				sum++;
-			}
-		}
-		if(sum > ( evidence.size() / 2 ) )
-		{
-			classification = 1;
-		}
-		else
-		{
-			classification = 0;
-		}*/
-
 	}
 }
 }

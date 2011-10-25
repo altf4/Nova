@@ -29,9 +29,6 @@ Suspect *ReceiveAlarm(int alarmSock);
 //Returns usage tips
 string Usage();
 
-//Calculates if the current suspect should be marked hostile or not
-bool IsSuspectHostile(Suspect *suspect);
-
 //Loads configuration variables from NOVAConfig_DM.txt or specified config file
 void LoadConfig(char* input);
 
