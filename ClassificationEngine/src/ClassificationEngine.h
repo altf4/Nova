@@ -26,6 +26,12 @@
 #define CE_FILENAME "/etc/CEKey"
 //dimension
 #define DIM 9
+//Number of lines expected in the CE config file
+#define CONFIG_FILE_LINE_COUNT 13
+
+//Used in classification algorithm. Store it here so we only need to calculate it once
+const double sqrtDIM = sqrt(DIM);
+
 
 namespace Nova{
 namespace ClassificationEngine{

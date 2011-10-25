@@ -48,6 +48,7 @@ int maxFeatureVal;				//The value to normalize feature values to.
 int k;							//number of nearest neighbors
 double eps;						//error bound
 int maxPts;						//maximum number of data points
+double classificationThreshold = .5; //value of classification to define split between hostile / benign
 //End configured variables
 const int dim = DIM;					//dimension
 
@@ -234,6 +235,7 @@ int main(int argc,char *argv[])
 //	for all the current suspects
 void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 {
+	int oldClassification;
 	//Classification Loop
 	while(true)
 	{
@@ -266,9 +268,21 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			{
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_wrlock(&lock);
+
+				oldClassification = it->second->isHostile;
+
 				Classify(it->second);
 				cout << it->second->ToString();
+
+				//If the hostility changed
+				if( oldClassification != it->second->isHostile)
+				{
+					SilentAlarm(it->second);
+				}
+
 				SendToUI(it->second);
+
+
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_rdlock(&lock);
 			}
@@ -448,36 +462,47 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 			dists,								// distance (returned)
 			eps);								// error bound
 
-	//Determine classification according to a majority vote.
+	//Determine classification according to weight by distance
+	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
+	//	This will make the classification range from 0 to 1
 	double classifyCount = 0;
-	for (int i = 0;i < k;i++)					// print summary
+	for (int i = 0; i < k; i++)
 	{
 		dists[i] = sqrt(dists[i]);				// unsquare distance
-		classifyCount += dataPtsWithClass[ nnIdx[i] ]->classification;
+
+		//If Hostile
+		if( dataPtsWithClass[ nnIdx[i] ]->classification == 1)
+		{
+			classifyCount += (1.0 - dists[i]);
+		}
+		//If benign
+		else if( dataPtsWithClass[ nnIdx[i] ]->classification == 0)
+		{
+			classifyCount -= (1.0 - dists[i]);
+		}
+		else
+		{
+			//error case; Data points must be 0 or 1
+			LOG4CXX_ERROR(m_logger,"Data point: " << i << " has an invalid classification of: " <<
+					dataPtsWithClass[ nnIdx[i] ]->classification << ". This must be either 0 (benign) or 1 (hostile).");
+			suspect->classification = -1;
+			delete [] nnIdx;							// clean things up
+		    delete [] dists;
+		    delete kdTree;
+		    annClose();
+		    return;
+		}
 	}
 
-	int oldClassification = suspect->classification;
+	suspect->classification = .5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM ));
 
-	//If this suspect has been flagged by an alarm, then let's be doubly sensitive
-	if(suspect->flaggedByAlarm)
+	if( suspect->classification > classificationThreshold)
 	{
-		classifyCount *= 2;
-	}
-
-	//If half or more of the k are evil, then evil
-	if(classifyCount >= ((double)k / 2.0))
-	{
-		suspect->classification = 1;
+		suspect->isHostile = true;
 	}
 	else
 	{
-		suspect->classification = 0;
-	}
-
-	//If the classification changed, then send out an alarm.
-	if(oldClassification != suspect->classification)
-	{
-		SilentAlarm(suspect);
+		suspect->isHostile = false;
 	}
 
 	delete [] nnIdx;							// clean things up
@@ -866,8 +891,8 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 void ClassificationEngine::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
-	bool verify[12];
-	for(uint i = 0; i < 12; i++)
+	bool verify[CONFIG_FILE_LINE_COUNT];
+	for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		verify[i] = false;
 
 	string line;
@@ -1020,6 +1045,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				}
 				continue;
 			}
+
 			prefix = "IS_TRAINING";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -1032,6 +1058,19 @@ void ClassificationEngine::LoadConfig(char* input)
 				continue;
 			}
 
+			prefix = "CLASSIFICATION_THRESHOLD";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atof(line.c_str()) >= 0)
+				{
+					classificationThreshold = atof(line.c_str());
+					verify[12]=true;
+				}
+				continue;
+			}
+
+
 			prefix = "#";
 			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
 			{
@@ -1042,7 +1081,7 @@ void ClassificationEngine::LoadConfig(char* input)
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(uint i = 0; i < 12; i++)
+		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		{
 			v &= verify[i];
 		}
