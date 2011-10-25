@@ -84,7 +84,7 @@ string Suspect::ToString()
 		{
 			ss << "not ";
 		}
-		ss << "hostile";
+		ss << "hostile\n";
 		//ss << " Packet Size Variance: " << features->features[PACKET_SIZE_VARIANCE] << "\n";
 	}
 	else
@@ -131,24 +131,6 @@ void Suspect::CalculateFeatures(bool isTraining)
 		{
 			classification = 0;
 		}
-		/*//Calculate classification on the basis of how many Evil Events it has
-		uint sum = 0;
-		for(uint j = 0; j < evidence.size(); j++)
-		{
-			if( evidence[j]->isHostile )
-			{
-				sum++;
-			}
-		}
-		if(sum > ( evidence.size() / 2 ) )
-		{
-			classification = 1;
-		}
-		else
-		{
-			classification = 0;
-		}*/
-
 	}
 }
 }

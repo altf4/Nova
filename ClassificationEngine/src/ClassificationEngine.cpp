@@ -469,7 +469,7 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	for (int i = 0; i < k; i++)
 	{
 		dists[i] = sqrt(dists[i]);				// unsquare distance
-		cout << "My distance is: " << dists[i] << endl;
+
 		//If Hostile
 		if( dataPtsWithClass[ nnIdx[i] ]->classification == 1)
 		{
@@ -494,7 +494,7 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 		}
 	}
 
-	suspect->classification = .5 + (classifyCount / (2.0 * (double)k));
+	suspect->classification = .5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM ));
 
 	if( suspect->classification > classificationThreshold)
 	{
