@@ -190,7 +190,7 @@ int main(int argc,char *argv[])
         exit(1);
     }
 
-    if(listen(IPCsock, ipcMaxConnections) == -1)
+    if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
     {
     	LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
 		close(IPCsock);

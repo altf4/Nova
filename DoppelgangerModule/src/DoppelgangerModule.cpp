@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if(listen(alarmSocket, 5) == -1)
+    if(listen(alarmSocket, SOCKET_QUEUE_SIZE) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"listen: " << strerror(errno));
 		close(alarmSocket);
