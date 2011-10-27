@@ -944,7 +944,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(line.size() > 6 && line.size() <  16)
 				{
 					broadcastAddr = line;
-					verify[3]=true;
+					verify[2]=true;
 				}
 				continue;
 			}
@@ -956,7 +956,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) > 0)
 				{
 					sAlarmPort = atoi(line.c_str());
-					verify[4]=true;
+					verify[3]=true;
 				}
 				continue;
 			}
@@ -968,7 +968,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) > 0)
 				{
 					k = atoi(line.c_str());
-					verify[5]=true;
+					verify[4]=true;
 				}
 				continue;
 			}
@@ -980,7 +980,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atof(line.c_str()) >= 0)
 				{
 					eps = atof(line.c_str());
-					verify[6]=true;
+					verify[5]=true;
 				}
 				continue;
 			}
@@ -992,7 +992,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) > 0)
 				{
 					maxPts = atoi(line.c_str());
-					verify[7]=true;
+					verify[6]=true;
 				}
 				continue;
 			}
@@ -1004,7 +1004,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) > 0)
 				{
 					classificationTimeout = atoi(line.c_str());
-					verify[8]=true;
+					verify[7]=true;
 				}
 				continue;
 			}
@@ -1016,7 +1016,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) > 0)
 				{
 					trainingTimeout = atoi(line.c_str());
-					verify[9]=true;
+					verify[8]=true;
 				}
 				continue;
 			}
@@ -1028,7 +1028,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) > 0)
 				{
 					maxFeatureVal = atoi(line.c_str());
-					verify[10]=true;
+					verify[9]=true;
 				}
 				continue;
 			}
@@ -1040,7 +1040,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					isTraining = atoi(line.c_str());
-					verify[11]=true;
+					verify[10]=true;
 				}
 				continue;
 			}
@@ -1052,7 +1052,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atof(line.c_str()) >= 0)
 				{
 					classificationThreshold = atof(line.c_str());
-					verify[12]=true;
+					verify[11]=true;
 				}
 				continue;
 			}

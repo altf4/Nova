@@ -114,34 +114,64 @@ bool NovaGUI::ReceiveCE(int socket)
 		// read class state from archive
 		ia >> suspect;
 		// archive and stream closed when destructors are called
-		updateSuspect(suspect);
+
 	}
 	catch(boost::archive::archive_exception e)
 	{
 		LOG4CXX_ERROR(m_logger, "Error interpreting received Suspect: " << string(e.what()));
 		return false;
 	}
+	struct suspectItem sItem;
+	sItem.suspect = suspect;
+	updateSuspect(sItem);
 	return true;
 }
 
-void NovaGUI::updateSuspect(Suspect* suspect)
+void NovaGUI::updateSuspect(suspectItem suspectItem)
 {
 
-	if(suspect == NULL) return;
+	if(suspectItem.suspect == NULL) return;
 
 	pthread_rwlock_wrlock(&lock);
+
+	//We borrow the flag to show there is new information.
+	suspectItem.suspect->needs_feature_update = true;
+
 	//If the suspect already exists in our table
-	if(SuspectTable.find(suspect->IP_address.s_addr) != SuspectTable.end())
+	if(SuspectTable.find(suspectItem.suspect->IP_address.s_addr) != SuspectTable.end())
 	{
-		//Update the information.
-		delete SuspectTable[suspect->IP_address.s_addr];
-		SuspectTable[suspect->IP_address.s_addr] = suspect;
+		//If classification hasn't changed
+		if(suspectItem.suspect->isHostile == SuspectTable[suspectItem.suspect->IP_address.s_addr].suspect->isHostile)
+		{
+			//We set this flag if the QWidgetListItem needs to be changed or created
+			suspectItem.suspect->needs_classification_update = false;
+		}
+
+		//If it has
+		else
+		{
+			//This flag is set because the classification has changed, and the item needs to be moved
+			suspectItem.suspect->needs_classification_update = true;
+		}
+
+		//Delete the old Suspect since we created and pointed to a new one
+		delete SuspectTable[suspectItem.suspect->IP_address.s_addr].suspect;
+
+		//We point to the same item so it doesn't need to be deleted.
+		suspectItem.item = SuspectTable[suspectItem.suspect->IP_address.s_addr].item;
+
+		//Update the entry in the table
+		SuspectTable[suspectItem.suspect->IP_address.s_addr] = suspectItem;
 	}
 	//If the suspect is new
 	else
 	{
-		//Put him in the table
-		SuspectTable[suspect->IP_address.s_addr] = suspect;
+		//This flag is set because it is a new item and to the GUI display has no classification yet
+		suspectItem.suspect->needs_classification_update = true;
+		suspectItem.item = NULL;
+
+		//Put it in the table
+		SuspectTable[suspectItem.suspect->IP_address.s_addr] = suspectItem;
 	}
 	pthread_rwlock_unlock(&lock);
 }
@@ -153,42 +183,82 @@ void NovaGUI::drawSuspects()
 	gbrush.setStyle(Qt::NoBrush);
 	QBrush rbrush(QColor(200, 0, 0, 255));
 	rbrush.setStyle(Qt::NoBrush);
-	QListWidgetItem * item;
 
-	this->ui.benignList->clear();
-	this->ui.hostileList->clear();
+	QListWidgetItem * item;
+	Suspect * suspect;
 	QString str;
 
 	pthread_rwlock_rdlock(&lock);
 	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		if(it->second != NULL)
+		//If there is new information
+		if(it->second.suspect->needs_feature_update)
 		{
-			if ((str = (QString)it->second->ToString().c_str()) == NULL)
+			//Extract Information
+			str = (QString)it->second.suspect->ToString().c_str();
+			//Set pointers for fast access
+			item = it->second.item;
+			suspect = it->second.suspect;
+
+			//If the item exists and is in the same list
+			if(suspect->needs_classification_update == false)
 			{
-				LOG4CXX_INFO(m_logger, "Suspect parsed to a null string");
-				continue;
+				item->setText(str);
+				//Reset the flag
+				suspect->needs_feature_update = false;
 			}
-			//If Benign
-			if(it->second->isHostile == false)
+			//If the item exists but classification has changed
+			else if(item != NULL)
 			{
-				//Create the Suspect
-				item = new QListWidgetItem(str, this->ui.benignList, 0);
-				item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
-				item->setForeground(gbrush);
+				//If Benign, old item is in hostile
+				if(suspect->isHostile == false)
+				{
+					//Remove old item, update info, change color, put in new list
+					this->ui.hostileList->removeItemWidget(item);
+					item->setForeground(gbrush);
+					item->setText(str);
+					this->ui.benignList->addItem(item);
+				}
+				//If Hostile, old item is in benign
+				else
+				{
+					//Remove old item, update info, change color, put in new list
+					this->ui.benignList->removeItemWidget(it->second.item);
+					item->setForeground(rbrush);
+					item->setText(str);
+					this->ui.hostileList->addItem(item);
+				}
+				//Reset the flags
+				suspect->needs_feature_update = false;
+				suspect->needs_classification_update = false;
 			}
-			//If Hostile
+			//If it's a new item
 			else
 			{
-				//Create the Suspect
-				item = new QListWidgetItem(str, this->ui.hostileList, 0);
-				item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
-				item->setForeground(rbrush);
+				//If Benign
+				if(suspect->isHostile == false)
+				{
+					//Create the Suspect in list with info set alignment and color
+					item = new QListWidgetItem(str, this->ui.benignList, 0);
+					item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
+					item->setForeground(gbrush);
+					//Point to the new item
+					it->second.item = item;
+				}
+				//If Hostile
+				else
+				{
+					//Create the Suspect in list with info set alignment and color
+					item = new QListWidgetItem(str, this->ui.hostileList, 0);
+					item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
+					item->setForeground(rbrush);
+					//Point to the new item
+					it->second.item = item;
+				}
+				//Reset the flags
+				suspect->needs_feature_update = false;
+				suspect->needs_classification_update = false;
 			}
-		}
-		else
-		{
-			LOG4CXX_INFO(m_logger, "NULL pointer in SuspectTable");
 		}
 	}
 	pthread_rwlock_unlock(&lock);

@@ -22,6 +22,14 @@
 #define MAX_MSG_SIZE 65535
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
+using namespace Nova;
+using namespace ClassificationEngine;
+
+struct suspectItem
+{
+	Suspect * suspect;
+	QListWidgetItem * item;
+};
 
 class NovaGUI : public QMainWindow
 {
@@ -37,7 +45,7 @@ public:
     bool ReceiveCE(int socket);
 
     ///Processes the recieved suspect in the suspect table
-    void updateSuspect(Nova::ClassificationEngine::Suspect* suspect);
+    void updateSuspect(suspectItem suspect);
 
     ///Updates the UI with the latest suspect information
     void drawSuspects();
@@ -67,10 +75,7 @@ private:
 
 };
 
-using namespace Nova;
-using namespace ClassificationEngine;
-
-typedef std::tr1::unordered_map<in_addr_t, Suspect*> SuspectHashTable;
+typedef std::tr1::unordered_map<in_addr_t, suspectItem> SuspectHashTable;
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);
@@ -82,6 +87,7 @@ void sclose(int sock);
 
 //Opens the socket and creates a thread to listen on it.
 void openSocket(NovaGUI *window);
+
 
 
 
