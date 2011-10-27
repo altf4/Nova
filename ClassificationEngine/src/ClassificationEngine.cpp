@@ -37,7 +37,6 @@ static struct sockaddr_in hostAddr;
 //Global variables related to Classification
 
 //Configured in NOVAConfig_CE or specified config file.
-int ipcMaxConnections;
 string broadcastAddr;			//Silent Alarm destination IP address
 int sAlarmPort;					//Silent Alarm destination port
 int classificationTimeout;		//In seconds, how long to wait between classifications
@@ -934,18 +933,6 @@ void ClassificationEngine::LoadConfig(char* input)
 					dataFile = line;
 					outFile = line.c_str();
 					verify[1]=true;
-				}
-				continue;
-			}
-
-			prefix = "IPC_MAX_CONNECTIONS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					ipcMaxConnections = atoi(line.c_str());
-					verify[2]=true;
 				}
 				continue;
 			}
