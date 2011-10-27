@@ -17,23 +17,29 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>811</width>
-      <height>561</height>
+      <x>79</x>
+      <y>-5</y>
+      <width>723</width>
+      <height>570</height>
      </rect>
     </property>
+    <property name="tabPosition">
+     <enum>QTabWidget::West</enum>
+    </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>0</number>
+    </property>
+    <property name="usesScrollButtons">
+     <bool>true</bool>
     </property>
     <widget class="QWidget" name="Suspects">
      <attribute name="title">
-      <string>Suspects</string>
+      <string/>
      </attribute>
      <widget class="QListWidget" name="benignList">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>20</x>
         <y>50</y>
         <width>301</width>
         <height>471</height>
@@ -43,7 +49,7 @@
      <widget class="QLabel" name="bListLabel">
       <property name="geometry">
        <rect>
-        <x>90</x>
+        <x>100</x>
         <y>20</y>
         <width>111</width>
         <height>31</height>
@@ -56,7 +62,7 @@
      <widget class="QLabel" name="hListLabel">
       <property name="geometry">
        <rect>
-        <x>440</x>
+        <x>450</x>
         <y>20</y>
         <width>111</width>
         <height>31</height>
@@ -69,7 +75,7 @@
      <widget class="QListWidget" name="hostileList">
       <property name="geometry">
        <rect>
-        <x>360</x>
+        <x>370</x>
         <y>50</y>
         <width>301</width>
         <height>471</height>
@@ -79,13 +85,13 @@
     </widget>
     <widget class="QWidget" name="CETab">
      <attribute name="title">
-      <string>Classification Engine</string>
+      <string/>
      </attribute>
      <widget class="QPushButton" name="CELoadButton">
       <property name="geometry">
        <rect>
-        <x>600</x>
-        <y>500</y>
+        <x>180</x>
+        <y>430</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -97,8 +103,8 @@
      <widget class="QPlainTextEdit" name="CETrainingTimeoutEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>410</y>
+        <x>190</x>
+        <y>340</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -107,8 +113,8 @@
      <widget class="QLabel" name="CEInterfaceLabel">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>140</y>
+        <x>110</x>
+        <y>70</y>
         <width>71</width>
         <height>20</height>
        </rect>
@@ -120,8 +126,8 @@
      <widget class="QLabel" name="CEIPCMaxConnectLabel">
       <property name="geometry">
        <rect>
-        <x>460</x>
-        <y>200</y>
+        <x>40</x>
+        <y>130</y>
         <width>131</width>
         <height>20</height>
        </rect>
@@ -133,8 +139,8 @@
      <widget class="QPushButton" name="CESaveButton">
       <property name="geometry">
        <rect>
-        <x>700</x>
-        <y>500</y>
+        <x>280</x>
+        <y>430</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -146,8 +152,8 @@
      <widget class="QPlainTextEdit" name="CEMaxFeatureValEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>440</y>
+        <x>190</x>
+        <y>370</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -156,8 +162,8 @@
      <widget class="QLabel" name="CEConfigLabel">
       <property name="geometry">
        <rect>
-        <x>670</x>
-        <y>110</y>
+        <x>250</x>
+        <y>40</y>
         <width>67</width>
         <height>17</height>
        </rect>
@@ -169,8 +175,8 @@
      <widget class="QPlainTextEdit" name="CEEnableTrainingEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>470</y>
+        <x>190</x>
+        <y>400</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -179,8 +185,8 @@
      <widget class="QLabel" name="CEDatafileLabel">
       <property name="geometry">
        <rect>
-        <x>510</x>
-        <y>170</y>
+        <x>90</x>
+        <y>100</y>
         <width>81</width>
         <height>21</height>
        </rect>
@@ -192,8 +198,8 @@
      <widget class="Line" name="CELine_2">
       <property name="geometry">
        <rect>
-        <x>590</x>
-        <y>140</y>
+        <x>170</x>
+        <y>70</y>
         <width>20</width>
         <height>351</height>
        </rect>
@@ -205,8 +211,8 @@
      <widget class="QPlainTextEdit" name="CEMaxPtsEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>350</y>
+        <x>190</x>
+        <y>280</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -215,8 +221,8 @@
      <widget class="QPlainTextEdit" name="CEClassificationTimeoutEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>380</y>
+        <x>190</x>
+        <y>310</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -225,8 +231,8 @@
      <widget class="QPlainTextEdit" name="CEEPSEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>320</y>
+        <x>190</x>
+        <y>250</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -235,8 +241,8 @@
      <widget class="QPlainTextEdit" name="CEBroadcastAddrEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>230</y>
+        <x>190</x>
+        <y>160</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -245,8 +251,8 @@
      <widget class="QPlainTextEdit" name="CESilentAlarmPortEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>260</y>
+        <x>190</x>
+        <y>190</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -255,8 +261,8 @@
      <widget class="QPlainTextEdit" name="CEKEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>290</y>
+        <x>190</x>
+        <y>220</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -265,8 +271,8 @@
      <widget class="QPlainTextEdit" name="CEInterfaceEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>140</y>
+        <x>190</x>
+        <y>70</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -275,8 +281,8 @@
      <widget class="QPlainTextEdit" name="CEIPCMaxConnectEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>200</y>
+        <x>190</x>
+        <y>130</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -285,8 +291,8 @@
      <widget class="QPlainTextEdit" name="CEDatafileEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>170</y>
+        <x>190</x>
+        <y>100</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -295,8 +301,8 @@
      <widget class="QLabel" name="CEBroadcastAddrLabel">
       <property name="geometry">
        <rect>
-        <x>480</x>
-        <y>230</y>
+        <x>60</x>
+        <y>160</y>
         <width>121</width>
         <height>20</height>
        </rect>
@@ -308,8 +314,8 @@
      <widget class="QLabel" name="CESilentAlarmPortLabel">
       <property name="geometry">
        <rect>
-        <x>490</x>
-        <y>260</y>
+        <x>70</x>
+        <y>190</y>
         <width>101</width>
         <height>20</height>
        </rect>
@@ -321,8 +327,8 @@
      <widget class="QLabel" name="CEKLabel">
       <property name="geometry">
        <rect>
-        <x>580</x>
-        <y>290</y>
+        <x>160</x>
+        <y>220</y>
         <width>16</width>
         <height>20</height>
        </rect>
@@ -334,8 +340,8 @@
      <widget class="QLabel" name="CEEPSLabel">
       <property name="geometry">
        <rect>
-        <x>570</x>
-        <y>320</y>
+        <x>150</x>
+        <y>250</y>
         <width>21</width>
         <height>20</height>
        </rect>
@@ -347,8 +353,8 @@
      <widget class="QLabel" name="CEMaxPtsLabel">
       <property name="geometry">
        <rect>
-        <x>540</x>
-        <y>350</y>
+        <x>120</x>
+        <y>280</y>
         <width>51</width>
         <height>20</height>
        </rect>
@@ -360,8 +366,8 @@
      <widget class="QLabel" name="CEClassificationTimeoutLabel">
       <property name="geometry">
        <rect>
-        <x>460</x>
-        <y>380</y>
+        <x>40</x>
+        <y>310</y>
         <width>131</width>
         <height>20</height>
        </rect>
@@ -373,8 +379,8 @@
      <widget class="QLabel" name="CETrainingTimeoutLabel">
       <property name="geometry">
        <rect>
-        <x>490</x>
-        <y>410</y>
+        <x>70</x>
+        <y>340</y>
         <width>101</width>
         <height>20</height>
        </rect>
@@ -386,8 +392,8 @@
      <widget class="QLabel" name="CEMaxFeatureValLabel">
       <property name="geometry">
        <rect>
-        <x>480</x>
-        <y>440</y>
+        <x>60</x>
+        <y>370</y>
         <width>111</width>
         <height>20</height>
        </rect>
@@ -399,8 +405,8 @@
      <widget class="QLabel" name="CEEnableTrainingLabel">
       <property name="geometry">
        <rect>
-        <x>460</x>
-        <y>470</y>
+        <x>40</x>
+        <y>400</y>
         <width>131</width>
         <height>20</height>
        </rect>
@@ -412,13 +418,13 @@
     </widget>
     <widget class="QWidget" name="DMTab">
      <attribute name="title">
-      <string>Doppelganger Module</string>
+      <string/>
      </attribute>
      <widget class="QPlainTextEdit" name="DMInterfaceEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>410</y>
+        <x>180</x>
+        <y>70</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -427,8 +433,8 @@
      <widget class="Line" name="DMLine">
       <property name="geometry">
        <rect>
-        <x>590</x>
-        <y>410</y>
+        <x>160</x>
+        <y>70</y>
         <width>16</width>
         <height>81</height>
        </rect>
@@ -440,8 +446,8 @@
      <widget class="QLabel" name="DMIPLabel">
       <property name="geometry">
        <rect>
-        <x>490</x>
-        <y>440</y>
+        <x>60</x>
+        <y>100</y>
         <width>101</width>
         <height>21</height>
        </rect>
@@ -453,8 +459,8 @@
      <widget class="QLabel" name="DMInterfaceLabel">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>410</y>
+        <x>100</x>
+        <y>70</y>
         <width>71</width>
         <height>21</height>
        </rect>
@@ -466,8 +472,8 @@
      <widget class="QPlainTextEdit" name="DMIPEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>440</y>
+        <x>180</x>
+        <y>100</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -476,8 +482,8 @@
      <widget class="QLabel" name="DMEnabledLabel">
       <property name="geometry">
        <rect>
-        <x>460</x>
-        <y>470</y>
+        <x>30</x>
+        <y>130</y>
         <width>131</width>
         <height>20</height>
        </rect>
@@ -489,8 +495,8 @@
      <widget class="QPlainTextEdit" name="DMEnabledEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>470</y>
+        <x>180</x>
+        <y>130</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -499,8 +505,8 @@
      <widget class="QPushButton" name="DMSaveButton">
       <property name="geometry">
        <rect>
-        <x>700</x>
-        <y>500</y>
+        <x>270</x>
+        <y>160</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -512,8 +518,8 @@
      <widget class="QLabel" name="DMConfigLabel">
       <property name="geometry">
        <rect>
-        <x>650</x>
-        <y>380</y>
+        <x>220</x>
+        <y>40</y>
         <width>67</width>
         <height>17</height>
        </rect>
@@ -525,8 +531,8 @@
      <widget class="QPushButton" name="DMLoadButton">
       <property name="geometry">
        <rect>
-        <x>600</x>
-        <y>500</y>
+        <x>170</x>
+        <y>160</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -538,13 +544,13 @@
     </widget>
     <widget class="QWidget" name="HSTab">
      <attribute name="title">
-      <string>Haystack Monitor</string>
+      <string/>
      </attribute>
      <widget class="QLabel" name="HSConfigLabel">
       <property name="geometry">
        <rect>
-        <x>650</x>
-        <y>330</y>
+        <x>240</x>
+        <y>80</y>
         <width>67</width>
         <height>17</height>
        </rect>
@@ -556,8 +562,8 @@
      <widget class="QPlainTextEdit" name="HSFreqEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>470</y>
+        <x>200</x>
+        <y>220</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -566,8 +572,8 @@
      <widget class="QPushButton" name="HSLoadButton">
       <property name="geometry">
        <rect>
-        <x>600</x>
-        <y>500</y>
+        <x>190</x>
+        <y>250</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -579,8 +585,8 @@
      <widget class="Line" name="HSLine">
       <property name="geometry">
        <rect>
-        <x>590</x>
-        <y>380</y>
+        <x>180</x>
+        <y>130</y>
         <width>20</width>
         <height>111</height>
        </rect>
@@ -592,8 +598,8 @@
      <widget class="QLabel" name="HSInterfaceLabel">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>380</y>
+        <x>120</x>
+        <y>130</y>
         <width>71</width>
         <height>21</height>
        </rect>
@@ -605,8 +611,8 @@
      <widget class="QPlainTextEdit" name="HSTimeoutEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>440</y>
+        <x>200</x>
+        <y>190</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -615,8 +621,8 @@
      <widget class="QPushButton" name="HSSaveButton">
       <property name="geometry">
        <rect>
-        <x>700</x>
-        <y>500</y>
+        <x>290</x>
+        <y>250</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -628,8 +634,8 @@
      <widget class="QPlainTextEdit" name="HSInterfaceEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>380</y>
+        <x>200</x>
+        <y>130</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -638,8 +644,8 @@
      <widget class="QLabel" name="HSTimeoutLabel">
       <property name="geometry">
        <rect>
-        <x>510</x>
-        <y>440</y>
+        <x>100</x>
+        <y>190</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -651,8 +657,8 @@
      <widget class="QLabel" name="HSFreqLabel">
       <property name="geometry">
        <rect>
-        <x>470</x>
-        <y>470</y>
+        <x>60</x>
+        <y>220</y>
         <width>131</width>
         <height>20</height>
        </rect>
@@ -664,8 +670,8 @@
      <widget class="QPlainTextEdit" name="HSHoneyDConfigEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>410</y>
+        <x>200</x>
+        <y>160</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -674,8 +680,8 @@
      <widget class="QLabel" name="HSHoneyDConfigLabel">
       <property name="geometry">
        <rect>
-        <x>440</x>
-        <y>410</y>
+        <x>30</x>
+        <y>160</y>
         <width>151</width>
         <height>21</height>
        </rect>
@@ -687,13 +693,13 @@
     </widget>
     <widget class="QWidget" name="LTMTab">
      <attribute name="title">
-      <string>Local Traffic Monitor</string>
+      <string/>
      </attribute>
      <widget class="QPlainTextEdit" name="LTMInterfaceEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>410</y>
+        <x>220</x>
+        <y>90</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -702,8 +708,8 @@
      <widget class="QPlainTextEdit" name="LTMTimeoutEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>440</y>
+        <x>220</x>
+        <y>120</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -712,8 +718,8 @@
      <widget class="QPlainTextEdit" name="LTMFreqEdit">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>470</y>
+        <x>220</x>
+        <y>150</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -722,8 +728,8 @@
      <widget class="QLabel" name="LTMInterfaceLabel">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>410</y>
+        <x>140</x>
+        <y>90</y>
         <width>71</width>
         <height>21</height>
        </rect>
@@ -735,8 +741,8 @@
      <widget class="QLabel" name="LTMTimeoutLabel">
       <property name="geometry">
        <rect>
-        <x>510</x>
-        <y>440</y>
+        <x>120</x>
+        <y>120</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -748,8 +754,8 @@
      <widget class="QLabel" name="LTMFreqLabel">
       <property name="geometry">
        <rect>
-        <x>470</x>
-        <y>470</y>
+        <x>80</x>
+        <y>150</y>
         <width>131</width>
         <height>20</height>
        </rect>
@@ -761,8 +767,8 @@
      <widget class="Line" name="LTMLine">
       <property name="geometry">
        <rect>
-        <x>590</x>
-        <y>410</y>
+        <x>200</x>
+        <y>90</y>
         <width>16</width>
         <height>81</height>
        </rect>
@@ -774,8 +780,8 @@
      <widget class="QPushButton" name="LTMSaveButton">
       <property name="geometry">
        <rect>
-        <x>700</x>
-        <y>500</y>
+        <x>310</x>
+        <y>180</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -787,8 +793,8 @@
      <widget class="QLabel" name="LTMConfigLabel">
       <property name="geometry">
        <rect>
-        <x>650</x>
-        <y>380</y>
+        <x>260</x>
+        <y>60</y>
         <width>67</width>
         <height>17</height>
        </rect>
@@ -800,8 +806,8 @@
      <widget class="QPushButton" name="LTMLoadButton">
       <property name="geometry">
        <rect>
-        <x>600</x>
-        <y>500</y>
+        <x>210</x>
+        <y>180</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -811,6 +817,79 @@
       </property>
      </widget>
     </widget>
+   </widget>
+   <widget class="QPushButton" name="SuspectButton">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>101</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Suspects</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="CEButton">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>120</y>
+      <width>101</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Classification
+Engine</string>
+    </property>
+    <property name="autoRepeat">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="DMButton">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>230</y>
+      <width>101</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Doppelganger
+Module</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="HSButton">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>340</y>
+      <width>101</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Haystack
+Monitor</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="LTMButton">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>450</y>
+      <width>101</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Local
+Traffic
+Monitor</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
