@@ -473,12 +473,12 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 		//If Hostile
 		if( dataPtsWithClass[ nnIdx[i] ]->classification == 1)
 		{
-			classifyCount += (1.0 - dists[i]);
+			classifyCount += (sqrtDIM - dists[i]);
 		}
 		//If benign
 		else if( dataPtsWithClass[ nnIdx[i] ]->classification == 0)
 		{
-			classifyCount -= (1.0 - dists[i]);
+			classifyCount -= (sqrtDIM - dists[i]);
 		}
 		else
 		{
