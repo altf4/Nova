@@ -27,7 +27,7 @@
 //dimension
 #define DIM 9
 //Number of lines expected in the CE config file
-#define CONFIG_FILE_LINE_COUNT 13
+#define CONFIG_FILE_LINE_COUNT 12
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
 
