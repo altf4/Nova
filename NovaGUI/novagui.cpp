@@ -194,6 +194,16 @@ void NovaGUI::drawSuspects()
 	pthread_rwlock_unlock(&lock);
 }
 
+void NovaGUI::on_SuspectButton_clicked()
+{
+	this->ui.tabWidget->setCurrentIndex(0);
+}
+
+void NovaGUI::on_CEButton_clicked()
+{
+	this->ui.tabWidget->setCurrentIndex(1);
+}
+
 void NovaGUI::on_CELoadButton_clicked()
 {
 	string line;
@@ -352,6 +362,11 @@ void NovaGUI::on_CESaveButton_clicked()
 
 }
 
+void NovaGUI::on_DMButton_clicked()
+{
+	this->ui.tabWidget->setCurrentIndex(2);
+}
+
 void NovaGUI::on_DMLoadButton_clicked()
 {
 	string line;
@@ -421,6 +436,11 @@ void NovaGUI::on_DMSaveButton_clicked()
 	}
 	config.close();
 
+}
+
+void NovaGUI::on_HSButton_clicked()
+{
+	this->ui.tabWidget->setCurrentIndex(3);
 }
 
 void NovaGUI::on_HSLoadButton_clicked()
@@ -504,6 +524,11 @@ void NovaGUI::on_HSSaveButton_clicked()
 
 }
 
+void NovaGUI::on_LTMButton_clicked()
+{
+	this->ui.tabWidget->setCurrentIndex(4);
+}
+
 void NovaGUI::on_LTMLoadButton_clicked()
 {
 	string line;
@@ -572,7 +597,6 @@ void NovaGUI::on_LTMSaveButton_clicked()
 		exit(1);
 	}
 	config.close();
-
 }
 
 void openSocket(NovaGUI *window)
