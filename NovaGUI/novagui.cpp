@@ -605,7 +605,7 @@ void openSocket(NovaGUI *window)
 		exit(1);
 	}
 
-	if(listen(CEsock, 50) == -1)
+	if(listen(CEsock, SOCKET_QUEUE_SIZE) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
 		close(CEsock);

@@ -20,6 +20,8 @@
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
+//Number of messages to queue in a listening socket before ignoring requests until the queue is open
+#define SOCKET_QUEUE_SIZE 50
 
 class NovaGUI : public QMainWindow
 {
