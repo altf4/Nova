@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'novaconfig.ui'
 **
-** Created: Fri Oct 28 09:38:50 2011
+** Created: Fri Oct 28 12:15:35 2011
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -14,6 +14,7 @@
 #include <QtGui/QAction>
 #include <QtGui/QApplication>
 #include <QtGui/QButtonGroup>
+#include <QtGui/QCheckBox>
 #include <QtGui/QFrame>
 #include <QtGui/QGroupBox>
 #include <QtGui/QHeaderView>
@@ -34,27 +35,53 @@ public:
     QTreeWidget *treeWidget;
     QStackedWidget *stackedWidget;
     QWidget *generalPage;
-    QGroupBox *groupBox;
-    QLabel *label;
-    QGroupBox *groupBox_2;
-    QLabel *label_2;
-    QLabel *label_3;
-    QTextEdit *textEdit;
-    QTextEdit *textEdit_2;
-    QTextEdit *textEdit_3;
-    QGroupBox *groupBox_3;
-    QLabel *label_4;
-    QLabel *label_5;
-    QTextEdit *textEdit_4;
-    QTextEdit *textEdit_5;
+    QGroupBox *genGroupBox;
+    QLabel *interfaceLabel;
+    QGroupBox *saGroupBox;
+    QLabel *saIPLabel;
+    QLabel *saPortLabel;
+    QTextEdit *saIPEdit;
+    QTextEdit *saPortEdit;
+    QTextEdit *interfaceEdit;
+    QGroupBox *tcpGroupBox;
+    QLabel *tcpFrequencyLabel;
+    QLabel *tcpTimeoutLabel;
+    QTextEdit *tcpFrequencyEdit;
+    QTextEdit *tcpTimeoutEdit;
     QWidget *classificationPage;
+    QGroupBox *ceGroupBox;
+    QLabel *dataLabel;
+    QGroupBox *ceConfigGroupBox;
+    QLabel *ceIntensityLabel;
+    QLabel *ceFrequencyLabel;
+    QTextEdit *ceIntensityEdit;
+    QTextEdit *ceFrequencyEdit;
+    QLabel *ceThresholdLabel;
+    QLabel *ceErrorLabel;
+    QTextEdit *ceThresholdEdit;
+    QTextEdit *ceErrorEdit;
+    QTextEdit *dataEdit;
+    QPushButton *dataButton;
     QWidget *doppelgangerPage;
+    QGroupBox *dmGroupBox;
+    QGroupBox *dmConfigGroupBox;
+    QLabel *dmConfigLabel;
+    QTextEdit *dmConfigEdit;
+    QPushButton *dmConfigButton;
+    QLabel *dmIPLabel;
+    QTextEdit *dmIPEdit;
+    QCheckBox *dmCheckBox;
     QWidget *haystackPage;
-    QFrame *frame;
-    QPushButton *pushButton;
-    QPushButton *pushButton_2;
-    QPushButton *pushButton_3;
-    QPushButton *pushButton_4;
+    QGroupBox *hsGroupBox;
+    QGroupBox *hsConfigGroupBox;
+    QLabel *hsConfigLabel;
+    QTextEdit *hsConfigEdit;
+    QPushButton *hsConfigButton;
+    QFrame *buttonFrame;
+    QPushButton *okButton;
+    QPushButton *cancelButton;
+    QPushButton *defaultsButton;
+    QPushButton *applyButton;
 
     void setupUi(QMainWindow *NovaConfigClass)
     {
@@ -76,72 +103,160 @@ public:
         stackedWidget->setGeometry(QRect(149, -11, 451, 401));
         generalPage = new QWidget();
         generalPage->setObjectName(QString::fromUtf8("generalPage"));
-        groupBox = new QGroupBox(generalPage);
-        groupBox->setObjectName(QString::fromUtf8("groupBox"));
-        groupBox->setGeometry(QRect(10, 20, 431, 321));
-        label = new QLabel(groupBox);
-        label->setObjectName(QString::fromUtf8("label"));
-        label->setGeometry(QRect(150, 40, 57, 20));
-        groupBox_2 = new QGroupBox(groupBox);
-        groupBox_2->setObjectName(QString::fromUtf8("groupBox_2"));
-        groupBox_2->setGeometry(QRect(10, 90, 401, 91));
-        label_2 = new QLabel(groupBox_2);
-        label_2->setObjectName(QString::fromUtf8("label_2"));
-        label_2->setGeometry(QRect(80, 20, 121, 20));
-        label_3 = new QLabel(groupBox_2);
-        label_3->setObjectName(QString::fromUtf8("label_3"));
-        label_3->setGeometry(QRect(170, 60, 31, 20));
-        textEdit = new QTextEdit(groupBox_2);
-        textEdit->setObjectName(QString::fromUtf8("textEdit"));
-        textEdit->setGeometry(QRect(210, 20, 150, 20));
-        textEdit_2 = new QTextEdit(groupBox_2);
-        textEdit_2->setObjectName(QString::fromUtf8("textEdit_2"));
-        textEdit_2->setGeometry(QRect(210, 60, 150, 20));
-        textEdit_3 = new QTextEdit(groupBox);
-        textEdit_3->setObjectName(QString::fromUtf8("textEdit_3"));
-        textEdit_3->setGeometry(QRect(220, 40, 150, 20));
-        groupBox_3 = new QGroupBox(groupBox);
-        groupBox_3->setObjectName(QString::fromUtf8("groupBox_3"));
-        groupBox_3->setGeometry(QRect(10, 210, 401, 101));
-        label_4 = new QLabel(groupBox_3);
-        label_4->setObjectName(QString::fromUtf8("label_4"));
-        label_4->setGeometry(QRect(40, 70, 161, 20));
-        label_5 = new QLabel(groupBox_3);
-        label_5->setObjectName(QString::fromUtf8("label_5"));
-        label_5->setGeometry(QRect(100, 30, 101, 20));
-        textEdit_4 = new QTextEdit(groupBox_3);
-        textEdit_4->setObjectName(QString::fromUtf8("textEdit_4"));
-        textEdit_4->setGeometry(QRect(210, 70, 150, 20));
-        textEdit_5 = new QTextEdit(groupBox_3);
-        textEdit_5->setObjectName(QString::fromUtf8("textEdit_5"));
-        textEdit_5->setGeometry(QRect(210, 30, 150, 20));
+        genGroupBox = new QGroupBox(generalPage);
+        genGroupBox->setObjectName(QString::fromUtf8("genGroupBox"));
+        genGroupBox->setGeometry(QRect(10, 40, 431, 351));
+        interfaceLabel = new QLabel(genGroupBox);
+        interfaceLabel->setObjectName(QString::fromUtf8("interfaceLabel"));
+        interfaceLabel->setGeometry(QRect(150, 50, 57, 20));
+        saGroupBox = new QGroupBox(genGroupBox);
+        saGroupBox->setObjectName(QString::fromUtf8("saGroupBox"));
+        saGroupBox->setGeometry(QRect(10, 100, 401, 111));
+        saIPLabel = new QLabel(saGroupBox);
+        saIPLabel->setObjectName(QString::fromUtf8("saIPLabel"));
+        saIPLabel->setGeometry(QRect(80, 30, 121, 20));
+        saPortLabel = new QLabel(saGroupBox);
+        saPortLabel->setObjectName(QString::fromUtf8("saPortLabel"));
+        saPortLabel->setGeometry(QRect(170, 70, 31, 20));
+        saIPEdit = new QTextEdit(saGroupBox);
+        saIPEdit->setObjectName(QString::fromUtf8("saIPEdit"));
+        saIPEdit->setGeometry(QRect(210, 30, 150, 20));
+        QFont font;
+        font.setKerning(true);
+        saIPEdit->setFont(font);
+        saPortEdit = new QTextEdit(saGroupBox);
+        saPortEdit->setObjectName(QString::fromUtf8("saPortEdit"));
+        saPortEdit->setGeometry(QRect(210, 70, 150, 20));
+        interfaceEdit = new QTextEdit(genGroupBox);
+        interfaceEdit->setObjectName(QString::fromUtf8("interfaceEdit"));
+        interfaceEdit->setGeometry(QRect(220, 50, 150, 20));
+        tcpGroupBox = new QGroupBox(genGroupBox);
+        tcpGroupBox->setObjectName(QString::fromUtf8("tcpGroupBox"));
+        tcpGroupBox->setGeometry(QRect(10, 230, 401, 111));
+        tcpFrequencyLabel = new QLabel(tcpGroupBox);
+        tcpFrequencyLabel->setObjectName(QString::fromUtf8("tcpFrequencyLabel"));
+        tcpFrequencyLabel->setGeometry(QRect(40, 70, 161, 20));
+        tcpTimeoutLabel = new QLabel(tcpGroupBox);
+        tcpTimeoutLabel->setObjectName(QString::fromUtf8("tcpTimeoutLabel"));
+        tcpTimeoutLabel->setGeometry(QRect(100, 30, 101, 20));
+        tcpFrequencyEdit = new QTextEdit(tcpGroupBox);
+        tcpFrequencyEdit->setObjectName(QString::fromUtf8("tcpFrequencyEdit"));
+        tcpFrequencyEdit->setGeometry(QRect(210, 70, 150, 20));
+        tcpTimeoutEdit = new QTextEdit(tcpGroupBox);
+        tcpTimeoutEdit->setObjectName(QString::fromUtf8("tcpTimeoutEdit"));
+        tcpTimeoutEdit->setGeometry(QRect(210, 30, 150, 20));
         stackedWidget->addWidget(generalPage);
         classificationPage = new QWidget();
         classificationPage->setObjectName(QString::fromUtf8("classificationPage"));
+        ceGroupBox = new QGroupBox(classificationPage);
+        ceGroupBox->setObjectName(QString::fromUtf8("ceGroupBox"));
+        ceGroupBox->setGeometry(QRect(10, 40, 431, 351));
+        dataLabel = new QLabel(ceGroupBox);
+        dataLabel->setObjectName(QString::fromUtf8("dataLabel"));
+        dataLabel->setGeometry(QRect(10, 60, 57, 20));
+        ceConfigGroupBox = new QGroupBox(ceGroupBox);
+        ceConfigGroupBox->setObjectName(QString::fromUtf8("ceConfigGroupBox"));
+        ceConfigGroupBox->setGeometry(QRect(10, 110, 401, 231));
+        ceIntensityLabel = new QLabel(ceConfigGroupBox);
+        ceIntensityLabel->setObjectName(QString::fromUtf8("ceIntensityLabel"));
+        ceIntensityLabel->setGeometry(QRect(130, 30, 60, 20));
+        ceFrequencyLabel = new QLabel(ceConfigGroupBox);
+        ceFrequencyLabel->setObjectName(QString::fromUtf8("ceFrequencyLabel"));
+        ceFrequencyLabel->setGeometry(QRect(120, 80, 70, 20));
+        ceIntensityEdit = new QTextEdit(ceConfigGroupBox);
+        ceIntensityEdit->setObjectName(QString::fromUtf8("ceIntensityEdit"));
+        ceIntensityEdit->setGeometry(QRect(190, 30, 150, 20));
+        ceFrequencyEdit = new QTextEdit(ceConfigGroupBox);
+        ceFrequencyEdit->setObjectName(QString::fromUtf8("ceFrequencyEdit"));
+        ceFrequencyEdit->setGeometry(QRect(190, 80, 150, 20));
+        ceThresholdLabel = new QLabel(ceConfigGroupBox);
+        ceThresholdLabel->setObjectName(QString::fromUtf8("ceThresholdLabel"));
+        ceThresholdLabel->setGeometry(QRect(120, 130, 60, 20));
+        ceErrorLabel = new QLabel(ceConfigGroupBox);
+        ceErrorLabel->setObjectName(QString::fromUtf8("ceErrorLabel"));
+        ceErrorLabel->setGeometry(QRect(150, 180, 30, 20));
+        ceThresholdEdit = new QTextEdit(ceConfigGroupBox);
+        ceThresholdEdit->setObjectName(QString::fromUtf8("ceThresholdEdit"));
+        ceThresholdEdit->setGeometry(QRect(190, 130, 150, 20));
+        ceErrorEdit = new QTextEdit(ceConfigGroupBox);
+        ceErrorEdit->setObjectName(QString::fromUtf8("ceErrorEdit"));
+        ceErrorEdit->setGeometry(QRect(190, 180, 150, 20));
+        dataEdit = new QTextEdit(ceGroupBox);
+        dataEdit->setObjectName(QString::fromUtf8("dataEdit"));
+        dataEdit->setEnabled(false);
+        dataEdit->setGeometry(QRect(70, 60, 288, 20));
+        dataButton = new QPushButton(ceGroupBox);
+        dataButton->setObjectName(QString::fromUtf8("dataButton"));
+        dataButton->setGeometry(QRect(340, 60, 71, 20));
+        dataButton->setFlat(false);
         stackedWidget->addWidget(classificationPage);
         doppelgangerPage = new QWidget();
         doppelgangerPage->setObjectName(QString::fromUtf8("doppelgangerPage"));
+        dmGroupBox = new QGroupBox(doppelgangerPage);
+        dmGroupBox->setObjectName(QString::fromUtf8("dmGroupBox"));
+        dmGroupBox->setGeometry(QRect(10, 40, 431, 351));
+        dmConfigGroupBox = new QGroupBox(dmGroupBox);
+        dmConfigGroupBox->setObjectName(QString::fromUtf8("dmConfigGroupBox"));
+        dmConfigGroupBox->setGeometry(QRect(10, 100, 401, 241));
+        dmConfigLabel = new QLabel(dmConfigGroupBox);
+        dmConfigLabel->setObjectName(QString::fromUtf8("dmConfigLabel"));
+        dmConfigLabel->setGeometry(QRect(10, 30, 111, 20));
+        dmConfigEdit = new QTextEdit(dmConfigGroupBox);
+        dmConfigEdit->setObjectName(QString::fromUtf8("dmConfigEdit"));
+        dmConfigEdit->setEnabled(false);
+        dmConfigEdit->setGeometry(QRect(120, 30, 221, 20));
+        dmConfigButton = new QPushButton(dmConfigGroupBox);
+        dmConfigButton->setObjectName(QString::fromUtf8("dmConfigButton"));
+        dmConfigButton->setGeometry(QRect(320, 30, 71, 20));
+        dmConfigButton->setFlat(false);
+        dmIPLabel = new QLabel(dmConfigGroupBox);
+        dmIPLabel->setObjectName(QString::fromUtf8("dmIPLabel"));
+        dmIPLabel->setGeometry(QRect(49, 70, 71, 20));
+        dmIPEdit = new QTextEdit(dmConfigGroupBox);
+        dmIPEdit->setObjectName(QString::fromUtf8("dmIPEdit"));
+        dmIPEdit->setGeometry(QRect(120, 70, 150, 20));
+        dmCheckBox = new QCheckBox(dmGroupBox);
+        dmCheckBox->setObjectName(QString::fromUtf8("dmCheckBox"));
+        dmCheckBox->setGeometry(QRect(20, 50, 151, 20));
+        dmCheckBox->setLayoutDirection(Qt::RightToLeft);
         stackedWidget->addWidget(doppelgangerPage);
         haystackPage = new QWidget();
         haystackPage->setObjectName(QString::fromUtf8("haystackPage"));
+        hsGroupBox = new QGroupBox(haystackPage);
+        hsGroupBox->setObjectName(QString::fromUtf8("hsGroupBox"));
+        hsGroupBox->setGeometry(QRect(10, 40, 431, 351));
+        hsConfigGroupBox = new QGroupBox(hsGroupBox);
+        hsConfigGroupBox->setObjectName(QString::fromUtf8("hsConfigGroupBox"));
+        hsConfigGroupBox->setGeometry(QRect(10, 80, 401, 261));
+        hsConfigLabel = new QLabel(hsConfigGroupBox);
+        hsConfigLabel->setObjectName(QString::fromUtf8("hsConfigLabel"));
+        hsConfigLabel->setGeometry(QRect(10, 30, 111, 20));
+        hsConfigEdit = new QTextEdit(hsConfigGroupBox);
+        hsConfigEdit->setObjectName(QString::fromUtf8("hsConfigEdit"));
+        hsConfigEdit->setEnabled(false);
+        hsConfigEdit->setGeometry(QRect(120, 30, 221, 20));
+        hsConfigButton = new QPushButton(hsConfigGroupBox);
+        hsConfigButton->setObjectName(QString::fromUtf8("hsConfigButton"));
+        hsConfigButton->setGeometry(QRect(320, 30, 71, 20));
+        hsConfigButton->setFlat(false);
         stackedWidget->addWidget(haystackPage);
-        frame = new QFrame(centralwidget);
-        frame->setObjectName(QString::fromUtf8("frame"));
-        frame->setGeometry(QRect(0, 390, 601, 51));
-        frame->setFrameShape(QFrame::StyledPanel);
-        frame->setFrameShadow(QFrame::Raised);
-        pushButton = new QPushButton(frame);
-        pushButton->setObjectName(QString::fromUtf8("pushButton"));
-        pushButton->setGeometry(QRect(510, 10, 80, 25));
-        pushButton_2 = new QPushButton(frame);
-        pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
-        pushButton_2->setGeometry(QRect(150, 10, 80, 25));
-        pushButton_3 = new QPushButton(frame);
-        pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
-        pushButton_3->setGeometry(QRect(260, 10, 111, 25));
-        pushButton_4 = new QPushButton(frame);
-        pushButton_4->setObjectName(QString::fromUtf8("pushButton_4"));
-        pushButton_4->setGeometry(QRect(400, 10, 80, 25));
+        buttonFrame = new QFrame(centralwidget);
+        buttonFrame->setObjectName(QString::fromUtf8("buttonFrame"));
+        buttonFrame->setGeometry(QRect(0, 390, 601, 51));
+        buttonFrame->setFrameShape(QFrame::StyledPanel);
+        buttonFrame->setFrameShadow(QFrame::Raised);
+        okButton = new QPushButton(buttonFrame);
+        okButton->setObjectName(QString::fromUtf8("okButton"));
+        okButton->setGeometry(QRect(510, 10, 80, 25));
+        cancelButton = new QPushButton(buttonFrame);
+        cancelButton->setObjectName(QString::fromUtf8("cancelButton"));
+        cancelButton->setGeometry(QRect(150, 10, 80, 25));
+        defaultsButton = new QPushButton(buttonFrame);
+        defaultsButton->setObjectName(QString::fromUtf8("defaultsButton"));
+        defaultsButton->setGeometry(QRect(260, 10, 111, 25));
+        applyButton = new QPushButton(buttonFrame);
+        applyButton->setObjectName(QString::fromUtf8("applyButton"));
+        applyButton->setGeometry(QRect(400, 10, 80, 25));
         NovaConfigClass->setCentralWidget(centralwidget);
 
         retranslateUi(NovaConfigClass);
@@ -170,18 +285,336 @@ public:
         ___qtreewidgetitem4->setText(0, QApplication::translate("NovaConfigClass", "Haystack", 0, QApplication::UnicodeUTF8));
         treeWidget->setSortingEnabled(__sortingEnabled);
 
-        groupBox->setTitle(QApplication::translate("NovaConfigClass", "General Settings", 0, QApplication::UnicodeUTF8));
-        label->setText(QApplication::translate("NovaConfigClass", "Interface", 0, QApplication::UnicodeUTF8));
-        groupBox_2->setTitle(QApplication::translate("NovaConfigClass", "Silent Alarm", 0, QApplication::UnicodeUTF8));
-        label_2->setText(QApplication::translate("NovaConfigClass", "Broadcast Address", 0, QApplication::UnicodeUTF8));
-        label_3->setText(QApplication::translate("NovaConfigClass", "Port", 0, QApplication::UnicodeUTF8));
-        groupBox_3->setTitle(QApplication::translate("NovaConfigClass", "TCP Timeout", 0, QApplication::UnicodeUTF8));
-        label_4->setText(QApplication::translate("NovaConfigClass", "Timeout Check Frequency", 0, QApplication::UnicodeUTF8));
-        label_5->setText(QApplication::translate("NovaConfigClass", "Time till Timeout", 0, QApplication::UnicodeUTF8));
-        pushButton->setText(QApplication::translate("NovaConfigClass", "Ok", 0, QApplication::UnicodeUTF8));
-        pushButton_2->setText(QApplication::translate("NovaConfigClass", "Cancel", 0, QApplication::UnicodeUTF8));
-        pushButton_3->setText(QApplication::translate("NovaConfigClass", "Restore Defaults", 0, QApplication::UnicodeUTF8));
-        pushButton_4->setText(QApplication::translate("NovaConfigClass", "Apply", 0, QApplication::UnicodeUTF8));
+        genGroupBox->setTitle(QApplication::translate("NovaConfigClass", "General Settings", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        interfaceLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The name of the interface to run Nova on.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        interfaceLabel->setText(QApplication::translate("NovaConfigClass", "Interface", 0, QApplication::UnicodeUTF8));
+        saGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Silent Alarm", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        saIPLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The IP address to send silent alarams from.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        saIPLabel->setText(QApplication::translate("NovaConfigClass", "Broadcast Address", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        saPortLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The port to send silent alarams on.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        saPortLabel->setText(QApplication::translate("NovaConfigClass", "Port", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        saIPEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The IP address to send silent alarams from.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        saPortEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The port to send silent alarams on.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        interfaceEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The name of the interface to run Nova on.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        tcpGroupBox->setTitle(QApplication::translate("NovaConfigClass", "TCP Timeout", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        tcpFrequencyLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How long to wait (in seconds) between checking for timed out TCP sessions.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        tcpFrequencyLabel->setText(QApplication::translate("NovaConfigClass", "Timeout Check Frequency", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        tcpTimeoutLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How long to wait (in seconds) before considering a TCP session as timed out.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        tcpTimeoutLabel->setText(QApplication::translate("NovaConfigClass", "Time till Timeout", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        tcpFrequencyEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How long to wait (in seconds) between checking for timed out TCP sessions.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        tcpTimeoutEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How long to wait (in seconds) before considering a TCP session as timed out.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        ceGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Classification Settings", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        dataLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The Data File to read and write to when classifying suspects or training Nova.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        dataLabel->setText(QApplication::translate("NovaConfigClass", "Data File", 0, QApplication::UnicodeUTF8));
+        ceConfigGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Configuration", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        ceIntensityLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How many similar points to find in classification. A higher value will increase accuracy but decrease performance.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        ceIntensityLabel->setText(QApplication::translate("NovaConfigClass", "Intensity", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        ceFrequencyLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How long to wait (in seconds) before re-classifying suspects with new information.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        ceFrequencyLabel->setText(QApplication::translate("NovaConfigClass", "Frequency", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        ceIntensityEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How many similar points to find in classification. A higher value will increase accuracy but decrease performance.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        ceFrequencyEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How long to wait (in seconds) before re-classifying suspects with new information.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        ceThresholdLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">When to consider a suspect hostile. Range is between 0 and 1. 0 is least hostile, 1 is most hostile. Default is 0.5.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        ceThresholdLabel->setText(QApplication::translate("NovaConfigClass", "Threshold", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        ceErrorLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">A higher error may improve performance but will decrease accuracy. Default is 0.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        ceErrorLabel->setText(QApplication::translate("NovaConfigClass", "Error", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        ceThresholdEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">When to consider a suspect hostile. Range is between 0 and 1. 0 is least hostile, 1 is most hostile. Default is 0.5.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        ceErrorEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">A higher error may improve performance but will decrease accuracy. Default is 0.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        dataEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The Data File to read and write to when classifying suspects or training Nova.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        dataButton->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Browse the file system for a data file.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        dataButton->setText(QApplication::translate("NovaConfigClass", "Browse", 0, QApplication::UnicodeUTF8));
+        dmGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Doppelganger Settings", 0, QApplication::UnicodeUTF8));
+        dmConfigGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Configure (HoneyD Todo)", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        dmConfigLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The file to read the Doppelganger configuration from.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        dmConfigLabel->setText(QApplication::translate("NovaConfigClass", "Configuration File", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        dmConfigEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The file to read the Doppelganger configuration from.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        dmConfigButton->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Browse the file system for a configuration file.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        dmConfigButton->setText(QApplication::translate("NovaConfigClass", "Browse", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        dmIPLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The IP address the Doppelganger is assigned,  Must be available.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        dmIPLabel->setText(QApplication::translate("NovaConfigClass", "IP Address", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        dmIPEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The IP address the Doppelganger is assigned,  Must be available.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        dmCheckBox->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Turning off the Doppelganger will mean that this host will be visible at all times even if the suspect is classified as hostile.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        dmCheckBox->setText(QApplication::translate("NovaConfigClass", "Enable Doppelganger", 0, QApplication::UnicodeUTF8));
+        hsGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Haystack Settings", 0, QApplication::UnicodeUTF8));
+        hsConfigGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Configure (HoneyD Todo)", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        hsConfigLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The file to read the Haystack configuration from.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        hsConfigLabel->setText(QApplication::translate("NovaConfigClass", "Configuration File", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        hsConfigEdit->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The file to read the Haystack configuration from.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        hsConfigButton->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<table border=\"0\" style=\"-qt-table-type: root; margin-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;\">\n"
+"<tr>\n"
+"<td style=\"border: none;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Browse the file system for a configuration file.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        hsConfigButton->setText(QApplication::translate("NovaConfigClass", "Browse", 0, QApplication::UnicodeUTF8));
+        okButton->setText(QApplication::translate("NovaConfigClass", "Ok", 0, QApplication::UnicodeUTF8));
+        cancelButton->setText(QApplication::translate("NovaConfigClass", "Cancel", 0, QApplication::UnicodeUTF8));
+        defaultsButton->setText(QApplication::translate("NovaConfigClass", "Restore Defaults", 0, QApplication::UnicodeUTF8));
+        applyButton->setText(QApplication::translate("NovaConfigClass", "Apply", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
