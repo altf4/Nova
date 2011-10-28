@@ -16,7 +16,9 @@ namespace Nova{
 namespace LocalTrafficMonitor{
 
 ///	Filename of the file to be used as an IPC key
-#define KEY_FILENAME "/etc/NovaIPCKey"
+#define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+//Number of values read from the NOVAConfig file
+#define CONFIG_FILE_LINE_COUNT 5
 
 ///Hash table for current TCP Sessions
 ///Table key is the source network socket, comprised of IP and Port in string format

@@ -11,11 +11,13 @@
 using std::string;
 
 ///	Filename of the file to be used as an IPC key
-#define KEY_ALARM_FILENAME "/etc/NovaDoppIPCKey"
+#define KEY_ALARM_FILENAME "/.nova/keys/NovaDoppIPCKey"
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
+//Number of lines read in the NOVAConfig file
+#define CONFIG_FILE_LINE_COUNT 4
 
 namespace Nova{
 namespace DoppelgangerModule{

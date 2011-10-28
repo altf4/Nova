@@ -272,145 +272,15 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void NovaGUI::on_SuspectButton_clicked()
 {
-	this->ui.tabWidget->setCurrentIndex(0);
+	this->ui.stackedWidget->setCurrentIndex(0);
 }
 
 void NovaGUI::on_CEButton_clicked()
 {
-	this->ui.tabWidget->setCurrentIndex(1);
+	this->ui.stackedWidget->setCurrentIndex(1);
 }
 
-void NovaGUI::on_CELoadButton_clicked()
-{
-	string line;
-	string prefix;
-	ifstream config("Config/NOVAConfig_CE.txt");
-
-	if(config.is_open())
-	{
-		while(config.good())
-		{
-			getline(config,line);
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEInterfaceEdit->clear();
-				this->ui.CEInterfaceEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "DATAFILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEDatafileEdit->clear();
-				this->ui.CEDatafileEdit->appendPlainText((QString)line.c_str());
-				continue;
-			}
-			prefix = "IPC_MAX_CONNECTIONS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEIPCMaxConnectEdit->clear();
-				this->ui.CEIPCMaxConnectEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "BROADCAST_ADDR";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEBroadcastAddrEdit->clear();
-				this->ui.CEBroadcastAddrEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "SILENT_ALARM_PORT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CESilentAlarmPortEdit->clear();
-				this->ui.CESilentAlarmPortEdit->appendPlainText((QString)line.c_str());
-				continue;
-			}
-			prefix = "K";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEKEdit->clear();
-				this->ui.CEKEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "EPS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEEPSEdit->clear();
-				this->ui.CEEPSEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "MAX_PTS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEMaxPtsEdit->clear();
-				this->ui.CEMaxPtsEdit->appendPlainText((QString)line.c_str());
-				continue;
-			}
-			prefix = "CLASSIFICATION_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEClassificationTimeoutEdit->clear();
-				this->ui.CEClassificationTimeoutEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "TRAINING_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CETrainingTimeoutEdit->clear();
-				this->ui.CETrainingTimeoutEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "MAX_FEATURE_VALUE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEMaxFeatureValEdit->clear();
-				this->ui.CEMaxFeatureValEdit->appendPlainText((QString)line.c_str());
-				continue;
-			}
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.CEEnableTrainingEdit->clear();
-				this->ui.CEEnableTrainingEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
-			{
-				continue;
-			}
-		}
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error loading from Classification Engine config file.");
-		exit(1);
-	}
-	config.close();
-}
-
-void NovaGUI::on_CESaveButton_clicked()
+/*void NovaGUI::on_CESaveButton_clicked()
 {
 	string line;
 	ofstream config("Config/NOVAConfig_CE.txt");
@@ -435,67 +305,15 @@ void NovaGUI::on_CESaveButton_clicked()
 		exit(1);
 	}
 	config.close();
-
-}
+}*/
 
 void NovaGUI::on_DMButton_clicked()
 {
-	this->ui.tabWidget->setCurrentIndex(2);
+	this->ui.stackedWidget->setCurrentIndex(2);
 }
 
-void NovaGUI::on_DMLoadButton_clicked()
-{
-	string line;
-	string prefix;
-	ifstream config("Config/NOVAConfig_DM.txt");
 
-	if(config.is_open())
-	{
-		while(config.good())
-		{
-			getline(config,line);
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.DMInterfaceEdit->clear();
-				this->ui.DMInterfaceEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "DOPPELGANGER_IP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.DMIPEdit->clear();
-				this->ui.DMIPEdit->appendPlainText((QString)line.c_str());
-				continue;
-			}
-			prefix = "ENABLED";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.DMEnabledEdit->clear();
-				this->ui.DMEnabledEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
-			{
-				continue;
-			}
-		}
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error loading from Doppelganger Module config file.");
-		exit(1);
-	}
-	config.close();
-}
-
-void NovaGUI::on_DMSaveButton_clicked()
+/*void NovaGUI::on_DMSaveButton_clicked()
 {
 	string line;
 	ofstream config("Config/NOVAConfig_DM.txt");
@@ -512,75 +330,14 @@ void NovaGUI::on_DMSaveButton_clicked()
 	}
 	config.close();
 
-}
+}*/
 
 void NovaGUI::on_HSButton_clicked()
 {
-	this->ui.tabWidget->setCurrentIndex(3);
+	this->ui.stackedWidget->setCurrentIndex(3);
 }
 
-void NovaGUI::on_HSLoadButton_clicked()
-{
-	string line;
-	string prefix;
-	ifstream config("Config/NOVAConfig_HS.txt");
-
-	if(config.is_open())
-	{
-		while(config.good())
-		{
-			getline(config,line);
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.HSInterfaceEdit->clear();
-				this->ui.HSInterfaceEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.HSHoneyDConfigEdit->clear();
-				this->ui.HSHoneyDConfigEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "TCP_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.HSTimeoutEdit->clear();
-				this->ui.HSTimeoutEdit->appendPlainText((QString)line.c_str());
-				continue;
-			}
-			prefix = "TCP_CHECK_FREQ";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.HSFreqEdit->clear();
-				this->ui.HSFreqEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
-			{
-				continue;
-			}
-		}
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error loading from Haystack Monitor config file.");
-		exit(1);
-	}
-	config.close();
-}
-
-void NovaGUI::on_HSSaveButton_clicked()
+/*void NovaGUI::on_HSSaveButton_clicked()
 {
 	string line;
 	ofstream config("Config/NOVAConfig_HS.txt");
@@ -598,66 +355,15 @@ void NovaGUI::on_HSSaveButton_clicked()
 	}
 	config.close();
 
-}
+}*/
 
 void NovaGUI::on_LTMButton_clicked()
 {
-	this->ui.tabWidget->setCurrentIndex(4);
+	this->ui.stackedWidget->setCurrentIndex(4);
 }
 
-void NovaGUI::on_LTMLoadButton_clicked()
-{
-	string line;
-	string prefix;
-	ifstream config("Config/NOVAConfig_LTM.txt");
 
-	if(config.is_open())
-	{
-		while(config.good())
-		{
-			getline(config,line);
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.LTMInterfaceEdit->clear();
-				this->ui.LTMInterfaceEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "TCP_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.LTMTimeoutEdit->clear();
-				this->ui.LTMTimeoutEdit->appendPlainText((QString)line.c_str());
-				continue;
-			}
-			prefix = "TCP_CHECK_FREQ";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				this->ui.LTMFreqEdit->clear();
-				this->ui.LTMFreqEdit->appendPlainText((QString)line.c_str());
-				continue;
-
-			}
-			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
-			{
-				continue;
-			}
-		}
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error loading from Local Traffic Monitor config file.");
-		exit(1);
-	}
-	config.close();
-}
-
-void NovaGUI::on_LTMSaveButton_clicked()
+/*void NovaGUI::on_LTMSaveButton_clicked()
 {
 	string line;
 	ofstream config("Config/NOVAConfig_LTM.txt");
@@ -673,7 +379,7 @@ void NovaGUI::on_LTMSaveButton_clicked()
 		exit(1);
 	}
 	config.close();
-}
+}*/
 
 void openSocket(NovaGUI *window)
 {
@@ -692,9 +398,12 @@ void openSocket(NovaGUI *window)
 
 	CE_IPCAddress.sun_family = AF_UNIX;
 
-	ofstream key(CE_FILENAME);
-	key.close();
-	strcpy(CE_IPCAddress.sun_path, CE_FILENAME);
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = CE_FILENAME;
+	path += key;
+
+	strcpy(CE_IPCAddress.sun_path, path.c_str());
 	unlink(CE_IPCAddress.sun_path);
 	len = strlen(CE_IPCAddress.sun_path) + sizeof(CE_IPCAddress.sun_family);
 
