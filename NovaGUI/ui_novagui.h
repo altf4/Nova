@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'novagui.ui'
 **
-** Created: Thu Oct 27 14:38:29 2011
+** Created: Fri Oct 28 09:38:50 2011
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -32,10 +32,7 @@ QT_BEGIN_NAMESPACE
 class Ui_NovaGUIClass
 {
 public:
-    QAction *actionTodo;
-    QAction *actionTodo_2;
-    QAction *actionTodo_3;
-    QAction *actionTodo_4;
+    QAction *actionConfigure;
     QWidget *centralwidget;
     QTabWidget *tabWidget;
     QWidget *Suspects;
@@ -113,10 +110,11 @@ public:
     QPushButton *HSButton;
     QPushButton *LTMButton;
     QMenuBar *menubar;
-    QMenu *menuClassification_Engine;
-    QMenu *menuDoppelganger_Module;
-    QMenu *menuHaystack_Monitor;
-    QMenu *menuLocal_Traffic_Monitor;
+    QMenu *menuFile;
+    QMenu *menuEdit;
+    QMenu *menuRun;
+    QMenu *menuView;
+    QMenu *menuHelp;
     QStatusBar *statusbar;
 
     void setupUi(QMainWindow *NovaGUIClass)
@@ -124,14 +122,8 @@ public:
         if (NovaGUIClass->objectName().isEmpty())
             NovaGUIClass->setObjectName(QString::fromUtf8("NovaGUIClass"));
         NovaGUIClass->resize(800, 600);
-        actionTodo = new QAction(NovaGUIClass);
-        actionTodo->setObjectName(QString::fromUtf8("actionTodo"));
-        actionTodo_2 = new QAction(NovaGUIClass);
-        actionTodo_2->setObjectName(QString::fromUtf8("actionTodo_2"));
-        actionTodo_3 = new QAction(NovaGUIClass);
-        actionTodo_3->setObjectName(QString::fromUtf8("actionTodo_3"));
-        actionTodo_4 = new QAction(NovaGUIClass);
-        actionTodo_4->setObjectName(QString::fromUtf8("actionTodo_4"));
+        actionConfigure = new QAction(NovaGUIClass);
+        actionConfigure->setObjectName(QString::fromUtf8("actionConfigure"));
         centralwidget = new QWidget(NovaGUIClass);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         tabWidget = new QTabWidget(centralwidget);
@@ -374,27 +366,27 @@ public:
         menubar = new QMenuBar(NovaGUIClass);
         menubar->setObjectName(QString::fromUtf8("menubar"));
         menubar->setGeometry(QRect(0, 0, 800, 20));
-        menuClassification_Engine = new QMenu(menubar);
-        menuClassification_Engine->setObjectName(QString::fromUtf8("menuClassification_Engine"));
-        menuDoppelganger_Module = new QMenu(menubar);
-        menuDoppelganger_Module->setObjectName(QString::fromUtf8("menuDoppelganger_Module"));
-        menuHaystack_Monitor = new QMenu(menubar);
-        menuHaystack_Monitor->setObjectName(QString::fromUtf8("menuHaystack_Monitor"));
-        menuLocal_Traffic_Monitor = new QMenu(menubar);
-        menuLocal_Traffic_Monitor->setObjectName(QString::fromUtf8("menuLocal_Traffic_Monitor"));
+        menuFile = new QMenu(menubar);
+        menuFile->setObjectName(QString::fromUtf8("menuFile"));
+        menuEdit = new QMenu(menubar);
+        menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
+        menuRun = new QMenu(menubar);
+        menuRun->setObjectName(QString::fromUtf8("menuRun"));
+        menuView = new QMenu(menubar);
+        menuView->setObjectName(QString::fromUtf8("menuView"));
+        menuHelp = new QMenu(menubar);
+        menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
         NovaGUIClass->setMenuBar(menubar);
         statusbar = new QStatusBar(NovaGUIClass);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
         NovaGUIClass->setStatusBar(statusbar);
 
-        menubar->addAction(menuClassification_Engine->menuAction());
-        menubar->addAction(menuDoppelganger_Module->menuAction());
-        menubar->addAction(menuHaystack_Monitor->menuAction());
-        menubar->addAction(menuLocal_Traffic_Monitor->menuAction());
-        menuClassification_Engine->addAction(actionTodo);
-        menuDoppelganger_Module->addAction(actionTodo_2);
-        menuHaystack_Monitor->addAction(actionTodo_3);
-        menuLocal_Traffic_Monitor->addAction(actionTodo_4);
+        menubar->addAction(menuFile->menuAction());
+        menubar->addAction(menuEdit->menuAction());
+        menubar->addAction(menuRun->menuAction());
+        menubar->addAction(menuView->menuAction());
+        menubar->addAction(menuHelp->menuAction());
+        menuFile->addAction(actionConfigure);
 
         retranslateUi(NovaGUIClass);
 
@@ -407,10 +399,7 @@ public:
     void retranslateUi(QMainWindow *NovaGUIClass)
     {
         NovaGUIClass->setWindowTitle(QApplication::translate("NovaGUIClass", "MainWindow", 0, QApplication::UnicodeUTF8));
-        actionTodo->setText(QApplication::translate("NovaGUIClass", "Todo", 0, QApplication::UnicodeUTF8));
-        actionTodo_2->setText(QApplication::translate("NovaGUIClass", "Todo", 0, QApplication::UnicodeUTF8));
-        actionTodo_3->setText(QApplication::translate("NovaGUIClass", "Todo", 0, QApplication::UnicodeUTF8));
-        actionTodo_4->setText(QApplication::translate("NovaGUIClass", "Todo", 0, QApplication::UnicodeUTF8));
+        actionConfigure->setText(QApplication::translate("NovaGUIClass", "Preferences", 0, QApplication::UnicodeUTF8));
         bListLabel->setText(QApplication::translate("NovaGUIClass", "Benign Suspects", 0, QApplication::UnicodeUTF8));
         hListLabel->setText(QApplication::translate("NovaGUIClass", " Hostile Suspects", 0, QApplication::UnicodeUTF8));
         tabWidget->setTabText(tabWidget->indexOf(Suspects), QString());
@@ -462,10 +451,11 @@ public:
         LTMButton->setText(QApplication::translate("NovaGUIClass", "Local\n"
 "Traffic\n"
 "Monitor", 0, QApplication::UnicodeUTF8));
-        menuClassification_Engine->setTitle(QApplication::translate("NovaGUIClass", "Classification Engine", 0, QApplication::UnicodeUTF8));
-        menuDoppelganger_Module->setTitle(QApplication::translate("NovaGUIClass", "Doppelganger Module", 0, QApplication::UnicodeUTF8));
-        menuHaystack_Monitor->setTitle(QApplication::translate("NovaGUIClass", "Haystack Monitor", 0, QApplication::UnicodeUTF8));
-        menuLocal_Traffic_Monitor->setTitle(QApplication::translate("NovaGUIClass", "Local Traffic Monitor", 0, QApplication::UnicodeUTF8));
+        menuFile->setTitle(QApplication::translate("NovaGUIClass", "File", 0, QApplication::UnicodeUTF8));
+        menuEdit->setTitle(QApplication::translate("NovaGUIClass", "Edit", 0, QApplication::UnicodeUTF8));
+        menuRun->setTitle(QApplication::translate("NovaGUIClass", "Run", 0, QApplication::UnicodeUTF8));
+        menuView->setTitle(QApplication::translate("NovaGUIClass", "View", 0, QApplication::UnicodeUTF8));
+        menuHelp->setTitle(QApplication::translate("NovaGUIClass", "Help", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

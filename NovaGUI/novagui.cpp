@@ -11,13 +11,13 @@
 #include <QtGui>
 #include <QApplication>
 #include "novagui.h"
+#include "novaconfig.h"
 #include <sstream>
 #include <QString>
 #include <QChar>
 #include <fstream>
 #include <log4cxx/xml/domconfigurator.h>
 #include <errno.h>
-
 
 using namespace std;
 using namespace Nova;
@@ -262,6 +262,12 @@ void NovaGUI::drawSuspects()
 		}
 	}
 	pthread_rwlock_unlock(&lock);
+}
+
+void NovaGUI::on_actionConfigure_triggered()
+{
+	NovaConfig *w = new NovaConfig(this);
+	w->show();
 }
 
 void NovaGUI::on_SuspectButton_clicked()
