@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'novaconfig.ui'
 **
-** Created: Fri Oct 28 12:15:35 2011
+** Created: Fri Oct 28 15:46:01 2011
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -100,7 +100,7 @@ public:
         treeWidget->setGeometry(QRect(0, 0, 150, 391));
         stackedWidget = new QStackedWidget(centralwidget);
         stackedWidget->setObjectName(QString::fromUtf8("stackedWidget"));
-        stackedWidget->setGeometry(QRect(149, -11, 451, 401));
+        stackedWidget->setGeometry(QRect(150, -20, 451, 411));
         generalPage = new QWidget();
         generalPage->setObjectName(QString::fromUtf8("generalPage"));
         genGroupBox = new QGroupBox(generalPage);
@@ -108,16 +108,16 @@ public:
         genGroupBox->setGeometry(QRect(10, 40, 431, 351));
         interfaceLabel = new QLabel(genGroupBox);
         interfaceLabel->setObjectName(QString::fromUtf8("interfaceLabel"));
-        interfaceLabel->setGeometry(QRect(150, 50, 57, 20));
+        interfaceLabel->setGeometry(QRect(146, 50, 61, 20));
         saGroupBox = new QGroupBox(genGroupBox);
         saGroupBox->setObjectName(QString::fromUtf8("saGroupBox"));
         saGroupBox->setGeometry(QRect(10, 100, 401, 111));
         saIPLabel = new QLabel(saGroupBox);
         saIPLabel->setObjectName(QString::fromUtf8("saIPLabel"));
-        saIPLabel->setGeometry(QRect(80, 30, 121, 20));
+        saIPLabel->setGeometry(QRect(70, 30, 131, 20));
         saPortLabel = new QLabel(saGroupBox);
         saPortLabel->setObjectName(QString::fromUtf8("saPortLabel"));
-        saPortLabel->setGeometry(QRect(170, 70, 31, 20));
+        saPortLabel->setGeometry(QRect(160, 70, 41, 20));
         saIPEdit = new QTextEdit(saGroupBox);
         saIPEdit->setObjectName(QString::fromUtf8("saIPEdit"));
         saIPEdit->setGeometry(QRect(210, 30, 150, 20));
@@ -135,10 +135,10 @@ public:
         tcpGroupBox->setGeometry(QRect(10, 230, 401, 111));
         tcpFrequencyLabel = new QLabel(tcpGroupBox);
         tcpFrequencyLabel->setObjectName(QString::fromUtf8("tcpFrequencyLabel"));
-        tcpFrequencyLabel->setGeometry(QRect(40, 70, 161, 20));
+        tcpFrequencyLabel->setGeometry(QRect(30, 70, 171, 20));
         tcpTimeoutLabel = new QLabel(tcpGroupBox);
         tcpTimeoutLabel->setObjectName(QString::fromUtf8("tcpTimeoutLabel"));
-        tcpTimeoutLabel->setGeometry(QRect(100, 30, 101, 20));
+        tcpTimeoutLabel->setGeometry(QRect(90, 30, 111, 20));
         tcpFrequencyEdit = new QTextEdit(tcpGroupBox);
         tcpFrequencyEdit->setObjectName(QString::fromUtf8("tcpFrequencyEdit"));
         tcpFrequencyEdit->setGeometry(QRect(210, 70, 150, 20));
@@ -153,16 +153,16 @@ public:
         ceGroupBox->setGeometry(QRect(10, 40, 431, 351));
         dataLabel = new QLabel(ceGroupBox);
         dataLabel->setObjectName(QString::fromUtf8("dataLabel"));
-        dataLabel->setGeometry(QRect(10, 60, 57, 20));
+        dataLabel->setGeometry(QRect(180, 30, 61, 20));
         ceConfigGroupBox = new QGroupBox(ceGroupBox);
         ceConfigGroupBox->setObjectName(QString::fromUtf8("ceConfigGroupBox"));
         ceConfigGroupBox->setGeometry(QRect(10, 110, 401, 231));
         ceIntensityLabel = new QLabel(ceConfigGroupBox);
         ceIntensityLabel->setObjectName(QString::fromUtf8("ceIntensityLabel"));
-        ceIntensityLabel->setGeometry(QRect(130, 30, 60, 20));
+        ceIntensityLabel->setGeometry(QRect(119, 30, 71, 20));
         ceFrequencyLabel = new QLabel(ceConfigGroupBox);
         ceFrequencyLabel->setObjectName(QString::fromUtf8("ceFrequencyLabel"));
-        ceFrequencyLabel->setGeometry(QRect(120, 80, 70, 20));
+        ceFrequencyLabel->setGeometry(QRect(109, 80, 81, 20));
         ceIntensityEdit = new QTextEdit(ceConfigGroupBox);
         ceIntensityEdit->setObjectName(QString::fromUtf8("ceIntensityEdit"));
         ceIntensityEdit->setGeometry(QRect(190, 30, 150, 20));
@@ -171,10 +171,10 @@ public:
         ceFrequencyEdit->setGeometry(QRect(190, 80, 150, 20));
         ceThresholdLabel = new QLabel(ceConfigGroupBox);
         ceThresholdLabel->setObjectName(QString::fromUtf8("ceThresholdLabel"));
-        ceThresholdLabel->setGeometry(QRect(120, 130, 60, 20));
+        ceThresholdLabel->setGeometry(QRect(109, 130, 71, 20));
         ceErrorLabel = new QLabel(ceConfigGroupBox);
         ceErrorLabel->setObjectName(QString::fromUtf8("ceErrorLabel"));
-        ceErrorLabel->setGeometry(QRect(150, 180, 30, 20));
+        ceErrorLabel->setGeometry(QRect(139, 180, 41, 20));
         ceThresholdEdit = new QTextEdit(ceConfigGroupBox);
         ceThresholdEdit->setObjectName(QString::fromUtf8("ceThresholdEdit"));
         ceThresholdEdit->setGeometry(QRect(190, 130, 150, 20));
@@ -184,10 +184,10 @@ public:
         dataEdit = new QTextEdit(ceGroupBox);
         dataEdit->setObjectName(QString::fromUtf8("dataEdit"));
         dataEdit->setEnabled(false);
-        dataEdit->setGeometry(QRect(70, 60, 288, 20));
+        dataEdit->setGeometry(QRect(27, 60, 330, 20));
         dataButton = new QPushButton(ceGroupBox);
         dataButton->setObjectName(QString::fromUtf8("dataButton"));
-        dataButton->setGeometry(QRect(340, 60, 71, 20));
+        dataButton->setGeometry(QRect(320, 57, 70, 26));
         dataButton->setFlat(false);
         stackedWidget->addWidget(classificationPage);
         doppelgangerPage = new QWidget();
@@ -200,24 +200,24 @@ public:
         dmConfigGroupBox->setGeometry(QRect(10, 100, 401, 241));
         dmConfigLabel = new QLabel(dmConfigGroupBox);
         dmConfigLabel->setObjectName(QString::fromUtf8("dmConfigLabel"));
-        dmConfigLabel->setGeometry(QRect(10, 30, 111, 20));
+        dmConfigLabel->setGeometry(QRect(130, 30, 121, 20));
         dmConfigEdit = new QTextEdit(dmConfigGroupBox);
         dmConfigEdit->setObjectName(QString::fromUtf8("dmConfigEdit"));
         dmConfigEdit->setEnabled(false);
-        dmConfigEdit->setGeometry(QRect(120, 30, 221, 20));
+        dmConfigEdit->setGeometry(QRect(20, 60, 320, 20));
         dmConfigButton = new QPushButton(dmConfigGroupBox);
         dmConfigButton->setObjectName(QString::fromUtf8("dmConfigButton"));
-        dmConfigButton->setGeometry(QRect(320, 30, 71, 20));
+        dmConfigButton->setGeometry(QRect(320, 57, 70, 26));
         dmConfigButton->setFlat(false);
         dmIPLabel = new QLabel(dmConfigGroupBox);
         dmIPLabel->setObjectName(QString::fromUtf8("dmIPLabel"));
-        dmIPLabel->setGeometry(QRect(49, 70, 71, 20));
+        dmIPLabel->setGeometry(QRect(69, 100, 81, 20));
         dmIPEdit = new QTextEdit(dmConfigGroupBox);
         dmIPEdit->setObjectName(QString::fromUtf8("dmIPEdit"));
-        dmIPEdit->setGeometry(QRect(120, 70, 150, 20));
+        dmIPEdit->setGeometry(QRect(150, 100, 150, 20));
         dmCheckBox = new QCheckBox(dmGroupBox);
         dmCheckBox->setObjectName(QString::fromUtf8("dmCheckBox"));
-        dmCheckBox->setGeometry(QRect(20, 50, 151, 20));
+        dmCheckBox->setGeometry(QRect(70, 50, 191, 20));
         dmCheckBox->setLayoutDirection(Qt::RightToLeft);
         stackedWidget->addWidget(doppelgangerPage);
         haystackPage = new QWidget();
@@ -230,14 +230,14 @@ public:
         hsConfigGroupBox->setGeometry(QRect(10, 80, 401, 261));
         hsConfigLabel = new QLabel(hsConfigGroupBox);
         hsConfigLabel->setObjectName(QString::fromUtf8("hsConfigLabel"));
-        hsConfigLabel->setGeometry(QRect(10, 30, 111, 20));
+        hsConfigLabel->setGeometry(QRect(100, 30, 131, 20));
         hsConfigEdit = new QTextEdit(hsConfigGroupBox);
         hsConfigEdit->setObjectName(QString::fromUtf8("hsConfigEdit"));
         hsConfigEdit->setEnabled(false);
-        hsConfigEdit->setGeometry(QRect(120, 30, 221, 20));
+        hsConfigEdit->setGeometry(QRect(30, 60, 320, 20));
         hsConfigButton = new QPushButton(hsConfigGroupBox);
         hsConfigButton->setObjectName(QString::fromUtf8("hsConfigButton"));
-        hsConfigButton->setGeometry(QRect(320, 30, 71, 20));
+        hsConfigButton->setGeometry(QRect(320, 57, 70, 26));
         hsConfigButton->setFlat(false);
         stackedWidget->addWidget(haystackPage);
         buttonFrame = new QFrame(centralwidget);
@@ -247,21 +247,21 @@ public:
         buttonFrame->setFrameShadow(QFrame::Raised);
         okButton = new QPushButton(buttonFrame);
         okButton->setObjectName(QString::fromUtf8("okButton"));
-        okButton->setGeometry(QRect(510, 10, 80, 25));
+        okButton->setGeometry(QRect(529, 10, 61, 25));
         cancelButton = new QPushButton(buttonFrame);
         cancelButton->setObjectName(QString::fromUtf8("cancelButton"));
-        cancelButton->setGeometry(QRect(150, 10, 80, 25));
+        cancelButton->setGeometry(QRect(150, 10, 81, 25));
         defaultsButton = new QPushButton(buttonFrame);
         defaultsButton->setObjectName(QString::fromUtf8("defaultsButton"));
-        defaultsButton->setGeometry(QRect(260, 10, 111, 25));
+        defaultsButton->setGeometry(QRect(260, 10, 141, 25));
         applyButton = new QPushButton(buttonFrame);
         applyButton->setObjectName(QString::fromUtf8("applyButton"));
-        applyButton->setGeometry(QRect(400, 10, 80, 25));
+        applyButton->setGeometry(QRect(430, 10, 71, 25));
         NovaConfigClass->setCentralWidget(centralwidget);
 
         retranslateUi(NovaConfigClass);
 
-        stackedWidget->setCurrentIndex(0);
+        stackedWidget->setCurrentIndex(3);
 
 
         QMetaObject::connectSlotsByName(NovaConfigClass);

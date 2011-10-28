@@ -17,17 +17,17 @@
 ///	Filename of the file to be used as an IPC key
 // See ticket #12
 
-#define KEY_FILENAME "/etc/NovaIPCKey"
+#define KEY_FILENAME "/.nova/keys/NovaIPCKey"
 ///	Filename of the file to be used as an Doppelganger IPC key
-#define KEY_ALARM_FILENAME "/etc/NovaDoppIPCKey"
+#define KEY_ALARM_FILENAME "/.nova/keys/NovaDoppIPCKey"
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
 ///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/etc/CEKey"
+#define CE_FILENAME "/.nova/keys/CEKey"
 //dimension
 #define DIM 9
-//Number of lines expected in the CE config file
-#define CONFIG_FILE_LINE_COUNT 12
+//Number of values read from the NOVAConfig file
+#define CONFIG_FILE_LINE_COUNT 9
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
 
@@ -55,7 +55,7 @@ void *SilentAlarmLoop(void *ptr);
 void Classify(Suspect *suspect);
 
 ///Calculates normalized data points and stores into 'normalizedDataPts'
-void NormalizeDataPoints(int maxVal);
+void NormalizeDataPoints();
 
 ///Subroutine to copy the data points in 'suspects' to their respective ANN Points
 void CopyDataToAnnPoints();

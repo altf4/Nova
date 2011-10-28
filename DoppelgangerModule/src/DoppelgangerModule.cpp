@@ -122,6 +122,11 @@ int main(int argc, char *argv[])
     int alarmSocket, len;
     struct sockaddr_un remote;
 
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = KEY_ALARM_FILENAME;
+	path += key;
+
     if((alarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
@@ -130,7 +135,7 @@ int main(int argc, char *argv[])
     }
     remote.sun_family = AF_UNIX;
 
-    strcpy(remote.sun_path, KEY_ALARM_FILENAME);
+    strcpy(remote.sun_path, path.c_str());
     unlink(remote.sun_path);
 
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
@@ -320,7 +325,7 @@ string Nova::DoppelgangerModule::Usage()
 	string usage_tips = "Nova Doppelganger Module\n";
 	usage_tips += "\tUsage: DoppelgangerModule -l <log config file> -n <NOVA config file>\n";
 	usage_tips += "\t-l: Path to LOG4CXX config xml file.\n";
-	usage_tips += "\t-n: Path to NOVA config txt file. (Config/NOVACONFIG_DM.txt by default)\n";
+	usage_tips += "\t-n: Path to NOVA config txt file.\n";
 
 	return usage_tips;
 }
@@ -329,8 +334,8 @@ string Nova::DoppelgangerModule::Usage()
 void DoppelgangerModule::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
-	bool verify[4];
-	for(uint i = 0; i < 4; i++)
+	bool verify[CONFIG_FILE_LINE_COUNT];
+	for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		verify[i] = false;
 
 	string line;
@@ -363,7 +368,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = "HONEYD_CONFIG";
+			prefix = "DM_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -392,7 +397,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				verify[2]=true;
 				continue;
 			}
-			prefix = "ENABLED";
+			prefix = "DM_ENABLED";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -403,17 +408,11 @@ void DoppelgangerModule::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix))
-			{
-				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file.");
-				continue;
-			}
 		}
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(uint i = 0; i < 4; i++)
+		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		{
 			v &= verify[i];
 		}
