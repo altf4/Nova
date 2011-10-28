@@ -10,7 +10,10 @@ class NovaConfig : public QMainWindow
 
 public:
     NovaConfig(QWidget *parent = 0);
+
     ~NovaConfig();
+
+    void LoadPreferences();
 
 private slots:
 

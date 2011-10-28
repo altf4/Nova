@@ -25,7 +25,7 @@ using namespace DoppelgangerModule;
 LoggerPtr m_logger(Logger::getLogger("main"));
 
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
-string hostAddrString, doppelgangerAddrString;
+string hostAddrString, doppelgangerAddrString, honeydConfigPath;
 struct sockaddr_in hostAddr, loopbackAddr;
 bool isEnabled;
 
@@ -329,8 +329,8 @@ string Nova::DoppelgangerModule::Usage()
 void DoppelgangerModule::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
-	bool verify[3];
-	for(uint i = 0; i < 3; i++)
+	bool verify[4];
+	for(uint i = 0; i < 4; i++)
 		verify[i] = false;
 
 	string line;
@@ -363,6 +363,18 @@ void DoppelgangerModule::LoadConfig(char* input)
 				continue;
 			}
 
+			prefix = "HONEYD_CONFIG";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0)
+				{
+					honeydConfigPath = line;
+					verify[1]=true;
+				}
+				continue;
+			}
+
 			prefix = "DOPPELGANGER_IP";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -377,7 +389,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 						exit(1);
 					}
 				}
-				verify[1]=true;
+				verify[2]=true;
 				continue;
 			}
 			prefix = "ENABLED";
@@ -387,7 +399,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					isEnabled = atoi(line.c_str());
-					verify[2]=true;
+					verify[3]=true;
 				}
 				continue;
 			}
@@ -401,7 +413,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(uint i = 0; i < 3; i++)
+		for(uint i = 0; i < 4; i++)
 		{
 			v &= verify[i];
 		}

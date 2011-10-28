@@ -27,7 +27,7 @@ using namespace log4cxx::xml;
 
 int CEsock;
 static SuspectHashTable SuspectTable;
-//Might need locks later
+
 pthread_rwlock_t lock;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
