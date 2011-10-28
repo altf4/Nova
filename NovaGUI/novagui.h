@@ -52,6 +52,7 @@ public:
 
 private slots:
 
+	void on_actionConfigure_triggered();
 	void on_SuspectButton_clicked();
 
 	void on_CEButton_clicked();
