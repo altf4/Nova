@@ -188,14 +188,12 @@ void NovaGUI::drawSuspects()
 	Suspect * suspect;
 	QString str;
 
-	pthread_rwlock_rdlock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		//If there is new information
 		if(it->second.suspect->needs_feature_update)
 		{
-			pthread_rwlock_unlock(&lock);
-			pthread_rwlock_wrlock(&lock);
 			//Extract Information
 			str = (QString)it->second.suspect->ToString().c_str();
 			//Set pointers for fast access
@@ -261,8 +259,6 @@ void NovaGUI::drawSuspects()
 				suspect->needs_feature_update = false;
 				suspect->needs_classification_update = false;
 			}
-			pthread_rwlock_unlock(&lock);
-			pthread_rwlock_rdlock(&lock);
 		}
 	}
 	pthread_rwlock_unlock(&lock);
