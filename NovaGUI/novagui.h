@@ -16,7 +16,7 @@
 #include <Suspect.h>
 
 ///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/etc/CEKey"
+#define CE_FILENAME "/.nova/keys/CEKey"
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
@@ -52,24 +52,16 @@ public:
 
 private slots:
 
+	void on_actionConfigure_triggered();
 	void on_SuspectButton_clicked();
 
 	void on_CEButton_clicked();
-	void on_CELoadButton_clicked();
-	void on_CESaveButton_clicked();
 
 	void on_DMButton_clicked();
-	void on_DMLoadButton_clicked();
-	void on_DMSaveButton_clicked();
 
 	void on_HSButton_clicked();
-	void on_HSLoadButton_clicked();
-	void on_HSSaveButton_clicked();
 
 	void on_LTMButton_clicked();
-    void on_LTMLoadButton_clicked();
-    void on_LTMSaveButton_clicked();
-
 
 private:
 

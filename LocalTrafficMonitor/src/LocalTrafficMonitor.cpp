@@ -374,6 +374,11 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 	stringstream ss;
 	boost::archive::text_oarchive oa(ss);
 
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = KEY_FILENAME;
+	path += key;
+
 	int socketFD, len;
 	struct sockaddr_un remote;
 
@@ -392,7 +397,7 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 	}
 
 	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, KEY_FILENAME);
+	strcpy(remote.sun_path, path.c_str());
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	if(connect(socketFD, (struct sockaddr *)&remote, len) == -1)
@@ -467,8 +472,8 @@ string Nova::LocalTrafficMonitor::Usage()
 void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
-	bool verify[5];
-	for(uint i = 0; i < 5; i++)
+	bool verify[CONFIG_FILE_LINE_COUNT];
+	for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		verify[i] = false;
 
 	string line;
@@ -537,17 +542,11 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
-			{
-				LOG4CXX_INFO(m_logger,"Unexpected entry in NOVA configuration file.");
-				continue;
-			}
 		}
 
 		//Checks to make sure all values have been set.
 		bool v = true;
-		for(uint i = 0; i < 5; i++)
+		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		{
 			v &= verify[i];
 		}

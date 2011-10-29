@@ -10,7 +10,9 @@
 #define HAYSTACK_H_
 
 ///	Filename of the file to be used as an IPC key
-#define KEY_FILENAME "/etc/NovaIPCKey"
+#define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+//Number of values read from the NOVAConfig file
+#define CONFIG_FILE_LINE_COUNT 6
 
 #include <TrafficEvent.h>
 
