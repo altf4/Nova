@@ -2,8 +2,6 @@
 ** Form generated from reading UI file 'novagui.ui'
 **
 <<<<<<< HEAD
-** Created: Fri Oct 28 15:35:07 2011
-=======
 ** Created: Fri Oct 28 09:56:24 2011
 >>>>>>> master
 **      by: Qt User Interface Compiler version 4.7.0
