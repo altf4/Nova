@@ -40,7 +40,6 @@ static struct sockaddr_in hostAddr;
 string broadcastAddr;			//Silent Alarm destination IP address
 int sAlarmPort;					//Silent Alarm destination port
 int classificationTimeout;		//In seconds, how long to wait between classifications
-int trainingTimeout;			//In seconds, how long to wait between training calculations
 int maxFeatureVal;				//The value to normalize feature values to.
 									//Higher value makes for more precision, but more cycles.
 
@@ -176,9 +175,13 @@ int main(int argc,char *argv[])
 	}
 
 	localIPCAddress.sun_family = AF_UNIX;
-	ofstream key(KEY_FILENAME);
-	key.close();
-	strcpy(localIPCAddress.sun_path, KEY_FILENAME);
+
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = KEY_FILENAME;
+	path += key;
+
+	strcpy(localIPCAddress.sun_path, path.c_str());
 	unlink(localIPCAddress.sun_path);
 	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
@@ -257,7 +260,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 		pthread_rwlock_wrlock(&lock);
 		//Calculate the normalized feature sets, actually used by ANN
 		//	Writes into Suspect ANNPoints
-		NormalizeDataPoints(maxFeatureVal);
+		NormalizeDataPoints();
 		pthread_rwlock_unlock(&lock);
 		pthread_rwlock_rdlock(&lock);
 		//Perform classification on each suspect
@@ -302,7 +305,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	//Training Loop
 	while(true)
 	{
-		sleep(trainingTimeout);
+		sleep(classificationTimeout);
 		pthread_rwlock_wrlock(&lock);
 		ofstream myfile (string(outFile).data(), ios::app);
 		if (myfile.is_open())
@@ -524,7 +527,7 @@ void Nova::ClassificationEngine::CopyDataToAnnPoints()
 }
 
 //Calculates normalized data points and stores into 'normalizedDataPts'
-void Nova::ClassificationEngine::NormalizeDataPoints(int maxVal)
+void Nova::ClassificationEngine::NormalizeDataPoints()
 {
 	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
@@ -551,7 +554,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints(int maxVal)
 		{
 			if(maxFeatureValues[0] != 0)
 			{
-				it->second->annPoint[i] = (double)(it->second->features->features[i] / maxFeatureValues[i]) * maxVal;
+				it->second->annPoint[i] = (double)(it->second->features->features[i] / maxFeatureValues[i]);
 			}
 			else
 			{
@@ -569,7 +572,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints(int maxVal)
 		{
 			if(maxFeatureValues[j] != 0)
 			{
-				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]) * maxVal);
+				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]));
 			}
 			else
 			{
@@ -596,13 +599,32 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 {
 	ifstream myfile (inFilePath.data());
 	string line;
+	int i = 0;
+	//Count the number of data points for allocation
+	if (myfile.is_open())
+	{
+		while (!myfile.eof())
+		{
+			if(myfile.peek() == EOF)
+			{
+				break;
+			}
+			getline(myfile,line);
+			i++;
+		}
+	}
+	else LOG4CXX_ERROR(m_logger, "Unable to open file.");
+	myfile.close();
+	maxPts = i;
 
+	//Open the file again, allocate the number of points and assign
+	myfile.open(inFilePath.data(), ifstream::in);
 	dataPts = annAllocPts(maxPts, dim);			// allocate data points
 	normalizedDataPts = annAllocPts(maxPts, dim);
 
 	if (myfile.is_open())
 	{
-		int i = 0;
+		i = 0;
 
 		while (!myfile.eof() && (i < maxPts))
 		{
@@ -664,7 +686,7 @@ string Nova::ClassificationEngine::Usage()
 	string usageString = "Nova Classification Engine!\n";
 	usageString += "\tUsage: ClassificationEngine -l LogConfigPath -n NOVAConfigPath \n";
 	usageString += "\t-l: Path to LOG4CXX config xml file.\n";
-	usageString += "\t-n: Path to NOVA config txt file. (Config/NOVAConfig_CE.txt by default)\n";
+	usageString += "\t-n: Path to NOVA config txt file.\n";
 	return usageString;
 }
 
@@ -738,9 +760,13 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	}
 
 	remote.sun_family = AF_UNIX;
-	ofstream key(KEY_ALARM_FILENAME);
-	key.close();
-	strcpy(remote.sun_path, KEY_ALARM_FILENAME);
+
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = KEY_ALARM_FILENAME;
+	path += key;
+
+	strcpy(remote.sun_path, path.c_str());
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
@@ -866,8 +892,13 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 		return;
 	}
 
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = CE_FILENAME;
+	path += key;
+
 	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, CE_FILENAME);
+	strcpy(remote.sun_path, path.c_str());
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
@@ -985,18 +1016,6 @@ void ClassificationEngine::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = "MAX_PTS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					maxPts = atoi(line.c_str());
-					verify[6]=true;
-				}
-				continue;
-			}
-
 			prefix = "CLASSIFICATION_TIMEOUT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -1004,31 +1023,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) > 0)
 				{
 					classificationTimeout = atoi(line.c_str());
-					verify[7]=true;
-				}
-				continue;
-			}
-
-			prefix = "TRAINING_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					trainingTimeout = atoi(line.c_str());
-					verify[8]=true;
-				}
-				continue;
-			}
-
-			prefix = "MAX_FEATURE_VALUE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					maxFeatureVal = atoi(line.c_str());
-					verify[9]=true;
+					verify[6]=true;
 				}
 				continue;
 			}
@@ -1040,7 +1035,7 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					isTraining = atoi(line.c_str());
-					verify[10]=true;
+					verify[7]=true;
 				}
 				continue;
 			}
@@ -1052,16 +1047,8 @@ void ClassificationEngine::LoadConfig(char* input)
 				if(atof(line.c_str()) >= 0)
 				{
 					classificationThreshold = atof(line.c_str());
-					verify[11]=true;
+					verify[8]=true;
 				}
-				continue;
-			}
-
-
-			prefix = "#";
-			if(line.substr(0,prefix.size()).compare(prefix) && line.compare(""))
-			{
-				LOG4CXX_INFO(m_logger, "Unexpected entry in NOVA configuration file.");
 				continue;
 			}
 		}
