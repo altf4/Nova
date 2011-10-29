@@ -175,6 +175,45 @@ void NovaConfig::LoadPreferences()
 	config.close();
 }
 
+void NovaConfig::on_dataButton_clicked()
+{
+	//Gets the current path location
+	QDir path = QDir::currentPath();
+
+	//Opens a cross-platform dialog box
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Data File"),  path.path(), tr("Text Files (*.txt)"));
+
+	//Gets the relative path using the absolute path in fileName and the current path
+	fileName = path.relativeFilePath(fileName);
+	ui.dataEdit->setText(fileName);
+}
+
+void NovaConfig::on_hsConfigButton_clicked()
+{
+	//Gets the current path location
+	QDir path = QDir::currentPath();
+
+	//Opens a cross-platform dialog box
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Config File"),  path.path(), tr("Text Files (*.config)"));
+
+	//Gets the relative path using the absolute path in fileName and the current path
+	fileName = path.relativeFilePath(fileName);
+	ui.hsConfigEdit->setText(fileName);
+}
+
+void NovaConfig::on_dmConfigButton_clicked()
+{
+	//Gets the current path location
+	QDir path = QDir::currentPath();
+
+	//Opens a cross-platform dialog box
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Config File"), path.path(), tr("Text Files (*.config)"));
+
+	//Gets the relative path using the absolute path in fileName and the current path
+	fileName = path.relativeFilePath(fileName);
+	ui.dmConfigEdit->setText(fileName);
+}
+
 void NovaConfig::on_okButton_clicked()
 {
 	string line, prefix, isTraining, readPcap, pcapFile;
