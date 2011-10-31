@@ -38,9 +38,6 @@ void NovaConfig::LoadPreferences()
 {
 	string line;
 	string prefix;
-	string interface;
-	string tcpTimeout;
-	string tcpFreq;
 
 	//Read from CE Config
 	ifstream config("Config/NOVAConfig.txt");
@@ -55,7 +52,6 @@ void NovaConfig::LoadPreferences()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				interface = line;
 				ui.interfaceEdit->setText((QString)line.c_str());
 				continue;
 			}
@@ -108,6 +104,14 @@ void NovaConfig::LoadPreferences()
 				continue;
 			}
 
+			prefix = "IS_TRAINING";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.trainingCheckBox->setChecked(atoi(line.c_str()));
+				continue;
+			}
+
 			prefix = "CLASSIFICATION_THRESHOLD";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -128,7 +132,6 @@ void NovaConfig::LoadPreferences()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				tcpTimeout = line;
 				ui.tcpTimeoutEdit->setText((QString)line.c_str());
 				continue;
 			}
@@ -137,7 +140,6 @@ void NovaConfig::LoadPreferences()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				tcpFreq = line;
 				ui.tcpFrequencyEdit->setText((QString)line.c_str());
 				continue;
 			}
@@ -165,6 +167,31 @@ void NovaConfig::LoadPreferences()
 				ui.dmCheckBox->setChecked(atoi(line.c_str()));
 				continue;
 			}
+
+			prefix = "READ_PCAP";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.pcapCheckBox->setChecked(atoi(line.c_str()));
+				ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
+				continue;
+			}
+
+			prefix = "PCAP_FILE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.pcapEdit->setText(line.c_str());
+				continue;
+			}
+
+			prefix = "GO_TO_LIVE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.liveCapCheckBox->setChecked(atoi(line.c_str()));
+				continue;
+			}
 		}
 	}
 	else
@@ -173,6 +200,24 @@ void NovaConfig::LoadPreferences()
 		this->close();
 	}
 	config.close();
+}
+
+void NovaConfig::on_pcapCheckBox_stateChanged(int state)
+{
+	ui.pcapGroupBox->setEnabled(state);
+}
+
+void NovaConfig::on_pcapButton_clicked()
+{
+	//Gets the current path location
+	QDir path = QDir::currentPath();
+
+	//Opens a cross-platform dialog box
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Data File"),  path.path(), tr("Text Files (*.txt)"));
+
+	//Gets the relative path using the absolute path in fileName and the current path
+	fileName = path.relativeFilePath(fileName);
+	ui.pcapEdit->setText(fileName);
 }
 
 void NovaConfig::on_dataButton_clicked()
@@ -216,44 +261,7 @@ void NovaConfig::on_dmConfigButton_clicked()
 
 void NovaConfig::on_okButton_clicked()
 {
-	string line, prefix, isTraining, readPcap, pcapFile;
-
-	//Save some values that aren't set in preferences
-	ifstream preConfig("Config/NOVAConfig.txt");
-	if(preConfig.is_open())
-	{
-		while(preConfig.good())
-		{
-			getline(preConfig,line);
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				isTraining = line;
-				continue;
-			}
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				readPcap = line;
-				continue;
-			}
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				pcapFile = line;
-				continue;
-			}
-		}
-	}
-	else
-	{
-		LOG4CXX_ERROR(n_logger, "Error reading from Nova config file.");
-		this->close();
-	}
-	preConfig.close();
+	string line, prefix;
 
 	//Rewrite the config file with the new settings
 	ofstream config("Config/NOVAConfig.txt");
@@ -266,7 +274,14 @@ void NovaConfig::on_okButton_clicked()
 		config << "K " << this->ui.ceIntensityEdit->toPlainText().toStdString() << endl;
 		config << "EPS " << this->ui.ceErrorEdit->toPlainText().toStdString() << endl;
 		config << "CLASSIFICATION_TIMEOUT " << this->ui.ceFrequencyEdit->toPlainText().toStdString() << endl;
-		config << "IS_TRAINING " << isTraining << endl;
+		if(ui.trainingCheckBox->isChecked())
+		{
+			config << "IS_TRAINING 1"<<endl;
+		}
+		else
+		{
+			config << "IS_TRAINING 0"<<endl;
+		}
 		config << "CLASSIFICATION_THRESHOLD " << this->ui.ceThresholdEdit->toPlainText().toStdString() << endl;
 		config << "DM_HONEYD_CONFIG " << this->ui.dmConfigEdit->toPlainText().toStdString() << endl;
 
@@ -282,8 +297,23 @@ void NovaConfig::on_okButton_clicked()
 		config << "HS_HONEYD_CONFIG " << this->ui.hsConfigEdit->toPlainText().toStdString() << endl;
 		config << "TCP_TIMEOUT " << this->ui.tcpTimeoutEdit->toPlainText().toStdString() << endl;
 		config << "TCP_CHECK_FREQ " << this->ui.tcpFrequencyEdit->toPlainText().toStdString() << endl;
-		config << "READ_PCAP " << readPcap << endl;
-		config << "PCAP_FILE " << pcapFile;
+		if(ui.pcapCheckBox->isChecked())
+		{
+			config << "READ_PCAP 1"<<endl;
+		}
+		else
+		{
+			config << "READ_PCAP 0"<<endl;
+		}
+		config << "PCAP_FILE " << ui.pcapEdit->toPlainText().toStdString() << endl;
+		if(ui.liveCapCheckBox->isChecked())
+		{
+			config << "GO_TO_LIVE 1";
+		}
+		else
+		{
+			config << "GO_TO_LIVE 0";
+		}
 	}
 	else
 	{
@@ -296,44 +326,7 @@ void NovaConfig::on_okButton_clicked()
 
 void NovaConfig::on_applyButton_clicked()
 {
-	string line, prefix, isTraining, readPcap, pcapFile;
-
-	//Save some values that aren't set in preferences
-	ifstream preConfig("Config/NOVAConfig.txt");
-	if(preConfig.is_open())
-	{
-		while(preConfig.good())
-		{
-			getline(preConfig,line);
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				isTraining = line;
-				continue;
-			}
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				readPcap = line;
-				continue;
-			}
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				pcapFile = line;
-				continue;
-			}
-		}
-	}
-	else
-	{
-		LOG4CXX_ERROR(n_logger, "Error reading from Nova config file.");
-		this->close();
-	}
-	preConfig.close();
+	string line, prefix;
 
 	//Rewrite the config file with the new settings
 	ofstream config("Config/NOVAConfig.txt");
@@ -346,7 +339,14 @@ void NovaConfig::on_applyButton_clicked()
 		config << "K " << this->ui.ceIntensityEdit->toPlainText().toStdString() << endl;
 		config << "EPS " << this->ui.ceErrorEdit->toPlainText().toStdString() << endl;
 		config << "CLASSIFICATION_TIMEOUT " << this->ui.ceFrequencyEdit->toPlainText().toStdString() << endl;
-		config << "IS_TRAINING " << isTraining << endl;
+		if(ui.trainingCheckBox->isChecked())
+		{
+			config << "IS_TRAINING 1"<<endl;
+		}
+		else
+		{
+			config << "IS_TRAINING 0"<<endl;
+		}
 		config << "CLASSIFICATION_THRESHOLD " << this->ui.ceThresholdEdit->toPlainText().toStdString() << endl;
 		config << "DM_HONEYD_CONFIG " << this->ui.dmConfigEdit->toPlainText().toStdString() << endl;
 
@@ -362,8 +362,23 @@ void NovaConfig::on_applyButton_clicked()
 		config << "HS_HONEYD_CONFIG " << this->ui.hsConfigEdit->toPlainText().toStdString() << endl;
 		config << "TCP_TIMEOUT " << this->ui.tcpTimeoutEdit->toPlainText().toStdString() << endl;
 		config << "TCP_CHECK_FREQ " << this->ui.tcpFrequencyEdit->toPlainText().toStdString() << endl;
-		config << "READ_PCAP " << readPcap << endl;
-		config << "PCAP_FILE " << pcapFile;
+		if(ui.pcapCheckBox->isChecked())
+		{
+			config << "READ_PCAP 1"<<endl;
+		}
+		else
+		{
+			config << "READ_PCAP 0"<<endl;
+		}
+		config << "PCAP_FILE " << ui.pcapEdit->toPlainText().toStdString() << endl;
+		if(ui.liveCapCheckBox->isChecked())
+		{
+			config << "GO_TO_LIVE 1";
+		}
+		else
+		{
+			config << "GO_TO_LIVE 0";
+		}
 	}
 	else
 	{
@@ -407,7 +422,8 @@ void NovaConfig::on_defaultsButton_clicked()
 		config << "TCP_TIMEOUT 3" << endl;
 		config << "TCP_CHECK_FREQ 3" << endl;
 		config << "READ_PCAP 0" << endl;
-		config << "PCAP_FILE Config/pcapfile";
+		config << "PCAP_FILE Config/pcapfile" << endl;
+		config << "GO_TO_LIVE 1";
 	}
 	else
 	{

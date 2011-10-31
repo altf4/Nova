@@ -52,7 +52,14 @@ public:
 
 private slots:
 
+	void on_actionRunNovaAs_triggered();
+
+	void on_actionRunNova_triggered();
+
+	void on_actionStopNova_triggered();
+
 	void on_actionConfigure_triggered();
+
 	void on_SuspectButton_clicked();
 
 	void on_CEButton_clicked();

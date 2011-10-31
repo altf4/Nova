@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'novagui.ui'
 **
-** Created: Fri Oct 28 09:56:24 2011
+** Created: Mon Oct 31 11:38:04 2011
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -33,6 +33,10 @@ class Ui_NovaGUIClass
 {
 public:
     QAction *actionConfigure;
+    QAction *actionRunNova;
+    QAction *actionRunNovaAs;
+    QAction *actionStop;
+    QAction *actionStopNova;
     QWidget *centralwidget;
     QStackedWidget *stackedWidget;
     QWidget *stackedWidgetPage1;
@@ -48,7 +52,7 @@ public:
     QLabel *CEConfigLabel;
     QPlainTextEdit *CEEnableTrainingEdit;
     QLabel *CEDatafileLabel;
-    QFrame *CELine_2;
+    QFrame *CELine;
     QPlainTextEdit *CEMaxPtsEdit;
     QPlainTextEdit *CEClassificationTimeoutEdit;
     QPlainTextEdit *CEEPSEdit;
@@ -116,6 +120,14 @@ public:
         NovaGUIClass->resize(800, 600);
         actionConfigure = new QAction(NovaGUIClass);
         actionConfigure->setObjectName(QString::fromUtf8("actionConfigure"));
+        actionRunNova = new QAction(NovaGUIClass);
+        actionRunNova->setObjectName(QString::fromUtf8("actionRunNova"));
+        actionRunNovaAs = new QAction(NovaGUIClass);
+        actionRunNovaAs->setObjectName(QString::fromUtf8("actionRunNovaAs"));
+        actionStop = new QAction(NovaGUIClass);
+        actionStop->setObjectName(QString::fromUtf8("actionStop"));
+        actionStopNova = new QAction(NovaGUIClass);
+        actionStopNova->setObjectName(QString::fromUtf8("actionStopNova"));
         centralwidget = new QWidget(NovaGUIClass);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         stackedWidget = new QStackedWidget(centralwidget);
@@ -159,11 +171,11 @@ public:
         CEDatafileLabel = new QLabel(stackedWidgetPage2);
         CEDatafileLabel->setObjectName(QString::fromUtf8("CEDatafileLabel"));
         CEDatafileLabel->setGeometry(QRect(90, 100, 81, 21));
-        CELine_2 = new QFrame(stackedWidgetPage2);
-        CELine_2->setObjectName(QString::fromUtf8("CELine_2"));
-        CELine_2->setGeometry(QRect(170, 70, 20, 351));
-        CELine_2->setFrameShape(QFrame::VLine);
-        CELine_2->setFrameShadow(QFrame::Sunken);
+        CELine = new QFrame(stackedWidgetPage2);
+        CELine->setObjectName(QString::fromUtf8("CELine"));
+        CELine->setGeometry(QRect(170, 70, 20, 351));
+        CELine->setFrameShape(QFrame::VLine);
+        CELine->setFrameShadow(QFrame::Sunken);
         CEMaxPtsEdit = new QPlainTextEdit(stackedWidgetPage2);
         CEMaxPtsEdit->setObjectName(QString::fromUtf8("CEMaxPtsEdit"));
         CEMaxPtsEdit->setGeometry(QRect(190, 280, 181, 21));
@@ -352,11 +364,15 @@ public:
         menubar->addAction(menuRun->menuAction());
         menubar->addAction(menuView->menuAction());
         menubar->addAction(menuHelp->menuAction());
-        menuFile->addAction(actionConfigure);
+        menuEdit->addAction(actionConfigure);
+        menuRun->addAction(actionRunNova);
+        menuRun->addAction(actionRunNovaAs);
+        menuRun->addSeparator();
+        menuRun->addAction(actionStopNova);
 
         retranslateUi(NovaGUIClass);
 
-        stackedWidget->setCurrentIndex(0);
+        stackedWidget->setCurrentIndex(1);
 
 
         QMetaObject::connectSlotsByName(NovaGUIClass);
@@ -364,8 +380,12 @@ public:
 
     void retranslateUi(QMainWindow *NovaGUIClass)
     {
-        NovaGUIClass->setWindowTitle(QApplication::translate("NovaGUIClass", "MainWindow", 0, QApplication::UnicodeUTF8));
+        NovaGUIClass->setWindowTitle(QApplication::translate("NovaGUIClass", "Nova", 0, QApplication::UnicodeUTF8));
         actionConfigure->setText(QApplication::translate("NovaGUIClass", "Preferences", 0, QApplication::UnicodeUTF8));
+        actionRunNova->setText(QApplication::translate("NovaGUIClass", "Run", 0, QApplication::UnicodeUTF8));
+        actionRunNovaAs->setText(QApplication::translate("NovaGUIClass", "Run as...", 0, QApplication::UnicodeUTF8));
+        actionStop->setText(QApplication::translate("NovaGUIClass", "Pause", 0, QApplication::UnicodeUTF8));
+        actionStopNova->setText(QApplication::translate("NovaGUIClass", "Stop", 0, QApplication::UnicodeUTF8));
         bListLabel->setText(QApplication::translate("NovaGUIClass", "Benign Suspects", 0, QApplication::UnicodeUTF8));
         hListLabel->setText(QApplication::translate("NovaGUIClass", " Hostile Suspects", 0, QApplication::UnicodeUTF8));
         CEInterfaceLabel->setText(QApplication::translate("NovaGUIClass", " Interface", 0, QApplication::UnicodeUTF8));

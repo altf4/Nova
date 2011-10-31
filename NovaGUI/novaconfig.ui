@@ -38,6 +38,11 @@
     </item>
     <item>
      <property name="text">
+      <string>Run Settings</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
       <string>Classification</string>
      </property>
     </item>
@@ -62,7 +67,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="generalPage">
      <widget class="QGroupBox" name="genGroupBox">
@@ -322,6 +327,114 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;How long to wait (in seconds) before considering a TCP session as timed out.&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="runPage">
+     <widget class="QCheckBox" name="pcapCheckBox">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>110</y>
+        <width>251</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string>Read packets from file</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="trainingCheckBox">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>50</y>
+        <width>251</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string>Run in Training Mode</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="pcapGroupBox">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>150</y>
+        <width>411</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Packet File Options</string>
+      </property>
+      <widget class="QTextEdit" name="pcapEdit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>27</x>
+         <y>63</y>
+         <width>301</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="pcapLabel">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>30</y>
+         <width>191</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Packet Capture File</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pcapButton">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>60</y>
+         <width>80</width>
+         <height>26</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="liveCapCheckBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>110</y>
+         <width>301</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Go to live capture after reading</string>
+       </property>
       </widget>
      </widget>
     </widget>

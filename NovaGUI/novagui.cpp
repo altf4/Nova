@@ -12,6 +12,7 @@
 #include <QApplication>
 #include "novagui.h"
 #include "novaconfig.h"
+#include "run_popup.h"
 #include <sstream>
 #include <QString>
 #include <QChar>
@@ -264,6 +265,22 @@ void NovaGUI::drawSuspects()
 	pthread_rwlock_unlock(&lock);
 }
 
+void NovaGUI::on_actionRunNova_triggered()
+{
+
+}
+
+void NovaGUI::on_actionRunNovaAs_triggered()
+{
+	Run_Popup *w = new Run_Popup(this);
+	w->show();
+}
+
+void NovaGUI::on_actionStopNova_triggered()
+{
+
+}
+
 void NovaGUI::on_actionConfigure_triggered()
 {
 	NovaConfig *w = new NovaConfig(this);
@@ -280,106 +297,22 @@ void NovaGUI::on_CEButton_clicked()
 	this->ui.stackedWidget->setCurrentIndex(1);
 }
 
-/*void NovaGUI::on_CESaveButton_clicked()
-{
-	string line;
-	ofstream config("Config/NOVAConfig_CE.txt");
-	if(config.is_open())
-	{
-		config << "INTERFACE " << this->ui.CEInterfaceEdit->toPlainText().toStdString() << endl;
-		config << "DATAFILE " << this->ui.CEDatafileEdit->toPlainText().toStdString() << endl;
-		config << "IPC_MAX_CONNECTIONS " << this->ui.CEIPCMaxConnectEdit->toPlainText().toStdString() << endl;
-		config << "BROADCAST_ADDR " << this->ui.CEBroadcastAddrEdit->toPlainText().toStdString() << endl;
-		config << "SILENT_ALARM_PORT " << this->ui.CESilentAlarmPortEdit->toPlainText().toStdString() << endl;
-		config << "K " << this->ui.CEKEdit->toPlainText().toStdString() << endl;
-		config << "EPS " << this->ui.CEEPSEdit->toPlainText().toStdString() << endl;
-		config << "MAX_PTS " << this->ui.CEMaxPtsEdit->toPlainText().toStdString() << endl;
-		config << "CLASSIFICATION_TIMEOUT " << this->ui.CEClassificationTimeoutEdit->toPlainText().toStdString() << endl;
-		config << "TRAINING_TIMEOUT " << this->ui.CETrainingTimeoutEdit->toPlainText().toStdString() << endl;
-		config << "MAX_FEATURE_VALUE " << this->ui.CEMaxFeatureValEdit->toPlainText().toStdString() << endl;
-		config << "IS_TRAINING " << this->ui.CEEnableTrainingEdit->toPlainText().toStdString();
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error writing to Classification Engine config file.");
-		exit(1);
-	}
-	config.close();
-}*/
-
 void NovaGUI::on_DMButton_clicked()
 {
 	this->ui.stackedWidget->setCurrentIndex(2);
 }
 
 
-/*void NovaGUI::on_DMSaveButton_clicked()
-{
-	string line;
-	ofstream config("Config/NOVAConfig_DM.txt");
-	if(config.is_open())
-	{
-		config << "INTERFACE " << this->ui.DMInterfaceEdit->toPlainText().toStdString() << endl;
-		config << "DOPPELGANGER_IP " << this->ui.DMIPEdit->toPlainText().toStdString() << endl;
-		config << "ENABLED " << this->ui.DMEnabledEdit->toPlainText().toStdString();
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error writing to Doppelganger Module config file.");
-		exit(1);
-	}
-	config.close();
-
-}*/
 
 void NovaGUI::on_HSButton_clicked()
 {
 	this->ui.stackedWidget->setCurrentIndex(3);
 }
 
-/*void NovaGUI::on_HSSaveButton_clicked()
-{
-	string line;
-	ofstream config("Config/NOVAConfig_HS.txt");
-	if(config.is_open())
-	{
-		config << "INTERFACE " << this->ui.HSInterfaceEdit->toPlainText().toStdString() << endl;
-		config << "HONEYD_CONFIG " << this->ui.HSHoneyDConfigEdit->toPlainText().toStdString() << endl;
-		config << "TCP_TIMEOUT " << this->ui.HSTimeoutEdit->toPlainText().toStdString() << endl;
-		config << "TCP_CHECK_FREQ " << this->ui.HSFreqEdit->toPlainText().toStdString();
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error writing to Haystack Monitor config file.");
-		exit(1);
-	}
-	config.close();
-
-}*/
-
 void NovaGUI::on_LTMButton_clicked()
 {
 	this->ui.stackedWidget->setCurrentIndex(4);
 }
-
-
-/*void NovaGUI::on_LTMSaveButton_clicked()
-{
-	string line;
-	ofstream config("Config/NOVAConfig_LTM.txt");
-	if(config.is_open())
-	{
-		config << "INTERFACE " << this->ui.LTMInterfaceEdit->toPlainText().toStdString() << endl;
-		config << "TCP_TIMEOUT " << this->ui.LTMTimeoutEdit->toPlainText().toStdString() << endl;
-		config << "TCP_CHECK_FREQ " << this->ui.LTMFreqEdit->toPlainText().toStdString();
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Error writing to Local Traffic Monitor config file.");
-		exit(1);
-	}
-	config.close();
-}*/
 
 void openSocket(NovaGUI *window)
 {

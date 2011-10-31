@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Nova</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QStackedWidget" name="stackedWidget">
@@ -24,9 +24,9 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
-    <widget class="QWidget" name="stackedWidgetPage1" native="true">
+    <widget class="QWidget" name="stackedWidgetPage1">
      <widget class="QListWidget" name="benignList">
       <property name="geometry">
        <rect>
@@ -74,7 +74,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="stackedWidgetPage2" native="true">
+    <widget class="QWidget" name="stackedWidgetPage2">
      <widget class="QPlainTextEdit" name="CETrainingTimeoutEdit">
       <property name="geometry">
        <rect>
@@ -157,7 +157,7 @@
        <string>Data File Path</string>
       </property>
      </widget>
-     <widget class="Line" name="CELine_2">
+     <widget class="Line" name="CELine">
       <property name="geometry">
        <rect>
         <x>170</x>
@@ -378,7 +378,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="stackedWidgetPage3" native="true">
+    <widget class="QWidget" name="stackedWidgetPage3">
      <widget class="QPlainTextEdit" name="DMInterfaceEdit">
       <property name="geometry">
        <rect>
@@ -475,7 +475,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="stackedWidgetPage4" native="true">
+    <widget class="QWidget" name="stackedWidgetPage4">
      <widget class="QLabel" name="HSConfigLabel">
       <property name="geometry">
        <rect>
@@ -595,7 +595,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="stackedWidgetPage5" native="true">
+    <widget class="QWidget" name="stackedWidgetPage5">
      <widget class="QPlainTextEdit" name="LTMInterfaceEdit">
       <property name="geometry">
        <rect>
@@ -780,17 +780,21 @@ Monitor</string>
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionConfigure"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>Edit</string>
     </property>
+    <addaction name="actionConfigure"/>
    </widget>
    <widget class="QMenu" name="menuRun">
     <property name="title">
      <string>Run</string>
     </property>
+    <addaction name="actionRunNova"/>
+    <addaction name="actionRunNovaAs"/>
+    <addaction name="separator"/>
+    <addaction name="actionStopNova"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -812,6 +816,26 @@ Monitor</string>
   <action name="actionConfigure">
    <property name="text">
     <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionRunNova">
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionRunNovaAs">
+   <property name="text">
+    <string>Run as...</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Pause</string>
+   </property>
+  </action>
+  <action name="actionStopNova">
+   <property name="text">
+    <string>Stop</string>
    </property>
   </action>
  </widget>
