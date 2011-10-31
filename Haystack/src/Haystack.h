@@ -12,7 +12,7 @@
 ///	Filename of the file to be used as an IPC key
 #define KEY_FILENAME "/.nova/keys/NovaIPCKey"
 //Number of values read from the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 6
+#define CONFIG_FILE_LINE_COUNT 7
 
 #include <TrafficEvent.h>
 

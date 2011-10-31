@@ -32,6 +32,7 @@ string dev; //Interface name, read from config file
 string honeydConfigPath;
 string pcapPath; //Pcap file to read from instead of live packet capture.
 bool usePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
+bool goToLiveCap; //Specify if go to live capture mode after reading from a pcap file
 
 /// Callback function that is passed to pcap_loop(..) and called each time
 /// a packet is recieved
@@ -264,8 +265,10 @@ int main(int argc, char *argv[])
 		//First process any packets in the file then close all the sessions
 		pcap_loop(handle, -1, Packet_Handler,NULL);
 		TCPTimeout(NULL);
+
+		if(goToLiveCap) usePcapFile = false; //If we are going to live capture set the flag.
 	}
-	else
+	if(!usePcapFile)
 	{
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
 		handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
@@ -371,6 +374,11 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 		//Check only once every TCP_CHECK_FREQ seconds
 		sleep(tcpFreq);
 	}while(!usePcapFile);
+
+	//After a pcap file is read we do one iteration of this function to clear out the sessions
+	//This is return is to prevent an error being thrown when there isn't one.
+	if(usePcapFile) return NULL;
+
 	//Shouldn't get here
 	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted");
 	return NULL;
@@ -556,6 +564,18 @@ void Haystack::LoadConfig(char* input)
 				{
 					pcapPath = line;
 					verify[5]=true;
+				}
+				continue;
+			}
+
+			prefix = "GO_TO_LIVE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0)
+				{
+					goToLiveCap = atoi(line.c_str());
+					verify[6]=true;
 				}
 				continue;
 			}
