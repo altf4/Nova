@@ -27,9 +27,13 @@ void on_defaultsButton_clicked();
 void on_applyButton_clicked();
 
 //Browse dialogs for file paths
+void on_pcapButton_clicked();
 void on_dataButton_clicked();
 void on_hsConfigButton_clicked();
 void on_dmConfigButton_clicked();
+
+//Check Box signal for enabling group box
+void on_pcapCheckBox_stateChanged(int state);
 
 
 

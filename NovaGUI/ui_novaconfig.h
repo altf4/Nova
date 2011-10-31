@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'novaconfig.ui'
 **
-** Created: Fri Oct 28 15:46:01 2011
+** Created: Mon Oct 31 11:34:59 2011
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -48,6 +48,14 @@ public:
     QLabel *tcpTimeoutLabel;
     QTextEdit *tcpFrequencyEdit;
     QTextEdit *tcpTimeoutEdit;
+    QWidget *runPage;
+    QCheckBox *pcapCheckBox;
+    QCheckBox *trainingCheckBox;
+    QGroupBox *pcapGroupBox;
+    QTextEdit *pcapEdit;
+    QLabel *pcapLabel;
+    QPushButton *pcapButton;
+    QCheckBox *liveCapCheckBox;
     QWidget *classificationPage;
     QGroupBox *ceGroupBox;
     QLabel *dataLabel;
@@ -92,6 +100,7 @@ public:
         centralwidget = new QWidget(NovaConfigClass);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         treeWidget = new QTreeWidget(centralwidget);
+        new QTreeWidgetItem(treeWidget);
         new QTreeWidgetItem(treeWidget);
         new QTreeWidgetItem(treeWidget);
         new QTreeWidgetItem(treeWidget);
@@ -146,6 +155,36 @@ public:
         tcpTimeoutEdit->setObjectName(QString::fromUtf8("tcpTimeoutEdit"));
         tcpTimeoutEdit->setGeometry(QRect(210, 30, 150, 20));
         stackedWidget->addWidget(generalPage);
+        runPage = new QWidget();
+        runPage->setObjectName(QString::fromUtf8("runPage"));
+        pcapCheckBox = new QCheckBox(runPage);
+        pcapCheckBox->setObjectName(QString::fromUtf8("pcapCheckBox"));
+        pcapCheckBox->setGeometry(QRect(50, 110, 251, 20));
+        pcapCheckBox->setLayoutDirection(Qt::LeftToRight);
+        trainingCheckBox = new QCheckBox(runPage);
+        trainingCheckBox->setObjectName(QString::fromUtf8("trainingCheckBox"));
+        trainingCheckBox->setGeometry(QRect(50, 50, 251, 20));
+        trainingCheckBox->setLayoutDirection(Qt::LeftToRight);
+        pcapGroupBox = new QGroupBox(runPage);
+        pcapGroupBox->setObjectName(QString::fromUtf8("pcapGroupBox"));
+        pcapGroupBox->setEnabled(true);
+        pcapGroupBox->setGeometry(QRect(20, 150, 411, 161));
+        pcapEdit = new QTextEdit(pcapGroupBox);
+        pcapEdit->setObjectName(QString::fromUtf8("pcapEdit"));
+        pcapEdit->setEnabled(false);
+        pcapEdit->setGeometry(QRect(27, 63, 301, 20));
+        pcapLabel = new QLabel(pcapGroupBox);
+        pcapLabel->setObjectName(QString::fromUtf8("pcapLabel"));
+        pcapLabel->setGeometry(QRect(80, 30, 191, 20));
+        pcapButton = new QPushButton(pcapGroupBox);
+        pcapButton->setObjectName(QString::fromUtf8("pcapButton"));
+        pcapButton->setGeometry(QRect(310, 60, 80, 26));
+        liveCapCheckBox = new QCheckBox(pcapGroupBox);
+        liveCapCheckBox->setObjectName(QString::fromUtf8("liveCapCheckBox"));
+        liveCapCheckBox->setEnabled(true);
+        liveCapCheckBox->setGeometry(QRect(30, 110, 301, 20));
+        liveCapCheckBox->setLayoutDirection(Qt::LeftToRight);
+        stackedWidget->addWidget(runPage);
         classificationPage = new QWidget();
         classificationPage->setObjectName(QString::fromUtf8("classificationPage"));
         ceGroupBox = new QGroupBox(classificationPage);
@@ -261,7 +300,7 @@ public:
 
         retranslateUi(NovaConfigClass);
 
-        stackedWidget->setCurrentIndex(3);
+        stackedWidget->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(NovaConfigClass);
@@ -278,11 +317,13 @@ public:
         QTreeWidgetItem *___qtreewidgetitem1 = treeWidget->topLevelItem(0);
         ___qtreewidgetitem1->setText(0, QApplication::translate("NovaConfigClass", "General", 0, QApplication::UnicodeUTF8));
         QTreeWidgetItem *___qtreewidgetitem2 = treeWidget->topLevelItem(1);
-        ___qtreewidgetitem2->setText(0, QApplication::translate("NovaConfigClass", "Classification", 0, QApplication::UnicodeUTF8));
+        ___qtreewidgetitem2->setText(0, QApplication::translate("NovaConfigClass", "Run Settings", 0, QApplication::UnicodeUTF8));
         QTreeWidgetItem *___qtreewidgetitem3 = treeWidget->topLevelItem(2);
-        ___qtreewidgetitem3->setText(0, QApplication::translate("NovaConfigClass", "Doppelganger", 0, QApplication::UnicodeUTF8));
+        ___qtreewidgetitem3->setText(0, QApplication::translate("NovaConfigClass", "Classification", 0, QApplication::UnicodeUTF8));
         QTreeWidgetItem *___qtreewidgetitem4 = treeWidget->topLevelItem(3);
-        ___qtreewidgetitem4->setText(0, QApplication::translate("NovaConfigClass", "Haystack", 0, QApplication::UnicodeUTF8));
+        ___qtreewidgetitem4->setText(0, QApplication::translate("NovaConfigClass", "Doppelganger", 0, QApplication::UnicodeUTF8));
+        QTreeWidgetItem *___qtreewidgetitem5 = treeWidget->topLevelItem(4);
+        ___qtreewidgetitem5->setText(0, QApplication::translate("NovaConfigClass", "Haystack", 0, QApplication::UnicodeUTF8));
         treeWidget->setSortingEnabled(__sortingEnabled);
 
         genGroupBox->setTitle(QApplication::translate("NovaConfigClass", "General Settings", 0, QApplication::UnicodeUTF8));
@@ -393,6 +434,12 @@ public:
 "<td style=\"border: none;\">\n"
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">How long to wait (in seconds) before considering a TCP session as timed out.</p></td></tr></table></body></html>", 0, QApplication::UnicodeUTF8));
 #endif // QT_NO_TOOLTIP
+        pcapCheckBox->setText(QApplication::translate("NovaConfigClass", "Read packets from file", 0, QApplication::UnicodeUTF8));
+        trainingCheckBox->setText(QApplication::translate("NovaConfigClass", "Run in Training Mode", 0, QApplication::UnicodeUTF8));
+        pcapGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Packet File Options", 0, QApplication::UnicodeUTF8));
+        pcapLabel->setText(QApplication::translate("NovaConfigClass", "Packet Capture File", 0, QApplication::UnicodeUTF8));
+        pcapButton->setText(QApplication::translate("NovaConfigClass", "Browse", 0, QApplication::UnicodeUTF8));
+        liveCapCheckBox->setText(QApplication::translate("NovaConfigClass", "Go to live capture after reading", 0, QApplication::UnicodeUTF8));
         ceGroupBox->setTitle(QApplication::translate("NovaConfigClass", "Classification Settings", 0, QApplication::UnicodeUTF8));
 #ifndef QT_NO_TOOLTIP
         dataLabel->setToolTip(QApplication::translate("NovaConfigClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"

@@ -2,12 +2,15 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-HEADERS += novaconfig.h \
+HEADERS += run_popup.h \
+    novaconfig.h \
     novagui.h
-SOURCES += novaconfig.cpp \
+SOURCES += run_popup.cpp \
+    novaconfig.cpp \
     main.cpp \
     novagui.cpp
-FORMS += novaconfig.ui \
+FORMS += run_popup.ui \
+    novaconfig.ui \
     novagui.ui
 RESOURCES += 
 INCLUDEPATH += ../NovaLibrary/src
