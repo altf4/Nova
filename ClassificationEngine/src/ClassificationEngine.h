@@ -63,6 +63,9 @@ void Classify(Suspect *suspect);
 ///Calculates normalized data points and stores into 'normalizedDataPts'
 void NormalizeDataPoints();
 
+///Reforms the kd tree in the vent that a suspects' feature exceeds the current max value for normalization
+void FormKdTree();
+
 ///Subroutine to copy the data points in 'suspects' to their respective ANN Points
 void CopyDataToAnnPoints();
 
