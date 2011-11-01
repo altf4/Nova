@@ -17,8 +17,14 @@ namespace LocalTrafficMonitor{
 
 ///	Filename of the file to be used as an IPC key
 #define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+/// File name of the file to be used as GUI Input IPC key.
+#define GUI_FILENAME "/.nova/keys/GUI_LTMKey"
 //Number of values read from the NOVAConfig file
 #define CONFIG_FILE_LINE_COUNT 6
+///The maximum message, as defined in /proc/sys/kernel/msgmax
+#define MAX_MSG_SIZE 65535
+//Number of messages to queue in a listening socket before ignoring requests until the queue is open
+#define SOCKET_QUEUE_SIZE 50
 
 ///Hash table for current TCP Sessions
 ///Table key is the source network socket, comprised of IP and Port in string format
@@ -35,6 +41,12 @@ typedef std::tr1::unordered_map<string, struct Session> TCPSessionHashTable;
 
 //Loads configuration variables from NOVAConfig_LTM.txt or specified config file
 void LoadConfig(char* input);
+
+/// Thread for listening for GUI commands
+void *GUILoop(void *ptr);
+
+/// Receives input commands from the GUI
+void ReceiveGUICommand(int socket);
 
 /// Callback function that is passed to pcap_loop(..) and called each time
 /// a packet is recieved

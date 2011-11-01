@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
-  <!-- Output the log message to system console.-->
-  <appender name="LocalTrafficMonitorConsoleAppender" class="org.apache.log4j.ConsoleAppender">    
-    <param name="Target" value="System.out"/>
-        <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%-5p %c{1} - %m%n"/>
-        </layout>
-  </appender>
-
   <!-- Output the log message to log file -->
   <appender name="LocalTrafficMonitorFileAppender" class="org.apache.log4j.FileAppender">
     <param name="file" value="Logs/LocalTrafficMonitor.log" />
@@ -16,11 +8,9 @@
       <param name="ConversionPattern" value="%d %-5p [%t:%x] %C{2} (%F:%L) - %m%n" />
     </layout>
   </appender>
-
   <root>
         <priority value="all" />
         <appender-ref ref="LocalTrafficMonitorFileAppender"/>
-        <appender-ref ref="LocalTrafficMonitorConsoleAppender"/>
   </root>
  </log4j:configuration>
 

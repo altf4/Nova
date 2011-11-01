@@ -11,8 +11,14 @@
 
 ///	Filename of the file to be used as an IPC key
 #define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+/// File name of the file to be used as GUI Input IPC key.
+#define GUI_FILENAME "/.nova/keys/GUI_HSKey"
 //Number of values read from the NOVAConfig file
 #define CONFIG_FILE_LINE_COUNT 7
+///The maximum message, as defined in /proc/sys/kernel/msgmax
+#define MAX_MSG_SIZE 65535
+//Number of messages to queue in a listening socket before ignoring requests until the queue is open
+#define SOCKET_QUEUE_SIZE 50
 
 #include <TrafficEvent.h>
 
@@ -23,6 +29,12 @@ namespace Haystack{
 void LoadConfig(char* input);
 
 using namespace std;
+
+/// Thread for listening for GUI commands
+void *GUILoop(void *ptr);
+
+/// Receives input commands from the GUI
+void ReceiveGUICommand(int socket);
 
 /// Callback function that is passed to pcap_loop(..) and called each time
 /// a packet is recieved

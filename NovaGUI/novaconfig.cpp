@@ -25,7 +25,7 @@ NovaConfig::NovaConfig(QWidget *parent)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig_CGUI.xml");
+	DOMConfigurator::configure("Config/Log4cxxConfig_GUI.xml");
 	LoadPreferences();
 }
 

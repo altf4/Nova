@@ -77,13 +77,14 @@ private:
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
 	{
+		uint i = version;
 		ar & IP_address.s_addr;
 		ar & classification;
 		ar & isHostile;
 		ar & needs_classification_update;
 		ar & needs_feature_update;
 		ar & features;
-		for(uint i = 0; i < DIMENSION; i++)
+		for(i = 0; i < DIMENSION; i++)
 		{
 			ar & annPoint[i];
 		}

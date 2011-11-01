@@ -87,6 +87,7 @@ int main(int argc,char *argv[])
 	pthread_t classificationLoopThread;
 	pthread_t trainingLoopThread;
 	pthread_t silentAlarmListenThread;
+	pthread_t GUIListenThread;
 
 	while((c = getopt (argc,argv,":n:l:")) != -1)
 	{
@@ -154,6 +155,7 @@ int main(int argc,char *argv[])
 	LoadConfig(nConfig);
 	outPtr = (void *)outFile;
 
+	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
 	//Are we Training or Classifying?
 	if(isTraining)
 	{
@@ -231,6 +233,49 @@ int main(int argc,char *argv[])
 	LOG4CXX_ERROR(m_logger,"Main thread ended. Shouldn't get here!!!");
 	close(IPCsock);
 	return 1;
+}
+
+//Infinite loop that recieves messages from the GUI
+void *Nova::ClassificationEngine::GUILoop(void *ptr)
+{
+	struct sockaddr_un localIPCAddress;
+	int IPCsock, len;
+
+	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+
+	localIPCAddress.sun_family = AF_UNIX;
+
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = GUI_FILENAME;
+	path += key;
+
+	strcpy(localIPCAddress.sun_path, path.c_str());
+	unlink(localIPCAddress.sun_path);
+	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+
+	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+
+	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+	while(true)
+	{
+		ReceiveGUICommand(IPCsock);
+	}
 }
 
 //Separate thread which infinite loops, periodically updating all the classifications
@@ -839,7 +884,7 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
     {
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(connectionSocket);
-        return NULL;
+        return false;
     }
 
 	stringstream ss;
@@ -866,6 +911,37 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 	tempEvent->copyTo(event);
 	close(connectionSocket);
 	return true;
+}
+
+/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+void ClassificationEngine::ReceiveGUICommand(int socket)
+{
+	struct sockaddr_un remote;
+    int socketSize, connectionSocket;
+    int bytesRead;
+    char buffer[MAX_MSG_SIZE];
+
+    socketSize = sizeof(remote);
+
+    //Blocking call
+    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		close(connectionSocket);
+    }
+    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+		close(connectionSocket);
+    }
+
+    string line = string(buffer);
+
+    if(!line.compare("EXIT"))
+    {
+    	exit(1);
+    }
+	close(connectionSocket);
 }
 
 //Send a silent alarm about the argument suspect
