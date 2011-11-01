@@ -25,7 +25,7 @@ NovaConfig::NovaConfig(QWidget *parent)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig_GUI.xml");
+	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	LoadPreferences();
 }
 
@@ -192,6 +192,14 @@ void NovaConfig::LoadPreferences()
 				ui.liveCapCheckBox->setChecked(atoi(line.c_str()));
 				continue;
 			}
+
+			prefix = "USE_TERMINALS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.terminalCheckBox->setChecked(atoi(line.c_str()));
+				continue;
+			}
 		}
 	}
 	else
@@ -308,11 +316,19 @@ void NovaConfig::on_okButton_clicked()
 		config << "PCAP_FILE " << ui.pcapEdit->toPlainText().toStdString() << endl;
 		if(ui.liveCapCheckBox->isChecked())
 		{
-			config << "GO_TO_LIVE 1";
+			config << "GO_TO_LIVE 1" << endl;
 		}
 		else
 		{
-			config << "GO_TO_LIVE 0";
+			config << "GO_TO_LIVE 0" << endl;
+		}
+		if(ui.terminalCheckBox->isChecked())
+		{
+			config << "USE_TERMINALS 1";
+		}
+		else
+		{
+			config << "USE_TERMINALS 0";
 		}
 	}
 	else
@@ -378,6 +394,14 @@ void NovaConfig::on_applyButton_clicked()
 		else
 		{
 			config << "GO_TO_LIVE 0";
+		}
+		if(ui.terminalCheckBox->isChecked())
+		{
+			config << "USE_TERMINALS 1";
+		}
+		else
+		{
+			config << "USE_TERMINALS 0";
 		}
 	}
 	else

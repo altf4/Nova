@@ -437,6 +437,22 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </widget>
+     <widget class="QCheckBox" name="terminalCheckBox">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>350</y>
+        <width>291</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string>Display Processes in Terminals</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="classificationPage">
      <widget class="QGroupBox" name="ceGroupBox">

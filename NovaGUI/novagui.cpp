@@ -30,6 +30,7 @@ using namespace log4cxx::xml;
 int CE_InSock, CE_OutSock, DM_OutSock, HS_OutSock, LTM_OutSock;
 struct sockaddr_un CE_InAddress, CE_OutAddress, DM_OutAddress, HS_OutAddress, LTM_OutAddress;
 bool novaRunning = false;
+bool useTerminals;
 
 static SuspectHashTable SuspectTable;
 
@@ -56,7 +57,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	//Might need locks later
 	pthread_rwlock_init(&lock, NULL);
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig_GUI.xml");
+	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	//Not sure why this is needed, but it seems to take care of the error
 	// the abstracted Qt operations of QObject::connect sometimes throws an
 	// error complaining about queueing objects of type 'QItemSelection'
@@ -552,14 +553,51 @@ void startNova()
 {
 	if(!novaRunning)
 	{
-		system("nohup honeyd -d -i eth0 -f Config/haystack.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -l "
-				"Config/honeyd.log -s Config/honeydservice.log > /dev/null &");
-		system("nohup honeyd -d -i lo -f Config/doppelganger.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -l "
-				"Config/honeydDopp.log -s Config/honeydDoppservice.log 10.0.0.0/8 > /dev/null &");
-		system("nohup ./bin/LocalTrafficMonitor -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_LTM.xml > /dev/null &");
-		system("nohup ./bin/Haystack -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_HS.xml > /dev/null &");
-		system("nohup ./bin/ClassificationEngine -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_CE.xml > /dev/null &");
-		system("nohup ./bin/DoppelgangerModule -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_DM.xml > /dev/null &");
+		ifstream * config = new ifstream("Config/NOVAConfig.txt");
+		if(config->is_open())
+		{
+			string line, prefix;
+			prefix = "USE_TERMINALS";
+			while(config->good())
+			{
+				getline(*config, line);
+				if(!line.substr(0,prefix.size()).compare(prefix))
+				{
+					line = line.substr(prefix.size()+1,line.size());
+					useTerminals = atoi(line.c_str());
+					continue;
+				}
+			}
+		}
+		config->close();
+		delete config;
+
+		if(!useTerminals)
+		{
+			system("nohup honeyd -d -i eth0 -f Config/haystack.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints"
+					" -s Config/honeydservice.log > /dev/null &");
+			system("nohup honeyd -d -i lo -f Config/doppelganger.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints"
+					" -s Config/honeydDoppservice.log 10.0.0.0/8 > /dev/null &");
+			system("nohup ./bin/LocalTrafficMonitor -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
+			system("nohup ./bin/Haystack -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
+			system("nohup ./bin/ClassificationEngine -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
+			system("nohup ./bin/DoppelgangerModule -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
+		}
+		else
+		{
+			system("(gnome-terminal -t \"HoneyD Haystack\" --geometry \"+0+0\" -x honeyd -d -i eth0 -f Config/haystack.config"
+					" -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -s Config/honeydservice.log )&");
+			system("(gnome-terminal -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x honeyd -d -i lo -f Config/doppelganger.config"
+					" -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -s Config/honeydDoppservice.log 10.0.0.0/8 )&");
+			system("(gnome-terminal -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x ./bin/LocalTrafficMonitor"
+					" -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_Console.xml)&");
+			system("(gnome-terminal -t \"Haystack\" --geometry \"+1000+600\" -x ./bin/Haystack -n Config/NOVAConfig.txt"
+					" -l Config/Log4cxxConfig_Console.xml)&");
+			system("(gnome-terminal -t \"ClassificationEngine\" --geometry \"+0+600\" -x ./bin/ClassificationEngine"
+					" -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_Console.xml)&");
+			system("(gnome-terminal -t \"DoppelgangerModule\" --geometry \"+500+600\" -x ./bin/DoppelgangerModule"
+					" -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_Console.xml )&");
+		}
 		novaRunning = true;
 	}
 }

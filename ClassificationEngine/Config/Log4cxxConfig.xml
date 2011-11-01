@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
   <!-- Output the log message to log file -->
-  <appender name="NovaGUIFileAppender" class="org.apache.log4j.FileAppender">
-    <param name="file" value="Logs/NovaGUI.log" />
+  <appender name="NovaFileAppender" class="org.apache.log4j.FileAppender">
+    <param name="file" value="Logs/Nova.log" />
     <param name="append" value="true" />
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d %-5p [%t:%x] %C{2} (%F:%L) - %m%n" />
@@ -10,7 +10,7 @@
   </appender>
   <root>
         <priority value="all" />
-        <appender-ref ref="NovaGUIFileAppender"/>
+        <appender-ref ref="NovaFileAppender"/>
   </root>
  </log4j:configuration>
 
