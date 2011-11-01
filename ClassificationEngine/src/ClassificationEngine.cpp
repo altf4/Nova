@@ -35,6 +35,12 @@ static string hostAddrString;
 static struct sockaddr_in hostAddr;
 
 //Global variables related to Classification
+//Global memory assignments to improve ReceiveTrafficEvent performance
+struct sockaddr_un remote;
+int socketSize, bytesRead;
+char buffer[MAX_MSG_SIZE];
+TrafficEvent *tempEvent, *event;
+
 
 //Configured in NOVAConfig_CE or specified config file.
 string broadcastAddr;			//Silent Alarm destination IP address
@@ -205,7 +211,7 @@ int main(int argc,char *argv[])
 	//"Main Loop"
 	while(true)
 	{
-		TrafficEvent *event = new TrafficEvent();
+		event = new TrafficEvent();
 		if( ReceiveTrafficEvent(IPCsock,TRAFFIC_EVENT_MTYPE,event) == false)
 		{
 			delete event;
@@ -900,12 +906,9 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, TrafficEvent *event)
 {
-	struct sockaddr_un remote;
-    int socketSize, connectionSocket;
-    int bytesRead;
-    char buffer[MAX_MSG_SIZE];
+	int connectionSocket;
 
-    socketSize = sizeof(remote);
+	socketSize = sizeof(remote);
 
     //Blocking call
     if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
@@ -929,8 +932,6 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 	//	boost serialization creates a new object. So if we try to apply it to
 	//	the "event" variable, it just clobbers the pointer and doesn't get
 	//	seen
-
-	TrafficEvent *tempEvent;
 
 	try
 	{
