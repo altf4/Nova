@@ -15,7 +15,7 @@ Run_Popup::Run_Popup(QWidget *parent)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig_GUI.xml");
+	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	LoadPreferences();
 }
 
@@ -67,6 +67,14 @@ void Run_Popup::LoadPreferences()
 			{
 				line = line.substr(prefix.size()+1,line.size());
 				ui.liveCapCheckBox->setChecked(atoi(line.c_str()));
+				continue;
+			}
+
+			prefix = "USE_TERMINALS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.terminalCheckBox->setChecked(atoi(line.c_str()));
 				continue;
 			}
 		}
@@ -136,9 +144,17 @@ bool Run_Popup::savePreferences()
 			prefix = "GO_TO_LIVE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << "GO_TO_LIVE " << this->ui.liveCapCheckBox->isChecked();
+				*out << "GO_TO_LIVE " << this->ui.liveCapCheckBox->isChecked() << endl;
 				continue;
 			}
+
+			prefix = "USE_TERMINALS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << "USE_TERMINALS " << this->ui.terminalCheckBox->isChecked() << endl;
+				continue;
+			}
+
 			*out << line << endl;
 		}
 	}

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>379</width>
-    <height>304</height>
+    <height>348</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -124,7 +124,7 @@
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>270</y>
+      <y>310</y>
       <width>80</width>
       <height>25</height>
      </rect>
@@ -137,13 +137,29 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>270</y>
+      <y>310</y>
       <width>80</width>
       <height>25</height>
      </rect>
     </property>
     <property name="text">
      <string>Cancel</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="terminalCheckBox">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>270</y>
+      <width>291</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>Display Processes in Terminals</string>
     </property>
    </widget>
   </widget>
