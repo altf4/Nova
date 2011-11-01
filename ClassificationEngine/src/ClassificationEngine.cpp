@@ -53,6 +53,7 @@ const int dim = DIM;					//dimension
 int nPts = 0;						//actual number of data points
 ANNpointArray dataPts;				//data points
 ANNpointArray normalizedDataPts;	//normalized data points
+ANNkd_tree*	kdTree;					// search structure
 string dataFile;					//input for data points
 istream* queryIn = NULL;			//input for query points
 
@@ -484,6 +485,35 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	return NULL;
 }
 
+//Forms the normalized kd tree, done once on start up
+//will be called again if the a suspect's max value for a feature exceeds the current maximum
+void Nova::ClassificationEngine::FormKdTree()
+{
+	delete kdTree;
+	//Normalize the data points
+	//Foreach data point
+	for(int j = 0;j < dim;j++)
+	{
+		//Foreach feature within the data point
+		for(int i=0;i < nPts;i++)
+		{
+			if(maxFeatureValues[j] != 0)
+			{
+				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]));
+			}
+			else
+			{
+				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				break;
+			}
+		}
+	}
+	kdTree = new ANNkd_tree(					// build search structure
+			normalizedDataPts,					// the data points
+					nPts,						// number of points
+					dim);						// dimension of space
+}
+
 //Performs classification on given suspect
 //Where all the magic takes place
 void Nova::ClassificationEngine::Classify(Suspect *suspect)
@@ -491,16 +521,10 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	ANNpoint			queryPt;				// query point
 	ANNidxArray			nnIdx;					// near neighbor indices
 	ANNdistArray		dists;					// near neighbor distances
-	ANNkd_tree*			kdTree;					// search structure
 
 	queryPt = suspect->annPoint;
 	nnIdx = new ANNidx[k];						// allocate near neigh indices
 	dists = new ANNdist[k];						// allocate near neighbor dists
-
-	kdTree = new ANNkd_tree(					// build search structure
-			normalizedDataPts,					// the data points
-					nPts,						// number of points
-					dim);						// dimension of space
 
 	kdTree->annkSearch(							// search
 			queryPt,							// query point
@@ -535,7 +559,6 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 			suspect->classification = -1;
 			delete [] nnIdx;							// clean things up
 		    delete [] dists;
-		    delete kdTree;
 		    annClose();
 		    return;
 		}
@@ -554,7 +577,6 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 
 	delete [] nnIdx;							// clean things up
     delete [] dists;
-    delete kdTree;
 
     annClose();
 	suspect->needs_classification_update = false;
@@ -571,9 +593,12 @@ void Nova::ClassificationEngine::CopyDataToAnnPoints()
 	}
 }
 
-//Calculates normalized data points and stores into 'normalizedDataPts'
+//Calculates normalized data points for suspects
 void Nova::ClassificationEngine::NormalizeDataPoints()
 {
+	//Used to indicate if a max value has changed and the kd tree needs to be reformed
+	bool aMaxValChanged = false;
+
 	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
@@ -581,10 +606,14 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 		{
 			if(it->second->features->features[i] > maxFeatureValues[i])
 			{
+				//For proper normalization the upper bound for a feature is the max value of the data.
 				maxFeatureValues[i] = it->second->features->features[i];
+				aMaxValChanged = true;
 			}
 		}
 	}
+	if(aMaxValChanged) FormKdTree();
+
 	//Normalize the suspect points
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
@@ -604,25 +633,6 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 			else
 			{
 				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
-			}
-		}
-	}
-
-	//Normalize the data points
-	//Foreach data point
-	for(int j = 0;j < dim;j++)
-	{
-		//Foreach feature within the data point
-		for(int i=0;i < nPts;i++)
-		{
-			if(maxFeatureValues[j] != 0)
-			{
-				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]));
-			}
-			else
-			{
-				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
-				break;
 			}
 		}
 	}
@@ -702,6 +712,30 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else LOG4CXX_ERROR(m_logger,"Unable to open file.");
 	myfile.close();
+
+	//Normalize the data points
+	//Foreach data point
+	for(int j = 0;j < dim;j++)
+	{
+		//Foreach feature within the data point
+		for(int i=0;i < nPts;i++)
+		{
+			if(maxFeatureValues[j] != 0)
+			{
+				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]));
+			}
+			else
+			{
+				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				break;
+			}
+		}
+	}
+
+	kdTree = new ANNkd_tree(					// build search structure
+			normalizedDataPts,					// the data points
+					nPts,						// number of points
+					dim);						// dimension of space
 }
 
 //Writes dataPtsWithClass out to a file specified by outFilePath
