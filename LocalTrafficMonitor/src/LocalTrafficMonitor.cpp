@@ -32,6 +32,16 @@ string pcapPath; //Pcap file to read from instead of live packet capture.
 bool usePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
 bool goToLiveCap; //Specify if go to live capture mode after reading from a pcap file
 
+//Global memory assignments to improve packet handler performance
+int len, dataLen, dest_port;
+struct ether_header *ethernet;  	/* net/ethernet.h */
+struct ip *ip_hdr; 					/* The IP header */
+TrafficEvent *event, *tempEvent;
+struct Packet packet_info;
+char tcp_socket[55];
+struct sockaddr_un remote;
+const char* data;
+
 pthread_rwlock_t lock;
 LoggerPtr m_logger(Logger::getLogger("main"));
 
@@ -39,96 +49,87 @@ LoggerPtr m_logger(Logger::getLogger("main"));
 /// a packet is recieved
 void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
-	struct ether_header *ethernet;  	/* net/ethernet.h */
-		struct ip *ip_hdr; 					/* The IP header */
+	if(packet == NULL)
+	{
+		LOG4CXX_ERROR(m_logger, "Didn't grab packet!");
+		return;
+	}
 
-		TrafficEvent *event;
-		struct Packet temp;
+	/* let's start with the ether header... */
+	ethernet = (struct ether_header *) packet;
 
-		if(packet == NULL)
+	/* Do a couple of checks to see what packet type we have..*/
+	if (ntohs (ethernet->ether_type) == ETHERTYPE_IP)
+	{
+		ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
+
+		//Prepare Packet structure
+		packet_info.ip_hdr = *ip_hdr;
+		packet_info.pcap_header = *pkthdr;
+
+		//IF UDP or ICMP
+		if(ip_hdr->ip_p == 17 )
 		{
-			LOG4CXX_ERROR(m_logger, "Didn't grab packet!");
-			return;
+			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
+			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
+			SendToCE(event);
+			delete event;
+			event = NULL;
 		}
-
-		/* let's start with the ether header... */
-		ethernet = (struct ether_header *) packet;
-
-		/* Do a couple of checks to see what packet type we have..*/
-		if (ntohs (ethernet->ether_type) == ETHERTYPE_IP)
+		else if(ip_hdr->ip_p == 1)
 		{
-			ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
+			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
+			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
+			SendToCE(event);
+			delete event;
+			event = NULL;
+		}
+		//If TCP...
+		else if(ip_hdr->ip_p == 6)
+		{
+			packet_info.tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
+			dest_port = ntohs(packet_info.tcp_hdr.dest);
 
-			//Prepare Packet structure
-			struct Packet *packet_info = &temp;
-			packet_info->ip_hdr = *ip_hdr;
-			packet_info->pcap_header = *pkthdr;
-
-			//IF UDP or ICMP
-			if(ip_hdr->ip_p == 17 )
+			bzero(tcp_socket, 55);
+			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
+			pthread_rwlock_wrlock(&lock);
+			//If this is a new entry...
+			if( SessionTable[tcp_socket].session.size() == 0)
 			{
-				packet_info->udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-				event = new Nova::TrafficEvent(*packet_info, FROM_HAYSTACK_DP);
-				SendToCE(event);
-				delete event;
-				event = NULL;
+				//Insert packet into Hash Table
+				SessionTable[tcp_socket].session.push_back(packet_info);
+				SessionTable[tcp_socket].fin = false;
 			}
-			else if(ip_hdr->ip_p == 1)
-			{
-				packet_info->icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-				event = new Nova::TrafficEvent(*packet_info, FROM_HAYSTACK_DP);
-				SendToCE(event);
-				delete event;
-				event = NULL;
-			}
-			//If TCP...
-			else if(ip_hdr->ip_p == 6)
-			{
-				packet_info->tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
-				int dest_port = ntohs(packet_info->tcp_hdr.dest);
-				char tcp_socket[55];
 
-				bzero(tcp_socket, 55);
-				snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
-				pthread_rwlock_wrlock(&lock);
-
-				//If this is a new entry...
-				if( SessionTable[tcp_socket].session.size() == 0)
+			//If there is already a session in progress for the given LogEntry
+			else
+			{
+				//If Session is ending
+				//TODO: The session may continue a few packets after the FIN. Account for this case.
+				//See ticket #15
+				if(packet_info.tcp_hdr.fin)
 				{
-					//Insert packet into Hash Table
-					SessionTable[tcp_socket].session.push_back(*packet_info);
-					SessionTable[tcp_socket].fin = false;
+					SessionTable[tcp_socket].session.push_back(packet_info);
+					SessionTable[tcp_socket].fin = true;
 				}
-
-				//If there is already a session in progress for the given LogEntry
 				else
 				{
-					//If Session is ending
-					//TODO: The session may continue a few packets after the FIN. Account for this case.
-					//See ticket #15
-					if(packet_info->tcp_hdr.fin)
-					{
-						SessionTable[tcp_socket].session.push_back(*packet_info);
-						SessionTable[tcp_socket].fin = true;
-					}
-					else
-					{
-						//Add this new packet to the session vector
-						SessionTable[tcp_socket].session.push_back(*packet_info);
-					}
+					//Add this new packet to the session vector
+					SessionTable[tcp_socket].session.push_back(packet_info);
 				}
-				pthread_rwlock_unlock(&lock);
 			}
+			pthread_rwlock_unlock(&lock);
 		}
-		else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
-		{
-			return;
-		}
-		else
-		{
-			LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
-			return;
-		}
+	}
+	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
+	{
+		return;
+	}
+	else
+	{
+		LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
+		return;
+	}
 }
 
 int main(int argc, char *argv[])
@@ -215,6 +216,16 @@ int main(int argc, char *argv[])
 
 	//Runs the configuration loader
 	LoadConfig(nConfig);
+
+	//Pre-Forms the socket address to improve performance
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = KEY_FILENAME;
+	path += key;
+
+	remote.sun_family = AF_UNIX;
+	strcpy(remote.sun_path, path.c_str());
+	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
 
@@ -308,7 +319,7 @@ int main(int argc, char *argv[])
 void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 {
 	struct sockaddr_un localIPCAddress;
-	int IPCsock, len;
+	int IPCsock, length;
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
@@ -326,7 +337,7 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 
 	strcpy(localIPCAddress.sun_path, path.c_str());
 	unlink(localIPCAddress.sun_path);
-	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+	length = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
 	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
 	{
@@ -405,8 +416,8 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 					//If session has been finished for more than two seconds
 					if(it->second.fin == true)
 					{
-						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
-						SendToCE(event);
+						tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
+						SendToCE(tempEvent);
 
 						pthread_rwlock_unlock(&lock);
 						pthread_rwlock_wrlock(&lock);
@@ -415,15 +426,15 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 						pthread_rwlock_unlock(&lock);
 						pthread_rwlock_rdlock(&lock);
 
-						delete event;
-						event = NULL;
+						delete tempEvent;
+						tempEvent = NULL;
 					}
 					//If this session is timed out
 					else if(packetTime + tcpTime < currentTime)
 					{
 
-						TrafficEvent *event = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
-						SendToCE(event);
+						tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
+						SendToCE(tempEvent);
 
 						pthread_rwlock_unlock(&lock);
 						pthread_rwlock_wrlock(&lock);
@@ -432,8 +443,8 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 						pthread_rwlock_unlock(&lock);
 						pthread_rwlock_rdlock(&lock);
 
-						delete event;
-						event = NULL;
+						delete tempEvent;
+						tempEvent = NULL;
 					}
 				}
 			}
@@ -459,20 +470,14 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 	stringstream ss;
 	boost::archive::text_oarchive oa(ss);
 
-	//Builds the key path
-	string path = getenv("HOME");
-	string key = KEY_FILENAME;
-	path += key;
-
-	int socketFD, len;
-	struct sockaddr_un remote;
+	int socketFD;
 
 	//Serialize the data into a simple char buffer
 	oa << event;
 	string temp = ss.str();
 
-	const char* data = temp.c_str();
-	int dataLen = temp.size();
+	data = temp.c_str();
+	dataLen = temp.size();
 
 	if((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -480,10 +485,6 @@ bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 		close(socketFD);
 		return false;
 	}
-
-	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, path.c_str());
-	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	if(connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
