@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
 	using namespace LocalTrafficMonitor;
 	pthread_rwlock_init(&lock, NULL);
 	pthread_t TCP_timeout_thread;
+	pthread_t GUIListenThread;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
 	int ret;
@@ -215,6 +216,8 @@ int main(int argc, char *argv[])
 	//Runs the configuration loader
 	LoadConfig(nConfig);
 
+	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
+
 	struct bpf_program fp;			/* The compiled filter expression */
 	char filter_exp[64];
 	pcap_t *handle;
@@ -235,6 +238,7 @@ int main(int argc, char *argv[])
 	//If we are reading from a packet capture file
 	if(usePcapFile)
 	{
+		sleep(tcpFreq); //To allow time for other processes to open
 		handle = pcap_open_offline(pcapPath.c_str(), errbuf);
 
 		if(handle == NULL)
@@ -299,6 +303,79 @@ int main(int argc, char *argv[])
 	    pcap_loop(handle, -1, Packet_Handler, NULL);
 	}
 	return 0;
+}
+
+void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
+{
+	struct sockaddr_un localIPCAddress;
+	int IPCsock, len;
+
+	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+
+	localIPCAddress.sun_family = AF_UNIX;
+
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = GUI_FILENAME;
+	path += key;
+
+	strcpy(localIPCAddress.sun_path, path.c_str());
+	unlink(localIPCAddress.sun_path);
+	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+
+	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+
+	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+	while(true)
+	{
+		ReceiveGUICommand(IPCsock);
+	}
+}
+
+/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+void LocalTrafficMonitor::ReceiveGUICommand(int socket)
+{
+	struct sockaddr_un remote;
+    int socketSize, connectionSocket;
+    int bytesRead;
+    char buffer[MAX_MSG_SIZE];
+
+    socketSize = sizeof(remote);
+
+    //Blocking call
+    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		close(connectionSocket);
+    }
+    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+		close(connectionSocket);
+    }
+
+    string line = string(buffer);
+
+    if(!line.compare("EXIT"))
+    {
+    	exit(1);
+    }
+	close(connectionSocket);
 }
 
 /// Thread for periodically checking for TCP timeout.

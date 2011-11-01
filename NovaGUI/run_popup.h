@@ -13,11 +13,14 @@ public:
     ~Run_Popup();
 
     void LoadPreferences();
+    bool savePreferences();
 
 private slots:
 
 //Main buttons
 void on_cancelButton_clicked();
+void on_startButton_clicked();
+
 
 //Check Box signal for enabling group box
 void on_pcapCheckBox_stateChanged(int state);

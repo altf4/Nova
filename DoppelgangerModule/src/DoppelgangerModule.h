@@ -12,6 +12,8 @@ using std::string;
 
 ///	Filename of the file to be used as an IPC key
 #define KEY_ALARM_FILENAME "/.nova/keys/NovaDoppIPCKey"
+/// File name of the file to be used as GUI Input IPC key.
+#define GUI_FILENAME "/.nova/keys/GUI_DMKey"
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
@@ -29,6 +31,12 @@ string getLocalIP(const char *dev);
 
 ///Listens over IPC for a Silent Alarm, blocking on no answer
 Suspect *ReceiveAlarm(int alarmSock);
+
+/// Thread for listening for GUI commands
+void *GUILoop(void *ptr);
+
+/// Receives input commands from the GUI
+void ReceiveGUICommand(int socket);
 
 //Returns usage tips
 string Usage();

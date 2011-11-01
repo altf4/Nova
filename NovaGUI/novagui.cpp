@@ -15,6 +15,7 @@
 #include "run_popup.h"
 #include <sstream>
 #include <QString>
+#include <signal.h>
 #include <QChar>
 #include <fstream>
 #include <log4cxx/xml/domconfigurator.h>
@@ -26,18 +27,32 @@ using namespace ClassificationEngine;
 using namespace log4cxx;
 using namespace log4cxx::xml;
 
-int CEsock;
+int CE_InSock, CE_OutSock, DM_OutSock, HS_OutSock, LTM_OutSock;
+struct sockaddr_un CE_InAddress, CE_OutAddress, DM_OutAddress, HS_OutAddress, LTM_OutAddress;
+bool novaRunning = false;
+
 static SuspectHashTable SuspectTable;
+
+//Variables for message sends.
+const char* data;
+int dataLen, len;
 
 pthread_rwlock_t lock;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
-
+//Called when process receives a SIGINT, like if you press ctrl+c
+void sighandler(int param)
+{
+	param = param;
+	closeNova();
+	exit(1);
+}
 
 NovaGUI::NovaGUI(QWidget *parent)
     : QMainWindow(parent)
 {
+	signal(SIGINT, sighandler);
 	//Might need locks later
 	pthread_rwlock_init(&lock, NULL);
 	ui.setupUi(this);
@@ -46,12 +61,43 @@ NovaGUI::NovaGUI(QWidget *parent)
 	// the abstracted Qt operations of QObject::connect sometimes throws an
 	// error complaining about queueing objects of type 'QItemSelection'
 	qRegisterMetaType<QItemSelection>("QItemSelection");
-	openSocket(this);
+
+	//Sets up the socket addresses
+	getSocketAddr();
+
+	//Create listening socket, listen thread and draw thread --------------
+	pthread_t CEListenThread;
+	pthread_t CEDrawThread;
+
+	if((CE_InSock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		sclose(CE_InSock);
+		exit(1);
+	}
+
+	len = strlen(CE_InAddress.sun_path) + sizeof(CE_InAddress.sun_family);
+
+	if(bind(CE_InSock,(struct sockaddr *)&CE_InAddress,len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		sclose(CE_InSock);
+		exit(1);
+	}
+
+	if(listen(CE_InSock, SOCKET_QUEUE_SIZE) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		sclose(CE_InSock);
+		exit(1);
+	}
+	pthread_create(&CEListenThread,NULL,CEListen, this);
+	pthread_create(&CEDrawThread,NULL,CEDraw, this);
 }
 
 NovaGUI::~NovaGUI()
 {
-
+	closeNova();
 }
 
 
@@ -59,7 +105,7 @@ void *CEListen(void *ptr)
 {
 	while(true)
 	{
-		((NovaGUI*)ptr)->ReceiveCE(CEsock);
+		((NovaGUI*)ptr)->ReceiveCE(CE_InSock);
 	}
 	return NULL;
 }
@@ -224,7 +270,7 @@ void NovaGUI::drawSuspects()
 				else
 				{
 					//Remove old item, update info, change color, put in new list
-					this->ui.benignList->removeItemWidget(it->second.item);
+					this->ui.benignList->removeItemWidget(item);
 					item->setForeground(rbrush);
 					item->setText(str);
 					this->ui.hostileList->addItem(item);
@@ -267,7 +313,7 @@ void NovaGUI::drawSuspects()
 
 void NovaGUI::on_actionRunNova_triggered()
 {
-
+	startNova();
 }
 
 void NovaGUI::on_actionRunNovaAs_triggered()
@@ -278,7 +324,7 @@ void NovaGUI::on_actionRunNovaAs_triggered()
 
 void NovaGUI::on_actionStopNova_triggered()
 {
-
+	closeNova();
 }
 
 void NovaGUI::on_actionConfigure_triggered()
@@ -314,47 +360,208 @@ void NovaGUI::on_LTMButton_clicked()
 	this->ui.stackedWidget->setCurrentIndex(4);
 }
 
-void openSocket(NovaGUI *window)
+void getSocketAddr()
 {
-	struct sockaddr_un CE_IPCAddress;
-	int len;
-	pthread_t CEListenThread;
-	pthread_t CEDrawThread;
 
-
-	if((CEsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-		close(CEsock);
-		exit(1);
-	}
-
-	CE_IPCAddress.sun_family = AF_UNIX;
-
+	//CE IN --------------------------------------------------
 	//Builds the key path
 	string path = getenv("HOME");
 	string key = CE_FILENAME;
 	path += key;
+	//Builds the address
+	CE_InAddress.sun_family = AF_UNIX;
+	strcpy(CE_InAddress.sun_path, path.c_str());
+	unlink(CE_InAddress.sun_path);
 
-	strcpy(CE_IPCAddress.sun_path, path.c_str());
-	unlink(CE_IPCAddress.sun_path);
-	len = strlen(CE_IPCAddress.sun_path) + sizeof(CE_IPCAddress.sun_family);
+	//CE OUT -------------------------------------------------
+	//Builds the key path
+	path = getenv("HOME");
+	key = CE_GUI_FILENAME;
+	path += key;
+	//Builds the address
+	CE_OutAddress.sun_family = AF_UNIX;
+	strcpy(CE_OutAddress.sun_path, path.c_str());
 
-	if(bind(CEsock,(struct sockaddr *)&CE_IPCAddress,len) == -1)
+	//DM OUT -------------------------------------------------
+	//Builds the key path
+	path = getenv("HOME");
+	key = DM_GUI_FILENAME;
+	path += key;
+	//Builds the address
+	DM_OutAddress.sun_family = AF_UNIX;
+	strcpy(DM_OutAddress.sun_path, path.c_str());
+
+	//HS OUT -------------------------------------------------
+	//Builds the key path
+	path = getenv("HOME");
+	key = HS_GUI_FILENAME;
+	path += key;
+	//Builds the address
+	HS_OutAddress.sun_family = AF_UNIX;
+	strcpy(HS_OutAddress.sun_path, path.c_str());
+
+	//LTM OUT ------------------------------------------------
+	//Builds the key path
+	path = getenv("HOME");
+	key = LTM_GUI_FILENAME;
+	path += key;
+	//Builds the address
+	LTM_OutAddress.sun_family = AF_UNIX;
+	strcpy(LTM_OutAddress.sun_path, path.c_str());
+
+}
+
+void closeNova()
+{
+	if(novaRunning)
 	{
-		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
-		close(CEsock);
+		//Sets the message
+		data = "EXIT";
+		dataLen = 4;
+
+		//Sends the message to all Nova processes
+		sendAll();
+
+		// Close Honeyd processes
+		FILE * out = popen("pidof honeyd","r");
+		if(out != NULL)
+		{
+			char buffer[1024];
+			char * line = fgets(buffer, sizeof(buffer), out);
+			string cmd = "kill " + string(line);
+			system(cmd.c_str());
+		}
+		pclose(out);
+		novaRunning = false;
+	}
+}
+
+void sendAll()
+{
+	//Opens all the sockets
+	//CE OUT -------------------------------------------------
+	if ((CE_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		close(CE_OutSock);
 		exit(1);
 	}
 
-	if(listen(CEsock, SOCKET_QUEUE_SIZE) == -1)
+	//DM OUT -------------------------------------------------
+	if ((DM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
-		close(CEsock);
+		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		close(DM_OutSock);
 		exit(1);
 	}
-	pthread_create(&CEListenThread,NULL,CEListen, window);
-	pthread_create(&CEDrawThread,NULL,CEDraw, window);
+
+	//HS OUT -------------------------------------------------
+	if ((HS_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		close(HS_OutSock);
+		exit(1);
+	}
+
+	//LTM OUT ------------------------------------------------
+	if ((LTM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		close(LTM_OutSock);
+		exit(1);
+	}
+
+
+	//Sends the message
+	//CE OUT -------------------------------------------------
+	len = strlen(CE_OutAddress.sun_path) + sizeof(CE_OutAddress.sun_family);
+	if (connect(CE_OutSock, (struct sockaddr *)&CE_OutAddress, len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
+		close(CE_OutSock);
+		return;
+	}
+
+	if (send(CE_OutSock, data, dataLen, 0) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+		close(CE_OutSock);
+		return;
+	}
+	// -------------------------------------------------------
+	close(CE_OutSock);
+
+	//DM OUT -------------------------------------------------
+	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
+	if (connect(DM_OutSock, (struct sockaddr *)&DM_OutAddress, len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
+		close(DM_OutSock);
+		return;
+	}
+
+	if (send(DM_OutSock, data, dataLen, 0) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+		close(DM_OutSock);
+		return;
+	}
+	close(DM_OutSock);
+	// -------------------------------------------------------
+
+
+	//HS OUT -------------------------------------------------
+	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
+	if (connect(HS_OutSock, (struct sockaddr *)&HS_OutAddress, len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
+		close(HS_OutSock);
+		return;
+	}
+
+	if (send(HS_OutSock, data, dataLen, 0) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+		close(HS_OutSock);
+		return;
+	}
+	close(HS_OutSock);
+	// -------------------------------------------------------
+
+
+	//LTM OUT ------------------------------------------------
+	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);
+	if (connect(LTM_OutSock, (struct sockaddr *)&LTM_OutAddress, len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
+		close(LTM_OutSock);
+		return;
+	}
+
+	if (send(LTM_OutSock, data, dataLen, 0) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+		close(LTM_OutSock);
+		return;
+	}
+	close(LTM_OutSock);
+	// -------------------------------------------------------
+}
+
+void startNova()
+{
+	if(!novaRunning)
+	{
+		system("nohup honeyd -d -i eth0 -f Config/haystack.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -l "
+				"Config/honeyd.log -s Config/honeydservice.log > /dev/null &");
+		system("nohup honeyd -d -i lo -f Config/doppelganger.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -l "
+				"Config/honeydDopp.log -s Config/honeydDoppservice.log 10.0.0.0/8 > /dev/null &");
+		system("nohup ./bin/LocalTrafficMonitor -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_LTM.xml > /dev/null &");
+		system("nohup ./bin/Haystack -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_HS.xml > /dev/null &");
+		system("nohup ./bin/ClassificationEngine -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_CE.xml > /dev/null &");
+		system("nohup ./bin/DoppelgangerModule -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_DM.xml > /dev/null &");
+		novaRunning = true;
+	}
 }
 
 void sclose(int sock)

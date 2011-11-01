@@ -116,7 +116,8 @@ private:
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
 	{
-		for(uint i=0; i < DIMENSION; i++)
+		uint i = version;
+		for(i=0; i < DIMENSION; i++)
 		{
 			ar & features[i];
 		}

@@ -15,8 +15,20 @@
 #include <arpa/inet.h>
 #include <Suspect.h>
 
+/// File name of the file to be used as Traffic Event IPC key
+#define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+///	Filename of the file to be used as an Doppelganger IPC key
+#define KEY_ALARM_FILENAME "/.nova/keys/NovaDoppIPCKey"
 ///	Filename of the file to be used as an Classification Engine IPC key
 #define CE_FILENAME "/.nova/keys/CEKey"
+/// File name of the file to be used as CE Output IPC key.
+#define CE_GUI_FILENAME "/.nova/keys/GUI_CEKey"
+/// File name of the file to be used as CE Output IPC key.
+#define DM_GUI_FILENAME "/.nova/keys/GUI_DMKey"
+/// File name of the file to be used as CE Output IPC key.
+#define HS_GUI_FILENAME "/.nova/keys/GUI_HSKey"
+/// File name of the file to be used as CE Output IPC key.
+#define LTM_GUI_FILENAME "/.nova/keys/GUI_LTMKey"
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
@@ -84,8 +96,21 @@ void *CEDraw(void *ptr);
 ///Socket closing workaround for namespace issue.
 void sclose(int sock);
 
-//Opens the socket and creates a thread to listen on it.
-void openSocket(NovaGUI *window);
+//Opens the sockets for a message
+void openSocket();
+
+//Closes the Nova processes
+void closeNova();
+
+//Starts the Nova processes
+void startNova();
+
+//Saves the socket addresses for re-use.
+void getSocketAddr();
+
+//Sends the contents of global scope const char * data to all Nova processes
+void sendAll();
+
 
 
 

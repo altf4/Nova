@@ -20,10 +20,13 @@
 #define KEY_FILENAME "/.nova/keys/NovaIPCKey"
 ///	Filename of the file to be used as an Doppelganger IPC key
 #define KEY_ALARM_FILENAME "/.nova/keys/NovaDoppIPCKey"
-///The maximum message, as defined in /proc/sys/kernel/msgmax
-#define MAX_MSG_SIZE 65535
 ///	Filename of the file to be used as an Classification Engine IPC key
 #define CE_FILENAME "/.nova/keys/CEKey"
+/// File name of the file to be used as GUI Input IPC key.
+#define GUI_FILENAME "/.nova/keys/GUI_CEKey"
+
+///The maximum message, as defined in /proc/sys/kernel/msgmax
+#define MAX_MSG_SIZE 65535
 //dimension
 #define DIM 9
 //Number of values read from the NOVAConfig file
@@ -40,6 +43,9 @@ namespace ClassificationEngine{
 
 //Hash table for current list of suspects
 typedef std::tr1::unordered_map<in_addr_t, Suspect* > SuspectHashTable;
+
+// Thread for listening for GUI commands
+void *GUILoop(void *ptr);
 
 //Separate thread which infinite loops, periodically updating all the classifications
 //	for all the current suspects
@@ -81,6 +87,9 @@ void SilentAlarm(Suspect *suspect);
 ///Receive a TrafficEvent from another local component.
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 bool ReceiveTrafficEvent(int socket, long msg_type, TrafficEvent *event);
+
+/// Receives input commands from the GUI
+void ReceiveGUICommand(int socket);
 
 //Sends output to the UI
 void SendToUI(Suspect *suspect);

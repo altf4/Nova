@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 {
 	int c;
 	char suspectAddr[INET_ADDRSTRLEN];
+	pthread_t GUIListenThread;
 
 	signal(SIGINT, siginthandler);
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
@@ -107,6 +108,7 @@ int main(int argc, char *argv[])
 	}
 	LoadConfig(nConfig);
 
+	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
 	string commandLine;
 
 	//system commands to allow DM to function.
@@ -139,6 +141,7 @@ int main(int argc, char *argv[])
     unlink(remote.sun_path);
 
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
+
     if(bind(alarmSocket,(struct sockaddr *)&remote,len) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"bind: " << strerror(errno));
@@ -224,6 +227,80 @@ int main(int argc, char *argv[])
 		suspect = NULL;
 	}
 }
+
+void *Nova::DoppelgangerModule::GUILoop(void *ptr)
+{
+	struct sockaddr_un localIPCAddress;
+	int IPCsock, len;
+
+	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+
+	localIPCAddress.sun_family = AF_UNIX;
+
+	//Builds the key path
+	string path = getenv("HOME");
+	string key = GUI_FILENAME;
+	path += key;
+
+	strcpy(localIPCAddress.sun_path, path.c_str());
+	unlink(localIPCAddress.sun_path);
+	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+
+	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+
+	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		close(IPCsock);
+		exit(1);
+	}
+	while(true)
+	{
+		ReceiveGUICommand(IPCsock);
+	}
+}
+
+/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+void DoppelgangerModule::ReceiveGUICommand(int socket)
+{
+	struct sockaddr_un remote;
+    int socketSize, connectionSocket;
+    int bytesRead;
+    char buffer[MAX_MSG_SIZE];
+
+    socketSize = sizeof(remote);
+
+    //Blocking call
+    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		close(connectionSocket);
+    }
+    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+		close(connectionSocket);
+    }
+
+    string line = string(buffer);
+
+    if(!line.compare("EXIT"))
+    {
+    	exit(1);
+    }
+	close(connectionSocket);
+}
+
 
 //Returns a string representation of the specified device's IP address
 string Nova::DoppelgangerModule::getLocalIP(const char *dev)
