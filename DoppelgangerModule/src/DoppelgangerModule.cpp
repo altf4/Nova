@@ -24,6 +24,9 @@ using namespace DoppelgangerModule;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
+SuspectHashTable SuspectTable;
+pthread_rwlock_t lock;
+
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
 string hostAddrString, doppelgangerAddrString, honeydConfigPath;
 struct sockaddr_in hostAddr, loopbackAddr;
@@ -49,11 +52,6 @@ int main(int argc, char *argv[])
 
 	//Path name variable for config file, set to a default
 	char* nConfig = (char*)"Config/NOVAConfig_DM.txt";
-
-	//Hash table for keeping track of suspects
-	//	the bool represents if the suspect is hostile or not
-	typedef std::tr1::unordered_map<in_addr_t, bool> SuspectHashTable;
-	SuspectHashTable SuspectTable;
 
 	while ((c = getopt (argc, argv, ":n:l:")) != -1)
 	{
@@ -183,6 +181,7 @@ int main(int argc, char *argv[])
 
 
 
+		pthread_rwlock_rdlock(&lock);
 		//If the suspect already exists in our table
 		if(SuspectTable.find(suspect->IP_address.s_addr) != SuspectTable.end())
 		{
@@ -196,7 +195,13 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		pthread_rwlock_unlock(&lock);
+		pthread_rwlock_wrlock(&lock);
+
 		SuspectTable[suspect->IP_address.s_addr] = suspect->isHostile;
+
+		pthread_rwlock_unlock(&lock);
+
 		if(suspect->isHostile && isEnabled)
 		{
 			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
@@ -277,6 +282,7 @@ void DoppelgangerModule::ReceiveGUICommand(int socket)
     int socketSize, connectionSocket;
     int bytesRead;
     char buffer[MAX_MSG_SIZE];
+    string prefix, line;
 
     socketSize = sizeof(remote);
 
@@ -292,13 +298,30 @@ void DoppelgangerModule::ReceiveGUICommand(int socket)
 		close(connectionSocket);
     }
 
-    string line = string(buffer);
+    line = string(buffer);
 
-    if(!line.compare("EXIT"))
+    prefix = "EXIT";
+    if(!line.substr(0,prefix.size()).compare(prefix))
     {
     	exit(1);
     }
-	close(connectionSocket);
+
+    prefix = "CLEAR";
+    if(!line.substr(0,prefix.size()).compare(prefix))
+	{
+        prefix = "CLEAR ALL";
+        if(!line.substr(0,prefix.size()).compare(prefix))
+        {
+			pthread_rwlock_wrlock(&lock);
+			SuspectTable.clear();
+			pthread_rwlock_unlock(&lock);
+        }
+        else
+        {
+        	//Call clear individual suspect function - removeSuspect(string suspectIP)
+        }
+	}
+    close(connectionSocket);
 }
 
 

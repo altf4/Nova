@@ -365,6 +365,7 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
     int socketSize, connectionSocket;
     int bytesRead;
     char buffer[MAX_MSG_SIZE];
+    string prefix, line;
 
     socketSize = sizeof(remote);
 
@@ -380,13 +381,15 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
 		close(connectionSocket);
     }
 
-    string line = string(buffer);
+    line = string(buffer);
 
-    if(!line.compare("EXIT"))
+    prefix = "EXIT";
+    if(!line.substr(0,prefix.size()).compare(prefix))
     {
     	exit(1);
     }
-	close(connectionSocket);
+
+    close(connectionSocket);
 }
 
 /// Thread for periodically checking for TCP timeout.
