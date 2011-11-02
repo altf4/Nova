@@ -180,6 +180,8 @@ bool NovaGUI::ReceiveCE(int socket)
 	}
 	struct suspectItem sItem;
 	sItem.suspect = suspect;
+	sItem.item = NULL;
+	sItem.mainItem = NULL;
 	updateSuspect(sItem);
 	return true;
 }
@@ -201,8 +203,14 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 			//We set this flag if the QWidgetListItem needs to be changed or created
 			//We check for a NULL item so that if the suspect list is cleared but the classification hasn't changed
 			//We still create a new item during drawSuspects
-			if(suspectItem.item != NULL) suspectItem.suspect->needs_classification_update = false;
-			else suspectItem.suspect->needs_classification_update = true;
+			if(SuspectTable[suspectItem.suspect->IP_address.s_addr].item != NULL)
+			{
+				suspectItem.suspect->needs_classification_update = false;
+			}
+			else
+			{
+				suspectItem.suspect->needs_classification_update = true;
+			}
 		}
 
 		//If it has
@@ -286,7 +294,9 @@ void NovaGUI::drawAllSuspects()
 		//Reset the flags
 		suspect->needs_feature_update = false;
 		suspect->needs_classification_update = false;
+		it->second.suspect = suspect;
 	}
+	pthread_rwlock_unlock(&lock);
 }
 
 void NovaGUI::drawSuspects()
@@ -347,7 +357,7 @@ void NovaGUI::drawSuspects()
 					mainItem->setForeground(rbrush);
 					mainItem->setText(str);
 					this->ui.hostileList->addItem(item);
-					this->ui.mainSuspectList->addItem(item);
+					this->ui.mainSuspectList->addItem(mainItem);
 				}
 				//Reset the flags
 				suspect->needs_feature_update = false;
@@ -491,8 +501,8 @@ void  NovaGUI::on_stopButton_clicked()
 }
 void  NovaGUI::on_clearSuspectsButton_clicked()
 {
-	clearSuspectList();
 	clearSuspects();
+	drawAllSuspects();
 }
 
 void clearSuspects()
