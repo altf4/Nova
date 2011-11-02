@@ -109,8 +109,8 @@ bool Run_Popup::savePreferences()
 {
 	string line, prefix;
 
-	system("mv Config/NOVAConfig.txt Config/NOVAConfigtemp.txt");
-	ifstream *in = new ifstream("Config/NOVAConfigtemp.txt");
+	system("cp Config/NOVAConfig.txt Config/.NOVAConfig.tmp");
+	ifstream *in = new ifstream("Config/.NOVAConfig.tmp");
 	ofstream *out = new ofstream("Config/NOVAConfig.txt");
 
 
@@ -164,7 +164,7 @@ bool Run_Popup::savePreferences()
 		out->close();
 		delete out;
 		delete in;
-		system("rm Config/NOVAConfigtemp.txt");
+		system("rm Config/.NOVAConfig.tmp");
 		LOG4CXX_ERROR(r_logger,"Unable to open Config file");
 		return false;
 	}
@@ -172,6 +172,6 @@ bool Run_Popup::savePreferences()
 	out->close();
 	delete in;
 	delete out;
-	system("rm Config/NOVAConfigtemp.txt");
+	system("rm Config/.NOVAConfig.tmp");
 	return true;
 }

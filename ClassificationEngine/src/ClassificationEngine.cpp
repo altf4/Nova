@@ -955,6 +955,7 @@ void ClassificationEngine::ReceiveGUICommand(int socket)
     int socketSize, connectionSocket;
     int bytesRead;
     char buffer[MAX_MSG_SIZE];
+    string prefix, line;
 
     socketSize = sizeof(remote);
 
@@ -970,13 +971,31 @@ void ClassificationEngine::ReceiveGUICommand(int socket)
 		close(connectionSocket);
     }
 
-    string line = string(buffer);
+    line = string(buffer);
 
-    if(!line.compare("EXIT"))
+    prefix = "EXIT";
+    if(!line.substr(0,prefix.size()).compare(prefix))
     {
     	exit(1);
     }
-	close(connectionSocket);
+
+    prefix = "CLEAR";
+    if(!line.substr(0,prefix.size()).compare(prefix))
+	{
+        prefix = "CLEAR ALL";
+        if(!line.substr(0,prefix.size()).compare(prefix))
+        {
+			pthread_rwlock_wrlock(&lock);
+			suspects.clear();
+			pthread_rwlock_unlock(&lock);
+        }
+        else
+        {
+        	//Call clear individual suspect function - removeSuspect(string suspectIP)
+        }
+	}
+
+    close(connectionSocket);
 }
 
 //Send a silent alarm about the argument suspect

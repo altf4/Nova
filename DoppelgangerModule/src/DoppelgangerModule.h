@@ -21,6 +21,10 @@ using std::string;
 //Number of lines read in the NOVAConfig file
 #define CONFIG_FILE_LINE_COUNT 4
 
+//Hash table for keeping track of suspects
+//	the bool represents if the suspect is hostile or not
+typedef std::tr1::unordered_map<in_addr_t, bool> SuspectHashTable;
+
 namespace Nova{
 namespace DoppelgangerModule{
 
