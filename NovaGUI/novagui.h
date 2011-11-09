@@ -59,7 +59,7 @@ public:
     Ui::NovaGUIClass ui;
 
     ///Receive a input from Classification Engine.
-    bool ReceiveCE(int socket);
+    bool receiveCE(int socket);
 
     ///Processes the recieved suspect in the suspect table
     void updateSuspect(suspectItem suspect);
@@ -72,6 +72,9 @@ public:
 
     ///Clears the suspect tables completely.
     void clearSuspectList();
+
+    //Action to do when the window closes.
+    void closeEvent(QCloseEvent * e);
 
 
 private slots:

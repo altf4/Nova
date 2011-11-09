@@ -2,14 +2,20 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-HEADERS += run_popup.h \
+HEADERS += nodePopup.h \
+    portPopup.h \
+    run_popup.h \
     novaconfig.h \
     novagui.h
-SOURCES += run_popup.cpp \
+SOURCES += nodePopup.cpp \
+    portPopup.cpp \
+    run_popup.cpp \
     novaconfig.cpp \
     main.cpp \
     novagui.cpp
-FORMS += run_popup.ui \
+FORMS += nodePopup.ui \
+    portPopup.ui \
+    run_popup.ui \
     novaconfig.ui \
     novagui.ui
 RESOURCES += 

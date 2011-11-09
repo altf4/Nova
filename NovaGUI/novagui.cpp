@@ -54,7 +54,6 @@ NovaGUI::NovaGUI(QWidget *parent)
     : QMainWindow(parent)
 {
 	signal(SIGINT, sighandler);
-	//Might need locks later
 	pthread_rwlock_init(&lock, NULL);
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
@@ -106,7 +105,14 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 NovaGUI::~NovaGUI()
 {
+
+}
+
+void NovaGUI::closeEvent(QCloseEvent * e)
+{
+	e = e;
 	closeNova();
+	//this->close();
 }
 
 
@@ -114,7 +120,7 @@ void *CEListen(void *ptr)
 {
 	while(true)
 	{
-		((NovaGUI*)ptr)->ReceiveCE(CE_InSock);
+		((NovaGUI*)ptr)->receiveCE(CE_InSock);
 	}
 	return NULL;
 }
@@ -129,7 +135,7 @@ void *CEDraw(void *ptr)
 	return NULL;
 }
 
-bool NovaGUI::ReceiveCE(int socket)
+bool NovaGUI::receiveCE(int socket)
 {
 	struct sockaddr_un remote;
 	int socketSize, connectionSocket;

@@ -16,7 +16,7 @@ Run_Popup::Run_Popup(QWidget *parent)
 {
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
-	LoadPreferences();
+	loadPreferences();
 }
 
 Run_Popup::~Run_Popup()
@@ -24,7 +24,7 @@ Run_Popup::~Run_Popup()
 
 }
 
-void Run_Popup::LoadPreferences()
+void Run_Popup::loadPreferences()
 {
 	string line, prefix;
 

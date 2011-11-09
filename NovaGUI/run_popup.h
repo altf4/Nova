@@ -12,7 +12,7 @@ public:
     Run_Popup(QWidget *parent = 0);
     ~Run_Popup();
 
-    void LoadPreferences();
+    void loadPreferences();
     bool savePreferences();
 
 private slots:
