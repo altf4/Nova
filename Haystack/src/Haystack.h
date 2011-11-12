@@ -10,11 +10,11 @@
 #define HAYSTACK_H_
 
 ///	Filename of the file to be used as an IPC key
-#define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+#define KEY_FILENAME "/keys/NovaIPCKey"
 /// File name of the file to be used as GUI Input IPC key.
-#define GUI_FILENAME "/.nova/keys/GUI_HSKey"
+#define GUI_FILENAME "/keys/GUI_HSKey"
 //Number of values read from the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 7
+#define CONFIG_FILE_LINE_COUNT 8
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open

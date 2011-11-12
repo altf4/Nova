@@ -17,20 +17,21 @@
 ///	Filename of the file to be used as an IPC key
 // See ticket #12
 
-#define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+#define KEY_FILENAME "/keys/NovaIPCKey"
 ///	Filename of the file to be used as an Doppelganger IPC key
-#define KEY_ALARM_FILENAME "/.nova/keys/NovaDoppIPCKey"
+#define KEY_ALARM_FILENAME "/keys/NovaDoppIPCKey"
 ///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/.nova/keys/CEKey"
+#define CE_FILENAME "/keys/CEKey"
 /// File name of the file to be used as GUI Input IPC key.
-#define GUI_FILENAME "/.nova/keys/GUI_CEKey"
+#define GUI_FILENAME "/keys/GUI_CEKey"
+
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
 //dimension
 #define DIM 9
 //Number of values read from the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 9
+#define CONFIG_FILE_LINE_COUNT 10
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
 
@@ -98,7 +99,7 @@ void ReceiveGUICommand(int socket);
 void SendToUI(Suspect *suspect);
 
 //Loads configuration variables from NOVAConfig_CE.txt or specified config file
-void LoadConfig(char* input);
+void LoadConfig(char * input);
 
 }
 }

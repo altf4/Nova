@@ -30,9 +30,10 @@ LoggerPtr node_logger(Logger::getLogger("main"));
  ************************************************/
 
 
-nodePopup::nodePopup(QWidget *parent, node *n, int type)
+nodePopup::nodePopup(QWidget *parent, node *n, int type, string home)
     : QMainWindow(parent)
 {
+	homePath = home;
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	novaParent = (NovaConfig *)parent;
@@ -513,7 +514,7 @@ void nodePopup::on_editPortsButton_clicked()
 	editingPorts = true;
 	if(!ui.profileTreeWidget->selectedItems().isEmpty() && !subnetSel)
 	{
-		portwind = new portPopup(this, gnode->pfile, FROM_NODE_CONFIG);
+		portwind = new portPopup(this, gnode->pfile, FROM_NODE_CONFIG, homePath);
 		loadAllNodes();
 		portwind->show();
 	}

@@ -16,19 +16,19 @@
 #include <Suspect.h>
 
 /// File name of the file to be used as Traffic Event IPC key
-#define KEY_FILENAME "/.nova/keys/NovaIPCKey"
+#define KEY_FILENAME "/keys/NovaIPCKey"
 ///	Filename of the file to be used as an Doppelganger IPC key
-#define KEY_ALARM_FILENAME "/.nova/keys/NovaDoppIPCKey"
+#define KEY_ALARM_FILENAME "/keys/NovaDoppIPCKey"
 ///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/.nova/keys/CEKey"
+#define CE_FILENAME "/keys/CEKey"
 /// File name of the file to be used as CE Output IPC key.
-#define CE_GUI_FILENAME "/.nova/keys/GUI_CEKey"
+#define CE_GUI_FILENAME "/keys/GUI_CEKey"
 /// File name of the file to be used as CE Output IPC key.
-#define DM_GUI_FILENAME "/.nova/keys/GUI_DMKey"
+#define DM_GUI_FILENAME "/keys/GUI_DMKey"
 /// File name of the file to be used as CE Output IPC key.
-#define HS_GUI_FILENAME "/.nova/keys/GUI_HSKey"
+#define HS_GUI_FILENAME "/keys/GUI_HSKey"
 /// File name of the file to be used as CE Output IPC key.
-#define LTM_GUI_FILENAME "/.nova/keys/GUI_LTMKey"
+#define LTM_GUI_FILENAME "/keys/GUI_LTMKey"
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
@@ -54,6 +54,8 @@ class NovaGUI : public QMainWindow
 
 public:
 
+    bool editingPreferences;
+    bool runAsWindowUp;
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();
     Ui::NovaGUIClass ui;

@@ -9,11 +9,15 @@ using namespace std;
 using namespace log4cxx;
 using namespace log4cxx::xml;
 
+NovaGUI * parentwindow;
+
 LoggerPtr r_logger(Logger::getLogger("main"));
 
-Run_Popup::Run_Popup(QWidget *parent)
+Run_Popup::Run_Popup(QWidget *parent, string home)
     : QMainWindow(parent)
 {
+	homePath = home;
+	parentwindow = (NovaGUI*)parent;
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	loadPreferences();
@@ -22,6 +26,12 @@ Run_Popup::Run_Popup(QWidget *parent)
 Run_Popup::~Run_Popup()
 {
 
+}
+
+void Run_Popup::closeEvent(QCloseEvent * e)
+{
+	e = e;
+	parentwindow->runAsWindowUp = false;
 }
 
 void Run_Popup::loadPreferences()

@@ -1,0 +1,88 @@
+Honeyd scripts used to emulate services, broken down
+by operating system.  Note, many of the scripts included
+were done by Fabian Bieker <fabian.bieker@web.de>.  His
+scripts call on the logging script misc/base.sh, which is
+used for additional logging.  You may want to include this
+with other scripts.
+
+
+
+SCRIPT SUB-DIRECTORIES
+======================
+
+Unix
+-----
+- Linux
+  o ftp.sh              Emulates an interactive WU-FTP server.
+
+    - Suse7.0
+      o apache.sh  
+      o cyrus-imapd.sh  
+      o echo.sh     
+      o ident.sh  
+      o qpop.sh  
+      o sendmail.sh  
+      o ssh.sh      
+      o telnetd.sh
+      o bo.sh      
+      o discard.sh      
+      o fingerd.sh  
+      o lpd.sh    
+      o rpc.sh   
+      o squid.sh     
+      o syslogd.sh  
+      o wuftpd.sh
+
+    - Suse8.0
+      o apache.sh       
+      o fingerd.sh  
+      o lpd.sh      
+      o qpop.sh      
+      o squid.sh  
+      o syslogd.sh
+      o cyrus-imapd.sh  
+      o ident.sh    
+      o proftpd.sh  
+      o sendmail.sh  
+      o ssh.sh    
+      o telnetd.sh
+
+- General
+  o proxy.pl            Emulates a mail proxy, used to catch spammers
+  o smtp.pl             Emulates Sendmail and Postfix, used to catch spammers
+  o smtp.sh             Emulates a UNIX Sendmail server
+  o rpc                 Emulates various rpc services
+  o pop                 Emulates a POP server
+  o smnp                Emulates SNMP server
+
+
+Win32
+-----
+- Win2k
+  o exchange-imap.sh  
+  o exchange-nntp.sh  
+  o exchange-pop3.sh  
+  o exchange-smtp.sh  
+  o iis.sh  
+  o ldap.sh  
+  o msftp.sh  
+  o vnc.sh
+
+- General
+  o iis-0.95            Emulates a vulnerable IIS webserver
+  o web.sh              Very simple web service
+
+routers
+-------
+- cisco
+  o router-telnet.pl    Emulates a Cisco Telnet login
+
+other
+
+FILES:
+------
+README                    Take a guess.
+test.sh                   Simple shell script to test honeyd.
+base.sh                   Logging routine you can use withing
+                          other scripts for additional logging.
+                          Developed by Fabian Bieker.

@@ -4,13 +4,19 @@
 #include <QtGui/QMainWindow>
 #include "ui_run_popup.h"
 
+using namespace std;
+
 class Run_Popup : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    Run_Popup(QWidget *parent = 0);
+    string homePath;
+
+    Run_Popup(QWidget *parent = 0, string homePath = "");
     ~Run_Popup();
+
+    void closeEvent(QCloseEvent * e);
 
     void loadPreferences();
     bool savePreferences();

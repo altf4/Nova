@@ -88,12 +88,13 @@ class NovaConfig : public QMainWindow
 public:
     bool editingPorts;
     bool editingNodes;
+    string homePath;
 
     SubnetTable subnets;
     NodeTable nodes;
     ProfileTable profiles;
 
-    NovaConfig(QWidget *parent = 0);
+    NovaConfig(QWidget *parent = 0, string homePath = "");
 
     ~NovaConfig();
 

@@ -1,0 +1,6 @@
+/					[drwx]
+/pub/				[dr-x]
+/pub/linux/			[dr-x]
+/pub/linux/kernel/	[dr-x]
+/pub/misc/			[dr-x]
+/incoming/			[drwx]

@@ -1,0 +1,27 @@
+#make folder in etc with path locations to nova files
+mkdir /etc/nova
+cp Read/paths /etc/nova
+cp Read/nmap-os-fingerprints /etc/nova
+
+#Copy the hidden directories and files
+mkdir $HOME/.nova
+cp -R .nova $HOME
+
+#Copy the scripts and logs
+mkdir /usr/share/nova
+cp -R Write/nova /usr/share/
+
+#Give permissions
+chmod -R a+rw $HOME/.nova
+chmod -R a+rw /usr/share/nova
+chmod a-w /usr/share/nova
+chmod u+w /usr/share/nova
+
+#The binaries themselves
+cp bin/NovaGUI /usr/local/bin
+cp bin/ClassificationEngine /usr/local/bin
+cp bin/DoppelgangerModule /usr/local/bin
+cp bin/Haystack /usr/local/bin
+cp bin/LocalTrafficMonitor /usr/local/bin
+
+echo "Nova Installed!"

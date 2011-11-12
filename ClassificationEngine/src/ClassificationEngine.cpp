@@ -31,6 +31,7 @@ pthread_rwlock_t lock;
 //NOT normalized
 vector <Point*> dataPtsWithClass;
 bool isTraining = false;
+bool useTerminals;
 static string hostAddrString;
 static struct sockaddr_in hostAddr;
 
@@ -65,29 +66,19 @@ istream* queryIn = NULL;			//input for query points
 
 const char *outFile;				//output for data points during training
 
+char * pathsFile = (char*)"/etc/nova/paths";
+string homePath;
+
 void *outPtr;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
 int maxFeatureValues[dim];
 
-
-void siginthandler(int param)
-{
-	//Append suspect data to the datafile before exit
-	//WriteDataPointsToFile((char*)outPtr);
-	exit(1);
-}
-
 int main(int argc,char *argv[])
 {
-	int c, IPCsock, len;
-
+	int IPCsock, len;
 	pthread_rwlock_init(&lock, NULL);
-
-	//Path name variable for config file, set to a default
-	char* nConfig = (char*)"Config/NOVAConfig_CE.txt";
-	string line; //used for input checking
 
 	struct sockaddr_un localIPCAddress;
 
@@ -96,70 +87,84 @@ int main(int argc,char *argv[])
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
 
-	while((c = getopt (argc,argv,":n:l:")) != -1)
+	string novaConfig, logConfig;
+	string line, prefix; //used for input checking
+
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(pathsFile);
+
+	if(paths->is_open())
 	{
-		switch(c)
+		while(paths->good())
+		{
+			getline(*paths,line);
+
+			prefix = "NOVA_HOME";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				homePath = line;
+				break;
+			}
+		}
+	}
+	paths->close();
+	delete paths;
+	paths = NULL;
+
+	//Resolves environment variables
+	int start = 0;
+	int end = 0;
+	string var;
+
+	while((start = homePath.find("$",end)) != -1)
+	{
+		end = homePath.find("/", start);
+		//If no path after environment var
+		if(end == -1)
 		{
 
-			//"NOVA Config"
-			case 'n':
-				if(optarg != NULL)
-				{
-					line = string(optarg);
-					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".txt"))
-					{
-						nConfig = (char *)optarg;
-					}
-				}
-				else
-				{
-					cerr << "Bad Input File Path" << endl;
-					cout << Usage();
-					exit(1);
-				}
-				break;
-
-			//Log config file
-			case 'l':
-				if(optarg != NULL)
-				{
-					line = string(optarg);
-					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".xml"))
-					{
-						DOMConfigurator::configure(optarg);
-					}
-				}
-				else
-				{
-					cerr << "Bad Output File Path" << endl;
-					cout << Usage();
-					exit(1);
-				}
-				break;
-
-			case '?':
-				cerr << "You entered an unrecognized input flag: " << (char)optopt << endl;
-				cout << Usage();
-				exit(1);
-				break;
-
-			case ':':
-				cerr << "You're missing an argument after the flag: " << (char)optopt << endl;
-				cout << Usage();
-				exit(1);
-				break;
-
-			default:
+			var = homePath.substr(start+1, homePath.size());
+			var = getenv(var.c_str());
+			homePath = homePath.substr(0,start) + var;
+		}
+		else
+		{
+			var = homePath.substr(start+1, end-1);
+			var = getenv(var.c_str());
+			var = var + homePath.substr(end, homePath.size());
+			if(start > 0)
 			{
-				cerr << "Sorry, I didn't recognize the option: " << (char)c << endl;
-				cout << Usage();
-				exit(1);
+				homePath = homePath.substr(0,start)+var;
+			}
+			else
+			{
+				homePath = var;
 			}
 		}
 	}
 
+	if(homePath == "")
+	{
+		exit(1);
+	}
+
+	novaConfig = homePath + "/Config/NOVAConfig.txt";
+	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
+
+	DOMConfigurator::configure(logConfig.c_str());
+
 	//Runs the configuration loader
-	LoadConfig(nConfig);
+	LoadConfig((char*)novaConfig.c_str());
+
+	if(!useTerminals)
+	{
+		logConfig = homePath +"/Config/Log4cxxConfig.xml";
+		DOMConfigurator::configure(logConfig.c_str());
+	}
+
+	dataFile = homePath + "/" +dataFile;
+	outFile = dataFile.c_str();
 	outPtr = (void *)outFile;
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -186,11 +191,10 @@ int main(int argc,char *argv[])
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = KEY_FILENAME;
-	path += key;
+	key = homePath + key;
 
-	strcpy(localIPCAddress.sun_path, path.c_str());
+	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
 	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
@@ -258,11 +262,10 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = GUI_FILENAME;
-	path += key;
+	key = homePath + key;
 
-	strcpy(localIPCAddress.sun_path, path.c_str());
+	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
 	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
@@ -352,8 +355,6 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 //Thread for calculating training data, and writing to file.
 void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 {
-	signal(SIGINT, siginthandler);
-
 	//Training Loop
 	while(true)
 	{
@@ -847,11 +848,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	remote.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = KEY_ALARM_FILENAME;
-	path += key;
+	key = homePath + key;
 
-	strcpy(remote.sun_path, path.c_str());
+	strcpy(remote.sun_path, key.c_str());
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
@@ -1023,12 +1023,11 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 	}
 
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = CE_FILENAME;
-	path += key;
+	key = homePath + key;
 
 	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, path.c_str());
+	strcpy(remote.sun_path, key.c_str());
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
@@ -1048,7 +1047,7 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 }
 
 
-void ClassificationEngine::LoadConfig(char* input)
+void ClassificationEngine::LoadConfig(char * input)
 {
 	//Used to verify all values have been loaded
 	bool verify[CONFIG_FILE_LINE_COUNT];
@@ -1085,14 +1084,13 @@ void ClassificationEngine::LoadConfig(char* input)
 
 			}
 
-			prefix = "DATAFILE";
+			prefix = "USE_TERMINALS";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".txt"))
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					dataFile = line;
-					outFile = line.c_str();
+					useTerminals = atoi(line.c_str());
 					verify[1]=true;
 				}
 				continue;
@@ -1178,6 +1176,18 @@ void ClassificationEngine::LoadConfig(char* input)
 				{
 					classificationThreshold = atof(line.c_str());
 					verify[8]=true;
+				}
+				continue;
+			}
+
+			prefix = "DATAFILE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0 && !line.substr(line.size()-4, line.size()).compare(".txt"))
+				{
+					dataFile = line;
+					verify[9]=true;
 				}
 				continue;
 			}

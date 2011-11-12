@@ -45,10 +45,11 @@ LoggerPtr p_logger(Logger::getLogger("main"));
  * Construct and Initialize GUI
  ************************************************/
 
-portPopup::portPopup(QWidget *parent, struct profile *profile, bool fromNode)
+portPopup::portPopup(QWidget *parent, struct profile *profile, bool fromNode, string home)
     : QMainWindow(parent)
 {
 	//Configure Logging and set up window
+	homePath = home;
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	remoteCall = false;
