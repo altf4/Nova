@@ -1,0 +1,9 @@
+rm -r /etc/nova
+rm -r /usr/share/nova
+rm -r $HOME/.nova
+rm /usr/local/bin/NovaGUI
+rm /usr/local/bin/ClassificationEngine
+rm /usr/local/bin/DoppelgangerModule
+rm /usr/local/bin/Haystack
+rm /usr/local/bin/LocalTrafficMonitor
+echo "All Nova Components Removed"

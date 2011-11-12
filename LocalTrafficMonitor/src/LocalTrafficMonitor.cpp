@@ -45,6 +45,10 @@ const char* data;
 pthread_rwlock_t lock;
 LoggerPtr m_logger(Logger::getLogger("main"));
 
+char * pathsFile = (char*)"/etc/nova/paths";
+string homePath;
+bool useTerminals;
+
 /// Callback function that is passed to pcap_loop(..) and called each time
 /// a packet is recieved
 void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
@@ -142,89 +146,95 @@ int main(int argc, char *argv[])
 	char errbuf[PCAP_ERRBUF_SIZE];
 	int ret;
 
-	//Path name variable for config file, set to a default
-	char* nConfig = (char*)"Config/NOVAConfig_LTM.txt";
-	string line; //used for input checking
-
 	bpf_u_int32 maskp;				/* subnet mask */
 	bpf_u_int32 netp; 				/* ip          */
 
 	string hostAddress;
-	int c;
 
-	while((c = getopt (argc, argv, ":n:l:")) != -1)
+	string novaConfig, logConfig;
+
+	string line, prefix; //used for input checking
+
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(pathsFile);
+
+	if(paths->is_open())
 	{
-		switch(c)
+		while(paths->good())
+		{
+			getline(*paths,line);
+
+			prefix = "NOVA_HOME";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				homePath = line;
+				break;
+			}
+		}
+	}
+	paths->close();
+	delete paths;
+	paths = NULL;
+
+	//Resolves environment variables
+	int start = 0;
+	int end = 0;
+	string var;
+
+	while((start = homePath.find("$",end)) != -1)
+	{
+		end = homePath.find("/", start);
+		//If no path after environment var
+		if(end == -1)
 		{
 
-			//"NOVA Config"
-			case 'n':
-				if(optarg != NULL)
-				{
-					line = string(optarg);
-					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".txt"))
-					{
-						nConfig = (char *)optarg;
-					}
-				}
-				else
-				{
-					cerr << "Bad Input File Path" << endl;
-					cout << Usage();
-					exit(1);
-				}
-				break;
-
-			//Log config file
-			case 'l':
-				if(optarg != NULL)
-				{
-					line = string(optarg);
-					if(line.size() > 4 && !line.substr(line.size()-4, line.size()).compare(".xml"))
-					{
-						DOMConfigurator::configure(optarg);
-					}
-				}
-				else
-				{
-					cerr << "Bad Output File Path" << endl;
-					cout << Usage();
-					exit(1);
-				}
-				break;
-
-			case '?':
-				cerr << "You entered an unrecognized input flag: " << (char)optopt << endl;
-				cout << Usage();
-				exit(1);
-				break;
-
-			case ':':
-				cerr << "You're missing an argument after the flag: " << (char)optopt << endl;
-				cout << Usage();
-				exit(1);
-				break;
-
-			default:
+			var = homePath.substr(start+1, homePath.size());
+			var = getenv(var.c_str());
+			homePath = homePath.substr(0,start) + var;
+		}
+		else
+		{
+			var = homePath.substr(start+1, end-1);
+			var = getenv(var.c_str());
+			var = var + homePath.substr(end, homePath.size());
+			if(start > 0)
 			{
-				cerr << "Sorry, I didn't recognize the option: " << (char)c << endl;
-				cout << Usage();
-				exit(1);
+				homePath = homePath.substr(0,start)+var;
+			}
+			else
+			{
+				homePath = var;
 			}
 		}
 	}
 
+	if(homePath == "")
+	{
+		exit(1);
+	}
+
+	novaConfig = homePath + "/Config/NOVAConfig.txt";
+	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
+
+	DOMConfigurator::configure(logConfig.c_str());
+
 	//Runs the configuration loader
-	LoadConfig(nConfig);
+	LoadConfig((char*)novaConfig.c_str());
+
+	if(!useTerminals)
+	{
+		logConfig = homePath +"/Config/Log4cxxConfig.xml";
+		DOMConfigurator::configure(logConfig.c_str());
+	}
 
 	//Pre-Forms the socket address to improve performance
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = KEY_FILENAME;
-	path += key;
+	key = homePath+key;
 
 	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, path.c_str());
+	strcpy(remote.sun_path, key.c_str());
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -331,11 +341,10 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = GUI_FILENAME;
-	path += key;
+	key = homePath+key;
 
-	strcpy(localIPCAddress.sun_path, path.c_str());
+	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
 	length = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
@@ -626,7 +635,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				line = line.substr(prefix.size()+1,line.size());
 				if(line.size() > 0)
 				{
-					pcapPath = line;
+					pcapPath = homePath+"/"+line;
 					verify[4]=true;
 				}
 				continue;
@@ -639,6 +648,17 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				{
 					goToLiveCap = atoi(line.c_str());
 					verify[5]=true;
+				}
+				continue;
+			}
+			prefix = "USE_TERMINALS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				{
+					useTerminals = atoi(line.c_str());
+					verify[6]=true;
 				}
 				continue;
 			}

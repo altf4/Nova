@@ -42,6 +42,9 @@ pthread_rwlock_t lock;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
+char * pathsFile = (char*)"/etc/nova/paths";
+string homePath, readPath, writePath;
+
 //Called when process receives a SIGINT, like if you press ctrl+c
 void sighandler(int param)
 {
@@ -56,7 +59,151 @@ NovaGUI::NovaGUI(QWidget *parent)
 	signal(SIGINT, sighandler);
 	pthread_rwlock_init(&lock, NULL);
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
+	runAsWindowUp = false;
+	editingPreferences = false;
+
+	string novaConfig, logConfig;
+	string line, prefix; //used for input checking
+
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(pathsFile);
+
+	if(paths->is_open())
+	{
+		while(paths->good())
+		{
+			getline(*paths,line);
+
+			prefix = "NOVA_HOME";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				homePath = line;
+				continue;
+			}
+			prefix = "NOVA_WR";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				writePath = line;
+				continue;
+			}
+			prefix = "NOVA_RD";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				readPath = line;
+				continue;
+			}
+		}
+	}
+	paths->close();
+	delete paths;
+	paths = NULL;
+
+	//Resolves environment variables
+	int start = 0;
+	int end = 0;
+	string var;
+
+	while((start = homePath.find("$",end)) != -1)
+	{
+		end = homePath.find("/", start);
+		//If no path after environment var
+		if(end == -1)
+		{
+
+			var = homePath.substr(start+1, homePath.size());
+			var = getenv((char*)var.c_str());
+			homePath = homePath.substr(0,start) + var;
+		}
+		else
+		{
+			var = homePath.substr(start+1, end-1);
+			var = getenv((char*)var.c_str());
+			var = var + homePath.substr(end, homePath.size());
+			if(start > 0)
+			{
+				homePath = homePath.substr(0,start)+var;
+			}
+			else
+			{
+				homePath = var;
+			}
+		}
+	}
+
+	start = 0;
+	end = 0;
+	while((start = readPath.find("$",end)) != -1)
+	{
+		end = readPath.find("/", start);
+		//If no path after environment var
+		if(end == -1)
+		{
+
+			var = readPath.substr(start+1, readPath.size());
+			var = getenv((char*)var.c_str());
+			readPath = readPath.substr(0,start) + var;
+		}
+		else
+		{
+			var = readPath.substr(start+1, end-1);
+			var = getenv((char*)var.c_str());
+			var = var + readPath.substr(end, readPath.size());
+			if(start > 0)
+			{
+				readPath = readPath.substr(0,start)+var;
+			}
+			else
+			{
+				readPath = var;
+			}
+		}
+	}
+
+	start = 0;
+	end = 0;
+	while((start = writePath.find("$",end)) != -1)
+	{
+		end = writePath.find("/", start);
+		//If no path after environment var
+		if(end == -1)
+		{
+
+			var = writePath.substr(start+1, writePath.size());
+			var = getenv((char*)var.c_str());
+			writePath = writePath.substr(0,start) + var;
+		}
+		else
+		{
+			var = writePath.substr(start+1, end-1);
+			var = getenv((char*)var.c_str());
+			var = var + writePath.substr(end, writePath.size());
+			if(start > 0)
+			{
+				writePath = writePath.substr(0,start)+var;
+			}
+			else
+			{
+				writePath = var;
+			}
+		}
+	}
+
+	if((homePath == "") || (readPath == "") || (writePath == ""))
+	{
+		exit(1);
+	}
+
+	QDir::setCurrent((QString)homePath.c_str());
+
+	novaConfig = "Config/NOVAConfig.txt";
+	logConfig = "Config/Log4cxxConfig_Console.xml";
+
+	DOMConfigurator::configure(logConfig.c_str());
+
+
 	//Not sure why this is needed, but it seems to take care of the error
 	// the abstracted Qt operations of QObject::connect sometimes throws an
 	// error complaining about queueing objects of type 'QItemSelection'
@@ -430,8 +577,12 @@ void NovaGUI::on_actionRunNova_triggered()
 
 void NovaGUI::on_actionRunNovaAs_triggered()
 {
-	Run_Popup *w = new Run_Popup(this);
-	w->show();
+	if(!runAsWindowUp && !novaRunning)
+	{
+		Run_Popup *w = new Run_Popup(this, homePath);
+		w->show();
+		runAsWindowUp = true;
+	}
 }
 
 void NovaGUI::on_actionStopNova_triggered()
@@ -441,8 +592,12 @@ void NovaGUI::on_actionStopNova_triggered()
 
 void NovaGUI::on_actionConfigure_triggered()
 {
-	NovaConfig *w = new NovaConfig(this);
-	w->show();
+	if(!editingPreferences)
+	{
+		NovaConfig *w = new NovaConfig(this, homePath);
+		w->show();
+		editingPreferences = true;
+	}
 }
 
 void  NovaGUI::on_actionExit_triggered()
@@ -551,7 +706,9 @@ void startNova()
 {
 	if(!novaRunning)
 	{
-		ifstream * config = new ifstream("Config/NOVAConfig.txt");
+		string path = getenv("HOME");
+		path += "/.nova/Config/NOVAConfig.txt";
+		ifstream * config = new ifstream((char*)path.c_str());
 		if(config->is_open())
 		{
 			string line, prefix;
@@ -572,29 +729,25 @@ void startNova()
 
 		if(!useTerminals)
 		{
-			system("nohup honeyd -d -i eth0 -f Config/haystack.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints"
-					" -s Config/honeydservice.log > /dev/null &");
-			system("nohup honeyd -d -i lo -f Config/doppelganger.config -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints"
-					" -s Config/honeydDoppservice.log 10.0.0.0/8 > /dev/null &");
-			system("nohup ./bin/LocalTrafficMonitor -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
-			system("nohup ./bin/Haystack -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
-			system("nohup ./bin/ClassificationEngine -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
-			system("nohup ./bin/DoppelgangerModule -n Config/NOVAConfig.txt -l Config/Log4cxxConfig.xml > /dev/null &");
+			system(("nohup honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-fingerprints"
+					" -s "+writePath+"/Logs/honeydservice.log > /dev/null &").c_str());
+			system(("nohup honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-fingerprints"
+					" -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 > /dev/null &").c_str());
+			system("nohup LocalTrafficMonitor > /dev/null &");
+			system("nohup Haystack > /dev/null &");
+			system("nohup ClassificationEngine > /dev/null &");
+			system("nohup DoppelgangerModule > /dev/null &");
 		}
 		else
 		{
-			system("(gnome-terminal -t \"HoneyD Haystack\" --geometry \"+0+0\" -x honeyd -d -i eth0 -f Config/haystack.config"
-					" -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -s Config/honeydservice.log )&");
-			system("(gnome-terminal -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x honeyd -d -i lo -f Config/doppelganger.config"
-					" -p $HOME/Programs/nmap-4.11/nmap-os-fingerprints -s Config/honeydDoppservice.log 10.0.0.0/8 )&");
-			system("(gnome-terminal -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x ./bin/LocalTrafficMonitor"
-					" -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_Console.xml)&");
-			system("(gnome-terminal -t \"Haystack\" --geometry \"+1000+600\" -x ./bin/Haystack -n Config/NOVAConfig.txt"
-					" -l Config/Log4cxxConfig_Console.xml)&");
-			system("(gnome-terminal -t \"ClassificationEngine\" --geometry \"+0+600\" -x ./bin/ClassificationEngine"
-					" -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_Console.xml)&");
-			system("(gnome-terminal -t \"DoppelgangerModule\" --geometry \"+500+600\" -x ./bin/DoppelgangerModule"
-					" -n Config/NOVAConfig.txt -l Config/Log4cxxConfig_Console.xml )&");
+			system(("(gnome-terminal -t \"HoneyD Haystack\" --geometry \"+0+0\" -x honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config"
+					" -p "+readPath+"/nmap-os-fingerprints -s "+writePath+"/Logs/honeydservice.log )&").c_str());
+			system(("(gnome-terminal -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config"
+					" -p "+readPath+"/nmap-os-fingerprints -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 )&").c_str());
+			system("(gnome-terminal -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor)&");
+			system("(gnome-terminal -t \"Haystack\" --geometry \"+1000+600\" -x Haystack)&");
+			system("(gnome-terminal -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine)&");
+			system("(gnome-terminal -t \"DoppelgangerModule\" --geometry \"+500+600\" -x DoppelgangerModule)&");
 		}
 		novaRunning = true;
 	}
@@ -608,49 +761,44 @@ void getSocketAddr()
 
 	//CE IN --------------------------------------------------
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = CE_FILENAME;
-	path += key;
+	key = homePath + key;
 	//Builds the address
 	CE_InAddress.sun_family = AF_UNIX;
-	strcpy(CE_InAddress.sun_path, path.c_str());
+	strcpy(CE_InAddress.sun_path, key.c_str());
 	unlink(CE_InAddress.sun_path);
 
 	//CE OUT -------------------------------------------------
 	//Builds the key path
-	path = getenv("HOME");
 	key = CE_GUI_FILENAME;
-	path += key;
+	key = homePath + key;
 	//Builds the address
 	CE_OutAddress.sun_family = AF_UNIX;
-	strcpy(CE_OutAddress.sun_path, path.c_str());
+	strcpy(CE_OutAddress.sun_path, key.c_str());
 
 	//DM OUT -------------------------------------------------
 	//Builds the key path
-	path = getenv("HOME");
 	key = DM_GUI_FILENAME;
-	path += key;
+	key = homePath + key;
 	//Builds the address
 	DM_OutAddress.sun_family = AF_UNIX;
-	strcpy(DM_OutAddress.sun_path, path.c_str());
+	strcpy(DM_OutAddress.sun_path, key.c_str());
 
 	//HS OUT -------------------------------------------------
 	//Builds the key path
-	path = getenv("HOME");
 	key = HS_GUI_FILENAME;
-	path += key;
+	key = homePath + key;
 	//Builds the address
 	HS_OutAddress.sun_family = AF_UNIX;
-	strcpy(HS_OutAddress.sun_path, path.c_str());
+	strcpy(HS_OutAddress.sun_path, key.c_str());
 
 	//LTM OUT ------------------------------------------------
 	//Builds the key path
-	path = getenv("HOME");
 	key = LTM_GUI_FILENAME;
-	path += key;
+	key = homePath + key;
 	//Builds the address
 	LTM_OutAddress.sun_family = AF_UNIX;
-	strcpy(LTM_OutAddress.sun_path, path.c_str());
+	strcpy(LTM_OutAddress.sun_path, key.c_str());
 
 }
 
@@ -769,7 +917,6 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(CE_OutSock);
-		exit(1);
 	}
 
 	//DM OUT -------------------------------------------------
@@ -777,7 +924,6 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(DM_OutSock);
-		exit(1);
 	}
 
 	//HS OUT -------------------------------------------------
@@ -785,7 +931,6 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(HS_OutSock);
-		exit(1);
 	}
 
 	//LTM OUT ------------------------------------------------
@@ -793,7 +938,6 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(LTM_OutSock);
-		exit(1);
 	}
 
 
@@ -804,14 +948,12 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
 		close(CE_OutSock);
-		return;
 	}
 
 	if (send(CE_OutSock, data, dataLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(CE_OutSock);
-		return;
 	}
 	close(CE_OutSock);
 	// -------------------------------------------------------
@@ -822,14 +964,12 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
 		close(DM_OutSock);
-		return;
 	}
 
 	if (send(DM_OutSock, data, dataLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(DM_OutSock);
-		return;
 	}
 	close(DM_OutSock);
 	// -------------------------------------------------------
@@ -841,14 +981,12 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
 		close(HS_OutSock);
-		return;
 	}
 
 	if (send(HS_OutSock, data, dataLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(HS_OutSock);
-		return;
 	}
 	close(HS_OutSock);
 	// -------------------------------------------------------
@@ -860,14 +998,12 @@ void sendAll()
 	{
 		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
 		close(LTM_OutSock);
-		return;
 	}
 
 	if (send(LTM_OutSock, data, dataLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(LTM_OutSock);
-		return;
 	}
 	close(LTM_OutSock);
 	// -------------------------------------------------------

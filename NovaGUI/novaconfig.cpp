@@ -26,6 +26,8 @@ struct subnet * currentSubnet = NULL;
 
 portPopup * portwindow;
 nodePopup * nodewindow;
+NovaGUI * mainwindow;
+
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
 bool selectedSubnet = false;
@@ -36,9 +38,11 @@ LoggerPtr n_logger(Logger::getLogger("main"));
  * Construct and Initialize GUI
  ************************************************/
 
-NovaConfig::NovaConfig(QWidget *parent)
+NovaConfig::NovaConfig(QWidget *parent, string home)
     : QMainWindow(parent)
 {
+	homePath = home;
+	mainwindow = (NovaGUI*)parent;
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	editingPorts = false;
@@ -66,6 +70,8 @@ void NovaConfig::closeEvent(QCloseEvent * e)
 		portwindow->remoteCall = true;
 		portwindow->close();
 	}
+	mainwindow->editingPreferences = false;
+
 }
 
 /************************************************
@@ -265,6 +271,7 @@ void NovaConfig::loadHaystack()
 		subnets.clear();
 		nodes.clear();
 		profiles.clear();
+
 		while(config->good())
 		{
 			getline(*config, line);
@@ -524,10 +531,9 @@ void NovaConfig::updatePointers()
 void NovaConfig::on_pcapButton_clicked()
 {
 	//Gets the current path location
-	QDir path = QDir::currentPath();
-
+	QDir path = QDir::current();
 	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Data File"),  path.path(), tr("Text Files (*.txt)"));
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Packet Capture File"),  path.path(), tr("Pcap Files (*)"));
 
 	//Gets the relative path using the absolute path in fileName and the current path
 	if(fileName != NULL)
@@ -540,8 +546,7 @@ void NovaConfig::on_pcapButton_clicked()
 void NovaConfig::on_dataButton_clicked()
 {
 	//Gets the current path location
-	QDir path = QDir::currentPath();
-
+	QDir path = QDir::current();
 	//Opens a cross-platform dialog box
 	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Data File"),  path.path(), tr("Text Files (*.txt)"));
 
@@ -556,10 +561,9 @@ void NovaConfig::on_dataButton_clicked()
 void NovaConfig::on_hsConfigButton_clicked()
 {
 	//Gets the current path location
-	QDir path = QDir::currentPath();
-
+	QDir path = QDir::current();
 	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Config File"),  path.path(), tr("Text Files (*.config)"));
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Haystack Config File"),  path.path(), tr("Text Files (*.config)"));
 
 	//Gets the relative path using the absolute path in fileName and the current path
 	if(fileName != NULL)
@@ -573,10 +577,10 @@ void NovaConfig::on_hsConfigButton_clicked()
 void NovaConfig::on_dmConfigButton_clicked()
 {
 	//Gets the current path location
-	QDir path = QDir::currentPath();
+	QDir path = QDir::current();
 
 	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Config File"), path.path(), tr("Text Files (*.config)"));
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Doppelganger Config File"), path.path(), tr("Text Files (*.config)"));
 
 	//Gets the relative path using the absolute path in fileName and the current path
 	if(fileName != NULL)
@@ -1104,7 +1108,7 @@ void NovaConfig::on_editPortsButton_clicked()
 		QTreeWidgetItem * item = ui.profileTreeWidget->selectedItems().first();
 		string profileStr = item->text(0).toStdString();
 		struct profile *p = &profiles[profileStr];
-		portwindow = new portPopup(this, p, FROM_NOVA_CONFIG);
+		portwindow = new portPopup(this, p, FROM_NOVA_CONFIG, homePath);
 		loadAllNodes();
 		portwindow->show();
 	}
@@ -1261,7 +1265,7 @@ void NovaConfig::on_nodeEditButton_clicked()
 	if(nodes.size())
 	{
 		editingNodes = true;
-		nodewindow = new nodePopup(this, currentNode, EDIT_NODE);
+		nodewindow = new nodePopup(this, currentNode, EDIT_NODE, homePath);
 		loadAllNodes();
 		nodewindow->show();
 	}
@@ -1273,7 +1277,7 @@ void NovaConfig::on_nodeCloneButton_clicked()
 	if(nodes.size())
 	{
 		editingNodes = true;
-		nodewindow = new nodePopup(this, currentNode, CLONE_NODE);
+		nodewindow = new nodePopup(this, currentNode, CLONE_NODE, homePath);
 		loadAllNodes();
 		nodewindow->show();
 	}
@@ -1285,7 +1289,7 @@ void NovaConfig::on_nodeAddButton_clicked()
 	if(nodes.size())
 	{
 		editingNodes = true;
-		nodewindow = new nodePopup(this, currentNode, ADD_NODE);
+		nodewindow = new nodePopup(this, currentNode, ADD_NODE, homePath);
 		loadAllNodes();
 		nodewindow->show();
 	}

@@ -14,13 +14,14 @@ class nodePopup : public QMainWindow
 public:
     bool remoteCall;
     bool editingPorts;
+    string homePath;
 
     //Copies of node data to distinguish from saved preferences
     SubnetTable subnets;
     NodeTable nodes;
     ProfileTable profiles;
 
-    nodePopup(QWidget *parent = 0, node * n = NULL, int type = -1);
+    nodePopup(QWidget *parent = 0, node * n = NULL, int type = -1, string homePath = "");
     ~nodePopup();
 
     //Action to do when the window closes.

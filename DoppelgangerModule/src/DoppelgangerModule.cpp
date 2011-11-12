@@ -30,7 +30,10 @@ pthread_rwlock_t lock;
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
 string hostAddrString, doppelgangerAddrString, honeydConfigPath;
 struct sockaddr_in hostAddr, loopbackAddr;
-bool isEnabled;
+bool isEnabled, useTerminals;
+
+char * pathsFile = (char*)"/etc/nova/paths";
+string homePath;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -43,68 +46,87 @@ void siginthandler(int param)
 
 int main(int argc, char *argv[])
 {
-	int c;
 	char suspectAddr[INET_ADDRSTRLEN];
 	pthread_t GUIListenThread;
 
 	signal(SIGINT, siginthandler);
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
+	string novaConfig, logConfig;
 
-	//Path name variable for config file, set to a default
-	char* nConfig = (char*)"Config/NOVAConfig_DM.txt";
+	string line, prefix; //used for input checking
 
-	while ((c = getopt (argc, argv, ":n:l:")) != -1)
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(pathsFile);
+
+	if(paths->is_open())
 	{
-		switch(c)
+		while(paths->good())
 		{
-			//"NOVA Config"
-			case 'n':
-				if(optarg != NULL)
-				{
-					nConfig = (char *)optarg;
-				}
-				else
-				{
-					cerr << "Bad Input File Path" << endl;
-					cout << Usage();
-					exit(1);
-				}
-				break;
+			getline(*paths,line);
 
-			case 'l':
-				if(optarg != NULL)
-				{
-					DOMConfigurator::configure(optarg);
-				}
-				else
-				{
-					cerr << "Bad Output File Path" << endl;
-					cout << Usage();
-					exit(1);
-				}
-				break;
-
-			case '?':
-				cerr << "You entered an unrecognized input flag: " << (char)optopt << endl;
-				cout << Usage();
-				exit(1);
-				break;
-
-			case ':':
-				cerr << "You're missing an argument after the flag: " << (char)optopt << endl;
-				cout << Usage();
-				exit(1);
-				break;
-
-			default:
+			prefix = "NOVA_HOME";
+			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				cerr << "Sorry, I didn't recognize the option: " << (char)c << endl;
-				cout << Usage();
-				exit(1);
+				line = line.substr(prefix.size()+1,line.size());
+				homePath = line;
+				break;
 			}
 		}
 	}
-	LoadConfig(nConfig);
+	paths->close();
+	delete paths;
+	paths = NULL;
+
+	//Resolves environment variables
+	int start = 0;
+	int end = 0;
+	string var;
+
+	while((start = homePath.find("$",end)) != -1)
+	{
+		end = homePath.find("/", start);
+		//If no path after environment var
+		if(end == -1)
+		{
+
+			var = homePath.substr(start+1, homePath.size());
+			var = getenv(var.c_str());
+			homePath = homePath.substr(0,start) + var;
+		}
+		else
+		{
+			var = homePath.substr(start+1, end-1);
+			var = getenv(var.c_str());
+			var = var + homePath.substr(end, homePath.size());
+			if(start > 0)
+			{
+				homePath = homePath.substr(0,start)+var;
+			}
+			else
+			{
+				homePath = var;
+			}
+		}
+	}
+
+	if(homePath == "")
+	{
+		exit(1);
+	}
+
+	novaConfig = homePath + "/Config/NOVAConfig.txt";
+	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
+
+	DOMConfigurator::configure(logConfig.c_str());
+
+	//Runs the configuration loader
+	LoadConfig((char*)novaConfig.c_str());
+
+	if(!useTerminals)
+	{
+		logConfig = homePath +"/Config/Log4cxxConfig.xml";
+		DOMConfigurator::configure(logConfig.c_str());
+	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
 	string commandLine;
@@ -123,9 +145,8 @@ int main(int argc, char *argv[])
     struct sockaddr_un remote;
 
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = KEY_ALARM_FILENAME;
-	path += key;
+	key = homePath+key;
 
     if((alarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
     {
@@ -135,7 +156,7 @@ int main(int argc, char *argv[])
     }
     remote.sun_family = AF_UNIX;
 
-    strcpy(remote.sun_path, path.c_str());
+    strcpy(remote.sun_path, key.c_str());
     unlink(remote.sun_path);
 
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
@@ -246,13 +267,11 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	}
 
 	localIPCAddress.sun_family = AF_UNIX;
-
 	//Builds the key path
-	string path = getenv("HOME");
 	string key = GUI_FILENAME;
-	path += key;
+	key = homePath + key;
 
-	strcpy(localIPCAddress.sun_path, path.c_str());
+	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
 	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
@@ -474,7 +493,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				line = line.substr(prefix.size()+1,line.size());
 				if(line.size() > 0)
 				{
-					honeydConfigPath = line;
+					honeydConfigPath = homePath+"/"+line;
 					verify[1]=true;
 				}
 				continue;
@@ -505,6 +524,17 @@ void DoppelgangerModule::LoadConfig(char* input)
 				{
 					isEnabled = atoi(line.c_str());
 					verify[3]=true;
+				}
+				continue;
+			}
+			prefix = "USE_TERMINALS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				{
+					useTerminals = atoi(line.c_str());
+					verify[4]=true;
 				}
 				continue;
 			}

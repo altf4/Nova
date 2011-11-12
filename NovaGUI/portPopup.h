@@ -13,8 +13,9 @@ class portPopup : public QMainWindow
 
 public:
     bool remoteCall;
+    string homePath;
 
-    portPopup(QWidget *parent = 0, struct profile *profile = NULL, bool fromNode = false);
+    portPopup(QWidget *parent = 0, struct profile *profile = NULL, bool fromNode = false, string homePath = "");
     ~portPopup();
 
     //Re-enables the GUI before exiting
