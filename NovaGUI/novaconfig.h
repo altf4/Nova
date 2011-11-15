@@ -4,6 +4,7 @@
 #include <QtGui/QMainWindow>
 #include <QtGui/QTreeWidget>
 #include "ui_novaconfig.h"
+#include "novagui.h"
 #include <tr1/unordered_map>
 
 using namespace std;
@@ -17,69 +18,6 @@ using namespace std;
 #define ADD_NODE 0
 #define CLONE_NODE 1
 #define EDIT_NODE 2
-
-/*********************************************************************
- - Structs and Tables for quick item access through pointers -
-**********************************************************************/
-
-//used to maintain information about a port, it's type and behavior
-struct port
-{
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * portItem;
-	string portNum;
-	string type;
-	string behavior;
-};
-
-
-//used to keep track of subnet gui items and allow for easy access
-struct subnet
-{
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * nodeItem;
-	string address;
-	bool enabled;
-	vector<struct node *> nodes;
-};
-
-//container for the subnet pairs
-typedef std::tr1::unordered_map<string, subnet> SubnetTable;
-
-
-//used to keep track of haystack profile gui items and allow for easy access
-struct profile
-{
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * profileItem;
-	string name;
-	string personality;
-	string ethernet;
-	string tcpAction;
-	string uptimeBehvaior; //TODO Once we have a settings file we can implement
-	string uptime;
-	vector<struct port> ports;
-};
-
-//Container for accessing profile item pairs
-typedef std::tr1::unordered_map<string, profile> ProfileTable;
-
-
-//used to keep track of haystack node gui items and allow for easy access
-struct node
-{
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * nodeItem;
-	struct subnet * sub;
-	struct profile * pfile;
-	string address;
-	string pname;
-	bool enabled;
-};
-
-//Container for accessing node item pairs
-typedef std::tr1::unordered_map<string, node> NodeTable;
-
 
 class NovaConfig : public QMainWindow
 {

@@ -1,0 +1,87 @@
+<profiles>
+	<profile>
+		<name>default</name>
+		<set>
+			<TCP>block</TCP>
+			<UDP>block</UDP>
+			<ICMP>block</ICMP>
+		</set>
+		<profiles>
+			<profile>
+				<name>WinServer</name>
+				<set>
+					<TCP>reset</TCP>
+					<personality>Microsoft Windows 2003 Server</personality>
+					<ethernet>Dell</ethernet>
+					<uptime>1546550</uptime>
+				</set>
+				<add>
+					<ports>
+						<port>20 TCP Open</port>
+						<port>21 Windows FTP</port>
+						<port>23 Telnet Router</port>
+						<port>80 Windows Web</port>
+						<port>139 TCP Open</port>
+						<port>137 TCP Open</port>
+						<port>137 UDP Open</port>
+						<port>135 UDP Open</port>
+					</ports>
+				</add>
+			</profile>
+			<profile>
+				<name>LinuxServer</name>
+				<set>
+					<TCP>reset</TCP>
+					<personality>Linux kernel 2.6.5 - 2.6.8</personality>
+					<ethernet>Dell</ethernet>
+					<uptime>1324350</uptime>
+				</set>
+				<add>
+					<ports>
+						<port>80 Windows Web</port>
+						<port>139 TCP Open</port>
+						<port>137 TCP Open</port>
+						<port>137 UDP Open</port>
+						<port>135 UDP Open</port>
+					</ports>
+				</add>
+			</profile>
+			<profile>
+				<name>BSDServer</name>
+				<set>
+					<TCP>reset</TCP>
+					<personality>Linux kernel 2.6.5 - 2.6.8</personality>
+					<ethernet>Dell</ethernet>
+					<uptime>1326346</uptime>
+				</set>
+				<add>
+					<ports>
+						<port>23 Telnet Router</port>
+						<port>139 TCP Open</port>
+						<port>137 TCP Open</port>
+						<port>137 UDP Open</port>
+						<port>135 UDP Open</port>
+					</ports>
+				</add>
+			</profile>
+			<profile>
+				<name>Dopp</name>
+				<set>
+					<TCP>reset</TCP>
+					<personality>Microsoft Windows 2003 Server</personality>
+					<uptime>1327650</uptime>
+				</set>
+				<add>
+					<ports>
+						<port>23 Telnet Router</port>
+						<port>80 Windows Web</port>
+						<port>139 TCP Open</port>
+						<port>137 TCP Open</port>
+						<port>137 UDP Open</port>
+						<port>135 UDP Open</port>
+					</ports>
+				</add>
+			</profile>
+		</profiles>
+	</profile>
+</profiles>

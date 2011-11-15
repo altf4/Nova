@@ -19,7 +19,12 @@
 #include <QChar>
 #include <fstream>
 #include <log4cxx/xml/domconfigurator.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
 #include <errno.h>
+#include <arpa/inet.h>
+#include <math.h>
 
 using namespace std;
 using namespace Nova;
@@ -45,6 +50,10 @@ LoggerPtr m_logger(Logger::getLogger("main"));
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 
+/************************************************
+ * Constructors, Destructors and Closing Actions
+ ************************************************/
+
 //Called when process receives a SIGINT, like if you press ctrl+c
 void sighandler(int param)
 {
@@ -62,7 +71,85 @@ NovaGUI::NovaGUI(QWidget *parent)
 	runAsWindowUp = false;
 	editingPreferences = false;
 
-	string novaConfig, logConfig;
+	getInfo();
+
+	string novaConfig = "Config/NOVAConfig.txt";
+	string logConfig = "Config/Log4cxxConfig_Console.xml";
+
+	DOMConfigurator::configure(logConfig.c_str());
+
+	loadAll();
+
+	//Not sure why this is needed, but it seems to take care of the error
+	// the abstracted Qt operations of QObject::connect sometimes throws an
+	// error complaining about queueing objects of type 'QItemSelection'
+	qRegisterMetaType<QItemSelection>("QItemSelection");
+
+	//Sets up the socket addresses
+	getSocketAddr();
+
+	//Create listening socket, listen thread and draw thread --------------
+	pthread_t CEListenThread;
+	pthread_t CEDrawThread;
+
+	if((CE_InSock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		sclose(CE_InSock);
+		exit(1);
+	}
+
+	len = strlen(CE_InAddress.sun_path) + sizeof(CE_InAddress.sun_family);
+
+	if(bind(CE_InSock,(struct sockaddr *)&CE_InAddress,len) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		sclose(CE_InSock);
+		exit(1);
+	}
+
+	if(listen(CE_InSock, SOCKET_QUEUE_SIZE) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		sclose(CE_InSock);
+		exit(1);
+	}
+
+	//Sets initial view
+	this->ui.stackedWidget->setCurrentIndex(0);
+	this->ui.mainButton->setFlat(true);
+	this->ui.suspectButton->setFlat(false);
+	this->ui.doppelButton->setFlat(false);
+	this->ui.haystackButton->setFlat(false);
+
+	pthread_create(&CEListenThread,NULL,CEListen, this);
+	pthread_create(&CEDrawThread,NULL,CEDraw, this);
+}
+
+NovaGUI::~NovaGUI()
+{
+
+}
+
+void NovaGUI::closeEvent(QCloseEvent * e)
+{
+	e = e;
+	closeNova();
+	//this->close();
+}
+
+/************************************************
+ * Gets preliminary information
+ ************************************************/
+
+void NovaGUI::getInfo()
+{
+	getPaths();
+	getSettings();
+}
+
+void NovaGUI::getPaths()
+{
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
@@ -197,71 +284,57 @@ NovaGUI::NovaGUI(QWidget *parent)
 	}
 
 	QDir::setCurrent((QString)homePath.c_str());
-
-	novaConfig = "Config/NOVAConfig.txt";
-	logConfig = "Config/Log4cxxConfig_Console.xml";
-
-	DOMConfigurator::configure(logConfig.c_str());
-
-
-	//Not sure why this is needed, but it seems to take care of the error
-	// the abstracted Qt operations of QObject::connect sometimes throws an
-	// error complaining about queueing objects of type 'QItemSelection'
-	qRegisterMetaType<QItemSelection>("QItemSelection");
-
-	//Sets up the socket addresses
-	getSocketAddr();
-
-	//Create listening socket, listen thread and draw thread --------------
-	pthread_t CEListenThread;
-	pthread_t CEDrawThread;
-
-	if((CE_InSock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-		sclose(CE_InSock);
-		exit(1);
-	}
-
-	len = strlen(CE_InAddress.sun_path) + sizeof(CE_InAddress.sun_family);
-
-	if(bind(CE_InSock,(struct sockaddr *)&CE_InAddress,len) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
-		sclose(CE_InSock);
-		exit(1);
-	}
-
-	if(listen(CE_InSock, SOCKET_QUEUE_SIZE) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
-		sclose(CE_InSock);
-		exit(1);
-	}
-
-	//Sets initial view
-	this->ui.stackedWidget->setCurrentIndex(0);
-	this->ui.mainButton->setFlat(true);
-	this->ui.suspectButton->setFlat(false);
-	this->ui.doppelButton->setFlat(false);
-	this->ui.haystackButton->setFlat(false);
-
-	pthread_create(&CEListenThread,NULL,CEListen, this);
-	pthread_create(&CEDrawThread,NULL,CEDraw, this);
 }
 
-NovaGUI::~NovaGUI()
+void NovaGUI::getSettings()
 {
+	string line, prefix; //used for input checking
 
+	//Get locations of nova files
+	ifstream *settings =  new ifstream((homePath+"/settings").c_str());
+
+	if(settings->is_open())
+	{
+		while(settings->good())
+		{
+			getline(*settings,line);
+			prefix = "group";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				group = line;
+				continue;
+			}
+			/*prefix = "subnet";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				mainSubnet.numMaskBits = atoi(line.substr(line.find("/")+1,(line.size()-(line.find("/")+1))).c_str());
+				mainSubnet.address = line;
+				mainSubnet.base = htonl(inet_addr(line.substr(0,line.find("/")).c_str()));
+				uint tempBase = 0;
+				uint tempRange = (pow(2, 32) - 1);
+				for(int i = 0; i < mainSubnet.numMaskBits; i ++)
+				{
+					tempBase += pow(2, 31-i);
+					tempRange -= pow(2, 31-i);
+				}
+				mainSubnet.base &= tempBase;
+				mainSubnet.range = mainSubnet.base+tempRange;
+				mainSubnet.enabled = true;
+				continue;
+			}*/
+		}
+	}
+	//subnets[mainSubnet.address] = mainSubnet;
+	settings->close();
+	delete settings;
+	settings = NULL;
 }
 
-void NovaGUI::closeEvent(QCloseEvent * e)
-{
-	e = e;
-	closeNova();
-	//this->close();
-}
-
+/************************************************
+ * Thread Loops
+ ************************************************/
 
 void *CEListen(void *ptr)
 {
@@ -281,6 +354,622 @@ void *CEDraw(void *ptr)
 	}
 	return NULL;
 }
+
+/************************************************
+ * Load Honeyd XML Configuration Functions
+ ************************************************/
+
+//Calls all load functions
+void NovaGUI::loadAll()
+{
+	loadScripts();
+	loadPorts();
+	loadProfiles();
+	loadGroup();
+}
+
+//Loads scripts from file
+void NovaGUI::loadScripts()
+{
+	using boost::property_tree::ptree;
+	ptree pt;
+
+	try
+	{
+		read_xml(homePath+"/scripts.xml", pt);
+
+		BOOST_FOREACH(ptree::value_type &v, pt.get_child("scripts"))
+		{
+			script s;
+
+			//Each script consists of a name and path to that script
+			s.name = v.second.get<std::string>("name");
+			s.path = v.second.get<std::string>("path");
+			scripts[s.name] = s;
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading scripts: "+ string(e.what()));
+	}
+}
+
+//Loads ports from file
+void NovaGUI::loadPorts()
+{
+	using boost::property_tree::ptree;
+	ptree pt;
+
+	try
+	{
+		read_xml(homePath+"/templates/ports.xml", pt);
+
+		BOOST_FOREACH(ptree::value_type &v, pt.get_child("ports"))
+		{
+			port p;
+			//Required xml entries
+			p.portName = v.second.get<std::string>("name");
+			p.portNum = v.second.get<std::string>("number");
+			p.type = v.second.get<std::string>("type");
+			p.behavior = v.second.get<std::string>("behavior");
+
+			//If this port uses a script, find and assign it.
+			if(!p.behavior.compare("script") || !p.behavior.compare("internal"))
+			{
+				p.scriptPtr = &scripts[v.second.get<std::string>("script")];
+				p.scriptName = p.scriptPtr->name;
+			}
+			//If the port works as a proxy, find destination
+			else if(!p.behavior.compare("proxy"))
+			{
+				p.proxyIP = v.second.get<std::string>("IP");
+				p.proxyPort = v.second.get<std::string>("Port");
+			}
+			ports[p.portName] = p;
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading ports: "+ string(e.what()));
+	}
+}
+
+
+//Loads the subnets and nodes from file for the currently specified group
+void NovaGUI::loadGroup()
+{
+	using boost::property_tree::ptree;
+	ptree pt;
+	ptree ptr;
+
+	try
+	{
+		read_xml(homePath+"/templates/nodes.xml", pt);
+		BOOST_FOREACH(ptree::value_type &v, pt.get_child("groups"))
+		{
+			//Find the specified group
+			if(!v.second.get<std::string>("name").compare(group))
+			{
+				try //Null Check
+				{
+					//Load Subnets first, they are needed before we can load nodes
+					ptr = v.second.get_child("subnets");
+					loadSubnets(ptr);
+
+					try //Null Check
+					{
+						//If subnets are loaded successfully, load nodes
+						ptr = v.second.get_child("nodes");
+						loadNodes(ptr);
+					}
+					catch(std::exception &e)
+					{
+						LOG4CXX_ERROR(m_logger, "Problem loading nodes: " + string(e.what()));
+					}
+				}
+				catch(std::exception &e)
+				{
+					LOG4CXX_ERROR(m_logger, "Problem loading subnets: " + string(e.what()));
+				}
+
+				try //Null Check
+				{
+					//Loads doppelganger, doesn't have a subnet
+					ptr = v.second.get_child("doppelganger");
+					loadDoppelganger(ptr);
+				}
+				catch(std::exception &e)
+				{
+					LOG4CXX_ERROR(m_logger, "Problem loading doppelganger: " + string(e.what()));
+				}
+			}
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading group: " + group + " - "+ string(e.what()));
+	}
+}
+
+//loads subnets from file for current group
+void NovaGUI::loadSubnets(ptree ptr)
+{
+	try
+	{
+		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		{
+			subnet sub;
+			//If real interface
+			if(!string(v.first.data()).compare("interface"))
+			{
+				//Extract the data
+				sub.name = v.second.get<std::string>("name");
+				sub.address = v.second.get<std::string>("IP");
+				sub.mask = v.second.get<std::string>("mask");
+
+				//Gets the IP address in uint32 form
+				in_addr_t baseTemp = htonl(inet_addr(sub.address.c_str()));
+
+				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
+				in_addr_t maskTemp = htonl(inet_addr(sub.mask.c_str()));
+				sub.base = (baseTemp & maskTemp);
+
+				//Subtracting the mask from 0xFFFFFFFF gets the number of addresses in the range
+				//Adding range to base gets the highest usable IP address.
+				maskTemp = (pow(2,32)-1) - maskTemp;
+				sub.max = sub.base + maskTemp;
+
+				//Save subnet
+				subnets[sub.address] = sub;
+			}
+			//If virtual honeyd subnet
+			else if(!string(v.first.data()).compare("virtual"))
+			{
+				//TODO
+			}
+			else
+			{
+				LOG4CXX_INFO(m_logger, "Unexpected Entry in file: "+ string(v.first.data()));
+			}
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading subnets: "+ string(e.what()));
+	}
+}
+
+//loads doppelganger from file for current group
+void NovaGUI::loadDoppelganger(ptree ptr)
+{
+	profile p;
+	ptree ptr2;
+	try
+	{
+		//required values
+		dm.interface = string(ptr.get<std::string>("interface"));
+		dm.address = string(ptr.get<std::string>("IP"));
+		dm.enabled = atoi(string(ptr.get<std::string>("enabled")).c_str());
+		dm.pname = string(ptr.get<std::string>("profile.name"));
+		dm.pfile = &profiles[dm.pname];
+
+		try //Conditional: has "set" values
+		{
+			//Some values are set for the doppelganger specifically
+			ptr2 = ptr.get_child("profile.set");
+
+			//Inherit all of parent profile's values
+			p = *dm.pfile;
+			//Create unique profile for the doppelganger
+			p.name = dm.address;
+			dm.pname = dm.address;
+			p.parentProfile = dm.pfile;
+			loadProfileSet(ptr2, &p);
+		}
+		catch(...){}
+
+		try //Conditional: has "add" values
+		{
+			//Some ports or subsystems are specific to the doppelganger
+			ptr2 = ptr.get_child("profile.add");
+
+			//If doppelganger already has a unique profile
+			if(!dm.pname.compare(dm.address))
+			{
+				loadProfileAdd(ptr2, &p);
+			}
+			//If doppelganger needs a unique profile
+			else
+			{
+				//Inherit all of parent profile's values
+				p = *dm.pfile;
+				//Create unique profile for the doppelganger
+				p.name = dm.address;
+				dm.pname = dm.address;
+				p.parentProfile = dm.pfile;
+				loadProfileAdd(ptr2, &p);
+			}
+		}
+		catch(...){}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading doppelganger: "+ string(e.what()));
+	}
+}
+
+//loads haystack nodes from file for current group
+void NovaGUI::loadNodes(ptree ptr)
+{
+	ptree ptr2;
+	profile p;
+	try
+	{
+		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		{
+			if(!string(v.first.data()).compare("node"))
+			{
+				node n;
+
+				//Required xml entires
+				n.interface = v.second.get<std::string>("interface");
+				n.address = v.second.get<std::string>("IP");
+				n.enabled = atoi(v.second.get<std::string>("enabled").c_str());
+				n.pname = v.second.get<std::string>("profile.name");
+
+				//Looks up profile, these must be loaded first
+				n.pfile = &profiles[n.pname];
+
+				//intialize subnet to NULL and check for smallest bounding subnet
+				n.sub = NULL;
+
+				n.realIP = htonl(inet_addr(n.address.c_str())); //convert ip to uint32
+				uint minRange = (pow(2, 32) - 1); //intialize to 0xFFFFFFFF
+
+				//Check each subnet
+				for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+				{
+					//If node falls within a subnets range
+					if((n.realIP >= it->second.base) && (n.realIP <= it->second.max))
+					{
+						//If this is the smallest range
+						if(((it->second.max - it->second.base) + 1) < minRange)
+						{
+							//If node isn't using host's address
+							if(it->second.address.compare(n.address))
+							{
+								//1 is added outside parenthesis to insure no bit overflow
+								minRange = (it->second.max - it->second.base) + 1;
+								n.sub = &it->second;
+							}
+						}
+					}
+				}
+				try //Conditional: has "set" values
+				{
+					//Some values are set for the node specifically
+					ptr2 = v.second.get_child("profile.set");
+
+					//Inherit all of parent profile's values
+					p = *n.pfile;
+					//Create unique profile for this node
+					p.name = n.address;
+					n.pname = n.address;
+					p.parentProfile = n.pfile;
+					loadProfileSet(ptr2, &p);
+				}
+				catch(...){}
+
+				try //Conditional: has "add" values
+				{
+					//Some ports or subsystems are specific to the node
+					ptr2 = v.second.get_child("profile.add");
+
+					//If node already has a unique profile
+					if(!n.pname.compare(n.address))
+					{
+						loadProfileAdd(ptr2, &p);
+					}
+					//If node needs a unique profile
+					else
+					{
+						//Inherit all of parent profile's values
+						p = *n.pfile;
+						//Create unique profile for this node
+						p.name = n.address;
+						n.pname = n.address;
+						p.parentProfile = n.pfile;
+						loadProfileAdd(ptr2, &p);
+					}
+				}
+				catch(...){}
+
+				bool unique = true;
+				//Check that node has unique IP addr
+				for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+				{
+					if(n.realIP == it->second.realIP)
+					{
+						unique = false;
+					}
+				}
+
+				//If we have a subnet and node is unique
+				if((n.sub != NULL) && unique)
+				{
+					//If node has unique profile, include it in the profiles table
+					if(!n.pname.compare(n.address))
+					{
+						profiles[n.pname] = p;
+						n.pfile = &profiles[n.pname];
+					}
+
+					//save the node in the table
+					nodes[n.address] = n;
+					//Put address of saved node in subnet's list of nodes.
+					nodes[n.address].sub->nodes.push_back(&nodes[n.address]);
+				}
+				//If no subnet found, can't use node.
+				else
+				{
+					LOG4CXX_ERROR(m_logger, "Node at IP: " + n.address + " is outside all valid subnet ranges");
+				}
+			}
+			else
+			{
+				LOG4CXX_INFO(m_logger, "Unexpected Entry in file: "+ string(v.first.data()));
+			}
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading nodes: "+ string(e.what()));
+	}
+}
+void NovaGUI::loadProfiles()
+{
+	using boost::property_tree::ptree;
+	ptree pt;
+	ptree ptr;
+
+	try
+	{
+		read_xml(homePath+"/templates/profiles.xml", pt);
+
+		BOOST_FOREACH(ptree::value_type &v, pt.get_child("profiles"))
+		{
+			//Generic profile, essentially a honeyd template
+			if(!string(v.first.data()).compare("profile"))
+			{
+				profile p;
+				//Root profile has no parent
+				p.parentProfile = NULL;
+
+				//Name required, DCHP boolean intialized (set in loadProfileSet)
+				p.name = v.second.get<std::string>("name");
+				p.DHCP = false;
+				p.ports.clear();
+
+				try //Conditional: has "set" values
+				{
+					ptr = v.second.get_child("set");
+					//pass 'set' subset and pointer to this profile
+					loadProfileSet(ptr, &p);
+				}
+				catch(...){}
+
+				try //Conditional: has "add" values
+				{
+					ptr = v.second.get_child("add");
+					//pass 'add' subset and pointer to this profile
+					loadProfileAdd(ptr, &p);
+				}
+				catch(...){}
+
+				//Save the profile
+				profiles[p.name] = p;
+
+				try //Conditional: has children profiles
+				{
+					ptr = v.second.get_child("profiles");
+
+					//start recurisive descent down profile tree with this profile as the root
+					//pass subtree and pointer to parent
+					loadSubProfiles(ptr, &profiles[p.name]);
+				}
+				catch(...){}
+
+			}
+
+			//Honeyd's implementation of switching templates based on conditions
+			else if(!string(v.first.data()).compare("dynamic"))
+			{
+				//TODO
+			}
+			else
+			{
+				LOG4CXX_ERROR(m_logger, "Invalid XML Path" +string(v.first.data()));
+			}
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading Profiles: "+ string(e.what()));
+	}
+}
+
+//Sets the configuration of 'set' values for profile that called it
+void NovaGUI::loadProfileSet(ptree ptr, profile *p)
+{
+	string prefix;
+	try
+	{
+		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		{
+			prefix = "TCP";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->tcpAction = v.second.data();
+				continue;
+			}
+			prefix = "UDP";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->udpAction = v.second.data();
+				continue;
+			}
+			prefix = "ICMP";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->icmpAction = v.second.data();
+				continue;
+			}
+			prefix = "personality";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->personality = v.second.data();
+				continue;
+			}
+			prefix = "ethernet";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->ethernet = v.second.data();
+				continue;
+			}
+			prefix = "uptime";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->uptime = v.second.data();
+				continue;
+			}
+			prefix = "uptimeRange";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->uptimeRange = v.second.data();
+				continue;
+			}
+			prefix = "dropRate";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->dropRate = v.second.data();
+				continue;
+			}
+			prefix = "DHCP";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				p->DHCP = true;
+				continue;
+			}
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading profile set parameters: "+ string(e.what()));
+	}
+}
+
+//Adds specified ports and subsystems
+// removes any previous port with same number and type to avoid conflicts
+void NovaGUI::loadProfileAdd(ptree ptr, profile *p)
+{
+	string prefix;
+	port * prt;
+
+	try
+	{
+		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		{
+			//Checks for ports
+			prefix = "ports";
+			if(!string(v.first.data()).compare(prefix))
+			{
+				//Iterates through the ports
+				BOOST_FOREACH(ptree::value_type &v2, ptr.get_child("ports"))
+				{
+					prt = &ports[v2.second.data()];
+
+					//Checks inherited ports for conflicts
+					for(uint i = 0; i < p->ports.size(); i++)
+					{
+						//Erase inherited port if a conflict is found
+						if(!prt->portNum.compare(p->ports[i].portNum) && !prt->type.compare(p->ports[i].type))
+						{
+							p->ports.erase(p->ports.begin()+i);
+						}
+					}
+					//Add specified port
+					p->ports.push_back(*prt);
+				}
+				continue;
+			}
+
+			//Checks for a subsystem
+			prefix = "subsystem"; //TODO
+			if(!string(v.first.data()).compare(prefix))
+			{
+				continue;
+			}
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading profile add parameters: "+ string(e.what()));
+	}
+}
+
+//Recurisve descent down a profile tree, inherits parent, sets values and continues if not leaf.
+void NovaGUI::loadSubProfiles(ptree ptr, profile * p)
+{
+	try
+	{
+		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		{
+			ptree ptr2;
+
+			//Inherits parent,
+			profile prof = *p;
+			prof.parentProfile = p;
+
+			//Gets name, initializes DHCP
+			prof.name = v.second.get<std::string>("name");
+			prof.DHCP = false;
+
+			try //Conditional: If profile has set configurations different from parent
+			{
+				ptr2 = v.second.get_child("set");
+				loadProfileSet(ptr2, &prof);
+			}
+			catch(...){}
+
+			try //Conditional: If profile has port or subsystems different from parent
+			{
+				ptr2 = v.second.get_child("add");
+				loadProfileAdd(ptr2, &prof);
+			}
+			catch(...){}
+
+			//Saves the profile
+			profiles[prof.name] = prof;
+
+
+			try //Conditional: if profile has children (not leaf)
+			{
+				ptr2 = v.second.get_child("profiles");
+				loadSubProfiles(ptr2, &profiles[prof.name]);
+			}
+			catch(...){}
+		}
+	}
+	catch(std::exception &e)
+	{
+		LOG4CXX_ERROR(m_logger, "Problem loading sub profiles: "+ string(e.what()));
+	}
+}
+
+
+/************************************************
+ * Suspect Functions
+ ************************************************/
 
 bool NovaGUI::receiveCE(int socket)
 {
@@ -396,6 +1085,10 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 	}
 	pthread_rwlock_unlock(&lock);
 }
+
+/************************************************
+ * Display Functions
+ ************************************************/
 
 void NovaGUI::drawAllSuspects()
 {
@@ -570,6 +1263,10 @@ void NovaGUI::clearSuspectList()
 	pthread_rwlock_unlock(&lock);
 }
 
+/************************************************
+ * Menu Signal Handlers
+ ************************************************/
+
 void NovaGUI::on_actionRunNova_triggered()
 {
 	startNova();
@@ -616,6 +1313,10 @@ void  NovaGUI::on_actionShow_All_Suspects_triggered()
 	drawAllSuspects();
 }
 
+/************************************************
+ * View Signal Handlers
+ ************************************************/
+
 void NovaGUI::on_mainButton_clicked()
 {
 	this->ui.stackedWidget->setCurrentIndex(0);
@@ -652,6 +1353,10 @@ void NovaGUI::on_haystackButton_clicked()
 	this->ui.haystackButton->setFlat(true);
 }
 
+/************************************************
+ * Button Signal Handlers
+ ************************************************/
+
 void  NovaGUI::on_runButton_clicked()
 {
 	startNova();
@@ -665,6 +1370,10 @@ void  NovaGUI::on_clearSuspectsButton_clicked()
 	clearSuspects();
 	drawAllSuspects();
 }
+
+/************************************************
+ * IPC Functions
+ ************************************************/
 
 void clearSuspects()
 {
@@ -753,9 +1462,10 @@ void startNova()
 	}
 }
 
-/*****************************************************************************
-// ------------------------- SOCKET FUNCTIONS --------------------------------
-*****************************************************************************/
+/************************************************
+ * Socket Functions
+ ************************************************/
+
 void getSocketAddr()
 {
 
@@ -1013,6 +1723,3 @@ void sclose(int sock)
 {
 	close(sock);
 }
-/*****************************************************************************
-// ------------------------- END SOCKET FUNCTIONS ----------------------------
-*****************************************************************************/
