@@ -9,8 +9,10 @@
 #define NOVAGUI_H
 
 #include <QtGui/QMainWindow>
+#include <QtGui/QTreeWidget>
 #include "ui_novagui.h"
 #include <tr1/unordered_map>
+#include <boost/property_tree/ptree.hpp>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <Suspect.h>
@@ -34,8 +36,109 @@
 #define MAX_MSG_SIZE 65535
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
+
+using namespace std;
 using namespace Nova;
 using namespace ClassificationEngine;
+using boost::property_tree::ptree;
+
+/*********************************************************************
+ - Structs and Tables for quick item access through pointers -
+**********************************************************************/
+
+//used to maintain information on imported scripts
+struct script
+{
+	string name;
+	string path;
+};
+typedef std::tr1::unordered_map<string, script> ScriptTable;
+
+//used to maintain information about a port, it's type and behavior
+struct port
+{
+	QTreeWidgetItem * item;
+	QTreeWidgetItem * portItem;
+	string portName;
+	string portNum;
+	string type;
+	string behavior;
+	string scriptName;
+	string proxyIP;
+	string proxyPort;
+	script * scriptPtr;
+};
+typedef std::tr1::unordered_map<string, port> PortTable;
+
+
+//used to keep track of subnet gui items and allow for easy access
+struct subnet
+{
+	QTreeWidgetItem * item;
+	QTreeWidgetItem * nodeItem;
+	string name;
+	string address;
+	string mask;
+	in_addr_t base;
+	in_addr_t max;
+	bool enabled;
+	vector<struct node *> nodes;
+};
+
+//container for the subnet pairs
+typedef std::tr1::unordered_map<string, subnet> SubnetTable;
+
+
+//used to keep track of haystack profile gui items and allow for easy access
+struct profile
+{
+	QTreeWidgetItem * item;
+	QTreeWidgetItem * profileItem;
+	string name;
+	string tcpAction;
+	string udpAction;
+	string icmpAction;
+	string personality;
+	string ethernet;
+	string uptime;
+	string uptimeRange;
+	string dropRate;
+	bool DHCP;
+	vector<struct port> ports;
+	profile * parentProfile;
+};
+
+//Container for accessing profile item pairs
+typedef std::tr1::unordered_map<string, profile> ProfileTable;
+
+
+//used to keep track of haystack node gui items and allow for easy access
+struct node
+{
+	QTreeWidgetItem * item;
+	QTreeWidgetItem * nodeItem;
+	struct subnet * sub;
+	string interface;
+	struct profile * pfile;
+	string address;
+	in_addr_t realIP;
+	string pname;
+	bool enabled;
+};
+
+//Container for accessing node item pairs
+typedef std::tr1::unordered_map<string, node> NodeTable;
+
+//Used to store the current doppelganger
+struct doppelganger
+{
+	string interface;
+	struct profile * pfile;
+	string address;
+	in_addr_t realIP;
+	string pname;
+	bool enabled;
+};
 
 struct suspectItem
 {
@@ -56,6 +159,16 @@ public:
 
     bool editingPreferences;
     bool runAsWindowUp;
+
+    string group;
+    doppelganger dm;
+
+    SubnetTable subnets;
+    PortTable ports;
+    ProfileTable profiles;
+    NodeTable nodes;
+    ScriptTable scripts;
+
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();
     Ui::NovaGUIClass ui;
@@ -77,6 +190,35 @@ public:
 
     //Action to do when the window closes.
     void closeEvent(QCloseEvent * e);
+
+    //Get preliminary config information
+    void getInfo();
+    void getPaths();
+    void getSettings();
+
+    //XML Read Functions
+
+    //calls main load functions
+    void loadAll();
+    //load all scripts
+    void loadScripts();
+    //load all ports
+    void loadPorts();
+
+    //load all profiles
+    void loadProfiles();
+    //set profile configurations
+    void loadProfileSet(ptree ptr, profile *p);
+    //add ports or subsystems
+    void loadProfileAdd(ptree ptr, profile *p);
+    //recursive descent down profile tree
+    void loadSubProfiles(ptree ptr, profile *p);
+
+    //load current honeyd configuration group
+    void loadGroup();
+    void loadSubnets(ptree ptr);
+    void loadDoppelganger(ptree ptr);
+    void loadNodes(ptree ptr);
 
 
 private slots:
