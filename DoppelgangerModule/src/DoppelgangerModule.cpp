@@ -14,7 +14,7 @@
 #include <signal.h>
 #include <log4cxx/xml/domconfigurator.h>
 #include <fstream>
-#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -34,6 +34,29 @@ bool isEnabled, useTerminals;
 
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath;
+
+//Alarm IPC globals to improve performance
+struct sockaddr_un remote;
+struct sockaddr * remoteAddrPtr = (struct sockaddr *)&remote;
+int connectionSocket;
+int bytesRead;
+char buf[MAX_MSG_SIZE];
+Suspect * suspect = NULL;
+int alarmSocket;
+
+//GUI IPC globals to improve performance
+struct sockaddr_un localIPCAddress;
+struct sockaddr * localIPCAddressPtr = (struct sockaddr *)&localIPCAddress;
+struct sockaddr_un GUIRemote;
+struct sockaddr * GUIRemotePtr = (struct sockaddr *)&GUIRemote;
+int IPCsock;
+int GUISocket;
+int numBytes;
+char buffer[MAX_MSG_SIZE];
+
+//constants that can be re-used
+int socketSize = sizeof(remote);
+socklen_t * socketSizePtr = (socklen_t*)&socketSize;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -139,9 +162,7 @@ int main(int argc, char *argv[])
 	commandLine = "iptables -t nat -F";
 	system(commandLine.c_str());
 
-	Suspect *suspect;
-
-    int alarmSocket, len;
+    int len;
     struct sockaddr_un remote;
 
 	//Builds the key path
@@ -178,7 +199,7 @@ int main(int argc, char *argv[])
 	//"Main Loop"
 	while(true)
 	{
-		suspect  = ReceiveAlarm(alarmSocket);
+		ReceiveAlarm();
 
 		if(suspect == NULL)
 		{
@@ -256,9 +277,6 @@ int main(int argc, char *argv[])
 
 void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 {
-	struct sockaddr_un localIPCAddress;
-	int IPCsock, len;
-
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
@@ -267,15 +285,16 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	}
 
 	localIPCAddress.sun_family = AF_UNIX;
+
 	//Builds the key path
-	string key = GUI_FILENAME;
-	key = homePath + key;
+	string key = homePath + GUI_FILENAME;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
-	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
-	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
+	int GUILen = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+
+	if(bind(IPCsock,localIPCAddressPtr,GUILen) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
 		close(IPCsock);
@@ -290,28 +309,22 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	}
 	while(true)
 	{
-		ReceiveGUICommand(IPCsock);
+		ReceiveGUICommand();
 	}
 }
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-void DoppelgangerModule::ReceiveGUICommand(int socket)
+void DoppelgangerModule::ReceiveGUICommand()
 {
-	struct sockaddr_un remote;
-    int socketSize, connectionSocket;
-    int bytesRead;
-    char buffer[MAX_MSG_SIZE];
     string prefix, line;
 
-    socketSize = sizeof(remote);
-
     //Blocking call
-    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    if ((connectionSocket = accept(IPCsock, GUIRemotePtr, socketSizePtr)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		close(connectionSocket);
     }
-    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(connectionSocket);
@@ -388,38 +401,29 @@ string Nova::DoppelgangerModule::getLocalIP(const char *dev)
 }
 
 //Listens over IPC for a Silent Alarm, blocking on no answer
-Suspect *Nova::DoppelgangerModule::ReceiveAlarm(int alarmSock)
+void Nova::DoppelgangerModule::ReceiveAlarm()
 {
-
-	struct sockaddr_un remote;
-    int socketSize, connectionSocket;
-    int bytesRead;
-    char buf[MAX_MSG_SIZE];
-
-    socketSize = sizeof(remote);
-
-
     //Blocking call
-    if ((connectionSocket = accept(alarmSock, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    if ((connectionSocket = accept(alarmSocket, remoteAddrPtr, socketSizePtr)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		close(connectionSocket);
-        return NULL;
+        return;
     }
     if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
     {
     	LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(connectionSocket);
-        return NULL;
+        return;
     }
 
-	Suspect * suspect = new Suspect();
+	suspect = new Suspect();
 
 	try
 	{
-		stringstream ss;
-		ss << buf;
-		boost::archive::text_iarchive ia(ss);
+		stringbuf ss;
+		ss.sputn(buf, bytesRead);
+		boost::archive::binary_iarchive ia(ss);
 		// create and open an archive for input
 		// read class state from archive
 		ia >> suspect;
@@ -435,7 +439,7 @@ Suspect *Nova::DoppelgangerModule::ReceiveAlarm(int alarmSock)
 		}
 	}
 	close(connectionSocket);
-	return suspect;
+	return;
 }
 
 //Returns a string with usage tips

@@ -11,7 +11,7 @@
 #include <fstream>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
 	//If we're reading from a packet capture file
 	if(usePcapFile)
 	{
-		sleep(tcpFreq); //To allow time for other processes to open
+		sleep(1); //To allow time for other processes to open
 		handle = pcap_open_offline(pcapPath.c_str(), errbuf);
 
 		if(handle == NULL)
@@ -415,8 +415,8 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 //	Returns success or failure
 bool Nova::Haystack::SendToCE(TrafficEvent *event)
 {
-	stringstream ss;
-	boost::archive::text_oarchive oa(ss);
+	stringbuf ss;
+	boost::archive::binary_oarchive oa(ss);
 	int socketFD;
 
 	//Serialize the data into a simple char buffer

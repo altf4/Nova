@@ -21,6 +21,7 @@
 #include <log4cxx/xml/domconfigurator.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include <boost/foreach.hpp>
 #include <errno.h>
 #include <arpa/inet.h>
@@ -1005,9 +1006,9 @@ bool NovaGUI::receiveCE(int socket)
 	sclose(connectionSocket);
 	try
 	{
-		stringstream ss;
-		ss << buf;
-		boost::archive::text_iarchive ia(ss);
+		stringbuf ss;
+		ss.sputn(buf, bytesRead);
+		boost::archive::binary_iarchive ia(ss);
 		// create and open an archive for input
 		// read class state from archive
 		ia >> suspect;

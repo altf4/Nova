@@ -125,4 +125,6 @@ private:
 };
 }
 }
+BOOST_IS_BITWISE_SERIALIZABLE(Nova::ClassificationEngine::FeatureSet);
+
 #endif /* FEATURESET_H_ */

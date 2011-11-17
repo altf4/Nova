@@ -90,10 +90,10 @@ void SilentAlarm(Suspect *suspect);
 
 ///Receive a TrafficEvent from another local component.
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-bool ReceiveTrafficEvent(int socket, long msg_type, TrafficEvent *event);
+bool ReceiveTrafficEvent();
 
 /// Receives input commands from the GUI
-void ReceiveGUICommand(int socket);
+void ReceiveGUICommand();
 
 //Sends output to the UI
 void SendToUI(Suspect *suspect);

@@ -16,8 +16,8 @@
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -36,11 +36,57 @@ static string hostAddrString;
 static struct sockaddr_in hostAddr;
 
 //Global variables related to Classification
-//Global memory assignments to improve ReceiveTrafficEvent performance
+
+//Global memory assignments to improve performance of IPC loops
+
+//** Main (ReceiveTrafficEvent) **
 struct sockaddr_un remote;
-int socketSize, bytesRead;
+struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
+int bytesRead;
+int connectionSocket;
 char buffer[MAX_MSG_SIZE];
 TrafficEvent *tempEvent, *event;
+int IPCsock;
+
+//** Silent Alarm **
+struct sockaddr_un alarmRemote;
+struct sockaddr* alarmRemotePtr =(struct sockaddr *)&alarmRemote;
+struct sockaddr_in serv_addr;
+struct sockaddr* serv_addrPtr = (struct sockaddr *)&serv_addr;
+int len;
+const char* data;
+int dataLen;
+int numBytesRead;
+int socketFD;
+int sockfd, broadcast = 1;
+int * bdPtr = &broadcast;
+int bdsize = sizeof broadcast;
+char alarmBuf[MAX_MSG_SIZE];
+
+
+//** GUI **
+struct sockaddr_un GUIRemote;
+struct sockaddr* GUIAddrPtr = (struct sockaddr *)&GUIRemote;
+int numBytes;
+int GUISocket;
+int GUIConnectionSocket;
+char buf[MAX_MSG_SIZE];
+
+//** SendToUI **
+struct sockaddr_un GUISendRemote;
+struct sockaddr* GUISendPtr = (struct sockaddr *)&GUISendRemote;
+int GUISendSocket;
+int GUILen;
+const char* GUIData;
+int GUIDataLen;
+
+
+//Universal Socket variables (constants that can be re-used)
+int socketSize = sizeof(remote);
+int inSocketSize = sizeof(serv_addr);
+socklen_t * sockSizePtr = (socklen_t*)&socketSize;
+
+
 
 
 //Configured in NOVAConfig_CE or specified config file.
@@ -77,7 +123,7 @@ int maxFeatureValues[dim];
 
 int main(int argc,char *argv[])
 {
-	int IPCsock, len;
+	int len;
 	pthread_rwlock_init(&lock, NULL);
 
 	struct sockaddr_un localIPCAddress;
@@ -216,28 +262,26 @@ int main(int argc,char *argv[])
 	while(true)
 	{
 		event = new TrafficEvent();
-		if( ReceiveTrafficEvent(IPCsock,TRAFFIC_EVENT_MTYPE,event) == false)
+		if( ReceiveTrafficEvent() == false)
 		{
 			delete event;
 			event = NULL;
 			continue;
 		}
-
+		pthread_rwlock_wrlock(&lock);
 		//If this is a new Suspect
 		if(suspects.count(event->src_IP.s_addr) == 0)
 		{
-			pthread_rwlock_wrlock(&lock);
 			suspects[event->src_IP.s_addr] = new Suspect(event);
-			pthread_rwlock_unlock(&lock);
 		}
 
 		//A returning suspect
 		else
 		{
-			pthread_rwlock_wrlock(&lock);
 			suspects[event->src_IP.s_addr]->AddEvidence(event);
-			pthread_rwlock_unlock(&lock);
+
 		}
+		pthread_rwlock_unlock(&lock);
 	}
 
 	//Shouldn't get here!
@@ -249,42 +293,42 @@ int main(int argc,char *argv[])
 //Infinite loop that recieves messages from the GUI
 void *Nova::ClassificationEngine::GUILoop(void *ptr)
 {
-	struct sockaddr_un localIPCAddress;
-	int IPCsock, len;
+	struct sockaddr_un GUIAddress;
+	int len;
 
-	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	if((GUISocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-		close(IPCsock);
+		close(GUISocket);
 		exit(1);
 	}
 
-	localIPCAddress.sun_family = AF_UNIX;
+	GUIAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
 	string key = GUI_FILENAME;
 	key = homePath + key;
 
-	strcpy(localIPCAddress.sun_path, key.c_str());
-	unlink(localIPCAddress.sun_path);
-	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+	strcpy(GUIAddress.sun_path, key.c_str());
+	unlink(GUIAddress.sun_path);
+	len = strlen(GUIAddress.sun_path) + sizeof(GUIAddress.sun_family);
 
-	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
+	if(bind(GUISocket,(struct sockaddr *)&GUIAddress,len) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
-		close(IPCsock);
+		close(GUISocket);
 		exit(1);
 	}
 
-	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(GUISocket, SOCKET_QUEUE_SIZE) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
-		close(IPCsock);
+		close(GUISocket);
 		exit(1);
 	}
 	while(true)
 	{
-		ReceiveGUICommand(IPCsock);
+		ReceiveGUICommand();
 	}
 }
 
@@ -293,12 +337,29 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 {
 	int oldClassification;
+
+	//Builds the GUI address
+	string GUIKey = homePath + CE_FILENAME;
+	GUISendRemote.sun_family = AF_UNIX;
+	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
+	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
+
+	//Builds the Silent Alarm IPC address
+	string key = homePath + KEY_ALARM_FILENAME;
+	alarmRemote.sun_family = AF_UNIX;
+	strcpy(alarmRemote.sun_path, key.c_str());
+	len = strlen(alarmRemote.sun_path) + sizeof(alarmRemote.sun_family);
+
+	//Builds the Silent Alarm Network address
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(sAlarmPort);
+	serv_addr.sin_addr.s_addr = INADDR_BROADCAST;
+
 	//Classification Loop
 	while(true)
 	{
 		sleep(classificationTimeout);
 		pthread_rwlock_rdlock(&lock);
-
 		//Calculate the "true" Feature Set for each Suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
@@ -311,21 +372,14 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 				pthread_rwlock_rdlock(&lock);
 			}
 		}
-		pthread_rwlock_unlock(&lock);
-		pthread_rwlock_wrlock(&lock);
 		//Calculate the normalized feature sets, actually used by ANN
 		//	Writes into Suspect ANNPoints
 		NormalizeDataPoints();
-		pthread_rwlock_unlock(&lock);
-		pthread_rwlock_rdlock(&lock);
 		//Perform classification on each suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
 			if(it->second->needs_classification_update)
 			{
-				pthread_rwlock_unlock(&lock);
-				pthread_rwlock_wrlock(&lock);
-
 				oldClassification = it->second->isHostile;
 
 				Classify(it->second);
@@ -338,10 +392,6 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 				}
 
 				SendToUI(it->second);
-
-
-				pthread_rwlock_unlock(&lock);
-				pthread_rwlock_rdlock(&lock);
 			}
 		}
 		pthread_rwlock_unlock(&lock);
@@ -355,14 +405,20 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 //Thread for calculating training data, and writing to file.
 void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 {
+	string GUIKey = homePath + CE_FILENAME;
+	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
+
+	GUISendRemote.sun_family = AF_UNIX;
+	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
+
 	//Training Loop
 	while(true)
 	{
 		sleep(classificationTimeout);
-		pthread_rwlock_wrlock(&lock);
 		ofstream myfile (string(outFile).data(), ios::app);
 		if (myfile.is_open())
 		{
+			pthread_rwlock_wrlock(&lock);
 			//Calculate the "true" Feature Set for each Suspect
 			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 			{
@@ -375,7 +431,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					}
 					for(int j=0; j < dim; j++)
 					{
-						it->second->annPoint[j] = it->second->features->features[j];
+						it->second->annPoint[j] = it->second->features.features[j];
 						myfile << it->second->annPoint[j] << " ";
 					}
 					myfile << it->second->classification;
@@ -384,13 +440,10 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					SendToUI(it->second);
 				}
 			}
-			//	Writes into Suspect ANNPoints
-
-			//WriteDataPointsToFile((char*)outPtr);
+			pthread_rwlock_unlock(&lock);
 		}
 		else LOG4CXX_INFO(m_logger, "Unable to open file.");
 		myfile.close();
-		pthread_rwlock_unlock(&lock);
 	}
 	//Shouldn't get here!
 	LOG4CXX_ERROR(m_logger,"Training thread ended. Shouldn't get here!!!");
@@ -401,11 +454,6 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
-	char buf[MAX_MSG_SIZE];
-	struct sockaddr_in sendaddr;
-
-	int numbytes;
-	int addr_len;
 	int broadcast=1;
 
 	if((sockfd = socket(PF_INET,SOCK_DGRAM,0)) == -1)
@@ -422,24 +470,36 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		exit(1);
 	}
 
+	struct sockaddr_in sendaddr;
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
+	int addr_len = sizeof(sendaddr);
+
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
 
-	if(bind(sockfd,(struct sockaddr*) &sendaddr,sizeof sendaddr) == -1)
+	int buf_len = sizeof(alarmBuf);
+
+	struct sockaddr * sockPtr = (struct sockaddr *)&sendaddr;
+	socklen_t * lenPtr = (socklen_t *)&addr_len;
+
+	if(bind(sockfd, sockPtr, addr_len) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
 
-	addr_len = sizeof sendaddr;
+	in_addr_t hostS_Addr = hostAddr.sin_addr.s_addr;
+	in_addr_t sendS_Addr = sendaddr.sin_addr.s_addr;
+	Suspect *suspect = NULL;
+
+	int numbytes;
 
 	while(1)
 	{
 		//Do the actual "listen"
-		if ((numbytes = recvfrom(sockfd,buf,sizeof buf,0,(struct sockaddr *)&sendaddr,(socklen_t *)&addr_len)) == -1)
+		if ((numbytes = recvfrom(sockfd,alarmBuf,buf_len,0, sockPtr, lenPtr) == -1))
 		{
 			LOG4CXX_ERROR(m_logger, "recvfrom: " << strerror(errno));
 			close(sockfd);
@@ -447,25 +507,25 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		}
 
 		//If this is from ourselves, then drop it.
-		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
+		if(hostS_Addr == sendS_Addr)
 		{
 			continue;
 		}
 
-		Suspect *suspect = new Suspect();
+		suspect = new Suspect();
 
 		try
 		{
 			// create and open an archive for input
-			stringstream ss;
-			ss << buf;
-			boost::archive::text_iarchive ia(ss);
+			stringbuf ss;
+			ss.sputn(alarmBuf, numbytes);
+			boost::archive::binary_iarchive ia(ss);
 
 			// read class state from archive
 			ia >> suspect;
 			LOG4CXX_INFO(m_logger,"Received a Silent Alarm!\n" << suspect->ToString());
-			pthread_rwlock_rdlock(&lock);
 
+			pthread_rwlock_rdlock(&lock);
 			for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 			{
 				if(it->second->IP_address.s_addr == suspect->IP_address.s_addr)
@@ -473,12 +533,9 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 					pthread_rwlock_unlock(&lock);
 					pthread_rwlock_wrlock(&lock);
 					it->second->flaggedByAlarm = true;
-					pthread_rwlock_unlock(&lock);
-					pthread_rwlock_rdlock(&lock);
 					break;
 				}
 			}
-			pthread_rwlock_unlock(&lock);
 		}
 		catch(boost::archive::archive_exception e)
 		{
@@ -486,6 +543,8 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: " << string(e.what()));
 		}
 		delete suspect;
+		suspect = NULL;
+		pthread_rwlock_unlock(&lock);
 	}
 	close(sockfd);
 	LOG4CXX_INFO(m_logger,"Silent Alarm thread ended. Shouldn't get here!!!");
@@ -570,7 +629,8 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 		    return;
 		}
 	}
-
+	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	suspect->classification = .5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM ));
 
 	if( suspect->classification > classificationThreshold)
@@ -581,12 +641,13 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	{
 		suspect->isHostile = false;
 	}
-
 	delete [] nnIdx;							// clean things up
     delete [] dists;
 
     annClose();
 	suspect->needs_classification_update = false;
+	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&lock);
 }
 
 //Subroutine to copy the data points in 'suspects' to their respective ANN Points
@@ -611,20 +672,22 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 	{
 		for(int i = 0;i < dim;i++)
 		{
-			if(it->second->features->features[i] > maxFeatureValues[i])
+			if(it->second->features.features[i] > maxFeatureValues[i])
 			{
 				//For proper normalization the upper bound for a feature is the max value of the data.
-				maxFeatureValues[i] = it->second->features->features[i];
+				maxFeatureValues[i] = it->second->features.features[i];
 				aMaxValChanged = true;
 			}
 		}
 	}
 	if(aMaxValChanged) FormKdTree();
 
+	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	//Normalize the suspect points
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
-		//Create the ANN Point, if needed
+
 		if(it->second->annPoint == NULL)
 		{
 			it->second->annPoint = annAllocPt(DIMENSION);
@@ -635,7 +698,8 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 		{
 			if(maxFeatureValues[0] != 0)
 			{
-				it->second->annPoint[i] = (double)(it->second->features->features[i] / maxFeatureValues[i]);
+				// We don't need a write lock, only this thread uses it.
+				it->second->annPoint[i] = (double)(it->second->features.features[i] / maxFeatureValues[i]);
 			}
 			else
 			{
@@ -643,6 +707,8 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 			}
 		}
 	}
+	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&lock);
 }
 
 //Prints a single ANN point, p, to stream, out
@@ -748,10 +814,12 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 //Writes dataPtsWithClass out to a file specified by outFilePath
 void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 {
+
 	ofstream myfile (outFilePath.data(), ios::app);
 
 	if (myfile.is_open())
 	{
+		pthread_rwlock_rdlock(&lock);
 		for ( SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++ )
 		{
 			for(int j=0; j < dim; j++)
@@ -761,9 +829,11 @@ void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 			myfile << it->second->classification;
 			myfile << "\n";
 		}
+		pthread_rwlock_unlock(&lock);
 	}
 	else LOG4CXX_ERROR(m_logger, "Unable to open file.");
 	myfile.close();
+
 }
 
 //Returns usage tips
@@ -825,18 +895,15 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
-    stringstream ss;
-	boost::archive::text_oarchive oa(ss);
-
-	int socketFD, len;
-	struct sockaddr_un remote;
+    stringbuf ss;
+	boost::archive::binary_oarchive oa(ss);
 
 	//Serialize the data into a simple char buffer
 	oa << suspect;
 	string temp = ss.str();
 
-	const char* data = temp.c_str();
-	int dataLen = temp.size();
+	data = temp.c_str();
+	dataLen = temp.size();
 
 	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -845,16 +912,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		return;
 	}
 
-	remote.sun_family = AF_UNIX;
-
-	//Builds the key path
-	string key = KEY_ALARM_FILENAME;
-	key = homePath + key;
-
-	strcpy(remote.sun_path, key.c_str());
-	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
-
-	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
+	if (connect(socketFD, alarmRemotePtr, len) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
 		close(socketFD);
@@ -870,31 +928,21 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	close(socketFD);
 
 	//Send Silent Alarm to other Nova Instances
-	int sockfd, broadcast = 1;
-	struct sockaddr_in serv_addr;
-
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(sAlarmPort);
-	serv_addr.sin_addr.s_addr = INADDR_BROADCAST;
-
-	sockfd = socket(AF_INET,SOCK_DGRAM,0);
-
-	if (sockfd < 0)
+	if ((sockfd = socket(AF_INET,SOCK_DGRAM,0)) == -1)
 	{
-		LOG4CXX_INFO(m_logger,"ERROR opening socket: " << strerror(errno));
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sockfd);
 		return;
 	}
 
-	if((setsockopt(sockfd,SOL_SOCKET,SO_BROADCAST,&broadcast,sizeof broadcast)) == -1)
+	if((setsockopt(sockfd, SOL_SOCKET,SO_BROADCAST, bdPtr, bdsize)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "setsockopt - SO_SOCKET: " << strerror(errno));
 		close(sockfd);
 		return;
 	}
 
-	if( sendto(sockfd,data,dataLen,0,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) == -1)
+	if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
 		close(sockfd);
@@ -904,14 +952,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 ///Receive a TrafficEvent from another local component.
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, TrafficEvent *event)
+bool ClassificationEngine::ReceiveTrafficEvent()
 {
-	int connectionSocket;
-
-	socketSize = sizeof(remote);
-
     //Blocking call
-    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    if ((connectionSocket = accept(IPCsock, remoteSockAddr, sockSizePtr)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		close(connectionSocket);
@@ -924,10 +968,9 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
         return false;
     }
 
-	stringstream ss;
-	ss << buffer;
+	stringbuf ss;
+	ss.sputn(buffer, bytesRead);
 
-	boost::archive::text_iarchive ia(ss);
 	// Read into a temp object then copy. We do this b/c the ">>" operator for
 	//	boost serialization creates a new object. So if we try to apply it to
 	//	the "event" variable, it just clobbers the pointer and doesn't get
@@ -935,6 +978,7 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 
 	try
 	{
+		boost::archive::binary_iarchive ia(ss);
 		ia >> tempEvent;
 	}
 	catch(boost::archive::archive_exception e)
@@ -943,35 +987,29 @@ bool ClassificationEngine::ReceiveTrafficEvent(int socket, long msg_type, Traffi
 		close(connectionSocket);
 		return false;
 	}
-	tempEvent->copyTo(event);
+	*event = *tempEvent;
 	close(connectionSocket);
 	return true;
 }
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-void ClassificationEngine::ReceiveGUICommand(int socket)
+void ClassificationEngine::ReceiveGUICommand()
 {
-	struct sockaddr_un remote;
-    int socketSize, connectionSocket;
-    int bytesRead;
-    char buffer[MAX_MSG_SIZE];
     string prefix, line;
 
-    socketSize = sizeof(remote);
-
     //Blocking call
-    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    if ((GUIConnectionSocket = accept(GUISocket, GUIAddrPtr, sockSizePtr)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
-		close(connectionSocket);
+		close(GUIConnectionSocket);
     }
-    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    if((numBytes = recv(GUIConnectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
-		close(connectionSocket);
+		close(GUIConnectionSocket);
     }
 
-    line = string(buffer);
+    line = string(buf);
 
     prefix = "EXIT";
     if(!line.substr(0,prefix.size()).compare(prefix))
@@ -994,56 +1032,43 @@ void ClassificationEngine::ReceiveGUICommand(int socket)
         	//Call clear individual suspect function - removeSuspect(string suspectIP)
         }
 	}
-
-    close(connectionSocket);
+    close(GUIConnectionSocket);
 }
 
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 {
-
-    stringstream ss;
-	boost::archive::text_oarchive oa(ss);
-
-	int socketFD, len;
-	struct sockaddr_un remote;
+    stringbuf ss;
+	boost::archive::binary_oarchive oa(ss);
 
 	//Serialize the data into a simple char buffer
 	oa << suspect;
 	string temp = ss.str();
 
-	const char* data = temp.c_str();
-	int dataLen = temp.size();
+	GUIData = temp.c_str();
+	GUIDataLen = temp.size();
 
-	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
-		close(socketFD);
+		close(GUISendSocket);
 		return;
 	}
 
-	//Builds the key path
-	string key = CE_FILENAME;
-	key = homePath + key;
-
-	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, key.c_str());
-	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
-
-	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
+	if (connect(GUISendSocket, GUISendPtr, GUILen) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
-		close(socketFD);
+		close(GUISendSocket);
 		return;
 	}
 
-	if (send(socketFD, data, dataLen, 0) == -1)
+	if (send(GUISendSocket, GUIData, GUIDataLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
-		close(socketFD);
+		close(GUISendSocket);
 		return;
 	}
-	close(socketFD);
+	close(GUISendSocket);
 }
 
 
