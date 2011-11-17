@@ -8,6 +8,7 @@
 
 #include "TrafficEvent.h"
 #include <arpa/inet.h>
+
 using namespace std;
 namespace Nova{
 //
@@ -223,5 +224,94 @@ void TrafficEvent::copyTo(TrafficEvent *toEvent)
 	toEvent->packet_count = this->packet_count;
 	toEvent->from_haystack = this->from_haystack;
 	toEvent->isHostile = this->isHostile;
+}
+
+string TrafficEvent::serializeEvent()
+{
+	string temp;
+	temp.clear();
+	temp.append((char*)&start_timestamp, sizeof start_timestamp);
+	temp.append((char*)&end_timestamp, sizeof end_timestamp);
+	temp.append((char*)&src_IP.s_addr, sizeof src_IP.s_addr);
+	temp.append((char*)&dst_IP.s_addr, sizeof dst_IP.s_addr);
+	temp.append((char*)&src_port, sizeof src_port);
+	temp.append((char*)&dst_port, sizeof dst_port);
+	temp.append((char*)&IP_total_data_bytes, sizeof IP_total_data_bytes);
+	temp.append((char*)&IP_protocol, sizeof IP_protocol);
+	temp.append((char*)&ICMP_type, sizeof ICMP_type);
+	temp.append((char*)&packet_count, sizeof packet_count);
+	temp.append((char*)&from_haystack, sizeof from_haystack);
+	temp.append((char*)&isHostile, sizeof isHostile);
+	int tempSize = sizeof IP_packet_sizes[0];
+	for(uint i = 0; i < IP_packet_sizes.size(); i++)
+	{
+		temp.append((char*)&IP_packet_sizes[i], tempSize);
+	}
+	tempSize = sizeof packet_intervals[0];
+	for(uint i = 0; i < packet_intervals.size(); i++)
+	{
+		temp.append((char*)&packet_intervals[i], tempSize);
+	}
+	return temp;
+}
+
+void TrafficEvent::deserializeEvent(string buf)
+{
+	uint i = 0;
+	uint k = sizeof start_timestamp;
+	strcpy((char *)&start_timestamp, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof end_timestamp;
+	strcpy((char *)&end_timestamp, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof src_IP.s_addr;
+	strcpy((char *)&src_IP.s_addr, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof dst_IP.s_addr;
+	strcpy((char *)&dst_IP.s_addr, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof src_port;
+	strcpy((char *)&src_port, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof dst_port;
+	strcpy((char *)&dst_port, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof IP_total_data_bytes;
+	strcpy((char *)&IP_total_data_bytes, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof IP_protocol;
+	strcpy((char *)&IP_protocol, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof ICMP_type;
+	strcpy((char *)&ICMP_type, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof packet_count;
+	strcpy((char *)&packet_count, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof from_haystack;
+	strcpy((char *)&from_haystack, buf.substr(i,k).c_str());
+	i+=k;
+	k = sizeof isHostile;
+	strcpy((char *)&isHostile, buf.substr(i,k).c_str());
+	i+=k;
+
+	int tempI;
+	k = sizeof tempI;
+	IP_packet_sizes.clear();
+	for(uint j = 0; j < packet_count; j++)
+	{
+		strcpy((char *)&tempI, buf.substr(i,k).c_str());
+		IP_packet_sizes.push_back(tempI);
+		i+= k;
+	}
+	time_t  tempT;
+	k = sizeof tempT;
+	packet_intervals.clear();
+	for(uint j = 0; j < packet_count; j++)
+	{
+		strcpy((char *)&tempT, buf.substr(i,k).c_str());
+		packet_intervals.push_back(tempT);
+		i+= k;
+	}
 }
 }

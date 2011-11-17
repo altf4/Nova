@@ -45,6 +45,7 @@ namespace Nova{
 class TrafficEvent
 {
 	public:
+
 		//********************
 		//* Member Variables *
 		//********************
@@ -120,6 +121,12 @@ class TrafficEvent
 
 		//Copies the contents of this TrafficEvent to the parameter TrafficEvent
 		void copyTo(TrafficEvent *toEvent);
+
+		//Serializes the event into a char buffer
+		string serializeEvent();
+
+		//Deserializes an event from a char buffer
+		void deserializeEvent(string buf);
 
 	private:
 		friend class boost::serialization::access;

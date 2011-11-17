@@ -981,8 +981,9 @@ bool ClassificationEngine::ReceiveTrafficEvent()
 
 	try
 	{
-		boost::archive::binary_iarchive ia(ss);
-		ia >> tempEvent;
+		event->deserializeEvent(ss.str());
+		//boost::archive::binary_iarchive ia(ss);
+		//ia >> tempEvent;
 	}
 	catch(boost::archive::archive_exception e)
 	{
@@ -990,7 +991,7 @@ bool ClassificationEngine::ReceiveTrafficEvent()
 		close(connectionSocket);
 		return false;
 	}
-	*event = *tempEvent;
+	//*event = *tempEvent;
 	close(connectionSocket);
 	return true;
 }

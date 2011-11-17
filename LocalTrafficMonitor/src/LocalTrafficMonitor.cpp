@@ -478,16 +478,16 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 
 ///Sends the given TrafficEvent to the Classification Engine
 ///	Returns success or failure
-bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
+bool Nova::LocalTrafficMonitor::SendToCE(TrafficEvent *event)
 {
-	stringbuf ss;
-	boost::archive::binary_oarchive oa(ss);
+	//stringbuf ss;
+	//boost::archive::binary_oarchive oa(ss);
 
 	int socketFD;
 
 	//Serialize the data into a simple char buffer
-	oa << event;
-	string temp = ss.str();
+	//oa << event;
+	string temp = event->serializeEvent();
 
 	data = temp.c_str();
 	dataLen = temp.size();
