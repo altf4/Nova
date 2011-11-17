@@ -115,8 +115,6 @@ void Suspect::CalculateFeatures(bool isTraining)
 	this->features.CalculateHaystackEventFrequency();
 	this->features.CalculatePacketSizeDeviation();
 	this->features.CalculatePacketIntervalDeviation();
-
-	this->needs_feature_update = false;
 	if(isTraining)
 	{
 		if(this->features.features[DISTINCT_IPS] > 2)

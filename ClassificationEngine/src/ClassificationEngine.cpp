@@ -434,6 +434,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 						it->second->annPoint[j] = it->second->features.features[j];
 						myfile << it->second->annPoint[j] << " ";
 					}
+					it->second->needs_feature_update = false;
 					myfile << it->second->classification;
 					myfile << "\n";
 					cout << it->second->ToString();
@@ -454,6 +455,11 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
+	char buf[MAX_MSG_SIZE];
+	struct sockaddr_in sendaddr;
+
+	int numbytes;
+	int addr_len;
 	int broadcast=1;
 
 	if((sockfd = socket(PF_INET,SOCK_DGRAM,0)) == -1)
@@ -470,36 +476,30 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		exit(1);
 	}
 
-	struct sockaddr_in sendaddr;
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
-	int addr_len = sizeof(sendaddr);
-
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
+	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
+	socklen_t sendaddrSize = sizeof sendaddr;
 
-	int buf_len = sizeof(alarmBuf);
-
-	struct sockaddr * sockPtr = (struct sockaddr *)&sendaddr;
-	socklen_t * lenPtr = (socklen_t *)&addr_len;
-
-	if(bind(sockfd, sockPtr, addr_len) == -1)
+	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
 
-	in_addr_t hostS_Addr = hostAddr.sin_addr.s_addr;
-	in_addr_t sendS_Addr = sendaddr.sin_addr.s_addr;
-	Suspect *suspect = NULL;
+	addr_len = sizeof sendaddr;
+	socklen_t * addr_lenPtr = (socklen_t *)&addr_len;
+	size_t bufSize = sizeof buf;
 
-	int numbytes;
+	Suspect *suspect = NULL;
 
 	while(1)
 	{
 		//Do the actual "listen"
-		if ((numbytes = recvfrom(sockfd,alarmBuf,buf_len,0, sockPtr, lenPtr) == -1))
+		if ((numbytes = recvfrom(sockfd,buf,bufSize,0,sockaddrPtr,addr_lenPtr)) == -1)
 		{
 			LOG4CXX_ERROR(m_logger, "recvfrom: " << strerror(errno));
 			close(sockfd);
@@ -507,7 +507,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		}
 
 		//If this is from ourselves, then drop it.
-		if(hostS_Addr == sendS_Addr)
+		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
 		{
 			continue;
 		}
@@ -518,14 +518,14 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		{
 			// create and open an archive for input
 			stringbuf ss;
-			ss.sputn(alarmBuf, numbytes);
+			ss.sputn(buf, numbytes);
 			boost::archive::binary_iarchive ia(ss);
 
 			// read class state from archive
 			ia >> suspect;
 			LOG4CXX_INFO(m_logger,"Received a Silent Alarm!\n" << suspect->ToString());
-
 			pthread_rwlock_rdlock(&lock);
+
 			for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 			{
 				if(it->second->IP_address.s_addr == suspect->IP_address.s_addr)
@@ -543,7 +543,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: " << string(e.what()));
 		}
 		delete suspect;
-		suspect = NULL;
 		pthread_rwlock_unlock(&lock);
 	}
 	close(sockfd);
@@ -687,24 +686,28 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 	//Normalize the suspect points
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
-
-		if(it->second->annPoint == NULL)
+		if(it->second->needs_feature_update)
 		{
-			it->second->annPoint = annAllocPt(DIMENSION);
-		}
 
-		//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
-		for(int i = 0;i < dim;i++)
-		{
-			if(maxFeatureValues[0] != 0)
+			if(it->second->annPoint == NULL)
 			{
-				// We don't need a write lock, only this thread uses it.
-				it->second->annPoint[i] = (double)(it->second->features.features[i] / maxFeatureValues[i]);
+				it->second->annPoint = annAllocPt(DIMENSION);
 			}
-			else
+
+			//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
+			for(int i = 0;i < dim;i++)
 			{
-				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				if(maxFeatureValues[0] != 0)
+				{
+					// We don't need a write lock, only this thread uses it.
+					it->second->annPoint[i] = (double)(it->second->features.features[i] / maxFeatureValues[i]);
+				}
+				else
+				{
+					LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				}
 			}
+			it->second->needs_feature_update = false;
 		}
 	}
 	pthread_rwlock_unlock(&lock);
