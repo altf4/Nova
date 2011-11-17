@@ -23,7 +23,7 @@ Suspect::Suspect()
 	needs_feature_update = true;
 	flaggedByAlarm = false;
 	isHostile = false;
-	features = NULL;
+	features = FeatureSet();
 	annPoint = annAllocPt(DIMENSION);
 	evidence.clear();
 }
@@ -31,11 +31,6 @@ Suspect::Suspect()
 //Destructor. Has to delete the FeatureSet object within.
 Suspect::~Suspect()
 {
-	if(features != NULL)
-	{
-		delete features;
-		features = NULL;
-	}
 	for ( uint i = 0; i < evidence.size(); i++ )
 	{
 		if(evidence[i] != NULL)
@@ -55,7 +50,7 @@ Suspect::Suspect(TrafficEvent *event)
 	this->IP_address = event->src_IP;
 	this->classification = -1;
 	this->isHostile = false;
-	this->features = new FeatureSet();
+	this->features = FeatureSet();
 	this->annPoint = NULL;
 	this->flaggedByAlarm = false;
 	this->AddEvidence(event);
@@ -73,31 +68,24 @@ string Suspect::ToString()
 	{
 		ss << "Suspect: Null IP\n";
 	}
-	if((features != NULL) && (features->features != NULL))
+	ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
+	ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
+	ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
+	ss << " Port Traffic Distribution: "  <<  features.features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
+	ss << " Haystack Events: " << features.features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+	ss << " Mean Packet Size: " << features.features[PACKET_SIZE_MEAN] << "\n";
+	ss << " Packet Size Variance: " << features.features[PACKET_SIZE_DEVIATION] << "\n";
+	ss << " Mean Packet Interval: " << features.features[PACKET_INTERVAL_MEAN] << "\n";
+	ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
+	ss << " Suspect is ";
+	if(!isHostile)
 	{
-		ss << " Distinct IPs Contacted: " << features->features[DISTINCT_IPS] << "\n";
-		ss << " Haystack Traffic Distribution: " << features->features[IP_TRAFFIC_DISTRIBUTION] << "\n";
-		ss << " Distinct Ports Contacted: " << features->features[DISTINCT_PORTS] << "\n";
-		ss << " Port Traffic Distribution: "  <<  features->features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-		ss << " Haystack Events: " << features->features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-		ss << " Mean Packet Size: " << features->features[PACKET_SIZE_MEAN] << "\n";
-		ss << " Packet Size Variance: " << features->features[PACKET_SIZE_DEVIATION] << "\n";
-		ss << " Mean Packet Interval: " << features->features[PACKET_INTERVAL_MEAN] << "\n";
-		ss << " Packet Interval Variance: " << features->features[PACKET_INTERVAL_DEVIATION] << "\n";
-		ss << " Suspect is ";
-		if(!isHostile)
-		{
-			ss << "not ";
-		}
-		ss << "hostile\n";
+		ss << "not ";
 	}
-	else
-	{
-		ss << " Null Feature Set\n";
-	}
+	ss << "hostile\n";
 	ss <<  " Classification: " <<  classification <<  "\n";
-//	ss << "\tHaystack hits: " << features->haystackEvents << "\n";
-//	ss << "\tHost hits: " << features->hostEvents << "\n";
+//	ss << "\tHaystack hits: " << features.haystackEvents << "\n";
+//	ss << "\tHost hits: " << features.hostEvents << "\n";
 	return ss.str();
 }
 
@@ -116,22 +104,22 @@ void Suspect::CalculateFeatures(bool isTraining)
 	//Clear any existing feature data
 	for(uint i = 0; i < this->evidence.size(); i++)
 	{
-		this->features->UpdateEvidence(this->evidence[i]);
+		this->features.UpdateEvidence(this->evidence[i]);
 	}
 	this->evidence.clear();
 	//For-each piece of evidence
-	this->features->CalculateDistinctIPs();
-	this->features->CalculateDistinctPorts();
-	this->features->CalculateIPTrafficDistribution();
-	this->features->CalculatePortTrafficDistribution();
-	this->features->CalculateHaystackEventFrequency();
-	this->features->CalculatePacketSizeDeviation();
-	this->features->CalculatePacketIntervalDeviation();
+	this->features.CalculateDistinctIPs();
+	this->features.CalculateDistinctPorts();
+	this->features.CalculateIPTrafficDistribution();
+	this->features.CalculatePortTrafficDistribution();
+	this->features.CalculateHaystackEventFrequency();
+	this->features.CalculatePacketSizeDeviation();
+	this->features.CalculatePacketIntervalDeviation();
 
 	this->needs_feature_update = false;
 	if(isTraining)
 	{
-		if(this->features->features[5] > 2)
+		if(this->features.features[DISTINCT_IPS] > 2)
 		{
 			classification = 1;
 			isHostile = true;

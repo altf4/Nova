@@ -15,7 +15,8 @@
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+
 
 
 using namespace log4cxx;
@@ -259,7 +260,7 @@ int main(int argc, char *argv[])
 	//If we are reading from a packet capture file
 	if(usePcapFile)
 	{
-		sleep(tcpFreq); //To allow time for other processes to open
+		sleep(1); //To allow time for other processes to open
 		handle = pcap_open_offline(pcapPath.c_str(), errbuf);
 
 		if(handle == NULL)
@@ -479,8 +480,8 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 ///	Returns success or failure
 bool Nova::LocalTrafficMonitor::SendToCE( TrafficEvent *event )
 {
-	stringstream ss;
-	boost::archive::text_oarchive oa(ss);
+	stringbuf ss;
+	boost::archive::binary_oarchive oa(ss);
 
 	int socketFD;
 

@@ -34,13 +34,13 @@ using namespace ClassificationEngine;
 string getLocalIP(const char *dev);
 
 ///Listens over IPC for a Silent Alarm, blocking on no answer
-Suspect *ReceiveAlarm(int alarmSock);
+void ReceiveAlarm();
 
 /// Thread for listening for GUI commands
 void *GUILoop(void *ptr);
 
 /// Receives input commands from the GUI
-void ReceiveGUICommand(int socket);
+void ReceiveGUICommand();
 
 //Returns usage tips
 string Usage();

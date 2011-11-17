@@ -12,6 +12,7 @@
 
 #include "FeatureSet.h"
 #include <ANN/ANN.h>
+#include <boost/serialization/is_bitwise_serializable.hpp>
 
 namespace Nova{
 namespace ClassificationEngine{
@@ -45,7 +46,7 @@ public:
 	bool flaggedByAlarm;
 
 	///	The Feature Set for this Suspect
-	FeatureSet *features;
+	FeatureSet features;
 
 	///	The feature set in the format that ANN requires.
 	ANNpoint annPoint;
@@ -93,4 +94,6 @@ private:
 };
 }
 }
+BOOST_IS_BITWISE_SERIALIZABLE(Nova::ClassificationEngine::Suspect);
+
 #endif /* SUSPECT_H_ */

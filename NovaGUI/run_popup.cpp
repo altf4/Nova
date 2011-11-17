@@ -3,6 +3,9 @@
 #include <sstream>
 #include "novagui.h"
 #include <log4cxx/xml/domconfigurator.h>
+#include <QString>
+#include <QtGui>
+#include <QApplication>
 
 
 using namespace std;
@@ -113,6 +116,21 @@ void Run_Popup::on_startButton_clicked()
 void Run_Popup::on_cancelButton_clicked()
 {
 	this->close();
+}
+
+void Run_Popup::on_pcapButton_clicked()
+{
+	//Gets the current path location
+	QDir path = QDir::current();
+	//Opens a cross-platform dialog box
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Packet Capture File"),  path.path(), tr("Pcap Files (*)"));
+
+	//Gets the relative path using the absolute path in fileName and the current path
+	if(fileName != NULL)
+	{
+		fileName = path.relativeFilePath(fileName);
+		ui.pcapEdit->setText(fileName);
+	}
 }
 
 bool Run_Popup::savePreferences()

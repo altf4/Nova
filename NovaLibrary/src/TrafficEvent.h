@@ -17,10 +17,10 @@
 #include <netinet/if_ether.h>
 #include <vector>
 #include <pcap.h>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
 #include <tr1/unordered_map>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
+
 
 #ifndef TRAFFICEVENT_H_
 #define TRAFFICEVENT_H_
@@ -37,6 +37,7 @@
 #define FROM_HAYSTACK_DP	1
 //From the Local Traffic Monitor
 #define FROM_LTM			0
+
 
 using namespace std;
 namespace Nova{
@@ -143,6 +144,8 @@ class TrafficEvent
 		}
 };
 
+
+
 ///	A struct version of a packet, as received from libpcap
 struct Packet
 {
@@ -158,5 +161,6 @@ struct Packet
 	struct icmphdr icmp_hdr;
 };
 }
+BOOST_IS_BITWISE_SERIALIZABLE(Nova::TrafficEvent);
 
 #endif /* TRAFFICEVENT_H_ */
