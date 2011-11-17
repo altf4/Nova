@@ -415,13 +415,13 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 //	Returns success or failure
 bool Nova::Haystack::SendToCE(TrafficEvent *event)
 {
-	stringbuf ss;
-	boost::archive::binary_oarchive oa(ss);
+	//stringbuf ss;
+	//boost::archive::binary_oarchive oa(ss);
 	int socketFD;
 
 	//Serialize the data into a simple char buffer
-	oa << event;
-	string temp = ss.str();
+	//oa << event;
+	string temp = event->serializeEvent();
 
 	data = temp.c_str();
 	int dataLen = temp.size();

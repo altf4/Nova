@@ -1439,9 +1439,9 @@ void startNova()
 
 		if(!useTerminals)
 		{
-			system(("nohup honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-fingerprints"
+			system(("nohup honeyd -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-fingerprints"
 					" -s "+writePath+"/Logs/honeydservice.log > /dev/null &").c_str());
-			system(("nohup honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-fingerprints"
+			system(("nohup honeyd -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-fingerprints"
 					" -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 > /dev/null &").c_str());
 			system("nohup LocalTrafficMonitor > /dev/null &");
 			system("nohup Haystack > /dev/null &");
