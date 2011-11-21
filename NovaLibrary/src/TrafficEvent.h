@@ -38,6 +38,60 @@
 //From the Local Traffic Monitor
 #define FROM_LTM			0
 
+///	A struct for statically sized TrafficEvent Information
+struct TEvent
+{
+	///Timestamp of the begining of this event
+	time_t start_timestamp;
+	///Timestamp of the end of this event
+	time_t end_timestamp;
+
+	///Source IP address of this event
+	struct in_addr src_IP;
+	///Destination IP address of this event
+	struct in_addr dst_IP;
+
+	///Source port of this event
+	in_port_t src_port;
+	///Destination port of this event
+	in_port_t dst_port;
+
+	///Total amount of IP layer bytes sent to the victim
+	uint IP_total_data_bytes;
+
+	///The IP proto type number
+	///	IE: 6 == TCP, 17 == UDP, 1 == ICMP, etc...
+	uint IP_protocol;
+
+	///ICMP specific values
+	///IE:	0,0 = Ping reply
+	///		8,0 = Ping request
+	///		3,3 = Destination port unreachable
+	int ICMP_type;
+	///IE:	0,0 = Ping reply
+	///		8,0 = Ping request
+	///		3,3 = Destination port unreachable
+	int ICMP_code;
+
+	///Packets involved in this event
+	uint packet_count;
+
+	///Did this event originate from the Haystack?	///	Meta information about packet
+	struct pcap_pkthdr pcap_header;
+	///	Pointer to an IP header
+	struct ip ip_hdr;
+	/// Pointer to a TCP Header
+	struct tcphdr tcp_hdr;
+	/// Pointer to a UDP Header
+	struct udphdr udp_hdr;
+	/// Pointer to an ICMP Header
+	struct icmphdr icmp_hdr;
+	///	False for from the host machine
+	bool from_haystack;
+
+	///For training use. Is this a hostile Event?
+	bool isHostile;
+};
 
 using namespace std;
 namespace Nova{
@@ -50,52 +104,14 @@ class TrafficEvent
 		//* Member Variables *
 		//********************
 
-		///Timestamp of the begining of this event
-		time_t start_timestamp;
-		///Timestamp of the end of this event
-		time_t end_timestamp;
-
-		///Source IP address of this event
-		struct in_addr src_IP;
-		///Destination IP address of this event
-		struct in_addr dst_IP;
-
-		///Source port of this event
-		in_port_t src_port;
-		///Destination port of this event
-		in_port_t dst_port;
-
-		///Total amount of IP layer bytes sent to the victim
-		uint IP_total_data_bytes;
+		//Stores statically sized TrafficEvent information
+		//We use a struct here to increase performance of serialization
+		struct TEvent info;
 
 		///A vector of the sizes of the IP layers of
 		vector <int> IP_packet_sizes;
 		///A vector of start times for all packets in a tcp session
 		vector <time_t> packet_intervals;
-
-		///The IP proto type number
-		///	IE: 6 == TCP, 17 == UDP, 1 == ICMP, etc...
-		uint IP_protocol;
-
-		///ICMP specific values
-		///IE:	0,0 = Ping reply
-		///		8,0 = Ping request
-		///		3,3 = Destination port unreachable
-		int ICMP_type;
-		///IE:	0,0 = Ping reply
-		///		8,0 = Ping request
-		///		3,3 = Destination port unreachable
-		int ICMP_code;
-
-		///Packets involved in this event
-		uint packet_count;
-
-		///Did this event originate from the Haystack?
-		///	False for from the host machine
-		bool from_haystack;
-
-		///For training use. Is this a hostile Event?
-		bool isHostile;
 
 		//********************
 		//* Member Functions *
@@ -133,21 +149,9 @@ class TrafficEvent
 		template<class Archive>
 		void serialize(Archive & ar, const unsigned int version)
 		{
-			ar & start_timestamp;
-			ar & end_timestamp;
-			ar & src_IP.s_addr;
-			ar & dst_IP.s_addr;
-			ar & src_port;
-			ar & dst_port;
-			ar & IP_total_data_bytes;
+			ar & info;
 			ar & IP_packet_sizes;
 			ar & packet_intervals;
-			ar & IP_protocol;
-			ar & ICMP_type;
-			ar & ICMP_code;
-			ar & packet_count;
-			ar & from_haystack;
-			ar & isHostile;
 		}
 };
 

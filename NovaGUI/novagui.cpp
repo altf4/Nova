@@ -516,7 +516,6 @@ void NovaGUI::loadSubnets(ptree *ptr)
 				sub.base = (baseTemp & maskTemp);
 				//Get the number of bits in the mask
 				sub.maskBits = getMaskBits(maskTemp);
-				cout << "Num bits: " << sub.maskBits;
 				//Adding the binary inversion of the mask gets the highest usable IP
 				sub.max = sub.base + ~maskTemp;
 
@@ -626,7 +625,7 @@ void NovaGUI::loadNodes(ptree *ptr)
 				n.sub = NULL;
 
 				n.realIP = htonl(inet_addr(n.address.c_str())); //convert ip to uint32
-				uint max = 0; //Tracks the mask with smallest range by comparing num of bits used.
+				int max = 0; //Tracks the mask with smallest range by comparing num of bits used.
 
 				//Check each subnet
 				for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
