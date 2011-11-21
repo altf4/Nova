@@ -154,29 +154,29 @@ void FeatureSet::CalculatePacketSizeDeviation()
 
 void FeatureSet::UpdateEvidence(TrafficEvent *event)
 {
-	packetCount += event->packet_count;
-	bytesTotal += event->IP_total_data_bytes;
+	packetCount += event->info.packet_count;
+	bytesTotal += event->info.IP_total_data_bytes;
 	//If from haystack
-	if(event->from_haystack)
+	if( event->info.from_haystack)
 	{
 		//Put the packet count into a bin associated with the haystack
-		IPTable[event->dst_IP.s_addr] += event->packet_count;
+		IPTable[ event->info.dst_IP.s_addr] += event->info.packet_count;
 	}
 	//Else from a host
 	else
 	{
 		//Put the packet count into a bin associated with source so that
 		// all host events for a suspect go into the same bin
-		IPTable[event->src_IP.s_addr] += event->packet_count;
+		IPTable[ event->info.src_IP.s_addr] +=  event->info.packet_count;
 	}
 
-	portTable[event->dst_port] += event->packet_count;
+	portTable[ event->info.dst_port] +=  event->info.packet_count;
 	//Checks for the max to avoid iterating through the entire table every update
 	//Since number of ports can grow very large during a scan this will distribute the computation more evenly
 	//Since the IP will tend to be relatively small compared to number of events, it's max is found during the call.
-	if(portTable[event->dst_port] > portMax)
+	if(portTable[ event->info.dst_port] > portMax)
 	{
-		portMax = portTable[event->dst_port];
+		portMax = portTable[ event->info.dst_port];
 	}
 
 	for(uint i = 0; i < event->IP_packet_sizes.size(); i++)
@@ -186,7 +186,7 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 		packet_intervals.push_back(event->packet_intervals[i]);
 	}
 	//Accumulate to find the lowest Start time and biggest end time.
-	if(event->from_haystack)
+	if( event->info.from_haystack)
 	{
 		haystackEvents++;
 	}
@@ -194,13 +194,13 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	{
 		hostEvents++;
 	}
-	if( event->start_timestamp < startTime)
+	if( event->info.start_timestamp < startTime)
 	{
-		startTime = event->start_timestamp;
+		startTime = event->info.start_timestamp;
 	}
-	if( event->end_timestamp > endTime)
+	if(  event->info.end_timestamp > endTime)
 	{
-		endTime = event->end_timestamp;
+		endTime = event->info.end_timestamp;
 	}
 }
 }
