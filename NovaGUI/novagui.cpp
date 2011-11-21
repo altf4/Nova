@@ -373,16 +373,15 @@ void NovaGUI::loadAll()
 void NovaGUI::loadScripts()
 {
 	using boost::property_tree::ptree;
-	ptree pt;
-
+	scriptTree.clear();
 	try
 	{
-		read_xml(homePath+"/scripts.xml", pt);
+		read_xml(homePath+"/scripts.xml", scriptTree);
 
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child("scripts"))
+		BOOST_FOREACH(ptree::value_type &v, scriptTree.get_child("scripts"))
 		{
 			script s;
-
+			s.treePtr = &v.second;
 			//Each script consists of a name and path to that script
 			s.name = v.second.get<std::string>("name");
 			s.path = v.second.get<std::string>("path");
@@ -399,15 +398,15 @@ void NovaGUI::loadScripts()
 void NovaGUI::loadPorts()
 {
 	using boost::property_tree::ptree;
-	ptree pt;
-
+	portTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/ports.xml", pt);
+		read_xml(homePath+"/templates/ports.xml", portTree);
 
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child("ports"))
+		BOOST_FOREACH(ptree::value_type &v, portTree.get_child("ports"))
 		{
 			port p;
+			p.treePtr = &v.second;
 			//Required xml entries
 			p.portName = v.second.get<std::string>("name");
 			p.portNum = v.second.get<std::string>("number");
@@ -440,13 +439,13 @@ void NovaGUI::loadPorts()
 void NovaGUI::loadGroup()
 {
 	using boost::property_tree::ptree;
-	ptree pt;
+	groupTree.clear();
 	ptree ptr;
 
 	try
 	{
-		read_xml(homePath+"/templates/nodes.xml", pt);
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child("groups"))
+		read_xml(homePath+"/templates/nodes.xml", groupTree);
+		BOOST_FOREACH(ptree::value_type &v, groupTree.get_child("groups"))
 		{
 			//Find the specified group
 			if(!v.second.get<std::string>("name").compare(group))
@@ -454,14 +453,14 @@ void NovaGUI::loadGroup()
 				try //Null Check
 				{
 					//Load Subnets first, they are needed before we can load nodes
-					ptr = v.second.get_child("subnets");
-					loadSubnets(ptr);
+					subnetTree = &v.second.get_child("subnets");
+					loadSubnets(subnetTree);
 
 					try //Null Check
 					{
 						//If subnets are loaded successfully, load nodes
-						ptr = v.second.get_child("nodes");
-						loadNodes(ptr);
+						nodesTree = &v.second.get_child("nodes");
+						loadNodes(nodesTree);
 					}
 					catch(std::exception &e)
 					{
@@ -476,8 +475,8 @@ void NovaGUI::loadGroup()
 				try //Null Check
 				{
 					//Loads doppelganger, doesn't have a subnet
-					ptr = v.second.get_child("doppelganger");
-					loadDoppelganger(ptr);
+					doppTree = &v.second.get_child("doppelganger");
+					loadDoppelganger(doppTree);
 				}
 				catch(std::exception &e)
 				{
@@ -493,16 +492,17 @@ void NovaGUI::loadGroup()
 }
 
 //loads subnets from file for current group
-void NovaGUI::loadSubnets(ptree ptr)
+void NovaGUI::loadSubnets(ptree *ptr)
 {
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
-			subnet sub;
 			//If real interface
 			if(!string(v.first.data()).compare("interface"))
 			{
+				subnet sub;
+				sub.treePtr = &v.second;
 				//Extract the data
 				sub.name = v.second.get<std::string>("name");
 				sub.address = v.second.get<std::string>("IP");
@@ -514,11 +514,11 @@ void NovaGUI::loadSubnets(ptree ptr)
 				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
 				in_addr_t maskTemp = htonl(inet_addr(sub.mask.c_str()));
 				sub.base = (baseTemp & maskTemp);
-
-				//Subtracting the mask from 0xFFFFFFFF gets the number of addresses in the range
-				//Adding range to base gets the highest usable IP address.
-				maskTemp = (pow(2,32)-1) - maskTemp;
-				sub.max = sub.base + maskTemp;
+				//Get the number of bits in the mask
+				sub.maskBits = getMaskBits(maskTemp);
+				cout << "Num bits: " << sub.maskBits;
+				//Adding the binary inversion of the mask gets the highest usable IP
+				sub.max = sub.base + ~maskTemp;
 
 				//Save subnet
 				subnets[sub.address] = sub;
@@ -541,23 +541,24 @@ void NovaGUI::loadSubnets(ptree ptr)
 }
 
 //loads doppelganger from file for current group
-void NovaGUI::loadDoppelganger(ptree ptr)
+void NovaGUI::loadDoppelganger(ptree *ptr)
 {
 	profile p;
-	ptree ptr2;
+	ptree *ptr2;
 	try
 	{
 		//required values
-		dm.interface = string(ptr.get<std::string>("interface"));
-		dm.address = string(ptr.get<std::string>("IP"));
-		dm.enabled = atoi(string(ptr.get<std::string>("enabled")).c_str());
-		dm.pname = string(ptr.get<std::string>("profile.name"));
+		dm.treePtr = ptr;
+		dm.interface = string(ptr->get<std::string>("interface"));
+		dm.address = string(ptr->get<std::string>("IP"));
+		dm.enabled = atoi(string(ptr->get<std::string>("enabled")).c_str());
+		dm.pname = string(ptr->get<std::string>("profile.name"));
 		dm.pfile = &profiles[dm.pname];
 
 		try //Conditional: has "set" values
 		{
 			//Some values are set for the doppelganger specifically
-			ptr2 = ptr.get_child("profile.set");
+			ptr2 = &ptr->get_child("profile.set");
 
 			//Inherit all of parent profile's values
 			p = *dm.pfile;
@@ -572,7 +573,7 @@ void NovaGUI::loadDoppelganger(ptree ptr)
 		try //Conditional: has "add" values
 		{
 			//Some ports or subsystems are specific to the doppelganger
-			ptr2 = ptr.get_child("profile.add");
+			ptr2 = &ptr->get_child("profile.add");
 
 			//If doppelganger already has a unique profile
 			if(!dm.pname.compare(dm.address))
@@ -600,18 +601,18 @@ void NovaGUI::loadDoppelganger(ptree ptr)
 }
 
 //loads haystack nodes from file for current group
-void NovaGUI::loadNodes(ptree ptr)
+void NovaGUI::loadNodes(ptree *ptr)
 {
-	ptree ptr2;
+	ptree * ptr2;
 	profile p;
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
 			if(!string(v.first.data()).compare("node"))
 			{
 				node n;
-
+				n.treePtr = &v.second;
 				//Required xml entires
 				n.interface = v.second.get<std::string>("interface");
 				n.address = v.second.get<std::string>("IP");
@@ -625,31 +626,29 @@ void NovaGUI::loadNodes(ptree ptr)
 				n.sub = NULL;
 
 				n.realIP = htonl(inet_addr(n.address.c_str())); //convert ip to uint32
-				uint minRange = (pow(2, 32) - 1); //intialize to 0xFFFFFFFF
+				uint max = 0; //Tracks the mask with smallest range by comparing num of bits used.
 
 				//Check each subnet
 				for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 				{
-					//If node falls within a subnets range
-					if((n.realIP >= it->second.base) && (n.realIP <= it->second.max))
+					//If node falls outside a subnets range skip it
+					if((n.realIP < it->second.base) || (n.realIP > it->second.max))
+						continue;
+					//If this is the smallest range
+					if(it->second.maskBits > max)
 					{
-						//If this is the smallest range
-						if(((it->second.max - it->second.base) + 1) < minRange)
+						//If node isn't using host's address
+						if(it->second.address.compare(n.address))
 						{
-							//If node isn't using host's address
-							if(it->second.address.compare(n.address))
-							{
-								//1 is added outside parenthesis to insure no bit overflow
-								minRange = (it->second.max - it->second.base) + 1;
-								n.sub = &it->second;
-							}
+							max = it->second.maskBits;
+							n.sub = &it->second;
 						}
 					}
 				}
 				try //Conditional: has "set" values
 				{
 					//Some values are set for the node specifically
-					ptr2 = v.second.get_child("profile.set");
+					ptr2 = &v.second.get_child("profile.set");
 
 					//Inherit all of parent profile's values
 					p = *n.pfile;
@@ -664,7 +663,7 @@ void NovaGUI::loadNodes(ptree ptr)
 				try //Conditional: has "add" values
 				{
 					//Some ports or subsystems are specific to the node
-					ptr2 = v.second.get_child("profile.add");
+					ptr2 = &v.second.get_child("profile.add");
 
 					//If node already has a unique profile
 					if(!n.pname.compare(n.address))
@@ -730,14 +729,13 @@ void NovaGUI::loadNodes(ptree ptr)
 void NovaGUI::loadProfiles()
 {
 	using boost::property_tree::ptree;
-	ptree pt;
-	ptree ptr;
-
+	ptree * ptr;
+	profileTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/profiles.xml", pt);
+		read_xml(homePath+"/templates/profiles.xml", profileTree);
 
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child("profiles"))
+		BOOST_FOREACH(ptree::value_type &v, profileTree.get_child("profiles"))
 		{
 			//Generic profile, essentially a honeyd template
 			if(!string(v.first.data()).compare("profile"))
@@ -745,6 +743,7 @@ void NovaGUI::loadProfiles()
 				profile p;
 				//Root profile has no parent
 				p.parentProfile = NULL;
+				p.ptreePtr = &v.second;
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
@@ -753,7 +752,7 @@ void NovaGUI::loadProfiles()
 
 				try //Conditional: has "set" values
 				{
-					ptr = v.second.get_child("set");
+					ptr = &v.second.get_child("set");
 					//pass 'set' subset and pointer to this profile
 					loadProfileSet(ptr, &p);
 				}
@@ -761,7 +760,7 @@ void NovaGUI::loadProfiles()
 
 				try //Conditional: has "add" values
 				{
-					ptr = v.second.get_child("add");
+					ptr = &v.second.get_child("add");
 					//pass 'add' subset and pointer to this profile
 					loadProfileAdd(ptr, &p);
 				}
@@ -772,7 +771,7 @@ void NovaGUI::loadProfiles()
 
 				try //Conditional: has children profiles
 				{
-					ptr = v.second.get_child("profiles");
+					ptr = &v.second.get_child("profiles");
 
 					//start recurisive descent down profile tree with this profile as the root
 					//pass subtree and pointer to parent
@@ -800,12 +799,12 @@ void NovaGUI::loadProfiles()
 }
 
 //Sets the configuration of 'set' values for profile that called it
-void NovaGUI::loadProfileSet(ptree ptr, profile *p)
+void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 {
 	string prefix;
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
 			prefix = "TCP";
 			if(!string(v.first.data()).compare(prefix))
@@ -871,21 +870,21 @@ void NovaGUI::loadProfileSet(ptree ptr, profile *p)
 
 //Adds specified ports and subsystems
 // removes any previous port with same number and type to avoid conflicts
-void NovaGUI::loadProfileAdd(ptree ptr, profile *p)
+void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 {
 	string prefix;
 	port * prt;
 
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
 			//Checks for ports
 			prefix = "ports";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				//Iterates through the ports
-				BOOST_FOREACH(ptree::value_type &v2, ptr.get_child("ports"))
+				BOOST_FOREACH(ptree::value_type &v2, ptr->get_child("ports"))
 				{
 					prt = &ports[v2.second.data()];
 
@@ -919,16 +918,17 @@ void NovaGUI::loadProfileAdd(ptree ptr, profile *p)
 }
 
 //Recurisve descent down a profile tree, inherits parent, sets values and continues if not leaf.
-void NovaGUI::loadSubProfiles(ptree ptr, profile * p)
+void NovaGUI::loadSubProfiles(ptree *ptr, profile * p)
 {
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr.get_child(""))
+		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
-			ptree ptr2;
+			ptree *ptr2;
 
 			//Inherits parent,
 			profile prof = *p;
+			prof.ptreePtr = &v.second;
 			prof.parentProfile = p;
 
 			//Gets name, initializes DHCP
@@ -937,14 +937,14 @@ void NovaGUI::loadSubProfiles(ptree ptr, profile * p)
 
 			try //Conditional: If profile has set configurations different from parent
 			{
-				ptr2 = v.second.get_child("set");
+				ptr2 = &v.second.get_child("set");
 				loadProfileSet(ptr2, &prof);
 			}
 			catch(...){}
 
 			try //Conditional: If profile has port or subsystems different from parent
 			{
-				ptr2 = v.second.get_child("add");
+				ptr2 = &v.second.get_child("add");
 				loadProfileAdd(ptr2, &prof);
 			}
 			catch(...){}
@@ -955,7 +955,7 @@ void NovaGUI::loadSubProfiles(ptree ptr, profile * p)
 
 			try //Conditional: if profile has children (not leaf)
 			{
-				ptr2 = v.second.get_child("profiles");
+				ptr2 = &v.second.get_child("profiles");
 				loadSubProfiles(ptr2, &profiles[prof.name]);
 			}
 			catch(...){}
@@ -1262,6 +1262,24 @@ void NovaGUI::clearSuspectList()
 		it->second.item = NULL;
 	}
 	pthread_rwlock_unlock(&lock);
+}
+
+void NovaGUI::drawNodes()
+{
+	QTreeWidgetItem * item = NULL;
+	QString str;
+
+	ui.nodesTreeWidget->clear();
+
+	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+	{
+		item = new QTreeWidgetItem(ui.nodesTreeWidget);
+		str = (QString)it->second.address.c_str();
+	}
+	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+
+	}
 }
 
 /************************************************
@@ -1723,4 +1741,17 @@ void sendAll()
 void sclose(int sock)
 {
 	close(sock);
+}
+
+//Returns the number of bits used in the mask when given in in_addr_t form
+int getMaskBits(in_addr_t mask)
+{
+	mask = ~mask;
+	int i = 32;
+	while(mask != 0)
+	{
+		mask = mask/2;
+		i--;
+	}
+	return i;
 }
