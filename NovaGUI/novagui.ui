@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="mainPage">
      <widget class="QLabel" name="mainSuspectListLabel">
@@ -170,7 +170,49 @@ p, li { white-space: pre-wrap; }
      </widget>
     </widget>
     <widget class="QWidget" name="doppelPage"/>
-    <widget class="QWidget" name="haystackPage"/>
+    <widget class="QWidget" name="haystackPage">
+     <widget class="QTreeWidget" name="nodesTreeWidget">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>40</y>
+        <width>531</width>
+        <height>521</height>
+       </rect>
+      </property>
+      <property name="expandsOnDoubleClick">
+       <bool>true</bool>
+      </property>
+      <attribute name="headerVisible">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="headerDefaultSectionSize">
+       <number>263</number>
+      </attribute>
+      <attribute name="headerStretchLastSection">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="headerDefaultSectionSize">
+       <number>263</number>
+      </attribute>
+      <attribute name="headerVisible">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="headerStretchLastSection">
+       <bool>false</bool>
+      </attribute>
+      <column>
+       <property name="text">
+        <string>Address</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Profile</string>
+       </property>
+      </column>
+     </widget>
+    </widget>
    </widget>
    <widget class="QPushButton" name="doppelButton">
     <property name="geometry">

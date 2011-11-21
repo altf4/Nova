@@ -51,6 +51,7 @@ struct script
 {
 	string name;
 	string path;
+	ptree * treePtr;
 };
 typedef std::tr1::unordered_map<string, script> ScriptTable;
 
@@ -67,6 +68,7 @@ struct port
 	string proxyIP;
 	string proxyPort;
 	script * scriptPtr;
+	ptree * treePtr;
 };
 typedef std::tr1::unordered_map<string, port> PortTable;
 
@@ -79,10 +81,12 @@ struct subnet
 	string name;
 	string address;
 	string mask;
+	int maskBits;
 	in_addr_t base;
 	in_addr_t max;
 	bool enabled;
 	vector<struct node *> nodes;
+	ptree * treePtr;
 };
 
 //container for the subnet pairs
@@ -106,6 +110,7 @@ struct profile
 	bool DHCP;
 	vector<struct port> ports;
 	profile * parentProfile;
+	ptree * ptreePtr;
 };
 
 //Container for accessing profile item pairs
@@ -124,6 +129,7 @@ struct node
 	in_addr_t realIP;
 	string pname;
 	bool enabled;
+	ptree * treePtr;
 };
 
 //Container for accessing node item pairs
@@ -138,6 +144,7 @@ struct doppelganger
 	in_addr_t realIP;
 	string pname;
 	bool enabled;
+	ptree * treePtr;
 };
 
 struct suspectItem
@@ -169,6 +176,16 @@ public:
     NodeTable nodes;
     ScriptTable scripts;
 
+    //Storing these trees allow for easy modification and writing of the XML files
+    //Without having to reconstruct the tree from scratch.
+    ptree groupTree;
+    ptree portTree;
+    ptree profileTree;
+    ptree scriptTree;
+    ptree *nodesTree;
+    ptree *doppTree;
+    ptree *subnetTree;
+
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();
     Ui::NovaGUIClass ui;
@@ -184,6 +201,9 @@ public:
 
     ///Updates the UI with the latest suspect information
     void drawSuspects();
+
+    //Displays the topology of the honeyd configuration
+    void drawNodes();
 
     ///Clears the suspect tables completely.
     void clearSuspectList();
@@ -208,17 +228,17 @@ public:
     //load all profiles
     void loadProfiles();
     //set profile configurations
-    void loadProfileSet(ptree ptr, profile *p);
+    void loadProfileSet(ptree *ptr, profile *p);
     //add ports or subsystems
-    void loadProfileAdd(ptree ptr, profile *p);
+    void loadProfileAdd(ptree *ptr, profile *p);
     //recursive descent down profile tree
-    void loadSubProfiles(ptree ptr, profile *p);
+    void loadSubProfiles(ptree *ptr, profile *p);
 
     //load current honeyd configuration group
     void loadGroup();
-    void loadSubnets(ptree ptr);
-    void loadDoppelganger(ptree ptr);
-    void loadNodes(ptree ptr);
+    void loadSubnets(ptree *ptr);
+    void loadDoppelganger(ptree *ptr);
+    void loadNodes(ptree *ptr);
 
 
 private slots:
@@ -280,6 +300,9 @@ void sendToLTM();
 
 //Deletes all Suspect information for the GUI and Nova
 void clearSuspects();
+
+//Gets number of bits used in the mask
+int getMaskBits(in_addr_t range);
 
 
 
