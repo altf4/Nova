@@ -44,7 +44,7 @@ struct sockaddr_un remote;
 struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
 int bytesRead;
 int connectionSocket;
-char buffer[MAX_MSG_SIZE];
+u_char buffer[MAX_MSG_SIZE];
 TrafficEvent *tempEvent, *event;
 int IPCsock;
 
@@ -970,28 +970,18 @@ bool ClassificationEngine::ReceiveTrafficEvent()
 		close(connectionSocket);
         return false;
     }
-
-	stringbuf ss;
-	ss.sputn(buffer, bytesRead);
-
-	// Read into a temp object then copy. We do this b/c the ">>" operator for
-	//	boost serialization creates a new object. So if we try to apply it to
-	//	the "event" variable, it just clobbers the pointer and doesn't get
-	//	seen
-
 	try
 	{
-		event->deserializeEvent(ss.str());
-		//boost::archive::binary_iarchive ia(ss);
-		//ia >> tempEvent;
+		event->deserializeEvent(buffer);
+		bzero(buffer, bytesRead);
 	}
-	catch(boost::archive::archive_exception e)
+	catch(std::exception e)
 	{
 		LOG4CXX_ERROR(m_logger,"Error in parsing received TrafficEvent: " << string(e.what()));
 		close(connectionSocket);
+		bzero(buffer, MAX_MSG_SIZE);
 		return false;
 	}
-	//*event = *tempEvent;
 	close(connectionSocket);
 	return true;
 }
