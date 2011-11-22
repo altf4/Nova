@@ -47,7 +47,7 @@ Suspect::~Suspect()
 //Constructor from a TrafficEvent
 Suspect::Suspect(TrafficEvent *event)
 {
-	this->IP_address = event->info.src_IP;
+	this->IP_address = event->src_IP;
 	this->classification = -1;
 	this->isHostile = false;
 	this->features = FeatureSet();

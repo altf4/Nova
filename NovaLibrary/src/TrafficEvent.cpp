@@ -24,35 +24,35 @@ TrafficEvent::TrafficEvent(struct Packet packet, int component_source)
 		return;
 	}
 	//Start and end times are the same since this is a one packet event
-	this->info.start_timestamp = packet.pcap_header.ts.tv_sec;
-	this->info.end_timestamp = packet.pcap_header.ts.tv_sec;
-	this->info.packet_count = 1;
-	this->info.dst_IP = packet.ip_hdr.ip_dst;
-	this->info.src_IP = packet.ip_hdr.ip_src;
-	this->info.IP_protocol = packet.ip_hdr.ip_p;
+	this->start_timestamp = packet.pcap_header.ts.tv_sec;
+	this->end_timestamp = packet.pcap_header.ts.tv_sec;
+	this->packet_count = 1;
+	this->dst_IP = packet.ip_hdr.ip_dst;
+	this->src_IP = packet.ip_hdr.ip_src;
+	this->IP_protocol = packet.ip_hdr.ip_p;
 	//If UDP
 	if(packet.ip_hdr.ip_p == 17)
 	{
-		this->info.dst_port = ntohs(packet.udp_hdr.dest);
-		this->info.src_port = ntohs(packet.udp_hdr.source);
-		this->info.IP_total_data_bytes = ntohs(packet.ip_hdr.ip_len);
-		this->info.ICMP_type = -1;
-		this->info.ICMP_code = -1;
+		this->dst_port = ntohs(packet.udp_hdr.dest);
+		this->src_port = ntohs(packet.udp_hdr.source);
+		this->IP_total_data_bytes = ntohs(packet.ip_hdr.ip_len);
+		this->ICMP_type = -1;
+		this->ICMP_code = -1;
 	}
 	//If ICMP
 	else if(packet.ip_hdr.ip_p == 1)
 	{
-		this->info.ICMP_type = packet.icmp_hdr.type;
-		this->info.ICMP_code = packet.icmp_hdr.code;
-		this->info.IP_total_data_bytes = ntohs(packet.ip_hdr.ip_len);
-		this->info.dst_port = -1;
-		this->info.src_port = -1;
+		this->ICMP_type = packet.icmp_hdr.type;
+		this->ICMP_code = packet.icmp_hdr.code;
+		this->IP_total_data_bytes = ntohs(packet.ip_hdr.ip_len);
+		this->dst_port = -1;
+		this->src_port = -1;
 	}
 	this->IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
 	this->packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
-	this->info.from_haystack = component_source;
+	this->from_haystack = component_source;
 	//Set known hostility, only used in training
-	this->info.isHostile = component_source;
+	this->isHostile = component_source;
 }
 
 //TCP Constructor
@@ -60,49 +60,49 @@ TrafficEvent::TrafficEvent(struct Packet packet, int component_source)
 TrafficEvent::TrafficEvent( vector<struct Packet>  *list, int component_source)
 {
 	struct Packet *packet = &list->front();
-	this->info.start_timestamp = list->front().pcap_header.ts.tv_sec;
-	this->info.end_timestamp = list->back().pcap_header.ts.tv_sec;
-	this->info.packet_count = list->size();
-	this->info.dst_IP = packet->ip_hdr.ip_dst;
-	this->info.src_IP = packet->ip_hdr.ip_src;
+	this->start_timestamp = list->front().pcap_header.ts.tv_sec;
+	this->end_timestamp = list->back().pcap_header.ts.tv_sec;
+	this->packet_count = list->size();
+	this->dst_IP = packet->ip_hdr.ip_dst;
+	this->src_IP = packet->ip_hdr.ip_src;
 	//Really complicated casting which grabs the dst and src ports
-	this->info.dst_port =  ntohs(packet->tcp_hdr.dest);
-	this->info.src_port =  ntohs(packet->tcp_hdr.source);
-	this->info.IP_protocol = packet->ip_hdr.ip_p;
-	if( this->info.IP_protocol != 6 )
+	this->dst_port =  ntohs(packet->tcp_hdr.dest);
+	this->src_port =  ntohs(packet->tcp_hdr.source);
+	this->IP_protocol = packet->ip_hdr.ip_p;
+	if( this->IP_protocol != 6 )
 	{
 		cout << "Error with TCP protocol in list.\n";
 		return;
 	}
-	this->info.IP_total_data_bytes = 0;
+	this->IP_total_data_bytes = 0;
 	for(uint i = 0; i < list->size(); i++)
 	{
-		this->info.IP_total_data_bytes += ntohs((*list)[i].ip_hdr.ip_len);
+		this->IP_total_data_bytes += ntohs((*list)[i].ip_hdr.ip_len);
 		this->IP_packet_sizes.push_back(ntohs((*list)[i].ip_hdr.ip_len));
 		this->packet_intervals.push_back((*list)[i].pcap_header.ts.tv_sec);
 		//cout << ntohs((*list)[i].packet->ip_hdr.ip_len) << "\n";
 	}
-	this->info.from_haystack = component_source;
+	this->from_haystack = component_source;
 	//Set known hostility, only used in training
-	this->info.isHostile = component_source;
+	this->isHostile = component_source;
 }
 
 //Used in serialization
 TrafficEvent::TrafficEvent()
 {
-	info.start_timestamp = 0;
-	info.end_timestamp = 0;
-	info.src_IP.s_addr = 0;
-	info.dst_IP.s_addr = 0;
-	info.src_port = 0;
-	info.dst_port = 0;
-	info.IP_total_data_bytes = 0;
-	info.IP_protocol = 0;
-	info.ICMP_type = 0;
-	info.ICMP_code = 0;
-	info.packet_count = 0;
-	info.from_haystack = 0;
-	info.isHostile = 0;
+	start_timestamp = 0;
+	end_timestamp = 0;
+	src_IP.s_addr = 0;
+	dst_IP.s_addr = 0;
+	src_port = 0;
+	dst_port = 0;
+	IP_total_data_bytes = 0;
+	IP_protocol = 0;
+	ICMP_type = 0;
+	ICMP_code = 0;
+	packet_count = 0;
+	from_haystack = 0;
+	isHostile = 0;
 }
 
 //Outputs a string representation of the LogEntry to the screen
@@ -111,10 +111,10 @@ string TrafficEvent::ToString()
 	string output;
 	char temp[64];
 	output = "Timestamp: ";
-	output += ctime(&(this->info.start_timestamp));
+	output += ctime(&(this->start_timestamp));
 	output += "\tTo ";
-	output += ctime(&(this->info.end_timestamp));
-	if(this->info.from_haystack)
+	output += ctime(&(this->end_timestamp));
+	if(this->from_haystack)
 	{
 		output += "\tFrom: Haystack\n";
 	}
@@ -122,7 +122,7 @@ string TrafficEvent::ToString()
 	{
 		output += "\tFrom: Host\n";
 	}
-	if(this->info.isHostile)
+	if(this->isHostile)
 	{
 		output += "\tIs Evil\n";
 	}
@@ -132,50 +132,50 @@ string TrafficEvent::ToString()
 	}
 	output += "\tIP Proto Type:\t";
 	bzero(temp, sizeof(temp));
-	snprintf(temp, sizeof(temp), "%d", this->info.IP_protocol);
+	snprintf(temp, sizeof(temp), "%d", this->IP_protocol);
 	output += temp;
 	output += "\n";
 	output += "\tSource IP:\t";
-	output += inet_ntoa(this->info.src_IP);
+	output += inet_ntoa(this->src_IP);
 	output += "\n";
 	output += "\tDestination IP:\t";
-	output += inet_ntoa(this->info.dst_IP);
+	output += inet_ntoa(this->dst_IP);
 	output += "\n";
-	if(this->info.IP_protocol == 1)
+	if(this->IP_protocol == 1)
 	{
 		output += "\tICMP Type:\t";
 		bzero(temp, sizeof(temp));
-		snprintf(temp, sizeof(temp), "%d", this->info.ICMP_type);
+		snprintf(temp, sizeof(temp), "%d", this->ICMP_type);
 		output += temp;
 		output += "\n";
 		output += "\tICMP Code:\t";
 		bzero(temp, sizeof(temp));
-		snprintf(temp, sizeof(temp), "%d", this->info.ICMP_code);
+		snprintf(temp, sizeof(temp), "%d", this->ICMP_code);
 		output += temp;
 		output += "\n";
 	}
 	//TCP or UDP
-	else if(this->info.IP_protocol == 6 || this->info.IP_protocol == 17)
+	else if(this->IP_protocol == 6 || this->IP_protocol == 17)
 	{
 		output += "\tSource port:\t";
 		bzero(temp, sizeof(temp));
-		snprintf(temp, sizeof(temp), "%d", this->info.src_port);
+		snprintf(temp, sizeof(temp), "%d", this->src_port);
 		output += temp;
 		output += "\n";
 		output += "\tTarget port:\t";
 		bzero(temp, sizeof(temp));
-		snprintf(temp, sizeof(temp), "%d", this->info.dst_port);
+		snprintf(temp, sizeof(temp), "%d", this->dst_port);
 		output += temp;
 		output += "\n";
 	}
 	output += "\tPacket Count:\t";
 	bzero(temp, sizeof(temp));
-	snprintf(temp, sizeof(temp), "%d", this->info.packet_count);
+	snprintf(temp, sizeof(temp), "%d", this->packet_count);
 	output += temp;
 	output += "\n";
 	output += "\tRx bytes:\t";
 	bzero(temp, sizeof(temp));
-	snprintf(temp, sizeof(temp), "%d", this->info.IP_total_data_bytes);
+	snprintf(temp, sizeof(temp), "%d", this->IP_total_data_bytes);
 	output += temp;
 	output += "\n";
 	output += "\n";
@@ -206,31 +206,45 @@ bool TrafficEvent::ArePacketsHostile( vector<struct Packet>  *list)
 
 void TrafficEvent::copyTo(TrafficEvent *toEvent)
 {
-	toEvent->info.start_timestamp = this->info.start_timestamp;
-	toEvent->info.end_timestamp = this->info.end_timestamp;
-	toEvent->info.src_IP.s_addr = this->info.src_IP.s_addr;
-	toEvent->info.dst_IP.s_addr = this->info.dst_IP.s_addr;
-	toEvent->info.src_port = this->info.src_port;
-	toEvent->info.dst_port = this->info.dst_port;
-	toEvent->info.IP_total_data_bytes = this->info.IP_total_data_bytes;
+	toEvent->start_timestamp = this->start_timestamp;
+	toEvent->end_timestamp = this->end_timestamp;
+	toEvent->src_IP.s_addr = this->src_IP.s_addr;
+	toEvent->dst_IP.s_addr = this->dst_IP.s_addr;
+	toEvent->src_port = this->src_port;
+	toEvent->dst_port = this->dst_port;
+	toEvent->IP_total_data_bytes = this->IP_total_data_bytes;
 	for(uint i = 0; i < this->IP_packet_sizes.size(); i++)
 	{
 		toEvent->IP_packet_sizes.push_back(this->IP_packet_sizes[i]);
 		toEvent->packet_intervals.push_back(this->packet_intervals[i]);
 	}
-	toEvent->info.IP_protocol = this->info.IP_protocol;
-	toEvent->info.ICMP_type = this->info.ICMP_type;
-	toEvent->info.ICMP_code = this->info.ICMP_code;
-	toEvent->info.packet_count = this->info.packet_count;
-	toEvent->info.from_haystack = this->info.from_haystack;
-	toEvent->info.isHostile = this->info.isHostile;
+	toEvent->IP_protocol = this->IP_protocol;
+	toEvent->ICMP_type = this->ICMP_type;
+	toEvent->ICMP_code = this->ICMP_code;
+	toEvent->packet_count = this->packet_count;
+	toEvent->from_haystack = this->from_haystack;
+	toEvent->isHostile = this->isHostile;
 }
 
 string TrafficEvent::serializeEvent()
 {
 	string temp;
 	temp.clear();
-	temp.append((char*)&info, sizeof info);
+
+	temp.append((char*)&start_timestamp, sizeof start_timestamp);
+	temp.append((char*)&end_timestamp, sizeof end_timestamp);
+	temp.append((char*)&src_IP, sizeof src_IP);
+	temp.append((char*)&dst_IP, sizeof dst_IP);
+	temp.append((char*)&src_port, sizeof src_port);
+	temp.append((char*)&dst_port, sizeof dst_port);
+	temp.append((char*)&IP_total_data_bytes, sizeof IP_total_data_bytes);
+	temp.append((char*)&IP_protocol, sizeof IP_protocol);
+	temp.append((char*)&ICMP_type, sizeof ICMP_type);
+	temp.append((char*)&ICMP_code, sizeof ICMP_code);
+	temp.append((char*)&packet_count, sizeof packet_count);
+	temp.append((char*)&from_haystack, sizeof from_haystack);
+	temp.append((char*)&isHostile, sizeof isHostile);
+
 	int tempSize = sizeof IP_packet_sizes[0];
 	for(uint i = 0; i < IP_packet_sizes.size(); i++)
 	{
@@ -247,13 +261,28 @@ string TrafficEvent::serializeEvent()
 void TrafficEvent::deserializeEvent(string buf)
 {
 	uint i = 0;
-	uint k = sizeof info;
-	info = *(struct TEvent *)buf.substr(i,k).c_str();
+	uint k = sizeof (struct TEvent);
+	struct TEvent *info = (struct TEvent *)buf.substr(i,k).c_str();
 	i+=k;
+
+	start_timestamp = info->start_timestamp;
+	end_timestamp= info->end_timestamp;
+	src_IP = info->src_IP;
+	dst_IP= info->dst_IP;
+	src_port = info->src_port;
+	dst_port = info->dst_port;
+	IP_total_data_bytes = info->IP_total_data_bytes;
+	IP_protocol = info->IP_protocol;
+	ICMP_type = info->ICMP_type;
+	ICMP_code = info->ICMP_code;
+	packet_count = info->packet_count;
+	from_haystack = info->from_haystack;
+	isHostile = info->isHostile;
+
 	int tempI;
 	k = sizeof tempI;
 	IP_packet_sizes.clear();
-	for(uint j = 0; j < info.packet_count; j++)
+	for(uint j = 0; j < packet_count; j++)
 	{
 		strcpy((char *)&tempI, buf.substr(i,k).c_str());
 		IP_packet_sizes.push_back(tempI);
@@ -262,7 +291,7 @@ void TrafficEvent::deserializeEvent(string buf)
 	time_t  tempT;
 	k = sizeof tempT;
 	packet_intervals.clear();
-	for(uint j = 0; j < info.packet_count; j++)
+	for(uint j = 0; j < packet_count; j++)
 	{
 		strcpy((char *)&tempT, buf.substr(i,k).c_str());
 		packet_intervals.push_back(tempT);
