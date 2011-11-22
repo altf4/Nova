@@ -8,8 +8,10 @@
 
 #include "TrafficEvent.h"
 #include <arpa/inet.h>
+#include <stdio.h>
 
 using namespace std;
+
 namespace Nova{
 //
 //	Constructors from the wire
@@ -233,8 +235,8 @@ uint TrafficEvent::serializeEvent(u_char * buf)
 	uint size = sizeof(uint); // 4 bytes
 	uint offset = 0;
 
-	//Clears a chunk of the buffer (6 bytes more than used due to booleans)
-	bzero(buf, (13+2*packet_count)*size);
+	//Clears a chunk of the buffer
+	bzero(buf, ((11+2*packet_count)*size)+2);
 
 	//Copies the value and increases the offset
 	memcpy(buf, &start_timestamp, size);

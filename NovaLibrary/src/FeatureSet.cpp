@@ -203,5 +203,43 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 		endTime = event->end_timestamp;
 	}
 }
+
+//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
+//	returns the number of bytes set in the buffer
+uint FeatureSet::serializeFeatureSet(u_char * buf)
+{
+	uint offset = 0;
+	uint size = 8; //All features are doubles.
+
+	//Clears a chunk of the buffer for the FeatureSet
+	bzero(buf, size*DIMENSION);
+
+	//Copies the value and increases the offset
+	for(uint i = 0; i < DIMENSION; i++)
+	{
+		memcpy(buf+offset, &features[i], size);
+		offset+= size;
+	}
+
+	return offset;
+}
+
+//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
+//	returns the number of bytes read from the buffer
+uint FeatureSet::deserializeFeatureSet(u_char * buf)
+{
+	uint offset = 0;
+	uint size = 8;
+
+	//Copies the value and increases the offset
+	for(uint i = 0; i < DIMENSION; i++)
+	{
+		memcpy(&features[i], buf+offset, size);
+		offset+= size;
+	}
+
+	return offset;
+}
+
 }
 }

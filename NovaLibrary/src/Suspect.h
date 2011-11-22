@@ -12,7 +12,6 @@
 
 #include "FeatureSet.h"
 #include <ANN/ANN.h>
-#include <boost/serialization/is_bitwise_serializable.hpp>
 
 namespace Nova{
 namespace ClassificationEngine{
@@ -73,27 +72,16 @@ public:
 	///	Calculates the feature set for this suspect
 	void CalculateFeatures(bool isTraining);
 
-private:
-    friend class boost::serialization::access;
-	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version)
-	{
-		uint i = version;
-		ar & IP_address.s_addr;
-		ar & classification;
-		ar & isHostile;
-		ar & needs_classification_update;
-		ar & needs_feature_update;
-		ar & features;
-		for(i = 0; i < DIMENSION; i++)
-		{
-			ar & annPoint[i];
-		}
-		ar & flaggedByAlarm;
-	}
+	//Stores the Suspect information into the buffer, retrieved using deserializeSuspect
+	//	returns the number of bytes set in the buffer
+	uint serializeSuspect(u_char * buf);
+
+	//Reads Suspect information from a buffer originally populated by serializeSuspect
+	//	returns the number of bytes read from the buffer
+	uint deserializeSuspect(u_char * buf);
+
 };
 }
 }
-BOOST_IS_BITWISE_SERIALIZABLE(Nova::ClassificationEngine::Suspect);
 
 #endif /* SUSPECT_H_ */

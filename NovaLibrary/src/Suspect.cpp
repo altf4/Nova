@@ -129,5 +129,81 @@ void Suspect::CalculateFeatures(bool isTraining)
 		}
 	}
 }
+
+//Stores the Suspect information into the buffer, retrieved using deserializeSuspect
+//	returns the number of bytes set in the buffer
+uint Suspect::serializeSuspect(u_char * buf)
+{
+	uint offset = 0;
+	uint bsize = 1; //bools
+	uint isize = 4; //s_addr, int etc
+	uint dsize = 8; //doubles, annPoints
+
+	//Clears a chunk of the buffer for everything but FeatureSet
+	bzero(buf, (isize + dsize*(DIMENSION+1) + 4*bsize));
+
+	//Copies the value and increases the offset
+	memcpy(buf, &IP_address.s_addr, isize);
+	offset+= isize;
+	memcpy(buf+offset, &classification, dsize);
+	offset+= dsize;
+	memcpy(buf+offset, &isHostile, bsize);
+	offset+= bsize;
+	memcpy(buf+offset, &needs_classification_update, bsize);
+	offset+= bsize;
+	memcpy(buf+offset, &needs_feature_update, bsize);
+	offset+= bsize;
+	memcpy(buf+offset, &flaggedByAlarm, bsize);
+	offset+= bsize;
+
+	for(uint i = 0; i < DIMENSION; i++)
+	{
+		memcpy(buf+offset, &annPoint[i], dsize);
+		offset+= dsize;
+	}
+
+	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
+	//	returns the number of bytes set in the buffer
+	offset += features.serializeFeatureSet(buf+offset);
+
+	return offset;
+}
+
+//Reads Suspect information from a buffer originally populated by serializeSuspect
+//	returns the number of bytes read from the buffer
+uint Suspect::deserializeSuspect(u_char * buf)
+{
+	uint offset = 0;
+	uint bsize = 1; //bools
+	uint isize = 4; //s_addr, int etc
+	uint dsize = 8; //doubles, annPoints
+
+	//Copies the value and increases the offset
+	memcpy(&IP_address.s_addr, buf, isize);
+	offset+= isize;
+	memcpy(&classification, buf+offset, dsize);
+	offset+= dsize;
+	memcpy(&isHostile, buf+offset, bsize);
+	offset+= bsize;
+	memcpy(&needs_classification_update, buf+offset, bsize);
+	offset+= bsize;
+	memcpy(&needs_feature_update, buf+offset, bsize);
+	offset+= bsize;
+	memcpy(&flaggedByAlarm, buf+offset, bsize);
+	offset+= bsize;
+
+	for(uint i = 0; i < DIMENSION; i++)
+	{
+		memcpy(&annPoint[i], buf+offset, dsize);
+		offset+= dsize;
+	}
+
+	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
+	//	returns the number of bytes read from the buffer
+	offset += features.deserializeFeatureSet(buf+offset);
+
+	return offset;
+}
+
 }
 }
