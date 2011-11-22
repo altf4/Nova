@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <TrafficEvent.h>
+#include <GUIMsg.h>
 #include <fstream>
 #include "LocalTrafficMonitor.h"
 #include <sys/ioctl.h>
@@ -372,35 +373,34 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void LocalTrafficMonitor::ReceiveGUICommand(int socket)
 {
-	struct sockaddr_un remote;
-    int socketSize, connectionSocket;
+	struct sockaddr_un msgRemote;
+    int socketSize, msgSocket;
     int bytesRead;
-    char buffer[MAX_MSG_SIZE];
-    string prefix, line;
+    u_char msgBuffer[MAX_GUIMSG_SIZE];
+    GUIMsg msg = GUIMsg();
 
-    socketSize = sizeof(remote);
-
+    socketSize = sizeof(msgRemote);
     //Blocking call
-    if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
+    if ((msgSocket = accept(socket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
-		close(connectionSocket);
+		close(msgSocket);
     }
-    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
-		close(connectionSocket);
+		close(msgSocket);
     }
 
-    line = string(buffer);
-
-    prefix = "EXIT";
-    if(!line.substr(0,prefix.size()).compare(prefix))
+    msg.deserializeMessage(msgBuffer);
+    switch(msg.getType())
     {
-    	exit(1);
+    	case EXIT:
+    		exit(1);
+    	default:
+    		break;
     }
-
-    close(connectionSocket);
+    close(msgSocket);
 }
 
 /// Thread for periodically checking for TCP timeout.
