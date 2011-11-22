@@ -32,26 +32,32 @@ using namespace ClassificationEngine;
 using namespace log4cxx;
 using namespace log4cxx::xml;
 
+//Socket communication variables
 int CE_InSock, CE_OutSock, DM_OutSock, HS_OutSock, LTM_OutSock;
 struct sockaddr_un CE_InAddress, CE_OutAddress, DM_OutAddress, HS_OutAddress, LTM_OutAddress;
-bool novaRunning = false;
-bool useTerminals;
+int len;
 
-static SuspectHashTable SuspectTable;
 
-//Variables for message sends.
-const char* data;
-int dataLen, len;
+//GUI to Nova message variables
+GUIMsg message = GUIMsg();
+u_char msgBuffer[MAX_GUIMSG_SIZE];
+int msgLen = 0;
 
+//Receive Suspect variables
 u_char buf[MAX_MSG_SIZE];
 int bytesRead;
 
-pthread_rwlock_t lock;
-
-LoggerPtr m_logger(Logger::getLogger("main"));
-
+//Configuration variables
+bool useTerminals;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
+
+
+//General variables like tables, flags, locks, etc.
+static SuspectHashTable SuspectTable;
+pthread_rwlock_t lock;
+LoggerPtr m_logger(Logger::getLogger("main"));
+bool novaRunning = false;
 
 /************************************************
  * Constructors, Destructors and Closing Actions
@@ -1389,8 +1395,8 @@ void clearSuspects()
 {
 	pthread_rwlock_wrlock(&lock);
 	SuspectTable.clear();
-	data = "CLEAR ALL";
-	dataLen = string(data).size();
+	message.setMessage(CLEAR_ALL);
+	msgLen = message.serialzeMessage(msgBuffer);
 	sendToCE();
 	sendToDM();
 	pthread_rwlock_unlock(&lock);
@@ -1401,8 +1407,8 @@ void closeNova()
 	if(novaRunning)
 	{
 		//Sets the message
-		data = "EXIT";
-		dataLen = string(data).size();
+		message.setMessage(EXIT);
+		msgLen = message.serialzeMessage(msgBuffer);
 
 		//Sends the message to all Nova processes
 		sendAll();
@@ -1414,7 +1420,8 @@ void closeNova()
 			char buffer[1024];
 			char * line = fgets(buffer, sizeof(buffer), out);
 			string cmd = "kill " + string(line);
-			system(cmd.c_str());
+			if(cmd.size() > 5)
+				system(cmd.c_str());
 		}
 		pclose(out);
 		novaRunning = false;
@@ -1540,7 +1547,7 @@ void sendToCE()
 		return;
 	}
 
-	if (send(CE_OutSock, data, dataLen, 0) == -1)
+	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(CE_OutSock);
@@ -1567,7 +1574,7 @@ void sendToDM()
 		return;
 	}
 
-	if (send(DM_OutSock, data, dataLen, 0) == -1)
+	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(DM_OutSock);
@@ -1594,7 +1601,7 @@ void sendToHS()
 		return;
 	}
 
-	if (send(HS_OutSock, data, dataLen, 0) == -1)
+	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(HS_OutSock);
@@ -1621,7 +1628,7 @@ void sendToLTM()
 		return;
 	}
 
-	if (send(LTM_OutSock, data, dataLen, 0) == -1)
+	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(LTM_OutSock);
@@ -1670,7 +1677,7 @@ void sendAll()
 		close(CE_OutSock);
 	}
 
-	if (send(CE_OutSock, data, dataLen, 0) == -1)
+	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(CE_OutSock);
@@ -1686,7 +1693,7 @@ void sendAll()
 		close(DM_OutSock);
 	}
 
-	if (send(DM_OutSock, data, dataLen, 0) == -1)
+	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(DM_OutSock);
@@ -1703,7 +1710,7 @@ void sendAll()
 		close(HS_OutSock);
 	}
 
-	if (send(HS_OutSock, data, dataLen, 0) == -1)
+	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(HS_OutSock);
@@ -1720,7 +1727,7 @@ void sendAll()
 		close(LTM_OutSock);
 	}
 
-	if (send(LTM_OutSock, data, dataLen, 0) == -1)
+	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(LTM_OutSock);

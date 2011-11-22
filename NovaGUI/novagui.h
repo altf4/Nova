@@ -16,6 +16,7 @@
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <Suspect.h>
+#include <GUIMsg.h>
 
 /// File name of the file to be used as Traffic Event IPC key
 #define KEY_FILENAME "/keys/NovaIPCKey"

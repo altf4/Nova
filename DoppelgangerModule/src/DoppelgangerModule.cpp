@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <sys/un.h>
 #include <errno.h>
+#include <GUIMsg.h>
 #include <signal.h>
 #include <log4cxx/xml/domconfigurator.h>
 #include <fstream>
@@ -46,12 +47,7 @@ int alarmSocket;
 //GUI IPC globals to improve performance
 struct sockaddr_un localIPCAddress;
 struct sockaddr * localIPCAddressPtr = (struct sockaddr *)&localIPCAddress;
-struct sockaddr_un GUIRemote;
-struct sockaddr * GUIRemotePtr = (struct sockaddr *)&GUIRemote;
 int IPCsock;
-int GUISocket;
-int numBytes;
-char buffer[MAX_MSG_SIZE];
 
 //constants that can be re-used
 int socketSize = sizeof(remote);
@@ -316,44 +312,43 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void DoppelgangerModule::ReceiveGUICommand()
 {
-    string prefix, line;
+	struct sockaddr_un msgRemote;
+    int socketSize, msgSocket;
+    int bytesRead;
+    GUIMsg msg = GUIMsg();
+    u_char msgBuffer[MAX_GUIMSG_SIZE];
 
+
+    socketSize = sizeof(msgRemote);
     //Blocking call
-    if ((connectionSocket = accept(IPCsock, GUIRemotePtr, socketSizePtr)) == -1)
+    if ((msgSocket = accept(IPCsock, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
-		close(connectionSocket);
+		close(msgSocket);
     }
-    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0)) == -1)
+    if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
-		close(connectionSocket);
+		close(msgSocket);
     }
 
-    line = string(buffer);
-
-    prefix = "EXIT";
-    if(!line.substr(0,prefix.size()).compare(prefix))
+    msg.deserializeMessage(msgBuffer);
+    switch(msg.getType())
     {
-    	exit(1);
-    }
-
-    prefix = "CLEAR";
-    if(!line.substr(0,prefix.size()).compare(prefix))
-	{
-        prefix = "CLEAR ALL";
-        if(!line.substr(0,prefix.size()).compare(prefix))
-        {
-			pthread_rwlock_wrlock(&lock);
+    	case EXIT:
+    		exit(1);
+    	case CLEAR_ALL:
+    		pthread_rwlock_wrlock(&lock);
 			SuspectTable.clear();
 			pthread_rwlock_unlock(&lock);
-        }
-        else
-        {
-        	//Call clear individual suspect function - removeSuspect(string suspectIP)
-        }
-	}
-    close(connectionSocket);
+			break;
+    	case CLEAR_SUSPECT:
+    		//TODO still no functionality for this yet
+			break;
+    	default:
+    		break;
+    }
+    close(msgSocket);
 }
 
 

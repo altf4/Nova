@@ -11,6 +11,7 @@
 #include <fstream>
 #include "Point.h"
 #include <arpa/inet.h>
+#include <GUIMsg.h>
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <net/if.h>
@@ -64,13 +65,8 @@ int bdsize = sizeof broadcast;
 char alarmBuf[MAX_MSG_SIZE];
 
 
-//** GUI **
-struct sockaddr_un GUIRemote;
-struct sockaddr* GUIAddrPtr = (struct sockaddr *)&GUIRemote;
-int numBytes;
+//** ReceiveGUICommand **
 int GUISocket;
-int GUIConnectionSocket;
-char buf[MAX_MSG_SIZE];
 
 //** SendToUI **
 struct sockaddr_un GUISendRemote;
@@ -980,44 +976,43 @@ bool ClassificationEngine::ReceiveTrafficEvent()
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void ClassificationEngine::ReceiveGUICommand()
 {
-    string prefix, line;
+    struct sockaddr_un msgRemote;
+	int socketSize, msgSocket;
+	int bytesRead;
+	GUIMsg msg = GUIMsg();
+	u_char msgBuffer[MAX_GUIMSG_SIZE];
 
-    //Blocking call
-    if ((GUIConnectionSocket = accept(GUISocket, GUIAddrPtr, sockSizePtr)) == -1)
-    {
-		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
-		close(GUIConnectionSocket);
-    }
-    if((numBytes = recv(GUIConnectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
-    {
-		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
-		close(GUIConnectionSocket);
-    }
+	socketSize = sizeof(msgRemote);
 
-    line = string(buf);
-
-    prefix = "EXIT";
-    if(!line.substr(0,prefix.size()).compare(prefix))
-    {
-    	exit(1);
-    }
-
-    prefix = "CLEAR";
-    if(!line.substr(0,prefix.size()).compare(prefix))
+	//Blocking call
+	if ((msgSocket = accept(GUISocket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
 	{
-        prefix = "CLEAR ALL";
-        if(!line.substr(0,prefix.size()).compare(prefix))
-        {
+		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		close(msgSocket);
+	}
+	if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+		close(msgSocket);
+	}
+
+	msg.deserializeMessage(msgBuffer);
+	switch(msg.getType())
+	{
+		case EXIT:
+			exit(1);
+		case CLEAR_ALL:
 			pthread_rwlock_wrlock(&lock);
 			suspects.clear();
 			pthread_rwlock_unlock(&lock);
-        }
-        else
-        {
-        	//Call clear individual suspect function - removeSuspect(string suspectIP)
-        }
+			break;
+		case CLEAR_SUSPECT:
+			//TODO still no functionality for this yet
+			break;
+		default:
+			break;
 	}
-    close(GUIConnectionSocket);
+	close(msgSocket);
 }
 
 //Send a silent alarm about the argument suspect
