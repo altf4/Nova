@@ -270,15 +270,15 @@ int main(int argc,char *argv[])
 		}
 		pthread_rwlock_wrlock(&lock);
 		//If this is a new Suspect
-		if(suspects.count(event->info.src_IP.s_addr) == 0)
+		if(suspects.count(event->src_IP.s_addr) == 0)
 		{
-			suspects[event->info.src_IP.s_addr] = new Suspect(event);
+			suspects[event->src_IP.s_addr] = new Suspect(event);
 		}
 
 		//A returning suspect
 		else
 		{
-			suspects[event->info.src_IP.s_addr]->AddEvidence(event);
+			suspects[event->src_IP.s_addr]->AddEvidence(event);
 
 		}
 		pthread_rwlock_unlock(&lock);
