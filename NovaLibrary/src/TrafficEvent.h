@@ -19,8 +19,6 @@
 #include <pcap.h>
 #include <tr1/unordered_map>
 #include <boost/serialization/vector.hpp>
-#include <boost/serialization/is_bitwise_serializable.hpp>
-
 
 #ifndef TRAFFICEVENT_H_
 #define TRAFFICEVENT_H_
@@ -39,52 +37,6 @@
 //From the Local Traffic Monitor
 #define FROM_LTM			0
 
-///	A struct for statically sized TrafficEvent Information
-// Notice every value is uint, this is because this struct is only used for serialization
-// moving each value in a buffer of 4 bytes using an uint array.
-struct TEvent
-{
-	///Timestamp of the begining of this event
-	uint start_timestamp;
-	///Timestamp of the end of this event
-	uint end_timestamp;
-
-	///Source IP address of this event
-	uint src_IP;
-	///Destination IP address of this event
-	uint dst_IP;
-
-	///Source port of this event
-	uint src_port;
-	///Destination port of this event
-	uint dst_port;
-
-	///Total amount of IP layer bytes sent to the victim
-	uint IP_total_data_bytes;
-
-	///The IP proto type number
-	///	IE: 6 == TCP, 17 == UDP, 1 == ICMP, etc...
-	uint IP_protocol;
-
-	///ICMP specific values
-	///IE:	0,0 = Ping reply
-	///		8,0 = Ping request
-	///		3,3 = Destination port unreachable
-	uint ICMP_type;
-	///IE:	0,0 = Ping reply
-	///		8,0 = Ping request
-	///		3,3 = Destination port unreachable
-	uint ICMP_code;
-
-	///Packets involved in this event
-	uint packet_count;
-
-	///	False for from the host machine
-	uint from_haystack;
-
-	///For training use. Is this a hostile Event?
-	uint isHostile;
-};
 
 using namespace std;
 namespace Nova{
@@ -97,7 +49,7 @@ class TrafficEvent
 		//* Member Variables *
 		//********************
 
-	///Timestamp of the begining of this event
+		///Timestamp of the begining of this event
 		time_t start_timestamp;
 		///Timestamp of the end of this event
 		time_t end_timestamp;
@@ -186,14 +138,6 @@ class TrafficEvent
 		//	returns the number of bytes read from the buffer
 		uint deserializeEvent(u_char * buf);
 
-	private:
-		friend class boost::serialization::access;
-		template<class Archive>
-		void serialize(Archive & ar, const unsigned int version)
-		{
-			ar & IP_packet_sizes;
-			ar & packet_intervals;
-		}
 };
 
 
@@ -213,6 +157,5 @@ struct Packet
 	struct icmphdr icmp_hdr;
 };
 }
-BOOST_IS_BITWISE_SERIALIZABLE(Nova::TrafficEvent);
 
 #endif /* TRAFFICEVENT_H_ */

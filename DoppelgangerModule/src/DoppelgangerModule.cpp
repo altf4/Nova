@@ -14,7 +14,6 @@
 #include <signal.h>
 #include <log4cxx/xml/domconfigurator.h>
 #include <fstream>
-#include <boost/archive/binary_iarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -40,7 +39,7 @@ struct sockaddr_un remote;
 struct sockaddr * remoteAddrPtr = (struct sockaddr *)&remote;
 int connectionSocket;
 int bytesRead;
-char buf[MAX_MSG_SIZE];
+u_char buf[MAX_MSG_SIZE];
 Suspect * suspect = NULL;
 int alarmSocket;
 
@@ -70,6 +69,7 @@ void siginthandler(int param)
 int main(int argc, char *argv[])
 {
 	char suspectAddr[INET_ADDRSTRLEN];
+	bzero(buf, MAX_MSG_SIZE);
 	pthread_t GUIListenThread;
 
 	signal(SIGINT, siginthandler);
@@ -416,27 +416,17 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
 		close(connectionSocket);
         return;
     }
-
 	suspect = new Suspect();
-
 	try
 	{
-		stringbuf ss;
-		ss.sputn(buf, bytesRead);
-		boost::archive::binary_iarchive ia(ss);
-		// create and open an archive for input
-		// read class state from archive
-		ia >> suspect;
-		// archive and stream closed when destructors are called
+		suspect->deserializeSuspect(buf);
+		bzero(buf, bytesRead);
 	}
-	catch(boost::archive::archive_exception e)
+	catch(std::exception e)
 	{
 		LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
-		if(suspect != NULL)
-		{
-			delete suspect;
-			suspect = NULL;
-		}
+		delete suspect;
+		suspect = NULL;
 	}
 	close(connectionSocket);
 	return;

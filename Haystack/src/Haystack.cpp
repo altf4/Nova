@@ -11,7 +11,6 @@
 #include <fstream>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
-#include <boost/archive/binary_oarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;

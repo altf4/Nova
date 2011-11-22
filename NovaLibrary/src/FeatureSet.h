@@ -83,6 +83,14 @@ public:
 	/// Processes incoming evidence before calculating the features
 	void UpdateEvidence(TrafficEvent *event);
 
+	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
+	//	returns the number of bytes set in the buffer
+	uint serializeFeatureSet(u_char * buf);
+
+	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
+	//	returns the number of bytes read from the buffer
+	uint deserializeFeatureSet(u_char * buf);
+
 private:
 	//Temporary variables used to calculate Features
 
@@ -111,20 +119,8 @@ private:
 	vector <int> packetSizes;
 	///A vector of packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
-
-    friend class boost::serialization::access;
-	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version)
-	{
-		uint i = version;
-		for(i=0; i < DIMENSION; i++)
-		{
-			ar & features[i];
-		}
-	}
 };
 }
 }
-BOOST_IS_BITWISE_SERIALIZABLE(Nova::ClassificationEngine::FeatureSet);
 
 #endif /* FEATURESET_H_ */

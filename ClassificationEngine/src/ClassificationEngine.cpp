@@ -16,8 +16,6 @@
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -54,8 +52,10 @@ struct sockaddr* alarmRemotePtr =(struct sockaddr *)&alarmRemote;
 struct sockaddr_in serv_addr;
 struct sockaddr* serv_addrPtr = (struct sockaddr *)&serv_addr;
 int len;
-const char* data;
-int dataLen;
+
+u_char data[MAX_MSG_SIZE];
+uint dataLen;
+
 int numBytesRead;
 int socketFD;
 int sockfd, broadcast = 1;
@@ -77,8 +77,8 @@ struct sockaddr_un GUISendRemote;
 struct sockaddr* GUISendPtr = (struct sockaddr *)&GUISendRemote;
 int GUISendSocket;
 int GUILen;
-const char* GUIData;
-int GUIDataLen;
+u_char GUIData[MAX_MSG_SIZE];
+uint GUIDataLen;
 
 
 //Universal Socket variables (constants that can be re-used)
@@ -123,9 +123,12 @@ int maxFeatureValues[dim];
 
 int main(int argc,char *argv[])
 {
-	int len;
+	bzero(GUIData,MAX_MSG_SIZE);
+	bzero(data,MAX_MSG_SIZE);
+	bzero(buffer, MAX_MSG_SIZE);
 	pthread_rwlock_init(&lock, NULL);
 
+	int len;
 	struct sockaddr_un localIPCAddress;
 
 	pthread_t classificationLoopThread;
@@ -455,7 +458,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
-	char buf[MAX_MSG_SIZE];
+	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
 	int numbytes;
@@ -516,13 +519,9 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 		try
 		{
-			// create and open an archive for input
-			stringbuf ss;
-			ss.sputn(buf, numbytes);
-			boost::archive::binary_iarchive ia(ss);
+			suspect->deserializeSuspect(buf);
+			bzero(buf, numbytes);
 
-			// read class state from archive
-			ia >> suspect;
 			LOG4CXX_INFO(m_logger,"Received a Silent Alarm!\n" << suspect->ToString());
 			pthread_rwlock_rdlock(&lock);
 
@@ -537,7 +536,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 				}
 			}
 		}
-		catch(boost::archive::archive_exception e)
+		catch(std::exception e)
 		{
 			close(sockfd);
 			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: " << string(e.what()));
@@ -898,15 +897,7 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
-    stringbuf ss;
-	boost::archive::binary_oarchive oa(ss);
-
-	//Serialize the data into a simple char buffer
-	oa << suspect;
-	string temp = ss.str();
-
-	data = temp.c_str();
-	dataLen = temp.size();
+	dataLen = suspect->serializeSuspect(data);
 
 	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -1032,15 +1023,7 @@ void ClassificationEngine::ReceiveGUICommand()
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 {
-    stringbuf ss;
-	boost::archive::binary_oarchive oa(ss);
-
-	//Serialize the data into a simple char buffer
-	oa << suspect;
-	string temp = ss.str();
-
-	GUIData = temp.c_str();
-	GUIDataLen = temp.size();
+	GUIDataLen = suspect->serializeSuspect(GUIData);
 
 	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{

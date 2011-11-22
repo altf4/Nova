@@ -21,7 +21,6 @@
 #include <log4cxx/xml/domconfigurator.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/archive/binary_iarchive.hpp>
 #include <boost/foreach.hpp>
 #include <errno.h>
 #include <arpa/inet.h>
@@ -43,6 +42,9 @@ static SuspectHashTable SuspectTable;
 //Variables for message sends.
 const char* data;
 int dataLen, len;
+
+u_char buf[MAX_MSG_SIZE];
+int bytesRead;
 
 pthread_rwlock_t lock;
 
@@ -975,11 +977,7 @@ bool NovaGUI::receiveCE(int socket)
 {
 	struct sockaddr_un remote;
 	int socketSize, connectionSocket;
-	int bytesRead;
-	char buf[MAX_MSG_SIZE];
-
 	socketSize = sizeof(remote);
-
 
 	//Blocking call
 	if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
@@ -991,7 +989,6 @@ bool NovaGUI::receiveCE(int socket)
 	if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == 0)
 	{
 		return false;
-
 	}
 	else if(bytesRead == -1)
 	{
@@ -999,27 +996,22 @@ bool NovaGUI::receiveCE(int socket)
 		sclose(connectionSocket);
 		return false;
 	}
+	sclose(connectionSocket);
 
 	Suspect* suspect = new Suspect();
 
-	sclose(connectionSocket);
 	try
 	{
-		stringbuf ss;
-		ss.sputn(buf, bytesRead);
-		boost::archive::binary_iarchive ia(ss);
-		// create and open an archive for input
-		// read class state from archive
-		ia >> suspect;
-		// archive and stream closed when destructors are called
-
+		suspect->deserializeSuspect(buf);
+		bzero(buf, bytesRead);
 	}
-	catch(boost::archive::archive_exception e)
+	catch(std::exception e)
 	{
 		LOG4CXX_ERROR(m_logger, "Error interpreting received Suspect: " << string(e.what()));
 		delete suspect;
 		return false;
 	}
+
 	struct suspectItem sItem;
 	sItem.suspect = suspect;
 	sItem.item = NULL;
