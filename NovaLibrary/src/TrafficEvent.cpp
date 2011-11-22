@@ -226,76 +226,109 @@ void TrafficEvent::copyTo(TrafficEvent *toEvent)
 	toEvent->isHostile = this->isHostile;
 }
 
-string TrafficEvent::serializeEvent()
+//Stores the traffic event information into the buffer, retrieved using deserializeEvent
+//	returns the number of bytes set in the buffer
+uint TrafficEvent::serializeEvent(u_char * buf)
 {
-	string temp;
-	temp.clear();
+	uint size = sizeof(uint); // 4 bytes
+	uint offset = 0;
 
-	temp.append((char*)&start_timestamp, sizeof start_timestamp);
-	temp.append((char*)&end_timestamp, sizeof end_timestamp);
-	temp.append((char*)&src_IP, sizeof src_IP);
-	temp.append((char*)&dst_IP, sizeof dst_IP);
-	temp.append((char*)&src_port, sizeof src_port);
-	temp.append((char*)&dst_port, sizeof dst_port);
-	temp.append((char*)&IP_total_data_bytes, sizeof IP_total_data_bytes);
-	temp.append((char*)&IP_protocol, sizeof IP_protocol);
-	temp.append((char*)&ICMP_type, sizeof ICMP_type);
-	temp.append((char*)&ICMP_code, sizeof ICMP_code);
-	temp.append((char*)&packet_count, sizeof packet_count);
-	temp.append((char*)&from_haystack, sizeof from_haystack);
-	temp.append((char*)&isHostile, sizeof isHostile);
+	//Clears a chunk of the buffer (6 bytes more than used due to booleans)
+	bzero(buf, (13+2*packet_count)*size);
 
-	int tempSize = sizeof IP_packet_sizes[0];
-	for(uint i = 0; i < IP_packet_sizes.size(); i++)
+	//Copies the value and increases the offset
+	memcpy(buf, &start_timestamp, size);
+	offset+= size;
+	memcpy(buf+offset, &end_timestamp, size);
+	offset+= size;
+	memcpy(buf+offset, &src_IP.s_addr, size);
+	offset+= size;
+	memcpy(buf+offset, &dst_IP.s_addr, size);
+	offset+= size;
+	memcpy(buf+offset, &src_port, size);
+	offset+= size;
+	memcpy(buf+offset, &dst_port, size);
+	offset+= size;
+	memcpy(buf+offset, &IP_total_data_bytes, size);
+	offset+= size;
+	memcpy(buf+offset, &IP_protocol, size);
+	offset+= size;
+	memcpy(buf+offset, &ICMP_type, size);
+	offset+= size;
+	memcpy(buf+offset, &ICMP_code,  size);
+	offset+= size;
+	memcpy(buf+offset, &packet_count, size);
+	offset+= size;
+	//Despite being treated like an integer booleans only use 1 byte.
+	memcpy(buf+offset, &from_haystack, 1);
+	offset++;
+	memcpy(buf+offset, &isHostile, 1);
+	offset++;
+
+	for(uint i = 0; i < packet_count; i++)
 	{
-		temp.append((char*)&IP_packet_sizes[i], tempSize);
+		memcpy(buf+offset, &IP_packet_sizes[i], size);
+		offset+= size;
 	}
-	tempSize = sizeof packet_intervals[0];
-	for(uint i = 0; i < packet_intervals.size(); i++)
+	for(uint i = 0; i < packet_count; i++)
 	{
-		temp.append((char*)&packet_intervals[i], tempSize);
+		memcpy(buf+offset, &packet_intervals[i], size);
+		offset+= size;
 	}
-	return temp;
+	//The offset at the end of execution is also equal to the number of bytes set.
+	return offset;
 }
 
-void TrafficEvent::deserializeEvent(string buf)
+//Reads TrafficEvent information from a buffer originally populated by serializeEvent
+//	returns the number of bytes read from the buffer
+uint TrafficEvent::deserializeEvent(u_char * buf)
 {
-	uint i = 0;
-	uint k = sizeof (struct TEvent);
-	struct TEvent *info = (struct TEvent *)buf.substr(i,k).c_str();
-	i+=k;
+	uint size = sizeof(uint);
+	uint offset = 0;
 
-	start_timestamp = info->start_timestamp;
-	end_timestamp= info->end_timestamp;
-	src_IP = info->src_IP;
-	dst_IP= info->dst_IP;
-	src_port = info->src_port;
-	dst_port = info->dst_port;
-	IP_total_data_bytes = info->IP_total_data_bytes;
-	IP_protocol = info->IP_protocol;
-	ICMP_type = info->ICMP_type;
-	ICMP_code = info->ICMP_code;
-	packet_count = info->packet_count;
-	from_haystack = info->from_haystack;
-	isHostile = info->isHostile;
+	//Copies the value and increases the offset
+	memcpy(&start_timestamp, buf, size);
+	offset+= size;
+	memcpy(&end_timestamp, buf+offset, size);
+	offset+= size;
+	memcpy(&src_IP.s_addr, buf+offset, size);
+	offset+= size;
+	memcpy(&dst_IP.s_addr, buf+offset, size);
+	offset+= size;
+	memcpy(&src_port, buf+offset, size);
+	offset+= size;
+	memcpy(&dst_port, buf+offset, size);
+	offset+= size;
+	memcpy(&IP_total_data_bytes, buf+offset, size);
+	offset+= size;
+	memcpy(&IP_protocol, buf+offset, size);
+	offset+= size;
+	memcpy(&ICMP_type, buf+offset, size);
+	offset+= size;
+	memcpy(&ICMP_code, buf+offset, size);
+	offset+= size;
+	memcpy(&packet_count, buf+offset, size);
+	offset+= size;
+	//Despite being treated like an integer booleans only use 1 byte.
+	memcpy(&from_haystack, buf+offset, 1);
+	offset++;
+	memcpy(&isHostile, buf+offset, 1);
+	offset++;
 
-	int tempI;
-	k = sizeof tempI;
-	IP_packet_sizes.clear();
-	for(uint j = 0; j < packet_count; j++)
+	IP_packet_sizes.resize(packet_count);
+	for(uint i = 0; i < packet_count; i++)
 	{
-		strcpy((char *)&tempI, buf.substr(i,k).c_str());
-		IP_packet_sizes.push_back(tempI);
-		i+= k;
+		memcpy(&IP_packet_sizes[i], buf+offset, size);
+		offset += size;
 	}
-	time_t  tempT;
-	k = sizeof tempT;
-	packet_intervals.clear();
-	for(uint j = 0; j < packet_count; j++)
+
+	packet_intervals.resize(packet_count);
+	for(uint i = 0; i < packet_count; i++)
 	{
-		strcpy((char *)&tempT, buf.substr(i,k).c_str());
-		packet_intervals.push_back(tempT);
-		i+= k;
+		memcpy(&packet_intervals[i], buf+offset, size);
+		offset += size;
 	}
+	//The offset at the end of execution is also equal to the number of bytes read.
+	return offset;
 }
 }

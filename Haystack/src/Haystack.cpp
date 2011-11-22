@@ -24,14 +24,16 @@ int tcpFreq; //TCP_CHECK_FREQ measured in seconds
 static TCPSessionHashTable SessionTable;
 
 //Memory assignments moved outside packet handler to increase performance
-int len, dest_port, dataLen;
+int len, dest_port;
 struct sockaddr_un remote;
 struct Packet packet_info;
 struct ether_header *ethernet;  	/* net/ethernet.h */
 struct ip *ip_hdr; 					/* The IP header */
 TrafficEvent *event, *tempEvent;
 char tcp_socket[55];
-const char* data;
+
+u_char data[MAX_MSG_SIZE];
+uint dataLen;
 
 pthread_rwlock_t lock;
 
@@ -143,6 +145,7 @@ int main(int argc, char *argv[])
 	pthread_t GUIListenThread;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
+	bzero(data, MAX_MSG_SIZE);
 
 	int ret;
 	bpf_u_int32 maskp;				/* subnet mask */
@@ -415,16 +418,8 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 //	Returns success or failure
 bool Nova::Haystack::SendToCE(TrafficEvent *event)
 {
-	//stringbuf ss;
-	//boost::archive::binary_oarchive oa(ss);
 	int socketFD;
-
-	//Serialize the data into a simple char buffer
-	//oa << event;
-	string temp = event->serializeEvent();
-
-	data = temp.c_str();
-	int dataLen = temp.size();
+	dataLen = event->serializeEvent(data);
 
 	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -446,6 +441,7 @@ bool Nova::Haystack::SendToCE(TrafficEvent *event)
 		close(socketFD);
 		return false;
 	}
+	bzero(data,dataLen);
 	close(socketFD);
     return true;
 }

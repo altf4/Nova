@@ -32,6 +32,7 @@
 //Rest allocated for IP_packet_sizes. One int for each packet
 //TODO: Increase this value if proven necessary.
 #define TRAFFIC_EVENT_MAX_SIZE 1028
+#define MAX_MSG_SIZE 65535
 
 //From the Haystack or Doppelganger Module
 #define FROM_HAYSTACK_DP	1
@@ -39,22 +40,24 @@
 #define FROM_LTM			0
 
 ///	A struct for statically sized TrafficEvent Information
+// Notice every value is uint, this is because this struct is only used for serialization
+// moving each value in a buffer of 4 bytes using an uint array.
 struct TEvent
 {
 	///Timestamp of the begining of this event
-	time_t start_timestamp;
+	uint start_timestamp;
 	///Timestamp of the end of this event
-	time_t end_timestamp;
+	uint end_timestamp;
 
 	///Source IP address of this event
-	struct in_addr src_IP;
+	uint src_IP;
 	///Destination IP address of this event
-	struct in_addr dst_IP;
+	uint dst_IP;
 
 	///Source port of this event
-	in_port_t src_port;
+	uint src_port;
 	///Destination port of this event
-	in_port_t dst_port;
+	uint dst_port;
 
 	///Total amount of IP layer bytes sent to the victim
 	uint IP_total_data_bytes;
@@ -67,20 +70,20 @@ struct TEvent
 	///IE:	0,0 = Ping reply
 	///		8,0 = Ping request
 	///		3,3 = Destination port unreachable
-	int ICMP_type;
+	uint ICMP_type;
 	///IE:	0,0 = Ping reply
 	///		8,0 = Ping request
 	///		3,3 = Destination port unreachable
-	int ICMP_code;
+	uint ICMP_code;
 
 	///Packets involved in this event
 	uint packet_count;
 
 	///	False for from the host machine
-	bool from_haystack;
+	uint from_haystack;
 
 	///For training use. Is this a hostile Event?
-	bool isHostile;
+	uint isHostile;
 };
 
 using namespace std;
@@ -175,11 +178,13 @@ class TrafficEvent
 		//Copies the contents of this TrafficEvent to the parameter TrafficEvent
 		void copyTo(TrafficEvent *toEvent);
 
-		//Serializes the event into a char buffer
-		string serializeEvent();
+		//Stores the traffic event information into the buffer, retrieved using deserializeEvent
+		//	returns the number of bytes set in the buffer
+		uint serializeEvent(u_char * buf);
 
-		//Deserializes an event from a char buffer
-		void deserializeEvent(string buf);
+		//Reads TrafficEvent information from a buffer originally populated by serializeEvent
+		//	returns the number of bytes read from the buffer
+		uint deserializeEvent(u_char * buf);
 
 	private:
 		friend class boost::serialization::access;

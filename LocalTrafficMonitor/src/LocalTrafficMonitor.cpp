@@ -34,14 +34,16 @@ bool usePcapFile; //Specify if reading from PCAP file or capturing live, true us
 bool goToLiveCap; //Specify if go to live capture mode after reading from a pcap file
 
 //Global memory assignments to improve packet handler performance
-int len, dataLen, dest_port;
+int len, dest_port;
 struct ether_header *ethernet;  	/* net/ethernet.h */
 struct ip *ip_hdr; 					/* The IP header */
 TrafficEvent *event, *tempEvent;
 struct Packet packet_info;
 char tcp_socket[55];
 struct sockaddr_un remote;
-const char* data;
+
+u_char data[MAX_MSG_SIZE];
+uint dataLen;
 
 pthread_rwlock_t lock;
 LoggerPtr m_logger(Logger::getLogger("main"));
@@ -145,6 +147,8 @@ int main(int argc, char *argv[])
 	pthread_t GUIListenThread;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
+	bzero(data, MAX_MSG_SIZE);
+
 	int ret;
 
 	bpf_u_int32 maskp;				/* subnet mask */
@@ -480,17 +484,8 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 ///	Returns success or failure
 bool Nova::LocalTrafficMonitor::SendToCE(TrafficEvent *event)
 {
-	//stringbuf ss;
-	//boost::archive::binary_oarchive oa(ss);
-
 	int socketFD;
-
-	//Serialize the data into a simple char buffer
-	//oa << event;
-	string temp = event->serializeEvent();
-
-	data = temp.c_str();
-	dataLen = temp.size();
+	dataLen = event->serializeEvent(data);
 
 	if((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -511,6 +506,7 @@ bool Nova::LocalTrafficMonitor::SendToCE(TrafficEvent *event)
 		close(socketFD);
 		return false;
 	}
+	bzero(data,dataLen);
 	close(socketFD);
     return true;
 }
