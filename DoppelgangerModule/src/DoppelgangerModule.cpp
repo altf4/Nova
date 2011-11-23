@@ -68,6 +68,9 @@ int main(int argc, char *argv[])
 	bzero(buf, MAX_MSG_SIZE);
 	pthread_t GUIListenThread;
 
+	SuspectTable.set_empty_key(NULL);
+	SuspectTable.resize(INITIAL_TABLESIZE);
+
 	signal(SIGINT, siginthandler);
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
 	string novaConfig, logConfig;

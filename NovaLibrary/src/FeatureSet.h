@@ -10,6 +10,7 @@
 #define FEATURESET_H_
 
 #include "TrafficEvent.h"
+#include <google/dense_hash_map>
 #include <vector>
 #include <set>
 
@@ -36,6 +37,10 @@
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_DEVIATION 8
 
+#define INITIAL_IP_SIZE 256
+#define INITIAL_PORT_SIZE 1024
+#define INITIAL_PACKET_SIZE 4096
+
 
 
 //TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
@@ -45,9 +50,36 @@
 namespace Nova{
 namespace ClassificationEngine{
 
-typedef std::tr1::unordered_map<in_addr_t, uint > IP_Table;
-typedef std::tr1::unordered_map<in_port_t, uint > Port_Table;
-typedef std::tr1::unordered_map<int, uint > Packet_Table;
+//Equality operator used by google's dense hash map
+struct eqaddr
+{
+  bool operator()(in_addr_t s1, in_addr_t s2) const
+  {
+	    return (s1 == s2);
+  }
+};
+
+//Equality operator used by google's dense hash map
+struct eqport
+{
+  bool operator()(in_port_t s1, in_port_t s2) const
+  {
+	    return (s1 == s2);
+  }
+};
+
+//Equality operator used by google's dense hash map
+struct eqint
+{
+  bool operator()(int s1, int s2) const
+  {
+	    return (s1 == s2);
+  }
+};
+
+typedef google::dense_hash_map<in_addr_t, uint, tr1::hash<in_addr_t>, eqaddr > IP_Table;
+typedef google::dense_hash_map<in_port_t, uint, tr1::hash<in_port_t>, eqport > Port_Table;
+typedef google::dense_hash_map<int, uint, tr1::hash<int>, eqint > Packet_Table;
 
 ///A Feature Set represents a point in N dimensional space, which the Classification Engine uses to
 ///	determine a classification. Each member of the FeatureSet class represents one of these dimensions.

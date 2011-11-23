@@ -7,6 +7,7 @@
 
 #include "Suspect.h"
 #include <ANN/ANN.h>
+#include <google/dense_hash_map>
 
 using std::string;
 
@@ -20,10 +21,21 @@ using std::string;
 #define SOCKET_QUEUE_SIZE 50
 //Number of lines read in the NOVAConfig file
 #define CONFIG_FILE_LINE_COUNT 5
+//Sets the Initial Table size for faster operations
+#define INITIAL_TABLESIZE 256
+
+//Equality operator used by google's dense hash map
+struct eq
+{
+  bool operator()(in_addr_t s1, in_addr_t s2) const
+  {
+    return (s1 == s2);
+  }
+};
 
 //Hash table for keeping track of suspects
 //	the bool represents if the suspect is hostile or not
-typedef std::tr1::unordered_map<in_addr_t, bool> SuspectHashTable;
+typedef google::dense_hash_map<in_addr_t, bool, tr1::hash<in_addr_t>, eq > SuspectHashTable;
 
 namespace Nova{
 namespace DoppelgangerModule{

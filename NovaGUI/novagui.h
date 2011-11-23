@@ -11,12 +11,12 @@
 #include <QtGui/QMainWindow>
 #include <QtGui/QTreeWidget>
 #include "ui_novagui.h"
-#include <tr1/unordered_map>
 #include <boost/property_tree/ptree.hpp>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <Suspect.h>
 #include <GUIMsg.h>
+#include <google/dense_hash_map>
 
 /// File name of the file to be used as Traffic Event IPC key
 #define KEY_FILENAME "/keys/NovaIPCKey"
@@ -47,6 +47,15 @@ using boost::property_tree::ptree;
  - Structs and Tables for quick item access through pointers -
 **********************************************************************/
 
+//Equality operator used by google's dense hash map
+struct eq
+{
+  bool operator()(string s1, string s2) const
+  {
+    return !(s1.compare(s2));
+  }
+};
+
 //used to maintain information on imported scripts
 struct script
 {
@@ -54,7 +63,9 @@ struct script
 	string path;
 	ptree * treePtr;
 };
-typedef std::tr1::unordered_map<string, script> ScriptTable;
+
+//Container for accessing script items
+typedef google::dense_hash_map<string, script, tr1::hash<string>, eq > ScriptTable;
 
 //used to maintain information about a port, it's type and behavior
 struct port
@@ -71,8 +82,8 @@ struct port
 	script * scriptPtr;
 	ptree * treePtr;
 };
-typedef std::tr1::unordered_map<string, port> PortTable;
-
+//Container for accessing port items
+typedef google::dense_hash_map<string, port, tr1::hash<string>, eq > PortTable;
 
 //used to keep track of subnet gui items and allow for easy access
 struct subnet
@@ -90,8 +101,8 @@ struct subnet
 	ptree * treePtr;
 };
 
-//container for the subnet pairs
-typedef std::tr1::unordered_map<string, subnet> SubnetTable;
+//Container for accessing subnet items
+typedef google::dense_hash_map<string, subnet, tr1::hash<string>, eq > SubnetTable;
 
 
 //used to keep track of haystack profile gui items and allow for easy access
@@ -114,9 +125,8 @@ struct profile
 	ptree * ptreePtr;
 };
 
-//Container for accessing profile item pairs
-typedef std::tr1::unordered_map<string, profile> ProfileTable;
-
+//Container for accessing profile items
+typedef google::dense_hash_map<string, profile, tr1::hash<string>, eq > ProfileTable;
 
 //used to keep track of haystack node gui items and allow for easy access
 struct node
@@ -133,8 +143,8 @@ struct node
 	ptree * treePtr;
 };
 
-//Container for accessing node item pairs
-typedef std::tr1::unordered_map<string, node> NodeTable;
+//Container for accessing node items
+typedef google::dense_hash_map<string, node, tr1::hash<string>, eq > NodeTable;
 
 //Used to store the current doppelganger
 struct doppelganger
@@ -266,7 +276,16 @@ private:
 
 };
 
-typedef std::tr1::unordered_map<in_addr_t, suspectItem> SuspectHashTable;
+//Equality operator used by google's dense hash map
+struct eqinaddr
+{
+  bool operator()(in_addr_t s1, in_addr_t s2) const
+  {
+    return (s1 == s2);
+  }
+};
+
+typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqinaddr > SuspectHashTable;
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);

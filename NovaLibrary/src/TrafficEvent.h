@@ -17,7 +17,6 @@
 #include <netinet/if_ether.h>
 #include <vector>
 #include <pcap.h>
-#include <tr1/unordered_map>
 #include <boost/serialization/vector.hpp>
 
 #ifndef TRAFFICEVENT_H_

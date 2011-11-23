@@ -42,6 +42,9 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
     : QMainWindow(parent)
 {
 	homePath = home;
+	subnets.set_empty_key("");
+	nodes.set_empty_key("");
+	profiles.set_empty_key("");
 	mainwindow = (NovaGUI*)parent;
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
