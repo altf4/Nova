@@ -9,9 +9,9 @@
 #define CLASSIFICATIONENGINE_H_
 
 #include <TrafficEvent.h>
-#include <tr1/unordered_map>
 #include "Suspect.h"
 #include <ANN/ANN.h>
+#include <google/dense_hash_map>
 
 //TODO: Make Nova create this file on startup or installation.
 ///	Filename of the file to be used as an IPC key
@@ -24,6 +24,8 @@
 #define CE_FILENAME "/keys/CEKey"
 /// File name of the file to be used as GUI Input IPC key.
 #define GUI_FILENAME "/keys/GUI_CEKey"
+//Sets the Initial Table size for faster operations
+#define INITIAL_TABLESIZE 256
 
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
@@ -38,12 +40,20 @@
 //Used in classification algorithm. Store it here so we only need to calculate it once
 const double sqrtDIM = sqrt(DIM);
 
+//Equality operator used by google's dense hash map
+struct eq
+{
+  bool operator()(in_addr_t s1, in_addr_t s2) const
+  {
+    return (s1 == s2);
+  }
+};
 
 namespace Nova{
 namespace ClassificationEngine{
 
 //Hash table for current list of suspects
-typedef std::tr1::unordered_map<in_addr_t, Suspect* > SuspectHashTable;
+typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eq > SuspectHashTable;
 
 // Thread for listening for GUI commands
 void *GUILoop(void *ptr);

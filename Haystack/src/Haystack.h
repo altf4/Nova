@@ -19,8 +19,11 @@
 #define MAX_MSG_SIZE 65535
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
+//Sets the Initial Table size for faster operations
+#define INITIAL_TABLESIZE 65535
 
 #include <TrafficEvent.h>
+#include <google/dense_hash_map>
 
 namespace Nova{
 namespace Haystack{
@@ -65,8 +68,18 @@ struct Session
 	vector<struct Packet> session;
 };
 
+
+//Equality operator used by google's dense hash map
+struct eq
+{
+  bool operator()(string s1, string s2) const
+  {
+    return !(s1.compare(s2));
+  }
+};
+
 ///The Value is a vector of IP headers
-typedef std::tr1::unordered_map<string, struct Session> TCPSessionHashTable;
+typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eq > TCPSessionHashTable;
 }
 }
 

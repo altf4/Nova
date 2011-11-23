@@ -34,6 +34,9 @@ nodePopup::nodePopup(QWidget *parent, node *n, int type, string home)
     : QMainWindow(parent)
 {
 	homePath = home;
+	subnets.set_empty_key("");
+	nodes.set_empty_key("");
+	profiles.set_empty_key("");
 	ui.setupUi(this);
 	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	novaParent = (NovaConfig *)parent;

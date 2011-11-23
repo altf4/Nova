@@ -24,7 +24,9 @@ using namespace std;
 using namespace Nova;
 using namespace ClassificationEngine;
 
+
 static SuspectHashTable suspects;
+
 pthread_rwlock_t lock;
 
 //NOT normalized
@@ -123,6 +125,9 @@ int main(int argc,char *argv[])
 	bzero(data,MAX_MSG_SIZE);
 	bzero(buffer, MAX_MSG_SIZE);
 	pthread_rwlock_init(&lock, NULL);
+
+	suspects.set_empty_key(NULL);
+	suspects.resize(INITIAL_TABLESIZE);
 
 	int len;
 	struct sockaddr_un localIPCAddress;

@@ -76,6 +76,12 @@ NovaGUI::NovaGUI(QWidget *parent)
 {
 	signal(SIGINT, sighandler);
 	pthread_rwlock_init(&lock, NULL);
+	SuspectTable.set_empty_key(NULL);
+	subnets.set_empty_key("");
+	ports.set_empty_key("");
+	nodes.set_empty_key("");
+	profiles.set_empty_key("");
+	scripts.set_empty_key("");
 	ui.setupUi(this);
 	runAsWindowUp = false;
 	editingPreferences = false;

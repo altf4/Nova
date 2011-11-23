@@ -19,9 +19,15 @@ FeatureSet::FeatureSet()
 	//Temp variables
 	startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
 	endTime = 0;
+	IPTable.set_empty_key(NULL);
+	portTable.set_empty_key(NULL);
+	packTable.set_empty_key(NULL);
 	IPTable.clear();
 	portTable.clear();
 	packTable.clear();
+	IPTable.resize(INITIAL_IP_SIZE);
+	portTable.resize(INITIAL_PORT_SIZE);
+	packTable.resize(INITIAL_PACKET_SIZE);
 	haystackEvents = 0;
 	hostEvents = 0;
 	packetCount = 0;
@@ -159,24 +165,33 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	//If from haystack
 	if( event->from_haystack)
 	{
+		if(IPTable.count(event->dst_IP.s_addr) == 0)
+			IPTable[event->dst_IP.s_addr] = event->packet_count;
+		else
 		//Put the packet count into a bin associated with the haystack
-		IPTable[ event->dst_IP.s_addr] += event->packet_count;
+		IPTable[event->dst_IP.s_addr] += event->packet_count;
 	}
 	//Else from a host
 	else
 	{
 		//Put the packet count into a bin associated with source so that
 		// all host events for a suspect go into the same bin
-		IPTable[ event->src_IP.s_addr] +=  event->packet_count;
+		if(IPTable.count(event->src_IP.s_addr) == 0)
+			IPTable[event->src_IP.s_addr] = event->packet_count;
+		else
+		IPTable[event->src_IP.s_addr] +=  event->packet_count;
 	}
 
-	portTable[ event->dst_port] +=  event->packet_count;
+	if(portTable.count(event->dst_port) == 0)
+		portTable[event->dst_port] =  event->packet_count;
+	else
+		portTable[event->dst_port] +=  event->packet_count;
 	//Checks for the max to avoid iterating through the entire table every update
 	//Since number of ports can grow very large during a scan this will distribute the computation more evenly
 	//Since the IP will tend to be relatively small compared to number of events, it's max is found during the call.
-	if(portTable[ event->dst_port] > portMax)
+	if(portTable[event->dst_port] > portMax)
 	{
-		portMax = portTable[ event->dst_port];
+		portMax = portTable[event->dst_port];
 	}
 
 	for(uint i = 0; i < event->IP_packet_sizes.size(); i++)

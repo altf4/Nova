@@ -144,6 +144,9 @@ int main(int argc, char *argv[])
 	pthread_t TCP_timeout_thread;
 	pthread_t GUIListenThread;
 
+	SessionTable.set_empty_key("");
+	SessionTable.resize(INITIAL_TABLESIZE);
+
 	char errbuf[PCAP_ERRBUF_SIZE];
 	bzero(data, MAX_MSG_SIZE);
 
