@@ -16,7 +16,7 @@ using namespace std;
 
 //Global copy of parent's ports
 // - used to temporarily store changes until the user commits them
-vector<struct port> ports;
+vector<string> ports;
 
 //Global port - used to store the currently selected port
 struct port * gprt = NULL;
@@ -40,6 +40,7 @@ bool loading = true;
 bool fromNodeMenu;
 
 LoggerPtr p_logger(Logger::getLogger("main"));
+
 
 /************************************************
  * Construct and Initialize GUI
@@ -100,7 +101,7 @@ portPopup::portPopup(QWidget *parent, struct profile *profile, bool fromNode, st
 	if(!ports.empty())
 	{
 		//Display first port by default
-		gprt = &ports[0];
+		//gprt = ports[0];
 		//Load all ports from profile
 		loadAllPorts();
 	}
@@ -172,11 +173,11 @@ void portPopup::loadAllPorts()
 		struct port * prt;
 		for(uint i = 0; i < ports.size(); i++)
 		{
-			prt = &ports[i];
+			//prt = ports[i];
 			item = new QTreeWidgetItem(0);
 			item->setText(0,(QString)prt->portNum.c_str());
 			ui.portTreeWidget->insertTopLevelItem(i, item);
-			prt->portItem = item;
+			//prt->portItem = item;
 		}
 		//set the current item
 		citem = gprt->portItem;
@@ -236,7 +237,7 @@ void portPopup::on_portTreeWidget_itemSelectionChanged()
 
 		//Switch to new port
 		citem = ui.portTreeWidget->selectedItems().first();
-		gprt = &ports[ui.portTreeWidget->indexOfTopLevelItem(citem)];
+		//gprt = ports[ui.portTreeWidget->indexOfTopLevelItem(citem)];
 
 		//Load port preferences
 		loadPort(gprt);
@@ -257,6 +258,20 @@ void portPopup::on_okButton_clicked()
 	if(!ports.empty()) savePort(gprt);
 	p->ports.clear();
 	p->ports = ports;
+	if(fromNodeMenu)
+	{
+
+	}
+	else
+	{
+		ptree * pt = &p->tree.get_child("add.ports");
+		pt->clear();
+		for(uint i = 0; i < ports.size(); i++)
+		{
+			//pt->add("port", ports[i]->portName);
+		}
+		//profileMenu->updateProfileTree(p);
+	}
 
 	//Enable the parent window and show all changes
 	this->close();
@@ -279,7 +294,7 @@ void portPopup::on_defaultsButton_clicked()
 		{
 			i = 0;
 		}
-		gprt = &ports[i];
+		//gprt = ports[i];
 	}
 	loadAllPorts();
 }
@@ -296,6 +311,13 @@ void portPopup::on_applyButton_clicked()
 	}
 	else
 	{
+		ptree * pt = &p->tree.get_child("add.ports");
+		pt->clear();
+		for(uint i = 0; i < ports.size(); i++)
+		{
+			//pt->add("port", ports[i]->portName);
+		}
+		//profileMenu->updateProfileTree(p);
 		profileMenu->loadProfile();
 	}
 }
@@ -321,6 +343,7 @@ void portPopup::on_deleteButton_clicked()
 		//Get index of selected port and remove it
 		uint i = ui.portTreeWidget->indexOfTopLevelItem(citem);
 		ui.portTreeWidget->removeItemWidget(citem,0);
+		//ports[i] = NULL;
 		ports.erase(ports.begin()+i);
 
 		//If ports still exist
@@ -330,8 +353,9 @@ void portPopup::on_deleteButton_clicked()
 			if(i == ports.size()) i--;
 
 			//Set global port
-			gprt = &ports[i];
+			//gprt = ports[i];
 		}
+
 		//Update the GUI
 		loadAllPorts();
 	}
@@ -349,13 +373,13 @@ void portPopup::on_addButton_clicked()
 		//Get current index and insert copy just after it.
 		uint i = ui.portTreeWidget->indexOfTopLevelItem(citem);
 		i++;
-		ports.insert((ports.begin()+i),(temp));
-		gprt = &ports[i];
+		//ports.insert((ports.begin()+i),(&temp));
+		//gprt = ports[i];
 	}
 	else
 	{
-		ports.push_back(temp);
-		gprt = &ports[0];
+		//ports.push_back(&temp);
+		//gprt = ports[0];
 	}
 	loadAllPorts();
 }
@@ -367,8 +391,8 @@ void portPopup::on_cloneButton_clicked()
 		//Get current index and insert copy just after it.
 		uint i = ui.portTreeWidget->indexOfTopLevelItem(citem);
 		i++;
-		ports.insert((ports.begin()+i),(*gprt));
-		gprt = &ports[i];
+		//ports.insert((ports.begin()+i),(gprt));
+		//gprt = ports[i];
 		loadAllPorts();
 	}
 }

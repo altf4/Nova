@@ -982,7 +982,7 @@ p, li { white-space: pre-wrap; }
          <bool>false</bool>
         </property>
         <attribute name="headerVisible">
-         <bool>false</bool>
+         <bool>true</bool>
         </attribute>
         <attribute name="headerCascadingSectionResizes">
          <bool>false</bool>
@@ -1004,18 +1004,6 @@ p, li { white-space: pre-wrap; }
         </attribute>
         <attribute name="headerDefaultSectionSize">
          <number>123</number>
-        </attribute>
-        <attribute name="headerVisible">
-         <bool>false</bool>
-        </attribute>
-        <attribute name="headerMinimumSectionSize">
-         <number>25</number>
-        </attribute>
-        <attribute name="headerHighlightSections">
-         <bool>false</bool>
-        </attribute>
-        <attribute name="headerStretchLastSection">
-         <bool>false</bool>
         </attribute>
         <column>
          <property name="text">
@@ -1155,6 +1143,9 @@ p, li { white-space: pre-wrap; }
        <property name="textElideMode">
         <enum>Qt::ElideRight</enum>
        </property>
+       <property name="verticalScrollMode">
+        <enum>QAbstractItemView::ScrollPerPixel</enum>
+       </property>
        <property name="horizontalScrollMode">
         <enum>QAbstractItemView::ScrollPerPixel</enum>
        </property>
@@ -1167,6 +1158,9 @@ p, li { white-space: pre-wrap; }
        <property name="uniformRowHeights">
         <bool>false</bool>
        </property>
+       <property name="sortingEnabled">
+        <bool>true</bool>
+       </property>
        <attribute name="headerVisible">
         <bool>true</bool>
        </attribute>
@@ -1190,18 +1184,6 @@ p, li { white-space: pre-wrap; }
        </attribute>
        <attribute name="headerDefaultSectionSize">
         <number>148</number>
-       </attribute>
-       <attribute name="headerVisible">
-        <bool>true</bool>
-       </attribute>
-       <attribute name="headerMinimumSectionSize">
-        <number>25</number>
-       </attribute>
-       <attribute name="headerHighlightSections">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerStretchLastSection">
-        <bool>false</bool>
        </attribute>
        <column>
         <property name="text">

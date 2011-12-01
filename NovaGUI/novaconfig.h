@@ -13,7 +13,7 @@ using namespace std;
 #define PROFILE_INDEX 1
 #define FROM_NOVA_CONFIG false
 #define DELETE_PROFILE true
-#define PROFILE_NAME_CHANGE false
+#define UPDATE_PROFILE false
 #define ADD_NODE 0
 #define CLONE_NODE 1
 #define EDIT_NODE 2
@@ -30,6 +30,10 @@ public:
     SubnetTable subnets;
     NodeTable nodes;
     ProfileTable profiles;
+    PortTable ports;
+    ScriptTable scripts;
+
+    string group;
 
     NovaConfig(QWidget *parent = 0, string homePath = "");
 
@@ -43,16 +47,32 @@ public:
 
     void loadProfile();
     void loadAllProfiles();
+    void createProfileItem(profile *p);
+    void createProfileTree(profile *p);
     void saveProfile();
+    void deleteProfile(string name);
+    void updateProfileTree(string parent);
+    //Takes a ptree and loads and sub profiles (used in clone)
+    void loadProfilesFromTree(string parent);
+    //set profile configurations
+    void loadProfileSet(ptree *ptr, profile *p);
+    //add ports or subsystems
+    void loadProfileAdd(ptree *ptr, profile *p);
+    //recursive descent down profile tree
+    void loadSubProfiles(string parent);
 
-    void deleteNode();
+    void deleteNodes();
+    void deleteNode(node *n);
     void loadAllNodes();
 
     //If a profile is edited, this function updates the changes for the rest of the GUI
-    void updateProfile(bool deleteProfile);
+    void updateProfile(bool deleteProfile, profile *p);
 
     //Action to do when the window closes.
     void closeEvent(QCloseEvent * e);
+
+    void pushData();
+    void pullData();
 
 private slots:
 
