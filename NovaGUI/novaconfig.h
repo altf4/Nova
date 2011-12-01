@@ -39,30 +39,50 @@ public:
 
     ~NovaConfig();
 
+    //Loads the configuration options from NOVAConfig.txt
     void loadPreferences();
+    //Draws the current honeyd configuration for haystack and doppelganger
     void loadHaystack();
 
-    //Updates the 'current' pointers incase the data was modified
+    //Updates the 'current' keys, not really pointers just used to access current selections
+    //This is called on start up and by child windows that push modified data
     void updatePointers();
 
+    //Populates the window with the select profile's information
     void loadProfile();
+    //Populates the profile heirarchy in the tree widget
     void loadAllProfiles();
+
+    //Creates a tree widget item for the profile based on it's parent
+    //If no parent it is created as a root node
     void createProfileItem(profile *p);
-    void createProfileTree(profile *p);
+    //Creates a ptree for a profile with current values
+    void createProfileTree(string name);
+
+    //Temporarily stores changed configuration options when selection is changed
+    // to permanently store these changes call pushData();
     void saveProfile();
+    //Removes a profile, all of it's children and any nodes that currently use it
     void deleteProfile(string name);
-    void updateProfileTree(string parent);
-    //Takes a ptree and loads and sub profiles (used in clone)
+
+    //Recreates the profile tree of all ancestors
+    //This needs to be called after adding, deleting or storing changes to a profile.
+    void updateProfileTree(string name);
+
+    //Takes a ptree and loads and sub profiles (used in clone to extract children)
     void loadProfilesFromTree(string parent);
-    //set profile configurations
+    //set profile configurations (only called in loadProfilesFromTree)
     void loadProfileSet(ptree *ptr, profile *p);
-    //add ports or subsystems
+    //add ports or subsystems (only called in loadProfilesFromTree)
     void loadProfileAdd(ptree *ptr, profile *p);
-    //recursive descent down profile tree
+    //recursive descent down profile tree (only called in loadProfilesFromTree)
     void loadSubProfiles(string parent);
 
+    //Function called on a delete signal to delete a node or subnet
     void deleteNodes();
+    //Deletes a single node, called from deleteNodes();
     void deleteNode(node *n);
+    //Populates the tree widget with the current node configuration
     void loadAllNodes();
 
     //If a profile is edited, this function updates the changes for the rest of the GUI
@@ -71,7 +91,9 @@ public:
     //Action to do when the window closes.
     void closeEvent(QCloseEvent * e);
 
+    //Pushes the current configuration to novagui (Apply or Ok signal)
     void pushData();
+    //Pulls the configuration stored in novagui
     void pullData();
 
 private slots:

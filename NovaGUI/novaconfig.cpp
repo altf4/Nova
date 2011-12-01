@@ -20,6 +20,7 @@ using namespace ClassificationEngine;
 using namespace log4cxx;
 using namespace log4cxx::xml;
 
+//Keys used to maintain and lookup current selections
 string currentProfile = "";
 string currentNode = "";
 string currentSubnet = "";
@@ -71,6 +72,7 @@ NovaConfig::~NovaConfig()
 
 }
 
+//Action to take when window is closing
 void NovaConfig::closeEvent(QCloseEvent * e)
 {
 	e = e;
@@ -268,17 +270,20 @@ void NovaConfig::loadPreferences()
 	config.close();
 }
 
-
+//Draws the current honeyd configuration
 void NovaConfig::loadHaystack()
 {
+	//Sets an initial selection
 	updatePointers();
+	//Draws all node heirarchy
 	loadAllNodes();
-	//Load profiles
+	//Draws all profile heriarchy
 	loadAllProfiles();
 	ui.nodeTreeWidget->expandAll();
 	ui.hsNodeTreeWidget->expandAll();
 }
 
+//Saves the changes to parent novagui window
 void NovaConfig::pushData()
 {
 	//Clears the tables
@@ -295,10 +300,12 @@ void NovaConfig::pushData()
 	mainwindow->ports = ports;
 	mainwindow->profiles = profiles;
 
-	//Saves the current configuration in XML files
+	//Saves the current configuration to XML files
 	mainwindow->saveAll();
 }
 
+//Pulls the last stored configuration from novagui
+//used on start up or to undo all changes (currently defaults button)
 void NovaConfig::pullData()
 {
 	//Clears the tables
@@ -316,6 +323,8 @@ void NovaConfig::pullData()
 	profiles = mainwindow->profiles;
 }
 
+//Attempts to use the same key previously used, if that key is no longer available
+//It selects a new one if possible
 void NovaConfig::updatePointers()
 {
 	if(selectedSubnet)
@@ -419,6 +428,7 @@ void NovaConfig::on_dmConfigButton_clicked()
  * General Preferences GUI Signals
  ************************************************/
 
+//Stores all changes and closes the window
 void NovaConfig::on_okButton_clicked()
 {
 	string line, prefix;
@@ -489,10 +499,12 @@ void NovaConfig::on_okButton_clicked()
 		this->close();
 	}
 	config.close();
+	//Save changes
 	pushData();
 	this->close();
 }
 
+//Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
 	string line, prefix;
@@ -563,14 +575,17 @@ void NovaConfig::on_applyButton_clicked()
 		this->close();
 	}
 	config.close();
-	//This call isn't needed but it helps to make sure the values have been written correctly during debugging.
+	//Reloads NOVAConfig preferences to assert concurrency
 	loadPreferences();
+	//Saves honeyd changes
 	pushData();
 	loadingItems = true;
+	//Reloads honeyd configuration to assert concurrency
 	loadHaystack();
 	loadingItems = false;
 }
 
+//Exit the window and ignore any changes since opening or apply was pressed
 void NovaConfig::on_cancelButton_clicked()
 {
 	this->close();
@@ -582,10 +597,14 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	//We should really identify default values and write those while maintaining
 	//Critical values that might cause nova to break if changed.
 
+	//Reloads from NOVAConfig
 	loadPreferences();
+	//Has NovaGUI reload honeyd configuration from XML files
 	mainwindow->loadAll();
+	//Pulls honeyd configuration
 	pullData();
 	loadingItems = true;
+	//Populates honeyd configuration pulled
 	loadHaystack();
 	loadingItems = false;
 }
@@ -690,73 +709,114 @@ void NovaConfig::saveProfile()
 	}
 }
 
+//Removes a profile, all of it's children and any nodes that currently use it
 void NovaConfig::deleteProfile(string name)
 {
+	//Recursive descent to find and call delete on any children of the profile
 	for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 	{
+		//If the profile at the iterator is a child of this profile
 		if(!it->second.parentProfile.compare(name))
 		{
 			deleteProfile(it->second.name);
 		}
 	}
-	profile  p = profiles[name];
+
+	//If it is not the original profile deleted skip this part
 	if(!name.compare(currentProfile))
 	{
+		//Store a copy of the profile for cleanup after deletion
+		profile  p = profiles[name];
+
 		QTreeWidgetItem * item = NULL, *temp = NULL;
+
+		//If there is at least one other profile after deleting all children
 		if(profiles.size() > 1)
 		{
+			//Get the current profile item
 			item = profiles[currentProfile].profileItem;
+			//Try to find another profile below it
 			temp = ui.profileTreeWidget->itemBelow(item);
+
+			//If no profile below, find a profile above
 			if(temp == NULL)
 			{
 				item = ui.profileTreeWidget->itemAbove(item);
 			}
-			else item = temp;
+			else item = temp; //if profile below was found
 		}
+
+		//Remove the current profiles tree widget items
 		ui.profileTreeWidget->removeItemWidget(p.profileItem, 0);
 		ui.hsProfileTreeWidget->removeItemWidget(p.item, 0);
 
+		//Clear the tree of the current profile (may not be needed)
 		profiles[name].tree.clear();
+
+		//Erase the profile from the table and any nodes that use it
 		updateProfile(DELETE_PROFILE, &profiles[name]);
 
+		//If this profile has a parent
 		if(p.parentProfile.compare(""))
 		{
+			//save a copy of the parent
 			profile parent = profiles[p.parentProfile];
+
+			//point to the profiles subtree of parent-copy ptree and clear it
 			ptree * pt = &parent.tree.get_child("profiles");
 			pt->clear();
+
+			//Find all profiles still in the table that are sibilings of deleted profile
+			//* We should be using an iterator to find the original profile and erase it
+			//* but boost's iterator implementation doesn't seem to be able to access data
+			//* correctly and are frequently invalidated.
+
 			for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 			{
 				if(!it->second.parentProfile.compare(parent.name))
 				{
+					//Put sibiling profiles into the tree
 					pt->add_child("profile", it->second.tree);
 				}
-			}
+			}	//parent-copy now has the ptree of all children except deleted profile
+
+			//point to the original parent's profiles subtree and replace it with our new ptree
 			ptree * treePtr = &profiles[p.parentProfile].tree.get_child("profiles");
 			treePtr->clear();
-			*treePtr	= *pt;
+			*treePtr = *pt;
+
+			//Updates all ancestors with the deletion
 			updateProfileTree(p.parentProfile);
 		}
-		if((item != NULL) && (!name.compare(currentProfile)))
-		{
+		//If an item was found for a new selection
+		if(item != NULL)
+		{	//Set the current selection
 			currentProfile = item->text(0).toStdString();
 		}
-		else if(!name.compare(currentProfile))
-		{
+		//If no profiles remain
+		else
+		{	//No selection
 			currentProfile = "";
 		}
+		//Redraw honeyd configuration to reflect changes
 		loadHaystack();
 	}
+
+	//If a child profile just delete, no more action needed
 	else
 	{
+		//Erase the profile from the table and any nodes that use it
 		updateProfile(DELETE_PROFILE, &profiles[name]);
 	}
 }
 
+//Populates the window with the selected profile's options
 void NovaConfig::loadProfile()
 {
 	struct port * pr = NULL;
 	QTreeWidgetItem * item = NULL;
-	if(profiles.size() && (profiles.find(currentProfile) != profiles.end()))
+	//If the selected profile can be found
+	if(profiles.find(currentProfile) != profiles.end())
 	{
 
 		//Clear the tree widget and load new selections
@@ -793,7 +853,6 @@ void NovaConfig::loadProfile()
 	}
 	else
 	{
-		LOG4CXX_ERROR(n_logger, profiles.size());
 		ui.portTreeWidget->clear();
 
 		//Set the variables of the profile
@@ -812,13 +871,24 @@ void NovaConfig::loadProfile()
 	}
 }
 
+//This is called to update all ancestor ptrees, does not update current ptree to do that call
+// createProfileTree(profile.name) which will call this function afterwards currently this will
+// only be called when a profile is deleted and has no current ptree to update all other
+// changes use createProfileTree
 void NovaConfig::updateProfileTree(string name)
 {
+	//If the profile has a parent to update
 	if(profiles[name].parentProfile.compare(""))
 	{
+		//Get the parents name and create an empty ptree
 		string parent = profiles[name].parentProfile;
 		ptree pt;
 		pt.clear();
+
+		//Find all children of the parent and put them in the empty ptree
+		// Ideally we could just replace the individual child but the data structure doesn't seem
+		// to support this very well when all keys in the ptree (ie. profiles.profile) are the same
+		// because the ptree iterators just don't seem to work correctly and documentation is very poor
 		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 		{
 			if(!it->second.parentProfile.compare(parent))
@@ -826,11 +896,16 @@ void NovaConfig::updateProfileTree(string name)
 				pt.add_child("profile", it->second.tree);
 			}
 		}
+		//Replace the parent's profiles subtree (stores all children) with the new one
 		profiles[parent].tree.put_child("profiles", pt);
+		//Recursively ascend to update all ancestors
 		updateProfileTree(parent);
 	}
 }
 
+//This is used when a profile is cloned, it allows us to copy a ptree and extract all children from it
+// it is exactly the same as novagui's xml extraction functions except that it gets the ptree from the
+// cloned profile and it asserts a profile's name is unique and changes the name if it isn't
 void NovaConfig::loadProfilesFromTree(string parent)
 {
 	using boost::property_tree::ptree;
@@ -850,17 +925,21 @@ void NovaConfig::loadProfilesFromTree(string parent)
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
 
+				//Asserts the name is unique, if it is not it finds a unique name
+				// up to the range of 2^32
 				string profileStr = p.name;
 				stringstream ss;
-				int i = 0;
+				uint i = 0, j = 0;
+				j = ~j; //2^32-1
 
-				while(profiles.find(p.name) != profiles.end())
+				while((profiles.find(p.name) != profiles.end()) && (i < j))
 				{
 					ss.str("");
 					i++;
 					ss << profileStr << "-" << i;
 					p.name = ss.str();
 				}
+				p.tree.put<std::string>("name", p.name);
 
 				p.DHCP = false;
 				p.ports.clear();
@@ -883,6 +962,7 @@ void NovaConfig::loadProfilesFromTree(string parent)
 
 				//Save the profile
 				profiles[p.name] = p;
+				updateProfileTree(p.name);
 
 				try //Conditional: has children profiles
 				{
@@ -893,7 +973,6 @@ void NovaConfig::loadProfilesFromTree(string parent)
 					loadSubProfiles(p.name);
 				}
 				catch(...){}
-
 			}
 
 			//Honeyd's implementation of switching templates based on conditions
@@ -1052,15 +1131,19 @@ void NovaConfig::loadSubProfiles(string parent)
 
 			string profileStr = prof.name;
 			stringstream ss;
-			uint i = 0;
+			uint i = 0, j = 0;
+			j = ~j; //2^32-1
 
-			while(profiles.find(prof.name) != profiles.end())
+			//Asserts the name is unique, if it is not it finds a unique name
+			// up to the range of 2^32
+			while((profiles.find(prof.name) != profiles.end()) && (i < j))
 			{
 				ss.str("");
 				i++;
 				ss << profileStr << "-" << i;
 				prof.name = ss.str();
 			}
+			prof.tree.put<std::string>("name", prof.name);
 
 			prof.DHCP = false;
 
@@ -1080,7 +1163,7 @@ void NovaConfig::loadSubProfiles(string parent)
 
 			//Saves the profile
 			profiles[prof.name] = prof;
-
+			updateProfileTree(prof.name);
 
 			try //Conditional: if profile has children (not leaf)
 			{
@@ -1094,6 +1177,8 @@ void NovaConfig::loadSubProfiles(string parent)
 		LOG4CXX_ERROR(n_logger, "Problem loading sub profiles: "+ string(e.what()));
 	}
 }
+
+//Draws all profile heirarchy in the tree widget
 void NovaConfig::loadAllProfiles()
 {
 	loadingItems = true;
@@ -1104,20 +1189,27 @@ void NovaConfig::loadAllProfiles()
 
 	if(profiles.size())
 	{
+		//First sets all pointers to NULL, clear has already deleted so these pointers are invalid
+		// createProfileItem then uses these NULL pointers as a flag to avoid creating duplicate items
 		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 		{
 			it->second.item = NULL;
 			it->second.profileItem = NULL;
 		}
+		//calls createProfileItem on every profile, this will first assert that all ancestors have items
+		// and create them if not to draw the table correctly, thus the need for the NULL pointer as a flag
 		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 		{
 			createProfileItem(&it->second);
 		}
+		//Sets the current selection to the original selection
 		ui.profileTreeWidget->setCurrentItem(profiles[currentProfile].profileItem);
+		//populates the window and expand the profile heirarchy
 		loadProfile();
 		ui.hsProfileTreeWidget->expandAll();
 		ui.profileTreeWidget->expandAll();
 	}
+	//If no profiles exist, do nothing and ensure no profile is selected
 	else
 	{
 		currentProfile = "";
@@ -1125,13 +1217,17 @@ void NovaConfig::loadAllProfiles()
 	loadingItems = false;
 }
 
+//Creates tree widget items for a profile and all ancestors if they need one.
 void NovaConfig::createProfileItem(profile *p)
 {
+	//If the profile hasn't had an item created yet
 	if(p->item == NULL)
 	{
 		QTreeWidgetItem * item = NULL;
+		//get the name
 		string profileStr = p->name;
 
+		//if the profile has no parents create the item at the top level
 		if(p->parentProfile == "")
 		{
 			/*NOTE*/
@@ -1146,16 +1242,21 @@ void NovaConfig::createProfileItem(profile *p)
 			item->setText(0, (QString)profileStr.c_str());
 			p->profileItem = item;
 		}
+		//if the profile has ancestors
 		else
 		{
+			//find the parent and assert that they have an item
 			if(profiles.find(p->parentProfile) != profiles.end())
 			{
 				profile * parent = &profiles[p->parentProfile];
 
 				if(parent->item == NULL)
 				{
+					//if parent has no item recursively ascend until all parents do
 					createProfileItem(parent);
 				}
+				//Now that all ancestors have items, create the profile's item
+
 				//*NOTE*
 				//These items don't need to be deleted because the clear function
 				// and destructor of the tree widget does that already.
@@ -1172,46 +1273,55 @@ void NovaConfig::createProfileItem(profile *p)
 	}
 }
 
-void NovaConfig::createProfileTree(profile *p)
+//Populates an emptry ptree with all used values
+void NovaConfig::createProfileTree(string name)
 {
 	ptree temp;
-	if(p->name.compare(""))
-		temp.put<std::string>("name", p->name);
-	if(p->tcpAction.compare(""))
-		temp.put<std::string>("set.TCP", p->tcpAction);
-	if(p->udpAction.compare(""))
-		temp.put<std::string>("set.UDP", p->udpAction);
-	if(p->icmpAction.compare(""))
-		temp.put<std::string>("set.ICMP", p->icmpAction);
-	if(p->personality.compare(""))
-		temp.put<std::string>("set.personality", p->personality);
-	if(p->ethernet.compare(""))
-		temp.put<std::string>("set.ethernet", p->ethernet);
-	if(p->uptime.compare(""))
-		temp.put<std::string>("set.uptime", p->uptime);
-	if(p->uptimeRange.compare(""))
-		temp.put<std::string>("set.uptimeRange", p->uptimeRange);
-	if(p->dropRate.compare(""))
-		temp.put<std::string>("set.dropRate", p->dropRate);
-	temp.put<bool>("set.DHCP", p->DHCP);
+	profile p = profiles[name];
+	if(p.name.compare(""))
+		temp.put<std::string>("name", p.name);
+	if(p.tcpAction.compare(""))
+		temp.put<std::string>("set.TCP", p.tcpAction);
+	if(p.udpAction.compare(""))
+		temp.put<std::string>("set.UDP", p.udpAction);
+	if(p.icmpAction.compare(""))
+		temp.put<std::string>("set.ICMP", p.icmpAction);
+	if(p.personality.compare(""))
+		temp.put<std::string>("set.personality", p.personality);
+	if(p.ethernet.compare(""))
+		temp.put<std::string>("set.ethernet", p.ethernet);
+	if(p.uptime.compare(""))
+		temp.put<std::string>("set.uptime", p.uptime);
+	if(p.uptimeRange.compare(""))
+		temp.put<std::string>("set.uptimeRange", p.uptimeRange);
+	if(p.dropRate.compare(""))
+		temp.put<std::string>("set.dropRate", p.dropRate);
+	temp.put<bool>("set.DHCP", p.DHCP);
 
+	//Populates the ports, if none are found create an empty field because it is expected.
 	ptree pt;
-	if(p->ports.size())
+	if(p.ports.size())
 	{
-		for(uint i = 0; i < p->ports.size(); i++)
+		for(uint i = 0; i < p.ports.size(); i++)
 		{
-			temp.add<std::string>("add.ports.port", p->ports[i]);
+			temp.add<std::string>("add.ports.port", p.ports[i]);
 		}
 	}
 	else
 	{
 		temp.put_child("add.ports",pt);
 	}
+	//put empty ptree in profiles as well because it is expected, does not matter that it is the same
+	// as the one in add.ports if profile has no ports, since both are empty.
 	temp.put_child("profiles", pt);
-	p->tree = temp;
-	updateProfileTree(p->name);
+
+	//copy the tree over and update ancestors
+	p.tree = temp;
+	profiles[name] = p;
+	updateProfileTree(name);
 }
 
+//Either deletes a profile or updates the window to reflect a profile name change
 void NovaConfig::updateProfile(bool deleteProfile, profile * p)
 {
 	//If the profile is being deleted
@@ -1277,6 +1387,7 @@ void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 	}
 }
 
+//Self explanatory, see deleteProfile for details
 void NovaConfig::on_deleteButton_clicked()
 {
 	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && profiles.size())
@@ -1285,36 +1396,48 @@ void NovaConfig::on_deleteButton_clicked()
 	}
 }
 
+//Creates a base profile with default values seen below
 void NovaConfig::on_addButton_clicked()
 {
 	struct profile temp;
-	stringstream ss;
 	temp.name = "New Profile";
 	temp.ethernet = "Dell";
 	temp.personality = "Microsoft Windows 2003 Server";
 	temp.tcpAction = "reset";
 	temp.uptime = "0";
 	temp.ports.clear();
-	int i = 1;
 
-	while(profiles.find(temp.name) != profiles.end())
+	stringstream ss;
+	uint i = 0, j = 0;
+	j = ~j; // 2^32-1
+
+	//Finds a unique identifier
+	while((profiles.find(temp.name) != profiles.end()) && (i < j))
 	{
 		i++;
 		ss.str("");
 		ss << "New Profile-" << i;
 		temp.name = ss.str();
 	}
+	//If there is currently a selected profile, that profile will be the parent of the new profile
 	if(profiles.find(currentProfile) != profiles.end())
+	{
 		temp.parentProfile = currentProfile;
+		currentProfile = temp.name;
+	}
+	//If no profile is selected the profile is a root node
 	else
 	{
 		temp.parentProfile = "";
 		currentProfile = temp.name;
 	}
+	//Puts the profile in the table, creates a ptree and loads the new configuration
 	profiles[temp.name] = temp;
-	createProfileTree(&profiles[temp.name]);
+	createProfileTree(temp.name);
 	loadAllProfiles();
 }
+
+//Copies a profile and all of it's descendants
 void NovaConfig::on_cloneButton_clicked()
 {
 	//Do nothing if no profiles
@@ -1323,27 +1446,35 @@ void NovaConfig::on_cloneButton_clicked()
 		QTreeWidgetItem * item = ui.profileTreeWidget->selectedItems().first();
 		string profileStr = item->text(0).toStdString();
 		profile p = profiles[currentProfile];
-		int i = 1;
+
 		stringstream ss;
+		uint i = 1, j = 0;
+		j = ~j; //2^32-1
+
+		//Since we are cloning, it will already be a duplicate
 		ss.str("");
 		ss << profileStr << "-" << i;
 		p.name = ss.str();
-		//Check for name in use, if so increase number
-		while(profiles.find(p.name) != profiles.end())
+
+		//Check for name in use, if so increase number until unique name is found
+		while((profiles.find(p.name) != profiles.end()) && (i < j))
 		{
 			ss.str("");
 			i++;
 			ss << profileStr << "-" << i;
 			p.name = ss.str();
 		}
+		p.tree.put<std::string>("name",p.name);
 		//Change the profile name and put in the table, update the current profile
+		//Extract all descendants, create a ptree, update with new configuration
 		profiles[p.name] = p;
 		loadProfilesFromTree(p.name);
-		createProfileTree(&profiles[p.name]);
+		updateProfileTree(p.name);
 		loadAllProfiles();
 	}
 }
 
+//Not currently used, will be implemented in the new GUI design
 void NovaConfig::on_editPortsButton_clicked()
 {
 	/*editingPorts = true;
@@ -1604,6 +1735,7 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 	}
 }
 
+//Not currently used, will be implemented in the new GUI design TODO
 //Pops up the node edit window selecting the current node
 void NovaConfig::on_nodeEditButton_clicked()
 {
@@ -1615,7 +1747,7 @@ void NovaConfig::on_nodeEditButton_clicked()
 		nodewindow->show();
 	}*/
 }
-
+//Not currently used, will be implemented in the new GUI design TODO
 //Creates a copy of the current node and pops up the edit window
 void NovaConfig::on_nodeCloneButton_clicked()
 {
@@ -1627,7 +1759,7 @@ void NovaConfig::on_nodeCloneButton_clicked()
 		nodewindow->show();
 	}*/
 }
-
+//Not currently used, will be implemented in the new GUI design TODO
 //Creates a new node and pops up the edit window
 void NovaConfig::on_nodeAddButton_clicked()
 {
@@ -1640,7 +1772,7 @@ void NovaConfig::on_nodeAddButton_clicked()
 	}*/
 }
 
-//Gets item selection then calls the function(s) to remove the node(s)
+//Calls the function(s) to remove the node(s)
 void NovaConfig::on_nodeDeleteButton_clicked()
 {
 	if(subnets.size() || nodes.size())
