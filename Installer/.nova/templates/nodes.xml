@@ -6,26 +6,28 @@
 				<name>eth0</name>
 				<IP>192.168.3.113</IP>
 				<mask>255.255.255.0</mask>
+				<enabled>true</enabled>
 			</interface>
 			<interface>
 				<name>lo</name>
 				<IP>127.0.0.1</IP>
 				<mask>255.0.0.0</mask>
+				<enabled>true</enabled>
 			</interface>
 		</subnets>
-		<doppelganger>
+		<nodes>
+			<node>
 				<interface>lo</interface>
-				<IP>10.0.0.1</IP>
-				<enabled>1</enabled>
+				<IP>127.10.10.1</IP>
+				<enabled>true</enabled>
 				<profile>
 					<name>Dopp</name>
 				</profile>
-		</doppelganger>
-		<nodes>
+			</node>
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.10</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -33,7 +35,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.11</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -41,7 +43,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.12</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -49,7 +51,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.13</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -57,7 +59,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.14</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -65,7 +67,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.15</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -73,7 +75,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.16</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -81,7 +83,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.17</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -89,7 +91,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.18</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -97,7 +99,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.19</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -105,7 +107,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.20</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -113,7 +115,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.21</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -121,7 +123,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.22</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -129,7 +131,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.23</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -137,7 +139,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.24</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -145,7 +147,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.25</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -153,7 +155,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.26</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -161,7 +163,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.27</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -169,7 +171,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.28</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -177,7 +179,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.29</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -185,7 +187,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.30</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -193,7 +195,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.31</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -201,7 +203,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.32</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -209,7 +211,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.33</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
@@ -217,7 +219,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.34</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -225,7 +227,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.35</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
@@ -233,7 +235,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.36</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
@@ -241,7 +243,7 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>192.168.3.37</IP>
-				<enabled>1</enabled>
+				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>

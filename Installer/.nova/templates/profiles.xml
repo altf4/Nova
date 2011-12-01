@@ -27,6 +27,8 @@
 						<port>135 UDP Open</port>
 					</ports>
 				</add>
+				<profiles>
+				</profiles>
 			</profile>
 			<profile>
 				<name>LinuxServer</name>
@@ -45,6 +47,8 @@
 						<port>135 UDP Open</port>
 					</ports>
 				</add>
+				<profiles>
+				</profiles>
 			</profile>
 			<profile>
 				<name>BSDServer</name>
@@ -63,6 +67,8 @@
 						<port>135 UDP Open</port>
 					</ports>
 				</add>
+				<profiles>
+				</profiles>
 			</profile>
 			<profile>
 				<name>Dopp</name>
@@ -81,6 +87,8 @@
 						<port>135 UDP Open</port>
 					</ports>
 				</add>
+				<profiles>
+				</profiles>
 			</profile>
 		</profiles>
 	</profile>

@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="mainPage">
      <widget class="QLabel" name="mainSuspectListLabel">
@@ -48,6 +48,12 @@
         <width>311</width>
         <height>441</height>
        </rect>
+      </property>
+      <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+      <property name="horizontalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
      </widget>
      <widget class="QListWidget" name="mainHaystackList">
@@ -118,6 +124,12 @@ p, li { white-space: pre-wrap; }
         <height>461</height>
        </rect>
       </property>
+      <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+      <property name="horizontalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
      </widget>
      <widget class="QLabel" name="bListLabel">
       <property name="geometry">
@@ -153,6 +165,12 @@ p, li { white-space: pre-wrap; }
         <width>321</width>
         <height>461</height>
        </rect>
+      </property>
+      <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+      <property name="horizontalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
      </widget>
      <widget class="QPushButton" name="clearSuspectsButton">

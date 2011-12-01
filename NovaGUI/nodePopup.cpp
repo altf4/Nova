@@ -116,29 +116,29 @@ void nodePopup::saveNodeProfile()
 {
 	if(!subnetSel && profiles.size())
 	{
-		profile * currentProfile = gnode->pfile;
-		port * pr;
-		QTreeWidgetItem * item;
+		profile * currentProfile = &profiles[gnode->pfile];
+		//port * pr;
+		//QTreeWidgetItem * item;
 
 		//Saves any modifications to the last selected object.
 		if(profiles.find(currentProfile->name) != profiles.end())
 		{
-			gnode->pname = ui.profileEdit->toPlainText().toStdString();
+			gnode->pfile = ui.profileEdit->toPlainText().toStdString();
 			currentProfile->name = ui.profileEdit->toPlainText().toStdString();
 			currentProfile->ethernet = ui.ethernetEdit->toPlainText().toStdString();
 			currentProfile->tcpAction = ui.tcpActionEdit->toPlainText().toStdString();
 			currentProfile->uptime = ui.uptimeEdit->toPlainText().toStdString();
 			currentProfile->personality = ui.personalityEdit->toPlainText().toStdString();
 
-			//Save the port table
+			/*Save the port table
 			for(int i = 0; i < ui.portTreeWidget->topLevelItemCount(); i++)
 			{
-				pr = &currentProfile->ports[i];
+				pr = currentProfile->ports[i];
 				item = ui.portTreeWidget->topLevelItem(i);
 				pr->portNum = item->text(0).toStdString();
 				pr->type = item->text(1).toStdString();
 				pr->behavior = item->text(2).toStdString();
-			}
+			}*/
 		}
 	}
 }
@@ -148,9 +148,9 @@ void nodePopup::loadNodeProfile()
 {
 	bool temp = load;
 	load = true;
-	QTreeWidgetItem *item = NULL;
+	//QTreeWidgetItem *item = NULL;
 
-	if(gnode->pfile != NULL)
+	if(profiles.find(gnode->pfile) != profiles.begin())
 	{
 
 		//If subnet is selected
@@ -167,23 +167,24 @@ void nodePopup::loadNodeProfile()
 		//If node is selected
 		else
 		{
-			ui.profileEdit->setText((QString)gnode->pname.c_str());
-			ui.personalityEdit->setText((QString)gnode->pfile->personality.c_str());
-			ui.ethernetEdit->setText((QString)gnode->pfile->ethernet.c_str());
+			profile * p = &profiles[gnode->pfile];
+			ui.profileEdit->setText((QString)gnode->pfile.c_str());
+			ui.personalityEdit->setText((QString)p->personality.c_str());
+			ui.ethernetEdit->setText((QString)p->ethernet.c_str());
 			ui.ipEdit->setText((QString)gnode->address.c_str());
-			ui.tcpActionEdit->setText((QString)gnode->pfile->tcpAction.c_str());
-			ui.uptimeEdit->setText((QString)gnode->pfile->uptime.c_str());
-			ui.profileTreeWidget->setCurrentItem(gnode->pfile->item);
+			ui.tcpActionEdit->setText((QString)p->tcpAction.c_str());
+			ui.uptimeEdit->setText((QString)p->uptime.c_str());
+			ui.profileTreeWidget->setCurrentItem(p->item);
 
 			ui.portTreeWidget->clear();
 
-			if(!gnode->pfile->ports.empty())
+			/*if(!p->ports.empty())
 			{
 				struct port * prt;
 				//Populate the port table
-				for(uint i = 0; i < gnode->pfile->ports.size(); i++)
+				for(uint i = 0; i < p->ports.size(); i++)
 				{
-					prt = &gnode->pfile->ports[i];
+					prt = gnode->pfile->ports[i];
 					item = new QTreeWidgetItem(0);
 					item->setText(0,(QString)prt->portNum.c_str());
 					item->setText(1,(QString)prt->type.c_str());
@@ -191,7 +192,7 @@ void nodePopup::loadNodeProfile()
 					ui.portTreeWidget->insertTopLevelItem(i, item);
 					prt->portItem = item;
 				}
-			}
+			}*/
 		}
 	}
 	load = temp;
@@ -226,7 +227,7 @@ void nodePopup::loadAllNodes()
 		for(uint i = 0; i < it->second.nodes.size(); i++)
 		{
 
-			n = it->second.nodes[i];
+			n = &nodes[it->second.nodes[i]];
 
 			//Create the node item for the Haystack tree
 			item = new QTreeWidgetItem(it->second.item, 0);
@@ -265,7 +266,7 @@ void nodePopup::loadAllNodeProfiles()
 			item->setText(0, (QString)profileStr.c_str());
 			it->second.item = item;
 		}
-		ui.profileTreeWidget->setCurrentItem(gnode->pfile->item);
+		ui.profileTreeWidget->setCurrentItem(profiles[gnode->pfile].item);
 		loadNodeProfile();
 	}
 	load = false;
@@ -283,34 +284,6 @@ void nodePopup::pullData()
 	if(novaParent->subnets.size()) subnets = novaParent->subnets;
 	if(novaParent->nodes.size()) nodes = novaParent->nodes;
 	if(novaParent->profiles.size()) profiles = novaParent->profiles;
-
-	//Adjust subnet pointers
-	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-	{
-
-		//Adjust pointers for
-		for(uint i = 0; i < it->second.nodes.size(); i++)
-		{
-			//point to new memory location of nodes
-			it->second.nodes[i] = &nodes[it->second.nodes[i]->address];
-		}
-	}
-
-	//Adjust node pointers
-	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-	{
-		//point each node back to it's subnet and profile
-		it->second.sub = &subnets[it->second.sub->address];
-		it->second.pfile = &profiles[it->second.pname];
-	}
-
-	//Adjust profile pointers
-	for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
-	{
-
-	}
-
-	//adjusts current node pointer
 }
 
 //Copies the data to parent novaconfig and adjusts the pointers
@@ -322,32 +295,6 @@ void nodePopup::pushData()
 	if(subnets.size()) novaParent->subnets = subnets;
 	if(nodes.size()) novaParent->nodes = nodes;
 	if(profiles.size()) novaParent->profiles = profiles;
-
-	//Adjust subnet pointers
-	for(SubnetTable::iterator it = novaParent->subnets.begin(); it != novaParent->subnets.end(); it++)
-	{
-
-		//Adjust vector of node pointers
-		for(uint i = 0; i < it->second.nodes.size(); i++)
-		{
-			//point to new memory location of nodes
-			it->second.nodes[i] = &novaParent->nodes[it->second.nodes[i]->address];
-		}
-	}
-
-	//Adjust node pointers
-	for(NodeTable::iterator it = novaParent->nodes.begin(); it != novaParent->nodes.end(); it++)
-	{
-		//point each node back to it's subnet and profile
-		it->second.sub = &novaParent->subnets[it->second.sub->address];
-		it->second.pfile = &novaParent->profiles[it->second.pname];
-	}
-
-	//Adjust profile pointers
-	for(ProfileTable::iterator it = novaParent->profiles.begin(); it != novaParent->profiles.end(); it++)
-	{
-
-	}
 }
 
 /************************************************
@@ -369,7 +316,7 @@ void nodePopup::on_nodeTreeWidget_itemSelectionChanged()
 			{
 				subnetSel = false;
 				gnode = &nodes[address];
-				gnet = gnode->sub;
+				gnet = &subnets[gnode->sub];
 				load = true;
 				loadNodeProfile();
 				load = false;
@@ -378,7 +325,7 @@ void nodePopup::on_nodeTreeWidget_itemSelectionChanged()
 			{
 				gnet = &subnets[address];
 				if(gnet->nodes.size())
-					gnode = gnet->nodes.front();
+					gnode = &nodes[gnet->nodes.front()];
 				else gnode = NULL;
 				subnetSel = true;
 				load = true;
@@ -398,8 +345,7 @@ void nodePopup::on_profileTreeWidget_itemSelectionChanged()
 		{
 			QTreeWidgetItem * item = ui.profileTreeWidget->selectedItems().first();
 			string name = item->text(0).toStdString();
-			gnode->pname = name;
-			gnode->pfile = &profiles[name];
+			gnode->pfile = name;
 			load = true;
 			loadNodeProfile();
 			load = false;
@@ -461,7 +407,7 @@ void nodePopup::on_enableButton_clicked()
 	{
 		for(uint i = 0; i < gnet->nodes.size(); i++)
 		{
-			gnet->nodes[i]->enabled = true;
+			nodes[gnet->nodes[i]].enabled = true;
 
 		}
 		gnet->enabled = true;
@@ -487,7 +433,7 @@ void nodePopup::on_disableButton_clicked()
 	{
 		for(uint i = 0; i < gnet->nodes.size(); i++)
 		{
-			gnet->nodes[i]->enabled = false;
+			nodes[gnet->nodes[i]].enabled = false;
 
 		}
 		gnet->enabled = false;
@@ -517,7 +463,7 @@ void nodePopup::on_editPortsButton_clicked()
 	editingPorts = true;
 	if(!ui.profileTreeWidget->selectedItems().isEmpty() && !subnetSel)
 	{
-		portwind = new portPopup(this, gnode->pfile, FROM_NODE_CONFIG, homePath);
+		portwind = new portPopup(this, &profiles[gnode->pfile], FROM_NODE_CONFIG, homePath);
 		loadAllNodes();
 		portwind->show();
 	}

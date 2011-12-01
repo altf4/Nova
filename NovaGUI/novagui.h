@@ -12,6 +12,7 @@
 #include <QtGui/QTreeWidget>
 #include "ui_novagui.h"
 #include <boost/property_tree/ptree.hpp>
+#include <boost/foreach.hpp>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <Suspect.h>
@@ -61,7 +62,7 @@ struct script
 {
 	string name;
 	string path;
-	ptree * treePtr;
+	ptree tree;
 };
 
 //Container for accessing script items
@@ -79,8 +80,7 @@ struct port
 	string scriptName;
 	string proxyIP;
 	string proxyPort;
-	script * scriptPtr;
-	ptree * treePtr;
+	ptree tree;
 };
 //Container for accessing port items
 typedef google::dense_hash_map<string, port, tr1::hash<string>, eq > PortTable;
@@ -97,8 +97,8 @@ struct subnet
 	in_addr_t base;
 	in_addr_t max;
 	bool enabled;
-	vector<struct node *> nodes;
-	ptree * treePtr;
+	vector<string> nodes;
+	ptree tree;
 };
 
 //Container for accessing subnet items
@@ -120,9 +120,9 @@ struct profile
 	string uptimeRange;
 	string dropRate;
 	bool DHCP;
-	vector<struct port> ports;
-	profile * parentProfile;
-	ptree * ptreePtr;
+	vector<string> ports;
+	string  parentProfile;
+	ptree tree;
 };
 
 //Container for accessing profile items
@@ -133,30 +133,17 @@ struct node
 {
 	QTreeWidgetItem * item;
 	QTreeWidgetItem * nodeItem;
-	struct subnet * sub;
+	string sub;
 	string interface;
-	struct profile * pfile;
+	string pfile;
 	string address;
 	in_addr_t realIP;
-	string pname;
 	bool enabled;
-	ptree * treePtr;
+	ptree tree;
 };
 
 //Container for accessing node items
 typedef google::dense_hash_map<string, node, tr1::hash<string>, eq > NodeTable;
-
-//Used to store the current doppelganger
-struct doppelganger
-{
-	string interface;
-	struct profile * pfile;
-	string address;
-	in_addr_t realIP;
-	string pname;
-	bool enabled;
-	ptree * treePtr;
-};
 
 struct suspectItem
 {
@@ -179,7 +166,6 @@ public:
     bool runAsWindowUp;
 
     string group;
-    doppelganger dm;
 
     SubnetTable subnets;
     PortTable ports;
@@ -243,13 +229,17 @@ public:
     //add ports or subsystems
     void loadProfileAdd(ptree *ptr, profile *p);
     //recursive descent down profile tree
-    void loadSubProfiles(ptree *ptr, profile *p);
+    void loadSubProfiles(string parent);
 
     //load current honeyd configuration group
     void loadGroup();
     void loadSubnets(ptree *ptr);
-    void loadDoppelganger(ptree *ptr);
     void loadNodes(ptree *ptr);
+
+    //Saves the current configuration information to XML files
+    void saveAll();
+    //Writes the current configuration to honeyd configs
+    void writeHoneyd();
 
 
 private slots:
