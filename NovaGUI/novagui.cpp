@@ -373,56 +373,56 @@ void *CEDraw(void *ptr)
 void NovaGUI::saveAll()
 {
 	using boost::property_tree::ptree;
-	ptree * pt = NULL;
+	ptree pt;
 
 	//Scripts
 	scriptTree.clear();
 	for(ScriptTable::iterator it = scripts.begin(); it != scripts.end(); it++)
 	{
-		pt = &it->second.tree;
-		pt->put<std::string>("name", it->second.name);
-		pt->put<std::string>("path", it->second.path);
-		scriptTree.add_child("scripts.script", *pt);
+		pt = it->second.tree;
+		pt.put<std::string>("name", it->second.name);
+		pt.put<std::string>("path", it->second.path);
+		scriptTree.add_child("scripts.script", pt);
 	}
 
 	//Ports
 	portTree.clear();
 	for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
 	{
-		pt = &it->second.tree;
-		pt->put<std::string>("name", it->second.portName);
-		pt->put<std::string>("number", it->second.portNum);
-		pt->put<std::string>("type", it->second.type);
-		pt->put<std::string>("behavior", it->second.behavior);
+		pt = it->second.tree;
+		pt.put<std::string>("name", it->second.portName);
+		pt.put<std::string>("number", it->second.portNum);
+		pt.put<std::string>("type", it->second.type);
+		pt.put<std::string>("behavior", it->second.behavior);
 		//If this port uses a script, save it.
 		if(!it->second.behavior.compare("script") || !it->second.behavior.compare("internal"))
 		{
-			pt->put<std::string>("script", it->second.scriptName);
+			pt.put<std::string>("script", it->second.scriptName);
 		}
 		//If the port works as a proxy, save destination
 		else if(!it->second.behavior.compare("proxy"))
 		{
-			pt->put<std::string>("IP", it->second.proxyIP);
-			pt->put<std::string>("Port", it->second.proxyPort);
+			pt.put<std::string>("IP", it->second.proxyIP);
+			pt.put<std::string>("Port", it->second.proxyPort);
 		}
-		portTree.add_child("ports.port", *pt);
+		portTree.add_child("ports.port", pt);
 	}
 
 	subnetTree->clear();
 	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 	{
-		pt = &it->second.tree;
+		pt = it->second.tree;
 
 		//TODO assumes subnet is interface, need to discover and handle if virtual
-		pt->put<std::string>("name", it->second.name);
-		pt->put<bool>("enabled",it->second.enabled);
+		pt.put<std::string>("name", it->second.name);
+		pt.put<bool>("enabled",it->second.enabled);
 
 		//Remove /## format mask from the address then put it in the XML.
 		stringstream ss;
 		ss << "/" << it->second.maskBits;
 		int i = ss.str().size();
 		string temp = it->second.address.substr(0,(it->second.address.size()-i));
-		pt->put<std::string>("IP", temp);
+		pt.put<std::string>("IP", temp);
 
 		//Gets the mask from mask bits then put it in XML
 		in_addr_t mask = pow(2, 32-it->second.maskBits) - 1;
@@ -433,36 +433,35 @@ void NovaGUI::saveAll()
 		addr.s_addr = htonl(mask);
 		//call ntoa to get char * and make string
 		temp = string(inet_ntoa(addr));
-		pt->put<std::string>("mask", temp);
-		subnetTree->add_child("interface", *pt);
+		pt.put<std::string>("mask", temp);
+		subnetTree->add_child("interface", pt);
 	}
 
 	//Nodes
 	nodesTree->clear();
 	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
-		pt = &it->second.tree;
+		pt = it->second.tree;
 		//Required xml entires
-		pt->put<std::string>("interface", it->second.interface);
-		pt->put<std::string>("IP", it->second.address);
-		pt->put<bool>("enabled", it->second.enabled);
-		pt->put<std::string>("profile.name", it->second.pfile);
-		nodesTree->add_child("node",*pt);
+		pt.put<std::string>("interface", it->second.interface);
+		pt.put<std::string>("IP", it->second.address);
+		pt.put<bool>("enabled", it->second.enabled);
+		pt.put<std::string>("profile.name", it->second.pfile);
+		nodesTree->add_child("node",pt);
 	}
 	profileTree.clear();
 	for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 	{
 		if(it->second.parentProfile == "")
 		{
-			pt = &it->second.tree;
-			profileTree.add_child("profiles.profile", *pt);
+			pt = it->second.tree;
+			profileTree.add_child("profiles.profile", pt);
 		}
 	}
 	write_xml(homePath+"/scripts.xml", scriptTree);
 	write_xml(homePath+"/templates/ports.xml", portTree);
 	write_xml(homePath+"/templates/nodes.xml", groupTree);
 	write_xml(homePath+"/templates/profiles.xml", profileTree);
-	pt = NULL;
 }
 
 //Writes the current configuration to honeyd configs

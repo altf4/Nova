@@ -239,7 +239,7 @@ public:
     //Saves the current configuration information to XML files
     void saveAll();
     //Writes the current configuration to honeyd configs
-    void writeHoneyd();
+    void writeHoneyd(); //TODO
 
 
 private slots:
