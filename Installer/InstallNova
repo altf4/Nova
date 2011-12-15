@@ -1,7 +1,7 @@
 #make folder in etc with path locations to nova files
 mkdir /etc/nova
 cp Read/paths /etc/nova
-cp Read/nmap-os-fingerprints /etc/nova
+cp Read/nmap-os-db /etc/nova
 
 #Copy the hidden directories and files
 mkdir $HOME/.nova

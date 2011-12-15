@@ -1,49 +1,49 @@
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
-cd $HOME/Code/NovaGit/Nova/NovaLibrary/Debug/
+cd $HOME/Code/Nova/NovaLibrary/Debug/
 make
-cd $HOME/Code/NovaGit/Nova/ClassificationEngine/Debug/
+cd $HOME/Code/Nova/ClassificationEngine/Debug/
 make
-cd $HOME/Code/NovaGit/Nova/DoppelgangerModule/Debug/
+cd $HOME/Code/Nova/DoppelgangerModule/Debug/
 make
-cd $HOME/Code/NovaGit/Nova/Haystack/Debug/
+cd $HOME/Code/Nova/Haystack/Debug/
 make
-cd $HOME/Code/NovaGit/Nova/LocalTrafficMonitor/Debug/
+cd $HOME/Code/Nova/LocalTrafficMonitor/Debug/
 make
 
 cd $DIR
 
-cp $HOME/Code/NovaGit/Nova/NovaGUI/NovaGUI bin
-cp $HOME/Code/NovaGit/Nova/ClassificationEngine/Debug/ClassificationEngine bin
-cp $HOME/Code/NovaGit/Nova/DoppelgangerModule/Debug/DoppelgangerModule bin
-cp $HOME/Code/NovaGit/Nova/Haystack/Debug/Haystack bin
-cp $HOME/Code/NovaGit/Nova/LocalTrafficMonitor/Debug/LocalTrafficMonitor bin
+cp $HOME/Code/Nova/NovaGUI/NovaGUI bin
+cp $HOME/Code/Nova/ClassificationEngine/Debug/ClassificationEngine bin
+cp $HOME/Code/Nova/DoppelgangerModule/Debug/DoppelgangerModule bin
+cp $HOME/Code/Nova/Haystack/Debug/Haystack bin
+cp $HOME/Code/Nova/LocalTrafficMonitor/Debug/LocalTrafficMonitor bin
 
 #Copy the Log4cxx config xml files, and rename them
-cp $HOME/Code/NovaGit/Nova/ClassificationEngine/Config/Log4cxxConfig.xml .nova/Config
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/NovaGit/Nova/DoppelgangerModule/Config
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/NovaGit/Nova/Haystack/Config
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/NovaGit/Nova/LocalTrafficMonitor/Config
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/NovaGit/Nova/NovaGUI/Config
+cp $HOME/Code/Nova/ClassificationEngine/Config/Log4cxxConfig.xml .nova/Config
+cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/DoppelgangerModule/Config
+cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/Haystack/Config
+cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/LocalTrafficMonitor/Config
+cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/NovaGUI/Config
 
-cp $HOME/Code/NovaGit/Nova/ClassificationEngine/Config/Log4cxxConfig_Console.xml .nova/Config
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/NovaGit/Nova/DoppelgangerModule/Config
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/NovaGit/Nova/Haystack/Config
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/NovaGit/Nova/LocalTrafficMonitor/Config
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/NovaGit/Nova/NovaGUI/Config
+cp $HOME/Code/Nova/ClassificationEngine/Config/Log4cxxConfig_Console.xml .nova/Config
+cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/DoppelgangerModule/Config
+cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/Haystack/Config
+cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/LocalTrafficMonitor/Config
+cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/NovaGUI/Config
 
 #Copy all the Nova config files
-cp $HOME/Code/NovaGit/Nova/ClassificationEngine/Config/NOVAConfig.txt .nova/Config
-cp .nova/Config/NOVAConfig.txt $HOME/Code/NovaGit/Nova/DoppelgangerModule/Config
-cp .nova/Config/NOVAConfig.txt $HOME/Code/NovaGit/Nova/Haystack/Config
-cp .nova/Config/NOVAConfig.txt $HOME/Code/NovaGit/Nova/LocalTrafficMonitor/Config
-cp .nova/Config/NOVAConfig.txt $HOME/Code/NovaGit/Nova/NovaGUI/Config
+cp $HOME/Code/Nova/ClassificationEngine/Config/NOVAConfig.txt .nova/Config
+cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/DoppelgangerModule/Config
+cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/Haystack/Config
+cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/LocalTrafficMonitor/Config
+cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/NovaGUI/Config
 
 #Honeyd Config files.
-cp $HOME/Code/NovaGit/Nova/Haystack/Config/haystack.config .nova/Config
-cp $HOME/Code/NovaGit/Nova/DoppelgangerModule/Config/doppelganger.config .nova/Config
+cp $HOME/Code/Nova/Haystack/Config/haystack.config .nova/Config
+cp $HOME/Code/Nova/DoppelgangerModule/Config/doppelganger.config .nova/Config
 
 #Classification database
-cp $HOME/Code/NovaGit/Nova/ClassificationEngine/Config/data.txt .nova/Data
+cp $HOME/Code/Nova/ClassificationEngine/Config/data.txt .nova/Data
 
 echo "Nova Installer Updated From Source"
