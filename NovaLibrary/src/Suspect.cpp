@@ -239,15 +239,15 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
 	//	returns the number of bytes read from the buffer
 	offset += features.deserializeFeatureSet(buf+offset);
 
+	struct silentAlarmFeatureData temp;
 	for(uint i = 0; i < DIMENSION; i++)
 	{
-		features.SATable[hostAddr].features[i] = features.features[i];
+		temp.features[i] = features.features[i];
 	}
-	features.SATable[hostAddr].packetCount = 0;
+	temp.packetCount = 0;
+	features.SATable[hostAddr] = temp;
 
-	offset += features.deserializeFeatureData(buf+offset, hostAddr);
-
-	return offset;
+	return offset += features.deserializeFeatureData(buf+offset, hostAddr);
 }
 
 //Extracts and returns the IP Address from a serialized suspect located at buf
