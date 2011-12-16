@@ -496,9 +496,10 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	size_t bufSize = sizeof buf;
 
 	Suspect *suspect = NULL;
-
+	cout << sizeof(in_port_t) << " : " << sizeof(uint16_t) << endl;
 	while(1)
 	{
+		bzero(buf, MAX_SUSPECT_SIZE);
 		//Do the actual "listen"
 		if ((numbytes = recvfrom(sockfd,buf,bufSize,0,sockaddrPtr,addr_lenPtr)) == -1)
 		{
@@ -506,6 +507,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(sockfd);
 			exit(1);
 		}
+		cout << "NumBytes: " << numbytes << endl;
 
 		//If this is from ourselves, then drop it.
 		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
@@ -914,6 +916,7 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
+	bzero(data, MAX_SUSPECT_SIZE);
 	dataLen = suspect->serializeSuspect(data);
 
 	//If the hostility hasn't changed don't bother the DM
@@ -965,7 +968,6 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		close(sockfd);
 		return;
 	}
-	bzero(data, dataLen);
 }
 
 ///Receive a TrafficEvent from another local component.

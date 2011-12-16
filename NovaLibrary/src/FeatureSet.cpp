@@ -151,7 +151,7 @@ void FeatureSet::CalculateHaystackEventFrequency()
 {
 	if(totalIntervalAll > 0)
 	{
-		features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEventsAll)) / (totalIntervalAll);
+		features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEventsAll)) / (double)(totalIntervalAll);
 	}
 }
 
@@ -337,8 +337,6 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 	uint offset = 0;
 	//Bytes in a word, used for everything but port #'s
 	uint size = 4;
-	//Port # is 2 bytes
-	uint psize = 2;
 
 	//Total interval time for this feature set
 	time_t totalInterval = endTime - startTime;
@@ -381,8 +379,9 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 
 	for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
 	{
-		memcpy(buf+offset, &it->first, psize);
-		offset += psize;
+		uint temp = it->first;
+		memcpy(buf+offset, &temp, size);
+		offset += size;
 		memcpy(buf+offset, &it->second, size);
 		offset += size;
 	}
@@ -395,8 +394,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	uint offset = 0;
 	//Bytes in a word, used for everything but port #'s
 	uint size = 4;
-	//Bytes in a port #
-	uint psize = 2;
+
 	//Temporary struct to store SA sender's information
 	struct silentAlarmFeatureData SAData;
 	for(uint i = 0; i < DIMENSION; i++)
@@ -407,8 +405,6 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	//Temporary variables to store and track data during deserialization
 	uint temp;
 	uint tempCount;
-	uint16_t ptemp;
-
 
 	//Required, individual variables for calculation
 	memcpy(&SAData.totalInterval, buf+offset, size);
@@ -478,12 +474,14 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	for(uint i = 0; i < SAData.packetCount;)
 	{
-		memcpy(&ptemp, buf+offset, psize);
-		offset += psize;
+		memcpy(&temp, buf+offset, size);
+		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.portTable[ptemp] = tempCount;
+		cout << "Port: " << temp << " #: " << tempCount << endl;
+		SAData.portTable[temp] = tempCount;
 		i += tempCount;
+
 	}
 
 	//If this host has previous data from this sender, remove the old information
@@ -521,15 +519,24 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	for(Packet_Table::iterator it = SAData.packTable.begin(); it != SAData.packTable.end(); it++)
 	{
-		packTableAll[it->first] += it->second;
+		if(packTableAll.count(it->first) == 0)
+			packTableAll[it->first] = it->second;
+		else
+			packTableAll[it->first] += it->second;
 	}
 	for(IP_Table::iterator it = SAData.IPTable.begin(); it != SAData.IPTable.end(); it++)
 	{
-		IPTableAll[it->first] += it->second;
+		if(IPTableAll.count(it->first) == 0)
+			IPTableAll[it->first] = it->second;
+		else
+			IPTableAll[it->first] += it->second;
 	}
 	for(Port_Table::iterator it = SAData.portTable.begin(); it != SAData.portTable.end(); it++)
 	{
-		portTableAll[it->first] += it->second;
+		if(portTableAll.count(it->first) == 0)
+			portTableAll[it->first] = it->second;
+		else
+			portTableAll[it->first] += it->second;
 	}
 
 	//Copy the Data over
