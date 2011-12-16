@@ -18,9 +18,9 @@ namespace ClassificationEngine{
 Suspect::Suspect()
 {
 	IP_address.s_addr = 0;
-	classification = 0;
-	needs_classification_update = true;
-	needs_feature_update = true;
+	classification = -1;
+	needs_classification_update = false;
+	needs_feature_update = false;
 	flaggedByAlarm = false;
 	isHostile = false;
 	features = FeatureSet();
@@ -108,6 +108,7 @@ void Suspect::CalculateFeatures(bool isTraining)
 	}
 	this->evidence.clear();
 	//For-each piece of evidence
+	this->features.CalculateTimeInterval();
 	this->features.CalculateDistinctIPs();
 	this->features.CalculateDistinctPorts();
 	this->features.CalculateIPTrafficDistribution();
@@ -242,10 +243,19 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
 	{
 		features.SATable[hostAddr].features[i] = features.features[i];
 	}
+	features.SATable[hostAddr].packetCount = 0;
 
 	offset += features.deserializeFeatureData(buf+offset, hostAddr);
 
 	return offset;
+}
+
+//Extracts and returns the IP Address from a serialized suspect located at buf
+uint getSerializedAddr(u_char * buf)
+{
+	uint addr = 0;
+	memcpy(&addr, buf, 4);
+	return addr;
 }
 
 }
