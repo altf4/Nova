@@ -514,6 +514,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 		try
 		{
+			cout << sendaddr.sin_addr.s_addr << endl;
 			suspect->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
 			bzero(buf, numbytes);
 
