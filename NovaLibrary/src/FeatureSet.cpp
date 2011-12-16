@@ -356,14 +356,14 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
-		memcpy(buf+offset, &it->second.second, size);
+		memcpy(buf+offset, &it->second.first, size);
 		offset += size;
 	}
 	for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
 	{
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
-		memcpy(buf+offset, &it->second.second, size);
+		memcpy(buf+offset, &it->second.first, size);
 		offset += size;
 	}
 
@@ -372,7 +372,7 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 		//uint temp = it->first; Might need to use 4 bytes here?
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
-		memcpy(buf+offset, &it->second.second, size);
+		memcpy(buf+offset, &it->second.first, size);
 		offset += size;
 	}
 
