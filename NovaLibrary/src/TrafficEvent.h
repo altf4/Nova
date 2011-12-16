@@ -100,7 +100,7 @@ class TrafficEvent
 		bool isHostile;
 
 		///A vector of the sizes of the IP layers of
-		vector <uint> IP_packet_sizes;
+		vector <int> IP_packet_sizes;
 		///A vector of start times for all packets in a tcp session
 		vector <time_t> packet_intervals;
 

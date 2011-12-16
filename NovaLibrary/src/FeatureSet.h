@@ -69,9 +69,9 @@ struct eqport
 };
 
 //Equality operator used by google's dense hash map
-struct equint
+struct eqint
 {
-  bool operator()(uint s1, uint s2) const
+  bool operator()(int s1, int s2) const
   {
 	    return (s1 == s2);
   }
@@ -79,7 +79,7 @@ struct equint
 
 typedef google::dense_hash_map<in_addr_t, uint, tr1::hash<in_addr_t>, eqaddr > IP_Table;
 typedef google::dense_hash_map<in_port_t, uint, tr1::hash<in_port_t>, eqport > Port_Table;
-typedef google::dense_hash_map<uint, uint, tr1::hash<uint>, equint > Packet_Table;
+typedef google::dense_hash_map<int, uint, tr1::hash<uint>, eqint > Packet_Table;
 
 struct silentAlarmFeatureData
 {
