@@ -30,6 +30,8 @@
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
+///The Max suspect data size, set to 2mb
+#define MAX_SUSPECT_SIZE 2048000
 //dimension
 #define DIM 9
 //Number of values read from the NOVAConfig file

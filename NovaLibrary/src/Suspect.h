@@ -80,6 +80,11 @@ public:
 	//	returns the number of bytes read from the buffer
 	uint deserializeSuspect(u_char * buf);
 
+	//Reads Suspect information from a buffer originally populated by serializeSuspect
+	// when given a hostAddr it stores features[DIMENSION] in SATable[hostAddr].features[DIMENSION]
+	//	returns the number of bytes read from the buffer
+	uint deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr);
+
 };
 }
 }
