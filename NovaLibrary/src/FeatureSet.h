@@ -77,9 +77,10 @@ struct eqint
   }
 };
 
-typedef google::dense_hash_map<in_addr_t, uint, tr1::hash<in_addr_t>, eqaddr > IP_Table;
-typedef google::dense_hash_map<in_port_t, uint, tr1::hash<in_port_t>, eqport > Port_Table;
-typedef google::dense_hash_map<int, uint, tr1::hash<uint>, eqint > Packet_Table;
+
+typedef google::dense_hash_map<in_addr_t, pair<uint, uint>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
+typedef google::dense_hash_map<in_port_t, pair<uint, uint>, tr1::hash<in_port_t>, eqport > Port_Table;
+typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<uint>, eqint > Packet_Table;
 
 struct silentAlarmFeatureData
 {
@@ -185,40 +186,21 @@ private:
 	uint portMax;
 
 	//Tracks the number of HS events
-	uint haystackEvents;
+	pair<uint, uint> haystackEvents;
 
 	time_t startTime;
 	time_t endTime;
-	time_t totalInterval;
+	pair<time_t, time_t> totalInterval;
 
 	//Number of packets total
-	uint packetCount;
+	pair<uint, uint> packetCount;
 	//Total number of bytes in all packets
-	uint bytesTotal;
+	pair<uint, uint> bytesTotal;
 
 	///A vector of packet arrival times for tracking traffic over time.
 	vector <time_t> packet_times;
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
-
-	//Number of packets total
-	uint packetCountAll;
-	//Total number of bytes in all packets
-	uint bytesTotalAll;
-	//Tracks the number of HS events among all nova instances.
-	uint haystackEventsAll;
-	//Sum of all intervals from all nova instances
-	time_t totalIntervalAll;
-
-	//Table of Packet sizes and counts for variance calc, used to include SA data
-	Packet_Table packTableAll;
-	//Table of IP addresses and associated packet counts, used to include SA data
-	IP_Table IPTableAll;
-	//Table of Ports and associated packet counts, used to include SA data
-	Port_Table portTableAll;
-
-	//Flag to indicate that the SAData is current so update evidence can continue to add to the All tables
-	//bool SADataCurrent;
 
 };
 }
