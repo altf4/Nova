@@ -57,7 +57,7 @@ struct sockaddr* serv_addrPtr = (struct sockaddr *)&serv_addr;
 int len;
 int oldClassification;
 
-u_char data[MAX_SUSPECT_SIZE];
+u_char data[MAX_MSG_SIZE];
 uint dataLen;
 
 int numBytesRead;
@@ -458,7 +458,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
-	u_char buf[MAX_SUSPECT_SIZE];
+	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
 	int numbytes;
@@ -501,7 +501,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	while(1)
 	{
-		bzero(buf, MAX_SUSPECT_SIZE);
+		bzero(buf, MAX_MSG_SIZE);
 		//Do the actual "listen"
 		if ((numbytes = recvfrom(sockfd,buf,bufSize,0,sockaddrPtr,addr_lenPtr)) == -1)
 		{
@@ -917,7 +917,7 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
-	bzero(data, MAX_SUSPECT_SIZE);
+	bzero(data, MAX_MSG_SIZE);
 	dataLen = suspect->serializeSuspect(data);
 
 	//If the hostility hasn't changed don't bother the DM
@@ -947,7 +947,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	}
 
 	//Update other Nova Instances with latest suspect Data
-	dataLen += suspect->features.serializeFeatureData(data+dataLen);
+	dataLen += suspect->features.serializeFeatureData(data+dataLen, hostAddr.sin_addr.s_addr);
 	//Send Silent Alarm to other Nova Instances with feature Data
 	if ((sockfd = socket(AF_INET,SOCK_DGRAM,0)) == -1)
 	{
