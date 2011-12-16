@@ -478,7 +478,6 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		cout << "Port: " << temp << " #: " << tempCount << endl;
 		SAData.portTable[temp] = tempCount;
 		i += tempCount;
 
