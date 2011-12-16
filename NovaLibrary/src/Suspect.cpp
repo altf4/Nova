@@ -108,14 +108,8 @@ void Suspect::CalculateFeatures(bool isTraining)
 	}
 	this->evidence.clear();
 	//For-each piece of evidence
-	this->features.CalculateTimeInterval();
-	this->features.CalculateDistinctIPs();
-	this->features.CalculateDistinctPorts();
-	this->features.CalculateIPTrafficDistribution();
-	this->features.CalculatePortTrafficDistribution();
-	this->features.CalculateHaystackEventFrequency();
-	this->features.CalculatePacketSizeDeviation();
-	this->features.CalculatePacketIntervalDeviation();
+	this->features.CalculateAll();
+
 	if(isTraining)
 	{
 		if(this->features.features[DISTINCT_IPS] > 2)

@@ -41,6 +41,10 @@
 #define INITIAL_PORT_SIZE 1024
 #define INITIAL_PACKET_SIZE 4096
 
+//boolean values for updateFeatureData()
+#define INCLUDE true
+#define REMOVE false
+
 
 
 //TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
@@ -90,13 +94,11 @@ struct silentAlarmFeatureData
 
 	// endTime - startTime : used to incorporate time based information correctly.
 	uint totalInterval;
-
-	//Derived values:
-	// haystackEvents = totalInterval * features[HAYSTACK_EVENT_FREQUENCY]
+	//Number of TrafficEvents that originate from the haystack
 	uint haystackEvents;
-	// packetCount = totalInterval / features[PACKET_INTERVAL_MEAN]
+	//Total number of packets
 	uint packetCount;
-	// bytesTotal = packetCount * features[PACKET_SIZE_MEAN]
+	//Total number of bytes
 	uint bytesTotal;
 
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
@@ -123,34 +125,49 @@ class FeatureSet
 public:
 	/// The actual feature values
 	double features[DIMENSION];
+
 	//Table of Nova hosts and feature set data needed to include silent alarm information in classifications
 	Silent_Alarm_Table SATable;
+
+	//Number of packets total
+	pair<uint, uint> packetCount;
 
 	FeatureSet();
 	///Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
-	///Calculates the total interval for time based features using latest timestamps
+	//Calculates all features in the feature set
+	void CalculateAll();
+	///Calculates the local time interval for time-dependent features using the latest time stamps
 	void CalculateTimeInterval();
-	///Calculates a feature
+
+	///Calculates the distribution of traffic across IP address
 	void CalculateIPTrafficDistribution();
-	///Calculates a feature
+	///Calculates the distribution of traffic across ports
 	void CalculatePortTrafficDistribution();
+
 	///Calculates distinct IPs contacted
 	void CalculateDistinctIPs();
 	///Calculates distinct ports contacted
 	void CalculateDistinctPorts();
-	///Calculates a feature
+
+	///Calculates the rate that haystack nodes are contacted
 	void CalculateHaystackEventFrequency();
-	///Calculates a feature
+
+	///Calculates the mean packet size
 	void CalculatePacketSizeMean();
-	///Calculates a feature
+	///Calculates the standard deviation of the packet sizes
 	void CalculatePacketSizeDeviation();
-	///Calculates a feature
+
+	///Calculates the average time between packets
 	void CalculatePacketIntervalMean();
-	///Calculates a feature
+	///Calculates the standard deviation of time between packets
 	void CalculatePacketIntervalDeviation();
+
 	/// Processes incoming evidence before calculating the features
 	void UpdateEvidence(TrafficEvent *event);
+	//Adds the local data to the silent alarm data before calculation
+	// this is done to improve the performance of UpdateEvidence
+	void UpdateFeatureData(bool include);
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
@@ -192,8 +209,6 @@ private:
 	time_t endTime;
 	pair<time_t, time_t> totalInterval;
 
-	//Number of packets total
-	pair<uint, uint> packetCount;
 	//Total number of bytes in all packets
 	pair<uint, uint> bytesTotal;
 
