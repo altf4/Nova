@@ -496,7 +496,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	size_t bufSize = sizeof buf;
 
 	Suspect *suspect = NULL;
-	cout << sizeof(in_port_t) << " : " << sizeof(uint16_t) << endl;
+
 	while(1)
 	{
 		bzero(buf, MAX_SUSPECT_SIZE);
@@ -507,7 +507,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(sockfd);
 			exit(1);
 		}
-		cout << "NumBytes: " << numbytes << endl;
 
 		//If this is from ourselves, then drop it.
 		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
