@@ -38,19 +38,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: ClassificationEngine
+all: DoppelgangerModule
 
 # Tool invocations
-ClassificationEngine: $(OBJS) $(USER_OBJS)
+DoppelgangerModule: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L../../NovaLibrary/Debug -pg -o"ClassificationEngine" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../NovaLibrary/Debug -o"DoppelgangerModule" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) ClassificationEngine
+	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) DoppelgangerModule
 	-@echo ' '
 
 .PHONY: all clean dependents
