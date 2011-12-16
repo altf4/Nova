@@ -205,5 +205,48 @@ uint Suspect::deserializeSuspect(u_char * buf)
 	return offset;
 }
 
+//Reads Suspect information from a buffer originally populated by serializeSuspect
+// populates SATable[hostAddr],	returns the number of bytes read from the buffer
+uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
+{
+	uint offset = 0;
+	uint bsize = 1; //bools
+	uint isize = 4; //s_addr, int etc
+	uint dsize = 8; //doubles, annPoints
+
+	//Copies the value and increases the offset
+	memcpy(&IP_address.s_addr, buf, isize);
+	offset+= isize;
+	memcpy(&classification, buf+offset, dsize);
+	offset+= dsize;
+	memcpy(&isHostile, buf+offset, bsize);
+	offset+= bsize;
+	memcpy(&needs_classification_update, buf+offset, bsize);
+	offset+= bsize;
+	memcpy(&needs_feature_update, buf+offset, bsize);
+	offset+= bsize;
+	memcpy(&flaggedByAlarm, buf+offset, bsize);
+	offset+= bsize;
+
+	for(uint i = 0; i < DIMENSION; i++)
+	{
+		memcpy(&annPoint[i], buf+offset, dsize);
+		offset+= dsize;
+	}
+
+	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
+	//	returns the number of bytes read from the buffer
+	offset += features.deserializeFeatureSet(buf+offset);
+
+	for(uint i = 0; i < DIMENSION; i++)
+	{
+		features.SATable[hostAddr].features[i] = features.features[i];
+	}
+
+	offset += features.deserializeFeatureData(buf+offset, hostAddr);
+
+	return offset;
+}
+
 }
 }

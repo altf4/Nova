@@ -55,8 +55,9 @@ struct sockaddr* alarmRemotePtr =(struct sockaddr *)&alarmRemote;
 struct sockaddr_in serv_addr;
 struct sockaddr* serv_addrPtr = (struct sockaddr *)&serv_addr;
 int len;
+int oldClassification;
 
-u_char data[MAX_MSG_SIZE];
+u_char data[MAX_SUSPECT_SIZE];
 uint dataLen;
 
 int numBytesRead;
@@ -340,7 +341,6 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 //	for all the current suspects
 void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 {
-	int oldClassification;
 
 	//Builds the GUI address
 	string GUIKey = homePath + CE_FILENAME;
@@ -388,13 +388,8 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 
 				Classify(it->second);
 				cout << it->second->ToString();
-
-				//If the hostility changed
-				if( oldClassification != it->second->isHostile)
-				{
+				if(it->second->isHostile)
 					SilentAlarm(it->second);
-				}
-
 				SendToUI(it->second);
 			}
 		}
@@ -459,7 +454,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
-	u_char buf[MAX_MSG_SIZE];
+	u_char buf[MAX_SUSPECT_SIZE];
 	struct sockaddr_in sendaddr;
 
 	int numbytes;
@@ -520,7 +515,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 		try
 		{
-			suspect->deserializeSuspect(buf);
+			suspect->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
 			bzero(buf, numbytes);
 
 			LOG4CXX_INFO(m_logger,"Received a Silent Alarm!\n" << suspect->ToString());
@@ -900,29 +895,35 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
 	dataLen = suspect->serializeSuspect(data);
 
-	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	//If the hostility hasn't changed don't bother the DM
+	if( oldClassification != suspect->isHostile)
 	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+			close(socketFD);
+			return;
+		}
+
+		if (connect(socketFD, alarmRemotePtr, len) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
+			close(socketFD);
+			return;
+		}
+
+		if (send(socketFD, data, dataLen, 0) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
+			close(socketFD);
+			return;
+		}
 		close(socketFD);
-		return;
 	}
 
-	if (connect(socketFD, alarmRemotePtr, len) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
-		close(socketFD);
-		return;
-	}
-
-	if (send(socketFD, data, dataLen, 0) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
-		close(socketFD);
-		return;
-	}
-	close(socketFD);
-
-	//Send Silent Alarm to other Nova Instances
+	//Update other Nova Instances with latest suspect Data
+	dataLen += suspect->features.serializeFeatureData(data+dataLen);
+	//Send Silent Alarm to other Nova Instances with feature Data
 	if ((sockfd = socket(AF_INET,SOCK_DGRAM,0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
@@ -943,6 +944,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		close(sockfd);
 		return;
 	}
+	bzero(data, dataLen);
 }
 
 ///Receive a TrafficEvent from another local component.
