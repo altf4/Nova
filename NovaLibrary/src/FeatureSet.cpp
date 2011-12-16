@@ -383,21 +383,45 @@ uint FeatureSet::deserializeFeatureSet(u_char * buf)
 	return offset;
 }
 
-uint FeatureSet::serializeFeatureData(u_char *buf)
+uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 {
 	uint offset = 0;
 	//Bytes in a word, used for everything but port #'s
 	const uint size = 4;
 
+	struct silentAlarmFeatureData * temp;
+
+	//If we have a silentAlarmFeatureData struct for the local host
+	if(SATable.find(hostAddr) != SATable.end())
+		temp = &SATable[hostAddr];
+
+	//Else create one
+	else
+	{
+		struct silentAlarmFeatureData t;
+		SATable[hostAddr] = t;
+		temp = &SATable[hostAddr];
+	}
+
 	//Required, individual variables for calculation
 	memcpy(buf+offset, &totalInterval.first, size);
 	offset += size;
+
 	memcpy(buf+offset, &haystackEvents.first, size);
+	haystackEvents.second += haystackEvents.first;
+	haystackEvents.first = 0;
 	offset += size;
+
 	memcpy(buf+offset, &packetCount.first, size);
+	packetCount.second += packetCount.first;
+	packetCount.first = 0;
 	offset += size;
+
 	memcpy(buf+offset, &bytesTotal.first, size);
+	bytesTotal.second += bytesTotal.first;
+	bytesTotal.first = 0;
 	offset += size;
+
 	memcpy(buf+offset, &portMax, size);
 	offset += size;
 
@@ -405,8 +429,11 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 	for(uint i = 0; i < packet_intervals.size(); i++)
 	{
 		memcpy(buf+offset, &packet_intervals[i], size);
+		temp->packet_intervals.push_back(packet_intervals[i]);
 		offset += size;
 	}
+
+	packet_intervals.clear();
 
 	//These tables all just place their key followed by the data
 	for(Packet_Table::iterator it = packTable.begin(); it != packTable.end(); it++)
@@ -415,6 +442,8 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
 		memcpy(buf+offset, &it->second.first, size);
+		packTable[it->first].second += it->second.first;
+		packTable[it->first].first = 0;
 		offset += size;
 	}
 	for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
@@ -422,6 +451,8 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
 		memcpy(buf+offset, &it->second.first, size);
+		IPTable[it->first].second += it->second.first;
+		IPTable[it->first].first = 0;
 		offset += size;
 	}
 
@@ -431,39 +462,48 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
 		memcpy(buf+offset, &it->second.first, size);
+		portTable[it->first].second += it->second.first;
+		portTable[it->first].first = 0;
 		offset += size;
 	}
 
 	return offset;
 }
 
-uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
+uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct silentAlarmFeatureData * sender)
 {
 	uint offset = 0;
 
 	//Bytes in a word, used for everything but port #'s
 	const uint size = 4;
-
-	//Temporary struct to store SA sender's information
-	struct silentAlarmFeatureData SAData;
-	for(uint i = 0; i < DIMENSION; i++)
-	{
-		SAData.features[i] = SATable[hostAddr].features[i];
-	}
+	uint pkt_count = 0;
 
 	//Temporary variables to store and track data during deserialization
-	uint temp;
-	uint tempCount;
+	uint temp = 0;
+	uint tempCount = 0;
+
 
 	//Required, individual variables for calculation
-	memcpy(&SAData.totalInterval, buf+offset, size);
+	totalInterval.second -= sender->totalInterval;
+	memcpy(&sender->totalInterval, buf+offset, size);
+	totalInterval.second += sender->totalInterval;
 	offset += size;
-	memcpy(&SAData.haystackEvents, buf+offset, size);
+
+	memcpy(&temp, buf+offset, size);
+	sender->haystackEvents += temp;
+	haystackEvents.second += temp;
 	offset += size;
-	memcpy(&SAData.packetCount, buf+offset, size);
+
+	memcpy(&pkt_count, buf+offset, size);
+	sender->packetCount += pkt_count;
+	packetCount.second += pkt_count;
 	offset += size;
-	memcpy(&SAData.bytesTotal, buf+offset, size);
+
+	memcpy(&temp, buf+offset, size);
+	sender->bytesTotal += temp;
+	bytesTotal.second += temp;
 	offset += size;
+
 	memcpy(&temp, buf+offset, size);
 	offset += size;
 
@@ -471,12 +511,11 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		portMax = temp;
 
 	//Packet intervals
-	SAData.packet_intervals.clear();
-	for(uint i = 1; i < (SAData.packetCount); i++)
+	for(uint i = 1; i < pkt_count; i++)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
-		SAData.packet_intervals.push_back(temp);
+		sender->packet_intervals.push_back(temp);
 	}
 
 	/***************************************************************************************************
@@ -485,100 +524,38 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	****************************************************************************************************/
 
 	//Packet size table
-	tempCount = 0;
-	SAData.packTable.set_empty_key(0);
-	SAData.packTable.clear();
-
-	for(uint i = 0; i < SAData.packetCount;)
+	for(uint i = 0; i < pkt_count;)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-
-		SAData.packTable[(int)temp].first = tempCount;
+		packTable[(int)temp].second += tempCount;
 		i += tempCount;
 	}
 
 	//IP table
-	tempCount = 0;
-	SAData.IPTable.set_empty_key(0);
-	SAData.IPTable.clear();
-
-	for(uint i = 0; i < SAData.packetCount;)
+	for(uint i = 0; i < pkt_count;)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.IPTable[(in_addr_t)temp].first = tempCount;
+		IPTable[(in_addr_t)temp].second += tempCount;
 		i += tempCount;
 	}
 
 
 	//Port table
-	tempCount = 0;
-	SAData.portTable.set_empty_key(0);
-	SAData.portTable.clear();
-
-	for(uint i = 0; i < SAData.packetCount;)
+	for(uint i = 0; i < pkt_count;)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.portTable[temp].first = tempCount;
+		portTable[(in_port_t)temp].second += tempCount;
 		i += tempCount;
 	}
-
-	//If this host has previous data from this sender, remove the old information
-	if(SATable[hostAddr].packTable.size())
-	{
-		silentAlarmFeatureData * host = &SATable[hostAddr];
-
-		packetCount.second -= host->packetCount;
-		bytesTotal.second -= host->bytesTotal;
-		haystackEvents.second -= host->haystackEvents;
-		totalInterval.second -= host->totalInterval;
-
-		for(Packet_Table::iterator it = host->packTable.begin(); it != host->packTable.end(); it++)
-		{
-			packTable[it->first].second -= it->second.first;
-		}
-
-		for(IP_Table::iterator it = host->IPTable.begin(); it != host->IPTable.end(); it++)
-		{
-			IPTable[it->first].second -= it->second.first;
-		}
-
-		for(Port_Table::iterator it = host->portTable.begin(); it != host->portTable.end(); it++)
-		{
-			portTable[it->first].second -= it->second.first;
-		}
-	}
-
-	//Include the new information
-
-	packetCount.second += SAData.packetCount;
-	bytesTotal.second += SAData.bytesTotal;
-	haystackEvents.second += SAData.haystackEvents;
-	totalInterval.second += SAData.totalInterval;
-
-	for(Packet_Table::iterator it = SAData.packTable.begin(); it != SAData.packTable.end(); it++)
-	{
-			packTable[it->first].second += it->second.first;
-	}
-	for(IP_Table::iterator it = SAData.IPTable.begin(); it != SAData.IPTable.end(); it++)
-	{
-			IPTable[it->first].second += it->second.first;
-	}
-	for(Port_Table::iterator it = SAData.portTable.begin(); it != SAData.portTable.end(); it++)
-	{
-			portTable[it->first].second += it->second.first;
-	}
-
-	//Copy the Data over
-	SATable[hostAddr] = SAData;
 
 	return offset;
 }

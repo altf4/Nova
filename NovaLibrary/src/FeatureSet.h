@@ -104,12 +104,12 @@ struct silentAlarmFeatureData
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
 
-	//Table of Packet sizes and counts for variance calc
+	/*//Table of Packet sizes and counts for variance calc
 	Packet_Table packTable;
 	//Table of IP addresses and associated packet counts
 	IP_Table IPTable;
 	//Table of Ports and associated packet counts
-	Port_Table portTable;
+	Port_Table portTable;*/
 
 };
 
@@ -178,14 +178,11 @@ public:
 
 	//Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	//	returns the number of bytes set in the buffer
-	uint serializeFeatureData(u_char * buf);
+	uint serializeFeatureData(u_char * buf, in_addr_t hostAddr);
 	//Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores that information into SATable[hostAddr]
 	//	returns the number of bytes read from the buffer
-	uint deserializeFeatureData(u_char * buf, in_addr_t hostAddr);
-
-	//This function puts all SA Data together for feature calculation
-	//void combineSATables();
+	uint deserializeFeatureData(u_char * buf, in_addr_t hostAddr, struct silentAlarmFeatureData * sender);
 
 private:
 	//Temporary variables used to calculate Features
