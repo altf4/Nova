@@ -56,7 +56,7 @@ struct sockaddr_in serv_addr;
 struct sockaddr* serv_addrPtr = (struct sockaddr *)&serv_addr;
 int len;
 
-u_char data[MAX_MSG_SIZE];
+u_char data[MAX_SUSPECT_SIZE];
 uint dataLen;
 
 int numBytesRead;
@@ -459,7 +459,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
-	u_char buf[MAX_MSG_SIZE];
+	u_char buf[MAX_SUSPECT_SIZE];
 	struct sockaddr_in sendaddr;
 
 	int numbytes;
@@ -520,7 +520,8 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 		try
 		{
-			suspect->deserializeSuspect(buf);
+			uint offset = suspect->deserializeSuspect(buf);
+			suspect->features.deserializeFeatureData(buf+offset, sendaddr.sin_addr.s_addr);
 			bzero(buf, numbytes);
 
 			LOG4CXX_INFO(m_logger,"Received a Silent Alarm!\n" << suspect->ToString());
@@ -922,7 +923,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	}
 	close(socketFD);
 
-	//Send Silent Alarm to other Nova Instances
+	dataLen += suspect->features.serializeFeatureData(data+dataLen);
+	//Send Silent Alarm to other Nova Instances with feature Data
 	if ((sockfd = socket(AF_INET,SOCK_DGRAM,0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));

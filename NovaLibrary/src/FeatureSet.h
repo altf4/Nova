@@ -69,9 +69,9 @@ struct eqport
 };
 
 //Equality operator used by google's dense hash map
-struct eqint
+struct equint
 {
-  bool operator()(int s1, int s2) const
+  bool operator()(uint s1, uint s2) const
   {
 	    return (s1 == s2);
   }
@@ -79,7 +79,39 @@ struct eqint
 
 typedef google::dense_hash_map<in_addr_t, uint, tr1::hash<in_addr_t>, eqaddr > IP_Table;
 typedef google::dense_hash_map<in_port_t, uint, tr1::hash<in_port_t>, eqport > Port_Table;
-typedef google::dense_hash_map<int, uint, tr1::hash<int>, eqint > Packet_Table;
+typedef google::dense_hash_map<uint, uint, tr1::hash<uint>, equint > Packet_Table;
+
+struct silentAlarmFeatureData
+{
+	/// The actual feature values
+	double features[DIMENSION];
+
+
+	// endTime - startTime : used to incorporate time based information correctly.
+	uint totalInterval;
+
+	//Derived values:
+	// haystackEvents = totalInterval * features[HAYSTACK_EVENT_FREQUENCY]
+	uint haystackEvents;
+	// packetCount = totalInterval / features[PACKET_INTERVAL_MEAN]
+	uint packetCount;
+	// bytesTotal = packetCount * features[PACKET_SIZE_MEAN]
+	uint bytesTotal;
+
+	///A vector of the intervals between packet arrival times for tracking traffic over time.
+	vector <time_t> packet_intervals;
+
+	//Table of Packet sizes and counts for variance calc
+	Packet_Table packTable;
+	//Table of IP addresses and associated packet counts
+	IP_Table IPTable;
+	//Table of Ports and associated packet counts
+	Port_Table portTable;
+
+};
+
+
+typedef google::dense_hash_map<in_addr_t, struct silentAlarmFeatureData, tr1::hash<in_addr_t>, eqaddr > Silent_Alarm_Table;
 
 ///A Feature Set represents a point in N dimensional space, which the Classification Engine uses to
 ///	determine a classification. Each member of the FeatureSet class represents one of these dimensions.
@@ -118,10 +150,17 @@ public:
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
 	uint serializeFeatureSet(u_char * buf);
-
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
 	uint deserializeFeatureSet(u_char * buf);
+
+	//Stores the feature set data into the buffer, retrieved using deserializeFeatureData
+	//	returns the number of bytes set in the buffer
+	uint serializeFeatureData(u_char * buf);
+	//Reads the feature set data from a buffer originally populated by serializeFeatureData
+	// and stores that information into SATable[hostAddr]
+	//	returns the number of bytes read from the buffer
+	uint deserializeFeatureData(u_char * buf, in_addr_t hostAddr);
 
 private:
 	//Temporary variables used to calculate Features
@@ -138,8 +177,11 @@ private:
 	//Max packet count to a port, used for normalizing
 	uint portMax;
 
+	//Table of Nova hosts and feature set data needed to include silent alarm information in classifications
+	Silent_Alarm_Table SATable;
+
 	uint haystackEvents;
-	uint hostEvents;
+	//Tracks the number of HS events among other nova instances.
 	time_t startTime ;
 	time_t endTime;
 	//Number of packets total
@@ -147,10 +189,11 @@ private:
 	//Total number of bytes in all packets
 	uint bytesTotal;
 
-	///A vector of packet sizes for the event
-	vector <int> packetSizes;
 	///A vector of packet arrival times for tracking traffic over time.
+	vector <time_t> packet_times;
+	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
+
 };
 }
 }
