@@ -104,13 +104,6 @@ struct silentAlarmFeatureData
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
 
-	/*//Table of Packet sizes and counts for variance calc
-	Packet_Table packTable;
-	//Table of IP addresses and associated packet counts
-	IP_Table IPTable;
-	//Table of Ports and associated packet counts
-	Port_Table portTable;*/
-
 };
 
 
