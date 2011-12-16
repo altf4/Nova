@@ -8967,6 +8967,7 @@ T7(R=N)
 U1(DF=N%T=3B-45%TG=40%IPL=38%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=25A3%RUD=G)
 IE(DFI=S%T=3B-45%TG=40%CD=S)
 
+
 # DEC Digital UNIX 4.X
 # DEC Digital UNIX 4.X (AlphaServer 1000A 5/400 Digital UNIX V4.0F (Rev. 1229))
 Fingerprint DEC Digital UNIX v4.0F
