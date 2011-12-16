@@ -326,7 +326,10 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	uint psize = 2;
 	//Temporary struct to store SA sender's information
 	struct silentAlarmFeatureData SAData;
-	SAData.features = SATable[hostAddr].features;
+	for(uint i = 0; i < DIMENSION; i++)
+	{
+		SAData.features[i] = SATable[hostAddr].features[i];
+	}
 
 	//Temporary variables to store and track data during deserialization
 	uint temp;
