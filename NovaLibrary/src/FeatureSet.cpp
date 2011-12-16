@@ -19,39 +19,30 @@ FeatureSet::FeatureSet()
 	//Temp variables
 	startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
 	endTime = 0;
-	totalInterval = 0;
-	totalIntervalAll = 0;
+	totalInterval.first = 0;
+	totalInterval.second = 0;
 
 	IPTable.set_empty_key(0);
 	portTable.set_empty_key(0);
 	packTable.set_empty_key(0);
 	SATable.set_empty_key(0);
-	IPTableAll.set_empty_key(0);
-	portTableAll.set_empty_key(0);
-	packTableAll.set_empty_key(0);
 
 	packet_intervals.clear();
 	IPTable.clear();
 	portTable.clear();
 	packTable.clear();
 	SATable.clear();
-	IPTableAll.clear();
-	portTableAll.clear();
-	packTableAll.clear();
 
 	IPTable.resize(INITIAL_IP_SIZE);
 	portTable.resize(INITIAL_PORT_SIZE);
 	packTable.resize(INITIAL_PACKET_SIZE);
-	IPTableAll.resize(INITIAL_IP_SIZE);
-	portTableAll.resize(INITIAL_PORT_SIZE);
-	packTableAll.resize(INITIAL_PACKET_SIZE);
 
-	haystackEvents = 0;
-	packetCount = 0;
-	bytesTotal = 0;
-	haystackEventsAll = 0;
-	packetCountAll = 0;
-	bytesTotalAll = 0;
+	haystackEvents.first = 0;
+	packetCount.first = 0;
+	bytesTotal.first = 0;
+	haystackEvents.second = 0;
+	packetCount.second = 0;
+	bytesTotal.second = 0;
 
 	portMax = 0;
 	IPMax = 0;
@@ -68,24 +59,21 @@ void FeatureSet::ClearFeatureSet()
 	//Temp variables
 	startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
 	endTime = 0;
-	totalInterval = 0;
-	totalIntervalAll = 0;
+	totalInterval.first = 0;
+	totalInterval.second = 0;
 
 	IPTable.clear();
 	portTable.clear();
 	packTable.clear();
 	SATable.clear();
-	IPTableAll.clear();
-	portTableAll.clear();
-	packTableAll.clear();
 	packet_intervals.clear();
 
-	haystackEvents = 0;
-	packetCount = 0;
-	bytesTotal = 0;
-	haystackEventsAll = 0;
-	packetCountAll = 0;
-	bytesTotalAll = 0;
+	haystackEvents.first = 0;
+	packetCount.first = 0;
+	bytesTotal.first = 0;
+	haystackEvents.second = 0;
+	packetCount.second = 0;
+	bytesTotal.second = 0;
 
 	portMax = 0;
 	IPMax = 0;
@@ -101,21 +89,21 @@ void FeatureSet::CalculateTimeInterval()
 {
 	if(endTime > startTime)
 	{
-		totalIntervalAll -= totalInterval;
-		totalInterval = endTime - startTime;
-		totalIntervalAll += totalInterval;
+		totalInterval.second -= totalInterval.first;
+		totalInterval.first = endTime - startTime;
+		totalInterval.second += totalInterval.first;
 	}
 }
 
 ///Calculates distinct IPs contacted
 void FeatureSet::CalculateDistinctIPs()
 {
-	features[DISTINCT_IPS] = IPTableAll.size();
+	features[DISTINCT_IPS] = IPTable.size();
 }
 ///Calculates distinct ports contacted
 void FeatureSet::CalculateDistinctPorts()
 {
-	features[DISTINCT_PORTS] =  portTableAll.size();
+	features[DISTINCT_PORTS] =  portTable.size();
 }
 
 ///Calculates the ip traffic distribution for the suspect
@@ -123,35 +111,36 @@ void FeatureSet::CalculateIPTrafficDistribution()
 {
 	features[IP_TRAFFIC_DISTRIBUTION] = 0;
 	IPMax = 0;
-	for (IP_Table::iterator it = IPTableAll.begin() ; it != IPTableAll.end(); it++)
+	for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
 	{
-		if(it->second > IPMax) IPMax = it->second;
+		if(it->second.second > IPMax)
+			IPMax = it->second.second;
 	}
-	for (IP_Table::iterator it = IPTableAll.begin() ; it != IPTableAll.end(); it++)
+	for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
 	{
-		features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)IPMax);
+		features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)IPMax);
 	}
 
-	features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION] / (double)IPTableAll.size();
+	features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION] / (double)IPTable.size();
 }
 
 ///Calculates the port traffic distribution for the suspect
 void FeatureSet::CalculatePortTrafficDistribution()
 {
 	features[PORT_TRAFFIC_DISTRIBUTION] = 0;
-	for (Port_Table::iterator it = portTableAll.begin() ; it != portTableAll.end(); it++)
+	for (Port_Table::iterator it = portTable.begin() ; it != portTable.end(); it++)
 	{
-		features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)portMax);
+		features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)portMax);
 	}
 
-	features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION] / (double)portTableAll.size();
+	features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION] / (double)portTable.size();
 }
 
 void FeatureSet::CalculateHaystackEventFrequency()
 {
-	if(totalIntervalAll > 0)
+	if(totalInterval.second > 0)
 	{
-		features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEventsAll)) / (double)(totalIntervalAll);
+		features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEvents.second)) / (double)(totalInterval.second);
 	}
 }
 
@@ -160,7 +149,7 @@ void FeatureSet::CalculatePacketIntervalMean()
 {
 	//Each set of feature data (local and SATable items) have packetCount-1 intervals
 	//Subtract (# of SA Data entries + 1) from total packet count to get total # of intervals
-	features[PACKET_INTERVAL_MEAN] = ((double)(totalIntervalAll) / (double)(packetCountAll- (SATable.size()+1)));
+	features[PACKET_INTERVAL_MEAN] = ((double)(totalInterval.second) / (double)(packetCount.second- (SATable.size()+1)));
 }
 
 void FeatureSet::CalculatePacketIntervalDeviation()
@@ -168,7 +157,7 @@ void FeatureSet::CalculatePacketIntervalDeviation()
 	double count = packet_intervals.size();
 	//Each set of feature data (local and SATable items) have packetCount-1 intervals
 	//Subtract (# of SA Data entries + 1) from total packet count to get total # of intervals
-	double totalCount = (packetCountAll - (SATable.size()+1));
+	double totalCount = (packetCount.second - (SATable.size()+1));
 	double mean = 0;
 	double variance = 0;
 
@@ -196,13 +185,13 @@ void FeatureSet::CalculatePacketIntervalDeviation()
 ///Calculates Packet Size Mean for a suspect
 void FeatureSet::CalculatePacketSizeMean()
 {
-	features[PACKET_SIZE_MEAN] = (double)bytesTotalAll / (double)packetCountAll;
+	features[PACKET_SIZE_MEAN] = (double)bytesTotal.second / (double)packetCount.second;
 }
 
 ///Calculates Packet Size Variance for a suspect
 void FeatureSet::CalculatePacketSizeDeviation()
 {
-	double count = packetCountAll;
+	double count = packetCount.second;
 	double mean = 0;
 	double variance = 0;
 	//Calculate mean
@@ -210,10 +199,10 @@ void FeatureSet::CalculatePacketSizeDeviation()
 	mean = features[PACKET_SIZE_MEAN];
 
 	//Calculate variance
-	for(Packet_Table::iterator it = packTableAll.begin() ; it != packTableAll.end(); it++)
+	for(Packet_Table::iterator it = packTable.begin() ; it != packTable.end(); it++)
 	{
 		// number of packets multiplied by (packet_size - mean)^2 divided by count
-		variance += (it->second*pow(it->first - mean,2));
+		variance += (it->second.second * pow((it->first - mean), 2));
 	}
 	variance /= count;
 
@@ -222,43 +211,43 @@ void FeatureSet::CalculatePacketSizeDeviation()
 
 void FeatureSet::UpdateEvidence(TrafficEvent *event)
 {
-	packetCount += event->packet_count;
-	packetCountAll += event->packet_count;
-	bytesTotal += event->IP_total_data_bytes;
-	bytesTotalAll += event->IP_total_data_bytes;
+	packetCount.first += event->packet_count;
+	packetCount.second += event->packet_count;
+	bytesTotal.first += event->IP_total_data_bytes;
+	bytesTotal.second += event->IP_total_data_bytes;
 
 
 	//If from haystack
 	if( event->from_haystack)
 	{
-		IPTable[event->dst_IP.s_addr] += event->packet_count;
-		IPTableAll[event->dst_IP.s_addr] += event->packet_count;
+		IPTable[event->dst_IP.s_addr].first += event->packet_count;
+		IPTable[event->dst_IP.s_addr].second += event->packet_count;
 	}
 	//Else from a host
 	else
 	{
 		//Put the packet count into a bin associated with source so that
 		// all host events for a suspect go into the same bin
-		IPTable[event->src_IP.s_addr] +=  event->packet_count;
-		IPTableAll[event->src_IP.s_addr] +=  event->packet_count;
+		IPTable[event->src_IP.s_addr].first +=  event->packet_count;
+		IPTable[event->src_IP.s_addr].second +=  event->packet_count;
 	}
 
-	portTable[event->dst_port] +=  event->packet_count;
-	portTableAll[event->dst_port] +=  event->packet_count;
+	portTable[event->dst_port].first +=  event->packet_count;
+	portTable[event->dst_port].second +=  event->packet_count;
 
 	//Checks for the max to avoid iterating through the entire table every update
 	//Since number of ports can grow very large during a scan this will distribute the computation more evenly
 	//Since the IP will tend to be relatively small compared to number of events, it's max is found during the call.
-	if(portTableAll[event->dst_port] > portMax)
+	if(portTable[event->dst_port].second > portMax)
 	{
-		portMax = portTableAll[event->dst_port];
+		portMax = portTable[event->dst_port].second;
 	}
 	if(packet_times.size() > 1)
 	{
 		for(uint i = 0; i < event->IP_packet_sizes.size(); i++)
 		{
-			packTable[event->IP_packet_sizes[i]]++;
-			packTableAll[event->IP_packet_sizes[i]]++;
+			packTable[event->IP_packet_sizes[i]].first++;
+			packTable[event->IP_packet_sizes[i]].second++;
 			packet_intervals.push_back(event->packet_intervals[i] - packet_times[packet_times.size()-1]);
 			packet_times.push_back(event->packet_intervals[i]);
 
@@ -268,8 +257,8 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	{
 		for(uint i = 0; i < event->IP_packet_sizes.size(); i++)
 		{
-			packTable[event->IP_packet_sizes[i]]++;
-			packTableAll[event->IP_packet_sizes[i]]++;
+			packTable[event->IP_packet_sizes[i]].first++;
+			packTable[event->IP_packet_sizes[i]].second++;
 			packet_times.push_back(event->packet_intervals[i]);
 		}
 		packet_intervals.clear();
@@ -282,8 +271,8 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	//Accumulate to find the lowest Start time and biggest end time.
 	if( event->from_haystack)
 	{
-		haystackEvents++;
-		haystackEventsAll++;
+		haystackEvents.first++;
+		haystackEvents.second++;
 	}
 	if( event->start_timestamp < startTime)
 	{
@@ -335,20 +324,18 @@ uint FeatureSet::deserializeFeatureSet(u_char * buf)
 uint FeatureSet::serializeFeatureData(u_char *buf)
 {
 	uint offset = 0;
+	uint16_t psize = 2;
 	//Bytes in a word, used for everything but port #'s
 	uint size = 4;
 
-	//Total interval time for this feature set
-	time_t totalInterval = endTime - startTime;
-
 	//Required, individual variables for calculation
-	memcpy(buf+offset, &totalInterval, size);
+	memcpy(buf+offset, &totalInterval.first, size);
 	offset += size;
-	memcpy(buf+offset, &haystackEvents, size);
+	memcpy(buf+offset, &haystackEvents.first, size);
 	offset += size;
-	memcpy(buf+offset, &packetCount, size);
+	memcpy(buf+offset, &packetCount.first, size);
 	offset += size;
-	memcpy(buf+offset, &bytesTotal, size);
+	memcpy(buf+offset, &bytesTotal.first, size);
 	offset += size;
 	memcpy(buf+offset, &portMax, size);
 	offset += size;
@@ -366,23 +353,23 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
-		memcpy(buf+offset, &it->second, size);
+		memcpy(buf+offset, &it->second.second, size);
 		offset += size;
 	}
 	for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
 	{
 		memcpy(buf+offset, &it->first, size);
 		offset += size;
-		memcpy(buf+offset, &it->second, size);
+		memcpy(buf+offset, &it->second.second, size);
 		offset += size;
 	}
 
 	for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
 	{
-		uint temp = it->first;
-		memcpy(buf+offset, &temp, size);
-		offset += size;
-		memcpy(buf+offset, &it->second, size);
+		//uint temp = it->first; Might need to use 4 bytes here?
+		memcpy(buf+offset, &it->first, psize);
+		offset += psize;
+		memcpy(buf+offset, &it->second.second, size);
 		offset += size;
 	}
 
@@ -392,6 +379,8 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 {
 	uint offset = 0;
+
+	uint psize = 2;
 	//Bytes in a word, used for everything but port #'s
 	uint size = 4;
 
@@ -404,6 +393,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	//Temporary variables to store and track data during deserialization
 	uint temp;
+	uint16_t ptemp;
 	uint tempCount;
 
 	//Required, individual variables for calculation
@@ -447,7 +437,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
 
-		SAData.packTable[(int)temp] = tempCount;
+		SAData.packTable[(int)temp].first = tempCount;
 		i += tempCount;
 	}
 
@@ -462,7 +452,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.IPTable[(in_addr_t)temp] = tempCount;
+		SAData.IPTable[(in_addr_t)temp].first = tempCount;
 		i += tempCount;
 	}
 
@@ -474,68 +464,67 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	for(uint i = 0; i < SAData.packetCount;)
 	{
-		memcpy(&temp, buf+offset, size);
-		offset += size;
+		memcpy(&ptemp, buf+offset, psize);
+		offset += psize;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.portTable[temp] = tempCount;
+		SAData.portTable[ptemp].first = tempCount;
 		i += tempCount;
-
 	}
 
 	//If this host has previous data from this sender, remove the old information
-	if(SATable[hostAddr].packetCount != 0)
+	if(SATable[hostAddr].packTable.size())
 	{
 		silentAlarmFeatureData * host = &SATable[hostAddr];
 
-		packetCountAll -= host->packetCount;
-		bytesTotalAll -= host->bytesTotal;
-		haystackEventsAll -= host->haystackEvents;
-		totalIntervalAll -= host->totalInterval;
+		packetCount.second -= host->packetCount;
+		bytesTotal.second -= host->bytesTotal;
+		haystackEvents.second -= host->haystackEvents;
+		totalInterval.second -= host->totalInterval;
 
 		for(Packet_Table::iterator it = host->packTable.begin(); it != host->packTable.end(); it++)
 		{
-			packTableAll[it->first] -= it->second;
+			packTable[it->first].second -= it->second.first;
 		}
 
 		for(IP_Table::iterator it = host->IPTable.begin(); it != host->IPTable.end(); it++)
 		{
-			IPTableAll[it->first] -= it->second;
+			IPTable[it->first].second -= it->second.first;
 		}
 
 		for(Port_Table::iterator it = host->portTable.begin(); it != host->portTable.end(); it++)
 		{
-			portTableAll[it->first] -= it->second;
+			portTable[it->first].second -= it->second.first;
 		}
 	}
 
 	//Include the new information
 
-	packetCountAll += SAData.packetCount;
-	bytesTotalAll += SAData.bytesTotal;
-	haystackEventsAll += SAData.haystackEvents;
-	totalIntervalAll += SAData.totalInterval;
+	packetCount.second += SAData.packetCount;
+	bytesTotal.second += SAData.bytesTotal;
+	haystackEvents.second += SAData.haystackEvents;
+	totalInterval.second += SAData.totalInterval;
 
 	for(Packet_Table::iterator it = SAData.packTable.begin(); it != SAData.packTable.end(); it++)
 	{
-		if(packTableAll.count(it->first) == 0)
-			packTableAll[it->first] = it->second;
+		if(packTable.count(it->first) == 0)
+			packTable[it->first].second = it->second.first;
 		else
-			packTableAll[it->first] += it->second;
+			packTable[it->first].second += it->second.first;
 	}
 	for(IP_Table::iterator it = SAData.IPTable.begin(); it != SAData.IPTable.end(); it++)
 	{
-		if(IPTableAll.count(it->first) == 0)
-			IPTableAll[it->first] = it->second;
+		if(IPTable.count(it->first) == 0)
+			IPTable[it->first].second = it->second.first;
 		else
-			IPTableAll[it->first] += it->second;
+			IPTable[it->first].second += it->second.first;
 	}
 	for(Port_Table::iterator it = SAData.portTable.begin(); it != SAData.portTable.end(); it++)
 	{
-		if(portTableAll.count(it->first) == 0)
-			portTableAll[it->first] = it->second;
+		if(portTable.count(it->first) == 0)
+			portTable[it->first].second = it->second.first;
 		else
-			portTableAll[it->first] += it->second;
+			portTable[it->first].second += it->second.first;
 	}
 
 	//Copy the Data over
@@ -543,65 +532,6 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	return offset;
 }
-
-/*void FeatureSet::combineSATables()
-{
-	packTableAll.clear_no_resize();
-	IPTableAll.clear_no_resize();
-	portTableAll.clear_no_resize();
-
-	//Put all the SA Data in first
-	for(Silent_Alarm_Table::iterator itt = SATable.begin(); itt != SATable.end(); itt++)
-	{
-		silentAlarmFeatureData * host = &itt->second;
-
-		for(Packet_Table::iterator it = host->packTable.begin(); it != host->packTable.end(); it++)
-		{
-			if(packTableAll.count(it->first) == 0)
-				packTableAll[it->first] = it->second;
-			else
-				packTableAll[it->first] += it->second;
-		}
-		for(IP_Table::iterator it = host->IPTable.begin(); it != host->IPTable.end(); it++)
-		{
-			if(IPTableAll.count(it->first) == 0)
-				IPTableAll[it->first] = it->second;
-			else
-				IPTableAll[it->first] += it->second;
-		}
-		for(Port_Table::iterator it = host->portTable.begin(); it != host->portTable.end(); it++)
-		{
-			if(portTableAll.count(it->first) == 0)
-				portTableAll[it->first] = it->second;
-			else
-				portTableAll[it->first] += it->second;
-		}
-	}
-
-	//Then include the local data
-	for(Packet_Table::iterator it = packTable.begin(); it != packTable.end(); it++)
-	{
-		if(packTableAll.count(it->first) == 0)
-			packTableAll[it->first] = it->second;
-		else
-			packTableAll[it->first] += it->second;
-	}
-	for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
-	{
-		if(IPTableAll.count(it->first) == 0)
-			IPTableAll[it->first] = it->second;
-		else
-			IPTableAll[it->first] += it->second;
-	}
-	for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
-	{
-		if(portTableAll.count(it->first) == 0)
-			portTableAll[it->first] = it->second;
-		else
-			portTableAll[it->first] += it->second;
-	}
-	SADataCurrent = true;
-}*/
 
 }
 }
