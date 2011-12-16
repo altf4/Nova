@@ -390,7 +390,9 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 				oldClassification = it->second->isHostile;
 				Classify(it->second);
 				cout << it->second->ToString();
-				if(it->second->isHostile)
+				//If suspect is hostile and this Nova instance has unique information
+				// 			(not just from silent alarms)
+				if(it->second->isHostile && it->second->features.packetCount.first)
 					SilentAlarm(it->second);
 				SendToUI(it->second);
 			}

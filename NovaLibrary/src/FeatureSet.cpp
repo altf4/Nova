@@ -83,15 +83,32 @@ void FeatureSet::ClearFeatureSet()
 		features[i] = 0;
 	}
 }
-///Calculates the total interval for time based features using latest timestamps
 
+//Calculates all features in the feature set
+void FeatureSet::CalculateAll()
+{
+	UpdateFeatureData(INCLUDE);
+
+	CalculateDistinctIPs();
+	CalculateDistinctPorts();
+
+	CalculateIPTrafficDistribution();
+	CalculatePortTrafficDistribution();
+
+	CalculateHaystackEventFrequency();
+
+	CalculatePacketSizeDeviation();
+	CalculatePacketIntervalDeviation();
+
+	UpdateFeatureData(REMOVE);
+}
+
+///Calculates the total interval for time based features using latest timestamps
 void FeatureSet::CalculateTimeInterval()
 {
 	if(endTime > startTime)
 	{
-		totalInterval.second -= totalInterval.first;
 		totalInterval.first = endTime - startTime;
-		totalInterval.second += totalInterval.first;
 	}
 }
 
@@ -217,15 +234,12 @@ void FeatureSet::CalculatePacketSizeDeviation()
 void FeatureSet::UpdateEvidence(TrafficEvent *event)
 {
 	packetCount.first += event->packet_count;
-	packetCount.second += event->packet_count;
 	bytesTotal.first += event->IP_total_data_bytes;
-	bytesTotal.second += event->IP_total_data_bytes;
 
 	//If from haystack
 	if( event->from_haystack)
 	{
 		IPTable[event->dst_IP.s_addr].first += event->packet_count;
-		IPTable[event->dst_IP.s_addr].second += event->packet_count;
 	}
 	//Else from a host
 	else
@@ -233,11 +247,9 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 		//Put the packet count into a bin associated with source so that
 		// all host events for a suspect go into the same bin
 		IPTable[event->src_IP.s_addr].first +=  event->packet_count;
-		IPTable[event->src_IP.s_addr].second +=  event->packet_count;
 	}
 
 	portTable[event->dst_port].first +=  event->packet_count;
-	portTable[event->dst_port].second +=  event->packet_count;
 
 	//Checks for the max to avoid iterating through the entire table every update
 	//Since number of ports can grow very large during a scan this will distribute the computation more evenly
@@ -251,7 +263,7 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 		for(uint i = 0; i < event->IP_packet_sizes.size(); i++)
 		{
 			packTable[event->IP_packet_sizes[i]].first++;
-			packTable[event->IP_packet_sizes[i]].second++;
+
 			packet_intervals.push_back(event->packet_intervals[i] - packet_times[packet_times.size()-1]);
 			packet_times.push_back(event->packet_intervals[i]);
 
@@ -262,7 +274,7 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 		for(uint i = 0; i < event->IP_packet_sizes.size(); i++)
 		{
 			packTable[event->IP_packet_sizes[i]].first++;
-			packTable[event->IP_packet_sizes[i]].second++;
+
 			packet_times.push_back(event->packet_intervals[i]);
 		}
 		packet_intervals.clear();
@@ -276,7 +288,6 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	if( event->from_haystack)
 	{
 		haystackEvents.first++;
-		haystackEvents.second++;
 	}
 	if( event->start_timestamp < startTime)
 	{
@@ -285,6 +296,57 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	if(  event->end_timestamp > endTime)
 	{
 		endTime = event->end_timestamp;
+	}
+}
+
+void FeatureSet::UpdateFeatureData(bool include)
+{
+	//Updates timeInterval.first with the latest end and start times
+	CalculateTimeInterval();
+
+	if(include)
+	{
+		totalInterval.second += totalInterval.first;
+		packetCount.second += packetCount.first;
+		bytesTotal.second += bytesTotal.second;
+		haystackEvents.second += haystackEvents.first;
+
+		for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
+		{
+			it->second.second += it->second.first;
+		}
+
+		for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
+		{
+			it->second.second += it->second.first;
+		}
+
+		for(Packet_Table::iterator it = packTable.begin(); it != packTable.end(); it++)
+		{
+			it->second.second += it->second.first;
+		}
+	}
+	else
+	{
+		totalInterval.second -= totalInterval.first;
+		packetCount.second -= packetCount.first;
+		bytesTotal.second -= bytesTotal.second;
+		haystackEvents.second -= haystackEvents.first;
+
+		for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
+		{
+			it->second.second -= it->second.first;
+		}
+
+		for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
+		{
+			it->second.second -= it->second.first;
+		}
+
+		for(Packet_Table::iterator it = packTable.begin(); it != packTable.end(); it++)
+		{
+			it->second.second -= it->second.first;
+		}
 	}
 }
 
