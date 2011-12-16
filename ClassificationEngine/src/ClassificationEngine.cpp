@@ -388,7 +388,8 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 
 				Classify(it->second);
 				cout << it->second->ToString();
-				SilentAlarm(it->second);
+				if(it->second->isHostile)
+					SilentAlarm(it->second);
 				SendToUI(it->second);
 			}
 		}
@@ -514,7 +515,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 		try
 		{
-			cout << sendaddr.sin_addr.s_addr << endl;
 			suspect->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
 			bzero(buf, numbytes);
 

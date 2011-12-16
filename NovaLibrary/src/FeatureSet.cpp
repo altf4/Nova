@@ -279,6 +279,13 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 	memcpy(buf+offset, &totalInterval, size);
 	offset += size;
 
+	memcpy(buf+offset, &haystackEvents, size);
+	offset += size;
+	memcpy(buf+offset, &packetCount, size);
+	offset += size;
+	memcpy(buf+offset, &bytesTotal, size);
+	offset += size;
+
 	//Vector of packet intervals
 	for(uint i = 0; i < packet_intervals.size(); i++)
 	{
@@ -330,31 +337,42 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	{
 		SAData.features[i] = SATable[hostAddr].features[i];
 	}
+	SAData.packTable.set_empty_key(0);
+	SAData.IPTable.set_empty_key(0);
+	SAData.portTable.set_empty_key(0);
+
+	cout << "Features copied" << endl;
 
 	//Temporary variables to store and track data during deserialization
 	uint temp;
 	uint tempCount;
 	uint16_t ptemp;
+	cout << "Total Interval" << endl;
 
 	memcpy(&SAData.totalInterval, buf+offset, size);
 	offset += size;
 
-	//Derived values:
-	// haystackEvents = totalInterval * features[HAYSTACK_EVENT_FREQUENCY]
-	SAData.haystackEvents = SAData.totalInterval * SAData.features[HAYSTACK_EVENT_FREQUENCY];
-	// packetCount = totalInterval / features[PACKET_INTERVAL_MEAN]
-	SAData.packetCount = SAData.totalInterval / SAData.features[PACKET_INTERVAL_MEAN];
-	// bytesTotal = packetCount * features[PACKET_SIZE_MEAN]
-	SAData.bytesTotal = SAData.packetCount * SAData.features[PACKET_SIZE_MEAN];
+	memcpy(&SAData.haystackEvents, buf+offset, size);
+	offset += size;
+	memcpy(&SAData.packetCount, buf+offset, size);
+	offset += size;
+	memcpy(&SAData.bytesTotal, buf+offset, size);
+	offset += size;
+
+	cout << "Packet Intervals" << endl;
 
 	//Packet intervals
 	SAData.packet_intervals.clear();
-	for(uint i = 0; i < (SAData.packetCount-1); i++)
+	cout << "Packet Count: " << SAData.packetCount << endl;
+	for(uint i = 1; i < (SAData.packetCount); i++)
 	{
+		//cout << "Interval #: " << i << endl;
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		SAData.packet_intervals.push_back(temp);
 	}
+
+	cout << "Packet Sizes" << endl;
 
 	//Packet size table
 	tempCount = 0;
@@ -367,9 +385,11 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.packTable[temp] = tempCount;
+		SAData.packTable[(int)temp] = tempCount;
 		i += tempCount;
 	}
+
+	cout << "IP Table" << endl;
 
 	//IP table
 	tempCount = 0;
@@ -382,9 +402,11 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.IPTable[temp] = tempCount;
+		SAData.IPTable[(in_addr_t)temp] = tempCount;
 		i += tempCount;
 	}
+
+	cout << "Port Table" << endl;
 
 	//Port table
 	tempCount = 0;
