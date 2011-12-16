@@ -120,6 +120,9 @@ LoggerPtr m_logger(Logger::getLogger("main"));
 
 int maxFeatureValues[dim];
 
+//Used to indicate if the kd tree needs to be reformed
+bool updateKDTree = false;
+
 int main(int argc,char *argv[])
 {
 	bzero(GUIData,MAX_MSG_SIZE);
@@ -385,7 +388,6 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			if(it->second->needs_classification_update)
 			{
 				oldClassification = it->second->isHostile;
-
 				Classify(it->second);
 				cout << it->second->ToString();
 				if(it->second->isHostile)
@@ -512,32 +514,42 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		}
 
 		suspect = new Suspect();
+		pthread_rwlock_wrlock(&lock);
 
 		try
 		{
-			suspect->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
-			bzero(buf, numbytes);
+			//Gets the suspects address
+			uint addr = getSerializedAddr(buf);
 
-			LOG4CXX_INFO(m_logger,"Received a Silent Alarm!\n" << suspect->ToString());
-			pthread_rwlock_rdlock(&lock);
-
-			for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
+			SuspectHashTable::iterator it = suspects.find(addr);
+			//If this is a new suspect put it in the table
+			if(it == suspects.end())
 			{
-				if(it->second->IP_address.s_addr == suspect->IP_address.s_addr)
-				{
-					pthread_rwlock_unlock(&lock);
-					pthread_rwlock_wrlock(&lock);
-					it->second->flaggedByAlarm = true;
-					break;
-				}
+				suspect->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
+				suspects[addr] = suspect;
+
 			}
+			//If this suspect exists, update the information
+			else
+			{
+				//This function will overwrite everything except the information used to calculate the classification
+				// a combined classification will be given next classification loop
+				suspects[addr]->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
+				delete suspect;
+			}
+			suspects[addr]->needs_feature_update = true;
+			suspects[addr]->needs_classification_update = true;
+			suspects[addr]->flaggedByAlarm = true;
+			updateKDTree = true;
+
+			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
 		}
 		catch(std::exception e)
 		{
 			close(sockfd);
+			delete suspect;
 			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: " << string(e.what()));
 		}
-		delete suspect;
 		pthread_rwlock_unlock(&lock);
 	}
 	close(sockfd);
@@ -572,6 +584,7 @@ void Nova::ClassificationEngine::FormKdTree()
 			normalizedDataPts,					// the data points
 					nPts,						// number of points
 					dim);						// dimension of space
+	updateKDTree = false;
 }
 
 //Performs classification on given suspect
@@ -597,34 +610,43 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
 	//	This will make the classification range from 0 to 1
 	double classifyCount = 0;
+
 	for (int i = 0; i < k; i++)
 	{
 		dists[i] = sqrt(dists[i]);				// unsquare distance
 
-		//If Hostile
-		if( dataPtsWithClass[ nnIdx[i] ]->classification == 1)
+		if(nnIdx[i] == -1)
 		{
-			classifyCount += (sqrtDIM - dists[i]);
-		}
-		//If benign
-		else if( dataPtsWithClass[ nnIdx[i] ]->classification == 0)
-		{
-			classifyCount -= (sqrtDIM - dists[i]);
+			LOG4CXX_ERROR(m_logger, "Unable to find a nearest neighbor for Data point: " << i << "\nTry decreasing the Error bound");
 		}
 		else
 		{
-			//error case; Data points must be 0 or 1
-			LOG4CXX_ERROR(m_logger,"Data point: " << i << " has an invalid classification of: " <<
-					dataPtsWithClass[ nnIdx[i] ]->classification << ". This must be either 0 (benign) or 1 (hostile).");
-			suspect->classification = -1;
-			delete [] nnIdx;							// clean things up
-		    delete [] dists;
-		    annClose();
-		    return;
+			//If Hostile
+			if(dataPtsWithClass[nnIdx[i]]->classification == 1)
+			{
+				classifyCount += (sqrtDIM - dists[i]);
+			}
+			//If benign
+			else if(dataPtsWithClass[nnIdx[i]]->classification == 0)
+			{
+				classifyCount -= (sqrtDIM - dists[i]);
+			}
+			else
+			{
+				//error case; Data points must be 0 or 1
+				LOG4CXX_ERROR(m_logger,"Data point: " << i << " has an invalid classification of: " <<
+						dataPtsWithClass[ nnIdx[i] ]->classification << ". This must be either 0 (benign) or 1 (hostile).");
+				suspect->classification = -1;
+				delete [] nnIdx;							// clean things up
+				delete [] dists;
+				annClose();
+				return;
+			}
 		}
 	}
 	pthread_rwlock_unlock(&lock);
 	pthread_rwlock_wrlock(&lock);
+
 	suspect->classification = .5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM ));
 
 	if( suspect->classification > classificationThreshold)
@@ -658,8 +680,7 @@ void Nova::ClassificationEngine::CopyDataToAnnPoints()
 //Calculates normalized data points for suspects
 void Nova::ClassificationEngine::NormalizeDataPoints()
 {
-	//Used to indicate if a max value has changed and the kd tree needs to be reformed
-	bool aMaxValChanged = false;
+
 
 	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
@@ -670,11 +691,11 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 			{
 				//For proper normalization the upper bound for a feature is the max value of the data.
 				maxFeatureValues[i] = it->second->features.features[i];
-				aMaxValChanged = true;
+				updateKDTree = true;
 			}
 		}
 	}
-	if(aMaxValChanged) FormKdTree();
+	if(updateKDTree) FormKdTree();
 
 	pthread_rwlock_unlock(&lock);
 	pthread_rwlock_wrlock(&lock);

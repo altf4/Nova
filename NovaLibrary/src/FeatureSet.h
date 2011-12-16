@@ -128,6 +128,8 @@ public:
 	FeatureSet();
 	///Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
+	///Calculates the total interval for time based features using latest timestamps
+	void CalculateTimeInterval();
 	///Calculates a feature
 	void CalculateIPTrafficDistribution();
 	///Calculates a feature
@@ -164,6 +166,9 @@ public:
 	//	returns the number of bytes read from the buffer
 	uint deserializeFeatureData(u_char * buf, in_addr_t hostAddr);
 
+	//This function puts all SA Data together for feature calculation
+	//void combineSATables();
+
 private:
 	//Temporary variables used to calculate Features
 
@@ -179,10 +184,13 @@ private:
 	//Max packet count to a port, used for normalizing
 	uint portMax;
 
+	//Tracks the number of HS events
 	uint haystackEvents;
-	//Tracks the number of HS events among other nova instances.
-	time_t startTime ;
+
+	time_t startTime;
 	time_t endTime;
+	time_t totalInterval;
+
 	//Number of packets total
 	uint packetCount;
 	//Total number of bytes in all packets
@@ -192,6 +200,25 @@ private:
 	vector <time_t> packet_times;
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
+
+	//Number of packets total
+	uint packetCountAll;
+	//Total number of bytes in all packets
+	uint bytesTotalAll;
+	//Tracks the number of HS events among all nova instances.
+	uint haystackEventsAll;
+	//Sum of all intervals from all nova instances
+	time_t totalIntervalAll;
+
+	//Table of Packet sizes and counts for variance calc, used to include SA data
+	Packet_Table packTableAll;
+	//Table of IP addresses and associated packet counts, used to include SA data
+	IP_Table IPTableAll;
+	//Table of Ports and associated packet counts, used to include SA data
+	Port_Table portTableAll;
+
+	//Flag to indicate that the SAData is current so update evidence can continue to add to the All tables
+	//bool SADataCurrent;
 
 };
 }
