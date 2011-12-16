@@ -337,9 +337,6 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	{
 		SAData.features[i] = SATable[hostAddr].features[i];
 	}
-	SAData.packTable.set_empty_key(0);
-	SAData.IPTable.set_empty_key(0);
-	SAData.portTable.set_empty_key(0);
 
 	cout << "Features copied" << endl;
 
@@ -385,6 +382,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
+		cout <<"Size: " << temp << " Count: " << tempCount << endl;
 		SAData.packTable[(int)temp] = tempCount;
 		i += tempCount;
 	}
