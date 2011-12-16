@@ -221,7 +221,6 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	bytesTotal.first += event->IP_total_data_bytes;
 	bytesTotal.second += event->IP_total_data_bytes;
 
-
 	//If from haystack
 	if( event->from_haystack)
 	{
@@ -329,9 +328,8 @@ uint FeatureSet::deserializeFeatureSet(u_char * buf)
 uint FeatureSet::serializeFeatureData(u_char *buf)
 {
 	uint offset = 0;
-	uint16_t psize = 2;
 	//Bytes in a word, used for everything but port #'s
-	uint size = 4;
+	const uint size = 4;
 
 	//Required, individual variables for calculation
 	memcpy(buf+offset, &totalInterval.first, size);
@@ -372,8 +370,8 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 	for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
 	{
 		//uint temp = it->first; Might need to use 4 bytes here?
-		memcpy(buf+offset, &it->first, psize);
-		offset += psize;
+		memcpy(buf+offset, &it->first, size);
+		offset += size;
 		memcpy(buf+offset, &it->second.second, size);
 		offset += size;
 	}
@@ -385,9 +383,8 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 {
 	uint offset = 0;
 
-	uint psize = 2;
 	//Bytes in a word, used for everything but port #'s
-	uint size = 4;
+	const uint size = 4;
 
 	//Temporary struct to store SA sender's information
 	struct silentAlarmFeatureData SAData;
@@ -398,7 +395,6 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	//Temporary variables to store and track data during deserialization
 	uint temp;
-	uint16_t ptemp;
 	uint tempCount;
 
 	//Required, individual variables for calculation
@@ -469,11 +465,11 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	for(uint i = 0; i < SAData.packetCount;)
 	{
-		memcpy(&ptemp, buf+offset, psize);
-		offset += psize;
+		memcpy(&temp, buf+offset, size);
+		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		SAData.portTable[ptemp].first = tempCount;
+		SAData.portTable[temp].first = tempCount;
 		i += tempCount;
 	}
 
