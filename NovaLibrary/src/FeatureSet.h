@@ -122,6 +122,8 @@ class FeatureSet
 public:
 	/// The actual feature values
 	double features[DIMENSION];
+	//Table of Nova hosts and feature set data needed to include silent alarm information in classifications
+	Silent_Alarm_Table SATable;
 
 	FeatureSet();
 	///Clears out the current values, and also any temp variables used to calculate them
@@ -176,9 +178,6 @@ private:
 	Port_Table portTable;
 	//Max packet count to a port, used for normalizing
 	uint portMax;
-
-	//Table of Nova hosts and feature set data needed to include silent alarm information in classifications
-	Silent_Alarm_Table SATable;
 
 	uint haystackEvents;
 	//Tracks the number of HS events among other nova instances.
