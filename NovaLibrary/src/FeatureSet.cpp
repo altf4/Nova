@@ -87,7 +87,8 @@ void FeatureSet::ClearFeatureSet()
 //Calculates all features in the feature set
 void FeatureSet::CalculateAll()
 {
-	UpdateFeatureData(INCLUDE);
+	//UpdateFeatureData(INCLUDE);
+	CalculateTimeInterval();
 
 	CalculateDistinctIPs();
 	CalculateDistinctPorts();
@@ -100,7 +101,7 @@ void FeatureSet::CalculateAll()
 	CalculatePacketSizeDeviation();
 	CalculatePacketIntervalDeviation();
 
-	UpdateFeatureData(REMOVE);
+	//UpdateFeatureData(REMOVE);
 }
 
 ///Calculates the total interval for time based features using latest timestamps
@@ -304,7 +305,7 @@ void FeatureSet::UpdateFeatureData(bool include)
 	{
 		totalInterval.second += totalInterval.first;
 		packetCount.second += packetCount.first;
-		bytesTotal.second += bytesTotal.second;
+		bytesTotal.second += bytesTotal.first;
 		haystackEvents.second += haystackEvents.first;
 
 		for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
@@ -326,7 +327,7 @@ void FeatureSet::UpdateFeatureData(bool include)
 	{
 		totalInterval.second -= totalInterval.first;
 		packetCount.second -= packetCount.first;
-		bytesTotal.second -= bytesTotal.second;
+		bytesTotal.second -= bytesTotal.first;
 		haystackEvents.second -= haystackEvents.first;
 
 		for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
@@ -389,36 +390,42 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	//Bytes in a word, used for everything but port #'s
 	const uint size = 4;
 
-	struct silentAlarmFeatureData * temp;
+	struct silentAlarmFeatureData temp;
 
 	//If we have a silentAlarmFeatureData struct for the local host
 	if(SATable.find(hostAddr) != SATable.end())
-		temp = &SATable[hostAddr];
+		temp = SATable[hostAddr];
 
 	//Else create one
 	else
 	{
-		struct silentAlarmFeatureData t;
-		SATable[hostAddr] = t;
-		temp = &SATable[hostAddr];
+		temp.totalInterval = 0;
+		temp.packetCount = 0;
+		temp.haystackEvents = 0;
+		temp.bytesTotal = 0;
+		temp.packet_intervals.clear();
 	}
 
 	//Required, individual variables for calculation
 	memcpy(buf+offset, &totalInterval.first, size);
+	temp.totalInterval = totalInterval.first;
 	offset += size;
 
 	memcpy(buf+offset, &haystackEvents.first, size);
 	haystackEvents.second += haystackEvents.first;
+	temp.haystackEvents += haystackEvents.first;
 	haystackEvents.first = 0;
 	offset += size;
 
 	memcpy(buf+offset, &packetCount.first, size);
 	packetCount.second += packetCount.first;
+	temp.packetCount += packetCount.first;
 	packetCount.first = 0;
 	offset += size;
 
 	memcpy(buf+offset, &bytesTotal.first, size);
 	bytesTotal.second += bytesTotal.first;
+	temp.bytesTotal += bytesTotal.first;
 	bytesTotal.first = 0;
 	offset += size;
 
@@ -429,7 +436,7 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	for(uint i = 0; i < packet_intervals.size(); i++)
 	{
 		memcpy(buf+offset, &packet_intervals[i], size);
-		temp->packet_intervals.push_back(packet_intervals[i]);
+		temp.packet_intervals.push_back(packet_intervals[i]);
 		offset += size;
 	}
 
@@ -467,6 +474,7 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		offset += size;
 	}
 
+	SATable[hostAddr] = temp;
 	return offset;
 }
 
@@ -530,7 +538,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		packTable[(int)temp].second += tempCount;
+		packTable[temp].second += tempCount;
 		i += tempCount;
 	}
 
@@ -541,7 +549,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		IPTable[(in_addr_t)temp].second += tempCount;
+		IPTable[temp].second += tempCount;
 		i += tempCount;
 	}
 
@@ -553,7 +561,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		portTable[(in_port_t)temp].second += tempCount;
+		portTable[temp].second += tempCount;
 		i += tempCount;
 	}
 
