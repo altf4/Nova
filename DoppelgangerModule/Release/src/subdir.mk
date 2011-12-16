@@ -4,13 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/ClassificationEngine.cpp 
+../src/DoppelgangerModule.cpp 
 
 OBJS += \
-./src/ClassificationEngine.o 
+./src/DoppelgangerModule.o 
 
 CPP_DEPS += \
-./src/ClassificationEngine.d 
+./src/DoppelgangerModule.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
