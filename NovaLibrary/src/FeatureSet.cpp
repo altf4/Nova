@@ -138,9 +138,15 @@ void FeatureSet::CalculatePortTrafficDistribution()
 
 void FeatureSet::CalculateHaystackEventFrequency()
 {
-	if(totalInterval.second > 0)
+	// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
+	if(totalInterval.second)
 	{
 		features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEvents.second)) / (double)(totalInterval.second);
+	}
+	else
+	{
+		//If interval is 0, no time based information, use a default of 1 for the interval
+		features[HAYSTACK_EVENT_FREQUENCY] = (double)(haystackEvents.second);
 	}
 }
 
@@ -149,7 +155,8 @@ void FeatureSet::CalculatePacketIntervalMean()
 {
 	//Each set of feature data (local and SATable items) have packetCount-1 intervals
 	//Subtract (# of SA Data entries + 1) from total packet count to get total # of intervals
-	features[PACKET_INTERVAL_MEAN] = ((double)(totalInterval.second) / (double)(packetCount.second- (SATable.size()+1)));
+	features[PACKET_INTERVAL_MEAN] = (((double) totalInterval.second)
+							/ ((double) (packetCount.second - (SATable.size() + 1) )));
 }
 
 void FeatureSet::CalculatePacketIntervalDeviation()
@@ -166,7 +173,7 @@ void FeatureSet::CalculatePacketIntervalDeviation()
 
 	for(uint i = 0; i < count; i++)
 	{
-		variance += (pow((packet_intervals[i] - mean), 2));
+		variance += (pow(((double)packet_intervals[i] - mean), 2)) / totalCount;
 	}
 
 	for(Silent_Alarm_Table::iterator it = SATable.begin(); it != SATable.end(); it++)
@@ -174,10 +181,9 @@ void FeatureSet::CalculatePacketIntervalDeviation()
 		count = it->second.packet_intervals.size();
 		for(uint i = 0; i < count; i++)
 		{
-			variance += (pow(( it->second.packet_intervals[i] - mean), 2));
+			variance += (pow(((double)it->second.packet_intervals[i] - mean), 2)) / totalCount;
 		}
 	}
-	variance /= totalCount;
 
 	features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
 }
@@ -202,9 +208,8 @@ void FeatureSet::CalculatePacketSizeDeviation()
 	for(Packet_Table::iterator it = packTable.begin() ; it != packTable.end(); it++)
 	{
 		// number of packets multiplied by (packet_size - mean)^2 divided by count
-		variance += (it->second.second * pow((it->first - mean), 2));
+		variance += (it->second.second * pow((it->first - mean), 2))/ count;
 	}
-	variance /= count;
 
 	features[PACKET_SIZE_DEVIATION] = sqrt(variance);
 }
@@ -507,23 +512,14 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	for(Packet_Table::iterator it = SAData.packTable.begin(); it != SAData.packTable.end(); it++)
 	{
-		if(packTable.count(it->first) == 0)
-			packTable[it->first].second = it->second.first;
-		else
 			packTable[it->first].second += it->second.first;
 	}
 	for(IP_Table::iterator it = SAData.IPTable.begin(); it != SAData.IPTable.end(); it++)
 	{
-		if(IPTable.count(it->first) == 0)
-			IPTable[it->first].second = it->second.first;
-		else
 			IPTable[it->first].second += it->second.first;
 	}
 	for(Port_Table::iterator it = SAData.portTable.begin(); it != SAData.portTable.end(); it++)
 	{
-		if(portTable.count(it->first) == 0)
-			portTable[it->first].second = it->second.first;
-		else
 			portTable[it->first].second += it->second.first;
 	}
 
