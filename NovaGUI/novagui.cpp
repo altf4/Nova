@@ -75,7 +75,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 {
 	signal(SIGINT, sighandler);
 	pthread_rwlock_init(&lock, NULL);
-	SuspectTable.set_empty_key(0);
+	SuspectTable.set_empty_key(1);
 	subnets.set_empty_key("");
 	ports.set_empty_key("");
 	nodes.set_empty_key("");
