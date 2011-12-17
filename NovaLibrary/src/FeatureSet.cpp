@@ -87,7 +87,7 @@ void FeatureSet::ClearFeatureSet()
 //Calculates all features in the feature set
 void FeatureSet::CalculateAll()
 {
-	//UpdateFeatureData(INCLUDE);
+	UpdateFeatureData(INCLUDE);
 	CalculateTimeInterval();
 
 	CalculateDistinctIPs();
@@ -101,7 +101,7 @@ void FeatureSet::CalculateAll()
 	CalculatePacketSizeDeviation();
 	CalculatePacketIntervalDeviation();
 
-	//UpdateFeatureData(REMOVE);
+	UpdateFeatureData(REMOVE);
 }
 
 ///Calculates the total interval for time based features using latest timestamps
