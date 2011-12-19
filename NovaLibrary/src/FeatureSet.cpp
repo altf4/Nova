@@ -277,7 +277,6 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 			packTable[event->IP_packet_sizes[i]].first++;
 			packet_times.push_back(event->packet_intervals[i]);
 		}
-		packet_intervals.clear();
 		for(uint i = 1; i < packet_times.size(); i++)
 		{
 			packet_intervals.push_back(packet_times[i] - packet_times[i-1]);
