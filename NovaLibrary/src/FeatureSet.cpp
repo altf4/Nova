@@ -477,17 +477,18 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 
 	//These tables all just place their key followed by the data
 	uint tempInt, i = 0;
-	for(Packet_Table::iterator it = packTable.begin(); it != packTable.end(); it++)
+	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (i < count); it++)
 	{
-		if(it->second.first && (i < count))
+		if(it->second.first)
 		{
 			tempInt = it->second.first;
 			//We only send data on the number of packets serialized earlier in the message
 			// if we send more it might be expecting information that isn't there later
 			if((i+tempInt) > count)
 			{
-				tempInt -= (i+tempInt)-count;
+				tempInt = count - i;
 			}
+			i+= tempInt;
 			memcpy(buf+offset, &it->first, size);
 			offset += size;
 			memcpy(buf+offset, &tempInt, size);
@@ -497,17 +498,18 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		}
 	}
 	i = 0;
-	for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
+	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (i < count); it++)
 	{
-		if(it->second.first && (i < count))
+		if(it->second.first)
 		{
 			tempInt = it->second.first;
 			//We only send data on the number of packets serialized earlier in the message
 			// if we send more it might be expecting information that isn't there later
 			if((i+tempInt) > count)
 			{
-				tempInt -= (i+tempInt)-count;
+				tempInt = count - i;
 			}
+			i+= tempInt;
 			memcpy(buf+offset, &it->first, size);
 			offset += size;
 			memcpy(buf+offset, &tempInt, size);
@@ -517,17 +519,18 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 		}
 	}
 	i = 0;
-	for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
+	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (i < count); it++)
 	{
-		if(it->second.first && (i < count))
+		if(it->second.first)
 		{
 			tempInt = it->second.first;
 			//We only send data on the number of packets serialized earlier in the message
 			// if we send more it might be expecting information that isn't there later
 			if((i+tempInt) > count)
 			{
-				tempInt -= (i+tempInt)-count;
+				tempInt = count - i;
 			}
+			i+= tempInt;
 			memcpy(buf+offset, &it->first, size);
 			offset += size;
 			memcpy(buf+offset, &tempInt, size);
@@ -581,7 +584,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		portMax = temp;
 
 	//Packet intervals
-	for(uint i = 1; i < pkt_count; i++)
+	for(uint i = 0; i < pkt_count; i++)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
