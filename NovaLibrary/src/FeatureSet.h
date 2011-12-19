@@ -41,6 +41,11 @@
 #define INITIAL_PORT_SIZE 1024
 #define INITIAL_PACKET_SIZE 4096
 
+//UDP has max payload of 65535 bytes, suspect with data has a base size of 180 bytes
+// each packet can requires up to 28 bytes, meaning we can only send up information on
+// a maximum of 2334 packets
+#define MAX_PACKETS_PER_MSG 2334
+
 //boolean values for updateFeatureData()
 #define INCLUDE true
 #define REMOVE false
