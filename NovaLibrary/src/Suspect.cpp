@@ -31,7 +31,7 @@ Suspect::Suspect()
 //Destructor. Has to delete the FeatureSet object within.
 Suspect::~Suspect()
 {
-	for ( uint i = 0; i < evidence.size(); i++ )
+	for (uint i = 0; i < evidence.size(); i++)
 	{
 		if(evidence[i] != NULL)
 		{
@@ -47,13 +47,13 @@ Suspect::~Suspect()
 //Constructor from a TrafficEvent
 Suspect::Suspect(TrafficEvent *event)
 {
-	this->IP_address = event->src_IP;
-	this->classification = -1;
-	this->isHostile = false;
-	this->features = FeatureSet();
-	this->annPoint = NULL;
-	this->flaggedByAlarm = false;
-	this->AddEvidence(event);
+	IP_address = event->src_IP;
+	classification = -1;
+	isHostile = false;
+	features = FeatureSet();
+	annPoint = NULL;
+	flaggedByAlarm = false;
+	AddEvidence(event);
 }
 
 //Converts suspect into a human readable string and returns it
@@ -93,26 +93,26 @@ string Suspect::ToString()
 //	Does not take actions like reclassifying or calculating features.
 void Suspect::AddEvidence(TrafficEvent *event)
 {
-	this->evidence.push_back(event);
-	this->needs_classification_update = true;
-	this->needs_feature_update = true;
+	evidence.push_back(event);
+	needs_classification_update = true;
+	needs_feature_update = true;
 }
 
 //Calculates the feature set for this suspect
 void Suspect::CalculateFeatures(bool isTraining)
 {
 	//Clear any existing feature data
-	for(uint i = 0; i < this->evidence.size(); i++)
+	for(uint i = 0; i < evidence.size(); i++)
 	{
-		this->features.UpdateEvidence(this->evidence[i]);
+		features.UpdateEvidence(evidence[i]);
 	}
-	this->evidence.clear();
+	evidence.clear();
 	//For-each piece of evidence
-	this->features.CalculateAll();
+	features.CalculateAll();
 
 	if(isTraining)
 	{
-		if(this->features.features[DISTINCT_IPS] > 2)
+		if(features.features[DISTINCT_IPS] > 2)
 		{
 			classification = 1;
 			isHostile = true;

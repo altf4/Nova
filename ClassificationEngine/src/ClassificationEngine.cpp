@@ -270,7 +270,7 @@ int main(int argc,char *argv[])
 	while(true)
 	{
 		event = new TrafficEvent();
-		if( ReceiveTrafficEvent() == false)
+		if(ReceiveTrafficEvent() == false)
 		{
 			delete event;
 			event = NULL;
@@ -428,7 +428,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 				if(it->second->needs_feature_update)
 				{
 					it->second->CalculateFeatures(isTraining);
-					if( it->second->annPoint == NULL)
+					if(it->second->annPoint == NULL)
 					{
 						it->second->annPoint = annAllocPt(DIMENSION);
 					}
