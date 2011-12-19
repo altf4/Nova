@@ -970,7 +970,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 			close(sockfd);
 			return;
 		}
-
+		cout << "Broadcast" << endl;
 	}while(suspect->features.packetCount.first);
 }
 
