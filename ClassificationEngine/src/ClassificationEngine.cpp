@@ -492,13 +492,14 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
     }
 
 
-	Suspect *suspect = NULL;
+	Suspect * suspect = NULL;
 
 	int connectionSocket, bytesRead;
 
 	//Accept incoming Silent Alarm TCP Connections
 	while(1)
 	{
+		suspect = NULL;
 
 		//Blocking call
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
@@ -507,7 +508,9 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-		if((bytesRead = recvfrom(connectionSocket, buf, MAX_MSG_SIZE, 0,sockaddrPtr,&sendaddrSize)) == -1)
+		bzero(buf, MAX_MSG_SIZE);
+
+		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0)) == -1)
 		{
 			LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 			close(connectionSocket);
@@ -550,7 +553,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			suspects[addr]->flaggedByAlarm = true;
 
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
-			bzero(buf, bytesRead);
 		}
 		catch(std::exception e)
 		{
@@ -971,12 +973,12 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 			if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
 			{
-				LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
+				LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
 				close(socketFD);
 				continue;
 			}
 
-			if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
+			if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
 			{
 				LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 				close(sockfd);
