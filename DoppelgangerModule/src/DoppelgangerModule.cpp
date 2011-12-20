@@ -453,13 +453,16 @@ void DoppelgangerModule::LoadConfig(char* input)
 	string prefix;
 	ifstream config(input);
 
+	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
+			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS"};
+
 	if(config.is_open())
 	{
 		while(config.good())
 		{
 			getline(config,line);
 
-			prefix = "INTERFACE";
+			prefix = prefixes[0];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -479,7 +482,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = "DM_HONEYD_CONFIG";
+			prefix = prefixes[1];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -491,7 +494,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = "DOPPELGANGER_IP";
+			prefix = prefixes[2];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -508,7 +511,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				verify[2]=true;
 				continue;
 			}
-			prefix = "DM_ENABLED";
+			prefix = prefixes[3];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -519,7 +522,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "USE_TERMINALS";
+			prefix = prefixes[4];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -537,6 +540,8 @@ void DoppelgangerModule::LoadConfig(char* input)
 		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		{
 			v &= verify[i];
+			if (!verify[i])
+				LOG4CXX_ERROR(m_logger,"The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
 		}
 
 		if(v == false)

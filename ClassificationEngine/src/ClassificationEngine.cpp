@@ -1088,13 +1088,19 @@ void ClassificationEngine::LoadConfig(char * input)
 	string prefix;
 	ifstream config(input);
 
+	const string prefixes[] = {"INTERFACE","USE_TERMINALS",
+	"BROADCAST_ADDR","SILENT_ALARM_PORT",
+	"K", "EPS",
+	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
+	"CLASSIFICATION_THRESHOLD","DATAFILE"};
+
 	if(config.is_open())
 	{
 		while(config.good())
 		{
 			getline(config,line);
 
-			prefix = "INTERFACE";
+			prefix = prefixes[0];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1114,7 +1120,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 			}
 
-			prefix = "USE_TERMINALS";
+			prefix = prefixes[1];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1126,7 +1132,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "BROADCAST_ADDR";
+			prefix = prefixes[2];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1138,7 +1144,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "SILENT_ALARM_PORT";
+			prefix = prefixes[3];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1150,7 +1156,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "K";
+			prefix = prefixes[4];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1162,7 +1168,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "EPS";
+			prefix = prefixes[5];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1174,7 +1180,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "CLASSIFICATION_TIMEOUT";
+			prefix = prefixes[6];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1186,7 +1192,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "IS_TRAINING";
+			prefix = prefixes[7];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1198,7 +1204,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "CLASSIFICATION_THRESHOLD";
+			prefix = prefixes[8];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1210,7 +1216,7 @@ void ClassificationEngine::LoadConfig(char * input)
 				continue;
 			}
 
-			prefix = "DATAFILE";
+			prefix = prefixes[9];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -1228,6 +1234,9 @@ void ClassificationEngine::LoadConfig(char * input)
 		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		{
 			v &= verify[i];
+			if (!verify[i])
+				LOG4CXX_ERROR(m_logger,"The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
+
 		}
 
 		if(v == false)
