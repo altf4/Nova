@@ -462,11 +462,9 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
-	int numbytes;
 	int addr_len;
-	int broadcast=1;
 
-	if((sockfd = socket(PF_INET,SOCK_STREAM,6)) == -1)
+	if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sockfd);
@@ -476,6 +474,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
+
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
 	socklen_t sendaddrSize = sizeof sendaddr;
@@ -487,38 +486,55 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		exit(1);
 	}
 
+    if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"listen: " << strerror(errno));
+		close(sockfd);
+        exit(1);
+    }
+
 	addr_len = sizeof sendaddr;
 	socklen_t * addr_lenPtr = (socklen_t *)&addr_len;
-	size_t bufSize = sizeof buf;
 
 	Suspect *suspect = NULL;
 
+	int connectionSocket, bytesRead;
+	struct sockaddr_un remote;
+	struct sockaddr * remoteAddrPtr = (struct sockaddr *)&remote;
+
+	//Accept incoming Silent Alarm TCP Connections
 	while(1)
 	{
-		bzero(buf, MAX_MSG_SIZE);
-		//Do the actual "listen"
-		if ((numbytes = recvfrom(sockfd,buf,bufSize,0,sockaddrPtr,addr_lenPtr)) == -1)
+
+		//Blocking call
+		if((connectionSocket = accept(sockfd, remoteAddrPtr, sockSizePtr)) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "recvfrom: " << strerror(errno));
-			close(sockfd);
-			exit(1);
+			LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+			close(connectionSocket);
+			continue;
+		}
+		if((bytesRead = recvfrom(connectionSocket, buf, MAX_MSG_SIZE, 0,sockaddrPtr,addr_lenPtr)) == -1)
+		{
+			LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+			close(connectionSocket);
+			continue;
 		}
 
 		//If this is from ourselves, then drop it.
 		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
 		{
+			close(connectionSocket);
 			continue;
 		}
 
-		suspect = new Suspect();
 		pthread_rwlock_wrlock(&lock);
-
 		try
 		{
-			//Gets the suspects address
-			uint addr = getSerializedAddr(buf);
+			suspect = new Suspect();
 
+			uint addr = getSerializedAddr(buf);
 			SuspectHashTable::iterator it = suspects.find(addr);
+
 			//If this is a new suspect put it in the table
 			if(it == suspects.end())
 			{
@@ -534,18 +550,21 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 				suspects[addr]->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
 				delete suspect;
 			}
+
 			suspects[addr]->needs_feature_update = true;
 			suspects[addr]->needs_classification_update = true;
 			suspects[addr]->flaggedByAlarm = true;
 
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
+			bzero(buf, bytesRead);
 		}
 		catch(std::exception e)
 		{
-			close(sockfd);
+			LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
 			delete suspect;
-			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: " << string(e.what()));
+			suspect = NULL;
 		}
+		close(connectionSocket);
 		pthread_rwlock_unlock(&lock);
 	}
 	close(sockfd);
