@@ -24,8 +24,10 @@ using namespace std;
 using namespace Nova;
 using namespace ClassificationEngine;
 
-
+// Maintains a list of suspects and information on network activity
 static SuspectHashTable suspects;
+// Vector of ip addresses that correspond to other nova instances
+vector<in_addr_t> neighbors;
 
 pthread_rwlock_t lock;
 
@@ -360,7 +362,6 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 	//Builds the Silent Alarm Network address
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(sAlarmPort);
-	serv_addr.sin_addr.s_addr = INADDR_BROADCAST;
 
 	//Classification Loop
 	while(true)
@@ -465,16 +466,9 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	int addr_len;
 	int broadcast=1;
 
-	if((sockfd = socket(PF_INET,SOCK_DGRAM,0)) == -1)
+	if((sockfd = socket(PF_INET,SOCK_STREAM,6)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-		close(sockfd);
-		exit(1);
-	}
-
-	if(setsockopt(sockfd,SOL_SOCKET,SO_BROADCAST,&broadcast,sizeof broadcast) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "setsockopt - SO_SOCKET: " << strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
@@ -543,7 +537,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			suspects[addr]->needs_feature_update = true;
 			suspects[addr]->needs_classification_update = true;
 			suspects[addr]->flaggedByAlarm = true;
-			updateKDTree = true;
 
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
 		}
@@ -917,60 +910,59 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
+	bzero(data, MAX_MSG_SIZE);
+	dataLen = suspect->serializeSuspect(data);
+
+	//If the hostility hasn't changed don't bother the DM
+	if( oldClassification != suspect->isHostile)
+	{
+		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+			close(socketFD);
+			return;
+		}
+
+		if (connect(socketFD, alarmRemotePtr, len) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
+			close(socketFD);
+			return;
+		}
+
+		if (send(socketFD, data, dataLen, 0) == -1)
+		{
+			LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
+			close(socketFD);
+			return;
+		}
+		close(socketFD);
+	}
+
 	while(suspect->features.packetCount.first)
 	{
-		bzero(data, MAX_MSG_SIZE);
-		dataLen = suspect->serializeSuspect(data);
-
-		//If the hostility hasn't changed don't bother the DM
-		if( oldClassification != suspect->isHostile)
-		{
-			if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-			{
-				LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-				close(socketFD);
-				return;
-			}
-
-			if (connect(socketFD, alarmRemotePtr, len) == -1)
-			{
-				LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
-				close(socketFD);
-				return;
-			}
-
-			if (send(socketFD, data, dataLen, 0) == -1)
-			{
-				LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
-				close(socketFD);
-				return;
-			}
-			close(socketFD);
-		}
 
 		//Update other Nova Instances with latest suspect Data
 		dataLen += suspect->features.serializeFeatureData(data+dataLen, hostAddr.sin_addr.s_addr);
-		//Send Silent Alarm to other Nova Instances with feature Data
-		if ((sockfd = socket(AF_INET,SOCK_DGRAM,0)) == -1)
+		for(uint i = 0; i < neighbors.size(); i++)
 		{
-			LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-			close(sockfd);
-			return;
-		}
+			serv_addr.sin_addr.s_addr = neighbors[i];
+			//Send Silent Alarm to other Nova Instances with feature Data
+			if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+			{
+				LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+				close(sockfd);
+				return;
+			}
 
-		if((setsockopt(sockfd, SOL_SOCKET,SO_BROADCAST, bdPtr, bdsize)) == -1)
-		{
-			LOG4CXX_ERROR(m_logger, "setsockopt - SO_SOCKET: " << strerror(errno));
-			close(sockfd);
-			return;
+			if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
+			{
+				LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
+				close(sockfd);
+				return;
+			}
 		}
-
-		if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
-		{
-			LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
-			close(sockfd);
-			return;
-		}
+		bzero(data, MAX_MSG_SIZE);
 	}
 }
 
@@ -1087,6 +1079,41 @@ void ClassificationEngine::LoadConfig(char * input)
 
 	string line;
 	string prefix;
+
+	string settingsPath = homePath +"/settings";
+	ifstream settings(settingsPath.c_str());
+	in_addr_t nbr;
+
+	if(settings.is_open())
+	{
+		while(settings.good())
+		{
+			getline(settings, line);
+
+			prefix = "neighbor";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0)
+				{
+					//Note inet_addr() not compatible with 255.255.255.255 as this is == the error condition of -1
+					nbr = inet_addr(line.c_str());
+
+					if((int)nbr == -1)
+					{
+						LOG4CXX_ERROR(m_logger, "Invalid IP address parsed on line of settings file.");
+					}
+					else if(nbr)
+					{
+						neighbors.push_back(nbr);
+					}
+					nbr = 0;
+				}
+			}
+		}
+	}
+	settings.close();
+
 	ifstream config(input);
 
 	if(config.is_open())
