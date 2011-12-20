@@ -26,6 +26,8 @@
 #define GUI_FILENAME "/keys/GUI_CEKey"
 //Sets the Initial Table size for faster operations
 #define INITIAL_TABLESIZE 256
+//Number of messages to queue in a listening socket before ignoring requests until the queue is open
+#define SOCKET_QUEUE_SIZE 50
 
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
@@ -67,6 +69,9 @@ void *TrainingLoop(void *ptr);
 
 ///Thread for listening for Silent Alarms from other Nova instances
 void *SilentAlarmLoop(void *ptr);
+
+///Accepts incoming Silent Alarm TCP Connections
+void ReceiveAlarm(int alarmSocket, Suspect * suspect);
 
 ///Performs classification on given suspect
 void Classify(Suspect *suspect);
