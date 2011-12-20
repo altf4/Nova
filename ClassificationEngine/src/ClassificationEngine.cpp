@@ -462,8 +462,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
-	int addr_len;
-
 	if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
@@ -493,27 +491,23 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
         exit(1);
     }
 
-	addr_len = sizeof sendaddr;
-	socklen_t * addr_lenPtr = (socklen_t *)&addr_len;
 
 	Suspect *suspect = NULL;
 
 	int connectionSocket, bytesRead;
-	struct sockaddr_un remote;
-	struct sockaddr * remoteAddrPtr = (struct sockaddr *)&remote;
 
 	//Accept incoming Silent Alarm TCP Connections
 	while(1)
 	{
 
 		//Blocking call
-		if((connectionSocket = accept(sockfd, remoteAddrPtr, sockSizePtr)) == -1)
+		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
 			LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 			close(connectionSocket);
 			continue;
 		}
-		if((bytesRead = recvfrom(connectionSocket, buf, MAX_MSG_SIZE, 0,sockaddrPtr,addr_lenPtr)) == -1)
+		if((bytesRead = recvfrom(connectionSocket, buf, MAX_MSG_SIZE, 0,sockaddrPtr,&sendaddrSize)) == -1)
 		{
 			LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 			close(connectionSocket);
@@ -931,6 +925,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
 	bzero(data, MAX_MSG_SIZE);
 	dataLen = suspect->serializeSuspect(data);
+	uint featureData = 0;
 
 	//If the hostility hasn't changed don't bother the DM
 	if( oldClassification != suspect->isHostile)
@@ -960,9 +955,9 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 	while(suspect->features.packetCount.first)
 	{
+		featureData = suspect->features.serializeFeatureData(data+dataLen, hostAddr.sin_addr.s_addr);
 
 		//Update other Nova Instances with latest suspect Data
-		dataLen += suspect->features.serializeFeatureData(data+dataLen, hostAddr.sin_addr.s_addr);
 		for(uint i = 0; i < neighbors.size(); i++)
 		{
 			serv_addr.sin_addr.s_addr = neighbors[i];
@@ -971,17 +966,25 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 			{
 				LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 				close(sockfd);
-				return;
+				continue;
+			}
+
+			if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+			{
+				LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
+				close(socketFD);
+				continue;
 			}
 
 			if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
 			{
-				LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
+				LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 				close(sockfd);
-				return;
+				continue;
 			}
+			close(sockfd);
 		}
-		bzero(data, MAX_MSG_SIZE);
+		bzero(data+dataLen, featureData);
 	}
 }
 
