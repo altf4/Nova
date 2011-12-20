@@ -586,12 +586,17 @@ void Haystack::LoadConfig(char* input)
 	string prefix;
 	ifstream config(input);
 
+	const string prefixes[] = {"INTERFACE", "HS_HONEYD_CONFIG",
+			"TCP_TIMEOUT","TCP_CHECK_FREQ",
+			"READ_PCAP", "PCAP_FILE",
+			"GO_TO_LIVE","USE_TERMINALS"};
+
 	if(config.is_open())
 	{
 		while(config.good())
 		{
 			getline(config,line);
-			prefix = "INTERFACE";
+			prefix = prefix[0];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -602,7 +607,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "HS_HONEYD_CONFIG";
+			prefix = prefix[1];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -613,7 +618,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "TCP_TIMEOUT";
+			prefix = prefix[2];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -624,7 +629,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "TCP_CHECK_FREQ";
+			prefix = prefix[3];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -635,7 +640,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "READ_PCAP";
+			prefix = prefix[4];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -646,7 +651,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = "PCAP_FILE";
+			prefix = prefix[5];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -658,7 +663,7 @@ void Haystack::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = "GO_TO_LIVE";
+			prefix = prefix[6];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -670,7 +675,7 @@ void Haystack::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = "USE_TERMINALS";
+			prefix = prefix[7];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -688,6 +693,8 @@ void Haystack::LoadConfig(char* input)
 		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
 		{
 			v &= verify[i];
+			if (!verify[i])
+				LOG4CXX_ERROR(m_logger,"The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
 		}
 
 		if(v == false)
