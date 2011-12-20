@@ -70,9 +70,6 @@ void *TrainingLoop(void *ptr);
 ///Thread for listening for Silent Alarms from other Nova instances
 void *SilentAlarmLoop(void *ptr);
 
-///Accepts incoming Silent Alarm TCP Connections
-void ReceiveAlarm(int alarmSocket, Suspect * suspect);
-
 ///Performs classification on given suspect
 void Classify(Suspect *suspect);
 
