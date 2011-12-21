@@ -596,7 +596,7 @@ void Haystack::LoadConfig(char* input)
 		while(config.good())
 		{
 			getline(config,line);
-			prefix = prefix[0];
+			prefix = prefixes[0];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -607,7 +607,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = prefix[1];
+			prefix = prefixes[1];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -618,7 +618,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = prefix[2];
+			prefix = prefixes[2];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -629,7 +629,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = prefix[3];
+			prefix = prefixes[3];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -640,7 +640,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = prefix[4];
+			prefix = prefixes[4];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -651,7 +651,7 @@ void Haystack::LoadConfig(char* input)
 				}
 				continue;
 			}
-			prefix = prefix[5];
+			prefix = prefixes[5];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -663,7 +663,7 @@ void Haystack::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = prefix[6];
+			prefix = prefixes[6];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
@@ -675,7 +675,7 @@ void Haystack::LoadConfig(char* input)
 				continue;
 			}
 
-			prefix = prefix[7];
+			prefix = prefixes[7];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
