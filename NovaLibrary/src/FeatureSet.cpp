@@ -91,8 +91,9 @@ void FeatureSet::ClearFeatureSet()
 //Calculates all features in the feature set
 void FeatureSet::CalculateAll()
 {
-	UpdateFeatureData(INCLUDE);
 	CalculateTimeInterval();
+
+	UpdateFeatureData(INCLUDE);
 
 	CalculateDistinctIPs();
 	CalculateDistinctPorts();
@@ -191,7 +192,7 @@ void FeatureSet::CalculatePacketIntervalDeviation()
 
 	for (Interval_Table::iterator it = intervalTable.begin() ; it != intervalTable.end(); it++)
 	{
-		variance += it->second.second*(pow(((double)it->first - mean), 2)/totalCount);
+		variance += it->second.second*(pow((it->first - mean), 2)/totalCount);
 	}
 
 	features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
