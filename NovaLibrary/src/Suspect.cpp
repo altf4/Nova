@@ -246,7 +246,6 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
 		temp.packetCount = 0;
 		temp.haystackEvents = 0;
 		temp.bytesTotal = 0;
-		temp.packet_intervals.clear();
 		features.SATable[hostAddr] = temp;
 	}
 

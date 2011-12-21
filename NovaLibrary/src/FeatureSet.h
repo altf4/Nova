@@ -86,16 +86,26 @@ struct eqint
   }
 };
 
+//Equality operator used by google's dense hash map
+struct eqtime
+{
+  bool operator()(time_t s1, time_t s2) const
+  {
+	    return (s1 == s2);
+  }
+};
+
 
 typedef google::dense_hash_map<in_addr_t, pair<uint, uint>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
 typedef google::dense_hash_map<in_port_t, pair<uint, uint>, tr1::hash<in_port_t>, eqport > Port_Table;
-typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<uint>, eqint > Packet_Table;
+typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<int>, eqint > Packet_Table;
+typedef google::dense_hash_map<time_t, pair<uint, uint>, tr1::hash<time_t>, eqtime > Interval_Table;
+
 
 struct silentAlarmFeatureData
 {
 	/// The actual feature values
 	double features[DIMENSION];
-
 
 	// endTime - startTime : used to incorporate time based information correctly.
 	uint totalInterval;
@@ -105,9 +115,6 @@ struct silentAlarmFeatureData
 	uint packetCount;
 	//Total number of bytes
 	uint bytesTotal;
-
-	///A vector of the intervals between packet arrival times for tracking traffic over time.
-	vector <time_t> packet_intervals;
 
 };
 
@@ -211,6 +218,11 @@ private:
 	vector <time_t> packet_times;
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
+
+	///A table of the intervals between packet arrival times for tracking traffic over time.
+	Interval_Table intervalTable;
+
+	time_t last_time;
 
 };
 }
