@@ -270,7 +270,7 @@ int main(int argc,char *argv[])
 	while(true)
 	{
 		event = new TrafficEvent();
-		if( ReceiveTrafficEvent() == false)
+		if(ReceiveTrafficEvent() == false)
 		{
 			delete event;
 			event = NULL;
@@ -428,7 +428,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 				if(it->second->needs_feature_update)
 				{
 					it->second->CalculateFeatures(isTraining);
-					if( it->second->annPoint == NULL)
+					if(it->second->annPoint == NULL)
 					{
 						it->second->annPoint = annAllocPt(DIMENSION);
 					}
@@ -917,7 +917,8 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
-	do{
+	while(suspect->features.packetCount.first)
+	{
 		bzero(data, MAX_MSG_SIZE);
 		dataLen = suspect->serializeSuspect(data);
 
@@ -970,7 +971,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 			close(sockfd);
 			return;
 		}
-	}while(suspect->features.packetCount.first);
+	}
 }
 
 ///Receive a TrafficEvent from another local component.
