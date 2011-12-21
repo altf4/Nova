@@ -1001,7 +1001,7 @@ bool ClassificationEngine::ReceiveTrafficEvent()
 		close(connectionSocket);
         return false;
     }
-    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(connectionSocket);
