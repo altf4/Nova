@@ -201,7 +201,7 @@ uint Suspect::deserializeSuspect(u_char * buf)
 }
 
 //Reads Suspect information from a buffer originally populated by serializeSuspect
-// populates SATable[hostAddr],	returns the number of bytes read from the buffer
+// returns the number of bytes read from the buffer
 uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
 {
 	uint offset = 0;
@@ -233,30 +233,8 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
 	//	returns the number of bytes read from the buffer
 	offset += features.deserializeFeatureSet(buf+offset);
 
-	struct silentAlarmFeatureData temp;
+	offset += features.deserializeFeatureData(buf+offset, hostAddr);
 
-	//If we have a silentAlarmFeatureData struct for the local host
-	if(features.SATable.find(hostAddr) != features.SATable.end())
-		temp = features.SATable[hostAddr];
-
-	//Else create one
-	else
-	{
-		temp.totalInterval = 0;
-		temp.packetCount = 0;
-		temp.haystackEvents = 0;
-		temp.bytesTotal = 0;
-		features.SATable[hostAddr] = temp;
-	}
-
-	for(uint i = 0; i < DIMENSION; i++)
-	{
-		temp.features[i] = features.features[i];
-	}
-
-	offset += features.deserializeFeatureData(buf+offset, hostAddr, &temp);
-
-	features.SATable[hostAddr] = temp;
 
 	return offset;
 }
