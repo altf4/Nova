@@ -24,8 +24,10 @@ using namespace std;
 using namespace Nova;
 using namespace ClassificationEngine;
 
-
+// Maintains a list of suspects and information on network activity
 static SuspectHashTable suspects;
+// Vector of ip addresses that correspond to other nova instances
+vector<in_addr_t> neighbors;
 
 pthread_rwlock_t lock;
 
@@ -360,7 +362,6 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 	//Builds the Silent Alarm Network address
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(sAlarmPort);
-	serv_addr.sin_addr.s_addr = INADDR_BROADCAST;
 
 	//Classification Loop
 	while(true)
@@ -461,20 +462,9 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
-	int numbytes;
-	int addr_len;
-	int broadcast=1;
-
-	if((sockfd = socket(PF_INET,SOCK_DGRAM,0)) == -1)
+	if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-		close(sockfd);
-		exit(1);
-	}
-
-	if(setsockopt(sockfd,SOL_SOCKET,SO_BROADCAST,&broadcast,sizeof broadcast) == -1)
-	{
-		LOG4CXX_ERROR(m_logger, "setsockopt - SO_SOCKET: " << strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
@@ -482,6 +472,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
+
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
 	socklen_t sendaddrSize = sizeof sendaddr;
@@ -493,38 +484,54 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		exit(1);
 	}
 
-	addr_len = sizeof sendaddr;
-	socklen_t * addr_lenPtr = (socklen_t *)&addr_len;
-	size_t bufSize = sizeof buf;
+    if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
+    {
+		LOG4CXX_ERROR(m_logger,"listen: " << strerror(errno));
+		close(sockfd);
+        exit(1);
+    }
 
-	Suspect *suspect = NULL;
 
+	Suspect * suspect = NULL;
+
+	int connectionSocket, bytesRead;
+
+	//Accept incoming Silent Alarm TCP Connections
 	while(1)
 	{
-		bzero(buf, MAX_MSG_SIZE);
-		//Do the actual "listen"
-		if ((numbytes = recvfrom(sockfd,buf,bufSize,0,sockaddrPtr,addr_lenPtr)) == -1)
+		suspect = NULL;
+
+		//Blocking call
+		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "recvfrom: " << strerror(errno));
-			close(sockfd);
-			exit(1);
+			LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+			close(connectionSocket);
+			continue;
+		}
+		bzero(buf, MAX_MSG_SIZE);
+
+		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0)) == -1)
+		{
+			LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+			close(connectionSocket);
+			continue;
 		}
 
 		//If this is from ourselves, then drop it.
 		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
 		{
+			close(connectionSocket);
 			continue;
 		}
 
-		suspect = new Suspect();
 		pthread_rwlock_wrlock(&lock);
-
 		try
 		{
-			//Gets the suspects address
-			uint addr = getSerializedAddr(buf);
+			suspect = new Suspect();
 
+			uint addr = getSerializedAddr(buf);
 			SuspectHashTable::iterator it = suspects.find(addr);
+
 			//If this is a new suspect put it in the table
 			if(it == suspects.end())
 			{
@@ -540,19 +547,20 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 				suspects[addr]->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
 				delete suspect;
 			}
+
 			suspects[addr]->needs_feature_update = true;
 			suspects[addr]->needs_classification_update = true;
 			suspects[addr]->flaggedByAlarm = true;
-			updateKDTree = true;
 
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
 		}
 		catch(std::exception e)
 		{
-			close(sockfd);
+			LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
 			delete suspect;
-			LOG4CXX_INFO(m_logger,"Error interpreting received Silent Alarm: " << string(e.what()));
+			suspect = NULL;
 		}
+		close(connectionSocket);
 		pthread_rwlock_unlock(&lock);
 	}
 	close(sockfd);
@@ -917,60 +925,68 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 //Send a silent alarm about the argument suspect
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
-	while(suspect->features.packetCount.first)
+	bzero(data, MAX_MSG_SIZE);
+	dataLen = suspect->serializeSuspect(data);
+	uint featureData = 0;
+
+	//If the hostility hasn't changed don't bother the DM
+	if( oldClassification != suspect->isHostile)
 	{
-		bzero(data, MAX_MSG_SIZE);
-		dataLen = suspect->serializeSuspect(data);
-
-		//If the hostility hasn't changed don't bother the DM
-		if( oldClassification != suspect->isHostile)
-		{
-			if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-			{
-				LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-				close(socketFD);
-				return;
-			}
-
-			if (connect(socketFD, alarmRemotePtr, len) == -1)
-			{
-				LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
-				close(socketFD);
-				return;
-			}
-
-			if (send(socketFD, data, dataLen, 0) == -1)
-			{
-				LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
-				close(socketFD);
-				return;
-			}
-			close(socketFD);
-		}
-
-		//Update other Nova Instances with latest suspect Data
-		dataLen += suspect->features.serializeFeatureData(data+dataLen, hostAddr.sin_addr.s_addr);
-		//Send Silent Alarm to other Nova Instances with feature Data
-		if ((sockfd = socket(AF_INET,SOCK_DGRAM,0)) == -1)
+		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
 			LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-			close(sockfd);
+			close(socketFD);
 			return;
 		}
 
-		if((setsockopt(sockfd, SOL_SOCKET,SO_BROADCAST, bdPtr, bdsize)) == -1)
+		if (connect(socketFD, alarmRemotePtr, len) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "setsockopt - SO_SOCKET: " << strerror(errno));
-			close(sockfd);
+			LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
+			close(socketFD);
 			return;
 		}
 
-		if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
+		if (send(socketFD, data, dataLen, 0) == -1)
 		{
-			LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
-			close(sockfd);
+			LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
+			close(socketFD);
 			return;
 		}
+		close(socketFD);
+	}
+
+	while(suspect->features.packetCount.first)
+	{
+		featureData = suspect->features.serializeFeatureData(data+dataLen, hostAddr.sin_addr.s_addr);
+
+		//Update other Nova Instances with latest suspect Data
+		for(uint i = 0; i < neighbors.size(); i++)
+		{
+			serv_addr.sin_addr.s_addr = neighbors[i];
+			//Send Silent Alarm to other Nova Instances with feature Data
+			if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+			{
+				LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+				close(sockfd);
+				continue;
+			}
+
+			if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+			{
+				LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
+				close(socketFD);
+				continue;
+			}
+
+			if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
+			{
+				LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+				close(sockfd);
+				continue;
+			}
+			close(sockfd);
+		}
+		bzero(data+dataLen, featureData);
 	}
 }
 
@@ -985,7 +1001,7 @@ bool ClassificationEngine::ReceiveTrafficEvent()
 		close(connectionSocket);
         return false;
     }
-    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, 0 )) == -1)
+    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
     {
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(connectionSocket);
@@ -1087,6 +1103,41 @@ void ClassificationEngine::LoadConfig(char * input)
 
 	string line;
 	string prefix;
+
+	string settingsPath = homePath +"/settings";
+	ifstream settings(settingsPath.c_str());
+	in_addr_t nbr;
+
+	if(settings.is_open())
+	{
+		while(settings.good())
+		{
+			getline(settings, line);
+
+			prefix = "neighbor";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0)
+				{
+					//Note inet_addr() not compatible with 255.255.255.255 as this is == the error condition of -1
+					nbr = inet_addr(line.c_str());
+
+					if((int)nbr == -1)
+					{
+						LOG4CXX_ERROR(m_logger, "Invalid IP address parsed on line of settings file.");
+					}
+					else if(nbr)
+					{
+						neighbors.push_back(nbr);
+					}
+					nbr = 0;
+				}
+			}
+		}
+	}
+	settings.close();
+
 	ifstream config(input);
 
 	const string prefixes[] = {"INTERFACE","USE_TERMINALS",
