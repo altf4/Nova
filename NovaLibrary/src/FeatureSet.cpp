@@ -25,7 +25,7 @@ FeatureSet::FeatureSet()
 	IPTable.set_empty_key(0);
 	portTable.set_empty_key(0);
 	packTable.set_empty_key(0);
-	intervalTable.set_empty_key(0);
+	intervalTable.set_empty_key(2147483647);
 	SATable.set_empty_key(0);
 
 	IPTable.clear();
@@ -603,8 +603,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		if(temp)
-			intervalTable[temp].second += tempCount;
+		intervalTable[temp].second += tempCount;
 		i += tempCount;
 	}
 
@@ -615,8 +614,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		if(temp)
-			packTable[temp].second += tempCount;
+		packTable[temp].second += tempCount;
 		i += tempCount;
 	}
 
@@ -627,8 +625,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		if(temp)
-			IPTable[temp].second += tempCount;
+		IPTable[temp].second += tempCount;
 		i += tempCount;
 	}
 
@@ -640,8 +637,7 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
-		if(temp)
-			portTable[temp].second += tempCount;
+		portTable[temp].second += tempCount;
 		i += tempCount;
 	}
 
