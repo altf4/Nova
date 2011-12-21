@@ -510,7 +510,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		}
 		bzero(buf, MAX_MSG_SIZE);
 
-		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0)) == -1)
+		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
 			LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 			close(connectionSocket);
@@ -1040,7 +1040,7 @@ void ClassificationEngine::ReceiveGUICommand()
 		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		close(msgSocket);
 	}
-	if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
+	if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, MSG_WAITALL )) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		close(msgSocket);
