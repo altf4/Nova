@@ -1,19 +1,230 @@
-INTERFACE eth0
+############################################
+# INTERFACE #
+############################################
+#
+# This is the local network device that Nova will listen on.
+# You can view your list of available interfaces by running:
+#
+# ifconfig -a
+#
+# If no interface is specified, Nova will use the first
+# device found on the system, ignoring the loopback. This
+# variable takes the string representation of the device
+# as found through ifconfig.
+#
+# EXAMPLE:
+#INTERFACE eth0
+INTERFACE eth0 
+
+
+############################################
+# DATAFILE #
+############################################
+#
+# Contains a path relative to the ~/.nova/ folder of where
+# the data points file can by located.
+#
+# EXAMPLE:
+#DATAFILE Data/data.txt
 DATAFILE Data/data.txt
+
+
+############################################
+# BROADCAST_ADDR #
+############################################
+#
+# Broadcast IP address to be used.
+# 
+# EXAMPLE:
+#BROADCAST_ADDR 255.255.255.255
 BROADCAST_ADDR 255.255.255.255
+
+############################################
+# SILENT_ALARM_PORT #
+############################################
+#
+# Port for Nova instances to communicate 
+# silent alarm notifications between eachother.
+#
+# EXAMPLE:
+#SILENT_ALARM_PORT 4242
 SILENT_ALARM_PORT 4242
+
+############################################
+# K #
+############################################
+#
+# Number of nearest neighbors to check.
+#
+# EXAMPLE:
+#K 3
 K 3
+
+############################################
+# EPS #
+############################################
+#
+# Error bound for the nearest neighbor search,
+# 0 will imply exact nearest neighbors. Increasing
+# EPS will decrease accuracy but increase running 
+# time of the the nearest neigbor search.
+#
+# EXAMPLE:
+#EPS 0.01
 EPS 0.01
+
+############################################
+# CLASSIFICATION_TIMEOUT #
+############################################
+#
+# Time in seconds to wait between 
+# suspect classifications.
+# 
+# EXAMPLE:
+#CLASSIFICATION_TIMEOUT 7
 CLASSIFICATION_TIMEOUT 7
+
+############################################
+# IS_TRAINING #
+############################################
+#
+# Set training mode or classification mode.
+# 	0: Classification mode
+# 	1: Training mode
+#
+# EXAMPLE:
+#IS_TRAINING 0
 IS_TRAINING 0
+
+############################################
+# CLASSIFICATION_THRESHOLD #
+############################################
+#
+# Value of classification to define split 
+# between hostile / benign suspects. A
+# smaller value could result in more false
+# positives. 
+# 
+# EXAMPLE:
+#CLASSIFICATION_THRESHOLD .5
 CLASSIFICATION_THRESHOLD .5
+
+############################################
+# DM_HONEYD_CONFIG #
+############################################
+#
+# Path relative to ~/.nova where the honeyd
+# configuration file resides.
+# 
+# EXAMPLE:
+#DM_HONEYD_CONFIG Config/doppelganger.config
 DM_HONEYD_CONFIG Config/doppelganger.config
+
+############################################
+# DOPPELGANGER_IP #
+############################################
+#
+# IP address to use for the doppelganger.
+#
+# EXAMPLE:
+#DOPPELGANGER_IP 10.0.0.1
 DOPPELGANGER_IP 10.0.0.1
+
+############################################
+# DM_ENABLED #
+############################################
+#
+# Enable or disable the doppelganger module.
+# With the doppelganger module enabled, hosts
+# that have been detected as hostile will have
+# a Doppelganger node dynamically rerouted in 
+# front of any legitimate nodes the attacker
+# is trying to access. 
+#
+# 	0: Doppelganger module disabled
+#	1: Doppelganger module enabled
+#
+# EXAMPLE:
+#DM_ENABLED 1
 DM_ENABLED 1
+
+############################################
+# HS_HONEYD_CONFIG #
+############################################
+#
+# Path relative to ~/.nova where the HoneyD
+# configuration file resides. This file will
+# be parsed for used IP addresses. 
+# 
+# EXAMPLE:
+#HS_HONEYD_CONFIG Config/haystack.config
 HS_HONEYD_CONFIG Config/haystack.config
+
+############################################
+# TCP_TIMEOUT #
+############################################
+#
+# Time in seconds before timing out TCP sessions
+# that weren't torn down properly
+#
+# EXAMPLE:
+#TCP_TIMEOUT 7
 TCP_TIMEOUT 7
+
+############################################
+# TCP_CHECK_FREQ #
+############################################
+#
+# How often in seconds to check for TCP timeouts.
+#
+# EXAMPLE:
+#TCP_CHECK_FREQ 3
 TCP_CHECK_FREQ 3
+
+############################################
+# READ_PCAP #
+############################################
+# 
+# Specify if reading packets in from a PCAP file
+#	0: Do not read in PCAP file
+#	1: Read in PCAP file
+#
+# EXAMPLE:
+#READ_PCAP 0
 READ_PCAP 0
+
+############################################
+# PCAP_FILE #
+############################################
+#
+# Path to PCAP file to read from if READ_PCAP
+# is enabled.
+# 
+# EXAMPLE:
+#PCAP_FILE pcapfile
 PCAP_FILE pcapfile
+
+############################################
+# GO_TO_LIVE #
+############################################
+#
+# Continue with live packets after PCAP file?
+#	0: Do not go to live capture after reading PCAP file
+#	1: Go to live capture after reading PCAP file
+# 
+# EXAMPLE:
+#GO_TO_LIVE 1
 GO_TO_LIVE 1
-USE_TERMINALS 0
+
+############################################
+# USE_TERMINALS #
+############################################
+#
+# Give logging output in terminals.
+#	0: No teriminal output
+#	1: Terminal logging output
+# EXAMPLE:
+#USE_TERMINALS 0
+USE_TERMINALS 1
+
+
