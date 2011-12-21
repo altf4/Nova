@@ -14,7 +14,7 @@
 #
 # EXAMPLE:
 #INTERFACE eth0
-INTERFACE eth0 
+INTERFACE eth0
 
 
 ############################################
@@ -34,7 +34,7 @@ DATAFILE Data/data.txt
 ############################################
 #
 # Broadcast IP address to be used.
-# 
+#
 # EXAMPLE:
 #BROADCAST_ADDR 255.255.255.255
 BROADCAST_ADDR 255.255.255.255
@@ -79,7 +79,7 @@ EPS 0.01
 #
 # Time in seconds to wait between 
 # suspect classifications.
-# 
+#
 # EXAMPLE:
 #CLASSIFICATION_TIMEOUT 7
 CLASSIFICATION_TIMEOUT 7
@@ -104,7 +104,7 @@ IS_TRAINING 0
 # between hostile / benign suspects. A
 # smaller value could result in more false
 # positives. 
-# 
+#
 # EXAMPLE:
 #CLASSIFICATION_THRESHOLD .5
 CLASSIFICATION_THRESHOLD .5
@@ -115,7 +115,7 @@ CLASSIFICATION_THRESHOLD .5
 #
 # Path relative to ~/.nova where the honeyd
 # configuration file resides.
-# 
+#
 # EXAMPLE:
 #DM_HONEYD_CONFIG Config/doppelganger.config
 DM_HONEYD_CONFIG Config/doppelganger.config
@@ -184,7 +184,7 @@ TCP_CHECK_FREQ 3
 ############################################
 # READ_PCAP #
 ############################################
-# 
+#
 # Specify if reading packets in from a PCAP file
 #	0: Do not read in PCAP file
 #	1: Read in PCAP file
@@ -226,5 +226,3 @@ GO_TO_LIVE 1
 # EXAMPLE:
 #USE_TERMINALS 0
 USE_TERMINALS 1
-
-
