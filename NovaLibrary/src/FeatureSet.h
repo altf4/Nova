@@ -45,6 +45,7 @@
 // each packet can requires up to 28 bytes, meaning we can only send up information on
 // a maximum of 2334 packets
 #define MAX_PACKETS_PER_MSG 2334
+#define MAX_TABLE_ENTRIES 8168
 
 //boolean values for updateFeatureData()
 #define INCLUDE true
@@ -187,7 +188,7 @@ public:
 	//Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores that information into SATable[hostAddr]
 	//	returns the number of bytes read from the buffer
-	uint deserializeFeatureData(u_char * buf, in_addr_t hostAddr, struct silentAlarmFeatureData * sender);
+	uint deserializeFeatureData(u_char * buf, in_addr_t hostAddr);
 
 private:
 	//Temporary variables used to calculate Features

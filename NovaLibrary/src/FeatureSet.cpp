@@ -26,13 +26,11 @@ FeatureSet::FeatureSet()
 	portTable.set_empty_key(0);
 	packTable.set_empty_key(0);
 	intervalTable.set_empty_key(2147483647);
-	SATable.set_empty_key(0);
 
 	IPTable.clear();
 	portTable.clear();
 	packTable.clear();
 	intervalTable.clear();
-	SATable.clear();
 
 	intervalTable.resize(INITIAL_IP_SIZE);
 	IPTable.resize(INITIAL_IP_SIZE);
@@ -68,7 +66,6 @@ void FeatureSet::ClearFeatureSet()
 	IPTable.clear();
 	portTable.clear();
 	packTable.clear();
-	SATable.clear();
 	intervalTable.clear();
 
 	haystackEvents.first = 0;
@@ -280,9 +277,6 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 
 void FeatureSet::UpdateFeatureData(bool include)
 {
-	//Updates timeInterval.first with the latest end and start times
-	CalculateTimeInterval();
-
 	if(include)
 	{
 		totalInterval.second += totalInterval.first;
@@ -379,186 +373,138 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 {
 	uint offset = 0;
 	uint count = 0;
+	uint table_entries = 0;
 
 	//Bytes in a word, used for everything but port #'s
 	const uint size = 4;
 
-	struct silentAlarmFeatureData temp;
-
-	//If we have a silentAlarmFeatureData struct for the local host
-	if(SATable.find(hostAddr) != SATable.end())
-		temp = SATable[hostAddr];
-
-	//Else create one
-	else
-	{
-		temp.totalInterval = 0;
-		temp.packetCount = 0;
-		temp.haystackEvents = 0;
-		temp.bytesTotal = 0;
-	}
-
 	//Required, individual variables for calculation
+	CalculateTimeInterval();
 	memcpy(buf+offset, &totalInterval.first, size);
-	temp.totalInterval = totalInterval.first;
 	offset += size;
 
-	//If we will have plenty of room, send everything
-	if(packetCount.first < MAX_PACKETS_PER_MSG)
-	{
-		memcpy(buf+offset, &haystackEvents.first, size);
-		haystackEvents.second += haystackEvents.first;
-		temp.haystackEvents += haystackEvents.first;
-		haystackEvents.first = 0;
-		offset += size;
+	memcpy(buf+offset, &haystackEvents.first, size);
+	haystackEvents.second += haystackEvents.first;
+	haystackEvents.first = 0;
+	offset += size;
 
-		memcpy(buf+offset, &packetCount.first, size);
-		packetCount.second += packetCount.first;
-		temp.packetCount += packetCount.first;
-		count = packetCount.first;
-		packetCount.first = 0;
-		offset += size;
+	memcpy(buf+offset, &packetCount.first, size);
+	packetCount.second += packetCount.first;
+	packetCount.first = 0;
+	offset += size;
 
-		memcpy(buf+offset, &bytesTotal.first, size);
-		bytesTotal.second += bytesTotal.first;
-		temp.bytesTotal += bytesTotal.first;
-		bytesTotal.first = 0;
-		offset += size;
-	}
-	//If we might run out of room, we need to limit the size of what we send
-	else
-	{
-		//how much of the information we will be sending
-		double ratio = (double)MAX_PACKETS_PER_MSG / (double)packetCount.first;
-
-		uint tempInt = (uint)(haystackEvents.first*ratio);
-		memcpy(buf+offset, &tempInt, size);
-		haystackEvents.second += tempInt;
-		temp.haystackEvents += tempInt;
-		haystackEvents.first -= tempInt;
-		offset += size;
-
-		tempInt = MAX_PACKETS_PER_MSG;
-		memcpy(buf+offset, &tempInt, size);
-		packetCount.second += tempInt;
-		temp.packetCount += tempInt;
-		count = tempInt;
-		packetCount.first -= tempInt;
-		offset += size;
-
-		tempInt = (uint)(bytesTotal.first*ratio);
-		memcpy(buf+offset, &tempInt, size);
-		bytesTotal.second += tempInt;
-		temp.bytesTotal += tempInt;
-		bytesTotal.first -= tempInt;
-		offset += size;
-	}
+	memcpy(buf+offset, &bytesTotal.first, size);
+	bytesTotal.second += bytesTotal.first;
+	bytesTotal.first = 0;
+	offset += size;
 
 	memcpy(buf+offset, &portMax, size);
 	offset += size;
 
 	//These tables all just place their key followed by the data
+	uint tempInt;
 
-	uint tempInt, i = 0;
+	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
 
-	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (i < count); it++)
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second.first)
 		{
-			tempInt = it->second.first;
-			//We only send data on the number of packets serialized earlier in the message
-			// if we send more it might be expecting information that isn't there later
-			if((i+tempInt) > count)
-			{
-				tempInt = count - i;
-			}
-			i+= tempInt;
+			table_entries++;
 			memcpy(buf+offset, &it->first, size);
 			offset += size;
-			memcpy(buf+offset, &tempInt, size);
-			intervalTable[it->first].second += tempInt;
-			intervalTable[it->first].first -= tempInt;
+			memcpy(buf+offset, &it->second.first, size);
 			offset += size;
+			intervalTable[it->first].second += it->second.first;
+			intervalTable[it->first].first = 0;
 		}
 	}
 
-	i = 0;
-	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (i < count); it++)
+	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second.first)
 		{
-			tempInt = it->second.first;
-			//We only send data on the number of packets serialized earlier in the message
-			// if we send more it might be expecting information that isn't there later
-			if((i+tempInt) > count)
-			{
-				tempInt = count - i;
-			}
-			i+= tempInt;
+			table_entries++;
 			memcpy(buf+offset, &it->first, size);
 			offset += size;
-			memcpy(buf+offset, &tempInt, size);
-			packTable[it->first].second += tempInt;
-			packTable[it->first].first -= tempInt;
+			memcpy(buf+offset, &it->second.first, size);
 			offset += size;
+			packTable[it->first].second += it->second.first;
+			packTable[it->first].first = 0;
 		}
 	}
 
-	i = 0;
-	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (i < count); it++)
+	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second.first)
 		{
-			tempInt = it->second.first;
-			//We only send data on the number of packets serialized earlier in the message
-			// if we send more it might be expecting information that isn't there later
-			if((i+tempInt) > count)
-			{
-				tempInt = count - i;
-			}
-			i+= tempInt;
+			table_entries++;
 			memcpy(buf+offset, &it->first, size);
 			offset += size;
-			memcpy(buf+offset, &tempInt, size);
-			IPTable[it->first].second += tempInt;
-			IPTable[it->first].first -= tempInt;
+			memcpy(buf+offset, &it->second.first, size);
 			offset += size;
+			IPTable[it->first].second += it->second.first;
+			IPTable[it->first].first = 0;
 		}
 	}
 
-	i = 0;
-	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (i < count); it++)
+	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second.first)
 		{
-			tempInt = it->second.first;
-			//We only send data on the number of packets serialized earlier in the message
-			// if we send more it might be expecting information that isn't there later
-			if((i+tempInt) > count)
-			{
-				tempInt = count - i;
-			}
-			i+= tempInt;
+			table_entries++;
 			memcpy(buf+offset, &it->first, size);
 			offset += size;
-			memcpy(buf+offset, &tempInt, size);
-			portTable[it->first].second += tempInt;
-			portTable[it->first].first -= tempInt;
+			memcpy(buf+offset, &it->second.first, size);
 			offset += size;
+			portTable[it->first].second += it->second.first;
+			portTable[it->first].first = 0;
 		}
 	}
-
-	SATable[hostAddr] = temp;
 	return offset;
 }
 
-uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct silentAlarmFeatureData * sender)
+uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 {
 	uint offset = 0;
 
 	//Bytes in a word, used for everything but port #'s
 	const uint size = 4;
-	uint pkt_count = 0;
+	uint table_size = 0;
 
 	//Temporary variables to store and track data during deserialization
 	uint temp = 0;
@@ -566,23 +512,19 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 
 
 	//Required, individual variables for calculation
-	totalInterval.second -= sender->totalInterval;
-	memcpy(&sender->totalInterval, buf+offset, size);
-	totalInterval.second += sender->totalInterval;
+	memcpy(&temp, buf+offset, size);
+	totalInterval.second += temp;
 	offset += size;
 
 	memcpy(&temp, buf+offset, size);
-	sender->haystackEvents += temp;
 	haystackEvents.second += temp;
 	offset += size;
 
-	memcpy(&pkt_count, buf+offset, size);
-	sender->packetCount += pkt_count;
-	packetCount.second += pkt_count;
+	memcpy(&temp, buf+offset, size);
+	packetCount.second += temp;
 	offset += size;
 
 	memcpy(&temp, buf+offset, size);
-	sender->bytesTotal += temp;
 	bytesTotal.second += temp;
 	offset += size;
 
@@ -597,49 +539,60 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr, struct 
 	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
 
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
 	//Packet interval table
-	for(uint i = 0; i < pkt_count;)
+	for(uint i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
 		intervalTable[temp].second += tempCount;
-		i += tempCount;
+		i++;
 	}
 
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
 	//Packet size table
-	for(uint i = 0; i < pkt_count;)
+	for(uint i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
 		packTable[temp].second += tempCount;
-		i += tempCount;
+		i++;
 	}
 
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
 	//IP table
-	for(uint i = 0; i < pkt_count;)
+	for(uint i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
 		IPTable[temp].second += tempCount;
-		i += tempCount;
+		i++;
 	}
 
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
 
 	//Port table
-	for(uint i = 0; i < pkt_count;)
+	for(uint i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, size);
 		offset += size;
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
 		portTable[temp].second += tempCount;
-		i += tempCount;
+		i++;
 	}
 
 	return offset;
