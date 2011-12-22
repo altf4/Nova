@@ -111,6 +111,7 @@ void FeatureSet::CalculateTimeInterval()
 	if(endTime > startTime)
 	{
 		totalInterval.first = endTime - startTime;
+		startTime = endTime;
 	}
 }
 
@@ -380,6 +381,8 @@ uint FeatureSet::serializeFeatureDataBroadcast(u_char *buf)
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 	memcpy(buf+offset, &totalInterval.first, size);
+	totalInterval.second += totalInterval.first;
+	totalInterval.first = 0;
 	offset += size;
 
 	memcpy(buf+offset, &haystackEvents.first, size);
@@ -608,6 +611,7 @@ uint FeatureSet::serializeFeatureDataLocal(u_char *buf)
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 	memcpy(buf+offset, &totalInterval.first, size);
+	totalInterval.first = 0;
 	offset += size;
 
 	memcpy(buf+offset, &haystackEvents.first, size);
