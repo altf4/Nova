@@ -16,7 +16,6 @@
 
 using namespace std;
 using namespace Nova;
-using namespace ClassificationEngine;
 using namespace log4cxx;
 using namespace log4cxx::xml;
 

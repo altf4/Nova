@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lboost_serialization -lNovaLibrary -lann -llog4cxx
+LIBS := -lNovaLibrary -lann -llog4cxx
 

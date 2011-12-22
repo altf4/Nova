@@ -11,33 +11,27 @@
 #include <sstream>
 
 using namespace std;
+
 namespace Nova{
-namespace ClassificationEngine{
+
 
 //Blank Constructor
 Suspect::Suspect()
 {
 	IP_address.s_addr = 0;
 	classification = -1;
-	needs_classification_update = false;
-	needs_feature_update = false;
+	needs_classification_update = true;
+	needs_feature_update = true;
 	flaggedByAlarm = false;
 	isHostile = false;
 	features = FeatureSet();
-	annPoint = annAllocPt(DIMENSION);
+	annPoint = NULL;
 	evidence.clear();
 }
 
 //Destructor. Has to delete the FeatureSet object within.
 Suspect::~Suspect()
 {
-	for (uint i = 0; i < evidence.size(); i++)
-	{
-		if(evidence[i] != NULL)
-		{
-			delete evidence[i];
-		}
-	}
 	if(annPoint != NULL)
 	{
 		annDeallocPt(annPoint);
@@ -50,6 +44,8 @@ Suspect::Suspect(TrafficEvent *event)
 	IP_address = event->src_IP;
 	classification = -1;
 	isHostile = false;
+	needs_classification_update = true;
+	needs_feature_update = true;
 	features = FeatureSet();
 	annPoint = NULL;
 	flaggedByAlarm = false;
@@ -93,21 +89,13 @@ string Suspect::ToString()
 //	Does not take actions like reclassifying or calculating features.
 void Suspect::AddEvidence(TrafficEvent *event)
 {
-	evidence.push_back(event);
-	needs_classification_update = true;
+	evidence.push_back(*event);
 	needs_feature_update = true;
 }
 
 //Calculates the feature set for this suspect
 void Suspect::CalculateFeatures(bool isTraining)
 {
-	//Clear any existing feature data
-	for(uint i = 0; i < evidence.size(); i++)
-	{
-		features.UpdateEvidence(evidence[i]);
-	}
-	evidence.clear();
-	//For-each piece of evidence
 	features.CalculateAll();
 
 	if(isTraining)
@@ -132,7 +120,7 @@ uint Suspect::serializeSuspect(u_char * buf)
 	uint offset = 0;
 	uint bsize = 1; //bools
 	uint isize = 4; //s_addr, int etc
-	uint dsize = 8; //doubles, annPoints
+	uint dsize = 8; //doubles
 
 	//Clears a chunk of the buffer for everything but FeatureSet
 	bzero(buf, (isize + dsize*(DIMENSION+1) + 4*bsize));
@@ -151,12 +139,6 @@ uint Suspect::serializeSuspect(u_char * buf)
 	memcpy(buf+offset, &flaggedByAlarm, bsize);
 	offset+= bsize;
 
-	for(uint i = 0; i < DIMENSION; i++)
-	{
-		memcpy(buf+offset, &annPoint[i], dsize);
-		offset+= dsize;
-	}
-
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
 	offset += features.serializeFeatureSet(buf+offset);
@@ -171,7 +153,7 @@ uint Suspect::deserializeSuspect(u_char * buf)
 	uint offset = 0;
 	uint bsize = 1; //bools
 	uint isize = 4; //s_addr, int etc
-	uint dsize = 8; //doubles, annPoints
+	uint dsize = 8; //doubles
 
 	//Copies the value and increases the offset
 	memcpy(&IP_address.s_addr, buf, isize);
@@ -187,12 +169,6 @@ uint Suspect::deserializeSuspect(u_char * buf)
 	memcpy(&flaggedByAlarm, buf+offset, bsize);
 	offset+= bsize;
 
-	for(uint i = 0; i < DIMENSION; i++)
-	{
-		memcpy(&annPoint[i], buf+offset, dsize);
-		offset+= dsize;
-	}
-
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
 	offset += features.deserializeFeatureSet(buf+offset);
@@ -202,7 +178,7 @@ uint Suspect::deserializeSuspect(u_char * buf)
 
 //Reads Suspect information from a buffer originally populated by serializeSuspect
 // returns the number of bytes read from the buffer
-uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
+uint Suspect::deserializeSuspectWithData(u_char * buf, bool isLocal)
 {
 	uint offset = 0;
 	uint bsize = 1; //bools
@@ -223,18 +199,17 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr)
 	memcpy(&flaggedByAlarm, buf+offset, bsize);
 	offset+= bsize;
 
-	for(uint i = 0; i < DIMENSION; i++)
-	{
-		memcpy(&annPoint[i], buf+offset, dsize);
-		offset+= dsize;
-	}
-
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
 	offset += features.deserializeFeatureSet(buf+offset);
 
-	offset += features.deserializeFeatureData(buf+offset, hostAddr);
+	if(isLocal)
+		offset += features.deserializeFeatureDataLocal(buf+offset);
+	else
+		offset += features.deserializeFeatureDataBroadcast(buf+offset);
 
+	needs_feature_update = true;
+	needs_classification_update = true;
 
 	return offset;
 }
@@ -247,5 +222,4 @@ uint getSerializedAddr(u_char * buf)
 	return addr;
 }
 
-}
 }

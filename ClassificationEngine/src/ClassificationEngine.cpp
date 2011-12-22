@@ -42,13 +42,14 @@ static struct sockaddr_in hostAddr;
 
 //Global memory assignments to improve performance of IPC loops
 
-//** Main (ReceiveTrafficEvent) **
+//** Main (ReceiveSuspectData) **
 struct sockaddr_un remote;
 struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
 int bytesRead;
 int connectionSocket;
 u_char buffer[MAX_MSG_SIZE];
 TrafficEvent *tempEvent, *event;
+Suspect * suspect;
 int IPCsock;
 
 //** Silent Alarm **
@@ -271,27 +272,7 @@ int main(int argc,char *argv[])
 	//"Main Loop"
 	while(true)
 	{
-		event = new TrafficEvent();
-		if(ReceiveTrafficEvent() == false)
-		{
-			delete event;
-			event = NULL;
-			continue;
-		}
-		pthread_rwlock_wrlock(&lock);
-		//If this is a new Suspect
-		if(suspects.count(event->src_IP.s_addr) == 0)
-		{
-			suspects[event->src_IP.s_addr] = new Suspect(event);
-		}
-
-		//A returning suspect
-		else
-		{
-			suspects[event->src_IP.s_addr]->AddEvidence(event);
-
-		}
-		pthread_rwlock_unlock(&lock);
+		ReceiveSuspectData();
 	}
 
 	//Shouldn't get here!
@@ -527,29 +508,24 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		pthread_rwlock_wrlock(&lock);
 		try
 		{
-			suspect = new Suspect();
-
 			uint addr = getSerializedAddr(buf);
 			SuspectHashTable::iterator it = suspects.find(addr);
 
 			//If this is a new suspect put it in the table
 			if(it == suspects.end())
 			{
-				suspect->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
+				suspect = new Suspect();
+				suspect->deserializeSuspectWithData(buf, BROADCAST_DATA);
 				suspects[addr] = suspect;
-
+				suspect = NULL;
 			}
 			//If this suspect exists, update the information
 			else
 			{
 				//This function will overwrite everything except the information used to calculate the classification
 				// a combined classification will be given next classification loop
-				suspects[addr]->deserializeSuspectWithData(buf, sendaddr.sin_addr.s_addr);
-				delete suspect;
+				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
 			}
-
-			suspects[addr]->needs_feature_update = true;
-			suspects[addr]->needs_classification_update = true;
 			suspects[addr]->flaggedByAlarm = true;
 
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
@@ -677,22 +653,10 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	pthread_rwlock_rdlock(&lock);
 }
 
-//Subroutine to copy the data points in 'suspects' to their respective ANN Points
-void Nova::ClassificationEngine::CopyDataToAnnPoints()
-{
-	//Set the ANN point for each Suspect
-	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
-	{
-		//Create the ANN Point, if needed
-
-	}
-}
 
 //Calculates normalized data points for suspects
 void Nova::ClassificationEngine::NormalizeDataPoints()
 {
-
-
 	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
@@ -715,24 +679,16 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 	{
 		if(it->second->needs_feature_update)
 		{
-
 			if(it->second->annPoint == NULL)
-			{
 				it->second->annPoint = annAllocPt(DIMENSION);
-			}
 
 			//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
 			for(int i = 0;i < dim;i++)
 			{
 				if(maxFeatureValues[0] != 0)
-				{
-					// We don't need a write lock, only this thread uses it.
 					it->second->annPoint[i] = (double)(it->second->features.features[i] / maxFeatureValues[i]);
-				}
 				else
-				{
 					LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
-				}
 			}
 			it->second->needs_feature_update = false;
 		}
@@ -957,7 +913,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 	while(suspect->features.packetCount.first)
 	{
-		featureData = suspect->features.serializeFeatureData(data+dataLen, hostAddr.sin_addr.s_addr);
+		featureData = suspect->features.serializeFeatureData(data+dataLen);
 
 		//Update other Nova Instances with latest suspect Data
 		for(uint i = 0; i < neighbors.size(); i++)
@@ -992,7 +948,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 ///Receive a TrafficEvent from another local component.
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-bool ClassificationEngine::ReceiveTrafficEvent()
+bool ClassificationEngine::ReceiveSuspectData()
 {
     //Blocking call
     if ((connectionSocket = accept(IPCsock, remoteSockAddr, sockSizePtr)) == -1)
@@ -1009,8 +965,16 @@ bool ClassificationEngine::ReceiveTrafficEvent()
     }
 	try
 	{
-		event->deserializeEvent(buffer);
-		bzero(buffer, bytesRead);
+		pthread_rwlock_wrlock(&lock);
+		uint addr = getSerializedAddr(buffer);
+		SuspectHashTable::iterator it = suspects.find(addr);
+
+		//If this is a new suspect make an entry in the table
+		if(it == suspects.end())
+			suspects[addr] = new Suspect();
+		//Deserialize the data
+		suspects[addr]->deserializeSuspectWithData(buffer, LOCAL_DATA);
+		pthread_rwlock_unlock(&lock);
 	}
 	catch(std::exception e)
 	{

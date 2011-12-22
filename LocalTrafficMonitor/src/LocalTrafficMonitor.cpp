@@ -21,15 +21,21 @@ using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
+using namespace LocalTrafficMonitor;
 
-int tcpTime; //TCP_TIMEOUT Measured in seconds
-int tcpFreq; //TCP_CHECK_FREQ Measured in seconds
-static LocalTrafficMonitor::TCPSessionHashTable SessionTable;
+static TCPSessionHashTable SessionTable;
+static SuspectHashTable	suspects;
+
+pthread_rwlock_t sessionLock;
+pthread_rwlock_t suspectLock;
 
 string dev; //Interface name, read from config file
 string pcapPath; //Pcap file to read from instead of live packet capture.
 bool usePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
 bool goToLiveCap; //Specify if go to live capture mode after reading from a pcap file
+int tcpTime; //TCP_TIMEOUT Measured in seconds
+int tcpFreq; //TCP_CHECK_FREQ Measured in seconds
+uint classificationTimeout; //Time between checking suspects for updated data
 
 //Global memory assignments to improve packet handler performance
 int len, dest_port;
@@ -43,109 +49,24 @@ struct sockaddr_un remote;
 u_char data[MAX_MSG_SIZE];
 uint dataLen;
 
-pthread_rwlock_t lock;
 LoggerPtr m_logger(Logger::getLogger("main"));
 
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath;
 bool useTerminals;
 
-/// Callback function that is passed to pcap_loop(..) and called each time
-/// a packet is recieved
-void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
-{
-	if(packet == NULL)
-	{
-		LOG4CXX_ERROR(m_logger, "Didn't grab packet!");
-		return;
-	}
-
-	/* let's start with the ether header... */
-	ethernet = (struct ether_header *) packet;
-
-	/* Do a couple of checks to see what packet type we have..*/
-	if (ntohs (ethernet->ether_type) == ETHERTYPE_IP)
-	{
-		ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
-
-		//Prepare Packet structure
-		packet_info.ip_hdr = *ip_hdr;
-		packet_info.pcap_header = *pkthdr;
-
-		//IF UDP or ICMP
-		if(ip_hdr->ip_p == 17 )
-		{
-			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
-			SendToCE(event);
-			delete event;
-			event = NULL;
-		}
-		else if(ip_hdr->ip_p == 1)
-		{
-			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
-			SendToCE(event);
-			delete event;
-			event = NULL;
-		}
-		//If TCP...
-		else if(ip_hdr->ip_p == 6)
-		{
-			packet_info.tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
-			dest_port = ntohs(packet_info.tcp_hdr.dest);
-
-			bzero(tcp_socket, 55);
-			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
-			pthread_rwlock_wrlock(&lock);
-			//If this is a new entry...
-			if( SessionTable[tcp_socket].session.size() == 0)
-			{
-				//Insert packet into Hash Table
-				SessionTable[tcp_socket].session.push_back(packet_info);
-				SessionTable[tcp_socket].fin = false;
-			}
-
-			//If there is already a session in progress for the given LogEntry
-			else
-			{
-				//If Session is ending
-				//TODO: The session may continue a few packets after the FIN. Account for this case.
-				//See ticket #15
-				if(packet_info.tcp_hdr.fin)
-				{
-					SessionTable[tcp_socket].session.push_back(packet_info);
-					SessionTable[tcp_socket].fin = true;
-				}
-				else
-				{
-					//Add this new packet to the session vector
-					SessionTable[tcp_socket].session.push_back(packet_info);
-				}
-			}
-			pthread_rwlock_unlock(&lock);
-		}
-	}
-	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
-	{
-		return;
-	}
-	else
-	{
-		LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
-		return;
-	}
-}
-
 int main(int argc, char *argv[])
 {
-	using namespace LocalTrafficMonitor;
-	pthread_rwlock_init(&lock, NULL);
+	pthread_rwlock_init(&sessionLock, NULL);
+	pthread_rwlock_init(&suspectLock, NULL);
 	pthread_t TCP_timeout_thread;
 	pthread_t GUIListenThread;
+	pthread_t SuspectUpdateThread;
 
 	SessionTable.set_empty_key("");
-	SessionTable.resize(INITIAL_TABLESIZE);
+	SessionTable.resize(INITIAL_SESSION_TABLESIZE);
+	suspects.set_empty_key(0);
+	suspects.resize(INITIAL_SUSPECT_TABLESIZE);
 
 	char errbuf[PCAP_ERRBUF_SIZE];
 	bzero(data, MAX_MSG_SIZE);
@@ -323,13 +244,100 @@ int main(int argc, char *argv[])
 		}
 
 		pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
-
+		pthread_create(&SuspectUpdateThread, NULL, SuspectLoop, NULL);
 
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received
 	    pcap_loop(handle, -1, Packet_Handler, NULL);
 	}
 	return 0;
+}
+
+/// Callback function that is passed to pcap_loop(..) and called each time
+/// a packet is recieved
+void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+{
+	if(packet == NULL)
+	{
+		LOG4CXX_ERROR(m_logger, "Didn't grab packet!");
+		return;
+	}
+
+	/* let's start with the ether header... */
+	ethernet = (struct ether_header *) packet;
+
+	/* Do a couple of checks to see what packet type we have..*/
+	if (ntohs (ethernet->ether_type) == ETHERTYPE_IP)
+	{
+		ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
+
+		//Prepare Packet structure
+		packet_info.ip_hdr = *ip_hdr;
+		packet_info.pcap_header = *pkthdr;
+
+		//IF UDP or ICMP
+		if(ip_hdr->ip_p == 17 )
+		{
+			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
+			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
+			updateSuspect(event);
+			delete event;
+			event = NULL;
+		}
+		else if(ip_hdr->ip_p == 1)
+		{
+			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
+			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
+			updateSuspect(event);
+			delete event;
+			event = NULL;
+		}
+		//If TCP...
+		else if(ip_hdr->ip_p == 6)
+		{
+			packet_info.tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
+			dest_port = ntohs(packet_info.tcp_hdr.dest);
+
+			bzero(tcp_socket, 55);
+			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
+			pthread_rwlock_wrlock(&sessionLock);
+			//If this is a new entry...
+			if( SessionTable[tcp_socket].session.size() == 0)
+			{
+				//Insert packet into Hash Table
+				SessionTable[tcp_socket].session.push_back(packet_info);
+				SessionTable[tcp_socket].fin = false;
+			}
+
+			//If there is already a session in progress for the given LogEntry
+			else
+			{
+				//If Session is ending
+				//TODO: The session may continue a few packets after the FIN. Account for this case.
+				//See ticket #15
+				if(packet_info.tcp_hdr.fin)
+				{
+					SessionTable[tcp_socket].session.push_back(packet_info);
+					SessionTable[tcp_socket].fin = true;
+				}
+				else
+				{
+					//Add this new packet to the session vector
+					SessionTable[tcp_socket].session.push_back(packet_info);
+				}
+			}
+			pthread_rwlock_unlock(&sessionLock);
+		}
+	}
+	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
+	{
+		return;
+	}
+	else
+	{
+		LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
+		return;
+	}
 }
 
 void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
@@ -416,7 +424,7 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 		time_t currentTime = time(NULL);
 		time_t packetTime;
 
-		pthread_rwlock_rdlock(&lock);
+		pthread_rwlock_rdlock(&sessionLock);
 		for ( TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
 		{
 			if(it->second.session.size() > 0)
@@ -434,14 +442,14 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 					if(it->second.fin == true)
 					{
 						tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
-						SendToCE(tempEvent);
+						updateSuspect(tempEvent);
 
-						pthread_rwlock_unlock(&lock);
-						pthread_rwlock_wrlock(&lock);
+						pthread_rwlock_unlock(&sessionLock);
+						pthread_rwlock_wrlock(&sessionLock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
-						pthread_rwlock_unlock(&lock);
-						pthread_rwlock_rdlock(&lock);
+						pthread_rwlock_unlock(&sessionLock);
+						pthread_rwlock_rdlock(&sessionLock);
 
 						delete tempEvent;
 						tempEvent = NULL;
@@ -451,14 +459,14 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 					{
 
 						tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_LTM);
-						SendToCE(tempEvent);
+						updateSuspect(tempEvent);
 
-						pthread_rwlock_unlock(&lock);
-						pthread_rwlock_wrlock(&lock);
+						pthread_rwlock_unlock(&sessionLock);
+						pthread_rwlock_wrlock(&sessionLock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
-						pthread_rwlock_unlock(&lock);
-						pthread_rwlock_rdlock(&lock);
+						pthread_rwlock_unlock(&sessionLock);
+						pthread_rwlock_rdlock(&sessionLock);
 
 						delete tempEvent;
 						tempEvent = NULL;
@@ -466,7 +474,7 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 				}
 			}
 		}
-		pthread_rwlock_unlock(&lock);
+		pthread_rwlock_unlock(&sessionLock);
 		//Check only once every TCP_CHECK_FREQ seconds
 		sleep(tcpFreq);
 	}while(!usePcapFile);
@@ -482,33 +490,80 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 
 ///Sends the given TrafficEvent to the Classification Engine
 ///	Returns success or failure
-bool Nova::LocalTrafficMonitor::SendToCE(TrafficEvent *event)
+bool Nova::LocalTrafficMonitor::SendToCE(Suspect *suspect)
 {
 	int socketFD;
-	dataLen = event->serializeEvent(data);
+	dataLen = suspect->serializeSuspect(data);
+	dataLen += suspect->features.serializeFeatureData(data+dataLen);
 
-	if((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-    	LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+    	LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
 
-	if(connect(socketFD, (struct sockaddr *)&remote, len) == -1)
+	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 	{
-    	LOG4CXX_ERROR(m_logger, "connect: " << strerror(errno));
+    	LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
-	if(send(socketFD, data, dataLen, 0) == -1)
+
+	if (send(socketFD, data, dataLen, 0) == -1)
 	{
-    	LOG4CXX_ERROR(m_logger, "send: " << strerror(errno));
+    	LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
 		close(socketFD);
 		return false;
 	}
 	bzero(data,dataLen);
 	close(socketFD);
     return true;
+}
+
+//Stores events to be processed before sending
+void Nova::LocalTrafficMonitor::updateSuspect(TrafficEvent *event)
+{
+	in_addr_t addr = event->src_IP.s_addr;
+	pthread_rwlock_wrlock(&suspectLock);
+	//If our suspect is new
+	if(suspects.find(addr) == suspects.end())
+		suspects[addr] = new Suspect(event);
+	//Else our suspect exists
+	else
+		suspects[addr]->AddEvidence(event);
+
+	pthread_rwlock_unlock(&suspectLock);
+}
+
+void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
+{
+	while(true)
+	{
+		sleep(classificationTimeout);
+		pthread_rwlock_rdlock(&suspectLock);
+		for(SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
+		{
+			if(it->second->needs_feature_update)
+			{
+				pthread_rwlock_unlock(&suspectLock);
+				pthread_rwlock_wrlock(&suspectLock);
+				for(uint i = 0; i < it->second->evidence.size(); i++)
+				{
+					it->second->features.UpdateEvidence(&it->second->evidence[i]);
+				}
+				it->second->evidence.clear();
+				SendToCE(it->second);
+				it->second->needs_feature_update = false;
+				pthread_rwlock_unlock(&suspectLock);
+				pthread_rwlock_rdlock(&suspectLock);
+			}
+		}
+		pthread_rwlock_unlock(&suspectLock);
+	}
+	//Shouldn't get here
+	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted");
+	return NULL;
 }
 
 ///Returns a string representation of the specified device's IP address
@@ -554,16 +609,6 @@ string Nova::LocalTrafficMonitor::getLocalIP(const char *dev)
 	return NULL;
 }
 
-///Returns usage tips
-string Nova::LocalTrafficMonitor::Usage()
-{
-	string usage_tips = "Local Traffic Monitor Module\n";
-	usage_tips += "\tUsage:Local Traffic Monitor Module -l <log config file> -n <NOVA config file> \n";
-	usage_tips += "\t-l: Path to LOG4CXX config xml file.\n";
-	usage_tips += "\t-n: Path to NOVA config txt file. (Config/NOVAConfig_LTM.txt by default)\n";
-	return usage_tips;
-}
-
 void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
@@ -577,7 +622,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 
 	const string prefixes[] = {"INTERFACE", "TCP_TIMEOUT",
 			"TCP_CHECK_FREQ", "READ_PCAP",
-			"PCAP_FILE", "GO_TO_LIVE","USE_TERMINALS"};
+			"PCAP_FILE", "GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT"};
 
 	if(config.is_open())
 	{
@@ -596,6 +641,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				continue;
 
 			}
+
 			prefix = prefixes[1];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -607,6 +653,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				}
 				continue;
 			}
+
 			prefix = prefixes[2];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -619,6 +666,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				continue;
 
 			}
+
 			prefix = prefixes[3];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -630,6 +678,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				}
 				continue;
 			}
+
 			prefix = prefixes[4];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -641,6 +690,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				}
 				continue;
 			}
+
 			prefix = prefixes[5];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -652,6 +702,7 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				}
 				continue;
 			}
+
 			prefix = prefixes[6];
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -660,6 +711,18 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				{
 					useTerminals = atoi(line.c_str());
 					verify[6]=true;
+				}
+				continue;
+			}
+
+			prefix = prefixes[7];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) > 0)
+				{
+					classificationTimeout = atoi(line.c_str());
+					verify[7]=true;
 				}
 				continue;
 			}

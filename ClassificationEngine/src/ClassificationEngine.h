@@ -28,7 +28,10 @@
 #define INITIAL_TABLESIZE 256
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
-
+//If the feature data is local
+#define LOCAL_DATA true
+//If the feature data is broadcast from another nova instance
+#define BROADCAST_DATA false
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
@@ -100,9 +103,9 @@ string getLocalIP(const char *dev);
 ///Send a silent alarm about the argument suspect
 void SilentAlarm(Suspect *suspect);
 
-///Receive a TrafficEvent from another local component.
+///Receive featureData from another local component.
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-bool ReceiveTrafficEvent();
+bool ReceiveSuspectData();
 
 /// Receives input commands from the GUI
 void ReceiveGUICommand();

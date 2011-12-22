@@ -40,8 +40,6 @@ typedef google::dense_hash_map<in_addr_t, bool, tr1::hash<in_addr_t>, eq > Suspe
 namespace Nova{
 namespace DoppelgangerModule{
 
-using namespace ClassificationEngine;
-
 ///Returns a string representation of the specified device's IP address
 string getLocalIP(const char *dev);
 
