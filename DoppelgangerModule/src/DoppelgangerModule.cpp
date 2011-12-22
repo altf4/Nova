@@ -162,11 +162,14 @@ int main(int argc, char *argv[])
 	system(commandLine.c_str());
 	commandLine = "iptables -t nat -F";
 	system(commandLine.c_str());
-	commandLine = "iptables -A INPUT -p udp --dport "+sAlarmPort+" -j DROP";
+	commandLine = "iptables -t filter -F";
 	system(commandLine.c_str());
-	commandLine = "iptables -A INPUT -p tcp --dport "+sAlarmPort+" -j DROP";
+	commandLine = "iptables -A INPUT -p udp --dport "+sAlarmPort+" -j REJECT --reject-with icmp-port-unreachable";
 	system(commandLine.c_str());
-
+	commandLine = "iptables -A INPUT -p tcp --dport "+sAlarmPort+" -j REJECT --reject-with tcp-reset";
+	system(commandLine.c_str());
+	commandLine = "iptables -A INPUT -j DROP";
+	system(commandLine.c_str());
 
     int len;
     struct sockaddr_un remote;
