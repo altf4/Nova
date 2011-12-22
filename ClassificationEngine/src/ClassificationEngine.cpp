@@ -925,7 +925,6 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	{
 		do
 		{
-			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
@@ -941,6 +940,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 				if(knockPort(OPEN))
 				{
+					bzero(data,MAX_MSG_SIZE);
+					dataLen = suspect->serializeSuspect(data);
+					featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+
 					//Send Silent Alarm to other Nova Instances with feature Data
 					if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 					{
@@ -968,14 +971,14 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = "iptables -D INPUT 1";
 				system(commandLine.c_str());
 			}
-			bzero(data+dataLen, featureData);
+			bzero(data,MAX_MSG_SIZE);
 		}while(featureData == MORE_DATA);
 	}
 }
 
 bool ClassificationEngine::knockPort(bool mode)
 {
-	bzero(data, dataLen);
+	bzero(data, MAX_MSG_SIZE);
 	stringstream ss;
 	ss << key;
 	//mode == OPEN (true)
