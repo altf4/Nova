@@ -28,6 +28,8 @@ using namespace ClassificationEngine;
 static SuspectHashTable suspects;
 // Vector of ip addresses that correspond to other nova instances
 vector<in_addr_t> neighbors;
+// Key used for port knocking
+string key;
 
 pthread_rwlock_t lock;
 
@@ -916,33 +918,78 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
+
 				serv_addr.sin_addr.s_addr = neighbors[i];
-				//Send Silent Alarm to other Nova Instances with feature Data
-				if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+				if(knockPort(OPEN))
 				{
-					LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-					close(sockfd);
-					continue;
-				}
+					//Send Silent Alarm to other Nova Instances with feature Data
+					if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+					{
+						LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+						close(sockfd);
+						continue;
+					}
 
-				if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
-				{
-					LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
-					close(socketFD);
-					continue;
-				}
+					if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+					{
+						LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
+						close(socketFD);
+						continue;
+					}
 
-				if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
-				{
-					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+					if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
+					{
+						LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+						close(sockfd);
+						continue;
+					}
 					close(sockfd);
-					continue;
+					knockPort(CLOSE);
 				}
-				close(sockfd);
 			}
 			bzero(data+dataLen, featureData);
 		}while(featureData == MORE_DATA);
 	}
+}
+
+bool ClassificationEngine::knockPort(bool mode)
+{
+	bzero(data, dataLen);
+	stringstream ss;
+	ss << key;
+	//mode == OPEN (true)
+	if(mode)
+	{
+		ss << "OPEN";
+		dataLen = key.size() + 4;
+	}
+	//mode == CLOSE (false)
+	else
+	{
+		ss << "SHUT";
+		dataLen = key.size() + 4;
+	}
+	memcpy(data, ss.str().c_str(), ss.str().size());
+
+	crpytBuffer(data, dataLen, ENCRYPT);
+
+	//Send Port knock to other Nova Instances
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		close(sockfd);
+		return false;
+	}
+
+	if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+		close(sockfd);
+		return false;
+	}
+
+	close(sockfd);
+	return true;
 }
 
 ///Receive a TrafficEvent from another local component.
@@ -1056,6 +1103,11 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 	close(GUISendSocket);
 }
 
+//Encrpyts/decrypts a char buffer of size 'size' depending on mode
+void ClassificationEngine::crpytBuffer(u_char * buf, uint size, bool mode)
+{
+	//TODO
+}
 
 void ClassificationEngine::LoadConfig(char * input)
 {
@@ -1066,6 +1118,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 	string line;
 	string prefix;
+	uint i = 0;
 
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
@@ -1076,6 +1129,7 @@ void ClassificationEngine::LoadConfig(char * input)
 		while(settings.good())
 		{
 			getline(settings, line);
+			i++;
 
 			prefix = "neighbor";
 			if(!line.substr(0,prefix.size()).compare(prefix))
@@ -1088,7 +1142,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 					if((int)nbr == -1)
 					{
-						LOG4CXX_ERROR(m_logger, "Invalid IP address parsed on line of settings file.");
+						LOG4CXX_ERROR(m_logger, "Invalid IP address parsed on line " << i << " of the settings file.");
 					}
 					else if(nbr)
 					{
@@ -1096,6 +1150,16 @@ void ClassificationEngine::LoadConfig(char * input)
 					}
 					nbr = 0;
 				}
+			}
+			prefix = "key";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				//TODO Key should be 256 characters, hard check for this once implemented
+				if((line.size() > 0) && (line.size() < 257))
+					key = line;
+				else
+					LOG4CXX_ERROR(m_logger, "Invalid Key parsed on line " << i << " of the settings file.");
 			}
 		}
 	}
