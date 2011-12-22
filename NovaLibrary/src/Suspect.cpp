@@ -24,6 +24,7 @@ Suspect::Suspect()
 	needs_feature_update = true;
 	flaggedByAlarm = false;
 	isHostile = false;
+	isLive = false;
 	features = FeatureSet();
 	annPoint = NULL;
 	evidence.clear();
@@ -46,6 +47,7 @@ Suspect::Suspect(TrafficEvent *event)
 	isHostile = false;
 	needs_classification_update = true;
 	needs_feature_update = true;
+	isLive = true;
 	features = FeatureSet();
 	annPoint = NULL;
 	flaggedByAlarm = false;
@@ -138,6 +140,8 @@ uint Suspect::serializeSuspect(u_char * buf)
 	offset+= bsize;
 	memcpy(buf+offset, &flaggedByAlarm, bsize);
 	offset+= bsize;
+	memcpy(buf+offset, &isLive, bsize); // AQW: add isLive to suspect serialize
+	offset+= bsize;
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
@@ -168,6 +172,8 @@ uint Suspect::deserializeSuspect(u_char * buf)
 	offset+= bsize;
 	memcpy(&flaggedByAlarm, buf+offset, bsize);
 	offset+= bsize;
+	memcpy(&isLive, buf+offset, bsize); // AQW: add isLive to suspect deserialize
+	offset+= bsize;
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
@@ -197,6 +203,8 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, bool isLocal)
 	memcpy(&needs_feature_update, buf+offset, bsize);
 	offset+= bsize;
 	memcpy(&flaggedByAlarm, buf+offset, bsize);
+	offset+= bsize;
+	memcpy(&isLive, buf+offset, bsize);
 	offset+= bsize;
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet

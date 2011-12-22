@@ -42,8 +42,8 @@
 #define INITIAL_PACKET_SIZE 4096
 
 //UDP has max payload of 65535 bytes
-//serializeSuspect requires 88 bytes, serializeFeatureData requires 36 bytes, bytes left = 65411
-// each entry in a table takes 8 bytes 65411/8 = 8176.375
+//serializeSuspect requires 89 bytes, serializeFeatureData requires 36 bytes, bytes left = 65410
+// each entry in a table takes 8 bytes 65410/8 = 8176.25
 #define MAX_TABLE_ENTRIES 8176
 
 //boolean values for updateFeatureData()

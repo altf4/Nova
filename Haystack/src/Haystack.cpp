@@ -548,6 +548,7 @@ void Nova::Haystack::updateSuspect(TrafficEvent *event)
 	else
 		suspects[addr]->AddEvidence(event);
 
+	suspects[addr]->isLive = !usePcapFile; // AQW: added this for ticket 130
 	pthread_rwlock_unlock(&suspectLock);
 }
 
