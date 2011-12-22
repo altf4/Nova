@@ -11,7 +11,6 @@
 
 using namespace std;
 namespace Nova{
-namespace ClassificationEngine{
 
 //Empty constructor
 FeatureSet::FeatureSet()
@@ -369,7 +368,7 @@ uint FeatureSet::deserializeFeatureSet(u_char * buf)
 	return offset;
 }
 
-uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
+uint FeatureSet::serializeFeatureData(u_char *buf)
 {
 	uint offset = 0;
 	uint count = 0;
@@ -498,7 +497,7 @@ uint FeatureSet::serializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	return offset;
 }
 
-uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
+uint FeatureSet::deserializeFeatureDataLocal(u_char *buf)
 {
 	uint offset = 0;
 
@@ -510,6 +509,104 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	uint temp = 0;
 	uint tempCount = 0;
 
+	//Required, individual variables for calculation
+	memcpy(&temp, buf+offset, size);
+	totalInterval.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	haystackEvents.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	packetCount.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	bytesTotal.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	offset += size;
+
+	if(temp > portMax)
+		portMax = temp;
+
+	/***************************************************************************************************
+	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
+	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
+	****************************************************************************************************/
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//Packet interval table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		intervalTable[temp].first += tempCount;
+		i++;
+	}
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//Packet size table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		packTable[temp].first += tempCount;
+		i++;
+	}
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//IP table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		IPTable[temp].first += tempCount;
+		i++;
+	}
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//Port table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		portTable[temp].first += tempCount;
+		i++;
+	}
+
+	return offset;
+}
+
+uint FeatureSet::deserializeFeatureDataBroadcast(u_char *buf)
+{
+	uint offset = 0;
+
+	//Bytes in a word, used for everything but port #'s
+	const uint size = 4;
+	uint table_size = 0;
+
+	//Temporary variables to store and track data during deserialization
+	uint temp = 0;
+	uint tempCount = 0;
 
 	//Required, individual variables for calculation
 	memcpy(&temp, buf+offset, size);
@@ -598,5 +695,4 @@ uint FeatureSet::deserializeFeatureData(u_char *buf, in_addr_t hostAddr)
 	return offset;
 }
 
-}
 }

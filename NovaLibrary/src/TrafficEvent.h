@@ -59,7 +59,7 @@ class TrafficEvent
 		struct in_addr dst_IP;
 
 		///Source port of this event
-		in_port_t src_port;
+		//in_port_t src_port;
 		///Destination port of this event
 		in_port_t dst_port;
 
@@ -68,36 +68,36 @@ class TrafficEvent
 
 		///The IP proto type number
 		///	IE: 6 == TCP, 17 == UDP, 1 == ICMP, etc...
-		uint IP_protocol;
+		//uint IP_protocol;
 
 		///ICMP specific values
 		///IE:	0,0 = Ping reply
 		///		8,0 = Ping request
 		///		3,3 = Destination port unreachable
-		int ICMP_type;
+		//int ICMP_type;
 		///IE:	0,0 = Ping reply
 		///		8,0 = Ping request
 		///		3,3 = Destination port unreachable
-		int ICMP_code;
+		//int ICMP_code;
 
 		///Packets involved in this event
 		uint packet_count;
 
 		///Did this event originate from the Haystack?	///	Meta information about packet
-		struct pcap_pkthdr pcap_header;
+		//struct pcap_pkthdr pcap_header;
 		///	Pointer to an IP header
-		struct ip ip_hdr;
+		//struct ip ip_hdr;
 		/// Pointer to a TCP Header
-		struct tcphdr tcp_hdr;
+		//struct tcphdr tcp_hdr;
 		/// Pointer to a UDP Header
-		struct udphdr udp_hdr;
+		//struct udphdr udp_hdr;
 		/// Pointer to an ICMP Header
-		struct icmphdr icmp_hdr;
+		//struct icmphdr icmp_hdr;
 		///	False for from the host machine
 		bool from_haystack;
 
 		///For training use. Is this a hostile Event?
-		bool isHostile;
+		//bool isHostile;
 
 		///A vector of the sizes of the IP layers of
 		vector <int> IP_packet_sizes;
@@ -122,20 +122,13 @@ class TrafficEvent
 		///Returns a string representation of the LogEntry for printing to screen
 		string ToString();
 
-		///Returns true if the majority of packets are flagged as hostile
-		/// Else, false
-		bool ArePacketsHostile( vector<struct Packet>  *list);
-
-		//Copies the contents of this TrafficEvent to the parameter TrafficEvent
-		void copyTo(TrafficEvent *toEvent);
-
 		//Stores the traffic event information into the buffer, retrieved using deserializeEvent
 		//	returns the number of bytes set in the buffer
-		uint serializeEvent(u_char * buf);
+		/*uint serializeEvent(u_char * buf);
 
 		//Reads TrafficEvent information from a buffer originally populated by serializeEvent
 		//	returns the number of bytes read from the buffer
-		uint deserializeEvent(u_char * buf);
+		uint deserializeEvent(u_char * buf);*/
 
 };
 

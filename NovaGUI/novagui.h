@@ -41,7 +41,6 @@
 
 using namespace std;
 using namespace Nova;
-using namespace ClassificationEngine;
 using boost::property_tree::ptree;
 
 /*********************************************************************

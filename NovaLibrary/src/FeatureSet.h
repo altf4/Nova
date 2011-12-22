@@ -41,24 +41,18 @@
 #define INITIAL_PORT_SIZE 1024
 #define INITIAL_PACKET_SIZE 4096
 
-//UDP has max payload of 65535 bytes, suspect with data has a base size of 180 bytes
-// each packet can requires up to 28 bytes, meaning we can only send up information on
-// a maximum of 2334 packets
-#define MAX_PACKETS_PER_MSG 2334
-#define MAX_TABLE_ENTRIES 8168
+//UDP has max payload of 65535 bytes, suspect with data has a base size of 112 bytes leaving 65423 bytes
+// each entry in a table takes 8 bytes 65423/8 = 8177.875
+#define MAX_TABLE_ENTRIES 8177
 
 //boolean values for updateFeatureData()
 #define INCLUDE true
 #define REMOVE false
 
-
-
 //TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
 ///	This is the number of features in a feature set.
 #define DIMENSION 9
 
-namespace Nova{
-namespace ClassificationEngine{
 
 //Equality operator used by google's dense hash map
 struct eqaddr
@@ -68,6 +62,8 @@ struct eqaddr
 	    return (s1 == s2);
   }
 };
+//Table of IP destinations and a count;
+typedef google::dense_hash_map<in_addr_t, pair<uint, uint>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
 
 //Equality operator used by google's dense hash map
 struct eqport
@@ -77,6 +73,8 @@ struct eqport
 	    return (s1 == s2);
   }
 };
+//Table of destination ports and a count;
+typedef google::dense_hash_map<in_port_t, pair<uint, uint>, tr1::hash<in_port_t>, eqport > Port_Table;
 
 //Equality operator used by google's dense hash map
 struct eqint
@@ -86,6 +84,8 @@ struct eqint
 	    return (s1 == s2);
   }
 };
+//Table of packet sizes and a count
+typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<int>, eqint > Packet_Table;
 
 //Equality operator used by google's dense hash map
 struct eqtime
@@ -95,32 +95,10 @@ struct eqtime
 	    return (s1 == s2);
   }
 };
-
-
-typedef google::dense_hash_map<in_addr_t, pair<uint, uint>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
-typedef google::dense_hash_map<in_port_t, pair<uint, uint>, tr1::hash<in_port_t>, eqport > Port_Table;
-typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<int>, eqint > Packet_Table;
+//Table of packet intervals and a count
 typedef google::dense_hash_map<time_t, pair<uint, uint>, tr1::hash<time_t>, eqtime > Interval_Table;
 
-
-struct silentAlarmFeatureData
-{
-	/// The actual feature values
-	double features[DIMENSION];
-
-	// endTime - startTime : used to incorporate time based information correctly.
-	uint totalInterval;
-	//Number of TrafficEvents that originate from the haystack
-	uint haystackEvents;
-	//Total number of packets
-	uint packetCount;
-	//Total number of bytes
-	uint bytesTotal;
-
-};
-
-
-typedef google::dense_hash_map<in_addr_t, struct silentAlarmFeatureData, tr1::hash<in_addr_t>, eqaddr > Silent_Alarm_Table;
+namespace Nova{
 
 ///A Feature Set represents a point in N dimensional space, which the Classification Engine uses to
 ///	determine a classification. Each member of the FeatureSet class represents one of these dimensions.
@@ -131,9 +109,6 @@ class FeatureSet
 public:
 	/// The actual feature values
 	double features[DIMENSION];
-
-	//Table of Nova hosts and feature set data needed to include silent alarm information in classifications
-	Silent_Alarm_Table SATable;
 
 	//Number of packets total
 	pair<uint, uint> packetCount;
@@ -184,11 +159,15 @@ public:
 
 	//Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	//	returns the number of bytes set in the buffer
-	uint serializeFeatureData(u_char * buf, in_addr_t hostAddr);
+	uint serializeFeatureData(u_char * buf);
 	//Reads the feature set data from a buffer originally populated by serializeFeatureData
-	// and stores that information into SATable[hostAddr]
+	// and stores it in broadcast data (the second member of uint pairs)
 	//	returns the number of bytes read from the buffer
-	uint deserializeFeatureData(u_char * buf, in_addr_t hostAddr);
+	uint deserializeFeatureDataBroadcast(u_char * buf);
+	//Reads the feature set data from a buffer originally populated by serializeFeatureData
+	// and stores it in local data (the first member of uint pairs)
+	//	returns the number of bytes read from the buffer
+	uint deserializeFeatureDataLocal(u_char * buf);
 
 private:
 	//Temporary variables used to calculate Features
@@ -226,7 +205,6 @@ private:
 	time_t last_time;
 
 };
-}
 }
 
 #endif /* FEATURESET_H_ */

@@ -14,7 +14,6 @@
 #include <ANN/ANN.h>
 
 namespace Nova{
-namespace ClassificationEngine{
 
 ///	A Suspect represents a single actor on the network, whether good or bad.
 ///Suspects are the target of classification and a major part of Nova.
@@ -51,7 +50,7 @@ public:
 	ANNpoint annPoint;
 
 	///	A listing of all the events (evidence) that originated from this suspect
-	vector <TrafficEvent*> evidence;
+	vector <TrafficEvent> evidence;
 
 	///	Blank Constructor
 	Suspect();
@@ -83,16 +82,12 @@ public:
 	//Reads Suspect information from a buffer originally populated by serializeSuspect
 	// expects featureSet data appended by serializeFeatureData after serializeSuspect
 	//	returns the number of bytes read from the buffer
-	uint deserializeSuspectWithData(u_char * buf, in_addr_t hostAddr);
-
-
-
+	uint deserializeSuspectWithData(u_char * buf, bool isLocal);
 };
 
 //Extracts and returns the IP Address from a serialized suspect located at buf
 uint getSerializedAddr(u_char * buf);
 
-}
 }
 
 #endif /* SUSPECT_H_ */
