@@ -910,9 +910,9 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		}
 		close(socketFD);
 	}
-
-	while((featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen)) == MORE_DATA)
+	do
 	{
+		featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 
 		//Update other Nova Instances with latest suspect Data
 		for(uint i = 0; i < neighbors.size(); i++)
@@ -942,7 +942,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 			close(sockfd);
 		}
 		bzero(data+dataLen, featureData);
-	}
+
+	}while(featureData == MORE_DATA);
 }
 
 ///Receive a TrafficEvent from another local component.

@@ -81,8 +81,8 @@ EPS 0.01
 # suspect classifications.
 #
 # EXAMPLE:
-#CLASSIFICATION_TIMEOUT 7
-CLASSIFICATION_TIMEOUT 7
+#CLASSIFICATION_TIMEOUT 5
+CLASSIFICATION_TIMEOUT 3
 
 ############################################
 # IS_TRAINING #
