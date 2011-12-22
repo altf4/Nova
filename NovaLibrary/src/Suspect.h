@@ -43,6 +43,9 @@ public:
 	///	Has this suspect been the subject of an alarm from another Nova instance?
 	bool flaggedByAlarm;
 
+	/// AQW: Is this live capture or pcap?
+	bool isLive;
+
 	///	The Feature Set for this Suspect
 	FeatureSet features;
 

@@ -883,7 +883,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	uint featureData = 0;
 
 	//If the hostility hasn't changed don't bother the DM
-	if( oldClassification != suspect->isHostile)
+	if(oldClassification != suspect->isHostile && suspect->isLive) // AQW: added "&& suspect->isLive"
 	{
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
@@ -907,7 +907,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		}
 		close(socketFD);
 	}
-	if(suspect->features.packetCount.first)
+	if(suspect->features.packetCount.first && suspect->isLive) // AQW: added "&& suspect->isLive"
 	{
 		do
 		{
@@ -918,21 +918,21 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 			{
 				serv_addr.sin_addr.s_addr = neighbors[i];
 				//Send Silent Alarm to other Nova Instances with feature Data
-				if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+				if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 				{
 					LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 					close(sockfd);
 					continue;
 				}
 
-				if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+				if(connect(sockfd, serv_addrPtr, inSocketSize) == -1)
 				{
 					LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
 					close(socketFD);
 					continue;
 				}
 
-				if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
+				if(sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
 				{
 					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 					close(sockfd);
