@@ -41,9 +41,10 @@
 #define INITIAL_PORT_SIZE 1024
 #define INITIAL_PACKET_SIZE 4096
 
-//UDP has max payload of 65535 bytes, suspect with data has a base size of 112 bytes leaving 65423 bytes
-// each entry in a table takes 8 bytes 65423/8 = 8177.875
-#define MAX_TABLE_ENTRIES 8177
+//UDP has max payload of 65535 bytes
+//serializeSuspect requires 88 bytes, serializeFeatureData requires 36 bytes, bytes left = 65411
+// each entry in a table takes 8 bytes 65411/8 = 8176.375
+#define MAX_TABLE_ENTRIES 8176
 
 //boolean values for updateFeatureData()
 #define INCLUDE true
@@ -52,7 +53,6 @@
 //TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
 ///	This is the number of features in a feature set.
 #define DIMENSION 9
-
 
 //Equality operator used by google's dense hash map
 struct eqaddr
@@ -158,12 +158,18 @@ public:
 	uint deserializeFeatureSet(u_char * buf);
 
 	//Stores the feature set data into the buffer, retrieved using deserializeFeatureData
-	//	returns the number of bytes set in the buffer
-	uint serializeFeatureData(u_char * buf);
+	//	returns the number of bytes set in the buffer, this function saves serialized data.
+	// 	used by the ClassificationEngine for sending silentAlarms, needs data to classify
+	uint serializeFeatureDataBroadcast(u_char * buf);
 	//Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in broadcast data (the second member of uint pairs)
 	//	returns the number of bytes read from the buffer
 	uint deserializeFeatureDataBroadcast(u_char * buf);
+
+	//Stores the feature set data into the buffer, retrieved using deserializeFeatureData
+	//	returns the number of bytes set in the buffer, this function doesn't keep data once
+	// 	serialized. used by the LocalTrafficMonitor and Haystack for sending suspect information
+	uint serializeFeatureDataLocal(u_char * buf);
 	//Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in local data (the first member of uint pairs)
 	//	returns the number of bytes read from the buffer

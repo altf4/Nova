@@ -911,9 +911,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		close(socketFD);
 	}
 
-	while(suspect->features.packetCount.first)
+	while((featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen)) == MORE_DATA)
 	{
-		featureData = suspect->features.serializeFeatureData(data+dataLen);
 
 		//Update other Nova Instances with latest suspect Data
 		for(uint i = 0; i < neighbors.size(); i++)

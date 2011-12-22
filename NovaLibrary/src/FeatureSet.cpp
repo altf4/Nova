@@ -368,7 +368,7 @@ uint FeatureSet::deserializeFeatureSet(u_char * buf)
 	return offset;
 }
 
-uint FeatureSet::serializeFeatureData(u_char *buf)
+uint FeatureSet::serializeFeatureDataBroadcast(u_char *buf)
 {
 	uint offset = 0;
 	uint count = 0;
@@ -497,105 +497,6 @@ uint FeatureSet::serializeFeatureData(u_char *buf)
 	return offset;
 }
 
-uint FeatureSet::deserializeFeatureDataLocal(u_char *buf)
-{
-	uint offset = 0;
-
-	//Bytes in a word, used for everything but port #'s
-	const uint size = 4;
-	uint table_size = 0;
-
-	//Temporary variables to store and track data during deserialization
-	uint temp = 0;
-	uint tempCount = 0;
-
-	//Required, individual variables for calculation
-	memcpy(&temp, buf+offset, size);
-	totalInterval.first += temp;
-	offset += size;
-
-	memcpy(&temp, buf+offset, size);
-	haystackEvents.first += temp;
-	offset += size;
-
-	memcpy(&temp, buf+offset, size);
-	packetCount.first += temp;
-	offset += size;
-
-	memcpy(&temp, buf+offset, size);
-	bytesTotal.first += temp;
-	offset += size;
-
-	memcpy(&temp, buf+offset, size);
-	offset += size;
-
-	if(temp > portMax)
-		portMax = temp;
-
-	/***************************************************************************************************
-	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
-	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
-	****************************************************************************************************/
-
-	memcpy(&table_size, buf+offset, size);
-	offset += size;
-
-	//Packet interval table
-	for(uint i = 0; i < table_size;)
-	{
-		memcpy(&temp, buf+offset, size);
-		offset += size;
-		memcpy(&tempCount, buf+offset, size);
-		offset += size;
-		intervalTable[temp].first += tempCount;
-		i++;
-	}
-
-	memcpy(&table_size, buf+offset, size);
-	offset += size;
-
-	//Packet size table
-	for(uint i = 0; i < table_size;)
-	{
-		memcpy(&temp, buf+offset, size);
-		offset += size;
-		memcpy(&tempCount, buf+offset, size);
-		offset += size;
-		packTable[temp].first += tempCount;
-		i++;
-	}
-
-	memcpy(&table_size, buf+offset, size);
-	offset += size;
-
-	//IP table
-	for(uint i = 0; i < table_size;)
-	{
-		memcpy(&temp, buf+offset, size);
-		offset += size;
-		memcpy(&tempCount, buf+offset, size);
-		offset += size;
-		IPTable[temp].first += tempCount;
-		i++;
-	}
-
-	memcpy(&table_size, buf+offset, size);
-	offset += size;
-
-	//Port table
-	for(uint i = 0; i < table_size;)
-	{
-		memcpy(&temp, buf+offset, size);
-		offset += size;
-		memcpy(&tempCount, buf+offset, size);
-		offset += size;
-		portTable[temp].first += tempCount;
-		i++;
-	}
-
-	return offset;
-}
-
 uint FeatureSet::deserializeFeatureDataBroadcast(u_char *buf)
 {
 	uint offset = 0;
@@ -689,6 +590,227 @@ uint FeatureSet::deserializeFeatureDataBroadcast(u_char *buf)
 		memcpy(&tempCount, buf+offset, size);
 		offset += size;
 		portTable[temp].second += tempCount;
+		i++;
+	}
+
+	return offset;
+}
+
+uint FeatureSet::serializeFeatureDataLocal(u_char *buf)
+{
+	uint offset = 0;
+	uint count = 0;
+	uint table_entries = 0;
+
+	//Bytes in a word, used for everything but port #'s
+	const uint size = 4;
+
+	//Required, individual variables for calculation
+	CalculateTimeInterval();
+	memcpy(buf+offset, &totalInterval.first, size);
+	offset += size;
+
+	memcpy(buf+offset, &haystackEvents.first, size);
+	haystackEvents.first = 0;
+	offset += size;
+
+	memcpy(buf+offset, &packetCount.first, size);
+	packetCount.first = 0;
+	offset += size;
+
+	memcpy(buf+offset, &bytesTotal.first, size);
+	bytesTotal.first = 0;
+	offset += size;
+
+	memcpy(buf+offset, &portMax, size);
+	offset += size;
+
+	//These tables all just place their key followed by the data
+	uint tempInt;
+
+	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second.first)
+		{
+			table_entries++;
+			memcpy(buf+offset, &it->first, size);
+			offset += size;
+			memcpy(buf+offset, &it->second.first, size);
+			offset += size;
+			intervalTable[it->first].first = 0;
+		}
+	}
+
+	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second.first)
+		{
+			table_entries++;
+			memcpy(buf+offset, &it->first, size);
+			offset += size;
+			memcpy(buf+offset, &it->second.first, size);
+			offset += size;
+			packTable[it->first].first = 0;
+		}
+	}
+
+	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second.first)
+		{
+			table_entries++;
+			memcpy(buf+offset, &it->first, size);
+			offset += size;
+			memcpy(buf+offset, &it->second.first, size);
+			offset += size;
+			IPTable[it->first].first = 0;
+		}
+	}
+
+	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second.first)
+			count++;
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	memcpy(buf+offset, &tempInt, size);
+	offset += size;
+
+	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second.first)
+		{
+			table_entries++;
+			memcpy(buf+offset, &it->first, size);
+			offset += size;
+			memcpy(buf+offset, &it->second.first, size);
+			offset += size;
+			portTable[it->first].first = 0;
+		}
+	}
+	return offset;
+}
+
+uint FeatureSet::deserializeFeatureDataLocal(u_char *buf)
+{
+	uint offset = 0;
+
+	//Bytes in a word, used for everything but port #'s
+	const uint size = 4;
+	uint table_size = 0;
+
+	//Temporary variables to store and track data during deserialization
+	uint temp = 0;
+	uint tempCount = 0;
+
+	//Required, individual variables for calculation
+	memcpy(&temp, buf+offset, size);
+	totalInterval.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	haystackEvents.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	packetCount.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	bytesTotal.first += temp;
+	offset += size;
+
+	memcpy(&temp, buf+offset, size);
+	offset += size;
+
+	if(temp > portMax)
+		portMax = temp;
+
+	/***************************************************************************************************
+	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
+	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
+	****************************************************************************************************/
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//Packet interval table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		intervalTable[temp].first += tempCount;
+		i++;
+	}
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//Packet size table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		packTable[temp].first += tempCount;
+		i++;
+	}
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//IP table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		IPTable[temp].first += tempCount;
+		i++;
+	}
+
+	memcpy(&table_size, buf+offset, size);
+	offset += size;
+
+	//Port table
+	for(uint i = 0; i < table_size;)
+	{
+		memcpy(&temp, buf+offset, size);
+		offset += size;
+		memcpy(&tempCount, buf+offset, size);
+		offset += size;
+		portTable[temp].first += tempCount;
 		i++;
 	}
 
