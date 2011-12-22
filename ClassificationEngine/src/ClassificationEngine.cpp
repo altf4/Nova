@@ -374,7 +374,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 				cout << it->second->ToString();
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
-				if(it->second->isHostile && it->second->features.packetCount.first)
+				if(it->second->isHostile)
 					SilentAlarm(it->second);
 				SendToUI(it->second);
 			}
@@ -472,15 +472,11 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
         exit(1);
     }
 
-
-	Suspect * suspect = NULL;
-
 	int connectionSocket, bytesRead;
 
 	//Accept incoming Silent Alarm TCP Connections
 	while(1)
 	{
-		suspect = NULL;
 
 		//Blocking call
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
@@ -514,10 +510,11 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			//If this is a new suspect put it in the table
 			if(it == suspects.end())
 			{
-				suspect = new Suspect();
-				suspect->deserializeSuspectWithData(buf, BROADCAST_DATA);
-				suspects[addr] = suspect;
-				suspect = NULL;
+				suspects[addr] = new Suspect();
+				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
+				//We set isHostile to false so that when we classify the first time
+				// the suspect will go from benign to hostile and be sent to the doppelganger module
+				suspects[addr]->isHostile = false;
 			}
 			//If this suspect exists, update the information
 			else
@@ -910,40 +907,42 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		}
 		close(socketFD);
 	}
-	do
+	if(suspect->features.packetCount.first)
 	{
-		featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
-
-		//Update other Nova Instances with latest suspect Data
-		for(uint i = 0; i < neighbors.size(); i++)
+		do
 		{
-			serv_addr.sin_addr.s_addr = neighbors[i];
-			//Send Silent Alarm to other Nova Instances with feature Data
-			if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+
+			//Update other Nova Instances with latest suspect Data
+			for(uint i = 0; i < neighbors.size(); i++)
 			{
-				LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+				serv_addr.sin_addr.s_addr = neighbors[i];
+				//Send Silent Alarm to other Nova Instances with feature Data
+				if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+				{
+					LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+					close(sockfd);
+					continue;
+				}
+
+				if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+				{
+					LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
+					close(socketFD);
+					continue;
+				}
+
+				if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
+				{
+					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+					close(sockfd);
+					continue;
+				}
 				close(sockfd);
-				continue;
 			}
-
-			if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
-			{
-				LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
-				close(socketFD);
-				continue;
-			}
-
-			if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
-			{
-				LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
-				close(sockfd);
-				continue;
-			}
-			close(sockfd);
-		}
-		bzero(data+dataLen, featureData);
-
-	}while(featureData == MORE_DATA);
+			bzero(data+dataLen, featureData);
+		}while(featureData == MORE_DATA);
+	}
 }
 
 ///Receive a TrafficEvent from another local component.
