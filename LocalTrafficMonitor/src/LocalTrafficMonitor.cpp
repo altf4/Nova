@@ -286,7 +286,7 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 			if(event->dst_port ==  sAlarmPort)
 			{
 				//if we receive a udp packet on the silent alarm port, see if it is a port knock request
-				knockRequest(event, (((u_char *)ip_hdr + sizeof(struct ip)) + packet_info.udp_hdr.len));
+				knockRequest(event, (((u_char *)ip_hdr + sizeof(struct ip)) + sizeof(struct udphdr)));
 			}
 			updateSuspect(event);
 			delete event;
@@ -829,14 +829,13 @@ void LocalTrafficMonitor::knockRequest(TrafficEvent * event, u_char * payload)
 		sentKey = (char*)(payload+key.size());
 		if(!sentKey.compare("OPEN"))
 		{
-			ss << "iptables -I INPUT 1 -s" << inet_ntoa(event->src_IP) << "-p tcp --dport 4242 -j ACCEPT";
+			ss << "iptables -I INPUT 1 -s " << *inet_ntoa(event->src_IP) << " -p tcp --dport 4242 -j ACCEPT";
 			commandLine = ss.str();
 			system(commandLine.c_str());
 		}
 		else if(!sentKey.compare("SHUT"))
 		{
-			ss << "iptables -D INPUT 1 -s" << inet_ntoa(event->src_IP) << "-p tcp --dport 4242 -j ACCEPT";
-			commandLine = ss.str();
+			commandLine = "iptables -D INPUT 1";
 			system(commandLine.c_str());
 		}
 	}
