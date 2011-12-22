@@ -503,6 +503,18 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			continue;
 		}
 
+		crpytBuffer(buf, bytesRead, DECRYPT);
+
+		string keyCheck = string((char*)buf);
+		keyCheck = keyCheck.substr(0, key.size());
+
+		//If the first packets are the key this is a knock request (closing) and should be ignored.
+		if(!keyCheck.compare(key))
+		{
+			close(connectionSocket);
+			continue;
+		}
+
 		pthread_rwlock_wrlock(&lock);
 		try
 		{
@@ -918,8 +930,15 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
-
 				serv_addr.sin_addr.s_addr = neighbors[i];
+
+				stringstream ss;
+				string commandLine;
+
+				ss << "iptables -I INPUT 1 -s " << neighbors[i] << " -p tcp --dport 4242 -j ACCEPT";
+				commandLine = ss.str();
+				system(commandLine.c_str());
+
 				if(knockPort(OPEN))
 				{
 					//Send Silent Alarm to other Nova Instances with feature Data
@@ -946,6 +965,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					close(sockfd);
 					knockPort(CLOSE);
 				}
+				commandLine = "iptables -D INPUT 1";
+				system(commandLine.c_str());
 			}
 			bzero(data+dataLen, featureData);
 		}while(featureData == MORE_DATA);
