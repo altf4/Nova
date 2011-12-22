@@ -23,6 +23,9 @@
 #define INITIAL_SESSION_TABLESIZE 65535
 //Sets the Initial Table size for faster operations
 #define INITIAL_SUSPECT_TABLESIZE 256
+//The num returned by serializeFeatureData and serializeSuspect combined
+// if it hit the maximum byte size;
+#define MORE_DATA 65532
 
 #include <TrafficEvent.h>
 #include <google/dense_hash_map>

@@ -503,32 +503,37 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 bool Nova::Haystack::SendToCE(Suspect *suspect)
 {
 	int socketFD;
-	dataLen = suspect->serializeSuspect(data);
-	dataLen += suspect->features.serializeFeatureData(data+dataLen);
 
-	if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-    	LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
-		close(socketFD);
-		return false;
-	}
+	do{
+		dataLen = suspect->serializeSuspect(data);
+		dataLen += suspect->features.serializeFeatureDataLocal(data+dataLen);
 
-	if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
-	{
-    	LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
-		close(socketFD);
-		return false;
-	}
+		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		{
+			LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+			close(socketFD);
+			return false;
+		}
 
-	if (send(socketFD, data, dataLen, 0) == -1)
-	{
-    	LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+		if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
+		{
+			LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
+			close(socketFD);
+			return false;
+		}
+
+		if (send(socketFD, data, dataLen, 0) == -1)
+		{
+			LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+			close(socketFD);
+			return false;
+		}
+		bzero(data,dataLen);
 		close(socketFD);
-		return false;
-	}
-	bzero(data,dataLen);
-	close(socketFD);
-    return true;
+
+	}while(dataLen == MORE_DATA);
+
+	return true;
 }
 
 //Stores events to be processed before sending
