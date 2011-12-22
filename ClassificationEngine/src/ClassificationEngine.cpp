@@ -104,6 +104,8 @@ int k;							//number of nearest neighbors
 double eps;						//error bound
 int maxPts;						//maximum number of data points
 double classificationThreshold = .5; //value of classification to define split between hostile / benign
+uint SA_Max_Attempts = 3;			//The number of times to attempt to reconnect to a neighbor
+double SA_Sleep_Duration = 0.5;		//The time to sleep after a port knocking request and allow it to go through
 //End configured variables
 const int dim = DIM;					//dimension
 
@@ -940,9 +942,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 				if(knockPort(OPEN))
 				{
-					bzero(data,MAX_MSG_SIZE);
-					dataLen = suspect->serializeSuspect(data);
-					featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+
 
 					//Send Silent Alarm to other Nova Instances with feature Data
 					if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
@@ -951,13 +951,20 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						close(sockfd);
 						continue;
 					}
-
-					if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+					for(uint i = 0; i < SA_Max_Attempts; i++)
 					{
-						LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
-						close(socketFD);
-						continue;
+						if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+						{
+							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
+							knockPort(OPEN);
+							continue;
+						}
+						else break;
 					}
+
+					bzero(data,MAX_MSG_SIZE);
+					dataLen = suspect->serializeSuspect(data);
+					featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 
 					if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
 					{
@@ -1013,6 +1020,7 @@ bool ClassificationEngine::knockPort(bool mode)
 	}
 
 	close(sockfd);
+	sleep(SA_Sleep_Duration);
 	return true;
 }
 
@@ -1195,7 +1203,7 @@ void ClassificationEngine::LoadConfig(char * input)
 	"BROADCAST_ADDR","SILENT_ALARM_PORT",
 	"K", "EPS",
 	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
-	"CLASSIFICATION_THRESHOLD","DATAFILE"};
+	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION"};
 
 	if(config.is_open())
 	{
@@ -1327,6 +1335,30 @@ void ClassificationEngine::LoadConfig(char * input)
 				{
 					dataFile = line;
 					verify[9]=true;
+				}
+				continue;
+			}
+
+			prefix = prefixes[10];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) > 0)
+				{
+					SA_Max_Attempts = atoi(line.c_str());
+					verify[10]=true;
+				}
+				continue;
+			}
+
+			prefix = prefixes[11];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atof(line.c_str()) >= 0)
+				{
+					SA_Sleep_Duration = atof(line.c_str());
+					verify[11]=true;
 				}
 				continue;
 			}
