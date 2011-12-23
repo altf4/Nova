@@ -60,8 +60,7 @@ void siginthandler(int param)
 {
 	//Clear any existing DNAT routes on exit
 	//	Otherwise susepcts will keep getting routed into a black hole
-	system("iptables -t nat -F");
-	system("iptables -t filter -F");
+	system("iptables -F");
 	exit(1);
 }
 
