@@ -945,17 +945,29 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					bzero(data,MAX_MSG_SIZE);
 					dataLen = suspect->serializeSuspect(data);
 					featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+					uint i;
+					for(i = 0; i < SA_Max_Attempts; i++)
+					{
+						//Send Silent Alarm to other Nova Instances with feature Data
+						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+						{
+							LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+							close(sockfd);
+							knockPort(OPEN);
+							continue;
+						}
 
-					//Send Silent Alarm to other Nova Instances with feature Data
-					if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
-					{
-						LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-						close(sockfd);
-						continue;
+						if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+						{
+							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
+							close(sockfd);
+							knockPort(OPEN);
+							continue;
+						}
+						break;
 					}
-					if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+					if(i == SA_Max_Attempts)
 					{
-						LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
 						close(sockfd);
 						continue;
 					}
