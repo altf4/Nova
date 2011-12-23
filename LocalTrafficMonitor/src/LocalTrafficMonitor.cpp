@@ -829,7 +829,7 @@ void LocalTrafficMonitor::knockRequest(TrafficEvent * event, u_char * payload)
 		sentKey = (char*)(payload+key.size());
 		if(!sentKey.compare("OPEN"))
 		{
-			ss << "iptables -I INPUT 1 -s " << *inet_ntoa(event->src_IP) << " -p tcp --dport 4242 -j ACCEPT";
+			ss << "iptables -I INPUT 1 -s " << string(inet_ntoa(event->src_IP)) << " -p tcp --dport 4242 -j ACCEPT";
 			commandLine = ss.str();
 			system(commandLine.c_str());
 		}
