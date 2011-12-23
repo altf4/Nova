@@ -957,7 +957,6 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					{
 						LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
 						close(sockfd);
-						knockPort(OPEN);
 						continue;
 					}
 
@@ -1007,9 +1006,9 @@ bool ClassificationEngine::knockPort(bool mode)
 		return false;
 	}
 
-	if( sendto(sockfd,data,dataLen,0,serv_addrPtr, inSocketSize) == -1)
+	if( sendto(sockfd,data,dataLen, MSG_DONTWAIT,serv_addrPtr, inSocketSize) == -1)
 	{
-		LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+		LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
 		close(sockfd);
 		return false;
 	}
