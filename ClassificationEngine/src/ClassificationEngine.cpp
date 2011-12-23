@@ -456,7 +456,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
-	sendaddr.sin_addr.s_addr = INADDR_ANY;
+	sendaddr.sin_addr.s_addr = hostAddr.sin_addr.s_addr;
 
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
@@ -936,7 +936,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				stringstream ss;
 				string commandLine;
 
-				ss << "iptables -I INPUT 1 -s " << neighbors[i] << " -p tcp --dport 4242 -j ACCEPT";
+				ss << "iptables -I INPUT 1 -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
@@ -960,7 +960,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						continue;
 					}
 
-					if( sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
+					if( send(sockfd,data,dataLen+featureData,0) == -1)
 					{
 						LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 						close(sockfd);
