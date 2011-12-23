@@ -346,6 +346,7 @@ void DoppelgangerModule::ReceiveGUICommand()
     switch(msg.getType())
     {
     	case EXIT:
+    		system("iptables -F");
     		exit(1);
     	case CLEAR_ALL:
     		pthread_rwlock_wrlock(&lock);
