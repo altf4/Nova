@@ -9,7 +9,7 @@
 #include "ui_novagui.h"
 #include <QtGui>
 #include <QApplication>
-#include <main.h>
+#include "main.h"
 
 using namespace std;
 
