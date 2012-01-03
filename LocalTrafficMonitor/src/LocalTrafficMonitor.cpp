@@ -55,6 +55,9 @@ char * pathsFile = (char*)"/etc/nova/paths";
 string homePath;
 bool useTerminals;
 
+string key;
+in_port_t sAlarmPort;
+
 int main(int argc, char *argv[])
 {
 	pthread_rwlock_init(&sessionLock, NULL);
@@ -255,7 +258,7 @@ int main(int argc, char *argv[])
 
 /// Callback function that is passed to pcap_loop(..) and called each time
 /// a packet is recieved
-void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
 	if(packet == NULL)
 	{
@@ -280,6 +283,11 @@ void Nova::LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap
 		{
 			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
 			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
+			if(event->dst_port ==  sAlarmPort)
+			{
+				//if we receive a udp packet on the silent alarm port, see if it is a port knock request
+				knockRequest(event, (((u_char *)ip_hdr + sizeof(struct ip)) + sizeof(struct udphdr)));
+			}
 			updateSuspect(event);
 			delete event;
 			event = NULL;
@@ -490,7 +498,7 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 
 ///Sends the given TrafficEvent to the Classification Engine
 ///	Returns success or failure
-bool Nova::LocalTrafficMonitor::SendToCE(Suspect *suspect)
+bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 {
 	int socketFD;
 
@@ -527,7 +535,7 @@ bool Nova::LocalTrafficMonitor::SendToCE(Suspect *suspect)
 }
 
 //Stores events to be processed before sending
-void Nova::LocalTrafficMonitor::updateSuspect(TrafficEvent *event)
+void LocalTrafficMonitor::updateSuspect(TrafficEvent *event)
 {
 	in_addr_t addr = event->src_IP.s_addr;
 	pthread_rwlock_wrlock(&suspectLock);
@@ -538,8 +546,7 @@ void Nova::LocalTrafficMonitor::updateSuspect(TrafficEvent *event)
 	else
 		suspects[addr]->AddEvidence(event);
 
-	suspects[addr]->isLive = !usePcapFile; // AQW: added this for ticket 130
-	cout << "isLive == " << suspects[addr]->isLive << endl;
+	suspects[addr]->isLive = !usePcapFile;
 	pthread_rwlock_unlock(&suspectLock);
 }
 
@@ -574,7 +581,7 @@ void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 }
 
 ///Returns a string representation of the specified device's IP address
-string Nova::LocalTrafficMonitor::getLocalIP(const char *dev)
+string LocalTrafficMonitor::getLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
@@ -616,7 +623,7 @@ string Nova::LocalTrafficMonitor::getLocalIP(const char *dev)
 	return NULL;
 }
 
-void Nova::LocalTrafficMonitor::LoadConfig(char* input)
+void LocalTrafficMonitor::LoadConfig(char* input)
 {
 	//Used to verify all values have been loaded
 	bool verify[CONFIG_FILE_LINE_COUNT];
@@ -625,11 +632,38 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 
 	string line;
 	string prefix;
+	uint i = 0;
+
+	string settingsPath = homePath +"/settings";
+	ifstream settings(settingsPath.c_str());
+
+	if(settings.is_open())
+	{
+		while(settings.good())
+		{
+			getline(settings, line);
+			i++;
+
+			prefix = "key";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				//TODO Key should be 256 characters, hard check for this once implemented
+				if((line.size() > 0) && (line.size() < 257))
+					key = line;
+				else
+					LOG4CXX_ERROR(m_logger, "Invalid Key parsed on line " << i << " of the settings file.");
+			}
+		}
+	}
+	settings.close();
+
+
 	ifstream config(input);
 
 	const string prefixes[] = {"INTERFACE", "TCP_TIMEOUT",
 			"TCP_CHECK_FREQ", "READ_PCAP",
-			"PCAP_FILE", "GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT"};
+			"PCAP_FILE", "GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT"};
 
 	if(config.is_open())
 	{
@@ -733,6 +767,17 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 				}
 				continue;
 			}
+			prefix = prefixes[8];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) > 0)
+				{
+					sAlarmPort = atoi(line.c_str());
+					verify[8]=true;
+				}
+				continue;
+			}
 		}
 
 		//Checks to make sure all values have been set.
@@ -760,4 +805,39 @@ void Nova::LocalTrafficMonitor::LoadConfig(char* input)
 		exit(1);
 	}
 	config.close();
+}
+
+//Encrpyts/decrypts a char buffer of size 'size' depending on mode
+void LocalTrafficMonitor::cryptBuffer(u_char * buf, uint size, bool mode)
+{
+	//TODO
+}
+
+//Checks the udp packet payload associated with event for a port knocking request,
+// opens/closes the port for the sender depending on the payload
+void LocalTrafficMonitor::knockRequest(TrafficEvent * event, u_char * payload)
+{
+	stringstream ss;
+	string commandLine;
+
+	uint len = key.size() + 4;
+	cryptBuffer(payload, len, DECRYPT);
+	string sentKey = (char*)payload;
+
+	sentKey = sentKey.substr(0,key.size());
+	if(!sentKey.compare(key))
+	{
+		sentKey = (char*)(payload+key.size());
+		if(!sentKey.compare("OPEN"))
+		{
+			ss << "iptables -I INPUT 1 -s " << string(inet_ntoa(event->src_IP)) << " -p tcp --dport 4242 -j ACCEPT";
+			commandLine = ss.str();
+			system(commandLine.c_str());
+		}
+		else if(!sentKey.compare("SHUT"))
+		{
+			commandLine = "iptables -D INPUT 1";
+			system(commandLine.c_str());
+		}
+	}
 }

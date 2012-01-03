@@ -140,7 +140,7 @@ uint Suspect::serializeSuspect(u_char * buf)
 	offset+= bsize;
 	memcpy(buf+offset, &flaggedByAlarm, bsize);
 	offset+= bsize;
-	memcpy(buf+offset, &isLive, bsize); // AQW: add isLive to suspect serialize
+	memcpy(buf+offset, &isLive, bsize);
 	offset+= bsize;
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
@@ -172,7 +172,7 @@ uint Suspect::deserializeSuspect(u_char * buf)
 	offset+= bsize;
 	memcpy(&flaggedByAlarm, buf+offset, bsize);
 	offset+= bsize;
-	memcpy(&isLive, buf+offset, bsize); // AQW: add isLive to suspect deserialize
+	memcpy(&isLive, buf+offset, bsize);
 	offset+= bsize;
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet

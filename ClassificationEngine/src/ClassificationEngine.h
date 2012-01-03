@@ -34,13 +34,19 @@
 #define LOCAL_DATA true
 //If the feature data is broadcast from another nova instance
 #define BROADCAST_DATA false
+//Mode to knock on the silent alarm port
+#define OPEN true
+#define CLOSE false
+//Mode for encryption/decryption
+#define ENCRYPT true
+#define DECRYPT false
 
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
 //dimension
 #define DIM 9
 //Number of values read from the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 10
+#define CONFIG_FILE_LINE_COUNT 12
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
 
@@ -105,6 +111,9 @@ string getLocalIP(const char *dev);
 ///Send a silent alarm about the argument suspect
 void SilentAlarm(Suspect *suspect);
 
+///Knocks on the port of the neighboring nova instance to open or close it
+bool knockPort(bool mode);
+
 ///Receive featureData from another local component.
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 bool ReceiveSuspectData();
@@ -114,6 +123,9 @@ void ReceiveGUICommand();
 
 //Sends output to the UI
 void SendToUI(Suspect *suspect);
+
+//Encrpyts/decrypts a char buffer of size 'size' depending on mode
+void crpytBuffer(u_char * buf, uint size, bool mode);
 
 //Loads configuration variables from NOVAConfig_CE.txt or specified config file
 void LoadConfig(char * input);

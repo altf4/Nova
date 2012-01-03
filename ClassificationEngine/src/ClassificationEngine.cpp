@@ -28,6 +28,8 @@ using namespace ClassificationEngine;
 static SuspectHashTable suspects;
 // Vector of ip addresses that correspond to other nova instances
 vector<in_addr_t> neighbors;
+// Key used for port knocking
+string key;
 
 pthread_rwlock_t lock;
 
@@ -452,7 +454,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
-	sendaddr.sin_addr.s_addr = INADDR_ANY;
+	sendaddr.sin_addr.s_addr = hostAddr.sin_addr.s_addr;
 
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
@@ -496,6 +498,18 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 		//If this is from ourselves, then drop it.
 		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
+		{
+			close(connectionSocket);
+			continue;
+		}
+
+		crpytBuffer(buf, bytesRead, DECRYPT);
+
+		string keyCheck = string((char*)buf);
+		keyCheck = keyCheck.substr(0, key.size());
+
+		//If the first packets are the key this is a knock request (closing) and should be ignored.
+		if(!keyCheck.compare(key))
 		{
 			close(connectionSocket);
 			continue;
@@ -883,7 +897,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	uint featureData = 0;
 
 	//If the hostility hasn't changed don't bother the DM
-	if(oldClassification != suspect->isHostile && suspect->isLive) // AQW: added "&& suspect->isLive"
+	if(oldClassification != suspect->isHostile && suspect->isLive)
 	{
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
@@ -907,42 +921,111 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		}
 		close(socketFD);
 	}
-	if(suspect->features.packetCount.first && suspect->isLive) // AQW: added "&& suspect->isLive"
+	if(suspect->features.packetCount.first && suspect->isLive)
 	{
 		do
 		{
-			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
 				serv_addr.sin_addr.s_addr = neighbors[i];
-				//Send Silent Alarm to other Nova Instances with feature Data
-				if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
-				{
-					LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-					close(sockfd);
-					continue;
-				}
 
-				if(connect(sockfd, serv_addrPtr, inSocketSize) == -1)
-				{
-					LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
-					close(socketFD);
-					continue;
-				}
+				stringstream ss;
+				string commandLine;
 
-				if(sendto(sockfd,data,dataLen+featureData,0,serv_addrPtr, inSocketSize) == -1)
+				ss << "iptables -I INPUT 1 -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				commandLine = ss.str();
+				system(commandLine.c_str());
+
+				if(knockPort(OPEN))
 				{
-					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+					bzero(data,MAX_MSG_SIZE);
+					dataLen = suspect->serializeSuspect(data);
+					featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+					uint i;
+					for(i = 0; i < SA_Max_Attempts; i++)
+					{
+						//Send Silent Alarm to other Nova Instances with feature Data
+						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+						{
+							LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+							close(sockfd);
+							knockPort(OPEN);
+							continue;
+						}
+
+						if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
+						{
+							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
+							close(sockfd);
+							knockPort(OPEN);
+							continue;
+						}
+						break;
+					}
+					if(i == SA_Max_Attempts)
+					{
+						close(sockfd);
+						continue;
+					}
+
+					if( send(sockfd,data,dataLen+featureData,0) == -1)
+					{
+						LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+						close(sockfd);
+						continue;
+					}
 					close(sockfd);
-					continue;
+					knockPort(CLOSE);
 				}
-				close(sockfd);
+				commandLine = "iptables -D INPUT 1";
+				system(commandLine.c_str());
 			}
-			bzero(data+dataLen, featureData);
+			bzero(data,MAX_MSG_SIZE);
 		}while(featureData == MORE_DATA);
 	}
+}
+
+bool ClassificationEngine::knockPort(bool mode)
+{
+	bzero(data, MAX_MSG_SIZE);
+	stringstream ss;
+	ss << key;
+	//mode == OPEN (true)
+	if(mode)
+	{
+		ss << "OPEN";
+		dataLen = key.size() + 4;
+	}
+	//mode == CLOSE (false)
+	else
+	{
+		ss << "SHUT";
+		dataLen = key.size() + 4;
+	}
+	memcpy(data, ss.str().c_str(), ss.str().size());
+
+	crpytBuffer(data, dataLen, ENCRYPT);
+
+	//Send Port knock to other Nova Instances
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
+	{
+		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		close(sockfd);
+		return false;
+	}
+
+	if( sendto(sockfd,data,dataLen, MSG_DONTWAIT,serv_addrPtr, inSocketSize) == -1)
+	{
+		LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
+		close(sockfd);
+		return false;
+	}
+
+	close(sockfd);
+	sleep(SA_Sleep_Duration);
+	return true;
 }
 
 ///Receive a TrafficEvent from another local component.
@@ -1056,6 +1139,11 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 	close(GUISendSocket);
 }
 
+//Encrpyts/decrypts a char buffer of size 'size' depending on mode
+void ClassificationEngine::crpytBuffer(u_char * buf, uint size, bool mode)
+{
+	//TODO
+}
 
 void ClassificationEngine::LoadConfig(char * input)
 {
@@ -1066,6 +1154,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 	string line;
 	string prefix;
+	uint i = 0;
 
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
@@ -1076,6 +1165,7 @@ void ClassificationEngine::LoadConfig(char * input)
 		while(settings.good())
 		{
 			getline(settings, line);
+			i++;
 
 			prefix = "neighbor";
 			if(!line.substr(0,prefix.size()).compare(prefix))
@@ -1088,7 +1178,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 					if((int)nbr == -1)
 					{
-						LOG4CXX_ERROR(m_logger, "Invalid IP address parsed on line of settings file.");
+						LOG4CXX_ERROR(m_logger, "Invalid IP address parsed on line " << i << " of the settings file.");
 					}
 					else if(nbr)
 					{
@@ -1096,6 +1186,16 @@ void ClassificationEngine::LoadConfig(char * input)
 					}
 					nbr = 0;
 				}
+			}
+			prefix = "key";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				//TODO Key should be 256 characters, hard check for this once implemented
+				if((line.size() > 0) && (line.size() < 257))
+					key = line;
+				else
+					LOG4CXX_ERROR(m_logger, "Invalid Key parsed on line " << i << " of the settings file.");
 			}
 		}
 	}
@@ -1107,7 +1207,7 @@ void ClassificationEngine::LoadConfig(char * input)
 	"BROADCAST_ADDR","SILENT_ALARM_PORT",
 	"K", "EPS",
 	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
-	"CLASSIFICATION_THRESHOLD","DATAFILE"};
+	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION"};
 
 	if(config.is_open())
 	{
@@ -1239,6 +1339,30 @@ void ClassificationEngine::LoadConfig(char * input)
 				{
 					dataFile = line;
 					verify[9]=true;
+				}
+				continue;
+			}
+
+			prefix = prefixes[10];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) > 0)
+				{
+					SA_Max_Attempts = atoi(line.c_str());
+					verify[10]=true;
+				}
+				continue;
+			}
+
+			prefix = prefixes[11];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atof(line.c_str()) >= 0)
+				{
+					SA_Sleep_Duration = atof(line.c_str());
+					verify[11]=true;
 				}
 				continue;
 			}

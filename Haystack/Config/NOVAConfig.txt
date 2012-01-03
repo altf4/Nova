@@ -226,3 +226,31 @@ GO_TO_LIVE 1
 # EXAMPLE:
 #USE_TERMINALS 0
 USE_TERMINALS 1
+
+############################################
+# SA_MAX_ATTEMPTS #
+############################################
+#
+# This is the number of times nova will try to connect to another 
+# instance of nova when sending a silent alarm. The time between
+# attempts is set in 
+#
+# 3 attempts by default
+#
+# EXAMPLE:
+#SA_MAX_ATTEMPTS 3
+SA_MAX_ATTEMPTS 3
+
+############################################
+# SA_SLEEP_DURATION #
+############################################
+#
+# This is time in seconds that nova will sleep between attempts
+# to form a tcp connection to another instance of nova when
+# sending a silent alarm
+#
+# 0.5 seconds by default
+#
+# EXAMPLE:
+#SA_SLEEP_DURATION 0.5
+SA_SLEEP_DURATION 0.5
