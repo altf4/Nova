@@ -26,7 +26,8 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath) {
 			"USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "BROADCAST_ADDR",
 			"SILENT_ALARM_PORT", "K", "EPS", "IS_TRAINING",
 			"CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS",
-			"SA_SLEEP_DURATION" };
+			"SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
+			"DOPPELGANGER_IP", "DM_ENABLED"};
 
 	if (config.is_open()) {
 		while (config.good()) {
@@ -288,10 +289,52 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath) {
 				continue;
 			}
 
+			 //"DM_HONEYD_CONFIG"
+			prefix = prefixes[18];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0)
+				{
+					currentOption->data = homePath + "/" + line;
+					currentOption->isValid = true;
+				}
+				options.insert(
+						pair<string, NovaOption> (prefix, *currentOption));
+				continue;
+			}
+
+			// "DOPPELGANGER_IP"
+			prefix = prefixes[19];
+			if (!line.substr(0, prefix.size()).compare(prefix)) {
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0) {
+					currentOption->data = line.c_str();
+					currentOption->isValid = true;
+				}
+				options.insert(
+						pair<string, NovaOption> (prefix, *currentOption));
+				continue;
+			}
+			// "DM_ENABLED"
+			prefix = prefixes[20];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				{
+					currentOption->data = line.c_str();
+					currentOption->isValid = true;
+				}
+				options.insert(
+						pair<string, NovaOption> (prefix, *currentOption));
+				continue;
+
+			}
+
 		}
 	} else {
 		//LOG4CXX_INFO(m_logger, "No configuration file detected.");
-		exit(1);
 	}
 }
 
