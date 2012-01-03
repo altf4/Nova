@@ -53,12 +53,14 @@ int IPCsock;
 int socketSize = sizeof(remote);
 socklen_t * socketSizePtr = (socklen_t*)&socketSize;
 
+string sAlarmPort;
+
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
 {
 	//Clear any existing DNAT routes on exit
 	//	Otherwise susepcts will keep getting routed into a black hole
-	system("iptables -t nat -F");
+	system("iptables -F");
 	exit(1);
 }
 
@@ -161,6 +163,10 @@ int main(int argc, char *argv[])
 	commandLine = "iptables -t nat -F";
 	system(commandLine.c_str());
 
+	commandLine = "iptables -A INPUT -p udp -j REJECT --reject-with icmp-port-unreachable";
+	system(commandLine.c_str());
+	commandLine = "iptables -A INPUT -p tcp -j REJECT --reject-with tcp-reset";
+	system(commandLine.c_str());
     int len;
     struct sockaddr_un remote;
 
@@ -339,6 +345,7 @@ void DoppelgangerModule::ReceiveGUICommand()
     switch(msg.getType())
     {
     	case EXIT:
+    		system("iptables -F");
     		exit(1);
     	case CLEAR_ALL:
     		pthread_rwlock_wrlock(&lock);
@@ -454,7 +461,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 	ifstream config(input);
 
 	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
-			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS"};
+			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
 
 	if(config.is_open())
 	{
@@ -530,6 +537,17 @@ void DoppelgangerModule::LoadConfig(char* input)
 				{
 					useTerminals = atoi(line.c_str());
 					verify[4]=true;
+				}
+				continue;
+			}
+			prefix = prefixes[5];
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(atoi(line.c_str()) > 0)
+				{
+					sAlarmPort = line.c_str();
+					verify[5]=true;
 				}
 				continue;
 			}

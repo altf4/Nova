@@ -14,7 +14,7 @@
 /// File name of the file to be used as GUI Input IPC key.
 #define GUI_FILENAME "/keys/GUI_LTMKey"
 //Number of values read from the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 8
+#define CONFIG_FILE_LINE_COUNT 9
 ///The maximum message, as defined in /proc/sys/kernel/msgmax
 #define MAX_MSG_SIZE 65535
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
@@ -26,6 +26,9 @@
 //The num returned by serializeFeatureData and serializeSuspect combined
 // if it hit the maximum byte size;
 #define MORE_DATA 65532
+//Mode for encryption/decryption
+#define ENCRYPT true
+#define DECRYPT false
 
 #include <TrafficEvent.h>
 #include <google/dense_hash_map>
@@ -68,6 +71,12 @@ string getLocalIP(const char *dev);
 //Loads configuration variables from NOVAConfig_LTM.txt or specified config file
 void LoadConfig(char* input);
 
+//Encrpyts/decrypts a char buffer of size 'size' depending on mode
+void cryptBuffer(u_char * buf, uint size, bool mode);
+
+//Checks the udp packet payload associated with event for a port knocking request,
+// opens/closes the port for the sender depending on the payload
+void knockRequest(TrafficEvent * event, u_char * payload);
 
 //Equality operator used by google's dense hash map
 struct eq
