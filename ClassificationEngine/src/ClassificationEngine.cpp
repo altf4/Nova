@@ -1244,11 +1244,11 @@ void ClassificationEngine::LoadConfig(char * input)
 	broadcastAddr = NovaConfig->options["BROADCAST_ADDR"].data;
 	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
 	k = atoi(NovaConfig->options["K"].data.c_str());
-	eps =  atoi(NovaConfig->options["EPS"].data.c_str());
+	eps =  atof(NovaConfig->options["EPS"].data.c_str());
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
 	isTraining = atoi(NovaConfig->options["IS_TRAINING"].data.c_str());
-	classificationThreshold = atoi(NovaConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str());
+	classificationThreshold = atof(NovaConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str())
 	dataFile = NovaConfig->options["DATAFILE"].data;
 	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
-	SA_Sleep_Duration = atoi(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
+	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
 }
