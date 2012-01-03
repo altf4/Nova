@@ -124,9 +124,6 @@ uint Suspect::serializeSuspect(u_char * buf)
 	uint isize = 4; //s_addr, int etc
 	uint dsize = 8; //doubles
 
-	//Clears a chunk of the buffer for everything but FeatureSet
-	bzero(buf, (isize + dsize*(DIMENSION+1) + 4*bsize));
-
 	//Copies the value and increases the offset
 	memcpy(buf, &IP_address.s_addr, isize);
 	offset+= isize;

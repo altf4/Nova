@@ -29,7 +29,7 @@
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
 //The num of bytes returned by serializeFeatureData if it hit the maximum size;
-#define MORE_DATA 65444
+#define MORE_DATA 65444 //MAX_TABLE_ENTIRES*8 +  Min size of feature data (currently 8176*8 + 36)
 //If the feature data is local
 #define LOCAL_DATA true
 //If the feature data is broadcast from another nova instance
