@@ -211,7 +211,9 @@ int main(int argc, char *argv[])
 		}
 		//First process any packets in the file then close all the sessions
 		pcap_loop(handle, -1, Packet_Handler,NULL);
+
 		TCPTimeout(NULL);
+		SuspectLoop(NULL);
 
 		if(goToLiveCap) usePcapFile = false; //If we are going to live capture set the flag.
 	}
@@ -553,7 +555,7 @@ void LocalTrafficMonitor::updateSuspect(TrafficEvent *event)
 
 void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 {
-	while(true)
+	do
 	{
 		sleep(classificationTimeout);
 		pthread_rwlock_rdlock(&suspectLock);
@@ -575,9 +577,14 @@ void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 			}
 		}
 		pthread_rwlock_unlock(&suspectLock);
-	}
+	} while(!usePcapFile);
+
+	//After a pcap file is read we do one iteration of this function to clear out the sessions
+	//This is return is to prevent an error being thrown when there isn't one.
+	if(usePcapFile) return NULL;
+
 	//Shouldn't get here
-	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted");
+	LOG4CXX_ERROR(m_logger, "SuspectLoop Thread has halted!");
 	return NULL;
 }
 
