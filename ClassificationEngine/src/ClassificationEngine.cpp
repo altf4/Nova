@@ -17,6 +17,7 @@
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
+#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -1149,14 +1150,9 @@ void ClassificationEngine::crpytBuffer(u_char * buf, uint size, bool mode)
 
 void ClassificationEngine::LoadConfig(char * input)
 {
-	//Used to verify all values have been loaded
-	bool verify[CONFIG_FILE_LINE_COUNT];
-	for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
-		verify[i] = false;
-
-	string line;
-	string prefix;
+	string prefix, line;
 	uint i = 0;
+	bool v = true;
 
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
@@ -1203,7 +1199,9 @@ void ClassificationEngine::LoadConfig(char * input)
 	}
 	settings.close();
 
-	ifstream config(input);
+
+	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
+	NovaConfig->LoadConfig(input, homePath);
 
 	const string prefixes[] = {"INTERFACE","USE_TERMINALS",
 	"BROADCAST_ADDR","SILENT_ALARM_PORT",
@@ -1211,189 +1209,46 @@ void ClassificationEngine::LoadConfig(char * input)
 	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
 	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION"};
 
-	if(config.is_open())
+	for (i = 0; i < 12; i++) {
+		prefix = prefixes[i];
+
+		NovaConfig->options[prefix];
+		if (!NovaConfig->options[prefix].isValid) {
+			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			v = false;
+		}
+	}
+
+	//Checks to make sure all values have been set.
+	if(v == false)
 	{
-		while(config.good())
-		{
-			getline(config,line);
-
-			prefix = prefixes[0];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0)
-				{
-					hostAddrString = getLocalIP(line.c_str());
-					if(hostAddrString.size() == 0)
-					{
-						LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
-						exit(1);
-					}
-
-					inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
-					verify[0]=true;
-				}
-				continue;
-
-			}
-
-			prefix = prefixes[1];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					useTerminals = atoi(line.c_str());
-					verify[1]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[2];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 6 && line.size() <  16)
-				{
-					broadcastAddr = line;
-					verify[2]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[3];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					sAlarmPort = atoi(line.c_str());
-					verify[3]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[4];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					k = atoi(line.c_str());
-					verify[4]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[5];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atof(line.c_str()) >= 0)
-				{
-					eps = atof(line.c_str());
-					verify[5]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[6];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					classificationTimeout = atoi(line.c_str());
-					verify[6]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[7];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					isTraining = atoi(line.c_str());
-					verify[7]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[8];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atof(line.c_str()) >= 0)
-				{
-					classificationThreshold = atof(line.c_str());
-					verify[8]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[9];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0 && !line.substr(line.size()-4, line.size()).compare(".txt"))
-				{
-					dataFile = line;
-					verify[9]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[10];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					SA_Max_Attempts = atoi(line.c_str());
-					verify[10]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[11];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atof(line.c_str()) >= 0)
-				{
-					SA_Sleep_Duration = atof(line.c_str());
-					verify[11]=true;
-				}
-				continue;
-			}
-		}
-
-		//Checks to make sure all values have been set.
-		bool v = true;
-		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
-		{
-			v &= verify[i];
-			if (!verify[i])
-				LOG4CXX_ERROR(m_logger,"The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
-
-		}
-
-		if(v == false)
-		{
-			LOG4CXX_ERROR(m_logger, "One or more values have not been set.");
-			exit(1);
-		}
-		else
-		{
-			LOG4CXX_INFO(m_logger, "Config loaded successfully.");
-		}
+		LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
+		exit(1);
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger, "No configuration file detected.");
+		LOG4CXX_INFO(m_logger,"Config loaded successfully.");
+	}
+
+	hostAddrString = getLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+	if(hostAddrString.size() == 0)
+	{
+		LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
 		exit(1);
 	}
-	config.close();
+
+	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
+
+
+	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
+	broadcastAddr = NovaConfig->options["BROADCAST_ADDR"].data;
+	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
+	k = atoi(NovaConfig->options["K"].data.c_str());
+	eps =  atoi(NovaConfig->options["EPS"].data.c_str());
+	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
+	isTraining = atoi(NovaConfig->options["IS_TRAINING"].data.c_str());
+	classificationThreshold = atoi(NovaConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str());
+	dataFile = NovaConfig->options["DATAFILE"].data;
+	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
+	SA_Sleep_Duration = atoi(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
 }

@@ -16,6 +16,7 @@
 #include <net/if.h>
 #include <sys/un.h>
 #include <log4cxx/xml/domconfigurator.h>
+#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -625,17 +626,14 @@ string LocalTrafficMonitor::getLocalIP(const char *dev)
 
 void LocalTrafficMonitor::LoadConfig(char* input)
 {
-	//Used to verify all values have been loaded
-	bool verify[CONFIG_FILE_LINE_COUNT];
-	for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
-		verify[i] = false;
-
 	string line;
 	string prefix;
 	uint i = 0;
 
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
+
+	LOG4CXX_INFO(m_logger,"Starting to load configuration file");
 
 	if(settings.is_open())
 	{
@@ -659,152 +657,49 @@ void LocalTrafficMonitor::LoadConfig(char* input)
 	settings.close();
 
 
-	ifstream config(input);
+
+	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
+	NovaConfig->LoadConfig(input, homePath);
+
+	bool v = true;
 
 	const string prefixes[] = {"INTERFACE", "TCP_TIMEOUT",
 			"TCP_CHECK_FREQ", "READ_PCAP",
 			"PCAP_FILE", "GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT"};
 
-	if(config.is_open())
+
+	for (i = 0; i < 9; i++) {
+		prefix = prefixes[i];
+
+		NovaConfig->options[prefix];
+		if (!NovaConfig->options[prefix].isValid) {
+			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			v = false;
+		}
+	}
+
+	//Checks to make sure all values have been set.
+	if(v == false)
 	{
-		while(config.good())
-		{
-			getline(config,line);
-			prefix = prefixes[0];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0)
-				{
-					dev = line;
-					verify[0]=true;
-				}
-				continue;
-
-			}
-
-			prefix = prefixes[1];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					tcpTime = atoi(line.c_str());
-					verify[1]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[2];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					tcpFreq = atoi(line.c_str());
-					verify[2]=true;
-				}
-				continue;
-
-			}
-
-			prefix = prefixes[3];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					usePcapFile = atoi(line.c_str());
-					verify[3]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[4];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0)
-				{
-					pcapPath = homePath+"/"+line;
-					verify[4]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[5];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0)
-				{
-					goToLiveCap = atoi(line.c_str());
-					verify[5]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[6];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					useTerminals = atoi(line.c_str());
-					verify[6]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[7];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					classificationTimeout = atoi(line.c_str());
-					verify[7]=true;
-				}
-				continue;
-			}
-			prefix = prefixes[8];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					sAlarmPort = atoi(line.c_str());
-					verify[8]=true;
-				}
-				continue;
-			}
-		}
-
-		//Checks to make sure all values have been set.
-		bool v = true;
-		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
-		{
-			v &= verify[i];
-			if (!verify[i])
-				LOG4CXX_ERROR(m_logger,"The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
-		}
-
-		if(v == false)
-		{
-			LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
-			exit(1);
-		}
-		else
-		{
-			LOG4CXX_INFO(m_logger,"Config loaded successfully.");
-		}
+		LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
+		exit(1);
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger, "No configuration file detected." );
-		exit(1);
+		LOG4CXX_INFO(m_logger,"All configuration values appear valid.");
 	}
-	config.close();
+
+
+	dev = NovaConfig->options["INTERFACE"].data;
+	tcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
+	tcpFreq = atoi(NovaConfig->options["TCP_CHECK_FREQ"].data.c_str());
+	usePcapFile = atoi(NovaConfig->options["READ_PCAP"].data.c_str());
+	pcapPath = NovaConfig->options["PCAP_FILE"].data;
+	goToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
+	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
+	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
+	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
+
 }
 
 //Encrpyts/decrypts a char buffer of size 'size' depending on mode
