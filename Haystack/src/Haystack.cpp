@@ -653,7 +653,7 @@ void Haystack::LoadConfig(char* input)
 	if(v == false)
 	{
 		LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
-		//exit(1);
+		exit(1);
 	}
 	else
 	{
@@ -661,7 +661,6 @@ void Haystack::LoadConfig(char* input)
 	}
 
 	dev = NovaConfig->options["INTERFACE"].data;
-	cout << "Set dev to " << dev << endl;
 	honeydConfigPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
 	tcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
 	tcpFreq = atoi(NovaConfig->options["TCP_CHECK_FREQ"].data.c_str());
