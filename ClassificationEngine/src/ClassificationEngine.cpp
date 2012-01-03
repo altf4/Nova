@@ -943,7 +943,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 				ss << "iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
-				//system(commandLine.c_str());
+				system(commandLine.c_str());
 
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
@@ -984,7 +984,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				ss.str("");
 				ss << "iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
-				//system(commandLine.c_str());
+				system(commandLine.c_str());
 			}
 		}while(featureData == MORE_DATA);
 	}
