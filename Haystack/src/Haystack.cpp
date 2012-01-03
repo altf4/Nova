@@ -644,7 +644,7 @@ void Haystack::LoadConfig(char* input)
 
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger,"The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
 			v = false;
 		}
 	}
