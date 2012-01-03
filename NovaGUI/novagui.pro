@@ -2,22 +2,23 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-HEADERS += nodePopup.h \
-    portPopup.h \
-    run_popup.h \
-    novaconfig.h \
-    novagui.h
-SOURCES += nodePopup.cpp \
-    portPopup.cpp \
-    run_popup.cpp \
-    novaconfig.cpp \
-    main.cpp \
-    novagui.cpp
-FORMS += nodePopup.ui \
-    portPopup.ui \
-    run_popup.ui \
-    novaconfig.ui \
-    novagui.ui
+HEADERS += src/main.h \
+    src/nodePopup.h \
+    src/novaconfig.h \
+    src/novagui.h \
+    src/portPopup.h \
+    src/run_popup.h
+SOURCES += src/main.cpp \
+    src/nodePopup.cpp \
+    src/novaconfig.cpp \
+    src/novagui.cpp \
+    src/portPopup.cpp \
+    src/run_popup.cpp
+FORMS += UI/nodePopup.ui \
+    UI/novaconfig.ui \
+    UI/novagui.ui \
+    UI/portPopup.ui \
+    UI/run_popup.ui
 RESOURCES += 
 INCLUDEPATH += ../NovaLibrary/src
 LIBS += ../NovaLibrary/Debug/libNovaLibrary.a \
@@ -26,3 +27,4 @@ LIBS += ../NovaLibrary/Debug/libNovaLibrary.a \
     /usr/lib/liblog4cxx.a \
     /usr/lib/libapr-1.a \
     /usr/lib/libaprutil-1.a
+UI_DIR = UI_headers/ 

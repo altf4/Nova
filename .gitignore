@@ -70,4 +70,8 @@ Installer/bin/*
 
 # Auto generated QT files
 NovaGUI/ui_*.h
+NovaGUI/src/ui_*.h
+NovaGUI/UI_Headers/ui_*.h
+NovaGUI/UI_headers/
+
 
