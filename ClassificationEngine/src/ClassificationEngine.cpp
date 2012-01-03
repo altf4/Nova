@@ -927,7 +927,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	{
 		do
 		{
-
+			bzero(data+dataLen, MAX_MSG_SIZE-dataLen);
+			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
@@ -936,17 +937,14 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				stringstream ss;
 				string commandLine;
 
-				ss << "iptables -I INPUT 1 -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				ss << "iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
-				if(knockPort(OPEN))
+				uint i;
+				for(i = 0; i < SA_Max_Attempts; i++)
 				{
-					bzero(data,MAX_MSG_SIZE);
-					dataLen = suspect->serializeSuspect(data);
-					featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
-					uint i;
-					for(i = 0; i < SA_Max_Attempts; i++)
+					if(knockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
@@ -966,22 +964,24 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						}
 						break;
 					}
-					if(i == SA_Max_Attempts)
-					{
-						close(sockfd);
-						continue;
-					}
-
-					if( send(sockfd,data,dataLen+featureData,0) == -1)
-					{
-						LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
-						close(sockfd);
-						continue;
-					}
-					close(sockfd);
-					knockPort(CLOSE);
 				}
-				commandLine = "iptables -D INPUT 1";
+				if(i == SA_Max_Attempts)
+				{
+					close(sockfd);
+					continue;
+				}
+
+				if( send(sockfd,data,dataLen+featureData,0) == -1)
+				{
+					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+					close(sockfd);
+					continue;
+				}
+				close(sockfd);
+				knockPort(CLOSE);
+				ss.str("");
+				ss << "iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				commandLine = ss.str();
 				system(commandLine.c_str());
 			}
 			bzero(data,MAX_MSG_SIZE);
