@@ -447,7 +447,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
-	if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sockfd);
@@ -456,7 +456,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
-	sendaddr.sin_addr.s_addr = hostAddr.sin_addr.s_addr;
+	sendaddr.sin_addr.s_addr = INADDR_ANY;
 
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
@@ -468,6 +468,12 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		close(sockfd);
 		exit(1);
 	}
+	stringstream ss;
+	ss << "iptables -A INPUT -p udp --dport " << sAlarmPort << " -j REJECT --reject-with icmp-port-unreachable";
+	system(ss.str().c_str());
+	ss.str("");
+	ss << "iptables -A INPUT -p tcp --dport " << sAlarmPort << " -j REJECT --reject-with tcp-reset";
+	system(ss.str().c_str());
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
     {
@@ -516,7 +522,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-
 		pthread_rwlock_wrlock(&lock);
 		try
 		{
@@ -927,7 +932,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	{
 		do
 		{
-			bzero(data+dataLen, MAX_MSG_SIZE-dataLen);
+			bzero(data, MAX_MSG_SIZE);
+			dataLen = suspect->serializeSuspect(data);
 			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
@@ -937,21 +943,21 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				stringstream ss;
 				string commandLine;
 
-				ss << "iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				ss << "iptables -I 1 INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
+					sleep(0.5);
 					if(knockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
-						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+						if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 						{
 							LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 							close(sockfd);
-							knockPort(OPEN);
 							continue;
 						}
 
@@ -959,7 +965,6 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						{
 							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
 							close(sockfd);
-							knockPort(OPEN);
 							continue;
 						}
 						break;
@@ -984,7 +989,6 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				system(commandLine.c_str());
 			}
-			bzero(data,MAX_MSG_SIZE);
 		}while(featureData == MORE_DATA);
 	}
 }
