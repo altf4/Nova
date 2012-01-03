@@ -26,24 +26,25 @@ chmod -R a+rw bin
 
 mkdir .nova/Config
 
-cp $HOME/Code/Nova/ClassificationEngine/Config/Log4cxxConfig.xml .nova/Config/Log4cxxConfig.xml
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/DoppelgangerModule/Config/Log4cxxConfig.xml
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/Haystack/Config/Log4cxxConfig.xml
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/LocalTrafficMonitor/Config/Log4cxxConfig.xml
-cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/NovaGUI/Config/Log4cxxConfig.xml
+# Following was all depricated to remove all the duplicate configuration files
+cp $HOME/Code/Nova/NovaLibrary/Config/Log4cxxConfig.xml .nova/Config/Log4cxxConfig.xml
+#cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/DoppelgangerModule/Config/Log4cxxConfig.xml
+#cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/Haystack/Config/Log4cxxConfig.xml
+#cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/LocalTrafficMonitor/Config/Log4cxxConfig.xml
+#cp .nova/Config/Log4cxxConfig.xml $HOME/Code/Nova/NovaGUI/Config/Log4cxxConfig.xml
 
-cp $HOME/Code/Nova/ClassificationEngine/Config/Log4cxxConfig_Console.xml .nova/Config/Log4cxxConfig_Console.xml
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/DoppelgangerModule/Config/Log4cxxConfig_Console.xml
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/Haystack/Config/Log4cxxConfig_Console.xml
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/LocalTrafficMonitor/Config/Log4cxxConfig_Console.xml
-cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/NovaGUI/Config/Log4cxxConfig_Console.xml
+cp $HOME/Code/Nova/NovaLibrary/Config/Log4cxxConfig_Console.xml .nova/Config/Log4cxxConfig_Console.xml
+#cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/DoppelgangerModule/Config/Log4cxxConfig_Console.xml
+#cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/Haystack/Config/Log4cxxConfig_Console.xml
+#cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/LocalTrafficMonitor/Config/Log4cxxConfig_Console.xml
+#cp .nova/Config/Log4cxxConfig_Console.xml $HOME/Code/Nova/NovaGUI/Config/Log4cxxConfig_Console.xml
 
 #Copy all the Nova config files
-cp $HOME/Code/Nova/ClassificationEngine/Config/NOVAConfig.txt .nova/Config/NOVAConfig.txt
-cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/DoppelgangerModule/Config/NOVAConfig.txt
-cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/Haystack/Config/NOVAConfig.txt
-cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/LocalTrafficMonitor/Config/NOVAConfig.txt
-cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/NovaGUI/Config/NOVAConfig.txt
+cp $HOME/Code/Nova/NovaLibrary/Config/NOVAConfig.txt .nova/Config/NOVAConfig.txt
+#cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/DoppelgangerModule/Config/NOVAConfig.txt
+#cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/Haystack/Config/NOVAConfig.txt
+#cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/LocalTrafficMonitor/Config/NOVAConfig.txt
+#cp .nova/Config/NOVAConfig.txt $HOME/Code/Nova/NovaGUI/Config/NOVAConfig.txt
 
 #Honeyd Config files.
 cp $HOME/Code/Nova/Haystack/Config/haystack.config .nova/Config/haystack.config
