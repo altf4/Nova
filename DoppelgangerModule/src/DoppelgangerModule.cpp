@@ -15,6 +15,7 @@
 #include <signal.h>
 #include <log4cxx/xml/domconfigurator.h>
 #include <fstream>
+#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -454,130 +455,59 @@ string Nova::DoppelgangerModule::Usage()
 
 void DoppelgangerModule::LoadConfig(char* input)
 {
-	//Used to verify all values have been loaded
-	bool verify[CONFIG_FILE_LINE_COUNT];
-	for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
-		verify[i] = false;
-
-	string line;
 	string prefix;
-	ifstream config(input);
+	bool v = true;
+
+	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
+	NovaConfig->LoadConfig(input, homePath);
 
 	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
 
-	if(config.is_open())
+
+	for (uint i = 0; i < 6; i++) {
+		prefix = prefixes[i];
+
+		NovaConfig->options[prefix];
+		if (!NovaConfig->options[prefix].isValid) {
+			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			v = false;
+		}
+	}
+
+	//Checks to make sure all values have been set.
+	if(v == false)
 	{
-		while(config.good())
-		{
-			getline(config,line);
-
-			prefix = prefixes[0];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-
-				hostAddrString = getLocalIP(line.c_str());
-				{
-					struct in_addr *temp = NULL;
-
-					if(inet_aton(hostAddrString.c_str(), temp) == 0)
-					{
-						LOG4CXX_ERROR(m_logger, "Invalid interface IP address!");
-						exit(1);
-					}
-				}
-				inet_pton(AF_INET, hostAddrString.c_str(), &(hostAddr.sin_addr));
-				verify[0]=true;
-				continue;
-			}
-
-			prefix = prefixes[1];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0)
-				{
-					honeydConfigPath = homePath+"/"+line;
-					verify[1]=true;
-				}
-				continue;
-			}
-
-			prefix = prefixes[2];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				doppelgangerAddrString = line;
-				{
-					struct in_addr *tempr = NULL;
-
-					if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
-					{
-						LOG4CXX_ERROR(m_logger,"Invalid doppelganger IP address!");
-						exit(1);
-					}
-				}
-				verify[2]=true;
-				continue;
-			}
-			prefix = prefixes[3];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					isEnabled = atoi(line.c_str());
-					verify[3]=true;
-				}
-				continue;
-			}
-			prefix = prefixes[4];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					useTerminals = atoi(line.c_str());
-					verify[4]=true;
-				}
-				continue;
-			}
-			prefix = prefixes[5];
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					sAlarmPort = line.c_str();
-					verify[5]=true;
-				}
-				continue;
-			}
-		}
-
-		//Checks to make sure all values have been set.
-		bool v = true;
-		for(uint i = 0; i < CONFIG_FILE_LINE_COUNT; i++)
-		{
-			v &= verify[i];
-			if (!verify[i])
-				LOG4CXX_ERROR(m_logger,"The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
-		}
-
-		if(v == false)
-		{
-			LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
-			exit(1);
-		}
-		else
-		{
-			LOG4CXX_INFO(m_logger,"Config loaded successfully.");
-		}
+		LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
+		exit(1);
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger, "No configuration file detected!" );
+		LOG4CXX_INFO(m_logger,"Config loaded successfully.");
+	}
+
+	hostAddrString = getLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+	if(hostAddrString.size() == 0)
+	{
+		LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
 		exit(1);
 	}
+
+	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
+
+
+
+	doppelgangerAddrString = NovaConfig->options["DOPPELGANGER_IP"].data;
+	struct in_addr *tempr = NULL;
+
+	if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
+	{
+		LOG4CXX_ERROR(m_logger,"Invalid doppelganger IP address!");
+		exit(1);
+	}
+
+	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
+	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
+	isEnabled = atoi(NovaConfig->options["DM_ENABLED"].data.c_str());
+
 }
