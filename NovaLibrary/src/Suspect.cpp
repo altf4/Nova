@@ -66,6 +66,12 @@ string Suspect::ToString()
 	{
 		ss << "Suspect: Null IP\n";
 	}
+
+	if (isLive)
+		ss << " Suspect Status: Live Capture" << "\n";
+	else
+		ss << " Suspect Status: Loaded from PCAP" << "\n";
+
 	ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
 	ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
 	ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
