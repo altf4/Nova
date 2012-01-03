@@ -510,7 +510,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-
 		crpytBuffer(buf, bytesRead, DECRYPT);
 
 		string keyCheck = string((char*)buf);
@@ -519,43 +518,42 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		//If the first packets are the key this is a knock request (closing) and should be ignored.
 		if(!keyCheck.compare(key))
 		{
+
+			pthread_rwlock_wrlock(&lock);
+			try
+			{
+				uint addr = getSerializedAddr(buf+keyCheck.size());
+				SuspectHashTable::iterator it = suspects.find(addr);
+
+				//If this is a new suspect put it in the table
+				if(it == suspects.end())
+				{
+					suspects[addr] = new Suspect();
+					suspects[addr]->deserializeSuspectWithData(buf+keyCheck.size(), BROADCAST_DATA);
+					//We set isHostile to false so that when we classify the first time
+					// the suspect will go from benign to hostile and be sent to the doppelganger module
+					suspects[addr]->isHostile = false;
+				}
+				//If this suspect exists, update the information
+				else
+				{
+					//This function will overwrite everything except the information used to calculate the classification
+					// a combined classification will be given next classification loop
+					suspects[addr]->deserializeSuspectWithData(buf+keyCheck.size(), BROADCAST_DATA);
+				}
+				suspects[addr]->flaggedByAlarm = true;
+
+				LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
+			}
+			catch(std::exception e)
+			{
+				LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
+				delete suspect;
+				suspect = NULL;
+			}
 			close(connectionSocket);
-			continue;
+			pthread_rwlock_unlock(&lock);
 		}
-		pthread_rwlock_wrlock(&lock);
-		try
-		{
-			uint addr = getSerializedAddr(buf);
-			SuspectHashTable::iterator it = suspects.find(addr);
-
-			//If this is a new suspect put it in the table
-			if(it == suspects.end())
-			{
-				suspects[addr] = new Suspect();
-				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
-				//We set isHostile to false so that when we classify the first time
-				// the suspect will go from benign to hostile and be sent to the doppelganger module
-				suspects[addr]->isHostile = false;
-			}
-			//If this suspect exists, update the information
-			else
-			{
-				//This function will overwrite everything except the information used to calculate the classification
-				// a combined classification will be given next classification loop
-				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
-			}
-			suspects[addr]->flaggedByAlarm = true;
-
-			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
-		}
-		catch(std::exception e)
-		{
-			LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
-			delete suspect;
-			suspect = NULL;
-		}
-		close(connectionSocket);
-		pthread_rwlock_unlock(&lock);
 	}
 	close(sockfd);
 	LOG4CXX_INFO(m_logger,"Silent Alarm thread ended. Shouldn't get here!!!");
@@ -943,14 +941,13 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				stringstream ss;
 				string commandLine;
 
-				ss << "iptables -I 1 INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				ss << "iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
-				system(commandLine.c_str());
+				//system(commandLine.c_str());
 
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
-					sleep(0.5);
 					if(knockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
@@ -987,7 +984,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				ss.str("");
 				ss << "iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
-				system(commandLine.c_str());
+				//system(commandLine.c_str());
 			}
 		}while(featureData == MORE_DATA);
 	}
@@ -1015,14 +1012,14 @@ bool ClassificationEngine::knockPort(bool mode)
 	crpytBuffer(data, dataLen, ENCRYPT);
 
 	//Send Port knock to other Nova Instances
-	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sockfd);
 		return false;
 	}
 
-	if( sendto(sockfd,data,dataLen, MSG_DONTWAIT,serv_addrPtr, inSocketSize) == -1)
+	if( sendto(sockfd,data,dataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
 		close(sockfd);
