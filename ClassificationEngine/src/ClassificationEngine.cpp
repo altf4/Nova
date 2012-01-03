@@ -104,6 +104,8 @@ int k;							//number of nearest neighbors
 double eps;						//error bound
 int maxPts;						//maximum number of data points
 double classificationThreshold = .5; //value of classification to define split between hostile / benign
+uint SA_Max_Attempts = 3;			//The number of times to attempt to reconnect to a neighbor
+double SA_Sleep_Duration = 0.5;		//The time to sleep after a port knocking request and allow it to go through
 //End configured variables
 const int dim = DIM;					//dimension
 
