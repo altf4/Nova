@@ -17,7 +17,7 @@
 #include <netinet/if_ether.h>
 #include <vector>
 #include <pcap.h>
-#include <boost/serialization/vector.hpp>
+//#include <boost/serialization/vector.hpp>
 
 #ifndef TRAFFICEVENT_H_
 #define TRAFFICEVENT_H_

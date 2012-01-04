@@ -225,12 +225,4 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, bool isLocal)
 	return offset;
 }
 
-//Extracts and returns the IP Address from a serialized suspect located at buf
-uint getSerializedAddr(u_char * buf)
-{
-	uint addr = 0;
-	memcpy(&addr, buf, 4);
-	return addr;
-}
-
 }
