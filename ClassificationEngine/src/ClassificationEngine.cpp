@@ -538,9 +538,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			}
 			suspects[addr]->flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-			suspects[addr]->features.IPTable[hostAddr.sin_addr.s_addr].second += suspects[addr]->features.IPTable[sendaddr.sin_addr.s_addr].second;
-			suspects[addr]->features.IPTable[hostAddr.sin_addr.s_addr].second = 0;
-			suspects[addr]->features.IPTable.erase(sendaddr.sin_addr.s_addr);
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
 		}
 		catch(std::exception e)

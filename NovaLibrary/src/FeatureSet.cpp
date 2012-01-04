@@ -22,7 +22,6 @@ FeatureSet::FeatureSet()
 	totalInterval.second = 0;
 
 	IPTable.set_empty_key(0);
-	IPTable.set_deleted_key(1);
 	portTable.set_empty_key(0);
 	packTable.set_empty_key(0);
 	intervalTable.set_empty_key(2147483647);
@@ -235,9 +234,9 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	//Else from a host
 	else
 	{
-		//Put the packet count into a bin associated with source so that
+		//Put the packet count into a bin that is never used so that
 		// all host events for a suspect go into the same bin
-		IPTable[event->src_IP.s_addr].first +=  event->packet_count;
+		IPTable[1].first +=  event->packet_count;
 	}
 
 	portTable[event->dst_port].first +=  event->packet_count;
