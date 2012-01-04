@@ -22,6 +22,7 @@ FeatureSet::FeatureSet()
 	totalInterval.second = 0;
 
 	IPTable.set_empty_key(0);
+	IPTable.set_deleted_key(1);
 	portTable.set_empty_key(0);
 	packTable.set_empty_key(0);
 	intervalTable.set_empty_key(2147483647);
@@ -111,7 +112,6 @@ void FeatureSet::CalculateTimeInterval()
 	if(endTime > startTime)
 	{
 		totalInterval.first = endTime - startTime;
-		startTime = endTime;
 	}
 }
 
@@ -380,6 +380,7 @@ uint FeatureSet::serializeFeatureDataBroadcast(u_char *buf)
 
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
+	startTime = endTime;
 	memcpy(buf+offset, &totalInterval.first, size);
 	totalInterval.second += totalInterval.first;
 	totalInterval.first = 0;
@@ -610,6 +611,7 @@ uint FeatureSet::serializeFeatureDataLocal(u_char *buf)
 
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
+	startTime = endTime;
 	memcpy(buf+offset, &totalInterval.first, size);
 	totalInterval.first = 0;
 	offset += size;
