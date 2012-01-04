@@ -8,10 +8,13 @@
 
 #ifndef SUSPECT_H_
 #define SUSPECT_H_
-#define DIMENSION 9
 
+#include "Point.h"
+#include "TrafficEvent.h"
 #include "FeatureSet.h"
-#include <ANN/ANN.h>
+
+using namespace std;
+using namespace Nova;
 
 namespace Nova{
 
@@ -87,9 +90,6 @@ public:
 	//	returns the number of bytes read from the buffer
 	uint deserializeSuspectWithData(u_char * buf, bool isLocal);
 };
-
-//Extracts and returns the IP Address from a serialized suspect located at buf
-uint getSerializedAddr(u_char * buf);
 
 }
 

@@ -6,23 +6,18 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
-#include <TrafficEvent.h>
 #include <errno.h>
 #include <fstream>
-#include "Point.h"
 #include <arpa/inet.h>
-#include <GUIMsg.h>
-#include <sys/ioctl.h>
 #include <signal.h>
 #include <net/if.h>
 #include <sys/un.h>
-#include <log4cxx/xml/domconfigurator.h>
-#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
+using namespace NovaUtil;
 using namespace ClassificationEngine;
 
 // Maintains a list of suspects and information on network activity
@@ -175,6 +170,8 @@ int main(int argc,char *argv[])
 	paths = NULL;
 
 	//Resolves environment variables
+	//homePath = resolvePathVars(homePath);
+
 	int start = 0;
 	int end = 0;
 	string var;
@@ -417,7 +414,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					it->second->CalculateFeatures(isTraining);
 					if(it->second->annPoint == NULL)
 					{
-						it->second->annPoint = annAllocPt(DIMENSION);
+						it->second->annPoint = annAllocPt(DIM);
 					}
 					for(int j=0; j < dim; j++)
 					{
@@ -512,7 +509,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-		crpytBuffer(buf, bytesRead, DECRYPT);
+		cryptBuffer(buf, bytesRead, DECRYPT);
 
 		pthread_rwlock_wrlock(&lock);
 		try
@@ -690,7 +687,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 		if(it->second->needs_feature_update)
 		{
 			if(it->second->annPoint == NULL)
-				it->second->annPoint = annAllocPt(DIMENSION);
+				it->second->annPoint = annAllocPt(DIM);
 
 			//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
 			for(int i = 0;i < dim;i++)
@@ -939,23 +936,23 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
+				//Send Silent Alarm to other Nova Instances with feature Data
+				if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+				{
+					LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+					close(sockfd);
+					continue;
+				}
+
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
 					if(knockPort(OPEN))
 					{
-						//Send Silent Alarm to other Nova Instances with feature Data
-						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
-						{
-							LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-							close(sockfd);
-							continue;
-						}
-
 						if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
 						{
 							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
-							close(sockfd);
+							cout << errno << endl;
 							continue;
 						}
 						break;
@@ -1002,7 +999,7 @@ bool ClassificationEngine::knockPort(bool mode)
 	bzero(keyBuf, 1024);
 	memcpy(keyBuf, ss.str().c_str(), ss.str().size());
 
-	crpytBuffer(keyBuf, keyDataLen, ENCRYPT);
+	cryptBuffer(keyBuf, keyDataLen, ENCRYPT);
 
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
@@ -1133,12 +1130,6 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 		return;
 	}
 	close(GUISendSocket);
-}
-
-//Encrpyts/decrypts a char buffer of size 'size' depending on mode
-void ClassificationEngine::crpytBuffer(u_char * buf, uint size, bool mode)
-{
-	//TODO
 }
 
 void ClassificationEngine::LoadConfig(char * input)

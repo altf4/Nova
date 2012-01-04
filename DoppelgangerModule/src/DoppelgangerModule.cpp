@@ -6,16 +6,12 @@
 //============================================================================
 
 #include "DoppelgangerModule.h"
-#include <sys/ioctl.h>
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
 #include <errno.h>
-#include <GUIMsg.h>
 #include <signal.h>
-#include <log4cxx/xml/domconfigurator.h>
 #include <fstream>
-#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -25,7 +21,7 @@ using namespace DoppelgangerModule;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
-SuspectHashTable SuspectTable;
+SuspectLiteHashTable SuspectTable;
 pthread_rwlock_t lock;
 
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them

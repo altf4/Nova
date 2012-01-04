@@ -8,20 +8,16 @@
 
 #include <errno.h>
 #include <arpa/inet.h>
-#include <TrafficEvent.h>
-#include <GUIMsg.h>
 #include <fstream>
 #include "LocalTrafficMonitor.h"
-#include <sys/ioctl.h>
 #include <net/if.h>
 #include <sys/un.h>
-#include <log4cxx/xml/domconfigurator.h>
-#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
+using namespace NovaUtil;
 using namespace LocalTrafficMonitor;
 
 static TCPSessionHashTable SessionTable;
@@ -707,12 +703,6 @@ void LocalTrafficMonitor::LoadConfig(char* input)
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
 	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
 
-}
-
-//Encrpyts/decrypts a char buffer of size 'size' depending on mode
-void LocalTrafficMonitor::cryptBuffer(u_char * buf, uint size, bool mode)
-{
-	//TODO
 }
 
 //Checks the udp packet payload associated with event for a port knocking request,
