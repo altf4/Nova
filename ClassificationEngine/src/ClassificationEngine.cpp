@@ -448,7 +448,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
-	if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
 		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		close(sockfd);
@@ -457,7 +457,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	sendaddr.sin_family = AF_INET;
 	sendaddr.sin_port = htons(sAlarmPort);
-	sendaddr.sin_addr.s_addr = hostAddr.sin_addr.s_addr;
+	sendaddr.sin_addr.s_addr = INADDR_ANY;
 
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
@@ -469,6 +469,12 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		close(sockfd);
 		exit(1);
 	}
+	stringstream ss;
+	ss << "iptables -A INPUT -p udp --dport " << sAlarmPort << " -j REJECT --reject-with icmp-port-unreachable";
+	system(ss.str().c_str());
+	ss.str("");
+	ss << "iptables -A INPUT -p tcp --dport " << sAlarmPort << " -j REJECT --reject-with tcp-reset";
+	system(ss.str().c_str());
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
     {
@@ -483,6 +489,8 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	while(1)
 	{
 
+		bzero(buf, MAX_MSG_SIZE);
+
 		//Blocking call
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
@@ -490,7 +498,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-		bzero(buf, MAX_MSG_SIZE);
 
 		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
@@ -505,18 +512,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-
 		crpytBuffer(buf, bytesRead, DECRYPT);
-
-		string keyCheck = string((char*)buf);
-		keyCheck = keyCheck.substr(0, key.size());
-
-		//If the first packets are the key this is a knock request (closing) and should be ignored.
-		if(!keyCheck.compare(key))
-		{
-			close(connectionSocket);
-			continue;
-		}
 
 		pthread_rwlock_wrlock(&lock);
 		try
@@ -541,7 +537,9 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
 			}
 			suspects[addr]->flaggedByAlarm = true;
-
+			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
+			suspects[addr]->features.IPTable[hostAddr.sin_addr.s_addr].second += suspects[addr]->features.IPTable[sendaddr.sin_addr.s_addr].second;
+			suspects[addr]->features.IPTable.erase(sendaddr.sin_addr.s_addr);
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
 		}
 		catch(std::exception e)
@@ -928,7 +926,9 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	{
 		do
 		{
-
+			bzero(data, MAX_MSG_SIZE);
+			dataLen = suspect->serializeSuspect(data);
+			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
@@ -937,24 +937,20 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				stringstream ss;
 				string commandLine;
 
-				ss << "iptables -I INPUT 1 -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				ss << "iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
-				if(knockPort(OPEN))
+				uint i;
+				for(i = 0; i < SA_Max_Attempts; i++)
 				{
-					bzero(data,MAX_MSG_SIZE);
-					dataLen = suspect->serializeSuspect(data);
-					featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
-					uint i;
-					for(i = 0; i < SA_Max_Attempts; i++)
+					if(knockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 						{
 							LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 							close(sockfd);
-							knockPort(OPEN);
 							continue;
 						}
 
@@ -962,54 +958,53 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						{
 							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
 							close(sockfd);
-							knockPort(OPEN);
 							continue;
 						}
 						break;
 					}
-					if(i == SA_Max_Attempts)
-					{
-						close(sockfd);
-						continue;
-					}
-
-					if( send(sockfd,data,dataLen+featureData,0) == -1)
-					{
-						LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
-						close(sockfd);
-						continue;
-					}
-					close(sockfd);
-					knockPort(CLOSE);
 				}
-				commandLine = "iptables -D INPUT 1";
+				if(i == SA_Max_Attempts)
+				{
+					close(sockfd);
+					continue;
+				}
+
+				if( send(sockfd,data,dataLen+featureData,0) == -1)
+				{
+					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
+					close(sockfd);
+					continue;
+				}
+				close(sockfd);
+				knockPort(CLOSE);
+				ss.str("");
+				ss << "iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				commandLine = ss.str();
 				system(commandLine.c_str());
 			}
-			bzero(data,MAX_MSG_SIZE);
 		}while(featureData == MORE_DATA);
 	}
 }
 
 bool ClassificationEngine::knockPort(bool mode)
 {
-	bzero(data, MAX_MSG_SIZE);
 	stringstream ss;
 	ss << key;
+
 	//mode == OPEN (true)
 	if(mode)
-	{
 		ss << "OPEN";
-		dataLen = key.size() + 4;
-	}
+
 	//mode == CLOSE (false)
 	else
-	{
 		ss << "SHUT";
-		dataLen = key.size() + 4;
-	}
-	memcpy(data, ss.str().c_str(), ss.str().size());
 
-	crpytBuffer(data, dataLen, ENCRYPT);
+	uint keyDataLen = key.size() + 4;
+	u_char keyBuf[1024];
+	bzero(keyBuf, 1024);
+	memcpy(keyBuf, ss.str().c_str(), ss.str().size());
+
+	crpytBuffer(keyBuf, keyDataLen, ENCRYPT);
 
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
@@ -1019,7 +1014,7 @@ bool ClassificationEngine::knockPort(bool mode)
 		return false;
 	}
 
-	if( sendto(sockfd,data,dataLen, MSG_DONTWAIT,serv_addrPtr, inSocketSize) == -1)
+	if( sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
 		LOG4CXX_ERROR(m_logger,"Error in UDP Send: " << strerror(errno));
 		close(sockfd);

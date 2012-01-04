@@ -164,10 +164,6 @@ int main(int argc, char *argv[])
 	commandLine = "iptables -t nat -F";
 	system(commandLine.c_str());
 
-	commandLine = "iptables -A INPUT -p udp -j REJECT --reject-with icmp-port-unreachable";
-	system(commandLine.c_str());
-	commandLine = "iptables -A INPUT -p tcp -j REJECT --reject-with tcp-reset";
-	system(commandLine.c_str());
     int len;
     struct sockaddr_un remote;
 
