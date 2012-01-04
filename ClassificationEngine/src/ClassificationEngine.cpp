@@ -513,27 +513,17 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		}
 		crpytBuffer(buf, bytesRead, DECRYPT);
 
-		string keyCheck = string((char*)buf);
-		u_char * buffer = buf;
-
-		//If the first packets are the key this is a knock request (closing) and should be ignored.
-		if(!keyCheck.substr(0, key.size()).compare(key))
-		{
-			close(connectionSocket);
-			continue;
-		}
-
 		pthread_rwlock_wrlock(&lock);
 		try
 		{
-			uint addr = getSerializedAddr(buffer);
+			uint addr = getSerializedAddr(buf);
 			SuspectHashTable::iterator it = suspects.find(addr);
 
 			//If this is a new suspect put it in the table
 			if(it == suspects.end())
 			{
 				suspects[addr] = new Suspect();
-				suspects[addr]->deserializeSuspectWithData(buffer, BROADCAST_DATA);
+				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
 				//We set isHostile to false so that when we classify the first time
 				// the suspect will go from benign to hostile and be sent to the doppelganger module
 				suspects[addr]->isHostile = false;
@@ -543,10 +533,12 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			{
 				//This function will overwrite everything except the information used to calculate the classification
 				// a combined classification will be given next classification loop
-				suspects[addr]->deserializeSuspectWithData(buffer, BROADCAST_DATA);
+				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
 			}
 			suspects[addr]->flaggedByAlarm = true;
-
+			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
+			suspects[addr]->features.IPTable[hostAddr.sin_addr.s_addr].second += suspects[addr]->features.IPTable[sendaddr.sin_addr.s_addr].second;
+			suspects[addr]->features.IPTable.erase(sendaddr.sin_addr.s_addr);
 			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
 		}
 		catch(std::exception e)

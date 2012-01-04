@@ -113,6 +113,9 @@ public:
 	//Number of packets total
 	pair<uint, uint> packetCount;
 
+	//Table of IP addresses and associated packet counts
+	IP_Table IPTable;
+
 	FeatureSet();
 	///Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
@@ -180,8 +183,7 @@ private:
 
 	//Table of Packet sizes and counts for variance calc
 	Packet_Table packTable;
-	//Table of IP addresses and associated packet counts
-	IP_Table IPTable;
+
 	//Max packet count to an IP, used for normalizing
 	uint IPMax;
 
