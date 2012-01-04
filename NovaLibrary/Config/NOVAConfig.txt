@@ -7,14 +7,14 @@
 #
 # ifconfig -a
 #
-# If no interface is specified, Nova will use the first
-# device found on the system, ignoring the loopback. This
-# variable takes the string representation of the device
-# as found through ifconfig.
+# If the interface "default" is specified, the system will
+# use the interface that contains the default route.
+# Otherwise, this variable takes the string representation 
+# of the device as found through ifconfig.
 #
 # EXAMPLE:
 #INTERFACE eth0
-INTERFACE eth0
+INTERFACE default
 
 
 ############################################

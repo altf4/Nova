@@ -96,6 +96,9 @@ public:
     //Pulls the configuration stored in novagui
     void pullData();
 
+    // Saves the configuration to the config file, returns true if success
+    bool saveConfigurationToFile();
+
 private slots:
 
 //Which menu item is selected
