@@ -39,7 +39,6 @@ struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
 int bytesRead;
 int connectionSocket;
 u_char buffer[MAX_MSG_SIZE];
-TrafficEvent *tempEvent, *event;
 Suspect * suspect;
 int IPCsock;
 

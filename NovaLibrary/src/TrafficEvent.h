@@ -78,20 +78,6 @@ class TrafficEvent
 
 };
 
-///	A struct version of a packet, as received from libpcap
-struct Packet
-{
-	///	Meta information about packet
-	struct pcap_pkthdr pcap_header;
-	///	Pointer to an IP header
-	struct ip ip_hdr;
-	/// Pointer to a TCP Header
-	struct tcphdr tcp_hdr;
-	/// Pointer to a UDP Header
-	struct udphdr udp_hdr;
-	/// Pointer to an ICMP Header
-	struct icmphdr icmp_hdr;
-};
 }
 
 #endif /* TRAFFICEVENT_H_ */

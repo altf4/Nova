@@ -55,7 +55,7 @@ public:
 	ANNpoint annPoint;
 
 	///	A listing of all the events (evidence) that originated from this suspect
-	vector <TrafficEvent> evidence;
+	vector <struct Packet> evidence;
 
 	///	Blank Constructor
 	Suspect();
@@ -64,14 +64,14 @@ public:
 	~Suspect();
 
 	///	Constructor from a TrafficEvent
-	Suspect(TrafficEvent *event);
+	Suspect(struct Packet packet);
 
 	///	Converts suspect into a human readable string and returns it
 	string ToString();
 
 	///	Add an additional piece of evidence to this suspect
 	///		Does not take actions like reclassifying or calculating features.
-	void AddEvidence(TrafficEvent *event);
+	void AddEvidence(struct Packet);
 
 	///	Calculates the feature set for this suspect
 	void CalculateFeatures(bool isTraining);
