@@ -8,27 +8,29 @@
 #ifndef GUIMSG_H_
 #define GUIMSG_H_
 
-#include <string>
-#include <string.h>
-#include <stdio.h>
-#include <arpa/inet.h>
+#include "NovaUtil.h"
 
-//The different message types
-#define EXIT 'e'
-#define CLEAR_ALL 'c'
-#define CLEAR_SUSPECT 's'
 
-//Default construction, doubles as error flag.
-#define INVALID '0'
-#define NONE ""
 
 //Maximum number of characters an argument can have.
 #define MAX_VAL_SIZE 255
-#define MAX_GUIMSG_SIZE 256
+
+//Default GUIMsg construction val, doubles as error flag.
+#define NONE ""
+
+//The different message types
+enum GUIMsgType
+{
+	EXIT = 'e',
+	CLEAR_ALL = 'c',
+	CLEAR_SUSPECT = 's',
+	INVALID = '0'
+};
 
 using namespace std;
-namespace Nova
-{
+
+namespace Nova{
+
 class GUIMsg
 {
 	public:
@@ -41,16 +43,16 @@ class GUIMsg
 	GUIMsg();
 
 	//Constructor for messages that have no arguments
-	GUIMsg(char type);
+	GUIMsg(GUIMsgType type);
 
 	//Constructor for messages that have an argument
-	GUIMsg(char type, string val);
+	GUIMsg(GUIMsgType type, string val);
 
 	//Sets the message, returns true if successful
-	bool setMessage(char type);
+	bool setMessage(GUIMsgType type);
 
 	//Sets the message, returns true if successful
-	bool setMessage(char type, string val);
+	bool setMessage(GUIMsgType type, string val);
 
 	//Returns the message type
 	char getType();
@@ -73,7 +75,7 @@ class GUIMsg
 	//********************
 
 	//The message type
-	char type;
+	GUIMsgType type;
 	//The argument if applicable.
 	string val;
 };

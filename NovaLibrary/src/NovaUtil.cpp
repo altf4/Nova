@@ -10,10 +10,7 @@
 
 using namespace std;
 
-namespace Nova
-{
-namespace NovaUtil
-{
+namespace Nova{
 
 //Encrpyts/decrypts a char buffer of size 'size' depending on mode
 void cryptBuffer(u_char * buf, uint size, bool mode)
@@ -21,6 +18,41 @@ void cryptBuffer(u_char * buf, uint size, bool mode)
 	//TODO
 }
 
+// Reads the paths file and returns the homePath of nova
+string getHomePath()
+{
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(PATHS_FILE);
+	string prefix, homePath, line;
+
+	if(paths->is_open())
+	{
+		while(paths->good())
+		{
+			getline(*paths,line);
+
+			prefix = "NOVA_HOME";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				homePath = line;
+				break;
+			}
+		}
+	}
+	paths->close();
+	delete paths;
+	paths = NULL;
+
+	//Resolves environment variables
+	homePath = resolvePathVars(homePath);
+
+	if(homePath == "")
+	{
+		exit(1);
+	}
+	return homePath;
+}
 // Replaces any env vars in 'path' and returns the absolute path
 string resolvePathVars(string path)
 {
@@ -65,5 +97,17 @@ uint getSerializedAddr(u_char * buf)
 	return addr;
 }
 
+//Returns the number of bits used in the mask when given in in_addr_t form
+int getMaskBits(in_addr_t mask)
+{
+	mask = ~mask;
+	int i = 32;
+	while(mask != 0)
+	{
+		mask = mask/2;
+		i--;
+	}
+	return i;
 }
+
 }

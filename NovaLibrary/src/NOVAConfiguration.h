@@ -8,14 +8,7 @@
 #ifndef NOVACONFIGURATION_H_
 #define NOVACONFIGURATION_H_
 
-
-#include <errno.h>
-#include <fstream>
-#include <iostream>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <map>
+#include "NovaUtil.h"
 
 namespace Nova {
 

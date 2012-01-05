@@ -7,13 +7,6 @@
 //============================================================================
 
 #include "Haystack.h"
-#include "NOVAConfiguration.h"
-#include <GUIMsg.h>
-#include <errno.h>
-#include <fstream>
-#include <string.h>
-#include <sys/un.h>
-#include <log4cxx/xml/domconfigurator.h>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -50,7 +43,7 @@ uint dataLen;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
-char * pathsFile = (char*)"/etc/nova/paths";
+char * pathsFile = (char*)PATHS_FILE;
 string homePath;
 bool useTerminals;
 
@@ -63,9 +56,9 @@ int main(int argc, char *argv[])
 	pthread_t SuspectUpdateThread;
 
 	SessionTable.set_empty_key("");
-	SessionTable.resize(INITIAL_SESSION_TABLESIZE);
+	SessionTable.resize(INIT_SIZE_HUGE);
 	suspects.set_empty_key(0);
-	suspects.resize(INITIAL_SUSPECT_TABLESIZE);
+	suspects.resize(INIT_SIZE_SMALL);
 
 	char errbuf[PCAP_ERRBUF_SIZE];
 	bzero(data, MAX_MSG_SIZE);
@@ -82,64 +75,7 @@ int main(int argc, char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	ifstream *paths =  new ifstream(pathsFile);
-
-	if(paths->is_open())
-	{
-		while(paths->good())
-		{
-			getline(*paths,line);
-
-			prefix = "NOVA_HOME";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				homePath = line;
-				break;
-			}
-		}
-	}
-	paths->close();
-	delete paths;
-	paths = NULL;
-
-	//Resolves environment variables
-	int start = 0;
-	int end = 0;
-	string var;
-
-	while((start = homePath.find("$",end)) != -1)
-	{
-		end = homePath.find("/", start);
-		//If no path after environment var
-		if(end == -1)
-		{
-
-			var = homePath.substr(start+1, homePath.size());
-			var = getenv(var.c_str());
-			homePath = homePath.substr(0,start) + var;
-		}
-		else
-		{
-			var = homePath.substr(start+1, end-1);
-			var = getenv(var.c_str());
-			var = var + homePath.substr(end, homePath.size());
-			if(start > 0)
-			{
-				homePath = homePath.substr(0,start)+var;
-			}
-			else
-			{
-				homePath = var;
-			}
-		}
-	}
-
-	if(homePath == "")
-	{
-		exit(1);
-	}
-
+	homePath = getHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -372,7 +308,7 @@ void *Nova::Haystack::GUILoop(void *ptr)
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = GUI_FILENAME;
+	string key = HS_GUI_FILENAME;
 	key = homePath + key;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());

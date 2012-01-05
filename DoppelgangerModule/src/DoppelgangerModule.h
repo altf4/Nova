@@ -10,14 +10,12 @@
 
 using namespace std;
 
-///	Filename of the file to be used as an IPC key
-#define KEY_ALARM_FILENAME "/keys/NovaDoppIPCKey"
-/// File name of the file to be used as GUI Input IPC key.
-#define GUI_FILENAME "/keys/GUI_DMKey"
 //Number of lines read in the NOVAConfig file
 #define CONFIG_FILE_LINE_COUNT 6
-//Sets the Initial Table size for faster operations
-#define INITIAL_TABLESIZE 256
+
+//Hash table for keeping track of suspects
+//	the bool represents if the suspect is hostile or not
+typedef google::dense_hash_map<in_addr_t, bool, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
 namespace Nova{
 namespace DoppelgangerModule{

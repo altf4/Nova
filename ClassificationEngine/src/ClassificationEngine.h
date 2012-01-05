@@ -11,22 +11,6 @@
 #include <NovaUtil.h>
 #include <Suspect.h>
 
-//TODO: Make Nova create this file on startup or installation.
-///	Filename of the file to be used as an IPC key
-// See ticket #12
-
-#define KEY_FILENAME "/keys/NovaIPCKey"
-///	Filename of the file to be used as an Doppelganger IPC key
-#define KEY_ALARM_FILENAME "/keys/NovaDoppIPCKey"
-///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/keys/CEKey"
-/// File name of the file to be used as GUI Input IPC key.
-#define GUI_FILENAME "/keys/GUI_CEKey"
-//Sets the Initial Table size for faster operations
-#define INITIAL_TABLESIZE 256
-//The num of bytes returned by serializeFeatureData if it hit the maximum size;
-#define MORE_DATA 65444 //MAX_TABLE_ENTIRES*8 +  Min size of feature data (currently 8176*8 + 36)
-
 //Mode to knock on the silent alarm port
 #define OPEN true
 #define CLOSE false
@@ -42,8 +26,6 @@ typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr
 
 namespace Nova{
 namespace ClassificationEngine{
-
-
 
 // Thread for listening for GUI commands
 void *GUILoop(void *ptr);

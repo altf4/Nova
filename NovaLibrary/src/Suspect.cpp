@@ -7,13 +7,10 @@
 //============================================================================/*
 
 #include "Suspect.h"
-#include <arpa/inet.h>
-#include <sstream>
 
 using namespace std;
 
 namespace Nova{
-
 
 //Blank Constructor
 Suspect::Suspect()

@@ -6,18 +6,11 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
-#include <errno.h>
-#include <fstream>
-#include <arpa/inet.h>
-#include <signal.h>
-#include <net/if.h>
-#include <sys/un.h>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
-using namespace NovaUtil;
 using namespace ClassificationEngine;
 
 // Maintains a list of suspects and information on network activity
@@ -114,7 +107,7 @@ istream* queryIn = NULL;			//input for query points
 
 const char *outFile;				//output for data points during training
 
-char * pathsFile = (char*)"/etc/nova/paths";
+char * pathsFile = (char*)PATHS_FILE;
 string homePath;
 
 void *outPtr;
@@ -134,7 +127,7 @@ int main(int argc,char *argv[])
 	pthread_rwlock_init(&lock, NULL);
 
 	suspects.set_empty_key(NULL);
-	suspects.resize(INITIAL_TABLESIZE);
+	suspects.resize(INIT_SIZE_SMALL);
 
 	int len;
 	struct sockaddr_un localIPCAddress;
@@ -148,66 +141,7 @@ int main(int argc,char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	ifstream *paths =  new ifstream(pathsFile);
-
-	if(paths->is_open())
-	{
-		while(paths->good())
-		{
-			getline(*paths,line);
-
-			prefix = "NOVA_HOME";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				homePath = line;
-				break;
-			}
-		}
-	}
-	paths->close();
-	delete paths;
-	paths = NULL;
-
-	//Resolves environment variables
-	//homePath = resolvePathVars(homePath);
-
-	int start = 0;
-	int end = 0;
-	string var;
-
-	while((start = homePath.find("$",end)) != -1)
-	{
-		end = homePath.find("/", start);
-		//If no path after environment var
-		if(end == -1)
-		{
-
-			var = homePath.substr(start+1, homePath.size());
-			var = getenv(var.c_str());
-			homePath = homePath.substr(0,start) + var;
-		}
-		else
-		{
-			var = homePath.substr(start+1, end-1);
-			var = getenv(var.c_str());
-			var = var + homePath.substr(end, homePath.size());
-			if(start > 0)
-			{
-				homePath = homePath.substr(0,start)+var;
-			}
-			else
-			{
-				homePath = var;
-			}
-		}
-	}
-
-	if(homePath == "")
-	{
-		exit(1);
-	}
-
+	homePath = getHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -299,7 +233,7 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 	GUIAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = GUI_FILENAME;
+	string key = CE_GUI_FILENAME;
 	key = homePath + key;
 
 	strcpy(GUIAddress.sun_path, key.c_str());
@@ -890,7 +824,6 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
 	bzero(data, MAX_MSG_SIZE);
 	dataLen = suspect->serializeSuspect(data);
-	uint featureData = 0;
 
 	//If the hostility hasn't changed don't bother the DM
 	if(oldClassification != suspect->isHostile && suspect->isLive)
@@ -923,7 +856,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		{
 			bzero(data, MAX_MSG_SIZE);
 			dataLen = suspect->serializeSuspect(data);
-			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+			dataLen += suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
@@ -964,7 +897,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					continue;
 				}
 
-				if( send(sockfd,data,dataLen+featureData,0) == -1)
+				if( send(sockfd,data,dataLen,0) == -1)
 				{
 					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 					close(sockfd);
@@ -977,7 +910,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				system(commandLine.c_str());
 			}
-		}while(featureData == MORE_DATA);
+		}while(dataLen == MORE_DATA);
 	}
 }
 
