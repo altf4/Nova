@@ -869,23 +869,22 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
-				//Send Silent Alarm to other Nova Instances with feature Data
-				if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
-				{
-					LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-					close(sockfd);
-					continue;
-				}
-
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
 					if(knockPort(OPEN))
 					{
+						//Send Silent Alarm to other Nova Instances with feature Data
+						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+						{
+							LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+							close(sockfd);
+							continue;
+						}
 						if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
 						{
 							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
-							cout << errno << endl;
+							close(sockfd);
 							continue;
 						}
 						break;
