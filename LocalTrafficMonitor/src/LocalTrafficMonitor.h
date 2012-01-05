@@ -12,17 +12,8 @@
 #include <Suspect.h>
 #include <NovaUtil.h>
 
-/// File name of the file to be used as GUI Input IPC key.
-#define GUI_FILENAME "/keys/GUI_LTMKey"
 //Number of values read from the NOVAConfig file
 #define CONFIG_FILE_LINE_COUNT 9
-//Sets the Initial Table size for faster operations
-#define INITIAL_SESSION_TABLESIZE 65535
-//Sets the Initial Table size for faster operations
-#define INITIAL_SUSPECT_TABLESIZE 256
-//The num returned by serializeFeatureData and serializeSuspect combined
-// if it hit the maximum byte size;
-#define MORE_DATA 65532
 
 using namespace std;
 
@@ -66,9 +57,6 @@ void knockRequest(TrafficEvent * event, u_char * payload);
 
 //Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
-
-///The Value is a vector of IP headers
-typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr > TCPSessionHashTable;
 
 }
 }

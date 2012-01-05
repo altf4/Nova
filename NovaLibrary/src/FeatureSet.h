@@ -9,16 +9,9 @@
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
 
-#include <sys/types.h>
 #include "NovaUtil.h"
-#include "TrafficEvent.h"
 
 using namespace std;
-
-//If the feature data is local
-#define LOCAL_DATA true
-//If the feature data is broadcast from another nova instance
-#define BROADCAST_DATA false
 
 ///The traffic distribution across the haystacks relative to host traffic
 #define IP_TRAFFIC_DISTRIBUTION 0
@@ -43,10 +36,6 @@ using namespace std;
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_DEVIATION 8
 
-#define INITIAL_IP_SIZE 256
-#define INITIAL_PORT_SIZE 1024
-#define INITIAL_PACKET_SIZE 4096
-
 //UDP has max payload of 65535 bytes
 //serializeSuspect requires 89 bytes, serializeFeatureData requires 36 bytes, bytes left = 65410
 // each entry in a table takes 8 bytes 65410/8 = 8176.25
@@ -60,6 +49,10 @@ using namespace std;
 typedef google::dense_hash_map<in_addr_t, pair<uint, uint>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
 //Table of destination ports and a count;
 typedef google::dense_hash_map<in_port_t, pair<uint, uint>, tr1::hash<in_port_t>, eqport > Port_Table;
+//Table of packet sizes and a count
+typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<int>, eqint > Packet_Table;
+//Table of packet intervals and a count
+typedef google::dense_hash_map<time_t, pair<uint, uint>, tr1::hash<time_t>, eqtime > Interval_Table;
 
 namespace Nova{
 

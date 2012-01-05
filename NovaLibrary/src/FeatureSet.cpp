@@ -7,7 +7,6 @@
 //============================================================================/*
 
 #include "FeatureSet.h"
-#include <math.h>
 
 using namespace std;
 namespace Nova{
@@ -31,10 +30,10 @@ FeatureSet::FeatureSet()
 	packTable.clear();
 	intervalTable.clear();
 
-	intervalTable.resize(INITIAL_IP_SIZE);
-	IPTable.resize(INITIAL_IP_SIZE);
-	portTable.resize(INITIAL_PORT_SIZE);
-	packTable.resize(INITIAL_PACKET_SIZE);
+	intervalTable.resize(INIT_SIZE_SMALL);
+	IPTable.resize(INIT_SIZE_SMALL);
+	portTable.resize(INIT_SIZE_MEDIUM);
+	packTable.resize(INIT_SIZE_LARGE);
 
 	haystackEvents.first = 0;
 	packetCount.first = 0;

@@ -21,7 +21,7 @@ GUIMsg::GUIMsg()
 }
 
 //Constructor for messages that have no arguments
-GUIMsg::GUIMsg(char t)
+GUIMsg::GUIMsg(GUIMsgType t)
 {
 	switch(t)
 	{
@@ -40,7 +40,7 @@ GUIMsg::GUIMsg(char t)
 }
 
 //Constructor for messages that have an argument
-GUIMsg::GUIMsg(char t, string v)
+GUIMsg::GUIMsg(GUIMsgType t, string v)
 {
 	switch(t)
 	{
@@ -77,7 +77,7 @@ GUIMsg::GUIMsg(char t, string v)
 
 
 //Sets the message, returns true if successful
-bool GUIMsg::setMessage(char t)
+bool GUIMsg::setMessage(GUIMsgType t)
 {
 	//Only sets if the type is recognized and requires no argument
 	switch(t)
@@ -97,7 +97,7 @@ bool GUIMsg::setMessage(char t)
 }
 
 //Sets the message, returns true if successful
-bool GUIMsg::setMessage(char t, string v)
+bool GUIMsg::setMessage(GUIMsgType t, string v)
 {
 	switch(t)
 	{

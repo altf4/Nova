@@ -9,8 +9,7 @@
 #ifndef SUSPECT_H_
 #define SUSPECT_H_
 
-#include "Point.h"
-#include "TrafficEvent.h"
+#include "NovaUtil.h"
 #include "FeatureSet.h"
 
 using namespace std;
