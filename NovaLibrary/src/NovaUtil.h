@@ -9,10 +9,6 @@
 #ifndef NOVAUTIL_H_
 #define NOVAUTIL_H_
 
-//#include <string>
-//#include <sys/types.h>
-//#include <stdlib.h>
-
 #include <pcap.h>
 #include <math.h>
 #include <errno.h>
