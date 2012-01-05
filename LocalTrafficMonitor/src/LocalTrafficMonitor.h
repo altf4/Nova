@@ -40,7 +40,7 @@ void *TCPTimeout( void *ptr );
 bool SendToCE(Suspect *suspect);
 
 //Updates a suspect with evidence to be processed later
-void updateSuspect(TrafficEvent *event);
+void updateSuspect(Packet packet);
 
 /// Thread for listening for GUI commands
 void *SuspectLoop(void *ptr);
@@ -53,7 +53,7 @@ void LoadConfig(char* input);
 
 //Checks the udp packet payload associated with event for a port knocking request,
 // opens/closes the port for the sender depending on the payload
-void knockRequest(TrafficEvent * event, u_char * payload);
+void knockRequest(Packet packet, u_char * payload);
 
 //Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;

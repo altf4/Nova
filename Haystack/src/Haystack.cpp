@@ -32,10 +32,9 @@ uint classificationTimeout; //Time between checking suspects for updated data
 //Memory assignments moved outside packet handler to increase performance
 int len, dest_port;
 struct sockaddr_un remote;
-struct Packet packet_info;
+Packet packet_info;
 struct ether_header *ethernet;  	/* net/ethernet.h */
 struct ip *ip_hdr; 					/* The IP header */
-TrafficEvent *event, *tempEvent;
 char tcp_socket[55];
 
 u_char data[MAX_MSG_SIZE];
@@ -226,23 +225,18 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 		//Prepare Packet structure
 		packet_info.ip_hdr = *ip_hdr;
 		packet_info.pcap_header = *pkthdr;
+		packet_info.fromHaystack = FROM_HAYSTACK_DP;
 
 		//IF UDP or ICMP
 		if(ip_hdr->ip_p == 17 )
 		{
 			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
-			updateSuspect(event);
-			delete event;
-			event = NULL;
+			updateSuspect(packet_info);
 		}
 		else if(ip_hdr->ip_p == 1)
 		{
 			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			event = new Nova::TrafficEvent(packet_info, FROM_HAYSTACK_DP);
-			updateSuspect(event);
-			delete event;
-			event = NULL;
+			updateSuspect(packet_info);
 		}
 		//If TCP...
 		else if(ip_hdr->ip_p == 6)
@@ -395,8 +389,13 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 					//If session has been finished for more than two seconds
 					if(it->second.fin == true)
 					{
-						tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
-						updateSuspect(tempEvent);
+						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
+
+						for (int p = 0; p < (SessionTable[it->first].session).size(); p++)
+						{
+							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
+							updateSuspect((SessionTable[it->first].session).at(p));
+						}
 
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_wrlock(&sessionLock);
@@ -405,14 +404,18 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_rdlock(&sessionLock);
 
-						delete tempEvent;
-						tempEvent = NULL;
+						//delete tempEvent;
+						//tempEvent = NULL;
 					}
 					//If this session is timed out
 					else if(packetTime + tcpTime < currentTime)
 					{
-						tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
-						updateSuspect(tempEvent);
+						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
+						for (int p = 0; p < (SessionTable[it->first].session).size(); p++)
+						{
+							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
+							updateSuspect((SessionTable[it->first].session).at(p));
+						}
 
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_wrlock(&sessionLock);
@@ -421,8 +424,8 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_rdlock(&sessionLock);
 
-						delete tempEvent;
-						tempEvent = NULL;
+						//delete tempEvent;
+						//tempEvent = NULL;
 					}
 				}
 			}
@@ -480,16 +483,16 @@ bool Nova::Haystack::SendToCE(Suspect *suspect)
 }
 
 //Stores events to be processed before sending
-void Nova::Haystack::updateSuspect(TrafficEvent *event)
+void Nova::Haystack::updateSuspect(Packet packet)
 {
-	in_addr_t addr = event->src_IP.s_addr;
+	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
 	pthread_rwlock_wrlock(&suspectLock);
 	//If our suspect is new
 	if(suspects.find(addr) == suspects.end())
-		suspects[addr] = new Suspect(event);
+		suspects[addr] = new Suspect(packet);
 	//Else our suspect exists
 	else
-		suspects[addr]->AddEvidence(event);
+		suspects[addr]->AddEvidence(packet);
 
 	suspects[addr]->isLive = !usePcapFile;
 	pthread_rwlock_unlock(&suspectLock);
@@ -509,7 +512,7 @@ void *Nova::Haystack::SuspectLoop(void *ptr)
 				pthread_rwlock_wrlock(&suspectLock);
 				for(uint i = 0; i < it->second->evidence.size(); i++)
 				{
-					it->second->features.UpdateEvidence(&it->second->evidence[i]);
+					it->second->features.UpdateEvidence(it->second->evidence[i]);
 				}
 				it->second->evidence.clear();
 				SendToCE(it->second);
