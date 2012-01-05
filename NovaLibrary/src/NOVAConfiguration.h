@@ -1,14 +1,23 @@
-/*
- * NOVAConfiguration.h
- *
- *  Created on: Dec 22, 2011
- *      Author: root
- */
+//============================================================================
+// Name        : NOVAConfiguration.h
+// Author      : DataSoft Corporation
+// Copyright   : GNU GPL v3
+// Description : Loads and parses the configuration file
+//============================================================================/*
 
 #ifndef NOVACONFIGURATION_H_
 #define NOVACONFIGURATION_H_
 
+<<<<<<< HEAD
 #include "NovaUtil.h"
+=======
+<<<<<<< HEAD
+
+#include <google/dense_hash_map>
+=======
+#include "NovaUtil.h"
+>>>>>>> NovaUtil
+>>>>>>> master
 
 namespace Nova {
 
@@ -19,6 +28,18 @@ struct NovaOption {
 	string data;
 };
 
+//Equality operator used by google's dense hash map
+struct eq
+{
+  bool operator()(string s1, string s2) const
+  {
+    return !(s1.compare(s2));
+  }
+};
+
+typedef google::dense_hash_map<string, struct NovaOption, tr1::hash<string>, eq > optionsMap;
+
+
 
 class NOVAConfiguration {
 public:
@@ -28,7 +49,7 @@ public:
 
 
 public:
-	map<string, NovaOption> options;
+	optionsMap options;
 };
 
 }
