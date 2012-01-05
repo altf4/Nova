@@ -7,6 +7,7 @@
 //============================================================================/*
 
 #include "FeatureSet.h"
+#include "NovaUtil.h"
 
 using namespace std;
 namespace Nova{
@@ -219,15 +220,46 @@ void FeatureSet::CalculatePacketSizeDeviation()
 	features[PACKET_SIZE_DEVIATION] = sqrt(variance);
 }
 
-void FeatureSet::UpdateEvidence(TrafficEvent *event)
+void FeatureSet::UpdateEvidence(Packet packet)
 {
-	packetCount.first += event->packet_count;
-	bytesTotal.first += event->IP_total_data_bytes;
+	in_port_t dst_port;
+	uint packet_count;
+	vector <int> IP_packet_sizes;
+	vector <time_t> packet_intervals;
+	struct ip *ip_hdr = &packet.ip_hdr;
+	if(ip_hdr == NULL)
+	{
+		return;
+	}
+	//Start and end times are the same since this is a one packet event
+	packet_count = 1;
+
+	//If UDP
+	if(packet.ip_hdr.ip_p == 17)
+	{
+		dst_port = ntohs(packet.udp_hdr.dest);
+	}
+	//If ICMP
+	else if(packet.ip_hdr.ip_p == 1)
+	{
+		dst_port = -1;
+	}
+	// If TCP
+	else if (packet.ip_hdr.ip_p == 6)
+	{
+		dst_port =  ntohs(packet.tcp_hdr.dest);
+	}
+
+	IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
+	packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
+
+	packetCount.first += packet_count;
+	bytesTotal.first += ntohs(packet.ip_hdr.ip_len);;
 
 	//If from haystack
-	if(event->from_haystack)
+	if(packet.fromHaystack)
 	{
-		IPTable[event->dst_IP.s_addr].first += event->packet_count;
+		IPTable[packet.ip_hdr.ip_dst.s_addr].first += packet_count;
 		haystackEvents.first++;
 	}
 	//Else from a host
@@ -235,41 +267,41 @@ void FeatureSet::UpdateEvidence(TrafficEvent *event)
 	{
 		//Put the packet count into a bin that is never used so that
 		// all host events for a suspect go into the same bin
-		IPTable[1].first +=  event->packet_count;
+		IPTable[1].first +=  packet_count;
 	}
 
-	portTable[event->dst_port].first +=  event->packet_count;
+	portTable[dst_port].first += packet_count;
 
 	//Checks for the max to avoid iterating through the entire table every update
 	//Since number of ports can grow very large during a scan this will distribute the computation more evenly
 	//Since the IP will tend to be relatively small compared to number of events, it's max is found during the call.
-	if(portTable[event->dst_port].first > portMax)
+	if(portTable[dst_port].first > portMax)
 	{
-		portMax = portTable[event->dst_port].first;
+		portMax = portTable[dst_port].first;
 	}
 
-	for(uint i = 0; i < event->IP_packet_sizes.size(); i++)
+	for(uint i = 0; i < IP_packet_sizes.size(); i++)
 	{
-		packTable[event->IP_packet_sizes[i]].first++;
+		packTable[IP_packet_sizes[i]].first++;
 	}
 
 	if(last_time != 0)
-		intervalTable[event->packet_intervals[0] - last_time].first++;
+		intervalTable[packet_intervals[0] - last_time].first++;
 
-	for(uint i = 1; i < event->packet_intervals.size(); i++)
+	for(uint i = 1; i < packet_intervals.size(); i++)
 	{
-		intervalTable[event->packet_intervals[i] - event->packet_intervals[i-1]].first++;
+		intervalTable[packet_intervals[i] - packet_intervals[i-1]].first++;
 	}
-	last_time = event->packet_intervals.back();
+	last_time = packet_intervals.back();
 
 	//Accumulate to find the lowest Start time and biggest end time.
-	if( event->start_timestamp < startTime)
+	if(packet.pcap_header.ts.tv_sec < startTime)
 	{
-		startTime = event->start_timestamp;
+		startTime = packet.pcap_header.ts.tv_sec;
 	}
-	if(  event->end_timestamp > endTime)
+	if( packet.pcap_header.ts.tv_sec > endTime)
 	{
-		endTime = event->end_timestamp;
+		endTime =  packet.pcap_header.ts.tv_sec;
 	}
 }
 

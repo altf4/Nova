@@ -37,9 +37,9 @@ Suspect::~Suspect()
 }
 
 //Constructor from a TrafficEvent
-Suspect::Suspect(TrafficEvent *event)
+Suspect::Suspect(Packet packet)
 {
-	IP_address = event->src_IP;
+	IP_address = packet.ip_hdr.ip_src;
 	classification = -1;
 	isHostile = false;
 	needs_classification_update = true;
@@ -48,7 +48,7 @@ Suspect::Suspect(TrafficEvent *event)
 	features = FeatureSet();
 	annPoint = NULL;
 	flaggedByAlarm = false;
-	AddEvidence(event);
+	AddEvidence(packet);
 }
 
 //Converts suspect into a human readable string and returns it
@@ -92,9 +92,9 @@ string Suspect::ToString()
 
 //Add an additional piece of evidence to this suspect
 //	Does not take actions like reclassifying or calculating features.
-void Suspect::AddEvidence(TrafficEvent *event)
+void Suspect::AddEvidence(Packet packet)
 {
-	evidence.push_back(*event);
+	evidence.push_back(packet);
 	needs_feature_update = true;
 }
 
