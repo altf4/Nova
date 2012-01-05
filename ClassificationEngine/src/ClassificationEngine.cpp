@@ -6,6 +6,7 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
+//#include <string>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -1125,11 +1126,21 @@ void ClassificationEngine::LoadConfig(char * input)
 	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
 	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION"};
 
-	for (i = 0; i < 12; i++) {
+	for (i = 0; i < 12; i++)
+	{
 		prefix = prefixes[i];
 
 		NovaConfig->options[prefix];
-		if (!NovaConfig->options[prefix].isValid) {
+
+		// If the prefix isn't valid and we're looking for SILENT_ALARM_PORT, give the default port value.
+		if(!NovaConfig->options[prefix].isValid && !(prefix.compare(prefixes[3])))
+		{
+			// This port is unassigned, and does not show up in any virus databases that I saw
+			sAlarmPort = 12011;
+		}
+
+		else if (!NovaConfig->options[prefix].isValid)
+		{
 			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
 			v = false;
 		}
