@@ -55,7 +55,7 @@ class GUIMsg
 	bool setMessage(GUIMsgType type, string val);
 
 	//Returns the message type
-	char getType();
+	GUIMsgType getType();
 
 	//Returns the message argument
 	string getValue();

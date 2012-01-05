@@ -72,6 +72,7 @@ GUIMsg::GUIMsg(GUIMsgType t, string v)
 		default:
 			type = INVALID;
 			val = NONE;
+			break;
 	}
 }
 
@@ -128,7 +129,7 @@ bool GUIMsg::setMessage(GUIMsgType t, string v)
 }
 
 //Returns the message type
-char GUIMsg::getType()
+GUIMsgType GUIMsg::getType()
 {
 	return type;
 }

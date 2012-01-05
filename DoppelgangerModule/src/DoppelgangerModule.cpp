@@ -168,6 +168,7 @@ int main(int argc, char *argv[])
 				//Do nothing. This means no change has happened since last alarm
 				delete suspect;
 				suspect = NULL;
+				pthread_rwlock_unlock(&lock);
 				continue;
 			}
 		}
