@@ -7,13 +7,10 @@
 //============================================================================/*
 
 #include "Suspect.h"
-#include <arpa/inet.h>
-#include <sstream>
 
 using namespace std;
 
 namespace Nova{
-
 
 //Blank Constructor
 Suspect::Suspect()
@@ -223,14 +220,6 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, bool isLocal)
 	needs_classification_update = true;
 
 	return offset;
-}
-
-//Extracts and returns the IP Address from a serialized suspect located at buf
-uint getSerializedAddr(u_char * buf)
-{
-	uint addr = 0;
-	memcpy(&addr, buf, 4);
-	return addr;
 }
 
 }

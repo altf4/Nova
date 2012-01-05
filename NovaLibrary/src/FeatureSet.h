@@ -9,10 +9,9 @@
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
 
-#include "TrafficEvent.h"
-#include <google/dense_hash_map>
-#include <vector>
-#include <set>
+#include "NovaUtil.h"
+
+using namespace std;
 
 ///The traffic distribution across the haystacks relative to host traffic
 #define IP_TRAFFIC_DISTRIBUTION 0
@@ -37,10 +36,6 @@
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_DEVIATION 8
 
-#define INITIAL_IP_SIZE 256
-#define INITIAL_PORT_SIZE 1024
-#define INITIAL_PACKET_SIZE 4096
-
 //UDP has max payload of 65535 bytes
 //serializeSuspect requires 89 bytes, serializeFeatureData requires 36 bytes, bytes left = 65410
 // each entry in a table takes 8 bytes 65410/8 = 8176.25
@@ -50,51 +45,12 @@
 #define INCLUDE true
 #define REMOVE false
 
-//TODO: This is a duplicate from the "dim" in ClassificationEngine.cpp. Maybe move to a global?
-///	This is the number of features in a feature set.
-#define DIMENSION 9
-
-//Equality operator used by google's dense hash map
-struct eqaddr
-{
-  bool operator()(in_addr_t s1, in_addr_t s2) const
-  {
-	    return (s1 == s2);
-  }
-};
 //Table of IP destinations and a count;
 typedef google::dense_hash_map<in_addr_t, pair<uint, uint>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
-
-//Equality operator used by google's dense hash map
-struct eqport
-{
-  bool operator()(in_port_t s1, in_port_t s2) const
-  {
-	    return (s1 == s2);
-  }
-};
 //Table of destination ports and a count;
 typedef google::dense_hash_map<in_port_t, pair<uint, uint>, tr1::hash<in_port_t>, eqport > Port_Table;
-
-//Equality operator used by google's dense hash map
-struct eqint
-{
-  bool operator()(int s1, int s2) const
-  {
-	    return (s1 == s2);
-  }
-};
 //Table of packet sizes and a count
 typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<int>, eqint > Packet_Table;
-
-//Equality operator used by google's dense hash map
-struct eqtime
-{
-  bool operator()(time_t s1, time_t s2) const
-  {
-	    return (s1 == s2);
-  }
-};
 //Table of packet intervals and a count
 typedef google::dense_hash_map<time_t, pair<uint, uint>, tr1::hash<time_t>, eqtime > Interval_Table;
 
@@ -108,7 +64,7 @@ class FeatureSet
 
 public:
 	/// The actual feature values
-	double features[DIMENSION];
+	double features[DIM];
 
 	//Number of packets total
 	pair<uint, uint> packetCount;

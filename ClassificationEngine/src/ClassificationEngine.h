@@ -8,65 +8,24 @@
 #ifndef CLASSIFICATIONENGINE_H_
 #define CLASSIFICATIONENGINE_H_
 
-#include <TrafficEvent.h>
-#include "Suspect.h"
-#include <ANN/ANN.h>
-#include <google/dense_hash_map>
+#include <NovaUtil.h>
+#include <Suspect.h>
 
-//TODO: Make Nova create this file on startup or installation.
-///	Filename of the file to be used as an IPC key
-// See ticket #12
-
-#define KEY_FILENAME "/keys/NovaIPCKey"
-///	Filename of the file to be used as an Doppelganger IPC key
-#define KEY_ALARM_FILENAME "/keys/NovaDoppIPCKey"
-///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/keys/CEKey"
-/// File name of the file to be used as GUI Input IPC key.
-#define GUI_FILENAME "/keys/GUI_CEKey"
-//Sets the Initial Table size for faster operations
-#define INITIAL_TABLESIZE 256
-//Number of messages to queue in a listening socket before ignoring requests until the queue is open
-#define SOCKET_QUEUE_SIZE 50
-//The num of bytes returned by serializeFeatureData if it hit the maximum size;
-#define MORE_DATA 65444 //MAX_TABLE_ENTIRES*8 +  Min size of feature data (currently 8176*8 + 36)
-//If the feature data is local
-#define LOCAL_DATA true
-//If the feature data is broadcast from another nova instance
-#define BROADCAST_DATA false
 //Mode to knock on the silent alarm port
 #define OPEN true
 #define CLOSE false
-//Mode for encryption/decryption
-#define ENCRYPT true
-#define DECRYPT false
 
-///The maximum message, as defined in /proc/sys/kernel/msgmax
-#define MAX_MSG_SIZE 65535
-//dimension
-#define DIM 9
 //Number of values read from the NOVAConfig file
 #define CONFIG_FILE_LINE_COUNT 12
-//Number of messages to queue in a listening socket before ignoring requests until the queue is open
-#define SOCKET_QUEUE_SIZE 50
 
 //Used in classification algorithm. Store it here so we only need to calculate it once
 const double sqrtDIM = sqrt(DIM);
 
-//Equality operator used by google's dense hash map
-struct eq
-{
-  bool operator()(in_addr_t s1, in_addr_t s2) const
-  {
-    return (s1 == s2);
-  }
-};
+//Hash table for current list of suspects
+typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
 namespace Nova{
 namespace ClassificationEngine{
-
-//Hash table for current list of suspects
-typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eq > SuspectHashTable;
 
 // Thread for listening for GUI commands
 void *GUILoop(void *ptr);
@@ -123,9 +82,6 @@ void ReceiveGUICommand();
 
 //Sends output to the UI
 void SendToUI(Suspect *suspect);
-
-//Encrpyts/decrypts a char buffer of size 'size' depending on mode
-void crpytBuffer(u_char * buf, uint size, bool mode);
 
 //Loads configuration variables from NOVAConfig_CE.txt or specified config file
 void LoadConfig(char * input);
