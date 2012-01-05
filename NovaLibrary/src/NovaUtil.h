@@ -32,7 +32,6 @@
 #include <log4cxx/xml/domconfigurator.h>
 
 #include "NOVAConfiguration.h"
-#include "TrafficEvent.h"
 #include "GUIMsg.h"
 #include "Point.h"
 
@@ -82,7 +81,7 @@ using namespace Nova;
 #define BROADCAST_DATA false
 
 //From the Haystack or Doppelganger Module
-#define FROM_HAYSTACK_DP	1
+#define FROM_HAYSTACK_DP	true
 //From the Local Traffic Monitor
 #define FROM_LTM			0
 
@@ -149,6 +148,24 @@ struct eqtime
 /************************************************/
 /********* Common Typedefs and Structs **********/
 /************************************************/
+
+
+///	A struct version of a packet, as received from libpcap
+struct Packet
+{
+	///	Meta information about packet
+	struct pcap_pkthdr pcap_header;
+	///	Pointer to an IP header
+	struct ip ip_hdr;
+	/// Pointer to a TCP Header
+	struct tcphdr tcp_hdr;
+	/// Pointer to a UDP Header
+	struct udphdr udp_hdr;
+	/// Pointer to an ICMP Header
+	struct icmphdr icmp_hdr;
+
+	bool fromHaystack;
+};
 
 ///Hash table for current TCP Sessions
 ///Table key is the source network socket, comprised of IP and Port in string format
