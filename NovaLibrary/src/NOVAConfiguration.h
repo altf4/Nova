@@ -8,22 +8,8 @@
 #ifndef NOVACONFIGURATION_H_
 #define NOVACONFIGURATION_H_
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 #include "NovaUtil.h"
-=======
-<<<<<<< HEAD
->>>>>>> NovaUtil
-
 #include <google/dense_hash_map>
-=======
-#include "NovaUtil.h"
->>>>>>> NovaUtil
-<<<<<<< HEAD
-=======
->>>>>>> master
->>>>>>> NovaUtil
 
 namespace Nova {
 
