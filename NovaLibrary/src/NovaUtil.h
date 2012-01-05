@@ -151,7 +151,7 @@ struct eqtime
 
 
 ///	A struct version of a packet, as received from libpcap
-struct Packet
+struct _packet
 {
 	///	Meta information about packet
 	struct pcap_pkthdr pcap_header;
@@ -167,13 +167,15 @@ struct Packet
 	bool fromHaystack;
 };
 
+typedef struct _packet Packet;
+
 ///Hash table for current TCP Sessions
 ///Table key is the source network socket, comprised of IP and Port in string format
 ///	IE: "192.168.1.1-8080"
 struct Session
 {
 	bool fin;
-	vector<struct Packet> session;
+	vector<Packet> session;
 };
 
 ///The Value is a vector of IP headers

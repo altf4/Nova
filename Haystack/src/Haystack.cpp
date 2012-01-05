@@ -32,7 +32,7 @@ uint classificationTimeout; //Time between checking suspects for updated data
 //Memory assignments moved outside packet handler to increase performance
 int len, dest_port;
 struct sockaddr_un remote;
-struct Packet packet_info;
+Packet packet_info;
 struct ether_header *ethernet;  	/* net/ethernet.h */
 struct ip *ip_hdr; 					/* The IP header */
 char tcp_socket[55];
@@ -483,10 +483,9 @@ bool Nova::Haystack::SendToCE(Suspect *suspect)
 }
 
 //Stores events to be processed before sending
-void Nova::Haystack::updateSuspect(struct Packet packet)
+void Nova::Haystack::updateSuspect(Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
-	cout << "The addr is " << addr << endl;
 	pthread_rwlock_wrlock(&suspectLock);
 	//If our suspect is new
 	if(suspects.find(addr) == suspects.end())

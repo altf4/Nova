@@ -64,14 +64,14 @@ public:
 	~Suspect();
 
 	///	Constructor from a TrafficEvent
-	Suspect(Packet &packet);
+	Suspect(Packet packet);
 
 	///	Converts suspect into a human readable string and returns it
 	string ToString();
 
 	///	Add an additional piece of evidence to this suspect
 	///		Does not take actions like reclassifying or calculating features.
-	void AddEvidence(Packet &packet);
+	void AddEvidence(Packet packet);
 
 	///	Calculates the feature set for this suspect
 	void CalculateFeatures(bool isTraining);
