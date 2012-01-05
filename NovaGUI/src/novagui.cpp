@@ -5,25 +5,17 @@
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
 //============================================================================/*
 
-#include <sys/un.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <QtGui>
 #include <QApplication>
 #include "novagui.h"
 #include "novaconfig.h"
 #include "run_popup.h"
-#include <sstream>
+
 #include <QString>
-#include <signal.h>
 #include <QChar>
-#include <fstream>
-#include <log4cxx/xml/domconfigurator.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <math.h>
 
 using namespace std;
 using namespace Nova;
@@ -1735,17 +1727,4 @@ void sendAll()
 void sclose(int sock)
 {
 	close(sock);
-}
-
-//Returns the number of bits used in the mask when given in in_addr_t form
-int getMaskBits(in_addr_t mask)
-{
-	mask = ~mask;
-	int i = 32;
-	while(mask != 0)
-	{
-		mask = mask/2;
-		i--;
-	}
-	return i;
 }

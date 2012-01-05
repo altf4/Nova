@@ -13,31 +13,8 @@
 #include "ui_novagui.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
-#include <sys/un.h>
-#include <arpa/inet.h>
 #include <Suspect.h>
-#include <GUIMsg.h>
-#include <google/dense_hash_map>
-
-/// File name of the file to be used as Traffic Event IPC key
-#define KEY_FILENAME "/keys/NovaIPCKey"
-///	Filename of the file to be used as an Doppelganger IPC key
-#define KEY_ALARM_FILENAME "/keys/NovaDoppIPCKey"
-///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/keys/CEKey"
-/// File name of the file to be used as CE Output IPC key.
-#define CE_GUI_FILENAME "/keys/GUI_CEKey"
-/// File name of the file to be used as CE Output IPC key.
-#define DM_GUI_FILENAME "/keys/GUI_DMKey"
-/// File name of the file to be used as CE Output IPC key.
-#define HS_GUI_FILENAME "/keys/GUI_HSKey"
-/// File name of the file to be used as CE Output IPC key.
-#define LTM_GUI_FILENAME "/keys/GUI_LTMKey"
-
-///The maximum message, as defined in /proc/sys/kernel/msgmax
-#define MAX_MSG_SIZE 65535
-//Number of messages to queue in a listening socket before ignoring requests until the queue is open
-#define SOCKET_QUEUE_SIZE 50
+#include <NovaUtil.h>
 
 using namespace std;
 using namespace Nova;
@@ -47,14 +24,6 @@ using boost::property_tree::ptree;
  - Structs and Tables for quick item access through pointers -
 **********************************************************************/
 
-//Equality operator used by google's dense hash map
-struct eq
-{
-  bool operator()(string s1, string s2) const
-  {
-    return !(s1.compare(s2));
-  }
-};
 
 //used to maintain information on imported scripts
 struct script
@@ -65,7 +34,7 @@ struct script
 };
 
 //Container for accessing script items
-typedef google::dense_hash_map<string, script, tr1::hash<string>, eq > ScriptTable;
+typedef google::dense_hash_map<string, script, tr1::hash<string>, eqstr > ScriptTable;
 
 //used to maintain information about a port, it's type and behavior
 struct port
@@ -82,7 +51,7 @@ struct port
 	ptree tree;
 };
 //Container for accessing port items
-typedef google::dense_hash_map<string, port, tr1::hash<string>, eq > PortTable;
+typedef google::dense_hash_map<string, port, tr1::hash<string>, eqstr > PortTable;
 
 //used to keep track of subnet gui items and allow for easy access
 struct subnet
@@ -101,7 +70,7 @@ struct subnet
 };
 
 //Container for accessing subnet items
-typedef google::dense_hash_map<string, subnet, tr1::hash<string>, eq > SubnetTable;
+typedef google::dense_hash_map<string, subnet, tr1::hash<string>, eqstr > SubnetTable;
 
 
 //used to keep track of haystack profile gui items and allow for easy access
@@ -125,7 +94,7 @@ struct profile
 };
 
 //Container for accessing profile items
-typedef google::dense_hash_map<string, profile, tr1::hash<string>, eq > ProfileTable;
+typedef google::dense_hash_map<string, profile, tr1::hash<string>, eqstr > ProfileTable;
 
 //used to keep track of haystack node gui items and allow for easy access
 struct node
@@ -142,7 +111,7 @@ struct node
 };
 
 //Container for accessing node items
-typedef google::dense_hash_map<string, node, tr1::hash<string>, eq > NodeTable;
+typedef google::dense_hash_map<string, node, tr1::hash<string>, eqstr > NodeTable;
 
 struct suspectItem
 {
@@ -265,16 +234,8 @@ private:
 
 };
 
-//Equality operator used by google's dense hash map
-struct eqinaddr
-{
-  bool operator()(in_addr_t s1, in_addr_t s2) const
-  {
-    return (s1 == s2);
-  }
-};
 
-typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqinaddr > SuspectHashTable;
+typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);
@@ -309,12 +270,5 @@ void sendToLTM();
 
 //Deletes all Suspect information for the GUI and Nova
 void clearSuspects();
-
-//Gets number of bits used in the mask
-int getMaskBits(in_addr_t range);
-
-
-
-
 
 #endif // NOVAGUI_H

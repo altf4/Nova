@@ -6,16 +6,6 @@
 //============================================================================
 
 #include "DoppelgangerModule.h"
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <arpa/inet.h>
-#include <sys/un.h>
-#include <errno.h>
-#include <GUIMsg.h>
-#include <signal.h>
-#include <log4cxx/xml/domconfigurator.h>
-#include <fstream>
-#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -33,7 +23,7 @@ string hostAddrString, doppelgangerAddrString, honeydConfigPath;
 struct sockaddr_in hostAddr, loopbackAddr;
 bool isEnabled, useTerminals;
 
-char * pathsFile = (char*)"/etc/nova/paths";
+char * pathsFile = (char*)PATHS_FILE;
 string homePath;
 
 //Alarm IPC globals to improve performance
@@ -72,7 +62,7 @@ int main(int argc, char *argv[])
 	pthread_t GUIListenThread;
 
 	SuspectTable.set_empty_key(NULL);
-	SuspectTable.resize(INITIAL_TABLESIZE);
+	SuspectTable.resize(INIT_SIZE_SMALL);
 
 	signal(SIGINT, siginthandler);
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
@@ -81,64 +71,7 @@ int main(int argc, char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	ifstream *paths =  new ifstream(pathsFile);
-
-	if(paths->is_open())
-	{
-		while(paths->good())
-		{
-			getline(*paths,line);
-
-			prefix = "NOVA_HOME";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				homePath = line;
-				break;
-			}
-		}
-	}
-	paths->close();
-	delete paths;
-	paths = NULL;
-
-	//Resolves environment variables
-	int start = 0;
-	int end = 0;
-	string var;
-
-	while((start = homePath.find("$",end)) != -1)
-	{
-		end = homePath.find("/", start);
-		//If no path after environment var
-		if(end == -1)
-		{
-
-			var = homePath.substr(start+1, homePath.size());
-			var = getenv(var.c_str());
-			homePath = homePath.substr(0,start) + var;
-		}
-		else
-		{
-			var = homePath.substr(start+1, end-1);
-			var = getenv(var.c_str());
-			var = var + homePath.substr(end, homePath.size());
-			if(start > 0)
-			{
-				homePath = homePath.substr(0,start)+var;
-			}
-			else
-			{
-				homePath = var;
-			}
-		}
-	}
-
-	if(homePath == "")
-	{
-		exit(1);
-	}
-
+	homePath = getHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -289,7 +222,7 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = homePath + GUI_FILENAME;
+	string key = homePath + DM_GUI_FILENAME;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);

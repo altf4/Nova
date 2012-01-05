@@ -6,18 +6,6 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
-#include <TrafficEvent.h>
-#include <errno.h>
-#include <fstream>
-#include "Point.h"
-#include <arpa/inet.h>
-#include <GUIMsg.h>
-#include <sys/ioctl.h>
-#include <signal.h>
-#include <net/if.h>
-#include <sys/un.h>
-#include <log4cxx/xml/domconfigurator.h>
-#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -119,7 +107,7 @@ istream* queryIn = NULL;			//input for query points
 
 const char *outFile;				//output for data points during training
 
-char * pathsFile = (char*)"/etc/nova/paths";
+char * pathsFile = (char*)PATHS_FILE;
 string homePath;
 
 void *outPtr;
@@ -139,7 +127,7 @@ int main(int argc,char *argv[])
 	pthread_rwlock_init(&lock, NULL);
 
 	suspects.set_empty_key(NULL);
-	suspects.resize(INITIAL_TABLESIZE);
+	suspects.resize(INIT_SIZE_SMALL);
 
 	int len;
 	struct sockaddr_un localIPCAddress;
@@ -153,64 +141,7 @@ int main(int argc,char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	ifstream *paths =  new ifstream(pathsFile);
-
-	if(paths->is_open())
-	{
-		while(paths->good())
-		{
-			getline(*paths,line);
-
-			prefix = "NOVA_HOME";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				homePath = line;
-				break;
-			}
-		}
-	}
-	paths->close();
-	delete paths;
-	paths = NULL;
-
-	//Resolves environment variables
-	int start = 0;
-	int end = 0;
-	string var;
-
-	while((start = homePath.find("$",end)) != -1)
-	{
-		end = homePath.find("/", start);
-		//If no path after environment var
-		if(end == -1)
-		{
-
-			var = homePath.substr(start+1, homePath.size());
-			var = getenv(var.c_str());
-			homePath = homePath.substr(0,start) + var;
-		}
-		else
-		{
-			var = homePath.substr(start+1, end-1);
-			var = getenv(var.c_str());
-			var = var + homePath.substr(end, homePath.size());
-			if(start > 0)
-			{
-				homePath = homePath.substr(0,start)+var;
-			}
-			else
-			{
-				homePath = var;
-			}
-		}
-	}
-
-	if(homePath == "")
-	{
-		exit(1);
-	}
-
+	homePath = getHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -302,7 +233,7 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 	GUIAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = GUI_FILENAME;
+	string key = CE_GUI_FILENAME;
 	key = homePath + key;
 
 	strcpy(GUIAddress.sun_path, key.c_str());
@@ -417,7 +348,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					it->second->CalculateFeatures(isTraining);
 					if(it->second->annPoint == NULL)
 					{
-						it->second->annPoint = annAllocPt(DIMENSION);
+						it->second->annPoint = annAllocPt(DIM);
 					}
 					for(int j=0; j < dim; j++)
 					{
@@ -512,7 +443,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-		crpytBuffer(buf, bytesRead, DECRYPT);
+		cryptBuffer(buf, bytesRead, DECRYPT);
 
 		pthread_rwlock_wrlock(&lock);
 		try
@@ -690,7 +621,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 		if(it->second->needs_feature_update)
 		{
 			if(it->second->annPoint == NULL)
-				it->second->annPoint = annAllocPt(DIMENSION);
+				it->second->annPoint = annAllocPt(DIM);
 
 			//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
 			for(int i = 0;i < dim;i++)
@@ -893,7 +824,6 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
 	bzero(data, MAX_MSG_SIZE);
 	dataLen = suspect->serializeSuspect(data);
-	uint featureData = 0;
 
 	//If the hostility hasn't changed don't bother the DM
 	if(oldClassification != suspect->isHostile && suspect->isLive)
@@ -926,7 +856,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		{
 			bzero(data, MAX_MSG_SIZE);
 			dataLen = suspect->serializeSuspect(data);
-			featureData = suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+			dataLen += suspect->features.serializeFeatureDataBroadcast(data+dataLen);
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
@@ -939,23 +869,23 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
+				//Send Silent Alarm to other Nova Instances with feature Data
+				if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
+				{
+					LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+					close(sockfd);
+					continue;
+				}
+
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
 					if(knockPort(OPEN))
 					{
-						//Send Silent Alarm to other Nova Instances with feature Data
-						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
-						{
-							LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-							close(sockfd);
-							continue;
-						}
-
 						if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
 						{
 							LOG4CXX_INFO(m_logger, "connect: " << strerror(errno));
-							close(sockfd);
+							cout << errno << endl;
 							continue;
 						}
 						break;
@@ -967,7 +897,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					continue;
 				}
 
-				if( send(sockfd,data,dataLen+featureData,0) == -1)
+				if( send(sockfd,data,dataLen,0) == -1)
 				{
 					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 					close(sockfd);
@@ -980,7 +910,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				system(commandLine.c_str());
 			}
-		}while(featureData == MORE_DATA);
+		}while(dataLen == MORE_DATA);
 	}
 }
 
@@ -1002,7 +932,7 @@ bool ClassificationEngine::knockPort(bool mode)
 	bzero(keyBuf, 1024);
 	memcpy(keyBuf, ss.str().c_str(), ss.str().size());
 
-	crpytBuffer(keyBuf, keyDataLen, ENCRYPT);
+	cryptBuffer(keyBuf, keyDataLen, ENCRYPT);
 
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
@@ -1133,12 +1063,6 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 		return;
 	}
 	close(GUISendSocket);
-}
-
-//Encrpyts/decrypts a char buffer of size 'size' depending on mode
-void ClassificationEngine::crpytBuffer(u_char * buf, uint size, bool mode)
-{
-	//TODO
 }
 
 void ClassificationEngine::LoadConfig(char * input)

@@ -15,7 +15,7 @@ namespace ClassificationEngine{
 
 Point::Point()
 {
-	annPoint = annAllocPt(DIMENSION);
+	annPoint = annAllocPt(DIM);
 	classification = 0;
 }
 

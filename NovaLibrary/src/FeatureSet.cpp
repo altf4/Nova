@@ -7,7 +7,6 @@
 //============================================================================/*
 
 #include "FeatureSet.h"
-#include <math.h>
 
 using namespace std;
 namespace Nova{
@@ -31,10 +30,10 @@ FeatureSet::FeatureSet()
 	packTable.clear();
 	intervalTable.clear();
 
-	intervalTable.resize(INITIAL_IP_SIZE);
-	IPTable.resize(INITIAL_IP_SIZE);
-	portTable.resize(INITIAL_PORT_SIZE);
-	packTable.resize(INITIAL_PACKET_SIZE);
+	intervalTable.resize(INIT_SIZE_SMALL);
+	IPTable.resize(INIT_SIZE_SMALL);
+	portTable.resize(INIT_SIZE_MEDIUM);
+	packTable.resize(INIT_SIZE_LARGE);
 
 	haystackEvents.first = 0;
 	packetCount.first = 0;
@@ -47,7 +46,7 @@ FeatureSet::FeatureSet()
 	portMax = 0;
 	IPMax = 0;
 	//Features
-	for(int i = 0; i < DIMENSION; i++)
+	for(int i = 0; i < DIM; i++)
 	{
 		features[i] = 0;
 	}
@@ -78,7 +77,7 @@ void FeatureSet::ClearFeatureSet()
 	portMax = 0;
 	IPMax = 0;
 	//Features
-	for(int i = 0; i < DIMENSION; i++)
+	for(int i = 0; i < DIM; i++)
 	{
 		features[i] = 0;
 	}
@@ -339,10 +338,10 @@ uint FeatureSet::serializeFeatureSet(u_char * buf)
 	uint size = 8; //All features are doubles.
 
 	//Clears a chunk of the buffer for the FeatureSet
-	bzero(buf, size*DIMENSION);
+	bzero(buf, size*DIM);
 
 	//Copies the value and increases the offset
-	for(uint i = 0; i < DIMENSION; i++)
+	for(uint i = 0; i < DIM; i++)
 	{
 		memcpy(buf+offset, &features[i], size);
 		offset+= size;
@@ -359,7 +358,7 @@ uint FeatureSet::deserializeFeatureSet(u_char * buf)
 	uint size = 8;
 
 	//Copies the value and increases the offset
-	for(uint i = 0; i < DIMENSION; i++)
+	for(uint i = 0; i < DIM; i++)
 	{
 		memcpy(&features[i], buf+offset, size);
 		offset+= size;
