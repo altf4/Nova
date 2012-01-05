@@ -9,7 +9,9 @@
 #include <fstream>
 #include <iostream>
 #include <string.h>
-
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace std;
 
 namespace Nova
 {
@@ -20,6 +22,8 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 	string line;
 	string prefix;
 	int prefixIndex;
+	const string SILENT_ALARM_DEFAULT = "12011";
+	LoggerPtr m_logger(Logger::getLogger("main"));
 
 	cout << "Loading file " << input << " in homepath " << homePath << endl;
 
@@ -241,6 +245,14 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 				if (atoi(line.c_str()) > 0)
 				{
 					options[prefix].data = line.c_str();
+					options[prefix].isValid = true;
+				}
+				// If the address given is 0, then just assign the default and send it through
+				else if(atoi(line.c_str()) == 0)
+				{
+					options[prefix].data = "12011";
+					LOG4CXX_ERROR(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
+					LOG4CXX_INFO(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
 					options[prefix].isValid = true;
 				}
 				continue;
