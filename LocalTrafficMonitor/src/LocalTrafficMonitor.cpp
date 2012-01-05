@@ -476,6 +476,7 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 void LocalTrafficMonitor::updateSuspect(Packet &packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
+	cout << "The addr is " << addr << endl;
 	pthread_rwlock_wrlock(&suspectLock);
 	//If our suspect is new
 	if(suspects.find(addr) == suspects.end())

@@ -973,6 +973,7 @@ bool ClassificationEngine::ReceiveSuspectData()
 	{
 		pthread_rwlock_wrlock(&lock);
 		uint addr = getSerializedAddr(buffer);
+		cout << "Addr is " << addr << endl;
 		SuspectHashTable::iterator it = suspects.find(addr);
 
 		//If this is a new suspect make an entry in the table
@@ -980,6 +981,7 @@ bool ClassificationEngine::ReceiveSuspectData()
 			suspects[addr] = new Suspect();
 		//Deserialize the data
 		suspects[addr]->deserializeSuspectWithData(buffer, LOCAL_DATA);
+		cout << "Set deserialized suspect IP to " << suspects[addr]->IP_address.s_addr << endl;
 		pthread_rwlock_unlock(&lock);
 	}
 	catch(std::exception e)

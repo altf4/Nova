@@ -37,7 +37,7 @@ Suspect::~Suspect()
 }
 
 //Constructor from a TrafficEvent
-Suspect::Suspect(struct Packet packet)
+Suspect::Suspect(Packet &packet)
 {
 	IP_address = packet.ip_hdr.ip_src;
 	classification = -1;
@@ -92,7 +92,7 @@ string Suspect::ToString()
 
 //Add an additional piece of evidence to this suspect
 //	Does not take actions like reclassifying or calculating features.
-void Suspect::AddEvidence(struct Packet packet)
+void Suspect::AddEvidence(Packet &packet)
 {
 	evidence.push_back(packet);
 	needs_feature_update = true;
