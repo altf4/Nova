@@ -220,7 +220,7 @@ void FeatureSet::CalculatePacketSizeDeviation()
 	features[PACKET_SIZE_DEVIATION] = sqrt(variance);
 }
 
-void FeatureSet::UpdateEvidence(struct Packet packet)
+void FeatureSet::UpdateEvidence(Packet packet)
 {
 	in_port_t dst_port;
 	uint packet_count;
@@ -244,6 +244,12 @@ void FeatureSet::UpdateEvidence(struct Packet packet)
 	{
 		dst_port = -1;
 	}
+	// If TCP
+	else if (packet.ip_hdr.ip_p == 6)
+	{
+		dst_port =  ntohs(packet.tcp_hdr.dest);
+	}
+
 	IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
 	packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
 

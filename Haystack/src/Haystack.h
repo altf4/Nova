@@ -40,7 +40,7 @@ void *TCPTimeout( void *ptr );
 bool SendToCE(Suspect *suspect);
 
 //Updates a suspect with evidence to be processed later
-void updateSuspect(struct Packet packet);
+void updateSuspect(Packet packet);
 
 /// Thread for listening for GUI commands
 void *SuspectLoop(void *ptr);

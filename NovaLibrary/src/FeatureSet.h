@@ -104,7 +104,7 @@ public:
 	void CalculatePacketIntervalDeviation();
 
 	/// Processes incoming evidence before calculating the features
-	void UpdateEvidence(struct Packet packet);
+	void UpdateEvidence(Packet packet);
 	//Adds the local data to the silent alarm data before calculation
 	// this is done to improve the performance of UpdateEvidence
 	void UpdateFeatureData(bool include);

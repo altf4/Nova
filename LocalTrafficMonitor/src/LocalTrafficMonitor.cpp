@@ -37,7 +37,7 @@ uint classificationTimeout; //Time between checking suspects for updated data
 int len, dest_port;
 struct ether_header *ethernet;  	/* net/ethernet.h */
 struct ip *ip_hdr; 					/* The IP header */
-struct Packet packet_info;
+Packet packet_info;
 char tcp_socket[55];
 struct sockaddr_un remote;
 
@@ -473,10 +473,9 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 }
 
 //Stores events to be processed before sending
-void LocalTrafficMonitor::updateSuspect(Packet &packet)
+void LocalTrafficMonitor::updateSuspect(Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
-	cout << "The addr is " << addr << endl;
 	pthread_rwlock_wrlock(&suspectLock);
 	//If our suspect is new
 	if(suspects.find(addr) == suspects.end())
@@ -647,7 +646,7 @@ void LocalTrafficMonitor::LoadConfig(char* input)
 
 //Checks the udp packet payload associated with event for a port knocking request,
 // opens/closes the port for the sender depending on the payload
-void LocalTrafficMonitor::knockRequest(Packet &packet, u_char * payload)
+void LocalTrafficMonitor::knockRequest(Packet packet, u_char * payload)
 {
 	stringstream ss;
 	string commandLine;
