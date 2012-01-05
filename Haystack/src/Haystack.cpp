@@ -486,10 +486,11 @@ bool Nova::Haystack::SendToCE(Suspect *suspect)
 void Nova::Haystack::updateSuspect(struct Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
+	cout << "The addr is " << addr << endl;
 	pthread_rwlock_wrlock(&suspectLock);
 	//If our suspect is new
 	if(suspects.find(addr) == suspects.end())
-		suspects[addr] = new Suspect();
+		suspects[addr] = new Suspect(packet);
 	//Else our suspect exists
 	else
 		suspects[addr]->AddEvidence(packet);

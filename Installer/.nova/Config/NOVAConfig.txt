@@ -184,14 +184,14 @@ TCP_CHECK_FREQ 3
 ############################################
 # READ_PCAP #
 ############################################
-#
+#D
 # Specify if reading packets in from a PCAP file
 #	0: Do not read in PCAP file
 #	1: Read in PCAP file
 #
 # EXAMPLE:
 #READ_PCAP 0
-READ_PCAP 0
+READ_PCAP 1
 
 ############################################
 # PCAP_FILE #
@@ -202,7 +202,7 @@ READ_PCAP 0
 # 
 # EXAMPLE:
 #PCAP_FILE pcapfile
-PCAP_FILE pcapfile
+PCAP_FILE ../pcapfile
 
 ############################################
 # GO_TO_LIVE #
