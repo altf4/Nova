@@ -241,7 +241,16 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 			prefix = prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
+				// This is a quick fix for the case when there's no space; it will append the required space and
+				// the default port value, and then display an INFO message for the user
+				if(line.size() == prefix.size())
+				{
+					line += " 12024";
+					LOG4CXX_INFO(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
+				}
+
 				line = line.substr(prefix.size() + 1, line.size());
+
 				if (atoi(line.c_str()) > 0)
 				{
 					options[prefix].data = line.c_str();
@@ -250,7 +259,7 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 				// If the address given is 0, then just assign the default and send it through
 				else if(atoi(line.c_str()) == 0)
 				{
-					options[prefix].data = "12011";
+					options[prefix].data = "12024";
 					LOG4CXX_INFO(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
 					options[prefix].isValid = true;
 				}
