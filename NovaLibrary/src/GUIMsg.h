@@ -24,7 +24,8 @@ enum GUIMsgType
 	EXIT = 'e',
 	CLEAR_ALL = 'c',
 	CLEAR_SUSPECT = 's',
-	INVALID = '0'
+	INVALID = '0',
+	WRITE_SUSPECTS = 'w'
 };
 
 using namespace std;

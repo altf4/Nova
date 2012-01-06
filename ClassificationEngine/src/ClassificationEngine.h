@@ -86,6 +86,9 @@ void SendToUI(Suspect *suspect);
 //Loads configuration variables from NOVAConfig_CE.txt or specified config file
 void LoadConfig(char * input);
 
+// Dump the suspect information to a file
+void saveSuspectsToFile(string filename);
+
 }
 }
 #endif /* CLASSIFICATIONENGINE_H_ */

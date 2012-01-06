@@ -302,6 +302,7 @@ Module</string>
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionSave_Suspects"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -376,6 +377,11 @@ Module</string>
   <action name="actionShow_All_Suspects">
    <property name="text">
     <string>Show All Suspects</string>
+   </property>
+  </action>
+  <action name="actionSave_Suspects">
+   <property name="text">
+    <string>Save Suspects</string>
    </property>
   </action>
  </widget>

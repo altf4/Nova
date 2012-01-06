@@ -167,6 +167,9 @@ public:
     ///Updates the UI with the latest suspect information
     void drawSuspects();
 
+    // Tells CE to save suspects to file
+    void saveSuspects();
+
     //Displays the topology of the honeyd configuration
     void drawNodes();
 
@@ -218,6 +221,7 @@ private slots:
 	void on_actionStopNova_triggered();
 	void on_actionConfigure_triggered();
 	void on_actionExit_triggered();
+	void on_actionSave_Suspects_triggered();
 	void on_actionHide_Old_Suspects_triggered();
 	void on_actionShow_All_Suspects_triggered();
 

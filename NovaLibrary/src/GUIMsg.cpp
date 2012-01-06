@@ -56,6 +56,17 @@ GUIMsg::GUIMsg(GUIMsgType t, string v)
 			val = v;
 			break;
 
+		case WRITE_SUSPECTS:
+			type = t;
+			if(v.compare(NONE))
+			{
+				type = INVALID;
+				val = NONE;
+				break;
+			}
+			val = v;
+			break;
+
 		//These don't require an argument so we ignore it
 		case EXIT:
 			type = t;
@@ -104,7 +115,15 @@ bool GUIMsg::setMessage(GUIMsgType t, string v)
 	{
 		//Requires an argument, invalid if it has none.
 		case CLEAR_SUSPECT:
-			if(val.compare(""))
+			if(v.compare("") == 0)
+				return false;
+			type = t;
+			val = v;
+			return true;
+
+		//Requires an argument, invalid if it has none.
+		case WRITE_SUSPECTS:
+			if(v.compare("") == 0)
 				return false;
 			type = t;
 			val = v;
@@ -162,6 +181,15 @@ uint GUIMsg::serialzeMessage(u_char * buf)
 				}
 				bzero(buf, 1);
 				return 0;
+			case WRITE_SUSPECTS:
+				if(val.compare(NONE))
+				{
+					strcpy((char*)buf+offset, val.c_str());
+					offset += val.size();
+					return offset;
+				}
+				bzero(buf, 1);
+				return 0;
 			default:
 				return offset;
 		}
@@ -181,6 +209,22 @@ uint GUIMsg::deserializeMessage(u_char * buf)
 	{
 		//If message that has an argument.
 		case CLEAR_SUSPECT:
+			strncpy(c, (char *)buf+offset, MAX_VAL_SIZE);
+			val = c;
+
+			//If argument is present
+			if(val.compare(NONE))
+			{
+				offset += val.size();
+				return offset;
+			}
+
+			//else no argument
+			bzero(buf, 1);
+			type = INVALID;
+			return 0;
+
+		case WRITE_SUSPECTS:
 			strncpy(c, (char *)buf+offset, MAX_VAL_SIZE);
 			val = c;
 
