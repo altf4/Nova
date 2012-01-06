@@ -251,7 +251,6 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 				else if(atoi(line.c_str()) == 0)
 				{
 					options[prefix].data = "12011";
-					LOG4CXX_ERROR(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
 					LOG4CXX_INFO(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
 					options[prefix].isValid = true;
 				}
