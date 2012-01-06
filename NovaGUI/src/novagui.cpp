@@ -1234,6 +1234,25 @@ void NovaGUI::drawSuspects()
 	pthread_rwlock_unlock(&lock);
 }
 
+void NovaGUI::saveSuspects()
+{
+	 QString filename = QFileDialog::getSaveFileName(this,
+			tr("Save Suspect List"), QDir::currentPath(),
+			tr("Documents (*.txt)"));
+
+	if (filename.isNull())
+	{
+		return;
+	}
+
+
+	message.setMessage(WRITE_SUSPECTS, filename.toStdString());
+	msgLen = message.serialzeMessage(msgBuffer);
+
+	//Sends the message to all Nova processes
+	sendToCE();
+}
+
 void NovaGUI::clearSuspectList()
 {
 	pthread_rwlock_wrlock(&lock);
@@ -1305,6 +1324,11 @@ void  NovaGUI::on_actionExit_triggered()
 {
 	closeNova();
 	exit(1);
+}
+
+void NovaGUI::on_actionSave_Suspects_triggered()
+{
+	saveSuspects();
 }
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()

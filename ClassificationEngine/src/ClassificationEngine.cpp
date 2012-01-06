@@ -6,6 +6,7 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
+#include <iostream>
 //#include <string>
 
 using namespace log4cxx;
@@ -1003,6 +1004,8 @@ void ClassificationEngine::ReceiveGUICommand()
 	GUIMsg msg = GUIMsg();
 	u_char msgBuffer[MAX_GUIMSG_SIZE];
 
+	bzero(msgBuffer, MAX_GUIMSG_SIZE);
+
 	socketSize = sizeof(msgRemote);
 
 	//Blocking call
@@ -1030,10 +1033,35 @@ void ClassificationEngine::ReceiveGUICommand()
 		case CLEAR_SUSPECT:
 			//TODO still no functionality for this yet
 			break;
+		case WRITE_SUSPECTS:
+			saveSuspectsToFile(msg.getValue());
+			break;
 		default:
 			break;
 	}
 	close(msgSocket);
+}
+
+void ClassificationEngine::saveSuspectsToFile(string filename)
+{
+	LOG4CXX_INFO(m_logger, "Got request to save file to " + filename);
+
+	ofstream *out = new ofstream(filename.c_str());
+
+	if(!out->is_open())
+	{
+		LOG4CXX_ERROR(m_logger, "Error: Unable to open file " + filename + " to save suspect data.");
+		return;
+	}
+
+	pthread_rwlock_rdlock(&lock);
+	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+	{
+		*out << it->second->ToString() << endl;
+	}
+	pthread_rwlock_unlock(&lock);
+
+	out->close();
 }
 
 //Send a silent alarm about the argument suspect
