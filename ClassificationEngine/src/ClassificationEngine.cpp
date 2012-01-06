@@ -1136,7 +1136,8 @@ void ClassificationEngine::LoadConfig(char * input)
 		if(!NovaConfig->options[prefix].isValid && !(prefix.compare(prefixes[3])))
 		{
 			// This port is unassigned, and does not show up in any virus databases that I saw
-			sAlarmPort = 12011;
+			NovaConfig->options[prefix].data = "12011";
+			LOG4CXX_INFO(m_logger, prefix << " was not present! Using default port.");
 		}
 
 		else if (!NovaConfig->options[prefix].isValid)
