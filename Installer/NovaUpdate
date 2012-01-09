@@ -1,3 +1,4 @@
+#!/bin/bash
 ./RemoveNova
 ./UpdateInstaller
-./InstallNova
+./InstallNova $1

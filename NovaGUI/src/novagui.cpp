@@ -1431,7 +1431,7 @@ void closeNova()
 		{
 			char buffer[1024];
 			char * line = fgets(buffer, sizeof(buffer), out);
-			string cmd = "kill " + string(line);
+			string cmd = "sudo kill " + string(line);
 			if(cmd.size() > 5)
 				system(cmd.c_str());
 		}
@@ -1467,9 +1467,9 @@ void startNova()
 
 		if(!useTerminals)
 		{
-			system(("nohup honeyd -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db"
+			system(("nohup sudo honeyd -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db"
 					" -s "+writePath+"/Logs/honeydservice.log > /dev/null &").c_str());
-			system(("nohup honeyd -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db"
+			system(("nohup sudo honeyd -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db"
 					" -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 > /dev/null &").c_str());
 			system("nohup LocalTrafficMonitor > /dev/null &");
 			system("nohup Haystack > /dev/null &");
@@ -1478,9 +1478,9 @@ void startNova()
 		}
 		else
 		{
-			system(("(gnome-terminal -t \"HoneyD Haystack\" --geometry \"+0+0\" -x honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config"
+			system(("(gnome-terminal -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config"
 					" -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydservice.log )&").c_str());
-			system(("(gnome-terminal -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config"
+			system(("(gnome-terminal -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config"
 					" -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 )&").c_str());
 			system("(gnome-terminal -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor)&");
 			system("(gnome-terminal -t \"Haystack\" --geometry \"+1000+600\" -x Haystack)&");
