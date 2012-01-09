@@ -51,7 +51,7 @@ void siginthandler(int param)
 {
 	//Clear any existing DNAT routes on exit
 	//	Otherwise susepcts will keep getting routed into a black hole
-	system("iptables -F");
+	system("sudo iptables -F");
 	exit(1);
 }
 
@@ -88,13 +88,14 @@ int main(int argc, char *argv[])
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
 	string commandLine;
-
 	//system commands to allow DM to function.
-	commandLine = "iptables -A FORWARD -i lo -j DROP";
+	commandLine = "sudo iptables -A FORWARD -i lo -j DROP";
 	system(commandLine.c_str());
-	commandLine = "route add -host "+doppelgangerAddrString+" dev lo";
+
+	commandLine = "sudo route add -host "+doppelgangerAddrString+" dev lo";
 	system(commandLine.c_str());
-	commandLine = "iptables -t nat -F";
+
+	commandLine = "sudo iptables -t nat -F";
 	system(commandLine.c_str());
 
     int len;
@@ -184,7 +185,7 @@ int main(int argc, char *argv[])
 		{
 			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
-			commandLine = "iptables -t nat -A PREROUTING -d ";
+			commandLine = "sudo iptables -t nat -A PREROUTING -d ";
 			commandLine += hostAddrString;
 			commandLine += " -s ";
 			commandLine += suspectAddr;
@@ -197,7 +198,7 @@ int main(int argc, char *argv[])
 		{
 			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
-			commandLine = "iptables -t nat -D PREROUTING -d ";
+			commandLine = "sudo iptables -t nat -D PREROUTING -d ";
 			commandLine += hostAddrString;
 			commandLine += " -s ";
 			commandLine += suspectAddr;
@@ -258,7 +259,6 @@ void DoppelgangerModule::ReceiveGUICommand()
     GUIMsg msg = GUIMsg();
     u_char msgBuffer[MAX_GUIMSG_SIZE];
 
-
     socketSize = sizeof(msgRemote);
     //Blocking call
     if ((msgSocket = accept(IPCsock, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
@@ -276,7 +276,7 @@ void DoppelgangerModule::ReceiveGUICommand()
     switch(msg.getType())
     {
     	case EXIT:
-    		system("iptables -F");
+    		system("sudo iptables -F");
     		exit(1);
     	case CLEAR_ALL:
     		pthread_rwlock_wrlock(&lock);
@@ -421,8 +421,6 @@ void DoppelgangerModule::LoadConfig(char* input)
 	}
 
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
-
-
 
 	doppelgangerAddrString = NovaConfig->options["DOPPELGANGER_IP"].data;
 	struct in_addr *tempr = NULL;

@@ -1,7 +1,13 @@
+#!/bin/bash
+#make nova group
+groupadd nova
+usermod -a -G nova $1
+
 #make folder in etc with path locations to nova files
 mkdir /etc/nova
 cp Read/paths /etc/nova
 cp Read/nmap-os-db /etc/nova
+cp Read/sudoers_nova	/etc/sudoers.d
 
 #Copy the hidden directories and files
 mkdir $HOME/.nova
@@ -23,5 +29,9 @@ cp bin/ClassificationEngine /usr/local/bin
 cp bin/DoppelgangerModule /usr/local/bin
 cp bin/Haystack /usr/local/bin
 cp bin/LocalTrafficMonitor /usr/local/bin
+
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/local/bin/LocalTrafficMonitor
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/local/bin/Haystack
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
 
 echo "Nova Installed!"
