@@ -15,9 +15,6 @@
 #define OPEN true
 #define CLOSE false
 
-//Number of values read from the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 12
-
 //Used in classification algorithm. Store it here so we only need to calculate it once
 const double sqrtDIM = sqrt(DIM);
 
