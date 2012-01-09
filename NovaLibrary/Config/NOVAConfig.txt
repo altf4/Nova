@@ -191,7 +191,7 @@ TCP_CHECK_FREQ 3
 #
 # EXAMPLE:
 #READ_PCAP 0
-READ_PCAP 1
+READ_PCAP 0
 
 ############################################
 # PCAP_FILE #

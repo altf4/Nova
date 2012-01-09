@@ -402,10 +402,10 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		exit(1);
 	}
 	stringstream ss;
-	ss << "iptables -A INPUT -p udp --dport " << sAlarmPort << " -j REJECT --reject-with icmp-port-unreachable";
+	ss << "sudo iptables -A INPUT -p udp --dport " << sAlarmPort << " -j REJECT --reject-with icmp-port-unreachable";
 	system(ss.str().c_str());
 	ss.str("");
-	ss << "iptables -A INPUT -p tcp --dport " << sAlarmPort << " -j REJECT --reject-with tcp-reset";
+	ss << "sudo iptables -A INPUT -p tcp --dport " << sAlarmPort << " -j REJECT --reject-with tcp-reset";
 	system(ss.str().c_str());
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
@@ -866,7 +866,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				stringstream ss;
 				string commandLine;
 
-				ss << "iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				ss << "sudo iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
@@ -906,7 +906,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				close(sockfd);
 				knockPort(CLOSE);
 				ss.str("");
-				ss << "iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+				ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
 				system(commandLine.c_str());
 			}
