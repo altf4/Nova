@@ -12,9 +12,6 @@
 #include <NovaUtil.h>
 #include <Suspect.h>
 
-//Number of values read from the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 9
-
 using namespace std;
 
 namespace Nova{

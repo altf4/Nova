@@ -10,9 +10,6 @@
 
 using namespace std;
 
-//Number of lines read in the NOVAConfig file
-#define CONFIG_FILE_LINE_COUNT 6
-
 //Hash table for keeping track of suspects
 //	the bool represents if the suspect is hostile or not
 typedef google::dense_hash_map<in_addr_t, bool, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
