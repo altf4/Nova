@@ -8,6 +8,7 @@ mkdir /etc/nova
 cp Read/paths /etc/nova
 cp Read/nmap-os-db /etc/nova
 cp Read/sudoers_nova	/etc/sudoers.d
+chmod 0440 /etc/sudoers.d/sudoers_nova 
 
 #Copy the hidden directories and files
 mkdir $HOME/.nova
