@@ -194,7 +194,7 @@ p, li { white-space: pre-wrap; }
          <string>Port</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="saIPEdit">
+       <widget class="QLineEdit" name="saIPEdit">
         <property name="geometry">
          <rect>
           <x>210</x>
@@ -219,7 +219,7 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The IP address to send silent alarams from.&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="saPortEdit">
+       <widget class="QLineEdit" name="saPortEdit">
         <property name="geometry">
          <rect>
           <x>210</x>
@@ -240,7 +240,7 @@ p, li { white-space: pre-wrap; }
         </property>
        </widget>
       </widget>
-      <widget class="QTextEdit" name="interfaceEdit">
+      <widget class="QLineEdit" name="interfaceEdit">
        <property name="geometry">
         <rect>
          <x>220</x>
@@ -318,7 +318,7 @@ p, li { white-space: pre-wrap; }
          <string>Time till Timeout</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="tcpFrequencyEdit">
+       <widget class="QLineEdit" name="tcpFrequencyEdit">
         <property name="geometry">
          <rect>
           <x>210</x>
@@ -338,7 +338,7 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;How long to wait (in seconds) between checking for timed out TCP sessions.&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="tcpTimeoutEdit">
+       <widget class="QLineEdit" name="tcpTimeoutEdit">
         <property name="geometry">
          <rect>
           <x>210</x>
@@ -409,7 +409,7 @@ p, li { white-space: pre-wrap; }
       <property name="title">
        <string>Packet File Options</string>
       </property>
-      <widget class="QTextEdit" name="pcapEdit">
+      <widget class="QLineEdit" name="pcapEdit">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -579,7 +579,7 @@ p, li { white-space: pre-wrap; }
          <string>Frequency</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="ceIntensityEdit">
+       <widget class="QLineEdit" name="ceIntensityEdit">
         <property name="geometry">
          <rect>
           <x>190</x>
@@ -599,7 +599,7 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;How many similar points to find in classification. A higher value will increase accuracy but decrease performance.&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="ceFrequencyEdit">
+       <widget class="QLineEdit" name="ceFrequencyEdit">
         <property name="geometry">
          <rect>
           <x>190</x>
@@ -665,7 +665,7 @@ p, li { white-space: pre-wrap; }
          <string>Error</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="ceThresholdEdit">
+       <widget class="QLineEdit" name="ceThresholdEdit">
         <property name="geometry">
          <rect>
           <x>190</x>
@@ -685,7 +685,7 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;When to consider a suspect hostile. Range is between 0 and 1. 0 is least hostile, 1 is most hostile. Default is 0.5.&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="ceErrorEdit">
+       <widget class="QLineEdit" name="ceErrorEdit">
         <property name="geometry">
          <rect>
           <x>190</x>
@@ -706,7 +706,7 @@ p, li { white-space: pre-wrap; }
         </property>
        </widget>
       </widget>
-      <widget class="QTextEdit" name="dataEdit">
+      <widget class="QLineEdit" name="dataEdit">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -805,7 +805,7 @@ p, li { white-space: pre-wrap; }
          <string>Configuration File</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="dmConfigEdit">
+       <widget class="QLineEdit" name="dmConfigEdit">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -877,7 +877,7 @@ p, li { white-space: pre-wrap; }
          <string>IP Address</string>
         </property>
        </widget>
-       <widget class="QTextEdit" name="dmIPEdit">
+       <widget class="QLineEdit" name="dmIPEdit">
         <property name="geometry">
          <rect>
           <x>150</x>
@@ -1061,7 +1061,7 @@ p, li { white-space: pre-wrap; }
         <string>Configuration File</string>
        </property>
       </widget>
-      <widget class="QTextEdit" name="hsConfigEdit">
+      <widget class="QLineEdit" name="hsConfigEdit">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -1395,7 +1395,7 @@ p, li { white-space: pre-wrap; }
         </property>
        </item>
       </widget>
-      <widget class="QTextEdit" name="uptimeEdit">
+      <widget class="QLineEdit" name="uptimeEdit">
        <property name="geometry">
         <rect>
          <x>190</x>
@@ -1405,7 +1405,7 @@ p, li { white-space: pre-wrap; }
         </rect>
        </property>
       </widget>
-      <widget class="QTextEdit" name="tcpActionEdit">
+      <widget class="QLineEdit" name="tcpActionEdit">
        <property name="geometry">
         <rect>
          <x>260</x>
@@ -1415,7 +1415,7 @@ p, li { white-space: pre-wrap; }
         </rect>
        </property>
       </widget>
-      <widget class="QTextEdit" name="ethernetEdit">
+      <widget class="QLineEdit" name="ethernetEdit">
        <property name="geometry">
         <rect>
          <x>200</x>
@@ -1425,7 +1425,7 @@ p, li { white-space: pre-wrap; }
         </rect>
        </property>
       </widget>
-      <widget class="QTextEdit" name="profileEdit">
+      <widget class="QLineEdit" name="profileEdit">
        <property name="geometry">
         <rect>
          <x>190</x>
@@ -1472,7 +1472,7 @@ p, li { white-space: pre-wrap; }
         </property>
        </column>
       </widget>
-      <widget class="QTextEdit" name="personalityEdit">
+      <widget class="QLineEdit" name="personalityEdit">
        <property name="geometry">
         <rect>
          <x>220</x>

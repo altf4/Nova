@@ -510,98 +510,98 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "INTERFACE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.interfaceEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.interfaceEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "DATAFILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.dataEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.dataEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "BROADCAST_ADDR";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.saIPEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.saIPEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "SILENT_ALARM_PORT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.saPortEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.saPortEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "K";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.ceIntensityEdit->toPlainText().toStdString()  << endl;
+				*out << prefix << " " << this->ui.ceIntensityEdit->displayText().toStdString()  << endl;
 				continue;
 			}
 
 			prefix = "EPS";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.ceErrorEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.ceErrorEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "CLASSIFICATION_TIMEOUT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.ceFrequencyEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.ceFrequencyEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "CLASSIFICATION_THRESHOLD";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.ceThresholdEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.ceThresholdEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "DM_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.dmConfigEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.dmConfigEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "DOPPELGANGER_IP";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.dmIPEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.dmIPEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "HS_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.hsConfigEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.hsConfigEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "TCP_TIMEOUT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.tcpTimeoutEdit->toPlainText().toStdString() << endl;
+				*out << prefix << " " << this->ui.tcpTimeoutEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
 			prefix = "TCP_CHECK_FREQ";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.tcpFrequencyEdit->toPlainText().toStdString()  << endl;
+				*out << prefix << " " << this->ui.tcpFrequencyEdit->displayText().toStdString()  << endl;
 				continue;
 			}
 
 			prefix = "PCAP_FILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << ui.pcapEdit->toPlainText().toStdString()  << endl;
+				*out << prefix << " " << ui.pcapEdit->displayText().toStdString()  << endl;
 				continue;
 			}
 
@@ -778,10 +778,10 @@ void NovaConfig::saveProfile()
 	{
 		profile * p = &profiles[currentProfile];
 		//currentProfile->name is set in updateProfile
-		p->ethernet = ui.ethernetEdit->toPlainText().toStdString();
-		p->tcpAction = ui.tcpActionEdit->toPlainText().toStdString();
-		p->uptime = ui.uptimeEdit->toPlainText().toStdString();
-		p->personality = ui.personalityEdit->toPlainText().toStdString();
+		p->ethernet = ui.ethernetEdit->displayText().toStdString();
+		p->tcpAction = ui.tcpActionEdit->displayText().toStdString();
+		p->uptime = ui.uptimeEdit->displayText().toStdString();
+		p->personality = ui.personalityEdit->displayText().toStdString();
 		//Save the port table
 		for(int i = 0; i < ui.portTreeWidget->topLevelItemCount(); i++)
 		{
@@ -1582,8 +1582,8 @@ void NovaConfig::on_profileEdit_textChanged()
 {
 	if(!loadingItems && !profiles.empty())
 	{
-		profiles[currentProfile].item->setText(0,ui.profileEdit->toPlainText());
-		profiles[currentProfile].profileItem->setText(0,ui.profileEdit->toPlainText());
+		profiles[currentProfile].item->setText(0,ui.profileEdit->displayText());
+		profiles[currentProfile].profileItem->setText(0,ui.profileEdit->displayText());
 	}
 }
 
