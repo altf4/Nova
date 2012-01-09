@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
 	}
 	if(!usePcapFile)
 	{
+		//system("setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/LocalTrafficMonitor");
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
 		handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
 
