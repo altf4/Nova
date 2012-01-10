@@ -35,7 +35,7 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 			"CLASSIFICATION_TIMEOUT", "BROADCAST_ADDR", "SILENT_ALARM_PORT",
 			"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
 			"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
-			"DOPPELGANGER_IP", "DM_ENABLED" };
+			"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES" };
 
 	// Populate the options map
 	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
@@ -400,6 +400,21 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				{
+					options[prefix].data = line.c_str();
+					options[prefix].isValid = true;
+				}
+				continue;
+
+			}
+
+			// ENABLED_FEATURES
+			prefixIndex++;
+			prefix = prefixes[prefixIndex];
+			if (!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if (line.size() == DIM)
 				{
 					options[prefix].data = line.c_str();
 					options[prefix].isValid = true;

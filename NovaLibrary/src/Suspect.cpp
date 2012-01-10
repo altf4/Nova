@@ -52,7 +52,7 @@ Suspect::Suspect(Packet packet)
 }
 
 //Converts suspect into a human readable string and returns it
-string Suspect::ToString()
+string Suspect::ToString(bool featureEnabled[])
 {
 	stringstream ss;
 	if(&IP_address != NULL)
@@ -64,20 +64,38 @@ string Suspect::ToString()
 		ss << "Suspect: Null IP\n";
 	}
 
-	if (isLive)
-		ss << " Suspect Status: Live Capture" << "\n";
-	else
-		ss << " Suspect Status: Loaded from PCAP" << "\n";
+	//if (isLive)
+	//	ss << " Suspect Status: Live Capture" << "\n";
+	//else
+	//	ss << " Suspect Status: Loaded from PCAP" << "\n";
 
-	ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
-	ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
-	ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
-	ss << " Port Traffic Distribution: "  <<  features.features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-	ss << " Haystack Events: " << features.features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-	ss << " Mean Packet Size: " << features.features[PACKET_SIZE_MEAN] << "\n";
-	ss << " Packet Size Variance: " << features.features[PACKET_SIZE_DEVIATION] << "\n";
-	ss << " Mean Packet Interval: " << features.features[PACKET_INTERVAL_MEAN] << "\n";
-	ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
+	if (featureEnabled[DISTINCT_IPS])
+		ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
+
+	if (featureEnabled[IP_TRAFFIC_DISTRIBUTION])
+		ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
+
+	if (featureEnabled[DISTINCT_PORTS])
+		ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
+
+	if (featureEnabled[PORT_TRAFFIC_DISTRIBUTION])
+		ss << " Port Traffic Distribution: "  <<  features.features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
+
+	if (featureEnabled[HAYSTACK_EVENT_FREQUENCY])
+		ss << " Haystack Events: " << features.features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+
+	if (featureEnabled[PACKET_SIZE_MEAN])
+		ss << " Mean Packet Size: " << features.features[PACKET_SIZE_MEAN] << "\n";
+
+	if (featureEnabled[PACKET_SIZE_DEVIATION])
+		ss << " Packet Size Variance: " << features.features[PACKET_SIZE_DEVIATION] << "\n";
+
+	if (featureEnabled[PACKET_INTERVAL_MEAN])
+		ss << " Mean Packet Interval: " << features.features[PACKET_INTERVAL_MEAN] << "\n";
+
+	if (featureEnabled[PACKET_INTERVAL_DEVIATION])
+		ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
+
 	ss << " Suspect is ";
 	if(!isHostile)
 	{
@@ -99,9 +117,9 @@ void Suspect::AddEvidence(Packet packet)
 }
 
 //Calculates the feature set for this suspect
-void Suspect::CalculateFeatures(bool isTraining)
+void Suspect::CalculateFeatures(bool isTraining, bool featuresEnabled[])
 {
-	features.CalculateAll();
+	features.CalculateAll(featuresEnabled);
 
 	if(isTraining)
 	{
