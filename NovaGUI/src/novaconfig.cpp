@@ -636,7 +636,7 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "USE_TERMINALS";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				if(ui.liveCapCheckBox->isChecked())
+				if(ui.terminalCheckBox->isChecked())
 				{
 					*out << "USE_TERMINALS 1" << endl;
 				}
