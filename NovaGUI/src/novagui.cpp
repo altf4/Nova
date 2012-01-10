@@ -49,6 +49,9 @@ pthread_rwlock_t lock;
 LoggerPtr m_logger(Logger::getLogger("main"));
 bool novaRunning = false;
 
+
+bool featureEnabled[DIM];
+
 /************************************************
  * Constructors, Destructors and Closing Actions
  ************************************************/
@@ -1093,7 +1096,7 @@ void NovaGUI::drawAllSuspects()
 	pthread_rwlock_wrlock(&lock);
 	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		str = (QString)it->second.suspect->ToString().c_str();
+		str = (QString)it->second.suspect->ToString(featureEnabled).c_str();
 
 		suspect = it->second.suspect;
 		//If Benign
@@ -1151,7 +1154,7 @@ void NovaGUI::drawSuspects()
 		if(it->second.suspect->needs_feature_update)
 		{
 			//Extract Information
-			str = (QString)it->second.suspect->ToString().c_str();
+			str = (QString)it->second.suspect->ToString(featureEnabled).c_str();
 			//Set pointers for fast access
 			item = it->second.item;
 			mainItem = it->second.mainItem;
@@ -1444,26 +1447,31 @@ void startNova()
 {
 	if(!novaRunning)
 	{
-		string path = getenv("HOME");
-		path += "/.nova/Config/NOVAConfig.txt";
-		ifstream * config = new ifstream((char*)path.c_str());
-		if(config->is_open())
+		string homePath = getHomePath();
+		string input = homePath + "/Config/NOVAConfig.txt";
+
+		NOVAConfiguration * NovaConfig = new NOVAConfiguration();
+		NovaConfig->LoadConfig((char*)input.c_str(), homePath);
+
+		if (!NovaConfig->options["USE_TERMINALS"].isValid || !NovaConfig->options["ENABLED_FEATURES"].isValid)
 		{
-			string line, prefix;
-			prefix = "USE_TERMINALS";
-			while(config->good())
+			LOG4CXX_ERROR(m_logger, "ERROR: Unable to load configuration file.")
+		}
+
+		useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
+		string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
+
+		for (uint i = 0; i < DIM; i++)
+		{
+			if ('1' == enabledFeatureMask.at(i))
 			{
-				getline(*config, line);
-				if(!line.substr(0,prefix.size()).compare(prefix))
-				{
-					line = line.substr(prefix.size()+1,line.size());
-					useTerminals = atoi(line.c_str());
-					continue;
-				}
+				featureEnabled[i] = true;
+			}
+			else
+			{
+				featureEnabled[i] = false;
 			}
 		}
-		config->close();
-		delete config;
 
 		if(!useTerminals)
 		{

@@ -28,11 +28,13 @@ using namespace std;
 
 /// Number of distinct IP addresses contacted
 #define DISTINCT_IPS 5
+
 /// Number of distinct ports contacted
 #define DISTINCT_PORTS 6
 
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_MEAN 7
+
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_DEVIATION 8
 
@@ -76,32 +78,11 @@ public:
 	///Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
 	//Calculates all features in the feature set
-	void CalculateAll();
+	void CalculateAll(bool featuresEnabled[]);
 	///Calculates the local time interval for time-dependent features using the latest time stamps
 	void CalculateTimeInterval();
 
-	///Calculates the distribution of traffic across IP address
-	void CalculateIPTrafficDistribution();
-	///Calculates the distribution of traffic across ports
-	void CalculatePortTrafficDistribution();
-
-	///Calculates distinct IPs contacted
-	void CalculateDistinctIPs();
-	///Calculates distinct ports contacted
-	void CalculateDistinctPorts();
-
-	///Calculates the rate that haystack nodes are contacted
-	void CalculateHaystackEventFrequency();
-
-	///Calculates the mean packet size
-	void CalculatePacketSizeMean();
-	///Calculates the standard deviation of the packet sizes
-	void CalculatePacketSizeDeviation();
-
-	///Calculates the average time between packets
-	void CalculatePacketIntervalMean();
-	///Calculates the standard deviation of time between packets
-	void CalculatePacketIntervalDeviation();
+	void calculate(uint featureDimension);
 
 	/// Processes incoming evidence before calculating the features
 	void UpdateEvidence(Packet packet);

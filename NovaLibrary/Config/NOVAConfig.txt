@@ -255,3 +255,14 @@ SA_MAX_ATTEMPTS 3
 #SA_SLEEP_DURATION 0.5
 SA_SLEEP_DURATION 0.5
 
+############################################
+# ENABLED_FEATURES #
+############################################
+# 
+# Allows the ability to enable or disable features.
+# Each character represents a feature,
+# 	0: Disabled
+#	1: Enabled
+#
+ENABLED_FEATURES 000000100
+
