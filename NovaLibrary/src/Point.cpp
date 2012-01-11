@@ -19,6 +19,13 @@ Point::Point()
 	classification = 0;
 }
 
+Point::Point(uint enabledFeatures)
+{
+	annPoint = annAllocPt(enabledFeatures);
+	classification = 0;
+}
+
+
 Point::~Point()
 {
 	annDeallocPt(annPoint);
