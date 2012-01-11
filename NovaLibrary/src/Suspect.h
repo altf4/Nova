@@ -74,7 +74,7 @@ public:
 	void AddEvidence(Packet packet);
 
 	///	Calculates the feature set for this suspect
-	void CalculateFeatures(bool isTraining, bool featuresEnabled[]);
+	void CalculateFeatures(bool isTraining, uint32_t featuresEnabled);
 
 	//Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//	returns the number of bytes set in the buffer

@@ -107,6 +107,7 @@ istream* queryIn = NULL;			//input for query points
 
 // Used for disabling features
 bool featureEnabled[DIM];
+uint32_t featureMask;
 int enabledFeatures = 0;
 
 const char *outFile;				//output for data points during training
@@ -297,7 +298,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			{
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_wrlock(&lock);
-				it->second->CalculateFeatures(isTraining, featureEnabled);
+				it->second->CalculateFeatures(isTraining, featureMask);
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_rdlock(&lock);
 			}
@@ -350,7 +351,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 			{
 				if(it->second->needs_feature_update)
 				{
-					it->second->CalculateFeatures(isTraining, featureEnabled);
+					it->second->CalculateFeatures(isTraining, featureMask);
 					if(it->second->annPoint == NULL)
 					{
 						it->second->annPoint = annAllocPt(DIM);
@@ -604,18 +605,27 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 //Calculates normalized data points for suspects
 void Nova::ClassificationEngine::NormalizeDataPoints()
 {
+
+
+
 	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
-
-		for(int i = 0;i < enabledFeatures;i++)
+		// Used for matching the 0->DIM index with the 0->enabledFeatures index
+		int ai = 0;
+		for(int i = 0;i < DIM;i++)
 		{
-			if(it->second->features.features[i] > maxFeatureValues[i])
+			if (featureEnabled[i])
 			{
-				//For proper normalization the upper bound for a feature is the max value of the data.
-				maxFeatureValues[i] = it->second->features.features[i];
-				updateKDTree = true;
+				if(it->second->features.features[i] > maxFeatureValues[ai])
+				{
+					//For proper normalization the upper bound for a feature is the max value of the data.
+					maxFeatureValues[ai] = it->second->features.features[i];
+					updateKDTree = true;
+				}
+				ai++;
 			}
+
 		}
 	}
 	if(updateKDTree) FormKdTree();
@@ -631,12 +641,18 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 				it->second->annPoint = annAllocPt(enabledFeatures);
 
 			//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
-			for(int i = 0;i < enabledFeatures;i++)
+			int ai = 0;
+			for(int i = 0;i < DIM;i++)
 			{
-				if(maxFeatureValues[i] != 0)
-					it->second->annPoint[i] = (double)(it->second->features.features[i] / maxFeatureValues[i]);
-				else
-					LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				if (featureEnabled[i])
+				{
+					if(maxFeatureValues[i] != 0)
+						it->second->annPoint[ai] = (double)(it->second->features.features[i] / maxFeatureValues[ai]);
+					else
+						LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+					ai++;
+				}
+
 			}
 			it->second->needs_feature_update = false;
 		}
@@ -698,6 +714,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 			dataPtsWithClass.push_back(new Point());
 
+			// Used for matching the 0->DIM index with the 0->enabledFeatures index
 			int actualDimension = 0;
 			for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
 			{
@@ -1222,11 +1239,13 @@ void ClassificationEngine::LoadConfig(char * input)
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 
+	featureMask = 0;
 	for (uint i = 0; i < DIM; i++)
 	{
 		if ('1' == enabledFeatureMask.at(i))
 		{
 			featureEnabled[i] = true;
+			featureMask += pow(2, i);
 			enabledFeatures++;
 		}
 		else
