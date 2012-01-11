@@ -921,6 +921,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				if(i == SA_Max_Attempts)
 				{
 					close(sockfd);
+					ss.str("");
+					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+					commandLine = ss.str();
+					system(commandLine.c_str());
 					continue;
 				}
 
@@ -928,6 +932,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				{
 					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 					close(sockfd);
+					ss.str("");
+					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+					commandLine = ss.str();
+					system(commandLine.c_str());
 					continue;
 				}
 				close(sockfd);
