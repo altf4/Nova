@@ -29,6 +29,7 @@ public:
 	int classification;
 
 	Point();
+	Point(uint enabledFeatures);
 
 	~Point();
 };

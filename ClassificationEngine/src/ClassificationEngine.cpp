@@ -119,7 +119,7 @@ void *outPtr;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
-int maxFeatureValues[DIM];
+double maxFeatureValues[DIM];
 
 //Used to indicate if the kd tree needs to be reformed
 bool updateKDTree = false;
@@ -509,7 +509,7 @@ void Nova::ClassificationEngine::FormKdTree()
 			}
 			else
 			{
-				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (j+1) << " is 0!");
 				break;
 			}
 		}
@@ -605,9 +605,6 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 //Calculates normalized data points for suspects
 void Nova::ClassificationEngine::NormalizeDataPoints()
 {
-
-
-
 	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
@@ -646,7 +643,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 			{
 				if (featureEnabled[i])
 				{
-					if(maxFeatureValues[i] != 0)
+					if(maxFeatureValues[ai] != 0)
 						it->second->annPoint[ai] = (double)(it->second->features.features[i] / maxFeatureValues[ai]);
 					else
 						LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
@@ -712,7 +709,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 				break;
 			}
 
-			dataPtsWithClass.push_back(new Point());
+			dataPtsWithClass.push_back(new Point(enabledFeatures));
 
 			// Used for matching the 0->DIM index with the 0->enabledFeatures index
 			int actualDimension = 0;
