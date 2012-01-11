@@ -85,19 +85,53 @@ void FeatureSet::ClearFeatureSet()
 }
 
 //Calculates all features in the feature set
-void FeatureSet::CalculateAll(bool featuresEnabled[])
+void FeatureSet::CalculateAll(uint32_t featuresEnabled)
 {
 	CalculateTimeInterval();
 
 	UpdateFeatureData(INCLUDE);
 
-	for (uint i = 0; i < DIM; i++)
+	if(featuresEnabled & IP_TRAFFIC_DISTRIBUTION_MASK)
 	{
-		if (featuresEnabled[i])
-		{
-			calculate(i);
-		}
+			calculate(IP_TRAFFIC_DISTRIBUTION);
 	}
+	if(featuresEnabled & PORT_TRAFFIC_DISTRIBUTION_MASK)
+	{
+			calculate(PORT_TRAFFIC_DISTRIBUTION);
+	}
+	if(featuresEnabled & HAYSTACK_EVENT_FREQUENCY_MASK)
+	{
+			calculate(HAYSTACK_EVENT_FREQUENCY);
+	}
+	if(featuresEnabled & PACKET_SIZE_MEAN_MASK)
+	{
+			calculate(PACKET_SIZE_MEAN);
+	}
+	if(featuresEnabled & PACKET_SIZE_DEVIATION_MASK)
+	{
+		if(!(featuresEnabled & PACKET_SIZE_MEAN_MASK))
+			calculate(PACKET_SIZE_MEAN);
+		calculate(PACKET_SIZE_DEVIATION);
+	}
+	if(featuresEnabled & DISTINCT_IPS_MASK)
+	{
+			calculate(DISTINCT_IPS);
+	}
+	if(featuresEnabled & DISTINCT_PORTS_MASK)
+	{
+			calculate(DISTINCT_PORTS);
+	}
+	if(featuresEnabled & PACKET_INTERVAL_MEAN_MASK)
+	{
+			calculate(PACKET_INTERVAL_MEAN);
+	}
+	if(featuresEnabled & PACKET_INTERVAL_DEVIATION_MASK)
+	{
+			if(!(featuresEnabled & PACKET_INTERVAL_MEAN_MASK))
+				calculate(PACKET_INTERVAL_MEAN);
+			calculate(PACKET_INTERVAL_DEVIATION);
+	}
+
 
 	UpdateFeatureData(REMOVE);
 }
@@ -172,7 +206,6 @@ void FeatureSet::calculate(uint featureDimension)
 		double mean = 0;
 		double variance = 0;
 		//Calculate mean
-		calculate(PACKET_SIZE_MEAN);
 		mean = features[PACKET_SIZE_MEAN];
 
 		//Calculate variance
@@ -218,7 +251,6 @@ void FeatureSet::calculate(uint featureDimension)
 		double mean = 0;
 		double variance = 0;
 
-		calculate(PACKET_INTERVAL_MEAN);
 		mean = features[PACKET_INTERVAL_MEAN];
 
 		for (Interval_Table::iterator it = intervalTable.begin() ; it != intervalTable.end(); it++)

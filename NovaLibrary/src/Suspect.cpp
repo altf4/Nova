@@ -117,7 +117,7 @@ void Suspect::AddEvidence(Packet packet)
 }
 
 //Calculates the feature set for this suspect
-void Suspect::CalculateFeatures(bool isTraining, bool featuresEnabled[])
+void Suspect::CalculateFeatures(bool isTraining, uint32_t featuresEnabled)
 {
 	features.CalculateAll(featuresEnabled);
 
