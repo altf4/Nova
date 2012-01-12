@@ -265,8 +265,6 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 	}
 }
 
-//Separate thread which infinite loops, periodically updating all the classifications
-//	for all the current suspects
 void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 {
 
@@ -329,7 +327,6 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 }
 
 
-//Thread for calculating training data, and writing to file.
 void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 {
 	string GUIKey = homePath + CE_FILENAME;
@@ -378,7 +375,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	return NULL;
 }
 
-//Thread for listening for Silent Alarms from other Nova instances
+
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
@@ -491,8 +488,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	return NULL;
 }
 
-//Forms the normalized kd tree, done once on start up
-//will be called again if the a suspect's max value for a feature exceeds the current maximum
+
 void Nova::ClassificationEngine::FormKdTree()
 {
 	delete kdTree;
@@ -521,8 +517,7 @@ void Nova::ClassificationEngine::FormKdTree()
 	updateKDTree = false;
 }
 
-//Performs classification on given suspect
-//Where all the magic takes place
+
 void Nova::ClassificationEngine::Classify(Suspect *suspect)
 {
 	ANNpoint			queryPt;				// query point
@@ -602,7 +597,6 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 }
 
 
-//Calculates normalized data points for suspects
 void Nova::ClassificationEngine::NormalizeDataPoints()
 {
 	//Find the max values for each feature
@@ -658,7 +652,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 	pthread_rwlock_rdlock(&lock);
 }
 
-//Prints a single ANN point, p, to stream, out
+
 void Nova::ClassificationEngine::printPt(ostream &out, ANNpoint p)
 {
 	out << "(" << p[0];
@@ -669,7 +663,7 @@ void Nova::ClassificationEngine::printPt(ostream &out, ANNpoint p)
 	out << ")\n";
 }
 
-//Reads into the list of suspects from a file specified by inFilePath
+
 void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 {
 	ifstream myfile (inFilePath.data());
@@ -766,7 +760,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 					enabledFeatures);						// dimension of space
 }
 
-//Writes dataPtsWithClass out to a file specified by outFilePath
+
 void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 {
 
@@ -802,9 +796,7 @@ string Nova::ClassificationEngine::Usage()
 }
 
 
-
-//Returns a string representation of the specified device's IP address
-string Nova::ClassificationEngine::getLocalIP(const char *dev)
+string Nova::ClassificationEngine::GetLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
@@ -847,7 +839,7 @@ string Nova::ClassificationEngine::getLocalIP(const char *dev)
 	return string("");
 }
 
-//Send a silent alarm about the argument suspect
+
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
 	bzero(data, MAX_MSG_SIZE);
@@ -900,7 +892,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
-					if(knockPort(OPEN))
+					if(KnockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
@@ -939,7 +931,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					continue;
 				}
 				close(sockfd);
-				knockPort(CLOSE);
+				KnockPort(CLOSE);
 				ss.str("");
 				ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
@@ -949,7 +941,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	}
 }
 
-bool ClassificationEngine::knockPort(bool mode)
+
+bool ClassificationEngine::KnockPort(bool mode)
 {
 	stringstream ss;
 	ss << key;
@@ -989,8 +982,7 @@ bool ClassificationEngine::knockPort(bool mode)
 	return true;
 }
 
-///Receive a TrafficEvent from another local component.
-/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+
 bool ClassificationEngine::ReceiveSuspectData()
 {
     //Blocking call
@@ -1030,7 +1022,7 @@ bool ClassificationEngine::ReceiveSuspectData()
 	return true;
 }
 
-/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+
 void ClassificationEngine::ReceiveGUICommand()
 {
     struct sockaddr_un msgRemote;
@@ -1069,7 +1061,7 @@ void ClassificationEngine::ReceiveGUICommand()
 			//TODO still no functionality for this yet
 			break;
 		case WRITE_SUSPECTS:
-			saveSuspectsToFile(msg.getValue());
+			SaveSuspectsToFile(msg.getValue());
 			break;
 		default:
 			break;
@@ -1077,7 +1069,8 @@ void ClassificationEngine::ReceiveGUICommand()
 	close(msgSocket);
 }
 
-void ClassificationEngine::saveSuspectsToFile(string filename)
+
+void ClassificationEngine::SaveSuspectsToFile(string filename)
 {
 	LOG4CXX_INFO(m_logger, "Got request to save file to " + filename);
 
@@ -1099,7 +1092,7 @@ void ClassificationEngine::saveSuspectsToFile(string filename)
 	out->close();
 }
 
-//Send a silent alarm about the argument suspect
+
 void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 {
 	GUIDataLen = suspect->serializeSuspect(GUIData);
@@ -1127,7 +1120,8 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 	close(GUISendSocket);
 }
 
-void ClassificationEngine::LoadConfig(char * input)
+
+void ClassificationEngine::LoadConfig(char * configFilePath)
 {
 	string prefix, line;
 	uint i = 0;
@@ -1180,7 +1174,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(input, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath);
 
 	const string prefixes[] = {"INTERFACE","USE_TERMINALS",
 	"BROADCAST_ADDR","SILENT_ALARM_PORT",
@@ -1204,7 +1198,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 		else if (!NovaConfig->options[prefix].isValid)
 		{
-			LOG4CXX_ERROR(m_logger, "The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, "The configuration variable " + prefixes[i] + " was not set in configuration file " + configFilePath);
 			v = false;
 		}
 	}
@@ -1220,7 +1214,7 @@ void ClassificationEngine::LoadConfig(char * input)
 		LOG4CXX_INFO(m_logger,"Config loaded successfully.");
 	}
 
-	hostAddrString = getLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
 	if(hostAddrString.size() == 0)
 	{
 		LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
