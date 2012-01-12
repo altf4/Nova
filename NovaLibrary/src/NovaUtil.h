@@ -196,6 +196,11 @@ string GetHomePath();
 // Returns: Path with env vars resolved and replaced with real values
 string ResolvePathVars(string path);
 
+// Gets local IP address for interface
+//		dev - Device name, e.g. "eth0"
+// Returns: IP addresses
+string GetLocalIP(const char *dev);
+
 // Extracts and returns the IP Address from a serialized suspect located at buf
 //		buf - Contains serialized suspect data
 // Returns: IP address of the serialized suspect

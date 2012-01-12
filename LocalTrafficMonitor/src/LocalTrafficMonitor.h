@@ -53,10 +53,6 @@ void updateSuspect(Packet packet);
 //		ptr - Required for pthread start routines
 void *SuspectLoop(void *ptr);
 
-// Returns a string representation of the given local device's IP address
-//		dev - Device to get IP for, e.g. "eth0"
-string GetLocalIP(const char *dev);
-
 // Loads configuration variables
 //		configFilePath - Location of configuration file
 void LoadConfig(char* configFilePath);

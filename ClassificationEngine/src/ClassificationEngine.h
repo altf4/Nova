@@ -73,10 +73,6 @@ void WriteDataPointsToFile(string outFilePath);
 // Returns tips on command line usage
 string Usage();
 
-// Returns a string representation of the given local device's IP address
-//		dev - Device to get IP for, IE "eth0"
-string GetLocalIP(const char *dev);
-
 // Send a silent alarm
 //		suspect - Suspect to send alarm about
 void SilentAlarm(Suspect *suspect);

@@ -797,50 +797,6 @@ string Nova::ClassificationEngine::Usage()
 }
 
 
-string Nova::ClassificationEngine::GetLocalIP(const char *dev)
-{
-	static struct ifreq ifreqs[20];
-	struct ifconf ifconf;
-
-	uint  nifaces, i;
-	memset(&ifconf,0,sizeof(ifconf));
-
-	ifconf.ifc_buf = (char*)(ifreqs);
-	ifconf.ifc_len = sizeof(ifreqs);
-
-	int sock, rval;
-	sock = socket(AF_INET,SOCK_STREAM,0);
-
-	if(sock < 0)
-	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
-		close(sock);
-		return NULL;
-	}
-
-	if((rval = ioctl(sock,SIOCGIFCONF,(char*)&ifconf)) < 0 )
-	{
-		LOG4CXX_ERROR(m_logger, "ioctl(SIOGIFCONF): " << strerror(errno));
-	}
-
-	close(sock);
-	nifaces =  ifconf.ifc_len/sizeof(struct ifreq);
-
-	for(i = 0;i < nifaces;i++)
-	{
-		if( strcmp(ifreqs[i].ifr_name, dev) == 0 )
-		{
-			char ip_addr [INET_ADDRSTRLEN];
-			struct sockaddr_in *b = (struct sockaddr_in *) &(ifreqs[i].ifr_addr);
-
-			inet_ntop(AF_INET,&(b->sin_addr),ip_addr,INET_ADDRSTRLEN);
-			return string(ip_addr);
-		}
-	}
-	return string("");
-}
-
-
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
 	bzero(data, MAX_MSG_SIZE);
