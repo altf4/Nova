@@ -392,12 +392,13 @@ void DoppelgangerModule::LoadConfig(char* input)
 			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
 
 
-	for (uint i = 0; i < 6; i++) {
+	for (int i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
+	{
 		prefix = prefixes[i];
 
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
 			v = false;
 		}
 	}
