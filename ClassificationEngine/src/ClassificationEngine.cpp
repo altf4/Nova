@@ -1188,7 +1188,7 @@ void ClassificationEngine::LoadConfig(char * input)
 	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
 	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "ENABLED_FEATURES"};
 
-	for (i = 0; i < 12; i++)
+	for (i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
 	{
 		prefix = prefixes[i];
 
@@ -1204,7 +1204,7 @@ void ClassificationEngine::LoadConfig(char * input)
 
 		else if (!NovaConfig->options[prefix].isValid)
 		{
-			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, "The configuration variable " + prefixes[i] + " was not set in configuration file " + input);
 			v = false;
 		}
 	}
