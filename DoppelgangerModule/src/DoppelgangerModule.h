@@ -17,10 +17,6 @@ typedef google::dense_hash_map<in_addr_t, bool, tr1::hash<in_addr_t>, eqaddr > S
 namespace Nova{
 namespace DoppelgangerModule{
 
-// Returns a string representation of the specified device's IP address
-//		dev - Device name, ie "eth0"
-string GetLocalIP(const char *dev);
-
 // Listens over IPC for a Silent Alarm, blocking on no answer
 void ReceiveAlarm();
 
