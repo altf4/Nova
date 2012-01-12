@@ -675,7 +675,13 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	ifstream myfile (inFilePath.data());
 	string line;
 
+	//string array to check whether a line in data.txt file has the right number of fields
+	string fieldsCheck[DIM];
+	bool valid = true;
+
 	int i = 0;
+	int k = 0;
+
 	//Count the number of data points for allocation
 	if (myfile.is_open())
 	{
@@ -689,7 +695,12 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			i++;
 		}
 	}
-	else LOG4CXX_ERROR(m_logger, "Unable to open file.");
+
+	else
+	{
+		LOG4CXX_ERROR(m_logger, "Unable to open file.");
+	}
+
 	myfile.close();
 	maxPts = i;
 
@@ -709,35 +720,72 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 				break;
 			}
 
-			dataPtsWithClass.push_back(new Point(enabledFeatures));
-
-			// Used for matching the 0->DIM index with the 0->enabledFeatures index
-			int actualDimension = 0;
-			for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
+			//initializes fieldsCheck to have all array indices contain the string "NotPresent"
+			for(int j = 0; j < DIM; j++)
 			{
-				getline(myfile,line,' ');
-				double temp = strtod(line.data(), NULL);
+				fieldsCheck[j] = "NotPresent";
+			}
 
-				if (featureEnabled[defaultDimension])
+			//this will grab a line of values up to a newline or until DIM values have been taken in.
+			while(myfile.peek() != '/n' && k < DIM)
+			{
+				getline(myfile, fieldsCheck[k], ' ');
+				k++;
+			}
+
+			//starting from the end of fieldsCheck, if NotPresent is still inside the array, then
+			//the line of the data.txt file is incorrect, set valid to false.
+			for(int m = DIM - 1; m > 0 && valid; m--)
+			{
+				if(!fieldsCheck[m].compare("NotPresent"))
 				{
-					dataPtsWithClass[i]->annPoint[actualDimension] = temp;
-					dataPts[i][actualDimension] = temp;
-
-					//Set the max values of each feature. (Used later in normalization)
-					if(temp > maxFeatureValues[actualDimension])
-					{
-						maxFeatureValues[actualDimension] = temp;
-					}
-					actualDimension++;
+					valid = false;
 				}
 			}
-			getline(myfile,line);
-			dataPtsWithClass[i]->classification = atoi(line.data());
-			i++;
+
+			//if the line is valid, continue as normal
+			if(valid)
+			{
+				dataPtsWithClass.push_back(new Point(enabledFeatures));
+
+				// Used for matching the 0->DIM index with the 0->enabledFeatures index
+				int actualDimension = 0;
+				for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
+				{
+					getline(myfile,line,' ');
+					double temp = strtod(line.data(), NULL);
+
+					if (featureEnabled[defaultDimension])
+					{
+						dataPtsWithClass[i]->annPoint[actualDimension] = temp;
+						dataPts[i][actualDimension] = temp;
+
+						//Set the max values of each feature. (Used later in normalization)
+						if(temp > maxFeatureValues[actualDimension])
+						{
+							maxFeatureValues[actualDimension] = temp;
+						}
+						actualDimension++;
+					}
+				}
+				getline(myfile,line);
+				dataPtsWithClass[i]->classification = atoi(line.data());
+				i++;
+			}
+			//but if it isn't, just get to the next line without incrementing i.
+			//this way every correct line will be inserted in sequence
+			//without any gaps due to perhaps multiple line failures, etc.
+			else
+			{
+				getline(myfile,line);
+			}
 		}
 		nPts = i;
 	}
-	else LOG4CXX_ERROR(m_logger,"Unable to open file.");
+	else
+	{
+		LOG4CXX_ERROR(m_logger,"Unable to open file.");
+	}
 	myfile.close();
 
 	//Normalize the data points
@@ -1080,7 +1128,32 @@ void ClassificationEngine::ReceiveGUICommand()
 void ClassificationEngine::saveSuspectsToFile(string filename)
 {
 	LOG4CXX_INFO(m_logger, "Got request to save file to " + filename);
+	dataPtsWithClass.push_back(new Point(enabledFeatures));
 
+				// Used for matching the 0->DIM index with the 0->enabledFeatures index
+				int actualDimension = 0;
+				for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
+				{
+					getline(myfile,line,' ');
+					double temp = strtod(line.data(), NULL);
+
+					if (featureEnabled[defaultDimension])
+					{
+						dataPtsWithClass[i]->annPoint[actualDimension] = temp;
+						dataPts[i][actualDimension] = temp;
+
+						//Set the max values of each feature. (Used later in normalization)
+						if(temp > maxFeatureValues[actualDimension])
+						{
+							maxFeatureValues[actualDimension] = temp;
+						}
+						actualDimension++;
+					}
+				}
+				getline(myfile,line);
+				dataPtsWithClass[i]->classification = atoi(line.data());
+				i++;
+			}
 	ofstream *out = new ofstream(filename.c_str());
 
 	if(!out->is_open())
