@@ -17,43 +17,55 @@ using namespace std;
 namespace Nova{
 namespace LocalTrafficMonitor{
 
-/// Callback function that is passed to pcap_loop(..) and called each time
-/// a packet is recieved
-void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet);
-
-/// Thread for listening for GUI commands
-void *GUILoop(void *ptr);
-
-/// Receives input commands from the GUI
-void ReceiveGUICommand(int socket);
-
-/// Thread for periodically checking for TCP timeout.
-///	IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
-///	This thread looks for old tcp sessions and declares them terminated
-void *TCPTimeout( void *ptr );
-
-///Sends the given Suspect to the Classification Engine
-///	Returns success or failure
-bool SendToCE(Suspect *suspect);
-
-//Updates a suspect with evidence to be processed later
-void updateSuspect(Packet packet);
-
-/// Thread for listening for GUI commands
-void *SuspectLoop(void *ptr);
-
-///Returns a string representation of the specified device's IP address
-string getLocalIP(const char *dev);
-
-//Loads configuration variables from NOVAConfig_LTM.txt or specified config file
-void LoadConfig(char* input);
-
-//Checks the udp packet payload associated with event for a port knocking request,
-// opens/closes the port for the sender depending on the payload
-void knockRequest(Packet packet, u_char * payload);
-
 //Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+
+// Callback function that is passed to pcap_loop(..) and called each time a packet is received
+//		useless - Unused
+//		pkthdr - pcap packet header
+//		packet - packet data
+void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet);
+
+// Start routine for the GUI command listening thread
+//		ptr - Required for pthread start routiness
+void *GUILoop(void *ptr);
+
+// Receives input commands from the GUI
+// This is a blocking function. If nothing is received, then wait on this thread for an answer
+void ReceiveGUICommand(int socket);
+
+// Startup rotuine for thread periodically checking for TCP timeout.
+// IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
+// This thread looks for old tcp sessions and declares them terminated
+//		ptr - Required for pthread start routines
+void *TCPTimeout( void *ptr );
+
+// Sends the given Suspect to the Classification Engine
+//		suspect - Suspect to send
+// Returns: true for success, false for failure
+bool SendToCE(Suspect *suspect);
+
+// Updates a suspect with evidence to be processed later
+//		packet : Packet headers to used for the evidence
+void updateSuspect(Packet packet);
+
+// Startup routine for thread updated evidence on suspsects
+//		ptr - Required for pthread start routines
+void *SuspectLoop(void *ptr);
+
+// Returns a string representation of the given local device's IP address
+//		dev - Device to get IP for, e.g. "eth0"
+string GetLocalIP(const char *dev);
+
+// Loads configuration variables
+//		configFilePath - Location of configuration file
+void LoadConfig(char* configFilePath);
+
+// Checks the udp packet payload associated with event for a port knocking request,
+// opens/closes the port using iptables for the sender depending on the payload
+//		packet - header information
+//		payload - actual packet data
+void KnockRequest(Packet packet, u_char * payload);
 
 }
 }

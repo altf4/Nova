@@ -17,77 +17,86 @@ using namespace Nova;
 
 namespace Nova{
 
-///	A Suspect represents a single actor on the network, whether good or bad.
-///Suspects are the target of classification and a major part of Nova.
+// A Suspect represents a single actor on the network, whether good or bad.
+// Suspects are the target of classification and a major part of Nova.
 class Suspect
 {
 
 public:
-	///The IP address of the suspect. This field serves as a unique identifier for the Suspect
+	// The IP address of the suspect. This field serves as a unique identifier for the Suspect
 	struct in_addr IP_address;
 
-	///	The current classification assigned to this suspect.
-	///		0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
-	///		-1 indicates no classification or error.
+	// The current classification assigned to this suspect.
+	//		0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
+	//		-1 indicates no classification or error.
 	double classification;
 
-	/// Is the classification above the current threshold? IE: What conclusion has the CE come to?
+	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
 	bool isHostile;
 
-	/// Does the classification need updating?
-	///		IE: Has the evidence changed since last it was calculated?
+	// Does the classification need updating?
+	//		IE: Has the evidence changed since last it was calculated?
 	bool needs_classification_update;
 
-	///	Does the FeatureSet need updating?
-	///		IE: Has the evidence changed since last it was calculated?
+	// Does the FeatureSet need updating?
+	//		IE: Has the evidence changed since last it was calculated?
 	bool needs_feature_update;
 
-	///	Has this suspect been the subject of an alarm from another Nova instance?
+	// Has this suspect been the subject of an alarm from another Nova instance?
 	bool flaggedByAlarm;
 
-	/// Is this a live capture or is NOVA reading from a pcap file?
+	// Is this a live capture or is NOVA reading from a pcap file?
 	bool isLive;
 
-	///	The Feature Set for this Suspect
+	// The Feature Set for this Suspect
 	FeatureSet features;
 
-	///	The feature set in the format that ANN requires.
+	// The feature set in the format that ANN requires.
 	ANNpoint annPoint;
 
-	///	A listing of all the events (evidence) that originated from this suspect
+	// A listing of all the events (evidence) that originated from this suspect
 	vector <Packet> evidence;
 
-	///	Blank Constructor
 	Suspect();
 
-	///	Destructor. Has to delete the FeatureSet object within.
+	//	Destructor. Has to delete the FeatureSet object within.
 	~Suspect();
 
-	///	Constructor from a TrafficEvent
+	//	Constructor from a Packet
+	//		packet - Used to set the IP address and initial evidence of the suspect
 	Suspect(Packet packet);
 
-	///	Converts suspect into a human readable string and returns it
+	//	Converts suspect into a human readable string
+	//		featureEnabled: Array of size DIM that specifies which features to return in the string
+	// 	Returns: Human readable string of the given feature
 	string ToString(bool featureEnabled[]);
 
-	///	Add an additional piece of evidence to this suspect
-	///		Does not take actions like reclassifying or calculating features.
+	//	Add an additional piece of evidence to this suspect
+	// Does not take actions like reclassifying or calculating features.
+	//		packet - Packet headers to extract evidence from
 	void AddEvidence(Packet packet);
 
-	///	Calculates the feature set for this suspect
+	// Calculates the feature set for this suspect
+	// 		isTraining: True for training data gathering mode
+	//		featuresEnabled: bitmask of features to calculate
 	void CalculateFeatures(bool isTraining, uint32_t featuresEnabled);
 
-	//Stores the Suspect information into the buffer, retrieved using deserializeSuspect
-	//	returns the number of bytes set in the buffer
-	uint serializeSuspect(u_char * buf);
+	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
+	//		buf - Pointer to buffer where serialized data will be stored
+	// Returns: number of bytes set in the buffer
+	uint SerializeSuspect(u_char * buf);
 
-	//Reads Suspect information from a buffer originally populated by serializeSuspect
-	//	returns the number of bytes read from the buffer
-	uint deserializeSuspect(u_char * buf);
+	// Reads Suspect information from a buffer originally populated by serializeSuspect
+	//		buf - Pointer to buffer where the serialized suspect is
+	// Returns: number of bytes read from the buffer
+	uint DeserializeSuspect(u_char * buf);
 
-	//Reads Suspect information from a buffer originally populated by serializeSuspect
+	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	// expects featureSet data appended by serializeFeatureData after serializeSuspect
-	//	returns the number of bytes read from the buffer
-	uint deserializeSuspectWithData(u_char * buf, bool isLocal);
+	//		buf - Pointer to buffer where serialized data resides
+	//		isLocal -
+	// Returns: number of bytes read from the buffer
+	uint DeserializeSuspectWithData(u_char * buf, bool isLocal);
 };
 
 }

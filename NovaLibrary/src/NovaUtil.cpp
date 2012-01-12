@@ -13,13 +13,13 @@ using namespace std;
 namespace Nova{
 
 //Encrpyts/decrypts a char buffer of size 'size' depending on mode
-void cryptBuffer(u_char * buf, uint size, bool mode)
+void CryptBuffer(u_char * buf, uint size, bool mode)
 {
 	//TODO
 }
 
 // Reads the paths file and returns the homePath of nova
-string getHomePath()
+string GetHomePath()
 {
 	//Get locations of nova files
 	ifstream *paths =  new ifstream(PATHS_FILE);
@@ -45,7 +45,7 @@ string getHomePath()
 	paths = NULL;
 
 	//Resolves environment variables
-	homePath = resolvePathVars(homePath);
+	homePath = ResolvePathVars(homePath);
 
 	if(homePath == "")
 	{
@@ -54,7 +54,7 @@ string getHomePath()
 	return homePath;
 }
 // Replaces any env vars in 'path' and returns the absolute path
-string resolvePathVars(string path)
+string ResolvePathVars(string path)
 {
 	int start = 0;
 	int end = 0;
@@ -90,7 +90,7 @@ string resolvePathVars(string path)
 }
 
 //Extracts and returns the IP Address from a serialized suspect located at buf
-uint getSerializedAddr(u_char * buf)
+uint GetSerializedAddr(u_char * buf)
 {
 	uint addr = 0;
 	memcpy(&addr, buf, 4);
@@ -98,7 +98,7 @@ uint getSerializedAddr(u_char * buf)
 }
 
 //Returns the number of bits used in the mask when given in in_addr_t form
-int getMaskBits(in_addr_t mask)
+int GetMaskBits(in_addr_t mask)
 {
 	mask = ~mask;
 	int i = 32;

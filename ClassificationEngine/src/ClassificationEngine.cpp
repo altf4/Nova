@@ -6,6 +6,7 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
+#include "NOVAConfiguration.h"
 #include <iostream>
 //#include <string>
 
@@ -146,7 +147,7 @@ int main(int argc,char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	homePath = getHomePath();
+	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -446,19 +447,19 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-		cryptBuffer(buf, bytesRead, DECRYPT);
+		CryptBuffer(buf, bytesRead, DECRYPT);
 
 		pthread_rwlock_wrlock(&lock);
 		try
 		{
-			uint addr = getSerializedAddr(buf);
+			uint addr = GetSerializedAddr(buf);
 			SuspectHashTable::iterator it = suspects.find(addr);
 
 			//If this is a new suspect put it in the table
 			if(it == suspects.end())
 			{
 				suspects[addr] = new Suspect();
-				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
+				suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
 				//We set isHostile to false so that when we classify the first time
 				// the suspect will go from benign to hostile and be sent to the doppelganger module
 				suspects[addr]->isHostile = false;
@@ -468,7 +469,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			{
 				//This function will overwrite everything except the information used to calculate the classification
 				// a combined classification will be given next classification loop
-				suspects[addr]->deserializeSuspectWithData(buf, BROADCAST_DATA);
+				suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
 			}
 			suspects[addr]->flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
@@ -843,7 +844,7 @@ string Nova::ClassificationEngine::GetLocalIP(const char *dev)
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
 	bzero(data, MAX_MSG_SIZE);
-	dataLen = suspect->serializeSuspect(data);
+	dataLen = suspect->SerializeSuspect(data);
 
 	//If the hostility hasn't changed don't bother the DM
 	if(oldClassification != suspect->isHostile && suspect->isLive)
@@ -875,8 +876,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		do
 		{
 			bzero(data, MAX_MSG_SIZE);
-			dataLen = suspect->serializeSuspect(data);
-			dataLen += suspect->features.serializeFeatureDataBroadcast(data+dataLen);
+			dataLen = suspect->SerializeSuspect(data);
+			dataLen += suspect->features.SerializeFeatureDataBroadcast(data+dataLen);
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{
@@ -960,7 +961,7 @@ bool ClassificationEngine::KnockPort(bool mode)
 	bzero(keyBuf, 1024);
 	memcpy(keyBuf, ss.str().c_str(), ss.str().size());
 
-	cryptBuffer(keyBuf, keyDataLen, ENCRYPT);
+	CryptBuffer(keyBuf, keyDataLen, ENCRYPT);
 
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
@@ -1001,14 +1002,14 @@ bool ClassificationEngine::ReceiveSuspectData()
 	try
 	{
 		pthread_rwlock_wrlock(&lock);
-		uint addr = getSerializedAddr(buffer);
+		uint addr = GetSerializedAddr(buffer);
 		SuspectHashTable::iterator it = suspects.find(addr);
 
 		//If this is a new suspect make an entry in the table
 		if(it == suspects.end())
 			suspects[addr] = new Suspect();
 		//Deserialize the data
-		suspects[addr]->deserializeSuspectWithData(buffer, LOCAL_DATA);
+		suspects[addr]->DeserializeSuspectWithData(buffer, LOCAL_DATA);
 		pthread_rwlock_unlock(&lock);
 	}
 	catch(std::exception e)
@@ -1095,7 +1096,7 @@ void ClassificationEngine::SaveSuspectsToFile(string filename)
 
 void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 {
-	GUIDataLen = suspect->serializeSuspect(GUIData);
+	GUIDataLen = suspect->SerializeSuspect(GUIData);
 
 	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{

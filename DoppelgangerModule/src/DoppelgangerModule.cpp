@@ -6,6 +6,7 @@
 //============================================================================
 
 #include "DoppelgangerModule.h"
+#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -71,7 +72,7 @@ int main(int argc, char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	homePath = getHomePath();
+	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -250,7 +251,6 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	}
 }
 
-/// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void DoppelgangerModule::ReceiveGUICommand()
 {
 	struct sockaddr_un msgRemote;
@@ -292,9 +292,7 @@ void DoppelgangerModule::ReceiveGUICommand()
     close(msgSocket);
 }
 
-
-//Returns a string representation of the specified device's IP address
-string Nova::DoppelgangerModule::getLocalIP(const char *dev)
+string Nova::DoppelgangerModule::GetLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
@@ -336,7 +334,7 @@ string Nova::DoppelgangerModule::getLocalIP(const char *dev)
 	return string("");
 }
 
-//Listens over IPC for a Silent Alarm, blocking on no answer
+
 void Nova::DoppelgangerModule::ReceiveAlarm()
 {
     //Blocking call
@@ -355,7 +353,7 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
 	suspect = new Suspect();
 	try
 	{
-		suspect->deserializeSuspect(buf);
+		suspect->DeserializeSuspect(buf);
 		bzero(buf, bytesRead);
 	}
 	catch(std::exception e)
@@ -368,7 +366,7 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
 	return;
 }
 
-//Returns a string with usage tips
+
 string Nova::DoppelgangerModule::Usage()
 {
 	string usage_tips = "Nova Doppelganger Module\n";
@@ -380,13 +378,13 @@ string Nova::DoppelgangerModule::Usage()
 }
 
 
-void DoppelgangerModule::LoadConfig(char* input)
+void DoppelgangerModule::LoadConfig(char* configFilePath)
 {
 	string prefix;
 	bool v = true;
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(input, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath);
 
 	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
@@ -398,7 +396,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + configFilePath);
 			v = false;
 		}
 	}
@@ -414,7 +412,7 @@ void DoppelgangerModule::LoadConfig(char* input)
 		LOG4CXX_INFO(m_logger,"Config loaded successfully.");
 	}
 
-	hostAddrString = getLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
 	if(hostAddrString.size() == 0)
 	{
 		LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
