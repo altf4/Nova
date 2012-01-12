@@ -8,7 +8,6 @@
 #include "ClassificationEngine.h"
 #include "NOVAConfiguration.h"
 #include <iostream>
-//#include <string>
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -18,30 +17,29 @@ using namespace ClassificationEngine;
 
 // Maintains a list of suspects and information on network activity
 static SuspectHashTable suspects;
+
 // Vector of ip addresses that correspond to other nova instances
 vector<in_addr_t> neighbors;
+
 // Key used for port knocking
 string key;
 
 pthread_rwlock_t lock;
 
+// Buffers
+u_char buffer[MAX_MSG_SIZE];
+u_char data[MAX_MSG_SIZE];
+u_char GUIData[MAX_MSG_SIZE];
+
 //NOT normalized
 vector <Point*> dataPtsWithClass;
-bool isTraining = false;
-bool useTerminals;
 static string hostAddrString;
 static struct sockaddr_in hostAddr;
-
-//Global variables related to Classification
-
-//Global memory assignments to improve performance of IPC loops
 
 //** Main (ReceiveSuspectData) **
 struct sockaddr_un remote;
 struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
-int bytesRead;
-int connectionSocket;
-u_char buffer[MAX_MSG_SIZE];
+
 Suspect * suspect;
 int IPCsock;
 
@@ -50,19 +48,9 @@ struct sockaddr_un alarmRemote;
 struct sockaddr* alarmRemotePtr =(struct sockaddr *)&alarmRemote;
 struct sockaddr_in serv_addr;
 struct sockaddr* serv_addrPtr = (struct sockaddr *)&serv_addr;
-int len;
+
 int oldClassification;
-
-u_char data[MAX_MSG_SIZE];
-uint dataLen;
-
-int numBytesRead;
-int socketFD;
-int sockfd, broadcast = 1;
-int * bdPtr = &broadcast;
-int bdsize = sizeof broadcast;
-char alarmBuf[MAX_MSG_SIZE];
-
+int sockfd = 1;
 
 //** ReceiveGUICommand **
 int GUISocket;
@@ -72,70 +60,57 @@ struct sockaddr_un GUISendRemote;
 struct sockaddr* GUISendPtr = (struct sockaddr *)&GUISendRemote;
 int GUISendSocket;
 int GUILen;
-u_char GUIData[MAX_MSG_SIZE];
-uint GUIDataLen;
-
 
 //Universal Socket variables (constants that can be re-used)
 int socketSize = sizeof(remote);
 int inSocketSize = sizeof(serv_addr);
 socklen_t * sockSizePtr = (socklen_t*)&socketSize;
 
-
-
-
-//Configured in NOVAConfig_CE or specified config file.
-string broadcastAddr;			//Silent Alarm destination IP address
-int sAlarmPort;					//Silent Alarm destination port
-int classificationTimeout;		//In seconds, how long to wait between classifications
-int maxFeatureVal;				//The value to normalize feature values to.
-									//Higher value makes for more precision, but more cycles.
-
-int k;							//number of nearest neighbors
-double eps;						//error bound
-int maxPts;						//maximum number of data points
-double classificationThreshold = .5; //value of classification to define split between hostile / benign
-uint SA_Max_Attempts = 3;			//The number of times to attempt to reconnect to a neighbor
-double SA_Sleep_Duration = 0.5;		//The time to sleep after a port knocking request and allow it to go through
-//End configured variables
-
+// kdtree stuff
 int nPts = 0;						//actual number of data points
 ANNpointArray dataPts;				//data points
 ANNpointArray normalizedDataPts;	//normalized data points
 ANNkd_tree*	kdTree;					// search structure
 string dataFile;					//input for data points
-istream* queryIn = NULL;			//input for query points
+
+//Used to indicate if the kd tree needs to be reformed
+bool updateKDTree = false;
 
 // Used for disabling features
 bool featureEnabled[DIM];
 uint32_t featureMask;
 int enabledFeatures = 0;
 
+// Misc
+int len;
 const char *outFile;				//output for data points during training
-
-char * pathsFile = (char*)PATHS_FILE;
 string homePath;
-
-void *outPtr;
-
+double maxFeatureValues[DIM];
 LoggerPtr m_logger(Logger::getLogger("main"));
 
-double maxFeatureValues[DIM];
-
-//Used to indicate if the kd tree needs to be reformed
-bool updateKDTree = false;
+// Nova Configuration Variables (read from config file)
+bool isTraining;
+bool useTerminals;
+int sAlarmPort;					//Silent Alarm destination port
+int classificationTimeout;		//In seconds, how long to wait between classifications
+int k;							//number of nearest neighbors
+double eps;						//error bound
+double classificationThreshold ; //value of classification to define split between hostile / benign
+uint SA_Max_Attempts;			//The number of times to attempt to reconnect to a neighbor
+double SA_Sleep_Duration;		//The time to sleep after a port knocking request and allow it to go through
+// End configured variables
 
 int main(int argc,char *argv[])
 {
 	bzero(GUIData,MAX_MSG_SIZE);
 	bzero(data,MAX_MSG_SIZE);
 	bzero(buffer, MAX_MSG_SIZE);
+
 	pthread_rwlock_init(&lock, NULL);
 
-	suspects.set_empty_key(NULL);
+	suspects.set_empty_key(0);
 	suspects.resize(INIT_SIZE_SMALL);
 
-	int len;
 	struct sockaddr_un localIPCAddress;
 
 	pthread_t classificationLoopThread;
@@ -164,7 +139,6 @@ int main(int argc,char *argv[])
 
 	dataFile = homePath + "/" +dataFile;
 	outFile = dataFile.c_str();
-	outPtr = (void *)outFile;
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
 	//Are we Training or Classifying?
@@ -268,7 +242,6 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 
 void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 {
-
 	//Builds the GUI address
 	string GUIKey = homePath + CE_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
@@ -686,7 +659,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else LOG4CXX_ERROR(m_logger, "Unable to open file.");
 	myfile.close();
-	maxPts = i;
+	int maxPts = i;
 
 	//Open the file again, allocate the number of points and assign
 	myfile.open(inFilePath.data(), ifstream::in);
@@ -799,8 +772,9 @@ string Nova::ClassificationEngine::Usage()
 
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {
-	bzero(data, MAX_MSG_SIZE);
-	dataLen = suspect->SerializeSuspect(data);
+	int socketFD;
+
+	uint dataLen = suspect->SerializeSuspect(data);
 
 	//If the hostility hasn't changed don't bother the DM
 	if(oldClassification != suspect->isHostile && suspect->isLive)
@@ -942,6 +916,8 @@ bool ClassificationEngine::KnockPort(bool mode)
 
 bool ClassificationEngine::ReceiveSuspectData()
 {
+	int bytesRead, connectionSocket;
+
     //Blocking call
     if ((connectionSocket = accept(IPCsock, remoteSockAddr, sockSizePtr)) == -1)
     {
@@ -1052,7 +1028,7 @@ void ClassificationEngine::SaveSuspectsToFile(string filename)
 
 void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 {
-	GUIDataLen = suspect->SerializeSuspect(GUIData);
+	uint GUIDataLen = suspect->SerializeSuspect(GUIData);
 
 	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -1133,8 +1109,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath);
 
-	const string prefixes[] = {"INTERFACE","USE_TERMINALS",
-	"BROADCAST_ADDR","SILENT_ALARM_PORT",
+	const string prefixes[] = {"INTERFACE","USE_TERMINALS","SILENT_ALARM_PORT",
 	"K", "EPS",
 	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
 	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "ENABLED_FEATURES"};
@@ -1182,7 +1157,6 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 
 	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	broadcastAddr = NovaConfig->options["BROADCAST_ADDR"].data;
 	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
 	k = atoi(NovaConfig->options["K"].data.c_str());
 	eps =  atof(NovaConfig->options["EPS"].data.c_str());
