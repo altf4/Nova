@@ -611,12 +611,13 @@ void LocalTrafficMonitor::LoadConfig(char* input)
 			"PCAP_FILE", "GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT"};
 
 
-	for (i = 0; i < 9; i++) {
+	for (i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
+	{
 		prefix = prefixes[i];
 
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, i + " The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
 			v = false;
 		}
 	}
