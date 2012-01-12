@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	bzero(buf, MAX_MSG_SIZE);
 	pthread_t GUIListenThread;
 
-	SuspectTable.set_empty_key(NULL);
+	SuspectTable.set_empty_key(0);
 	SuspectTable.resize(INIT_SIZE_SMALL);
 
 	signal(SIGINT, siginthandler);
@@ -272,8 +272,8 @@ void DoppelgangerModule::ReceiveGUICommand()
 		close(msgSocket);
     }
 
-    msg.deserializeMessage(msgBuffer);
-    switch(msg.getType())
+    msg.DeserializeMessage(msgBuffer);
+    switch(msg.GetType())
     {
     	case EXIT:
     		system("sudo iptables -F");

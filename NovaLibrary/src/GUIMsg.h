@@ -55,29 +55,29 @@ class GUIMsg
 	// Sets the message
 	//		type - type of message to create
 	// Returns: true if successful
-	bool setMessage(GUIMsgType type);
+	bool SetMessage(GUIMsgType type);
 
 	// Sets the message
 	//		type - type of message to create
 	//		val - argument to send along with the message
 	// Returns: true if successful
-	bool setMessage(GUIMsgType type, string val);
+	bool SetMessage(GUIMsgType type, string val);
 
 	// Returns the message type
-	GUIMsgType getType();
+	GUIMsgType GetType();
 
 	// Returns the message argument
-	string getValue();
+	string GetValue();
 
 	// Serializes the message into given buffer for communication
 	//		buf - Pointer to buffer to store serialized data
 	// Returns: Number of bytes in buffer used
-	uint serialzeMessage(u_char * buf);
+	uint SerialzeMessage(u_char * buf);
 
 	// Deserializes the message from the given buffer for reading
 	//		buf - Points to buffer to read serialized data from
 	// Returns: Number of bytes read
-	uint deserializeMessage(u_char * buf);
+	uint DeserializeMessage(u_char * buf);
 
 	private:
 

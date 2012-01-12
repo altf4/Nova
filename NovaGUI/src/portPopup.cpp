@@ -279,10 +279,13 @@ void portPopup::on_okButton_clicked()
 
 void portPopup::on_defaultsButton_clicked()
 {
-	int i = 0;
+	// int i = 0;
 	//Pull the original ports
 	ports = p->ports;
 
+	// TODO: Is this code deprecated or being worked on?
+	// Commented to eliminate some compiler warnings about unused vars
+	/*
 	//gets index of current item
 	if(!ports.empty())
 	{
@@ -296,6 +299,7 @@ void portPopup::on_defaultsButton_clicked()
 		}
 		//gprt = ports[i];
 	}
+	*/
 	loadAllPorts();
 }
 

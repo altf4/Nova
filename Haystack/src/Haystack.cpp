@@ -350,8 +350,8 @@ void Haystack::ReceiveGUICommand(int socket)
 		close(msgSocket);
     }
 
-    msg.deserializeMessage(msgBuffer);
-    switch(msg.getType())
+    msg.DeserializeMessage(msgBuffer);
+    switch(msg.GetType())
     {
     	case EXIT:
     		exit(1);

@@ -627,7 +627,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 }
 
 
-void Nova::ClassificationEngine::printPt(ostream &out, ANNpoint p)
+void Nova::ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 {
 	out << "(" << p[0];
 	for (int i = 1;i < enabledFeatures;i++)
@@ -980,8 +980,8 @@ void ClassificationEngine::ReceiveGUICommand()
 		close(msgSocket);
 	}
 
-	msg.deserializeMessage(msgBuffer);
-	switch(msg.getType())
+	msg.DeserializeMessage(msgBuffer);
+	switch(msg.GetType())
 	{
 		case EXIT:
 			exit(1);
@@ -994,7 +994,7 @@ void ClassificationEngine::ReceiveGUICommand()
 			//TODO still no functionality for this yet
 			break;
 		case WRITE_SUSPECTS:
-			SaveSuspectsToFile(msg.getValue());
+			SaveSuspectsToFile(msg.GetValue());
 			break;
 		default:
 			break;

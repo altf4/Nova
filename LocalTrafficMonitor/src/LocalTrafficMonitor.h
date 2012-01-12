@@ -47,7 +47,7 @@ bool SendToCE(Suspect *suspect);
 
 // Updates a suspect with evidence to be processed later
 //		packet : Packet headers to used for the evidence
-void updateSuspect(Packet packet);
+void UpdateSuspect(Packet packet);
 
 // Startup routine for thread updated evidence on suspsects
 //		ptr - Required for pthread start routines
