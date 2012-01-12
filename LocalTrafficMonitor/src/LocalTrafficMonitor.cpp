@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <fstream>
 #include "LocalTrafficMonitor.h"
+#include "NOVAConfiguration.h"
 #include <net/if.h>
 #include <sys/un.h>
 
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	homePath = getHomePath();
+	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -111,7 +112,7 @@ int main(int argc, char *argv[])
 	char filter_exp[64];
 	pcap_t *handle;
 
-	hostAddress = getLocalIP(dev.c_str());
+	hostAddress = GetLocalIP(dev.c_str());
 
 	if(hostAddress.empty())
 	{
@@ -197,8 +198,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-/// Callback function that is passed to pcap_loop(..) and called each time
-/// a packet is recieved
+
 void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
 	if(packet == NULL)
@@ -228,7 +228,7 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 			if((in_port_t)ntohs(packet_info.udp_hdr.dest) ==  sAlarmPort)
 			{
 				//if we receive a udp packet on the silent alarm port, see if it is a port knock request
-				knockRequest(packet_info, (((u_char *)ip_hdr + sizeof(struct ip)) + sizeof(struct udphdr)));
+				KnockRequest(packet_info, (((u_char *)ip_hdr + sizeof(struct ip)) + sizeof(struct udphdr)));
 			}
 			updateSuspect(packet_info);
 		}
@@ -285,10 +285,11 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 	}
 }
 
+
 void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 {
 	struct sockaddr_un localIPCAddress;
-	int IPCsock, length;
+	int IPCsock;
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
@@ -305,7 +306,7 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
-	length = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+	// length = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
 	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
 	{
@@ -326,7 +327,7 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 	}
 }
 
-/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+
 void LocalTrafficMonitor::ReceiveGUICommand(int socket)
 {
 	struct sockaddr_un msgRemote;
@@ -359,9 +360,7 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
     close(msgSocket);
 }
 
-/// Thread for periodically checking for TCP timeout.
-///	IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
-///	This thread looks for old tcp sessions and declares them terminated
+
 void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 {
 	do
@@ -435,15 +434,14 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 	return NULL;
 }
 
-///Sends the given TrafficEvent to the Classification Engine
-///	Returns success or failure
+
 bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 {
 	int socketFD;
 
 	do{
-		dataLen = suspect->serializeSuspect(data);
-		dataLen += suspect->features.serializeFeatureDataLocal(data+dataLen);
+		dataLen = suspect->SerializeSuspect(data);
+		dataLen += suspect->features.SerializeFeatureDataLocal(data+dataLen);
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
@@ -473,7 +471,7 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
     return true;
 }
 
-//Stores events to be processed before sending
+
 void LocalTrafficMonitor::updateSuspect(Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
@@ -488,6 +486,7 @@ void LocalTrafficMonitor::updateSuspect(Packet packet)
 	suspects[addr]->isLive = !usePcapFile;
 	pthread_rwlock_unlock(&suspectLock);
 }
+
 
 void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 {
@@ -524,8 +523,8 @@ void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 	return NULL;
 }
 
-///Returns a string representation of the specified device's IP address
-string LocalTrafficMonitor::getLocalIP(const char *dev)
+
+string LocalTrafficMonitor::GetLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
@@ -567,7 +566,8 @@ string LocalTrafficMonitor::getLocalIP(const char *dev)
 	return NULL;
 }
 
-void LocalTrafficMonitor::LoadConfig(char* input)
+
+void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 {
 	string line;
 	string prefix;
@@ -602,7 +602,7 @@ void LocalTrafficMonitor::LoadConfig(char* input)
 
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(input, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath);
 
 	bool v = true;
 
@@ -617,7 +617,7 @@ void LocalTrafficMonitor::LoadConfig(char* input)
 
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + configFilePath);
 			v = false;
 		}
 	}
@@ -646,15 +646,14 @@ void LocalTrafficMonitor::LoadConfig(char* input)
 
 }
 
-//Checks the udp packet payload associated with event for a port knocking request,
-// opens/closes the port for the sender depending on the payload
-void LocalTrafficMonitor::knockRequest(Packet packet, u_char * payload)
+
+void LocalTrafficMonitor::KnockRequest(Packet packet, u_char * payload)
 {
 	stringstream ss;
 	string commandLine;
 
 	uint len = key.size() + 4;
-	cryptBuffer(payload, len, DECRYPT);
+	CryptBuffer(payload, len, DECRYPT);
 	string sentKey = (char*)payload;
 
 	sentKey = sentKey.substr(0,key.size());

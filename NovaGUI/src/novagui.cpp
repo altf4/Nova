@@ -12,6 +12,9 @@
 #include "novaconfig.h"
 #include "run_popup.h"
 
+#include "NOVAConfiguration.h"
+#include "NovaUtil.h"
+
 #include <QString>
 #include <QChar>
 #include <boost/property_tree/ptree.hpp>
@@ -619,7 +622,7 @@ void NovaGUI::loadSubnets(ptree *ptr)
 				in_addr_t maskTemp = ntohl(inet_addr(sub.mask.c_str()));
 				sub.base = (baseTemp & maskTemp);
 				//Get the number of bits in the mask
-				sub.maskBits = getMaskBits(maskTemp);
+				sub.maskBits = GetMaskBits(maskTemp);
 				//Adding the binary inversion of the mask gets the highest usable IP
 				sub.max = sub.base + ~maskTemp;
 				stringstream ss;
@@ -999,7 +1002,7 @@ bool NovaGUI::receiveCE(int socket)
 
 	try
 	{
-		suspect->deserializeSuspect(buf);
+		suspect->DeserializeSuspect(buf);
 		bzero(buf, bytesRead);
 	}
 	catch(std::exception e)
@@ -1447,7 +1450,7 @@ void startNova()
 {
 	if(!novaRunning)
 	{
-		string homePath = getHomePath();
+		string homePath = GetHomePath();
 		string input = homePath + "/Config/NOVAConfig.txt";
 
 		NOVAConfiguration * NovaConfig = new NOVAConfiguration();

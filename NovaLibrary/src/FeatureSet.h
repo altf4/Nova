@@ -20,24 +20,28 @@ using namespace std;
 ///The traffic distribution across ports contacted
 #define PORT_TRAFFIC_DISTRIBUTION 1
 #define PORT_TRAFFIC_DISTRIBUTION_MASK 2
+
 ///Number of ScanEvents that the suspect is responsible for per second
 #define HAYSTACK_EVENT_FREQUENCY 2
 #define HAYSTACK_EVENT_FREQUENCY_MASK 4
+
 ///Measures the distribution of packet sizes
 #define PACKET_SIZE_MEAN 3
 #define PACKET_SIZE_MEAN_MASK 8
 #define PACKET_SIZE_DEVIATION 4
 #define PACKET_SIZE_DEVIATION_MASK 16
+
 /// Number of distinct IP addresses contacted
 #define DISTINCT_IPS 5
 #define DISTINCT_IPS_MASK 32
+
 /// Number of distinct ports contacted
 #define DISTINCT_PORTS 6
 #define DISTINCT_PORTS_MASK 64
+
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_MEAN 7
 #define PACKET_INTERVAL_MEAN_MASK 128
-///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_DEVIATION 8
 #define PACKET_INTERVAL_DEVIATION_MASK 256
 
@@ -78,45 +82,67 @@ public:
 	IP_Table IPTable;
 
 	FeatureSet();
-	///Clears out the current values, and also any temp variables used to calculate them
+	// Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
-	//Calculates all features in the feature set
+
+	// Calculates all features in the feature set
+	//		featuresEnabled - Bitmask of which features are enabled, e.g. 0b111 would enable the first 3
 	void CalculateAll(uint32_t featuresEnabled);
-	///Calculates the local time interval for time-dependent features using the latest time stamps
+
+	// Calculates the local time interval for time-dependent features using the latest time stamps
 	void CalculateTimeInterval();
 
-	void calculate(uint featureDimension);
+	// Calculates a feature's value
+	//		featureDimension: feature to calculate, e.g. PACKET_INTERVAL_DEVIATION
+	// Note: this will update the global 'features' array for the given featureDimension index
+	void Calculate(uint featureDimension);
 
-	/// Processes incoming evidence before calculating the features
+	// Processes incoming evidence before calculating the features
+	//		packet - packet headers of new packet
 	void UpdateEvidence(Packet packet);
-	//Adds the local data to the silent alarm data before calculation
+
+	// Adds/removes the local data to the silent alarm data before calculation
 	// this is done to improve the performance of UpdateEvidence
+	//		include - true: adds data
+	//				- false: removes data
 	void UpdateFeatureData(bool include);
 
-	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
-	//	returns the number of bytes set in the buffer
-	uint serializeFeatureSet(u_char * buf);
-	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
-	//	returns the number of bytes read from the buffer
-	uint deserializeFeatureSet(u_char * buf);
+	// Serializes the contents of the global 'features' array
+	//		buf - Pointer to buffer where serialized feature set is to be stored
+	// Returns: number of bytes set in the buffer
+	uint SerializeFeatureSet(u_char * buf);
 
-	//Stores the feature set data into the buffer, retrieved using deserializeFeatureData
-	//	returns the number of bytes set in the buffer, this function saves serialized data.
-	// 	used by the ClassificationEngine for sending silentAlarms, needs data to classify
-	uint serializeFeatureDataBroadcast(u_char * buf);
-	//Reads the feature set data from a buffer originally populated by serializeFeatureData
+	// Deserializes the buffer into the contents of the global 'features' array
+	//		buf - Pointer to buffer where serialized feature set resides
+	// Returns: number of bytes read from the buffer
+	uint DeserializeFeatureSet(u_char * buf);
+
+	// TODO: Might be a good idea to combine SerializeFeatureDataBroadcast/SerializeFeatureDataLocal and
+	// the deserializing compliments. Very small changes in the code, we could pass another input arg as a switch.
+
+	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
+	// This function saves serialized data used by the ClassificationEngine for sending silentAlarms, needs data to classify
+	//		buf - Pointer to buffer to store serialized data
+	// Returns: number of bytes set in the buffer
+	uint SerializeFeatureDataBroadcast(u_char * buf);
+
+	// Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in broadcast data (the second member of uint pairs)
-	//	returns the number of bytes read from the buffer
-	uint deserializeFeatureDataBroadcast(u_char * buf);
+	//		buf - Pointer to buffer where the serialized Feature data broadcast resides
+	// Returns: number of bytes read from the buffer
+	uint DeserializeFeatureDataBroadcast(u_char * buf);
 
-	//Stores the feature set data into the buffer, retrieved using deserializeFeatureData
-	//	returns the number of bytes set in the buffer, this function doesn't keep data once
-	// 	serialized. used by the LocalTrafficMonitor and Haystack for sending suspect information
-	uint serializeFeatureDataLocal(u_char * buf);
+	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
+	// This function doesn't keep data once serialized. Used by the LocalTrafficMonitor and Haystack for sending suspect information
+	//		buf - Pointer to buffer to store serialized data in
+	// Returns: number of bytes set in the buffer
+	uint SerializeFeatureDataLocal(u_char * buf);
+
 	//Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in local data (the first member of uint pairs)
-	//	returns the number of bytes read from the buffer
-	uint deserializeFeatureDataLocal(u_char * buf);
+	//		buf - Pointer to buffer where the serialized data resides
+	// Returns: number of bytes read from the buffer
+	uint DeserializeFeatureDataLocal(u_char * buf);
 
 private:
 	//Temporary variables used to calculate Features
@@ -151,7 +177,6 @@ private:
 	Interval_Table intervalTable;
 
 	time_t last_time;
-
 };
 }
 

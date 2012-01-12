@@ -2,7 +2,7 @@
 // Name        : NOVAConfiguration.h
 // Author      : DataSoft Corporation
 // Copyright   : GNU GPL v3
-// Description : Loads and parses the configuration file
+// Description : Class to load and parse the NOVA configuration file
 //============================================================================/*
 
 #include "NOVAConfiguration.h"
@@ -17,7 +17,7 @@ namespace Nova
 {
 
 // Loads the configuration file into the class's state data
-void NOVAConfiguration::LoadConfig(char* input, string homePath)
+void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 {
 	string line;
 	string prefix;
@@ -25,9 +25,9 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 	const string SILENT_ALARM_DEFAULT = "12011";
 	LoggerPtr m_logger(Logger::getLogger("main"));
 
-	cout << "Loading file " << input << " in homepath " << homePath << endl;
+	cout << "Loading file " << configFilePath << " in homepath " << homeNovaPath << endl;
 
-	ifstream config(input);
+	ifstream config(configFilePath);
 
 	const string prefixes[] =
 	{ "INTERFACE", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ",
@@ -118,7 +118,7 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homePath + "/" + line;
+					options[prefix].data = homeNovaPath + "/" + line;
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -174,7 +174,7 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homePath + "/" + line;
+					options[prefix].data = homeNovaPath + "/" + line;
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -373,7 +373,7 @@ void NOVAConfiguration::LoadConfig(char* input, string homePath)
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homePath + "/" + line;
+					options[prefix].data = homeNovaPath + "/" + line;
 					options[prefix].isValid = true;
 				}
 				continue;

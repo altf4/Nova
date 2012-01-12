@@ -40,33 +40,43 @@ class GUIMsg
 	//* Member Functions *
 	//********************
 
-	//For instantiation only, use other constructors if message is known.
+	// For instantiation only, use other constructors if message is known.
 	GUIMsg();
 
-	//Constructor for messages that have no arguments
+	// Constructor for messages that have no arguments
+	//		type - type of message to create
 	GUIMsg(GUIMsgType type);
 
-	//Constructor for messages that have an argument
+	// Constructor for messages that have an argument
+	//		type - type of message to create
+	//		val - argument to send along with the message
 	GUIMsg(GUIMsgType type, string val);
 
-	//Sets the message, returns true if successful
+	// Sets the message
+	//		type - type of message to create
+	// Returns: true if successful
 	bool setMessage(GUIMsgType type);
 
-	//Sets the message, returns true if successful
+	// Sets the message
+	//		type - type of message to create
+	//		val - argument to send along with the message
+	// Returns: true if successful
 	bool setMessage(GUIMsgType type, string val);
 
-	//Returns the message type
+	// Returns the message type
 	GUIMsgType getType();
 
-	//Returns the message argument
+	// Returns the message argument
 	string getValue();
 
-	//Serializes the message into given buffer for communication
-	//Returns bytes used
+	// Serializes the message into given buffer for communication
+	//		buf - Pointer to buffer to store serialized data
+	// Returns: Number of bytes in buffer used
 	uint serialzeMessage(u_char * buf);
 
-	//Deserializes the message from the given buffer for reading
-	//Returns bytes read
+	// Deserializes the message from the given buffer for reading
+	//		buf - Points to buffer to read serialized data from
+	// Returns: Number of bytes read
 	uint deserializeMessage(u_char * buf);
 
 	private:
@@ -75,9 +85,10 @@ class GUIMsg
 	//* Member Variables *
 	//********************
 
-	//The message type
+	// The message type
 	GUIMsgType type;
-	//The argument if applicable.
+
+	// The argument if applicable.
 	string val;
 };
 }
