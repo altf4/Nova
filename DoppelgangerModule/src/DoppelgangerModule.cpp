@@ -151,8 +151,8 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		cout << "Alarm!\n";
-		cout << suspect->ToString();
+		//cout << "Alarm!\n";
+		//cout << suspect->ToString();
 		//Keep track of what suspects we've swapped and their current state
 		// Otherwise rules can accumulate in IPtables. Then when you go to delete one,
 		// there will still be more left over and it won't seem to have worked.

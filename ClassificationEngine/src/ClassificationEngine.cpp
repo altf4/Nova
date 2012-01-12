@@ -97,7 +97,6 @@ double classificationThreshold = .5; //value of classification to define split b
 uint SA_Max_Attempts = 3;			//The number of times to attempt to reconnect to a neighbor
 double SA_Sleep_Duration = 0.5;		//The time to sleep after a port knocking request and allow it to go through
 //End configured variables
-const int dim = DIM;					//dimension
 
 int nPts = 0;						//actual number of data points
 ANNpointArray dataPts;				//data points
@@ -105,6 +104,11 @@ ANNpointArray normalizedDataPts;	//normalized data points
 ANNkd_tree*	kdTree;					// search structure
 string dataFile;					//input for data points
 istream* queryIn = NULL;			//input for query points
+
+// Used for disabling features
+bool featureEnabled[DIM];
+uint32_t featureMask;
+int enabledFeatures = 0;
 
 const char *outFile;				//output for data points during training
 
@@ -115,7 +119,7 @@ void *outPtr;
 
 LoggerPtr m_logger(Logger::getLogger("main"));
 
-int maxFeatureValues[dim];
+double maxFeatureValues[DIM];
 
 //Used to indicate if the kd tree needs to be reformed
 bool updateKDTree = false;
@@ -165,6 +169,7 @@ int main(int argc,char *argv[])
 	//Are we Training or Classifying?
 	if(isTraining)
 	{
+		enabledFeatures = DIM;
 		pthread_create(&trainingLoopThread,NULL,TrainingLoop,(void *)outFile);
 	}
 	else
@@ -293,7 +298,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			{
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_wrlock(&lock);
-				it->second->CalculateFeatures(isTraining);
+				it->second->CalculateFeatures(isTraining, featureMask);
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_rdlock(&lock);
 			}
@@ -308,7 +313,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			{
 				oldClassification = it->second->isHostile;
 				Classify(it->second);
-				cout << it->second->ToString();
+				cout << it->second->ToString(featureEnabled);
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
 				if(it->second->isHostile)
@@ -346,12 +351,12 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 			{
 				if(it->second->needs_feature_update)
 				{
-					it->second->CalculateFeatures(isTraining);
+					it->second->CalculateFeatures(isTraining, featureMask);
 					if(it->second->annPoint == NULL)
 					{
 						it->second->annPoint = annAllocPt(DIM);
 					}
-					for(int j=0; j < dim; j++)
+					for(int j=0; j < DIM; j++)
 					{
 						it->second->annPoint[j] = it->second->features.features[j];
 						myfile << it->second->annPoint[j] << " ";
@@ -359,7 +364,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					it->second->needs_feature_update = false;
 					myfile << it->second->classification;
 					myfile << "\n";
-					cout << it->second->ToString();
+					cout << it->second->ToString(featureEnabled);
 					SendToUI(it->second);
 				}
 			}
@@ -470,7 +475,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			}
 			suspects[addr]->flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString());
+			LOG4CXX_INFO(m_logger, "Received Silent Alarm!\n" << suspects[addr]->ToString(featureEnabled));
 		}
 		catch(std::exception e)
 		{
@@ -493,7 +498,7 @@ void Nova::ClassificationEngine::FormKdTree()
 	delete kdTree;
 	//Normalize the data points
 	//Foreach data point
-	for(int j = 0;j < dim;j++)
+	for(int j = 0;j < enabledFeatures;j++)
 	{
 		//Foreach feature within the data point
 		for(int i=0;i < nPts;i++)
@@ -504,7 +509,7 @@ void Nova::ClassificationEngine::FormKdTree()
 			}
 			else
 			{
-				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (j+1) << " is 0!");
 				break;
 			}
 		}
@@ -512,7 +517,7 @@ void Nova::ClassificationEngine::FormKdTree()
 	kdTree = new ANNkd_tree(					// build search structure
 			normalizedDataPts,					// the data points
 					nPts,						// number of points
-					dim);						// dimension of space
+					enabledFeatures);						// dimension of space
 	updateKDTree = false;
 }
 
@@ -525,6 +530,7 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	ANNdistArray		dists;					// near neighbor distances
 
 	queryPt = suspect->annPoint;
+
 	nnIdx = new ANNidx[k];						// allocate near neigh indices
 	dists = new ANNdist[k];						// allocate near neighbor dists
 
@@ -602,14 +608,21 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
-		for(int i = 0;i < dim;i++)
+		// Used for matching the 0->DIM index with the 0->enabledFeatures index
+		int ai = 0;
+		for(int i = 0;i < DIM;i++)
 		{
-			if(it->second->features.features[i] > maxFeatureValues[i])
+			if (featureEnabled[i])
 			{
-				//For proper normalization the upper bound for a feature is the max value of the data.
-				maxFeatureValues[i] = it->second->features.features[i];
-				updateKDTree = true;
+				if(it->second->features.features[i] > maxFeatureValues[ai])
+				{
+					//For proper normalization the upper bound for a feature is the max value of the data.
+					maxFeatureValues[ai] = it->second->features.features[i];
+					updateKDTree = true;
+				}
+				ai++;
 			}
+
 		}
 	}
 	if(updateKDTree) FormKdTree();
@@ -622,15 +635,21 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 		if(it->second->needs_feature_update)
 		{
 			if(it->second->annPoint == NULL)
-				it->second->annPoint = annAllocPt(DIM);
+				it->second->annPoint = annAllocPt(enabledFeatures);
 
 			//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
-			for(int i = 0;i < dim;i++)
+			int ai = 0;
+			for(int i = 0;i < DIM;i++)
 			{
-				if(maxFeatureValues[0] != 0)
-					it->second->annPoint[i] = (double)(it->second->features.features[i] / maxFeatureValues[i]);
-				else
-					LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+				if (featureEnabled[i])
+				{
+					if(maxFeatureValues[ai] != 0)
+						it->second->annPoint[ai] = (double)(it->second->features.features[i] / maxFeatureValues[ai]);
+					else
+						LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+					ai++;
+				}
+
 			}
 			it->second->needs_feature_update = false;
 		}
@@ -643,7 +662,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 void Nova::ClassificationEngine::printPt(ostream &out, ANNpoint p)
 {
 	out << "(" << p[0];
-	for (int i = 1;i < dim;i++)
+	for (int i = 1;i < enabledFeatures;i++)
 	{
 		out << ", " << p[i];
 	}
@@ -655,6 +674,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 {
 	ifstream myfile (inFilePath.data());
 	string line;
+
 	int i = 0;
 	//Count the number of data points for allocation
 	if (myfile.is_open())
@@ -675,8 +695,8 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	//Open the file again, allocate the number of points and assign
 	myfile.open(inFilePath.data(), ifstream::in);
-	dataPts = annAllocPts(maxPts, dim);			// allocate data points
-	normalizedDataPts = annAllocPts(maxPts, dim);
+	dataPts = annAllocPts(maxPts, enabledFeatures); // allocate data points
+	normalizedDataPts = annAllocPts(maxPts, enabledFeatures);
 
 	if (myfile.is_open())
 	{
@@ -689,20 +709,26 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 				break;
 			}
 
-			dataPtsWithClass.push_back(new Point());
+			dataPtsWithClass.push_back(new Point(enabledFeatures));
 
-			for(int j = 0;j < dim;j++)
+			// Used for matching the 0->DIM index with the 0->enabledFeatures index
+			int actualDimension = 0;
+			for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
 			{
 				getline(myfile,line,' ');
 				double temp = strtod(line.data(), NULL);
 
-				dataPtsWithClass[i]->annPoint[j] = temp;
-				dataPts[i][j] = temp;
-
-				//Set the max values of each feature. (Used later in normalization)
-				if(temp > maxFeatureValues[j])
+				if (featureEnabled[defaultDimension])
 				{
-					maxFeatureValues[j] = temp;
+					dataPtsWithClass[i]->annPoint[actualDimension] = temp;
+					dataPts[i][actualDimension] = temp;
+
+					//Set the max values of each feature. (Used later in normalization)
+					if(temp > maxFeatureValues[actualDimension])
+					{
+						maxFeatureValues[actualDimension] = temp;
+					}
+					actualDimension++;
 				}
 			}
 			getline(myfile,line);
@@ -715,10 +741,11 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	myfile.close();
 
 	//Normalize the data points
-	//Foreach data point
-	for(int j = 0;j < dim;j++)
+
+	//Foreach feature within the data point
+	for(int j = 0;j < enabledFeatures;j++)
 	{
-		//Foreach feature within the data point
+		//Foreach data point
 		for(int i=0;i < nPts;i++)
 		{
 			if(maxFeatureValues[j] != 0)
@@ -736,7 +763,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	kdTree = new ANNkd_tree(					// build search structure
 			normalizedDataPts,					// the data points
 					nPts,						// number of points
-					dim);						// dimension of space
+					enabledFeatures);						// dimension of space
 }
 
 //Writes dataPtsWithClass out to a file specified by outFilePath
@@ -750,7 +777,7 @@ void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 		pthread_rwlock_rdlock(&lock);
 		for ( SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++ )
 		{
-			for(int j=0; j < dim; j++)
+			for(int j=0; j < enabledFeatures; j++)
 			{
 				myfile << it->second->annPoint[j] << " ";
 			}
@@ -894,6 +921,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				if(i == SA_Max_Attempts)
 				{
 					close(sockfd);
+					ss.str("");
+					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+					commandLine = ss.str();
+					system(commandLine.c_str());
 					continue;
 				}
 
@@ -901,6 +932,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				{
 					LOG4CXX_ERROR(m_logger,"Error in TCP Send: " << strerror(errno));
 					close(sockfd);
+					ss.str("");
+					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
+					commandLine = ss.str();
+					system(commandLine.c_str());
 					continue;
 				}
 				close(sockfd);
@@ -1057,7 +1092,7 @@ void ClassificationEngine::saveSuspectsToFile(string filename)
 	pthread_rwlock_rdlock(&lock);
 	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 	{
-		*out << it->second->ToString() << endl;
+		*out << it->second->ToString(featureEnabled) << endl;
 	}
 	pthread_rwlock_unlock(&lock);
 
@@ -1151,7 +1186,7 @@ void ClassificationEngine::LoadConfig(char * input)
 	"BROADCAST_ADDR","SILENT_ALARM_PORT",
 	"K", "EPS",
 	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
-	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION"};
+	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "ENABLED_FEATURES"};
 
 	for (i = 0; i < 12; i++)
 	{
@@ -1206,4 +1241,23 @@ void ClassificationEngine::LoadConfig(char * input)
 	dataFile = NovaConfig->options["DATAFILE"].data;
 	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
 	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
+
+	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
+
+	featureMask = 0;
+	for (uint i = 0; i < DIM; i++)
+	{
+		if ('1' == enabledFeatureMask.at(i))
+		{
+			featureEnabled[i] = true;
+			featureMask += pow(2, i);
+			enabledFeatures++;
+		}
+		else
+		{
+			featureEnabled[i] = false;
+		}
+	}
+
+	sqrtDIM = sqrt(enabledFeatures);
 }

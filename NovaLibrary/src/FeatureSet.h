@@ -15,26 +15,31 @@ using namespace std;
 
 ///The traffic distribution across the haystacks relative to host traffic
 #define IP_TRAFFIC_DISTRIBUTION 0
+#define IP_TRAFFIC_DISTRIBUTION_MASK 1
 
 ///The traffic distribution across ports contacted
 #define PORT_TRAFFIC_DISTRIBUTION 1
-
+#define PORT_TRAFFIC_DISTRIBUTION_MASK 2
 ///Number of ScanEvents that the suspect is responsible for per second
 #define HAYSTACK_EVENT_FREQUENCY 2
-
+#define HAYSTACK_EVENT_FREQUENCY_MASK 4
 ///Measures the distribution of packet sizes
 #define PACKET_SIZE_MEAN 3
+#define PACKET_SIZE_MEAN_MASK 8
 #define PACKET_SIZE_DEVIATION 4
-
+#define PACKET_SIZE_DEVIATION_MASK 16
 /// Number of distinct IP addresses contacted
 #define DISTINCT_IPS 5
+#define DISTINCT_IPS_MASK 32
 /// Number of distinct ports contacted
 #define DISTINCT_PORTS 6
-
+#define DISTINCT_PORTS_MASK 64
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_MEAN 7
+#define PACKET_INTERVAL_MEAN_MASK 128
 ///Measures the distribution of intervals between packets
 #define PACKET_INTERVAL_DEVIATION 8
+#define PACKET_INTERVAL_DEVIATION_MASK 256
 
 //UDP has max payload of 65535 bytes
 //serializeSuspect requires 89 bytes, serializeFeatureData requires 36 bytes, bytes left = 65410
@@ -76,32 +81,11 @@ public:
 	///Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
 	//Calculates all features in the feature set
-	void CalculateAll();
+	void CalculateAll(uint32_t featuresEnabled);
 	///Calculates the local time interval for time-dependent features using the latest time stamps
 	void CalculateTimeInterval();
 
-	///Calculates the distribution of traffic across IP address
-	void CalculateIPTrafficDistribution();
-	///Calculates the distribution of traffic across ports
-	void CalculatePortTrafficDistribution();
-
-	///Calculates distinct IPs contacted
-	void CalculateDistinctIPs();
-	///Calculates distinct ports contacted
-	void CalculateDistinctPorts();
-
-	///Calculates the rate that haystack nodes are contacted
-	void CalculateHaystackEventFrequency();
-
-	///Calculates the mean packet size
-	void CalculatePacketSizeMean();
-	///Calculates the standard deviation of the packet sizes
-	void CalculatePacketSizeDeviation();
-
-	///Calculates the average time between packets
-	void CalculatePacketIntervalMean();
-	///Calculates the standard deviation of time between packets
-	void CalculatePacketIntervalDeviation();
+	void calculate(uint featureDimension);
 
 	/// Processes incoming evidence before calculating the features
 	void UpdateEvidence(Packet packet);
