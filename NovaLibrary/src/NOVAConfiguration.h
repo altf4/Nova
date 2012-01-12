@@ -31,8 +31,6 @@ struct eq
 
 typedef google::dense_hash_map<string, struct NovaOption, tr1::hash<string>, eq > optionsMap;
 
-
-
 class NOVAConfiguration {
 public:
 	NOVAConfiguration();

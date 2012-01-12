@@ -85,24 +85,189 @@ void FeatureSet::ClearFeatureSet()
 }
 
 //Calculates all features in the feature set
-void FeatureSet::CalculateAll()
+void FeatureSet::CalculateAll(uint32_t featuresEnabled)
 {
 	CalculateTimeInterval();
 
 	UpdateFeatureData(INCLUDE);
 
-	CalculateDistinctIPs();
-	CalculateDistinctPorts();
+	if(featuresEnabled & IP_TRAFFIC_DISTRIBUTION_MASK)
+	{
+			calculate(IP_TRAFFIC_DISTRIBUTION);
+	}
+	if(featuresEnabled & PORT_TRAFFIC_DISTRIBUTION_MASK)
+	{
+			calculate(PORT_TRAFFIC_DISTRIBUTION);
+	}
+	if(featuresEnabled & HAYSTACK_EVENT_FREQUENCY_MASK)
+	{
+			calculate(HAYSTACK_EVENT_FREQUENCY);
+	}
+	if(featuresEnabled & PACKET_SIZE_MEAN_MASK)
+	{
+			calculate(PACKET_SIZE_MEAN);
+	}
+	if(featuresEnabled & PACKET_SIZE_DEVIATION_MASK)
+	{
+		if(!(featuresEnabled & PACKET_SIZE_MEAN_MASK))
+			calculate(PACKET_SIZE_MEAN);
+		calculate(PACKET_SIZE_DEVIATION);
+	}
+	if(featuresEnabled & DISTINCT_IPS_MASK)
+	{
+			calculate(DISTINCT_IPS);
+	}
+	if(featuresEnabled & DISTINCT_PORTS_MASK)
+	{
+			calculate(DISTINCT_PORTS);
+	}
+	if(featuresEnabled & PACKET_INTERVAL_MEAN_MASK)
+	{
+			calculate(PACKET_INTERVAL_MEAN);
+	}
+	if(featuresEnabled & PACKET_INTERVAL_DEVIATION_MASK)
+	{
+			if(!(featuresEnabled & PACKET_INTERVAL_MEAN_MASK))
+				calculate(PACKET_INTERVAL_MEAN);
+			calculate(PACKET_INTERVAL_DEVIATION);
+	}
 
-	CalculateIPTrafficDistribution();
-	CalculatePortTrafficDistribution();
-
-	CalculateHaystackEventFrequency();
-
-	CalculatePacketSizeDeviation();
-	CalculatePacketIntervalDeviation();
 
 	UpdateFeatureData(REMOVE);
+}
+
+void FeatureSet::calculate(uint featureDimension)
+{
+	switch (featureDimension)
+	{
+
+	///The traffic distribution across the haystacks relative to host traffic
+	case IP_TRAFFIC_DISTRIBUTION:
+	{
+		features[IP_TRAFFIC_DISTRIBUTION] = 0;
+		IPMax = 0;
+		for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
+		{
+			if(it->second.second > IPMax)
+				IPMax = it->second.second;
+		}
+		for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
+		{
+			features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)IPMax);
+		}
+
+		features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION] / (double)IPTable.size();
+		break;
+	}
+
+
+	///The traffic distribution across ports contacted
+	case PORT_TRAFFIC_DISTRIBUTION:
+	{
+		features[PORT_TRAFFIC_DISTRIBUTION] = 0;
+		for (Port_Table::iterator it = portTable.begin() ; it != portTable.end(); it++)
+		{
+			features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)portMax);
+		}
+
+		features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION] / (double)portTable.size();
+		break;
+	}
+
+	///Number of ScanEvents that the suspect is responsible for per second
+	case HAYSTACK_EVENT_FREQUENCY:
+	{
+		// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
+		if(totalInterval.second)
+		{
+			features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEvents.second)) / (double)(totalInterval.second);
+		}
+		else
+		{
+			//If interval is 0, no time based information, use a default of 1 for the interval
+			features[HAYSTACK_EVENT_FREQUENCY] = (double)(haystackEvents.second);
+		}
+		break;
+	}
+
+
+	///Measures the distribution of packet sizes
+	case PACKET_SIZE_MEAN:
+	{
+		features[PACKET_SIZE_MEAN] = (double)bytesTotal.second / (double)packetCount.second;
+		break;
+	}
+
+
+	///Measures the distribution of packet sizes
+	case PACKET_SIZE_DEVIATION:
+	{
+		double count = packetCount.second;
+		double mean = 0;
+		double variance = 0;
+		//Calculate mean
+		mean = features[PACKET_SIZE_MEAN];
+
+		//Calculate variance
+		for(Packet_Table::iterator it = packTable.begin() ; it != packTable.end(); it++)
+		{
+			// number of packets multiplied by (packet_size - mean)^2 divided by count
+			variance += (it->second.second * pow((it->first - mean), 2))/ count;
+		}
+
+		features[PACKET_SIZE_DEVIATION] = sqrt(variance);
+		break;
+	}
+
+
+	/// Number of distinct IP addresses contacted
+	case DISTINCT_IPS:
+	{
+		features[DISTINCT_IPS] = IPTable.size();
+		break;
+	}
+
+
+	/// Number of distinct ports contacted
+	case DISTINCT_PORTS:
+	{
+		features[DISTINCT_PORTS] =  portTable.size();
+		break;
+	}
+
+	///Measures the distribution of intervals between packets
+	case PACKET_INTERVAL_MEAN:
+	{
+		features[PACKET_INTERVAL_MEAN] = (((double) totalInterval.second)
+								/ ((double) (packetCount.second)));
+		break;
+	}
+
+
+	///Measures the distribution of intervals between packets
+	case PACKET_INTERVAL_DEVIATION:
+	{
+		double totalCount = packetCount.second;
+		double mean = 0;
+		double variance = 0;
+
+		mean = features[PACKET_INTERVAL_MEAN];
+
+		for (Interval_Table::iterator it = intervalTable.begin() ; it != intervalTable.end(); it++)
+		{
+			variance += it->second.second*(pow((it->first - mean), 2)/totalCount);
+		}
+
+		features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
+		break;
+	}
+
+	default:
+	{
+		break;
+	}
+
+	}
 }
 
 ///Calculates the total interval for time based features using latest timestamps
@@ -114,111 +279,8 @@ void FeatureSet::CalculateTimeInterval()
 	}
 }
 
-///Calculates distinct IPs contacted
-void FeatureSet::CalculateDistinctIPs()
-{
-	features[DISTINCT_IPS] = IPTable.size();
-}
-///Calculates distinct ports contacted
-void FeatureSet::CalculateDistinctPorts()
-{
-	features[DISTINCT_PORTS] =  portTable.size();
-}
-
-///Calculates the ip traffic distribution for the suspect
-void FeatureSet::CalculateIPTrafficDistribution()
-{
-	features[IP_TRAFFIC_DISTRIBUTION] = 0;
-	IPMax = 0;
-	for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
-	{
-		if(it->second.second > IPMax)
-			IPMax = it->second.second;
-	}
-	for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
-	{
-		features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)IPMax);
-	}
-
-	features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION] / (double)IPTable.size();
-}
-
-///Calculates the port traffic distribution for the suspect
-void FeatureSet::CalculatePortTrafficDistribution()
-{
-	features[PORT_TRAFFIC_DISTRIBUTION] = 0;
-	for (Port_Table::iterator it = portTable.begin() ; it != portTable.end(); it++)
-	{
-		features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)portMax);
-	}
-
-	features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION] / (double)portTable.size();
-}
-
-void FeatureSet::CalculateHaystackEventFrequency()
-{
-	// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
-	if(totalInterval.second)
-	{
-		features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEvents.second)) / (double)(totalInterval.second);
-	}
-	else
-	{
-		//If interval is 0, no time based information, use a default of 1 for the interval
-		features[HAYSTACK_EVENT_FREQUENCY] = (double)(haystackEvents.second);
-	}
-}
 
 
-void FeatureSet::CalculatePacketIntervalMean()
-{
-
-	features[PACKET_INTERVAL_MEAN] = (((double) totalInterval.second)
-							/ ((double) (packetCount.second)));
-}
-
-void FeatureSet::CalculatePacketIntervalDeviation()
-{
-	double totalCount = packetCount.second;
-	double mean = 0;
-	double variance = 0;
-
-	CalculatePacketIntervalMean();
-	mean = features[PACKET_INTERVAL_MEAN];
-
-	for (Interval_Table::iterator it = intervalTable.begin() ; it != intervalTable.end(); it++)
-	{
-		variance += it->second.second*(pow((it->first - mean), 2)/totalCount);
-	}
-
-	features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
-}
-
-///Calculates Packet Size Mean for a suspect
-void FeatureSet::CalculatePacketSizeMean()
-{
-	features[PACKET_SIZE_MEAN] = (double)bytesTotal.second / (double)packetCount.second;
-}
-
-///Calculates Packet Size Variance for a suspect
-void FeatureSet::CalculatePacketSizeDeviation()
-{
-	double count = packetCount.second;
-	double mean = 0;
-	double variance = 0;
-	//Calculate mean
-	CalculatePacketSizeMean();
-	mean = features[PACKET_SIZE_MEAN];
-
-	//Calculate variance
-	for(Packet_Table::iterator it = packTable.begin() ; it != packTable.end(); it++)
-	{
-		// number of packets multiplied by (packet_size - mean)^2 divided by count
-		variance += (it->second.second * pow((it->first - mean), 2))/ count;
-	}
-
-	features[PACKET_SIZE_DEVIATION] = sqrt(variance);
-}
 
 void FeatureSet::UpdateEvidence(Packet packet)
 {

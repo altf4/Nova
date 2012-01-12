@@ -16,7 +16,7 @@
 #define CLOSE false
 
 //Used in classification algorithm. Store it here so we only need to calculate it once
-const double sqrtDIM = sqrt(DIM);
+double sqrtDIM;
 
 //Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
