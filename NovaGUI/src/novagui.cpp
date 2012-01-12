@@ -1252,8 +1252,8 @@ void NovaGUI::saveSuspects()
 	}
 
 
-	message.setMessage(WRITE_SUSPECTS, filename.toStdString());
-	msgLen = message.serialzeMessage(msgBuffer);
+	message.SetMessage(WRITE_SUSPECTS, filename.toStdString());
+	msgLen = message.SerialzeMessage(msgBuffer);
 
 	//Sends the message to all Nova processes
 	sendToCE();
@@ -1276,14 +1276,14 @@ void NovaGUI::clearSuspectList()
 
 void NovaGUI::drawNodes()
 {
-	QTreeWidgetItem * item = NULL;
+	//QTreeWidgetItem * item = NULL;
 	QString str;
 
 	ui.nodesTreeWidget->clear();
 
 	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 	{
-		item = new QTreeWidgetItem(ui.nodesTreeWidget);
+		//item = new QTreeWidgetItem(ui.nodesTreeWidget);
 		str = (QString)it->second.address.c_str();
 	}
 	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
@@ -1413,8 +1413,8 @@ void clearSuspects()
 {
 	pthread_rwlock_wrlock(&lock);
 	SuspectTable.clear();
-	message.setMessage(CLEAR_ALL);
-	msgLen = message.serialzeMessage(msgBuffer);
+	message.SetMessage(CLEAR_ALL);
+	msgLen = message.SerialzeMessage(msgBuffer);
 	sendToCE();
 	sendToDM();
 	pthread_rwlock_unlock(&lock);
@@ -1425,8 +1425,8 @@ void closeNova()
 	if(novaRunning)
 	{
 		//Sets the message
-		message.setMessage(EXIT);
-		msgLen = message.serialzeMessage(msgBuffer);
+		message.SetMessage(EXIT);
+		msgLen = message.SerialzeMessage(msgBuffer);
 
 		//Sends the message to all Nova processes
 		sendAll();

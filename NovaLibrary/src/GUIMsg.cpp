@@ -87,7 +87,7 @@ GUIMsg::GUIMsg(GUIMsgType t, string v)
 }
 
 
-bool GUIMsg::setMessage(GUIMsgType t)
+bool GUIMsg::SetMessage(GUIMsgType t)
 {
 	//Only sets if the type is recognized and requires no argument
 	switch(t)
@@ -107,7 +107,7 @@ bool GUIMsg::setMessage(GUIMsgType t)
 }
 
 
-bool GUIMsg::setMessage(GUIMsgType t, string v)
+bool GUIMsg::SetMessage(GUIMsgType t, string v)
 {
 	switch(t)
 	{
@@ -146,19 +146,19 @@ bool GUIMsg::setMessage(GUIMsgType t, string v)
 }
 
 
-GUIMsgType GUIMsg::getType()
+GUIMsgType GUIMsg::GetType()
 {
 	return type;
 }
 
 
-string GUIMsg::getValue()
+string GUIMsg::GetValue()
 {
 	return val;
 }
 
 
-uint GUIMsg::serialzeMessage(u_char * buf)
+uint GUIMsg::SerialzeMessage(u_char * buf)
 {
 	//Only works if a valid message
 	if(type != INVALID)
@@ -196,7 +196,7 @@ uint GUIMsg::serialzeMessage(u_char * buf)
 }
 
 
-uint GUIMsg::deserializeMessage(u_char * buf)
+uint GUIMsg::DeserializeMessage(u_char * buf)
 {
 	uint offset = 0;
 	char c[MAX_VAL_SIZE];

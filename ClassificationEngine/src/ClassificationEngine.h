@@ -59,7 +59,7 @@ void CopyDataToAnnPoints();
 // Prints a single ANN point, p, to stream, out
 //		out - steam to print to
 //		p 	- ANN point to print
-void printPt(ostream &out, ANNpoint p);
+void PrintPt(ostream &out, ANNpoint p);
 
 // Reads into the list of suspects from a file specified by inFilePath
 //		inFilePath - path to input file, should contain Feature dimensions

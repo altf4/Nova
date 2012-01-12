@@ -230,12 +230,12 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 				//if we receive a udp packet on the silent alarm port, see if it is a port knock request
 				KnockRequest(packet_info, (((u_char *)ip_hdr + sizeof(struct ip)) + sizeof(struct udphdr)));
 			}
-			updateSuspect(packet_info);
+			UpdateSuspect(packet_info);
 		}
 		else if(ip_hdr->ip_p == 1)
 		{
 			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			updateSuspect(packet_info);
+			UpdateSuspect(packet_info);
 		}
 		//If TCP...
 		else if(ip_hdr->ip_p == 6)
@@ -349,8 +349,8 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
 		close(msgSocket);
     }
 
-    msg.deserializeMessage(msgBuffer);
-    switch(msg.getType())
+    msg.DeserializeMessage(msgBuffer);
+    switch(msg.GetType())
     {
     	case EXIT:
     		exit(1);
@@ -388,7 +388,7 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_LTM;
-							updateSuspect((SessionTable[it->first].session).at(p));
+							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
 						pthread_rwlock_unlock(&sessionLock);
@@ -407,7 +407,7 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_LTM;
-							updateSuspect((SessionTable[it->first].session).at(p));
+							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
 						pthread_rwlock_unlock(&sessionLock);
@@ -472,7 +472,7 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 }
 
 
-void LocalTrafficMonitor::updateSuspect(Packet packet)
+void LocalTrafficMonitor::UpdateSuspect(Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
 	pthread_rwlock_wrlock(&suspectLock);
