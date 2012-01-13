@@ -28,17 +28,6 @@ INTERFACE default
 #DATAFILE Data/data.txt
 DATAFILE Data/data.txt
 
-
-############################################
-# BROADCAST_ADDR #
-############################################
-#
-# Broadcast IP address to be used.
-#
-# EXAMPLE:
-#BROADCAST_ADDR 255.255.255.255
-BROADCAST_ADDR 255.255.255.255
-
 ############################################
 # SILENT_ALARM_PORT #
 ############################################
