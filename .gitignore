@@ -57,6 +57,10 @@ ClassificationEngine/Debug/ClassificationEngine
 DoppelgangerModule/Debug/DoppelgangerModule
 Haystack/Debug/Haystack
 LocalTrafficMonitor/Debug/LocalTrafficMonitor
+ClassificationEngine/Release/ClassificationEngine
+DoppelgangerModule/Release/DoppelgangerModule
+Haystack/Release/Haystack
+LocalTrafficMonitor/Release/LocalTrafficMonitor
 NovaGUI/.settings/
 NovaGUI/Makefile
 NovaGUI/Makefile.Debug
