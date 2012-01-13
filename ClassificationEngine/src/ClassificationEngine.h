@@ -24,67 +24,83 @@ typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr
 namespace Nova{
 namespace ClassificationEngine{
 
-// Thread for listening for GUI commands
+// Start routine for the GUI command listening thread
+//		ptr - Required for pthread start routines
 void *GUILoop(void *ptr);
 
-//Separate thread which infinite loops, periodically updating all the classifications
-//	for all the current suspects
+// Start routine for a separate thread which infinite loops, periodically
+// updating all the classifications for all the current suspects
+//		prt - Required for pthread start routines
 void *ClassificationLoop(void *ptr);
 
-///Thread for calculating training data, and writing to file.
+// Start routine for thread that calculates training data, and used for writing to file.
+//		prt - Required for pthread start routines
 void *TrainingLoop(void *ptr);
 
-///Thread for listening for Silent Alarms from other Nova instances
+// Startup routine for thread that listens for Silent Alarms from other Nova instances
+//		prt - Required for pthread start routines
 void *SilentAlarmLoop(void *ptr);
 
-///Performs classification on given suspect
+// Performs classification on given suspect
+//		suspect - suspect to classify based on current evidence
+// Note: this updates the classification of the suspect in dataPtsWithClass as well as it's isHostile variable
 void Classify(Suspect *suspect);
 
-///Calculates normalized data points and stores into 'normalizedDataPts'
+// Calculates normalized data points and stores into 'normalizedDataPts'
 void NormalizeDataPoints();
 
-///Reforms the kd tree in the vent that a suspects' feature exceeds the current max value for normalization
+// Forms the normalized kd tree, called once on start up
+// Will be called again if the a suspect's max value for a feature exceeds the current maximum for normalization
 void FormKdTree();
 
-///Subroutine to copy the data points in 'suspects' to their respective ANN Points
+// Subroutine to copy the data points in 'suspects' to their respective ANN Points
 void CopyDataToAnnPoints();
 
-///Prints a single ANN point, p, to stream, out
-void printPt(ostream &out, ANNpoint p);
+// Prints a single ANN point, p, to stream, out
+//		out - steam to print to
+//		p 	- ANN point to print
+void PrintPt(ostream &out, ANNpoint p);
 
-///Reads into the list of suspects from a file specified by inFilePath
+// Reads into the list of suspects from a file specified by inFilePath
+//		inFilePath - path to input file, should contain Feature dimensions
+//					 followed by hostile classification (0 or 1), all space separated
 void LoadDataPointsFromFile(string inFilePath);
 
-///Writes the list of suspects out to a file specified by outFilePath
+// Writes the list of suspects out to a file specified by outFilePath
+//		outFilePath - path to output file
 void WriteDataPointsToFile(string outFilePath);
 
-///Returns usage tips
+// Returns tips on command line usage
 string Usage();
 
-///Returns a string representation of the given local device's IP address
-string getLocalIP(const char *dev);
-
-///Send a silent alarm about the argument suspect
+// Send a silent alarm
+//		suspect - Suspect to send alarm about
 void SilentAlarm(Suspect *suspect);
 
-///Knocks on the port of the neighboring nova instance to open or close it
-bool knockPort(bool mode);
+// Knocks on the port of the neighboring nova instance to open or close it
+//		mode - true for OPEN, false for CLOSE
+bool KnockPort(bool mode);
 
-///Receive featureData from another local component.
-/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+// Receive featureData from another local component.
+// This is a blocking function. If nothing is received, then wait on this thread for an answer
+// Returns: false if any sort of error
 bool ReceiveSuspectData();
 
-/// Receives input commands from the GUI
+// Receives input commands from the GUI
+// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void ReceiveGUICommand();
 
-//Sends output to the UI
+// Sends output to the UI
+//	suspect - suspect to serialize GUI data and send
 void SendToUI(Suspect *suspect);
 
-//Loads configuration variables from NOVAConfig_CE.txt or specified config file
-void LoadConfig(char * input);
+// Loads configuration variables
+//		configFilePath - Location of configuration file
+void LoadConfig(char * configFilePath);
 
 // Dump the suspect information to a file
-void saveSuspectsToFile(string filename);
+//		filename - Path to file to write to
+void SaveSuspectsToFile(string filename);
 
 }
 }

@@ -12,7 +12,7 @@ using namespace std;
 
 namespace Nova{
 
-//Blank Constructor
+
 Suspect::Suspect()
 {
 	IP_address.s_addr = 0;
@@ -27,7 +27,7 @@ Suspect::Suspect()
 	evidence.clear();
 }
 
-//Destructor. Has to delete the FeatureSet object within.
+
 Suspect::~Suspect()
 {
 	if(annPoint != NULL)
@@ -36,7 +36,7 @@ Suspect::~Suspect()
 	}
 }
 
-//Constructor from a TrafficEvent
+
 Suspect::Suspect(Packet packet)
 {
 	IP_address = packet.ip_hdr.ip_src;
@@ -51,7 +51,7 @@ Suspect::Suspect(Packet packet)
 	AddEvidence(packet);
 }
 
-//Converts suspect into a human readable string and returns it
+
 string Suspect::ToString(bool featureEnabled[])
 {
 	stringstream ss;
@@ -108,15 +108,14 @@ string Suspect::ToString(bool featureEnabled[])
 	return ss.str();
 }
 
-//Add an additional piece of evidence to this suspect
-//	Does not take actions like reclassifying or calculating features.
+
 void Suspect::AddEvidence(Packet packet)
 {
 	evidence.push_back(packet);
 	needs_feature_update = true;
 }
 
-//Calculates the feature set for this suspect
+
 void Suspect::CalculateFeatures(bool isTraining, uint32_t featuresEnabled)
 {
 	features.CalculateAll(featuresEnabled);
@@ -136,9 +135,8 @@ void Suspect::CalculateFeatures(bool isTraining, uint32_t featuresEnabled)
 	}
 }
 
-//Stores the Suspect information into the buffer, retrieved using deserializeSuspect
-//	returns the number of bytes set in the buffer
-uint Suspect::serializeSuspect(u_char * buf)
+
+uint Suspect::SerializeSuspect(u_char * buf)
 {
 	uint offset = 0;
 	uint bsize = 1; //bools
@@ -163,14 +161,13 @@ uint Suspect::serializeSuspect(u_char * buf)
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
-	offset += features.serializeFeatureSet(buf+offset);
+	offset += features.SerializeFeatureSet(buf+offset);
 
 	return offset;
 }
 
-//Reads Suspect information from a buffer originally populated by serializeSuspect
-//	returns the number of bytes read from the buffer
-uint Suspect::deserializeSuspect(u_char * buf)
+
+uint Suspect::DeserializeSuspect(u_char * buf)
 {
 	uint offset = 0;
 	uint bsize = 1; //bools
@@ -195,14 +192,13 @@ uint Suspect::deserializeSuspect(u_char * buf)
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
-	offset += features.deserializeFeatureSet(buf+offset);
+	offset += features.DeserializeFeatureSet(buf+offset);
 
 	return offset;
 }
 
-//Reads Suspect information from a buffer originally populated by serializeSuspect
-// returns the number of bytes read from the buffer
-uint Suspect::deserializeSuspectWithData(u_char * buf, bool isLocal)
+
+uint Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 {
 	uint offset = 0;
 	uint bsize = 1; //bools
@@ -227,12 +223,12 @@ uint Suspect::deserializeSuspectWithData(u_char * buf, bool isLocal)
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
-	offset += features.deserializeFeatureSet(buf+offset);
+	offset += features.DeserializeFeatureSet(buf+offset);
 
 	if(isLocal)
-		offset += features.deserializeFeatureDataLocal(buf+offset);
+		offset += features.DeserializeFeatureDataLocal(buf+offset);
 	else
-		offset += features.deserializeFeatureDataBroadcast(buf+offset);
+		offset += features.DeserializeFeatureDataBroadcast(buf+offset);
 
 	needs_feature_update = true;
 	needs_classification_update = true;
