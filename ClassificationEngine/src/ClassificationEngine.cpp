@@ -649,6 +649,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	int i = 0;
 	int k = 0;
+	int badLines = 0;
 
 	//Count the number of data points for allocation
 	if (myfile.is_open())
@@ -683,6 +684,8 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 		while (!myfile.eof() && (i < maxPts))
 		{
+			k = 0;
+
 			if(myfile.peek() == EOF)
 			{
 				break;
@@ -695,20 +698,30 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			}
 
 			//this will grab a line of values up to a newline or until DIM values have been taken in.
-			while(myfile.peek() != '/n' && k < DIM)
+			while(myfile.peek() != '\n' && k < DIM)
 			{
 				getline(myfile, fieldsCheck[k], ' ');
 				k++;
 			}
 
 			//starting from the end of fieldsCheck, if NotPresent is still inside the array, then
-			//the line of the data.txt file is incorrect, set valid to false.
-			for(int m = DIM - 1; m > 0 && valid; m--)
+			//the line of the data.txt file is incorrect, set valid to false. Note that this
+			//only works in regards to the 9 data points preceding the classification,
+			//not the classification itself.
+			for(int m = DIM - 1; m >= 0 && valid; m--)
 			{
 				if(!fieldsCheck[m].compare("NotPresent"))
 				{
 					valid = false;
 				}
+			}
+
+			//if the next character is a newline after extracting as many data points as possible,
+			//then the classification is not present. For now, I will merely discard the line;
+			//there may be a more elegant way to do it. (i.e. pass the data to Classify or something)
+			if(myfile.peek() == '\n' || myfile.peek() == ' ')
+			{
+				valid = false;
 			}
 
 			//if the line is valid, continue as normal
@@ -720,8 +733,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 				int actualDimension = 0;
 				for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
 				{
-					getline(myfile,line,' ');
-					double temp = strtod(line.data(), NULL);
+					double temp = strtod(fieldsCheck[defaultDimension].data(), NULL);
 
 					if (featureEnabled[defaultDimension])
 					{
@@ -746,6 +758,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			else
 			{
 				getline(myfile,line);
+				badLines++;
 			}
 		}
 		nPts = i;
@@ -756,6 +769,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	myfile.close();
 
+	LOG4CXX_INFO(m_logger, "There were " << badLines << " incomplete lines in the data file.");
 	//Normalize the data points
 
 	//Foreach feature within the data point
@@ -1056,30 +1070,6 @@ void ClassificationEngine::SaveSuspectsToFile(string filename)
 	LOG4CXX_INFO(m_logger, "Got request to save file to " + filename);
 	dataPtsWithClass.push_back(new Point(enabledFeatures));
 
-				// Used for matching the 0->DIM index with the 0->enabledFeatures index
-				int actualDimension = 0;
-				for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
-				{
-					getline(myfile,line,' ');
-					double temp = strtod(line.data(), NULL);
-
-					if (featureEnabled[defaultDimension])
-					{
-						dataPtsWithClass[i]->annPoint[actualDimension] = temp;
-						dataPts[i][actualDimension] = temp;
-
-						//Set the max values of each feature. (Used later in normalization)
-						if(temp > maxFeatureValues[actualDimension])
-						{
-							maxFeatureValues[actualDimension] = temp;
-						}
-						actualDimension++;
-					}
-				}
-				getline(myfile,line);
-				dataPtsWithClass[i]->classification = atoi(line.data());
-				i++;
-			}
 	ofstream *out = new ofstream(filename.c_str());
 
 	if(!out->is_open())
