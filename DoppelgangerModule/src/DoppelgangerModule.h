@@ -17,23 +17,23 @@ typedef google::dense_hash_map<in_addr_t, bool, tr1::hash<in_addr_t>, eqaddr > S
 namespace Nova{
 namespace DoppelgangerModule{
 
-///Returns a string representation of the specified device's IP address
-string getLocalIP(const char *dev);
-
-///Listens over IPC for a Silent Alarm, blocking on no answer
+// Listens over IPC for a Silent Alarm, blocking on no answer
 void ReceiveAlarm();
 
-/// Thread for listening for GUI commands
+// Startup routine for pthread that listens for GUI comamnds
+//		ptr - Requires for pthread startup routines
 void *GUILoop(void *ptr);
 
-/// Receives input commands from the GUI
+// Receives input commands from the GUI
+// Note: This is a blocking function. If nothing is received, then wait on this thread for an answer
 void ReceiveGUICommand();
 
-//Returns usage tips
+// Returns tips for command line usage
 string Usage();
 
-//Loads configuration variables from NOVAConfig_DM.txt or specified config file
-void LoadConfig(char* input);
+// Loads configuration variables
+//		configFilePath - Location of configuration file
+void LoadConfig(char* configFilePath);
 
 }
 }

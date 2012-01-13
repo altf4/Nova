@@ -27,7 +27,6 @@
 #include <google/dense_hash_map>
 #include <log4cxx/xml/domconfigurator.h>
 
-#include "NOVAConfiguration.h"
 #include "GUIMsg.h"
 #include "Point.h"
 
@@ -185,19 +184,30 @@ typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr 
 namespace Nova{
 
 // Encrpyts/decrypts a char buffer of size 'size' depending on mode
-void cryptBuffer(u_char * buf, uint size, bool mode);
+// TODO: Comment more on this once it's written
+void CryptBuffer(u_char * buf, uint size, bool mode);
 
 // Reads the paths file and returns the homePath of nova
-string getHomePath();
+// Returns: Something like "/home/user/.nova"
+string GetHomePath();
 
 // Replaces any env vars in 'path' and returns the absolute path
-string resolvePathVars(string path);
+// 		path - String containing a path with env vars (eg $HOME)
+// Returns: Path with env vars resolved and replaced with real values
+string ResolvePathVars(string path);
 
-//Extracts and returns the IP Address from a serialized suspect located at buf
-uint getSerializedAddr(u_char * buf);
+// Gets local IP address for interface
+//		dev - Device name, e.g. "eth0"
+// Returns: IP addresses
+string GetLocalIP(const char *dev);
 
-//Gets number of bits used in the mask
-int getMaskBits(in_addr_t range);
+// Extracts and returns the IP Address from a serialized suspect located at buf
+//		buf - Contains serialized suspect data
+// Returns: IP address of the serialized suspect
+uint GetSerializedAddr(u_char * buf);
+
+// Returns the number of bits used in the mask when given in in_addr_t form
+int GetMaskBits(in_addr_t range);
 
 }
 #endif /* NOVAUTIL_H_ */
