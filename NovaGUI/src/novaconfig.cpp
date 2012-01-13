@@ -90,6 +90,60 @@ void NovaConfig::closeEvent(QCloseEvent * e)
 
 }
 
+// Feature enable/disable stuff
+
+void NovaConfig::advanceFeatureSelection()
+{
+	int nextRow = ui.featureList->currentRow() + 1;
+	if (nextRow >= ui.featureList->count())
+	{
+		nextRow = 0;
+	}
+	ui.featureList->setCurrentRow(nextRow);
+}
+
+void NovaConfig::on_featureEnableButton_clicked()
+{
+	updateFeatureListItem(ui.featureList->currentItem(), '1');
+	advanceFeatureSelection();
+}
+
+void NovaConfig::on_featureDisableButton_clicked()
+{
+	updateFeatureListItem(ui.featureList->currentItem(), '0');
+	advanceFeatureSelection();
+}
+
+QListWidgetItem* NovaConfig::getFeatureListItem(QString name, char enabled)
+{
+	QListWidgetItem *newFeatureEntry = new QListWidgetItem();
+	name.prepend("+  ");
+	newFeatureEntry->setText(name);
+	updateFeatureListItem(newFeatureEntry, enabled);
+
+	return newFeatureEntry;
+}
+
+void NovaConfig::updateFeatureListItem(QListWidgetItem* newFeatureEntry, char enabled)
+{
+	QBrush *enabledColor = new QBrush(QColor("black"));
+	QBrush *disabledColor = new QBrush(QColor("grey"));
+	QString name = newFeatureEntry->text().remove(0, 2);
+
+	if (enabled == '1')
+	{
+		name.prepend(QString("+ "));
+		newFeatureEntry->setForeground(*enabledColor);
+	}
+	else
+	{
+		name.prepend(QString("- "));
+		newFeatureEntry->setForeground(*disabledColor);
+	}
+	newFeatureEntry->setText(name);
+}
+
+
 /************************************************
  * Loading preferences from configuration files
  ************************************************/
@@ -272,8 +326,40 @@ void NovaConfig::loadPreferences()
 			prefix = "ENABLED_FEATURES";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceFeatureEdit->setText((QString)line.c_str());
+				string featuresEnabled = line.substr(prefix.size()+1,line.size());
+
+				// Clear out any old stuff in the list
+				ui.featureList->clear();
+
+
+				// Populate the list, row order is based on dimension macros
+				ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
+						getFeatureListItem(QString("IP Traffic Distribution"),featuresEnabled.at(IP_TRAFFIC_DISTRIBUTION)));
+
+				ui.featureList->insertItem(PORT_TRAFFIC_DISTRIBUTION,
+						getFeatureListItem(QString("Port Traffic Distribution"),featuresEnabled.at(PORT_TRAFFIC_DISTRIBUTION)));
+
+				ui.featureList->insertItem(HAYSTACK_EVENT_FREQUENCY,
+						getFeatureListItem(QString("Haystack Event Frequency"),featuresEnabled.at(HAYSTACK_EVENT_FREQUENCY)));
+
+				ui.featureList->insertItem(PACKET_SIZE_MEAN,
+						getFeatureListItem(QString("Packet Size Mean"),featuresEnabled.at(PACKET_SIZE_MEAN)));
+
+				ui.featureList->insertItem(PACKET_SIZE_DEVIATION,
+						getFeatureListItem(QString("Packet Size Deviation"),featuresEnabled.at(PACKET_SIZE_DEVIATION)));
+
+				ui.featureList->insertItem(DISTINCT_IPS,
+						getFeatureListItem(QString("IPs Contacted"),featuresEnabled.at(DISTINCT_IPS)));
+
+				ui.featureList->insertItem(DISTINCT_PORTS,
+						getFeatureListItem(QString("Ports Contacted"),featuresEnabled.at(DISTINCT_PORTS)));
+
+				ui.featureList->insertItem(PACKET_INTERVAL_MEAN,
+						getFeatureListItem(QString("Packet Interval Mean"),featuresEnabled.at(PACKET_INTERVAL_MEAN)));
+
+				ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
+						getFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
+
 				continue;
 			}
 		}
@@ -459,6 +545,7 @@ void NovaConfig::on_okButton_clicked()
 	this->close();
 }
 
+
 //Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
@@ -492,8 +579,10 @@ bool NovaConfig::saveConfigurationToFile() {
 	{
 		while(in->good())
 		{
-			getline(*in, line);
-
+			if (!getline(*in, line))
+			{
+				continue;
+			}
 
 			prefix = "DM_ENABLED";
 			if(!line.substr(0,prefix.size()).compare(prefix))
@@ -631,7 +720,17 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "ENABLED_FEATURES";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << ui.ceFeatureEdit->displayText().toStdString()  << endl;
+				*out << prefix << " ";
+				for (uint i = 0; i < DIM; i++)
+				{
+					char state = ui.featureList->item(i)->text().at(0).toAscii();
+					if (state == '+')
+						*out << 1;
+					else
+						*out << 0;
+				}
+
+				*out << endl;
 				continue;
 			}
 
