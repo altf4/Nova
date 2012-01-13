@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lpcap -llog4cxx -lNovaLibrary -lpthread -lboost_serialization
+LIBS := -lpcap -llog4cxx -lNovaLibrary -lpthread -lann
 
