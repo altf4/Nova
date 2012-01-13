@@ -124,11 +124,19 @@ void NovaConfig::loadPreferences()
 				continue;
 			}
 
-			prefix = "BROADCAST_ADDR";
+			prefix = "SA_MAX_ATTEMPTS";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				ui.saIPEdit->setText((QString)line.c_str());
+				ui.saAttemptsMaxEdit->setText((QString)line.c_str());
+				continue;
+			}
+
+			prefix = "SA_SLEEP_DURATION";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.saAttemptsTimeEdit->setText((QString)line.c_str());
 				continue;
 			}
 
@@ -258,6 +266,14 @@ void NovaConfig::loadPreferences()
 			{
 				line = line.substr(prefix.size()+1,line.size());
 				ui.terminalCheckBox->setChecked(atoi(line.c_str()));
+				continue;
+			}
+
+			prefix = "ENABLED_FEATURES";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				ui.ceFeatureEdit->setText((QString)line.c_str());
 				continue;
 			}
 		}
@@ -521,10 +537,17 @@ bool NovaConfig::saveConfigurationToFile() {
 				continue;
 			}
 
-			prefix = "BROADCAST_ADDR";
+			prefix = "SA_SLEEP_DURATION";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.saIPEdit->displayText().toStdString() << endl;
+				*out << prefix << " " << this->ui.saAttemptsTimeEdit->displayText().toStdString() << endl;
+				continue;
+			}
+
+			prefix = "SA_MAX_ATTEMPTS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << this->ui.saAttemptsMaxEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
@@ -602,6 +625,13 @@ bool NovaConfig::saveConfigurationToFile() {
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				*out << prefix << " " << ui.pcapEdit->displayText().toStdString()  << endl;
+				continue;
+			}
+
+			prefix = "ENABLED_FEATURES";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << ui.ceFeatureEdit->displayText().toStdString()  << endl;
 				continue;
 			}
 
