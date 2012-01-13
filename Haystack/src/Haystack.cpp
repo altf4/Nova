@@ -83,11 +83,16 @@ int main(int argc, char *argv[])
 
 	//Runs the configuration loader
 	LoadConfig((char*)novaConfig.c_str());
-
 	if(!useTerminals)
 	{
-		logConfig = homePath +"/Config/Log4cxxConfig.xml";
-		DOMConfigurator::configure(logConfig.c_str());
+		//logConfig = homePath +"/Config/Log4cxxConfig.xml";
+		//DOMConfigurator::configure(logConfig.c_str());
+		openlog("DoppelgangerModule", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+	}
+
+	else
+	{
+		openlog("DoppelgangerModule", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
 	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -102,7 +107,8 @@ int main(int argc, char *argv[])
 
 	if(haystackAddresses.empty())
 	{
-		LOG4CXX_ERROR(m_logger, "Invalid interface given");
+		//LOG4CXX_ERROR(m_logger, "Invalid interface given");
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d Invalid interface given", __LINE__);
 		exit(1);
 	}
 
@@ -118,7 +124,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	LOG4CXX_INFO(m_logger, haystackAddresses_csv);
+	//LOG4CXX_INFO(m_logger, haystackAddresses_csv);
+	syslog(LOG_INFO, "%s", haystackAddresses_csv.c_str());
 
 	//Preform the socket address for faster run time
 	//Builds the key path
