@@ -7,6 +7,7 @@
 //============================================================================
 
 #include "Haystack.h"
+#include "NOVAConfiguration.h"
 
 using namespace log4cxx;
 using namespace log4cxx::xml;
@@ -74,7 +75,7 @@ int main(int argc, char *argv[])
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	homePath = getHomePath();
+	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
 
@@ -204,8 +205,6 @@ int main(int argc, char *argv[])
 }
 
 
-/// Callback function that is passed to pcap_loop(..) and called each time
-/// a packet is recieved
 void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
 	if(packet == NULL)
@@ -231,12 +230,12 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 		if(ip_hdr->ip_p == 17 )
 		{
 			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			updateSuspect(packet_info);
+			UpdateSuspect(packet_info);
 		}
 		else if(ip_hdr->ip_p == 1)
 		{
 			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			updateSuspect(packet_info);
+			UpdateSuspect(packet_info);
 		}
 		//If TCP...
 		else if(ip_hdr->ip_p == 6)
@@ -287,6 +286,7 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 	}
 }
 
+
 void *Nova::Haystack::GUILoop(void *ptr)
 {
 	struct sockaddr_un localIPCAddress;
@@ -328,7 +328,7 @@ void *Nova::Haystack::GUILoop(void *ptr)
 	}
 }
 
-/// This is a blocking function. If nothing is received, then wait on this thread for an answer
+
 void Haystack::ReceiveGUICommand(int socket)
 {
 	struct sockaddr_un msgRemote;
@@ -350,8 +350,8 @@ void Haystack::ReceiveGUICommand(int socket)
 		close(msgSocket);
     }
 
-    msg.deserializeMessage(msgBuffer);
-    switch(msg.getType())
+    msg.DeserializeMessage(msgBuffer);
+    switch(msg.GetType())
     {
     	case EXIT:
     		exit(1);
@@ -361,9 +361,7 @@ void Haystack::ReceiveGUICommand(int socket)
     close(msgSocket);
 }
 
-/// Thread for periodically checking for TCP timeout.
-///	IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
-///	This thread looks for old tcp sessions and declares them terminated
+
 void *Nova::Haystack::TCPTimeout(void *ptr)
 {
 	do
@@ -391,10 +389,10 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 					{
 						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
 
-						for (int p = 0; p < (SessionTable[it->first].session).size(); p++)
+						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
-							updateSuspect((SessionTable[it->first].session).at(p));
+							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
 						pthread_rwlock_unlock(&sessionLock);
@@ -411,10 +409,10 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 					else if(packetTime + tcpTime < currentTime)
 					{
 						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
-						for (int p = 0; p < (SessionTable[it->first].session).size(); p++)
+						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
-							updateSuspect((SessionTable[it->first].session).at(p));
+							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
 						pthread_rwlock_unlock(&sessionLock);
@@ -444,15 +442,14 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 	return NULL;
 }
 
-//Sends the given TrafficEvent to the Classification Engine
-//	Returns success or failure
+
 bool Nova::Haystack::SendToCE(Suspect *suspect)
 {
 	int socketFD;
 
 	do{
-		dataLen = suspect->serializeSuspect(data);
-		dataLen += suspect->features.serializeFeatureDataLocal(data+dataLen);
+		dataLen = suspect->SerializeSuspect(data);
+		dataLen += suspect->features.SerializeFeatureDataLocal(data+dataLen);
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
@@ -482,8 +479,8 @@ bool Nova::Haystack::SendToCE(Suspect *suspect)
 	return true;
 }
 
-//Stores events to be processed before sending
-void Nova::Haystack::updateSuspect(Packet packet)
+
+void Nova::Haystack::UpdateSuspect(Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
 	pthread_rwlock_wrlock(&suspectLock);
@@ -497,6 +494,7 @@ void Nova::Haystack::updateSuspect(Packet packet)
 	suspects[addr]->isLive = !usePcapFile;
 	pthread_rwlock_unlock(&suspectLock);
 }
+
 
 void *Nova::Haystack::SuspectLoop(void *ptr)
 {
@@ -533,7 +531,7 @@ void *Nova::Haystack::SuspectLoop(void *ptr)
 	return NULL;
 }
 
-//Parse through the honeyd config file and get the list of IP addresses used.
+
 vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 {
 	//Path to the main log file
@@ -574,10 +572,11 @@ vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 	return retAddresses;
 }
 
-void Haystack::LoadConfig(char* input)
+
+void Haystack::LoadConfig(char* configFilePath)
 {
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(input, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath);
 
 
 	string prefix;
@@ -589,13 +588,13 @@ void Haystack::LoadConfig(char* input)
 			"GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT"};
 
 
-	for (int i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
+	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
 	{
 		prefix = prefixes[i];
 
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + input);
+			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + configFilePath);
 			v = false;
 		}
 	}
@@ -620,7 +619,4 @@ void Haystack::LoadConfig(char* input)
 	goToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
 	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
-
-
-
 }
