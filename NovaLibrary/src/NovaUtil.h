@@ -26,6 +26,7 @@
 #include <netinet/if_ether.h>
 #include <google/dense_hash_map>
 #include <log4cxx/xml/domconfigurator.h>
+#include <syslog.h>
 
 #include "GUIMsg.h"
 #include "Point.h"
