@@ -31,7 +31,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 	const string prefixes[] =
 	{ "INTERFACE", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ",
 			"READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "USE_TERMINALS",
-			"CLASSIFICATION_TIMEOUT", "BROADCAST_ADDR", "SILENT_ALARM_PORT",
+			"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
 			"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
 			"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES" };
@@ -214,20 +214,6 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
-				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
-				}
-				continue;
-			}
-
-			// BROADCAST_ADDR
-			prefixIndex++;
-			prefix = prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 6 && line.size() < 16)
 				{
 					options[prefix].data = line.c_str();
 					options[prefix].isValid = true;
