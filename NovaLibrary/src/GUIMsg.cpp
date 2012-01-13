@@ -13,14 +13,13 @@ using namespace std;
 namespace Nova
 {
 
-//For instantiation only, use other constructors if message is known.
 GUIMsg::GUIMsg()
 {
 	type = INVALID;
 	val = NONE;
 }
 
-//Constructor for messages that have no arguments
+
 GUIMsg::GUIMsg(GUIMsgType t)
 {
 	switch(t)
@@ -39,7 +38,7 @@ GUIMsg::GUIMsg(GUIMsgType t)
 	val = NONE;
 }
 
-//Constructor for messages that have an argument
+
 GUIMsg::GUIMsg(GUIMsgType t, string v)
 {
 	switch(t)
@@ -88,8 +87,7 @@ GUIMsg::GUIMsg(GUIMsgType t, string v)
 }
 
 
-//Sets the message, returns true if successful
-bool GUIMsg::setMessage(GUIMsgType t)
+bool GUIMsg::SetMessage(GUIMsgType t)
 {
 	//Only sets if the type is recognized and requires no argument
 	switch(t)
@@ -108,8 +106,8 @@ bool GUIMsg::setMessage(GUIMsgType t)
 	}
 }
 
-//Sets the message, returns true if successful
-bool GUIMsg::setMessage(GUIMsgType t, string v)
+
+bool GUIMsg::SetMessage(GUIMsgType t, string v)
 {
 	switch(t)
 	{
@@ -147,20 +145,20 @@ bool GUIMsg::setMessage(GUIMsgType t, string v)
 	}
 }
 
-//Returns the message type
-GUIMsgType GUIMsg::getType()
+
+GUIMsgType GUIMsg::GetType()
 {
 	return type;
 }
 
-//Returns the message argument
-string GUIMsg::getValue()
+
+string GUIMsg::GetValue()
 {
 	return val;
 }
 
-//Serializes the message into given buffer for communication
-uint GUIMsg::serialzeMessage(u_char * buf)
+
+uint GUIMsg::SerialzeMessage(u_char * buf)
 {
 	//Only works if a valid message
 	if(type != INVALID)
@@ -197,8 +195,8 @@ uint GUIMsg::serialzeMessage(u_char * buf)
 	return 0;
 }
 
-//Deserializes the message from the given buffer for reading
-uint GUIMsg::deserializeMessage(u_char * buf)
+
+uint GUIMsg::DeserializeMessage(u_char * buf)
 {
 	uint offset = 0;
 	char c[MAX_VAL_SIZE];
@@ -251,6 +249,4 @@ uint GUIMsg::deserializeMessage(u_char * buf)
 			return 0;
 	}
 }
-
-
 }

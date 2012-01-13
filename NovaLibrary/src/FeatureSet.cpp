@@ -12,7 +12,7 @@
 using namespace std;
 namespace Nova{
 
-//Empty constructor
+
 FeatureSet::FeatureSet()
 {
 	//Temp variables
@@ -53,7 +53,7 @@ FeatureSet::FeatureSet()
 	}
 }
 
-///Clears out the current values, and also any temp variables used to calculate them
+
 void FeatureSet::ClearFeatureSet()
 {
 	//Temp variables
@@ -84,7 +84,7 @@ void FeatureSet::ClearFeatureSet()
 	}
 }
 
-//Calculates all features in the feature set
+
 void FeatureSet::CalculateAll(uint32_t featuresEnabled)
 {
 	CalculateTimeInterval();
@@ -93,50 +93,51 @@ void FeatureSet::CalculateAll(uint32_t featuresEnabled)
 
 	if(featuresEnabled & IP_TRAFFIC_DISTRIBUTION_MASK)
 	{
-			calculate(IP_TRAFFIC_DISTRIBUTION);
+			Calculate(IP_TRAFFIC_DISTRIBUTION);
 	}
 	if(featuresEnabled & PORT_TRAFFIC_DISTRIBUTION_MASK)
 	{
-			calculate(PORT_TRAFFIC_DISTRIBUTION);
+			Calculate(PORT_TRAFFIC_DISTRIBUTION);
 	}
 	if(featuresEnabled & HAYSTACK_EVENT_FREQUENCY_MASK)
 	{
-			calculate(HAYSTACK_EVENT_FREQUENCY);
+			Calculate(HAYSTACK_EVENT_FREQUENCY);
 	}
 	if(featuresEnabled & PACKET_SIZE_MEAN_MASK)
 	{
-			calculate(PACKET_SIZE_MEAN);
+			Calculate(PACKET_SIZE_MEAN);
 	}
 	if(featuresEnabled & PACKET_SIZE_DEVIATION_MASK)
 	{
 		if(!(featuresEnabled & PACKET_SIZE_MEAN_MASK))
-			calculate(PACKET_SIZE_MEAN);
-		calculate(PACKET_SIZE_DEVIATION);
+			Calculate(PACKET_SIZE_MEAN);
+		Calculate(PACKET_SIZE_DEVIATION);
 	}
 	if(featuresEnabled & DISTINCT_IPS_MASK)
 	{
-			calculate(DISTINCT_IPS);
+			Calculate(DISTINCT_IPS);
 	}
 	if(featuresEnabled & DISTINCT_PORTS_MASK)
 	{
-			calculate(DISTINCT_PORTS);
+			Calculate(DISTINCT_PORTS);
 	}
 	if(featuresEnabled & PACKET_INTERVAL_MEAN_MASK)
 	{
-			calculate(PACKET_INTERVAL_MEAN);
+			Calculate(PACKET_INTERVAL_MEAN);
 	}
 	if(featuresEnabled & PACKET_INTERVAL_DEVIATION_MASK)
 	{
 			if(!(featuresEnabled & PACKET_INTERVAL_MEAN_MASK))
-				calculate(PACKET_INTERVAL_MEAN);
-			calculate(PACKET_INTERVAL_DEVIATION);
+				Calculate(PACKET_INTERVAL_MEAN);
+			Calculate(PACKET_INTERVAL_DEVIATION);
 	}
 
 
 	UpdateFeatureData(REMOVE);
 }
 
-void FeatureSet::calculate(uint featureDimension)
+
+void FeatureSet::Calculate(uint featureDimension)
 {
 	switch (featureDimension)
 	{
@@ -270,7 +271,7 @@ void FeatureSet::calculate(uint featureDimension)
 	}
 }
 
-///Calculates the total interval for time based features using latest timestamps
+
 void FeatureSet::CalculateTimeInterval()
 {
 	if(endTime > startTime)
@@ -278,9 +279,6 @@ void FeatureSet::CalculateTimeInterval()
 		totalInterval.first = endTime - startTime;
 	}
 }
-
-
-
 
 void FeatureSet::UpdateEvidence(Packet packet)
 {
@@ -367,6 +365,7 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	}
 }
 
+
 void FeatureSet::UpdateFeatureData(bool include)
 {
 	if(include)
@@ -424,9 +423,8 @@ void FeatureSet::UpdateFeatureData(bool include)
 	}
 }
 
-//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
-//	returns the number of bytes set in the buffer
-uint FeatureSet::serializeFeatureSet(u_char * buf)
+
+uint FeatureSet::SerializeFeatureSet(u_char * buf)
 {
 	uint offset = 0;
 	uint size = 8; //All features are doubles.
@@ -444,9 +442,8 @@ uint FeatureSet::serializeFeatureSet(u_char * buf)
 	return offset;
 }
 
-//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
-//	returns the number of bytes read from the buffer
-uint FeatureSet::deserializeFeatureSet(u_char * buf)
+
+uint FeatureSet::DeserializeFeatureSet(u_char * buf)
 {
 	uint offset = 0;
 	uint size = 8;
@@ -461,7 +458,8 @@ uint FeatureSet::deserializeFeatureSet(u_char * buf)
 	return offset;
 }
 
-uint FeatureSet::serializeFeatureDataBroadcast(u_char *buf)
+
+uint FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 {
 	uint offset = 0;
 	uint count = 0;
@@ -593,7 +591,8 @@ uint FeatureSet::serializeFeatureDataBroadcast(u_char *buf)
 	return offset;
 }
 
-uint FeatureSet::deserializeFeatureDataBroadcast(u_char *buf)
+
+uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 {
 	uint offset = 0;
 
@@ -692,7 +691,8 @@ uint FeatureSet::deserializeFeatureDataBroadcast(u_char *buf)
 	return offset;
 }
 
-uint FeatureSet::serializeFeatureDataLocal(u_char *buf)
+
+uint FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 {
 	uint offset = 0;
 	uint count = 0;
@@ -816,7 +816,8 @@ uint FeatureSet::serializeFeatureDataLocal(u_char *buf)
 	return offset;
 }
 
-uint FeatureSet::deserializeFeatureDataLocal(u_char *buf)
+
+uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 {
 	uint offset = 0;
 

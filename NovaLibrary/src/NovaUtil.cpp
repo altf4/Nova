@@ -12,14 +12,12 @@ using namespace std;
 
 namespace Nova{
 
-//Encrpyts/decrypts a char buffer of size 'size' depending on mode
-void cryptBuffer(u_char * buf, uint size, bool mode)
+void CryptBuffer(u_char * buf, uint size, bool mode)
 {
 	//TODO
 }
 
-// Reads the paths file and returns the homePath of nova
-string getHomePath()
+string GetHomePath()
 {
 	//Get locations of nova files
 	ifstream *paths =  new ifstream(PATHS_FILE);
@@ -45,7 +43,7 @@ string getHomePath()
 	paths = NULL;
 
 	//Resolves environment variables
-	homePath = resolvePathVars(homePath);
+	homePath = ResolvePathVars(homePath);
 
 	if(homePath == "")
 	{
@@ -53,8 +51,53 @@ string getHomePath()
 	}
 	return homePath;
 }
-// Replaces any env vars in 'path' and returns the absolute path
-string resolvePathVars(string path)
+
+string GetLocalIP(const char *dev)
+{
+	static struct ifreq ifreqs[20];
+	struct ifconf ifconf;
+	uint  nifaces, i;
+
+	memset(&ifconf,0,sizeof(ifconf));
+	ifconf.ifc_buf = (char*) (ifreqs);
+	ifconf.ifc_len = sizeof(ifreqs);
+
+	int sock, rval;
+	sock = socket(AF_INET,SOCK_STREAM,0);
+
+	if(sock < 0)
+	{
+		// TODO: Fix the logging on this
+		//LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		close(sock);
+		return NULL;
+	}
+
+	if((rval = ioctl(sock, SIOCGIFCONF , (char*) &ifconf)) < 0 )
+	{
+		// TODO: Fix the logging on this
+		//LOG4CXX_ERROR(m_logger,"ioctl(SIOGIFCONF): " << strerror(errno));
+	}
+
+	close(sock);
+	nifaces =  ifconf.ifc_len/sizeof(struct ifreq);
+
+	for(i = 0; i < nifaces; i++)
+	{
+		if( strcmp(ifreqs[i].ifr_name, dev) == 0 )
+		{
+			char ip_addr [ INET_ADDRSTRLEN ];
+			struct sockaddr_in *b = (struct sockaddr_in *) &(ifreqs[i].ifr_addr);
+
+			inet_ntop(AF_INET, &(b->sin_addr), ip_addr, INET_ADDRSTRLEN);
+			return string(ip_addr);
+		}
+	}
+	return string("");
+}
+
+
+string ResolvePathVars(string path)
 {
 	int start = 0;
 	int end = 0;
@@ -89,16 +132,16 @@ string resolvePathVars(string path)
 	return var;
 }
 
-//Extracts and returns the IP Address from a serialized suspect located at buf
-uint getSerializedAddr(u_char * buf)
+
+uint GetSerializedAddr(u_char * buf)
 {
 	uint addr = 0;
 	memcpy(&addr, buf, 4);
 	return addr;
 }
 
-//Returns the number of bits used in the mask when given in in_addr_t form
-int getMaskBits(in_addr_t mask)
+
+int GetMaskBits(in_addr_t mask)
 {
 	mask = ~mask;
 	int i = 32;
