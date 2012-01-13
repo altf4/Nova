@@ -41,6 +41,22 @@ public:
 
     //Loads the configuration options from NOVAConfig.txt
     void loadPreferences();
+
+
+    // Creates a new item for the featureList
+    //		name - Name to be displayed, e.g. "Ports Contacted"
+    //		enabled - '1' for enabled, all other disabled
+    //	Returns: A Feature List Item
+    QListWidgetItem* getFeatureListItem(QString name, char enabled);
+
+    // Updates the color and text of a featureList Item
+    //		newFeatureEntry - Pointer to the Feature List Item
+    //		enabled - '1' for enabled, all other disabled
+    void updateFeatureListItem(QListWidgetItem* newFeatureEntry, char enabled);
+
+    // Advances the currently selected item to the next one in the featureList
+    void advanceFeatureSelection();
+
     //Draws the current honeyd configuration for haystack and doppelganger
     void loadHaystack();
 
@@ -134,6 +150,10 @@ void on_nodeDeleteButton_clicked();
 void on_nodeEnableButton_clicked();
 void on_nodeDisableButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
+
+//GUI Signals for Feature addition/removal
+void on_featureEnableButton_clicked();
+void on_featureDisableButton_clicked();
 
 
 
