@@ -41,11 +41,11 @@ debug:
 
 #Cleans both Release and Debug
 clean-debug:
-	cd NovaLibrary/Release; $(MAKE) clean
-	cd ClassificationEngine/Release; $(MAKE) clean
-	cd DoppelgangerModule/Release; $(MAKE) clean
-	cd Haystack/Release; $(MAKE) clean
-	cd LocalTrafficMonitor/Release; $(MAKE) clean
+	cd NovaLibrary/Debug; $(MAKE) clean
+	cd ClassificationEngine/Debug; $(MAKE) clean
+	cd DoppelgangerModule/Debug; $(MAKE) clean
+	cd Haystack/Debug; $(MAKE) clean
+	cd LocalTrafficMonitor/Debug; $(MAKE) clean
 	cd NovaGUI; $(MAKE) debug-clean
 
 clean-release:
