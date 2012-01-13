@@ -44,7 +44,7 @@ all: ClassificationEngine
 ClassificationEngine: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L../../NovaLibrary/Debug -o"ClassificationEngine" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../NovaLibrary/Release -o"ClassificationEngine" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

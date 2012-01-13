@@ -35,6 +35,7 @@
 ehthumbs.db
 Icon?
 Thumbs.db
+*~
 
 # SVN Hidden Directories #
 ##########################
@@ -56,6 +57,10 @@ ClassificationEngine/Debug/ClassificationEngine
 DoppelgangerModule/Debug/DoppelgangerModule
 Haystack/Debug/Haystack
 LocalTrafficMonitor/Debug/LocalTrafficMonitor
+ClassificationEngine/Release/ClassificationEngine
+DoppelgangerModule/Release/DoppelgangerModule
+Haystack/Release/Haystack
+LocalTrafficMonitor/Release/LocalTrafficMonitor
 NovaGUI/.settings/
 NovaGUI/Makefile
 NovaGUI/Makefile.Debug
@@ -73,6 +78,10 @@ NovaGUI/ui_*.h
 NovaGUI/src/ui_*.h
 NovaGUI/UI_Headers/ui_*.h
 NovaGUI/UI_headers/
-
+NovaGUI/moc_nodePopup.cpp
+NovaGUI/moc_novaconfig.cpp
+NovaGUI/moc_novagui.cpp
+NovaGUI/moc_portPopup.cpp
+NovaGUI/moc_run_popup.cpp
 
 /NovaLibrary/.settings/org.eclipse.cdt.managedbuilder.core.prefs
