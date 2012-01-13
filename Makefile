@@ -40,6 +40,8 @@ debug:
 	cp ClassificationEngine/Config/data.txt Installer/.nova/Data/data.txt
 
 #Cleans both Release and Debug
+clean: clean-debug clean-release
+
 clean-debug:
 	cd NovaLibrary/Debug; $(MAKE) clean
 	cd ClassificationEngine/Debug; $(MAKE) clean
@@ -116,7 +118,7 @@ install-debug:
 	#The binaries themselves
 	cp NovaGUI/NovaGUI /usr/local/bin
 	cp ClassificationEngine/Debug/ClassificationEngine /usr/local/bin
-	cp DoppelgangerModule/DebugDoppelgangerModule /usr/local/bin
+	cp DoppelgangerModule/Debug/DoppelgangerModule /usr/local/bin
 	cp Haystack/Debug/Haystack /usr/local/bin
 	cp LocalTrafficMonitor/Debug/LocalTrafficMonitor /usr/local/bin
 	#Set pcap permissions
