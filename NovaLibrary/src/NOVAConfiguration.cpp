@@ -22,7 +22,6 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 	string line;
 	string prefix;
 	int prefixIndex;
-	const string SILENT_ALARM_DEFAULT = "12011";
 	LoggerPtr m_logger(Logger::getLogger("main"));
 
 	cout << "Loading file " << configFilePath << " in homepath " << homeNovaPath << endl;
