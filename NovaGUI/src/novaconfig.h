@@ -57,6 +57,7 @@ public:
     // Advances the currently selected item to the next one in the featureList
     void advanceFeatureSelection();
 
+
     //Draws the current honeyd configuration for haystack and doppelganger
     void loadHaystack();
 
@@ -116,6 +117,9 @@ public:
     bool saveConfigurationToFile();
 
 private slots:
+
+// Right click action on a feature, we manually connect it so no need for proper prefix
+void onFeatureClick(const QPoint & pos);
 
 //Which menu item is selected
 void on_treeWidget_itemSelectionChanged();

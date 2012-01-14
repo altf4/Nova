@@ -65,6 +65,9 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	loadHaystack();
 
 	ui.treeWidget->expandAll();
+
+	ui.featureList->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(ui.featureList, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onFeatureClick(const QPoint &)));
 }
 
 NovaConfig::~NovaConfig()
@@ -124,6 +127,37 @@ QListWidgetItem* NovaConfig::getFeatureListItem(QString name, char enabled)
 	return newFeatureEntry;
 }
 
+void NovaConfig::onFeatureClick(const QPoint & pos)
+{
+	QPoint globalPos = ui.featureList->mapToGlobal(pos);
+	QModelIndex t = ui.featureList->indexAt(pos);
+
+	// Handle clicking on a row that isn't populated
+	if (t.row() < 0 || t.row() >= DIM)
+	{
+		return;
+	}
+
+	// Make the menu
+    QMenu myMenu;
+    myMenu.addAction(new QAction("Enable", this));
+    myMenu.addAction(new QAction("Disable", this));
+
+    // Figure out what the user selected
+    QAction* selectedItem = myMenu.exec(globalPos);
+    if (selectedItem)
+    {
+		if (selectedItem->text() == "Enable")
+		{
+			updateFeatureListItem(ui.featureList->item(t.row()), '1');
+		}
+		else if (selectedItem->text() == "Disable")
+		{
+			updateFeatureListItem(ui.featureList->item(t.row()), '0');
+		}
+    }
+}
+
 void NovaConfig::updateFeatureListItem(QListWidgetItem* newFeatureEntry, char enabled)
 {
 	QBrush *enabledColor = new QBrush(QColor("black"));
@@ -154,7 +188,8 @@ void NovaConfig::loadPreferences()
 	string prefix;
 
 	//Read from CE Config
-	ifstream config("Config/NOVAConfig.txt");
+	string configurationFile = homePath + "/Config/NOVAConfig.txt";
+	ifstream config(configurationFile.c_str());
 
 	if(config.is_open())
 	{
@@ -571,9 +606,12 @@ bool NovaConfig::saveConfigurationToFile() {
 	string line, prefix;
 
 	//Rewrite the config file with the new settings
-	system("cp -f Config/NOVAConfig.txt Config/.NOVAConfig.tmp");
-	ifstream *in = new ifstream("Config/.NOVAConfig.tmp");
-	ofstream *out = new ofstream("Config/NOVAConfig.txt");
+	string configurationFile = homePath + "/Config/NOVAConfig.txt";
+	string configurationBackup = homePath + "/Config/NOVAConfig.tmp";
+	string copyCommand = "cp -f " + configurationFile + " " + configurationBackup;
+	system(copyCommand.c_str());
+	ifstream *in = new ifstream(configurationBackup.c_str());
+	ofstream *out = new ofstream(configurationFile.c_str());
 
 	if(out->is_open() && in->is_open())
 	{
