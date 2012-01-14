@@ -584,7 +584,7 @@ p, li { white-space: pre-wrap; }
        <widget class="QLabel" name="ceIntensityLabel">
         <property name="geometry">
          <rect>
-          <x>10</x>
+          <x>20</x>
           <y>30</y>
           <width>71</width>
           <height>20</height>
@@ -607,7 +607,7 @@ p, li { white-space: pre-wrap; }
        <widget class="QLabel" name="ceFrequencyLabel">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>10</x>
           <y>60</y>
           <width>81</width>
           <height>20</height>
@@ -670,7 +670,7 @@ p, li { white-space: pre-wrap; }
        <widget class="QLabel" name="ceThresholdLabel">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>10</x>
           <y>90</y>
           <width>71</width>
           <height>20</height>
@@ -693,7 +693,7 @@ p, li { white-space: pre-wrap; }
        <widget class="QLabel" name="ceErrorLabel">
         <property name="geometry">
          <rect>
-          <x>30</x>
+          <x>40</x>
           <y>120</y>
           <width>41</width>
           <height>20</height>
@@ -773,7 +773,7 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;A higher error may improve performance but will decrease accuracy. Default is 0.&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
-         <string>Classification Criteria</string>
+         <string>Classification Features</string>
         </property>
        </widget>
        <widget class="QListWidget" name="featureList">
