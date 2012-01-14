@@ -83,8 +83,23 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		logConfig = homePath +"/Config/Log4cxxConfig.xml";
-		DOMConfigurator::configure(logConfig.c_str());
+		//logConfig = homePath +"/Config/Log4cxxConfig.xml";
+		//DOMConfigurator::configure(logConfig.c_str());
+		//openlog opens a stream to syslog for logging. The parameters are as follows:
+		//1st: identity; a string representing where the call is coming from.
+		//2nd: options; OR all of the flags you want together to generate the correct argument
+		//     LOG_CONS    = write to console IF there is an error writing to syslog
+		//     LOG_PID     = Log PID with other information
+		//     LOG_NDELAY  = Open connection immediately
+		//     LOG_PERROR  = Print to stderror as well
+		//3rd: facility; essentially what facility you want to log to. In our case Local0, other examples
+		//     are AUTH or CRON, etc.
+		openlog("DoppelgangerModule", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+	}
+
+	else
+	{
+		openlog("DoppelgangerModule", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
 	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -108,7 +123,13 @@ int main(int argc, char *argv[])
 
     if((alarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+    	// syslog takes 2+ arguments.
+    	// 1st: where and what; OR together facility and level. note that
+    	//      if you elect to use openlog, facilty can be left out.
+    	// 2nd: String that will be logged
+    	// 3rd: arguments for formatted string, much like printf
+		syslog(LOG_LOCAL0 | LOG_ERR, "ERROR: socket: %s", strerror(errno));
 		close(alarmSocket);
 		exit(1);
     }
@@ -121,14 +142,16 @@ int main(int argc, char *argv[])
 
     if(bind(alarmSocket,(struct sockaddr *)&remote,len) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"bind: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger,"bind: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: bind: %s", __LINE__, strerror(errno));
 		close(alarmSocket);
         exit(1);
     }
 
     if(listen(alarmSocket, SOCKET_QUEUE_SIZE) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"listen: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger,"listen: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
 		close(alarmSocket);
         exit(1);
     }
@@ -217,7 +240,8 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 {
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -234,14 +258,16 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 
 	if(bind(IPCsock,localIPCAddressPtr,GUILen) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line %d ERROR: bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -263,12 +289,14 @@ void DoppelgangerModule::ReceiveGUICommand()
     //Blocking call
     if ((msgSocket = accept(IPCsock, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: accept: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
     if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: recv: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
 
@@ -298,13 +326,15 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
     //Blocking call
     if ((connectionSocket = accept(alarmSocket, remoteAddrPtr, socketSizePtr)) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		//LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: accept: %s", __LINE__, strerror(errno));
 		close(connectionSocket);
         return;
     }
     if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
     {
-    	LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+    	//LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+    	syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: recv: %s", __LINE__, strerror(errno));
 		close(connectionSocket);
         return;
     }
@@ -316,7 +346,8 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
 	}
 	catch(std::exception e)
 	{
-		LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
+		//LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: Error interpreting received Silent Alarm: %s", __LINE__, string(e.what()).c_str());
 		delete suspect;
 		suspect = NULL;
 	}
@@ -354,7 +385,8 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + configFilePath);
+			//LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + configFilePath);
+			syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: The configuration variable # %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
 			v = false;
 		}
 	}
@@ -362,18 +394,21 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 	//Checks to make sure all values have been set.
 	if(v == false)
 	{
-		LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
+		//LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: One or more values have not been set in configuration file %s", __LINE__, configFilePath);
 		exit(1);
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger,"Config loaded successfully.");
+		//LOG4CXX_INFO(m_logger,"Config loaded successfully.");
+		syslog(LOG_INFO, "INFO: Config loaded successfully.");
 	}
 
 	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
 	if(hostAddrString.size() == 0)
 	{
-		LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
+		//LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: Bad interface, no IP's associated", __LINE__);
 		exit(1);
 	}
 
@@ -384,7 +419,8 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 
 	if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
 	{
-		LOG4CXX_ERROR(m_logger,"Invalid doppelganger IP address!");
+		//LOG4CXX_ERROR(m_logger,"Invalid doppelganger IP address!");
+		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d ERROR: Invalid doppelganger IP address", __LINE__);
 		exit(1);
 	}
 
