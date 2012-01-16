@@ -140,5 +140,4 @@ uninstall:
 	rm -rf .nova/Config
 	rm -rf .nova/Data
 	rm -rf bin
-	groupdel nova
-
+	-groupdel nova
