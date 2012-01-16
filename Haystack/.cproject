@@ -44,7 +44,6 @@
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="pcap"/>
 									<listOptionValue builtIn="false" value="pthread"/>
-									<listOptionValue builtIn="false" value="log4cxx"/>
 									<listOptionValue builtIn="false" value="ann"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.19642422" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
@@ -694,7 +693,6 @@
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pcap"/>
 									<listOptionValue builtIn="false" value="pthread"/>
-									<listOptionValue builtIn="false" value="log4cxx"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.2074123444" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Release"/>
