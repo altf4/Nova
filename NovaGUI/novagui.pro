@@ -22,11 +22,11 @@ FORMS += UI/nodePopup.ui \
     UI/run_popup.ui
 RESOURCES += 
 INCLUDEPATH += ../NovaLibrary/src
+CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
+else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
 LIBS += /usr/lib/libboost_serialization.a \
     /usr/lib/liblog4cxx.a \
     /usr/lib/libapr-1.a \
     /usr/lib/libann.a \
     /usr/lib/libaprutil-1.a
-CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
-else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
 UI_DIR = UI_headers/ 
