@@ -9,8 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <string.h>
-using namespace log4cxx;
-using namespace log4cxx::xml;
+
 using namespace std;
 
 namespace Nova
@@ -22,9 +21,10 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 	string line;
 	string prefix;
 	int prefixIndex;
-	LoggerPtr m_logger(Logger::getLogger("main"));
 
-	cout << "Loading file " << configFilePath << " in homepath " << homeNovaPath << endl;
+	openlog("NOVAConfiguration", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+
+	syslog(LOG_INFO, "Line: %d Loading file %s in homepath %s.", __LINE__, configFilePath, homeNovaPath.c_str());
 
 	ifstream config(configFilePath);
 
@@ -95,7 +95,6 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 								}
 
 								line = fgets(buffer, sizeof(buffer), out);
-
 							}
 						}
 						pclose(out);
@@ -231,7 +230,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 				if(line.size() == prefix.size())
 				{
 					line += " 12024";
-					LOG4CXX_INFO(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
+					syslog(LOG_INFO, "Line: %d Value for %s was either 0 or not set. Using default value.", __LINE__, prefix.c_str());
 				}
 
 				line = line.substr(prefix.size() + 1, line.size());
@@ -245,7 +244,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 				else if(atoi(line.c_str()) == 0)
 				{
 					options[prefix].data = "12024";
-					LOG4CXX_INFO(m_logger, "Value for " << prefix << " was either 0 or not set. Using default port.");
+					syslog(LOG_INFO, "Line: %d Value for %s was either 0 or not set. Using default value.", __LINE__, prefix.c_str());
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -414,9 +413,10 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 	{
 		// TODO: Change this to use the logger. Need to figure out the home path
 		// to get the logger set up, so putting this off until the that's moved to a utility class.
-		cout << "No configuration file found" << endl;
+		syslog(LOG_INFO, "Line: %d No configuration file found.", __LINE__);
 		//LOG4CXX_INFO(m_logger, "No configuration file detected.");
 	}
+	closelog();
 }
 
 NOVAConfiguration::NOVAConfiguration()

@@ -9,8 +9,6 @@
 #include "Haystack.h"
 #include "NOVAConfiguration.h"
 
-using namespace log4cxx;
-using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
 using namespace Haystack;
@@ -40,8 +38,6 @@ char tcp_socket[55];
 
 u_char data[MAX_MSG_SIZE];
 uint dataLen;
-
-LoggerPtr m_logger(Logger::getLogger("main"));
 
 char * pathsFile = (char*)PATHS_FILE;
 string homePath;
@@ -77,22 +73,18 @@ int main(int argc, char *argv[])
 	//Get locations of nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
-
-	DOMConfigurator::configure(logConfig.c_str());
 
 	//Runs the configuration loader
 	LoadConfig((char*)novaConfig.c_str());
+
 	if(!useTerminals)
 	{
-		//logConfig = homePath +"/Config/Log4cxxConfig.xml";
-		//DOMConfigurator::configure(logConfig.c_str());
-		openlog("DoppelgangerModule", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+		openlog("Haystack", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
 	}
 
 	else
 	{
-		openlog("DoppelgangerModule", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+		openlog("Haystack", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
 	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -107,8 +99,7 @@ int main(int argc, char *argv[])
 
 	if(haystackAddresses.empty())
 	{
-		//LOG4CXX_ERROR(m_logger, "Invalid interface given");
-		syslog(LOG_LOCAL0 | LOG_ERR, "Line: %d Invalid interface given", __LINE__);
+		syslog(LOG_ERR, "Line: %d Invalid interface given", __LINE__);
 		exit(1);
 	}
 
@@ -124,7 +115,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	//LOG4CXX_INFO(m_logger, haystackAddresses_csv);
 	syslog(LOG_INFO, "%s", haystackAddresses_csv.c_str());
 
 	//Preform the socket address for faster run time
@@ -144,18 +134,18 @@ int main(int argc, char *argv[])
 
 		if(handle == NULL)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't open file: " << pcapPath << ": " << errbuf);
+			syslog(LOG_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, pcapPath.c_str(), errbuf);
 			return(2);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 		//First process any packets in the file then close all the sessions
@@ -176,7 +166,7 @@ int main(int argc, char *argv[])
 
 		if(handle == NULL)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't open device: " << dev << ": " << errbuf);
+			syslog(LOG_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, dev.c_str(), errbuf);
 			return(2);
 		}
 
@@ -185,19 +175,19 @@ int main(int argc, char *argv[])
 
 		if(ret == -1)
 		{
-			LOG4CXX_ERROR(m_logger, errbuf);
+			syslog(LOG_ERR, "Line: %d %s", __LINE__, errbuf);
 			exit(1);
 		}
 
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
@@ -216,7 +206,7 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 {
 	if(packet == NULL)
 	{
-		LOG4CXX_ERROR(m_logger, "Didn't grab packet!");
+		syslog(LOG_ERR, "Line: %d Didn't grab packet!", __LINE__);
 		return;
 	}
 
@@ -288,7 +278,7 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 	}
 	else
 	{
-		LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
+		syslog(LOG_ERR, "Line: %d Unknown Non-IP Packet Received", __LINE__);
 		return;
 	}
 }
@@ -301,7 +291,7 @@ void *Nova::Haystack::GUILoop(void *ptr)
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -318,14 +308,14 @@ void *Nova::Haystack::GUILoop(void *ptr)
 
 	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -348,12 +338,12 @@ void Haystack::ReceiveGUICommand(int socket)
     //Blocking call
     if ((msgSocket = accept(socket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+    	syslog(LOG_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
     if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+    	syslog(LOG_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
 
@@ -445,7 +435,7 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 	if(usePcapFile) return NULL;
 
 	//Shouldn't get here
-	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted");
+	syslog(LOG_ERR, "Line: %d TCP Timeout Thread has halted", __LINE__);
 	return NULL;
 }
 
@@ -454,27 +444,28 @@ bool Nova::Haystack::SendToCE(Suspect *suspect)
 {
 	int socketFD;
 
-	do{
+	do
+	{
 		dataLen = suspect->SerializeSuspect(data);
 		dataLen += suspect->features.SerializeFeatureDataLocal(data+dataLen);
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+			syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 		{
-			LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
+			syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (send(socketFD, data, dataLen, 0) == -1)
 		{
-			LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+			syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
@@ -534,7 +525,7 @@ void *Nova::Haystack::SuspectLoop(void *ptr)
 	if(usePcapFile) return NULL;
 
 	//Shouldn't get here
-	LOG4CXX_ERROR(m_logger, "SuspectLoop Thread has halted!");
+	syslog(LOG_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
 	return NULL;
 }
 
@@ -547,7 +538,7 @@ vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 
 	if( honeydConfFile == NULL)
 	{
-		LOG4CXX_ERROR(m_logger, "Error opening log file. Does it exist?");
+		syslog(LOG_ERR, "Line: %d Error opening log file. Does it exist?", __LINE__);
 		exit(1);
 	}
 
@@ -589,6 +580,8 @@ void Haystack::LoadConfig(char* configFilePath)
 	string prefix;
 	bool v = true;
 
+	openlog("Haystack", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+
 	const string prefixes[] = {"INTERFACE", "HS_HONEYD_CONFIG",
 			"TCP_TIMEOUT","TCP_CHECK_FREQ",
 			"READ_PCAP", "PCAP_FILE",
@@ -600,8 +593,9 @@ void Haystack::LoadConfig(char* configFilePath)
 		prefix = prefixes[i];
 
 		NovaConfig->options[prefix];
-		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + configFilePath);
+		if (!NovaConfig->options[prefix].isValid)
+		{
+			syslog(LOG_ERR, "Line: %d The configuration variable # %s was not set in the configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
 			v = false;
 		}
 	}
@@ -609,12 +603,12 @@ void Haystack::LoadConfig(char* configFilePath)
 	//Checks to make sure all values have been set.
 	if(v == false)
 	{
-		LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
+		syslog(LOG_ERR, "Line: %d One or more values have no been set", __LINE__);
 		exit(1);
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger,"Config loaded successfully.");
+		syslog(LOG_INFO, "Line: %d Config loaded successfully", __LINE__);
 	}
 
 	dev = NovaConfig->options["INTERFACE"].data;
@@ -626,4 +620,6 @@ void Haystack::LoadConfig(char* configFilePath)
 	goToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
 	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
+
+	closelog();
 }
