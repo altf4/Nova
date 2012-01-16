@@ -93,8 +93,12 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		logConfig = homePath +"/Config/Log4cxxConfig.xml";
-		DOMConfigurator::configure(logConfig.c_str());
+		openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+	}
+
+	else
+	{
+		openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
 	}
 
 	//Pre-Forms the socket address to improve performance
@@ -116,14 +120,14 @@ int main(int argc, char *argv[])
 
 	if(hostAddress.empty())
 	{
-		LOG4CXX_ERROR(m_logger, "Invalid interface given");
+		syslog(LOG_ERR, "Line: %d Invalid interface given", __LINE__);
 		exit(1);
 	}
 
 	//Form the Filter Expression String
 	bzero(filter_exp, 64);
 	snprintf(filter_exp, 64, "dst host %s", hostAddress.data());
-	LOG4CXX_INFO(m_logger, filter_exp);
+	syslog(LOG_INFO, "%s", filter_exp);
 
 	//If we are reading from a packet capture file
 	if(usePcapFile)
@@ -133,18 +137,18 @@ int main(int argc, char *argv[])
 
 		if(handle == NULL)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't open file: " << pcapPath << ": " << errbuf);
+			syslog(LOG_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, pcapPath.c_str(), errbuf);
 			return(2);
 		}
 		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 		//First process any packets in the file then close all the sessions
@@ -163,7 +167,7 @@ int main(int argc, char *argv[])
 
 		if(handle == NULL)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't open device: " << dev << ": " << errbuf);
+			syslog(LOG_ERR, "Line: %d Couldn't open device: %s: %s", __LINE__, dev.c_str(), errbuf);
 			return(2);
 		}
 
@@ -172,19 +176,19 @@ int main(int argc, char *argv[])
 
 		if(ret == -1)
 		{
-			LOG4CXX_ERROR(m_logger, errbuf);
+			syslog(LOG_ERR, "Line: %d %s", __LINE__, errbuf);
 			exit(1);
 		}
 
 		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't parse filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			LOG4CXX_ERROR(m_logger, "Couldn't install filter: " << filter_exp << " " << pcap_geterr(handle));
+			syslog(LOG_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
@@ -203,7 +207,7 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 {
 	if(packet == NULL)
 	{
-		LOG4CXX_ERROR(m_logger, "Didn't grab packet!");
+		syslog(LOG_ERR, "Line: %d Didn't grab packet!", __LINE__);
 		return;
 	}
 
@@ -280,7 +284,7 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 	}
 	else
 	{
-		LOG4CXX_ERROR(m_logger, "Unknown Non-IP Packet Received");
+		syslog(LOG_ERR, "Line: %d Unknown Non-IP Packet Received", __LINE__);
 		return;
 	}
 }
@@ -293,7 +297,7 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -310,14 +314,14 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 
 	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -340,12 +344,12 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
     //Blocking call
     if ((msgSocket = accept(socket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
+    	syslog(LOG_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
     if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
-		LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
 
@@ -430,7 +434,7 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 	if(usePcapFile) return NULL;
 
 	//Shouldn't get here
-	LOG4CXX_ERROR(m_logger, "TCP Timeout Thread has halted!");
+	syslog(LOG_ERR, "Line: %d TCP Timeout Thread has halted!", __LINE__);
 	return NULL;
 }
 
@@ -445,21 +449,21 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+			syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 		{
-			LOG4CXX_ERROR(m_logger,"connect: " << strerror(errno));
+			syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (send(socketFD, data, dataLen, 0) == -1)
 		{
-			LOG4CXX_ERROR(m_logger,"send: " << strerror(errno));
+			syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
@@ -519,7 +523,7 @@ void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 	if(usePcapFile) return NULL;
 
 	//Shouldn't get here
-	LOG4CXX_ERROR(m_logger, "SuspectLoop Thread has halted!");
+	syslog(LOG_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
 	return NULL;
 }
 
@@ -532,7 +536,9 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
 
-	LOG4CXX_INFO(m_logger,"Starting to load configuration file");
+	openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+
+	syslog(LOG_INFO, "Line: %d Starting to load configuration file", __LINE__);
 
 	if(settings.is_open())
 	{
@@ -549,7 +555,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 				if((line.size() > 0) && (line.size() < 257))
 					key = line;
 				else
-					LOG4CXX_ERROR(m_logger, "Invalid Key parsed on line " << i << " of the settings file.");
+					syslog(LOG_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
 			}
 		}
 	}
@@ -572,8 +578,9 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 		prefix = prefixes[i];
 
 		NovaConfig->options[prefix];
-		if (!NovaConfig->options[prefix].isValid) {
-			LOG4CXX_ERROR(m_logger, "The configuration variable # " + prefixes[i] + " was not set in configuration file " + configFilePath);
+		if (!NovaConfig->options[prefix].isValid)
+		{
+			syslog(LOG_ERR, "Line: %d The configuration variable # %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
 			v = false;
 		}
 	}
@@ -581,12 +588,12 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	//Checks to make sure all values have been set.
 	if(v == false)
 	{
-		LOG4CXX_ERROR(m_logger,"One or more values have not been set.");
+		syslog(LOG_ERR, "Line: %d One or more values have not been set.", __LINE__);
 		exit(1);
 	}
 	else
 	{
-		LOG4CXX_INFO(m_logger,"All configuration values appear valid.");
+		syslog(LOG_INFO, "Line: %d All configuration values appear valid.", __LINE__);
 	}
 
 
@@ -600,6 +607,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
 	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
 
+	closelog();
 }
 
 
