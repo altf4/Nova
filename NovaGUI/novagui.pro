@@ -2,6 +2,7 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
+#PRE_TARGETDEPS += /usr/lib/libann.a
 HEADERS += src/main.h \
     src/nodePopup.h \
     src/novaconfig.h \
@@ -21,10 +22,11 @@ FORMS += UI/nodePopup.ui \
     UI/run_popup.ui
 RESOURCES += 
 INCLUDEPATH += ../NovaLibrary/src
-LIBS += ../NovaLibrary/Debug/libNovaLibrary.a \
-    /usr/lib/libboost_serialization.a \
-    /usr/lib/libann.a \
+CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
+else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
+LIBS += /usr/lib/libboost_serialization.a \
     /usr/lib/liblog4cxx.a \
     /usr/lib/libapr-1.a \
+    /usr/lib/libann.a \
     /usr/lib/libaprutil-1.a
 UI_DIR = UI_headers/ 
