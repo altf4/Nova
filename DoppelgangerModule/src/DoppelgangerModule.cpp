@@ -8,13 +8,9 @@
 #include "DoppelgangerModule.h"
 #include "NOVAConfiguration.h"
 
-using namespace log4cxx;
-using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
 using namespace DoppelgangerModule;
-
-LoggerPtr m_logger(Logger::getLogger("main"));
 
 SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
@@ -74,9 +70,6 @@ int main(int argc, char *argv[])
 	//Get locations of nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
-
-	DOMConfigurator::configure(logConfig.c_str());
 
 	//Runs the configuration loader
 	LoadConfig((char*)novaConfig.c_str());

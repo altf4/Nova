@@ -44,7 +44,6 @@
 								</option>
 								<option id="gnu.cpp.link.option.libs.1780963954" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="pcap"/>
-									<listOptionValue builtIn="false" value="log4cxx"/>
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="ann"/>
@@ -692,7 +691,6 @@
 								</option>
 								<option id="gnu.cpp.link.option.libs.998652840" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="pcap"/>
-									<listOptionValue builtIn="false" value="log4cxx"/>
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="ann"/>

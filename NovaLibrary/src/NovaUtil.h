@@ -19,13 +19,15 @@
 #include <ANN/ANN.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <pthread.h>
+#include <vector>
+#include <sstream>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/if_ether.h>
 #include <google/dense_hash_map>
-#include <log4cxx/xml/domconfigurator.h>
 #include <syslog.h>
 
 #include "GUIMsg.h"
@@ -33,7 +35,6 @@
 
 using namespace std;
 using namespace Nova;
-
 
 /*********************************/
 /******** Common Defines *********/

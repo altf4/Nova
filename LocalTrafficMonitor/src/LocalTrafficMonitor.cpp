@@ -14,8 +14,6 @@
 #include <net/if.h>
 #include <sys/un.h>
 
-using namespace log4cxx;
-using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
 using namespace LocalTrafficMonitor;
@@ -44,8 +42,6 @@ struct sockaddr_un remote;
 
 u_char data[MAX_MSG_SIZE];
 uint dataLen;
-
-LoggerPtr m_logger(Logger::getLogger("main"));
 
 char * pathsFile = (char*)PATHS_FILE;
 string homePath;
@@ -84,9 +80,6 @@ int main(int argc, char *argv[])
 	//Get locations of nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
-
-	DOMConfigurator::configure(logConfig.c_str());
 
 	//Runs the configuration loader
 	LoadConfig((char*)novaConfig.c_str());

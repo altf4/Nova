@@ -9,8 +9,6 @@
 #include "NOVAConfiguration.h"
 #include <iostream>
 
-using namespace log4cxx;
-using namespace log4cxx::xml;
 using namespace std;
 using namespace Nova;
 using namespace ClassificationEngine;
@@ -86,7 +84,6 @@ int len;
 const char *outFile;				//output for data points during training
 string homePath;
 double maxFeatureValues[DIM];
-LoggerPtr m_logger(Logger::getLogger("main"));
 
 // Nova Configuration Variables (read from config file)
 bool isTraining;
@@ -124,21 +121,18 @@ int main(int argc,char *argv[])
 	//Get locations of nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	logConfig = homePath + "/Config/Log4cxxConfig_Console.xml";
-
-	DOMConfigurator::configure(logConfig.c_str());
 
 	//Runs the configuration loader
 	LoadConfig((char*)novaConfig.c_str());
 
 	if(!useTerminals)
 	{
-		openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+		openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+		openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 	}
 
 	dataFile = homePath + "/" +dataFile;
@@ -365,7 +359,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
-		LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
+		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
@@ -622,7 +616,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 					if(maxFeatureValues[ai] != 0)
 						it->second->annPoint[ai] = (double)(it->second->features.features[i] / maxFeatureValues[ai]);
 					else
-						LOG4CXX_INFO(m_logger,"Max Feature Value for feature " << (i+1) << " is 0!");
+						syslog(LOG_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (i + 1));
 					ai++;
 				}
 
@@ -1138,7 +1132,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	ifstream settings(settingsPath.c_str());
 	in_addr_t nbr;
 
-	openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+	openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
 	if(settings.is_open())
 	{

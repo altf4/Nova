@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lNovaLibrary -llog4cxx -lann
+LIBS := -lNovaLibrary -lann -lpthread
 
