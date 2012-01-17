@@ -293,7 +293,9 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
 				if(it->second->isHostile)
+				{
 					SilentAlarm(it->second);
+				}
 				SendToUI(it->second);
 			}
 		}
@@ -907,6 +909,14 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						}
 						if (connect(sockfd, serv_addrPtr, inSocketSize) == -1)
 						{
+							//If the host isn't up we stop trying
+							if(errno == EHOSTUNREACH)
+							{
+								//set to max attempts to hit the failed connect condition
+								i = SA_Max_Attempts;
+								syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+								break;
+							}
 							syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 							close(sockfd);
 							continue;
@@ -914,7 +924,8 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						break;
 					}
 				}
-				if(i == SA_Max_Attempts)
+				//If connecting failed
+				if(i == SA_Max_Attempts )
 				{
 					close(sockfd);
 					ss.str("");

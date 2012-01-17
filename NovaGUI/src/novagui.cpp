@@ -47,7 +47,7 @@ string homePath, readPath, writePath;
 
 
 //General variables like tables, flags, locks, etc.
-static SuspectHashTable SuspectTable;
+SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
 LoggerPtr m_logger(Logger::getLogger("main"));
 bool novaRunning = false;
@@ -97,9 +97,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	loadAll();
 
-	//Not sure why this is needed, but it seems to take care of the error
-	// the abstracted Qt operations of QObject::connect sometimes throws an
-	// error complaining about queueing objects of type 'QItemSelection'
+	//This register meta type function needs to be called for any object types passed through a signal
+	qRegisterMetaType<in_addr_t>("in_addr_t");
 	qRegisterMetaType<QItemSelection>("QItemSelection");
 
 	//Sets up the socket addresses
@@ -107,7 +106,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	//Create listening socket, listen thread and draw thread --------------
 	pthread_t CEListenThread;
-	pthread_t CEDrawThread;
 
 	if((CE_InSock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
@@ -139,8 +137,9 @@ NovaGUI::NovaGUI(QWidget *parent)
 	this->ui.doppelButton->setFlat(false);
 	this->ui.haystackButton->setFlat(false);
 
+	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(drawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
+
 	pthread_create(&CEListenThread,NULL,CEListen, this);
-	pthread_create(&CEDrawThread,NULL,CEDraw, this);
 }
 
 NovaGUI::~NovaGUI()
@@ -152,7 +151,6 @@ void NovaGUI::closeEvent(QCloseEvent * e)
 {
 	e = e;
 	closeNova();
-	//this->close();
 }
 
 /************************************************
@@ -339,16 +337,6 @@ void *CEListen(void *ptr)
 	while(true)
 	{
 		((NovaGUI*)ptr)->receiveCE(CE_InSock);
-	}
-	return NULL;
-}
-
-void *CEDraw(void *ptr)
-{
-	while(true)
-	{
-		((NovaGUI*)ptr)->drawSuspects();
-		sleep(5);
 	}
 	return NULL;
 }
@@ -1024,58 +1012,22 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 {
 
 	pthread_rwlock_wrlock(&lock);
-
-	//We borrow the flag to show there is new information.
-	suspectItem.suspect->needs_feature_update = true;
-
 	//If the suspect already exists in our table
 	if(SuspectTable.find(suspectItem.suspect->IP_address.s_addr) != SuspectTable.end())
 	{
-		//If classification hasn't changed
-		if(suspectItem.suspect->isHostile == SuspectTable[suspectItem.suspect->IP_address.s_addr].suspect->isHostile)
-		{
-			//We set this flag if the QWidgetListItem needs to be changed or created
-			//We check for a NULL item so that if the suspect list is cleared but the classification hasn't changed
-			//We still create a new item during drawSuspects
-			if(SuspectTable[suspectItem.suspect->IP_address.s_addr].item != NULL)
-			{
-				suspectItem.suspect->needs_classification_update = false;
-			}
-			else
-			{
-				suspectItem.suspect->needs_classification_update = true;
-			}
-		}
-
-		//If it has
-		else
-		{
-			//This flag is set because the classification has changed, and the item needs to be moved
-			suspectItem.suspect->needs_classification_update = true;
-		}
-
-		//Delete the old Suspect since we created and pointed to a new one
-		delete SuspectTable[suspectItem.suspect->IP_address.s_addr].suspect;
-
 		//We point to the same item so it doesn't need to be deleted.
 		suspectItem.item = SuspectTable[suspectItem.suspect->IP_address.s_addr].item;
 		suspectItem.mainItem = SuspectTable[suspectItem.suspect->IP_address.s_addr].mainItem;
 
-		//Update the entry in the table
-		SuspectTable[suspectItem.suspect->IP_address.s_addr] = suspectItem;
+		//Delete the old Suspect since we created and pointed to a new one
+		delete SuspectTable[suspectItem.suspect->IP_address.s_addr].suspect;
 	}
-	//If the suspect is new
-	else
-	{
-		//This flag is set because it is a new item and to the GUI display has no classification yet
-		suspectItem.suspect->needs_classification_update = true;
-		suspectItem.item = NULL;
-		suspectItem.mainItem = NULL;
-
-		//Put it in the table
-		SuspectTable[suspectItem.suspect->IP_address.s_addr] = suspectItem;
-	}
+	//We borrow the flag to show there is new information.
+	suspectItem.suspect->needs_feature_update = true;
+	//Update the entry in the table
+	SuspectTable[suspectItem.suspect->IP_address.s_addr] = suspectItem;
 	pthread_rwlock_unlock(&lock);
+	emit newSuspect(suspectItem.suspect->IP_address.s_addr);
 }
 
 /************************************************
@@ -1085,161 +1037,282 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 void NovaGUI::drawAllSuspects()
 {
 	clearSuspectList();
-	//Create the colors for the draw
-	QBrush gbrush(QColor(0, 150, 0, 255));
-	gbrush.setStyle(Qt::NoBrush);
-	QBrush rbrush(QColor(200, 0, 0, 255));
-	rbrush.setStyle(Qt::NoBrush);
 
 	QListWidgetItem * item = NULL;
 	QListWidgetItem * mainItem = NULL;
 	Suspect * suspect = NULL;
 	QString str;
+	QBrush brush;
+	QColor color;
 
 	pthread_rwlock_wrlock(&lock);
 	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		str = (QString)it->second.suspect->ToString(featureEnabled).c_str();
-
+		str = (QString) string(inet_ntoa(it->second.suspect->IP_address)).c_str();
 		suspect = it->second.suspect;
-		//If Benign
-		if(suspect->isHostile == false)
+		//Create the colors for the draw
+		if(suspect->classification < 0.5)
 		{
-			//Create the Suspect in list with info set alignment and color
-			item = new QListWidgetItem(str, this->ui.benignList, 0);
-			item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
-			item->setForeground(gbrush);
-			//Copy the item
-			mainItem = new QListWidgetItem(*item);
-			//Point to the new items
-			it->second.mainItem = mainItem;
-			it->second.item = item;
+			//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
+			color = QColor((int)(200*2*suspect->classification),200, 50);
 		}
-		//If Hostile
 		else
 		{
-			//Create the Suspect in list with info set alignment and color
-			item = new QListWidgetItem(str, this->ui.hostileList, 0);
-			item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
-			item->setForeground(rbrush);
+			//at 0.5 QBrush is 255,255 (yellow), at from 0.5->1.0 remove more green until QBrush is Red
+			color = QColor(200,200-(int)(200*2*(suspect->classification-0.5)), 50);
+		}
+		brush.setColor(color);
+		brush.setStyle(Qt::NoBrush);
+
+		//Create the Suspect in list with info set alignment and color
+		item = new QListWidgetItem(str,0);
+		item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
+		item->setForeground(brush);
+
+		in_addr_t addr;
+		int i = 0;
+		if(ui.suspectList->count())
+		{
+			for(i = 0; i < ui.suspectList->count(); i++)
+			{
+				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
+				if(SuspectTable[addr].suspect->classification < suspect->classification)
+					break;
+			}
+		}
+		ui.suspectList->insertItem(i, item);
+
+		//If Hostile
+		if(suspect->isHostile )
+		{
 			//Copy the item and add it to the list
-			mainItem = new QListWidgetItem(*item);
-			ui.mainSuspectList->addItem(mainItem);
-			//Point to the new items
-			it->second.item = item;
+			mainItem = new QListWidgetItem(str,0);
+			mainItem->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
+			mainItem->setForeground(brush);
+
+			i = 0;
+			if(ui.hostileList->count())
+			{
+				for(i = 0; i < ui.hostileList->count(); i++)
+				{
+					addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
+					if(SuspectTable[addr].suspect->classification < suspect->classification)
+						break;
+				}
+			}
+			ui.hostileList->insertItem(i, mainItem);
 			it->second.mainItem = mainItem;
 		}
+		//Point to the new items
+		it->second.item = item;
 		//Reset the flags
 		suspect->needs_feature_update = false;
-		suspect->needs_classification_update = false;
 		it->second.suspect = suspect;
 	}
+	updateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
 }
 
-void NovaGUI::drawSuspects()
+//Updates the UI with the latest suspect information
+//*NOTE This slot is not thread safe, make sure you set appropriate locks before sending a signal to this slot
+void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 {
-	//Create the colors for the draw
-	QBrush gbrush(QColor(0, 150, 0, 255));
-	gbrush.setStyle(Qt::NoBrush);
-	QBrush rbrush(QColor(200, 0, 0, 255));
-	rbrush.setStyle(Qt::NoBrush);
 
-	QListWidgetItem * item = NULL;
-	QListWidgetItem * mainItem = NULL;
-	Suspect * suspect = NULL;
 	QString str;
+	QBrush brush;
+	QColor color;
+	in_addr_t addr;
 
 	pthread_rwlock_wrlock(&lock);
-	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
-	{
-		//If there is new information
-		if(it->second.suspect->needs_feature_update)
-		{
-			//Extract Information
-			str = (QString)it->second.suspect->ToString(featureEnabled).c_str();
-			//Set pointers for fast access
-			item = it->second.item;
-			mainItem = it->second.mainItem;
-			suspect = it->second.suspect;
+	suspectItem * sItem = &SuspectTable[suspectAddr];
+	//Extract Information
+	str = (QString) string(inet_ntoa(sItem->suspect->IP_address)).c_str();
 
-			//If the item exists and is in the same list
-			if(suspect->needs_classification_update == false)
+	//Create the colors for the draw
+	if(sItem->suspect->classification < 0.5)
+	{
+		//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
+		color = QColor((int)(200*2*sItem->suspect->classification),200, 50);
+	}
+	else
+	{
+		//at 0.5 QBrush is 255,255 (yellow), at from 0.5->1.0 remove more green until QBrush is Red
+		color = QColor(200,200-(int)(200*2*(sItem->suspect->classification-0.5)), 50);
+	}
+	brush.setColor(color);
+	brush.setStyle(Qt::NoBrush);
+
+	//If the item exists
+	if(sItem->item != NULL)
+	{
+		sItem->item->setText(str);
+		sItem->item->setForeground(brush);
+		bool selected = false;
+		int current_row = ui.suspectList->currentRow();
+
+		//If this is our current selection flag it so we can update the selection if we change the index
+		if(current_row == ui.suspectList->row(sItem->item))
+			selected = true;
+
+		ui.suspectList->removeItemWidget(sItem->item);
+
+		int i = 0;
+		if(ui.suspectList->count())
+		{
+			for(i = 0; i < ui.suspectList->count(); i++)
 			{
-				item->setText(str);
-				mainItem->setText(str);
-				//Reset the flag
-				suspect->needs_feature_update = false;
-			}
-			//If the item exists but classification has changed
-			else if(item != NULL)
-			{
-				//If Benign, old item is in hostile
-				if(suspect->isHostile == false)
-				{
-					//Remove old item, update info, change color, put in new list
-					this->ui.hostileList->removeItemWidget(item);
-					this->ui.mainSuspectList->removeItemWidget(mainItem);
-					item->setForeground(gbrush);
-					item->setText(str);
-					mainItem->setText(str);
-					this->ui.benignList->addItem(item);
-				}
-				//If Hostile, old item is in benign
-				else
-				{
-					//Remove old item, update info, change color, put in new list
-					this->ui.benignList->removeItemWidget(item);
-					item->setForeground(rbrush);
-					item->setText(str);
-					mainItem->setForeground(rbrush);
-					mainItem->setText(str);
-					this->ui.hostileList->addItem(item);
-					this->ui.mainSuspectList->addItem(mainItem);
-				}
-				//Reset the flags
-				suspect->needs_feature_update = false;
-				suspect->needs_classification_update = false;
-			}
-			//If it's a new item
-			else
-			{
-				//If Benign
-				if(suspect->isHostile == false)
-				{
-					//Create the Suspect in list with info set alignment and color
-					item = new QListWidgetItem(str, this->ui.benignList, 0);
-					item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
-					item->setForeground(gbrush);
-					//Copy the item
-					mainItem = new QListWidgetItem(*item);
-					//Point to the new items
-					it->second.mainItem = mainItem;
-					it->second.item = item;
-				}
-				//If Hostile
-				else
-				{
-					//Create the Suspect in list with info set alignment and color
-					item = new QListWidgetItem(str, this->ui.hostileList, 0);
-					item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
-					item->setForeground(rbrush);
-					//Copy the item and add it to the list
-					mainItem = new QListWidgetItem(*item);
-					ui.mainSuspectList->addItem(mainItem);
-					//Point to the new items
-					it->second.item = item;
-					it->second.mainItem = mainItem;
-				}
-				//Reset the flags
-				suspect->needs_feature_update = false;
-				suspect->needs_classification_update = false;
+				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
+				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+					break;
 			}
 		}
+		ui.suspectList->insertItem(i, sItem->item);
+
+		//If we need to update the selection
+		if(selected)
+		{
+			ui.suspectList->setCurrentRow(i);
+		}
 	}
+	//If the item doesn't exist
+	else
+	{
+		//Create the Suspect in list with info set alignment and color
+		sItem->item = new QListWidgetItem(str,0);
+		sItem->item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
+		sItem->item->setForeground(brush);
+
+		int i = 0;
+		if(ui.suspectList->count())
+		{
+			for(i = 0; i < ui.suspectList->count(); i++)
+			{
+				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
+				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+					break;
+			}
+		}
+		ui.suspectList->insertItem(i, sItem->item);
+	}
+
+	//If the mainItem exists and suspect is hostile
+	if((sItem->mainItem != NULL) && sItem->suspect->isHostile)
+	{
+		sItem->mainItem->setText(str);
+		sItem->mainItem->setForeground(brush);
+		bool selected = false;
+		int current_row = ui.hostileList->currentRow();
+
+		//If this is our current selection flag it so we can update the selection if we change the index
+		if(current_row == ui.hostileList->row(sItem->mainItem))
+			selected = true;
+
+		ui.hostileList->removeItemWidget(sItem->mainItem);
+		int i = 0;
+		if(ui.hostileList->count())
+		{
+			for(i = 0; i < ui.hostileList->count(); i++)
+			{
+				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
+				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+					break;
+			}
+		}
+		ui.hostileList->insertItem(i, sItem->mainItem);
+
+		//If we need to update the selection
+		if(selected)
+		{
+			ui.hostileList->setCurrentRow(i);
+		}
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
+	}
+	//Else if the mainItem exists and suspect is not hostile
+	else if(sItem->mainItem != NULL)
+	{
+		ui.hostileList->removeItemWidget(sItem->mainItem);
+	}
+	//If the mainItem doesn't exist and suspect is hostile
+	else if(sItem->suspect->isHostile)
+	{
+		//Create the Suspect in list with info set alignment and color
+		sItem->mainItem = new QListWidgetItem(str,0);
+		sItem->mainItem->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
+		sItem->mainItem->setForeground(brush);
+
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
+
+		int i = 0;
+		if(ui.hostileList->count())
+		{
+			for(i = 0; i < ui.hostileList->count(); i++)
+			{
+				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
+				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+					break;
+			}
+		}
+		ui.hostileList->insertItem(i, sItem->mainItem);
+	}
+	sItem->item->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
+	updateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
 }
+void NovaGUI::updateSuspectWidgets()
+{
+	double hostileAcc = 0, benignAcc = 0, totalAcc = 0;
 
+	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
+	{
+		if(it->second.suspect->isHostile)
+		{
+			hostileAcc += it->second.suspect->classification;
+			totalAcc += it->second.suspect->classification;
+		}
+		else
+		{
+			benignAcc += 1-it->second.suspect->classification;
+			totalAcc += 1-it->second.suspect->classification;
+		}
+	}
+
+	int numBenign = ui.suspectList->count() - ui.hostileList->count();
+	stringstream ss;
+	ss << numBenign;
+	ui.numBenignEdit->setText(QString(ss.str().c_str()));
+
+	if(numBenign)
+	{
+		benignAcc /= numBenign;
+		ui.benignClassificationBar->setValue((int)(benignAcc*100));
+		ui.benignSuspectClassificationBar->setValue((int)(benignAcc*100));
+	}
+	else
+	{
+		ui.benignClassificationBar->setValue(100);
+		ui.benignSuspectClassificationBar->setValue(100);
+	}
+	if(ui.hostileList->count())
+	{
+		hostileAcc /= ui.hostileList->count();
+		ui.hostileClassificationBar->setValue((int)(hostileAcc*100));
+		ui.hostileSuspectClassificationBar->setValue((int)(hostileAcc*100));
+	}
+	else
+	{
+		ui.hostileClassificationBar->setValue(100);
+		ui.hostileSuspectClassificationBar->setValue(100);
+	}
+	if(ui.suspectList->count())
+	{
+		totalAcc /= ui.suspectList->count();
+		ui.overallSuspectClassificationBar->setValue((int)(totalAcc*100));
+	}
+	else
+	{
+		ui.overallSuspectClassificationBar->setValue(100);
+	}
+}
 void NovaGUI::saveSuspects()
 {
 	 QString filename = QFileDialog::getSaveFileName(this,
@@ -1262,14 +1335,13 @@ void NovaGUI::saveSuspects()
 void NovaGUI::clearSuspectList()
 {
 	pthread_rwlock_wrlock(&lock);
-	this->ui.mainSuspectList->clear();
+	this->ui.suspectList->clear();
 	this->ui.hostileList->clear();
-	this->ui.benignList->clear();
 	//Since clearing permenantly deletes the items we need to make sure the suspects point to null
 	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		it->second.mainItem = NULL;
 		it->second.item = NULL;
+		it->second.mainItem = NULL;
 	}
 	pthread_rwlock_unlock(&lock);
 }
@@ -1391,20 +1463,31 @@ void NovaGUI::on_haystackButton_clicked()
  * Button Signal Handlers
  ************************************************/
 
-void  NovaGUI::on_runButton_clicked()
+void NovaGUI::on_runButton_clicked()
 {
 	startNova();
 }
-void  NovaGUI::on_stopButton_clicked()
+void NovaGUI::on_stopButton_clicked()
 {
 	closeNova();
 }
-void  NovaGUI::on_clearSuspectsButton_clicked()
+void NovaGUI::on_clearSuspectsButton_clicked()
 {
-	clearSuspects();
 	drawAllSuspects();
+	clearSuspects();
 }
 
+
+/************************************************
+ * List Signal Handlers
+ ************************************************/
+void NovaGUI::on_suspectList_itemSelectionChanged()
+{
+	pthread_rwlock_rdlock(&lock);
+	in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
+	ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
+	pthread_rwlock_unlock(&lock);
+}
 /************************************************
  * IPC Functions
  ************************************************/
