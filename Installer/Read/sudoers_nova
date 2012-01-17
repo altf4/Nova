@@ -12,5 +12,6 @@
 # Cmnd alias specification
 Cmnd_Alias NOVACMNDS = /sbin/route, /sbin/iptables, /bin/kill, /usr/bin/honeyd
 # User privilege specification
-%nova ALL = NOPASSWD: NOVACMNDS
-# Members of the admin group may gain root privileges
+
+Defaults!NOVACMNDS exempt_group=nova
+
