@@ -106,7 +106,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	if((CE_InSock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		sclose(CE_InSock);
 		exit(1);
 	}
@@ -115,14 +115,14 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	if(bind(CE_InSock,(struct sockaddr *)&CE_InAddress,len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		sclose(CE_InSock);
 		exit(1);
 	}
 
 	if(listen(CE_InSock, SOCKET_QUEUE_SIZE) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		sclose(CE_InSock);
 		exit(1);
 	}
@@ -493,7 +493,7 @@ void NovaGUI::loadScripts()
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading scripts: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading scripts: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -532,7 +532,7 @@ void NovaGUI::loadPorts()
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading ports: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading ports: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -566,19 +566,19 @@ void NovaGUI::loadGroup()
 					}
 					catch(std::exception &e)
 					{
-						syslog(LOG_ERR, "Line: %d Problem loading nodes: %s", __LINE__, string(e.what()).c_str());
+						syslog(SYSL_ERR, "Line: %d Problem loading nodes: %s", __LINE__, string(e.what()).c_str());
 					}
 				}
 				catch(std::exception &e)
 				{
-					syslog(LOG_ERR, "Line: %d Problem loading subnets: %s", __LINE__, string(e.what()).c_str());
+					syslog(SYSL_ERR, "Line: %d Problem loading subnets: %s", __LINE__, string(e.what()).c_str());
 				}
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading group: %s - %s", __LINE__, group.c_str(), string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading group: %s - %s", __LINE__, group.c_str(), string(e.what()).c_str());
 	}
 }
 
@@ -624,13 +624,13 @@ void NovaGUI::loadSubnets(ptree *ptr)
 			}
 			else
 			{
-				syslog(LOG_ERR, "Line: %d Unexpected Entry in file: %s", __LINE__, string(v.first.data()).c_str());
+				syslog(SYSL_ERR, "Line: %d Unexpected Entry in file: %s", __LINE__, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading subnets: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading subnets: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -699,18 +699,18 @@ void NovaGUI::loadNodes(ptree *ptr)
 				//If no subnet found, can't use node unless it's doppelganger.
 				else
 				{
-					syslog(LOG_ERR, "Line: %d Node at IP: %s is outside all valid subnet ranges", __LINE__, n.address.c_str());
+					syslog(SYSL_ERR, "Line: %d Node at IP: %s is outside all valid subnet ranges", __LINE__, n.address.c_str());
 				}
 			}
 			else
 			{
-				syslog(LOG_ERR, "Line: %d Unexpected Entry in file: %s", __LINE__, string(v.first.data()).c_str());
+				syslog(SYSL_ERR, "Line: %d Unexpected Entry in file: %s", __LINE__, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading nodes: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading nodes: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 void NovaGUI::loadProfiles()
@@ -773,13 +773,13 @@ void NovaGUI::loadProfiles()
 			}
 			else
 			{
-				syslog(LOG_ERR, "Line: %d Invalid XML Path %s", __LINE__, string(v.first.data()).c_str());
+				syslog(SYSL_ERR, "Line: %d Invalid XML Path %s", __LINE__, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -849,7 +849,7 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading profile set parameters: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading profile set parameters: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -898,7 +898,7 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading profile add parameters: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading profile add parameters: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -949,7 +949,7 @@ void NovaGUI::loadSubProfiles(string parent)
 	}
 	catch(std::exception &e)
 	{
-		syslog(LOG_ERR, "Line: %d Problem loading sub profiles: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Problem loading sub profiles: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -967,7 +967,7 @@ bool NovaGUI::receiveCE(int socket)
 	//Blocking call
 	if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 		sclose(connectionSocket);
 		return false;
 	}
@@ -977,7 +977,7 @@ bool NovaGUI::receiveCE(int socket)
 	}
 	else if(bytesRead == -1)
 	{
-		syslog(LOG_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 		sclose(connectionSocket);
 		return false;
 	}
@@ -992,7 +992,7 @@ bool NovaGUI::receiveCE(int socket)
 	}
 	catch(std::exception e)
 	{
-		syslog(LOG_ERR, "Line: %d Error interpreting received Suspect: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Error interpreting received Suspect: %s", __LINE__, string(e.what()).c_str());
 		delete suspect;
 		return false;
 	}
@@ -1538,7 +1538,7 @@ void startNova()
 
 		if (!NovaConfig->options["USE_TERMINALS"].isValid || !NovaConfig->options["ENABLED_FEATURES"].isValid)
 		{
-			syslog(LOG_ERR, "Line: %d ERROR: Unable to load configuration file.", __LINE__);
+			syslog(SYSL_ERR, "Line: %d ERROR: Unable to load configuration file.", __LINE__);
 		}
 
 		useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
@@ -1637,7 +1637,7 @@ void sendToCE()
 	//Opens the socket
 	if ((CE_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
 		exit(1);
 	}
@@ -1645,14 +1645,14 @@ void sendToCE()
 	len = strlen(CE_OutAddress.sun_path) + sizeof(CE_OutAddress.sun_family);
 	if (connect(CE_OutSock, (struct sockaddr *)&CE_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
 		return;
 	}
 
 	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
 		return;
 	}
@@ -1664,7 +1664,7 @@ void sendToDM()
 	//Opens the socket
 	if ((DM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
 		exit(1);
 	}
@@ -1672,14 +1672,14 @@ void sendToDM()
 	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
 	if (connect(DM_OutSock, (struct sockaddr *)&DM_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
 		return;
 	}
 
 	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
 		return;
 	}
@@ -1691,7 +1691,7 @@ void sendToHS()
 	//Opens the socket
 	if ((HS_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
 		exit(1);
 	}
@@ -1699,14 +1699,14 @@ void sendToHS()
 	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
 	if (connect(HS_OutSock, (struct sockaddr *)&HS_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
 		return;
 	}
 
 	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
 		return;
 	}
@@ -1718,7 +1718,7 @@ void sendToLTM()
 	//Opens the socket
 	if ((LTM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);
 		exit(1);
 	}
@@ -1726,14 +1726,14 @@ void sendToLTM()
 	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);
 	if (connect(LTM_OutSock, (struct sockaddr *)&LTM_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);
 		return;
 	}
 
 	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);
 		return;
 	}
@@ -1745,28 +1745,28 @@ void sendAll()
 	//CE OUT -------------------------------------------------
 	if ((CE_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
 	}
 
 	//DM OUT -------------------------------------------------
 	if ((DM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
 	}
 
 	//HS OUT -------------------------------------------------
 	if ((HS_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
 	}
 
 	//LTM OUT ------------------------------------------------
 	if ((LTM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);
 	}
 
@@ -1776,13 +1776,13 @@ void sendAll()
 	len = strlen(CE_OutAddress.sun_path) + sizeof(CE_OutAddress.sun_family);
 	if (connect(CE_OutSock, (struct sockaddr *)&CE_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
 	}
 
 	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
 	}
 	close(CE_OutSock);
@@ -1792,13 +1792,13 @@ void sendAll()
 	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
 	if (connect(DM_OutSock, (struct sockaddr *)&DM_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
 	}
 
 	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
 	}
 	close(DM_OutSock);
@@ -1809,13 +1809,13 @@ void sendAll()
 	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
 	if (connect(HS_OutSock, (struct sockaddr *)&HS_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
 	}
 
 	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
 	}
 	close(HS_OutSock);
@@ -1826,13 +1826,13 @@ void sendAll()
 	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);
 	if (connect(LTM_OutSock, (struct sockaddr *)&LTM_OutAddress, len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);
 	}
 
 	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);
 	}
 	close(LTM_OutSock);

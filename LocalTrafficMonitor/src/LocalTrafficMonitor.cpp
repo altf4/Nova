@@ -86,12 +86,12 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+		openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+		openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 	}
 
 	//Pre-Forms the socket address to improve performance
@@ -113,14 +113,14 @@ int main(int argc, char *argv[])
 
 	if(hostAddress.empty())
 	{
-		syslog(LOG_ERR, "Line: %d Invalid interface given", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Invalid interface given", __LINE__);
 		exit(1);
 	}
 
 	//Form the Filter Expression String
 	bzero(filter_exp, 64);
 	snprintf(filter_exp, 64, "dst host %s", hostAddress.data());
-	syslog(LOG_INFO, "%s", filter_exp);
+	syslog(SYSL_INFO, "%s", filter_exp);
 
 	//If we are reading from a packet capture file
 	if(usePcapFile)
@@ -130,18 +130,18 @@ int main(int argc, char *argv[])
 
 		if(handle == NULL)
 		{
-			syslog(LOG_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, pcapPath.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, pcapPath.c_str(), errbuf);
 			return(2);
 		}
 		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 		//First process any packets in the file then close all the sessions
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
 		if(handle == NULL)
 		{
-			syslog(LOG_ERR, "Line: %d Couldn't open device: %s: %s", __LINE__, dev.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s: %s", __LINE__, dev.c_str(), errbuf);
 			return(2);
 		}
 
@@ -169,19 +169,19 @@ int main(int argc, char *argv[])
 
 		if(ret == -1)
 		{
-			syslog(LOG_ERR, "Line: %d %s", __LINE__, errbuf);
+			syslog(SYSL_ERR, "Line: %d %s", __LINE__, errbuf);
 			exit(1);
 		}
 
 		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(1);
 		}
 
@@ -200,7 +200,7 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 {
 	if(packet == NULL)
 	{
-		syslog(LOG_ERR, "Line: %d Didn't grab packet!", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Didn't grab packet!", __LINE__);
 		return;
 	}
 
@@ -277,7 +277,7 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 	}
 	else
 	{
-		syslog(LOG_ERR, "Line: %d Unknown Non-IP Packet Received", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Unknown Non-IP Packet Received", __LINE__);
 		return;
 	}
 }
@@ -290,7 +290,7 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -307,14 +307,14 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 
 	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -337,12 +337,12 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
     //Blocking call
     if ((msgSocket = accept(socket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
-    	syslog(LOG_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
+    	syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
     if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
-		syslog(LOG_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
 
@@ -427,7 +427,7 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 	if(usePcapFile) return NULL;
 
 	//Shouldn't get here
-	syslog(LOG_ERR, "Line: %d TCP Timeout Thread has halted!", __LINE__);
+	syslog(SYSL_ERR, "Line: %d TCP Timeout Thread has halted!", __LINE__);
 	return NULL;
 }
 
@@ -442,21 +442,21 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (send(socketFD, data, dataLen, 0) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
@@ -516,7 +516,7 @@ void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 	if(usePcapFile) return NULL;
 
 	//Shouldn't get here
-	syslog(LOG_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
+	syslog(SYSL_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
 	return NULL;
 }
 
@@ -529,9 +529,9 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
 
-	openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
+	openlog("LocalTrafficMonitor", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
-	syslog(LOG_INFO, "Line: %d Starting to load configuration file", __LINE__);
+	syslog(SYSL_INFO, "Line: %d Starting to load configuration file", __LINE__);
 
 	if(settings.is_open())
 	{
@@ -548,7 +548,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 				if((line.size() > 0) && (line.size() < 257))
 					key = line;
 				else
-					syslog(LOG_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
+					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
 			}
 		}
 	}
@@ -573,7 +573,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 		NovaConfig->options[prefix];
 		if (!NovaConfig->options[prefix].isValid)
 		{
-			syslog(LOG_ERR, "Line: %d The configuration variable # %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
+			syslog(SYSL_ERR, "Line: %d The configuration variable # %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
 			v = false;
 		}
 	}
@@ -581,12 +581,12 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	//Checks to make sure all values have been set.
 	if(v == false)
 	{
-		syslog(LOG_ERR, "Line: %d One or more values have not been set.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d One or more values have not been set.", __LINE__);
 		exit(1);
 	}
 	else
 	{
-		syslog(LOG_INFO, "Line: %d All configuration values appear valid.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d All configuration values appear valid.", __LINE__);
 	}
 
 
