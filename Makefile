@@ -73,7 +73,7 @@ install-release:
 	chmod 0440 /etc/sudoers.d/sudoers_nova 
 	#Copy the hidden directories and files
 	mkdir -p $(HOME)/.nova
-	cp -R Installer/.nova $(HOME)
+	cp -R -f Installer/.nova $(HOME)
 	#Copy the scripts and logs
 	mkdir -p /usr/share/nova
 	cp -R Installer/Write/nova /usr/share/
@@ -106,7 +106,7 @@ install-debug:
 	chmod 0440 /etc/sudoers.d/sudoers_nova 
 	#Copy the hidden directories and files
 	mkdir -p $(HOME)/.nova
-	cp -R Installer/.nova $(HOME)
+	cp -R -f Installer/.nova $(HOME)
 	#Copy the scripts and logs
 	mkdir -p /usr/share/nova
 	cp -R Installer/Write/nova /usr/share/
