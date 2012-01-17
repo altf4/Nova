@@ -127,12 +127,12 @@ int main(int argc,char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_AUTHPRIV);
+		openlog("ClassificationEngine", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+		openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	dataFile = homePath + "/" +dataFile;
@@ -1143,7 +1143,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	ifstream settings(settingsPath.c_str());
 	in_addr_t nbr;
 
-	openlog("ClassificationEngine", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
 	if(settings.is_open())
 	{

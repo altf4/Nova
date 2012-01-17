@@ -79,12 +79,12 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog("Haystack", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_AUTHPRIV);
+		openlog("Haystack", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("Haystack", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+		openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -580,7 +580,7 @@ void Haystack::LoadConfig(char* configFilePath)
 	string prefix;
 	bool v = true;
 
-	openlog("Haystack", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+	openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
 
 	const string prefixes[] = {"INTERFACE", "HS_HONEYD_CONFIG",
 			"TCP_TIMEOUT","TCP_CHECK_FREQ",

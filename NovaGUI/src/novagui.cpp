@@ -90,7 +90,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	string novaConfig = "Config/NOVAConfig.txt";
 	string logConfig = "Config/Log4cxxConfig_Console.xml";
 
-	openlog("NovaGUI", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
 	loadAll();
 
