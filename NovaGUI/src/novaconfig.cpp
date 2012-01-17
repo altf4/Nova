@@ -396,6 +396,7 @@ void NovaConfig::loadPreferences()
 	else
 	{
 		syslog(SYSL_ERR, "Line: %d Error loading from Classification Engine config file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_READ_FAIL);
 		this->close();
 	}
 	config.close();
