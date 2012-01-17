@@ -11,14 +11,11 @@
 #include <QString>
 #include <QChar>
 #include <fstream>
-#include <log4cxx/xml/domconfigurator.h>
 #include <errno.h>
 #include <string.h>
 
 using namespace std;
 using namespace Nova;
-using namespace log4cxx;
-using namespace log4cxx::xml;
 
 //Keys used to maintain and lookup current selections
 string currentProfile = "";
@@ -32,8 +29,6 @@ NovaGUI * mainwindow;
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
 bool selectedSubnet = false;
-
-LoggerPtr n_logger(Logger::getLogger("main"));
 
 /************************************************
  * Construct and Initialize GUI
@@ -56,7 +51,6 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	mainwindow = (NovaGUI*)parent;
 	group = mainwindow->group;
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	editingPorts = false;
 
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
@@ -401,7 +395,7 @@ void NovaConfig::loadPreferences()
 	}
 	else
 	{
-		LOG4CXX_ERROR(n_logger, "Error loading from Classification Engine config file.");
+		syslog(SYSL_ERR, "Line: %d Error loading from Classification Engine config file.", __LINE__);
 		this->close();
 	}
 	config.close();
@@ -571,7 +565,7 @@ void NovaConfig::on_okButton_clicked()
 	// TODO: Change to a GUI popup error
 	if (!saveConfigurationToFile())
 	{
-		LOG4CXX_ERROR(n_logger, "Error writing to Nova config file.");
+		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
 		this->close();
 	}
 
@@ -587,7 +581,7 @@ void NovaConfig::on_applyButton_clicked()
 	// TODO: Change to a GUI popup error
 	if (!saveConfigurationToFile())
 	{
-		LOG4CXX_ERROR(n_logger, "Error writing to Nova config file.");
+		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
 		this->close();
 	}
 
@@ -819,7 +813,7 @@ bool NovaConfig::saveConfigurationToFile() {
 	}
 	else
 	{
-		LOG4CXX_ERROR(n_logger, "Error writing to Nova config file.");
+		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
 		in->close();
 		out->close();
 		delete in;
@@ -906,8 +900,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 		}
 		else
 		{
-			LOG4CXX_ERROR(n_logger, "Unable to set stackedWidget page"
-					" index from treeWidgetItem");
+			syslog(SYSL_ERR, "Line: %d Unable to set stackedWidget page index from treeWidgetItem", __LINE__);
 		}
 	}
 }
@@ -1234,13 +1227,13 @@ void NovaConfig::loadProfilesFromTree(string parent)
 			}
 			else
 			{
-				LOG4CXX_ERROR(n_logger, "Invalid XML Path" +string(v.first.data()));
+				syslog(SYSL_ERR, "Line: %d Invalid XML Path %s", __LINE__, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		LOG4CXX_ERROR(n_logger, "Problem loading Profiles: "+ string(e.what()));
+		syslog(SYSL_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -1310,7 +1303,7 @@ void NovaConfig::loadProfileSet(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		LOG4CXX_ERROR(n_logger, "Problem loading profile set parameters: "+ string(e.what()));
+		syslog(SYSL_ERR, "Line: %d Problem loading profile set parameters: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -1359,7 +1352,7 @@ void NovaConfig::loadProfileAdd(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		LOG4CXX_ERROR(n_logger, "Problem loading profile add parameters: "+ string(e.what()));
+		syslog(SYSL_ERR, "Line: %d Problem loading profile add parameters: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
@@ -1426,7 +1419,7 @@ void NovaConfig::loadSubProfiles(string parent)
 	}
 	catch(std::exception &e)
 	{
-		LOG4CXX_ERROR(n_logger, "Problem loading sub profiles: "+ string(e.what()));
+		syslog(SYSL_ERR, "Line: %d Problem loading sub profiles: %s", __LINE__, string(e.what()).c_str());
 	}
 }
 
