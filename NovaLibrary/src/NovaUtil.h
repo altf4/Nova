@@ -98,10 +98,12 @@ using namespace Nova;
 /// File name of the file that contains nova's install locations
 #define PATHS_FILE "/etc/nova/paths"
 
-
+/// Simple define for the ORing of these two integer values. Used for syslog.
 #define SYSL_ERR (LOG_ERR | LOG_AUTHPRIV)
-
 #define SYSL_INFO (LOG_INFO | LOG_AUTHPRIV)
+/// Configs for openlog (first is with terminals, second is without
+#define OPEN_SYSL (LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR)
+#define NO_TERM_SYSL (LOG_CONS | LOG_PID | LOG_NDELAY)
 /************************************************************************/
 /********** Equality operators used by google's dense hash maps *********/
 /************************************************************************/
