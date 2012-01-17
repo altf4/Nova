@@ -85,3 +85,8 @@ NovaGUI/moc_portPopup.cpp
 NovaGUI/moc_run_popup.cpp
 
 /NovaLibrary/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+/NovaGUI/release/moc_nodePopup.cpp
+/NovaGUI/release/moc_novaconfig.cpp
+/NovaGUI/release/moc_novagui.cpp
+/NovaGUI/release/moc_portPopup.cpp
+/NovaGUI/release/moc_run_popup.cpp
