@@ -81,6 +81,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 	ports.set_deleted_key("Deleted");
 	scripts.set_deleted_key("Deleted");
 
+	prompter = new dialogPrompter();
+
 	ui.setupUi(this);
 	runAsWindowUp = false;
 	editingPreferences = false;
