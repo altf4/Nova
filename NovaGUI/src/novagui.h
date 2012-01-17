@@ -124,6 +124,8 @@ struct suspectItem
 	QListWidgetItem * mainItem;
 };
 
+typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+
 class NovaGUI : public QMainWindow
 {
     Q_OBJECT
@@ -161,11 +163,10 @@ public:
     ///Processes the recieved suspect in the suspect table
     void updateSuspect(suspectItem suspect);
 
-    ///Calls clearSuspects first then draws the suspect tables from scratch
+    //Calls clearSuspects first then draws the suspect tables from scratch
     void drawAllSuspects();
-
-    ///Updates the UI with the latest suspect information
-    void drawSuspects();
+    //Updates various Suspect-based widgets, called when suspect information changes
+    void updateSuspectWidgets();
 
     // Tells CE to save suspects to file
     void saveSuspects();
@@ -173,7 +174,7 @@ public:
     //Displays the topology of the honeyd configuration
     void drawNodes();
 
-    ///Clears the suspect tables completely.
+    //Clears the suspect tables completely.
     void clearSuspectList();
 
     //Action to do when the window closes.
@@ -213,7 +214,9 @@ public:
     void writeHoneyd(); //TODO
 
 
-private slots:
+private
+
+slots:
 
 	//Menu actions
 	void on_actionRunNovaAs_triggered();
@@ -225,21 +228,32 @@ private slots:
 	void on_actionHide_Old_Suspects_triggered();
 	void on_actionShow_All_Suspects_triggered();
 
-	//Main view buttons
+	//Global Widgets
 	void on_mainButton_clicked();
 	void on_suspectButton_clicked();
 	void on_doppelButton_clicked();
 	void on_haystackButton_clicked();
+
+	//Main view widgets
 	void on_runButton_clicked();
 	void on_stopButton_clicked();
+
+	//Suspect view widgets
 	void on_clearSuspectsButton_clicked();
+	void on_suspectList_itemSelectionChanged();
+
+	//Custom Slots
+    //Updates the UI with the latest suspect information
+    void drawSuspect(in_addr_t suspectAddr);
+
+signals:
+
+	//Custom Signals
+	void newSuspect(in_addr_t suspectAddr);
 
 private:
 
 };
-
-
-typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);
