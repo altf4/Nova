@@ -98,6 +98,10 @@ using namespace Nova;
 /// File name of the file that contains nova's install locations
 #define PATHS_FILE "/etc/nova/paths"
 
+
+#define SYSL_ERR (LOG_ERR | LOG_AUTHPRIV)
+
+#define SYSL_INFO (LOG_INFO | LOG_AUTHPRIV)
 /************************************************************************/
 /********** Equality operators used by google's dense hash maps *********/
 /************************************************************************/

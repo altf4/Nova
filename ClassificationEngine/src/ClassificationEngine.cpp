@@ -155,7 +155,7 @@ int main(int argc,char *argv[])
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
 	}
@@ -172,14 +172,14 @@ int main(int argc,char *argv[])
 
     if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
     {
-    	syslog(LOG_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
+    	syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
     	close(IPCsock);
         exit(1);
     }
 
     if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
     {
-    	syslog(LOG_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
+    	syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
         exit(1);
     }
@@ -191,7 +191,7 @@ int main(int argc,char *argv[])
 	}
 
 	//Shouldn't get here!
-	syslog(LOG_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
+	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
 	close(IPCsock);
 	return 1;
 }
@@ -204,7 +204,7 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 
 	if((GUISocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(GUISocket);
 		exit(1);
 	}
@@ -221,14 +221,14 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 
 	if(bind(GUISocket,(struct sockaddr *)&GUIAddress,len) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		close(GUISocket);
 		exit(1);
 	}
 
 	if(listen(GUISocket, SOCKET_QUEUE_SIZE) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(GUISocket);
 		exit(1);
 	}
@@ -296,7 +296,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 		pthread_rwlock_unlock(&lock);
 	}
 	//Shouldn't get here!!
-	syslog(LOG_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
+	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
 	return NULL;
 }
 
@@ -343,12 +343,12 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 		}
 		else
 		{
-			syslog(LOG_ERR, "Line: %d Unable to open file", __LINE__);
+			syslog(SYSL_ERR, "Line: %d Unable to open file", __LINE__);
 		}
 		myfile.close();
 	}
 	//Shouldn't get here!
-	syslog(LOG_ERR, "Line: %d Training thread ended. Shouldn't get here!!!", __LINE__);
+	syslog(SYSL_ERR, "Line: %d Training thread ended. Shouldn't get here!!!", __LINE__);
 	return NULL;
 }
 
@@ -361,7 +361,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
@@ -376,7 +376,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
 	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
@@ -390,7 +390,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
     {
-		syslog(LOG_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(sockfd);
         exit(1);
     }
@@ -406,14 +406,14 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		//Blocking call
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 			close(connectionSocket);
 			continue;
 		}
 
 		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 			close(connectionSocket);
 			continue;
 		}
@@ -450,11 +450,11 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			}
 			suspects[addr]->flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-			syslog(LOG_INFO, "Line: %d Received Silent Alarm!\n %s", __LINE__, (suspects[addr]->ToString(featureEnabled)).c_str());
+			syslog(SYSL_INFO, "Line: %d Received Silent Alarm!\n %s", __LINE__, (suspects[addr]->ToString(featureEnabled)).c_str());
 		}
 		catch(std::exception e)
 		{
-			syslog(LOG_ERR, "Line: %d Error interpreting received Silent Alarm: %s", __LINE__, string(e.what()).c_str());
+			syslog(SYSL_ERR, "Line: %d Error interpreting received Silent Alarm: %s", __LINE__, string(e.what()).c_str());
 			delete suspect;
 			suspect = NULL;
 		}
@@ -462,7 +462,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		pthread_rwlock_unlock(&lock);
 	}
 	close(sockfd);
-	syslog(LOG_INFO, "Line: %d Silent Alarm thread ended. Shouldn't get here!!!", __LINE__);
+	syslog(SYSL_INFO, "Line: %d Silent Alarm thread ended. Shouldn't get here!!!", __LINE__);
 	return NULL;
 }
 
@@ -483,7 +483,7 @@ void Nova::ClassificationEngine::FormKdTree()
 			}
 			else
 			{
-				syslog(LOG_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (j + 1));
+				syslog(SYSL_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (j + 1));
 				break;
 			}
 		}
@@ -525,7 +525,7 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 
 		if(nnIdx[i] == -1)
 		{
-			syslog(LOG_ERR, "Line: %d Unable to find a nearest neighbor for Data point: %d\n Try decreasing the Error bound", __LINE__, i);
+			syslog(SYSL_ERR, "Line: %d Unable to find a nearest neighbor for Data point: %d\n Try decreasing the Error bound", __LINE__, i);
 		}
 		else
 		{
@@ -542,7 +542,7 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 			else
 			{
 				//error case; Data points must be 0 or 1
-				syslog(LOG_ERR, "Line: %d Data point: %d has an invalid classification of: %d. This must be either 0 (benign) or 1 (hostile)",
+				syslog(SYSL_ERR, "Line: %d Data point: %d has an invalid classification of: %d. This must be either 0 (benign) or 1 (hostile)",
 					   __LINE__, i, dataPtsWithClass[nnIdx[i]]->classification);
 				suspect->classification = -1;
 				delete [] nnIdx;							// clean things up
@@ -618,7 +618,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 					if(maxFeatureValues[ai] != 0)
 						it->second->annPoint[ai] = (double)(it->second->features.features[i] / maxFeatureValues[ai]);
 					else
-						syslog(LOG_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (i + 1));
+						syslog(SYSL_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (i + 1));
 					ai++;
 				}
 
@@ -671,7 +671,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		syslog(LOG_ERR, "Line: %d Unable to open file.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Unable to open file.", __LINE__);
 	}
 
 	myfile.close();
@@ -769,11 +769,11 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else
 	{
-		syslog(LOG_ERR, "Line: %d Unable to open file.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Unable to open file.", __LINE__);
 	}
 	myfile.close();
 
-	syslog(LOG_INFO, "Line: %d There were %d incomplete lines in the data file.", __LINE__, badLines);
+	syslog(SYSL_INFO, "Line: %d There were %d incomplete lines in the data file.", __LINE__, badLines);
 	//Normalize the data points
 
 	//Foreach feature within the data point
@@ -788,7 +788,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			}
 			else
 			{
-				syslog(LOG_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (i + 1));
+				syslog(SYSL_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (i + 1));
 				break;
 			}
 		}
@@ -822,7 +822,7 @@ void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 	}
 	else
 	{
-		syslog(LOG_ERR, "Line: %d Unable to open file.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Unable to open file.", __LINE__);
 	}
 	myfile.close();
 
@@ -850,21 +850,21 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 	{
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return;
 		}
 
 		if (connect(socketFD, alarmRemotePtr, len) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return;
 		}
 
 		if (send(socketFD, data, dataLen, 0) == -1)
 		{
-			syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return;
 		}
@@ -897,7 +897,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 						{
-							syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+							syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 							close(sockfd);
 							continue;
 						}
@@ -908,10 +908,10 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 							{
 								//set to max attempts to hit the failed connect condition
 								i = SA_Max_Attempts;
-								syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+								syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 								break;
 							}
-							syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+							syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 							close(sockfd);
 							continue;
 						}
@@ -931,7 +931,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 				if( send(sockfd,data,dataLen,0) == -1)
 				{
-					syslog(LOG_ERR, "Line: %d Error in TCP Send: %s", __LINE__, strerror(errno));
+					syslog(SYSL_ERR, "Line: %d Error in TCP Send: %s", __LINE__, strerror(errno));
 					close(sockfd);
 					ss.str("");
 					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
@@ -974,14 +974,14 @@ bool ClassificationEngine::KnockPort(bool mode)
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(sockfd);
 		return false;
 	}
 
 	if( sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d Error in UDP Send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d Error in UDP Send: %s", __LINE__, strerror(errno));
 		close(sockfd);
 		return false;
 	}
@@ -999,13 +999,13 @@ bool ClassificationEngine::ReceiveSuspectData()
     //Blocking call
     if ((connectionSocket = accept(IPCsock, remoteSockAddr, sockSizePtr)) == -1)
     {
-		syslog(LOG_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 		close(connectionSocket);
         return false;
     }
     if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
     {
-		syslog(LOG_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 		close(connectionSocket);
         return false;
     }
@@ -1024,7 +1024,7 @@ bool ClassificationEngine::ReceiveSuspectData()
 	}
 	catch(std::exception e)
 	{
-		syslog(LOG_ERR, "Line: %d Error in parsing received TrafficEvent: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Error in parsing received TrafficEvent: %s", __LINE__, string(e.what()).c_str());
 		close(connectionSocket);
 		bzero(buffer, MAX_MSG_SIZE);
 		return false;
@@ -1049,12 +1049,12 @@ void ClassificationEngine::ReceiveGUICommand()
 	//Blocking call
 	if ((msgSocket = accept(GUISocket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 		close(msgSocket);
 	}
 	if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, MSG_WAITALL )) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 		close(msgSocket);
 	}
 
@@ -1083,14 +1083,14 @@ void ClassificationEngine::ReceiveGUICommand()
 
 void ClassificationEngine::SaveSuspectsToFile(string filename)
 {
-	syslog(LOG_ERR, "Line: %d Got request to save file to %s", __LINE__, filename.c_str());
+	syslog(SYSL_ERR, "Line: %d Got request to save file to %s", __LINE__, filename.c_str());
 	dataPtsWithClass.push_back(new Point(enabledFeatures));
 
 	ofstream *out = new ofstream(filename.c_str());
 
 	if(!out->is_open())
 	{
-		syslog(LOG_ERR, "Line: %d Error: Unable to open file %s to save suspect data.", __LINE__, filename.c_str());
+		syslog(SYSL_ERR, "Line: %d Error: Unable to open file %s to save suspect data.", __LINE__, filename.c_str());
 		return;
 	}
 
@@ -1111,21 +1111,21 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 
 	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(GUISendSocket);
 		return;
 	}
 
 	if (connect(GUISendSocket, GUISendPtr, GUILen) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 		close(GUISendSocket);
 		return;
 	}
 
 	if (send(GUISendSocket, GUIData, GUIDataLen, 0) == -1)
 	{
-		syslog(LOG_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(GUISendSocket);
 		return;
 	}
@@ -1163,7 +1163,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 					if((int)nbr == -1)
 					{
-						syslog(LOG_ERR, "Line: %d Invalid IP address parsed on line %d of the settings file.", __LINE__, i);
+						syslog(SYSL_ERR, "Line: %d Invalid IP address parsed on line %d of the settings file.", __LINE__, i);
 					}
 					else if(nbr)
 					{
@@ -1180,7 +1180,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 				if((line.size() > 0) && (line.size() < 257))
 					key = line;
 				else
-					syslog(LOG_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
+					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
 			}
 		}
 	}
@@ -1206,12 +1206,12 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 		{
 			// This port is unassigned, and does not show up in any virus databases that I saw
 			NovaConfig->options[prefix].data = "12024";
-			syslog(LOG_ERR, "Line: %d %s was not present! Using default port.", __LINE__, prefix.c_str());
+			syslog(SYSL_ERR, "Line: %d %s was not present! Using default port.", __LINE__, prefix.c_str());
 		}
 
 		else if (!NovaConfig->options[prefix].isValid)
 		{
-			syslog(LOG_ERR, "Line: %d The configuration variable %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
+			syslog(SYSL_ERR, "Line: %d The configuration variable %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
 			v = false;
 		}
 	}
@@ -1219,18 +1219,18 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	//Checks to make sure all values have been set.
 	if(v == false)
 	{
-		syslog(LOG_ERR, "Line: %d One or more values have not been set.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d One or more values have not been set.", __LINE__);
 		exit(1);
 	}
 	else
 	{
-		syslog(LOG_INFO, "Line: %d Config loaded successfully.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d Config loaded successfully.", __LINE__);
 	}
 
 	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
 	if(hostAddrString.size() == 0)
 	{
-		syslog(LOG_ERR, "Line: %d Bad interface, no IP's associated!", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Bad interface, no IP's associated!", __LINE__);
 		exit(1);
 	}
 

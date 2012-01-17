@@ -24,7 +24,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 
 	openlog("NOVAConfiguration", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_LOCAL0);
 
-	syslog(LOG_INFO, "Line: %d Loading file %s in homepath %s.", __LINE__, configFilePath, homeNovaPath.c_str());
+	syslog(SYSL_INFO, "Line: %d Loading file %s in homepath %s.", __LINE__, configFilePath, homeNovaPath.c_str());
 
 	ifstream config(configFilePath);
 
@@ -230,7 +230,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 				if(line.size() == prefix.size())
 				{
 					line += " 12024";
-					syslog(LOG_INFO, "Line: %d Value for %s was either 0 or not set. Using default value.", __LINE__, prefix.c_str());
+					syslog(SYSL_INFO, "Line: %d Value for %s was either 0 or not set. Using default value.", __LINE__, prefix.c_str());
 				}
 
 				line = line.substr(prefix.size() + 1, line.size());
@@ -244,7 +244,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 				else if(atoi(line.c_str()) == 0)
 				{
 					options[prefix].data = "12024";
-					syslog(LOG_INFO, "Line: %d Value for %s was either 0 or not set. Using default value.", __LINE__, prefix.c_str());
+					syslog(SYSL_INFO, "Line: %d Value for %s was either 0 or not set. Using default value.", __LINE__, prefix.c_str());
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -413,7 +413,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath)
 	{
 		// TODO: Change this to use the logger. Need to figure out the home path
 		// to get the logger set up, so putting this off until the that's moved to a utility class.
-		syslog(LOG_INFO, "Line: %d No configuration file found.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__);
 		//LOG4CXX_INFO(m_logger, "No configuration file detected.");
 	}
 	closelog();
