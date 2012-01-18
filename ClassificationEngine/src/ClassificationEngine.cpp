@@ -127,12 +127,12 @@ int main(int argc,char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog(__FILE__, NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog("ClassificationEngine", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
+		openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	dataFile = homePath + "/" +dataFile;
@@ -1187,7 +1187,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
-	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
+	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
 	const string prefixes[] = {"INTERFACE","USE_TERMINALS","SILENT_ALARM_PORT",
 	"K", "EPS",
