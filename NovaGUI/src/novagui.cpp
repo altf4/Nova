@@ -82,6 +82,12 @@ NovaGUI::NovaGUI(QWidget *parent)
 	scripts.set_deleted_key("Deleted");
 
 	ui.setupUi(this);
+	ui.actionExit->setShortcut(QKeySequence("Ctrl+Q"));
+	ui.actionSave_Suspects->setShortcut(QKeySequence("Ctrl+S"));
+	ui.actionRunNova->setShortcut(QKeySequence("Ctrl+R"));
+	ui.actionStopNova->setShortcut(QKeySequence("Ctrl+K"));
+
+
 	runAsWindowUp = false;
 	editingPreferences = false;
 
@@ -1533,9 +1539,13 @@ void closeNova()
 		{
 			char buffer[1024];
 			char * line = fgets(buffer, sizeof(buffer), out);
-			string cmd = "sudo kill " + string(line);
-			if(cmd.size() > 5)
-				system(cmd.c_str());
+
+			if (line != NULL)
+			{
+				string cmd = "sudo kill " + string(line);
+				if(cmd.size() > 5)
+					system(cmd.c_str());
+			}
 		}
 		pclose(out);
 		novaRunning = false;

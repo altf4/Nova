@@ -1775,7 +1775,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>Cancel</string>
+      <string>&amp;Cancel</string>
      </property>
     </widget>
     <widget class="QPushButton" name="okButton">
@@ -1788,7 +1788,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>Ok</string>
+      <string>&amp;Ok</string>
      </property>
     </widget>
     <widget class="QPushButton" name="defaultsButton">
@@ -1801,7 +1801,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>Restore Defaults</string>
+      <string>&amp;Restore Defaults</string>
      </property>
     </widget>
     <widget class="QPushButton" name="applyButton">
@@ -1814,7 +1814,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>Apply</string>
+      <string>&amp;Apply</string>
      </property>
     </widget>
    </widget>
