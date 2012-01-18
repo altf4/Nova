@@ -3,10 +3,7 @@
 #include "nodePopup.h"
 #include <fstream>
 #include <signal.h>
-#include <log4cxx/xml/domconfigurator.h>
 
-using namespace log4cxx;
-using namespace log4cxx::xml;
 using namespace std;
 
 
@@ -39,8 +36,6 @@ bool loading = true;
 //Flag to distinguish which type of window is the parent so proper casting can take place
 bool fromNodeMenu;
 
-LoggerPtr p_logger(Logger::getLogger("main"));
-
 
 /************************************************
  * Construct and Initialize GUI
@@ -52,7 +47,7 @@ portPopup::portPopup(QWidget *parent, struct profile *profile, bool fromNode, st
 	//Configure Logging and set up window
 	homePath = home;
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	remoteCall = false;
 
 	fromNodeMenu = fromNode;
@@ -78,13 +73,13 @@ portPopup::portPopup(QWidget *parent, struct profile *profile, bool fromNode, st
 		}
 		else
 		{
-			LOG4CXX_ERROR(p_logger, "Parent pointer is NULL");
+			syslog(SYSL_ERR, "File: %s Line: %d Parent pointer is NULL", __FILE__, __LINE__);
 			this->close();
 		}
 	}
 	catch(...)
 	{
-		LOG4CXX_ERROR(p_logger, "Unable to cast parent pointer into expected object");
+		syslog(SYSL_ERR, "File: %s Line: %d Unable to cast parent pointer into expected object", __FILE__, __LINE__);
 		this->close();
 	}
 

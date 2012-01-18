@@ -127,13 +127,13 @@ void dialogPrompter::loadDefaultActions()
 				defaultActionToTake[enumType] = action;
 			else
 			{
-				syslog(SYSL_ERR, "Line: %d Error in settings file, message type does not exist: %s", __LINE__, type.c_str());
+				syslog(SYSL_ERR, "File: %s Line: %d Error in settings file, message type does not exist: %s", __FILE__, __LINE__, type.c_str());
 			}
 		}
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Unable to open settings file: %s", __LINE__, configurationFile.c_str());
+		syslog(SYSL_ERR, "File: %s Line: %d Unable to open settings file: %s", __FILE__, __LINE__, configurationFile.c_str());
 	}
 }
 
@@ -283,7 +283,7 @@ bool dialogPrompter::displayPrompt(messageType msg, string arg /*= ""*/)
 	}
 	else /* Shouldn't get here */
 	{
-		syslog(SYSL_ERR, "Line: %d Shouldn't get here. displayPrompt's result was invalid", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Shouldn't get here. displayPrompt's result was invalid", __FILE__, __LINE__);
 		return false;
 	}
 }

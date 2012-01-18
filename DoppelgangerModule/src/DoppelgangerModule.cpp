@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		//logConfig = homePath +"/Config/Log4cxxConfig.xml";
 		//DOMConfigurator::configure(logConfig.c_str());
 		//openlog opens a stream to syslog for logging. The parameters are as follows:
 		//1st: identity; a string representing where the call is coming from.
@@ -342,7 +341,6 @@ string Nova::DoppelgangerModule::Usage()
 {
 	string usage_tips = "Nova Doppelganger Module\n";
 	usage_tips += "\tUsage: DoppelgangerModule -l <log config file> -n <NOVA config file>\n";
-	usage_tips += "\t-l: Path to LOG4CXX config xml file.\n";
 	usage_tips += "\t-n: Path to NOVA config txt file.\n";
 
 	return usage_tips;
@@ -356,6 +354,7 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->SetDefaults();
 
 	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
