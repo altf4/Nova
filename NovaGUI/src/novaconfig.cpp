@@ -51,7 +51,11 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	//Store parent and load UI
 	mainwindow = (NovaGUI*)parent;
 	group = mainwindow->group;
+
+	// Set up the GUI
 	ui.setupUi(this);
+	setInputValidators();
+
 	editingPorts = false;
 
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
@@ -1705,6 +1709,41 @@ void NovaConfig::updateProfile(bool deleteProfile, profile * p)
 	}
 }
 
+
+void NovaConfig::setInputValidators()
+{
+	// Allows positive integers
+	QIntValidator *uintValidator = new QIntValidator();
+	uintValidator->setBottom(0);
+
+	// Allows positive doubles
+	QDoubleValidator *udoubleValidator = new QDoubleValidator();
+	udoubleValidator->setBottom(0);
+
+	// Disallows whitespace
+	QRegExp rx("\\S+");
+	QRegExpValidator *noSpaceValidator = new QRegExpValidator(rx, this);
+
+	// Set up input validators so user can't enter obviously bad data in the QLineEdits
+	// General settings
+	ui.interfaceEdit->setValidator(noSpaceValidator);
+	ui.saAttemptsMaxEdit->setValidator(uintValidator);
+	ui.saAttemptsTimeEdit->setValidator(udoubleValidator);
+	ui.saPortEdit->setValidator(uintValidator);
+	ui.tcpTimeoutEdit->setValidator(uintValidator);
+	ui.tcpFrequencyEdit->setValidator(uintValidator);
+
+	// Classification engine settings
+	ui.ceIntensityEdit->setValidator(uintValidator);
+	ui.ceFrequencyEdit->setValidator(uintValidator);
+	ui.ceThresholdEdit->setValidator(udoubleValidator);
+	ui.ceErrorEdit->setValidator(udoubleValidator);
+
+	// Doppelganger
+	// TODO: Make a custom validator for ipv4 and ipv6 IP addresses
+	// For now we just make sure someone doesn't enter whitespace
+	ui.dmIPEdit->setValidator(noSpaceValidator);
+}
 
 /******************************************
  * Profile Menu GUI Signals ***************/
