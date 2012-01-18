@@ -14,23 +14,23 @@ key Kn0CKkN0ckN0v4!
 #       message show TYPE
 #
 #   Never show this message, choose default behavior
-#       message hide TYPE
+#       message hide MSG
 #   
 #   Always select yes to this question
-#       message default TYPE yes
+#       message default yes MSG
 #   
 #   Always select no to this question
-#       message default TYPE no
+#       message default no MSG
+# 
+# Note: the MSG strings are predefined in the dialogPrompter class
 
-
-message show CONFIG_READ_FAIL
-message show CONFIG_WRITE_FAIL
-message show DELETE_USED_PROFILE
-message show HONEYD_FILE_READ_FAIL
-message show UNEXPECTED_FILE_ENTRY
-message show HONEYD_LOAD_SUBNETS_FAIL
-message show HONEYD_LOAD_NODES_FAIL
-message show HONEYD_LOAD_PROFILES_FAIL
-message show HONEYD_LOAD_PROFILESET_FAIL
-message show HONEYD_NODE_INVALID_SUBNET
-
+message show |Error: Unable to read NOVA configuration file 
+message show |Error: Unable to write to NOVA configuration file 
+message show |This profile is currently in use. Are you sure you want to delete it?
+message show |Error: Unable to read Honeyd configuration file 
+message show |Error: Unexpected entry in file 
+message show |Error: Unable to load subnets 
+message show |Error: Unable to load nodes 
+message show |Error: Unable to load profiles 
+message show |Error: Unable to load profile sets 
+message show |Error: Node at IP is outside all valid subnet ranges: 
