@@ -61,6 +61,21 @@ public:
 	//			such as a file path or return error value.
 	bool displayPrompt(messageType msg, string arg = "");
 
+	// Saves a change in the default user actions for a setting in both the object state and config file
+	//
+	//		msg - Message to change setting of
+	//		action - New default action
+	void setDefaultAction(messageType msg, defaultAction action);
+
+	// Loads all of the default user actions for dialogs from the settings file
+	void loadDefaultActions();
+
+	// Default actions array
+	defaultAction defaultActionToTake[numberOfMessageTypes];
+
+	static const char* messageTypeStrings[];
+	static const dialogType messageTypeTypes[];
+
 private:
 	// Translates a msg type and action to a string for the settings file
 	//		msg - Message type
@@ -68,28 +83,15 @@ private:
 	// Returns: string that can be written to the config file
 	string makeConfigurationLine(messageType msg, defaultAction action);
 
-	// Loads all of the default user actions for dialogs from the settings file
-	void loadDefaultActions();
-
-	// Saves a change in the default user actions for a setting in both the object state and config file
-	//
-	//		msg - Message to change setting of
-	//		action - New default action
-	void setDefaultAction(messageType msg, defaultAction action);
 
 	// Path to the configuration file
 	string configurationFile;
-
-	// Default actions array
-	defaultAction defaultActionToTake[numberOfMessageTypes];
 
 	// Configuration file prefixes defined here in case we want to change them later
 	static const string showPrefix;
 	static const string hidePrefix;
 	static const string defaultPrefix;
 
-	// Map the enums to strings... useful to make the settings file reading/writing functions a lot prettier
-	static const char* messageTypeStrings[];
 };
 
 #endif /* DIALOGPROMPTER_H_ */
