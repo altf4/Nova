@@ -44,6 +44,7 @@ void Run_Popup::loadPreferences()
 	//Read from CE Config
 	ifstream config("Config/NOVAConfig.txt");
 
+	// TODO: Just pass the NovaConfig object in here.. or make a new one, no need to read file manually here
 	if(config.is_open())
 	{
 		while(config.good())
