@@ -1186,6 +1186,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->SetDefaults();
 
 	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
