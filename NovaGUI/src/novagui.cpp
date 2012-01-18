@@ -91,6 +91,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 	string logConfig = "Config/Log4cxxConfig_Console.xml";
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+
+	// Load the dialog stuff in
 	prompter = new dialogPrompter();
 
 	loadAll();

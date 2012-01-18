@@ -17,6 +17,7 @@ const string dialogPrompter::defaultPrefix = "message default";
 
 // These are string versions of the enum names used in the settings file
 // If you add a messageType enum, you must add a string name for it here (same as enum name is fine)
+// Note: don't put whitespace in these strings. Anything else is fine.
 const char* dialogPrompter::messageTypeStrings[] = {
 		"CONFIG_READ_FAIL",
 		"CONFIG_WRITE_FAIL",
@@ -29,6 +30,21 @@ const char* dialogPrompter::messageTypeStrings[] = {
 		"HONEYD_LOAD_PROFILESET_FAIL",
 		"HONEYD_NODE_INVALID_SUBNET",
 };
+
+const dialogType dialogPrompter::messageTypeTypes[] = {
+		DIALOG_NOTIFICATION,
+		DIALOG_NOTIFICATION,
+		DIALOG_YES_NO,
+		DIALOG_NOTIFICATION,
+		DIALOG_NOTIFICATION,
+		DIALOG_NOTIFICATION,
+		DIALOG_NOTIFICATION,
+		DIALOG_NOTIFICATION,
+		DIALOG_NOTIFICATION,
+		DIALOG_NOTIFICATION,
+};
+
+
 
 dialogPrompter::dialogPrompter()
 {

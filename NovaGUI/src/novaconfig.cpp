@@ -58,6 +58,15 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	pullData();
 	loadHaystack();
 
+	// Populate the dialog stuff
+	for (int i = 0; i < numberOfMessageTypes; i++)
+	{
+		QListWidgetItem *item = new QListWidgetItem();
+		item->setText(dialogPrompter::messageTypeStrings[i]);
+		ui.msgTypeListWidget->insertItem(i, item);
+	}
+
+
 	ui.treeWidget->expandAll();
 
 	ui.featureList->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -87,8 +96,28 @@ void NovaConfig::closeEvent(QCloseEvent * e)
 
 }
 
-// Feature enable/disable stuff
+void NovaConfig::on_msgTypeListWidget_currentRowChanged()
+{
+	int item = ui.msgTypeListWidget->currentRow();
 
+	ui.defaultActionListWidget->clear();
+
+	switch (dialogPrompter::messageTypeTypes[item])
+	{
+	case DIALOG_NOTIFICATION:
+		ui.defaultActionListWidget->insertItem(0, new QListWidgetItem("Show"));
+		ui.defaultActionListWidget->insertItem(1, new QListWidgetItem("Hide"));
+		break;
+
+	case DIALOG_YES_NO:
+		ui.defaultActionListWidget->insertItem(0, new QListWidgetItem("Show"));
+		ui.defaultActionListWidget->insertItem(1, new QListWidgetItem("Always yes"));
+		ui.defaultActionListWidget->insertItem(1, new QListWidgetItem("Always no"));
+		break;
+	}
+}
+
+// Feature enable/disable stuff
 void NovaConfig::advanceFeatureSelection()
 {
 	int nextRow = ui.featureList->currentRow() + 1;
@@ -580,7 +609,6 @@ void NovaConfig::on_okButton_clicked()
 //Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
-	// TODO: Change to a GUI popup error
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
@@ -874,10 +902,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 	int i = ui.treeWidget->indexOfTopLevelItem(item);
 	if(i != -1)
 	{
-		if(i != -1 )
-		{
-			ui.stackedWidget->setCurrentIndex(i);
-		}
+		ui.stackedWidget->setCurrentIndex(i);
 	}
 	//If the item is a child of a top level item, find out what type of item it is
 	else
