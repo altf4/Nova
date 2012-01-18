@@ -17,7 +17,7 @@ const string dialogPrompter::defaultPrefix = "message default";
 
 // These are string versions of the enum names used in the settings file
 // If you add a messageType enum, you must add a string name for it here (same as enum name is fine)
-// Note: don't put whitespace in these strings. Anything else is fine.
+// Note: for now don't put whitespace in these strings. Anything else is fine.
 const char* dialogPrompter::messageTypeStrings[] = {
 		"CONFIG_READ_FAIL",
 		"CONFIG_WRITE_FAIL",
@@ -161,7 +161,8 @@ void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 	{
 		while (config.good())
 		{
-			getline(config, line);
+			if (!getline(config, line))
+				continue;
 
 			if (!line.substr(0, showPrefix.length()).compare(showPrefix))
 				type = line.substr(showPrefix.length() + 1);

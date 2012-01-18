@@ -136,6 +136,7 @@ void on_hsConfigButton_clicked();
 void on_dmConfigButton_clicked();
 
 void on_msgTypeListWidget_currentRowChanged();
+void on_defaultActionListWidget_currentRowChanged();
 
 //Check Box signal for enabling pcap settings group box
 void on_pcapCheckBox_stateChanged(int state);
