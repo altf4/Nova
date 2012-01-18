@@ -22,7 +22,9 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 	string prefix;
 	int prefixIndex;
 
-	openlog(module.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+	string use = module.substr(7, (module.length() - 11));
+
+	openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
 	syslog(SYSL_INFO, "Loading file %s in homepath %s", configFilePath, homeNovaPath.c_str());
 

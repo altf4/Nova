@@ -87,12 +87,12 @@ int main(int argc, char *argv[])
 		//     LOG_PERROR  = Print to stderror as well
 		//3rd: facility; essentially what facility you want to log to. In our case Local0, other examples
 		//     are AUTH or CRON, etc.
-		openlog(__FILE__, NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog("DoppelgangerModule", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
+		openlog("DoppelgangerModule", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -360,7 +360,7 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
 
-	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
+	openlog("DoppelgangerModule", OPEN_SYSL, LOG_AUTHPRIV);
 
 	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
 	{

@@ -86,12 +86,12 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog(__FILE__, NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog("LocalTrafficMonitor", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
+		openlog("LocalTrafficMonitor", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	//Pre-Forms the socket address to improve performance
@@ -529,7 +529,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
 
-	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
+	openlog("LocalTrafficMonitor", OPEN_SYSL, LOG_AUTHPRIV);
 
 	syslog(SYSL_INFO, "Line: %d Starting to load configuration file", __LINE__);
 
