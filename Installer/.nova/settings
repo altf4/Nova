@@ -5,3 +5,32 @@ neighbor 192.168.3.111
 neighbor 192.168.3.113
 
 key Kn0CKkN0ckN0v4!
+
+
+
+# Set up default actions for dialog messages
+# Currently supported options,
+#   Always show this message
+#       message show TYPE
+#
+#   Never show this message, choose default behavior
+#       message hide TYPE
+#   
+#   Always select yes to this question
+#       message default TYPE yes
+#   
+#   Always select no to this question
+#       message default TYPE no
+
+
+message show CONFIG_READ_FAIL
+message show CONFIG_WRITE_FAIL
+message show DELETE_USED_PROFILE
+message show HONEYD_FILE_READ_FAIL
+message show UNEXPECTED_FILE_ENTRY
+message show HONEYD_LOAD_SUBNETS_FAIL
+message show HONEYD_LOAD_NODES_FAIL
+message show HONEYD_LOAD_PROFILES_FAIL
+message show HONEYD_LOAD_PROFILESET_FAIL
+message show HONEYD_NODE_INVALID_SUBNET
+

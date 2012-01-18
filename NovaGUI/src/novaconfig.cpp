@@ -29,6 +29,7 @@ NovaGUI * mainwindow;
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
 bool selectedSubnet = false;
+bool loadingDefaultActions = false;
 
 /************************************************
  * Construct and Initialize GUI
@@ -57,6 +58,15 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	loadPreferences();
 	pullData();
 	loadHaystack();
+
+	// Populate the dialog stuff
+	for (int i = 0; i < numberOfMessageTypes; i++)
+	{
+		QListWidgetItem *item = new QListWidgetItem();
+		item->setText(dialogPrompter::messageTypeStrings[i]);
+		ui.msgTypeListWidget->insertItem(i, item);
+	}
+
 
 	ui.treeWidget->expandAll();
 
@@ -87,8 +97,73 @@ void NovaConfig::closeEvent(QCloseEvent * e)
 
 }
 
-// Feature enable/disable stuff
+void NovaConfig::on_msgTypeListWidget_currentRowChanged()
+{
+	loadingDefaultActions = true;
+	int item = ui.msgTypeListWidget->currentRow();
 
+	ui.defaultActionListWidget->clear();
+	ui.defaultActionListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+	QListWidgetItem *listItem;
+
+	switch (dialogPrompter::messageTypeTypes[item])
+	{
+	case DIALOG_NOTIFICATION:
+		listItem = new QListWidgetItem("Always Show");
+		ui.defaultActionListWidget->insertItem(0, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_SHOW)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always Hide");
+		ui.defaultActionListWidget->insertItem(1, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_HIDE)
+			listItem->setSelected(true);
+		break;
+
+	case DIALOG_YES_NO:
+		listItem = new QListWidgetItem("Always Show");
+		ui.defaultActionListWidget->insertItem(0, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_SHOW)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always Yes");
+		ui.defaultActionListWidget->insertItem(1, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_ALWAYS_YES)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always No");
+		ui.defaultActionListWidget->insertItem(2, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_ALWAYS_NO)
+			listItem->setSelected(true);
+		break;
+	}
+	loadingDefaultActions = false;
+}
+
+void NovaConfig::on_defaultActionListWidget_currentRowChanged()
+{
+	// If we're still populating the list
+	if (loadingDefaultActions)
+		return;
+
+
+	QString selected = 	ui.defaultActionListWidget->currentItem()->text();
+	messageType msgType = (messageType)ui.msgTypeListWidget->currentRow();
+
+	if (!selected.compare("Always Show"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_SHOW);
+	else if (!selected.compare("Always Hide"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_HIDE);
+	else if (!selected.compare("Always Yes"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALWAYS_YES);
+	else if (!selected.compare("Always No"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALWAYS_NO);
+	else
+		syslog(SYSL_ERR, "Line: %d Invalid user dialog default action selected, shouldn't get here", __LINE__);
+
+}
+
+// Feature enable/disable stuff
 void NovaConfig::advanceFeatureSelection()
 {
 	int nextRow = ui.featureList->currentRow() + 1;
@@ -395,7 +470,8 @@ void NovaConfig::loadPreferences()
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Error loading from Classification Engine config file.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Error reading NOVA configuration file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_READ_FAIL, configurationFile);
 		this->close();
 	}
 	config.close();
@@ -566,6 +642,7 @@ void NovaConfig::on_okButton_clicked()
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
 
@@ -578,10 +655,10 @@ void NovaConfig::on_okButton_clicked()
 //Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
-	// TODO: Change to a GUI popup error
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
 
@@ -814,6 +891,7 @@ bool NovaConfig::saveConfigurationToFile() {
 	else
 	{
 		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		in->close();
 		out->close();
 		delete in;
@@ -870,10 +948,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 	int i = ui.treeWidget->indexOfTopLevelItem(item);
 	if(i != -1)
 	{
-		if(i != -1 )
-		{
-			ui.stackedWidget->setCurrentIndex(i);
-		}
+		ui.stackedWidget->setCurrentIndex(i);
 	}
 	//If the item is a child of a top level item, find out what type of item it is
 	else
@@ -1234,6 +1309,7 @@ void NovaConfig::loadProfilesFromTree(string parent)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
+		mainwindow->prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
 }
 
