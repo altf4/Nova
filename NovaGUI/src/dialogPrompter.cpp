@@ -10,27 +10,24 @@
 #include <sstream>
 #include <QtGui>
 
-
-const string dialogPrompter::showPrefix = "message show";
-const string dialogPrompter::hidePrefix = "message hide";
-const string dialogPrompter::defaultPrefix = "message default";
-
-// These are string versions of the enum names used in the settings file
-// If you add a messageType enum, you must add a string name for it here (same as enum name is fine)
-// Note: for now don't put whitespace in these strings. Anything else is fine.
+// These are string messages corresponding to the messageType enums
+// If you add a messageType enum, you must add a string for it here
+// Note: You should format in such a way to allow for an extra argument string to be appended,
+// e.g., "Unable to load file: " can be called with an arg to displayMessage with a filename to be appended
 const char* dialogPrompter::messageTypeStrings[] = {
-		"CONFIG_READ_FAIL",
-		"CONFIG_WRITE_FAIL",
-		"DELETE_USED_PROFILE",
-		"HONEYD_FILE_READ_FAIL",
-		"UNEXPECTED_FILE_ENTRY",
-		"HONEYD_LOAD_SUBNETS_FAIL",
-		"HONEYD_LOAD_NODES_FAIL",
-		"HONEYD_LOAD_PROFILES_FAIL",
-		"HONEYD_LOAD_PROFILESET_FAIL",
-		"HONEYD_NODE_INVALID_SUBNET",
+		"Error: Unable to read NOVA configuration file ",
+		"Error: Unable to write to NOVA configuration file ",
+		"This profile is currently in use. Are you sure you want to delete it?",
+		"Error: Unable to read Honeyd configuration file ",
+		"Error: Unexpected entry in file ",
+		"Error: Unable to load subnets ",
+		"Error: Unable to load nodes ",
+		"Error: Unable to load profiles ",
+		"Error: Unable to load profile sets ",
+		"Error: Node at IP is outside all valid subnet ranges: ",
 };
 
+// Type of dialog message you want displayed
 const dialogType dialogPrompter::messageTypeTypes[] = {
 		DIALOG_NOTIFICATION,
 		DIALOG_NOTIFICATION,
@@ -45,6 +42,11 @@ const dialogType dialogPrompter::messageTypeTypes[] = {
 };
 
 
+// Prefixes for the configuration file
+const string dialogPrompter::showPrefix = "message show";
+const string dialogPrompter::hidePrefix = "message hide";
+const string dialogPrompter::yesPrefix = "message default yes";
+const string dialogPrompter::noPrefix = "message default no";
 
 dialogPrompter::dialogPrompter()
 {
@@ -91,31 +93,22 @@ void dialogPrompter::loadDefaultActions()
 			if (!line.substr(0, showPrefix.length()).compare(showPrefix))
 			{
 				action = CHOICE_SHOW;
-				type = line.substr(showPrefix.length() + 1, line.length());
+				type = line.substr(showPrefix.length() + 2, line.length());
 			}
 			else if (!line.substr(0, hidePrefix.length()).compare(hidePrefix))
 			{
 				action = CHOICE_HIDE;
-				type = line.substr(showPrefix.length() + 1, line.length());
+				type = line.substr(showPrefix.length() + 2, line.length());
 			}
-			else if (!line.substr(0, defaultPrefix.length()).compare(defaultPrefix))
+			else if (!line.substr(0, yesPrefix.length()).compare(yesPrefix))
 			{
-				string tmp = line.substr(defaultPrefix.length() + 1);
-				type = tmp.substr(0, tmp.find_first_of(' '));
-				string defaultAnswer = tmp.substr(tmp.find_first_of(' ') + 1);
-
-				if (!defaultAnswer.compare("yes"))
-				{
-					action = CHOICE_ALWAYS_YES;
-				}
-				else if (!defaultAnswer.compare("no"))
-				{
-					action = CHOICE_ALWAYS_NO;
-				}
-				else
-				{
-					action = CHOICE_SHOW;
-				}
+				action = CHOICE_ALWAYS_YES;
+				type = line.substr(yesPrefix.length() + 2, line.length());
+			}
+			else if (!line.substr(0, noPrefix.length()).compare(noPrefix))
+			{
+				action = CHOICE_ALWAYS_NO;
+				type = line.substr(noPrefix.length() + 2, line.length());
 			}
 			else
 			{
@@ -154,7 +147,7 @@ void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 	string line, type;
 	stringstream ss;
 
-	// Try to change existing values first. If !found, we append at the end
+	// Try to change existing lines first. If !found, we append at the end
 	bool found = false;
 
 	if (config.is_open())
@@ -165,14 +158,13 @@ void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 				continue;
 
 			if (!line.substr(0, showPrefix.length()).compare(showPrefix))
-				type = line.substr(showPrefix.length() + 1);
+				type = line.substr(showPrefix.length() + 2);
 			else if (!line.substr(0, hidePrefix.length()).compare(hidePrefix))
-				type = line.substr(hidePrefix.length() + 1);
-			else if (!line.substr(0, defaultPrefix.length()).compare(defaultPrefix))
-			{
-				string tmp = line.substr(defaultPrefix.length() + 1);
-				type = tmp.substr(0, tmp.find_first_of(' '));
-			}
+				type = line.substr(hidePrefix.length() + 2);
+			else if (!line.substr(0, noPrefix.length()).compare(noPrefix))
+				type = line.substr(noPrefix.length() + 2);
+			else if (!line.substr(0, yesPrefix.length()).compare(yesPrefix))
+				type = line.substr(yesPrefix.length() + 2);
 
 			// Found an entry
 			if (!type.compare(messageTypeStrings[msg]))
@@ -207,16 +199,16 @@ string dialogPrompter::makeConfigurationLine(messageType msg, defaultAction acti
 	switch (action)
 	{
 	case CHOICE_SHOW:
-		ss << showPrefix << " " << messageTypeStrings[msg] << endl;
+		ss << showPrefix << " |" << messageTypeStrings[msg] << endl;
 		break;
 	case CHOICE_HIDE:
-		ss << hidePrefix << " " << messageTypeStrings[msg] << endl;
+		ss << hidePrefix << " |" << messageTypeStrings[msg] << endl;
 		break;
 	case CHOICE_ALWAYS_YES:
-		ss << defaultPrefix << " " << messageTypeStrings[msg] << " yes" << endl;
+		ss << yesPrefix << " |" << messageTypeStrings[msg] << endl;
 		break;
 	case CHOICE_ALWAYS_NO:
-		ss << defaultPrefix << " " << messageTypeStrings[msg] << " no" << endl;
+		ss << noPrefix << " |" << messageTypeStrings[msg] << endl;
 		break;
 	}
 
@@ -238,45 +230,10 @@ bool dialogPrompter::displayPrompt(messageType msg, string arg /*= ""*/)
 	QMessageBox *dialogBox = new QMessageBox();
 	QLabel *checkBoxLabel = new QLabel();
 	QCheckBox *checkBox = new QCheckBox();
-
-	dialogType dialog = DIALOG_NOTIFICATION;
 	stringstream errorMessage;
 
-	// Put new predefined error message strings here and define their dialogType
-	switch (msg)
-	{
-	case CONFIG_READ_FAIL:
-		errorMessage << "Error: Unable to read NOVA configuration file " << arg;
-		break;
-	case CONFIG_WRITE_FAIL:
-		errorMessage << "Error: Unable to write to NOVA configuration file "  << arg;
-		break;
-	case DELETE_USED_PROFILE:
-		errorMessage << "Error: This profile is currently in use. Are you sure you want to delete it?";
-		dialog = DIALOG_YES_NO;
-		break;
-	case HONEYD_FILE_READ_FAIL:
-		errorMessage << "Error: Unable to read Honeyd configuration file " << arg;
-		break;
-	case UNEXPECTED_FILE_ENTRY:
-		errorMessage << "Error: Unexpected entry in file " << arg;
-		break;
-	case HONEYD_LOAD_SUBNETS_FAIL:
-		errorMessage << "Error: Unable to load subnets " << arg;
-		break;
-	case HONEYD_LOAD_NODES_FAIL:
-		errorMessage << "Error: Unable to load nodes " << arg;
-		break;
-	case HONEYD_LOAD_PROFILES_FAIL:
-		errorMessage << "Error: Unable to load profiles " << arg;
-		break;
-	case HONEYD_LOAD_PROFILESET_FAIL:
-		errorMessage << "Error: Unable to load profile sets " << arg;
-		break;
-	case HONEYD_NODE_INVALID_SUBNET:
-		errorMessage << "Node at IP: " << arg << "is outside all valid subnet ranges";
-		break;
-	}
+	dialogType dialog = messageTypeTypes[msg];
+	errorMessage << messageTypeStrings[msg] << arg;
 
 	// Configure the buttons and checkbox text
 	switch (dialog)
@@ -284,6 +241,7 @@ bool dialogPrompter::displayPrompt(messageType msg, string arg /*= ""*/)
 	case DIALOG_YES_NO:
 		checkBoxLabel->setText("Always take this action");
 		dialogBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+		break;
 	case DIALOG_NOTIFICATION:
 		checkBoxLabel->setText("Never show this type of error again");
 		dialogBox->setStandardButtons(QMessageBox::Ok);
