@@ -395,8 +395,8 @@ void NovaConfig::loadPreferences()
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Error loading from Classification Engine config file.", __LINE__);
-		mainwindow->prompter->displayPrompt(CONFIG_READ_FAIL);
+		syslog(SYSL_ERR, "Line: %d Error reading NOVA configuration file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_READ_FAIL, configurationFile);
 		this->close();
 	}
 	config.close();
@@ -567,6 +567,7 @@ void NovaConfig::on_okButton_clicked()
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
 
@@ -583,6 +584,7 @@ void NovaConfig::on_applyButton_clicked()
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
 
@@ -815,6 +817,7 @@ bool NovaConfig::saveConfigurationToFile() {
 	else
 	{
 		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		in->close();
 		out->close();
 		delete in;
@@ -1235,6 +1238,7 @@ void NovaConfig::loadProfilesFromTree(string parent)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
+		mainwindow->prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
 }
 

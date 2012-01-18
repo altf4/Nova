@@ -81,8 +81,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	ports.set_deleted_key("Deleted");
 	scripts.set_deleted_key("Deleted");
 
-	prompter = new dialogPrompter();
-
 	ui.setupUi(this);
 	runAsWindowUp = false;
 	editingPreferences = false;
@@ -93,6 +91,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	string logConfig = "Config/Log4cxxConfig_Console.xml";
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+	prompter = new dialogPrompter();
 
 	loadAll();
 
@@ -496,6 +495,7 @@ void NovaGUI::loadScripts()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading scripts: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
 }
 
@@ -535,6 +535,7 @@ void NovaGUI::loadPorts()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading ports: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
 }
 
@@ -569,11 +570,13 @@ void NovaGUI::loadGroup()
 					catch(std::exception &e)
 					{
 						syslog(SYSL_ERR, "Line: %d Problem loading nodes: %s", __LINE__, string(e.what()).c_str());
+						prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 					}
 				}
 				catch(std::exception &e)
 				{
 					syslog(SYSL_ERR, "Line: %d Problem loading subnets: %s", __LINE__, string(e.what()).c_str());
+					prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 				}
 			}
 		}
@@ -581,6 +584,7 @@ void NovaGUI::loadGroup()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading group: %s - %s", __LINE__, group.c_str(), string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
 }
 
@@ -627,12 +631,14 @@ void NovaGUI::loadSubnets(ptree *ptr)
 			else
 			{
 				syslog(SYSL_ERR, "Line: %d Unexpected Entry in file: %s", __LINE__, string(v.first.data()).c_str());
+				prompter->displayPrompt(UNEXPECTED_FILE_ENTRY, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading subnets: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_SUBNETS_FAIL, string(e.what()).c_str());
 	}
 }
 
@@ -702,17 +708,20 @@ void NovaGUI::loadNodes(ptree *ptr)
 				else
 				{
 					syslog(SYSL_ERR, "Line: %d Node at IP: %s is outside all valid subnet ranges", __LINE__, n.address.c_str());
+					prompter->displayPrompt(HONEYD_NODE_INVALID_SUBNET, n.address);
 				}
 			}
 			else
 			{
 				syslog(SYSL_ERR, "Line: %d Unexpected Entry in file: %s", __LINE__, string(v.first.data()).c_str());
+				prompter->displayPrompt(UNEXPECTED_FILE_ENTRY, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading nodes: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_NODES_FAIL, string(e.what()).c_str());
 	}
 }
 void NovaGUI::loadProfiles()
@@ -782,6 +791,7 @@ void NovaGUI::loadProfiles()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_PROFILES_FAIL, string(e.what()).c_str());
 	}
 }
 
@@ -852,6 +862,7 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading profile set parameters: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_PROFILESET_FAIL, string(e.what()).c_str());
 	}
 }
 
@@ -901,6 +912,7 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading profile add parameters: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_PROFILES_FAIL, string(e.what()).c_str());
 	}
 }
 
@@ -952,6 +964,7 @@ void NovaGUI::loadSubProfiles(string parent)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "Line: %d Problem loading sub profiles: %s", __LINE__, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_PROFILES_FAIL, string(e.what()).c_str());
 	}
 }
 
