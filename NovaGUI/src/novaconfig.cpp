@@ -149,7 +149,6 @@ void NovaConfig::on_defaultActionListWidget_currentRowChanged()
 
 	QString selected = 	ui.defaultActionListWidget->currentItem()->text();
 	messageType msgType = (messageType)ui.msgTypeListWidget->currentRow();
-	cout << "msgType is " << dialogPrompter::messageTypeStrings[msgType] << endl;
 
 	if (!selected.compare("Always Show"))
 		mainwindow->prompter->setDefaultAction(msgType, CHOICE_SHOW);

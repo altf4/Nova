@@ -12,7 +12,10 @@
 
 using namespace std;
 
-// If you add a new message, be sure to update numberOfMessageTypes and messageTypeStrings
+// If you add a new dialog in this enum, be sure to,
+//	Increment dialogPrompter.h/numberOfMessageTypes
+//	Set a message string in dialogPrompter.cpp/messageTypeStrings
+//	Set the dialog type in dialogPrompter.cpp/messageTypeTypes
 #define numberOfMessageTypes 10
 enum messageType
 {
@@ -36,9 +39,10 @@ enum defaultAction
 	CHOICE_ALWAYS_NO,
 };
 
+// Right now we just support "Okay" and "Yes/No" dialogs
 enum dialogType
 {
-	DIALOG_NOTIFICATION,
+	DIALOG_NOTIFICATION = 0,
 	DIALOG_YES_NO,
 };
 
@@ -59,6 +63,7 @@ public:
 	//		msg - Which message to display
 	//		arg - Some of the predefined messages can allow for additional info to be included,
 	//			such as a file path or return error value.
+	// Returns: true for an "okay/yes" user response, false otherwise
 	bool displayPrompt(messageType msg, string arg = "");
 
 	// Saves a change in the default user actions for a setting in both the object state and config file
@@ -83,14 +88,14 @@ private:
 	// Returns: string that can be written to the config file
 	string makeConfigurationLine(messageType msg, defaultAction action);
 
-
-	// Path to the configuration file
+	// Path to the settings file
 	string configurationFile;
 
 	// Configuration file prefixes defined here in case we want to change them later
 	static const string showPrefix;
 	static const string hidePrefix;
-	static const string defaultPrefix;
+	static const string yesPrefix;
+	static const string noPrefix;
 
 };
 
