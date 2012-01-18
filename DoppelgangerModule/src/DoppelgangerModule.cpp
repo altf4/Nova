@@ -354,6 +354,7 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->SetDefaults();
 
 	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};

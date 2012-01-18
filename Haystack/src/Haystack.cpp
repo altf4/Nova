@@ -575,6 +575,7 @@ void Haystack::LoadConfig(char* configFilePath)
 {
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->SetDefaults();
 
 
 	string prefix;
