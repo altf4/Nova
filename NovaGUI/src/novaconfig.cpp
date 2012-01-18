@@ -29,6 +29,7 @@ NovaGUI * mainwindow;
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
 bool selectedSubnet = false;
+bool loadingDefaultActions = false;
 
 /************************************************
  * Construct and Initialize GUI
@@ -98,23 +99,69 @@ void NovaConfig::closeEvent(QCloseEvent * e)
 
 void NovaConfig::on_msgTypeListWidget_currentRowChanged()
 {
+	loadingDefaultActions = true;
 	int item = ui.msgTypeListWidget->currentRow();
 
 	ui.defaultActionListWidget->clear();
+	ui.defaultActionListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+	QListWidgetItem *listItem;
 
 	switch (dialogPrompter::messageTypeTypes[item])
 	{
 	case DIALOG_NOTIFICATION:
-		ui.defaultActionListWidget->insertItem(0, new QListWidgetItem("Show"));
-		ui.defaultActionListWidget->insertItem(1, new QListWidgetItem("Hide"));
+		listItem = new QListWidgetItem("Always Show");
+		ui.defaultActionListWidget->insertItem(0, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_SHOW)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always Hide");
+		ui.defaultActionListWidget->insertItem(1, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_HIDE)
+			listItem->setSelected(true);
 		break;
 
 	case DIALOG_YES_NO:
-		ui.defaultActionListWidget->insertItem(0, new QListWidgetItem("Show"));
-		ui.defaultActionListWidget->insertItem(1, new QListWidgetItem("Always yes"));
-		ui.defaultActionListWidget->insertItem(1, new QListWidgetItem("Always no"));
+		listItem = new QListWidgetItem("Always Show");
+		ui.defaultActionListWidget->insertItem(0, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_SHOW)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always Yes");
+		ui.defaultActionListWidget->insertItem(1, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_ALWAYS_YES)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always No");
+		ui.defaultActionListWidget->insertItem(2, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_ALWAYS_NO)
+			listItem->setSelected(true);
 		break;
 	}
+	loadingDefaultActions = false;
+}
+
+void NovaConfig::on_defaultActionListWidget_currentRowChanged()
+{
+	// If we're still populating the list
+	if (loadingDefaultActions)
+		return;
+
+
+	QString selected = 	ui.defaultActionListWidget->currentItem()->text();
+	messageType msgType = (messageType)ui.msgTypeListWidget->currentRow();
+	cout << "msgType is " << dialogPrompter::messageTypeStrings[msgType] << endl;
+
+	if (!selected.compare("Always Show"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_SHOW);
+	else if (!selected.compare("Always Hide"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_HIDE);
+	else if (!selected.compare("Always Yes"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALWAYS_YES);
+	else if (!selected.compare("Always No"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALWAYS_NO);
+	else
+		syslog(SYSL_ERR, "Line: %d Invalid user dialog default action selected, shouldn't get here", __LINE__);
+
 }
 
 // Feature enable/disable stuff
