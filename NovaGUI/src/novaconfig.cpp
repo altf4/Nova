@@ -146,7 +146,7 @@ void NovaConfig::on_defaultActionListWidget_currentRowChanged()
 	if (loadingDefaultActions)
 		return;
 
-
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	QString selected = 	ui.defaultActionListWidget->currentItem()->text();
 	messageType msgType = (messageType)ui.msgTypeListWidget->currentRow();
 
@@ -159,8 +159,9 @@ void NovaConfig::on_defaultActionListWidget_currentRowChanged()
 	else if (!selected.compare("Always No"))
 		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALWAYS_NO);
 	else
-		syslog(SYSL_ERR, "Line: %d Invalid user dialog default action selected, shouldn't get here", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Invalid user dialog default action selected, shouldn't get here", __FILE__, __LINE__);
 
+	closelog();
 }
 
 // Feature enable/disable stuff
@@ -259,6 +260,8 @@ void NovaConfig::loadPreferences()
 	//Read from CE Config
 	string configurationFile = homePath + "/Config/NOVAConfig.txt";
 	ifstream config(configurationFile.c_str());
+
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
 	if(config.is_open())
 	{
@@ -470,10 +473,11 @@ void NovaConfig::loadPreferences()
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Error reading NOVA configuration file.", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Error reading NOVA configuration file.", __FILE__, __LINE__);
 		mainwindow->prompter->displayPrompt(CONFIG_READ_FAIL, configurationFile);
 		this->close();
 	}
+	closelog();
 	config.close();
 }
 
@@ -638,14 +642,16 @@ void NovaConfig::on_dmConfigButton_clicked()
 //Stores all changes and closes the window
 void NovaConfig::on_okButton_clicked()
 {
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	// TODO: Change to a GUI popup error
 	if (!saveConfigurationToFile())
 	{
-		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
 		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
 
+	closelog();
 	//Save changes
 	pushData();
 	this->close();
@@ -655,9 +661,10 @@ void NovaConfig::on_okButton_clicked()
 //Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	if (!saveConfigurationToFile())
 	{
-		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
 		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
@@ -670,6 +677,7 @@ void NovaConfig::on_applyButton_clicked()
 	//Reloads honeyd configuration to assert concurrency
 	loadHaystack();
 	loadingItems = false;
+	closelog();
 }
 
 
@@ -890,7 +898,9 @@ bool NovaConfig::saveConfigurationToFile() {
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
+		closelog();
 		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		in->close();
 		out->close();
@@ -975,7 +985,9 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 		}
 		else
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to set stackedWidget page index from treeWidgetItem", __LINE__);
+			openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+			syslog(SYSL_ERR, "File: %s Line: %d Unable to set stackedWidget page index from treeWidgetItem", __FILE__, __LINE__);
+			closelog();
 		}
 	}
 }
@@ -1230,6 +1242,7 @@ void NovaConfig::loadProfilesFromTree(string parent)
 {
 	using boost::property_tree::ptree;
 	ptree * ptr, pt = profiles[parent].tree;
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, pt.get_child("profiles"))
@@ -1302,15 +1315,16 @@ void NovaConfig::loadProfilesFromTree(string parent)
 			}
 			else
 			{
-				syslog(SYSL_ERR, "Line: %d Invalid XML Path %s", __LINE__, string(v.first.data()).c_str());
+				syslog(SYSL_ERR, "File: %s Line: %d Invalid XML Path %s", __FILE__, __LINE__, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading Profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
 		mainwindow->prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
+	closelog();
 }
 
 //Sets the configuration of 'set' values for profile that called it
@@ -1379,7 +1393,9 @@ void NovaConfig::loadProfileSet(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading profile set parameters: %s", __LINE__, string(e.what()).c_str());
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile set parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		closelog();
 	}
 }
 
@@ -1428,7 +1444,9 @@ void NovaConfig::loadProfileAdd(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading profile add parameters: %s", __LINE__, string(e.what()).c_str());
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile add parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		closelog();
 	}
 }
 
@@ -1495,7 +1513,9 @@ void NovaConfig::loadSubProfiles(string parent)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading sub profiles: %s", __LINE__, string(e.what()).c_str());
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading sub profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		closelog();
 	}
 }
 
@@ -1810,7 +1830,7 @@ void NovaConfig::on_editPortsButton_clicked()
 	}
 	else
 	{
-		LOG4CXX_ERROR(n_logger, "No profile selected when opening port edit window.");
+		syslog(SYSL_ERR, "File: %s Line: %d No profile selected when opening port edit window.", __FILE__, __LINE__);
 	}*/
 }
 

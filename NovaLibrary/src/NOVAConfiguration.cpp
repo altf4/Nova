@@ -38,7 +38,9 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 			"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES" };
 
-	//populate the defaultVector
+	//populate the defaultVector. I know it looks a little messy, maybe
+	//hard code it somewhere? Just did this so that if we add or remove stuff,
+	//we only have to do it here
 	for(uint j = 0; j < sizeof(prefixes)/sizeof(prefixes[0]); j++)
 	{
 		string def;
@@ -88,7 +90,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 					break;
 			default: break;
 		}
-		defaults[j] = make_pair(prefixes[j], def);
+		defaults.push_back(make_pair(prefixes[j], def));
 	}
 
 	// Populate the options map
@@ -141,7 +143,6 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 										{
 
 											options[prefix].data = column;
-											// LOG4CXX_INFO(m_logger, "Interface Device defaulted to '" + dev + "'");
 										}
 
 										column = strtok(NULL, " \t\n");
@@ -483,10 +484,16 @@ void NOVAConfiguration::SetDefaults()
 
 	for(uint i = 0; i < options.size(); i++)
 	{
-		if(!options[prefixes[i]].isValid)
+		//if the option is not valid from LoadConfig, and it is an option that has a default value, assign.
+		//anything that has no static default (i.e. something that has a user defined default) will pass
+		//on to a given module with isValid being false, and kick out from there. The compare doesn't have to
+		//be here until we have a solid foundation determining what will have static defaults and what won't,
+		//but I put it in anyways to remind myself when the time comes
+		if(!options[prefixes[i]].isValid && defaults[i].second.compare("No") != 0)
 		{
 			syslog(SYSL_INFO, "Configuration option %s was not set, present, or valid. Setting to default value %s", prefixes[i].c_str(), defaults[i].second.c_str());
 			options[prefixes[i]].data = defaults[i].second;
+			options[prefixes[i]].isValid = true;
 		}
 	}
 
