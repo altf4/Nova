@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	vector <string> haystackAddresses;
 	string haystackAddresses_csv = "";
 
-	string novaConfig, logConfig;
+	string novaConfig;
 
 	string line, prefix; //used for input checking
 
@@ -79,12 +79,12 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog("Haystack", NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -574,13 +574,13 @@ vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 void Haystack::LoadConfig(char* configFilePath)
 {
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
 
 	string prefix;
 	bool v = true;
 
-	openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
+	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 
 	const string prefixes[] = {"INTERFACE", "HS_HONEYD_CONFIG",
 			"TCP_TIMEOUT","TCP_CHECK_FREQ",
@@ -608,7 +608,7 @@ void Haystack::LoadConfig(char* configFilePath)
 	}
 	else
 	{
-		syslog(SYSL_INFO, "Line: %d Config loaded successfully", __LINE__);
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully", __LINE__);
 	}
 
 	dev = NovaConfig->options["INTERFACE"].data;

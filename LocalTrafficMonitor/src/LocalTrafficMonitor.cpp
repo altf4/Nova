@@ -73,11 +73,11 @@ int main(int argc, char *argv[])
 
 	string hostAddress;
 
-	string novaConfig, logConfig;
+	string novaConfig;
 
 	string line, prefix; //used for input checking
 
-	//Get locations of nova files
+	//Get locations of Nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 
@@ -86,12 +86,12 @@ int main(int argc, char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog("LocalTrafficMonitor", NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("LocalTrafficMonitor", OPEN_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	//Pre-Forms the socket address to improve performance
@@ -529,7 +529,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
 
-	openlog("LocalTrafficMonitor", OPEN_SYSL, LOG_AUTHPRIV);
+	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 
 	syslog(SYSL_INFO, "Line: %d Starting to load configuration file", __LINE__);
 
@@ -557,7 +557,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
 	bool v = true;
 
@@ -586,7 +586,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	}
 	else
 	{
-		syslog(SYSL_INFO, "Line: %d All configuration values appear valid.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d INFO All configuration values appear valid.", __LINE__);
 	}
 
 

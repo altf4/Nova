@@ -32,7 +32,8 @@ public:
 	// Loads and parses a NOVA configuration file
 	//		configFilePath - Path to the NOVA configuration file
 	//		homeNovaPath - Path to the /home/user/.nova folder
-	void LoadConfig(char* configFilePath, string homeNovaPath);
+	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
+	void LoadConfig(char* configFilePath, string homeNovaPath, string module);
 
 public:
 	// Map of configuration variable name to NovaOption (isValid and data)

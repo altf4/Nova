@@ -1534,7 +1534,7 @@ void startNova()
 		string input = homePath + "/Config/NOVAConfig.txt";
 
 		NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-		NovaConfig->LoadConfig((char*)input.c_str(), homePath);
+		NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
 
 		if (!NovaConfig->options["USE_TERMINALS"].isValid || !NovaConfig->options["ENABLED_FEATURES"].isValid)
 		{

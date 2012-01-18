@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
 	signal(SIGINT, siginthandler);
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
-	string novaConfig, logConfig;
+	string novaConfig;
 
 	string line, prefix; //used for input checking
 
@@ -87,12 +87,12 @@ int main(int argc, char *argv[])
 		//     LOG_PERROR  = Print to stderror as well
 		//3rd: facility; essentially what facility you want to log to. In our case Local0, other examples
 		//     are AUTH or CRON, etc.
-		openlog("DoppelgangerModule", NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("DoppelgangerModule", OPEN_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
@@ -116,7 +116,6 @@ int main(int argc, char *argv[])
 
     if((alarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
     {
-		//LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
     	// syslog takes 2+ arguments.
     	// 1st: where and what; OR together facility and level. note that
     	//      if you elect to use openlog, facilty can be left out.
@@ -135,7 +134,6 @@ int main(int argc, char *argv[])
 
     if(bind(alarmSocket,(struct sockaddr *)&remote,len) == -1)
     {
-		//LOG4CXX_ERROR(m_logger,"bind: " << strerror(errno));
 		syslog(SYSL_ERR, "Line: %d ERROR: bind: %s", __LINE__, strerror(errno));
 		close(alarmSocket);
         exit(1);
@@ -143,7 +141,6 @@ int main(int argc, char *argv[])
 
     if(listen(alarmSocket, SOCKET_QUEUE_SIZE) == -1)
     {
-		//LOG4CXX_ERROR(m_logger,"listen: " << strerror(errno));
 		syslog(SYSL_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
 		close(alarmSocket);
         exit(1);
@@ -233,7 +230,6 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 {
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		//LOG4CXX_ERROR(m_logger, "socket: " << strerror(errno));
 		syslog(SYSL_ERR, "Line: %d ERROR: socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
@@ -251,7 +247,6 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 
 	if(bind(IPCsock,localIPCAddressPtr,GUILen) == -1)
 	{
-		//LOG4CXX_ERROR(m_logger, "bind: " << strerror(errno));
 		syslog(SYSL_ERR, "Line %d ERROR: bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
@@ -259,7 +254,6 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
-		//LOG4CXX_ERROR(m_logger, "listen: " << strerror(errno));
 		syslog(SYSL_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
 		exit(1);
@@ -282,13 +276,11 @@ void DoppelgangerModule::ReceiveGUICommand()
     //Blocking call
     if ((msgSocket = accept(IPCsock, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
-		//LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		syslog(SYSL_ERR, "Line: %d ERROR: accept: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
     if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
-		//LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
 		syslog(SYSL_ERR, "Line: %d ERROR: recv: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
@@ -319,14 +311,12 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
     //Blocking call
     if ((connectionSocket = accept(alarmSocket, remoteAddrPtr, socketSizePtr)) == -1)
     {
-		//LOG4CXX_ERROR(m_logger,"accept: " << strerror(errno));
 		syslog(SYSL_ERR, "Line: %d ERROR: accept: %s", __LINE__, strerror(errno));
 		close(connectionSocket);
         return;
     }
     if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
     {
-    	//LOG4CXX_ERROR(m_logger,"recv: " << strerror(errno));
     	syslog(SYSL_ERR, "Line: %d ERROR: recv: %s", __LINE__, strerror(errno));
 		close(connectionSocket);
         return;
@@ -339,7 +329,6 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
 	}
 	catch(std::exception e)
 	{
-		//LOG4CXX_ERROR(m_logger, "Error interpreting received Silent Alarm: " << string(e.what()));
 		syslog(SYSL_ERR, "Line: %d ERROR: Error interpreting received Silent Alarm: %s", __LINE__, string(e.what()).c_str());
 		delete suspect;
 		suspect = NULL;
@@ -366,12 +355,12 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 	bool v = true;
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
 	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
 			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
 
-	openlog("DoppelgangerModule", OPEN_SYSL, LOG_AUTHPRIV);
+	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 
 	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
 	{
@@ -393,13 +382,13 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 	}
 	else
 	{
-		syslog(SYSL_INFO, "INFO: Config loaded successfully.");
+		syslog(SYSL_INFO, "Line: %d INFO: Config loaded successfully.", __LINE__);
 	}
 
 	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+
 	if(hostAddrString.size() == 0)
 	{
-		//LOG4CXX_ERROR(m_logger, "Bad interface, no IP's associated!");
 		syslog(SYSL_ERR, "Line: %d ERROR: Bad interface, no IP's associated", __LINE__);
 		exit(1);
 	}
@@ -411,7 +400,6 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 
 	if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
 	{
-		//LOG4CXX_ERROR(m_logger,"Invalid doppelganger IP address!");
 		syslog(SYSL_ERR, "Line: %d ERROR: Invalid doppelganger IP address", __LINE__);
 		exit(1);
 	}

@@ -115,7 +115,7 @@ int main(int argc,char *argv[])
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
 
-	string novaConfig, logConfig;
+	string novaConfig;
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
@@ -127,12 +127,12 @@ int main(int argc,char *argv[])
 
 	if(!useTerminals)
 	{
-		openlog("ClassificationEngine", NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
+		openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
 	dataFile = homePath + "/" +dataFile;
@@ -1143,8 +1143,6 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	ifstream settings(settingsPath.c_str());
 	in_addr_t nbr;
 
-	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
-
 	if(settings.is_open())
 	{
 		while(settings.good())
@@ -1186,9 +1184,10 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	}
 	settings.close();
 
-
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+
+	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
 
 	const string prefixes[] = {"INTERFACE","USE_TERMINALS","SILENT_ALARM_PORT",
 	"K", "EPS",
@@ -1209,7 +1208,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 			syslog(SYSL_ERR, "Line: %d %s was not present! Using default port.", __LINE__, prefix.c_str());
 		}
 
-		else if (!NovaConfig->options[prefix].isValid)
+		else if(!NovaConfig->options[prefix].isValid)
 		{
 			syslog(SYSL_ERR, "Line: %d The configuration variable %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
 			v = false;
@@ -1224,7 +1223,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	}
 	else
 	{
-		syslog(SYSL_INFO, "Line: %d Config loaded successfully.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
 	}
 
 	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
@@ -1266,5 +1265,6 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	}
 
 	sqrtDIM = sqrt(enabledFeatures);
+
 	closelog();
 }
