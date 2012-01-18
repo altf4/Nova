@@ -833,7 +833,6 @@ string Nova::ClassificationEngine::Usage()
 {
 	string usageString = "Nova Classification Engine!\n";
 	usageString += "\tUsage: ClassificationEngine -l LogConfigPath -n NOVAConfigPath \n";
-	usageString += "\t-l: Path to LOG4CXX config xml file.\n";
 	usageString += "\t-n: Path to NOVA config txt file.\n";
 	return usageString;
 }
@@ -1186,6 +1185,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->SetDefaults();
 
 	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
@@ -1200,15 +1200,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 		NovaConfig->options[prefix];
 
-		// If the prefix isn't valid and we're looking for SILENT_ALARM_PORT, give the default port value.
-		if(!NovaConfig->options[prefix].isValid && !(prefix.compare(prefixes[3])))
-		{
-			// This port is unassigned, and does not show up in any virus databases that I saw
-			NovaConfig->options[prefix].data = "12024";
-			syslog(SYSL_ERR, "Line: %d %s was not present! Using default port.", __LINE__, prefix.c_str());
-		}
-
-		else if(!NovaConfig->options[prefix].isValid)
+		if(!NovaConfig->options[prefix].isValid)
 		{
 			syslog(SYSL_ERR, "Line: %d The configuration variable %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
 			v = false;
