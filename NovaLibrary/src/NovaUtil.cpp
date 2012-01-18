@@ -58,6 +58,8 @@ string GetLocalIP(const char *dev)
 	struct ifconf ifconf;
 	uint  nifaces, i;
 
+	openlog(__FILE__, OPEN_SYSL, LOG_AUTHPRIV);
+
 	memset(&ifconf,0,sizeof(ifconf));
 	ifconf.ifc_buf = (char*) (ifreqs);
 	ifconf.ifc_len = sizeof(ifreqs);
@@ -67,16 +69,14 @@ string GetLocalIP(const char *dev)
 
 	if(sock < 0)
 	{
-		// TODO: Fix the logging on this
-		//LOG4CXX_ERROR(m_logger,"socket: " << strerror(errno));
+		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(sock);
 		return NULL;
 	}
 
 	if((rval = ioctl(sock, SIOCGIFCONF , (char*) &ifconf)) < 0 )
 	{
-		// TODO: Fix the logging on this
-		//LOG4CXX_ERROR(m_logger,"ioctl(SIOGIFCONF): " << strerror(errno));
+		syslog(SYSL_ERR, "Line: %d ioctl(SIOGIFCONF): %s", __LINE__, strerror(errno));
 	}
 
 	close(sock);

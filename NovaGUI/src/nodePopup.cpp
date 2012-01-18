@@ -4,10 +4,7 @@
 #include "nodePopup.h"
 #include <fstream>
 #include <signal.h>
-#include <log4cxx/xml/domconfigurator.h>
 
-using namespace log4cxx;
-using namespace log4cxx::xml;
 using namespace std;
 
 //Parent window pointers, allows us to call functions from the parent
@@ -23,7 +20,6 @@ string address;
 bool load;
 bool subnetSel = false;
 
-LoggerPtr node_logger(Logger::getLogger("main"));
 
 /************************************************
  * Construct and Initialize GUI
@@ -38,7 +34,7 @@ nodePopup::nodePopup(QWidget *parent, node *n, int type, string home)
 	nodes.set_empty_key("");
 	profiles.set_empty_key("");
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	novaParent = (NovaConfig *)parent;
 	novaParent->setEnabled(false);
 	this->setEnabled(true);
@@ -62,7 +58,7 @@ nodePopup::nodePopup(QWidget *parent, node *n, int type, string home)
 	}
 	else
 	{
-		LOG4CXX_ERROR(node_logger, "Invalid type given in constructor");
+		syslog(SYSL_ERR, "File: %s Line: %d Invalid type given in constructor", __FILE__, __LINE__);
 		this->close();
 	}
 	loadAllNodes();
@@ -469,6 +465,6 @@ void nodePopup::on_editPortsButton_clicked()
 	}
 	else
 	{
-		LOG4CXX_ERROR(node_logger, "No profile selected when opening port edit window.");
+		syslog(SYSL_ERR, "File: %s Line: %d No profile selected when opening port edit window", __FILE__, __LINE__);
 	}
 }
