@@ -23,6 +23,7 @@ struct NovaOption {
 
 // Maps the configuration prefix (e.g. INTERFACE) to a NovaOption instance
 typedef google::dense_hash_map<string, struct NovaOption, tr1::hash<string>, eqstr > optionsMap;
+typedef vector <pair<string, string> > defaultVector;
 
 class NOVAConfiguration {
 public:
@@ -32,11 +33,17 @@ public:
 	// Loads and parses a NOVA configuration file
 	//		configFilePath - Path to the NOVA configuration file
 	//		homeNovaPath - Path to the /home/user/.nova folder
-	void LoadConfig(char* configFilePath, string homeNovaPath);
+	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
+	void LoadConfig(char* configFilePath, string homeNovaPath, string module);
+	// Checks through the optionsMap options and sets the default value for any
+	// configuration variable that has a false isValid attribute
+	int SetDefaults();
 
 public:
 	// Map of configuration variable name to NovaOption (isValid and data)
 	optionsMap options;
+	// associative array for the defaults that can be statically set.
+	defaultVector defaults;
 };
 
 }

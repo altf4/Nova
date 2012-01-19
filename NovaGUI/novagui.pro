@@ -2,14 +2,17 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-#PRE_TARGETDEPS += /usr/lib/libann.a
-HEADERS += src/main.h \
+
+# PRE_TARGETDEPS += /usr/lib/libann.a
+HEADERS += src/dialogPrompter.h \
+    src/main.h \
     src/nodePopup.h \
     src/novaconfig.h \
     src/novagui.h \
     src/portPopup.h \
     src/run_popup.h
-SOURCES += src/main.cpp \
+SOURCES += src/dialogPrompter.cpp \
+    src/main.cpp \
     src/nodePopup.cpp \
     src/novaconfig.cpp \
     src/novagui.cpp \
@@ -25,8 +28,8 @@ INCLUDEPATH += ../NovaLibrary/src
 CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
 else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
 LIBS += /usr/lib/libboost_serialization.a \
-    /usr/lib/liblog4cxx.a \
     /usr/lib/libapr-1.a \
     /usr/lib/libann.a \
     /usr/lib/libaprutil-1.a
-UI_DIR = UI_headers/ 
+UI_DIR = UI_headers/
+QMAKE_CLEAN += $(TARGET)

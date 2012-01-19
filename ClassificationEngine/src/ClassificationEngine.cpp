@@ -88,7 +88,7 @@ double maxFeatureValues[DIM];
 // Nova Configuration Variables (read from config file)
 bool isTraining;
 bool useTerminals;
-int sAlarmPort;					//Silent Alarm destination port
+in_port_t sAlarmPort;					//Silent Alarm destination port
 int classificationTimeout;		//In seconds, how long to wait between classifications
 int k;							//number of nearest neighbors
 double eps;						//error bound
@@ -115,7 +115,7 @@ int main(int argc,char *argv[])
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
 
-	string novaConfig, logConfig;
+	string novaConfig;
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
@@ -833,7 +833,6 @@ string Nova::ClassificationEngine::Usage()
 {
 	string usageString = "Nova Classification Engine!\n";
 	usageString += "\tUsage: ClassificationEngine -l LogConfigPath -n NOVAConfigPath \n";
-	usageString += "\t-l: Path to LOG4CXX config xml file.\n";
 	usageString += "\t-n: Path to NOVA config txt file.\n";
 	return usageString;
 }
@@ -1143,13 +1142,11 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 {
 	string prefix, line;
 	uint i = 0;
-	bool v = true;
+	int confCheck = 0;
 
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
 	in_addr_t nbr;
-
-	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
 	if(settings.is_open())
 	{
@@ -1192,45 +1189,26 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	}
 	settings.close();
 
-
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
-	const string prefixes[] = {"INTERFACE","USE_TERMINALS","SILENT_ALARM_PORT",
-	"K", "EPS",
-	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
-	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "ENABLED_FEATURES"};
+	confCheck = NovaConfig->SetDefaults();
 
-	for (i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
-	{
-		prefix = prefixes[i];
-
-		NovaConfig->options[prefix];
-
-		// If the prefix isn't valid and we're looking for SILENT_ALARM_PORT, give the default port value.
-		if(!NovaConfig->options[prefix].isValid && !(prefix.compare(prefixes[3])))
-		{
-			// This port is unassigned, and does not show up in any virus databases that I saw
-			NovaConfig->options[prefix].data = "12024";
-			syslog(SYSL_ERR, "Line: %d %s was not present! Using default port.", __LINE__, prefix.c_str());
-		}
-
-		else if (!NovaConfig->options[prefix].isValid)
-		{
-			syslog(SYSL_ERR, "Line: %d The configuration variable %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
-			v = false;
-		}
-	}
+	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
 	//Checks to make sure all values have been set.
-	if(v == false)
+	if(confCheck == 2)
 	{
-		syslog(SYSL_ERR, "Line: %d One or more values have not been set.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
 		exit(1);
 	}
-	else
+	else if(confCheck == 1)
 	{
-		syslog(SYSL_INFO, "Line: %d Config loaded successfully.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
+	}
+	else if (confCheck == 0)
+	{
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
 	}
 
 	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
@@ -1239,6 +1217,8 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 		syslog(SYSL_ERR, "Line: %d Bad interface, no IP's associated!", __LINE__);
 		exit(1);
 	}
+
+	closelog();
 
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
 
@@ -1272,5 +1252,4 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	}
 
 	sqrtDIM = sqrt(enabledFeatures);
-	closelog();
 }

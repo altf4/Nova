@@ -16,6 +16,7 @@
 #include <boost/foreach.hpp>
 #include <Suspect.h>
 #include <NovaUtil.h>
+#include "dialogPrompter.h"
 
 using namespace std;
 using namespace Nova;
@@ -153,6 +154,8 @@ public:
     ptree *nodesTree;
     ptree *doppTree;
     ptree *subnetTree;
+
+    dialogPrompter *prompter;
 
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();

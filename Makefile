@@ -77,6 +77,10 @@ install-release:
 	#Copy the scripts and logs
 	mkdir -p /usr/share/nova
 	cp -R Installer/Write/nova /usr/share/
+	#move 40-nova.conf into /etc/rsyslog.d/ for logging
+	cp Installer/Read/40-nova.conf /etc/rsyslog.d/
+	#restart rsyslog
+	service rsyslog restart
 	#Give permissions
 	chmod -R a+rw $(HOME)/.nova
 	chmod -R a+rw /usr/share/nova
@@ -110,6 +114,10 @@ install-debug:
 	#Copy the scripts and logs
 	mkdir -p /usr/share/nova
 	cp -R Installer/Write/nova /usr/share/
+	#move 40-nova.conf into /etc/rsyslog.d/ for logging
+	cp Installer/Read/40-nova.conf /etc/rsyslog.d/
+	#restart rsyslog
+	service rsyslog restart
 	#Give permissions
 	chmod -R a+rw $(HOME)/.nova
 	chmod -R a+rw /usr/share/nova
@@ -137,6 +145,7 @@ uninstall:
 	rm -f /usr/local/bin/Haystack
 	rm -f /usr/local/bin/LocalTrafficMonitor
 	rm -f /etc/sudoers.d/sudoers_nova
+	rm -f /etc/rsyslog.d/40-nova.conf
 	rm -rf .nova/Config
 	rm -rf .nova/Data
 	rm -rf bin
