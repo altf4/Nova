@@ -10,6 +10,7 @@
 
 #include <QtGui/QMainWindow>
 #include <QtGui/QTreeWidget>
+#include <QMouseEvent>
 #include "ui_novagui.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
@@ -167,6 +168,8 @@ public:
     void drawAllSuspects();
     //Updates various Suspect-based widgets, called when suspect information changes
     void updateSuspectWidgets();
+    //Removes an individual suspect from display until it's information is updated
+    void hideSuspect(in_addr_t addr);
 
     // Tells CE to save suspects to file
     void saveSuspects();
@@ -213,10 +216,10 @@ public:
     //Writes the current configuration to honeyd configs
     void writeHoneyd(); //TODO
 
+protected:
+    void contextMenuEvent(QContextMenuEvent *event);
 
-private
-
-slots:
+private slots:
 
 	//Menu actions
 	void on_actionRunNovaAs_triggered();
@@ -227,6 +230,9 @@ slots:
 	void on_actionSave_Suspects_triggered();
 	void on_actionHide_Old_Suspects_triggered();
 	void on_actionShow_All_Suspects_triggered();
+	void on_actionClear_All_Suspects_triggered();
+	void on_actionClear_Suspect_triggered();
+	void on_actionHide_Suspect_triggered();
 
 	//Global Widgets
 	void on_mainButton_clicked();
@@ -288,5 +294,7 @@ void sendToLTM();
 
 //Deletes all Suspect information for the GUI and Nova
 void clearSuspects();
+//Removes all information on a suspect
+void clearSuspect(string suspectStr);
 
 #endif // NOVAGUI_H

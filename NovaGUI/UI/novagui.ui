@@ -23,8 +23,11 @@
       <height>581</height>
      </rect>
     </property>
+    <property name="focusPolicy">
+     <enum>Qt::ClickFocus</enum>
+    </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="mainPage">
      <widget class="QPushButton" name="stopButton">
@@ -77,6 +80,9 @@
         <width>181</width>
         <height>161</height>
        </rect>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::NoContextMenu</enum>
       </property>
       <property name="verticalScrollMode">
        <enum>QAbstractItemView::ScrollPerPixel</enum>
@@ -191,6 +197,9 @@
         <width>171</width>
         <height>471</height>
        </rect>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::NoContextMenu</enum>
       </property>
       <property name="verticalScrollMode">
        <enum>QAbstractItemView::ScrollPerPixel</enum>
@@ -459,7 +468,7 @@ Module</string>
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -518,11 +527,6 @@ Module</string>
     <string>Run as...</string>
    </property>
   </action>
-  <action name="actionStop">
-   <property name="text">
-    <string>Pause</string>
-   </property>
-  </action>
   <action name="actionStopNova">
    <property name="text">
     <string>Stop</string>
@@ -548,7 +552,25 @@ Module</string>
     <string>Save Suspects</string>
    </property>
   </action>
+  <action name="actionClear_All_Suspects">
+   <property name="text">
+    <string>Clear All Suspects</string>
+   </property>
+  </action>
+  <action name="actionClear_Suspect">
+   <property name="text">
+    <string>Clear Suspect</string>
+   </property>
+  </action>
+  <action name="actionHide_Suspect">
+   <property name="text">
+    <string>Hide Suspect</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
+ <slots>
+  <slot>ShowContextMenu(QPoint)</slot>
+ </slots>
 </ui>

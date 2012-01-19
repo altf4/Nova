@@ -17,6 +17,7 @@
 
 #include <QString>
 #include <QChar>
+#include <QPoint>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
@@ -49,8 +50,9 @@ SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
 bool novaRunning = false;
 
-
 bool featureEnabled[DIM];
+bool editingSuspectList = false;
+QMenu * suspectMenu;
 
 /************************************************
  * Constructors, Destructors and Closing Actions
@@ -70,6 +72,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	signal(SIGINT, sighandler);
 	pthread_rwlock_init(&lock, NULL);
 	SuspectTable.set_empty_key(1);
+	SuspectTable.set_deleted_key(5);
 	subnets.set_empty_key("");
 	ports.set_empty_key("");
 	nodes.set_empty_key("");
@@ -82,6 +85,9 @@ NovaGUI::NovaGUI(QWidget *parent)
 	scripts.set_deleted_key("Deleted");
 
 	ui.setupUi(this);
+	//Pre-forms the suspect menu
+	suspectMenu = new QMenu(this);
+
 	runAsWindowUp = false;
 	editingPreferences = false;
 
@@ -133,15 +139,51 @@ NovaGUI::NovaGUI(QWidget *parent)
 	this->ui.suspectButton->setFlat(false);
 	this->ui.doppelButton->setFlat(false);
 	this->ui.haystackButton->setFlat(false);
-
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(drawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
-
 	pthread_create(&CEListenThread,NULL,CEListen, this);
 }
 
 NovaGUI::~NovaGUI()
 {
 
+}
+
+
+//Draws the suspect context menu
+void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
+{
+	if(ui.suspectList->hasFocus() || ui.suspectList->underMouse())
+	{
+		suspectMenu->clear();
+		if(ui.suspectList->isItemSelected(ui.suspectList->currentItem()))
+		{
+			suspectMenu->addAction(ui.actionClear_Suspect);
+			suspectMenu->addAction(ui.actionHide_Suspect);
+		}
+	}
+	else if(ui.hostileList->hasFocus() || ui.hostileList->underMouse())
+	{
+		suspectMenu->clear();
+		if(ui.hostileList->isItemSelected(ui.hostileList->currentItem()))
+		{
+			suspectMenu->addAction(ui.actionClear_Suspect);
+			suspectMenu->addAction(ui.actionHide_Suspect);
+		}
+	}
+	else
+	{
+		return;
+	}
+	suspectMenu->addSeparator();
+	suspectMenu->addAction(ui.actionClear_All_Suspects);
+	suspectMenu->addAction(ui.actionSave_Suspects);
+	suspectMenu->addSeparator();
+
+	suspectMenu->addAction(ui.actionShow_All_Suspects);
+	suspectMenu->addAction(ui.actionHide_Old_Suspects);
+
+	QPoint globalPos = event->globalPos();
+	suspectMenu->popup(globalPos);
 }
 
 void NovaGUI::closeEvent(QCloseEvent * e)
@@ -1033,6 +1075,7 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 
 void NovaGUI::drawAllSuspects()
 {
+	editingSuspectList = true;
 	clearSuspectList();
 
 	QListWidgetItem * item = NULL;
@@ -1108,13 +1151,14 @@ void NovaGUI::drawAllSuspects()
 	}
 	updateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
+	editingSuspectList = false;
 }
 
 //Updates the UI with the latest suspect information
 //*NOTE This slot is not thread safe, make sure you set appropriate locks before sending a signal to this slot
 void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 {
-
+	editingSuspectList = true;
 	QString str;
 	QBrush brush;
 	QColor color;
@@ -1254,7 +1298,9 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 	sItem->item->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
 	updateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
+	editingSuspectList = false;
 }
+
 void NovaGUI::updateSuspectWidgets()
 {
 	double hostileAcc = 0, benignAcc = 0, totalAcc = 0;
@@ -1329,6 +1375,7 @@ void NovaGUI::saveSuspects()
 	sendToCE();
 }
 
+//Clears the suspect tables completely.
 void NovaGUI::clearSuspectList()
 {
 	pthread_rwlock_wrlock(&lock);
@@ -1401,6 +1448,52 @@ void  NovaGUI::on_actionExit_triggered()
 	exit(1);
 }
 
+void NovaGUI::on_actionClear_All_Suspects_triggered()
+{
+	editingSuspectList = true;
+	clearSuspects();
+	drawAllSuspects();
+	editingSuspectList = false;
+}
+
+void NovaGUI::on_actionClear_Suspect_triggered()
+{
+	QListWidget * list;
+	if(ui.suspectList->hasFocus())
+	{
+		list = ui.suspectList;
+	}
+	else if(ui.hostileList->hasFocus())
+	{
+		list = ui.hostileList;
+	}
+	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
+	{
+		string suspectStr = list->currentItem()->text().toStdString();
+		in_addr_t addr = inet_addr(suspectStr.c_str());
+		hideSuspect(addr);
+		clearSuspect(suspectStr);
+	}
+}
+
+void NovaGUI::on_actionHide_Suspect_triggered()
+{
+	QListWidget * list;
+	if(ui.suspectList->hasFocus())
+	{
+		list = ui.suspectList;
+	}
+	else if(ui.hostileList->hasFocus())
+	{
+		list = ui.hostileList;
+	}
+	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
+	{
+		in_addr_t addr = inet_addr(list->currentItem()->text().toStdString().c_str());
+		hideSuspect(addr);
+	}
+}
+
 void NovaGUI::on_actionSave_Suspects_triggered()
 {
 	saveSuspects();
@@ -1408,12 +1501,16 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()
 {
+	editingSuspectList = true;
 	clearSuspectList();
+	editingSuspectList = false;
 }
 
 void  NovaGUI::on_actionShow_All_Suspects_triggered()
 {
+	editingSuspectList = true;
 	drawAllSuspects();
+	editingSuspectList = false;
 }
 
 /************************************************
@@ -1470,8 +1567,10 @@ void NovaGUI::on_stopButton_clicked()
 }
 void NovaGUI::on_clearSuspectsButton_clicked()
 {
-	drawAllSuspects();
+	editingSuspectList = true;
 	clearSuspects();
+	drawAllSuspects();
+	editingSuspectList = false;
 }
 
 
@@ -1480,23 +1579,64 @@ void NovaGUI::on_clearSuspectsButton_clicked()
  ************************************************/
 void NovaGUI::on_suspectList_itemSelectionChanged()
 {
-	pthread_rwlock_rdlock(&lock);
-	in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
-	ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
-	pthread_rwlock_unlock(&lock);
+	if(!editingSuspectList)
+	{
+		pthread_rwlock_wrlock(&lock);
+		if(ui.suspectList->currentItem() != NULL)
+		{
+			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
+			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
+		}
+		pthread_rwlock_unlock(&lock);
+	}
 }
+
 /************************************************
  * IPC Functions
  ************************************************/
+void NovaGUI::hideSuspect(in_addr_t addr)
+{
+	pthread_rwlock_wrlock(&lock);
+	editingSuspectList = true;
+	suspectItem * sItem = &SuspectTable[addr];
+	if(!sItem->item->isSelected())
+	{
+		pthread_rwlock_unlock(&lock);
+		editingSuspectList = false;
+		return;
+	}
+	ui.suspectList->removeItemWidget(sItem->item);
+	delete sItem->item;
+	sItem->item = NULL;
+	if(sItem->mainItem != NULL)
+	{
+		ui.hostileList->removeItemWidget(sItem->mainItem);
+		delete sItem->mainItem;
+		sItem->mainItem = NULL;
+	}
+	pthread_rwlock_unlock(&lock);
+	editingSuspectList = false;
+}
 
+//Removes all information on a suspect
+void clearSuspect(string suspectStr)
+{
+	pthread_rwlock_wrlock(&lock);
+	SuspectTable.erase(inet_addr(suspectStr.c_str()));
+	message.SetMessage(CLEAR_SUSPECT, suspectStr);
+	msgLen = message.SerialzeMessage(msgBuffer);
+	sendAll();
+	pthread_rwlock_unlock(&lock);
+}
+
+//Deletes all Suspect information for the GUI and Nova
 void clearSuspects()
 {
 	pthread_rwlock_wrlock(&lock);
 	SuspectTable.clear();
 	message.SetMessage(CLEAR_ALL);
 	msgLen = message.SerialzeMessage(msgBuffer);
-	sendToCE();
-	sendToDM();
+	sendAll();
 	pthread_rwlock_unlock(&lock);
 }
 
@@ -1650,7 +1790,7 @@ void sendToCE()
 		return;
 	}
 
-	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
@@ -1677,7 +1817,7 @@ void sendToDM()
 		return;
 	}
 
-	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
@@ -1704,7 +1844,7 @@ void sendToHS()
 		return;
 	}
 
-	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
@@ -1731,7 +1871,7 @@ void sendToLTM()
 		return;
 	}
 
-	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);
@@ -1780,7 +1920,7 @@ void sendAll()
 		close(CE_OutSock);
 	}
 
-	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(CE_OutSock);
@@ -1796,7 +1936,7 @@ void sendAll()
 		close(DM_OutSock);
 	}
 
-	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(DM_OutSock);
@@ -1813,7 +1953,7 @@ void sendAll()
 		close(HS_OutSock);
 	}
 
-	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(HS_OutSock);
@@ -1830,7 +1970,7 @@ void sendAll()
 		close(LTM_OutSock);
 	}
 
-	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
 		close(LTM_OutSock);

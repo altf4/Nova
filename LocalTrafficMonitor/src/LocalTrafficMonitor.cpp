@@ -332,6 +332,7 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
     int bytesRead;
     u_char msgBuffer[MAX_GUIMSG_SIZE];
     GUIMsg msg = GUIMsg();
+    in_addr_t suspectKey = 0;
 
     socketSize = sizeof(msgRemote);
     //Blocking call
@@ -349,6 +350,19 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
     msg.DeserializeMessage(msgBuffer);
     switch(msg.GetType())
     {
+		case CLEAR_ALL:
+			pthread_rwlock_wrlock(&suspectLock);
+			suspects.clear();
+			pthread_rwlock_unlock(&suspectLock);
+			break;
+		case CLEAR_SUSPECT:
+			suspectKey = inet_addr(msg.GetValue().c_str());
+			pthread_rwlock_wrlock(&suspectLock);
+			suspects.set_deleted_key(5);
+			suspects.erase(suspectKey);
+			suspects.clear_deleted_key();
+			pthread_rwlock_unlock(&suspectLock);
+			break;
     	case EXIT:
     		exit(1);
     	default:
