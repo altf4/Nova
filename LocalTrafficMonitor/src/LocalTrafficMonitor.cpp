@@ -559,7 +559,6 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
-	NovaConfig->SetDefaults();
 
 	confCheck = NovaConfig->SetDefaults();
 
@@ -578,6 +577,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
 	}
 
+	closelog();
 
 	dev = NovaConfig->options["INTERFACE"].data;
 	tcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
@@ -588,8 +588,6 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
 	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
-
-	closelog();
 }
 
 

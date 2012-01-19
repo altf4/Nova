@@ -42,6 +42,7 @@ public:
 public:
 	// Map of configuration variable name to NovaOption (isValid and data)
 	optionsMap options;
+	// associative array for the defaults that can be statically set.
 	defaultVector defaults;
 };
 

@@ -1212,6 +1212,8 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 		exit(1);
 	}
 
+	closelog();
+
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
 
 
@@ -1244,6 +1246,4 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	}
 
 	sqrtDIM = sqrt(enabledFeatures);
-
-	closelog();
 }

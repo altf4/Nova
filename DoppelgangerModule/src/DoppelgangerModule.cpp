@@ -354,7 +354,6 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
-	NovaConfig->SetDefaults();
 
 	confCheck = NovaConfig->SetDefaults();
 
@@ -394,9 +393,9 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 		exit(1);
 	}
 
+	closelog();
+
 	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
 	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
 	isEnabled = atoi(NovaConfig->options["DM_ENABLED"].data.c_str());
-
-	closelog();
 }
