@@ -521,6 +521,9 @@ Module</string>
    <property name="text">
     <string>&amp;Run</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
   </action>
   <action name="actionRunNovaAs">
    <property name="text">
@@ -531,10 +534,16 @@ Module</string>
    <property name="text">
     <string>&amp;Stop</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+K</string>
+   </property>
   </action>
   <action name="actionExit">
    <property name="text">
     <string>&amp;Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actionHide_Old_Suspects">
@@ -550,6 +559,9 @@ Module</string>
   <action name="actionSave_Suspects">
    <property name="text">
     <string>&amp;Save Suspects</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionClear_All_Suspects">
