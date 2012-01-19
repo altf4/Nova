@@ -1040,6 +1040,7 @@ void ClassificationEngine::ReceiveGUICommand()
 	int socketSize, msgSocket;
 	int bytesRead;
 	GUIMsg msg = GUIMsg();
+	in_addr_t suspectKey = 0;
 	u_char msgBuffer[MAX_GUIMSG_SIZE];
 
 	bzero(msgBuffer, MAX_GUIMSG_SIZE);
@@ -1069,7 +1070,12 @@ void ClassificationEngine::ReceiveGUICommand()
 			pthread_rwlock_unlock(&lock);
 			break;
 		case CLEAR_SUSPECT:
-			//TODO still no functionality for this yet
+			suspectKey = inet_addr(msg.GetValue().c_str());
+			pthread_rwlock_wrlock(&lock);
+			suspects.set_deleted_key(5);
+			suspects.erase(suspectKey);
+			suspects.clear_deleted_key();
+			pthread_rwlock_unlock(&lock);
 			break;
 		case WRITE_SUSPECTS:
 			SaveSuspectsToFile(msg.GetValue());

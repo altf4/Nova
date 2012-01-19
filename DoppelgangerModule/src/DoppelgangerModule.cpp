@@ -277,6 +277,7 @@ void DoppelgangerModule::ReceiveGUICommand()
     int bytesRead;
     GUIMsg msg = GUIMsg();
     u_char msgBuffer[MAX_GUIMSG_SIZE];
+    in_addr_t suspectKey = 0;
 
     socketSize = sizeof(msgRemote);
     //Blocking call
@@ -305,7 +306,12 @@ void DoppelgangerModule::ReceiveGUICommand()
 			pthread_rwlock_unlock(&lock);
 			break;
     	case CLEAR_SUSPECT:
-    		//TODO still no functionality for this yet
+			suspectKey = inet_addr(msg.GetValue().c_str());
+			pthread_rwlock_wrlock(&lock);
+			SuspectTable.set_deleted_key(5);
+			SuspectTable.erase(suspectKey);
+			SuspectTable.clear_deleted_key();
+			pthread_rwlock_unlock(&lock);
 			break;
     	default:
     		break;
