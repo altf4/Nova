@@ -37,7 +37,7 @@ public:
 	void LoadConfig(char* configFilePath, string homeNovaPath, string module);
 	// Checks through the optionsMap options and sets the default value for any
 	// configuration variable that has a false isValid attribute
-	void SetDefaults();
+	int SetDefaults();
 
 public:
 	// Map of configuration variable name to NovaOption (isValid and data)
