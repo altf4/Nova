@@ -85,12 +85,9 @@ NovaGUI::NovaGUI(QWidget *parent)
 	scripts.set_deleted_key("Deleted");
 
 	ui.setupUi(this);
+
 	//Pre-forms the suspect menu
 	suspectMenu = new QMenu(this);
-	ui.actionExit->setShortcut(QKeySequence("Ctrl+Q"));
-	ui.actionSave_Suspects->setShortcut(QKeySequence("Ctrl+S"));
-	ui.actionRunNova->setShortcut(QKeySequence("Ctrl+R"));
-	ui.actionStopNova->setShortcut(QKeySequence("Ctrl+K"));
 
 
 	runAsWindowUp = false;
