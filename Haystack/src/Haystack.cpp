@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	vector <string> haystackAddresses;
 	string haystackAddresses_csv = "";
 
-	string novaConfig, logConfig;
+	string novaConfig;
 
 	string line, prefix; //used for input checking
 
@@ -588,42 +588,30 @@ vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 void Haystack::LoadConfig(char* configFilePath)
 {
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath);
+	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
+	int confCheck = NovaConfig->SetDefaults();
 
 	string prefix;
-	bool v = true;
 
 	openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
 
-	const string prefixes[] = {"INTERFACE", "HS_HONEYD_CONFIG",
-			"TCP_TIMEOUT","TCP_CHECK_FREQ",
-			"READ_PCAP", "PCAP_FILE",
-			"GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT"};
-
-
-	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
-	{
-		prefix = prefixes[i];
-
-		NovaConfig->options[prefix];
-		if (!NovaConfig->options[prefix].isValid)
-		{
-			syslog(SYSL_ERR, "Line: %d The configuration variable # %s was not set in the configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
-			v = false;
-		}
-	}
-
 	//Checks to make sure all values have been set.
-	if(v == false)
+	if(confCheck == 2)
 	{
-		syslog(SYSL_ERR, "Line: %d One or more values have no been set", __LINE__);
+		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
 		exit(1);
 	}
-	else
+	else if(confCheck == 1)
 	{
-		syslog(SYSL_INFO, "Line: %d Config loaded successfully", __LINE__);
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
 	}
+	else if (confCheck == 0)
+	{
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
+	}
+
+	closelog();
 
 	dev = NovaConfig->options["INTERFACE"].data;
 	honeydConfigPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
@@ -634,6 +622,4 @@ void Haystack::LoadConfig(char* configFilePath)
 	goToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
 	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
-
-	closelog();
 }

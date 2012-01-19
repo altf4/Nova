@@ -2,19 +2,14 @@
 #include <fstream>
 #include <sstream>
 #include "novagui.h"
-#include <log4cxx/xml/domconfigurator.h>
 #include <QString>
 #include <QtGui>
 #include <QApplication>
 
 
 using namespace std;
-using namespace log4cxx;
-using namespace log4cxx::xml;
 
 NovaGUI * parentwindow;
-
-LoggerPtr r_logger(Logger::getLogger("main"));
 
 Run_Popup::Run_Popup(QWidget *parent, string home)
     : QMainWindow(parent)
@@ -22,7 +17,6 @@ Run_Popup::Run_Popup(QWidget *parent, string home)
 	homePath = home;
 	parentwindow = (NovaGUI*)parent;
 	ui.setupUi(this);
-	DOMConfigurator::configure("Config/Log4cxxConfig.xml");
 	loadPreferences();
 }
 
@@ -44,6 +38,9 @@ void Run_Popup::loadPreferences()
 	//Read from CE Config
 	ifstream config("Config/NOVAConfig.txt");
 
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+
+	// TODO: Just pass the NovaConfig object in here.. or make a new one, no need to read file manually here
 	if(config.is_open())
 	{
 		while(config.good())
@@ -94,7 +91,7 @@ void Run_Popup::loadPreferences()
 	}
 	else
 	{
-		LOG4CXX_ERROR(r_logger,"Unable to open Config file");
+		syslog(SYSL_ERR, "File: %s Line: %d Unable to open Config file.", __FILE__, __LINE__);
 		this->close();
 	}
 }
@@ -193,7 +190,7 @@ bool Run_Popup::savePreferences()
 		delete out;
 		delete in;
 		system("rm Config/.NOVAConfig.tmp");
-		LOG4CXX_ERROR(r_logger,"Unable to open Config file");
+		syslog(SYSL_ERR, "File: %s Line: %d Unable to open Config file.", __FILE__, __LINE__);
 		return false;
 	}
 	in->close();

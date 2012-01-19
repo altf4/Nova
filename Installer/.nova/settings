@@ -5,3 +5,32 @@ neighbor 192.168.3.111
 neighbor 192.168.3.113
 
 key Kn0CKkN0ckN0v4!
+
+
+
+# Set up default actions for dialog messages
+# Currently supported options,
+#   Always show this message
+#       message show TYPE
+#
+#   Never show this message, choose default behavior
+#       message hide MSG
+#   
+#   Always select yes to this question
+#       message default yes MSG
+#   
+#   Always select no to this question
+#       message default no MSG
+# 
+# Note: the MSG strings are predefined in the dialogPrompter class
+
+message show |Error: Unable to read NOVA configuration file 
+message show |Error: Unable to write to NOVA configuration file 
+message show |This profile is currently in use. Are you sure you want to delete it?
+message show |Error: Unable to read Honeyd configuration file 
+message show |Error: Unexpected entry in file 
+message show |Error: Unable to load subnets 
+message show |Error: Unable to load nodes 
+message show |Error: Unable to load profiles 
+message show |Error: Unable to load profile sets 
+message show |Error: Node at IP is outside all valid subnet ranges: 

@@ -29,6 +29,7 @@ NovaGUI * mainwindow;
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
 bool selectedSubnet = false;
+bool loadingDefaultActions = false;
 
 /************************************************
  * Construct and Initialize GUI
@@ -50,13 +51,26 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	//Store parent and load UI
 	mainwindow = (NovaGUI*)parent;
 	group = mainwindow->group;
+
+	// Set up the GUI
 	ui.setupUi(this);
+	setInputValidators();
+
 	editingPorts = false;
 
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
 	loadPreferences();
 	pullData();
 	loadHaystack();
+
+	// Populate the dialog stuff
+	for (int i = 0; i < numberOfMessageTypes; i++)
+	{
+		QListWidgetItem *item = new QListWidgetItem();
+		item->setText(dialogPrompter::messageTypeStrings[i]);
+		ui.msgTypeListWidget->insertItem(i, item);
+	}
+
 
 	ui.treeWidget->expandAll();
 
@@ -87,8 +101,74 @@ void NovaConfig::closeEvent(QCloseEvent * e)
 
 }
 
-// Feature enable/disable stuff
+void NovaConfig::on_msgTypeListWidget_currentRowChanged()
+{
+	loadingDefaultActions = true;
+	int item = ui.msgTypeListWidget->currentRow();
 
+	ui.defaultActionListWidget->clear();
+	ui.defaultActionListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+	QListWidgetItem *listItem;
+
+	switch (dialogPrompter::messageTypeTypes[item])
+	{
+	case DIALOG_NOTIFICATION:
+		listItem = new QListWidgetItem("Always Show");
+		ui.defaultActionListWidget->insertItem(0, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_SHOW)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always Hide");
+		ui.defaultActionListWidget->insertItem(1, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_HIDE)
+			listItem->setSelected(true);
+		break;
+
+	case DIALOG_YES_NO:
+		listItem = new QListWidgetItem("Always Show");
+		ui.defaultActionListWidget->insertItem(0, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_SHOW)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always Yes");
+		ui.defaultActionListWidget->insertItem(1, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_ALWAYS_YES)
+			listItem->setSelected(true);
+
+		listItem = new QListWidgetItem("Always No");
+		ui.defaultActionListWidget->insertItem(2, listItem);
+		if (mainwindow->prompter->defaultActionToTake[item] == CHOICE_ALWAYS_NO)
+			listItem->setSelected(true);
+		break;
+	}
+	loadingDefaultActions = false;
+}
+
+void NovaConfig::on_defaultActionListWidget_currentRowChanged()
+{
+	// If we're still populating the list
+	if (loadingDefaultActions)
+		return;
+
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+	QString selected = 	ui.defaultActionListWidget->currentItem()->text();
+	messageType msgType = (messageType)ui.msgTypeListWidget->currentRow();
+
+	if (!selected.compare("Always Show"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_SHOW);
+	else if (!selected.compare("Always Hide"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_HIDE);
+	else if (!selected.compare("Always Yes"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALWAYS_YES);
+	else if (!selected.compare("Always No"))
+		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALWAYS_NO);
+	else
+		syslog(SYSL_ERR, "File: %s Line: %d Invalid user dialog default action selected, shouldn't get here", __FILE__, __LINE__);
+
+	closelog();
+}
+
+// Feature enable/disable stuff
 void NovaConfig::advanceFeatureSelection()
 {
 	int nextRow = ui.featureList->currentRow() + 1;
@@ -184,6 +264,8 @@ void NovaConfig::loadPreferences()
 	//Read from CE Config
 	string configurationFile = homePath + "/Config/NOVAConfig.txt";
 	ifstream config(configurationFile.c_str());
+
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
 	if(config.is_open())
 	{
@@ -395,9 +477,11 @@ void NovaConfig::loadPreferences()
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Error loading from Classification Engine config file.", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Error reading NOVA configuration file.", __FILE__, __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_READ_FAIL, configurationFile);
 		this->close();
 	}
+	closelog();
 	config.close();
 }
 
@@ -562,13 +646,16 @@ void NovaConfig::on_dmConfigButton_clicked()
 //Stores all changes and closes the window
 void NovaConfig::on_okButton_clicked()
 {
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	// TODO: Change to a GUI popup error
 	if (!saveConfigurationToFile())
 	{
-		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
 
+	closelog();
 	//Save changes
 	pushData();
 	this->close();
@@ -578,10 +665,11 @@ void NovaConfig::on_okButton_clicked()
 //Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
-	// TODO: Change to a GUI popup error
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	if (!saveConfigurationToFile())
 	{
-		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		this->close();
 	}
 
@@ -593,6 +681,7 @@ void NovaConfig::on_applyButton_clicked()
 	//Reloads honeyd configuration to assert concurrency
 	loadHaystack();
 	loadingItems = false;
+	closelog();
 }
 
 
@@ -813,7 +902,10 @@ bool NovaConfig::saveConfigurationToFile() {
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Error writing to Nova config file.", __LINE__);
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
+		closelog();
+		mainwindow->prompter->displayPrompt(CONFIG_WRITE_FAIL);
 		in->close();
 		out->close();
 		delete in;
@@ -870,10 +962,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 	int i = ui.treeWidget->indexOfTopLevelItem(item);
 	if(i != -1)
 	{
-		if(i != -1 )
-		{
-			ui.stackedWidget->setCurrentIndex(i);
-		}
+		ui.stackedWidget->setCurrentIndex(i);
 	}
 	//If the item is a child of a top level item, find out what type of item it is
 	else
@@ -900,7 +989,9 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 		}
 		else
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to set stackedWidget page index from treeWidgetItem", __LINE__);
+			openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+			syslog(SYSL_ERR, "File: %s Line: %d Unable to set stackedWidget page index from treeWidgetItem", __FILE__, __LINE__);
+			closelog();
 		}
 	}
 }
@@ -1155,6 +1246,7 @@ void NovaConfig::loadProfilesFromTree(string parent)
 {
 	using boost::property_tree::ptree;
 	ptree * ptr, pt = profiles[parent].tree;
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, pt.get_child("profiles"))
@@ -1227,14 +1319,16 @@ void NovaConfig::loadProfilesFromTree(string parent)
 			}
 			else
 			{
-				syslog(SYSL_ERR, "Line: %d Invalid XML Path %s", __LINE__, string(v.first.data()).c_str());
+				syslog(SYSL_ERR, "File: %s Line: %d Invalid XML Path %s", __FILE__, __LINE__, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading Profiles: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading Profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		mainwindow->prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
+	closelog();
 }
 
 //Sets the configuration of 'set' values for profile that called it
@@ -1303,7 +1397,9 @@ void NovaConfig::loadProfileSet(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading profile set parameters: %s", __LINE__, string(e.what()).c_str());
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile set parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		closelog();
 	}
 }
 
@@ -1352,7 +1448,9 @@ void NovaConfig::loadProfileAdd(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading profile add parameters: %s", __LINE__, string(e.what()).c_str());
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile add parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		closelog();
 	}
 }
 
@@ -1419,7 +1517,9 @@ void NovaConfig::loadSubProfiles(string parent)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "Line: %d Problem loading sub profiles: %s", __LINE__, string(e.what()).c_str());
+		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading sub profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		closelog();
 	}
 }
 
@@ -1610,6 +1710,41 @@ void NovaConfig::updateProfile(bool deleteProfile, profile * p)
 }
 
 
+void NovaConfig::setInputValidators()
+{
+	// Allows positive integers
+	QIntValidator *uintValidator = new QIntValidator();
+	uintValidator->setBottom(0);
+
+	// Allows positive doubles
+	QDoubleValidator *udoubleValidator = new QDoubleValidator();
+	udoubleValidator->setBottom(0);
+
+	// Disallows whitespace
+	QRegExp rx("\\S+");
+	QRegExpValidator *noSpaceValidator = new QRegExpValidator(rx, this);
+
+	// Set up input validators so user can't enter obviously bad data in the QLineEdits
+	// General settings
+	ui.interfaceEdit->setValidator(noSpaceValidator);
+	ui.saAttemptsMaxEdit->setValidator(uintValidator);
+	ui.saAttemptsTimeEdit->setValidator(udoubleValidator);
+	ui.saPortEdit->setValidator(uintValidator);
+	ui.tcpTimeoutEdit->setValidator(uintValidator);
+	ui.tcpFrequencyEdit->setValidator(uintValidator);
+
+	// Classification engine settings
+	ui.ceIntensityEdit->setValidator(uintValidator);
+	ui.ceFrequencyEdit->setValidator(uintValidator);
+	ui.ceThresholdEdit->setValidator(udoubleValidator);
+	ui.ceErrorEdit->setValidator(udoubleValidator);
+
+	// Doppelganger
+	// TODO: Make a custom validator for ipv4 and ipv6 IP addresses
+	// For now we just make sure someone doesn't enter whitespace
+	ui.dmIPEdit->setValidator(noSpaceValidator);
+}
+
 /******************************************
  * Profile Menu GUI Signals ***************/
 
@@ -1734,7 +1869,7 @@ void NovaConfig::on_editPortsButton_clicked()
 	}
 	else
 	{
-		LOG4CXX_ERROR(n_logger, "No profile selected when opening port edit window.");
+		syslog(SYSL_ERR, "File: %s Line: %d No profile selected when opening port edit window.", __FILE__, __LINE__);
 	}*/
 }
 

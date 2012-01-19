@@ -27,7 +27,7 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Run in Training Mode</string>
+     <string>Run in Training &amp;Mode</string>
     </property>
    </widget>
    <widget class="QCheckBox" name="pcapCheckBox">
@@ -43,7 +43,7 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Read packets from file</string>
+     <string>Read packets from &amp;File</string>
     </property>
    </widget>
    <widget class="QGroupBox" name="pcapGroupBox">
@@ -97,7 +97,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Browse</string>
+      <string>&amp;Browse</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="liveCapCheckBox">
@@ -116,7 +116,7 @@
       <enum>Qt::LeftToRight</enum>
      </property>
      <property name="text">
-      <string>Go to live capture after reading</string>
+      <string>&amp;Go to live capture after reading</string>
      </property>
     </widget>
    </widget>
@@ -130,7 +130,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Start</string>
+     <string>&amp;Start</string>
     </property>
    </widget>
    <widget class="QPushButton" name="cancelButton">
@@ -143,7 +143,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Cancel</string>
+     <string>&amp;Cancel</string>
     </property>
    </widget>
    <widget class="QCheckBox" name="terminalCheckBox">
@@ -159,7 +159,7 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Display Processes in Terminals</string>
+     <string>&amp;Display Processes in Terminals</string>
     </property>
    </widget>
   </widget>

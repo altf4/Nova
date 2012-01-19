@@ -8,7 +8,7 @@
 
 using namespace std;
 
-#define HAYSTACK_MENU_INDEX 4
+#define HAYSTACK_MENU_INDEX 5
 #define NODE_INDEX 0
 #define PROFILE_INDEX 1
 #define FROM_NOVA_CONFIG false
@@ -135,6 +135,9 @@ void on_dataButton_clicked();
 void on_hsConfigButton_clicked();
 void on_dmConfigButton_clicked();
 
+void on_msgTypeListWidget_currentRowChanged();
+void on_defaultActionListWidget_currentRowChanged();
+
 //Check Box signal for enabling pcap settings group box
 void on_pcapCheckBox_stateChanged(int state);
 
@@ -163,7 +166,7 @@ void on_featureDisableButton_clicked();
 
 
 private:
-
+	void setInputValidators();
     Ui::NovaConfigClass ui;
 };
 
