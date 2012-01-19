@@ -12,9 +12,10 @@
 
 using namespace std;
 
+
+
 namespace Nova
 {
-
 // Loads the configuration file into the class's state data
 void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, string module)
 {
@@ -64,7 +65,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 					break;
 			case 8: def = "3";
 					break;
-			case 9: def = "12024"; // 12024
+			case 9: def = "12024";
 					break;
 			case 10: def = "3";
 					break;
