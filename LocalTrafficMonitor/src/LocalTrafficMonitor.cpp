@@ -525,6 +525,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	string line;
 	string prefix;
 	uint i = 0;
+	int confCheck = 0;
 
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
@@ -560,34 +561,21 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 	NovaConfig->SetDefaults();
 
-	bool v = true;
-
-	const string prefixes[] = {"INTERFACE", "TCP_TIMEOUT",
-			"TCP_CHECK_FREQ", "READ_PCAP",
-			"PCAP_FILE", "GO_TO_LIVE","USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT"};
-
-
-	for (i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
-	{
-		prefix = prefixes[i];
-
-		NovaConfig->options[prefix];
-		if (!NovaConfig->options[prefix].isValid)
-		{
-			syslog(SYSL_ERR, "Line: %d The configuration variable # %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
-			v = false;
-		}
-	}
+	confCheck = NovaConfig->SetDefaults();
 
 	//Checks to make sure all values have been set.
-	if(v == false)
+	if(confCheck == 2)
 	{
-		syslog(SYSL_ERR, "Line: %d One or more values have not been set.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
 		exit(1);
 	}
-	else
+	else if(confCheck == 1)
 	{
-		syslog(SYSL_INFO, "Line: %d INFO All configuration values appear valid.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
+	}
+	else if (confCheck == 0)
+	{
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
 	}
 
 

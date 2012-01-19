@@ -32,3 +32,4 @@ LIBS += /usr/lib/libboost_serialization.a \
     /usr/lib/libann.a \
     /usr/lib/libaprutil-1.a
 UI_DIR = UI_headers/
+QMAKE_CLEAN += $(TARGET)
