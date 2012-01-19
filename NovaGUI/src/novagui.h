@@ -10,16 +10,20 @@
 
 #include <QtGui/QMainWindow>
 #include <QtGui/QTreeWidget>
+ #include <QProcess>
+#include <QMouseEvent>
 #include "ui_novagui.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
 #include <Suspect.h>
 #include <NovaUtil.h>
 #include "dialogPrompter.h"
+#include "NOVAConfiguration.h"
 
 using namespace std;
 using namespace Nova;
 using boost::property_tree::ptree;
+
 
 /*********************************************************************
  - Structs and Tables for quick item access through pointers -
@@ -125,6 +129,14 @@ struct suspectItem
 	QListWidgetItem * mainItem;
 };
 
+struct novaComponent
+{
+	string name;
+	string terminalCommand;
+	string noTerminalCommand;
+	QProcess *process;
+};
+
 typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
 class NovaGUI : public QMainWindow
@@ -166,10 +178,14 @@ public:
     ///Processes the recieved suspect in the suspect table
     void updateSuspect(suspectItem suspect);
 
+    void emitSystemStatusRefresh();
+
     //Calls clearSuspects first then draws the suspect tables from scratch
     void drawAllSuspects();
     //Updates various Suspect-based widgets, called when suspect information changes
     void updateSuspectWidgets();
+    //Removes an individual suspect from display until it's information is updated
+    void hideSuspect(in_addr_t addr);
 
     // Tells CE to save suspects to file
     void saveSuspects();
@@ -216,10 +232,10 @@ public:
     //Writes the current configuration to honeyd configs
     void writeHoneyd(); //TODO
 
+protected:
+    void contextMenuEvent(QContextMenuEvent *event);
 
-private
-
-slots:
+private slots:
 
 	//Menu actions
 	void on_actionRunNovaAs_triggered();
@@ -230,6 +246,9 @@ slots:
 	void on_actionSave_Suspects_triggered();
 	void on_actionHide_Old_Suspects_triggered();
 	void on_actionShow_All_Suspects_triggered();
+	void on_actionClear_All_Suspects_triggered();
+	void on_actionClear_Suspect_triggered();
+	void on_actionHide_Suspect_triggered();
 
 	//Global Widgets
 	void on_mainButton_clicked();
@@ -241,6 +260,11 @@ slots:
 	void on_runButton_clicked();
 	void on_stopButton_clicked();
 
+	//System Status widgets
+	void on_systemStatStartButton_clicked();
+	void on_systemStatStopButton_clicked();
+	void on_systemStatKillButton_clicked();
+
 	//Suspect view widgets
 	void on_clearSuspectsButton_clicked();
 	void on_suspectList_itemSelectionChanged();
@@ -248,20 +272,27 @@ slots:
 	//Custom Slots
     //Updates the UI with the latest suspect information
     void drawSuspect(in_addr_t suspectAddr);
+    void updateSystemStatus();
+    void initiateSystemStatus();
 
 signals:
 
 	//Custom Signals
 	void newSuspect(in_addr_t suspectAddr);
+	void refreshSystemStatus();
 
 private:
-
+	QIcon* greenIcon;
+	QIcon* redIcon;
+	QIcon* yellowIcon;
 };
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);
 /// Updates the suspect list every so often.
 void *CEDraw(void *ptr);
+
+void *StatusUpdate(void *ptr);
 
 ///Socket closing workaround for namespace issue.
 void sclose(int sock);
@@ -274,6 +305,7 @@ void closeNova();
 
 //Starts the Nova processes
 void startNova();
+void startComponent(novaComponent *component);
 
 //Saves the socket addresses for re-use.
 void getSocketAddr();
@@ -291,5 +323,7 @@ void sendToLTM();
 
 //Deletes all Suspect information for the GUI and Nova
 void clearSuspects();
+//Removes all information on a suspect
+void clearSuspect(string suspectStr);
 
 #endif // NOVAGUI_H

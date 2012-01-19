@@ -17,6 +17,7 @@
 
 #include <QString>
 #include <QChar>
+#include <QPoint>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
@@ -39,7 +40,7 @@ u_char buf[MAX_MSG_SIZE];
 int bytesRead;
 
 //Configuration variables
-bool useTerminals;
+bool useTerminals = true;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 
@@ -49,8 +50,19 @@ SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
 bool novaRunning = false;
 
-
 bool featureEnabled[DIM];
+bool editingSuspectList = false;
+QMenu * suspectMenu;
+
+
+#define COMPONENT_CE 0
+#define COMPONENT_LM 1
+#define COMPONENT_DM 2
+#define COMPONENT_DMH 3
+#define COMPONENT_HS 4
+#define COMPONENT_HSH 5
+
+struct novaComponent novaComponents[6];
 
 /************************************************
  * Constructors, Destructors and Closing Actions
@@ -70,6 +82,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	signal(SIGINT, sighandler);
 	pthread_rwlock_init(&lock, NULL);
 	SuspectTable.set_empty_key(1);
+	SuspectTable.set_deleted_key(5);
 	subnets.set_empty_key("");
 	ports.set_empty_key("");
 	nodes.set_empty_key("");
@@ -82,16 +95,16 @@ NovaGUI::NovaGUI(QWidget *parent)
 	scripts.set_deleted_key("Deleted");
 
 	ui.setupUi(this);
-	ui.actionExit->setShortcut(QKeySequence("Ctrl+Q"));
-	ui.actionSave_Suspects->setShortcut(QKeySequence("Ctrl+S"));
-	ui.actionRunNova->setShortcut(QKeySequence("Ctrl+R"));
-	ui.actionStopNova->setShortcut(QKeySequence("Ctrl+K"));
+
+	//Pre-forms the suspect menu
+	suspectMenu = new QMenu(this);
 
 
 	runAsWindowUp = false;
 	editingPreferences = false;
 
 	getInfo();
+	initiateSystemStatus();
 
 	string novaConfig = "Config/NOVAConfig.txt";
 
@@ -111,6 +124,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	//Create listening socket, listen thread and draw thread --------------
 	pthread_t CEListenThread;
+	pthread_t StatusUpdateThread;
 
 	if((CE_InSock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
@@ -135,21 +149,61 @@ NovaGUI::NovaGUI(QWidget *parent)
 		exit(1);
 	}
 
+
 	//Sets initial view
 	this->ui.stackedWidget->setCurrentIndex(0);
 	this->ui.mainButton->setFlat(true);
 	this->ui.suspectButton->setFlat(false);
 	this->ui.doppelButton->setFlat(false);
 	this->ui.haystackButton->setFlat(false);
-
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(drawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(updateSystemStatus()), Qt::BlockingQueuedConnection);
 
 	pthread_create(&CEListenThread,NULL,CEListen, this);
+	pthread_create(&StatusUpdateThread,NULL,StatusUpdate, this);
 }
 
 NovaGUI::~NovaGUI()
 {
 
+}
+
+
+//Draws the suspect context menu
+void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
+{
+	if(ui.suspectList->hasFocus() || ui.suspectList->underMouse())
+	{
+		suspectMenu->clear();
+		if(ui.suspectList->isItemSelected(ui.suspectList->currentItem()))
+		{
+			suspectMenu->addAction(ui.actionClear_Suspect);
+			suspectMenu->addAction(ui.actionHide_Suspect);
+		}
+	}
+	else if(ui.hostileList->hasFocus() || ui.hostileList->underMouse())
+	{
+		suspectMenu->clear();
+		if(ui.hostileList->isItemSelected(ui.hostileList->currentItem()))
+		{
+			suspectMenu->addAction(ui.actionClear_Suspect);
+			suspectMenu->addAction(ui.actionHide_Suspect);
+		}
+	}
+	else
+	{
+		return;
+	}
+	suspectMenu->addSeparator();
+	suspectMenu->addAction(ui.actionClear_All_Suspects);
+	suspectMenu->addAction(ui.actionSave_Suspects);
+	suspectMenu->addSeparator();
+
+	suspectMenu->addAction(ui.actionShow_All_Suspects);
+	suspectMenu->addAction(ui.actionHide_Old_Suspects);
+
+	QPoint globalPos = event->globalPos();
+	suspectMenu->popup(globalPos);
 }
 
 void NovaGUI::closeEvent(QCloseEvent * e)
@@ -304,6 +358,30 @@ void NovaGUI::getPaths()
 	}
 
 	QDir::setCurrent((QString)homePath.c_str());
+
+	novaComponents[COMPONENT_CE].name = "Classification Engine";
+	novaComponents[COMPONENT_CE].terminalCommand = "gnome-terminal --disable-factory -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine";
+	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine > /dev/null";
+
+	novaComponents[COMPONENT_LM].name ="Local Traffic Monitor";
+	novaComponents[COMPONENT_LM].terminalCommand ="gnome-terminal --disable-factory -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor";
+	novaComponents[COMPONENT_LM].noTerminalCommand ="nohup LocalTrafficMonitor > /dev/null";
+
+	novaComponents[COMPONENT_DM].name ="Doppelganger Module";
+	novaComponents[COMPONENT_DM].terminalCommand ="gnome-terminal --disable-factory -t \"DoppelgangerModule\" --geometry \"+500+600\" -x DoppelgangerModule";
+	novaComponents[COMPONENT_DM].noTerminalCommand ="nohup DoppelgangerModule > /dev/null";
+
+	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
+	novaComponents[COMPONENT_DMH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8";
+	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 > /dev/null";
+
+	novaComponents[COMPONENT_HS].name ="Haystack Module";
+	novaComponents[COMPONENT_HS].terminalCommand ="gnome-terminal --disable-factory -t \"Haystack\" --geometry \"+1000+600\" -x Haystack",
+	novaComponents[COMPONENT_HS].noTerminalCommand ="nohup Haystack > /dev/null";
+
+	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
+	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydservice.log";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydservice.log > /dev/null";
 }
 
 void NovaGUI::getSettings()
@@ -344,6 +422,22 @@ void *CEListen(void *ptr)
 		((NovaGUI*)ptr)->receiveCE(CE_InSock);
 	}
 	return NULL;
+}
+
+void *StatusUpdate(void *ptr)
+{
+	while(true)
+	{
+		((NovaGUI*)ptr)->emitSystemStatusRefresh();
+
+		sleep(2);
+	}
+	return NULL;
+}
+
+void NovaGUI::emitSystemStatusRefresh()
+{
+	emit refreshSystemStatus();
 }
 
 /************************************************
@@ -505,6 +599,60 @@ void NovaGUI::loadScripts()
 		prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
 	}
 }
+
+void NovaGUI::initiateSystemStatus()
+{
+	// Pull in the icons now that homePath is set
+	string greenPath = homePath + "/Images/greendot.png";
+	string yellowPath = homePath + "/Images/yellowdot.png";
+	string redPath = homePath + "/Images/reddot.png";
+
+	greenIcon = new QIcon(QPixmap(QString::fromStdString(greenPath)));
+	yellowIcon = new QIcon(QPixmap(QString::fromStdString(yellowPath)));
+	redIcon = new QIcon(QPixmap(QString::fromStdString(redPath)));
+
+	// Populate the System Status table with empty widgets
+	for (int i = 0; i < ui.systemStatusTable->rowCount(); i++)
+		for (int j = 0; j < ui.systemStatusTable->columnCount(); j++)
+			ui.systemStatusTable->setItem(i, j,  new QTableWidgetItem());
+
+	// Add labels for our components
+	ui.systemStatusTable->item(COMPONENT_CE,0)->setText(QString::fromStdString(novaComponents[COMPONENT_CE].name));
+	ui.systemStatusTable->item(COMPONENT_LM,0)->setText(QString::fromStdString(novaComponents[COMPONENT_LM].name));
+	ui.systemStatusTable->item(COMPONENT_DM,0)->setText(QString::fromStdString(novaComponents[COMPONENT_DM].name));
+	ui.systemStatusTable->item(COMPONENT_DMH,0)->setText(QString::fromStdString(novaComponents[COMPONENT_DMH].name));
+	ui.systemStatusTable->item(COMPONENT_HS,0)->setText(QString::fromStdString(novaComponents[COMPONENT_HS].name));
+	ui.systemStatusTable->item(COMPONENT_HSH,0)->setText(QString::fromStdString(novaComponents[COMPONENT_HSH].name));
+}
+
+
+void NovaGUI::updateSystemStatus()
+{
+	char buffer[1024];
+	bzero(buffer, 1024);
+	QTableWidgetItem *item;
+	QTableWidgetItem *pidItem;
+
+
+	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
+	{
+		item = ui.systemStatusTable->item(i,0);
+		pidItem = ui.systemStatusTable->item(i,1);
+
+		if (novaComponents[i].process == NULL || !novaComponents[i].process->pid())
+		{
+			item->setIcon(*redIcon);
+			pidItem->setText("");
+		}
+		else
+		{
+			item->setIcon(*greenIcon);
+			pidItem->setText(QString::number(novaComponents[i].process->pid()));
+		}
+
+	}
+}
+
 
 //Loads ports from file
 void NovaGUI::loadPorts()
@@ -731,6 +879,7 @@ void NovaGUI::loadNodes(ptree *ptr)
 		prompter->displayPrompt(HONEYD_LOAD_NODES_FAIL, string(e.what()).c_str());
 	}
 }
+
 void NovaGUI::loadProfiles()
 {
 	using boost::property_tree::ptree;
@@ -1055,6 +1204,7 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 
 void NovaGUI::drawAllSuspects()
 {
+	editingSuspectList = true;
 	clearSuspectList();
 
 	QListWidgetItem * item = NULL;
@@ -1130,13 +1280,14 @@ void NovaGUI::drawAllSuspects()
 	}
 	updateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
+	editingSuspectList = false;
 }
 
 //Updates the UI with the latest suspect information
 //*NOTE This slot is not thread safe, make sure you set appropriate locks before sending a signal to this slot
 void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 {
-
+	editingSuspectList = true;
 	QString str;
 	QBrush brush;
 	QColor color;
@@ -1276,7 +1427,9 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 	sItem->item->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
 	updateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
+	editingSuspectList = false;
 }
+
 void NovaGUI::updateSuspectWidgets()
 {
 	double hostileAcc = 0, benignAcc = 0, totalAcc = 0;
@@ -1351,6 +1504,7 @@ void NovaGUI::saveSuspects()
 	sendToCE();
 }
 
+//Clears the suspect tables completely.
 void NovaGUI::clearSuspectList()
 {
 	pthread_rwlock_wrlock(&lock);
@@ -1423,6 +1577,52 @@ void  NovaGUI::on_actionExit_triggered()
 	exit(1);
 }
 
+void NovaGUI::on_actionClear_All_Suspects_triggered()
+{
+	editingSuspectList = true;
+	clearSuspects();
+	drawAllSuspects();
+	editingSuspectList = false;
+}
+
+void NovaGUI::on_actionClear_Suspect_triggered()
+{
+	QListWidget * list;
+	if(ui.suspectList->hasFocus())
+	{
+		list = ui.suspectList;
+	}
+	else if(ui.hostileList->hasFocus())
+	{
+		list = ui.hostileList;
+	}
+	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
+	{
+		string suspectStr = list->currentItem()->text().toStdString();
+		in_addr_t addr = inet_addr(suspectStr.c_str());
+		hideSuspect(addr);
+		clearSuspect(suspectStr);
+	}
+}
+
+void NovaGUI::on_actionHide_Suspect_triggered()
+{
+	QListWidget * list;
+	if(ui.suspectList->hasFocus())
+	{
+		list = ui.suspectList;
+	}
+	else if(ui.hostileList->hasFocus())
+	{
+		list = ui.hostileList;
+	}
+	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
+	{
+		in_addr_t addr = inet_addr(list->currentItem()->text().toStdString().c_str());
+		hideSuspect(addr);
+	}
+}
+
 void NovaGUI::on_actionSave_Suspects_triggered()
 {
 	saveSuspects();
@@ -1430,12 +1630,16 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()
 {
+	editingSuspectList = true;
 	clearSuspectList();
+	editingSuspectList = false;
 }
 
 void  NovaGUI::on_actionShow_All_Suspects_triggered()
 {
+	editingSuspectList = true;
 	drawAllSuspects();
+	editingSuspectList = false;
 }
 
 /************************************************
@@ -1490,10 +1694,78 @@ void NovaGUI::on_stopButton_clicked()
 {
 	closeNova();
 }
+
+void NovaGUI::on_systemStatStartButton_clicked()
+{
+	int row = ui.systemStatusTable->currentRow();
+
+	switch (row) {
+	case COMPONENT_CE:
+		startComponent(&novaComponents[COMPONENT_CE]);
+		break;
+	case COMPONENT_DM:
+		startComponent(&novaComponents[COMPONENT_DM]);
+		break;
+	case COMPONENT_HS:
+		startComponent(&novaComponents[COMPONENT_HS]);
+		break;
+	case COMPONENT_LM:
+		startComponent(&novaComponents[COMPONENT_LM]);
+		break;
+	case COMPONENT_HSH:
+		startComponent(&novaComponents[COMPONENT_HSH]);
+		break;
+	case COMPONENT_DMH:
+		startComponent(&novaComponents[COMPONENT_DMH]);
+		break;
+	}
+
+	updateSystemStatus();
+}
+
+void NovaGUI::on_systemStatKillButton_clicked()
+{
+	QProcess *process = novaComponents[ui.systemStatusTable->currentRow()].process;
+
+	if(process == NULL || !process->pid())
+		return;
+
+	process->kill();
+
+	updateSystemStatus();
+}
+
+void NovaGUI::on_systemStatStopButton_clicked()
+{
+	int row = ui.systemStatusTable->currentRow();
+
+	//Sets the message
+	message.SetMessage(EXIT);
+	msgLen = message.SerialzeMessage(msgBuffer);
+
+	switch (row) {
+	case COMPONENT_CE:
+		sendToCE();
+		break;
+	case COMPONENT_DM:
+		sendToDM();
+		break;
+	case COMPONENT_HS:
+		sendToHS();
+		break;
+	case COMPONENT_LM:
+		sendToLTM();
+		break;
+	}
+	updateSystemStatus();
+}
+
 void NovaGUI::on_clearSuspectsButton_clicked()
 {
-	drawAllSuspects();
+	editingSuspectList = true;
 	clearSuspects();
+	drawAllSuspects();
+	editingSuspectList = false;
 }
 
 
@@ -1502,55 +1774,94 @@ void NovaGUI::on_clearSuspectsButton_clicked()
  ************************************************/
 void NovaGUI::on_suspectList_itemSelectionChanged()
 {
-	pthread_rwlock_rdlock(&lock);
-	in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
-	ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
-	pthread_rwlock_unlock(&lock);
+	if(!editingSuspectList)
+	{
+		pthread_rwlock_wrlock(&lock);
+		if(ui.suspectList->currentItem() != NULL)
+		{
+			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
+			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
+		}
+		pthread_rwlock_unlock(&lock);
+	}
 }
+
 /************************************************
  * IPC Functions
  ************************************************/
+void NovaGUI::hideSuspect(in_addr_t addr)
+{
+	pthread_rwlock_wrlock(&lock);
+	editingSuspectList = true;
+	suspectItem * sItem = &SuspectTable[addr];
+	if(!sItem->item->isSelected())
+	{
+		pthread_rwlock_unlock(&lock);
+		editingSuspectList = false;
+		return;
+	}
+	ui.suspectList->removeItemWidget(sItem->item);
+	delete sItem->item;
+	sItem->item = NULL;
+	if(sItem->mainItem != NULL)
+	{
+		ui.hostileList->removeItemWidget(sItem->mainItem);
+		delete sItem->mainItem;
+		sItem->mainItem = NULL;
+	}
+	pthread_rwlock_unlock(&lock);
+	editingSuspectList = false;
+}
 
+//Removes all information on a suspect
+void clearSuspect(string suspectStr)
+{
+	pthread_rwlock_wrlock(&lock);
+	SuspectTable.erase(inet_addr(suspectStr.c_str()));
+	message.SetMessage(CLEAR_SUSPECT, suspectStr);
+	msgLen = message.SerialzeMessage(msgBuffer);
+	sendAll();
+	pthread_rwlock_unlock(&lock);
+}
+
+//Deletes all Suspect information for the GUI and Nova
 void clearSuspects()
 {
 	pthread_rwlock_wrlock(&lock);
 	SuspectTable.clear();
 	message.SetMessage(CLEAR_ALL);
 	msgLen = message.SerialzeMessage(msgBuffer);
-	sendToCE();
-	sendToDM();
+	sendAll();
 	pthread_rwlock_unlock(&lock);
 }
 
 void closeNova()
 {
-	if(novaRunning)
+	//Sets the message
+	message.SetMessage(EXIT);
+	msgLen = message.SerialzeMessage(msgBuffer);
+
+	//Sends the message to all Nova processes
+	sendAll();
+
+	// Close Honeyd processes
+	FILE * out = popen("pidof honeyd","r");
+	if(out != NULL)
 	{
-		//Sets the message
-		message.SetMessage(EXIT);
-		msgLen = message.SerialzeMessage(msgBuffer);
+		char buffer[1024];
+		char * line = fgets(buffer, sizeof(buffer), out);
 
-		//Sends the message to all Nova processes
-		sendAll();
-
-		// Close Honeyd processes
-		FILE * out = popen("pidof honeyd","r");
-		if(out != NULL)
+		if (line != NULL)
 		{
-			char buffer[1024];
-			char * line = fgets(buffer, sizeof(buffer), out);
-
-			if (line != NULL)
-			{
-				string cmd = "sudo kill " + string(line);
-				if(cmd.size() > 5)
-					system(cmd.c_str());
-			}
+			string cmd = "sudo kill " + string(line);
+			if(cmd.size() > 5)
+				system(cmd.c_str());
 		}
-		pclose(out);
-		novaRunning = false;
 	}
+	pclose(out);
+	novaRunning = false;
 }
+
 
 void startNova()
 {
@@ -1582,31 +1893,27 @@ void startNova()
 			}
 		}
 
-		if(!useTerminals)
+		for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
 		{
-			system(("nohup sudo honeyd -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db"
-					" -s "+writePath+"/Logs/honeydservice.log > /dev/null &").c_str());
-			system(("nohup sudo honeyd -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db"
-					" -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 > /dev/null &").c_str());
-			system("nohup LocalTrafficMonitor > /dev/null &");
-			system("nohup Haystack > /dev/null &");
-			system("nohup ClassificationEngine > /dev/null &");
-			system("nohup DoppelgangerModule > /dev/null &");
+			startComponent(&novaComponents[i]);
 		}
-		else
-		{
-			system(("(gnome-terminal -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config"
-					" -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydservice.log )&").c_str());
-			system(("(gnome-terminal -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config"
-					" -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 )&").c_str());
-			system("(gnome-terminal -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor)&");
-			system("(gnome-terminal -t \"Haystack\" --geometry \"+1000+600\" -x Haystack)&");
-			system("(gnome-terminal -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine)&");
-			system("(gnome-terminal -t \"DoppelgangerModule\" --geometry \"+500+600\" -x DoppelgangerModule)&");
-		}
+
 		novaRunning = true;
 	}
 }
+
+void startComponent(novaComponent *component)
+{
+	QString program;
+	if (useTerminals)
+		program = QString::fromStdString(component->terminalCommand);
+	else
+		program = QString::fromStdString(component->noTerminalCommand);
+
+	component->process = new QProcess();
+	component->process->start(program);
+}
+
 
 /************************************************
  * Socket Functions
@@ -1676,7 +1983,7 @@ void sendToCE()
 		return;
 	}
 
-	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(CE_OutSock);
@@ -1703,7 +2010,7 @@ void sendToDM()
 		return;
 	}
 
-	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(DM_OutSock);
@@ -1730,7 +2037,7 @@ void sendToHS()
 		return;
 	}
 
-	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(HS_OutSock);
@@ -1757,7 +2064,7 @@ void sendToLTM()
 		return;
 	}
 
-	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(LTM_OutSock);
@@ -1806,7 +2113,7 @@ void sendAll()
 		close(CE_OutSock);
 	}
 
-	if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(CE_OutSock);
@@ -1822,7 +2129,7 @@ void sendAll()
 		close(DM_OutSock);
 	}
 
-	if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(DM_OutSock);
@@ -1839,7 +2146,7 @@ void sendAll()
 		close(HS_OutSock);
 	}
 
-	if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(HS_OutSock);
@@ -1856,7 +2163,7 @@ void sendAll()
 		close(LTM_OutSock);
 	}
 
-	if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
 		close(LTM_OutSock);
