@@ -41,7 +41,7 @@ int IPCsock;
 int socketSize = sizeof(remote);
 socklen_t * socketSizePtr = (socklen_t*)&socketSize;
 
-string sAlarmPort;
+in_port_t sAlarmPort;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -350,37 +350,28 @@ string Nova::DoppelgangerModule::Usage()
 void DoppelgangerModule::LoadConfig(char* configFilePath)
 {
 	string prefix;
-	bool v = true;
+	int confCheck = 0;
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
-	const string prefixes[] = {"INTERFACE", "DM_HONEYD_CONFIG",
-			"DOPPELGANGER_IP", "DM_ENABLED", "USE_TERMINALS", "SILENT_ALARM_PORT"};
+	confCheck = NovaConfig->SetDefaults();
 
 	openlog("DoppelgangerModule", OPEN_SYSL, LOG_AUTHPRIV);
 
-	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
-	{
-		prefix = prefixes[i];
-
-		NovaConfig->options[prefix];
-		if (!NovaConfig->options[prefix].isValid)
-		{
-			syslog(SYSL_ERR, "Line: %d ERROR: The configuration variable # %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
-			v = false;
-		}
-	}
-
 	//Checks to make sure all values have been set.
-	if(v == false)
+	if(confCheck == 2)
 	{
-		syslog(SYSL_ERR, "Line: %d ERROR: One or more values have not been set in configuration file %s", __LINE__, configFilePath);
+		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
 		exit(1);
 	}
-	else
+	else if(confCheck == 1)
 	{
-		syslog(SYSL_INFO, "Line: %d INFO: Config loaded successfully.", __LINE__);
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
+	}
+	else if (confCheck == 0)
+	{
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
 	}
 
 	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());

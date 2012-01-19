@@ -88,7 +88,7 @@ double maxFeatureValues[DIM];
 // Nova Configuration Variables (read from config file)
 bool isTraining;
 bool useTerminals;
-int sAlarmPort;					//Silent Alarm destination port
+in_port_t sAlarmPort;					//Silent Alarm destination port
 int classificationTimeout;		//In seconds, how long to wait between classifications
 int k;							//number of nearest neighbors
 double eps;						//error bound
@@ -1136,7 +1136,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 {
 	string prefix, line;
 	uint i = 0;
-	bool v = true;
+	int confCheck = 0;
 
 	string settingsPath = homePath +"/settings";
 	ifstream settings(settingsPath.c_str());
@@ -1185,35 +1185,22 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
-	NovaConfig->SetDefaults();
+
+	confCheck = NovaConfig->SetDefaults();
 
 	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
-	const string prefixes[] = {"INTERFACE","USE_TERMINALS","SILENT_ALARM_PORT",
-	"K", "EPS",
-	"CLASSIFICATION_TIMEOUT","IS_TRAINING",
-	"CLASSIFICATION_THRESHOLD","DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "ENABLED_FEATURES"};
-
-	for (i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
-	{
-		prefix = prefixes[i];
-
-		NovaConfig->options[prefix];
-
-		if(!NovaConfig->options[prefix].isValid)
-		{
-			syslog(SYSL_ERR, "Line: %d The configuration variable %s was not set in configuration file %s", __LINE__, prefixes[i].c_str(), configFilePath);
-			v = false;
-		}
-	}
-
 	//Checks to make sure all values have been set.
-	if(v == false)
+	if(confCheck == 2)
 	{
-		syslog(SYSL_ERR, "Line: %d One or more values have not been set.", __LINE__);
+		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
 		exit(1);
 	}
-	else
+	else if(confCheck == 1)
+	{
+		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
+	}
+	else if (confCheck == 0)
 	{
 		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
 	}
