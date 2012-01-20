@@ -10,6 +10,7 @@
 
 #include <QtGui/QMainWindow>
 #include <QtGui/QTreeWidget>
+ #include <QProcess>
 #include <QMouseEvent>
 #include "ui_novagui.h"
 #include <boost/property_tree/ptree.hpp>
@@ -17,10 +18,12 @@
 #include <Suspect.h>
 #include <NovaUtil.h>
 #include "dialogPrompter.h"
+#include "NOVAConfiguration.h"
 
 using namespace std;
 using namespace Nova;
 using boost::property_tree::ptree;
+
 
 /*********************************************************************
  - Structs and Tables for quick item access through pointers -
@@ -126,6 +129,14 @@ struct suspectItem
 	QListWidgetItem * mainItem;
 };
 
+struct novaComponent
+{
+	string name;
+	string terminalCommand;
+	string noTerminalCommand;
+	QProcess *process;
+};
+
 typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
 class NovaGUI : public QMainWindow
@@ -166,6 +177,8 @@ public:
 
     ///Processes the recieved suspect in the suspect table
     void updateSuspect(suspectItem suspect);
+
+    void emitSystemStatusRefresh();
 
     //Calls clearSuspects first then draws the suspect tables from scratch
     void drawAllSuspects();
@@ -247,6 +260,11 @@ private slots:
 	void on_runButton_clicked();
 	void on_stopButton_clicked();
 
+	//System Status widgets
+	void on_systemStatStartButton_clicked();
+	void on_systemStatStopButton_clicked();
+	void on_systemStatKillButton_clicked();
+
 	//Suspect view widgets
 	void on_clearSuspectsButton_clicked();
 	void on_suspectList_itemSelectionChanged();
@@ -254,20 +272,27 @@ private slots:
 	//Custom Slots
     //Updates the UI with the latest suspect information
     void drawSuspect(in_addr_t suspectAddr);
+    void updateSystemStatus();
+    void initiateSystemStatus();
 
 signals:
 
 	//Custom Signals
 	void newSuspect(in_addr_t suspectAddr);
+	void refreshSystemStatus();
 
 private:
-
+	QIcon* greenIcon;
+	QIcon* redIcon;
+	QIcon* yellowIcon;
 };
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);
 /// Updates the suspect list every so often.
 void *CEDraw(void *ptr);
+
+void *StatusUpdate(void *ptr);
 
 ///Socket closing workaround for namespace issue.
 void sclose(int sock);
@@ -280,6 +305,7 @@ void closeNova();
 
 //Starts the Nova processes
 void startNova();
+void startComponent(novaComponent *component);
 
 //Saves the socket addresses for re-use.
 void getSocketAddr();
