@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <string.h>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -22,6 +23,12 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 	string line;
 	string prefix;
 	int prefixIndex;
+
+	if( !InitUserConfigs(homeNovaPath) )
+	{
+		//TODO: Error condition. Do something here! Probably return false again.
+		return;
+	}
 
 	string use = module.substr(7, (module.length() - 11));
 
@@ -508,6 +515,38 @@ int NOVAConfiguration::SetDefaults()
 
 	closelog();
 	return out;
+}
+
+// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
+//	Returns: True if (after the function) the user has all necessary ~/.nova config files
+//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
+bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
+{
+	string dotNovaDir = homeNovaPath + "/.nova/";
+
+	struct stat fileAttr;
+	if ( stat( dotNovaDir.c_str(), &fileAttr ) )
+	{
+		return true;
+	}
+	else
+	{
+		//TODO: Do this command programmatically. Not by calling system()
+		if( system("cp -rf /etc/nova/.nova $(HOME)") == -1)
+		{
+			return false;
+		}
+
+		//Check the ~/.nova dir again
+		if ( stat( dotNovaDir.c_str(), &fileAttr ) )
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 
 NOVAConfiguration::NOVAConfiguration()
