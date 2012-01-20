@@ -48,13 +48,12 @@ string homePath, readPath, writePath;
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
-bool novaRunning = false;
 
 bool featureEnabled[DIM];
 bool editingSuspectList = false;
 QMenu * suspectMenu;
 
-
+// Defines the order of components in the process list and novaComponents array
 #define COMPONENT_CE 0
 #define COMPONENT_LM 1
 #define COMPONENT_DM 2
@@ -1548,7 +1547,7 @@ void NovaGUI::on_actionRunNova_triggered()
 
 void NovaGUI::on_actionRunNovaAs_triggered()
 {
-	if(!runAsWindowUp && !novaRunning)
+	if(!runAsWindowUp)
 	{
 		Run_Popup *w = new Run_Popup(this, homePath);
 		w->show();
@@ -1727,10 +1726,8 @@ void NovaGUI::on_systemStatKillButton_clicked()
 {
 	QProcess *process = novaComponents[ui.systemStatusTable->currentRow()].process;
 
-	if(process == NULL || !process->pid())
-		return;
-
-	process->kill();
+	if(process != NULL && process->pid())
+		process->kill();
 
 	updateSystemStatus();
 }
@@ -1755,6 +1752,14 @@ void NovaGUI::on_systemStatStopButton_clicked()
 		break;
 	case COMPONENT_LM:
 		sendToLTM();
+		break;
+	case COMPONENT_DMH:
+		if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
+			novaComponents[COMPONENT_DMH].process->kill();
+		break;
+	case COMPONENT_HSH:
+		if (novaComponents[COMPONENT_HSH].process != NULL && novaComponents[COMPONENT_HSH].process->pid() != 0)
+			novaComponents[COMPONENT_HSH].process->kill();
 		break;
 	}
 	updateSystemStatus();
@@ -1859,47 +1864,44 @@ void closeNova()
 		}
 	}
 	pclose(out);
-	novaRunning = false;
 }
 
 
 void startNova()
 {
-	if(!novaRunning)
+	string homePath = GetHomePath();
+	string input = homePath + "/Config/NOVAConfig.txt";
+
+	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
+	NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
+
+	if (!NovaConfig->options["USE_TERMINALS"].isValid || !NovaConfig->options["ENABLED_FEATURES"].isValid)
 	{
-		string homePath = GetHomePath();
-		string input = homePath + "/Config/NOVAConfig.txt";
-
-		NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-		NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
-
-		if (!NovaConfig->options["USE_TERMINALS"].isValid || !NovaConfig->options["ENABLED_FEATURES"].isValid)
-		{
-			syslog(SYSL_ERR, "File: %s Line: %d ERROR: Unable to load configuration file.", __FILE__, __LINE__);
-		}
-
-		useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-		string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
-
-		for (uint i = 0; i < DIM; i++)
-		{
-			if ('1' == enabledFeatureMask.at(i))
-			{
-				featureEnabled[i] = true;
-			}
-			else
-			{
-				featureEnabled[i] = false;
-			}
-		}
-
-		for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
-		{
-			startComponent(&novaComponents[i]);
-		}
-
-		novaRunning = true;
+		syslog(SYSL_ERR, "File: %s Line: %d ERROR: Unable to load configuration file.", __FILE__, __LINE__);
 	}
+
+	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
+	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
+
+	for (uint i = 0; i < DIM; i++)
+	{
+		if ('1' == enabledFeatureMask.at(i))
+		{
+			featureEnabled[i] = true;
+		}
+		else
+		{
+			featureEnabled[i] = false;
+		}
+	}
+
+	// Start and processes that aren't running already
+	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
+	{
+		if(novaComponents[i].process == NULL || !novaComponents[i].process->pid())
+			startComponent(&novaComponents[i]);
+	}
+
 }
 
 void startComponent(novaComponent *component)

@@ -305,6 +305,8 @@ void closeNova();
 
 //Starts the Nova processes
 void startNova();
+
+// Start one component of Nova
 void startComponent(novaComponent *component);
 
 //Saves the socket addresses for re-use.
