@@ -9,6 +9,8 @@
 #define DIALOGPROMPTER_H_
 
 #include <string>
+#include <vector>
+#include "dialogPrompt.h"
 
 using namespace std;
 
@@ -17,33 +19,14 @@ using namespace std;
 //	Set a message string in dialogPrompter.cpp/messageTypeStrings
 //	Set the dialog type in dialogPrompter.cpp/messageTypeTypes
 #define numberOfMessageTypes 10
-enum messageType
-{
-	CONFIG_READ_FAIL = 0,
-	CONFIG_WRITE_FAIL,
-	DELETE_USED_PROFILE,
-	HONEYD_FILE_READ_FAIL,
-	UNEXPECTED_FILE_ENTRY,
-	HONEYD_LOAD_SUBNETS_FAIL,
-	HONEYD_LOAD_NODES_FAIL,
-	HONEYD_LOAD_PROFILES_FAIL,
-	HONEYD_LOAD_PROFILESET_FAIL,
-	HONEYD_NODE_INVALID_SUBNET,
-};
 
-enum defaultAction
-{
-	CHOICE_SHOW = 0,
-	CHOICE_HIDE,
-	CHOICE_ALWAYS_YES,
-	CHOICE_ALWAYS_NO,
-};
+typedef int messageType;
 
-// Right now we just support "Okay" and "Yes/No" dialogs
-enum dialogType
+struct dialogMessageType
 {
-	DIALOG_NOTIFICATION = 0,
-	DIALOG_YES_NO,
+	string descriptionUID;
+	dialogType type;
+	defaultAction action;
 };
 
 class dialogPrompter
@@ -56,6 +39,8 @@ public:
 	//		configurationFilePath - Path to the "settings" file
 	dialogPrompter(string configurationFilePath);
 
+	messageType registerDialog(dialogMessageType t);
+
 	// Basic destructor
 	virtual ~dialogPrompter();
 
@@ -64,7 +49,7 @@ public:
 	//		arg - Some of the predefined messages can allow for additional info to be included,
 	//			such as a file path or return error value.
 	// Returns: true for an "okay/yes" user response, false otherwise
-	bool displayPrompt(messageType msg, string arg = "");
+	defaultAction displayPrompt(messageType msg, string arg = "");
 
 	// Saves a change in the default user actions for a setting in both the object state and config file
 	//
@@ -75,11 +60,7 @@ public:
 	// Loads all of the default user actions for dialogs from the settings file
 	void loadDefaultActions();
 
-	// Default actions array
-	defaultAction defaultActionToTake[numberOfMessageTypes];
-
-	static const char* messageTypeStrings[];
-	static const dialogType messageTypeTypes[];
+	vector<dialogMessageType> registeredMessageTypes;
 
 private:
 	// Translates a msg type and action to a string for the settings file
@@ -96,7 +77,6 @@ private:
 	static const string hidePrefix;
 	static const string yesPrefix;
 	static const string noPrefix;
-
 };
 
 #endif /* DIALOGPROMPTER_H_ */

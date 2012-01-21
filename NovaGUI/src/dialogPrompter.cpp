@@ -10,38 +10,6 @@
 #include <sstream>
 #include <QtGui>
 
-// These are string messages corresponding to the messageType enums
-// If you add a messageType enum, you must add a string for it here
-// Note: You should format in such a way to allow for an extra argument string to be appended,
-// e.g., "Unable to load file: " can be called with an arg to displayMessage with a filename to be appended
-const char* dialogPrompter::messageTypeStrings[] = {
-		"Error: Unable to read NOVA configuration file ",
-		"Error: Unable to write to NOVA configuration file ",
-		"This profile is currently in use. Are you sure you want to delete it?",
-		"Error: Unable to read Honeyd configuration file ",
-		"Error: Unexpected entry in file ",
-		"Error: Unable to load subnets ",
-		"Error: Unable to load nodes ",
-		"Error: Unable to load profiles ",
-		"Error: Unable to load profile sets ",
-		"Error: Node at IP is outside all valid subnet ranges: ",
-};
-
-// Type of dialog message you want displayed
-const dialogType dialogPrompter::messageTypeTypes[] = {
-		DIALOG_NOTIFICATION,
-		DIALOG_NOTIFICATION,
-		DIALOG_YES_NO,
-		DIALOG_NOTIFICATION,
-		DIALOG_NOTIFICATION,
-		DIALOG_NOTIFICATION,
-		DIALOG_NOTIFICATION,
-		DIALOG_NOTIFICATION,
-		DIALOG_NOTIFICATION,
-		DIALOG_NOTIFICATION,
-};
-
-
 // Prefixes for the configuration file
 const string dialogPrompter::showPrefix = "message show";
 const string dialogPrompter::hidePrefix = "message hide";
@@ -66,19 +34,25 @@ dialogPrompter::~dialogPrompter()
 	// TODO Auto-generated destructor stub
 }
 
+messageType dialogPrompter::registerDialog(dialogMessageType t)
+{
+	for (uint i = 0; i < registeredMessageTypes.size(); i++)
+	{
+		if (!registeredMessageTypes[i].descriptionUID.compare(t.descriptionUID) && registeredMessageTypes[i].type == t.type)
+			return i;
+	}
+	registeredMessageTypes.push_back(t);
+	return (registeredMessageTypes.size() - 1);
+}
+
 void dialogPrompter::loadDefaultActions()
 {
 	ifstream config(configurationFile.data());
 	string line;
 
-	string type;
-	messageType enumType;
-	bool validType;
+	string description, prefix;
+	dialogType type;
 	defaultAction action;
-
-	// Set everything to always show in case the settings file has no entry for one
-	for (int i = 0; i < numberOfMessageTypes; i++)
-		defaultActionToTake[i] = CHOICE_SHOW;
 
 	if (config.is_open())
 	{
@@ -87,48 +61,42 @@ void dialogPrompter::loadDefaultActions()
 			if (!getline(config, line))
 				continue;
 
-			validType = false;
-
 			// Extract the info from the file
 			if (!line.substr(0, showPrefix.length()).compare(showPrefix))
 			{
 				action = CHOICE_SHOW;
-				type = line.substr(showPrefix.length() + 2, line.length());
+				prefix = showPrefix;
 			}
 			else if (!line.substr(0, hidePrefix.length()).compare(hidePrefix))
 			{
 				action = CHOICE_HIDE;
-				type = line.substr(showPrefix.length() + 2, line.length());
+				prefix = hidePrefix;
 			}
 			else if (!line.substr(0, yesPrefix.length()).compare(yesPrefix))
 			{
-				action = CHOICE_ALWAYS_YES;
-				type = line.substr(yesPrefix.length() + 2, line.length());
+				action = CHOICE_DEFAULT;
+				prefix = yesPrefix;
 			}
 			else if (!line.substr(0, noPrefix.length()).compare(noPrefix))
 			{
-				action = CHOICE_ALWAYS_NO;
-				type = line.substr(noPrefix.length() + 2, line.length());
+				action = CHOICE_ALT;
+				prefix = noPrefix;
 			}
 			else
 			{
 				continue;
 			}
 
-			// Map the string to the messageType enum
-			for (int i = 0; i < numberOfMessageTypes; i++)
-				if (!type.compare(messageTypeStrings[i]))
-				{
-					enumType = (messageType)i;
-					validType = true;
-				}
+			line = line.substr(showPrefix.length() + 1);
+			type = (dialogType)atoi(line.substr(0, line.find_first_of(" ")).c_str());
+			description = line.substr(line.find_first_of(" ") + 1);
 
-			if (validType)
-				defaultActionToTake[enumType] = action;
-			else
-			{
-				syslog(SYSL_ERR, "File: %s Line: %d Error in settings file, message type does not exist: %s", __FILE__, __LINE__, type.c_str());
-			}
+			dialogMessageType* t = new dialogMessageType();
+			t->action = action;
+			t->descriptionUID = description;
+			t->type = type;
+
+			registeredMessageTypes.push_back(*t);
 		}
 	}
 	else
@@ -140,11 +108,12 @@ void dialogPrompter::loadDefaultActions()
 void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 {
 	// Set in our local sate
-	defaultActionToTake[msg] = action;
+	registeredMessageTypes[msg].action = action;
 
 	// Pull in the old config file
 	ifstream config(configurationFile.data());
-	string line, type;
+	string line, trimmedLine, description, prefix;
+	dialogType type;
 	stringstream ss;
 
 	// Try to change existing lines first. If !found, we append at the end
@@ -157,25 +126,38 @@ void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 			if (!getline(config, line))
 				continue;
 
+			// Extract the info from the file
 			if (!line.substr(0, showPrefix.length()).compare(showPrefix))
-				type = line.substr(showPrefix.length() + 2);
+				prefix = showPrefix;
 			else if (!line.substr(0, hidePrefix.length()).compare(hidePrefix))
-				type = line.substr(hidePrefix.length() + 2);
-			else if (!line.substr(0, noPrefix.length()).compare(noPrefix))
-				type = line.substr(noPrefix.length() + 2);
+				prefix = hidePrefix;
 			else if (!line.substr(0, yesPrefix.length()).compare(yesPrefix))
-				type = line.substr(yesPrefix.length() + 2);
+				prefix = yesPrefix;
+			else if (!line.substr(0, noPrefix.length()).compare(noPrefix))
+				prefix = noPrefix;
+			else
+				prefix = "";
 
-			// Found an entry
-			if (!type.compare(messageTypeStrings[msg]))
+			if (prefix.compare(""))
 			{
-				found = true;
-				ss << makeConfigurationLine(msg, action);
+				// Trim off the prefix
+				trimmedLine = line.substr(showPrefix.length() + 1);
+
+				type = (dialogType)atoi(trimmedLine.substr(0, trimmedLine.find_first_of(" ")).c_str());
+				description = trimmedLine.substr(trimmedLine.find_first_of(" ") + 1);
+
+				// Found an entry
+				if (!description.compare(registeredMessageTypes[msg].descriptionUID) && type == registeredMessageTypes[msg].type)
+				{
+					found = true;
+					ss << makeConfigurationLine(msg, action);
+				}
+				else
+					ss << line << endl;
 			}
 			else
-			{
 				ss << line << endl;
-			}
+
 		}
 	}
 
@@ -199,91 +181,44 @@ string dialogPrompter::makeConfigurationLine(messageType msg, defaultAction acti
 	switch (action)
 	{
 	case CHOICE_SHOW:
-		ss << showPrefix << " |" << messageTypeStrings[msg] << endl;
+		ss << showPrefix;
 		break;
 	case CHOICE_HIDE:
-		ss << hidePrefix << " |" << messageTypeStrings[msg] << endl;
+		ss << hidePrefix;
 		break;
-	case CHOICE_ALWAYS_YES:
-		ss << yesPrefix << " |" << messageTypeStrings[msg] << endl;
+	case CHOICE_DEFAULT:
+		ss << yesPrefix;
 		break;
-	case CHOICE_ALWAYS_NO:
-		ss << noPrefix << " |" << messageTypeStrings[msg] << endl;
+	case CHOICE_ALT:
+		ss << noPrefix;
 		break;
 	}
+
+	ss  << " " << registeredMessageTypes[msg].type << " " <<  registeredMessageTypes[msg].descriptionUID << endl;
 
 	return ss.str();
 }
 
-bool dialogPrompter::displayPrompt(messageType msg, string arg /*= ""*/)
+defaultAction dialogPrompter::displayPrompt(messageType msg, string text /*= ""*/)
 {
 	// Do we have a default action for this messageType?
-	if (defaultActionToTake[msg] == CHOICE_HIDE)
-		return true;
-	else if (defaultActionToTake[msg] == CHOICE_ALWAYS_YES)
-		return true;
-	else if (defaultActionToTake[msg] == CHOICE_ALWAYS_NO)
-		return false;
+	if (registeredMessageTypes[msg].action == CHOICE_HIDE)
+		return CHOICE_DEFAULT;
+	else if (registeredMessageTypes[msg].action == CHOICE_DEFAULT)
+		return CHOICE_DEFAULT;
+	else if (registeredMessageTypes[msg].action == CHOICE_ALT)
+		return CHOICE_ALT;
 
 
-	// No default action, display the actual message
-	QMessageBox *dialogBox = new QMessageBox();
-	QLabel *checkBoxLabel = new QLabel();
-	QCheckBox *checkBox = new QCheckBox();
-	stringstream errorMessage;
+	dialogType dialog = registeredMessageTypes[msg].type;
 
-	dialogType dialog = messageTypeTypes[msg];
-	errorMessage << messageTypeStrings[msg] << arg;
-
-	// Configure the buttons and checkbox text
-	switch (dialog)
-	{
-	case DIALOG_YES_NO:
-		checkBoxLabel->setText("Always take this action");
-		dialogBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-		break;
-	case DIALOG_NOTIFICATION:
-		checkBoxLabel->setText("Never show this type of error again");
-		dialogBox->setStandardButtons(QMessageBox::Ok);
-		break;
-	}
-
-	dialogBox->setText(errorMessage.str().c_str());
-
-	// This is a bit hackish, but Qt doesn't have a yes/no dialog box with a "always do this" checkbox,
-	// so this inserts one and shifts the buttons below it
-	QLayoutItem *buttons = ((QGridLayout*)dialogBox->layout())->itemAtPosition(2, 0);
-	((QGridLayout*)dialogBox->layout())->addWidget(checkBox, 2, 0);
-	((QGridLayout*)dialogBox->layout())->addWidget(checkBoxLabel, 2, 1);
-	((QGridLayout*)dialogBox->layout())->addWidget(buttons->widget(), 3, 0, 1, 2);
+	dialogPrompt *dialogBox = new dialogPrompt(dialog, QString::fromStdString(text), QString::fromStdString(""));
 
 	// Prompt the user
-	dialogBox->exec();
+	defaultAction action = dialogBox->exec();
 
-	// Note: If the user hits the X button, QMessageBox still sets result() automagically
+	if (dialogBox->checkBox->isChecked())
+				setDefaultAction(msg, action);
 
-	// Set the default action of needed, return true for okay/yes responses
-	if (dialogBox->result() == QMessageBox::Ok)
-	{
-		if (checkBox->isChecked())
-			setDefaultAction(msg, CHOICE_HIDE);
-		return true;
-	}
-	else if (dialogBox->result() == QMessageBox::Yes)
-	{
-		if (checkBox->isChecked())
-			setDefaultAction(msg, CHOICE_ALWAYS_YES);
-		return true;
-	}
-	else if (dialogBox->result() == QMessageBox::No)
-	{
-		if (checkBox->isChecked())
-			setDefaultAction(msg, CHOICE_ALWAYS_NO);
-		return false;
-	}
-	else /* Shouldn't get here */
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d Shouldn't get here. displayPrompt's result was invalid", __FILE__, __LINE__);
-		return false;
-	}
+	return action;
 }

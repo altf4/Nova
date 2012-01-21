@@ -163,8 +163,6 @@ void on_featureEnableButton_clicked();
 void on_featureDisableButton_clicked();
 
 
-
-
 private:
 	void setInputValidators();
     Ui::NovaConfigClass ui;

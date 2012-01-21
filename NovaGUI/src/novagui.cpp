@@ -112,6 +112,38 @@ NovaGUI::NovaGUI(QWidget *parent)
 	// Load the dialog stuff in
 	prompter = new dialogPrompter();
 
+	dialogMessageType * t = new dialogMessageType();
+	t->descriptionUID = "Failure reading config files";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	CONFIG_READ_FAIL = prompter->registerDialog(*t);
+
+	t->descriptionUID = "Failure writing config files";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	CONFIG_WRITE_FAIL = prompter->registerDialog(*t);
+
+	t->descriptionUID = "Failure reading honeyd files";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	HONEYD_READ_FAIL = prompter->registerDialog(*t);
+
+	t->descriptionUID = "Failure loading honeyd config files";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	HONEYD_LOAD_FAIL = prompter->registerDialog(*t);
+
+	t->descriptionUID = "Unexpected file entries";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	UNEXPECTED_ENTRY = prompter->registerDialog(*t);
+
+	t->descriptionUID = "Honeyd subnets out of range";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	HONEYD_INVALID_SUBNET = prompter->registerDialog(*t);
+
+
 	loadAll();
 
 	//This register meta type function needs to be called for any object types passed through a signal
@@ -594,7 +626,7 @@ void NovaGUI::loadScripts()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading scripts: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_READ_FAIL, "Problem loading scripts:  " + string(e.what()));
 	}
 }
 
@@ -688,7 +720,7 @@ void NovaGUI::loadPorts()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading ports: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_READ_FAIL, "Problem loading ports: " + string(e.what()));
 	}
 }
 
@@ -723,13 +755,13 @@ void NovaGUI::loadGroup()
 					catch(std::exception &e)
 					{
 						syslog(SYSL_ERR, "File: %s Line: %d Problem loading nodes: %s", __FILE__, __LINE__, string(e.what()).c_str());
-						prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
+						prompter->displayPrompt(HONEYD_READ_FAIL, "Problem loading nodes: " + string(e.what()));
 					}
 				}
 				catch(std::exception &e)
 				{
 					syslog(SYSL_ERR, "File: %s Line: %d Problem loading subnets: %s", __FILE__, __LINE__, string(e.what()).c_str());
-					prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
+					prompter->displayPrompt(HONEYD_READ_FAIL, "Problem loading subnets: " + string(e.what()));
 				}
 			}
 		}
@@ -737,7 +769,7 @@ void NovaGUI::loadGroup()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, group.c_str(), string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_FILE_READ_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_READ_FAIL, "Problem loading group:  string(e.what())");
 	}
 }
 
@@ -784,14 +816,14 @@ void NovaGUI::loadSubnets(ptree *ptr)
 			else
 			{
 				syslog(SYSL_ERR, "File: %s Line: %d Unexpected Entry in file: %s", __FILE__, __LINE__, string(v.first.data()).c_str());
-				prompter->displayPrompt(UNEXPECTED_FILE_ENTRY, string(v.first.data()).c_str());
+				prompter->displayPrompt(UNEXPECTED_ENTRY, string(v.first.data()).c_str());
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading subnets: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_LOAD_SUBNETS_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_FAIL, "Problem loading subnets: " + string(e.what()));
 	}
 }
 
@@ -861,20 +893,20 @@ void NovaGUI::loadNodes(ptree *ptr)
 				else
 				{
 					syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet ranges", __FILE__, __LINE__, n.address.c_str());
-					prompter->displayPrompt(HONEYD_NODE_INVALID_SUBNET, n.address);
+					prompter->displayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all valid subnet ranges: " + n.address);
 				}
 			}
 			else
 			{
 				syslog(SYSL_ERR, "File: %s Line: %d Unexpected Entry in file: %s", __FILE__, __LINE__, string(v.first.data()).c_str());
-				prompter->displayPrompt(UNEXPECTED_FILE_ENTRY, string(v.first.data()).c_str());
+				prompter->displayPrompt(UNEXPECTED_ENTRY, "Unexpected Entry in file: " + string(v.first.data()));
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading nodes: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_LOAD_NODES_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_FAIL, "Problem loading nodes: " + string(e.what()));
 	}
 }
 
@@ -945,7 +977,7 @@ void NovaGUI::loadProfiles()
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading Profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_LOAD_PROFILES_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_FAIL, "Problem loading Profiles: " + string(e.what()));
 	}
 }
 
@@ -1016,7 +1048,7 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile set parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_LOAD_PROFILESET_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_FAIL, "Problem loading profile set parameters: " + string(e.what()));
 	}
 }
 
@@ -1066,7 +1098,7 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile add parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_LOAD_PROFILES_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_FAIL, "Problem loading profile add parameters: " + string(e.what()));
 	}
 }
 
@@ -1118,7 +1150,7 @@ void NovaGUI::loadSubProfiles(string parent)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading sub profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		prompter->displayPrompt(HONEYD_LOAD_PROFILES_FAIL, string(e.what()).c_str());
+		prompter->displayPrompt(HONEYD_LOAD_FAIL, "Problem loading sub profiles:" + string(e.what()));
 	}
 }
 
