@@ -10,7 +10,7 @@
 # User alias specification
 
 # Cmnd alias specification
-Cmnd_Alias NOVACMNDS = /sbin/route, /sbin/iptables, /bin/kill, /usr/bin/honeyd
+Cmnd_Alias NOVACMNDS = /sbin/route, /sbin/iptables, /bin/kill, /usr/bin/honeyd, /usr/bin/pkill
 # User privilege specification
 
 Defaults!NOVACMNDS exempt_group=nova
