@@ -391,19 +391,19 @@ void NovaGUI::getPaths()
 
 	novaComponents[COMPONENT_CE].name = "Classification Engine";
 	novaComponents[COMPONENT_CE].terminalCommand = "gnome-terminal --disable-factory -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine";
-	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine > /dev/null";
+	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine";
 
 	novaComponents[COMPONENT_LM].name ="Local Traffic Monitor";
 	novaComponents[COMPONENT_LM].terminalCommand ="gnome-terminal --disable-factory -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor";
-	novaComponents[COMPONENT_LM].noTerminalCommand ="nohup LocalTrafficMonitor > /dev/null";
+	novaComponents[COMPONENT_LM].noTerminalCommand ="nohup LocalTrafficMonitor";
 
 	novaComponents[COMPONENT_DM].name ="Doppelganger Module";
 	novaComponents[COMPONENT_DM].terminalCommand ="gnome-terminal --disable-factory -t \"DoppelgangerModule\" --geometry \"+500+600\" -x DoppelgangerModule";
-	novaComponents[COMPONENT_DM].noTerminalCommand ="nohup DoppelgangerModule > /dev/null";
+	novaComponents[COMPONENT_DM].noTerminalCommand ="nohup DoppelgangerModule";
 
 	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
 	novaComponents[COMPONENT_DMH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8";
-	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8 > /dev/null";
+	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydDoppservice.log 10.0.0.0/8";
 
 	novaComponents[COMPONENT_HS].name ="Haystack Module";
 	novaComponents[COMPONENT_HS].terminalCommand ="gnome-terminal --disable-factory -t \"Haystack\" --geometry \"+1000+600\" -x Haystack",
@@ -411,7 +411,7 @@ void NovaGUI::getPaths()
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
 	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydservice.log";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydservice.log > /dev/null";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s "+writePath+"/Logs/honeydservice.log";
 }
 
 void NovaGUI::getSettings()
@@ -1757,8 +1757,31 @@ void NovaGUI::on_systemStatKillButton_clicked()
 {
 	QProcess *process = novaComponents[ui.systemStatusTable->currentRow()].process;
 
+	// Fix for honeyd not closing with gnome-terminal + sudo
+	if (useTerminals && process != NULL && process->pid() &&
+			(ui.systemStatusTable->currentRow() == COMPONENT_DMH || ui.systemStatusTable->currentRow() == COMPONENT_HSH))
+	{
+		QString killString = QString("sudo pkill -TERM -P ") + QString::number(process->pid());
+		system(killString.toStdString().c_str());
+
+		killString = QString("sudo kill ") + QString::number(process->pid());
+		system(killString.toStdString().c_str());
+	}
+
+	// Politely ask the process to die
+	if(process != NULL && process->pid())
+		process->terminate();
+
+	// Tell the process to die in a stern voice
 	if(process != NULL && process->pid())
 		process->kill();
+
+	// Give up telling it to die and kill it ourselves with the power of root
+	if(process != NULL && process->pid())
+	{
+		QString killString = QString("sudo kill ") + QString::number(process->pid());
+		system(killString.toStdString().c_str());
+	}
 
 	updateSystemStatus();
 }
@@ -1786,11 +1809,23 @@ void NovaGUI::on_systemStatStopButton_clicked()
 		break;
 	case COMPONENT_DMH:
 		if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
-			novaComponents[COMPONENT_DMH].process->terminate();
+		{
+			QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
+			system(killString.toStdString().c_str());
+
+			killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
+			system(killString.toStdString().c_str());
+		}
 		break;
 	case COMPONENT_HSH:
 		if (novaComponents[COMPONENT_HSH].process != NULL && novaComponents[COMPONENT_HSH].process->pid() != 0)
-			novaComponents[COMPONENT_HSH].process->terminate();
+		{
+			QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
+			system(killString.toStdString().c_str());
+
+			killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
+			system(killString.toStdString().c_str());
+		}
 		break;
 	}
 	updateSystemStatus();
@@ -1938,6 +1973,7 @@ void startNova()
 void startComponent(novaComponent *component)
 {
 	QString program;
+
 	if (useTerminals)
 		program = QString::fromStdString(component->terminalCommand);
 	else
