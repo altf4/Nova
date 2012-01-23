@@ -4,6 +4,7 @@
 #include <QtGui>
 #include "NovaUtil.h"
 
+
 enum dialogType {
 	notSet = 0,
 	notifyPrompt,
@@ -14,7 +15,9 @@ enum dialogType {
 	warningActionPrompt
 };
 
-enum defaultAction
+
+
+enum defaultChoice
 {
 	CHOICE_SHOW = 0,
 	CHOICE_HIDE,
@@ -22,36 +25,38 @@ enum defaultAction
 	CHOICE_ALT,
 };
 
-class dialogPrompt : public QMessageBox
+
+class DialogPrompt : public QMessageBox
 {
     Q_OBJECT
 
 public:
     //Default Constructor
-    dialogPrompt(QWidget *parent = 0);
+    DialogPrompt(QWidget *parent = 0);
 
     //Constructs a notification box, if it is a preventable warning then spawn the box before taking the action
     // Describe the side effects of the warning if the action is taken, if the user presses cancel, don't continue
     // If the error or notification will happen regardless simply display message and continue after the box is closed.
-    dialogPrompt(enum dialogType, const QString &title, const QString &text = "", QWidget *parent = 0);
+    DialogPrompt(dialogType type, const QString &title, const QString &text, QWidget *parent = 0);
 
     //Constructs a notification box that displays the problem, the default action and an alternative action
     // message type sets the level, title summarizes the problem, text describes the choices
     // default Action is performed on Yes, Alternative Action is performed on No
     // returns -1 so the action that caused the prompt can be prevented
-    dialogPrompt(enum dialogType, QAction * defaultAction, QAction * alternativeAction,
-    		const QString &title, const QString &text = "", QWidget *parent = 0);
-    ~dialogPrompt();
+    DialogPrompt(dialogType type, QAction * defaultAction, QAction * alternativeAction,
+    		const QString &title, const QString &text, QWidget *parent = 0);
+
+    ~DialogPrompt();
 
     // This returns the defaultAction to use if the checkbox is selected
-    defaultAction exec();
+    defaultChoice exec();
 
-    void setMessageType(dialogType type);
-    void setDefaultAction(QAction * action);
-    void setAlternativeAction(QAction * action);
-    dialogType getMessageType();
-    QAction * getDefaultAction();
-    QAction * getAlternativeAction();
+    void SetMessageType(dialogType type);
+    void SetDefaultAction(QAction * action);
+    void SetAlternativeAction(QAction * action);
+    dialogType GetMessageType();
+    QAction * GetDefaultAction();
+    QAction * GetAlternativeAction();
 
     QCheckBox *checkBox;
 

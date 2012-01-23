@@ -4,16 +4,16 @@ QT += core \
     gui
 
 # PRE_TARGETDEPS += /usr/lib/libann.a
-HEADERS += src/dialogPrompt.h \
-    src/dialogPrompter.h \
+HEADERS += src/DialogPrompter.h \
+    src/DialogPrompt.h \
     src/main.h \
     src/nodePopup.h \
     src/novaconfig.h \
     src/novagui.h \
     src/portPopup.h \
     src/run_popup.h
-SOURCES += src/dialogPrompt.cpp \
-    src/dialogPrompter.cpp \
+SOURCES += src/DialogPrompter.cpp \
+    src/DialogPrompt.cpp \
     src/main.cpp \
     src/nodePopup.cpp \
     src/novaconfig.cpp \
