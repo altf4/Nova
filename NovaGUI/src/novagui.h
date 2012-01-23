@@ -17,7 +17,7 @@
 #include <boost/foreach.hpp>
 #include <Suspect.h>
 #include <NovaUtil.h>
-#include "dialogPrompter.h"
+#include "DialogPrompter.h"
 #include "NOVAConfiguration.h"
 
 using namespace std;
@@ -166,8 +166,8 @@ public:
     ptree *doppTree;
     ptree *subnetTree;
 
-    dialogPrompter *prompter;
-    messageType CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL, HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
+    DialogPrompter *prompter;
+    messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL, HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
 
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();

@@ -13,7 +13,6 @@
 #include <fstream>
 #include <errno.h>
 #include <string.h>
-#include "dialogPrompter.h"
 
 using namespace std;
 using namespace Nova;
@@ -157,16 +156,16 @@ void NovaConfig::on_defaultActionListWidget_currentRowChanged()
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	QString selected = 	ui.defaultActionListWidget->currentItem()->text();
-	messageType msgType = (messageType)ui.msgTypeListWidget->currentRow();
+	messageHandle msgType = (messageHandle)ui.msgTypeListWidget->currentRow();
 
 	if (!selected.compare("Always Show"))
-		mainwindow->prompter->setDefaultAction(msgType, CHOICE_SHOW);
+		mainwindow->prompter->SetDefaultAction(msgType, CHOICE_SHOW);
 	else if (!selected.compare("Always Hide"))
-		mainwindow->prompter->setDefaultAction(msgType, CHOICE_HIDE);
+		mainwindow->prompter->SetDefaultAction(msgType, CHOICE_HIDE);
 	else if (!selected.compare("Always Yes"))
-		mainwindow->prompter->setDefaultAction(msgType, CHOICE_DEFAULT);
+		mainwindow->prompter->SetDefaultAction(msgType, CHOICE_DEFAULT);
 	else if (!selected.compare("Always No"))
-		mainwindow->prompter->setDefaultAction(msgType, CHOICE_ALT);
+		mainwindow->prompter->SetDefaultAction(msgType, CHOICE_ALT);
 	else
 		syslog(SYSL_ERR, "File: %s Line: %d Invalid user dialog default action selected, shouldn't get here", __FILE__, __LINE__);
 
@@ -483,7 +482,7 @@ void NovaConfig::loadPreferences()
 	else
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Error reading NOVA configuration file.", __FILE__, __LINE__);
-		mainwindow->prompter->displayPrompt(mainwindow->CONFIG_READ_FAIL, "Error: Unable to read NOVA configuration file " + configurationFile);
+		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_READ_FAIL, "Error: Unable to read NOVA configuration file " + configurationFile);
 		this->close();
 	}
 	closelog();
@@ -656,7 +655,8 @@ void NovaConfig::on_okButton_clicked()
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
-		mainwindow->prompter->displayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file");
+		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file");
+
 		this->close();
 	}
 
@@ -674,7 +674,7 @@ void NovaConfig::on_applyButton_clicked()
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
-		mainwindow->prompter->displayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file ");
+		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file ");
 		this->close();
 	}
 
@@ -910,7 +910,7 @@ bool NovaConfig::saveConfigurationToFile() {
 		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
 		closelog();
-		mainwindow->prompter->displayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file");
+		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file");
 		in->close();
 		out->close();
 		delete in;
@@ -1331,7 +1331,7 @@ void NovaConfig::loadProfilesFromTree(string parent)
 	catch(std::exception &e)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Problem loading Profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		mainwindow->prompter->displayPrompt(mainwindow->HONEYD_LOAD_FAIL, "Problem loading Profiles: " + string(e.what()));
+		mainwindow->prompter->DisplayPrompt(mainwindow->HONEYD_LOAD_FAIL, "Problem loading Profiles: " + string(e.what()));
 	}
 	closelog();
 }

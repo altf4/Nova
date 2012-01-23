@@ -5,36 +5,27 @@
 // Description : Class to help display error messages to the user via the GUI
 //============================================================================/*
 
-#include "dialogPrompter.h"
+#include "DialogPrompter.h"
 #include "NovaUtil.h"
 #include <sstream>
 #include <QtGui>
 
 // Prefixes for the configuration file
-const string dialogPrompter::showPrefix = "message show";
-const string dialogPrompter::hidePrefix = "message hide";
-const string dialogPrompter::yesPrefix = "message default yes";
-const string dialogPrompter::noPrefix = "message default no";
+const string DialogPrompter::showPrefix = "message show";
+const string DialogPrompter::hidePrefix = "message hide";
+const string DialogPrompter::yesPrefix = "message default yes";
+const string DialogPrompter::noPrefix = "message default no";
 
-dialogPrompter::dialogPrompter()
-{
-	configurationFile = GetHomePath() + "/settings";
-	loadDefaultActions();
-}
 
-dialogPrompter::dialogPrompter(string configurationFilePath)
+DialogPrompter::DialogPrompter(string configurationFilePath /*= ""*/)
 {
-	configurationFile = configurationFilePath;
-	loadDefaultActions();
+	if (!configurationFilePath.compare(""))
+		configurationFile = GetHomePath() + "/settings";
+	LoadDefaultActions();
 }
 
 
-dialogPrompter::~dialogPrompter()
-{
-	// TODO Auto-generated destructor stub
-}
-
-messageType dialogPrompter::registerDialog(dialogMessageType t)
+messageHandle DialogPrompter::RegisterDialog(messageType t)
 {
 	for (uint i = 0; i < registeredMessageTypes.size(); i++)
 	{
@@ -45,14 +36,15 @@ messageType dialogPrompter::registerDialog(dialogMessageType t)
 	return (registeredMessageTypes.size() - 1);
 }
 
-void dialogPrompter::loadDefaultActions()
+
+void DialogPrompter::LoadDefaultActions()
 {
 	ifstream config(configurationFile.data());
 	string line;
 
 	string description, prefix;
 	dialogType type;
-	defaultAction action;
+	defaultChoice action;
 
 	if (config.is_open())
 	{
@@ -91,7 +83,7 @@ void dialogPrompter::loadDefaultActions()
 			type = (dialogType)atoi(line.substr(0, line.find_first_of(" ")).c_str());
 			description = line.substr(line.find_first_of(" ") + 1);
 
-			dialogMessageType* t = new dialogMessageType();
+			messageType* t = new messageType();
 			t->action = action;
 			t->descriptionUID = description;
 			t->type = type;
@@ -105,7 +97,8 @@ void dialogPrompter::loadDefaultActions()
 	}
 }
 
-void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
+
+void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 {
 	// Set in our local sate
 	registeredMessageTypes[msg].action = action;
@@ -150,7 +143,7 @@ void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 				if (!description.compare(registeredMessageTypes[msg].descriptionUID) && type == registeredMessageTypes[msg].type)
 				{
 					found = true;
-					ss << makeConfigurationLine(msg, action);
+					ss << MakeConfigurationLine(msg, action);
 				}
 				else
 					ss << line << endl;
@@ -163,7 +156,7 @@ void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 
 	// Append a new line if we didn't find one to edit
 	if (!found)
-		ss << makeConfigurationLine(msg, action);
+		ss << MakeConfigurationLine(msg, action);
 
 	config.close();
 
@@ -174,7 +167,8 @@ void dialogPrompter::setDefaultAction(messageType msg, defaultAction action)
 	outFile.close();
 }
 
-string dialogPrompter::makeConfigurationLine(messageType msg, defaultAction action)
+
+string DialogPrompter::MakeConfigurationLine(messageHandle msg, defaultChoice action)
 {
 	stringstream ss;
 
@@ -199,26 +193,43 @@ string dialogPrompter::makeConfigurationLine(messageType msg, defaultAction acti
 	return ss.str();
 }
 
-defaultAction dialogPrompter::displayPrompt(messageType msg, string text /*= ""*/)
+
+defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt, QAction * defaultAction, QAction * alternativeAction, QWidget *parent /*= 0*/)
 {
 	// Do we have a default action for this messageType?
-	if (registeredMessageTypes[msg].action == CHOICE_HIDE)
+	if (registeredMessageTypes[handle].action == CHOICE_HIDE)
+	{
 		return CHOICE_DEFAULT;
-	else if (registeredMessageTypes[msg].action == CHOICE_DEFAULT)
+	}
+	else if (registeredMessageTypes[handle].action == CHOICE_DEFAULT)
+	{
+		if (defaultAction != NULL)
+			defaultAction->trigger();
 		return CHOICE_DEFAULT;
-	else if (registeredMessageTypes[msg].action == CHOICE_ALT)
+	}
+	else if (registeredMessageTypes[handle].action == CHOICE_ALT)
+	{
+		if (alternativeAction != NULL)
+			alternativeAction->trigger();
 		return CHOICE_ALT;
+	}
 
+	dialogType dialog = registeredMessageTypes[handle].type;
 
-	dialogType dialog = registeredMessageTypes[msg].type;
-
-	dialogPrompt *dialogBox = new dialogPrompt(dialog, QString::fromStdString(text), QString::fromStdString(""));
+	DialogPrompt *dialogBox = new DialogPrompt(dialog, defaultAction, alternativeAction,
+			QString::fromStdString(messageTxt),
+			QString::fromStdString(registeredMessageTypes[handle].descriptionUID), parent);
 
 	// Prompt the user
-	defaultAction action = dialogBox->exec();
+	defaultChoice action = dialogBox->exec();
 
 	if (dialogBox->checkBox->isChecked())
-				setDefaultAction(msg, action);
+				SetDefaultAction(handle, action);
 
 	return action;
+}
+
+defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt, QWidget *parent /* = 0*/)
+{
+	return DisplayPrompt(handle, messageTxt, NULL, NULL, parent);
 }

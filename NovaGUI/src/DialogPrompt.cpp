@@ -1,7 +1,8 @@
-#include "dialogPrompt.h"
+#include "DialogPrompt.h"
+
 
 //Default constructor, used for instantiation only
-dialogPrompt::dialogPrompt(QWidget *parent)
+DialogPrompt::DialogPrompt(QWidget *parent)
     : QMessageBox(parent)
 {
 	type = notSet;
@@ -14,41 +15,41 @@ dialogPrompt::dialogPrompt(QWidget *parent)
 //Constructs a notification box, if it is a preventable warning then spawn the box before taking the action
 // Describe the side effects of the warning if the action is taken, if the user presses cancel, don't continue
 // If the error or notification will happen regardless simply display message and continue after the box is closed.
-dialogPrompt::dialogPrompt(dialogType type, const QString &title, const QString &text, QWidget *parent)
+DialogPrompt::DialogPrompt(dialogType type, const QString &title, const QString &text, QWidget *parent)
     : QMessageBox(parent)
 {
 	this->setText(title);
-	this->setInformativeText(text);
+	this->setWindowTitle(text);
 	checkBoxLabel = new QLabel();
 	checkBox = new QCheckBox();
 
-	setMessageType(type);
+	SetMessageType(type);
 }
 
 //Constructs a notification box that displays the problem, the default action and an alternative action
 // message type sets the level, title summarizes the problem, text describes the choices
 // default Action is performed on Yes, Alternative Action is performed on No
 // returns -1 so the action that caused the prompt can be prevented
-dialogPrompt::dialogPrompt(enum dialogType, QAction * defaultAction, QAction * alternativeAction,
+DialogPrompt::DialogPrompt(dialogType type, QAction * defaultAction, QAction * alternativeAction,
 		const QString &title, const QString &text, QWidget *parent)
     : QMessageBox(parent)
 {
 	this->setText(title);
-	this->setInformativeText(text);
+	this->setWindowTitle(text);
 	this->defaultAct = defaultAction;
 	this->alternativeAct = alternativeAction;
 	this->checkBoxLabel = new QLabel();
 	this->checkBox = new QCheckBox();
 
-	setMessageType(type);
+	SetMessageType(type);
 }
 
-dialogPrompt::~dialogPrompt()
+DialogPrompt::~DialogPrompt()
 {
 
 }
 
-defaultAction dialogPrompt::exec()
+defaultChoice DialogPrompt::exec()
 {
 	// This is a bit hackish, but Qt doesn't have a yes/no dialog box with a "always do this" checkbox,
 	// so this inserts one and shifts the buttons below it
@@ -75,9 +76,17 @@ defaultAction dialogPrompt::exec()
 		case notifyActionPrompt:
 		case warningActionPrompt:
 			if (selectedButton == QMessageBox::Yes)
+			{
+				if (defaultAct != NULL)
+					defaultAct->trigger();
 				return CHOICE_DEFAULT;
-			if (selectedButton == QMessageBox::No)
+			}
+			else if (selectedButton == QMessageBox::No)
+			{
+				if (alternativeAct != NULL)
+					alternativeAct->trigger();
 				return CHOICE_ALT;
+			}
 			else
 				return CHOICE_SHOW;
 		default:
@@ -87,7 +96,7 @@ defaultAction dialogPrompt::exec()
 
 //Sets the message type, if a question based type or preventable warning, if the user clicks cancel
 // a value of -1 will be returned as a check to prevent the action.
-void dialogPrompt::setMessageType(dialogType type)
+void DialogPrompt::SetMessageType(dialogType type)
 {
 	this->type = type;
 	switch(this->type)
@@ -130,32 +139,32 @@ void dialogPrompt::setMessageType(dialogType type)
 
 //Sets the default action to take, create and action ahead of time and when the user clicks
 // yes on a question based prompt that action will occur
-void dialogPrompt::setDefaultAction(QAction * action)
+void DialogPrompt::SetDefaultAction(QAction * action)
 {
 	defaultAct = action;
 }
 
 //Sets the alternative action to take, create and action ahead of time and when the user clicks
 // No on a question based prompt that action will occur
-void dialogPrompt::setAlternativeAction(QAction * action)
+void DialogPrompt::SetAlternativeAction(QAction * action)
 {
 	alternativeAct = action;
 }
 
 //Returns the message type a value of 0 here means the is currently no message type.
-dialogType dialogPrompt::getMessageType()
+dialogType DialogPrompt::GetMessageType()
 {
 	return type;
 }
 
 //Returns a pointer to the default action
-QAction * dialogPrompt::getDefaultAction()
+QAction * DialogPrompt::GetDefaultAction()
 {
 	return defaultAct;
 }
 
 //Returns a pointer to the alternative action
-QAction * dialogPrompt::getAlternativeAction()
+QAction * DialogPrompt::GetAlternativeAction()
 {
 	return alternativeAct;
 }
