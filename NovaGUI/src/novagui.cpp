@@ -1943,6 +1943,13 @@ void startComponent(novaComponent *component)
 	else
 		program = QString::fromStdString(component->noTerminalCommand);
 
+	// Is the process already running?
+	if (component->process != NULL)
+	{
+		component->process->kill();
+		delete component->process;
+	}
+
 	component->process = new QProcess();
 	component->process->start(program);
 }
