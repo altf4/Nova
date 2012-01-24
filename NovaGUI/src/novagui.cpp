@@ -4,22 +4,8 @@
 // Copyright   : GNU GPL v3
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
 //============================================================================/*
-
-#include <sys/socket.h>
-#include <QtGui>
-#include <QApplication>
 #include "novagui.h"
-#include "novaconfig.h"
-#include "run_popup.h"
 
-#include "NOVAConfiguration.h"
-#include "NovaUtil.h"
-
-#include <QString>
-#include <QChar>
-#include <QPoint>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
 
 using namespace std;
 using namespace Nova;
@@ -441,30 +427,6 @@ void NovaGUI::getSettings()
 	settings = NULL;
 }
 
-/************************************************
- * Thread Loops
- ************************************************/
-
-void *CEListen(void *ptr)
-{
-	while(true)
-	{
-		((NovaGUI*)ptr)->receiveCE(CE_InSock);
-	}
-	return NULL;
-}
-
-void *StatusUpdate(void *ptr)
-{
-	while(true)
-	{
-		((NovaGUI*)ptr)->emitSystemStatusRefresh();
-
-		sleep(2);
-	}
-	return NULL;
-}
-
 void NovaGUI::emitSystemStatusRefresh()
 {
 	emit refreshSystemStatus();
@@ -558,8 +520,10 @@ void NovaGUI::saveAll()
 		pt = it->second.tree;
 		//Required xml entires
 		pt.put<std::string>("interface", it->second.interface);
-		pt.put<std::string>("IP", it->second.address);
+		pt.put<std::string>("IP", it->second.IP);
 		pt.put<bool>("enabled", it->second.enabled);
+		if(it->second.MAC.size())
+			pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
 		nodesTree->add_child("node",pt);
 	}
@@ -832,6 +796,7 @@ void NovaGUI::loadSubnets(ptree *ptr)
 void NovaGUI::loadNodes(ptree *ptr)
 {
 	profile p;
+	ptree * ptr2;
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
@@ -839,61 +804,181 @@ void NovaGUI::loadNodes(ptree *ptr)
 			if(!string(v.first.data()).compare("node"))
 			{
 				node n;
+				int max = 0;
+				bool unique = true;
+				stringstream ss;
+				uint i = 0, j = 0;
+				j = ~j; // 2^32-1
+
 				n.tree = v.second;
 				//Required xml entires
 				n.interface = v.second.get<std::string>("interface");
-				n.address = v.second.get<std::string>("IP");
+				n.IP = v.second.get<std::string>("IP");
 				n.enabled = v.second.get<bool>("enabled");
 				n.pfile = v.second.get<std::string>("profile.name");
+				p = profiles[n.pfile];
 
-				//intialize subnet to NULL and check for smallest bounding subnet
-				n.sub = "";
-
-				n.realIP = htonl(inet_addr(n.address.c_str())); //convert ip to uint32
-				int max = 0; //Tracks the mask with smallest range by comparing num of bits used.
-
-				//Check each subnet
-				for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+				//Get mac if present
+				try //Conditional: has "set" values
 				{
-					//If node falls outside a subnets range skip it
-					if((n.realIP < it->second.base) || (n.realIP > it->second.max))
-						continue;
-					//If this is the smallest range
-					if(it->second.maskBits > max)
+					ptr2 = &v.second.get_child("MAC");
+					//pass 'set' subset and pointer to this profile
+					n.MAC = v.second.get<std::string>("MAC");
+				}
+				catch(...){}
+
+				switch(p.type)
+				{
+
+				//***** STATIC IP ********//
+				case static_IP:
+
+					n.name = n.IP;
+					//intialize subnet to NULL and check for smallest bounding subnet
+					n.sub = "";
+					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
+					//Tracks the mask with smallest range by comparing num of bits used.
+
+					//Check each subnet
+					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 					{
-						//If node isn't using host's address
-						if(it->second.address.compare(n.address))
+						//If node falls outside a subnets range skip it
+						if((n.realIP < it->second.base) || (n.realIP > it->second.max))
+							continue;
+						//If this is the smallest range
+						if(it->second.maskBits > max)
 						{
-							max = it->second.maskBits;
-							n.sub = it->second.address;
+							//If node isn't using host's address
+							if(it->second.address.compare(n.IP))
+							{
+								max = it->second.maskBits;
+								n.sub = it->second.address;
+							}
 						}
 					}
-				}
 
-				bool unique = true;
-				//Check that node has unique IP addr
-				for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-				{
-					if(n.realIP == it->second.realIP)
+					//Check that node has unique IP addr
+					for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 					{
-						unique = false;
+						if(n.realIP == it->second.realIP)
+						{
+							unique = false;
+						}
 					}
-				}
 
-				//If we have a subnet and node is unique
-				if((n.sub != "") && unique)
-				{
+					//If we have a subnet and node is unique
+					if((n.sub != "") && unique)
+					{
+						//save the node in the table
+						nodes[n.name] = n;
+
+						//Put address of saved node in subnet's list of nodes.
+						subnets[nodes[n.name].sub].nodes.push_back(n.name);
+					}
+					//If no subnet found, can't use node unless it's doppelganger.
+					else
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet ranges", __FILE__, __LINE__, n.IP.c_str());
+						prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all valid subnet ranges: " + n.name);
+					}
+					break;
+
+
+				//***** STATIC DHCP (static MAC) ********//
+				case staticDHCP:
+
+					//If no MAC is set, there's a problem
+					if(!n.MAC.size())
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s does not have a MAC Address.",
+								__FILE__, __LINE__, string(n.pfile).c_str());
+						continue;
+					}
+
+					//Associated MAC is already in use, this is not allowed, throw out the node
+					//TODO proper debug prints and popups needed
+					if(nodes.find(n.MAC) != nodes.end())
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected in nodes: %s", __FILE__, __LINE__, n.MAC.c_str());
+						continue;
+					}
+					n.name = n.MAC;
+					n.sub = "";
+					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+					{
+						if(!it->second.name.compare(n.interface))
+							n.sub = it->second.address;
+					}
+					// If no valid subnet/interface found
+					//TODO proper debug prints and popups needed
+					if(!n.sub.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s is unable to resolve it's interface.", __FILE__, __LINE__, n.MAC.c_str());
+						continue;
+					}
+
 					//save the node in the table
-					nodes[n.address] = n;
+					nodes[n.name] = n;
 
 					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.address].sub].nodes.push_back(n.address);
-				}
-				//If no subnet found, can't use node unless it's doppelganger.
-				else
-				{
-					syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet ranges", __FILE__, __LINE__, n.address.c_str());
-					prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all valid subnet ranges: " + n.address);
+					subnets[nodes[n.name].sub].nodes.push_back(n.name);
+					break;
+
+				//***** RANDOM DHCP (random MAC each time run) ********//
+				case randomDHCP:
+
+					n.name = n.pfile + " on " + n.interface;
+
+					//Finds a unique identifier
+					while((nodes.find(n.name) != nodes.end()) && (i < j))
+					{
+						i++;
+						ss.str("");
+						ss << n.pfile << " on " << n.interface << "-" << i;
+						n.name = ss.str();
+					}
+					n.sub = "";
+					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+					{
+						if(!it->second.name.compare(n.interface))
+							n.sub = it->second.address;
+					}
+					// If no valid subnet/interface found
+					//TODO proper debug prints and popups needed
+					if(!n.sub.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+						continue;
+					}
+					//save the node in the table
+					nodes[n.name] = n;
+
+					//Put address of saved node in subnet's list of nodes.
+					subnets[nodes[n.name].sub].nodes.push_back(n.name);
+					break;
+
+				//***** Doppelganger ********//
+				case Doppelganger:
+					n.name = "Doppelganger";
+					n.sub = "";
+					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+					{
+						if(!it->second.name.compare(n.interface))
+							n.sub = it->second.address;
+					}
+					// If no valid subnet/interface found
+					//TODO proper debug prints and popups needed
+					if(!n.sub.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d The Doppelganger is unable to resolve the interface: %s", __FILE__, __LINE__, n.interface.c_str());
+						continue;
+					}
+					//save the node in the table
+					nodes[n.IP] = n;
+
+					//Put address of saved node in subnet's list of nodes.
+					subnets[nodes[n.IP].sub].nodes.push_back(n.IP);
+					break;
 				}
 			}
 			else
@@ -931,8 +1016,8 @@ void NovaGUI::loadProfiles()
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
-				p.DHCP = false;
 				p.ports.clear();
+				p.type = (profileType)v.second.get<int>("type");
 
 				try //Conditional: has "set" values
 				{
@@ -1037,12 +1122,6 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 				p->dropRate = v.second.data();
 				continue;
 			}
-			prefix = "DHCP";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->DHCP = true;
-				continue;
-			}
 		}
 	}
 	catch(std::exception &e)
@@ -1120,7 +1199,11 @@ void NovaGUI::loadSubProfiles(string parent)
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
 
-			prof.DHCP = false;
+			try //Conditional: If profile overrides type
+			{
+				prof.type = (profileType)v.second.get<int>("type");
+			}
+			catch(...){}
 
 			try //Conditional: If profile has set configurations different from parent
 			{
@@ -1884,6 +1967,37 @@ void NovaGUI::hideSuspect(in_addr_t addr)
 	editingSuspectList = false;
 }
 
+/*********************************************************
+ ----------------- General Functions ---------------------
+ *********************************************************/
+
+namespace Nova
+{
+
+/************************************************
+ * Thread Loops
+ ************************************************/
+
+void *StatusUpdate(void *ptr)
+{
+	while(true)
+	{
+		((NovaGUI*)ptr)->emitSystemStatusRefresh();
+
+		sleep(2);
+	}
+	return NULL;
+}
+
+void *CEListen(void *ptr)
+{
+	while(true)
+	{
+		((NovaGUI*)ptr)->receiveCE(CE_InSock);
+	}
+	return NULL;
+}
+
 //Removes all information on a suspect
 void clearSuspect(string suspectStr)
 {
@@ -2251,4 +2365,6 @@ void sendAll()
 void sclose(int sock)
 {
 	close(sock);
+}
+
 }

@@ -68,6 +68,7 @@ install-release:
 	#make folder in etc with path locations to nova files
 	mkdir -p /etc/nova
 	cp Installer/Read/paths /etc/nova
+	cp Installer/Read/nmap-mac-prefixes /etc/nova
 	cp Installer/Read/nmap-os-db /etc/nova
 	cp Installer/Read/sudoers_nova	/etc/sudoers.d
 	chmod 0440 /etc/sudoers.d/sudoers_nova 
@@ -82,6 +83,7 @@ install-release:
 	#restart rsyslog
 	service rsyslog restart
 	#Give permissions
+	chmod a+rw /etc/nova/nmap-mac-prefixes
 	chmod -R a+rw $(HOME)/.nova
 	chmod -R a+rw /usr/share/nova
 	chmod a-w /usr/share/nova
@@ -105,6 +107,7 @@ install-debug:
 	#make folder in etc with path locations to nova files
 	mkdir -p /etc/nova
 	cp Installer/Read/paths /etc/nova
+	cp Installer/Read/nmap-mac-prefixes /etc/nova
 	cp Installer/Read/nmap-os-db /etc/nova
 	cp Installer/Read/sudoers_nova	/etc/sudoers.d
 	chmod 0440 /etc/sudoers.d/sudoers_nova 

@@ -1,9 +1,4 @@
 #include "nodePopup.h"
-#include "portPopup.h"
-#include "novaconfig.h"
-#include "nodePopup.h"
-#include <fstream>
-#include <signal.h>
 
 using namespace std;
 
@@ -40,7 +35,7 @@ nodePopup::nodePopup(QWidget *parent, node *n, int type, string home)
 	this->setEnabled(true);
 	remoteCall = false;
 
-	address = n->address;
+	address = n->IP;
 	gnode = n;
 	pullData();
 	gnode = &nodes[address];
@@ -167,7 +162,7 @@ void nodePopup::loadNodeProfile()
 			ui.profileEdit->setText((QString)gnode->pfile.c_str());
 			ui.personalityEdit->setText((QString)p->personality.c_str());
 			ui.ethernetEdit->setText((QString)p->ethernet.c_str());
-			ui.ipEdit->setText((QString)gnode->address.c_str());
+			ui.ipEdit->setText((QString)gnode->IP.c_str());
 			ui.tcpActionEdit->setText((QString)p->tcpAction.c_str());
 			ui.uptimeEdit->setText((QString)p->uptime.c_str());
 			ui.profileTreeWidget->setCurrentItem(p->item);
@@ -227,7 +222,7 @@ void nodePopup::loadAllNodes()
 
 			//Create the node item for the Haystack tree
 			item = new QTreeWidgetItem(it->second.item, 0);
-			item->setText(0, (QString)n->address.c_str());
+			item->setText(0, (QString)n->IP.c_str());
 			n->item = item;
 
 

@@ -1,12 +1,9 @@
 #ifndef NOVACONFIG_H
 #define NOVACONFIG_H
 
-#include <QtGui/QMainWindow>
-#include <QtGui/QTreeWidget>
 #include "ui_novaconfig.h"
+#include "stdlib.h"
 #include "novagui.h"
-
-using namespace std;
 
 #define HAYSTACK_MENU_INDEX 5
 #define NODE_INDEX 0
@@ -18,11 +15,19 @@ using namespace std;
 #define CLONE_NODE 1
 #define EDIT_NODE 2
 
+typedef google::dense_hash_map<uint, string, tr1::hash<uint>, eqint> MACToVendorTable;
+typedef google::dense_hash_map<string, vector<uint> *,  tr1::hash<string>, eqstr > VendorToMACTable;
+
+using namespace std;
+
 class NovaConfig : public QMainWindow
 {
     Q_OBJECT
 
 public:
+    //Value set by dialog windows
+    string retVal;
+
     bool editingPorts;
     bool editingNodes;
     string homePath;
@@ -33,6 +38,9 @@ public:
     PortTable ports;
     ScriptTable scripts;
 
+    MACToVendorTable MACVendorTable;
+    VendorToMACTable VendorMACTable;
+
     string group;
 
     NovaConfig(QWidget *parent = 0, string homePath = "");
@@ -41,7 +49,18 @@ public:
 
     //Loads the configuration options from NOVAConfig.txt
     void loadPreferences();
+    //Display MAC vendor prefix's
+    void displayMACPrefixWindow();
+    //Load Personality choices from nmap fingerprints file
+    void displayNmapPersonalityTree();
+    //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
+    string resolveMACVendor(uint MACPrefix);
+    //Load MAC vendor prefix choices from nmap mac prefix file
+    void loadMACPrefixs();
 
+    //Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
+    // *note conflicts are only checked for locally, weird things may happen if the address is already being used.
+    string generateUniqueMACAddr(string vendor);
 
     // Creates a new item for the featureList
     //		name - Name to be displayed, e.g. "Ports Contacted"
@@ -56,7 +75,6 @@ public:
 
     // Advances the currently selected item to the next one in the featureList
     void advanceFeatureSelection();
-
 
     //Draws the current honeyd configuration for haystack and doppelganger
     void loadHaystack();
@@ -140,6 +158,8 @@ void on_defaultActionListWidget_currentRowChanged();
 
 //Check Box signal for enabling pcap settings group box
 void on_pcapCheckBox_stateChanged(int state);
+//Check Box signal for enabling or disabling dhcp IP resolution
+void on_dhcpComboBox_currentIndexChanged(int index);
 
 //GUI Signals for Profile settings
 void on_editPortsButton_clicked();
@@ -156,12 +176,13 @@ void on_nodeAddButton_clicked();
 void on_nodeDeleteButton_clicked();
 void on_nodeEnableButton_clicked();
 void on_nodeDisableButton_clicked();
+void on_setEthernetButton_clicked();
+void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
 
 //GUI Signals for Feature addition/removal
 void on_featureEnableButton_clicked();
 void on_featureDisableButton_clicked();
-
 
 private:
 	void setInputValidators();

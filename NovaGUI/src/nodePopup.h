@@ -1,9 +1,8 @@
 #ifndef NODEPOPUP_H
 #define NODEPOPUP_H
 
-#include <QtGui/QWidget>
+#include "novagui.h"
 #include "ui_nodePopup.h"
-#include "novaconfig.h"
 
 #define FROM_NODE_CONFIG true
 

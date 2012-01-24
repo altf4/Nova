@@ -51,6 +51,75 @@ string GetHomePath()
 	}
 	return homePath;
 }
+string GetReadPath()
+{
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(PATHS_FILE);
+	string prefix, readPath, line;
+
+	if(paths->is_open())
+	{
+		while(paths->good())
+		{
+			getline(*paths,line);
+
+			prefix = "NOVA_RD";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				readPath = line;
+				break;
+			}
+		}
+	}
+	paths->close();
+	delete paths;
+	paths = NULL;
+
+	//Resolves environment variables
+	readPath = ResolvePathVars(readPath);
+
+	if(readPath == "")
+	{
+		exit(1);
+	}
+	return readPath;
+}
+
+string GetWritePath()
+{
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(PATHS_FILE);
+	string prefix, writePath, line;
+
+	if(paths->is_open())
+	{
+		while(paths->good())
+		{
+			getline(*paths,line);
+
+			prefix = "NOVA_WR";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				writePath = line;
+				break;
+			}
+		}
+	}
+	paths->close();
+	delete paths;
+	paths = NULL;
+
+	//Resolves environment variables
+	writePath = ResolvePathVars(writePath);
+
+	if(writePath == "")
+	{
+		exit(1);
+	}
+	return writePath;
+}
 
 string GetLocalIP(const char *dev)
 {
@@ -129,7 +198,9 @@ string ResolvePathVars(string path)
 			}
 		}
 	}
-	return var;
+	if(var.compare(""))
+		return var;
+	else return path;
 }
 
 
