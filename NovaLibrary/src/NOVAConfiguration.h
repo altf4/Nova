@@ -21,8 +21,9 @@ struct NovaOption {
 	string data; // Value for the configuration variable
 };
 
+using namespace google;
 // Maps the configuration prefix (e.g. INTERFACE) to a NovaOption instance
-typedef google::dense_hash_map<string, struct NovaOption, tr1::hash<string>, eqstr > optionsMap;
+typedef dense_hash_map<string, struct NovaOption, tr1::hash<string>, eqstr > optionsMap;
 typedef vector <pair<string, string> > defaultVector;
 
 class NOVAConfiguration {
