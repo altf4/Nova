@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <sys/un.h>
 #include <ANN/ANN.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <pthread.h>

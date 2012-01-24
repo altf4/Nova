@@ -36,9 +36,15 @@ public:
 	//		homeNovaPath - Path to the /home/user/.nova folder
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
 	void LoadConfig(char* configFilePath, string homeNovaPath, string module);
+
 	// Checks through the optionsMap options and sets the default value for any
 	// configuration variable that has a false isValid attribute
 	int SetDefaults();
+
+	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
+	//	Returns: True if (after the function) the user has all necessary ~/.nova config files
+	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
+	bool static InitUserConfigs(string homeNovaPath);
 
 public:
 	// Map of configuration variable name to NovaOption (isValid and data)

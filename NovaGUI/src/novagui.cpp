@@ -87,12 +87,17 @@ NovaGUI::NovaGUI(QWidget *parent)
 	runAsWindowUp = false;
 	editingPreferences = false;
 
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+
+	if( !NOVAConfiguration::InitUserConfigs(GetHomePath()) )
+	{
+		exit(EXIT_FAILURE);
+	}
+
 	getInfo();
 	initiateSystemStatus();
 
 	string novaConfig = "Config/NOVAConfig.txt";
-
-	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
 	// Create the dialog generator
 	prompter = new DialogPrompter();
@@ -175,6 +180,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	this->ui.haystackButton->setFlat(false);
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(drawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(updateSystemStatus()), Qt::BlockingQueuedConnection);
+
 	pthread_create(&CEListenThread,NULL,CEListen, this);
 	pthread_create(&StatusUpdateThread,NULL,StatusUpdate, this);
 }
