@@ -24,12 +24,6 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 	string prefix;
 	int prefixIndex;
 
-	if( !InitUserConfigs(homeNovaPath) )
-	{
-		//TODO: Error condition. Do something here! Probably return false again.
-		return;
-	}
-
 	string use = module.substr(7, (module.length() - 11));
 
 	openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
@@ -522,23 +516,22 @@ int NOVAConfiguration::SetDefaults()
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
 bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 {
-	string dotNovaDir = homeNovaPath + "/.nova/";
-
 	struct stat fileAttr;
-	if ( stat( dotNovaDir.c_str(), &fileAttr ) )
+	//TODO: Do a proper check to make sure all config files exist, not just the .nova dir
+	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		return true;
 	}
 	else
 	{
 		//TODO: Do this command programmatically. Not by calling system()
-		if( system("cp -rf /etc/nova/.nova $(HOME)") == -1)
+		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
 		{
 			return false;
 		}
 
 		//Check the ~/.nova dir again
-		if ( stat( dotNovaDir.c_str(), &fileAttr ) )
+		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 		{
 			return true;
 		}

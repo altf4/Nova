@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+#Set pcap permissions
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/LocalTrafficMonitor
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/Haystack
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
+#Give permissions
+chmod 0440 /etc/sudoers.d/sudoers_nova
+#make nova group
+groupadd -f nova
+usermod -a -G nova $SUDO_USER

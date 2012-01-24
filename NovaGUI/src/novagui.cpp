@@ -98,16 +98,21 @@ NovaGUI::NovaGUI(QWidget *parent)
 	//Pre-forms the suspect menu
 	suspectMenu = new QMenu(this);
 
-
 	runAsWindowUp = false;
 	editingPreferences = false;
+
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+
+	if( !NOVAConfiguration::InitUserConfigs(GetHomePath()) )
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
+		exit(EXIT_FAILURE);
+	}
 
 	getInfo();
 	initiateSystemStatus();
 
 	string novaConfig = "Config/NOVAConfig.txt";
-
-	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
 	// Load the dialog stuff in
 	prompter = new dialogPrompter();
