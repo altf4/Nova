@@ -13,8 +13,6 @@ release:
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	cd NovaGUI; $(MAKE) release
 	mkdir -p Installer/.nova/Config
-	cp NovaLibrary/Config/Log4cxxConfig.xml Installer/.nova/Config/Log4cxxConfig.xml
-	cp NovaLibrary/Config/Log4cxxConfig_Console.xml Installer/.nova/Config/Log4cxxConfig_Console.xml
 	cp NovaLibrary/Config/NOVAConfig.txt Installer/.nova/Config/NOVAConfig.txt
 	cp Haystack/Config/haystack.config Installer/.nova/Config/haystack.config
 	cp DoppelgangerModule/Config/doppelganger.config Installer/.nova/Config/doppelganger.config
@@ -31,8 +29,6 @@ debug:
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	cd NovaGUI; $(MAKE) debug
 	mkdir -p Installer/.nova/Config
-	cp NovaLibrary/Config/Log4cxxConfig.xml Installer/.nova/Config/Log4cxxConfig.xml
-	cp NovaLibrary/Config/Log4cxxConfig_Console.xml Installer/.nova/Config/Log4cxxConfig_Console.xml
 	cp NovaLibrary/Config/NOVAConfig.txt Installer/.nova/Config/NOVAConfig.txt
 	cp Haystack/Config/haystack.config Installer/.nova/Config/haystack.config
 	cp DoppelgangerModule/Config/doppelganger.config Installer/.nova/Config/doppelganger.config
@@ -92,7 +88,6 @@ install-debug:
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
-
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
