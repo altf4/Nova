@@ -3,7 +3,7 @@
  <class>NovaConfigClass</class>
  <widget class="QMainWindow" name="NovaConfigClass">
   <property name="windowModality">
-   <enum>Qt::NonModal</enum>
+   <enum>Qt::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -118,7 +118,7 @@
      <string/>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>6</number>
     </property>
     <widget class="QWidget" name="generalPage">
      <widget class="QGroupBox" name="genGroupBox">
@@ -427,10 +427,6 @@ p, li { white-space: pre-wrap; }
         </property>
        </widget>
       </widget>
-      <zorder>interfaceLabel</zorder>
-      <zorder>saGroupBox</zorder>
-      <zorder>interfaceEdit</zorder>
-      <zorder>tcpGroupBox</zorder>
      </widget>
     </widget>
     <widget class="QWidget" name="runPage">
@@ -1338,50 +1334,17 @@ p, li { white-space: pre-wrap; }
        <property name="indentation">
         <number>20</number>
        </property>
-       <property name="rootIsDecorated">
-        <bool>true</bool>
-       </property>
        <property name="uniformRowHeights">
         <bool>false</bool>
        </property>
        <property name="sortingEnabled">
         <bool>true</bool>
        </property>
-       <attribute name="headerVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerCascadingSectionResizes">
-        <bool>false</bool>
+       <attribute name="headerDefaultSectionSize">
+        <number>214</number>
        </attribute>
        <attribute name="headerDefaultSectionSize">
-        <number>148</number>
-       </attribute>
-       <attribute name="headerHighlightSections">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerMinimumSectionSize">
-        <number>25</number>
-       </attribute>
-       <attribute name="headerStretchLastSection">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerCascadingSectionResizes">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerDefaultSectionSize">
-        <number>148</number>
-       </attribute>
-       <attribute name="headerVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerMinimumSectionSize">
-        <number>25</number>
-       </attribute>
-       <attribute name="headerHighlightSections">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerStretchLastSection">
-        <bool>false</bool>
+        <number>214</number>
        </attribute>
        <column>
         <property name="text">
