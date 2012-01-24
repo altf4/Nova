@@ -69,10 +69,10 @@ install-release:
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
 	#Copy the hidden directories and files
-	install -d Installer/.nova $(DESTDIR)//etc/nova
+	cp -rp Installer/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
-	install -d Installer/Write/nova $(DESTDIR)/usr/share/
+	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
@@ -91,10 +91,10 @@ install-debug:
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
 	#Copy the hidden directories and files
-	install -d Installer/.nova $(DESTDIR)/$(HOME)
+	cp -rp Installer/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
-	install -d Installer/Write/nova $(DESTDIR)/usr/share/
+	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
