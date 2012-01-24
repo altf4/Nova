@@ -64,7 +64,7 @@ install: install-release
 install-release:
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefix $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
@@ -89,7 +89,7 @@ install-debug:
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefix $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
 
