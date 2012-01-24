@@ -62,91 +62,58 @@ install: install-release
 
 #Requires root
 install-release:
-	#make nova group
-	groupadd -f nova
-	usermod -a -G nova $(SUDO_USER)
 	#make folder in etc with path locations to nova files
-	mkdir -p /etc/nova
-	cp Installer/Read/paths /etc/nova
-	cp Installer/Read/nmap-os-db /etc/nova
-	cp Installer/Read/sudoers_nova	/etc/sudoers.d
-	chmod 0440 /etc/sudoers.d/sudoers_nova 
+	mkdir -p $(DESTDIR)/etc/nova
+	install Installer/Read/paths $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
+	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
 	#Copy the hidden directories and files
-	mkdir -p $(HOME)/.nova
-	cp -R -f Installer/.nova /etc/nova
+	install -d Installer/.nova $(DESTDIR)//etc/nova
 	#Copy the scripts and logs
-	mkdir -p /usr/share/nova
-	cp -R Installer/Write/nova /usr/share/
-	#move 40-nova.conf into /etc/rsyslog.d/ for logging
-	cp Installer/Read/40-nova.conf /etc/rsyslog.d/
-	#restart rsyslog
-	service rsyslog restart
-	#Give permissions
-	chmod -R a+rw $(HOME)/.nova
-	chmod -R a+rw /usr/share/nova
-	chmod a-w /usr/share/nova
-	chmod u+w /usr/share/nova
+	mkdir -p $(DESTDIR)/usr/share/nova
+	install -d Installer/Write/nova $(DESTDIR)/usr/share/
 	#The binaries themselves
-	cp NovaGUI/NovaGUI /usr/local/bin
-	cp ClassificationEngine/Release/ClassificationEngine /usr/local/bin
-	cp DoppelgangerModule/Release/DoppelgangerModule /usr/local/bin
-	cp Haystack/Release/Haystack /usr/local/bin
-	cp LocalTrafficMonitor/Release/LocalTrafficMonitor /usr/local/bin
-	#Set pcap permissions
-	setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/local/bin/LocalTrafficMonitor
-	setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/local/bin/Haystack
-	setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
+	mkdir -p $(DESTDIR)/usr/bin
+	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
+	install ClassificationEngine/Release/ClassificationEngine $(DESTDIR)/usr/bin
+	install DoppelgangerModule/Release/DoppelgangerModule $(DESTDIR)/usr/bin
+	install Haystack/Release/Haystack $(DESTDIR)/usr/bin
+	install LocalTrafficMonitor/Release/LocalTrafficMonitor $(DESTDIR)/usr/bin
+	sh Installer/postinst
 
 #requires root
 install-debug:
-	#make nova group
-	groupadd -f nova
-	usermod -a -G nova $(SUDO_USER)
 	#make folder in etc with path locations to nova files
-	mkdir -p /etc/nova
-	cp Installer/Read/paths /etc/nova
-	cp Installer/Read/nmap-os-db /etc/nova
-	cp Installer/Read/sudoers_nova	/etc/sudoers.d
-	chmod 0440 /etc/sudoers.d/sudoers_nova 
+	mkdir -p $(DESTDIR)/etc/nova
+	install Installer/Read/paths $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
+	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
 	#Copy the hidden directories and files
-	mkdir -p $(HOME)/.nova
-	cp -R -f Installer/.nova /etc/nova
+	install -d Installer/.nova $(DESTDIR)/$(HOME)
 	#Copy the scripts and logs
-	mkdir -p /usr/share/nova
-	cp -R Installer/Write/nova /usr/share/
-	#move 40-nova.conf into /etc/rsyslog.d/ for logging
-	cp Installer/Read/40-nova.conf /etc/rsyslog.d/
-	#restart rsyslog
-	service rsyslog restart
-	#Give permissions
-	chmod -R a+rw $(HOME)/.nova
-	chmod -R a+rw /usr/share/nova
-	chmod a-w /usr/share/nova
-	chmod u+w /usr/share/nova
+	mkdir -p $(DESTDIR)/usr/share/nova
+	install -d Installer/Write/nova $(DESTDIR)/usr/share/
 	#The binaries themselves
-	cp NovaGUI/NovaGUI /usr/local/bin
-	cp ClassificationEngine/Debug/ClassificationEngine /usr/local/bin
-	cp DoppelgangerModule/Debug/DoppelgangerModule /usr/local/bin
-	cp Haystack/Debug/Haystack /usr/local/bin
-	cp LocalTrafficMonitor/Debug/LocalTrafficMonitor /usr/local/bin
-	#Set pcap permissions
-	setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/local/bin/LocalTrafficMonitor
-	setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/local/bin/Haystack
-	setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
+	mkdir -p $(DESTDIR)/usr/bin
+	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
+	install ClassificationEngine/Debug/ClassificationEngine $(DESTDIR)/usr/bin
+	install DoppelgangerModule/Debug/DoppelgangerModule $(DESTDIR)/usr/bin
+	install Haystack/Debug/Haystack $(DESTDIR)/usr/bin
+	install LocalTrafficMonitor/Debug/LocalTrafficMonitor $(DESTDIR)/usr/bin
+	sh Installer/postinst
 
 #Requires root
 uninstall:
-	rm -rf /etc/nova
-	rm -rf /usr/share/nova
-	rm -rf $(HOME)/.nova
-	rm -f /usr/local/bin/NovaGUI
-	rm -f /usr/local/bin/ClassificationEngine
-	rm -f /usr/local/bin/DoppelgangerModule
-	rm -f /usr/local/bin/Haystack
-	rm -f /usr/local/bin/LocalTrafficMonitor
-	rm -f /etc/sudoers.d/sudoers_nova
-	rm -f /etc/rsyslog.d/40-nova.conf
-	rm -rf .nova/Config
-	rm -rf .nova/Data
-	rm -rf bin
-	-groupdel nova
+	rm -rf $(DESTDIR)/etc/nova
+	rm -rf $(DESTDIR)/usr/share/nova
+	rm -rf $(DESTDIR)/$(HOME)/.nova
+	rm -f $(DESTDIR)/usr/bin/NovaGUI
+	rm -f $(DESTDIR)/usr/bin/ClassificationEngine
+	rm -f $(DESTDIR)/usr/bin/DoppelgangerModule
+	rm -f $(DESTDIR)/usr/bin/Haystack
+	rm -f $(DESTDIR)/usr/bin/LocalTrafficMonitor
+	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
+	sh Installer/postrm
+
