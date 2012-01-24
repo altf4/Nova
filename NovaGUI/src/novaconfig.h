@@ -17,7 +17,6 @@
 
 typedef google::dense_hash_map<uint, string, tr1::hash<uint>, eqint> MACToVendorTable;
 typedef google::dense_hash_map<string, vector<uint> *,  tr1::hash<string>, eqstr > VendorToMACTable;
-
 using namespace std;
 
 class NovaConfig : public QMainWindow
