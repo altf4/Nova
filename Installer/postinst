@@ -10,4 +10,3 @@ setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
 chmod 0440 /etc/sudoers.d/sudoers_nova
 #make nova group
 groupadd -f nova
-usermod -a -G nova $SUDO_USER

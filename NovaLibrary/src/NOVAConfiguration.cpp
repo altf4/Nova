@@ -524,9 +524,17 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 	}
 	else
 	{
+		if( system("gksudo --description 'Add your user to the privileged nova user group. "
+				"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
+		{
+			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to assign user root privileges");
+			return false;
+		}
+
 		//TODO: Do this command programmatically. Not by calling system()
 		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
 		{
+			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
 			return false;
 		}
 
@@ -537,6 +545,7 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 		}
 		else
 		{
+			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
 			return false;
 		}
 	}
