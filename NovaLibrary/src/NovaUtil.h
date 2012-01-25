@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <sys/un.h>
 #include <ANN/ANN.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
@@ -198,7 +199,12 @@ void CryptBuffer(u_char * buf, uint size, bool mode);
 // Reads the paths file and returns the homePath of nova
 // Returns: Something like "/home/user/.nova"
 string GetHomePath();
-
+// Reads the paths file and returns the readPath of nova
+// Returns: Something like "/usr/share/nova"
+string GetReadPath();
+// Reads the paths file and returns the writePath of nova
+// Returns: Something like "/etc/nova"
+string GetWritePath();
 // Replaces any env vars in 'path' and returns the absolute path
 // 		path - String containing a path with env vars (eg $HOME)
 // Returns: Path with env vars resolved and replaced with real values
@@ -218,4 +224,8 @@ uint GetSerializedAddr(u_char * buf);
 int GetMaskBits(in_addr_t range);
 
 }
+
+//Some includes need to occur at the end of the header to fix some linking errors during compilation
+#include "NOVAConfiguration.h"
+
 #endif /* NOVAUTIL_H_ */

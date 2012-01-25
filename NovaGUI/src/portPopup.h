@@ -3,7 +3,7 @@
 
 #include <QtGui/QWidget>
 #include "ui_portPopup.h"
-#include "novaconfig.h"
+#include "novagui.h"
 
 using namespace std;
 
