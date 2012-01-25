@@ -436,231 +436,83 @@ void NovaConfig::displayMACPrefixWindow()
 
 void NovaConfig::loadPreferences()
 {
-	string line;
-	string prefix;
-
 	//Read from CE Config
 	string configurationFile = homePath + "/Config/NOVAConfig.txt";
-	ifstream config(configurationFile.c_str());
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
-	if(config.is_open())
+	NOVAConfiguration * NConfig = new NOVAConfiguration();
+	NConfig->LoadConfig((char*)configurationFile.c_str(), homePath, __FILE__);
+	if (!NConfig->options["INTERFACE"].isValid || !NConfig->options["DATAFILE"].isValid
+			|| !NConfig->options["SA_MAX_ATTEMPTS"].isValid || !NConfig->options["SA_SLEEP_DURATION"].isValid
+			|| !NConfig->options["SILENT_ALARM_PORT"].isValid || !NConfig->options["K"].isValid
+			|| !NConfig->options["EPS"].isValid || !NConfig->options["CLASSIFICATION_TIMEOUT"].isValid
+			|| !NConfig->options["CLASSIFICATION_THRESHOLD"].isValid || !NConfig->options["IS_TRAINING"].isValid
+			|| !NConfig->options["HS_HONEYD_CONFIG"].isValid || !NConfig->options["TCP_TIMEOUT"].isValid
+			|| !NConfig->options["TCP_CHECK_FREQ"].isValid || !NConfig->options["DM_HONEYD_CONFIG"].isValid
+			|| !NConfig->options["DOPPELGANGER_IP"].isValid || !NConfig->options["DM_ENABLED"].isValid
+			|| !NConfig->options["READ_PCAP"].isValid || !NConfig->options["PCAP_FILE"].isValid
+			|| !NConfig->options["GO_TO_LIVE"].isValid || !NConfig->options["USE_TERMINALS"].isValid
+			|| !NConfig->options["ENABLED_FEATURES"].isValid)
 	{
-		while(config.good())
-		{
-			getline(config,line);
-
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.interfaceEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "DATAFILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dataEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "SA_MAX_ATTEMPTS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.saAttemptsMaxEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "SA_SLEEP_DURATION";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.saAttemptsTimeEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "SILENT_ALARM_PORT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.saPortEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "K";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceIntensityEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "EPS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceErrorEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceFrequencyEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.trainingCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_THRESHOLD";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceThresholdEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "HS_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.hsConfigEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "TCP_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.tcpTimeoutEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "TCP_CHECK_FREQ";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.tcpFrequencyEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "DM_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dmConfigEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "DOPPELGANGER_IP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dmIPEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "DM_ENABLED";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dmCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.pcapCheckBox->setChecked(atoi(line.c_str()));
-				ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
-				continue;
-			}
-
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.pcapEdit->setText(line.c_str());
-				continue;
-			}
-
-			prefix = "GO_TO_LIVE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.liveCapCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "USE_TERMINALS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.terminalCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "ENABLED_FEATURES";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				string featuresEnabled = line.substr(prefix.size()+1,line.size());
-
-				// Clear out any old stuff in the list
-				ui.featureList->clear();
-
-
-				// Populate the list, row order is based on dimension macros
-				ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
-						getFeatureListItem(QString("IP Traffic Distribution"),featuresEnabled.at(IP_TRAFFIC_DISTRIBUTION)));
-
-				ui.featureList->insertItem(PORT_TRAFFIC_DISTRIBUTION,
-						getFeatureListItem(QString("Port Traffic Distribution"),featuresEnabled.at(PORT_TRAFFIC_DISTRIBUTION)));
-
-				ui.featureList->insertItem(HAYSTACK_EVENT_FREQUENCY,
-						getFeatureListItem(QString("Haystack Event Frequency"),featuresEnabled.at(HAYSTACK_EVENT_FREQUENCY)));
-
-				ui.featureList->insertItem(PACKET_SIZE_MEAN,
-						getFeatureListItem(QString("Packet Size Mean"),featuresEnabled.at(PACKET_SIZE_MEAN)));
-
-				ui.featureList->insertItem(PACKET_SIZE_DEVIATION,
-						getFeatureListItem(QString("Packet Size Deviation"),featuresEnabled.at(PACKET_SIZE_DEVIATION)));
-
-				ui.featureList->insertItem(DISTINCT_IPS,
-						getFeatureListItem(QString("IPs Contacted"),featuresEnabled.at(DISTINCT_IPS)));
-
-				ui.featureList->insertItem(DISTINCT_PORTS,
-						getFeatureListItem(QString("Ports Contacted"),featuresEnabled.at(DISTINCT_PORTS)));
-
-				ui.featureList->insertItem(PACKET_INTERVAL_MEAN,
-						getFeatureListItem(QString("Packet Interval Mean"),featuresEnabled.at(PACKET_INTERVAL_MEAN)));
-
-				ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
-						getFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
-
-				continue;
-			}
-		}
-	}
-	else
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d Error reading NOVA configuration file.", __FILE__, __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d ERROR: Unable to load configuration file.", __FILE__, __LINE__);
 		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_READ_FAIL, "Error: Unable to read NOVA configuration file " + configurationFile);
 		this->close();
 	}
+	ui.interfaceEdit->setText((QString)NConfig->options["INTERFACE"].data.c_str());
+	ui.dataEdit->setText((QString)NConfig->options["DATAFILE"].data.c_str());
+	ui.saAttemptsMaxEdit->setText((QString)NConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
+	ui.saAttemptsTimeEdit->setText((QString)NConfig->options["SA_SLEEP_DURATION"].data.c_str());
+	ui.saPortEdit->setText((QString)NConfig->options["SILENT_ALARM_PORT"].data.c_str());
+	ui.ceIntensityEdit->setText((QString)NConfig->options["K"].data.c_str());
+	ui.ceErrorEdit->setText((QString)NConfig->options["EPS"].data.c_str());
+	ui.ceFrequencyEdit->setText((QString)NConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
+	ui.ceThresholdEdit->setText((QString)NConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str());
+	ui.trainingCheckBox->setChecked(atoi(NConfig->options["IS_TRAINING"].data.c_str()));
+	ui.hsConfigEdit->setText((QString)NConfig->options["HS_HONEYD_CONFIG"].data.c_str());
+	ui.tcpTimeoutEdit->setText((QString)NConfig->options["TCP_TIMEOUT"].data.c_str());
+	ui.tcpFrequencyEdit->setText((QString)NConfig->options["TCP_CHECK_FREQ"].data.c_str());
+	ui.dmConfigEdit->setText((QString)NConfig->options["DM_HONEYD_CONFIG"].data.c_str());
+	ui.dmIPEdit->setText((QString)NConfig->options["DOPPELGANGER_IP"].data.c_str());
+	ui.dmCheckBox->setChecked(atoi(NConfig->options["DM_ENABLED"].data.c_str()));
+	ui.pcapCheckBox->setChecked(atoi(NConfig->options["READ_PCAP"].data.c_str()));
+	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
+	ui.pcapEdit->setText((QString)NConfig->options["PCAP_FILE"].data.c_str());
+	ui.liveCapCheckBox->setChecked(atoi(NConfig->options["GO_TO_LIVE"].data.c_str()));
+	ui.terminalCheckBox->setChecked(atoi(NConfig->options["USE_TERMINALS"].data.c_str()));
+	{
+		string featuresEnabled = NConfig->options["ENABLED_FEATURES"].data;
+		ui.featureList->clear();
+		// Populate the list, row order is based on dimension macros
+		ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
+				getFeatureListItem(QString("IP Traffic Distribution"),featuresEnabled.at(IP_TRAFFIC_DISTRIBUTION)));
+
+		ui.featureList->insertItem(PORT_TRAFFIC_DISTRIBUTION,
+				getFeatureListItem(QString("Port Traffic Distribution"),featuresEnabled.at(PORT_TRAFFIC_DISTRIBUTION)));
+
+		ui.featureList->insertItem(HAYSTACK_EVENT_FREQUENCY,
+				getFeatureListItem(QString("Haystack Event Frequency"),featuresEnabled.at(HAYSTACK_EVENT_FREQUENCY)));
+
+		ui.featureList->insertItem(PACKET_SIZE_MEAN,
+				getFeatureListItem(QString("Packet Size Mean"),featuresEnabled.at(PACKET_SIZE_MEAN)));
+
+		ui.featureList->insertItem(PACKET_SIZE_DEVIATION,
+				getFeatureListItem(QString("Packet Size Deviation"),featuresEnabled.at(PACKET_SIZE_DEVIATION)));
+
+		ui.featureList->insertItem(DISTINCT_IPS,
+				getFeatureListItem(QString("IPs Contacted"),featuresEnabled.at(DISTINCT_IPS)));
+
+		ui.featureList->insertItem(DISTINCT_PORTS,
+				getFeatureListItem(QString("Ports Contacted"),featuresEnabled.at(DISTINCT_PORTS)));
+
+		ui.featureList->insertItem(PACKET_INTERVAL_MEAN,
+				getFeatureListItem(QString("Packet Interval Mean"),featuresEnabled.at(PACKET_INTERVAL_MEAN)));
+
+		ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
+				getFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
+	}
 	closelog();
-	config.close();
+	delete NConfig;
 }
 
 //Draws the current honeyd configuration
