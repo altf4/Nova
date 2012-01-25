@@ -1,10 +1,11 @@
 <profiles>
 	<profile>
 		<name>default</name>
+		<type>0</type>
 		<set>
 			<TCP>block</TCP>
 			<UDP>block</UDP>
-			<ICMP>block</ICMP>
+			<ICMP>block</ICMP>	
 		</set>
 		<profiles>
 			<profile>
@@ -71,7 +72,8 @@
 				</profiles>
 			</profile>
 			<profile>
-				<name>Dopp</name>
+				<name>Doppelganger</name>
+				<type>3</type>
 				<set>
 					<TCP>reset</TCP>
 					<personality>Microsoft Windows 2003 Server</personality>

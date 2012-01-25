@@ -3,27 +3,33 @@
  <class>NovaConfigClass</class>
  <widget class="QMainWindow" name="NovaConfigClass">
   <property name="windowModality">
-   <enum>Qt::NonModal</enum>
+   <enum>Qt::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>581</width>
-    <height>429</height>
+    <width>751</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Preferences</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+     <horstretch>100</horstretch>
+     <verstretch>100</verstretch>
+    </sizepolicy>
+   </property>
    <widget class="QTreeWidget" name="treeWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>131</width>
-      <height>391</height>
+      <width>141</width>
+      <height>431</height>
      </rect>
     </property>
     <property name="autoExpandDelay">
@@ -33,7 +39,7 @@
      <bool>true</bool>
     </attribute>
     <attribute name="headerDefaultSectionSize">
-     <number>127</number>
+     <number>139</number>
     </attribute>
     <attribute name="headerStretchLastSection">
      <bool>false</bool>
@@ -42,7 +48,7 @@
      <bool>true</bool>
     </attribute>
     <attribute name="headerDefaultSectionSize">
-     <number>127</number>
+     <number>139</number>
     </attribute>
     <attribute name="headerStretchLastSection">
      <bool>false</bool>
@@ -96,23 +102,29 @@
    <widget class="QStackedWidget" name="stackedWidget">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>140</x>
       <y>-20</y>
-      <width>431</width>
+      <width>611</width>
       <height>411</height>
      </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
     </property>
     <property name="accessibleName">
      <string/>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>6</number>
     </property>
     <widget class="QWidget" name="generalPage">
      <widget class="QGroupBox" name="genGroupBox">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>60</x>
         <y>40</y>
         <width>421</width>
         <height>351</height>
@@ -545,7 +557,7 @@ p, li { white-space: pre-wrap; }
      <widget class="QGroupBox" name="ceGroupBox">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>70</x>
         <y>40</y>
         <width>421</width>
         <height>351</height>
@@ -876,7 +888,7 @@ p, li { white-space: pre-wrap; }
      <widget class="QGroupBox" name="dmGroupBox">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>70</x>
         <y>40</y>
         <width>421</width>
         <height>351</height>
@@ -1045,7 +1057,7 @@ p, li { white-space: pre-wrap; }
      <widget class="QGroupBox" name="apSettingsGroupBox">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>70</x>
         <y>40</y>
         <width>421</width>
         <height>361</height>
@@ -1074,7 +1086,7 @@ p, li { white-space: pre-wrap; }
         </rect>
        </property>
       </widget>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="msgTypeLabel">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -1087,7 +1099,7 @@ p, li { white-space: pre-wrap; }
         <string>Message Dialog</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="defaultActionLabel">
        <property name="geometry">
         <rect>
          <x>290</x>
@@ -1106,9 +1118,9 @@ p, li { white-space: pre-wrap; }
      <widget class="QGroupBox" name="hsSettingsGroupBox">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>20</x>
         <y>40</y>
-        <width>421</width>
+        <width>581</width>
         <height>361</height>
        </rect>
       </property>
@@ -1118,9 +1130,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QGroupBox" name="hsSummaryGroupBox">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>90</y>
-         <width>391</width>
+         <width>581</width>
          <height>261</height>
         </rect>
        </property>
@@ -1132,20 +1144,14 @@ p, li { white-space: pre-wrap; }
          <rect>
           <x>10</x>
           <y>20</y>
-          <width>251</width>
+          <width>371</width>
           <height>231</height>
          </rect>
-        </property>
-        <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarAsNeeded</enum>
         </property>
         <property name="autoScroll">
          <bool>false</bool>
         </property>
-        <property name="textElideMode">
-         <enum>Qt::ElideRight</enum>
-        </property>
-        <property name="horizontalScrollMode">
+        <property name="verticalScrollMode">
          <enum>QAbstractItemView::ScrollPerPixel</enum>
         </property>
         <property name="indentation">
@@ -1157,17 +1163,8 @@ p, li { white-space: pre-wrap; }
         <property name="uniformRowHeights">
          <bool>false</bool>
         </property>
-        <attribute name="headerVisible">
-         <bool>false</bool>
-        </attribute>
-        <attribute name="headerCascadingSectionResizes">
-         <bool>false</bool>
-        </attribute>
         <attribute name="headerDefaultSectionSize">
-         <number>123</number>
-        </attribute>
-        <attribute name="headerHighlightSections">
-         <bool>false</bool>
+         <number>184</number>
         </attribute>
         <attribute name="headerMinimumSectionSize">
          <number>25</number>
@@ -1175,20 +1172,11 @@ p, li { white-space: pre-wrap; }
         <attribute name="headerStretchLastSection">
          <bool>false</bool>
         </attribute>
-        <attribute name="headerCascadingSectionResizes">
-         <bool>false</bool>
-        </attribute>
         <attribute name="headerDefaultSectionSize">
-         <number>123</number>
-        </attribute>
-        <attribute name="headerVisible">
-         <bool>false</bool>
+         <number>184</number>
         </attribute>
         <attribute name="headerMinimumSectionSize">
          <number>25</number>
-        </attribute>
-        <attribute name="headerHighlightSections">
-         <bool>false</bool>
         </attribute>
         <attribute name="headerStretchLastSection">
          <bool>false</bool>
@@ -1207,11 +1195,17 @@ p, li { white-space: pre-wrap; }
        <widget class="QTreeWidget" name="hsProfileTreeWidget">
         <property name="geometry">
          <rect>
-          <x>270</x>
+          <x>390</x>
           <y>20</y>
-          <width>111</width>
+          <width>171</width>
           <height>231</height>
          </rect>
+        </property>
+        <property name="verticalScrollMode">
+         <enum>QAbstractItemView::ScrollPerPixel</enum>
+        </property>
+        <property name="indentation">
+         <number>10</number>
         </property>
         <property name="sortingEnabled">
          <bool>true</bool>
@@ -1256,7 +1250,7 @@ p, li { white-space: pre-wrap; }
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>53</y>
+         <y>50</y>
          <width>320</width>
          <height>20</height>
         </rect>
@@ -1275,10 +1269,10 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="hsConfigButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
+         <x>349</x>
          <y>50</y>
-         <width>70</width>
-         <height>26</height>
+         <width>71</width>
+         <height>20</height>
         </rect>
        </property>
        <property name="toolTip">
@@ -1304,9 +1298,9 @@ p, li { white-space: pre-wrap; }
      <widget class="QGroupBox" name="nodesGroupBox">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>40</y>
-        <width>421</width>
+        <width>591</width>
         <height>361</height>
        </rect>
       </property>
@@ -1318,7 +1312,7 @@ p, li { white-space: pre-wrap; }
         <rect>
          <x>10</x>
          <y>20</y>
-         <width>301</width>
+         <width>431</width>
          <height>331</height>
         </rect>
        </property>
@@ -1340,50 +1334,17 @@ p, li { white-space: pre-wrap; }
        <property name="indentation">
         <number>20</number>
        </property>
-       <property name="rootIsDecorated">
-        <bool>true</bool>
-       </property>
        <property name="uniformRowHeights">
         <bool>false</bool>
        </property>
        <property name="sortingEnabled">
         <bool>true</bool>
        </property>
-       <attribute name="headerVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerCascadingSectionResizes">
-        <bool>false</bool>
+       <attribute name="headerDefaultSectionSize">
+        <number>214</number>
        </attribute>
        <attribute name="headerDefaultSectionSize">
-        <number>148</number>
-       </attribute>
-       <attribute name="headerHighlightSections">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerMinimumSectionSize">
-        <number>25</number>
-       </attribute>
-       <attribute name="headerStretchLastSection">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerCascadingSectionResizes">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerDefaultSectionSize">
-        <number>148</number>
-       </attribute>
-       <attribute name="headerVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerMinimumSectionSize">
-        <number>25</number>
-       </attribute>
-       <attribute name="headerHighlightSections">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="headerStretchLastSection">
-        <bool>false</bool>
+        <number>214</number>
        </attribute>
        <column>
         <property name="text">
@@ -1399,7 +1360,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="nodeDisableButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
+         <x>490</x>
          <y>320</y>
          <width>80</width>
          <height>25</height>
@@ -1412,7 +1373,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="nodeDeleteButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
+         <x>490</x>
          <y>140</y>
          <width>80</width>
          <height>25</height>
@@ -1425,7 +1386,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="nodeAddButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
+         <x>490</x>
          <y>110</y>
          <width>80</width>
          <height>25</height>
@@ -1438,7 +1399,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="nodeEditButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
+         <x>490</x>
          <y>240</y>
          <width>80</width>
          <height>25</height>
@@ -1451,7 +1412,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="nodeCloneButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
+         <x>490</x>
          <y>190</y>
          <width>80</width>
          <height>25</height>
@@ -1464,7 +1425,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="nodeEnableButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
+         <x>490</x>
          <y>290</y>
          <width>80</width>
          <height>25</height>
@@ -1480,9 +1441,9 @@ p, li { white-space: pre-wrap; }
      <widget class="QGroupBox" name="profileGroupBox">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>40</y>
-        <width>421</width>
+        <width>591</width>
         <height>361</height>
        </rect>
       </property>
@@ -1494,8 +1455,8 @@ p, li { white-space: pre-wrap; }
         <rect>
          <x>10</x>
          <y>20</y>
-         <width>111</width>
-         <height>301</height>
+         <width>171</width>
+         <height>341</height>
         </rect>
        </property>
        <property name="sortingEnabled">
@@ -1513,7 +1474,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="uptimeLabel">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>200</x>
          <y>140</y>
          <width>57</width>
          <height>22</height>
@@ -1526,7 +1487,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="ethernetLabel">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>200</x>
          <y>50</y>
          <width>57</width>
          <height>22</height>
@@ -1539,9 +1500,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="tcpActionLabel">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>200</x>
          <y>80</y>
-         <width>121</width>
+         <width>131</width>
          <height>22</height>
         </rect>
        </property>
@@ -1552,9 +1513,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="uptimeBehaviorLabel">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>200</x>
          <y>110</y>
-         <width>111</width>
+         <width>121</width>
          <height>22</height>
         </rect>
        </property>
@@ -1565,9 +1526,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="profileLabel">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>200</x>
          <y>20</y>
-         <width>41</width>
+         <width>51</width>
          <height>22</height>
         </rect>
        </property>
@@ -1578,9 +1539,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="uptimeBehaviorComboBox">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>330</x>
          <y>110</y>
-         <width>161</width>
+         <width>251</width>
          <height>22</height>
         </rect>
        </property>
@@ -1598,9 +1559,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLineEdit" name="uptimeEdit">
        <property name="geometry">
         <rect>
-         <x>190</x>
+         <x>260</x>
          <y>140</y>
-         <width>221</width>
+         <width>321</width>
          <height>21</height>
         </rect>
        </property>
@@ -1608,9 +1569,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLineEdit" name="tcpActionEdit">
        <property name="geometry">
         <rect>
-         <x>260</x>
+         <x>340</x>
          <y>80</y>
-         <width>151</width>
+         <width>241</width>
          <height>21</height>
         </rect>
        </property>
@@ -1618,19 +1579,22 @@ p, li { white-space: pre-wrap; }
       <widget class="QLineEdit" name="ethernetEdit">
        <property name="geometry">
         <rect>
-         <x>200</x>
+         <x>270</x>
          <y>50</y>
-         <width>211</width>
+         <width>251</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
        </property>
       </widget>
       <widget class="QLineEdit" name="profileEdit">
        <property name="geometry">
         <rect>
-         <x>190</x>
+         <x>260</x>
          <y>20</y>
-         <width>221</width>
+         <width>161</width>
          <height>21</height>
         </rect>
        </property>
@@ -1638,9 +1602,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QTreeWidget" name="portTreeWidget">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>200</x>
          <y>200</y>
-         <width>281</width>
+         <width>381</width>
          <height>121</height>
         </rect>
        </property>
@@ -1675,9 +1639,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLineEdit" name="personalityEdit">
        <property name="geometry">
         <rect>
-         <x>220</x>
+         <x>290</x>
          <y>170</y>
-         <width>191</width>
+         <width>231</width>
          <height>21</height>
         </rect>
        </property>
@@ -1685,7 +1649,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="personalityLabel">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>200</x>
          <y>170</y>
          <width>81</width>
          <height>22</height>
@@ -1698,8 +1662,8 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="addButton">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>327</y>
+         <x>190</x>
+         <y>330</y>
          <width>80</width>
          <height>25</height>
         </rect>
@@ -1711,8 +1675,8 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="deleteButton">
        <property name="geometry">
         <rect>
-         <x>229</x>
-         <y>327</y>
+         <x>410</x>
+         <y>330</y>
          <width>71</width>
          <height>25</height>
         </rect>
@@ -1724,8 +1688,8 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="cloneButton">
        <property name="geometry">
         <rect>
-         <x>120</x>
-         <y>327</y>
+         <x>300</x>
+         <y>330</y>
          <width>81</width>
          <height>25</height>
         </rect>
@@ -1737,8 +1701,8 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="editPortsButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
-         <y>327</y>
+         <x>510</x>
+         <y>330</y>
          <width>80</width>
          <height>25</height>
         </rect>
@@ -1747,17 +1711,79 @@ p, li { white-space: pre-wrap; }
         <string>Edit Ports</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="setEthernetButton">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>50</y>
+         <width>61</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="setPersonalityButton">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>170</y>
+         <width>61</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="dhcpComboBox">
+       <property name="geometry">
+        <rect>
+         <x>420</x>
+         <y>20</y>
+         <width>161</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>Static IP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>DHCP - Static MAC</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>DHCP - Random MAC</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Doppelganger</string>
+        </property>
+       </item>
+      </widget>
      </widget>
     </widget>
    </widget>
    <widget class="QFrame" name="frame">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>140</x>
       <y>390</y>
-      <width>581</width>
+      <width>611</width>
       <height>40</height>
      </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
     </property>
     <property name="frameShape">
      <enum>QFrame::StyledPanel</enum>
@@ -1768,7 +1794,7 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="cancelButton">
      <property name="geometry">
       <rect>
-       <x>15</x>
+       <x>30</x>
        <y>7</y>
        <width>80</width>
        <height>25</height>
@@ -1781,7 +1807,7 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="okButton">
      <property name="geometry">
       <rect>
-       <x>485</x>
+       <x>500</x>
        <y>7</y>
        <width>80</width>
        <height>25</height>
@@ -1794,7 +1820,7 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="defaultsButton">
      <property name="geometry">
       <rect>
-       <x>150</x>
+       <x>170</x>
        <y>7</y>
        <width>141</width>
        <height>25</height>
@@ -1807,7 +1833,7 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="applyButton">
      <property name="geometry">
       <rect>
-       <x>360</x>
+       <x>370</x>
        <y>7</y>
        <width>71</width>
        <height>25</height>

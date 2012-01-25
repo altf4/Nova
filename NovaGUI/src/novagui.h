@@ -8,17 +8,30 @@
 #ifndef NOVAGUI_H
 #define NOVAGUI_H
 
-#include <QtGui/QMainWindow>
-#include <QtGui/QTreeWidget>
- #include <QProcess>
-#include <QMouseEvent>
-#include "ui_novagui.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/foreach.hpp>
+#include <QProcess>
+#include <QChar>
+#include <QtGui>
+#include <QPoint>
+#include <errno.h>
+#include <fstream>
+#include <sstream>
+#include <QString>
+#include <string.h>
+#include <sys/un.h>
 #include <Suspect.h>
-#include <NovaUtil.h>
+#include <QMouseEvent>
+#include <arpa/inet.h>
+#include <QApplication>
+#include <sys/socket.h>
+#include <boost/foreach.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+
 #include "DialogPrompter.h"
-#include "NOVAConfiguration.h"
+#include "ui_novagui.h"
+#include "run_popup.h"
+#include "portPopup.h"
+#include "NovaUtil.h"
 
 using namespace std;
 using namespace Nova;
@@ -29,6 +42,7 @@ using boost::property_tree::ptree;
  - Structs and Tables for quick item access through pointers -
 **********************************************************************/
 
+enum profileType { static_IP = 0, staticDHCP = 1, randomDHCP = 2, Doppelganger = 3};
 
 //used to maintain information on imported scripts
 struct script
@@ -92,7 +106,7 @@ struct profile
 	string uptime;
 	string uptimeRange;
 	string dropRate;
-	bool DHCP;
+	profileType type;
 	vector<string> ports;
 	string  parentProfile;
 	ptree tree;
@@ -104,12 +118,14 @@ typedef google::dense_hash_map<string, profile, tr1::hash<string>, eqstr > Profi
 //used to keep track of haystack node gui items and allow for easy access
 struct node
 {
+	string name;
 	QTreeWidgetItem * item;
 	QTreeWidgetItem * nodeItem;
 	string sub;
 	string interface;
 	string pfile;
-	string address;
+	string IP;
+	string MAC;
 	in_addr_t realIP;
 	bool enabled;
 	ptree tree;
@@ -124,7 +140,8 @@ struct suspectItem
 	Suspect * suspect;
 	//The associated item for the suspect view list
 	QListWidgetItem * item;
-	//The associated item for the main view list
+	//The associated item for the main view list#include "NOVAConfiguration.h"
+
 	//We need a second item because an item can only be in one list at a time
 	QListWidgetItem * mainItem;
 };
@@ -288,6 +305,8 @@ private:
 	QIcon* yellowIcon;
 };
 
+namespace Nova {
+
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CEListen(void *ptr);
 /// Updates the suspect list every so often.
@@ -328,5 +347,10 @@ void sendToLTM();
 void clearSuspects();
 //Removes all information on a suspect
 void clearSuspect(string suspectStr);
+}
 
+//Some includes need to occur at the end of the header to fix some linking errors during compilation
+#include "nodePopup.h"
+#include "NovaComplexDialog.h"
+#include "novaconfig.h"
 #endif // NOVAGUI_H

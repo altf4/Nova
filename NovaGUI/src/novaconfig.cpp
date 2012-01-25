@@ -1,18 +1,4 @@
 #include "novaconfig.h"
-#include "novagui.h"
-#include "portPopup.h"
-#include "nodePopup.h"
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <QtGui>
-#include <QApplication>
-#include <sstream>
-#include <QString>
-#include <QChar>
-#include <fstream>
-#include <errno.h>
-#include <string.h>
 
 using namespace std;
 using namespace Nova;
@@ -42,11 +28,18 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	homePath = home;
 
 	//Initialize hash tables
+	MACVendorTable.set_empty_key(16777216); //2^24, invalid MAC prefix.
+	VendorMACTable.set_empty_key("");
 	subnets.set_empty_key("");
+	subnets.set_deleted_key("DELETED");
 	nodes.set_empty_key("");
+	nodes.set_deleted_key("DELETED");
 	profiles.set_empty_key("");
+	profiles.set_deleted_key("DELETED");
 	ports.set_empty_key("");
+	ports.set_deleted_key("DELETED");
 	scripts.set_empty_key("");
+	scripts.set_deleted_key("DELETED");
 
 	//Store parent and load UI
 	mainwindow = (NovaGUI*)parent;
@@ -62,6 +55,7 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	loadPreferences();
 	pullData();
 	loadHaystack();
+	loadMACPrefixs();
 
 	// Populate the dialog menu
 	for (uint i = 0; i < mainwindow->prompter->registeredMessageTypes.size(); i++)
@@ -260,233 +254,265 @@ void NovaConfig::updateFeatureListItem(QListWidgetItem* newFeatureEntry, char en
  * Loading preferences from configuration files
  ************************************************/
 
-void NovaConfig::loadPreferences()
+void NovaConfig::loadMACPrefixs()
 {
-	string line;
-	string prefix;
-
-	//Read from CE Config
-	string configurationFile = homePath + "/Config/NOVAConfig.txt";
-	ifstream config(configurationFile.c_str());
-
-	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
-
-	if(config.is_open())
+	string MACPrefixFile = GetReadPath() + "/nmap-mac-prefixes";
+	ifstream MACPrefixes(MACPrefixFile.c_str());
+	string line, vendor, prefixStr;
+	char * notUsed;
+	uint prefix;
+	if(MACPrefixes.is_open())
 	{
-		while(config.good())
+		while(MACPrefixes.good())
 		{
-			getline(config,line);
-
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.interfaceEdit->setText((QString)line.c_str());
+			getline(MACPrefixes, prefixStr, ' ');
+			/* From 'man strtoul'  Since strtoul() can legitimately return 0 or  LONG_MAX  (LLONG_MAX  for
+		       strtoull()) on both success and failure, the calling program should set
+		       errno to 0 before the call, and then determine if an error occurred  by
+		       checking whether errno has a nonzero value after the call. */
+			errno = 0;
+			prefix = strtoul(prefixStr.c_str(), &notUsed, 16);
+			if(errno)
 				continue;
+			getline(MACPrefixes, vendor);
+			MACVendorTable[prefix] = vendor;
+			if(VendorMACTable.find(vendor) != VendorMACTable.end())
+			{
+				VendorMACTable[vendor]->push_back(prefix);
 			}
-
-			prefix = "DATAFILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
+			else
 			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dataEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "SA_MAX_ATTEMPTS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.saAttemptsMaxEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "SA_SLEEP_DURATION";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.saAttemptsTimeEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "SILENT_ALARM_PORT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.saPortEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "K";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceIntensityEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "EPS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceErrorEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceFrequencyEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.trainingCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_THRESHOLD";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.ceThresholdEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "HS_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.hsConfigEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "TCP_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.tcpTimeoutEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "TCP_CHECK_FREQ";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.tcpFrequencyEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "DM_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dmConfigEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "DOPPELGANGER_IP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dmIPEdit->setText((QString)line.c_str());
-				continue;
-			}
-
-			prefix = "DM_ENABLED";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.dmCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.pcapCheckBox->setChecked(atoi(line.c_str()));
-				ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
-				continue;
-			}
-
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.pcapEdit->setText(line.c_str());
-				continue;
-			}
-
-			prefix = "GO_TO_LIVE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.liveCapCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "USE_TERMINALS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.terminalCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "ENABLED_FEATURES";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				string featuresEnabled = line.substr(prefix.size()+1,line.size());
-
-				// Clear out any old stuff in the list
-				ui.featureList->clear();
-
-
-				// Populate the list, row order is based on dimension macros
-				ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
-						getFeatureListItem(QString("IP Traffic Distribution"),featuresEnabled.at(IP_TRAFFIC_DISTRIBUTION)));
-
-				ui.featureList->insertItem(PORT_TRAFFIC_DISTRIBUTION,
-						getFeatureListItem(QString("Port Traffic Distribution"),featuresEnabled.at(PORT_TRAFFIC_DISTRIBUTION)));
-
-				ui.featureList->insertItem(HAYSTACK_EVENT_FREQUENCY,
-						getFeatureListItem(QString("Haystack Event Frequency"),featuresEnabled.at(HAYSTACK_EVENT_FREQUENCY)));
-
-				ui.featureList->insertItem(PACKET_SIZE_MEAN,
-						getFeatureListItem(QString("Packet Size Mean"),featuresEnabled.at(PACKET_SIZE_MEAN)));
-
-				ui.featureList->insertItem(PACKET_SIZE_DEVIATION,
-						getFeatureListItem(QString("Packet Size Deviation"),featuresEnabled.at(PACKET_SIZE_DEVIATION)));
-
-				ui.featureList->insertItem(DISTINCT_IPS,
-						getFeatureListItem(QString("IPs Contacted"),featuresEnabled.at(DISTINCT_IPS)));
-
-				ui.featureList->insertItem(DISTINCT_PORTS,
-						getFeatureListItem(QString("Ports Contacted"),featuresEnabled.at(DISTINCT_PORTS)));
-
-				ui.featureList->insertItem(PACKET_INTERVAL_MEAN,
-						getFeatureListItem(QString("Packet Interval Mean"),featuresEnabled.at(PACKET_INTERVAL_MEAN)));
-
-				ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
-						getFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
-
-				continue;
+				vector<uint> * vect = new vector<uint>;
+				vect->push_back(prefix);
+				VendorMACTable[vendor] = vect;
 			}
 		}
 	}
-	else
+}
+
+//Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
+// *note conflicts are only checked for locally, weird things may happen if the address is already being used.
+string NovaConfig::generateUniqueMACAddr(string vendor)
+{
+	char addrBuffer[8];
+	stringstream addrStrm;
+	pair<uint32_t,uint32_t> addr;
+	VendorToMACTable::iterator it;
+	string testStr;
+
+	//If we can resolve the vendor to a range
+	if((it = VendorMACTable.find(vendor)) != VendorMACTable.end())
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Error reading NOVA configuration file.", __FILE__, __LINE__);
+		do
+		{
+			//Randomly select one of the ranges
+			uint j;
+			uint i = rand() % it->second->size();
+			addr.first = it->second->at(i);
+			i = 0;
+
+			//Convert the first part to a string and format it for output
+			sprintf(addrBuffer, "%x", addr.first);
+			testStr = string(addrBuffer);
+			for(j = 0; j < (6-testStr.size()); j++)
+			{
+				if(!(i%2)&& i )
+				{
+					addrStrm << ":";
+				}
+				addrStrm << "0";
+				i++;
+			}
+			j = 0;
+			if(testStr.size() > 6)
+				j = testStr.size() - 6;
+			for(j = j; j < testStr.size(); j++)
+			{
+				if(!(i%2)&& i )
+				{
+					addrStrm << ":";
+				}
+				addrStrm << addrBuffer[j];
+				i++;
+			}
+
+			//Randomly generate the remaining portion
+			addr.second = ((uint)rand() & (uint)(pow(2,24)-1));
+
+			//Convert the second part to a string and format it for output
+			bzero(addrBuffer, 8);
+			sprintf(addrBuffer, "%x", addr.second);
+			testStr = string(addrBuffer);
+			i = 0;
+			for(j = 0; j < (6-testStr.size()); j++)
+			{
+				if(!(i%2)&& i )
+				{
+					addrStrm << ":";
+				}
+				addrStrm << "0";
+				i++;
+			}
+			j = 0;
+			if(testStr.size() > 6)
+				j = testStr.size() - 6;
+			for(j = j; j < testStr.size(); j++)
+			{
+				if(!(i%2)&& (i!=6))
+				{
+					addrStrm << ":";
+				}
+				addrStrm << addrBuffer[j];
+				i++;
+			}
+		}while(nodes.find(addrStrm.str()) != nodes.end());
+	}
+	return addrStrm.str();
+}
+
+//Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
+string NovaConfig::resolveMACVendor(uint MACPrefix)
+{
+	if(MACVendorTable.find((uint)(MACPrefix)) != MACVendorTable.end())
+		return MACVendorTable[(uint)(MACPrefix)];
+	else
+		return "";
+}
+
+//Load Personality choices from nmap fingerprints file
+void NovaConfig::displayNmapPersonalityTree()
+{
+	NovaComplexDialog * NmapPersonalityWindow = new NovaComplexDialog(
+			PersonalityDialog, this);
+	retVal = "";
+	NmapPersonalityWindow->exec();
+
+}
+//Load MAC vendor prefix choices from nmap mac prefix file
+void NovaConfig::displayMACPrefixWindow()
+{
+	NovaComplexDialog * MACPrefixWindow = new NovaComplexDialog(
+			MACDialog, this);
+	retVal = "";
+	MACPrefixWindow->exec();
+	if(retVal.compare(""))
+	{
+		ui.ethernetEdit->setText((QString)retVal.c_str());
+
+		//If there is no change in vendor, nothing left to be done.
+		if(profiles[currentProfile].ethernet.compare(retVal))
+			return;
+		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+		{
+			if(!it->second.pfile.compare(currentProfile))
+			{
+				it->second.MAC = generateUniqueMACAddr(retVal);
+			}
+		}
+		//If IP's arent staticDHCP, key wont change so do nothing
+		if(profiles[currentProfile].type != staticDHCP)
+			return;
+
+		vector<node> nodeList;
+		//If there is a vendor change, get new MAC's for each node using the profile.
+		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+		{
+			if(!it->second.pfile.compare(currentProfile))
+			{
+				node tempNode = it->second;
+				deleteNode(&it->second);
+				nodeList.push_back(tempNode);
+			}
+		}
+		while(!nodeList.empty())
+		{
+			node tempNode = nodeList.back();
+			nodeList.pop_back();
+			nodes[tempNode.name] = tempNode;
+			subnets[tempNode.sub].nodes.push_back(tempNode.name);
+		}
+	}
+}
+
+void NovaConfig::loadPreferences()
+{
+	//Read from CE Config
+	string configurationFile = homePath + "/Config/NOVAConfig.txt";
+
+	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
+
+	NOVAConfiguration * NConfig = new NOVAConfiguration();
+	NConfig->LoadConfig((char*)configurationFile.c_str(), homePath, __FILE__);
+	if (!NConfig->options["INTERFACE"].isValid || !NConfig->options["DATAFILE"].isValid
+			|| !NConfig->options["SA_MAX_ATTEMPTS"].isValid || !NConfig->options["SA_SLEEP_DURATION"].isValid
+			|| !NConfig->options["SILENT_ALARM_PORT"].isValid || !NConfig->options["K"].isValid
+			|| !NConfig->options["EPS"].isValid || !NConfig->options["CLASSIFICATION_TIMEOUT"].isValid
+			|| !NConfig->options["CLASSIFICATION_THRESHOLD"].isValid || !NConfig->options["IS_TRAINING"].isValid
+			|| !NConfig->options["HS_HONEYD_CONFIG"].isValid || !NConfig->options["TCP_TIMEOUT"].isValid
+			|| !NConfig->options["TCP_CHECK_FREQ"].isValid || !NConfig->options["DM_HONEYD_CONFIG"].isValid
+			|| !NConfig->options["DOPPELGANGER_IP"].isValid || !NConfig->options["DM_ENABLED"].isValid
+			|| !NConfig->options["READ_PCAP"].isValid || !NConfig->options["PCAP_FILE"].isValid
+			|| !NConfig->options["GO_TO_LIVE"].isValid || !NConfig->options["USE_TERMINALS"].isValid
+			|| !NConfig->options["ENABLED_FEATURES"].isValid)
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d ERROR: Unable to load configuration file.", __FILE__, __LINE__);
 		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_READ_FAIL, "Error: Unable to read NOVA configuration file " + configurationFile);
 		this->close();
 	}
+	ui.interfaceEdit->setText((QString)NConfig->options["INTERFACE"].data.c_str());
+	ui.dataEdit->setText((QString)NConfig->options["DATAFILE"].data.c_str());
+	ui.saAttemptsMaxEdit->setText((QString)NConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
+	ui.saAttemptsTimeEdit->setText((QString)NConfig->options["SA_SLEEP_DURATION"].data.c_str());
+	ui.saPortEdit->setText((QString)NConfig->options["SILENT_ALARM_PORT"].data.c_str());
+	ui.ceIntensityEdit->setText((QString)NConfig->options["K"].data.c_str());
+	ui.ceErrorEdit->setText((QString)NConfig->options["EPS"].data.c_str());
+	ui.ceFrequencyEdit->setText((QString)NConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
+	ui.ceThresholdEdit->setText((QString)NConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str());
+	ui.trainingCheckBox->setChecked(atoi(NConfig->options["IS_TRAINING"].data.c_str()));
+	ui.hsConfigEdit->setText((QString)NConfig->options["HS_HONEYD_CONFIG"].data.c_str());
+	ui.tcpTimeoutEdit->setText((QString)NConfig->options["TCP_TIMEOUT"].data.c_str());
+	ui.tcpFrequencyEdit->setText((QString)NConfig->options["TCP_CHECK_FREQ"].data.c_str());
+	ui.dmConfigEdit->setText((QString)NConfig->options["DM_HONEYD_CONFIG"].data.c_str());
+	ui.dmIPEdit->setText((QString)NConfig->options["DOPPELGANGER_IP"].data.c_str());
+	ui.dmCheckBox->setChecked(atoi(NConfig->options["DM_ENABLED"].data.c_str()));
+	ui.pcapCheckBox->setChecked(atoi(NConfig->options["READ_PCAP"].data.c_str()));
+	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
+	ui.pcapEdit->setText((QString)NConfig->options["PCAP_FILE"].data.c_str());
+	ui.liveCapCheckBox->setChecked(atoi(NConfig->options["GO_TO_LIVE"].data.c_str()));
+	ui.terminalCheckBox->setChecked(atoi(NConfig->options["USE_TERMINALS"].data.c_str()));
+	{
+		string featuresEnabled = NConfig->options["ENABLED_FEATURES"].data;
+		ui.featureList->clear();
+		// Populate the list, row order is based on dimension macros
+		ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
+				getFeatureListItem(QString("IP Traffic Distribution"),featuresEnabled.at(IP_TRAFFIC_DISTRIBUTION)));
+
+		ui.featureList->insertItem(PORT_TRAFFIC_DISTRIBUTION,
+				getFeatureListItem(QString("Port Traffic Distribution"),featuresEnabled.at(PORT_TRAFFIC_DISTRIBUTION)));
+
+		ui.featureList->insertItem(HAYSTACK_EVENT_FREQUENCY,
+				getFeatureListItem(QString("Haystack Event Frequency"),featuresEnabled.at(HAYSTACK_EVENT_FREQUENCY)));
+
+		ui.featureList->insertItem(PACKET_SIZE_MEAN,
+				getFeatureListItem(QString("Packet Size Mean"),featuresEnabled.at(PACKET_SIZE_MEAN)));
+
+		ui.featureList->insertItem(PACKET_SIZE_DEVIATION,
+				getFeatureListItem(QString("Packet Size Deviation"),featuresEnabled.at(PACKET_SIZE_DEVIATION)));
+
+		ui.featureList->insertItem(DISTINCT_IPS,
+				getFeatureListItem(QString("IPs Contacted"),featuresEnabled.at(DISTINCT_IPS)));
+
+		ui.featureList->insertItem(DISTINCT_PORTS,
+				getFeatureListItem(QString("Ports Contacted"),featuresEnabled.at(DISTINCT_PORTS)));
+
+		ui.featureList->insertItem(PACKET_INTERVAL_MEAN,
+				getFeatureListItem(QString("Packet Interval Mean"),featuresEnabled.at(PACKET_INTERVAL_MEAN)));
+
+		ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
+				getFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
+	}
 	closelog();
-	config.close();
+	delete NConfig;
 }
 
 //Draws the current honeyd configuration
@@ -563,7 +589,7 @@ void NovaConfig::updatePointers()
 		if(nodes.find(currentNode) != nodes.end());
 		//If not it sets it to the front or NULL
 		else if(nodes.size())
-			currentNode = nodes.begin()->second.address;
+			currentNode = nodes.begin()->second.name;
 		else
 			currentNode = "";
 		currentSubnet = "";
@@ -670,6 +696,7 @@ void NovaConfig::on_okButton_clicked()
 //Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
+	saveProfile();
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	if (!saveConfigurationToFile())
 	{
@@ -1016,9 +1043,81 @@ void NovaConfig::on_pcapCheckBox_stateChanged(int state)
 	ui.pcapGroupBox->setEnabled(state);
 }
 
-
 /******************************************
  * Profile Menu GUI Functions *************/
+
+/* Enables or disables options specific for reading from pcap file */
+void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
+{
+	if(loadingItems)
+		return;
+	else
+		loadingItems = true;
+	vector<string> delList;
+	vector<node> addList;
+	profiles[currentProfile].type = (profileType)index;
+
+	//If the current ethernet is an invalid selection
+	//TODO this should display a dialog asking the user if they wish to pick a valid ethernet or cancel mode change
+	if(((VendorMACTable.find(profiles[currentProfile].ethernet)) == VendorMACTable.end())
+			&& (index == staticDHCP))
+		displayMACPrefixWindow();
+
+	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+		if(!currentProfile.compare(it->second.pfile))
+		{
+			stringstream ss;
+			uint i = 0, j = 0;
+			j = ~j; // 2^32-1
+
+			node tempNode = it->second;
+			delList.push_back(it->first);
+
+			switch(profiles[currentProfile].type)
+			{
+				case static_IP:
+					tempNode.name = tempNode.IP;
+					break;
+				case staticDHCP:
+					tempNode.MAC = generateUniqueMACAddr(profiles[currentProfile].ethernet);
+					tempNode.name = tempNode.MAC;
+					break;
+
+				case randomDHCP:
+					tempNode.name = tempNode.pfile + " on " + tempNode.interface;
+
+					//Finds a unique identifier
+					while((nodes.find(tempNode.name) != nodes.end()) && (i < j))
+					{
+						i++;
+						ss.str("");
+						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
+						tempNode.name = ss.str();
+					}
+					break;
+				case Doppelganger:
+					tempNode.name = "Doppelganger";
+			}
+			addList.push_back(tempNode);
+		}
+	}
+	while(!delList.empty())
+	{
+		string delStr = delList.back();
+		delList.pop_back();
+		deleteNode(&nodes[delStr]);
+	}
+	while(!addList.empty())
+	{
+		node tempNode = addList.back();
+		addList.pop_back();
+		nodes[tempNode.name] = tempNode;
+		subnets[tempNode.sub].nodes.push_back(tempNode.name);
+	}
+	loadingItems = false;
+	loadAllNodes();
+}
 
 void NovaConfig::saveProfile()
 {
@@ -1038,6 +1137,7 @@ void NovaConfig::saveProfile()
 		p->tcpAction = ui.tcpActionEdit->displayText().toStdString();
 		p->uptime = ui.uptimeEdit->displayText().toStdString();
 		p->personality = ui.personalityEdit->displayText().toStdString();
+		p->type = (profileType)ui.dhcpComboBox->currentIndex();
 		//Save the port table
 		for(int i = 0; i < ui.portTreeWidget->topLevelItemCount(); i++)
 		{
@@ -1048,6 +1148,7 @@ void NovaConfig::saveProfile()
 			pr->behavior = item->text(2).toStdString();
 		}
 	}
+	createProfileTree(currentProfile);
 }
 
 //Removes a profile, all of it's children and any nodes that currently use it
@@ -1170,6 +1271,7 @@ void NovaConfig::loadProfile()
 		ui.tcpActionEdit->setText((QString)p->tcpAction.c_str());
 		ui.uptimeEdit->setText((QString)p->uptime.c_str());
 		ui.personalityEdit->setText((QString)p->personality.c_str());
+		ui.dhcpComboBox->setCurrentIndex(p->type);
 
 		//Populate the port table
 		for(uint i = 0; i < p->ports.size(); i++)
@@ -1209,12 +1311,13 @@ void NovaConfig::loadProfile()
 		ui.uptimeEdit->setEnabled(false);
 		ui.personalityEdit->setEnabled(false);
 		ui.uptimeBehaviorComboBox->setEnabled(false);
+		//ui.dhcpCheckBox->setChecked(false);
 	}
 }
 
 //This is called to update all ancestor ptrees, does not update current ptree to do that call
 // createProfileTree(profile.name) which will call this function afterwards currently this will
-// only be called when a profile is deleted and has no current ptree to update all other
+// only be called when a profile is deleted and has no current ptree. to update all other
 // changes use createProfileTree
 void NovaConfig::updateProfileTree(string name)
 {
@@ -1259,13 +1362,14 @@ void NovaConfig::loadProfilesFromTree(string parent)
 			//Generic profile, essentially a honeyd template
 			if(!string(v.first.data()).compare("profile"))
 			{
-				profile p;
+				profile p = profiles[parent];
 				//Root profile has no parent
 				p.parentProfile = parent;
 				p.tree = v.second;
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
+				p.type = (profileType)v.second.get<int>("type");
 
 				//Asserts the name is unique, if it is not it finds a unique name
 				// up to the range of 2^32
@@ -1283,7 +1387,6 @@ void NovaConfig::loadProfilesFromTree(string parent)
 				}
 				p.tree.put<std::string>("name", p.name);
 
-				p.DHCP = false;
 				p.ports.clear();
 
 				try //Conditional: has "set" values
@@ -1392,12 +1495,6 @@ void NovaConfig::loadProfileSet(ptree *ptr, profile *p)
 				p->dropRate = v.second.data();
 				continue;
 			}
-			prefix = "DHCP";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->DHCP = true;
-				continue;
-			}
 		}
 	}
 	catch(std::exception &e)
@@ -1493,7 +1590,11 @@ void NovaConfig::loadSubProfiles(string parent)
 			}
 			prof.tree.put<std::string>("name", prof.name);
 
-			prof.DHCP = false;
+			try //Conditional: If profile overrides type
+			{
+				prof.type = (profileType)v.second.get<int>("type");
+			}
+			catch(...){}
 
 			try //Conditional: If profile has set configurations different from parent
 			{
@@ -1646,7 +1747,7 @@ void NovaConfig::createProfileTree(string name)
 		temp.put<std::string>("set.uptimeRange", p.uptimeRange);
 	if(p.dropRate.compare(""))
 		temp.put<std::string>("set.dropRate", p.dropRate);
-	temp.put<bool>("set.DHCP", p.DHCP);
+	temp.put<int>("type", p.type);
 
 	//Populates the ports, if none are found create an empty field because it is expected.
 	ptree pt;
@@ -1935,13 +2036,13 @@ void NovaConfig::loadAllNodes()
 
 			//Create the node item for the Haystack tree
 			item = new QTreeWidgetItem(it->second.item, 0);
-			item->setText(0, (QString)n->address.c_str());
+			item->setText(0, (QString)n->name.c_str());
 			item->setText(1, (QString)n->pfile.c_str());
 			n->item = item;
 
 			//Create the node item for the node edit tree
 			item = new QTreeWidgetItem(it->second.nodeItem, 0);
-			item->setText(0, (QString)n->address.c_str());
+			item->setText(0, (QString)n->name.c_str());
 			item->setText(1, (QString)n->pfile.c_str());
 			n->nodeItem = item;
 
@@ -2081,14 +2182,15 @@ void NovaConfig::deleteNode(node *n)
 	ui.nodeTreeWidget->removeItemWidget(n->nodeItem, 0);
 	ui.hsNodeTreeWidget->removeItemWidget(n->item, 0);
 	subnet * s = &subnets[n->sub];
+
 	for(uint i = 0; i < s->nodes.size(); i++)
 	{
-		if(s->nodes[i] == n->address)
+		if(!s->nodes[i].compare(n->name))
 		{
 			s->nodes.erase(s->nodes.begin()+i);
 		}
 	}
-	nodes.erase(n->address);
+	nodes.erase(n->name);
 }
 
 /******************************************
@@ -2222,4 +2324,14 @@ void NovaConfig::on_nodeDisableButton_clicked()
 	else
 		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
 	loadingItems = false;
+}
+
+void NovaConfig::on_setEthernetButton_clicked()
+{
+	displayMACPrefixWindow();
+}
+
+void NovaConfig::on_setPersonalityButton_clicked()
+{
+	displayNmapPersonalityTree();
 }

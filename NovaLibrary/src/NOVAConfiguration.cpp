@@ -6,13 +6,8 @@
 //============================================================================/*
 
 #include "NOVAConfiguration.h"
-#include <fstream>
-#include <iostream>
-#include <string.h>
 
 using namespace std;
-
-
 
 namespace Nova
 {
@@ -508,6 +503,46 @@ int NOVAConfiguration::SetDefaults()
 
 	closelog();
 	return out;
+}
+
+// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
+//	Returns: True if (after the function) the user has all necessary ~/.nova config files
+//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
+bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
+{
+	struct stat fileAttr;
+	//TODO: Do a proper check to make sure all config files exist, not just the .nova dir
+	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+	{
+		return true;
+	}
+	else
+	{
+		if( system("gksudo --description 'Add your user to the privileged nova user group. "
+				"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
+		{
+			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to assign user root privileges");
+			return false;
+		}
+
+		//TODO: Do this command programmatically. Not by calling system()
+		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
+		{
+			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
+			return false;
+		}
+
+		//Check the ~/.nova dir again
+		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+		{
+			return true;
+		}
+		else
+		{
+			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
+			return false;
+		}
+	}
 }
 
 NOVAConfiguration::NOVAConfiguration()
