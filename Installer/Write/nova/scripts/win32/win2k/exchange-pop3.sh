@@ -12,7 +12,7 @@
 # $1: srcip, $2: srcport, $3: dstip, $4: dstport
 #
 
-. scripts/misc/base.sh
+. /usr/share/nova/scripts/misc/base.sh
 
 SRCIP=$1
 SRCPORT=$2

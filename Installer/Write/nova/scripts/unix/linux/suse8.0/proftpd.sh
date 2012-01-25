@@ -22,7 +22,7 @@
 # 0.0.1: initial release
 # 
 
-. scripts/misc/base.sh
+. /usr/share/nova/scripts/misc/base.sh
 
 SRCIP=$1
 SRCPORT=$2
@@ -34,7 +34,7 @@ HOST="bps-pc10"
 
 AUTH="no"
 PASS="no"
-DATFILES="/usr/share/honeyd/scripts/suse8.0/dat/proftpd.files"
+DATFILES="/usr/share/nova/scripts/suse8.0/dat/proftpd.files"
 
 pwd="/"
 passive=0

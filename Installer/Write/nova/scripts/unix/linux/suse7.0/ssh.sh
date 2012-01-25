@@ -6,7 +6,7 @@
 # added protocol mismatch stuff
 #
 
-. scripts/misc/base.sh
+. /usr/share/nova/scripts/misc/base.sh
 
 SRCIP=$1
 SRCPORT=$2

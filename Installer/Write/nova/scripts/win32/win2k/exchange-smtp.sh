@@ -14,7 +14,7 @@
 # 0.0.1: 
 #
 
-. scripts/misc/base.sh
+. /usr/share/nova/scripts/misc/base.sh
 
 SRCIP=$1
 SRCPORT=$2
