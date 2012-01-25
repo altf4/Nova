@@ -504,11 +504,8 @@ void NovaGUI::initiateSystemStatus()
 
 void NovaGUI::updateSystemStatus()
 {
-	char buffer[1024];
-	bzero(buffer, 1024);
 	QTableWidgetItem *item;
 	QTableWidgetItem *pidItem;
-
 
 	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
 	{
@@ -525,8 +522,9 @@ void NovaGUI::updateSystemStatus()
 			item->setIcon(*greenIcon);
 			pidItem->setText(QString::number(novaComponents[i].process->pid()));
 		}
-
 	}
+
+	on_systemStatusTable_itemSelectionChanged();
 }
 
 
@@ -1690,6 +1688,30 @@ void NovaGUI::on_stopButton_clicked()
 	closeNova();
 }
 
+void NovaGUI::on_systemStatusTable_itemSelectionChanged()
+{
+	int row = ui.systemStatusTable->currentRow();
+
+	if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
+	{
+		ui.systemStatStartButton->setDisabled(true);
+		ui.systemStatKillButton->setDisabled(false);
+
+		// We can't send a stop signal to honeyd, force using the kill button
+		if (row == COMPONENT_DMH || row == COMPONENT_HSH)
+			ui.systemStatStopButton->setDisabled(true);
+		else
+			ui.systemStatStopButton->setDisabled(false);
+
+	}
+	else
+	{
+		ui.systemStatStartButton->setDisabled(false);
+		ui.systemStatStopButton->setDisabled(true);
+		ui.systemStatKillButton->setDisabled(true);
+	}
+}
+
 void NovaGUI::on_systemStatStartButton_clicked()
 {
 	int row = ui.systemStatusTable->currentRow();
@@ -1747,8 +1769,6 @@ void NovaGUI::on_systemStatKillButton_clicked()
 		QString killString = QString("sudo kill ") + QString::number(process->pid());
 		system(killString.toStdString().c_str());
 	}
-
-	updateSystemStatus();
 }
 
 void NovaGUI::on_systemStatStopButton_clicked()
@@ -1793,7 +1813,6 @@ void NovaGUI::on_systemStatStopButton_clicked()
 		}
 		break;
 	}
-	updateSystemStatus();
 }
 
 void NovaGUI::on_clearSuspectsButton_clicked()

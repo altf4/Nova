@@ -282,6 +282,7 @@ private slots:
 	void on_systemStatStartButton_clicked();
 	void on_systemStatStopButton_clicked();
 	void on_systemStatKillButton_clicked();
+	void on_systemStatusTable_itemSelectionChanged();
 
 	//Suspect view widgets
 	void on_clearSuspectsButton_clicked();
@@ -300,9 +301,9 @@ signals:
 	void refreshSystemStatus();
 
 private:
-	QIcon* greenIcon;
-	QIcon* redIcon;
-	QIcon* yellowIcon;
+	const QIcon* greenIcon;
+	const QIcon* redIcon;
+	const QIcon* yellowIcon;
 };
 
 namespace Nova {
