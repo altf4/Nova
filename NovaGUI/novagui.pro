@@ -4,25 +4,29 @@ QT += core \
     gui
 
 # PRE_TARGETDEPS += /usr/lib/libann.a
-HEADERS += src/DialogPrompter.h \
+HEADERS += src/nova_manual.h \
+    src/DialogPrompter.h \
     src/DialogPrompt.h \
-	src/NovaComplexDialog.h \
+    src/NovaComplexDialog.h \
     src/main.h \
     src/nodePopup.h \
     src/novaconfig.h \
     src/novagui.h \
     src/portPopup.h \
     src/run_popup.h
-SOURCES += src/DialogPrompter.cpp \
+SOURCES += src/nova_manual.cpp \
+    src/DialogPrompter.cpp \
     src/DialogPrompt.cpp \
-	src/NovaComplexDialog.cpp \
+    src/NovaComplexDialog.cpp \
     src/main.cpp \
     src/nodePopup.cpp \
     src/novaconfig.cpp \
     src/novagui.cpp \
     src/portPopup.cpp \
     src/run_popup.cpp
-FORMS += UI/NovaComplexDialog.ui \
+FORMS += UI/nova_manual.ui \
+    src/UI/nova_manual.ui \
+    UI/NovaComplexDialog.ui \
     UI/nodePopup.ui \
     UI/novaconfig.ui \
     UI/novagui.ui \

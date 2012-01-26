@@ -37,6 +37,7 @@ pthread_rwlock_t lock;
 
 bool featureEnabled[DIM];
 bool editingSuspectList = false;
+bool isHelpUp = false;
 QMenu * suspectMenu;
 
 // Defines the order of components in the process list and novaComponents array
@@ -1635,6 +1636,14 @@ void  NovaGUI::on_actionShow_All_Suspects_triggered()
 	editingSuspectList = true;
 	drawAllSuspects();
 	editingSuspectList = false;
+}
+
+void NovaGUI::on_actionHelp_2_triggered()
+{
+	// call constructor for nova_manual
+	Nova_Manual *wi = new Nova_Manual();
+	// use .show()
+	wi->show();
 }
 
 /************************************************
