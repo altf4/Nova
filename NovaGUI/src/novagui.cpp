@@ -1,9 +1,20 @@
 //============================================================================
 // Name        : novagui.cpp
-// Author      : DataSoft Corporation
-// Copyright   : GNU GPL v3
+// Copyright   : DataSoft Corporation 2011-2012
+//	Nova is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//   
+//   Nova is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//   
+//   You should have received a copy of the GNU General Public License
+//   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
-//============================================================================/*
+//============================================================================
 #include "novagui.h"
 
 
@@ -505,11 +516,8 @@ void NovaGUI::initiateSystemStatus()
 
 void NovaGUI::updateSystemStatus()
 {
-	char buffer[1024];
-	bzero(buffer, 1024);
 	QTableWidgetItem *item;
 	QTableWidgetItem *pidItem;
-
 
 	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
 	{
@@ -526,8 +534,9 @@ void NovaGUI::updateSystemStatus()
 			item->setIcon(*greenIcon);
 			pidItem->setText(QString::number(novaComponents[i].process->pid()));
 		}
-
 	}
+
+	on_systemStatusTable_itemSelectionChanged();
 }
 
 
@@ -1699,6 +1708,30 @@ void NovaGUI::on_stopButton_clicked()
 	closeNova();
 }
 
+void NovaGUI::on_systemStatusTable_itemSelectionChanged()
+{
+	int row = ui.systemStatusTable->currentRow();
+
+	if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
+	{
+		ui.systemStatStartButton->setDisabled(true);
+		ui.systemStatKillButton->setDisabled(false);
+
+		// We can't send a stop signal to honeyd, force using the kill button
+		if (row == COMPONENT_DMH || row == COMPONENT_HSH)
+			ui.systemStatStopButton->setDisabled(true);
+		else
+			ui.systemStatStopButton->setDisabled(false);
+
+	}
+	else
+	{
+		ui.systemStatStartButton->setDisabled(false);
+		ui.systemStatStopButton->setDisabled(true);
+		ui.systemStatKillButton->setDisabled(true);
+	}
+}
+
 void NovaGUI::on_systemStatStartButton_clicked()
 {
 	int row = ui.systemStatusTable->currentRow();
@@ -1756,8 +1789,6 @@ void NovaGUI::on_systemStatKillButton_clicked()
 		QString killString = QString("sudo kill ") + QString::number(process->pid());
 		system(killString.toStdString().c_str());
 	}
-
-	updateSystemStatus();
 }
 
 void NovaGUI::on_systemStatStopButton_clicked()
@@ -1802,7 +1833,6 @@ void NovaGUI::on_systemStatStopButton_clicked()
 		}
 		break;
 	}
-	updateSystemStatus();
 }
 
 void NovaGUI::on_clearSuspectsButton_clicked()
