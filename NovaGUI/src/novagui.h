@@ -1,10 +1,20 @@
 //============================================================================
 // Name        : novagui.h
-// Author      : DataSoft Corporation
-// Copyright   : GNU GPL v3
+// Copyright   : DataSoft Corporation 2011-2012
+//	Nova is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//   
+//   Nova is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//   
+//   You should have received a copy of the GNU General Public License
+//   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Header file for the main NovaGUI component
-//============================================================================/*
-
+//============================================================================
 #ifndef NOVAGUI_H
 #define NOVAGUI_H
 
@@ -285,6 +295,7 @@ private slots:
 	void on_systemStatStartButton_clicked();
 	void on_systemStatStopButton_clicked();
 	void on_systemStatKillButton_clicked();
+	void on_systemStatusTable_itemSelectionChanged();
 
 	//Suspect view widgets
 	void on_clearSuspectsButton_clicked();
@@ -303,9 +314,9 @@ signals:
 	void refreshSystemStatus();
 
 private:
-	QIcon* greenIcon;
-	QIcon* redIcon;
-	QIcon* yellowIcon;
+	const QIcon* greenIcon;
+	const QIcon* redIcon;
+	const QIcon* yellowIcon;
 };
 
 namespace Nova {
