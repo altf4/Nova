@@ -712,6 +712,7 @@ Module</string>
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="actionHelp_2"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -724,6 +725,14 @@ Module</string>
     <bool>false</bool>
    </property>
   </widget>
+  <action name="actionHelp">
+   <property name="iconText">
+    <string>Help Contents</string>
+   </property>
+   <property name="toolTip">
+    <string>Help Contents</string>
+   </property>
+  </action>
   <action name="actionConfigure">
    <property name="text">
     <string>&amp;Preferences</string>
@@ -789,6 +798,11 @@ Module</string>
   <action name="actionHide_Suspect">
    <property name="text">
     <string>Hide Suspect</string>
+   </property>
+  </action>
+  <action name="actionHelp_2">
+   <property name="text">
+    <string>Help Contents</string>
    </property>
   </action>
  </widget>

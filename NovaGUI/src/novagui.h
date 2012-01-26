@@ -31,6 +31,7 @@
 #include "ui_novagui.h"
 #include "run_popup.h"
 #include "portPopup.h"
+#include "nova_manual.h"
 #include "NovaUtil.h"
 
 using namespace std;
@@ -163,6 +164,7 @@ class NovaGUI : public QMainWindow
 public:
 
     bool editingPreferences;
+    bool isHelpUp;
     bool runAsWindowUp;
 
     string group;
@@ -267,6 +269,7 @@ private slots:
 	void on_actionClear_All_Suspects_triggered();
 	void on_actionClear_Suspect_triggered();
 	void on_actionHide_Suspect_triggered();
+	void on_actionHelp_2_triggered();
 
 	//Global Widgets
 	void on_mainButton_clicked();
