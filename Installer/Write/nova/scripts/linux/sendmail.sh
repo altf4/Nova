@@ -6,8 +6,6 @@
 # -> http://www.citi.umich.edu/u/provos/honeyd/
 # 
 # Author: Maik Ellinger
-# Last modified: 17/06/2002
-# Version: 0.0.8
 # 
 # Changelog: 
 # 0.0.7: - bugfix: sending correct CR/LF -> ToDO: correct all echo where necessary
@@ -20,7 +18,7 @@
 # $1: srcip, $2: srcport, $3: dstip, $4: dstport
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-# made it accepting mail
+# modified by DataSoft Corporation
 #
 
 . /usr/share/nova/scripts/misc/base.sh

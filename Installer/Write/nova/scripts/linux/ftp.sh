@@ -5,8 +5,7 @@
 # -> http://www.citi.umich.edu/u/provos/honeyd/
 # 
 # Author: Maik Ellinger
-# Last modified: 13/06/2002
-# Version: 0.0.8
+# modified by DataSoft Corporation
 # 
 # Changelog:
 # 0.0.8; some ftp comamnds implemented: PWD, TYPE, MODE, PORT (by Fabian Bieker)

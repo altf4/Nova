@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# $1: srcip, $2: srcport, $3: dstip, $4: dstport
+# $1: srcip, $2: srcport, $3: dstip, $4: dstport, $5 configFile
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 

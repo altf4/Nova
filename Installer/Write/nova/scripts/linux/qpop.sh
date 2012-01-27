@@ -5,16 +5,15 @@
 # -> http://www.citi.umich.edu/u/provos/honeyd/
 # 
 # Author: Maik Ellinger
-# Last modified: 24/06/2002
-# Version: 0.0.1
-# 
+
+#
 # Changelog: 
 # 
 # 0.0.1: initial release
 # 
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 

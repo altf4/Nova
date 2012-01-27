@@ -3,7 +3,7 @@
 # $1: srcip, $2: srcport, $3: dstip, $4: dstport
 #
 # by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 
@@ -12,7 +12,7 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
-SERVICE="echo"
+SERVICE="lpd"
 HOST="serv"
 
 my_start
@@ -23,6 +23,7 @@ while read name; do
 	name=`echo $name | sed s/[[:cntrl:]]//g`
 
 	echo "$name" >> $LOG
-	echo "$name"
+	echo "$HOST: lpd: Illegal service request"
 done
+
 my_stop

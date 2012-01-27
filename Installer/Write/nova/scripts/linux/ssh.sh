@@ -3,8 +3,8 @@
 # $1: srcip, $2: srcport, $3: dstip, $4: dstport, $5: config
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-# added protocol mismatch stuff
-#
+# modified by DataSoft Corporation
+
 
 . /usr/share/nova/scripts/misc/base.sh
 
