@@ -24,7 +24,7 @@ NovaComplexDialog::NovaComplexDialog(QWidget *parent)
 	ui.setupUi(this);
 	type = MACDialog;
 }
-NovaComplexDialog::NovaComplexDialog(whichDialog type, QWidget *parent)
+NovaComplexDialog::NovaComplexDialog(whichDialog type, QWidget *parent, string filter)
 	: QDialog(parent)
 {
 	novaParent = (NovaConfig *)parent;
@@ -42,10 +42,14 @@ NovaComplexDialog::NovaComplexDialog(whichDialog type, QWidget *parent)
 		case MACDialog:
 			ui.searchButton->setDefault(true);
 			this->setWindowTitle((const QString&)"Select a MAC Vendor");
+			this->blockSignals(true);
+			ui.searchEdit->setText((QString)filter.c_str());
+			this->blockSignals(false);
 			on_searchButton_clicked();
 		default:
 			break;
 	}
+	ui.searchEdit->setFocus();
 }
 
 NovaComplexDialog::~NovaComplexDialog()
@@ -97,21 +101,18 @@ void NovaComplexDialog::drawPersonalities(string filterStr)
 	{
 
 		//Get fingerprint and Class strings
-		fprint = printList->at(i).first;
-		printClass = printList->at(i).second;
+		fprint = printList->at((int)i).first;
+		printClass = printList->at((int)i).second;
 		//find the first portion of the class string
 		temp = printClass.substr(0,printClass.find(' '));
 		bool matched = true;
-		for(uint i = 0; i < filterStr.size(); i++)
+		if(strcasestr(temp.c_str(), filterStr.c_str()) == NULL)
 		{
-			if(temp[i] != filterStr[i])
-			{
-				matched = false;
-				break;
-			}
+			matched = false;
 		}
 		if(!matched)
 			continue;
+
 		//Get the current top level children
 		QObjectList list = ui.treeWidget->children();
 		bool found = false;
@@ -213,13 +214,9 @@ void NovaComplexDialog::on_searchButton_clicked()
 		for(VendorToMACTable::iterator it = table->begin(); it != table->end(); it++)
 		{
 			matched = true;
-			for(uint i = 0; i < filterStr.size(); i++)
+			if(strcasestr(it->first.c_str(), filterStr.c_str()) == NULL)
 			{
-				if(it->first[i] != filterStr[i])
-				{
-					matched = false;
-					break;
-				}
+				matched = false;
 			}
 			if(matched)
 			{
