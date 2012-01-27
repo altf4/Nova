@@ -476,7 +476,7 @@ void NovaConfig::displayNmapPersonalityTree()
 void NovaConfig::displayMACPrefixWindow()
 {
 	NovaComplexDialog * MACPrefixWindow = new NovaComplexDialog(
-			MACDialog, this);
+			MACDialog, this, ui.ethernetEdit->text().toStdString());
 	retVal = "";
 	MACPrefixWindow->exec();
 	if(retVal.compare(""))
