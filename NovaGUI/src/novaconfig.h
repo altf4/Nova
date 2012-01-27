@@ -56,6 +56,7 @@ public:
 
     MACToVendorTable MACVendorTable;
     VendorToMACTable VendorMACTable;
+    vector<pair<string, string> > nmapPersonalities;
 
     string group;
 
@@ -73,6 +74,8 @@ public:
     string resolveMACVendor(uint MACPrefix);
     //Load MAC vendor prefix choices from nmap mac prefix file
     void loadMACPrefixs();
+    //Load nmap personalities from the nmap-os-db file
+    void loadNmapPersonalities();
 
     //Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
     // *note conflicts are only checked for locally, weird things may happen if the address is already being used.
@@ -178,7 +181,6 @@ void on_pcapCheckBox_stateChanged(int state);
 void on_dhcpComboBox_currentIndexChanged(int index);
 
 //GUI Signals for Profile settings
-void on_editPortsButton_clicked();
 void on_cloneButton_clicked();
 void on_addButton_clicked();
 void on_deleteButton_clicked();

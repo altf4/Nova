@@ -1528,8 +1528,6 @@ void NovaGUI::drawNodes()
 	//QTreeWidgetItem * item = NULL;
 	QString str;
 
-	ui.nodesTreeWidget->clear();
-
 	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 	{
 		//item = new QTreeWidgetItem(ui.nodesTreeWidget);
