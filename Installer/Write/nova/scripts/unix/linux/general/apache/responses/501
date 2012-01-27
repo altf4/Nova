@@ -1,6 +1,6 @@
 HTTP/1.1 501 Method Not Implemented
 Date: %DATE%
-Server: Apache/2.2.20 (Ubuntu)
+Server: %SERVER_VERSION%
 Allow: GET,HEAD,POST,OPTIONS
 Vary: Accept-Encoding
 Connection: close

@@ -1,6 +1,6 @@
 HTTP/1.1 404 Not Found
 Date: %DATE%
-Server: Apache/2.2.20 (Ubuntu)
+Server: %SERVER_VERSION%
 Vary: Accept-Encoding
 Connection: close
 Content-Type: text/html; charset=iso-8859-1

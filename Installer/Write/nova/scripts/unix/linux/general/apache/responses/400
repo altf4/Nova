@@ -1,6 +1,6 @@
 HTTP/1.1 400 Bad Request
 Date: %DATE%
-Server: Apache/2.2.20 (Ubuntu)
+Server: %SERVER_VERSION%
 Vary: Accept-Encoding
 Connection: close
 Content-Type: text/html; charset=iso-8859-1
