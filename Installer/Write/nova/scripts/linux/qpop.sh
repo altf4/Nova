@@ -5,16 +5,15 @@
 # -> http://www.citi.umich.edu/u/provos/honeyd/
 # 
 # Author: Maik Ellinger
-# Last modified: 24/06/2002
-# Version: 0.0.1
-# 
+
+#
 # Changelog: 
 # 
 # 0.0.1: initial release
 # 
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 
@@ -23,6 +22,10 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/QPOP_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
+
 SERVICE="qpop/POP3"
 
 HOST="serv"
@@ -30,7 +33,7 @@ AUTH="no"
 PASS="no"
 
 my_start
-echo -e "+OK QPOP (version 2.53) at $HOST.$DOMAIN starting.\r"
+echo -e "+OK $VERSION at $HOST.$DOMAIN starting.\r"
 while read incmd parm1 parm2 parm3 parm4 parm5
 do
 	# remove control-characters

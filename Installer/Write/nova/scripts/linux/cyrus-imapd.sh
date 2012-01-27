@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# $1: srcip, $2: srcport, $3: dstip, $4: dstport
+# $1: srcip, $2: srcport, $3: dstip, $4: dstport, $5 configFile
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 
@@ -12,14 +12,17 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/CYRUS_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
 SERVICE="cyrus/IMAP"
-HOST="bps-pc10"
+HOST="serv"
 
 login="false"
 mail=`head -c 2 /dev/urandom | hexdump | sed -e 's/[0 a-z]//g' | head -c 1`
 
 my_start
-echo "* OK $HOST Cyrus IMAP4 v2.0.16 server ready"
+echo -e "* OK $HOST $VERSION server ready"
 
 while read name; do
 

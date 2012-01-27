@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 #
-# $1: srcip, $2: srcport, $3: dstip, $4: dstport
+# $1: srcip, $2: srcport, $3: dstip, $4: dstport, $5: config
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-# added protocol mismatch stuff
-#
+# modified by DataSoft Corporation
+
 
 . /usr/share/nova/scripts/misc/base.sh
 
@@ -13,13 +13,16 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/SSH_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
 SERVICE="ssh"
 HOST="serv"
 
 
 my_start
 
-echo "SSH-1.99-OpenSSH_2.1.1"
+echo -e "$VERSION"
 
 while read name; do
 	echo "$name" >> $LOG

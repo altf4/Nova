@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 
@@ -10,8 +10,12 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+BANNER=`perl -nle '/TELNET_BANNER (.*)/ and print $1' < $STRINGSFILE`
+
+
 SERVICE="telnet"
-HOST="bps-pc10"
+HOST="serv"
 
 state="login"
 count=1
@@ -32,7 +36,7 @@ login_failed() {
 
 }
 
-echo "Welcome to SuSE Linux 8.0 (i386) - Kernel 2.4.18-64GB-SMP (8)."
+echo -e $BANNER
 echo -n "$HOST Login: "
 
 

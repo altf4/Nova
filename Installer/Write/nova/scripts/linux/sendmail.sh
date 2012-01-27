@@ -6,8 +6,6 @@
 # -> http://www.citi.umich.edu/u/provos/honeyd/
 # 
 # Author: Maik Ellinger
-# Last modified: 17/06/2002
-# Version: 0.0.8
 # 
 # Changelog: 
 # 0.0.7: - bugfix: sending correct CR/LF -> ToDO: correct all echo where necessary
@@ -20,7 +18,7 @@
 # $1: srcip, $2: srcport, $3: dstip, $4: dstport
 #
 # modified by Fabian Bieker <fabian.bieker@web.de>
-# made it accepting mail
+# modified by DataSoft Corporation
 #
 
 . /usr/share/nova/scripts/misc/base.sh
@@ -30,15 +28,19 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/SENDMAIL_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
+
 SERVICE="sendmail/SMTP"
-HOST="bps-pc10"
+HOST="serv"
 
 MAILFROM="err"
 EHELO="no"
 RCPTTO="err"
 
 my_start
-echo -e "220 $HOST.$DOMAIN ESMTP Sendmail 8.12.2/8.12.2/SuSE Linux 8.12.0-0.3; $DATE\r" 
+echo -e "220 $HOST.$DOMAIN ESMTP $VERSION; $DATE\r" 
 
 while read incmd parm1 parm2 parm3 parm4 parm5
 do
@@ -51,7 +53,7 @@ do
 	parm5=`echo $parm5 | sed s/[[:cntrl:]]//g`
 
 	# convert to upper-case
-	incmd_nocase=`echo $incmd | gawk '{print toupper($0);}'`
+	incmd_nocase=`echo $incmd | awk '{print toupper($0);}'`
 	#echo $incmd_nocase
 	case $incmd_nocase in
 	    QUIT* )	
@@ -62,7 +64,7 @@ do
 		echo -e "250 2.0.0 Reset state\r"
 		;;
 	    HELP* )
-		echo "214-2.0.0 This is sendmail version 8,12,2"
+		echo "214-2.0.0 This is $VERSION"
 		echo "214-2.0.0 Topics:"
 		echo "214-2.0.0       HELO    EHLO    MAIL    RCPT    DATA"
 		echo "214-2.0.0       RSET    NOOP    QUIT    HELP    VRFY"
@@ -101,7 +103,7 @@ do
 		fi
 		;;
 	    MAIL* )
-		haveFROM=`echo $parm1 | gawk -F: '{print toupper($1);}'`
+		haveFROM=`echo $parm1 | awk -F: '{print toupper($1);}'`
 		if [ "$haveFROM" == "FROM" ]
 		then
 	    		if [ `echo "$incmd$parm1$parm2" | grep '<.*>' 2>&1 >/dev/null && echo 1` ]; then
@@ -116,7 +118,7 @@ do
 		fi
 		;;
 	    RCPT* )
-		haveTO=`echo $parm1 | gawk -F: '{print toupper($1);}'`
+		haveTO=`echo $parm1 | awk -F: '{print toupper($1);}'`
 		if [ "$haveTO" == "TO"  ]; then
 			if [ "$MAILFROM" == "ok"  ]; then 
 	    		if [ `echo "$incmd$parm1$parm2" | grep '<.*>' 2>&1 >/dev/null && echo 1` ]; then
@@ -159,7 +161,7 @@ do
 		echo -e "503 AUTH mechanism not available\r"
 		;;
 	    * )
-		if [ $DATA != "ok" ]; then
+		if [ "$DATA" != "ok" ]; then
 			echo -e "500 5.5.1 Command unrecognized: \"$incmd\"\r"
 		fi
 		;;

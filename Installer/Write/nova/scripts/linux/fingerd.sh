@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 
@@ -9,6 +9,9 @@ SRCIP=$1
 SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
+
+STRINGSFILE=$5
+VERSION=`perl -nle '/FINGERD_VERSION (.*)/ and print $1' < $STRINGSFILE`
 
 SERVICE="finger"
 HOST="serv"
@@ -24,7 +27,7 @@ echo "$name" >> $LOG
 
 if [ "$name" == "root" ]; then
 	cat << _eof_
-Welcome to Linux version 2.4.7-4GB at $HOST.$DOMAIN !
+$VERSION at $HOST.$DOMAIN !
 
  $DATE  up 64 days, 15:01, 3 users,  load average: 0.05, 0.11, 0.07
 
@@ -40,7 +43,7 @@ fi
 
 if [ -z $name ]; then
 	cat << _eof_
-Welcome to Linux version 2.4.7-4GB at $HOST.$DOMAIN !
+$VERSION at $HOST.$DOMAIN !
 
  $DATE  up 67 days, 14:57,  2 users,  load average: 0.22, 0.09, 0.2
 
@@ -52,7 +55,7 @@ _eof_
 fi
 
 cat << _eof_
-Welcome to Linux version 2.4.7-4GB at $HOST.$DOMAIN !
+$VERSION at $HOST.$DOMAIN !
 
  $DATE  up 67 days, 15:07,  2 users,  load average: 0.17, 0.19, 0.8:
 

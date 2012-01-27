@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 #
 # by Fabian Bieker <fabian.bieker@web.de>
-#
+# modified by DataSoft Corporation
 
 . /usr/share/nova/scripts/misc/base.sh
 
@@ -10,8 +10,12 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/SQUID_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
+
 SERVICE="squid/PROXY"
-HOST="bps-pc10"
+HOST="serv"
 LOG="/var/log/honeyd/web.log"
 
 REQUEST=""
@@ -45,7 +49,7 @@ done
 if [ -z "$REQUEST" ] ; then
 	cat << _eof_
 HTTP/1.0 400 Bad Request
-Server: Squid/2.4.STABLE3
+Server: $VERSION
 Mime-Version: 1.0
 Date: $DATE 
 Content-Type: text/html
@@ -93,7 +97,7 @@ fi
 sleep 5
 cat << _eof_
 HTTP/1.0 400 CONNECT_FAIL 
-Server: Squid/2.4.STABLE3
+Server: $VERSION
 Mime-Version: 1.0
 Date: $DATE 
 Content-Type: text/html
@@ -129,4 +133,5 @@ The system returned:
 The remote host or network may be down.  Please try the request again.
 <P>Your cache administrator is <A HREF="mailto:webcache@$HOST.DOMAIN">webcache@$HOST.$DOMAIN</A>.
 _eof_
+
 my_stop

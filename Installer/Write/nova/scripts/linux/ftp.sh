@@ -5,8 +5,7 @@
 # -> http://www.citi.umich.edu/u/provos/honeyd/
 # 
 # Author: Maik Ellinger
-# Last modified: 13/06/2002
-# Version: 0.0.8
+# modified by DataSoft Corporation
 # 
 # Changelog:
 # 0.0.8; some ftp comamnds implemented: PWD, TYPE, MODE, PORT (by Fabian Bieker)
@@ -29,12 +28,15 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
-SERVICE="pro-ftpd/FTP"
-HOST="bps-pc10"
+STRINGSFILE=$5
+VERSION=`perl -nle '/FTPD_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
+SERVICE="wu-ftpd/FTP"
+HOST="serv"
 
 AUTH="no"
 PASS="no"
-DATFILES="/usr/share/nova/scripts/suse8.0/dat/proftpd.files"
+DATFILES="/usr/share/nova/scripts/suse7.0/dat/wuftpd.files"
 
 pwd="/"
 passive=0
@@ -45,7 +47,7 @@ mode="S"
 
 my_start
 
-echo -e "220 ProFTPD 1.2.4rc1 Server (SuSE) [$HOST.$DOMAIN] ready.\r"
+echo -e "220 $HOST.$DOMAIN $VERSION $DATE) ready.\r"
 while read incmd parm1 parm2 parm3 parm4 parm5
 do
 	# remove control-characters
