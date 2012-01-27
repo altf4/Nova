@@ -23,6 +23,10 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/QPOP_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
+
 SERVICE="qpop/POP3"
 
 HOST="serv"
@@ -30,7 +34,7 @@ AUTH="no"
 PASS="no"
 
 my_start
-echo -e "+OK QPOP (version 2.53) at $HOST.$DOMAIN starting.\r"
+echo -e "+OK $VERSION at $HOST.$DOMAIN starting.\r"
 while read incmd parm1 parm2 parm3 parm4 parm5
 do
 	# remove control-characters

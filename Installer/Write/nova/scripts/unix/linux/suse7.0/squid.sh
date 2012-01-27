@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # by Fabian Bieker <fabian.bieker@web.de>
 #
@@ -9,6 +9,10 @@ SRCIP=$1
 SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
+
+STRINGSFILE=$5
+VERSION=`perl -nle '/SQUID_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
 
 SERVICE="squid/PROXY"
 HOST="serv"
@@ -45,7 +49,7 @@ done
 if [ -z "$REQUEST" ] ; then
 	cat << _eof_
 HTTP/1.0 400 Bad Request
-Server: Squid/2.2.STABLE2
+Server: $VERSION
 Mime-Version: 1.0
 Date: $DATE 
 Content-Type: text/html
@@ -93,7 +97,7 @@ fi
 sleep 5
 cat << _eof_
 HTTP/1.0 400 CONNECT_FAIL 
-Server: Squid/2.2.STABLE2
+Server: $VERSION
 Mime-Version: 1.0
 Date: $DATE 
 Content-Type: text/html

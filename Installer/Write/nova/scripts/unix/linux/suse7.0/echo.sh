@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # $1: srcip, $2: srcport, $3: dstip, $4: dstport
 #

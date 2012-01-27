@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # by Fabian Bieker <fabian.bieker@web.de>
 #

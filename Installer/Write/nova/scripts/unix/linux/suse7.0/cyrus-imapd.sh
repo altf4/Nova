@@ -12,6 +12,9 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/CYRUS_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
 SERVICE="cyrus/IMAP"
 HOST="serv"
 
@@ -19,7 +22,7 @@ login="false"
 mail=`head -c 2 /dev/urandom | hexdump | sed -e 's/[0 a-z]//g' | head -c 1`
 
 my_start
-echo "* OK $HOST Cyrus IMAP4 v1.3.1 server ready"
+echo -e "* OK $HOST $VERSION server ready"
 
 while read name; do
 

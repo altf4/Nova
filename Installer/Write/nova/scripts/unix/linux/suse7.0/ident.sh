@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # by Fabian Bieker <fabian.bieker@web.de>
 #
@@ -13,7 +13,8 @@ DSTPORT=$4
 SERVICE="ident"
 HOST="serv"
 
-USER="john"			# other user than root, to display randomly
+STRINGSFILE=$5
+USER=`perl -nle '/IDENT_USERNAME (.*)/ and print $1' < $STRINGSFILE`
 
 my_start
 
@@ -32,8 +33,8 @@ if [ -z "$srcport" ]; then
 	my_stop
 fi
 
-rand=`head -c 2 /dev/urandom | hexdump | sed -e 's/[0 a-z]//g' | head -c 1`
-#echo "rand: $rand"
+rand=$(($(od -An -N2 -i /dev/random)%3))
+
 #rand=1
 dstport=`echo "$srcport" | sed -e 's/.*,\([0-9][0-9]*\)/\1/'`
 srcport=`echo "$srcport" | sed -e 's/\([0-9][0-9]*\),.*/\1/'`

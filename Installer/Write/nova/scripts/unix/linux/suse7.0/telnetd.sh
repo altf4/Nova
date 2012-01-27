@@ -10,6 +10,10 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+BANNER=`perl -nle '/TELNET_BANNER (.*)/ and print $1' < $STRINGSFILE`
+
+
 SERVICE="telnet"
 HOST="serv"
 
@@ -32,7 +36,7 @@ login_failed() {
 
 }
 
-echo "Welcome to SuSE Linux 7.0 (i386) - Kernel 2.4.7 (0)."
+echo -e $BANNER
 echo -n "$HOST Login: "
 
 

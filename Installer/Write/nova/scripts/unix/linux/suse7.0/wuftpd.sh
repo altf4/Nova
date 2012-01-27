@@ -29,6 +29,9 @@ SRCPORT=$2
 DSTIP=$3
 DSTPORT=$4
 
+STRINGSFILE=$5
+VERSION=`perl -nle '/FTPD_VERSION (.*)/ and print $1' < $STRINGSFILE`
+
 SERVICE="wu-ftpd/FTP"
 HOST="serv"
 
@@ -45,7 +48,7 @@ mode="S"
 
 my_start
 
-echo -e "220 $HOST.$DOMAIN FTP server (Version wu-2.6.0(5) $DATE) ready.\r"
+echo -e "220 $HOST.$DOMAIN $VERSION $DATE) ready.\r"
 while read incmd parm1 parm2 parm3 parm4 parm5
 do
 	# remove control-characters
