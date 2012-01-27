@@ -42,16 +42,17 @@ if {![regexp {^([^ ]+) ([^ ]+) ?([^ ]*)} $request -> requestMethod requestURI re
 	exit
 }
 
-if {$requestVersion == "" && $requestMethod != "GET" && $requestMethod != "POST"} {
-	set outputString [readFile [file join $responseFolder 400]]
-	processOutputString $outputString
-	exit
-}
-
-
-set line "bogusLine"
-while {$line != ""} {
-	gets stdin line
+if {$requestVersion == ""} {
+	if {$requestMethod != "GET" && $requestMethod != "POST"} {
+		set outputString [readFile [file join $responseFolder 400]]
+		processOutputString $outputString
+		exit
+	}
+} else {
+	set line "bogusLine"
+	while {$line != ""} {
+		gets stdin line
+	}
 }
 
 
