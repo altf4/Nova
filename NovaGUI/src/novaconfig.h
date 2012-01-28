@@ -153,6 +153,9 @@ public:
     // Saves the configuration to the config file, returns true if success
     bool saveConfigurationToFile();
 
+protected:
+    void contextMenuEvent(QContextMenuEvent *event);
+
 private slots:
 
 // Right click action on a feature, we manually connect it so no need for proper prefix
@@ -197,6 +200,7 @@ void on_nodeDisableButton_clicked();
 void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
+void on_dropRateSlider_valueChanged();
 
 //GUI Signals for Feature addition/removal
 void on_featureEnableButton_clicked();
