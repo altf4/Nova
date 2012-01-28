@@ -28,6 +28,7 @@ string currentSubnet = "";
 portPopup * portwindow;
 nodePopup * nodewindow;
 NovaGUI * mainwindow;
+QMenu * portMenu;
 
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
@@ -41,6 +42,7 @@ bool loadingDefaultActions = false;
 NovaConfig::NovaConfig(QWidget *parent, string home)
     : QMainWindow(parent)
 {
+	portMenu = new QMenu();
 	//store current directory / base path for Nova
 	homePath = home;
 
@@ -92,6 +94,23 @@ NovaConfig::~NovaConfig()
 
 }
 
+void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
+{
+	if(ui.portTreeWidget->hasFocus() || ui.portTreeWidget->underMouse())
+	{
+		portMenu->clear();
+		portMenu->addAction(ui.actionAddPort);
+		if(ui.portTreeWidget->isItemSelected(ui.portTreeWidget->currentItem()))
+		{
+			portMenu->addSeparator();
+			portMenu->addAction(ui.actionEditPort);
+			portMenu->addSeparator();
+			portMenu->addAction(ui.actionDeletePort);
+		}
+		QPoint globalPos = event->globalPos();
+		portMenu->popup(globalPos);
+	}
+}
 //Action to take when window is closing
 void NovaConfig::closeEvent(QCloseEvent * e)
 {
@@ -1223,6 +1242,9 @@ void NovaConfig::saveProfile()
 		p->uptime = ui.uptimeEdit->displayText().toStdString();
 		p->personality = ui.personalityEdit->displayText().toStdString();
 		p->type = (profileType)ui.dhcpComboBox->currentIndex();
+		p->dropRate = ui.dropRateSetting->text().toStdString();
+		p->dropRate = p->dropRate.substr(0, p->dropRate.size()-1);
+
 		//Save the port table
 		for(int i = 0; i < ui.portTreeWidget->topLevelItemCount(); i++)
 		{
@@ -1357,6 +1379,16 @@ void NovaConfig::loadProfile()
 		ui.uptimeEdit->setText((QString)p->uptime.c_str());
 		ui.personalityEdit->setText((QString)p->personality.c_str());
 		ui.dhcpComboBox->setCurrentIndex(p->type);
+		if(p->dropRate.size())
+		{
+			ui.dropRateSlider->setValue(atoi(p->dropRate.c_str()));
+			ui.dropRateSetting->setText((QString)(p->dropRate.append("%").c_str()));
+		}
+		else
+		{
+			ui.dropRateSetting->setText("0%");
+			ui.dropRateSlider->setValue(0);
+		}
 
 		//Populate the port table
 		for(uint i = 0; i < p->ports.size(); i++)
@@ -2400,4 +2432,11 @@ void NovaConfig::on_setEthernetButton_clicked()
 void NovaConfig::on_setPersonalityButton_clicked()
 {
 	displayNmapPersonalityTree();
+}
+
+void NovaConfig::on_dropRateSlider_valueChanged()
+{
+	stringstream ss;
+	ss << ui.dropRateSlider->value() << "%";
+	ui.dropRateSetting->setText((QString)ss.str().c_str());
 }
