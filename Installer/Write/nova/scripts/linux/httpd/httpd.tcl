@@ -1,19 +1,9 @@
 #!/usr/bin/tclsh
 
-# TODO
-#
-
-set scriptsFolder "/usr/share/nova/scripts"
-set responseFolder [file join $scriptsFolder unix linux general apache responses]
-
 set sourceIp [lindex $argv 0]
 set sourcePort [lindex $argv 1]
 set destinationIp [lindex $argv 2]
 set destinationPort [lindex $argv 3]
-
-# Stuff we might want to change into arguments
-set versionString "Apache/2.2.20 (Ubuntu)"
-set date [exec date]
 
 proc readFile {fileName} {
 	set fh [open $fileName "r"]
@@ -22,6 +12,28 @@ proc readFile {fileName} {
 
 	return $data
 }
+
+set configInformation [split [readFile [lindex $argv 4]] "\n"]
+
+foreach line $configInformation {
+	if {[regexp {^HTTPD_RESPONSE_FOLDER (.*)} $line -> value]} {set ::responseFolder $value}
+	if {[regexp {^HTTPD_SERVER_VERSION (.*)} $line -> value]} {set ::versionString $value}
+	if {[regexp {^HTTPD_SECURE_FILES (.*)} $line -> value]} {set ::secureFiles $value}
+}
+
+if {![info exists responseFolder] || ![info exists versionString] || ![info exists secureFiles]} {
+	puts stderr "Unable to load variables from configuration file"
+	exit
+}
+
+
+
+
+
+# Stuff we might want to change into arguments
+set date [exec date]
+
+
 
 proc processOutputString {outputString} {
 	regsub {%DATE%} $outputString $::date outputString
@@ -61,6 +73,20 @@ switch -- $requestMethod {
 		if {[regexp {^/$|^/index.html(\?.*)?$} $requestURI]} {
 			set outputString [readFile [file join $responseFolder 200_index.header]]
 			append outputString [readFile [file join $responseFolder index.html]]
+		} elseif {[regexp {^/(.*)} $requestURI]} {
+			set found false
+			foreach fileName $secureFiles {
+				if {"/$fileName" == $requestURI} {
+				    set outputString [readFile [file join $responseFolder 401.header]]
+				    set found true
+				    break
+				}
+			}
+			if {!$found} {
+			    set outputString [readFile [file join $responseFolder 404.header]]
+			    append outputString [readFile [file join $responseFolder 404.html]]
+			}
+        
 		} else {
 			set outputString [readFile [file join $responseFolder 404.header]]
 			append outputString [readFile [file join $responseFolder 404.html]]
