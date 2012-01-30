@@ -56,6 +56,7 @@ public:
 
     MACToVendorTable MACVendorTable;
     VendorToMACTable VendorMACTable;
+    vector<pair<string, string> > nmapPersonalities;
 
     string group;
 
@@ -73,6 +74,8 @@ public:
     string resolveMACVendor(uint MACPrefix);
     //Load MAC vendor prefix choices from nmap mac prefix file
     void loadMACPrefixs();
+    //Load nmap personalities from the nmap-os-db file
+    void loadNmapPersonalities();
 
     //Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
     // *note conflicts are only checked for locally, weird things may happen if the address is already being used.
@@ -150,6 +153,9 @@ public:
     // Saves the configuration to the config file, returns true if success
     bool saveConfigurationToFile();
 
+protected:
+    void contextMenuEvent(QContextMenuEvent *event);
+
 private slots:
 
 // Right click action on a feature, we manually connect it so no need for proper prefix
@@ -178,7 +184,6 @@ void on_pcapCheckBox_stateChanged(int state);
 void on_dhcpComboBox_currentIndexChanged(int index);
 
 //GUI Signals for Profile settings
-void on_editPortsButton_clicked();
 void on_cloneButton_clicked();
 void on_addButton_clicked();
 void on_deleteButton_clicked();
@@ -195,6 +200,7 @@ void on_nodeDisableButton_clicked();
 void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
+void on_dropRateSlider_valueChanged();
 
 //GUI Signals for Feature addition/removal
 void on_featureEnableButton_clicked();

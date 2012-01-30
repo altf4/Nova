@@ -623,49 +623,7 @@ Module</string>
        </layout>
       </widget>
       <widget class="QWidget" name="doppelPage"/>
-      <widget class="QWidget" name="haystackPage">
-       <widget class="QTreeWidget" name="nodesTreeWidget">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>9</y>
-          <width>701</width>
-          <height>511</height>
-         </rect>
-        </property>
-        <property name="expandsOnDoubleClick">
-         <bool>true</bool>
-        </property>
-        <attribute name="headerVisible">
-         <bool>false</bool>
-        </attribute>
-        <attribute name="headerDefaultSectionSize">
-         <number>263</number>
-        </attribute>
-        <attribute name="headerStretchLastSection">
-         <bool>false</bool>
-        </attribute>
-        <attribute name="headerDefaultSectionSize">
-         <number>263</number>
-        </attribute>
-        <attribute name="headerVisible">
-         <bool>false</bool>
-        </attribute>
-        <attribute name="headerStretchLastSection">
-         <bool>false</bool>
-        </attribute>
-        <column>
-         <property name="text">
-          <string>Address</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Profile</string>
-         </property>
-        </column>
-       </widget>
-      </widget>
+      <widget class="QWidget" name="haystackPage"/>
      </widget>
     </item>
    </layout>
