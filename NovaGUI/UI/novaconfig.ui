@@ -1660,7 +1660,7 @@ p, li { white-space: pre-wrap; }
                 <enum>Qt::ClickFocus</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="genTab">
                 <attribute name="title">
@@ -2079,9 +2079,6 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="1">
-                    <widget class="QLineEdit" name="tcpActionEdit"/>
-                   </item>
                    <item row="1" column="0">
                     <widget class="QLabel" name="udpActionLabel">
                      <property name="text">
@@ -2089,18 +2086,12 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="1">
-                    <widget class="QLineEdit" name="udpActionEdit"/>
-                   </item>
                    <item row="2" column="0">
                     <widget class="QLabel" name="icmpActionLabel">
                      <property name="text">
                       <string>Default ICMP Action</string>
                      </property>
                     </widget>
-                   </item>
-                   <item row="2" column="1">
-                    <widget class="QLineEdit" name="icmpActionEdit"/>
                    </item>
                    <item row="3" column="0" colspan="2">
                     <widget class="QTreeWidget" name="portTreeWidget">
@@ -2131,6 +2122,66 @@ p, li { white-space: pre-wrap; }
                        <string>Behavior</string>
                       </property>
                      </column>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QComboBox" name="tcpActionComboBox">
+                     <property name="maxVisibleItems">
+                      <number>3</number>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>reset</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>open</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>block</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QComboBox" name="udpActionComboBox">
+                     <item>
+                      <property name="text">
+                       <string>reset</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>open</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>block</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QComboBox" name="icmpActionComboBox">
+                     <item>
+                      <property name="text">
+                       <string>reset</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>open</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>block</string>
+                      </property>
+                     </item>
                     </widget>
                    </item>
                   </layout>
