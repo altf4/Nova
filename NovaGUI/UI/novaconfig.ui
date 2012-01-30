@@ -1629,7 +1629,7 @@ p, li { white-space: pre-wrap; }
             <property name="flat">
              <bool>true</bool>
             </property>
-            <layout class="QGridLayout" name="profGridBox" columnstretch="25,25,25,25">
+            <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="25,75">
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -1639,7 +1639,7 @@ p, li { white-space: pre-wrap; }
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item row="0" column="0" rowspan="2">
+             <item>
               <widget class="QTreeWidget" name="profileTreeWidget">
                <property name="sortingEnabled">
                 <bool>true</bool>
@@ -1654,13 +1654,13 @@ p, li { white-space: pre-wrap; }
                </column>
               </widget>
              </item>
-             <item row="0" column="1" colspan="3">
+             <item>
               <widget class="QTabWidget" name="profileTabWidget">
                <property name="focusPolicy">
                 <enum>Qt::ClickFocus</enum>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="genTab">
                 <attribute name="title">
@@ -1675,6 +1675,9 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <item>
                   <layout class="QFormLayout" name="genProfFormBox">
+                   <property name="fieldGrowthPolicy">
+                    <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+                   </property>
                    <property name="verticalSpacing">
                     <number>6</number>
                    </property>
@@ -1965,6 +1968,9 @@ p, li { white-space: pre-wrap; }
                          <height>27</height>
                         </size>
                        </property>
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
                       </widget>
                      </item>
                      <item>
@@ -2062,6 +2068,75 @@ p, li { white-space: pre-wrap; }
                        </property>
                        <property name="orientation">
                         <enum>Qt::Horizontal</enum>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="7" column="0" colspan="2">
+                    <widget class="QLabel" name="label">
+                     <property name="font">
+                      <font>
+                       <italic>true</italic>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>* Italics means this value is Inherited</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="8" column="0" colspan="2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_8">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QPushButton" name="addButton">
+                       <property name="text">
+                        <string>Add</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="cloneButton">
+                       <property name="text">
+                        <string>Clone</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_2">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="deleteButton">
+                       <property name="text">
+                        <string>Delete</string>
                        </property>
                       </widget>
                      </item>
@@ -2258,12 +2333,97 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
+                   <item row="0" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_3">
+                     <item>
+                      <widget class="QComboBox" name="tcpActionComboBox">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maxVisibleItems">
+                        <number>3</number>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>reset</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>open</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>block</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QCheckBox" name="checkBox">
+                       <property name="font">
+                        <font>
+                         <italic>true</italic>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>Inherit</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
                    <item row="1" column="0">
                     <widget class="QLabel" name="udpActionLabel">
                      <property name="text">
                       <string>Default UDP Action</string>
                      </property>
                     </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_4">
+                     <item>
+                      <widget class="QComboBox" name="udpActionComboBox">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>reset</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>open</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>block</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QCheckBox" name="checkBox_2">
+                       <property name="font">
+                        <font>
+                         <italic>true</italic>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>Inherit</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
                    </item>
                    <item row="2" column="0">
                     <widget class="QLabel" name="icmpActionLabel">
@@ -2272,20 +2432,60 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
+                   <item row="2" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_6">
+                     <item>
+                      <widget class="QComboBox" name="icmpActionComboBox">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>reset</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>open</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>block</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QCheckBox" name="checkBox_3">
+                       <property name="font">
+                        <font>
+                         <italic>true</italic>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>Inherit</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
                    <item row="3" column="0" colspan="2">
                     <widget class="QTreeWidget" name="portTreeWidget">
                      <attribute name="headerDefaultSectionSize">
                       <number>65</number>
                      </attribute>
-                     <attribute name="headerStretchLastSection">
-                      <bool>true</bool>
-                     </attribute>
                      <attribute name="headerDefaultSectionSize">
                       <number>65</number>
                      </attribute>
-                     <attribute name="headerStretchLastSection">
-                      <bool>true</bool>
-                     </attribute>
+                     <column>
+                      <property name="text">
+                       <string>Name</string>
+                      </property>
+                     </column>
                      <column>
                       <property name="text">
                        <string>Port</string>
@@ -2303,91 +2503,25 @@ p, li { white-space: pre-wrap; }
                      </column>
                     </widget>
                    </item>
-                   <item row="0" column="1">
-                    <widget class="QComboBox" name="tcpActionComboBox">
-                     <property name="maxVisibleItems">
-                      <number>3</number>
+                   <item row="4" column="0" colspan="2">
+                    <widget class="QLabel" name="portsInheritedLabel">
+                     <property name="font">
+                      <font>
+                       <italic>true</italic>
+                      </font>
                      </property>
-                     <item>
-                      <property name="text">
-                       <string>reset</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>open</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>block</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
-                   <item row="1" column="1">
-                    <widget class="QComboBox" name="udpActionComboBox">
-                     <item>
-                      <property name="text">
-                       <string>reset</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>open</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>block</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
-                   <item row="2" column="1">
-                    <widget class="QComboBox" name="icmpActionComboBox">
-                     <item>
-                      <property name="text">
-                       <string>reset</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>open</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>block</string>
-                      </property>
-                     </item>
+                     <property name="text">
+                      <string>* Italics means this value is Inherited</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
                     </widget>
                    </item>
                   </layout>
                  </item>
                 </layout>
                </widget>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="addButton">
-               <property name="text">
-                <string>Add</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QPushButton" name="cloneButton">
-               <property name="text">
-                <string>Clone</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QPushButton" name="deleteButton">
-               <property name="text">
-                <string>Delete</string>
-               </property>
               </widget>
              </item>
             </layout>
