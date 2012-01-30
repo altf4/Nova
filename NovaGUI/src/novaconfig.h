@@ -67,7 +67,7 @@ public:
     //Loads the configuration options from NOVAConfig.txt
     void loadPreferences();
     //Display MAC vendor prefix's
-    void displayMACPrefixWindow();
+    bool displayMACPrefixWindow();
     //Load Personality choices from nmap fingerprints file
     void displayNmapPersonalityTree();
     //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string

@@ -20,13 +20,15 @@
 NovaComplexDialog::NovaComplexDialog(QWidget *parent)
     : QDialog(parent)
 {
+	retVal = NULL;
 	novaParent = (NovaConfig *)parent;
 	ui.setupUi(this);
 	type = MACDialog;
 }
-NovaComplexDialog::NovaComplexDialog(whichDialog type, QWidget *parent, string filter)
+NovaComplexDialog::NovaComplexDialog(whichDialog type,string* retval, QWidget *parent, string filter)
 	: QDialog(parent)
 {
+	retVal = retval;
 	novaParent = (NovaConfig *)parent;
 	this->type = type;
 	ui.setupUi(this);
@@ -188,6 +190,7 @@ void NovaComplexDialog::drawPersonalities(string filterStr)
 
 void NovaComplexDialog::on_cancelButton_clicked()
 {
+	*retVal = "";
 	this->close();
 }
 
@@ -196,7 +199,7 @@ void NovaComplexDialog::on_selectButton_clicked()
 	if((ui.treeWidget->currentItem() != NULL) && !ui.treeWidget->currentItem()->childCount())
 	{
 		string ret = ui.treeWidget->currentItem()->text(0).toStdString();
-		novaParent->retVal = ret;
+		*retVal = ret;
 		this->close();
 	}
 }
