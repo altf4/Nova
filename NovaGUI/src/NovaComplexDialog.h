@@ -32,8 +32,11 @@ public:
     //Default constructor, shouldn't be used
     NovaComplexDialog(QWidget *parent = 0);
     //Standard constructor, specify which dialog type you wish to create
-    NovaComplexDialog(whichDialog type, QWidget *parent = 0);
+    NovaComplexDialog(whichDialog type, QWidget *parent = 0, string filter = "");
     ~NovaComplexDialog();
+
+    //Draws the parsed personalities in the widget
+    void drawPersonalities(string filterStr);
     //Sets the help message displayed at the bottom of the window to provide the user hints on usage.
     void setHelpMsg(const QString& str);
     //Returns the help message displayed at the bottom of the window to provide the user hints on usage.

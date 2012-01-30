@@ -24,7 +24,7 @@ NovaComplexDialog::NovaComplexDialog(QWidget *parent)
 	ui.setupUi(this);
 	type = MACDialog;
 }
-NovaComplexDialog::NovaComplexDialog(whichDialog type, QWidget *parent)
+NovaComplexDialog::NovaComplexDialog(whichDialog type, QWidget *parent, string filter)
 	: QDialog(parent)
 {
 	novaParent = (NovaConfig *)parent;
@@ -36,19 +36,20 @@ NovaComplexDialog::NovaComplexDialog(whichDialog type, QWidget *parent)
 			this->setWindowTitle((const QString&)"Select an Operating System");
 			ui.displayLabel->setText((const QString&)"Select which operating system you would like to emulate");
 			ui.helpLabel->setText((const QString&)"Navigate down the tree, select an operating system and press 'Select'");
-			ui.searchEdit->setEnabled(false);
-			ui.searchEdit->setVisible(false);
-			ui.selectButton->setDefault(true);
-			ui.searchButton->setEnabled(false);
-			ui.searchButton->setVisible(false);
+			ui.searchButton->setDefault(true);
+			drawPersonalities("");
 			break;
 		case MACDialog:
 			ui.searchButton->setDefault(true);
 			this->setWindowTitle((const QString&)"Select a MAC Vendor");
+			this->blockSignals(true);
+			ui.searchEdit->setText((QString)filter.c_str());
+			this->blockSignals(false);
+			on_searchButton_clicked();
 		default:
 			break;
 	}
-	on_searchButton_clicked();
+	ui.searchEdit->setFocus();
 }
 
 NovaComplexDialog::~NovaComplexDialog()
@@ -86,6 +87,105 @@ whichDialog NovaComplexDialog::getType()
 	return type;
 }
 
+void NovaComplexDialog::drawPersonalities(string filterStr)
+{
+	ui.treeWidget->clear();
+	QTreeWidgetItem * item = NULL;
+	QTreeWidgetItem * index = NULL;
+	vector<pair<string,string> > * printList = &novaParent->nmapPersonalities;
+	string fprint;
+	string printClass;
+	string temp;
+	//Populate the list
+	for(uint i = 0; i < printList->size(); i++)
+	{
+
+		//Get fingerprint and Class strings
+		fprint = printList->at((int)i).first;
+		printClass = printList->at((int)i).second;
+		//find the first portion of the class string
+		temp = printClass.substr(0,printClass.find(' '));
+		bool matched = true;
+		if(strcasestr(temp.c_str(), filterStr.c_str()) == NULL)
+		{
+			matched = false;
+		}
+		if(!matched)
+			continue;
+
+		//Get the current top level children
+		QObjectList list = ui.treeWidget->children();
+		bool found = false;
+
+		//Attempt to locate the proper node, if none found create it
+		for(int i = 0; i < ui.treeWidget->topLevelItemCount(); i++)
+		{
+			index = ui.treeWidget->topLevelItem(i);
+			if(!index->text(0).toStdString().compare(temp))
+			{
+				found = true;
+				break;
+			}
+		}
+		if(!found)
+		{
+			index = new QTreeWidgetItem(ui.treeWidget);
+			index->setText(0,(QString)temp.c_str());
+		}
+
+
+		//While the class is not resolved, find the next level node or create it.
+		while(printClass.find("| ") != string::npos)
+		{
+			found = false;
+			printClass = printClass.substr(printClass.find("| ")+2,printClass.size());
+			if(printClass.find(' ') != string::npos)
+				temp = printClass.substr(0,printClass.find(' '));
+			else
+				temp = printClass;
+
+			if(index->childCount())
+			{
+				int i;
+				for(i = 0; i < index->childCount(); i++)
+				{
+					item = index->child(i);
+					if(!item->text(0).toStdString().compare(temp))
+					{
+						found = true;
+						break;
+					}
+				}
+			}
+			if(!found)
+			{
+				index = new QTreeWidgetItem(index);
+				index->setText(0,(QString)temp.c_str());
+			}
+		}
+		//Look for a duplicate fingerprint, if not found create it.
+		found = false;
+		if(index->childCount())
+		{
+			int i;
+			for(i = 0; i < index->childCount(); i++)
+			{
+				item = index->child(i);
+				if(!item->text(0).toStdString().compare(fprint))
+				{
+					found = true;
+					break;
+				}
+			}
+		}
+		if(!found)
+		{
+			index = new QTreeWidgetItem(index);
+			index->setText(0,(QString)fprint.c_str());
+		}
+	}
+}
+
 void NovaComplexDialog::on_cancelButton_clicked()
 {
 	this->close();
@@ -93,7 +193,7 @@ void NovaComplexDialog::on_cancelButton_clicked()
 
 void NovaComplexDialog::on_selectButton_clicked()
 {
-	if(ui.treeWidget->currentItem() != NULL)
+	if((ui.treeWidget->currentItem() != NULL) && !ui.treeWidget->currentItem()->childCount())
 	{
 		string ret = ui.treeWidget->currentItem()->text(0).toStdString();
 		novaParent->retVal = ret;
@@ -104,53 +204,35 @@ void NovaComplexDialog::on_selectButton_clicked()
 void NovaComplexDialog::on_searchButton_clicked()
 {
 	QTreeWidgetItem * item = NULL;
-	VendorToMACTable * table = &novaParent->VendorMACTable;
 	string filterStr = ui.searchEdit->text().toStdString();
-	bool matched = false;
-	ui.treeWidget->clear();
-	for(VendorToMACTable::iterator it = table->begin(); it != table->end(); it++)
+
+	if(type == MACDialog)
 	{
-		matched = true;
-		for(uint i = 0; i < filterStr.size(); i++)
+		VendorToMACTable * table = &novaParent->VendorMACTable;
+		bool matched = false;
+		ui.treeWidget->clear();
+		for(VendorToMACTable::iterator it = table->begin(); it != table->end(); it++)
 		{
-			if(it->first[i] != filterStr[i])
+			matched = true;
+			if(strcasestr(it->first.c_str(), filterStr.c_str()) == NULL)
 			{
 				matched = false;
-				break;
+			}
+			if(matched)
+			{
+				item = new QTreeWidgetItem(ui.treeWidget);
+				item->setText(0, it->first.data());
 			}
 		}
-		if(matched)
-		{
-			item = new QTreeWidgetItem(ui.treeWidget);
-			item->setText(0, it->first.data());
-		}
+		ui.treeWidget->sortItems(0, Qt::AscendingOrder);
 	}
-	ui.treeWidget->sortItems(0, Qt::AscendingOrder);
+	if(type == PersonalityDialog)
+	{
+		drawPersonalities(filterStr);
+	}
 }
 
 void NovaComplexDialog::on_searchEdit_textChanged()
 {
-	QTreeWidgetItem * item = NULL;
-	VendorToMACTable * table = &novaParent->VendorMACTable;
-	string filterStr = ui.searchEdit->text().toStdString();
-	bool matched = false;
-	ui.treeWidget->clear();
-	for(VendorToMACTable::iterator it = table->begin(); it != table->end(); it++)
-	{
-		matched = true;
-		for(uint i = 0; i < filterStr.size(); i++)
-		{
-			if(it->first[i] != filterStr[i])
-			{
-				matched = false;
-				break;
-			}
-		}
-		if(matched)
-		{
-			item = new QTreeWidgetItem(ui.treeWidget);
-			item->setText(0, it->first.data());
-		}
-	}
-	ui.treeWidget->sortItems(0, Qt::AscendingOrder);
+	on_searchButton_clicked();
 }
