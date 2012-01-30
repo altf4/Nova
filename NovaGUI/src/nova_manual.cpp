@@ -18,8 +18,7 @@ Nova_Manual::Nova_Manual(QWidget *parent)
 
 	// set default help page here, as well as Text Browser Search Paths
 	ui.displayHelp->setSearchPaths(*paths);
-	ui.displayHelp->setSource(QUrl(QString("poem.txt")));
-	//ui.helpTree->
+	ui.helpTree->setCurrentItem((ui.helpTree->itemAt(0,0)));
 }
 
 Nova_Manual::~Nova_Manual()
@@ -41,11 +40,11 @@ void Nova_Manual::setPaths()
 
 void Nova_Manual::on_helpTree_itemSelectionChanged()
 {
-	if((ui.helpTree->currentItem()->text(0)).compare(QString("Quickstart")))
+	if(!(ui.helpTree->currentItem()->text(0)).compare(QString("Quickstart")))
 	{
 		ui.displayHelp->setSource(QUrl(QString("test.txt")));
 	}
-	else if((ui.helpTree->currentItem()->text(0)).compare(QString("Installing")))
+	else if(!(ui.helpTree->currentItem()->text(0)).compare(QString("Installing")))
 	{
 		ui.displayHelp->setSource(QUrl(QString("poem.txt")));
 	}
