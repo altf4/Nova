@@ -98,6 +98,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	runAsWindowUp = false;
 	editingPreferences = false;
+	isHelpUp = false;
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
@@ -688,7 +689,7 @@ void NovaGUI::loadSubnets(ptree *ptr)
 void NovaGUI::loadNodes(ptree *ptr)
 {
 	profile p;
-	ptree * ptr2;
+	//ptree * ptr2;
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
@@ -713,7 +714,7 @@ void NovaGUI::loadNodes(ptree *ptr)
 				//Get mac if present
 				try //Conditional: has "set" values
 				{
-					ptr2 = &v.second.get_child("MAC");
+					//ptr2 = &v.second.get_child("MAC");
 					//pass 'set' subset and pointer to this profile
 					n.MAC = v.second.get<std::string>("MAC");
 				}
@@ -1649,10 +1650,12 @@ void  NovaGUI::on_actionShow_All_Suspects_triggered()
 
 void NovaGUI::on_actionHelp_2_triggered()
 {
-	// call constructor for nova_manual
-	Nova_Manual *wi = new Nova_Manual();
-	// use .show()
-	wi->show();
+	if(!isHelpUp)
+	{
+		Nova_Manual *wi = new Nova_Manual(this);
+		wi->show();
+		isHelpUp = true;
+	}
 }
 
 /************************************************
