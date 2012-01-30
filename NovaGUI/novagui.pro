@@ -25,7 +25,6 @@ SOURCES += src/nova_manual.cpp \
     src/portPopup.cpp \
     src/run_popup.cpp
 FORMS += UI/nova_manual.ui \
-    src/UI/nova_manual.ui \
     UI/NovaComplexDialog.ui \
     UI/nodePopup.ui \
     UI/novaconfig.ui \
