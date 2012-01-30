@@ -1220,6 +1220,8 @@ void NovaConfig::saveProfile()
 		//currentProfile->name is set in updateProfile
 		p->ethernet = ui.ethernetEdit->displayText().toStdString();
 		p->tcpAction = ui.tcpActionComboBox->currentText().toStdString();
+		p->udpAction = ui.udpActionComboBox->currentText().toStdString();
+		p->icmpAction = ui.icmpActionComboBox->currentText().toStdString();
 		p->uptime = ui.uptimeEdit->displayText().toStdString();
 		p->personality = ui.personalityEdit->displayText().toStdString();
 		p->type = (profileType)ui.dhcpComboBox->currentIndex();
@@ -1354,6 +1356,8 @@ void NovaConfig::loadProfile()
 		ui.profileEdit->setText((QString)p->name.c_str());
 		ui.ethernetEdit->setText((QString)p->ethernet.c_str());
 		ui.tcpActionComboBox->setCurrentIndex( ui.tcpActionComboBox->findText(p->tcpAction.c_str() ) );
+		ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->udpAction.c_str() ) );
+		ui.icmpActionComboBox->setCurrentIndex( ui.icmpActionComboBox->findText(p->icmpAction.c_str() ) );
 		ui.uptimeEdit->setText((QString)p->uptime.c_str());
 		ui.personalityEdit->setText((QString)p->personality.c_str());
 		ui.dhcpComboBox->setCurrentIndex(p->type);
@@ -1375,6 +1379,8 @@ void NovaConfig::loadProfile()
 		ui.profileEdit->setEnabled(true);
 		ui.ethernetEdit->setEnabled(true);
 		ui.tcpActionComboBox->setEnabled(true);
+		ui.udpActionComboBox->setEnabled(true);
+		ui.icmpActionComboBox->setEnabled(true);
 		ui.uptimeEdit->setEnabled(true);
 		ui.personalityEdit->setEnabled(true);
 		ui.uptimeBehaviorComboBox->setEnabled(true);
@@ -1387,12 +1393,16 @@ void NovaConfig::loadProfile()
 		ui.profileEdit->clear();
 		ui.ethernetEdit->clear();
 		ui.tcpActionComboBox->clear();
+		ui.udpActionComboBox->clear();
+		ui.icmpActionComboBox->clear();
 		ui.uptimeEdit->clear();
 		ui.personalityEdit->clear();
 		ui.uptimeBehaviorComboBox->setCurrentIndex(0);
 		ui.profileEdit->setEnabled(false);
 		ui.ethernetEdit->setEnabled(false);
 		ui.tcpActionComboBox->setEnabled(false);
+		ui.udpActionComboBox->setEnabled(false);
+		ui.icmpActionComboBox->setEnabled(false);
 		ui.uptimeEdit->setEnabled(false);
 		ui.personalityEdit->setEnabled(false);
 		ui.uptimeBehaviorComboBox->setEnabled(false);
