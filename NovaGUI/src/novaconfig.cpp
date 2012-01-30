@@ -482,9 +482,9 @@ string NovaConfig::resolveMACVendor(uint MACPrefix)
 //Load Personality choices from nmap fingerprints file
 void NovaConfig::displayNmapPersonalityTree()
 {
-	NovaComplexDialog * NmapPersonalityWindow = new NovaComplexDialog(
-			PersonalityDialog, this);
 	retVal = "";
+	NovaComplexDialog * NmapPersonalityWindow = new NovaComplexDialog(
+			PersonalityDialog, &retVal, this);
 	NmapPersonalityWindow->exec();
 	if(retVal.compare(""))
 	{
@@ -492,11 +492,11 @@ void NovaConfig::displayNmapPersonalityTree()
 	}
 }
 //Load MAC vendor prefix choices from nmap mac prefix file
-void NovaConfig::displayMACPrefixWindow()
+bool NovaConfig::displayMACPrefixWindow()
 {
-	NovaComplexDialog * MACPrefixWindow = new NovaComplexDialog(
-			MACDialog, this, ui.ethernetEdit->text().toStdString());
 	retVal = "";
+	NovaComplexDialog * MACPrefixWindow = new NovaComplexDialog(
+			MACDialog, &retVal, this, ui.ethernetEdit->text().toStdString());
 	MACPrefixWindow->exec();
 	if(retVal.compare(""))
 	{
@@ -504,7 +504,7 @@ void NovaConfig::displayMACPrefixWindow()
 
 		//If there is no change in vendor, nothing left to be done.
 		if(profiles[currentProfile].ethernet.compare(retVal))
-			return;
+			return true;
 		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 		{
 			if(!it->second.pfile.compare(currentProfile))
@@ -514,7 +514,7 @@ void NovaConfig::displayMACPrefixWindow()
 		}
 		//If IP's arent staticDHCP, key wont change so do nothing
 		if(profiles[currentProfile].type != staticDHCP)
-			return;
+			return true;
 
 		vector<node> nodeList;
 		//If there is a vendor change, get new MAC's for each node using the profile.
@@ -534,7 +534,9 @@ void NovaConfig::displayMACPrefixWindow()
 			nodes[tempNode.name] = tempNode;
 			subnets[tempNode.sub].nodes.push_back(tempNode.name);
 		}
+		return true;
 	}
+	return false;
 }
 
 void NovaConfig::loadPreferences()
@@ -1159,13 +1161,21 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 		loadingItems = true;
 	vector<string> delList;
 	vector<node> addList;
-	profiles[currentProfile].type = (profileType)index;
 
 	//If the current ethernet is an invalid selection
 	//TODO this should display a dialog asking the user if they wish to pick a valid ethernet or cancel mode change
 	if(((VendorMACTable.find(profiles[currentProfile].ethernet)) == VendorMACTable.end())
 			&& (index == staticDHCP))
-		displayMACPrefixWindow();
+		if(!displayMACPrefixWindow())
+		{
+			blockSignals(true);
+			ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
+			blockSignals(false);
+			loadingItems = false;
+			return;
+		}
+
+	profiles[currentProfile].type = (profileType)index;
 
 	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{

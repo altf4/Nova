@@ -39,19 +39,6 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QPushButton" name="suspectButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Suspects</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="mainButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -68,7 +55,23 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="suspectButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Suspects</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="doppelButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -83,6 +86,9 @@ Module</string>
       </item>
       <item>
        <widget class="QPushButton" name="haystackButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
           <horstretch>0</horstretch>
