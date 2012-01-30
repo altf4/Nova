@@ -40,6 +40,11 @@ void Nova_Manual::setPaths()
 
 void Nova_Manual::on_helpTree_itemSelectionChanged()
 {
+	// Will have to find a more graceful way to do this, I don't know that
+	// for the breadth of stuff that can populate the help that we'd want to
+	// put in an if for each one. Maybe have an enumerated type for determining
+	// keyword position in an array of strings for use in a switch statement?
+
 	if(!(ui.helpTree->currentItem()->text(0)).compare(QString("Quickstart")))
 	{
 		ui.displayHelp->setSource(QUrl(QString("test.txt")));
