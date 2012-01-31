@@ -16,4 +16,4 @@ chown -R nobody:nogroup /var/log/honeyd
 #add the file 40-nova.conf into /etc/rsyslog.d/
 cp Installer/Read/40-nova.conf /etc/rsyslog.d/
 #restart syslog so the changes will take effect
-/etc/init.d/rsyslog restart
+service rsyslog restart
