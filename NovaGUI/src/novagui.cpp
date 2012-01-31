@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
@@ -911,7 +911,7 @@ void NovaGUI::loadProfiles()
 				p.name = v.second.get<std::string>("name");
 				p.ports.clear();
 				p.type = (profileType)v.second.get<int>("type");
-				for(uint i = 0; i < 9; i++)
+				for(uint i = 0; i < INHERITED_MAX; i++)
 				{
 					p.inherited[i] = false;
 				}
@@ -1011,7 +1011,6 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 			{
 				p->uptime = v.second.data();
 				p->inherited[UPTIME] = false;
-				p->inherited[UPTIME_RANGE] = false;
 				continue;
 			}
 			prefix = "uptimeRange";
@@ -1111,7 +1110,7 @@ void NovaGUI::loadSubProfiles(string parent)
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
 
-			for(uint i = 0; i < 9; i++)
+			for(uint i = 0; i < INHERITED_MAX; i++)
 			{
 				prof.inherited[i] = true;
 			}
