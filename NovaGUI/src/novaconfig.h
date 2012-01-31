@@ -104,6 +104,8 @@ public:
 
     //Populates the window with the select profile's information
     void loadProfile();
+    //loads the inheritance values from the profiles, called by loadProfile
+    void loadInherited();
     //Populates the profile heirarchy in the tree widget
     void loadAllProfiles();
 
@@ -116,6 +118,8 @@ public:
     //Temporarily stores changed configuration options when selection is changed
     // to permanently store these changes call pushData();
     void saveProfile();
+    //saves the inheritance values of the profiles, called by saveProfile
+    void saveInherited();
     //Removes a profile, all of it's children and any nodes that currently use it
     void deleteProfile(string name);
 
@@ -180,8 +184,10 @@ void on_defaultActionListWidget_currentRowChanged();
 
 //Check Box signal for enabling pcap settings group box
 void on_pcapCheckBox_stateChanged(int state);
-//Check Box signal for enabling or disabling dhcp IP resolution
+//Combo box signal for enabling or disabling dhcp IP resolution
 void on_dhcpComboBox_currentIndexChanged(int index);
+//Combo box signal for changing the uptime behavior
+void on_uptimeBehaviorComboBox_currentIndexChanged(int index);
 
 //GUI Signals for Profile settings
 void on_cloneButton_clicked();
@@ -205,6 +211,14 @@ void on_dropRateSlider_valueChanged();
 //GUI Signals for Feature addition/removal
 void on_featureEnableButton_clicked();
 void on_featureDisableButton_clicked();
+
+//Inheritance Check boxes
+void on_ipModeCheckBox_stateChanged();
+void on_ethernetCheckBox_stateChanged();
+void on_uptimeCheckBox_stateChanged();
+void on_uptimeBehaviorCheckBox_stateChanged();
+void on_personalityCheckBox_stateChanged();
+void on_dropRateCheckBox_stateChanged();
 
 private:
 	void setInputValidators();
