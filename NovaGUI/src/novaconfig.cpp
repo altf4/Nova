@@ -895,7 +895,7 @@ bool NovaConfig::saveConfigurationToFile() {
 
 	//Rewrite the config file with the new settings
 	string configurationFile = homePath + "/Config/NOVAConfig.txt";
-	string configurationBackup = homePath + "/Config/NOVAConfig.tmp";
+	string configurationBackup = homePath + "/Config/.NOVAConfig.tmp";
 	string copyCommand = "cp -f " + configurationFile + " " + configurationBackup;
 	system(copyCommand.c_str());
 	ifstream *in = new ifstream(configurationBackup.c_str());
@@ -1004,7 +1004,7 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "DM_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.dmConfigEdit->displayText().toStdString() << endl;
+				*out << prefix << " " << (this->ui.dmConfigEdit->displayText().toStdString()).substr(homePath.length() + 1, (this->ui.dmConfigEdit->displayText().toStdString()).length()) << endl;
 				continue;
 			}
 
@@ -1018,7 +1018,7 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "HS_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << this->ui.hsConfigEdit->displayText().toStdString() << endl;
+				*out << prefix << " " << (this->ui.hsConfigEdit->displayText().toStdString()).substr(homePath.length() + 1, (this->ui.hsConfigEdit->displayText().toStdString()).length()) << endl;
 				continue;
 			}
 
@@ -1039,7 +1039,7 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "PCAP_FILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << ui.pcapEdit->displayText().toStdString()  << endl;
+				*out << prefix << " " << (ui.pcapEdit->displayText().toStdString()).substr(homePath.length() + 1, (ui.pcapEdit->displayText().toStdString()).length())  << endl;
 				continue;
 			}
 
