@@ -70,7 +70,6 @@ NovaGUI/debug/
 NovaLibrary/Debug/src/
 
 # Installer files
-Installer/.nova/*
 Installer/bin/*
 
 # Auto generated QT files
