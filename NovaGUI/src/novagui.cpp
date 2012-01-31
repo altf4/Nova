@@ -911,6 +911,10 @@ void NovaGUI::loadProfiles()
 				p.name = v.second.get<std::string>("name");
 				p.ports.clear();
 				p.type = (profileType)v.second.get<int>("type");
+				for(uint i = 0; i < 9; i++)
+				{
+					p.inherited[i] = false;
+				}
 
 				try //Conditional: has "set" values
 				{
@@ -971,36 +975,43 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->tcpAction = v.second.data();
+				p->inherited[TCP_ACTION] = false;
 				continue;
 			}
 			prefix = "UDP";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->udpAction = v.second.data();
+				p->inherited[UDP_ACTION] = false;
 				continue;
 			}
 			prefix = "ICMP";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->icmpAction = v.second.data();
+				p->inherited[ICMP_ACTION] = false;
 				continue;
 			}
 			prefix = "personality";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->personality = v.second.data();
+				p->inherited[PERSONALITY] = false;
 				continue;
 			}
 			prefix = "ethernet";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->ethernet = v.second.data();
+				p->inherited[ETHERNET] = false;
 				continue;
 			}
 			prefix = "uptime";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->uptime = v.second.data();
+				p->inherited[UPTIME] = false;
+				p->inherited[UPTIME_RANGE] = false;
 				continue;
 			}
 			prefix = "uptimeRange";
@@ -1013,6 +1024,7 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->dropRate = v.second.data();
+				p->inherited[DROP_RATE] = false;
 				continue;
 			}
 		}
@@ -1033,6 +1045,10 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 
 	try
 	{
+		for(uint i = 0; i < p->ports.size(); i++)
+		{
+			p->ports[i].second = true;
+		}
 		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
 			//Checks for ports
@@ -1048,13 +1064,16 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 					for(uint i = 0; i < p->ports.size(); i++)
 					{
 						//Erase inherited port if a conflict is found
-						if(!prt->portNum.compare(ports[p->ports[i]].portNum) && !prt->type.compare(ports[p->ports[i]].type))
+						if(!prt->portNum.compare(ports[p->ports[i].first].portNum) && !prt->type.compare(ports[p->ports[i].first].type))
 						{
 							p->ports.erase(p->ports.begin()+i);
 						}
 					}
 					//Add specified port
-					p->ports.push_back(prt->portName);
+					pair<string, bool> portpair;
+					portpair.first = prt->portName;
+					portpair.second = false;
+					p->ports.push_back(portpair);
 				}
 				continue;
 			}
@@ -1092,9 +1111,15 @@ void NovaGUI::loadSubProfiles(string parent)
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
 
+			for(uint i = 0; i < 9; i++)
+			{
+				prof.inherited[i] = true;
+			}
+
 			try //Conditional: If profile overrides type
 			{
 				prof.type = (profileType)v.second.get<int>("type");
+				prof.inherited[TYPE] = false;
 			}
 			catch(...){}
 

@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>751</width>
-    <height>430</height>
+    <height>431</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1660,16 +1660,13 @@ p, li { white-space: pre-wrap; }
                 <enum>Qt::ClickFocus</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="genTab">
                 <attribute name="title">
                  <string>General Settings</string>
                 </attribute>
                 <layout class="QHBoxLayout" name="genProfSettingsBox" stretch="85,15">
-                 <property name="spacing">
-                  <number>0</number>
-                 </property>
                  <property name="rightMargin">
                   <number>0</number>
                  </property>
@@ -1863,32 +1860,6 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="1">
-                    <widget class="QComboBox" name="uptimeBehaviorComboBox">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <item>
-                      <property name="text">
-                       <string>Flat Value</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Random in Range</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
                    <item row="4" column="0">
                     <widget class="QLabel" name="uptimeLabel">
                      <property name="minimumSize">
@@ -1908,22 +1879,6 @@ p, li { white-space: pre-wrap; }
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="1">
-                    <widget class="QLineEdit" name="uptimeEdit">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
                      </property>
                     </widget>
                    </item>
@@ -2073,7 +2028,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="7" column="0" colspan="2">
+                   <item row="8" column="0" colspan="2">
                     <widget class="QLabel" name="label">
                      <property name="font">
                       <font>
@@ -2088,7 +2043,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="8" column="0" colspan="2">
+                   <item row="9" column="0" colspan="2">
                     <layout class="QHBoxLayout" name="horizontalLayout_8">
                      <property name="spacing">
                       <number>0</number>
@@ -2141,6 +2096,65 @@ p, li { white-space: pre-wrap; }
                       </widget>
                      </item>
                     </layout>
+                   </item>
+                   <item row="4" column="1">
+                    <layout class="QHBoxLayout" name="uptimeForm">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLineEdit" name="uptimeEdit">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="uptimeRangeLabel">
+                       <property name="text">
+                        <string> - </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="uptimeRangeEdit"/>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QComboBox" name="uptimeBehaviorComboBox">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>27</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>27</height>
+                      </size>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>Flat Value</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>Random in Range</string>
+                      </property>
+                     </item>
+                    </widget>
                    </item>
                   </layout>
                  </item>
@@ -2334,7 +2348,7 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item row="0" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_3">
+                    <layout class="QHBoxLayout" name="defTCPForm">
                      <item>
                       <widget class="QComboBox" name="tcpActionComboBox">
                        <property name="sizePolicy">
@@ -2364,7 +2378,7 @@ p, li { white-space: pre-wrap; }
                       </widget>
                      </item>
                      <item>
-                      <widget class="QCheckBox" name="checkBox">
+                      <widget class="QCheckBox" name="tcpCheckBox">
                        <property name="font">
                         <font>
                          <italic>true</italic>
@@ -2385,7 +2399,7 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item row="1" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_4">
+                    <layout class="QHBoxLayout" name="defUDPForm">
                      <item>
                       <widget class="QComboBox" name="udpActionComboBox">
                        <property name="sizePolicy">
@@ -2412,7 +2426,7 @@ p, li { white-space: pre-wrap; }
                       </widget>
                      </item>
                      <item>
-                      <widget class="QCheckBox" name="checkBox_2">
+                      <widget class="QCheckBox" name="udpCheckBox">
                        <property name="font">
                         <font>
                          <italic>true</italic>
@@ -2433,7 +2447,7 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item row="2" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <layout class="QHBoxLayout" name="defICMPForm">
                      <item>
                       <widget class="QComboBox" name="icmpActionComboBox">
                        <property name="sizePolicy">
@@ -2460,7 +2474,7 @@ p, li { white-space: pre-wrap; }
                       </widget>
                      </item>
                      <item>
-                      <widget class="QCheckBox" name="checkBox_3">
+                      <widget class="QCheckBox" name="icmpCheckBox">
                        <property name="font">
                         <font>
                          <italic>true</italic>
