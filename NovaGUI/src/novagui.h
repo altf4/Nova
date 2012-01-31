@@ -55,6 +55,9 @@ using boost::property_tree::ptree;
 
 enum profileType { static_IP = 0, staticDHCP = 1, randomDHCP = 2, Doppelganger = 3};
 
+enum profileIndex { TYPE = 0, TCP_ACTION = 1, UDP_ACTION = 2, ICMP_ACTION = 3,
+	PERSONALITY = 4, ETHERNET = 5, UPTIME = 6, UPTIME_RANGE = 7, DROP_RATE = 8};
+
 //used to maintain information on imported scripts
 struct script
 {
@@ -118,8 +121,9 @@ struct profile
 	string uptimeRange;
 	string dropRate;
 	profileType type;
-	vector<string> ports;
-	string  parentProfile;
+	bool inherited[9];
+	vector<pair<string, bool> > ports;
+	string parentProfile;
 	ptree tree;
 };
 

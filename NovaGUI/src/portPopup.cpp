@@ -103,7 +103,7 @@ portPopup::portPopup(QWidget *parent, struct profile *profile, bool fromNode, st
 	//assign the global profile
 	p = profile;
 	//Copy the ports
-	ports = p->ports;
+	//ports = p->ports;
 
 	//Set up label
 	string temp = "Ports for ";
@@ -269,7 +269,7 @@ void portPopup::on_okButton_clicked()
 	//Save the recent changes in window then push all changes over
 	if(!ports.empty()) savePort(gprt);
 	p->ports.clear();
-	p->ports = ports;
+	//p->ports = ports;
 	if(fromNodeMenu)
 	{
 
@@ -293,7 +293,7 @@ void portPopup::on_defaultsButton_clicked()
 {
 	// int i = 0;
 	//Pull the original ports
-	ports = p->ports;
+	//ports = p->ports;
 
 	// TODO: Is this code deprecated or being worked on?
 	// Commented to eliminate some compiler warnings about unused vars
@@ -320,7 +320,7 @@ void portPopup::on_applyButton_clicked()
 	//Save the recent changes in window then push all changes
 	if(!ports.empty()) savePort(gprt);
 	p->ports.clear();
-	p->ports = ports;
+	//p->ports = ports;
 	if(fromNodeMenu)
 	{
 		nodeMenu->loadNodeProfile();

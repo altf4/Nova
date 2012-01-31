@@ -226,6 +226,73 @@ void NovaConfig::on_featureDisableButton_clicked()
 	advanceFeatureSelection();
 }
 
+//Inheritance Check boxes
+void NovaConfig::on_ipModeCheckBox_stateChanged()
+{
+	if(!loadingItems)
+	{
+		loadingItems = true;
+		saveProfile();
+		loadProfile();
+		loadingItems = false;
+	}
+}
+
+void NovaConfig::on_ethernetCheckBox_stateChanged()
+{
+	if(!loadingItems)
+	{
+		loadingItems = true;
+		saveProfile();
+		loadProfile();
+		loadingItems = false;
+	}
+}
+
+void NovaConfig::on_uptimeCheckBox_stateChanged()
+{
+	if(!loadingItems)
+	{
+		loadingItems = true;
+		saveProfile();
+		loadProfile();
+		loadingItems = false;
+	}
+}
+
+void NovaConfig::on_uptimeBehaviorCheckBox_stateChanged()
+{
+	if(!loadingItems)
+	{
+		loadingItems = true;
+		saveProfile();
+		loadProfile();
+		loadingItems = false;
+	}
+}
+
+void NovaConfig::on_personalityCheckBox_stateChanged()
+{
+	if(!loadingItems)
+	{
+		loadingItems = true;
+		saveProfile();
+		loadProfile();
+		loadingItems = false;
+	}
+}
+
+void NovaConfig::on_dropRateCheckBox_stateChanged()
+{
+	if(!loadingItems)
+	{
+		loadingItems = true;
+		saveProfile();
+		loadProfile();
+		loadingItems = false;
+	}
+}
+
 QListWidgetItem* NovaConfig::getFeatureListItem(QString name, char enabled)
 {
 	QListWidgetItem *newFeatureEntry = new QListWidgetItem();
@@ -1168,9 +1235,7 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 			&& (index == staticDHCP))
 		if(!displayMACPrefixWindow())
 		{
-			blockSignals(true);
 			ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
-			blockSignals(false);
 			loadingItems = false;
 			return;
 		}
@@ -1233,11 +1298,21 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 	loadAllNodes();
 }
 
+//Combo box signal for changing the uptime behavior
+void NovaConfig::on_uptimeBehaviorComboBox_currentIndexChanged(int index)
+{
+	//If uptime behavior = random in range
+	if(index)
+		ui.uptimeRangeEdit->setText(ui.uptimeEdit->displayText());
+
+	ui.uptimeRangeLabel->setVisible(index);
+	ui.uptimeRangeEdit->setVisible(index);
+}
+
 void NovaConfig::saveProfile()
 {
 	QTreeWidgetItem * item = NULL;
 	struct port * pr = NULL;
-
 	//If the name has changed we need to move it in the profile hash table and point all
 	//nodes that use the profile to the new location.
 	updateProfile(UPDATE_PROFILE, &profiles[currentProfile]);
@@ -1252,24 +1327,81 @@ void NovaConfig::saveProfile()
 		p->udpAction = ui.udpActionComboBox->currentText().toStdString();
 		p->icmpAction = ui.icmpActionComboBox->currentText().toStdString();
 		p->uptime = ui.uptimeEdit->displayText().toStdString();
+		//If random in range behavior
+		if(ui.uptimeBehaviorComboBox->currentIndex())
+			p->uptimeRange = ui.uptimeRangeEdit->displayText().toStdString();
+		//If flat behavior
+		else
+			p->uptimeRange = "";
 		p->personality = ui.personalityEdit->displayText().toStdString();
 		p->type = (profileType)ui.dhcpComboBox->currentIndex();
-		p->dropRate = ui.dropRateSetting->text().toStdString();
-		p->dropRate = p->dropRate.substr(0, p->dropRate.size()-1);
+		stringstream ss;
+		ss << ui.dropRateSlider->value();
+		p->dropRate = ss.str();
 
 		//Save the port table
 		for(int i = 0; i < ui.portTreeWidget->topLevelItemCount(); i++)
 		{
-			pr = &ports[p->ports[i]];
+			pr = &ports[p->ports[i].first];
 			item = ui.portTreeWidget->topLevelItem(i);
-			pr->portNum = item->text(0).toStdString();
-			pr->type = item->text(1).toStdString();
-			pr->behavior = item->text(2).toStdString();
+			pr->portNum = item->text(1).toStdString();
+			pr->type = item->text(2).toStdString();
+			pr->behavior = item->text(3).toStdString();
 		}
 	}
+	saveInherited();
 	createProfileTree(currentProfile);
 }
 
+void NovaConfig::saveInherited()
+{
+	profile * p = &profiles[currentProfile];
+
+	p->inherited[TYPE] = ui.ipModeCheckBox->isChecked();
+	if(ui.ipModeCheckBox->isChecked())
+		p->type = profiles[p->parentProfile].type;
+
+	p->inherited[TCP_ACTION] = ui.tcpCheckBox->isChecked();
+	if(ui.tcpCheckBox->isChecked())
+		p->tcpAction = profiles[p->parentProfile].tcpAction;
+
+	p->inherited[UDP_ACTION] = ui.udpCheckBox->isChecked();
+	if(ui.udpCheckBox->isChecked())
+		p->udpAction = profiles[p->parentProfile].udpAction;
+
+	p->inherited[ICMP_ACTION] = ui.icmpCheckBox->isChecked();
+	if(ui.icmpCheckBox->isChecked())
+		p->icmpAction = profiles[p->parentProfile].icmpAction;
+
+	p->inherited[ETHERNET] = ui.ethernetCheckBox->isChecked();
+	if(ui.ethernetCheckBox->isChecked())
+		p->ethernet = profiles[p->parentProfile].ethernet;
+
+	p->inherited[UPTIME] = ui.uptimeCheckBox->isChecked();
+	if(ui.uptimeCheckBox->isChecked())
+	{
+		p->uptime = profiles[p->parentProfile].uptime;
+		p->uptimeRange = profiles[p->parentProfile].uptimeRange;
+	}
+
+	p->inherited[UPTIME_RANGE] = ui.uptimeBehaviorCheckBox->isChecked();
+	if(ui.uptimeBehaviorCheckBox->isChecked())
+	{
+		if(profiles[p->parentProfile].uptimeRange.compare(""))
+			ui.uptimeBehaviorComboBox->setCurrentIndex(1);
+		else
+			ui.uptimeBehaviorComboBox->setCurrentIndex(0);
+	}
+
+	p->inherited[PERSONALITY] = ui.personalityCheckBox->isChecked();
+	if(ui.personalityCheckBox->isChecked())
+		p->personality = profiles[p->parentProfile].personality;
+
+	p->inherited[DROP_RATE] = ui.dropRateCheckBox->isChecked();
+	if(ui.dropRateCheckBox->isChecked())
+		p->dropRate = profiles[p->parentProfile].dropRate;
+
+}
 //Removes a profile, all of it's children and any nodes that currently use it
 void NovaConfig::deleteProfile(string name)
 {
@@ -1379,7 +1511,7 @@ void NovaConfig::loadProfile()
 	//If the selected profile can be found
 	if(profiles.find(currentProfile) != profiles.end())
 	{
-
+		loadInherited();
 		//Clear the tree widget and load new selections
 		ui.portTreeWidget->clear();
 
@@ -1391,12 +1523,27 @@ void NovaConfig::loadProfile()
 		ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->udpAction.c_str() ) );
 		ui.icmpActionComboBox->setCurrentIndex( ui.icmpActionComboBox->findText(p->icmpAction.c_str() ) );
 		ui.uptimeEdit->setText((QString)p->uptime.c_str());
+		if(p->uptimeRange.compare(""))
+		{
+			ui.uptimeBehaviorComboBox->setCurrentIndex(1);
+			ui.uptimeRangeEdit->setText((QString)p->uptimeRange.c_str());
+			ui.uptimeRangeLabel->setVisible(true);
+			ui.uptimeRangeEdit->setVisible(true);
+		}
+		else
+		{
+			ui.uptimeBehaviorComboBox->setCurrentIndex(0);
+			ui.uptimeRangeLabel->setVisible(false);
+			ui.uptimeRangeEdit->setVisible(false);
+		}
 		ui.personalityEdit->setText((QString)p->personality.c_str());
 		ui.dhcpComboBox->setCurrentIndex(p->type);
 		if(p->dropRate.size())
 		{
 			ui.dropRateSlider->setValue(atoi(p->dropRate.c_str()));
-			ui.dropRateSetting->setText((QString)(p->dropRate.append("%").c_str()));
+			stringstream ss;
+			ss << ui.dropRateSlider->value() << "%";
+			ui.dropRateSetting->setText((QString)ss.str().c_str());
 		}
 		else
 		{
@@ -1407,25 +1554,18 @@ void NovaConfig::loadProfile()
 		//Populate the port table
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
-			pr = &ports[p->ports[i]];
+			pr = &ports[p->ports[i].first];
 
 			//These don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
 			item = new QTreeWidgetItem(0);
-			item->setText(0,(QString)pr->portNum.c_str());
-			item->setText(1,(QString)pr->type.c_str());
-			item->setText(2,(QString)pr->behavior.c_str());
+			item->setText(0,(QString)pr->portName.c_str());
+			item->setText(1,(QString)pr->portNum.c_str());
+			item->setText(2,(QString)pr->type.c_str());
+			item->setText(3,(QString)pr->behavior.c_str());
 			ui.portTreeWidget->insertTopLevelItem(i, item);
 			pr->item = item;
 		}
-		ui.profileEdit->setEnabled(true);
-		ui.ethernetEdit->setEnabled(true);
-		ui.tcpActionComboBox->setEnabled(true);
-		ui.udpActionComboBox->setEnabled(true);
-		ui.icmpActionComboBox->setEnabled(true);
-		ui.uptimeEdit->setEnabled(true);
-		ui.personalityEdit->setEnabled(true);
-		ui.uptimeBehaviorComboBox->setEnabled(true);
 	}
 	else
 	{
@@ -1434,12 +1574,17 @@ void NovaConfig::loadProfile()
 		//Set the variables of the profile
 		ui.profileEdit->clear();
 		ui.ethernetEdit->clear();
-		ui.tcpActionComboBox->clear();
-		ui.udpActionComboBox->clear();
-		ui.icmpActionComboBox->clear();
+		ui.tcpActionComboBox->setCurrentIndex(0);
+		ui.udpActionComboBox->setCurrentIndex(0);
+		ui.icmpActionComboBox->setCurrentIndex(0);
 		ui.uptimeEdit->clear();
 		ui.personalityEdit->clear();
 		ui.uptimeBehaviorComboBox->setCurrentIndex(0);
+		ui.uptimeRangeLabel->setVisible(false);
+		ui.uptimeRangeEdit->setVisible(false);
+		ui.dhcpComboBox->setCurrentIndex(0);
+		ui.dropRateSlider->setValue(0);
+		ui.dropRateSetting->setText("0%");
 		ui.profileEdit->setEnabled(false);
 		ui.ethernetEdit->setEnabled(false);
 		ui.tcpActionComboBox->setEnabled(false);
@@ -1448,8 +1593,140 @@ void NovaConfig::loadProfile()
 		ui.uptimeEdit->setEnabled(false);
 		ui.personalityEdit->setEnabled(false);
 		ui.uptimeBehaviorComboBox->setEnabled(false);
-		//ui.dhcpCheckBox->setChecked(false);
+		ui.dhcpComboBox->setEnabled(false);
+		ui.dropRateSlider->setEnabled(false);
 	}
+}
+
+void NovaConfig::loadInherited()
+{
+	QFont tempFont;
+	profile * p = &profiles[currentProfile];
+
+	ui.ipModeCheckBox->setChecked(p->inherited[TYPE]);
+	ui.ipModeCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.ipModeCheckBox->setChecked(p->inherited[TYPE]);
+
+	tempFont = QFont(ui.IPModeLabel->font());
+	tempFont.setItalic(p->inherited[TYPE]);
+	ui.IPModeLabel->setFont(tempFont);
+	ui.dhcpComboBox->setEnabled(!p->inherited[TYPE]);
+
+	ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->udpAction.c_str() ) );
+	ui.icmpActionComboBox->setCurrentIndex( ui.icmpActionComboBox->findText(p->icmpAction.c_str() ) );
+
+	ui.tcpCheckBox->setChecked(p->inherited[ICMP_ACTION]);
+	ui.tcpCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.tcpCheckBox->setChecked(p->inherited[TCP_ACTION]);
+
+	tempFont = QFont(ui.tcpActionComboBox->font());
+	tempFont.setItalic(p->inherited[TCP_ACTION]);
+	ui.tcpActionComboBox->setFont(tempFont);
+	ui.tcpActionLabel->setFont(tempFont);
+	ui.tcpActionComboBox->setEnabled(!p->inherited[TCP_ACTION]);
+
+	ui.udpCheckBox->setChecked(p->inherited[UDP_ACTION]);
+	ui.udpCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.udpCheckBox->setChecked(p->inherited[UDP_ACTION]);
+
+	tempFont = QFont(ui.udpActionComboBox->font());
+	tempFont.setItalic(p->inherited[UDP_ACTION]);
+	ui.udpActionComboBox->setFont(tempFont);
+	ui.udpActionLabel->setFont(tempFont);
+	ui.udpActionComboBox->setEnabled(!p->inherited[UDP_ACTION]);
+
+	ui.icmpCheckBox->setChecked(p->inherited[ICMP_ACTION]);
+	ui.icmpCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.icmpCheckBox->setChecked(p->inherited[ICMP_ACTION]);
+
+	tempFont = QFont(ui.icmpActionComboBox->font());
+	tempFont.setItalic(p->inherited[ICMP_ACTION]);
+	ui.icmpActionComboBox->setFont(tempFont);
+	ui.icmpActionLabel->setFont(tempFont);
+	ui.icmpActionComboBox->setEnabled(!p->inherited[ICMP_ACTION]);
+
+	ui.ethernetCheckBox->setChecked(p->inherited[ETHERNET]);
+	ui.ethernetCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.ethernetCheckBox->setChecked(p->inherited[ETHERNET]);
+	tempFont = QFont(ui.ethernetLabel->font());
+	tempFont.setItalic(p->inherited[ETHERNET]);
+	ui.ethernetLabel->setFont(tempFont);
+	ui.ethernetEdit->setFont(tempFont);
+	ui.ethernetEdit->setEnabled(!p->inherited[ETHERNET]);
+	ui.setEthernetButton->setEnabled(!p->inherited[ETHERNET]);
+
+	ui.uptimeCheckBox->setChecked(p->inherited[UPTIME]);
+	ui.uptimeCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.uptimeCheckBox->setChecked(p->inherited[UPTIME]);
+	tempFont = QFont(ui.uptimeLabel->font());
+	tempFont.setItalic(p->inherited[UPTIME]);
+	ui.uptimeLabel->setFont(tempFont);
+	ui.uptimeEdit->setFont(tempFont);
+	ui.uptimeRangeEdit->setFont(tempFont);
+	ui.uptimeRangeLabel->setFont(tempFont);
+	ui.uptimeEdit->setEnabled(!p->inherited[UPTIME]);
+
+	ui.uptimeBehaviorCheckBox->setChecked(p->inherited[UPTIME_RANGE]);
+	ui.uptimeBehaviorCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.uptimeBehaviorCheckBox->setChecked(p->inherited[UPTIME_RANGE]);
+	tempFont = QFont(ui.uptimeBehaviorLabel->font());
+	tempFont.setItalic(p->inherited[UPTIME_RANGE]);
+	ui.uptimeBehaviorLabel->setFont(tempFont);
+	ui.uptimeBehaviorComboBox->setFont(tempFont);
+	ui.uptimeBehaviorComboBox->setEnabled(!p->inherited[UPTIME_RANGE]);
+
+	ui.personalityCheckBox->setChecked(p->inherited[PERSONALITY]);
+	ui.personalityCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.personalityCheckBox->setChecked(p->inherited[PERSONALITY]);
+	tempFont = QFont(ui.personalityLabel->font());
+	tempFont.setItalic(p->inherited[PERSONALITY]);
+	ui.personalityLabel->setFont(tempFont);
+	ui.personalityEdit->setFont(tempFont);
+	ui.personalityEdit->setEnabled(!p->inherited[PERSONALITY]);
+	ui.setPersonalityButton->setEnabled(!p->inherited[PERSONALITY]);
+
+	ui.dropRateCheckBox->setChecked(p->inherited[DROP_RATE]);
+	ui.dropRateCheckBox->setEnabled(p->parentProfile.compare(""));
+	//We set again incase the checkbox was disabled (previous selection was root profile)
+	ui.dropRateCheckBox->setChecked(p->inherited[DROP_RATE]);
+	tempFont = QFont(ui.dropRateLabel->font());
+	tempFont.setItalic(p->inherited[DROP_RATE]);
+	ui.dropRateLabel->setFont(tempFont);
+	ui.dropRateSetting->setFont(tempFont);
+	ui.dropRateSlider->setEnabled(!p->inherited[DROP_RATE]);
+
+	if(ui.ethernetCheckBox->isChecked())
+		p->ethernet = profiles[p->parentProfile].ethernet;
+
+	if(ui.uptimeCheckBox->isChecked())
+	{
+		p->uptime = profiles[p->parentProfile].uptime;
+		p->uptimeRange = profiles[p->parentProfile].uptimeRange;
+	}
+
+	if(ui.uptimeBehaviorCheckBox->isChecked())
+	{
+		if(profiles[p->parentProfile].uptimeRange.compare(""))
+			ui.uptimeBehaviorComboBox->setCurrentIndex(1);
+		else
+			ui.uptimeBehaviorComboBox->setCurrentIndex(0);
+	}
+
+	if(ui.personalityCheckBox->isChecked())
+		p->personality = profiles[p->parentProfile].personality;
+
+	if(ui.dropRateCheckBox->isChecked())
+		p->dropRate = profiles[p->parentProfile].dropRate;
+	if(ui.ipModeCheckBox->isChecked())
+		p->type = profiles[p->parentProfile].type;
 }
 
 //This is called to update all ancestor ptrees, does not update current ptree to do that call
@@ -1507,6 +1784,11 @@ void NovaConfig::loadProfilesFromTree(string parent)
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
 				p.type = (profileType)v.second.get<int>("type");
+
+				for(uint i = 0; i < 9; i++)
+				{
+					p.inherited[i] = false;
+				}
 
 				//Asserts the name is unique, if it is not it finds a unique name
 				// up to the range of 2^32
@@ -1588,36 +1870,43 @@ void NovaConfig::loadProfileSet(ptree *ptr, profile *p)
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->tcpAction = v.second.data();
+				p->inherited[TCP_ACTION] = false;
 				continue;
 			}
 			prefix = "UDP";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->udpAction = v.second.data();
+				p->inherited[UDP_ACTION] = false;
 				continue;
 			}
 			prefix = "ICMP";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->icmpAction = v.second.data();
+				p->inherited[ICMP_ACTION] = false;
 				continue;
 			}
 			prefix = "personality";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->personality = v.second.data();
+				p->inherited[PERSONALITY] = false;
 				continue;
 			}
 			prefix = "ethernet";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->ethernet = v.second.data();
+				p->inherited[ETHERNET] = false;
 				continue;
 			}
 			prefix = "uptime";
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->uptime = v.second.data();
+				p->inherited[UPTIME] = false;
+				p->inherited[UPTIME_RANGE] = false;
 				continue;
 			}
 			prefix = "uptimeRange";
@@ -1630,6 +1919,7 @@ void NovaConfig::loadProfileSet(ptree *ptr, profile *p)
 			if(!string(v.first.data()).compare(prefix))
 			{
 				p->dropRate = v.second.data();
+				p->inherited[DROP_RATE] = false;
 				continue;
 			}
 		}
@@ -1651,6 +1941,10 @@ void NovaConfig::loadProfileAdd(ptree *ptr, profile *p)
 
 	try
 	{
+		for(uint i = 0; i < p->ports.size(); i++)
+		{
+			p->ports[i].second = true;
+		}
 		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
 			//Checks for ports
@@ -1666,13 +1960,16 @@ void NovaConfig::loadProfileAdd(ptree *ptr, profile *p)
 					for(uint i = 0; i < p->ports.size(); i++)
 					{
 						//Erase inherited port if a conflict is found
-						if(!prt->portNum.compare(ports[p->ports[i]].portNum) && !prt->type.compare(ports[p->ports[i]].type))
+						if(!prt->portNum.compare(ports[p->ports[i].first].portNum) && !prt->type.compare(ports[p->ports[i].first].type))
 						{
 							p->ports.erase(p->ports.begin()+i);
 						}
 					}
 					//Add specified port
-					p->ports.push_back(prt->portName);
+					pair<string, bool> portpair;
+					portpair.first = prt->portName;
+					portpair.second = false;
+					p->ports.push_back(portpair);
 				}
 				continue;
 			}
@@ -1711,6 +2008,11 @@ void NovaConfig::loadSubProfiles(string parent)
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
 
+			for(uint i = 0; i < 9; i++)
+			{
+				prof.inherited[i] = true;
+			}
+
 			string profileStr = prof.name;
 			stringstream ss;
 			uint i = 0, j = 0;
@@ -1730,6 +2032,7 @@ void NovaConfig::loadSubProfiles(string parent)
 			try //Conditional: If profile overrides type
 			{
 				prof.type = (profileType)v.second.get<int>("type");
+				prof.inherited[TYPE] = false;
 			}
 			catch(...){}
 
@@ -1793,9 +2096,9 @@ void NovaConfig::loadAllProfiles()
 		//Sets the current selection to the original selection
 		ui.profileTreeWidget->setCurrentItem(profiles[currentProfile].profileItem);
 		//populates the window and expand the profile heirarchy
-		loadProfile();
 		ui.hsProfileTreeWidget->expandAll();
 		ui.profileTreeWidget->expandAll();
+		loadProfile();
 	}
 	//If no profiles exist, do nothing and ensure no profile is selected
 	else
@@ -1868,31 +2171,35 @@ void NovaConfig::createProfileTree(string name)
 	profile p = profiles[name];
 	if(p.name.compare(""))
 		temp.put<std::string>("name", p.name);
-	if(p.tcpAction.compare(""))
+	if(p.tcpAction.compare("") && !p.inherited[TCP_ACTION])
 		temp.put<std::string>("set.TCP", p.tcpAction);
-	if(p.udpAction.compare(""))
+	if(p.udpAction.compare("") && !p.inherited[UDP_ACTION])
 		temp.put<std::string>("set.UDP", p.udpAction);
-	if(p.icmpAction.compare(""))
+	if(p.icmpAction.compare("") && !p.inherited[ICMP_ACTION])
 		temp.put<std::string>("set.ICMP", p.icmpAction);
-	if(p.personality.compare(""))
+	if(p.personality.compare("") && !p.inherited[PERSONALITY])
 		temp.put<std::string>("set.personality", p.personality);
-	if(p.ethernet.compare(""))
+	if(p.ethernet.compare("") && !p.inherited[ETHERNET])
 		temp.put<std::string>("set.ethernet", p.ethernet);
-	if(p.uptime.compare(""))
+	if(p.uptime.compare("") && !p.inherited[UPTIME])
 		temp.put<std::string>("set.uptime", p.uptime);
-	if(p.uptimeRange.compare(""))
+	if(p.uptimeRange.compare("") && !p.inherited[UPTIME])
 		temp.put<std::string>("set.uptimeRange", p.uptimeRange);
-	if(p.dropRate.compare(""))
+	if(p.dropRate.compare("") && !p.inherited[DROP_RATE])
 		temp.put<std::string>("set.dropRate", p.dropRate);
-	temp.put<int>("type", p.type);
+	if(!p.inherited[TYPE])
+		temp.put<int>("type", p.type);
 
 	//Populates the ports, if none are found create an empty field because it is expected.
 	ptree pt;
 	if(p.ports.size())
 	{
+		temp.put_child("add.ports",pt);
 		for(uint i = 0; i < p.ports.size(); i++)
 		{
-			temp.add<std::string>("add.ports.port", p.ports[i]);
+			//If the port isn't inherited
+			if(!p.ports[i].second)
+				temp.add<std::string>("add.ports.port", p.ports[i].first);
 		}
 	}
 	else
@@ -2027,6 +2334,9 @@ void NovaConfig::on_addButton_clicked()
 	temp.ethernet = "Dell";
 	temp.personality = "Microsoft Windows 2003 Server";
 	temp.tcpAction = "reset";
+	temp.udpAction = "reset";
+	temp.icmpAction = "reset";
+	temp.type = static_IP;
 	temp.uptime = "0";
 	temp.ports.clear();
 
