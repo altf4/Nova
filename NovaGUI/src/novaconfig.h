@@ -5,15 +5,15 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
+// Description :
 //============================================================================
 #ifndef NOVACONFIG_H
 #define NOVACONFIG_H
@@ -194,7 +194,7 @@ void on_cloneButton_clicked();
 void on_addButton_clicked();
 void on_deleteButton_clicked();
 void on_profileTreeWidget_itemSelectionChanged();
-void on_profileEdit_textChanged();
+void on_profileEdit_editingFinished();
 
 //GUI Signals for Node settings
 void on_nodeEditButton_clicked();
@@ -216,9 +216,11 @@ void on_featureDisableButton_clicked();
 void on_ipModeCheckBox_stateChanged();
 void on_ethernetCheckBox_stateChanged();
 void on_uptimeCheckBox_stateChanged();
-void on_uptimeBehaviorCheckBox_stateChanged();
 void on_personalityCheckBox_stateChanged();
 void on_dropRateCheckBox_stateChanged();
+void on_tcpCheckBox_stateChanged();
+void on_udpCheckBox_stateChanged();
+void on_icmpCheckBox_stateChanged();
 
 private:
 	void setInputValidators();
