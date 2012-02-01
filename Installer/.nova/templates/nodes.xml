@@ -18,7 +18,7 @@
 		<nodes>
 			<node>
 				<interface>lo</interface>
-				<IP>127.10.10.1</IP>
+				<IP>10.0.0.1</IP>
 				<enabled>true</enabled>
 				<profile>
 					<name>Doppelganger</name>
