@@ -16,6 +16,7 @@
 // Description :
 //============================================================================
 #include "novaconfig.h"
+#include <QtGui/QComboBox>
 
 using namespace std;
 using namespace Nova;
@@ -100,10 +101,11 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 	{
 		portMenu->clear();
 		portMenu->addAction(ui.actionAddPort);
-		if(ui.portTreeWidget->isItemSelected(ui.portTreeWidget->currentItem()))
+		if(ui.portTreeWidget->topLevelItemCount())
 		{
 			portMenu->addSeparator();
 			portMenu->addAction(ui.actionEditPort);
+			portMenu->addAction(ui.actionToggle_Inherited);
 			portMenu->addSeparator();
 			portMenu->addAction(ui.actionDeletePort);
 		}
@@ -111,6 +113,27 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 		portMenu->popup(globalPos);
 	}
 }
+
+void NovaConfig::on_actionToggle_Inherited_triggered()
+{
+
+}
+
+void NovaConfig::on_actionAddPort_triggered()
+{
+
+}
+
+void NovaConfig::on_actionEditPort_triggered()
+{
+
+}
+
+void NovaConfig::on_actionDeletePort_triggered()
+{
+
+}
+
 //Action to take when window is closing
 void NovaConfig::closeEvent(QCloseEvent * e)
 {
@@ -309,6 +332,62 @@ void NovaConfig::on_icmpCheckBox_stateChanged()
 	if(!loadingItems)
 	{
 		loadingItems = true;
+		saveProfile();
+		loadProfile();
+		loadingItems = false;
+	}
+}
+void NovaConfig::on_portTreeWidget_itemPressed(QTreeWidgetItem* item)
+{
+	ui.portTreeWidget->setCurrentItem(item);
+}
+void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem * item)
+{
+	if(!loadingItems && (item != NULL))
+	{
+		loadingItems = true;
+		ui.portTreeWidget->setCurrentItem(item);
+		string oldPort = item->text(0).toStdString()+ "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
+		profile * p = &profiles[currentProfile];
+
+		for(uint i = 0; i < p->ports.size(); i++)
+		{
+			if(!oldPort.compare(p->ports[i].first))
+				p->ports.erase(p->ports.begin()+i);
+		}
+
+		QComboBox * qTypeBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 1);
+		item->setText(1, qTypeBox->currentText());
+
+		QComboBox * qBehavBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 2);
+		item->setText(2, qBehavBox->currentText());
+
+		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
+
+		if(ports.find(portName) == ports.end())
+		{
+			port temp;
+			temp.portName = portName;
+			temp.portNum = item->text(0).toStdString();
+			temp.type = item->text(1).toStdString();
+			temp.behavior = item->text(2).toStdString();
+			ports[portName] = temp;
+		}
+		for(uint i = 0; i < p->ports.size(); i++)
+		{
+			if(!p->ports[i].first.compare(portName))
+			{
+				ui.portTreeWidget->removeItemWidget(item, 0);
+				saveProfile();
+				loadProfile();
+				loadingItems = false;
+				return;
+			}
+		}
+		pair<string, bool> portPair;
+		portPair.first = portName;
+		portPair.second = false;
+		p->ports.push_back(portPair);
 		saveProfile();
 		loadProfile();
 		loadingItems = false;
@@ -1363,9 +1442,17 @@ void NovaConfig::saveProfile()
 		{
 			pr = ports[p.ports[i].first];
 			item = ui.portTreeWidget->topLevelItem(i);
-			pr.portNum = item->text(1).toStdString();
-			pr.type = item->text(2).toStdString();
-			pr.behavior = item->text(3).toStdString();
+			pr.portNum = item->text(0).toStdString();
+			QComboBox * qTypeBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 1);
+			QComboBox * qBehavBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 2);
+			pr.type = qTypeBox->currentText().toStdString();
+			pr.behavior = qBehavBox->currentText().toStdString();
+			//If the behavior names a script
+			if(!pr.behavior.compare("open") || !pr.behavior.compare("reset") || !pr.behavior.compare("block"))
+			{
+				pr.behavior = "script";
+				pr.scriptName = qBehavBox->currentText().toStdString();
+			}
 			ports[p.ports[i].first] = pr;
 		}
 		profiles[currentProfile] = p;
@@ -1574,14 +1661,59 @@ void NovaConfig::loadProfile()
 		{
 			pr = &ports[p->ports[i].first];
 
+
 			//These don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
 			item = new QTreeWidgetItem(0);
-			item->setText(0,(QString)pr->portName.c_str());
-			item->setText(1,(QString)pr->portNum.c_str());
-			item->setText(2,(QString)pr->type.c_str());
-			item->setText(3,(QString)pr->behavior.c_str());
+			item->setText(0,(QString)pr->portNum.c_str());
+			item->setText(1,(QString)pr->type.c_str());
+			item->setText(2,(QString)pr->behavior.c_str());
 			ui.portTreeWidget->insertTopLevelItem(i, item);
+
+			QFont tempFont;
+			tempFont = QFont(item->font(0));
+			tempFont.setItalic(p->ports[i].second);
+			item->setFont(0,tempFont);
+			item->setFont(1,tempFont);
+			item->setFont(2,tempFont);
+
+			QComboBox *typeBox = new QComboBox(ui.portTreeWidget);
+			typeBox->addItem("TCP");
+			typeBox->addItem("UDP");
+			typeBox->setItemText(0, "TCP");
+			typeBox->setItemText(1, "UDP");
+			typeBox->setEnabled(!p->ports[i].second);
+
+			QComboBox *behaviorBox = new QComboBox(ui.portTreeWidget);
+			behaviorBox->addItem("reset");
+			behaviorBox->addItem("open");
+			behaviorBox->addItem("block");
+			behaviorBox->insertSeparator(3);
+			for(ScriptTable::iterator it = scripts.begin(); it != scripts.end(); it++)
+			{
+				behaviorBox->addItem((QString)it->first.c_str());
+			}
+			behaviorBox->setEnabled(!p->ports[i].second);
+			if(p->ports[i].second)
+				item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+			else
+				item->setFlags(item->flags() | Qt::ItemIsEditable);
+
+			typeBox->setAutoFillBackground(true);
+			typeBox->setContextMenuPolicy(Qt::NoContextMenu);
+			typeBox->setFocusPolicy(Qt::NoFocus);
+			typeBox->setCurrentIndex(typeBox->findText(pr->type.c_str()));
+
+			behaviorBox->setAutoFillBackground(true);
+			behaviorBox->setFocusPolicy(Qt::NoFocus);
+			behaviorBox->setContextMenuPolicy(Qt::NoContextMenu);
+			if(!pr->behavior.compare("script"))
+				behaviorBox->setCurrentIndex(behaviorBox->findText(pr->scriptName.c_str()));
+			else
+				behaviorBox->setCurrentIndex(behaviorBox->findText(pr->behavior.c_str()));
+
+			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
+			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
 			pr->item = item;
 		}
 	}

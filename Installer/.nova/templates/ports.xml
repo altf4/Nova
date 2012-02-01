@@ -1,51 +1,51 @@
 <ports>
 	<port>
-		<name>20 TCP Open</name>
+		<name>20_TCP_open</name>
 		<number>20</number>
 		<type>TCP</type>
 		<behavior>open</behavior>
 	</port>
 	<port>
-		<name>21 Windows FTP</name>
+		<name>21_TCP_Windows FTP</name>
 		<number>21</number>
 		<type>TCP</type>
 		<behavior>script</behavior>
 		<script>Windows FTP</script>
 	</port>
 	<port>
-		<name>23 Telnet Router</name>
+		<name>23_TCP_Telnet Router</name>
 		<number>23</number>
 		<type>TCP</type>
 		<behavior>script</behavior>
 		<script>Telnet Router</script>
 	</port>
 	<port>
-		<name>80 Windows Web</name>
+		<name>80_TCP_Windows Web</name>
 		<number>80</number>
 		<type>TCP</type>
 		<behavior>script</behavior>
 		<script>Windows Web</script>
 	</port>
 	<port>
-		<name>139 TCP Open</name>
+		<name>139_TCP_open</name>
 		<number>139</number>
 		<type>TCP</type>
 		<behavior>open</behavior>
 	</port>
 	<port>
-		<name>137 TCP Open</name>
+		<name>137_TCP_open</name>
 		<number>137</number>
 		<type>TCP</type>
 		<behavior>open</behavior>
 	</port>
 	<port>
-		<name>137 UDP Open</name>
+		<name>137_UDP_open</name>
 		<number>137</number>
 		<type>UDP</type>
 		<behavior>open</behavior>
 	</port>
 	<port>
-		<name>135 UDP Open</name>
+		<name>135_UDP_open</name>
 		<number>135</number>
 		<type>UDP</type>
 		<behavior>open</behavior>
