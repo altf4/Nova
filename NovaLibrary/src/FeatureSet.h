@@ -66,13 +66,13 @@ using namespace std;
 #define REMOVE false
 
 //Table of IP destinations and a count;
-typedef google::dense_hash_map<in_addr_t, pair<uint, uint>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
+typedef google::dense_hash_map<in_addr_t, pair<uint32_t, uint32_t>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
 //Table of destination ports and a count;
-typedef google::dense_hash_map<in_port_t, pair<uint, uint>, tr1::hash<in_port_t>, eqport > Port_Table;
+typedef google::dense_hash_map<in_port_t, pair<uint32_t, uint32_t>, tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef google::dense_hash_map<int, pair<uint, uint>, tr1::hash<int>, eqint > Packet_Table;
+typedef google::dense_hash_map<int, pair<uint32_t, uint32_t>, tr1::hash<int>, eqint > Packet_Table;
 //Table of packet intervals and a count
-typedef google::dense_hash_map<time_t, pair<uint, uint>, tr1::hash<time_t>, eqtime > Interval_Table;
+typedef google::dense_hash_map<time_t, pair<uint32_t, uint32_t>, tr1::hash<time_t>, eqtime > Interval_Table;
 
 namespace Nova{
 
@@ -170,14 +170,14 @@ private:
 	uint portMax;
 
 	//Tracks the number of HS events
-	pair<uint, uint> haystackEvents;
+	pair<uint32_t, uint32_t> haystackEvents;
 
 	time_t startTime;
 	time_t endTime;
 	pair<time_t, time_t> totalInterval;
 
 	//Total number of bytes in all packets
-	pair<uint, uint> bytesTotal;
+	pair<uint32_t, uint32_t> bytesTotal;
 
 	///A vector of packet arrival times for tracking traffic over time.
 	vector <time_t> packet_times;
