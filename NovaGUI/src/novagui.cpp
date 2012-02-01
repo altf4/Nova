@@ -1673,7 +1673,9 @@ void NovaGUI::on_actionTrainingData_triggered()
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 	classifier->exec();
-	vector<string>* classifications = classifier->getHostiles();
+
+	// TODO
+	//vector<string>* classifications = classifier->getStateData();
 
 	QString outputFile = QFileDialog::getSaveFileName(this,
 			tr("Classification Database File"), QDir::currentPath(),
@@ -1684,6 +1686,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
+	// TODO: Change reorganizeTrainingFile so it uses the user's choices
 	// reorganizeTrainingFile(data.toStdString(), outputFile.toStdString(), *classifications);
 }
 

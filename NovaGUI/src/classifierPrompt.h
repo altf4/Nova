@@ -28,7 +28,7 @@ public:
     classifierPrompt(QWidget *parent = 0);
     classifierPrompt(TrainingHashTable* trainingDump, QWidget *parent = 0);
 
-    vector<string>* getHostiles();
+    ipToHeader* getStateData();
 
     ~classifierPrompt();
 

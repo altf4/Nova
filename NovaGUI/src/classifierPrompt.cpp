@@ -102,10 +102,11 @@ void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 
 classifierPrompt::~classifierPrompt()
 {
-
+	for (ipToHeader::iterator it = suspects.begin(); it != suspects.end(); it++)
+		delete it->second;
 }
 
-vector<string>* classifierPrompt::getHostiles()
+ipToHeader* classifierPrompt::getStateData()
 {
-    return NULL;
+    return &suspects;
 }
