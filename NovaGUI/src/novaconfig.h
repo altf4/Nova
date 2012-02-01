@@ -164,7 +164,10 @@ private slots:
 
 // Right click action on a feature, we manually connect it so no need for proper prefix
 void onFeatureClick(const QPoint & pos);
-
+//When an item in the port tree widget changes
+void on_portTreeWidget_itemChanged(QTreeWidgetItem * item);
+//When an item in the port tree widget is clicked
+void on_portTreeWidget_itemPressed(QTreeWidgetItem * item);
 //Which menu item is selected
 void on_treeWidget_itemSelectionChanged();
 //General Preferences Buttons
@@ -221,6 +224,12 @@ void on_dropRateCheckBox_stateChanged();
 void on_tcpCheckBox_stateChanged();
 void on_udpCheckBox_stateChanged();
 void on_icmpCheckBox_stateChanged();
+
+//Port inheritance menu toggle
+void on_actionToggle_Inherited_triggered();
+void on_actionEditPort_triggered();
+void on_actionDeletePort_triggered();
+void on_actionAddPort_triggered();
 
 private:
 	void setInputValidators();
