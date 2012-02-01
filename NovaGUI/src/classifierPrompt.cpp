@@ -16,7 +16,7 @@ classifierPrompt::classifierPrompt(TrainingHashTable* trainingDump, QWidget *par
 	for (TrainingHashTable::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
 	{
 		// Set up the data in our struct
-		suspects[it->first] = new suspectHeader();
+		suspects[it->first] = new trainingSuspectHeader();
 		suspects[it->first]->isIncluded = true;
 		suspects[it->first]->isHostile = false;
 		suspects[it->first]->ip = it->first;
@@ -26,7 +26,7 @@ classifierPrompt::classifierPrompt(TrainingHashTable* trainingDump, QWidget *par
 	}
 }
 
-void classifierPrompt::makeRow(suspectHeader* header, int row)
+void classifierPrompt::makeRow(trainingSuspectHeader* header, int row)
 {
 	updating = true;
 
@@ -51,7 +51,7 @@ void classifierPrompt::makeRow(suspectHeader* header, int row)
 	updating = false;
 }
 
-void classifierPrompt::updateRow(suspectHeader* header, int row)
+void classifierPrompt::updateRow(trainingSuspectHeader* header, int row)
 {
 	updating = true;
 
@@ -76,7 +76,7 @@ void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 	if (updating)
 		return;
 
-	suspectHeader* header = suspects[ui.tableWidget->item(row, 2)->text().toStdString()];
+	trainingSuspectHeader* header = suspects[ui.tableWidget->item(row, 2)->text().toStdString()];
 
 	switch (col)
 	{
@@ -102,11 +102,11 @@ void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 
 classifierPrompt::~classifierPrompt()
 {
-	for (ipToHeader::iterator it = suspects.begin(); it != suspects.end(); it++)
+	for (TrainingHeaderMap::iterator it = suspects.begin(); it != suspects.end(); it++)
 		delete it->second;
 }
 
-ipToHeader* classifierPrompt::getStateData()
+TrainingHeaderMap* classifierPrompt::getStateData()
 {
     return &suspects;
 }

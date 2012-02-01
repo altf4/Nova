@@ -6,7 +6,7 @@
 #include "NovaUtil.h"
 
 
-struct _suspectHeader
+struct _trainingSuspectHeader
 {
 	bool isHostile;
 	bool isIncluded;
@@ -14,10 +14,9 @@ struct _suspectHeader
 	string description;
 };
 
+typedef struct _trainingSuspectHeader trainingSuspectHeader;
 
-typedef struct _suspectHeader suspectHeader;
-
-typedef google::dense_hash_map<string, suspectHeader*, tr1::hash<string>, eqstr > ipToHeader;
+typedef google::dense_hash_map<string, trainingSuspectHeader*, tr1::hash<string>, eqstr > TrainingHeaderMap;
 
 
 class classifierPrompt : public QDialog
@@ -28,7 +27,7 @@ public:
     classifierPrompt(QWidget *parent = 0);
     classifierPrompt(TrainingHashTable* trainingDump, QWidget *parent = 0);
 
-    ipToHeader* getStateData();
+    TrainingHeaderMap* getStateData();
 
     ~classifierPrompt();
 
@@ -36,11 +35,11 @@ private slots:
 	void on_tableWidget_cellChanged(int row, int col);
 
 private:
-    void updateRow(suspectHeader* header, int row);
-    void makeRow(suspectHeader* header, int row);
+    void updateRow(trainingSuspectHeader* header, int row);
+    void makeRow(trainingSuspectHeader* header, int row);
 
     bool updating;
-	ipToHeader suspects;
+	TrainingHeaderMap suspects;
     Ui::classifierPromptClass ui;
 };
 
