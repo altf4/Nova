@@ -608,6 +608,7 @@ uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	//Temporary variables to store and track data during deserialization
 	uint temp = 0;
 	uint tempCount = 0;
+	in_port_t port = 0;
 
 	//Required, individual variables for calculation
 	memcpy(&temp, buf+offset, sizeof bytesTotal.first);
@@ -685,11 +686,11 @@ uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	//Port table
 	for(uint i = 0; i < table_size;)
 	{
-		memcpy(&temp, buf+offset, sizeof temp);
-		offset += sizeof temp;
+		memcpy(&port, buf+offset, sizeof port);
+		offset += sizeof port;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		portTable[temp].second += tempCount;
+		portTable[port].second += tempCount;
 		i++;
 	}
 
@@ -829,6 +830,7 @@ uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 	//Temporary variables to store and track data during deserialization
 	uint temp = 0;
 	uint tempCount = 0;
+	in_port_t port = 0;
 
 	//Required, individual variables for calculation
 	memcpy(&temp, buf+offset, sizeof totalInterval.first);
@@ -906,11 +908,11 @@ uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 	//Port table
 	for(uint i = 0; i < table_size;)
 	{
-		memcpy(&temp, buf+offset, sizeof temp);
-		offset += sizeof temp;
+		memcpy(&port, buf+offset, sizeof port);
+		offset += sizeof port;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		portTable[temp].first += tempCount;
+		portTable[port].first += tempCount;
 		i++;
 	}
 
