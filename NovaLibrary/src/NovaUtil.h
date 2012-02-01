@@ -41,6 +41,7 @@
 #include <netinet/if_ether.h>
 #include <google/dense_hash_map>
 #include <syslog.h>
+#include <string>
 
 #include "GUIMsg.h"
 #include "Point.h"
@@ -195,6 +196,7 @@ struct Session
 
 ///The Value is a vector of IP headers
 typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr > TCPSessionHashTable;
+typedef google::dense_hash_map<string, vector<string>*, tr1::hash<string>, eqstr > TrainingHashTable;
 
 /*****************************************************************************/
 /** NovaUtil namespace is ONLY for functions repeated in multiple processes **/
@@ -233,6 +235,9 @@ uint GetSerializedAddr(u_char * buf);
 
 // Returns the number of bits used in the mask when given in in_addr_t form
 int GetMaskBits(in_addr_t range);
+
+void reorganizeTrainingFile(string inputFile, string outputFile);
+TrainingHashTable* readEngineDumpFile(string inputFile);
 
 }
 

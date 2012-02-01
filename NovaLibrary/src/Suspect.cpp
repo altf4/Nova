@@ -127,23 +127,9 @@ void Suspect::AddEvidence(Packet packet)
 }
 
 
-void Suspect::CalculateFeatures(bool isTraining, uint32_t featuresEnabled)
+void Suspect::CalculateFeatures(uint32_t featuresEnabled)
 {
 	features.CalculateAll(featuresEnabled);
-
-	if(isTraining)
-	{
-		if(features.features[DISTINCT_IPS] > 2)
-		{
-			classification = 1;
-			isHostile = true;
-		}
-		else
-		{
-			classification = 0;
-			isHostile = false;
-		}
-	}
 }
 
 

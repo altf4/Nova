@@ -235,4 +235,75 @@ int GetMaskBits(in_addr_t mask)
 	return i;
 }
 
+TrainingHashTable* readEngineDumpFile(string inputFile)
+{
+	TrainingHashTable* trainingTable = new TrainingHashTable();
+	trainingTable->set_empty_key("");
+
+	ifstream dataFile(inputFile.data());
+	string line, ip, data;
+
+	if (dataFile.is_open())
+	{
+		while (dataFile.good() && getline(dataFile,line))
+		{
+			ip = line.substr(0,line.find_first_of(' '));
+			data = line.substr(line.find_first_of(' ') + 1, string::npos);
+			data = "\t" + data;
+
+			(*trainingTable)[ip] = new vector<string>();
+			(*trainingTable)[ip]->push_back(data);
+		}
+	}
+	dataFile.close();
+
+	return trainingTable;
+}
+
+void reorganizeTrainingFile(string inputFile, string outputFile, vector<string> hostiles)
+{
+	TrainingHashTable* trainingTable;
+	readEngineDumpFile(inputFile);
+
+	string line;
+	bool getUID = true;
+	int uid, max = 0;
+	ifstream stream(outputFile.data());
+	if (stream.is_open())
+	{
+		while (stream.good() && getline(stream,line))
+		{
+			if (line.length() > 0)
+			{
+				if (getUID)
+					uid = atoi(line.substr(0,line.find_first_of(' ')).c_str());
+				getUID = false;
+			}
+			else
+			{
+				getUID = true;
+			}
+
+			if (uid > max)
+				max = uid;
+		}
+	}
+	stream.close();
+
+
+	uid = max + 1;
+	ofstream out(outputFile.data());
+	for (TrainingHashTable::iterator ipIt = trainingTable->begin(); ipIt != trainingTable->end(); ipIt++)
+	{
+		out << uid << " 0 " << "Generated from IP " << ipIt->first << '"' << endl;
+		for (vector<string>::iterator i = ipIt->second->begin(); i != ipIt->second->end(); i++)
+		{
+			out << *i << endl;
+		}
+		uid++;
+	}
+
+	out.close();
+}
+
 }

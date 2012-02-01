@@ -4,7 +4,8 @@ QT += core \
     gui
 
 # PRE_TARGETDEPS += /usr/lib/libann.a
-HEADERS += src/nova_manual.h \
+HEADERS += src/classifierPrompt.h \
+    src/nova_manual.h \
     src/DialogPrompter.h \
     src/DialogPrompt.h \
     src/NovaComplexDialog.h \
@@ -14,7 +15,8 @@ HEADERS += src/nova_manual.h \
     src/novagui.h \
     src/portPopup.h \
     src/run_popup.h
-SOURCES += src/nova_manual.cpp \
+SOURCES += src/classifierPrompt.cpp \
+    src/nova_manual.cpp \
     src/DialogPrompter.cpp \
     src/DialogPrompt.cpp \
     src/NovaComplexDialog.cpp \
@@ -24,7 +26,8 @@ SOURCES += src/nova_manual.cpp \
     src/novagui.cpp \
     src/portPopup.cpp \
     src/run_popup.cpp
-FORMS += UI/nova_manual.ui \
+FORMS += UI/classifierPrompt.ui \
+    UI/nova_manual.ui \
     UI/NovaComplexDialog.ui \
     UI/nodePopup.ui \
     UI/novaconfig.ui \

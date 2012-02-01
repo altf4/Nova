@@ -90,7 +90,7 @@ public:
 	// Calculates the feature set for this suspect
 	// 		isTraining - True for training data gathering mode
 	//		featuresEnabled - bitmask of features to calculate
-	void CalculateFeatures(bool isTraining, uint32_t featuresEnabled);
+	void CalculateFeatures(uint32_t featuresEnabled);
 
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored

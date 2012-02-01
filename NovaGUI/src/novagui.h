@@ -278,6 +278,7 @@ private slots:
 	void on_actionConfigure_triggered();
 	void on_actionExit_triggered();
 	void on_actionSave_Suspects_triggered();
+	void on_actionTrainingData_triggered();
 	void on_actionHide_Old_Suspects_triggered();
 	void on_actionShow_All_Suspects_triggered();
 	void on_actionClear_All_Suspects_triggered();

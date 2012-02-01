@@ -16,6 +16,7 @@
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
 //============================================================================
 #include "novagui.h"
+#include "classifierPrompt.h"
 
 
 using namespace std;
@@ -1655,6 +1656,35 @@ void NovaGUI::on_actionHide_Suspect_triggered()
 void NovaGUI::on_actionSave_Suspects_triggered()
 {
 	saveSuspects();
+}
+
+void NovaGUI::on_actionTrainingData_triggered()
+{
+	 QString data = QFileDialog::getOpenFileName(this,
+			tr("Classification Engine Data Dump"), QDir::currentPath(),
+			tr("Documents (*.dump)"));
+
+	if (data.isNull())
+	{
+		return;
+	}
+
+	TrainingHashTable* trainingDump = readEngineDumpFile(data.toStdString());
+
+	classifierPrompt* classifier = new classifierPrompt(trainingDump);
+	classifier->exec();
+	vector<string>* classifications = classifier->getHostiles();
+
+	QString outputFile = QFileDialog::getSaveFileName(this,
+			tr("Classification Database File"), QDir::currentPath(),
+			tr("Documents (*.txt)"));
+
+	if (outputFile.isNull())
+	{
+		return;
+	}
+
+	// reorganizeTrainingFile(data.toStdString(), outputFile.toStdString(), *classifications);
 }
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()
