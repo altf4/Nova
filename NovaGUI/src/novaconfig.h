@@ -229,7 +229,6 @@ void on_icmpCheckBox_stateChanged();
 
 //Port inheritance menu toggle
 void on_actionToggle_Inherited_triggered();
-void on_actionEditPort_triggered();
 void on_actionDeletePort_triggered();
 void on_actionAddPort_triggered();
 
