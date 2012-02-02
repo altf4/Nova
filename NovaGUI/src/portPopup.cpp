@@ -192,7 +192,7 @@ void portPopup::loadAllPorts()
 			//prt->portItem = item;
 		}
 		//set the current item
-		citem = gprt->portItem;
+		//citem = gprt->portItem;
 		ui.portTreeWidget->setCurrentItem(citem);
 	}
 	else
