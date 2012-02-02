@@ -42,6 +42,9 @@ char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 
 
+string doppelgangerPath;
+string haystackPath;
+
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
@@ -183,6 +186,14 @@ NovaGUI::NovaGUI(QWidget *parent)
 		sclose(CE_InSock);
 		exit(1);
 	}
+
+
+	string input = homePath + "/Config/NOVAConfig.txt";
+
+	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
+	NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
+	doppelgangerPath = NovaConfig->options["DM_HONEYD_CONFIG"].data;
+	haystackPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
 
 
 	//Sets initial view
@@ -442,44 +453,88 @@ void NovaGUI::saveAll()
 void NovaGUI::writeHoneyd()
 {
 	stringstream out;
+	stringstream doppelOut;
+
+	vector<string> profilesParsed;
 
 	for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 	{
-		out << profileToString(&it->second);
+		if (!it->second.parentProfile.compare(""))
+		{
+			string pString = profileToString(&it->second);
+			out << pString;
+			doppelOut << pString;
+			profilesParsed.push_back(it->first);
+		}
 	}
 
-	out << endl << endl;
+	while (profilesParsed.size() < profiles.size())
+	{
+		for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+		{
+			bool selfMatched = false;
+			bool parentFound = false;
+			for (uint i = 0; i < profilesParsed.size(); i++)
+			{
+				if(!it->second.parentProfile.compare(profilesParsed[i]))
+				{
+					parentFound = true;
+					continue;
+				}
+				if (!it->first.compare(profilesParsed[i]))
+				{
+					selfMatched = true;
+					break;
+				}
+			}
 
+			if(!selfMatched && parentFound)
+			{
+				string pString = profileToString(&it->second);
+				out << pString;
+				doppelOut << pString;
+				profilesParsed.push_back(it->first);
+
+			}
+		}
+	}
+
+	// Start node section
+	out << endl << endl;
 	for (NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
-		//node
-		//out <<
-		/*
+		if (!it->second.enabled)
+		{
+			continue;
+		}
+
 		switch (profiles[it->second.pfile].type)
 		{
 			case static_IP:
-
+				out << " bind " << it->second.IP << " " << it->second.pfile << endl;
+				break;
 			case staticDHCP:
+				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet " << it->second.MAC << endl;
+				break;
 			case randomDHCP:
+				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet " << profiles[it->second.pfile].ethernet << endl;
+				break;
 			case Doppelganger:
+				doppelOut << " bind " << it->second.IP << " " << it->second.pfile << endl;
+				break;
 		}
-
-
-
-
-		 * 	string name;
-	string sub;
-	string interface;
-	string pfile;
-	string IP;
-	string MAC;
-	in_addr_t realIP;
-	bool enabled;
-	ptree tree;
-		 */
 	}
 
+	ofstream outFile(haystackPath.data());
+	cout << "Saving to " << haystackPath.data() << endl;
+	outFile << out.str() << endl;
+	outFile.close();
+
 	cout << out.str() << endl;
+
+	ofstream doppelOutFile(doppelgangerPath.data());
+	doppelOutFile << doppelOut.str() << endl;
+	doppelOutFile.close();
 }
 
 string NovaGUI::profileToString(profile* p)
@@ -494,10 +549,18 @@ string NovaGUI::profileToString(profile* p)
 	out << "set " << p->name  << " default tcp action " << p->tcpAction << endl;
 	out << "set " << p->name  << " default udp action " << p->udpAction << endl;
 	out << "set " << p->name  << " default icmp action " << p->icmpAction << endl;
-	out << "set " << p->name << " personality \"" << p->personality << '"' << endl;
-	out << "set " << p->name << " ethernet \"" << p->ethernet << '"' << endl;
-	out << "set " << p->name << " uptime " << p->uptime << endl;
-	out << "set " << p->name << " droprate in " << p->dropRate << endl;
+
+	if (p->personality.compare(""))
+		out << "set " << p->name << " personality \"" << p->personality << '"' << endl;
+
+	if (p->ethernet.compare(""))
+		out << "set " << p->name << " ethernet \"" << p->ethernet << '"' << endl;
+
+	if (p->uptime.compare(""))
+		out << "set " << p->name << " uptime " << p->uptime << endl;
+
+	if (p->dropRate.compare(""))
+		out << "set " << p->name << " droprate in " << p->dropRate << endl;
 
 	for (uint i = 0; i < p->ports.size(); i++)
 	{
@@ -508,11 +571,9 @@ string NovaGUI::profileToString(profile* p)
 			out << " " << ports[p->ports[i].first].type;
 			out << " port " << ports[p->ports[i].first].portNum << " ";
 
-			//cout << "behavior is " << ports[p->ports[i].first].behavior << endl;
 			if (!(ports[p->ports[i].first].behavior.compare("script")))
 			{
 				string scriptName = ports[p->ports[i].first].scriptName;
-				//cout << "Scirptname is " << scriptName << endl;
 
 				out << '"' << scripts[scriptName].path << '"'<< endl;
 			}
