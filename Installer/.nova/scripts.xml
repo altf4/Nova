@@ -9,6 +9,6 @@
 	</script>
 	<script>
 		<name>Windows Web</name>
-		<path>sh /usr/share/honeyd/scripts/win32/web.sh</path>
+		<path>bash /usr/share/honeyd/scripts/win32/web.sh</path>
 	</script>
 </scripts>
