@@ -12,7 +12,7 @@
 				<name>WinServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Microsoft Windows 2003 Server</personality>
+					<personality>Microsoft Windows 7</personality>
 					<ethernet>Dell</ethernet>
 					<uptime>1546550</uptime>
 				</set>
@@ -36,7 +36,7 @@
 				<name>LinuxServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Linux kernel 2.6.5 - 2.6.8</personality>
+					<personality>Linux 2.6.11 - 2.6.20</personality>
 					<ethernet>Dell</ethernet>
 					<uptime>1324350</uptime>
 				</set>
@@ -56,7 +56,7 @@
 				<name>BSDServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Linux kernel 2.6.5 - 2.6.8</personality>
+					<personality>Linux 2.6.11 - 2.6.20</personality>
 					<ethernet>Dell</ethernet>
 					<uptime>1326346</uptime>
 				</set>
@@ -77,7 +77,7 @@
 				<type>3</type>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Microsoft Windows 2003 Server</personality>
+					<personality>Microsoft Windows 7</personality>
 					<uptime>1327650</uptime>
 				</set>
 				<add>
