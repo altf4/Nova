@@ -278,13 +278,15 @@ private slots:
 	void on_actionConfigure_triggered();
 	void on_actionExit_triggered();
 	void on_actionSave_Suspects_triggered();
-	void on_actionTrainingData_triggered();
 	void on_actionHide_Old_Suspects_triggered();
 	void on_actionShow_All_Suspects_triggered();
 	void on_actionClear_All_Suspects_triggered();
 	void on_actionClear_Suspect_triggered();
 	void on_actionHide_Suspect_triggered();
 	void on_actionHelp_2_triggered();
+
+	void on_actionTrainingData_triggered();
+	void on_actionMakeDataFile_triggered();
 
 	//Global Widgets
 	void on_mainButton_clicked();

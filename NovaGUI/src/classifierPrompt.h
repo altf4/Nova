@@ -5,41 +5,30 @@
 #include "ui_classifierPrompt.h"
 #include "NovaUtil.h"
 
-
-struct _trainingSuspectHeader
-{
-	bool isHostile;
-	bool isIncluded;
-	string ip;
-	string description;
-};
-
-typedef struct _trainingSuspectHeader trainingSuspectHeader;
-
-typedef google::dense_hash_map<string, trainingSuspectHeader*, tr1::hash<string>, eqstr > TrainingHeaderMap;
-
-
 class classifierPrompt : public QDialog
 {
     Q_OBJECT
 
 public:
     classifierPrompt(QWidget *parent = 0);
-    classifierPrompt(TrainingHashTable* trainingDump, QWidget *parent = 0);
+    classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent = 0);
+    classifierPrompt(trainingSuspectMap* map, QWidget *parent = 0);
 
-    TrainingHeaderMap* getStateData();
+    trainingSuspectMap* getStateData();
 
     ~classifierPrompt();
 
 private slots:
 	void on_tableWidget_cellChanged(int row, int col);
+	void on_okayButton_clicked();
+	void on_cancelButton_clicked();
 
 private:
-    void updateRow(trainingSuspectHeader* header, int row);
-    void makeRow(trainingSuspectHeader* header, int row);
+    void updateRow(trainingSuspect* header, int row);
+    void makeRow(trainingSuspect* header, int row);
 
     bool updating;
-	TrainingHeaderMap suspects;
+	trainingSuspectMap* suspects;
     Ui::classifierPromptClass ui;
 };
 

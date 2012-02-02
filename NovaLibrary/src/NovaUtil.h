@@ -196,7 +196,22 @@ struct Session
 
 ///The Value is a vector of IP headers
 typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr > TCPSessionHashTable;
-typedef google::dense_hash_map<string, vector<string>*, tr1::hash<string>, eqstr > TrainingHashTable;
+
+// Header for training data
+struct _trainingSuspect
+{
+	bool isHostile;
+	bool isIncluded;
+	string uid;
+	string description;
+	vector<string>* points;
+};
+
+typedef struct _trainingSuspect trainingSuspect;
+
+typedef google::dense_hash_map<string, trainingSuspect*, tr1::hash<string>, eqstr > trainingSuspectMap;
+typedef google::dense_hash_map<string, vector<string>*, tr1::hash<string>, eqstr > trainingDumpMap;
+
 
 /*****************************************************************************/
 /** NovaUtil namespace is ONLY for functions repeated in multiple processes **/
@@ -236,8 +251,9 @@ uint GetSerializedAddr(u_char * buf);
 // Returns the number of bits used in the mask when given in in_addr_t form
 int GetMaskBits(in_addr_t range);
 
-void reorganizeTrainingFile(string inputFile, string outputFile);
-TrainingHashTable* readEngineDumpFile(string inputFile);
+void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* headerMap);
+trainingDumpMap* ReadEngineDumpFile(string inputFile);
+trainingSuspectMap* ReadClassificationDb(string inputFile);
 
 }
 

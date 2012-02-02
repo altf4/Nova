@@ -6,27 +6,40 @@ classifierPrompt::classifierPrompt(QWidget *parent)
 	ui.setupUi(this);
 }
 
-classifierPrompt::classifierPrompt(TrainingHashTable* trainingDump, QWidget *parent)
+classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
 {
 	ui.setupUi(this);
-	suspects.set_empty_key("");
-	updating = false;
+
+	suspects = new trainingSuspectMap();
+	suspects->set_empty_key("");
 
 	int row = 0;
-	for (TrainingHashTable::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
+	for (trainingDumpMap::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
 	{
-		// Set up the data in our struct
-		suspects[it->first] = new trainingSuspectHeader();
-		suspects[it->first]->isIncluded = true;
-		suspects[it->first]->isHostile = false;
-		suspects[it->first]->ip = it->first;
-		suspects[it->first]->description = "Description for " + it->first;
+		(*suspects)[it->first] = new trainingSuspect();
+		(*suspects)[it->first]->isIncluded = true;
+		(*suspects)[it->first]->isHostile = false;
+		(*suspects)[it->first]->uid = it->first;
+		(*suspects)[it->first]->description = "Description for " + it->first;
 
-		makeRow(suspects[it->first], row);
+		makeRow((*suspects)[it->first], row);
 	}
 }
 
-void classifierPrompt::makeRow(trainingSuspectHeader* header, int row)
+classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
+{
+	ui.setupUi(this);
+	suspects = map;
+
+	int row = 0;
+	for (trainingSuspectMap::iterator it = map->begin(); it != map->end(); it++)
+	{
+		makeRow((*suspects)[it->first], row);
+		row++;
+	}
+}
+
+void classifierPrompt::makeRow(trainingSuspect* header, int row)
 {
 	updating = true;
 
@@ -51,7 +64,7 @@ void classifierPrompt::makeRow(trainingSuspectHeader* header, int row)
 	updating = false;
 }
 
-void classifierPrompt::updateRow(trainingSuspectHeader* header, int row)
+void classifierPrompt::updateRow(trainingSuspect* header, int row)
 {
 	updating = true;
 
@@ -65,7 +78,7 @@ void classifierPrompt::updateRow(trainingSuspectHeader* header, int row)
 	else
 		ui.tableWidget->item(row,1)->setCheckState(Qt::Checked);
 
-	ui.tableWidget->item(row,2)->setText(QString::fromStdString(header->ip));
+	ui.tableWidget->item(row,2)->setText(QString::fromStdString(header->uid));
 	ui.tableWidget->item(row,3)->setText(QString::fromStdString(header->description));
 
 	updating = false;
@@ -76,7 +89,7 @@ void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 	if (updating)
 		return;
 
-	trainingSuspectHeader* header = suspects[ui.tableWidget->item(row, 2)->text().toStdString()];
+	trainingSuspect* header = (*suspects)[ui.tableWidget->item(row, 2)->text().toStdString()];
 
 	switch (col)
 	{
@@ -102,11 +115,22 @@ void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 
 classifierPrompt::~classifierPrompt()
 {
-	for (TrainingHeaderMap::iterator it = suspects.begin(); it != suspects.end(); it++)
+	for (trainingSuspectMap::iterator it = suspects->begin(); it != suspects->end(); it++)
 		delete it->second;
 }
 
-TrainingHeaderMap* classifierPrompt::getStateData()
+trainingSuspectMap* classifierPrompt::getStateData()
 {
-    return &suspects;
+    return suspects;
+}
+
+void classifierPrompt::on_okayButton_clicked()
+{
+	accept();
+}
+
+
+void classifierPrompt::on_cancelButton_clicked()
+{
+	reject();
 }

@@ -656,6 +656,7 @@ Module</string>
     </property>
     <addaction name="actionConfigure"/>
     <addaction name="actionTrainingData"/>
+    <addaction name="actionMakeDataFile"/>
    </widget>
    <widget class="QMenu" name="menuRun">
     <property name="title">
@@ -772,7 +773,12 @@ Module</string>
   </action>
   <action name="actionTrainingData">
    <property name="text">
-    <string>&amp;Training Data</string>
+    <string>&amp;Import Training Dump</string>
+   </property>
+  </action>
+  <action name="actionMakeDataFile">
+   <property name="text">
+    <string>&amp;Customize Training Data</string>
    </property>
   </action>
  </widget>

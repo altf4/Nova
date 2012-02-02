@@ -235,9 +235,9 @@ int GetMaskBits(in_addr_t mask)
 	return i;
 }
 
-TrainingHashTable* readEngineDumpFile(string inputFile)
+trainingDumpMap* ReadEngineDumpFile(string inputFile)
 {
-	TrainingHashTable* trainingTable = new TrainingHashTable();
+	trainingDumpMap* trainingTable = new trainingDumpMap();
 	trainingTable->set_empty_key("");
 
 	ifstream dataFile(inputFile.data());
@@ -260,10 +260,58 @@ TrainingHashTable* readEngineDumpFile(string inputFile)
 	return trainingTable;
 }
 
-void reorganizeTrainingFile(string inputFile, string outputFile, vector<string> hostiles)
+trainingSuspectMap* ReadClassificationDb(string inputFile)
 {
-	TrainingHashTable* trainingTable;
-	readEngineDumpFile(inputFile);
+	trainingSuspectMap* suspects = new trainingSuspectMap();
+	suspects->set_empty_key("");
+
+	string line;
+	bool getHeader = true;
+
+	trainingSuspect* suspect = new trainingSuspect();
+	suspect->points = new vector<string>();
+
+	ifstream stream(inputFile.data());
+	if (stream.is_open())
+	{
+		while (stream.good() && getline(stream,line))
+		{
+			cout << "Parsing line " << line << endl;
+			if (line.length() > 0)
+			{
+				if (getHeader)
+				{
+					suspect->uid = line.substr(0,line.find_first_of(' '));
+					suspect->isHostile = atoi(line.substr(line.find_first_of(' ') + 1, 1).c_str());
+					suspect->description = line.substr(line.find_first_of('"'), line.length());
+
+					cout << suspect->uid << " " << suspect->isHostile << " " << suspect->description << endl;
+					getHeader = false;
+				}
+				else {
+					suspect->points->push_back(line);
+				}
+			}
+			else
+			{
+				if (!getHeader)
+				{
+					(*suspects)[suspect->uid] = suspect;
+					suspect = new trainingSuspect();
+					suspect->points = new vector<string>();
+					getHeader = true;
+				}
+			}
+		}
+	}
+	stream.close();
+
+	return suspects;
+}
+
+void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* headerMap)
+{
+	trainingDumpMap* trainingTable = ReadEngineDumpFile(inputFile);
 
 	string line;
 	bool getUID = true;
@@ -293,14 +341,20 @@ void reorganizeTrainingFile(string inputFile, string outputFile, vector<string> 
 
 	uid = max + 1;
 	ofstream out(outputFile.data());
-	for (TrainingHashTable::iterator ipIt = trainingTable->begin(); ipIt != trainingTable->end(); ipIt++)
+	for (trainingDumpMap::iterator ipIt = trainingTable->begin(); ipIt != trainingTable->end(); ipIt++)
 	{
-		out << uid << " 0 " << "Generated from IP " << ipIt->first << '"' << endl;
-		for (vector<string>::iterator i = ipIt->second->begin(); i != ipIt->second->end(); i++)
+		// TODO: make sure the input had all the IPs we're checking so this line doesn't make googlehashmap explode on error
+		trainingSuspect* header = (*headerMap)[ipIt->first];
+
+		if (header->isIncluded)
 		{
-			out << *i << endl;
+			out << endl << 	uid << " " << header->isHostile << " \"" << header->description << "\"" << endl;
+			for (vector<string>::iterator i = ipIt->second->begin(); i != ipIt->second->end(); i++)
+			{
+				out << *i << endl;
+			}
+			uid++;
 		}
-		uid++;
 	}
 
 	out.close();

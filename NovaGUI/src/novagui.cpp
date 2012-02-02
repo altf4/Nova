@@ -1658,36 +1658,45 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 	saveSuspects();
 }
 
+void NovaGUI::on_actionMakeDataFile_triggered()
+{
+	 QString data = QFileDialog::getOpenFileName(this,
+			 tr("File to select classifications from"), QDir::currentPath(), tr("NOVA Classification Database (*.db)"));
+
+	if (data.isNull())
+		return;
+
+	trainingSuspectMap* map = ReadClassificationDb(data.toStdString());
+	classifierPrompt* classifier = new classifierPrompt(map);
+
+	if (classifier->exec() == QDialog::Rejected)
+		return;
+
+}
+
 void NovaGUI::on_actionTrainingData_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			tr("Classification Engine Data Dump"), QDir::currentPath(),
-			tr("Documents (*.dump)"));
+			 tr("Classification Engine Data Dump"), QDir::currentPath(), tr("NOVA Classification Dump (*.dump)"));
 
 	if (data.isNull())
-	{
 		return;
-	}
 
-	TrainingHashTable* trainingDump = readEngineDumpFile(data.toStdString());
-
+	trainingDumpMap* trainingDump = ReadEngineDumpFile(data.toStdString());
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
-	classifier->exec();
 
-	// TODO
-	//vector<string>* classifications = classifier->getStateData();
+	if (classifier->exec() == QDialog::Rejected)
+		return;
+
+	trainingSuspectMap* headerMap = classifier->getStateData();
 
 	QString outputFile = QFileDialog::getSaveFileName(this,
-			tr("Classification Database File"), QDir::currentPath(),
-			tr("Documents (*.txt)"));
+			tr("Classification Database File"), QDir::currentPath(), tr("NOVA Classification Database (*.db)"));
 
 	if (outputFile.isNull())
-	{
 		return;
-	}
 
-	// TODO: Change reorganizeTrainingFile so it uses the user's choices
-	// reorganizeTrainingFile(data.toStdString(), outputFile.toStdString(), *classifications);
+	MergeDumpIntoDb(data.toStdString(), outputFile.toStdString(), headerMap);
 }
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()
