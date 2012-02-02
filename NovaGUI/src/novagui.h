@@ -74,7 +74,6 @@ typedef google::dense_hash_map<string, script, tr1::hash<string>, eqstr > Script
 struct port
 {
 	QTreeWidgetItem * item;
-	QTreeWidgetItem * portItem;
 	string portName;
 	string portNum;
 	string type;

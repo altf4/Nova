@@ -132,7 +132,52 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 
 void NovaConfig::on_actionToggle_Inherited_triggered()
 {
+	if(!loadingItems && !ui.portTreeWidget->selectedItems().empty())
+	{
+		loadingItems = true;
+		port * prt = NULL;
+		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
+		{
+			if(ui.portTreeWidget->currentItem() == it->second.item)
+			{
+				//iterators are copies not the actual items
+				prt = &ports[it->second.portName];
+				break;
+			}
+		}
+		profile * p = &profiles[currentProfile];
+		for(uint i = 0; i < p->ports.size(); i++)
+		{
+			if(!p->ports[i].first.compare(prt->portName))
+			{
+				//If the port is inherited we can just make it explicit
+				if(p->ports[i].second)
+					p->ports[i].second = false;
 
+				//If the port isn't inherited and the profile has parents
+				//TODO display prompt that allows the user to delete the port or do nothing
+				else if(p->parentProfile.compare(""))
+				{
+					profile * parent = &profiles[p->parentProfile];
+					uint j = 0;
+					//check for the inherited port
+					for(j = 0; j < parent->ports.size(); j++)
+					{
+						if(!prt->portName.compare(parent->ports[j].first))
+							p->ports[i].second = true;
+					}
+				}
+				//If the port isn't inherited and the profile has no parent
+				else
+					syslog(SYSL_ERR, "File: %s Line: %d Cannot inherit without any ancestors!", __FILE__, __LINE__);
+
+				break;
+			}
+		}
+		loadProfile();
+		saveProfile();
+		loadingItems = false;
+	}
 }
 
 void NovaConfig::on_actionAddPort_triggered()
@@ -353,59 +398,109 @@ void NovaConfig::on_icmpCheckBox_stateChanged()
 		loadingItems = false;
 	}
 }
-void NovaConfig::on_portTreeWidget_itemPressed(QTreeWidgetItem* item)
-{
-	ui.portTreeWidget->setCurrentItem(item);
-}
-void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem * item)
+
+void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 {
 	if(!loadingItems && (item != NULL))
 	{
 		loadingItems = true;
 		ui.portTreeWidget->setCurrentItem(item);
-		string oldPort = item->text(0).toStdString()+ "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
 		profile * p = &profiles[currentProfile];
-
+		string oldPort;
+		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
+		{
+			if(it->second.item == item)
+				oldPort = it->second.portName;
+		}
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
-			if(!oldPort.compare(p->ports[i].first))
+			if(!p->ports[i].first.compare(oldPort))
 				p->ports.erase(p->ports.begin()+i);
 		}
 
-		QComboBox * qTypeBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 1);
+		TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
 		item->setText(1, qTypeBox->currentText());
 
-		QComboBox * qBehavBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 2);
+		TreeItemComboBox * qBehavBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 2);
 		item->setText(2, qBehavBox->currentText());
 
 		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
 
+		cout << "New: " << portName << " Old: " << oldPort << endl;
+		port prt;
 		if(ports.find(portName) == ports.end())
 		{
-			port temp;
-			temp.portName = portName;
-			temp.portNum = item->text(0).toStdString();
-			temp.type = item->text(1).toStdString();
-			temp.behavior = item->text(2).toStdString();
-			ports[portName] = temp;
+			prt.portName = portName;
+			prt.portNum = item->text(0).toStdString();
+			prt.type = item->text(1).toStdString();
+			prt.behavior = item->text(2).toStdString();
+		}
+		else
+		{
+			prt = ports[portName];
 		}
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
-			if(!p->ports[i].first.compare(portName))
+			port * temp = &ports[p->ports[i].first];
+			if((!(temp->portNum.compare(prt.portNum))) && (!(temp->type.compare(prt.type))))
 			{
-				ui.portTreeWidget->removeItemWidget(item, 0);
-				saveProfile();
-				loadProfile();
-				loadingItems = false;
-				return;
+				syslog(SYSL_ERR, "File: %s Line: %d WARNING: Port number and protocol already used.", __FILE__, __LINE__);
+				portName = "";
 			}
 		}
-		pair<string, bool> portPair;
-		portPair.first = portName;
-		portPair.second = false;
-		p->ports.push_back(portPair);
-		saveProfile();
+
+		if(portName.compare(""))
+		{
+			for(uint i = 0; i < p->ports.size(); i++)
+			{
+				if(!(p->ports[i].first.compare(oldPort)))
+				{
+					p->ports.erase(p->ports.begin()+i);
+					break;
+				}
+			}
+			p = &profiles[currentProfile];
+
+			pair<string, bool> portPair;
+			portPair.first = portName;
+			portPair.second = false;
+			uint i = 0;
+			for(i = 0; i < p->ports.size(); i++)
+			{
+				port * temp = &ports[p->ports[i].first];
+				if((atoi(temp->portNum.c_str())) < (atoi(prt.portNum.c_str())))
+				{
+					continue;
+				}
+				break;
+			}
+			if(i < p->ports.size())
+				p->ports.insert(p->ports.begin()+i, portPair);
+			else
+				p->ports.push_back(portPair);
+		}
+
+		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+		{
+			for(uint i = 0; i < it->second.ports.size(); i++)
+			{
+				if(it->second.ports[i].second && !it->second.ports[i].first.compare(oldPort))
+				{
+					if(portName.compare(""))
+					{
+						it->second.ports[i].first = portName;
+						ports[portName] = prt;
+					}
+					else
+						it->second.ports.erase(it->second.ports.begin() + i);
+					break;
+				}
+			}
+			profiles[it->first] = it->second;
+		}
+
 		loadProfile();
+		saveProfile();
 		loadingItems = false;
 	}
 }
@@ -1459,8 +1554,8 @@ void NovaConfig::saveProfile()
 			pr = ports[p.ports[i].first];
 			item = ui.portTreeWidget->topLevelItem(i);
 			pr.portNum = item->text(0).toStdString();
-			QComboBox * qTypeBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 1);
-			QComboBox * qBehavBox = (QComboBox*)ui.portTreeWidget->itemWidget(item, 2);
+			TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
+			TreeItemComboBox * qBehavBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 2);
 			pr.type = qTypeBox->currentText().toStdString();
 			pr.behavior = qBehavBox->currentText().toStdString();
 			//If the behavior names a script
@@ -1470,6 +1565,8 @@ void NovaConfig::saveProfile()
 				pr.scriptName = qBehavBox->currentText().toStdString();
 			}
 			ports[p.ports[i].first] = pr;
+			p.ports[i].second = item->font(0).italic();
+
 		}
 		profiles[currentProfile] = p;
 	}
@@ -1634,6 +1731,13 @@ void NovaConfig::loadProfile()
 	{
 		loadInherited();
 		//Clear the tree widget and load new selections
+		QTreeWidgetItem * portCurrentItem;
+		portCurrentItem = ui.portTreeWidget->currentItem();
+		string portCurrentString = "";
+		if(portCurrentItem != NULL)
+			portCurrentString = portCurrentItem->text(0).toStdString()+ "_"
+				+ portCurrentItem->text(1).toStdString() + "_" + portCurrentItem->text(2).toStdString();
+
 		ui.portTreeWidget->clear();
 
 		profile * p = &profiles[currentProfile];
@@ -1683,7 +1787,10 @@ void NovaConfig::loadProfile()
 			item = new QTreeWidgetItem(0);
 			item->setText(0,(QString)pr->portNum.c_str());
 			item->setText(1,(QString)pr->type.c_str());
-			item->setText(2,(QString)pr->behavior.c_str());
+			if(!pr->behavior.compare("script"))
+				item->setText(2, (QString)pr->scriptName.c_str());
+			else
+				item->setText(2,(QString)pr->behavior.c_str());
 			ui.portTreeWidget->insertTopLevelItem(i, item);
 
 			QFont tempFont;
@@ -1693,14 +1800,15 @@ void NovaConfig::loadProfile()
 			item->setFont(1,tempFont);
 			item->setFont(2,tempFont);
 
-			QComboBox *typeBox = new QComboBox(ui.portTreeWidget);
+			TreeItemComboBox *typeBox = new TreeItemComboBox(this, item);
 			typeBox->addItem("TCP");
 			typeBox->addItem("UDP");
 			typeBox->setItemText(0, "TCP");
 			typeBox->setItemText(1, "UDP");
 			typeBox->setEnabled(!p->ports[i].second);
+			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
 
-			QComboBox *behaviorBox = new QComboBox(ui.portTreeWidget);
+			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
 			behaviorBox->addItem("reset");
 			behaviorBox->addItem("open");
 			behaviorBox->addItem("block");
@@ -1710,6 +1818,9 @@ void NovaConfig::loadProfile()
 				behaviorBox->addItem((QString)it->first.c_str());
 			}
 			behaviorBox->setEnabled(!p->ports[i].second);
+			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
+
+
 			if(p->ports[i].second)
 				item->setFlags(item->flags() & ~Qt::ItemIsEditable);
 			else
@@ -1731,6 +1842,8 @@ void NovaConfig::loadProfile()
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
 			pr->item = item;
+			if(!portCurrentString.compare(pr->portName))
+				ui.portTreeWidget->setCurrentItem(pr->item);
 		}
 	}
 	else
@@ -2137,10 +2250,28 @@ void NovaConfig::loadProfileAdd(ptree *ptr, profile *p)
 						}
 					}
 					//Add specified port
-					pair<string, bool> portpair;
-					portpair.first = prt->portName;
-					portpair.second = false;
-					p->ports.push_back(portpair);
+					pair<string, bool> portPair;
+					portPair.first = prt->portName;
+					portPair.second = false;
+					if(!p->ports.size())
+						p->ports.push_back(portPair);
+					else
+					{
+						uint i = 0;
+						for(i = 0; i < p->ports.size(); i++)
+						{
+							port * temp = &ports[p->ports[i].first];
+							if((atoi(temp->portNum.c_str())) < (atoi(prt->portNum.c_str())))
+							{
+								continue;
+							}
+							break;
+						}
+						if(i < p->ports.size())
+							p->ports.insert(p->ports.begin()+i, portPair);
+						else
+							p->ports.push_back(portPair);
+					}
 				}
 				continue;
 			}

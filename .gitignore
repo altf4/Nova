@@ -99,3 +99,4 @@ NovaGUI/moc_run_popup.cpp
 /NovaGUI/release/moc_DialogPrompt.cpp
 /NovaGUI/release/moc_nova_manual.cpp
 /Installer/.nova/Data/data.txt
+/Installer/.nova/Config/doppelganger.config
