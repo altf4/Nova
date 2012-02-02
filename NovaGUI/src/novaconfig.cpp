@@ -843,6 +843,7 @@ void NovaConfig::loadPreferences()
 		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_READ_FAIL, "Error: Unable to read NOVA configuration file " + configurationFile);
 		this->close();
 	}
+
 	ui.interfaceEdit->setText((QString)NConfig->options["INTERFACE"].data.c_str());
 	ui.dataEdit->setText((QString)NConfig->options["DATAFILE"].data.c_str());
 	ui.saAttemptsMaxEdit->setText((QString)NConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
@@ -1559,7 +1560,7 @@ void NovaConfig::saveProfile()
 			pr.type = qTypeBox->currentText().toStdString();
 			pr.behavior = qBehavBox->currentText().toStdString();
 			//If the behavior names a script
-			if(!pr.behavior.compare("open") || !pr.behavior.compare("reset") || !pr.behavior.compare("block"))
+			if(pr.behavior.compare("open") && pr.behavior.compare("reset") && pr.behavior.compare("block"))
 			{
 				pr.behavior = "script";
 				pr.scriptName = qBehavBox->currentText().toStdString();
