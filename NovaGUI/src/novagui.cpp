@@ -454,9 +454,19 @@ void NovaGUI::writeHoneyd()
 	{
 		//node
 		//out <<
-
-
 		/*
+		switch (profiles[it->second.pfile].type)
+		{
+			case static_IP:
+
+			case staticDHCP:
+			case randomDHCP:
+			case Doppelganger:
+		}
+
+
+
+
 		 * 	string name;
 	string sub;
 	string interface;
