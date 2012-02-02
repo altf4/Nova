@@ -2655,6 +2655,30 @@ p, li { white-space: pre-wrap; }
     <string>Sets the port explicitly or Inherits from parent</string>
    </property>
   </action>
+  <action name="actionProfileClone">
+   <property name="text">
+    <string>Clone Profile</string>
+   </property>
+   <property name="toolTip">
+    <string>Clone Profile</string>
+   </property>
+  </action>
+  <action name="actionProfileAdd">
+   <property name="text">
+    <string>Add Profile</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Profile</string>
+   </property>
+  </action>
+  <action name="actionProfileDelete">
+   <property name="text">
+    <string>Delete Profile</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete Profile</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

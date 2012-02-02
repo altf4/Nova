@@ -30,6 +30,7 @@ portPopup * portwindow;
 nodePopup * nodewindow;
 NovaGUI * mainwindow;
 QMenu * portMenu;
+QMenu * profileTreeMenu;
 
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
@@ -44,6 +45,8 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
     : QMainWindow(parent)
 {
 	portMenu = new QMenu();
+	profileTreeMenu = new QMenu();
+
 	//store current directory / base path for Nova
 	homePath = home;
 
@@ -111,6 +114,19 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 		}
 		QPoint globalPos = event->globalPos();
 		portMenu->popup(globalPos);
+	}
+
+	if (ui.profileTreeWidget->hasFocus() || ui.profileTreeWidget->underMouse())
+	{
+		profileTreeMenu->clear();
+		profileTreeMenu->addAction(ui.actionProfileAdd);
+		profileTreeMenu->addSeparator();
+		profileTreeMenu->addAction(ui.actionProfileClone);
+		profileTreeMenu->addSeparator();
+		profileTreeMenu->addAction(ui.actionProfileDelete);
+
+		QPoint globalPos = event->globalPos();
+		profileTreeMenu->popup(globalPos);
 	}
 }
 
@@ -2476,6 +2492,11 @@ void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 //Self explanatory, see deleteProfile for details
 void NovaConfig::on_deleteButton_clicked()
 {
+	emit on_actionProfileDelete_triggered();
+}
+
+void NovaConfig::on_actionProfileDelete_triggered()
+{
 	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && profiles.size())
 	{
 		deleteProfile(currentProfile);
@@ -2484,6 +2505,11 @@ void NovaConfig::on_deleteButton_clicked()
 
 //Creates a base profile with default values seen below
 void NovaConfig::on_addButton_clicked()
+{
+	emit on_actionProfileAdd_triggered();
+}
+
+void NovaConfig::on_actionProfileAdd_triggered()
 {
 	struct profile temp = profiles[currentProfile];
 	temp.name = "New Profile";
@@ -2530,9 +2556,16 @@ void NovaConfig::on_addButton_clicked()
 	loadAllProfiles();
 }
 
+
 //Copies a profile and all of it's descendants
 void NovaConfig::on_cloneButton_clicked()
 {
+	emit on_actionProfileClone_triggered();
+}
+
+void NovaConfig::on_actionProfileClone_triggered()
+{
+
 	//Do nothing if no profiles
 	if(profiles.size())
 	{
