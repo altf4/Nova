@@ -266,6 +266,7 @@ public:
     void saveAll();
     //Writes the current configuration to honeyd configs
     void writeHoneyd(); //TODO
+    string profileToString(profile* p);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
