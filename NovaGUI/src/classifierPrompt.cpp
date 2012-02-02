@@ -24,6 +24,8 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 
 		makeRow((*suspects)[it->first], row);
 	}
+
+	allowDescriptionEdit = true;
 }
 
 classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
@@ -37,6 +39,8 @@ classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
 		makeRow((*suspects)[it->first], row);
 		row++;
 	}
+
+	allowDescriptionEdit = false;
 }
 
 void classifierPrompt::makeRow(trainingSuspect* header, int row)
@@ -54,10 +58,15 @@ void classifierPrompt::makeRow(trainingSuspect* header, int row)
 	QTableWidgetItem* ipItem = new QTableWidgetItem();
 	ipItem->setFlags(ipItem->flags() &= ~Qt::ItemIsEditable);
 
+	QTableWidgetItem* descriptionItem = new QTableWidgetItem();
+	if (!allowDescriptionEdit)
+		descriptionItem->setFlags(descriptionItem->flags() &= ~Qt::ItemIsEditable);
+
+
 	ui.tableWidget->setItem(row, 0, chkBoxItem);
 	ui.tableWidget->setItem(row, 1, includeItem);
 	ui.tableWidget->setItem(row, 2, ipItem);
-	ui.tableWidget->setItem(row, 3, new QTableWidgetItem());
+	ui.tableWidget->setItem(row, 3, descriptionItem);
 
 	updateRow(header, row);
 

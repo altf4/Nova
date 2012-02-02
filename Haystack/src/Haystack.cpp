@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 
 	if(haystackAddresses.empty())
 	{
-		syslog(SYSL_ERR, "Line: %d Invalid interface given", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Error: No honeyd haystack nodes were found", __LINE__);
 		exit(1);
 	}
 

@@ -27,6 +27,7 @@ private:
     void updateRow(trainingSuspect* header, int row);
     void makeRow(trainingSuspect* header, int row);
 
+    bool allowDescriptionEdit;
     bool updating;
 	trainingSuspectMap* suspects;
     Ui::classifierPromptClass ui;
