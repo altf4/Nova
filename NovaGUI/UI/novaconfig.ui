@@ -2449,11 +2449,14 @@ p, li { white-space: pre-wrap; }
                    </item>
                    <item row="3" column="0" colspan="2">
                     <widget class="QTreeWidget" name="portTreeWidget">
+                     <property name="focusPolicy">
+                      <enum>Qt::ClickFocus</enum>
+                     </property>
                      <property name="inputMethodHints">
                       <set>Qt::ImhNone</set>
                      </property>
                      <property name="editTriggers">
-                      <set>QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+                      <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
                      </property>
                      <attribute name="headerDefaultSectionSize">
                       <number>65</number>
@@ -2635,11 +2638,6 @@ p, li { white-space: pre-wrap; }
     </rect>
    </property>
   </widget>
-  <action name="actionEditPort">
-   <property name="text">
-    <string>Edit Selected Port</string>
-   </property>
-  </action>
   <action name="actionAddPort">
    <property name="text">
     <string>Add New Port</string>
