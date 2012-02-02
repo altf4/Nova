@@ -1584,6 +1584,7 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 		return;
 	else
 		loadingItems = true;
+
 	vector<string> delList;
 	vector<node> addList;
 	bool nameUnique = false;
@@ -1599,11 +1600,20 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 			return;
 		}
 
+
 	profiles[currentProfile].type = (profileType)index;
+
+
 
 	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
-		if(!currentProfile.compare(it->second.pfile))
+		profile * p = &profiles[it->second.pfile];
+		while(p->inherited[TYPE] && p->parentProfile.compare(""))
+		{
+			p = &profiles[p->parentProfile];
+		}
+
+		if(!p->name.compare(currentProfile))
 		{
 			stringstream ss;
 			uint i = 0, j = 0;
@@ -1612,22 +1622,14 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 			node tempNode = it->second;
 			delList.push_back(it->first);
 
-			switch(profiles[currentProfile].type)
+			switch(p->type)
 			{
 				case static_IP:
 					tempNode.name = tempNode.IP;
 					break;
 				case staticDHCP:
-					tempNode.MAC = generateUniqueMACAddr(profiles[currentProfile].ethernet);
+					tempNode.MAC = generateUniqueMACAddr(profiles[it->second.pfile].ethernet);
 					tempNode.name = tempNode.MAC;
-					//Finds a unique identifier
-					while((nodes.find(tempNode.name) != nodes.end()) && (i < j))
-					{
-						i++;
-						ss.str("");
-						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
-						tempNode.name = ss.str();
-					}
 					break;
 
 				case randomDHCP:
@@ -1652,6 +1654,7 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 					break;
 				case Doppelganger:
 					tempNode.name = "Doppelganger";
+					break;
 			}
 			addList.push_back(tempNode);
 		}
@@ -1669,6 +1672,8 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 		nodes[tempNode.name] = tempNode;
 		subnets[tempNode.sub].nodes.push_back(tempNode.name);
 	}
+	saveProfile();
+	loadProfile();
 	loadingItems = false;
 	loadAllNodes();
 }
