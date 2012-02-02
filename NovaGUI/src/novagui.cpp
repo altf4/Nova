@@ -511,16 +511,16 @@ void NovaGUI::writeHoneyd()
 		switch (profiles[it->second.pfile].type)
 		{
 			case static_IP:
-				out << " bind " << it->second.IP << " " << it->second.pfile << endl;
+				out << "bind " << it->second.IP << " " << it->second.pfile << endl;
 				break;
 			case staticDHCP:
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet " << it->second.MAC << endl;
 				break;
 			case randomDHCP:
-				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet " << profiles[it->second.pfile].ethernet << endl;
+				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
 				break;
 			case Doppelganger:
-				doppelOut << " bind " << it->second.IP << " " << it->second.pfile << endl;
+				doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
 				break;
 		}
 	}
@@ -568,8 +568,11 @@ string NovaGUI::profileToString(profile* p)
 		if (!p->ports[i].second)
 		{
 			out << "add " << p->name;
-			out << " " << ports[p->ports[i].first].type;
-			out << " port " << ports[p->ports[i].first].portNum << " ";
+			if(!ports[p->ports[i].first].type.compare("TCP"))
+				out << " tcp port ";
+			else
+				out << " udp port ";
+			out << ports[p->ports[i].first].portNum << " ";
 
 			if (!(ports[p->ports[i].first].behavior.compare("script")))
 			{
