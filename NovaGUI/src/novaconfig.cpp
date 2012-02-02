@@ -1077,6 +1077,7 @@ void NovaConfig::pushData()
 
 	//Saves the current configuration to XML files
 	mainwindow->saveAll();
+	mainwindow->writeHoneyd();
 }
 
 //Pulls the last stored configuration from novagui
