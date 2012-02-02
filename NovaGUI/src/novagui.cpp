@@ -441,8 +441,62 @@ void NovaGUI::saveAll()
 //TODO need to take current XML files and write them as honeyd configuration, called in startNova()
 void NovaGUI::writeHoneyd()
 {
+	stringstream out;
 
+	for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+	{
+		if (!it->second.parentProfile.compare("default") || !it->second.parentProfile.compare(""))
+			out << "create " << it->second.name << endl;
+		else
+			out << "clone " << it->second.parentProfile << " " << it->second.name << endl;
+
+		out << "set " << it->second.name  << " default tcp action " << it->second.tcpAction << endl;
+		out << "set " << it->second.name  << " default udp action " << it->second.udpAction << endl;
+		out << "set " << it->second.name  << " default icmp action " << it->second.icmpAction << endl;
+		out << "set " << it->second.name << " personality \"" << it->second.personality << '"' << endl;
+		out << "set " << it->second.name << " ethernet \"" << it->second.ethernet << '"' << endl;
+		out << "set " << it->second.name << " uptime " << it->second.uptime << endl;
+		out << "set " << it->second.name << " droprate in " << it->second.dropRate << endl;
+
+		out << endl;
+
+//		for (vector<pair<string, bool> >::iterator portIt = it->second.ports.begin(); portIt != it->second.ports.end(); portIt++)
+		for (uint i = 0; i < it->second.ports.size(); i++)
+		{
+			profile* p = &it->second;
+
+			// Only include non-inherited ports
+			if (!p->ports[i].second)
+			{
+				out << "add " << it->second.name;
+				out << " " << ports[p->ports[i].first].type;
+				out << " port " << ports[p->ports[i].first].portNum << " ";
+
+				cout << "behavior is " << ports[p->ports[i].first].behavior << endl;
+				if (!(ports[p->ports[i].first].behavior.compare("script")))
+				{
+					string scriptName = ports[p->ports[i].first].scriptName;
+					cout << "Scirptname is " << scriptName << endl;
+
+					out << '"' << scripts[scriptName].path << '"'<< endl;
+				}
+				else
+				{
+					out << ports[p->ports[i].first].behavior << endl;
+				}
+			}
+		}
+
+		out << endl << endl;
+		// proxyIP ???;
+		// proxyPort ???
+		//profileType type;
+
+	}
+
+	//cout << out.str() << endl;
 }
+
 
 /************************************************
  * Load Honeyd XML Configuration Functions
@@ -1726,6 +1780,7 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
+	writeHoneyd();
 	startNova();
 }
 void NovaGUI::on_stopButton_clicked()
@@ -1995,6 +2050,7 @@ void closeNova()
 
 void startNova()
 {
+
 	string homePath = GetHomePath();
 	string input = homePath + "/Config/NOVAConfig.txt";
 
