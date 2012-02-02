@@ -231,6 +231,12 @@ void on_actionEditPort_triggered();
 void on_actionDeletePort_triggered();
 void on_actionAddPort_triggered();
 
+// Profile right click menu
+void on_actionProfileAdd_triggered();
+void on_actionProfileDelete_triggered();
+void on_actionProfileClone_triggered();
+
+
 private:
 	void setInputValidators();
     Ui::NovaConfigClass ui;
