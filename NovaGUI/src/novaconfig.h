@@ -157,17 +157,19 @@ public:
     // Saves the configuration to the config file, returns true if success
     bool saveConfigurationToFile();
 
+public slots:
+//When an item in the port tree widget changes
+void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);
+
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
+
 
 private slots:
 
 // Right click action on a feature, we manually connect it so no need for proper prefix
 void onFeatureClick(const QPoint & pos);
-//When an item in the port tree widget changes
-void on_portTreeWidget_itemChanged(QTreeWidgetItem * item);
-//When an item in the port tree widget is clicked
-void on_portTreeWidget_itemPressed(QTreeWidgetItem * item);
+
 //Which menu item is selected
 void on_treeWidget_itemSelectionChanged();
 //General Preferences Buttons
@@ -242,4 +244,33 @@ private:
     Ui::NovaConfigClass ui;
 };
 
+class TreeItemComboBox : public QComboBox
+{
+	Q_OBJECT
+
+public:
+
+	TreeItemComboBox(NovaConfig * parent = 0, QTreeWidgetItem* buddy = 0)
+	{
+		this->parent = parent;
+		this->buddy = buddy;
+		connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(setCurrentIndex(int)));
+	}
+	~TreeItemComboBox(){}
+
+	NovaConfig * parent;
+	QTreeWidgetItem * buddy;
+
+public slots:
+	void setCurrentIndex(int index)
+	{
+		QComboBox::setCurrentIndex(index);
+		emit notifyParent(buddy);
+	}
+
+
+	signals:
+	void notifyParent(QTreeWidgetItem *item);
+
+};
 #endif // NOVACONFIG_H
