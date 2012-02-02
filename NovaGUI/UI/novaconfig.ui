@@ -2449,8 +2449,11 @@ p, li { white-space: pre-wrap; }
                    </item>
                    <item row="3" column="0" colspan="2">
                     <widget class="QTreeWidget" name="portTreeWidget">
-                     <property name="selectionMode">
-                      <enum>QAbstractItemView::NoSelection</enum>
+                     <property name="inputMethodHints">
+                      <set>Qt::ImhNone</set>
+                     </property>
+                     <property name="editTriggers">
+                      <set>QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
                      </property>
                      <attribute name="headerDefaultSectionSize">
                       <number>65</number>
