@@ -1069,10 +1069,28 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 						}
 					}
 					//Add specified port
-					pair<string, bool> portpair;
-					portpair.first = prt->portName;
-					portpair.second = false;
-					p->ports.push_back(portpair);
+					pair<string, bool> portPair;
+					portPair.first = prt->portName;
+					portPair.second = false;
+					if(!p->ports.size())
+						p->ports.push_back(portPair);
+					else
+					{
+						uint i = 0;
+						for(i = 0; i < p->ports.size(); i++)
+						{
+							port * temp = &ports[p->ports[i].first];
+							if((atoi(temp->portNum.c_str())) < (atoi(prt->portNum.c_str())))
+							{
+								continue;
+							}
+							break;
+						}
+						if(i < p->ports.size())
+							p->ports.insert(p->ports.begin()+i, portPair);
+						else
+							p->ports.push_back(portPair);
+					}
 				}
 				continue;
 			}
