@@ -445,56 +445,76 @@ void NovaGUI::writeHoneyd()
 
 	for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 	{
-		if (!it->second.parentProfile.compare("default") || !it->second.parentProfile.compare(""))
-			out << "create " << it->second.name << endl;
-		else
-			out << "clone " << it->second.parentProfile << " " << it->second.name << endl;
-
-		out << "set " << it->second.name  << " default tcp action " << it->second.tcpAction << endl;
-		out << "set " << it->second.name  << " default udp action " << it->second.udpAction << endl;
-		out << "set " << it->second.name  << " default icmp action " << it->second.icmpAction << endl;
-		out << "set " << it->second.name << " personality \"" << it->second.personality << '"' << endl;
-		out << "set " << it->second.name << " ethernet \"" << it->second.ethernet << '"' << endl;
-		out << "set " << it->second.name << " uptime " << it->second.uptime << endl;
-		out << "set " << it->second.name << " droprate in " << it->second.dropRate << endl;
-
-		out << endl;
-
-//		for (vector<pair<string, bool> >::iterator portIt = it->second.ports.begin(); portIt != it->second.ports.end(); portIt++)
-		for (uint i = 0; i < it->second.ports.size(); i++)
-		{
-			profile* p = &it->second;
-
-			// Only include non-inherited ports
-			if (!p->ports[i].second)
-			{
-				out << "add " << it->second.name;
-				out << " " << ports[p->ports[i].first].type;
-				out << " port " << ports[p->ports[i].first].portNum << " ";
-
-				cout << "behavior is " << ports[p->ports[i].first].behavior << endl;
-				if (!(ports[p->ports[i].first].behavior.compare("script")))
-				{
-					string scriptName = ports[p->ports[i].first].scriptName;
-					cout << "Scirptname is " << scriptName << endl;
-
-					out << '"' << scripts[scriptName].path << '"'<< endl;
-				}
-				else
-				{
-					out << ports[p->ports[i].first].behavior << endl;
-				}
-			}
-		}
-
-		out << endl << endl;
-		// proxyIP ???;
-		// proxyPort ???
-		//profileType type;
-
+		out << profileToString(&it->second);
 	}
 
-	//cout << out.str() << endl;
+	out << endl << endl;
+
+	for (NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+		//node
+		//out <<
+
+
+		/*
+		 * 	string name;
+	string sub;
+	string interface;
+	string pfile;
+	string IP;
+	string MAC;
+	in_addr_t realIP;
+	bool enabled;
+	ptree tree;
+		 */
+	}
+
+	cout << out.str() << endl;
+}
+
+string NovaGUI::profileToString(profile* p)
+{
+	stringstream out;
+
+	if (!p->parentProfile.compare("default") || !p->parentProfile.compare(""))
+		out << "create " << p->name << endl;
+	else
+		out << "clone " << p->parentProfile << " " << p->name << endl;
+
+	out << "set " << p->name  << " default tcp action " << p->tcpAction << endl;
+	out << "set " << p->name  << " default udp action " << p->udpAction << endl;
+	out << "set " << p->name  << " default icmp action " << p->icmpAction << endl;
+	out << "set " << p->name << " personality \"" << p->personality << '"' << endl;
+	out << "set " << p->name << " ethernet \"" << p->ethernet << '"' << endl;
+	out << "set " << p->name << " uptime " << p->uptime << endl;
+	out << "set " << p->name << " droprate in " << p->dropRate << endl;
+
+	for (uint i = 0; i < p->ports.size(); i++)
+	{
+		// Only include non-inherited ports
+		if (!p->ports[i].second)
+		{
+			out << "add " << p->name;
+			out << " " << ports[p->ports[i].first].type;
+			out << " port " << ports[p->ports[i].first].portNum << " ";
+
+			//cout << "behavior is " << ports[p->ports[i].first].behavior << endl;
+			if (!(ports[p->ports[i].first].behavior.compare("script")))
+			{
+				string scriptName = ports[p->ports[i].first].scriptName;
+				//cout << "Scirptname is " << scriptName << endl;
+
+				out << '"' << scripts[scriptName].path << '"'<< endl;
+			}
+			else
+			{
+				out << ports[p->ports[i].first].behavior << endl;
+			}
+		}
+	}
+
+	out << endl;
+	return out.str();
 }
 
 
