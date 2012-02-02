@@ -107,9 +107,7 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 		if(ui.portTreeWidget->topLevelItemCount())
 		{
 			portMenu->addSeparator();
-			portMenu->addAction(ui.actionEditPort);
 			portMenu->addAction(ui.actionToggle_Inherited);
-			portMenu->addSeparator();
 			portMenu->addAction(ui.actionDeletePort);
 		}
 		QPoint globalPos = event->globalPos();
@@ -182,17 +180,163 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 
 void NovaConfig::on_actionAddPort_triggered()
 {
+	if(!loadingItems)
+	{
+		if(profiles.find(currentProfile) != profiles.end())
+		{
+			loadingItems = true;
+			profile * p = &profiles[currentProfile];
+			for(uint i = 0; i < p->ports.size(); i++)
+			{
+				if(!p->ports[i].first.compare("Not a port"))
+					return;
+			}
+			port pr;
+			pr.portNum = "0";
+			pr.type = "TCP";
+			pr.behavior = "open";
+			pr.portName = "0_TCP_open";
+			pr.scriptName = "";
 
-}
+			//These don't need to be deleted because the clear function
+			// and destructor of the tree widget does that already.
+			QTreeWidgetItem * item = new QTreeWidgetItem(0);
+			item->setText(0,(QString)pr.portNum.c_str());
+			item->setText(1,(QString)pr.type.c_str());
+			if(!pr.behavior.compare("script"))
+				item->setText(2, (QString)pr.scriptName.c_str());
+			else
+				item->setText(2,(QString)pr.behavior.c_str());
+			ui.portTreeWidget->addTopLevelItem(item);
 
-void NovaConfig::on_actionEditPort_triggered()
-{
+			TreeItemComboBox *typeBox = new TreeItemComboBox(this, item);
+			typeBox->addItem("TCP");
+			typeBox->addItem("UDP");
+			typeBox->setItemText(0, "TCP");
+			typeBox->setItemText(1, "UDP");
+			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
 
+			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
+			behaviorBox->addItem("reset");
+			behaviorBox->addItem("open");
+			behaviorBox->addItem("block");
+			behaviorBox->insertSeparator(3);
+			for(ScriptTable::iterator it = scripts.begin(); it != scripts.end(); it++)
+			{
+				behaviorBox->addItem((QString)it->first.c_str());
+			}
+			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
+
+			item->setFlags(item->flags() | Qt::ItemIsEditable);
+
+			typeBox->setAutoFillBackground(true);
+			typeBox->setContextMenuPolicy(Qt::NoContextMenu);
+			typeBox->setFocusPolicy(Qt::NoFocus);
+			typeBox->setCurrentIndex(typeBox->findText(pr.type.c_str()));
+
+			behaviorBox->setAutoFillBackground(true);
+			behaviorBox->setFocusPolicy(Qt::NoFocus);
+			behaviorBox->setContextMenuPolicy(Qt::NoContextMenu);
+			behaviorBox->setCurrentIndex(behaviorBox->findText(pr.behavior.c_str()));
+
+			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
+			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
+			pr.item = item;
+			ui.portTreeWidget->setCurrentItem(pr.item);
+			pair<string, bool> portPair;
+			portPair.first = pr.portName;
+			portPair.second = false;
+			p->ports.insert(p->ports.begin(),portPair);
+
+			ports[pr.portName] = pr;
+			loadProfile();
+			saveProfile();
+			ui.portTreeWidget->editItem(ports[pr.portName].item, 0);
+
+			portPair.second = true;
+			for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+			{
+				profile * ptemp = &it->second;
+				while(ptemp->parentProfile.compare("") && ptemp->parentProfile.compare(p->name))
+				{
+					ptemp = &profiles[ptemp->parentProfile];
+				}
+				if(!ptemp->parentProfile.compare(p->name))
+				{
+					profiles[it->first].ports.insert(profiles[it->first].ports.begin(),portPair);
+				}
+			}
+			loadingItems = false;
+		}
+	}
 }
 
 void NovaConfig::on_actionDeletePort_triggered()
 {
+	if(!loadingItems && !ui.portTreeWidget->selectedItems().empty())
+	{
+		loadingItems = true;
+		port * prt = NULL;
+		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
+		{
+			if(ui.portTreeWidget->currentItem() == it->second.item)
+			{
+				//iterators are copies not the actual items
+				prt = &ports[it->second.portName];
+				break;
+			}
+		}
+		profile * p = &profiles[currentProfile];
+		for(uint i = 0; i < p->ports.size(); i++)
+		{
+			if(!p->ports[i].first.compare(prt->portName) && !p->ports[i].second)
+			{
+				//Check for inheritance on the deleted port.
+				//If valid parent
+				if(p->parentProfile.compare(""))
+				{
+					profile * parent = &profiles[p->parentProfile];
+					bool matched = false;
+					//check for the inherited port
+					for(uint j = 0; j < parent->ports.size(); j++)
+					{
+						if((!prt->type.compare(ports[parent->ports[j].first].type))
+								&& (!prt->portNum.compare(ports[parent->ports[j].first].portNum)))
+						{
+							p->ports[i].second = true;
+							p->ports[i].first = parent->ports[j].first;
+							matched = true;
+						}
+					}
+					if(!matched)
+						p->ports.erase(p->ports.begin()+i);
+				}
+				//If no parent.
+				else
+					p->ports.erase(p->ports.begin()+i);
 
+				//Check for children with inherited port.
+				for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+					if(!it->second.parentProfile.compare(p->name))
+						for(uint j = 0; j < it->second.ports.size(); j++)
+						{
+							if(!it->second.ports[j].first.compare(prt->portName) && it->second.ports[j].second)
+							{
+								it->second.ports.erase(it->second.ports.begin()+j);
+								break;
+							}
+						}
+				break;
+			}
+			else
+				syslog(SYSL_ERR, "File: %s Line: %d Cannot delete an inherited port, set the behavior to "
+						"that protocols default action to effectively remove an inherited port", __FILE__, __LINE__);
+
+		}
+		loadProfile();
+		saveProfile();
+		loadingItems = false;
+	}
 }
 
 //Action to take when window is closing
@@ -434,6 +578,7 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 			prt.portNum = item->text(0).toStdString();
 			prt.type = item->text(1).toStdString();
 			prt.behavior = item->text(2).toStdString();
+			ports[portName] = prt;
 		}
 		else
 		{
@@ -1440,6 +1585,7 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 		loadingItems = true;
 	vector<string> delList;
 	vector<node> addList;
+	bool nameUnique = false;
 
 	//If the current ethernet is an invalid selection
 	//TODO this should display a dialog asking the user if they wish to pick a valid ethernet or cancel mode change
@@ -1473,14 +1619,30 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 				case staticDHCP:
 					tempNode.MAC = generateUniqueMACAddr(profiles[currentProfile].ethernet);
 					tempNode.name = tempNode.MAC;
+					//Finds a unique identifier
+					while((nodes.find(tempNode.name) != nodes.end()) && (i < j))
+					{
+						i++;
+						ss.str("");
+						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
+						tempNode.name = ss.str();
+					}
 					break;
 
 				case randomDHCP:
 					tempNode.name = tempNode.pfile + " on " + tempNode.interface;
-
+					nameUnique = false;
 					//Finds a unique identifier
-					while((nodes.find(tempNode.name) != nodes.end()) && (i < j))
+					while(i < j)
 					{
+						nameUnique = true;
+						for(uint k = 0; k < addList.size(); k++)
+						{
+							if(!addList[k].name.compare(tempNode.name))
+								nameUnique = false;
+						}
+						if(nameUnique)
+							break;
 						i++;
 						ss.str("");
 						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
@@ -1557,9 +1719,13 @@ void NovaConfig::saveProfile()
 			TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
 			TreeItemComboBox * qBehavBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 2);
 			pr.type = qTypeBox->currentText().toStdString();
+			if(!pr.portNum.compare(""))
+			{
+				continue;
+			}
 			pr.behavior = qBehavBox->currentText().toStdString();
 			//If the behavior names a script
-			if(!pr.behavior.compare("open") || !pr.behavior.compare("reset") || !pr.behavior.compare("block"))
+			if(pr.behavior.compare("open") && pr.behavior.compare("reset") && pr.behavior.compare("block"))
 			{
 				pr.behavior = "script";
 				pr.scriptName = qBehavBox->currentText().toStdString();
