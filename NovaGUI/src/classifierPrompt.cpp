@@ -40,7 +40,7 @@ classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
 		row++;
 	}
 
-	allowDescriptionEdit = false;
+	allowDescriptionEdit = true;
 }
 
 void classifierPrompt::makeRow(trainingSuspect* header, int row)
@@ -59,8 +59,9 @@ void classifierPrompt::makeRow(trainingSuspect* header, int row)
 	ipItem->setFlags(ipItem->flags() &= ~Qt::ItemIsEditable);
 
 	QTableWidgetItem* descriptionItem = new QTableWidgetItem();
-	if (!allowDescriptionEdit)
-		descriptionItem->setFlags(descriptionItem->flags() &= ~Qt::ItemIsEditable);
+	// TODO: Fix this
+	//if (!allowDescriptionEdit)
+	//	descriptionItem->setFlags(descriptionItem->flags() &= ~Qt::ItemIsEditable);
 
 
 	ui.tableWidget->setItem(row, 0, chkBoxItem);

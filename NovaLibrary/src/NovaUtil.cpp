@@ -251,7 +251,9 @@ trainingDumpMap* ReadEngineDumpFile(string inputFile)
 			data = line.substr(line.find_first_of(' ') + 1, string::npos);
 			data = "\t" + data;
 
-			(*trainingTable)[ip] = new vector<string>();
+			if ((*trainingTable)[ip] == NULL)
+				(*trainingTable)[ip] = new vector<string>();
+
 			(*trainingTable)[ip]->push_back(data);
 		}
 	}
