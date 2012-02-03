@@ -367,7 +367,7 @@ string MakeCeFileFromDb(trainingSuspectMap& db)
 		{
 			for (uint i = 0; i < it->second->points->size(); i++)
 			{
-				ss << it->second->points->at(i) << " " << it->second->isHostile << endl;
+				ss << it->second->points->at(i).substr(1, string::npos) << " " << it->second->isHostile << endl;
 			}
 		}
 	}

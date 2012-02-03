@@ -42,9 +42,10 @@ bool useTerminals = true;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 
-
+// Paths extracted from the config file
 string doppelgangerPath;
 string haystackPath;
+string trainingDataPath;
 
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
@@ -193,8 +194,10 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
+
 	doppelgangerPath = NovaConfig->options["DM_HONEYD_CONFIG"].data;
 	haystackPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
+	trainingDataPath = NovaConfig->options["DATAFILE"].data;
 
 
 	//Sets initial view
@@ -1839,8 +1842,9 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 
 	string dataFileContent = MakeCeFileFromDb(*map);
 
-	cout << dataFileContent << endl;
-
+	ofstream out (trainingDataPath.data());
+	out << dataFileContent;
+	out.close();
 }
 
 void NovaGUI::on_actionTrainingData_triggered()
