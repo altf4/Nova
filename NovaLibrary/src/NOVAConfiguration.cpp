@@ -31,7 +31,7 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER" };
 
 // Loads the configuration file into the class's state data
-void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, string module)
+void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPath, string module)
 {
 	string line;
 	string prefix;

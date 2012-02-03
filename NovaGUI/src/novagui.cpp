@@ -41,11 +41,14 @@ int bytesRead;
 bool useTerminals = true;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
+string configurationFile = "/Config/NOVAConfig.txt";
+NOVAConfiguration configuration;
 
 // Paths extracted from the config file
 string doppelgangerPath;
 string haystackPath;
 string trainingDataPath;
+bool isTraining = false;
 
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
@@ -64,6 +67,7 @@ QMenu * suspectMenu;
 #define COMPONENT_HS 4
 #define COMPONENT_HSH 5
 
+
 struct novaComponent novaComponents[6];
 
 /************************************************
@@ -74,7 +78,7 @@ struct novaComponent novaComponents[6];
 void sighandler(int param)
 {
 	param = param;
-	closeNova();
+	stopNova();
 	exit(1);
 }
 
@@ -118,7 +122,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	string novaConfig = "Config/NOVAConfig.txt";
 
 	// Create the dialog generator
-	prompter = new DialogPrompter();
+	prompter= new DialogPrompter();
 
 	// Register our desired error message types
 	messageType * t = new messageType();
@@ -151,6 +155,11 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t->action = CHOICE_SHOW;
 	t->type = errorPrompt;
 	HONEYD_INVALID_SUBNET = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Request to merge CE capture into training Db";
+	t->action = CHOICE_SHOW;
+	t->type = notifyActionPrompt;
+	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(*t);
 
 
 	loadAll();
@@ -190,14 +199,14 @@ NovaGUI::NovaGUI(QWidget *parent)
 	}
 
 
-	string input = homePath + "/Config/NOVAConfig.txt";
+	configurationFile = homePath + configurationFile;
+	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
 
-	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
+	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
+	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
+	trainingDataPath = configuration.options["DATAFILE"].data;
+	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
 
-	doppelgangerPath = NovaConfig->options["DM_HONEYD_CONFIG"].data;
-	haystackPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
-	trainingDataPath = NovaConfig->options["DATAFILE"].data;
 
 
 	//Sets initial view
@@ -259,7 +268,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 void NovaGUI::closeEvent(QCloseEvent * e)
 {
 	e = e;
-	closeNova();
+	emit on_actionStopNova_triggered();
 }
 
 /************************************************
@@ -533,7 +542,7 @@ void NovaGUI::writeHoneyd()
 	outFile << out.str() << endl;
 	outFile.close();
 
-	cout << out.str() << endl;
+	//cout << out.str() << endl;
 
 	ofstream doppelOutFile(doppelgangerPath.data());
 	doppelOutFile << doppelOut.str() << endl;
@@ -581,7 +590,10 @@ string NovaGUI::profileToString(profile* p)
 			{
 				string scriptName = ports[p->ports[i].first].scriptName;
 
-				out << '"' << scripts[scriptName].path << '"'<< endl;
+				if (scripts[scriptName].path.compare(""))
+					out << '"' << scripts[scriptName].path << '"'<< endl;
+				else
+					syslog(SYSL_ERR, "File: %s Line: %d Error writing profile port script %s: Path to script is null", __FILE__, __LINE__, scriptName.c_str());
 			}
 			else
 			{
@@ -1755,7 +1767,15 @@ void NovaGUI::on_actionRunNovaAs_triggered()
 
 void NovaGUI::on_actionStopNova_triggered()
 {
-	closeNova();
+	stopNova();
+
+	// Were we in training mode?
+	if (isTraining)
+	{
+		prompter->DisplayPrompt(LAUNCH_TRAINING_MERGE,
+			"ClassificationEngine was in training mode. Would you like to merge the capture file into the training database now?",
+			ui.actionTrainingData, NULL);
+	}
 }
 
 void NovaGUI::on_actionConfigure_triggered()
@@ -1770,7 +1790,7 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	closeNova();
+	on_actionStopNova_triggered();
 	exit(1);
 }
 
@@ -1828,7 +1848,7 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 void NovaGUI::on_actionMakeDataFile_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("File to select classifications from"), QDir::currentPath(), tr("NOVA Classification Database (*.db)"));
+			 tr("File to select classifications from"), QString::fromStdString(trainingDataPath), tr("NOVA Classification Database (*.db)"));
 
 	if (data.isNull())
 		return;
@@ -1849,7 +1869,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 void NovaGUI::on_actionTrainingData_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("Classification Engine Data Dump"), QDir::currentPath(), tr("NOVA Classification Dump (*.dump)"));
+			 tr("Classification Engine Data Dump"), QString::fromStdString(trainingDataPath), tr("NOVA Classification Dump (*.dump)"));
 
 	if (data.isNull())
 		return;
@@ -1863,7 +1883,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 	trainingSuspectMap* headerMap = classifier->getStateData();
 
 	QString outputFile = QFileDialog::getSaveFileName(this,
-			tr("Classification Database File"), QDir::currentPath(), tr("NOVA Classification Database (*.db)"));
+			tr("Classification Database File"), QString::fromStdString(trainingDataPath), tr("NOVA Classification Database (*.db)"));
 
 	if (outputFile.isNull())
 		return;
@@ -1949,7 +1969,7 @@ void NovaGUI::on_runButton_clicked()
 }
 void NovaGUI::on_stopButton_clicked()
 {
-	closeNova();
+	emit on_actionStopNova_triggered();
 }
 
 void NovaGUI::on_systemStatusTable_itemSelectionChanged()
@@ -2185,7 +2205,7 @@ void clearSuspects()
 	pthread_rwlock_unlock(&lock);
 }
 
-void closeNova()
+void stopNova()
 {
 	//Sets the message
 	message.SetMessage(EXIT);
@@ -2218,16 +2238,14 @@ void startNova()
 	string homePath = GetHomePath();
 	string input = homePath + "/Config/NOVAConfig.txt";
 
-	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
+	// Reload the configuration file
+	configuration.LoadConfig((char*)input.c_str(), homePath, __FILE__);
 
-	if (!NovaConfig->options["USE_TERMINALS"].isValid || !NovaConfig->options["ENABLED_FEATURES"].isValid)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d ERROR: Unable to load configuration file.", __FILE__, __LINE__);
-	}
+	useTerminals = atoi(configuration.options["USE_TERMINALS"].data.c_str());
+	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
 
-	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
+	string enabledFeatureMask = configuration.options["ENABLED_FEATURES"].data;
+
 
 	for (uint i = 0; i < DIM; i++)
 	{
