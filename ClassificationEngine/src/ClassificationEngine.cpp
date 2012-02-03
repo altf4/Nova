@@ -19,6 +19,7 @@
 #include "ClassificationEngine.h"
 #include "NOVAConfiguration.h"
 #include <iostream>
+#include <time.h>
 
 using namespace std;
 using namespace Nova;
@@ -98,6 +99,8 @@ double maxFeatureValues[DIM];
 
 // Nova Configuration Variables (read from config file)
 bool isTraining;
+string trainingFolder;
+string trainingCapFile;
 bool useTerminals;
 in_port_t sAlarmPort;					//Silent Alarm destination port
 int classificationTimeout;		//In seconds, how long to wait between classifications
@@ -153,6 +156,15 @@ int main(int argc,char *argv[])
 	//Are we Training or Classifying?
 	if(isTraining)
 	{
+		// We suffix the training capture files with the date/time
+		time_t rawtime;
+		time ( &rawtime );
+		struct tm * timeinfo = localtime(&rawtime);
+
+		char buffer [40];
+		strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
+		trainingCapFile = homePath + "/" + trainingFolder + "/training" + buffer + ".dump";
+
 		enabledFeatures = DIM;
 		pthread_create(&trainingLoopThread,NULL,TrainingLoop,(void *)outFile);
 	}
@@ -324,7 +336,8 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	while(true)
 	{
 		sleep(classificationTimeout);
-		ofstream myfile (string(outFile).data(), ios::app);
+		ofstream myfile (trainingCapFile.data(), ios::app);
+
 		if (myfile.is_open())
 		{
 			pthread_rwlock_wrlock(&lock);
@@ -338,6 +351,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					{
 						it->second->annPoint = annAllocPt(DIM);
 					}
+
 
 					myfile << string(inet_ntoa(it->second->IP_address)) << " ";
 
@@ -1241,10 +1255,12 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	eps =  atof(NovaConfig->options["EPS"].data.c_str());
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
 	isTraining = atoi(NovaConfig->options["IS_TRAINING"].data.c_str());
+	trainingFolder = NovaConfig->options["TRAINING_CAP_FOLDER"].data;
 	classificationThreshold = atof(NovaConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str());
 	dataFile = NovaConfig->options["DATAFILE"].data;
 	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
 	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
+
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 

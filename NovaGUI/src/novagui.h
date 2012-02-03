@@ -153,9 +153,9 @@ struct suspectItem
 {
 	//The suspect information
 	Suspect * suspect;
+
 	//The associated item for the suspect view list
 	QListWidgetItem * item;
-	//The associated item for the main view list#include "NOVAConfiguration.h"
 
 	//We need a second item because an item can only be in one list at a time
 	QListWidgetItem * mainItem;
@@ -200,7 +200,9 @@ public:
     ptree *subnetTree;
 
     DialogPrompter *prompter;
-    messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL, HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
+    messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
+    messageHandle HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
+    messageHandle LAUNCH_TRAINING_MERGE;
 
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();
@@ -343,7 +345,7 @@ void sclose(int sock);
 void openSocket();
 
 //Closes the Nova processes
-void closeNova();
+void stopNova();
 
 //Starts the Nova processes
 void startNova();

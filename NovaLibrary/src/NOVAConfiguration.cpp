@@ -22,8 +22,16 @@ using namespace std;
 
 namespace Nova
 {
+
+const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ",
+		"READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "USE_TERMINALS",
+		"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
+		"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
+		"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
+		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER" };
+
 // Loads the configuration file into the class's state data
-void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, string module)
+void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPath, string module)
 {
 	string line;
 	string prefix;
@@ -36,14 +44,6 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 	syslog(SYSL_INFO, "Loading file %s in homepath %s", configFilePath, homeNovaPath.c_str());
 
 	ifstream config(configFilePath);
-
-	const string prefixes[] =
-	{ "INTERFACE", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ",
-			"READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "USE_TERMINALS",
-			"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
-			"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
-			"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
-			"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES" };
 
 	//populate the defaultVector. I know it looks a little messy, maybe
 	//hard code it somewhere? Just did this so that if we add or remove stuff,
@@ -94,6 +94,8 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 			case 19: def = "1";
 					break;
 			case 20: def = "111111111";
+					break;
+			case 21: def = "Data";
 					break;
 			default: break;
 		}
@@ -462,6 +464,22 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 
 			}
 
+			// TRAINING_CAP_FOLDER
+			prefixIndex++;
+			prefix = prefixes[prefixIndex];
+			if (!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if (line.size() > 0)
+				{
+					options[prefix].data = line.c_str();
+					options[prefix].isValid = true;
+				}
+				continue;
+			}
+
+
+
 		}
 	}
 	else
@@ -479,14 +497,6 @@ int NOVAConfiguration::SetDefaults()
 	openlog(__FUNCTION__, OPEN_SYSL, LOG_AUTHPRIV);
 
 	int out = 0;
-
-	const string prefixes[] =
-	{ "INTERFACE", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ",
-			"READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "USE_TERMINALS",
-			"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
-			"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
-			"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
-			"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES" };
 
 	for(uint i = 0; i < options.size() && out < 2; i++)
 	{

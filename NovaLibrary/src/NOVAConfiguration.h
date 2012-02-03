@@ -46,7 +46,7 @@ public:
 	//		configFilePath - Path to the NOVA configuration file
 	//		homeNovaPath - Path to the /home/user/.nova folder
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
-	void LoadConfig(char* configFilePath, string homeNovaPath, string module);
+	void LoadConfig(char const* configFilePath, string homeNovaPath, string module);
 
 	// Checks through the optionsMap options and sets the default value for any
 	// configuration variable that has a false isValid attribute
@@ -62,6 +62,10 @@ public:
 	optionsMap options;
 	// associative array for the defaults that can be statically set.
 	defaultVector defaults;
+
+private:
+
+	static const string prefixes[];
 };
 
 }
