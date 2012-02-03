@@ -70,7 +70,12 @@ NovaGUI/debug/
 NovaLibrary/Debug/src/
 
 # Installer files
-Installer/.nova/*
+Installer/.nova/Data/*
+Installer/.nova/s*
+Installer/.nova/keys/*
+Installer/.nova/Images/*
+Installer/.nova/templates/*
+Installer/.nova/Config/NOVAConfig.txt
 Installer/bin/*
 
 # Auto generated QT files
@@ -93,3 +98,5 @@ NovaGUI/moc_run_popup.cpp
 /NovaGUI/release/moc_NovaComplexDialog.cpp
 /NovaGUI/release/moc_DialogPrompt.cpp
 /NovaGUI/release/moc_nova_manual.cpp
+/Installer/.nova/Data/data.txt
+/Installer/.nova/Config/doppelganger.config

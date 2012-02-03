@@ -1,14 +1,14 @@
 <scripts>
 	<script>
 		<name>Windows FTP</name>
-		<path>/usr/share/honeyd/scripts/win32/win2k/msftp.sh</path>
+		<path>sh /usr/share/honeyd/scripts/win32/win2k/msftp.sh</path>
 	</script>
 	<script>
 		<name>Telnet Router</name>
-		<path>/usr/share/honeyd/scripts/router-telnet.pl</path>
+		<path>perl /usr/share/honeyd/scripts/embedded/router-telnet.pl</path>
 	</script>
 	<script>
 		<name>Windows Web</name>
-		<path>/usr/share/honeyd/scripts/win32/web.sh</path>
+		<path>bash /usr/share/honeyd/scripts/win32/web.sh</path>
 	</script>
 </scripts>

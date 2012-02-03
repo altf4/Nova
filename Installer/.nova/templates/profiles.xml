@@ -12,20 +12,21 @@
 				<name>WinServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Microsoft Windows 2003 Server</personality>
+					<personality>Microsoft Windows 7</personality>
 					<ethernet>Dell</ethernet>
 					<uptime>1546550</uptime>
 				</set>
 				<add>
 					<ports>
-						<port>20 TCP Open</port>
-						<port>21 Windows FTP</port>
-						<port>23 Telnet Router</port>
-						<port>80 Windows Web</port>
-						<port>139 TCP Open</port>
-						<port>137 TCP Open</port>
-						<port>137 UDP Open</port>
-						<port>135 UDP Open</port>
+						<port>20_TCP_open</port>
+						<port>21_TCP_Windows FTP</port>
+						<port>23_TCP_Telnet Router</port>
+						<port>80_TCP_Windows Web</port>
+						<port>135_UDP_open</port>
+						<port>137_TCP_open</port>
+						<port>137_UDP_open</port>
+						<port>139_TCP_open</port>
+						
 					</ports>
 				</add>
 				<profiles>
@@ -35,17 +36,17 @@
 				<name>LinuxServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Linux kernel 2.6.5 - 2.6.8</personality>
+					<personality>Linux 2.6.11 - 2.6.20</personality>
 					<ethernet>Dell</ethernet>
 					<uptime>1324350</uptime>
 				</set>
 				<add>
 					<ports>
-						<port>80 Windows Web</port>
-						<port>139 TCP Open</port>
-						<port>137 TCP Open</port>
-						<port>137 UDP Open</port>
-						<port>135 UDP Open</port>
+						<port>80_TCP_Windows Web</port>
+						<port>135_UDP_open</port>
+						<port>137_TCP_open</port>
+						<port>137_UDP_open</port>
+						<port>139_TCP_open</port>
 					</ports>
 				</add>
 				<profiles>
@@ -55,17 +56,17 @@
 				<name>BSDServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Linux kernel 2.6.5 - 2.6.8</personality>
+					<personality>Linux 2.6.11 - 2.6.20</personality>
 					<ethernet>Dell</ethernet>
 					<uptime>1326346</uptime>
 				</set>
 				<add>
 					<ports>
-						<port>23 Telnet Router</port>
-						<port>139 TCP Open</port>
-						<port>137 TCP Open</port>
-						<port>137 UDP Open</port>
-						<port>135 UDP Open</port>
+						<port>23_TCP_Telnet Router</port>
+						<port>135_UDP_open</port>
+						<port>137_TCP_open</port>
+						<port>137_UDP_open</port>
+						<port>139_TCP_open</port>
 					</ports>
 				</add>
 				<profiles>
@@ -76,17 +77,17 @@
 				<type>3</type>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Microsoft Windows 2003 Server</personality>
+					<personality>Microsoft Windows 7</personality>
 					<uptime>1327650</uptime>
 				</set>
 				<add>
 					<ports>
-						<port>23 Telnet Router</port>
-						<port>80 Windows Web</port>
-						<port>139 TCP Open</port>
-						<port>137 TCP Open</port>
-						<port>137 UDP Open</port>
-						<port>135 UDP Open</port>
+						<port>23_TCP_Telnet Router</port>
+						<port>80_TCP_Windows Web</port>
+						<port>135_UDP_open</port>
+						<port>137_TCP_open</port>
+						<port>137_UDP_open</port>
+						<port>139_TCP_open</port>
 					</ports>
 				</add>
 				<profiles>

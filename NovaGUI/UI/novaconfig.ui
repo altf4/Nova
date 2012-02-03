@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>751</width>
-    <height>431</height>
+    <width>800</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1693,7 +1693,7 @@ p, li { white-space: pre-wrap; }
                       </size>
                      </property>
                      <property name="text">
-                      <string>IP Assignment</string>
+                      <string>IP Addressing</string>
                      </property>
                     </widget>
                    </item>
@@ -1839,28 +1839,6 @@ p, li { white-space: pre-wrap; }
                     </layout>
                    </item>
                    <item row="3" column="0">
-                    <widget class="QLabel" name="uptimeBehaviorLabel">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>Uptime Behavior</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="0">
                     <widget class="QLabel" name="uptimeLabel">
                      <property name="minimumSize">
                       <size>
@@ -1882,7 +1860,72 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="0">
+                   <item row="3" column="1">
+                    <layout class="QHBoxLayout" name="uptimeForm" stretch="25,1,25,25">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLineEdit" name="uptimeEdit">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="uptimeRangeLabel">
+                       <property name="text">
+                        <string> - </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="uptimeRangeEdit"/>
+                     </item>
+                     <item>
+                      <widget class="QComboBox" name="uptimeBehaviorComboBox">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>Flat</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>Range</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="4" column="0">
                     <widget class="QLabel" name="personalityLabel">
                      <property name="minimumSize">
                       <size>
@@ -1904,7 +1947,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="1">
+                   <item row="4" column="1">
                     <layout class="QHBoxLayout" name="personalityForm">
                      <property name="spacing">
                       <number>0</number>
@@ -1949,7 +1992,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="6" column="0">
+                   <item row="5" column="0">
                     <widget class="QLabel" name="dropRateLabel">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1977,7 +2020,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="1">
+                   <item row="5" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_2">
                      <item>
                       <widget class="QLabel" name="dropRateSetting">
@@ -2028,7 +2071,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="8" column="0" colspan="2">
+                   <item row="6" column="0" colspan="2">
                     <widget class="QLabel" name="label">
                      <property name="font">
                       <font>
@@ -2043,7 +2086,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="9" column="0" colspan="2">
+                   <item row="7" column="0" colspan="2">
                     <layout class="QHBoxLayout" name="horizontalLayout_8">
                      <property name="spacing">
                       <number>0</number>
@@ -2097,65 +2140,6 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="4" column="1">
-                    <layout class="QHBoxLayout" name="uptimeForm">
-                     <property name="spacing">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <widget class="QLineEdit" name="uptimeEdit">
-                       <property name="minimumSize">
-                        <size>
-                         <width>0</width>
-                         <height>27</height>
-                        </size>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>16777215</width>
-                         <height>27</height>
-                        </size>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QLabel" name="uptimeRangeLabel">
-                       <property name="text">
-                        <string> - </string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QLineEdit" name="uptimeRangeEdit"/>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="3" column="1">
-                    <widget class="QComboBox" name="uptimeBehaviorComboBox">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <item>
-                      <property name="text">
-                       <string>Flat Value</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Random in Range</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
                   </layout>
                  </item>
                  <item>
@@ -2190,6 +2174,22 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
+                   <item row="1" column="0" colspan="2">
+                    <spacer name="inheritSpacer">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>0</width>
+                       <height>27</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
                    <item row="2" column="0">
                     <widget class="QCheckBox" name="ethernetCheckBox">
                      <property name="minimumSize">
@@ -2215,30 +2215,6 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item row="3" column="0">
-                    <widget class="QCheckBox" name="uptimeBehaviorCheckBox">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <italic>true</italic>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>Inherit</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="0">
                     <widget class="QCheckBox" name="uptimeCheckBox">
                      <property name="minimumSize">
                       <size>
@@ -2262,7 +2238,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="0">
+                   <item row="4" column="0">
                     <widget class="QCheckBox" name="personalityCheckBox">
                      <property name="minimumSize">
                       <size>
@@ -2286,7 +2262,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="0">
+                   <item row="5" column="0">
                     <widget class="QCheckBox" name="dropRateCheckBox">
                      <property name="minimumSize">
                       <size>
@@ -2309,22 +2285,6 @@ p, li { white-space: pre-wrap; }
                       <string>Inherit</string>
                      </property>
                     </widget>
-                   </item>
-                   <item row="1" column="0" colspan="2">
-                    <spacer name="verticalSpacer">
-                     <property name="orientation">
-                      <enum>Qt::Vertical</enum>
-                     </property>
-                     <property name="sizeType">
-                      <enum>QSizePolicy::Fixed</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                    </spacer>
                    </item>
                   </layout>
                  </item>
@@ -2489,17 +2449,21 @@ p, li { white-space: pre-wrap; }
                    </item>
                    <item row="3" column="0" colspan="2">
                     <widget class="QTreeWidget" name="portTreeWidget">
+                     <property name="focusPolicy">
+                      <enum>Qt::ClickFocus</enum>
+                     </property>
+                     <property name="inputMethodHints">
+                      <set>Qt::ImhNone</set>
+                     </property>
+                     <property name="editTriggers">
+                      <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+                     </property>
                      <attribute name="headerDefaultSectionSize">
                       <number>65</number>
                      </attribute>
                      <attribute name="headerDefaultSectionSize">
                       <number>65</number>
                      </attribute>
-                     <column>
-                      <property name="text">
-                       <string>Name</string>
-                      </property>
-                     </column>
                      <column>
                       <property name="text">
                        <string>Port</string>
@@ -2664,11 +2628,16 @@ p, li { white-space: pre-wrap; }
     </item>
    </layout>
   </widget>
-  <action name="actionEditPort">
-   <property name="text">
-    <string>Edit Selected Port</string>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>25</height>
+    </rect>
    </property>
-  </action>
+  </widget>
   <action name="actionAddPort">
    <property name="text">
     <string>Add New Port</string>
@@ -2677,6 +2646,38 @@ p, li { white-space: pre-wrap; }
   <action name="actionDeletePort">
    <property name="text">
     <string>Delete Selected Port</string>
+   </property>
+  </action>
+  <action name="actionToggle_Inherited">
+   <property name="text">
+    <string>Toggle Inherited</string>
+   </property>
+   <property name="toolTip">
+    <string>Sets the port explicitly or Inherits from parent</string>
+   </property>
+  </action>
+  <action name="actionProfileClone">
+   <property name="text">
+    <string>Clone Profile</string>
+   </property>
+   <property name="toolTip">
+    <string>Clone Profile</string>
+   </property>
+  </action>
+  <action name="actionProfileAdd">
+   <property name="text">
+    <string>Add Profile</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Profile</string>
+   </property>
+  </action>
+  <action name="actionProfileDelete">
+   <property name="text">
+    <string>Delete Profile</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete Profile</string>
    </property>
   </action>
  </widget>

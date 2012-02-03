@@ -5,15 +5,15 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
+// Description :
 //============================================================================
 #ifndef NOVACONFIG_H
 #define NOVACONFIG_H
@@ -157,8 +157,13 @@ public:
     // Saves the configuration to the config file, returns true if success
     bool saveConfigurationToFile();
 
+public slots:
+//When an item in the port tree widget changes
+void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);
+
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
+
 
 private slots:
 
@@ -194,7 +199,7 @@ void on_cloneButton_clicked();
 void on_addButton_clicked();
 void on_deleteButton_clicked();
 void on_profileTreeWidget_itemSelectionChanged();
-void on_profileEdit_textChanged();
+void on_profileEdit_editingFinished();
 
 //GUI Signals for Node settings
 void on_nodeEditButton_clicked();
@@ -216,13 +221,55 @@ void on_featureDisableButton_clicked();
 void on_ipModeCheckBox_stateChanged();
 void on_ethernetCheckBox_stateChanged();
 void on_uptimeCheckBox_stateChanged();
-void on_uptimeBehaviorCheckBox_stateChanged();
 void on_personalityCheckBox_stateChanged();
 void on_dropRateCheckBox_stateChanged();
+void on_tcpCheckBox_stateChanged();
+void on_udpCheckBox_stateChanged();
+void on_icmpCheckBox_stateChanged();
+
+//Port inheritance menu toggle
+void on_actionToggle_Inherited_triggered();
+void on_actionDeletePort_triggered();
+void on_actionAddPort_triggered();
+
+// Profile right click menu
+void on_actionProfileAdd_triggered();
+void on_actionProfileDelete_triggered();
+void on_actionProfileClone_triggered();
+
 
 private:
 	void setInputValidators();
     Ui::NovaConfigClass ui;
 };
 
+class TreeItemComboBox : public QComboBox
+{
+	Q_OBJECT
+
+public:
+
+	TreeItemComboBox(NovaConfig * parent = 0, QTreeWidgetItem* buddy = 0)
+	{
+		this->parent = parent;
+		this->buddy = buddy;
+		connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(setCurrentIndex(int)));
+	}
+	~TreeItemComboBox(){}
+
+	NovaConfig * parent;
+	QTreeWidgetItem * buddy;
+
+public slots:
+	void setCurrentIndex(int index)
+	{
+		QComboBox::setCurrentIndex(index);
+		emit notifyParent(buddy);
+	}
+
+
+	signals:
+	void notifyParent(QTreeWidgetItem *item);
+
+};
 #endif // NOVACONFIG_H

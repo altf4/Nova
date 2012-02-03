@@ -136,25 +136,22 @@ void Suspect::CalculateFeatures(uint32_t featuresEnabled)
 uint Suspect::SerializeSuspect(u_char * buf)
 {
 	uint offset = 0;
-	uint bsize = 1; //bools
-	uint isize = 4; //s_addr, int etc
-	uint dsize = 8; //doubles
 
 	//Copies the value and increases the offset
-	memcpy(buf, &IP_address.s_addr, isize);
-	offset+= isize;
-	memcpy(buf+offset, &classification, dsize);
-	offset+= dsize;
-	memcpy(buf+offset, &isHostile, bsize);
-	offset+= bsize;
-	memcpy(buf+offset, &needs_classification_update, bsize);
-	offset+= bsize;
-	memcpy(buf+offset, &needs_feature_update, bsize);
-	offset+= bsize;
-	memcpy(buf+offset, &flaggedByAlarm, bsize);
-	offset+= bsize;
-	memcpy(buf+offset, &isLive, bsize);
-	offset+= bsize;
+	memcpy(buf, &IP_address.s_addr, sizeof IP_address.s_addr);
+	offset+= sizeof IP_address.s_addr;
+	memcpy(buf+offset, &classification, sizeof classification);
+	offset+= sizeof classification;
+	memcpy(buf+offset, &isHostile, sizeof isHostile);
+	offset+= sizeof isHostile;
+	memcpy(buf+offset, &needs_classification_update, sizeof needs_classification_update);
+	offset+= sizeof needs_classification_update;
+	memcpy(buf+offset, &needs_feature_update, sizeof needs_feature_update);
+	offset+= sizeof needs_feature_update;
+	memcpy(buf+offset, &flaggedByAlarm, sizeof flaggedByAlarm);
+	offset+= sizeof flaggedByAlarm;
+	memcpy(buf+offset, &isLive, sizeof isLive);
+	offset+= sizeof isLive;
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
@@ -167,25 +164,22 @@ uint Suspect::SerializeSuspect(u_char * buf)
 uint Suspect::DeserializeSuspect(u_char * buf)
 {
 	uint offset = 0;
-	uint bsize = 1; //bools
-	uint isize = 4; //s_addr, int etc
-	uint dsize = 8; //doubles
 
 	//Copies the value and increases the offset
-	memcpy(&IP_address.s_addr, buf, isize);
-	offset+= isize;
-	memcpy(&classification, buf+offset, dsize);
-	offset+= dsize;
-	memcpy(&isHostile, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&needs_classification_update, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&needs_feature_update, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&flaggedByAlarm, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&isLive, buf+offset, bsize);
-	offset+= bsize;
+	memcpy(&IP_address.s_addr, buf, sizeof IP_address.s_addr);
+	offset+= sizeof IP_address.s_addr;
+	memcpy(&classification, buf+offset, sizeof classification);
+	offset+= sizeof classification;
+	memcpy(&isHostile, buf+offset, sizeof isHostile);
+	offset+= sizeof isHostile;
+	memcpy(&needs_classification_update, buf+offset, sizeof needs_classification_update);
+	offset+= sizeof needs_classification_update;
+	memcpy(&needs_feature_update, buf+offset, sizeof needs_feature_update);
+	offset+= sizeof needs_feature_update;
+	memcpy(&flaggedByAlarm, buf+offset, sizeof flaggedByAlarm);
+	offset+= sizeof flaggedByAlarm;
+	memcpy(&isLive, buf+offset, sizeof isLive);
+	offset+= sizeof isLive;
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
@@ -198,25 +192,22 @@ uint Suspect::DeserializeSuspect(u_char * buf)
 uint Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 {
 	uint offset = 0;
-	uint bsize = 1; //bools
-	uint isize = 4; //s_addr, int etc
-	uint dsize = 8; //doubles, annPoints
 
 	//Copies the value and increases the offset
-	memcpy(&IP_address.s_addr, buf, isize);
-	offset+= isize;
-	memcpy(&classification, buf+offset, dsize);
-	offset+= dsize;
-	memcpy(&isHostile, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&needs_classification_update, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&needs_feature_update, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&flaggedByAlarm, buf+offset, bsize);
-	offset+= bsize;
-	memcpy(&isLive, buf+offset, bsize);
-	offset+= bsize;
+	memcpy(&IP_address.s_addr, buf, sizeof IP_address.s_addr);
+	offset+= sizeof IP_address.s_addr;
+	memcpy(&classification, buf+offset, sizeof classification);
+	offset+= sizeof classification;
+	memcpy(&isHostile, buf+offset, sizeof isHostile);
+	offset+= sizeof isHostile;
+	memcpy(&needs_classification_update, buf+offset, sizeof needs_classification_update);
+	offset+= sizeof needs_classification_update;
+	memcpy(&needs_feature_update, buf+offset, sizeof needs_feature_update);
+	offset+= sizeof needs_feature_update;
+	memcpy(&flaggedByAlarm, buf+offset, sizeof flaggedByAlarm);
+	offset+= sizeof flaggedByAlarm;
+	memcpy(&isLive, buf+offset, sizeof isLive);
+	offset+= sizeof isLive;
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer

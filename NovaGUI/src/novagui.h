@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Header file for the main NovaGUI component
@@ -52,11 +52,12 @@ using boost::property_tree::ptree;
 /*********************************************************************
  - Structs and Tables for quick item access through pointers -
 **********************************************************************/
+#define INHERITED_MAX 8
 
 enum profileType { static_IP = 0, staticDHCP = 1, randomDHCP = 2, Doppelganger = 3};
 
 enum profileIndex { TYPE = 0, TCP_ACTION = 1, UDP_ACTION = 2, ICMP_ACTION = 3,
-	PERSONALITY = 4, ETHERNET = 5, UPTIME = 6, UPTIME_RANGE = 7, DROP_RATE = 8};
+	PERSONALITY = 4, ETHERNET = 5, UPTIME = 6, DROP_RATE = 7};
 
 //used to maintain information on imported scripts
 struct script
@@ -73,7 +74,6 @@ typedef google::dense_hash_map<string, script, tr1::hash<string>, eqstr > Script
 struct port
 {
 	QTreeWidgetItem * item;
-	QTreeWidgetItem * portItem;
 	string portName;
 	string portNum;
 	string type;
@@ -121,7 +121,7 @@ struct profile
 	string uptimeRange;
 	string dropRate;
 	profileType type;
-	bool inherited[9];
+	bool inherited[INHERITED_MAX];
 	vector<pair<string, bool> > ports;
 	string parentProfile;
 	ptree tree;
@@ -265,6 +265,7 @@ public:
     void saveAll();
     //Writes the current configuration to honeyd configs
     void writeHoneyd(); //TODO
+    string profileToString(profile* p);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);

@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
@@ -42,6 +42,9 @@ bool useTerminals = true;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 
+
+string doppelgangerPath;
+string haystackPath;
 
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
@@ -184,6 +187,14 @@ NovaGUI::NovaGUI(QWidget *parent)
 		sclose(CE_InSock);
 		exit(1);
 	}
+
+
+	string input = homePath + "/Config/NOVAConfig.txt";
+
+	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
+	NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
+	doppelgangerPath = NovaConfig->options["DM_HONEYD_CONFIG"].data;
+	haystackPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
 
 
 	//Sets initial view
@@ -442,8 +453,145 @@ void NovaGUI::saveAll()
 //TODO need to take current XML files and write them as honeyd configuration, called in startNova()
 void NovaGUI::writeHoneyd()
 {
+	stringstream out;
+	stringstream doppelOut;
 
+	vector<string> profilesParsed;
+
+	for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+	{
+		if (!it->second.parentProfile.compare(""))
+		{
+			string pString = profileToString(&it->second);
+			out << pString;
+			doppelOut << pString;
+			profilesParsed.push_back(it->first);
+		}
+	}
+
+	while (profilesParsed.size() < profiles.size())
+	{
+		for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+		{
+			bool selfMatched = false;
+			bool parentFound = false;
+			for (uint i = 0; i < profilesParsed.size(); i++)
+			{
+				if(!it->second.parentProfile.compare(profilesParsed[i]))
+				{
+					parentFound = true;
+					continue;
+				}
+				if (!it->first.compare(profilesParsed[i]))
+				{
+					selfMatched = true;
+					break;
+				}
+			}
+
+			if(!selfMatched && parentFound)
+			{
+				string pString = profileToString(&it->second);
+				out << pString;
+				doppelOut << pString;
+				profilesParsed.push_back(it->first);
+
+			}
+		}
+	}
+
+	// Start node section
+	out << endl << endl;
+	for (NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+		if (!it->second.enabled)
+		{
+			continue;
+		}
+
+		switch (profiles[it->second.pfile].type)
+		{
+			case static_IP:
+				out << "bind " << it->second.IP << " " << it->second.pfile << endl;
+				break;
+			case staticDHCP:
+				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet " << it->second.MAC << endl;
+				break;
+			case randomDHCP:
+				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
+				break;
+			case Doppelganger:
+				doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
+				break;
+		}
+	}
+
+	ofstream outFile(haystackPath.data());
+	cout << "Saving to " << haystackPath.data() << endl;
+	outFile << out.str() << endl;
+	outFile.close();
+
+	cout << out.str() << endl;
+
+	ofstream doppelOutFile(doppelgangerPath.data());
+	doppelOutFile << doppelOut.str() << endl;
+	doppelOutFile.close();
 }
+
+string NovaGUI::profileToString(profile* p)
+{
+	stringstream out;
+
+	if (!p->parentProfile.compare("default") || !p->parentProfile.compare(""))
+		out << "create " << p->name << endl;
+	else
+		out << "clone " << p->parentProfile << " " << p->name << endl;
+
+	out << "set " << p->name  << " default tcp action " << p->tcpAction << endl;
+	out << "set " << p->name  << " default udp action " << p->udpAction << endl;
+	out << "set " << p->name  << " default icmp action " << p->icmpAction << endl;
+
+	if (p->personality.compare(""))
+		out << "set " << p->name << " personality \"" << p->personality << '"' << endl;
+
+	if (p->ethernet.compare(""))
+		out << "set " << p->name << " ethernet \"" << p->ethernet << '"' << endl;
+
+	if (p->uptime.compare(""))
+		out << "set " << p->name << " uptime " << p->uptime << endl;
+
+	if (p->dropRate.compare(""))
+		out << "set " << p->name << " droprate in " << p->dropRate << endl;
+
+	for (uint i = 0; i < p->ports.size(); i++)
+	{
+		// Only include non-inherited ports
+		if (!p->ports[i].second)
+		{
+			out << "add " << p->name;
+			if(!ports[p->ports[i].first].type.compare("TCP"))
+				out << " tcp port ";
+			else
+				out << " udp port ";
+			out << ports[p->ports[i].first].portNum << " ";
+
+			if (!(ports[p->ports[i].first].behavior.compare("script")))
+			{
+				string scriptName = ports[p->ports[i].first].scriptName;
+
+				out << '"' << scripts[scriptName].path << '"'<< endl;
+			}
+			else
+			{
+				out << ports[p->ports[i].first].behavior << endl;
+			}
+		}
+	}
+
+	out << endl;
+	return out.str();
+}
+
 
 /************************************************
  * Load Honeyd XML Configuration Functions
@@ -912,7 +1060,7 @@ void NovaGUI::loadProfiles()
 				p.name = v.second.get<std::string>("name");
 				p.ports.clear();
 				p.type = (profileType)v.second.get<int>("type");
-				for(uint i = 0; i < 9; i++)
+				for(uint i = 0; i < INHERITED_MAX; i++)
 				{
 					p.inherited[i] = false;
 				}
@@ -1012,7 +1160,6 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 			{
 				p->uptime = v.second.data();
 				p->inherited[UPTIME] = false;
-				p->inherited[UPTIME_RANGE] = false;
 				continue;
 			}
 			prefix = "uptimeRange";
@@ -1071,10 +1218,28 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 						}
 					}
 					//Add specified port
-					pair<string, bool> portpair;
-					portpair.first = prt->portName;
-					portpair.second = false;
-					p->ports.push_back(portpair);
+					pair<string, bool> portPair;
+					portPair.first = prt->portName;
+					portPair.second = false;
+					if(!p->ports.size())
+						p->ports.push_back(portPair);
+					else
+					{
+						uint i = 0;
+						for(i = 0; i < p->ports.size(); i++)
+						{
+							port * temp = &ports[p->ports[i].first];
+							if((atoi(temp->portNum.c_str())) < (atoi(prt->portNum.c_str())))
+							{
+								continue;
+							}
+							break;
+						}
+						if(i < p->ports.size())
+							p->ports.insert(p->ports.begin()+i, portPair);
+						else
+							p->ports.push_back(portPair);
+					}
 				}
 				continue;
 			}
@@ -1112,7 +1277,7 @@ void NovaGUI::loadSubProfiles(string parent)
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
 
-			for(uint i = 0; i < 9; i++)
+			for(uint i = 0; i < INHERITED_MAX; i++)
 			{
 				prof.inherited[i] = true;
 			}
@@ -1773,6 +1938,7 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
+	writeHoneyd();
 	startNova();
 }
 void NovaGUI::on_stopButton_clicked()
@@ -2042,6 +2208,7 @@ void closeNova()
 
 void startNova()
 {
+
 	string homePath = GetHomePath();
 	string input = homePath + "/Config/NOVAConfig.txt";
 

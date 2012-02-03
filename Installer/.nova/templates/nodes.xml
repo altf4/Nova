@@ -4,7 +4,7 @@
 		<subnets>
 			<interface>
 				<name>eth0</name>
-				<IP>192.168.3.113</IP>
+				<IP>192.168.10.113</IP>
 				<mask>255.255.255.0</mask>
 				<enabled>true</enabled>
 			</interface>
@@ -18,7 +18,7 @@
 		<nodes>
 			<node>
 				<interface>lo</interface>
-				<IP>127.10.10.1</IP>
+				<IP>10.0.0.1</IP>
 				<enabled>true</enabled>
 				<profile>
 					<name>Doppelganger</name>
@@ -26,7 +26,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.10</IP>
+				<IP>192.168.10.10</IP>
 				<MAC>00:1d:090f:88:1f</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -35,7 +35,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.11</IP>
+				<IP>192.168.10.11</IP>
 				<MAC>00:23:ae:70:93:8c</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -44,7 +44,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.12</IP>
+				<IP>192.168.10.12</IP>
 				<MAC>00:1c:23:84:ea:66</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -53,7 +53,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.13</IP>
+				<IP>192.168.10.13</IP>
 				<MAC>00:13:72:ba:72:4d</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -62,7 +62,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.14</IP>
+				<IP>192.168.10.14</IP>
 				<MAC>00:1d:09:36:65:37</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -71,7 +71,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.15</IP>
+				<IP>192.168.10.15</IP>
 				<MAC>00:1c:23:99:e2:22</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -80,7 +80,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.16</IP>
+				<IP>192.168.10.16</IP>
 				<MAC>00:23:ae:e4:db:42</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -89,7 +89,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.17</IP>
+				<IP>192.168.10.17</IP>
 				<MAC>00:1e:c9:e9:35:6a</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -98,7 +98,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.18</IP>
+				<IP>192.168.10.18</IP>
 				<MAC>00:16:f0:f8:ad:8f</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -107,7 +107,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.19</IP>
+				<IP>192.168.10.19</IP>
 				<MAC>00:19:b90e:13:35</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -116,7 +116,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.20</IP>
+				<IP>192.168.10.20</IP>
 				<MAC>00:1a:a0:2a:b9:67</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -125,7 +125,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.21</IP>
+				<IP>192.168.10.21</IP>
 				<MAC>00:25:64:38:47:97</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -134,7 +134,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.22</IP>
+				<IP>192.168.10.22</IP>
 				<MAC>00:15:c5:bb:a9:a6</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -143,7 +143,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.23</IP>
+				<IP>192.168.10.23</IP>
 				<MAC>00:16:f0:ef:ed:bd</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -152,7 +152,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.24</IP>
+				<IP>192.168.10.24</IP>
 				<MAC>00:11:43:ad:d2:4a</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -161,7 +161,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.25</IP>
+				<IP>192.168.10.25</IP>
 				<MAC>00:21:70:84:ad:bc</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -170,7 +170,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.26</IP>
+				<IP>192.168.10.26</IP>
 				<MAC>00:23:ae:5b:8e:75</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -179,7 +179,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.27</IP>
+				<IP>192.168.10.27</IP>
 				<MAC>00:12:3f:f0:b5:2d</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -188,7 +188,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.28</IP>
+				<IP>192.168.10.28</IP>
 				<MAC>00:22:19:93:36:e2</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -197,7 +197,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.29</IP>
+				<IP>192.168.10.29</IP>
 				<MAC>00:23:ae:19:2b:96</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -206,7 +206,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.30</IP>
+				<IP>192.168.10.30</IP>
 				<MAC>00:1e:c9:21:33:c9</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -215,7 +215,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.31</IP>
+				<IP>192.168.10.31</IP>
 				<MAC>00:26:b9:6d:9c:46</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -224,7 +224,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.32</IP>
+				<IP>192.168.10.32</IP>
 				<MAC>00:11:43:13:01:cb</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -233,7 +233,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.33</IP>
+				<IP>192.168.10.33</IP>
 				<MAC>00:25:64:aa:05:60</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -242,7 +242,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.34</IP>
+				<IP>192.168.10.34</IP>
 				<MAC>00:1e:4f:dd:d4:0c</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -251,7 +251,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.35</IP>
+				<IP>192.168.10.35</IP>
 				<MAC>00:21:9b:d8:cc:86</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -260,7 +260,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.36</IP>
+				<IP>192.168.10.36</IP>
 				<MAC>00:1c:23:17:eb:d8</MAC>
 				<enabled>true</enabled>
 				<profile>
@@ -269,7 +269,7 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.3.37</IP>
+				<IP>192.168.10.37</IP>
 				<MAC>00:1e:4f:49:8c:e9</MAC>
 				<enabled>true</enabled>
 				<profile>
