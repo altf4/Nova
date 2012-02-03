@@ -268,7 +268,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 void NovaGUI::closeEvent(QCloseEvent * e)
 {
 	e = e;
-	emit on_actionStopNova_triggered();
+	stopNova();
 }
 
 /************************************************
@@ -1790,7 +1790,7 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	on_actionStopNova_triggered();
+	stopNova();
 	exit(1);
 }
 

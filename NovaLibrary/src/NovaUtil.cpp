@@ -311,35 +311,20 @@ trainingSuspectMap* ReadClassificationDb(string inputFile)
 void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* headerMap)
 {
 	trainingDumpMap* trainingTable = ReadEngineDumpFile(inputFile);
+	trainingSuspectMap* db = ReadClassificationDb(outputFile);
 
-	string line;
-	bool getUID = true;
-	int uid, max = 0;
-	ifstream stream(outputFile.data());
-	if (stream.is_open())
+	int max = 0, uid = 0;
+	for (trainingSuspectMap::iterator it = db->begin(); it != db->end(); it++)
 	{
-		while (stream.good() && getline(stream,line))
-		{
-			if (line.length() > 0)
-			{
-				if (getUID)
-					uid = atoi(line.substr(0,line.find_first_of(' ')).c_str());
-				getUID = false;
-			}
-			else
-			{
-				getUID = true;
-			}
+		uid = atoi(it->first.c_str());
+		cout << "uid is " << uid << endl;
 
-			if (uid > max)
-				max = uid;
-		}
+		if (uid > max)
+			max = uid;
 	}
-	stream.close();
-
 
 	uid = max + 1;
-	ofstream out(outputFile.data());
+	ofstream out(outputFile.data(), ios::app);
 	for (trainingDumpMap::iterator ipIt = trainingTable->begin(); ipIt != trainingTable->end(); ipIt++)
 	{
 		// TODO: make sure the input had all the IPs we're checking so this line doesn't make googlehashmap explode on error
@@ -347,11 +332,11 @@ void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* he
 
 		if (header->isIncluded)
 		{
-			out << endl << 	uid << " " << header->isHostile << " \"" << header->description << "\"" << endl;
+			out << uid << " " << header->isHostile << " \"" << header->description << "\"" << endl;
 			for (vector<string>::iterator i = ipIt->second->begin(); i != ipIt->second->end(); i++)
-			{
 				out << *i << endl;
-			}
+			out << endl;
+
 			uid++;
 		}
 	}

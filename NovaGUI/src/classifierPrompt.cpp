@@ -17,7 +17,7 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 	for (trainingDumpMap::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
 	{
 		(*suspects)[it->first] = new trainingSuspect();
-		(*suspects)[it->first]->isIncluded = true;
+		(*suspects)[it->first]->isIncluded = false;
 		(*suspects)[it->first]->isHostile = false;
 		(*suspects)[it->first]->uid = it->first;
 		(*suspects)[it->first]->description = "Description for " + it->first;
