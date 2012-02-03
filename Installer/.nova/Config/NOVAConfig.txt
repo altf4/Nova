@@ -85,6 +85,18 @@ CLASSIFICATION_TIMEOUT 3
 #IS_TRAINING 0
 IS_TRAINING 0
 
+
+############################################
+# TRAINING_CAP_FOLDER #
+############################################
+# 
+# Folder where classification engine training
+# capture files will be stored.
+# 
+# EXAMPLE
+# TRAINING_CAP_FOLDER
+TRAINING_CAP_FOLDER Data 
+
 ############################################
 # CLASSIFICATION_THRESHOLD #
 ############################################
@@ -254,4 +266,6 @@ SA_SLEEP_DURATION 0.5
 #	1: Enabled
 #
 ENABLED_FEATURES 111111111
+
+
 

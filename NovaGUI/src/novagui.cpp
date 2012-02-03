@@ -453,7 +453,6 @@ void NovaGUI::saveAll()
 }
 
 //Writes the current configuration to honeyd configs
-//TODO need to take current XML files and write them as honeyd configuration, called in startNova()
 void NovaGUI::writeHoneyd()
 {
 	stringstream out;
@@ -1942,7 +1941,10 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
-	writeHoneyd();
+	// TODO: Put this back? It was really annoying if you had an existing
+	// haystack.config you wanted to use, kept rewriting it on start.
+	// Commented for now until the Node setup works in the GUI.
+	//writeHoneyd();
 	startNova();
 }
 void NovaGUI::on_stopButton_clicked()
