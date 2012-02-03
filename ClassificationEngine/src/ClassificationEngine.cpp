@@ -279,7 +279,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			{
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_wrlock(&lock);
-				it->second->CalculateFeatures(isTraining, featureMask);
+				it->second->CalculateFeatures(featureMask);
 				pthread_rwlock_unlock(&lock);
 				pthread_rwlock_rdlock(&lock);
 			}
@@ -333,18 +333,20 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 			{
 				if(it->second->needs_feature_update)
 				{
-					it->second->CalculateFeatures(isTraining, featureMask);
+					it->second->CalculateFeatures(featureMask);
 					if(it->second->annPoint == NULL)
 					{
 						it->second->annPoint = annAllocPt(DIM);
 					}
+
+					myfile << string(inet_ntoa(it->second->IP_address)) << " ";
+
 					for(int j=0; j < DIM; j++)
 					{
 						it->second->annPoint[j] = it->second->features.features[j];
 						myfile << it->second->annPoint[j] << " ";
 					}
 					it->second->needs_feature_update = false;
-					myfile << it->second->classification;
 					myfile << "\n";
 					cout << it->second->ToString(featureEnabled);
 					SendToUI(it->second);
@@ -362,7 +364,6 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	syslog(SYSL_ERR, "Line: %d Training thread ended. Shouldn't get here!!!", __LINE__);
 	return NULL;
 }
-
 
 void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 {

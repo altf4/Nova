@@ -235,4 +235,144 @@ int GetMaskBits(in_addr_t mask)
 	return i;
 }
 
+trainingDumpMap* ReadEngineDumpFile(string inputFile)
+{
+	trainingDumpMap* trainingTable = new trainingDumpMap();
+	trainingTable->set_empty_key("");
+
+	ifstream dataFile(inputFile.data());
+	string line, ip, data;
+
+	if (dataFile.is_open())
+	{
+		while (dataFile.good() && getline(dataFile,line))
+		{
+			ip = line.substr(0,line.find_first_of(' '));
+			data = line.substr(line.find_first_of(' ') + 1, string::npos);
+			data = "\t" + data;
+
+			(*trainingTable)[ip] = new vector<string>();
+			(*trainingTable)[ip]->push_back(data);
+		}
+	}
+	dataFile.close();
+
+	return trainingTable;
+}
+
+trainingSuspectMap* ReadClassificationDb(string inputFile)
+{
+	trainingSuspectMap* suspects = new trainingSuspectMap();
+	suspects->set_empty_key("");
+
+	string line;
+	bool getHeader = true;
+
+	trainingSuspect* suspect = new trainingSuspect();
+	suspect->points = new vector<string>();
+
+	ifstream stream(inputFile.data());
+	if (stream.is_open())
+	{
+		while (stream.good() && getline(stream,line))
+		{
+			if (line.length() > 0)
+			{
+				if (getHeader)
+				{
+					suspect->uid = line.substr(0,line.find_first_of(' '));
+					suspect->isHostile = atoi(line.substr(line.find_first_of(' ') + 1, 1).c_str());
+					suspect->description = line.substr(line.find_first_of('"'), line.length());
+					getHeader = false;
+				}
+				else {
+					suspect->points->push_back(line);
+				}
+			}
+			else
+			{
+				if (!getHeader)
+				{
+					(*suspects)[suspect->uid] = suspect;
+					suspect = new trainingSuspect();
+					suspect->points = new vector<string>();
+					getHeader = true;
+				}
+			}
+		}
+	}
+	stream.close();
+
+	return suspects;
+}
+
+void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* headerMap)
+{
+	trainingDumpMap* trainingTable = ReadEngineDumpFile(inputFile);
+
+	string line;
+	bool getUID = true;
+	int uid, max = 0;
+	ifstream stream(outputFile.data());
+	if (stream.is_open())
+	{
+		while (stream.good() && getline(stream,line))
+		{
+			if (line.length() > 0)
+			{
+				if (getUID)
+					uid = atoi(line.substr(0,line.find_first_of(' ')).c_str());
+				getUID = false;
+			}
+			else
+			{
+				getUID = true;
+			}
+
+			if (uid > max)
+				max = uid;
+		}
+	}
+	stream.close();
+
+
+	uid = max + 1;
+	ofstream out(outputFile.data());
+	for (trainingDumpMap::iterator ipIt = trainingTable->begin(); ipIt != trainingTable->end(); ipIt++)
+	{
+		// TODO: make sure the input had all the IPs we're checking so this line doesn't make googlehashmap explode on error
+		trainingSuspect* header = (*headerMap)[ipIt->first];
+
+		if (header->isIncluded)
+		{
+			out << endl << 	uid << " " << header->isHostile << " \"" << header->description << "\"" << endl;
+			for (vector<string>::iterator i = ipIt->second->begin(); i != ipIt->second->end(); i++)
+			{
+				out << *i << endl;
+			}
+			uid++;
+		}
+	}
+
+	out.close();
+}
+
+string MakeCeFileFromDb(trainingSuspectMap& db)
+{
+	stringstream ss;
+
+	for (trainingSuspectMap::iterator it = db.begin(); it != db.end(); it++)
+	{
+		if (it->second->isIncluded)
+		{
+			for (uint i = 0; i < it->second->points->size(); i++)
+			{
+				ss << it->second->points->at(i).substr(1, string::npos) << " " << it->second->isHostile << endl;
+			}
+		}
+	}
+
+	return ss.str();
+}
+
 }

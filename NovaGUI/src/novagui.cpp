@@ -16,6 +16,7 @@
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
 //============================================================================
 #include "novagui.h"
+#include "classifierPrompt.h"
 
 
 using namespace std;
@@ -41,9 +42,10 @@ bool useTerminals = true;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 
-
+// Paths extracted from the config file
 string doppelgangerPath;
 string haystackPath;
+string trainingDataPath;
 
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
@@ -192,8 +194,10 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig((char*)input.c_str(), homePath, __FILE__);
+
 	doppelgangerPath = NovaConfig->options["DM_HONEYD_CONFIG"].data;
 	haystackPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
+	trainingDataPath = NovaConfig->options["DATAFILE"].data;
 
 
 	//Sets initial view
@@ -1820,6 +1824,52 @@ void NovaGUI::on_actionHide_Suspect_triggered()
 void NovaGUI::on_actionSave_Suspects_triggered()
 {
 	saveSuspects();
+}
+
+void NovaGUI::on_actionMakeDataFile_triggered()
+{
+	 QString data = QFileDialog::getOpenFileName(this,
+			 tr("File to select classifications from"), QDir::currentPath(), tr("NOVA Classification Database (*.db)"));
+
+	if (data.isNull())
+		return;
+
+	trainingSuspectMap* map = ReadClassificationDb(data.toStdString());
+	classifierPrompt* classifier = new classifierPrompt(map);
+
+	if (classifier->exec() == QDialog::Rejected)
+		return;
+
+	string dataFileContent = MakeCeFileFromDb(*map);
+
+	ofstream out (trainingDataPath.data());
+	out << dataFileContent;
+	out.close();
+}
+
+void NovaGUI::on_actionTrainingData_triggered()
+{
+	 QString data = QFileDialog::getOpenFileName(this,
+			 tr("Classification Engine Data Dump"), QDir::currentPath(), tr("NOVA Classification Dump (*.dump)"));
+
+	if (data.isNull())
+		return;
+
+	trainingDumpMap* trainingDump = ReadEngineDumpFile(data.toStdString());
+	classifierPrompt* classifier = new classifierPrompt(trainingDump);
+
+	if (classifier->exec() == QDialog::Rejected)
+		return;
+
+	trainingSuspectMap* headerMap = classifier->getStateData();
+
+	QString outputFile = QFileDialog::getSaveFileName(this,
+			tr("Classification Database File"), QDir::currentPath(), tr("NOVA Classification Database (*.db)"));
+
+	if (outputFile.isNull())
+		return;
+
+	MergeDumpIntoDb(data.toStdString(), outputFile.toStdString(), headerMap);
 }
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()

@@ -286,6 +286,9 @@ private slots:
 	void on_actionHide_Suspect_triggered();
 	void on_actionHelp_2_triggered();
 
+	void on_actionTrainingData_triggered();
+	void on_actionMakeDataFile_triggered();
+
 	//Global Widgets
 	void on_mainButton_clicked();
 	void on_suspectButton_clicked();

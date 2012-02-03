@@ -41,6 +41,7 @@
 #include <netinet/if_ether.h>
 #include <google/dense_hash_map>
 #include <syslog.h>
+#include <string>
 
 #include "GUIMsg.h"
 #include "Point.h"
@@ -196,6 +197,22 @@ struct Session
 ///The Value is a vector of IP headers
 typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr > TCPSessionHashTable;
 
+// Header for training data
+struct _trainingSuspect
+{
+	bool isHostile;
+	bool isIncluded;
+	string uid;
+	string description;
+	vector<string>* points;
+};
+
+typedef struct _trainingSuspect trainingSuspect;
+
+typedef google::dense_hash_map<string, trainingSuspect*, tr1::hash<string>, eqstr > trainingSuspectMap;
+typedef google::dense_hash_map<string, vector<string>*, tr1::hash<string>, eqstr > trainingDumpMap;
+
+
 /*****************************************************************************/
 /** NovaUtil namespace is ONLY for functions repeated in multiple processes **/
 /** and that don't fit into a category large enough to warrant a new class ***/
@@ -233,6 +250,18 @@ uint GetSerializedAddr(u_char * buf);
 
 // Returns the number of bits used in the mask when given in in_addr_t form
 int GetMaskBits(in_addr_t range);
+
+// Convert CE dump to Training DB format and append it
+void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* headerMap);
+
+// Parse a CE dump file
+trainingDumpMap* ReadEngineDumpFile(string inputFile);
+
+// Parse a Training DB file
+trainingSuspectMap* ReadClassificationDb(string inputFile);
+
+// Create a CE data file from a subset of the Training DB file
+string MakeCeFileFromDb(trainingSuspectMap& db);
 
 }
 

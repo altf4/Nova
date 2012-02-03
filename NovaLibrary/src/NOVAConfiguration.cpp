@@ -466,10 +466,7 @@ void NOVAConfiguration::LoadConfig(char* configFilePath, string homeNovaPath, st
 	}
 	else
 	{
-		// TODO: Change this to use the logger. Need to figure out the home path
-		// to get the logger set up, so putting this off until the that's moved to a utility class.
 		syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__);
-		//return 0;
 	}
 	closelog();
 }
