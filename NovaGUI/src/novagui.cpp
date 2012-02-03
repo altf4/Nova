@@ -1672,6 +1672,10 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 	if (classifier->exec() == QDialog::Rejected)
 		return;
 
+	string dataFileContent = MakeCeFileFromDb(*map);
+
+	cout << dataFileContent << endl;
+
 }
 
 void NovaGUI::on_actionTrainingData_triggered()

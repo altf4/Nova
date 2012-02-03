@@ -276,7 +276,6 @@ trainingSuspectMap* ReadClassificationDb(string inputFile)
 	{
 		while (stream.good() && getline(stream,line))
 		{
-			cout << "Parsing line " << line << endl;
 			if (line.length() > 0)
 			{
 				if (getHeader)
@@ -284,8 +283,6 @@ trainingSuspectMap* ReadClassificationDb(string inputFile)
 					suspect->uid = line.substr(0,line.find_first_of(' '));
 					suspect->isHostile = atoi(line.substr(line.find_first_of(' ') + 1, 1).c_str());
 					suspect->description = line.substr(line.find_first_of('"'), line.length());
-
-					cout << suspect->uid << " " << suspect->isHostile << " " << suspect->description << endl;
 					getHeader = false;
 				}
 				else {
@@ -358,6 +355,24 @@ void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* he
 	}
 
 	out.close();
+}
+
+string MakeCeFileFromDb(trainingSuspectMap& db)
+{
+	stringstream ss;
+
+	for (trainingSuspectMap::iterator it = db.begin(); it != db.end(); it++)
+	{
+		if (it->second->isIncluded)
+		{
+			for (uint i = 0; i < it->second->points->size(); i++)
+			{
+				ss << it->second->points->at(i) << " " << it->second->isHostile << endl;
+			}
+		}
+	}
+
+	return ss.str();
 }
 
 }
