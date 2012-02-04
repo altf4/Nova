@@ -31,6 +31,7 @@ nodePopup * nodewindow;
 NovaGUI * mainwindow;
 QMenu * portMenu;
 QMenu * profileTreeMenu;
+QMenu * nodeTreeMenu;
 
 //flag to avoid GUI signal conflicts
 bool loadingItems, editingItems = false;
@@ -46,6 +47,7 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 {
 	portMenu = new QMenu();
 	profileTreeMenu = new QMenu();
+	nodeTreeMenu = new QMenu();
 
 	//store current directory / base path for Nova
 	homePath = home;
@@ -113,8 +115,7 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 		QPoint globalPos = event->globalPos();
 		portMenu->popup(globalPos);
 	}
-
-	if (ui.profileTreeWidget->hasFocus() || ui.profileTreeWidget->underMouse())
+	else if (ui.profileTreeWidget->hasFocus() || ui.profileTreeWidget->underMouse())
 	{
 		profileTreeMenu->clear();
 		profileTreeMenu->addAction(ui.actionProfileAdd);
@@ -125,6 +126,21 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 
 		QPoint globalPos = event->globalPos();
 		profileTreeMenu->popup(globalPos);
+	}
+	else if (ui.nodeTreeWidget|| ui.nodeTreeWidget->underMouse())
+	{
+		nodeTreeMenu->clear();
+		nodeTreeMenu->addAction(ui.actionNodeEdit);
+		nodeTreeMenu->addSeparator();
+		nodeTreeMenu->addAction(ui.actionNodeAdd);
+		nodeTreeMenu->addAction(ui.actionNodeClone);
+		nodeTreeMenu->addAction(ui.actionNodeDelete);
+		nodeTreeMenu->addSeparator();
+		nodeTreeMenu->addAction(ui.actionNodeEnable);
+		nodeTreeMenu->addAction(ui.actionNodeDisable);
+
+		QPoint globalPos = event->globalPos();
+		nodeTreeMenu->popup(globalPos);
 	}
 }
 
@@ -3154,6 +3170,85 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 	}
 }
 
+
+
+// Right click menus for the Node tree
+void NovaConfig::on_actionNodeAdd_triggered()
+{
+
+}
+
+void NovaConfig::on_actionNodeDelete_triggered()
+{
+	if(subnets.size() || nodes.size())
+		deleteNodes();
+}
+
+void NovaConfig::on_actionNodeClone_triggered()
+{
+
+}
+
+void NovaConfig::on_actionNodeEdit_triggered()
+{
+
+}
+
+void NovaConfig::on_actionNodeEnable_triggered()
+{
+	if(selectedSubnet)
+	{
+		subnet * s = &subnets[currentSubnet];
+		for(uint i = 0; i < s->nodes.size(); i++)
+		{
+			nodes[s->nodes[i]].enabled = true;
+
+		}
+		s->enabled = true;
+	}
+	else
+	{
+		nodes[currentNode].enabled = true;
+	}
+
+	//Draw the nodes and restore selection
+	loadingItems = true;
+	loadAllNodes();
+	if(selectedSubnet)
+		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
+	else
+		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
+	loadingItems = false;
+}
+
+void NovaConfig::on_actionNodeDisable_triggered()
+{
+	if(selectedSubnet)
+	{
+		subnet * s = &subnets[currentSubnet];
+		for(uint i = 0; i < s->nodes.size(); i++)
+		{
+			nodes[s->nodes[i]].enabled = false;
+
+		}
+		s->enabled = false;
+	}
+	else
+	{
+		nodes[currentNode].enabled = false;
+	}
+
+	//Draw the nodes and restore selection
+	loadingItems = true;
+	loadAllNodes();
+	if(selectedSubnet)
+		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
+	else
+		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
+	loadingItems = false;
+}
+
+
 //Not currently used, will be implemented in the new GUI design TODO
 //Pops up the node edit window selecting the current node
 void NovaConfig::on_nodeEditButton_clicked()
@@ -3194,8 +3289,7 @@ void NovaConfig::on_nodeAddButton_clicked()
 //Calls the function(s) to remove the node(s)
 void NovaConfig::on_nodeDeleteButton_clicked()
 {
-	if(subnets.size() || nodes.size())
-		deleteNodes();
+	emit on_actionNodeDelete_triggered();
 }
 
 //Enables a node or a subnet in honeyd
@@ -3203,29 +3297,7 @@ void NovaConfig::on_nodeDeleteButton_clicked()
 //  loading from the file will need to recognize these
 void NovaConfig::on_nodeEnableButton_clicked()
 {
-	if(selectedSubnet)
-	{
-		subnet * s = &subnets[currentSubnet];
-		for(uint i = 0; i < s->nodes.size(); i++)
-		{
-			nodes[s->nodes[i]].enabled = true;
-
-		}
-		s->enabled = true;
-	}
-	else
-	{
-		nodes[currentNode].enabled = true;
-	}
-
-	//Draw the nodes and restore selection
-	loadingItems = true;
-	loadAllNodes();
-	if(selectedSubnet)
-		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
-	else
-		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
-	loadingItems = false;
+	emit on_actionNodeEnable_triggered();
 }
 
 //Disables a node or a subnet in honeyd
@@ -3233,29 +3305,7 @@ void NovaConfig::on_nodeEnableButton_clicked()
 //  loading from the file will need to recognize these
 void NovaConfig::on_nodeDisableButton_clicked()
 {
-	if(selectedSubnet)
-	{
-		subnet * s = &subnets[currentSubnet];
-		for(uint i = 0; i < s->nodes.size(); i++)
-		{
-			nodes[s->nodes[i]].enabled = false;
-
-		}
-		s->enabled = false;
-	}
-	else
-	{
-		nodes[currentNode].enabled = false;
-	}
-
-	//Draw the nodes and restore selection
-	loadingItems = true;
-	loadAllNodes();
-	if(selectedSubnet)
-		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
-	else
-		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
-	loadingItems = false;
+	emit on_actionNodeDisable_triggered();
 }
 
 void NovaConfig::on_setEthernetButton_clicked()

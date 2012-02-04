@@ -120,7 +120,7 @@
          <string/>
         </property>
         <property name="currentIndex">
-         <number>7</number>
+         <number>6</number>
         </property>
         <widget class="QWidget" name="generalPage">
          <layout class="QVBoxLayout" name="genVertBox">
@@ -1660,7 +1660,7 @@ p, li { white-space: pre-wrap; }
                 <enum>Qt::ClickFocus</enum>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="genTab">
                 <attribute name="title">
@@ -2678,6 +2678,54 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="toolTip">
     <string>Delete Profile</string>
+   </property>
+  </action>
+  <action name="actionNodeClone">
+   <property name="text">
+    <string>Clone Node</string>
+   </property>
+   <property name="toolTip">
+    <string>Clone Node</string>
+   </property>
+  </action>
+  <action name="actionNodeAdd">
+   <property name="text">
+    <string>Add Node</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Node</string>
+   </property>
+  </action>
+  <action name="actionNodeDelete">
+   <property name="text">
+    <string>Delete Node</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete Node</string>
+   </property>
+  </action>
+  <action name="actionNodeEnable">
+   <property name="text">
+    <string>Enable Node</string>
+   </property>
+   <property name="toolTip">
+    <string>Enable Node</string>
+   </property>
+  </action>
+  <action name="actionNodeDisable">
+   <property name="text">
+    <string>Disable Node</string>
+   </property>
+   <property name="toolTip">
+    <string>Disable Node</string>
+   </property>
+  </action>
+  <action name="actionNodeEdit">
+   <property name="text">
+    <string>Edit Node</string>
+   </property>
+   <property name="toolTip">
+    <string>Edit Node</string>
    </property>
   </action>
  </widget>

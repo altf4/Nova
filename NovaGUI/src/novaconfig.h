@@ -238,6 +238,16 @@ void on_actionProfileDelete_triggered();
 void on_actionProfileClone_triggered();
 
 
+// Node right click menu
+void on_actionNodeAdd_triggered();
+void on_actionNodeDelete_triggered();
+void on_actionNodeClone_triggered();
+void on_actionNodeEdit_triggered();
+void on_actionNodeEnable_triggered();
+void on_actionNodeDisable_triggered();
+
+
+
 private:
 	void setInputValidators();
     Ui::NovaConfigClass ui;

@@ -2239,7 +2239,7 @@ void startNova()
 	string input = homePath + "/Config/NOVAConfig.txt";
 
 	// Reload the configuration file
-	configuration.LoadConfig((char*)input.c_str(), homePath, __FILE__);
+	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
 
 	useTerminals = atoi(configuration.options["USE_TERMINALS"].data.c_str());
 	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
