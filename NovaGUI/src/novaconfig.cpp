@@ -566,27 +566,19 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 		loadingItems = true;
 		ui.portTreeWidget->setCurrentItem(item);
 		profile * p = &profiles[currentProfile];
-		string oldPort;
+		string oldPortName, oldPortNumber;
+		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
+
 		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
 		{
 			if(it->second.item == item)
-				oldPort = it->second.portName;
+			{
+				oldPortName = it->second.portName;
+				oldPortNumber = it->second.portNum;
+			}
+
 		}
-		for(uint i = 0; i < p->ports.size(); i++)
-		{
-			if(!p->ports[i].first.compare(oldPort))
-				p->ports.erase(p->ports.begin()+i);
-		}
 
-		TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
-		item->setText(1, qTypeBox->currentText());
-
-		TreeItemComboBox * qBehavBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 2);
-		item->setText(2, qBehavBox->currentText());
-
-		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
-
-		cout << "New: " << portName << " Old: " << oldPort << endl;
 		port prt;
 		if(ports.find(portName) == ports.end())
 		{
@@ -600,21 +592,53 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 		{
 			prt = ports[portName];
 		}
+
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
 			port * temp = &ports[p->ports[i].first];
 			if((!(temp->portNum.compare(prt.portNum))) && (!(temp->type.compare(prt.type))))
 			{
+				if (CHOICE_DEFAULT == mainwindow->prompter->DisplayPrompt(mainwindow->DELETE_DUP_PORT,
+						"This port is already assigned. If you continue, this assignment will be deleted. Are you sure you want to continue?"))
+				{
+					// User said okay
+					portName = "";
+				}
+				else
+				{
+					// User said cancel
+					item->setText(0, QString::fromStdString(string(oldPortNumber)));
+					loadingItems = false;
+					return;
+				}
+
 				syslog(SYSL_ERR, "File: %s Line: %d WARNING: Port number and protocol already used.", __FILE__, __LINE__);
 				portName = "";
 			}
 		}
 
+
+		uint i;
+		for(i = 0; i < p->ports.size(); i++)
+		{
+			if(!p->ports[i].first.compare(oldPortName))
+				p->ports.erase(p->ports.begin()+i);
+		}
+
+
+		TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
+		item->setText(1, qTypeBox->currentText());
+
+		TreeItemComboBox * qBehavBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 2);
+		item->setText(2, qBehavBox->currentText());
+
+		cout << "New: " << portName << " Old: " << oldPortName << endl;
+
 		if(portName.compare(""))
 		{
 			for(uint i = 0; i < p->ports.size(); i++)
 			{
-				if(!(p->ports[i].first.compare(oldPort)))
+				if(!(p->ports[i].first.compare(oldPortName)))
 				{
 					p->ports.erase(p->ports.begin()+i);
 					break;
@@ -645,7 +669,7 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 		{
 			for(uint i = 0; i < it->second.ports.size(); i++)
 			{
-				if(it->second.ports[i].second && !it->second.ports[i].first.compare(oldPort))
+				if(it->second.ports[i].second && !it->second.ports[i].first.compare(oldPortName))
 				{
 					if(portName.compare(""))
 					{

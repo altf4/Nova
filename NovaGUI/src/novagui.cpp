@@ -161,6 +161,10 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t->type = notifyActionPrompt;
 	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(*t);
 
+	t->descriptionUID = "Warning: duplicate port will be deleted if you proceed";
+	t->action = CHOICE_SHOW;
+	t->type = warningPreventablePrompt;
+	DELETE_DUP_PORT = prompter->RegisterDialog(*t);
 
 	loadAll();
 

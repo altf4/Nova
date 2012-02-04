@@ -202,7 +202,7 @@ public:
     DialogPrompter *prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
     messageHandle HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
-    messageHandle LAUNCH_TRAINING_MERGE;
+    messageHandle LAUNCH_TRAINING_MERGE, DELETE_DUP_PORT;
 
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();
