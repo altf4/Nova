@@ -2775,6 +2775,10 @@ void NovaConfig::setInputValidators()
 	ui.tcpTimeoutEdit->setValidator(uintValidator);
 	ui.tcpFrequencyEdit->setValidator(uintValidator);
 
+	// Profile page
+	ui.uptimeEdit->setValidator(uintValidator);
+	ui.uptimeRangeEdit->setValidator(uintValidator);
+
 	// Classification engine settings
 	ui.ceIntensityEdit->setValidator(uintValidator);
 	ui.ceFrequencyEdit->setValidator(uintValidator);
