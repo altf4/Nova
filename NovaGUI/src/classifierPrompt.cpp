@@ -8,6 +8,7 @@ classifierPrompt::classifierPrompt(QWidget *parent)
 
 classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
 {
+	parent = parent;
 	ui.setupUi(this);
 
 	allowDescriptionEdit = true;
@@ -30,6 +31,7 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 
 classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
 {
+	parent = parent;
 	ui.setupUi(this);
 	suspects = map;
 

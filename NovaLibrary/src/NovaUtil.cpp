@@ -247,7 +247,7 @@ trainingDumpMap* ParseEngineCaptureFile(string captureFile)
 	{
 		while (dataFile.good() && getline(dataFile,line))
 		{
-			int firstDelim = line.find_first_of(' ');
+			uint firstDelim = line.find_first_of(' ');
 
 			if (firstDelim == string::npos)
 			{
@@ -282,7 +282,7 @@ trainingSuspectMap* ParseTrainingDb(string dbPath)
 
 	string line;
 	bool getHeader = true;
-	int delimIndex;
+	uint delimIndex;
 
 	trainingSuspect* suspect = new trainingSuspect();
 	suspect->points = new vector<string>();
