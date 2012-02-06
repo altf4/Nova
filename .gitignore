@@ -67,7 +67,6 @@ NovaGUI/Makefile.Debug
 NovaGUI/Makefile.Release
 NovaGUI/NovaGUI
 NovaGUI/debug/
-NovaLibrary/Debug/src/
 
 # Installer files
 Installer/.nova/Data/*
