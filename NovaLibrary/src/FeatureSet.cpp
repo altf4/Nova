@@ -148,7 +148,7 @@ void FeatureSet::CalculateAll(uint32_t featuresEnabled)
 }
 
 
-void FeatureSet::Calculate(uint featureDimension)
+void FeatureSet::Calculate(uint32_t featureDimension)
 {
 	switch (featureDimension)
 	{
@@ -294,7 +294,7 @@ void FeatureSet::CalculateTimeInterval()
 void FeatureSet::UpdateEvidence(Packet packet)
 {
 	in_port_t dst_port;
-	uint packet_count;
+	uint32_t packet_count;
 	vector <int> IP_packet_sizes;
 	vector <time_t> packet_intervals;
 	struct ip *ip_hdr = &packet.ip_hdr;
@@ -351,7 +351,7 @@ void FeatureSet::UpdateEvidence(Packet packet)
 		portMax = portTable[dst_port].first;
 	}
 
-	for(uint i = 0; i < IP_packet_sizes.size(); i++)
+	for(uint32_t i = 0; i < IP_packet_sizes.size(); i++)
 	{
 		packTable[IP_packet_sizes[i]].first++;
 	}
@@ -359,7 +359,7 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	if(last_time != 0)
 		intervalTable[packet_intervals[0] - last_time].first++;
 
-	for(uint i = 1; i < packet_intervals.size(); i++)
+	for(uint32_t i = 1; i < packet_intervals.size(); i++)
 	{
 		intervalTable[packet_intervals[i] - packet_intervals[i-1]].first++;
 	}
@@ -435,15 +435,15 @@ void FeatureSet::UpdateFeatureData(bool include)
 }
 
 
-uint FeatureSet::SerializeFeatureSet(u_char * buf)
+uint32_t FeatureSet::SerializeFeatureSet(u_char * buf)
 {
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	//Clears a chunk of the buffer for the FeatureSet
 	bzero(buf, (sizeof features[0])*DIM);
 
 	//Copies the value and increases the offset
-	for(uint i = 0; i < DIM; i++)
+	for(uint32_t i = 0; i < DIM; i++)
 	{
 		memcpy(buf+offset, &features[i], sizeof features[i]);
 		offset+= sizeof features[i];
@@ -453,12 +453,12 @@ uint FeatureSet::SerializeFeatureSet(u_char * buf)
 }
 
 
-uint FeatureSet::DeserializeFeatureSet(u_char * buf)
+uint32_t FeatureSet::DeserializeFeatureSet(u_char * buf)
 {
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
-	for(uint i = 0; i < DIM; i++)
+	for(uint32_t i = 0; i < DIM; i++)
 	{
 		memcpy(&features[i], buf+offset, sizeof features[i]);
 		offset+= sizeof features[i];
@@ -468,11 +468,11 @@ uint FeatureSet::DeserializeFeatureSet(u_char * buf)
 }
 
 
-uint FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
+uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 {
-	uint offset = 0;
-	uint count = 0;
-	uint table_entries = 0;
+	uint32_t offset = 0;
+	uint32_t count = 0;
+	uint32_t table_entries = 0;
 
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
@@ -501,7 +501,7 @@ uint FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	offset += sizeof portMax;
 
 	//These tables all just place their key followed by the data
-	uint tempInt;
+	uint32_t tempInt;
 
 	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
 		if(it->second.first)
@@ -598,16 +598,16 @@ uint FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 }
 
 
-uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
+uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 {
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	//Bytes in a word, used for everything but port #'s
-	uint table_size = 0;
+	uint32_t table_size = 0;
 
 	//Temporary variables to store and track data during deserialization
-	uint temp = 0;
-	uint tempCount = 0;
+	uint32_t temp = 0;
+	uint32_t tempCount = 0;
 	in_port_t port = 0;
 
 	//Required, individual variables for calculation
@@ -642,7 +642,7 @@ uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	offset += sizeof table_size;
 
 	//Packet interval table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
@@ -656,7 +656,7 @@ uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	offset += sizeof table_size;
 
 	//Packet size table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
@@ -670,7 +670,7 @@ uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	offset += sizeof table_size;
 
 	//IP table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
@@ -684,7 +684,7 @@ uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	offset += sizeof table_size;
 
 	//Port table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&port, buf+offset, sizeof port);
 		offset += sizeof port;
@@ -698,11 +698,11 @@ uint FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 }
 
 
-uint FeatureSet::SerializeFeatureDataLocal(u_char *buf)
+uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 {
-	uint offset = 0;
-	uint count = 0;
-	uint table_entries = 0;
+	uint32_t offset = 0;
+	uint32_t count = 0;
+	uint32_t table_entries = 0;
 
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
@@ -727,7 +727,7 @@ uint FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 	offset += sizeof portMax;
 
 	//These tables all just place their key followed by the data
-	uint tempInt;
+	uint32_t tempInt;
 
 	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
 		if(it->second.first)
@@ -820,16 +820,16 @@ uint FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 }
 
 
-uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
+uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 {
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	//Bytes in a word, used for everything but port #'s
-	uint table_size = 0;
+	uint32_t table_size = 0;
 
 	//Temporary variables to store and track data during deserialization
-	uint temp = 0;
-	uint tempCount = 0;
+	uint32_t temp = 0;
+	uint32_t tempCount = 0;
 	in_port_t port = 0;
 
 	//Required, individual variables for calculation
@@ -864,7 +864,7 @@ uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 	offset += sizeof table_size;
 
 	//Packet interval table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
@@ -878,7 +878,7 @@ uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 	offset += sizeof table_size;
 
 	//Packet size table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
@@ -892,7 +892,7 @@ uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 	offset += sizeof table_size;
 
 	//IP table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
@@ -906,7 +906,7 @@ uint FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 	offset += sizeof table_size;
 
 	//Port table
-	for(uint i = 0; i < table_size;)
+	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&port, buf+offset, sizeof port);
 		offset += sizeof port;
