@@ -1902,7 +1902,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 	if (outputFile.isNull())
 		return;
 
-	if (!CaptureToTrainingDb(data.toStdString(), outputFile.toStdString(), headerMap))
+	if (!CaptureToTrainingDb(outputFile.toStdString(), headerMap))
 	{
 		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing the input files. Please see the logs for more details.");
 	}

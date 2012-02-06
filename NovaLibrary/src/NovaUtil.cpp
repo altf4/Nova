@@ -247,7 +247,7 @@ trainingDumpMap* ParseEngineCaptureFile(string captureFile)
 	{
 		while (dataFile.good() && getline(dataFile,line))
 		{
-			int firstDelim = line.find_first_of(' ');
+			uint firstDelim = line.find_first_of(' ');
 
 			if (firstDelim == string::npos)
 			{
@@ -282,7 +282,7 @@ trainingSuspectMap* ParseTrainingDb(string dbPath)
 
 	string line;
 	bool getHeader = true;
-	int delimIndex;
+	uint delimIndex;
 
 	trainingSuspect* suspect = new trainingSuspect();
 	suspect->points = new vector<string>();
@@ -343,19 +343,17 @@ trainingSuspectMap* ParseTrainingDb(string dbPath)
 	return suspects;
 }
 
-bool CaptureToTrainingDb(string captureFile, string dbFile, trainingSuspectMap* selectionOptions)
+bool CaptureToTrainingDb(string dbFile, trainingSuspectMap* entries)
 {
-	trainingDumpMap* trainingTable = ParseEngineCaptureFile(captureFile);
 	trainingSuspectMap* db = ParseTrainingDb(dbFile);
 
-	if (trainingTable == NULL || db == NULL)
+	if (db == NULL)
 		return false;
 
 	int max = 0, uid = 0;
 	for (trainingSuspectMap::iterator it = db->begin(); it != db->end(); it++)
 	{
 		uid = atoi(it->first.c_str());
-		cout << "uid is " << uid << endl;
 
 		if (uid > max)
 			max = uid;
@@ -363,15 +361,12 @@ bool CaptureToTrainingDb(string captureFile, string dbFile, trainingSuspectMap* 
 
 	uid = max + 1;
 	ofstream out(dbFile.data(), ios::app);
-	for (trainingDumpMap::iterator ipIt = trainingTable->begin(); ipIt != trainingTable->end(); ipIt++)
+	for (trainingSuspectMap::iterator header = entries->begin(); header != entries->end(); header++)
 	{
-		// TODO: make sure the input had all the IPs we're checking so this line doesn't make googlehashmap explode on error
-		trainingSuspect* header = (*selectionOptions)[ipIt->first];
-
-		if (header->isIncluded)
+		if (header->second->isIncluded)
 		{
-			out << uid << " " << header->isHostile << " \"" << header->description << "\"" << endl;
-			for (vector<string>::iterator i = ipIt->second->begin(); i != ipIt->second->end(); i++)
+			out << uid << " " << header->second->isHostile << " \"" << header->second->description << "\"" << endl;
+			for (vector<string>::iterator i = header->second->points->begin(); i != header->second->points->end(); i++)
 				out << *i << endl;
 			out << endl;
 

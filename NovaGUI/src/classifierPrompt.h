@@ -18,14 +18,22 @@ public:
 
     ~classifierPrompt();
 
+protected:
+    void contextMenuEvent(QContextMenuEvent * event);
+
 private slots:
 	void on_tableWidget_cellChanged(int row, int col);
 	void on_okayButton_clicked();
 	void on_cancelButton_clicked();
+	void on_actionCombineEntries_triggered();
 
 private:
     void updateRow(trainingSuspect* header, int row);
     void makeRow(trainingSuspect* header, int row);
+    void DisplaySuspectEntries();
+
+    QMenu * menu;
+    int groups;
 
     bool allowDescriptionEdit;
     bool updating;

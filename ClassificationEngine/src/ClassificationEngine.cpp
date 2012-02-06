@@ -370,7 +370,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 		}
 		else
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to open file", __LINE__);
+			syslog(SYSL_ERR, "Line: %d Unable to open file %s", __LINE__, trainingCapFile.data());
 		}
 		myfile.close();
 	}

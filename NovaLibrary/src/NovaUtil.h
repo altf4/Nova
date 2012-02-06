@@ -252,7 +252,7 @@ uint GetSerializedAddr(u_char * buf);
 int GetMaskBits(in_addr_t range);
 
 // Convert CE dump to Training DB format and append it
-bool CaptureToTrainingDb(string captureFile, string dbFile, trainingSuspectMap* selectionOptions);
+bool CaptureToTrainingDb(string dbFile, trainingSuspectMap* selectionOptions);
 
 // Parse a CE dump file
 trainingDumpMap* ParseEngineCaptureFile(string captureFile);

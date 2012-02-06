@@ -16,6 +16,9 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTableWidget" name="tableWidget">
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
      <property name="sortingEnabled">
       <bool>true</bool>
      </property>
@@ -93,6 +96,14 @@
     </layout>
    </item>
   </layout>
+  <action name="actionCombineEntries">
+   <property name="text">
+    <string>Combine Entries</string>
+   </property>
+   <property name="toolTip">
+    <string>Combine Entries</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
