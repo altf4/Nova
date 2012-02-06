@@ -10,6 +10,8 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 {
 	ui.setupUi(this);
 
+	allowDescriptionEdit = true;
+
 	suspects = new trainingSuspectMap();
 	suspects->set_empty_key("");
 
@@ -24,8 +26,6 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 
 		makeRow((*suspects)[it->first], row);
 	}
-
-	allowDescriptionEdit = true;
 }
 
 classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
@@ -33,14 +33,14 @@ classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
 	ui.setupUi(this);
 	suspects = map;
 
+	allowDescriptionEdit = false;
+
 	int row = 0;
 	for (trainingSuspectMap::iterator it = map->begin(); it != map->end(); it++)
 	{
 		makeRow((*suspects)[it->first], row);
 		row++;
 	}
-
-	allowDescriptionEdit = true;
 }
 
 void classifierPrompt::makeRow(trainingSuspect* header, int row)
@@ -59,9 +59,11 @@ void classifierPrompt::makeRow(trainingSuspect* header, int row)
 	ipItem->setFlags(ipItem->flags() &= ~Qt::ItemIsEditable);
 
 	QTableWidgetItem* descriptionItem = new QTableWidgetItem();
-	// TODO: Fix this
-	//if (!allowDescriptionEdit)
-	//	descriptionItem->setFlags(descriptionItem->flags() &= ~Qt::ItemIsEditable);
+
+	if (allowDescriptionEdit)
+		descriptionItem->setFlags(descriptionItem->flags() |= Qt::ItemIsEditable);
+	else
+		descriptionItem->setFlags(descriptionItem->flags() &= ~Qt::ItemIsEditable);
 
 
 	ui.tableWidget->setItem(row, 0, chkBoxItem);

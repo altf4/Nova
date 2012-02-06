@@ -1853,13 +1853,20 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 	if (data.isNull())
 		return;
 
-	trainingSuspectMap* map = ReadClassificationDb(data.toStdString());
+	trainingSuspectMap* map = ParseTrainingDb(data.toStdString());
+	if (map == NULL)
+	{
+		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
+		return;
+	}
+
+
 	classifierPrompt* classifier = new classifierPrompt(map);
 
 	if (classifier->exec() == QDialog::Rejected)
 		return;
 
-	string dataFileContent = MakeCeFileFromDb(*map);
+	string dataFileContent = MakaDataFile(*map);
 
 	ofstream out (trainingDataPath.data());
 	out << dataFileContent;
@@ -1874,7 +1881,14 @@ void NovaGUI::on_actionTrainingData_triggered()
 	if (data.isNull())
 		return;
 
-	trainingDumpMap* trainingDump = ReadEngineDumpFile(data.toStdString());
+	trainingDumpMap* trainingDump = ParseEngineCaptureFile(data.toStdString());
+
+	if (trainingDump == NULL)
+	{
+		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
+		return;
+	}
+
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 
 	if (classifier->exec() == QDialog::Rejected)
@@ -1888,7 +1902,10 @@ void NovaGUI::on_actionTrainingData_triggered()
 	if (outputFile.isNull())
 		return;
 
-	MergeDumpIntoDb(data.toStdString(), outputFile.toStdString(), headerMap);
+	if (!CaptureToTrainingDb(data.toStdString(), outputFile.toStdString(), headerMap))
+	{
+		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing the input files. Please see the logs for more details.");
+	}
 }
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()

@@ -235,20 +235,28 @@ int GetMaskBits(in_addr_t mask)
 	return i;
 }
 
-trainingDumpMap* ReadEngineDumpFile(string inputFile)
+trainingDumpMap* ParseEngineCaptureFile(string captureFile)
 {
 	trainingDumpMap* trainingTable = new trainingDumpMap();
 	trainingTable->set_empty_key("");
 
-	ifstream dataFile(inputFile.data());
+	ifstream dataFile(captureFile.data());
 	string line, ip, data;
 
 	if (dataFile.is_open())
 	{
 		while (dataFile.good() && getline(dataFile,line))
 		{
-			ip = line.substr(0,line.find_first_of(' '));
-			data = line.substr(line.find_first_of(' ') + 1, string::npos);
+			int firstDelim = line.find_first_of(' ');
+
+			if (firstDelim == string::npos)
+			{
+				syslog(SYSL_ERR, "Line: %d Error: Invalid or corrupt CE capture file.", __LINE__);
+				return NULL;
+			}
+
+			ip = line.substr(0,firstDelim);
+			data = line.substr(firstDelim + 1, string::npos);
 			data = "\t" + data;
 
 			if ((*trainingTable)[ip] == NULL)
@@ -257,23 +265,29 @@ trainingDumpMap* ReadEngineDumpFile(string inputFile)
 			(*trainingTable)[ip]->push_back(data);
 		}
 	}
+	else
+	{
+		syslog(SYSL_ERR, "Line: %d Error: unable to open CE capture file for reading.", __LINE__);
+		return NULL;
+	}
 	dataFile.close();
 
 	return trainingTable;
 }
 
-trainingSuspectMap* ReadClassificationDb(string inputFile)
+trainingSuspectMap* ParseTrainingDb(string dbPath)
 {
 	trainingSuspectMap* suspects = new trainingSuspectMap();
 	suspects->set_empty_key("");
 
 	string line;
 	bool getHeader = true;
+	int delimIndex;
 
 	trainingSuspect* suspect = new trainingSuspect();
 	suspect->points = new vector<string>();
 
-	ifstream stream(inputFile.data());
+	ifstream stream(dbPath.data());
 	if (stream.is_open())
 	{
 		while (stream.good() && getline(stream,line))
@@ -282,8 +296,24 @@ trainingSuspectMap* ReadClassificationDb(string inputFile)
 			{
 				if (getHeader)
 				{
-					suspect->uid = line.substr(0,line.find_first_of(' '));
-					suspect->isHostile = atoi(line.substr(line.find_first_of(' ') + 1, 1).c_str());
+					delimIndex = line.find_first_of(' ');
+
+					if (delimIndex == string::npos)
+					{
+						syslog(SYSL_ERR, "Line: %d Error: Invalid or corrupt DB training file", __LINE__);
+						return NULL;
+					}
+
+					suspect->uid = line.substr(0,delimIndex);
+					suspect->isHostile = atoi(line.substr(delimIndex + 1, 1).c_str());
+
+					delimIndex = line.find_first_of('"');
+					if (delimIndex == string::npos)
+					{
+						syslog(SYSL_ERR, "Line: %d Error: Invalid or corrupt DB training file", __LINE__);
+						return NULL;
+					}
+
 					suspect->description = line.substr(line.find_first_of('"'), line.length());
 					getHeader = false;
 				}
@@ -303,15 +333,23 @@ trainingSuspectMap* ReadClassificationDb(string inputFile)
 			}
 		}
 	}
+	else
+	{
+		syslog(SYSL_ERR, "Line: %d Error: unable to open training DB file for reading.", __LINE__);
+		return NULL;
+	}
 	stream.close();
 
 	return suspects;
 }
 
-void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* headerMap)
+bool CaptureToTrainingDb(string captureFile, string dbFile, trainingSuspectMap* selectionOptions)
 {
-	trainingDumpMap* trainingTable = ReadEngineDumpFile(inputFile);
-	trainingSuspectMap* db = ReadClassificationDb(outputFile);
+	trainingDumpMap* trainingTable = ParseEngineCaptureFile(captureFile);
+	trainingSuspectMap* db = ParseTrainingDb(dbFile);
+
+	if (trainingTable == NULL || db == NULL)
+		return false;
 
 	int max = 0, uid = 0;
 	for (trainingSuspectMap::iterator it = db->begin(); it != db->end(); it++)
@@ -324,11 +362,11 @@ void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* he
 	}
 
 	uid = max + 1;
-	ofstream out(outputFile.data(), ios::app);
+	ofstream out(dbFile.data(), ios::app);
 	for (trainingDumpMap::iterator ipIt = trainingTable->begin(); ipIt != trainingTable->end(); ipIt++)
 	{
 		// TODO: make sure the input had all the IPs we're checking so this line doesn't make googlehashmap explode on error
-		trainingSuspect* header = (*headerMap)[ipIt->first];
+		trainingSuspect* header = (*selectionOptions)[ipIt->first];
 
 		if (header->isIncluded)
 		{
@@ -342,9 +380,11 @@ void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* he
 	}
 
 	out.close();
+
+	return true;
 }
 
-string MakeCeFileFromDb(trainingSuspectMap& db)
+string MakaDataFile(trainingSuspectMap& db)
 {
 	stringstream ss;
 

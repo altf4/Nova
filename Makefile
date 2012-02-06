@@ -18,6 +18,7 @@ release:
 	cp DoppelgangerModule/Config/doppelganger.config Installer/.nova/Config/doppelganger.config
 	mkdir -p Installer/.nova/Data
 	cp ClassificationEngine/Config/data.txt Installer/.nova/Data/data.txt
+	cp ClassificationEngine/Config/training.db Installer/.nova/Data/training.db
 
 #Debug target
 debug:
@@ -34,6 +35,7 @@ debug:
 	cp DoppelgangerModule/Config/doppelganger.config Installer/.nova/Config/doppelganger.config
 	mkdir -p Installer/.nova/Data
 	cp ClassificationEngine/Config/data.txt Installer/.nova/Data/data.txt
+	cp ClassificationEngine/Config/training.db Installer/.nova/Data/training.db
 
 #Cleans both Release and Debug
 clean: clean-debug clean-release
