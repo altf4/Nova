@@ -230,7 +230,7 @@ void NovaConfig::on_actionAddPort_triggered()
 			typeBox->addItem("UDP");
 			typeBox->setItemText(0, "TCP");
 			typeBox->setItemText(1, "UDP");
-			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
+			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
 
 			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
 			behaviorBox->addItem("reset");
@@ -241,18 +241,12 @@ void NovaConfig::on_actionAddPort_triggered()
 			{
 				behaviorBox->addItem((QString)it->first.c_str());
 			}
-			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
+			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
 
 			item->setFlags(item->flags() | Qt::ItemIsEditable);
 
-			typeBox->setAutoFillBackground(true);
-			typeBox->setContextMenuPolicy(Qt::NoContextMenu);
-			typeBox->setFocusPolicy(Qt::NoFocus);
 			typeBox->setCurrentIndex(typeBox->findText(pr.type.c_str()));
 
-			behaviorBox->setAutoFillBackground(true);
-			behaviorBox->setFocusPolicy(Qt::NoFocus);
-			behaviorBox->setContextMenuPolicy(Qt::NoContextMenu);
 			behaviorBox->setCurrentIndex(behaviorBox->findText(pr.behavior.c_str()));
 
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
@@ -442,7 +436,8 @@ void NovaConfig::on_defaultActionListWidget_currentRowChanged()
 	else if (!selected.compare("Always No"))
 		mainwindow->prompter->SetDefaultAction(msgType, CHOICE_ALT);
 	else
-		syslog(SYSL_ERR, "File: %s Line: %d Invalid user dialog default action selected, shouldn't get here", __FILE__, __LINE__);
+		syslog(SYSL_ERR, "File: %s Line: %d Invalid user dialog default action selected, shouldn't get here",
+				__FILE__, __LINE__);
 
 	closelog();
 }
@@ -559,9 +554,9 @@ void NovaConfig::on_icmpCheckBox_stateChanged()
 	}
 }
 
-void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
+void NovaConfig::portTreeWidget_itemChanged(QTreeWidgetItem *item,  bool edited)
 {
-	if(!loadingItems && (item != NULL))
+	if(!loadingItems && (item != NULL) && edited)
 	{
 		loadingItems = true;
 		ui.portTreeWidget->setCurrentItem(item);
@@ -584,9 +579,9 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 		TreeItemComboBox * qBehavBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 2);
 		item->setText(2, qBehavBox->currentText());
 
-		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
+		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString()
+				+ "_" + item->text(2).toStdString();
 
-		cout << "New: " << portName << " Old: " << oldPort << endl;
 		port prt;
 		if(ports.find(portName) == ports.end())
 		{
@@ -605,7 +600,8 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 			port * temp = &ports[p->ports[i].first];
 			if((!(temp->portNum.compare(prt.portNum))) && (!(temp->type.compare(prt.type))))
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d WARNING: Port number and protocol already used.", __FILE__, __LINE__);
+				syslog(SYSL_ERR, "File: %s Line: %d WARNING: Port number and protocol already used.",
+						__FILE__, __LINE__);
 				portName = "";
 			}
 		}
@@ -662,6 +658,15 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem *item)
 
 		loadProfile();
 		saveProfile();
+		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
+		ui.portTreeWidget->setCurrentItem(ports[prt.portName].item);
+		loadingItems = false;
+	}
+	else if(!edited && !loadingItems && (item != NULL))
+	{
+		loadingItems = true;
+		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
+		ui.portTreeWidget->setCurrentItem(item);
 		loadingItems = false;
 	}
 }
@@ -931,6 +936,124 @@ void NovaConfig::displayNmapPersonalityTree()
 		ui.personalityEdit->setText((QString)retVal.c_str());
 	}
 }
+bool NovaConfig::updateNodeTypes()
+{
+	bool hasDoppelganger = false;
+	bool nameUnique = false;
+	stringstream ss;
+	uint i = 0, j = 0;
+	j = ~j; // 2^32-1
+	vector<string> delList;
+	vector<node> addList;
+	string prefix = "";
+
+	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+		node tempNode = it->second;
+		switch(profiles[tempNode.pfile].type)
+		{
+			case static_IP:
+				//If name/key is not the IP
+				if(it->first.compare(tempNode.IP))
+				{
+					tempNode.name = tempNode.IP;
+					delList.push_back(it->first);
+					addList.push_back(tempNode);
+				}
+				break;
+
+			case staticDHCP:
+
+				//If there is no MAC
+				if(!tempNode.MAC.size())
+				{
+					tempNode.MAC = generateUniqueMACAddr(profiles[tempNode.pfile].ethernet);
+				}
+				//If name/key is not the MAC
+				if(it->first.compare(tempNode.MAC))
+				{
+					tempNode.name = tempNode.MAC;
+					delList.push_back(it->first);
+					addList.push_back(tempNode);
+				}
+				break;
+
+			case randomDHCP:
+				prefix = tempNode.pfile + " on " + tempNode.interface;
+				//If the key is at least long enough to be correct
+				if(it->first.size() >= prefix.size())
+				{
+					//If the key starts with the correct prefix do nothing
+					if(!it->first.substr(0,prefix.size()).compare(prefix))
+						break;
+				}
+				//If the key doesn't start with the correct prefix, generate the correct name
+				tempNode.name = prefix;
+				i = 0;
+				ss.str("");
+				//Finds a unique identifier
+				while(i < j)
+				{
+					nameUnique = true;
+					for(uint k = 0; k < addList.size(); k++)
+					{
+						if(!addList[k].name.compare(tempNode.name))
+							nameUnique = false;
+					}
+					if(nodes.find(tempNode.name) != nodes.end())
+						nameUnique = false;
+
+					if(nameUnique)
+						break;
+					i++;
+					ss.str("");
+					ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
+					tempNode.name = ss.str();
+				}
+				delList.push_back(it->first);
+				addList.push_back(tempNode);
+				break;
+
+			case Doppelganger:
+				//If name isn't doppelganger and we haven't found a doppelganger yet
+				if(!hasDoppelganger)
+				{
+					tempNode.name = "Doppelganger";
+					delList.push_back(it->first);
+					addList.push_back(tempNode);
+					hasDoppelganger = true;
+				}
+				else
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d ERROR: A Doppelganger already exists.", __FILE__, __LINE__);
+					//TODO Appropriate display prompt here
+					return false;
+				}
+				break;
+		}
+	}
+
+	if(!hasDoppelganger)
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d ERROR: No Doppelganger exists.", __FILE__, __LINE__);
+		//TODO Appropriate display prompt here
+		return false;
+	}
+	while(!delList.empty())
+	{
+		string delStr = delList.back();
+		delList.pop_back();
+		deleteNode(&nodes[delStr]);
+	}
+	while(!addList.empty())
+	{
+		node tempNode = addList.back();
+		addList.pop_back();
+		nodes[tempNode.name] = tempNode;
+		subnets[tempNode.sub].nodes.push_back(tempNode.name);
+	}
+	return true;
+}
 //Load MAC vendor prefix choices from nmap mac prefix file
 bool NovaConfig::displayMACPrefixWindow()
 {
@@ -956,25 +1079,10 @@ bool NovaConfig::displayMACPrefixWindow()
 		if(profiles[currentProfile].type != staticDHCP)
 			return true;
 
-		vector<node> nodeList;
-		//If there is a vendor change, get new MAC's for each node using the profile.
-		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-		{
-			if(!it->second.pfile.compare(currentProfile))
-			{
-				node tempNode = it->second;
-				deleteNode(&it->second);
-				nodeList.push_back(tempNode);
-			}
-		}
-		while(!nodeList.empty())
-		{
-			node tempNode = nodeList.back();
-			nodeList.pop_back();
-			nodes[tempNode.name] = tempNode;
-			subnets[tempNode.sub].nodes.push_back(tempNode.name);
-		}
-		return true;
+		if(updateNodeTypes())
+			return true;
+		else
+			return false;
 	}
 	return false;
 }
@@ -1604,95 +1712,65 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 
 	vector<string> delList;
 	vector<node> addList;
-	bool nameUnique = false;
+	bool nodeExists = false;
+
+	//Find out if any nodes use this profile
+	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+		//if we find a node using this profile
+		if(!it->second.pfile.compare(currentProfile))
+			nodeExists = true;
+	}
+
+	//If were switching to Doppelganger mode and a node uses this profile
+	if((index == Doppelganger) && nodeExists)
+	{
+		//Check that another node isn't already the Doppelganger
+		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+		{
+			if(profiles[it->second.pfile].type == Doppelganger)
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d ERROR: A Doppelganger already exists.", __FILE__, __LINE__);
+				//TODO Appropriate Doppelganger exists displayPrompt
+				ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
+				loadingItems = false;
+				return;
+			}
+		}
+	}
 
 	//If the current ethernet is an invalid selection
 	//TODO this should display a dialog asking the user if they wish to pick a valid ethernet or cancel mode change
-	if(((VendorMACTable.find(profiles[currentProfile].ethernet)) == VendorMACTable.end())
-			&& (index == staticDHCP))
+	if(((VendorMACTable.find(profiles[currentProfile].ethernet)) == VendorMACTable.end()) && (index == staticDHCP))
+	{
 		if(!displayMACPrefixWindow())
 		{
 			ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
 			loadingItems = false;
 			return;
 		}
-
+	}
 
 	profiles[currentProfile].type = (profileType)index;
-
-
-
-	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-	{
-		profile * p = &profiles[it->second.pfile];
-		while(p->inherited[TYPE] && p->parentProfile.compare(""))
-		{
-			p = &profiles[p->parentProfile];
-		}
-
-		if(!p->name.compare(currentProfile))
-		{
-			stringstream ss;
-			uint i = 0, j = 0;
-			j = ~j; // 2^32-1
-
-			node tempNode = it->second;
-			delList.push_back(it->first);
-
-			switch(p->type)
-			{
-				case static_IP:
-					tempNode.name = tempNode.IP;
-					break;
-				case staticDHCP:
-					tempNode.MAC = generateUniqueMACAddr(profiles[it->second.pfile].ethernet);
-					tempNode.name = tempNode.MAC;
-					break;
-
-				case randomDHCP:
-					tempNode.name = tempNode.pfile + " on " + tempNode.interface;
-					nameUnique = false;
-					//Finds a unique identifier
-					while(i < j)
-					{
-						nameUnique = true;
-						for(uint k = 0; k < addList.size(); k++)
-						{
-							if(!addList[k].name.compare(tempNode.name))
-								nameUnique = false;
-						}
-						if(nameUnique)
-							break;
-						i++;
-						ss.str("");
-						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
-						tempNode.name = ss.str();
-					}
-					break;
-				case Doppelganger:
-					tempNode.name = "Doppelganger";
-					break;
-			}
-			addList.push_back(tempNode);
-		}
-	}
-	while(!delList.empty())
-	{
-		string delStr = delList.back();
-		delList.pop_back();
-		deleteNode(&nodes[delStr]);
-	}
-	while(!addList.empty())
-	{
-		node tempNode = addList.back();
-		addList.pop_back();
-		nodes[tempNode.name] = tempNode;
-		subnets[tempNode.sub].nodes.push_back(tempNode.name);
-	}
+	ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
+	loadingItems = true;
 	saveProfile();
 	loadProfile();
-	loadingItems = false;
+	updateNodeTypes();
 	loadAllNodes();
+	loadingItems = false;
+	bool doppExists = false;
+	//If there is no doppelganger node, disable the DM
+	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+		if(profiles[it->second.pfile].type == Doppelganger)
+		{
+			doppExists = true;
+			break;
+		}
+	}
+	//Disables the dm if no dopp node, otherwise it keeps the same state.
+	ui.dmCheckBox->setChecked(doppExists & ui.dmCheckBox->isChecked());
 }
 
 //Combo box signal for changing the uptime behavior
@@ -1995,7 +2073,7 @@ void NovaConfig::loadProfile()
 			typeBox->setItemText(0, "TCP");
 			typeBox->setItemText(1, "UDP");
 			typeBox->setEnabled(!p->ports[i].second);
-			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
+			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
 
 			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
 			behaviorBox->addItem("reset");
@@ -2007,7 +2085,7 @@ void NovaConfig::loadProfile()
 				behaviorBox->addItem((QString)it->first.c_str());
 			}
 			behaviorBox->setEnabled(!p->ports[i].second);
-			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *)), this, SLOT(on_portTreeWidget_itemChanged(QTreeWidgetItem *)));
+			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
 
 
 			if(p->ports[i].second)
@@ -2015,14 +2093,8 @@ void NovaConfig::loadProfile()
 			else
 				item->setFlags(item->flags() | Qt::ItemIsEditable);
 
-			typeBox->setAutoFillBackground(true);
-			typeBox->setContextMenuPolicy(Qt::NoContextMenu);
-			typeBox->setFocusPolicy(Qt::NoFocus);
 			typeBox->setCurrentIndex(typeBox->findText(pr->type.c_str()));
 
-			behaviorBox->setAutoFillBackground(true);
-			behaviorBox->setFocusPolicy(Qt::NoFocus);
-			behaviorBox->setContextMenuPolicy(Qt::NoContextMenu);
 			if(!pr->behavior.compare("script"))
 				behaviorBox->setCurrentIndex(behaviorBox->findText(pr->scriptName.c_str()));
 			else
@@ -2825,6 +2897,7 @@ void NovaConfig::on_actionProfileDelete_triggered()
 	{
 		deleteProfile(currentProfile);
 	}
+	loadAllNodes();
 }
 
 //Creates a base profile with default values seen below
@@ -2878,6 +2951,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	profiles[temp.name] = temp;
 	createProfileTree(temp.name);
 	loadAllProfiles();
+	loadAllNodes();
 }
 
 
@@ -2921,6 +2995,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 		loadProfilesFromTree(p.name);
 		updateProfileTree(p.name);
 		loadAllProfiles();
+		loadAllNodes();
 	}
 }
 
@@ -2937,6 +3012,7 @@ void NovaConfig::on_profileEdit_editingFinished()
 		saveProfile();
 		loadProfile();
 		loadingItems = false;
+		loadAllNodes();
 	}
 }
 
@@ -2996,6 +3072,21 @@ void NovaConfig::loadAllNodes()
 			item = new QTreeWidgetItem(it->second.nodeItem, 0);
 			item->setText(0, (QString)n->name.c_str());
 			item->setText(1, (QString)n->pfile.c_str());
+
+			TreeItemComboBox *pfileBox = new TreeItemComboBox(this, item);
+			uint i = 0;
+			for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+			{
+				pfileBox->addItem(it->first.c_str());
+				pfileBox->setItemText(i, it->first.c_str());
+				i++;
+			}
+
+			connect(pfileBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(nodeTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
+
+			pfileBox->setCurrentIndex(pfileBox->findText(n->pfile.c_str()));
+
+			ui.nodeTreeWidget->setItemWidget(item, 1, pfileBox);
 			n->nodeItem = item;
 
 			if(this->isEnabled())
@@ -3083,6 +3174,7 @@ void NovaConfig::deleteNodes()
 		nodes.clear_no_resize();
 		currentSubnet = "";
 		currentNode = "";
+		loadingItems = false;
 		return;
 	}
 	//If we are deleteing a subnet, remove each node first then remove the subnet.
@@ -3124,8 +3216,8 @@ void NovaConfig::deleteNodes()
 		currentSubnet = address;
 		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
 	}
-	loadAllNodes();
 	loadingItems = false;
+	loadAllNodes();
 }
 
 // Removes the node from item widgets and data structures.
@@ -3154,6 +3246,7 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 	//If the user is changing the selection AND something is selected
 	if(!loadingItems)
 	{
+		loadingItems = true;
 		if(!ui.nodeTreeWidget->selectedItems().isEmpty())
 		{
 			QTreeWidgetItem * item = ui.nodeTreeWidget->selectedItems().first();
@@ -3171,10 +3264,53 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 				selectedSubnet = true;
 			}
 		}
+		loadingItems = false;
 	}
 }
 
+void NovaConfig::nodeTreeWidget_itemChanged(QTreeWidgetItem * item, bool edited)
+{
+	if(!loadingItems && edited)
+	{
+		loadingItems = true;
+		ui.nodeTreeWidget->setCurrentItem(item);
+		string oldPfile;
+		if(!ui.nodeTreeWidget->selectedItems().isEmpty())
+		{
+			node * n = &nodes[item->text(0).toStdString()];
+			oldPfile = n->pfile;
+			TreeItemComboBox * pfileBox = (TreeItemComboBox* )ui.nodeTreeWidget->itemWidget(item, 1);
+			n->pfile = pfileBox->currentText().toStdString();
+		}
+		if(updateNodeTypes())
+		{
+			item = nodes[currentNode].nodeItem;
+			ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
+			ui.nodeTreeWidget->setCurrentItem(item);
+			loadingItems = false;
+		}
+		else
+		{
+			node * n = &nodes[item->text(0).toStdString()];
+			TreeItemComboBox * pfileBox = (TreeItemComboBox* )ui.nodeTreeWidget->itemWidget(item, 1);
+			n->pfile = oldPfile;
+			pfileBox->setCurrentIndex(pfileBox->findText((QString)oldPfile.c_str()));
 
+			updateNodeTypes();
+			item = nodes[currentNode].nodeItem;
+			ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
+			ui.nodeTreeWidget->setCurrentItem(item);
+			loadingItems = false;
+		}
+	}
+	else if(!loadingItems && !edited)
+	{
+		loadingItems = true;
+		ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
+		ui.nodeTreeWidget->setCurrentItem(item);
+		loadingItems = false;
+	}
+}
 
 // Right click menus for the Node tree
 void NovaConfig::on_actionNodeAdd_triggered()
@@ -3216,8 +3352,8 @@ void NovaConfig::on_actionNodeEnable_triggered()
 	}
 
 	//Draw the nodes and restore selection
-	loadingItems = true;
 	loadAllNodes();
+	loadingItems = true;
 	if(selectedSubnet)
 		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
 	else
@@ -3243,8 +3379,8 @@ void NovaConfig::on_actionNodeDisable_triggered()
 	}
 
 	//Draw the nodes and restore selection
-	loadingItems = true;
 	loadAllNodes();
+	loadingItems = true;
 	if(selectedSubnet)
 		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
 	else
