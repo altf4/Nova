@@ -95,19 +95,19 @@ public:
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
-	uint SerializeSuspect(u_char * buf);
+	uint32_t SerializeSuspect(u_char * buf);
 
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	//		buf - Pointer to buffer where the serialized suspect is
 	// Returns: number of bytes read from the buffer
-	uint DeserializeSuspect(u_char * buf);
+	uint32_t DeserializeSuspect(u_char * buf);
 
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	// expects featureSet data appended by serializeFeatureData after serializeSuspect
 	//		buf - Pointer to buffer where serialized data resides
 	//		isLocal -
 	// Returns: number of bytes read from the buffer
-	uint DeserializeSuspectWithData(u_char * buf, bool isLocal);
+	uint32_t DeserializeSuspectWithData(u_char * buf, bool isLocal);
 };
 
 }
