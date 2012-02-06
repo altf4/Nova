@@ -277,7 +277,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if (atoi(line.c_str()) >= 0)
 				{
 					options[prefix].data = line.c_str();
 					options[prefix].isValid = true;

@@ -11,6 +11,7 @@ classifierPrompt::classifierPrompt(QWidget *parent)
 
 classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
 {
+	parent = parent;
 	ui.setupUi(this);
 	groups = 0;
 	menu = new QMenu(this);
@@ -37,6 +38,7 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 
 classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
 {
+	parent = parent;
 	ui.setupUi(this);
 	groups = 0;
 	menu = new QMenu(this);

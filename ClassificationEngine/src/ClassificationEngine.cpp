@@ -258,6 +258,8 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 	while(true)
 	{
 		ReceiveGUICommand();
+		if(!classificationTimeout)
+			ClassificationLoop(NULL);
 	}
 }
 
@@ -280,7 +282,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 	serv_addr.sin_port = htons(sAlarmPort);
 
 	//Classification Loop
-	while(true)
+	while(classificationTimeout)
 	{
 		sleep(classificationTimeout);
 		pthread_rwlock_rdlock(&lock);
@@ -319,7 +321,8 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 		pthread_rwlock_unlock(&lock);
 	}
 	//Shouldn't get here!!
-	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
+	if(classificationTimeout)
+		syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
 	return NULL;
 }
 
@@ -477,6 +480,8 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			suspects[addr]->flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 			syslog(SYSL_INFO, "Line: %d Received Silent Alarm!\n %s", __LINE__, (suspects[addr]->ToString(featureEnabled)).c_str());
+			if(!classificationTimeout)
+				ClassificationLoop(NULL);
 		}
 		catch(std::exception e)
 		{

@@ -133,9 +133,9 @@ void Suspect::CalculateFeatures(uint32_t featuresEnabled)
 }
 
 
-uint Suspect::SerializeSuspect(u_char * buf)
+uint32_t Suspect::SerializeSuspect(u_char * buf)
 {
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
 	memcpy(buf, &IP_address.s_addr, sizeof IP_address.s_addr);
@@ -161,9 +161,9 @@ uint Suspect::SerializeSuspect(u_char * buf)
 }
 
 
-uint Suspect::DeserializeSuspect(u_char * buf)
+uint32_t Suspect::DeserializeSuspect(u_char * buf)
 {
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
 	memcpy(&IP_address.s_addr, buf, sizeof IP_address.s_addr);
@@ -189,9 +189,9 @@ uint Suspect::DeserializeSuspect(u_char * buf)
 }
 
 
-uint Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
+uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 {
-	uint offset = 0;
+	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
 	memcpy(&IP_address.s_addr, buf, sizeof IP_address.s_addr);
