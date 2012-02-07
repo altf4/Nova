@@ -397,4 +397,9 @@ string MakaDataFile(trainingSuspectMap& db)
 	return ss.str();
 }
 
+void ThinTrainingPoints(trainingDumpMap* suspects)
+{
+
+}
+
 }
