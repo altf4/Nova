@@ -181,7 +181,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homeNovaPath + "/" + line;
+					options[prefix].data = line;
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -237,7 +237,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homeNovaPath + "/" + line;
+					options[prefix].data = line;
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -414,7 +414,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homeNovaPath + "/" + line;
+					options[prefix].data = line;
 					options[prefix].isValid = true;
 				}
 				continue;

@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
 	//Get locations of Nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
+	chdir(homePath.c_str());
 
 	//Runs the configuration loader
 	LoadConfig((char*)novaConfig.c_str());

@@ -1487,7 +1487,7 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "DM_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << (this->ui.dmConfigEdit->displayText().toStdString()).substr(homePath.length() + 1, (this->ui.dmConfigEdit->displayText().toStdString()).length()) << endl;
+				*out << prefix << " " << this->ui.dmConfigEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
@@ -1501,7 +1501,7 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "HS_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << (this->ui.hsConfigEdit->displayText().toStdString()).substr(homePath.length() + 1, (this->ui.hsConfigEdit->displayText().toStdString()).length()) << endl;
+				*out << prefix << " " << this->ui.hsConfigEdit->displayText().toStdString() << endl;
 				continue;
 			}
 
@@ -1522,7 +1522,7 @@ bool NovaConfig::saveConfigurationToFile() {
 			prefix = "PCAP_FILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << (ui.pcapEdit->displayText().toStdString()).substr(homePath.length() + 1, (ui.pcapEdit->displayText().toStdString()).length())  << endl;
+				*out << prefix << " " << ui.pcapEdit->displayText().toStdString()  << endl;
 				continue;
 			}
 
