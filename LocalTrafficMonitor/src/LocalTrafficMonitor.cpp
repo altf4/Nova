@@ -282,6 +282,10 @@ void LocalTrafficMonitor::Packet_Handler(u_char *useless,const struct pcap_pkthd
 			}
 			pthread_rwlock_unlock(&sessionLock);
 		}
+
+		// Allow for continuous classification
+		if (!classificationTimeout)
+			SuspectLoop(NULL);
 	}
 	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
 	{
@@ -535,11 +539,12 @@ void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 			}
 		}
 		pthread_rwlock_unlock(&suspectLock);
-	} while(!usePcapFile);
+	} while(!usePcapFile && classificationTimeout);
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
-	if(usePcapFile) return NULL;
+	// Also return if continuous classification is enabled by setting classificationTimeout to 0
+	if(usePcapFile || !classificationTimeout) return NULL;
 
 	//Shouldn't get here
 	syslog(SYSL_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
