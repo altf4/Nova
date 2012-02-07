@@ -397,4 +397,84 @@ string MakaDataFile(trainingSuspectMap& db)
 	return ss.str();
 }
 
+void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
+{
+	double maxValues[DIM];
+	for (uint i = 0; i < DIM; i++)
+		maxValues[i] = 0;
+
+	// Parse out the max values for normalization
+	for (trainingDumpMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	{
+		for (int p = it->second->size() - 1; p >= 0; p--)
+		{
+			stringstream ss(it->second->at(p));
+			for (uint d = 0; d < DIM; d++)
+			{
+				string featureString;
+				double feature;
+				getline(ss, featureString, ' ');
+
+				feature = atof(featureString.c_str());
+				if (feature > maxValues[d])
+					maxValues[d] = feature;
+			}
+		}
+	}
+
+
+	ANNpoint newerPoint = annAllocPt(DIM);
+	ANNpoint olderPoint = annAllocPt(DIM);
+
+	for (trainingDumpMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	{
+		// Can't trim points if there's only 1
+		if (it->second->size() < 2)
+			continue;
+
+		stringstream ss(it->second->at(it->second->size() - 1));
+		for (int d = 0; d < DIM; d++)
+		{
+			string feature;
+			getline(ss, feature, ' ');
+			newerPoint[d] = atof(feature.c_str()) / maxValues[d];
+		}
+
+		cout << "Suspect is " << it->first << endl;
+
+		for (int p = it->second->size() - 2; p >= 0; p--)
+		{
+			double distance = 0;
+
+			stringstream ss(it->second->at(p));
+			for (uint d = 0; d < DIM; d++)
+			{
+				string feature;
+				getline(ss, feature, ' ');
+				olderPoint[d] = atof(feature.c_str()) / maxValues[d];
+			}
+
+			for(uint d=0; d < DIM; d++)
+				distance += annDist(d, olderPoint,newerPoint);
+
+			cout << "Distance is " << distance << endl;
+
+			// Should we throw this point away?
+			if (distance < distanceThreshhold)
+			{
+				it->second->erase(it->second->begin() + p);
+			}
+			else
+			{
+				for (uint d = 0; d < DIM; d++)
+					newerPoint[d] = olderPoint[d];
+			}
+
+		}
+	}
+
+	annDeallocPt(newerPoint);
+	annDeallocPt(olderPoint);
+}
+
 }
