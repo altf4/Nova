@@ -263,6 +263,8 @@ trainingSuspectMap* ParseTrainingDb(string dbPath);
 // Create a CE data file from a subset of the Training DB file
 string MakaDataFile(trainingSuspectMap& db);
 
+void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold);
+
 }
 
 //Some includes need to occur at the end of the header to fix some linking errors during compilation

@@ -111,6 +111,8 @@ uint SA_Max_Attempts;			//The number of times to attempt to reconnect to a neigh
 double SA_Sleep_Duration;		//The time to sleep after a port knocking request and allow it to go through
 // End configured variables
 
+lastPointHash lastPoints;
+
 int main(int argc,char *argv[])
 {
 	bzero(GUIData,MAX_MSG_SIZE);
@@ -121,6 +123,8 @@ int main(int argc,char *argv[])
 
 	suspects.set_empty_key(0);
 	suspects.resize(INIT_SIZE_SMALL);
+
+	lastPoints.set_empty_key(0);
 
 	struct sockaddr_un localIPCAddress;
 
@@ -157,8 +161,6 @@ int main(int argc,char *argv[])
 	//Are we Training or Classifying?
 	if(isTraining)
 	{
-		LoadDataPointsFromFile(dataFile);
-
 		// We suffix the training capture files with the date/time
 		time_t rawtime;
 		time ( &rawtime );
@@ -347,18 +349,14 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
 
 
-	// TODO: Keep track of the lastPoint we saved for each suspect, not just a global one
-	// this code is just for testing and isn't functional yet
-	ANNpoint lastPoint = NULL;
-
 	//Training Loop
 	do
 	{
 		sleep(classificationTimeout);
 		ofstream myfile (trainingCapFile.data(), ios::app);
-		bool savePoint;
-		ANNdist distance;
-		int distanceThreshold = 0;
+		//bool savePoint;
+		//ANNdist distance;
+		//int distanceThreshold = 0;
 
 		if (myfile.is_open())
 		{
@@ -366,7 +364,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 			//Calculate the "true" Feature Set for each Suspect
 			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 			{
-				savePoint = false;
+				//savePoint = false;
 
 				if(it->second->needs_feature_update)
 				{
@@ -378,41 +376,43 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					for(int j=0; j < DIM; j++)
 						it->second->annPoint[j] = it->second->features.features[j];
 
+					/*
 					// Save the first point we get
-					if (lastPoint == NULL)
+					if (lastPoints[it->first] == NULL)
 					{
 						savePoint = true;
-						lastPoint = annCopyPt(DIM, it->second->annPoint);
+						lastPoints[it->first] = annCopyPt(DIM, it->second->annPoint);
 					}
 					else
 					{
 						// Compute squared distance from last point
 						distance = 0;
 						for(int j=0; j < DIM; j++)
-							distance += annDist(j, lastPoint, it->second->annPoint);
+							distance += annDist(j, lastPoints[it->first] , it->second->annPoint);
 
 						cout << "Distance is " << distance << endl;
 						if (distance >= distanceThreshold)
 						{
 							savePoint = true;
-							annDeallocPt(lastPoint);
-							lastPoint = annCopyPt(DIM, it->second->annPoint);
+							annDeallocPt(lastPoints[it->first]);
+							lastPoints[it->first] = annCopyPt(DIM, it->second->annPoint);
 						}
 					}
+					*/
 
-					if (savePoint)
-					{
+					//if (savePoint)
+					//{
 						myfile << string(inet_ntoa(it->second->IP_address)) << " ";
 
 						for(int j=0; j < DIM; j++)
 							myfile << it->second->annPoint[j] << " ";
 
 						myfile << "\n";
-					}
+					//}
 
 
 					it->second->needs_feature_update = false;
-					//cout << it->second->ToString(featureEnabled);
+					cout << it->second->ToString(featureEnabled);
 					SendToUI(it->second);
 				}
 			}
