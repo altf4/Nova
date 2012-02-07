@@ -1889,6 +1889,8 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
+	//ThinTrainingPoints(trainingDump, 1000);
+
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 
 	if (classifier->exec() == QDialog::Rejected)

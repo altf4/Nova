@@ -353,9 +353,9 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	{
 		sleep(classificationTimeout);
 		ofstream myfile (trainingCapFile.data(), ios::app);
-		bool savePoint;
-		ANNdist distance;
-		int distanceThreshold = 0;
+		//bool savePoint;
+		//ANNdist distance;
+		//int distanceThreshold = 0;
 
 		if (myfile.is_open())
 		{
@@ -363,7 +363,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 			//Calculate the "true" Feature Set for each Suspect
 			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 			{
-				savePoint = false;
+				//savePoint = false;
 
 				if(it->second->needs_feature_update)
 				{
@@ -375,6 +375,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					for(int j=0; j < DIM; j++)
 						it->second->annPoint[j] = it->second->features.features[j];
 
+					/*
 					// Save the first point we get
 					if (lastPoints[it->first] == NULL)
 					{
@@ -396,16 +397,17 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 							lastPoints[it->first] = annCopyPt(DIM, it->second->annPoint);
 						}
 					}
+					*/
 
-					if (savePoint)
-					{
+					//if (savePoint)
+					//{
 						myfile << string(inet_ntoa(it->second->IP_address)) << " ";
 
 						for(int j=0; j < DIM; j++)
 							myfile << it->second->annPoint[j] << " ";
 
 						myfile << "\n";
-					}
+					//}
 
 
 					it->second->needs_feature_update = false;
