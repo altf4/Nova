@@ -6,8 +6,6 @@ set -e
 setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/LocalTrafficMonitor
 setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/Haystack
 setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
-#Give permissions
-chmod 0440 /etc/sudoers.d/sudoers_nova
 #make nova group
 groupadd -f nova
 #Make a honeyd log file folder that belongs to 'nobody'
