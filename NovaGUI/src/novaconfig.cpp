@@ -1836,9 +1836,9 @@ void NovaConfig::saveProfile()
 
 		}
 		profiles[currentProfile] = p;
+		saveInherited();
+		createProfileTree(currentProfile);
 	}
-	saveInherited();
-	createProfileTree(currentProfile);
 }
 
 void NovaConfig::saveInherited()
@@ -2785,12 +2785,18 @@ void NovaConfig::updateProfile(bool deleteProfile, profile * p)
 	//If the profile is being deleted
 	if(deleteProfile)
 	{
+		vector<string> delList;
 		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 		{
 			if(!it->second.pfile.compare(p->name))
 			{
-				deleteNode(&it->second);
+				delList.push_back(it->first);
 			}
+		}
+		while(!delList.empty())
+		{
+			deleteNode(&nodes[delList.back()]);
+			delList.pop_back();
 		}
 		profiles.erase(p->name);
 	}
@@ -2798,27 +2804,27 @@ void NovaConfig::updateProfile(bool deleteProfile, profile * p)
 	else
 	{
 		string pfile = p->profileItem->text(0).toStdString();
+		profile tempPfile = * p;
 
 		//If item text and profile name don't match, we need to update
-		if(p->name.compare(pfile))
+		if(tempPfile.name.compare(pfile))
 		{
 			//Set the profile to the correct name and put the profile in the table
-			profiles[pfile] = *p;
+			profiles[pfile] = tempPfile;
 			profiles[pfile].name = pfile;
 
 			//Find all nodes who use this profile and update to the new one
 			for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 			{
-				if(it->second.pfile == p->name)
+				if(!it->second.pfile.compare(tempPfile.name))
 				{
 					it->second.pfile = pfile;
-					it->second.nodeItem->setText(1, (QString)pfile.c_str());
 				}
 			}
-			if(!p->name.compare(currentProfile))
+			if(!tempPfile.name.compare(currentProfile))
 				currentProfile = pfile;
 			//Remove the old profile and update the currentProfile pointer
-			profiles.erase(p->name);
+			profiles.erase(tempPfile.name);
 		}
 	}
 }
@@ -2895,7 +2901,19 @@ void NovaConfig::on_actionProfileDelete_triggered()
 {
 	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && profiles.size())
 	{
-		deleteProfile(currentProfile);
+		bool nodeExists = false;
+		//Find out if any nodes use this profile
+		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+		{
+			//if we find a node using this profile
+			if(!it->second.pfile.compare(currentProfile))
+				nodeExists = true;
+		}
+		if(nodeExists)
+			syslog(SYSL_ERR, "File: %s Line: %d ERROR: A Node is currently using this profile.", __FILE__, __LINE__);
+		//TODO appropriate display prompt here
+		else
+			deleteProfile(currentProfile);
 	}
 	loadAllNodes();
 }
@@ -2908,7 +2926,7 @@ void NovaConfig::on_addButton_clicked()
 
 void NovaConfig::on_actionProfileAdd_triggered()
 {
-	struct profile temp = profiles[currentProfile];
+	struct profile temp;
 	temp.name = "New Profile";
 
 	stringstream ss;
@@ -2926,6 +2944,9 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	//If there is currently a selected profile, that profile will be the parent of the new profile
 	if(profiles.find(currentProfile) != profiles.end())
 	{
+		string tempName = temp.name;
+		temp = profiles[currentProfile];
+		temp.name = tempName;
 		temp.parentProfile = currentProfile;
 		for(uint i = 0; i < INHERITED_MAX; i++)
 			temp.inherited[i] = true;
@@ -2937,15 +2958,18 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	else
 	{
 		temp.parentProfile = "";
-		temp.ethernet = "Dell";
-		temp.personality = "Microsoft Windows 2003 Server";
+		temp.ethernet = "";
+		temp.personality = "";
 		temp.tcpAction = "reset";
 		temp.udpAction = "reset";
 		temp.icmpAction = "reset";
 		temp.type = static_IP;
 		temp.uptime = "0";
+		temp.dropRate = "0";
 		temp.ports.clear();
 		currentProfile = temp.name;
+		for(uint i = 0; i < INHERITED_MAX; i++)
+			temp.inherited[i] = false;
 	}
 	//Puts the profile in the table, creates a ptree and loads the new configuration
 	profiles[temp.name] = temp;
@@ -2967,6 +2991,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 	//Do nothing if no profiles
 	if(profiles.size())
 	{
+		loadingItems = true;
 		QTreeWidgetItem * item = ui.profileTreeWidget->selectedItems().first();
 		string profileStr = item->text(0).toStdString();
 		profile p = profiles[currentProfile];
@@ -2996,6 +3021,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 		updateProfileTree(p.name);
 		loadAllProfiles();
 		loadAllNodes();
+		loadingItems = false;
 	}
 }
 
