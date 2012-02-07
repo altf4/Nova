@@ -67,11 +67,14 @@ install-release:
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
+	mkdir -p $(DESTDIR)/usr/share/nova/icons
 	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
+	cp Installer/Read/icons/* $(DESTDIR)/usr/share/nova/icons
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
@@ -90,11 +93,14 @@ install-debug:
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
+	mkdir -p $(DESTDIR)/usr/share/nova/icons
 	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
+	cp Installer/Read/icons/* $(DESTDIR)/usr/share/nova/icons
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
@@ -115,5 +121,6 @@ uninstall:
 	rm -f $(DESTDIR)/usr/bin/Haystack
 	rm -f $(DESTDIR)/usr/bin/LocalTrafficMonitor
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
+	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	sh Installer/postrm
 
