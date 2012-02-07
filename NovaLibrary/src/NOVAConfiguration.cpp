@@ -105,9 +105,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 	// Populate the options map
 	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
 	{
-		NovaOption * currentOption = new NovaOption();
-		currentOption->isValid = false;
-		options[prefixes[i]] = *currentOption;
+		options[prefixes[i]].isValid = false;
 	}
 
 	if (config.is_open())
