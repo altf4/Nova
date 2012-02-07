@@ -70,6 +70,8 @@ public:
     bool displayMACPrefixWindow();
     //Load Personality choices from nmap fingerprints file
     void displayNmapPersonalityTree();
+    //Renames the nodes to the correct unique identifier based on node type;
+    bool updateNodeTypes();
     //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
     string resolveMACVendor(uint MACPrefix);
     //Load MAC vendor prefix choices from nmap mac prefix file
@@ -159,7 +161,7 @@ public:
 
 public slots:
 //When an item in the port tree widget changes
-void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);
+void portTreeWidget_itemChanged(QTreeWidgetItem *item, bool edited);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
@@ -211,6 +213,7 @@ void on_nodeDisableButton_clicked();
 void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
+void nodeTreeWidget_itemChanged(QTreeWidgetItem * item, bool edited);
 void on_dropRateSlider_valueChanged();
 
 //GUI Signals for Feature addition/removal
@@ -263,7 +266,10 @@ public:
 	{
 		this->parent = parent;
 		this->buddy = buddy;
-		connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(setCurrentIndex(int)));
+		this->setFocusPolicy(Qt::ClickFocus);
+		this->setContextMenuPolicy(Qt::NoContextMenu);
+		this->setAutoFillBackground(true);
+		connect(this, SIGNAL(activated(int)), this, SLOT(setCurrentIndex(int)));
 	}
 	~TreeItemComboBox(){}
 
@@ -274,12 +280,22 @@ public slots:
 	void setCurrentIndex(int index)
 	{
 		QComboBox::setCurrentIndex(index);
-		emit notifyParent(buddy);
+		emit notifyParent(buddy, true);
 	}
 
-
 	signals:
-	void notifyParent(QTreeWidgetItem *item);
+	void notifyParent(QTreeWidgetItem *item, bool edited);
+
+protected:
+	void wheelEvent(QWheelEvent * e)
+	{
+		e->ignore();
+	}
+	void focusInEvent(QFocusEvent * e)
+	{
+		e->ignore();
+		emit notifyParent(buddy, false);
+	}
 
 };
 #endif // NOVACONFIG_H

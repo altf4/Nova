@@ -1030,10 +1030,10 @@ void NovaGUI::loadNodes(ptree *ptr)
 						continue;
 					}
 					//save the node in the table
-					nodes[n.IP] = n;
+					nodes[n.name] = n;
 
 					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.IP].sub].nodes.push_back(n.IP);
+					subnets[nodes[n.name].sub].nodes.push_back(n.name);
 					break;
 				}
 			}
