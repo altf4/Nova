@@ -418,6 +418,10 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
+						// Allow for continuous classification
+						if (!classificationTimeout)
+							SuspectLoop(NULL);
+
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_wrlock(&sessionLock);
 						SessionTable[it->first].session.clear();
@@ -436,6 +440,10 @@ void *Nova::LocalTrafficMonitor::TCPTimeout( void *ptr )
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_LTM;
 							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
+
+						// Allow for continuous classification
+						if (!classificationTimeout)
+							SuspectLoop(NULL);
 
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_wrlock(&sessionLock);
