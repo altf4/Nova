@@ -283,6 +283,10 @@ void Nova::Haystack::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pk
 			}
 			pthread_rwlock_unlock(&sessionLock);
 		}
+
+		// Allow for continuous classification
+		if (!classificationTimeout)
+			SuspectLoop(NULL);
 	}
 	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
 	{
@@ -418,6 +422,10 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
+						// Allow for continuous classification
+						if (!classificationTimeout)
+							SuspectLoop(NULL);
+
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_wrlock(&sessionLock);
 						SessionTable[it->first].session.clear();
@@ -437,6 +445,10 @@ void *Nova::Haystack::TCPTimeout(void *ptr)
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
 							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
+
+						// Allow for continuous classification
+						if (!classificationTimeout)
+							SuspectLoop(NULL);
 
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_wrlock(&sessionLock);
@@ -544,11 +556,12 @@ void *Nova::Haystack::SuspectLoop(void *ptr)
 			}
 		}
 		pthread_rwlock_unlock(&suspectLock);
-	} while(!usePcapFile);
+	} while(!usePcapFile && classificationTimeout);
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
-	if(usePcapFile) return NULL;
+	// Also return if continuous classification is enabled by setting classificationTimeout to 0
+	if(usePcapFile || !classificationTimeout) return NULL;
 
 	//Shouldn't get here
 	syslog(SYSL_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);

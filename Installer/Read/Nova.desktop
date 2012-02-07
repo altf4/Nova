@@ -1,0 +1,16 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Icon[en_US]=/usr/share/nova/icons/DataSoftIcon.jpg
+Name[en_US]=Nova
+GenericName[en_US]=Network Anti-Reconnaissance
+Comment[en_US]=Qt Front End for Nova system
+Name=Nova
+Comment=Qt Front End for Nova system
+GenericName=Network Anti-Reconnaissance
+Icon=/usr/share/nova/icons/DataSoftIcon.jpg
+Categories=GNOME;QT;Network;Security;
+Exec=NovaGUI
+
