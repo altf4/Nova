@@ -156,6 +156,8 @@ int main(int argc,char *argv[])
 	//Are we Training or Classifying?
 	if(isTraining)
 	{
+		LoadDataPointsFromFile(dataFile);
+
 		// We suffix the training capture files with the date/time
 		time_t rawtime;
 		time ( &rawtime );
@@ -210,7 +212,16 @@ int main(int argc,char *argv[])
 	//"Main Loop"
 	while(true)
 	{
-		ReceiveSuspectData();
+		if (ReceiveSuspectData())
+		{
+			if(!classificationTimeout)
+			{
+				if (!isTraining)
+					ClassificationLoop(NULL);
+				else
+					TrainingLoop(NULL);
+			}
+		}
 	}
 
 	//Shouldn't get here!
@@ -280,7 +291,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 	serv_addr.sin_port = htons(sAlarmPort);
 
 	//Classification Loop
-	while(true)
+	do
 	{
 		sleep(classificationTimeout);
 		pthread_rwlock_rdlock(&lock);
@@ -317,26 +328,36 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			}
 		}
 		pthread_rwlock_unlock(&lock);
-	}
+	} while(classificationTimeout);
+
 	//Shouldn't get here!!
-	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
+	if(classificationTimeout)
+		syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
 	return NULL;
 }
 
 
 void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 {
+	//Builds the GUI address
 	string GUIKey = homePath + CE_FILENAME;
-	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
-
 	GUISendRemote.sun_family = AF_UNIX;
+	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
 
+
+	// TODO: Keep track of the lastPoint we saved for each suspect, not just a global one
+	// this code is just for testing and isn't functional yet
+	ANNpoint lastPoint = NULL;
+
 	//Training Loop
-	while(true)
+	do
 	{
 		sleep(classificationTimeout);
 		ofstream myfile (trainingCapFile.data(), ios::app);
+		bool savePoint;
+		ANNdist distance;
+		int distanceThreshold = 0;
 
 		if (myfile.is_open())
 		{
@@ -344,25 +365,53 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 			//Calculate the "true" Feature Set for each Suspect
 			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 			{
+				savePoint = false;
+
 				if(it->second->needs_feature_update)
 				{
 					it->second->CalculateFeatures(featureMask);
 					if(it->second->annPoint == NULL)
-					{
 						it->second->annPoint = annAllocPt(DIM);
-					}
 
-
-					myfile << string(inet_ntoa(it->second->IP_address)) << " ";
 
 					for(int j=0; j < DIM; j++)
-					{
 						it->second->annPoint[j] = it->second->features.features[j];
-						myfile << it->second->annPoint[j] << " ";
+
+					// Save the first point we get
+					if (lastPoint == NULL)
+					{
+						savePoint = true;
+						lastPoint = annCopyPt(DIM, it->second->annPoint);
 					}
+					else
+					{
+						// Compute squared distance from last point
+						distance = 0;
+						for(int j=0; j < DIM; j++)
+							distance += annDist(j, lastPoint, it->second->annPoint);
+
+						cout << "Distance is " << distance << endl;
+						if (distance >= distanceThreshold)
+						{
+							savePoint = true;
+							annDeallocPt(lastPoint);
+							lastPoint = annCopyPt(DIM, it->second->annPoint);
+						}
+					}
+
+					if (savePoint)
+					{
+						myfile << string(inet_ntoa(it->second->IP_address)) << " ";
+
+						for(int j=0; j < DIM; j++)
+							myfile << it->second->annPoint[j] << " ";
+
+						myfile << "\n";
+					}
+
+
 					it->second->needs_feature_update = false;
-					myfile << "\n";
-					cout << it->second->ToString(featureEnabled);
+					//cout << it->second->ToString(featureEnabled);
 					SendToUI(it->second);
 				}
 			}
@@ -370,12 +419,15 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 		}
 		else
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to open file", __LINE__);
+			syslog(SYSL_ERR, "Line: %d Unable to open file %s", __LINE__, trainingCapFile.data());
 		}
 		myfile.close();
-	}
+	} while(classificationTimeout);
+
 	//Shouldn't get here!
-	syslog(SYSL_ERR, "Line: %d Training thread ended. Shouldn't get here!!!", __LINE__);
+	if (classificationTimeout)
+		syslog(SYSL_ERR, "Line: %d Training thread ended. Shouldn't get here!!!", __LINE__);
+
 	return NULL;
 }
 
@@ -477,6 +529,8 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 			suspects[addr]->flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 			syslog(SYSL_INFO, "Line: %d Received Silent Alarm!\n %s", __LINE__, (suspects[addr]->ToString(featureEnabled)).c_str());
+			if(!classificationTimeout)
+				ClassificationLoop(NULL);
 		}
 		catch(std::exception e)
 		{
@@ -1049,7 +1103,7 @@ bool ClassificationEngine::ReceiveSuspectData()
 	}
 	catch(std::exception e)
 	{
-		syslog(SYSL_ERR, "Line: %d Error in parsing received TrafficEvent: %s", __LINE__, string(e.what()).c_str());
+		syslog(SYSL_ERR, "Line: %d Error in parsing received Suspect: %s", __LINE__, string(e.what()).c_str());
 		close(connectionSocket);
 		bzero(buffer, MAX_MSG_SIZE);
 		return false;

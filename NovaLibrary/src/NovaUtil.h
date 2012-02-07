@@ -252,16 +252,16 @@ uint GetSerializedAddr(u_char * buf);
 int GetMaskBits(in_addr_t range);
 
 // Convert CE dump to Training DB format and append it
-void MergeDumpIntoDb(string inputFile, string outputFile, trainingSuspectMap* headerMap);
+bool CaptureToTrainingDb(string dbFile, trainingSuspectMap* selectionOptions);
 
 // Parse a CE dump file
-trainingDumpMap* ReadEngineDumpFile(string inputFile);
+trainingDumpMap* ParseEngineCaptureFile(string captureFile);
 
 // Parse a Training DB file
-trainingSuspectMap* ReadClassificationDb(string inputFile);
+trainingSuspectMap* ParseTrainingDb(string dbPath);
 
 // Create a CE data file from a subset of the Training DB file
-string MakeCeFileFromDb(trainingSuspectMap& db);
+string MakaDataFile(trainingSuspectMap& db);
 
 }
 

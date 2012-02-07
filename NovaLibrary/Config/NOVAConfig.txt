@@ -94,8 +94,8 @@ IS_TRAINING 0
 # capture files will be stored.
 # 
 # EXAMPLE
-# TRAINING_CAP_FOLDER
-TRAINING_CAP_FOLDER Data 
+# TRAINING_CAP_FOLDER Data
+TRAINING_CAP_FOLDER Data
 
 ############################################
 # CLASSIFICATION_THRESHOLD #

@@ -121,12 +121,12 @@ public:
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored
 	// Returns: number of bytes set in the buffer
-	uint SerializeFeatureSet(u_char * buf);
+	uint32_t SerializeFeatureSet(u_char * buf);
 
 	// Deserializes the buffer into the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set resides
 	// Returns: number of bytes read from the buffer
-	uint DeserializeFeatureSet(u_char * buf);
+	uint32_t DeserializeFeatureSet(u_char * buf);
 
 	// TODO: Might be a good idea to combine SerializeFeatureDataBroadcast/SerializeFeatureDataLocal and
 	// the deserializing compliments. Very small changes in the code, we could pass another input arg as a switch.
@@ -135,25 +135,25 @@ public:
 	// This function saves serialized data used by the ClassificationEngine for sending silentAlarms, needs data to classify
 	//		buf - Pointer to buffer to store serialized data
 	// Returns: number of bytes set in the buffer
-	uint SerializeFeatureDataBroadcast(u_char * buf);
+	uint32_t SerializeFeatureDataBroadcast(u_char * buf);
 
 	// Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in broadcast data (the second member of uint pairs)
 	//		buf - Pointer to buffer where the serialized Feature data broadcast resides
 	// Returns: number of bytes read from the buffer
-	uint DeserializeFeatureDataBroadcast(u_char * buf);
+	uint32_t DeserializeFeatureDataBroadcast(u_char * buf);
 
 	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	// This function doesn't keep data once serialized. Used by the LocalTrafficMonitor and Haystack for sending suspect information
 	//		buf - Pointer to buffer to store serialized data in
 	// Returns: number of bytes set in the buffer
-	uint SerializeFeatureDataLocal(u_char * buf);
+	uint32_t SerializeFeatureDataLocal(u_char * buf);
 
 	//Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in local data (the first member of uint pairs)
 	//		buf - Pointer to buffer where the serialized data resides
 	// Returns: number of bytes read from the buffer
-	uint DeserializeFeatureDataLocal(u_char * buf);
+	uint32_t DeserializeFeatureDataLocal(u_char * buf);
 
 private:
 	//Temporary variables used to calculate Features
@@ -162,12 +162,12 @@ private:
 	Packet_Table packTable;
 
 	//Max packet count to an IP, used for normalizing
-	uint IPMax;
+	uint32_t IPMax;
 
 	//Table of Ports and associated packet counts
 	Port_Table portTable;
 	//Max packet count to a port, used for normalizing
-	uint portMax;
+	uint32_t portMax;
 
 	//Tracks the number of HS events
 	pair<uint32_t, uint32_t> haystackEvents;

@@ -21,7 +21,7 @@
 						<port>20_TCP_open</port>
 						<port>21_TCP_Windows FTP</port>
 						<port>23_TCP_Telnet Router</port>
-						<port>80_TCP_Windows Web</port>
+						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
 						<port>137_TCP_open</port>
 						<port>137_UDP_open</port>
@@ -42,7 +42,7 @@
 				</set>
 				<add>
 					<ports>
-						<port>80_TCP_Windows Web</port>
+						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
 						<port>137_TCP_open</port>
 						<port>137_UDP_open</port>
@@ -83,7 +83,7 @@
 				<add>
 					<ports>
 						<port>23_TCP_Telnet Router</port>
-						<port>80_TCP_Windows Web</port>
+						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
 						<port>137_TCP_open</port>
 						<port>137_UDP_open</port>

@@ -20,11 +20,11 @@
 		<script>Telnet Router</script>
 	</port>
 	<port>
-		<name>80_TCP_Windows Web</name>
+		<name>80_TCP_Windows httpd</name>
 		<number>80</number>
 		<type>TCP</type>
 		<behavior>script</behavior>
-		<script>Windows Web</script>
+		<script>Windows httpd</script>
 	</port>
 	<port>
 		<name>139_TCP_open</name>
