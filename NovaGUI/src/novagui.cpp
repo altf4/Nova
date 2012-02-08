@@ -676,6 +676,14 @@ void NovaGUI::loadScripts()
 			s.tree = v.second;
 			//Each script consists of a name and path to that script
 			s.name = v.second.get<std::string>("name");
+
+			if (!s.name.compare(""))
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd scripts XML file contains invalid (null) script names. Some scripts have failed to load.");
+				continue;
+			}
+
 			s.path = v.second.get<std::string>("path");
 			scripts[s.name] = s;
 		}
@@ -756,6 +764,14 @@ void NovaGUI::loadPorts()
 			p.tree = v.second;
 			//Required xml entries
 			p.portName = v.second.get<std::string>("name");
+
+			if (!p.portName.compare(""))
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd XML files contain invalid port names. Some ports have failed to load.");
+				continue;
+			}
+
 			p.portNum = v.second.get<std::string>("number");
 			p.type = v.second.get<std::string>("type");
 			p.behavior = v.second.get<std::string>("behavior");
@@ -911,6 +927,14 @@ void NovaGUI::loadNodes(ptree *ptr)
 				n.IP = v.second.get<std::string>("IP");
 				n.enabled = v.second.get<bool>("enabled");
 				n.pfile = v.second.get<std::string>("profile.name");
+
+				if (!n.pfile.compare(""))
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+					prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+					continue;
+				}
+
 				p = profiles[n.pfile];
 
 				//Get mac if present
@@ -929,6 +953,14 @@ void NovaGUI::loadNodes(ptree *ptr)
 				case static_IP:
 
 					n.name = n.IP;
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
+
 					//intialize subnet to NULL and check for smallest bounding subnet
 					n.sub = "";
 					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
@@ -1004,6 +1036,14 @@ void NovaGUI::loadNodes(ptree *ptr)
 						continue;
 					}
 					n.name = n.MAC;
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
+
 					n.sub = "";
 					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 					{
@@ -1031,6 +1071,13 @@ void NovaGUI::loadNodes(ptree *ptr)
 				case randomDHCP:
 
 					n.name = n.pfile + " on " + n.interface;
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
 
 					//Finds a unique identifier
 					while((nodes.find(n.name) != nodes.end()) && (i < j))
@@ -1065,6 +1112,14 @@ void NovaGUI::loadNodes(ptree *ptr)
 				//***** Doppelganger ********//
 				case Doppelganger:
 					n.name = "Doppelganger";
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
+
 					n.sub = "";
 					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 					{
@@ -1123,6 +1178,14 @@ void NovaGUI::loadProfiles()
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
+
+				if (!p.name.compare(""))
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+					prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd profiles XML file contains invalid profile names. Some profiles have failed to load.");
+					continue;
+				}
+
 				p.ports.clear();
 				p.type = (profileType)v.second.get<int>("type");
 				for(uint i = 0; i < INHERITED_MAX; i++)
@@ -1341,6 +1404,13 @@ void NovaGUI::loadSubProfiles(string parent)
 
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
+
+			if (!prof.name.compare(""))
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd profiles XML file contains invalid profile names. Some profiles have failed to load.");
+				continue;
+			}
 
 			for(uint i = 0; i < INHERITED_MAX; i++)
 			{
