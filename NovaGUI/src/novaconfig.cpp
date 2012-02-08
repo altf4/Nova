@@ -176,8 +176,12 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 					//check for the inherited port
 					for(j = 0; j < parent->ports.size(); j++)
 					{
-						if(!prt->portName.compare(parent->ports[j].first))
+						port temp = ports[parent->ports[j].first];
+						if(!prt->portNum.compare(temp.portNum) && !prt->type.compare(temp.type))
+						{
+							p->ports[i].first = temp.portName;
 							p->ports[i].second = true;
+						}
 					}
 					//TODO display prompt that allows the user to delete the port or do nothing if port isn't found
 				}
@@ -203,12 +207,8 @@ void NovaConfig::on_actionAddPort_triggered()
 		if(profiles.find(currentProfile) != profiles.end())
 		{
 			loadingItems = true;
-			profile * p = &profiles[currentProfile];
-			for(uint i = 0; i < p->ports.size(); i++)
-			{
-				if(!p->ports[i].first.compare("Not a port"))
-					return;
-			}
+			profile p = profiles[currentProfile];
+
 			port pr;
 			pr.portNum = "0";
 			pr.type = "TCP";
@@ -258,26 +258,48 @@ void NovaConfig::on_actionAddPort_triggered()
 			pair<string, bool> portPair;
 			portPair.first = pr.portName;
 			portPair.second = false;
-			p->ports.insert(p->ports.begin(),portPair);
 
-			ports[pr.portName] = pr;
+			bool conflict = false;
+			for(uint i = 0; i < p.ports.size(); i++)
+			{
+				port temp = ports[p.ports[i].first];
+				if(!pr.portNum.compare(temp.portNum) && !pr.type.compare(temp.type))
+					conflict = true;
+			}
+			if(!conflict)
+			{
+				p.ports.insert(p.ports.begin(),portPair);
+				ports[pr.portName] = pr;
+				profiles[p.name] = p;
+
+				portPair.second = true;
+				vector<profile> profList;
+				for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+				{
+					profile ptemp = it->second;
+					while(ptemp.parentProfile.compare("") && ptemp.parentProfile.compare(p.name))
+					{
+						ptemp = profiles[ptemp.parentProfile];
+					}
+					if(!ptemp.parentProfile.compare(p.name))
+					{
+						ptemp = it->second;
+						conflict = false;
+						for(uint i = 0; i < ptemp.ports.size(); i++)
+						{
+							port temp = ports[ptemp.ports[i].first];
+							if(!pr.portNum.compare(temp.portNum) && !pr.type.compare(temp.type))
+								conflict = true;
+						}
+						if(!conflict)
+							ptemp.ports.insert(ptemp.ports.begin(),portPair);
+					}
+					profiles[ptemp.name] = ptemp;
+				}
+			}
 			loadProfile();
 			saveProfile();
 			ui.portTreeWidget->editItem(ports[pr.portName].item, 0);
-
-			portPair.second = true;
-			for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
-			{
-				profile * ptemp = &it->second;
-				while(ptemp->parentProfile.compare("") && ptemp->parentProfile.compare(p->name))
-				{
-					ptemp = &profiles[ptemp->parentProfile];
-				}
-				if(!ptemp->parentProfile.compare(p->name))
-				{
-					profiles[it->first].ports.insert(profiles[it->first].ports.begin(),portPair);
-				}
-			}
 			loadingItems = false;
 		}
 	}
@@ -567,33 +589,19 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 	if(!loadingItems && (item != NULL) && edited)
 	{
 		loadingItems = true;
-
 		//Ensure the signaling item is selected
 		ui.portTreeWidget->setCurrentItem(item);
-
-		profile * p = &profiles[currentProfile];
+		profile p = profiles[currentProfile];
 		string oldPort;
 		port oldPrt;
-		bool oldInh;
 
 		//Find the port before the changes
 		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
 		{
 			if(it->second.item == item)
-			{
-				oldPrt = it->second;
 				oldPort = it->second.portName;
-			}
 		}
-		//Erase the old port from the current profile
-		for(uint i = 0; i < p->ports.size(); i++)
-		{
-			if(!p->ports[i].first.compare(oldPort))
-			{
-				oldInh = p->ports[i].second;
-				p->ports.erase(p->ports.begin()+i);
-			}
-		}
+		oldPrt = ports[oldPort];
 
 		//Use the combo boxes to update the hidden text underneath them.
 		TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
@@ -624,16 +632,15 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 			ports[portName] = prt;
 		}
 		else
-		{
 			prt = ports[portName];
-		}
 
-		p = &profiles[currentProfile];
 		//Check for port conflicts
-		for(uint i = 0; i < p->ports.size(); i++)
+		for(uint i = 0; i < p.ports.size(); i++)
 		{
-			port temp = ports[p->ports[i].first];
-			if((!(temp.portNum.compare(prt.portNum))) && (!(temp.type.compare(prt.type))))
+			port temp = ports[p.ports[i].first];
+			//If theres a conflict other than with the old port
+			if((!(temp.portNum.compare(prt.portNum))) && (!(temp.type.compare(prt.type)))
+					&& temp.portName.compare(oldPort))
 			{
 				syslog(SYSL_ERR, "File: %s Line: %d WARNING: Port number and protocol already used.",
 						__FILE__, __LINE__);
@@ -644,29 +651,57 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		//If there were no conflicts and the port will be included, insert in sorted location
 		if(portName.compare(""))
 		{
-			p = &profiles[currentProfile];
+			uint index;
+			pair<string, bool> portPair;
+
+			//Erase the old port from the current profile
+			for(index = 0; index < p.ports.size(); index++)
+				if(!p.ports[index].first.compare(oldPort))
+					p.ports.erase(p.ports.begin()+index);
+
+			//If the port number or protocol is different, check for inherited ports
+			if((prt.portNum.compare(oldPrt.portNum) || prt.type.compare(oldPrt.type))
+					&& (profiles.find(p.parentProfile) != profiles.end()))
+			{
+				profile parent = profiles[p.parentProfile];
+				for(uint i = 0; i < parent.ports.size(); i++)
+				{
+					port temp = ports[parent.ports[i].first];
+					//If a parent's port matches the number and protocol of the old port being removed
+					if((!(temp.portNum.compare(oldPrt.portNum))) && (!(temp.type.compare(oldPrt.type))))
+					{
+						portPair.first = temp.portName;
+						portPair.second = true;
+						if(index < p.ports.size())
+							p.ports.insert(p.ports.begin() + index, portPair);
+						else
+							p.ports.push_back(portPair);
+						break;
+					}
+				}
+			}
 
 			//Create the vector item for the profile
-			pair<string, bool> portPair;
 			portPair.first = portName;
 			portPair.second = false;
 
 			//Insert it at the numerically sorted position.
 			uint i = 0;
-			for(i = 0; i < p->ports.size(); i++)
+			for(i = 0; i < p.ports.size(); i++)
 			{
-				port temp = ports[p->ports[i].first];
+				port temp = ports[p.ports[i].first];
 				if((atoi(temp.portNum.c_str())) < (atoi(prt.portNum.c_str())))
 				{
 					continue;
 				}
 				break;
 			}
-			if(i < p->ports.size())
-				p->ports.insert(p->ports.begin()+i, portPair);
+			if(i < p.ports.size())
+				p.ports.insert(p.ports.begin()+i, portPair);
 			else
-				p->ports.push_back(portPair);
+				p.ports.push_back(portPair);
 
+			profiles[p.name] = p;
 			//Check for children who inherit the port
 			vector<string> updateList;
 			updateList.push_back(currentProfile);
@@ -698,106 +733,55 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 					//A valid profile is stored in the list
 					if(valid)
 					{
-						updateList.push_back(it->first);
+						profile ptemp = it->second;
+						//Check if we inherited the old port, and delete it if so
+						for(uint i = 0; i < ptemp.ports.size(); i++)
+							if(!ptemp.ports[i].first.compare(oldPort) && ptemp.ports[i].second)
+								ptemp.ports.erase(ptemp.ports.begin()+i);
+
+						profile parentTemp = profiles[ptemp.parentProfile];
+
+						//insert any ports the parent has that doesn't conflict
+						for(uint i = 0; i < parentTemp.ports.size(); i++)
+						{
+							bool conflict = false;
+							port pr = ports[parentTemp.ports[i].first];
+							//Check the child for conflicts
+							for(uint j = 0; j < ptemp.ports.size(); j++)
+							{
+								port temp = ports[ptemp.ports[j].first];
+								if(!temp.portNum.compare(pr.portNum) && !temp.type.compare(pr.type))
+									conflict = true;
+							}
+							if(!conflict)
+							{
+								portPair.first = pr.portName;
+								portPair.second = true;
+								//Insert it at the numerically sorted position.
+								uint j = 0;
+								for(j = 0; j < ptemp.ports.size(); j++)
+								{
+									port temp = ports[ptemp.ports[j].first];
+									if((atoi(temp.portNum.c_str())) < (atoi(pr.portNum.c_str())))
+										continue;
+
+									break;
+								}
+								if(j < ptemp.ports.size())
+									ptemp.ports.insert(ptemp.ports.begin()+j, portPair);
+								else
+									ptemp.ports.push_back(portPair);
+							}
+						}
+						updateList.push_back(ptemp.name);
+						profiles[ptemp.name] = ptemp;
 						//Since we found at least one profile this iteration flag as changed
 						// so we can check for it's children
 						changed = true;
-					}
-				}
-			}
-
-			//Iterate over the list and update their port list if they inherited the changed port
-			while(!updateList.empty())
-			{
-				profile p = profiles[updateList.back()];
-				updateList.pop_back();
-				for(uint i = 0; i < p.ports.size(); i++)
-				{
-					if(p.ports[i].second && !p.ports[i].first.compare(oldPort))
-					{
-						if(portName.compare(""))
-						{
-							p.ports[i].first = portName;
-						}
-						else
-							p.ports.erase(p.ports.begin() + i);
 						break;
 					}
 				}
-				profiles[p.name] = p;
-
-				if(!p.parentProfile.compare(""))
-					continue;
-
-				pair<string, bool> parentPair;
-				parentPair.second = false;
-
-				//If the port number or protocol is different, check for inherited ports
-				if(prt.portNum.compare(oldPrt.portNum) || prt.type.compare(oldPrt.type))
-				{
-					profile parent = profiles[p.parentProfile];
-					for(uint i = 0; i < parent.ports.size(); i++)
-					{
-						port temp = ports[parent.ports[i].first];
-						//If a parent's port matches the number and protocol of the old port being removed
-						if((!(temp.portNum.compare(oldPrt.portNum))) && (!(temp.type.compare(oldPrt.type))))
-						{
-							oldPrt = temp;
-							parentPair.first = temp.portName;
-							parentPair.second = true;
-							break;
-						}
-					}
-				}
-
-				//If we found a port to inherit
-				if(parentPair.second)
-				{
-					//Insert it at the numerically sorted position.
-					uint i = 0;
-					for(i = 0; i < p.ports.size(); i++)
-					{
-						port temp = ports[p.ports[i].first];
-						if((atoi(temp.portNum.c_str())) < (atoi(oldPrt.portNum.c_str())))
-						{
-							continue;
-						}
-						break;
-					}
-					if(i < p.ports.size())
-						p.ports.insert(p.ports.begin()+i, parentPair);
-					else
-						p.ports.push_back(parentPair);
-				}
-				profiles[p.name] = p;
 			}
-		}
-		else
-		{
-			portName = oldPort;
-			p = &profiles[currentProfile];
-
-			//Create the vector item for the profile
-			pair<string, bool> portPair;
-			portPair.first = oldPort;
-			portPair.second = oldInh;
-			prt = ports[oldPort];
-
-			//Insert it at the numerically sorted position.
-			uint i = 0;
-			for(i = 0; i < p->ports.size(); i++)
-			{
-				port temp = ports[p->ports[i].first];
-				if((atoi(temp.portNum.c_str())) < (atoi(prt.portNum.c_str())))
-				{
-					continue;
-				}
-				break;
-			}
-			if(i < p->ports.size())
-				p->ports.insert(p->ports.begin()+i, portPair);
-			else
-				p->ports.push_back(portPair);
 		}
 		loadProfile();
 		saveProfile();
@@ -2249,7 +2233,7 @@ void NovaConfig::loadProfile()
 			typeBox->addItem("UDP");
 			typeBox->setItemText(0, "TCP");
 			typeBox->setItemText(1, "UDP");
-			typeBox->setEnabled(!p->ports[i].second);
+			typeBox->setFont(tempFont);
 			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
@@ -2261,7 +2245,7 @@ void NovaConfig::loadProfile()
 			{
 				behaviorBox->addItem((QString)it->first.c_str());
 			}
-			behaviorBox->setEnabled(!p->ports[i].second);
+			behaviorBox->setFont(tempFont);
 			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 
