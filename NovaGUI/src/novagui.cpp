@@ -164,7 +164,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	t->descriptionUID = "Problem inheriting port";
 	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
+	t->type = notifyPrompt;
 	NO_ANCESTORS = prompter->RegisterDialog(*t);
 
 
@@ -464,10 +464,11 @@ void NovaGUI::saveAll()
 			profileTree.add_child("profiles.profile", pt);
 		}
 	}
-	write_xml(homePath+"/scripts.xml", scriptTree);
-	write_xml(homePath+"/templates/ports.xml", portTree);
-	write_xml(homePath+"/templates/nodes.xml", groupTree);
-	write_xml(homePath+"/templates/profiles.xml", profileTree);
+	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
+	write_xml(homePath+"/scripts.xml", scriptTree, std::locale(), settings);
+	write_xml(homePath+"/templates/ports.xml", portTree, std::locale(), settings);
+	write_xml(homePath+"/templates/nodes.xml", groupTree, std::locale(), settings);
+	write_xml(homePath+"/templates/profiles.xml", profileTree, std::locale(), settings);
 }
 
 //Writes the current configuration to honeyd configs
@@ -639,10 +640,11 @@ void NovaGUI::loadAll()
 void NovaGUI::loadScripts()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
 	scriptTree.clear();
 	try
 	{
-		read_xml(homePath+"/scripts.xml", scriptTree);
+		read_xml(homePath+"/scripts.xml", scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &v, scriptTree.get_child("scripts"))
 		{
@@ -717,10 +719,12 @@ void NovaGUI::updateSystemStatus()
 void NovaGUI::loadPorts()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+
 	portTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/ports.xml", portTree);
+		read_xml(homePath+"/templates/ports.xml", portTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &v, portTree.get_child("ports"))
 		{
@@ -758,12 +762,14 @@ void NovaGUI::loadPorts()
 void NovaGUI::loadGroup()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+
 	groupTree.clear();
 	ptree ptr;
 
 	try
 	{
-		read_xml(homePath+"/templates/nodes.xml", groupTree);
+		read_xml(homePath+"/templates/nodes.xml", groupTree, boost::property_tree::xml_parser::trim_whitespace);
 		BOOST_FOREACH(ptree::value_type &v, groupTree.get_child("groups"))
 		{
 			//Find the specified group
@@ -1063,11 +1069,12 @@ void NovaGUI::loadNodes(ptree *ptr)
 void NovaGUI::loadProfiles()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
 	ptree * ptr;
 	profileTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/profiles.xml", profileTree);
+		read_xml(homePath+"/templates/profiles.xml", profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &v, profileTree.get_child("profiles"))
 		{
