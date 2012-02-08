@@ -21,7 +21,7 @@
 #include <QtGui>
 #include "NovaUtil.h"
 
-
+using namespace std;
 enum dialogType {
 	notSet = 0,
 	notifyPrompt,

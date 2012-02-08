@@ -21,7 +21,6 @@ using namespace std;
 
 //Parent window pointers, allows us to call functions from the parent
 NovaConfig * novaParent;
-portPopup * portwind;
 
 //Global pointer to the current node
 node * gnode = NULL;
@@ -90,11 +89,6 @@ void nodePopup::closeEvent(QCloseEvent * e)
 {
 	e = e;
 
-	if(editingPorts && (portwind != NULL))
-	{
-		portwind->remoteCall = true;
-		portwind->close();
-	}
 
 	if(remoteCall) remoteClose();
 	else closeWindow();
@@ -471,9 +465,9 @@ void nodePopup::on_editPortsButton_clicked()
 	editingPorts = true;
 	if(!ui.profileTreeWidget->selectedItems().isEmpty() && !subnetSel)
 	{
-		portwind = new portPopup(this, &profiles[gnode->pfile], FROM_NODE_CONFIG, homePath);
+		//portwind = new portPopup(this, &profiles[gnode->pfile], FROM_NODE_CONFIG, homePath);
 		loadAllNodes();
-		portwind->show();
+		//portwind->show();
 	}
 	else
 	{

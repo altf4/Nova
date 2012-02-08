@@ -167,6 +167,30 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t->type = notifyPrompt;
 	NO_ANCESTORS = prompter->RegisterDialog(*t);
 
+	t->descriptionUID = "Loading a Haystack Node Failed";
+	t->action = CHOICE_SHOW;
+	t->type = warningPrompt;
+	NODE_LOAD_FAIL = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Cannot inherit the selected port";
+	t->action = CHOICE_SHOW;
+	t->type = notifyActionPrompt;
+	CANNOT_INHERIT_PORT = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Cannot delete the selected port";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	CANNOT_DELETE_PORT = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "No Doppelganger could be found";
+	t->action = CHOICE_SHOW;
+	t->type = warningPreventablePrompt;
+	NO_DOPP = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Multiple Doppelgangers detected";
+	t->action = CHOICE_SHOW;
+	t->type = warningPreventablePrompt;
+	DOPP_EXISTS = prompter->RegisterDialog(*t);
 
 	delete t;
 
@@ -949,8 +973,10 @@ void NovaGUI::loadNodes(ptree *ptr)
 					//If no subnet found, can't use node unless it's doppelganger.
 					else
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet ranges", __FILE__, __LINE__, n.IP.c_str());
-						prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all valid subnet ranges: " + n.name);
+						syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet "
+								"ranges", __FILE__, __LINE__, n.IP.c_str());
+						prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all "
+								"valid subnet ranges: " + n.name);
 					}
 					break;
 
@@ -961,16 +987,20 @@ void NovaGUI::loadNodes(ptree *ptr)
 					//If no MAC is set, there's a problem
 					if(!n.MAC.size())
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s does not have a MAC Address.",
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s "
+								"does not have a MAC Address.",
 								__FILE__, __LINE__, string(n.pfile).c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled node using profile "
+								"" + n.pfile + " does not have a MAC Address.");
 						continue;
 					}
 
 					//Associated MAC is already in use, this is not allowed, throw out the node
-					//TODO proper debug prints and popups needed
 					if(nodes.find(n.MAC) != nodes.end())
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected in nodes: %s", __FILE__, __LINE__, n.MAC.c_str());
+						syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
+								"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, n.MAC +" is already in use.");
 						continue;
 					}
 					n.name = n.MAC;
@@ -981,10 +1011,12 @@ void NovaGUI::loadNodes(ptree *ptr)
 							n.sub = it->second.address;
 					}
 					// If no valid subnet/interface found
-					//TODO proper debug prints and popups needed
 					if(!n.sub.compare(""))
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s is unable to resolve it's interface.", __FILE__, __LINE__, n.MAC.c_str());
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s "
+								"is unable to resolve it's interface.",__FILE__, __LINE__, n.MAC.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+								+ n.MAC + " is unable to resolve it's interface.");
 						continue;
 					}
 
@@ -1015,10 +1047,12 @@ void NovaGUI::loadNodes(ptree *ptr)
 							n.sub = it->second.address;
 					}
 					// If no valid subnet/interface found
-					//TODO proper debug prints and popups needed
 					if(!n.sub.compare(""))
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve "
+								"it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+								+ n.MAC + " is unable to resolve it's interface.");
 						continue;
 					}
 					//save the node in the table
@@ -1038,10 +1072,11 @@ void NovaGUI::loadNodes(ptree *ptr)
 							n.sub = it->second.address;
 					}
 					// If no valid subnet/interface found
-					//TODO proper debug prints and popups needed
 					if(!n.sub.compare(""))
 					{
 						syslog(SYSL_ERR, "File: %s Line: %d The Doppelganger is unable to resolve the interface: %s", __FILE__, __LINE__, n.interface.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "The Doppelganger is unable to resolve "
+								"the interface: " + n.interface);
 						continue;
 					}
 					//save the node in the table
