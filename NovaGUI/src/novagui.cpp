@@ -1889,7 +1889,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
-	//ThinTrainingPoints(trainingDump, 1000);
+	ThinTrainingPoints(trainingDump, 0.001);
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 

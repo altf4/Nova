@@ -399,6 +399,7 @@ string MakaDataFile(trainingSuspectMap& db)
 
 void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
 {
+	uint numThinned = 0, numTotal = 0;
 	double maxValues[DIM];
 	for (uint i = 0; i < DIM; i++)
 		maxValues[i] = 0;
@@ -408,6 +409,7 @@ void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
 	{
 		for (int p = it->second->size() - 1; p >= 0; p--)
 		{
+			numTotal++;
 			stringstream ss(it->second->at(p));
 			for (uint d = 0; d < DIM; d++)
 			{
@@ -463,15 +465,18 @@ void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
 			if (distance < distanceThreshhold)
 			{
 				it->second->erase(it->second->begin() + p);
+				numThinned++;
 			}
 			else
 			{
 				for (uint d = 0; d < DIM; d++)
 					newerPoint[d] = olderPoint[d];
 			}
-
 		}
 	}
+
+	cout << "Total points: " << numTotal << endl;
+	cout << "Number Thinned: " << numThinned << endl;
 
 	annDeallocPt(newerPoint);
 	annDeallocPt(olderPoint);
