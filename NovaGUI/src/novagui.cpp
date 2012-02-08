@@ -436,7 +436,7 @@ void NovaGUI::saveAll()
 		portTree.add_child("ports.port", pt);
 	}
 
-	subnetTree->clear();
+	subnetTree.clear();
 	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 	{
 		pt = it->second.tree;
@@ -462,11 +462,11 @@ void NovaGUI::saveAll()
 		//call ntoa to get char * and make string
 		temp = string(inet_ntoa(addr));
 		pt.put<std::string>("mask", temp);
-		subnetTree->add_child("interface", pt);
+		subnetTree.add_child("interface", pt);
 	}
 
 	//Nodes
-	nodesTree->clear();
+	nodesTree.clear();
 	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
 		pt = it->second.tree;
@@ -477,7 +477,7 @@ void NovaGUI::saveAll()
 		if(it->second.MAC.size())
 			pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
-		nodesTree->add_child("node",pt);
+		nodesTree.add_child("node",pt);
 	}
 	profileTree.clear();
 	for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
@@ -802,14 +802,14 @@ void NovaGUI::loadGroup()
 				try //Null Check
 				{
 					//Load Subnets first, they are needed before we can load nodes
-					subnetTree = &v.second.get_child("subnets");
-					loadSubnets(subnetTree);
+					subnetTree = v.second.get_child("subnets");
+					loadSubnets(&subnetTree);
 
 					try //Null Check
 					{
 						//If subnets are loaded successfully, load nodes
-						nodesTree = &v.second.get_child("nodes");
-						loadNodes(nodesTree);
+						nodesTree = v.second.get_child("nodes");
+						loadNodes(&nodesTree);
 					}
 					catch(std::exception &e)
 					{

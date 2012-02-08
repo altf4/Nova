@@ -194,9 +194,8 @@ public:
     ptree portTree;
     ptree profileTree;
     ptree scriptTree;
-    ptree *nodesTree;
-    ptree *doppTree;
-    ptree *subnetTree;
+    ptree nodesTree;
+    ptree subnetTree;
 
     DialogPrompter *prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
