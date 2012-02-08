@@ -175,6 +175,9 @@ private slots:
 // Right click action on a feature, we manually connect it so no need for proper prefix
 void onFeatureClick(const QPoint & pos);
 
+//Empty action slot to do nothing on certain action prompts
+void on_actionNo_Action_triggered();
+
 //Which menu item is selected
 void on_treeWidget_itemSelectionChanged();
 //General Preferences Buttons
