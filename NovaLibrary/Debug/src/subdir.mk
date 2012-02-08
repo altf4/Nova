@@ -7,6 +7,7 @@ CPP_SRCS += \
 ../src/FeatureSet.cpp \
 ../src/GUIMsg.cpp \
 ../src/NOVAConfiguration.cpp \
+../src/NovaMessageClient.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
 ../src/Suspect.cpp 
@@ -15,6 +16,7 @@ OBJS += \
 ./src/FeatureSet.o \
 ./src/GUIMsg.o \
 ./src/NOVAConfiguration.o \
+./src/NovaMessageClient.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
 ./src/Suspect.o 
@@ -23,6 +25,7 @@ CPP_DEPS += \
 ./src/FeatureSet.d \
 ./src/GUIMsg.d \
 ./src/NOVAConfiguration.d \
+./src/NovaMessageClient.d \
 ./src/NovaUtil.d \
 ./src/Point.d \
 ./src/Suspect.d 

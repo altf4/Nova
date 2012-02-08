@@ -13,7 +13,9 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Class to load and parse the NOVA configuration file
+// Description : Class to generate messages based on events inside the program,
+// and maintain information needed for the sending of those events, mostly
+// networking information that is not readily available
 //============================================================================/*
 
 #include "NovaMessageClient.h"
@@ -23,99 +25,126 @@ using namespace std;
 namespace Nova
 {
 
-	const string NovaMessageClient::prefixes[] = {  };
+	const string NovaMessageClient::prefixes[] = { "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "RECIPIENTS", "SERVICE_PREFERENCES" };
 
 // Loads the configuration file into the class's state data
-	void NovaMessageClient::LoadConfiguration(char const* configFilePath, string module)
+	uint16_t NovaMessageClient::LoadConfiguration(char const* configFilePath)
 	{
 		string line;
 		string prefix;
-		int prefixIndex;
+		uint16_t prefixIndex;
 
-		string use = module.substr(7, (module.length() - 11));
+		//openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
-		openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
-
-		syslog(SYSL_INFO, "Loading file %s in homepath %s", configFilePath, homeNovaPath.c_str());
+		//syslog(SYSL_INFO, "Loading file %s in homepath %s", configFilePath, homeNovaPath.c_str());
 
 		ifstream config(configFilePath);
 
 		//populate the defaultVector. I know it looks a little messy, maybe
 		//hard code it somewhere? Just did this so that if we add or remove stuff,
 		//we only have to do it here
-		for(uint j = 0; j < sizeof(prefixes)/sizeof(prefixes[0]); j++)
+		for(uint16_t j = 0; j < sizeof(prefixes)/sizeof(prefixes[0]); j++)
 		{
 			string def;
+
 			switch(j)
 			{
-				case 0: def = "default";
-						break;
-				case 1: def = "Config/haystack.config";
-						break;
-				case 2: def = "7";
-						break;
-				case 3: def = "3";
+				case 0:
+				case 1:
+				case 2:
+				case 3: def = "NO_DEFAULT";
 						break;
 				case 4: def = "0";
 						break;
-				case 5: def = "../pcapfile";
-						break;
-				case 6: def = "1";
-						break;
-				case 7: def = "1";
-						break;
-				case 8: def = "3";
-						break;
-				case 9: def = "12024";
-						break;
-				case 10: def = "3";
-						break;
-				case 11: def = "0.01";
-						break;
-				case 12: def = "0";
-						break;
-				case 13: def = ".5";
-						break;
-				case 14: def = "Data/data.txt";
-						break;
-				case 15: def = "3";
-						break;
-				case 16: def = ".5";
-						break;
-				case 17: def = "Config/doppelganger.config";
-						break;
-				case 18: def = "10.0.0.1";
-						break;
-				case 19: def = "1";
-						break;
-				case 20: def = "111111111";
-						break;
-				case 21: def = "Data";
-						break;
 				default: break;
 			}
-			defaults.push_back(make_pair(prefixes[j], def));
+
+			checkLoad[j] = def;
 		}
 
-		if (config.is_open())
+		if(config.is_open())
 		{
-			while (config.good())
+			while(config.good())
 			{
 				getline(config, line);
+
 				prefixIndex = 0;
 				prefix = prefixes[prefixIndex];
 
-				// HS_HONEYD_CONFIG
-				prefixIndex++;
-				prefix = prefixes[prefixIndex];
-				if (!line.substr(0, prefix.size()).compare(prefix))
+				// SMTP_ADDR
+				if(!line.substr(0, prefix.size()).compare(prefix))
 				{
 					line = line.substr(prefix.size() + 1, line.size());
-					if (line.size() > 0)
+
+					if(line.size() > 0)
 					{
-						options[prefix].data = homeNovaPath + "/" + line;
-						options[prefix].isValid = true;
+						messageInfo.smtp_addr = ((in_addr_t) atoi(line.c_str()));
 					}
+
+					continue;
+				}
+
+				prefixIndex++;
+				prefix = prefixes[prefixIndex];
+
+				//SMTP_PORT
+				if(!line.substr(0, prefix.size()).compare(prefix))
+				{
+					line = line.substr(prefix.size() + 1, line.size());
+
+					if(line.size() > 0)
+					{
+						messageInfo.smtp_port = ((in_port_t) atoi(line.c_str()));
+					}
+
+					continue;
+				}
+
+				prefixIndex++;
+				prefix = prefixes[prefixIndex];
+
+				//SMTP_DOMAIN
+				if(!line.substr(0, prefix.size()).compare(prefix))
+				{
+					line = line.substr(prefix.size() + 1, line.size());
+
+					if(line.size() > 0)
+					{
+						messageInfo.smtp_domain = line;
+					}
+
+					continue;
+				}
+
+				prefixIndex++;
+				prefix = prefixes[prefixIndex];
+
+				//RECIPIENTS
+				if(!line.substr(0, prefix.size()).compare(prefix))
+				{
+					line = line.substr(prefix.size() + 1, line.size());
+
+					if(line.size() > 0)
+					{
+						messageInfo.email_recipients = parseAddressesString(line);
+					}
+
+					continue;
+				}
+
+				prefixIndex++;
+				prefix = prefixes[prefixIndex];
+
+				//SERVICE_PREFERENCES
+				if(!line.substr(0, prefix.size()).compare(prefix))
+				{
+					line = line.substr(prefix.size() + 1, line.size());
+
+					if(line.size() > 0)
+					{
+						messageInfo.service_preferences = ((uint16_t) atoi(line.c_str()));
+					}
+
 					continue;
 				}
 			}
@@ -124,45 +153,44 @@ namespace Nova
 		{
 			syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__);
 		}
-		closelog();
-	}
 
-
-	///Checks the optionsMap generated by LoadConfig for any incorrect values;
-	///if there are any problems, report to syslog and set option to default
-	int NovaMessageClient::SetDefaults()
-	{
-		openlog(__FUNCTION__, OPEN_SYSL, LOG_AUTHPRIV);
-
-		int out = 0;
-
-		for(uint i = 0; i < options.size() && out < 2; i++)
+		for(uint16_t i = 0; i < sizeof(checkLoad)/sizeof(checkLoad[0]); i++)
 		{
-			//if the option is not valid from LoadConfig, and it is an option that has a default value, assign.
-			//anything that has no static default (i.e. something that has a user defined default) will pass
-			//on to a given module with isValid being false, and kick out from there. The compare doesn't have to
-			//be here until we have a solid foundation determining what will have static defaults and what won't,
-			//but I put it in anyways to remind myself when the time comes
-			if(!options[prefixes[i]].isValid && defaults[i].second.compare("No") != 0)
+			if(!checkLoad[i].compare("NO_DEFAULT"))
 			{
-				syslog(SYSL_INFO, "Configuration option %s was not set, present, or valid. Setting to default value %s", prefixes[i].c_str(), defaults[i].second.c_str());
-				options[prefixes[i]].data = defaults[i].second;
-				options[prefixes[i]].isValid = true;
-				out = 1;
-			}
-			if(!options[prefixes[i]].isValid && !defaults[i].second.compare("No"))
-			{
-				syslog(SYSL_ERR, "The configuration variable %s was not set in the configuration file, and has no default.", prefixes[i].c_str());
-				out = 2;
+				syslog(SYSL_ERR, "Line: %d Some of the Nova messaging options were not configured, or not present.", __LINE__);
+				return 0;
 			}
 		}
 
 		closelog();
-		return out;
+
+		return 1;
+	}
+	// TODO: use find and substring instead of trying to use strtok
+	vector<string> parseAddressesString(string addresses)
+	{
+		 vector<string> returnAddresses;
+		 char * add;
+		 add = strtok(addresses, ",");
+
+		 while(add != NULL)
+		 {
+			 returnAddresses.push_back(add);
+			 add = strtok(NULL, ",");
+		 }
+
+		 return returnAddresses;
 	}
 
-	NovaMessageClient::NovaMessageClient()
+	void saveMessageConfiguration(string filename)
 	{
+
+	}
+
+	NovaMessageClient::NovaMessageClient(string parent)
+	{
+		parentName = parent;
 	}
 
 	NovaMessageClient::~NovaMessageClient()

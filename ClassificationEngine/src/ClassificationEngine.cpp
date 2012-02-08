@@ -18,6 +18,7 @@
 
 #include "ClassificationEngine.h"
 #include "NOVAConfiguration.h"
+#include "NovaMessageClient.h"
 #include <iostream>
 #include <time.h>
 
@@ -1271,6 +1272,12 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaMessageClient * NovaMessageConf = new NovaMessageClient(__FILE__);
+	if(!NovaMessageConf->LoadConfiguration(configFilePath))
+	{
+		syslog(SYSL_ERR, "Line: %d One or more of the messaging configuration values have not been set, and have no default.", __LINE__);
+		exit(1);
+	}
 
 	confCheck = NovaConfig->SetDefaults();
 
