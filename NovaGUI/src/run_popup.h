@@ -13,7 +13,8 @@
 //   
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
+// Description : This provides a run dialog where the user can override the configuration
+//	options provided in the config file and set things like training mode/pcap file.
 //============================================================================
 #ifndef RUN_POPUP_H
 #define RUN_POPUP_H

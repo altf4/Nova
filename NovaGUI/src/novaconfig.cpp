@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description :
+// Description : NOVA preferences/configuration window
 //============================================================================
 #include "novaconfig.h"
 #include <QtGui/QComboBox>
