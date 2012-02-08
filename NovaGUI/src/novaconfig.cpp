@@ -169,7 +169,6 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 					p->ports[i].second = false;
 
 				//If the port isn't inherited and the profile has parents
-				//TODO display prompt that allows the user to delete the port or do nothing
 				else if(p->parentProfile.compare(""))
 				{
 					profile * parent = &profiles[p->parentProfile];
@@ -180,11 +179,14 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 						if(!prt->portName.compare(parent->ports[j].first))
 							p->ports[i].second = true;
 					}
+					//TODO display prompt that allows the user to delete the port or do nothing if port isn't found
 				}
 				//If the port isn't inherited and the profile has no parent
 				else
-					syslog(SYSL_ERR, "File: %s Line: %d Cannot inherit without any ancestors!", __FILE__, __LINE__);
-
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d Cannot inherit without any ancestors.", __FILE__, __LINE__);
+					mainwindow->prompter->DisplayPrompt(mainwindow->NO_ANCESTORS, "Cannot inherit without any ancestors.");
+				}
 				break;
 			}
 		}
@@ -230,7 +232,7 @@ void NovaConfig::on_actionAddPort_triggered()
 			typeBox->addItem("UDP");
 			typeBox->setItemText(0, "TCP");
 			typeBox->setItemText(1, "UDP");
-			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
+			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
 			behaviorBox->addItem("reset");
@@ -241,7 +243,7 @@ void NovaConfig::on_actionAddPort_triggered()
 			{
 				behaviorBox->addItem((QString)it->first.c_str());
 			}
-			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
+			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			item->setFlags(item->flags() | Qt::ItemIsEditable);
 
@@ -554,51 +556,84 @@ void NovaConfig::on_icmpCheckBox_stateChanged()
 	}
 }
 
-void NovaConfig::portTreeWidget_itemChanged(QTreeWidgetItem *item,  bool edited)
+void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem * item)
 {
+	portTreeWidget_comboBoxChanged(item, true);
+}
+
+void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edited)
+{
+	//On user action with a valid port, and the user actually changed something
 	if(!loadingItems && (item != NULL) && edited)
 	{
 		loadingItems = true;
+
+		//Ensure the signaling item is selected
 		ui.portTreeWidget->setCurrentItem(item);
+
 		profile * p = &profiles[currentProfile];
 		string oldPort;
+		port oldPrt;
+		bool oldInh;
+
+		//Find the port before the changes
 		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
 		{
 			if(it->second.item == item)
+			{
+				oldPrt = it->second;
 				oldPort = it->second.portName;
+			}
 		}
+		//Erase the old port from the current profile
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
 			if(!p->ports[i].first.compare(oldPort))
+			{
+				oldInh = p->ports[i].second;
 				p->ports.erase(p->ports.begin()+i);
+			}
 		}
 
+		//Use the combo boxes to update the hidden text underneath them.
 		TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
 		item->setText(1, qTypeBox->currentText());
 
 		TreeItemComboBox * qBehavBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 2);
 		item->setText(2, qBehavBox->currentText());
 
+		//Generate a unique identifier for a particular protocol, number and behavior combination
+		// this is pulled from the recently updated hidden text and reflects any changes
 		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString()
 				+ "_" + item->text(2).toStdString();
 
 		port prt;
+		//Locate the port in the table or create the port if it doesn't exist
 		if(ports.find(portName) == ports.end())
 		{
 			prt.portName = portName;
 			prt.portNum = item->text(0).toStdString();
 			prt.type = item->text(1).toStdString();
 			prt.behavior = item->text(2).toStdString();
+			//If the behavior is actually a script name
+			if(prt.behavior.compare("open") && prt.behavior.compare("reset") && prt.behavior.compare("block"))
+			{
+				prt.scriptName = prt.behavior;
+				prt.behavior = "script";
+			}
 			ports[portName] = prt;
 		}
 		else
 		{
 			prt = ports[portName];
 		}
+
+		p = &profiles[currentProfile];
+		//Check for port conflicts
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
-			port * temp = &ports[p->ports[i].first];
-			if((!(temp->portNum.compare(prt.portNum))) && (!(temp->type.compare(prt.type))))
+			port temp = ports[p->ports[i].first];
+			if((!(temp.portNum.compare(prt.portNum))) && (!(temp.type.compare(prt.type))))
 			{
 				syslog(SYSL_ERR, "File: %s Line: %d WARNING: Port number and protocol already used.",
 						__FILE__, __LINE__);
@@ -606,26 +641,154 @@ void NovaConfig::portTreeWidget_itemChanged(QTreeWidgetItem *item,  bool edited)
 			}
 		}
 
+		//If there were no conflicts and the port will be included, insert in sorted location
 		if(portName.compare(""))
 		{
-			for(uint i = 0; i < p->ports.size(); i++)
-			{
-				if(!(p->ports[i].first.compare(oldPort)))
-				{
-					p->ports.erase(p->ports.begin()+i);
-					break;
-				}
-			}
 			p = &profiles[currentProfile];
 
+			//Create the vector item for the profile
 			pair<string, bool> portPair;
 			portPair.first = portName;
 			portPair.second = false;
+
+			//Insert it at the numerically sorted position.
 			uint i = 0;
 			for(i = 0; i < p->ports.size(); i++)
 			{
-				port * temp = &ports[p->ports[i].first];
-				if((atoi(temp->portNum.c_str())) < (atoi(prt.portNum.c_str())))
+				port temp = ports[p->ports[i].first];
+				if((atoi(temp.portNum.c_str())) < (atoi(prt.portNum.c_str())))
+				{
+					continue;
+				}
+				break;
+			}
+			if(i < p->ports.size())
+				p->ports.insert(p->ports.begin()+i, portPair);
+			else
+				p->ports.push_back(portPair);
+
+			//Check for children who inherit the port
+			vector<string> updateList;
+			updateList.push_back(currentProfile);
+			bool changed = true;
+			bool valid;
+
+			//While any changes have been made
+			while(changed)
+			{
+				//In this while, no changes have been found
+				changed = false;
+				//Check profile table for children of currentProfile at it's children and so on
+				for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+				{
+					//Profile invalid to add to start
+					valid = false;
+					for(uint i = 0; i < updateList.size(); i++)
+					{
+						//If the parent is being updated this profile is tenatively valid
+						if(!it->second.parentProfile.compare(updateList[i]))
+							valid = true;
+						//If this profile is already in the list, this profile shouldn't be included
+						if(!it->first.compare(updateList[i]))
+						{
+							valid = false;
+							break;
+						}
+					}
+					//A valid profile is stored in the list
+					if(valid)
+					{
+						updateList.push_back(it->first);
+						//Since we found at least one profile this iteration flag as changed
+						// so we can check for it's children
+						changed = true;
+					}
+				}
+			}
+
+			//Iterate over the list and update their port list if they inherited the changed port
+			while(!updateList.empty())
+			{
+				profile p = profiles[updateList.back()];
+				updateList.pop_back();
+				for(uint i = 0; i < p.ports.size(); i++)
+				{
+					if(p.ports[i].second && !p.ports[i].first.compare(oldPort))
+					{
+						if(portName.compare(""))
+						{
+							p.ports[i].first = portName;
+						}
+						else
+							p.ports.erase(p.ports.begin() + i);
+						break;
+					}
+				}
+				profiles[p.name] = p;
+
+				if(!p.parentProfile.compare(""))
+					continue;
+
+				pair<string, bool> parentPair;
+				parentPair.second = false;
+
+				//If the port number or protocol is different, check for inherited ports
+				if(prt.portNum.compare(oldPrt.portNum) || prt.type.compare(oldPrt.type))
+				{
+					profile parent = profiles[p.parentProfile];
+					for(uint i = 0; i < parent.ports.size(); i++)
+					{
+						port temp = ports[parent.ports[i].first];
+						//If a parent's port matches the number and protocol of the old port being removed
+						if((!(temp.portNum.compare(oldPrt.portNum))) && (!(temp.type.compare(oldPrt.type))))
+						{
+							oldPrt = temp;
+							parentPair.first = temp.portName;
+							parentPair.second = true;
+							break;
+						}
+					}
+				}
+
+				//If we found a port to inherit
+				if(parentPair.second)
+				{
+					//Insert it at the numerically sorted position.
+					uint i = 0;
+					for(i = 0; i < p.ports.size(); i++)
+					{
+						port temp = ports[p.ports[i].first];
+						if((atoi(temp.portNum.c_str())) < (atoi(oldPrt.portNum.c_str())))
+						{
+							continue;
+						}
+						break;
+					}
+					if(i < p.ports.size())
+						p.ports.insert(p.ports.begin()+i, parentPair);
+					else
+						p.ports.push_back(parentPair);
+				}
+				profiles[p.name] = p;
+			}
+		}
+		else
+		{
+			portName = oldPort;
+			p = &profiles[currentProfile];
+
+			//Create the vector item for the profile
+			pair<string, bool> portPair;
+			portPair.first = oldPort;
+			portPair.second = oldInh;
+			prt = ports[oldPort];
+
+			//Insert it at the numerically sorted position.
+			uint i = 0;
+			for(i = 0; i < p->ports.size(); i++)
+			{
+				port temp = ports[p->ports[i].first];
+				if((atoi(temp.portNum.c_str())) < (atoi(prt.portNum.c_str())))
 				{
 					continue;
 				}
@@ -636,34 +799,17 @@ void NovaConfig::portTreeWidget_itemChanged(QTreeWidgetItem *item,  bool edited)
 			else
 				p->ports.push_back(portPair);
 		}
-
-		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
-		{
-			for(uint i = 0; i < it->second.ports.size(); i++)
-			{
-				if(it->second.ports[i].second && !it->second.ports[i].first.compare(oldPort))
-				{
-					if(portName.compare(""))
-					{
-						it->second.ports[i].first = portName;
-						ports[portName] = prt;
-					}
-					else
-						it->second.ports.erase(it->second.ports.begin() + i);
-					break;
-				}
-			}
-			profiles[it->first] = it->second;
-		}
-
 		loadProfile();
 		saveProfile();
 		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
 		ui.portTreeWidget->setCurrentItem(ports[prt.portName].item);
 		loadingItems = false;
+		loadAllProfiles();
 	}
+	//On user interaction with a valid port item without any changes
 	else if(!edited && !loadingItems && (item != NULL))
 	{
+		//Select the valid port item under the associated combo box
 		loadingItems = true;
 		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
 		ui.portTreeWidget->setCurrentItem(item);
@@ -1174,17 +1320,45 @@ void NovaConfig::loadHaystack()
 {
 	//Sets an initial selection
 	updatePointers();
-	//Draws all node heirarchy
-	loadAllNodes();
 	//Draws all profile heriarchy
 	loadAllProfiles();
+	//Draws all node heirarchy
+	loadAllNodes();
 	ui.nodeTreeWidget->expandAll();
 	ui.hsNodeTreeWidget->expandAll();
+}
+
+//Checks for ports that aren't used and removes them from the table if so
+void NovaConfig::cleanPorts()
+{
+	vector<string> delList;
+	bool found;
+	for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
+	{
+		found = false;
+		for(ProfileTable::iterator jt = profiles.begin(); (jt != profiles.end()) && !found; jt++)
+		{
+			for(uint i = 0; (i < jt->second.ports.size()) && !found; i++)
+			{
+				if(!jt->second.ports[i].first.compare(it->first))
+					found = true;
+			}
+		}
+		if(!found)
+			delList.push_back(it->first);
+	}
+	while(!delList.empty())
+	{
+		ports.erase(delList.back());
+		delList.pop_back();
+	}
 }
 
 //Saves the changes to parent novagui window
 void NovaConfig::pushData()
 {
+	//Clean up unused ports
+	cleanPorts();
 	//Clears the tables
 	mainwindow->subnets.clear_no_resize();
 	mainwindow->nodes.clear_no_resize();
@@ -1333,15 +1507,13 @@ void NovaConfig::on_okButton_clicked()
 {
 	saveProfile();
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
-	// TODO: Change to a GUI popup error
+
 	if (!saveConfigurationToFile())
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
 		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file");
-
 		this->close();
 	}
-
 	closelog();
 	//Save changes
 	pushData();
@@ -1831,9 +2003,14 @@ void NovaConfig::saveProfile()
 				pr.behavior = "script";
 				pr.scriptName = qBehavBox->currentText().toStdString();
 			}
+			if(!pr.behavior.compare("script"))
+				pr.portName = pr.portNum + "_" +pr.type + "_" + pr.scriptName;
+			else
+				pr.portName = pr.portNum + "_" +pr.type + "_" + pr.behavior;
+
+			p.ports[i].first = pr.portName;
 			ports[p.ports[i].first] = pr;
 			p.ports[i].second = item->font(0).italic();
-
 		}
 		profiles[currentProfile] = p;
 		saveInherited();
@@ -1964,7 +2141,7 @@ void NovaConfig::deleteProfile(string name)
 			*treePtr = *pt;
 
 			//Updates all ancestors with the deletion
-			updateProfileTree(p.parentProfile);
+			updateProfileTree(p.parentProfile, ALL);
 		}
 		//If an item was found for a new selection
 		if(item != NULL)
@@ -2073,7 +2250,7 @@ void NovaConfig::loadProfile()
 			typeBox->setItemText(0, "TCP");
 			typeBox->setItemText(1, "UDP");
 			typeBox->setEnabled(!p->ports[i].second);
-			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
+			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
 			behaviorBox->addItem("reset");
@@ -2085,7 +2262,7 @@ void NovaConfig::loadProfile()
 				behaviorBox->addItem((QString)it->first.c_str());
 			}
 			behaviorBox->setEnabled(!p->ports[i].second);
-			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
+			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 
 			if(p->ports[i].second)
@@ -2273,15 +2450,50 @@ void NovaConfig::loadInherited()
 // createProfileTree(profile.name) which will call this function afterwards currently this will
 // only be called when a profile is deleted and has no current ptree. to update all other
 // changes use createProfileTree
-void NovaConfig::updateProfileTree(string name)
+void NovaConfig::updateProfileTree(string name, updateDir direction)
 {
-	//If the profile has a parent to update
-	if(profiles[name].parentProfile.compare(""))
+	//Copy the profile
+	profile p = profiles[name];
+	bool up = false, down = false;
+	switch(direction)
+	{
+		case ALL:
+			up = true;
+			down = true;
+			break;
+		case UP:
+			up = true;
+			break;
+		case DOWN:
+			down = true;
+			break;
+		default:
+			break;
+	}
+	if(down)
+	{
+		//Find all children
+		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+		{
+			//If child is found
+			if(!it->second.parentProfile.compare(p.name))
+			{
+				//Update the child
+				updateProfileTree(it->first, DOWN);
+				//Put the child in the parent's ptree
+				p.tree.add_child("profiles.profile", it->second.tree);
+			}
+		}
+		profiles[name] = p;
+	}
+	//If the original calling profile has a parent to update
+	if(p.parentProfile.compare("") && up)
 	{
 		//Get the parents name and create an empty ptree
-		string parent = profiles[name].parentProfile;
+		profile parent = profiles[p.parentProfile];
 		ptree pt;
 		pt.clear();
+		pt.add_child("profile", p.tree);
 
 		//Find all children of the parent and put them in the empty ptree
 		// Ideally we could just replace the individual child but the data structure doesn't seem
@@ -2289,15 +2501,16 @@ void NovaConfig::updateProfileTree(string name)
 		// because the ptree iterators just don't seem to work correctly and documentation is very poor
 		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 		{
-			if(!it->second.parentProfile.compare(parent))
+			if(!it->second.parentProfile.compare(parent.name))
 			{
 				pt.add_child("profile", it->second.tree);
 			}
 		}
 		//Replace the parent's profiles subtree (stores all children) with the new one
-		profiles[parent].tree.put_child("profiles", pt);
+		parent.tree.put_child("profiles", pt);
+		profiles[parent.name] = parent;
 		//Recursively ascend to update all ancestors
-		updateProfileTree(parent);
+		updateProfileTree(parent.name, UP);
 	}
 }
 
@@ -2372,7 +2585,7 @@ void NovaConfig::loadProfilesFromTree(string parent)
 
 				//Save the profile
 				profiles[p.name] = p;
-				updateProfileTree(p.name);
+				updateProfileTree(p.name, ALL);
 
 				try //Conditional: has children profiles
 				{
@@ -2615,7 +2828,7 @@ void NovaConfig::loadSubProfiles(string parent)
 
 			//Saves the profile
 			profiles[prof.name] = prof;
-			updateProfileTree(prof.name);
+			updateProfileTree(prof.name, ALL);
 
 			try //Conditional: if profile has children (not leaf)
 			{
@@ -2654,7 +2867,7 @@ void NovaConfig::loadAllProfiles()
 		// and create them if not to draw the table correctly, thus the need for the NULL pointer as a flag
 		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 		{
-			createProfileItem(&it->second);
+			createProfileItem(it->first);
 		}
 		//Sets the current selection to the original selection
 		ui.profileTreeWidget->setCurrentItem(profiles[currentProfile].profileItem);
@@ -2672,58 +2885,61 @@ void NovaConfig::loadAllProfiles()
 }
 
 //Creates tree widget items for a profile and all ancestors if they need one.
-void NovaConfig::createProfileItem(profile *p)
+void NovaConfig::createProfileItem(string pstr)
 {
+	profile p = profiles[pstr];
 	//If the profile hasn't had an item created yet
-	if(p->item == NULL)
+	if(p.item == NULL)
 	{
 		QTreeWidgetItem * item = NULL;
 		//get the name
-		string profileStr = p->name;
+		string profileStr = p.name;
 
 		//if the profile has no parents create the item at the top level
-		if(p->parentProfile == "")
+		if(!p.parentProfile.compare(""))
 		{
 			/*NOTE*/
 			//These items don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
 			item = new QTreeWidgetItem(ui.hsProfileTreeWidget,0);
 			item->setText(0, (QString)profileStr.c_str());
-			p->item = item;
+			p.item = item;
 
 			//Create the profile item for the profile tree
 			item = new QTreeWidgetItem(ui.profileTreeWidget,0);
 			item->setText(0, (QString)profileStr.c_str());
-			p->profileItem = item;
+			p.profileItem = item;
 		}
 		//if the profile has ancestors
 		else
 		{
 			//find the parent and assert that they have an item
-			if(profiles.find(p->parentProfile) != profiles.end())
+			if(profiles.find(p.parentProfile) != profiles.end())
 			{
-				profile * parent = &profiles[p->parentProfile];
+				profile parent = profiles[p.parentProfile];
 
-				if(parent->item == NULL)
+				if(parent.item == NULL)
 				{
 					//if parent has no item recursively ascend until all parents do
-					createProfileItem(parent);
+					createProfileItem(p.parentProfile);
+					parent = profiles[p.parentProfile];
 				}
 				//Now that all ancestors have items, create the profile's item
 
 				//*NOTE*
 				//These items don't need to be deleted because the clear function
 				// and destructor of the tree widget does that already.
-				item = new QTreeWidgetItem(parent->item,0);
+				item = new QTreeWidgetItem(parent.item,0);
 				item->setText(0, (QString)profileStr.c_str());
-				p->item = item;
+				p.item = item;
 
 				//Create the profile item for the profile tree
-				item = new QTreeWidgetItem(parent->profileItem,0);
+				item = new QTreeWidgetItem(parent.profileItem,0);
 				item->setText(0, (QString)profileStr.c_str());
-				p->profileItem = item;
+				p.profileItem = item;
 			}
 		}
+		profiles[p.name] = p;
 	}
 }
 
@@ -2776,7 +2992,7 @@ void NovaConfig::createProfileTree(string name)
 	//copy the tree over and update ancestors
 	p.tree = temp;
 	profiles[name] = p;
-	updateProfileTree(name);
+	updateProfileTree(name, ALL);
 }
 
 //Either deletes a profile or updates the window to reflect a profile name change
@@ -3018,7 +3234,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 		//Extract all descendants, create a ptree, update with new configuration
 		profiles[p.name] = p;
 		loadProfilesFromTree(p.name);
-		updateProfileTree(p.name);
+		updateProfileTree(p.name, ALL);
 		loadAllProfiles();
 		loadAllNodes();
 		loadingItems = false;
@@ -3108,7 +3324,7 @@ void NovaConfig::loadAllNodes()
 				i++;
 			}
 
-			connect(pfileBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(nodeTreeWidget_itemChanged(QTreeWidgetItem *, bool)));
+			connect(pfileBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(nodeTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			pfileBox->setCurrentIndex(pfileBox->findText(n->pfile.c_str()));
 
@@ -3294,7 +3510,7 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 	}
 }
 
-void NovaConfig::nodeTreeWidget_itemChanged(QTreeWidgetItem * item, bool edited)
+void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited)
 {
 	if(!loadingItems && edited)
 	{
@@ -3459,16 +3675,12 @@ void NovaConfig::on_nodeDeleteButton_clicked()
 }
 
 //Enables a node or a subnet in honeyd
-//TODO Use this flag to comment out nodes whens writing to the honeyd config
-//  loading from the file will need to recognize these
 void NovaConfig::on_nodeEnableButton_clicked()
 {
 	emit on_actionNodeEnable_triggered();
 }
 
 //Disables a node or a subnet in honeyd
-//TODO Use this flag to comment out nodes whens writing to the honeyd config
-//  loading from the file will need to recognize these
 void NovaConfig::on_nodeDisableButton_clicked()
 {
 	emit on_actionNodeDisable_triggered();

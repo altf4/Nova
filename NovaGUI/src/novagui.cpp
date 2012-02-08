@@ -161,6 +161,13 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t->type = notifyActionPrompt;
 	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(*t);
 
+	t->descriptionUID = "Problem inheriting port";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	NO_ANCESTORS = prompter->RegisterDialog(*t);
+
+
+	delete t;
 
 	loadAll();
 
