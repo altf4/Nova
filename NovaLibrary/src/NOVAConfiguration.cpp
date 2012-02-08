@@ -28,7 +28,7 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
 		"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
 		"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
-		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER" };
+		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE" };
 
 // Loads the configuration file into the class's state data
 void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPath, string module)
@@ -97,6 +97,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 					break;
 			case 21: def = "Data";
 					break;
+			case 22: def = "0";
+					break;
 			default: break;
 		}
 		defaults.push_back(make_pair(prefixes[j], def));
@@ -105,9 +107,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 	// Populate the options map
 	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
 	{
-		NovaOption * currentOption = new NovaOption();
-		currentOption->isValid = false;
-		options[prefixes[i]] = *currentOption;
+		options[prefixes[i]].isValid = false;
 	}
 
 	if (config.is_open())
@@ -181,7 +181,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homeNovaPath + "/" + line;
+					options[prefix].data = line;
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -237,7 +237,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homeNovaPath + "/" + line;
+					options[prefix].data = line;
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -414,7 +414,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = homeNovaPath + "/" + line;
+					options[prefix].data = line;
 					options[prefix].isValid = true;
 				}
 				continue;
@@ -478,6 +478,19 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				continue;
 			}
 
+			// THINNING_DISTANCE
+			prefixIndex++;
+			prefix = prefixes[prefixIndex];
+			if (!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if (line.size() > 0)
+				{
+					options[prefix].data = line.c_str();
+					options[prefix].isValid = true;
+				}
+				continue;
+			}
 
 
 		}

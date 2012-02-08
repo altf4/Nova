@@ -31,6 +31,7 @@ double sqrtDIM;
 
 //Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+typedef google::dense_hash_map<in_addr_t, ANNpoint, tr1::hash<in_addr_t>, eqaddr > lastPointHash;
 
 namespace Nova{
 namespace ClassificationEngine{

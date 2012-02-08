@@ -48,6 +48,7 @@ NOVAConfiguration configuration;
 string doppelgangerPath;
 string haystackPath;
 string trainingDataPath;
+double thinningDistance;
 bool isTraining = false;
 
 //General variables like tables, flags, locks, etc.
@@ -161,6 +162,13 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t->type = notifyActionPrompt;
 	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(*t);
 
+	t->descriptionUID = "Problem inheriting port";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	NO_ANCESTORS = prompter->RegisterDialog(*t);
+
+
+	delete t;
 
 	loadAll();
 
@@ -205,6 +213,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
 	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
 	trainingDataPath = configuration.options["DATAFILE"].data;
+	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
 	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
 
 
@@ -1030,10 +1039,10 @@ void NovaGUI::loadNodes(ptree *ptr)
 						continue;
 					}
 					//save the node in the table
-					nodes[n.IP] = n;
+					nodes[n.name] = n;
 
 					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.IP].sub].nodes.push_back(n.IP);
+					subnets[nodes[n.name].sub].nodes.push_back(n.name);
 					break;
 				}
 			}
@@ -1888,6 +1897,8 @@ void NovaGUI::on_actionTrainingData_triggered()
 		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
 		return;
 	}
+
+	ThinTrainingPoints(trainingDump, thinningDistance);
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 

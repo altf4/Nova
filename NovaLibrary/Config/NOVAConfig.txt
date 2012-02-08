@@ -67,7 +67,12 @@ EPS 0.01
 ############################################
 #
 # Time in seconds to wait between 
-# suspect classifications.
+# suspect classifications. If this value is
+# set to 0, then continuous classification
+# mode will be enabled, which will reclassify
+# a suspect when any new information is obtained.
+# However, doing this may result in loss of 
+# performance and should be done at your own risk.
 #
 # EXAMPLE:
 #CLASSIFICATION_TIMEOUT 5
@@ -96,6 +101,25 @@ IS_TRAINING 0
 # EXAMPLE
 # TRAINING_CAP_FOLDER Data
 TRAINING_CAP_FOLDER Data
+
+############################################
+# THINNING_DISTANCE #
+############################################
+# 
+# This sets how much the training data points
+# are thinned out before writing them to the
+# DB file. Any consecutive points who's squarred 
+# distance is less than this value will be removed.
+#
+# A value of 0 will disable point thinning
+# 
+# Distances are based off of a normalized 
+# data set, so distances will be < 1
+# EXAMPLE
+# THINNING_DISTANCE .0001
+THINNING_DISTANCE 0.001
+
+############################################
 
 ############################################
 # CLASSIFICATION_THRESHOLD #

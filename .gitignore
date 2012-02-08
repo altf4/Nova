@@ -98,3 +98,4 @@ NovaGUI/moc_run_popup.cpp
 /NovaGUI/release/moc_nova_manual.cpp
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Config/doppelganger.config
+/NovaGUI/release/moc_classifierPrompt.cpp

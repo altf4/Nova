@@ -389,12 +389,93 @@ string MakaDataFile(trainingSuspectMap& db)
 		{
 			for (uint i = 0; i < it->second->points->size(); i++)
 			{
-				ss << it->second->points->at(i).substr(1, string::npos) << " " << it->second->isHostile << endl;
+				ss << it->second->points->at(i).substr(1, string::npos) << it->second->isHostile << endl;
 			}
 		}
 	}
 
 	return ss.str();
+}
+
+void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
+{
+	uint numThinned = 0, numTotal = 0;
+	double maxValues[DIM];
+	for (uint i = 0; i < DIM; i++)
+		maxValues[i] = 0;
+
+	// Parse out the max values for normalization
+	for (trainingDumpMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	{
+		for (int p = it->second->size() - 1; p >= 0; p--)
+		{
+			numTotal++;
+			stringstream ss(it->second->at(p));
+			for (uint d = 0; d < DIM; d++)
+			{
+				string featureString;
+				double feature;
+				getline(ss, featureString, ' ');
+
+				feature = atof(featureString.c_str());
+				if (feature > maxValues[d])
+					maxValues[d] = feature;
+			}
+		}
+	}
+
+
+	ANNpoint newerPoint = annAllocPt(DIM);
+	ANNpoint olderPoint = annAllocPt(DIM);
+
+	for (trainingDumpMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	{
+		// Can't trim points if there's only 1
+		if (it->second->size() < 2)
+			continue;
+
+		stringstream ss(it->second->at(it->second->size() - 1));
+		for (int d = 0; d < DIM; d++)
+		{
+			string feature;
+			getline(ss, feature, ' ');
+			newerPoint[d] = atof(feature.c_str()) / maxValues[d];
+		}
+
+		for (int p = it->second->size() - 2; p >= 0; p--)
+		{
+			double distance = 0;
+
+			stringstream ss(it->second->at(p));
+			for (uint d = 0; d < DIM; d++)
+			{
+				string feature;
+				getline(ss, feature, ' ');
+				olderPoint[d] = atof(feature.c_str()) / maxValues[d];
+			}
+
+			for(uint d=0; d < DIM; d++)
+				distance += annDist(d, olderPoint,newerPoint);
+
+			// Should we throw this point away?
+			if (distance < distanceThreshhold)
+			{
+				it->second->erase(it->second->begin() + p);
+				numThinned++;
+			}
+			else
+			{
+				for (uint d = 0; d < DIM; d++)
+					newerPoint[d] = olderPoint[d];
+			}
+		}
+	}
+
+	cout << "Total points: " << numTotal << endl;
+	cout << "Number Thinned: " << numThinned << endl;
+
+	annDeallocPt(newerPoint);
+	annDeallocPt(olderPoint);
 }
 
 }

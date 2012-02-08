@@ -203,6 +203,7 @@ public:
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
     messageHandle HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
     messageHandle LAUNCH_TRAINING_MERGE;
+    messageHandle NO_ANCESTORS, PROFILE_IN_USE, DOPP_EXISTS, NO_DOPP, CANNOT_INHERIT_PORT;
 
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();
@@ -266,7 +267,7 @@ public:
     //Saves the current configuration information to XML files
     void saveAll();
     //Writes the current configuration to honeyd configs
-    void writeHoneyd(); //TODO
+    void writeHoneyd();
     string profileToString(profile* p);
 
 protected:
