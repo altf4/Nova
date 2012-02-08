@@ -60,21 +60,6 @@ install: install-release
 
 #Requires root
 install-release:
-	#make folder in etc with path locations to nova files
-	mkdir -p $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
-	install Installer/Read/paths $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
-	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
-	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
-	#Copy the hidden directories and files
-	cp -rp Installer/.nova $(DESTDIR)/etc/nova
-	#Copy the scripts and logs
-	mkdir -p $(DESTDIR)/usr/share/nova
-	mkdir -p $(DESTDIR)/usr/share/nova/icons
-	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
-	cp Installer/Read/icons/* $(DESTDIR)/usr/share/nova/icons
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
@@ -82,17 +67,11 @@ install-release:
 	install DoppelgangerModule/Release/DoppelgangerModule $(DESTDIR)/usr/bin
 	install Haystack/Release/Haystack $(DESTDIR)/usr/bin
 	install LocalTrafficMonitor/Release/LocalTrafficMonitor $(DESTDIR)/usr/bin
-	sh Installer/postinst
-
-#requires root
-install-debug:
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
-	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
@@ -101,6 +80,14 @@ install-debug:
 	mkdir -p $(DESTDIR)/usr/share/nova/icons
 	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
 	cp Installer/Read/icons/* $(DESTDIR)/usr/share/nova/icons
+	mkdir -p $(DESTDIR)/var/log/honeyd
+	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
+	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	sh Installer/postinst
+
+#requires root
+install-debug:
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
@@ -108,6 +95,23 @@ install-debug:
 	install DoppelgangerModule/Debug/DoppelgangerModule $(DESTDIR)/usr/bin
 	install Haystack/Debug/Haystack $(DESTDIR)/usr/bin
 	install LocalTrafficMonitor/Debug/LocalTrafficMonitor $(DESTDIR)/usr/bin
+	#make folder in etc with path locations to nova files
+	mkdir -p $(DESTDIR)/etc/nova
+	install Installer/Read/paths $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
+	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
+	#Copy the hidden directories and files
+	cp -rp Installer/.nova $(DESTDIR)/etc/nova
+	#Copy the scripts and logs
+	mkdir -p $(DESTDIR)/usr/share/nova
+	mkdir -p $(DESTDIR)/usr/share/nova/icons
+	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
+	cp Installer/Read/icons/* $(DESTDIR)/usr/share/nova/icons
+	mkdir -p $(DESTDIR)/var/log/honeyd
+	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
+	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	sh Installer/postinst
 
 #Requires root
@@ -122,5 +126,6 @@ uninstall:
 	rm -f $(DESTDIR)/usr/bin/LocalTrafficMonitor
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
+	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	sh Installer/postrm
 

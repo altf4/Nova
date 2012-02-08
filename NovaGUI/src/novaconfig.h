@@ -36,6 +36,8 @@ typedef google::dense_hash_map<uint, string, tr1::hash<uint>, eqint> MACToVendor
 typedef google::dense_hash_map<string, vector<uint> *,  tr1::hash<string>, eqstr > VendorToMACTable;
 using namespace std;
 
+enum updateDir{ALL = 0, UP, DOWN};
+
 class NovaConfig : public QMainWindow
 {
     Q_OBJECT
@@ -113,7 +115,7 @@ public:
 
     //Creates a tree widget item for the profile based on it's parent
     //If no parent it is created as a root node
-    void createProfileItem(profile *p);
+    void createProfileItem(string pstr);
     //Creates a ptree for a profile with current values
     void createProfileTree(string name);
 
@@ -127,7 +129,7 @@ public:
 
     //Recreates the profile tree of all ancestors
     //This needs to be called after adding, deleting or storing changes to a profile.
-    void updateProfileTree(string name);
+    void updateProfileTree(string name, updateDir direction);
 
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     void loadProfilesFromTree(string parent);
@@ -151,6 +153,11 @@ public:
     //Action to do when the window closes.
     void closeEvent(QCloseEvent * e);
 
+    //Updates children when inherited ports are changed
+    void updatePorts();
+    //Checks for ports that aren't used and removes them from the table if so
+    void cleanPorts();
+
     //Pushes the current configuration to novagui (Apply or Ok signal)
     void pushData();
     //Pulls the configuration stored in novagui
@@ -158,10 +165,6 @@ public:
 
     // Saves the configuration to the config file, returns true if success
     bool saveConfigurationToFile();
-
-public slots:
-//When an item in the port tree widget changes
-void portTreeWidget_itemChanged(QTreeWidgetItem *item, bool edited);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
@@ -213,7 +216,6 @@ void on_nodeDisableButton_clicked();
 void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
-void nodeTreeWidget_itemChanged(QTreeWidgetItem * item, bool edited);
 void on_dropRateSlider_valueChanged();
 
 //GUI Signals for Feature addition/removal
@@ -249,7 +251,13 @@ void on_actionNodeEdit_triggered();
 void on_actionNodeEnable_triggered();
 void on_actionNodeDisable_triggered();
 
+//When text box in the tree is edited
+void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);
 
+//Custom signal for combo box items in the tree changing
+void portTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
+//Custom signal for combo box items in the tree changing
+void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited);
 
 private:
 	void setInputValidators();
