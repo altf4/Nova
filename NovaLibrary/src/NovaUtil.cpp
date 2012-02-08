@@ -442,8 +442,6 @@ void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
 			newerPoint[d] = atof(feature.c_str()) / maxValues[d];
 		}
 
-		cout << "Suspect is " << it->first << endl;
-
 		for (int p = it->second->size() - 2; p >= 0; p--)
 		{
 			double distance = 0;
@@ -458,8 +456,6 @@ void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
 
 			for(uint d=0; d < DIM; d++)
 				distance += annDist(d, olderPoint,newerPoint);
-
-			cout << "Distance is " << distance << endl;
 
 			// Should we throw this point away?
 			if (distance < distanceThreshhold)

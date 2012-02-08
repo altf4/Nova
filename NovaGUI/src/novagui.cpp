@@ -48,6 +48,7 @@ NOVAConfiguration configuration;
 string doppelgangerPath;
 string haystackPath;
 string trainingDataPath;
+double thinningDistance;
 bool isTraining = false;
 
 //General variables like tables, flags, locks, etc.
@@ -212,6 +213,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
 	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
 	trainingDataPath = configuration.options["DATAFILE"].data;
+	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
 	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
 
 
@@ -1896,7 +1898,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
-	ThinTrainingPoints(trainingDump, 0.001);
+	ThinTrainingPoints(trainingDump, thinningDistance);
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 

@@ -28,7 +28,7 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
 		"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
 		"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
-		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER" };
+		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE" };
 
 // Loads the configuration file into the class's state data
 void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPath, string module)
@@ -96,6 +96,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 			case 20: def = "111111111";
 					break;
 			case 21: def = "Data";
+					break;
+			case 22: def = "0";
 					break;
 			default: break;
 		}
@@ -476,6 +478,19 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				continue;
 			}
 
+			// THINNING_DISTANCE
+			prefixIndex++;
+			prefix = prefixes[prefixIndex];
+			if (!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if (line.size() > 0)
+				{
+					options[prefix].data = line.c_str();
+					options[prefix].isValid = true;
+				}
+				continue;
+			}
 
 
 		}

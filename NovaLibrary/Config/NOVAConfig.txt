@@ -116,7 +116,7 @@ TRAINING_CAP_FOLDER Data
 # Distances are based off of a normalized 
 # data set, so distances will be < 1
 # EXAMPLE
-# TRAINING_CAP_FOLDER Data
+# THINNING_DISTANCE .0001
 THINNING_DISTANCE 0.001
 
 ############################################
