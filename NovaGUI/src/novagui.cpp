@@ -1552,7 +1552,14 @@ void NovaGUI::drawAllSuspects()
 		str = (QString) string(inet_ntoa(it->second.suspect->IP_address)).c_str();
 		suspect = it->second.suspect;
 		//Create the colors for the draw
-		if(suspect->classification < 0.5)
+
+		if (suspect->classification < 0)
+		{
+			// In training mode, classification is never set and ends up at -1
+			// Make it a nice blue so it's clear that it hasn't classified
+			color = QColor(0,0,255);
+		}
+		else if(suspect->classification < 0.5)
 		{
 			//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
 			color = QColor((int)(200*2*suspect->classification),200, 50);
@@ -1631,7 +1638,13 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 	str = (QString) string(inet_ntoa(sItem->suspect->IP_address)).c_str();
 
 	//Create the colors for the draw
-	if(sItem->suspect->classification < 0.5)
+	if (sItem->suspect->classification < 0)
+	{
+		// In training mode, classification is never set and ends up at -1
+		// Make it a nice blue so it's clear that it hasn't classified
+		color = QColor(0,0,255);
+	}
+	else if(sItem->suspect->classification < 0.5)
 	{
 		//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
 		color = QColor((int)(200*2*sItem->suspect->classification),200, 50);
