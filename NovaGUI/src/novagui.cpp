@@ -128,70 +128,60 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	// Register our desired error message types
 	messageType * t = new messageType();
-	t->descriptionUID = "Failure reading config files";
 	t->action = CHOICE_SHOW;
+
+	// Error prompts
 	t->type = errorPrompt;
+
+	t->descriptionUID = "Failure reading config files";
 	CONFIG_READ_FAIL = prompter->RegisterDialog(*t);
 
 	t->descriptionUID = "Failure writing config files";
-	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
 	CONFIG_WRITE_FAIL = prompter->RegisterDialog(*t);
 
 	t->descriptionUID = "Failure reading honeyd files";
-	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
 	HONEYD_READ_FAIL = prompter->RegisterDialog(*t);
 
 	t->descriptionUID = "Failure loading honeyd config files";
-	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
 	HONEYD_LOAD_FAIL = prompter->RegisterDialog(*t);
 
 	t->descriptionUID = "Unexpected file entries";
-	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
 	UNEXPECTED_ENTRY = prompter->RegisterDialog(*t);
 
 	t->descriptionUID = "Honeyd subnets out of range";
-	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
 	HONEYD_INVALID_SUBNET = prompter->RegisterDialog(*t);
 
-	t->descriptionUID = "Request to merge CE capture into training Db";
-	t->action = CHOICE_SHOW;
+	t->descriptionUID = "Cannot delete the selected port";
+	CANNOT_DELETE_PORT = prompter->RegisterDialog(*t);
+
+
+	// Action required notification prompts
 	t->type = notifyActionPrompt;
+
+	t->descriptionUID = "Request to merge CE capture into training Db";
 	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(*t);
 
+	t->descriptionUID = "Cannot inherit the selected port";
+	CANNOT_INHERIT_PORT = prompter->RegisterDialog(*t);
+
+
+	// Preventable warnings
+	t->type = warningPreventablePrompt;
+
+	t->descriptionUID = "No Doppelganger could be found";
+	NO_DOPP = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Multiple Doppelgangers detected";
+	DOPP_EXISTS = prompter->RegisterDialog(*t);
+
+	// Misc other prompts
 	t->descriptionUID = "Problem inheriting port";
-	t->action = CHOICE_SHOW;
 	t->type = notifyPrompt;
 	NO_ANCESTORS = prompter->RegisterDialog(*t);
 
 	t->descriptionUID = "Loading a Haystack Node Failed";
-	t->action = CHOICE_SHOW;
 	t->type = warningPrompt;
 	NODE_LOAD_FAIL = prompter->RegisterDialog(*t);
-
-	t->descriptionUID = "Cannot inherit the selected port";
-	t->action = CHOICE_SHOW;
-	t->type = notifyActionPrompt;
-	CANNOT_INHERIT_PORT = prompter->RegisterDialog(*t);
-
-	t->descriptionUID = "Cannot delete the selected port";
-	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
-	CANNOT_DELETE_PORT = prompter->RegisterDialog(*t);
-
-	t->descriptionUID = "No Doppelganger could be found";
-	t->action = CHOICE_SHOW;
-	t->type = warningPreventablePrompt;
-	NO_DOPP = prompter->RegisterDialog(*t);
-
-	t->descriptionUID = "Multiple Doppelgangers detected";
-	t->action = CHOICE_SHOW;
-	t->type = warningPreventablePrompt;
-	DOPP_EXISTS = prompter->RegisterDialog(*t);
 
 	delete t;
 
