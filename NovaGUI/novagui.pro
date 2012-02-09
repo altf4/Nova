@@ -30,10 +30,9 @@ FORMS += UI/classifierPrompt.ui \
     UI/nodePopup.ui \
     UI/novaconfig.ui \
     UI/novagui.ui \
-    UI/portPopup.ui \
     UI/run_popup.ui
 RESOURCES += 
-INCLUDEPATH += ../NovaLibrary/src 
+INCLUDEPATH += ../NovaLibrary/src
 CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
 else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
 LIBS += /usr/lib/libboost_serialization.a \
@@ -46,4 +45,3 @@ CONFIG += no_keywords
 CONFIG += link_pkgconfig
 PKGCONFIG += glib-2.0
 PKGCONFIG += gtk+-3.0
-
