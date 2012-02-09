@@ -17,6 +17,7 @@
 //============================================================================
 #include "novagui.h"
 #include "classifierPrompt.h"
+#include "NOVAConfiguration.h"
 
 
 using namespace std;

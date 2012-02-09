@@ -16,6 +16,7 @@
 // Description : NOVA preferences/configuration window
 //============================================================================
 #include "novaconfig.h"
+#include "NOVAConfiguration.h"
 #include <QtGui/QComboBox>
 
 using namespace std;

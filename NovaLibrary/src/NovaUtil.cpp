@@ -307,6 +307,10 @@ trainingSuspectMap* ParseTrainingDb(string dbPath)
 					suspect->uid = line.substr(0,delimIndex);
 					suspect->isHostile = atoi(line.substr(delimIndex + 1, 1).c_str());
 
+					// TODO: It would be nice to have the suspects used last time to generate the
+					// data file still selected as included. For now we just mark them all.
+					suspect->isIncluded = true;
+
 					delimIndex = line.find_first_of('"');
 					if (delimIndex == string::npos)
 					{

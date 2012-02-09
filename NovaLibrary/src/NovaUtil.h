@@ -270,11 +270,9 @@ trainingSuspectMap* ParseTrainingDb(string dbPath);
 // Create a CE data file from a subset of the Training DB file
 string MakaDataFile(trainingSuspectMap& db);
 
+// Removes consecutive points who's squared distance is less than a specified distance
 void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold);
 
 }
-
-//Some includes need to occur at the end of the header to fix some linking errors during compilation
-#include "NOVAConfiguration.h"
 
 #endif /* NOVAUTIL_H_ */
