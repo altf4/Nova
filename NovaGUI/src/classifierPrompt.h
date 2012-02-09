@@ -28,8 +28,12 @@ class classifierPrompt : public QDialog
     Q_OBJECT
 
 public:
-    classifierPrompt(QWidget *parent = 0);
+    // Takes in the results of a training file capture and allows the user to select
+    // which suspects to include and which are hostile, and set a description.
     classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent = 0);
+
+    // Taken in a map of suspects to display to the user. User can edit the
+    // include/hostility flags.
     classifierPrompt(trainingSuspectMap* map, QWidget *parent = 0);
 
     trainingSuspectMap* getStateData();

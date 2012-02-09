@@ -19,17 +19,9 @@
 #include "classifierPrompt.h"
 #include <QtGui>
 
-classifierPrompt::classifierPrompt(QWidget *parent)
-    : QDialog(parent)
-{
-	ui.setupUi(this);
-	groups = 0;
-	menu = new QMenu(this);
-}
-
 classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
+: QDialog(parent)
 {
-	parent = parent;
 	ui.setupUi(this);
 	groups = 0;
 	menu = new QMenu(this);
@@ -40,7 +32,6 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 	suspects->set_empty_key("");
 	suspects->set_deleted_key("!");
 
-	int row = 0;
 	for (trainingDumpMap::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
 	{
 		(*suspects)[it->first] = new trainingSuspect();
@@ -55,8 +46,8 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 }
 
 classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
+: QDialog(parent)
 {
-	parent = parent;
 	ui.setupUi(this);
 	groups = 0;
 	menu = new QMenu(this);
