@@ -28,7 +28,7 @@
 								<option id="gnu.cpp.compiler.option.include.paths.1540131459" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/src"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.other.other.1720601141" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -lpthread" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1720601141" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -lpthread `pkg-config --libs --cflags glib-2.0 gtk+-3.0`" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.debugging.gprof.1770474596" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.693075228" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

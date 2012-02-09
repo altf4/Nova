@@ -18,7 +18,7 @@
 
 #include "ClassificationEngine.h"
 #include "NOVAConfiguration.h"
-#include "NovaMessageClient.h"
+#include "Logger.h"
 #include <iostream>
 #include <time.h>
 
@@ -110,6 +110,11 @@ double eps;						//error bound
 double classificationThreshold ; //value of classification to define split between hostile / benign
 uint SA_Max_Attempts;			//The number of times to attempt to reconnect to a neighbor
 double SA_Sleep_Duration;		//The time to sleep after a port knocking request and allow it to go through
+string SMTP_addr;
+string SMTP_domain;
+in_port_t SMTP_port;
+uint16_t service_pref;
+vector<string> email_recipients;
 // End configured variables
 
 lastPointHash lastPoints;
@@ -1273,12 +1278,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
-	NovaMessageClient * NovaMessageConf = new NovaMessageClient(__FILE__);
-	if(!NovaMessageConf->LoadConfiguration(configFilePath))
-	{
-		syslog(SYSL_ERR, "Line: %d One or more of the messaging configuration values have not been set, and have no default.", __LINE__);
-		exit(1);
-	}
+	Logger * loggerConf = new Logger(__FILE__, configFilePath, true);
 
 	confCheck = NovaConfig->SetDefaults();
 
@@ -1288,6 +1288,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	if(confCheck == 2)
 	{
 		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
+
 		exit(1);
 	}
 	else if(confCheck == 1)
@@ -1300,6 +1301,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	}
 
 	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+
 	if(hostAddrString.size() == 0)
 	{
 		syslog(SYSL_ERR, "Line: %d Bad interface, no IP's associated!", __LINE__);
@@ -1322,7 +1324,12 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	dataFile = NovaConfig->options["DATAFILE"].data;
 	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
 	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
-
+	SMTP_addr = loggerConf->messageInfo.smtp_addr;
+	SMTP_domain = loggerConf->messageInfo.smtp_domain;
+	email_recipients = loggerConf->messageInfo.email_recipients;
+	SMTP_port = loggerConf->messageInfo.smtp_port;
+	service_pref = loggerConf->messageInfo.service_preferences;
+	loggerConf->Logging(INFO, 0, LIBNOTIFY, email_recipients, "Success!");
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 

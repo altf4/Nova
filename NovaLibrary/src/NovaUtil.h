@@ -42,6 +42,13 @@
 #include <google/dense_hash_map>
 #include <syslog.h>
 #include <string>
+#include <iostream>
+#include <algorithm>
+#include <iterator>
+#include <libnotify/notify.h>
+#include <glib-2.0/glib.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <unistd.h>
 
 #include "GUIMsg.h"
 #include "Point.h"

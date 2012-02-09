@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : NovaMessageClient.h
+// Name        : Logger.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,30 +16,32 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================/*
 
-#ifndef NOVAMESSAGECLIENT_H_
-#define NOVAMESSAGECLIENT_H_
+#ifndef Logger_H_
+#define Logger_H_
 
 
 #include "NovaUtil.h"
-//#include <libnotify>
+
+using namespace std;
+using namespace google;
+
+namespace Nova {
 
 // may not need this, trying to determine if this is a good way to
 // tell the class how to allocate service use or if using the enum
 // below would be better
-enum {NO_SERV, SYSLOG, LIBNOTIFY, LIBNOTIFY_BELOW, EMAIL, EMAIL_SYSLOG, EMAIL_LIBNOTIFY, EMAIL_BELOW};
+enum Services {NO_SERV, SYSLOG, LIBNOTIFY, LIBNOTIFY_BELOW, EMAIL, EMAIL_SYSLOG, EMAIL_LIBNOTIFY, EMAIL_BELOW};
 // enum for NovaMessaging to use
-enum {EMERGENCY, ALERT, CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG};
+enum Levels {EMERGENCY, ALERT, CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG};
 
-using namespace std;
-
-namespace Nova {
+typedef vector<pair<uint16_t, string> > levelsMap;
 
 struct MessageOptions
 {
 	// the SMTP server domain name for display purposes
 	string smtp_domain;
-	// the actual SMTP server address for socket use
-	in_addr_t smtp_addr;
+	// the email address that will be set as sender
+	string smtp_addr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
 	in_port_t smtp_port;
 	// tried to find a smaller integer to use; essentially going to be a bitmask for
@@ -53,36 +55,42 @@ struct MessageOptions
 
 typedef struct MessageOptions optionsInfo;
 
-class NovaMessageClient {
+class Logger {
 public:
-	NovaMessageClient(string parent);
-	~NovaMessageClient();
-	//void ConfigureMessaging();
+	Logger(string parent, char const * configFilePath, bool init);
+	~Logger();
+	// Load Configuration: loads the SMTP info and service level preferences
+	// from NovaConfig.txt.
+	// args:   char const * filename. This tells the method where the config
+	// file is for parsing.
+	// return: uint16_t ( 0 | 1). On 0, one of the options was not set, and has
+	// no default. On 1, everything's fine.
 	uint16_t LoadConfiguration(char const* filename);
-	void saveMessageConfiguration(string filename);
-	vector<string> parseAddressesString(string addresses);
+	void SaveLoggerConfiguration(string filename);
+	vector<string> ParseAddressesString(string addresses);
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void NovaMessaging(int messageLevel, string syslog_facility, uint16_t services, vector<string> recipients);
-
+	void Logging(uint16_t messageLevel, uint16_t syslog_facility, uint16_t services, vector<string> recipients, string message);
 private:
-	// NovaNotify makes use of the libnotify methods to produce
+	// Notify makes use of the libnotify methods to produce
 	// a notification with the desired level to the desktop.
-	void NovaNotify(int level, string message);
-	// NovaLog will be the method that calls syslog
-	void NovaLog(int level, string facility, string message);
-	// NovaMail will, obviously, email people.
-	void NovaMail(int level, string message, vector<string> recipients);
+	void Notify(uint16_t level, string message);
+	// Log will be the method that calls syslog
+	void Log(uint16_t level, uint16_t facility, string message);
+	// Mail will, obviously, email people.
+	void Mail(uint16_t level, string message, vector<string> recipients);
+	// clean the elements in the toClean vector.
+	vector<string> CleanAddresses(vector<string> toClean);
 
 public:
 	optionsInfo messageInfo;
+	levelsMap levels;
 private:
 	static const string prefixes[];
-	string checkLoad[];
 	string parentName;
 };
 
 }
 
-#endif /* NOVAMESSAGECLIENT_H_ */
+#endif /* Logger_H_ */

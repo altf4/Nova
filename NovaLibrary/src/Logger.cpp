@@ -18,22 +18,23 @@
 // networking information that is not readily available
 //============================================================================/*
 
-#include "NovaMessageClient.h"
+#include "Logger.h"
+
 
 using namespace std;
 
 namespace Nova
 {
 
-	const string NovaMessageClient::prefixes[] = { "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "RECIPIENTS", "SERVICE_PREFERENCES" };
+	const string Logger::prefixes[] = { "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "RECIPIENTS", "SERVICE_PREFERENCES" };
 
 // Loads the configuration file into the class's state data
-	uint16_t NovaMessageClient::LoadConfiguration(char const* configFilePath)
+	uint16_t Logger::LoadConfiguration(char const* configFilePath)
 	{
 		string line;
 		string prefix;
 		uint16_t prefixIndex;
-
+		string checkLoad[5];
 		//openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
 		//syslog(SYSL_INFO, "Loading file %s in homepath %s", configFilePath, homeNovaPath.c_str());
@@ -78,7 +79,8 @@ namespace Nova
 
 					if(line.size() > 0)
 					{
-						messageInfo.smtp_addr = ((in_addr_t) atoi(line.c_str()));
+						messageInfo.smtp_addr = line;
+						checkLoad[prefixIndex] = line;
 					}
 
 					continue;
@@ -95,6 +97,7 @@ namespace Nova
 					if(line.size() > 0)
 					{
 						messageInfo.smtp_port = ((in_port_t) atoi(line.c_str()));
+						checkLoad[prefixIndex] = line;
 					}
 
 					continue;
@@ -111,6 +114,7 @@ namespace Nova
 					if(line.size() > 0)
 					{
 						messageInfo.smtp_domain = line;
+						checkLoad[prefixIndex] = line;
 					}
 
 					continue;
@@ -118,7 +122,7 @@ namespace Nova
 
 				prefixIndex++;
 				prefix = prefixes[prefixIndex];
-
+				vector<string> vec;
 				//RECIPIENTS
 				if(!line.substr(0, prefix.size()).compare(prefix))
 				{
@@ -126,7 +130,8 @@ namespace Nova
 
 					if(line.size() > 0)
 					{
-						messageInfo.email_recipients = parseAddressesString(line);
+						messageInfo.email_recipients = Logger::ParseAddressesString(line);
+						checkLoad[prefixIndex] = line;
 					}
 
 					continue;
@@ -143,6 +148,7 @@ namespace Nova
 					if(line.size() > 0)
 					{
 						messageInfo.service_preferences = ((uint16_t) atoi(line.c_str()));
+						checkLoad[prefixIndex] = line;
 					}
 
 					continue;
@@ -167,33 +173,125 @@ namespace Nova
 
 		return 1;
 	}
-	// TODO: use find and substring instead of trying to use strtok
-	vector<string> parseAddressesString(string addresses)
+
+	vector<string> Logger::ParseAddressesString(string addresses)
 	{
 		 vector<string> returnAddresses;
-		 char * add;
-		 add = strtok(addresses, ",");
+		 istringstream iss(addresses);
 
-		 while(add != NULL)
+		 copy(istream_iterator<string>(iss),
+		      istream_iterator<string>(),
+		      back_inserter<vector <string> >(returnAddresses));
+
+		 for(uint16_t i = 0; i < returnAddresses.size(); i++)
 		 {
-			 returnAddresses.push_back(add);
-			 add = strtok(NULL, ",");
+			 cout << returnAddresses.at(i) << endl;
 		 }
 
 		 return returnAddresses;
 	}
 
-	void saveMessageConfiguration(string filename)
+	void Logger::SaveLoggerConfiguration(string filename)
 	{
 
 	}
 
-	NovaMessageClient::NovaMessageClient(string parent)
+	void Logger::Logging(uint16_t messageLevel, uint16_t syslog_facility, uint16_t services, vector<string> recipients, string message)
+	{
+		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
+		{
+			Notify(messageLevel, message);
+		}
+		if(services == SYSLOG || services == LIBNOTIFY_BELOW || services == EMAIL_SYSLOG || services == EMAIL_BELOW)
+		{
+			Log(messageLevel, syslog_facility, message);
+		}
+		if(services == EMAIL || services == EMAIL_SYSLOG || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
+		{
+			Mail(messageLevel, message, recipients);
+		}
+		if(services == 0)
+		{
+			openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
+			syslog(SYSL_INFO, "You are not currently opting to use any logging mechanisms.");
+			closelog();
+		}
+	}
+
+	void Logger::Notify(uint16_t level, string message)
+	{
+		NotifyNotification *note;
+		notify_init("Logger");
+		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), NULL);
+		notify_notification_set_timeout(note, 3000);
+		g_object_unref(G_OBJECT(note));
+	}
+
+	void Logger::Log(uint16_t level, uint16_t facility, string message)
+	{
+
+	}
+
+	void Logger::Mail(uint16_t level, string message, vector<string> recipients)
+	{
+
+	}
+
+	vector<string> Logger::CleanAddresses(vector<string> toClean)
+	{
+		vector<string> out = toClean;
+
+		for(uint16_t i = 0; i < toClean.size(); i++)
+		{
+			uint16_t endSubStr = toClean[i].find(",", 0);
+
+			if(endSubStr != toClean[i].npos)
+			{
+				out[i] = toClean[i].substr(0, endSubStr - 1);
+			}
+		}
+
+		for(uint16_t i = 0; i < out.size(); i++)
+		{
+			cout << out.at(i) << endl;
+		}
+
+		return out;
+	}
+
+	Logger::Logger(string parent, char const * configFilePath, bool init)
 	{
 		parentName = parent;
+
+		for(uint16_t i; i < 8; i++)
+		{
+			string level = "";
+			switch(i)
+			{
+				case 0: level = "EMERGENCY";
+				case 1: level = "ALERT";
+				case 2: level = "CRITICAL";
+				case 3: level = "ERROR";
+				case 4: level = "WARNING";
+				case 5: level = "NOTICE";
+				case 6: level = "INFO";
+				case 7: level = "DEBUG";
+			}
+
+			levels.push_back(pair<uint16_t, string> (i, level));
+		}
+
+		if(init)
+		{
+			if(!LoadConfiguration(configFilePath))
+			{
+				syslog(SYSL_ERR, "Line: %d One or more of the messaging configuration values have not been set, and have no default.", __LINE__);
+				exit(1);
+			}
+		}
 	}
 
-	NovaMessageClient::~NovaMessageClient()
+	Logger::~Logger()
 	{
 	}
 
