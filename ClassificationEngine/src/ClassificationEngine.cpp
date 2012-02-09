@@ -113,7 +113,7 @@ double SA_Sleep_Duration;		//The time to sleep after a port knocking request and
 string SMTP_addr;
 string SMTP_domain;
 in_port_t SMTP_port;
-uint16_t service_pref;
+Nova::userMap service_pref;
 vector<string> email_recipients;
 // End configured variables
 

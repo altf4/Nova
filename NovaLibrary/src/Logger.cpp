@@ -196,8 +196,9 @@ namespace Nova
 
 	void Logger::Logging(Nova::Levels messageLevel, string message)
 	{
-		Nova::Services services = setServiceLevel(messageLevel);
-
+		//Nova::Services services = Logger::setServiceLevel(messageLevel);
+		// ^^^ This is temporary, still need to go through and define setServiceLevel
+		Nova::Services services = LIBNOTIFY;
 		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
 			Notify(messageLevel, message);
@@ -263,12 +264,12 @@ namespace Nova
 		return out;
 	}
 
-	void setUserLogPreferences(string logPrefString)
+	void Logger::setUserLogPreferences(string logPrefString)
 	{
 
 	}
 
-	void setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
+	void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
 	{
 
 	}
