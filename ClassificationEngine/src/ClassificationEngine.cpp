@@ -549,11 +549,14 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
 	kdTree->annkSearch(							// search
-			suspect->annPoint,							// query point
+			suspect->annPoint,					// query point
 			k,									// number of near neighbors
 			nnIdx,								// nearest neighbors (returned)
 			dists,								// distance (returned)
 			eps);								// error bound
+
+	for (int i = 0; i < DIM; i++)
+		suspect->featureAccuracy[i] = 0;
 
 	//Determine classification according to weight by distance
 	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
@@ -564,7 +567,12 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	{
 		dists[i] = sqrt(dists[i]);				// unsquare distance
 
-
+		for (int j = 0; j < enabledFeatures; j++)
+		{
+			cout << sqrt(annDist(j, suspect->annPoint, kdTree->thePoints()[nnIdx[i]])) << " ";
+			suspect->featureAccuracy[j] += sqrt(annDist(j, suspect->annPoint, kdTree->thePoints()[nnIdx[i]]));
+		}
+		cout << endl;
 
 		if(nnIdx[i] == -1)
 		{
@@ -595,6 +603,10 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 			}
 		}
 	}
+
+	for (int j = 0; j < DIM; j++)
+				suspect->featureAccuracy[j] /= k;
+
 	pthread_rwlock_unlock(&lock);
 	pthread_rwlock_wrlock(&lock);
 

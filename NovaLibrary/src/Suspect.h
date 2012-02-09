@@ -61,6 +61,7 @@ public:
 
 	// The Feature Set for this Suspect
 	FeatureSet features;
+	double featureAccuracy[DIM];
 
 	// The feature set in the format that ANN requires.
 	ANNpoint annPoint;
