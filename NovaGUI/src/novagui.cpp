@@ -164,9 +164,33 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	t->descriptionUID = "Problem inheriting port";
 	t->action = CHOICE_SHOW;
-	t->type = errorPrompt;
+	t->type = notifyPrompt;
 	NO_ANCESTORS = prompter->RegisterDialog(*t);
 
+	t->descriptionUID = "Loading a Haystack Node Failed";
+	t->action = CHOICE_SHOW;
+	t->type = warningPrompt;
+	NODE_LOAD_FAIL = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Cannot inherit the selected port";
+	t->action = CHOICE_SHOW;
+	t->type = notifyActionPrompt;
+	CANNOT_INHERIT_PORT = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Cannot delete the selected port";
+	t->action = CHOICE_SHOW;
+	t->type = errorPrompt;
+	CANNOT_DELETE_PORT = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "No Doppelganger could be found";
+	t->action = CHOICE_SHOW;
+	t->type = warningPreventablePrompt;
+	NO_DOPP = prompter->RegisterDialog(*t);
+
+	t->descriptionUID = "Multiple Doppelgangers detected";
+	t->action = CHOICE_SHOW;
+	t->type = warningPreventablePrompt;
+	DOPP_EXISTS = prompter->RegisterDialog(*t);
 
 	delete t;
 
@@ -412,7 +436,7 @@ void NovaGUI::saveAll()
 		portTree.add_child("ports.port", pt);
 	}
 
-	subnetTree->clear();
+	subnetTree.clear();
 	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 	{
 		pt = it->second.tree;
@@ -438,11 +462,11 @@ void NovaGUI::saveAll()
 		//call ntoa to get char * and make string
 		temp = string(inet_ntoa(addr));
 		pt.put<std::string>("mask", temp);
-		subnetTree->add_child("interface", pt);
+		subnetTree.add_child("interface", pt);
 	}
 
 	//Nodes
-	nodesTree->clear();
+	nodesTree.clear();
 	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
 		pt = it->second.tree;
@@ -453,7 +477,7 @@ void NovaGUI::saveAll()
 		if(it->second.MAC.size())
 			pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
-		nodesTree->add_child("node",pt);
+		nodesTree.add_child("node",pt);
 	}
 	profileTree.clear();
 	for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
@@ -464,10 +488,11 @@ void NovaGUI::saveAll()
 			profileTree.add_child("profiles.profile", pt);
 		}
 	}
-	write_xml(homePath+"/scripts.xml", scriptTree);
-	write_xml(homePath+"/templates/ports.xml", portTree);
-	write_xml(homePath+"/templates/nodes.xml", groupTree);
-	write_xml(homePath+"/templates/profiles.xml", profileTree);
+	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
+	write_xml(homePath+"/scripts.xml", scriptTree, std::locale(), settings);
+	write_xml(homePath+"/templates/ports.xml", portTree, std::locale(), settings);
+	write_xml(homePath+"/templates/nodes.xml", groupTree, std::locale(), settings);
+	write_xml(homePath+"/templates/profiles.xml", profileTree, std::locale(), settings);
 }
 
 //Writes the current configuration to honeyd configs
@@ -639,10 +664,11 @@ void NovaGUI::loadAll()
 void NovaGUI::loadScripts()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
 	scriptTree.clear();
 	try
 	{
-		read_xml(homePath+"/scripts.xml", scriptTree);
+		read_xml(homePath+"/scripts.xml", scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &v, scriptTree.get_child("scripts"))
 		{
@@ -650,6 +676,14 @@ void NovaGUI::loadScripts()
 			s.tree = v.second;
 			//Each script consists of a name and path to that script
 			s.name = v.second.get<std::string>("name");
+
+			if (!s.name.compare(""))
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd scripts XML file contains invalid (null) script names. Some scripts have failed to load.");
+				continue;
+			}
+
 			s.path = v.second.get<std::string>("path");
 			scripts[s.name] = s;
 		}
@@ -717,10 +751,12 @@ void NovaGUI::updateSystemStatus()
 void NovaGUI::loadPorts()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+
 	portTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/ports.xml", portTree);
+		read_xml(homePath+"/templates/ports.xml", portTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &v, portTree.get_child("ports"))
 		{
@@ -728,6 +764,14 @@ void NovaGUI::loadPorts()
 			p.tree = v.second;
 			//Required xml entries
 			p.portName = v.second.get<std::string>("name");
+
+			if (!p.portName.compare(""))
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd XML files contain invalid port names. Some ports have failed to load.");
+				continue;
+			}
+
 			p.portNum = v.second.get<std::string>("number");
 			p.type = v.second.get<std::string>("type");
 			p.behavior = v.second.get<std::string>("behavior");
@@ -758,12 +802,14 @@ void NovaGUI::loadPorts()
 void NovaGUI::loadGroup()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+
 	groupTree.clear();
 	ptree ptr;
 
 	try
 	{
-		read_xml(homePath+"/templates/nodes.xml", groupTree);
+		read_xml(homePath+"/templates/nodes.xml", groupTree, boost::property_tree::xml_parser::trim_whitespace);
 		BOOST_FOREACH(ptree::value_type &v, groupTree.get_child("groups"))
 		{
 			//Find the specified group
@@ -772,14 +818,14 @@ void NovaGUI::loadGroup()
 				try //Null Check
 				{
 					//Load Subnets first, they are needed before we can load nodes
-					subnetTree = &v.second.get_child("subnets");
-					loadSubnets(subnetTree);
+					subnetTree = v.second.get_child("subnets");
+					loadSubnets(&subnetTree);
 
 					try //Null Check
 					{
 						//If subnets are loaded successfully, load nodes
-						nodesTree = &v.second.get_child("nodes");
-						loadNodes(nodesTree);
+						nodesTree = v.second.get_child("nodes");
+						loadNodes(&nodesTree);
 					}
 					catch(std::exception &e)
 					{
@@ -881,6 +927,14 @@ void NovaGUI::loadNodes(ptree *ptr)
 				n.IP = v.second.get<std::string>("IP");
 				n.enabled = v.second.get<bool>("enabled");
 				n.pfile = v.second.get<std::string>("profile.name");
+
+				if (!n.pfile.compare(""))
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+					prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+					continue;
+				}
+
 				p = profiles[n.pfile];
 
 				//Get mac if present
@@ -899,6 +953,14 @@ void NovaGUI::loadNodes(ptree *ptr)
 				case static_IP:
 
 					n.name = n.IP;
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
+
 					//intialize subnet to NULL and check for smallest bounding subnet
 					n.sub = "";
 					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
@@ -943,8 +1005,10 @@ void NovaGUI::loadNodes(ptree *ptr)
 					//If no subnet found, can't use node unless it's doppelganger.
 					else
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet ranges", __FILE__, __LINE__, n.IP.c_str());
-						prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all valid subnet ranges: " + n.name);
+						syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet "
+								"ranges", __FILE__, __LINE__, n.IP.c_str());
+						prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all "
+								"valid subnet ranges: " + n.name);
 					}
 					break;
 
@@ -955,19 +1019,31 @@ void NovaGUI::loadNodes(ptree *ptr)
 					//If no MAC is set, there's a problem
 					if(!n.MAC.size())
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s does not have a MAC Address.",
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s "
+								"does not have a MAC Address.",
 								__FILE__, __LINE__, string(n.pfile).c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled node using profile "
+								"" + n.pfile + " does not have a MAC Address.");
 						continue;
 					}
 
 					//Associated MAC is already in use, this is not allowed, throw out the node
-					//TODO proper debug prints and popups needed
 					if(nodes.find(n.MAC) != nodes.end())
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected in nodes: %s", __FILE__, __LINE__, n.MAC.c_str());
+						syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
+								"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, n.MAC +" is already in use.");
 						continue;
 					}
 					n.name = n.MAC;
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
+
 					n.sub = "";
 					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 					{
@@ -975,10 +1051,12 @@ void NovaGUI::loadNodes(ptree *ptr)
 							n.sub = it->second.address;
 					}
 					// If no valid subnet/interface found
-					//TODO proper debug prints and popups needed
 					if(!n.sub.compare(""))
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s is unable to resolve it's interface.", __FILE__, __LINE__, n.MAC.c_str());
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s "
+								"is unable to resolve it's interface.",__FILE__, __LINE__, n.MAC.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+								+ n.MAC + " is unable to resolve it's interface.");
 						continue;
 					}
 
@@ -993,6 +1071,13 @@ void NovaGUI::loadNodes(ptree *ptr)
 				case randomDHCP:
 
 					n.name = n.pfile + " on " + n.interface;
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
 
 					//Finds a unique identifier
 					while((nodes.find(n.name) != nodes.end()) && (i < j))
@@ -1009,10 +1094,12 @@ void NovaGUI::loadNodes(ptree *ptr)
 							n.sub = it->second.address;
 					}
 					// If no valid subnet/interface found
-					//TODO proper debug prints and popups needed
 					if(!n.sub.compare(""))
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve "
+								"it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+								+ n.MAC + " is unable to resolve it's interface.");
 						continue;
 					}
 					//save the node in the table
@@ -1025,6 +1112,14 @@ void NovaGUI::loadNodes(ptree *ptr)
 				//***** Doppelganger ********//
 				case Doppelganger:
 					n.name = "Doppelganger";
+
+					if (!n.name.compare(""))
+					{
+						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+						continue;
+					}
+
 					n.sub = "";
 					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 					{
@@ -1032,10 +1127,11 @@ void NovaGUI::loadNodes(ptree *ptr)
 							n.sub = it->second.address;
 					}
 					// If no valid subnet/interface found
-					//TODO proper debug prints and popups needed
 					if(!n.sub.compare(""))
 					{
 						syslog(SYSL_ERR, "File: %s Line: %d The Doppelganger is unable to resolve the interface: %s", __FILE__, __LINE__, n.interface.c_str());
+						prompter->DisplayPrompt(NODE_LOAD_FAIL, "The Doppelganger is unable to resolve "
+								"the interface: " + n.interface);
 						continue;
 					}
 					//save the node in the table
@@ -1063,11 +1159,12 @@ void NovaGUI::loadNodes(ptree *ptr)
 void NovaGUI::loadProfiles()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
 	ptree * ptr;
 	profileTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/profiles.xml", profileTree);
+		read_xml(homePath+"/templates/profiles.xml", profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &v, profileTree.get_child("profiles"))
 		{
@@ -1081,6 +1178,14 @@ void NovaGUI::loadProfiles()
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
+
+				if (!p.name.compare(""))
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+					prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd profiles XML file contains invalid profile names. Some profiles have failed to load.");
+					continue;
+				}
+
 				p.ports.clear();
 				p.type = (profileType)v.second.get<int>("type");
 				for(uint i = 0; i < INHERITED_MAX; i++)
@@ -1300,6 +1405,13 @@ void NovaGUI::loadSubProfiles(string parent)
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
 
+			if (!prof.name.compare(""))
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd profiles XML file contains invalid profile names. Some profiles have failed to load.");
+				continue;
+			}
+
 			for(uint i = 0; i < INHERITED_MAX; i++)
 			{
 				prof.inherited[i] = true;
@@ -1440,7 +1552,14 @@ void NovaGUI::drawAllSuspects()
 		str = (QString) string(inet_ntoa(it->second.suspect->IP_address)).c_str();
 		suspect = it->second.suspect;
 		//Create the colors for the draw
-		if(suspect->classification < 0.5)
+
+		if (suspect->classification < 0)
+		{
+			// In training mode, classification is never set and ends up at -1
+			// Make it a nice blue so it's clear that it hasn't classified
+			color = QColor(0,0,255);
+		}
+		else if(suspect->classification < 0.5)
 		{
 			//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
 			color = QColor((int)(200*2*suspect->classification),200, 50);
@@ -1519,7 +1638,13 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 	str = (QString) string(inet_ntoa(sItem->suspect->IP_address)).c_str();
 
 	//Create the colors for the draw
-	if(sItem->suspect->classification < 0.5)
+	if (sItem->suspect->classification < 0)
+	{
+		// In training mode, classification is never set and ends up at -1
+		// Make it a nice blue so it's clear that it hasn't classified
+		color = QColor(0,0,255);
+	}
+	else if(sItem->suspect->classification < 0.5)
 	{
 		//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
 		color = QColor((int)(200*2*sItem->suspect->classification),200, 50);

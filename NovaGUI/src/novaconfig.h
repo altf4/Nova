@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description :
+// Description : NOVA preferences/configuration window
 //============================================================================
 #ifndef NOVACONFIG_H
 #define NOVACONFIG_H
@@ -174,6 +174,9 @@ private slots:
 
 // Right click action on a feature, we manually connect it so no need for proper prefix
 void onFeatureClick(const QPoint & pos);
+
+//Empty action slot to do nothing on certain action prompts
+void on_actionNo_Action_triggered();
 
 //Which menu item is selected
 void on_treeWidget_itemSelectionChanged();

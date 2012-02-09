@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description :
+// Description : NOVA preferences/configuration window
 //============================================================================
 #include "novaconfig.h"
 #include <QtGui/QComboBox>
@@ -26,7 +26,6 @@ string currentProfile = "";
 string currentNode = "";
 string currentSubnet = "";
 
-portPopup * portwindow;
 nodePopup * nodewindow;
 NovaGUI * mainwindow;
 QMenu * portMenu;
@@ -86,13 +85,15 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	// Populate the dialog menu
 	for (uint i = 0; i < mainwindow->prompter->registeredMessageTypes.size(); i++)
 	{
-		ui.msgTypeListWidget->insertItem(i, new QListWidgetItem(QString::fromStdString(mainwindow->prompter->registeredMessageTypes[i].descriptionUID)));
+		ui.msgTypeListWidget->insertItem(i, new QListWidgetItem(QString::fromStdString(
+				mainwindow->prompter->registeredMessageTypes[i].descriptionUID)));
 	}
 
 	ui.treeWidget->expandAll();
 
 	ui.featureList->setContextMenuPolicy(Qt::CustomContextMenu);
-	connect(ui.featureList, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onFeatureClick(const QPoint &)));
+	connect(ui.featureList, SIGNAL(customContextMenuRequested(const QPoint &)), this,
+			SLOT(onFeatureClick(const QPoint &)));
 }
 
 NovaConfig::~NovaConfig()
@@ -144,6 +145,10 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 	}
 }
 
+void NovaConfig::on_actionNo_Action_triggered()
+{
+	return;
+}
 void NovaConfig::on_actionToggle_Inherited_triggered()
 {
 	if(!loadingItems && !ui.portTreeWidget->selectedItems().empty())
@@ -182,6 +187,13 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 							p->ports[i].first = temp.portName;
 							p->ports[i].second = true;
 						}
+					}
+					if(!p->ports[i].second)
+					{
+						loadingItems = false;
+						mainwindow->prompter->DisplayPrompt(mainwindow->CANNOT_INHERIT_PORT, "The selected port cannot be inherited"
+								" from any ancestors, would you like to keep it?", ui.actionNo_Action, ui.actionDeletePort, this);
+						loadingItems = true;
 					}
 					//TODO display prompt that allows the user to delete the port or do nothing if port isn't found
 				}
@@ -321,9 +333,10 @@ void NovaConfig::on_actionDeletePort_triggered()
 			}
 		}
 		profile * p = &profiles[currentProfile];
-		for(uint i = 0; i < p->ports.size(); i++)
+		uint i;
+		for(i = 0; i < p->ports.size(); i++)
 		{
-			if(!p->ports[i].first.compare(prt->portName) && !p->ports[i].second)
+			if(!p->ports[i].first.compare(prt->portName))
 			{
 				//Check for inheritance on the deleted port.
 				//If valid parent
@@ -362,10 +375,13 @@ void NovaConfig::on_actionDeletePort_triggered()
 						}
 				break;
 			}
-			else
-				syslog(SYSL_ERR, "File: %s Line: %d Cannot delete an inherited port, set the behavior to "
-						"that protocols default action to effectively remove an inherited port", __FILE__, __LINE__);
-
+			if(i == p->ports.size())
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Port %s could not be found in profile %s",__FILE__,
+						__LINE__, prt->portName.c_str(),p->name.c_str());
+				mainwindow->prompter->DisplayPrompt(mainwindow->CANNOT_DELETE_PORT, "Port " + prt->portName
+						+ " cannot be found.");
+			}
 		}
 		loadProfile();
 		saveProfile();
@@ -381,11 +397,6 @@ void NovaConfig::closeEvent(QCloseEvent * e)
 	{
 		nodewindow->remoteCall = true;
 		nodewindow->close();
-	}
-	if(editingPorts && (portwindow != NULL))
-	{
-		portwindow->remoteCall = true;
-		portwindow->close();
 	}
 	mainwindow->editingPreferences = false;
 
@@ -1156,18 +1167,24 @@ bool NovaConfig::updateNodeTypes()
 				else
 				{
 					syslog(SYSL_ERR, "File: %s Line: %d ERROR: A Doppelganger already exists.", __FILE__, __LINE__);
-					//TODO Appropriate display prompt here
-					return false;
+					if(mainwindow->prompter->DisplayPrompt(mainwindow->DOPP_EXISTS, "Only one node can be a Doppelganger for a host, would"
+							" you like to delete the duplicate node using profile: " + tempNode.pfile + "?") == CHOICE_ALT)
+						return false;
+					else
+						delList.push_back(it->first);
 				}
 				break;
 		}
 	}
 
-	if(!hasDoppelganger)
+	if(!hasDoppelganger && ui.dmCheckBox->isChecked())
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d ERROR: No Doppelganger exists.", __FILE__, __LINE__);
-		//TODO Appropriate display prompt here
-		return false;
+		if(mainwindow->prompter->DisplayPrompt(mainwindow->NO_DOPP, "No Doppelganger node could be found. Do you wish to disable"
+				" the Doppelganger and continue?") == CHOICE_ALT)
+			return false;
+		else
+			ui.dmCheckBox->setChecked(false);
 	}
 	while(!delList.empty())
 	{

@@ -40,7 +40,6 @@
 #include "DialogPrompter.h"
 #include "ui_novagui.h"
 #include "run_popup.h"
-#include "portPopup.h"
 #include "nova_manual.h"
 #include "NovaUtil.h"
 
@@ -195,14 +194,13 @@ public:
     ptree portTree;
     ptree profileTree;
     ptree scriptTree;
-    ptree *nodesTree;
-    ptree *doppTree;
-    ptree *subnetTree;
+    ptree nodesTree;
+    ptree subnetTree;
 
     DialogPrompter *prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
     messageHandle HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
-    messageHandle LAUNCH_TRAINING_MERGE;
+    messageHandle LAUNCH_TRAINING_MERGE, NODE_LOAD_FAIL, CANNOT_DELETE_PORT;
     messageHandle NO_ANCESTORS, PROFILE_IN_USE, DOPP_EXISTS, NO_DOPP, CANNOT_INHERIT_PORT;
 
     NovaGUI(QWidget *parent = 0);

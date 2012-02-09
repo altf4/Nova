@@ -13,7 +13,7 @@
 //   
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
+// Description : Provides dialogs for MAC and personality selection
 //============================================================================
 #include "NovaComplexDialog.h"
 

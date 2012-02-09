@@ -73,7 +73,7 @@ Installer/.nova/Data/*
 Installer/.nova/s*
 Installer/.nova/Images/*
 Installer/.nova/templates/*
-Installer/.nova/Config/NOVAConfig.txt
+Installer/.nova/Config/*
 Installer/bin/*
 
 # Auto generated QT files

@@ -2728,6 +2728,11 @@ p, li { white-space: pre-wrap; }
     <string>Edit Node</string>
    </property>
   </action>
+  <action name="actionNo_Action">
+   <property name="text">
+    <string>No Action</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

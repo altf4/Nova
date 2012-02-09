@@ -13,7 +13,6 @@ HEADERS += src/classifierPrompt.h \
     src/nodePopup.h \
     src/novaconfig.h \
     src/novagui.h \
-    src/portPopup.h \
     src/run_popup.h
 SOURCES += src/classifierPrompt.cpp \
     src/nova_manual.cpp \
@@ -24,7 +23,6 @@ SOURCES += src/classifierPrompt.cpp \
     src/nodePopup.cpp \
     src/novaconfig.cpp \
     src/novagui.cpp \
-    src/portPopup.cpp \
     src/run_popup.cpp
 FORMS += UI/classifierPrompt.ui \
     UI/nova_manual.ui \

@@ -250,7 +250,7 @@ GO_TO_LIVE 1
 #	1: Terminal logging output
 # EXAMPLE:
 #USE_TERMINALS 0
-USE_TERMINALS 1
+USE_TERMINALS 0
 
 ############################################
 # SA_MAX_ATTEMPTS #
