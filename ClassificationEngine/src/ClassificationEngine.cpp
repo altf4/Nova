@@ -44,14 +44,12 @@ u_char GUIData[MAX_MSG_SIZE];
 
 //NOT normalized
 vector <Point*> dataPtsWithClass;
-static string hostAddrString;
 static struct sockaddr_in hostAddr;
 
 //** Main (ReceiveSuspectData) **
 struct sockaddr_un remote;
 struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
 
-Suspect * suspect;
 int IPCsock;
 
 //** Silent Alarm **
@@ -117,8 +115,6 @@ Nova::userMap service_pref;
 vector<string> email_recipients;
 // End configured variables
 
-lastPointHash lastPoints;
-
 int main(int argc,char *argv[])
 {
 	bzero(GUIData,MAX_MSG_SIZE);
@@ -129,8 +125,6 @@ int main(int argc,char *argv[])
 
 	suspects.set_empty_key(0);
 	suspects.resize(INIT_SIZE_SMALL);
-
-	lastPoints.set_empty_key(0);
 
 	struct sockaddr_un localIPCAddress;
 
@@ -360,9 +354,6 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	{
 		sleep(classificationTimeout);
 		ofstream myfile (trainingCapFile.data(), ios::app);
-		//bool savePoint;
-		//ANNdist distance;
-		//int distanceThreshold = 0;
 
 		if (myfile.is_open())
 		{
@@ -370,7 +361,6 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 			//Calculate the "true" Feature Set for each Suspect
 			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 			{
-				//savePoint = false;
 
 				if(it->second->needs_feature_update)
 				{
@@ -382,40 +372,12 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 					for(int j=0; j < DIM; j++)
 						it->second->annPoint[j] = it->second->features.features[j];
 
-					/*
-					// Save the first point we get
-					if (lastPoints[it->first] == NULL)
-					{
-						savePoint = true;
-						lastPoints[it->first] = annCopyPt(DIM, it->second->annPoint);
-					}
-					else
-					{
-						// Compute squared distance from last point
-						distance = 0;
-						for(int j=0; j < DIM; j++)
-							distance += annDist(j, lastPoints[it->first] , it->second->annPoint);
-
-						cout << "Distance is " << distance << endl;
-						if (distance >= distanceThreshold)
-						{
-							savePoint = true;
-							annDeallocPt(lastPoints[it->first]);
-							lastPoints[it->first] = annCopyPt(DIM, it->second->annPoint);
-						}
-					}
-					*/
-
-					//if (savePoint)
-					//{
 						myfile << string(inet_ntoa(it->second->IP_address)) << " ";
 
 						for(int j=0; j < DIM; j++)
 							myfile << it->second->annPoint[j] << " ";
 
 						myfile << "\n";
-					//}
-
 
 					it->second->needs_feature_update = false;
 					cout << it->second->ToString(featureEnabled);
@@ -542,8 +504,6 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 		catch(std::exception e)
 		{
 			syslog(SYSL_ERR, "Line: %d Error interpreting received Silent Alarm: %s", __LINE__, string(e.what()).c_str());
-			delete suspect;
-			suspect = NULL;
 		}
 		close(connectionSocket);
 		pthread_rwlock_unlock(&lock);
@@ -585,17 +545,11 @@ void Nova::ClassificationEngine::FormKdTree()
 
 void Nova::ClassificationEngine::Classify(Suspect *suspect)
 {
-	ANNpoint			queryPt;				// query point
-	ANNidxArray			nnIdx;					// near neighbor indices
-	ANNdistArray		dists;					// near neighbor distances
-
-	queryPt = suspect->annPoint;
-
-	nnIdx = new ANNidx[k];						// allocate near neigh indices
-	dists = new ANNdist[k];						// allocate near neighbor dists
+	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
+	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
 	kdTree->annkSearch(							// search
-			queryPt,							// query point
+			suspect->annPoint,							// query point
 			k,									// number of near neighbors
 			nnIdx,								// nearest neighbors (returned)
 			dists,								// distance (returned)
@@ -609,6 +563,8 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	for (int i = 0; i < k; i++)
 	{
 		dists[i] = sqrt(dists[i]);				// unsquare distance
+
+
 
 		if(nnIdx[i] == -1)
 		{
@@ -1278,7 +1234,10 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+
+	/* TODO Addison: Fix this / uncomment when working
 	Logger * loggerConf = new Logger(__FILE__, "/home/addison/Code/NovaTest/smtp_config.txt", true);
+	*/
 
 	confCheck = NovaConfig->SetDefaults();
 
@@ -1300,7 +1259,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
 	}
 
-	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+	string hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
 
 	if(hostAddrString.size() == 0)
 	{
@@ -1324,11 +1283,14 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	dataFile = NovaConfig->options["DATAFILE"].data;
 	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
 	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
+
+	/* TODO Addison: Fix this / uncomment when working
 	SMTP_addr = loggerConf->messageInfo.smtp_addr;
 	SMTP_domain = loggerConf->messageInfo.smtp_domain;
 	email_recipients = loggerConf->messageInfo.email_recipients;
 	SMTP_port = loggerConf->messageInfo.smtp_port;
 	service_pref = loggerConf->messageInfo.service_preferences;
+	*/
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 
