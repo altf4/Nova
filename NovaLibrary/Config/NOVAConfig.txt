@@ -291,5 +291,74 @@ SA_SLEEP_DURATION 0.5
 #
 ENABLED_FEATURES 111111111
 
+############################################
+# SMTP_ADDR #
+############################################
+# 
+# This is the address from which all Nova email alerts
+# will be sent. Should be of the form string @ string . string
+#
+SMTP_ADDR test@changethis.now
 
+############################################
+# SMTP_PORT #
+############################################
+#
+# The port number that the SMTP server being used
+# for distributing email alerts must be connected to on.
+# Should be an integer.
+#
+SMTP_PORT 465
 
+############################################
+# SMTP_DOMAIN #
+############################################
+#
+# The name of the SMTP server that you will be connecting to.
+# Example: smtp.server.com
+#
+SMTP_DOMAIN smtp.server.com
+
+############################################
+# RECIPIENTS #
+############################################
+#
+# A comma delimited list of the email addresses to send email
+# alerts to. 
+# Example:
+# RECIPIENTS first@email.send, second@email.send
+# Note: spaces after each comma
+#
+RECIPIENTS first@email.send, second@email.send
+
+############################################
+# SERVICE_PREFERENCES #
+############################################
+#
+# This string will provide the logger with what services you
+# wish to use, depending on level of criticality.
+# Each section takes the form LEVEL:SERVICES;
+# LEVEL: (0..7) are kept consistent with syslog message levels:
+#        0: EMERGENCY
+#	 1: ALERT
+#	 2: CRITICAL
+#	 3: ERROR
+#	 4: WARNING
+#	 5: NOTICE
+# 	 6: INFO
+# 	 7: DEBUG
+# SERVICES: (0..7) are a bitmask of what services to use. 3 bits used: 
+#		EMAIL LIBNOTIFY SYSLOG
+#	Thus, SERVICES are:
+#	 0: NO_SERV (no logging of any kind will be done)
+#	 1: SYSLOG  (event level will log to syslog only)
+#	 2: LIBNOTIFY (event level will log to libnotify only)
+#	 3: LIBNOTIFY_BELOW (event level will log to both syslog and libnotify)
+#	 4: EMAIL (event level will only send email alerts)
+#	 5: EMAIL_SYSLOG (event level will send email alerts and log usign syslog)
+#	 6: EMAIL_LIBNOTIFY (event level will send email alerts and display desktop notifications)
+#	 7: EMAIL_BELOW (event level will send emails, use desktop notifications, and use syslog)
+# 
+# EXAMPLE: 
+# SERVICE_PREFERENCES 0:7;1:6;2:5;3:4;4:3;5:2;6:1;7:1;
+SERVICE_PREFERENCES 0:7;1:6;2:5;3:4;4:3;5:2;6:1;7:1;

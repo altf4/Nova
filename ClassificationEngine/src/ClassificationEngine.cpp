@@ -1305,7 +1305,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	if(hostAddrString.size() == 0)
 	{
 		syslog(SYSL_ERR, "Line: %d Bad interface, no IP's associated!", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	closelog();
@@ -1329,6 +1329,8 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	email_recipients = loggerConf->messageInfo.email_recipients;
 	SMTP_port = loggerConf->messageInfo.smtp_port;
 	service_pref = loggerConf->messageInfo.service_preferences;
+
+	loggerConf->Logging(ERROR, SMTP_addr);
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 

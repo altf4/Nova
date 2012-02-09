@@ -13,7 +13,9 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Class to load and parse the NOVA configuration file
+// Description : Class to generate messages based on events inside the program,
+// and maintain information needed for the sending of those events, mostly
+// networking information that is not readily available
 //============================================================================/*
 
 #ifndef Logger_H_
@@ -98,6 +100,8 @@ private:
 	// of arguments for void Logging().
 	// TODO: write a function definition for this
 	Nova::Services setServiceLevel(Nova::Levels messageLevel);
+	//
+	Nova::Services parseServicesFromChar(char parse);
 
 public:
 	optionsInfo messageInfo;
