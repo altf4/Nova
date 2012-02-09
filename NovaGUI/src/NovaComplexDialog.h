@@ -55,7 +55,7 @@ private:
     whichDialog type;
     Ui::NovaComplexDialogClass ui;
 
-private slots:
+private Q_SLOTS:
 
 	void on_searchEdit_textChanged();
 	void on_cancelButton_clicked();

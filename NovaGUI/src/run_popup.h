@@ -39,7 +39,7 @@ public:
     void loadPreferences();
     bool savePreferences();
 
-private slots:
+private Q_SLOTS:
 
 //Main buttons
 void on_cancelButton_clicked();

@@ -1278,7 +1278,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
-	Logger * loggerConf = new Logger(__FILE__, configFilePath, true);
+	Logger * loggerConf = new Logger(__FILE__, "/home/addison/Code/NovaTest/smtp_config.txt", true);
 
 	confCheck = NovaConfig->SetDefaults();
 
@@ -1329,7 +1329,6 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	email_recipients = loggerConf->messageInfo.email_recipients;
 	SMTP_port = loggerConf->messageInfo.smtp_port;
 	service_pref = loggerConf->messageInfo.service_preferences;
-	loggerConf->Logging(INFO, 0, LIBNOTIFY, email_recipients, "Success!");
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 

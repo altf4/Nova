@@ -271,7 +271,7 @@ public:
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
 
-private slots:
+private Q_SLOTS:
 
 	//Menu actions
 	void on_actionRunNovaAs_triggered();
@@ -316,7 +316,7 @@ private slots:
     void updateSystemStatus();
     void initiateSystemStatus();
 
-signals:
+Q_SIGNALS:
 
 	//Custom Signals
 	void newSuspect(in_addr_t suspectAddr);

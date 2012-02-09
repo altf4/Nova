@@ -60,7 +60,7 @@ public:
     //Copies the data to parent novaconfig and adjusts the pointers
     void pushData();
 
-private slots:
+private Q_SLOTS:
 
 	//General Button signals
 	void on_okButton_clicked();

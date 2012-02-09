@@ -3111,7 +3111,7 @@ void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 //Self explanatory, see deleteProfile for details
 void NovaConfig::on_deleteButton_clicked()
 {
-	emit on_actionProfileDelete_triggered();
+	Q_EMIT on_actionProfileDelete_triggered();
 }
 
 void NovaConfig::on_actionProfileDelete_triggered()
@@ -3138,7 +3138,7 @@ void NovaConfig::on_actionProfileDelete_triggered()
 //Creates a base profile with default values seen below
 void NovaConfig::on_addButton_clicked()
 {
-	emit on_actionProfileAdd_triggered();
+	Q_EMIT on_actionProfileAdd_triggered();
 }
 
 void NovaConfig::on_actionProfileAdd_triggered()
@@ -3199,7 +3199,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 //Copies a profile and all of it's descendants
 void NovaConfig::on_cloneButton_clicked()
 {
-	emit on_actionProfileClone_triggered();
+	Q_EMIT on_actionProfileClone_triggered();
 }
 
 void NovaConfig::on_actionProfileClone_triggered()
@@ -3672,19 +3672,19 @@ void NovaConfig::on_nodeAddButton_clicked()
 //Calls the function(s) to remove the node(s)
 void NovaConfig::on_nodeDeleteButton_clicked()
 {
-	emit on_actionNodeDelete_triggered();
+	Q_EMIT on_actionNodeDelete_triggered();
 }
 
 //Enables a node or a subnet in honeyd
 void NovaConfig::on_nodeEnableButton_clicked()
 {
-	emit on_actionNodeEnable_triggered();
+	Q_EMIT on_actionNodeEnable_triggered();
 }
 
 //Disables a node or a subnet in honeyd
 void NovaConfig::on_nodeDisableButton_clicked()
 {
-	emit on_actionNodeDisable_triggered();
+	Q_EMIT on_actionNodeDisable_triggered();
 }
 
 void NovaConfig::on_setEthernetButton_clicked()

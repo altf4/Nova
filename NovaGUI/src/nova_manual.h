@@ -42,7 +42,7 @@ private:
     Ui::Nova_ManualClass ui;
     QStringList *paths;
 
-private slots:
+private Q_SLOTS:
 	void on_helpTree_itemSelectionChanged();
 };
 

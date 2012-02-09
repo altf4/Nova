@@ -170,7 +170,7 @@ protected:
     void contextMenuEvent(QContextMenuEvent *event);
 
 
-private slots:
+private Q_SLOTS:
 
 // Right click action on a feature, we manually connect it so no need for proper prefix
 void onFeatureClick(const QPoint & pos);
@@ -287,14 +287,14 @@ public:
 	NovaConfig * parent;
 	QTreeWidgetItem * buddy;
 
-public slots:
+public Q_SLOTS:
 	void setCurrentIndex(int index)
 	{
 		QComboBox::setCurrentIndex(index);
-		emit notifyParent(buddy, true);
+		Q_EMIT notifyParent(buddy, true);
 	}
 
-	signals:
+	Q_SIGNALS:
 	void notifyParent(QTreeWidgetItem *item, bool edited);
 
 protected:
@@ -305,7 +305,7 @@ protected:
 	void focusInEvent(QFocusEvent * e)
 	{
 		e->ignore();
-		emit notifyParent(buddy, false);
+		Q_EMIT notifyParent(buddy, false);
 	}
 
 };

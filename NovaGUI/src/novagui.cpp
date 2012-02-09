@@ -381,7 +381,7 @@ void NovaGUI::getSettings()
 
 void NovaGUI::emitSystemStatusRefresh()
 {
-	emit refreshSystemStatus();
+	Q_EMIT refreshSystemStatus();
 }
 
 /************************************************
@@ -1527,7 +1527,7 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 	//Update the entry in the table
 	SuspectTable[suspectItem.suspect->IP_address.s_addr] = suspectItem;
 	pthread_rwlock_unlock(&lock);
-	emit newSuspect(suspectItem.suspect->IP_address.s_addr);
+	Q_EMIT newSuspect(suspectItem.suspect->IP_address.s_addr);
 }
 
 /************************************************
@@ -2122,7 +2122,7 @@ void NovaGUI::on_runButton_clicked()
 }
 void NovaGUI::on_stopButton_clicked()
 {
-	emit on_actionStopNova_triggered();
+	Q_EMIT on_actionStopNova_triggered();
 }
 
 void NovaGUI::on_systemStatusTable_itemSelectionChanged()

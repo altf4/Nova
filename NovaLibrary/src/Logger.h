@@ -25,7 +25,8 @@
 using namespace std;
 using namespace google;
 
-namespace Nova {
+namespace Nova
+{
 
 // may not need this, trying to determine if this is a good way to
 // tell the class how to allocate service use or if using the enum
@@ -35,7 +36,10 @@ enum Services {NO_SERV, SYSLOG, LIBNOTIFY, LIBNOTIFY_BELOW, EMAIL, EMAIL_SYSLOG,
 enum Levels {EMERGENCY, ALERT, CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG};
 
 typedef vector<pair<uint16_t, string> > levelsMap;
+typedef vector<pair<Nova::Levels, Nova::Services> > userMap;
 
+
+//There will be more than this, most likely
 struct MessageOptions
 {
 	// the SMTP server domain name for display purposes
@@ -44,10 +48,8 @@ struct MessageOptions
 	string smtp_addr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
 	in_port_t smtp_port;
-	// tried to find a smaller integer to use; essentially going to be a bitmask for
-	// determining what services to use. So 1 would be the user just using syslog,
-	// 4 would be just email, 5 email and syslog, et cetera.
-	uint16_t service_preferences;
+	// TODO: Write the comment here lol
+	userMap service_preferences;
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
 	vector<string> email_recipients;
@@ -55,7 +57,8 @@ struct MessageOptions
 
 typedef struct MessageOptions optionsInfo;
 
-class Logger {
+class Logger
+{
 public:
 	Logger(string parent, char const * configFilePath, bool init);
 	~Logger();
@@ -71,21 +74,35 @@ public:
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(uint16_t messageLevel, uint16_t syslog_facility, uint16_t services, vector<string> recipients, string message);
+	void Logging(Nova::Levels messageLevel, string message);
+	// methods for assigning the log preferences from different places
+	// into the user map inside MessageOptions struct.
+	// args: string logPrefString: this method is used for reading from the config file
+	// args: Nova::Levels messageLevel, Nova::Services services: this is for individual
+	//       adjustments to the struct from the GUI; may change the name but as they
+	//		 are both used to set the preferences I figured it'd be okay.
+	void setUserLogPreferences(string logPrefString);
+	void setUserLogPreferences(Nova::Levels messageLevel, Nova::Services services);
+
 private:
 	// Notify makes use of the libnotify methods to produce
 	// a notification with the desired level to the desktop.
 	void Notify(uint16_t level, string message);
 	// Log will be the method that calls syslog
-	void Log(uint16_t level, uint16_t facility, string message);
+	void Log(uint16_t level, string message);
 	// Mail will, obviously, email people.
-	void Mail(uint16_t level, string message, vector<string> recipients);
+	void Mail(uint16_t level, string message);
 	// clean the elements in the toClean vector.
 	vector<string> CleanAddresses(vector<string> toClean);
+	// for use in the logging public method. Purely used to reduce number
+	// of arguments for void Logging().
+	// TODO: write a function definition for this
+	Nova::Services setServiceLevel(Nova::Levels messageLevel);
 
 public:
 	optionsInfo messageInfo;
 	levelsMap levels;
+
 private:
 	static const string prefixes[];
 	string parentName;

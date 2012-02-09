@@ -30,9 +30,9 @@
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.1984959885" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug">
 								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.991882821" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.1320848233" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.include.paths.1529965696" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath"/>
+								<option id="gnu.cpp.compiler.option.include.paths.1529965696" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths"/>
 								<option id="gnu.cpp.compiler.option.debugging.gprof.702435721" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.other.other.1749033413" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  `pkg-config --libs --cflags glib-2.0 gtk+-3.0`" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1749033413" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  `pkg-config --libs --cflags glib-2.0 gtk+-3.0`" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1044163870" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool command="gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.2130132660" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">
@@ -49,12 +49,7 @@
 					</folderInfo>
 					<fileInfo id="cdt.managedbuild.config.gnu.lib.debug.1217381362.1978549135" name="NovaUtil.cpp" rcbsApplicability="disable" resourcePath="src/NovaUtil.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.1984959885.2070093542">
 						<tool errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.1984959885.2070093542" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.1984959885">
-							<option id="gnu.cpp.compiler.option.include.paths.2109182336" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-								<listOptionValue builtIn="false" value="/usr/lib/i386-linux-gnu/glib-2.0/include"/>
-								<listOptionValue builtIn="false" value="/usr/include/libnotify"/>
-								<listOptionValue builtIn="false" value="/usr/include/gdk-pixbuf-2.0"/>
-								<listOptionValue builtIn="false" value="/usr/include/glib-2.0"/>
-							</option>
+							<option id="gnu.cpp.compiler.option.include.paths.2109182336" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath"/>
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2014131422" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 						<tool customBuildStep="true" id="org.eclipse.cdt.managedbuilder.ui.rcbs.1977948735" name="Resource Custom Build Step">

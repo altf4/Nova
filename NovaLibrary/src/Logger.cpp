@@ -35,13 +35,10 @@ namespace Nova
 		string prefix;
 		uint16_t prefixIndex;
 		string checkLoad[5];
-		//openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
-
-		//syslog(SYSL_INFO, "Loading file %s in homepath %s", configFilePath, homeNovaPath.c_str());
 
 		ifstream config(configFilePath);
 
-		//populate the defaultVector. I know it looks a little messy, maybe
+		//populate the checkLoad array. I know it looks a little messy, maybe
 		//hard code it somewhere? Just did this so that if we add or remove stuff,
 		//we only have to do it here
 		for(uint16_t j = 0; j < sizeof(prefixes)/sizeof(prefixes[0]); j++)
@@ -141,13 +138,14 @@ namespace Nova
 				prefix = prefixes[prefixIndex];
 
 				//SERVICE_PREFERENCES
+				//TODO: make method for parsing string to map criticality level to service
 				if(!line.substr(0, prefix.size()).compare(prefix))
 				{
 					line = line.substr(prefix.size() + 1, line.size());
 
 					if(line.size() > 0)
 					{
-						messageInfo.service_preferences = ((uint16_t) atoi(line.c_str()));
+						Logger::setUserLogPreferences(line);
 						checkLoad[prefixIndex] = line;
 					}
 
@@ -196,21 +194,24 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(uint16_t messageLevel, uint16_t syslog_facility, uint16_t services, vector<string> recipients, string message)
+	void Logger::Logging(Nova::Levels messageLevel, string message)
 	{
+		Nova::Services services = setServiceLevel(messageLevel);
+
 		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
 			Notify(messageLevel, message);
 		}
 		if(services == SYSLOG || services == LIBNOTIFY_BELOW || services == EMAIL_SYSLOG || services == EMAIL_BELOW)
 		{
-			Log(messageLevel, syslog_facility, message);
+			Log(messageLevel, message);
 		}
 		if(services == EMAIL || services == EMAIL_SYSLOG || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
-			Mail(messageLevel, message, recipients);
+			Mail(messageLevel, message);
 		}
-		if(services == 0)
+
+		if(services == NO_SERV)
 		{
 			openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
 			syslog(SYSL_INFO, "You are not currently opting to use any logging mechanisms.");
@@ -222,17 +223,20 @@ namespace Nova
 	{
 		NotifyNotification *note;
 		notify_init("Logger");
-		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), NULL);
+		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg");
 		notify_notification_set_timeout(note, 3000);
+		notify_notification_show(note, NULL);
 		g_object_unref(G_OBJECT(note));
 	}
 
-	void Logger::Log(uint16_t level, uint16_t facility, string message)
+	void Logger::Log(uint16_t level, string message)
 	{
-
+		openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(level, "%s: %s", parentName.c_str(), message.c_str());
+		closelog();
 	}
 
-	void Logger::Mail(uint16_t level, string message, vector<string> recipients)
+	void Logger::Mail(uint16_t level, string message)
 	{
 
 	}
@@ -259,23 +263,42 @@ namespace Nova
 		return out;
 	}
 
+	void setUserLogPreferences(string logPrefString)
+	{
+
+	}
+
+	void setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
+	{
+
+	}
+
 	Logger::Logger(string parent, char const * configFilePath, bool init)
 	{
 		parentName = parent;
 
-		for(uint16_t i; i < 8; i++)
+		for(uint16_t i = 0; i < 8; i++)
 		{
 			string level = "";
 			switch(i)
 			{
 				case 0: level = "EMERGENCY";
+						break;
 				case 1: level = "ALERT";
+						break;
 				case 2: level = "CRITICAL";
+						break;
 				case 3: level = "ERROR";
+						break;
 				case 4: level = "WARNING";
+						break;
 				case 5: level = "NOTICE";
+						break;
 				case 6: level = "INFO";
+						break;
 				case 7: level = "DEBUG";
+						break;
+				default:break;
 			}
 
 			levels.push_back(pair<uint16_t, string> (i, level));

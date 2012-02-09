@@ -39,7 +39,7 @@ public:
 protected:
     void contextMenuEvent(QContextMenuEvent * event);
 
-private slots:
+private Q_SLOTS:
 	void on_tableWidget_cellChanged(int row, int col);
 	void on_okayButton_clicked();
 	void on_cancelButton_clicked();

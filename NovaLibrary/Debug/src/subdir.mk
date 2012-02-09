@@ -39,11 +39,4 @@ src/%.o: ../src/%.cpp
 	@echo 'Finished building: $<'
 	@echo ' '
 
-src/NovaUtil.o: ../src/NovaUtil.cpp
-	@echo 'Building file: $<'
-	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I/usr/lib/i386-linux-gnu/glib-2.0/include -I/usr/include/libnotify -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/glib-2.0 -O0 -g3 -Wall -c -fmessage-length=0  `pkg-config --libs --cflags glib-2.0 gtk+-3.0` -MMD -MP -MF"$(@:%.o=%.d)" -MT"src/NovaUtil.d" -o"$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
-
 
