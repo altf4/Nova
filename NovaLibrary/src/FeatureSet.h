@@ -57,9 +57,9 @@ using namespace std;
 #define PACKET_INTERVAL_DEVIATION_MASK 256
 
 //UDP has max payload of 65535 bytes
-//serializeSuspect requires 89 bytes, serializeFeatureData requires 36 bytes, bytes left = 65410
-// each entry in a table takes 8 bytes 65410/8 = 8176.25
-#define MAX_TABLE_ENTRIES 8176
+//serializeSuspect requires 201 bytes, serializeFeatureData requires 36 bytes, bytes left = 65334
+// each entry in a table takes 8 bytes 65334/8 = 8166.75
+#define MAX_TABLE_ENTRIES 8166
 
 //boolean values for updateFeatureData()
 #define INCLUDE true
