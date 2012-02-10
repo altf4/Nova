@@ -76,66 +76,11 @@ string Suspect::ToString(bool featureEnabled[])
 	stringstream ss;
 	if(&IP_address != NULL)
 	{
-		ss << "Suspect: "<< inet_ntoa(IP_address) << "\n\n";
+		ss << "Suspect: "<< inet_ntoa(IP_address) << "\n";
 	}
 	else
 	{
 		ss << "Suspect: Null IP\n\n";
-	}
-
-
-	if (featureEnabled[DISTINCT_IPS])
-	{
-		ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[DISTINCT_IPS] << "\n";
-	}
-
-	if (featureEnabled[IP_TRAFFIC_DISTRIBUTION])
-	{
-		ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[IP_TRAFFIC_DISTRIBUTION] << "\n";
-	}
-
-	if (featureEnabled[DISTINCT_PORTS])
-	{
-		ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[DISTINCT_PORTS] << "\n";
-	}
-
-	if (featureEnabled[PORT_TRAFFIC_DISTRIBUTION])
-	{
-		ss << " Port Traffic Distribution: "  <<  features.features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PORT_TRAFFIC_DISTRIBUTION] << "\n";
-	}
-
-	if (featureEnabled[HAYSTACK_EVENT_FREQUENCY])
-	{
-		ss << " Haystack Events: " << features.features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[HAYSTACK_EVENT_FREQUENCY] << "\n";
-	}
-
-	if (featureEnabled[PACKET_SIZE_MEAN])
-	{
-		ss << " Mean Packet Size: " << features.features[PACKET_SIZE_MEAN] << "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_SIZE_MEAN] << "\n";
-	}
-
-	if (featureEnabled[PACKET_SIZE_DEVIATION])
-	{
-		ss << " Packet Size Variance: " << features.features[PACKET_SIZE_DEVIATION] << "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_SIZE_DEVIATION] << "\n";
-	}
-
-	if (featureEnabled[PACKET_INTERVAL_MEAN])
-	{
-		ss << " Mean Packet Interval: " << features.features[PACKET_INTERVAL_MEAN] << "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_INTERVAL_MEAN] << "\n";
-	}
-
-	if (featureEnabled[PACKET_INTERVAL_DEVIATION])
-	{
-		ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
-		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
 
 	ss << " Suspect is ";
@@ -143,6 +88,63 @@ string Suspect::ToString(bool featureEnabled[])
 		ss << "not ";
 	ss << "hostile\n";
 	ss <<  " Classification: " <<  classification <<  "\n";
+	ss <<  " Hostile neighbors: " << hostileNeighbors << "\n";
+
+
+	if (featureEnabled[DISTINCT_IPS])
+	{
+		ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[DISTINCT_IPS] << "\n";
+	}
+
+	if (featureEnabled[IP_TRAFFIC_DISTRIBUTION])
+	{
+		ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[IP_TRAFFIC_DISTRIBUTION] << "\n";
+	}
+
+	if (featureEnabled[DISTINCT_PORTS])
+	{
+		ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[DISTINCT_PORTS] << "\n";
+	}
+
+	if (featureEnabled[PORT_TRAFFIC_DISTRIBUTION])
+	{
+		ss << " Port Traffic Distribution: "  <<  features.features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[PORT_TRAFFIC_DISTRIBUTION] << "\n";
+	}
+
+	if (featureEnabled[HAYSTACK_EVENT_FREQUENCY])
+	{
+		ss << " Haystack Events: " << features.features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[HAYSTACK_EVENT_FREQUENCY] << "\n";
+	}
+
+	if (featureEnabled[PACKET_SIZE_MEAN])
+	{
+		ss << " Mean Packet Size: " << features.features[PACKET_SIZE_MEAN] << "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[PACKET_SIZE_MEAN] << "\n";
+	}
+
+	if (featureEnabled[PACKET_SIZE_DEVIATION])
+	{
+		ss << " Packet Size Variance: " << features.features[PACKET_SIZE_DEVIATION] << "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[PACKET_SIZE_DEVIATION] << "\n";
+	}
+
+	if (featureEnabled[PACKET_INTERVAL_MEAN])
+	{
+		ss << " Mean Packet Interval: " << features.features[PACKET_INTERVAL_MEAN] << "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[PACKET_INTERVAL_MEAN] << "\n";
+	}
+
+	if (featureEnabled[PACKET_INTERVAL_DEVIATION])
+	{
+		ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
+		ss << "    Avg Distance to Neighbors: " << featureAccuracy[PACKET_INTERVAL_DEVIATION] << "\n";
+	}
+
 
 	return ss.str();
 }
