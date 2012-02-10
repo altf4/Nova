@@ -22,15 +22,9 @@
 #include <QChar>
 #include <QtGui>
 #include <QPoint>
-#include <errno.h>
-#include <fstream>
-#include <sstream>
 #include <QString>
-#include <string.h>
-#include <sys/un.h>
 #include <Suspect.h>
 #include <QMouseEvent>
-#include <arpa/inet.h>
 #include <QApplication>
 #include <sys/socket.h>
 #include <boost/foreach.hpp>
@@ -279,6 +273,7 @@ private Q_SLOTS:
 	void on_actionStopNova_triggered();
 	void on_actionConfigure_triggered();
 	void on_actionExit_triggered();
+
 	void on_actionSave_Suspects_triggered();
 	void on_actionHide_Old_Suspects_triggered();
 	void on_actionShow_All_Suspects_triggered();
@@ -286,6 +281,11 @@ private Q_SLOTS:
 	void on_actionClear_Suspect_triggered();
 	void on_actionHide_Suspect_triggered();
 	void on_actionHelp_2_triggered();
+
+	void on_actionSystemStatKill_triggered();
+	void on_actionSystemStatStop_triggered();
+	void on_actionSystemStatStart_triggered();
+	void on_actionSystemStatReload_triggered();
 
 	void on_actionTrainingData_triggered();
 	void on_actionMakeDataFile_triggered();
@@ -348,6 +348,8 @@ void stopNova();
 
 //Starts the Nova processes
 void startNova();
+
+void reloadConfiguration();
 
 // Start one component of Nova
 void startComponent(novaComponent *component);

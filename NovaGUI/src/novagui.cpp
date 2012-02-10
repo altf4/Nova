@@ -60,6 +60,7 @@ bool featureEnabled[DIM];
 bool editingSuspectList = false;
 bool isHelpUp = false;
 QMenu * suspectMenu;
+QMenu * systemStatMenu;
 
 // Defines the order of components in the process list and novaComponents array
 #define COMPONENT_CE 0
@@ -106,9 +107,9 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	//Pre-forms the suspect menu
 	suspectMenu = new QMenu(this);
+	systemStatMenu = new QMenu(this);
 
 	runAsWindowUp = false;
-	editingPreferences = false;
 	isHelpUp = false;
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
@@ -120,8 +121,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	getInfo();
 	initiateSystemStatus();
-
-	string novaConfig = "Config/NOVAConfig.txt";
 
 	// Create the dialog generator
 	prompter= new DialogPrompter();
@@ -223,13 +222,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 
 	configurationFile = homePath + configurationFile;
-	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
 
-	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
-	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
-	trainingDataPath = configuration.options["DATAFILE"].data;
-	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
-	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
+	reloadConfiguration();
 
 
 
@@ -263,6 +257,17 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			suspectMenu->addAction(ui.actionClear_Suspect);
 			suspectMenu->addAction(ui.actionHide_Suspect);
 		}
+
+		suspectMenu->addSeparator();
+		suspectMenu->addAction(ui.actionClear_All_Suspects);
+		suspectMenu->addAction(ui.actionSave_Suspects);
+		suspectMenu->addSeparator();
+
+		suspectMenu->addAction(ui.actionShow_All_Suspects);
+		suspectMenu->addAction(ui.actionHide_Old_Suspects);
+
+		QPoint globalPos = event->globalPos();
+		suspectMenu->popup(globalPos);
 	}
 	else if(ui.hostileList->hasFocus() || ui.hostileList->underMouse())
 	{
@@ -272,21 +277,48 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			suspectMenu->addAction(ui.actionClear_Suspect);
 			suspectMenu->addAction(ui.actionHide_Suspect);
 		}
+
+		suspectMenu->addSeparator();
+		suspectMenu->addAction(ui.actionClear_All_Suspects);
+		suspectMenu->addAction(ui.actionSave_Suspects);
+		suspectMenu->addSeparator();
+
+		suspectMenu->addAction(ui.actionShow_All_Suspects);
+		suspectMenu->addAction(ui.actionHide_Old_Suspects);
+
+		QPoint globalPos = event->globalPos();
+		suspectMenu->popup(globalPos);
+	}
+	else if(ui.systemStatusTable->hasFocus() || ui.systemStatusTable->underMouse())
+	{
+		systemStatMenu->clear();
+
+		int row = ui.systemStatusTable->currentRow();
+		if (row < 0 || row >= ui.systemStatusTable->rowCount())
+			return;
+
+		if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
+		{
+			systemStatMenu->addAction(ui.actionSystemStatKill);
+
+			if (row != COMPONENT_DMH && row != COMPONENT_HSH)
+				systemStatMenu->addAction(ui.actionSystemStatStop);
+
+			if (row == COMPONENT_CE)
+				systemStatMenu->addAction(ui.actionSystemStatReload);
+		}
+		else
+		{
+			systemStatMenu->addAction(ui.actionSystemStatStart);
+		}
+
+		QPoint globalPos = event->globalPos();
+		systemStatMenu->popup(globalPos);
 	}
 	else
 	{
 		return;
 	}
-	suspectMenu->addSeparator();
-	suspectMenu->addAction(ui.actionClear_All_Suspects);
-	suspectMenu->addAction(ui.actionSave_Suspects);
-	suspectMenu->addSeparator();
-
-	suspectMenu->addAction(ui.actionShow_All_Suspects);
-	suspectMenu->addAction(ui.actionHide_Old_Suspects);
-
-	QPoint globalPos = event->globalPos();
-	suspectMenu->popup(globalPos);
 }
 
 void NovaGUI::closeEvent(QCloseEvent * e)
@@ -1905,12 +1937,11 @@ void NovaGUI::on_actionStopNova_triggered()
 
 void NovaGUI::on_actionConfigure_triggered()
 {
-	if(!editingPreferences)
-	{
-		NovaConfig *w = new NovaConfig(this, homePath);
-		w->show();
-		editingPreferences = true;
-	}
+	NovaConfig *w = new NovaConfig(this, homePath);
+	w->exec();
+
+	// Reload the configuration in case the user changed stuff
+	reloadConfiguration();
 }
 
 void  NovaGUI::on_actionExit_triggered()
@@ -2140,35 +2171,7 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 	}
 }
 
-void NovaGUI::on_systemStatStartButton_clicked()
-{
-	int row = ui.systemStatusTable->currentRow();
-
-	switch (row) {
-	case COMPONENT_CE:
-		startComponent(&novaComponents[COMPONENT_CE]);
-		break;
-	case COMPONENT_DM:
-		startComponent(&novaComponents[COMPONENT_DM]);
-		break;
-	case COMPONENT_HS:
-		startComponent(&novaComponents[COMPONENT_HS]);
-		break;
-	case COMPONENT_LM:
-		startComponent(&novaComponents[COMPONENT_LM]);
-		break;
-	case COMPONENT_HSH:
-		startComponent(&novaComponents[COMPONENT_HSH]);
-		break;
-	case COMPONENT_DMH:
-		startComponent(&novaComponents[COMPONENT_DMH]);
-		break;
-	}
-
-	updateSystemStatus();
-}
-
-void NovaGUI::on_systemStatKillButton_clicked()
+void NovaGUI::on_actionSystemStatKill_triggered()
 {
 	QProcess *process = novaComponents[ui.systemStatusTable->currentRow()].process;
 
@@ -2199,7 +2202,8 @@ void NovaGUI::on_systemStatKillButton_clicked()
 	}
 }
 
-void NovaGUI::on_systemStatStopButton_clicked()
+
+void NovaGUI::on_actionSystemStatStop_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
 
@@ -2241,6 +2245,59 @@ void NovaGUI::on_systemStatStopButton_clicked()
 		}
 		break;
 	}
+}
+
+
+void NovaGUI::on_actionSystemStatStart_triggered()
+{
+	int row = ui.systemStatusTable->currentRow();
+
+	switch (row) {
+	case COMPONENT_CE:
+		startComponent(&novaComponents[COMPONENT_CE]);
+		break;
+	case COMPONENT_DM:
+		startComponent(&novaComponents[COMPONENT_DM]);
+		break;
+	case COMPONENT_HS:
+		startComponent(&novaComponents[COMPONENT_HS]);
+		break;
+	case COMPONENT_LM:
+		startComponent(&novaComponents[COMPONENT_LM]);
+		break;
+	case COMPONENT_HSH:
+		startComponent(&novaComponents[COMPONENT_HSH]);
+		break;
+	case COMPONENT_DMH:
+		startComponent(&novaComponents[COMPONENT_DMH]);
+		break;
+	}
+
+	updateSystemStatus();
+}
+
+
+void NovaGUI::on_actionSystemStatReload_triggered()
+{
+	//Sets the message
+	message.SetMessage(RELOAD);
+	msgLen = message.SerialzeMessage(msgBuffer);
+	sendToCE();
+}
+
+void NovaGUI::on_systemStatStartButton_clicked()
+{
+	on_actionSystemStatStart_triggered();
+}
+
+void NovaGUI::on_systemStatKillButton_clicked()
+{
+	on_actionSystemStatKill_triggered();
+}
+
+void NovaGUI::on_systemStatStopButton_clicked()
+{
+	on_actionSystemStatStop_triggered();
 }
 
 void NovaGUI::on_clearSuspectsButton_clicked()
@@ -2375,20 +2432,20 @@ void stopNova()
 	pclose(out);
 }
 
-
-void startNova()
+// Reload the configuration file
+void reloadConfiguration()
 {
-
-	string homePath = GetHomePath();
-	string input = homePath + "/Config/NOVAConfig.txt";
-
 	// Reload the configuration file
 	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
 
 	useTerminals = atoi(configuration.options["USE_TERMINALS"].data.c_str());
 	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
-
 	string enabledFeatureMask = configuration.options["ENABLED_FEATURES"].data;
+
+	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
+	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
+	trainingDataPath = configuration.options["DATAFILE"].data;
+	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
 
 
 	for (uint i = 0; i < DIM; i++)
@@ -2402,6 +2459,13 @@ void startNova()
 			featureEnabled[i] = false;
 		}
 	}
+}
+
+
+void startNova()
+{
+	// Reload the configuration file
+	reloadConfiguration();
 
 	// Start and processes that aren't running already
 	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)

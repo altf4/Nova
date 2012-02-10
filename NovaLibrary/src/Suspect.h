@@ -41,6 +41,7 @@ public:
 	//		0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
 	//		-1 indicates no classification or error.
 	double classification;
+	int hostileNeighbors;
 
 	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
 	bool isHostile;
@@ -61,6 +62,7 @@ public:
 
 	// The Feature Set for this Suspect
 	FeatureSet features;
+	double featureAccuracy[DIM];
 
 	// The feature set in the format that ANN requires.
 	ANNpoint annPoint;
