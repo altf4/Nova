@@ -43,5 +43,4 @@ UI_DIR = UI_headers/
 QMAKE_CLEAN += $(TARGET)
 CONFIG += no_keywords
 CONFIG += link_pkgconfig
-PKGCONFIG += glib-2.0
-PKGCONFIG += gtk+-3.0
+PKGCONFIG += libnotify

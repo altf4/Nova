@@ -32,7 +32,7 @@
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.1320848233" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1529965696" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths"/>
 								<option id="gnu.cpp.compiler.option.debugging.gprof.702435721" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.other.other.1749033413" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  `pkg-config --libs --cflags glib-2.0 gtk+-3.0`" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1749033413" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  `pkg-config --libs --cflags libnotify`" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1044163870" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool command="gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.2130132660" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">
@@ -749,9 +749,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.1106971881" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug">
 								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.734207501" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.1210132881" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.include.paths.1118998666" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath"/>
+								<option id="gnu.cpp.compiler.option.include.paths.1118998666" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths"/>
 								<option id="gnu.cpp.compiler.option.debugging.gprof.1523360537" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.other.other.1027196994" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  `pkg-config --libs --cflags glib-2.0 gtk+-3.0`" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1027196994" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  `pkg-config --libs --cflags libnotify`" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1335375739" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.235434169" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">

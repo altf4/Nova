@@ -30,7 +30,7 @@
 									<listOptionValue builtIn="false" value="../../NovaLibrary/src"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.debugging.gprof.1111410878" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.other.other.1471913290" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 `pkg-config --libs --cflags glib-2.0 gtk+-3.0`" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1471913290" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 `pkg-config --libs --cflags libnotify`" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1840377110" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.770340639" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -679,7 +679,7 @@
 									<listOptionValue builtIn="false" value="../../NovaLibrary/src"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.debugging.gprof.493908498" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.other.other.31378909" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 `pkg-config --libs --cflags glib-2.0 gtk+-3.0`" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.31378909" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 `pkg-config --libs --cflags libnotify`" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1756442159" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1459364659" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">

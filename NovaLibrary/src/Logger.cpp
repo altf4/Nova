@@ -224,7 +224,7 @@ namespace Nova
 	{
 		NotifyNotification *note;
 		notify_init("Logger");
-		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg");
+		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg", NULL);
 		notify_notification_set_timeout(note, 3000);
 		notify_notification_show(note, NULL);
 		g_object_unref(G_OBJECT(note));
