@@ -36,7 +36,8 @@ enum GUIMsgType
 	CLEAR_ALL = 'c',
 	CLEAR_SUSPECT = 's',
 	INVALID = '0',
-	WRITE_SUSPECTS = 'w'
+	WRITE_SUSPECTS = 'w',
+	RELOAD = 'r'
 };
 
 using namespace std;

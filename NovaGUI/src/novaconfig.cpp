@@ -43,11 +43,11 @@ bool loadingDefaultActions = false;
  ************************************************/
 
 NovaConfig::NovaConfig(QWidget *parent, string home)
-    : QMainWindow(parent)
+    : QDialog(parent)
 {
-	portMenu = new QMenu();
-	profileTreeMenu = new QMenu();
-	nodeTreeMenu = new QMenu();
+	portMenu = new QMenu(this);
+	profileTreeMenu = new QMenu(this);
+	nodeTreeMenu = new QMenu(this);
 
 	//store current directory / base path for Nova
 	homePath = home;
@@ -835,7 +835,7 @@ void NovaConfig::onFeatureClick(const QPoint & pos)
 	}
 
 	// Make the menu
-    QMenu myMenu;
+    QMenu myMenu(this);
     myMenu.addAction(new QAction("Enable", this));
     myMenu.addAction(new QAction("Disable", this));
 

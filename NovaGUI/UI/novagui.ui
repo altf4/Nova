@@ -781,6 +781,38 @@ Module</string>
     <string>&amp;Customize Training Data</string>
    </property>
   </action>
+  <action name="actionSystemStatKill">
+   <property name="text">
+    <string>Kill Component</string>
+   </property>
+   <property name="toolTip">
+    <string>systemStatKill</string>
+   </property>
+  </action>
+  <action name="actionSystemStatStop">
+   <property name="text">
+    <string>Stop Component</string>
+   </property>
+   <property name="toolTip">
+    <string>systemStatStop</string>
+   </property>
+  </action>
+  <action name="actionSystemStatStart">
+   <property name="text">
+    <string>Start Component</string>
+   </property>
+   <property name="toolTip">
+    <string>systemStatStart</string>
+   </property>
+  </action>
+  <action name="actionSystemStatReload">
+   <property name="text">
+    <string>Send Reload Command</string>
+   </property>
+   <property name="toolTip">
+    <string>systemStatReload</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

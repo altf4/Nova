@@ -88,7 +88,7 @@ bool updateKDTree = false;
 // Used for disabling features
 bool featureEnabled[DIM];
 uint32_t featureMask;
-int enabledFeatures = 0;
+int enabledFeatures;
 
 // Misc
 int len;
@@ -133,16 +133,11 @@ int main(int argc,char *argv[])
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
 
-	string novaConfig;
-	string line, prefix; //used for input checking
-
 	//Get locations of nova files
 	homePath = GetHomePath();
-	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	chdir(homePath.c_str());
 
-	//Runs the configuration loader
-	LoadConfig((char*)novaConfig.c_str());
+	Reload();
 
 	if(!useTerminals)
 	{
@@ -154,8 +149,6 @@ int main(int argc,char *argv[])
 		openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
-	dataFile = homePath + "/" +dataFile;
-	outFile = dataFile.c_str();
 
 	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
 	//Are we Training or Classifying?
@@ -175,8 +168,6 @@ int main(int argc,char *argv[])
 	}
 	else
 	{
-		LoadDataPointsFromFile(dataFile);
-
 		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
 		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
 	}
@@ -231,6 +222,42 @@ int main(int argc,char *argv[])
 	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
 	close(IPCsock);
 	return 1;
+}
+
+void Nova::ClassificationEngine::Reload()
+{
+	// Aquire a lock to stop the other threads from classifying till we're done
+	pthread_rwlock_wrlock(&lock);
+
+	// Clear the enabledFeatures count
+	enabledFeatures = 0;
+
+	// Clear max values
+	for (int i = 0; i < DIM; i++)
+		maxFeatureValues[i] = 0;
+
+	dataPtsWithClass.clear();
+
+	// Reload the configuration file
+	string novaConfig = homePath + "/Config/NOVAConfig.txt";
+	LoadConfig((char*)novaConfig.c_str());
+
+	// Did our data file move?
+	dataFile = homePath + "/" +dataFile;
+	outFile = dataFile.c_str();
+
+	// Reload the data file
+	if (dataPts != NULL)
+		annDeallocPts(dataPts);
+	if (normalizedDataPts != NULL)
+		annDeallocPts(normalizedDataPts);
+	LoadDataPointsFromFile(dataFile);
+
+	// Set everyone to be reclassified
+	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+		it->second->needs_classification_update = true;
+
+	pthread_rwlock_unlock(&lock);
 }
 
 //Infinite loop that recieves messages from the GUI
@@ -558,6 +585,8 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	for (int i = 0; i < DIM; i++)
 		suspect->featureAccuracy[i] = 0;
 
+	suspect->hostileNeighbors = 0;
+
 	//Determine classification according to weight by distance
 	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
 	//	This will make the classification range from 0 to 1
@@ -584,6 +613,7 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 			if(dataPtsWithClass[nnIdx[i]]->classification == 1)
 			{
 				classifyCount += (sqrtDIM - dists[i]);
+				suspect->hostileNeighbors++;
 			}
 			//If benign
 			else if(dataPtsWithClass[nnIdx[i]]->classification == 0)
@@ -611,6 +641,12 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	pthread_rwlock_wrlock(&lock);
 
 	suspect->classification = .5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM ));
+
+	// Fix for rounding errors caused by double's not being precise enough if DIM is something like 2
+	if (suspect->classification < 0)
+		suspect->classification = 0;
+	else if (suspect->classification > 1)
+		suspect->classification = 1;
 
 	if( suspect->classification > classificationThreshold)
 	{
@@ -673,7 +709,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 					if(maxFeatureValues[ai] != 0)
 						it->second->annPoint[ai] = (double)(it->second->features.features[i] / maxFeatureValues[ai]);
 					else
-						syslog(SYSL_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (i + 1));
+						syslog(SYSL_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (ai + 1));
 					ai++;
 				}
 
@@ -736,6 +772,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	myfile.open(inFilePath.data(), ifstream::in);
 	dataPts = annAllocPts(maxPts, enabledFeatures); // allocate data points
 	normalizedDataPts = annAllocPts(maxPts, enabledFeatures);
+
 
 	if (myfile.is_open())
 	{
@@ -843,7 +880,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			}
 			else
 			{
-				syslog(SYSL_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (i + 1));
+				syslog(SYSL_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (j + 1));
 				break;
 			}
 		}
@@ -1133,6 +1170,9 @@ void ClassificationEngine::ReceiveGUICommand()
 			break;
 		case WRITE_SUSPECTS:
 			SaveSuspectsToFile(msg.GetValue());
+			break;
+		case RELOAD:
+			Reload();
 			break;
 		default:
 			break;

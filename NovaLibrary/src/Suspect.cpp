@@ -27,6 +27,7 @@ namespace Nova{
 Suspect::Suspect()
 {
 	IP_address.s_addr = 0;
+	hostileNeighbors = 0;
 	classification = -1;
 	needs_classification_update = true;
 	needs_feature_update = true;
@@ -54,6 +55,7 @@ Suspect::~Suspect()
 Suspect::Suspect(Packet packet)
 {
 	IP_address = packet.ip_hdr.ip_src;
+	hostileNeighbors = 0;
 	classification = -1;
 	isHostile = false;
 	needs_classification_update = true;
@@ -72,7 +74,6 @@ Suspect::Suspect(Packet packet)
 string Suspect::ToString(bool featureEnabled[])
 {
 	stringstream ss;
-	ss << "whyyy?" << endl;
 	if(&IP_address != NULL)
 	{
 		ss << "Suspect: "<< inet_ntoa(IP_address) << "\n\n";
@@ -86,55 +87,55 @@ string Suspect::ToString(bool featureEnabled[])
 	if (featureEnabled[DISTINCT_IPS])
 	{
 		ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[DISTINCT_IPS] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[DISTINCT_IPS] << "\n";
 	}
 
 	if (featureEnabled[IP_TRAFFIC_DISTRIBUTION])
 	{
 		ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[IP_TRAFFIC_DISTRIBUTION] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[IP_TRAFFIC_DISTRIBUTION] << "\n";
 	}
 
 	if (featureEnabled[DISTINCT_PORTS])
 	{
 		ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[DISTINCT_PORTS] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[DISTINCT_PORTS] << "\n";
 	}
 
 	if (featureEnabled[PORT_TRAFFIC_DISTRIBUTION])
 	{
 		ss << " Port Traffic Distribution: "  <<  features.features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[PORT_TRAFFIC_DISTRIBUTION] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PORT_TRAFFIC_DISTRIBUTION] << "\n";
 	}
 
 	if (featureEnabled[HAYSTACK_EVENT_FREQUENCY])
 	{
 		ss << " Haystack Events: " << features.features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[HAYSTACK_EVENT_FREQUENCY] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[HAYSTACK_EVENT_FREQUENCY] << "\n";
 	}
 
 	if (featureEnabled[PACKET_SIZE_MEAN])
 	{
 		ss << " Mean Packet Size: " << features.features[PACKET_SIZE_MEAN] << "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[PACKET_SIZE_MEAN] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_SIZE_MEAN] << "\n";
 	}
 
 	if (featureEnabled[PACKET_SIZE_DEVIATION])
 	{
 		ss << " Packet Size Variance: " << features.features[PACKET_SIZE_DEVIATION] << "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[PACKET_SIZE_DEVIATION] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_SIZE_DEVIATION] << "\n";
 	}
 
 	if (featureEnabled[PACKET_INTERVAL_MEAN])
 	{
 		ss << " Mean Packet Interval: " << features.features[PACKET_INTERVAL_MEAN] << "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[PACKET_INTERVAL_MEAN] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_INTERVAL_MEAN] << "\n";
 	}
 
 	if (featureEnabled[PACKET_INTERVAL_DEVIATION])
 	{
 		ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
-		ss << "  Average Distance to Neighbors: " << featureAccuracy[PACKET_INTERVAL_DEVIATION] << "\n\n";
+		ss << "    " << hostileNeighbors << " hostile neighbors and average distance of " << featureAccuracy[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
 
 	ss << " Suspect is ";
@@ -179,6 +180,8 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	offset+= sizeof flaggedByAlarm;
 	memcpy(buf+offset, &isLive, sizeof isLive);
 	offset+= sizeof isLive;
+	memcpy(buf+offset, &hostileNeighbors, sizeof hostileNeighbors);
+	offset+= sizeof hostileNeighbors;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
@@ -214,6 +217,8 @@ uint32_t Suspect::DeserializeSuspect(u_char * buf)
 	offset+= sizeof flaggedByAlarm;
 	memcpy(&isLive, buf+offset, sizeof isLive);
 	offset+= sizeof isLive;
+	memcpy(&hostileNeighbors, buf+offset, sizeof hostileNeighbors);
+	offset+= sizeof hostileNeighbors;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
@@ -249,6 +254,8 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	offset+= sizeof flaggedByAlarm;
 	memcpy(&isLive, buf+offset, sizeof isLive);
 	offset+= sizeof isLive;
+	memcpy(&hostileNeighbors, buf+offset, sizeof hostileNeighbors);
+	offset+= sizeof hostileNeighbors;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
