@@ -262,6 +262,8 @@ public:
     void writeHoneyd();
     string profileToString(profile* p);
 
+    void setFeatureDistances(Suspect* suspect);
+
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
 

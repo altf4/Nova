@@ -57,6 +57,7 @@ SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
 
 bool featureEnabled[DIM];
+int enabledFeatures;
 bool editingSuspectList = false;
 bool isHelpUp = false;
 QMenu * suspectMenu;
@@ -595,11 +596,8 @@ void NovaGUI::writeHoneyd()
 	}
 
 	ofstream outFile(haystackPath.data());
-	cout << "Saving to " << haystackPath.data() << endl;
 	outFile << out.str() << endl;
 	outFile.close();
-
-	//cout << out.str() << endl;
 
 	ofstream doppelOutFile(doppelgangerPath.data());
 	doppelOutFile << doppelOut.str() << endl;
@@ -2321,8 +2319,67 @@ void NovaGUI::on_suspectList_itemSelectionChanged()
 		{
 			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
 			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
+			setFeatureDistances(SuspectTable[addr].suspect);
 		}
 		pthread_rwlock_unlock(&lock);
+	}
+}
+
+void NovaGUI::setFeatureDistances(Suspect* suspect)
+{
+	int row = 0;
+	ui.suspectDistances->clear();
+	for (int i = 0; i < DIM; i++)
+	{
+		if (featureEnabled[i])
+		{
+			switch (i)
+			{
+			case IP_TRAFFIC_DISTRIBUTION:
+				ui.suspectDistances->insertItem(row, tr("IP Traffic Distribution Accuracy"));
+				break;
+			case PORT_TRAFFIC_DISTRIBUTION:
+				ui.suspectDistances->insertItem(row, tr("Port Traffic Distribution Accuracy"));
+				break;
+			case HAYSTACK_EVENT_FREQUENCY:
+				ui.suspectDistances->insertItem(row, tr("Haystack Event Frequency Accuracy"));
+				break;
+			case PACKET_SIZE_MEAN:
+				ui.suspectDistances->insertItem(row, tr("Packet Size Mean Accuracy"));
+				break;
+			case PACKET_SIZE_DEVIATION:
+				ui.suspectDistances->insertItem(row, tr("Packet Size Deviation Accuracy"));
+				break;
+			case DISTINCT_IPS:
+				ui.suspectDistances->insertItem(row, tr("IPs Contacted Accuracy"));
+				break;
+			case DISTINCT_PORTS:
+				ui.suspectDistances->insertItem(row, tr("Ports Contacted Accuracy"));
+				break;
+			case PACKET_INTERVAL_MEAN:
+				ui.suspectDistances->insertItem(row, tr("Packet Interval Mean Accuracy"));
+				break;
+			case PACKET_INTERVAL_DEVIATION:
+				ui.suspectDistances->insertItem(row, tr("Packet Interval Deviation Accuracy"));
+				break;
+			}
+
+			row++;
+			QProgressBar* bar = new QProgressBar();
+			bar->setMinimum(0);
+			bar->setMaximum(100);
+			bar->setTextVisible(true);
+			bar->setValue((int)((1 - suspect->featureAccuracy[i]/(double)sqrt(enabledFeatures))*100));
+			bar->setStyleSheet(
+				"QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
+				QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5, stop: 0 yellow, stop: 1 green);}");
+
+			QListWidgetItem* item = new QListWidgetItem();
+			ui.suspectDistances->insertItem(row, item);
+			ui.suspectDistances->setItemWidget(item, bar);
+
+			row++;
+		}
 	}
 }
 
@@ -2448,11 +2505,13 @@ void reloadConfiguration()
 	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
 
 
+	enabledFeatures = 0;
 	for (uint i = 0; i < DIM; i++)
 	{
 		if ('1' == enabledFeatureMask.at(i))
 		{
 			featureEnabled[i] = true;
+			enabledFeatures++;
 		}
 		else
 		{

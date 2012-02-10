@@ -102,7 +102,7 @@ Module</string>
       </item>
      </layout>
     </item>
-    <item row="0" column="1" rowspan="2">
+    <item row="0" column="2" rowspan="2">
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -117,7 +117,7 @@ Module</string>
        <enum>QFrame::NoFrame</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <property name="sizePolicy">
@@ -533,17 +533,7 @@ Module</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="suspectFeaturesLabel">
-          <property name="text">
-           <string>Suspect Features</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0" rowspan="7">
+        <item row="1" column="0" rowspan="12">
          <widget class="QListWidget" name="suspectList">
           <property name="contextMenuPolicy">
            <enum>Qt::NoContextMenu</enum>
@@ -556,60 +546,27 @@ Module</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
+        <item row="0" column="2">
+         <widget class="QLabel" name="suspectFeaturesLabel">
+          <property name="text">
+           <string>Suspect Features</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2" rowspan="6">
          <widget class="QTextEdit" name="suspectFeaturesEdit"/>
         </item>
-        <item row="2" column="1">
-         <widget class="QLabel" name="hostileSuspectClassificationLabel">
+        <item row="14" column="0">
+         <widget class="QPushButton" name="clearSuspectsButton">
           <property name="text">
-           <string>Hostile Classification Accuracy</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           <string>Clear Suspects</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
-         <widget class="QProgressBar" name="hostileSuspectClassificationBar">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="value">
-           <number>100</number>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1">
-         <widget class="QLabel" name="benignSuspectClassificationLabel">
-          <property name="text">
-           <string>Benign Classification Accuracy</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="1">
-         <widget class="QProgressBar" name="benignSuspectClassificationBar">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="value">
-           <number>100</number>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="1">
-         <widget class="QLabel" name="overallSuspectClassificationLabel">
-          <property name="text">
-           <string>Overall Classification Accuracy</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="7" column="1">
+        <item row="12" column="2">
          <widget class="QProgressBar" name="overallSuspectClassificationBar">
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -619,10 +576,56 @@ Module</string>
           </property>
          </widget>
         </item>
-        <item row="8" column="2">
-         <widget class="QPushButton" name="clearSuspectsButton">
+        <item row="1" column="1" rowspan="12">
+         <widget class="QListWidget" name="suspectDistances"/>
+        </item>
+        <item row="11" column="2">
+         <widget class="QLabel" name="overallSuspectClassificationLabel">
           <property name="text">
-           <string>Clear Suspects</string>
+           <string>Overall Classification Accuracy</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="2">
+         <widget class="QProgressBar" name="benignSuspectClassificationBar">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="value">
+           <number>100</number>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="2">
+         <widget class="QLabel" name="benignSuspectClassificationLabel">
+          <property name="text">
+           <string>Benign Classification Accuracy</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="2">
+         <widget class="QProgressBar" name="hostileSuspectClassificationBar">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="value">
+           <number>100</number>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="2">
+         <widget class="QLabel" name="hostileSuspectClassificationLabel">
+          <property name="text">
+           <string>Hostile Classification Accuracy</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
