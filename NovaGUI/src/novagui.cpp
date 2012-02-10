@@ -2333,36 +2333,43 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 	{
 		if (featureEnabled[i])
 		{
+			QString featureLabel;
+
 			switch (i)
 			{
 			case IP_TRAFFIC_DISTRIBUTION:
-				ui.suspectDistances->insertItem(row, tr("IP Traffic Distribution Accuracy"));
+				featureLabel = tr("IP Traffic Distribution");
 				break;
 			case PORT_TRAFFIC_DISTRIBUTION:
-				ui.suspectDistances->insertItem(row, tr("Port Traffic Distribution Accuracy"));
+				featureLabel = tr("Port Traffic Distribution");
 				break;
 			case HAYSTACK_EVENT_FREQUENCY:
-				ui.suspectDistances->insertItem(row, tr("Haystack Event Frequency Accuracy"));
+				featureLabel = tr("Haystack Event Frequency");
 				break;
 			case PACKET_SIZE_MEAN:
-				ui.suspectDistances->insertItem(row, tr("Packet Size Mean Accuracy"));
+				featureLabel = tr("Packet Size Mean");
 				break;
 			case PACKET_SIZE_DEVIATION:
-				ui.suspectDistances->insertItem(row, tr("Packet Size Deviation Accuracy"));
+				featureLabel = tr("Packet Size Deviation");
 				break;
 			case DISTINCT_IPS:
-				ui.suspectDistances->insertItem(row, tr("IPs Contacted Accuracy"));
+				featureLabel = tr("IPs Contacted");
 				break;
 			case DISTINCT_PORTS:
-				ui.suspectDistances->insertItem(row, tr("Ports Contacted Accuracy"));
+				featureLabel = tr("Ports Contacted");
 				break;
 			case PACKET_INTERVAL_MEAN:
-				ui.suspectDistances->insertItem(row, tr("Packet Interval Mean Accuracy"));
+				featureLabel = tr("Packet Interval Mean");
 				break;
 			case PACKET_INTERVAL_DEVIATION:
-				ui.suspectDistances->insertItem(row, tr("Packet Interval Deviation Accuracy"));
+				featureLabel = tr("Packet Interval Deviation");
 				break;
 			}
+
+			ui.suspectDistances->insertItem(row, featureLabel + tr(" Accuracy"));
+			QString formatString = "%p% | ";
+			formatString.append(featureLabel);
+			formatString.append(": ");
 
 			row++;
 			QProgressBar* bar = new QProgressBar();
@@ -2373,6 +2380,9 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 			bar->setStyleSheet(
 				"QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
 				QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5, stop: 0 yellow, stop: 1 green);}");
+
+			formatString.append(QString::number(suspect->features.features[i]));
+			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();
 			ui.suspectDistances->insertItem(row, item);
