@@ -44,6 +44,8 @@ char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 string configurationFile = "/Config/NOVAConfig.txt";
 NOVAConfiguration configuration;
+bool goToLive = true;
+bool readFromPcap = false;
 
 // Paths extracted from the config file
 string doppelgangerPath;
@@ -354,26 +356,32 @@ void NovaGUI::getPaths()
 	novaComponents[COMPONENT_CE].name = "Classification Engine";
 	novaComponents[COMPONENT_CE].terminalCommand = "gnome-terminal --disable-factory -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine";
 	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine";
+	novaComponents[COMPONENT_CE].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_LM].name ="Local Traffic Monitor";
 	novaComponents[COMPONENT_LM].terminalCommand ="gnome-terminal --disable-factory -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor";
 	novaComponents[COMPONENT_LM].noTerminalCommand ="nohup LocalTrafficMonitor";
+	novaComponents[COMPONENT_LM].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DM].name ="Doppelganger Module";
 	novaComponents[COMPONENT_DM].terminalCommand ="gnome-terminal --disable-factory -t \"DoppelgangerModule\" --geometry \"+500+600\" -x DoppelgangerModule";
 	novaComponents[COMPONENT_DM].noTerminalCommand ="nohup DoppelgangerModule";
+	novaComponents[COMPONENT_DM].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
 	novaComponents[COMPONENT_DMH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
+	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HS].name ="Haystack Module";
 	novaComponents[COMPONENT_HS].terminalCommand ="gnome-terminal --disable-factory -t \"Haystack\" --geometry \"+1000+600\" -x Haystack",
 	novaComponents[COMPONENT_HS].noTerminalCommand ="nohup Haystack > /dev/null";
+	novaComponents[COMPONENT_HS].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
 	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
 	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
+	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
 
 void NovaGUI::getSettings()
@@ -754,12 +762,37 @@ void NovaGUI::updateSystemStatus()
 
 		if (novaComponents[i].process == NULL || !novaComponents[i].process->pid())
 		{
-			item->setIcon(*redIcon);
 			pidItem->setText("");
+
+			// Restart processes that died for some reason
+			if (novaComponents[i].shouldBeRunning)
+			{
+				// Don't restart LocalTrafficMonitor or Haystack if we're reading from pcap file
+				if (!goToLive && readFromPcap && (i == COMPONENT_LM || i == COMPONENT_HS))
+				{
+					item->setIcon(*redIcon);
+				}
+				else
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d GUI has detected a dead process %s. Restarting it.", __FILE__, __LINE__, novaComponents[i].name.c_str());
+					item->setIcon(*yellowIcon);
+					startComponent(&novaComponents[i]);
+				}
+			}
+			else
+			{
+				item->setIcon(*redIcon);
+			}
+
 		}
 		else
 		{
-			item->setIcon(*greenIcon);
+			// The process is running, but it shouldn't be. Make it yellow
+			if (novaComponents[i].shouldBeRunning)
+				item->setIcon(*greenIcon);
+			else
+				item->setIcon(*yellowIcon);
+
 			pidItem->setText(QString::number(novaComponents[i].process->pid()));
 		}
 	}
@@ -2171,7 +2204,10 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 
 void NovaGUI::on_actionSystemStatKill_triggered()
 {
-	QProcess *process = novaComponents[ui.systemStatusTable->currentRow()].process;
+	int row = ui.systemStatusTable->currentRow();
+
+	QProcess *process = novaComponents[row].process;
+	novaComponents[row].shouldBeRunning = false;
 
 	// Fix for honeyd not closing with gnome-terminal + sudo
 	if (useTerminals && process != NULL && process->pid() &&
@@ -2204,6 +2240,7 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 void NovaGUI::on_actionSystemStatStop_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
+	novaComponents[row].shouldBeRunning = false;
 
 	//Sets the message
 	message.SetMessage(EXIT);
@@ -2269,6 +2306,8 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 	case COMPONENT_DMH:
 		startComponent(&novaComponents[COMPONENT_DMH]);
 		break;
+	default:
+		return;
 	}
 
 	updateSystemStatus();
@@ -2475,6 +2514,10 @@ void clearSuspects()
 
 void stopNova()
 {
+	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
+	{
+		novaComponents[i].shouldBeRunning = false;
+	}
 	//Sets the message
 	message.SetMessage(EXIT);
 	msgLen = message.SerialzeMessage(msgBuffer);
@@ -2514,6 +2557,8 @@ void reloadConfiguration()
 	trainingDataPath = configuration.options["DATAFILE"].data;
 	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
 
+	goToLive = atoi(configuration.options["GO_TO_LIVE"].data.c_str());
+	readFromPcap = atoi(configuration.options["READ_PCAP"].data.c_str());
 
 	enabledFeatures = 0;
 	for (uint i = 0; i < DIM; i++)
@@ -2560,6 +2605,8 @@ void startComponent(novaComponent *component)
 		component->process->kill();
 		delete component->process;
 	}
+
+	component->shouldBeRunning = true;
 
 	component->process = new QProcess();
 	component->process->start(program);

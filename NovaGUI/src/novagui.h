@@ -160,6 +160,7 @@ struct novaComponent
 	string terminalCommand;
 	string noTerminalCommand;
 	QProcess *process;
+	bool shouldBeRunning;
 };
 
 typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
