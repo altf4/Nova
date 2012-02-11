@@ -53,6 +53,7 @@ string haystackPath;
 string trainingDataPath;
 double thinningDistance;
 bool isTraining = false;
+string dmAddr;
 
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
@@ -129,63 +130,63 @@ NovaGUI::NovaGUI(QWidget *parent)
 	prompter= new DialogPrompter();
 
 	// Register our desired error message types
-	messageType * t = new messageType();
-	t->action = CHOICE_SHOW;
+	messageType t;
+	t.action = CHOICE_SHOW;
 
 	// Error prompts
-	t->type = errorPrompt;
+	t.type = errorPrompt;
 
-	t->descriptionUID = "Failure reading config files";
-	CONFIG_READ_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure reading config files";
+	CONFIG_READ_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Failure writing config files";
-	CONFIG_WRITE_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure writing config files";
+	CONFIG_WRITE_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Failure reading honeyd files";
-	HONEYD_READ_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure reading honeyd files";
+	HONEYD_READ_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Failure loading honeyd config files";
-	HONEYD_LOAD_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure loading honeyd config files";
+	HONEYD_LOAD_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Unexpected file entries";
-	UNEXPECTED_ENTRY = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Unexpected file entries";
+	UNEXPECTED_ENTRY = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Honeyd subnets out of range";
-	HONEYD_INVALID_SUBNET = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Honeyd subnets out of range";
+	HONEYD_INVALID_SUBNET = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Cannot delete the selected port";
-	CANNOT_DELETE_PORT = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Cannot delete the selected port";
+	CANNOT_DELETE_PORT = prompter->RegisterDialog(t);
 
 
 	// Action required notification prompts
-	t->type = notifyActionPrompt;
+	t.type = notifyActionPrompt;
 
-	t->descriptionUID = "Request to merge CE capture into training Db";
-	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Request to merge CE capture into training Db";
+	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Cannot inherit the selected port";
-	CANNOT_INHERIT_PORT = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Cannot inherit the selected port";
+	CANNOT_INHERIT_PORT = prompter->RegisterDialog(t);
 
+	t.descriptionUID = "Cannot delete the selected item";
+	CANNOT_DELETE_ITEM = prompter->RegisterDialog(t);
 
 	// Preventable warnings
-	t->type = warningPreventablePrompt;
+	t.type = warningPreventablePrompt;
 
-	t->descriptionUID = "No Doppelganger could be found";
-	NO_DOPP = prompter->RegisterDialog(*t);
-
-	t->descriptionUID = "Multiple Doppelgangers detected";
-	DOPP_EXISTS = prompter->RegisterDialog(*t);
+	t.descriptionUID = "No Doppelganger could be found";
+	NO_DOPP = prompter->RegisterDialog(t);
 
 	// Misc other prompts
-	t->descriptionUID = "Problem inheriting port";
-	t->type = notifyPrompt;
-	NO_ANCESTORS = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Problem inheriting port";
+	t.type = notifyPrompt;
+	NO_ANCESTORS = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Loading a Haystack Node Failed";
-	t->type = warningPrompt;
-	NODE_LOAD_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Loading a Haystack Node Failed";
+	t.type = warningPrompt;
+	NODE_LOAD_FAIL = prompter->RegisterDialog(t);
 
-	delete t;
+	configurationFile = homePath + configurationFile;
+	reloadConfiguration();
 
 	loadAll();
 
@@ -222,13 +223,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 		sclose(CE_InSock);
 		exit(1);
 	}
-
-
-	configurationFile = homePath + configurationFile;
-
-	reloadConfiguration();
-
-
 
 	//Sets initial view
 	this->ui.stackedWidget->setCurrentIndex(0);
@@ -506,6 +500,7 @@ void NovaGUI::saveAll()
 		pt.put<std::string>("interface", it->second.interface);
 		pt.put<std::string>("IP", it->second.IP);
 		pt.put<bool>("enabled", it->second.enabled);
+		pt.put<std::string>("name", it->second.name);
 		if(it->second.MAC.size())
 			pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
@@ -585,8 +580,11 @@ void NovaGUI::writeHoneyd()
 		{
 			continue;
 		}
-
-		switch (profiles[it->second.pfile].type)
+		else if(it->second.name.compare("Doppelganger"))
+		{
+			doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
+		}
+		else switch (profiles[it->second.pfile].type)
 		{
 			case static_IP:
 				out << "bind " << it->second.IP << " " << it->second.pfile << endl;
@@ -596,9 +594,6 @@ void NovaGUI::writeHoneyd()
 				break;
 			case randomDHCP:
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
-				break;
-			case Doppelganger:
-				doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
 				break;
 		}
 	}
@@ -914,6 +909,7 @@ void NovaGUI::loadSubnets(ptree *ptr)
 			{
 				subnet sub;
 				sub.tree = v.second;
+				sub.isRealDevice = true;
 				//Extract the data
 				sub.name = v.second.get<std::string>("name");
 				sub.address = v.second.get<std::string>("IP");
@@ -935,12 +931,37 @@ void NovaGUI::loadSubnets(ptree *ptr)
 				sub.address = ss.str();
 
 				//Save subnet
-				subnets[sub.address] = sub;
+				subnets[sub.name] = sub;
 			}
 			//If virtual honeyd subnet
 			else if(!string(v.first.data()).compare("virtual"))
 			{
-				//TODO
+				//TODO Implement and test
+				/*subnet sub;
+				sub.tree = v.second;
+				sub.isRealDevice = false;
+				//Extract the data
+				sub.name = v.second.get<std::string>("name");
+				sub.address = v.second.get<std::string>("IP");
+				sub.mask = v.second.get<std::string>("mask");
+				sub.enabled = v.second.get<bool>("enabled");
+
+				//Gets the IP address in uint32 form
+				in_addr_t baseTemp = ntohl(inet_addr(sub.address.c_str()));
+
+				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
+				in_addr_t maskTemp = ntohl(inet_addr(sub.mask.c_str()));
+				sub.base = (baseTemp & maskTemp);
+				//Get the number of bits in the mask
+				sub.maskBits = GetMaskBits(maskTemp);
+				//Adding the binary inversion of the mask gets the highest usable IP
+				sub.max = sub.base + ~maskTemp;
+				stringstream ss;
+				ss << sub.address << "/" << sub.maskBits;
+				sub.address = ss.str();
+
+				//Save subnet
+				subnets[sub.name] = sub;*/
 			}
 			else
 			{
@@ -999,201 +1020,169 @@ void NovaGUI::loadNodes(ptree *ptr)
 					n.MAC = v.second.get<std::string>("MAC");
 				}
 				catch(...){}
+				if(!n.IP.compare(dmAddr))
+				{
+					n.name = "Doppelganger";
+					n.sub = n.interface;
+					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
+					//save the node in the table
+					nodes[n.name] = n;
 
-				switch(p.type)
+					//Put address of saved node in subnet's list of nodes.
+					subnets[nodes[n.name].sub].nodes.push_back(n.name);
+				}
+				else switch(p.type)
 				{
 
-				//***** STATIC IP ********//
-				case static_IP:
+					//***** STATIC IP ********//
+					case static_IP:
 
-					n.name = n.IP;
+						n.name = n.IP;
 
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					//intialize subnet to NULL and check for smallest bounding subnet
-					n.sub = "";
-					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
-					//Tracks the mask with smallest range by comparing num of bits used.
-
-					//Check each subnet
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						//If node falls outside a subnets range skip it
-						if((n.realIP < it->second.base) || (n.realIP > it->second.max))
-							continue;
-						//If this is the smallest range
-						if(it->second.maskBits > max)
+						if (!n.name.compare(""))
 						{
-							//If node isn't using host's address
-							if(it->second.address.compare(n.IP))
+							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+							prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+							continue;
+						}
+
+						//intialize subnet to NULL and check for smallest bounding subnet
+						n.sub = ""; //TODO virtual subnets will need to be handled when implemented
+						n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
+						//Tracks the mask with smallest range by comparing num of bits used.
+
+						//Check each subnet
+						for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+						{
+							//If node falls outside a subnets range skip it
+							if((n.realIP < it->second.base) || (n.realIP > it->second.max))
+								continue;
+							//If this is the smallest range
+							if(it->second.maskBits > max)
 							{
-								max = it->second.maskBits;
-								n.sub = it->second.address;
+								//If node isn't using host's address
+								if(it->second.address.compare(n.IP))
+								{
+									max = it->second.maskBits;
+									n.sub = it->second.name;
+								}
 							}
 						}
-					}
 
-					//Check that node has unique IP addr
-					for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-					{
-						if(n.realIP == it->second.realIP)
+						//Check that node has unique IP addr
+						for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 						{
-							unique = false;
+							if(n.realIP == it->second.realIP)
+							{
+								unique = false;
+							}
 						}
-					}
 
-					//If we have a subnet and node is unique
-					if((n.sub != "") && unique)
-					{
+						//If we have a subnet and node is unique
+						if((n.sub != "") && unique)
+						{
+							//save the node in the table
+							nodes[n.name] = n;
+
+							//Put address of saved node in subnet's list of nodes.
+							subnets[nodes[n.name].sub].nodes.push_back(n.name);
+						}
+						//If no subnet found, can't use node unless it's doppelganger.
+						else
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet "
+									"ranges", __FILE__, __LINE__, n.IP.c_str());
+							prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all "
+									"valid subnet ranges: " + n.name);
+						}
+						break;
+
+
+					//***** STATIC DHCP (static MAC) ********//
+					case staticDHCP:
+
+						//If no MAC is set, there's a problem
+						if(!n.MAC.size())
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s "
+									"does not have a MAC Address.",
+									__FILE__, __LINE__, string(n.pfile).c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled node using profile "
+									"" + n.pfile + " does not have a MAC Address.");
+							continue;
+						}
+
+						//Associated MAC is already in use, this is not allowed, throw out the node
+						if(nodes.find(n.MAC) != nodes.end())
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
+									"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, n.MAC +" is already in use.");
+							continue;
+						}
+						n.name = n.MAC;
+
+						if (!n.name.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+							prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+							continue;
+						}
+
+						n.sub = n.interface; //TODO virtual subnets will need to be handled when implemented
+						// If no valid subnet/interface found
+						if(!n.sub.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s "
+									"is unable to resolve it's interface.",__FILE__, __LINE__, n.MAC.c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+									+ n.MAC + " is unable to resolve it's interface.");
+							continue;
+						}
+
 						//save the node in the table
 						nodes[n.name] = n;
 
 						//Put address of saved node in subnet's list of nodes.
 						subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					}
-					//If no subnet found, can't use node unless it's doppelganger.
-					else
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet "
-								"ranges", __FILE__, __LINE__, n.IP.c_str());
-						prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all "
-								"valid subnet ranges: " + n.name);
-					}
-					break;
+						break;
 
+					//***** RANDOM DHCP (random MAC each time run) ********//
+					case randomDHCP:
 
-				//***** STATIC DHCP (static MAC) ********//
-				case staticDHCP:
+						n.name = n.pfile + " on " + n.interface;
 
-					//If no MAC is set, there's a problem
-					if(!n.MAC.size())
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s "
-								"does not have a MAC Address.",
-								__FILE__, __LINE__, string(n.pfile).c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled node using profile "
-								"" + n.pfile + " does not have a MAC Address.");
-						continue;
-					}
+						if (!n.name.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+							prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+							continue;
+						}
 
-					//Associated MAC is already in use, this is not allowed, throw out the node
-					if(nodes.find(n.MAC) != nodes.end())
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
-								"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, n.MAC +" is already in use.");
-						continue;
-					}
-					n.name = n.MAC;
+						//Finds a unique identifier
+						while((nodes.find(n.name) != nodes.end()) && (i < j))
+						{
+							i++;
+							ss.str("");
+							ss << n.pfile << " on " << n.interface << "-" << i;
+							n.name = ss.str();
+						}
+						n.sub = n.interface; //TODO virtual subnets will need to be handled when implemented
+						// If no valid subnet/interface found
+						if(!n.sub.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve "
+									"it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+									+ n.MAC + " is unable to resolve it's interface.");
+							continue;
+						}
+						//save the node in the table
+						nodes[n.name] = n;
 
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					n.sub = "";
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						if(!it->second.name.compare(n.interface))
-							n.sub = it->second.address;
-					}
-					// If no valid subnet/interface found
-					if(!n.sub.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s "
-								"is unable to resolve it's interface.",__FILE__, __LINE__, n.MAC.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
-								+ n.MAC + " is unable to resolve it's interface.");
-						continue;
-					}
-
-					//save the node in the table
-					nodes[n.name] = n;
-
-					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					break;
-
-				//***** RANDOM DHCP (random MAC each time run) ********//
-				case randomDHCP:
-
-					n.name = n.pfile + " on " + n.interface;
-
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					//Finds a unique identifier
-					while((nodes.find(n.name) != nodes.end()) && (i < j))
-					{
-						i++;
-						ss.str("");
-						ss << n.pfile << " on " << n.interface << "-" << i;
-						n.name = ss.str();
-					}
-					n.sub = "";
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						if(!it->second.name.compare(n.interface))
-							n.sub = it->second.address;
-					}
-					// If no valid subnet/interface found
-					if(!n.sub.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve "
-								"it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
-								+ n.MAC + " is unable to resolve it's interface.");
-						continue;
-					}
-					//save the node in the table
-					nodes[n.name] = n;
-
-					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					break;
-
-				//***** Doppelganger ********//
-				case Doppelganger:
-					n.name = "Doppelganger";
-
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					n.sub = "";
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						if(!it->second.name.compare(n.interface))
-							n.sub = it->second.address;
-					}
-					// If no valid subnet/interface found
-					if(!n.sub.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d The Doppelganger is unable to resolve the interface: %s", __FILE__, __LINE__, n.interface.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "The Doppelganger is unable to resolve "
-								"the interface: " + n.interface);
-						continue;
-					}
-					//save the node in the table
-					nodes[n.name] = n;
-
-					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					break;
+						//Put address of saved node in subnet's list of nodes.
+						subnets[nodes[n.name].sub].nodes.push_back(n.name);
+						break;
 				}
 			}
 			else
@@ -1969,7 +1958,8 @@ void NovaGUI::on_actionStopNova_triggered()
 void NovaGUI::on_actionConfigure_triggered()
 {
 	NovaConfig *w = new NovaConfig(this, homePath);
-	w->exec();
+	w->setWindowModality(Qt::WindowModal);
+	w->show();
 
 	// Reload the configuration in case the user changed stuff
 	reloadConfiguration();
@@ -2559,6 +2549,7 @@ void reloadConfiguration()
 
 	goToLive = atoi(configuration.options["GO_TO_LIVE"].data.c_str());
 	readFromPcap = atoi(configuration.options["READ_PCAP"].data.c_str());
+	dmAddr = configuration.options["DOPPELGANGER_IP"].data.c_str();
 
 	enabledFeatures = 0;
 	for (uint i = 0; i < DIM; i++)

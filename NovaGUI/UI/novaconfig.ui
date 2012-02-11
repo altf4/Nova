@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>NovaConfigClass</class>
- <widget class="QDialog" name="NovaConfigClass">
+ <widget class="QMainWindow" name="NovaConfigClass">
   <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
@@ -120,7 +120,7 @@
          <string/>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>7</number>
         </property>
         <widget class="QWidget" name="generalPage">
          <layout class="QVBoxLayout" name="genVertBox">
@@ -1724,11 +1724,6 @@ p, li { white-space: pre-wrap; }
                      <item>
                       <property name="text">
                        <string>DHCP - Random MAC</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Doppelganger</string>
                       </property>
                      </item>
                     </widget>

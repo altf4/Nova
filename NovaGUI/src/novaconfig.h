@@ -38,7 +38,7 @@ using namespace std;
 
 enum updateDir{ALL = 0, UP, DOWN};
 
-class NovaConfig : public QDialog
+class NovaConfig : public QMainWindow
 {
     Q_OBJECT
 
