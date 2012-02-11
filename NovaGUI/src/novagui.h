@@ -47,7 +47,7 @@ using boost::property_tree::ptree;
 **********************************************************************/
 #define INHERITED_MAX 8
 
-enum profileType { static_IP = 0, staticDHCP = 1, randomDHCP = 2, Doppelganger = 3};
+enum profileType { static_IP = 0, staticDHCP = 1, randomDHCP = 2};
 
 enum profileIndex { TYPE = 0, TCP_ACTION = 1, UDP_ACTION = 2, ICMP_ACTION = 3,
 	PERSONALITY = 4, ETHERNET = 5, UPTIME = 6, DROP_RATE = 7};
@@ -91,6 +91,7 @@ struct subnet
 	in_addr_t base;
 	in_addr_t max;
 	bool enabled;
+	bool isRealDevice;
 	vector<string> nodes;
 	ptree tree;
 };
@@ -194,8 +195,8 @@ public:
     DialogPrompter *prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
     messageHandle HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
-    messageHandle LAUNCH_TRAINING_MERGE, NODE_LOAD_FAIL, CANNOT_DELETE_PORT;
-    messageHandle NO_ANCESTORS, PROFILE_IN_USE, DOPP_EXISTS, NO_DOPP, CANNOT_INHERIT_PORT;
+    messageHandle LAUNCH_TRAINING_MERGE, NODE_LOAD_FAIL, CANNOT_DELETE_PORT, CANNOT_DELETE_ITEM;
+    messageHandle NO_ANCESTORS, PROFILE_IN_USE, NO_DOPP, CANNOT_INHERIT_PORT;
 
     NovaGUI(QWidget *parent = 0);
     ~NovaGUI();

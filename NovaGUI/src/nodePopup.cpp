@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Popup for creating and editing nodes
@@ -203,7 +203,7 @@ void nodePopup::loadNodeProfile()
 //reloads all information
 void nodePopup::loadAllNodes()
 {
-	load = true;
+	/*load = true;
 	QBrush whitebrush(QColor(255, 255, 255, 255));
 	QBrush greybrush(QColor(100, 100, 100, 255));
 	greybrush.setStyle(Qt::SolidPattern);
@@ -248,7 +248,7 @@ void nodePopup::loadAllNodes()
 	gnode = &nodes[address];
 	ui.nodeTreeWidget->expandAll();
 	ui.nodeTreeWidget->setCurrentItem(gnode->item);
-	load = false;
+	load = false;*/
 }
 
 //Loads all the profile information
