@@ -44,6 +44,8 @@ char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 string configurationFile = "/Config/NOVAConfig.txt";
 NOVAConfiguration configuration;
+bool goToLive = true;
+bool readFromPcap = false;
 
 // Paths extracted from the config file
 string doppelgangerPath;
@@ -51,15 +53,18 @@ string haystackPath;
 string trainingDataPath;
 double thinningDistance;
 bool isTraining = false;
+string dmAddr;
 
 //General variables like tables, flags, locks, etc.
 SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
 
 bool featureEnabled[DIM];
+int enabledFeatures;
 bool editingSuspectList = false;
 bool isHelpUp = false;
 QMenu * suspectMenu;
+QMenu * systemStatMenu;
 
 // Defines the order of components in the process list and novaComponents array
 #define COMPONENT_CE 0
@@ -106,9 +111,9 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	//Pre-forms the suspect menu
 	suspectMenu = new QMenu(this);
+	systemStatMenu = new QMenu(this);
 
 	runAsWindowUp = false;
-	editingPreferences = false;
 	isHelpUp = false;
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
@@ -121,69 +126,67 @@ NovaGUI::NovaGUI(QWidget *parent)
 	getInfo();
 	initiateSystemStatus();
 
-	string novaConfig = "Config/NOVAConfig.txt";
-
 	// Create the dialog generator
 	prompter= new DialogPrompter();
 
 	// Register our desired error message types
-	messageType * t = new messageType();
-	t->action = CHOICE_SHOW;
+	messageType t;
+	t.action = CHOICE_SHOW;
 
 	// Error prompts
-	t->type = errorPrompt;
+	t.type = errorPrompt;
 
-	t->descriptionUID = "Failure reading config files";
-	CONFIG_READ_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure reading config files";
+	CONFIG_READ_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Failure writing config files";
-	CONFIG_WRITE_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure writing config files";
+	CONFIG_WRITE_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Failure reading honeyd files";
-	HONEYD_READ_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure reading honeyd files";
+	HONEYD_READ_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Failure loading honeyd config files";
-	HONEYD_LOAD_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Failure loading honeyd config files";
+	HONEYD_LOAD_FAIL = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Unexpected file entries";
-	UNEXPECTED_ENTRY = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Unexpected file entries";
+	UNEXPECTED_ENTRY = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Honeyd subnets out of range";
-	HONEYD_INVALID_SUBNET = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Honeyd subnets out of range";
+	HONEYD_INVALID_SUBNET = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Cannot delete the selected port";
-	CANNOT_DELETE_PORT = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Cannot delete the selected port";
+	CANNOT_DELETE_PORT = prompter->RegisterDialog(t);
 
 
 	// Action required notification prompts
-	t->type = notifyActionPrompt;
+	t.type = notifyActionPrompt;
 
-	t->descriptionUID = "Request to merge CE capture into training Db";
-	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Request to merge CE capture into training Db";
+	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Cannot inherit the selected port";
-	CANNOT_INHERIT_PORT = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Cannot inherit the selected port";
+	CANNOT_INHERIT_PORT = prompter->RegisterDialog(t);
 
+	t.descriptionUID = "Cannot delete the selected item";
+	CANNOT_DELETE_ITEM = prompter->RegisterDialog(t);
 
 	// Preventable warnings
-	t->type = warningPreventablePrompt;
+	t.type = warningPreventablePrompt;
 
-	t->descriptionUID = "No Doppelganger could be found";
-	NO_DOPP = prompter->RegisterDialog(*t);
-
-	t->descriptionUID = "Multiple Doppelgangers detected";
-	DOPP_EXISTS = prompter->RegisterDialog(*t);
+	t.descriptionUID = "No Doppelganger could be found";
+	NO_DOPP = prompter->RegisterDialog(t);
 
 	// Misc other prompts
-	t->descriptionUID = "Problem inheriting port";
-	t->type = notifyPrompt;
-	NO_ANCESTORS = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Problem inheriting port";
+	t.type = notifyPrompt;
+	NO_ANCESTORS = prompter->RegisterDialog(t);
 
-	t->descriptionUID = "Loading a Haystack Node Failed";
-	t->type = warningPrompt;
-	NODE_LOAD_FAIL = prompter->RegisterDialog(*t);
+	t.descriptionUID = "Loading a Haystack Node Failed";
+	t.type = warningPrompt;
+	NODE_LOAD_FAIL = prompter->RegisterDialog(t);
 
-	delete t;
+	configurationFile = homePath + configurationFile;
+	reloadConfiguration();
 
 	loadAll();
 
@@ -221,18 +224,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 		exit(1);
 	}
 
-
-	configurationFile = homePath + configurationFile;
-	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
-
-	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
-	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
-	trainingDataPath = configuration.options["DATAFILE"].data;
-	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
-	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
-
-
-
 	//Sets initial view
 	this->ui.stackedWidget->setCurrentIndex(0);
 	this->ui.mainButton->setFlat(true);
@@ -263,6 +254,17 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			suspectMenu->addAction(ui.actionClear_Suspect);
 			suspectMenu->addAction(ui.actionHide_Suspect);
 		}
+
+		suspectMenu->addSeparator();
+		suspectMenu->addAction(ui.actionClear_All_Suspects);
+		suspectMenu->addAction(ui.actionSave_Suspects);
+		suspectMenu->addSeparator();
+
+		suspectMenu->addAction(ui.actionShow_All_Suspects);
+		suspectMenu->addAction(ui.actionHide_Old_Suspects);
+
+		QPoint globalPos = event->globalPos();
+		suspectMenu->popup(globalPos);
 	}
 	else if(ui.hostileList->hasFocus() || ui.hostileList->underMouse())
 	{
@@ -272,21 +274,48 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			suspectMenu->addAction(ui.actionClear_Suspect);
 			suspectMenu->addAction(ui.actionHide_Suspect);
 		}
+
+		suspectMenu->addSeparator();
+		suspectMenu->addAction(ui.actionClear_All_Suspects);
+		suspectMenu->addAction(ui.actionSave_Suspects);
+		suspectMenu->addSeparator();
+
+		suspectMenu->addAction(ui.actionShow_All_Suspects);
+		suspectMenu->addAction(ui.actionHide_Old_Suspects);
+
+		QPoint globalPos = event->globalPos();
+		suspectMenu->popup(globalPos);
+	}
+	else if(ui.systemStatusTable->hasFocus() || ui.systemStatusTable->underMouse())
+	{
+		systemStatMenu->clear();
+
+		int row = ui.systemStatusTable->currentRow();
+		if (row < 0 || row >= ui.systemStatusTable->rowCount())
+			return;
+
+		if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
+		{
+			systemStatMenu->addAction(ui.actionSystemStatKill);
+
+			if (row != COMPONENT_DMH && row != COMPONENT_HSH)
+				systemStatMenu->addAction(ui.actionSystemStatStop);
+
+			if (row == COMPONENT_CE)
+				systemStatMenu->addAction(ui.actionSystemStatReload);
+		}
+		else
+		{
+			systemStatMenu->addAction(ui.actionSystemStatStart);
+		}
+
+		QPoint globalPos = event->globalPos();
+		systemStatMenu->popup(globalPos);
 	}
 	else
 	{
 		return;
 	}
-	suspectMenu->addSeparator();
-	suspectMenu->addAction(ui.actionClear_All_Suspects);
-	suspectMenu->addAction(ui.actionSave_Suspects);
-	suspectMenu->addSeparator();
-
-	suspectMenu->addAction(ui.actionShow_All_Suspects);
-	suspectMenu->addAction(ui.actionHide_Old_Suspects);
-
-	QPoint globalPos = event->globalPos();
-	suspectMenu->popup(globalPos);
 }
 
 void NovaGUI::closeEvent(QCloseEvent * e)
@@ -321,26 +350,32 @@ void NovaGUI::getPaths()
 	novaComponents[COMPONENT_CE].name = "Classification Engine";
 	novaComponents[COMPONENT_CE].terminalCommand = "gnome-terminal --disable-factory -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine";
 	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine";
+	novaComponents[COMPONENT_CE].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_LM].name ="Local Traffic Monitor";
 	novaComponents[COMPONENT_LM].terminalCommand ="gnome-terminal --disable-factory -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor";
 	novaComponents[COMPONENT_LM].noTerminalCommand ="nohup LocalTrafficMonitor";
+	novaComponents[COMPONENT_LM].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DM].name ="Doppelganger Module";
 	novaComponents[COMPONENT_DM].terminalCommand ="gnome-terminal --disable-factory -t \"DoppelgangerModule\" --geometry \"+500+600\" -x DoppelgangerModule";
 	novaComponents[COMPONENT_DM].noTerminalCommand ="nohup DoppelgangerModule";
+	novaComponents[COMPONENT_DM].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
 	novaComponents[COMPONENT_DMH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
+	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HS].name ="Haystack Module";
 	novaComponents[COMPONENT_HS].terminalCommand ="gnome-terminal --disable-factory -t \"Haystack\" --geometry \"+1000+600\" -x Haystack",
 	novaComponents[COMPONENT_HS].noTerminalCommand ="nohup Haystack > /dev/null";
+	novaComponents[COMPONENT_HS].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
 	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
 	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
+	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
 
 void NovaGUI::getSettings()
@@ -465,6 +500,7 @@ void NovaGUI::saveAll()
 		pt.put<std::string>("interface", it->second.interface);
 		pt.put<std::string>("IP", it->second.IP);
 		pt.put<bool>("enabled", it->second.enabled);
+		pt.put<std::string>("name", it->second.name);
 		if(it->second.MAC.size())
 			pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
@@ -544,8 +580,11 @@ void NovaGUI::writeHoneyd()
 		{
 			continue;
 		}
-
-		switch (profiles[it->second.pfile].type)
+		else if(it->second.name.compare("Doppelganger"))
+		{
+			doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
+		}
+		else switch (profiles[it->second.pfile].type)
 		{
 			case static_IP:
 				out << "bind " << it->second.IP << " " << it->second.pfile << endl;
@@ -556,18 +595,12 @@ void NovaGUI::writeHoneyd()
 			case randomDHCP:
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
 				break;
-			case Doppelganger:
-				doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
-				break;
 		}
 	}
 
 	ofstream outFile(haystackPath.data());
-	cout << "Saving to " << haystackPath.data() << endl;
 	outFile << out.str() << endl;
 	outFile.close();
-
-	//cout << out.str() << endl;
 
 	ofstream doppelOutFile(doppelgangerPath.data());
 	doppelOutFile << doppelOut.str() << endl;
@@ -724,12 +757,37 @@ void NovaGUI::updateSystemStatus()
 
 		if (novaComponents[i].process == NULL || !novaComponents[i].process->pid())
 		{
-			item->setIcon(*redIcon);
 			pidItem->setText("");
+
+			// Restart processes that died for some reason
+			if (novaComponents[i].shouldBeRunning)
+			{
+				// Don't restart LocalTrafficMonitor or Haystack if we're reading from pcap file
+				if (!goToLive && readFromPcap && (i == COMPONENT_LM || i == COMPONENT_HS))
+				{
+					item->setIcon(*redIcon);
+				}
+				else
+				{
+					syslog(SYSL_ERR, "File: %s Line: %d GUI has detected a dead process %s. Restarting it.", __FILE__, __LINE__, novaComponents[i].name.c_str());
+					item->setIcon(*yellowIcon);
+					startComponent(&novaComponents[i]);
+				}
+			}
+			else
+			{
+				item->setIcon(*redIcon);
+			}
+
 		}
 		else
 		{
-			item->setIcon(*greenIcon);
+			// The process is running, but it shouldn't be. Make it yellow
+			if (novaComponents[i].shouldBeRunning)
+				item->setIcon(*greenIcon);
+			else
+				item->setIcon(*yellowIcon);
+
 			pidItem->setText(QString::number(novaComponents[i].process->pid()));
 		}
 	}
@@ -851,6 +909,7 @@ void NovaGUI::loadSubnets(ptree *ptr)
 			{
 				subnet sub;
 				sub.tree = v.second;
+				sub.isRealDevice = true;
 				//Extract the data
 				sub.name = v.second.get<std::string>("name");
 				sub.address = v.second.get<std::string>("IP");
@@ -872,12 +931,37 @@ void NovaGUI::loadSubnets(ptree *ptr)
 				sub.address = ss.str();
 
 				//Save subnet
-				subnets[sub.address] = sub;
+				subnets[sub.name] = sub;
 			}
 			//If virtual honeyd subnet
 			else if(!string(v.first.data()).compare("virtual"))
 			{
-				//TODO
+				//TODO Implement and test
+				/*subnet sub;
+				sub.tree = v.second;
+				sub.isRealDevice = false;
+				//Extract the data
+				sub.name = v.second.get<std::string>("name");
+				sub.address = v.second.get<std::string>("IP");
+				sub.mask = v.second.get<std::string>("mask");
+				sub.enabled = v.second.get<bool>("enabled");
+
+				//Gets the IP address in uint32 form
+				in_addr_t baseTemp = ntohl(inet_addr(sub.address.c_str()));
+
+				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
+				in_addr_t maskTemp = ntohl(inet_addr(sub.mask.c_str()));
+				sub.base = (baseTemp & maskTemp);
+				//Get the number of bits in the mask
+				sub.maskBits = GetMaskBits(maskTemp);
+				//Adding the binary inversion of the mask gets the highest usable IP
+				sub.max = sub.base + ~maskTemp;
+				stringstream ss;
+				ss << sub.address << "/" << sub.maskBits;
+				sub.address = ss.str();
+
+				//Save subnet
+				subnets[sub.name] = sub;*/
 			}
 			else
 			{
@@ -936,201 +1020,169 @@ void NovaGUI::loadNodes(ptree *ptr)
 					n.MAC = v.second.get<std::string>("MAC");
 				}
 				catch(...){}
+				if(!n.IP.compare(dmAddr))
+				{
+					n.name = "Doppelganger";
+					n.sub = n.interface;
+					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
+					//save the node in the table
+					nodes[n.name] = n;
 
-				switch(p.type)
+					//Put address of saved node in subnet's list of nodes.
+					subnets[nodes[n.name].sub].nodes.push_back(n.name);
+				}
+				else switch(p.type)
 				{
 
-				//***** STATIC IP ********//
-				case static_IP:
+					//***** STATIC IP ********//
+					case static_IP:
 
-					n.name = n.IP;
+						n.name = n.IP;
 
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					//intialize subnet to NULL and check for smallest bounding subnet
-					n.sub = "";
-					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
-					//Tracks the mask with smallest range by comparing num of bits used.
-
-					//Check each subnet
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						//If node falls outside a subnets range skip it
-						if((n.realIP < it->second.base) || (n.realIP > it->second.max))
-							continue;
-						//If this is the smallest range
-						if(it->second.maskBits > max)
+						if (!n.name.compare(""))
 						{
-							//If node isn't using host's address
-							if(it->second.address.compare(n.IP))
+							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+							prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+							continue;
+						}
+
+						//intialize subnet to NULL and check for smallest bounding subnet
+						n.sub = ""; //TODO virtual subnets will need to be handled when implemented
+						n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
+						//Tracks the mask with smallest range by comparing num of bits used.
+
+						//Check each subnet
+						for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+						{
+							//If node falls outside a subnets range skip it
+							if((n.realIP < it->second.base) || (n.realIP > it->second.max))
+								continue;
+							//If this is the smallest range
+							if(it->second.maskBits > max)
 							{
-								max = it->second.maskBits;
-								n.sub = it->second.address;
+								//If node isn't using host's address
+								if(it->second.address.compare(n.IP))
+								{
+									max = it->second.maskBits;
+									n.sub = it->second.name;
+								}
 							}
 						}
-					}
 
-					//Check that node has unique IP addr
-					for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-					{
-						if(n.realIP == it->second.realIP)
+						//Check that node has unique IP addr
+						for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 						{
-							unique = false;
+							if(n.realIP == it->second.realIP)
+							{
+								unique = false;
+							}
 						}
-					}
 
-					//If we have a subnet and node is unique
-					if((n.sub != "") && unique)
-					{
+						//If we have a subnet and node is unique
+						if((n.sub != "") && unique)
+						{
+							//save the node in the table
+							nodes[n.name] = n;
+
+							//Put address of saved node in subnet's list of nodes.
+							subnets[nodes[n.name].sub].nodes.push_back(n.name);
+						}
+						//If no subnet found, can't use node unless it's doppelganger.
+						else
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet "
+									"ranges", __FILE__, __LINE__, n.IP.c_str());
+							prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all "
+									"valid subnet ranges: " + n.name);
+						}
+						break;
+
+
+					//***** STATIC DHCP (static MAC) ********//
+					case staticDHCP:
+
+						//If no MAC is set, there's a problem
+						if(!n.MAC.size())
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s "
+									"does not have a MAC Address.",
+									__FILE__, __LINE__, string(n.pfile).c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled node using profile "
+									"" + n.pfile + " does not have a MAC Address.");
+							continue;
+						}
+
+						//Associated MAC is already in use, this is not allowed, throw out the node
+						if(nodes.find(n.MAC) != nodes.end())
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
+									"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, n.MAC +" is already in use.");
+							continue;
+						}
+						n.name = n.MAC;
+
+						if (!n.name.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+							prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+							continue;
+						}
+
+						n.sub = n.interface; //TODO virtual subnets will need to be handled when implemented
+						// If no valid subnet/interface found
+						if(!n.sub.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s "
+									"is unable to resolve it's interface.",__FILE__, __LINE__, n.MAC.c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+									+ n.MAC + " is unable to resolve it's interface.");
+							continue;
+						}
+
 						//save the node in the table
 						nodes[n.name] = n;
 
 						//Put address of saved node in subnet's list of nodes.
 						subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					}
-					//If no subnet found, can't use node unless it's doppelganger.
-					else
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet "
-								"ranges", __FILE__, __LINE__, n.IP.c_str());
-						prompter->DisplayPrompt(HONEYD_INVALID_SUBNET, " Node at IP is outside all "
-								"valid subnet ranges: " + n.name);
-					}
-					break;
+						break;
 
+					//***** RANDOM DHCP (random MAC each time run) ********//
+					case randomDHCP:
 
-				//***** STATIC DHCP (static MAC) ********//
-				case staticDHCP:
+						n.name = n.pfile + " on " + n.interface;
 
-					//If no MAC is set, there's a problem
-					if(!n.MAC.size())
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s "
-								"does not have a MAC Address.",
-								__FILE__, __LINE__, string(n.pfile).c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled node using profile "
-								"" + n.pfile + " does not have a MAC Address.");
-						continue;
-					}
+						if (!n.name.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+							prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
+							continue;
+						}
 
-					//Associated MAC is already in use, this is not allowed, throw out the node
-					if(nodes.find(n.MAC) != nodes.end())
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
-								"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, n.MAC +" is already in use.");
-						continue;
-					}
-					n.name = n.MAC;
+						//Finds a unique identifier
+						while((nodes.find(n.name) != nodes.end()) && (i < j))
+						{
+							i++;
+							ss.str("");
+							ss << n.pfile << " on " << n.interface << "-" << i;
+							n.name = ss.str();
+						}
+						n.sub = n.interface; //TODO virtual subnets will need to be handled when implemented
+						// If no valid subnet/interface found
+						if(!n.sub.compare(""))
+						{
+							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve "
+									"it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+							prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
+									+ n.MAC + " is unable to resolve it's interface.");
+							continue;
+						}
+						//save the node in the table
+						nodes[n.name] = n;
 
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					n.sub = "";
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						if(!it->second.name.compare(n.interface))
-							n.sub = it->second.address;
-					}
-					// If no valid subnet/interface found
-					if(!n.sub.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s "
-								"is unable to resolve it's interface.",__FILE__, __LINE__, n.MAC.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
-								+ n.MAC + " is unable to resolve it's interface.");
-						continue;
-					}
-
-					//save the node in the table
-					nodes[n.name] = n;
-
-					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					break;
-
-				//***** RANDOM DHCP (random MAC each time run) ********//
-				case randomDHCP:
-
-					n.name = n.pfile + " on " + n.interface;
-
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					//Finds a unique identifier
-					while((nodes.find(n.name) != nodes.end()) && (i < j))
-					{
-						i++;
-						ss.str("");
-						ss << n.pfile << " on " << n.interface << "-" << i;
-						n.name = ss.str();
-					}
-					n.sub = "";
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						if(!it->second.name.compare(n.interface))
-							n.sub = it->second.address;
-					}
-					// If no valid subnet/interface found
-					if(!n.sub.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve "
-								"it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "DHCP Enabled Node with MAC "
-								+ n.MAC + " is unable to resolve it's interface.");
-						continue;
-					}
-					//save the node in the table
-					nodes[n.name] = n;
-
-					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					break;
-
-				//***** Doppelganger ********//
-				case Doppelganger:
-					n.name = "Doppelganger";
-
-					if (!n.name.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-						prompter->DisplayPrompt(HONEYD_LOAD_FAIL, "Warning: the honeyd nodes XML file contains invalid node names. Some nodes have failed to load.");
-						continue;
-					}
-
-					n.sub = "";
-					for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-					{
-						if(!it->second.name.compare(n.interface))
-							n.sub = it->second.address;
-					}
-					// If no valid subnet/interface found
-					if(!n.sub.compare(""))
-					{
-						syslog(SYSL_ERR, "File: %s Line: %d The Doppelganger is unable to resolve the interface: %s", __FILE__, __LINE__, n.interface.c_str());
-						prompter->DisplayPrompt(NODE_LOAD_FAIL, "The Doppelganger is unable to resolve "
-								"the interface: " + n.interface);
-						continue;
-					}
-					//save the node in the table
-					nodes[n.name] = n;
-
-					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.name].sub].nodes.push_back(n.name);
-					break;
+						//Put address of saved node in subnet's list of nodes.
+						subnets[nodes[n.name].sub].nodes.push_back(n.name);
+						break;
 				}
 			}
 			else
@@ -1905,12 +1957,12 @@ void NovaGUI::on_actionStopNova_triggered()
 
 void NovaGUI::on_actionConfigure_triggered()
 {
-	if(!editingPreferences)
-	{
-		NovaConfig *w = new NovaConfig(this, homePath);
-		w->show();
-		editingPreferences = true;
-	}
+	NovaConfig *w = new NovaConfig(this, homePath);
+	w->setWindowModality(Qt::WindowModal);
+	w->show();
+
+	// Reload the configuration in case the user changed stuff
+	reloadConfiguration();
 }
 
 void  NovaGUI::on_actionExit_triggered()
@@ -2140,37 +2192,12 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 	}
 }
 
-void NovaGUI::on_systemStatStartButton_clicked()
+void NovaGUI::on_actionSystemStatKill_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
 
-	switch (row) {
-	case COMPONENT_CE:
-		startComponent(&novaComponents[COMPONENT_CE]);
-		break;
-	case COMPONENT_DM:
-		startComponent(&novaComponents[COMPONENT_DM]);
-		break;
-	case COMPONENT_HS:
-		startComponent(&novaComponents[COMPONENT_HS]);
-		break;
-	case COMPONENT_LM:
-		startComponent(&novaComponents[COMPONENT_LM]);
-		break;
-	case COMPONENT_HSH:
-		startComponent(&novaComponents[COMPONENT_HSH]);
-		break;
-	case COMPONENT_DMH:
-		startComponent(&novaComponents[COMPONENT_DMH]);
-		break;
-	}
-
-	updateSystemStatus();
-}
-
-void NovaGUI::on_systemStatKillButton_clicked()
-{
-	QProcess *process = novaComponents[ui.systemStatusTable->currentRow()].process;
+	QProcess *process = novaComponents[row].process;
+	novaComponents[row].shouldBeRunning = false;
 
 	// Fix for honeyd not closing with gnome-terminal + sudo
 	if (useTerminals && process != NULL && process->pid() &&
@@ -2199,9 +2226,11 @@ void NovaGUI::on_systemStatKillButton_clicked()
 	}
 }
 
-void NovaGUI::on_systemStatStopButton_clicked()
+
+void NovaGUI::on_actionSystemStatStop_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
+	novaComponents[row].shouldBeRunning = false;
 
 	//Sets the message
 	message.SetMessage(EXIT);
@@ -2243,6 +2272,61 @@ void NovaGUI::on_systemStatStopButton_clicked()
 	}
 }
 
+
+void NovaGUI::on_actionSystemStatStart_triggered()
+{
+	int row = ui.systemStatusTable->currentRow();
+
+	switch (row) {
+	case COMPONENT_CE:
+		startComponent(&novaComponents[COMPONENT_CE]);
+		break;
+	case COMPONENT_DM:
+		startComponent(&novaComponents[COMPONENT_DM]);
+		break;
+	case COMPONENT_HS:
+		startComponent(&novaComponents[COMPONENT_HS]);
+		break;
+	case COMPONENT_LM:
+		startComponent(&novaComponents[COMPONENT_LM]);
+		break;
+	case COMPONENT_HSH:
+		startComponent(&novaComponents[COMPONENT_HSH]);
+		break;
+	case COMPONENT_DMH:
+		startComponent(&novaComponents[COMPONENT_DMH]);
+		break;
+	default:
+		return;
+	}
+
+	updateSystemStatus();
+}
+
+
+void NovaGUI::on_actionSystemStatReload_triggered()
+{
+	//Sets the message
+	message.SetMessage(RELOAD);
+	msgLen = message.SerialzeMessage(msgBuffer);
+	sendToCE();
+}
+
+void NovaGUI::on_systemStatStartButton_clicked()
+{
+	on_actionSystemStatStart_triggered();
+}
+
+void NovaGUI::on_systemStatKillButton_clicked()
+{
+	on_actionSystemStatKill_triggered();
+}
+
+void NovaGUI::on_systemStatStopButton_clicked()
+{
+	on_actionSystemStatStop_triggered();
+}
+
 void NovaGUI::on_clearSuspectsButton_clicked()
 {
 	editingSuspectList = true;
@@ -2264,8 +2348,77 @@ void NovaGUI::on_suspectList_itemSelectionChanged()
 		{
 			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
 			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
+			setFeatureDistances(SuspectTable[addr].suspect);
 		}
 		pthread_rwlock_unlock(&lock);
+	}
+}
+
+void NovaGUI::setFeatureDistances(Suspect* suspect)
+{
+	int row = 0;
+	ui.suspectDistances->clear();
+	for (int i = 0; i < DIM; i++)
+	{
+		if (featureEnabled[i])
+		{
+			QString featureLabel;
+
+			switch (i)
+			{
+			case IP_TRAFFIC_DISTRIBUTION:
+				featureLabel = tr("IP Traffic Distribution");
+				break;
+			case PORT_TRAFFIC_DISTRIBUTION:
+				featureLabel = tr("Port Traffic Distribution");
+				break;
+			case HAYSTACK_EVENT_FREQUENCY:
+				featureLabel = tr("Haystack Event Frequency");
+				break;
+			case PACKET_SIZE_MEAN:
+				featureLabel = tr("Packet Size Mean");
+				break;
+			case PACKET_SIZE_DEVIATION:
+				featureLabel = tr("Packet Size Deviation");
+				break;
+			case DISTINCT_IPS:
+				featureLabel = tr("IPs Contacted");
+				break;
+			case DISTINCT_PORTS:
+				featureLabel = tr("Ports Contacted");
+				break;
+			case PACKET_INTERVAL_MEAN:
+				featureLabel = tr("Packet Interval Mean");
+				break;
+			case PACKET_INTERVAL_DEVIATION:
+				featureLabel = tr("Packet Interval Deviation");
+				break;
+			}
+
+			ui.suspectDistances->insertItem(row, featureLabel + tr(" Accuracy"));
+			QString formatString = "%p% | ";
+			formatString.append(featureLabel);
+			formatString.append(": ");
+
+			row++;
+			QProgressBar* bar = new QProgressBar();
+			bar->setMinimum(0);
+			bar->setMaximum(100);
+			bar->setTextVisible(true);
+			bar->setValue((int)((1 - suspect->featureAccuracy[i]/(double)sqrt(enabledFeatures))*100));
+			bar->setStyleSheet(
+				"QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
+				QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5, stop: 0 yellow, stop: 1 green);}");
+
+			formatString.append(QString::number(suspect->features.features[i]));
+			bar->setFormat(formatString);
+
+			QListWidgetItem* item = new QListWidgetItem();
+			ui.suspectDistances->insertItem(row, item);
+			ui.suspectDistances->setItemWidget(item, bar);
+
+			row++;
+		}
 	}
 }
 
@@ -2351,6 +2504,10 @@ void clearSuspects()
 
 void stopNova()
 {
+	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
+	{
+		novaComponents[i].shouldBeRunning = false;
+	}
 	//Sets the message
 	message.SetMessage(EXIT);
 	msgLen = message.SerialzeMessage(msgBuffer);
@@ -2375,33 +2532,45 @@ void stopNova()
 	pclose(out);
 }
 
-
-void startNova()
+// Reload the configuration file
+void reloadConfiguration()
 {
-
-	string homePath = GetHomePath();
-	string input = homePath + "/Config/NOVAConfig.txt";
-
 	// Reload the configuration file
 	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
 
 	useTerminals = atoi(configuration.options["USE_TERMINALS"].data.c_str());
 	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
-
 	string enabledFeatureMask = configuration.options["ENABLED_FEATURES"].data;
 
+	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
+	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
+	trainingDataPath = configuration.options["DATAFILE"].data;
+	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
 
+	goToLive = atoi(configuration.options["GO_TO_LIVE"].data.c_str());
+	readFromPcap = atoi(configuration.options["READ_PCAP"].data.c_str());
+	dmAddr = configuration.options["DOPPELGANGER_IP"].data.c_str();
+
+	enabledFeatures = 0;
 	for (uint i = 0; i < DIM; i++)
 	{
 		if ('1' == enabledFeatureMask.at(i))
 		{
 			featureEnabled[i] = true;
+			enabledFeatures++;
 		}
 		else
 		{
 			featureEnabled[i] = false;
 		}
 	}
+}
+
+
+void startNova()
+{
+	// Reload the configuration file
+	reloadConfiguration();
 
 	// Start and processes that aren't running already
 	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
@@ -2427,6 +2596,8 @@ void startComponent(novaComponent *component)
 		component->process->kill();
 		delete component->process;
 	}
+
+	component->shouldBeRunning = true;
 
 	component->process = new QProcess();
 	component->process->start(program);

@@ -114,6 +114,10 @@ void LoadConfig(char * configFilePath);
 //		filename - Path to file to write to
 void SaveSuspectsToFile(string filename);
 
+// Force a reload of NOVAConfig/Data.txt while running.
+// This will reclassify all the suspects based on the new data.
+void Reload();
+
 }
 }
 #endif /* CLASSIFICATIONENGINE_H_ */

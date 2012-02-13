@@ -222,7 +222,15 @@ namespace Nova
 	{
 		NotifyNotification *note;
 		notify_init("Logger");
+		#ifdef NOTIFY_CHECK_VERSION
+		#if NOTIFY_CHECK_VERSION (0, 7, 0)
 		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg");
+		#else
+		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg", NULL);
+		#endif
+		#else
+		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg", NULL);
+		#endif
 		notify_notification_set_timeout(note, 3000);
 		notify_notification_show(note, NULL);
 		g_object_unref(G_OBJECT(note));

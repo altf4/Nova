@@ -2,8 +2,6 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-
-# PRE_TARGETDEPS += /usr/lib/libann.a
 HEADERS += src/classifierPrompt.h \
     src/nova_manual.h \
     src/DialogPrompter.h \
@@ -30,12 +28,11 @@ FORMS += UI/classifierPrompt.ui \
     UI/nodePopup.ui \
     UI/novaconfig.ui \
     UI/novagui.ui \
-    UI/portPopup.ui \
     UI/run_popup.ui
 RESOURCES += 
-INCLUDEPATH += ../NovaLibrary/src 
+INCLUDEPATH += ../NovaLibrary/src
 CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
-else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
+else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a 
 LIBS += /usr/lib/libboost_serialization.a \
     /usr/lib/libapr-1.a \
     /usr/lib/libann.a \
@@ -44,6 +41,4 @@ UI_DIR = UI_headers/
 QMAKE_CLEAN += $(TARGET)
 CONFIG += no_keywords
 CONFIG += link_pkgconfig
-PKGCONFIG += glib-2.0
-PKGCONFIG += gtk+-3.0
-
+PKGCONFIG += libnotify

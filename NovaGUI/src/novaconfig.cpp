@@ -45,9 +45,9 @@ bool loadingDefaultActions = false;
 NovaConfig::NovaConfig(QWidget *parent, string home)
     : QMainWindow(parent)
 {
-	portMenu = new QMenu();
-	profileTreeMenu = new QMenu();
-	nodeTreeMenu = new QMenu();
+	portMenu = new QMenu(this);
+	profileTreeMenu = new QMenu(this);
+	nodeTreeMenu = new QMenu(this);
 
 	//store current directory / base path for Nova
 	homePath = home;
@@ -736,7 +736,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 						if(!it->second.parentProfile.compare(updateList[i]))
 							valid = true;
 						//If this profile is already in the list, this profile shouldn't be included
-						if(!it->first.compare(updateList[i]))
+						if(!it->second.name.compare(updateList[i]))
 						{
 							valid = false;
 							break;
@@ -835,7 +835,7 @@ void NovaConfig::onFeatureClick(const QPoint & pos)
 	}
 
 	// Make the menu
-    QMenu myMenu;
+    QMenu myMenu(this);
     myMenu.addAction(new QAction("Enable", this));
     myMenu.addAction(new QAction("Disable", this));
 
@@ -1080,7 +1080,6 @@ void NovaConfig::displayNmapPersonalityTree()
 }
 bool NovaConfig::updateNodeTypes()
 {
-	bool hasDoppelganger = false;
 	bool nameUnique = false;
 	stringstream ss;
 	uint i = 0, j = 0;
@@ -1092,100 +1091,73 @@ bool NovaConfig::updateNodeTypes()
 	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
 		node tempNode = it->second;
-		switch(profiles[tempNode.pfile].type)
+		if(tempNode.name.compare("Doppelganger"))
 		{
-			case static_IP:
-				//If name/key is not the IP
-				if(it->first.compare(tempNode.IP))
-				{
-					tempNode.name = tempNode.IP;
-					delList.push_back(it->first);
-					addList.push_back(tempNode);
-				}
-				break;
-
-			case staticDHCP:
-
-				//If there is no MAC
-				if(!tempNode.MAC.size())
-				{
-					tempNode.MAC = generateUniqueMACAddr(profiles[tempNode.pfile].ethernet);
-				}
-				//If name/key is not the MAC
-				if(it->first.compare(tempNode.MAC))
-				{
-					tempNode.name = tempNode.MAC;
-					delList.push_back(it->first);
-					addList.push_back(tempNode);
-				}
-				break;
-
-			case randomDHCP:
-				prefix = tempNode.pfile + " on " + tempNode.interface;
-				//If the key is at least long enough to be correct
-				if(it->first.size() >= prefix.size())
-				{
-					//If the key starts with the correct prefix do nothing
-					if(!it->first.substr(0,prefix.size()).compare(prefix))
-						break;
-				}
-				//If the key doesn't start with the correct prefix, generate the correct name
-				tempNode.name = prefix;
-				i = 0;
-				ss.str("");
-				//Finds a unique identifier
-				while(i < j)
-				{
-					nameUnique = true;
-					for(uint k = 0; k < addList.size(); k++)
+			 switch(profiles[tempNode.pfile].type)
+			 {
+				case static_IP:
+					//If name/key is not the IP
+					if(it->second.name.compare(tempNode.IP))
 					{
-						if(!addList[k].name.compare(tempNode.name))
-							nameUnique = false;
+						tempNode.name = tempNode.IP;
+						delList.push_back(it->second.name);
+						addList.push_back(tempNode);
 					}
-					if(nodes.find(tempNode.name) != nodes.end())
-						nameUnique = false;
+					break;
 
-					if(nameUnique)
-						break;
-					i++;
+				case staticDHCP:
+
+					//If there is no MAC
+					if(!tempNode.MAC.size())
+					{
+						tempNode.MAC = generateUniqueMACAddr(profiles[tempNode.pfile].ethernet);
+					}
+					//If name/key is not the MAC
+					if(it->second.name.compare(tempNode.MAC))
+					{
+						tempNode.name = tempNode.MAC;
+						delList.push_back(it->second.name);
+						addList.push_back(tempNode);
+					}
+					break;
+
+				case randomDHCP:
+					prefix = tempNode.pfile + " on " + tempNode.interface;
+					//If the key is at least long enough to be correct
+					if(it->second.name.size() >= prefix.size())
+					{
+						//If the key starts with the correct prefix do nothing
+						if(!it->second.name.substr(0,prefix.size()).compare(prefix))
+							break;
+					}
+					//If the key doesn't start with the correct prefix, generate the correct name
+					tempNode.name = prefix;
+					i = 0;
 					ss.str("");
-					ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
-					tempNode.name = ss.str();
-				}
-				delList.push_back(it->first);
-				addList.push_back(tempNode);
-				break;
+					//Finds a unique identifier
+					while(i < j)
+					{
+						nameUnique = true;
+						for(uint k = 0; k < addList.size(); k++)
+						{
+							if(!addList[k].name.compare(tempNode.name))
+								nameUnique = false;
+						}
+						if(nodes.find(tempNode.name) != nodes.end())
+							nameUnique = false;
 
-			case Doppelganger:
-				//If name isn't doppelganger and we haven't found a doppelganger yet
-				if(!hasDoppelganger)
-				{
-					tempNode.name = "Doppelganger";
-					delList.push_back(it->first);
+						if(nameUnique)
+							break;
+						i++;
+						ss.str("");
+						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
+						tempNode.name = ss.str();
+					}
+					delList.push_back(it->second.name);
 					addList.push_back(tempNode);
-					hasDoppelganger = true;
-				}
-				else
-				{
-					syslog(SYSL_ERR, "File: %s Line: %d ERROR: A Doppelganger already exists.", __FILE__, __LINE__);
-					if(mainwindow->prompter->DisplayPrompt(mainwindow->DOPP_EXISTS, "Only one node can be a Doppelganger for a host, would"
-							" you like to delete the duplicate node using profile: " + tempNode.pfile + "?") == CHOICE_ALT)
-						return false;
-					else
-						delList.push_back(it->first);
-				}
-				break;
+					break;
+			 }
 		}
-	}
-
-	if(!hasDoppelganger && ui.dmCheckBox->isChecked())
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d ERROR: No Doppelganger exists.", __FILE__, __LINE__);
-		if(mainwindow->prompter->DisplayPrompt(mainwindow->NO_DOPP, "No Doppelganger node could be found. Do you wish to disable"
-				" the Doppelganger and continue?") == CHOICE_ALT)
-			return false;
-		else
-			ui.dmCheckBox->setChecked(false);
 	}
 	while(!delList.empty())
 	{
@@ -1409,28 +1381,49 @@ void NovaConfig::updatePointers()
 		if(subnets.find(currentSubnet) != subnets.end());
 		//If not it sets it to the front or NULL
 		else if(subnets.size())
-			currentSubnet = subnets.begin()->second.address;
+		{
+			currentNode = "";
+			currentSubnet = subnets.begin()->first;
+		}
 		else
+		{
+			selectedSubnet = false;
 			currentSubnet = "";
-		currentNode = "";
+		}
 	}
-	else
+	else if(!selectedSubnet)
 	{
+
 		//Asserts the node still exists
-		if(nodes.find(currentNode) != nodes.end());
+		if(nodes.find(currentNode) != nodes.end())
+		{
+			currentSubnet = nodes[currentNode].sub;
+		}
 		//If not it sets it to the front or NULL
 		else if(nodes.size())
-			currentNode = nodes.begin()->second.name;
+		{
+			currentNode = nodes.begin()->first;
+			currentSubnet = nodes[currentNode].sub;
+		}
+		//should never get hit since we have a doppelganger but is here just incase
 		else
+		{
 			currentNode = "";
-		currentSubnet = "";
+			if(subnets.size())
+			{
+				currentSubnet = subnets.begin()->first;
+				selectedSubnet = true;
+			}
+			else
+				currentSubnet = "";
+		}
 	}
 
 	//Asserts the profile still exists
 	if(profiles.find(currentProfile) != profiles.end());
 	//If not it sets it to the front or NULL
 	else if(profiles.size())
-		currentProfile = profiles.begin()->second.name;
+		currentProfile = profiles.begin()->first;
 	else
 		currentProfile = "";
 }
@@ -1896,23 +1889,6 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 			nodeExists = true;
 	}
 
-	//If were switching to Doppelganger mode and a node uses this profile
-	if((index == Doppelganger) && nodeExists)
-	{
-		//Check that another node isn't already the Doppelganger
-		for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-		{
-			if(profiles[it->second.pfile].type == Doppelganger)
-			{
-				syslog(SYSL_ERR, "File: %s Line: %d ERROR: A Doppelganger already exists.", __FILE__, __LINE__);
-				//TODO Appropriate Doppelganger exists displayPrompt
-				ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
-				loadingItems = false;
-				return;
-			}
-		}
-	}
-
 	//If the current ethernet is an invalid selection
 	//TODO this should display a dialog asking the user if they wish to pick a valid ethernet or cancel mode change
 	if(((VendorMACTable.find(profiles[currentProfile].ethernet)) == VendorMACTable.end()) && (index == staticDHCP))
@@ -1933,18 +1909,6 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 	updateNodeTypes();
 	loadAllNodes();
 	loadingItems = false;
-	bool doppExists = false;
-	//If there is no doppelganger node, disable the DM
-	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-	{
-		if(profiles[it->second.pfile].type == Doppelganger)
-		{
-			doppExists = true;
-			break;
-		}
-	}
-	//Disables the dm if no dopp node, otherwise it keeps the same state.
-	ui.dmCheckBox->setChecked(doppExists & ui.dmCheckBox->isChecked());
 }
 
 //Combo box signal for changing the uptime behavior
@@ -2481,7 +2445,7 @@ void NovaConfig::updateProfileTree(string name, updateDir direction)
 			if(!it->second.parentProfile.compare(p.name))
 			{
 				//Update the child
-				updateProfileTree(it->first, DOWN);
+				updateProfileTree(it->second.name, DOWN);
 				//Put the child in the parent's ptree
 				p.tree.add_child("profiles.profile", it->second.tree);
 			}
@@ -2869,7 +2833,7 @@ void NovaConfig::loadAllProfiles()
 		// and create them if not to draw the table correctly, thus the need for the NULL pointer as a flag
 		for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 		{
-			createProfileItem(it->first);
+			createProfileItem(it->second.name);
 		}
 		//Sets the current selection to the original selection
 		ui.profileTreeWidget->setCurrentItem(profiles[currentProfile].profileItem);
@@ -3008,7 +2972,7 @@ void NovaConfig::updateProfile(bool deleteProfile, profile * p)
 		{
 			if(!it->second.pfile.compare(p->name))
 			{
-				delList.push_back(it->first);
+				delList.push_back(it->second.name);
 			}
 		}
 		while(!delList.empty())
@@ -3117,7 +3081,9 @@ void NovaConfig::on_deleteButton_clicked()
 
 void NovaConfig::on_actionProfileDelete_triggered()
 {
-	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && profiles.size())
+	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && currentProfile.compare("default")
+			&& (profiles.find(currentProfile) != profiles.end()))
+
 	{
 		bool nodeExists = false;
 		//Find out if any nodes use this profile
@@ -3128,10 +3094,46 @@ void NovaConfig::on_actionProfileDelete_triggered()
 				nodeExists = true;
 		}
 		if(nodeExists)
+		{
 			syslog(SYSL_ERR, "File: %s Line: %d ERROR: A Node is currently using this profile.", __FILE__, __LINE__);
+			if(mainwindow->prompter->DisplayPrompt(mainwindow->CANNOT_DELETE_ITEM, "Profile "
+				+currentProfile+" cannot be deleted because some nodes are currently using it, would you like to "
+				"disable all nodes currently using it?",ui.actionNo_Action, ui.actionNo_Action, this) == CHOICE_DEFAULT)
+			{
+				for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+				{
+						if(!it->second.pfile.compare(currentProfile))
+							nodes[it->second.name].enabled = false;
+				}
+			}
+		}
 		//TODO appropriate display prompt here
 		else
 			deleteProfile(currentProfile);
+	}
+	else if(!currentProfile.compare("default"))
+	{
+		syslog(SYSL_INFO, "File:%s Line: %d NOTIFY: Cannot delete the default profile.",__FILE__,__LINE__);
+		if(mainwindow->prompter->DisplayPrompt(mainwindow->CANNOT_DELETE_ITEM, "Cannot delete the default profile, "
+				"would you like to disable the Haystack instead?",ui.actionNo_Action, ui.actionNo_Action, this) == CHOICE_DEFAULT)
+		{
+			loadingItems = true;
+			bool tempSelBool = selectedSubnet;
+			selectedSubnet = true;
+			string tempNode = currentNode;
+			currentNode = "";
+			string tempNet = currentSubnet;
+			for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+			{
+				currentSubnet = it->second.name;
+				on_actionNodeDisable_triggered();
+				loadingItems = true;
+			}
+			selectedSubnet = tempSelBool;
+			currentNode = tempNode;
+			currentSubnet = tempNet;
+			loadingItems = false;
+		}
 	}
 	loadAllNodes();
 }
@@ -3282,23 +3284,28 @@ void NovaConfig::loadAllNodes()
 		//create the subnet item for the Haystack menu tree
 		item = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
 		item->setText(0, (QString)it->second.address.c_str());
+		if(it->second.isRealDevice)
+			item->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
+		else
+			item->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
 		it->second.item = item;
 
 		//create the subnet item for the node edit tree
 		item = new QTreeWidgetItem(ui.nodeTreeWidget, 0);
 		item->setText(0, (QString)it->second.address.c_str());
+		if(it->second.isRealDevice)
+			item->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
+		else
+			item->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
 		it->second.nodeItem = item;
 
-		if(this->isEnabled())
+		if(!it->second.enabled)
 		{
-			if(!it->second.enabled)
-			{
-				whitebrush.setStyle(Qt::NoBrush);
-				it->second.nodeItem->setBackground(0,greybrush);
-				it->second.nodeItem->setForeground(0,whitebrush);
-				it->second.item->setBackground(0,greybrush);
-				it->second.item->setForeground(0,whitebrush);
-			}
+			whitebrush.setStyle(Qt::NoBrush);
+			it->second.nodeItem->setBackground(0,greybrush);
+			it->second.nodeItem->setForeground(0,whitebrush);
+			it->second.item->setBackground(0,greybrush);
+			it->second.item->setForeground(0,whitebrush);
 		}
 
 		for(uint i = 0; i < it->second.nodes.size(); i++)
@@ -3321,8 +3328,8 @@ void NovaConfig::loadAllNodes()
 			uint i = 0;
 			for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 			{
-				pfileBox->addItem(it->first.c_str());
-				pfileBox->setItemText(i, it->first.c_str());
+				pfileBox->addItem(it->second.name.c_str());
+				pfileBox->setItemText(i, it->second.name.c_str());
 				i++;
 			}
 
@@ -3333,16 +3340,13 @@ void NovaConfig::loadAllNodes()
 			ui.nodeTreeWidget->setItemWidget(item, 1, pfileBox);
 			n->nodeItem = item;
 
-			if(this->isEnabled())
+			if(!n->enabled)
 			{
-				if(!n->enabled)
-				{
-					whitebrush.setStyle(Qt::NoBrush);
-					n->nodeItem->setBackground(0,greybrush);
-					n->nodeItem->setForeground(0,whitebrush);
-					n->item->setBackground(0,greybrush);
-					n->item->setForeground(0,whitebrush);
-				}
+				whitebrush.setStyle(Qt::NoBrush);
+				n->nodeItem->setBackground(0,greybrush);
+				n->nodeItem->setForeground(0,whitebrush);
+				n->item->setBackground(0,greybrush);
+				n->item->setForeground(0,whitebrush);
 			}
 		}
 	}
@@ -3350,9 +3354,13 @@ void NovaConfig::loadAllNodes()
 	if(nodes.size()+subnets.size())
 	{
 		if(nodes.find(currentNode) != nodes.end())
+		{
 			ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
+		}
 		else if(subnets.find(currentSubnet) != subnets.end())
+		{
 			ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
+		}
 	}
 	loadingItems = false;
 }
@@ -3361,8 +3369,8 @@ void NovaConfig::loadAllNodes()
 void NovaConfig::deleteNodes()
 {
 	QTreeWidgetItem * temp = NULL;
-	string address = "";
-	bool nextIsSubnet;
+	string name = "";
+	bool nextIsSubnet = false;
 
 	loadingItems = true;
 
@@ -3384,14 +3392,16 @@ void NovaConfig::deleteNodes()
 			tempI++;
 			temp = ui.nodeTreeWidget->topLevelItem(tempI);
 		}
-		//Save the address since the item will change when we redraw the list
-		address = temp->text(0).toStdString();
+		//Save the name since the item will change when we redraw the list
+		name = temp->text(1).toStdString();
+		name = name.substr(name.find("-")+2, name.size());
 
 		//Flag as subnet
 		nextIsSubnet = true;
 	}
 	//If there is at least one other item and we have a node selected
-	else if(((nodes.size()+subnets.size()) > 1) && !selectedSubnet)
+	//Since we cannot delete a physical device's subnet we can still have a selection.
+	else if((nodes.size()+subnets.size()) > 1)
 	{
 		//Try to select the bottom item first
 		temp = ui.nodeTreeWidget->itemBelow(ui.nodeTreeWidget->selectedItems().first());
@@ -3401,28 +3411,57 @@ void NovaConfig::deleteNodes()
 			temp = ui.nodeTreeWidget->itemAbove(ui.nodeTreeWidget->selectedItems().first());
 
 		//Save the address since the item temp points to will change when we redraw the list
-		address = temp->text(0).toStdString();
+		name = temp->text(0).toStdString();
 
 		//If the item isn't top level it is a node and will return -1
 		if(ui.nodeTreeWidget->indexOfTopLevelItem(temp) == -1)
 			nextIsSubnet = false; //Flag as node
 
-		else nextIsSubnet = true; //Flag as subnet
+		else
+		{
+			nextIsSubnet = true; //Flag as subnet
+			name = temp->text(1).toStdString();
+			name = name.substr(name.find("-")+2, name.size());
+		}
 	}
 	//If there are no more items in the list make sure it is clear then return.
 	else
 	{
-		ui.nodeTreeWidget->clear();
-		ui.hsNodeTreeWidget->clear();
+		//Although this is here as a safeguard incase the other two conditions fail
+		// it shouldn't ever be hit because the doppelganger and loopback should always exist
+		vector<subnet> physicalDevs;
+		node dmTemp = nodes["Doppelganger"];
+		selectedSubnet = true;
+		loadingItems = true;
+		for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+		{
+			if(it->second.isRealDevice)
+			{
+				physicalDevs.push_back(it->second);
+			}
+		}
 		subnets.clear_no_resize();
 		nodes.clear_no_resize();
-		currentSubnet = "";
-		currentNode = "";
-		loadingItems = false;
+		nodes["Doppelganger"] = dmTemp;
+		while(!physicalDevs.size())
+		{
+			subnets[physicalDevs.back().name] = physicalDevs.back();
+			currentSubnet = physicalDevs.back().name;
+			on_actionNodeDisable_triggered();
+			loadingItems = true;
+			physicalDevs.pop_back();
+		}
+		subnets[dmTemp.sub].nodes.push_back(dmTemp.name);
+		currentNode = "Doppelganger";
+		currentSubnet = nodes[currentNode].sub;
+		selectedSubnet = false;
+		loadAllNodes();
 		return;
 	}
+
+	loadingItems = true;
 	//If we are deleteing a subnet, remove each node first then remove the subnet.
-	if(selectedSubnet && currentSubnet.compare(""))
+	if(selectedSubnet)
 	{
 		subnet * s = &subnets[currentSubnet];
 		//Get initial size
@@ -3434,39 +3473,57 @@ void NovaConfig::deleteNodes()
 			if(currentNode.compare(""))
 				deleteNode(&nodes[currentNode]);
 		}
-		//Remove the subnet from the list and delete from table
-		ui.nodeTreeWidget->removeItemWidget(s->nodeItem, 0);
-		ui.hsNodeTreeWidget->removeItemWidget(s->item, 0);
-		subnets.erase(currentSubnet);
+		if(!subnets[currentSubnet].isRealDevice)
+		{
+			//Remove the subnet from the list and delete from table
+			ui.nodeTreeWidget->removeItemWidget(s->nodeItem, 0);
+			ui.hsNodeTreeWidget->removeItemWidget(s->item, 0);
+			subnets.erase(currentSubnet);
+		}
 	}
 	//Delete the selected node
 	else
 	{
-		deleteNode(&nodes[currentNode]);
+		if(currentNode.compare("Doppelganger"))
+			deleteNode(&nodes[currentNode]);
 	}
 	loadingItems = true;
 
-
-	//If we have a node as our new selection, set it as current item
-	if(!nextIsSubnet)
+	//If the currentSelection cannot be deleted it is either the doppelganger or a real device.
+	if((selectedSubnet && subnets[currentSubnet].isRealDevice) || (!currentNode.compare("Doppelganger")))
 	{
-		currentNode = address;
+		loadingItems = false;
+		on_actionNodeDisable_triggered();
+	}
+	//If we have a node as our new selection, set it as current item
+	else if(!nextIsSubnet)
+	{
+		currentNode = name;
 		currentSubnet = nodes[currentNode].sub;
-		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
+		loadingItems = false;
+		selectedSubnet = false;
+		loadAllNodes();
 	}
 	//If we have a subnet selected
 	else
 	{
-		currentSubnet = address;
-		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
+		currentSubnet = name;
+		loadingItems = false;
+		selectedSubnet = true;
+		loadAllNodes();
 	}
-	loadingItems = false;
-	loadAllNodes();
+
 }
 
 // Removes the node from item widgets and data structures.
 void NovaConfig::deleteNode(node *n)
 {
+	//Cannot delete doppelganger node
+	if(!n->name.compare("Doppelganger"))
+	{
+		return;
+	}
+
 	ui.nodeTreeWidget->removeItemWidget(n->nodeItem, 0);
 	ui.hsNodeTreeWidget->removeItemWidget(n->item, 0);
 	subnet * s = &subnets[n->sub];
@@ -3498,13 +3555,13 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 			if(ui.nodeTreeWidget->indexOfTopLevelItem(item) == -1)
 			{
 				currentNode = item->text(0).toStdString();
-				currentSubnet = "";
+				currentSubnet = nodes[currentNode].sub;
 				selectedSubnet = false;
 			}
 			else //If it's a subnet
 			{
-				currentSubnet = item->text(0).toStdString();
-				currentNode = "";
+				currentSubnet = item->text(1).toStdString();
+				currentSubnet = currentSubnet.substr(currentSubnet.find("-")+2, currentSubnet.size());
 				selectedSubnet = true;
 			}
 		}
@@ -3580,42 +3637,45 @@ void NovaConfig::on_actionNodeEdit_triggered()
 
 void NovaConfig::on_actionNodeEnable_triggered()
 {
-	if(selectedSubnet)
+	if(currentNode.compare("") || selectedSubnet)
 	{
-		subnet * s = &subnets[currentSubnet];
-		for(uint i = 0; i < s->nodes.size(); i++)
+		if(selectedSubnet)
 		{
-			nodes[s->nodes[i]].enabled = true;
+			subnet * s = &subnets[currentSubnet];
+			for(uint i = 0; i < s->nodes.size(); i++)
+			{
+				nodes[s->nodes[i]].enabled = true;
 
+			}
+			s->enabled = true;
 		}
-		s->enabled = true;
-	}
-	else
-	{
-		nodes[currentNode].enabled = true;
-	}
+		else
+		{
+			nodes[currentNode].enabled = true;
+		}
 
-	//Draw the nodes and restore selection
-	loadAllNodes();
-	loadingItems = true;
-	if(selectedSubnet)
-		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
-	else
-		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
-	loadingItems = false;
+		//Draw the nodes and restore selection
+		loadAllNodes();
+		loadingItems = true;
+		if(selectedSubnet)
+			ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
+		else
+			ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
+		loadingItems = false;
+	}
 }
 
 void NovaConfig::on_actionNodeDisable_triggered()
 {
 	if(selectedSubnet)
 	{
-		subnet * s = &subnets[currentSubnet];
-		for(uint i = 0; i < s->nodes.size(); i++)
+		subnet s = subnets[currentSubnet];
+		for(uint i = 0; i < s.nodes.size(); i++)
 		{
-			nodes[s->nodes[i]].enabled = false;
-
+			nodes[s.nodes[i]].enabled = false;
 		}
-		s->enabled = false;
+		s.enabled = false;
+		subnets[currentSubnet] = s;
 	}
 	else
 	{
