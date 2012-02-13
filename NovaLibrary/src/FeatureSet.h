@@ -70,7 +70,7 @@ typedef google::dense_hash_map<in_addr_t, uint32_t, tr1::hash<in_addr_t>, eqaddr
 //Table of destination ports and a count;
 typedef google::dense_hash_map<in_port_t, uint32_t, tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef google::dense_hash_map<int, uint32_t, tr1::hash<int>, eqint > Packet_Table;
+typedef google::dense_hash_map<uint32_t, uint32_t, tr1::hash<int>, eqint > Packet_Table;
 //Table of packet intervals and a count
 typedef google::dense_hash_map<time_t, uint32_t, tr1::hash<time_t>, eqtime > Interval_Table;
 
@@ -87,7 +87,7 @@ public:
 	double features[DIM];
 
 	//Number of packets total
-	uint packetCount;
+	uint32_t packetCount;
 
 	//Table of IP addresses and associated packet counts
 	IP_Table IPTable;

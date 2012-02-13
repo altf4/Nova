@@ -574,15 +574,15 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	in_port_t port = 0;
 
 	//Required, individual variables for calculation
-	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	memcpy(&temp, buf+offset, sizeof unsentData->totalInterval);
 	totalInterval += temp;
 	offset += sizeof unsentData->bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	memcpy(&temp, buf+offset, sizeof unsentData->haystackEvents);
 	haystackEvents += temp;
 	offset += sizeof unsentData->bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	memcpy(&temp, buf+offset, sizeof unsentData->packetCount);
 	packetCount += temp;
 	offset += sizeof unsentData->bytesTotal;
 
@@ -590,7 +590,7 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	bytesTotal += temp;
 	offset += sizeof unsentData->bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	memcpy(&temp, buf+offset, sizeof unsentData->portMax);
 	offset += sizeof unsentData->bytesTotal;
 
 	if(temp > portMax)
