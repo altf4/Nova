@@ -266,6 +266,8 @@ public:
 
     void setFeatureDistances(Suspect* suspect);
 
+    void reloadConfiguration();
+
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
 
@@ -352,8 +354,6 @@ void stopNova();
 
 //Starts the Nova processes
 void startNova();
-
-void reloadConfiguration();
 
 // Start one component of Nova
 void startComponent(novaComponent *component);
