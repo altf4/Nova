@@ -3,13 +3,13 @@
 	<name>NovaGUI</name>
 	<comment></comment>
 	<projects>
-		<project>ClassificationEngine</project>
-		<project>DoppelgangerModule</project>
-		<project>Haystack</project>
-		<project>LocalTrafficMonitor</project>
-		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
+		<buildCommand>
+			<name>com.trolltech.qtcppproject.QtMakefileGenerator</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 		<buildCommand>
 			<name>org.eclipse.cdt.make.core.makeBuilder</name>
 			<triggers>clean,full,incremental,</triggers>
@@ -24,7 +24,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.arguments</key>
-					<value>-j</value>
+					<value></value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.command</key>
@@ -64,7 +64,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.environment</key>
-					<value>MAKE=make -j|PATH=/usr/share/qt4/bin:${env_var:PATH}:${env_var:PATH}|</value>
+					<value>PATH=/usr/share/qt4/bin:${env_var:PATH}|</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.stopOnError</key>
@@ -72,13 +72,8 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.useDefaultBuildCmd</key>
-					<value>false</value>
+					<value>true</value>
 				</dictionary>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>com.trolltech.qtcppproject.QtMakefileGenerator</name>
-			<arguments>
 			</arguments>
 		</buildCommand>
 		<buildCommand>
