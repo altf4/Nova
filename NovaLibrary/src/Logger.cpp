@@ -128,6 +128,7 @@ namespace Nova
 					if(line.size() > 0)
 					{
 						messageInfo.email_recipients = Logger::ParseAddressesString(line);
+						messageInfo.email_recipients = Logger::CleanAddresses(messageInfo.email_recipients);
 						checkLoad[prefixIndex] = line;
 					}
 
@@ -189,11 +190,9 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(Nova::Levels messageLevel, string message)
+	void Logger::Logging(Nova::Levels messageLevel, userMap serv, string message)
 	{
-		//Nova::Services services = Logger::setServiceLevel(messageLevel);
-		// ^^^ This is temporary, still need to go through and define setServiceLevel
-		Nova::Services services = LIBNOTIFY_BELOW;
+		Nova::Services services = Logger::setServiceLevel(messageLevel, serv);
 
 		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
@@ -258,7 +257,7 @@ namespace Nova
 
 			if(endSubStr != toClean[i].npos)
 			{
-				out[i] = toClean[i].substr(0, endSubStr - 1);
+				out[i] = toClean[i].substr(0, endSubStr);
 			}
 		}
 
@@ -282,21 +281,21 @@ namespace Nova
 					{
 						switch(logPrefString.at(i))
 						{
-							case 0: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(EMERGENCY, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '0': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(EMERGENCY, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
-							case 1: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ALERT, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '1': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ALERT, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
-							case 2: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(CRITICAL, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '2': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(CRITICAL, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
-							case 3: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ERROR, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '3': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ERROR, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
-							case 4: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(WARNING, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '4': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(WARNING, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
-							case 5: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(NOTICE, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '5': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(NOTICE, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
-							case 6: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(INFO, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '6': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(INFO, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
-							case 7: messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(DEBUG, parseServicesFromChar(logPrefString.at(i + 2))));
+							case '7': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(DEBUG, parseServicesFromChar(logPrefString.at(i + 2))));
 									break;
 						}
 					}
@@ -341,14 +340,22 @@ namespace Nova
 
 	}
 
-	/*Nova::Services Logger::setServiceLevel(Nova::Levels messageLevel)
+	Nova::Services Logger::setServiceLevel(Nova::Levels messageLevel, userMap serv)
 	{
+		for(uint16_t i = 0; i < serv.size(); i++)
+		{
+			if(messageLevel == serv[i].first)
+			{
+				return serv[i].second;
+			}
+		}
 
-	}*/
+		return NO_SERV;
+	}
 
 	Logger::Logger(string parent, char const * configFilePath, bool init)
 	{
-		parentName = parent;
+		parentName = parent.substr(7, (parent.length() - 11));;
 
 		for(uint16_t i = 0; i < 8; i++)
 		{

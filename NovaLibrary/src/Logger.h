@@ -76,7 +76,7 @@ public:
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(Nova::Levels messageLevel, string message);
+	void Logging(Nova::Levels messageLevel, userMap serv, string message);
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
 	// args: string logPrefString: this method is used for reading from the config file
@@ -99,7 +99,7 @@ private:
 	// for use in the logging public method. Purely used to reduce number
 	// of arguments for void Logging().
 	// TODO: write a function definition for this
-	Nova::Services setServiceLevel(Nova::Levels messageLevel);
+	Nova::Services setServiceLevel(Nova::Levels messageLevel, userMap serv);
 	//
 	Nova::Services parseServicesFromChar(char parse);
 
