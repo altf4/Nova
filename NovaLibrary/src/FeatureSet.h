@@ -179,8 +179,6 @@ private:
 	//Total number of bytes in all packets
 	pair<uint32_t, uint32_t> bytesTotal;
 
-	///A vector of packet arrival times for tracking traffic over time.
-	vector <time_t> packet_times;
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;
 
