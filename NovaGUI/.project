@@ -11,11 +11,6 @@
 	</projects>
 	<buildSpec>
 		<buildCommand>
-			<name>com.trolltech.qtcppproject.QtMakefileGenerator</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
 			<name>org.eclipse.cdt.make.core.makeBuilder</name>
 			<triggers>clean,full,incremental,</triggers>
 			<arguments>
@@ -69,11 +64,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.environment</key>
-<<<<<<< HEAD
-					<value>PATH=/usr/share/qt4/bin:${env_var:PATH}|</value>
-=======
 					<value>MAKE=make -j2|PATH=/usr/share/qt4/bin:${env_var:PATH}:${env_var:PATH}|</value>
->>>>>>> 65ee6b5b42f6cbb5bc5e6ab73e9b51ff213e28c5
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.stopOnError</key>
@@ -81,8 +72,13 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.useDefaultBuildCmd</key>
-					<value>true</value>
+					<value>false</value>
 				</dictionary>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>com.trolltech.qtcppproject.QtMakefileGenerator</name>
+			<arguments>
 			</arguments>
 		</buildCommand>
 		<buildCommand>
