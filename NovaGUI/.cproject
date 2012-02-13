@@ -138,6 +138,14 @@
 				<pathentry base-path="/usr/share/qt4/include" include="QtScript" kind="inc" path="" system="true"/>
 				<pathentry base-path="/usr/share/qt4/include" include="QtDBus" kind="inc" path="" system="true"/>
 				<pathentry base-path="/usr/share/qt4/include" include="QtDeclarative" kind="inc" path="" system="true"/>
+				<pathentry kind="src" path=""/>
+				<pathentry kind="out" path=""/>
+				<pathentry kind="prj" path="/NovaLibrary"/>
+				<pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
+				<pathentry kind="prj" path="/LocalTrafficMonitor"/>
+				<pathentry kind="prj" path="/DoppelgangerModule"/>
+				<pathentry kind="prj" path="/ClassificationEngine"/>
+				<pathentry kind="prj" path="/Haystack"/>
 				<pathentry base-path="/usr/include/qt4" include="" kind="inc" path="" system="true"/>
 				<pathentry base-path="/usr/include/qt4" include="QtDeclarative" kind="inc" path="" system="true"/>
 				<pathentry base-path="/usr/include/qt4" include="QtXmlPatterns" kind="inc" path="" system="true"/>
@@ -159,14 +167,6 @@
 				<pathentry base-path="/usr/include/qt4" include="QtNetwork" kind="inc" path="" system="true"/>
 				<pathentry base-path="/usr/include/qt4" include="QtSvg" kind="inc" path="" system="true"/>
 				<pathentry base-path="/usr/include/qt4" include="QtXml" kind="inc" path="" system="true"/>
-				<pathentry kind="src" path=""/>
-				<pathentry kind="out" path=""/>
-				<pathentry kind="prj" path="/NovaLibrary"/>
-				<pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
-				<pathentry kind="prj" path="/LocalTrafficMonitor"/>
-				<pathentry kind="prj" path="/DoppelgangerModule"/>
-				<pathentry kind="prj" path="/ClassificationEngine"/>
-				<pathentry kind="prj" path="/Haystack"/>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
