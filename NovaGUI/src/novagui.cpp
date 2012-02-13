@@ -1960,9 +1960,6 @@ void NovaGUI::on_actionConfigure_triggered()
 	NovaConfig *w = new NovaConfig(this, homePath);
 	w->setWindowModality(Qt::WindowModal);
 	w->show();
-
-	// Reload the configuration in case the user changed stuff
-	reloadConfiguration();
 }
 
 void  NovaGUI::on_actionExit_triggered()
@@ -2434,6 +2431,40 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 	}
 }
 
+// Reload the configuration file
+void NovaGUI::reloadConfiguration()
+{
+	// Reload the configuration file
+	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
+
+	useTerminals = atoi(configuration.options["USE_TERMINALS"].data.c_str());
+	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
+	string enabledFeatureMask = configuration.options["ENABLED_FEATURES"].data;
+
+	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
+	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
+	trainingDataPath = configuration.options["DATAFILE"].data;
+	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
+
+	goToLive = atoi(configuration.options["GO_TO_LIVE"].data.c_str());
+	readFromPcap = atoi(configuration.options["READ_PCAP"].data.c_str());
+	dmAddr = configuration.options["DOPPELGANGER_IP"].data.c_str();
+
+	enabledFeatures = 0;
+	for (uint i = 0; i < DIM; i++)
+	{
+		if ('1' == enabledFeatureMask.at(i))
+		{
+			featureEnabled[i] = true;
+			enabledFeatures++;
+		}
+		else
+		{
+			featureEnabled[i] = false;
+		}
+	}
+}
+
 /************************************************
  * IPC Functions
  ************************************************/
@@ -2544,46 +2575,9 @@ void stopNova()
 	pclose(out);
 }
 
-// Reload the configuration file
-void reloadConfiguration()
-{
-	// Reload the configuration file
-	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
-
-	useTerminals = atoi(configuration.options["USE_TERMINALS"].data.c_str());
-	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
-	string enabledFeatureMask = configuration.options["ENABLED_FEATURES"].data;
-
-	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
-	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
-	trainingDataPath = configuration.options["DATAFILE"].data;
-	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
-
-	goToLive = atoi(configuration.options["GO_TO_LIVE"].data.c_str());
-	readFromPcap = atoi(configuration.options["READ_PCAP"].data.c_str());
-	dmAddr = configuration.options["DOPPELGANGER_IP"].data.c_str();
-
-	enabledFeatures = 0;
-	for (uint i = 0; i < DIM; i++)
-	{
-		if ('1' == enabledFeatureMask.at(i))
-		{
-			featureEnabled[i] = true;
-			enabledFeatures++;
-		}
-		else
-		{
-			featureEnabled[i] = false;
-		}
-	}
-}
-
 
 void startNova()
 {
-	// Reload the configuration file
-	reloadConfiguration();
-
 	// Start and processes that aren't running already
 	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
 	{
