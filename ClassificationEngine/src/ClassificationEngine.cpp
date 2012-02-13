@@ -982,7 +982,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		{
 			bzero(data, MAX_MSG_SIZE);
 			dataLen = suspect->SerializeSuspect(data);
-			dataLen += suspect->features.SerializeFeatureDataBroadcast(data+dataLen);
+			dataLen += suspect->features.SerializeFeatureData(data+dataLen, true);
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
 			{

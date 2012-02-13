@@ -480,7 +480,7 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 
 	do{
 		dataLen = suspect->SerializeSuspect(data);
-		dataLen += suspect->features.SerializeFeatureDataLocal(data+dataLen);
+		dataLen += suspect->features.SerializeFeatureData(data+dataLen, false);
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{

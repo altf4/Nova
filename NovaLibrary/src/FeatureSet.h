@@ -131,32 +131,18 @@ public:
 	// Returns: number of bytes read from the buffer
 	uint32_t DeserializeFeatureSet(u_char * buf);
 
-	// TODO: Might be a good idea to combine SerializeFeatureDataBroadcast/SerializeFeatureDataLocal and
-	// the deserializing compliments. Very small changes in the code, we could pass another input arg as a switch.
-
-	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
-	// This function saves serialized data used by the ClassificationEngine for sending silentAlarms, needs data to classify
-	//		buf - Pointer to buffer to store serialized data
-	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureDataBroadcast(u_char * buf);
-
 	// Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in broadcast data (the second member of uint pairs)
 	//		buf - Pointer to buffer where the serialized Feature data broadcast resides
 	// Returns: number of bytes read from the buffer
 	uint32_t DeserializeFeatureDataBroadcast(u_char * buf);
+	uint32_t DeserializeFeatureDataLocal(u_char * buf);
 
 	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	// This function doesn't keep data once serialized. Used by the LocalTrafficMonitor and Haystack for sending suspect information
 	//		buf - Pointer to buffer to store serialized data in
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureDataLocal(u_char * buf);
-
-	//Reads the feature set data from a buffer originally populated by serializeFeatureData
-	// and stores it in local data (the first member of uint pairs)
-	//		buf - Pointer to buffer where the serialized data resides
-	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureDataLocal(u_char * buf);
+	uint32_t SerializeFeatureData(u_char * buf, bool isBroadcast);
 
 	FeatureSet* unsentData;
 private:

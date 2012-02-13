@@ -431,7 +431,7 @@ uint32_t FeatureSet::DeserializeFeatureSet(u_char * buf)
 }
 
 
-uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
+uint32_t FeatureSet::SerializeFeatureData(u_char *buf, bool isBroadcast)
 {
 	uint32_t offset = 0;
 	uint32_t count = 0;
@@ -441,22 +441,26 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	CalculateTimeInterval();
 	startTime = endTime;
 	memcpy(buf+offset, &unsentData->totalInterval, sizeof unsentData->totalInterval);
-	totalInterval += unsentData->totalInterval;
+	if (isBroadcast)
+		totalInterval += unsentData->totalInterval;
 	unsentData->totalInterval = 0;
 	offset += sizeof unsentData->totalInterval;
 
 	memcpy(buf+offset, &unsentData->haystackEvents, sizeof unsentData->haystackEvents);
-	haystackEvents += unsentData->haystackEvents;
+	if (isBroadcast)
+		haystackEvents += unsentData->haystackEvents;
 	unsentData->haystackEvents = 0;
 	offset += sizeof unsentData->haystackEvents;
 
 	memcpy(buf+offset, &unsentData->packetCount, sizeof unsentData->packetCount);
-	packetCount += unsentData->packetCount;
+	if (isBroadcast)
+		packetCount += unsentData->packetCount;
 	unsentData->packetCount = 0;
 	offset += sizeof unsentData->packetCount;
 
 	memcpy(buf+offset, &unsentData->bytesTotal, sizeof unsentData->bytesTotal);
-	bytesTotal += unsentData->bytesTotal;
+	if (isBroadcast)
+		bytesTotal += unsentData->bytesTotal;
 	unsentData->bytesTotal = 0;
 	offset += sizeof unsentData->bytesTotal;
 
@@ -484,7 +488,8 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 			offset += sizeof it->first;
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
-			intervalTable[it->first] += it->second;
+			if (isBroadcast)
+				intervalTable[it->first] += it->second;
 			unsentData->intervalTable[it->first] = 0;
 		}
 	}
@@ -507,7 +512,8 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 			offset += sizeof it->first;
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
-			packTable[it->first] += it->second;
+			if (isBroadcast)
+				packTable[it->first] += it->second;
 			unsentData->packTable[it->first] = 0;
 		}
 	}
@@ -530,7 +536,8 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 			offset += sizeof it->first;
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
-			IPTable[it->first] += it->second;
+			if (isBroadcast)
+				IPTable[it->first] += it->second;
 			unsentData->IPTable[it->first] = 0;
 		}
 	}
@@ -553,7 +560,8 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 			offset += sizeof it->first;
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
-			portTable[it->first] += it->second;
+			if (isBroadcast)
+				portTable[it->first] += it->second;
 			unsentData->portTable[it->first] = 0;
 		}
 	}
@@ -576,22 +584,22 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	//Required, individual variables for calculation
 	memcpy(&temp, buf+offset, sizeof unsentData->totalInterval);
 	totalInterval += temp;
-	offset += sizeof unsentData->bytesTotal;
+	offset += sizeof unsentData->totalInterval;
 
 	memcpy(&temp, buf+offset, sizeof unsentData->haystackEvents);
 	haystackEvents += temp;
-	offset += sizeof unsentData->bytesTotal;
+	offset += sizeof unsentData->haystackEvents;
 
 	memcpy(&temp, buf+offset, sizeof unsentData->packetCount);
 	packetCount += temp;
-	offset += sizeof unsentData->bytesTotal;
+	offset += sizeof unsentData->packetCount;
 
 	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
 	bytesTotal += temp;
 	offset += sizeof unsentData->bytesTotal;
 
 	memcpy(&temp, buf+offset, sizeof unsentData->portMax);
-	offset += sizeof unsentData->bytesTotal;
+	offset += sizeof unsentData->portMax;
 
 	if(temp > portMax)
 		portMax = temp;
@@ -661,128 +669,6 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 }
 
 
-uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
-{
-	uint32_t offset = 0;
-	uint32_t count = 0;
-	uint32_t table_entries = 0;
-
-	//Required, individual variables for calculation
-	CalculateTimeInterval();
-	startTime = endTime;
-	memcpy(buf+offset, &unsentData->totalInterval, sizeof unsentData->totalInterval);
-	unsentData->totalInterval = 0;
-	offset += sizeof unsentData->totalInterval;
-
-	memcpy(buf+offset, &unsentData->haystackEvents, sizeof unsentData->haystackEvents);
-	unsentData->haystackEvents = 0;
-	offset += sizeof unsentData->haystackEvents;
-
-	memcpy(buf+offset, &unsentData->packetCount, sizeof unsentData->packetCount);
-	unsentData->packetCount = 0;
-	offset += sizeof unsentData->packetCount;
-
-	memcpy(buf+offset, &unsentData->bytesTotal, sizeof unsentData->bytesTotal);
-	unsentData->bytesTotal = 0;
-	offset += sizeof unsentData->bytesTotal;
-
-	memcpy(buf+offset, &portMax, sizeof portMax);
-	offset += sizeof portMax;
-
-	//These tables all just place their key followed by the data
-	uint32_t tempInt;
-
-	for(Interval_Table::iterator it = unsentData->intervalTable.begin(); (it != unsentData->intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second)
-			count++;
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-
-	for(Interval_Table::iterator it = unsentData->intervalTable.begin(); (it != unsentData->intervalTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-			unsentData->intervalTable[it->first] = 0;
-		}
-	}
-
-	for(Packet_Table::iterator it = unsentData->packTable.begin(); (it != unsentData->packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second)
-			count++;
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-
-	for(Packet_Table::iterator it = unsentData->packTable.begin(); (it != unsentData->packTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-			unsentData->packTable[it->first] = 0;
-		}
-	}
-
-	for(IP_Table::iterator it = unsentData->IPTable.begin(); (it != unsentData->IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second)
-			count++;
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-
-	for(IP_Table::iterator it = unsentData->IPTable.begin(); (it != unsentData->IPTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-			unsentData->IPTable[it->first] = 0;
-		}
-	}
-
-	for(Port_Table::iterator it = unsentData->portTable.begin(); (it != unsentData->portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second)
-			count++;
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-
-	for(Port_Table::iterator it = unsentData->portTable.begin(); (it != unsentData->portTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-			unsentData->portTable[it->first] = 0;
-		}
-	}
-	return offset;
-}
-
-
 uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 {
 	uint32_t offset = 0;
@@ -847,7 +733,7 @@ uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 		offset += sizeof temp;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		packTable[temp] += tempCount;
+		unsentData->packTable[temp] += tempCount;
 		i++;
 	}
 
