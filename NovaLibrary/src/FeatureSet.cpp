@@ -26,42 +26,17 @@ namespace Nova{
 
 FeatureSet::FeatureSet()
 {
-	//Temp variables
-	startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
-	endTime = 0;
-	totalInterval.first = 0;
-	totalInterval.second = 0;
-
 	IPTable.set_empty_key(0);
 	portTable.set_empty_key(0);
 	packTable.set_empty_key(0);
 	intervalTable.set_empty_key(2147483647);
 
-	IPTable.clear();
-	portTable.clear();
-	packTable.clear();
-	intervalTable.clear();
+	ClearFeatureSet();
 
 	intervalTable.resize(INIT_SIZE_SMALL);
 	IPTable.resize(INIT_SIZE_SMALL);
 	portTable.resize(INIT_SIZE_MEDIUM);
 	packTable.resize(INIT_SIZE_LARGE);
-
-	haystackEvents.first = 0;
-	packetCount.first = 0;
-	bytesTotal.first = 0;
-	haystackEvents.second = 0;
-	packetCount.second = 0;
-	bytesTotal.second = 0;
-	last_time = 0;
-
-	portMax = 0;
-	IPMax = 0;
-	//Features
-	for(int i = 0; i < DIM; i++)
-	{
-		features[i] = 0;
-	}
 }
 
 
@@ -70,29 +45,23 @@ void FeatureSet::ClearFeatureSet()
 	//Temp variables
 	startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
 	endTime = 0;
-	totalInterval.first = 0;
-	totalInterval.second = 0;
+	totalInterval = 0;
 
 	IPTable.clear();
 	portTable.clear();
 	packTable.clear();
 	intervalTable.clear();
 
-	haystackEvents.first = 0;
-	packetCount.first = 0;
-	bytesTotal.first = 0;
-	haystackEvents.second = 0;
-	packetCount.second = 0;
-	bytesTotal.second = 0;
+	haystackEvents = 0;
+	packetCount = 0;
+	bytesTotal = 0;
 	last_time = 0;
 
 	portMax = 0;
 	IPMax = 0;
 	//Features
 	for(int i = 0; i < DIM; i++)
-	{
 		features[i] = 0;
-	}
 }
 
 
@@ -157,15 +126,17 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	case IP_TRAFFIC_DISTRIBUTION:
 	{
 		features[IP_TRAFFIC_DISTRIBUTION] = 0;
+
+		// TODO: Don't lookup ipmax everytime.. or remove it from class vars if we need to
 		IPMax = 0;
 		for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
 		{
-			if(it->second.second > IPMax)
-				IPMax = it->second.second;
+			if(it->second > IPMax)
+				IPMax = it->second;
 		}
 		for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
 		{
-			features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)IPMax);
+			features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)IPMax);
 		}
 
 		features[IP_TRAFFIC_DISTRIBUTION] = features[IP_TRAFFIC_DISTRIBUTION] / (double)IPTable.size();
@@ -179,7 +150,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 		features[PORT_TRAFFIC_DISTRIBUTION] = 0;
 		for (Port_Table::iterator it = portTable.begin() ; it != portTable.end(); it++)
 		{
-			features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second.second / (double)portMax);
+			features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)portMax);
 		}
 
 		features[PORT_TRAFFIC_DISTRIBUTION] = features[PORT_TRAFFIC_DISTRIBUTION] / (double)portTable.size();
@@ -190,14 +161,14 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	case HAYSTACK_EVENT_FREQUENCY:
 	{
 		// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
-		if(totalInterval.second)
+		if(totalInterval)
 		{
-			features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEvents.second)) / (double)(totalInterval.second);
+			features[HAYSTACK_EVENT_FREQUENCY] = ((double)(haystackEvents)) / (double)(totalInterval);
 		}
 		else
 		{
 			//If interval is 0, no time based information, use a default of 1 for the interval
-			features[HAYSTACK_EVENT_FREQUENCY] = (double)(haystackEvents.second);
+			features[HAYSTACK_EVENT_FREQUENCY] = (double)(haystackEvents);
 		}
 		break;
 	}
@@ -206,7 +177,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	///Measures the distribution of packet sizes
 	case PACKET_SIZE_MEAN:
 	{
-		features[PACKET_SIZE_MEAN] = (double)bytesTotal.second / (double)packetCount.second;
+		features[PACKET_SIZE_MEAN] = (double)bytesTotal / (double)packetCount;
 		break;
 	}
 
@@ -214,7 +185,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	///Measures the distribution of packet sizes
 	case PACKET_SIZE_DEVIATION:
 	{
-		double count = packetCount.second;
+		double count = packetCount;
 		double mean = 0;
 		double variance = 0;
 		//Calculate mean
@@ -224,7 +195,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 		for(Packet_Table::iterator it = packTable.begin() ; it != packTable.end(); it++)
 		{
 			// number of packets multiplied by (packet_size - mean)^2 divided by count
-			variance += (it->second.second * pow((it->first - mean), 2))/ count;
+			variance += (it->second * pow((it->first - mean), 2))/ count;
 		}
 
 		features[PACKET_SIZE_DEVIATION] = sqrt(variance);
@@ -250,8 +221,8 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	///Measures the distribution of intervals between packets
 	case PACKET_INTERVAL_MEAN:
 	{
-		features[PACKET_INTERVAL_MEAN] = (((double) totalInterval.second)
-								/ ((double) (packetCount.second)));
+		features[PACKET_INTERVAL_MEAN] = (((double) totalInterval)
+								/ ((double) (packetCount)));
 		break;
 	}
 
@@ -259,7 +230,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	///Measures the distribution of intervals between packets
 	case PACKET_INTERVAL_DEVIATION:
 	{
-		double totalCount = packetCount.second;
+		double totalCount = packetCount;
 		double mean = 0;
 		double variance = 0;
 
@@ -267,7 +238,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 
 		for (Interval_Table::iterator it = intervalTable.begin() ; it != intervalTable.end(); it++)
 		{
-			variance += it->second.second*(pow((it->first - mean), 2)/totalCount);
+			variance += it->second*(pow((it->first - mean), 2)/totalCount);
 		}
 
 		features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
@@ -287,7 +258,7 @@ void FeatureSet::CalculateTimeInterval()
 {
 	if(endTime > startTime)
 	{
-		totalInterval.first = endTime - startTime;
+		unsentData->totalInterval = endTime - startTime;
 	}
 }
 
@@ -324,44 +295,44 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
 	packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
 
-	packetCount.first += packet_count;
-	bytesTotal.first += ntohs(packet.ip_hdr.ip_len);;
+	unsentData->packetCount += packet_count;
+	unsentData->bytesTotal += ntohs(packet.ip_hdr.ip_len);;
 
 	//If from haystack
 	if(packet.fromHaystack)
 	{
-		IPTable[packet.ip_hdr.ip_dst.s_addr].first += packet_count;
-		haystackEvents.first++;
+		unsentData->IPTable[packet.ip_hdr.ip_dst.s_addr] += packet_count;
+		unsentData->haystackEvents++;
 	}
 	//Else from a host
 	else
 	{
 		//Put the packet count into a bin that is never used so that
 		// all host events for a suspect go into the same bin
-		IPTable[1].first +=  packet_count;
+		unsentData->IPTable[1] +=  packet_count;
 	}
 
-	portTable[dst_port].first += packet_count;
+	unsentData->portTable[dst_port] += packet_count;
 
 	//Checks for the max to avoid iterating through the entire table every update
 	//Since number of ports can grow very large during a scan this will distribute the computation more evenly
 	//Since the IP will tend to be relatively small compared to number of events, it's max is found during the call.
-	if(portTable[dst_port].first > portMax)
+	if(unsentData->portTable[dst_port] > portMax)
 	{
-		portMax = portTable[dst_port].first;
+		portMax = unsentData->portTable[dst_port];
 	}
 
 	for(uint32_t i = 0; i < IP_packet_sizes.size(); i++)
 	{
-		packTable[IP_packet_sizes[i]].first++;
+		unsentData->packTable[IP_packet_sizes[i]]++;
 	}
 
 	if(last_time != 0)
-		intervalTable[packet_intervals[0] - last_time].first++;
+		unsentData->intervalTable[packet_intervals[0] - last_time]++;
 
 	for(uint32_t i = 1; i < packet_intervals.size(); i++)
 	{
-		intervalTable[packet_intervals[i] - packet_intervals[i-1]].first++;
+		intervalTable[packet_intervals[i] - unsentData->packet_intervals[i-1]]++;
 	}
 	last_time = packet_intervals.back();
 
@@ -376,62 +347,54 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	}
 }
 
+FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
+	totalInterval += rhs.totalInterval;
+	packetCount += rhs.packetCount;
+	bytesTotal += rhs.bytesTotal;
+	haystackEvents += rhs.haystackEvents;
+
+	for(IP_Table::iterator it = rhs.IPTable.begin(); it != rhs.IPTable.end(); it++)
+		IPTable[it->first] += rhs.IPTable[it->first];
+
+	for(Port_Table::iterator it = rhs.portTable.begin(); it != rhs.portTable.end(); it++)
+		portTable[it->first] += rhs.portTable[it->first];
+
+	for(Packet_Table::iterator it = rhs.packTable.begin(); it != rhs.packTable.end(); it++)
+		packTable[it->first] += rhs.packTable[it->first];
+
+	for(Interval_Table::iterator it = rhs.intervalTable.begin(); it != rhs.intervalTable.end(); it++)
+		intervalTable[it->first] += rhs.intervalTable[it->first];
+
+	return *this;
+}
+
+FeatureSet& FeatureSet::operator-=(FeatureSet &rhs) {
+	totalInterval -= rhs.totalInterval;
+	packetCount -= rhs.packetCount;
+	bytesTotal -= rhs.bytesTotal;
+	haystackEvents -= rhs.haystackEvents;
+
+	for(IP_Table::iterator it = rhs.IPTable.begin(); it != rhs.IPTable.end(); it++)
+		IPTable[it->first] -= rhs.IPTable[it->first];
+
+	for(Port_Table::iterator it = rhs.portTable.begin(); it != rhs.portTable.end(); it++)
+		portTable[it->first] -= rhs.portTable[it->first];
+
+	for(Packet_Table::iterator it = rhs.packTable.begin(); it != rhs.packTable.end(); it++)
+		packTable[it->first] -= rhs.packTable[it->first];
+
+	for(Interval_Table::iterator it = rhs.intervalTable.begin(); it != rhs.intervalTable.end(); it++)
+		intervalTable[it->first] -= rhs.intervalTable[it->first];
+
+	return *this;
+}
 
 void FeatureSet::UpdateFeatureData(bool include)
 {
 	if(include)
-	{
-		totalInterval.second += totalInterval.first;
-		packetCount.second += packetCount.first;
-		bytesTotal.second += bytesTotal.first;
-		haystackEvents.second += haystackEvents.first;
-
-		for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
-		{
-			IPTable[it->first].second += it->second.first;
-		}
-
-		for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
-		{
-			portTable[it->first].second += it->second.first;
-		}
-
-		for(Packet_Table::iterator it = packTable.begin(); it != packTable.end(); it++)
-		{
-			packTable[it->first].second += it->second.first;
-		}
-		for(Interval_Table::iterator it = intervalTable.begin(); it != intervalTable.end(); it++)
-		{
-			intervalTable[it->first].second += it->second.first;
-		}
-	}
+		*this += *unsentData;
 	else
-	{
-		totalInterval.second -= totalInterval.first;
-		packetCount.second -= packetCount.first;
-		bytesTotal.second -= bytesTotal.first;
-		haystackEvents.second -= haystackEvents.first;
-
-		for(IP_Table::iterator it = IPTable.begin(); it != IPTable.end(); it++)
-		{
-			IPTable[it->first].second -= it->second.first;
-		}
-
-		for(Port_Table::iterator it = portTable.begin(); it != portTable.end(); it++)
-		{
-			portTable[it->first].second -= it->second.first;
-		}
-
-		for(Packet_Table::iterator it = packTable.begin(); it != packTable.end(); it++)
-		{
-			packTable[it->first].second -= it->second.first;
-		}
-
-		for(Interval_Table::iterator it = intervalTable.begin(); it != intervalTable.end(); it++)
-		{
-			intervalTable[it->first].second -= it->second.first;
-		}
-	}
+		*this -= *unsentData;
 }
 
 
@@ -477,25 +440,25 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 	startTime = endTime;
-	memcpy(buf+offset, &totalInterval.first, sizeof totalInterval.first);
-	totalInterval.second += totalInterval.first;
-	totalInterval.first = 0;
-	offset += sizeof totalInterval.first;
+	memcpy(buf+offset, &unsentData->totalInterval, sizeof unsentData->totalInterval);
+	totalInterval += unsentData->totalInterval;
+	unsentData->totalInterval = 0;
+	offset += sizeof unsentData->totalInterval;
 
-	memcpy(buf+offset, &haystackEvents.first, sizeof haystackEvents.first);
-	haystackEvents.second += haystackEvents.first;
-	haystackEvents.first = 0;
-	offset += sizeof haystackEvents.first;
+	memcpy(buf+offset, &unsentData->haystackEvents, sizeof unsentData->haystackEvents);
+	haystackEvents += unsentData->haystackEvents;
+	unsentData->haystackEvents = 0;
+	offset += sizeof unsentData->haystackEvents;
 
-	memcpy(buf+offset, &packetCount.first, sizeof packetCount.first);
-	packetCount.second += packetCount.first;
-	packetCount.first = 0;
-	offset += sizeof packetCount.first;
+	memcpy(buf+offset, &unsentData->packetCount, sizeof unsentData->packetCount);
+	packetCount += unsentData->packetCount;
+	unsentData->packetCount = 0;
+	offset += sizeof unsentData->packetCount;
 
-	memcpy(buf+offset, &bytesTotal.first, sizeof bytesTotal.first);
-	bytesTotal.second += bytesTotal.first;
-	bytesTotal.first = 0;
-	offset += sizeof bytesTotal.first;
+	memcpy(buf+offset, &unsentData->bytesTotal, sizeof unsentData->bytesTotal);
+	bytesTotal += unsentData->bytesTotal;
+	unsentData->bytesTotal = 0;
+	offset += sizeof unsentData->bytesTotal;
 
 	memcpy(buf+offset, &portMax, sizeof portMax);
 	offset += sizeof portMax;
@@ -503,8 +466,8 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	//These tables all just place their key followed by the data
 	uint32_t tempInt;
 
-	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(Interval_Table::iterator it = unsentData->intervalTable.begin(); (it != unsentData->intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -512,22 +475,22 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (table_entries < count); it++)
+	for(Interval_Table::iterator it = unsentData->intervalTable.begin(); (it != unsentData->intervalTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			intervalTable[it->first].second += it->second.first;
-			intervalTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			intervalTable[it->first] += it->second;
+			unsentData->intervalTable[it->first] = 0;
 		}
 	}
 
-	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(Packet_Table::iterator it = unsentData->packTable.begin(); (it != unsentData->packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -535,22 +498,22 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (table_entries < count); it++)
+	for(Packet_Table::iterator it = unsentData->packTable.begin(); (it != unsentData->packTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			packTable[it->first].second += it->second.first;
-			packTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			packTable[it->first] += it->second;
+			unsentData->packTable[it->first] = 0;
 		}
 	}
 
-	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(IP_Table::iterator it = unsentData->IPTable.begin(); (it != unsentData->IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -558,22 +521,22 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (table_entries < count); it++)
+	for(IP_Table::iterator it = unsentData->IPTable.begin(); (it != unsentData->IPTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			IPTable[it->first].second += it->second.first;
-			IPTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			IPTable[it->first] += it->second;
+			unsentData->IPTable[it->first] = 0;
 		}
 	}
 
-	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(Port_Table::iterator it = unsentData->portTable.begin(); (it != unsentData->portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -581,17 +544,17 @@ uint32_t FeatureSet::SerializeFeatureDataBroadcast(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (table_entries < count); it++)
+	for(Port_Table::iterator it = unsentData->portTable.begin(); (it != unsentData->portTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			portTable[it->first].second += it->second.first;
-			portTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			portTable[it->first] += it->second;
+			unsentData->portTable[it->first] = 0;
 		}
 	}
 	return offset;
@@ -611,24 +574,24 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 	in_port_t port = 0;
 
 	//Required, individual variables for calculation
-	memcpy(&temp, buf+offset, sizeof bytesTotal.first);
-	totalInterval.second += temp;
-	offset += sizeof bytesTotal.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	totalInterval += temp;
+	offset += sizeof unsentData->bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof bytesTotal.first);
-	haystackEvents.second += temp;
-	offset += sizeof bytesTotal.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	haystackEvents += temp;
+	offset += sizeof unsentData->bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof bytesTotal.first);
-	packetCount.second += temp;
-	offset += sizeof bytesTotal.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	packetCount += temp;
+	offset += sizeof unsentData->bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof bytesTotal.first);
-	bytesTotal.second += temp;
-	offset += sizeof bytesTotal.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	bytesTotal += temp;
+	offset += sizeof unsentData->bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof bytesTotal.first);
-	offset += sizeof bytesTotal.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	offset += sizeof unsentData->bytesTotal;
 
 	if(temp > portMax)
 		portMax = temp;
@@ -648,7 +611,7 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 		offset += sizeof temp;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		intervalTable[temp].second += tempCount;
+		intervalTable[temp] += tempCount;
 		i++;
 	}
 
@@ -662,7 +625,7 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 		offset += sizeof temp;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		packTable[temp].second += tempCount;
+		packTable[temp] += tempCount;
 		i++;
 	}
 
@@ -676,7 +639,7 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 		offset += sizeof temp;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		IPTable[temp].second += tempCount;
+		IPTable[temp] += tempCount;
 		i++;
 	}
 
@@ -690,7 +653,7 @@ uint32_t FeatureSet::DeserializeFeatureDataBroadcast(u_char *buf)
 		offset += sizeof port;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		portTable[port].second += tempCount;
+		portTable[port] += tempCount;
 		i++;
 	}
 
@@ -707,21 +670,21 @@ uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 	startTime = endTime;
-	memcpy(buf+offset, &totalInterval.first, sizeof totalInterval.first);
-	totalInterval.first = 0;
-	offset += sizeof totalInterval.first;
+	memcpy(buf+offset, &unsentData->totalInterval, sizeof unsentData->totalInterval);
+	unsentData->totalInterval = 0;
+	offset += sizeof unsentData->totalInterval;
 
-	memcpy(buf+offset, &haystackEvents.first, sizeof haystackEvents.first);
-	haystackEvents.first = 0;
-	offset += sizeof haystackEvents.first;
+	memcpy(buf+offset, &unsentData->haystackEvents, sizeof unsentData->haystackEvents);
+	unsentData->haystackEvents = 0;
+	offset += sizeof unsentData->haystackEvents;
 
-	memcpy(buf+offset, &packetCount.first, sizeof packetCount.first);
-	packetCount.first = 0;
-	offset += sizeof packetCount.first;
+	memcpy(buf+offset, &unsentData->packetCount, sizeof unsentData->packetCount);
+	unsentData->packetCount = 0;
+	offset += sizeof unsentData->packetCount;
 
-	memcpy(buf+offset, &bytesTotal.first, sizeof bytesTotal.first);
-	bytesTotal.first = 0;
-	offset += sizeof bytesTotal.first;
+	memcpy(buf+offset, &unsentData->bytesTotal, sizeof unsentData->bytesTotal);
+	unsentData->bytesTotal = 0;
+	offset += sizeof unsentData->bytesTotal;
 
 	memcpy(buf+offset, &portMax, sizeof portMax);
 	offset += sizeof portMax;
@@ -729,8 +692,8 @@ uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 	//These tables all just place their key followed by the data
 	uint32_t tempInt;
 
-	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(Interval_Table::iterator it = unsentData->intervalTable.begin(); (it != unsentData->intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -738,21 +701,21 @@ uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(Interval_Table::iterator it = intervalTable.begin(); (it != intervalTable.end()) && (table_entries < count); it++)
+	for(Interval_Table::iterator it = unsentData->intervalTable.begin(); (it != unsentData->intervalTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			intervalTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			unsentData->intervalTable[it->first] = 0;
 		}
 	}
 
-	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(Packet_Table::iterator it = unsentData->packTable.begin(); (it != unsentData->packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -760,21 +723,21 @@ uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(Packet_Table::iterator it = packTable.begin(); (it != packTable.end()) && (table_entries < count); it++)
+	for(Packet_Table::iterator it = unsentData->packTable.begin(); (it != unsentData->packTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			packTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			unsentData->packTable[it->first] = 0;
 		}
 	}
 
-	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(IP_Table::iterator it = unsentData->IPTable.begin(); (it != unsentData->IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -782,21 +745,21 @@ uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(IP_Table::iterator it = IPTable.begin(); (it != IPTable.end()) && (table_entries < count); it++)
+	for(IP_Table::iterator it = unsentData->IPTable.begin(); (it != unsentData->IPTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			IPTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			unsentData->IPTable[it->first] = 0;
 		}
 	}
 
-	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
-		if(it->second.first)
+	for(Port_Table::iterator it = unsentData->portTable.begin(); (it != unsentData->portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+		if(it->second)
 			count++;
 
 	//The size of the Table
@@ -804,16 +767,16 @@ uint32_t FeatureSet::SerializeFeatureDataLocal(u_char *buf)
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
 
-	for(Port_Table::iterator it = portTable.begin(); (it != portTable.end()) && (table_entries < count); it++)
+	for(Port_Table::iterator it = unsentData->portTable.begin(); (it != unsentData->portTable.end()) && (table_entries < count); it++)
 	{
-		if(it->second.first)
+		if(it->second)
 		{
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
-			memcpy(buf+offset, &it->second.first, sizeof it->second.first);
-			offset += sizeof it->second.first;
-			portTable[it->first].first = 0;
+			memcpy(buf+offset, &it->second, sizeof it->second);
+			offset += sizeof it->second;
+			unsentData->portTable[it->first] = 0;
 		}
 	}
 	return offset;
@@ -833,21 +796,21 @@ uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 	in_port_t port = 0;
 
 	//Required, individual variables for calculation
-	memcpy(&temp, buf+offset, sizeof totalInterval.first);
-	totalInterval.first += temp;
-	offset += sizeof totalInterval.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->totalInterval);
+	unsentData->totalInterval += temp;
+	offset += sizeof unsentData->totalInterval;
 
-	memcpy(&temp, buf+offset, sizeof haystackEvents.first);
-	haystackEvents.first += temp;
-	offset += sizeof haystackEvents.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->haystackEvents);
+	unsentData->haystackEvents += temp;
+	offset += sizeof unsentData->haystackEvents;
 
-	memcpy(&temp, buf+offset, sizeof packetCount.first);
-	packetCount.first += temp;
-	offset += sizeof packetCount.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->packetCount);
+	unsentData->packetCount += temp;
+	offset += sizeof unsentData->packetCount;
 
-	memcpy(&temp, buf+offset, sizeof bytesTotal.first);
-	bytesTotal.first += temp;
-	offset += sizeof bytesTotal.first;
+	memcpy(&temp, buf+offset, sizeof unsentData->bytesTotal);
+	unsentData->bytesTotal += temp;
+	offset += sizeof unsentData->bytesTotal;
 
 	memcpy(&temp, buf+offset, sizeof portMax);
 	offset += sizeof portMax;
@@ -870,7 +833,7 @@ uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 		offset += sizeof temp;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		intervalTable[temp].first += tempCount;
+		unsentData->intervalTable[temp] += tempCount;
 		i++;
 	}
 
@@ -884,7 +847,7 @@ uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 		offset += sizeof temp;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		packTable[temp].first += tempCount;
+		packTable[temp] += tempCount;
 		i++;
 	}
 
@@ -898,7 +861,7 @@ uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 		offset += sizeof temp;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		IPTable[temp].first += tempCount;
+		unsentData->IPTable[temp] += tempCount;
 		i++;
 	}
 
@@ -912,7 +875,7 @@ uint32_t FeatureSet::DeserializeFeatureDataLocal(u_char *buf)
 		offset += sizeof port;
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
-		portTable[port].first += tempCount;
+		unsentData->portTable[port] += tempCount;
 		i++;
 	}
 

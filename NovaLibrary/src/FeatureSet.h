@@ -66,13 +66,13 @@ using namespace std;
 #define REMOVE false
 
 //Table of IP destinations and a count;
-typedef google::dense_hash_map<in_addr_t, pair<uint32_t, uint32_t>, tr1::hash<in_addr_t>, eqaddr > IP_Table;
+typedef google::dense_hash_map<in_addr_t, uint32_t, tr1::hash<in_addr_t>, eqaddr > IP_Table;
 //Table of destination ports and a count;
-typedef google::dense_hash_map<in_port_t, pair<uint32_t, uint32_t>, tr1::hash<in_port_t>, eqport > Port_Table;
+typedef google::dense_hash_map<in_port_t, uint32_t, tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef google::dense_hash_map<int, pair<uint32_t, uint32_t>, tr1::hash<int>, eqint > Packet_Table;
+typedef google::dense_hash_map<int, uint32_t, tr1::hash<int>, eqint > Packet_Table;
 //Table of packet intervals and a count
-typedef google::dense_hash_map<time_t, pair<uint32_t, uint32_t>, tr1::hash<time_t>, eqtime > Interval_Table;
+typedef google::dense_hash_map<time_t, uint32_t, tr1::hash<time_t>, eqtime > Interval_Table;
 
 namespace Nova{
 
@@ -87,7 +87,7 @@ public:
 	double features[DIM];
 
 	//Number of packets total
-	pair<uint, uint> packetCount;
+	uint packetCount;
 
 	//Table of IP addresses and associated packet counts
 	IP_Table IPTable;
@@ -95,6 +95,9 @@ public:
 	FeatureSet();
 	// Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
+
+	FeatureSet& operator-=(FeatureSet &rhs);
+	FeatureSet& operator+=(FeatureSet &rhs);
 
 	// Calculates all features in the feature set
 	//		featuresEnabled - Bitmask of which features are enabled, e.g. 0b111 would enable the first 3
@@ -155,6 +158,7 @@ public:
 	// Returns: number of bytes read from the buffer
 	uint32_t DeserializeFeatureDataLocal(u_char * buf);
 
+	FeatureSet* unsentData;
 private:
 	//Temporary variables used to calculate Features
 
@@ -170,14 +174,14 @@ private:
 	uint32_t portMax;
 
 	//Tracks the number of HS events
-	pair<uint32_t, uint32_t> haystackEvents;
+	uint32_t haystackEvents;
 
 	time_t startTime;
 	time_t endTime;
-	pair<time_t, time_t> totalInterval;
+	time_t totalInterval;
 
 	//Total number of bytes in all packets
-	pair<uint32_t, uint32_t> bytesTotal;
+	uint32_t bytesTotal;
 
 	///A vector of the intervals between packet arrival times for tracking traffic over time.
 	vector <time_t> packet_intervals;

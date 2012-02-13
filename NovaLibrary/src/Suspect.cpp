@@ -35,6 +35,7 @@ Suspect::Suspect()
 	isHostile = false;
 	isLive = false;
 	features = FeatureSet();
+	features.unsentData = new FeatureSet();
 	annPoint = NULL;
 	evidence.clear();
 
@@ -62,6 +63,7 @@ Suspect::Suspect(Packet packet)
 	needs_feature_update = true;
 	isLive = true;
 	features = FeatureSet();
+	features.unsentData = new FeatureSet();
 	annPoint = NULL;
 	flaggedByAlarm = false;
 	AddEvidence(packet);

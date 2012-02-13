@@ -976,7 +976,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 		}
 		close(socketFD);
 	}
-	if(suspect->features.packetCount.first && suspect->isLive)
+	if(suspect->features.unsentData->packetCount && suspect->isLive)
 	{
 		do
 		{
