@@ -347,7 +347,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 			{
 				oldClassification = it->second->isHostile;
 				Classify(it->second);
-				cout << it->second->ToString(featureEnabled);
+				//cout << it->second->ToString(featureEnabled);
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
 				if(it->second->isHostile)
@@ -407,7 +407,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 						myfile << "\n";
 
 					it->second->needs_feature_update = false;
-					cout << it->second->ToString(featureEnabled);
+					//cout << it->second->ToString(featureEnabled);
 					SendToUI(it->second);
 				}
 			}
@@ -596,12 +596,17 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 	{
 		dists[i] = sqrt(dists[i]);				// unsquare distance
 
-		for (int j = 0; j < enabledFeatures; j++)
+		for (int j = 0; j < DIM; j++)
 		{
-			cout << sqrt(annDist(j, suspect->annPoint, kdTree->thePoints()[nnIdx[i]])) << " ";
-			suspect->featureAccuracy[j] += sqrt(annDist(j, suspect->annPoint, kdTree->thePoints()[nnIdx[i]]));
+			if (featureEnabled[j])
+			{
+				double distance = suspect->annPoint[j] - kdTree->thePoints()[nnIdx[i]][j];
+				if (distance < 0)
+					distance *= -1;
+
+				suspect->featureAccuracy[j] += distance;
+			}
 		}
-		cout << endl;
 
 		if(nnIdx[i] == -1)
 		{

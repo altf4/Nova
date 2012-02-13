@@ -2405,7 +2405,19 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 			bar->setMinimum(0);
 			bar->setMaximum(100);
 			bar->setTextVisible(true);
-			bar->setValue((int)((1 - suspect->featureAccuracy[i]/(double)sqrt(enabledFeatures))*100));
+
+			if (suspect->featureAccuracy[i] < 0)
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->featureAccuracy[i]);
+				suspect->featureAccuracy[i] = 0;
+			}
+			else if (suspect->featureAccuracy[i] > 1)
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->featureAccuracy[i]);
+				suspect->featureAccuracy[i] = 1;
+			}
+
+			bar->setValue((int)((1 - suspect->featureAccuracy[i]/1.0)*100));
 			bar->setStyleSheet(
 				"QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
 				QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5, stop: 0 yellow, stop: 1 green);}");
