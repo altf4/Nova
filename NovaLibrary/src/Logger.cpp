@@ -128,7 +128,6 @@ namespace Nova
 					if(line.size() > 0)
 					{
 						messageInfo.email_recipients = Logger::ParseAddressesString(line);
-						messageInfo.email_recipients = Logger::CleanAddresses(messageInfo.email_recipients);
 						checkLoad[prefixIndex] = line;
 					}
 
@@ -182,6 +181,8 @@ namespace Nova
 		      istream_iterator<string>(),
 		      back_inserter<vector <string> >(returnAddresses));
 
+		 returnAddresses = Logger::CleanAddresses(returnAddresses);
+
 		 return returnAddresses;
 	}
 
@@ -190,7 +191,7 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(Nova::Levels messageLevel, userMap serv, string message)
+	void Logger::Logging(Nova::Levels messageLevel, userMap serv, string message, vector<string> recipients)
 	{
 		Nova::Services services = Logger::setServiceLevel(messageLevel, serv);
 
@@ -206,7 +207,7 @@ namespace Nova
 
 		if(services == EMAIL || services == EMAIL_SYSLOG || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
-			Mail(messageLevel, message);
+			Mail(messageLevel, message, recipients);
 		}
 
 		if(services == NO_SERV)
@@ -242,7 +243,7 @@ namespace Nova
 		closelog();
 	}
 
-	void Logger::Mail(uint16_t level, string message)
+	void Logger::Mail(uint16_t level, string message, vector<string> recipients)
 	{
 
 	}
