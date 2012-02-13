@@ -13,7 +13,9 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Class to load and parse the NOVA configuration file
+// Description : Class to generate messages based on events inside the program,
+// and maintain information needed for the sending of those events, mostly
+// networking information that is not readily available
 //============================================================================/*
 
 #ifndef Logger_H_
@@ -60,6 +62,15 @@ typedef struct MessageOptions optionsInfo;
 class Logger
 {
 public:
+	// Constructor for the Logger class.
+	// args: string parent. The name of the module (or file) that called the logger object
+	//		 char const * configFilePath. The path to the file to parse for logging configuration options.
+	//       bool init. If true, call the LoadConfiguration method. Should only be true
+	//                  in the LoadConfig methods for a given module.
+	//					If false, don't call LoadConfiguration, just populate the levels
+	//					map. If false, when logging the userMap that is passed to the
+	//					Logging method must be the userMap saved in the process,
+	//					not the one in the messageInfo struct.
 	Logger(string parent, char const * configFilePath, bool init);
 	~Logger();
 	// Load Configuration: loads the SMTP info and service level preferences
@@ -69,12 +80,20 @@ public:
 	// return: uint16_t ( 0 | 1). On 0, one of the options was not set, and has
 	// no default. On 1, everything's fine.
 	uint16_t LoadConfiguration(char const* filename);
+	// SaveLoggerConfiguration: will save LoggerConfiguration to the given filename.
+	// No use for this right now, a placeholder for future gui applications. Will
+	// definitely change.
 	void SaveLoggerConfiguration(string filename);
+	// ParseAddressesString: takes in the comma separated string of email recipients
+	// and returns a vector containing each individual email address. May not need this
+	// in the future, depending on how forgiving the SMTP methods are in Poco, but for
+	// now I thought it a good idea to have.
+	// args: string addresses. comma separated string of email addresses.
 	vector<string> ParseAddressesString(string addresses);
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(Nova::Levels messageLevel, string message);
+	void Logging(Nova::Levels messageLevel, userMap serv, string message, vector<string> recipients);
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
 	// args: string logPrefString: this method is used for reading from the config file
@@ -87,17 +106,31 @@ public:
 private:
 	// Notify makes use of the libnotify methods to produce
 	// a notification with the desired level to the desktop.
+	// args: uint16_t level. The level of severity to print in the
+	//       libNotify message.
+	//       string message. The content of the libNotify message
 	void Notify(uint16_t level, string message);
 	// Log will be the method that calls syslog
+	// args: uint16_t level. The level of severity to tell syslog to log with.
+	//       string message. The message to send to syslog in string form.
 	void Log(uint16_t level, string message);
 	// Mail will, obviously, email people.
-	void Mail(uint16_t level, string message);
-	// clean the elements in the toClean vector.
+	// args: uint16_t level. The level of severity with which to apply
+	// when sending the email. Used primarily to extract a string from the
+	// levels map.
+	//		 string message. This will be the string that is sent as the
+	// email's content.
+	//       vector<string> recipients. Who the email will be sent to.
+	void Mail(uint16_t level, string message, vector<string> recipients);
+	// clean the elements in the toClean vector, i.e. removing trailing commas, etc.
 	vector<string> CleanAddresses(vector<string> toClean);
 	// for use in the logging public method. Purely used to reduce number
 	// of arguments for void Logging().
 	// TODO: write a function definition for this
-	Nova::Services setServiceLevel(Nova::Levels messageLevel);
+	Nova::Services setServiceLevel(Nova::Levels messageLevel, userMap serv);
+	// takes in a character, and returns a Services type; for use when
+	// parsing the SERVICE_PREFERENCES string from the NOVAConfig.txt file.
+	Nova::Services parseServicesFromChar(char parse);
 
 public:
 	optionsInfo messageInfo;

@@ -181,10 +181,7 @@ namespace Nova
 		      istream_iterator<string>(),
 		      back_inserter<vector <string> >(returnAddresses));
 
-		 for(uint16_t i = 0; i < returnAddresses.size(); i++)
-		 {
-			 cout << returnAddresses.at(i) << endl;
-		 }
+		 returnAddresses = Logger::CleanAddresses(returnAddresses);
 
 		 return returnAddresses;
 	}
@@ -194,22 +191,23 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(Nova::Levels messageLevel, string message)
+	void Logger::Logging(Nova::Levels messageLevel, userMap serv, string message, vector<string> recipients)
 	{
-		//Nova::Services services = Logger::setServiceLevel(messageLevel);
-		// ^^^ This is temporary, still need to go through and define setServiceLevel
-		Nova::Services services = LIBNOTIFY;
+		Nova::Services services = Logger::setServiceLevel(messageLevel, serv);
+
 		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
 			Notify(messageLevel, message);
 		}
+
 		if(services == SYSLOG || services == LIBNOTIFY_BELOW || services == EMAIL_SYSLOG || services == EMAIL_BELOW)
 		{
 			Log(messageLevel, message);
 		}
+
 		if(services == EMAIL || services == EMAIL_SYSLOG || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
-			Mail(messageLevel, message);
+			Mail(messageLevel, message, recipients);
 		}
 
 		if(services == NO_SERV)
@@ -245,7 +243,7 @@ namespace Nova
 		closelog();
 	}
 
-	void Logger::Mail(uint16_t level, string message)
+	void Logger::Mail(uint16_t level, string message, vector<string> recipients)
 	{
 
 	}
@@ -260,13 +258,8 @@ namespace Nova
 
 			if(endSubStr != toClean[i].npos)
 			{
-				out[i] = toClean[i].substr(0, endSubStr - 1);
+				out[i] = toClean[i].substr(0, endSubStr);
 			}
-		}
-
-		for(uint16_t i = 0; i < out.size(); i++)
-		{
-			cout << out.at(i) << endl;
 		}
 
 		return out;
@@ -274,7 +267,73 @@ namespace Nova
 
 	void Logger::setUserLogPreferences(string logPrefString)
 	{
+		if(logPrefString.size() != 32)
+		{
+			openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
+			syslog(SYSL_ERR, "The service preferences line is not configured correctly; it should be of the form \"LEVEL:SERVICES;\" (without quotes); for each level, 0 through 7, and each service, 1 through 7.");
+			closelog();
+			exit(EXIT_FAILURE);
+		}
+		else
+		{
+			for(uint16_t i = 0; i < logPrefString.size(); i += 4)
+			{
+					if(isdigit(logPrefString.at(i)))
+					{
+						switch(logPrefString.at(i))
+						{
+							case '0': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(EMERGENCY, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+							case '1': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ALERT, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+							case '2': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(CRITICAL, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+							case '3': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ERROR, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+							case '4': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(WARNING, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+							case '5': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(NOTICE, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+							case '6': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(INFO, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+							case '7': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(DEBUG, parseServicesFromChar(logPrefString.at(i + 2))));
+									break;
+						}
+					}
+					else
+					{
+						openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
+						syslog(SYSL_ERR, "The service preferences line is not configured correctly; it should be of the form \"LEVEL:SERVICES;\" (without quotes) for each level, 0 through 7, and each service, 1 through 7.");
+						closelog();
+						exit(EXIT_FAILURE);
+					}
+			}
+		}
+	}
 
+	Nova::Services Logger::parseServicesFromChar(char parse)
+	{
+		switch((int)(parse - 48))
+		{
+			case 0: return NO_SERV;
+					break;
+			case 1: return SYSLOG;
+					break;
+			case 2: return LIBNOTIFY;
+					break;
+			case 3: return LIBNOTIFY_BELOW;
+					break;
+			case 4: return EMAIL;
+					break;
+			case 5: return EMAIL_SYSLOG;
+					break;
+			case 6: return EMAIL_LIBNOTIFY;
+					break;
+			case 7: return EMAIL_BELOW;
+					break;
+			default: return NO_SERV;
+		}
+		return NO_SERV;
 	}
 
 	void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
@@ -282,9 +341,22 @@ namespace Nova
 
 	}
 
+	Nova::Services Logger::setServiceLevel(Nova::Levels messageLevel, userMap serv)
+	{
+		for(uint16_t i = 0; i < serv.size(); i++)
+		{
+			if(messageLevel == serv[i].first)
+			{
+				return serv[i].second;
+			}
+		}
+
+		return NO_SERV;
+	}
+
 	Logger::Logger(string parent, char const * configFilePath, bool init)
 	{
-		parentName = parent;
+		parentName = parent.substr(7, (parent.length() - 11));;
 
 		for(uint16_t i = 0; i < 8; i++)
 		{
@@ -318,7 +390,7 @@ namespace Nova
 			if(!LoadConfiguration(configFilePath))
 			{
 				syslog(SYSL_ERR, "Line: %d One or more of the messaging configuration values have not been set, and have no default.", __LINE__);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 		}
 	}

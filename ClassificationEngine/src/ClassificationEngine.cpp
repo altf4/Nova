@@ -1292,9 +1292,9 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
-	/* TODO Addison: Fix this / uncomment when working
-	Logger * loggerConf = new Logger(__FILE__, "/home/addison/Code/NovaTest/smtp_config.txt", true);
-	*/
+
+	Logger * loggerConf = new Logger(__FILE__, configFilePath, true);
+
 
 	confCheck = NovaConfig->SetDefaults();
 
@@ -1321,7 +1321,7 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	if(hostAddrString.size() == 0)
 	{
 		syslog(SYSL_ERR, "Line: %d Bad interface, no IP's associated!", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	closelog();
@@ -1341,13 +1341,12 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
 	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
 
-	/* TODO Addison: Fix this / uncomment when working
+
 	SMTP_addr = loggerConf->messageInfo.smtp_addr;
 	SMTP_domain = loggerConf->messageInfo.smtp_domain;
 	email_recipients = loggerConf->messageInfo.email_recipients;
 	SMTP_port = loggerConf->messageInfo.smtp_port;
 	service_pref = loggerConf->messageInfo.service_preferences;
-	*/
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 
