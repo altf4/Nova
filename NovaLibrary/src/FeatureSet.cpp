@@ -58,7 +58,6 @@ void FeatureSet::ClearFeatureSet()
 	last_time = 0;
 
 	portMax = 0;
-	IPMax = 0;
 	//Features
 	for(int i = 0; i < DIM; i++)
 		features[i] = 0;
@@ -127,8 +126,8 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	{
 		features[IP_TRAFFIC_DISTRIBUTION] = 0;
 
-		// TODO: Don't lookup ipmax everytime.. or remove it from class vars if we need to
-		IPMax = 0;
+		//Max packet count to an IP, used for normalizing
+		uint32_t IPMax = 0;
 		for (IP_Table::iterator it = IPTable.begin() ; it != IPTable.end(); it++)
 		{
 			if(it->second > IPMax)
@@ -332,7 +331,7 @@ void FeatureSet::UpdateEvidence(Packet packet)
 
 	for(uint32_t i = 1; i < packet_intervals.size(); i++)
 	{
-		intervalTable[packet_intervals[i] - unsentData->packet_intervals[i-1]]++;
+		unsentData->intervalTable[packet_intervals[i] - packet_intervals[i-1]]++;
 	}
 	last_time = packet_intervals.back();
 

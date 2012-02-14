@@ -151,9 +151,6 @@ private:
 	//Table of Packet sizes and counts for variance calc
 	Packet_Table packTable;
 
-	//Max packet count to an IP, used for normalizing
-	uint32_t IPMax;
-
 	//Table of Ports and associated packet counts
 	Port_Table portTable;
 	//Max packet count to a port, used for normalizing
@@ -168,9 +165,6 @@ private:
 
 	//Total number of bytes in all packets
 	uint32_t bytesTotal;
-
-	///A vector of the intervals between packet arrival times for tracking traffic over time.
-	vector <time_t> packet_intervals;
 
 	///A table of the intervals between packet arrival times for tracking traffic over time.
 	Interval_Table intervalTable;
