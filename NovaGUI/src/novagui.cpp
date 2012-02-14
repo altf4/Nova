@@ -109,6 +109,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	ui.setupUi(this);
 
+	editingPreferences = false;
+
 	//Pre-forms the suspect menu
 	suspectMenu = new QMenu(this);
 	systemStatMenu = new QMenu(this);
@@ -291,8 +293,11 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 		systemStatMenu->clear();
 
 		int row = ui.systemStatusTable->currentRow();
-		if (row < 0 || row >= ui.systemStatusTable->rowCount())
+		if (row < 0 || row > sizeof(novaComponents))
+		{
+			syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
 			return;
+		}
 
 		if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
 		{
@@ -747,6 +752,9 @@ void NovaGUI::initiateSystemStatus()
 
 void NovaGUI::updateSystemStatus()
 {
+	 if(editingPreferences)
+		 return;
+
 	QTableWidgetItem *item;
 	QTableWidgetItem *pidItem;
 
@@ -792,7 +800,12 @@ void NovaGUI::updateSystemStatus()
 		}
 	}
 
-	on_systemStatusTable_itemSelectionChanged();
+	// Update the buttons if need be
+	int row = ui.systemStatusTable->currentRow();
+	if (row < 0 || row > sizeof(novaComponents))
+		return;
+	else
+		on_systemStatusTable_itemSelectionChanged();
 }
 
 
@@ -1957,6 +1970,7 @@ void NovaGUI::on_actionStopNova_triggered()
 
 void NovaGUI::on_actionConfigure_triggered()
 {
+	editingPreferences = true;
 	NovaConfig *w = new NovaConfig(this, homePath);
 	w->setWindowModality(Qt::WindowModal);
 	w->show();
@@ -2169,6 +2183,12 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 {
 	int row = ui.systemStatusTable->currentRow();
 
+	if (row < 0 || row > sizeof(novaComponents))
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+		return;
+	}
+
 	if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
 	{
 		ui.systemStatStartButton->setDisabled(true);
@@ -2192,6 +2212,12 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 void NovaGUI::on_actionSystemStatKill_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
+
+	if (row < 0 || row > sizeof(novaComponents))
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+		return;
+	}
 
 	QProcess *process = novaComponents[row].process;
 	novaComponents[row].shouldBeRunning = false;
