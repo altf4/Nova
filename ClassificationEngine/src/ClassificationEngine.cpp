@@ -133,7 +133,7 @@ int main(int argc,char *argv[])
 
 	//Get locations of nova files
 	homePath = GetHomePath();
-	string novaConfig = homePath += "Config/NOVAConfig.txt";
+	string novaConfig = homePath + "/Config/NOVAConfig.txt";
 	chdir(homePath.c_str());
 
 	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
