@@ -571,6 +571,7 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 		//Check the ~/.nova dir again
 		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 		{
+			if(system("gksu -l $USER"));
 			return true;
 		}
 		else
