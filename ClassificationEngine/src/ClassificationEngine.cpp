@@ -935,15 +935,6 @@ void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
 
 }
 
-//Returns usage tips
-string Nova::ClassificationEngine::Usage()
-{
-	string usageString = "Nova Classification Engine!\n";
-	usageString += "\tUsage: ClassificationEngine -l LogConfigPath -n NOVAConfigPath \n";
-	usageString += "\t-n: Path to NOVA config txt file.\n";
-	return usageString;
-}
-
 
 void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 {

@@ -65,9 +65,6 @@ void NormalizeDataPoints();
 // Will be called again if the a suspect's max value for a feature exceeds the current maximum for normalization
 void FormKdTree();
 
-// Subroutine to copy the data points in 'suspects' to their respective ANN Points
-void CopyDataToAnnPoints();
-
 // Prints a single ANN point, p, to stream, out
 //		out - steam to print to
 //		p 	- ANN point to print
@@ -81,9 +78,6 @@ void LoadDataPointsFromFile(string inFilePath);
 // Writes the list of suspects out to a file specified by outFilePath
 //		outFilePath - path to output file
 void WriteDataPointsToFile(string outFilePath);
-
-// Returns tips on command line usage
-string Usage();
 
 // Send a silent alarm
 //		suspect - Suspect to send alarm about
