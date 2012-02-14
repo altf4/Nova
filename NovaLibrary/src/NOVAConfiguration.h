@@ -21,6 +21,7 @@
 
 
 #include "NovaUtil.h"
+#include "Logger.h"
 
 using namespace std;
 

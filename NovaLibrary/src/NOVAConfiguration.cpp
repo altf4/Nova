@@ -30,12 +30,16 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
 		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE" };
 
+Logger * loggerConf;
+
 // Loads the configuration file into the class's state data
 void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPath, string module)
 {
 	string line;
 	string prefix;
 	int prefixIndex;
+
+	loggerConf = new Logger(__FILE__, configFilePath, true);
 
 	string use = module.substr(7, (module.length() - 11));
 

@@ -22,6 +22,7 @@
 #include <fstream>
 #include "LocalTrafficMonitor.h"
 #include "NOVAConfiguration.h"
+#include "Logger.h"
 #include <net/if.h>
 #include <sys/un.h>
 
@@ -61,6 +62,8 @@ bool useTerminals;
 string key;
 in_port_t sAlarmPort;
 
+Logger * loggerConf;
+
 int main(int argc, char *argv[])
 {
 	pthread_rwlock_init(&sessionLock, NULL);
@@ -93,7 +96,8 @@ int main(int argc, char *argv[])
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	chdir(homePath.c_str());
 
-	//Runs the configuration loader
+	//Runs the configuration loaders
+	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
 	LoadConfig((char*)novaConfig.c_str());
 
 	if(!useTerminals)
