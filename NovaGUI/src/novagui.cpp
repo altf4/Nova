@@ -587,7 +587,7 @@ void NovaGUI::writeHoneyd()
 		{
 			continue;
 		}
-		else if(it->second.name.compare("Doppelganger"))
+		else if(!it->second.name.compare("Doppelganger"))
 		{
 			doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
 		}

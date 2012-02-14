@@ -2,7 +2,8 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-HEADERS += src/classifierPrompt.h \
+HEADERS += src/loggerwindow.h \
+    src/classifierPrompt.h \
     src/nova_manual.h \
     src/DialogPrompter.h \
     src/DialogPrompt.h \
@@ -12,7 +13,8 @@ HEADERS += src/classifierPrompt.h \
     src/novaconfig.h \
     src/novagui.h \
     src/run_popup.h
-SOURCES += src/classifierPrompt.cpp \
+SOURCES += src/loggerwindow.cpp \
+    src/classifierPrompt.cpp \
     src/nova_manual.cpp \
     src/DialogPrompter.cpp \
     src/DialogPrompt.cpp \
@@ -22,7 +24,8 @@ SOURCES += src/classifierPrompt.cpp \
     src/novaconfig.cpp \
     src/novagui.cpp \
     src/run_popup.cpp
-FORMS += UI/classifierPrompt.ui \
+FORMS += UI/loggerwindow.ui \
+    UI/classifierPrompt.ui \
     UI/nova_manual.ui \
     UI/NovaComplexDialog.ui \
     UI/nodePopup.ui \
@@ -32,7 +35,7 @@ FORMS += UI/classifierPrompt.ui \
 RESOURCES += 
 INCLUDEPATH += ../NovaLibrary/src
 CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
-else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a 
+else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
 LIBS += /usr/lib/libboost_serialization.a \
     /usr/lib/libapr-1.a \
     /usr/lib/libann.a \
