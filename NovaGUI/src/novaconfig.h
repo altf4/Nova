@@ -151,7 +151,7 @@ public:
     void updateProfile(bool deleteProfile, profile *p);
 
     //Action to do when the window closes.
-    void closeEvent(QCloseEvent * e);
+    void closeEvent();
 
     //Updates children when inherited ports are changed
     void updatePorts();
@@ -195,6 +195,8 @@ void on_dmConfigButton_clicked();
 void on_msgTypeListWidget_currentRowChanged();
 void on_defaultActionListWidget_currentRowChanged();
 
+//Enable DM checkbox, action syncs Node displayed in haystack as disabled/enabled
+void on_dmCheckBox_stateChanged(int state);
 //Check Box signal for enabling pcap settings group box
 void on_pcapCheckBox_stateChanged(int state);
 //Combo box signal for enabling or disabling dhcp IP resolution
@@ -251,6 +253,7 @@ void on_actionNodeAdd_triggered();
 void on_actionNodeDelete_triggered();
 void on_actionNodeClone_triggered();
 void on_actionNodeEdit_triggered();
+void on_actionNodeCustomizeProfile_triggered();
 void on_actionNodeEnable_triggered();
 void on_actionNodeDisable_triggered();
 
