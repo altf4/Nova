@@ -133,6 +133,7 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 	{
 		nodeTreeMenu->clear();
 		nodeTreeMenu->addAction(ui.actionNodeEdit);
+		nodeTreeMenu->addAction(ui.actionNodeCustomizeProfile);
 		nodeTreeMenu->addSeparator();
 		nodeTreeMenu->addAction(ui.actionNodeAdd);
 		nodeTreeMenu->addAction(ui.actionNodeClone);
@@ -391,16 +392,9 @@ void NovaConfig::on_actionDeletePort_triggered()
 }
 
 //Action to take when window is closing
-void NovaConfig::closeEvent(QCloseEvent * e)
+void NovaConfig::closeEvent()
 {
-	e = e;
-	if(editingNodes && (nodewindow != NULL))
-	{
-		nodewindow->remoteCall = true;
-		nodewindow->close();
-	}
 	mainwindow->editingPreferences = false;
-
 }
 
 void NovaConfig::on_msgTypeListWidget_currentRowChanged()
@@ -1861,7 +1855,12 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
  * Preference Menu Specific GUI Signals
  ************************************************/
 
-
+//Enable DM checkbox, action syncs Node displayed in haystack as disabled/enabled
+void NovaConfig::on_dmCheckBox_stateChanged(int state)
+{
+	nodes["Doppelganger"].enabled = state;
+	loadAllNodes();
+}
 /*************************
  * Pcap Menu GUI Signals */
 
@@ -1912,8 +1911,8 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 	saveProfile();
 	loadProfile();
 	updateNodeTypes();
-	loadAllNodes();
 	loadingItems = false;
+	loadAllNodes();
 }
 
 //Combo box signal for changing the uptime behavior
@@ -3344,7 +3343,12 @@ void NovaConfig::loadAllNodes()
 
 			ui.nodeTreeWidget->setItemWidget(item, 1, pfileBox);
 			n->nodeItem = item;
-
+			if(!n->name.compare("Doppelganger"))
+			{
+				ui.dmCheckBox->setChecked(n->enabled);
+				//Enable the loopback subnet as well if DM is enabled
+				subnets[n->sub].enabled |= n->enabled;
+			}
 			if(!n->enabled)
 			{
 				whitebrush.setStyle(Qt::NoBrush);
@@ -3635,39 +3639,47 @@ void NovaConfig::on_actionNodeClone_triggered()
 
 }
 
-void NovaConfig::on_actionNodeEdit_triggered()
+void  NovaConfig::on_actionNodeEdit_triggered()
+{
+	if(!selectedSubnet)
+	{
+		nodePopup * editNode =  new nodePopup(this, &nodes[currentNode]);
+		editNode->show();
+	}
+}
+
+void NovaConfig::on_actionNodeCustomizeProfile_triggered()
 {
 
 }
 
 void NovaConfig::on_actionNodeEnable_triggered()
 {
-	if(currentNode.compare("") || selectedSubnet)
+	if(selectedSubnet)
 	{
-		if(selectedSubnet)
+		subnet s = subnets[currentSubnet];
+		for(uint i = 0; i < s.nodes.size(); i++)
 		{
-			subnet * s = &subnets[currentSubnet];
-			for(uint i = 0; i < s->nodes.size(); i++)
-			{
-				nodes[s->nodes[i]].enabled = true;
+			nodes[s.nodes[i]].enabled = true;
 
-			}
-			s->enabled = true;
 		}
-		else
-		{
-			nodes[currentNode].enabled = true;
-		}
-
-		//Draw the nodes and restore selection
-		loadAllNodes();
-		loadingItems = true;
-		if(selectedSubnet)
-			ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
-		else
-			ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
-		loadingItems = false;
+		s.enabled = true;
+		subnets[currentSubnet] = s;
 	}
+	else
+	{
+		nodes[currentNode].enabled = true;
+		subnets[nodes[currentNode].sub].enabled = true;
+	}
+
+	//Draw the nodes and restore selection
+	loadAllNodes();
+	loadingItems = true;
+	if(selectedSubnet)
+		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
+	else
+		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
+	loadingItems = false;
 }
 
 void NovaConfig::on_actionNodeDisable_triggered()
@@ -3702,13 +3714,7 @@ void NovaConfig::on_actionNodeDisable_triggered()
 //Pops up the node edit window selecting the current node
 void NovaConfig::on_nodeEditButton_clicked()
 {
-	/*if(nodes.size())
-	{
-		editingNodes = true;
-		nodewindow = new nodePopup(this, &nodes[currentNode], EDIT_NODE, homePath);
-		loadAllNodes();
-		nodewindow->show();
-	}*/
+	Q_EMIT on_actionNodeEdit_triggered();
 }
 //Not currently used, will be implemented in the new GUI design TODO
 //Creates a copy of the current node and pops up the edit window

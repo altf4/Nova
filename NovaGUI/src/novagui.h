@@ -33,8 +33,6 @@
 
 #include "DialogPrompter.h"
 #include "ui_novagui.h"
-#include "run_popup.h"
-#include "nova_manual.h"
 #include "NovaUtil.h"
 
 using namespace std;

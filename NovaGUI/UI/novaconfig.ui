@@ -2715,17 +2715,25 @@ p, li { white-space: pre-wrap; }
     <string>Disable Node</string>
    </property>
   </action>
+  <action name="actionNodeCustomizeProfile">
+   <property name="text">
+    <string>Customize Profile</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a Custom Profile for this Node</string>
+   </property>
+  </action>
+  <action name="actionNo_Action">
+   <property name="text">
+    <string>No Action</string>
+   </property>
+  </action>
   <action name="actionNodeEdit">
    <property name="text">
     <string>Edit Node</string>
    </property>
    <property name="toolTip">
     <string>Edit Node</string>
-   </property>
-  </action>
-  <action name="actionNo_Action">
-   <property name="text">
-    <string>No Action</string>
    </property>
   </action>
  </widget>
