@@ -239,7 +239,7 @@ namespace Nova
 	void Logger::Log(uint16_t level, string message)
 	{
 		openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(level, "%s: %s", parentName.c_str(), message.c_str());
+		syslog(level, "%s %s: %s", (levels[level].second).c_str(), parentName.c_str(), message.c_str());
 		closelog();
 	}
 
@@ -336,9 +336,21 @@ namespace Nova
 		return NO_SERV;
 	}
 
-	void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
+	userMap Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services, userMap inModuleSettings)
 	{
+		userMap output = inModuleSettings;
+		bool end = false;
 
+		for(uint16_t i = 0; i < inModuleSettings.size() && !end; i++)
+		{
+			if(inModuleSettings[i].first == messageTypeLevel)
+			{
+				output[i].second = services;
+				end = true;
+			}
+		}
+
+		return output;
 	}
 
 	Nova::Services Logger::setServiceLevel(Nova::Levels messageLevel, userMap serv)
