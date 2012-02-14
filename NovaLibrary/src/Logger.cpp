@@ -191,7 +191,7 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(Nova::Levels messageLevel, userMap serv, string message, vector<string> recipients)
+	void Logger::Logging(Nova::Levels messageLevel, userMap serv, string message, optionsInfo options)
 	{
 		Nova::Services services = Logger::setServiceLevel(messageLevel, serv);
 
@@ -207,7 +207,7 @@ namespace Nova
 
 		if(services == EMAIL || services == EMAIL_SYSLOG || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
-			Mail(messageLevel, message, recipients);
+			Mail(messageLevel, message, options);
 		}
 
 		if(services == NO_SERV)
@@ -243,7 +243,7 @@ namespace Nova
 		closelog();
 	}
 
-	void Logger::Mail(uint16_t level, string message, vector<string> recipients)
+	void Logger::Mail(uint16_t level, string message, optionsInfo options)
 	{
 
 	}

@@ -93,7 +93,7 @@ public:
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(Nova::Levels messageLevel, userMap serv, string message, vector<string> recipients);
+	void Logging(Nova::Levels messageLevel, userMap serv, string message, optionsInfo options);
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
 	// args: 	string logPrefString: this method is used for reading from the config file
@@ -123,7 +123,7 @@ private:
 	//		 	string message. This will be the string that is sent as the
 	// 		 	email's content.
 	//       	vector<string> recipients. Who the email will be sent to.
-	void Mail(uint16_t level, string message, vector<string> recipients);
+	void Mail(uint16_t level, string message, optionsInfo options);
 	// clean the elements in the toClean vector, i.e. removing trailing commas, etc.
 	vector<string> CleanAddresses(vector<string> toClean);
 	// extracts the service mask from the userMap provided based on the given message level.

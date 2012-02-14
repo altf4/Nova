@@ -108,11 +108,12 @@ double eps;						//error bound
 double classificationThreshold ; //value of classification to define split between hostile / benign
 uint SA_Max_Attempts;			//The number of times to attempt to reconnect to a neighbor
 double SA_Sleep_Duration;		//The time to sleep after a port knocking request and allow it to go through
-string SMTP_addr;
+optionsInfo CEOptions;
+/*string SMTP_addr;
 string SMTP_domain;
 in_port_t SMTP_port;
 Nova::userMap service_pref;
-vector<string> email_recipients;
+vector<string> email_recipients;*/
 // End configured variables
 
 int main(int argc,char *argv[])
@@ -985,6 +986,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				system(commandLine.c_str());
 
+
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
@@ -1342,11 +1344,11 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
 
 
-	SMTP_addr = loggerConf->messageInfo.smtp_addr;
-	SMTP_domain = loggerConf->messageInfo.smtp_domain;
-	email_recipients = loggerConf->messageInfo.email_recipients;
-	SMTP_port = loggerConf->messageInfo.smtp_port;
-	service_pref = loggerConf->messageInfo.service_preferences;
+	CEOptions.smtp_addr = loggerConf->messageInfo.smtp_addr;
+	CEOptions.smtp_domain = loggerConf->messageInfo.smtp_domain;
+	CEOptions.email_recipients = loggerConf->messageInfo.email_recipients;
+	CEOptions.smtp_port = loggerConf->messageInfo.smtp_port;
+	CEOptions.service_preferences = loggerConf->messageInfo.service_preferences;
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 
