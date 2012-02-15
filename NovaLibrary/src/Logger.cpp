@@ -191,9 +191,9 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(Nova::Levels messageLevel, userMap serv, string message, optionsInfo options)
+	void Logger::Logging(Nova::Levels messageLevel, string message)
 	{
-		Nova::Services services = Logger::setServiceLevel(messageLevel, serv);
+		Nova::Services services = Logger::setServiceLevel(messageLevel, messageInfo.service_preferences);
 
 		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
@@ -207,7 +207,7 @@ namespace Nova
 
 		if(services == EMAIL || services == EMAIL_SYSLOG || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
 		{
-			Mail(messageLevel, message, options);
+			Mail(messageLevel, message);
 		}
 
 		if(services == NO_SERV)
@@ -221,15 +221,16 @@ namespace Nova
 	void Logger::Notify(uint16_t level, string message)
 	{
 		NotifyNotification *note;
+		string notifyHeader = parentName + ": " + levels[level].second;
 		notify_init("Logger");
 		#ifdef NOTIFY_CHECK_VERSION
 		#if NOTIFY_CHECK_VERSION (0, 7, 0)
-		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg");
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg");
 		#else
-		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg", NULL);
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg", NULL);
 		#endif
 		#else
-		note = notify_notification_new((levels[level].second).c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg", NULL);
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg", NULL);
 		#endif
 		notify_notification_set_timeout(note, 3000);
 		notify_notification_show(note, NULL);
@@ -243,7 +244,7 @@ namespace Nova
 		closelog();
 	}
 
-	void Logger::Mail(uint16_t level, string message, optionsInfo options)
+	void Logger::Mail(uint16_t level, string message)
 	{
 
 	}
@@ -336,21 +337,19 @@ namespace Nova
 		return NO_SERV;
 	}
 
-	userMap Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services, userMap inModuleSettings)
+	void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
 	{
-		userMap output = inModuleSettings;
+		userMap output = messageInfo.service_preferences;
 		bool end = false;
 
-		for(uint16_t i = 0; i < inModuleSettings.size() && !end; i++)
+		for(uint16_t i = 0; i < messageInfo.service_preferences.size() && !end; i++)
 		{
-			if(inModuleSettings[i].first == messageTypeLevel)
+			if(messageInfo.service_preferences[i].first == messageTypeLevel)
 			{
-				output[i].second = services;
+				messageInfo.service_preferences[i].second = services;
 				end = true;
 			}
 		}
-
-		return output;
 	}
 
 	Nova::Services Logger::setServiceLevel(Nova::Levels messageLevel, userMap serv)

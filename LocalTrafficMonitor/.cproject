@@ -47,6 +47,7 @@
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="ann"/>
+									<listOptionValue builtIn="false" value="notify"/>
 								</option>
 								<option id="gnu.cpp.link.option.debugging.gprof.2119339162" name="Generate gprof information (-pg)" superClass="gnu.cpp.link.option.debugging.gprof" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.52962576" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -694,6 +695,7 @@
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="ann"/>
+									<listOptionValue builtIn="false" value="notify"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1445521496" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

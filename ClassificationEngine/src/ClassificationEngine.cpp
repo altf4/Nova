@@ -36,6 +36,7 @@ vector<in_addr_t> neighbors;
 string key;
 
 pthread_rwlock_t lock;
+pthread_rwlock_t logLock;
 
 // Buffers
 u_char buffer[MAX_MSG_SIZE];
@@ -108,12 +109,7 @@ double eps;						//error bound
 double classificationThreshold ; //value of classification to define split between hostile / benign
 uint SA_Max_Attempts;			//The number of times to attempt to reconnect to a neighbor
 double SA_Sleep_Duration;		//The time to sleep after a port knocking request and allow it to go through
-optionsInfo CEOptions;
-/*string SMTP_addr;
-string SMTP_domain;
-in_port_t SMTP_port;
-Nova::userMap service_pref;
-vector<string> email_recipients;*/
+Logger * loggerConf;
 // End configured variables
 
 int main(int argc,char *argv[])
@@ -123,6 +119,7 @@ int main(int argc,char *argv[])
 	bzero(buffer, MAX_MSG_SIZE);
 
 	pthread_rwlock_init(&lock, NULL);
+	pthread_rwlock_init(&logLock, NULL);
 
 	suspects.set_empty_key(0);
 	suspects.resize(INIT_SIZE_SMALL);
@@ -136,8 +133,10 @@ int main(int argc,char *argv[])
 
 	//Get locations of nova files
 	homePath = GetHomePath();
+	string novaConfig = homePath + "/Config/NOVAConfig.txt";
 	chdir(homePath.c_str());
 
+	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
 	Reload();
 
 	if(!useTerminals)
@@ -203,6 +202,16 @@ int main(int argc,char *argv[])
 		close(IPCsock);
         exit(1);
     }
+
+
+    // This is the structure that you'll use whenever you call Logging. The first argument
+    // is the severity, can be found either in Logger.h's enum Levels, or you can
+    // just use any of the syslog levels. All caps, always.
+    // The second is the string to display in any of the mediums through which logging
+    // will route based on severity level.
+    pthread_rwlock_rdlock(&logLock);
+    loggerConf->Logging(INFO, "Classification Engine has begun the main loop...");
+    pthread_rwlock_unlock(&logLock);
 
 	//"Main Loop"
 	while(true)
@@ -1294,10 +1303,6 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
-
-	Logger * loggerConf = new Logger(__FILE__, configFilePath, true);
-
-
 	confCheck = NovaConfig->SetDefaults();
 
 	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
@@ -1342,13 +1347,6 @@ void ClassificationEngine::LoadConfig(char * configFilePath)
 	dataFile = NovaConfig->options["DATAFILE"].data;
 	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
 	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
-
-
-	CEOptions.smtp_addr = loggerConf->messageInfo.smtp_addr;
-	CEOptions.smtp_domain = loggerConf->messageInfo.smtp_domain;
-	CEOptions.email_recipients = loggerConf->messageInfo.email_recipients;
-	CEOptions.smtp_port = loggerConf->messageInfo.smtp_port;
-	CEOptions.service_preferences = loggerConf->messageInfo.service_preferences;
 
 	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
 
