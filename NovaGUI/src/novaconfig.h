@@ -46,8 +46,7 @@ public:
     //Value set by dialog windows
     string retVal;
 
-    bool editingPorts;
-    bool editingNodes;
+    QMutex * loading;
     string homePath;
 
     SubnetTable subnets;

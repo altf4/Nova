@@ -36,8 +36,10 @@ nodePopup::nodePopup(QWidget * parent, node * n)
 	ui.setupUi(this);
 	novaParent = (NovaConfig *)parent;
 	editNode = *n;
-	ethernetEdit = new HexMACSpinBox(this, editNode.MAC);
+	ethernetEdit = new HexMACSpinBox(this, editNode.MAC, macSuffix);
+	prefixEthEdit = new HexMACSpinBox(this, editNode.MAC, macPrefix);
 	ui.ethernetHBox->insertWidget(0, ethernetEdit);
+	ui.ethernetHBox->insertWidget(0, prefixEthEdit);
 	loadNode();
 }
 
@@ -54,7 +56,7 @@ nodePopup::~nodePopup()
 //saves the changes to a node
 void nodePopup::saveNode()
 {
-	editNode.MAC = ethernetEdit->text().toStdString();
+	editNode.MAC = prefixEthEdit->text().toStdString() +":"+ethernetEdit->text().toStdString();
 	editNode.realIP = (ui.ipSpinBox0->value() << 24) +(ui.ipSpinBox1->value() << 16)
 			+ (ui.ipSpinBox2->value() << 8) + (ui.ipSpinBox3->value());
 	in_addr inTemp;
@@ -69,9 +71,12 @@ void nodePopup::loadNode()
 	profile p = novaParent->profiles[editNode.pfile];
 
 	ui.ethernetVendorEdit->setText((QString)p.ethernet.c_str());
-	QString t = QString(editNode.MAC.substr(0, 9).c_str());
-	ethernetEdit->setPrefix(t);
-	QString suffixStr = QString(editNode.MAC.substr(9, editNode.MAC.size()).c_str());
+
+	QString prefixStr = QString(editNode.MAC.substr(0, 8).c_str()).toLower();
+	prefixStr = prefixStr.remove(':');
+	prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));
+
+	QString suffixStr = QString(editNode.MAC.substr(9, 8).c_str()).toLower();
 	suffixStr = suffixStr.remove(':');
 	ethernetEdit->setValue(suffixStr.toInt(NULL, 16));
 
@@ -143,8 +148,16 @@ void nodePopup::pullData()
 //Copies the data to parent novaconfig and adjusts the pointers
 void nodePopup::pushData()
 {
+	novaParent->loading->lock();
 	novaParent->nodes[editNode.name] = editNode;
 	novaParent->updateNodeTypes();
+
+	//The node may have a new name after updateNodeTypes depending on changes made and profile type
+	if(novaParent->profiles[editNode.pfile].type == staticDHCP)
+		editNode.name = editNode.MAC;
+	if(novaParent->profiles[editNode.pfile].type == static_IP)
+		editNode.name = editNode.IP;
+	novaParent->loading->unlock();
 	novaParent->loadAllNodes();
 }
 
@@ -160,9 +173,25 @@ void nodePopup::on_cancelButton_clicked()
 
 void nodePopup::on_okButton_clicked()
 {
+	NovaGUI * mainwindow  = (NovaGUI*)novaParent->parent();
 	saveNode();
-	pushData();
-	this->close();
+	int ret = validateNodeSettings();
+	switch(ret)
+	{
+		case 0:
+			pushData();
+			this->close();
+			break;
+		case 1:
+			mainwindow->prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
+					"This Node requires a unique IP address");
+			break;
+		case 2:
+			mainwindow->prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
+					"DHCP Enabled nodes requires a unique MAC Address.");
+			break;
+	}
+	on_restoreButton_clicked();
 }
 
 void nodePopup::on_restoreButton_clicked()
@@ -173,9 +202,60 @@ void nodePopup::on_restoreButton_clicked()
 
 void nodePopup::on_applyButton_clicked()
 {
+	NovaGUI * mainwindow  = (NovaGUI*)novaParent->parent();
 	saveNode();
-	pushData();
-	pullData();
-	loadNode();
+	int ret = validateNodeSettings();
+	switch(ret)
+	{
+		case 0:
+			pushData();
+			break;
+		case 1:
+			mainwindow->prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
+					"This Node requires a unique IP address");
+			break;
+		case 2:
+			mainwindow->prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
+					"DHCP Enabled nodes requires a unique MAC Address.");
+			break;
+	}
+	on_restoreButton_clicked();
+
 }
 
+void nodePopup::on_generateButton_clicked()
+{
+	editNode.MAC = novaParent->generateUniqueMACAddr(ui.ethernetVendorEdit->text().toStdString());
+	loadNode();
+	saveNode();
+}
+
+int nodePopup::validateNodeSettings()
+{
+	novaParent->loading->lock();
+	bool ipConflict = false;
+	bool macConflict = false;
+	for(NodeTable::iterator it = novaParent->nodes.begin(); it != novaParent->nodes.end(); it++)
+	{
+		if(it->second.name.compare(editNode.name))
+		{
+			if(!it->second.IP.compare(editNode.IP))
+			{
+				ipConflict = true;
+				break;
+			}
+			if(!it->second.MAC.compare(editNode.MAC))
+			{
+				macConflict = true;
+				break;
+			}
+		}
+	}
+	int ret = 0;
+	if(ipConflict)
+		ret = 1;
+	else if(macConflict)
+		ret = 2;
+	novaParent->loading->unlock();
+	return ret;
+}

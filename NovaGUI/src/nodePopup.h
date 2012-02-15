@@ -21,6 +21,8 @@
 #include "ui_nodePopup.h"
 #include "novagui.h"
 
+enum macType{macPrefix = 0, macSuffix = 1};
+
 class QRegExpValidator;
 
 class HexMACSpinBox : public QSpinBox
@@ -28,9 +30,9 @@ class HexMACSpinBox : public QSpinBox
 	Q_OBJECT
 
 public:
-	HexMACSpinBox(QWidget * parent = 0, string MACAddr = "") : QSpinBox(parent)
+	HexMACSpinBox(QWidget * parent = 0, string MACAddr = "", macType which = macSuffix) : QSpinBox(parent)
 	{
-		validator = new QRegExpValidator(QRegExp("([0-9A-Fa-f][0-9A-Fa-f][:]){3,5}[0-9A-Fa-f][0-9A-Fa-f]"
+		validator = new QRegExpValidator(QRegExp("([0-9A-Fa-f][0-9A-Fa-f][:]){0,2}[0-9A-Fa-f][0-9A-Fa-f]"
 				, Qt::CaseInsensitive, QRegExp::RegExp), this);
 		setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
 		setWrapping(true);
@@ -38,17 +40,20 @@ public:
 
 		if(MACAddr.size() < 14)
 		{
-			setPrefix("00:00:00:");
 			setValue(0);
 		}
 
-		else
+		else if(which == macSuffix)
 		{
-			QString t = QString(MACAddr.substr(0, 9).c_str()).toLower();
-			setPrefix(t);
-			QString suffixStr = QString(MACAddr.substr(9, MACAddr.size()).c_str());
+			QString suffixStr = QString(MACAddr.substr(9, MACAddr.size()).c_str()).toLower();
 			suffixStr = suffixStr.remove(':');
 			setValue(suffixStr.toInt(NULL, 16));
+		}
+		else
+		{
+			QString prefixStr = QString(MACAddr.substr(0, 8).c_str()).toLower();
+			prefixStr = prefixStr.remove(':');
+			setValue(prefixStr.toInt(NULL, 16));
 		}
 	}
 
@@ -77,7 +82,7 @@ protected:
 
 	QValidator::State validate(QString &text, int &pos) const
 	{
-		if(this->lineEdit()->text().size() < 17)
+		if(this->lineEdit()->text().size() < 8)
 			return QValidator::Intermediate;
 		return validator->validate(text, pos);
 	}
@@ -98,6 +103,7 @@ public:
     ~nodePopup();
 
     HexMACSpinBox * ethernetEdit;
+    HexMACSpinBox * prefixEthEdit;
 
     //Saves the current configuration
     void saveNode();
@@ -108,6 +114,9 @@ public:
     //Copies the data to parent novaconfig and adjusts the pointers
     void pushData();
 
+    //Checks for IP or MAC conflicts
+    int validateNodeSettings();
+
 private Q_SLOTS:
 
 	//General Button slots
@@ -115,6 +124,7 @@ private Q_SLOTS:
 	void on_cancelButton_clicked();
 	void on_restoreButton_clicked();
 	void on_applyButton_clicked();
+	void on_generateButton_clicked();
 
 private:
     Ui::nodePopupClass ui;

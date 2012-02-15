@@ -34,7 +34,7 @@ QMenu * profileTreeMenu;
 QMenu * nodeTreeMenu;
 
 //flag to avoid GUI signal conflicts
-bool loadingItems, editingItems = false;
+bool editingItems = false;
 bool selectedSubnet = false;
 bool loadingDefaultActions = false;
 
@@ -48,6 +48,7 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	portMenu = new QMenu(this);
 	profileTreeMenu = new QMenu(this);
 	nodeTreeMenu = new QMenu(this);
+	loading = new QMutex(QMutex::NonRecursive);
 
 	//store current directory / base path for Nova
 	homePath = home;
@@ -73,16 +74,14 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	// Set up the GUI
 	ui.setupUi(this);
 	setInputValidators();
-
-	editingPorts = false;
-
+	loading->lock();
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
 	loadPreferences();
 	pullData();
 	loadHaystack();
 	loadMACPrefixs();
 	loadNmapPersonalities();
-
+	loading->unlock();
 	// Populate the dialog menu
 	for (uint i = 0; i < mainwindow->prompter->registeredMessageTypes.size(); i++)
 	{
@@ -153,9 +152,8 @@ void NovaConfig::on_actionNo_Action_triggered()
 }
 void NovaConfig::on_actionToggle_Inherited_triggered()
 {
-	if(!loadingItems && !ui.portTreeWidget->selectedItems().empty())
+	if(loading->tryLock() && !ui.portTreeWidget->selectedItems().empty())
 	{
-		loadingItems = true;
 		port * prt = NULL;
 		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
 		{
@@ -192,10 +190,10 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 					}
 					if(!p->ports[i].second)
 					{
-						loadingItems = false;
+						loading->unlock();
 						mainwindow->prompter->DisplayPrompt(mainwindow->CANNOT_INHERIT_PORT, "The selected port cannot be inherited"
 								" from any ancestors, would you like to keep it?", ui.actionNo_Action, ui.actionDeletePort, this);
-						loadingItems = true;
+						loading->lock();
 					}
 					//TODO display prompt that allows the user to delete the port or do nothing if port isn't found
 				}
@@ -210,17 +208,16 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 		}
 		loadProfile();
 		saveProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_actionAddPort_triggered()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
 		if(profiles.find(currentProfile) != profiles.end())
 		{
-			loadingItems = true;
 			profile p = profiles[currentProfile];
 
 			port pr;
@@ -314,16 +311,15 @@ void NovaConfig::on_actionAddPort_triggered()
 			loadProfile();
 			saveProfile();
 			ui.portTreeWidget->editItem(ports[pr.portName].item, 0);
-			loadingItems = false;
 		}
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_actionDeletePort_triggered()
 {
-	if(!loadingItems && !ui.portTreeWidget->selectedItems().empty())
+	if(loading->tryLock() && !ui.portTreeWidget->selectedItems().empty())
 	{
-		loadingItems = true;
 		port * prt = NULL;
 		for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
 		{
@@ -387,7 +383,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 		}
 		loadProfile();
 		saveProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
@@ -498,89 +494,81 @@ void NovaConfig::on_featureDisableButton_clicked()
 //Inheritance Check boxes
 void NovaConfig::on_ipModeCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_ethernetCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_uptimeCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_personalityCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_dropRateCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_tcpCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_udpCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::on_icmpCheckBox_stateChanged()
 {
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
@@ -592,9 +580,8 @@ void NovaConfig::on_portTreeWidget_itemChanged(QTreeWidgetItem * item)
 void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edited)
 {
 	//On user action with a valid port, and the user actually changed something
-	if(!loadingItems && (item != NULL) && edited)
+	if(loading->tryLock() && (item != NULL) && edited)
 	{
-		loadingItems = true;
 		//Ensure the signaling item is selected
 		ui.portTreeWidget->setCurrentItem(item);
 		profile p = profiles[currentProfile];
@@ -793,17 +780,16 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		saveProfile();
 		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
 		ui.portTreeWidget->setCurrentItem(ports[prt.portName].item);
-		loadingItems = false;
+		loading->unlock();
 		loadAllProfiles();
 	}
 	//On user interaction with a valid port item without any changes
-	else if(!edited && !loadingItems && (item != NULL))
+	else if(!edited && loading->tryLock() && (item != NULL))
 	{
 		//Select the valid port item under the associated combo box
-		loadingItems = true;
 		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
 		ui.portTreeWidget->setCurrentItem(item);
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
@@ -1093,6 +1079,28 @@ bool NovaConfig::updateNodeTypes()
 					//If name/key is not the IP
 					if(it->second.name.compare(tempNode.IP))
 					{
+						if(nodes.find(tempNode.IP) != nodes.end())
+						{
+							uint i;
+							for(i = 0; i < addList.size(); i++)
+							{
+								if(!addList[i].name.compare(tempNode.IP))
+									break;
+								//Ensures that at least one node will remain if there is a conflict
+								if((i+1) == addList.size())
+									addList.push_back(tempNode);
+							}
+							if(i == addList.size())
+								mainwindow->prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL, "Statically addressed node using "
+									"profile " + tempNode.pfile + " requires a unique IP Address. Conflicting node has been deleted.");
+							delList.push_back(it->second.name);
+						}
+						else
+						{
+							tempNode.name = tempNode.IP;
+							delList.push_back(it->second.name);
+							addList.push_back(tempNode);
+						}
 						tempNode.name = tempNode.IP;
 						delList.push_back(it->second.name);
 						addList.push_back(tempNode);
@@ -1109,9 +1117,18 @@ bool NovaConfig::updateNodeTypes()
 					//If name/key is not the MAC
 					if(it->second.name.compare(tempNode.MAC))
 					{
-						tempNode.name = tempNode.MAC;
-						delList.push_back(it->second.name);
-						addList.push_back(tempNode);
+						if(nodes.find(tempNode.MAC) != nodes.end())
+						{
+							mainwindow->prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL, "DHCP Enabled node using profile "
+									"" + tempNode.pfile + " requires a unique MAC Address. Conflicting node has been deleted.");
+							delList.push_back(it->second.name);
+						}
+						else
+						{
+							tempNode.name = tempNode.MAC;
+							delList.push_back(it->second.name);
+							addList.push_back(tempNode);
+						}
 					}
 					break;
 
@@ -1289,6 +1306,7 @@ void NovaConfig::loadHaystack()
 	//Sets an initial selection
 	updatePointers();
 	//Draws all profile heriarchy
+	loading->unlock();
 	loadAllProfiles();
 	//Draws all node heirarchy
 	loadAllNodes();
@@ -1494,6 +1512,7 @@ void NovaConfig::on_dmConfigButton_clicked()
 //Stores all changes and closes the window
 void NovaConfig::on_okButton_clicked()
 {
+	loading->lock();
 	saveProfile();
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
@@ -1506,8 +1525,8 @@ void NovaConfig::on_okButton_clicked()
 	closelog();
 	//Save changes
 	pushData();
-
 	mainwindow->reloadConfiguration();
+	loading->unlock();
 	this->close();
 }
 
@@ -1515,6 +1534,7 @@ void NovaConfig::on_okButton_clicked()
 //Stores all changes the repopulates the window
 void NovaConfig::on_applyButton_clicked()
 {
+	loading->lock();
 	saveProfile();
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 	if (!saveConfigurationToFile())
@@ -1528,13 +1548,13 @@ void NovaConfig::on_applyButton_clicked()
 	loadPreferences();
 	//Saves honeyd changes
 	pushData();
-	loadingItems = true;
+	loading->lock();
 	//Reloads honeyd configuration to assert concurrency
 	loadHaystack();
 
 	mainwindow->reloadConfiguration();
 
-	loadingItems = false;
+	loading->unlock();
 	closelog();
 }
 
@@ -1795,10 +1815,10 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	mainwindow->loadAll();
 	//Pulls honeyd configuration
 	pullData();
-	loadingItems = true;
+	loading->lock();
 	//Populates honeyd configuration pulled
 	loadHaystack();
-	loadingItems = false;
+	loading->unlock();
 }
 
 void NovaConfig::on_treeWidget_itemSelectionChanged()
@@ -1859,6 +1879,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 void NovaConfig::on_dmCheckBox_stateChanged(int state)
 {
 	nodes["Doppelganger"].enabled = state;
+	loading->unlock();
 	loadAllNodes();
 }
 /*************************
@@ -1876,10 +1897,8 @@ void NovaConfig::on_pcapCheckBox_stateChanged(int state)
 /* Enables or disables options specific for reading from pcap file */
 void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 {
-	if(loadingItems)
+	if(!loading->tryLock())
 		return;
-	else
-		loadingItems = true;
 
 	vector<string> delList;
 	vector<node> addList;
@@ -1900,18 +1919,18 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 		if(!displayMACPrefixWindow())
 		{
 			ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
-			loadingItems = false;
+			loading->unlock();
 			return;
 		}
 	}
 
 	profiles[currentProfile].type = (profileType)index;
 	ui.dhcpComboBox->setCurrentIndex((int)profiles[currentProfile].type);
-	loadingItems = true;
+	loading->lock();
 	saveProfile();
 	loadProfile();
 	updateNodeTypes();
-	loadingItems = false;
+	loading->unlock();
 	loadAllNodes();
 }
 
@@ -2138,7 +2157,7 @@ void NovaConfig::deleteProfile(string name)
 //Populates the window with the selected profile's options
 void NovaConfig::loadProfile()
 {
-	struct port * pr = NULL;
+	port pr;
 	QTreeWidgetItem * item = NULL;
 	//If the selected profile can be found
 	if(profiles.find(currentProfile) != profiles.end())
@@ -2193,18 +2212,18 @@ void NovaConfig::loadProfile()
 		//Populate the port table
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
-			pr = &ports[p->ports[i].first];
+			pr =ports[p->ports[i].first];
 
 
 			//These don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
 			item = new QTreeWidgetItem(0);
-			item->setText(0,(QString)pr->portNum.c_str());
-			item->setText(1,(QString)pr->type.c_str());
-			if(!pr->behavior.compare("script"))
-				item->setText(2, (QString)pr->scriptName.c_str());
+			item->setText(0,(QString)pr.portNum.c_str());
+			item->setText(1,(QString)pr.type.c_str());
+			if(!pr.behavior.compare("script"))
+				item->setText(2, (QString)pr.scriptName.c_str());
 			else
-				item->setText(2,(QString)pr->behavior.c_str());
+				item->setText(2,(QString)pr.behavior.c_str());
 			ui.portTreeWidget->insertTopLevelItem(i, item);
 
 			QFont tempFont;
@@ -2240,18 +2259,19 @@ void NovaConfig::loadProfile()
 			else
 				item->setFlags(item->flags() | Qt::ItemIsEditable);
 
-			typeBox->setCurrentIndex(typeBox->findText(pr->type.c_str()));
+			typeBox->setCurrentIndex(typeBox->findText(pr.type.c_str()));
 
-			if(!pr->behavior.compare("script"))
-				behaviorBox->setCurrentIndex(behaviorBox->findText(pr->scriptName.c_str()));
+			if(!pr.behavior.compare("script"))
+				behaviorBox->setCurrentIndex(behaviorBox->findText(pr.scriptName.c_str()));
 			else
-				behaviorBox->setCurrentIndex(behaviorBox->findText(pr->behavior.c_str()));
+				behaviorBox->setCurrentIndex(behaviorBox->findText(pr.behavior.c_str()));
 
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
-			pr->item = item;
-			if(!portCurrentString.compare(pr->portName))
-				ui.portTreeWidget->setCurrentItem(pr->item);
+			pr.item = item;
+			ports[pr.portName] = pr;
+			if(!portCurrentString.compare(pr.portName))
+				ui.portTreeWidget->setCurrentItem(pr.item);
 		}
 	}
 	else
@@ -2818,7 +2838,7 @@ void NovaConfig::loadSubProfiles(string parent)
 //Draws all profile heirarchy in the tree widget
 void NovaConfig::loadAllProfiles()
 {
-	loadingItems = true;
+	loading->lock();
 	ui.hsProfileTreeWidget->clear();
 	ui.profileTreeWidget->clear();
 	ui.hsProfileTreeWidget->sortByColumn(0,Qt::AscendingOrder);
@@ -2851,7 +2871,7 @@ void NovaConfig::loadAllProfiles()
 	{
 		currentProfile = "";
 	}
-	loadingItems = false;
+	loading->unlock();
 }
 
 //Creates tree widget items for a profile and all ancestors if they need one.
@@ -3062,10 +3082,9 @@ void NovaConfig::setInputValidators()
 /* This loads the profile config menu for the profile selected */
 void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 {
-	if(!loadingItems && profiles.size())
+	if(loading->tryLock() && profiles.size())
 	{
 		//Save old profile
-		loadingItems = true;
 		saveProfile();
 		if(!ui.profileTreeWidget->selectedItems().isEmpty())
 		{
@@ -3073,7 +3092,7 @@ void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 			currentProfile = item->text(0).toStdString();
 		}
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
@@ -3121,7 +3140,7 @@ void NovaConfig::on_actionProfileDelete_triggered()
 		if(mainwindow->prompter->DisplayPrompt(mainwindow->CANNOT_DELETE_ITEM, "Cannot delete the default profile, "
 				"would you like to disable the Haystack instead?",ui.actionNo_Action, ui.actionNo_Action, this) == CHOICE_DEFAULT)
 		{
-			loadingItems = true;
+			loading->lock();
 			bool tempSelBool = selectedSubnet;
 			selectedSubnet = true;
 			string tempNode = currentNode;
@@ -3131,14 +3150,15 @@ void NovaConfig::on_actionProfileDelete_triggered()
 			{
 				currentSubnet = it->second.name;
 				on_actionNodeDisable_triggered();
-				loadingItems = true;
+				loading->lock();
 			}
 			selectedSubnet = tempSelBool;
 			currentNode = tempNode;
 			currentSubnet = tempNet;
-			loadingItems = false;
+			loading->unlock();
 		}
 	}
+	loading->unlock();
 	loadAllNodes();
 }
 
@@ -3150,6 +3170,7 @@ void NovaConfig::on_addButton_clicked()
 
 void NovaConfig::on_actionProfileAdd_triggered()
 {
+	loading->lock();
 	struct profile temp;
 	temp.name = "New Profile";
 
@@ -3198,6 +3219,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	//Puts the profile in the table, creates a ptree and loads the new configuration
 	profiles[temp.name] = temp;
 	createProfileTree(temp.name);
+	loading->unlock();
 	loadAllProfiles();
 	loadAllNodes();
 }
@@ -3215,7 +3237,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 	//Do nothing if no profiles
 	if(profiles.size())
 	{
-		loadingItems = true;
+		loading->lock();
 		QTreeWidgetItem * item = ui.profileTreeWidget->selectedItems().first();
 		string profileStr = item->text(0).toStdString();
 		profile p = profiles[currentProfile];
@@ -3243,17 +3265,16 @@ void NovaConfig::on_actionProfileClone_triggered()
 		profiles[p.name] = p;
 		loadProfilesFromTree(p.name);
 		updateProfileTree(p.name, ALL);
+		loading->unlock();
 		loadAllProfiles();
 		loadAllNodes();
-		loadingItems = false;
 	}
 }
 
 void NovaConfig::on_profileEdit_editingFinished()
 {
-	if(!loadingItems && !profiles.empty())
+	if(loading->tryLock() && !profiles.empty())
 	{
-		loadingItems = true;
 		profiles[currentProfile].item->setText(0,ui.profileEdit->displayText());
 		profiles[currentProfile].profileItem->setText(0,ui.profileEdit->displayText());
 		//If the name has changed we need to move it in the profile hash table and point all
@@ -3261,7 +3282,7 @@ void NovaConfig::on_profileEdit_editingFinished()
 		updateProfile(UPDATE_PROFILE, &profiles[currentProfile]);
 		saveProfile();
 		loadProfile();
-		loadingItems = false;
+		loading->unlock();
 		loadAllNodes();
 	}
 }
@@ -3271,7 +3292,7 @@ void NovaConfig::on_profileEdit_editingFinished()
 
 void NovaConfig::loadAllNodes()
 {
-	loadingItems = true;
+	loading->lock();
 	QBrush whitebrush(QColor(255, 255, 255, 255));
 	QBrush greybrush(QColor(100, 100, 100, 255));
 	greybrush.setStyle(Qt::SolidPattern);
@@ -3371,7 +3392,7 @@ void NovaConfig::loadAllNodes()
 			ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
 		}
 	}
-	loadingItems = false;
+	loading->unlock();
 }
 
 //Function called when delete button
@@ -3381,7 +3402,7 @@ void NovaConfig::deleteNodes()
 	string name = "";
 	bool nextIsSubnet = false;
 
-	loadingItems = true;
+	loading->lock();
 
 	//If a subnet is selected and there's another to select
 	if((subnets.size() > 1) && selectedSubnet)
@@ -3441,7 +3462,7 @@ void NovaConfig::deleteNodes()
 		vector<subnet> physicalDevs;
 		node dmTemp = nodes["Doppelganger"];
 		selectedSubnet = true;
-		loadingItems = true;
+		loading->lock();
 		for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
 		{
 			if(it->second.isRealDevice)
@@ -3457,18 +3478,19 @@ void NovaConfig::deleteNodes()
 			subnets[physicalDevs.back().name] = physicalDevs.back();
 			currentSubnet = physicalDevs.back().name;
 			on_actionNodeDisable_triggered();
-			loadingItems = true;
+			loading->lock();
 			physicalDevs.pop_back();
 		}
 		subnets[dmTemp.sub].nodes.push_back(dmTemp.name);
 		currentNode = "Doppelganger";
 		currentSubnet = nodes[currentNode].sub;
 		selectedSubnet = false;
+		loading->unlock();
 		loadAllNodes();
 		return;
 	}
 
-	loadingItems = true;
+	loading->lock();
 	//If we are deleteing a subnet, remove each node first then remove the subnet.
 	if(selectedSubnet)
 	{
@@ -3496,12 +3518,12 @@ void NovaConfig::deleteNodes()
 		if(currentNode.compare("Doppelganger"))
 			deleteNode(&nodes[currentNode]);
 	}
-	loadingItems = true;
+	loading->lock();
 
 	//If the currentSelection cannot be deleted it is either the doppelganger or a real device.
 	if((selectedSubnet && subnets[currentSubnet].isRealDevice) || (!currentNode.compare("Doppelganger")))
 	{
-		loadingItems = false;
+		loading->unlock();
 		on_actionNodeDisable_triggered();
 	}
 	//If we have a node as our new selection, set it as current item
@@ -3509,16 +3531,16 @@ void NovaConfig::deleteNodes()
 	{
 		currentNode = name;
 		currentSubnet = nodes[currentNode].sub;
-		loadingItems = false;
 		selectedSubnet = false;
+		loading->unlock();
 		loadAllNodes();
 	}
 	//If we have a subnet selected
 	else
 	{
 		currentSubnet = name;
-		loadingItems = false;
 		selectedSubnet = true;
+		loading->unlock();
 		loadAllNodes();
 	}
 
@@ -3554,9 +3576,8 @@ void NovaConfig::deleteNode(node *n)
 void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 {
 	//If the user is changing the selection AND something is selected
-	if(!loadingItems)
+	if(loading->tryLock())
 	{
-		loadingItems = true;
 		if(!ui.nodeTreeWidget->selectedItems().isEmpty())
 		{
 			QTreeWidgetItem * item = ui.nodeTreeWidget->selectedItems().first();
@@ -3574,15 +3595,14 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 				selectedSubnet = true;
 			}
 		}
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
 void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited)
 {
-	if(!loadingItems && edited)
+	if(loading->tryLock() && edited)
 	{
-		loadingItems = true;
 		ui.nodeTreeWidget->setCurrentItem(item);
 		string oldPfile;
 		if(!ui.nodeTreeWidget->selectedItems().isEmpty())
@@ -3597,7 +3617,6 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edi
 			item = nodes[currentNode].nodeItem;
 			ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
 			ui.nodeTreeWidget->setCurrentItem(item);
-			loadingItems = false;
 		}
 		else
 		{
@@ -3610,15 +3629,14 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edi
 			item = nodes[currentNode].nodeItem;
 			ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
 			ui.nodeTreeWidget->setCurrentItem(item);
-			loadingItems = false;
 		}
+		loading->unlock();
 	}
-	else if(!loadingItems && !edited)
+	else if(loading->tryLock() && !edited)
 	{
-		loadingItems = true;
 		ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
 		ui.nodeTreeWidget->setCurrentItem(item);
-		loadingItems = false;
+		loading->unlock();
 	}
 }
 
@@ -3673,13 +3691,14 @@ void NovaConfig::on_actionNodeEnable_triggered()
 	}
 
 	//Draw the nodes and restore selection
+	loading->unlock();
 	loadAllNodes();
-	loadingItems = true;
+	loading->lock();
 	if(selectedSubnet)
 		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
 	else
 		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
-	loadingItems = false;
+	loading->unlock();
 }
 
 void NovaConfig::on_actionNodeDisable_triggered()
@@ -3700,13 +3719,14 @@ void NovaConfig::on_actionNodeDisable_triggered()
 	}
 
 	//Draw the nodes and restore selection
+	loading->unlock();
 	loadAllNodes();
-	loadingItems = true;
+	loading->lock();
 	if(selectedSubnet)
 		ui.nodeTreeWidget->setCurrentItem(subnets[currentSubnet].nodeItem);
 	else
 		ui.nodeTreeWidget->setCurrentItem(nodes[currentNode].nodeItem);
-	loadingItems = false;
+	loading->unlock();
 }
 
 
@@ -3720,25 +3740,13 @@ void NovaConfig::on_nodeEditButton_clicked()
 //Creates a copy of the current node and pops up the edit window
 void NovaConfig::on_nodeCloneButton_clicked()
 {
-	/*if(nodes.size())
-	{
-		editingNodes = true;
-		nodewindow = new nodePopup(this, &nodes[currentNode], CLONE_NODE, homePath);
-		loadAllNodes();
-		nodewindow->show();
-	}*/
+
 }
 //Not currently used, will be implemented in the new GUI design TODO
 //Creates a new node and pops up the edit window
 void NovaConfig::on_nodeAddButton_clicked()
 {
-	/*if(nodes.size())
-	{
-		editingNodes = true;
-		nodewindow = new nodePopup(this, &nodes[currentNode], ADD_NODE, homePath);
-		loadAllNodes();
-		nodewindow->show();
-	}*/
+
 }
 
 //Calls the function(s) to remove the node(s)
