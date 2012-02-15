@@ -19,6 +19,7 @@
 
 #include "Haystack.h"
 #include "NOVAConfiguration.h"
+#include "Logger.h"
 
 using namespace std;
 using namespace Nova;
@@ -54,6 +55,8 @@ char * pathsFile = (char*)PATHS_FILE;
 string homePath;
 bool useTerminals;
 
+Logger * loggerConf;
+
 int main(int argc, char *argv[])
 {
 	pthread_rwlock_init(&sessionLock, NULL);
@@ -86,7 +89,8 @@ int main(int argc, char *argv[])
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 	chdir(homePath.c_str());
 
-	//Runs the configuration loader
+	//Runs the configuration loaders
+	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
 	LoadConfig((char*)novaConfig.c_str());
 
 	if(!useTerminals)

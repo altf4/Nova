@@ -73,27 +73,14 @@ public:
 	//					not the one in the messageInfo struct.
 	Logger(string parent, char const * configFilePath, bool init);
 	~Logger();
-	// Load Configuration: loads the SMTP info and service level preferences
-	// from NovaConfig.txt.
-	// args:   char const * filename. This tells the method where the config
-	// 		   file is for parsing.
-	// return: uint16_t ( 0 | 1). On 0, one of the options was not set, and has
-	// 		   no default. On 1, everything's fine.
-	uint16_t LoadConfiguration(char const* filename);
 	// SaveLoggerConfiguration: will save LoggerConfiguration to the given filename.
 	// No use for this right now, a placeholder for future gui applications. Will
 	// definitely change.
 	void SaveLoggerConfiguration(string filename);
-	// ParseAddressesString: takes in the comma separated string of email recipients
-	// and returns a vector containing each individual email address. May not need this
-	// in the future, depending on how forgiving the SMTP methods are in Poco, but for
-	// now I thought it a good idea to have.
-	// args: 	string addresses. comma separated string of email addresses.
-	vector<string> ParseAddressesString(string addresses);
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(Nova::Levels messageLevel, userMap serv, string message, optionsInfo options);
+	void Logging(Nova::Levels messageLevel, string message);
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
 	// args: 	string logPrefString: this method is used for reading from the config file
@@ -103,7 +90,7 @@ public:
 	//       	Given Nova::Levels level will have have Nova::Services services mapped to it inside
 	//       	the inModuleSettings userMap, and the new map will be returned.
 	void setUserLogPreferences(string logPrefString);
-	userMap setUserLogPreferences(Nova::Levels messageLevel, Nova::Services services, userMap inModuleSettings);
+	void setUserLogPreferences(Nova::Levels messageLevel, Nova::Services services);
 
 private:
 	// Notify makes use of the libnotify methods to produce
@@ -112,6 +99,12 @@ private:
 	//       	libNotify message.
 	//       	string message. The content of the libNotify message
 	void Notify(uint16_t level, string message);
+	// ParseAddressesString: takes in the comma separated string of email recipients
+	// and returns a vector containing each individual email address. May not need this
+	// in the future, depending on how forgiving the SMTP methods are in Poco, but for
+	// now I thought it a good idea to have.
+	// args: 	string addresses. comma separated string of email addresses.
+	vector<string> ParseAddressesString(string addresses);
 	// Log will be the method that calls syslog
 	// args: 	uint16_t level. The level of severity to tell syslog to log with.
 	//       	string message. The message to send to syslog in string form.
@@ -123,7 +116,7 @@ private:
 	//		 	string message. This will be the string that is sent as the
 	// 		 	email's content.
 	//       	vector<string> recipients. Who the email will be sent to.
-	void Mail(uint16_t level, string message, optionsInfo options);
+	void Mail(uint16_t level, string message);
 	// clean the elements in the toClean vector, i.e. removing trailing commas, etc.
 	vector<string> CleanAddresses(vector<string> toClean);
 	// extracts the service mask from the userMap provided based on the given message level.
@@ -131,14 +124,21 @@ private:
 	// takes in a character, and returns a Services type; for use when
 	// parsing the SERVICE_PREFERENCES string from the NOVAConfig.txt file.
 	Nova::Services parseServicesFromChar(char parse);
+	// Load Configuration: loads the SMTP info and service level preferences
+	// from NovaConfig.txt.
+	// args:   char const * filename. This tells the method where the config
+	// 		   file is for parsing.
+	// return: uint16_t ( 0 | 1). On 0, one of the options was not set, and has
+	// 		   no default. On 1, everything's fine.
+	uint16_t LoadConfiguration(char const* filename);
 
 public:
-	optionsInfo messageInfo;
 	levelsMap levels;
 
 private:
 	static const string prefixes[];
 	string parentName;
+	optionsInfo messageInfo;
 };
 
 }
