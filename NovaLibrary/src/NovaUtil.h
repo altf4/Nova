@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Utility class for storing functions that are used by multiple
@@ -272,6 +272,9 @@ string MakaDataFile(trainingSuspectMap& db);
 
 // Removes consecutive points who's squared distance is less than a specified distance
 void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold);
+
+//Returns the Hex character for integers 0-15, any other value returns an empty string ("")
+string intToHexAscii(uint val);
 
 }
 

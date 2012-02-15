@@ -18,8 +18,74 @@
 #ifndef NODEPOPUP_H
 #define NODEPOPUP_H
 
-#include "novagui.h"
 #include "ui_nodePopup.h"
+#include "novagui.h"
+
+class QRegExpValidator;
+
+class HexMACSpinBox : public QSpinBox
+{
+	Q_OBJECT
+
+public:
+	HexMACSpinBox(QWidget * parent = 0, string MACAddr = "") : QSpinBox(parent)
+	{
+		validator = new QRegExpValidator(QRegExp("([0-9A-Fa-f][0-9A-Fa-f][:]){3,5}[0-9A-Fa-f][0-9A-Fa-f]"
+				, Qt::CaseInsensitive, QRegExp::RegExp), this);
+		setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
+		setWrapping(true);
+		setRange(0, (pow(2,24)-1));
+
+		if(MACAddr.size() < 14)
+		{
+			setPrefix("00:00:00:");
+			setValue(0);
+		}
+
+		else
+		{
+			QString t = QString(MACAddr.substr(0, 9).c_str()).toLower();
+			setPrefix(t);
+			QString suffixStr = QString(MACAddr.substr(9, MACAddr.size()).c_str());
+			suffixStr = suffixStr.remove(':');
+			setValue(suffixStr.toInt(NULL, 16));
+		}
+	}
+
+protected:
+	int valueFromText(const QString &text) const
+	{
+		int val = 0;
+		QString temp = QString(text);
+		temp = temp.remove(':');
+		temp = temp.right(6);
+		val = temp.toInt(NULL, 16);
+		return val;
+	}
+
+	QString textFromValue(int value) const
+	{
+		QString ret = QString::number(value, 16).toLower();
+		while(ret.toStdString().size() < 6)
+		{
+			ret = ret.prepend('0');
+		}
+		ret = ret.insert(4, ':');
+		ret = ret.insert(2, ':');
+		return ret;
+	}
+
+	QValidator::State validate(QString &text, int &pos) const
+	{
+		if(this->lineEdit()->text().size() < 17)
+			return QValidator::Intermediate;
+		return validator->validate(text, pos);
+	}
+
+private:
+
+    QRegExpValidator *validator;
+};
 
 
 class nodePopup : public QMainWindow
@@ -28,10 +94,10 @@ class nodePopup : public QMainWindow
 
 public:
 
-    string homePath;
-
     nodePopup(QWidget *parent = 0, node *n  = NULL);
     ~nodePopup();
+
+    HexMACSpinBox * ethernetEdit;
 
     //Saves the current configuration
     void saveNode();
@@ -51,7 +117,6 @@ private Q_SLOTS:
 	void on_applyButton_clicked();
 
 private:
-
     Ui::nodePopupClass ui;
 };
 

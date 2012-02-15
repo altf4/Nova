@@ -16,8 +16,10 @@
 // Description : Popup for creating and editing nodes
 //============================================================================
 #include "nodePopup.h"
+#include "novaconfig.h"
 
 using namespace std;
+using namespace Nova;
 
 //Parent window pointers, allows us to call functions from the parent
 NovaConfig * novaParent;
@@ -32,9 +34,10 @@ nodePopup::nodePopup(QWidget * parent, node * n)
 {
 	//homePath = GetHomePath();
 	ui.setupUi(this);
-
 	novaParent = (NovaConfig *)parent;
 	editNode = *n;
+	ethernetEdit = new HexMACSpinBox(this, editNode.MAC);
+	ui.ethernetHBox->insertWidget(0, ethernetEdit);
 	loadNode();
 }
 
@@ -51,7 +54,7 @@ nodePopup::~nodePopup()
 //saves the changes to a node
 void nodePopup::saveNode()
 {
-	editNode.MAC = ui.ethernetEdit->displayText().toStdString();
+	editNode.MAC = ethernetEdit->text().toStdString();
 	editNode.realIP = (ui.ipSpinBox0->value() << 24) +(ui.ipSpinBox1->value() << 16)
 			+ (ui.ipSpinBox2->value() << 8) + (ui.ipSpinBox3->value());
 	in_addr inTemp;
@@ -66,7 +69,11 @@ void nodePopup::loadNode()
 	profile p = novaParent->profiles[editNode.pfile];
 
 	ui.ethernetVendorEdit->setText((QString)p.ethernet.c_str());
-	ui.ethernetEdit->setText((QString)editNode.MAC.c_str());
+	QString t = QString(editNode.MAC.substr(0, 9).c_str());
+	ethernetEdit->setPrefix(t);
+	QString suffixStr = QString(editNode.MAC.substr(9, editNode.MAC.size()).c_str());
+	suffixStr = suffixStr.remove(':');
+	ethernetEdit->setValue(suffixStr.toInt(NULL, 16));
 
 	int count = 0;
 	int numBits = 32 - s.maskBits;
