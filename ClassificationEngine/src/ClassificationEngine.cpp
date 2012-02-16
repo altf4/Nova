@@ -550,7 +550,8 @@ void Nova::ClassificationEngine::RefreshStateFile()
 	in.close();
 
 	string copyCommand = "cp -f " + tmpFile + " " + ceSaveFile;
-	system(copyCommand.c_str());
+	if (system(copyCommand.c_str()) == -1)
+		syslog(SYSL_ERR, "Line %d: Error: Unable to copy CE state tmp file to CE state file. System call to cp failed.", __LINE__);
 }
 
 void Nova::ClassificationEngine::Reload()
@@ -1573,7 +1574,9 @@ void ClassificationEngine::ReceiveGUICommand()
 			suspectsSinceLastSave.clear();
 
 			string delString = "rm -f " + ceSaveFile;
-			system(delString.c_str());
+			if(system(delString.c_str()) == -1)
+				syslog(SYSL_ERR, "Line: %d Unable to delete CE state file. System call to rm failed.", __LINE__);
+
 			pthread_rwlock_unlock(&lock);
 			break;
 		}
