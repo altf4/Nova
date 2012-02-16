@@ -259,7 +259,6 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	}
 }
 
-inline
 void FeatureSet::CalculateTimeInterval()
 {
 	if(endTime > startTime)
@@ -354,7 +353,6 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	}
 }
 
-inline
 FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
 	totalInterval += rhs.totalInterval;
 	packetCount += rhs.packetCount;
@@ -379,7 +377,6 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
 	return *this;
 }
 
-inline
 FeatureSet& FeatureSet::operator-=(FeatureSet &rhs) {
 	totalInterval -= rhs.totalInterval;
 	packetCount -= rhs.packetCount;
@@ -401,7 +398,6 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs) {
 	return *this;
 }
 
-inline
 void FeatureSet::UpdateFeatureData(bool include)
 {
 	if(include)
