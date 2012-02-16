@@ -139,6 +139,7 @@ private:
 	static const string prefixes[];
 	string parentName;
 	optionsInfo messageInfo;
+	pthread_rwlock_t logLock;
 };
 
 }

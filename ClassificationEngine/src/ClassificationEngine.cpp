@@ -37,7 +37,6 @@ vector<in_addr_t> neighbors;
 string key;
 
 pthread_rwlock_t lock;
-pthread_rwlock_t logLock;
 
 // Buffers
 u_char buffer[MAX_MSG_SIZE];
@@ -133,7 +132,6 @@ int main(int argc,char *argv[])
 	bzero(buffer, MAX_MSG_SIZE);
 
 	pthread_rwlock_init(&lock, NULL);
-	pthread_rwlock_init(&logLock, NULL);
 
 	if (argc > 1)
 		if (!strcmp(argv[1], "--no-gui"))
@@ -166,11 +164,7 @@ int main(int argc,char *argv[])
 	homePath = GetHomePath();
 	string novaConfig = homePath + "/Config/NOVAConfig.txt";
 	if(chdir(homePath.c_str()) == -1)
-	{
-	    pthread_rwlock_rdlock(&logLock);
 	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
-	    pthread_rwlock_unlock(&logLock);
-	}
 
 	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
 	Reload();
@@ -245,9 +239,7 @@ int main(int argc,char *argv[])
     // just use any of the syslog levels. All caps, always.
     // The second is the string to display in any of the mediums through which logging
     // will route based on severity level.
-    pthread_rwlock_rdlock(&logLock);
     loggerConf->Logging(INFO, "Classification Engine has begun the main loop...");
-    pthread_rwlock_unlock(&logLock);
 
 
     //"Main Loop"
@@ -819,17 +811,13 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 	ss << "sudo iptables -A INPUT -p udp --dport " << sAlarmPort << " -j REJECT --reject-with icmp-port-unreachable";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    pthread_rwlock_rdlock(&logLock);
 	    loggerConf->Logging(INFO, "Failed to update iptables.");
-	    pthread_rwlock_unlock(&logLock);
 	}
 	ss.str("");
 	ss << "sudo iptables -A INPUT -p tcp --dport " << sAlarmPort << " -j REJECT --reject-with tcp-reset";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    pthread_rwlock_rdlock(&logLock);
 	    loggerConf->Logging(INFO, "Failed to update iptables.");
-	    pthread_rwlock_unlock(&logLock);
 	}
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
@@ -1354,9 +1342,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 
 				if(system(commandLine.c_str()) == -1)
 				{
-					pthread_rwlock_rdlock(&logLock);
 					loggerConf->Logging(INFO, "Failed to update iptables.");
-					pthread_rwlock_unlock(&logLock);
 				}
 
 
@@ -1398,9 +1384,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						pthread_rwlock_rdlock(&logLock);
 						loggerConf->Logging(INFO, "Failed to update iptables.");
-						pthread_rwlock_unlock(&logLock);
 					}
 					continue;
 				}
@@ -1414,9 +1398,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						pthread_rwlock_rdlock(&logLock);
 						loggerConf->Logging(INFO, "Failed to update iptables.");
-						pthread_rwlock_unlock(&logLock);
 					}
 					continue;
 				}
@@ -1427,9 +1409,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				if(system(commandLine.c_str()) == -1)
 				{
-					pthread_rwlock_rdlock(&logLock);
 					loggerConf->Logging(INFO, "Failed to update iptables.");
-					pthread_rwlock_unlock(&logLock);
 				}
 			}
 		}while(dataLen == MORE_DATA);

@@ -193,6 +193,8 @@ namespace Nova
 
 	void Logger::Logging(Nova::Levels messageLevel, string message)
 	{
+		pthread_rwlock_wrlock(&logLock);
+
 		Nova::Services services = Logger::setServiceLevel(messageLevel, messageInfo.service_preferences);
 
 		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
@@ -216,6 +218,8 @@ namespace Nova
 			syslog(SYSL_INFO, "You are not currently opting to use any logging mechanisms.");
 			closelog();
 		}
+
+		pthread_rwlock_unlock(&logLock);
 	}
 
 	void Logger::Notify(uint16_t level, string message)
@@ -367,6 +371,7 @@ namespace Nova
 
 	Logger::Logger(string parent, char const * configFilePath, bool init)
 	{
+		pthread_rwlock_init(&logLock, NULL);
 		parentName = parent.substr(7, (parent.length() - 11));;
 
 		for(uint16_t i = 0; i < 8; i++)

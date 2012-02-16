@@ -35,7 +35,6 @@ static SuspectHashTable	suspects;
 
 pthread_rwlock_t sessionLock;
 pthread_rwlock_t suspectLock;
-pthread_rwlock_t logLock;
 
 string dev; //Interface name, read from config file
 string pcapPath; //Pcap file to read from instead of live packet capture.
@@ -69,7 +68,6 @@ int main(int argc, char *argv[])
 {
 	pthread_rwlock_init(&sessionLock, NULL);
 	pthread_rwlock_init(&suspectLock, NULL);
-	pthread_rwlock_init(&logLock, NULL);
 	pthread_t TCP_timeout_thread;
 	pthread_t GUIListenThread;
 	pthread_t SuspectUpdateThread;
@@ -96,15 +94,14 @@ int main(int argc, char *argv[])
 	//Get locations of Nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	if(chdir(homePath.c_str()) == -1)
-	{
-		pthread_rwlock_rdlock(&logLock);
-		loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
-		pthread_rwlock_unlock(&logLock);
-	}
 
 	//Runs the configuration loaders
-	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
+		loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
+
+	if(chdir(homePath.c_str()) == -1)
+		loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
+
+
 	LoadConfig((char*)novaConfig.c_str());
 
 	if(!useTerminals)
@@ -660,21 +657,15 @@ void LocalTrafficMonitor::KnockRequest(Packet packet, u_char * payload)
 			ss << "iptables -I INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << sAlarmPort << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
-			{
-				pthread_rwlock_rdlock(&logLock);
 				loggerConf->Logging(INFO, "Failed to open port with port knocking.");
-				pthread_rwlock_unlock(&logLock);
-			}
+
 		}
 		else if(!sentKey.compare("SHUT"))
 		{
 			ss << "iptables -D INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << sAlarmPort << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
-			{
-				pthread_rwlock_rdlock(&logLock);
 				loggerConf->Logging(INFO, "Failed to shut port after knock request.");
-				pthread_rwlock_unlock(&logLock);
 			}
 		}
 	}
