@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 
 	//Runs the configuration loaders
-		loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
+	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
 
 	if(chdir(homePath.c_str()) == -1)
 		loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	if(hostAddress.empty())
 	{
 		syslog(SYSL_ERR, "Line: %d Invalid interface given", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	//Form the Filter Expression String
@@ -156,13 +156,13 @@ int main(int argc, char *argv[])
 		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		//First process any packets in the file then close all the sessions
 		pcap_loop(handle, -1, Packet_Handler,NULL);
@@ -190,19 +190,19 @@ int main(int argc, char *argv[])
 		if(ret == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d %s", __LINE__, errbuf);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
@@ -316,7 +316,7 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 	{
 		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	localIPCAddress.sun_family = AF_UNIX;
@@ -333,14 +333,14 @@ void *Nova::LocalTrafficMonitor::GUILoop(void *ptr)
 	{
 		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	while(true)
 	{
@@ -388,7 +388,7 @@ void LocalTrafficMonitor::ReceiveGUICommand(int socket)
 			pthread_rwlock_unlock(&suspectLock);
 			break;
     	case EXIT:
-    		exit(1);
+    		exit(EXIT_SUCCESS);
     	default:
     		break;
     }
@@ -600,9 +600,12 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
 			}
 		}
+		settings.close();
 	}
-	settings.close();
-
+	else
+	{
+		syslog(SYSL_ERR, "Line %d ERROR: Unable to open settings file", __LINE__);
+	}
 
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
@@ -614,7 +617,7 @@ void LocalTrafficMonitor::LoadConfig(char* configFilePath)
 	if(confCheck == 2)
 	{
 		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	else if(confCheck == 1)
 	{
@@ -666,7 +669,6 @@ void LocalTrafficMonitor::KnockRequest(Packet packet, u_char * payload)
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
 				loggerConf->Logging(INFO, "Failed to shut port after knock request.");
-			}
 		}
 	}
 }

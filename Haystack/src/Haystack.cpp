@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 	if(haystackAddresses.empty())
 	{
 		syslog(SYSL_ERR, "Line: %d Error: No honeyd haystack nodes were found", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	//Flatten out the vector into a csv string
@@ -159,13 +159,13 @@ int main(int argc, char *argv[])
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		//First process any packets in the file then close all the sessions
 		pcap_loop(handle, -1, Packet_Handler,NULL);
@@ -195,19 +195,19 @@ int main(int argc, char *argv[])
 		if(ret == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d %s", __LINE__, errbuf);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
@@ -316,7 +316,7 @@ void *Nova::Haystack::GUILoop(void *ptr)
 	{
 		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	localIPCAddress.sun_family = AF_UNIX;
@@ -333,14 +333,14 @@ void *Nova::Haystack::GUILoop(void *ptr)
 	{
 		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	while(true)
 	{
@@ -388,7 +388,7 @@ void Haystack::ReceiveGUICommand(int socket)
 			pthread_rwlock_unlock(&suspectLock);
 			break;
     	case EXIT:
-    		exit(1);
+    		exit(EXIT_SUCCESS);
     	default:
     		break;
     }
@@ -586,7 +586,7 @@ vector <string> Nova::Haystack::GetHaystackAddresses(string honeyDConfigPath)
 	if( honeydConfFile == NULL)
 	{
 		syslog(SYSL_ERR, "Line: %d Error opening log file. Does it exist?", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	string LogInputLine;
@@ -633,7 +633,7 @@ void Haystack::LoadConfig(char* configFilePath)
 	if(confCheck == 2)
 	{
 		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	else if(confCheck == 1)
 	{
