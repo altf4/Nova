@@ -513,6 +513,17 @@ void NovaGUI::saveAll()
 		pt.put<std::string>("profile.name", it->second.pfile);
 		nodesTree.add_child("node",pt);
 	}
+	using boost::property_tree::ptree;
+	BOOST_FOREACH(ptree::value_type &v, groupTree.get_child("groups"))
+	{
+		//Find the specified group
+		if(!v.second.get<std::string>("name").compare(group))
+		{
+			//Load Subnets first, they are needed before we can load nodes
+			v.second.put_child("subnets", subnetTree);
+			v.second.put_child("nodes",nodesTree);
+		}
+	}
 	profileTree.clear();
 	for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
 	{

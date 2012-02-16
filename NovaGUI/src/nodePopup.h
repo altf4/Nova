@@ -38,7 +38,7 @@ public:
 		setWrapping(true);
 		setRange(0, (pow(2,24)-1));
 
-		if(MACAddr.size() < 14)
+		if(MACAddr.size() < 17)
 		{
 			setValue(0);
 		}

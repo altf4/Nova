@@ -71,14 +71,21 @@ void nodePopup::loadNode()
 	profile p = novaParent->profiles[editNode.pfile];
 
 	ui.ethernetVendorEdit->setText((QString)p.ethernet.c_str());
+	if(editNode.MAC.length() == 17)
+	{
+		QString prefixStr = QString(editNode.MAC.substr(0, 8).c_str()).toLower();
+		prefixStr = prefixStr.remove(':');
+		prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));
 
-	QString prefixStr = QString(editNode.MAC.substr(0, 8).c_str()).toLower();
-	prefixStr = prefixStr.remove(':');
-	prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));
-
-	QString suffixStr = QString(editNode.MAC.substr(9, 8).c_str()).toLower();
-	suffixStr = suffixStr.remove(':');
-	ethernetEdit->setValue(suffixStr.toInt(NULL, 16));
+		QString suffixStr = QString(editNode.MAC.substr(9, 8).c_str()).toLower();
+		suffixStr = suffixStr.remove(':');
+		ethernetEdit->setValue(suffixStr.toInt(NULL, 16));
+	}
+	else
+	{
+		prefixEthEdit->setValue(0);
+		ethernetEdit->setValue(0);
+	}
 
 	int count = 0;
 	int numBits = 32 - s.maskBits;
@@ -239,7 +246,7 @@ int nodePopup::validateNodeSettings()
 	{
 		if(it->second.name.compare(editNode.name))
 		{
-			if(!it->second.IP.compare(editNode.IP))
+			if(it->second.realIP == editNode.realIP)
 			{
 				ipConflict = true;
 				break;
@@ -251,6 +258,9 @@ int nodePopup::validateNodeSettings()
 			}
 		}
 	}
+	if(novaParent->subnets[editNode.sub].base == editNode.realIP)
+		ipConflict = true;
+
 	int ret = 0;
 	if(ipConflict)
 		ret = 1;

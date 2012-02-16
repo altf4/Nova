@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <groups>
 	<group>
 		<name>main</name>
@@ -17,32 +18,6 @@
 		</subnets>
 		<nodes>
 			<node>
-				<interface>lo</interface>
-				<IP>10.0.0.1</IP>
-				<enabled>true</enabled>
-				<profile>
-					<name>Doppelganger</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.10</IP>
-				<MAC>00:1d:09:0f:88:1f</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.11</IP>
-				<MAC>00:23:ae:70:93:8c</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>BSDServer</name>
-				</profile>
-			</node>
-			<node>
 				<interface>eth0</interface>
 				<IP>192.168.10.12</IP>
 				<MAC>00:1c:23:84:ea:66</MAC>
@@ -50,96 +25,7 @@
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.13</IP>
-				<MAC>00:13:72:ba:72:4d</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>BSDServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.14</IP>
-				<MAC>00:1d:09:36:65:37</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>BSDServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.15</IP>
-				<MAC>00:1c:23:99:e2:22</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.16</IP>
-				<MAC>00:23:ae:e4:db:42</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>LinuxServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.17</IP>
-				<MAC>00:1e:c9:e9:35:6a</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>LinuxServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.18</IP>
-				<MAC>00:16:f0:f8:ad:8f</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.19</IP>
-				<MAC>00:19:b9:0e:13:35</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>LinuxServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.20</IP>
-				<MAC>00:1a:a0:2a:b9:67</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>BSDServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.21</IP>
-				<MAC>00:25:64:38:47:97</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.22</IP>
-				<MAC>00:15:c5:bb:a9:a6</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>BSDServer</name>
-				</profile>
+				<name>192.168.10.12</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -149,69 +35,17 @@
 				<profile>
 					<name>BSDServer</name>
 				</profile>
+				<name>192.168.10.23</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.24</IP>
-				<MAC>00:11:43:ad:d2:4a</MAC>
+				<IP>192.168.10.15</IP>
+				<MAC>00:1c:23:99:e2:22</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.25</IP>
-				<MAC>00:21:70:84:ad:bc</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.26</IP>
-				<MAC>00:23:ae:5b:8e:75</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>BSDServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.27</IP>
-				<MAC>00:12:3f:f0:b5:2d</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>LinuxServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.28</IP>
-				<MAC>00:22:19:93:36:e2</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>BSDServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.29</IP>
-				<MAC>00:23:ae:19:2b:96</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.30</IP>
-				<MAC>00:1e:c9:21:33:c9</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>LinuxServer</name>
-				</profile>
+				<name>192.168.10.15</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -221,42 +55,27 @@
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
+				<name>192.168.10.31</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.32</IP>
-				<MAC>00:11:43:13:01:cb</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.33</IP>
-				<MAC>00:25:64:aa:05:60</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>WinServer</name>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>192.168.10.34</IP>
-				<MAC>00:1e:4f:dd:d4:0c</MAC>
+				<IP>192.168.10.26</IP>
+				<MAC>00:23:ae:5b:8e:75</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
+				<name>192.168.10.26</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.35</IP>
-				<MAC>00:21:9b:d8:cc:86</MAC>
+				<IP>192.168.10.16</IP>
+				<MAC>00:23:ae:e4:db:42</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
+				<name>192.168.10.16</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -266,6 +85,77 @@
 				<profile>
 					<name>BSDServer</name>
 				</profile>
+				<name>192.168.10.36</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.19</IP>
+				<MAC>00:19:b9:0e:13:35</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>LinuxServer</name>
+				</profile>
+				<name>192.168.10.19</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.29</IP>
+				<MAC>00:23:ae:19:2b:96</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.29</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.13</IP>
+				<MAC>00:13:72:ba:72:4d</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>BSDServer</name>
+				</profile>
+				<name>192.168.10.13</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.22</IP>
+				<MAC>00:15:c5:bb:a9:a6</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>BSDServer</name>
+				</profile>
+				<name>192.168.10.22</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.32</IP>
+				<MAC>00:11:43:13:01:cb</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.32</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.25</IP>
+				<MAC>00:21:70:84:ad:bc</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.25</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.17</IP>
+				<MAC>00:1e:c9:e9:35:6a</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>LinuxServer</name>
+				</profile>
+				<name>192.168.10.17</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -275,6 +165,146 @@
 				<profile>
 					<name>WinServer</name>
 				</profile>
+				<name>192.168.10.37</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.28</IP>
+				<MAC>00:22:19:93:36:e2</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>BSDServer</name>
+				</profile>
+				<name>192.168.10.28</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.10</IP>
+				<MAC>00:1d:09:0f:88:1f</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.10</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.34</IP>
+				<MAC>00:1e:4f:dd:d4:0c</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>BSDServer</name>
+				</profile>
+				<name>192.168.10.34</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.21</IP>
+				<MAC>00:25:64:38:47:97</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.21</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.33</IP>
+				<MAC>00:25:64:aa:05:60</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.33</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.24</IP>
+				<MAC>00:11:43:ad:d2:4a</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.24</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.14</IP>
+				<MAC>00:1d:09:36:65:37</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>BSDServer</name>
+				</profile>
+				<name>192.168.10.14</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.30</IP>
+				<MAC>00:1e:c9:21:33:c9</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>LinuxServer</name>
+				</profile>
+				<name>192.168.10.30</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.27</IP>
+				<MAC>00:12:3f:f0:b5:2d</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>LinuxServer</name>
+				</profile>
+				<name>192.168.10.27</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.11</IP>
+				<MAC>00:23:ae:70:93:8c</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>BSDServer</name>
+				</profile>
+				<name>192.168.10.11</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.35</IP>
+				<MAC>00:21:9b:d8:cc:86</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>LinuxServer</name>
+				</profile>
+				<name>192.168.10.35</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.20</IP>
+				<MAC>00:1a:a0:2a:b9:67</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>BSDServer</name>
+				</profile>
+				<name>192.168.10.20</name>
+			</node>
+			<node>
+				<interface>lo</interface>
+				<IP>10.0.0.1</IP>
+				<enabled>true</enabled>
+				<profile>
+					<name>Doppelganger</name>
+				</profile>
+				<name>Doppelganger</name>
+			</node>
+			<node>
+				<interface>eth0</interface>
+				<IP>192.168.10.18</IP>
+				<MAC>00:16:f0:f8:ad:8f</MAC>
+				<enabled>true</enabled>
+				<profile>
+					<name>WinServer</name>
+				</profile>
+				<name>192.168.10.18</name>
 			</node>
 		</nodes>
 	</group>

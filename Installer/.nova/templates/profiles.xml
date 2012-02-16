@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <profiles>
 	<profile>
 		<name>default</name>
@@ -5,32 +6,46 @@
 		<set>
 			<TCP>block</TCP>
 			<UDP>block</UDP>
-			<ICMP>block</ICMP>	
+			<ICMP>block</ICMP>
 		</set>
 		<profiles>
 			<profile>
-				<name>WinServer</name>
+				<name>BSDServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Microsoft Windows 7</personality>
+					<personality>Linux 2.6.11 - 2.6.20</personality>
 					<ethernet>Dell</ethernet>
-					<uptime>1546550</uptime>
+					<uptime>1326346</uptime>
 				</set>
 				<add>
 					<ports>
-						<port>20_TCP_open</port>
-						<port>21_TCP_Windows FTP</port>
 						<port>23_TCP_Telnet Router</port>
-						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
-						<port>137_TCP_open</port>
 						<port>137_UDP_open</port>
+						<port>137_TCP_open</port>
 						<port>139_TCP_open</port>
-						
 					</ports>
 				</add>
-				<profiles>
-				</profiles>
+				<profiles/>
+			</profile>
+			<profile>
+				<name>BSDServer</name>
+				<set>
+					<TCP>reset</TCP>
+					<personality>Linux 2.6.11 - 2.6.20</personality>
+					<ethernet>Dell</ethernet>
+					<uptime>1326346</uptime>
+				</set>
+				<add>
+					<ports>
+						<port>23_TCP_Telnet Router</port>
+						<port>135_UDP_open</port>
+						<port>137_UDP_open</port>
+						<port>137_TCP_open</port>
+						<port>139_TCP_open</port>
+					</ports>
+				</add>
+				<profiles/>
 			</profile>
 			<profile>
 				<name>LinuxServer</name>
@@ -49,28 +64,7 @@
 						<port>139_TCP_open</port>
 					</ports>
 				</add>
-				<profiles>
-				</profiles>
-			</profile>
-			<profile>
-				<name>BSDServer</name>
-				<set>
-					<TCP>reset</TCP>
-					<personality>Linux 2.6.11 - 2.6.20</personality>
-					<ethernet>Dell</ethernet>
-					<uptime>1326346</uptime>
-				</set>
-				<add>
-					<ports>
-						<port>23_TCP_Telnet Router</port>
-						<port>135_UDP_open</port>
-						<port>137_TCP_open</port>
-						<port>137_UDP_open</port>
-						<port>139_TCP_open</port>
-					</ports>
-				</add>
-				<profiles>
-				</profiles>
+				<profiles/>
 			</profile>
 			<profile>
 				<name>Doppelganger</name>
@@ -90,8 +84,29 @@
 						<port>139_TCP_open</port>
 					</ports>
 				</add>
-				<profiles>
-				</profiles>
+				<profiles/>
+			</profile>
+			<profile>
+				<name>WinServer</name>
+				<set>
+					<TCP>reset</TCP>
+					<personality>Microsoft Windows 7</personality>
+					<ethernet>Dell</ethernet>
+					<uptime>1546550</uptime>
+				</set>
+				<add>
+					<ports>
+						<port>20_TCP_open</port>
+						<port>21_TCP_Windows FTP</port>
+						<port>23_TCP_Telnet Router</port>
+						<port>80_TCP_Windows httpd</port>
+						<port>135_UDP_open</port>
+						<port>137_TCP_open</port>
+						<port>137_UDP_open</port>
+						<port>139_TCP_open</port>
+					</ports>
+				</add>
+				<profiles/>
 			</profile>
 		</profiles>
 	</profile>

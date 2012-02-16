@@ -1,17 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ports>
-	<port>
-		<name>20_TCP_open</name>
-		<number>20</number>
-		<type>TCP</type>
-		<behavior>open</behavior>
-	</port>
-	<port>
-		<name>21_TCP_Windows FTP</name>
-		<number>21</number>
-		<type>TCP</type>
-		<behavior>script</behavior>
-		<script>Windows FTP</script>
-	</port>
 	<port>
 		<name>23_TCP_Telnet Router</name>
 		<number>23</number>
@@ -27,14 +15,20 @@
 		<script>Windows httpd</script>
 	</port>
 	<port>
-		<name>139_TCP_open</name>
-		<number>139</number>
+		<name>137_TCP_open</name>
+		<number>137</number>
 		<type>TCP</type>
 		<behavior>open</behavior>
 	</port>
 	<port>
-		<name>137_TCP_open</name>
-		<number>137</number>
+		<name>135_UDP_open</name>
+		<number>135</number>
+		<type>UDP</type>
+		<behavior>open</behavior>
+	</port>
+	<port>
+		<name>20_TCP_open</name>
+		<number>20</number>
 		<type>TCP</type>
 		<behavior>open</behavior>
 	</port>
@@ -45,9 +39,16 @@
 		<behavior>open</behavior>
 	</port>
 	<port>
-		<name>135_UDP_open</name>
-		<number>135</number>
-		<type>UDP</type>
+		<name>21_TCP_Windows FTP</name>
+		<number>21</number>
+		<type>TCP</type>
+		<behavior>script</behavior>
+		<script>Windows FTP</script>
+	</port>
+	<port>
+		<name>139_TCP_open</name>
+		<number>139</number>
+		<type>TCP</type>
 		<behavior>open</behavior>
 	</port>
 </ports>
