@@ -84,6 +84,9 @@ install-release:
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	gzip Installer/Read/manpages/*.1
+	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	gzip -d Installer/Read/manpages/*.1.gz
 	sh Installer/postinst
 
 #requires root
@@ -112,6 +115,9 @@ install-debug:
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	gzip Installer/Read/manpages/*.1
+	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	gzip -d Installer/Read/manpages/*.1.gz
 	sh Installer/postinst
 
 #Requires root
@@ -127,5 +133,10 @@ uninstall:
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
+	rm -f $(DESTDIR)/usr/share/man/man1/ClassificationEngine.1.gz
+	rm -f $(DESTDIR)/usr/share/man/man1/Haystack.1.gz
+	rm -f $(DESTDIR)/usr/share/man/man1/NovaGUI.1.gz
+	rm -f $(DESTDIR)/usr/share/man/man1/LocalTrafficMonitor.1.gz
+	rm -f $(DESTDIR)/usr/share/man/man1/DoppelgangerModule.1.gz
 	sh Installer/postrm
 
