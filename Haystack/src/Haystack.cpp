@@ -30,6 +30,7 @@ static SuspectHashTable	suspects;
 
 pthread_rwlock_t sessionLock;
 pthread_rwlock_t suspectLock;
+pthread_rwlock_t logLock;
 
 string dev; //Interface name, read from config file
 string honeydConfigPath;
@@ -61,6 +62,7 @@ int main(int argc, char *argv[])
 {
 	pthread_rwlock_init(&sessionLock, NULL);
 	pthread_rwlock_init(&suspectLock, NULL);
+	pthread_rwlock_init(&logLock, NULL);
 	pthread_t TCP_timeout_thread;
 	pthread_t GUIListenThread;
 	pthread_t SuspectUpdateThread;
@@ -87,7 +89,12 @@ int main(int argc, char *argv[])
 	//Get locations of nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	chdir(homePath.c_str());
+	if(chdir(homePath.c_str()) == -1)
+	{
+	    pthread_rwlock_rdlock(&logLock);
+	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
+	    pthread_rwlock_unlock(&logLock);
+	}
 
 	//Runs the configuration loaders
 	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);

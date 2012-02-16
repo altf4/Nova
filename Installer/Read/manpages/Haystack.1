@@ -1,0 +1,20 @@
+.TH HAYSTACK "1" "February 2012" "12.02"
+
+.SH NAME
+.B Haystack
+\- The Nova process that creates an array of thin virtual machines to obscure real hosts and obfuscate the network in general.
+
+.SH SYNOPSIS
+.B Haystack
+
+.SH DESCRIPTION
+.PP
+.I Haystack
+will listen to the traffic being routed to the honeyd virtual machines, and send the data from the packets to the ClassificationEngine for review and classification. Has the ability to read pcap files of past or false traffic; this is useful for testing purposes such as a new user testing out different classification settings or Haystack configurations.
+
+.SH COPYRIGHT
+.PP
+Nova is Copyright (c) 2011 - 2012 DataSoft Corporation
+.PP
+Nova is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. Nova is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with Nova. If not, see <http://www.gnu.org/licenses/>.
+

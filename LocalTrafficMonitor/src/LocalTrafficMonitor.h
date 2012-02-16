@@ -38,15 +38,15 @@ typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr
 void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet);
 
 // Start routine for the GUI command listening thread
-//		ptr - Required for pthread start routiness
+//		ptr - Required for pthread start routines
 void *GUILoop(void *ptr);
 
 // Receives input commands from the GUI
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
 void ReceiveGUICommand(int socket);
 
-// Startup rotuine for thread periodically checking for TCP timeout.
-// IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
+// Startup routine for thread periodically checking for TCP timeout.
+// IE: Not all TCP sessions get torn down properly. Sometimes they just end midstream
 // This thread looks for old tcp sessions and declares them terminated
 //		ptr - Required for pthread start routines
 void *TCPTimeout( void *ptr );
@@ -60,7 +60,7 @@ bool SendToCE(Suspect *suspect);
 //		packet : Packet headers to used for the evidence
 void UpdateSuspect(Packet packet);
 
-// Startup routine for thread updated evidence on suspsects
+// Startup routine for thread updated evidence on suspects
 //		ptr - Required for pthread start routines
 void *SuspectLoop(void *ptr);
 
