@@ -76,8 +76,10 @@ QMenu * systemStatMenu;
 #define COMPONENT_HS 4
 #define COMPONENT_HSH 5
 
+#define NOVA_COMPONENTS 6
 
-struct novaComponent novaComponents[6];
+
+struct novaComponent novaComponents[NOVA_COMPONENTS];
 
 /************************************************
  * Constructors, Destructors and Closing Actions
@@ -88,7 +90,7 @@ void sighandler(int param)
 {
 	param = param;
 	stopNova();
-	exit(1);
+	exit(EXIT_SUCCESS);
 }
 
 NovaGUI::NovaGUI(QWidget *parent)
@@ -209,7 +211,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
 		sclose(CE_InSock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	len = strlen(CE_InAddress.sun_path) + sizeof(CE_InAddress.sun_family);
@@ -218,14 +220,14 @@ NovaGUI::NovaGUI(QWidget *parent)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
 		sclose(CE_InSock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if(listen(CE_InSock, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
 		sclose(CE_InSock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	//Sets initial view
@@ -295,7 +297,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 		systemStatMenu->clear();
 
 		int row = ui.systemStatusTable->currentRow();
-		if (row < 0 || row > sizeof(novaComponents))
+		if (row < 0 || row > NOVA_COMPONENTS)
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
 			return;
@@ -349,7 +351,7 @@ void NovaGUI::getPaths()
 
 	if((homePath == "") || (readPath == "") || (writePath == ""))
 	{
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	QDir::setCurrent((QString)homePath.c_str());
@@ -771,7 +773,7 @@ void NovaGUI::updateSystemStatus()
 	QTableWidgetItem *item;
 	QTableWidgetItem *pidItem;
 
-	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
+	for (uint i = 0; i < NOVA_COMPONENTS; i++)
 	{
 		item = ui.systemStatusTable->item(i,0);
 		pidItem = ui.systemStatusTable->item(i,1);
@@ -815,7 +817,7 @@ void NovaGUI::updateSystemStatus()
 
 	// Update the buttons if need be
 	int row = ui.systemStatusTable->currentRow();
-	if (row < 0 || row > sizeof(novaComponents))
+	if (row < 0 || row > NOVA_COMPONENTS)
 		return;
 	else
 		on_systemStatusTable_itemSelectionChanged();
@@ -1992,7 +1994,7 @@ void NovaGUI::on_actionConfigure_triggered()
 void  NovaGUI::on_actionExit_triggered()
 {
 	stopNova();
-	exit(1);
+	exit(EXIT_SUCCESS);
 }
 
 void NovaGUI::on_actionClear_All_Suspects_triggered()
@@ -2196,7 +2198,7 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 {
 	int row = ui.systemStatusTable->currentRow();
 
-	if (row < 0 || row > sizeof(novaComponents))
+	if (row < 0 || row > NOVA_COMPONENTS)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
 		return;
@@ -2226,7 +2228,7 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
 
-	if (row < 0 || row > sizeof(novaComponents))
+	if (row < 0 || row > NOVA_COMPONENTS)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
 		return;
@@ -2586,7 +2588,7 @@ void clearSuspects()
 
 void stopNova()
 {
-	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
+	for (uint i = 0; i < NOVA_COMPONENTS; i++)
 	{
 		novaComponents[i].shouldBeRunning = false;
 	}
@@ -2618,7 +2620,7 @@ void stopNova()
 void startNova()
 {
 	// Start and processes that aren't running already
-	for (uint i = 0; i < sizeof(novaComponents)/sizeof(novaComponents[0]); i++)
+	for (uint i = 0; i < NOVA_COMPONENTS; i++)
 	{
 		if(novaComponents[i].process == NULL || !novaComponents[i].process->pid())
 			startComponent(&novaComponents[i]);
@@ -2706,7 +2708,7 @@ void sendToCE()
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
 		close(CE_OutSock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	//Sends the message
 	len = strlen(CE_OutAddress.sun_path) + sizeof(CE_OutAddress.sun_family);
@@ -2733,7 +2735,7 @@ void sendToDM()
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
 		close(DM_OutSock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	//Sends the message
 	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
@@ -2760,7 +2762,7 @@ void sendToHS()
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
 		close(HS_OutSock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	//Sends the message
 	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
@@ -2787,7 +2789,7 @@ void sendToLTM()
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
 		close(LTM_OutSock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	//Sends the message
 	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);

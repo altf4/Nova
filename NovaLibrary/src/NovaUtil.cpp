@@ -56,10 +56,6 @@ string GetHomePath()
 	//Resolves environment variables
 	homePath = ResolvePathVars(homePath);
 
-	if(homePath == "")
-	{
-		exit(1);
-	}
 	return homePath;
 }
 string GetReadPath()
@@ -90,10 +86,6 @@ string GetReadPath()
 	//Resolves environment variables
 	readPath = ResolvePathVars(readPath);
 
-	if(readPath == "")
-	{
-		exit(1);
-	}
 	return readPath;
 }
 
@@ -125,10 +117,6 @@ string GetWritePath()
 	//Resolves environment variables
 	writePath = ResolvePathVars(writePath);
 
-	if(writePath == "")
-	{
-		exit(1);
-	}
 	return writePath;
 }
 

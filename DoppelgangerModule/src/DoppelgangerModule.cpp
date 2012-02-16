@@ -63,7 +63,7 @@ void siginthandler(int param)
 	//Clear any existing DNAT routes on exit
 	//	Otherwise susepcts will keep getting routed into a black hole
 	system("sudo iptables -F");
-	exit(1);
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
     	// 3rd: arguments for formatted string, much like printf
 		syslog(SYSL_ERR, "ERROR: socket: %s", strerror(errno));
 		close(alarmSocket);
-		exit(1);
+		exit(EXIT_FAILURE);
     }
     remote.sun_family = AF_UNIX;
 
@@ -151,14 +151,14 @@ int main(int argc, char *argv[])
     {
 		syslog(SYSL_ERR, "Line: %d ERROR: bind: %s", __LINE__, strerror(errno));
 		close(alarmSocket);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if(listen(alarmSocket, SOCKET_QUEUE_SIZE) == -1)
     {
 		syslog(SYSL_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
 		close(alarmSocket);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 	//"Main Loop"
@@ -247,7 +247,7 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: socket: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	localIPCAddress.sun_family = AF_UNIX;
@@ -264,14 +264,14 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	{
 		syslog(SYSL_ERR, "Line %d ERROR: bind: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
 		close(IPCsock);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	while(true)
 	{
@@ -306,7 +306,7 @@ void DoppelgangerModule::ReceiveGUICommand()
     {
     	case EXIT:
     		system("sudo iptables -F");
-    		exit(1);
+    		exit(EXIT_SUCCESS);
     	case CLEAR_ALL:
     		pthread_rwlock_wrlock(&lock);
 			SuspectTable.clear();
@@ -385,7 +385,7 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 	if(confCheck == 2)
 	{
 		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	else if(confCheck == 1)
 	{
@@ -401,7 +401,7 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 	if(hostAddrString.size() == 0)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: Bad interface, no IP's associated", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
@@ -412,7 +412,7 @@ void DoppelgangerModule::LoadConfig(char* configFilePath)
 	if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: Invalid doppelganger IP address", __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	closelog();
