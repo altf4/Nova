@@ -36,6 +36,8 @@ namespace Nova
 		uint16_t prefixIndex;
 		string checkLoad[5];
 
+		openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
+
 		ifstream config(configFilePath);
 
 		//populate the checkLoad array. I know it looks a little messy, maybe
@@ -405,6 +407,7 @@ namespace Nova
 		{
 			if(!LoadConfiguration(configFilePath))
 			{
+				openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
 				syslog(SYSL_ERR, "Line: %d One or more of the messaging configuration values have not been set, and have no default.", __LINE__);
 				exit(EXIT_FAILURE);
 			}

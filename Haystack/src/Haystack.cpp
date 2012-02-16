@@ -87,13 +87,13 @@ int main(int argc, char *argv[])
 	//Get locations of nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	if(chdir(homePath.c_str()) == -1)
-	{
-	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
-	}
 
 	//Runs the configuration loaders
 	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
+
+	if(chdir(homePath.c_str()) == -1)
+	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
+
 	LoadConfig((char*)novaConfig.c_str());
 
 	if(!useTerminals)
