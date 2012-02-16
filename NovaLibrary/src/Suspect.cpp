@@ -264,9 +264,9 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	offset += features.DeserializeFeatureSet(buf+offset);
 
 	if(isLocal)
-		offset += features.DeserializeFeatureDataLocal(buf+offset);
+		offset += features.unsentData->DeserializeFeatureData(buf+offset);
 	else
-		offset += features.DeserializeFeatureDataBroadcast(buf+offset);
+		offset += features.DeserializeFeatureData(buf+offset);
 
 	needs_feature_update = true;
 	needs_classification_update = true;

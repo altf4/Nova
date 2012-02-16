@@ -93,8 +93,11 @@ public:
 	IP_Table IPTable;
 
 	FeatureSet();
+	~FeatureSet();
 	// Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
+	void clearFeatureData();
+
 
 	FeatureSet& operator-=(FeatureSet &rhs);
 	FeatureSet& operator+=(FeatureSet &rhs);
@@ -135,14 +138,13 @@ public:
 	// and stores it in broadcast data (the second member of uint pairs)
 	//		buf - Pointer to buffer where the serialized Feature data broadcast resides
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureDataBroadcast(u_char * buf);
-	uint32_t DeserializeFeatureDataLocal(u_char * buf);
+	uint32_t DeserializeFeatureData(u_char * buf);
 
 	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	// This function doesn't keep data once serialized. Used by the LocalTrafficMonitor and Haystack for sending suspect information
 	//		buf - Pointer to buffer to store serialized data in
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureData(u_char * buf, bool isBroadcast);
+	uint32_t SerializeFeatureData(u_char * buf);
 
 	FeatureSet* unsentData;
 private:

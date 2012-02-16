@@ -480,25 +480,26 @@ bool LocalTrafficMonitor::SendToCE(Suspect *suspect)
 
 	do{
 		dataLen = suspect->SerializeSuspect(data);
-		dataLen += suspect->features.SerializeFeatureData(data+dataLen, false);
+		dataLen += suspect->features.unsentData->SerializeFeatureData(data+dataLen);
+		suspect->features.unsentData->clearFeatureData();
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d Unable to create socket to ClassificationEngine: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d Unable to connect to ClassificationEngine: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
 		if (send(socketFD, data, dataLen, 0) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d send: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d Unable to send to ClassificationEngine: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
@@ -541,7 +542,7 @@ void *Nova::LocalTrafficMonitor::SuspectLoop(void *ptr)
 				pthread_rwlock_wrlock(&suspectLock);
 				for(uint i = 0; i < it->second->evidence.size(); i++)
 				{
-					it->second->features.UpdateEvidence(it->second->evidence[i]);
+					it->second->features.unsentData->UpdateEvidence(it->second->evidence[i]);
 				}
 				it->second->evidence.clear();
 				SendToCE(it->second);

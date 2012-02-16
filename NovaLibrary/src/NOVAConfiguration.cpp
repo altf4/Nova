@@ -28,7 +28,8 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
 		"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
 		"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
-		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE" };
+		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE",
+		"SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE"};
 
 Logger * loggerConf;
 
@@ -103,6 +104,16 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 					break;
 			case 22: def = "0";
 					break;
+			// SAVE_FREQUENCY default to 24 hours (1440 minutes)
+			case 23: def = "1440";
+					break;
+			// DATA_TTL default to disabled
+			case 24: def = "0";
+					break;
+			// CE_SAVE_FILE
+			case 25: def = "ceStateSave";
+					break;
+
 			default: break;
 		}
 		defaults.push_back(make_pair(prefixes[j], def));
@@ -496,7 +507,47 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				continue;
 			}
 
+			// SAVE_FREQUENCY
+			prefixIndex++;
+			prefix = prefixes[prefixIndex];
+			if (!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if (line.size() > 0)
+				{
+					options[prefix].data = line.c_str();
+					options[prefix].isValid = true;
+				}
+				continue;
+			}
 
+			// DATA_TTL
+			prefixIndex++;
+			prefix = prefixes[prefixIndex];
+			if (!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if (line.size() > 0)
+				{
+					options[prefix].data = line.c_str();
+					options[prefix].isValid = true;
+				}
+				continue;
+			}
+
+			// CE_SAVE_FILE
+			prefixIndex++;
+			prefix = prefixes[prefixIndex];
+			if (!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if (line.size() > 0)
+				{
+					options[prefix].data = line;
+					options[prefix].isValid = true;
+				}
+				continue;
+			}
 		}
 	}
 	else

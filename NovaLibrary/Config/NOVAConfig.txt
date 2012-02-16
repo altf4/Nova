@@ -14,7 +14,7 @@
 #
 # EXAMPLE:
 #INTERFACE eth0
-INTERFACE default
+INTERFACE eth0
 
 
 ############################################
@@ -227,7 +227,7 @@ READ_PCAP 0
 # 
 # EXAMPLE:
 #PCAP_FILE pcapfile
-PCAP_FILE ../pcapfile
+PCAP_FILE ../masterPcap
 
 ############################################
 # GO_TO_LIVE #
@@ -239,7 +239,7 @@ PCAP_FILE ../pcapfile
 # 
 # EXAMPLE:
 #GO_TO_LIVE 1
-GO_TO_LIVE 1
+GO_TO_LIVE 0
 
 ############################################
 # USE_TERMINALS #
@@ -250,7 +250,7 @@ GO_TO_LIVE 1
 #	1: Terminal logging output
 # EXAMPLE:
 #USE_TERMINALS 0
-USE_TERMINALS 0
+USE_TERMINALS 1
 
 ############################################
 # SA_MAX_ATTEMPTS #
@@ -290,6 +290,45 @@ SA_SLEEP_DURATION 0.5
 #	1: Enabled
 #
 ENABLED_FEATURES 111111111
+
+############################################
+# SAVE_FREQUENCY #
+############################################
+# 
+# How often, in seconds, to save CE state data to file
+#
+# A value of 0 will disable saving.
+# 
+# Example: 
+#SAVE_FREQUENCY 3600
+SAVE_FREQUENCY 3600
+
+############################################
+# DATA_TTL #
+############################################
+# 
+# Time in seconds for data to remain valid and 
+# be used for suspect classification.
+#
+# A value of 0 will disable expiring old data.
+#
+# Example:
+#DATA_TTL 1440
+DATA_TTL 0
+
+############################################
+# CE_SAVE_FILE #
+############################################
+# 
+# Where the ClassificationEngine can save it's state
+#
+# Example:
+#CE_SAVE_FILE CESaveFile
+CE_SAVE_FILE CESaveFile
+
+
+
+# Logging Stuff #
 
 ############################################
 # SMTP_ADDR #
@@ -361,4 +400,4 @@ RECIPIENTS first@email.send, second@email.send
 # 
 # EXAMPLE: 
 # SERVICE_PREFERENCES 0:7;1:6;2:5;3:4;4:3;5:2;6:1;7:1;
-SERVICE_PREFERENCES 0:3;1:3;2:3;3:3;4:3;5:3;6:3;7:3;
+SERVICE_PREFERENCES 0:7;1:6;2:5;3:4;4:3;5:2;6:1;7:1;

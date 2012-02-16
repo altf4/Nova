@@ -108,6 +108,20 @@ void LoadConfig(char * configFilePath);
 //		filename - Path to file to write to
 void SaveSuspectsToFile(string filename);
 
+// Append to state file
+void AppendToStateFile();
+
+// Cleans up the state file
+//	- Removes old entries
+//	- Removes cleared suspects
+void RefreshStateFile();
+
+// Appends all entries in the state file to the suspect table
+void LoadStateFile();
+
+// Runs appendToStateFile before exiting
+void saveAndExit(int param);
+
 // Force a reload of NOVAConfig/Data.txt while running.
 // This will reclassify all the suspects based on the new data.
 void Reload();
