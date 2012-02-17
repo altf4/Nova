@@ -20,8 +20,8 @@
 #ifndef SUSPECT_H_
 #define SUSPECT_H_
 
-#include "NovaUtil.h"
 #include "FeatureSet.h"
+#include "Point.h"
 
 using namespace std;
 using namespace Nova;

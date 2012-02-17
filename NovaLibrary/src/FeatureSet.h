@@ -20,9 +20,44 @@
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
 
-#include "NovaUtil.h"
+#include "HashMapStructs.h"
+#include "Defines.h"
+#include <pcap.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/ip_icmp.h>
 
 using namespace std;
+
+///	A struct version of a packet, as received from libpcap
+struct _packet
+{
+	///	Meta information about packet
+	struct pcap_pkthdr pcap_header;
+	///	Pointer to an IP header
+	struct ip ip_hdr;
+	/// Pointer to a TCP Header
+	struct tcphdr tcp_hdr;
+	/// Pointer to a UDP Header
+	struct udphdr udp_hdr;
+	/// Pointer to an ICMP Header
+	struct icmphdr icmp_hdr;
+
+	bool fromHaystack;
+};
+
+typedef struct _packet Packet;
+
+///Hash table for current TCP Sessions
+///Table key is the source network socket, comprised of IP and Port in string format
+///	IE: "192.168.1.1-8080"
+struct Session
+{
+	bool fin;
+	vector<Packet> session;
+};
+
 
 ///The traffic distribution across the haystacks relative to host traffic
 #define IP_TRAFFIC_DISTRIBUTION 0

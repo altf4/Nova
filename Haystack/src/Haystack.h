@@ -20,8 +20,7 @@
 #ifndef HAYSTACK_H_
 #define HAYSTACK_H_
 
-#include <NovaUtil.h>
-#include <Suspect.h>
+#include "Suspect.h"
 
 using namespace std;
 

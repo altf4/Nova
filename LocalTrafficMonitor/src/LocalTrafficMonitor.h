@@ -20,8 +20,7 @@
 #ifndef LOCALTRAFFICMONITOR_H_
 #define LOCALTRAFFICMONITOR_H_
 
-#include <Suspect.h>
-#include <NovaUtil.h>
+#include "Suspect.h"
 
 using namespace std;
 

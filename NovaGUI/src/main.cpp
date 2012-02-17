@@ -15,11 +15,12 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Creates and runs the NovaGUI object
 //============================================================================
+#include "main.h"
 #include "novagui.h"
 #include "ui_novagui.h"
-#include <QtGui>
+
 #include <QApplication>
-#include "main.h"
+#include <QPlastiqueStyle>
 
 using namespace std;
 

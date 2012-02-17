@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "Suspect.h"
+#include <sstream>
 
 using namespace std;
 

@@ -21,8 +21,8 @@
 #ifndef Logger_H_
 #define Logger_H_
 
-
-#include "NovaUtil.h"
+#include "HashMapStructs.h"
+#include "Defines.h"
 
 using namespace std;
 using namespace google;

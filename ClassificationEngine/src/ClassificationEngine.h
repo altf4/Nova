@@ -19,8 +19,10 @@
 #ifndef CLASSIFICATIONENGINE_H_
 #define CLASSIFICATIONENGINE_H_
 
-#include <NovaUtil.h>
-#include <Suspect.h>
+#include "HashMapStructs.h"
+#include "Defines.h"
+#include "Suspect.h"
+#include <arpa/inet.h>
 
 //Mode to knock on the silent alarm port
 #define OPEN true

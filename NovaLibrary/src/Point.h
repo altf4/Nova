@@ -20,7 +20,9 @@
 #ifndef POINT_H_
 #define POINT_H_
 
-#include "NovaUtil.h"
+#include <ANN/ANN.h>
+#include <sys/types.h>
+
 
 namespace Nova
 {

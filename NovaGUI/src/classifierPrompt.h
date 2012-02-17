@@ -21,7 +21,7 @@
 
 #include <QtGui/QDialog>
 #include "ui_classifierPrompt.h"
-#include "NovaUtil.h"
+#include "HashMapStructs.h"
 
 class classifierPrompt : public QDialog
 {

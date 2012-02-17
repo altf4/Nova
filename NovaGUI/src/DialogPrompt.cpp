@@ -17,6 +17,9 @@
 //============================================================================
 
 #include "DialogPrompt.h"
+#include <QLabel>
+#include <QLayout>
+#include <QAction>
 
 
 //Default constructor, used for instantiation only

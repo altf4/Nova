@@ -18,7 +18,8 @@
 //============================================================================/*
 
 #include "FeatureSet.h"
-#include "NovaUtil.h"
+#include <math.h>
+#include <sys/un.h>
 
 using namespace std;
 namespace Nova{

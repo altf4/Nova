@@ -17,6 +17,7 @@
 //============================================================================
 #include "nodePopup.h"
 #include "novaconfig.h"
+#include "novagui.h"
 
 using namespace std;
 using namespace Nova;

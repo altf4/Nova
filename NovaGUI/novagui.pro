@@ -2,7 +2,8 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-HEADERS += src/loggerwindow.h \
+HEADERS += src/NovaGuiTypes.h \
+    src/loggerwindow.h \
     src/classifierPrompt.h \
     src/nova_manual.h \
     src/DialogPrompter.h \

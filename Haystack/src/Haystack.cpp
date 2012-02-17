@@ -17,9 +17,18 @@
 //					TrafficEvents usable by Nova's Classification Engine.
 //============================================================================
 
-#include "Haystack.h"
 #include "NOVAConfiguration.h"
+#include "HashMapStructs.h"
+#include "NovaUtil.h"
+#include "Haystack.h"
 #include "Logger.h"
+
+#include <netinet/if_ether.h>
+#include <sys/un.h>
+#include <syslog.h>
+#include <errno.h>
+#include <sstream>
+#include <fstream>
 
 using namespace std;
 using namespace Nova;

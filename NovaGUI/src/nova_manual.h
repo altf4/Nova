@@ -19,13 +19,7 @@
 #ifndef NOVA_MANUAL_H
 #define NOVA_MANUAL_H
 
-#include <QtGui/QMainWindow>
-#include <QTreeWidget>
-#include <QTreeWidgetItem>
-#include <QStringList>
-#include <QString>
 #include "ui_nova_manual.h"
-#include "novagui.h"
 
 class Nova_Manual : public QMainWindow
 {
