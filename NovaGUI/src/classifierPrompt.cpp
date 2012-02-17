@@ -17,7 +17,9 @@
 //============================================================================
 
 #include "classifierPrompt.h"
-#include <QtGui>
+#include <QtGui/QMenu>
+#include <QContextMenuEvent>
+#include <sstream>
 
 classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
 : QDialog(parent)

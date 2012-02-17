@@ -16,6 +16,9 @@
 // Description : Provides dialogs for MAC and personality selection
 //============================================================================
 #include "NovaComplexDialog.h"
+#include "NovaGuiTypes.h"
+
+class NovaConfig;
 
 NovaComplexDialog::NovaComplexDialog(QWidget *parent)
     : QDialog(parent)

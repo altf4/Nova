@@ -19,8 +19,10 @@
 #define NOVACONFIG_H
 
 #include "ui_novaconfig.h"
-#include "stdlib.h"
-#include "novagui.h"
+#include "NovaGuiTypes.h"
+
+#include <QMutex>
+#include <QWheelEvent>
 
 #define HAYSTACK_MENU_INDEX 5
 #define NODE_INDEX 0
@@ -148,9 +150,6 @@ public:
 
     //If a profile is edited, this function updates the changes for the rest of the GUI
     void updateProfile(bool deleteProfile, profile *p);
-
-    //Action to do when the window closes.
-    void closeEvent();
 
     //Updates children when inherited ports are changed
     void updatePorts();

@@ -19,7 +19,6 @@
 #ifndef RUN_POPUP_H
 #define RUN_POPUP_H
 
-#include <QtGui/QMainWindow>
 #include "ui_run_popup.h"
 
 using namespace std;
@@ -33,8 +32,6 @@ public:
 
     Run_Popup(QWidget *parent = 0, string homePath = "");
     ~Run_Popup();
-
-    void closeEvent(QCloseEvent * e);
 
     void loadPreferences();
     bool savePreferences();

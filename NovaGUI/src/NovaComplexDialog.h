@@ -18,12 +18,13 @@
 #ifndef NOVACOMPLEXDIALOG_H
 #define NOVACOMPLEXDIALOG_H
 
-#include "novagui.h"
 #include "ui_NovaComplexDialog.h"
+#include "novaconfig.h"
+
+using namespace std;
 
 enum whichDialog {MACDialog, PersonalityDialog};
 
-class NovaConfig;
 class NovaComplexDialog : public QDialog
 {
     Q_OBJECT

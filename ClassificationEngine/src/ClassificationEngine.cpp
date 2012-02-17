@@ -18,9 +18,18 @@
 
 #include "ClassificationEngine.h"
 #include "NOVAConfiguration.h"
+#include "NovaUtil.h"
+#include "Suspect.h"
 #include "Logger.h"
-#include <iostream>
-#include <time.h>
+
+#include <vector>
+#include <string>
+#include <errno.h>
+#include <fstream>
+#include <sstream>
+#include <syslog.h>
+#include <sys/un.h>
+#include <signal.h>
 
 using namespace std;
 using namespace Nova;

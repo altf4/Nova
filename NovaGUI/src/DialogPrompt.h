@@ -18,8 +18,8 @@
 #ifndef DIALOGPROMPT_H
 #define DIALOGPROMPT_H
 
-#include <QtGui>
-#include "NovaUtil.h"
+#include <QtGui/QMessageBox>
+#include <QtGui/QCheckBox>
 
 using namespace std;
 enum dialogType {

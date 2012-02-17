@@ -16,10 +16,22 @@
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
 //============================================================================
 #include "novagui.h"
+#include "NovaUtil.h"
+#include "run_popup.h"
+#include "novaconfig.h"
+#include "nova_manual.h"
 #include "classifierPrompt.h"
 #include "NOVAConfiguration.h"
-#include "run_popup.h"
-#include "nova_manual.h"
+
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <sys/socket.h>
+#include <QFileDialog>
+#include <sys/un.h>
+#include <signal.h>
+#include <syslog.h>
+#include <errno.h>
+#include <QDir>
 
 
 using namespace std;
@@ -113,13 +125,11 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	ui.setupUi(this);
 
-	editingPreferences = false;
 
 	//Pre-forms the suspect menu
 	suspectMenu = new QMenu(this);
 	systemStatMenu = new QMenu(this);
 
-	runAsWindowUp = false;
 	isHelpUp = false;
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
@@ -767,9 +777,6 @@ void NovaGUI::initiateSystemStatus()
 
 void NovaGUI::updateSystemStatus()
 {
-	 if(editingPreferences)
-		 return;
-
 	QTableWidgetItem *item;
 	QTableWidgetItem *pidItem;
 
@@ -1962,12 +1969,8 @@ void NovaGUI::on_actionRunNova_triggered()
 
 void NovaGUI::on_actionRunNovaAs_triggered()
 {
-	if(!runAsWindowUp)
-	{
-		Run_Popup *w = new Run_Popup(this, homePath);
-		w->show();
-		runAsWindowUp = true;
-	}
+	Run_Popup *w = new Run_Popup(this, homePath);
+	w->show();
 }
 
 void NovaGUI::on_actionStopNova_triggered()
@@ -1985,7 +1988,6 @@ void NovaGUI::on_actionStopNova_triggered()
 
 void NovaGUI::on_actionConfigure_triggered()
 {
-	editingPreferences = true;
 	NovaConfig *w = new NovaConfig(this, homePath);
 	w->setWindowModality(Qt::WindowModal);
 	w->show();

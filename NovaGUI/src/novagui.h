@@ -18,128 +18,15 @@
 #ifndef NOVAGUI_H
 #define NOVAGUI_H
 
-#include <QProcess>
-#include <QChar>
-#include <QtGui>
-#include <QPoint>
-#include <QString>
-#include <Suspect.h>
-#include <QMouseEvent>
-#include <QApplication>
-#include <sys/socket.h>
-#include <boost/foreach.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-
 #include "DialogPrompter.h"
+#include "NovaGuiTypes.h"
 #include "ui_novagui.h"
-#include "NovaUtil.h"
+#include "Suspect.h"
+
+#include <QProcess>
 
 using namespace std;
 using namespace Nova;
-using boost::property_tree::ptree;
-
-
-/*********************************************************************
- - Structs and Tables for quick item access through pointers -
-**********************************************************************/
-#define INHERITED_MAX 8
-
-enum profileType { static_IP = 0, staticDHCP = 1, randomDHCP = 2};
-
-enum profileIndex { TYPE = 0, TCP_ACTION = 1, UDP_ACTION = 2, ICMP_ACTION = 3,
-	PERSONALITY = 4, ETHERNET = 5, UPTIME = 6, DROP_RATE = 7};
-
-//used to maintain information on imported scripts
-struct script
-{
-	string name;
-	string path;
-	ptree tree;
-};
-
-//Container for accessing script items
-typedef google::dense_hash_map<string, script, tr1::hash<string>, eqstr > ScriptTable;
-
-//used to maintain information about a port, it's type and behavior
-struct port
-{
-	QTreeWidgetItem * item;
-	string portName;
-	string portNum;
-	string type;
-	string behavior;
-	string scriptName;
-	string proxyIP;
-	string proxyPort;
-	ptree tree;
-};
-//Container for accessing port items
-typedef google::dense_hash_map<string, port, tr1::hash<string>, eqstr > PortTable;
-
-//used to keep track of subnet gui items and allow for easy access
-struct subnet
-{
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * nodeItem;
-	string name;
-	string address;
-	string mask;
-	int maskBits;
-	in_addr_t base;
-	in_addr_t max;
-	bool enabled;
-	bool isRealDevice;
-	vector<string> nodes;
-	ptree tree;
-};
-
-//Container for accessing subnet items
-typedef google::dense_hash_map<string, subnet, tr1::hash<string>, eqstr > SubnetTable;
-
-
-//used to keep track of haystack profile gui items and allow for easy access
-struct profile
-{
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * profileItem;
-	string name;
-	string tcpAction;
-	string udpAction;
-	string icmpAction;
-	string personality;
-	string ethernet;
-	string uptime;
-	string uptimeRange;
-	string dropRate;
-	profileType type;
-	bool inherited[INHERITED_MAX];
-	vector<pair<string, bool> > ports;
-	string parentProfile;
-	ptree tree;
-};
-
-//Container for accessing profile items
-typedef google::dense_hash_map<string, profile, tr1::hash<string>, eqstr > ProfileTable;
-
-//used to keep track of haystack node gui items and allow for easy access
-struct node
-{
-	string name;
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * nodeItem;
-	string sub;
-	string interface;
-	string pfile;
-	string IP;
-	string MAC;
-	in_addr_t realIP;
-	bool enabled;
-	ptree tree;
-};
-
-//Container for accessing node items
-typedef google::dense_hash_map<string, node, tr1::hash<string>, eqstr > NodeTable;
 
 struct suspectItem
 {
@@ -152,6 +39,8 @@ struct suspectItem
 	//We need a second item because an item can only be in one list at a time
 	QListWidgetItem * mainItem;
 };
+typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+
 
 struct novaComponent
 {
@@ -162,18 +51,13 @@ struct novaComponent
 	bool shouldBeRunning;
 };
 
-typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
-
 class NovaGUI : public QMainWindow
 {
     Q_OBJECT
 
 public:
 
-    bool editingPreferences;
     bool isHelpUp;
-    bool runAsWindowUp;
-
     string group;
 
     SubnetTable subnets;
@@ -375,9 +259,4 @@ void clearSuspects();
 //Removes all information on a suspect
 void clearSuspect(string suspectStr);
 }
-
-//Some includes need to occur at the end of the header to fix some linking errors during compilation
-#include "nodePopup.h"
-#include "NovaComplexDialog.h"
-#include "novaconfig.h"
 #endif // NOVAGUI_H

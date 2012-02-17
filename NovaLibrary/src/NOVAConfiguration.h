@@ -19,9 +19,7 @@
 #ifndef NOVACONFIGURATION_H_
 #define NOVACONFIGURATION_H_
 
-
-#include "NovaUtil.h"
-#include "Logger.h"
+#include "HashMapStructs.h"
 
 using namespace std;
 

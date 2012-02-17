@@ -19,7 +19,10 @@
 //============================================================================/*
 
 #include "Logger.h"
-
+#include <fstream>
+#include <sstream>
+#include <syslog.h>
+#include <libnotify/notify.h>
 
 using namespace std;
 
