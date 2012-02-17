@@ -19,7 +19,10 @@
 #define NODEPOPUP_H
 
 #include "ui_nodePopup.h"
-#include "novagui.h"
+#include "NovaGuiTypes.h"
+
+#include <QtGui/QSpinBox>
+#include <math.h>
 
 enum macType{macPrefix = 0, macSuffix = 1};
 

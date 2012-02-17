@@ -17,14 +17,18 @@
 //					to the Classification Engine.
 //============================================================================/*
 
-#include <errno.h>
-#include <arpa/inet.h>
-#include <fstream>
 #include "LocalTrafficMonitor.h"
 #include "NOVAConfiguration.h"
+#include "HashMapStructs.h"
+#include "NovaUtil.h"
 #include "Logger.h"
-#include <net/if.h>
+
+#include <netinet/if_ether.h>
 #include <sys/un.h>
+#include <syslog.h>
+#include <errno.h>
+#include <sstream>
+#include <fstream>
 
 using namespace std;
 using namespace Nova;

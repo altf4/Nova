@@ -17,6 +17,12 @@
 //============================================================================/*
 
 #include "NOVAConfiguration.h"
+#include <fstream>
+#include "Logger.h"
+#include <syslog.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+
 
 using namespace std;
 

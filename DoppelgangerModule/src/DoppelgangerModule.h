@@ -16,8 +16,7 @@
 // Description : Nova utility for disguising a real system
 //============================================================================
 
-#include <NovaUtil.h>
-#include <Suspect.h>
+#include "HashMapStructs.h"
 
 using namespace std;
 

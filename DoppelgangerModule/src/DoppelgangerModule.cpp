@@ -18,7 +18,14 @@
 
 #include "DoppelgangerModule.h"
 #include "NOVAConfiguration.h"
+#include "NovaUtil.h"
+#include "Suspect.h"
 #include "Logger.h"
+
+#include <errno.h>
+#include <signal.h>
+#include <sys/un.h>
+#include <syslog.h>
 
 using namespace std;
 using namespace Nova;

@@ -19,8 +19,8 @@
 #ifndef GUIMSG_H_
 #define GUIMSG_H_
 
-#include "NovaUtil.h"
-
+#include <string>
+#include <sys/types.h>
 
 
 //Maximum number of characters an argument can have.

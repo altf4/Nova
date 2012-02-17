@@ -17,8 +17,15 @@
 //============================================================================
 #include "DialogPrompter.h"
 #include "NovaUtil.h"
+#include "Logger.h"
+
+#include <QAction>
+#include <syslog.h>
 #include <sstream>
-#include <QtGui>
+#include <fstream>
+
+using namespace std;
+using namespace Nova;
 
 // Prefixes for the configuration file
 const string DialogPrompter::showPrefix = "message show";

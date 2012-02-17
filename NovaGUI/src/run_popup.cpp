@@ -17,23 +17,21 @@
 //	options provided in the config file and set things like training mode/pcap file.
 //============================================================================
 #include "run_popup.h"
-#include <fstream>
-#include <sstream>
 #include "novagui.h"
-#include <QString>
-#include <QtGui>
-#include <QApplication>
+#include "Logger.h"
 
+#include <QDir>
+#include <string>
+#include <fstream>
+#include <syslog.h>
+#include <QFileDialog>
 
 using namespace std;
-
-NovaGUI * parentwindow;
 
 Run_Popup::Run_Popup(QWidget *parent, string home)
     : QMainWindow(parent)
 {
 	homePath = home;
-	parentwindow = (NovaGUI*)parent;
 	ui.setupUi(this);
 	loadPreferences();
 }
@@ -41,12 +39,6 @@ Run_Popup::Run_Popup(QWidget *parent, string home)
 Run_Popup::~Run_Popup()
 {
 
-}
-
-void Run_Popup::closeEvent(QCloseEvent * e)
-{
-	e = e;
-	parentwindow->runAsWindowUp = false;
 }
 
 void Run_Popup::loadPreferences()
@@ -180,7 +172,7 @@ bool Run_Popup::savePreferences()
 			prefix = "PCAP_FILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << "PCAP_FILE " << this->ui.pcapEdit->toPlainText().toStdString() << endl;
+				*out << "PCAP_FILE " << this->ui.pcapEdit->text().toStdString() << endl;
 				continue;
 			}
 

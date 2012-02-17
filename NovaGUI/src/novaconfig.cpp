@@ -15,9 +15,19 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : NOVA preferences/configuration window
 //============================================================================
+#include "novagui.h"
+#include "NovaUtil.h"
+#include "nodePopup.h"
 #include "novaconfig.h"
+#include "NovaComplexDialog.h"
 #include "NOVAConfiguration.h"
-#include <QtGui/QComboBox>
+
+#include <boost/foreach.hpp>
+#include <QFileDialog>
+#include <syslog.h>
+#include <errno.h>
+#include <fstream>
+#include <QDir>
 
 using namespace std;
 using namespace Nova;
@@ -391,11 +401,6 @@ void NovaConfig::on_actionDeletePort_triggered()
 	loading->unlock();
 }
 
-//Action to take when window is closing
-void NovaConfig::closeEvent()
-{
-	mainwindow->editingPreferences = false;
-}
 
 void NovaConfig::on_msgTypeListWidget_currentRowChanged()
 {

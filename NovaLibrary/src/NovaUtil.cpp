@@ -18,6 +18,15 @@
 //============================================================================/*
 
 #include "NovaUtil.h"
+#include "Defines.h"
+#include <fstream>
+#include <net/if.h>
+#include <syslog.h>
+#include <errno.h>
+#include <sys/un.h>
+#include <ANN/ANN.h>
+#include <sstream>
+#include <sys/ioctl.h>
 
 using namespace std;
 
