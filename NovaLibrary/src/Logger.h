@@ -23,6 +23,7 @@
 
 #include "HashMapStructs.h"
 #include "Defines.h"
+#include <cstring>
 
 using namespace std;
 using namespace google;
@@ -33,12 +34,13 @@ namespace Nova
 // may not need this, trying to determine if this is a good way to
 // tell the class how to allocate service use or if using the enum
 // below would be better
-enum Services {NO_SERV, SYSLOG, LIBNOTIFY, LIBNOTIFY_BELOW, EMAIL, EMAIL_SYSLOG, EMAIL_LIBNOTIFY, EMAIL_BELOW};
-// enum for NovaMessaging to use
-enum Levels {EMERGENCY, ALERT, CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG};
+enum Services {SYSLOG, LIBNOTIFY, EMAIL};
+// enum for NovaMessaging to use. May have to switch around the order to
+// make newer scheme make sense
+enum Levels {DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
 
 typedef vector<pair<uint16_t, string> > levelsMap;
-typedef vector<pair<Nova::Levels, Nova::Services> > userMap;
+typedef vector<pair< pair<Nova::Services, Nova::Levels>, char > > userMap;
 
 
 //There will be more than this, most likely
@@ -50,7 +52,6 @@ struct MessageOptions
 	string smtp_addr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
 	in_port_t smtp_port;
-	// TODO: Write the comment here lol
 	userMap service_preferences;
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
@@ -119,11 +120,9 @@ private:
 	void Mail(uint16_t level, string message);
 	// clean the elements in the toClean vector, i.e. removing trailing commas, etc.
 	vector<string> CleanAddresses(vector<string> toClean);
-	// extracts the service mask from the userMap provided based on the given message level.
-	Nova::Services setServiceLevel(Nova::Levels messageLevel, userMap serv);
 	// takes in a character, and returns a Services type; for use when
 	// parsing the SERVICE_PREFERENCES string from the NOVAConfig.txt file.
-	Nova::Services parseServicesFromChar(char parse);
+	Nova::Levels parseLevelFromChar(char parse);
 	// Load Configuration: loads the SMTP info and service level preferences
 	// from NovaConfig.txt.
 	// args:   char const * filename. This tells the method where the config
@@ -131,6 +130,7 @@ private:
 	// return: uint16_t ( 0 | 1). On 0, one of the options was not set, and has
 	// 		   no default. On 1, everything's fine.
 	uint16_t LoadConfiguration(char const* filename);
+	string getBitmask(Nova::Levels level);
 
 public:
 	levelsMap levels;

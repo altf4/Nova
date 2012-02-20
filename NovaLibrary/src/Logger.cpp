@@ -121,7 +121,6 @@ namespace Nova
 
 					continue;
 				}
-
 				prefixIndex++;
 				prefix = prefixes[prefixIndex];
 				vector<string> vec;
@@ -200,28 +199,21 @@ namespace Nova
 	{
 		pthread_rwlock_wrlock(&logLock);
 
-		Nova::Services services = Logger::setServiceLevel(messageLevel, messageInfo.service_preferences);
+		string mask = getBitmask(messageLevel);
 
-		if(services == LIBNOTIFY || services == LIBNOTIFY_BELOW || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
+		if(mask.at(0) == '1')
 		{
 			Notify(messageLevel, message);
 		}
 
-		if(services == SYSLOG || services == LIBNOTIFY_BELOW || services == EMAIL_SYSLOG || services == EMAIL_BELOW)
+		if(mask.at(1) == '1')
 		{
 			Log(messageLevel, message);
 		}
 
-		if(services == EMAIL || services == EMAIL_SYSLOG || services == EMAIL_LIBNOTIFY || services == EMAIL_BELOW)
+		if(mask.at(2) == '1')
 		{
 			Mail(messageLevel, message);
-		}
-
-		if(services == NO_SERV)
-		{
-			openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
-			syslog(SYSL_INFO, "You are not currently opting to use any logging mechanisms.");
-			closelog();
 		}
 
 		pthread_rwlock_unlock(&logLock);
@@ -277,76 +269,71 @@ namespace Nova
 
 	void Logger::setUserLogPreferences(string logPrefString)
 	{
-		if(logPrefString.size() != 32)
+		uint16_t size = logPrefString.size() + 1;
+		char * tokens;
+		char * parse;
+		uint16_t j = 0;
+		pair <pair <Nova::Services, Nova::Levels>, char> push;
+		pair <Nova::Services, Nova::Levels> insert;
+		char upDown;
+
+		tokens = new char[size];
+		strcpy(tokens, logPrefString.c_str());
+
+		parse = strtok(tokens, ";");
+
+		while(parse != NULL)
 		{
-			openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
-			syslog(SYSL_ERR, "The service preferences line is not configured correctly; it should be of the form \"LEVEL:SERVICES;\" (without quotes); for each level, 0 through 7, and each service, 1 through 7.");
-			closelog();
-			exit(EXIT_FAILURE);
-		}
-		else
-		{
-			for(uint16_t i = 0; i < logPrefString.size(); i += 4)
+			switch(parse[0])
 			{
-					if(isdigit(logPrefString.at(i)))
-					{
-						switch(logPrefString.at(i))
-						{
-							case '0': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(EMERGENCY, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-							case '1': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ALERT, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-							case '2': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(CRITICAL, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-							case '3': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(ERROR, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-							case '4': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(WARNING, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-							case '5': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(NOTICE, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-							case '6': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(INFO, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-							case '7': messageInfo.service_preferences.push_back(pair<Nova::Levels, Nova::Services>(DEBUG, parseServicesFromChar(logPrefString.at(i + 2))));
-									break;
-						}
-					}
-					else
-					{
-						openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
-						syslog(SYSL_ERR, "The service preferences line is not configured correctly; it should be of the form \"LEVEL:SERVICES;\" (without quotes) for each level, 0 through 7, and each service, 1 through 7.");
-						closelog();
-						exit(EXIT_FAILURE);
-					}
+				case '0': insert.first = SYSLOG;
+						insert.second = parseLevelFromChar(parse[2]);
+						break;
+				case '1': insert.first = LIBNOTIFY;
+						insert.second = parseLevelFromChar(parse[2]);
+						break;
+				case '2': insert.first = EMAIL;
+						insert.second = parseLevelFromChar(parse[2]);
+						break;
 			}
+			if(parse[3] == '-')
+			{
+				upDown = '-';
+			}
+			else if(parse[3] == '+')
+			{
+				upDown = '+';
+			}
+			else
+			{
+				upDown = '0';
+			}
+			push.first = insert;
+			push.second = upDown;
+			messageInfo.service_preferences.push_back(push);
+			parse = strtok(NULL, ";");
+			j++;
 		}
 	}
 
-	Nova::Services Logger::parseServicesFromChar(char parse)
+	Nova::Levels Logger::parseLevelFromChar(char parse)
 	{
 		switch((int)(parse - 48))
 		{
-			case 0: return NO_SERV;
-					break;
-			case 1: return SYSLOG;
-					break;
-			case 2: return LIBNOTIFY;
-					break;
-			case 3: return LIBNOTIFY_BELOW;
-					break;
-			case 4: return EMAIL;
-					break;
-			case 5: return EMAIL_SYSLOG;
-					break;
-			case 6: return EMAIL_LIBNOTIFY;
-					break;
-			case 7: return EMAIL_BELOW;
-					break;
-			default: return NO_SERV;
+			case 0: return DEBUG;
+			case 1: return INFO;
+			case 2: return NOTICE;
+			case 3: return WARNING;
+			case 4: return ERROR;
+			case 5: return CRITICAL;
+			case 6: return ALERT;
+			case 7: return EMERGENCY;
+			default: return DEBUG;
 		}
-		return NO_SERV;
+		return DEBUG;
 	}
 
-	void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
+	/*void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
 	{
 		userMap output = messageInfo.service_preferences;
 		bool end = false;
@@ -359,19 +346,77 @@ namespace Nova
 				end = true;
 			}
 		}
-	}
+	}*/
 
-	Nova::Services Logger::setServiceLevel(Nova::Levels messageLevel, userMap serv)
+	string Logger::getBitmask(Nova::Levels level)
 	{
-		for(uint16_t i = 0; i < serv.size(); i++)
+		string mask = "";
+		char upDown;
+
+		for(uint16_t i = 0; i < messageInfo.service_preferences.size(); i++)
 		{
-			if(messageLevel == serv[i].first)
+			upDown = messageInfo.service_preferences[i].second;
+
+			if(messageInfo.service_preferences[i].first.first == SYSLOG)
 			{
-				return serv[i].second;
+				if(messageInfo.service_preferences[i].first.second == level)
+				{
+					mask += "1";
+				}
+				else if(messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				{
+					mask += "1";
+				}
+				else if(messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				{
+					mask += "1";
+				}
+				else
+				{
+					mask += "0";
+				}
+			}
+			else if(messageInfo.service_preferences[i].first.first == LIBNOTIFY)
+			{
+				if(messageInfo.service_preferences[i].first.second == level)
+				{
+					mask += "1";
+				}
+				else if(messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				{
+					mask += "1";
+				}
+				else if(messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				{
+					mask += "1";
+				}
+				else
+				{
+					mask += "0";
+				}
+			}
+			else if(messageInfo.service_preferences[i].first.first == EMAIL)
+			{
+				if(messageInfo.service_preferences[i].first.second == level)
+				{
+					mask += "1";
+				}
+				else if(messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				{
+					mask += "1";
+				}
+				else if(messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				{
+					mask += "1";
+				}
+				else
+				{
+					mask += "0";
+				}
 			}
 		}
 
-		return NO_SERV;
+		return mask;
 	}
 
 	Logger::Logger(string parent, char const * configFilePath, bool init)
@@ -384,21 +429,21 @@ namespace Nova
 			string level = "";
 			switch(i)
 			{
-				case 0: level = "EMERGENCY";
+				case 0: level = "DEBUG";
 						break;
-				case 1: level = "ALERT";
+				case 1: level = "INFO";
 						break;
-				case 2: level = "CRITICAL";
+				case 2: level = "NOTICE";
 						break;
-				case 3: level = "ERROR";
+				case 3: level = "WARNING";
 						break;
-				case 4: level = "WARNING";
+				case 4: level = "ERROR";
 						break;
-				case 5: level = "NOTICE";
+				case 5: level = "CRITICAL";
 						break;
-				case 6: level = "INFO";
+				case 6: level = "ALERT";
 						break;
-				case 7: level = "DEBUG";
+				case 7: level = "EMERGENCY";
 						break;
 				default:break;
 			}
