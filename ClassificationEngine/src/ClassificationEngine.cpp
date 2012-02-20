@@ -30,6 +30,7 @@
 #include <syslog.h>
 #include <sys/un.h>
 #include <signal.h>
+#include <math.h>
 
 using namespace std;
 using namespace Nova;
@@ -104,7 +105,11 @@ int enabledFeatures;
 int len;
 const char *outFile;				//output for data points during training
 string homePath;
+
+// Used for data normalization
 double maxFeatureValues[DIM];
+double minFeatureValues[DIM];
+double meanFeatureValues[DIM];
 
 // Nova Configuration Variables (read from config file)
 bool isTraining;
@@ -127,6 +132,21 @@ string SMTP_domain;
 in_port_t SMTP_port;
 Nova::userMap service_pref;
 vector<string> email_recipients;
+
+// Normalization method to use on each feature
+// TODO: Make this a configuration var somewhere in Novaconfig.txt?
+normalizationType normalization[] = {
+		LINEAR_SHIFT, // Don't normalize IP traffic distribution, already between 0 and 1
+		LOGARITHMIC,
+		LOGARITHMIC,
+		LOGARITHMIC,
+		LOGARITHMIC,
+		LOGARITHMIC,
+		LOGARITHMIC,
+		LOGARITHMIC,
+		LOGARITHMIC
+};
+
 // End configured variables
 
 time_t lastLoadTime;
@@ -360,7 +380,7 @@ void Nova::ClassificationEngine::LoadStateFile()
 	ifstream in(ceSaveFile.data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		syslog(SYSL_ERR, "Line: %d Attempted load but unable to open CE load file", __LINE__);
+		syslog(SYSL_ERR, "Line: %d Attempted load last saved state but unable to open CE load file. This in normal for first run.", __LINE__);
 		return;
 	}
 
@@ -566,9 +586,15 @@ void Nova::ClassificationEngine::Reload()
 	// Clear the enabledFeatures count
 	enabledFeatures = 0;
 
-	// Clear max values
+	// Clear max and min values
 	for (int i = 0; i < DIM; i++)
 		maxFeatureValues[i] = 0;
+
+	for (int i = 0; i < DIM; i++)
+		minFeatureValues[i] = -1;
+
+	for (int i = 0; i < DIM; i++)
+		meanFeatureValues[i] = 0;
 
 	dataPtsWithClass.clear();
 
@@ -660,22 +686,23 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 	do
 	{
 		sleep(classificationTimeout);
-		pthread_rwlock_rdlock(&lock);
+		pthread_rwlock_wrlock(&lock);
 		//Calculate the "true" Feature Set for each Suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
 			if(it->second->needs_feature_update)
 			{
-				pthread_rwlock_unlock(&lock);
-				pthread_rwlock_wrlock(&lock);
 				it->second->CalculateFeatures(featureMask);
-				pthread_rwlock_unlock(&lock);
-				pthread_rwlock_rdlock(&lock);
 			}
 		}
 		//Calculate the normalized feature sets, actually used by ANN
 		//	Writes into Suspect ANNPoints
 		NormalizeDataPoints();
+
+
+		pthread_rwlock_unlock(&lock);
+		pthread_rwlock_rdlock(&lock);
+
 		//Perform classification on each suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
@@ -923,7 +950,7 @@ void Nova::ClassificationEngine::FormKdTree()
 		{
 			if(maxFeatureValues[j] != 0)
 			{
-				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]));
+				normalizedDataPts[i][j] = Normalize(normalization[j], dataPts[i][j], minFeatureValues[j], maxFeatureValues[j]);
 			}
 			else
 			{
@@ -1043,7 +1070,6 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 
 void Nova::ClassificationEngine::NormalizeDataPoints()
 {
-	//Find the max values for each feature
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
 		// Used for matching the 0->DIM index with the 0->enabledFeatures index
@@ -1055,18 +1081,20 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 				if(it->second->features.features[i] > maxFeatureValues[ai])
 				{
 					//For proper normalization the upper bound for a feature is the max value of the data.
-					maxFeatureValues[ai] = it->second->features.features[i];
-					updateKDTree = true;
+					it->second->features.features[i] = maxFeatureValues[ai];
+				}
+				else if (it->second->features.features[i] > maxFeatureValues[ai])
+				{
+					it->second->features.features[i] = minFeatureValues[ai];
 				}
 				ai++;
 			}
 
 		}
 	}
-	if(updateKDTree) FormKdTree();
 
-	pthread_rwlock_unlock(&lock);
-	pthread_rwlock_wrlock(&lock);
+	//if(updateKDTree) FormKdTree();
+
 	//Normalize the suspect points
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
@@ -1075,14 +1103,13 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 			if(it->second->annPoint == NULL)
 				it->second->annPoint = annAllocPt(enabledFeatures);
 
-			//If the max is 0, then there's no need to normalize! (Plus it'd be a div by zero)
 			int ai = 0;
 			for(int i = 0;i < DIM;i++)
 			{
 				if (featureEnabled[i])
 				{
 					if(maxFeatureValues[ai] != 0)
-						it->second->annPoint[ai] = (double)(it->second->features.features[i] / maxFeatureValues[ai]);
+						it->second->annPoint[ai] = Normalize(normalization[i], it->second->features.features[i], minFeatureValues[ai], maxFeatureValues[ai]);
 					else
 						syslog(SYSL_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (ai + 1));
 					ai++;
@@ -1092,8 +1119,6 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 			it->second->needs_feature_update = false;
 		}
 	}
-	pthread_rwlock_unlock(&lock);
-	pthread_rwlock_rdlock(&lock);
 }
 
 
@@ -1213,9 +1238,13 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 						//Set the max values of each feature. (Used later in normalization)
 						if(temp > maxFeatureValues[actualDimension])
-						{
 							maxFeatureValues[actualDimension] = temp;
-						}
+
+						if(minFeatureValues[actualDimension] == -1 || temp < minFeatureValues[actualDimension])
+							minFeatureValues[actualDimension] = temp;
+
+						meanFeatureValues[actualDimension] += temp;
+
 						actualDimension++;
 					}
 				}
@@ -1233,6 +1262,9 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			}
 		}
 		nPts = i;
+
+		for (int j = 0; j < DIM; j++)
+			meanFeatureValues[j] /= nPts;
 	}
 	else
 	{
@@ -1249,15 +1281,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 		//Foreach data point
 		for(int i=0;i < nPts;i++)
 		{
-			if(maxFeatureValues[j] != 0)
-			{
-				normalizedDataPts[i][j] = (double)((dataPts[i][j] / maxFeatureValues[j]));
-			}
-			else
-			{
-				syslog(SYSL_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (j + 1));
-				break;
-			}
+			normalizedDataPts[i][j] = Normalize(normalization[j], dataPts[i][j], minFeatureValues[j], maxFeatureValues[j]);
 		}
 	}
 
@@ -1265,27 +1289,58 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			normalizedDataPts,					// the data points
 					nPts,						// number of points
 					enabledFeatures);						// dimension of space
+
+	WriteDataPointsToFile("Data/normalizedPoints", kdTree);
+}
+
+double Nova::ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)
+{
+	switch (type)
+	{
+		case LINEAR:
+		{
+			return value / max;
+		}
+		case LINEAR_SHIFT:
+		{
+			return (value -min) / (max - min);
+		}
+		case LOGARITHMIC:
+		{
+			return (log(value - min + 1)) / (log(max - min + 1));
+		}
+		case NONORM:
+		{
+			return value;
+		}
+		default:
+		{
+			//loggerConf->Logging(ERROR, "Normalization failed: Normalization type unkown");
+			return 0;
+		}
+
+		// TODO: A sigmoid normalization function could be very useful,
+		// especially if we could somehow use it interactively to set the center and smoothing
+		// while looking at the data visualizations to see what works best for a feature
+	}
 }
 
 
-void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath)
+void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree)
 {
-
-	ofstream myfile (outFilePath.data(), ios::app);
+	ofstream myfile (outFilePath.data());
 
 	if (myfile.is_open())
 	{
-		pthread_rwlock_rdlock(&lock);
-		for ( SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++ )
+		for (int i = 0; i < tree->nPoints(); i++ )
 		{
-			for(int j=0; j < enabledFeatures; j++)
+			for(int j=0; j < tree->theDim(); j++)
 			{
-				myfile << it->second->annPoint[j] << " ";
+				myfile << tree->thePoints()[i][j] << " ";
 			}
-			myfile << it->second->classification;
+			myfile << dataPtsWithClass[i]->classification;
 			myfile << "\n";
 		}
-		pthread_rwlock_unlock(&lock);
 	}
 	else
 	{
@@ -1515,6 +1570,7 @@ bool ClassificationEngine::ReceiveSuspectData()
 		syslog(SYSL_ERR, "Line: %d Error in parsing received Suspect: %s", __LINE__, string(e.what()).c_str());
 		close(connectionSocket);
 		bzero(buffer, MAX_MSG_SIZE);
+		pthread_rwlock_unlock(&lock);
 		return false;
 	}
 	close(connectionSocket);

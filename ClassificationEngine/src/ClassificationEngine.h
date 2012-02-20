@@ -35,6 +35,13 @@ double sqrtDIM;
 typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 typedef google::dense_hash_map<in_addr_t, ANNpoint, tr1::hash<in_addr_t>, eqaddr > lastPointHash;
 
+enum normalizationType {
+	NONORM, 		// Does no data normalization. Feature must already be in a range from 0 to 1
+	LINEAR,			// Simple linear normalization by dividing data by the max
+	LINEAR_SHIFT, 	// Shifts min value to 0 before doing linear normalization
+	LOGARITHMIC		// Logarithmic normalization, larger outlier value will have less of an effect
+};
+
 namespace Nova{
 namespace ClassificationEngine{
 
@@ -60,6 +67,9 @@ void *SilentAlarmLoop(void *ptr);
 // Note: this updates the classification of the suspect in dataPtsWithClass as well as it's isHostile variable
 void Classify(Suspect *suspect);
 
+// Normalized a single value
+double Normalize(normalizationType type, double value, double min, double max);
+
 // Calculates normalized data points and stores into 'normalizedDataPts'
 void NormalizeDataPoints();
 
@@ -79,7 +89,7 @@ void LoadDataPointsFromFile(string inFilePath);
 
 // Writes the list of suspects out to a file specified by outFilePath
 //		outFilePath - path to output file
-void WriteDataPointsToFile(string outFilePath);
+void WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree);
 
 // Send a silent alarm
 //		suspect - Suspect to send alarm about

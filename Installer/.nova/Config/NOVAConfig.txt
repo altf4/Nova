@@ -374,30 +374,21 @@ RECIPIENTS first@email.send, second@email.send
 # SERVICE_PREFERENCES #
 ############################################
 #
-# This string will provide the logger with what services you
-# wish to use, depending on level of criticality.
-# Each section takes the form LEVEL:SERVICES;
-# LEVEL: (0..7) are kept consistent with syslog message levels:
-#        0: EMERGENCY
-#	 1: ALERT
-#	 2: CRITICAL
-#	 3: ERROR
-#	 4: WARNING
-#	 5: NOTICE
-# 	 6: INFO
-# 	 7: DEBUG
-# SERVICES: (0..7) are a bitmask of what services to use. 3 bits used: 
-#		EMAIL LIBNOTIFY SYSLOG
-#	Thus, SERVICES are:
-#	 0: NO_SERV (no logging of any kind will be done)
-#	 1: SYSLOG  (event level will log to syslog only)
-#	 2: LIBNOTIFY (event level will log to libnotify only)
-#	 3: LIBNOTIFY_BELOW (event level will log to both syslog and libnotify)
-#	 4: EMAIL (event level will only send email alerts)
-#	 5: EMAIL_SYSLOG (event level will send email alerts and log usign syslog)
-#	 6: EMAIL_LIBNOTIFY (event level will send email alerts and display desktop notifications)
-#	 7: EMAIL_BELOW (event level will send emails, use desktop notifications, and use syslog)
-# 
-# EXAMPLE: 
-# SERVICE_PREFERENCES 0:7;1:6;2:5;3:4;4:3;5:2;6:1;7:1;
-SERVICE_PREFERENCES 0:7;1:6;2:5;3:4;4:3;5:2;6:1;7:1;
+# SERVICE: 0 = SYSLOG
+#	       1 = LIBNOTIFY
+#		   2 = EMAIL
+#
+# LEVELS:  0 = DEBUG 
+#          1 = INFO
+#		   2 = NOTICE
+#          3 = WARNING
+#          4 = ERROR
+#          5 = CRITICAl
+#          6 = ALERT
+#          7 = EMERGENCY
+# (+ | -): Plus indicates use the service at this level or higher,
+#          minus indicates use the service at this level or lower.
+#          If you want to use a particular service for just one level,
+#          omit the + or - entirely.
+# SERVICE:LEVEL(+|-);
+SERVICE_PREFERENCES 0:4-;1:4-;2:0;
