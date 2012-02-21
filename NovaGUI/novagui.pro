@@ -2,7 +2,8 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-HEADERS += src/NovaGuiTypes.h \
+HEADERS += src/subnetPopup.h \
+    src/NovaGuiTypes.h \
     src/loggerwindow.h \
     src/classifierPrompt.h \
     src/nova_manual.h \
@@ -14,7 +15,8 @@ HEADERS += src/NovaGuiTypes.h \
     src/novaconfig.h \
     src/novagui.h \
     src/run_popup.h
-SOURCES += src/loggerwindow.cpp \
+SOURCES += src/subnetPopup.cpp \
+    src/loggerwindow.cpp \
     src/classifierPrompt.cpp \
     src/nova_manual.cpp \
     src/DialogPrompter.cpp \
@@ -25,7 +27,8 @@ SOURCES += src/loggerwindow.cpp \
     src/novaconfig.cpp \
     src/novagui.cpp \
     src/run_popup.cpp
-FORMS += UI/loggerwindow.ui \
+FORMS += UI/subnetPopup.ui \
+    UI/loggerwindow.ui \
     UI/classifierPrompt.ui \
     UI/nova_manual.ui \
     UI/NovaComplexDialog.ui \
