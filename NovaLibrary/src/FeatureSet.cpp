@@ -364,16 +364,17 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
 		IPTable[it->first] += rhs.IPTable[it->first];
 
 	for(Port_Table::iterator it = rhs.portTable.begin(); it != rhs.portTable.end(); it++)
+	{
 		portTable[it->first] += rhs.portTable[it->first];
+		if (portTable[it->first] > portMax)
+			portMax = portTable[it->first];
+	}
 
 	for(Packet_Table::iterator it = rhs.packTable.begin(); it != rhs.packTable.end(); it++)
 		packTable[it->first] += rhs.packTable[it->first];
 
 	for(Interval_Table::iterator it = rhs.intervalTable.begin(); it != rhs.intervalTable.end(); it++)
 		intervalTable[it->first] += rhs.intervalTable[it->first];
-
-	if (rhs.portMax > portMax)
-		portMax = rhs.portMax;
 
 	return *this;
 }

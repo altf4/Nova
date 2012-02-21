@@ -137,7 +137,7 @@ vector<string> email_recipients;
 // TODO: Make this a configuration var somewhere in Novaconfig.txt?
 normalizationType normalization[] = {
 		LINEAR_SHIFT, // Don't normalize IP traffic distribution, already between 0 and 1
-		LOGARITHMIC,
+		LINEAR_SHIFT,
 		LOGARITHMIC,
 		LOGARITHMIC,
 		LOGARITHMIC,
