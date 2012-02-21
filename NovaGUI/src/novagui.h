@@ -22,6 +22,7 @@
 #include "NovaGuiTypes.h"
 #include "ui_novagui.h"
 #include "Suspect.h"
+#include "loggerwindow.h"
 
 #include <QProcess>
 
@@ -169,6 +170,7 @@ private Q_SLOTS:
 	void on_actionClear_Suspect_triggered();
 	void on_actionHide_Suspect_triggered();
 	void on_actionHelp_2_triggered();
+	void on_actionLogger_triggered();
 
 	void on_actionSystemStatKill_triggered();
 	void on_actionSystemStatStop_triggered();

@@ -2,6 +2,8 @@
 #define LOGGERWINDOW_H
 
 #include <QtGui/QMainWindow>
+#include <QFile>
+#include <QTextStream>
 #include "ui_loggerwindow.h"
 
 class LoggerWindow : public QMainWindow
@@ -11,6 +13,12 @@ class LoggerWindow : public QMainWindow
 public:
     LoggerWindow(QWidget *parent = 0);
     ~LoggerWindow();
+
+private:
+    void setUpButtons();
+    void initializeLoggingWindow();
+    void on_pushButton_clicked();
+    QTreeWidgetItem * generateLogTabEntry(QString line);
 
 private:
     Ui::LoggerWindowClass ui;

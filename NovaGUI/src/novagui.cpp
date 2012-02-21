@@ -2139,6 +2139,12 @@ void NovaGUI::on_actionHelp_2_triggered()
 	}
 }
 
+void NovaGUI::on_actionLogger_triggered()
+{
+		LoggerWindow *wi = new LoggerWindow(this);
+		wi->show();
+}
+
 /************************************************
  * View Signal Handlers
  ************************************************/

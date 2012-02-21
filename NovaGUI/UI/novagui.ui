@@ -656,7 +656,7 @@ Module</string>
      <x>0</x>
      <y>0</y>
      <width>846</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -689,6 +689,7 @@ Module</string>
     </property>
     <addaction name="actionHide_Old_Suspects"/>
     <addaction name="actionShow_All_Suspects"/>
+    <addaction name="actionLogger"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -827,6 +828,11 @@ Module</string>
    </property>
    <property name="toolTip">
     <string>systemStatReload</string>
+   </property>
+  </action>
+  <action name="actionLogger">
+   <property name="text">
+    <string>Logger</string>
    </property>
   </action>
  </widget>
