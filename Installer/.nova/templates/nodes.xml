@@ -5,7 +5,7 @@
 		<subnets>
 			<interface>
 				<name>eth0</name>
-				<IP>192.168.10.113</IP>
+				<IP>192.168.10.1</IP>
 				<mask>255.255.255.0</mask>
 				<enabled>true</enabled>
 			</interface>
@@ -49,13 +49,13 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.31</IP>
+				<IP>192.168.10.3</IP>
 				<MAC>00:26:b9:6d:9c:46</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
-				<name>192.168.10.31</name>
+				<name>192.168.10.3</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -79,13 +79,13 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.36</IP>
+				<IP>192.168.10.8</IP>
 				<MAC>00:1c:23:17:eb:d8</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
-				<name>192.168.10.36</name>
+				<name>192.168.10.8</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -129,13 +129,13 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.32</IP>
+				<IP>192.168.10.4</IP>
 				<MAC>00:11:43:13:01:cb</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
-				<name>192.168.10.32</name>
+				<name>192.168.10.4</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -159,13 +159,13 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.37</IP>
+				<IP>192.168.10.9</IP>
 				<MAC>00:1e:4f:49:8c:e9</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
-				<name>192.168.10.37</name>
+				<name>192.168.10.9</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -189,13 +189,13 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.34</IP>
+				<IP>192.168.10.6</IP>
 				<MAC>00:1e:4f:dd:d4:0c</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>BSDServer</name>
 				</profile>
-				<name>192.168.10.34</name>
+				<name>192.168.10.6</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -209,13 +209,13 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.33</IP>
+				<IP>192.168.10.5</IP>
 				<MAC>00:25:64:aa:05:60</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>WinServer</name>
 				</profile>
-				<name>192.168.10.33</name>
+				<name>192.168.10.5</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
@@ -269,13 +269,13 @@
 			</node>
 			<node>
 				<interface>eth0</interface>
-				<IP>192.168.10.35</IP>
+				<IP>192.168.10.7</IP>
 				<MAC>00:21:9b:d8:cc:86</MAC>
 				<enabled>true</enabled>
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
-				<name>192.168.10.35</name>
+				<name>192.168.10.7</name>
 			</node>
 			<node>
 				<interface>eth0</interface>

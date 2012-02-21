@@ -72,7 +72,6 @@ NovaGUI/debug/
 Installer/.nova/Data/*
 Installer/.nova/s*
 Installer/.nova/Images/*
-Installer/.nova/templates/*
 Installer/.nova/Config/*
 Installer/bin/*
 
@@ -100,3 +99,4 @@ NovaGUI/moc_run_popup.cpp
 /Installer/.nova/Config/doppelganger.config
 /NovaGUI/release/moc_classifierPrompt.cpp
 /NovaGUI/release/moc_loggerwindow.cpp
+/NovaGUI/release/moc_subnetPopup.cpp

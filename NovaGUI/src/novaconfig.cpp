@@ -19,6 +19,7 @@
 #include "NovaUtil.h"
 #include "nodePopup.h"
 #include "novaconfig.h"
+#include "subnetPopup.h"
 #include "NovaComplexDialog.h"
 #include "NOVAConfiguration.h"
 
@@ -3782,6 +3783,11 @@ void  NovaConfig::on_actionNodeEdit_triggered()
 	{
 		nodePopup * editNode =  new nodePopup(this, &nodes[currentNode]);
 		editNode->show();
+	}
+	else
+	{
+		subnetPopup * editSubnet = new subnetPopup(this, &subnets[currentSubnet]);
+		editSubnet->show();
 	}
 }
 
