@@ -142,11 +142,29 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 	else if (ui.nodeTreeWidget|| ui.nodeTreeWidget->underMouse())
 	{
 		nodeTreeMenu->clear();
-		nodeTreeMenu->addAction(ui.actionNodeEdit);
-		nodeTreeMenu->addAction(ui.actionNodeCustomizeProfile);
+		nodeTreeMenu->addAction(ui.actionSubnetAdd);
 		nodeTreeMenu->addSeparator();
-		nodeTreeMenu->addAction(ui.actionNodeAdd);
-		nodeTreeMenu->addAction(ui.actionNodeClone);
+		nodeTreeMenu->addAction(ui.actionNodeEdit);
+		if(selectedSubnet)
+		{
+			ui.actionNodeEdit->setText("Edit Subnet");
+			ui.actionNodeEnable->setText("Enable Subnet");
+			ui.actionNodeDisable->setText("Disable Subnet");
+			nodeTreeMenu->addAction(ui.actionNodeAdd);
+			nodeTreeMenu->addSeparator();
+		}
+		else
+		{
+			ui.actionNodeEdit->setText("Edit Node");
+			ui.actionNodeEnable->setText("Enable Node");
+			ui.actionNodeDisable->setText("Disable Node");
+			nodeTreeMenu->addAction(ui.actionNodeCustomizeProfile);
+			nodeTreeMenu->addSeparator();
+			nodeTreeMenu->addAction(ui.actionNodeAdd);
+			nodeTreeMenu->addAction(ui.actionNodeClone);
+			nodeTreeMenu->addSeparator();
+
+		}
 		nodeTreeMenu->addAction(ui.actionNodeDelete);
 		nodeTreeMenu->addSeparator();
 		nodeTreeMenu->addAction(ui.actionNodeEnable);
@@ -3645,67 +3663,93 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edi
 		loading->unlock();
 	}
 }
-
+void NovaConfig::on_actionSubnetAdd_triggered()
+{
+	if(currentSubnet.compare(""))
+	{
+		loading->lock();
+		subnet s = subnets[currentSubnet];
+		s.name = currentSubnet + "-1";
+		s.address = "0.0.0.0/24";
+		s.nodes.clear();
+		s.enabled = false;
+		s.item = NULL;
+		s.nodeItem = NULL;
+		s.base = 0;
+		s.maskBits = 24;
+		s.max = 255;
+		s.isRealDevice = false;
+		subnets[s.name] = s;
+		currentSubnet = s.name;
+		loading->unlock();
+		subnetPopup * editSubnet = new subnetPopup(this, &subnets[currentSubnet]);
+		editSubnet->show();
+	}
+}
 // Right click menus for the Node tree
 void NovaConfig::on_actionNodeAdd_triggered()
 {
-	loading->lock();
-	node n;
-	n.sub = currentSubnet;
-	n.realIP = subnets[n.sub].base;
-	in_addr temp;
-	temp.s_addr = n.realIP;
-	n.IP = inet_ntoa(temp);
-	n.MAC = "";
-	n.pfile = "default";
-	n.interface = n.sub;
-	switch(profiles[n.pfile].type)
-	{
-		case static_IP:
-		{
-			n.name = n.IP;
-			break;
-		}
-		case staticDHCP:
-		{
-			n.MAC = generateUniqueMACAddr(profiles[n.pfile].ethernet);
-			n.name = n.MAC;
-			break;
-		}
-		case randomDHCP:
-		{
-			string prefix = n.pfile + " on " + n.interface;
-			//If the key doesn't start with the correct prefix, generate the correct name
-			n.name = prefix;
-			int i = 0;
-			int j = ~i;
-			stringstream ss;
-			bool nameUnique;
-			//Finds a unique identifier
-			while(i < j)
-			{
-				nameUnique = true;
-				if(nodes.find(n.name) != nodes.end())
-					nameUnique = false;
 
-				if(nameUnique)
-					break;
-				i++;
-				ss.str("");
-				ss << n.pfile << " on " << n.interface << "-" << i;
-				n.name = ss.str();
+	if(currentSubnet.compare(""))
+	{
+		loading->lock();
+		node n;
+		n.sub = currentSubnet;
+		n.realIP = subnets[n.sub].base;
+		in_addr temp;
+		temp.s_addr = n.realIP;
+		n.IP = inet_ntoa(temp);
+		n.MAC = "";
+		n.pfile = "default";
+		n.interface = n.sub;
+		switch(profiles[n.pfile].type)
+		{
+			case static_IP:
+			{
+				n.name = n.IP;
+				break;
+			}
+			case staticDHCP:
+			{
+				n.MAC = generateUniqueMACAddr(profiles[n.pfile].ethernet);
+				n.name = n.MAC;
+				break;
+			}
+			case randomDHCP:
+			{
+				string prefix = n.pfile + " on " + n.interface;
+				//If the key doesn't start with the correct prefix, generate the correct name
+				n.name = prefix;
+				int i = 0;
+				int j = ~i;
+				stringstream ss;
+				bool nameUnique;
+				//Finds a unique identifier
+				while(i < j)
+				{
+					nameUnique = true;
+					if(nodes.find(n.name) != nodes.end())
+						nameUnique = false;
+
+					if(nameUnique)
+						break;
+					i++;
+					ss.str("");
+					ss << n.pfile << " on " << n.interface << "-" << i;
+					n.name = ss.str();
+				}
 			}
 		}
+		n.enabled = false;
+		n.item = NULL;
+		n.nodeItem = NULL;
+		nodes[n.name] = n;
+		currentNode = n.name;
+		subnets[n.sub].nodes.push_back(n.name);
+		loading->unlock();
+		nodePopup * editNode =  new nodePopup(this, &n);
+		editNode->show();
 	}
-	n.enabled = false;
-	n.item = NULL;
-	n.nodeItem = NULL;
-	nodes[n.name] = n;
-	currentNode = n.name;
-	subnets[n.sub].nodes.push_back(n.name);
-	loading->unlock();
-	nodePopup * editNode =  new nodePopup(this, &n);
-	editNode->show();
 }
 
 void NovaConfig::on_actionNodeDelete_triggered()

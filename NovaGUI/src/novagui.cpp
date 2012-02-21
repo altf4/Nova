@@ -489,6 +489,7 @@ void NovaGUI::saveAll()
 		//TODO assumes subnet is interface, need to discover and handle if virtual
 		pt.put<std::string>("name", it->second.name);
 		pt.put<bool>("enabled",it->second.enabled);
+		pt.put<bool>("isReal", it->second.isRealDevice);
 
 		//Remove /## format mask from the address then put it in the XML.
 		stringstream ss;
@@ -502,10 +503,10 @@ void NovaGUI::saveAll()
 		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
 		mask = ~mask; //After getting the inverse of this we have the mask in host addr form.
 		//Convert to network order, put in in_addr struct
-		struct in_addr addr;
-		addr.s_addr = htonl(mask);
 		//call ntoa to get char * and make string
-		temp = string(inet_ntoa(addr));
+		in_addr tempMask;
+		tempMask.s_addr = htonl(mask);
+		temp = string(inet_ntoa(tempMask));
 		pt.put<std::string>("mask", temp);
 		subnetTree.add_child("interface", pt);
 	}
@@ -618,9 +619,11 @@ void NovaGUI::writeHoneyd()
 		{
 			case static_IP:
 				out << "bind " << it->second.IP << " " << it->second.pfile << endl;
+				if(it->second.MAC.compare(""))
+					out << "set " << it->second.IP << " ethernet \"" << it->second.MAC << "\"" << endl;
 				break;
 			case staticDHCP:
-				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet " << it->second.MAC << endl;
+				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet \"" << it->second.MAC << "\"" << endl;
 				break;
 			case randomDHCP:
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
@@ -944,7 +947,7 @@ void NovaGUI::loadSubnets(ptree *ptr)
 			{
 				subnet sub;
 				sub.tree = v.second;
-				sub.isRealDevice = true;
+				sub.isRealDevice =  v.second.get<bool>("isReal");
 				//Extract the data
 				sub.name = v.second.get<std::string>("name");
 				sub.address = v.second.get<std::string>("IP");
