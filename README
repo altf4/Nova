@@ -2,114 +2,186 @@
 What is Nova?
 ===============================
 
-The Network Obfuscation and Virtualized Anti-reconnaissance System (Nova) is a software tool developed to detect network based reconnaissance efforts and to deny the attacker access to real network data while providing false information regarding the number and types of systems connected to the network.
+The Network Obfuscation and Virtualized Anti-reconnaissance System (Nova) is a
+software tool developed to detect network based reconnaissance efforts and to
+deny the attacker access to real network data while providing false information
+regarding the number and types of systems connected to the network.
 
-* Nova will limit the effects of cyber attacks by detecting the activity and providing false data to the attacker
+* Nova will limit the effects of cyber attacks by detecting the activity and
+* providing false data to the attacker
 
 * Nova will spoof network data to attackers thus revealing their intentions
 
-* Autonomous agents combine lightweight virtualization, attacker classification, dynamic rerouting for asset protection, and diverse mechanisms for provision of false information to attackers
-
-
+* Autonomous agents combine lightweight virtualization, attacker classification,
+* dynamic rerouting for asset protection, and diverse mechanisms for provision
+* of false information to attackers
 
 
 ===============================
 The Installation Guide
 ===============================
 
-	The first thing to note is that Nova is currently only compatible with Linux, so if you do not have a Linux machine or a Linux partition on another machine, I would suggest that you go download Ubuntu 10.04 or higher and install it, either as a partition or for the whole machine. This guide will not address any issues with installing Linux; it is concerned with the installation and proper setup of Nova.
+- The first thing to note is that Nova is currently only compatible with
+Linux, so if you do not have a Linux machine or a Linux partition on another
+machine, I would suggest that you go download Ubuntu 10.04 or higher and install
+it, either as a partition or for the whole machine. This guide will not address
+any issues with installing Linux; it is concerned with the installation and
+proper setup of Nova.
 
-	Once you have Ubuntu up and running, you must now download the libraries required to compile Nova correctly. Make sure to watch the terminals at the beginning of the install process, and be sure to type 'Y' when asked to do so. Install the libraries with the following command:
 
-	sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git honeyd libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev
-	[Note: this part can take a little while to complete. ]
+===============================
+Getting Dependencies
+===============================
+
+- Once you have Ubuntu up and running, you must now download the libraries
+required to compile Nova correctly. Make sure to watch the terminals at the
+beginning of the install process, and be sure to type 'Y' when asked to do so.
+Install the libraries with the following command:
+
+    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git
+libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev
+libcap2-bin libboost-serialization-dev
 
 
-	Now, we'll have to take a quick detour to get another integral component of Nova: honeyd. We will have to download some extra libraries for honeyd as well; you can get them using this command:
+- Now, we'll have to take a quick detour to get another integral component
+of Nova: honeyd. We will have to download some extra libraries for honeyd as
+well; you can get them using this command:
 
-	sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
+    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev
+libpcre3-dev libedit-dev bison flex libtool automake 
 
-	If you're running Ubuntu 11.10 or higher, you will also need the library libevent1-dev; procure this by:
-	
-	sudo apt-get install libevent1-dev
 
-	Assuming everything has gone well thus far, it's about time to get the actual code on the machine! First, go to your home directory ('cd ~/' or 'cd $HOME') and use the mkdir command to create a directory called Code, then cd into it:
-	
-	mkdir Code
-	cd Code	
-	 
-	Once we're in the code directory, we're going to pull the code for honeyd and Nova off of the DataSoft Github account and place it into the Code directory. Type pwd to make sure that you are in the Code directory; if you are, use the following commands to procure the code:
+- If you're running Ubuntu 11.10 or higher, you will also need the library
+libevent1-dev; procure this by:
+    
+    sudo apt-get install libevent1-dev
 
-	Honeyd: 
-	git clone git://github.com/DataSoft/Honeyd.git
 
-	Nova:   
-	git clone git://github.com/DataSoft/Nova.git
-	
-	Make sure for these steps that, when asked in the terminal or by pop-up to produce your private key password and to allow the github server, you reply yes.
+===============================
+Getting the newest code
+===============================
 
-	Your $HOME/Code/ directory should now have a Honeyd/ folder and a Nova/ folder. Let's go into Honeyd and get that set up before we attempt to compile Nova. Use the cd command to enter Honeyd/honeyd/:
+- Assuming everything has gone well thus far, it's about time to get the
+actual code on the machine! First, go to your home directory ('cd ~/' or 'cd
+$HOME') and use the mkdir command to create a directory called Code, then cd
+into it:
 
-	cd Honeyd/honeyd
+    mkdir Code
+    cd Code
+ 
+- Once we're in the code directory, we're going to pull the code for
+honeyd and Nova off of the DataSoft Github account and place it into the Code
+directory. Type pwd to make sure that you are in the Code directory; if you are,
+use the following commands to procure the code:
 
-...where all of the honeyd source code should be on your machine. When inside the source directory, follow the next 5 steps in sequence:
+    git clone git://github.com/DataSoft/Honeyd.git
+    git clone git://github.com/DataSoft/Nova.git
 
-	
-	Step 1: 
-	./autogen.sh
+- Make sure for these steps that, when asked in the terminal or by pop-up
+to produce your private key password and to allow the github server, you reply
+yes.
 
-	Step 2: 
-	automake
 
-	Step 3: [If you have Ubuntu 11.04 or higher, use the command:
+===============================
+Building Honeyd
+===============================
 
-	gedit configure 
+- Your $HOME/Code/ directory should now have a Honeyd/ folder and a Nova/
+folder. Let's go into Honeyd and get that set up before we attempt to compile
+Nova. Use the cd command to enter Honeyd/honeyd/:
 
-	...to open the configuration script in the text editor and use Ctrl-H to open the find and replace 	menu. Into the 'Find:' field, enter 
+    cd Honeyd/honeyd
 
-	/usr/lib/libc.so
-	 	and for the 'Replace:' field, enter 
-	/lib/i386-linux-gnu/libc.so
-		 and Replace All.
+...where all of the honeyd source code should be on your machine. When inside
+the source directory, follow the next steps in sequence:
 
-	Save and quit from editing the file.
-	
-	Step 4: 
-	./configure
-	
-	Step 5: 
-	make
-	sudo make install
+    Step 1: ./autogen.sh
 
-	Once these steps are complete, and you have not run into any errors, it is time to move on to Nova. However, if you ran into any errors, especially when running Step 4 or 5, follow the instructions that the script gives to you and then try again. Do not move on until Step 4 configures without complaining and Step 5 returns no error. 
+    Step 2: automake
 
-	Now, onto Nova. Go back to the code directory from the honeyd source directory, either by 
-	
-	cd ~/Code/Nova
-	
-	It should contain directories for each of the modules the program will use, and if you see a file called Makefile then you're in the right place. There is very little left to do! 
-	
-	Now, to generate all the files that will be needed for install, use the command:
+    Step 3: [If you have Ubuntu 11.04 or higher, you must manually edit the
+confifure file. Use your favorite find and replace method or the following
+steps,
 
-	make
+    gedit configure 
 
-	→ This will generate all the binaries that the program needs to run, as well as the libraries and 	dependencies required for linking and function definitions. If there is an error here, check that 	all of the libraries from the beginning section were correctly installed, and refer to the given
-	error message to see what's wrong.
+    ...to open the configuration script in the text editor and use Ctrl-H to
+open the find and replace menu. Into the 'Find:' field, enter /usr/lib/libc.so 
+and for the 'Replace:' field, enter /lib/i386-linux-gnu/libc.so and Replace All.
 
-	sudo make install 
-	[may require password]
+    Save and quit from editing the file.
+    
+    Step 4: ./configure
 
-	→ This will set permissions for required files as well as place the binaries in /usr/bin so 	that they can be referenced by the GUI and the command line. Any errors here are likely the 	result of an absent function definition, refer to the above steps notes to remedy the problem.
+    Step 5: make
+    
+    Step 6: make sudo make install
 
-	[Note: If either of these steps error out, it is suggested that you run the cleaning command 	before trying to run them again (i.e. if make errors out, use sudo make clean to clean Nova's 	files up before running sudo make all again. For sudo make install use the command sudo 	make uninstall.]
 
-	As a workaround to a current installation bug, you have to log out of your current user and then log back in, in order for the permissions set during installation to complete.
+===============================
+Building Nova
+===============================
 
-	-Log Out
-	-Log Back In
+- Once these steps are complete, and you have not run into any errors, it
+is time to move on to Nova. However, if you ran into any errors, especially when
+running Step 4 or 5, follow the instructions that the script gives to you and
+then try again. Do not move on until Step 4 configures without complaining and
+Step 5 returns no error. 
 
-	After these steps are completed without errors, Nova is set up on your system. You can use the command
-	NovaGUI
-	To start the GUI from the command line. Refer to the Help tab in the GUI for its use and features.
+- Now, onto Nova. Go back to the folder where Nova resides, eg.
 
+    cd ~/Code/Nova
+
+- It should contain directories for each of the modules the program will
+use, and if you see a file called Makefile then you're in the right place.
+
+- Now, to generate all the files that will be needed for install, use the
+command:
+
+    make
+
+- This will generate all the binaries that the program needs to run, as
+well as the libraries and dependencies required for linking and function
+definitions. If there is an error here, check that all of the libraries
+from the beginning section were correctly installed, and refer to the given
+error message to see what's wrong.
+
+    sudo make install
+
+- This will set permissions for required files as well as place the
+binaries in /usr/bin so that they can be referenced by the GUI and the
+command line. Any errors here are likely the result of an absent function
+definition, refer to the above steps notes to remedy the problem.
+
+- Note: If either of these steps error out, it is suggested that you run
+the cleaning command before trying to run them again (i.e. if make errors
+out, use sudo make clean to clean Nova's files up before running sudo
+make all again. For sudo make install use the command sudo make uninstall.]
+
+- As a workaround to a current installation bug, you have to log out of
+your current user and then log back in, in order for the permissions set during
+installation to complete.
+
+    -Log out and log back in
+
+- After these steps are completed without errors, Nova is set up on your
+system. You can use the command 'NovaGUI' To start the GUI.
+
+Refer to the Help tab in the GUI and the Nova wiki for more information.
+
+
+===============================
+Contact us
+===============================
+
+feel free to contact the authors with issues and suggestions. You
+can use the issue tracker located at,
+
+https://github.com/DataSoft/Nova/issues
+
+
+And additional contact information should be available on the Datasoft github 
+account located at,
+
+https://github.com/DataSoft
 
