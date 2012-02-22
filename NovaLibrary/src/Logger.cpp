@@ -240,8 +240,8 @@ namespace Nova
 
 	void Logger::Log(uint16_t level, string message)
 	{
-		openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(level, "%s %s: %s", (levels[level].second).c_str(), parentName.c_str(), message.c_str());
+		openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(level, "%s %s", (levels[level].second).c_str(), message.c_str());
 		closelog();
 	}
 
@@ -419,10 +419,9 @@ namespace Nova
 		return mask;
 	}
 
-	Logger::Logger(string parent, char const * configFilePath, bool init)
+	Logger::Logger(char const * configFilePath, bool init)
 	{
 		pthread_rwlock_init(&logLock, NULL);
-		parentName = parent.substr(7, (parent.length() - 11));;
 
 		for(uint16_t i = 0; i < 8; i++)
 		{

@@ -72,7 +72,7 @@ public:
 	//					map. If false, when logging the userMap that is passed to the
 	//					Logging method must be the userMap saved in the process,
 	//					not the one in the messageInfo struct.
-	Logger(string parent, char const * configFilePath, bool init);
+	Logger(char const * configFilePath, bool init);
 	~Logger();
 	// SaveLoggerConfiguration: will save LoggerConfiguration to the given filename.
 	// No use for this right now, a placeholder for future gui applications. Will

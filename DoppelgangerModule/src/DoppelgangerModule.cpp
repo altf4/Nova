@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 	chdir(homePath.c_str());
 
 	//Runs the configuration loaders
-	loggerConf = new Logger(__FILE__, novaConfig.c_str(), true);
+	loggerConf = new Logger(novaConfig.c_str(), true);
 	LoadConfig((char*)novaConfig.c_str());
 
 	if(!useTerminals)
