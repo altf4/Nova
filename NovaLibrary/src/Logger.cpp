@@ -222,8 +222,8 @@ namespace Nova
 	void Logger::Notify(uint16_t level, string message)
 	{
 		NotifyNotification *note;
-		string notifyHeader = parentName + ": " + levels[level].second;
-		notify_init("Logger");
+		string notifyHeader = levels[level].second;
+		notify_init("Nova");
 		#ifdef NOTIFY_CHECK_VERSION
 		#if NOTIFY_CHECK_VERSION (0, 7, 0)
 		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), "/usr/share/nova/icons/DataSoftIcon.jpg");

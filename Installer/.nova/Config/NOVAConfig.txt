@@ -391,4 +391,4 @@ RECIPIENTS first@email.send, second@email.send
 #          If you want to use a particular service for just one level,
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
-SERVICE_PREFERENCES 0:4-;1:4-;2:0;
+SERVICE_PREFERENCES 0:7-;1:7-;2:0;
