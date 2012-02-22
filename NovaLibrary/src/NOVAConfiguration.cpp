@@ -44,11 +44,11 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 	string prefix;
 	int prefixIndex;
 
-	string use = module.substr(7, (module.length() - 11));
+	string use = module.substr(4, (module.length()));
 
 	openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
-	syslog(SYSL_INFO, "Loading file %s in homepath %s", configFilePath, homeNovaPath.c_str());
+	syslog(SYSL_INFO, "Line: %d Loading file %s in homepath %s", __LINE__, configFilePath, homeNovaPath.c_str());
 
 	ifstream config(configFilePath);
 

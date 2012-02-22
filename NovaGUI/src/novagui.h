@@ -114,8 +114,9 @@ public:
     void closeEvent(QCloseEvent * e);
 
     //Get preliminary config information
-    void getInfo();
-    void getPaths();
+    void loadInfo();
+    void loadPaths();
+    void setNovaCommands();
     void getSettings();
 
     //XML Read Functions
@@ -149,7 +150,7 @@ public:
 
     void setFeatureDistances(Suspect* suspect);
 
-    void reloadConfiguration();
+    void loadConfiguration();
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);

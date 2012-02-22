@@ -1553,7 +1553,7 @@ void NovaConfig::on_okButton_clicked()
 	closelog();
 	//Save changes
 	pushData();
-	mainwindow->reloadConfiguration();
+	mainwindow->loadConfiguration();
 	loading->unlock();
 	this->close();
 }
@@ -1579,7 +1579,7 @@ void NovaConfig::on_applyButton_clicked()
 	//Reloads honeyd configuration to assert concurrency
 	loadHaystack();
 
-	mainwindow->reloadConfiguration();
+	mainwindow->loadConfiguration();
 
 	loading->unlock();
 	closelog();
