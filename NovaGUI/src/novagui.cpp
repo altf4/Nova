@@ -125,7 +125,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	ui.setupUi(this);
 
-
 	//Pre-forms the suspect menu
 	suspectMenu = new QMenu(this);
 	systemStatMenu = new QMenu(this);
@@ -139,7 +138,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 		exit(EXIT_FAILURE);
 	}
 
-	getInfo();
+	loadInfo();
 	initiateSystemStatus();
 
 	// Create the dialog generator
@@ -173,7 +172,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t.descriptionUID = "Cannot delete the selected port";
 	CANNOT_DELETE_PORT = prompter->RegisterDialog(t);
 
-
 	// Action required notification prompts
 	t.type = notifyActionPrompt;
 
@@ -200,9 +198,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t.descriptionUID = "Loading a Haystack Node Failed";
 	t.type = warningPrompt;
 	NODE_LOAD_FAIL = prompter->RegisterDialog(t);
-
-	configurationFile = homePath + configurationFile;
-	reloadConfiguration();
 
 	loadAll();
 
@@ -347,25 +342,17 @@ void NovaGUI::closeEvent(QCloseEvent * e)
  * Gets preliminary information
  ************************************************/
 
-void NovaGUI::getInfo()
+void NovaGUI::loadInfo()
 {
-	getPaths();
+	loadPaths();
+	configurationFile = homePath + configurationFile;
+	loadConfiguration();
 	getSettings();
+	setNovaCommands();
 }
 
-void NovaGUI::getPaths()
+void NovaGUI::setNovaCommands()
 {
-	homePath = GetHomePath();
-	readPath = GetReadPath();
-	writePath = GetWritePath();
-
-	if((homePath == "") || (readPath == "") || (writePath == ""))
-	{
-		exit(EXIT_FAILURE);
-	}
-
-	QDir::setCurrent((QString)homePath.c_str());
-
 	novaComponents[COMPONENT_CE].name = "Classification Engine";
 	novaComponents[COMPONENT_CE].terminalCommand = "gnome-terminal --disable-factory -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine";
 	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine";
@@ -392,9 +379,22 @@ void NovaGUI::getPaths()
 	novaComponents[COMPONENT_HS].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i eth0 -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
+	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
+}
+void NovaGUI::loadPaths()
+{
+	homePath = GetHomePath();
+	readPath = GetReadPath();
+	writePath = GetWritePath();
+
+	if((homePath == "") || (readPath == "") || (writePath == ""))
+	{
+		exit(EXIT_FAILURE);
+	}
+
+	QDir::setCurrent((QString)homePath.c_str());
 }
 
 void NovaGUI::getSettings()
@@ -418,7 +418,6 @@ void NovaGUI::getSettings()
 			}
 		}
 	}
-	//subnets[mainSubnet.address] = mainSubnet;
 	settings->close();
 	delete settings;
 	settings = NULL;
@@ -2475,7 +2474,7 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 }
 
 // Reload the configuration file
-void NovaGUI::reloadConfiguration()
+void NovaGUI::loadConfiguration()
 {
 	// Reload the configuration file
 	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
