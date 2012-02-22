@@ -254,6 +254,7 @@ void on_actionNodeEdit_triggered();
 void on_actionNodeCustomizeProfile_triggered();
 void on_actionNodeEnable_triggered();
 void on_actionNodeDisable_triggered();
+void on_actionSubnetAdd_triggered();
 
 //When text box in the tree is edited
 void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);

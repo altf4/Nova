@@ -2736,6 +2736,14 @@ p, li { white-space: pre-wrap; }
     <string>Edit Node</string>
    </property>
   </action>
+  <action name="actionSubnetAdd">
+   <property name="text">
+    <string>Add Subnet</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Subnet</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
