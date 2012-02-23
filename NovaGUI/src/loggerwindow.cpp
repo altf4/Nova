@@ -1,22 +1,19 @@
 #include "loggerwindow.h"
 
+using namespace Nova;
+
 LoggerWindow::LoggerWindow(QWidget *parent)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
 	isBasic = true;
-	ui.settingsBox->hide();
 	ui.settingsBoxAdv->hide();
 	settingsBoxShowing = false;
-	setUpButtons();
+	showNumberOfLogs = 0;
 	initializeLoggingWindow();
+	setLoadedPreferences();
 	//create listening thread
 	//reference NovaGUI CEListen, etc...
-}
-
-void LoggerWindow::setUpButtons()
-{
-
 }
 
 void LoggerWindow::initializeLoggingWindow()
@@ -36,8 +33,139 @@ void LoggerWindow::initializeLoggingWindow()
 			if(pass > 0)
 				ui.logDisplay->addTopLevelItem(generateLogTabEntry(pass));
 		}
+
+		adjustColumnWidths();
+	}
+	//TODO: Add icons for checkboxes
+	file.close();
+}
+
+void LoggerWindow::updateLogDisplay()
+{
+	QFile file("/usr/share/nova/Logs/Nova.log");
+	uint16_t i = 0;
+
+	if(!file.open(QIODevice::ReadOnly))
+	{
+		ui.logDisplay->addTopLevelItem(logFileNotFound());
+	}
+	else
+	{
+		ui.logDisplay->clear();
+		QTextStream in(&file);
+		if(showNumberOfLogs > 0)
+		{
+			while(!in.atEnd() && i < showNumberOfLogs)
+			{
+				QString pass = in.readLine();
+				if(pass > 0)
+				{
+					ui.logDisplay->addTopLevelItem(generateLogTabEntry(pass));
+					i++;
+				}
+			}
+			while(!in.atEnd())
+			{
+				QString pass = in.readLine();
+				if(pass > 0)
+				{
+					ui.logDisplay->takeTopLevelItem(0);
+					ui.logDisplay->addTopLevelItem(generateLogTabEntry(pass));
+				}
+			}
+		}
+		else
+		{
+			while(!in.atEnd())
+			{
+				QString pass = in.readLine();
+				if(pass > 0)
+				{
+					ui.logDisplay->addTopLevelItem(generateLogTabEntry(pass));
+				}
+			}
+		}
+
+		setLevelViews(viewLevels);
+		adjustColumnWidths();
 	}
 	file.close();
+}
+
+void LoggerWindow::setLoadedPreferences()
+{
+	bool found = false;
+
+	string home = GetHomePath();
+	QString homePath = QString::fromStdString(home);
+	homePath.append("/Config/NOVAConfig.txt");
+
+	QFile file(homePath);
+
+	if(!file.open(QIODevice::ReadOnly))
+	{
+
+	}
+	else
+	{
+		QTextStream in(&file);
+		while(!in.atEnd() && !found)
+		{
+			QString pass = in.readLine();
+			QStringList parse = pass.split(" ");
+			if(!parse[0].compare("LOG_VIEW_LEVELS"))
+			{
+				viewLevels = parse[1];
+				setLevelViews(parse[1]);
+				found = true;
+			}
+		}
+	}
+	file.close();
+}
+
+void LoggerWindow::setLevelViews(QString bitmask)
+{
+	if(bitmask[0] == '0')
+	{
+		ui.checkDebug->setCheckState(Qt::Checked);
+		ui.checkDebug->setCheckState(Qt::Unchecked);
+	}
+	if(bitmask[1] == '0')
+	{
+		ui.checkInfo->setCheckState(Qt::Checked);
+		ui.checkInfo->setCheckState(Qt::Unchecked);
+	}
+	if(bitmask[2] == '0')
+	{
+		ui.checkNotice->setCheckState(Qt::Checked);
+		ui.checkNotice->setCheckState(Qt::Unchecked);
+	}
+	if(bitmask[3] == '0')
+	{
+		ui.checkWarning->setCheckState(Qt::Checked);
+		ui.checkWarning->setCheckState(Qt::Unchecked);
+	}
+	if(bitmask[4] == '0')
+	{
+		ui.checkError->setCheckState(Qt::Checked);
+		ui.checkError->setCheckState(Qt::Unchecked);
+	}
+	if(bitmask[5] == '0')
+	{
+		ui.checkCritical->setCheckState(Qt::Checked);
+		ui.checkCritical->setCheckState(Qt::Unchecked);
+	}
+	if(bitmask[6] == '0')
+	{
+		ui.checkAlert->setCheckState(Qt::Checked);
+		ui.checkAlert->setCheckState(Qt::Unchecked);
+	}
+	if(bitmask[7] == '0')
+	{
+		ui.checkEmergency->setCheckState(Qt::Checked);
+		ui.checkEmergency->setCheckState(Qt::Unchecked);
+	}
 }
 
 QTreeWidgetItem * LoggerWindow::generateLogTabEntry(QString line)
@@ -122,22 +250,12 @@ QTreeWidgetItem * LoggerWindow::logFileNotFound()
 
 void LoggerWindow::on_settingsButton_clicked()
 {
-	if(ui.logTabContainer->currentIndex() == 0 && !settingsBoxShowing)
-	{
-		ui.settingsBox->show();
-		settingsBoxShowing = true;
-	}
-	else if(ui.logTabContainer->currentIndex() == 0 && settingsBoxShowing)
-	{
-		ui.settingsBox->hide();
-		settingsBoxShowing = false;
-	}
-	else if(ui.logTabContainer->currentIndex() == 1 && !settingsBoxShowing)
+	if(!settingsBoxShowing)
 	{
 		ui.settingsBoxAdv->show();
 		settingsBoxShowing = true;
 	}
-	else if(ui.logTabContainer->currentIndex() == 1 && settingsBoxShowing)
+	else if(settingsBoxShowing)
 	{
 		ui.settingsBoxAdv->hide();
 		settingsBoxShowing = false;
@@ -158,24 +276,7 @@ void LoggerWindow::on_settingsButton_clicked()
 
 void LoggerWindow::on_clearButton_clicked()
 {
-	if(ui.logTabContainer->currentIndex() == 0)
-	{
-
-	}
-	else if(ui.logTabContainer->currentIndex() == 1)
-	{
-		ui.logDisplay->clear();
-	}
-}
-
-void LoggerWindow::on_logTabContainer_currentChanged()
-{
-	if(settingsBoxShowing)
-	{
-		settingsBoxShowing = false;
-		ui.settingsBox->hide();
-		ui.settingsBoxAdv->hide();
-	}
+	ui.logDisplay->clear();
 }
 
 void LoggerWindow::on_checkDebug_stateChanged(int state)
@@ -274,6 +375,12 @@ void LoggerWindow::on_checkEmergency_stateChanged(int state)
 	}
 }
 
+void LoggerWindow::on_linesBox_currentIndexChanged(const QString & text)
+{
+	showNumberOfLogs = text.toInt();
+	updateLogDisplay();
+}
+
 void LoggerWindow::hideSelected(QString level)
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
@@ -294,6 +401,27 @@ void LoggerWindow::showSelected(QString level)
 		(*it)->setHidden(false);
 		++it;
 	}
+}
+
+void LoggerWindow::adjustColumnWidths()
+{
+	int longestValueTime = 0;
+	int longestValueLevel = 0;
+
+	for(QTreeWidgetItemIterator it(ui.logDisplay); *it; ++it)
+	{
+		if((*it)->text(0).size() > longestValueTime)
+		{
+			longestValueTime = (*it)->text(0).size();
+		}
+		if((*it)->text(1).size() > longestValueLevel)
+		{
+			longestValueTime = (*it)->text(1).size();
+		}
+	}
+
+	ui.logDisplay->resizeColumnToContents(0);
+	ui.logDisplay->resizeColumnToContents(1);
 }
 
 void LoggerWindow::on_closeButton_clicked()
