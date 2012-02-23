@@ -87,6 +87,7 @@ install-release:
 	gzip Installer/Read/manpages/*.1
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	gzip -d Installer/Read/manpages/*.1.gz
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/
 	sh Installer/postinst
 
 #requires root
@@ -118,6 +119,7 @@ install-debug:
 	gzip Installer/Read/manpages/*.1
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	gzip -d Installer/Read/manpages/*.1.gz
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/
 	sh Installer/postinst
 
 #Requires root
