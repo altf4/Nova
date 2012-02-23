@@ -65,6 +65,7 @@ bool readFromPcap = false;
 string doppelgangerPath;
 string haystackPath;
 string trainingDataPath;
+string ceSaveFile;
 double thinningDistance;
 bool isTraining = false;
 string dmAddr;
@@ -2005,6 +2006,8 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 {
 	editingSuspectList = true;
 	clearSuspects();
+	if (!novaComponents[COMPONENT_CE].shouldBeRunning)
+		QFile::remove(QString::fromStdString(ceSaveFile));
 	drawAllSuspects();
 	editingSuspectList = false;
 }
@@ -2379,6 +2382,8 @@ void NovaGUI::on_clearSuspectsButton_clicked()
 {
 	editingSuspectList = true;
 	clearSuspects();
+	if (!novaComponents[COMPONENT_CE].shouldBeRunning)
+		QFile::remove(QString::fromStdString(ceSaveFile));
 	drawAllSuspects();
 	editingSuspectList = false;
 }
@@ -2496,6 +2501,7 @@ void NovaGUI::loadConfiguration()
 	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
 	trainingDataPath = configuration.options["DATAFILE"].data;
 	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
+	ceSaveFile = configuration.options["CE_SAVE_FILE"].data;
 
 	goToLive = atoi(configuration.options["GO_TO_LIVE"].data.c_str());
 	readFromPcap = atoi(configuration.options["READ_PCAP"].data.c_str());
