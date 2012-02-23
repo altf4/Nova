@@ -87,13 +87,10 @@ install-release:
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	mkdir -p $(DESTDIR)/usr/share/man/man1
-	gzip -c Installer/Read/manpages/ClassificationEngine.1 > Installer/Read/manpages/ClassificationEngine.1.gz
-	gzip -c Installer/Read/manpages/DoppelgangerModule.1 > Installer/Read/manpages/DoppelgangerModule.1.gz
-	gzip -c Installer/Read/manpages/Haystack.1 > Installer/Read/manpages/Haystack.1.gz
-	gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
-	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
+	gzip Installer/Read/manpages/*.1
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	gzip -d Installer/Read/manpages/*.1.gz
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/
 	sh Installer/postinst
 
 #requires root
@@ -124,13 +121,10 @@ install-debug:
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	mkdir -p $(DESTDIR)/usr/share/man/man1
-	gzip -c Installer/Read/manpages/ClassificationEngine.1 > Installer/Read/manpages/ClassificationEngine.1.gz
-	gzip -c Installer/Read/manpages/DoppelgangerModule.1 > Installer/Read/manpages/DoppelgangerModule.1.gz
-	gzip -c Installer/Read/manpages/Haystack.1 > Installer/Read/manpages/Haystack.1.gz
-	gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
-	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
+	gzip Installer/Read/manpages/*.1
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	gzip -d Installer/Read/manpages/*.1.gz
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/
 	sh Installer/postinst
 
 #Requires root
