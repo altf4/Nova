@@ -4,12 +4,21 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/ClassificationEngine.cpp \
+../src/DoppelgangerModule.cpp \
+../src/LocalTrafficMonitor.cpp \
 ../src/Novad.cpp 
 
 OBJS += \
+./src/ClassificationEngine.o \
+./src/DoppelgangerModule.o \
+./src/LocalTrafficMonitor.o \
 ./src/Novad.o 
 
 CPP_DEPS += \
+./src/ClassificationEngine.d \
+./src/DoppelgangerModule.d \
+./src/LocalTrafficMonitor.d \
 ./src/Novad.d 
 
 
@@ -17,7 +26,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I../../NovaLibrary/src/ -O0 -g3 -Wall -c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

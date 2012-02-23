@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS :=
+LIBS := -lNovaLibrary -lpcap -lnotify -lann -lpthread
 
