@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : LocalTrafficMonitor.cpp
+// Name        : Haystack.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,14 +13,14 @@
 //   
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Monitors local network traffic and sends detailed TrafficEvents
-//					to the Classification Engine.
-//============================================================================/*
+// Description : Nova utility for transforming Honeyd log files into
+//					TrafficEvents usable by Nova's Classification Engine.
+//============================================================================
 
-#include "LocalTrafficMonitor.h"
 #include "NOVAConfiguration.h"
 #include "HashMapStructs.h"
 #include "NovaUtil.h"
+#include "Haystack.h"
 #include "Logger.h"
 
 #include <netinet/if_ether.h>
@@ -40,20 +40,21 @@ pthread_rwlock_t sessionLock;
 pthread_rwlock_t suspectLock;
 
 string dev; //Interface name, read from config file
+string honeydConfigPath;
 string pcapPath; //Pcap file to read from instead of live packet capture.
 bool usePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
 bool goToLiveCap; //Specify if go to live capture mode after reading from a pcap file
-int tcpTime; //TCP_TIMEOUT Measured in seconds
-int tcpFreq; //TCP_CHECK_FREQ Measured in seconds
+int tcpTime; //TCP_TIMEOUT measured in seconds
+int tcpFreq; //TCP_CHECK_FREQ measured in seconds
 uint classificationTimeout; //Time between checking suspects for updated data
 
-//Global memory assignments to improve packet handler performance
+//Memory assignments moved outside packet handler to increase performance
 int len, dest_port;
+struct sockaddr_un remote;
+Packet packet_info;
 struct ether_header *ethernet;  	/* net/ethernet.h */
 struct ip *ip_hdr; 					/* The IP header */
-Packet packet_info;
 char tcp_socket[55];
-struct sockaddr_un remote;
 
 u_char data[MAX_MSG_SIZE];
 uint dataLen;
@@ -62,12 +63,9 @@ char * pathsFile = (char*)PATHS_FILE;
 string homePath;
 bool useTerminals;
 
-string key;
-in_port_t sAlarmPort;
-
 Logger * loggerConf;
 
-void *Nova::LocalTrafficMonitorMain(void *ptr)
+void *Nova::HaystackMain(void *ptr)
 {
 	pthread_rwlock_init(&sessionLock, NULL);
 	pthread_rwlock_init(&suspectLock, NULL);
@@ -84,17 +82,17 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	bzero(data, MAX_MSG_SIZE);
 
 	int ret;
-
 	bpf_u_int32 maskp;				/* subnet mask */
 	bpf_u_int32 netp; 				/* ip          */
 
-	string hostAddress;
+	vector <string> haystackAddresses;
+	string haystackAddresses_csv = "";
 
 	string novaConfig;
 
 	string line, prefix; //used for input checking
 
-	//Get locations of Nova files
+	//Get locations of nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
 
@@ -102,22 +100,51 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	loggerConf = new Logger(novaConfig.c_str(), true);
 
 	if(chdir(homePath.c_str()) == -1)
-		loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
-
+	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
 
 	LoadConfig((char*)novaConfig.c_str());
 
 	if(!useTerminals)
 	{
-		openlog("LocalTrafficMonitor", NO_TERM_SYSL, LOG_AUTHPRIV);
+		openlog("Haystack", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
 
 	else
 	{
-		openlog("LocalTrafficMonitor", OPEN_SYSL, LOG_AUTHPRIV);
+		openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
-	//Pre-Forms the socket address to improve performance
+	pthread_create(&GUIListenThread, NULL, HS_GUILoop, NULL);
+
+	struct bpf_program fp;			/* The compiled filter expression */
+	char filter_exp[64];
+	pcap_t *handle;
+
+
+
+	haystackAddresses = GetHaystackAddresses(honeydConfigPath);
+
+	if(haystackAddresses.empty())
+	{
+		syslog(SYSL_ERR, "Line: %d Error: No honeyd haystack nodes were found", __LINE__);
+		exit(EXIT_FAILURE);
+	}
+
+	//Flatten out the vector into a csv string
+	for(uint i = 0; i < haystackAddresses.size(); i++)
+	{
+		haystackAddresses_csv += "dst host ";
+		haystackAddresses_csv += haystackAddresses[i];
+
+		if(i+1 != haystackAddresses.size())
+		{
+			haystackAddresses_csv += " || ";
+		}
+	}
+
+	syslog(SYSL_INFO, "%s", haystackAddresses_csv.c_str());
+
+	//Preform the socket address for faster run time
 	//Builds the key path
 	string key = KEY_FILENAME;
 	key = homePath+key;
@@ -126,26 +153,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	strcpy(remote.sun_path, key.c_str());
 	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
-	pthread_create(&GUIListenThread, NULL, LTM_GUILoop, NULL);
-
-	struct bpf_program fp;			/* The compiled filter expression */
-	char filter_exp[64];
-	pcap_t *handle;
-
-	hostAddress = GetLocalIP(dev.c_str());
-
-	if(hostAddress.empty())
-	{
-		syslog(SYSL_ERR, "Line: %d Invalid interface given", __LINE__);
-		exit(EXIT_FAILURE);
-	}
-
-	//Form the Filter Expression String
-	bzero(filter_exp, 64);
-	snprintf(filter_exp, 64, "dst host %s", hostAddress.data());
-	syslog(SYSL_INFO, "%s", filter_exp);
-
-	//If we are reading from a packet capture file
+	//If we're reading from a packet capture file
 	if(usePcapFile)
 	{
 		sleep(1); //To allow time for other processes to open
@@ -156,7 +164,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, pcapPath.c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
-		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
+		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(EXIT_FAILURE);
@@ -173,17 +181,19 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 		TCPTimeout(NULL);
 		SuspectLoop(NULL);
 
+
 		if(goToLiveCap) usePcapFile = false; //If we are going to live capture set the flag.
 	}
+
+
 	if(!usePcapFile)
 	{
-		//system("setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/LocalTrafficMonitor");
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
 		handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s: %s", __LINE__, dev.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, dev.c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
 
@@ -196,7 +206,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 			exit(EXIT_FAILURE);
 		}
 
-		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
+		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
 			exit(EXIT_FAILURE);
@@ -219,7 +229,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 }
 
 
-void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
 	if(packet == NULL)
 	{
@@ -244,12 +254,6 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 		if(ip_hdr->ip_p == 17 )
 		{
 			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-
-			if((in_port_t)ntohs(packet_info.udp_hdr.dest) ==  sAlarmPort)
-			{
-				//if we receive a udp packet on the silent alarm port, see if it is a port knock request
-				KnockRequest(packet_info, (((u_char *)ip_hdr + sizeof(struct ip)) + sizeof(struct udphdr)));
-			}
 			UpdateSuspect(packet_info);
 		}
 		else if(ip_hdr->ip_p == 1)
@@ -265,6 +269,7 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 
 			bzero(tcp_socket, 55);
 			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
+
 			pthread_rwlock_wrlock(&sessionLock);
 			//If this is a new entry...
 			if( SessionTable[tcp_socket].session.size() == 0)
@@ -310,10 +315,10 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 }
 
 
-void *Nova::LTM_GUILoop(void *ptr)
+void *Nova::HS_GUILoop(void *ptr)
 {
 	struct sockaddr_un localIPCAddress;
-	int IPCsock;
+	int IPCsock, len;
 
 	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
@@ -325,12 +330,12 @@ void *Nova::LTM_GUILoop(void *ptr)
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = LTM_GUI_FILENAME;
-	key = homePath+key;
+	string key = HS_GUI_FILENAME;
+	key = homePath + key;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
-	// length = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
+	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
 	if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
 	{
@@ -370,19 +375,19 @@ void ReceiveGUICommand(int socket)
     }
     if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, 0 )) == -1)
     {
-		syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+    	syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
 		close(msgSocket);
     }
 
     msg.DeserializeMessage(msgBuffer);
     switch(msg.GetType())
     {
-		case CLEAR_ALL:
+    	case CLEAR_ALL:
 			pthread_rwlock_wrlock(&suspectLock);
-			suspects.clear();
+    		suspects.clear();
 			pthread_rwlock_unlock(&suspectLock);
-			break;
-		case CLEAR_SUSPECT:
+    		break;
+    	case CLEAR_SUSPECT:
 			suspectKey = inet_addr(msg.GetValue().c_str());
 			pthread_rwlock_wrlock(&suspectLock);
 			suspects.set_deleted_key(5);
@@ -399,7 +404,7 @@ void ReceiveGUICommand(int socket)
 }
 
 
-void *Nova::TCPTimeout( void *ptr )
+void *Nova::TCPTimeout(void *ptr)
 {
 	do
 	{
@@ -409,6 +414,7 @@ void *Nova::TCPTimeout( void *ptr )
 		pthread_rwlock_rdlock(&sessionLock);
 		for ( TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
 		{
+
 			if(it->second.session.size() > 0)
 			{
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
@@ -423,9 +429,11 @@ void *Nova::TCPTimeout( void *ptr )
 					//If session has been finished for more than two seconds
 					if(it->second.fin == true)
 					{
+						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
+
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							(SessionTable[it->first].session).at(p).fromHaystack = FROM_LTM;
+							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
 							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
@@ -440,15 +448,16 @@ void *Nova::TCPTimeout( void *ptr )
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_rdlock(&sessionLock);
 
-
+						//delete tempEvent;
+						//tempEvent = NULL;
 					}
 					//If this session is timed out
 					else if(packetTime + tcpTime < currentTime)
 					{
-
+						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							(SessionTable[it->first].session).at(p).fromHaystack = FROM_LTM;
+							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
 							UpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
@@ -462,6 +471,9 @@ void *Nova::TCPTimeout( void *ptr )
 						SessionTable[it->first].fin = false;
 						pthread_rwlock_unlock(&sessionLock);
 						pthread_rwlock_rdlock(&sessionLock);
+
+						//delete tempEvent;
+						//tempEvent = NULL;
 					}
 				}
 			}
@@ -476,23 +488,24 @@ void *Nova::TCPTimeout( void *ptr )
 	if(usePcapFile) return NULL;
 
 	//Shouldn't get here
-	syslog(SYSL_ERR, "Line: %d TCP Timeout Thread has halted!", __LINE__);
+	syslog(SYSL_ERR, "Line: %d TCP Timeout Thread has halted", __LINE__);
 	return NULL;
 }
 
 
-bool SendToCE(Suspect *suspect)
+bool Nova::SendToCE(Suspect *suspect)
 {
 	int socketFD;
 
-	do{
+	do
+	{
 		dataLen = suspect->SerializeSuspect(data);
 		dataLen += suspect->features.unsentData->SerializeFeatureData(data+dataLen);
 		suspect->features.unsentData->clearFeatureData();
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to create socket to ClassificationEngine: %s", __LINE__, strerror(errno));
+			syslog(SYSL_ERR, "Line: %d Unable to make socket to ClassificationEngine: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
@@ -515,11 +528,11 @@ bool SendToCE(Suspect *suspect)
 
 	}while(dataLen == MORE_DATA);
 
-    return true;
+	return true;
 }
 
 
-void UpdateSuspect(Packet packet)
+void Nova::UpdateSuspect(Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
 	pthread_rwlock_wrlock(&suspectLock);
@@ -571,50 +584,58 @@ void *Nova::SuspectLoop(void *ptr)
 	return NULL;
 }
 
+
+vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
+{
+	//Path to the main log file
+	ifstream honeydConfFile (honeyDConfigPath.c_str());
+	vector <string> retAddresses;
+
+	if( honeydConfFile == NULL)
+	{
+		syslog(SYSL_ERR, "Line: %d Error opening log file. Does it exist?", __LINE__);
+		exit(EXIT_FAILURE);
+	}
+
+	string LogInputLine;
+
+	while(!honeydConfFile.eof())
+	{
+		stringstream LogInputLineStream;
+
+		//Get the next line
+		getline(honeydConfFile, LogInputLine);
+
+		//Load the line into a stringstream for easier tokenizing
+		LogInputLineStream << LogInputLine;
+		string token;
+
+		//Is the first word "bind"?
+		getline(LogInputLineStream, token, ' ');
+
+		if(token.compare( "bind" ) != 0)
+		{
+			continue;
+		}
+
+		//The next token will be the IP address
+		getline(LogInputLineStream, token, ' ');
+		retAddresses.push_back(token);
+	}
+	return retAddresses;
+}
+
+
 void LoadConfig(char* configFilePath)
 {
-	string line;
-	string prefix;
-	uint i = 0;
-	int confCheck = 0;
-
-	string settingsPath = homePath +"/settings";
-	ifstream settings(settingsPath.c_str());
-
-	openlog("LocalTrafficMonitor", OPEN_SYSL, LOG_AUTHPRIV);
-
-	syslog(SYSL_INFO, "Line: %d Starting to load configuration file", __LINE__);
-
-	if(settings.is_open())
-	{
-		while(settings.good())
-		{
-			getline(settings, line);
-			i++;
-
-			prefix = "key";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				//TODO Key should be 256 characters, hard check for this once implemented
-				if((line.size() > 0) && (line.size() < 257))
-					key = line;
-				else
-					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
-			}
-		}
-		settings.close();
-	}
-	else
-	{
-		syslog(SYSL_ERR, "Line %d ERROR: Unable to open settings file", __LINE__);
-	}
-
-
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
 	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
 
-	confCheck = NovaConfig->SetDefaults();
+	int confCheck = NovaConfig->SetDefaults();
+
+	string prefix;
+
+	openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
 
 	//Checks to make sure all values have been set.
 	if(confCheck == 2)
@@ -634,6 +655,7 @@ void LoadConfig(char* configFilePath)
 	closelog();
 
 	dev = NovaConfig->options["INTERFACE"].data;
+	honeydConfigPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
 	tcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
 	tcpFreq = atoi(NovaConfig->options["TCP_CHECK_FREQ"].data.c_str());
 	usePcapFile = atoi(NovaConfig->options["READ_PCAP"].data.c_str());
@@ -641,37 +663,4 @@ void LoadConfig(char* configFilePath)
 	goToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
 	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
 	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
-	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
-}
-
-
-void KnockRequest(Packet packet, u_char * payload)
-{
-	stringstream ss;
-	string commandLine;
-
-	uint len = key.size() + 4;
-	CryptBuffer(payload, len, DECRYPT);
-	string sentKey = (char*)payload;
-
-	sentKey = sentKey.substr(0,key.size());
-	if(!sentKey.compare(key))
-	{
-		sentKey = (char*)(payload+key.size());
-		if(!sentKey.compare("OPEN"))
-		{
-			ss << "iptables -I INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << sAlarmPort << " -j ACCEPT";
-			commandLine = ss.str();
-			if(system(commandLine.c_str()) == -1)
-				loggerConf->Logging(INFO, "Failed to open port with port knocking.");
-
-		}
-		else if(!sentKey.compare("SHUT"))
-		{
-			ss << "iptables -D INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << sAlarmPort << " -j ACCEPT";
-			commandLine = ss.str();
-			if(system(commandLine.c_str()) == -1)
-				loggerConf->Logging(INFO, "Failed to shut port after knock request.");
-		}
-	}
 }

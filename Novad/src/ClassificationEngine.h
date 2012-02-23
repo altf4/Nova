@@ -32,7 +32,6 @@
 double sqrtDIM;
 
 //Hash table for current list of suspects
-typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 typedef google::dense_hash_map<in_addr_t, ANNpoint, tr1::hash<in_addr_t>, eqaddr > lastPointHash;
 
 enum normalizationType {
@@ -43,11 +42,15 @@ enum normalizationType {
 };
 
 namespace Nova{
-namespace ClassificationEngine{
+
+//The main thread for the Classification Engine
+// ptr - Unused pointer required by pthread
+// returns - Does not return (main loop)
+void *ClassificationEngineMain(void *ptr);
 
 // Start routine for the GUI command listening thread
 //		ptr - Required for pthread start routines
-void *GUILoop(void *ptr);
+void *CE_GUILoop(void *ptr);
 
 // Start routine for a separate thread which infinite loops, periodically
 // updating all the classifications for all the current suspects
@@ -139,5 +142,5 @@ void saveAndExit(int param);
 void Reload();
 
 }
-}
+
 #endif /* CLASSIFICATIONENGINE_H_ */

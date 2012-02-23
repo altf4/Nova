@@ -23,7 +23,6 @@
 using namespace std;
 
 namespace Nova{
-namespace ClassificationEngine{
 
 Point::Point()
 {
@@ -42,6 +41,5 @@ Point::~Point()
 {
 	annDeallocPt(annPoint);
 	classification = 0;
-}
 }
 }

@@ -6,18 +6,21 @@
 CPP_SRCS += \
 ../src/ClassificationEngine.cpp \
 ../src/DoppelgangerModule.cpp \
+../src/Haystack.cpp \
 ../src/LocalTrafficMonitor.cpp \
 ../src/Novad.cpp 
 
 OBJS += \
 ./src/ClassificationEngine.o \
 ./src/DoppelgangerModule.o \
+./src/Haystack.o \
 ./src/LocalTrafficMonitor.o \
 ./src/Novad.o 
 
 CPP_DEPS += \
 ./src/ClassificationEngine.d \
 ./src/DoppelgangerModule.d \
+./src/Haystack.d \
 ./src/LocalTrafficMonitor.d \
 ./src/Novad.d 
 

@@ -16,11 +16,25 @@
 // Description : Nova Daemon to perform network anti-reconnaissance
 //============================================================================
 
+#include "ClassificationEngine.h"
+#include "Haystack.h"
+#include "LocalTrafficMonitor.h"
+#include "DoppelgangerModule.h"
+
 #include <iostream>
+
 using namespace std;
+
+pthread_t CE_Thread, LTM_Thread, HS_Thread, DM_Thread;
 
 int main()
 {
-	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
-	return 0;
+	//Launch the 4 component threads
+	pthread_create(&CE_Thread, NULL, ClassificationEngineMain, NULL);
+	pthread_create(&LTM_Thread, NULL, LocalTrafficMonitorMain, NULL);
+	pthread_create(&HS_Thread, NULL, HaystackMain, NULL);
+	pthread_create(&DM_Thread, NULL, DoppelgangerModuleMain, NULL);
+
+
+	return EXIT_FAILURE;
 }

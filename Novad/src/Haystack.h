@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : LocalTrafficMonitor.h
+// Name        : Haystack.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,12 +13,12 @@
 //   
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Monitors local network traffic and sends detailed TrafficEvents
-//					to the Classification Engine.
-//============================================================================/*
+// Description : Nova utility for transforming Honeyd log files into
+//					TrafficEvents usable by Nova's Classification Engine.
+//============================================================================
 
-#ifndef LOCALTRAFFICMONITOR_H_
-#define LOCALTRAFFICMONITOR_H_
+#ifndef HAYSTACK_H_
+#define HAYSTACK_H_
 
 #include "Suspect.h"
 
@@ -26,13 +26,14 @@ using namespace std;
 
 namespace Nova{
 
-//Hash table for current list of suspects
+// Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
-//The main thread for the Local Traffic Monitor
+
+//The main thread for the Haystack
 // ptr - Unused pointer required by pthread
 // returns - Does not return (main loop)
-void *LocalTrafficMonitorMain(void *ptr);
+void *HaystackMain(void *ptr);
 
 // Callback function that is passed to pcap_loop(..) and called each time a packet is received
 //		useless - Unused
@@ -42,14 +43,14 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 
 // Start routine for the GUI command listening thread
 //		ptr - Required for pthread start routines
-void *LTM_GUILoop(void *ptr);
+void *HS_GUILoop(void *ptr);
 
 // Receives input commands from the GUI
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
 void ReceiveGUICommand(int socket);
 
-// Startup routine for thread periodically checking for TCP timeout.
-// IE: Not all TCP sessions get torn down properly. Sometimes they just end midstream
+// Startup rotuine for thread periodically checking for TCP timeout.
+// IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
 // This thread looks for old tcp sessions and declares them terminated
 //		ptr - Required for pthread start routines
 void *TCPTimeout( void *ptr );
@@ -63,20 +64,19 @@ bool SendToCE(Suspect *suspect);
 //		packet : Packet headers to used for the evidence
 void UpdateSuspect(Packet packet);
 
-// Startup routine for thread updated evidence on suspects
+// Startup routine for thread updated evidence on suspsects
 //		ptr - Required for pthread start routines
 void *SuspectLoop(void *ptr);
+
+// Parse through the honeyd config file and get the list of IP addresses used
+//		honeyDConfigPath - path to honeyd configuration file
+// Returns: vector containing IP addresses of all honeypots
+vector <string> GetHaystackAddresses(string honeyDConfigPath);
 
 // Loads configuration variables
 //		configFilePath - Location of configuration file
 void LoadConfig(char* configFilePath);
 
-// Checks the udp packet payload associated with event for a port knocking request,
-// opens/closes the port using iptables for the sender depending on the payload
-//		packet - header information
-//		payload - actual packet data
-void KnockRequest(Packet packet, u_char * payload);
-
 }
 
-#endif /* LOCALTRAFFICMONITOR_H_ */
+#endif /* HAYSTACK_H_ */

@@ -26,8 +26,6 @@
 
 namespace Nova
 {
-namespace ClassificationEngine
-{
 
 ///Point class meant to encapsulate both an ANN Point along with a classification
 class Point
@@ -48,5 +46,5 @@ public:
 };
 
 }
-}
+
 #endif /* POINT_H_ */

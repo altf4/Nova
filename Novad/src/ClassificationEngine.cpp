@@ -21,6 +21,8 @@
 #include "NovaUtil.h"
 #include "Suspect.h"
 #include "Logger.h"
+#include "Point.h"
+#include "Novad.h"
 
 #include <vector>
 #include <string>
@@ -34,7 +36,6 @@
 
 using namespace std;
 using namespace Nova;
-using namespace ClassificationEngine;
 
 // Maintains a list of suspects and information on network activity
 SuspectHashTable suspects;
@@ -61,7 +62,7 @@ static struct sockaddr_in hostAddr;
 struct sockaddr_un remote;
 struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
 
-int IPCsock;
+int CE_IPCsock;
 
 //** Silent Alarm **
 struct sockaddr_un alarmRemote;
@@ -154,17 +155,13 @@ time_t lastSaveTime;
 
 bool enableGUI = true;
 
-int main(int argc,char *argv[])
+void *Nova::ClassificationEngineMain(void *ptr)
 {
 	bzero(GUIData,MAX_MSG_SIZE);
 	bzero(data,MAX_MSG_SIZE);
 	bzero(buffer, MAX_MSG_SIZE);
 
 	pthread_rwlock_init(&lock, NULL);
-
-	if (argc > 1)
-		if (!strcmp(argv[1], "--no-gui"))
-			enableGUI = false;
 
 	signal(SIGINT, saveAndExit);
 
@@ -212,7 +209,7 @@ int main(int argc,char *argv[])
 	}
 
 
-	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
+	pthread_create(&GUIListenThread, NULL, CE_GUILoop, NULL);
 	//Are we Training or Classifying?
 	if(isTraining)
 	{
@@ -234,10 +231,10 @@ int main(int argc,char *argv[])
 		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
 	}
 
-	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	if((CE_IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
-		close(IPCsock);
+		close(CE_IPCsock);
 		exit(EXIT_FAILURE);
 	}
 
@@ -251,17 +248,17 @@ int main(int argc,char *argv[])
 	unlink(localIPCAddress.sun_path);
 	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
-    if(bind(IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
+    if(bind(CE_IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
     {
     	syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
-    	close(IPCsock);
+    	close(CE_IPCsock);
         exit(EXIT_FAILURE);
     }
 
-    if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
+    if(listen(CE_IPCsock, SOCKET_QUEUE_SIZE) == -1)
     {
     	syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
-		close(IPCsock);
+		close(CE_IPCsock);
         exit(EXIT_FAILURE);
     }
 
@@ -291,12 +288,11 @@ int main(int argc,char *argv[])
 
 	//Shouldn't get here!
 	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
-	close(IPCsock);
-	return 1;
+	close(CE_IPCsock);
 }
 
 //Called when process receives a SIGINT, like if you press ctrl+c
-void Nova::ClassificationEngine::saveAndExit(int param)
+void Nova::saveAndExit(int param)
 {
 	pthread_rwlock_wrlock(&lock);
 	AppendToStateFile();
@@ -305,7 +301,7 @@ void Nova::ClassificationEngine::saveAndExit(int param)
 	exit(EXIT_SUCCESS);
 }
 
-void Nova::ClassificationEngine::AppendToStateFile()
+void Nova::AppendToStateFile()
 {
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
@@ -367,7 +363,7 @@ void Nova::ClassificationEngine::AppendToStateFile()
 	suspectsSinceLastSave.clear();
 }
 
-void Nova::ClassificationEngine::LoadStateFile()
+void Nova::LoadStateFile()
 {
 	time_t timeStamp;
 	uint32_t dataSize;
@@ -452,7 +448,7 @@ void Nova::ClassificationEngine::LoadStateFile()
 	in.close();
 }
 
-void Nova::ClassificationEngine::RefreshStateFile()
+void Nova::RefreshStateFile()
 {
 	time_t timeStamp;
 	uint32_t dataSize;
@@ -578,7 +574,7 @@ void Nova::ClassificationEngine::RefreshStateFile()
 		syslog(SYSL_ERR, "Line %d: Error: Unable to copy CE state tmp file to CE state file. System call to cp failed.", __LINE__);
 }
 
-void Nova::ClassificationEngine::Reload()
+void Nova::Reload()
 {
 	// Aquire a lock to stop the other threads from classifying till we're done
 	pthread_rwlock_wrlock(&lock);
@@ -621,7 +617,7 @@ void Nova::ClassificationEngine::Reload()
 }
 
 //Infinite loop that recieves messages from the GUI
-void *Nova::ClassificationEngine::GUILoop(void *ptr)
+void *Nova::CE_GUILoop(void *ptr)
 {
 	struct sockaddr_un GUIAddress;
 	int len;
@@ -662,7 +658,7 @@ void *Nova::ClassificationEngine::GUILoop(void *ptr)
 	}
 }
 
-void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
+void *Nova::ClassificationLoop(void *ptr)
 {
 	//Builds the GUI address
 	string GUIKey = homePath + CE_FILENAME;
@@ -758,7 +754,7 @@ void *Nova::ClassificationEngine::ClassificationLoop(void *ptr)
 }
 
 
-void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
+void *Nova::TrainingLoop(void *ptr)
 {
 	//Builds the GUI address
 	string GUIKey = homePath + CE_FILENAME;
@@ -818,7 +814,7 @@ void *Nova::ClassificationEngine::TrainingLoop(void *ptr)
 	return NULL;
 }
 
-void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
+void *Nova::SilentAlarmLoop(void *ptr)
 {
 	int sockfd;
 	u_char buf[MAX_MSG_SIZE];
@@ -938,7 +934,7 @@ void *Nova::ClassificationEngine::SilentAlarmLoop(void *ptr)
 }
 
 
-void Nova::ClassificationEngine::FormKdTree()
+void Nova::FormKdTree()
 {
 	delete kdTree;
 	//Normalize the data points
@@ -967,7 +963,7 @@ void Nova::ClassificationEngine::FormKdTree()
 }
 
 
-void Nova::ClassificationEngine::Classify(Suspect *suspect)
+void Nova::Classify(Suspect *suspect)
 {
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
@@ -1068,7 +1064,7 @@ void Nova::ClassificationEngine::Classify(Suspect *suspect)
 }
 
 
-void Nova::ClassificationEngine::NormalizeDataPoints()
+void Nova::NormalizeDataPoints()
 {
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
@@ -1122,7 +1118,7 @@ void Nova::ClassificationEngine::NormalizeDataPoints()
 }
 
 
-void Nova::ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
+void Nova::PrintPt(ostream &out, ANNpoint p)
 {
 	out << "(" << p[0];
 	for (int i = 1;i < enabledFeatures;i++)
@@ -1133,7 +1129,7 @@ void Nova::ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 }
 
 
-void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
+void Nova::LoadDataPointsFromFile(string inFilePath)
 {
 	ifstream myfile (inFilePath.data());
 	string line;
@@ -1293,7 +1289,7 @@ void Nova::ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	WriteDataPointsToFile("Data/normalizedPoints", kdTree);
 }
 
-double Nova::ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)
+double Nova::Normalize(normalizationType type, double value, double min, double max)
 {
 	switch (type)
 	{
@@ -1326,7 +1322,7 @@ double Nova::ClassificationEngine::Normalize(normalizationType type, double valu
 }
 
 
-void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree)
+void Nova::WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree)
 {
 	ofstream myfile (outFilePath.data());
 
@@ -1351,7 +1347,7 @@ void Nova::ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd
 }
 
 
-void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
+void Nova::SilentAlarm(Suspect *suspect)
 {
 	int socketFD;
 
@@ -1484,7 +1480,7 @@ void Nova::ClassificationEngine::SilentAlarm(Suspect *suspect)
 }
 
 
-bool ClassificationEngine::KnockPort(bool mode)
+bool KnockPort(bool mode)
 {
 	stringstream ss;
 	ss << key;
@@ -1525,12 +1521,12 @@ bool ClassificationEngine::KnockPort(bool mode)
 }
 
 
-bool ClassificationEngine::ReceiveSuspectData()
+bool ReceiveSuspectData()
 {
 	int bytesRead, connectionSocket;
 
     //Blocking call
-    if ((connectionSocket = accept(IPCsock, remoteSockAddr, sockSizePtr)) == -1)
+    if ((connectionSocket = accept(CE_IPCsock, remoteSockAddr, sockSizePtr)) == -1)
     {
 		syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
 		close(connectionSocket);
@@ -1578,7 +1574,7 @@ bool ClassificationEngine::ReceiveSuspectData()
 }
 
 
-void ClassificationEngine::ReceiveGUICommand()
+void ReceiveGUICommand()
 {
     struct sockaddr_un msgRemote;
 	int socketSize, msgSocket;
@@ -1659,7 +1655,7 @@ void ClassificationEngine::ReceiveGUICommand()
 }
 
 
-void ClassificationEngine::SaveSuspectsToFile(string filename)
+void SaveSuspectsToFile(string filename)
 {
 	syslog(SYSL_ERR, "Line: %d Got request to save file to %s", __LINE__, filename.c_str());
 	dataPtsWithClass.push_back(new Point(enabledFeatures));
@@ -1683,7 +1679,7 @@ void ClassificationEngine::SaveSuspectsToFile(string filename)
 }
 
 
-void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
+void Nova::SendToUI(Suspect *suspect)
 {
 	if (!enableGUI)
 		return;
@@ -1714,7 +1710,7 @@ void Nova::ClassificationEngine::SendToUI(Suspect *suspect)
 }
 
 
-void ClassificationEngine::LoadConfig(char * configFilePath)
+void LoadConfig(char * configFilePath)
 {
 	string prefix, line;
 	uint i = 0;

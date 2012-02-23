@@ -25,14 +25,18 @@ using namespace std;
 typedef google::dense_hash_map<in_addr_t, bool, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
 
 namespace Nova{
-namespace DoppelgangerModule{
+
+//The main thread for the Doppelganger Module
+// ptr - Unused pointer required by pthread
+// returns - Does not return (main loop)
+void *DoppelgangerModuleMain(void *ptr);
 
 // Listens over IPC for a Silent Alarm, blocking on no answer
 void ReceiveAlarm();
 
 // Startup routine for pthread that listens for GUI comamnds
 //		ptr - Requires for pthread startup routines
-void *GUILoop(void *ptr);
+void *DM_GUILoop(void *ptr);
 
 // Receives input commands from the GUI
 // Note: This is a blocking function. If nothing is received, then wait on this thread for an answer
@@ -46,4 +50,4 @@ string Usage();
 void LoadConfig(char* configFilePath);
 
 }
-}
+

@@ -29,7 +29,6 @@
 
 using namespace std;
 using namespace Nova;
-using namespace DoppelgangerModule;
 
 SuspectHashTable SuspectTable;
 pthread_rwlock_t lock;
@@ -54,7 +53,7 @@ int alarmSocket;
 //GUI IPC globals to improve performance
 struct sockaddr_un localIPCAddress;
 struct sockaddr * localIPCAddressPtr = (struct sockaddr *)&localIPCAddress;
-int IPCsock;
+int DM_IPCsock;
 
 //constants that can be re-used
 int socketSize = sizeof(remote);
@@ -73,7 +72,7 @@ void siginthandler(int param)
 	exit(EXIT_SUCCESS);
 }
 
-int main(int argc, char *argv[])
+void *Nova::DoppelgangerModuleMain(void *ptr)
 {
 	char suspectAddr[INET_ADDRSTRLEN];
 	bzero(buf, MAX_MSG_SIZE);
@@ -117,7 +116,7 @@ int main(int argc, char *argv[])
 		openlog("DoppelgangerModule", OPEN_SYSL, LOG_AUTHPRIV);
 	}
 
-	pthread_create(&GUIListenThread, NULL, GUILoop, NULL);
+	pthread_create(&GUIListenThread, NULL, DM_GUILoop, NULL);
 	string commandLine;
 	//system commands to allow DM to function.
 	commandLine = "sudo iptables -A FORWARD -i lo -j DROP";
@@ -248,12 +247,12 @@ int main(int argc, char *argv[])
 	}
 }
 
-void *Nova::DoppelgangerModule::GUILoop(void *ptr)
+void *Nova::DM_GUILoop(void *ptr)
 {
-	if((IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	if((DM_IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: socket: %s", __LINE__, strerror(errno));
-		close(IPCsock);
+		close(DM_IPCsock);
 		exit(EXIT_FAILURE);
 	}
 
@@ -267,17 +266,17 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 
 	int GUILen = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
 
-	if(bind(IPCsock,localIPCAddressPtr,GUILen) == -1)
+	if(bind(DM_IPCsock,localIPCAddressPtr,GUILen) == -1)
 	{
 		syslog(SYSL_ERR, "Line %d ERROR: bind: %s", __LINE__, strerror(errno));
-		close(IPCsock);
+		close(DM_IPCsock);
 		exit(EXIT_FAILURE);
 	}
 
-	if(listen(IPCsock, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(DM_IPCsock, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
-		close(IPCsock);
+		close(DM_IPCsock);
 		exit(EXIT_FAILURE);
 	}
 	while(true)
@@ -286,7 +285,7 @@ void *Nova::DoppelgangerModule::GUILoop(void *ptr)
 	}
 }
 
-void DoppelgangerModule::ReceiveGUICommand()
+void ReceiveGUICommand()
 {
 	struct sockaddr_un msgRemote;
     int socketSize, msgSocket;
@@ -297,7 +296,7 @@ void DoppelgangerModule::ReceiveGUICommand()
 
     socketSize = sizeof(msgRemote);
     //Blocking call
-    if ((msgSocket = accept(IPCsock, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
+    if ((msgSocket = accept(DM_IPCsock, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
     {
 		syslog(SYSL_ERR, "Line: %d ERROR: accept: %s", __LINE__, strerror(errno));
 		close(msgSocket);
@@ -334,7 +333,7 @@ void DoppelgangerModule::ReceiveGUICommand()
 }
 
 
-void Nova::DoppelgangerModule::ReceiveAlarm()
+void Nova::ReceiveAlarm()
 {
     //Blocking call
     if ((connectionSocket = accept(alarmSocket, remoteAddrPtr, socketSizePtr)) == -1)
@@ -366,7 +365,7 @@ void Nova::DoppelgangerModule::ReceiveAlarm()
 }
 
 
-string Nova::DoppelgangerModule::Usage()
+string Nova::Usage()
 {
 	string usage_tips = "Nova Doppelganger Module\n";
 	usage_tips += "\tUsage: DoppelgangerModule -l <log config file> -n <NOVA config file>\n";
@@ -376,7 +375,7 @@ string Nova::DoppelgangerModule::Usage()
 }
 
 
-void DoppelgangerModule::LoadConfig(char* configFilePath)
+void LoadConfig(char* configFilePath)
 {
 	string prefix;
 	int confCheck = 0;
