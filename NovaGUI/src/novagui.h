@@ -40,7 +40,7 @@ struct suspectItem
 	//We need a second item because an item can only be in one list at a time
 	QListWidgetItem * mainItem;
 };
-typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectGUIHashTable;
 
 
 struct novaComponent

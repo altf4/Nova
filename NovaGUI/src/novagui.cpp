@@ -71,7 +71,7 @@ bool isTraining = false;
 string dmAddr;
 
 //General variables like tables, flags, locks, etc.
-SuspectHashTable SuspectTable;
+SuspectGUIHashTable SuspectTable;
 pthread_rwlock_t lock;
 
 bool featureEnabled[DIM];
@@ -1628,7 +1628,7 @@ void NovaGUI::drawAllSuspects()
 	QColor color;
 
 	pthread_rwlock_wrlock(&lock);
-	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
+	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		str = (QString) string(inet_ntoa(it->second.suspect->IP_address)).c_str();
 		suspect = it->second.suspect;
@@ -1860,7 +1860,7 @@ void NovaGUI::updateSuspectWidgets()
 {
 	double hostileAcc = 0, benignAcc = 0, totalAcc = 0;
 
-	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
+	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		if(it->second.suspect->isHostile)
 		{
@@ -1937,7 +1937,7 @@ void NovaGUI::clearSuspectList()
 	this->ui.suspectList->clear();
 	this->ui.hostileList->clear();
 	//Since clearing permenantly deletes the items we need to make sure the suspects point to null
-	for (SuspectHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
+	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		it->second.item = NULL;
 		it->second.mainItem = NULL;
