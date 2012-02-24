@@ -25,6 +25,7 @@
 
 #include <netinet/if_ether.h>
 #include <sys/un.h>
+#include <sys/inotify.h>
 #include <syslog.h>
 #include <errno.h>
 #include <sstream>
@@ -62,8 +63,16 @@ uint HSdataLen;
 char * HSpathsFile = (char*)PATHS_FILE;
 string HShomePath;
 bool HSuseTerminals;
+string dhcpListFile = "/var/log/honeyd/ipList";
+vector <string> haystackAddresses;
+vector <string> haystackDhcpAddresses;
+pcap_t *handle;
+bpf_u_int32 maskp;				/* subnet mask */
+bpf_u_int32 netp; 				/* ip          */
 
 Logger * HSloggerConf;
+int notifyFd;
+int watch;
 
 void *Nova::HaystackMain(void *ptr)
 {
@@ -72,6 +81,7 @@ void *Nova::HaystackMain(void *ptr)
 	pthread_t TCP_timeout_thread;
 	pthread_t GUIListenThread;
 	pthread_t SuspectUpdateThread;
+	pthread_t ipUpdateThread;
 
 	SessionTable.set_empty_key("");
 	SessionTable.resize(INIT_SIZE_HUGE);
@@ -82,10 +92,8 @@ void *Nova::HaystackMain(void *ptr)
 	bzero(HSdata, MAX_MSG_SIZE);
 
 	int ret;
-	bpf_u_int32 maskp;				/* subnet mask */
-	bpf_u_int32 netp; 				/* ip          */
 
-	vector <string> haystackAddresses;
+
 	string haystackAddresses_csv = "";
 
 	string novaConfig;
@@ -118,31 +126,25 @@ void *Nova::HaystackMain(void *ptr)
 
 	struct bpf_program fp;			/* The compiled filter expression */
 	char filter_exp[64];
-	pcap_t *handle;
-
 
 
 	haystackAddresses = GetHaystackAddresses(HShoneydConfigPath);
+	haystackDhcpAddresses = GetHaystackDhcpAddresses(dhcpListFile);
+	haystackAddresses_csv = ConstructFilterString();
 
-	if(haystackAddresses.empty())
+
+	notifyFd = inotify_init ();
+
+	if (notifyFd > 0)
 	{
-		syslog(SYSL_ERR, "Line: %d Error: No honeyd haystack nodes were found", __LINE__);
-		exit(EXIT_FAILURE);
+		watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+		pthread_create(&ipUpdateThread, NULL, UpdateIPFilter,NULL);
+	}
+	else
+	{
+		syslog(SYSL_ERR, "Unable to set up 'file modified/moved' watcher for the IP list file\n");
 	}
 
-	//Flatten out the vector into a csv string
-	for(uint i = 0; i < haystackAddresses.size(); i++)
-	{
-		haystackAddresses_csv += "dst host ";
-		haystackAddresses_csv += haystackAddresses[i];
-
-		if(i+1 != haystackAddresses.size())
-		{
-			haystackAddresses_csv += " || ";
-		}
-	}
-
-	syslog(SYSL_INFO, "%s", haystackAddresses_csv.c_str());
 
 	//Preform the socket address for faster run time
 	//Builds the key path
@@ -237,6 +239,7 @@ void Nova::HSPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,con
 		return;
 	}
 
+
 	/* let's start with the ether header... */
 	HSethernet = (struct ether_header *) packet;
 
@@ -314,6 +317,77 @@ void Nova::HSPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,con
 	}
 }
 
+string Nova::Haystack::ConstructFilterString()
+{
+	//Flatten out the vectors into a csv string
+	string filterString = "";
+
+	for(uint i = 0; i < haystackAddresses.size(); i++)
+	{
+		filterString += "dst host ";
+		filterString += haystackAddresses[i];
+
+		if(i+1 != haystackAddresses.size())
+			filterString += " || ";
+	}
+
+	if (!haystackDhcpAddresses.empty() && !haystackAddresses.empty())
+		filterString += " || ";
+
+	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
+	{
+		filterString += "dst host ";
+		filterString += haystackDhcpAddresses[i];
+
+		if(i+1 != haystackDhcpAddresses.size())
+			filterString += " || ";
+	}
+
+	if (filterString == "")
+	{
+		filterString = "dst host 0.0.0.0";
+	}
+
+	syslog(SYSL_INFO, "Pcap filter string is: %s", filterString.c_str());
+	return filterString;
+}
+
+void *Nova::Haystack::UpdateIPFilter(void *ptr)
+{
+	while (true)
+	{
+		if (watch > 0)
+		{
+			int BUF_LEN =  (1024 * (sizeof (struct inotify_event)) + 16);
+			char buf[BUF_LEN];
+			struct bpf_program fp;			/* The compiled filter expression */
+			char filter_exp[64];
+
+			// Blocking call, only moves on when the kernel notifies it that file has been changed
+			int readLen = read (notifyFd, buf, BUF_LEN);
+			if (readLen > 0) {
+				watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+				haystackDhcpAddresses = GetHaystackDhcpAddresses(dhcpListFile);
+				string haystackAddresses_csv = ConstructFilterString();
+
+				if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+					syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+
+				if (pcap_setfilter(handle, &fp) == -1)
+					syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			}
+		}
+		else
+		{
+			// This is the case when there's no file to watch, just sleep and wait for it to
+			// be created by honeyd when it starts up.
+			sleep(2);
+			watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+		}
+	}
+
+	return NULL;
+}
 
 void *Nova::HS_GUILoop(void *ptr)
 {
@@ -584,6 +658,26 @@ void *Nova::HSSuspectLoop(void *ptr)
 	return NULL;
 }
 
+vector <string> Nova::Haystack::GetHaystackDhcpAddresses(string dhcpListFile)
+{
+	ifstream dhcpFile(dhcpListFile.data());
+	vector<string> haystackDhcpAddresses;
+
+	if (dhcpFile.is_open())
+	{
+		while ( dhcpFile.good() )
+		{
+			string line;
+			getline (dhcpFile,line);
+			if (strcmp(line.c_str(), ""))
+				haystackDhcpAddresses.push_back(line);
+		}
+		dhcpFile.close();
+	}
+	else cout << "Unable to open file";
+
+	return haystackDhcpAddresses;
+}
 
 vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 {

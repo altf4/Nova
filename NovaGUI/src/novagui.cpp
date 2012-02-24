@@ -355,33 +355,33 @@ void NovaGUI::loadInfo()
 void NovaGUI::setNovaCommands()
 {
 	novaComponents[COMPONENT_CE].name = "Classification Engine";
-	novaComponents[COMPONENT_CE].terminalCommand = "gnome-terminal --disable-factory -t \"ClassificationEngine\" --geometry \"+0+600\" -x ClassificationEngine";
+	novaComponents[COMPONENT_CE].terminalCommand = "xterm -geometry \"+0+600\" -e ClassificationEngine";
 	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine";
 	novaComponents[COMPONENT_CE].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_LM].name ="Local Traffic Monitor";
-	novaComponents[COMPONENT_LM].terminalCommand ="gnome-terminal --disable-factory -t \"LocalTrafficMonitor\" --geometry \"+1000+0\" -x LocalTrafficMonitor";
+	novaComponents[COMPONENT_LM].terminalCommand ="xterm -geometry \"+1000+0\" -e LocalTrafficMonitor";
 	novaComponents[COMPONENT_LM].noTerminalCommand ="nohup LocalTrafficMonitor";
 	novaComponents[COMPONENT_LM].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DM].name ="Doppelganger Module";
-	novaComponents[COMPONENT_DM].terminalCommand ="gnome-terminal --disable-factory -t \"DoppelgangerModule\" --geometry \"+500+600\" -x DoppelgangerModule";
+	novaComponents[COMPONENT_DM].terminalCommand ="xterm -geometry \"+500+600\" -e DoppelgangerModule";
 	novaComponents[COMPONENT_DM].noTerminalCommand ="nohup DoppelgangerModule";
 	novaComponents[COMPONENT_DM].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
-	novaComponents[COMPONENT_DMH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Doppelganger\" --geometry \"+500+0\" -x sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
+	novaComponents[COMPONENT_DMH].terminalCommand ="xterm -geometry \"+500+0\" -e sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HS].name ="Haystack Module";
-	novaComponents[COMPONENT_HS].terminalCommand ="gnome-terminal --disable-factory -t \"Haystack\" --geometry \"+1000+600\" -x Haystack",
+	novaComponents[COMPONENT_HS].terminalCommand ="xterm -geometry \"+1000+600\" -e Haystack",
 	novaComponents[COMPONENT_HS].noTerminalCommand ="nohup Haystack > /dev/null";
 	novaComponents[COMPONENT_HS].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
+	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
 void NovaGUI::loadPaths()
@@ -2652,6 +2652,8 @@ void startComponent(novaComponent *component)
 		program = QString::fromStdString(component->terminalCommand);
 	else
 		program = QString::fromStdString(component->noTerminalCommand);
+
+	syslog(SYSL_INFO, "Running start command: %s", program.toStdString().c_str());
 
 	// Is the process already running?
 	if (component->process != NULL)
