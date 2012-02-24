@@ -464,6 +464,7 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				continue;
 			}
 
+
 			// DOPPELGANGER_IP
 			prefixIndex++;
 			prefix = prefixes[prefixIndex];
