@@ -29,12 +29,12 @@ using namespace std;
 namespace Nova
 {
 
-const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ",
-		"READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "USE_TERMINALS",
-		"CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT",
-		"K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE",
-		"SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "DM_HONEYD_CONFIG",
-		"DOPPELGANGER_IP", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE",
+const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
+		"TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE",
+		"USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS",
+		"IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS",
+		"SA_SLEEP_DURATION", "DM_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE",
+		"DM_ENABLED", "ENABLED_FEATURES","TRAINING_CAP_FOLDER", "THINNING_DISTANCE",
 		"SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE"};
 
 // Loads the configuration file into the class's state data
@@ -48,7 +48,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 
 	openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
-	syslog(SYSL_INFO, "Line: %d Loading file %s in homepath %s", __LINE__, configFilePath, homeNovaPath.c_str());
+	syslog(SYSL_INFO, "Line: %d Loading file %s in homepath %s", __LINE__,
+			configFilePath, homeNovaPath.c_str());
 
 	ifstream config(configFilePath);
 
@@ -60,60 +61,86 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 		string def;
 		switch(j)
 		{
+			//INTERFACE
 			case 0: def = "default";
 					break;
+			//HS_HONEYD_CONFIG
 			case 1: def = "Config/haystack.config";
 					break;
+			//TCP_TIMEOUT
 			case 2: def = "7";
 					break;
+			//TCP_CHECK_FREQ
 			case 3: def = "3";
 					break;
+			//READ_PCAP
 			case 4: def = "0";
 					break;
+			//PCAP_FILE
 			case 5: def = "../pcapfile";
 					break;
+			//GO_TO_LIVE
 			case 6: def = "1";
 					break;
+			//USE_TERMINALS
 			case 7: def = "1";
 					break;
+			//CLASSIFICATION_TIMEOUT
 			case 8: def = "3";
 					break;
+			//SILENT_ALARM_PORT
 			case 9: def = "12024";
 					break;
+			//K
 			case 10: def = "3";
 					break;
+			//EPS
 			case 11: def = "0.01";
 					break;
+			//IS_TRAINING
 			case 12: def = "0";
 					break;
+			//CLASSIFICATION_THRESHOLD
 			case 13: def = ".5";
 					break;
+			//DATAFILE
 			case 14: def = "Data/data.txt";
 					break;
+			//SA_MAX_ATTEMPTS
 			case 15: def = "3";
 					break;
+			//SA_SLEEP_DURATION
 			case 16: def = ".5";
 					break;
+			//DM_HONEYD_CONFIG
 			case 17: def = "Config/doppelganger.config";
 					break;
+			//DOPPELGANGER_IP
 			case 18: def = "10.0.0.1";
 					break;
-			case 19: def = "1";
+			//DOPPELGANGER_INTERFACE
+			case 19: def = "lo";
 					break;
-			case 20: def = "111111111";
+			//DM_ENABLED
+			case 20: def = "1";
 					break;
-			case 21: def = "Data";
+			//ENABLED_FEATURES
+			case 21: def = "111111111";
 					break;
-			case 22: def = "0";
+			//TRAINING_CAP_FOLDER
+			case 22: def = "Data";
+					break;
+			//THINNING_DISTANCE
+			case 23: def = "0";
 					break;
 			// SAVE_FREQUENCY default to 24 hours (1440 minutes)
-			case 23: def = "1440";
+			case 24: def = "1440";
 					break;
 			// DATA_TTL default to disabled
-			case 24: def = "0";
+			case 25: def = "0";
 					break;
 			// CE_SAVE_FILE
-			case 25: def = "ceStateSave";
+			case 26: def = "ceStateSave";
 					break;
 
 			default: break;
