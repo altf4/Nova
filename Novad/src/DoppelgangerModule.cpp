@@ -62,7 +62,7 @@ socklen_t *DMsocketSizePtr = (socklen_t*)&DMsocketSize;
 
 in_port_t DMsAlarmPort;
 
-Logger *DMloggerConf;
+extern Logger *logger;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -88,7 +88,6 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 	chdir(userHomePath.c_str());
 
 	//Runs the configuration loaders
-	DMloggerConf = new Logger(novaConfigPath.c_str(), true);
 	DMLoadConfig((char*)novaConfigPath.c_str());
 
 	if(!DMuseTerminals)

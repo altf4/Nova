@@ -64,6 +64,8 @@ char * HSpathsFile = (char*)PATHS_FILE;
 extern string userHomePath;
 extern string novaConfigPath;
 
+extern Logger *logger;
+
 bool HSuseTerminals;
 string dhcpListFile = "/var/log/honeyd/ipList";
 vector <string> haystackAddresses;
@@ -72,7 +74,6 @@ pcap_t *handle;
 bpf_u_int32 maskp;				/* subnet mask */
 bpf_u_int32 netp; 				/* ip          */
 
-Logger * HSloggerConf;
 int notifyFd;
 int watch;
 
@@ -98,11 +99,8 @@ void *Nova::HaystackMain(void *ptr)
 
 	string haystackAddresses_csv = "";
 
-	//Runs the configuration loaders
-	HSloggerConf = new Logger(novaConfigPath.c_str(), true);
-
 	if(chdir(userHomePath.c_str()) == -1)
-	    HSloggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
+		logger->Logging(INFO, "Failed to change directory to " + userHomePath);
 
 	HSLoadConfig((char*)novaConfigPath.c_str());
 

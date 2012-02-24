@@ -109,6 +109,8 @@ const char *outFile;				//output for data points during training
 extern string userHomePath;
 extern string novaConfigPath;
 
+extern Logger *logger;
+
 // Used for data normalization
 double maxFeatureValues[DIM];
 double minFeatureValues[DIM];
@@ -126,7 +128,6 @@ double eps;						//error bound
 double classificationThreshold ; //value of classification to define split between hostile / benign
 uint SA_Max_Attempts;			//The number of times to attempt to reconnect to a neighbor
 double SA_Sleep_Duration;		//The time to sleep after a port knocking request and allow it to go through
-Logger * loggerConf;
 int saveFrequency;
 int dataTTL;
 string ceSaveFile;
@@ -188,10 +189,8 @@ void *Nova::ClassificationEngineMain(void *ptr)
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
 
-	loggerConf = new Logger(novaConfigPath.c_str(), true);
-
 	if(chdir(userHomePath.c_str()) == -1)
-	    loggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
+		logger->Logging(INFO, "Failed to change directory to " + userHomePath);
 
 
 	Reload();
@@ -266,7 +265,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
     // just use any of the syslog levels. All caps, always.
     // The second is the string to display in any of the mediums through which logging
     // will route based on severity level.
-    loggerConf->Logging(INFO, "Classification Engine has begun the main loop...");
+    logger->Logging(INFO, "Classification Engine has begun the main loop...");
 
 
     //"Main Loop"
@@ -844,13 +843,13 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	ss << "sudo iptables -A INPUT -p udp --dport " << sAlarmPort << " -j REJECT --reject-with icmp-port-unreachable";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    loggerConf->Logging(INFO, "Failed to update iptables.");
+	    logger->Logging(INFO, "Failed to update iptables.");
 	}
 	ss.str("");
 	ss << "sudo iptables -A INPUT -p tcp --dport " << sAlarmPort << " -j REJECT --reject-with tcp-reset";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    loggerConf->Logging(INFO, "Failed to update iptables.");
+		logger->Logging(INFO, "Failed to update iptables.");
 	}
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
@@ -1403,7 +1402,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 				if(system(commandLine.c_str()) == -1)
 				{
-					loggerConf->Logging(INFO, "Failed to update iptables.");
+					logger->Logging(INFO, "Failed to update iptables.");
 				}
 
 
@@ -1445,7 +1444,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						loggerConf->Logging(INFO, "Failed to update iptables.");
+						logger->Logging(INFO, "Failed to update iptables.");
 					}
 					continue;
 				}
@@ -1459,7 +1458,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						loggerConf->Logging(INFO, "Failed to update iptables.");
+						logger->Logging(INFO, "Failed to update iptables.");
 					}
 					continue;
 				}
@@ -1470,7 +1469,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				if(system(commandLine.c_str()) == -1)
 				{
-					loggerConf->Logging(INFO, "Failed to update iptables.");
+					logger->Logging(INFO, "Failed to update iptables.");
 				}
 			}
 		}while(dataLen == MORE_DATA);
