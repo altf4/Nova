@@ -88,5 +88,4 @@ typedef struct _trainingSuspect trainingSuspect;
 typedef google::dense_hash_map<string, trainingSuspect*, tr1::hash<string>, eqstr > trainingSuspectMap;
 typedef google::dense_hash_map<string, vector<string>*, tr1::hash<string>, eqstr > trainingDumpMap;
 
-
 #endif /* HASHMAPSTRUCTS_H_ */

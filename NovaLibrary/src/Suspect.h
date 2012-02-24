@@ -114,4 +114,6 @@ public:
 
 }
 
+typedef google::dense_hash_map<in_addr_t, Suspect *, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+
 #endif /* SUSPECT_H_ */

@@ -30,25 +30,25 @@
 using namespace std;
 using namespace Nova;
 
-SuspectHashTable SuspectTable;
-pthread_rwlock_t lock;
+DMSuspectHashTable DMSuspectTable;
+pthread_rwlock_t DMlock;
 
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
-string hostAddrString, doppelgangerAddrString, honeydConfigPath;
+string hostAddrString, doppelgangerAddrString, DMhoneydConfigPath;
 struct sockaddr_in hostAddr, loopbackAddr;
-bool isEnabled, useTerminals;
+bool DMisEnabled, DMuseTerminals;
 
-char * pathsFile = (char*)PATHS_FILE;
-string homePath;
+char * DMpathsFile = (char*)PATHS_FILE;
+string DMhomePath;
 
 //Alarm IPC globals to improve performance
-struct sockaddr_un remote;
-struct sockaddr * remoteAddrPtr = (struct sockaddr *)&remote;
-int connectionSocket;
-int bytesRead;
-u_char buf[MAX_MSG_SIZE];
-Suspect * suspect = NULL;
-int alarmSocket;
+struct sockaddr_un DMremote;
+struct sockaddr * DMremoteAddrPtr = (struct sockaddr *)&DMremote;
+int DMconnectionSocket;
+int DMbytesRead;
+u_char DMbuf[MAX_MSG_SIZE];
+Suspect * DMsuspect = NULL;
+int DMalarmSocket;
 
 //GUI IPC globals to improve performance
 struct sockaddr_un localIPCAddress;
@@ -56,12 +56,12 @@ struct sockaddr * localIPCAddressPtr = (struct sockaddr *)&localIPCAddress;
 int DM_IPCsock;
 
 //constants that can be re-used
-int socketSize = sizeof(remote);
-socklen_t * socketSizePtr = (socklen_t*)&socketSize;
+int DMsocketSize = sizeof(DMremote);
+socklen_t * DMsocketSizePtr = (socklen_t*)&DMsocketSize;
 
-in_port_t sAlarmPort;
+in_port_t DMsAlarmPort;
 
-Logger * loggerConf;
+Logger * DMloggerConf;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -75,11 +75,11 @@ void siginthandler(int param)
 void *Nova::DoppelgangerModuleMain(void *ptr)
 {
 	char suspectAddr[INET_ADDRSTRLEN];
-	bzero(buf, MAX_MSG_SIZE);
+	bzero(DMbuf, MAX_MSG_SIZE);
 	pthread_t GUIListenThread;
 
-	SuspectTable.set_empty_key(0);
-	SuspectTable.resize(INIT_SIZE_SMALL);
+	DMSuspectTable.set_empty_key(0);
+	DMSuspectTable.resize(INIT_SIZE_SMALL);
 
 	signal(SIGINT, siginthandler);
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
@@ -88,15 +88,15 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	homePath = GetHomePath();
-	novaConfig = homePath + "/Config/NOVAConfig.txt";
-	chdir(homePath.c_str());
+	DMhomePath = GetHomePath();
+	novaConfig = DMhomePath + "/Config/NOVAConfig.txt";
+	chdir(DMhomePath.c_str());
 
 	//Runs the configuration loaders
-	loggerConf = new Logger(novaConfig.c_str(), true);
-	LoadConfig((char*)novaConfig.c_str());
+	DMloggerConf = new Logger(novaConfig.c_str(), true);
+	DMLoadConfig((char*)novaConfig.c_str());
 
-	if(!useTerminals)
+	if(!DMuseTerminals)
 	{
 		//DOMConfigurator::configure(logConfig.c_str());
 		//openlog opens a stream to syslog for logging. The parameters are as follows:
@@ -133,9 +133,9 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 
 	//Builds the key path
 	string key = KEY_ALARM_FILENAME;
-	key = homePath+key;
+	key = DMhomePath+key;
 
-    if((alarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+    if((DMalarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
     {
     	// syslog takes 2+ arguments.
     	// 1st: where and what; OR together facility and level. note that
@@ -143,7 +143,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
     	// 2nd: String that will be logged
     	// 3rd: arguments for formatted string, much like printf
 		syslog(SYSL_ERR, "ERROR: socket: %s", strerror(errno));
-		close(alarmSocket);
+		close(DMalarmSocket);
 		exit(EXIT_FAILURE);
     }
     remote.sun_family = AF_UNIX;
@@ -153,36 +153,36 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
-    if(bind(alarmSocket,(struct sockaddr *)&remote,len) == -1)
+    if(bind(DMalarmSocket,(struct sockaddr *)&remote,len) == -1)
     {
 		syslog(SYSL_ERR, "Line: %d ERROR: bind: %s", __LINE__, strerror(errno));
-		close(alarmSocket);
+		close(DMalarmSocket);
         exit(EXIT_FAILURE);
     }
 
-    if(listen(alarmSocket, SOCKET_QUEUE_SIZE) == -1)
+    if(listen(DMalarmSocket, SOCKET_QUEUE_SIZE) == -1)
     {
 		syslog(SYSL_ERR, "Line: %d ERROR: listen: %s", __LINE__, strerror(errno));
-		close(alarmSocket);
+		close(DMalarmSocket);
         exit(EXIT_FAILURE);
     }
 
 	//"Main Loop"
 	while(true)
 	{
-		ReceiveAlarm();
+		DMReceiveAlarm();
 
-		if(suspect == NULL)
+		if(DMsuspect == NULL)
 		{
 			continue;
 		}
 
 		//If this is from us, then ignore it!
-		if((hostAddr.sin_addr.s_addr == suspect->IP_address.s_addr)
+		if((hostAddr.sin_addr.s_addr == DMsuspect->IP_address.s_addr)
 				||(hostAddr.sin_addr.s_addr == loopbackAddr.sin_addr.s_addr))
 		{
-			delete suspect;
-			suspect = NULL;
+			delete DMsuspect;
+			DMsuspect = NULL;
 			continue;
 		}
 
@@ -194,31 +194,31 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 
 
 
-		pthread_rwlock_rdlock(&lock);
+		pthread_rwlock_rdlock(&DMlock);
 		//If the suspect already exists in our table
-		if(SuspectTable.find(suspect->IP_address.s_addr) != SuspectTable.end())
+		if(DMSuspectTable.find(DMsuspect->IP_address.s_addr) != DMSuspectTable.end())
 		{
 			//If hostility hasn't changed
-			if(SuspectTable[suspect->IP_address.s_addr] == suspect->isHostile)
+			if(DMSuspectTable[DMsuspect->IP_address.s_addr] == DMsuspect->isHostile)
 			{
 				//Do nothing. This means no change has happened since last alarm
-				delete suspect;
-				suspect = NULL;
-				pthread_rwlock_unlock(&lock);
+				delete DMsuspect;
+				DMsuspect = NULL;
+				pthread_rwlock_unlock(&DMlock);
 				continue;
 			}
 		}
 
-		pthread_rwlock_unlock(&lock);
-		pthread_rwlock_wrlock(&lock);
+		pthread_rwlock_unlock(&DMlock);
+		pthread_rwlock_wrlock(&DMlock);
 
-		SuspectTable[suspect->IP_address.s_addr] = suspect->isHostile;
+		DMSuspectTable[DMsuspect->IP_address.s_addr] = DMsuspect->isHostile;
 
-		pthread_rwlock_unlock(&lock);
+		pthread_rwlock_unlock(&DMlock);
 
-		if(suspect->isHostile && isEnabled)
+		if(DMsuspect->isHostile && DMisEnabled)
 		{
-			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(DMsuspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
 			commandLine = "sudo iptables -t nat -A PREROUTING -d ";
 			commandLine += hostAddrString;
@@ -231,7 +231,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 		}
 		else
 		{
-			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(DMsuspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
 			commandLine = "sudo iptables -t nat -D PREROUTING -d ";
 			commandLine += hostAddrString;
@@ -242,8 +242,8 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 
 			system(commandLine.c_str());
 		}
-		delete suspect;
-		suspect = NULL;
+		delete DMsuspect;
+		DMsuspect = NULL;
 	}
 }
 
@@ -259,7 +259,7 @@ void *Nova::DM_GUILoop(void *ptr)
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = homePath + DM_GUI_FILENAME;
+	string key = DMhomePath + DM_GUI_FILENAME;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
@@ -281,11 +281,11 @@ void *Nova::DM_GUILoop(void *ptr)
 	}
 	while(true)
 	{
-		ReceiveGUICommand();
+		DMReceiveGUICommand();
 	}
 }
 
-void ReceiveGUICommand()
+void Nova::DMReceiveGUICommand()
 {
 	struct sockaddr_un msgRemote;
     int socketSize, msgSocket;
@@ -314,17 +314,17 @@ void ReceiveGUICommand()
     		system("sudo iptables -F");
     		exit(EXIT_SUCCESS);
     	case CLEAR_ALL:
-    		pthread_rwlock_wrlock(&lock);
-			SuspectTable.clear();
-			pthread_rwlock_unlock(&lock);
+    		pthread_rwlock_wrlock(&DMlock);
+			DMSuspectTable.clear();
+			pthread_rwlock_unlock(&DMlock);
 			break;
     	case CLEAR_SUSPECT:
 			suspectKey = inet_addr(msg.GetValue().c_str());
-			pthread_rwlock_wrlock(&lock);
-			SuspectTable.set_deleted_key(5);
-			SuspectTable.erase(suspectKey);
-			SuspectTable.clear_deleted_key();
-			pthread_rwlock_unlock(&lock);
+			pthread_rwlock_wrlock(&DMlock);
+			DMSuspectTable.set_deleted_key(5);
+			DMSuspectTable.erase(suspectKey);
+			DMSuspectTable.clear_deleted_key();
+			pthread_rwlock_unlock(&DMlock);
 			break;
     	default:
     		break;
@@ -333,39 +333,39 @@ void ReceiveGUICommand()
 }
 
 
-void Nova::ReceiveAlarm()
+void Nova::DMReceiveAlarm()
 {
     //Blocking call
-    if ((connectionSocket = accept(alarmSocket, remoteAddrPtr, socketSizePtr)) == -1)
+    if ((DMconnectionSocket = accept(DMalarmSocket, DMremoteAddrPtr, DMsocketSizePtr)) == -1)
     {
 		syslog(SYSL_ERR, "Line: %d ERROR: accept: %s", __LINE__, strerror(errno));
-		close(connectionSocket);
+		close(DMconnectionSocket);
         return;
     }
-    if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == -1)
+    if((DMbytesRead = recv(DMconnectionSocket, DMbuf, MAX_MSG_SIZE, 0 )) == -1)
     {
     	syslog(SYSL_ERR, "Line: %d ERROR: recv: %s", __LINE__, strerror(errno));
-		close(connectionSocket);
+		close(DMconnectionSocket);
         return;
     }
-	suspect = new Suspect();
+	DMsuspect = new Suspect();
 	try
 	{
-		suspect->DeserializeSuspect(buf);
-		bzero(buf, bytesRead);
+		DMsuspect->DeserializeSuspect(DMbuf);
+		bzero(DMbuf, DMbytesRead);
 	}
 	catch(std::exception e)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: Error interpreting received Silent Alarm: %s", __LINE__, string(e.what()).c_str());
-		delete suspect;
-		suspect = NULL;
+		delete DMsuspect;
+		DMsuspect = NULL;
 	}
-	close(connectionSocket);
+	close(DMconnectionSocket);
 	return;
 }
 
 
-string Nova::Usage()
+string Nova::DMUsage()
 {
 	string usage_tips = "Nova Doppelganger Module\n";
 	usage_tips += "\tUsage: DoppelgangerModule -l <log config file> -n <NOVA config file>\n";
@@ -375,13 +375,13 @@ string Nova::Usage()
 }
 
 
-void LoadConfig(char* configFilePath)
+void Nova::DMLoadConfig(char* configFilePath)
 {
 	string prefix;
 	int confCheck = 0;
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->LoadConfig(configFilePath, DMhomePath, __FILE__);
 
 	confCheck = NovaConfig->SetDefaults();
 
@@ -423,7 +423,7 @@ void LoadConfig(char* configFilePath)
 
 	closelog();
 
-	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
-	isEnabled = atoi(NovaConfig->options["DM_ENABLED"].data.c_str());
+	DMuseTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
+	DMsAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
+	DMisEnabled = atoi(NovaConfig->options["DM_ENABLED"].data.c_str());
 }

@@ -19,6 +19,4 @@
 #ifndef NOVAD_H_
 #define NOVAD_H_
 
-typedef google::dense_hash_map<in_addr_t, Suspect*, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
-
 #endif /* NOVAD_H_ */

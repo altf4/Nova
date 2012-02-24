@@ -28,8 +28,6 @@
 #define OPEN true
 #define CLOSE false
 
-//Used in classification algorithm. Store it here so we only need to calculate it once
-double sqrtDIM;
 
 //Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, ANNpoint, tr1::hash<in_addr_t>, eqaddr > lastPointHash;
@@ -100,16 +98,16 @@ void SilentAlarm(Suspect *suspect);
 
 // Knocks on the port of the neighboring nova instance to open or close it
 //		mode - true for OPEN, false for CLOSE
-bool KnockPort(bool mode);
+bool CEKnockPort(bool mode);
 
 // Receive featureData from another local component.
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
 // Returns: false if any sort of error
-bool ReceiveSuspectData();
+bool CEReceiveSuspectData();
 
 // Receives input commands from the GUI
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
-void ReceiveGUICommand();
+void CEReceiveGUICommand();
 
 // Sends output to the UI
 //	suspect - suspect to serialize GUI data and send
@@ -117,7 +115,7 @@ void SendToUI(Suspect *suspect);
 
 // Loads configuration variables
 //		configFilePath - Location of configuration file
-void LoadConfig(char * configFilePath);
+void CELoadConfig(char * configFilePath);
 
 // Dump the suspect information to a file
 //		filename - Path to file to write to

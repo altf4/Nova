@@ -36,39 +36,39 @@ using namespace Nova;
 static TCPSessionHashTable SessionTable;
 static SuspectHashTable	suspects;
 
-pthread_rwlock_t sessionLock;
-pthread_rwlock_t suspectLock;
+pthread_rwlock_t HSsessionLock;
+pthread_rwlock_t HSsuspectLock;
 
-string dev; //Interface name, read from config file
-string honeydConfigPath;
-string pcapPath; //Pcap file to read from instead of live packet capture.
-bool usePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
-bool goToLiveCap; //Specify if go to live capture mode after reading from a pcap file
-int tcpTime; //TCP_TIMEOUT measured in seconds
-int tcpFreq; //TCP_CHECK_FREQ measured in seconds
-uint classificationTimeout; //Time between checking suspects for updated data
+string HSdev; //Interface name, read from config file
+string HShoneydConfigPath;
+string HSpcapPath; //Pcap file to read from instead of live packet capture.
+bool HSusePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
+bool HSgoToLiveCap; //Specify if go to live capture mode after reading from a pcap file
+int HStcpTime; //TCP_TIMEOUT measured in seconds
+int HStcpFreq; //TCP_CHECK_FREQ measured in seconds
+uint HSclassificationTimeout; //Time between checking suspects for updated data
 
 //Memory assignments moved outside packet handler to increase performance
-int len, dest_port;
-struct sockaddr_un remote;
-Packet packet_info;
-struct ether_header *ethernet;  	/* net/ethernet.h */
-struct ip *ip_hdr; 					/* The IP header */
-char tcp_socket[55];
+int HSlen, HSdest_port;
+struct sockaddr_un HSremote;
+Packet HSpacket_info;
+struct ether_header *HSethernet;  	/* net/ethernet.h */
+struct ip *HSip_hdr; 					/* The IP header */
+char HStcp_socket[55];
 
-u_char data[MAX_MSG_SIZE];
-uint dataLen;
+u_char HSdata[MAX_MSG_SIZE];
+uint HSdataLen;
 
-char * pathsFile = (char*)PATHS_FILE;
-string homePath;
-bool useTerminals;
+char * HSpathsFile = (char*)PATHS_FILE;
+string HShomePath;
+bool HSuseTerminals;
 
-Logger * loggerConf;
+Logger * HSloggerConf;
 
 void *Nova::HaystackMain(void *ptr)
 {
-	pthread_rwlock_init(&sessionLock, NULL);
-	pthread_rwlock_init(&suspectLock, NULL);
+	pthread_rwlock_init(&HSsessionLock, NULL);
+	pthread_rwlock_init(&HSsuspectLock, NULL);
 	pthread_t TCP_timeout_thread;
 	pthread_t GUIListenThread;
 	pthread_t SuspectUpdateThread;
@@ -79,7 +79,7 @@ void *Nova::HaystackMain(void *ptr)
 	suspects.resize(INIT_SIZE_SMALL);
 
 	char errbuf[PCAP_ERRBUF_SIZE];
-	bzero(data, MAX_MSG_SIZE);
+	bzero(HSdata, MAX_MSG_SIZE);
 
 	int ret;
 	bpf_u_int32 maskp;				/* subnet mask */
@@ -93,18 +93,18 @@ void *Nova::HaystackMain(void *ptr)
 	string line, prefix; //used for input checking
 
 	//Get locations of nova files
-	homePath = GetHomePath();
-	novaConfig = homePath + "/Config/NOVAConfig.txt";
+	HShomePath = GetHomePath();
+	novaConfig = HShomePath + "/Config/NOVAConfig.txt";
 
 	//Runs the configuration loaders
-	loggerConf = new Logger(novaConfig.c_str(), true);
+	HSloggerConf = new Logger(novaConfig.c_str(), true);
 
-	if(chdir(homePath.c_str()) == -1)
-	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
+	if(chdir(HShomePath.c_str()) == -1)
+	    HSloggerConf->Logging(INFO, "Failed to change directory to " + HShomePath);
 
-	LoadConfig((char*)novaConfig.c_str());
+	HSLoadConfig((char*)novaConfig.c_str());
 
-	if(!useTerminals)
+	if(!HSuseTerminals)
 	{
 		openlog("Haystack", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
@@ -122,7 +122,7 @@ void *Nova::HaystackMain(void *ptr)
 
 
 
-	haystackAddresses = GetHaystackAddresses(honeydConfigPath);
+	haystackAddresses = GetHaystackAddresses(HShoneydConfigPath);
 
 	if(haystackAddresses.empty())
 	{
@@ -147,21 +147,21 @@ void *Nova::HaystackMain(void *ptr)
 	//Preform the socket address for faster run time
 	//Builds the key path
 	string key = KEY_FILENAME;
-	key = homePath+key;
+	key = HShomePath+key;
 
-	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, key.c_str());
-	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
+	HSremote.sun_family = AF_UNIX;
+	strcpy(HSremote.sun_path, key.c_str());
+	HSlen = strlen(HSremote.sun_path) + sizeof(HSremote.sun_family);
 
 	//If we're reading from a packet capture file
-	if(usePcapFile)
+	if(HSusePcapFile)
 	{
 		sleep(1); //To allow time for other processes to open
-		handle = pcap_open_offline(pcapPath.c_str(), errbuf);
+		handle = pcap_open_offline(HSpcapPath.c_str(), errbuf);
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, pcapPath.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, HSpcapPath.c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
@@ -176,29 +176,29 @@ void *Nova::HaystackMain(void *ptr)
 			exit(EXIT_FAILURE);
 		}
 		//First process any packets in the file then close all the sessions
-		pcap_loop(handle, -1, Packet_Handler,NULL);
+		pcap_loop(handle, -1, HSPacket_Handler,NULL);
 
-		TCPTimeout(NULL);
-		SuspectLoop(NULL);
+		HSTCPTimeout(NULL);
+		HSSuspectLoop(NULL);
 
 
-		if(goToLiveCap) usePcapFile = false; //If we are going to live capture set the flag.
+		if(HSgoToLiveCap) HSusePcapFile = false; //If we are going to live capture set the flag.
 	}
 
 
-	if(!usePcapFile)
+	if(!HSusePcapFile)
 	{
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-		handle = pcap_open_live(dev.c_str(), BUFSIZ, 0, 1000, errbuf);
+		handle = pcap_open_live(HSdev.c_str(), BUFSIZ, 0, 1000, errbuf);
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, dev.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, HSdev.c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
 
 		/* ask pcap for the network address and mask of the device */
-		ret = pcap_lookupnet(dev.c_str(), &netp, &maskp, errbuf);
+		ret = pcap_lookupnet(HSdev.c_str(), &netp, &maskp, errbuf);
 
 		if(ret == -1)
 		{
@@ -218,18 +218,18 @@ void *Nova::HaystackMain(void *ptr)
 			exit(EXIT_FAILURE);
 		}
 
-		pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
-		pthread_create(&SuspectUpdateThread, NULL, SuspectLoop, NULL);
+		pthread_create(&TCP_timeout_thread, NULL, HSTCPTimeout, NULL);
+		pthread_create(&SuspectUpdateThread, NULL, HSSuspectLoop, NULL);
 
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received
-	    pcap_loop(handle, -1, Packet_Handler, NULL);
+	    pcap_loop(handle, -1, HSPacket_Handler, NULL);
 	}
 	return 0;
 }
 
 
-void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void Nova::HSPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
 	if(packet == NULL)
 	{
@@ -238,45 +238,45 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 	}
 
 	/* let's start with the ether header... */
-	ethernet = (struct ether_header *) packet;
+	HSethernet = (struct ether_header *) packet;
 
 	/* Do a couple of checks to see what packet type we have..*/
-	if (ntohs (ethernet->ether_type) == ETHERTYPE_IP)
+	if (ntohs (HSethernet->ether_type) == ETHERTYPE_IP)
 	{
-		ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
+		HSip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
 
 		//Prepare Packet structure
-		packet_info.ip_hdr = *ip_hdr;
-		packet_info.pcap_header = *pkthdr;
-		packet_info.fromHaystack = FROM_HAYSTACK_DP;
+		HSpacket_info.ip_hdr = *HSip_hdr;
+		HSpacket_info.pcap_header = *pkthdr;
+		HSpacket_info.fromHaystack = FROM_HAYSTACK_DP;
 
 		//IF UDP or ICMP
-		if(ip_hdr->ip_p == 17 )
+		if(HSip_hdr->ip_p == 17 )
 		{
-			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			UpdateSuspect(packet_info);
+			HSpacket_info.udp_hdr = *(struct udphdr*) ((char *)HSip_hdr + sizeof(struct ip));
+			HSUpdateSuspect(HSpacket_info);
 		}
-		else if(ip_hdr->ip_p == 1)
+		else if(HSip_hdr->ip_p == 1)
 		{
-			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			UpdateSuspect(packet_info);
+			HSpacket_info.icmp_hdr = *(struct icmphdr*) ((char *)HSip_hdr + sizeof(struct ip));
+			HSUpdateSuspect(HSpacket_info);
 		}
 		//If TCP...
-		else if(ip_hdr->ip_p == 6)
+		else if(HSip_hdr->ip_p == 6)
 		{
-			packet_info.tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
-			dest_port = ntohs(packet_info.tcp_hdr.dest);
+			HSpacket_info.tcp_hdr = *(struct tcphdr*)((char*)HSip_hdr + sizeof(struct ip));
+			HSdest_port = ntohs(HSpacket_info.tcp_hdr.dest);
 
-			bzero(tcp_socket, 55);
-			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
+			bzero(HStcp_socket, 55);
+			snprintf(HStcp_socket, 55, "%d-%d-%d", HSip_hdr->ip_dst.s_addr, HSip_hdr->ip_src.s_addr, HSdest_port);
 
-			pthread_rwlock_wrlock(&sessionLock);
+			pthread_rwlock_wrlock(&HSsessionLock);
 			//If this is a new entry...
-			if( SessionTable[tcp_socket].session.size() == 0)
+			if( SessionTable[HStcp_socket].session.size() == 0)
 			{
 				//Insert packet into Hash Table
-				SessionTable[tcp_socket].session.push_back(packet_info);
-				SessionTable[tcp_socket].fin = false;
+				SessionTable[HStcp_socket].session.push_back(HSpacket_info);
+				SessionTable[HStcp_socket].fin = false;
 			}
 
 			//If there is already a session in progress for the given LogEntry
@@ -285,25 +285,25 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 				//If Session is ending
 				//TODO: The session may continue a few packets after the FIN. Account for this case.
 				//See ticket #15
-				if(packet_info.tcp_hdr.fin)
+				if(HSpacket_info.tcp_hdr.fin)
 				{
-					SessionTable[tcp_socket].session.push_back(packet_info);
-					SessionTable[tcp_socket].fin = true;
+					SessionTable[HStcp_socket].session.push_back(HSpacket_info);
+					SessionTable[HStcp_socket].fin = true;
 				}
 				else
 				{
 					//Add this new packet to the session vector
-					SessionTable[tcp_socket].session.push_back(packet_info);
+					SessionTable[HStcp_socket].session.push_back(HSpacket_info);
 				}
 			}
-			pthread_rwlock_unlock(&sessionLock);
+			pthread_rwlock_unlock(&HSsessionLock);
 		}
 
 		// Allow for continuous classification
-		if (!classificationTimeout)
-			SuspectLoop(NULL);
+		if (!HSclassificationTimeout)
+			HSSuspectLoop(NULL);
 	}
-	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
+	else if(ntohs(HSethernet->ether_type) == ETHERTYPE_ARP)
 	{
 		return;
 	}
@@ -331,7 +331,7 @@ void *Nova::HS_GUILoop(void *ptr)
 
 	//Builds the key path
 	string key = HS_GUI_FILENAME;
-	key = homePath + key;
+	key = HShomePath + key;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
@@ -352,12 +352,12 @@ void *Nova::HS_GUILoop(void *ptr)
 	}
 	while(true)
 	{
-		ReceiveGUICommand(IPCsock);
+		HSReceiveGUICommand(IPCsock);
 	}
 }
 
 
-void ReceiveGUICommand(int socket)
+void Nova::HSReceiveGUICommand(int socket)
 {
 	struct sockaddr_un msgRemote;
     int socketSize, msgSocket;
@@ -383,17 +383,17 @@ void ReceiveGUICommand(int socket)
     switch(msg.GetType())
     {
     	case CLEAR_ALL:
-			pthread_rwlock_wrlock(&suspectLock);
+			pthread_rwlock_wrlock(&HSsuspectLock);
     		suspects.clear();
-			pthread_rwlock_unlock(&suspectLock);
+			pthread_rwlock_unlock(&HSsuspectLock);
     		break;
     	case CLEAR_SUSPECT:
 			suspectKey = inet_addr(msg.GetValue().c_str());
-			pthread_rwlock_wrlock(&suspectLock);
+			pthread_rwlock_wrlock(&HSsuspectLock);
 			suspects.set_deleted_key(5);
 			suspects.erase(suspectKey);
 			suspects.clear_deleted_key();
-			pthread_rwlock_unlock(&suspectLock);
+			pthread_rwlock_unlock(&HSsuspectLock);
 			break;
     	case EXIT:
     		exit(EXIT_SUCCESS);
@@ -404,14 +404,14 @@ void ReceiveGUICommand(int socket)
 }
 
 
-void *Nova::TCPTimeout(void *ptr)
+void *Nova::HSTCPTimeout(void *ptr)
 {
 	do
 	{
 		time_t currentTime = time(NULL);
 		time_t packetTime;
 
-		pthread_rwlock_rdlock(&sessionLock);
+		pthread_rwlock_rdlock(&HSsessionLock);
 		for ( TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
 		{
 
@@ -419,9 +419,9 @@ void *Nova::TCPTimeout(void *ptr)
 			{
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
 				//If were reading packets from a file, assume all packets have been loaded and go beyond timeout threshhold
-				if(usePcapFile)
+				if(HSusePcapFile)
 				{
-					currentTime = packetTime+3+tcpTime;
+					currentTime = packetTime+3+HStcpTime;
 				}
 				// If it exists)
 				if(packetTime + 2 < currentTime)
@@ -434,43 +434,43 @@ void *Nova::TCPTimeout(void *ptr)
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
-							UpdateSuspect((SessionTable[it->first].session).at(p));
+							HSUpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
 						// Allow for continuous classification
-						if (!classificationTimeout)
-							SuspectLoop(NULL);
+						if (!HSclassificationTimeout)
+							HSSuspectLoop(NULL);
 
-						pthread_rwlock_unlock(&sessionLock);
-						pthread_rwlock_wrlock(&sessionLock);
+						pthread_rwlock_unlock(&HSsessionLock);
+						pthread_rwlock_wrlock(&HSsessionLock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
-						pthread_rwlock_unlock(&sessionLock);
-						pthread_rwlock_rdlock(&sessionLock);
+						pthread_rwlock_unlock(&HSsessionLock);
+						pthread_rwlock_rdlock(&HSsessionLock);
 
 						//delete tempEvent;
 						//tempEvent = NULL;
 					}
 					//If this session is timed out
-					else if(packetTime + tcpTime < currentTime)
+					else if(packetTime + HStcpTime < currentTime)
 					{
 						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
-							UpdateSuspect((SessionTable[it->first].session).at(p));
+							HSUpdateSuspect((SessionTable[it->first].session).at(p));
 						}
 
 						// Allow for continuous classification
-						if (!classificationTimeout)
-							SuspectLoop(NULL);
+						if (!HSclassificationTimeout)
+							HSSuspectLoop(NULL);
 
-						pthread_rwlock_unlock(&sessionLock);
-						pthread_rwlock_wrlock(&sessionLock);
+						pthread_rwlock_unlock(&HSsessionLock);
+						pthread_rwlock_wrlock(&HSsessionLock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
-						pthread_rwlock_unlock(&sessionLock);
-						pthread_rwlock_rdlock(&sessionLock);
+						pthread_rwlock_unlock(&HSsessionLock);
+						pthread_rwlock_rdlock(&HSsessionLock);
 
 						//delete tempEvent;
 						//tempEvent = NULL;
@@ -478,14 +478,14 @@ void *Nova::TCPTimeout(void *ptr)
 				}
 			}
 		}
-		pthread_rwlock_unlock(&sessionLock);
+		pthread_rwlock_unlock(&HSsessionLock);
 		//Check only once every TCP_CHECK_FREQ seconds
-		sleep(tcpFreq);
-	}while(!usePcapFile);
+		sleep(HStcpFreq);
+	}while(!HSusePcapFile);
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
-	if(usePcapFile) return NULL;
+	if(HSusePcapFile) return NULL;
 
 	//Shouldn't get here
 	syslog(SYSL_ERR, "Line: %d TCP Timeout Thread has halted", __LINE__);
@@ -493,14 +493,14 @@ void *Nova::TCPTimeout(void *ptr)
 }
 
 
-bool Nova::SendToCE(Suspect *suspect)
+bool Nova::HSSendToCE(Suspect *suspect)
 {
 	int socketFD;
 
 	do
 	{
-		dataLen = suspect->SerializeSuspect(data);
-		dataLen += suspect->features.unsentData->SerializeFeatureData(data+dataLen);
+		HSdataLen = suspect->SerializeSuspect(HSdata);
+		HSdataLen += suspect->features.unsentData->SerializeFeatureData(HSdata+HSdataLen);
 		suspect->features.unsentData->clearFeatureData();
 
 		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -510,32 +510,32 @@ bool Nova::SendToCE(Suspect *suspect)
 			return false;
 		}
 
-		if (connect(socketFD, (struct sockaddr *)&remote, len) == -1)
+		if (connect(socketFD, (struct sockaddr *)&HSremote, HSlen) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Unable to connect to ClassificationEngine: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
 
-		if (send(socketFD, data, dataLen, 0) == -1)
+		if (send(socketFD, HSdata, HSdataLen, 0) == -1)
 		{
 			syslog(SYSL_ERR, "Line: %d Unable to send to ClassificationEngine: %s", __LINE__, strerror(errno));
 			close(socketFD);
 			return false;
 		}
-		bzero(data,dataLen);
+		bzero(HSdata,HSdataLen);
 		close(socketFD);
 
-	}while(dataLen == MORE_DATA);
+	}while(HSdataLen == MORE_DATA);
 
 	return true;
 }
 
 
-void Nova::UpdateSuspect(Packet packet)
+void Nova::HSUpdateSuspect(Packet packet)
 {
 	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
-	pthread_rwlock_wrlock(&suspectLock);
+	pthread_rwlock_wrlock(&HSsuspectLock);
 	//If our suspect is new
 	if(suspects.find(addr) == suspects.end())
 		suspects[addr] = new Suspect(packet);
@@ -543,41 +543,41 @@ void Nova::UpdateSuspect(Packet packet)
 	else
 		suspects[addr]->AddEvidence(packet);
 
-	suspects[addr]->isLive = !usePcapFile;
-	pthread_rwlock_unlock(&suspectLock);
+	suspects[addr]->isLive = !HSusePcapFile;
+	pthread_rwlock_unlock(&HSsuspectLock);
 }
 
 
-void *Nova::SuspectLoop(void *ptr)
+void *Nova::HSSuspectLoop(void *ptr)
 {
 	do
 	{
-		sleep(classificationTimeout);
-		pthread_rwlock_rdlock(&suspectLock);
+		sleep(HSclassificationTimeout);
+		pthread_rwlock_rdlock(&HSsuspectLock);
 		for(SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
 		{
 			if(it->second->needs_feature_update)
 			{
-				pthread_rwlock_unlock(&suspectLock);
-				pthread_rwlock_wrlock(&suspectLock);
+				pthread_rwlock_unlock(&HSsuspectLock);
+				pthread_rwlock_wrlock(&HSsuspectLock);
 				for(uint i = 0; i < it->second->evidence.size(); i++)
 				{
 					it->second->features.unsentData->UpdateEvidence(it->second->evidence[i]);
 				}
 				it->second->evidence.clear();
-				SendToCE(it->second);
+				HSSendToCE(it->second);
 				it->second->needs_feature_update = false;
-				pthread_rwlock_unlock(&suspectLock);
-				pthread_rwlock_rdlock(&suspectLock);
+				pthread_rwlock_unlock(&HSsuspectLock);
+				pthread_rwlock_rdlock(&HSsuspectLock);
 			}
 		}
-		pthread_rwlock_unlock(&suspectLock);
-	} while(!usePcapFile && classificationTimeout);
+		pthread_rwlock_unlock(&HSsuspectLock);
+	} while(!HSusePcapFile && HSclassificationTimeout);
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
 	// Also return if continuous classification is enabled by setting classificationTimeout to 0
-	if(usePcapFile || !classificationTimeout) return NULL;
+	if(HSusePcapFile || !HSclassificationTimeout) return NULL;
 
 	//Shouldn't get here
 	syslog(SYSL_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
@@ -626,10 +626,10 @@ vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 }
 
 
-void LoadConfig(char* configFilePath)
+void Nova::HSLoadConfig(char* configFilePath)
 {
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->LoadConfig(configFilePath, HShomePath, __FILE__);
 
 	int confCheck = NovaConfig->SetDefaults();
 
@@ -654,13 +654,13 @@ void LoadConfig(char* configFilePath)
 
 	closelog();
 
-	dev = NovaConfig->options["INTERFACE"].data;
-	honeydConfigPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
-	tcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
-	tcpFreq = atoi(NovaConfig->options["TCP_CHECK_FREQ"].data.c_str());
-	usePcapFile = atoi(NovaConfig->options["READ_PCAP"].data.c_str());
-	pcapPath = NovaConfig->options["PCAP_FILE"].data;
-	goToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
-	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
+	HSdev = NovaConfig->options["INTERFACE"].data;
+	HShoneydConfigPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
+	HStcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
+	HStcpFreq = atoi(NovaConfig->options["TCP_CHECK_FREQ"].data.c_str());
+	HSusePcapFile = atoi(NovaConfig->options["READ_PCAP"].data.c_str());
+	HSpcapPath = NovaConfig->options["PCAP_FILE"].data;
+	HSgoToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
+	HSuseTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
+	HSclassificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
 }

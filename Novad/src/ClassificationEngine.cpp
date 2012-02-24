@@ -19,10 +19,8 @@
 #include "ClassificationEngine.h"
 #include "NOVAConfiguration.h"
 #include "NovaUtil.h"
-#include "Suspect.h"
 #include "Logger.h"
 #include "Point.h"
-#include "Novad.h"
 
 #include <vector>
 #include <string>
@@ -36,6 +34,9 @@
 
 using namespace std;
 using namespace Nova;
+
+//Used in classification algorithm. Store it here so we only need to calculate it once
+double sqrtDIM;
 
 // Maintains a list of suspects and information on network activity
 SuspectHashTable suspects;
@@ -274,7 +275,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
     //"Main Loop"
 	while(true)
 	{
-		if (ReceiveSuspectData())
+		if (CEReceiveSuspectData())
 		{
 			if(!classificationTimeout)
 			{
@@ -596,7 +597,7 @@ void Nova::Reload()
 
 	// Reload the configuration file
 	string novaConfig = homePath + "/Config/NOVAConfig.txt";
-	LoadConfig((char*)novaConfig.c_str());
+	CELoadConfig((char*)novaConfig.c_str());
 
 	// Did our data file move?
 	dataFile = homePath + "/" +dataFile;
@@ -654,7 +655,7 @@ void *Nova::CE_GUILoop(void *ptr)
 	}
 	while(true)
 	{
-		ReceiveGUICommand();
+		CEReceiveGUICommand();
 	}
 }
 
@@ -1412,7 +1413,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				uint i;
 				for(i = 0; i < SA_Max_Attempts; i++)
 				{
-					if(KnockPort(OPEN))
+					if(CEKnockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
@@ -1466,7 +1467,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					continue;
 				}
 				close(sockfd);
-				KnockPort(CLOSE);
+				CEKnockPort(CLOSE);
 				ss.str("");
 				ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
@@ -1480,7 +1481,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 }
 
 
-bool KnockPort(bool mode)
+bool Nova::CEKnockPort(bool mode)
 {
 	stringstream ss;
 	ss << key;
@@ -1521,7 +1522,7 @@ bool KnockPort(bool mode)
 }
 
 
-bool ReceiveSuspectData()
+bool Nova::CEReceiveSuspectData()
 {
 	int bytesRead, connectionSocket;
 
@@ -1574,7 +1575,7 @@ bool ReceiveSuspectData()
 }
 
 
-void ReceiveGUICommand()
+void Nova::CEReceiveGUICommand()
 {
     struct sockaddr_un msgRemote;
 	int socketSize, msgSocket;
@@ -1655,7 +1656,7 @@ void ReceiveGUICommand()
 }
 
 
-void SaveSuspectsToFile(string filename)
+void Nova::SaveSuspectsToFile(string filename)
 {
 	syslog(SYSL_ERR, "Line: %d Got request to save file to %s", __LINE__, filename.c_str());
 	dataPtsWithClass.push_back(new Point(enabledFeatures));
@@ -1710,7 +1711,7 @@ void Nova::SendToUI(Suspect *suspect)
 }
 
 
-void LoadConfig(char * configFilePath)
+void Nova::CELoadConfig(char * configFilePath)
 {
 	string prefix, line;
 	uint i = 0;
