@@ -1128,6 +1128,8 @@ bool NovaConfig::updateNodeTypes()
 						}
 						else
 						{
+							if(!tempNode.name.compare(currentNode))
+								currentNode = tempNode.IP;
 							tempNode.name = tempNode.IP;
 							delList.push_back(it->second.name);
 							addList.push_back(tempNode);
@@ -1153,6 +1155,8 @@ bool NovaConfig::updateNodeTypes()
 						}
 						else
 						{
+							if(!tempNode.name.compare(currentNode))
+								currentNode = tempNode.MAC;
 							tempNode.name = tempNode.MAC;
 							delList.push_back(it->second.name);
 							addList.push_back(tempNode);
@@ -1170,6 +1174,8 @@ bool NovaConfig::updateNodeTypes()
 							break;
 					}
 					//If the key doesn't start with the correct prefix, generate the correct name
+					if(!tempNode.name.compare(currentNode))
+						currentNode = prefix;
 					tempNode.name = prefix;
 					i = 0;
 					ss.str("");
@@ -1192,6 +1198,8 @@ bool NovaConfig::updateNodeTypes()
 						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
 						tempNode.name = ss.str();
 					}
+					if(!prefix.compare(currentNode))
+						currentNode = tempNode.name;
 					delList.push_back(it->second.name);
 					addList.push_back(tempNode);
 					break;
@@ -3654,13 +3662,16 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edi
 				ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
 				ui.nodeTreeWidget->setCurrentItem(item);
 			}
+			loading->unlock();
+			loadAllNodes();
+			updatePointers();
 		}
-		else if(!edited)
+		else
 		{
 			ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
 			ui.nodeTreeWidget->setCurrentItem(item);
+			loading->unlock();
 		}
-		loading->unlock();
 	}
 }
 void NovaConfig::on_actionSubnetAdd_triggered()
