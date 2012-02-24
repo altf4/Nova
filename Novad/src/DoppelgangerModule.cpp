@@ -39,7 +39,8 @@ struct sockaddr_in hostAddr, loopbackAddr;
 bool DMisEnabled, DMuseTerminals;
 
 char * DMpathsFile = (char*)PATHS_FILE;
-string DMhomePath;
+extern string userHomePath;
+extern string novaConfigPath;
 
 //Alarm IPC globals to improve performance
 struct sockaddr_un DMremote;
@@ -52,16 +53,16 @@ int DMalarmSocket;
 
 //GUI IPC globals to improve performance
 struct sockaddr_un localIPCAddress;
-struct sockaddr * localIPCAddressPtr = (struct sockaddr *)&localIPCAddress;
+struct sockaddr *localIPCAddressPtr = (struct sockaddr *)&localIPCAddress;
 int DM_IPCsock;
 
 //constants that can be re-used
 int DMsocketSize = sizeof(DMremote);
-socklen_t * DMsocketSizePtr = (socklen_t*)&DMsocketSize;
+socklen_t *DMsocketSizePtr = (socklen_t*)&DMsocketSize;
 
 in_port_t DMsAlarmPort;
 
-Logger * DMloggerConf;
+Logger *DMloggerConf;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -83,18 +84,12 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 
 	signal(SIGINT, siginthandler);
 	loopbackAddr.sin_addr.s_addr = INADDR_LOOPBACK;
-	string novaConfig;
 
-	string line, prefix; //used for input checking
-
-	//Get locations of nova files
-	DMhomePath = GetHomePath();
-	novaConfig = DMhomePath + "/Config/NOVAConfig.txt";
-	chdir(DMhomePath.c_str());
+	chdir(userHomePath.c_str());
 
 	//Runs the configuration loaders
-	DMloggerConf = new Logger(novaConfig.c_str(), true);
-	DMLoadConfig((char*)novaConfig.c_str());
+	DMloggerConf = new Logger(novaConfigPath.c_str(), true);
+	DMLoadConfig((char*)novaConfigPath.c_str());
 
 	if(!DMuseTerminals)
 	{
@@ -122,7 +117,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 	commandLine = "sudo iptables -A FORWARD -i lo -j DROP";
 	system(commandLine.c_str());
 
-	commandLine = "sudo route add -host "+doppelgangerAddrString+" dev lo";
+	commandLine = "sudo route add -host "+ doppelgangerAddrString+" dev lo";
 	system(commandLine.c_str());
 
 	commandLine = "sudo iptables -t nat -F";
@@ -133,7 +128,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 
 	//Builds the key path
 	string key = KEY_ALARM_FILENAME;
-	key = DMhomePath+key;
+	key = userHomePath+key;
 
     if((DMalarmSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
     {
@@ -259,7 +254,7 @@ void *Nova::DM_GUILoop(void *ptr)
 	localIPCAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = DMhomePath + DM_GUI_FILENAME;
+	string key = userHomePath + DM_GUI_FILENAME;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
@@ -381,7 +376,7 @@ void Nova::DMLoadConfig(char* configFilePath)
 	int confCheck = 0;
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, DMhomePath, __FILE__);
+	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
 
 	confCheck = NovaConfig->SetDefaults();
 

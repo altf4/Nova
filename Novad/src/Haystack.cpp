@@ -60,7 +60,9 @@ u_char HSdata[MAX_MSG_SIZE];
 uint HSdataLen;
 
 char * HSpathsFile = (char*)PATHS_FILE;
-string HShomePath;
+extern string userHomePath;
+extern string novaConfigPath;
+
 bool HSuseTerminals;
 
 Logger * HSloggerConf;
@@ -88,21 +90,13 @@ void *Nova::HaystackMain(void *ptr)
 	vector <string> haystackAddresses;
 	string haystackAddresses_csv = "";
 
-	string novaConfig;
-
-	string line, prefix; //used for input checking
-
-	//Get locations of nova files
-	HShomePath = GetHomePath();
-	novaConfig = HShomePath + "/Config/NOVAConfig.txt";
-
 	//Runs the configuration loaders
-	HSloggerConf = new Logger(novaConfig.c_str(), true);
+	HSloggerConf = new Logger(novaConfigPath.c_str(), true);
 
-	if(chdir(HShomePath.c_str()) == -1)
-	    HSloggerConf->Logging(INFO, "Failed to change directory to " + HShomePath);
+	if(chdir(userHomePath.c_str()) == -1)
+	    HSloggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
 
-	HSLoadConfig((char*)novaConfig.c_str());
+	HSLoadConfig((char*)novaConfigPath.c_str());
 
 	if(!HSuseTerminals)
 	{
@@ -147,7 +141,7 @@ void *Nova::HaystackMain(void *ptr)
 	//Preform the socket address for faster run time
 	//Builds the key path
 	string key = KEY_FILENAME;
-	key = HShomePath+key;
+	key = userHomePath+key;
 
 	HSremote.sun_family = AF_UNIX;
 	strcpy(HSremote.sun_path, key.c_str());
@@ -331,7 +325,7 @@ void *Nova::HS_GUILoop(void *ptr)
 
 	//Builds the key path
 	string key = HS_GUI_FILENAME;
-	key = HShomePath + key;
+	key = userHomePath + key;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
@@ -629,7 +623,7 @@ vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 void Nova::HSLoadConfig(char* configFilePath)
 {
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, HShomePath, __FILE__);
+	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
 
 	int confCheck = NovaConfig->SetDefaults();
 

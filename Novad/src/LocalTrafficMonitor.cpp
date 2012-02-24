@@ -59,7 +59,9 @@ u_char LTMdata[MAX_MSG_SIZE];
 uint LTMdataLen;
 
 char * LTMpathsFile = (char*)PATHS_FILE;
-string LTMhomePath;
+extern string userHomePath;
+extern string novaConfigPath;
+
 bool LTMuseTerminals;
 
 string LTMkey;
@@ -90,22 +92,14 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 
 	string hostAddress;
 
-	string novaConfig;
-
-	string line, prefix; //used for input checking
-
-	//Get locations of Nova files
-	LTMhomePath = GetHomePath();
-	novaConfig = LTMhomePath + "/Config/NOVAConfig.txt";
-
 	//Runs the configuration loaders
-	LTMloggerConf = new Logger(novaConfig.c_str(), true);
+	LTMloggerConf = new Logger(novaConfigPath.c_str(), true);
 
-	if(chdir(LTMhomePath.c_str()) == -1)
-		LTMloggerConf->Logging(INFO, "Failed to change directory to " + LTMhomePath);
+	if(chdir(userHomePath.c_str()) == -1)
+		LTMloggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
 
 
-	LTMLoadConfig((char*)novaConfig.c_str());
+	LTMLoadConfig((char*)novaConfigPath.c_str());
 
 	if(!LTMuseTerminals)
 	{
@@ -120,7 +114,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	//Pre-Forms the socket address to improve performance
 	//Builds the key path
 	string key = KEY_FILENAME;
-	key = LTMhomePath+key;
+	key = userHomePath+key;
 
 	LTMremote.sun_family = AF_UNIX;
 	strcpy(LTMremote.sun_path, key.c_str());
@@ -326,7 +320,7 @@ void *Nova::LTM_GUILoop(void *ptr)
 
 	//Builds the key path
 	string key = LTM_GUI_FILENAME;
-	key = LTMhomePath+key;
+	key = userHomePath+key;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
@@ -578,7 +572,7 @@ void Nova::LTMLoadConfig(char* configFilePath)
 	uint i = 0;
 	int confCheck = 0;
 
-	string settingsPath = LTMhomePath +"/settings";
+	string settingsPath = userHomePath +"/settings";
 	ifstream settings(settingsPath.c_str());
 
 	openlog("LocalTrafficMonitor", OPEN_SYSL, LOG_AUTHPRIV);
@@ -612,7 +606,7 @@ void Nova::LTMLoadConfig(char* configFilePath)
 
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, LTMhomePath, __FILE__);
+	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
 
 	confCheck = NovaConfig->SetDefaults();
 

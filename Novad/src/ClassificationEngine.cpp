@@ -106,7 +106,8 @@ int enabledFeatures;
 // Misc
 int len;
 const char *outFile;				//output for data points during training
-string homePath;
+extern string userHomePath;
+extern string novaConfigPath;
 
 // Used for data normalization
 double maxFeatureValues[DIM];
@@ -187,14 +188,10 @@ void *Nova::ClassificationEngineMain(void *ptr)
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
 
-	//Get locations of nova files
-	homePath = GetHomePath();
-	string novaConfig = homePath + "/Config/NOVAConfig.txt";
+	loggerConf = new Logger(novaConfigPath.c_str(), true);
 
-	loggerConf = new Logger(novaConfig.c_str(), true);
-
-	if(chdir(homePath.c_str()) == -1)
-	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
+	if(chdir(userHomePath.c_str()) == -1)
+	    loggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
 
 
 	Reload();
@@ -221,7 +218,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
 
 		char buffer [40];
 		strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
-		trainingCapFile = homePath + "/" + trainingFolder + "/training" + buffer + ".dump";
+		trainingCapFile = userHomePath + "/" + trainingFolder + "/training" + buffer + ".dump";
 
 		enabledFeatures = DIM;
 		pthread_create(&trainingLoopThread,NULL,TrainingLoop,(void *)outFile);
@@ -243,7 +240,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
 
 	//Builds the key path
 	string key = KEY_FILENAME;
-	key = homePath + key;
+	key = userHomePath + key;
 
 	strcpy(localIPCAddress.sun_path, key.c_str());
 	unlink(localIPCAddress.sun_path);
@@ -596,11 +593,11 @@ void Nova::Reload()
 	dataPtsWithClass.clear();
 
 	// Reload the configuration file
-	string novaConfig = homePath + "/Config/NOVAConfig.txt";
+	string novaConfig = userHomePath + "/Config/NOVAConfig.txt";
 	CELoadConfig((char*)novaConfig.c_str());
 
 	// Did our data file move?
-	dataFile = homePath + "/" +dataFile;
+	dataFile = userHomePath + "/" +dataFile;
 	outFile = dataFile.c_str();
 
 	// Reload the data file
@@ -634,7 +631,7 @@ void *Nova::CE_GUILoop(void *ptr)
 
 	//Builds the key path
 	string key = CE_GUI_FILENAME;
-	key = homePath + key;
+	key = userHomePath + key;
 
 	strcpy(GUIAddress.sun_path, key.c_str());
 	unlink(GUIAddress.sun_path);
@@ -662,13 +659,13 @@ void *Nova::CE_GUILoop(void *ptr)
 void *Nova::ClassificationLoop(void *ptr)
 {
 	//Builds the GUI address
-	string GUIKey = homePath + CE_FILENAME;
+	string GUIKey = userHomePath + CE_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
 
 	//Builds the Silent Alarm IPC address
-	string key = homePath + KEY_ALARM_FILENAME;
+	string key = userHomePath + KEY_ALARM_FILENAME;
 	alarmRemote.sun_family = AF_UNIX;
 	strcpy(alarmRemote.sun_path, key.c_str());
 	len = strlen(alarmRemote.sun_path) + sizeof(alarmRemote.sun_family);
@@ -758,7 +755,7 @@ void *Nova::ClassificationLoop(void *ptr)
 void *Nova::TrainingLoop(void *ptr)
 {
 	//Builds the GUI address
-	string GUIKey = homePath + CE_FILENAME;
+	string GUIKey = userHomePath + CE_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
@@ -1717,7 +1714,7 @@ void Nova::CELoadConfig(char * configFilePath)
 	uint i = 0;
 	int confCheck = 0;
 
-	string settingsPath = homePath +"/settings";
+	string settingsPath = userHomePath +"/settings";
 	ifstream settings(settingsPath.c_str());
 	in_addr_t nbr;
 
@@ -1763,7 +1760,7 @@ void Nova::CELoadConfig(char * configFilePath)
 	settings.close();
 
 	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, homePath, __FILE__);
+	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
 
 	confCheck = NovaConfig->SetDefaults();
 

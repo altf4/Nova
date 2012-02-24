@@ -20,15 +20,22 @@
 #include "Haystack.h"
 #include "LocalTrafficMonitor.h"
 #include "DoppelgangerModule.h"
+#include "NovaUtil.h"
 
 #include <iostream>
 
 using namespace std;
 
+string userHomePath, novaConfigPath;
+
 pthread_t CE_Thread, LTM_Thread, HS_Thread, DM_Thread;
 
 int main()
 {
+	//TODO: Perhaps move this into its own init function?
+	userHomePath = GetHomePath();
+	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
+
 	//Launch the 4 component threads
 	pthread_create(&CE_Thread, NULL, ClassificationEngineMain, NULL);
 	pthread_create(&LTM_Thread, NULL, LocalTrafficMonitorMain, NULL);
