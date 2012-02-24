@@ -317,7 +317,7 @@ void Nova::HSPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,con
 	}
 }
 
-string Nova::Haystack::ConstructFilterString()
+string Nova::ConstructFilterString()
 {
 	//Flatten out the vectors into a csv string
 	string filterString = "";
@@ -352,7 +352,7 @@ string Nova::Haystack::ConstructFilterString()
 	return filterString;
 }
 
-void *Nova::Haystack::UpdateIPFilter(void *ptr)
+void *Nova::UpdateIPFilter(void *ptr)
 {
 	while (true)
 	{
@@ -658,7 +658,7 @@ void *Nova::HSSuspectLoop(void *ptr)
 	return NULL;
 }
 
-vector <string> Nova::Haystack::GetHaystackDhcpAddresses(string dhcpListFile)
+vector <string> Nova::GetHaystackDhcpAddresses(string dhcpListFile)
 {
 	ifstream dhcpFile(dhcpListFile.data());
 	vector<string> haystackDhcpAddresses;
