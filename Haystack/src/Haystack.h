@@ -68,6 +68,10 @@ void *SuspectLoop(void *ptr);
 //		honeyDConfigPath - path to honeyd configuration file
 // Returns: vector containing IP addresses of all honeypots
 vector <string> GetHaystackAddresses(string honeyDConfigPath);
+vector <string> GetHaystackDhcpAddresses(string honeyDConfigPath);
+
+void *UpdateIPFilter(void *ptr);
+string ConstructFilterString();
 
 // Loads configuration variables
 //		configFilePath - Location of configuration file

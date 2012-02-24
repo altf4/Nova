@@ -380,8 +380,8 @@ void NovaGUI::setNovaCommands()
 	novaComponents[COMPONENT_HS].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log";
+	novaComponents[COMPONENT_HSH].terminalCommand ="gnome-terminal --disable-factory -t \"HoneyD Haystack\" --geometry \"+0+0\" -x sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
 void NovaGUI::loadPaths()
