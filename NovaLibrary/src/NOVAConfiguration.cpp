@@ -23,7 +23,6 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 
-
 using namespace std;
 
 namespace Nova
@@ -38,121 +37,19 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE"};
 
 // Loads the configuration file into the class's state data
-void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPath, string module)
+void NOVAConfiguration::LoadConfig(string module)
 {
 	string line;
 	string prefix;
 	int prefixIndex;
 
+	bool isValid[sizeof(prefixes)/sizeof(prefixes[0])];
+
 	string use = module.substr(4, (module.length()));
 
 	openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
-	syslog(SYSL_INFO, "Line: %d Loading file %s in homepath %s", __LINE__,
-			configFilePath, homeNovaPath.c_str());
-
-	ifstream config(configFilePath);
-
-	//populate the defaultVector. I know it looks a little messy, maybe
-	//hard code it somewhere? Just did this so that if we add or remove stuff,
-	//we only have to do it here
-	for(uint j = 0; j < sizeof(prefixes)/sizeof(prefixes[0]); j++)
-	{
-		string def;
-		switch(j)
-		{
-			//INTERFACE
-			case 0: def = "default";
-					break;
-			//HS_HONEYD_CONFIG
-			case 1: def = "Config/haystack.config";
-					break;
-			//TCP_TIMEOUT
-			case 2: def = "7";
-					break;
-			//TCP_CHECK_FREQ
-			case 3: def = "3";
-					break;
-			//READ_PCAP
-			case 4: def = "0";
-					break;
-			//PCAP_FILE
-			case 5: def = "../pcapfile";
-					break;
-			//GO_TO_LIVE
-			case 6: def = "1";
-					break;
-			//USE_TERMINALS
-			case 7: def = "1";
-					break;
-			//CLASSIFICATION_TIMEOUT
-			case 8: def = "3";
-					break;
-			//SILENT_ALARM_PORT
-			case 9: def = "12024";
-					break;
-			//K
-			case 10: def = "3";
-					break;
-			//EPS
-			case 11: def = "0.01";
-					break;
-			//IS_TRAINING
-			case 12: def = "0";
-					break;
-			//CLASSIFICATION_THRESHOLD
-			case 13: def = ".5";
-					break;
-			//DATAFILE
-			case 14: def = "Data/data.txt";
-					break;
-			//SA_MAX_ATTEMPTS
-			case 15: def = "3";
-					break;
-			//SA_SLEEP_DURATION
-			case 16: def = ".5";
-					break;
-			//DM_HONEYD_CONFIG
-			case 17: def = "Config/doppelganger.config";
-					break;
-			//DOPPELGANGER_IP
-			case 18: def = "10.0.0.1";
-					break;
-			//DOPPELGANGER_INTERFACE
-			case 19: def = "lo";
-					break;
-			//DM_ENABLED
-			case 20: def = "1";
-					break;
-			//ENABLED_FEATURES
-			case 21: def = "111111111";
-					break;
-			//TRAINING_CAP_FOLDER
-			case 22: def = "Data";
-					break;
-			//THINNING_DISTANCE
-			case 23: def = "0";
-					break;
-			// SAVE_FREQUENCY default to 24 hours (1440 minutes)
-			case 24: def = "1440";
-					break;
-			// DATA_TTL default to disabled
-			case 25: def = "0";
-					break;
-			// CE_SAVE_FILE
-			case 26: def = "ceStateSave";
-					break;
-
-			default: break;
-		}
-		defaults.push_back(make_pair(prefixes[j], def));
-	}
-
-	// Populate the options map
-	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
-	{
-		options[prefixes[i]].isValid = false;
-	}
+	ifstream config(configFilePath.c_str());
 
 	if (config.is_open())
 	{
@@ -195,7 +92,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 										if (currentColumn == 7)
 										{
 
-											options[prefix].data = column;
+											interface = column;
+											isValid[prefixIndex] = true;
 										}
 
 										column = strtok(NULL, " \t\n");
@@ -209,10 +107,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 						pclose(out);
 					}
 					else
-						options[prefix].data = line;
-
-					if (!options[prefix].data.empty())
-						options[prefix].isValid = true;
+						interface = line;
+						isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -225,8 +121,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line;
-					options[prefix].isValid = true;
+					pathConfigHoneydHs  = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -239,8 +135,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					tcpTimout = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -253,8 +149,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					tcpCheckFreq = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -267,8 +163,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					readPcap = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -281,8 +177,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line;
-					options[prefix].isValid = true;
+					pathPcapFile = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -295,8 +191,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					gotoLive = line.c_str();
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -309,8 +205,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					useTerminals = line.c_str();
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -323,8 +219,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) >= 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					classificationTimeout = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -334,8 +230,6 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 			prefix = prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
-				// This is a quick fix for the case when there's no space; it will append the required space and
-				// allow processing to continue without a segfault
 				if(line.size() == prefix.size())
 				{
 					line += " ";
@@ -345,8 +239,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 
 				if (atoi(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					saPort = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -359,8 +253,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					k = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -373,8 +267,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) >= 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					eps = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -387,8 +281,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					isTraining = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -401,8 +295,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) >= 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					classificationThreshold= atof(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -416,8 +310,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				if (line.size() > 0 && !line.substr(line.size() - 4,
 						line.size()).compare(".txt"))
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					pathTrainingFile = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -430,8 +324,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					saMaxAttempts = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -444,8 +338,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) >= 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					saSleepDuration = atof(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -458,8 +352,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line;
-					options[prefix].isValid = true;
+					pathConfigHoneydDm = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -473,8 +367,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					doppelIp = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -487,8 +381,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					doppelInterface = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -501,8 +395,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					isDmEnabled = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 
@@ -516,8 +410,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() == DIM)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					enabledFeatures = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 
@@ -531,8 +425,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					pathTrainingCapFolder = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -543,10 +437,10 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if (atof(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					thinningDistance = atof(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -557,10 +451,10 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if (atoi(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					saveFreq = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -571,10 +465,10 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if (atoi(line.c_str()) > 0)
 				{
-					options[prefix].data = line.c_str();
-					options[prefix].isValid = true;
+					dataTTL = atoi(line.c_str());
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -587,8 +481,8 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					options[prefix].data = line;
-					options[prefix].isValid = true;
+					pathCESaveFile = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -598,52 +492,65 @@ void NOVAConfiguration::LoadConfig(char const* configFilePath, string homeNovaPa
 	{
 		syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__);
 	}
+
+
+	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
+	{
+		if (!isValid[i])
+		{
+			// TODO: Make this say which config option is invalid again
+			syslog(SYSL_INFO, "Line: %d Configuration option %s is invalid in the configuration file", __LINE__, prefixes[i].c_str());
+		}
+	}
 	closelog();
+
 }
 
 
-///Checks the optionsMap generated by LoadConfig for any incorrect values;
-///if there are any problems, report to syslog and set option to default
-// TODO: Should really use an enum instead of an int return value here
-int NOVAConfiguration::SetDefaults()
+
+void NOVAConfiguration::SetDefaults()
 {
 	openlog(__FUNCTION__, OPEN_SYSL, LOG_AUTHPRIV);
 
-	int out = 0;
+	interface = "default";
+	pathConfigHoneydHs 	= "Config/haystack.config";
+	pathPcapFile 		= "../pcapfile";
+	pathTrainingFile 	= "Data/data.txt";
+	pathConfigHoneydDm	= "Config/doppelganger.config";
+	pathTrainingCapFolder = "Data";
+	pathCESaveFile = "ceStateSave";
 
-	for(uint i = 0; i < options.size() && out < 2; i++)
-	{
-		//if the option is not valid from LoadConfig, and it is an option that has a default value, assign.
-		//anything that has no static default (i.e. something that has a user defined default) will pass
-		//on to a given module with isValid being false, and kick out from there. The compare doesn't have to
-		//be here until we have a solid foundation determining what will have static defaults and what won't,
-		//but I put it in anyways to remind myself when the time comes
-		if(!options[prefixes[i]].isValid && defaults[i].second.compare("No") != 0)
-		{
-			syslog(SYSL_INFO, "Configuration option %s was not set, present, or valid. Setting to default value %s", prefixes[i].c_str(), defaults[i].second.c_str());
-			options[prefixes[i]].data = defaults[i].second;
-			options[prefixes[i]].isValid = true;
-			out = 1;
-		}
-		if(!options[prefixes[i]].isValid && !defaults[i].second.compare("No"))
-		{
-			syslog(SYSL_ERR, "The configuration variable %s was not set in the configuration file, and has no default.", prefixes[i].c_str());
-			out = 2;
-		}
-	}
+	tcpTimout = 7;
+	tcpCheckFreq = 3;
+	readPcap = false;
+	gotoLive = true;
+	useTerminals = false;
+	isDmEnabled = true;
 
-	closelog();
-	return out;
+	classificationTimeout = 3;
+	saPort = 12024;
+	k = 3;
+	eps = 0.01;
+	isTraining = 0;
+	classificationThreshold = .5;
+	saMaxAttempts = 3;
+	saSleepDuration = .5;
+	doppelIp = "10.0.0.1";
+	doppelInterface = "lo";
+	enabledFeatures = "111111111";
+	thinningDistance = 0;
+	saveFreq = 1440;
+	dataTTL = 0;
 }
 
 // Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 //	Returns: True if (after the function) the user has all necessary ~/.nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
-bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
+bool NOVAConfiguration::InitUserConfigs(string homePath)
 {
 	struct stat fileAttr;
 	//TODO: Do a proper check to make sure all config files exist, not just the .nova dir
-	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+	if ( stat( homePath.c_str(), &fileAttr ) == 0)
 	{
 		return true;
 	}
@@ -664,7 +571,7 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 		}
 
 		//Check the ~/.nova dir again
-		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+		if ( stat( homePath.c_str(), &fileAttr ) == 0)
 		{
 			return true;
 		}
@@ -676,13 +583,294 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 	}
 }
 
-NOVAConfiguration::NOVAConfiguration()
+NOVAConfiguration::NOVAConfiguration(string configFilePath)
 {
-	options.set_empty_key("0");
+	this->configFilePath = configFilePath;
+	SetDefaults();
 }
 
 NOVAConfiguration::~NOVAConfiguration()
 {
+}
+
+double NOVAConfiguration::getClassificationThreshold() const
+{
+	return classificationThreshold;
+}
+
+int NOVAConfiguration::getClassificationTimeout() const
+{
+	return classificationTimeout;
+}
+
+string NOVAConfiguration::getConfigFilePath() const
+{
+	return configFilePath;
+}
+
+int NOVAConfiguration::getDataTTL() const
+{
+	return dataTTL;
+}
+
+string NOVAConfiguration::getDoppelInterface() const
+{
+	return doppelInterface;
+}
+
+string NOVAConfiguration::getDoppelIp() const
+{
+	return doppelIp;
+}
+
+string NOVAConfiguration::getEnabledFeatures() const
+{
+	return enabledFeatures;
+}
+
+double NOVAConfiguration::getEps() const
+{
+	return eps;
+}
+
+bool NOVAConfiguration::getGotoLive() const
+{
+	return gotoLive;
+}
+
+string NOVAConfiguration::getInterface() const
+{
+	return interface;
+}
+
+bool NOVAConfiguration::getIsDmEnabled() const
+{
+	return isDmEnabled;
+}
+
+bool NOVAConfiguration::getIsTraining() const
+{
+	return isTraining;
+}
+
+int NOVAConfiguration::getK() const
+{
+	return k;
+}
+
+string NOVAConfiguration::getPathCESaveFile() const
+{
+	return pathCESaveFile;
+}
+
+string NOVAConfiguration::getPathConfigHoneydDm() const
+{
+	return pathConfigHoneydDm;
+}
+
+string NOVAConfiguration::getPathConfigHoneydHs() const
+{
+	return pathConfigHoneydHs;
+}
+
+string NOVAConfiguration::getPathPcapFile() const
+{
+	return pathPcapFile;
+}
+
+string NOVAConfiguration::getPathTrainingCapFolder() const
+{
+	return pathTrainingCapFolder;
+}
+
+string NOVAConfiguration::getPathTrainingFile() const
+{
+	return pathTrainingFile;
+}
+
+bool NOVAConfiguration::getReadPcap() const
+{
+	return readPcap;
+}
+
+int NOVAConfiguration::getSaMaxAttempts() const
+{
+	return saMaxAttempts;
+}
+
+int NOVAConfiguration::getSaPort() const
+{
+	return saPort;
+}
+
+double NOVAConfiguration::getSaSleepDuration() const
+{
+	return saSleepDuration;
+}
+
+int NOVAConfiguration::getSaveFreq() const
+{
+	return saveFreq;
+}
+
+int NOVAConfiguration::getTcpCheckFreq() const
+{
+	return tcpCheckFreq;
+}
+
+int NOVAConfiguration::getTcpTimout() const
+{
+	return tcpTimout;
+}
+
+int NOVAConfiguration::getThinningDistance() const
+{
+	return thinningDistance;
+}
+
+bool NOVAConfiguration::getUseTerminals() const
+{
+	return useTerminals;
+}
+
+void NOVAConfiguration::setClassificationThreshold(double classificationThreshold)
+{
+	this->classificationThreshold = classificationThreshold;
+}
+
+void NOVAConfiguration::setClassificationTimeout(int classificationTimeout)
+{
+	this->classificationTimeout = classificationTimeout;
+}
+
+void NOVAConfiguration::setConfigFilePath(string configFilePath)
+{
+	this->configFilePath = configFilePath;
+}
+
+void NOVAConfiguration::setDataTTL(int dataTTL)
+{
+	this->dataTTL = dataTTL;
+}
+
+void NOVAConfiguration::setDoppelInterface(string doppelInterface)
+{
+	this->doppelInterface = doppelInterface;
+}
+
+void NOVAConfiguration::setDoppelIp(string doppelIp)
+{
+	this->doppelIp = doppelIp;
+}
+
+void NOVAConfiguration::setEnabledFeatures(string enabledFeatures)
+{
+	this->enabledFeatures = enabledFeatures;
+}
+
+void NOVAConfiguration::setEps(double eps)
+{
+	this->eps = eps;
+}
+
+void NOVAConfiguration::setGotoLive(bool gotoLive)
+{
+	this->gotoLive = gotoLive;
+}
+
+void NOVAConfiguration::setInterface(string interface)
+{
+	this->interface = interface;
+}
+
+void NOVAConfiguration::setIsDmEnabled(bool isDmEnabled)
+{
+	this->isDmEnabled = isDmEnabled;
+}
+
+void NOVAConfiguration::setIsTraining(bool isTraining)
+{
+	this->isTraining = isTraining;
+}
+
+void NOVAConfiguration::setK(int k)
+{
+	this->k = k;
+}
+
+void NOVAConfiguration::setPathCESaveFile(string pathCESaveFile)
+{
+	this->pathCESaveFile = pathCESaveFile;
+}
+
+void NOVAConfiguration::setPathConfigHoneydDm(string pathConfigHoneydDm)
+{
+	this->pathConfigHoneydDm = pathConfigHoneydDm;
+}
+
+void NOVAConfiguration::setPathConfigHoneydHs(string pathConfigHoneydHs)
+{
+	this->pathConfigHoneydHs = pathConfigHoneydHs;
+}
+
+void NOVAConfiguration::setPathPcapFile(string pathPcapFile)
+{
+	this->pathPcapFile = pathPcapFile;
+}
+
+void NOVAConfiguration::setPathTrainingCapFolder(string pathTrainingCapFolder)
+{
+	this->pathTrainingCapFolder = pathTrainingCapFolder;
+}
+
+void NOVAConfiguration::setPathTrainingFile(string pathTrainingFile)
+{
+	this->pathTrainingFile = pathTrainingFile;
+}
+
+void NOVAConfiguration::setReadPcap(bool readPcap)
+{
+	this->readPcap = readPcap;
+}
+
+void NOVAConfiguration::setSaMaxAttempts(int saMaxAttempts)
+{
+	this->saMaxAttempts = saMaxAttempts;
+}
+
+void NOVAConfiguration::setSaPort(int saPort)
+{
+	this->saPort = saPort;
+}
+
+void NOVAConfiguration::setSaSleepDuration(double saSleepDuration)
+{
+	this->saSleepDuration = saSleepDuration;
+}
+
+void NOVAConfiguration::setSaveFreq(int saveFreq)
+{
+	this->saveFreq = saveFreq;
+}
+
+void NOVAConfiguration::setTcpCheckFreq(int tcpCheckFreq)
+{
+	this->tcpCheckFreq = tcpCheckFreq;
+}
+
+void NOVAConfiguration::setTcpTimout(int tcpTimout)
+{
+	this->tcpTimout = tcpTimout;
+}
+
+void NOVAConfiguration::setThinningDistance(int thinningDistance)
+{
+	this->thinningDistance = thinningDistance;
+}
+
+void NOVAConfiguration::setUseTerminals(bool useTerminals)
+{
+	this->useTerminals = useTerminals;
 }
 
 }

@@ -36,11 +36,11 @@ pthread_rwlock_t DMlock;
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
 string hostAddrString, doppelgangerAddrString, DMhoneydConfigPath;
 struct sockaddr_in hostAddr, loopbackAddr;
-bool DMisEnabled, DMuseTerminals;
 
 char * DMpathsFile = (char*)PATHS_FILE;
 extern string userHomePath;
 extern string novaConfigPath;
+extern NOVAConfiguration *globalConfig;
 
 //Alarm IPC globals to improve performance
 struct sockaddr_un DMremote;
@@ -60,7 +60,6 @@ int DM_IPCsock;
 int DMsocketSize = sizeof(DMremote);
 socklen_t *DMsocketSizePtr = (socklen_t*)&DMsocketSize;
 
-in_port_t DMsAlarmPort;
 
 Logger *DMloggerConf;
 
@@ -91,7 +90,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 	DMloggerConf = new Logger(novaConfigPath.c_str(), true);
 	DMLoadConfig((char*)novaConfigPath.c_str());
 
-	if(!DMuseTerminals)
+	if(!globalConfig->getUseTerminals())
 	{
 		//DOMConfigurator::configure(logConfig.c_str());
 		//openlog opens a stream to syslog for logging. The parameters are as follows:
@@ -211,7 +210,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 
 		pthread_rwlock_unlock(&DMlock);
 
-		if(DMsuspect->isHostile && DMisEnabled)
+		if(DMsuspect->isHostile && globalConfig->getIsDmEnabled())
 		{
 			inet_ntop(AF_INET, &(DMsuspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
@@ -373,31 +372,12 @@ string Nova::DMUsage()
 void Nova::DMLoadConfig(char* configFilePath)
 {
 	string prefix;
-	int confCheck = 0;
 
-	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
-
-	confCheck = NovaConfig->SetDefaults();
 
 	openlog("DoppelgangerModule", OPEN_SYSL, LOG_AUTHPRIV);
 
-	//Checks to make sure all values have been set.
-	if(confCheck == 2)
-	{
-		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
-		exit(EXIT_FAILURE);
-	}
-	else if(confCheck == 1)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
-	}
-	else if (confCheck == 0)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
-	}
 
-	hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+	hostAddrString = GetLocalIP(globalConfig->getInterface().c_str());
 
 	if(hostAddrString.size() == 0)
 	{
@@ -407,7 +387,6 @@ void Nova::DMLoadConfig(char* configFilePath)
 
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
 
-	doppelgangerAddrString = NovaConfig->options["DOPPELGANGER_IP"].data;
 	struct in_addr *tempr = NULL;
 
 	if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
@@ -417,8 +396,4 @@ void Nova::DMLoadConfig(char* configFilePath)
 	}
 
 	closelog();
-
-	DMuseTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	DMsAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
-	DMisEnabled = atoi(NovaConfig->options["DM_ENABLED"].data.c_str());
 }

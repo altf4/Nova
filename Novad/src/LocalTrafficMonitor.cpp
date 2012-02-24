@@ -39,14 +39,6 @@ static SuspectHashTable	suspects;
 pthread_rwlock_t LTMsessionLock;
 pthread_rwlock_t LTMsuspectLock;
 
-string LTMdev; //Interface name, read from config file
-string LTMpcapPath; //Pcap file to read from instead of live packet capture.
-bool LTMusePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
-bool LTMgoToLiveCap; //Specify if go to live capture mode after reading from a pcap file
-int LTMtcpTime; //TCP_TIMEOUT Measured in seconds
-int LTMtcpFreq; //TCP_CHECK_FREQ Measured in seconds
-uint LTMclassificationTimeout; //Time between checking suspects for updated data
-
 //Global memory assignments to improve packet handler performance
 int LTMlen, LTMdest_port;
 struct ether_header *LTMethernet;  	/* net/ethernet.h */
@@ -57,15 +49,15 @@ struct sockaddr_un LTMremote;
 
 u_char LTMdata[MAX_MSG_SIZE];
 uint LTMdataLen;
+bool LTMusePcapFile;
 
 char * LTMpathsFile = (char*)PATHS_FILE;
 extern string userHomePath;
 extern string novaConfigPath;
+extern NOVAConfiguration *globalConfig;
 
-bool LTMuseTerminals;
 
 string LTMkey;
-in_port_t LTMsAlarmPort;
 
 Logger * LTMloggerConf;
 
@@ -85,6 +77,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	char errbuf[PCAP_ERRBUF_SIZE];
 	bzero(LTMdata, MAX_MSG_SIZE);
 
+	LTMusePcapFile = globalConfig->getReadPcap();
 	int ret;
 
 	bpf_u_int32 maskp;				/* subnet mask */
@@ -101,7 +94,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 
 	LTMLoadConfig((char*)novaConfigPath.c_str());
 
-	if(!LTMuseTerminals)
+	if(!globalConfig->getUseTerminals())
 	{
 		openlog("LocalTrafficMonitor", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
@@ -126,7 +119,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	char filter_exp[64];
 	pcap_t *handle;
 
-	hostAddress = GetLocalIP(LTMdev.c_str());
+	hostAddress = GetLocalIP(globalConfig->getInterface().c_str());
 
 	if(hostAddress.empty())
 	{
@@ -140,14 +133,14 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	syslog(SYSL_INFO, "%s", filter_exp);
 
 	//If we are reading from a packet capture file
-	if(LTMusePcapFile)
+	if(globalConfig->getReadPcap())
 	{
 		sleep(1); //To allow time for other processes to open
-		handle = pcap_open_offline(LTMpcapPath.c_str(), errbuf);
+		handle = pcap_open_offline(globalConfig->getPathPcapFile().c_str(), errbuf);
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, LTMpcapPath.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, globalConfig->getPathPcapFile().c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp,  filter_exp, 0, maskp) == -1)
@@ -167,22 +160,22 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 		LTMTCPTimeout(NULL);
 		LTMSuspectLoop(NULL);
 
-		if(LTMgoToLiveCap) LTMusePcapFile = false; //If we are going to live capture set the flag.
+		if(globalConfig->getGotoLive()) LTMusePcapFile = false; //If we are going to live capture set the flag.
 	}
 	if(!LTMusePcapFile)
 	{
 		//system("setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/LocalTrafficMonitor");
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-		handle = pcap_open_live(LTMdev.c_str(), BUFSIZ, 0, 1000, errbuf);
+		handle = pcap_open_live(globalConfig->getInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s: %s", __LINE__, LTMdev.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s: %s", __LINE__, globalConfig->getInterface().c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
 
 		/* ask pcap for the network address and mask of the device */
-		ret = pcap_lookupnet(LTMdev.c_str(), &netp, &maskp, errbuf);
+		ret = pcap_lookupnet(globalConfig->getInterface().c_str(), &netp, &maskp, errbuf);
 
 		if(ret == -1)
 		{
@@ -239,7 +232,7 @@ void Nova::LTMPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,co
 		{
 			LTMpacket_info.udp_hdr = *(struct udphdr*) ((char *)LTMip_hdr + sizeof(struct ip));
 
-			if((in_port_t)ntohs(LTMpacket_info.udp_hdr.dest) ==  LTMsAlarmPort)
+			if((in_port_t)ntohs(LTMpacket_info.udp_hdr.dest) ==  globalConfig->getSaPort())
 			{
 				//if we receive a udp packet on the silent alarm port, see if it is a port knock request
 				LTMKnockRequest(LTMpacket_info, (((u_char *)LTMip_hdr + sizeof(struct ip)) + sizeof(struct udphdr)));
@@ -289,7 +282,7 @@ void Nova::LTMPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,co
 		}
 
 		// Allow for continuous classification
-		if (!LTMclassificationTimeout)
+		if (!globalConfig->getClassificationTimeout())
 			LTMSuspectLoop(NULL);
 	}
 	else if(ntohs(LTMethernet->ether_type) == ETHERTYPE_ARP)
@@ -409,7 +402,7 @@ void *Nova::LTMTCPTimeout( void *ptr )
 				//If were reading packets from a file, assume all packets have been loaded and go beyond timeout threshhold
 				if(LTMusePcapFile)
 				{
-					currentTime = packetTime+3+LTMtcpTime;
+					currentTime = packetTime+3+globalConfig->getTcpTimout();
 				}
 				// If it exists)
 				if(packetTime + 2 < currentTime)
@@ -424,7 +417,7 @@ void *Nova::LTMTCPTimeout( void *ptr )
 						}
 
 						// Allow for continuous classification
-						if (!LTMclassificationTimeout)
+						if (!globalConfig->getClassificationTimeout())
 							LTMSuspectLoop(NULL);
 
 						pthread_rwlock_unlock(&LTMsessionLock);
@@ -437,7 +430,7 @@ void *Nova::LTMTCPTimeout( void *ptr )
 
 					}
 					//If this session is timed out
-					else if(packetTime + LTMtcpTime < currentTime)
+					else if(packetTime + globalConfig->getTcpTimout() < currentTime)
 					{
 
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
@@ -447,7 +440,7 @@ void *Nova::LTMTCPTimeout( void *ptr )
 						}
 
 						// Allow for continuous classification
-						if (!LTMclassificationTimeout)
+						if (!globalConfig->getClassificationTimeout())
 							LTMSuspectLoop(NULL);
 
 						pthread_rwlock_unlock(&LTMsessionLock);
@@ -462,7 +455,7 @@ void *Nova::LTMTCPTimeout( void *ptr )
 		}
 		pthread_rwlock_unlock(&LTMsessionLock);
 		//Check only once every TCP_CHECK_FREQ seconds
-		sleep(LTMtcpFreq);
+		sleep(globalConfig->getTcpCheckFreq());
 	}while(!LTMusePcapFile);
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
@@ -533,7 +526,7 @@ void *Nova::LTMSuspectLoop(void *ptr)
 {
 	do
 	{
-		sleep(LTMclassificationTimeout);
+		sleep(globalConfig->getClassificationTimeout());
 		pthread_rwlock_rdlock(&LTMsuspectLock);
 		for(SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
 		{
@@ -553,12 +546,12 @@ void *Nova::LTMSuspectLoop(void *ptr)
 			}
 		}
 		pthread_rwlock_unlock(&LTMsuspectLock);
-	} while(!LTMusePcapFile && LTMclassificationTimeout);
+	} while(!globalConfig->getReadPcap() && globalConfig->getClassificationTimeout());
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
 	// Also return if continuous classification is enabled by setting classificationTimeout to 0
-	if(LTMusePcapFile || !LTMclassificationTimeout) return NULL;
+	if(globalConfig->getReadPcap() || !globalConfig->getClassificationTimeout()) return NULL;
 
 	//Shouldn't get here
 	syslog(SYSL_ERR, "Line: %d LTMSuspectLoop Thread has halted!", __LINE__);
@@ -570,7 +563,6 @@ void Nova::LTMLoadConfig(char* configFilePath)
 	string line;
 	string prefix;
 	uint i = 0;
-	int confCheck = 0;
 
 	string settingsPath = userHomePath +"/settings";
 	ifstream settings(settingsPath.c_str());
@@ -605,37 +597,7 @@ void Nova::LTMLoadConfig(char* configFilePath)
 	}
 
 
-	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
-
-	confCheck = NovaConfig->SetDefaults();
-
-	//Checks to make sure all values have been set.
-	if(confCheck == 2)
-	{
-		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
-		exit(EXIT_FAILURE);
-	}
-	else if(confCheck == 1)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
-	}
-	else if (confCheck == 0)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
-	}
-
 	closelog();
-
-	LTMdev = NovaConfig->options["INTERFACE"].data;
-	LTMtcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
-	LTMtcpFreq = atoi(NovaConfig->options["TCP_CHECK_FREQ"].data.c_str());
-	LTMusePcapFile = atoi(NovaConfig->options["READ_PCAP"].data.c_str());
-	LTMpcapPath = NovaConfig->options["PCAP_FILE"].data;
-	LTMgoToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
-	LTMuseTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	LTMclassificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
-	LTMsAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
 }
 
 
@@ -654,7 +616,7 @@ void Nova::LTMKnockRequest(Packet packet, u_char * payload)
 		sentKey = (char*)(payload+LTMkey.size());
 		if(!sentKey.compare("OPEN"))
 		{
-			ss << "iptables -I INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << LTMsAlarmPort << " -j ACCEPT";
+			ss << "iptables -I INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << globalConfig->getSaPort() << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
 				LTMloggerConf->Logging(INFO, "Failed to open port with port knocking.");
@@ -662,7 +624,7 @@ void Nova::LTMKnockRequest(Packet packet, u_char * payload)
 		}
 		else if(!sentKey.compare("SHUT"))
 		{
-			ss << "iptables -D INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << LTMsAlarmPort << " -j ACCEPT";
+			ss << "iptables -D INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << globalConfig->getSaPort() << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
 				LTMloggerConf->Logging(INFO, "Failed to shut port after knock request.");

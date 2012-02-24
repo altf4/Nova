@@ -93,7 +93,6 @@ int nPts = 0;						//actual number of data points
 ANNpointArray dataPts;				//data points
 ANNpointArray normalizedDataPts;	//normalized data points
 ANNkd_tree*	kdTree;					// search structure
-string dataFile;					//input for data points
 
 //Used to indicate if the kd tree needs to be reformed
 bool updateKDTree = false;
@@ -108,6 +107,7 @@ int len;
 const char *outFile;				//output for data points during training
 extern string userHomePath;
 extern string novaConfigPath;
+extern NOVAConfiguration *globalConfig;
 
 // Used for data normalization
 double maxFeatureValues[DIM];
@@ -115,21 +115,8 @@ double minFeatureValues[DIM];
 double meanFeatureValues[DIM];
 
 // Nova Configuration Variables (read from config file)
-bool isTraining;
-string trainingFolder;
 string trainingCapFile;
-bool useTerminals;
-in_port_t sAlarmPort;					//Silent Alarm destination port
-int classificationTimeout;		//In seconds, how long to wait between classifications
-int k;							//number of nearest neighbors
-double eps;						//error bound
-double classificationThreshold ; //value of classification to define split between hostile / benign
-uint SA_Max_Attempts;			//The number of times to attempt to reconnect to a neighbor
-double SA_Sleep_Duration;		//The time to sleep after a port knocking request and allow it to go through
 Logger * loggerConf;
-int saveFrequency;
-int dataTTL;
-string ceSaveFile;
 string SMTP_addr;
 string SMTP_domain;
 in_port_t SMTP_port;
@@ -196,7 +183,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
 
 	Reload();
 
-	if(!useTerminals)
+	if(!globalConfig->getUseTerminals())
 	{
 		openlog("ClassificationEngine", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
@@ -209,7 +196,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
 
 	pthread_create(&GUIListenThread, NULL, CE_GUILoop, NULL);
 	//Are we Training or Classifying?
-	if(isTraining)
+	if(globalConfig->getIsTraining())
 	{
 		// We suffix the training capture files with the date/time
 		time_t rawtime;
@@ -218,7 +205,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
 
 		char buffer [40];
 		strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
-		trainingCapFile = userHomePath + "/" + trainingFolder + "/training" + buffer + ".dump";
+		trainingCapFile = userHomePath + "/" + globalConfig->getPathTrainingCapFolder() + "/training" + buffer + ".dump";
 
 		enabledFeatures = DIM;
 		pthread_create(&trainingLoopThread,NULL,TrainingLoop,(void *)outFile);
@@ -274,9 +261,9 @@ void *Nova::ClassificationEngineMain(void *ptr)
 	{
 		if (CEReceiveSuspectData())
 		{
-			if(!classificationTimeout)
+			if(!globalConfig->getClassificationTimeout())
 			{
-				if (!isTraining)
+				if (!globalConfig->getIsTraining())
 					ClassificationLoop(NULL);
 				else
 					TrainingLoop(NULL);
@@ -329,17 +316,17 @@ void Nova::AppendToStateFile()
 	if (dataSize == 0)
 		return;
 
-	ofstream out(ceSaveFile.data(), ofstream::binary | ofstream::app);
+	ofstream out(globalConfig->getPathCESaveFile().data(), ofstream::binary | ofstream::app);
 	if(!out.is_open())
 	{
-		syslog(SYSL_ERR, "Line: %d unbable open CE save file %s", __LINE__, ceSaveFile.c_str());
+		syslog(SYSL_ERR, "Line: %d unbable open CE save file %s", __LINE__, globalConfig->getPathCESaveFile().c_str());
 		return;
 	}
 
 	out.write((char*)&lastSaveTime, sizeof lastSaveTime);
 	out.write((char*)&dataSize, sizeof dataSize);
 
-	syslog(SYSL_INFO, "Line: %d Appending %d bytes to the CE state save file at %s", __LINE__, dataSize, ceSaveFile.c_str());
+	syslog(SYSL_INFO, "Line: %d Appending %d bytes to the CE state save file at %s", __LINE__, dataSize, globalConfig->getPathCESaveFile().c_str());
 
 	// Serialize our suspect table
 	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
@@ -371,7 +358,7 @@ void Nova::LoadStateFile()
 		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
 
 	// Open input file
-	ifstream in(ceSaveFile.data(), ios::binary | ios::in);
+	ifstream in(globalConfig->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
 		syslog(SYSL_ERR, "Line: %d Attempted load last saved state but unable to open CE load file. This in normal for first run.", __LINE__);
@@ -398,7 +385,7 @@ void Nova::LoadStateFile()
 		in.read((char*) &dataSize, sizeof dataSize);
 		lengthLeft -= sizeof dataSize;
 
-		if (dataTTL && (timeStamp < lastLoadTime - dataTTL))
+		if (globalConfig->getDataTTL() && (timeStamp < lastLoadTime - globalConfig->getDataTTL()))
 		{
 			syslog(SYSL_INFO, "Line %d: Throwing out old CE save state with timestamp of %d", __LINE__, (int)timeStamp);
 			in.seekg(dataSize, ifstream::cur);
@@ -457,7 +444,7 @@ void Nova::RefreshStateFile()
 		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
 
 	// Open input file
-	ifstream in(ceSaveFile.data(), ios::binary | ios::in);
+	ifstream in(globalConfig->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
 		syslog(SYSL_ERR, "Line: %d Attempted load but unable to open CE load file", __LINE__);
@@ -465,7 +452,7 @@ void Nova::RefreshStateFile()
 	}
 
 	// Open the tmp file
-	string tmpFile = ceSaveFile + ".tmp";
+	string tmpFile = globalConfig->getPathCESaveFile() + ".tmp";
 	ofstream out(tmpFile.data(), ios::binary);
 	if(!out.is_open())
 	{
@@ -494,7 +481,7 @@ void Nova::RefreshStateFile()
 		in.read((char*) &dataSize, sizeof dataSize);
 		lengthLeft -= sizeof dataSize;
 
-		if (dataTTL && (timeStamp < lastLoadTime - dataTTL))
+		if (globalConfig->getDataTTL() && (timeStamp < lastLoadTime - globalConfig->getDataTTL()))
 		{
 			syslog(SYSL_INFO, "Line %d: Throwing out old CE save state with timestamp of %d", __LINE__, (int)timeStamp);
 			in.seekg(dataSize, ifstream::cur);
@@ -567,7 +554,7 @@ void Nova::RefreshStateFile()
 	out.close();
 	in.close();
 
-	string copyCommand = "cp -f " + tmpFile + " " + ceSaveFile;
+	string copyCommand = "cp -f " + tmpFile + " " + globalConfig->getPathCESaveFile();
 	if (system(copyCommand.c_str()) == -1)
 		syslog(SYSL_ERR, "Line %d: Error: Unable to copy CE state tmp file to CE state file. System call to cp failed.", __LINE__);
 }
@@ -597,15 +584,15 @@ void Nova::Reload()
 	CELoadConfig((char*)novaConfig.c_str());
 
 	// Did our data file move?
-	dataFile = userHomePath + "/" +dataFile;
-	outFile = dataFile.c_str();
+	globalConfig->getPathTrainingFile() = userHomePath + "/" +globalConfig->getPathTrainingFile();
+	outFile = globalConfig->getPathTrainingFile().c_str();
 
 	// Reload the data file
 	if (dataPts != NULL)
 		annDeallocPts(dataPts);
 	if (normalizedDataPts != NULL)
 		annDeallocPts(normalizedDataPts);
-	LoadDataPointsFromFile(dataFile);
+	LoadDataPointsFromFile(globalConfig->getPathTrainingFile());
 
 	// Set everyone to be reclassified
 	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
@@ -672,14 +659,14 @@ void *Nova::ClassificationLoop(void *ptr)
 
 	//Builds the Silent Alarm Network address
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(sAlarmPort);
+	serv_addr.sin_port = htons(globalConfig->getSaPort());
 
 	LoadStateFile();
 
 	//Classification Loop
 	do
 	{
-		sleep(classificationTimeout);
+		sleep(globalConfig->getClassificationTimeout());
 		pthread_rwlock_wrlock(&lock);
 		//Calculate the "true" Feature Set for each Suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
@@ -716,16 +703,16 @@ void *Nova::ClassificationLoop(void *ptr)
 		}
 		pthread_rwlock_unlock(&lock);
 
-		if (saveFrequency > 0)
-			if ((time(NULL) - lastSaveTime) > saveFrequency)
+		if (globalConfig->getSaveFreq() > 0)
+			if ((time(NULL) - lastSaveTime) > globalConfig->getSaveFreq())
 			{
 				pthread_rwlock_wrlock(&lock);
 				AppendToStateFile();
 				pthread_rwlock_unlock(&lock);
 			}
 
-		if (dataTTL > 0)
-			if ((time(NULL) - lastLoadTime) > dataTTL)
+		if (globalConfig->getDataTTL() > 0)
+			if ((time(NULL) - lastLoadTime) > globalConfig->getDataTTL())
 			{
 				pthread_rwlock_wrlock(&lock);
 				AppendToStateFile();
@@ -743,10 +730,10 @@ void *Nova::ClassificationLoop(void *ptr)
 				pthread_rwlock_unlock(&lock);
 			}
 
-	} while(classificationTimeout);
+	} while(globalConfig->getClassificationTimeout());
 
 	//Shouldn't get here!!
-	if(classificationTimeout)
+	if(globalConfig->getClassificationTimeout())
 		syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
 	return NULL;
 }
@@ -764,7 +751,7 @@ void *Nova::TrainingLoop(void *ptr)
 	//Training Loop
 	do
 	{
-		sleep(classificationTimeout);
+		sleep(globalConfig->getClassificationTimeout());
 		ofstream myfile (trainingCapFile.data(), ios::app);
 
 		if (myfile.is_open())
@@ -803,10 +790,10 @@ void *Nova::TrainingLoop(void *ptr)
 			syslog(SYSL_ERR, "Line: %d Unable to open file %s", __LINE__, trainingCapFile.data());
 		}
 		myfile.close();
-	} while(classificationTimeout);
+	} while(globalConfig->getClassificationTimeout());
 
 	//Shouldn't get here!
-	if (classificationTimeout)
+	if (globalConfig->getClassificationTimeout())
 		syslog(SYSL_ERR, "Line: %d Training thread ended. Shouldn't get here!!!", __LINE__);
 
 	return NULL;
@@ -826,7 +813,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	}
 
 	sendaddr.sin_family = AF_INET;
-	sendaddr.sin_port = htons(sAlarmPort);
+	sendaddr.sin_port = htons(globalConfig->getSaPort());
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
 
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
@@ -841,13 +828,13 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	}
 
 	stringstream ss;
-	ss << "sudo iptables -A INPUT -p udp --dport " << sAlarmPort << " -j REJECT --reject-with icmp-port-unreachable";
+	ss << "sudo iptables -A INPUT -p udp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with icmp-port-unreachable";
 	if(system(ss.str().c_str()) == -1)
 	{
 	    loggerConf->Logging(INFO, "Failed to update iptables.");
 	}
 	ss.str("");
-	ss << "sudo iptables -A INPUT -p tcp --dport " << sAlarmPort << " -j REJECT --reject-with tcp-reset";
+	ss << "sudo iptables -A INPUT -p tcp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with tcp-reset";
 	if(system(ss.str().c_str()) == -1)
 	{
 	    loggerConf->Logging(INFO, "Failed to update iptables.");
@@ -916,7 +903,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 			suspects[addr]->flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 			syslog(SYSL_INFO, "Line: %d Received Silent Alarm!\n %s", __LINE__, (suspects[addr]->ToString(featureEnabled)).c_str());
-			if(!classificationTimeout)
+			if(!globalConfig->getClassificationTimeout())
 				ClassificationLoop(NULL);
 		}
 		catch(std::exception e)
@@ -963,6 +950,7 @@ void Nova::FormKdTree()
 
 void Nova::Classify(Suspect *suspect)
 {
+	int k = globalConfig->getK();
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
@@ -971,7 +959,7 @@ void Nova::Classify(Suspect *suspect)
 			k,									// number of near neighbors
 			nnIdx,								// nearest neighbors (returned)
 			dists,								// distance (returned)
-			eps);								// error bound
+			globalConfig->getEps());								// error bound
 
 	for (int i = 0; i < DIM; i++)
 		suspect->featureAccuracy[i] = 0;
@@ -1044,7 +1032,7 @@ void Nova::Classify(Suspect *suspect)
 	else if (suspect->classification > 1)
 		suspect->classification = 1;
 
-	if( suspect->classification > classificationThreshold)
+	if( suspect->classification > globalConfig->getClassificationThreshold())
 	{
 		suspect->isHostile = true;
 	}
@@ -1408,7 +1396,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 
 				uint i;
-				for(i = 0; i < SA_Max_Attempts; i++)
+				for(i = 0; i < globalConfig->getSaMaxAttempts(); i++)
 				{
 					if(CEKnockPort(OPEN))
 					{
@@ -1425,7 +1413,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 							if(errno == EHOSTUNREACH)
 							{
 								//set to max attempts to hit the failed connect condition
-								i = SA_Max_Attempts;
+								i = globalConfig->getSaMaxAttempts();
 								syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
 								break;
 							}
@@ -1437,7 +1425,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					}
 				}
 				//If connecting failed
-				if(i == SA_Max_Attempts )
+				if(i == globalConfig->getSaMaxAttempts() )
 				{
 					close(sockfd);
 					ss.str("");
@@ -1514,7 +1502,7 @@ bool Nova::CEKnockPort(bool mode)
 	}
 
 	close(sockfd);
-	sleep(SA_Sleep_Duration);
+	sleep(globalConfig->getSaSleepDuration());
 	return true;
 }
 
@@ -1615,7 +1603,7 @@ void Nova::CEReceiveGUICommand()
 				delete it->second;
 			suspectsSinceLastSave.clear();
 
-			string delString = "rm -f " + ceSaveFile;
+			string delString = "rm -f " + globalConfig->getPathCESaveFile();
 			if(system(delString.c_str()) == -1)
 				syslog(SYSL_ERR, "Line: %d Unable to delete CE state file. System call to rm failed.", __LINE__);
 
@@ -1712,7 +1700,6 @@ void Nova::CELoadConfig(char * configFilePath)
 {
 	string prefix, line;
 	uint i = 0;
-	int confCheck = 0;
 
 	string settingsPath = userHomePath +"/settings";
 	ifstream settings(settingsPath.c_str());
@@ -1759,30 +1746,10 @@ void Nova::CELoadConfig(char * configFilePath)
 	}
 	settings.close();
 
-	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
-
-	confCheck = NovaConfig->SetDefaults();
 
 	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);
 
-	//Checks to make sure all values have been set.
-	if(confCheck == 2)
-	{
-		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
-
-		exit(EXIT_FAILURE);
-	}
-	else if(confCheck == 1)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
-	}
-	else if (confCheck == 0)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
-	}
-
-	string hostAddrString = GetLocalIP(NovaConfig->options["INTERFACE"].data.c_str());
+	string hostAddrString = GetLocalIP(globalConfig->getInterface().c_str());
 
 	if(hostAddrString.size() == 0)
 	{
@@ -1795,23 +1762,7 @@ void Nova::CELoadConfig(char * configFilePath)
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
 
 
-	useTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	sAlarmPort = atoi(NovaConfig->options["SILENT_ALARM_PORT"].data.c_str());
-	k = atoi(NovaConfig->options["K"].data.c_str());
-	eps =  atof(NovaConfig->options["EPS"].data.c_str());
-	classificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
-	isTraining = atoi(NovaConfig->options["IS_TRAINING"].data.c_str());
-	trainingFolder = NovaConfig->options["TRAINING_CAP_FOLDER"].data;
-	classificationThreshold = atof(NovaConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str());
-	dataFile = NovaConfig->options["DATAFILE"].data;
-	SA_Max_Attempts = atoi(NovaConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
-	SA_Sleep_Duration = atof(NovaConfig->options["SA_SLEEP_DURATION"].data.c_str());
-
-	saveFrequency = atoi(NovaConfig->options["SAVE_FREQUENCY"].data.c_str());
-	dataTTL = atoi(NovaConfig->options["DATA_TTL"].data.c_str());
-	ceSaveFile = NovaConfig->options["CE_SAVE_FILE"].data;
-
-	string enabledFeatureMask = NovaConfig->options["ENABLED_FEATURES"].data;
+	string enabledFeatureMask = globalConfig->getEnabledFeatures();
 
 	featureMask = 0;
 	for (uint i = 0; i < DIM; i++)

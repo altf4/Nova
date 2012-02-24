@@ -40,15 +40,6 @@ static SuspectHashTable	suspects;
 pthread_rwlock_t HSsessionLock;
 pthread_rwlock_t HSsuspectLock;
 
-string HSdev; //Interface name, read from config file
-string HShoneydConfigPath;
-string HSpcapPath; //Pcap file to read from instead of live packet capture.
-bool HSusePcapFile; //Specify if reading from PCAP file or capturing live, true uses file
-bool HSgoToLiveCap; //Specify if go to live capture mode after reading from a pcap file
-int HStcpTime; //TCP_TIMEOUT measured in seconds
-int HStcpFreq; //TCP_CHECK_FREQ measured in seconds
-uint HSclassificationTimeout; //Time between checking suspects for updated data
-
 //Memory assignments moved outside packet handler to increase performance
 int HSlen, HSdest_port;
 struct sockaddr_un HSremote;
@@ -63,8 +54,10 @@ uint HSdataLen;
 char * HSpathsFile = (char*)PATHS_FILE;
 extern string userHomePath;
 extern string novaConfigPath;
+extern NOVAConfiguration *globalConfig;
 
-bool HSuseTerminals;
+bool HSusePcapcFile;
+
 string dhcpListFile = "/var/log/honeyd/ipList";
 vector <string> haystackAddresses;
 vector <string> haystackDhcpAddresses;
@@ -94,6 +87,7 @@ void *Nova::HaystackMain(void *ptr)
 	bzero(HSdata, MAX_MSG_SIZE);
 
 	int ret;
+	HSusePcapcFile = globalConfig->getReadPcap();
 
 
 	string haystackAddresses_csv = "";
@@ -104,9 +98,7 @@ void *Nova::HaystackMain(void *ptr)
 	if(chdir(userHomePath.c_str()) == -1)
 	    HSloggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
 
-	HSLoadConfig((char*)novaConfigPath.c_str());
-
-	if(!HSuseTerminals)
+	if(!globalConfig->getUseTerminals())
 	{
 		openlog("Haystack", NO_TERM_SYSL, LOG_AUTHPRIV);
 	}
@@ -122,7 +114,7 @@ void *Nova::HaystackMain(void *ptr)
 	char filter_exp[64];
 
 
-	haystackAddresses = GetHaystackAddresses(HShoneydConfigPath);
+	haystackAddresses = GetHaystackAddresses(globalConfig->getPathConfigHoneydHs());
 	haystackDhcpAddresses = GetHaystackDhcpAddresses(dhcpListFile);
 	haystackAddresses_csv = ConstructFilterString();
 
@@ -150,14 +142,14 @@ void *Nova::HaystackMain(void *ptr)
 	HSlen = strlen(HSremote.sun_path) + sizeof(HSremote.sun_family);
 
 	//If we're reading from a packet capture file
-	if(HSusePcapFile)
+	if(HSusePcapcFile)
 	{
 		sleep(1); //To allow time for other processes to open
-		handle = pcap_open_offline(HSpcapPath.c_str(), errbuf);
+		handle = pcap_open_offline(globalConfig->getPathPcapFile().c_str(), errbuf);
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, HSpcapPath.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, globalConfig->getPathPcapFile().c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
@@ -178,23 +170,23 @@ void *Nova::HaystackMain(void *ptr)
 		HSSuspectLoop(NULL);
 
 
-		if(HSgoToLiveCap) HSusePcapFile = false; //If we are going to live capture set the flag.
+		if(globalConfig->getGotoLive()) HSusePcapcFile = false; //If we are going to live capture set the flag.
 	}
 
 
-	if(!HSusePcapFile)
+	if(!HSusePcapcFile)
 	{
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-		handle = pcap_open_live(HSdev.c_str(), BUFSIZ, 0, 1000, errbuf);
+		handle = pcap_open_live(globalConfig->getInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, HSdev.c_str(), errbuf);
+			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, globalConfig->getInterface().c_str(), errbuf);
 			exit(EXIT_FAILURE);
 		}
 
 		/* ask pcap for the network address and mask of the device */
-		ret = pcap_lookupnet(HSdev.c_str(), &netp, &maskp, errbuf);
+		ret = pcap_lookupnet(globalConfig->getInterface().c_str(), &netp, &maskp, errbuf);
 
 		if(ret == -1)
 		{
@@ -297,7 +289,7 @@ void Nova::HSPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,con
 		}
 
 		// Allow for continuous classification
-		if (!HSclassificationTimeout)
+		if (!globalConfig->getClassificationTimeout())
 			HSSuspectLoop(NULL);
 	}
 	else if(ntohs(HSethernet->ether_type) == ETHERTYPE_ARP)
@@ -487,9 +479,9 @@ void *Nova::HSTCPTimeout(void *ptr)
 			{
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
 				//If were reading packets from a file, assume all packets have been loaded and go beyond timeout threshhold
-				if(HSusePcapFile)
+				if(HSusePcapcFile)
 				{
-					currentTime = packetTime+3+HStcpTime;
+					currentTime = packetTime+3+globalConfig->getTcpTimout();
 				}
 				// If it exists)
 				if(packetTime + 2 < currentTime)
@@ -506,7 +498,7 @@ void *Nova::HSTCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if (!HSclassificationTimeout)
+						if (!globalConfig->getClassificationTimeout())
 							HSSuspectLoop(NULL);
 
 						pthread_rwlock_unlock(&HSsessionLock);
@@ -520,7 +512,7 @@ void *Nova::HSTCPTimeout(void *ptr)
 						//tempEvent = NULL;
 					}
 					//If this session is timed out
-					else if(packetTime + HStcpTime < currentTime)
+					else if(packetTime + globalConfig->getTcpTimout() < currentTime)
 					{
 						//tempEvent = new TrafficEvent( &(SessionTable[it->first].session), FROM_HAYSTACK_DP);
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
@@ -530,7 +522,7 @@ void *Nova::HSTCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if (!HSclassificationTimeout)
+						if (!globalConfig->getClassificationTimeout())
 							HSSuspectLoop(NULL);
 
 						pthread_rwlock_unlock(&HSsessionLock);
@@ -548,12 +540,12 @@ void *Nova::HSTCPTimeout(void *ptr)
 		}
 		pthread_rwlock_unlock(&HSsessionLock);
 		//Check only once every TCP_CHECK_FREQ seconds
-		sleep(HStcpFreq);
-	}while(!HSusePcapFile);
+		sleep(globalConfig->getTcpCheckFreq());
+	}while(!HSusePcapcFile);
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
-	if(HSusePcapFile) return NULL;
+	if(HSusePcapcFile) return NULL;
 
 	//Shouldn't get here
 	syslog(SYSL_ERR, "Line: %d TCP Timeout Thread has halted", __LINE__);
@@ -611,7 +603,7 @@ void Nova::HSUpdateSuspect(Packet packet)
 	else
 		suspects[addr]->AddEvidence(packet);
 
-	suspects[addr]->isLive = !HSusePcapFile;
+	suspects[addr]->isLive = HSusePcapcFile;
 	pthread_rwlock_unlock(&HSsuspectLock);
 }
 
@@ -620,7 +612,7 @@ void *Nova::HSSuspectLoop(void *ptr)
 {
 	do
 	{
-		sleep(HSclassificationTimeout);
+		sleep(globalConfig->getClassificationTimeout());
 		pthread_rwlock_rdlock(&HSsuspectLock);
 		for(SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
 		{
@@ -640,12 +632,12 @@ void *Nova::HSSuspectLoop(void *ptr)
 			}
 		}
 		pthread_rwlock_unlock(&HSsuspectLock);
-	} while(!HSusePcapFile && HSclassificationTimeout);
+	} while(!HSusePcapcFile && globalConfig->getClassificationTimeout());
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
 	// Also return if continuous classification is enabled by setting classificationTimeout to 0
-	if(HSusePcapFile || !HSclassificationTimeout) return NULL;
+	if(HSusePcapcFile || !globalConfig->getClassificationTimeout()) return NULL;
 
 	//Shouldn't get here
 	syslog(SYSL_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
@@ -711,44 +703,4 @@ vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 		retAddresses.push_back(token);
 	}
 	return retAddresses;
-}
-
-
-void Nova::HSLoadConfig(char* configFilePath)
-{
-	NOVAConfiguration * NovaConfig = new NOVAConfiguration();
-	NovaConfig->LoadConfig(configFilePath, userHomePath, __FILE__);
-
-	int confCheck = NovaConfig->SetDefaults();
-
-	string prefix;
-
-	openlog("Haystack", OPEN_SYSL, LOG_AUTHPRIV);
-
-	//Checks to make sure all values have been set.
-	if(confCheck == 2)
-	{
-		syslog(SYSL_ERR, "Line: %d One or more values have not been set, and have no default.", __LINE__);
-		exit(EXIT_FAILURE);
-	}
-	else if(confCheck == 1)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully with defaults; some variables in NOVAConfig.txt were incorrectly set, not present, or not valid!", __LINE__);
-	}
-	else if (confCheck == 0)
-	{
-		syslog(SYSL_INFO, "Line: %d INFO Config loaded successfully.", __LINE__);
-	}
-
-	closelog();
-
-	HSdev = NovaConfig->options["INTERFACE"].data;
-	HShoneydConfigPath = NovaConfig->options["HS_HONEYD_CONFIG"].data;
-	HStcpTime = atoi(NovaConfig->options["TCP_TIMEOUT"].data.c_str());
-	HStcpFreq = atoi(NovaConfig->options["TCP_CHECK_FREQ"].data.c_str());
-	HSusePcapFile = atoi(NovaConfig->options["READ_PCAP"].data.c_str());
-	HSpcapPath = NovaConfig->options["PCAP_FILE"].data;
-	HSgoToLiveCap = atoi(NovaConfig->options["GO_TO_LIVE"].data.c_str());
-	HSuseTerminals = atoi(NovaConfig->options["USE_TERMINALS"].data.c_str());
-	HSclassificationTimeout = atoi(NovaConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
 }
