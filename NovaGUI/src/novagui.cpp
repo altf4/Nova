@@ -57,7 +57,7 @@ bool useTerminals = true;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
 string configurationFile = "/Config/NOVAConfig.txt";
-NOVAConfiguration configuration;
+NOVAConfiguration *configuration;
 bool goToLive = true;
 bool readFromPcap = false;
 
@@ -66,6 +66,7 @@ string doppelgangerPath;
 string haystackPath;
 string trainingDataPath;
 string ceSaveFile;
+string configurationInterface;
 double thinningDistance;
 bool isTraining = false;
 string dmAddr;
@@ -380,8 +381,8 @@ void NovaGUI::setNovaCommands()
 	novaComponents[COMPONENT_HS].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration.options["INTERFACE"].data + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + configurationInterface + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configurationInterface + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
 void NovaGUI::loadPaths()
@@ -2491,21 +2492,22 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 void NovaGUI::loadConfiguration()
 {
 	// Reload the configuration file
-	configuration.LoadConfig(configurationFile.c_str(), homePath, __FILE__);
+	configuration = new NOVAConfiguration(configurationFile);
 
-	useTerminals = atoi(configuration.options["USE_TERMINALS"].data.c_str());
-	isTraining = atoi(configuration.options["IS_TRAINING"].data.c_str());
-	string enabledFeatureMask = configuration.options["ENABLED_FEATURES"].data;
+	configurationInterface = configuration->getInterface();
+	useTerminals = configuration->getUseTerminals();
+	isTraining = configuration->getIsTraining();
+	string enabledFeatureMask = configuration->getEnabledFeatures();
 
-	doppelgangerPath = configuration.options["DM_HONEYD_CONFIG"].data;
-	haystackPath = configuration.options["HS_HONEYD_CONFIG"].data;
-	trainingDataPath = configuration.options["DATAFILE"].data;
-	thinningDistance = atof(configuration.options["THINNING_DISTANCE"].data.c_str());
-	ceSaveFile = configuration.options["CE_SAVE_FILE"].data;
+	doppelgangerPath = configuration->getPathConfigHoneydDm();
+	haystackPath = configuration->getPathConfigHoneydHs();
+	trainingDataPath = configuration->getPathTrainingFile();
+	thinningDistance = configuration->getThinningDistance();
+	ceSaveFile = configuration->getPathCESaveFile();
 
-	goToLive = atoi(configuration.options["GO_TO_LIVE"].data.c_str());
-	readFromPcap = atoi(configuration.options["READ_PCAP"].data.c_str());
-	dmAddr = configuration.options["DOPPELGANGER_IP"].data.c_str();
+	goToLive = configuration->getGotoLive();
+	readFromPcap = configuration->getReadPcap();
+	dmAddr = configuration->getDoppelIp();
 
 	enabledFeatures = 0;
 	for (uint i = 0; i < DIM; i++)

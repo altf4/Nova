@@ -1259,50 +1259,35 @@ void NovaConfig::loadPreferences()
 	//Read from CE Config
 	string configurationFile = homePath + "/Config/NOVAConfig.txt";
 
+	NOVAConfiguration *NConfig = new NOVAConfiguration(configurationFile);
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
-	NOVAConfiguration * NConfig = new NOVAConfiguration();
-	NConfig->LoadConfig((char*)configurationFile.c_str(), homePath, __FILE__);
-	if (!NConfig->options["INTERFACE"].isValid || !NConfig->options["DATAFILE"].isValid
-			|| !NConfig->options["SA_MAX_ATTEMPTS"].isValid || !NConfig->options["SA_SLEEP_DURATION"].isValid
-			|| !NConfig->options["SILENT_ALARM_PORT"].isValid || !NConfig->options["K"].isValid
-			|| !NConfig->options["EPS"].isValid || !NConfig->options["CLASSIFICATION_TIMEOUT"].isValid
-			|| !NConfig->options["CLASSIFICATION_THRESHOLD"].isValid || !NConfig->options["IS_TRAINING"].isValid
-			|| !NConfig->options["HS_HONEYD_CONFIG"].isValid || !NConfig->options["TCP_TIMEOUT"].isValid
-			|| !NConfig->options["TCP_CHECK_FREQ"].isValid || !NConfig->options["DM_HONEYD_CONFIG"].isValid
-			|| !NConfig->options["DOPPELGANGER_IP"].isValid || !NConfig->options["DM_ENABLED"].isValid
-			|| !NConfig->options["READ_PCAP"].isValid || !NConfig->options["PCAP_FILE"].isValid
-			|| !NConfig->options["GO_TO_LIVE"].isValid || !NConfig->options["USE_TERMINALS"].isValid
-			|| !NConfig->options["ENABLED_FEATURES"].isValid)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d ERROR: Unable to load configuration file.", __FILE__, __LINE__);
-		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_READ_FAIL, "Error: Unable to read NOVA configuration file " + configurationFile);
-		this->close();
-	}
+	ui.interfaceEdit->setText(QString::fromStdString(NConfig->getInterface()));
+	ui.dataEdit->setText(QString::fromStdString(NConfig->getPathTrainingFile()));
 
-	ui.interfaceEdit->setText((QString)NConfig->options["INTERFACE"].data.c_str());
-	ui.dataEdit->setText((QString)NConfig->options["DATAFILE"].data.c_str());
-	ui.saAttemptsMaxEdit->setText((QString)NConfig->options["SA_MAX_ATTEMPTS"].data.c_str());
-	ui.saAttemptsTimeEdit->setText((QString)NConfig->options["SA_SLEEP_DURATION"].data.c_str());
-	ui.saPortEdit->setText((QString)NConfig->options["SILENT_ALARM_PORT"].data.c_str());
-	ui.ceIntensityEdit->setText((QString)NConfig->options["K"].data.c_str());
-	ui.ceErrorEdit->setText((QString)NConfig->options["EPS"].data.c_str());
-	ui.ceFrequencyEdit->setText((QString)NConfig->options["CLASSIFICATION_TIMEOUT"].data.c_str());
-	ui.ceThresholdEdit->setText((QString)NConfig->options["CLASSIFICATION_THRESHOLD"].data.c_str());
-	ui.trainingCheckBox->setChecked(atoi(NConfig->options["IS_TRAINING"].data.c_str()));
-	ui.hsConfigEdit->setText((QString)NConfig->options["HS_HONEYD_CONFIG"].data.c_str());
-	ui.tcpTimeoutEdit->setText((QString)NConfig->options["TCP_TIMEOUT"].data.c_str());
-	ui.tcpFrequencyEdit->setText((QString)NConfig->options["TCP_CHECK_FREQ"].data.c_str());
-	ui.dmConfigEdit->setText((QString)NConfig->options["DM_HONEYD_CONFIG"].data.c_str());
-	ui.dmIPEdit->setText((QString)NConfig->options["DOPPELGANGER_IP"].data.c_str());
-	ui.dmCheckBox->setChecked(atoi(NConfig->options["DM_ENABLED"].data.c_str()));
-	ui.pcapCheckBox->setChecked(atoi(NConfig->options["READ_PCAP"].data.c_str()));
+	ui.saAttemptsMaxEdit->setText(QString::number(NConfig->getSaMaxAttempts()));
+	ui.saAttemptsTimeEdit->setText(QString::number(NConfig->getSaSleepDuration()));
+	ui.saPortEdit->setText(QString::number(NConfig->getSaPort()));
+	ui.ceIntensityEdit->setText(QString::number(NConfig->getK()));
+	ui.ceErrorEdit->setText(QString::number(NConfig->getEps()));
+	ui.ceFrequencyEdit->setText(QString::number(NConfig->getTcpCheckFreq()));
+	ui.ceThresholdEdit->setText(QString::number(NConfig->getClassificationThreshold()));
+	ui.tcpTimeoutEdit->setText(QString::number(NConfig->getClassificationTimeout()));
+	ui.tcpFrequencyEdit->setText(QString::number(NConfig->getTcpCheckFreq()));
+
+	ui.trainingCheckBox->setChecked(NConfig->getIsTraining());
+	ui.hsConfigEdit->setText((QString)NConfig->getPathConfigHoneydHs().c_str());
+
+	ui.dmConfigEdit->setText((QString)NConfig->getPathConfigHoneydDm().c_str());
+	ui.dmIPEdit->setText((QString)NConfig->getDoppelIp().c_str());
+	ui.dmCheckBox->setChecked(NConfig->getIsDmEnabled());
+	ui.pcapCheckBox->setChecked(NConfig->getReadPcap());
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
-	ui.pcapEdit->setText((QString)NConfig->options["PCAP_FILE"].data.c_str());
-	ui.liveCapCheckBox->setChecked(atoi(NConfig->options["GO_TO_LIVE"].data.c_str()));
-	ui.terminalCheckBox->setChecked(atoi(NConfig->options["USE_TERMINALS"].data.c_str()));
+	ui.pcapEdit->setText((QString)NConfig->getPathPcapFile().c_str());
+	ui.liveCapCheckBox->setChecked(NConfig->getGotoLive());
+	ui.terminalCheckBox->setChecked(NConfig->getUseTerminals());
 	{
-		string featuresEnabled = NConfig->options["ENABLED_FEATURES"].data;
+		string featuresEnabled = NConfig->getEnabledFeatures();
 		ui.featureList->clear();
 		// Populate the list, row order is based on dimension macros
 		ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
