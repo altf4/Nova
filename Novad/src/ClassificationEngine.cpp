@@ -109,6 +109,8 @@ extern string userHomePath;
 extern string novaConfigPath;
 extern NOVAConfiguration *globalConfig;
 
+extern Logger *logger;
+
 // Used for data normalization
 double maxFeatureValues[DIM];
 double minFeatureValues[DIM];
@@ -116,7 +118,6 @@ double meanFeatureValues[DIM];
 
 // Nova Configuration Variables (read from config file)
 string trainingCapFile;
-Logger * loggerConf;
 string SMTP_addr;
 string SMTP_domain;
 in_port_t SMTP_port;
@@ -175,10 +176,8 @@ void *Nova::ClassificationEngineMain(void *ptr)
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
 
-	loggerConf = new Logger(novaConfigPath.c_str(), true);
-
 	if(chdir(userHomePath.c_str()) == -1)
-	    loggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
+		logger->Logging(INFO, "Failed to change directory to " + userHomePath);
 
 
 	Reload();
@@ -253,7 +252,7 @@ void *Nova::ClassificationEngineMain(void *ptr)
     // just use any of the syslog levels. All caps, always.
     // The second is the string to display in any of the mediums through which logging
     // will route based on severity level.
-    loggerConf->Logging(INFO, "Classification Engine has begun the main loop...");
+    logger->Logging(INFO, "Classification Engine has begun the main loop...");
 
 
     //"Main Loop"
@@ -831,13 +830,13 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	ss << "sudo iptables -A INPUT -p udp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with icmp-port-unreachable";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    loggerConf->Logging(INFO, "Failed to update iptables.");
+	    logger->Logging(INFO, "Failed to update iptables.");
 	}
 	ss.str("");
 	ss << "sudo iptables -A INPUT -p tcp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with tcp-reset";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    loggerConf->Logging(INFO, "Failed to update iptables.");
+		logger->Logging(INFO, "Failed to update iptables.");
 	}
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
@@ -1391,7 +1390,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 				if(system(commandLine.c_str()) == -1)
 				{
-					loggerConf->Logging(INFO, "Failed to update iptables.");
+					logger->Logging(INFO, "Failed to update iptables.");
 				}
 
 
@@ -1433,7 +1432,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						loggerConf->Logging(INFO, "Failed to update iptables.");
+						logger->Logging(INFO, "Failed to update iptables.");
 					}
 					continue;
 				}
@@ -1447,7 +1446,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						loggerConf->Logging(INFO, "Failed to update iptables.");
+						logger->Logging(INFO, "Failed to update iptables.");
 					}
 					continue;
 				}
@@ -1458,7 +1457,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				if(system(commandLine.c_str()) == -1)
 				{
-					loggerConf->Logging(INFO, "Failed to update iptables.");
+					logger->Logging(INFO, "Failed to update iptables.");
 				}
 			}
 		}while(dataLen == MORE_DATA);

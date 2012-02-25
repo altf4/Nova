@@ -22,6 +22,7 @@
 #include "DoppelgangerModule.h"
 #include "NovaUtil.h"
 #include "NOVAConfiguration.h"
+#include "Logger.h"
 
 #include <iostream>
 
@@ -29,6 +30,7 @@ using namespace std;
 
 string userHomePath, novaConfigPath;
 NOVAConfiguration *globalConfig;
+Logger *logger;
 
 pthread_t CE_Thread, LTM_Thread, HS_Thread, DM_Thread;
 
@@ -37,6 +39,7 @@ int main()
 	//TODO: Perhaps move this into its own init function?
 	userHomePath = GetHomePath();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
+	logger = new Logger(novaConfigPath.c_str(), true);
 
 	globalConfig = new NOVAConfiguration(novaConfigPath);
 

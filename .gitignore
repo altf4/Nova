@@ -94,3 +94,7 @@ NovaGUI/moc_run_popup.cpp
 /NovaGUI/release/moc_classifierPrompt.cpp
 /NovaGUI/release/moc_loggerwindow.cpp
 /NovaGUI/release/moc_subnetPopup.cpp
+/Haystack/Release/Haystack
+/ClassificationEngine/Release/ClassificationEngine
+/DoppelgangerModule/Release/DoppelgangerModule
+/LocalTrafficMonitor/Release/LocalTrafficMonitor

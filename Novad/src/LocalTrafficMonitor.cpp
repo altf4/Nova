@@ -59,7 +59,7 @@ extern NOVAConfiguration *globalConfig;
 
 string LTMkey;
 
-Logger * LTMloggerConf;
+extern Logger * logger;
 
 void *Nova::LocalTrafficMonitorMain(void *ptr)
 {
@@ -85,11 +85,8 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 
 	string hostAddress;
 
-	//Runs the configuration loaders
-	LTMloggerConf = new Logger(novaConfigPath.c_str(), true);
-
 	if(chdir(userHomePath.c_str()) == -1)
-		LTMloggerConf->Logging(INFO, "Failed to change directory to " + userHomePath);
+		logger->Logging(INFO, "Failed to change directory to " + userHomePath);
 
 
 	LTMLoadConfig((char*)novaConfigPath.c_str());
@@ -619,7 +616,7 @@ void Nova::LTMKnockRequest(Packet packet, u_char * payload)
 			ss << "iptables -I INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << globalConfig->getSaPort() << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
-				LTMloggerConf->Logging(INFO, "Failed to open port with port knocking.");
+				logger->Logging(INFO, "Failed to open port with port knocking.");
 
 		}
 		else if(!sentKey.compare("SHUT"))
@@ -627,7 +624,7 @@ void Nova::LTMKnockRequest(Packet packet, u_char * payload)
 			ss << "iptables -D INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << globalConfig->getSaPort() << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
-				LTMloggerConf->Logging(INFO, "Failed to shut port after knock request.");
+				logger->Logging(INFO, "Failed to shut port after knock request.");
 		}
 	}
 }
