@@ -20,6 +20,7 @@
 #include "LocalTrafficMonitor.h"
 #include "NOVAConfiguration.h"
 #include "HashMapStructs.h"
+#include "SuspectTable.h"
 #include "NovaUtil.h"
 #include "Logger.h"
 

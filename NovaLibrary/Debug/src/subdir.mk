@@ -10,7 +10,8 @@ CPP_SRCS += \
 ../src/NOVAConfiguration.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
-../src/Suspect.cpp 
+../src/Suspect.cpp \
+../src/SuspectTable.cpp 
 
 OBJS += \
 ./src/FeatureSet.o \
@@ -19,7 +20,8 @@ OBJS += \
 ./src/NOVAConfiguration.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
-./src/Suspect.o 
+./src/Suspect.o \
+./src/SuspectTable.o 
 
 CPP_DEPS += \
 ./src/FeatureSet.d \
@@ -28,7 +30,8 @@ CPP_DEPS += \
 ./src/NOVAConfiguration.d \
 ./src/NovaUtil.d \
 ./src/Point.d \
-./src/Suspect.d 
+./src/Suspect.d \
+./src/SuspectTable.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
