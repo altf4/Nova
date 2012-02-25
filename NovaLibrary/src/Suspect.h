@@ -58,7 +58,7 @@ public:
 	vector <Packet> get_evidence(); //TODO
 
 	//Clears the evidence vector, returns 0 on success
-	int clear_evidence(); //TODO
+	void clear_evidence(); //TODO
 
 	// Calculates the feature set for this suspect
 	// 		isTraining - True for training data gathering mode
@@ -88,7 +88,7 @@ public:
 	in_addr_t get_IP_address(); //TODO
 	//Sets the suspects in_addr, must have the lock to perform this operation
 	//Returns: 0 on success
-	int set_IP_Address(in_addr_t ip); //TODO
+	void set_IP_Address(in_addr_t ip); //TODO
 
 
 	//Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
@@ -96,63 +96,63 @@ public:
 	double get_classification(); //TODO
 	//Sets the suspect's classification, must have the lock to perform this operation
 	//Returns 0 on success
-	int set_classification(double n); //TODO
+	void set_classification(double n); //TODO
 
 
 	//Returns the number of hostile neighbors, must not be locked or is locked by the owner
 	int get_hostileNeighbors(); //TODO
 	//Sets the number of hostile neighbors, must have the lock to perform this operation
-	int set_hostileNeighbors(int i); //TODO
+	void set_hostileNeighbors(int i); //TODO
 
 
 	//Returns the hostility bool of the suspect, must not be locked or is locked by the owner
 	bool get_isHostile(); //TODO
 	//Sets the hostility bool of the suspect, must have the lock to perform this operation
-	int set_isHostile(bool b); //TODO
+	void set_isHostile(bool b); //TODO
 
 
 	//Returns the needs classification bool, must not be locked or is locked by the owner
 	bool get_needs_classification_update(); //TODO
 	//Sets the needs classification bool, must have the lock to perform this operation
-	int set_needs_classification_update(bool b); //TODO
+	void set_needs_classification_update(bool b); //TODO
 
 
 	//Returns the needs feature update bool, must not be locked or is locked by the owner
 	bool get_needs_feature_update(); //TODO
 	//Sets the neeeds feature update bool, must have the lock to perform this operation
-	int set_needs_feature_update(bool b); //TODO
+	void set_needs_feature_update(bool b); //TODO
 
 
 	//Returns the flagged by silent alarm bool, must not be locked or is locked by the owner
 	bool get_flaggedByAlarm(); //TODO
 	//Sets the flagged by silent alarm bool, must have the lock to perform this operation
-	int set_flaggedByAlarm(bool b); //TODO
+	void set_flaggedByAlarm(bool b); //TODO
 
 
 	//Returns the 'from live capture' bool, must not be locked or is locked by the owner
 	bool get_isLive(); //TODO
 	//Sets the 'from live capture' bool, must have the lock to perform this operation
-	int set_isLive(bool b); //TODO
+	void set_isLive(bool b); //TODO
 
 
 	//Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
 	FeatureSet get_features(); //TODO
 	//Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
-	int set_features(FeatureSet fs); //TODO
+	void set_features(FeatureSet fs); //TODO
 
 	//Adds the feature set 'fs' to the suspect's feature set
-	int add_featureSet(FeatureSet fs); //TODO
+	void add_featureSet(FeatureSet fs); //TODO
 	//Subtracts the feature set 'fs' from the suspect's feature set
-	int subtract_featureSet(FeatureSet fs); //TODO
+	void subtract_featureSet(FeatureSet fs); //TODO
 
 	//Clears the feature set of the suspect
-	int clear_features(); //TODO
+	void clear_features(); //TODO
 
 
 	//Returns the accuracy double of the feature using featureIndex fi, must not be locked or is locked by the owner
 	double get_featureAccuracy(featureIndex fi); //TODO
 	//Sets the accuracy double of the feature using featureIndex fi, must have the lock to perform this operation
-	int setFeatureAccuracy(featureIndex fi, double d); //TODO
+	void setFeatureAccuracy(featureIndex fi, double d); //TODO
 
 	//Returns a copy of the suspect's ANNpoint, must not be locked or is locked by the owner
 	ANNpoint get_annPoint(); //TODO
@@ -166,7 +166,8 @@ public:
 	//Unlocks the suspect
 	void unlockSuspect(); //TODO
 
-//private: TODO uncomment once Suspect is fully accessible through functions
+//private: //TODO Uncomment private and ensure suspects are fully accessible using thread-safe accessors.
+	//Develop some method for making concurrent changes without redundantly locking and unlocking the suspects
 
 	// The IP address of the suspect. This field serves as a unique identifier for the Suspect
 	struct in_addr IP_address;
@@ -203,6 +204,8 @@ public:
 
 	// A listing of all the events (evidence) that originated from this suspect
 	vector <Packet> evidence;
+
+private:
 
 	//Lock used to maintain concurrency between threads
 	pthread_rwlock_t lock;

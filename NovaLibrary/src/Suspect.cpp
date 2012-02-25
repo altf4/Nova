@@ -27,6 +27,7 @@ namespace Nova{
 
 Suspect::Suspect()
 {
+	pthread_rwlock_init(&lock, NULL);
 	this->IP_address.s_addr = 0;
 	this->hostileNeighbors = 0;
 	this->classification = -1;
@@ -47,6 +48,8 @@ Suspect::Suspect()
 
 Suspect::~Suspect()
 {
+	//Lock the suspect before deletion to prevent further access
+	pthread_rwlock_wrlock(&lock);
 	if(this->annPoint != NULL)
 	{
 		annDeallocPt(this->annPoint);
@@ -56,6 +59,7 @@ Suspect::~Suspect()
 
 Suspect::Suspect(Packet packet)
 {
+	pthread_rwlock_init(&lock, NULL);
 	IP_address = packet.ip_hdr.ip_src;
 	hostileNeighbors = 0;
 	classification = -1;
@@ -76,6 +80,7 @@ Suspect::Suspect(Packet packet)
 
 string Suspect::ToString(bool featureEnabled[])
 {
+	pthread_rwlock_rdlock(&lock);
 	stringstream ss;
 	if(&IP_address != NULL)
 	{
@@ -139,57 +144,47 @@ string Suspect::ToString(bool featureEnabled[])
 		ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
 
-
+	pthread_rwlock_unlock(&lock);
 	return ss.str();
 }
 
 
 void Suspect::AddEvidence(Packet packet)
 {
+	pthread_rwlock_wrlock(&lock);
 	evidence.push_back(packet);
 	needs_feature_update = true;
+	pthread_rwlock_unlock(&lock);
 }
 
 //Returns a copy of the evidence vector so that it can be read.
 vector <Packet> Suspect::get_evidence() //TODO
 {
-	vector<Packet> ret;
-	if(!pthread_rwlock_tryrdlock(&lock))
-	{
-		ret = evidence;
-		pthread_rwlock_unlock(&lock);
-		return ret;
-	}
-	else
-	{
-		ret.clear();
-		return ret;
-	}
+	pthread_rwlock_rdlock(&lock);
+	vector<Packet>ret = evidence;
+	pthread_rwlock_unlock(&lock);
+	return ret;
 }
 
 //Clears the evidence vector, returns 0 on success
-int Suspect::clear_evidence() //TODO
+void Suspect::clear_evidence() //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
+		pthread_rwlock_wrlock(&lock);
 		evidence.clear();
 		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
 }
 
 void Suspect::CalculateFeatures(uint32_t featuresEnabled)
 {
+	pthread_rwlock_wrlock(&lock);
 	features.CalculateAll(featuresEnabled);
+	pthread_rwlock_unlock(&lock);
 }
 
 
 uint32_t Suspect::SerializeSuspect(u_char * buf)
 {
+	pthread_rwlock_rdlock(&lock);
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
@@ -220,6 +215,7 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
 	offset += features.SerializeFeatureSet(buf+offset);
+	pthread_rwlock_unlock(&lock);
 
 	return offset;
 }
@@ -227,6 +223,7 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 
 uint32_t Suspect::DeserializeSuspect(u_char * buf)
 {
+	pthread_rwlock_wrlock(&lock);
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
@@ -257,6 +254,8 @@ uint32_t Suspect::DeserializeSuspect(u_char * buf)
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
 	offset += features.DeserializeFeatureSet(buf+offset);
+	pthread_rwlock_unlock(&lock);
+
 
 	return offset;
 }
@@ -264,6 +263,7 @@ uint32_t Suspect::DeserializeSuspect(u_char * buf)
 
 uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 {
+	pthread_rwlock_wrlock(&lock);
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
@@ -302,6 +302,8 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 
 	needs_feature_update = true;
 	needs_classification_update = true;
+	pthread_rwlock_unlock(&lock);
+
 
 	return offset;
 }
@@ -310,31 +312,20 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 //Returns: Suspect's in_addr.s_addr or 0 on failure
 in_addr_t Suspect::get_IP_address() //TODO
 {
-	if(!pthread_rwlock_tryrdlock(&lock))
-	{
-		in_addr_t ret = IP_address.s_addr;
-		pthread_rwlock_unlock(&lock);
-		return ret;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_rdlock(&lock);
+	in_addr_t ret = IP_address.s_addr;
+	pthread_rwlock_unlock(&lock);
+	return ret;
+
 }
 //Sets the suspects in_addr, must have the lock to perform this operation
 //Returns: 0 on success
-int Suspect::set_IP_Address(in_addr_t ip) //TODO
+void Suspect::set_IP_Address(in_addr_t ip) //TODO
 {
-	if(!pthread_rwlock_trywrlock(&lock))
-	{
-		IP_address.s_addr = ip;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	IP_address.s_addr = ip;
+	pthread_rwlock_unlock(&lock);
+
 }
 
 
@@ -342,286 +333,188 @@ int Suspect::set_IP_Address(in_addr_t ip) //TODO
 // Returns -1 on failure
 double Suspect::get_classification() //TODO
 {
-	if(!pthread_rwlock_tryrdlock(&lock))
-	{
-		double ret = classification;
-		pthread_rwlock_unlock(&lock);
-		return ret;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_rdlock(&lock);
+	double ret = classification;
+	pthread_rwlock_unlock(&lock);
+	return ret;
+
 }
 
 //Sets the suspect's classification, must have the lock to perform this operation
 //Returns 0 on success
-int Suspect::set_classification(double n) //TODO
+void Suspect::set_classification(double n) //TODO
 {
-	if(!pthread_rwlock_trywrlock(&lock))
-	{
-		classification = n;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	classification = n;
+	pthread_rwlock_unlock(&lock);
+
 }
 
 
 //Returns the number of hostile neighbors, must not be locked or is locked by the owner
 int Suspect::get_hostileNeighbors() //TODO
 {
-	if(!pthread_rwlock_tryrdlock(&lock))
-	{
-		int ret = hostileNeighbors;
-		pthread_rwlock_unlock(&lock);
-		return ret;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_rdlock(&lock);
+	int ret = hostileNeighbors;
+	pthread_rwlock_unlock(&lock);
+	return ret;
+
 }
 //Sets the number of hostile neighbors, must have the lock to perform this operation
-int Suspect::set_hostileNeighbors(int i) //TODO
+void Suspect::set_hostileNeighbors(int i) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		hostileNeighbors = i;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	hostileNeighbors = i;
+	pthread_rwlock_unlock(&lock);
 }
 
 
 //Returns the hostility bool of the suspect, must not be locked or is locked by the owner
 bool Suspect::get_isHostile() //TODO
 {
+	pthread_rwlock_rdlock(&lock);
 	return isHostile;
+	pthread_rwlock_unlock(&lock);
 }
 //Sets the hostility bool of the suspect, must have the lock to perform this operation
-int Suspect::set_isHostile(bool b) //TODO
+void Suspect::set_isHostile(bool b) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		isHostile = b;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	isHostile = b;
+	pthread_rwlock_unlock(&lock);
 }
 
 
 //Returns the needs classification bool, must not be locked or is locked by the owner
 bool Suspect::get_needs_classification_update() //TODO
 {
+	pthread_rwlock_rdlock(&lock);
 	return needs_classification_update;
+	pthread_rwlock_unlock(&lock);
 }
 //Sets the needs classification bool, must have the lock to perform this operation
-int Suspect::set_needs_classification_update(bool b) //TODO
+void Suspect::set_needs_classification_update(bool b) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		needs_classification_update = b;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	needs_classification_update = b;
+	pthread_rwlock_unlock(&lock);
 }
 
 
 //Returns the needs feature update bool, must not be locked or is locked by the owner
 bool Suspect::get_needs_feature_update() //TODO
 {
+	pthread_rwlock_rdlock(&lock);
 	return needs_feature_update;
+	pthread_rwlock_unlock(&lock);
 }
 //Sets the neeeds feature update bool, must have the lock to perform this operation
-int Suspect::set_needs_feature_update(bool b) //TODO
+void Suspect::set_needs_feature_update(bool b) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		needs_feature_update = b;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	needs_feature_update = b;
+	pthread_rwlock_unlock(&lock);
 }
 
 
 //Returns the flagged by silent alarm bool, must not be locked or is locked by the owner
 bool Suspect::get_flaggedByAlarm() //TODO
 {
+	pthread_rwlock_rdlock(&lock);
 	return flaggedByAlarm;
+	pthread_rwlock_unlock(&lock);
 }
 //Sets the flagged by silent alarm bool, must have the lock to perform this operation
-int Suspect::set_flaggedByAlarm(bool b) //TODO
+void Suspect::set_flaggedByAlarm(bool b) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		flaggedByAlarm = b;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	flaggedByAlarm = b;
+	pthread_rwlock_unlock(&lock);
 }
 
 
 //Returns the 'from live capture' bool, must not be locked or is locked by the owner
 bool Suspect::get_isLive() //TODO
 {
+	pthread_rwlock_rdlock(&lock);
 	return isLive;
+	pthread_rwlock_unlock(&lock);
 }
 //Sets the 'from live capture' bool, must have the lock to perform this operation
-int Suspect::set_isLive(bool b) //TODO
+void Suspect::set_isLive(bool b) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		isLive = b;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	isLive = b;
+	pthread_rwlock_unlock(&lock);
 }
 
 
 //Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
 FeatureSet Suspect::get_features() //TODO
 {
-	if(!pthread_rwlock_tryrdlock(&lock))
-	{
-		FeatureSet ret = features;
-		pthread_rwlock_unlock(&lock);
-		return ret;
-	}
-	else
-	{
-		return FeatureSet();
-	}
+	pthread_rwlock_rdlock(&lock);
+	FeatureSet ret = features;
+	pthread_rwlock_unlock(&lock);
+	return ret;
 }
+
 //Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
-int Suspect::set_features(FeatureSet fs) //TODO
+void Suspect::set_features(FeatureSet fs) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		features = fs;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	features = fs;
+	pthread_rwlock_unlock(&lock);
 }
 
 //Adds the feature set 'fs' to the suspect's feature set
-int Suspect::add_featureSet(FeatureSet fs) //TODO
+void Suspect::add_featureSet(FeatureSet fs) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		features += fs;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	features += fs;
+	pthread_rwlock_unlock(&lock);
 }
 //Subtracts the feature set 'fs' from the suspect's feature set
-int Suspect::subtract_featureSet(FeatureSet fs) //TODO
+void Suspect::subtract_featureSet(FeatureSet fs) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		features -= fs;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	features -= fs;
+	pthread_rwlock_unlock(&lock);
+
 }
 
 //Clears the feature set of the suspect
-int Suspect::clear_features() //TODO
+void Suspect::clear_features() //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		features.ClearFeatureSet();
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	features.ClearFeatureSet();
+	pthread_rwlock_unlock(&lock);
+
 }
 
 
 //Returns the accuracy double of the feature using featureIndex fi, must not be locked or is locked by the owner
 double Suspect::get_featureAccuracy(featureIndex fi) //TODO
 {
-	if(!pthread_rwlock_tryrdlock(&lock))
-	{
-		double ret =  featureAccuracy[fi];
-		pthread_rwlock_unlock(&lock);
-		return ret;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_rdlock(&lock);
+	double ret =  featureAccuracy[fi];
+	pthread_rwlock_unlock(&lock);
+	return ret;
 }
 //Sets the accuracy double of the feature using featureIndex fi, must have the lock to perform this operation
-int Suspect::setFeatureAccuracy(featureIndex fi, double d) //TODO
+void Suspect::setFeatureAccuracy(featureIndex fi, double d) //TODO
 {
-	if(pthread_rwlock_trywrlock(&lock))
-	{
-		featureAccuracy[fi] = d;
-		pthread_rwlock_unlock(&lock);
-		return 0;
-	}
-	else
-	{
-		return -1;
-	}
+	pthread_rwlock_wrlock(&lock);
+	featureAccuracy[fi] = d;
+	pthread_rwlock_unlock(&lock);
 }
 
 //Returns a copy of the suspect's ANNpoint, must not be locked or is locked by the owner
 ANNpoint Suspect::get_annPoint() //TODO
 {
-	if(!pthread_rwlock_tryrdlock(&lock))
-	{
-		ANNpoint ret =  annPoint;
-		pthread_rwlock_unlock(&lock);
-		return ret;
-	}
-	else
-	{
-		return NULL;
-	}
+	pthread_rwlock_rdlock(&lock);
+	ANNpoint ret =  annPoint;
+	pthread_rwlock_unlock(&lock);
+	return ret;
 }
 
 //Write locks the suspect
