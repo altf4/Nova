@@ -19,6 +19,7 @@
 
 #include "NOVAConfiguration.h"
 #include "HashMapStructs.h"
+#include "SuspectTable.h"
 #include "NovaUtil.h"
 #include "Haystack.h"
 #include "Logger.h"

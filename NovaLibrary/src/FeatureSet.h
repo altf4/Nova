@@ -60,35 +60,26 @@ struct Session
 
 
 ///The traffic distribution across the haystacks relative to host traffic
-#define IP_TRAFFIC_DISTRIBUTION 0
 #define IP_TRAFFIC_DISTRIBUTION_MASK 1
 
 ///The traffic distribution across ports contacted
-#define PORT_TRAFFIC_DISTRIBUTION 1
 #define PORT_TRAFFIC_DISTRIBUTION_MASK 2
 
 ///Number of ScanEvents that the suspect is responsible for per second
-#define HAYSTACK_EVENT_FREQUENCY 2
 #define HAYSTACK_EVENT_FREQUENCY_MASK 4
 
 ///Measures the distribution of packet sizes
-#define PACKET_SIZE_MEAN 3
 #define PACKET_SIZE_MEAN_MASK 8
-#define PACKET_SIZE_DEVIATION 4
 #define PACKET_SIZE_DEVIATION_MASK 16
 
 /// Number of distinct IP addresses contacted
-#define DISTINCT_IPS 5
 #define DISTINCT_IPS_MASK 32
 
 /// Number of distinct ports contacted
-#define DISTINCT_PORTS 6
 #define DISTINCT_PORTS_MASK 64
 
 ///Measures the distribution of intervals between packets
-#define PACKET_INTERVAL_MEAN 7
 #define PACKET_INTERVAL_MEAN_MASK 128
-#define PACKET_INTERVAL_DEVIATION 8
 #define PACKET_INTERVAL_DEVIATION_MASK 256
 
 //UDP has max payload of 65535 bytes
@@ -108,6 +99,10 @@ typedef google::dense_hash_map<in_port_t, uint32_t, tr1::hash<in_port_t>, eqport
 typedef google::dense_hash_map<uint32_t, uint32_t, tr1::hash<int>, eqint > Packet_Table;
 //Table of packet intervals and a count
 typedef google::dense_hash_map<time_t, uint32_t, tr1::hash<time_t>, eqtime > Interval_Table;
+
+enum featureIndex{IP_TRAFFIC_DISTRIBUTION = 0, PORT_TRAFFIC_DISTRIBUTION = 1, HAYSTACK_EVENT_FREQUENCY = 2,
+	PACKET_SIZE_DEVIATION = 4, PACKET_SIZE_MEAN = 3, DISTINCT_IPS =5, DISTINCT_PORTS = 6,
+	PACKET_INTERVAL_MEAN = 7, PACKET_INTERVAL_DEVIATION = 8};
 
 namespace Nova{
 

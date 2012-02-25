@@ -17,10 +17,11 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
-#include "Haystack.h"
 #include "LocalTrafficMonitor.h"
 #include "DoppelgangerModule.h"
+#include "SuspectTable.h"
 #include "NovaUtil.h"
+#include "Haystack.h"
 #include "Logger.h"
 
 #include <iostream>

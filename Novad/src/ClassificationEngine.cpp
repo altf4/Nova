@@ -18,6 +18,7 @@
 
 #include "ClassificationEngine.h"
 #include "NOVAConfiguration.h"
+#include "SuspectTable.h"
 #include "NovaUtil.h"
 #include "Logger.h"
 #include "Point.h"
