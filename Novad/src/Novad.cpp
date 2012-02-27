@@ -33,7 +33,7 @@ string userHomePath, novaConfigPath;
 NOVAConfiguration *globalConfig;
 Logger *logger;
 
-pthread_t CE_Thread, LTM_Thread, HS_Thread, DM_Thread;
+pthread_t CE_Thread, LTM_Thread, HS_Thread;
 
 int main()
 {
@@ -49,14 +49,12 @@ int main()
 	pthread_create(&CE_Thread, NULL, ClassificationEngineMain, NULL);
 	pthread_create(&LTM_Thread, NULL, LocalTrafficMonitorMain, NULL);
 	pthread_create(&HS_Thread, NULL, HaystackMain, NULL);
-	pthread_create(&DM_Thread, NULL, DoppelgangerModuleMain, NULL);
 
 	// Don't exit until the threads have finished
 	// TODO: Restart dead threads? Or at least throw error messages when they die,
 	pthread_join(CE_Thread, NULL);
 	pthread_join(LTM_Thread, NULL);
 	pthread_join(HS_Thread, NULL);
-	pthread_join(DM_Thread, NULL);
 
 	return EXIT_FAILURE;
 }
