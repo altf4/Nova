@@ -136,7 +136,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	if( !NOVAConfiguration::InitUserConfigs(GetHomePath()) )
 	{
-		exit(EXIT_FAILURE);
+		syslog(SYSL_ERR, "Error: InitUserConfigs failed. Your home folder and permissions may not have been configured properly");	
+		//exit(EXIT_FAILURE);
 	}
 
 	loadInfo();
