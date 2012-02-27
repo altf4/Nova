@@ -641,11 +641,12 @@ int NOVAConfiguration::SetDefaults()
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
 bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 {
+	bool returnValue = true;
 	struct stat fileAttr;
 	//TODO: Do a proper check to make sure all config files exist, not just the .nova dir
 	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
-		return true;
+		return returnValue;
 	}
 	else
 	{
@@ -653,27 +654,29 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 				"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to assign user root privileges");
-			return false;
+			returnValue = false;
 		}
 
 		//TODO: Do this command programmatically. Not by calling system()
 		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			return false;
+			returnValue = false;
 		}
 
 		//Check the ~/.nova dir again
 		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 		{
-			return true;
+			return returnValue;
 		}
 		else
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			return false;
+			returnValue = false;
 		}
 	}
+
+	return returnValue;
 }
 
 NOVAConfiguration::NOVAConfiguration()
