@@ -65,6 +65,7 @@ public:
 private:
 
 	static const string prefixes[];
+	static const string requiredFiles[];
 };
 
 }
