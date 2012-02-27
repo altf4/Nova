@@ -77,8 +77,8 @@ void *Nova::HaystackMain(void *ptr)
 	pthread_rwlock_init(&HSsuspectLock, NULL);
 	pthread_t TCP_timeout_thread;
 	pthread_t GUIListenThread;
-	pthread_t SuspectUpdateThread;
-	pthread_t ipUpdateThread;
+	pthread_t HSSuspectUpdateThread;
+	pthread_t HSIpUpdateThread;
 
 	SessionTable.set_empty_key("");
 	SessionTable.resize(INIT_SIZE_HUGE);
@@ -123,7 +123,7 @@ void *Nova::HaystackMain(void *ptr)
 	if (notifyFd > 0)
 	{
 		watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
-		pthread_create(&ipUpdateThread, NULL, UpdateIPFilter,NULL);
+		pthread_create(&HSIpUpdateThread, NULL, UpdateIPFilter,NULL);
 	}
 	else
 	{
@@ -206,7 +206,7 @@ void *Nova::HaystackMain(void *ptr)
 		}
 
 		pthread_create(&TCP_timeout_thread, NULL, HSTCPTimeout, NULL);
-		pthread_create(&SuspectUpdateThread, NULL, HSSuspectLoop, NULL);
+		pthread_create(&HSSuspectUpdateThread, NULL, HSSuspectLoop, NULL);
 
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received

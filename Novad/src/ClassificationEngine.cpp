@@ -176,6 +176,9 @@ void *Nova::ClassificationEngineMain(void *ptr)
 	pthread_t trainingLoopThread;
 	pthread_t silentAlarmListenThread;
 	pthread_t GUIListenThread;
+	pthread_t TCP_timeout_thread;
+	pthread_t ipUpdateThread;
+
 
 	if(chdir(userHomePath.c_str()) == -1)
 		logger->Logging(INFO, "Failed to change directory to " + userHomePath);
@@ -223,30 +226,17 @@ void *Nova::ClassificationEngineMain(void *ptr)
 		exit(EXIT_FAILURE);
 	}
 
-	localIPCAddress.sun_family = AF_UNIX;
+	notifyFd = inotify_init ();
 
-	//Builds the key path
-	string key = KEY_FILENAME;
-	key = userHomePath + key;
-
-	strcpy(localIPCAddress.sun_path, key.c_str());
-	unlink(localIPCAddress.sun_path);
-	len = strlen(localIPCAddress.sun_path) + sizeof(localIPCAddress.sun_family);
-
-    if(bind(CE_IPCsock,(struct sockaddr *)&localIPCAddress,len) == -1)
-    {
-    	syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
-    	close(CE_IPCsock);
-        exit(EXIT_FAILURE);
-    }
-
-    if(listen(CE_IPCsock, SOCKET_QUEUE_SIZE) == -1)
-    {
-    	syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
-		close(CE_IPCsock);
-        exit(EXIT_FAILURE);
-    }
-
+	if (notifyFd > 0)
+	{
+		watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+		pthread_create(&HSIpUpdateThread, NULL, UpdateIPFilter,NULL);
+	}
+	else
+	{
+		syslog(SYSL_ERR, "Unable to set up 'file modified/moved' watcher for the IP list file\n");
+	}
 
     // This is the structure that you'll use whenever you call Logging. The first argument
     // is the severity, can be found either in Logger.h's enum Levels, or you can
@@ -254,7 +244,6 @@ void *Nova::ClassificationEngineMain(void *ptr)
     // The second is the string to display in any of the mediums through which logging
     // will route based on severity level.
     logger->Logging(INFO, "Classification Engine has begun the main loop...");
-
 
     //"Main Loop"
 	while(true)
@@ -694,7 +683,7 @@ void *Nova::ClassificationLoop(void *ptr)
 
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
-				if((it->second->isHostile) || (it->second->isHostile != oldClassification))
+				if(it->second->isHostile || oldClassification)
 				{
 					if(it->second->isLive)
 						SilentAlarm(it->second);
@@ -1404,7 +1393,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				}
 
 
-				uint i;
+				int i;
 				for(i = 0; i < globalConfig->getSaMaxAttempts(); i++)
 				{
 					if(CEKnockPort(OPEN))
@@ -1518,54 +1507,94 @@ bool Nova::CEKnockPort(bool mode)
 
 bool Nova::CEReceiveSuspectData()
 {
-	int bytesRead, connectionSocket;
+	char errbuf[PCAP_ERRBUF_SIZE];
 
-    //Blocking call
-    if ((connectionSocket = accept(CE_IPCsock, remoteSockAddr, sockSizePtr)) == -1)
-    {
-		syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
-		close(connectionSocket);
-        return false;
-    }
-    if((bytesRead = recv(connectionSocket, buffer, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
-    {
-		syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
-		close(connectionSocket);
-        return false;
-    }
-	try
+	int ret;
+	HSusePcapFile = globalConfig->getReadPcap();
+	string haystackAddresses_csv = "";
+
+	struct bpf_program fp;			/* The compiled filter expression */
+	char filter_exp[64];
+
+
+	haystackAddresses = GetHaystackAddresses(globalConfig->getPathConfigHoneydHs());
+	haystackDhcpAddresses = GetHaystackDhcpAddresses(dhcpListFile);
+	haystackAddresses_csv = ConstructFilterString();
+
+	//If we're reading from a packet capture file
+	if(HSusePcapFile)
 	{
-		pthread_rwlock_wrlock(&lock);
-		uint addr = GetSerializedAddr(buffer);
+		/*sleep(1); //To allow time for other processes to open
+		handle = pcap_open_offline(globalConfig->getPathPcapFile().c_str(), errbuf);
 
-		SuspectHashTable::iterator it = suspects.find(addr);
-		//If this is a new suspect make an entry in the table
-		if(it == suspects.end())
-			suspects[addr] = new Suspect();
-		//Deserialize the data
-		suspects[addr]->DeserializeSuspectWithData(buffer, LOCAL_DATA);
+		if(handle == NULL)
+		{
+			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, globalConfig->getPathPcapFile().c_str(), errbuf);
+			exit(EXIT_FAILURE);
+		}
+		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+		{
+			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			exit(EXIT_FAILURE);
+		}
+
+		if (pcap_setfilter(handle, &fp) == -1)
+		{
+			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			exit(EXIT_FAILURE);
+		}
+		//First process any packets in the file then close all the sessions
+		pcap_loop(handle, -1, HSPacket_Handler,NULL);
+
+		HSTCPTimeout(NULL);
+		HSSuspectLoop(NULL);
 
 
-		it = suspectsSinceLastSave.find(addr);
-		//If this is a new suspect make an entry in the table
-		if(it == suspectsSinceLastSave.end())
-			suspectsSinceLastSave[addr] = new Suspect();
-		//Deserialize the data
-		suspectsSinceLastSave[addr]->DeserializeSuspectWithData(buffer, BROADCAST_DATA);
-
-
-		pthread_rwlock_unlock(&lock);
+		if(globalConfig->getGotoLive()) HSusePcapcFile = false; //If we are going to live capture set the flag.*/
 	}
-	catch(std::exception e)
+
+
+	if(!HSusePcapcFile)
 	{
-		syslog(SYSL_ERR, "Line: %d Error in parsing received Suspect: %s", __LINE__, string(e.what()).c_str());
-		close(connectionSocket);
-		bzero(buffer, MAX_MSG_SIZE);
-		pthread_rwlock_unlock(&lock);
-		return false;
+		/*
+		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
+		handle = pcap_open_live(globalConfig->getInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
+
+		if(handle == NULL)
+		{
+			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, globalConfig->getInterface().c_str(), errbuf);
+			exit(EXIT_FAILURE);
+		}*/
+
+		/* ask pcap for the network address and mask of the device */
+		/*ret = pcap_lookupnet(globalConfig->getInterface().c_str(), &netp, &maskp, errbuf);
+
+		if(ret == -1)
+		{
+			syslog(SYSL_ERR, "Line: %d %s", __LINE__, errbuf);
+			exit(EXIT_FAILURE);
+		}
+
+		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+		{
+			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			exit(EXIT_FAILURE);
+		}
+
+		if (pcap_setfilter(handle, &fp) == -1)
+		{
+			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			exit(EXIT_FAILURE);
+		}
+
+		pthread_create(&TCP_timeout_thread, NULL, HSTCPTimeout, NULL);
+		pthread_create(&HSSuspectUpdateThread, NULL, HSSuspectLoop, NULL);
+
+		//"Main Loop"
+		//Runs the function "Packet_Handler" every time a packet is received
+	    pcap_loop(handle, -1, HSPacket_Handler, NULL);*/
 	}
-	close(connectionSocket);
-	return true;
+	return false;
 }
 
 
