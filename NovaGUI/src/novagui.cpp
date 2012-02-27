@@ -83,14 +83,11 @@ QMenu * suspectMenu;
 QMenu * systemStatMenu;
 
 // Defines the order of components in the process list and novaComponents array
-#define COMPONENT_CE 0
-#define COMPONENT_LM 1
-#define COMPONENT_DM 2
-#define COMPONENT_DMH 3
-#define COMPONENT_HS 4
-#define COMPONENT_HSH 5
+#define COMPONENT_NOVAD 0
+#define COMPONENT_DMH 1
+#define COMPONENT_HSH 2
 
-#define NOVA_COMPONENTS 6
+#define NOVA_COMPONENTS 3
 
 
 struct novaComponent novaComponents[NOVA_COMPONENTS];
@@ -318,7 +315,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			if (row != COMPONENT_DMH && row != COMPONENT_HSH)
 				systemStatMenu->addAction(ui.actionSystemStatStop);
 
-			if (row == COMPONENT_CE)
+			if (row == COMPONENT_NOVAD)
 				systemStatMenu->addAction(ui.actionSystemStatReload);
 		}
 		else
@@ -356,30 +353,15 @@ void NovaGUI::loadInfo()
 
 void NovaGUI::setNovaCommands()
 {
-	novaComponents[COMPONENT_CE].name = "Classification Engine";
-	novaComponents[COMPONENT_CE].terminalCommand = "xterm -geometry \"+0+600\" -e ClassificationEngine";
-	novaComponents[COMPONENT_CE].noTerminalCommand = "nohup ClassificationEngine";
-	novaComponents[COMPONENT_CE].shouldBeRunning = false;
-
-	novaComponents[COMPONENT_LM].name ="Local Traffic Monitor";
-	novaComponents[COMPONENT_LM].terminalCommand ="xterm -geometry \"+1000+0\" -e LocalTrafficMonitor";
-	novaComponents[COMPONENT_LM].noTerminalCommand ="nohup LocalTrafficMonitor";
-	novaComponents[COMPONENT_LM].shouldBeRunning = false;
-
-	novaComponents[COMPONENT_DM].name ="Doppelganger Module";
-	novaComponents[COMPONENT_DM].terminalCommand ="xterm -geometry \"+500+600\" -e DoppelgangerModule";
-	novaComponents[COMPONENT_DM].noTerminalCommand ="nohup DoppelgangerModule";
-	novaComponents[COMPONENT_DM].shouldBeRunning = false;
+	novaComponents[COMPONENT_NOVAD].name = "NOVA Daemon";
+	novaComponents[COMPONENT_NOVAD].terminalCommand = "xterm -geometry \"+0+600\" -e Novad";
+	novaComponents[COMPONENT_NOVAD].noTerminalCommand = "nohup Novad";
+	novaComponents[COMPONENT_NOVAD].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
 	novaComponents[COMPONENT_DMH].terminalCommand ="xterm -geometry \"+500+0\" -e sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
-
-	novaComponents[COMPONENT_HS].name ="Haystack Module";
-	novaComponents[COMPONENT_HS].terminalCommand ="xterm -geometry \"+1000+600\" -e Haystack",
-	novaComponents[COMPONENT_HS].noTerminalCommand ="nohup Haystack > /dev/null";
-	novaComponents[COMPONENT_HS].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
 	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + configurationInterface + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
@@ -771,11 +753,8 @@ void NovaGUI::initiateSystemStatus()
 			ui.systemStatusTable->setItem(i, j,  new QTableWidgetItem());
 
 	// Add labels for our components
-	ui.systemStatusTable->item(COMPONENT_CE,0)->setText(QString::fromStdString(novaComponents[COMPONENT_CE].name));
-	ui.systemStatusTable->item(COMPONENT_LM,0)->setText(QString::fromStdString(novaComponents[COMPONENT_LM].name));
-	ui.systemStatusTable->item(COMPONENT_DM,0)->setText(QString::fromStdString(novaComponents[COMPONENT_DM].name));
+	ui.systemStatusTable->item(COMPONENT_NOVAD,0)->setText(QString::fromStdString(novaComponents[COMPONENT_NOVAD].name));
 	ui.systemStatusTable->item(COMPONENT_DMH,0)->setText(QString::fromStdString(novaComponents[COMPONENT_DMH].name));
-	ui.systemStatusTable->item(COMPONENT_HS,0)->setText(QString::fromStdString(novaComponents[COMPONENT_HS].name));
 	ui.systemStatusTable->item(COMPONENT_HSH,0)->setText(QString::fromStdString(novaComponents[COMPONENT_HSH].name));
 }
 
@@ -797,17 +776,9 @@ void NovaGUI::updateSystemStatus()
 			// Restart processes that died for some reason
 			if (novaComponents[i].shouldBeRunning)
 			{
-				// Don't restart LocalTrafficMonitor or Haystack if we're reading from pcap file
-				if (!goToLive && readFromPcap && (i == COMPONENT_LM || i == COMPONENT_HS))
-				{
-					item->setIcon(*redIcon);
-				}
-				else
-				{
-					syslog(SYSL_ERR, "File: %s Line: %d GUI has detected a dead process %s. Restarting it.", __FILE__, __LINE__, novaComponents[i].name.c_str());
-					item->setIcon(*yellowIcon);
-					startComponent(&novaComponents[i]);
-				}
+				syslog(SYSL_ERR, "File: %s Line: %d GUI has detected a dead process %s. Restarting it.", __FILE__, __LINE__, novaComponents[i].name.c_str());
+				item->setIcon(*yellowIcon);
+				startComponent(&novaComponents[i]);
 			}
 			else
 			{
@@ -2008,8 +1979,7 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 {
 	editingSuspectList = true;
 	clearSuspects();
-	if (!novaComponents[COMPONENT_CE].shouldBeRunning)
-		QFile::remove(QString::fromStdString(ceSaveFile));
+	QFile::remove(QString::fromStdString(ceSaveFile));
 	drawAllSuspects();
 	editingSuspectList = false;
 }
@@ -2290,17 +2260,8 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 	msgLen = message.SerialzeMessage(msgBuffer);
 
 	switch (row) {
-	case COMPONENT_CE:
+	case COMPONENT_NOVAD:
 		sendToCE();
-		break;
-	case COMPONENT_DM:
-		sendToDM();
-		break;
-	case COMPONENT_HS:
-		sendToHS();
-		break;
-	case COMPONENT_LM:
-		sendToLTM();
 		break;
 	case COMPONENT_DMH:
 		if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
@@ -2331,17 +2292,8 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 	int row = ui.systemStatusTable->currentRow();
 
 	switch (row) {
-	case COMPONENT_CE:
-		startComponent(&novaComponents[COMPONENT_CE]);
-		break;
-	case COMPONENT_DM:
-		startComponent(&novaComponents[COMPONENT_DM]);
-		break;
-	case COMPONENT_HS:
-		startComponent(&novaComponents[COMPONENT_HS]);
-		break;
-	case COMPONENT_LM:
-		startComponent(&novaComponents[COMPONENT_LM]);
+	case COMPONENT_NOVAD:
+		startComponent(&novaComponents[COMPONENT_NOVAD]);
 		break;
 	case COMPONENT_HSH:
 		startComponent(&novaComponents[COMPONENT_HSH]);
@@ -2384,8 +2336,7 @@ void NovaGUI::on_clearSuspectsButton_clicked()
 {
 	editingSuspectList = true;
 	clearSuspects();
-	if (!novaComponents[COMPONENT_CE].shouldBeRunning)
-		QFile::remove(QString::fromStdString(ceSaveFile));
+	QFile::remove(QString::fromStdString(ceSaveFile));
 	drawAllSuspects();
 	editingSuspectList = false;
 }
@@ -2494,6 +2445,7 @@ void NovaGUI::loadConfiguration()
 {
 	// Reload the configuration file
 	configuration = new NOVAConfiguration(configurationFile);
+	configuration->LoadConfig("GUI");
 
 	configurationInterface = configuration->getInterface();
 	useTerminals = configuration->getUseTerminals();
@@ -2751,83 +2703,17 @@ void sendToCE()
 
 void sendToDM()
 {
-	//Opens the socket
-	if ((DM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-		exit(EXIT_FAILURE);
-	}
-	//Sends the message
-	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
-	if (connect(DM_OutSock, (struct sockaddr *)&DM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-		return;
-	}
 
-	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-		return;
-	}
-	close(DM_OutSock);
 }
 
 void sendToHS()
 {
-	//Opens the socket
-	if ((HS_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-		exit(EXIT_FAILURE);
-	}
-	//Sends the message
-	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
-	if (connect(HS_OutSock, (struct sockaddr *)&HS_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-		return;
-	}
 
-	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-		return;
-	}
-	close(HS_OutSock);
 }
 
 void sendToLTM()
 {
-	//Opens the socket
-	if ((LTM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-		exit(EXIT_FAILURE);
-	}
-	//Sends the message
-	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);
-	if (connect(LTM_OutSock, (struct sockaddr *)&LTM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-		return;
-	}
 
-	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-		return;
-	}
-	close(LTM_OutSock);
 }
 void sendAll()
 {
@@ -2837,27 +2723,6 @@ void sendAll()
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
 		close(CE_OutSock);
-	}
-
-	//DM OUT -------------------------------------------------
-	if ((DM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-	}
-
-	//HS OUT -------------------------------------------------
-	if ((HS_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-	}
-
-	//LTM OUT ------------------------------------------------
-	if ((LTM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
 	}
 
 
@@ -2876,56 +2741,6 @@ void sendAll()
 		close(CE_OutSock);
 	}
 	close(CE_OutSock);
-	// -------------------------------------------------------
-
-	//DM OUT -------------------------------------------------
-	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
-	if (connect(DM_OutSock, (struct sockaddr *)&DM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-	}
-
-	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-	}
-	close(DM_OutSock);
-	// -------------------------------------------------------
-
-
-	//HS OUT -------------------------------------------------
-	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
-	if (connect(HS_OutSock, (struct sockaddr *)&HS_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-	}
-
-	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-	}
-	close(HS_OutSock);
-	// -------------------------------------------------------
-
-
-	//LTM OUT ------------------------------------------------
-	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);
-	if (connect(LTM_OutSock, (struct sockaddr *)&LTM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-	}
-
-	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-	}
-	close(LTM_OutSock);
 	// -------------------------------------------------------
 }
 

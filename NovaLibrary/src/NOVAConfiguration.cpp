@@ -63,9 +63,7 @@ void NOVAConfiguration::LoadConfig(string module)
 
 	bool isValid[sizeof(prefixes)/sizeof(prefixes[0])];
 
-	string use = module.substr(4, (module.length()));
-
-	openlog(use.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+	openlog(module.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
 	ifstream config(configFilePath.c_str());
 

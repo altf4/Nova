@@ -117,7 +117,7 @@ Module</string>
        <enum>QFrame::NoFrame</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <property name="sizePolicy">
@@ -277,7 +277,7 @@ Module</string>
              <bool>false</bool>
             </property>
             <property name="rowCount">
-             <number>6</number>
+             <number>3</number>
             </property>
             <attribute name="horizontalHeaderCascadingSectionResizes">
              <bool>true</bool>
@@ -309,9 +309,6 @@ Module</string>
             <attribute name="horizontalHeaderDefaultSectionSize">
              <number>180</number>
             </attribute>
-            <row/>
-            <row/>
-            <row/>
             <row/>
             <row/>
             <row/>
@@ -656,7 +653,7 @@ Module</string>
      <x>0</x>
      <y>0</y>
      <width>846</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
