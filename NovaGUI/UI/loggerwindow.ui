@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Log Viewer</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -123,405 +123,379 @@
           <property name="title">
            <string>Settings</string>
           </property>
-          <widget class="QWidget" name="">
-           <property name="geometry">
-            <rect>
-             <x>12</x>
-             <y>27</y>
-             <width>594</width>
-             <height>254</height>
-            </rect>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <layout class="QVBoxLayout" name="verticalLayout_2">
-              <item>
-               <widget class="QLabel" name="labelFilter">
-                <property name="text">
-                 <string>Filter by Level</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QFrame" name="frame">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>121</width>
-                  <height>201</height>
-                 </size>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QGridLayout" name="gridLayout_6">
-                 <item row="0" column="0">
-                  <widget class="QCheckBox" name="checkDebug">
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_2">
+               <item>
+                <widget class="QFrame" name="frame">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>121</width>
+                   <height>201</height>
+                  </size>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_6">
+                  <item row="0" column="0">
+                   <widget class="QCheckBox" name="checkDebug">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&amp;DEBUG</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+D</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QCheckBox" name="checkInfo">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&amp;INFO</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+I</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QCheckBox" name="checkNotice">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&amp;NOTICE</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+N</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QCheckBox" name="checkWarning">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&amp;WARNING</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+W</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QCheckBox" name="checkError">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&amp;ERROR</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+E</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QCheckBox" name="checkCritical">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&amp;CRITICAL</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+C</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QCheckBox" name="checkAlert">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&amp;ALERT</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+A</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QCheckBox" name="checkEmergency">
+                    <property name="minimumSize">
+                     <size>
+                      <width>119</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>E&amp;MERGENCY</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Shift+M</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_2">
+                 <item>
+                  <widget class="QLabel" name="showLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="minimumSize">
                     <size>
-                     <width>0</width>
-                     <height>20</height>
+                     <width>34</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>34</width>
+                     <height>21</height>
                     </size>
                    </property>
                    <property name="text">
-                    <string>&amp;DEBUG</string>
-                   </property>
-                   <property name="shortcut">
-                    <string>Shift+D</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
+                    <string>Show</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0">
-                  <widget class="QCheckBox" name="checkInfo">
-                   <property name="minimumSize">
+                 <item>
+                  <widget class="QComboBox" name="linesBox">
+                   <property name="maximumSize">
                     <size>
-                     <width>0</width>
-                     <height>20</height>
+                     <width>51</width>
+                     <height>21</height>
                     </size>
                    </property>
-                   <property name="text">
-                    <string>&amp;INFO</string>
+                   <property name="editable">
+                    <bool>false</bool>
                    </property>
-                   <property name="shortcut">
-                    <string>Shift+I</string>
+                   <property name="currentIndex">
+                    <number>0</number>
                    </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
+                   <item>
+                    <property name="text">
+                     <string>All</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>10</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>20</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>50</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>100</string>
+                    </property>
+                   </item>
                   </widget>
                  </item>
-                 <item row="2" column="0">
-                  <widget class="QCheckBox" name="checkNotice">
-                   <property name="minimumSize">
+                 <item>
+                  <widget class="QLabel" name="linesLabel">
+                   <property name="maximumSize">
                     <size>
-                     <width>0</width>
-                     <height>20</height>
+                     <width>151</width>
+                     <height>21</height>
                     </size>
                    </property>
                    <property name="text">
-                    <string>&amp;NOTICE</string>
-                   </property>
-                   <property name="shortcut">
-                    <string>Shift+N</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QCheckBox" name="checkWarning">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>&amp;WARNING</string>
-                   </property>
-                   <property name="shortcut">
-                    <string>Shift+W</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="0">
-                  <widget class="QCheckBox" name="checkError">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>&amp;ERROR</string>
-                   </property>
-                   <property name="shortcut">
-                    <string>Shift+E</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="5" column="0">
-                  <widget class="QCheckBox" name="checkCritical">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>&amp;CRITICAL</string>
-                   </property>
-                   <property name="shortcut">
-                    <string>Shift+C</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="6" column="0">
-                  <widget class="QCheckBox" name="checkAlert">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>&amp;ALERT</string>
-                   </property>
-                   <property name="shortcut">
-                    <string>Shift+A</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="7" column="0">
-                  <widget class="QCheckBox" name="checkEmergency">
-                   <property name="minimumSize">
-                    <size>
-                     <width>119</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>E&amp;MERGENCY</string>
-                   </property>
-                   <property name="shortcut">
-                    <string>Shift+M</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
+                    <string>lines of the Nova log file</string>
                    </property>
                   </widget>
                  </item>
                 </layout>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="verticalLayout">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_2">
-                <item>
-                 <widget class="QLabel" name="showLabel">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>34</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>34</width>
-                    <height>21</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Show</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="linesBox">
-                  <property name="maximumSize">
-                   <size>
-                    <width>51</width>
-                    <height>21</height>
-                   </size>
-                  </property>
-                  <property name="editable">
-                   <bool>false</bool>
-                  </property>
-                  <property name="currentIndex">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>All</string>
-                   </property>
+               </item>
+               <item>
+                <spacer name="verticalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>168</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="applyFilter">
+                 <property name="text">
+                  <string>Apply &amp;Filters</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <item>
+                <widget class="QFrame" name="frame_2">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="MinimumExpanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>189</width>
+                   <height>219</height>
+                  </size>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout">
+                  <item row="0" column="0">
+                   <widget class="QCheckBox" name="checkClassification">
+                    <property name="text">
+                     <string>Classification Engine</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
                   </item>
-                  <item>
-                   <property name="text">
-                    <string>10</string>
-                   </property>
+                  <item row="1" column="0">
+                   <widget class="QCheckBox" name="checkLocalTraffic">
+                    <property name="text">
+                     <string>Local Traffic Monitor</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
                   </item>
-                  <item>
-                   <property name="text">
-                    <string>20</string>
-                   </property>
+                  <item row="2" column="0">
+                   <widget class="QCheckBox" name="checkHaystack">
+                    <property name="text">
+                     <string>Haystack</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
                   </item>
-                  <item>
-                   <property name="text">
-                    <string>50</string>
-                   </property>
+                  <item row="3" column="0">
+                   <widget class="QCheckBox" name="checkDoppelganger">
+                    <property name="text">
+                     <string>Doppelganger Module</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
                   </item>
-                  <item>
-                   <property name="text">
-                    <string>100</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="linesLabel">
-                  <property name="maximumSize">
-                   <size>
-                    <width>151</width>
-                    <height>21</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>lines of the Nova log file</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <spacer name="verticalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>168</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="showAdvButton">
-                <property name="text">
-                 <string>Show Advanced Logs</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="verticalLayout_4">
-              <item>
-               <widget class="QLabel" name="label">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>101</width>
-                  <height>15</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>101</width>
-                  <height>15</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Filter by Module</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QFrame" name="frame_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="MinimumExpanding">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>189</width>
-                  <height>219</height>
-                 </size>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QGridLayout" name="gridLayout">
-                 <item row="0" column="0">
-                  <widget class="QCheckBox" name="checkClassification">
-                   <property name="text">
-                    <string>Classification Engine</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QCheckBox" name="checkLocalTraffic">
-                   <property name="text">
-                    <string>Local Traffic Monitor</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="0">
-                  <widget class="QCheckBox" name="checkHaystack">
-                   <property name="text">
-                    <string>Haystack</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QCheckBox" name="checkDoppelganger">
-                   <property name="text">
-                    <string>Doppelganger Module</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
@@ -529,7 +503,7 @@
           <item>
            <widget class="QPushButton" name="settingsButton">
             <property name="text">
-             <string>Settings</string>
+             <string>&amp;Settings</string>
             </property>
            </widget>
           </item>

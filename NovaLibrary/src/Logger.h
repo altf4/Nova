@@ -81,7 +81,7 @@ public:
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(string processName, Nova::Levels messageLevel, string message);
+	void Logging(string processName, Nova::Levels messageLevel, string messageBasic, string messageAdv);
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
 	// args: 	string logPrefString: this method is used for reading from the config file

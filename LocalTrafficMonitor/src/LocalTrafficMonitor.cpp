@@ -67,6 +67,7 @@ string key;
 in_port_t sAlarmPort;
 
 Logger * loggerConf;
+string loggingName;
 
 int main(int argc, char *argv[])
 {
@@ -98,12 +99,12 @@ int main(int argc, char *argv[])
 	//Get locations of Nova files
 	homePath = GetHomePath();
 	novaConfig = homePath + "/Config/NOVAConfig.txt";
-
+	loggingName = "LocalTrafficMonitor";
 	//Runs the configuration loaders
 	loggerConf = new Logger(novaConfig.c_str(), true);
 
 	if(chdir(homePath.c_str()) == -1)
-		loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
+		loggerConf->Logging(loggingName, INFO, "Failed to change directory to " + homePath, "Failed to change directory to " + homePath);
 
 
 	LoadConfig((char*)novaConfig.c_str());
@@ -664,7 +665,7 @@ void LocalTrafficMonitor::KnockRequest(Packet packet, u_char * payload)
 			ss << "iptables -I INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << sAlarmPort << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
-				loggerConf->Logging(INFO, "Failed to open port with port knocking.");
+				loggerConf->Logging(loggingName, INFO, "Failed to open port with port knocking.", "Failed to open port with port knocking.");
 
 		}
 		else if(!sentKey.compare("SHUT"))
@@ -672,7 +673,7 @@ void LocalTrafficMonitor::KnockRequest(Packet packet, u_char * payload)
 			ss << "iptables -D INPUT -s " << string(inet_ntoa(packet.ip_hdr.ip_src)) << " -p tcp --dport " << sAlarmPort << " -j ACCEPT";
 			commandLine = ss.str();
 			if(system(commandLine.c_str()) == -1)
-				loggerConf->Logging(INFO, "Failed to shut port after knock request.");
+				loggerConf->Logging(loggingName, INFO, "Failed to shut port after knock request.", "Failed to shut port after knock request.");
 		}
 	}
 }

@@ -23,9 +23,8 @@ private:
     void hideSelected(QString level, bool isProcess);
     void showSelected(QString level, bool isProcess);
     void adjustColumnWidths();
-    void setLoadedPreferences();
-    void setLevelViews(QString bitmask);
     void updateLogDisplay();
+    bool shouldBeVisible(QString level, QString process);
     QTreeWidgetItem * generateLogTabEntry(QString line);
     QTreeWidgetItem * logFileNotFound();
 
@@ -40,15 +39,7 @@ private Q_SLOTS:
 	void on_settingsButton_clicked();
 	void on_clearButton_clicked();
 	void on_closeButton_clicked();
-	void on_checkDebug_stateChanged(int state);
-	void on_checkInfo_stateChanged(int state);
-	void on_checkNotice_stateChanged(int state);
-	void on_checkWarning_stateChanged(int state);
-	void on_checkError_stateChanged(int state);
-	void on_checkCritical_stateChanged(int state);
-	void on_checkAlert_stateChanged(int state);
-	void on_checkEmergency_stateChanged(int state);
-	void on_checkClassification_stateChanged(int state);
+	void on_applyFilter_clicked();
 	void on_linesBox_currentIndexChanged(const QString & text);
 };
 

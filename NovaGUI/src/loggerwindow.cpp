@@ -13,7 +13,7 @@ LoggerWindow::LoggerWindow(QWidget *parent)
 	settingsBoxShowing = false;
 	showNumberOfLogs = 0;
 	initializeLoggingWindow();
-	setLoadedPreferences();
+	this->setFocus();
 	//create listening thread
 	//reference NovaGUI CEListen, etc...
 }
@@ -40,6 +40,13 @@ void LoggerWindow::initializeLoggingWindow()
 	}
 	//TODO: Add icons for checkboxes
 	file.close();
+
+	ui.applyFilter->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F));
+	ui.applyFilter->setToolTip("Shortcut: Shift+F");
+	ui.closeButton->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
+	ui.closeButton->setToolTip("Shortcut: Ctrl+Q");
+	ui.settingsButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_S));
+	ui.settingsButton->setToolTip("Shortcut: Shift+S");
 }
 
 void LoggerWindow::updateLogDisplay()
@@ -90,86 +97,9 @@ void LoggerWindow::updateLogDisplay()
 			}
 		}
 
-		setLevelViews(viewLevels);
 		adjustColumnWidths();
 	}
 	file.close();
-}
-
-void LoggerWindow::setLoadedPreferences()
-{
-	bool found = false;
-
-	string home = GetHomePath();
-	QString homePath = QString::fromStdString(home);
-	homePath.append("/Config/NOVAConfig.txt");
-
-	QFile file(homePath);
-
-	if(!file.open(QIODevice::ReadOnly))
-	{
-
-	}
-	else
-	{
-		QTextStream in(&file);
-		while(!in.atEnd() && !found)
-		{
-			QString pass = in.readLine();
-			QStringList parse = pass.split(" ");
-			if(!parse[0].compare("LOG_VIEW_LEVELS"))
-			{
-				viewLevels = parse[1];
-				setLevelViews(parse[1]);
-				found = true;
-			}
-		}
-	}
-	file.close();
-}
-
-void LoggerWindow::setLevelViews(QString bitmask)
-{
-	if(bitmask[0] == '0')
-	{
-		ui.checkDebug->setCheckState(Qt::Checked);
-		ui.checkDebug->setCheckState(Qt::Unchecked);
-	}
-	if(bitmask[1] == '0')
-	{
-		ui.checkInfo->setCheckState(Qt::Checked);
-		ui.checkInfo->setCheckState(Qt::Unchecked);
-	}
-	if(bitmask[2] == '0')
-	{
-		ui.checkNotice->setCheckState(Qt::Checked);
-		ui.checkNotice->setCheckState(Qt::Unchecked);
-	}
-	if(bitmask[3] == '0')
-	{
-		ui.checkWarning->setCheckState(Qt::Checked);
-		ui.checkWarning->setCheckState(Qt::Unchecked);
-	}
-	if(bitmask[4] == '0')
-	{
-		ui.checkError->setCheckState(Qt::Checked);
-		ui.checkError->setCheckState(Qt::Unchecked);
-	}
-	if(bitmask[5] == '0')
-	{
-		ui.checkCritical->setCheckState(Qt::Checked);
-		ui.checkCritical->setCheckState(Qt::Unchecked);
-	}
-	if(bitmask[6] == '0')
-	{
-		ui.checkAlert->setCheckState(Qt::Checked);
-		ui.checkAlert->setCheckState(Qt::Unchecked);
-	}
-	if(bitmask[7] == '0')
-	{
-		ui.checkEmergency->setCheckState(Qt::Checked);
-		ui.checkEmergency->setCheckState(Qt::Unchecked);
-	}
 }
 
 QTreeWidgetItem * LoggerWindow::generateLogTabEntry(QString line)
@@ -250,7 +180,7 @@ QTreeWidgetItem * LoggerWindow::logFileNotFound()
 	QTreeWidgetItem * ret = new QTreeWidgetItem();
 	ret->setText(0, time.toString());
 	ret->setText(1, "ERROR");
-	ret->setText(2, "Log File not Found");
+	ret->setText(3, "Log File not Found");
 	return ret;
 }
 
@@ -284,113 +214,101 @@ void LoggerWindow::on_clearButton_clicked()
 {
 	ui.logDisplay->clear();
 }
-// TODO: make the filtering choices exclusive, OR establish and implement precedence of choices
-void LoggerWindow::on_checkDebug_stateChanged(int state)
+
+void LoggerWindow::on_applyFilter_clicked()
 {
-	if(state == Qt::Checked)
+ // ME for filter options enforced here, find a way to manage checkbox toggle permissions
+
+	QTreeWidgetItemIterator it(ui.logDisplay);
+	while(*it)
 	{
-		showSelected("DEBUG", false);
-	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("DEBUG", false);
+		if(shouldBeVisible((*it)->text(2), (*it)->text(1)))
+		{
+			(*it)->setHidden(false);
+		}
+		else
+		{
+			(*it)->setHidden(true);
+		}
+		++it;
 	}
 }
 
-void LoggerWindow::on_checkInfo_stateChanged(int state)
+bool LoggerWindow::shouldBeVisible(QString level, QString process)
 {
-	if(state == Qt::Checked)
-	{
-		showSelected("INFO", false);
-	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("INFO", false);
-	}
-}
+	bool show = false;
 
-void LoggerWindow::on_checkNotice_stateChanged(int state)
-{
-	if(state == Qt::Checked)
+	if(process == "ClassificationEngine" && ui.checkClassification->isChecked())
 	{
-		showSelected("NOTICE", false);
+		show = true;
 	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("NOTICE", false);
-	}
-}
 
-void LoggerWindow::on_checkWarning_stateChanged(int state)
-{
-	if(state == Qt::Checked)
+	else if(process == "LocalTrafficMonitor" && ui.checkLocalTraffic->isChecked())
 	{
-		showSelected("WARNING", false);
+		show = true;
 	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("WARNING", false);
-	}
-}
 
-void LoggerWindow::on_checkError_stateChanged(int state)
-{
-	if(state == Qt::Checked)
+	else if(process == "Haystack" && ui.checkHaystack->isChecked())
 	{
-		showSelected("ERROR", false);
+		show = true;
 	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("ERROR", false);
-	}
-}
 
-void LoggerWindow::on_checkCritical_stateChanged(int state)
-{
-	if(state == Qt::Checked)
+	else if(process == "DoppelgangerModule" && ui.checkDoppelganger->isChecked())
 	{
-		showSelected("CRITICAL", false);
+		show = true;
 	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("CRITICAL", false);
-	}
-}
 
-void LoggerWindow::on_checkAlert_stateChanged(int state)
-{
-	if(state == Qt::Checked)
+	else
 	{
-		showSelected("ALERT", false);
+		return false;
 	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("ALERT", false);
-	}
-}
 
-void LoggerWindow::on_checkEmergency_stateChanged(int state)
-{
-	if(state == Qt::Checked)
+	if(level == "DEBUG" && ui.checkDebug->isChecked())
 	{
-		showSelected("EMERGENCY", false);
+		show = true;
 	}
-	else if(state == Qt::Unchecked)
-	{
-		hideSelected("EMERGENCY", false);
-	}
-}
 
-void LoggerWindow::on_checkClassification_stateChanged(int state)
-{
-	if(state == Qt::Checked)
+	else if(level == "INFO" && ui.checkInfo->isChecked())
 	{
-		showSelected("ClassificationEngine", true);
+		show = true;
 	}
-	else if(state == Qt::Unchecked)
+
+	else if(level == "NOTICE" && ui.checkNotice->isChecked())
 	{
-		hideSelected("ClassificationEngine", true);
+		show = true;
 	}
+
+	else if(level == "WARNING" && ui.checkWarning->isChecked())
+	{
+		show = true;
+	}
+
+	else if(level == "ERROR" && ui.checkError->isChecked())
+	{
+		show = true;
+	}
+
+	else if(level == "CRITICAL" && ui.checkCritical->isChecked())
+	{
+		show = true;
+	}
+
+	else if(level == "ALERT" && ui.checkAlert->isChecked())
+	{
+		show = true;
+	}
+
+	else if(level == "EMERGENCY" && ui.checkEmergency->isChecked())
+	{
+		show = true;
+	}
+
+	else
+	{
+		show = false;
+	}
+
+	return show;
 }
 
 void LoggerWindow::on_linesBox_currentIndexChanged(const QString & text)
@@ -404,7 +322,7 @@ void LoggerWindow::hideSelected(QString level, bool isProcess)
 	QTreeWidgetItemIterator it(ui.logDisplay);
 	if(isProcess)
 	{
-		while (*it)
+		while(*it)
 		{
 			if((*it)->text(1) == level)
 			(*it)->setHidden(true);
@@ -413,9 +331,9 @@ void LoggerWindow::hideSelected(QString level, bool isProcess)
 	}
 	else
 	{
-		while (*it)
+		while(*it)
 		{
-			if((*it)->text(2) == level)
+			if((*it)->text(2) == level && !((*it)->isHidden()))
 			(*it)->setHidden(true);
 			++it;
 		}
@@ -427,7 +345,7 @@ void LoggerWindow::showSelected(QString level, bool isProcess)
 	QTreeWidgetItemIterator it(ui.logDisplay);
 	if(isProcess)
 	{
-		while (*it)
+		while(*it)
 		{
 			if((*it)->text(1) == level)
 			(*it)->setHidden(false);
@@ -436,9 +354,9 @@ void LoggerWindow::showSelected(QString level, bool isProcess)
 	}
 	else
 	{
-		while (*it)
+		while(*it)
 		{
-			if((*it)->text(2) == level)
+			if((*it)->text(2) == level && ((*it)->isHidden()))
 			(*it)->setHidden(false);
 			++it;
 		}

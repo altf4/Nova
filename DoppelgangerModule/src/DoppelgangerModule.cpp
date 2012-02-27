@@ -63,6 +63,7 @@ socklen_t * socketSizePtr = (socklen_t*)&socketSize;
 in_port_t sAlarmPort;
 
 Logger * loggerConf;
+string loggingName;
 
 //Called when process receives a SIGINT, like if you press ctrl+c
 void siginthandler(int param)
@@ -96,6 +97,7 @@ int main(int argc, char *argv[])
 	//Runs the configuration loaders
 	loggerConf = new Logger(novaConfig.c_str(), true);
 	LoadConfig((char*)novaConfig.c_str());
+	loggingName = "DoppelgangerModule";
 
 	if(!useTerminals)
 	{

@@ -195,7 +195,7 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(string processName, Nova::Levels messageLevel, string message)
+	void Logger::Logging(string processName, Nova::Levels messageLevel, string messageBasic, string messageAdv)
 	{
 		pthread_rwlock_wrlock(&logLock);
 
@@ -203,17 +203,17 @@ namespace Nova
 
 		if(mask.at(0) == '1')
 		{
-			Notify(processName, messageLevel, message);
+			Notify(processName, messageLevel, messageBasic);
 		}
 
 		if(mask.at(1) == '1')
 		{
-			Log(processName, messageLevel, message);
+			Log(processName, messageLevel, messageAdv);
 		}
 
 		if(mask.at(2) == '1')
 		{
-			Mail(processName, messageLevel, message);
+			Mail(processName, messageLevel, messageBasic);
 		}
 
 		pthread_rwlock_unlock(&logLock);

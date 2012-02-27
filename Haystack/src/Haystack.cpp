@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 	loggerConf = new Logger(novaConfig.c_str(), true);
 
 	if(chdir(homePath.c_str()) == -1)
-	    loggerConf->Logging(INFO, "Failed to change directory to " + homePath);
+	    loggerConf->Logging("Haystack", INFO, "Failed to change directory to " + homePath, "Failed to change directory to " + homePath);
 
 	LoadConfig((char*)novaConfig.c_str());
 

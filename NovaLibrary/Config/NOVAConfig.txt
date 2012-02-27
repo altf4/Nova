@@ -402,18 +402,3 @@ RECIPIENTS first@email.send, second@email.send
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
 SERVICE_PREFERENCES 0:7-;1:7-;2:0;
-
-############################################
-# LOG_VIEW_LEVELS #
-############################################
-#
-#
-# Saved bitmask of the levels to view in the log viewer.
-# A 1 indicates show message level; a 0 indicates not to show message level.
-# Levels are interpreted in ascending order from lowest to highest, i.e.
-# DEBUG -> INFO -> NOTICE -> WARNING -> ERROR -> CRITICAL -> ALERT -> EMERGENCY
-# EXAMPLE: 
-# LOG_VIEW_LEVELS 10010101
-# Which means show DEBUG, WARNING, CRITICAL and EMERGENCY level messages only on startup.
-#
-LOG_VIEW_LEVELS 00011111
