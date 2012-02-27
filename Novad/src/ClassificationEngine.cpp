@@ -694,9 +694,10 @@ void *Nova::ClassificationLoop(void *ptr)
 
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
-				if(it->second->isHostile != oldClassification)
+				if((it->second->isHostile) || (it->second->isHostile != oldClassification))
 				{
-					SilentAlarm(it->second);
+					if(it->second->isLive)
+						SilentAlarm(it->second);
 				}
 				SendToUI(it->second);
 			}
@@ -1343,7 +1344,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 	uint dataLen = suspect->SerializeSuspect(data);
 
 	//If the hostility hasn't changed don't bother the DM
-	if(oldClassification != suspect->isHostile && suspect->isLive)
+	if(oldClassification != suspect->isHostile)
 	{
 		if(suspect->isHostile && globalConfig->getIsDmEnabled())
 		{
@@ -1372,7 +1373,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 			system(commandLine.c_str());
 		}
 	}
-	if(suspect->features.unsentData->packetCount && suspect->isLive)
+	if(suspect->features.unsentData->packetCount)
 	{
 		do
 		{
