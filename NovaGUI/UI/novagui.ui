@@ -832,7 +832,7 @@ Module</string>
   </action>
   <action name="actionLogger">
    <property name="text">
-    <string>Logger</string>
+    <string>&amp;Logger</string>
    </property>
   </action>
  </widget>

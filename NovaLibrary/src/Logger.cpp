@@ -195,7 +195,7 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(Nova::Levels messageLevel, string message)
+	void Logger::Logging(string processName, Nova::Levels messageLevel, string messageBasic, string messageAdv)
 	{
 		pthread_rwlock_wrlock(&logLock);
 
@@ -203,26 +203,26 @@ namespace Nova
 
 		if(mask.at(0) == '1')
 		{
-			Notify(messageLevel, message);
+			Notify(processName, messageLevel, messageBasic);
 		}
 
 		if(mask.at(1) == '1')
 		{
-			Log(messageLevel, message);
+			Log(processName, messageLevel, messageAdv);
 		}
 
 		if(mask.at(2) == '1')
 		{
-			Mail(messageLevel, message);
+			Mail(processName, messageLevel, messageBasic);
 		}
 
 		pthread_rwlock_unlock(&logLock);
 	}
 
-	void Logger::Notify(uint16_t level, string message)
+	void Logger::Notify(string processName, uint16_t level, string message)
 	{
 		NotifyNotification *note;
-		string notifyHeader = levels[level].second;
+		string notifyHeader = processName + ": " + levels[level].second;
 		notify_init("Nova");
 		#ifdef NOTIFY_CHECK_VERSION
 		#if NOTIFY_CHECK_VERSION (0, 7, 0)
@@ -238,14 +238,14 @@ namespace Nova
 		g_object_unref(G_OBJECT(note));
 	}
 
-	void Logger::Log(uint16_t level, string message)
+	void Logger::Log(string processName, uint16_t level, string message)
 	{
 		openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(level, "%s %s", (levels[level].second).c_str(), message.c_str());
+		syslog(level, "%s: %s %s", processName.c_str(), (levels[level].second).c_str(), message.c_str());
 		closelog();
 	}
 
-	void Logger::Mail(uint16_t level, string message)
+	void Logger::Mail(string processName, uint16_t level, string message)
 	{
 
 	}

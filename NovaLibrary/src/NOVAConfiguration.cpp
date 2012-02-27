@@ -37,6 +37,23 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"DM_ENABLED", "ENABLED_FEATURES","TRAINING_CAP_FOLDER", "THINNING_DISTANCE",
 		"SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE"};
 
+// Files we need to run (that will be loaded with defaults if deleted)
+const string NOVAConfiguration::requiredFiles[] = {
+		"/settings",
+		"/Config/NOVAConfig.txt",
+		"/Data/data.txt",
+
+		"/Images/greendot.png",
+		"/Images/reddot.png",
+		"/Images/yellowdot.png",
+
+		"/scripts.xml",
+		"/templates/ports.xml",
+		"/templates/profiles.xml",
+		"/templates/routes.xml",
+		"/templates/nodes.xml"
+};
+
 // Loads the configuration file into the class's state data
 void NOVAConfiguration::LoadConfig(string module)
 {
@@ -549,11 +566,27 @@ void NOVAConfiguration::SetDefaults()
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
 bool NOVAConfiguration::InitUserConfigs(string homePath)
 {
+	bool returnValue = true;
 	struct stat fileAttr;
 	//TODO: Do a proper check to make sure all config files exist, not just the .nova dir
 	if ( stat( homePath.c_str(), &fileAttr ) == 0)
 	{
-		return true;
+		// Do all of the important files exist?
+		for (uint i = 0; i < sizeof(requiredFiles)/sizeof(requiredFiles[0]); i++)
+		{
+			string fullPath = homeNovaPath + NOVAConfiguration::requiredFiles[i];
+			if (stat (fullPath.c_str(), &fileAttr ) != 0)
+			{
+				string defaultLocation = "/etc/nova/.nova" + NOVAConfiguration::requiredFiles[i];
+				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
+				syslog(SYSL_ERR, "Warning: The file %s does not exist but is required for Nova to function. Restoring default file from %s",fullPath.c_str(), defaultLocation.c_str());
+				if (system(copyCommand.c_str()) == -1)
+				{
+					syslog(SYSL_ERR, "Error: Unable to copy file %s to %s.",fullPath.c_str(), defaultLocation.c_str());
+				}
+			}
+		}
+		return returnValue;
 	}
 	else
 	{
@@ -561,27 +594,29 @@ bool NOVAConfiguration::InitUserConfigs(string homePath)
 				"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to assign user root privileges");
-			return false;
+			returnValue = false;
 		}
 
 		//TODO: Do this command programmatically. Not by calling system()
 		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			return false;
+			returnValue = false;
 		}
 
 		//Check the ~/.nova dir again
 		if ( stat( homePath.c_str(), &fileAttr ) == 0)
 		{
-			return true;
+			return returnValue;
 		}
 		else
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			return false;
+			returnValue = false;
 		}
 	}
+
+	return returnValue;
 }
 
 string NOVAConfiguration::toString()

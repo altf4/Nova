@@ -81,7 +81,7 @@ public:
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(Nova::Levels messageLevel, string message);
+	void Logging(string processName, Nova::Levels messageLevel, string messageBasic, string messageAdv);
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
 	// args: 	string logPrefString: this method is used for reading from the config file
@@ -99,7 +99,7 @@ private:
 	// args: 	uint16_t level. The level of severity to print in the
 	//       	libNotify message.
 	//       	string message. The content of the libNotify message
-	void Notify(uint16_t level, string message);
+	void Notify(string processName, uint16_t level, string message);
 	// ParseAddressesString: takes in the comma separated string of email recipients
 	// and returns a vector containing each individual email address. May not need this
 	// in the future, depending on how forgiving the SMTP methods are in Poco, but for
@@ -109,7 +109,7 @@ private:
 	// Log will be the method that calls syslog
 	// args: 	uint16_t level. The level of severity to tell syslog to log with.
 	//       	string message. The message to send to syslog in string form.
-	void Log(uint16_t level, string message);
+	void Log(string processName, uint16_t level, string message);
 	// Mail will, obviously, email people.
 	// args: 	uint16_t level. The level of severity with which to apply
 	// 		 	when sending the email. Used primarily to extract a string from the
@@ -117,7 +117,7 @@ private:
 	//		 	string message. This will be the string that is sent as the
 	// 		 	email's content.
 	//       	vector<string> recipients. Who the email will be sent to.
-	void Mail(uint16_t level, string message);
+	void Mail(string processName, uint16_t level, string message);
 	// clean the elements in the toClean vector, i.e. removing trailing commas, etc.
 	vector<string> CleanAddresses(vector<string> toClean);
 	// takes in a character, and returns a Services type; for use when
@@ -137,7 +137,6 @@ public:
 
 private:
 	static const string prefixes[];
-	string parentName;
 	optionsInfo messageInfo;
 	pthread_rwlock_t logLock;
 };
