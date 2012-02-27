@@ -262,20 +262,6 @@ void *Nova::ClassificationEngineMain(void *ptr)
     // will route based on severity level.
     logger->Logging("ClassificationEngine", INFO, "Classification Engine has begun the main loop...", "Advanced Message Here");
 
-    //"Main Loop"
-	while(true)
-	{
-		if (CEReceiveSuspectData())
-		{
-			if(!globalConfig->getClassificationTimeout())
-			{
-				if (!globalConfig->getIsTraining())
-					ClassificationLoop(NULL);
-				else
-					TrainingLoop(NULL);
-			}
-		}
-	}
 	CEReceiveSuspectData();
 
 	//Shouldn't get here!
