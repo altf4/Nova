@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [groupdel nova]
+if ((`groupdel nova`))
 	then
 		echo
 fi
