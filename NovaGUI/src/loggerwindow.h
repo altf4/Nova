@@ -20,8 +20,8 @@ public:
 private:
     void initializeLoggingWindow();
     void updateLoggingWindow();
-    void hideSelected(QString level);
-    void showSelected(QString level);
+    void hideSelected(QString level, bool isProcess);
+    void showSelected(QString level, bool isProcess);
     void adjustColumnWidths();
     void setLoadedPreferences();
     void setLevelViews(QString bitmask);
@@ -48,6 +48,7 @@ private Q_SLOTS:
 	void on_checkCritical_stateChanged(int state);
 	void on_checkAlert_stateChanged(int state);
 	void on_checkEmergency_stateChanged(int state);
+	void on_checkClassification_stateChanged(int state);
 	void on_linesBox_currentIndexChanged(const QString & text);
 };
 

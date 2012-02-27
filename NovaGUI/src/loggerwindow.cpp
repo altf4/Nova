@@ -2,6 +2,8 @@
 
 using namespace Nova;
 
+//TODO: add support and GUI elements for viewing honeyd logs
+
 LoggerWindow::LoggerWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -55,6 +57,7 @@ void LoggerWindow::updateLogDisplay()
 		QTextStream in(&file);
 		if(showNumberOfLogs > 0)
 		{
+			ui.showLabel->setText("Last");
 			while(!in.atEnd() && i < showNumberOfLogs)
 			{
 				QString pass = in.readLine();
@@ -76,6 +79,7 @@ void LoggerWindow::updateLogDisplay()
 		}
 		else
 		{
+			ui.showLabel->setText("Show");
 			while(!in.atEnd())
 			{
 				QString pass = in.readLine();
@@ -174,17 +178,19 @@ QTreeWidgetItem * LoggerWindow::generateLogTabEntry(QString line)
 	QStringList parse = line.split(" ", QString::SkipEmptyParts);
 	QString time(parse[0] + " " + parse[1]+ " " + parse[2]);
 	ret->setText(0, time);
-	QString level(parse[5]);
-	ret->setText(1, level);
-	QString message(parse[6]);
+	QString process(parse[5].mid(0, (parse[5].size() - 1)));
+	ret->setText(1, process);
+	QString level(parse[6]);
+	ret->setText(2, level);
+	QString message(parse[7]);
 
-	for(int i = 7; i < parse.size(); i++)
+	for(int i = 8; i < parse.size(); i++)
 	{
 		message.append(" ");
 		message.append(parse[i]);
 	}
 
-	ret->setText(2, message);
+	ret->setText(3, message);
 	if(!level.compare("INFO"))
 	{
 		for(int i = 0; i < 4; i++)
@@ -278,16 +284,16 @@ void LoggerWindow::on_clearButton_clicked()
 {
 	ui.logDisplay->clear();
 }
-
+// TODO: make the filtering choices exclusive, OR establish and implement precedence of choices
 void LoggerWindow::on_checkDebug_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("DEBUG");
+		showSelected("DEBUG", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("DEBUG");
+		hideSelected("DEBUG", false);
 	}
 }
 
@@ -295,11 +301,11 @@ void LoggerWindow::on_checkInfo_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("INFO");
+		showSelected("INFO", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("INFO");
+		hideSelected("INFO", false);
 	}
 }
 
@@ -307,11 +313,11 @@ void LoggerWindow::on_checkNotice_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("NOTICE");
+		showSelected("NOTICE", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("NOTICE");
+		hideSelected("NOTICE", false);
 	}
 }
 
@@ -319,11 +325,11 @@ void LoggerWindow::on_checkWarning_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("WARNING");
+		showSelected("WARNING", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("WARNING");
+		hideSelected("WARNING", false);
 	}
 }
 
@@ -331,11 +337,11 @@ void LoggerWindow::on_checkError_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("ERROR");
+		showSelected("ERROR", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("ERROR");
+		hideSelected("ERROR", false);
 	}
 }
 
@@ -343,11 +349,11 @@ void LoggerWindow::on_checkCritical_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("CRITICAL");
+		showSelected("CRITICAL", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("CRITICAL");
+		hideSelected("CRITICAL", false);
 	}
 }
 
@@ -355,11 +361,11 @@ void LoggerWindow::on_checkAlert_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("ALERT");
+		showSelected("ALERT", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("ALERT");
+		hideSelected("ALERT", false);
 	}
 }
 
@@ -367,11 +373,23 @@ void LoggerWindow::on_checkEmergency_stateChanged(int state)
 {
 	if(state == Qt::Checked)
 	{
-		showSelected("EMERGENCY");
+		showSelected("EMERGENCY", false);
 	}
 	else if(state == Qt::Unchecked)
 	{
-		hideSelected("EMERGENCY");
+		hideSelected("EMERGENCY", false);
+	}
+}
+
+void LoggerWindow::on_checkClassification_stateChanged(int state)
+{
+	if(state == Qt::Checked)
+	{
+		showSelected("ClassificationEngine", true);
+	}
+	else if(state == Qt::Unchecked)
+	{
+		hideSelected("ClassificationEngine", true);
 	}
 }
 
@@ -381,47 +399,57 @@ void LoggerWindow::on_linesBox_currentIndexChanged(const QString & text)
 	updateLogDisplay();
 }
 
-void LoggerWindow::hideSelected(QString level)
+void LoggerWindow::hideSelected(QString level, bool isProcess)
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
-	while (*it)
+	if(isProcess)
 	{
-		if((*it)->text(1) == level)
-		(*it)->setHidden(true);
-		++it;
+		while (*it)
+		{
+			if((*it)->text(1) == level)
+			(*it)->setHidden(true);
+			++it;
+		}
+	}
+	else
+	{
+		while (*it)
+		{
+			if((*it)->text(2) == level)
+			(*it)->setHidden(true);
+			++it;
+		}
 	}
 }
 
-void LoggerWindow::showSelected(QString level)
+void LoggerWindow::showSelected(QString level, bool isProcess)
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
-	while (*it)
+	if(isProcess)
 	{
-		if((*it)->text(1) == level)
-		(*it)->setHidden(false);
-		++it;
+		while (*it)
+		{
+			if((*it)->text(1) == level)
+			(*it)->setHidden(false);
+			++it;
+		}
+	}
+	else
+	{
+		while (*it)
+		{
+			if((*it)->text(2) == level)
+			(*it)->setHidden(false);
+			++it;
+		}
 	}
 }
 
 void LoggerWindow::adjustColumnWidths()
 {
-	int longestValueTime = 0;
-	int longestValueLevel = 0;
-
-	for(QTreeWidgetItemIterator it(ui.logDisplay); *it; ++it)
-	{
-		if((*it)->text(0).size() > longestValueTime)
-		{
-			longestValueTime = (*it)->text(0).size();
-		}
-		if((*it)->text(1).size() > longestValueLevel)
-		{
-			longestValueTime = (*it)->text(1).size();
-		}
-	}
-
 	ui.logDisplay->resizeColumnToContents(0);
 	ui.logDisplay->resizeColumnToContents(1);
+	ui.logDisplay->resizeColumnToContents(2);
 }
 
 void LoggerWindow::on_closeButton_clicked()
