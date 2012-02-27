@@ -43,11 +43,7 @@ int main()
 	logger = new Logger(novaConfigPath.c_str(), true);
 
 	globalConfig = new NOVAConfiguration(novaConfigPath);
-	globalConfig->LoadConfig("foobar");
-
-	cout << globalConfig->toString() << endl;
-
-
+	globalConfig->LoadConfig("Novad");
 
 	//Launch the 4 component threads
 	pthread_create(&CE_Thread, NULL, ClassificationEngineMain, NULL);
