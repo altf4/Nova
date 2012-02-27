@@ -41,20 +41,15 @@ int main()
 	userHomePath = GetHomePath();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
 	logger = new Logger(novaConfigPath.c_str(), true);
-
 	globalConfig = new NOVAConfiguration(novaConfigPath);
 	globalConfig->LoadConfig("Novad");
 
 	//Launch the 4 component threads
 	pthread_create(&CE_Thread, NULL, ClassificationEngineMain, NULL);
-	pthread_create(&LTM_Thread, NULL, LocalTrafficMonitorMain, NULL);
-	pthread_create(&HS_Thread, NULL, HaystackMain, NULL);
 
 	// Don't exit until the threads have finished
 	// TODO: Restart dead threads? Or at least throw error messages when they die,
 	pthread_join(CE_Thread, NULL);
-	pthread_join(LTM_Thread, NULL);
-	pthread_join(HS_Thread, NULL);
 
 	return EXIT_FAILURE;
 }
