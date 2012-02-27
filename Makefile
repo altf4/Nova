@@ -5,13 +5,11 @@ all: release
 
 #Release Target
 release: 
-	cd NovaLibrary/Release; $(MAKE)
-	cd ClassificationEngine/Release; $(MAKE)
-	cd DoppelgangerModule/Release; $(MAKE)
-	cd Haystack/Release; $(MAKE)
-	cd LocalTrafficMonitor/Release; $(MAKE)
+	$(MAKE) -C NovaLibrary/Release
+	$(MAKE) -C Nova_UI_Core/Release
+	$(MAKE) -C Novad/Release
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
-	cd NovaGUI; $(MAKE) release
+	$(MAKE) -C NovaGUI release
 	mkdir -p Installer/.nova/Config
 	cp NovaLibrary/Config/NOVAConfig.txt Installer/.nova/Config/NOVAConfig.txt
 	cp Haystack/Config/haystack.config Installer/.nova/Config/haystack.config
@@ -22,13 +20,11 @@ release:
 
 #Debug target
 debug:
-	cd NovaLibrary/Debug; $(MAKE)
-	cd ClassificationEngine/Debug; $(MAKE)
-	cd DoppelgangerModule/Debug; $(MAKE)
-	cd Haystack/Debug; $(MAKE)
-	cd LocalTrafficMonitor/Debug; $(MAKE)
+	$(MAKE) -C NovaLibrary/Release
+	$(MAKE) -C Nova_UI_Core/Release
+	$(MAKE) -C Novad/Release
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
-	cd NovaGUI; $(MAKE) debug
+	$(MAKE) -C NovaGUI debug
 	mkdir -p Installer/.nova/Config
 	cp NovaLibrary/Config/NOVAConfig.txt Installer/.nova/Config/NOVAConfig.txt
 	cp Haystack/Config/haystack.config Installer/.nova/Config/haystack.config
@@ -42,14 +38,14 @@ clean: clean-debug clean-release
 	rm -f Installer/Read/manpages/*.gz
 
 clean-debug:
-	cd NovaLibrary/Debug; $(MAKE) clean
-	cd Novad/Debug; $(MAKE) clean
-	cd NovaGUI; $(MAKE) debug-clean
+	$(MAKE) -C NovaLibrary/Debug clean
+	$(MAKE) -C Novad/Debug clean
+	$(MAKE) -C NovaGUI debug-clean
 
 clean-release:
-	cd NovaLibrary/Release; $(MAKE) clean
-	cd Novad/Release; $(MAKE) clean
-	cd NovaGUI; $(MAKE) release-clean
+	$(MAKE) -C NovaLibrary/Release clean
+	$(MAKE) -C Novad/Release clean
+	$(MAKE) -C NovaGUI debug-clean
 
 install: install-release
 
