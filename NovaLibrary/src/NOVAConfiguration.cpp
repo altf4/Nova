@@ -268,7 +268,7 @@ void NOVAConfiguration::LoadConfig(string module)
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) >= 0)
 				{
-					eps = atoi(line.c_str());
+					eps = atof(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
