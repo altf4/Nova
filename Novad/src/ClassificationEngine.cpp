@@ -694,7 +694,7 @@ void *Nova::ClassificationLoop(void *ptr)
 
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
-				if(it->second->isHostile)
+				if(it->second->isHostile != oldClassification)
 				{
 					SilentAlarm(it->second);
 				}
@@ -1335,34 +1335,42 @@ void Nova::WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree)
 
 void Nova::SilentAlarm(Suspect *suspect)
 {
-	int socketFD;
+	char suspectAddr[INET_ADDRSTRLEN];
+	string commandLine;
+	string hostAddrString = GetLocalIP(globalConfig->getInterface().c_str());
+
 
 	uint dataLen = suspect->SerializeSuspect(data);
 
 	//If the hostility hasn't changed don't bother the DM
 	if(oldClassification != suspect->isHostile && suspect->isLive)
 	{
-		if ((socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		if(suspect->isHostile && globalConfig->getIsDmEnabled())
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to create socket to neighbor: %s", __LINE__, strerror(errno));
-			close(socketFD);
-			return;
-		}
+			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
 
-		if (connect(socketFD, alarmRemotePtr, len) == -1)
-		{
-			syslog(SYSL_ERR, "Line: %d Unable to connect to neigbor: %s", __LINE__, strerror(errno));
-			close(socketFD);
-			return;
-		}
+			commandLine = "sudo iptables -t nat -A PREROUTING -d ";
+			commandLine += hostAddrString;
+			commandLine += " -s ";
+			commandLine += suspectAddr;
+			commandLine += " -j DNAT --to-destination ";
+			commandLine += globalConfig->getDoppelIp();
 
-		if (send(socketFD, data, dataLen, 0) == -1)
-		{
-			syslog(SYSL_ERR, "Line: %d Unable to send to neigbor: %s", __LINE__, strerror(errno));
-			close(socketFD);
-			return;
+			system(commandLine.c_str());
 		}
-		close(socketFD);
+		else
+		{
+			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
+
+			commandLine = "sudo iptables -t nat -D PREROUTING -d ";
+			commandLine += hostAddrString;
+			commandLine += " -s ";
+			commandLine += suspectAddr;
+			commandLine += " -j DNAT --to-destination ";
+			commandLine += globalConfig->getDoppelIp();
+
+			system(commandLine.c_str());
+		}
 	}
 	if(suspect->features.unsentData->packetCount && suspect->isLive)
 	{
