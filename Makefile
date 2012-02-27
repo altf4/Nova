@@ -43,18 +43,12 @@ clean: clean-debug clean-release
 
 clean-debug:
 	cd NovaLibrary/Debug; $(MAKE) clean
-	cd ClassificationEngine/Debug; $(MAKE) clean
-	cd DoppelgangerModule/Debug; $(MAKE) clean
-	cd Haystack/Debug; $(MAKE) clean
-	cd LocalTrafficMonitor/Debug; $(MAKE) clean
+	cd Novad/Debug; $(MAKE) clean
 	cd NovaGUI; $(MAKE) debug-clean
 
 clean-release:
 	cd NovaLibrary/Release; $(MAKE) clean
-	cd ClassificationEngine/Release; $(MAKE) clean
-	cd DoppelgangerModule/Release; $(MAKE) clean
-	cd Haystack/Release; $(MAKE) clean
-	cd LocalTrafficMonitor/Release; $(MAKE) clean
+	cd Novad/Release; $(MAKE) clean
 	cd NovaGUI; $(MAKE) release-clean
 
 install: install-release
@@ -64,10 +58,7 @@ install-release:
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
-	install ClassificationEngine/Release/ClassificationEngine $(DESTDIR)/usr/bin
-	install DoppelgangerModule/Release/DoppelgangerModule $(DESTDIR)/usr/bin
-	install Haystack/Release/Haystack $(DESTDIR)/usr/bin
-	install LocalTrafficMonitor/Release/LocalTrafficMonitor $(DESTDIR)/usr/bin
+	install Novad/Release/Novad $(DESTDIR)/usr/bin
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
@@ -88,10 +79,8 @@ install-release:
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
-	gzip -c Installer/Read/manpages/ClassificationEngine.1 > Installer/Read/manpages/ClassificationEngine.1.gz
-	gzip -c Installer/Read/manpages/DoppelgangerModule.1 > Installer/Read/manpages/DoppelgangerModule.1.gz
-	gzip -c Installer/Read/manpages/Haystack.1 > Installer/Read/manpages/Haystack.1.gz
-	gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
+	# TODO: Combine man pages
+	#gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
 	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	sh Installer/postinst
@@ -101,10 +90,7 @@ install-debug:
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
-	install ClassificationEngine/Debug/ClassificationEngine $(DESTDIR)/usr/bin
-	install DoppelgangerModule/Debug/DoppelgangerModule $(DESTDIR)/usr/bin
-	install Haystack/Debug/Haystack $(DESTDIR)/usr/bin
-	install LocalTrafficMonitor/Debug/LocalTrafficMonitor $(DESTDIR)/usr/bin
+	install Novad/Debug/Novad $(DESTDIR)/usr/bin
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
@@ -125,10 +111,8 @@ install-debug:
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
-	gzip -c Installer/Read/manpages/ClassificationEngine.1 > Installer/Read/manpages/ClassificationEngine.1.gz
-	gzip -c Installer/Read/manpages/DoppelgangerModule.1 > Installer/Read/manpages/DoppelgangerModule.1.gz
-	gzip -c Installer/Read/manpages/Haystack.1 > Installer/Read/manpages/Haystack.1.gz
-	gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
+	# TODO: Combine man pages
+	#gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
 	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	sh Installer/postinst
@@ -139,17 +123,10 @@ uninstall:
 	rm -rf $(DESTDIR)/usr/share/nova
 	rm -rf $(DESTDIR)/$(HOME)/.nova
 	rm -f $(DESTDIR)/usr/bin/NovaGUI
-	rm -f $(DESTDIR)/usr/bin/ClassificationEngine
-	rm -f $(DESTDIR)/usr/bin/DoppelgangerModule
-	rm -f $(DESTDIR)/usr/bin/Haystack
-	rm -f $(DESTDIR)/usr/bin/LocalTrafficMonitor
+	rm -f $(DESTDIR)/usr/bin/Novad
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
-	rm -f $(DESTDIR)/usr/share/man/man1/ClassificationEngine.1.gz
-	rm -f $(DESTDIR)/usr/share/man/man1/Haystack.1.gz
-	rm -f $(DESTDIR)/usr/share/man/man1/NovaGUI.1.gz
-	rm -f $(DESTDIR)/usr/share/man/man1/LocalTrafficMonitor.1.gz
-	rm -f $(DESTDIR)/usr/share/man/man1/DoppelgangerModule.1.gz
+	#rm -f $(DESTDIR)/usr/share/man/man1/LocalTrafficMonitor.1.gz
 	sh Installer/postrm
 

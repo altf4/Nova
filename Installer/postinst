@@ -3,8 +3,7 @@
 set -e
 
 #Set pcap permissions
-setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/LocalTrafficMonitor
-setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/Haystack
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/Novad
 setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
 #make nova group
 groupadd -f nova
