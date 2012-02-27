@@ -10,14 +10,7 @@ release:
 	$(MAKE) -C Novad/Release
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
-	mkdir -p Installer/.nova/Config
-	cp NovaLibrary/Config/NOVAConfig.txt Installer/.nova/Config/NOVAConfig.txt
-	cp Haystack/Config/haystack.config Installer/.nova/Config/haystack.config
-	cp DoppelgangerModule/Config/doppelganger.config Installer/.nova/Config/doppelganger.config
-	mkdir -p Installer/.nova/Data
-	cp ClassificationEngine/Config/data.txt Installer/.nova/Data/data.txt
-	cp ClassificationEngine/Config/training.db Installer/.nova/Data/training.db
-
+	
 #Debug target
 debug:
 	$(MAKE) -C NovaLibrary/Release
@@ -25,14 +18,7 @@ debug:
 	$(MAKE) -C Novad/Release
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
-	mkdir -p Installer/.nova/Config
-	cp NovaLibrary/Config/NOVAConfig.txt Installer/.nova/Config/NOVAConfig.txt
-	cp Haystack/Config/haystack.config Installer/.nova/Config/haystack.config
-	cp DoppelgangerModule/Config/doppelganger.config Installer/.nova/Config/doppelganger.config
-	mkdir -p Installer/.nova/Data
-	cp ClassificationEngine/Config/data.txt Installer/.nova/Data/data.txt
-	cp ClassificationEngine/Config/training.db Installer/.nova/Data/training.db
-
+	
 #Cleans both Release and Debug
 clean: clean-debug clean-release
 	rm -f Installer/Read/manpages/*.gz
