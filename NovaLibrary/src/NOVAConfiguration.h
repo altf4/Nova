@@ -43,6 +43,8 @@ public:
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
     static bool InitUserConfigs(string homePath);
 
+    string toString();
+
     // Getters
     string getConfigFilePath() const;
     string getDoppelInterface() const;

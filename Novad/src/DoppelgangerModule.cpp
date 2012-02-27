@@ -34,7 +34,7 @@ DMSuspectHashTable DMSuspectTable;
 pthread_rwlock_t DMlock;
 
 //These variables used to be in the main function, changed to global to allow LoadConfig to set them
-string hostAddrString, doppelgangerAddrString, DMhoneydConfigPath;
+string hostAddrString;
 struct sockaddr_in hostAddr, loopbackAddr;
 
 char * DMpathsFile = (char*)PATHS_FILE;
@@ -115,7 +115,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 	commandLine = "sudo iptables -A FORWARD -i lo -j DROP";
 	system(commandLine.c_str());
 
-	commandLine = "sudo route add -host "+ doppelgangerAddrString+" dev lo";
+	commandLine = "sudo route add -host "+ globalConfig->getDoppelIp() +" dev lo";
 	system(commandLine.c_str());
 
 	commandLine = "sudo iptables -t nat -F";
@@ -218,7 +218,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 			commandLine += " -s ";
 			commandLine += suspectAddr;
 			commandLine += " -j DNAT --to-destination ";
-			commandLine += doppelgangerAddrString;
+			commandLine += globalConfig->getDoppelIp();
 
 			system(commandLine.c_str());
 		}
@@ -231,7 +231,7 @@ void *Nova::DoppelgangerModuleMain(void *ptr)
 			commandLine += " -s ";
 			commandLine += suspectAddr;
 			commandLine += " -j DNAT --to-destination ";
-			commandLine += doppelgangerAddrString;
+			commandLine += globalConfig->getDoppelIp();
 
 			system(commandLine.c_str());
 		}
@@ -388,7 +388,7 @@ void Nova::DMLoadConfig(char* configFilePath)
 
 	struct in_addr *tempr = NULL;
 
-	if( inet_aton(doppelgangerAddrString.c_str(), tempr) == 0)
+	if( inet_aton(globalConfig->getDoppelIp().c_str(), tempr) == 0)
 	{
 		syslog(SYSL_ERR, "Line: %d ERROR: Invalid doppelganger IP address", __LINE__);
 		exit(EXIT_FAILURE);

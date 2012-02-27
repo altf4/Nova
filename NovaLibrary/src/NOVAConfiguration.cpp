@@ -22,6 +22,7 @@
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <sstream>
 
 using namespace std;
 
@@ -465,7 +466,7 @@ void NOVAConfiguration::LoadConfig(string module)
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if (atoi(line.c_str()) >= 0)
 				{
 					dataTTL = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -581,6 +582,44 @@ bool NOVAConfiguration::InitUserConfigs(string homePath)
 			return false;
 		}
 	}
+}
+
+string NOVAConfiguration::toString()
+{
+	std::stringstream ss;
+	ss << "getConfigFilePath() " << getConfigFilePath() << endl;
+	ss << "getDoppelInterface() " << getDoppelInterface() << endl;
+	ss << "getDoppelIp() " << getDoppelIp() << endl;
+	ss << "getEnabledFeatures() " << getEnabledFeatures() << endl;
+	ss << "getInterface() " << getInterface() << endl;
+	ss << "getPathCESaveFile() " << getPathCESaveFile() << endl;
+	ss << "getPathConfigHoneydDm() " << getPathConfigHoneydDm() << endl;
+	ss << "getPathConfigHoneydHs() " << getPathConfigHoneydHs() << endl;
+	ss << "getPathPcapFile() " << getPathPcapFile() << endl;
+	ss << "getPathTrainingCapFolder() " << getPathTrainingCapFolder() << endl;
+	ss << "getPathTrainingFile() " << getPathTrainingFile() << endl;
+
+	ss << "getReadPcap() " << getReadPcap() << endl;
+	ss << "getUseTerminals() " << getUseTerminals() << endl;
+	ss << "getIsDmEnabled() " << getIsDmEnabled() << endl;
+	ss << "getIsTraining() " << getIsTraining() << endl;
+	ss << "getGotoLive() " << getGotoLive() << endl;
+
+	ss << "getClassificationTimeout() " << getClassificationTimeout() << endl;
+	ss << "getDataTTL() " << getDataTTL() << endl;
+	ss << "getK() " << getK() << endl;
+	ss << "getSaMaxAttempts() " << getSaMaxAttempts() << endl;
+	ss << "getSaPort() " << getSaPort() << endl;
+	ss << "getSaveFreq() " << getSaveFreq() << endl;
+	ss << "getTcpCheckFreq() " << getTcpCheckFreq() << endl;
+	ss << "getTcpTimout() " << getTcpTimout() << endl;
+	ss << "getThinningDistance() " << getThinningDistance() << endl;
+
+	ss << "getClassificationThreshold() " << getClassificationThreshold() << endl;
+	ss << "getSaSleepDuration() " << getSaSleepDuration() << endl;
+	ss << "getEps() " << getEps() << endl;
+
+	return ss.str();
 }
 
 NOVAConfiguration::NOVAConfiguration(string configFilePath)

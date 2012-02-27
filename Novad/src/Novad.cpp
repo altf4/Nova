@@ -43,6 +43,10 @@ int main()
 	logger = new Logger(novaConfigPath.c_str(), true);
 
 	globalConfig = new NOVAConfiguration(novaConfigPath);
+	globalConfig->LoadConfig("foobar");
+
+	cout << globalConfig->toString() << endl;
+
 
 
 	//Launch the 4 component threads
@@ -51,6 +55,12 @@ int main()
 	pthread_create(&HS_Thread, NULL, HaystackMain, NULL);
 	pthread_create(&DM_Thread, NULL, DoppelgangerModuleMain, NULL);
 
+	// Don't exit until the threads have finished
+	// TODO: Restart dead threads? Or at least throw error messages when they die,
+	pthread_join(CE_Thread, NULL);
+	pthread_join(LTM_Thread, NULL);
+	pthread_join(HS_Thread, NULL);
+	pthread_join(DM_Thread, NULL);
 
 	return EXIT_FAILURE;
 }
