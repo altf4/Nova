@@ -65,12 +65,6 @@ void HSUpdateSuspect(Packet packet);
 //		ptr - Required for pthread start routines
 void *HSSuspectLoop(void *ptr);
 
-// Parse through the honeyd config file and get the list of IP addresses used
-//		honeyDConfigPath - path to honeyd configuration file
-// Returns: vector containing IP addresses of all honeypots
-vector <string> GetHaystackAddresses(string honeyDConfigPath);
-vector <string> GetHaystackDhcpAddresses(string honeyDConfigPath);
-
 void *UpdateIPFilter(void *ptr);
 string ConstructFilterString();
 

@@ -139,6 +139,32 @@ void saveAndExit(int param);
 // This will reclassify all the suspects based on the new data.
 void Reload();
 
+// Parse through the honeyd config file and get the list of IP addresses used
+//		honeyDConfigPath - path to honeyd configuration file
+// Returns: vector containing IP addresses of all honeypots
+vector <string> GetHaystackAddresses(string honeyDConfigPath);
+vector <string> GetHaystackDhcpAddresses(string honeyDConfigPath);
+
+void *UpdateIPFilter(void *ptr);
+string ConstructFilterString();
+
+// Callback function that is passed to pcap_loop(..) and called each time a packet is received
+//		useless - Unused
+//		pkthdr - pcap packet header
+//		packet - packet data
+void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet);
+
+// Startup rotuine for thread periodically checking for TCP timeout.
+// IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
+// This thread looks for old tcp sessions and declares them terminated
+//		ptr - Required for pthread start routines
+void *TCPTimeout( void *ptr );
+
+// Updates a suspect with evidence to be processed later
+//		packet : Packet headers to used for the evidence
+void UpdateSuspect(Packet packet);
+
+
 }
 
 #endif /* CLASSIFICATIONENGINE_H_ */
