@@ -39,6 +39,7 @@ debug:
 
 #Cleans both Release and Debug
 clean: clean-debug clean-release
+	rm -f Installer/Read/manpages/*.gz
 
 clean-debug:
 	cd NovaLibrary/Debug; $(MAKE) clean
@@ -72,6 +73,7 @@ install-release:
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
+	mkdir -p $(DESTDIR)/usr/share/applications
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
@@ -81,12 +83,14 @@ install-release:
 	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
 	cp Installer/Read/icons/* $(DESTDIR)/usr/share/nova/icons
 	mkdir -p $(DESTDIR)/var/log/honeyd
+	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	gzip Installer/Read/manpages/*.1
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	gzip -d Installer/Read/manpages/*.1.gz
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/
 	sh Installer/postinst
 
 #requires root
@@ -103,6 +107,7 @@ install-debug:
 	install Installer/Read/paths $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
+	mkdir -p $(DESTDIR)/usr/share/applications
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
@@ -112,12 +117,14 @@ install-debug:
 	cp -rp Installer/Write/nova $(DESTDIR)/usr/share/
 	cp Installer/Read/icons/* $(DESTDIR)/usr/share/nova/icons
 	mkdir -p $(DESTDIR)/var/log/honeyd
+	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	gzip Installer/Read/manpages/*.1
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	gzip -d Installer/Read/manpages/*.1.gz
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/
 	sh Installer/postinst
 
 #Requires root

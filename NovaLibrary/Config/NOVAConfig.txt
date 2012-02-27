@@ -156,6 +156,16 @@ DM_HONEYD_CONFIG Config/doppelganger.config
 DOPPELGANGER_IP 10.0.0.1
 
 ############################################
+# DOPPELGANGER_INTERFACE #
+############################################
+#
+# Interface to use for the doppelganger.
+#
+# EXAMPLE:
+#DOPPELGANGER_INTERFACE lo
+DOPPELGANGER_INTERFACE lo
+
+############################################
 # DM_ENABLED #
 ############################################
 #
