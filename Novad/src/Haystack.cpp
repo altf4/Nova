@@ -18,7 +18,7 @@
 //============================================================================
 
 #include "NOVAConfiguration.h"
-#include "ClassificationEngine.h"
+#include "Novad.h"
 #include "HashMapStructs.h"
 #include "SuspectTable.h"
 #include "NovaUtil.h"
