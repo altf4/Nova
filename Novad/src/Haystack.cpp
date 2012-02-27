@@ -95,8 +95,7 @@ void *Nova::HaystackMain(void *ptr)
 	string haystackAddresses_csv = "";
 
 	if(chdir(userHomePath.c_str()) == -1)
-		logger->Logging(INFO, "Failed to change directory to " + userHomePath);
-	    loggerConf->Logging("Haystack", INFO, "Failed to change directory to " + homePath, "Failed to change directory to " + homePath);
+		logger->Logging("Haystack", INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
 
 	if(!globalConfig->getUseTerminals())
 	{
