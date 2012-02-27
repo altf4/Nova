@@ -1746,6 +1746,7 @@ void Nova::CEReceiveGUICommand()
 	{
 		case EXIT:
 		{
+    		system("sudo iptables -F");
 			saveAndExit(0);
 		}
 		case CLEAR_ALL:

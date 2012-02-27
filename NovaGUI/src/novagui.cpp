@@ -2290,17 +2290,12 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 	msgLen = message.SerialzeMessage(msgBuffer);
 
 	switch (row) {
+
 	case COMPONENT_CE:
-		sendToCE();
-		break;
 	case COMPONENT_DM:
-		sendToDM();
-		break;
 	case COMPONENT_HS:
-		sendToHS();
-		break;
 	case COMPONENT_LM:
-		sendToLTM();
+		sendToCE();
 		break;
 	case COMPONENT_DMH:
 		if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
@@ -2751,83 +2746,17 @@ void sendToCE()
 
 void sendToDM()
 {
-	//Opens the socket
-	if ((DM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-		exit(EXIT_FAILURE);
-	}
-	//Sends the message
-	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
-	if (connect(DM_OutSock, (struct sockaddr *)&DM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-		return;
-	}
 
-	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-		return;
-	}
-	close(DM_OutSock);
 }
 
 void sendToHS()
 {
-	//Opens the socket
-	if ((HS_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-		exit(EXIT_FAILURE);
-	}
-	//Sends the message
-	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
-	if (connect(HS_OutSock, (struct sockaddr *)&HS_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-		return;
-	}
 
-	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-		return;
-	}
-	close(HS_OutSock);
 }
 
 void sendToLTM()
 {
-	//Opens the socket
-	if ((LTM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-		exit(EXIT_FAILURE);
-	}
-	//Sends the message
-	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);
-	if (connect(LTM_OutSock, (struct sockaddr *)&LTM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-		return;
-	}
 
-	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-		return;
-	}
-	close(LTM_OutSock);
 }
 void sendAll()
 {
@@ -2837,27 +2766,6 @@ void sendAll()
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
 		close(CE_OutSock);
-	}
-
-	//DM OUT -------------------------------------------------
-	if ((DM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-	}
-
-	//HS OUT -------------------------------------------------
-	if ((HS_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-	}
-
-	//LTM OUT ------------------------------------------------
-	if ((LTM_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
 	}
 
 
@@ -2876,56 +2784,6 @@ void sendAll()
 		close(CE_OutSock);
 	}
 	close(CE_OutSock);
-	// -------------------------------------------------------
-
-	//DM OUT -------------------------------------------------
-	len = strlen(DM_OutAddress.sun_path) + sizeof(DM_OutAddress.sun_family);
-	if (connect(DM_OutSock, (struct sockaddr *)&DM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-	}
-
-	else if (send(DM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(DM_OutSock);
-	}
-	close(DM_OutSock);
-	// -------------------------------------------------------
-
-
-	//HS OUT -------------------------------------------------
-	len = strlen(HS_OutAddress.sun_path) + sizeof(HS_OutAddress.sun_family);
-	if (connect(HS_OutSock, (struct sockaddr *)&HS_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-	}
-
-	else if (send(HS_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(HS_OutSock);
-	}
-	close(HS_OutSock);
-	// -------------------------------------------------------
-
-
-	//LTM OUT ------------------------------------------------
-	len = strlen(LTM_OutAddress.sun_path) + sizeof(LTM_OutAddress.sun_family);
-	if (connect(LTM_OutSock, (struct sockaddr *)&LTM_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-	}
-
-	else if (send(LTM_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(LTM_OutSock);
-	}
-	close(LTM_OutSock);
 	// -------------------------------------------------------
 }
 
