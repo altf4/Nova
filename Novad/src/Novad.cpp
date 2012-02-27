@@ -172,6 +172,10 @@ int main()
 	//TODO: Perhaps move this into its own init function?
 	userHomePath = GetHomePath();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
+
+	if(chdir(userHomePath.c_str()) == -1)
+		logger->Logging("Novad", INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
+
 	logger = new Logger(novaConfigPath.c_str(), true);
 	globalConfig = new NOVAConfiguration(novaConfigPath);
 	globalConfig->LoadConfig("Novad");
@@ -584,8 +588,7 @@ void Nova::Reload()
 	dataPtsWithClass.clear();
 
 	// Reload the configuration file
-	string novaConfig = userHomePath + "/Config/NOVAConfig.txt";
-	CELoadConfig((char*)novaConfig.c_str());
+	globalConfig->LoadConfig("Novad");
 
 	// Did our data file move?
 	globalConfig->getPathTrainingFile() = userHomePath + "/" +globalConfig->getPathTrainingFile();
