@@ -574,6 +574,7 @@ void Nova::Reload()
 
 	// Clear the enabledFeatures count
 	enabledFeatures = 0;
+	CELoadConfig();
 
 	// Clear max and min values
 	for (int i = 0; i < DIM; i++)
@@ -1856,7 +1857,7 @@ void Nova::SendToUI(Suspect *suspect)
 }
 
 
-void Nova::CELoadConfig(char * configFilePath)
+void Nova::CELoadConfig()
 {
 	string prefix, line;
 	uint i = 0;

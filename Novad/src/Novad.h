@@ -110,7 +110,7 @@ void SendToUI(Suspect *suspect);
 
 // Loads configuration variables
 //		configFilePath - Location of configuration file
-void CELoadConfig(char * configFilePath);
+void CELoadConfig();
 
 // Dump the suspect information to a file
 //		filename - Path to file to write to
