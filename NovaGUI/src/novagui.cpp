@@ -739,9 +739,9 @@ void NovaGUI::LoadScriptsTemplate()
 void NovaGUI::InitiateSystemStatus()
 {
 	// Pull in the icons now that homePath is set
-	string greenPath = homePath + "/Images/greendot.png";
-	string yellowPath = homePath + "/Images/yellowdot.png";
-	string redPath = homePath + "/Images/reddot.png";
+	string greenPath = "/usr/share/nova/icons/greendot.png";
+	string yellowPath = "/usr/share/nova/icons/yellowdot.png";
+	string redPath = "/usr/share/nova/icons/reddot.png";
 
 	greenIcon = new QIcon(QPixmap(QString::fromStdString(greenPath)));
 	yellowIcon = new QIcon(QPixmap(QString::fromStdString(yellowPath)));

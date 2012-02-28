@@ -43,10 +43,6 @@ const string NOVAConfiguration::m_requiredFiles[] = {
 		"/Config/NOVAConfig.txt",
 		"/Data/data.txt",
 
-		"/Images/greendot.png",
-		"/Images/reddot.png",
-		"/Images/yellowdot.png",
-
 		"/scripts.xml",
 		"/templates/ports.xml",
 		"/templates/profiles.xml",
