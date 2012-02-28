@@ -25,8 +25,8 @@ INTERFACE eth0
 # the data points file can by located.
 #
 # EXAMPLE:
-#DATAFILE Data/data.txt
-DATAFILE Data/data.txt
+#DATAFILE Config/data.txt
+DATAFILE Config/data.txt
 
 ############################################
 # SILENT_ALARM_PORT #
