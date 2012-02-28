@@ -61,11 +61,6 @@ string key;
 pthread_rwlock_t sessionLock;
 pthread_rwlock_t suspectTableLock;
 
-// Buffers
-u_char buffer[MAX_MSG_SIZE];
-u_char data[MAX_MSG_SIZE];
-u_char GUIData[MAX_MSG_SIZE];
-
 //NOT normalized
 vector <Point*> dataPtsWithClass;
 static struct sockaddr_in hostAddr;
@@ -179,10 +174,6 @@ int main()
 	logger = new Logger(novaConfigPath.c_str(), true);
 	globalConfig = new NOVAConfiguration(novaConfigPath);
 	globalConfig->LoadConfig("Novad");
-
-	bzero(GUIData,MAX_MSG_SIZE);
-	bzero(data,MAX_MSG_SIZE);
-	bzero(buffer, MAX_MSG_SIZE);
 
 	pthread_rwlock_init(&suspectTableLock, NULL);
 	pthread_rwlock_init(&sessionLock, NULL);
@@ -1352,9 +1343,9 @@ void Nova::SilentAlarm(Suspect *suspect)
 	char suspectAddr[INET_ADDRSTRLEN];
 	string commandLine;
 	string hostAddrString = GetLocalIP(globalConfig->getInterface().c_str());
+	u_char serializedBuffer[MAX_MSG_SIZE];
 
-
-	uint dataLen = suspect->SerializeSuspect(data);
+	uint dataLen = suspect->SerializeSuspect(serializedBuffer);
 
 	//If the hostility hasn't changed don't bother the DM
 	if(oldClassification != suspect->isHostile)
@@ -1390,11 +1381,10 @@ void Nova::SilentAlarm(Suspect *suspect)
 	{
 		do
 		{
-			bzero(data, MAX_MSG_SIZE);
-			dataLen = suspect->SerializeSuspect(data);
+			dataLen = suspect->SerializeSuspect(serializedBuffer);
 
 			// Serialize the unsent data
-			dataLen += suspect->features.unsentData->SerializeFeatureData(data+dataLen);
+			dataLen += suspect->features.unsentData->SerializeFeatureData(serializedBuffer + dataLen);
 			// Move the unsent data to the sent side
 			suspect->features.UpdateFeatureData(true);
 			// Clear the unsent data
@@ -1460,7 +1450,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					continue;
 				}
 
-				if( send(sockfd,data,dataLen,0) == -1)
+				if( send(sockfd, serializedBuffer, dataLen, 0) == -1)
 				{
 					syslog(SYSL_ERR, "Line: %d Error in TCP Send: %s", __LINE__, strerror(errno));
 					close(sockfd);
@@ -1830,6 +1820,8 @@ void Nova::SendToUI(Suspect *suspect)
 {
 	if (!enableGUI)
 		return;
+
+	u_char GUIData[MAX_MSG_SIZE];
 
 	uint GUIDataLen = suspect->SerializeSuspect(GUIData);
 
