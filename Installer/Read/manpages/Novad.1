@@ -1,16 +1,16 @@
-.TH CLASSIFICATIONENGINE "1" "February 2012" "12.02"
+.TH NOVAD "1" "February 2012" "12.02"
 
 .SH NAME
-.B ClassificationEngine 
-\- The Nova process that performs classifications of IPs
+.B Novad
+\- The Nova daemon process
 
 .SH SYNOPSIS
-.B ClassificationEngine
+.B Novad
 
 .SH DESCRIPTION
 .PP
-.I ClassificationEngine 
-is the process within Nova that performs classifications on hosts in contact with the host running Nova. Using various networking metrics, ClassificationEngine will use an Approximate Nearest Neighbor algorithm to determine whether a given host is hostile or benign.
+.I Novad
+is the main process within Nova. This process monitors local network traffic, monitors traffic from the haystack and doppelgangeg honeyd instances, and performs classifications on hosts in contact with the host running Nova. Using various networking metrics, ClassificationEngine will use an Approximate Nearest Neighbor algorithm to determine whether a given host is hostile or benign. This process will communicate with the GUI to allow for visualizing the information in a useful manner.
 
 .SH COPYRIGHT
 .PP

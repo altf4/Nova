@@ -62,7 +62,7 @@ install-release:
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# TODO: Combine man pages
-	#gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
+	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
 	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	sh Installer/postinst
@@ -94,7 +94,7 @@ install-debug:
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# TODO: Combine man pages
-	#gzip -c Installer/Read/manpages/LocalTrafficMonitor.1 > Installer/Read/manpages/LocalTrafficMonitor.1.gz
+	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
 	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	sh Installer/postinst

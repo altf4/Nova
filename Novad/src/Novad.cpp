@@ -160,11 +160,11 @@ int main()
 	//TODO: Perhaps move this into its own init function?
 	userHomePath = GetHomePath();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
+	logger = new Logger(novaConfigPath.c_str(), true);
 
 	if(chdir(userHomePath.c_str()) == -1)
 		logger->Logging("Novad", INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
 
-	logger = new Logger(novaConfigPath.c_str(), true);
 	globalConfig = new NOVAConfiguration();
 	globalConfig->LoadConfig();
 
