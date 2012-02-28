@@ -173,7 +173,7 @@ int main()
 
 	logger = new Logger(novaConfigPath.c_str(), true);
 	globalConfig = new NOVAConfiguration(novaConfigPath);
-	globalConfig->LoadConfig("Novad");
+	globalConfig->LoadConfig();
 
 	pthread_rwlock_init(&suspectTableLock, NULL);
 	pthread_rwlock_init(&sessionLock, NULL);
@@ -580,7 +580,7 @@ void Nova::Reload()
 	dataPtsWithClass.clear();
 
 	// Reload the configuration file
-	globalConfig->LoadConfig("Novad");
+	globalConfig->LoadConfig();
 
 	// Did our data file move?
 	globalConfig->getPathTrainingFile() = userHomePath + "/" +globalConfig->getPathTrainingFile();

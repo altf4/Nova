@@ -1900,7 +1900,7 @@ void NovaGUI::saveSuspects()
 	msgLen = message.SerialzeMessage(msgBuffer);
 
 	//Sends the message to all Nova processes
-	sendToCE();
+	sendToNovad();
 }
 
 //Clears the suspect tables completely.
@@ -2168,10 +2168,6 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
-	// TODO: Put this back? It was really annoying if you had an existing
-	// haystack.config you wanted to use, kept rewriting it on start.
-	// Commented for now until the Node setup works in the GUI.
-	//writeHoneyd();
 	startNova();
 }
 void NovaGUI::on_stopButton_clicked()
@@ -2261,7 +2257,7 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 
 	switch (row) {
 	case COMPONENT_NOVAD:
-		sendToCE();
+		sendToNovad();
 		break;
 	case COMPONENT_DMH:
 		if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
@@ -2314,7 +2310,7 @@ void NovaGUI::on_actionSystemStatReload_triggered()
 	//Sets the message
 	message.SetMessage(RELOAD);
 	msgLen = message.SerialzeMessage(msgBuffer);
-	sendToCE();
+	sendToNovad();
 }
 
 void NovaGUI::on_systemStatStartButton_clicked()
@@ -2445,7 +2441,7 @@ void NovaGUI::loadConfiguration()
 {
 	// Reload the configuration file
 	configuration = new NOVAConfiguration(configurationFile);
-	configuration->LoadConfig("GUI");
+	configuration->LoadConfig();
 
 	configurationInterface = configuration->getInterface();
 	useTerminals = configuration->getUseTerminals();
@@ -2674,7 +2670,7 @@ void getSocketAddr()
 
 }
 
-void sendToCE()
+void sendToNovad()
 {
 	//Opens the socket
 	if ((CE_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -2701,20 +2697,6 @@ void sendToCE()
 	close(CE_OutSock);
 }
 
-void sendToDM()
-{
-
-}
-
-void sendToHS()
-{
-
-}
-
-void sendToLTM()
-{
-
-}
 void sendAll()
 {
 	//Opens all the sockets

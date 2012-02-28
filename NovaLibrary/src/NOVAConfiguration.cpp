@@ -55,7 +55,7 @@ const string NOVAConfiguration::m_requiredFiles[] = {
 };
 
 // Loads the configuration file into the class's state data
-void NOVAConfiguration::LoadConfig(string module)
+void NOVAConfiguration::LoadConfig()
 {
 	string line;
 	string prefix;
@@ -63,7 +63,7 @@ void NOVAConfiguration::LoadConfig(string module)
 
 	bool isValid[sizeof(m_prefixes)/sizeof(m_prefixes[0])];
 
-	openlog(module.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
+	openlog("Novaconfiguration", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
 	ifstream config(m_configFilePath.c_str());
 
@@ -519,7 +519,212 @@ void NOVAConfiguration::LoadConfig(string module)
 		}
 	}
 	closelog();
+}
 
+bool NOVAConfiguration::SaveConfig() {
+	string line, prefix;
+
+	//Rewrite the config file with the new settings
+	string configurationBackup = m_configFilePath + ".tmp";
+	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
+	system(copyCommand.c_str());
+	ifstream *in = new ifstream(configurationBackup.c_str());
+	ofstream *out = new ofstream(m_configFilePath.c_str());
+
+	if(out->is_open() && in->is_open())
+	{
+		while(in->good())
+		{
+			if (!getline(*in, line))
+			{
+				continue;
+			}
+
+			prefix = "DM_ENABLED";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				if(getIsDmEnabled())
+					*out << "DM_ENABLED 1"<<endl;
+				else
+					*out << "DM_ENABLED 0"<<endl;
+				continue;
+			}
+
+			prefix = "IS_TRAINING";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				if(getIsTraining())
+					*out << "IS_TRAINING 1"<<endl;
+				else
+					*out << "IS_TRAINING 0"<<endl;
+				continue;
+			}
+
+			prefix = "INTERFACE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getInterface() << endl;
+				continue;
+			}
+
+			prefix = "DATAFILE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getPathTrainingFile() << endl;
+				continue;
+			}
+
+			prefix = "SA_SLEEP_DURATION";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getSaSleepDuration() << endl;
+				continue;
+			}
+
+			prefix = "SA_MAX_ATTEMPTS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getSaMaxAttempts() << endl;
+				continue;
+			}
+
+			prefix = "SILENT_ALARM_PORT";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getSaPort() << endl;
+				continue;
+			}
+
+			prefix = "K";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getK() << endl;
+				continue;
+			}
+
+			prefix = "EPS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getEps() << endl;
+				continue;
+			}
+
+			prefix = "CLASSIFICATION_TIMEOUT";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getClassificationTimeout() << endl;
+				continue;
+			}
+
+			prefix = "CLASSIFICATION_THRESHOLD";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getClassificationThreshold() << endl;
+				continue;
+			}
+
+			prefix = "DM_HONEYD_CONFIG";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getPathConfigHoneydDm() << endl;
+				continue;
+			}
+
+			prefix = "DOPPELGANGER_IP";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getDoppelIp() << endl;
+				continue;
+			}
+
+			prefix = "HS_HONEYD_CONFIG";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getPathConfigHoneydHs() << endl;
+				continue;
+			}
+
+			prefix = "TCP_TIMEOUT";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getTcpTimout() << endl;
+				continue;
+			}
+
+			prefix = "TCP_CHECK_FREQ";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getTcpCheckFreq()  << endl;
+				continue;
+			}
+
+			prefix = "PCAP_FILE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " <<  getPathPcapFile() << endl;
+				continue;
+			}
+
+			prefix = "ENABLED_FEATURES";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " << getEnabledFeatures() << endl;
+				continue;
+			}
+
+			prefix = "READ_PCAP";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				if(getReadPcap())
+					*out << "READ_PCAP 1"<< endl;
+				else
+					*out << "READ_PCAP 0"<< endl;
+				continue;
+			}
+
+			prefix = "GO_TO_LIVE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				if(getGotoLive())
+					*out << "GO_TO_LIVE 1" << endl;
+				else
+					*out << "GO_TO_LIVE 0" << endl;
+				continue;
+			}
+
+			prefix = "USE_TERMINALS";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				if(getUseTerminals())
+					*out << "USE_TERMINALS 1" << endl;
+				else
+					*out << "USE_TERMINALS 0" << endl;
+				continue;
+			}
+
+			*out << line << endl;
+		}
+	}
+	else
+	{
+		openlog("Novaconfiguration", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
+		closelog();
+		in->close();
+		out->close();
+		delete in;
+		delete out;
+
+		return false;
+	}
+
+	in->close();
+	out->close();
+	delete in;
+	delete out;
+	system("rm -f Config/.NOVAConfig.tmp");
+
+	return true;
 }
 
 
@@ -659,6 +864,7 @@ NOVAConfiguration::NOVAConfiguration(string configFilePath)
 {
 	this->m_configFilePath = configFilePath;
 	SetDefaults();
+	LoadConfig();
 }
 
 NOVAConfiguration::~NOVAConfiguration()

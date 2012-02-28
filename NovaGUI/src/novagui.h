@@ -249,7 +249,7 @@ void getSocketAddr();
 //Sends the contents of global scope const char * 'data' to all Nova processes
 void sendAll();
 //Sends 'data' to Classification Engine
-void sendToCE();
+void sendToNovad();
 //Sends 'data' to Doppelganger Module
 void sendToDM();
 //Sends 'data' to Haystack

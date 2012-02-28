@@ -1582,239 +1582,44 @@ void NovaConfig::on_applyButton_clicked()
 bool NovaConfig::saveConfigurationToFile() {
 	string line, prefix;
 
-	//Rewrite the config file with the new settings
 	string configurationFile = homePath + "/Config/NOVAConfig.txt";
-	string configurationBackup = homePath + "/Config/.NOVAConfig.tmp";
-	string copyCommand = "cp -f " + configurationFile + " " + configurationBackup;
-	system(copyCommand.c_str());
-	ifstream *in = new ifstream(configurationBackup.c_str());
-	ofstream *out = new ofstream(configurationFile.c_str());
+	NOVAConfiguration *config = new NOVAConfiguration(configurationFile);
+	config->LoadConfig();
 
-	if(out->is_open() && in->is_open())
+	stringstream ss;
+
+	for (uint i = 0; i < DIM; i++)
 	{
-		while(in->good())
-		{
-			if (!getline(*in, line))
-			{
-				continue;
-			}
-
-			prefix = "DM_ENABLED";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(ui.dmCheckBox->isChecked())
-				{
-					*out << "DM_ENABLED 1"<<endl;
-				}
-				else
-				{
-					*out << "DM_ENABLED 0"<<endl;
-				}
-				continue;
-			}
-
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(ui.trainingCheckBox->isChecked())
-				{
-					*out << "IS_TRAINING 1"<<endl;
-				}
-				else
-				{
-					*out << "IS_TRAINING 0"<<endl;
-				}
-				continue;
-			}
-
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.interfaceEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "DATAFILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.dataEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "SA_SLEEP_DURATION";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.saAttemptsTimeEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "SA_MAX_ATTEMPTS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.saAttemptsMaxEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "SILENT_ALARM_PORT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.saPortEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "K";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.ceIntensityEdit->displayText().toStdString()  << endl;
-				continue;
-			}
-
-			prefix = "EPS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.ceErrorEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.ceFrequencyEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_THRESHOLD";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.ceThresholdEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "DM_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.dmConfigEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "DOPPELGANGER_IP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.dmIPEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "HS_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.hsConfigEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "TCP_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.tcpTimeoutEdit->displayText().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "TCP_CHECK_FREQ";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << this->ui.tcpFrequencyEdit->displayText().toStdString()  << endl;
-				continue;
-			}
-
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << ui.pcapEdit->displayText().toStdString()  << endl;
-				continue;
-			}
-
-			prefix = "ENABLED_FEATURES";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " ";
-				for (uint i = 0; i < DIM; i++)
-				{
-					char state = ui.featureList->item(i)->text().at(0).toAscii();
-					if (state == '+')
-						*out << 1;
-					else
-						*out << 0;
-				}
-
-				*out << endl;
-				continue;
-			}
-
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(ui.pcapCheckBox->isChecked())
-				{
-					*out << "READ_PCAP 1"<< endl;
-				}
-				else
-				{
-					*out << "READ_PCAP 0"<< endl;
-				}
-				continue;
-			}
-
-			prefix = "GO_TO_LIVE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(ui.liveCapCheckBox->isChecked())
-				{
-					*out << "GO_TO_LIVE 1" << endl;
-				}
-				else
-				{
-					*out << "GO_TO_LIVE 0" << endl;
-				}
-				continue;
-			}
-
-			prefix = "USE_TERMINALS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(ui.terminalCheckBox->isChecked())
-				{
-					*out << "USE_TERMINALS 1" << endl;
-				}
-				else
-				{
-					*out << "USE_TERMINALS 0" << endl;
-				}
-				continue;
-			}
-
-			*out << line << endl;
-		}
-	}
-	else
-	{
-		openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
-		closelog();
-		mainwindow->prompter->DisplayPrompt(mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file");
-		in->close();
-		out->close();
-		delete in;
-		delete out;
-
-		return false;
+		char state = ui.featureList->item(i)->text().at(0).toAscii();
+		if (state == '+')
+			ss << 1;
+		else
+			ss << 0;
 	}
 
-	in->close();
-	out->close();
-	delete in;
-	delete out;
-	system("rm -f Config/.NOVAConfig.tmp");
+	config->setIsDmEnabled(ui.dmCheckBox->isChecked());
+	config->setIsTraining(ui.trainingCheckBox->isChecked());
+	config->setInterface(this->ui.interfaceEdit->displayText().toStdString());
+	config->setPathTrainingFile(this->ui.dataEdit->displayText().toStdString());
+	config->setSaSleepDuration(this->ui.saAttemptsTimeEdit->displayText().toDouble());
+	config->setSaMaxAttempts(this->ui.saAttemptsMaxEdit->displayText().toInt());
+	config->setSaPort(this->ui.saPortEdit->displayText().toInt());
+	config->setK(this->ui.ceIntensityEdit->displayText().toInt());
+	config->setEps(this->ui.ceErrorEdit->displayText().toDouble());
+	config->setClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
+	config->setClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
+	config->setPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
+	config->setDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
+	config->setPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
+	config->setTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
+	config->setTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
+	config->setPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
+	config->setEnabledFeatures(ss.str());
+	config->setReadPcap(ui.pcapCheckBox->isChecked());
+	config->setGotoLive(ui.liveCapCheckBox->isChecked());
+	config->setUseTerminals(ui.terminalCheckBox->isChecked());
 
-	return true;
+	return config->SaveConfig();
 }
 
 //Exit the window and ignore any changes since opening or apply was pressed
