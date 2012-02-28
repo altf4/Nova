@@ -16,7 +16,7 @@
 // Description : Nova utility for disguising a real system
 //============================================================================
 
-#include "DoppelgangerModule.h"
+/*#include "DoppelgangerModule.h"
 #include "NOVAConfiguration.h"
 #include "NovaUtil.h"
 #include "Suspect.h"
@@ -396,3 +396,4 @@ void Nova::DMLoadConfig(char* configFilePath)
 
 	closelog();
 }
+*/

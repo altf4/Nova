@@ -219,9 +219,9 @@ void subnetPopup::pushData()
 	nParent->subnets.erase(subName);
 	nParent->subnets[editSubnet.name] = editSubnet;
 	nParent->loading->unlock();
-	nParent->updatePointers();
+	nParent->UpdateLookupKeys();
 
-	nParent->loadAllNodes();
+	nParent->LoadAllNodes();
 	subName = editSubnet.name;
 }
 

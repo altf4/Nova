@@ -15,9 +15,9 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Monitors local network traffic and sends detailed TrafficEvents
 //					to the Classification Engine.
-//============================================================================/*
+//============================================================================//
 
-#include "LocalTrafficMonitor.h"
+/*#include "LocalTrafficMonitor.h"
 #include "NOVAConfiguration.h"
 #include "HashMapStructs.h"
 #include "SuspectTable.h"
@@ -42,8 +42,8 @@ pthread_rwlock_t LTMsuspectLock;
 
 //Global memory assignments to improve packet handler performance
 int LTMlen, LTMdest_port;
-struct ether_header *LTMethernet;  	/* net/ethernet.h */
-struct ip *LTMip_hdr; 					/* The IP header */
+struct ether_header *LTMethernet;  	// net/ethernet.h
+struct ip *LTMip_hdr; 					// The IP header
 Packet LTMpacket_info;
 char LTMtcp_socket[55];
 struct sockaddr_un LTMremote;
@@ -81,8 +81,8 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 	LTMusePcapFile = globalConfig->getReadPcap();
 	int ret;
 
-	bpf_u_int32 maskp;				/* subnet mask */
-	bpf_u_int32 netp; 				/* ip          */
+	bpf_u_int32 maskp;				// subnet mask
+	bpf_u_int32 netp; 				// ip
 
 	string hostAddress;
 
@@ -110,7 +110,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 
 	pthread_create(&GUIListenThread, NULL, LTM_GUILoop, NULL);
 
-	struct bpf_program fp;			/* The compiled filter expression */
+	struct bpf_program fp;			// The compiled filter expression
 	char filter_exp[64];
 	pcap_t *handle;
 
@@ -169,7 +169,7 @@ void *Nova::LocalTrafficMonitorMain(void *ptr)
 			exit(EXIT_FAILURE);
 		}
 
-		/* ask pcap for the network address and mask of the device */
+		// ask pcap for the network address and mask of the device
 		ret = pcap_lookupnet(globalConfig->getInterface().c_str(), &netp, &maskp, errbuf);
 
 		if(ret == -1)
@@ -209,10 +209,10 @@ void Nova::LTMPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,co
 		return;
 	}
 
-	/* let's start with the ether header... */
+	// let's start with the ether header...
 	LTMethernet = (struct ether_header *) packet;
 
-	/* Do a couple of checks to see what packet type we have..*/
+	// Do a couple of checks to see what packet type we have..
 	if (ntohs (LTMethernet->ether_type) == ETHERTYPE_IP)
 	{
 		LTMip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
@@ -626,3 +626,4 @@ void Nova::LTMKnockRequest(Packet packet, u_char * payload)
 		}
 	}
 }
+*/

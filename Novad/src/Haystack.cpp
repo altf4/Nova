@@ -17,7 +17,7 @@
 //					TrafficEvents usable by Nova's Classification Engine.
 //============================================================================
 
-#include "NOVAConfiguration.h"
+/*#include "NOVAConfiguration.h"
 #include "Novad.h"
 #include "HashMapStructs.h"
 #include "SuspectTable.h"
@@ -46,8 +46,8 @@ pthread_rwlock_t HSsuspectLock;
 int HSlen, HSdest_port;
 struct sockaddr_un HSremote;
 Packet HSpacket_info;
-struct ether_header *HSethernet;  	/* net/ethernet.h */
-struct ip *HSip_hdr; 					/* The IP header */
+struct ether_header *HSethernet;  	// net/ethernet.h
+struct ip *HSip_hdr; 					// The IP header
 char HStcp_socket[55];
 
 u_char HSdata[MAX_MSG_SIZE];
@@ -66,8 +66,8 @@ string HSdhcpListFile = "/var/log/honeyd/ipList";
 vector <string> HShaystackAddresses;
 vector <string> HShaystackDhcpAddresses;
 pcap_t *HShandle;
-bpf_u_int32 HSmaskp;				/* subnet mask */
-bpf_u_int32 HSnetp; 				/* ip          */
+bpf_u_int32 HSmaskp;				// subnet mask
+bpf_u_int32 HSnetp; 				// ip
 
 int HSnotifyFd;
 int HSwatch;
@@ -110,7 +110,7 @@ void *Nova::HaystackMain(void *ptr)
 
 	pthread_create(&GUIListenThread, NULL, HS_GUILoop, NULL);
 
-	struct bpf_program fp;			/* The compiled filter expression */
+	struct bpf_program fp;			// The compiled filter expression
 	char filter_exp[64];
 
 
@@ -185,7 +185,7 @@ void *Nova::HaystackMain(void *ptr)
 			exit(EXIT_FAILURE);
 		}
 
-		/* ask pcap for the network address and mask of the device */
+		// ask pcap for the network address and mask of the device
 		ret = pcap_lookupnet(globalConfig->getInterface().c_str(), &HSnetp, &HSmaskp, errbuf);
 
 		if(ret == -1)
@@ -226,10 +226,10 @@ void Nova::HSPacket_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,con
 	}
 
 
-	/* let's start with the ether header... */
+	// let's start with the ether header...
 	HSethernet = (struct ether_header *) packet;
 
-	/* Do a couple of checks to see what packet type we have..*/
+	// Do a couple of checks to see what packet type we have..
 	if (ntohs (HSethernet->ether_type) == ETHERTYPE_IP)
 	{
 		HSip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
@@ -571,3 +571,4 @@ void *Nova::HSSuspectLoop(void *ptr)
 	syslog(SYSL_ERR, "Line: %d SuspectLoop Thread has halted!", __LINE__);
 	return NULL;
 }
+*/

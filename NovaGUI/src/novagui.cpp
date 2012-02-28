@@ -38,8 +38,8 @@ using namespace std;
 using namespace Nova;
 
 //Socket communication variables
-int CE_InSock, CE_OutSock, DM_OutSock, HS_OutSock, LTM_OutSock;
-struct sockaddr_un CE_InAddress, CE_OutAddress, DM_OutAddress, HS_OutAddress, LTM_OutAddress;
+int NovadInSocket, NovadOutSocket;
+struct sockaddr_un NovadInAddress, NovadOutAddress;
 int len;
 
 
@@ -100,7 +100,7 @@ struct novaComponent novaComponents[NOVA_COMPONENTS];
 void sighandler(int param)
 {
 	param = param;
-	stopNova();
+	StopNova();
 	exit(EXIT_SUCCESS);
 }
 
@@ -138,8 +138,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 		//exit(EXIT_FAILURE);
 	}
 
-	loadInfo();
-	initiateSystemStatus();
+	InitSession();
+	InitiateSystemStatus();
 
 	// Create the dialog generator
 	prompter= new DialogPrompter();
@@ -199,39 +199,39 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t.type = warningPrompt;
 	NODE_LOAD_FAIL = prompter->RegisterDialog(t);
 
-	loadAll();
+	LoadAllTemplates();
 
 	//This register meta type function needs to be called for any object types passed through a signal
 	qRegisterMetaType<in_addr_t>("in_addr_t");
 	qRegisterMetaType<QItemSelection>("QItemSelection");
 
 	//Sets up the socket addresses
-	getSocketAddr();
+	InitSocketAddresses();
 
 	//Create listening socket, listen thread and draw thread --------------
 	pthread_t CEListenThread;
 	pthread_t StatusUpdateThread;
 
-	if((CE_InSock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	if((NovadInSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		sclose(CE_InSock);
+		CloseSocket(NovadInSocket);
 		exit(EXIT_FAILURE);
 	}
 
-	len = strlen(CE_InAddress.sun_path) + sizeof(CE_InAddress.sun_family);
+	len = strlen(NovadInAddress.sun_path) + sizeof(NovadInAddress.sun_family);
 
-	if(bind(CE_InSock,(struct sockaddr *)&CE_InAddress,len) == -1)
+	if(bind(NovadInSocket,(struct sockaddr *)&NovadInAddress,len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
-		sclose(CE_InSock);
+		CloseSocket(NovadInSocket);
 		exit(EXIT_FAILURE);
 	}
 
-	if(listen(CE_InSock, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(NovadInSocket, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
-		sclose(CE_InSock);
+		CloseSocket(NovadInSocket);
 		exit(EXIT_FAILURE);
 	}
 
@@ -241,10 +241,10 @@ NovaGUI::NovaGUI(QWidget *parent)
 	this->ui.suspectButton->setFlat(false);
 	this->ui.doppelButton->setFlat(false);
 	this->ui.haystackButton->setFlat(false);
-	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(drawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(updateSystemStatus()), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::BlockingQueuedConnection);
 
-	pthread_create(&CEListenThread,NULL,CEListen, this);
+	pthread_create(&CEListenThread,NULL,NovadListenLoop, this);
 	pthread_create(&StatusUpdateThread,NULL,StatusUpdate, this);
 }
 
@@ -335,23 +335,23 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 void NovaGUI::closeEvent(QCloseEvent * e)
 {
 	e = e;
-	stopNova();
+	StopNova();
 }
 
 /************************************************
  * Gets preliminary information
  ************************************************/
 
-void NovaGUI::loadInfo()
+void NovaGUI::InitSession()
 {
-	loadPaths();
+	InitPaths();
 	configurationFile = homePath + configurationFile;
-	loadConfiguration();
-	getSettings();
-	setNovaCommands();
+	LoadNovadConfiguration();
+	LoadSettings();
+	InitNovadCommands();
 }
 
-void NovaGUI::setNovaCommands()
+void NovaGUI::InitNovadCommands()
 {
 	novaComponents[COMPONENT_NOVAD].name = "NOVA Daemon";
 	novaComponents[COMPONENT_NOVAD].terminalCommand = "xterm -geometry \"+0+600\" -e Novad";
@@ -368,7 +368,7 @@ void NovaGUI::setNovaCommands()
 	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configurationInterface + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
-void NovaGUI::loadPaths()
+void NovaGUI::InitPaths()
 {
 	homePath = GetHomePath();
 	readPath = GetReadPath();
@@ -382,7 +382,7 @@ void NovaGUI::loadPaths()
 	QDir::setCurrent((QString)homePath.c_str());
 }
 
-void NovaGUI::getSettings()
+void NovaGUI::LoadSettings()
 {
 	string line, prefix; //used for input checking
 
@@ -408,7 +408,7 @@ void NovaGUI::getSettings()
 	settings = NULL;
 }
 
-void NovaGUI::emitSystemStatusRefresh()
+void NovaGUI::SystemStatusRefresh()
 {
 	Q_EMIT refreshSystemStatus();
 }
@@ -427,7 +427,7 @@ void NovaGUI::emitSystemStatusRefresh()
 //To summarize this function only populates the xml data for the values it contains unless it is a new item,
 // it does not clean up, and only creates if it's a new item and then only for the fields that are needed.
 // it does not track profile inheritance either, that should be created when the heirarchy is modified.
-void NovaGUI::saveAll()
+void NovaGUI::SaveAllTemplates()
 {
 	using boost::property_tree::ptree;
 	ptree pt;
@@ -538,7 +538,7 @@ void NovaGUI::saveAll()
 }
 
 //Writes the current configuration to honeyd configs
-void NovaGUI::writeHoneyd()
+void NovaGUI::WriteHoneydConfiguration()
 {
 	stringstream out;
 	stringstream doppelOut;
@@ -549,7 +549,7 @@ void NovaGUI::writeHoneyd()
 	{
 		if (!it->second.parentProfile.compare(""))
 		{
-			string pString = profileToString(&it->second);
+			string pString = ProfileToString(&it->second);
 			out << pString;
 			doppelOut << pString;
 			profilesParsed.push_back(it->first);
@@ -578,7 +578,7 @@ void NovaGUI::writeHoneyd()
 
 			if(!selfMatched && parentFound)
 			{
-				string pString = profileToString(&it->second);
+				string pString = ProfileToString(&it->second);
 				out << pString;
 				doppelOut << pString;
 				profilesParsed.push_back(it->first);
@@ -624,7 +624,7 @@ void NovaGUI::writeHoneyd()
 	doppelOutFile.close();
 }
 
-string NovaGUI::profileToString(profile* p)
+string NovaGUI::ProfileToString(profile* p)
 {
 	stringstream out;
 
@@ -687,7 +687,7 @@ string NovaGUI::profileToString(profile* p)
  ************************************************/
 
 //Calls all load functions
-void NovaGUI::loadAll()
+void NovaGUI::LoadAllTemplates()
 {
 	scripts.clear_no_resize();
 	ports.clear_no_resize();
@@ -695,14 +695,14 @@ void NovaGUI::loadAll()
 	nodes.clear_no_resize();
 	subnets.clear_no_resize();
 
-	loadScripts();
-	loadPorts();
-	loadProfiles();
-	loadGroup();
+	LoadScriptsTemplate();
+	LoadPortsTemplate();
+	LoadProfilesTemplate();
+	LoadNodesTemplate();
 }
 
 //Loads scripts from file
-void NovaGUI::loadScripts()
+void NovaGUI::LoadScriptsTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -736,7 +736,7 @@ void NovaGUI::loadScripts()
 	}
 }
 
-void NovaGUI::initiateSystemStatus()
+void NovaGUI::InitiateSystemStatus()
 {
 	// Pull in the icons now that homePath is set
 	string greenPath = homePath + "/Images/greendot.png";
@@ -759,7 +759,7 @@ void NovaGUI::initiateSystemStatus()
 }
 
 
-void NovaGUI::updateSystemStatus()
+void NovaGUI::UpdateSystemStatus()
 {
 	QTableWidgetItem *item;
 	QTableWidgetItem *pidItem;
@@ -778,7 +778,7 @@ void NovaGUI::updateSystemStatus()
 			{
 				syslog(SYSL_ERR, "File: %s Line: %d GUI has detected a dead process %s. Restarting it.", __FILE__, __LINE__, novaComponents[i].name.c_str());
 				item->setIcon(*yellowIcon);
-				startComponent(&novaComponents[i]);
+				StartComponent(&novaComponents[i]);
 			}
 			else
 			{
@@ -808,7 +808,7 @@ void NovaGUI::updateSystemStatus()
 
 
 //Loads ports from file
-void NovaGUI::loadPorts()
+void NovaGUI::LoadPortsTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -859,7 +859,7 @@ void NovaGUI::loadPorts()
 
 
 //Loads the subnets and nodes from file for the currently specified group
-void NovaGUI::loadGroup()
+void NovaGUI::LoadNodesTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -879,13 +879,13 @@ void NovaGUI::loadGroup()
 				{
 					//Load Subnets first, they are needed before we can load nodes
 					subnetTree = v.second.get_child("subnets");
-					loadSubnets(&subnetTree);
+					LoadSubnets(&subnetTree);
 
 					try //Null Check
 					{
 						//If subnets are loaded successfully, load nodes
 						nodesTree = v.second.get_child("nodes");
-						loadNodes(&nodesTree);
+						LoadNodes(&nodesTree);
 					}
 					catch(std::exception &e)
 					{
@@ -909,7 +909,7 @@ void NovaGUI::loadGroup()
 }
 
 //loads subnets from file for current group
-void NovaGUI::loadSubnets(ptree *ptr)
+void NovaGUI::LoadSubnets(ptree *ptr)
 {
 	try
 	{
@@ -990,7 +990,7 @@ void NovaGUI::loadSubnets(ptree *ptr)
 
 
 //loads haystack nodes from file for current group
-void NovaGUI::loadNodes(ptree *ptr)
+void NovaGUI::LoadNodes(ptree *ptr)
 {
 	profile p;
 	//ptree * ptr2;
@@ -1210,7 +1210,7 @@ void NovaGUI::loadNodes(ptree *ptr)
 	}
 }
 
-void NovaGUI::loadProfiles()
+void NovaGUI::LoadProfilesTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -1251,7 +1251,7 @@ void NovaGUI::loadProfiles()
 				{
 					ptr = &v.second.get_child("set");
 					//pass 'set' subset and pointer to this profile
-					loadProfileSet(ptr, &p);
+					LoadProfileSettings(ptr, &p);
 				}
 				catch(...){}
 
@@ -1259,7 +1259,7 @@ void NovaGUI::loadProfiles()
 				{
 					ptr = &v.second.get_child("add");
 					//pass 'add' subset and pointer to this profile
-					loadProfileAdd(ptr, &p);
+					LoadProfileServices(ptr, &p);
 				}
 				catch(...){}
 
@@ -1270,7 +1270,7 @@ void NovaGUI::loadProfiles()
 				{
 					//start recurisive descent down profile tree with this profile as the root
 					//pass subtree and pointer to parent
-					loadSubProfiles(p.name);
+					LoadProfileChildren(p.name);
 				}
 				catch(...){}
 
@@ -1295,7 +1295,7 @@ void NovaGUI::loadProfiles()
 }
 
 //Sets the configuration of 'set' values for profile that called it
-void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
+void NovaGUI::LoadProfileSettings(ptree *ptr, profile *p)
 {
 	string prefix;
 	try
@@ -1368,7 +1368,7 @@ void NovaGUI::loadProfileSet(ptree *ptr, profile *p)
 
 //Adds specified ports and subsystems
 // removes any previous port with same number and type to avoid conflicts
-void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
+void NovaGUI::LoadProfileServices(ptree *ptr, profile *p)
 {
 	string prefix;
 	port * prt;
@@ -1442,7 +1442,7 @@ void NovaGUI::loadProfileAdd(ptree *ptr, profile *p)
 }
 
 //Recursive descent down a profile tree, inherits parent, sets values and continues if not leaf.
-void NovaGUI::loadSubProfiles(string parent)
+void NovaGUI::LoadProfileChildren(string parent)
 {
 	ptree ptr = profiles[parent].tree;
 	try
@@ -1481,14 +1481,14 @@ void NovaGUI::loadSubProfiles(string parent)
 			try //Conditional: If profile has set configurations different from parent
 			{
 				ptr2 = &v.second.get_child("set");
-				loadProfileSet(ptr2, &prof);
+				LoadProfileSettings(ptr2, &prof);
 			}
 			catch(...){}
 
 			try //Conditional: If profile has port or subsystems different from parent
 			{
 				ptr2 = &v.second.get_child("add");
-				loadProfileAdd(ptr2, &prof);
+				LoadProfileServices(ptr2, &prof);
 			}
 			catch(...){}
 
@@ -1498,7 +1498,7 @@ void NovaGUI::loadSubProfiles(string parent)
 
 			try //Conditional: if profile has children (not leaf)
 			{
-				loadSubProfiles(prof.name);
+				LoadProfileChildren(prof.name);
 			}
 			catch(...){}
 		}
@@ -1515,7 +1515,7 @@ void NovaGUI::loadSubProfiles(string parent)
  * Suspect Functions
  ************************************************/
 
-bool NovaGUI::receiveCE(int socket)
+bool NovaGUI::ReceiveSuspectFromNovad(int socket)
 {
 	struct sockaddr_un remote;
 	int socketSize, connectionSocket;
@@ -1525,7 +1525,7 @@ bool NovaGUI::receiveCE(int socket)
 	if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d accept: %s", __FILE__, __LINE__, strerror(errno));
-		sclose(connectionSocket);
+		CloseSocket(connectionSocket);
 		return false;
 	}
 	if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == 0)
@@ -1535,10 +1535,10 @@ bool NovaGUI::receiveCE(int socket)
 	else if(bytesRead == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d recv: %s", __FILE__, __LINE__, strerror(errno));
-		sclose(connectionSocket);
+		CloseSocket(connectionSocket);
 		return false;
 	}
-	sclose(connectionSocket);
+	CloseSocket(connectionSocket);
 
 	Suspect* suspect = new Suspect();
 
@@ -1558,11 +1558,11 @@ bool NovaGUI::receiveCE(int socket)
 	sItem.suspect = suspect;
 	sItem.item = NULL;
 	sItem.mainItem = NULL;
-	updateSuspect(sItem);
+	ProcessReceivedSuspect(sItem);
 	return true;
 }
 
-void NovaGUI::updateSuspect(suspectItem suspectItem)
+void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
 {
 
 	pthread_rwlock_wrlock(&lock);
@@ -1588,10 +1588,10 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
  * Display Functions
  ************************************************/
 
-void NovaGUI::drawAllSuspects()
+void NovaGUI::DrawAllSuspects()
 {
 	editingSuspectList = true;
-	clearSuspectList();
+	ClearSuspectList();
 
 	QListWidgetItem * item = NULL;
 	QListWidgetItem * mainItem = NULL;
@@ -1671,14 +1671,14 @@ void NovaGUI::drawAllSuspects()
 		suspect->m_needsFeatureUpdate = false;
 		it->second.suspect = suspect;
 	}
-	updateSuspectWidgets();
+	UpdateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
 	editingSuspectList = false;
 }
 
 //Updates the UI with the latest suspect information
 //*NOTE This slot is not thread safe, make sure you set appropriate locks before sending a signal to this slot
-void NovaGUI::drawSuspect(in_addr_t suspectAddr)
+void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 {
 	editingSuspectList = true;
 	QString str;
@@ -1824,12 +1824,12 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 		ui.hostileList->insertItem(i, sItem->mainItem);
 	}
 	sItem->item->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
-	updateSuspectWidgets();
+	UpdateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
 	editingSuspectList = false;
 }
 
-void NovaGUI::updateSuspectWidgets()
+void NovaGUI::UpdateSuspectWidgets()
 {
 	double hostileAcc = 0, benignAcc = 0, totalAcc = 0;
 
@@ -1884,7 +1884,7 @@ void NovaGUI::updateSuspectWidgets()
 		ui.overallSuspectClassificationBar->setValue(100);
 	}
 }
-void NovaGUI::saveSuspects()
+void NovaGUI::SaveAllSuspects()
 {
 	 QString filename = QFileDialog::getSaveFileName(this,
 			tr("Save Suspect List"), QDir::currentPath(),
@@ -1900,11 +1900,11 @@ void NovaGUI::saveSuspects()
 	msgLen = message.SerialzeMessage(msgBuffer);
 
 	//Sends the message to all Nova processes
-	sendToCE();
+	SendToNovad(msgBuffer, msgLen);
 }
 
 //Clears the suspect tables completely.
-void NovaGUI::clearSuspectList()
+void NovaGUI::ClearSuspectList()
 {
 	pthread_rwlock_wrlock(&lock);
 	this->ui.suspectList->clear();
@@ -1918,29 +1918,13 @@ void NovaGUI::clearSuspectList()
 	pthread_rwlock_unlock(&lock);
 }
 
-void NovaGUI::drawNodes()
-{
-	//QTreeWidgetItem * item = NULL;
-	QString str;
-
-	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
-	{
-		//item = new QTreeWidgetItem(ui.nodesTreeWidget);
-		str = (QString)it->second.address.c_str();
-	}
-	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
-	{
-
-	}
-}
-
 /************************************************
  * Menu Signal Handlers
  ************************************************/
 
 void NovaGUI::on_actionRunNova_triggered()
 {
-	startNova();
+	StartNova();
 }
 
 void NovaGUI::on_actionRunNovaAs_triggered()
@@ -1951,7 +1935,7 @@ void NovaGUI::on_actionRunNovaAs_triggered()
 
 void NovaGUI::on_actionStopNova_triggered()
 {
-	stopNova();
+	StopNova();
 
 	// Were we in training mode?
 	if (isTraining)
@@ -1971,16 +1955,16 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	stopNova();
+	StopNova();
 	exit(EXIT_SUCCESS);
 }
 
 void NovaGUI::on_actionClear_All_Suspects_triggered()
 {
 	editingSuspectList = true;
-	clearSuspects();
+	ClearAllSuspects();
 	QFile::remove(QString::fromStdString(ceSaveFile));
-	drawAllSuspects();
+	DrawAllSuspects();
 	editingSuspectList = false;
 }
 
@@ -1999,8 +1983,8 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 	{
 		string suspectStr = list->currentItem()->text().toStdString();
 		in_addr_t addr = inet_addr(suspectStr.c_str());
-		hideSuspect(addr);
-		clearSuspect(suspectStr);
+		HideSuspect(addr);
+		ClearSuspect(suspectStr);
 	}
 }
 
@@ -2018,13 +2002,13 @@ void NovaGUI::on_actionHide_Suspect_triggered()
 	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
 	{
 		in_addr_t addr = inet_addr(list->currentItem()->text().toStdString().c_str());
-		hideSuspect(addr);
+		HideSuspect(addr);
 	}
 }
 
 void NovaGUI::on_actionSave_Suspects_triggered()
 {
-	saveSuspects();
+	SaveAllSuspects();
 }
 
 void NovaGUI::on_actionMakeDataFile_triggered()
@@ -2095,14 +2079,14 @@ void NovaGUI::on_actionTrainingData_triggered()
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()
 {
 	editingSuspectList = true;
-	clearSuspectList();
+	ClearSuspectList();
 	editingSuspectList = false;
 }
 
 void  NovaGUI::on_actionShow_All_Suspects_triggered()
 {
 	editingSuspectList = true;
-	drawAllSuspects();
+	DrawAllSuspects();
 	editingSuspectList = false;
 }
 
@@ -2172,7 +2156,7 @@ void NovaGUI::on_runButton_clicked()
 	// haystack.config you wanted to use, kept rewriting it on start.
 	// Commented for now until the Node setup works in the GUI.
 	//writeHoneyd();
-	startNova();
+	StartNova();
 }
 void NovaGUI::on_stopButton_clicked()
 {
@@ -2261,7 +2245,7 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 
 	switch (row) {
 	case COMPONENT_NOVAD:
-		sendToCE();
+		SendToNovad(msgBuffer, msgLen);
 		break;
 	case COMPONENT_DMH:
 		if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
@@ -2293,19 +2277,19 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 
 	switch (row) {
 	case COMPONENT_NOVAD:
-		startComponent(&novaComponents[COMPONENT_NOVAD]);
+		StartComponent(&novaComponents[COMPONENT_NOVAD]);
 		break;
 	case COMPONENT_HSH:
-		startComponent(&novaComponents[COMPONENT_HSH]);
+		StartComponent(&novaComponents[COMPONENT_HSH]);
 		break;
 	case COMPONENT_DMH:
-		startComponent(&novaComponents[COMPONENT_DMH]);
+		StartComponent(&novaComponents[COMPONENT_DMH]);
 		break;
 	default:
 		return;
 	}
 
-	updateSystemStatus();
+	UpdateSystemStatus();
 }
 
 
@@ -2314,7 +2298,7 @@ void NovaGUI::on_actionSystemStatReload_triggered()
 	//Sets the message
 	message.SetMessage(RELOAD);
 	msgLen = message.SerialzeMessage(msgBuffer);
-	sendToCE();
+	SendToNovad(msgBuffer, msgLen);
 }
 
 void NovaGUI::on_systemStatStartButton_clicked()
@@ -2335,9 +2319,9 @@ void NovaGUI::on_systemStatStopButton_clicked()
 void NovaGUI::on_clearSuspectsButton_clicked()
 {
 	editingSuspectList = true;
-	clearSuspects();
+	ClearAllSuspects();
 	QFile::remove(QString::fromStdString(ceSaveFile));
-	drawAllSuspects();
+	DrawAllSuspects();
 	editingSuspectList = false;
 }
 
@@ -2354,13 +2338,13 @@ void NovaGUI::on_suspectList_itemSelectionChanged()
 		{
 			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
 			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
-			setFeatureDistances(SuspectTable[addr].suspect);
+			SetFeatureDistances(SuspectTable[addr].suspect);
 		}
 		pthread_rwlock_unlock(&lock);
 	}
 }
 
-void NovaGUI::setFeatureDistances(Suspect* suspect)
+void NovaGUI::SetFeatureDistances(Suspect* suspect)
 {
 	int row = 0;
 	ui.suspectDistances->clear();
@@ -2441,7 +2425,7 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 }
 
 // Reload the configuration file
-void NovaGUI::loadConfiguration()
+void NovaGUI::LoadNovadConfiguration()
 {
 	// Reload the configuration file
 	configuration = new NOVAConfiguration(configurationFile);
@@ -2480,7 +2464,7 @@ void NovaGUI::loadConfiguration()
 /************************************************
  * IPC Functions
  ************************************************/
-void NovaGUI::hideSuspect(in_addr_t addr)
+void NovaGUI::HideSuspect(in_addr_t addr)
 {
 	pthread_rwlock_wrlock(&lock);
 	editingSuspectList = true;
@@ -2519,45 +2503,45 @@ void *StatusUpdate(void *ptr)
 {
 	while(true)
 	{
-		((NovaGUI*)ptr)->emitSystemStatusRefresh();
+		((NovaGUI*)ptr)->SystemStatusRefresh();
 
 		sleep(2);
 	}
 	return NULL;
 }
 
-void *CEListen(void *ptr)
+void *NovadListenLoop(void *ptr)
 {
 	while(true)
 	{
-		((NovaGUI*)ptr)->receiveCE(CE_InSock);
+		((NovaGUI*)ptr)->ReceiveSuspectFromNovad(NovadInSocket);
 	}
 	return NULL;
 }
 
 //Removes all information on a suspect
-void clearSuspect(string suspectStr)
+void ClearSuspect(string suspectStr)
 {
 	pthread_rwlock_wrlock(&lock);
 	SuspectTable.erase(inet_addr(suspectStr.c_str()));
 	message.SetMessage(CLEAR_SUSPECT, suspectStr);
 	msgLen = message.SerialzeMessage(msgBuffer);
-	sendAll();
+	SendToNovad(msgBuffer, msgLen);
 	pthread_rwlock_unlock(&lock);
 }
 
 //Deletes all Suspect information for the GUI and Nova
-void clearSuspects()
+void ClearAllSuspects()
 {
 	pthread_rwlock_wrlock(&lock);
 	SuspectTable.clear();
 	message.SetMessage(CLEAR_ALL);
 	msgLen = message.SerialzeMessage(msgBuffer);
-	sendAll();
+	SendToNovad(msgBuffer, msgLen);
 	pthread_rwlock_unlock(&lock);
 }
 
-void stopNova()
+void StopNova()
 {
 	for (uint i = 0; i < NOVA_COMPONENTS; i++)
 	{
@@ -2568,7 +2552,7 @@ void stopNova()
 	msgLen = message.SerialzeMessage(msgBuffer);
 
 	//Sends the message to all Nova processes
-	sendAll();
+	SendToNovad(msgBuffer, msgLen);
 
 	// Close Honeyd processes
 	FILE * out = popen("pidof honeyd","r");
@@ -2588,18 +2572,18 @@ void stopNova()
 }
 
 
-void startNova()
+void StartNova()
 {
 	// Start and processes that aren't running already
 	for (uint i = 0; i < NOVA_COMPONENTS; i++)
 	{
 		if(novaComponents[i].process == NULL || !novaComponents[i].process->pid())
-			startComponent(&novaComponents[i]);
+			StartComponent(&novaComponents[i]);
 	}
 
 }
 
-void startComponent(novaComponent *component)
+void StartComponent(novaComponent *component)
 {
 	QString program;
 
@@ -2628,123 +2612,55 @@ void startComponent(novaComponent *component)
  * Socket Functions
  ************************************************/
 
-void getSocketAddr()
+void InitSocketAddresses()
 {
 
 	//CE IN --------------------------------------------------
 	//Builds the key path
-	string key = CE_FILENAME;
+	string key = NOVAD_IN_FILENAME;
 	key = homePath + key;
 	//Builds the address
-	CE_InAddress.sun_family = AF_UNIX;
-	strcpy(CE_InAddress.sun_path, key.c_str());
-	unlink(CE_InAddress.sun_path);
+	NovadInAddress.sun_family = AF_UNIX;
+	strcpy(NovadInAddress.sun_path, key.c_str());
+	unlink(NovadInAddress.sun_path);
 
 	//CE OUT -------------------------------------------------
 	//Builds the key path
-	key = CE_GUI_FILENAME;
+	key = NOVAD_OUT_FILENAME;
 	key = homePath + key;
 	//Builds the address
-	CE_OutAddress.sun_family = AF_UNIX;
-	strcpy(CE_OutAddress.sun_path, key.c_str());
-
-	//DM OUT -------------------------------------------------
-	//Builds the key path
-	key = DM_GUI_FILENAME;
-	key = homePath + key;
-	//Builds the address
-	DM_OutAddress.sun_family = AF_UNIX;
-	strcpy(DM_OutAddress.sun_path, key.c_str());
-
-	//HS OUT -------------------------------------------------
-	//Builds the key path
-	key = HS_GUI_FILENAME;
-	key = homePath + key;
-	//Builds the address
-	HS_OutAddress.sun_family = AF_UNIX;
-	strcpy(HS_OutAddress.sun_path, key.c_str());
-
-	//LTM OUT ------------------------------------------------
-	//Builds the key path
-	key = LTM_GUI_FILENAME;
-	key = homePath + key;
-	//Builds the address
-	LTM_OutAddress.sun_family = AF_UNIX;
-	strcpy(LTM_OutAddress.sun_path, key.c_str());
-
+	NovadOutAddress.sun_family = AF_UNIX;
+	strcpy(NovadOutAddress.sun_path, key.c_str());
 }
 
-void sendToCE()
+void SendToNovad(u_char * data, int size)
 {
 	//Opens the socket
-	if ((CE_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((NovadOutSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(CE_OutSock);
+		close(NovadOutSocket);
 		exit(EXIT_FAILURE);
 	}
 	//Sends the message
-	len = strlen(CE_OutAddress.sun_path) + sizeof(CE_OutAddress.sun_family);
-	if (connect(CE_OutSock, (struct sockaddr *)&CE_OutAddress, len) == -1)
+	len = strlen(NovadOutAddress.sun_path) + sizeof(NovadOutAddress.sun_family);
+	if (connect(NovadOutSocket, (struct sockaddr *)&NovadOutAddress, len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(CE_OutSock);
+		close(NovadOutSocket);
 		return;
 	}
 
-	else if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
+	else if (send(NovadOutSocket, data, size, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(CE_OutSock);
+		close(NovadOutSocket);
 		return;
 	}
-	close(CE_OutSock);
+	close(NovadOutSocket);
 }
 
-void sendToDM()
-{
-
-}
-
-void sendToHS()
-{
-
-}
-
-void sendToLTM()
-{
-
-}
-void sendAll()
-{
-	//Opens all the sockets
-	//CE OUT -------------------------------------------------
-	if ((CE_OutSock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(CE_OutSock);
-	}
-
-
-	//Sends the message
-	//CE OUT -------------------------------------------------
-	len = strlen(CE_OutAddress.sun_path) + sizeof(CE_OutAddress.sun_family);
-	if (connect(CE_OutSock, (struct sockaddr *)&CE_OutAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(CE_OutSock);
-	}
-
-	else if (send(CE_OutSock, msgBuffer, msgLen, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(CE_OutSock);
-	}
-	close(CE_OutSock);
-	// -------------------------------------------------------
-}
-
-void sclose(int sock)
+void CloseSocket(int sock)
 {
 	close(sock);
 }

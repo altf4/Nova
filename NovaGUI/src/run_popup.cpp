@@ -115,7 +115,7 @@ void Run_Popup::on_startButton_clicked()
 {
 	if(savePreferences())
 	{
-		startNova();
+		StartNova();
 	}
 	this->close();
 }

@@ -93,7 +93,7 @@ void SilentAlarm(Suspect *suspect);
 
 // Knocks on the port of the neighboring nova instance to open or close it
 //		mode - true for OPEN, false for CLOSE
-bool CEKnockPort(bool mode);
+bool KnockPort(bool mode);
 
 // Receive featureData from another local component.
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
@@ -110,7 +110,7 @@ void SendToUI(Suspect *suspect);
 
 // Loads configuration variables
 //		configFilePath - Location of configuration file
-void CELoadConfig();
+void LoadConfiguration();
 
 // Dump the suspect information to a file
 //		filename - Path to file to write to

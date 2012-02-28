@@ -158,7 +158,7 @@ void nodePopup::pushData()
 {
 	novaParent->loading->lock();
 	novaParent->nodes[editNode.name] = editNode;
-	novaParent->updateNodeTypes();
+	novaParent->SyncAllNodesWithProfiles();
 
 	//The node may have a new name after updateNodeTypes depending on changes made and profile type
 	if(novaParent->profiles[editNode.pfile].type == staticDHCP)
@@ -166,7 +166,7 @@ void nodePopup::pushData()
 	if(novaParent->profiles[editNode.pfile].type == static_IP)
 		editNode.name = editNode.IP;
 	novaParent->loading->unlock();
-	novaParent->loadAllNodes();
+	novaParent->LoadAllNodes();
 }
 
 /************************************************
@@ -233,7 +233,7 @@ void nodePopup::on_applyButton_clicked()
 
 void nodePopup::on_generateButton_clicked()
 {
-	editNode.MAC = novaParent->generateUniqueMACAddr(ui.ethernetVendorEdit->text().toStdString());
+	editNode.MAC = novaParent->GenerateUniqueMACAddress(ui.ethernetVendorEdit->text().toStdString());
 	loadNode();
 	saveNode();
 }

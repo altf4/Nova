@@ -565,7 +565,7 @@ void Nova::Reload()
 
 	// Clear the enabledFeatures count
 	enabledFeatures = 0;
-	CELoadConfig();
+	LoadConfiguration();
 
 	// Clear max and min values
 	for (int i = 0; i < DIM; i++)
@@ -616,7 +616,7 @@ void *Nova::CE_GUILoop(void *ptr)
 	GUIAddress.sun_family = AF_UNIX;
 
 	//Builds the key path
-	string key = CE_GUI_FILENAME;
+	string key = NOVAD_OUT_FILENAME;
 	key = userHomePath + key;
 
 	strcpy(GUIAddress.sun_path, key.c_str());
@@ -645,16 +645,10 @@ void *Nova::CE_GUILoop(void *ptr)
 void *Nova::ClassificationLoop(void *ptr)
 {
 	//Builds the GUI address
-	string GUIKey = userHomePath + CE_FILENAME;
+	string GUIKey = userHomePath + NOVAD_IN_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
-
-	//Builds the Silent Alarm IPC address
-	string key = userHomePath + KEY_ALARM_FILENAME;
-	alarmRemote.sun_family = AF_UNIX;
-	strcpy(alarmRemote.sun_path, key.c_str());
-	len = strlen(alarmRemote.sun_path) + sizeof(alarmRemote.sun_family);
 
 	//Builds the Silent Alarm Network address
 	serv_addr.sin_family = AF_INET;
@@ -747,7 +741,7 @@ void *Nova::ClassificationLoop(void *ptr)
 void *Nova::TrainingLoop(void *ptr)
 {
 	//Builds the GUI address
-	string GUIKey = userHomePath + CE_FILENAME;
+	string GUIKey = userHomePath + NOVAD_IN_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
@@ -1410,7 +1404,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				int i;
 				for(i = 0; i < globalConfig->getSaMaxAttempts(); i++)
 				{
-					if(CEKnockPort(OPEN))
+					if(KnockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
@@ -1464,7 +1458,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					continue;
 				}
 				close(sockfd);
-				CEKnockPort(CLOSE);
+				KnockPort(CLOSE);
 				ss.str("");
 				ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 				commandLine = ss.str();
@@ -1478,7 +1472,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 }
 
 
-bool Nova::CEKnockPort(bool mode)
+bool Nova::KnockPort(bool mode)
 {
 	stringstream ss;
 	ss << key;
@@ -1849,7 +1843,7 @@ void Nova::SendToUI(Suspect *suspect)
 }
 
 
-void Nova::CELoadConfig()
+void Nova::LoadConfiguration()
 {
 	string prefix, line;
 	uint i = 0;

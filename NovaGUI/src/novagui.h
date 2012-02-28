@@ -87,70 +87,70 @@ public:
     Ui::NovaGUIClass ui;
 
     ///Receive a input from Classification Engine.
-    bool receiveCE(int socket);
+    bool ReceiveSuspectFromNovad(int socket);
 
     ///Processes the recieved suspect in the suspect table
-    void updateSuspect(suspectItem suspect);
+    void ProcessReceivedSuspect(suspectItem suspect);
 
-    void emitSystemStatusRefresh();
+    void SystemStatusRefresh();
 
     //Calls clearSuspects first then draws the suspect tables from scratch
-    void drawAllSuspects();
+    void DrawAllSuspects();
     //Updates various Suspect-based widgets, called when suspect information changes
-    void updateSuspectWidgets();
+    void UpdateSuspectWidgets();
     //Removes an individual suspect from display until it's information is updated
-    void hideSuspect(in_addr_t addr);
+    void HideSuspect(in_addr_t addr);
 
     // Tells CE to save suspects to file
-    void saveSuspects();
-
-    //Displays the topology of the honeyd configuration
-    void drawNodes();
+    void SaveAllSuspects();
 
     //Clears the suspect tables completely.
-    void clearSuspectList();
+    void ClearSuspectList();
 
     //Action to do when the window closes.
     void closeEvent(QCloseEvent * e);
 
     //Get preliminary config information
-    void loadInfo();
-    void loadPaths();
-    void setNovaCommands();
-    void getSettings();
+    void InitSession();
+    void InitPaths();
+    void InitNovadCommands();
+    void LoadSettings();
 
     //XML Read Functions
 
     //calls main load functions
-    void loadAll();
+    void LoadAllTemplates();
     //load all scripts
-    void loadScripts();
+    void LoadScriptsTemplate();
     //load all ports
-    void loadPorts();
-
+    void LoadPortsTemplate();
     //load all profiles
-    void loadProfiles();
-    //set profile configurations
-    void loadProfileSet(ptree *ptr, profile *p);
-    //add ports or subsystems
-    void loadProfileAdd(ptree *ptr, profile *p);
-    //recursive descent down profile tree
-    void loadSubProfiles(string parent);
-
+    void LoadProfilesTemplate();
     //load current honeyd configuration group
-    void loadGroup();
-    void loadSubnets(ptree *ptr);
-    void loadNodes(ptree *ptr);
+    void LoadNodesTemplate();
+
+    //set profile configurations
+    void LoadProfileSettings(ptree *ptr, profile *p);
+    //add ports or subsystems
+    void LoadProfileServices(ptree *ptr, profile *p);
+    //recursive descent down profile tree
+    void LoadProfileChildren(string parent);
+
+
+    //Load stored subnets in ptr
+    void LoadSubnets(ptree *ptr);
+    //Load stored honeyd nodes ptr
+    void LoadNodes(ptree *ptr);
 
     //Saves the current configuration information to XML files
-    void saveAll();
+    void SaveAllTemplates();
     //Writes the current configuration to honeyd configs
-    void writeHoneyd();
-    string profileToString(profile* p);
+    void WriteHoneydConfiguration();
+    string ProfileToString(profile* p);
 
-    void setFeatureDistances(Suspect* suspect);
+    void SetFeatureDistances(Suspect* suspect);
 
-    void loadConfiguration();
+    void LoadNovadConfiguration();
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
@@ -203,9 +203,9 @@ private Q_SLOTS:
 
 	//Custom Slots
     //Updates the UI with the latest suspect information
-    void drawSuspect(in_addr_t suspectAddr);
-    void updateSystemStatus();
-    void initiateSystemStatus();
+    void DrawSuspect(in_addr_t suspectAddr);
+    void UpdateSystemStatus();
+    void InitiateSystemStatus();
 
 Q_SIGNALS:
 
@@ -222,44 +222,33 @@ private:
 namespace Nova {
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-void *CEListen(void *ptr);
-/// Updates the suspect list every so often.
-void *CEDraw(void *ptr);
+void *NovadListenLoop(void *ptr);
 
 void *StatusUpdate(void *ptr);
 
 ///Socket closing workaround for namespace issue.
-void sclose(int sock);
-
-//Opens the sockets for a message
-void openSocket();
+void CloseSocket(int sock);
 
 //Closes the Nova processes
-void stopNova();
+void StopNova();
 
 //Starts the Nova processes
-void startNova();
+void StartNova();
 
 // Start one component of Nova
-void startComponent(novaComponent *component);
+void StartComponent(novaComponent *component);
 
 //Saves the socket addresses for re-use.
-void getSocketAddr();
+void InitSocketAddresses();
 
-//Sends the contents of global scope const char * 'data' to all Nova processes
-void sendAll();
-//Sends 'data' to Classification Engine
-void sendToCE();
-//Sends 'data' to Doppelganger Module
-void sendToDM();
-//Sends 'data' to Haystack
-void sendToHS();
-//Sends 'data' to Local Traffic Monitor
-void sendToLTM();
+//Sends the GUIMsg object serialized inside the 'data' buffer with size n
+void SendToNovad(u_char * data, int size);
 
 //Deletes all Suspect information for the GUI and Nova
-void clearSuspects();
+void ClearAllSuspects();
+
 //Removes all information on a suspect
-void clearSuspect(string suspectStr);
+void ClearSuspect(string suspectStr);
+
 }
 #endif // NOVAGUI_H

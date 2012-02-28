@@ -49,9 +49,6 @@
 #define ENCRYPT true
 #define DECRYPT false
 
-///	Filename of the file to be used as an IPC key
-#define KEY_FILENAME "/keys/NovaIPCKey"
-
 //If the feature data is local
 #define LOCAL_DATA true
 //If the feature data is broadcast from another nova instance
@@ -62,20 +59,11 @@
 //From the Local Traffic Monitor
 #define FROM_LTM			0
 
-#define KEY_FILENAME "/keys/NovaIPCKey"
-///	Filename of the file to be used as an Doppelganger IPC key
-#define KEY_ALARM_FILENAME "/keys/NovaDoppIPCKey"
 ///	Filename of the file to be used as an Classification Engine IPC key
-#define CE_FILENAME "/keys/CEKey"
+#define NOVAD_IN_FILENAME "/keys/CEKey"
 /// File name of the file to be used as CE_GUI Input IPC key.
-#define CE_GUI_FILENAME "/keys/GUI_CEKey"
-/// File name of the file to be used as DM_GUI Input IPC key.
-#define DM_GUI_FILENAME "/keys/GUI_DMKey"
-/// File name of the file to be used as HS_GUI Input IPC key.
-#define HS_GUI_FILENAME "/keys/GUI_HSKey"
-/// File name of the file to be used as LTM_GUI Input IPC key.
-#define LTM_GUI_FILENAME "/keys/GUI_LTMKey"
-/// File name of the file that contains nova's install locations
+#define NOVAD_OUT_FILENAME "/keys/NovaIPCKey"
+
 #define PATHS_FILE "/etc/nova/paths"
 
 /// Simple define for the ORing of these two integer values. Used for syslog.

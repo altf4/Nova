@@ -16,7 +16,7 @@
 // Description : Nova utility for disguising a real system
 //============================================================================
 
-#include "HashMapStructs.h"
+/*#include "HashMapStructs.h"
 
 using namespace std;
 
@@ -49,5 +49,5 @@ string DMUsage();
 //		configFilePath - Location of configuration file
 void DMLoadConfig(char* configFilePath);
 
-}
+}*/
 

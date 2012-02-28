@@ -38,7 +38,7 @@ typedef google::dense_hash_map<uint, string, tr1::hash<uint>, eqint> MACToVendor
 typedef google::dense_hash_map<string, vector<uint> *,  tr1::hash<string>, eqstr > VendorToMACTable;
 using namespace std;
 
-enum updateDir{ALL = 0, UP, DOWN};
+enum recursiveDirection{ALL = 0, UP, DOWN};
 
 class NovaConfig : public QMainWindow
 {
@@ -68,101 +68,101 @@ public:
     ~NovaConfig();
 
     //Loads the configuration options from NOVAConfig.txt
-    void loadPreferences();
+    void LoadNovadPreferences();
     //Display MAC vendor prefix's
-    bool displayMACPrefixWindow();
+    bool DisplayMACPrefixWindow();
     //Load Personality choices from nmap fingerprints file
-    void displayNmapPersonalityTree();
+    void DisplayNmapPersonalityWindow();
     //Renames the nodes to the correct unique identifier based on node type;
-    bool updateNodeTypes();
+    bool SyncAllNodesWithProfiles();
     //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
-    string resolveMACVendor(uint MACPrefix);
+    string LookupMACVendor(uint MACPrefix);
     //Load MAC vendor prefix choices from nmap mac prefix file
-    void loadMACPrefixs();
+    void LoadMACAddressVendorPrefixesFromFile();
     //Load nmap personalities from the nmap-os-db file
-    void loadNmapPersonalities();
+    void LoadNmapPersonalitiesFromFile();
 
     //Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
     // *note conflicts are only checked for locally, weird things may happen if the address is already being used.
-    string generateUniqueMACAddr(string vendor);
+    string GenerateUniqueMACAddress(string vendor);
 
     // Creates a new item for the featureList
     //		name - Name to be displayed, e.g. "Ports Contacted"
     //		enabled - '1' for enabled, all other disabled
     //	Returns: A Feature List Item
-    QListWidgetItem* getFeatureListItem(QString name, char enabled);
+    QListWidgetItem* GetFeatureListItem(QString name, char enabled);
 
     // Updates the color and text of a featureList Item
     //		newFeatureEntry - Pointer to the Feature List Item
     //		enabled - '1' for enabled, all other disabled
-    void updateFeatureListItem(QListWidgetItem* newFeatureEntry, char enabled);
+    void UpdateFeatureListItem(QListWidgetItem* newFeatureEntry, char enabled);
 
     // Advances the currently selected item to the next one in the featureList
-    void advanceFeatureSelection();
+    void AdvanceFeatureSelection();
 
     //Draws the current honeyd configuration for haystack and doppelganger
-    void loadHaystack();
+    void LoadHaystackConfiguration();
 
     //Updates the 'current' keys, not really pointers just used to access current selections
     //This is called on start up and by child windows that push modified data
-    void updatePointers();
+    void UpdateLookupKeys();
 
     //Populates the window with the select profile's information
-    void loadProfile();
+    void LoadProfileSettings();
     //loads the inheritance values from the profiles, called by loadProfile
-    void loadInherited();
+    void LoadInheritedProfileSettings();
     //Populates the profile heirarchy in the tree widget
-    void loadAllProfiles();
+    void LoadAllProfiles();
 
     //Creates a tree widget item for the profile based on it's parent
     //If no parent it is created as a root node
-    void createProfileItem(string pstr);
+    void CreateProfileItem(string pstr);
     //Creates a ptree for a profile with current values
-    void createProfileTree(string name);
+    void CreateProfileTree(string name);
 
     //Temporarily stores changed configuration options when selection is changed
     // to permanently store these changes call pushData();
-    void saveProfile();
+    void SaveProfileSettings();
     //saves the inheritance values of the profiles, called by saveProfile
-    void saveInherited();
+    void SaveInheritedProfileSettings();
     //Removes a profile, all of it's children and any nodes that currently use it
-    void deleteProfile(string name);
+    void DeleteProfile(string name);
 
     //Recreates the profile tree of all ancestors
     //This needs to be called after adding, deleting or storing changes to a profile.
-    void updateProfileTree(string name, updateDir direction);
+    void UpdateProfileTree(string name, recursiveDirection direction);
 
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
-    void loadProfilesFromTree(string parent);
-    //set profile configurations (only called in loadProfilesFromTree)
-    void loadProfileSet(ptree *ptr, profile *p);
-    //add ports or subsystems (only called in loadProfilesFromTree)
-    void loadProfileAdd(ptree *ptr, profile *p);
-    //recursive descent down profile tree (only called in loadProfilesFromTree)
-    void loadSubProfiles(string parent);
+    void LoadProfilesFromTree(string parent);
+    //set profile configurations (only called in LoadProfilesFromTree)
+    void LoadProfileSettings(ptree *ptr, profile *p);
+    //add ports or subsystems (only called in LoadProfilesFromTree)
+    void LoadProfileServices(ptree *ptr, profile *p);
+    //recursive descent down profile tree (only called in LoadProfilesFromTree)
+    void LoadProfileChildren(string parent);
 
     //Function called on a delete signal to delete a node or subnet
-    void deleteNodes();
+    void DeleteNodes();
     //Deletes a single node, called from deleteNodes();
-    void deleteNode(node *n);
+    void DeleteNode(node *n);
     //Populates the tree widget with the current node configuration
-    void loadAllNodes();
+    void LoadAllNodes();
 
     //If a profile is edited, this function updates the changes for the rest of the GUI
-    void updateProfile(bool deleteProfile, profile *p);
+    void UpdateProfile(bool deleteProfile, profile *p);
 
     //Updates children when inherited ports are changed
-    void updatePorts();
+    void UpdatePorts();
     //Checks for ports that aren't used and removes them from the table if so
-    void cleanPorts();
+    void CleanPorts();
 
     //Pushes the current configuration to novagui (Apply or Ok signal)
-    void pushData();
+    void PushData();
     //Pulls the configuration stored in novagui
-    void pullData();
+    void PullData();
 
     // Saves the configuration to the config file, returns true if success
-    bool saveConfigurationToFile();
+    bool SaveConfigurationToFile();
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
@@ -265,7 +265,7 @@ void portTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited);
 
 private:
-	void setInputValidators();
+	void SetInputValidators();
     Ui::NovaConfigClass ui;
 };
 
