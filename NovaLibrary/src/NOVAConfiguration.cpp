@@ -29,7 +29,7 @@ using namespace std;
 namespace Nova
 {
 
-const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
+const string NOVAConfiguration::m_prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE",
 		"USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS",
 		"IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS",
@@ -38,7 +38,7 @@ const string NOVAConfiguration::prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
 		"SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE"};
 
 // Files we need to run (that will be loaded with defaults if deleted)
-const string NOVAConfiguration::requiredFiles[] = {
+const string NOVAConfiguration::m_requiredFiles[] = {
 		"/settings",
 		"/Config/NOVAConfig.txt",
 		"/Data/data.txt",
@@ -61,11 +61,11 @@ void NOVAConfiguration::LoadConfig(string module)
 	string prefix;
 	int prefixIndex;
 
-	bool isValid[sizeof(prefixes)/sizeof(prefixes[0])];
+	bool isValid[sizeof(m_prefixes)/sizeof(m_prefixes[0])];
 
 	openlog(module.c_str(), LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
 
-	ifstream config(configFilePath.c_str());
+	ifstream config(m_configFilePath.c_str());
 
 	if (config.is_open())
 	{
@@ -73,7 +73,7 @@ void NOVAConfiguration::LoadConfig(string module)
 		{
 			getline(config, line);
 			prefixIndex = 0;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 
 
 			// INTERFACE
@@ -108,7 +108,7 @@ void NOVAConfiguration::LoadConfig(string module)
 										if (currentColumn == 7)
 										{
 
-											interface = column;
+											m_interface = column;
 											isValid[prefixIndex] = true;
 										}
 
@@ -123,7 +123,7 @@ void NOVAConfiguration::LoadConfig(string module)
 						pclose(out);
 					}
 					else
-						interface = line;
+						m_interface = line;
 						isValid[prefixIndex] = true;
 				}
 				continue;
@@ -131,13 +131,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// HS_HONEYD_CONFIG
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					pathConfigHoneydHs  = line;
+					m_pathConfigHoneydHs  = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -145,13 +145,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// TCP_TIMEOUT
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					tcpTimout = atoi(line.c_str());
+					m_tcpTimout = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -159,13 +159,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// TCP_CHECK_FREQ
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					tcpCheckFreq = atoi(line.c_str());
+					m_tcpCheckFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -173,13 +173,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// READ_PCAP
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					readPcap = atoi(line.c_str());
+					m_readPcap = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -187,13 +187,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// PCAP_FILE
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					pathPcapFile = line;
+					m_pathPcapFile = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -201,13 +201,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// GO_TO_LIVE
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					gotoLive = line.c_str();
+					m_gotoLive = line.c_str();
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -215,13 +215,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// USE_TERMINALS
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					useTerminals = line.c_str();
+					m_useTerminals = line.c_str();
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -229,13 +229,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// CLASSIFICATION_TIMEOUT
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) >= 0)
 				{
-					classificationTimeout = atoi(line.c_str());
+					m_classificationTimeout = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -243,7 +243,7 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// SILENT_ALARM_PORT
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				if(line.size() == prefix.size())
@@ -255,7 +255,7 @@ void NOVAConfiguration::LoadConfig(string module)
 
 				if (atoi(line.c_str()) > 0)
 				{
-					saPort = atoi(line.c_str());
+					m_saPort = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -263,13 +263,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// K
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					k = atoi(line.c_str());
+					m_k = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -277,13 +277,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// EPS
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) >= 0)
 				{
-					eps = atof(line.c_str());
+					m_eps = atof(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -291,13 +291,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// IS_TRAINING
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					isTraining = atoi(line.c_str());
+					m_isTraining = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -305,13 +305,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// CLASSIFICATION_THRESHOLD
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) >= 0)
 				{
-					classificationThreshold= atof(line.c_str());
+					m_classificationThreshold= atof(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -319,14 +319,14 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// DATAFILE
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0 && !line.substr(line.size() - 4,
 						line.size()).compare(".txt"))
 				{
-					pathTrainingFile = line;
+					m_pathTrainingFile = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -334,13 +334,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// SA_MAX_ATTEMPTS
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					saMaxAttempts = atoi(line.c_str());
+					m_saMaxAttempts = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -348,13 +348,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// SA_SLEEP_DURATION
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) >= 0)
 				{
-					saSleepDuration = atof(line.c_str());
+					m_saSleepDuration = atof(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -362,13 +362,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// DM_HONEYD_CONFIG
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					pathConfigHoneydDm = line;
+					m_pathConfigHoneydDm = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -377,13 +377,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// DOPPELGANGER_IP
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					doppelIp = line;
+					m_doppelIp = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -391,13 +391,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// DOPPELGANGER_INTERFACE
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					doppelInterface = line;
+					m_doppelInterface = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -405,13 +405,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// DM_ENABLED
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
-					isDmEnabled = atoi(line.c_str());
+					m_isDmEnabled = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -420,13 +420,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// ENABLED_FEATURES
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() == DIM)
 				{
-					enabledFeatures = line;
+					m_enabledFeatures = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -435,13 +435,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// TRAINING_CAP_FOLDER
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					pathTrainingCapFolder = line;
+					m_pathTrainingCapFolder = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -449,13 +449,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// THINNING_DISTANCE
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atof(line.c_str()) > 0)
 				{
-					thinningDistance = atof(line.c_str());
+					m_thinningDistance = atof(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -463,13 +463,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// SAVE_FREQUENCY
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) > 0)
 				{
-					saveFreq = atoi(line.c_str());
+					m_saveFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -477,13 +477,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// DATA_TTL
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (atoi(line.c_str()) >= 0)
 				{
-					dataTTL = atoi(line.c_str());
+					m_dataTTL = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -491,13 +491,13 @@ void NOVAConfiguration::LoadConfig(string module)
 
 			// CE_SAVE_FILE
 			prefixIndex++;
-			prefix = prefixes[prefixIndex];
+			prefix = m_prefixes[prefixIndex];
 			if (!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() > 0)
 				{
-					pathCESaveFile = line;
+					m_pathCESaveFile = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -510,12 +510,12 @@ void NOVAConfiguration::LoadConfig(string module)
 	}
 
 
-	for (uint i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++)
+	for (uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
 		if (!isValid[i])
 		{
 			// TODO: Make this say which config option is invalid again
-			syslog(SYSL_INFO, "Line: %d Configuration option %s is invalid in the configuration file", __LINE__, prefixes[i].c_str());
+			syslog(SYSL_INFO, "Line: %d Configuration option %s is invalid in the configuration file", __LINE__, m_prefixes[i].c_str());
 		}
 	}
 	closelog();
@@ -528,35 +528,35 @@ void NOVAConfiguration::SetDefaults()
 {
 	openlog(__FUNCTION__, OPEN_SYSL, LOG_AUTHPRIV);
 
-	interface = "default";
-	pathConfigHoneydHs 	= "Config/haystack.config";
-	pathPcapFile 		= "../pcapfile";
-	pathTrainingFile 	= "Data/data.txt";
-	pathConfigHoneydDm	= "Config/doppelganger.config";
-	pathTrainingCapFolder = "Data";
-	pathCESaveFile = "ceStateSave";
+	m_interface = "default";
+	m_pathConfigHoneydHs 	= "Config/haystack.config";
+	m_pathPcapFile 		= "../pcapfile";
+	m_pathTrainingFile 	= "Data/data.txt";
+	m_pathConfigHoneydDm	= "Config/doppelganger.config";
+	m_pathTrainingCapFolder = "Data";
+	m_pathCESaveFile = "ceStateSave";
 
-	tcpTimout = 7;
-	tcpCheckFreq = 3;
-	readPcap = false;
-	gotoLive = true;
-	useTerminals = false;
-	isDmEnabled = true;
+	m_tcpTimout = 7;
+	m_tcpCheckFreq = 3;
+	m_readPcap = false;
+	m_gotoLive = true;
+	m_useTerminals = false;
+	m_isDmEnabled = true;
 
-	classificationTimeout = 3;
-	saPort = 12024;
-	k = 3;
-	eps = 0.01;
-	isTraining = 0;
-	classificationThreshold = .5;
-	saMaxAttempts = 3;
-	saSleepDuration = .5;
-	doppelIp = "10.0.0.1";
-	doppelInterface = "lo";
-	enabledFeatures = "111111111";
-	thinningDistance = 0;
-	saveFreq = 1440;
-	dataTTL = 0;
+	m_classificationTimeout = 3;
+	m_saPort = 12024;
+	m_k = 3;
+	m_eps = 0.01;
+	m_isTraining = 0;
+	m_classificationThreshold = .5;
+	m_saMaxAttempts = 3;
+	m_saSleepDuration = .5;
+	m_doppelIp = "10.0.0.1";
+	m_doppelInterface = "lo";
+	m_enabledFeatures = "111111111";
+	m_thinningDistance = 0;
+	m_saveFreq = 1440;
+	m_dataTTL = 0;
 }
 
 // Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
@@ -570,12 +570,12 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		// Do all of the important files exist?
-		for (uint i = 0; i < sizeof(requiredFiles)/sizeof(requiredFiles[0]); i++)
+		for (uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
 		{
-			string fullPath = homeNovaPath + NOVAConfiguration::requiredFiles[i];
+			string fullPath = homeNovaPath + NOVAConfiguration::m_requiredFiles[i];
 			if (stat (fullPath.c_str(), &fileAttr ) != 0)
 			{
-				string defaultLocation = "/etc/nova/.nova" + NOVAConfiguration::requiredFiles[i];
+				string defaultLocation = "/etc/nova/.nova" + NOVAConfiguration::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 				syslog(SYSL_ERR, "Warning: The file %s does not exist but is required for Nova to function. Restoring default file from %s",fullPath.c_str(), defaultLocation.c_str());
 				if (system(copyCommand.c_str()) == -1)
@@ -657,7 +657,7 @@ string NOVAConfiguration::toString()
 
 NOVAConfiguration::NOVAConfiguration(string configFilePath)
 {
-	this->configFilePath = configFilePath;
+	this->m_configFilePath = configFilePath;
 	SetDefaults();
 }
 
@@ -667,282 +667,282 @@ NOVAConfiguration::~NOVAConfiguration()
 
 double NOVAConfiguration::getClassificationThreshold() const
 {
-	return classificationThreshold;
+	return m_classificationThreshold;
 }
 
 int NOVAConfiguration::getClassificationTimeout() const
 {
-	return classificationTimeout;
+	return m_classificationTimeout;
 }
 
 string NOVAConfiguration::getConfigFilePath() const
 {
-	return configFilePath;
+	return m_configFilePath;
 }
 
 int NOVAConfiguration::getDataTTL() const
 {
-	return dataTTL;
+	return m_dataTTL;
 }
 
 string NOVAConfiguration::getDoppelInterface() const
 {
-	return doppelInterface;
+	return m_doppelInterface;
 }
 
 string NOVAConfiguration::getDoppelIp() const
 {
-	return doppelIp;
+	return m_doppelIp;
 }
 
 string NOVAConfiguration::getEnabledFeatures() const
 {
-	return enabledFeatures;
+	return m_enabledFeatures;
 }
 
 double NOVAConfiguration::getEps() const
 {
-	return eps;
+	return m_eps;
 }
 
 bool NOVAConfiguration::getGotoLive() const
 {
-	return gotoLive;
+	return m_gotoLive;
 }
 
 string NOVAConfiguration::getInterface() const
 {
-	return interface;
+	return m_interface;
 }
 
 bool NOVAConfiguration::getIsDmEnabled() const
 {
-	return isDmEnabled;
+	return m_isDmEnabled;
 }
 
 bool NOVAConfiguration::getIsTraining() const
 {
-	return isTraining;
+	return m_isTraining;
 }
 
 int NOVAConfiguration::getK() const
 {
-	return k;
+	return m_k;
 }
 
 string NOVAConfiguration::getPathCESaveFile() const
 {
-	return pathCESaveFile;
+	return m_pathCESaveFile;
 }
 
 string NOVAConfiguration::getPathConfigHoneydDm() const
 {
-	return pathConfigHoneydDm;
+	return m_pathConfigHoneydDm;
 }
 
 string NOVAConfiguration::getPathConfigHoneydHs() const
 {
-	return pathConfigHoneydHs;
+	return m_pathConfigHoneydHs;
 }
 
 string NOVAConfiguration::getPathPcapFile() const
 {
-	return pathPcapFile;
+	return m_pathPcapFile;
 }
 
 string NOVAConfiguration::getPathTrainingCapFolder() const
 {
-	return pathTrainingCapFolder;
+	return m_pathTrainingCapFolder;
 }
 
 string NOVAConfiguration::getPathTrainingFile() const
 {
-	return pathTrainingFile;
+	return m_pathTrainingFile;
 }
 
 bool NOVAConfiguration::getReadPcap() const
 {
-	return readPcap;
+	return m_readPcap;
 }
 
 int NOVAConfiguration::getSaMaxAttempts() const
 {
-	return saMaxAttempts;
+	return m_saMaxAttempts;
 }
 
 int NOVAConfiguration::getSaPort() const
 {
-	return saPort;
+	return m_saPort;
 }
 
 double NOVAConfiguration::getSaSleepDuration() const
 {
-	return saSleepDuration;
+	return m_saSleepDuration;
 }
 
 int NOVAConfiguration::getSaveFreq() const
 {
-	return saveFreq;
+	return m_saveFreq;
 }
 
 int NOVAConfiguration::getTcpCheckFreq() const
 {
-	return tcpCheckFreq;
+	return m_tcpCheckFreq;
 }
 
 int NOVAConfiguration::getTcpTimout() const
 {
-	return tcpTimout;
+	return m_tcpTimout;
 }
 
 int NOVAConfiguration::getThinningDistance() const
 {
-	return thinningDistance;
+	return m_thinningDistance;
 }
 
 bool NOVAConfiguration::getUseTerminals() const
 {
-	return useTerminals;
+	return m_useTerminals;
 }
 
 void NOVAConfiguration::setClassificationThreshold(double classificationThreshold)
 {
-	this->classificationThreshold = classificationThreshold;
+	this->m_classificationThreshold = classificationThreshold;
 }
 
 void NOVAConfiguration::setClassificationTimeout(int classificationTimeout)
 {
-	this->classificationTimeout = classificationTimeout;
+	this->m_classificationTimeout = classificationTimeout;
 }
 
 void NOVAConfiguration::setConfigFilePath(string configFilePath)
 {
-	this->configFilePath = configFilePath;
+	this->m_configFilePath = configFilePath;
 }
 
 void NOVAConfiguration::setDataTTL(int dataTTL)
 {
-	this->dataTTL = dataTTL;
+	this->m_dataTTL = dataTTL;
 }
 
 void NOVAConfiguration::setDoppelInterface(string doppelInterface)
 {
-	this->doppelInterface = doppelInterface;
+	this->m_doppelInterface = doppelInterface;
 }
 
 void NOVAConfiguration::setDoppelIp(string doppelIp)
 {
-	this->doppelIp = doppelIp;
+	this->m_doppelIp = doppelIp;
 }
 
 void NOVAConfiguration::setEnabledFeatures(string enabledFeatures)
 {
-	this->enabledFeatures = enabledFeatures;
+	this->m_enabledFeatures = enabledFeatures;
 }
 
 void NOVAConfiguration::setEps(double eps)
 {
-	this->eps = eps;
+	this->m_eps = eps;
 }
 
 void NOVAConfiguration::setGotoLive(bool gotoLive)
 {
-	this->gotoLive = gotoLive;
+	this->m_gotoLive = gotoLive;
 }
 
 void NOVAConfiguration::setInterface(string interface)
 {
-	this->interface = interface;
+	this->m_interface = interface;
 }
 
 void NOVAConfiguration::setIsDmEnabled(bool isDmEnabled)
 {
-	this->isDmEnabled = isDmEnabled;
+	this->m_isDmEnabled = isDmEnabled;
 }
 
 void NOVAConfiguration::setIsTraining(bool isTraining)
 {
-	this->isTraining = isTraining;
+	this->m_isTraining = isTraining;
 }
 
 void NOVAConfiguration::setK(int k)
 {
-	this->k = k;
+	this->m_k = k;
 }
 
 void NOVAConfiguration::setPathCESaveFile(string pathCESaveFile)
 {
-	this->pathCESaveFile = pathCESaveFile;
+	this->m_pathCESaveFile = pathCESaveFile;
 }
 
 void NOVAConfiguration::setPathConfigHoneydDm(string pathConfigHoneydDm)
 {
-	this->pathConfigHoneydDm = pathConfigHoneydDm;
+	this->m_pathConfigHoneydDm = pathConfigHoneydDm;
 }
 
 void NOVAConfiguration::setPathConfigHoneydHs(string pathConfigHoneydHs)
 {
-	this->pathConfigHoneydHs = pathConfigHoneydHs;
+	this->m_pathConfigHoneydHs = pathConfigHoneydHs;
 }
 
 void NOVAConfiguration::setPathPcapFile(string pathPcapFile)
 {
-	this->pathPcapFile = pathPcapFile;
+	this->m_pathPcapFile = pathPcapFile;
 }
 
 void NOVAConfiguration::setPathTrainingCapFolder(string pathTrainingCapFolder)
 {
-	this->pathTrainingCapFolder = pathTrainingCapFolder;
+	this->m_pathTrainingCapFolder = pathTrainingCapFolder;
 }
 
 void NOVAConfiguration::setPathTrainingFile(string pathTrainingFile)
 {
-	this->pathTrainingFile = pathTrainingFile;
+	this->m_pathTrainingFile = pathTrainingFile;
 }
 
 void NOVAConfiguration::setReadPcap(bool readPcap)
 {
-	this->readPcap = readPcap;
+	this->m_readPcap = readPcap;
 }
 
 void NOVAConfiguration::setSaMaxAttempts(int saMaxAttempts)
 {
-	this->saMaxAttempts = saMaxAttempts;
+	this->m_saMaxAttempts = saMaxAttempts;
 }
 
 void NOVAConfiguration::setSaPort(int saPort)
 {
-	this->saPort = saPort;
+	this->m_saPort = saPort;
 }
 
 void NOVAConfiguration::setSaSleepDuration(double saSleepDuration)
 {
-	this->saSleepDuration = saSleepDuration;
+	this->m_saSleepDuration = saSleepDuration;
 }
 
 void NOVAConfiguration::setSaveFreq(int saveFreq)
 {
-	this->saveFreq = saveFreq;
+	this->m_saveFreq = saveFreq;
 }
 
 void NOVAConfiguration::setTcpCheckFreq(int tcpCheckFreq)
 {
-	this->tcpCheckFreq = tcpCheckFreq;
+	this->m_tcpCheckFreq = tcpCheckFreq;
 }
 
 void NOVAConfiguration::setTcpTimout(int tcpTimout)
 {
-	this->tcpTimout = tcpTimout;
+	this->m_tcpTimout = tcpTimout;
 }
 
 void NOVAConfiguration::setThinningDistance(int thinningDistance)
 {
-	this->thinningDistance = thinningDistance;
+	this->m_thinningDistance = thinningDistance;
 }
 
 void NOVAConfiguration::setUseTerminals(bool useTerminals)
 {
-	this->useTerminals = useTerminals;
+	this->m_useTerminals = useTerminals;
 }
 
 }

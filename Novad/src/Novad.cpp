@@ -302,11 +302,11 @@ void Nova::AppendToStateFile()
 	// Compute the total dataSize
 	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
 	{
-		if (!it->second->features.packetCount)
+		if (!it->second->m_features.m_packetCount)
 			continue;
 
 		index = it->second->SerializeSuspect(tableBuffer);
-		index += it->second->features.SerializeFeatureData(tableBuffer + index);
+		index += it->second->m_features.SerializeFeatureData(tableBuffer + index);
 
 		dataSize += index;
 	}
@@ -330,11 +330,11 @@ void Nova::AppendToStateFile()
 	// Serialize our suspect table
 	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
 	{
-		if (!it->second->features.packetCount)
+		if (!it->second->m_features.m_packetCount)
 			continue;
 
 		index = it->second->SerializeSuspect(tableBuffer);
-		index += it->second->features.SerializeFeatureData(tableBuffer + index);
+		index += it->second->m_features.SerializeFeatureData(tableBuffer + index);
 
 		out.write((char*) tableBuffer, index);
 	}
@@ -410,20 +410,20 @@ void Nova::LoadStateFile()
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
-			suspectBytes += newSuspect->features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->m_features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 			bytesSoFar += suspectBytes;
 
-			if (suspects[newSuspect->IP_address.s_addr] == NULL)
+			if (suspects[newSuspect->m_IpAddress.s_addr] == NULL)
 			{
-				suspects[newSuspect->IP_address.s_addr] = newSuspect;
-				suspects[newSuspect->IP_address.s_addr]->needs_feature_update = true;
-				suspects[newSuspect->IP_address.s_addr]->needs_classification_update = true;
+				suspects[newSuspect->m_IpAddress.s_addr] = newSuspect;
+				suspects[newSuspect->m_IpAddress.s_addr]->m_needsFeatureUpdate = true;
+				suspects[newSuspect->m_IpAddress.s_addr]->m_needsClassificationUpdate = true;
 			}
 			else
 			{
-				suspects[newSuspect->IP_address.s_addr]->features += newSuspect->features;
-				suspects[newSuspect->IP_address.s_addr]->needs_feature_update = true;
-				suspects[newSuspect->IP_address.s_addr]->needs_classification_update = true;
+				suspects[newSuspect->m_IpAddress.s_addr]->m_features += newSuspect->m_features;
+				suspects[newSuspect->m_IpAddress.s_addr]->m_needsFeatureUpdate = true;
+				suspects[newSuspect->m_IpAddress.s_addr]->m_needsClassificationUpdate = true;
 				delete newSuspect;
 			}
 		}
@@ -506,15 +506,15 @@ void Nova::RefreshStateFile()
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
-			suspectBytes += newSuspect->features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->m_features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 
 			// Did a suspect get cleared? Not in suspects anymore, but still is suspectsSinceLastSave
-			SuspectHashTable::iterator saveIter = suspectsSinceLastSave.find(newSuspect->IP_address.s_addr);
-			SuspectHashTable::iterator normalIter = suspects.find(newSuspect->IP_address.s_addr);
+			SuspectHashTable::iterator saveIter = suspectsSinceLastSave.find(newSuspect->m_IpAddress.s_addr);
+			SuspectHashTable::iterator normalIter = suspects.find(newSuspect->m_IpAddress.s_addr);
 			if (normalIter == suspects.end() && saveIter != suspectsSinceLastSave.end())
 			{
 				cout << "Deleting suspect" << endl;
-				in_addr_t key = newSuspect->IP_address.s_addr;
+				in_addr_t key = newSuspect->m_IpAddress.s_addr;
 				deletedKeys.push_back(key);
 				Suspect *currentSuspect = suspectsSinceLastSave[key ];
 				suspectsSinceLastSave.set_deleted_key(5);
@@ -524,7 +524,7 @@ void Nova::RefreshStateFile()
 				delete currentSuspect;
 			}
 
-			vector<in_addr_t>::iterator vIter = find (deletedKeys.begin(), deletedKeys.end(), newSuspect->IP_address.s_addr);
+			vector<in_addr_t>::iterator vIter = find (deletedKeys.begin(), deletedKeys.end(), newSuspect->m_IpAddress.s_addr);
 			if (vIter != deletedKeys.end())
 			{
 				// Shift the rest of the data over on top of our bad suspect
@@ -595,7 +595,7 @@ void Nova::Reload()
 
 	// Set everyone to be reclassified
 	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
-		it->second->needs_classification_update = true;
+		it->second->m_needsClassificationUpdate = true;
 
 	pthread_rwlock_unlock(&suspectTableLock);
 }
@@ -670,13 +670,13 @@ void *Nova::ClassificationLoop(void *ptr)
 		//Calculate the "true" Feature Set for each Suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
-			if(it->second->needs_feature_update)
+			if(it->second->m_needsFeatureUpdate)
 			{
-				for(uint i = 0; i < it->second->evidence.size(); i++)
+				for(uint i = 0; i < it->second->m_evidence.size(); i++)
 				{
-					it->second->features.unsentData->UpdateEvidence(it->second->evidence[i]);
+					it->second->m_features.m_unsentData->UpdateEvidence(it->second->m_evidence[i]);
 				}
-				it->second->evidence.clear();
+				it->second->m_evidence.clear();
 				it->second->CalculateFeatures(featureMask);
 			}
 		}
@@ -691,16 +691,16 @@ void *Nova::ClassificationLoop(void *ptr)
 		//Perform classification on each suspect
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
-			if(it->second->needs_classification_update)
+			if(it->second->m_needsClassificationUpdate)
 			{
-				oldClassification = it->second->isHostile;
+				oldClassification = it->second->m_isHostile;
 				Classify(it->second);
 
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
-				if(it->second->isHostile || oldClassification)
+				if(it->second->m_isHostile || oldClassification)
 				{
-					if(it->second->isLive)
+					if(it->second->m_isLive)
 						SilentAlarm(it->second);
 				}
 				SendToUI(it->second);
@@ -766,24 +766,24 @@ void *Nova::TrainingLoop(void *ptr)
 			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 			{
 
-				if(it->second->needs_feature_update)
+				if(it->second->m_needsFeatureUpdate)
 				{
 					it->second->CalculateFeatures(featureMask);
-					if(it->second->annPoint == NULL)
-						it->second->annPoint = annAllocPt(DIM);
+					if(it->second->m_annPoint == NULL)
+						it->second->m_annPoint = annAllocPt(DIM);
 
 
 					for(int j=0; j < DIM; j++)
-						it->second->annPoint[j] = it->second->features.features[j];
+						it->second->m_annPoint[j] = it->second->m_features.m_features[j];
 
-						myfile << string(inet_ntoa(it->second->IP_address)) << " ";
+						myfile << string(inet_ntoa(it->second->m_IpAddress)) << " ";
 
 						for(int j=0; j < DIM; j++)
-							myfile << it->second->annPoint[j] << " ";
+							myfile << it->second->m_annPoint[j] << " ";
 
 						myfile << "\n";
 
-					it->second->needs_feature_update = false;
+					it->second->m_needsFeatureUpdate = false;
 					//cout << it->second->ToString(featureEnabled);
 					SendToUI(it->second);
 				}
@@ -896,7 +896,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 				suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
 				//We set isHostile to false so that when we classify the first time
 				// the suspect will go from benign to hostile and be sent to the doppelganger module
-				suspects[addr]->isHostile = false;
+				suspects[addr]->m_isHostile = false;
 			}
 			//If this suspect exists, update the information
 			else
@@ -905,7 +905,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 				// a combined classification will be given next classification loop
 				suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
 			}
-			suspects[addr]->flaggedByAlarm = true;
+			suspects[addr]->m_flaggedByAlarm = true;
 			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 			syslog(SYSL_INFO, "Line: %d Received Silent Alarm!\n %s", __LINE__, (suspects[addr]->ToString(featureEnabled)).c_str());
 			if(!globalConfig->getClassificationTimeout())
@@ -960,16 +960,16 @@ void Nova::Classify(Suspect *suspect)
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
 	kdTree->annkSearch(							// search
-			suspect->annPoint,					// query point
+			suspect->m_annPoint,					// query point
 			k,									// number of near neighbors
 			nnIdx,								// nearest neighbors (returned)
 			dists,								// distance (returned)
 			globalConfig->getEps());								// error bound
 
 	for (int i = 0; i < DIM; i++)
-		suspect->featureAccuracy[i] = 0;
+		suspect->m_featureAccuracy[i] = 0;
 
-	suspect->hostileNeighbors = 0;
+	suspect->m_hostileNeighbors = 0;
 
 	//Determine classification according to weight by distance
 	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
@@ -984,11 +984,11 @@ void Nova::Classify(Suspect *suspect)
 		{
 			if (featureEnabled[j])
 			{
-				double distance = suspect->annPoint[j] - kdTree->thePoints()[nnIdx[i]][j];
+				double distance = suspect->m_annPoint[j] - kdTree->thePoints()[nnIdx[i]][j];
 				if (distance < 0)
 					distance *= -1;
 
-				suspect->featureAccuracy[j] += distance;
+				suspect->m_featureAccuracy[j] += distance;
 			}
 		}
 
@@ -999,13 +999,13 @@ void Nova::Classify(Suspect *suspect)
 		else
 		{
 			//If Hostile
-			if(dataPtsWithClass[nnIdx[i]]->classification == 1)
+			if(dataPtsWithClass[nnIdx[i]]->m_classification == 1)
 			{
 				classifyCount += (sqrtDIM - dists[i]);
-				suspect->hostileNeighbors++;
+				suspect->m_hostileNeighbors++;
 			}
 			//If benign
-			else if(dataPtsWithClass[nnIdx[i]]->classification == 0)
+			else if(dataPtsWithClass[nnIdx[i]]->m_classification == 0)
 			{
 				classifyCount -= (sqrtDIM - dists[i]);
 			}
@@ -1013,8 +1013,8 @@ void Nova::Classify(Suspect *suspect)
 			{
 				//error case; Data points must be 0 or 1
 				syslog(SYSL_ERR, "Line: %d Data point: %d has an invalid classification of: %d. This must be either 0 (benign) or 1 (hostile)",
-					   __LINE__, i, dataPtsWithClass[nnIdx[i]]->classification);
-				suspect->classification = -1;
+					   __LINE__, i, dataPtsWithClass[nnIdx[i]]->m_classification);
+				suspect->m_classification = -1;
 				delete [] nnIdx;							// clean things up
 				delete [] dists;
 				annClose();
@@ -1024,32 +1024,32 @@ void Nova::Classify(Suspect *suspect)
 	}
 
 	for (int j = 0; j < DIM; j++)
-				suspect->featureAccuracy[j] /= k;
+				suspect->m_featureAccuracy[j] /= k;
 
 	pthread_rwlock_unlock(&suspectTableLock);
 	pthread_rwlock_wrlock(&suspectTableLock);
 
-	suspect->classification = .5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM ));
+	suspect->m_classification = .5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM ));
 
 	// Fix for rounding errors caused by double's not being precise enough if DIM is something like 2
-	if (suspect->classification < 0)
-		suspect->classification = 0;
-	else if (suspect->classification > 1)
-		suspect->classification = 1;
+	if (suspect->m_classification < 0)
+		suspect->m_classification = 0;
+	else if (suspect->m_classification > 1)
+		suspect->m_classification = 1;
 
-	if( suspect->classification > globalConfig->getClassificationThreshold())
+	if( suspect->m_classification > globalConfig->getClassificationThreshold())
 	{
-		suspect->isHostile = true;
+		suspect->m_isHostile = true;
 	}
 	else
 	{
-		suspect->isHostile = false;
+		suspect->m_isHostile = false;
 	}
 	delete [] nnIdx;							// clean things up
     delete [] dists;
 
     annClose();
-	suspect->needs_classification_update = false;
+	suspect->m_needsClassificationUpdate = false;
 	pthread_rwlock_unlock(&suspectTableLock);
 	pthread_rwlock_rdlock(&suspectTableLock);
 }
@@ -1065,14 +1065,14 @@ void Nova::NormalizeDataPoints()
 		{
 			if (featureEnabled[i])
 			{
-				if(it->second->features.features[i] > maxFeatureValues[ai])
+				if(it->second->m_features.m_features[i] > maxFeatureValues[ai])
 				{
 					//For proper normalization the upper bound for a feature is the max value of the data.
-					it->second->features.features[i] = maxFeatureValues[ai];
+					it->second->m_features.m_features[i] = maxFeatureValues[ai];
 				}
-				else if (it->second->features.features[i] > maxFeatureValues[ai])
+				else if (it->second->m_features.m_features[i] > maxFeatureValues[ai])
 				{
-					it->second->features.features[i] = minFeatureValues[ai];
+					it->second->m_features.m_features[i] = minFeatureValues[ai];
 				}
 				ai++;
 			}
@@ -1085,10 +1085,10 @@ void Nova::NormalizeDataPoints()
 	//Normalize the suspect points
 	for (SuspectHashTable::iterator it = suspects.begin();it != suspects.end();it++)
 	{
-		if(it->second->needs_feature_update)
+		if(it->second->m_needsFeatureUpdate)
 		{
-			if(it->second->annPoint == NULL)
-				it->second->annPoint = annAllocPt(enabledFeatures);
+			if(it->second->m_annPoint == NULL)
+				it->second->m_annPoint = annAllocPt(enabledFeatures);
 
 			int ai = 0;
 			for(int i = 0;i < DIM;i++)
@@ -1096,14 +1096,14 @@ void Nova::NormalizeDataPoints()
 				if (featureEnabled[i])
 				{
 					if(maxFeatureValues[ai] != 0)
-						it->second->annPoint[ai] = Normalize(normalization[i], it->second->features.features[i], minFeatureValues[ai], maxFeatureValues[ai]);
+						it->second->m_annPoint[ai] = Normalize(normalization[i], it->second->m_features.m_features[i], minFeatureValues[ai], maxFeatureValues[ai]);
 					else
 						syslog(SYSL_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (ai + 1));
 					ai++;
 				}
 
 			}
-			it->second->needs_feature_update = false;
+			it->second->m_needsFeatureUpdate = false;
 		}
 	}
 }
@@ -1220,7 +1220,7 @@ void Nova::LoadDataPointsFromFile(string inFilePath)
 
 					if (featureEnabled[defaultDimension])
 					{
-						dataPtsWithClass[i]->annPoint[actualDimension] = temp;
+						dataPtsWithClass[i]->m_annPoint[actualDimension] = temp;
 						dataPts[i][actualDimension] = temp;
 
 						//Set the max values of each feature. (Used later in normalization)
@@ -1236,7 +1236,7 @@ void Nova::LoadDataPointsFromFile(string inFilePath)
 					}
 				}
 				getline(myfile,line);
-				dataPtsWithClass[i]->classification = atoi(line.data());
+				dataPtsWithClass[i]->m_classification = atoi(line.data());
 				i++;
 			}
 			//but if it isn't, just get to the next line without incrementing i.
@@ -1325,7 +1325,7 @@ void Nova::WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree)
 			{
 				myfile << tree->thePoints()[i][j] << " ";
 			}
-			myfile << dataPtsWithClass[i]->classification;
+			myfile << dataPtsWithClass[i]->m_classification;
 			myfile << "\n";
 		}
 	}
@@ -1348,11 +1348,11 @@ void Nova::SilentAlarm(Suspect *suspect)
 	uint dataLen = suspect->SerializeSuspect(serializedBuffer);
 
 	//If the hostility hasn't changed don't bother the DM
-	if(oldClassification != suspect->isHostile)
+	if(oldClassification != suspect->m_isHostile)
 	{
-		if(suspect->isHostile && globalConfig->getIsDmEnabled())
+		if(suspect->m_isHostile && globalConfig->getIsDmEnabled())
 		{
-			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(suspect->m_IpAddress), suspectAddr, INET_ADDRSTRLEN);
 
 			commandLine = "sudo iptables -t nat -A PREROUTING -d ";
 			commandLine += hostAddrString;
@@ -1365,7 +1365,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 		}
 		else
 		{
-			inet_ntop(AF_INET, &(suspect->IP_address), suspectAddr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(suspect->m_IpAddress), suspectAddr, INET_ADDRSTRLEN);
 
 			commandLine = "sudo iptables -t nat -D PREROUTING -d ";
 			commandLine += hostAddrString;
@@ -1377,18 +1377,18 @@ void Nova::SilentAlarm(Suspect *suspect)
 			system(commandLine.c_str());
 		}
 	}
-	if(suspect->features.unsentData->packetCount)
+	if(suspect->m_features.m_unsentData->m_packetCount)
 	{
 		do
 		{
 			dataLen = suspect->SerializeSuspect(serializedBuffer);
 
 			// Serialize the unsent data
-			dataLen += suspect->features.unsentData->SerializeFeatureData(serializedBuffer + dataLen);
+			dataLen += suspect->m_features.m_unsentData->SerializeFeatureData(serializedBuffer+dataLen);
 			// Move the unsent data to the sent side
-			suspect->features.UpdateFeatureData(true);
+			suspect->m_features.UpdateFeatureData(true);
 			// Clear the unsent data
-			suspect->features.unsentData->clearFeatureData();
+			suspect->m_features.m_unsentData->clearFeatureData();
 
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < neighbors.size(); i++)
@@ -2169,7 +2169,7 @@ void Nova::UpdateSuspect(Packet packet)
 	else
 		suspects[addr]->AddEvidence(packet);
 
-	suspects[addr]->isLive = usePcapFile;
+	suspects[addr]->m_isLive = usePcapFile;
 	pthread_rwlock_unlock(&suspectTableLock);
 }
 

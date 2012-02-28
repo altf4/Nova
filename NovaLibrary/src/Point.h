@@ -34,10 +34,10 @@ class Point
 public:
 
 	///	The ANN Point, which represents this suspect in feature space
-	ANNpoint annPoint;
+	ANNpoint m_annPoint;
 
 	///	The classification given to the point on the basis of k-NN
-	int classification;
+	int m_classification;
 
 	Point();
 	Point(uint enabledFeatures);

@@ -27,64 +27,64 @@ namespace Nova{
 
 Suspect::Suspect()
 {
-	pthread_rwlock_init(&lock, NULL);
-	this->IP_address.s_addr = 0;
-	this->hostileNeighbors = 0;
-	this->classification = -1;
-	this->needs_classification_update = true;
-	this->needs_feature_update = true;
-	this->flaggedByAlarm = false;
-	this->isHostile = false;
-	this->isLive = false;
-	this->features = FeatureSet();
-	this->features.unsentData = new FeatureSet();
-	this->annPoint = NULL;
-	this->evidence.clear();
+	pthread_rwlock_init(&m_lock, NULL);
+	this->m_IpAddress.s_addr = 0;
+	this->m_hostileNeighbors = 0;
+	this->m_classification = -1;
+	this->m_needsClassificationUpdate = true;
+	this->m_needsFeatureUpdate = true;
+	this->m_flaggedByAlarm = false;
+	this->m_isHostile = false;
+	this->m_isLive = false;
+	this->m_features = FeatureSet();
+	this->m_features.m_unsentData = new FeatureSet();
+	this->m_annPoint = NULL;
+	this->m_evidence.clear();
 
 	for(int i = 0; i < DIM; i++)
-		this->featureAccuracy[i] = 0;
+		this->m_featureAccuracy[i] = 0;
 }
 
 
 Suspect::~Suspect()
 {
 	//Lock the suspect before deletion to prevent further access
-	pthread_rwlock_wrlock(&lock);
-	if(this->annPoint != NULL)
+	pthread_rwlock_wrlock(&m_lock);
+	if(this->m_annPoint != NULL)
 	{
-		annDeallocPt(this->annPoint);
+		annDeallocPt(this->m_annPoint);
 	}
 }
 
 
 Suspect::Suspect(Packet packet)
 {
-	pthread_rwlock_init(&lock, NULL);
-	IP_address = packet.ip_hdr.ip_src;
-	hostileNeighbors = 0;
-	classification = -1;
-	isHostile = false;
-	needs_classification_update = true;
-	needs_feature_update = true;
-	isLive = true;
-	features = FeatureSet();
-	features.unsentData = new FeatureSet();
-	annPoint = NULL;
-	flaggedByAlarm = false;
+	pthread_rwlock_init(&m_lock, NULL);
+	m_IpAddress = packet.ip_hdr.ip_src;
+	m_hostileNeighbors = 0;
+	m_classification = -1;
+	m_isHostile = false;
+	m_needsClassificationUpdate = true;
+	m_needsFeatureUpdate = true;
+	m_isLive = true;
+	m_features = FeatureSet();
+	m_features.m_unsentData = new FeatureSet();
+	m_annPoint = NULL;
+	m_flaggedByAlarm = false;
 	AddEvidence(packet);
 
 	for(int i = 0; i < DIM; i++)
-		featureAccuracy[i] = 0;
+		m_featureAccuracy[i] = 0;
 }
 
 
 string Suspect::ToString(bool featureEnabled[])
 {
-	pthread_rwlock_rdlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
 	stringstream ss;
-	if(&IP_address != NULL)
+	if(&m_IpAddress != NULL)
 	{
-		ss << "Suspect: "<< inet_ntoa(IP_address) << "\n";
+		ss << "Suspect: "<< inet_ntoa(m_IpAddress) << "\n";
 	}
 	else
 	{
@@ -92,130 +92,130 @@ string Suspect::ToString(bool featureEnabled[])
 	}
 
 	ss << " Suspect is ";
-	if(!isHostile)
+	if(!m_isHostile)
 		ss << "not ";
 	ss << "hostile\n";
-	ss <<  " Classification: " <<  classification <<  "\n";
-	ss <<  " Hostile neighbors: " << hostileNeighbors << "\n";
+	ss <<  " Classification: " <<  m_classification <<  "\n";
+	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 
 	if (featureEnabled[DISTINCT_IPS])
 	{
-		ss << " Distinct IPs Contacted: " << features.features[DISTINCT_IPS] << "\n";
+		ss << " Distinct IPs Contacted: " << m_features.m_features[DISTINCT_IPS] << "\n";
 	}
 
 	if (featureEnabled[IP_TRAFFIC_DISTRIBUTION])
 	{
-		ss << " Haystack Traffic Distribution: " << features.features[IP_TRAFFIC_DISTRIBUTION] << "\n";
+		ss << " Haystack Traffic Distribution: " << m_features.m_features[IP_TRAFFIC_DISTRIBUTION] << "\n";
 	}
 
 	if (featureEnabled[DISTINCT_PORTS])
 	{
-		ss << " Distinct Ports Contacted: " << features.features[DISTINCT_PORTS] << "\n";
+		ss << " Distinct Ports Contacted: " << m_features.m_features[DISTINCT_PORTS] << "\n";
 	}
 
 	if (featureEnabled[PORT_TRAFFIC_DISTRIBUTION])
 	{
-		ss << " Port Traffic Distribution: "  <<  features.features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
+		ss << " Port Traffic Distribution: "  <<  m_features.m_features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
 	}
 
 	if (featureEnabled[HAYSTACK_EVENT_FREQUENCY])
 	{
-		ss << " Haystack Events: " << features.features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
+		ss << " Haystack Events: " << m_features.m_features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
 	}
 
 	if (featureEnabled[PACKET_SIZE_MEAN])
 	{
-		ss << " Mean Packet Size: " << features.features[PACKET_SIZE_MEAN] << "\n";
+		ss << " Mean Packet Size: " << m_features.m_features[PACKET_SIZE_MEAN] << "\n";
 	}
 
 	if (featureEnabled[PACKET_SIZE_DEVIATION])
 	{
-		ss << " Packet Size Variance: " << features.features[PACKET_SIZE_DEVIATION] << "\n";
+		ss << " Packet Size Variance: " << m_features.m_features[PACKET_SIZE_DEVIATION] << "\n";
 	}
 
 	if (featureEnabled[PACKET_INTERVAL_MEAN])
 	{
-		ss << " Mean Packet Interval: " << features.features[PACKET_INTERVAL_MEAN] << "\n";
+		ss << " Mean Packet Interval: " << m_features.m_features[PACKET_INTERVAL_MEAN] << "\n";
 	}
 
 	if (featureEnabled[PACKET_INTERVAL_DEVIATION])
 	{
-		ss << " Packet Interval Variance: " << features.features[PACKET_INTERVAL_DEVIATION] << "\n";
+		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
 
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_unlock(&m_lock);
 	return ss.str();
 }
 
 
 void Suspect::AddEvidence(Packet packet)
 {
-	pthread_rwlock_wrlock(&lock);
-	evidence.push_back(packet);
-	needs_feature_update = true;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_evidence.push_back(packet);
+	m_needsFeatureUpdate = true;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 //Returns a copy of the evidence vector so that it can be read.
-vector <Packet> Suspect::get_evidence() //TODO
+vector <Packet> Suspect::GetEvidence() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	vector<Packet>ret = evidence;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	vector<Packet>ret = m_evidence;
+	pthread_rwlock_unlock(&m_lock);
 	return ret;
 }
 
 //Clears the evidence vector, returns 0 on success
-void Suspect::clear_evidence() //TODO
+void Suspect::ClearEvidence() //TODO
 {
-		pthread_rwlock_wrlock(&lock);
-		evidence.clear();
-		pthread_rwlock_unlock(&lock);
+		pthread_rwlock_wrlock(&m_lock);
+		m_evidence.clear();
+		pthread_rwlock_unlock(&m_lock);
 }
 
 void Suspect::CalculateFeatures(uint32_t featuresEnabled)
 {
-	pthread_rwlock_wrlock(&lock);
-	features.CalculateAll(featuresEnabled);
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_features.CalculateAll(featuresEnabled);
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 uint32_t Suspect::SerializeSuspect(u_char * buf)
 {
-	pthread_rwlock_rdlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
-	memcpy(buf, &IP_address.s_addr, sizeof IP_address.s_addr);
-	offset+= sizeof IP_address.s_addr;
-	memcpy(buf+offset, &classification, sizeof classification);
-	offset+= sizeof classification;
-	memcpy(buf+offset, &isHostile, sizeof isHostile);
-	offset+= sizeof isHostile;
-	memcpy(buf+offset, &needs_classification_update, sizeof needs_classification_update);
-	offset+= sizeof needs_classification_update;
-	memcpy(buf+offset, &needs_feature_update, sizeof needs_feature_update);
-	offset+= sizeof needs_feature_update;
-	memcpy(buf+offset, &flaggedByAlarm, sizeof flaggedByAlarm);
-	offset+= sizeof flaggedByAlarm;
-	memcpy(buf+offset, &isLive, sizeof isLive);
-	offset+= sizeof isLive;
-	memcpy(buf+offset, &hostileNeighbors, sizeof hostileNeighbors);
-	offset+= sizeof hostileNeighbors;
+	memcpy(buf, &m_IpAddress.s_addr, sizeof m_IpAddress.s_addr);
+	offset+= sizeof m_IpAddress.s_addr;
+	memcpy(buf+offset, &m_classification, sizeof m_classification);
+	offset+= sizeof m_classification;
+	memcpy(buf+offset, &m_isHostile, sizeof m_isHostile);
+	offset+= sizeof m_isHostile;
+	memcpy(buf+offset, &m_needsClassificationUpdate, sizeof m_needsClassificationUpdate);
+	offset+= sizeof m_needsClassificationUpdate;
+	memcpy(buf+offset, &m_needsFeatureUpdate, sizeof m_needsFeatureUpdate);
+	offset+= sizeof m_needsFeatureUpdate;
+	memcpy(buf+offset, &m_flaggedByAlarm, sizeof m_flaggedByAlarm);
+	offset+= sizeof m_flaggedByAlarm;
+	memcpy(buf+offset, &m_isLive, sizeof m_isLive);
+	offset+= sizeof m_isLive;
+	memcpy(buf+offset, &m_hostileNeighbors, sizeof m_hostileNeighbors);
+	offset+= sizeof m_hostileNeighbors;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(buf+offset, &featureAccuracy[i], sizeof featureAccuracy[i]);
-		offset+= sizeof featureAccuracy[i];
+		memcpy(buf+offset, &m_featureAccuracy[i], sizeof m_featureAccuracy[i]);
+		offset+= sizeof m_featureAccuracy[i];
 	}
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
-	offset += features.SerializeFeatureSet(buf+offset);
-	pthread_rwlock_unlock(&lock);
+	offset += m_features.SerializeFeatureSet(buf+offset);
+	pthread_rwlock_unlock(&m_lock);
 
 	return offset;
 }
@@ -223,38 +223,38 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 
 uint32_t Suspect::DeserializeSuspect(u_char * buf)
 {
-	pthread_rwlock_wrlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
-	memcpy(&IP_address.s_addr, buf, sizeof IP_address.s_addr);
-	offset+= sizeof IP_address.s_addr;
-	memcpy(&classification, buf+offset, sizeof classification);
-	offset+= sizeof classification;
-	memcpy(&isHostile, buf+offset, sizeof isHostile);
-	offset+= sizeof isHostile;
-	memcpy(&needs_classification_update, buf+offset, sizeof needs_classification_update);
-	offset+= sizeof needs_classification_update;
-	memcpy(&needs_feature_update, buf+offset, sizeof needs_feature_update);
-	offset+= sizeof needs_feature_update;
-	memcpy(&flaggedByAlarm, buf+offset, sizeof flaggedByAlarm);
-	offset+= sizeof flaggedByAlarm;
-	memcpy(&isLive, buf+offset, sizeof isLive);
-	offset+= sizeof isLive;
-	memcpy(&hostileNeighbors, buf+offset, sizeof hostileNeighbors);
-	offset+= sizeof hostileNeighbors;
+	memcpy(&m_IpAddress.s_addr, buf, sizeof m_IpAddress.s_addr);
+	offset+= sizeof m_IpAddress.s_addr;
+	memcpy(&m_classification, buf+offset, sizeof m_classification);
+	offset+= sizeof m_classification;
+	memcpy(&m_isHostile, buf+offset, sizeof m_isHostile);
+	offset+= sizeof m_isHostile;
+	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
+	offset+= sizeof m_needsClassificationUpdate;
+	memcpy(&m_needsFeatureUpdate, buf+offset, sizeof m_needsFeatureUpdate);
+	offset+= sizeof m_needsFeatureUpdate;
+	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
+	offset+= sizeof m_flaggedByAlarm;
+	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
+	offset+= sizeof m_isLive;
+	memcpy(&m_hostileNeighbors, buf+offset, sizeof m_hostileNeighbors);
+	offset+= sizeof m_hostileNeighbors;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(&featureAccuracy[i], buf+offset, sizeof featureAccuracy[i]);
-		offset+= sizeof featureAccuracy[i];
+		memcpy(&m_featureAccuracy[i], buf+offset, sizeof m_featureAccuracy[i]);
+		offset+= sizeof m_featureAccuracy[i];
 	}
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
-	offset += features.DeserializeFeatureSet(buf+offset);
-	pthread_rwlock_unlock(&lock);
+	offset += m_features.DeserializeFeatureSet(buf+offset);
+	pthread_rwlock_unlock(&m_lock);
 
 
 	return offset;
@@ -263,46 +263,46 @@ uint32_t Suspect::DeserializeSuspect(u_char * buf)
 
 uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 {
-	pthread_rwlock_wrlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
-	memcpy(&IP_address.s_addr, buf, sizeof IP_address.s_addr);
-	offset+= sizeof IP_address.s_addr;
-	memcpy(&classification, buf+offset, sizeof classification);
-	offset+= sizeof classification;
-	memcpy(&isHostile, buf+offset, sizeof isHostile);
-	offset+= sizeof isHostile;
-	memcpy(&needs_classification_update, buf+offset, sizeof needs_classification_update);
-	offset+= sizeof needs_classification_update;
-	memcpy(&needs_feature_update, buf+offset, sizeof needs_feature_update);
-	offset+= sizeof needs_feature_update;
-	memcpy(&flaggedByAlarm, buf+offset, sizeof flaggedByAlarm);
-	offset+= sizeof flaggedByAlarm;
-	memcpy(&isLive, buf+offset, sizeof isLive);
-	offset+= sizeof isLive;
-	memcpy(&hostileNeighbors, buf+offset, sizeof hostileNeighbors);
-	offset+= sizeof hostileNeighbors;
+	memcpy(&m_IpAddress.s_addr, buf, sizeof m_IpAddress.s_addr);
+	offset+= sizeof m_IpAddress.s_addr;
+	memcpy(&m_classification, buf+offset, sizeof m_classification);
+	offset+= sizeof m_classification;
+	memcpy(&m_isHostile, buf+offset, sizeof m_isHostile);
+	offset+= sizeof m_isHostile;
+	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
+	offset+= sizeof m_needsClassificationUpdate;
+	memcpy(&m_needsFeatureUpdate, buf+offset, sizeof m_needsFeatureUpdate);
+	offset+= sizeof m_needsFeatureUpdate;
+	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
+	offset+= sizeof m_flaggedByAlarm;
+	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
+	offset+= sizeof m_isLive;
+	memcpy(&m_hostileNeighbors, buf+offset, sizeof m_hostileNeighbors);
+	offset+= sizeof m_hostileNeighbors;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(&featureAccuracy[i], buf+offset, sizeof featureAccuracy[i]);
-		offset+= sizeof featureAccuracy[i];
+		memcpy(&m_featureAccuracy[i], buf+offset, sizeof m_featureAccuracy[i]);
+		offset+= sizeof m_featureAccuracy[i];
 	}
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
-	offset += features.DeserializeFeatureSet(buf+offset);
+	offset += m_features.DeserializeFeatureSet(buf+offset);
 
 	if(isLocal)
-		offset += features.unsentData->DeserializeFeatureData(buf+offset);
+		offset += m_features.m_unsentData->DeserializeFeatureData(buf+offset);
 	else
-		offset += features.DeserializeFeatureData(buf+offset);
+		offset += m_features.DeserializeFeatureData(buf+offset);
 
-	needs_feature_update = true;
-	needs_classification_update = true;
-	pthread_rwlock_unlock(&lock);
+	m_needsFeatureUpdate = true;
+	m_needsClassificationUpdate = true;
+	pthread_rwlock_unlock(&m_lock);
 
 
 	return offset;
@@ -310,229 +310,229 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 
 //Returns a copy of the suspects in_addr.s_addr, must not be locked or is locked by the owner
 //Returns: Suspect's in_addr.s_addr or 0 on failure
-in_addr_t Suspect::get_IP_address() //TODO
+in_addr_t Suspect::GetIpAddress() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	in_addr_t ret = IP_address.s_addr;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	in_addr_t ret = m_IpAddress.s_addr;
+	pthread_rwlock_unlock(&m_lock);
 	return ret;
 
 }
 //Sets the suspects in_addr, must have the lock to perform this operation
 //Returns: 0 on success
-void Suspect::set_IP_Address(in_addr_t ip) //TODO
+void Suspect::SetIpAddress(in_addr_t ip) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	IP_address.s_addr = ip;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_IpAddress.s_addr = ip;
+	pthread_rwlock_unlock(&m_lock);
 
 }
 
 
 //Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
 // Returns -1 on failure
-double Suspect::get_classification() //TODO
+double Suspect::GetClassification() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	double ret = classification;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	double ret = m_classification;
+	pthread_rwlock_unlock(&m_lock);
 	return ret;
 
 }
 
 //Sets the suspect's classification, must have the lock to perform this operation
 //Returns 0 on success
-void Suspect::set_classification(double n) //TODO
+void Suspect::SetClassification(double n) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	classification = n;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_classification = n;
+	pthread_rwlock_unlock(&m_lock);
 
 }
 
 
 //Returns the number of hostile neighbors, must not be locked or is locked by the owner
-int Suspect::get_hostileNeighbors() //TODO
+int Suspect::GetHostileNeighbors() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	int ret = hostileNeighbors;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	int ret = m_hostileNeighbors;
+	pthread_rwlock_unlock(&m_lock);
 	return ret;
 
 }
 //Sets the number of hostile neighbors, must have the lock to perform this operation
-void Suspect::set_hostileNeighbors(int i) //TODO
+void Suspect::SetHostileNeighbors(int i) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	hostileNeighbors = i;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_hostileNeighbors = i;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 //Returns the hostility bool of the suspect, must not be locked or is locked by the owner
-bool Suspect::get_isHostile() //TODO
+bool Suspect::GetIsHostile() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	return isHostile;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	return m_isHostile;
+	pthread_rwlock_unlock(&m_lock);
 }
 //Sets the hostility bool of the suspect, must have the lock to perform this operation
-void Suspect::set_isHostile(bool b) //TODO
+void Suspect::SetIsHostile(bool b) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	isHostile = b;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_isHostile = b;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 //Returns the needs classification bool, must not be locked or is locked by the owner
-bool Suspect::get_needs_classification_update() //TODO
+bool Suspect::GetNeedsClassificationUpdate() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	return needs_classification_update;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	return m_needsClassificationUpdate;
+	pthread_rwlock_unlock(&m_lock);
 }
 //Sets the needs classification bool, must have the lock to perform this operation
-void Suspect::set_needs_classification_update(bool b) //TODO
+void Suspect::SetNeedsClassificationUpdate(bool b) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	needs_classification_update = b;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_needsClassificationUpdate = b;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 //Returns the needs feature update bool, must not be locked or is locked by the owner
-bool Suspect::get_needs_feature_update() //TODO
+bool Suspect::GetNeedsFeatureUpdate() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	return needs_feature_update;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	return m_needsFeatureUpdate;
+	pthread_rwlock_unlock(&m_lock);
 }
 //Sets the neeeds feature update bool, must have the lock to perform this operation
-void Suspect::set_needs_feature_update(bool b) //TODO
+void Suspect::SetNeedsFeatureUpdate(bool b) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	needs_feature_update = b;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_needsFeatureUpdate = b;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 //Returns the flagged by silent alarm bool, must not be locked or is locked by the owner
-bool Suspect::get_flaggedByAlarm() //TODO
+bool Suspect::GetFlaggedByAlarm() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	return flaggedByAlarm;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	return m_flaggedByAlarm;
+	pthread_rwlock_unlock(&m_lock);
 }
 //Sets the flagged by silent alarm bool, must have the lock to perform this operation
-void Suspect::set_flaggedByAlarm(bool b) //TODO
+void Suspect::SetFlaggedByAlarm(bool b) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	flaggedByAlarm = b;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_flaggedByAlarm = b;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 //Returns the 'from live capture' bool, must not be locked or is locked by the owner
-bool Suspect::get_isLive() //TODO
+bool Suspect::GetIsLive() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	return isLive;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	return m_isLive;
+	pthread_rwlock_unlock(&m_lock);
 }
 //Sets the 'from live capture' bool, must have the lock to perform this operation
-void Suspect::set_isLive(bool b) //TODO
+void Suspect::SetIsLive(bool b) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	isLive = b;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_isLive = b;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 //Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
-FeatureSet Suspect::get_features() //TODO
+FeatureSet Suspect::GetFeatures() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	FeatureSet ret = features;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	FeatureSet ret = m_features;
+	pthread_rwlock_unlock(&m_lock);
 	return ret;
 }
 
 //Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
-void Suspect::set_features(FeatureSet fs) //TODO
+void Suspect::SetFeatures(FeatureSet fs) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	features = fs;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_features = fs;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 //Adds the feature set 'fs' to the suspect's feature set
-void Suspect::add_featureSet(FeatureSet fs) //TODO
+void Suspect::AddFeatureSet(FeatureSet fs) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	features += fs;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_features += fs;
+	pthread_rwlock_unlock(&m_lock);
 }
 //Subtracts the feature set 'fs' from the suspect's feature set
-void Suspect::subtract_featureSet(FeatureSet fs) //TODO
+void Suspect::SubtractFeatureSet(FeatureSet fs) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	features -= fs;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_features -= fs;
+	pthread_rwlock_unlock(&m_lock);
 
 }
 
 //Clears the feature set of the suspect
-void Suspect::clear_features() //TODO
+void Suspect::ClearFeatures() //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	features.ClearFeatureSet();
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_features.ClearFeatureSet();
+	pthread_rwlock_unlock(&m_lock);
 
 }
 
 
 //Returns the accuracy double of the feature using featureIndex fi, must not be locked or is locked by the owner
-double Suspect::get_featureAccuracy(featureIndex fi) //TODO
+double Suspect::GetFeatureAccuracy(featureIndex fi) //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	double ret =  featureAccuracy[fi];
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	double ret =  m_featureAccuracy[fi];
+	pthread_rwlock_unlock(&m_lock);
 	return ret;
 }
 //Sets the accuracy double of the feature using featureIndex fi, must have the lock to perform this operation
-void Suspect::setFeatureAccuracy(featureIndex fi, double d) //TODO
+void Suspect::SetFeatureAccuracy(featureIndex fi, double d) //TODO
 {
-	pthread_rwlock_wrlock(&lock);
-	featureAccuracy[fi] = d;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
+	m_featureAccuracy[fi] = d;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 //Returns a copy of the suspect's ANNpoint, must not be locked or is locked by the owner
-ANNpoint Suspect::get_annPoint() //TODO
+ANNpoint Suspect::GetAnnPoint() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
-	ANNpoint ret =  annPoint;
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
+	ANNpoint ret =  m_annPoint;
+	pthread_rwlock_unlock(&m_lock);
 	return ret;
 }
 
 //Write locks the suspect
-void Suspect::wrlockSuspect() //TODO
+void Suspect::WrlockSuspect() //TODO
 {
-	pthread_rwlock_wrlock(&lock);
+	pthread_rwlock_wrlock(&m_lock);
 }
 
 //Read locks the suspect
-void Suspect::rdlockSuspect() //TODO
+void Suspect::RdlockSuspect() //TODO
 {
-	pthread_rwlock_rdlock(&lock);
+	pthread_rwlock_rdlock(&m_lock);
 }
 
 //Unlocks the suspect
-void Suspect::unlockSuspect() //TODO
+void Suspect::UnlockSuspect() //TODO
 {
-	pthread_rwlock_unlock(&lock);
+	pthread_rwlock_unlock(&m_lock);
 }
 
 }

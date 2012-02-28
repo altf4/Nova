@@ -98,10 +98,10 @@ class GUIMsg
 	//********************
 
 	// The message type
-	GUIMsgType type;
+	GUIMsgType m_type;
 
 	// The argument if applicable.
-	string val;
+	string m_value;
 };
 }
 #endif /* GUIMSG_H_ */

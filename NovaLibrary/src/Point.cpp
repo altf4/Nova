@@ -26,20 +26,20 @@ namespace Nova{
 
 Point::Point()
 {
-	annPoint = annAllocPt(DIM);
-	classification = 0;
+	m_annPoint = annAllocPt(DIM);
+	m_classification = 0;
 }
 
 Point::Point(uint enabledFeatures)
 {
-	annPoint = annAllocPt(enabledFeatures);
-	classification = 0;
+	m_annPoint = annAllocPt(enabledFeatures);
+	m_classification = 0;
 }
 
 
 Point::~Point()
 {
-	annDeallocPt(annPoint);
-	classification = 0;
+	annDeallocPt(m_annPoint);
+	m_classification = 0;
 }
 }

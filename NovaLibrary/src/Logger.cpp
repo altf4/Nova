@@ -29,7 +29,7 @@ using namespace std;
 namespace Nova
 {
 
-	const string Logger::prefixes[] = { "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "RECIPIENTS", "SERVICE_PREFERENCES" };
+	const string Logger::m_prefixes[] = { "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "RECIPIENTS", "SERVICE_PREFERENCES" };
 
 // Loads the configuration file into the class's state data
 	uint16_t Logger::LoadConfiguration(char const* configFilePath)
@@ -46,7 +46,7 @@ namespace Nova
 		//populate the checkLoad array. I know it looks a little messy, maybe
 		//hard code it somewhere? Just did this so that if we add or remove stuff,
 		//we only have to do it here
-		for(uint16_t j = 0; j < sizeof(prefixes)/sizeof(prefixes[0]); j++)
+		for(uint16_t j = 0; j < sizeof(m_prefixes)/sizeof(m_prefixes[0]); j++)
 		{
 			string def;
 
@@ -72,7 +72,7 @@ namespace Nova
 				getline(config, line);
 
 				prefixIndex = 0;
-				prefix = prefixes[prefixIndex];
+				prefix = m_prefixes[prefixIndex];
 
 				// SMTP_ADDR
 				if(!line.substr(0, prefix.size()).compare(prefix))
@@ -81,7 +81,7 @@ namespace Nova
 
 					if(line.size() > 0)
 					{
-						messageInfo.smtp_addr = line;
+						m_messageInfo.smtp_addr = line;
 						checkLoad[prefixIndex] = line;
 					}
 
@@ -89,7 +89,7 @@ namespace Nova
 				}
 
 				prefixIndex++;
-				prefix = prefixes[prefixIndex];
+				prefix = m_prefixes[prefixIndex];
 
 				//SMTP_PORT
 				if(!line.substr(0, prefix.size()).compare(prefix))
@@ -98,7 +98,7 @@ namespace Nova
 
 					if(line.size() > 0)
 					{
-						messageInfo.smtp_port = ((in_port_t) atoi(line.c_str()));
+						m_messageInfo.smtp_port = ((in_port_t) atoi(line.c_str()));
 						checkLoad[prefixIndex] = line;
 					}
 
@@ -106,7 +106,7 @@ namespace Nova
 				}
 
 				prefixIndex++;
-				prefix = prefixes[prefixIndex];
+				prefix = m_prefixes[prefixIndex];
 
 				//SMTP_DOMAIN
 				if(!line.substr(0, prefix.size()).compare(prefix))
@@ -115,14 +115,14 @@ namespace Nova
 
 					if(line.size() > 0)
 					{
-						messageInfo.smtp_domain = line;
+						m_messageInfo.smtp_domain = line;
 						checkLoad[prefixIndex] = line;
 					}
 
 					continue;
 				}
 				prefixIndex++;
-				prefix = prefixes[prefixIndex];
+				prefix = m_prefixes[prefixIndex];
 				vector<string> vec;
 				//RECIPIENTS
 				if(!line.substr(0, prefix.size()).compare(prefix))
@@ -131,7 +131,7 @@ namespace Nova
 
 					if(line.size() > 0)
 					{
-						messageInfo.email_recipients = Logger::ParseAddressesString(line);
+						m_messageInfo.email_recipients = Logger::ParseAddressesString(line);
 						checkLoad[prefixIndex] = line;
 					}
 
@@ -139,7 +139,7 @@ namespace Nova
 				}
 
 				prefixIndex++;
-				prefix = prefixes[prefixIndex];
+				prefix = m_prefixes[prefixIndex];
 
 				//SERVICE_PREFERENCES
 				//TODO: make method for parsing string to map criticality level to service
@@ -197,7 +197,7 @@ namespace Nova
 
 	void Logger::Logging(string processName, Nova::Levels messageLevel, string messageBasic, string messageAdv)
 	{
-		pthread_rwlock_wrlock(&logLock);
+		pthread_rwlock_wrlock(&m_logLock);
 
 		string mask = getBitmask(messageLevel);
 
@@ -216,13 +216,13 @@ namespace Nova
 			Mail(processName, messageLevel, messageBasic);
 		}
 
-		pthread_rwlock_unlock(&logLock);
+		pthread_rwlock_unlock(&m_logLock);
 	}
 
 	void Logger::Notify(string processName, uint16_t level, string message)
 	{
 		NotifyNotification *note;
-		string notifyHeader = processName + ": " + levels[level].second;
+		string notifyHeader = processName + ": " + m_levels[level].second;
 		notify_init("Nova");
 		#ifdef NOTIFY_CHECK_VERSION
 		#if NOTIFY_CHECK_VERSION (0, 7, 0)
@@ -241,7 +241,7 @@ namespace Nova
 	void Logger::Log(string processName, uint16_t level, string message)
 	{
 		openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(level, "%s: %s %s", processName.c_str(), (levels[level].second).c_str(), message.c_str());
+		syslog(level, "%s: %s %s", processName.c_str(), (m_levels[level].second).c_str(), message.c_str());
 		closelog();
 	}
 
@@ -310,7 +310,7 @@ namespace Nova
 			}
 			push.first = insert;
 			push.second = upDown;
-			messageInfo.service_preferences.push_back(push);
+			m_messageInfo.service_preferences.push_back(push);
 			parse = strtok(NULL, ";");
 			j++;
 		}
@@ -353,21 +353,21 @@ namespace Nova
 		string mask = "";
 		char upDown;
 
-		for(uint16_t i = 0; i < messageInfo.service_preferences.size(); i++)
+		for(uint16_t i = 0; i < m_messageInfo.service_preferences.size(); i++)
 		{
-			upDown = messageInfo.service_preferences[i].second;
+			upDown = m_messageInfo.service_preferences[i].second;
 
-			if(messageInfo.service_preferences[i].first.first == SYSLOG)
+			if(m_messageInfo.service_preferences[i].first.first == SYSLOG)
 			{
-				if(messageInfo.service_preferences[i].first.second == level)
+				if(m_messageInfo.service_preferences[i].first.second == level)
 				{
 					mask += "1";
 				}
-				else if(messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				else if(m_messageInfo.service_preferences[i].first.second < level && upDown == '+')
 				{
 					mask += "1";
 				}
-				else if(messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				else if(m_messageInfo.service_preferences[i].first.second > level && upDown == '-')
 				{
 					mask += "1";
 				}
@@ -376,17 +376,17 @@ namespace Nova
 					mask += "0";
 				}
 			}
-			else if(messageInfo.service_preferences[i].first.first == LIBNOTIFY)
+			else if(m_messageInfo.service_preferences[i].first.first == LIBNOTIFY)
 			{
-				if(messageInfo.service_preferences[i].first.second == level)
+				if(m_messageInfo.service_preferences[i].first.second == level)
 				{
 					mask += "1";
 				}
-				else if(messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				else if(m_messageInfo.service_preferences[i].first.second < level && upDown == '+')
 				{
 					mask += "1";
 				}
-				else if(messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				else if(m_messageInfo.service_preferences[i].first.second > level && upDown == '-')
 				{
 					mask += "1";
 				}
@@ -395,17 +395,17 @@ namespace Nova
 					mask += "0";
 				}
 			}
-			else if(messageInfo.service_preferences[i].first.first == EMAIL)
+			else if(m_messageInfo.service_preferences[i].first.first == EMAIL)
 			{
-				if(messageInfo.service_preferences[i].first.second == level)
+				if(m_messageInfo.service_preferences[i].first.second == level)
 				{
 					mask += "1";
 				}
-				else if(messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				else if(m_messageInfo.service_preferences[i].first.second < level && upDown == '+')
 				{
 					mask += "1";
 				}
-				else if(messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				else if(m_messageInfo.service_preferences[i].first.second > level && upDown == '-')
 				{
 					mask += "1";
 				}
@@ -421,7 +421,7 @@ namespace Nova
 
 	Logger::Logger(char const * configFilePath, bool init)
 	{
-		pthread_rwlock_init(&logLock, NULL);
+		pthread_rwlock_init(&m_logLock, NULL);
 
 		for(uint16_t i = 0; i < 8; i++)
 		{
@@ -447,7 +447,7 @@ namespace Nova
 				default:break;
 			}
 
-			levels.push_back(pair<uint16_t, string> (i, level));
+			m_levels.push_back(pair<uint16_t, string> (i, level));
 		}
 
 		if(init)
