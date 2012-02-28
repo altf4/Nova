@@ -156,7 +156,7 @@ void nodePopup::pullData()
 //Copies the data to parent novaconfig and adjusts the pointers
 void nodePopup::pushData()
 {
-	novaParent->loading->lock();
+	novaParent->m_loading->lock();
 	novaParent->nodes[editNode.name] = editNode;
 	novaParent->SyncAllNodesWithProfiles();
 
@@ -165,7 +165,7 @@ void nodePopup::pushData()
 		editNode.name = editNode.MAC;
 	if(novaParent->profiles[editNode.pfile].type == static_IP)
 		editNode.name = editNode.IP;
-	novaParent->loading->unlock();
+	novaParent->m_loading->unlock();
 	novaParent->LoadAllNodes();
 }
 
@@ -240,7 +240,7 @@ void nodePopup::on_generateButton_clicked()
 
 int nodePopup::validateNodeSettings()
 {
-	novaParent->loading->lock();
+	novaParent->m_loading->lock();
 	bool ipConflict = false;
 	bool macConflict = false;
 	for(NodeTable::iterator it = novaParent->nodes.begin(); it != novaParent->nodes.end(); it++)
@@ -267,6 +267,6 @@ int nodePopup::validateNodeSettings()
 		ret = 1;
 	else if(macConflict)
 		ret = 2;
-	novaParent->loading->unlock();
+	novaParent->m_loading->unlock();
 	return ret;
 }

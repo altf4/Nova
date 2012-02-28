@@ -215,10 +215,10 @@ void subnetPopup::pullData()
 //Copies the data to parent novaconfig and adjusts the pointers
 void subnetPopup::pushData()
 {
-	nParent->loading->lock();
+	nParent->m_loading->lock();
 	nParent->subnets.erase(subName);
 	nParent->subnets[editSubnet.name] = editSubnet;
-	nParent->loading->unlock();
+	nParent->m_loading->unlock();
 	nParent->UpdateLookupKeys();
 
 	nParent->LoadAllNodes();

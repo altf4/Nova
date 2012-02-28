@@ -23,6 +23,7 @@
 #include "ui_novagui.h"
 #include "Suspect.h"
 #include "loggerwindow.h"
+#include "NOVAConfiguration.h"
 
 #include <QProcess>
 
@@ -58,23 +59,25 @@ class NovaGUI : public QMainWindow
 
 public:
 
-    bool isHelpUp;
-    string group;
+    bool m_isHelpUp;
+    string m_group;
 
-    SubnetTable subnets;
-    PortTable ports;
-    ProfileTable profiles;
-    NodeTable nodes;
-    ScriptTable scripts;
+    SubnetTable m_subnets;
+    PortTable m_ports;
+    ProfileTable m_profiles;
+    NodeTable m_nodes;
+    ScriptTable m_scripts;
 
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.
-    ptree groupTree;
-    ptree portTree;
-    ptree profileTree;
-    ptree scriptTree;
-    ptree nodesTree;
-    ptree subnetTree;
+    ptree m_groupTree;
+    ptree m_portTree;
+    ptree m_profileTree;
+    ptree m_scriptTree;
+    ptree m_nodesTree;
+    ptree m_subnetTree;
+
+    NOVAConfiguration *configuration;
 
     DialogPrompter *prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
@@ -214,9 +217,18 @@ Q_SIGNALS:
 	void refreshSystemStatus();
 
 private:
-	const QIcon* greenIcon;
-	const QIcon* redIcon;
-	const QIcon* yellowIcon;
+	const QIcon* m_greenIcon;
+	const QIcon* m_redIcon;
+	const QIcon* m_yellowIcon;
+
+	QMenu * m_suspectMenu;
+	QMenu * m_systemStatMenu;
+
+	bool m_featureEnabled[DIM];
+	bool m_editingSuspectList;
+
+	//Configuration variables
+	char * m_pathsFile;
 };
 
 namespace Nova {

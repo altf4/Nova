@@ -49,7 +49,7 @@ Nova_Manual::~Nova_Manual()
 void Nova_Manual::closeEvent(QCloseEvent * e)
 {
 	e = e;
-	mainw->isHelpUp = false;
+	mainw->m_isHelpUp = false;
 }
 
 void Nova_Manual::setPaths()

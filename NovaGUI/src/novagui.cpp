@@ -21,7 +21,6 @@
 #include "novaconfig.h"
 #include "nova_manual.h"
 #include "classifierPrompt.h"
-#include "NOVAConfiguration.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -42,7 +41,6 @@ int NovadInSocket, NovadOutSocket;
 struct sockaddr_un NovadInAddress, NovadOutAddress;
 int len;
 
-
 //GUI to Nova message variables
 GUIMsg message = GUIMsg();
 u_char msgBuffer[MAX_GUIMSG_SIZE];
@@ -52,34 +50,12 @@ int msgLen = 0;
 u_char buf[MAX_MSG_SIZE];
 int bytesRead;
 
-//Configuration variables
-bool useTerminals = true;
-char * pathsFile = (char*)"/etc/nova/paths";
+pthread_rwlock_t lock;
 string homePath, readPath, writePath;
-NOVAConfiguration *configuration;
-bool goToLive = true;
-bool readFromPcap = false;
 
-// Paths extracted from the config file
-string doppelgangerPath;
-string haystackPath;
-string trainingDataPath;
-string ceSaveFile;
-string configurationInterface;
-double thinningDistance;
-bool isTraining = false;
-string dmAddr;
 
 //General variables like tables, flags, locks, etc.
 SuspectGUIHashTable SuspectTable;
-pthread_rwlock_t lock;
-
-bool featureEnabled[DIM];
-int enabledFeatures;
-bool editingSuspectList = false;
-bool isHelpUp = false;
-QMenu * suspectMenu;
-QMenu * systemStatMenu;
 
 // Defines the order of components in the process list and novaComponents array
 #define COMPONENT_NOVAD 0
@@ -110,24 +86,28 @@ NovaGUI::NovaGUI(QWidget *parent)
 	pthread_rwlock_init(&lock, NULL);
 	SuspectTable.set_empty_key(1);
 	SuspectTable.set_deleted_key(5);
-	subnets.set_empty_key("");
-	ports.set_empty_key("");
-	nodes.set_empty_key("");
-	profiles.set_empty_key("");
-	scripts.set_empty_key("");
-	subnets.set_deleted_key("Deleted");
-	nodes.set_deleted_key("Deleted");
-	profiles.set_deleted_key("Deleted");
-	ports.set_deleted_key("Deleted");
-	scripts.set_deleted_key("Deleted");
+	m_subnets.set_empty_key("");
+	m_ports.set_empty_key("");
+	m_nodes.set_empty_key("");
+	m_profiles.set_empty_key("");
+	m_scripts.set_empty_key("");
+	m_subnets.set_deleted_key("Deleted");
+	m_nodes.set_deleted_key("Deleted");
+	m_profiles.set_deleted_key("Deleted");
+	m_ports.set_deleted_key("Deleted");
+	m_scripts.set_deleted_key("Deleted");
+
+	m_editingSuspectList = false;
+	m_pathsFile = (char*)"/etc/nova/paths";
+
 
 	ui.setupUi(this);
 
 	//Pre-forms the suspect menu
-	suspectMenu = new QMenu(this);
-	systemStatMenu = new QMenu(this);
+	m_suspectMenu = new QMenu(this);
+	m_systemStatMenu = new QMenu(this);
 
-	isHelpUp = false;
+	m_isHelpUp = false;
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
@@ -258,47 +238,47 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 {
 	if(ui.suspectList->hasFocus() || ui.suspectList->underMouse())
 	{
-		suspectMenu->clear();
+		m_suspectMenu->clear();
 		if(ui.suspectList->isItemSelected(ui.suspectList->currentItem()))
 		{
-			suspectMenu->addAction(ui.actionClear_Suspect);
-			suspectMenu->addAction(ui.actionHide_Suspect);
+			m_suspectMenu->addAction(ui.actionClear_Suspect);
+			m_suspectMenu->addAction(ui.actionHide_Suspect);
 		}
 
-		suspectMenu->addSeparator();
-		suspectMenu->addAction(ui.actionClear_All_Suspects);
-		suspectMenu->addAction(ui.actionSave_Suspects);
-		suspectMenu->addSeparator();
+		m_suspectMenu->addSeparator();
+		m_suspectMenu->addAction(ui.actionClear_All_Suspects);
+		m_suspectMenu->addAction(ui.actionSave_Suspects);
+		m_suspectMenu->addSeparator();
 
-		suspectMenu->addAction(ui.actionShow_All_Suspects);
-		suspectMenu->addAction(ui.actionHide_Old_Suspects);
+		m_suspectMenu->addAction(ui.actionShow_All_Suspects);
+		m_suspectMenu->addAction(ui.actionHide_Old_Suspects);
 
 		QPoint globalPos = event->globalPos();
-		suspectMenu->popup(globalPos);
+		m_suspectMenu->popup(globalPos);
 	}
 	else if(ui.hostileList->hasFocus() || ui.hostileList->underMouse())
 	{
-		suspectMenu->clear();
+		m_suspectMenu->clear();
 		if(ui.hostileList->isItemSelected(ui.hostileList->currentItem()))
 		{
-			suspectMenu->addAction(ui.actionClear_Suspect);
-			suspectMenu->addAction(ui.actionHide_Suspect);
+			m_suspectMenu->addAction(ui.actionClear_Suspect);
+			m_suspectMenu->addAction(ui.actionHide_Suspect);
 		}
 
-		suspectMenu->addSeparator();
-		suspectMenu->addAction(ui.actionClear_All_Suspects);
-		suspectMenu->addAction(ui.actionSave_Suspects);
-		suspectMenu->addSeparator();
+		m_suspectMenu->addSeparator();
+		m_suspectMenu->addAction(ui.actionClear_All_Suspects);
+		m_suspectMenu->addAction(ui.actionSave_Suspects);
+		m_suspectMenu->addSeparator();
 
-		suspectMenu->addAction(ui.actionShow_All_Suspects);
-		suspectMenu->addAction(ui.actionHide_Old_Suspects);
+		m_suspectMenu->addAction(ui.actionShow_All_Suspects);
+		m_suspectMenu->addAction(ui.actionHide_Old_Suspects);
 
 		QPoint globalPos = event->globalPos();
-		suspectMenu->popup(globalPos);
+		m_suspectMenu->popup(globalPos);
 	}
 	else if(ui.systemStatusTable->hasFocus() || ui.systemStatusTable->underMouse())
 	{
-		systemStatMenu->clear();
+		m_systemStatMenu->clear();
 
 		int row = ui.systemStatusTable->currentRow();
 		if (row < 0 || row > NOVA_COMPONENTS)
@@ -309,21 +289,21 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 
 		if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
 		{
-			systemStatMenu->addAction(ui.actionSystemStatKill);
+			m_systemStatMenu->addAction(ui.actionSystemStatKill);
 
 			if (row != COMPONENT_DMH && row != COMPONENT_HSH)
-				systemStatMenu->addAction(ui.actionSystemStatStop);
+				m_systemStatMenu->addAction(ui.actionSystemStatStop);
 
 			if (row == COMPONENT_NOVAD)
-				systemStatMenu->addAction(ui.actionSystemStatReload);
+				m_systemStatMenu->addAction(ui.actionSystemStatReload);
 		}
 		else
 		{
-			systemStatMenu->addAction(ui.actionSystemStatStart);
+			m_systemStatMenu->addAction(ui.actionSystemStatStart);
 		}
 
 		QPoint globalPos = event->globalPos();
-		systemStatMenu->popup(globalPos);
+		m_systemStatMenu->popup(globalPos);
 	}
 	else
 	{
@@ -344,7 +324,7 @@ void NovaGUI::closeEvent(QCloseEvent * e)
 void NovaGUI::InitSession()
 {
 	InitPaths();
-	LoadNovadConfiguration();
+	configuration = new NOVAConfiguration();
 	LoadSettings();
 	InitNovadCommands();
 }
@@ -362,8 +342,8 @@ void NovaGUI::InitNovadCommands()
 	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + configurationInterface + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configurationInterface + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + configuration->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
 void NovaGUI::InitPaths()
@@ -396,7 +376,7 @@ void NovaGUI::LoadSettings()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				group = line;
+				m_group = line;
 				continue;
 			}
 		}
@@ -431,18 +411,18 @@ void NovaGUI::SaveAllTemplates()
 	ptree pt;
 
 	//Scripts
-	scriptTree.clear();
-	for(ScriptTable::iterator it = scripts.begin(); it != scripts.end(); it++)
+	m_scriptTree.clear();
+	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
 	{
 		pt = it->second.tree;
 		pt.put<std::string>("name", it->second.name);
 		pt.put<std::string>("path", it->second.path);
-		scriptTree.add_child("scripts.script", pt);
+		m_scriptTree.add_child("scripts.script", pt);
 	}
 
 	//Ports
-	portTree.clear();
-	for(PortTable::iterator it = ports.begin(); it != ports.end(); it++)
+	m_portTree.clear();
+	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		pt = it->second.tree;
 		pt.put<std::string>("name", it->second.portName);
@@ -460,11 +440,11 @@ void NovaGUI::SaveAllTemplates()
 			pt.put<std::string>("IP", it->second.proxyIP);
 			pt.put<std::string>("Port", it->second.proxyPort);
 		}
-		portTree.add_child("ports.port", pt);
+		m_portTree.add_child("ports.port", pt);
 	}
 
-	subnetTree.clear();
-	for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+	m_subnetTree.clear();
+	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
 		pt = it->second.tree;
 
@@ -490,12 +470,12 @@ void NovaGUI::SaveAllTemplates()
 		tempMask.s_addr = htonl(mask);
 		temp = string(inet_ntoa(tempMask));
 		pt.put<std::string>("mask", temp);
-		subnetTree.add_child("interface", pt);
+		m_subnetTree.add_child("interface", pt);
 	}
 
 	//Nodes
-	nodesTree.clear();
-	for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	m_nodesTree.clear();
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		pt = it->second.tree;
 		//Required xml entires
@@ -506,33 +486,33 @@ void NovaGUI::SaveAllTemplates()
 		if(it->second.MAC.size())
 			pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
-		nodesTree.add_child("node",pt);
+		m_nodesTree.add_child("node",pt);
 	}
 	using boost::property_tree::ptree;
-	BOOST_FOREACH(ptree::value_type &v, groupTree.get_child("groups"))
+	BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 	{
 		//Find the specified group
-		if(!v.second.get<std::string>("name").compare(group))
+		if(!v.second.get<std::string>("name").compare(m_group))
 		{
 			//Load Subnets first, they are needed before we can load nodes
-			v.second.put_child("subnets", subnetTree);
-			v.second.put_child("nodes",nodesTree);
+			v.second.put_child("subnets", m_subnetTree);
+			v.second.put_child("nodes",m_nodesTree);
 		}
 	}
-	profileTree.clear();
-	for(ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+	m_profileTree.clear();
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		if(it->second.parentProfile == "")
 		{
 			pt = it->second.tree;
-			profileTree.add_child("profiles.profile", pt);
+			m_profileTree.add_child("profiles.profile", pt);
 		}
 	}
 	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
-	write_xml(homePath+"/scripts.xml", scriptTree, std::locale(), settings);
-	write_xml(homePath+"/templates/ports.xml", portTree, std::locale(), settings);
-	write_xml(homePath+"/templates/nodes.xml", groupTree, std::locale(), settings);
-	write_xml(homePath+"/templates/profiles.xml", profileTree, std::locale(), settings);
+	write_xml(homePath+"/scripts.xml", m_scriptTree, std::locale(), settings);
+	write_xml(homePath+"/templates/ports.xml", m_portTree, std::locale(), settings);
+	write_xml(homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
+	write_xml(homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
 }
 
 //Writes the current configuration to honeyd configs
@@ -543,7 +523,7 @@ void NovaGUI::WriteHoneydConfiguration()
 
 	vector<string> profilesParsed;
 
-	for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		if (!it->second.parentProfile.compare(""))
 		{
@@ -554,9 +534,9 @@ void NovaGUI::WriteHoneydConfiguration()
 		}
 	}
 
-	while (profilesParsed.size() < profiles.size())
+	while (profilesParsed.size() < m_profiles.size())
 	{
-		for (ProfileTable::iterator it = profiles.begin(); it != profiles.end(); it++)
+		for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
 			bool selfMatched = false;
 			bool parentFound = false;
@@ -587,7 +567,7 @@ void NovaGUI::WriteHoneydConfiguration()
 
 	// Start node section
 	out << endl << endl;
-	for (NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		if (!it->second.enabled)
 		{
@@ -597,7 +577,7 @@ void NovaGUI::WriteHoneydConfiguration()
 		{
 			doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
 		}
-		else switch (profiles[it->second.pfile].type)
+		else switch (m_profiles[it->second.pfile].type)
 		{
 			case static_IP:
 				out << "bind " << it->second.IP << " " << it->second.pfile << endl;
@@ -613,11 +593,11 @@ void NovaGUI::WriteHoneydConfiguration()
 		}
 	}
 
-	ofstream outFile(haystackPath.data());
+	ofstream outFile(configuration->getPathConfigHoneydHs().data());
 	outFile << out.str() << endl;
 	outFile.close();
 
-	ofstream doppelOutFile(doppelgangerPath.data());
+	ofstream doppelOutFile(configuration->getPathConfigHoneydDm().data());
 	doppelOutFile << doppelOut.str() << endl;
 	doppelOutFile.close();
 }
@@ -653,24 +633,24 @@ string NovaGUI::ProfileToString(profile* p)
 		if (!p->ports[i].second)
 		{
 			out << "add " << p->name;
-			if(!ports[p->ports[i].first].type.compare("TCP"))
+			if(!m_ports[p->ports[i].first].type.compare("TCP"))
 				out << " tcp port ";
 			else
 				out << " udp port ";
-			out << ports[p->ports[i].first].portNum << " ";
+			out << m_ports[p->ports[i].first].portNum << " ";
 
-			if (!(ports[p->ports[i].first].behavior.compare("script")))
+			if (!(m_ports[p->ports[i].first].behavior.compare("script")))
 			{
-				string scriptName = ports[p->ports[i].first].scriptName;
+				string scriptName = m_ports[p->ports[i].first].scriptName;
 
-				if (scripts[scriptName].path.compare(""))
-					out << '"' << scripts[scriptName].path << '"'<< endl;
+				if (m_scripts[scriptName].path.compare(""))
+					out << '"' << m_scripts[scriptName].path << '"'<< endl;
 				else
 					syslog(SYSL_ERR, "File: %s Line: %d Error writing profile port script %s: Path to script is null", __FILE__, __LINE__, scriptName.c_str());
 			}
 			else
 			{
-				out << ports[p->ports[i].first].behavior << endl;
+				out << m_ports[p->ports[i].first].behavior << endl;
 			}
 		}
 	}
@@ -687,11 +667,11 @@ string NovaGUI::ProfileToString(profile* p)
 //Calls all load functions
 void NovaGUI::LoadAllTemplates()
 {
-	scripts.clear_no_resize();
-	ports.clear_no_resize();
-	profiles.clear_no_resize();
-	nodes.clear_no_resize();
-	subnets.clear_no_resize();
+	m_scripts.clear_no_resize();
+	m_ports.clear_no_resize();
+	m_profiles.clear_no_resize();
+	m_nodes.clear_no_resize();
+	m_subnets.clear_no_resize();
 
 	LoadScriptsTemplate();
 	LoadPortsTemplate();
@@ -704,12 +684,12 @@ void NovaGUI::LoadScriptsTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
-	scriptTree.clear();
+	m_scriptTree.clear();
 	try
 	{
-		read_xml(homePath+"/scripts.xml", scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(homePath+"/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
-		BOOST_FOREACH(ptree::value_type &v, scriptTree.get_child("scripts"))
+		BOOST_FOREACH(ptree::value_type &v, m_scriptTree.get_child("scripts"))
 		{
 			script s;
 			s.tree = v.second;
@@ -724,7 +704,7 @@ void NovaGUI::LoadScriptsTemplate()
 			}
 
 			s.path = v.second.get<std::string>("path");
-			scripts[s.name] = s;
+			m_scripts[s.name] = s;
 		}
 	}
 	catch(std::exception &e)
@@ -741,9 +721,9 @@ void NovaGUI::InitiateSystemStatus()
 	string yellowPath = "/usr/share/nova/icons/yellowdot.png";
 	string redPath = "/usr/share/nova/icons/reddot.png";
 
-	greenIcon = new QIcon(QPixmap(QString::fromStdString(greenPath)));
-	yellowIcon = new QIcon(QPixmap(QString::fromStdString(yellowPath)));
-	redIcon = new QIcon(QPixmap(QString::fromStdString(redPath)));
+	m_greenIcon = new QIcon(QPixmap(QString::fromStdString(greenPath)));
+	m_yellowIcon = new QIcon(QPixmap(QString::fromStdString(yellowPath)));
+	m_redIcon = new QIcon(QPixmap(QString::fromStdString(redPath)));
 
 	// Populate the System Status table with empty widgets
 	for (int i = 0; i < ui.systemStatusTable->rowCount(); i++)
@@ -775,12 +755,12 @@ void NovaGUI::UpdateSystemStatus()
 			if (novaComponents[i].shouldBeRunning)
 			{
 				syslog(SYSL_ERR, "File: %s Line: %d GUI has detected a dead process %s. Restarting it.", __FILE__, __LINE__, novaComponents[i].name.c_str());
-				item->setIcon(*yellowIcon);
+				item->setIcon(*m_yellowIcon);
 				StartComponent(&novaComponents[i]);
 			}
 			else
 			{
-				item->setIcon(*redIcon);
+				item->setIcon(*m_redIcon);
 			}
 
 		}
@@ -788,9 +768,9 @@ void NovaGUI::UpdateSystemStatus()
 		{
 			// The process is running, but it shouldn't be. Make it yellow
 			if (novaComponents[i].shouldBeRunning)
-				item->setIcon(*greenIcon);
+				item->setIcon(*m_greenIcon);
 			else
-				item->setIcon(*yellowIcon);
+				item->setIcon(*m_yellowIcon);
 
 			pidItem->setText(QString::number(novaComponents[i].process->pid()));
 		}
@@ -811,12 +791,12 @@ void NovaGUI::LoadPortsTemplate()
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 
-	portTree.clear();
+	m_portTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/ports.xml", portTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(homePath+"/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
 
-		BOOST_FOREACH(ptree::value_type &v, portTree.get_child("ports"))
+		BOOST_FOREACH(ptree::value_type &v, m_portTree.get_child("ports"))
 		{
 			port p;
 			p.tree = v.second;
@@ -845,7 +825,7 @@ void NovaGUI::LoadPortsTemplate()
 				p.proxyIP = v.second.get<std::string>("IP");
 				p.proxyPort = v.second.get<std::string>("Port");
 			}
-			ports[p.portName] = p;
+			m_ports[p.portName] = p;
 		}
 	}
 	catch(std::exception &e)
@@ -862,28 +842,28 @@ void NovaGUI::LoadNodesTemplate()
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 
-	groupTree.clear();
+	m_groupTree.clear();
 	ptree ptr;
 
 	try
 	{
-		read_xml(homePath+"/templates/nodes.xml", groupTree, boost::property_tree::xml_parser::trim_whitespace);
-		BOOST_FOREACH(ptree::value_type &v, groupTree.get_child("groups"))
+		read_xml(homePath+"/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 		{
 			//Find the specified group
-			if(!v.second.get<std::string>("name").compare(group))
+			if(!v.second.get<std::string>("name").compare(m_group))
 			{
 				try //Null Check
 				{
 					//Load Subnets first, they are needed before we can load nodes
-					subnetTree = v.second.get_child("subnets");
-					LoadSubnets(&subnetTree);
+					m_subnetTree = v.second.get_child("subnets");
+					LoadSubnets(&m_subnetTree);
 
 					try //Null Check
 					{
 						//If subnets are loaded successfully, load nodes
-						nodesTree = v.second.get_child("nodes");
-						LoadNodes(&nodesTree);
+						m_nodesTree = v.second.get_child("nodes");
+						LoadNodes(&m_nodesTree);
 					}
 					catch(std::exception &e)
 					{
@@ -901,7 +881,7 @@ void NovaGUI::LoadNodesTemplate()
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, group.c_str(), string(e.what()).c_str());
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, m_group.c_str(), string(e.what()).c_str());
 		prompter->DisplayPrompt(HONEYD_READ_FAIL, "Problem loading group:  string(e.what())");
 	}
 }
@@ -940,7 +920,7 @@ void NovaGUI::LoadSubnets(ptree *ptr)
 				sub.address = ss.str();
 
 				//Save subnet
-				subnets[sub.name] = sub;
+				m_subnets[sub.name] = sub;
 			}
 			//If virtual honeyd subnet
 			else if(!string(v.first.data()).compare("virtual"))
@@ -1019,7 +999,7 @@ void NovaGUI::LoadNodes(ptree *ptr)
 					continue;
 				}
 
-				p = profiles[n.pfile];
+				p = m_profiles[n.pfile];
 
 				//Get mac if present
 				try //Conditional: has "set" values
@@ -1029,16 +1009,16 @@ void NovaGUI::LoadNodes(ptree *ptr)
 					n.MAC = v.second.get<std::string>("MAC");
 				}
 				catch(...){}
-				if(!n.IP.compare(dmAddr))
+				if(!n.IP.compare(configuration->getDoppelIp()))
 				{
 					n.name = "Doppelganger";
 					n.sub = n.interface;
 					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
 					//save the node in the table
-					nodes[n.name] = n;
+					m_nodes[n.name] = n;
 
 					//Put address of saved node in subnet's list of nodes.
-					subnets[nodes[n.name].sub].nodes.push_back(n.name);
+					m_subnets[m_nodes[n.name].sub].nodes.push_back(n.name);
 				}
 				else switch(p.type)
 				{
@@ -1061,7 +1041,7 @@ void NovaGUI::LoadNodes(ptree *ptr)
 						//Tracks the mask with smallest range by comparing num of bits used.
 
 						//Check each subnet
-						for(SubnetTable::iterator it = subnets.begin(); it != subnets.end(); it++)
+						for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 						{
 							//If node falls outside a subnets range skip it
 							if((n.realIP < it->second.base) || (n.realIP > it->second.max))
@@ -1079,7 +1059,7 @@ void NovaGUI::LoadNodes(ptree *ptr)
 						}
 
 						//Check that node has unique IP addr
-						for(NodeTable::iterator it = nodes.begin(); it != nodes.end(); it++)
+						for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 						{
 							if(n.realIP == it->second.realIP)
 							{
@@ -1091,10 +1071,10 @@ void NovaGUI::LoadNodes(ptree *ptr)
 						if((n.sub != "") && unique)
 						{
 							//save the node in the table
-							nodes[n.name] = n;
+							m_nodes[n.name] = n;
 
 							//Put address of saved node in subnet's list of nodes.
-							subnets[nodes[n.name].sub].nodes.push_back(n.name);
+							m_subnets[m_nodes[n.name].sub].nodes.push_back(n.name);
 						}
 						//If no subnet found, can't use node unless it's doppelganger.
 						else
@@ -1122,7 +1102,7 @@ void NovaGUI::LoadNodes(ptree *ptr)
 						}
 
 						//Associated MAC is already in use, this is not allowed, throw out the node
-						if(nodes.find(n.MAC) != nodes.end())
+						if(m_nodes.find(n.MAC) != m_nodes.end())
 						{
 							syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
 									"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
@@ -1150,10 +1130,10 @@ void NovaGUI::LoadNodes(ptree *ptr)
 						}
 
 						//save the node in the table
-						nodes[n.name] = n;
+						m_nodes[n.name] = n;
 
 						//Put address of saved node in subnet's list of nodes.
-						subnets[nodes[n.name].sub].nodes.push_back(n.name);
+						m_subnets[m_nodes[n.name].sub].nodes.push_back(n.name);
 						break;
 
 					//***** RANDOM DHCP (random MAC each time run) ********//
@@ -1169,7 +1149,7 @@ void NovaGUI::LoadNodes(ptree *ptr)
 						}
 
 						//Finds a unique identifier
-						while((nodes.find(n.name) != nodes.end()) && (i < j))
+						while((m_nodes.find(n.name) != m_nodes.end()) && (i < j))
 						{
 							i++;
 							ss.str("");
@@ -1187,10 +1167,10 @@ void NovaGUI::LoadNodes(ptree *ptr)
 							continue;
 						}
 						//save the node in the table
-						nodes[n.name] = n;
+						m_nodes[n.name] = n;
 
 						//Put address of saved node in subnet's list of nodes.
-						subnets[nodes[n.name].sub].nodes.push_back(n.name);
+						m_subnets[m_nodes[n.name].sub].nodes.push_back(n.name);
 						break;
 				}
 			}
@@ -1213,12 +1193,12 @@ void NovaGUI::LoadProfilesTemplate()
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 	ptree * ptr;
-	profileTree.clear();
+	m_profileTree.clear();
 	try
 	{
-		read_xml(homePath+"/templates/profiles.xml", profileTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(homePath+"/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
-		BOOST_FOREACH(ptree::value_type &v, profileTree.get_child("profiles"))
+		BOOST_FOREACH(ptree::value_type &v, m_profileTree.get_child("profiles"))
 		{
 			//Generic profile, essentially a honeyd template
 			if(!string(v.first.data()).compare("profile"))
@@ -1262,7 +1242,7 @@ void NovaGUI::LoadProfilesTemplate()
 				catch(...){}
 
 				//Save the profile
-				profiles[p.name] = p;
+				m_profiles[p.name] = p;
 
 				try //Conditional: has children profiles
 				{
@@ -1386,13 +1366,13 @@ void NovaGUI::LoadProfileServices(ptree *ptr, profile *p)
 				//Iterates through the ports
 				BOOST_FOREACH(ptree::value_type &v2, ptr->get_child("ports"))
 				{
-					prt = &ports[v2.second.data()];
+					prt = &m_ports[v2.second.data()];
 
 					//Checks inherited ports for conflicts
 					for(uint i = 0; i < p->ports.size(); i++)
 					{
 						//Erase inherited port if a conflict is found
-						if(!prt->portNum.compare(ports[p->ports[i].first].portNum) && !prt->type.compare(ports[p->ports[i].first].type))
+						if(!prt->portNum.compare(m_ports[p->ports[i].first].portNum) && !prt->type.compare(m_ports[p->ports[i].first].type))
 						{
 							p->ports.erase(p->ports.begin()+i);
 						}
@@ -1408,7 +1388,7 @@ void NovaGUI::LoadProfileServices(ptree *ptr, profile *p)
 						uint i = 0;
 						for(i = 0; i < p->ports.size(); i++)
 						{
-							port * temp = &ports[p->ports[i].first];
+							port * temp = &m_ports[p->ports[i].first];
 							if((atoi(temp->portNum.c_str())) < (atoi(prt->portNum.c_str())))
 							{
 								continue;
@@ -1442,7 +1422,7 @@ void NovaGUI::LoadProfileServices(ptree *ptr, profile *p)
 //Recursive descent down a profile tree, inherits parent, sets values and continues if not leaf.
 void NovaGUI::LoadProfileChildren(string parent)
 {
-	ptree ptr = profiles[parent].tree;
+	ptree ptr = m_profiles[parent].tree;
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, ptr.get_child("profiles"))
@@ -1450,7 +1430,7 @@ void NovaGUI::LoadProfileChildren(string parent)
 			ptree *ptr2;
 
 			//Inherits parent,
-			profile prof = profiles[parent];
+			profile prof = m_profiles[parent];
 			prof.tree = v.second;
 			prof.parentProfile = parent;
 
@@ -1491,7 +1471,7 @@ void NovaGUI::LoadProfileChildren(string parent)
 			catch(...){}
 
 			//Saves the profile
-			profiles[prof.name] = prof;
+			m_profiles[prof.name] = prof;
 
 
 			try //Conditional: if profile has children (not leaf)
@@ -1588,7 +1568,7 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
 
 void NovaGUI::DrawAllSuspects()
 {
-	editingSuspectList = true;
+	m_editingSuspectList = true;
 	ClearSuspectList();
 
 	QListWidgetItem * item = NULL;
@@ -1671,14 +1651,14 @@ void NovaGUI::DrawAllSuspects()
 	}
 	UpdateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
-	editingSuspectList = false;
+	m_editingSuspectList = false;
 }
 
 //Updates the UI with the latest suspect information
 //*NOTE This slot is not thread safe, make sure you set appropriate locks before sending a signal to this slot
 void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 {
-	editingSuspectList = true;
+	m_editingSuspectList = true;
 	QString str;
 	QBrush brush;
 	QColor color;
@@ -1792,7 +1772,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		{
 			ui.hostileList->setCurrentRow(i);
 		}
-		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
 	}
 	//Else if the mainItem exists and suspect is not hostile
 	else if(sItem->mainItem != NULL)
@@ -1807,7 +1787,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		sItem->mainItem->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 		sItem->mainItem->setForeground(brush);
 
-		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
 
 		int i = 0;
 		if(ui.hostileList->count())
@@ -1821,10 +1801,10 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		}
 		ui.hostileList->insertItem(i, sItem->mainItem);
 	}
-	sItem->item->setToolTip(QString(sItem->suspect->ToString(featureEnabled).c_str()));
+	sItem->item->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
 	UpdateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
-	editingSuspectList = false;
+	m_editingSuspectList = false;
 }
 
 void NovaGUI::UpdateSuspectWidgets()
@@ -1936,7 +1916,7 @@ void NovaGUI::on_actionStopNova_triggered()
 	StopNova();
 
 	// Were we in training mode?
-	if (isTraining)
+	if (configuration->getIsTraining())
 	{
 		prompter->DisplayPrompt(LAUNCH_TRAINING_MERGE,
 			"ClassificationEngine was in training mode. Would you like to merge the capture file into the training database now?",
@@ -1959,11 +1939,11 @@ void  NovaGUI::on_actionExit_triggered()
 
 void NovaGUI::on_actionClear_All_Suspects_triggered()
 {
-	editingSuspectList = true;
+	m_editingSuspectList = true;
 	ClearAllSuspects();
-	QFile::remove(QString::fromStdString(ceSaveFile));
+	QFile::remove(QString::fromStdString(configuration->getPathCESaveFile()));
 	DrawAllSuspects();
-	editingSuspectList = false;
+	m_editingSuspectList = false;
 }
 
 void NovaGUI::on_actionClear_Suspect_triggered()
@@ -2012,7 +1992,7 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 void NovaGUI::on_actionMakeDataFile_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("File to select classifications from"), QString::fromStdString(trainingDataPath), tr("NOVA Classification Database (*.db)"));
+			 tr("File to select classifications from"), QString::fromStdString(configuration->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
 	if (data.isNull())
 		return;
@@ -2032,7 +2012,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 
 	string dataFileContent = MakaDataFile(*map);
 
-	ofstream out (trainingDataPath.data());
+	ofstream out (configuration->getPathTrainingFile().data());
 	out << dataFileContent;
 	out.close();
 }
@@ -2040,7 +2020,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 void NovaGUI::on_actionTrainingData_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("Classification Engine Data Dump"), QString::fromStdString(trainingDataPath), tr("NOVA Classification Dump (*.dump)"));
+			 tr("Classification Engine Data Dump"), QString::fromStdString(configuration->getPathTrainingFile()), tr("NOVA Classification Dump (*.dump)"));
 
 	if (data.isNull())
 		return;
@@ -2053,7 +2033,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
-	ThinTrainingPoints(trainingDump, thinningDistance);
+	ThinTrainingPoints(trainingDump, configuration->getThinningDistance());
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 
@@ -2063,7 +2043,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 	trainingSuspectMap* headerMap = classifier->getStateData();
 
 	QString outputFile = QFileDialog::getSaveFileName(this,
-			tr("Classification Database File"), QString::fromStdString(trainingDataPath), tr("NOVA Classification Database (*.db)"));
+			tr("Classification Database File"), QString::fromStdString(configuration->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
 	if (outputFile.isNull())
 		return;
@@ -2076,25 +2056,25 @@ void NovaGUI::on_actionTrainingData_triggered()
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()
 {
-	editingSuspectList = true;
+	m_editingSuspectList = true;
 	ClearSuspectList();
-	editingSuspectList = false;
+	m_editingSuspectList = false;
 }
 
 void  NovaGUI::on_actionShow_All_Suspects_triggered()
 {
-	editingSuspectList = true;
+	m_editingSuspectList = true;
 	DrawAllSuspects();
-	editingSuspectList = false;
+	m_editingSuspectList = false;
 }
 
 void NovaGUI::on_actionHelp_2_triggered()
 {
-	if(!isHelpUp)
+	if(!m_isHelpUp)
 	{
 		Nova_Manual *wi = new Nova_Manual(this);
 		wi->show();
-		isHelpUp = true;
+		m_isHelpUp = true;
 	}
 }
 
@@ -2205,7 +2185,7 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 	novaComponents[row].shouldBeRunning = false;
 
 	// Fix for honeyd not closing with gnome-terminal + sudo
-	if (useTerminals && process != NULL && process->pid() &&
+	if (configuration->getUseTerminals() && process != NULL && process->pid() &&
 			(ui.systemStatusTable->currentRow() == COMPONENT_DMH || ui.systemStatusTable->currentRow() == COMPONENT_HSH))
 	{
 		QString killString = QString("sudo pkill -TERM -P ") + QString::number(process->pid());
@@ -2317,11 +2297,11 @@ void NovaGUI::on_systemStatStopButton_clicked()
 
 void NovaGUI::on_clearSuspectsButton_clicked()
 {
-	editingSuspectList = true;
+	m_editingSuspectList = true;
 	ClearAllSuspects();
-	QFile::remove(QString::fromStdString(ceSaveFile));
+	QFile::remove(QString::fromStdString(configuration->getPathCESaveFile()));
 	DrawAllSuspects();
-	editingSuspectList = false;
+	m_editingSuspectList = false;
 }
 
 
@@ -2330,13 +2310,13 @@ void NovaGUI::on_clearSuspectsButton_clicked()
  ************************************************/
 void NovaGUI::on_suspectList_itemSelectionChanged()
 {
-	if(!editingSuspectList)
+	if(!m_editingSuspectList)
 	{
 		pthread_rwlock_wrlock(&lock);
 		if(ui.suspectList->currentItem() != NULL)
 		{
 			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
-			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(featureEnabled).c_str()));
+			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(m_featureEnabled).c_str()));
 			SetFeatureDistances(SuspectTable[addr].suspect);
 		}
 		pthread_rwlock_unlock(&lock);
@@ -2349,7 +2329,7 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 	ui.suspectDistances->clear();
 	for (int i = 0; i < DIM; i++)
 	{
-		if (featureEnabled[i])
+		if (m_featureEnabled[i])
 		{
 			QString featureLabel;
 
@@ -2423,54 +2403,18 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 	}
 }
 
-// Reload the configuration file
-void NovaGUI::LoadNovadConfiguration()
-{
-	// Reload the configuration file
-	configuration = new NOVAConfiguration();
-
-	configurationInterface = configuration->getInterface();
-	useTerminals = configuration->getUseTerminals();
-	isTraining = configuration->getIsTraining();
-	string enabledFeatureMask = configuration->getEnabledFeatures();
-
-	doppelgangerPath = configuration->getPathConfigHoneydDm();
-	haystackPath = configuration->getPathConfigHoneydHs();
-	trainingDataPath = configuration->getPathTrainingFile();
-	thinningDistance = configuration->getThinningDistance();
-	ceSaveFile = configuration->getPathCESaveFile();
-
-	goToLive = configuration->getGotoLive();
-	readFromPcap = configuration->getReadPcap();
-	dmAddr = configuration->getDoppelIp();
-
-	enabledFeatures = 0;
-	for (uint i = 0; i < DIM; i++)
-	{
-		if ('1' == enabledFeatureMask.at(i))
-		{
-			featureEnabled[i] = true;
-			enabledFeatures++;
-		}
-		else
-		{
-			featureEnabled[i] = false;
-		}
-	}
-}
-
 /************************************************
  * IPC Functions
  ************************************************/
 void NovaGUI::HideSuspect(in_addr_t addr)
 {
 	pthread_rwlock_wrlock(&lock);
-	editingSuspectList = true;
+	m_editingSuspectList = true;
 	suspectItem * sItem = &SuspectTable[addr];
 	if(!sItem->item->isSelected())
 	{
 		pthread_rwlock_unlock(&lock);
-		editingSuspectList = false;
+		m_editingSuspectList = false;
 		return;
 	}
 	ui.suspectList->removeItemWidget(sItem->item);
@@ -2483,7 +2427,7 @@ void NovaGUI::HideSuspect(in_addr_t addr)
 		sItem->mainItem = NULL;
 	}
 	pthread_rwlock_unlock(&lock);
-	editingSuspectList = false;
+	m_editingSuspectList = false;
 }
 
 /*********************************************************
@@ -2584,8 +2528,9 @@ void StartNova()
 void StartComponent(novaComponent *component)
 {
 	QString program;
+	NOVAConfiguration config;
 
-	if (useTerminals)
+	if (config.getUseTerminals())
 		program = QString::fromStdString(component->terminalCommand);
 	else
 		program = QString::fromStdString(component->noTerminalCommand);

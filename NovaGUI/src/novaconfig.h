@@ -20,6 +20,8 @@
 
 #include "ui_novaconfig.h"
 #include "NovaGuiTypes.h"
+#include "novagui.h"
+#include "nodePopup.h"
 
 #include <QMutex>
 #include <QWheelEvent>
@@ -42,26 +44,17 @@ enum recursiveDirection{ALL = 0, UP, DOWN};
 
 class NovaConfig : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    //Value set by dialog windows
-    string retVal;
+	VendorToMACTable VendorMACTable;
+	vector<pair<string, string> > nmapPersonalities;
 
-    QMutex * loading;
-    string homePath;
+	SubnetTable subnets;
+	NodeTable nodes;
+	ProfileTable profiles;
 
-    SubnetTable subnets;
-    NodeTable nodes;
-    ProfileTable profiles;
-    PortTable ports;
-    ScriptTable scripts;
-
-    MACToVendorTable MACVendorTable;
-    VendorToMACTable VendorMACTable;
-    vector<pair<string, string> > nmapPersonalities;
-
-    string group;
+    QMutex * m_loading;
 
     NovaConfig(QWidget *parent = 0, string homePath = "");
 
@@ -267,6 +260,36 @@ void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited);
 private:
 	void SetInputValidators();
     Ui::NovaConfigClass ui;
+
+    //Keys used to maintain and lookup current selections
+    string m_currentProfile;
+    string m_currentNode;
+    string m_currentSubnet;
+
+    nodePopup * m_nodewindow;
+    NovaGUI * m_mainwindow;
+    QMenu * m_portMenu;
+    QMenu * m_profileTreeMenu;
+    QMenu * m_nodeTreeMenu;
+
+    //flag to avoid GUI signal conflicts
+    bool m_editingItems;
+    bool m_selectedSubnet;
+    bool m_loadingDefaultActions;
+
+    //Value set by dialog windows
+    string m_retVal;
+
+
+    string homePath;
+
+    PortTable ports;
+    ScriptTable scripts;
+
+    MACToVendorTable MACVendorTable;
+
+
+    string group;
 };
 
 class TreeItemComboBox : public QComboBox
