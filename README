@@ -174,11 +174,17 @@ Refer to the Help tab in the GUI and the Nova wiki for more information.
 Contact us
 ===============================
 
-feel free to contact the authors with issues and suggestions. You
-can use the issue tracker located at,
+feel free to contact the authors with issues and suggestions. 
 
-https://github.com/DataSoft/Nova/issues
+Found a bug? Tell us about it on our issue tracker:
+    https://github.com/DataSoft/Nova/issues
 
+Want to chat with us? Hop on IRC: 
+    Server: irc.oftc.net
+    Channel: #nova
+
+Email the team lead:
+    dan.petro@datasoft.com
 
 And additional contact information should be available on the Datasoft github 
 account located at,
