@@ -51,13 +51,6 @@ SuspectHashTable suspects;
 SuspectHashTable suspectsSinceLastSave;
 static TCPSessionHashTable SessionTable;
 
-
-// Vector of ip addresses that correspond to other nova instances
-vector<in_addr_t> neighbors;
-
-// Key used for port knocking
-string key;
-
 pthread_rwlock_t sessionLock;
 pthread_rwlock_t suspectTableLock;
 
@@ -172,7 +165,7 @@ int main()
 		logger->Logging("Novad", INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
 
 	logger = new Logger(novaConfigPath.c_str(), true);
-	globalConfig = new NOVAConfiguration(novaConfigPath);
+	globalConfig = new NOVAConfiguration();
 	globalConfig->LoadConfig();
 
 	pthread_rwlock_init(&suspectTableLock, NULL);
@@ -1385,9 +1378,9 @@ void Nova::SilentAlarm(Suspect *suspect)
 			suspect->m_features.m_unsentData->clearFeatureData();
 
 			//Update other Nova Instances with latest suspect Data
-			for(uint i = 0; i < neighbors.size(); i++)
+			for(uint i = 0; i < globalConfig->getNeighbors().size(); i++)
 			{
-				serv_addr.sin_addr.s_addr = neighbors[i];
+				serv_addr.sin_addr.s_addr = globalConfig->getNeighbors()[i];
 
 				stringstream ss;
 				string commandLine;
@@ -1475,7 +1468,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 bool Nova::KnockPort(bool mode)
 {
 	stringstream ss;
-	ss << key;
+	ss << globalConfig->getKey();
 
 	//mode == OPEN (true)
 	if(mode)
@@ -1485,7 +1478,7 @@ bool Nova::KnockPort(bool mode)
 	else
 		ss << "SHUT";
 
-	uint keyDataLen = key.size() + 4;
+	uint keyDataLen = globalConfig->getKey().size() + 4;
 	u_char keyBuf[1024];
 	bzero(keyBuf, 1024);
 	memcpy(keyBuf, ss.str().c_str(), ss.str().size());
@@ -1845,53 +1838,7 @@ void Nova::SendToUI(Suspect *suspect)
 
 void Nova::LoadConfiguration()
 {
-	string prefix, line;
-	uint i = 0;
 
-	string settingsPath = userHomePath +"/settings";
-	ifstream settings(settingsPath.c_str());
-	in_addr_t nbr;
-
-	if(settings.is_open())
-	{
-		while(settings.good())
-		{
-			getline(settings, line);
-			i++;
-
-			prefix = "neighbor";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0)
-				{
-					//Note inet_addr() not compatible with 255.255.255.255 as this is == the error condition of -1
-					nbr = inet_addr(line.c_str());
-
-					if((int)nbr == -1)
-					{
-						syslog(SYSL_ERR, "Line: %d Invalid IP address parsed on line %d of the settings file.", __LINE__, i);
-					}
-					else if(nbr)
-					{
-						neighbors.push_back(nbr);
-					}
-					nbr = 0;
-				}
-			}
-			prefix = "key";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				//TODO Key should be 256 characters, hard check for this once implemented
-				if((line.size() > 0) && (line.size() < 257))
-					key = line;
-				else
-					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
-			}
-		}
-	}
-	settings.close();
 
 
 	openlog("ClassificationEngine", OPEN_SYSL, LOG_AUTHPRIV);

@@ -1256,10 +1256,7 @@ bool NovaConfig::DisplayMACPrefixWindow()
 
 void NovaConfig::LoadNovadPreferences()
 {
-	//Read from CE Config
-	string configurationFile = homePath + "/Config/NOVAConfig.txt";
-
-	NOVAConfiguration *NConfig = new NOVAConfiguration(configurationFile);
+	NOVAConfiguration *NConfig = new NOVAConfiguration();
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
 	ui.interfaceEdit->setText(QString::fromStdString(NConfig->getInterface()));
@@ -1581,9 +1578,7 @@ void NovaConfig::on_applyButton_clicked()
 
 bool NovaConfig::SaveConfigurationToFile() {
 	string line, prefix;
-
-	string configurationFile = homePath + "/Config/NOVAConfig.txt";
-	NOVAConfiguration *config = new NOVAConfiguration(configurationFile);
+	NOVAConfiguration *config = new NOVAConfiguration();
 	config->LoadConfig();
 
 	stringstream ss;

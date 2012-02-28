@@ -28,13 +28,19 @@ namespace Nova {
 class NOVAConfiguration {
 
 public:
-	NOVAConfiguration(string configFilePath);
+	NOVAConfiguration(string configFilePath, string userConfigFilePath);
+	NOVAConfiguration();
+
 	~NOVAConfiguration();
 
 	// Loads and parses a NOVA configuration file
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
 	void LoadConfig();
 	bool SaveConfig();
+
+	bool LoadUserConfig();
+	// TODO: SaveUserConfig();
+	// We don't have any GUI stuff to edit this.. but we should
 
 	// Loads default values for all variables
 	void SetDefaults();
@@ -58,6 +64,8 @@ public:
     string getPathPcapFile() const;
     string getPathTrainingCapFolder() const;
     string getPathTrainingFile() const;
+    string getKey() const;
+    vector<in_addr_t> getNeighbors() const;
 
     bool getReadPcap() const;
     bool getUseTerminals() const;
@@ -109,6 +117,8 @@ public:
     void setTcpTimout(int tcpTimout);
     void setThinningDistance(int thinningDistance);
     void setUseTerminals(bool useTerminals);
+    void setKey(string key);
+    void setNeigbors(vector<in_addr_t> neighbors);
 
 private:
 	static const string m_prefixes[];
@@ -146,7 +156,12 @@ private:
 	bool m_isTraining;
 	bool m_isDmEnabled;
 
+	// User config options
+	vector<in_addr_t> m_neighbors;
+	string m_key;
+
 	string m_configFilePath;
+	string m_userConfigFilePath;
 };
 }
 

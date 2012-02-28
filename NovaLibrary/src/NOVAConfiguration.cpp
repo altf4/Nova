@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sstream>
+#include "NovaUtil.h"
 
 using namespace std;
 
@@ -517,6 +518,65 @@ void NOVAConfiguration::LoadConfig()
 	closelog();
 }
 
+bool NOVAConfiguration::LoadUserConfig()
+{
+	string prefix, line;
+	uint i = 0;
+	bool returnValue = true;
+	ifstream settings(m_userConfigFilePath.c_str());
+	in_addr_t nbr;
+
+	if(settings.is_open())
+	{
+		while(settings.good())
+		{
+			getline(settings, line);
+			i++;
+
+			prefix = "neighbor";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				if(line.size() > 0)
+				{
+					//Note inet_addr() not compatible with 255.255.255.255 as this is == the error condition of -1
+					nbr = inet_addr(line.c_str());
+
+					if((int)nbr == -1)
+					{
+						syslog(SYSL_ERR, "Line: %d Invalid IP address parsed on line %d of the settings file.", __LINE__, i);
+						returnValue = false;
+					}
+					else if(nbr)
+					{
+						m_neighbors.push_back(nbr);
+					}
+					nbr = 0;
+				}
+			}
+			prefix = "key";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				//TODO Key should be 256 characters, hard check for this once implemented
+				if((line.size() > 0) && (line.size() < 257))
+					m_key = line;
+				else
+				{
+					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
+					returnValue = false;
+				}
+			}
+		}
+	}
+	else
+	{
+		returnValue = false;
+	}
+	settings.close();
+	return returnValue;
+}
+
 bool NOVAConfiguration::SaveConfig() {
 	string line, prefix;
 
@@ -856,11 +916,22 @@ string NOVAConfiguration::toString()
 	return ss.str();
 }
 
-NOVAConfiguration::NOVAConfiguration(string configFilePath)
+NOVAConfiguration::NOVAConfiguration()
 {
-	this->m_configFilePath = configFilePath;
+	this->m_configFilePath = GetHomePath() + "/Config/NOVAConfig.txt";
+	this->m_userConfigFilePath = GetHomePath() + "/settings";
 	SetDefaults();
 	LoadConfig();
+	LoadUserConfig();
+}
+
+NOVAConfiguration::NOVAConfiguration(string configFilePath, string userConfigFilePath)
+{
+	this->m_configFilePath = configFilePath;
+	this->m_userConfigFilePath = userConfigFilePath;
+	SetDefaults();
+	LoadConfig();
+	LoadUserConfig();
 }
 
 NOVAConfiguration::~NOVAConfiguration()
@@ -1007,6 +1078,16 @@ bool NOVAConfiguration::getUseTerminals() const
 	return m_useTerminals;
 }
 
+string NOVAConfiguration::getKey() const
+{
+	return m_key;
+}
+
+vector<in_addr_t> NOVAConfiguration::getNeighbors() const
+{
+	return m_neighbors;
+}
+
 void NOVAConfiguration::setClassificationThreshold(double classificationThreshold)
 {
 	this->m_classificationThreshold = classificationThreshold;
@@ -1145,6 +1226,16 @@ void NOVAConfiguration::setThinningDistance(int thinningDistance)
 void NOVAConfiguration::setUseTerminals(bool useTerminals)
 {
 	this->m_useTerminals = useTerminals;
+}
+
+void NOVAConfiguration::setKey(string key)
+{
+	this->m_key = key;
+}
+
+void NOVAConfiguration::setNeigbors(vector<in_addr_t> neighbors)
+{
+	this->m_neighbors = neighbors;
 }
 
 }

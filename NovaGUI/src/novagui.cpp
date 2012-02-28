@@ -56,7 +56,6 @@ int bytesRead;
 bool useTerminals = true;
 char * pathsFile = (char*)"/etc/nova/paths";
 string homePath, readPath, writePath;
-string configurationFile = "/Config/NOVAConfig.txt";
 NOVAConfiguration *configuration;
 bool goToLive = true;
 bool readFromPcap = false;
@@ -345,7 +344,6 @@ void NovaGUI::closeEvent(QCloseEvent * e)
 void NovaGUI::InitSession()
 {
 	InitPaths();
-	configurationFile = homePath + configurationFile;
 	LoadNovadConfiguration();
 	LoadSettings();
 	InitNovadCommands();
@@ -2429,8 +2427,7 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 void NovaGUI::LoadNovadConfiguration()
 {
 	// Reload the configuration file
-	configuration = new NOVAConfiguration(configurationFile);
-	configuration->LoadConfig();
+	configuration = new NOVAConfiguration();
 
 	configurationInterface = configuration->getInterface();
 	useTerminals = configuration->getUseTerminals();
