@@ -133,12 +133,12 @@ private:
 	string getBitmask(Nova::Levels level);
 
 public:
-	levelsMap levels;
+	levelsMap m_levels;
 
 private:
-	static const string prefixes[];
-	optionsInfo messageInfo;
-	pthread_rwlock_t logLock;
+	static const string m_prefixes[];
+	optionsInfo m_messageInfo;
+	pthread_rwlock_t m_logLock;
 };
 
 }

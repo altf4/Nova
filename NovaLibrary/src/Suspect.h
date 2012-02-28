@@ -55,10 +55,10 @@ public:
 	void AddEvidence(Packet packet);
 
 	//Returns a copy of the evidence vector so that it can be read.
-	vector <Packet> get_evidence(); //TODO
+	vector <Packet> GetEvidence(); //TODO
 
 	//Clears the evidence vector, returns 0 on success
-	void clear_evidence(); //TODO
+	void ClearEvidence(); //TODO
 
 	// Calculates the feature set for this suspect
 	// 		isTraining - True for training data gathering mode
@@ -85,130 +85,130 @@ public:
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
 	//Returns: Suspect's in_addr or NULL on failure
-	in_addr_t get_IP_address(); //TODO
+	in_addr_t GetIpAddress(); //TODO
 	//Sets the suspects in_addr, must have the lock to perform this operation
 	//Returns: 0 on success
-	void set_IP_Address(in_addr_t ip); //TODO
+	void SetIpAddress(in_addr_t ip); //TODO
 
 
 	//Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
 	// Returns -1 on failure
-	double get_classification(); //TODO
+	double GetClassification(); //TODO
 	//Sets the suspect's classification, must have the lock to perform this operation
 	//Returns 0 on success
-	void set_classification(double n); //TODO
+	void SetClassification(double n); //TODO
 
 
 	//Returns the number of hostile neighbors, must not be locked or is locked by the owner
-	int get_hostileNeighbors(); //TODO
+	int GetHostileNeighbors(); //TODO
 	//Sets the number of hostile neighbors, must have the lock to perform this operation
-	void set_hostileNeighbors(int i); //TODO
+	void SetHostileNeighbors(int i); //TODO
 
 
 	//Returns the hostility bool of the suspect, must not be locked or is locked by the owner
-	bool get_isHostile(); //TODO
+	bool GetIsHostile(); //TODO
 	//Sets the hostility bool of the suspect, must have the lock to perform this operation
-	void set_isHostile(bool b); //TODO
+	void SetIsHostile(bool b); //TODO
 
 
 	//Returns the needs classification bool, must not be locked or is locked by the owner
-	bool get_needs_classification_update(); //TODO
+	bool GetNeedsClassificationUpdate(); //TODO
 	//Sets the needs classification bool, must have the lock to perform this operation
-	void set_needs_classification_update(bool b); //TODO
+	void SetNeedsClassificationUpdate(bool b); //TODO
 
 
 	//Returns the needs feature update bool, must not be locked or is locked by the owner
-	bool get_needs_feature_update(); //TODO
+	bool GetNeedsFeatureUpdate(); //TODO
 	//Sets the neeeds feature update bool, must have the lock to perform this operation
-	void set_needs_feature_update(bool b); //TODO
+	void SetNeedsFeatureUpdate(bool b); //TODO
 
 
 	//Returns the flagged by silent alarm bool, must not be locked or is locked by the owner
-	bool get_flaggedByAlarm(); //TODO
+	bool GetFlaggedByAlarm(); //TODO
 	//Sets the flagged by silent alarm bool, must have the lock to perform this operation
-	void set_flaggedByAlarm(bool b); //TODO
+	void SetFlaggedByAlarm(bool b); //TODO
 
 
 	//Returns the 'from live capture' bool, must not be locked or is locked by the owner
-	bool get_isLive(); //TODO
+	bool GetIsLive(); //TODO
 	//Sets the 'from live capture' bool, must have the lock to perform this operation
-	void set_isLive(bool b); //TODO
+	void SetIsLive(bool b); //TODO
 
 
 	//Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
-	FeatureSet get_features(); //TODO
+	FeatureSet GetFeatures(); //TODO
 	//Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
-	void set_features(FeatureSet fs); //TODO
+	void SetFeatures(FeatureSet fs); //TODO
 
 	//Adds the feature set 'fs' to the suspect's feature set
-	void add_featureSet(FeatureSet fs); //TODO
+	void AddFeatureSet(FeatureSet fs); //TODO
 	//Subtracts the feature set 'fs' from the suspect's feature set
-	void subtract_featureSet(FeatureSet fs); //TODO
+	void SubtractFeatureSet(FeatureSet fs); //TODO
 
 	//Clears the feature set of the suspect
-	void clear_features(); //TODO
+	void ClearFeatures(); //TODO
 
 
 	//Returns the accuracy double of the feature using featureIndex fi, must not be locked or is locked by the owner
-	double get_featureAccuracy(featureIndex fi); //TODO
+	double GetFeatureAccuracy(featureIndex fi); //TODO
 	//Sets the accuracy double of the feature using featureIndex fi, must have the lock to perform this operation
-	void setFeatureAccuracy(featureIndex fi, double d); //TODO
+	void SetFeatureAccuracy(featureIndex fi, double d); //TODO
 
 	//Returns a copy of the suspect's ANNpoint, must not be locked or is locked by the owner
-	ANNpoint get_annPoint(); //TODO
+	ANNpoint GetAnnPoint(); //TODO
 
 	//Write locks the suspect
-	void wrlockSuspect(); //TODO
+	void WrlockSuspect(); //TODO
 
 	//Read Locks the suspect
-	void rdlockSuspect(); //TODO
+	void RdlockSuspect(); //TODO
 
 	//Unlocks the suspect
-	void unlockSuspect(); //TODO
+	void UnlockSuspect(); //TODO
 
 //private: //TODO Uncomment private and ensure suspects are fully accessible using thread-safe accessors.
 	//Develop some method for making concurrent changes without redundantly locking and unlocking the suspects
 
 	// The IP address of the suspect. This field serves as a unique identifier for the Suspect
-	struct in_addr IP_address;
+	struct in_addr m_IpAddress;
 
 	// The current classification assigned to this suspect.
 	//		0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
 	//		-1 indicates no classification or error.
-	double classification;
-	int hostileNeighbors;
+	double m_classification;
+	int m_hostileNeighbors;
 
 	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
-	bool isHostile;
+	bool m_isHostile;
 
 	// Does the classification need updating?
 	//		IE: Has the evidence changed since last it was calculated?
-	bool needs_classification_update;
+	bool m_needsClassificationUpdate;
 
 	// Does the FeatureSet need updating?
 	//		IE: Has the evidence changed since last it was calculated?
-	bool needs_feature_update;
+	bool m_needsFeatureUpdate;
 
 	// Has this suspect been the subject of an alarm from another Nova instance?
-	bool flaggedByAlarm;
+	bool m_flaggedByAlarm;
 
 	// Is this a live capture or is NOVA reading from a pcap file?
-	bool isLive;
+	bool m_isLive;
 
 	// The Feature Set for this Suspect
-	FeatureSet features;
-	double featureAccuracy[DIM];
+	FeatureSet m_features;
+	double m_featureAccuracy[DIM];
 
 	// The feature set in the format that ANN requires.
-	ANNpoint annPoint;
+	ANNpoint m_annPoint;
 
 	// A listing of all the events (evidence) that originated from this suspect
-	vector <Packet> evidence;
+	vector <Packet> m_evidence;
 
 private:
 
 	//Lock used to maintain concurrency between threads
-	pthread_rwlock_t lock;
+	pthread_rwlock_t m_lock;
 
 };
 

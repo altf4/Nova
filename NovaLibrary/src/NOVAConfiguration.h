@@ -110,42 +110,42 @@ public:
     void setUseTerminals(bool useTerminals);
 
 private:
-	static const string prefixes[];
-	static const string requiredFiles[];
+	static const string m_prefixes[];
+	static const string m_requiredFiles[];
 
-	string interface;
-	string doppelIp;
-	string doppelInterface;
-	string enabledFeatures;
+	string m_interface;
+	string m_doppelIp;
+	string m_doppelInterface;
+	string m_enabledFeatures;
 
-	string pathConfigHoneydHs;
-	string pathConfigHoneydDm;
-	string pathPcapFile;
-	string pathTrainingFile;
-	string pathTrainingCapFolder;
-	string pathCESaveFile;
+	string m_pathConfigHoneydHs;
+	string m_pathConfigHoneydDm;
+	string m_pathPcapFile;
+	string m_pathTrainingFile;
+	string m_pathTrainingCapFolder;
+	string m_pathCESaveFile;
 
-	int tcpTimout;
-	int tcpCheckFreq;
-	int classificationTimeout;
-	int saPort;
-	int k;
-	int thinningDistance;
-	int saveFreq;
-	int dataTTL;
-	int saMaxAttempts;
+	int m_tcpTimout;
+	int m_tcpCheckFreq;
+	int m_classificationTimeout;
+	int m_saPort;
+	int m_k;
+	int m_thinningDistance;
+	int m_saveFreq;
+	int m_dataTTL;
+	int m_saMaxAttempts;
 
-	double saSleepDuration;
-	double eps;
-	double classificationThreshold;
+	double m_saSleepDuration;
+	double m_eps;
+	double m_classificationThreshold;
 
-	bool readPcap;
-	bool gotoLive;
-	bool useTerminals;
-	bool isTraining;
-	bool isDmEnabled;
+	bool m_readPcap;
+	bool m_gotoLive;
+	bool m_useTerminals;
+	bool m_isTraining;
+	bool m_isDmEnabled;
 
-	string configFilePath;
+	string m_configFilePath;
 };
 }
 

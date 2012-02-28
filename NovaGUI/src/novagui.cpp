@@ -1567,21 +1567,21 @@ void NovaGUI::updateSuspect(suspectItem suspectItem)
 
 	pthread_rwlock_wrlock(&lock);
 	//If the suspect already exists in our table
-	if(SuspectTable.find(suspectItem.suspect->IP_address.s_addr) != SuspectTable.end())
+	if(SuspectTable.find(suspectItem.suspect->m_IpAddress.s_addr) != SuspectTable.end())
 	{
 		//We point to the same item so it doesn't need to be deleted.
-		suspectItem.item = SuspectTable[suspectItem.suspect->IP_address.s_addr].item;
-		suspectItem.mainItem = SuspectTable[suspectItem.suspect->IP_address.s_addr].mainItem;
+		suspectItem.item = SuspectTable[suspectItem.suspect->m_IpAddress.s_addr].item;
+		suspectItem.mainItem = SuspectTable[suspectItem.suspect->m_IpAddress.s_addr].mainItem;
 
 		//Delete the old Suspect since we created and pointed to a new one
-		delete SuspectTable[suspectItem.suspect->IP_address.s_addr].suspect;
+		delete SuspectTable[suspectItem.suspect->m_IpAddress.s_addr].suspect;
 	}
 	//We borrow the flag to show there is new information.
-	suspectItem.suspect->needs_feature_update = true;
+	suspectItem.suspect->m_needsFeatureUpdate = true;
 	//Update the entry in the table
-	SuspectTable[suspectItem.suspect->IP_address.s_addr] = suspectItem;
+	SuspectTable[suspectItem.suspect->m_IpAddress.s_addr] = suspectItem;
 	pthread_rwlock_unlock(&lock);
-	Q_EMIT newSuspect(suspectItem.suspect->IP_address.s_addr);
+	Q_EMIT newSuspect(suspectItem.suspect->m_IpAddress.s_addr);
 }
 
 /************************************************
@@ -1603,25 +1603,25 @@ void NovaGUI::drawAllSuspects()
 	pthread_rwlock_wrlock(&lock);
 	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		str = (QString) string(inet_ntoa(it->second.suspect->IP_address)).c_str();
+		str = (QString) string(inet_ntoa(it->second.suspect->m_IpAddress)).c_str();
 		suspect = it->second.suspect;
 		//Create the colors for the draw
 
-		if (suspect->classification < 0)
+		if (suspect->m_classification < 0)
 		{
 			// In training mode, classification is never set and ends up at -1
 			// Make it a nice blue so it's clear that it hasn't classified
 			color = QColor(0,0,255);
 		}
-		else if(suspect->classification < 0.5)
+		else if(suspect->m_classification < 0.5)
 		{
 			//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
-			color = QColor((int)(200*2*suspect->classification),200, 50);
+			color = QColor((int)(200*2*suspect->m_classification),200, 50);
 		}
 		else
 		{
 			//at 0.5 QBrush is 255,255 (yellow), at from 0.5->1.0 remove more green until QBrush is Red
-			color = QColor(200,200-(int)(200*2*(suspect->classification-0.5)), 50);
+			color = QColor(200,200-(int)(200*2*(suspect->m_classification-0.5)), 50);
 		}
 		brush.setColor(color);
 		brush.setStyle(Qt::NoBrush);
@@ -1638,14 +1638,14 @@ void NovaGUI::drawAllSuspects()
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->classification < suspect->classification)
+				if(SuspectTable[addr].suspect->m_classification < suspect->m_classification)
 					break;
 			}
 		}
 		ui.suspectList->insertItem(i, item);
 
 		//If Hostile
-		if(suspect->isHostile )
+		if(suspect->m_isHostile )
 		{
 			//Copy the item and add it to the list
 			mainItem = new QListWidgetItem(str,0);
@@ -1658,7 +1658,7 @@ void NovaGUI::drawAllSuspects()
 				for(i = 0; i < ui.hostileList->count(); i++)
 				{
 					addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-					if(SuspectTable[addr].suspect->classification < suspect->classification)
+					if(SuspectTable[addr].suspect->m_classification < suspect->m_classification)
 						break;
 				}
 			}
@@ -1668,7 +1668,7 @@ void NovaGUI::drawAllSuspects()
 		//Point to the new items
 		it->second.item = item;
 		//Reset the flags
-		suspect->needs_feature_update = false;
+		suspect->m_needsFeatureUpdate = false;
 		it->second.suspect = suspect;
 	}
 	updateSuspectWidgets();
@@ -1689,24 +1689,24 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 	pthread_rwlock_wrlock(&lock);
 	suspectItem * sItem = &SuspectTable[suspectAddr];
 	//Extract Information
-	str = (QString) string(inet_ntoa(sItem->suspect->IP_address)).c_str();
+	str = (QString) string(inet_ntoa(sItem->suspect->m_IpAddress)).c_str();
 
 	//Create the colors for the draw
-	if (sItem->suspect->classification < 0)
+	if (sItem->suspect->m_classification < 0)
 	{
 		// In training mode, classification is never set and ends up at -1
 		// Make it a nice blue so it's clear that it hasn't classified
 		color = QColor(0,0,255);
 	}
-	else if(sItem->suspect->classification < 0.5)
+	else if(sItem->suspect->m_classification < 0.5)
 	{
 		//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
-		color = QColor((int)(200*2*sItem->suspect->classification),200, 50);
+		color = QColor((int)(200*2*sItem->suspect->m_classification),200, 50);
 	}
 	else
 	{
 		//at 0.5 QBrush is 255,255 (yellow), at from 0.5->1.0 remove more green until QBrush is Red
-		color = QColor(200,200-(int)(200*2*(sItem->suspect->classification-0.5)), 50);
+		color = QColor(200,200-(int)(200*2*(sItem->suspect->m_classification-0.5)), 50);
 	}
 	brush.setColor(color);
 	brush.setStyle(Qt::NoBrush);
@@ -1731,7 +1731,7 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
 					break;
 			}
 		}
@@ -1757,7 +1757,7 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
 					break;
 			}
 		}
@@ -1765,7 +1765,7 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 	}
 
 	//If the mainItem exists and suspect is hostile
-	if((sItem->mainItem != NULL) && sItem->suspect->isHostile)
+	if((sItem->mainItem != NULL) && sItem->suspect->m_isHostile)
 	{
 		sItem->mainItem->setText(str);
 		sItem->mainItem->setForeground(brush);
@@ -1783,7 +1783,7 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.hostileList->count(); i++)
 			{
 				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
 					break;
 			}
 		}
@@ -1802,7 +1802,7 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 		ui.hostileList->removeItemWidget(sItem->mainItem);
 	}
 	//If the mainItem doesn't exist and suspect is hostile
-	else if(sItem->suspect->isHostile)
+	else if(sItem->suspect->m_isHostile)
 	{
 		//Create the Suspect in list with info set alignment and color
 		sItem->mainItem = new QListWidgetItem(str,0);
@@ -1817,7 +1817,7 @@ void NovaGUI::drawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.hostileList->count(); i++)
 			{
 				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->classification < sItem->suspect->classification)
+				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
 					break;
 			}
 		}
@@ -1835,15 +1835,15 @@ void NovaGUI::updateSuspectWidgets()
 
 	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		if(it->second.suspect->isHostile)
+		if(it->second.suspect->m_isHostile)
 		{
-			hostileAcc += it->second.suspect->classification;
-			totalAcc += it->second.suspect->classification;
+			hostileAcc += it->second.suspect->m_classification;
+			totalAcc += it->second.suspect->m_classification;
 		}
 		else
 		{
-			benignAcc += 1-it->second.suspect->classification;
-			totalAcc += 1-it->second.suspect->classification;
+			benignAcc += 1-it->second.suspect->m_classification;
+			totalAcc += 1-it->second.suspect->m_classification;
 		}
 	}
 
@@ -2412,23 +2412,23 @@ void NovaGUI::setFeatureDistances(Suspect* suspect)
 			bar->setMaximum(100);
 			bar->setTextVisible(true);
 
-			if (suspect->featureAccuracy[i] < 0)
+			if (suspect->m_featureAccuracy[i] < 0)
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->featureAccuracy[i]);
-				suspect->featureAccuracy[i] = 0;
+				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->m_featureAccuracy[i]);
+				suspect->m_featureAccuracy[i] = 0;
 			}
-			else if (suspect->featureAccuracy[i] > 1)
+			else if (suspect->m_featureAccuracy[i] > 1)
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->featureAccuracy[i]);
-				suspect->featureAccuracy[i] = 1;
+				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->m_featureAccuracy[i]);
+				suspect->m_featureAccuracy[i] = 1;
 			}
 
-			bar->setValue((int)((1 - suspect->featureAccuracy[i]/1.0)*100));
+			bar->setValue((int)((1 - suspect->m_featureAccuracy[i]/1.0)*100));
 			bar->setStyleSheet(
 				"QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
 				QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
-			formatString.append(QString::number(suspect->features.features[i]));
+			formatString.append(QString::number(suspect->m_features.m_features[i]));
 			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();

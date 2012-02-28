@@ -114,13 +114,13 @@ class FeatureSet
 
 public:
 	/// The actual feature values
-	double features[DIM];
+	double m_features[DIM];
 
 	//Number of packets total
-	uint32_t packetCount;
+	uint32_t m_packetCount;
 
 	//Table of IP addresses and associated packet counts
-	IP_Table IPTable;
+	IP_Table m_IPTable;
 
 	FeatureSet();
 	~FeatureSet();
@@ -176,32 +176,32 @@ public:
 	// Returns: number of bytes set in the buffer
 	uint32_t SerializeFeatureData(u_char * buf);
 
-	FeatureSet* unsentData;
+	FeatureSet* m_unsentData;
 private:
 	//Temporary variables used to calculate Features
 
 	//Table of Packet sizes and counts for variance calc
-	Packet_Table packTable;
+	Packet_Table m_packTable;
 
 	//Table of Ports and associated packet counts
-	Port_Table portTable;
+	Port_Table m_portTable;
 	//Max packet count to a port, used for normalizing
-	uint32_t portMax;
+	uint32_t m_portMax;
 
 	//Tracks the number of HS events
-	uint32_t haystackEvents;
+	uint32_t m_haystackEvents;
 
-	time_t startTime;
-	time_t endTime;
-	time_t totalInterval;
+	time_t m_startTime;
+	time_t m_endTime;
+	time_t m_totalInterval;
 
 	//Total number of bytes in all packets
-	uint32_t bytesTotal;
+	uint32_t m_bytesTotal;
 
 	///A table of the intervals between packet arrival times for tracking traffic over time.
-	Interval_Table intervalTable;
+	Interval_Table m_intervalTable;
 
-	time_t last_time;
+	time_t m_last_time;
 };
 }
 
