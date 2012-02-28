@@ -266,7 +266,7 @@ int main()
 	// will route based on severity level.
 	logger->Logging("ClassificationEngine", INFO, "Classification Engine has begun the main loop...", "Advanced Message Here");
 
-	CEReceiveSuspectData();
+	Start_Packet_Handler();
 
 	//Shouldn't get here!
 	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
@@ -1519,7 +1519,7 @@ bool Nova::CEKnockPort(bool mode)
 }
 
 
-bool Nova::CEReceiveSuspectData()
+bool Nova::Start_Packet_Handler()
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
 

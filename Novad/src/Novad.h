@@ -98,7 +98,7 @@ bool CEKnockPort(bool mode);
 // Receive featureData from another local component.
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
 // Returns: false if any sort of error
-bool CEReceiveSuspectData();
+bool Start_Packet_Handler();
 
 // Receives input commands from the GUI
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
