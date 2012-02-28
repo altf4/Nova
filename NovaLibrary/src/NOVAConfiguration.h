@@ -33,7 +33,8 @@ public:
 
 	// Loads and parses a NOVA configuration file
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
-	void LoadConfig(string module);
+	void LoadConfig();
+	bool SaveConfig();
 
 	// Loads default values for all variables
 	void SetDefaults();

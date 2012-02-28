@@ -1900,7 +1900,11 @@ void NovaGUI::SaveAllSuspects()
 	msgLen = message.SerialzeMessage(msgBuffer);
 
 	//Sends the message to all Nova processes
+<<<<<<< HEAD
 	SendToNovad(msgBuffer, msgLen);
+=======
+	sendToNovad();
+>>>>>>> bfccec69c14059c12131a4afe6e969d3609ad107
 }
 
 //Clears the suspect tables completely.
@@ -2152,11 +2156,15 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
+<<<<<<< HEAD
 	// TODO: Put this back? It was really annoying if you had an existing
 	// haystack.config you wanted to use, kept rewriting it on start.
 	// Commented for now until the Node setup works in the GUI.
 	//writeHoneyd();
 	StartNova();
+=======
+	startNova();
+>>>>>>> bfccec69c14059c12131a4afe6e969d3609ad107
 }
 void NovaGUI::on_stopButton_clicked()
 {
@@ -2245,7 +2253,11 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 
 	switch (row) {
 	case COMPONENT_NOVAD:
+<<<<<<< HEAD
 		SendToNovad(msgBuffer, msgLen);
+=======
+		sendToNovad();
+>>>>>>> bfccec69c14059c12131a4afe6e969d3609ad107
 		break;
 	case COMPONENT_DMH:
 		if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
@@ -2298,7 +2310,11 @@ void NovaGUI::on_actionSystemStatReload_triggered()
 	//Sets the message
 	message.SetMessage(RELOAD);
 	msgLen = message.SerialzeMessage(msgBuffer);
+<<<<<<< HEAD
 	SendToNovad(msgBuffer, msgLen);
+=======
+	sendToNovad();
+>>>>>>> bfccec69c14059c12131a4afe6e969d3609ad107
 }
 
 void NovaGUI::on_systemStatStartButton_clicked()
@@ -2429,7 +2445,7 @@ void NovaGUI::LoadNovadConfiguration()
 {
 	// Reload the configuration file
 	configuration = new NOVAConfiguration(configurationFile);
-	configuration->LoadConfig("GUI");
+	configuration->LoadConfig();
 
 	configurationInterface = configuration->getInterface();
 	useTerminals = configuration->getUseTerminals();
