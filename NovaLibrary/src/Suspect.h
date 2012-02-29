@@ -157,14 +157,18 @@ public:
 	//Returns a copy of the suspect's ANNpoint, must not be locked or is locked by the owner
 	ANNpoint GetAnnPoint(); //TODO
 
-	//Write locks the suspect
-	void WrlockSuspect(); //TODO
+	//Returns the pthread_t owner, returns NULL if suspect is not checked out
+	pthread_t GetOwner();
 
-	//Read Locks the suspect
-	void RdlockSuspect(); //TODO
+	//Returns true if the suspect is checked out by a thread
+	bool HasOwner();
 
-	//Unlocks the suspect
-	void UnlockSuspect(); //TODO
+	//Sets the pthread_t 'owner'
+	//		tid: unique thread identifier retrieved from pthread_self();
+	void SetOwner(pthread_t tid);
+
+	//Flags the suspect as no longer 'checked out'
+	int UnsetOwner();
 
 //private: //TODO Uncomment private and ensure suspects are fully accessible using thread-safe accessors.
 	//Develop some method for making concurrent changes without redundantly locking and unlocking the suspects
@@ -209,6 +213,18 @@ private:
 
 	//Lock used to maintain concurrency between threads
 	pthread_rwlock_t m_lock;
+
+	pthread_t m_owner;
+	bool m_hasOwner;
+
+	//Write locks the suspect
+	void WrlockSuspect(); //TODO
+
+	//Read Locks the suspect
+	void RdlockSuspect(); //TODO
+
+	//Unlocks the suspect
+	void UnlockSuspect(); //TODO
 
 };
 
