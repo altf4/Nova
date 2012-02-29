@@ -20,79 +20,21 @@
 #ifndef SUSPECTTABLE_H_
 #define SUSPECTTABLE_H_
 
-#include "Suspect.h"
 #include <arpa/inet.h>
 #include <vector>
 
+#include "Suspect.h"
+#include "SuspectTableIterator.h"
+
 typedef google::dense_hash_map<in_addr_t, Suspect *, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+
 
 namespace Nova {
 
 enum SuspectTableTableRet{Invalid = -2, CheckedOut = -1,
 	Success = 0, NotCheckedOut = 1, Exists = 2};
 
-class SuspectTableIterator
-{
-
-public:
-	// Default iterator constructor
-	SuspectTableIterator(SuspectHashTable * table = NULL, vector<in_addr_t> * keys = NULL);
-
-	// Default iterator deconstructor
-	~SuspectTableIterator();
-
-	// Gets the Next Suspect in the table and increments the iterator
-	// Returns a copy of the Suspect
-	Suspect Next();
-
-	// Gets the Next Suspect in the table, does not increment the iterator
-	// Returns a copy of the Suspect
-	Suspect LookAhead();
-
-	// Gets the Previous Suspect in the Table and decrements the iterator
-	// Returns a copy of the Suspect
-	Suspect Previous();
-
-	// Gets the Previous Suspect in the Table, does not decrement the iterator
-	// Returns a copy of the Suspect
-	Suspect LookBack();
-
-	// Gets the Current Suspect in the Table
-	// Returns a copy of the Suspect
-	Suspect Current();
-
-	// Increments the iterator by 1
-	// Returns 'this'
-	SuspectTableIterator operator++();
-	// Increments the iterator by int 'rhs'
-	// Returns 'this'
-	SuspectTableIterator operator+=(int rhs);
-
-	// Decrements the iterator by 1
-	// Returns 'this'
-	SuspectTableIterator operator--();
-	// Decrements the iterator by int 'rhs'
-	// Returns 'this'
-	SuspectTableIterator operator-=(int rhs);
-
-	// Checks if the iterator 'rhs' is equal to 'this'
-	bool operator!=(SuspectTableIterator rhs);
-
-	// Checks if the iterator 'rhs' is not equal to 'this'
-	bool operator==(SuspectTableIterator rhs);
-
-
-private:
-
-	uint m_index;
-
-	SuspectHashTable * m_table_ref;
-
-	vector<in_addr_t> * m_keys_ref;
-
-};
-
-class SuspectTable : SuspectTableIterator
+class SuspectTable
 {
 
 public:
