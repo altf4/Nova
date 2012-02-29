@@ -499,7 +499,7 @@ void Nova::RefreshStateFile()
 				cout << "Deleting suspect" << endl;
 				in_addr_t key = newSuspect->GetIpAddress();
 				deletedKeys.push_back(key);
-				Suspect *currentSuspect = suspectsSinceLastSave[key ];
+				Suspect *currentSuspect = suspectsSinceLastSave[key];
 				suspectsSinceLastSave.set_deleted_key(5);
 				suspectsSinceLastSave.erase(key);
 				suspectsSinceLastSave.clear_deleted_key();
@@ -900,11 +900,12 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 		logger->Log(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")%__LINE__%__FILE__%(suspects[addr]->ToString(featureEnabled))).str());
 
+		pthread_rwlock_unlock(&suspectTableLock);
+
 		if(!globalConfig->getClassificationTimeout())
 			ClassificationLoop(NULL);
 
 		close(connectionSocket);
-		pthread_rwlock_unlock(&suspectTableLock);
 	}
 	close(sockfd);
 	logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
@@ -1671,7 +1672,6 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 				//TODO: The session may continue a few packets after the FIN. Account for this case.
 				//See ticket #15
 				if(packet_info.tcp_hdr.fin)// Runs appendToStateFile before exiting
-
 				{
 					SessionTable[tcp_socket].session.push_back(packet_info);
 					SessionTable[tcp_socket].fin = true;
@@ -2017,10 +2017,11 @@ void *Nova::TCPTimeout(void *ptr)
 {
 	do
 	{
+		pthread_rwlock_wrlock(&sessionLock);
+
 		time_t currentTime = time(NULL);
 		time_t packetTime;
 
-		pthread_rwlock_rdlock(&sessionLock);
 		for (TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
 		{
 
@@ -2040,8 +2041,8 @@ void *Nova::TCPTimeout(void *ptr)
 					{
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
-							UpdateSuspect((SessionTable[it->first].session).at(p));
+							SessionTable[it->first].session[p].fromHaystack = FROM_HAYSTACK_DP;
+							UpdateSuspect(SessionTable[it->first].session[p]);
 						}
 
 						// Allow for continuous classification
@@ -2053,20 +2054,16 @@ void *Nova::TCPTimeout(void *ptr)
 								TrainingLoop(NULL);
 						}
 
-						pthread_rwlock_unlock(&sessionLock);
-						pthread_rwlock_wrlock(&sessionLock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
-						pthread_rwlock_unlock(&sessionLock);
-						pthread_rwlock_rdlock(&sessionLock);
 					}
 					//If this session is timed out
 					else if(packetTime + globalConfig->getTcpTimout() < currentTime)
 					{
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							(SessionTable[it->first].session).at(p).fromHaystack = FROM_HAYSTACK_DP;
-							UpdateSuspect((SessionTable[it->first].session).at(p));
+							SessionTable[it->first].session[p].fromHaystack = FROM_HAYSTACK_DP;
+							UpdateSuspect(SessionTable[it->first].session[p]);
 						}
 
 						// Allow for continuous classification
@@ -2078,11 +2075,8 @@ void *Nova::TCPTimeout(void *ptr)
 								TrainingLoop(NULL);
 						}
 
-						pthread_rwlock_unlock(&sessionLock);
-						pthread_rwlock_wrlock(&sessionLock);
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
-						pthread_rwlock_unlock(&sessionLock);
 					}
 				}
 			}

@@ -28,6 +28,7 @@ namespace Nova{
 Suspect::Suspect()
 {
 	pthread_rwlock_init(&m_lock, NULL);
+	pthread_rwlock_wrlock(&m_lock);
 	m_owner = 0;
 	m_hasOwner = false;
 	m_IpAddress.s_addr = 0;
@@ -45,6 +46,7 @@ Suspect::Suspect()
 
 	for(int i = 0; i < DIM; i++)
 		m_featureAccuracy[i] = 0;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
@@ -62,6 +64,9 @@ Suspect::~Suspect()
 Suspect::Suspect(Packet packet)
 {
 	pthread_rwlock_init(&m_lock, NULL);
+	pthread_rwlock_wrlock(&m_lock);
+	m_owner = 0;
+	m_hasOwner = false;
 	m_IpAddress = packet.ip_hdr.ip_src;
 	m_hostileNeighbors = 0;
 	m_classification = -1;
@@ -77,6 +82,7 @@ Suspect::Suspect(Packet packet)
 
 	for(int i = 0; i < DIM; i++)
 		m_featureAccuracy[i] = 0;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
