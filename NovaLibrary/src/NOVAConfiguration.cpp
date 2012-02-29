@@ -820,6 +820,20 @@ void NOVAConfiguration::SetDefaults()
 	m_dataTTL = 0;
 }
 
+bool NOVAConfiguration::AddUserToGroup()
+{
+	bool returnValue = true;
+	if( system("gksudo --description 'Add your user to the privileged nova user group. "
+					"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to add user to the 'nova' group");
+		returnValue = false;
+	}
+	else
+		syslog(SYSL_INFO, "Added your user to the 'nova' group. You may need to log in and out for this to take affect.");
+	return returnValue;
+}
+
 // Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 //	Returns: True if (after the function) the user has all necessary ~/.nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
@@ -827,7 +841,28 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 {
 	bool returnValue = true;
 	struct stat fileAttr;
-	//TODO: Do a proper check to make sure all config files exist, not just the .nova dir
+	char buffer[256];
+
+	// Are we in the nova group? Run 'groups' and parse output
+	string groupsResult = "";
+	FILE* pipe = popen("groups", "r");
+    while(!feof(pipe))
+        if(fgets(buffer, 256, pipe) != NULL)
+        	groupsResult += buffer;
+
+    stringstream ss(groupsResult);
+    string group;
+    bool found = false;
+    while (ss >> group)
+    	if (group == "nova")
+    		found = true;
+
+    // Add them to the group if need be
+    if (!found)
+		if (!AddUserToGroup())
+			returnValue = false;
+
+    // Does ~/.nova exist?
 	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		// Do all of the important files exist?
@@ -840,21 +875,15 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 				syslog(SYSL_ERR, "Warning: The file %s does not exist but is required for Nova to function. Restoring default file from %s",fullPath.c_str(), defaultLocation.c_str());
 				if (system(copyCommand.c_str()) == -1)
-				{
 					syslog(SYSL_ERR, "Error: Unable to copy file %s to %s.",fullPath.c_str(), defaultLocation.c_str());
-				}
 			}
 		}
-		return returnValue;
 	}
 	else
 	{
-		if( system("gksudo --description 'Add your user to the privileged nova user group. "
-				"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
-		{
-			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to assign user root privileges");
+		// Try adding the user to the nova group
+		if (!AddUserToGroup())
 			returnValue = false;
-		}
 
 		//TODO: Do this command programmatically. Not by calling system()
 		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
@@ -865,9 +894,7 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 
 		//Check the ~/.nova dir again
 		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
-		{
 			return returnValue;
-		}
 		else
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
