@@ -81,7 +81,7 @@ public:
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Logging(Nova::Levels messageLevel, string messageBasic, string messageAdv = "", int line=0);
+	void Log(Nova::Levels messageLevel, string messageBasic, string messageAdv = "");
 
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
@@ -110,7 +110,7 @@ private:
 	// Log will be the method that calls syslog
 	// args: 	uint16_t level. The level of severity to tell syslog to log with.
 	//       	string message. The message to send to syslog in string form.
-	void Log(uint16_t level, string message);
+	void LogToFile(uint16_t level, string message);
 	// Mail will, obviously, email people.
 	// args: 	uint16_t level. The level of severity with which to apply
 	// 		 	when sending the email. Used primarily to extract a string from the
