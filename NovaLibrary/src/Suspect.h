@@ -84,11 +84,18 @@ public:
 
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
-	//Returns: Suspect's in_addr or NULL on failure
+	//Returns: Suspect's in_addr_t or NULL on failure
 	in_addr_t GetIpAddress(); //TODO
-	//Sets the suspects in_addr, must have the lock to perform this operation
+	//Sets the suspects in_addr_t, must have the lock to perform this operation
 	//Returns: 0 on success
 	void SetIpAddress(in_addr_t ip); //TODO
+
+	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
+	//Returns: Suspect's in_addr or NULL on failure
+	in_addr GetInAddr(); //TODO
+	//Sets the suspects in_addr, must have the lock to perform this operation
+	//Returns: 0 on success
+	void SetInAddr(in_addr in); //TODO
 
 
 	//Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
@@ -170,7 +177,18 @@ public:
 	//Flags the suspect as no longer 'checked out'
 	int UnsetOwner();
 
-//private: //TODO Uncomment private and ensure suspects are fully accessible using thread-safe accessors.
+	// The Feature Set for this Suspect
+	FeatureSet m_features;
+
+	// The feature set in the format that ANN requires.
+	ANNpoint m_annPoint;
+
+	// A listing of all the events (evidence) that originated from this suspect
+	vector <Packet> m_evidence;
+
+	double m_featureAccuracy[DIM];
+
+private: //TODO Uncomment private and ensure suspects are fully accessible using thread-safe accessors.
 	//Develop some method for making concurrent changes without redundantly locking and unlocking the suspects
 
 	// The IP address of the suspect. This field serves as a unique identifier for the Suspect
@@ -198,18 +216,6 @@ public:
 
 	// Is this a live capture or is NOVA reading from a pcap file?
 	bool m_isLive;
-
-	// The Feature Set for this Suspect
-	FeatureSet m_features;
-	double m_featureAccuracy[DIM];
-
-	// The feature set in the format that ANN requires.
-	ANNpoint m_annPoint;
-
-	// A listing of all the events (evidence) that originated from this suspect
-	vector <Packet> m_evidence;
-
-private:
 
 	//Lock used to maintain concurrency between threads
 	pthread_rwlock_t m_lock;

@@ -306,30 +306,44 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 
-
 	return offset;
 }
 
 //Returns a copy of the suspects in_addr.s_addr, must not be locked or is locked by the owner
-//Returns: Suspect's in_addr.s_addr or 0 on failure
+//Returns: Suspect's in_addr.s_addr
 in_addr_t Suspect::GetIpAddress() //TODO
 {
 	RdlockSuspect();
 	in_addr_t ret = m_IpAddress.s_addr;
 	UnlockSuspect();
 	return ret;
-
 }
+
 //Sets the suspects in_addr, must have the lock to perform this operation
-//Returns: 0 on success
 void Suspect::SetIpAddress(in_addr_t ip) //TODO
 {
 	WrlockSuspect();
 	m_IpAddress.s_addr = ip;
 	UnlockSuspect();
-
 }
 
+//Returns a copy of the suspects in_addr.s_addr, must not be locked or is locked by the owner
+//Returns: Suspect's in_addr
+in_addr Suspect::GetInAddr() //TODO
+{
+	RdlockSuspect();
+	in_addr ret = m_IpAddress;
+	UnlockSuspect();
+	return ret;
+}
+
+//Sets the suspects in_addr, must have the lock to perform this operation
+void Suspect::SetInAddr(in_addr in) //TODO
+{
+	WrlockSuspect();
+	m_IpAddress = in;
+	UnlockSuspect();
+}
 
 //Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
 // Returns -1 on failure
@@ -339,7 +353,6 @@ double Suspect::GetClassification() //TODO
 	double ret = m_classification;
 	UnlockSuspect();
 	return ret;
-
 }
 
 //Sets the suspect's classification, must have the lock to perform this operation
@@ -349,7 +362,6 @@ void Suspect::SetClassification(double n) //TODO
 	WrlockSuspect();
 	m_classification = n;
 	UnlockSuspect();
-
 }
 
 
@@ -360,7 +372,6 @@ int Suspect::GetHostileNeighbors() //TODO
 	int ret = m_hostileNeighbors;
 	UnlockSuspect();
 	return ret;
-
 }
 //Sets the number of hostile neighbors, must have the lock to perform this operation
 void Suspect::SetHostileNeighbors(int i) //TODO
