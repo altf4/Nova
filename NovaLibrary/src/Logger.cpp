@@ -195,7 +195,7 @@ namespace Nova
 
 	}
 
-	void Logger::Logging(Nova::Levels messageLevel, string messageBasic, string messageAdv, int line)
+	void Logger::Log(Nova::Levels messageLevel, string messageBasic, string messageAdv)
 	{
 		pthread_rwlock_wrlock(&m_logLock);
 		string mask = getBitmask(messageLevel);
@@ -204,14 +204,6 @@ namespace Nova
 		if (messageAdv == "")
 			messageAdv = messageBasic;
 
-		if (line != 0)
-		{
-			messageBasic = " " + messageBasic;
-			messageAdv = " " + messageAdv;
-			messageBasic = "Line: " + line + messageBasic;
-			messageAdv = "Line: " + line + messageBasic;
-		}
-
 		if(mask.at(0) == '1')
 		{
 			Notify(messageLevel, messageBasic);
@@ -219,7 +211,7 @@ namespace Nova
 
 		if(mask.at(1) == '1')
 		{
-			Log(messageLevel, messageAdv);
+			LogToFile(messageLevel, messageAdv);
 		}
 
 		if(mask.at(2) == '1')
@@ -249,7 +241,7 @@ namespace Nova
 		g_object_unref(G_OBJECT(note));
 	}
 
-	void Logger::Log(uint16_t level, string message)
+	void Logger::LogToFile(uint16_t level, string message)
 	{
 		openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
 		syslog(level, "%s %s", (m_levels[level].second).c_str(), message.c_str());

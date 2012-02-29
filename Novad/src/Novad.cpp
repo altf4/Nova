@@ -29,15 +29,16 @@
 #include <errno.h>
 #include <fstream>
 #include <sstream>
-#include <syslog.h>
 #include <sys/un.h>
 #include <signal.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
-
 #include <iostream>
 
+#include <boost/format.hpp>
+
 using namespace std;
+using boost::format;
 
 string userHomePath, novaConfigPath;
 NOVAConfiguration *globalConfig;
@@ -163,7 +164,7 @@ int main()
 	logger = new Logger(novaConfigPath.c_str(), true);
 
 	if(chdir(userHomePath.c_str()) == -1)
-		logger->Logging(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
+		logger->Log(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
 
 	globalConfig = new NOVAConfiguration();
 	globalConfig->LoadConfig();
@@ -175,11 +176,11 @@ int main()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
 
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
-		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
 
 	suspects.set_empty_key(0);
 	suspects.resize(INIT_SIZE_SMALL);
@@ -199,17 +200,6 @@ int main()
 
 
 	Reload();
-
-	if(!globalConfig->getUseTerminals())
-	{
-		openlog("Novad", NO_TERM_SYSL, LOG_AUTHPRIV);
-	}
-
-	else
-	{
-		openlog("Novad", OPEN_SYSL, LOG_AUTHPRIV);
-	}
-
 
 	pthread_create(&GUIListenThread, NULL, CE_GUILoop, NULL);
 	//Are we Training or Classifying?
@@ -233,13 +223,6 @@ int main()
 		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
 	}
 
-	if((CE_IPCsock = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
-	{
-		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
-		close(CE_IPCsock);
-		exit(EXIT_FAILURE);
-	}
-
 	notifyFd = inotify_init ();
 
 	if (notifyFd > 0)
@@ -249,20 +232,14 @@ int main()
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Unable to set up 'file modified/moved' watcher for the IP list file\n");
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to set up file watcher for the honeyd IP list file. DHCP addresse in honeyd will not be read")
+				%__LINE__%__FILE__).str());
 	}
-
-	// This is the structure that you'll use whenever you call Logging. The first argument
-	// is the severity, can be found either in Logger.h's enum Levels, or you can
-	// just use any of the syslog levels. All caps, always.
-	// The second is the string to display in any of the mediums through which logging
-	// will route based on severity level.
-	logger->Logging(INFO, "Classification Engine has begun the main loop...", "Advanced Message Here");
 
 	Start_Packet_Handler();
 
 	//Shouldn't get here!
-	syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
+	logger->Log(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen, something went very wrong.")%__LINE__%__FILE__).str());
 	close(CE_IPCsock);
 
 	return EXIT_FAILURE;
@@ -282,7 +259,7 @@ void Nova::AppendToStateFile()
 {
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
-		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
 
 	// Don't bother saving if no new suspect data, just confuses deserialization
 	if (suspectsSinceLastSave.size() <= 0)
@@ -311,14 +288,14 @@ void Nova::AppendToStateFile()
 	ofstream out(globalConfig->getPathCESaveFile().data(), ofstream::binary | ofstream::app);
 	if(!out.is_open())
 	{
-		syslog(SYSL_ERR, "Line: %d unbable open CE save file %s", __LINE__, globalConfig->getPathCESaveFile().c_str());
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the CE state file %3%")%__LINE__%__FILE__%globalConfig->getPathCESaveFile()).str());
 		return;
 	}
 
 	out.write((char*)&lastSaveTime, sizeof lastSaveTime);
 	out.write((char*)&dataSize, sizeof dataSize);
 
-	syslog(SYSL_INFO, "Line: %d Appending %d bytes to the CE state save file at %s", __LINE__, dataSize, globalConfig->getPathCESaveFile().c_str());
+	logger->Log(DEBUG, (format("File %1% at line %2%: Appending %3% bytes to the CE state file")%__LINE__%__FILE__%dataSize).str());
 
 	// Serialize our suspect table
 	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
@@ -347,13 +324,13 @@ void Nova::LoadStateFile()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
 
 	// Open input file
 	ifstream in(globalConfig->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		syslog(SYSL_ERR, "Line: %d Attempted load last saved state but unable to open CE load file. This in normal for first run.", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open CE state file. This is normal for the first run.")%__LINE__%__FILE__).str());
 		return;
 	}
 
@@ -367,7 +344,8 @@ void Nova::LoadStateFile()
 		// Bytes left, but not enough to make a header (timestamp + size)?
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
-			syslog(SYSL_ERR, "Line %d Error: Data file should have another header entry, but contains only %d bytes left", __LINE__, lengthLeft);
+			logger->Log(ERROR, "The CE state file may be corrupt",
+					(format("File %1% at line %2%: CE state file should have another entry, but only contains %3% more bytes")%__LINE__%__FILE__%lengthLeft).str());
 			break;
 		}
 
@@ -379,7 +357,7 @@ void Nova::LoadStateFile()
 
 		if (globalConfig->getDataTTL() && (timeStamp < lastLoadTime - globalConfig->getDataTTL()))
 		{
-			syslog(SYSL_INFO, "Line %d: Throwing out old CE save state with timestamp of %d", __LINE__, (int)timeStamp);
+			logger->Log(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
 			continue;
@@ -388,7 +366,9 @@ void Nova::LoadStateFile()
 		// Not as many bytes left as the size of the entry?
 		if (lengthLeft < dataSize)
 		{
-			syslog(SYSL_ERR, "Line %d Error: Data file should have another entry of size %d, but contains only %d bytes left", __LINE__, dataSize, lengthLeft);
+			logger->Log(ERROR, "The CE state file may be corruput, unable to read all data from it",
+					(format("File %1% at line %2%: CE state file should have another entry of size %3% but only has %4% bytes left")
+							%__LINE__%__FILE__%dataSize%lengthLeft).str());
 			break;
 		}
 
@@ -433,13 +413,13 @@ void Nova::RefreshStateFile()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
 
 	// Open input file
 	ifstream in(globalConfig->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		syslog(SYSL_ERR, "Line: %d Attempted load but unable to open CE load file", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the CE state file at %3%")%__LINE__%__FILE__%globalConfig->getPathCESaveFile()).str());
 		return;
 	}
 
@@ -448,7 +428,7 @@ void Nova::RefreshStateFile()
 	ofstream out(tmpFile.data(), ios::binary);
 	if(!out.is_open())
 	{
-		syslog(SYSL_ERR, "Line: %d Attempted load but unable to open CE load tmp file", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the temporary CE state file at %3%")%__LINE__%__FILE__%tmpFile).str());
 		in.close();
 		return;
 	}
@@ -463,7 +443,8 @@ void Nova::RefreshStateFile()
 		// Bytes left, but not enough to make a header (timestamp + size)?
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
-			syslog(SYSL_ERR, "Line %d Error: Data file should have another header entry, but contains only %d bytes left", __LINE__, lengthLeft);
+			logger->Log(ERROR, "The CE state file may be corrupt", (format("File %1% at line %2%: CE state file should have another entry, but only contains %3% more bytes")
+					%__LINE__%__FILE__%lengthLeft).str());
 			break;
 		}
 
@@ -475,7 +456,7 @@ void Nova::RefreshStateFile()
 
 		if (globalConfig->getDataTTL() && (timeStamp < lastLoadTime - globalConfig->getDataTTL()))
 		{
-			syslog(SYSL_INFO, "Line %d: Throwing out old CE save state with timestamp of %d", __LINE__, (int)timeStamp);
+			logger->Log(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
 			continue;
@@ -484,7 +465,8 @@ void Nova::RefreshStateFile()
 		// Not as many bytes left as the size of the entry?
 		if (lengthLeft < dataSize)
 		{
-			syslog(SYSL_ERR, "Line %d Error: Data file should have another entry of size %d, but contains only %d bytes left", __LINE__, dataSize, lengthLeft);
+			logger->Log(ERROR, "The CE state file may be corrupt",
+					(format("File %1% at line %2%: Data file should have another entry of size %3%, but contains only %4% bytes left")%__LINE__%__FILE__%dataSize%lengthLeft).str());
 			break;
 		}
 
@@ -548,7 +530,9 @@ void Nova::RefreshStateFile()
 
 	string copyCommand = "cp -f " + tmpFile + " " + globalConfig->getPathCESaveFile();
 	if (system(copyCommand.c_str()) == -1)
-		syslog(SYSL_ERR, "Line %d: Error: Unable to copy CE state tmp file to CE state file. System call to cp failed.", __LINE__);
+		logger->Log(ERROR, "Failed to write to the CE state file. This may be a permission problem, or the folder may not exist.",
+				(format("File %1% at line %2%: Unable to copy CE state tmp file to CE state file. System call to '%3' failed")
+						%__LINE__%__FILE__%copyCommand).str());
 }
 
 void Nova::Reload()
@@ -601,7 +585,8 @@ void *Nova::CE_GUILoop(void *ptr)
 
 	if((GUISocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		logger->Log(CRITICAL, "Unable to make socket to connect to GUI. Is another instance of Nova already running?",
+				(format("File %1% at line %2%: Unable to create socket for GUI. Errno: ")%__LINE__%__FILE__%strerror(errno)).str());
 		close(GUISocket);
 		exit(EXIT_FAILURE);
 	}
@@ -618,14 +603,16 @@ void *Nova::CE_GUILoop(void *ptr)
 
 	if(bind(GUISocket,(struct sockaddr *)&GUIAddress,len) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
+		logger->Log(CRITICAL, "Unable to make socket to connect to GUI. Is another instance of Nova already running?",
+				(format("File %1% at line %2%: Unable to bind to socket for GUI. Errno: ")%__LINE__%__FILE__%strerror(errno)).str());
 		close(GUISocket);
 		exit(EXIT_FAILURE);
 	}
 
 	if(listen(GUISocket, SOCKET_QUEUE_SIZE) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
+		logger->Log(CRITICAL, "Unable to make socket to connect to GUI. Is another instance of Nova already running?",
+				(format("File %1% at line %2%: Unable to listen to socket for GUI. Errno: ")%__LINE__%__FILE__%strerror(errno)).str());
 		close(GUISocket);
 		exit(EXIT_FAILURE);
 	}
@@ -726,7 +713,8 @@ void *Nova::ClassificationLoop(void *ptr)
 
 	//Shouldn't get here!!
 	if(globalConfig->getClassificationTimeout())
-		syslog(SYSL_ERR, "Line: %d Main thread ended. Shouldn't get here!!!", __LINE__);
+		logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+
 	return NULL;
 }
 
@@ -779,14 +767,16 @@ void *Nova::TrainingLoop(void *ptr)
 		}
 		else
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to open file %s", __LINE__, trainingCapFile.data());
+			logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to open the training capture file %3% for writing. Can not save training data.")
+					%__LINE__%__FILE__%trainingCapFile).str());
 		}
 		myfile.close();
 	} while(globalConfig->getClassificationTimeout());
 
 	//Shouldn't get here!
 	if (globalConfig->getClassificationTimeout())
-		syslog(SYSL_ERR, "Line: %d Training thread ended. Shouldn't get here!!!", __LINE__);
+		logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")
+				%__LINE__%__FILE__).str());
 
 	return NULL;
 }
@@ -799,7 +789,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to create the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -814,7 +804,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d bind: %s", __LINE__, strerror(errno));
+		logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -823,18 +813,18 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	ss << "sudo iptables -A INPUT -p udp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with icmp-port-unreachable";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    logger->Logging(INFO, "Failed to update iptables.", "Failed to update iptables.");
+	    logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 	}
 	ss.str("");
 	ss << "sudo iptables -A INPUT -p tcp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with tcp-reset";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    logger->Logging(INFO, "Failed to update iptables.", "Failed to update iptables.");
+	    logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 	}
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
     {
-		syslog(SYSL_ERR, "Line: %d listen: %s", __LINE__, strerror(errno));
+    	logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to listen on the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
         exit(EXIT_FAILURE);
     }
@@ -850,14 +840,16 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		//Blocking call
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
+			logger->Log(ERROR, (format("File %1% at line %2%: Problem when accepting incoming silent alarm connection. Errno: %3%")
+					%__LINE__%__FILE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
 		}
 
 		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+			logger->Log(CRITICAL, (format("File %1% at line %2%: Problem when recieving incomping silent alarm connection. Errno: %3%")
+					%__LINE__%__FILE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
 		}
@@ -871,42 +863,38 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		CryptBuffer(buf, bytesRead, DECRYPT);
 
 		pthread_rwlock_wrlock(&suspectTableLock);
-		try
-		{
-			uint addr = GetSerializedAddr(buf);
-			SuspectHashTable::iterator it = suspects.find(addr);
 
-			//If this is a new suspect put it in the table
-			if(it == suspects.end())
-			{
-				suspects[addr] = new Suspect();
-				suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
-				//We set isHostile to false so that when we classify the first time
-				// the suspect will go from benign to hostile and be sent to the doppelganger module
-				suspects[addr]->m_isHostile = false;
-			}
-			//If this suspect exists, update the information
-			else
-			{
-				//This function will overwrite everything except the information used to calculate the classification
-				// a combined classification will be given next classification loop
-				suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
-			}
-			suspects[addr]->m_flaggedByAlarm = true;
-			//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-			syslog(SYSL_INFO, "Line: %d Received Silent Alarm!\n %s", __LINE__, (suspects[addr]->ToString(featureEnabled)).c_str());
-			if(!globalConfig->getClassificationTimeout())
-				ClassificationLoop(NULL);
-		}
-		catch(std::exception e)
+		uint addr = GetSerializedAddr(buf);
+		SuspectHashTable::iterator it = suspects.find(addr);
+
+		//If this is a new suspect put it in the table
+		if(it == suspects.end())
 		{
-			syslog(SYSL_ERR, "Line: %d Error interpreting received Silent Alarm: %s", __LINE__, string(e.what()).c_str());
+			suspects[addr] = new Suspect();
+			suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
+			//We set isHostile to false so that when we classify the first time
+			// the suspect will go from benign to hostile and be sent to the doppelganger module
+			suspects[addr]->m_isHostile = false;
 		}
+		//If this suspect exists, update the information
+		else
+		{
+			//This function will overwrite everything except the information used to calculate the classification
+			// a combined classification will be given next classification loop
+			suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
+		}
+		suspects[addr]->m_flaggedByAlarm = true;
+		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
+		logger->Log(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")%__LINE__%__FILE__%(suspects[addr]->ToString(featureEnabled))).str());
+
+		if(!globalConfig->getClassificationTimeout())
+			ClassificationLoop(NULL);
+
 		close(connectionSocket);
 		pthread_rwlock_unlock(&suspectTableLock);
 	}
 	close(sockfd);
-	syslog(SYSL_INFO, "Line: %d Silent Alarm thread ended. Shouldn't get here!!!", __LINE__);
+	logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
 	return NULL;
 }
 
@@ -927,7 +915,7 @@ void Nova::FormKdTree()
 			}
 			else
 			{
-				syslog(SYSL_INFO, "Line: %d Max Feature Value for feature %d is 0!", __LINE__, (j + 1));
+				logger->Log(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__LINE__%__FILE__).str());
 				break;
 			}
 		}
@@ -981,7 +969,8 @@ void Nova::Classify(Suspect *suspect)
 
 		if(nnIdx[i] == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d Unable to find a nearest neighbor for Data point: %d\n Try decreasing the Error bound", __LINE__, i);
+			logger->Log(ERROR, (format("File %1% at line %2%: Unable to find a nearest neighbor for Data point %3% Try decreasing the Error bound")
+					%__LINE__%__FILE__%i).str());
 		}
 		else
 		{
@@ -999,8 +988,9 @@ void Nova::Classify(Suspect *suspect)
 			else
 			{
 				//error case; Data points must be 0 or 1
-				syslog(SYSL_ERR, "Line: %d Data point: %d has an invalid classification of: %d. This must be either 0 (benign) or 1 (hostile)",
-					   __LINE__, i, dataPtsWithClass[nnIdx[i]]->m_classification);
+				logger->Log(ERROR, (format("File %1% at line %2%: Data point has invalid classification. Should by 0 or 1, but is %3%")
+						%__LINE__%__FILE__%dataPtsWithClass[nnIdx[i]]->m_classification).str());
+
 				suspect->m_classification = -1;
 				delete [] nnIdx;							// clean things up
 				delete [] dists;
@@ -1085,7 +1075,8 @@ void Nova::NormalizeDataPoints()
 					if(maxFeatureValues[ai] != 0)
 						it->second->m_annPoint[ai] = Normalize(normalization[i], it->second->m_features.m_features[i], minFeatureValues[ai], maxFeatureValues[ai]);
 					else
-						syslog(SYSL_INFO, "Line: %d max Feature Value for feature %d is 0!", __LINE__, (ai + 1));
+						logger->Log(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
+								%__LINE__%__FILE__).str());
 					ai++;
 				}
 
@@ -1136,7 +1127,7 @@ void Nova::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Unable to open file.", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%globalConfig->getPathTrainingFile()).str());
 	}
 
 	myfile.close();
@@ -1242,11 +1233,10 @@ void Nova::LoadDataPointsFromFile(string inFilePath)
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Unable to open file.", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%globalConfig->getPathTrainingFile()).str());
 	}
 	myfile.close();
 
-	syslog(SYSL_INFO, "Line: %d There were %d incomplete lines in the data file.", __LINE__, badLines);
 	//Normalize the data points
 
 	//Foreach feature within the data point
@@ -1318,7 +1308,8 @@ void Nova::WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree)
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Unable to open file.", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%outFilePath).str());
+
 	}
 	myfile.close();
 
@@ -1390,7 +1381,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 				if(system(commandLine.c_str()) == -1)
 				{
-					logger->Logging(INFO, "Failed to update iptables.", "Failed to update iptables.");
+					logger->Log(INFO, "Failed to update iptables.", "Failed to update iptables.");
 				}
 
 
@@ -1402,7 +1393,8 @@ void Nova::SilentAlarm(Suspect *suspect)
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 						{
-							syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+							logger->Log(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
+									%__LINE__%__FILE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
 						}
@@ -1413,10 +1405,12 @@ void Nova::SilentAlarm(Suspect *suspect)
 							{
 								//set to max attempts to hit the failed connect condition
 								i = globalConfig->getSaMaxAttempts();
-								syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+								logger->Log(ERROR, (format("File %1% at line %2%: Unable to connect to host to send silent alarm. Errno: %3%")
+										%__LINE__%__FILE__%strerror(errno)).str());
 								break;
 							}
-							syslog(SYSL_ERR, "Line: %d connect: %s", __LINE__, strerror(errno));
+							logger->Log(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
+									%__LINE__%__FILE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
 						}
@@ -1432,21 +1426,21 @@ void Nova::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						logger->Logging(INFO, "Failed to update iptables.", "Failed to update iptables.");
+						logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 					}
 					continue;
 				}
 
 				if( send(sockfd, serializedBuffer, dataLen, 0) == -1)
 				{
-					syslog(SYSL_ERR, "Line: %d Error in TCP Send: %s", __LINE__, strerror(errno));
+					logger->Log(ERROR, (format("File %1% at line %2%: Error in TCP Send of silent alarm. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 					close(sockfd);
 					ss.str("");
 					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						logger->Logging(INFO, "Failed to update iptables.", "Failed to update iptables.");
+						logger->Log(INFO, "Failed to update iptables.", "Failed to update iptables.");
 					}
 					continue;
 				}
@@ -1457,7 +1451,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				if(system(commandLine.c_str()) == -1)
 				{
-					logger->Logging(INFO, "Failed to update iptables.", "Failed to update iptables.");
+					logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 				}
 			}
 		}while(dataLen == MORE_DATA);
@@ -1488,14 +1482,14 @@ bool Nova::KnockPort(bool mode)
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d socket: %s", __LINE__, strerror(errno));
+		logger->Log(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %s")%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
 	}
 
 	if( sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d Error in UDP Send: %s", __LINE__, strerror(errno));
+		logger->Log(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %s")%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
 	}
@@ -1530,18 +1524,18 @@ bool Nova::Start_Packet_Handler()
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open file: %s: %s", __LINE__, globalConfig->getPathPcapFile().c_str(), errbuf);
+			logger->Log(CRITICAL, (format("File %1% at line %2%: Couldn't open file: %3%: %4%")%__FILE__%__LINE__%globalConfig->getPathPcapFile().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			logger->Log(CRITICAL, (format("File %1% at line %2%: Couldn't parse filter: %3%: %4%")%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			logger->Log(CRITICAL, (format("File %1% at line %2%: Couldn't install filter: %3%: %4%")% __FILE__%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 		//First process any packets in the file then close all the sessions
@@ -1564,7 +1558,7 @@ bool Nova::Start_Packet_Handler()
 
 		if(handle == NULL)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't open device: %s %s", __LINE__, globalConfig->getInterface().c_str(), errbuf);
+			logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't open device: %3% %4%")% __FILE__%__LINE__%globalConfig->getInterface().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
@@ -1573,19 +1567,19 @@ bool Nova::Start_Packet_Handler()
 
 		if(ret == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d %s", __LINE__, errbuf);
+			logger->Log(ERROR, (format("File %1% at line %2%: %3%")% __FILE__%__LINE__%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+			logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't install filter:%3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 		//"Main Loop"
@@ -1608,7 +1602,7 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 
 	if(packet == NULL)
 	{
-		syslog(SYSL_ERR, "Line: %d Didn't grab packet!", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%:  Didn't grab packet!")% __FILE__%__LINE__).str());
 		return;
 	}
 
@@ -1691,7 +1685,7 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 	}
 	else
 	{
-		syslog(SYSL_ERR, "Line: %d Unknown Non-IP Packet Received", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%:  Unknown Non-IP Packet Received")% __FILE__%__LINE__).str());
 		return;
 	}
 }
@@ -1713,12 +1707,12 @@ void Nova::CEReceiveGUICommand()
 	//Blocking call
 	if ((msgSocket = accept(GUISocket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d accept: %s", __LINE__, strerror(errno));
+		logger->Log(ERROR, (format("File %1% at line %2%:  accept: %s")% __FILE__%__LINE__% strerror(errno)).str());
 		close(msgSocket);
 	}
 	if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, MSG_WAITALL )) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d recv: %s", __LINE__, strerror(errno));
+		logger->Log(ERROR, (format("File %1% at line %2%:  recv: %s")% __FILE__%__LINE__% strerror(errno)).str());
 		close(msgSocket);
 	}
 
@@ -1743,7 +1737,7 @@ void Nova::CEReceiveGUICommand()
 
 			string delString = "rm -f " + globalConfig->getPathCESaveFile();
 			if(system(delString.c_str()) == -1)
-				syslog(SYSL_ERR, "Line: %d Unable to delete CE state file. System call to rm failed.", __LINE__);
+				logger->Log(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
 
 			pthread_rwlock_unlock(&suspectTableLock);
 			break;
@@ -1781,14 +1775,14 @@ void Nova::CEReceiveGUICommand()
 
 void Nova::SaveSuspectsToFile(string filename)
 {
-	syslog(SYSL_ERR, "Line: %d Got request to save file to %s", __LINE__, filename.c_str());
+	logger->Log(ERROR, (format("File %1% at line %2%:  Got request to save file to %3%")% __FILE__%__LINE__% filename).str());
 	dataPtsWithClass.push_back(new Point(enabledFeatures));
 
 	ofstream out(filename.c_str());
 
 	if(!out.is_open())
 	{
-		syslog(SYSL_ERR, "Line: %d Error: Unable to open file %s to save suspect data.", __LINE__, filename.c_str());
+		logger->Log(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")% __FILE__%__LINE__% filename).str());
 		return;
 	}
 
@@ -1814,21 +1808,21 @@ void Nova::SendToUI(Suspect *suspect)
 
 	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d Unable to create GUI socket: %s", __LINE__, strerror(errno));
+		logger->Log(ERROR, (format("File %1% at line %2%:  Unable to create GUI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
 
 	if (connect(GUISendSocket, GUISendPtr, GUILen) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d Unable to connect to GUI: %s", __LINE__, strerror(errno));
+		logger->Log(ERROR, (format("File %1% at line %2%:  Unable to connect to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
 
 	if (send(GUISendSocket, GUIData, GUIDataLen, 0) == -1)
 	{
-		syslog(SYSL_ERR, "Line: %d Unable to send to GUI: %s", __LINE__, strerror(errno));
+		logger->Log(ERROR, (format("File %1% at line %2%:  Unable to send to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
@@ -1838,17 +1832,13 @@ void Nova::SendToUI(Suspect *suspect)
 
 void Nova::LoadConfiguration()
 {
-	openlog("Novad", OPEN_SYSL, LOG_AUTHPRIV);
-
 	string hostAddrString = GetLocalIP(globalConfig->getInterface().c_str());
 
 	if(hostAddrString.size() == 0)
 	{
-		syslog(SYSL_ERR, "Line: %d Bad interface, no IP's associated!", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%:  Bad interface, no IP's associated!")% __FILE__%__LINE__).str());
 		exit(EXIT_FAILURE);
 	}
-
-	closelog();
 
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
 
@@ -1905,7 +1895,7 @@ string Nova::ConstructFilterString()
 		filterString = "dst host 0.0.0.0";
 	}
 
-	syslog(SYSL_INFO, "Pcap filter string is: %s", filterString.c_str());
+	logger->Log(DEBUG, "Pcap filter string is %1%" + filterString);
 	return filterString;
 }
 
@@ -1928,10 +1918,10 @@ void *Nova::UpdateIPFilter(void *ptr)
 				string haystackAddresses_csv = ConstructFilterString();
 
 				if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-					syslog(SYSL_ERR, "Line: %d Couldn't parse filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+					logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 
 				if (pcap_setfilter(handle, &fp) == -1)
-					syslog(SYSL_ERR, "Line: %d Couldn't install filter: %s %s", __LINE__, filter_exp, pcap_geterr(handle));
+					logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't install filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			}
 		}
 		else
@@ -1976,7 +1966,7 @@ vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 
 	if( honeydConfFile == NULL)
 	{
-		syslog(SYSL_ERR, "Line: %d Error opening log file. Does it exist?", __LINE__);
+		logger->Log(ERROR, (format("File %1% at line %2%:  Error opening log file. Does it exist?")% __FILE__%__LINE__).str());
 		exit(EXIT_FAILURE);
 	}
 
@@ -2091,8 +2081,8 @@ void *Nova::TCPTimeout(void *ptr)
 	//This is return is to prevent an error being thrown when there isn't one.
 	if(usePcapFile) return NULL;
 
-	//Shouldn't get here
-	syslog(SYSL_ERR, "Line: %d TCP Timeout Thread has halted", __LINE__);
+
+	logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
 	return NULL;
 }
 
