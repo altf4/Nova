@@ -22,6 +22,7 @@
 #include "NovaGuiTypes.h"
 #include "novagui.h"
 #include "nodePopup.h"
+#include "VendorMacDb.h"
 
 #include <QMutex>
 #include <QWheelEvent>
@@ -36,8 +37,6 @@
 #define CLONE_NODE 1
 #define EDIT_NODE 2
 
-typedef google::dense_hash_map<uint, string, tr1::hash<uint>, eqint> MACToVendorTable;
-typedef google::dense_hash_map<string, vector<uint> *,  tr1::hash<string>, eqstr > VendorToMACTable;
 using namespace std;
 
 enum recursiveDirection{ALL = 0, UP, DOWN};
@@ -47,7 +46,6 @@ class NovaConfig : public QMainWindow
 	Q_OBJECT
 
 public:
-	VendorToMACTable VendorMACTable;
 	vector<pair<string, string> > nmapPersonalities;
 
 	SubnetTable subnets;
@@ -280,13 +278,13 @@ private:
     //Value set by dialog windows
     string m_retVal;
 
+    VendorMacDb m_macAddresses;
+
 
     string homePath;
 
     PortTable ports;
     ScriptTable scripts;
-
-    MACToVendorTable MACVendorTable;
 
 
     string group;

@@ -214,21 +214,14 @@ void NovaComplexDialog::on_searchButton_clicked()
 
 	if(type == MACDialog)
 	{
-		VendorToMACTable * table = &novaParent->VendorMACTable;
-		bool matched = false;
+		VendorMacDb db;
+		db.LoadPrefixFile();
+		vector<string> matches = db.SearchVendors(filterStr);
 		ui.treeWidget->clear();
-		for(VendorToMACTable::iterator it = table->begin(); it != table->end(); it++)
+		for(vector<string>::iterator it = matches.begin(); it != matches.end(); it++)
 		{
-			matched = true;
-			if(strcasestr(it->first.c_str(), filterStr.c_str()) == NULL)
-			{
-				matched = false;
-			}
-			if(matched)
-			{
 				item = new QTreeWidgetItem(ui.treeWidget);
-				item->setText(0, it->first.data());
-			}
+				item->setText(0, it->data());
 		}
 		ui.treeWidget->sortItems(0, Qt::AscendingOrder);
 	}

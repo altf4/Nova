@@ -57,8 +57,6 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	homePath = home;
 
 	//Initialize hash tables
-	MACVendorTable.set_empty_key(16777216); //2^24, invalid MAC prefix.
-	VendorMACTable.set_empty_key("");
 	subnets.set_empty_key("");
 	subnets.set_deleted_key("DELETED");
 	nodes.set_empty_key("");
@@ -82,7 +80,9 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	LoadNovadPreferences();
 	PullData();
 	LoadHaystackConfiguration();
-	LoadMACAddressVendorPrefixesFromFile();
+
+	m_macAddresses.LoadPrefixFile();
+
 	LoadNmapPersonalitiesFromFile();
 	m_loading->unlock();
 	// Populate the dialog menu
@@ -944,129 +944,14 @@ void NovaConfig::LoadNmapPersonalitiesFromFile()
 	}
 	nmapPers.close();
 }
-void NovaConfig::LoadMACAddressVendorPrefixesFromFile()
-{
-	string MACPrefixFile = GetReadPath() + "/nmap-mac-prefixes";
-	ifstream MACPrefixes(MACPrefixFile.c_str());
-	string line, vendor, prefixStr;
-	char * notUsed;
-	uint prefix;
-	if(MACPrefixes.is_open())
-	{
-		while(MACPrefixes.good())
-		{
-			getline(MACPrefixes, prefixStr, ' ');
-			/* From 'man strtoul'  Since strtoul() can legitimately return 0 or  LONG_MAX  (LLONG_MAX  for
-		       strtoull()) on both success and failure, the calling program should set
-		       errno to 0 before the call, and then determine if an error occurred  by
-		       checking whether errno has a nonzero value after the call. */
-			errno = 0;
-			prefix = strtoul(prefixStr.c_str(), &notUsed, 16);
-			if(errno)
-				continue;
-			getline(MACPrefixes, vendor);
-			MACVendorTable[prefix] = vendor;
-			if(VendorMACTable.find(vendor) != VendorMACTable.end())
-			{
-				VendorMACTable[vendor]->push_back(prefix);
-			}
-			else
-			{
-				vector<uint> * vect = new vector<uint>;
-				vect->push_back(prefix);
-				VendorMACTable[vendor] = vect;
-			}
-		}
-	}
-}
 
-//Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
-// *note conflicts are only checked for locally, weird things may happen if the address is already being used.
 string NovaConfig::GenerateUniqueMACAddress(string vendor)
 {
-	char addrBuffer[8];
-	stringstream addrStrm;
-	pair<uint32_t,uint32_t> addr;
-	VendorToMACTable::iterator it;
-	string testStr;
-
-	//If we can resolve the vendor to a range
-	if((it = VendorMACTable.find(vendor)) != VendorMACTable.end())
-	{
-		do
-		{
-			//Randomly select one of the ranges
-			uint j;
-			uint i = rand() % it->second->size();
-			addr.first = it->second->at(i);
-			i = 0;
-
-			//Convert the first part to a string and format it for output
-			sprintf(addrBuffer, "%x", addr.first);
-			testStr = string(addrBuffer);
-			for(j = 0; j < (6-testStr.size()); j++)
-			{
-				if(!(i%2)&& i )
-				{
-					addrStrm << ":";
-				}
-				addrStrm << "0";
-				i++;
-			}
-			j = 0;
-			if(testStr.size() > 6)
-				j = testStr.size() - 6;
-			for(j = j; j < testStr.size(); j++)
-			{
-				if(!(i%2)&& i )
-				{
-					addrStrm << ":";
-				}
-				addrStrm << addrBuffer[j];
-				i++;
-			}
-
-			//Randomly generate the remaining portion
-			addr.second = ((uint)rand() & (uint)(pow(2,24)-1));
-
-			//Convert the second part to a string and format it for output
-			bzero(addrBuffer, 8);
-			sprintf(addrBuffer, "%x", addr.second);
-			testStr = string(addrBuffer);
-			i = 0;
-			for(j = 0; j < (6-testStr.size()); j++)
-			{
-				if(!(i%2)&& i )
-				{
-					addrStrm << ":";
-				}
-				addrStrm << "0";
-				i++;
-			}
-			j = 0;
-			if(testStr.size() > 6)
-				j = testStr.size() - 6;
-			for(j = j; j < testStr.size(); j++)
-			{
-				if(!(i%2)&& (i!=6))
-				{
-					addrStrm << ":";
-				}
-				addrStrm << addrBuffer[j];
-				i++;
-			}
-		}while(nodes.find(addrStrm.str()) != nodes.end());
-	}
-	return addrStrm.str();
-}
-
-//Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
-string NovaConfig::LookupMACVendor(uint MACPrefix)
-{
-	if(MACVendorTable.find((uint)(MACPrefix)) != MACVendorTable.end())
-		return MACVendorTable[(uint)(MACPrefix)];
-	else
-		return "";
+	string addrStrm;
+	do {
+		addrStrm = m_macAddresses.GenerateRandomMAC(vendor);
+	}while(nodes.find(addrStrm) != nodes.end());
+	return addrStrm;
 }
 
 //Load Personality choices from nmap fingerprints file
@@ -1719,7 +1604,7 @@ void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
 
 	//If the current ethernet is an invalid selection
 	//TODO this should display a dialog asking the user if they wish to pick a valid ethernet or cancel mode change
-	if(((VendorMACTable.find(profiles[m_currentProfile].ethernet)) == VendorMACTable.end()) && (index == staticDHCP))
+	if(m_macAddresses.IsVendorValid(profiles[m_currentProfile].ethernet) && (index == staticDHCP))
 	{
 		if(!DisplayMACPrefixWindow())
 		{
