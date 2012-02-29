@@ -559,13 +559,17 @@ bool Suspect::HasOwner()
 
 //Sets the pthread_t 'owner'
 //		tid: unique thread identifier retrieved from pthread_self();
-void Suspect::SetOwner(pthread_t tid)
+// Returns: (0) on Success or (-1) if the suspect already has another owner
+int Suspect::SetOwner(pthread_t tid)
 {
+	if(HasOwner() && !pthread_equal(m_owner, pthread_self()))
+		return  -1;
 	WrlockSuspect();
 	m_hasOwner = true;
 	m_owner = tid;
 	UnlockSuspect();
 	RdlockSuspect();
+	return 0;
 }
 
 //Flags the suspect as no longer 'checked out'

@@ -112,28 +112,23 @@ int SuspectTable::CheckIn(Suspect * suspect)
 		{
 			if(m_keys[i] == key)
 			{
-				//If this suspect was never checked out
-				if(!m_table[key]->HasOwner())
+				pthread_rwlock_unlock(&m_lock);
+				pthread_rwlock_wrlock(&m_lock);
+				switch(m_table[key]->UnsetOwner())
 				{
-					pthread_rwlock_unlock(&m_lock);
-					return NotCheckedOut;
-				}
-
-				//If the suspect was checked out by this thread
-				if(pthread_equal(m_table[key]->GetOwner(), pthread_self()))
-				{
-					pthread_rwlock_unlock(&m_lock);
-					pthread_rwlock_wrlock(&m_lock);
-					m_table[key]->UnsetOwner();
-					*m_table[key] = *suspect;
-					pthread_rwlock_unlock(&m_lock);
-					return Success;
-				}
-				//If the suspect is checked out but not by this thread
-				else
-				{
-					pthread_rwlock_unlock(&m_lock);
-					return CheckedOut;
+					//If this suspect was never checked out
+					case 1:
+						pthread_rwlock_unlock(&m_lock);
+						return NotCheckedOut;
+					//If the suspect is checked out but not by this thread
+					case -1:
+						pthread_rwlock_unlock(&m_lock);
+						return CheckedOut;
+					//If the suspect was checked out by this thread
+					case 0:
+						*m_table[key] = *suspect;
+						pthread_rwlock_unlock(&m_lock);
+						return Success;
 				}
 			}
 		}

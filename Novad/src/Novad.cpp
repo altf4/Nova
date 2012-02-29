@@ -181,11 +181,13 @@ int main()
 	if (lastSaveTime == ((time_t)-1))
 		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
 
+	// XXX 'suspects' SuspectTable init todo
 	suspects.set_empty_key(0);
 	suspects.resize(INIT_SIZE_SMALL);
 	SessionTable.set_empty_key("");
 	SessionTable.resize(INIT_SIZE_HUGE);
 
+	// XXX 'suspectsSinceLastSave' SuspectTable init todo
 	suspectsSinceLastSave.set_empty_key(0);
 	suspectsSinceLastSave.resize(INIT_SIZE_SMALL);
 
@@ -285,6 +287,7 @@ void Nova::AppendToStateFile()
 		syslog(SYSL_ERR, "Line: %d Error unable to get timestamp", __LINE__);
 
 	// Don't bother saving if no new suspect data, just confuses deserialization
+	// XXX 'suspectsSinceLastSave.Size()' SuspectTable todo
 	if (suspectsSinceLastSave.size() <= 0)
 		return;
 
@@ -293,6 +296,7 @@ void Nova::AppendToStateFile()
 	uint32_t index = 0;
 
 	// Compute the total dataSize
+	// XXX 'suspectsSinceLastSave' SuspectTable && iterator todo
 	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
 	{
 		if (!it->second->m_features.m_packetCount)
@@ -321,6 +325,7 @@ void Nova::AppendToStateFile()
 	syslog(SYSL_INFO, "Line: %d Appending %d bytes to the CE state save file at %s", __LINE__, dataSize, globalConfig->getPathCESaveFile().c_str());
 
 	// Serialize our suspect table
+	// XXX 'suspectsSinceLastSave' SuspectTable && iterator todo
 	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
 	{
 		if (!it->second->m_features.m_packetCount)
@@ -335,6 +340,7 @@ void Nova::AppendToStateFile()
 	out.close();
 
 	// Clear out the unsaved data table (they're all saved now)
+	// XXX 'suspectsSinceLastSave' SuspectTable && iterator todo
 	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
 		delete it->second;
 	suspectsSinceLastSave.clear();
@@ -502,7 +508,9 @@ void Nova::RefreshStateFile()
 			suspectBytes += newSuspect->m_features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 
 			// Did a suspect get cleared? Not in suspects anymore, but still is suspectsSinceLastSave
+			// XXX 'suspectsSinceLastSave' SuspectTableIterator todo
 			SuspectHashTable::iterator saveIter = suspectsSinceLastSave.find(newSuspect->m_IpAddress.s_addr);
+			// XXX 'suspectsSinceLastSave' SuspectTableIterator todo
 			SuspectHashTable::iterator normalIter = suspects.find(newSuspect->m_IpAddress.s_addr);
 			if (normalIter == suspects.end() && saveIter != suspectsSinceLastSave.end())
 			{
@@ -587,6 +595,7 @@ void Nova::Reload()
 	LoadDataPointsFromFile(globalConfig->getPathTrainingFile());
 
 	// Set everyone to be reclassified
+	// XXX 'suspectsSinceLastSave' SuspectTableIterator todo
 	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		it->second->m_needsClassificationUpdate = true;
 
@@ -655,6 +664,7 @@ void *Nova::ClassificationLoop(void *ptr)
 		sleep(globalConfig->getClassificationTimeout());
 		pthread_rwlock_wrlock(&suspectTableLock);
 		//Calculate the "true" Feature Set for each Suspect
+		// XXX 'suspects' SuspectTableIterator todo
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
 			if(it->second->m_needsFeatureUpdate)
@@ -676,6 +686,7 @@ void *Nova::ClassificationLoop(void *ptr)
 		pthread_rwlock_rdlock(&suspectTableLock);
 
 		//Perform classification on each suspect
+		// XXX 'suspects' SuspectTableIterator todo
 		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 		{
 			if(it->second->m_needsClassificationUpdate)
@@ -710,10 +721,12 @@ void *Nova::ClassificationLoop(void *ptr)
 				AppendToStateFile();
 				RefreshStateFile();
 
+				// XXX 'suspects' SuspectTableIterator todo
 				for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
 					delete it->second;
 				suspects.clear();
 
+				// XXX 'suspects' SuspectTableIterator todo
 				for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
 					delete it->second;
 				suspectsSinceLastSave.clear();

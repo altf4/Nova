@@ -165,7 +165,7 @@ public:
 
 	//Sets the pthread_t 'owner'
 	//		tid: unique thread identifier retrieved from pthread_self();
-	void SetOwner(pthread_t tid);
+	int SetOwner(pthread_t tid);
 
 	//Flags the suspect as no longer 'checked out'
 	int UnsetOwner();
