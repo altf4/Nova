@@ -88,6 +88,7 @@ public:
     double getSaSleepDuration() const;
     double getEps() const;
 
+    string getGroup() const;
 
     // Setters
     void setClassificationThreshold(double classificationThreshold);
@@ -120,6 +121,7 @@ public:
     void setUseTerminals(bool useTerminals);
     void setKey(string key);
     void setNeigbors(vector<in_addr_t> neighbors);
+    void setGroup(string group);
 
 private:
 	static const string m_prefixes[];
@@ -136,6 +138,8 @@ private:
 	string m_pathTrainingFile;
 	string m_pathTrainingCapFolder;
 	string m_pathCESaveFile;
+
+	string m_group;
 
 	int m_tcpTimout;
 	int m_tcpCheckFreq;

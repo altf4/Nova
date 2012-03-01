@@ -70,7 +70,6 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 
 	//Store parent and load UI
 	m_mainwindow = (NovaGUI*)parent;
-	group = m_mainwindow->m_group;
 
 	// Set up the GUI
 	ui.setupUi(this);
@@ -1240,23 +1239,17 @@ void NovaConfig::PushData()
 {
 	//Clean up unused ports
 	CleanPorts();
-	//Clears the tables
-	m_mainwindow->m_subnets.clear_no_resize();
-	m_mainwindow->m_nodes.clear_no_resize();
-	m_mainwindow->m_profiles.clear_no_resize();
-	m_mainwindow->m_ports.clear_no_resize();
-	m_mainwindow->m_scripts.clear_no_resize();
 
 	//Copies the tables
-	m_mainwindow->m_scripts = scripts;
-	m_mainwindow->m_subnets = subnets;
-	m_mainwindow->m_nodes = nodes;
-	m_mainwindow->m_ports = ports;
-	m_mainwindow->m_profiles = profiles;
+	m_mainwindow->honeydConfig.SetScripts(scripts);
+	m_mainwindow->honeydConfig.SetProfiles(profiles);
+	m_mainwindow->honeydConfig.SetSubnets(subnets);
+	m_mainwindow->honeydConfig.SetNodes(nodes);
+	m_mainwindow->honeydConfig.SetPorts(ports);
 
 	//Saves the current configuration to XML files
-	m_mainwindow->SaveAllTemplates();
-	m_mainwindow->WriteHoneydConfiguration();
+	m_mainwindow->honeydConfig.SaveAllTemplates();
+	m_mainwindow->honeydConfig.WriteHoneydConfiguration();
 }
 
 //Pulls the last stored configuration from novagui
@@ -1271,11 +1264,11 @@ void NovaConfig::PullData()
 	scripts.clear_no_resize();
 
 	//Copies the tables
-	scripts = m_mainwindow->m_scripts;
-	subnets = m_mainwindow->m_subnets;
-	nodes = m_mainwindow->m_nodes;
-	ports = m_mainwindow->m_ports;
-	profiles = m_mainwindow->m_profiles;
+	scripts = m_mainwindow->honeydConfig.GetScripts();
+	subnets = m_mainwindow->honeydConfig.GetSubnets();
+	nodes = m_mainwindow->honeydConfig.GetNodes();
+	ports = m_mainwindow->honeydConfig.GetPorts();
+	profiles = m_mainwindow->honeydConfig.GetProfiles();
 }
 
 //Attempts to use the same key previously used, if that key is no longer available
@@ -1509,7 +1502,7 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	//Reloads from NOVAConfig
 	LoadNovadPreferences();
 	//Has NovaGUI reload honeyd configuration from XML files
-	m_mainwindow->LoadAllTemplates();
+	m_mainwindow->honeydConfig.LoadAllTemplates();
 	//Pulls honeyd configuration
 	PullData();
 	m_loading->lock();

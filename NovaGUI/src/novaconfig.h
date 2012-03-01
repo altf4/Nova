@@ -19,7 +19,6 @@
 #define NOVACONFIG_H
 
 #include "ui_novaconfig.h"
-#include "NovaGuiTypes.h"
 #include "novagui.h"
 #include "nodePopup.h"
 #include "VendorMacDb.h"
@@ -285,9 +284,6 @@ private:
 
     PortTable ports;
     ScriptTable scripts;
-
-
-    string group;
 };
 
 class TreeItemComboBox : public QComboBox

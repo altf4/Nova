@@ -567,6 +567,14 @@ bool NOVAConfiguration::LoadUserConfig()
 					returnValue = false;
 				}
 			}
+
+			prefix = "group";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				m_group = line;
+				continue;
+			}
 		}
 	}
 	else
@@ -1115,6 +1123,11 @@ vector<in_addr_t> NOVAConfiguration::getNeighbors() const
 	return m_neighbors;
 }
 
+string NOVAConfiguration::getGroup() const
+{
+	return m_group;
+}
+
 void NOVAConfiguration::setClassificationThreshold(double classificationThreshold)
 {
 	this->m_classificationThreshold = classificationThreshold;
@@ -1263,6 +1276,11 @@ void NOVAConfiguration::setKey(string key)
 void NOVAConfiguration::setNeigbors(vector<in_addr_t> neighbors)
 {
 	this->m_neighbors = neighbors;
+}
+
+void NOVAConfiguration::setGroup(string group)
+{
+	m_group = group;
 }
 
 }

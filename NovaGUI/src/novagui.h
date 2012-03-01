@@ -24,6 +24,7 @@
 #include "Suspect.h"
 #include "loggerwindow.h"
 #include "NOVAConfiguration.h"
+#include "HoneydConfiguration.h"
 
 #include <QProcess>
 
@@ -60,22 +61,7 @@ class NovaGUI : public QMainWindow
 public:
 
     bool m_isHelpUp;
-    string m_group;
-
-    SubnetTable m_subnets;
-    PortTable m_ports;
-    ProfileTable m_profiles;
-    NodeTable m_nodes;
-    ScriptTable m_scripts;
-
-    //Storing these trees allow for easy modification and writing of the XML files
-    //Without having to reconstruct the tree from scratch.
-    ptree m_groupTree;
-    ptree m_portTree;
-    ptree m_profileTree;
-    ptree m_scriptTree;
-    ptree m_nodesTree;
-    ptree m_subnetTree;
+    HoneydConfiguration honeydConfig;
 
     NOVAConfiguration *configuration;
 
@@ -117,39 +103,6 @@ public:
     void InitSession();
     void InitPaths();
     void InitNovadCommands();
-    void LoadSettings();
-
-    //XML Read Functions
-
-    //calls main load functions
-    void LoadAllTemplates();
-    //load all scripts
-    void LoadScriptsTemplate();
-    //load all ports
-    void LoadPortsTemplate();
-    //load all profiles
-    void LoadProfilesTemplate();
-    //load current honeyd configuration group
-    void LoadNodesTemplate();
-
-    //set profile configurations
-    void LoadProfileSettings(ptree *ptr, profile *p);
-    //add ports or subsystems
-    void LoadProfileServices(ptree *ptr, profile *p);
-    //recursive descent down profile tree
-    void LoadProfileChildren(string parent);
-
-
-    //Load stored subnets in ptr
-    void LoadSubnets(ptree *ptr);
-    //Load stored honeyd nodes ptr
-    void LoadNodes(ptree *ptr);
-
-    //Saves the current configuration information to XML files
-    void SaveAllTemplates();
-    //Writes the current configuration to honeyd configs
-    void WriteHoneydConfiguration();
-    string ProfileToString(profile* p);
 
     void SetFeatureDistances(Suspect* suspect);
 

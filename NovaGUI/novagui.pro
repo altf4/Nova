@@ -2,7 +2,8 @@ TEMPLATE = app
 TARGET = NovaGUI
 QT += core \
     gui
-HEADERS += src/VendorMacDb.h \
+HEADERS += src/HoneydConfiguration.h \
+    src/VendorMacDb.h \
     src/subnetPopup.h \
     src/NovaGuiTypes.h \
     src/loggerwindow.h \
@@ -16,7 +17,8 @@ HEADERS += src/VendorMacDb.h \
     src/novaconfig.h \
     src/novagui.h \
     src/run_popup.h
-SOURCES += src/VendorMacDb.cpp \
+SOURCES += src/HoneydConfiguration.cpp \
+    src/VendorMacDb.cpp \
     src/subnetPopup.cpp \
     src/loggerwindow.cpp \
     src/classifierPrompt.cpp \
