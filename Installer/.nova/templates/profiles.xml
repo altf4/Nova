@@ -2,24 +2,33 @@
 <profiles>
 	<profile>
 		<name>default</name>
-		<type>0</type>
 		<set>
 			<TCP>block</TCP>
 			<UDP>block</UDP>
 			<ICMP>block</ICMP>
+			<ethernet>Dell</ethernet>
+			<dropRate>0</dropRate>
 		</set>
+		<type>1</type>
+		<add>
+			<ports/>
+		</add>
 		<profiles>
 			<profile>
-				<name>BSDServer</name>
+				<name>WinServer</name>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Linux 2.6.11 - 2.6.20</personality>
+					<personality>Microsoft Windows 7</personality>
 					<ethernet>Dell</ethernet>
-					<uptime>1326346</uptime>
+					<uptime>1546550</uptime>
 				</set>
+				<type>1</type>
 				<add>
 					<ports>
+						<port>20_TCP_open</port>
+						<port>21_TCP_Windows FTP</port>
 						<port>23_TCP_Telnet Router</port>
+						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
 						<port>137_UDP_open</port>
 						<port>137_TCP_open</port>
@@ -40,8 +49,8 @@
 					<ports>
 						<port>23_TCP_Telnet Router</port>
 						<port>135_UDP_open</port>
-						<port>137_UDP_open</port>
 						<port>137_TCP_open</port>
+						<port>137_UDP_open</port>
 						<port>139_TCP_open</port>
 					</ports>
 				</add>
@@ -59,8 +68,8 @@
 					<ports>
 						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
-						<port>137_TCP_open</port>
 						<port>137_UDP_open</port>
+						<port>137_TCP_open</port>
 						<port>139_TCP_open</port>
 					</ports>
 				</add>
@@ -68,19 +77,20 @@
 			</profile>
 			<profile>
 				<name>Doppelganger</name>
-				<type>3</type>
 				<set>
 					<TCP>reset</TCP>
 					<personality>Microsoft Windows 7</personality>
+					<ethernet>Intel</ethernet>
 					<uptime>1327650</uptime>
 				</set>
+				<type>0</type>
 				<add>
 					<ports>
 						<port>23_TCP_Telnet Router</port>
 						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
-						<port>137_TCP_open</port>
 						<port>137_UDP_open</port>
+						<port>137_TCP_open</port>
 						<port>139_TCP_open</port>
 					</ports>
 				</add>
@@ -94,6 +104,7 @@
 					<ethernet>Dell</ethernet>
 					<uptime>1546550</uptime>
 				</set>
+				<type>1</type>
 				<add>
 					<ports>
 						<port>20_TCP_open</port>
@@ -101,8 +112,8 @@
 						<port>23_TCP_Telnet Router</port>
 						<port>80_TCP_Windows httpd</port>
 						<port>135_UDP_open</port>
-						<port>137_TCP_open</port>
 						<port>137_UDP_open</port>
+						<port>137_TCP_open</port>
 						<port>139_TCP_open</port>
 					</ports>
 				</add>

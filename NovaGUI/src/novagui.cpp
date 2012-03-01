@@ -37,8 +37,8 @@ using namespace std;
 using namespace Nova;
 
 //Socket communication variables
-int NovadInSocket, NovadOutSocket;
-struct sockaddr_un NovadInAddress, NovadOutAddress;
+int NovadOutSocket, NovadInSocket;
+struct sockaddr_un NovadOutAddress, NovadInAddress;
 int len;
 
 //GUI to Nova message variables
@@ -182,26 +182,26 @@ NovaGUI::NovaGUI(QWidget *parent)
 	pthread_t CEListenThread;
 	pthread_t StatusUpdateThread;
 
-	if((NovadInSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	if((NovadOutSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadInSocket);
+		CloseSocket(NovadOutSocket);
 		exit(EXIT_FAILURE);
 	}
 
-	len = strlen(NovadInAddress.sun_path) + sizeof(NovadInAddress.sun_family);
+	len = strlen(NovadOutAddress.sun_path) + sizeof(NovadOutAddress.sun_family);
 
-	if(bind(NovadInSocket,(struct sockaddr *)&NovadInAddress,len) == -1)
+	if(bind(NovadOutSocket,(struct sockaddr *)&NovadOutAddress,len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadInSocket);
+		CloseSocket(NovadOutSocket);
 		exit(EXIT_FAILURE);
 	}
 
-	if(listen(NovadInSocket, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(NovadOutSocket, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadInSocket);
+		CloseSocket(NovadOutSocket);
 		exit(EXIT_FAILURE);
 	}
 
@@ -485,21 +485,21 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
 
 	pthread_rwlock_wrlock(&lock);
 	//If the suspect already exists in our table
-	if(SuspectTable.find(suspectItem.suspect->m_IpAddress.s_addr) != SuspectTable.end())
+	if(SuspectTable.find(suspectItem.suspect->GetIpAddress()) != SuspectTable.end())
 	{
 		//We point to the same item so it doesn't need to be deleted.
-		suspectItem.item = SuspectTable[suspectItem.suspect->m_IpAddress.s_addr].item;
-		suspectItem.mainItem = SuspectTable[suspectItem.suspect->m_IpAddress.s_addr].mainItem;
+		suspectItem.item = SuspectTable[suspectItem.suspect->GetIpAddress()].item;
+		suspectItem.mainItem = SuspectTable[suspectItem.suspect->GetIpAddress()].mainItem;
 
 		//Delete the old Suspect since we created and pointed to a new one
-		delete SuspectTable[suspectItem.suspect->m_IpAddress.s_addr].suspect;
+		delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
 	}
 	//We borrow the flag to show there is new information.
-	suspectItem.suspect->m_needsFeatureUpdate = true;
+	suspectItem.suspect->SetNeedsFeatureUpdate(true);
 	//Update the entry in the table
-	SuspectTable[suspectItem.suspect->m_IpAddress.s_addr] = suspectItem;
+	SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
 	pthread_rwlock_unlock(&lock);
-	Q_EMIT newSuspect(suspectItem.suspect->m_IpAddress.s_addr);
+	Q_EMIT newSuspect(suspectItem.suspect->GetIpAddress());
 }
 
 /************************************************
@@ -521,25 +521,25 @@ void NovaGUI::DrawAllSuspects()
 	pthread_rwlock_wrlock(&lock);
 	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		str = (QString) string(inet_ntoa(it->second.suspect->m_IpAddress)).c_str();
+		str = (QString) string(inet_ntoa(it->second.suspect->GetInAddr())).c_str();
 		suspect = it->second.suspect;
 		//Create the colors for the draw
 
-		if (suspect->m_classification < 0)
+		if (suspect->GetClassification() < 0)
 		{
 			// In training mode, classification is never set and ends up at -1
 			// Make it a nice blue so it's clear that it hasn't classified
 			color = QColor(0,0,255);
 		}
-		else if(suspect->m_classification < 0.5)
+		else if(suspect->GetClassification() < 0.5)
 		{
 			//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
-			color = QColor((int)(200*2*suspect->m_classification),200, 50);
+			color = QColor((int)(200*2*suspect->GetClassification()),200, 50);
 		}
 		else
 		{
 			//at 0.5 QBrush is 255,255 (yellow), at from 0.5->1.0 remove more green until QBrush is Red
-			color = QColor(200,200-(int)(200*2*(suspect->m_classification-0.5)), 50);
+			color = QColor(200,200-(int)(200*2*(suspect->GetClassification()-0.5)), 50);
 		}
 		brush.setColor(color);
 		brush.setStyle(Qt::NoBrush);
@@ -556,14 +556,14 @@ void NovaGUI::DrawAllSuspects()
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->m_classification < suspect->m_classification)
+				if(SuspectTable[addr].suspect->GetClassification() < suspect->GetClassification())
 					break;
 			}
 		}
 		ui.suspectList->insertItem(i, item);
 
 		//If Hostile
-		if(suspect->m_isHostile )
+		if(suspect->GetIsHostile())
 		{
 			//Copy the item and add it to the list
 			mainItem = new QListWidgetItem(str,0);
@@ -576,7 +576,7 @@ void NovaGUI::DrawAllSuspects()
 				for(i = 0; i < ui.hostileList->count(); i++)
 				{
 					addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-					if(SuspectTable[addr].suspect->m_classification < suspect->m_classification)
+					if(SuspectTable[addr].suspect->GetClassification() < suspect->GetClassification())
 						break;
 				}
 			}
@@ -586,7 +586,7 @@ void NovaGUI::DrawAllSuspects()
 		//Point to the new items
 		it->second.item = item;
 		//Reset the flags
-		suspect->m_needsFeatureUpdate = false;
+		suspect->SetNeedsFeatureUpdate(false);
 		it->second.suspect = suspect;
 	}
 	UpdateSuspectWidgets();
@@ -607,24 +607,24 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 	pthread_rwlock_wrlock(&lock);
 	suspectItem * sItem = &SuspectTable[suspectAddr];
 	//Extract Information
-	str = (QString) string(inet_ntoa(sItem->suspect->m_IpAddress)).c_str();
+	str = (QString) string(inet_ntoa(sItem->suspect->GetInAddr())).c_str();
 
 	//Create the colors for the draw
-	if (sItem->suspect->m_classification < 0)
+	if (sItem->suspect->GetClassification() < 0)
 	{
 		// In training mode, classification is never set and ends up at -1
 		// Make it a nice blue so it's clear that it hasn't classified
 		color = QColor(0,0,255);
 	}
-	else if(sItem->suspect->m_classification < 0.5)
+	else if(sItem->suspect->GetClassification() < 0.5)
 	{
 		//at 0.5 QBrush is 255,255 (yellow), from 0->0.5 include more red until yellow
-		color = QColor((int)(200*2*sItem->suspect->m_classification),200, 50);
+		color = QColor((int)(200*2*sItem->suspect->GetClassification()),200, 50);
 	}
 	else
 	{
 		//at 0.5 QBrush is 255,255 (yellow), at from 0.5->1.0 remove more green until QBrush is Red
-		color = QColor(200,200-(int)(200*2*(sItem->suspect->m_classification-0.5)), 50);
+		color = QColor(200,200-(int)(200*2*(sItem->suspect->GetClassification()-0.5)), 50);
 	}
 	brush.setColor(color);
 	brush.setStyle(Qt::NoBrush);
@@ -649,7 +649,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
+				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
 					break;
 			}
 		}
@@ -675,7 +675,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
+				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
 					break;
 			}
 		}
@@ -683,7 +683,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 	}
 
 	//If the mainItem exists and suspect is hostile
-	if((sItem->mainItem != NULL) && sItem->suspect->m_isHostile)
+	if((sItem->mainItem != NULL) && sItem->suspect->GetIsHostile())
 	{
 		sItem->mainItem->setText(str);
 		sItem->mainItem->setForeground(brush);
@@ -701,7 +701,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.hostileList->count(); i++)
 			{
 				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
+				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
 					break;
 			}
 		}
@@ -720,7 +720,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		ui.hostileList->removeItemWidget(sItem->mainItem);
 	}
 	//If the mainItem doesn't exist and suspect is hostile
-	else if(sItem->suspect->m_isHostile)
+	else if(sItem->suspect->GetIsHostile())
 	{
 		//Create the Suspect in list with info set alignment and color
 		sItem->mainItem = new QListWidgetItem(str,0);
@@ -735,7 +735,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			for(i = 0; i < ui.hostileList->count(); i++)
 			{
 				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->m_classification < sItem->suspect->m_classification)
+				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
 					break;
 			}
 		}
@@ -753,15 +753,15 @@ void NovaGUI::UpdateSuspectWidgets()
 
 	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		if(it->second.suspect->m_isHostile)
+		if(it->second.suspect->GetIsHostile())
 		{
-			hostileAcc += it->second.suspect->m_classification;
-			totalAcc += it->second.suspect->m_classification;
+			hostileAcc += it->second.suspect->GetClassification();
+			totalAcc += it->second.suspect->GetClassification();
 		}
 		else
 		{
-			benignAcc += 1-it->second.suspect->m_classification;
-			totalAcc += 1-it->second.suspect->m_classification;
+			benignAcc += 1-it->second.suspect->GetClassification();
+			totalAcc += 1-it->second.suspect->GetClassification();
 		}
 	}
 
@@ -1396,7 +1396,7 @@ void *NovadListenLoop(void *ptr)
 {
 	while(true)
 	{
-		((NovaGUI*)ptr)->ReceiveSuspectFromNovad(NovadInSocket);
+		((NovaGUI*)ptr)->ReceiveSuspectFromNovad(NovadOutSocket);
 	}
 	return NULL;
 }
@@ -1503,44 +1503,44 @@ void InitSocketAddresses()
 	string key = NOVAD_IN_FILENAME;
 	key = homePath + key;
 	//Builds the address
-	NovadInAddress.sun_family = AF_UNIX;
-	strcpy(NovadInAddress.sun_path, key.c_str());
-	unlink(NovadInAddress.sun_path);
+	NovadOutAddress.sun_family = AF_UNIX;
+	strcpy(NovadOutAddress.sun_path, key.c_str());
+	unlink(NovadOutAddress.sun_path);
 
 	//CE OUT -------------------------------------------------
 	//Builds the key path
 	key = NOVAD_OUT_FILENAME;
 	key = homePath + key;
 	//Builds the address
-	NovadOutAddress.sun_family = AF_UNIX;
-	strcpy(NovadOutAddress.sun_path, key.c_str());
+	NovadInAddress.sun_family = AF_UNIX;
+	strcpy(NovadInAddress.sun_path, key.c_str());
 }
 
 void SendToNovad(u_char * data, int size)
 {
 	//Opens the socket
-	if ((NovadOutSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((NovadInSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadOutSocket);
+		close(NovadInSocket);
 		exit(EXIT_FAILURE);
 	}
 	//Sends the message
-	len = strlen(NovadOutAddress.sun_path) + sizeof(NovadOutAddress.sun_family);
-	if (connect(NovadOutSocket, (struct sockaddr *)&NovadOutAddress, len) == -1)
+	len = strlen(NovadInAddress.sun_path) + sizeof(NovadInAddress.sun_family);
+	if (connect(NovadInSocket, (struct sockaddr *)&NovadInAddress, len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadOutSocket);
+		close(NovadInSocket);
 		return;
 	}
 
-	else if (send(NovadOutSocket, data, size, 0) == -1)
+	else if (send(NovadInSocket, data, size, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadOutSocket);
+		close(NovadInSocket);
 		return;
 	}
-	close(NovadOutSocket);
+	close(NovadInSocket);
 }
 
 void CloseSocket(int sock)

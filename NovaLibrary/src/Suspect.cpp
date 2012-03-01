@@ -28,6 +28,7 @@ namespace Nova{
 Suspect::Suspect()
 {
 	pthread_rwlock_init(&m_lock, NULL);
+	pthread_rwlock_wrlock(&m_lock);
 	m_owner = 0;
 	m_hasOwner = false;
 	m_IpAddress.s_addr = 0;
@@ -45,23 +46,27 @@ Suspect::Suspect()
 
 	for(int i = 0; i < DIM; i++)
 		m_featureAccuracy[i] = 0;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 
 Suspect::~Suspect()
 {
-	//Lock the suspect before deletion to prevent further access
-	WrlockSuspect();
 	if(m_annPoint != NULL)
 	{
 		annDeallocPt(m_annPoint);
 	}
+	pthread_rwlock_destroy(&m_lock);
+	delete m_features.m_unsentData;
 }
 
 
 Suspect::Suspect(Packet packet)
 {
 	pthread_rwlock_init(&m_lock, NULL);
+	pthread_rwlock_wrlock(&m_lock);
+	m_owner = 0;
+	m_hasOwner = false;
 	m_IpAddress = packet.ip_hdr.ip_src;
 	m_hostileNeighbors = 0;
 	m_classification = -1;
@@ -73,10 +78,11 @@ Suspect::Suspect(Packet packet)
 	m_features.m_unsentData = new FeatureSet();
 	m_annPoint = NULL;
 	m_flaggedByAlarm = false;
-	AddEvidence(packet);
 
 	for(int i = 0; i < DIM; i++)
 		m_featureAccuracy[i] = 0;
+	pthread_rwlock_unlock(&m_lock);
+	AddEvidence(packet);
 }
 
 
@@ -156,6 +162,7 @@ void Suspect::AddEvidence(Packet packet)
 	WrlockSuspect();
 	m_evidence.push_back(packet);
 	m_needsFeatureUpdate = true;
+	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 }
 
@@ -306,30 +313,44 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 
-
 	return offset;
 }
 
 //Returns a copy of the suspects in_addr.s_addr, must not be locked or is locked by the owner
-//Returns: Suspect's in_addr.s_addr or 0 on failure
+//Returns: Suspect's in_addr.s_addr
 in_addr_t Suspect::GetIpAddress() //TODO
 {
 	RdlockSuspect();
 	in_addr_t ret = m_IpAddress.s_addr;
 	UnlockSuspect();
 	return ret;
-
 }
+
 //Sets the suspects in_addr, must have the lock to perform this operation
-//Returns: 0 on success
 void Suspect::SetIpAddress(in_addr_t ip) //TODO
 {
 	WrlockSuspect();
 	m_IpAddress.s_addr = ip;
 	UnlockSuspect();
-
 }
 
+//Returns a copy of the suspects in_addr.s_addr, must not be locked or is locked by the owner
+//Returns: Suspect's in_addr
+in_addr Suspect::GetInAddr() //TODO
+{
+	RdlockSuspect();
+	in_addr ret = m_IpAddress;
+	UnlockSuspect();
+	return ret;
+}
+
+//Sets the suspects in_addr, must have the lock to perform this operation
+void Suspect::SetInAddr(in_addr in) //TODO
+{
+	WrlockSuspect();
+	m_IpAddress = in;
+	UnlockSuspect();
+}
 
 //Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
 // Returns -1 on failure
@@ -339,7 +360,6 @@ double Suspect::GetClassification() //TODO
 	double ret = m_classification;
 	UnlockSuspect();
 	return ret;
-
 }
 
 //Sets the suspect's classification, must have the lock to perform this operation
@@ -349,7 +369,6 @@ void Suspect::SetClassification(double n) //TODO
 	WrlockSuspect();
 	m_classification = n;
 	UnlockSuspect();
-
 }
 
 
@@ -360,7 +379,6 @@ int Suspect::GetHostileNeighbors() //TODO
 	int ret = m_hostileNeighbors;
 	UnlockSuspect();
 	return ret;
-
 }
 //Sets the number of hostile neighbors, must have the lock to perform this operation
 void Suspect::SetHostileNeighbors(int i) //TODO
@@ -375,8 +393,9 @@ void Suspect::SetHostileNeighbors(int i) //TODO
 bool Suspect::GetIsHostile() //TODO
 {
 	RdlockSuspect();
-	return m_isHostile;
+	bool ret = m_isHostile;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the hostility bool of the suspect, must have the lock to perform this operation
 void Suspect::SetIsHostile(bool b) //TODO
@@ -391,8 +410,9 @@ void Suspect::SetIsHostile(bool b) //TODO
 bool Suspect::GetNeedsClassificationUpdate() //TODO
 {
 	RdlockSuspect();
-	return m_needsClassificationUpdate;
+	bool ret = m_needsClassificationUpdate;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the needs classification bool, must have the lock to perform this operation
 void Suspect::SetNeedsClassificationUpdate(bool b) //TODO
@@ -407,8 +427,9 @@ void Suspect::SetNeedsClassificationUpdate(bool b) //TODO
 bool Suspect::GetNeedsFeatureUpdate() //TODO
 {
 	RdlockSuspect();
-	return m_needsFeatureUpdate;
+	bool ret = m_needsFeatureUpdate;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the neeeds feature update bool, must have the lock to perform this operation
 void Suspect::SetNeedsFeatureUpdate(bool b) //TODO
@@ -423,8 +444,9 @@ void Suspect::SetNeedsFeatureUpdate(bool b) //TODO
 bool Suspect::GetFlaggedByAlarm() //TODO
 {
 	RdlockSuspect();
-	return m_flaggedByAlarm;
+	bool ret = m_flaggedByAlarm;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the flagged by silent alarm bool, must have the lock to perform this operation
 void Suspect::SetFlaggedByAlarm(bool b) //TODO
@@ -439,8 +461,9 @@ void Suspect::SetFlaggedByAlarm(bool b) //TODO
 bool Suspect::GetIsLive() //TODO
 {
 	RdlockSuspect();
-	return m_isLive;
+	bool ret = m_isLive;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the 'from live capture' bool, must have the lock to perform this operation
 void Suspect::SetIsLive(bool b) //TODO
@@ -559,13 +582,17 @@ bool Suspect::HasOwner()
 
 //Sets the pthread_t 'owner'
 //		tid: unique thread identifier retrieved from pthread_self();
-void Suspect::SetOwner(pthread_t tid)
+// Returns: (0) on Success or (-1) if the suspect already has another owner
+int Suspect::SetOwner(pthread_t tid)
 {
+	if(HasOwner() && !pthread_equal(m_owner, pthread_self()))
+		return  -1;
 	WrlockSuspect();
 	m_hasOwner = true;
 	m_owner = tid;
 	UnlockSuspect();
 	RdlockSuspect();
+	return 0;
 }
 
 //Flags the suspect as no longer 'checked out'

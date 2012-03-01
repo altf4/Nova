@@ -43,7 +43,7 @@ namespace Nova{
 
 // Start routine for the GUI command listening thread
 //		ptr - Required for pthread start routines
-void *CE_GUILoop(void *ptr);
+void *GUIListenLoop(void *ptr);
 
 // Start routine for a separate thread which infinite loops, periodically
 // updating all the classifications for all the current suspects
@@ -102,7 +102,7 @@ bool Start_Packet_Handler();
 
 // Receives input commands from the GUI
 // This is a blocking function. If nothing is received, then wait on this thread for an answer
-void CEReceiveGUICommand();
+void ReceiveGUICommand();
 
 // Sends output to the UI
 //	suspect - suspect to serialize GUI data and send
