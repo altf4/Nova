@@ -849,28 +849,28 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 	struct stat fileAttr;
 	char buffer[256];
 
-	// Are we in the nova group? Run 'groups' and parse output
-	string groupsResult = "";
-	FILE* pipe = popen("groups", "r");
-    while(!feof(pipe))
-        if(fgets(buffer, 256, pipe) != NULL)
-        	groupsResult += buffer;
-
-    stringstream ss(groupsResult);
-    string group;
-    bool found = false;
-    while (ss >> group)
-    	if (group == "nova")
-    		found = true;
-
-    // Add them to the group if need be
-    if (!found)
-		if (!AddUserToGroup())
-			returnValue = false;
-
     // Does ~/.nova exist?
 	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
+		// Are we in the nova group? Run 'groups' and parse output
+		string groupsResult = "";
+		FILE* pipe = popen("groups", "r");
+	    while(!feof(pipe))
+	        if(fgets(buffer, 256, pipe) != NULL)
+	        	groupsResult += buffer;
+
+	    stringstream ss(groupsResult);
+	    string group;
+	    bool found = false;
+	    while (ss >> group)
+	    	if (group == "nova")
+	    		found = true;
+
+	    // Add them to the group if need be
+	    if (!found)
+			if (!AddUserToGroup())
+				returnValue = false;
+
 		// Do all of the important files exist?
 		for (uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
 		{

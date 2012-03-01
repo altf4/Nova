@@ -61,8 +61,7 @@ class NovaGUI : public QMainWindow
 public:
 
     bool m_isHelpUp;
-    HoneydConfiguration honeydConfig;
-
+    HoneydConfiguration *honeydConfig;
     NOVAConfiguration *configuration;
 
     DialogPrompter *prompter;
