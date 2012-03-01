@@ -20,7 +20,7 @@
 #ifndef NOVAUTIL_H_
 #define NOVAUTIL_H_
 
-#include "GUIMsg.h"
+#include "messages/UI_Message.h"
 #include "HashMapStructs.h"
 #include <string>
 #include <vector>

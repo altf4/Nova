@@ -1702,7 +1702,7 @@ void Nova::ReceiveGUICommand()
     struct sockaddr_un msgRemote;
 	int socketSize, msgSocket;
 	int bytesRead;
-	GUIMsg msg = GUIMsg();
+	UI_Message msg = UI_Message();
 	in_addr_t suspectKey = 0;
 	u_char msgBuffer[MAX_GUIMSG_SIZE];
 

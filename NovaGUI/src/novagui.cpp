@@ -42,7 +42,7 @@ struct sockaddr_un NovadOutAddress, NovadInAddress;
 int len;
 
 //GUI to Nova message variables
-GUIMsg message = GUIMsg();
+UI_Message message = UI_Message();
 u_char msgBuffer[MAX_GUIMSG_SIZE];
 int msgLen = 0;
 

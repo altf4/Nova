@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : GUIMsg.h
+// Name        : UI_Message.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
 // Description : Message object for GUI communication with Nova processes
 //============================================================================/*
 
-#ifndef GUIMSG_H_
-#define GUIMSG_H_
+#ifndef UI_Message_H_
+#define UI_Message_H_
 
 #include <string>
 #include <sys/types.h>
@@ -26,11 +26,11 @@
 //Maximum number of characters an argument can have.
 #define MAX_VAL_SIZE 255
 
-//Default GUIMsg construction val, doubles as error flag.
+//Default UI_Message construction val, doubles as error flag.
 #define NONE ""
 
 //The different message types
-enum GUIMsgType
+enum UI_MessageType
 {
 	EXIT = 'e',
 	CLEAR_ALL = 'c',
@@ -44,7 +44,7 @@ using namespace std;
 
 namespace Nova{
 
-class GUIMsg
+class UI_Message
 {
 	public:
 
@@ -53,30 +53,30 @@ class GUIMsg
 	//********************
 
 	// For instantiation only, use other constructors if message is known.
-	GUIMsg();
+	UI_Message();
 
 	// Constructor for messages that have no arguments
 	//		type - type of message to create
-	GUIMsg(GUIMsgType type);
+	UI_Message(UI_MessageType type);
 
 	// Constructor for messages that have an argument
 	//		type - type of message to create
 	//		val - argument to send along with the message
-	GUIMsg(GUIMsgType type, string val);
+	UI_Message(UI_MessageType type, string val);
 
 	// Sets the message
 	//		type - type of message to create
 	// Returns: true if successful
-	bool SetMessage(GUIMsgType type);
+	bool SetMessage(UI_MessageType type);
 
 	// Sets the message
 	//		type - type of message to create
 	//		val - argument to send along with the message
 	// Returns: true if successful
-	bool SetMessage(GUIMsgType type, string val);
+	bool SetMessage(UI_MessageType type, string val);
 
 	// Returns the message type
-	GUIMsgType GetType();
+	UI_MessageType GetType();
 
 	// Returns the message argument
 	string GetValue();
@@ -98,10 +98,10 @@ class GUIMsg
 	//********************
 
 	// The message type
-	GUIMsgType m_type;
+	UI_MessageType m_type;
 
 	// The argument if applicable.
 	string m_value;
 };
 }
-#endif /* GUIMSG_H_ */
+#endif /* UI_Message_H_ */

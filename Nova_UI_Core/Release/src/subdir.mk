@@ -4,20 +4,26 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/StatusQueries.cpp 
+../src/NovadControl.cpp \
+../src/StatusQueries.cpp \
+../src/VendorMacDb.cpp 
 
 OBJS += \
-./src/StatusQueries.o 
+./src/NovadControl.o \
+./src/StatusQueries.o \
+./src/VendorMacDb.o 
 
 CPP_DEPS += \
-./src/StatusQueries.d 
+./src/NovadControl.d \
+./src/StatusQueries.d \
+./src/VendorMacDb.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I../../NovaLibrary/src/ -O3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

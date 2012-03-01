@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : GUIMsg.cpp
+// Name        : UI_Message.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 // Description : Message object for GUI communication with Nova processes
 //============================================================================/*
 
-#include "GUIMsg.h"
+#include "UI_Message.h"
 #include <sys/un.h>
 
 
@@ -25,14 +25,14 @@ using namespace std;
 namespace Nova
 {
 
-GUIMsg::GUIMsg()
+UI_Message::UI_Message()
 {
 	m_type = INVALID;
 	m_value = NONE;
 }
 
 
-GUIMsg::GUIMsg(GUIMsgType t)
+UI_Message::UI_Message(UI_MessageType t)
 {
 	switch(t)
 	{
@@ -50,7 +50,7 @@ GUIMsg::GUIMsg(GUIMsgType t)
 }
 
 
-GUIMsg::GUIMsg(GUIMsgType t, string v)
+UI_Message::UI_Message(UI_MessageType t, string v)
 {
 	switch(t)
 	{
@@ -84,7 +84,7 @@ GUIMsg::GUIMsg(GUIMsgType t, string v)
 }
 
 
-bool GUIMsg::SetMessage(GUIMsgType t)
+bool UI_Message::SetMessage(UI_MessageType t)
 {
 	//Only sets if the type is recognized and requires no argument
 	switch(t)
@@ -102,7 +102,7 @@ bool GUIMsg::SetMessage(GUIMsgType t)
 }
 
 
-bool GUIMsg::SetMessage(GUIMsgType t, string v)
+bool UI_Message::SetMessage(UI_MessageType t, string v)
 {
 	switch(t)
 	{
@@ -130,19 +130,19 @@ bool GUIMsg::SetMessage(GUIMsgType t, string v)
 }
 
 
-GUIMsgType GUIMsg::GetType()
+UI_MessageType UI_Message::GetType()
 {
 	return m_type;
 }
 
 
-string GUIMsg::GetValue()
+string UI_Message::GetValue()
 {
 	return m_value;
 }
 
 
-uint GUIMsg::SerialzeMessage(u_char * buf)
+uint UI_Message::SerialzeMessage(u_char * buf)
 {
 	//Only works if a valid message
 	if(m_type != INVALID)
@@ -172,7 +172,7 @@ uint GUIMsg::SerialzeMessage(u_char * buf)
 }
 
 
-uint GUIMsg::DeserializeMessage(u_char * buf)
+uint UI_Message::DeserializeMessage(u_char * buf)
 {
 	uint offset = 0;
 	char c[MAX_VAL_SIZE];
