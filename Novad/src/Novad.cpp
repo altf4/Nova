@@ -52,9 +52,6 @@ SuspectHashTable suspects;
 SuspectHashTable suspectsSinceLastSave;
 static TCPSessionHashTable SessionTable;
 
-pthread_rwlock_t sessionLock;
-pthread_rwlock_t suspectTableLock;
-
 //NOT normalized
 vector <Point*> dataPtsWithClass;
 static struct sockaddr_in hostAddr;
@@ -63,7 +60,7 @@ static struct sockaddr_in hostAddr;
 struct sockaddr_un remote;
 struct sockaddr* remoteSockAddr = (struct sockaddr *)&remote;
 
-int CE_IPCsock;
+int IPCsock;
 
 //** Silent Alarm **
 struct sockaddr_un alarmRemote;
@@ -153,8 +150,8 @@ int watch;
 bool usePcapFile;
 
 pthread_t TCP_timeout_thread;
-
-pthread_t CE_Thread, LTM_Thread, HS_Thread;
+pthread_rwlock_t sessionLock;
+pthread_rwlock_t suspectTableLock;
 
 int main()
 {
@@ -203,7 +200,7 @@ int main()
 
 	Reload();
 
-	pthread_create(&GUIListenThread, NULL, CE_GUILoop, NULL);
+	pthread_create(&GUIListenThread, NULL, GUIListenLoop, NULL);
 	//Are we Training or Classifying?
 	if(globalConfig->getIsTraining())
 	{
@@ -242,7 +239,7 @@ int main()
 
 	//Shouldn't get here!
 	logger->Log(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen, something went very wrong.")%__LINE__%__FILE__).str());
-	close(CE_IPCsock);
+	close(IPCsock);
 
 	return EXIT_FAILURE;
 }
@@ -392,7 +389,7 @@ void Nova::LoadStateFile()
 			suspectBytes += newSuspect->m_features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 			bytesSoFar += suspectBytes;
 
-			if (suspects[newSuspect->GetIpAddress()] == NULL)
+			if(suspects.find(newSuspect->GetIpAddress()) == suspects.end())
 			{
 				suspects[newSuspect->GetIpAddress()] = newSuspect;
 				suspects[newSuspect->GetIpAddress()]->SetNeedsFeatureUpdate(true);
@@ -557,7 +554,7 @@ void Nova::Reload()
 		maxFeatureValues[i] = 0;
 
 	for (int i = 0; i < DIM; i++)
-		minFeatureValues[i] = -1;
+		minFeatureValues[i] = 0;
 
 	for (int i = 0; i < DIM; i++)
 		meanFeatureValues[i] = 0;
@@ -587,7 +584,7 @@ void Nova::Reload()
 }
 
 //Infinite loop that recieves messages from the GUI
-void *Nova::CE_GUILoop(void *ptr)
+void *Nova::GUIListenLoop(void *ptr)
 {
 	struct sockaddr_un GUIAddress;
 	int len;
@@ -627,7 +624,7 @@ void *Nova::CE_GUILoop(void *ptr)
 	}
 	while(true)
 	{
-		CEReceiveGUICommand();
+		ReceiveGUICommand();
 	}
 }
 
@@ -667,10 +664,6 @@ void *Nova::ClassificationLoop(void *ptr)
 		//Calculate the normalized feature sets, actually used by ANN
 		//	Writes into Suspect ANNPoints
 		NormalizeDataPoints();
-
-
-		pthread_rwlock_unlock(&suspectTableLock);
-		pthread_rwlock_rdlock(&suspectTableLock);
 
 		//Perform classification on each suspect
 		// XXX 'suspects' SuspectTableIterator todo
@@ -1017,8 +1010,6 @@ void Nova::Classify(Suspect *suspect)
 	for (int j = 0; j < DIM; j++)
 				suspect->m_featureAccuracy[j] /= k;
 
-	pthread_rwlock_unlock(&suspectTableLock);
-	pthread_rwlock_wrlock(&suspectTableLock);
 
 	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM )));
 
@@ -1041,8 +1032,6 @@ void Nova::Classify(Suspect *suspect)
 
     annClose();
 	suspect->SetNeedsClassificationUpdate(false);
-	pthread_rwlock_unlock(&suspectTableLock);
-	pthread_rwlock_rdlock(&suspectTableLock);
 }
 
 
@@ -1061,7 +1050,7 @@ void Nova::NormalizeDataPoints()
 					//For proper normalization the upper bound for a feature is the max value of the data.
 					it->second->m_features.m_features[i] = maxFeatureValues[ai];
 				}
-				else if (it->second->m_features.m_features[i] > maxFeatureValues[ai])
+				else if (it->second->m_features.m_features[i] < minFeatureValues[ai])
 				{
 					it->second->m_features.m_features[i] = minFeatureValues[ai];
 				}
@@ -1219,9 +1208,6 @@ void Nova::LoadDataPointsFromFile(string inFilePath)
 						if(temp > maxFeatureValues[actualDimension])
 							maxFeatureValues[actualDimension] = temp;
 
-						if(minFeatureValues[actualDimension] == -1 || temp < minFeatureValues[actualDimension])
-							minFeatureValues[actualDimension] = temp;
-
 						meanFeatureValues[actualDimension] += temp;
 
 						actualDimension++;
@@ -1267,8 +1253,6 @@ void Nova::LoadDataPointsFromFile(string inFilePath)
 			normalizedDataPts,					// the data points
 					nPts,						// number of points
 					enabledFeatures);						// dimension of space
-
-	WriteDataPointsToFile("Data/normalizedPoints", kdTree);
 }
 
 double Nova::Normalize(normalizationType type, double value, double min, double max)
@@ -1285,7 +1269,10 @@ double Nova::Normalize(normalizationType type, double value, double min, double 
 		}
 		case LOGARITHMIC:
 		{
-			return (log(value - min + 1)) / (log(max - min + 1));
+			if(!value || !max)
+				return 0;
+			else return(log(value)/log(max));
+			//return (log(value - min + 1)) / (log(max - min + 1));
 		}
 		case NONORM:
 		{
@@ -1634,7 +1621,11 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 		//Prepare Packet structure
 		packet_info.ip_hdr = *ip_hdr;
 		packet_info.pcap_header = *pkthdr;
-		packet_info.fromHaystack = FROM_HAYSTACK_DP;
+		//If this is to the host
+		if(packet_info.ip_hdr.ip_dst.s_addr == hostAddr.sin_addr.s_addr)
+			packet_info.fromHaystack = FROM_LTM;
+		else
+			packet_info.fromHaystack = FROM_HAYSTACK_DP;
 
 		//IF UDP or ICMP
 		if(ip_hdr->ip_p == 17 )
@@ -1706,7 +1697,7 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 }
 
 
-void Nova::CEReceiveGUICommand()
+void Nova::ReceiveGUICommand()
 {
     struct sockaddr_un msgRemote;
 	int socketSize, msgSocket;
@@ -2041,17 +2032,20 @@ void *Nova::TCPTimeout(void *ptr)
 					{
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							SessionTable[it->first].session[p].fromHaystack = FROM_HAYSTACK_DP;
+							pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
+							pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						// Allow for continuous classification
 						if(!globalConfig->getClassificationTimeout())
 						{
+							pthread_rwlock_unlock(&sessionLock);
 							if (!globalConfig->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
+							pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						SessionTable[it->first].session.clear();
@@ -2062,17 +2056,20 @@ void *Nova::TCPTimeout(void *ptr)
 					{
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							SessionTable[it->first].session[p].fromHaystack = FROM_HAYSTACK_DP;
+							pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
+							pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						// Allow for continuous classification
 						if(!globalConfig->getClassificationTimeout())
 						{
+							pthread_rwlock_unlock(&sessionLock);
 							if (!globalConfig->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
+							pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						SessionTable[it->first].session.clear();

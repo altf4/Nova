@@ -37,8 +37,8 @@ using namespace std;
 using namespace Nova;
 
 //Socket communication variables
-int NovadInSocket, NovadOutSocket;
-struct sockaddr_un NovadInAddress, NovadOutAddress;
+int NovadOutSocket, NovadInSocket;
+struct sockaddr_un NovadOutAddress, NovadInAddress;
 int len;
 
 //GUI to Nova message variables
@@ -191,26 +191,26 @@ NovaGUI::NovaGUI(QWidget *parent)
 	pthread_t CEListenThread;
 	pthread_t StatusUpdateThread;
 
-	if((NovadInSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	if((NovadOutSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadInSocket);
+		CloseSocket(NovadOutSocket);
 		exit(EXIT_FAILURE);
 	}
 
-	len = strlen(NovadInAddress.sun_path) + sizeof(NovadInAddress.sun_family);
+	len = strlen(NovadOutAddress.sun_path) + sizeof(NovadOutAddress.sun_family);
 
-	if(bind(NovadInSocket,(struct sockaddr *)&NovadInAddress,len) == -1)
+	if(bind(NovadOutSocket,(struct sockaddr *)&NovadOutAddress,len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadInSocket);
+		CloseSocket(NovadOutSocket);
 		exit(EXIT_FAILURE);
 	}
 
-	if(listen(NovadInSocket, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(NovadOutSocket, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadInSocket);
+		CloseSocket(NovadOutSocket);
 		exit(EXIT_FAILURE);
 	}
 
@@ -2456,7 +2456,7 @@ void *NovadListenLoop(void *ptr)
 {
 	while(true)
 	{
-		((NovaGUI*)ptr)->ReceiveSuspectFromNovad(NovadInSocket);
+		((NovaGUI*)ptr)->ReceiveSuspectFromNovad(NovadOutSocket);
 	}
 	return NULL;
 }
@@ -2563,44 +2563,44 @@ void InitSocketAddresses()
 	string key = NOVAD_IN_FILENAME;
 	key = homePath + key;
 	//Builds the address
-	NovadInAddress.sun_family = AF_UNIX;
-	strcpy(NovadInAddress.sun_path, key.c_str());
-	unlink(NovadInAddress.sun_path);
+	NovadOutAddress.sun_family = AF_UNIX;
+	strcpy(NovadOutAddress.sun_path, key.c_str());
+	unlink(NovadOutAddress.sun_path);
 
 	//CE OUT -------------------------------------------------
 	//Builds the key path
 	key = NOVAD_OUT_FILENAME;
 	key = homePath + key;
 	//Builds the address
-	NovadOutAddress.sun_family = AF_UNIX;
-	strcpy(NovadOutAddress.sun_path, key.c_str());
+	NovadInAddress.sun_family = AF_UNIX;
+	strcpy(NovadInAddress.sun_path, key.c_str());
 }
 
 void SendToNovad(u_char * data, int size)
 {
 	//Opens the socket
-	if ((NovadOutSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((NovadInSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadOutSocket);
+		close(NovadInSocket);
 		exit(EXIT_FAILURE);
 	}
 	//Sends the message
-	len = strlen(NovadOutAddress.sun_path) + sizeof(NovadOutAddress.sun_family);
-	if (connect(NovadOutSocket, (struct sockaddr *)&NovadOutAddress, len) == -1)
+	len = strlen(NovadInAddress.sun_path) + sizeof(NovadInAddress.sun_family);
+	if (connect(NovadInSocket, (struct sockaddr *)&NovadInAddress, len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadOutSocket);
+		close(NovadInSocket);
 		return;
 	}
 
-	else if (send(NovadOutSocket, data, size, 0) == -1)
+	else if (send(NovadInSocket, data, size, 0) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadOutSocket);
+		close(NovadInSocket);
 		return;
 	}
-	close(NovadOutSocket);
+	close(NovadInSocket);
 }
 
 void CloseSocket(int sock)

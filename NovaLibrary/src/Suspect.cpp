@@ -52,12 +52,12 @@ Suspect::Suspect()
 
 Suspect::~Suspect()
 {
-	//Lock the suspect before deletion to prevent further access
-	WrlockSuspect();
 	if(m_annPoint != NULL)
 	{
 		annDeallocPt(m_annPoint);
 	}
+	pthread_rwlock_destroy(&m_lock);
+	delete m_features.m_unsentData;
 }
 
 
@@ -78,11 +78,11 @@ Suspect::Suspect(Packet packet)
 	m_features.m_unsentData = new FeatureSet();
 	m_annPoint = NULL;
 	m_flaggedByAlarm = false;
-	AddEvidence(packet);
 
 	for(int i = 0; i < DIM; i++)
 		m_featureAccuracy[i] = 0;
 	pthread_rwlock_unlock(&m_lock);
+	AddEvidence(packet);
 }
 
 
@@ -162,6 +162,7 @@ void Suspect::AddEvidence(Packet packet)
 	WrlockSuspect();
 	m_evidence.push_back(packet);
 	m_needsFeatureUpdate = true;
+	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 }
 
@@ -392,8 +393,9 @@ void Suspect::SetHostileNeighbors(int i) //TODO
 bool Suspect::GetIsHostile() //TODO
 {
 	RdlockSuspect();
-	return m_isHostile;
+	bool ret = m_isHostile;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the hostility bool of the suspect, must have the lock to perform this operation
 void Suspect::SetIsHostile(bool b) //TODO
@@ -408,8 +410,9 @@ void Suspect::SetIsHostile(bool b) //TODO
 bool Suspect::GetNeedsClassificationUpdate() //TODO
 {
 	RdlockSuspect();
-	return m_needsClassificationUpdate;
+	bool ret = m_needsClassificationUpdate;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the needs classification bool, must have the lock to perform this operation
 void Suspect::SetNeedsClassificationUpdate(bool b) //TODO
@@ -424,8 +427,9 @@ void Suspect::SetNeedsClassificationUpdate(bool b) //TODO
 bool Suspect::GetNeedsFeatureUpdate() //TODO
 {
 	RdlockSuspect();
-	return m_needsFeatureUpdate;
+	bool ret = m_needsFeatureUpdate;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the neeeds feature update bool, must have the lock to perform this operation
 void Suspect::SetNeedsFeatureUpdate(bool b) //TODO
@@ -440,8 +444,9 @@ void Suspect::SetNeedsFeatureUpdate(bool b) //TODO
 bool Suspect::GetFlaggedByAlarm() //TODO
 {
 	RdlockSuspect();
-	return m_flaggedByAlarm;
+	bool ret = m_flaggedByAlarm;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the flagged by silent alarm bool, must have the lock to perform this operation
 void Suspect::SetFlaggedByAlarm(bool b) //TODO
@@ -456,8 +461,9 @@ void Suspect::SetFlaggedByAlarm(bool b) //TODO
 bool Suspect::GetIsLive() //TODO
 {
 	RdlockSuspect();
-	return m_isLive;
+	bool ret = m_isLive;
 	UnlockSuspect();
+	return ret;
 }
 //Sets the 'from live capture' bool, must have the lock to perform this operation
 void Suspect::SetIsLive(bool b) //TODO

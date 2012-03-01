@@ -55,9 +55,9 @@
 #define BROADCAST_DATA false
 
 //From the Haystack or Doppelganger Module
-#define FROM_HAYSTACK_DP	true
+#define FROM_HAYSTACK_DP true
 //From the Local Traffic Monitor
-#define FROM_LTM			0
+#define FROM_LTM false
 
 ///	Filename of the file to be used as an Classification Engine IPC key
 #define NOVAD_IN_FILENAME "/keys/CEKey"

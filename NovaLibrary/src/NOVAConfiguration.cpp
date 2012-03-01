@@ -42,8 +42,6 @@ const string NOVAConfiguration::m_prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG
 const string NOVAConfiguration::m_requiredFiles[] = {
 		"/settings",
 		"/Config/NOVAConfig.txt",
-		"/Data/data.txt",
-
 		"/scripts.xml",
 		"/templates/ports.xml",
 		"/templates/profiles.xml",
