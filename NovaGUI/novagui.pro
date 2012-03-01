@@ -3,8 +3,7 @@ TARGET = NovaGUI
 QT += core \
     gui
 HEADERS += src/HoneydConfiguration.h \
-    src/VendorMacDb.h \
-    src/subnetPopup.h \
+	src/subnetPopup.h \
     src/NovaGuiTypes.h \
     src/loggerwindow.h \
     src/classifierPrompt.h \
@@ -18,8 +17,7 @@ HEADERS += src/HoneydConfiguration.h \
     src/novagui.h \
     src/run_popup.h
 SOURCES += src/HoneydConfiguration.cpp \
-    src/VendorMacDb.cpp \
-    src/subnetPopup.cpp \
+	src/subnetPopup.cpp \
     src/loggerwindow.cpp \
     src/classifierPrompt.cpp \
     src/nova_manual.cpp \
@@ -42,8 +40,11 @@ FORMS += UI/subnetPopup.ui \
     UI/run_popup.ui
 RESOURCES += 
 INCLUDEPATH += ../NovaLibrary/src
+INCLUDEPATH += ../Nova_UI_Core/src
 CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
 else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
+CONFIG(debug, debug|release):LIBS += ../Nova_UI_Core/Debug/libNova_UI_Core.so
+else:LIBS += ../Nova_UI_Core/Release/libNova_UI_Core.so
 LIBS += /usr/lib/libboost_serialization.a \
     /usr/lib/libapr-1.a \
     /usr/lib/libann.a \

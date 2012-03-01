@@ -5,15 +5,18 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/NovadControl.cpp \
-../src/StatusQueries.cpp 
+../src/StatusQueries.cpp \
+../src/VendorMacDb.cpp 
 
 OBJS += \
 ./src/NovadControl.o \
-./src/StatusQueries.o 
+./src/StatusQueries.o \
+./src/VendorMacDb.o 
 
 CPP_DEPS += \
 ./src/NovadControl.d \
-./src/StatusQueries.d 
+./src/StatusQueries.d \
+./src/VendorMacDb.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

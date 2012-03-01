@@ -13,9 +13,9 @@ release:
 	
 #Debug target
 debug:
-	$(MAKE) -C NovaLibrary/Release
-	$(MAKE) -C Nova_UI_Core/Release
-	$(MAKE) -C Novad/Release
+	$(MAKE) -C NovaLibrary/Debug
+	$(MAKE) -C Nova_UI_Core/Debug
+	$(MAKE) -C Novad/Debug
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 	
