@@ -1241,15 +1241,15 @@ void NovaConfig::PushData()
 	CleanPorts();
 
 	//Copies the tables
-	m_mainwindow->honeydConfig.SetScripts(scripts);
-	m_mainwindow->honeydConfig.SetProfiles(profiles);
-	m_mainwindow->honeydConfig.SetSubnets(subnets);
-	m_mainwindow->honeydConfig.SetNodes(nodes);
-	m_mainwindow->honeydConfig.SetPorts(ports);
+	m_mainwindow->honeydConfig->SetScripts(scripts);
+	m_mainwindow->honeydConfig->SetProfiles(profiles);
+	m_mainwindow->honeydConfig->SetSubnets(subnets);
+	m_mainwindow->honeydConfig->SetNodes(nodes);
+	m_mainwindow->honeydConfig->SetPorts(ports);
 
 	//Saves the current configuration to XML files
-	m_mainwindow->honeydConfig.SaveAllTemplates();
-	m_mainwindow->honeydConfig.WriteHoneydConfiguration();
+	m_mainwindow->honeydConfig->SaveAllTemplates();
+	m_mainwindow->honeydConfig->WriteHoneydConfiguration();
 }
 
 //Pulls the last stored configuration from novagui
@@ -1264,11 +1264,11 @@ void NovaConfig::PullData()
 	scripts.clear_no_resize();
 
 	//Copies the tables
-	scripts = m_mainwindow->honeydConfig.GetScripts();
-	subnets = m_mainwindow->honeydConfig.GetSubnets();
-	nodes = m_mainwindow->honeydConfig.GetNodes();
-	ports = m_mainwindow->honeydConfig.GetPorts();
-	profiles = m_mainwindow->honeydConfig.GetProfiles();
+	scripts = m_mainwindow->honeydConfig->GetScripts();
+	subnets = m_mainwindow->honeydConfig->GetSubnets();
+	nodes = m_mainwindow->honeydConfig->GetNodes();
+	ports = m_mainwindow->honeydConfig->GetPorts();
+	profiles = m_mainwindow->honeydConfig->GetProfiles();
 }
 
 //Attempts to use the same key previously used, if that key is no longer available
@@ -1502,7 +1502,7 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	//Reloads from NOVAConfig
 	LoadNovadPreferences();
 	//Has NovaGUI reload honeyd configuration from XML files
-	m_mainwindow->honeydConfig.LoadAllTemplates();
+	m_mainwindow->honeydConfig->LoadAllTemplates();
 	//Pulls honeyd configuration
 	PullData();
 	m_loading->lock();
