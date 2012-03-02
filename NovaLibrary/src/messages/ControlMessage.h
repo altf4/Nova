@@ -25,8 +25,9 @@
 
 #include "UI_Message.h"
 
-//Maximum number of characters an argument can have.
-#define MAX_PATH_SIZE 255
+//Maximum size of a linux file path
+#define MAX_PATH_SIZE 4096
+//Includes the UI_Message type and ControlType
 #define CONTROL_MSG_MIN_SIZE 2
 
 //The different message types
@@ -45,7 +46,8 @@ enum ControlType: char
 
 using namespace std;
 
-namespace Nova{
+namespace Nova
+{
 
 class ControlMessage : public UI_Message
 {
@@ -65,23 +67,19 @@ public:
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
-	char *Serialze(uint32_t *length);
+	char *Serialize(uint32_t *length);
 
-	enum ControlType controlType;
+	enum ControlType m_controlType;
 
 private:
-
-	//********************
-	//* Member Variables *
-	//********************
-
-	// The message type
-	ControlType m_controlType;
 
 	// The argument, if applicable.
 	char m_filePath[MAX_PATH_SIZE];
 
 	in_addr_t m_suspectAddress;
+
+	//Did the requested command succeed?
+	bool m_success;
 };
 }
 

@@ -53,7 +53,7 @@ public:
 	// Returns - true on successfully sending the object, false on error
 	static bool WriteMessage(UI_Message *message, int connectFD);
 
-	enum UI_MessageType messageType;
+	enum UI_MessageType m_messageType;
 
 protected:
 

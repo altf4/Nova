@@ -38,8 +38,8 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 	m_serializeError = false;
 
 	//Copy the message type
-	memcpy(&messageType, buffer, sizeof(messageType));
-	buffer += sizeof(messageType);
+	memcpy(&m_messageType, buffer, sizeof(m_messageType));
+	buffer += sizeof(m_messageType);
 
 	//Copy the control message type
 	memcpy(&m_controlType, buffer, sizeof(m_controlType));
@@ -49,18 +49,66 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 	{
 		case CONTROL_EXIT_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
 			break;
 		}
 		case CONTROL_EXIT_REPLY:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			memcpy(&m_success, buffer, sizeof(m_success));
+			buffer += sizeof(m_success);
+
 			break;
 		}
 		case CONTROL_CLEAR_ALL_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
 			break;
 		}
 		case CONTROL_CLEAR_ALL_REPLY:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			memcpy(&m_success, buffer, sizeof(m_success));
+			buffer += sizeof(m_success);
+
 			break;
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
@@ -90,127 +138,118 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 	}
 }
+char *ControlMessage::Serialize(uint32_t *length)
+{
+	char *buffer, *originalBuffer;
+	uint32_t messageSize;
 
+	switch(m_controlType)
+	{
+		case CONTROL_EXIT_REQUEST:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
 
-//ControlMessage::ControlMessage(ControlType t)
-//{
-//	switch(t)
-//	{
-//		case EXIT:
-//		case CLEAR_ALL:
-//		case RELOAD:
-//			m_controlType = t;
-//			break;
-//		//If type is unrecognized or requires an argument set the type to INVALID
-//		default:
-//			m_controlType = INVALID;
-//			break;
-//	}
-//	m_value = NONE;
-//}
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
 
+			break;
+		}
+		case CONTROL_EXIT_REPLY:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
 
-//ControlMessage::ControlMessage(ControlType t, string v)
-//{
-//	switch(t)
-//	{
-//		//Requires an argument, if it has none, set to INVALID.
-//		case CLEAR_SUSPECT:
-//		case WRITE_SUSPECTS:
-//			m_controlType = t;
-//			if(v.compare(NONE))
-//			{
-//				m_controlType = INVALID;
-//				m_value = NONE;
-//				break;
-//			}
-//			m_value = v;
-//			break;
-//
-//		//These don't require an argument so we ignore it
-//		case EXIT:
-//		case CLEAR_ALL:
-//		case RELOAD:
-//			m_controlType = t;
-//			m_value = NONE;
-//			break;
-//
-//		//If the message type is unrecognized
-//		default:
-//			m_controlType = INVALID;
-//			m_value = NONE;
-//			break;
-//	}
-//}
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_success, sizeof(m_success));
+			buffer += sizeof(m_success);
 
-//char *Serialze(uint32_t *length)
-//{
-//	//Only works if a valid message
-//	if(m_controlType != INVALID)
-//	{
-//		uint offset = 0;
-//		bzero(buf, 1+m_value.size()); //clear buffer for message
-//		memcpy(buf, &m_controlType, 1); //char is 1 byte
-//		offset++;
-//		switch(m_controlType)
-//		{
-//			//Only works if has an argument for types that need it
-//			case CLEAR_SUSPECT:
-//			case WRITE_SUSPECTS:
-//				if(m_value.compare(NONE))
-//				{
-//					strcpy((char*)buf+offset, m_value.c_str());
-//					offset += m_value.size();
-//					return offset;
-//				}
-//				bzero(buf, 1);
-//				return 0;
-//			default:
-//				return offset;
-//		}
-//	}
-//	return 0;
-//}
+			break;
+		}
+		case CONTROL_CLEAR_ALL_REQUEST:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
 
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
 
-//uint ControlMessage::DeserializeMessage(u_char * buf)
-//{
-//	uint offset = 0;
-//	char c[MAX_VAL_SIZE];
-//
-//	memcpy(&m_controlType, buf, 1); //char is 1 byte
-//	offset++;
-//	switch(m_controlType)
-//	{
-//		//If message that has an argument.
-//		case CLEAR_SUSPECT:
-//		case WRITE_SUSPECTS:
-//			strncpy(c, (char *)buf+offset, MAX_VAL_SIZE);
-//			m_value = c;
-//
-//			//If argument is present
-//			if(m_value.compare(NONE))
-//			{
-//				offset += m_value.size();
-//				return offset;
-//			}
-//
-//			//else no argument
-//			bzero(buf, 1);
-//			m_controlType = INVALID;
-//			return 0;
-//
-//		//If message with no argument
-//		case EXIT:
-//		case CLEAR_ALL:
-//		case RELOAD:
-//			return offset;
-//
-//		//if unrecognized msg
-//		default:
-//			bzero(buf, 1);
-//			return 0;
-//	}
-//}
+			break;
+		}
+		case CONTROL_CLEAR_ALL_REPLY:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_success, sizeof(m_success));
+			buffer += sizeof(m_success);
+
+			break;
+		}
+		case CONTROL_CLEAR_SUSPECT_REQUEST:
+		{
+			break;
+		}
+		case CONTROL_CLEAR_SUSPECT_REPLY:
+		{
+			break;
+		}
+		case CONTROL_INVALID:
+		{
+			break;
+		}
+		case CONTROL_WRITE_SUSPECTS:
+		{
+			break;
+		}
+		case CONTROL_RELOAD:
+		{
+			break;
+		}
+		default:
+		{
+			//Error
+			return NULL;
+		}
+	}
+
+	*length = messageSize;
+	return originalBuffer;
+}
 
 }
