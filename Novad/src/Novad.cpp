@@ -604,7 +604,7 @@ void *Nova::ClassificationLoop(void *ptr)
 					it->second->m_features.m_unsentData->UpdateEvidence(it->second->m_evidence[i]);
 				}
 				it->second->m_evidence.clear();
-				it->second->CalculateFeatures(engine->featureMask);
+				it->second->CalculateFeatures();
 			}
 		}
 		//Calculate the normalized feature sets, actually used by ANN
@@ -695,7 +695,7 @@ void *Nova::TrainingLoop(void *ptr)
 
 				if(it->second->GetNeedsFeatureUpdate())
 				{
-					it->second->CalculateFeatures(~0);
+					it->second->CalculateFeatures();
 					if(it->second->m_annPoint == NULL)
 						it->second->m_annPoint = annAllocPt(DIM);
 
@@ -837,7 +837,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		}
 		suspects[addr]->SetFlaggedByAlarm(true);
 		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-		logger->Log(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")%__LINE__%__FILE__%(suspects[addr]->ToString(engine->featureEnabled))).str());
+		logger->Log(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")%__LINE__%__FILE__%suspects[addr]->ToString()).str());
 
 		pthread_rwlock_unlock(&suspectTableLock);
 
@@ -1329,7 +1329,7 @@ void Nova::SaveSuspectsToFile(string filename)
 	pthread_rwlock_rdlock(&suspectTableLock);
 	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 	{
-		out << it->second->ToString(engine->featureEnabled) << endl;
+		out << it->second->ToString() << endl;
 	}
 	pthread_rwlock_unlock(&suspectTableLock);
 
@@ -1384,7 +1384,6 @@ void Nova::LoadConfiguration()
 
 
 	string enabledFeatureMask = Config::Inst()->getEnabledFeatures();
-	engine->SetEnabledFeatures(Config::Inst()->getEnabledFeatures());
 }
 
 

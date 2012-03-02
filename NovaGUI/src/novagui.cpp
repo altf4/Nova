@@ -719,7 +719,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		{
 			ui.hostileList->setCurrentRow(i);
 		}
-		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString().c_str()));
 	}
 	//Else if the mainItem exists and suspect is not hostile
 	else if(sItem->mainItem != NULL)
@@ -734,7 +734,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		sItem->mainItem->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 		sItem->mainItem->setForeground(brush);
 
-		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString().c_str()));
 
 		int i = 0;
 		if(ui.hostileList->count())
@@ -748,7 +748,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		}
 		ui.hostileList->insertItem(i, sItem->mainItem);
 	}
-	sItem->item->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
+	sItem->item->setToolTip(QString(sItem->suspect->ToString().c_str()));
 	UpdateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
 	m_editingSuspectList = false;
@@ -1263,7 +1263,7 @@ void NovaGUI::on_suspectList_itemSelectionChanged()
 		if(ui.suspectList->currentItem() != NULL)
 		{
 			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
-			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(m_featureEnabled).c_str()));
+			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString().c_str()));
 			SetFeatureDistances(SuspectTable[addr].suspect);
 		}
 		pthread_rwlock_unlock(&lock);

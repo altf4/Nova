@@ -73,38 +73,31 @@ public:
 	//		p 	- ANN point to print
 	void PrintPt(ostream &out, ANNpoint p);
 
-	void SetEnabledFeatures(string enabledFeatureMask);
-
-	// Used for disabling features
-	uint32_t featureMask;
-	bool featureEnabled[DIM];
-	uint32_t enabledFeatures;
-
 private:
 	// Disable the empty constructor, we need the logger/config/suspect table to do anything
 	ClassificationEngine();
 
 	// Types of normalization to apply to our features
-	static normalizationType normalization[];
+	static normalizationType m_normalization[];
 
 	//Used in classification algorithm. Store it here so we only need to calculate it once
-	double sqrtDIM;
+	double m_sqrtDIM;
 
-	vector <Point*> dataPtsWithClass;
+	vector <Point*> m_dataPtsWithClass;
 
 	// kdtree stuff
-	int nPts;						//actual number of data points
-	ANNpointArray dataPts;				//data points
-	ANNpointArray normalizedDataPts;	//normalized data points
-	ANNkd_tree*	kdTree;					// search structure
+	int m_nPts;						//actual number of data points
+	ANNpointArray m_dataPts;				//data points
+	ANNpointArray m_normalizedDataPts;	//normalized data points
+	ANNkd_tree*	m_kdTree;					// search structure
 
 	// Used for data normalization
-	double maxFeatureValues[DIM];
-	double minFeatureValues[DIM];
-	double meanFeatureValues[DIM];
+	double m_maxFeatureValues[DIM];
+	double m_minFeatureValues[DIM];
+	double m_meanFeatureValues[DIM];
 
-	Logger *logger;
-	SuspectHashTable *suspects;
+	Logger *m_logger;
+	SuspectHashTable *m_suspects;
 };
 
 

@@ -25,7 +25,7 @@ using boost::format;
 
 // Normalization method to use on each feature
 // TODO: Make this a configuration var somewhere in Novaconfig.txt?
-normalizationType ClassificationEngine::normalization[] = {
+normalizationType ClassificationEngine::m_normalization[] = {
 		LINEAR_SHIFT, // Don't normalize IP traffic distribution, already between 0 and 1
 		LINEAR_SHIFT,
 		LOGARITHMIC,
@@ -38,13 +38,9 @@ normalizationType ClassificationEngine::normalization[] = {
 };
 
 ClassificationEngine::ClassificationEngine(Logger *logger, SuspectHashTable *table)
-: logger(logger), suspects(table)
+: m_logger(logger), m_suspects(table)
 {
-	nPts = 0;
-	enabledFeatures = 0;
-	featureMask = 0;
-	for (uint i = 0; i < sizeof (featureEnabled); i++)
-		featureEnabled[i] = false;
+
 }
 
 ClassificationEngine::~ClassificationEngine()
@@ -52,53 +48,32 @@ ClassificationEngine::~ClassificationEngine()
 
 }
 
-void ClassificationEngine::SetEnabledFeatures(string enabledFeatureMask)
-{
-	enabledFeatures = 0;
-	featureMask = 0;
-	for (uint i = 0; i < DIM; i++)
-	{
-		if ('1' == enabledFeatureMask.at(i))
-		{
-			featureEnabled[i] = true;
-			featureMask += pow(2, i);
-			enabledFeatures++;
-		}
-		else
-		{
-			featureEnabled[i] = false;
-		}
-	}
-
-	sqrtDIM = sqrt(enabledFeatures);
-}
-
 
 void ClassificationEngine::FormKdTree()
 {
-	delete kdTree;
+	delete m_kdTree;
 	//Normalize the data points
 	//Foreach data point
-	for(uint j = 0;j < enabledFeatures;j++)
+	for(uint j = 0;j < Config::Inst()->getEnabledFeatureCount();j++)
 	{
 		//Foreach feature within the data point
-		for(int i=0;i < nPts;i++)
+		for(int i=0;i < m_nPts;i++)
 		{
-			if(maxFeatureValues[j] != 0)
+			if(m_maxFeatureValues[j] != 0)
 			{
-				normalizedDataPts[i][j] = Normalize(normalization[j], dataPts[i][j], minFeatureValues[j], maxFeatureValues[j]);
+				m_normalizedDataPts[i][j] = Normalize(m_normalization[j], m_dataPts[i][j], m_minFeatureValues[j], m_maxFeatureValues[j]);
 			}
 			else
 			{
-				logger->Log(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__LINE__%__FILE__).str());
+				m_logger->Log(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__LINE__%__FILE__).str());
 				break;
 			}
 		}
 	}
-	kdTree = new ANNkd_tree(					// build search structure
-			normalizedDataPts,					// the data points
-					nPts,						// number of points
-					enabledFeatures);						// dimension of space
+	m_kdTree = new ANNkd_tree(					// build search structure
+			m_normalizedDataPts,					// the data points
+					m_nPts,						// number of points
+					Config::Inst()->getEnabledFeatureCount());		// dimension of space
 	//updateKDTree = false;
 }
 
@@ -109,7 +84,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
-	kdTree->annkSearch(							// search
+	m_kdTree->annkSearch(							// search
 			suspect->m_annPoint,					// query point
 			k,									// number of near neighbors
 			nnIdx,								// nearest neighbors (returned)
@@ -132,9 +107,9 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 		for (int j = 0; j < DIM; j++)
 		{
-			if (featureEnabled[j])
+			if (Config::Inst()->isFeatureEnabled(j))
 			{
-				double distance = suspect->m_annPoint[j] - kdTree->thePoints()[nnIdx[i]][j];
+				double distance = suspect->m_annPoint[j] - m_kdTree->thePoints()[nnIdx[i]][j];
 				if (distance < 0)
 					distance *= -1;
 
@@ -144,27 +119,27 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 		if(nnIdx[i] == -1)
 		{
-			logger->Log(ERROR, (format("File %1% at line %2%: Unable to find a nearest neighbor for Data point %3% Try decreasing the Error bound")
+			m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to find a nearest neighbor for Data point %3% Try decreasing the Error bound")
 					%__LINE__%__FILE__%i).str());
 		}
 		else
 		{
 			//If Hostile
-			if(dataPtsWithClass[nnIdx[i]]->m_classification == 1)
+			if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 1)
 			{
-				classifyCount += (sqrtDIM - dists[i]);
+				classifyCount += (m_sqrtDIM - dists[i]);
 				suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1);
 			}
 			//If benign
-			else if(dataPtsWithClass[nnIdx[i]]->m_classification == 0)
+			else if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 0)
 			{
-				classifyCount -= (sqrtDIM - dists[i]);
+				classifyCount -= (m_sqrtDIM - dists[i]);
 			}
 			else
 			{
 				//error case; Data points must be 0 or 1
-				logger->Log(ERROR, (format("File %1% at line %2%: Data point has invalid classification. Should by 0 or 1, but is %3%")
-						%__LINE__%__FILE__%dataPtsWithClass[nnIdx[i]]->m_classification).str());
+				m_logger->Log(ERROR, (format("File %1% at line %2%: Data point has invalid classification. Should by 0 or 1, but is %3%")
+						%__LINE__%__FILE__%m_dataPtsWithClass[nnIdx[i]]->m_classification).str());
 
 				suspect->SetClassification(-1);
 				delete [] nnIdx;							// clean things up
@@ -179,7 +154,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 				suspect->m_featureAccuracy[j] /= k;
 
 
-	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM )));
+	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * m_sqrtDIM )));
 
 	// Fix for rounding errors caused by double's not being precise enough if DIM is something like 2
 	if (suspect->GetClassification() < 0)
@@ -205,22 +180,22 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 void ClassificationEngine::NormalizeDataPoints()
 {
-	for (SuspectHashTable::iterator it = suspects->begin();it != suspects->end();it++)
+	for (SuspectHashTable::iterator it = m_suspects->begin();it != m_suspects->end();it++)
 	{
 		// Used for matching the 0->DIM index with the 0->enabledFeatures index
 		int ai = 0;
 		for(int i = 0;i < DIM;i++)
 		{
-			if (featureEnabled[i])
+			if (Config::Inst()->isFeatureEnabled(i))
 			{
-				if(it->second->m_features.m_features[i] > maxFeatureValues[ai])
+				if(it->second->m_features.m_features[i] > m_maxFeatureValues[ai])
 				{
 					//For proper normalization the upper bound for a feature is the max value of the data.
-					it->second->m_features.m_features[i] = maxFeatureValues[ai];
+					it->second->m_features.m_features[i] = m_maxFeatureValues[ai];
 				}
-				else if (it->second->m_features.m_features[i] < minFeatureValues[ai])
+				else if (it->second->m_features.m_features[i] < m_minFeatureValues[ai])
 				{
-					it->second->m_features.m_features[i] = minFeatureValues[ai];
+					it->second->m_features.m_features[i] = m_minFeatureValues[ai];
 				}
 				ai++;
 			}
@@ -231,22 +206,22 @@ void ClassificationEngine::NormalizeDataPoints()
 	//if(updateKDTree) FormKdTree();
 
 	//Normalize the suspect points
-	for (SuspectHashTable::iterator it = suspects->begin();it != suspects->end();it++)
+	for (SuspectHashTable::iterator it = m_suspects->begin();it != m_suspects->end();it++)
 	{
 		if(it->second->GetNeedsFeatureUpdate())
 		{
 			if(it->second->m_annPoint == NULL)
-				it->second->m_annPoint = annAllocPt(enabledFeatures);
+				it->second->m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
 
 			int ai = 0;
 			for(int i = 0;i < DIM;i++)
 			{
-				if (featureEnabled[i])
+				if (Config::Inst()->isFeatureEnabled(i))
 				{
-					if(maxFeatureValues[ai] != 0)
-						it->second->m_annPoint[ai] = Normalize(normalization[i], it->second->m_features.m_features[i], minFeatureValues[ai], maxFeatureValues[ai]);
+					if(m_maxFeatureValues[ai] != 0)
+						it->second->m_annPoint[ai] = Normalize(m_normalization[i], it->second->m_features.m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 					else
-						logger->Log(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
+						m_logger->Log(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
 								%__LINE__%__FILE__).str());
 					ai++;
 				}
@@ -261,7 +236,7 @@ void ClassificationEngine::NormalizeDataPoints()
 void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 {
 	out << "(" << p[0];
-	for (uint i = 1;i < enabledFeatures;i++)
+	for (uint i = 1;i < Config::Inst()->getEnabledFeatureCount();i++)
 	{
 		out << ", " << p[i];
 	}
@@ -276,21 +251,21 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	// Clear max and min values
 	for (int i = 0; i < DIM; i++)
-		maxFeatureValues[i] = 0;
+		m_maxFeatureValues[i] = 0;
 
 	for (int i = 0; i < DIM; i++)
-		minFeatureValues[i] = 0;
+		m_minFeatureValues[i] = 0;
 
 	for (int i = 0; i < DIM; i++)
-		meanFeatureValues[i] = 0;
+		m_meanFeatureValues[i] = 0;
 
 	// Reload the data file
-	if (dataPts != NULL)
-		annDeallocPts(dataPts);
-	if (normalizedDataPts != NULL)
-		annDeallocPts(normalizedDataPts);
+	if (m_dataPts != NULL)
+		annDeallocPts(m_dataPts);
+	if (m_normalizedDataPts != NULL)
+		annDeallocPts(m_normalizedDataPts);
 
-	dataPtsWithClass.clear();
+	m_dataPtsWithClass.clear();
 
 	//string array to check whether a line in data.txt file has the right number of fields
 	string fieldsCheck[DIM];
@@ -316,7 +291,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
+		m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 
 	myfile.close();
@@ -324,8 +299,8 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	//Open the file again, allocate the number of points and assign
 	myfile.open(inFilePath.data(), ifstream::in);
-	dataPts = annAllocPts(maxPts, enabledFeatures); // allocate data points
-	normalizedDataPts = annAllocPts(maxPts, enabledFeatures);
+	m_dataPts = annAllocPts(maxPts, Config::Inst()->getEnabledFeatureCount()); // allocate data points
+	m_normalizedDataPts = annAllocPts(maxPts, Config::Inst()->getEnabledFeatureCount());
 
 
 	if (myfile.is_open())
@@ -377,7 +352,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			//if the line is valid, continue as normal
 			if(valid)
 			{
-				dataPtsWithClass.push_back(new Point(enabledFeatures));
+				m_dataPtsWithClass.push_back(new Point(Config::Inst()->getEnabledFeatureCount()));
 
 				// Used for matching the 0->DIM index with the 0->enabledFeatures index
 				int actualDimension = 0;
@@ -385,22 +360,22 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 				{
 					double temp = strtod(fieldsCheck[defaultDimension].data(), NULL);
 
-					if (featureEnabled[defaultDimension])
+					if (Config::Inst()->isFeatureEnabled(defaultDimension))
 					{
-						dataPtsWithClass[i]->m_annPoint[actualDimension] = temp;
-						dataPts[i][actualDimension] = temp;
+						m_dataPtsWithClass[i]->m_annPoint[actualDimension] = temp;
+						m_dataPts[i][actualDimension] = temp;
 
 						//Set the max values of each feature. (Used later in normalization)
-						if(temp > maxFeatureValues[actualDimension])
-							maxFeatureValues[actualDimension] = temp;
+						if(temp > m_maxFeatureValues[actualDimension])
+							m_maxFeatureValues[actualDimension] = temp;
 
-						meanFeatureValues[actualDimension] += temp;
+						m_meanFeatureValues[actualDimension] += temp;
 
 						actualDimension++;
 					}
 				}
 				getline(myfile,line);
-				dataPtsWithClass[i]->m_classification = atoi(line.data());
+				m_dataPtsWithClass[i]->m_classification = atoi(line.data());
 				i++;
 			}
 			//but if it isn't, just get to the next line without incrementing i.
@@ -412,33 +387,33 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 				badLines++;
 			}
 		}
-		nPts = i;
+		m_nPts = i;
 
 		for (int j = 0; j < DIM; j++)
-			meanFeatureValues[j] /= nPts;
+			m_meanFeatureValues[j] /= m_nPts;
 	}
 	else
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
+		m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 	myfile.close();
 
 	//Normalize the data points
 
 	//Foreach feature within the data point
-	for(uint j = 0;j < enabledFeatures;j++)
+	for(uint j = 0;j < Config::Inst()->getEnabledFeatureCount();j++)
 	{
 		//Foreach data point
-		for(int i=0;i < nPts;i++)
+		for(int i=0;i < m_nPts;i++)
 		{
-			normalizedDataPts[i][j] = Normalize(normalization[j], dataPts[i][j], minFeatureValues[j], maxFeatureValues[j]);
+			m_normalizedDataPts[i][j] = Normalize(m_normalization[j], m_dataPts[i][j], m_minFeatureValues[j], m_maxFeatureValues[j]);
 		}
 	}
 
-	kdTree = new ANNkd_tree(					// build search structure
-			normalizedDataPts,					// the data points
-					nPts,						// number of points
-					enabledFeatures);						// dimension of space
+	m_kdTree = new ANNkd_tree(					// build search structure
+			m_normalizedDataPts,					// the data points
+					m_nPts,						// number of points
+					Config::Inst()->getEnabledFeatureCount());				// dimension of space
 }
 
 double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)
@@ -489,13 +464,13 @@ void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree*
 			{
 				myfile << tree->thePoints()[i][j] << " ";
 			}
-			myfile << dataPtsWithClass[i]->m_classification;
+			myfile << m_dataPtsWithClass[i]->m_classification;
 			myfile << "\n";
 		}
 	}
 	else
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%outFilePath).str());
+		m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%outFilePath).str());
 
 	}
 	myfile.close();

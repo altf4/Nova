@@ -59,29 +59,6 @@ struct Session
 };
 
 
-///The traffic distribution across the haystacks relative to host traffic
-#define IP_TRAFFIC_DISTRIBUTION_MASK 1
-
-///The traffic distribution across ports contacted
-#define PORT_TRAFFIC_DISTRIBUTION_MASK 2
-
-///Number of ScanEvents that the suspect is responsible for per second
-#define HAYSTACK_EVENT_FREQUENCY_MASK 4
-
-///Measures the distribution of packet sizes
-#define PACKET_SIZE_MEAN_MASK 8
-#define PACKET_SIZE_DEVIATION_MASK 16
-
-/// Number of distinct IP addresses contacted
-#define DISTINCT_IPS_MASK 32
-
-/// Number of distinct ports contacted
-#define DISTINCT_PORTS_MASK 64
-
-///Measures the distribution of intervals between packets
-#define PACKET_INTERVAL_MEAN_MASK 128
-#define PACKET_INTERVAL_DEVIATION_MASK 256
-
 //UDP has max payload of 65535 bytes
 //serializeSuspect requires 201 bytes, serializeFeatureData requires 36 bytes, bytes left = 65334
 // each entry in a table takes 8 bytes 65334/8 = 8166.75
@@ -134,7 +111,7 @@ public:
 
 	// Calculates all features in the feature set
 	//		featuresEnabled - Bitmask of which features are enabled, e.g. 0b111 would enable the first 3
-	void CalculateAll(uint32_t featuresEnabled);
+	void CalculateAll();
 
 	// Calculates the local time interval for time-dependent features using the latest time stamps
 	void CalculateTimeInterval();

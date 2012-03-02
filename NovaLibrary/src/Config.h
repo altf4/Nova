@@ -20,6 +20,7 @@
 #define NOVACONFIGURATION_H_
 
 #include "HashMapStructs.h"
+#include "Defines.h"
 
 using namespace std;
 
@@ -59,6 +60,8 @@ public:
     string getDoppelInterface() const;
     string getDoppelIp() const;
     string getEnabledFeatures() const;
+    bool isFeatureEnabled(int i) const;
+    int getEnabledFeatureCount() const;
     string getInterface() const;
     string getPathCESaveFile() const;
     string getPathConfigHoneydDm() const;
@@ -98,7 +101,7 @@ public:
     void setDataTTL(int dataTTL);
     void setDoppelInterface(string doppelInterface);
     void setDoppelIp(string doppelIp);
-    void setEnabledFeatures(string enabledFeatures);
+    void setEnabledFeatures(string enabledFeatureMask);
     void setEps(double eps);
     void setGotoLive(bool gotoLive);
     void setInterface(string interface);
@@ -136,7 +139,13 @@ private:
 	string m_interface;
 	string m_doppelIp;
 	string m_doppelInterface;
-	string m_enabledFeatures;
+
+	// Enabled feature stuff, we provide a few formats and helpers
+	string m_enabledFeatureMask;
+	bool m_isFeatureEnabled[DIM];
+	int m_enabledFeatureCount;
+	double m_squrtEnabledFeatures;
+
 
 	string m_pathConfigHoneydHs;
 	string m_pathConfigHoneydDm;

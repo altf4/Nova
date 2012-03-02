@@ -24,6 +24,7 @@
 #include <sys/un.h>
 #include <sstream>
 #include "NovaUtil.h"
+#include <math.h>
 
 using namespace std;
 
@@ -430,7 +431,7 @@ void Config::LoadConfig()
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() == DIM)
 				{
-					m_enabledFeatures = line;
+					setEnabledFeatures(line);
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -829,7 +830,7 @@ void Config::SetDefaults()
 	m_saSleepDuration = .5;
 	m_doppelIp = "10.0.0.1";
 	m_doppelInterface = "lo";
-	m_enabledFeatures = "111111111";
+	m_enabledFeatureMask = "111111111";
 	m_thinningDistance = 0;
 	m_saveFreq = 1440;
 	m_dataTTL = 0;
@@ -1003,7 +1004,17 @@ string Config::getDoppelIp() const
 
 string Config::getEnabledFeatures() const
 {
-	return m_enabledFeatures;
+	return m_enabledFeatureMask;
+}
+
+int Config::getEnabledFeatureCount() const
+{
+	return m_enabledFeatureCount;
+}
+
+bool Config::isFeatureEnabled(int i) const
+{
+	return m_isFeatureEnabled[i];
 }
 
 double Config::getEps() const
@@ -1156,9 +1167,24 @@ void Config::setDoppelIp(string doppelIp)
 	this->m_doppelIp = doppelIp;
 }
 
-void Config::setEnabledFeatures(string enabledFeatures)
+void Config::setEnabledFeatures(string enabledFeatureMask)
 {
-	this->m_enabledFeatures = enabledFeatures;
+	m_enabledFeatureCount = 0;
+	for (uint i = 0; i < DIM; i++)
+	{
+		if ('1' == enabledFeatureMask.at(i))
+		{
+			m_isFeatureEnabled[i] = true;
+			m_enabledFeatureCount++;
+		}
+		else
+		{
+			m_isFeatureEnabled[i] = false;
+		}
+	}
+
+	m_squrtEnabledFeatures = sqrt(m_enabledFeatureCount);
+	m_enabledFeatureMask = enabledFeatureMask;
 }
 
 void Config::setEps(double eps)
