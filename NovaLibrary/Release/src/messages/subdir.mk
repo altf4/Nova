@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/messages/ControlMessage.cpp \
 ../src/messages/UI_Message.cpp 
 
 OBJS += \
+./src/messages/ControlMessage.o \
 ./src/messages/UI_Message.o 
 
 CPP_DEPS += \
+./src/messages/ControlMessage.d \
 ./src/messages/UI_Message.d 
 
 
@@ -17,7 +20,7 @@ CPP_DEPS += \
 src/messages/%.o: ../src/messages/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O3 -Wall -c -fmessage-length=0  `pkg-config --libs --cflags libnotify` -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -O3 -Wall -c -fmessage-length=0  `pkg-config --libs --cflags libnotify` --std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

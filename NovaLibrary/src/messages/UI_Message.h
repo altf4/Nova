@@ -13,95 +13,73 @@
 //   
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Message object for GUI communication with Nova processes
-//============================================================================/*
+// Description : Parent message class for GUI communication with Nova processes
+//============================================================================
 
 #ifndef UI_Message_H_
 #define UI_Message_H_
 
-#include <string>
-#include <sys/types.h>
+#include <stdlib.h>
+#include "stdint.h"
 
+#define MESSAGE_MIN_SIZE 1
 
-//Maximum number of characters an argument can have.
-#define MAX_VAL_SIZE 255
-
-//Default UI_Message construction val, doubles as error flag.
-#define NONE ""
-
-//The different message types
-enum UI_MessageType
+namespace Nova
 {
-	EXIT = 'e',
-	CLEAR_ALL = 'c',
-	CLEAR_SUSPECT = 's',
-	INVALID = '0',
-	WRITE_SUSPECTS = 'w',
-	RELOAD = 'r'
+
+enum UI_MessageType: char
+{
+	CONTROL_MESSAGE = 0,
 };
-
-using namespace std;
-
-namespace Nova{
 
 class UI_Message
 {
-	public:
+public:
 
-	//********************
-	//* Member Functions *
-	//********************
-
-	// For instantiation only, use other constructors if message is known.
+	//Empty constructor
 	UI_Message();
 
-	// Constructor for messages that have no arguments
-	//		type - type of message to create
-	UI_Message(UI_MessageType type);
+	//Reads a UI_Message from the given socket
+	//	NOTE: Blocking call, will wait until message appears
+	//	connectFD - A valid socket
+	// Returns - Pointer to newly allocated UI_Message object
+	//				returns NULL on error
+	//	NOTE: The caller must manually delete the returned object when finished with it
+	static UI_Message *ReadMessage(int connectFD);
 
-	// Constructor for messages that have an argument
-	//		type - type of message to create
-	//		val - argument to send along with the message
-	UI_Message(UI_MessageType type, string val);
+	//Writes a given UI_Message to the provided socket
+	//	message - A pointer to the message object to send
+	//	connectFD - a valid socket to send the message to
+	// Returns - true on successfully sending the object, false on error
+	static bool WriteMessage(UI_Message *message, int connectFD);
 
-	// Sets the message
-	//		type - type of message to create
-	// Returns: true if successful
-	bool SetMessage(UI_MessageType type);
+	enum UI_MessageType messageType;
 
-	// Sets the message
-	//		type - type of message to create
-	//		val - argument to send along with the message
-	// Returns: true if successful
-	bool SetMessage(UI_MessageType type, string val);
+protected:
 
-	// Returns the message type
-	UI_MessageType GetType();
+	//Serializes the UI_Message object into a char array
+	//	*length - Return parameter, specifies the length of the serialized array returned
+	// Returns - A pointer to the serialized array
+	//	NOTE: The caller must manually free() the returned buffer after use
+	virtual char *Serialize(uint32_t *length);
 
-	// Returns the message argument
-	string GetValue();
+	//Used to indicate serialization error in constructors
+	//	(Since constructors can't return NULL)
+	//Not ever sent.
+	bool m_serializeError;
 
-	// Serializes the message into given buffer for communication
-	//		buf - Pointer to buffer to store serialized data
-	// Returns: Number of bytes in buffer used
-	uint SerialzeMessage(u_char * buf);
+private:
 
-	// Deserializes the message from the given buffer for reading
-	//		buf - Points to buffer to read serialized data from
-	// Returns: Number of bytes read
-	uint DeserializeMessage(u_char * buf);
+	//Creates a new UI_Message from a given buffer. Calls the appropriate child constructor
+	//	buffer - char pointer to a buffer in memory where the serialized message is at
+	//	length - length of the buffer
+	// Returns - Pointer to newly allocated UI_Message object
+	//				returns NULL on error
+	//	NOTE: The caller must manually delete the returned object when finished with it
+	static UI_Message *Deserialize(char *buffer, uint32_t length);
 
-	private:
-
-	//********************
-	//* Member Variables *
-	//********************
-
-	// The message type
-	UI_MessageType m_type;
-
-	// The argument if applicable.
-	string m_value;
 };
+
 }
+
 #endif /* UI_Message_H_ */
