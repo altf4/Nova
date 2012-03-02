@@ -99,7 +99,7 @@ public:
     void closeEvent(QCloseEvent * e);
 
     //Get preliminary config information
-    void InitSession();
+    void InitConfiguration();
     void InitPaths();
     void InitNovadCommands();
 
