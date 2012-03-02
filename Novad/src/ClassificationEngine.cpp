@@ -40,7 +40,8 @@ normalizationType ClassificationEngine::m_normalization[] = {
 ClassificationEngine::ClassificationEngine(Logger *logger, SuspectHashTable *table)
 : m_logger(logger), m_suspects(table)
 {
-
+	m_normalizedDataPts = NULL;
+	m_dataPts = NULL;
 }
 
 ClassificationEngine::~ClassificationEngine()
