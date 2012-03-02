@@ -108,7 +108,9 @@ NovaGUI::NovaGUI(QWidget *parent)
 		//exit(EXIT_FAILURE);
 	}
 
-	InitSession();
+	InitConfiguration();
+	InitPaths();
+	InitNovadCommands();
 	InitiateSystemStatus();
 
 	// Create the dialog generator
@@ -313,11 +315,16 @@ void NovaGUI::closeEvent(QCloseEvent * e)
  * Gets preliminary information
  ************************************************/
 
-void NovaGUI::InitSession()
+void NovaGUI::InitConfiguration()
 {
-	InitPaths();
 	configuration = new NOVAConfiguration();
-	InitNovadCommands();
+	for (uint i = 0; i < DIM; i++)
+	{
+		if ('1' == configuration->getEnabledFeatures().at(i))
+			m_featureEnabled[i] = true;
+		else
+			m_featureEnabled[i] = false;
+	}
 }
 
 void NovaGUI::InitNovadCommands()

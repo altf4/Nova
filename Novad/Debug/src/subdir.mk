@@ -7,16 +7,19 @@ CPP_SRCS += \
 ../src/Control.cpp \
 ../src/Novad.cpp \
 ../src/ProtocolHandler.cpp 
+../src/ClassificationEngine.cpp \
 
 OBJS += \
 ./src/Control.o \
 ./src/Novad.o \
 ./src/ProtocolHandler.o 
+./src/ClassificationEngine.o \
 
 CPP_DEPS += \
 ./src/Control.d \
 ./src/Novad.d \
 ./src/ProtocolHandler.d 
+./src/ClassificationEngine.d \
 
 
 # Each subdirectory must supply rules for building sources it contributes
