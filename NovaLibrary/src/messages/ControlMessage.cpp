@@ -26,6 +26,7 @@ namespace Nova
 
 ControlMessage::ControlMessage()
 {
+	m_messageType = CONTROL_MESSAGE;
 }
 
 ControlMessage::ControlMessage(char *buffer, uint32_t length)
@@ -119,15 +120,23 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		{
 			break;
 		}
+		case CONTROL_SAVE_SUSPECTS_REQUEST:
+		{
+			break;
+		}
+		case CONTROL_SAVE_SUSPECTS_REPLY:
+		{
+			break;
+		}
+		case CONTROL_RECLASSIFY_ALL_REQUEST:
+		{
+			break;
+		}
+		case CONTROL_RECLASSIFY_ALL_REPLY:
+		{
+			break;
+		}
 		case CONTROL_INVALID:
-		{
-			break;
-		}
-		case CONTROL_WRITE_SUSPECTS:
-		{
-			break;
-		}
-		case CONTROL_RELOAD:
 		{
 			break;
 		}
@@ -229,15 +238,23 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			break;
 		}
+		case CONTROL_SAVE_SUSPECTS_REQUEST:
+		{
+			break;
+		}
+		case CONTROL_SAVE_SUSPECTS_REPLY:
+		{
+			break;
+		}
+		case CONTROL_RECLASSIFY_ALL_REQUEST:
+		{
+			break;
+		}
+		case CONTROL_RECLASSIFY_ALL_REPLY:
+		{
+			break;
+		}
 		case CONTROL_INVALID:
-		{
-			break;
-		}
-		case CONTROL_WRITE_SUSPECTS:
-		{
-			break;
-		}
-		case CONTROL_RELOAD:
 		{
 			break;
 		}

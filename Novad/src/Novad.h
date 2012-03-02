@@ -39,11 +39,8 @@ enum normalizationType {
 	LOGARITHMIC		// Logarithmic normalization, larger outlier value will have less of an effect
 };
 
-namespace Nova{
-
-// Start routine for the GUI command listening thread
-//		ptr - Required for pthread start routines
-void *GUIListenLoop(void *ptr);
+namespace Nova
+{
 
 // Start routine for a separate thread which infinite loops, periodically
 // updating all the classifications for all the current suspects
@@ -100,10 +97,6 @@ bool KnockPort(bool mode);
 // Returns: false if any sort of error
 bool Start_Packet_Handler();
 
-// Receives input commands from the GUI
-// This is a blocking function. If nothing is received, then wait on this thread for an answer
-void ReceiveGUICommand();
-
 // Sends output to the UI
 //	suspect - suspect to serialize GUI data and send
 void SendToUI(Suspect *suspect);
@@ -126,9 +119,6 @@ void RefreshStateFile();
 
 // Appends all entries in the state file to the suspect table
 void LoadStateFile();
-
-// Runs appendToStateFile before exiting
-void saveAndExit(int param);
 
 // Force a reload of NOVAConfig/Data.txt while running.
 // This will reclassify all the suspects based on the new data.

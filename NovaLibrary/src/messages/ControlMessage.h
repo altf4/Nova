@@ -39,9 +39,11 @@ enum ControlType: char
 	CONTROL_CLEAR_ALL_REPLY,		//Reply from Novad with success
 	CONTROL_CLEAR_SUSPECT_REQUEST,	//Request for Novad to clear specified suspect
 	CONTROL_CLEAR_SUSPECT_REPLY,	//Reply from Novad with success
+	CONTROL_SAVE_SUSPECTS_REQUEST,	//Request for Novad to save the suspects list to persistent storage
+	CONTROL_SAVE_SUSPECTS_REPLY,	//Reply from Novad with success
+	CONTROL_RECLASSIFY_ALL_REQUEST,	//Request for Novad to reclassify all suspects
+	CONTROL_RECLASSIFY_ALL_REPLY,	//Reply from Novad with success
 	CONTROL_INVALID,
-	CONTROL_WRITE_SUSPECTS,
-	CONTROL_RELOAD,
 };
 
 using namespace std;
@@ -70,8 +72,6 @@ public:
 	char *Serialize(uint32_t *length);
 
 	enum ControlType m_controlType;
-
-private:
 
 	// The argument, if applicable.
 	char m_filePath[MAX_PATH_SIZE];

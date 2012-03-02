@@ -22,6 +22,7 @@
 #include "Logger.h"
 #include "Point.h"
 #include "Novad.h"
+#include "Control.h"
 
 #include <vector>
 #include <math.h>
@@ -169,7 +170,7 @@ int main()
 	pthread_rwlock_init(&suspectTableLock, NULL);
 	pthread_rwlock_init(&sessionLock, NULL);
 
-	signal(SIGINT, saveAndExit);
+	signal(SIGINT, SaveAndExit);
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
@@ -189,18 +190,13 @@ int main()
 	suspectsSinceLastSave.set_empty_key(0);
 	suspectsSinceLastSave.resize(INIT_SIZE_SMALL);
 
-
 	pthread_t classificationLoopThread;
 	pthread_t trainingLoopThread;
 	pthread_t silentAlarmListenThread;
-	pthread_t GUIListenThread;
 	pthread_t ipUpdateThread;
-
-
 
 	Reload();
 
-	pthread_create(&GUIListenThread, NULL, GUIListenLoop, NULL);
 	//Are we Training or Classifying?
 	if(globalConfig->getIsTraining())
 	{
@@ -242,16 +238,6 @@ int main()
 	close(IPCsock);
 
 	return EXIT_FAILURE;
-}
-
-//Called when process receives a SIGINT, like if you press ctrl+c
-void Nova::saveAndExit(int param)
-{
-	pthread_rwlock_wrlock(&suspectTableLock);
-	AppendToStateFile();
-	pthread_rwlock_unlock(&suspectTableLock);
-
-	exit(EXIT_SUCCESS);
 }
 
 void Nova::AppendToStateFile()
@@ -581,51 +567,6 @@ void Nova::Reload()
 		it->second->SetNeedsClassificationUpdate(true);
 
 	pthread_rwlock_unlock(&suspectTableLock);
-}
-
-//Infinite loop that recieves messages from the GUI
-void *Nova::GUIListenLoop(void *ptr)
-{
-	struct sockaddr_un GUIAddress;
-	int len;
-
-	if((GUISocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
-	{
-		logger->Log(CRITICAL, "Unable to make socket to connect to GUI. Is another instance of Nova already running?",
-				(format("File %1% at line %2%: Unable to create socket for GUI. Errno: ")%__LINE__%__FILE__%strerror(errno)).str());
-		close(GUISocket);
-		exit(EXIT_FAILURE);
-	}
-
-	GUIAddress.sun_family = AF_UNIX;
-
-	//Builds the key path
-	string key = NOVAD_OUT_FILENAME;
-	key = userHomePath + key;
-
-	strcpy(GUIAddress.sun_path, key.c_str());
-	unlink(GUIAddress.sun_path);
-	len = strlen(GUIAddress.sun_path) + sizeof(GUIAddress.sun_family);
-
-	if(bind(GUISocket,(struct sockaddr *)&GUIAddress,len) == -1)
-	{
-		logger->Log(CRITICAL, "Unable to make socket to connect to GUI. Is another instance of Nova already running?",
-				(format("File %1% at line %2%: Unable to bind to socket for GUI. Errno: ")%__LINE__%__FILE__%strerror(errno)).str());
-		close(GUISocket);
-		exit(EXIT_FAILURE);
-	}
-
-	if(listen(GUISocket, SOCKET_QUEUE_SIZE) == -1)
-	{
-		logger->Log(CRITICAL, "Unable to make socket to connect to GUI. Is another instance of Nova already running?",
-				(format("File %1% at line %2%: Unable to listen to socket for GUI. Errno: ")%__LINE__%__FILE__%strerror(errno)).str());
-		close(GUISocket);
-		exit(EXIT_FAILURE);
-	}
-	while(true)
-	{
-		ReceiveGUICommand();
-	}
 }
 
 void *Nova::ClassificationLoop(void *ptr)
@@ -1695,89 +1636,6 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 		return;
 	}
 }
-
-
-void Nova::ReceiveGUICommand()
-{
-    struct sockaddr_un msgRemote;
-	int socketSize, msgSocket;
-	int bytesRead;
-	UI_Message msg = UI_Message();
-	in_addr_t suspectKey = 0;
-	u_char msgBuffer[MAX_GUIMSG_SIZE];
-
-	bzero(msgBuffer, MAX_GUIMSG_SIZE);
-
-	socketSize = sizeof(msgRemote);
-
-	//Blocking call
-	if ((msgSocket = accept(GUISocket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
-	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  accept: %s")% __FILE__%__LINE__% strerror(errno)).str());
-		close(msgSocket);
-	}
-	if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, MSG_WAITALL )) == -1)
-	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  recv: %s")% __FILE__%__LINE__% strerror(errno)).str());
-		close(msgSocket);
-	}
-
-	msg.DeserializeMessage(msgBuffer);
-	switch(msg.GetType())
-	{
-		case EXIT:
-		{
-    		system("sudo iptables -F");
-			saveAndExit(0);
-		}
-		case CLEAR_ALL:
-		{
-			pthread_rwlock_wrlock(&suspectTableLock);
-			for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
-				delete it->second;
-			suspects.clear();
-
-			for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
-				delete it->second;
-			suspectsSinceLastSave.clear();
-
-			string delString = "rm -f " + globalConfig->getPathCESaveFile();
-			if(system(delString.c_str()) == -1)
-				logger->Log(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
-
-			pthread_rwlock_unlock(&suspectTableLock);
-			break;
-		}
-		case CLEAR_SUSPECT:
-		{
-			suspectKey = inet_addr(msg.GetValue().c_str());
-			pthread_rwlock_wrlock(&suspectTableLock);
-			suspectsSinceLastSave[suspectKey] = suspects[suspectKey];
-			suspects.set_deleted_key(5);
-			suspects.erase(suspectKey);
-			suspects.clear_deleted_key();
-			RefreshStateFile();
-			pthread_rwlock_unlock(&suspectTableLock);
-			break;
-		}
-		case WRITE_SUSPECTS:
-		{
-			SaveSuspectsToFile(msg.GetValue());
-			break;
-		}
-		case RELOAD:
-		{
-			Reload();
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}
-	close(msgSocket);
-}
-
 
 void Nova::SaveSuspectsToFile(string filename)
 {

@@ -59,11 +59,6 @@
 //From the Local Traffic Monitor
 #define FROM_LTM false
 
-///	Filename of the file to be used as an Classification Engine IPC key
-#define NOVAD_IN_FILENAME "/keys/CEKey"
-/// File name of the file to be used as CE_GUI Input IPC key.
-#define NOVAD_OUT_FILENAME "/keys/NovaIPCKey"
-
 #define PATHS_FILE "/etc/nova/paths"
 
 /// Simple define for the ORing of these two integer values. Used for syslog.
