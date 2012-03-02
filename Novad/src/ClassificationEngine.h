@@ -26,7 +26,7 @@
 
 #include "Suspect.h"
 #include "Logger.h"
-#include "NOVAConfiguration.h"
+#include "Config.h"
 #include "SuspectTable.h"
 
 
@@ -40,7 +40,7 @@ enum normalizationType {
 class ClassificationEngine
 {
 public:
-	ClassificationEngine(Logger *logger, NOVAConfiguration *configuration, SuspectHashTable *table);
+	ClassificationEngine(Logger *logger, SuspectHashTable *table);
 
 	~ClassificationEngine();
 
@@ -104,7 +104,6 @@ private:
 	double meanFeatureValues[DIM];
 
 	Logger *logger;
-	NOVAConfiguration *globalConfig;
 	SuspectHashTable *suspects;
 };
 

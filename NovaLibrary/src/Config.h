@@ -25,13 +25,14 @@ using namespace std;
 
 namespace Nova {
 
-class NOVAConfiguration {
+class Config {
 
 public:
-	NOVAConfiguration(string configFilePath, string userConfigFilePath);
-	NOVAConfiguration();
+	// This is a singleton class, use this to access it
+	static Config* Inst();
 
-	~NOVAConfiguration();
+
+	~Config();
 
 	// Loads and parses a NOVA configuration file
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
@@ -123,7 +124,12 @@ public:
     void setNeigbors(vector<in_addr_t> neighbors);
     void setGroup(string group);
 
+protected:
+	Config();
+
 private:
+	static Config *m_instance;
+
 	static const string m_prefixes[];
 	static const string m_requiredFiles[];
 

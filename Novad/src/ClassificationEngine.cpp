@@ -37,8 +37,8 @@ normalizationType ClassificationEngine::normalization[] = {
 		LOGARITHMIC
 };
 
-ClassificationEngine::ClassificationEngine(Logger *logger, NOVAConfiguration *configuration, SuspectHashTable *table)
-: logger(logger), globalConfig(configuration), suspects(table)
+ClassificationEngine::ClassificationEngine(Logger *logger, SuspectHashTable *table)
+: logger(logger), suspects(table)
 {
 	nPts = 0;
 	enabledFeatures = 0;
@@ -105,7 +105,7 @@ void ClassificationEngine::FormKdTree()
 
 void ClassificationEngine::Classify(Suspect *suspect)
 {
-	int k = globalConfig->getK();
+	int k = Config::Inst()->getK();
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
@@ -114,7 +114,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			k,									// number of near neighbors
 			nnIdx,								// nearest neighbors (returned)
 			dists,								// distance (returned)
-			globalConfig->getEps());								// error bound
+			Config::Inst()->getEps());								// error bound
 
 	for (int i = 0; i < DIM; i++)
 		suspect->m_featureAccuracy[i] = 0;
@@ -187,7 +187,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	else if (suspect->GetClassification() > 1)
 		suspect->SetClassification(1);
 
-	if( suspect->GetClassification() > globalConfig->getClassificationThreshold())
+	if( suspect->GetClassification() > Config::Inst()->getClassificationThreshold())
 	{
 		suspect->SetIsHostile(true);
 	}
@@ -316,7 +316,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%globalConfig->getPathTrainingFile()).str());
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 
 	myfile.close();
@@ -419,7 +419,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%globalConfig->getPathTrainingFile()).str());
+		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 	myfile.close();
 
