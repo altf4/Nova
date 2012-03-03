@@ -157,26 +157,28 @@ public:
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureSet(u_char * buf);
+	uint32_t SerializeFeatureSet(u_char *buf);
 
 	// Deserializes the buffer into the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set resides
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureSet(u_char * buf);
+	uint32_t DeserializeFeatureSet(u_char *buf);
 
 	// Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in broadcast data (the second member of uint pairs)
 	//		buf - Pointer to buffer where the serialized Feature data broadcast resides
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureData(u_char * buf);
+	uint32_t DeserializeFeatureData(u_char *buf);
 
 	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	// This function doesn't keep data once serialized. Used by the LocalTrafficMonitor and Haystack for sending suspect information
 	//		buf - Pointer to buffer to store serialized data in
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureData(u_char * buf);
+	uint32_t SerializeFeatureData(u_char *buf);
 
-	FeatureSet* m_unsentData;
+	FeatureSet& operator=(FeatureSet &rhs);
+
+	FeatureSet *m_unsentData;
 private:
 	//Temporary variables used to calculate Features
 

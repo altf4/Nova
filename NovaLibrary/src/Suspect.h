@@ -37,38 +37,49 @@ public:
 
 	Suspect();
 
-	//	Destructor. Has to delete the FeatureSet object within.
+	// Destructor. Has to delete the FeatureSet object within.
 	~Suspect();
 
-	//	Constructor from a Packet
+	// Constructor from a Packet
 	//		packet - Used to set the IP address and initial evidence of the suspect
 	Suspect(Packet packet);
 
-	//	Converts suspect into a human readable string
+	// Converts suspect into a human readable string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the string
-	// 	Returns: Human readable string of the given feature
+	// Returns: Human readable string of the given feature
 	string ToString(bool featureEnabled[]);
 
-	//	Add an additional piece of evidence to this suspect
+	// Add an additional piece of evidence to this suspect
 	// Does not take actions like reclassifying or calculating features.
 	//		packet - Packet headers to extract evidence from
-	void AddEvidence(Packet packet);
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int AddEvidence(Packet packet);
 
-	//Returns a copy of the evidence vector so that it can be read.
-	vector <Packet> GetEvidence(); //TODO
+	// Proccesses all packets in m_evidence and puts them into the suspects unsent FeatureSet data
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int UpdateEvidence();
 
-	//Clears the evidence vector, returns 0 on success
-	void ClearEvidence(); //TODO
+	// Returns a copy of the evidence vector so that it can be read.
+	vector <Packet> GetEvidence();
+
+	//Clears the evidence vector
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int ClearEvidence();
 
 	// Calculates the feature set for this suspect
 	// 		isTraining - True for training data gathering mode
 	//		featuresEnabled - bitmask of features to calculate
-	void CalculateFeatures(uint32_t featuresEnabled);
+	int CalculateFeatures(uint32_t featuresEnabled);
 
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
 	uint32_t SerializeSuspect(u_char * buf);
+
+	// Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
+	//		buf - Pointer to buffer where serialized data will be stored
+	// Returns: number of bytes set in the buffer
+	uint32_t SerializeSuspectWithData(u_char * buf);
 
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	//		buf - Pointer to buffer where the serialized suspect is
@@ -78,91 +89,114 @@ public:
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	// expects featureSet data appended by serializeFeatureData after serializeSuspect
 	//		buf - Pointer to buffer where serialized data resides
-	//		isLocal -
+	//		isLocal - Specifies whether this data is from a Silent Alarm (false) or local packets (true)
 	// Returns: number of bytes read from the buffer
 	uint32_t DeserializeSuspectWithData(u_char * buf, bool isLocal);
 
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
 	//Returns: Suspect's in_addr_t or NULL on failure
-	in_addr_t GetIpAddress(); //TODO
+	in_addr_t GetIpAddress();
 	//Sets the suspects in_addr_t, must have the lock to perform this operation
 	//Returns: 0 on success
-	void SetIpAddress(in_addr_t ip); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetIpAddress(in_addr_t ip);
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
 	//Returns: Suspect's in_addr or NULL on failure
-	in_addr GetInAddr(); //TODO
+	in_addr GetInAddr();
 	//Sets the suspects in_addr, must have the lock to perform this operation
 	//Returns: 0 on success
-	void SetInAddr(in_addr in); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetInAddr(in_addr in);
 
 
 	//Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
 	// Returns -1 on failure
-	double GetClassification(); //TODO
+	double GetClassification();
 	//Sets the suspect's classification, must have the lock to perform this operation
 	//Returns 0 on success
-	void SetClassification(double n); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetClassification(double n);
 
 
 	//Returns the number of hostile neighbors, must not be locked or is locked by the owner
-	int GetHostileNeighbors(); //TODO
+	int GetHostileNeighbors();
 	//Sets the number of hostile neighbors, must have the lock to perform this operation
-	void SetHostileNeighbors(int i); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetHostileNeighbors(int i);
 
 
 	//Returns the hostility bool of the suspect, must not be locked or is locked by the owner
-	bool GetIsHostile(); //TODO
+	bool GetIsHostile();
 	//Sets the hostility bool of the suspect, must have the lock to perform this operation
-	void SetIsHostile(bool b); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetIsHostile(bool b);
 
 
 	//Returns the needs classification bool, must not be locked or is locked by the owner
-	bool GetNeedsClassificationUpdate(); //TODO
+	bool GetNeedsClassificationUpdate();
 	//Sets the needs classification bool, must have the lock to perform this operation
-	void SetNeedsClassificationUpdate(bool b); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetNeedsClassificationUpdate(bool b);
 
 
 	//Returns the needs feature update bool, must not be locked or is locked by the owner
-	bool GetNeedsFeatureUpdate(); //TODO
+	bool GetNeedsFeatureUpdate();
 	//Sets the neeeds feature update bool, must have the lock to perform this operation
-	void SetNeedsFeatureUpdate(bool b); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetNeedsFeatureUpdate(bool b);
 
 
 	//Returns the flagged by silent alarm bool, must not be locked or is locked by the owner
-	bool GetFlaggedByAlarm(); //TODO
+	bool GetFlaggedByAlarm();
 	//Sets the flagged by silent alarm bool, must have the lock to perform this operation
-	void SetFlaggedByAlarm(bool b); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetFlaggedByAlarm(bool b);
 
 
 	//Returns the 'from live capture' bool, must not be locked or is locked by the owner
-	bool GetIsLive(); //TODO
+	bool GetIsLive();
 	//Sets the 'from live capture' bool, must have the lock to perform this operation
-	void SetIsLive(bool b); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetIsLive(bool b);
 
 
 	//Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
-	FeatureSet GetFeatures(); //TODO
+	FeatureSet GetFeatureSet();
 	//Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
-	void SetFeatures(FeatureSet fs); //TODO
+	// Returns (0) on Success and (-1) if the suspect is currently owned by another thread
+	// Note: If you wish to block until the Suspect can be set, release any other locked resources and
+	// using the blocking SetOwner function to wait on the suspects lock.
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetFeatureSet(FeatureSet *fs);
 
 	//Adds the feature set 'fs' to the suspect's feature set
-	void AddFeatureSet(FeatureSet fs); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int AddFeatureSet(FeatureSet *fs);
 	//Subtracts the feature set 'fs' from the suspect's feature set
-	void SubtractFeatureSet(FeatureSet fs); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SubtractFeatureSet(FeatureSet *fs);
 
 	//Clears the feature set of the suspect
-	void ClearFeatures(); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int ClearFeatureSet();
 
+	//Clears the unsent feature set of the suspect
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int ClearUnsentData();
 
 	//Returns the accuracy double of the feature using featureIndex fi, must not be locked or is locked by the owner
-	double GetFeatureAccuracy(featureIndex fi); //TODO
+	double GetFeatureAccuracy(featureIndex fi);
 	//Sets the accuracy double of the feature using featureIndex fi, must have the lock to perform this operation
-	void SetFeatureAccuracy(featureIndex fi, double d); //TODO
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetFeatureAccuracy(featureIndex fi, double d);
 
-	//Returns a copy of the suspect's ANNpoint, must not be locked or is locked by the owner
-	ANNpoint GetAnnPoint(); //TODO
+	// must not be locked or is locked by the owner
+	ANNpoint GetAnnPoint();
+	//Sets the suspect's ANNpoint, must have the lock to perform this operation
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int SetAnnPoint(ANNpoint a);
 
 	//Returns the pthread_t owner, returns NULL if suspect is not checked out
 	pthread_t GetOwner();
@@ -172,10 +206,12 @@ public:
 
 	//Sets the pthread_t 'owner'
 	//		tid: unique thread identifier retrieved from pthread_self();
-	int SetOwner(pthread_t tid);
+	void SetOwner(pthread_t tid);
 
 	//Flags the suspect as no longer 'checked out'
-	int UnsetOwner();
+	int ResetOwner();
+
+private:
 
 	// The Feature Set for this Suspect
 	FeatureSet m_features;
@@ -187,9 +223,6 @@ public:
 	vector <Packet> m_evidence;
 
 	double m_featureAccuracy[DIM];
-
-private: //TODO Uncomment private and ensure suspects are fully accessible using thread-safe accessors.
-	//Develop some method for making concurrent changes without redundantly locking and unlocking the suspects
 
 	// The IP address of the suspect. This field serves as a unique identifier for the Suspect
 	struct in_addr m_IpAddress;
@@ -224,13 +257,13 @@ private: //TODO Uncomment private and ensure suspects are fully accessible using
 	bool m_hasOwner;
 
 	//Write locks the suspect
-	void WrlockSuspect(); //TODO
+	void WrlockSuspect();
 
 	//Read Locks the suspect
-	void RdlockSuspect(); //TODO
+	void RdlockSuspect();
 
 	//Unlocks the suspect
-	void UnlockSuspect(); //TODO
+	void UnlockSuspect();
 
 };
 

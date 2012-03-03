@@ -1316,23 +1316,25 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 			bar->setMaximum(100);
 			bar->setTextVisible(true);
 
-			if (suspect->m_featureAccuracy[i] < 0)
+			if(suspect->GetFeatureAccuracy((featureIndex)i) < 0)
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->m_featureAccuracy[i]);
-				suspect->m_featureAccuracy[i] = 0;
+				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E",
+						__FILE__, __LINE__, suspect->GetFeatureAccuracy((featureIndex)i));
+				suspect->SetFeatureAccuracy((featureIndex)i, 0);
 			}
-			else if (suspect->m_featureAccuracy[i] > 1)
+			else if (suspect->GetFeatureAccuracy((featureIndex)i) > 1)
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E", __FILE__, __LINE__, suspect->m_featureAccuracy[i]);
-				suspect->m_featureAccuracy[i] = 1;
+				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E",
+						__FILE__, __LINE__, suspect->GetFeatureAccuracy((featureIndex)i));
+				suspect->SetFeatureAccuracy((featureIndex)i, 1);
 			}
 
-			bar->setValue((int)((1 - suspect->m_featureAccuracy[i]/1.0)*100));
+			bar->setValue((int)((1 - suspect->GetFeatureAccuracy((featureIndex)i)/1.0)*100));
 			bar->setStyleSheet(
 				"QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
 				QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
-			formatString.append(QString::number(suspect->m_features.m_features[i]));
+			formatString.append(QString::number(suspect->GetFeatureSet().m_features[i]));
 			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();

@@ -128,7 +128,7 @@ void RefreshStateFile();
 void LoadStateFile();
 
 // Runs appendToStateFile before exiting
-void saveAndExit(int param);
+void SaveAndExit(int param);
 
 // Force a reload of NOVAConfig/Data.txt while running.
 // This will reclassify all the suspects based on the new data.

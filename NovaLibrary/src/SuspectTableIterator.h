@@ -24,7 +24,7 @@
 
 #include "Suspect.h"
 
-typedef google::dense_hash_map<in_addr_t, Suspect *, tr1::hash<in_addr_t>, eqaddr > SuspectHashTable;
+typedef google::dense_hash_map<uint64_t, Suspect *, tr1::hash<uint64_t>, eqkey > SuspectHashTable;
 
 namespace Nova {
 
@@ -33,7 +33,7 @@ class SuspectTableIterator
 
 public:
 	// Default iterator constructor
-	SuspectTableIterator(SuspectHashTable * table = NULL, vector<in_addr_t> * keys = NULL);
+	SuspectTableIterator(SuspectHashTable *table = NULL, vector<uint64_t> *keys = NULL);
 
 	// Default iterator deconstructor
 	~SuspectTableIterator();
@@ -58,6 +58,13 @@ public:
 	// Returns a copy of the Suspect
 	Suspect Current();
 
+	// Gets a reference to the index of the iterator
+	// Returns a reference to m_index
+	uint& GetIndex();
+
+	// Returns the in_addr_t associated with the current iterator's position
+	in_addr_t GetKey();
+
 	// Increments the iterator by 1
 	// Returns 'this'
 	SuspectTableIterator operator++();
@@ -78,14 +85,13 @@ public:
 	// Checks if the iterator 'rhs' is not equal to 'this'
 	bool operator==(SuspectTableIterator rhs);
 
-
 private:
 
 	uint m_index;
 
 	SuspectHashTable * m_table_ref;
 
-	vector<in_addr_t> * m_keys_ref;
+	vector<uint64_t> * m_keys_ref;
 
 };
 }

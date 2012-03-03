@@ -676,4 +676,58 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 	return offset;
 }
 
+FeatureSet& FeatureSet::operator=(FeatureSet &rhs)
+{
+	delete m_unsentData;
+	this->m_IPTable = rhs.m_IPTable;
+	this->m_bytesTotal = rhs.m_bytesTotal;
+	this->m_endTime = rhs.m_endTime;
+	*this->m_features = *rhs.m_features;
+	this->m_haystackEvents = rhs.m_haystackEvents;
+	this->m_intervalTable = rhs.m_intervalTable;
+	this->m_last_time = rhs.m_last_time;
+	this->m_packTable = rhs.m_packTable;
+	this->m_packetCount = rhs.m_packetCount;
+	this->m_portMax = rhs.m_portMax;
+	this->m_portTable = rhs.m_portTable;
+	this->m_startTime = rhs.m_startTime;
+	this->m_totalInterval = rhs.m_totalInterval;
+
+	if(rhs.m_unsentData != NULL)
+	{
+		FeatureSet fs = *rhs.m_unsentData;
+		m_unsentData = &fs;
+	}
+	else
+		m_unsentData = NULL;
+
+	return *this;
+}
+
+/*FeatureSet& FeatureSet::operator=(FeatureSet rhs)
+{
+	delete m_unsentData;
+	this->m_IPTable = rhs.m_IPTable;
+	this->m_bytesTotal = rhs.m_bytesTotal;
+	this->m_endTime = rhs.m_endTime;
+	*this->m_features = *rhs.m_features;
+	this->m_haystackEvents = rhs.m_haystackEvents;
+	this->m_intervalTable = rhs.m_intervalTable;
+	this->m_last_time = rhs.m_last_time;
+	this->m_packTable = rhs.m_packTable;
+	this->m_packetCount = rhs.m_packetCount;
+	this->m_portMax = rhs.m_portMax;
+	this->m_portTable = rhs.m_portTable;
+	this->m_startTime = rhs.m_startTime;
+	this->m_totalInterval = rhs.m_totalInterval;
+	if(rhs.m_unsentData != NULL)
+	{
+		FeatureSet fs = *rhs.m_unsentData;
+		m_unsentData = &fs;
+	}
+	else
+		m_unsentData = NULL;
+	return *this;
+}*/
+
 }

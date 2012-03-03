@@ -18,6 +18,8 @@
 //============================================================================/*
 
 #include "Suspect.h"
+#include "FeatureSet.h"
+
 #include <sstream>
 
 using namespace std;
@@ -39,7 +41,6 @@ Suspect::Suspect()
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
-	m_features = FeatureSet();
 	m_features.m_unsentData = new FeatureSet();
 	m_annPoint = NULL;
 	m_evidence.clear();
@@ -52,6 +53,7 @@ Suspect::Suspect()
 
 Suspect::~Suspect()
 {
+	WrlockSuspect();
 	if(m_annPoint != NULL)
 	{
 		annDeallocPt(m_annPoint);
@@ -74,7 +76,6 @@ Suspect::Suspect(Packet packet)
 	m_needsClassificationUpdate = true;
 	m_needsFeatureUpdate = true;
 	m_isLive = true;
-	m_features = FeatureSet();
 	m_features.m_unsentData = new FeatureSet();
 	m_annPoint = NULL;
 	m_flaggedByAlarm = false;
@@ -156,18 +157,40 @@ string Suspect::ToString(bool featureEnabled[])
 	return ss.str();
 }
 
-
-void Suspect::AddEvidence(Packet packet)
+//	Add an additional piece of evidence to this suspect
+//		packet - Packet headers to extract evidence from
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+// Note: Does not take actions like reclassifying or calculating features.
+int Suspect::AddEvidence(Packet packet)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_evidence.push_back(packet);
 	m_needsFeatureUpdate = true;
 	m_needsClassificationUpdate = true;
 	UnlockSuspect();
+	return 0;
+}
+
+// Proccesses all packets in m_evidence and puts them into the suspects unsent FeatureSet data
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::UpdateEvidence()
+{
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
+	WrlockSuspect();
+	for(uint i = 0; i < m_evidence.size(); i++)
+	{
+		this->m_features.m_unsentData->UpdateEvidence(m_evidence[i]);
+	}
+	m_evidence.clear();
+	UnlockSuspect();
+	return 0;
 }
 
 //Returns a copy of the evidence vector so that it can be read.
-vector <Packet> Suspect::GetEvidence() //TODO
+vector <Packet> Suspect::GetEvidence()
 {
 	RdlockSuspect();
 	vector<Packet>ret = m_evidence;
@@ -175,22 +198,33 @@ vector <Packet> Suspect::GetEvidence() //TODO
 	return ret;
 }
 
-//Clears the evidence vector, returns 0 on success
-void Suspect::ClearEvidence() //TODO
+//Clears the evidence vector
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::ClearEvidence()
 {
-		WrlockSuspect();
-		m_evidence.clear();
-		UnlockSuspect();
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
+	WrlockSuspect();
+	m_evidence.clear();
+	UnlockSuspect();
+	return 0;
 }
 
-void Suspect::CalculateFeatures(uint32_t featuresEnabled)
+//Calculates the suspect's features based on it's feature set
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::CalculateFeatures(uint32_t featuresEnabled)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_features.CalculateAll(featuresEnabled);
 	UnlockSuspect();
+	return 0;
 }
 
-
+// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
+//		buf - Pointer to buffer where serialized data will be stored
+// Returns: number of bytes set in the buffer
 uint32_t Suspect::SerializeSuspect(u_char * buf)
 {
 	RdlockSuspect();
@@ -229,7 +263,21 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	return offset;
 }
 
+// Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
+//		buf - Pointer to buffer where serialized data will be stored
+// Returns: number of bytes set in the buffer
+uint32_t Suspect::SerializeSuspectWithData(u_char * buf)
+{
+	RdlockSuspect();  //Double read lock should be ok
+	uint32_t offset = SerializeSuspect(buf);
+	offset += m_features.SerializeFeatureData(buf + offset);
+	UnlockSuspect();
+	return offset;
+}
 
+// Reads Suspect information from a buffer originally populated by serializeSuspect
+//		buf - Pointer to buffer where the serialized suspect is
+// Returns: number of bytes read from the buffer
 uint32_t Suspect::DeserializeSuspect(u_char * buf)
 {
 	WrlockSuspect();
@@ -316,9 +364,9 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	return offset;
 }
 
-//Returns a copy of the suspects in_addr.s_addr, must not be locked or is locked by the owner
+//Returns a copy of the suspects in_addr.s_addr
 //Returns: Suspect's in_addr.s_addr
-in_addr_t Suspect::GetIpAddress() //TODO
+in_addr_t Suspect::GetIpAddress()
 {
 	RdlockSuspect();
 	in_addr_t ret = m_IpAddress.s_addr;
@@ -326,17 +374,21 @@ in_addr_t Suspect::GetIpAddress() //TODO
 	return ret;
 }
 
-//Sets the suspects in_addr, must have the lock to perform this operation
-void Suspect::SetIpAddress(in_addr_t ip) //TODO
+//Sets the suspects in_addr
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetIpAddress(in_addr_t ip)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_IpAddress.s_addr = ip;
 	UnlockSuspect();
+	return 0;
 }
 
-//Returns a copy of the suspects in_addr.s_addr, must not be locked or is locked by the owner
+//Returns a copy of the suspects in_addr.s_addr
 //Returns: Suspect's in_addr
-in_addr Suspect::GetInAddr() //TODO
+in_addr Suspect::GetInAddr()
 {
 	RdlockSuspect();
 	in_addr ret = m_IpAddress;
@@ -344,17 +396,21 @@ in_addr Suspect::GetInAddr() //TODO
 	return ret;
 }
 
-//Sets the suspects in_addr, must have the lock to perform this operation
-void Suspect::SetInAddr(in_addr in) //TODO
+//Sets the suspects in_addr
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetInAddr(in_addr in)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_IpAddress = in;
 	UnlockSuspect();
+	return 0;
 }
 
-//Returns a copy of the Suspects classification double, must not be locked or is locked by the owner
+//Returns a copy of the Suspects classification double
 // Returns -1 on failure
-double Suspect::GetClassification() //TODO
+double Suspect::GetClassification()
 {
 	RdlockSuspect();
 	double ret = m_classification;
@@ -362,120 +418,146 @@ double Suspect::GetClassification() //TODO
 	return ret;
 }
 
-//Sets the suspect's classification, must have the lock to perform this operation
+//Sets the suspect's classification
 //Returns 0 on success
-void Suspect::SetClassification(double n) //TODO
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetClassification(double n)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_classification = n;
 	UnlockSuspect();
+	return 0;
 }
 
 
-//Returns the number of hostile neighbors, must not be locked or is locked by the owner
-int Suspect::GetHostileNeighbors() //TODO
+//Returns the number of hostile neighbors
+int Suspect::GetHostileNeighbors()
 {
 	RdlockSuspect();
 	int ret = m_hostileNeighbors;
 	UnlockSuspect();
 	return ret;
 }
-//Sets the number of hostile neighbors, must have the lock to perform this operation
-void Suspect::SetHostileNeighbors(int i) //TODO
+//Sets the number of hostile neighbors
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetHostileNeighbors(int i)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_hostileNeighbors = i;
 	UnlockSuspect();
+	return 0;
 }
 
 
-//Returns the hostility bool of the suspect, must not be locked or is locked by the owner
-bool Suspect::GetIsHostile() //TODO
+//Returns the hostility bool of the suspect
+bool Suspect::GetIsHostile()
 {
 	RdlockSuspect();
 	bool ret = m_isHostile;
 	UnlockSuspect();
 	return ret;
 }
-//Sets the hostility bool of the suspect, must have the lock to perform this operation
-void Suspect::SetIsHostile(bool b) //TODO
+//Sets the hostility bool of the suspect
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetIsHostile(bool b)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_isHostile = b;
 	UnlockSuspect();
+	return 0;
 }
 
 
-//Returns the needs classification bool, must not be locked or is locked by the owner
-bool Suspect::GetNeedsClassificationUpdate() //TODO
+//Returns the needs classification bool
+bool Suspect::GetNeedsClassificationUpdate()
 {
 	RdlockSuspect();
 	bool ret = m_needsClassificationUpdate;
 	UnlockSuspect();
 	return ret;
 }
-//Sets the needs classification bool, must have the lock to perform this operation
-void Suspect::SetNeedsClassificationUpdate(bool b) //TODO
+//Sets the needs classification bool
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetNeedsClassificationUpdate(bool b)
 {
 	WrlockSuspect();
 	m_needsClassificationUpdate = b;
 	UnlockSuspect();
+	return 0;
 }
 
 
-//Returns the needs feature update bool, must not be locked or is locked by the owner
-bool Suspect::GetNeedsFeatureUpdate() //TODO
+//Returns the needs feature update bool
+bool Suspect::GetNeedsFeatureUpdate()
 {
 	RdlockSuspect();
 	bool ret = m_needsFeatureUpdate;
 	UnlockSuspect();
 	return ret;
 }
-//Sets the neeeds feature update bool, must have the lock to perform this operation
-void Suspect::SetNeedsFeatureUpdate(bool b) //TODO
+//Sets the neeeds feature update bool
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetNeedsFeatureUpdate(bool b)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_needsFeatureUpdate = b;
 	UnlockSuspect();
+	return 0;
 }
 
 
-//Returns the flagged by silent alarm bool, must not be locked or is locked by the owner
-bool Suspect::GetFlaggedByAlarm() //TODO
+//Returns the flagged by silent alarm bool
+bool Suspect::GetFlaggedByAlarm()
 {
 	RdlockSuspect();
 	bool ret = m_flaggedByAlarm;
 	UnlockSuspect();
 	return ret;
 }
-//Sets the flagged by silent alarm bool, must have the lock to perform this operation
-void Suspect::SetFlaggedByAlarm(bool b) //TODO
+//Sets the flagged by silent alarm bool
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetFlaggedByAlarm(bool b)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_flaggedByAlarm = b;
 	UnlockSuspect();
+	return 0;
 }
 
 
-//Returns the 'from live capture' bool, must not be locked or is locked by the owner
-bool Suspect::GetIsLive() //TODO
+//Returns the 'from live capture' bool
+bool Suspect::GetIsLive()
 {
 	RdlockSuspect();
 	bool ret = m_isLive;
 	UnlockSuspect();
 	return ret;
 }
-//Sets the 'from live capture' bool, must have the lock to perform this operation
-void Suspect::SetIsLive(bool b) //TODO
+//Sets the 'from live capture' bool
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetIsLive(bool b)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_isLive = b;
 	UnlockSuspect();
+	return 0;
 }
 
 
-//Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
-FeatureSet Suspect::GetFeatures() //TODO
+//Returns a copy of the suspects FeatureSet
+FeatureSet Suspect::GetFeatureSet()
 {
 	RdlockSuspect();
 	FeatureSet ret = m_features;
@@ -483,58 +565,87 @@ FeatureSet Suspect::GetFeatures() //TODO
 	return ret;
 }
 
-//Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
-void Suspect::SetFeatures(FeatureSet fs) //TODO
+//Sets or overwrites the suspects FeatureSet
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetFeatureSet(FeatureSet *fs)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
-	m_features = fs;
+	m_features.operator =(*fs);
 	UnlockSuspect();
+	return 0;
 }
 
 //Adds the feature set 'fs' to the suspect's feature set
-void Suspect::AddFeatureSet(FeatureSet fs) //TODO
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::AddFeatureSet(FeatureSet *fs)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
-	m_features += fs;
+	m_features += *fs;
 	UnlockSuspect();
+	return 0;
 }
 //Subtracts the feature set 'fs' from the suspect's feature set
-void Suspect::SubtractFeatureSet(FeatureSet fs) //TODO
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SubtractFeatureSet(FeatureSet *fs)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
-	m_features -= fs;
+	m_features -= *fs;
 	UnlockSuspect();
-
+	return 0;
 }
 
 //Clears the feature set of the suspect
-void Suspect::ClearFeatures() //TODO
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::ClearFeatureSet()
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_features.ClearFeatureSet();
 	UnlockSuspect();
-
+	return 0;
 }
 
+//Clears the unsent feature set of the suspect
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::ClearUnsentData()
+{
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
+	WrlockSuspect();
+	m_features.m_unsentData->ClearFeatureSet();
+	UnlockSuspect();
+	return 0;
+}
 
-//Returns the accuracy double of the feature using featureIndex fi, must not be locked or is locked by the owner
-double Suspect::GetFeatureAccuracy(featureIndex fi) //TODO
+//Returns the accuracy double of the feature using featureIndex 'fi'
+double Suspect::GetFeatureAccuracy(featureIndex fi)
 {
 	RdlockSuspect();
 	double ret =  m_featureAccuracy[fi];
 	UnlockSuspect();
 	return ret;
 }
-//Sets the accuracy double of the feature using featureIndex fi, must have the lock to perform this operation
-void Suspect::SetFeatureAccuracy(featureIndex fi, double d) //TODO
+//Sets the accuracy double of the feature using featureIndex 'fi'
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetFeatureAccuracy(featureIndex fi, double d)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
 	WrlockSuspect();
 	m_featureAccuracy[fi] = d;
 	UnlockSuspect();
+	return 0;
 }
 
-//Returns a copy of the suspect's ANNpoint, must not be locked or is locked by the owner
-ANNpoint Suspect::GetAnnPoint() //TODO
+//Returns a copy of the suspect's ANNpoint
+ANNpoint Suspect::GetAnnPoint()
 {
 	RdlockSuspect();
 	ANNpoint ret =  m_annPoint;
@@ -542,22 +653,40 @@ ANNpoint Suspect::GetAnnPoint() //TODO
 	return ret;
 }
 
-//Write locks the suspect
-void Suspect::WrlockSuspect() //TODO
+//Sets the suspect's ANNpoint, must have the lock to perform this operation
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetAnnPoint(ANNpoint a)
 {
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
+	WrlockSuspect();
+	*m_annPoint = *a;
+	UnlockSuspect();
+	return 0;
+}
+
+//Write locks the suspect
+void Suspect::WrlockSuspect()
+{
+	if(m_hasOwner && pthread_equal(m_owner, pthread_self()))
+		pthread_rwlock_unlock(&m_lock);
 	pthread_rwlock_wrlock(&m_lock);
 }
 
 //Read locks the suspect
-void Suspect::RdlockSuspect() //TODO
+void Suspect::RdlockSuspect()
 {
+	if(m_hasOwner && pthread_equal(m_owner, pthread_self()))
+		pthread_rwlock_unlock(&m_lock);
 	pthread_rwlock_rdlock(&m_lock);
 }
 
 //Unlocks the suspect
-void Suspect::UnlockSuspect() //TODO
+void Suspect::UnlockSuspect()
 {
 	pthread_rwlock_unlock(&m_lock);
+	if(m_hasOwner && pthread_equal(m_owner, pthread_self()))
+		pthread_rwlock_rdlock(&m_lock);
 }
 
 //Returns the pthread_t owner
@@ -582,22 +711,20 @@ bool Suspect::HasOwner()
 
 //Sets the pthread_t 'owner'
 //		tid: unique thread identifier retrieved from pthread_self();
-// Returns: (0) on Success or (-1) if the suspect already has another owner
-int Suspect::SetOwner(pthread_t tid)
+// Note: This function will block until the owner can be set, use HasOwner()
+// if you want to prevent a blocking call.
+void Suspect::SetOwner(pthread_t tid)
 {
-	if(HasOwner() && !pthread_equal(m_owner, pthread_self()))
-		return  -1;
 	WrlockSuspect();
 	m_hasOwner = true;
 	m_owner = tid;
 	UnlockSuspect();
 	RdlockSuspect();
-	return 0;
 }
 
 //Flags the suspect as no longer 'checked out'
 // Returns (-1) if the caller is not the owner, (1) if the Suspect has no owner or (0) on success
-int Suspect::UnsetOwner()
+int Suspect::ResetOwner()
 {
 	if(m_hasOwner == false)
 		return 1;

@@ -70,6 +70,14 @@ struct eqtime
   }
 };
 
+struct eqkey
+{
+	bool operator()(uint64_t k1, uint64_t k2) const
+	{
+		return (k1 == k2);
+	}
+};
+
 ///The Value is a vector of IP headers
 typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr > TCPSessionHashTable;
 

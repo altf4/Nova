@@ -16,6 +16,8 @@
 // Description : Iterator used for traversing over a Suspect Table
 //============================================================================/*
 
+#include <math.h>
+
 #include "SuspectTableIterator.h"
 
 using namespace std;
@@ -30,7 +32,7 @@ namespace Nova
 
 
 //Default iterator constructor
-SuspectTableIterator::SuspectTableIterator(SuspectHashTable * table, vector<in_addr_t> * keys)
+SuspectTableIterator::SuspectTableIterator(SuspectHashTable * table, vector<uint64_t> * keys)
 {
 	m_index = 0;
 	m_table_ref = table;
@@ -96,8 +98,28 @@ Suspect SuspectTableIterator::LookBack()
 Suspect SuspectTableIterator::Current()
 {
 	SuspectHashTable::iterator it;
-	it = m_table_ref->find(m_keys_ref->at(m_index));
+	if((m_index >= 0) && (m_index < m_keys_ref->size()))
+	{
+		it = m_table_ref->find(m_keys_ref->at(m_index));
+	}
+	else
+	{
+		it = m_table_ref->end();
+	}
+
 	return *it->second;
+}
+
+// Gets a reference to the index of the iterator
+// Returns a reference to m_index
+uint& SuspectTableIterator::GetIndex()
+{
+	return m_index;
+}
+
+in_addr_t SuspectTableIterator::GetKey()
+{
+	return static_cast<in_addr_t>(m_keys_ref->at(m_index));
 }
 
 //Increments the iterator by 1
