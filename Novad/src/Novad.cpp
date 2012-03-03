@@ -154,15 +154,6 @@ int main()
 	//Are we Training or Classifying?
 	if(Config::Inst()->getIsTraining())
 	{
-		// We suffix the training capture files with the date/time
-		time_t rawtime;
-		time ( &rawtime );
-		struct tm * timeinfo = localtime(&rawtime);
-
-		char buffer [40];
-		strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
-
-
 		pthread_create(&trainingLoopThread,NULL,TrainingLoop,NULL);
 	}
 	else
@@ -501,7 +492,6 @@ void Nova::Reload()
 
 	// Did our data file move?
 	Config::Inst()->getPathTrainingFile() = userHomePath + "/" +Config::Inst()->getPathTrainingFile();
-	outFile = Config::Inst()->getPathTrainingFile().c_str();
 
 	engine->LoadDataPointsFromFile(Config::Inst()->getPathTrainingFile());
 
@@ -662,6 +652,14 @@ void *Nova::TrainingLoop(void *ptr)
 	GUISendRemote.sun_family = AF_UNIX;
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
+
+	// We suffix the training capture files with the date/time
+	time_t rawtime;
+	time ( &rawtime );
+	struct tm * timeinfo = localtime(&rawtime);
+	char buffer [40];
+	strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
+
 
 	string trainingCapFile = userHomePath + "/" + Config::Inst()->getPathTrainingCapFolder() + "/training" + buffer + ".dump";
 
