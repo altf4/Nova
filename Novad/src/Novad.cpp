@@ -81,18 +81,6 @@ socklen_t * sockSizePtr = (socklen_t*)&socketSize;
 
 // Misc
 int len;
-const char *outFile;				//output for data points during trainingthos
-
-
-// Nova Configuration Variables (read from config file)
-string trainingCapFile;
-string SMTP_addr;
-string SMTP_domain;
-in_port_t SMTP_port;
-Nova::userMap service_pref;
-vector<string> email_recipients;
-
-// End configured variables
 
 time_t lastLoadTime;
 time_t lastSaveTime;
@@ -173,10 +161,9 @@ int main()
 
 		char buffer [40];
 		strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
-		trainingCapFile = userHomePath + "/" + Config::Inst()->getPathTrainingCapFolder() + "/training" + buffer + ".dump";
 
 
-		pthread_create(&trainingLoopThread,NULL,TrainingLoop,(void *)outFile);
+		pthread_create(&trainingLoopThread,NULL,TrainingLoop,NULL);
 	}
 	else
 	{
@@ -676,6 +663,7 @@ void *Nova::TrainingLoop(void *ptr)
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
 
+	string trainingCapFile = userHomePath + "/" + Config::Inst()->getPathTrainingCapFolder() + "/training" + buffer + ".dump";
 
 	//Training Loop
 	do
