@@ -37,8 +37,8 @@ normalizationType ClassificationEngine::m_normalization[] = {
 		LOGARITHMIC
 };
 
-ClassificationEngine::ClassificationEngine(Logger *logger, SuspectHashTable *table)
-: m_logger(logger), m_suspects(table)
+ClassificationEngine::ClassificationEngine(SuspectHashTable *table)
+: m_suspects(table)
 {
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
@@ -66,7 +66,7 @@ void ClassificationEngine::FormKdTree()
 			}
 			else
 			{
-				m_logger->Log(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__LINE__%__FILE__).str());
+				LOG(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__LINE__%__FILE__).str());
 				break;
 			}
 		}
@@ -120,7 +120,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 		if(nnIdx[i] == -1)
 		{
-			m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to find a nearest neighbor for Data point %3% Try decreasing the Error bound")
+			LOG(ERROR, (format("File %1% at line %2%: Unable to find a nearest neighbor for Data point %3% Try decreasing the Error bound")
 					%__LINE__%__FILE__%i).str());
 		}
 		else
@@ -139,7 +139,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			else
 			{
 				//error case; Data points must be 0 or 1
-				m_logger->Log(ERROR, (format("File %1% at line %2%: Data point has invalid classification. Should by 0 or 1, but is %3%")
+				LOG(ERROR, (format("File %1% at line %2%: Data point has invalid classification. Should by 0 or 1, but is %3%")
 						%__LINE__%__FILE__%m_dataPtsWithClass[nnIdx[i]]->m_classification).str());
 
 				suspect->SetClassification(-1);
@@ -222,7 +222,7 @@ void ClassificationEngine::NormalizeDataPoints()
 					if(m_maxFeatureValues[ai] != 0)
 						it->second->m_annPoint[ai] = Normalize(m_normalization[i], it->second->m_features.m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 					else
-						m_logger->Log(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
+						LOG(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
 								%__LINE__%__FILE__).str());
 					ai++;
 				}
@@ -292,7 +292,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 
 	myfile.close();
@@ -395,7 +395,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else
 	{
-		m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 	myfile.close();
 
@@ -442,7 +442,7 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 		}
 		default:
 		{
-			//logger->Logging(ERROR, "Normalization failed: Normalization type unkown");
+			//LOGging(ERROR, "Normalization failed: Normalization type unkown");
 			return 0;
 		}
 
@@ -471,7 +471,7 @@ void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree*
 	}
 	else
 	{
-		m_logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%outFilePath).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%outFilePath).str());
 
 	}
 	myfile.close();

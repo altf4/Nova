@@ -61,7 +61,7 @@ public:
     string getDoppelIp() const;
     string getEnabledFeatures() const;
     bool isFeatureEnabled(int i) const;
-    int getEnabledFeatureCount() const;
+    uint getEnabledFeatureCount() const;
     string getInterface() const;
     string getPathCESaveFile() const;
     string getPathConfigHoneydDm() const;
@@ -126,6 +126,20 @@ public:
     void setKey(string key);
     void setNeigbors(vector<in_addr_t> neighbors);
     void setGroup(string group);
+    string getLoggerPreferences() const;
+    string getSMTPAddr() const;
+    string getSMTPDomain() const;
+    vector<string> getSMTPEmailRecipients() const;
+    in_port_t getSMTPPort() const;
+    void setLoggerPreferences(string loggerPreferences);
+    void setSMTPAddr(string SMTPAddr);
+    void setSMTPDomain(string SMTPDomain);
+	void setSMTPPort(in_port_t SMTPPort);
+
+    // Set with a vector of email addresses
+    void setSMTPEmailRecipients(vector<string> SMTPEmailRecipients);
+    // Set with a CSV string from the config file
+    void setSMTPEmailRecipients(string SMTPEmailRecipients);
 
 protected:
 	Config();
@@ -143,7 +157,7 @@ private:
 	// Enabled feature stuff, we provide a few formats and helpers
 	string m_enabledFeatureMask;
 	bool m_isFeatureEnabled[DIM];
-	int m_enabledFeatureCount;
+	uint m_enabledFeatureCount;
 	double m_squrtEnabledFeatures;
 
 
@@ -175,6 +189,18 @@ private:
 	bool m_useTerminals;
 	bool m_isTraining;
 	bool m_isDmEnabled;
+
+	// the SMTP server domain name for display purposes
+	string SMTPDomain;
+	// the email address that will be set as sender
+	string SMTPAddr;
+	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
+	in_port_t SMTPPort;
+
+	string loggerPreferences;
+	// a vector containing the email recipients; may move this into the actual classes
+	// as opposed to being in this struct
+	vector<string> SMTPEmailRecipients;
 
 	// User config options
 	vector<in_addr_t> m_neighbors;

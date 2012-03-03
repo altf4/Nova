@@ -31,13 +31,40 @@ using namespace std;
 namespace Nova
 {
 
-const string Config::m_prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
-		"TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE",
-		"USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS",
-		"IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS",
-		"SA_SLEEP_DURATION", "DM_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE",
-		"DM_ENABLED", "ENABLED_FEATURES","TRAINING_CAP_FOLDER", "THINNING_DISTANCE",
-		"SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE"};
+const string Config::m_prefixes[] = {
+		"INTERFACE",
+		"HS_HONEYD_CONFIG",
+		"TCP_TIMEOUT",
+		"TCP_CHECK_FREQ",
+		"READ_PCAP",
+		"PCAP_FILE",
+		"GO_TO_LIVE",
+		"USE_TERMINALS",
+		"CLASSIFICATION_TIMEOUT",
+		"SILENT_ALARM_PORT",
+		"K",
+		"EPS",
+		"IS_TRAINING",
+		"CLASSIFICATION_THRESHOLD",
+		"DATAFILE",
+		"SA_MAX_ATTEMPTS",
+		"SA_SLEEP_DURATION",
+		"DM_HONEYD_CONFIG",
+		"DOPPELGANGER_IP",
+		"DOPPELGANGER_INTERFACE",
+		"DM_ENABLED",
+		"ENABLED_FEATURES",
+		"TRAINING_CAP_FOLDER",
+		"THINNING_DISTANCE",
+		"SAVE_FREQUENCY",
+		"DATA_TTL",
+		"CE_SAVE_FILE",
+		"SMTP_ADDR",
+		"SMTP_PORT",
+		"SMTP_DOMAIN",
+		"RECIPIENTS",
+		"SERVICE_PREFERENCES"
+};
 
 // Files we need to run (that will be loaded with defaults if deleted)
 const string Config::m_requiredFiles[] = {
@@ -54,9 +81,9 @@ Config* Config::m_instance = NULL;
 
 Config* Config::Inst()
 {
-	if (Config::m_instance == NULL)
-		Config::m_instance = new Config();
-	return Config::m_instance;
+	if (m_instance == NULL)
+		m_instance = new Config();
+	return m_instance;
 }
 
 // Loads the configuration file into the class's state data
@@ -505,6 +532,89 @@ void Config::LoadConfig()
 					m_pathCESaveFile = line;
 					isValid[prefixIndex] = true;
 				}
+				continue;
+			}
+
+
+			// SMTP_ADDR
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPAddr(line);
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+
+			//SMTP_PORT
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPPort(((in_port_t) atoi(line.c_str())));
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SMTP_DOMAIN
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPDomain(line);
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//RECIPIENTS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPAddr(line);
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SERVICE_PREFERENCES
+			//TODO: make method for parsing string to map criticality level to service
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setLoggerPreferences(line);
+					isValid[prefixIndex] = true;
+				}
+
 				continue;
 			}
 		}
@@ -1007,7 +1117,7 @@ string Config::getEnabledFeatures() const
 	return m_enabledFeatureMask;
 }
 
-int Config::getEnabledFeatureCount() const
+uint Config::getEnabledFeatureCount() const
 {
 	return m_enabledFeatureCount;
 }
@@ -1305,6 +1415,80 @@ void Config::setNeigbors(vector<in_addr_t> neighbors)
 void Config::setGroup(string group)
 {
 	m_group = group;
+}
+
+string Config::getLoggerPreferences() const
+{
+	return loggerPreferences;
+}
+
+string Config::getSMTPAddr() const
+{
+	return SMTPAddr;
+}
+
+string Config::getSMTPDomain() const
+{
+	return SMTPDomain;
+}
+
+vector<string> Config::getSMTPEmailRecipients() const
+{
+	return SMTPEmailRecipients;
+}
+
+in_port_t Config::getSMTPPort() const
+{
+	return SMTPPort;
+}
+
+void Config::setLoggerPreferences(string loggerPreferences)
+{
+	this->loggerPreferences = loggerPreferences;
+}
+
+void Config::setSMTPAddr(string SMTPAddr)
+{
+	this->SMTPAddr = SMTPAddr;
+}
+
+void Config::setSMTPDomain(string SMTPDomain)
+{
+	this->SMTPDomain = SMTPDomain;
+}
+
+void Config::setSMTPEmailRecipients(vector<string> SMTPEmailRecipients)
+{
+	this->SMTPEmailRecipients = SMTPEmailRecipients;
+}
+
+void Config::setSMTPEmailRecipients(string SMTPEmailRecipients)
+{
+	 vector<string> addresses;
+	 istringstream iss(SMTPEmailRecipients);
+
+	 copy(istream_iterator<string>(iss),
+		  istream_iterator<string>(),
+		  back_inserter<vector <string> >(addresses));
+
+	vector<string> out = addresses;
+
+	for(uint16_t i = 0; i < addresses.size(); i++)
+	{
+		uint16_t endSubStr = addresses[i].find(",", 0);
+
+		if(endSubStr != addresses[i].npos)
+		{
+			out[i] = addresses[i].substr(0, endSubStr);
+		}
+	}
+
+	this->SMTPEmailRecipients = out;
+}
+
+void Config::setSMTPPort(in_port_t SMTPPort)
+{
+	this->SMTPPort = SMTPPort;
 }
 
 }

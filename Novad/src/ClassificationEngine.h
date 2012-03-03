@@ -40,7 +40,7 @@ enum normalizationType {
 class ClassificationEngine
 {
 public:
-	ClassificationEngine(Logger *logger, SuspectHashTable *table);
+	ClassificationEngine(SuspectHashTable *table);
 
 	~ClassificationEngine();
 
@@ -96,7 +96,6 @@ private:
 	double m_minFeatureValues[DIM];
 	double m_meanFeatureValues[DIM];
 
-	Logger *m_logger;
 	SuspectHashTable *m_suspects;
 };
 

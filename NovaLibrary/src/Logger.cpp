@@ -19,6 +19,7 @@
 //============================================================================/*
 
 #include "Logger.h"
+#include "Config.h"
 #include <fstream>
 #include <sstream>
 #include <syslog.h>
@@ -31,163 +32,25 @@ namespace Nova
 
 	const string Logger::m_prefixes[] = { "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "RECIPIENTS", "SERVICE_PREFERENCES" };
 
-// Loads the configuration file into the class's state data
-	uint16_t Logger::LoadConfiguration(char const* configFilePath)
+	Logger *Logger::m_loggerInstance = NULL;
+
+	Logger *Logger::Inst()
 	{
-		string line;
-		string prefix;
-		uint16_t prefixIndex;
-		string checkLoad[5];
-
-		openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
-
-		ifstream config(configFilePath);
-
-		//populate the checkLoad array. I know it looks a little messy, maybe
-		//hard code it somewhere? Just did this so that if we add or remove stuff,
-		//we only have to do it here
-		for(uint16_t j = 0; j < sizeof(m_prefixes)/sizeof(m_prefixes[0]); j++)
-		{
-			string def;
-
-			switch(j)
-			{
-				case 0:
-				case 1:
-				case 2:
-				case 3: def = "NO_DEFAULT";
-						break;
-				case 4: def = "0";
-						break;
-				default: break;
-			}
-
-			checkLoad[j] = def;
-		}
-
-		if(config.is_open())
-		{
-			while(config.good())
-			{
-				getline(config, line);
-
-				prefixIndex = 0;
-				prefix = m_prefixes[prefixIndex];
-
-				// SMTP_ADDR
-				if(!line.substr(0, prefix.size()).compare(prefix))
-				{
-					line = line.substr(prefix.size() + 1, line.size());
-
-					if(line.size() > 0)
-					{
-						m_messageInfo.smtp_addr = line;
-						checkLoad[prefixIndex] = line;
-					}
-
-					continue;
-				}
-
-				prefixIndex++;
-				prefix = m_prefixes[prefixIndex];
-
-				//SMTP_PORT
-				if(!line.substr(0, prefix.size()).compare(prefix))
-				{
-					line = line.substr(prefix.size() + 1, line.size());
-
-					if(line.size() > 0)
-					{
-						m_messageInfo.smtp_port = ((in_port_t) atoi(line.c_str()));
-						checkLoad[prefixIndex] = line;
-					}
-
-					continue;
-				}
-
-				prefixIndex++;
-				prefix = m_prefixes[prefixIndex];
-
-				//SMTP_DOMAIN
-				if(!line.substr(0, prefix.size()).compare(prefix))
-				{
-					line = line.substr(prefix.size() + 1, line.size());
-
-					if(line.size() > 0)
-					{
-						m_messageInfo.smtp_domain = line;
-						checkLoad[prefixIndex] = line;
-					}
-
-					continue;
-				}
-				prefixIndex++;
-				prefix = m_prefixes[prefixIndex];
-				vector<string> vec;
-				//RECIPIENTS
-				if(!line.substr(0, prefix.size()).compare(prefix))
-				{
-					line = line.substr(prefix.size() + 1, line.size());
-
-					if(line.size() > 0)
-					{
-						m_messageInfo.email_recipients = Logger::ParseAddressesString(line);
-						checkLoad[prefixIndex] = line;
-					}
-
-					continue;
-				}
-
-				prefixIndex++;
-				prefix = m_prefixes[prefixIndex];
-
-				//SERVICE_PREFERENCES
-				//TODO: make method for parsing string to map criticality level to service
-				if(!line.substr(0, prefix.size()).compare(prefix))
-				{
-					line = line.substr(prefix.size() + 1, line.size());
-
-					if(line.size() > 0)
-					{
-						Logger::setUserLogPreferences(line);
-						checkLoad[prefixIndex] = line;
-					}
-
-					continue;
-				}
-			}
-		}
-		else
-		{
-			syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__);
-		}
-
-		for(uint16_t i = 0; i < sizeof(checkLoad)/sizeof(checkLoad[0]); i++)
-		{
-			if(!checkLoad[i].compare("NO_DEFAULT"))
-			{
-				syslog(SYSL_ERR, "Line: %d Some of the Nova messaging options were not configured, or not present.", __LINE__);
-				return 0;
-			}
-		}
-
-		closelog();
-
-		return 1;
+		if (m_loggerInstance == NULL)
+			m_loggerInstance = new Logger();
+		return m_loggerInstance;
 	}
 
-	vector<string> Logger::ParseAddressesString(string addresses)
+// Loads the configuration file into the class's state data
+	uint16_t Logger::LoadConfiguration()
 	{
-		 vector<string> returnAddresses;
-		 istringstream iss(addresses);
+		m_messageInfo.smtp_addr = Config::Inst()->getSMTPAddr();
+		m_messageInfo.smtp_port = Config::Inst()->getSMTPPort();
+		m_messageInfo.smtp_domain = Config::Inst()->getSMTPDomain();
+		m_messageInfo.email_recipients = Config::Inst()->getSMTPEmailRecipients();
+		setUserLogPreferences(Config::Inst()->getLoggerPreferences());
 
-		 copy(istream_iterator<string>(iss),
-		      istream_iterator<string>(),
-		      back_inserter<vector <string> >(returnAddresses));
-
-		 returnAddresses = Logger::CleanAddresses(returnAddresses);
-
-		 return returnAddresses;
+		return 1;
 	}
 
 	void Logger::SaveLoggerConfiguration(string filename)
@@ -251,23 +114,6 @@ namespace Nova
 	void Logger::Mail(uint16_t level, string message)
 	{
 
-	}
-
-	vector<string> Logger::CleanAddresses(vector<string> toClean)
-	{
-		vector<string> out = toClean;
-
-		for(uint16_t i = 0; i < toClean.size(); i++)
-		{
-			uint16_t endSubStr = toClean[i].find(",", 0);
-
-			if(endSubStr != toClean[i].npos)
-			{
-				out[i] = toClean[i].substr(0, endSubStr);
-			}
-		}
-
-		return out;
 	}
 
 	void Logger::setUserLogPreferences(string logPrefString)
@@ -422,7 +268,7 @@ namespace Nova
 		return mask;
 	}
 
-	Logger::Logger(char const * configFilePath, bool init)
+	Logger::Logger()
 	{
 		pthread_rwlock_init(&m_logLock, NULL);
 
@@ -453,15 +299,7 @@ namespace Nova
 			m_levels.push_back(pair<uint16_t, string> (i, level));
 		}
 
-		if(init)
-		{
-			if(!LoadConfiguration(configFilePath))
-			{
-				openlog("Logger", OPEN_SYSL, LOG_AUTHPRIV);
-				syslog(SYSL_ERR, "Line: %d One or more of the messaging configuration values have not been set, and have no default.", __LINE__);
-				exit(EXIT_FAILURE);
-			}
-		}
+		LoadConfiguration();
 	}
 
 	Logger::~Logger()
