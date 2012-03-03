@@ -797,7 +797,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Problem when recieving incomping silent alarm connection. Errno: %3%")
+			LOG(CRITICAL, (format("File %1% at line %2%: Problem when receiving incoming silent alarm connection. Errno: %3%")
 					%__LINE__%__FILE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
@@ -916,7 +916,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 				if(system(commandLine.c_str()) == -1)
 				{
-					LOG(INFO, "Failed to update iptables.", "Failed to update iptables.");
+					LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 				}
 
 
@@ -975,7 +975,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						LOG(INFO, "Failed to update iptables.", "Failed to update iptables.");
+						LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 					}
 					continue;
 				}
@@ -1059,18 +1059,18 @@ bool Nova::Start_Packet_Handler()
 
 		if(handle == NULL)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't open file: %3%: %4%")%__FILE__%__LINE__%Config::Inst()->getPathPcapFile().c_str()%errbuf).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't open pcapc file: %3%: %4%")%__FILE__%__LINE__%Config::Inst()->getPathPcapFile().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't parse filter: %3%: %4%")%__LINE__%filter_exp%pcap_geterr(handle)).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't parse pcap filter: %3%: %4%")%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't install filter: %3%: %4%")% __FILE__%__LINE__%filter_exp%pcap_geterr(handle)).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't install pcap filter: %3%: %4%")% __FILE__%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 		//First process any packets in the file then close all the sessions
@@ -1093,7 +1093,7 @@ bool Nova::Start_Packet_Handler()
 
 		if(handle == NULL)
 		{
-			LOG(ERROR, (format("File %1% at line %2%:  Couldn't open device: %3% %4%")% __FILE__%__LINE__%Config::Inst()->getInterface().c_str()%errbuf).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Unable to open the network interface for live capture: %3% %4%")% __FILE__%__LINE__%Config::Inst()->getInterface().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
@@ -1102,7 +1102,7 @@ bool Nova::Start_Packet_Handler()
 
 		if(ret == -1)
 		{
-			LOG(ERROR, (format("File %1% at line %2%: %3%")% __FILE__%__LINE__%errbuf).str());
+			LOG(ERROR, (format("File %1% at line %2%: Unable to get the network address and mask of the interface. Error: %3%")% __FILE__%__LINE__%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
@@ -1137,7 +1137,7 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 
 	if(packet == NULL)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Didn't grab packet!")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Failed to capture packet!")% __FILE__%__LINE__).str());
 		return;
 	}
 
@@ -1223,7 +1223,7 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Unknown Non-IP Packet Received")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Unknown Non-IP Packet Received. Nova is ignoring it.")% __FILE__%__LINE__).str());
 		return;
 	}
 }
@@ -1245,12 +1245,12 @@ void Nova::ReceiveGUICommand()
 	//Blocking call
 	if ((msgSocket = accept(GUISocket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  accept: %s")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Unable to get GUI commands, accept on the socket failed: %s")% __FILE__%__LINE__% strerror(errno)).str());
 		close(msgSocket);
 	}
 	if((bytesRead = recv(msgSocket, msgBuffer, MAX_GUIMSG_SIZE, MSG_WAITALL )) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  recv: %s")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Unable to get GUI commands, recv the socket failed: %s")% __FILE__%__LINE__% strerror(errno)).str());
 		close(msgSocket);
 	}
 
@@ -1275,7 +1275,7 @@ void Nova::ReceiveGUICommand()
 
 			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
 			if(system(delString.c_str()) == -1)
-				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
+				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed. Do you have permissions on the file %3%?")% __FILE__%__LINE__%Config::Inst()->getPathCESaveFile()).str());
 
 			pthread_rwlock_unlock(&suspectTableLock);
 			break;
@@ -1345,21 +1345,21 @@ void Nova::SendToUI(Suspect *suspect)
 
 	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Unable to create GUI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to create GUI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
 
 	if (connect(GUISendSocket, GUISendPtr, GUILen) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Unable to connect to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to connect to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
 
 	if (send(GUISendSocket, GUIData, GUIDataLen, 0) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Unable to send to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to send to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
@@ -1373,7 +1373,7 @@ void Nova::LoadConfiguration()
 
 	if(hostAddrString.size() == 0)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Bad interface, no IP's associated!")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Bad ethernet interface, no IP's associated!")% __FILE__%__LINE__).str());
 		exit(EXIT_FAILURE);
 	}
 
@@ -1438,10 +1438,10 @@ void *Nova::UpdateIPFilter(void *ptr)
 				string haystackAddresses_csv = ConstructFilterString();
 
 				if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-					LOG(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%: Couldn't parse pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 
 				if (pcap_setfilter(handle, &fp) == -1)
-					LOG(ERROR, (format("File %1% at line %2%:  Couldn't install filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%:  Couldn't install pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			}
 		}
 		else
