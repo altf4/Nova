@@ -125,12 +125,6 @@ public:
 	//		packet - packet headers of new packet
 	void UpdateEvidence(Packet packet);
 
-	// Adds/removes the local data to the silent alarm data before calculation
-	// this is done to improve the performance of UpdateEvidence
-	//		include - true: adds data
-	//				- false: removes data
-	void UpdateFeatureData(bool include);
-
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored
 	// Returns: number of bytes set in the buffer
@@ -153,9 +147,9 @@ public:
 	// Returns: number of bytes set in the buffer
 	uint32_t SerializeFeatureData(u_char *buf);
 
-	FeatureSet& operator=(FeatureSet &rhs);
+	//FeatureSet(const FeatureSet &rhs);
+	//FeatureSet& operator=(FeatureSet &rhs);
 
-	FeatureSet *m_unsentData;
 private:
 	//Temporary variables used to calculate Features
 

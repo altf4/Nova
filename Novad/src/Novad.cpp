@@ -860,17 +860,17 @@ void Nova::SilentAlarm(Suspect *suspect)
 			system(commandLine.c_str());
 		}
 	}
-	if(suspect->GetFeatureSet().m_unsentData->m_packetCount)
+	if(suspect->GetUnsentFeatureSet().m_packetCount)
 	{
 		do
 		{
 			dataLen = suspect->SerializeSuspect(serializedBuffer);
 
 			// Serialize the unsent data
-			dataLen += suspect->GetFeatureSet().m_unsentData->SerializeFeatureData(serializedBuffer+dataLen);
+			dataLen += suspect->GetUnsentFeatureSet().SerializeFeatureData(serializedBuffer+dataLen);
 			// Move the unsent data to the sent side
 			FeatureSet fs = suspect->GetFeatureSet();
-			fs.UpdateFeatureData(true);
+			suspect->UpdateFeatureData(true);
 			suspect->SetFeatureSet(&fs);
 			// Clear the unsent data
 			suspect->ClearUnsentData();

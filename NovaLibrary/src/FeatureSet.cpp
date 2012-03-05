@@ -39,13 +39,11 @@ FeatureSet::FeatureSet()
 	m_IPTable.resize(INIT_SIZE_SMALL);
 	m_portTable.resize(INIT_SIZE_MEDIUM);
 	m_packTable.resize(INIT_SIZE_LARGE);
-
-	m_unsentData = NULL;
 }
 
 FeatureSet::~FeatureSet()
 {
-	delete m_unsentData;
+
 }
 
 
@@ -76,8 +74,6 @@ void FeatureSet::ClearFeatureSet()
 void FeatureSet::CalculateAll()
 {
 	CalculateTimeInterval();
-
-	UpdateFeatureData(INCLUDE);
 
 	if (Config::Inst()->isFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
@@ -119,9 +115,6 @@ void FeatureSet::CalculateAll()
 				Calculate(PACKET_INTERVAL_MEAN);
 			Calculate(PACKET_INTERVAL_DEVIATION);
 	}
-
-
-	UpdateFeatureData(REMOVE);
 }
 
 
@@ -401,15 +394,6 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs) {
 	return *this;
 }
 
-void FeatureSet::UpdateFeatureData(bool include)
-{
-	if(include)
-		*this += *m_unsentData;
-	else
-		*this -= *m_unsentData;
-}
-
-
 uint32_t FeatureSet::SerializeFeatureSet(u_char * buf)
 {
 	uint32_t offset = 0;
@@ -677,9 +661,9 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 	return offset;
 }
 
+/*
 FeatureSet& FeatureSet::operator=(FeatureSet &rhs)
 {
-	delete m_unsentData;
 	this->m_IPTable = rhs.m_IPTable;
 	this->m_bytesTotal = rhs.m_bytesTotal;
 	this->m_endTime = rhs.m_endTime;
@@ -694,18 +678,10 @@ FeatureSet& FeatureSet::operator=(FeatureSet &rhs)
 	this->m_startTime = rhs.m_startTime;
 	this->m_totalInterval = rhs.m_totalInterval;
 
-	if(rhs.m_unsentData != NULL)
-	{
-		FeatureSet fs = *rhs.m_unsentData;
-		m_unsentData = &fs;
-	}
-	else
-		m_unsentData = NULL;
-
 	return *this;
 }
 
-/*FeatureSet& FeatureSet::operator=(FeatureSet rhs)
+FeatureSet& FeatureSet::operator=(FeatureSet rhs)
 {
 	delete m_unsentData;
 	this->m_IPTable = rhs.m_IPTable;

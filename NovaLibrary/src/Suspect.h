@@ -164,6 +164,8 @@ public:
 
 	//Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
 	FeatureSet GetFeatureSet();
+	FeatureSet GetUnsentFeatureSet();
+	void UpdateFeatureData(bool include);
 	//Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
 	// Returns (0) on Success and (-1) if the suspect is currently owned by another thread
 	// Note: If you wish to block until the Suspect can be set, release any other locked resources and
@@ -215,6 +217,7 @@ private:
 
 	// The Feature Set for this Suspect
 	FeatureSet m_features;
+	FeatureSet m_unsentFeatures;
 
 	// The feature set in the format that ANN requires.
 	ANNpoint m_annPoint;

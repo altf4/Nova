@@ -42,7 +42,6 @@ Suspect::Suspect()
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
-	m_features.m_unsentData = new FeatureSet();
 	m_annPoint = NULL;
 	m_evidence.clear();
 
@@ -60,7 +59,6 @@ Suspect::~Suspect()
 		annDeallocPt(m_annPoint);
 	}
 	pthread_rwlock_destroy(&m_lock);
-	delete m_features.m_unsentData;
 }
 
 
@@ -77,7 +75,6 @@ Suspect::Suspect(Packet packet)
 	m_needsClassificationUpdate = true;
 	m_needsFeatureUpdate = true;
 	m_isLive = true;
-	m_features.m_unsentData = new FeatureSet();
 	m_annPoint = NULL;
 	m_flaggedByAlarm = false;
 
@@ -183,7 +180,7 @@ int Suspect::UpdateEvidence()
 	WrlockSuspect();
 	for(uint i = 0; i < m_evidence.size(); i++)
 	{
-		this->m_features.m_unsentData->UpdateEvidence(m_evidence[i]);
+		this->m_unsentFeatures.UpdateEvidence(m_evidence[i]);
 	}
 	m_evidence.clear();
 	UnlockSuspect();
@@ -218,7 +215,10 @@ int Suspect::CalculateFeatures()
 	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
 		return -1;
 	WrlockSuspect();
+
+	m_features += m_unsentFeatures;
 	m_features.CalculateAll();
+	m_features -= m_unsentFeatures;
 	UnlockSuspect();
 	return 0;
 }
@@ -354,7 +354,7 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	offset += m_features.DeserializeFeatureSet(buf+offset);
 
 	if(isLocal)
-		offset += m_features.m_unsentData->DeserializeFeatureData(buf+offset);
+		offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
 	else
 		offset += m_features.DeserializeFeatureData(buf+offset);
 
@@ -566,6 +566,24 @@ FeatureSet Suspect::GetFeatureSet()
 	return ret;
 }
 
+//Returns a copy of the suspects FeatureSet
+FeatureSet Suspect::GetUnsentFeatureSet()
+{
+	RdlockSuspect();
+	FeatureSet ret = m_unsentFeatures;
+	UnlockSuspect();
+	return ret;
+}
+
+void Suspect::UpdateFeatureData(bool include)
+{
+	if(include)
+		m_features += m_unsentFeatures;
+	else
+		m_features -= m_unsentFeatures;
+}
+
+
 //Sets or overwrites the suspects FeatureSet
 // Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
 int Suspect::SetFeatureSet(FeatureSet *fs)
@@ -620,7 +638,7 @@ int Suspect::ClearUnsentData()
 	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
 		return -1;
 	WrlockSuspect();
-	m_features.m_unsentData->ClearFeatureSet();
+	m_unsentFeatures.ClearFeatureSet();
 	UnlockSuspect();
 	return 0;
 }
