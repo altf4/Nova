@@ -81,19 +81,4 @@ struct eqkey
 ///The Value is a vector of IP headers
 typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr > TCPSessionHashTable;
 
-// Header for training data
-struct _trainingSuspect
-{
-	bool isHostile;
-	bool isIncluded;
-	string uid;
-	string description;
-	vector<string>* points;
-};
-
-typedef struct _trainingSuspect trainingSuspect;
-
-typedef google::dense_hash_map<string, trainingSuspect*, tr1::hash<string>, eqstr > trainingSuspectMap;
-typedef google::dense_hash_map<string, vector<string>*, tr1::hash<string>, eqstr > trainingDumpMap;
-
 #endif /* HASHMAPSTRUCTS_H_ */
