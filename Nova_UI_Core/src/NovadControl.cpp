@@ -50,7 +50,7 @@ bool Nova::StopNovad()
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
-		//Received the wrong kind of control message
+		//Received the wrong kind of message
 		delete reply;
 		return false;
 	}
@@ -89,7 +89,7 @@ bool Nova::SaveAllSuspects()
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
-		//Received the wrong kind of control message
+		//Received the wrong kind of message
 		delete reply;
 		return false;
 	}
@@ -106,3 +106,120 @@ bool Nova::SaveAllSuspects()
 	return retSuccess;
 }
 
+bool Nova::ClearAllSuspects()
+{
+	ControlMessage *clearRequest = new ControlMessage();
+	clearRequest->m_controlType = CONTROL_CLEAR_ALL_REQUEST;
+	if( UI_Message::WriteMessage(clearRequest, 0) ) //TODO: Change this to a real socket
+	{
+		//There was an error in sending the message
+		//TODO: Log this fact
+		delete clearRequest;
+		return false;
+	}
+	delete clearRequest;
+
+	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	if(reply == NULL)
+	{
+		//There was an error receiving the reply
+		//TODO: Log this fact
+		return false;
+	}
+	if(reply->m_messageType != CONTROL_MESSAGE )
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return false;
+	}
+
+	ControlMessage *clearReply = (ControlMessage*)reply;
+	if( clearReply->m_controlType != CONTROL_CLEAR_ALL_REPLY )
+	{
+		//Received the wrong kind of control message
+		delete clearReply;
+		return false;
+	}
+	bool retSuccess = clearReply->m_success;
+	delete clearReply;
+	return retSuccess;
+}
+
+bool Nova::ClearSuspect(in_addr_t suspectAddress)
+{
+	ControlMessage *clearRequest = new ControlMessage();
+	clearRequest->m_controlType = CONTROL_CLEAR_SUSPECT_REQUEST;
+	clearRequest->m_suspectAddress = suspectAddress;
+	if( UI_Message::WriteMessage(clearRequest, 0) ) //TODO: Change this to a real socket
+	{
+		//There was an error in sending the message
+		//TODO: Log this fact
+		delete clearRequest;
+		return false;
+	}
+	delete clearRequest;
+
+	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	if(reply == NULL)
+	{
+		//There was an error receiving the reply
+		//TODO: Log this fact
+		return false;
+	}
+	if(reply->m_messageType != CONTROL_MESSAGE )
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return false;
+	}
+
+	ControlMessage *clearReply = (ControlMessage*)reply;
+	if( clearReply->m_controlType != CONTROL_CLEAR_SUSPECT_REPLY )
+	{
+		//Received the wrong kind of control message
+		delete clearReply;
+		return false;
+	}
+	bool retSuccess = clearReply->m_success;
+	delete clearReply;
+	return retSuccess;
+}
+
+bool Nova::ReclassifyAllSuspects()
+{
+	ControlMessage *reclassifyRequest = new ControlMessage();
+	reclassifyRequest->m_controlType = CONTROL_RECLASSIFY_ALL_REQUEST;
+	if( UI_Message::WriteMessage(reclassifyRequest, 0) ) //TODO: Change this to a real socket
+	{
+		//There was an error in sending the message
+		//TODO: Log this fact
+		delete reclassifyRequest;
+		return false;
+	}
+	delete reclassifyRequest;
+
+	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	if(reply == NULL)
+	{
+		//There was an error receiving the reply
+		//TODO: Log this fact
+		return false;
+	}
+	if(reply->m_messageType != CONTROL_MESSAGE )
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return false;
+	}
+
+	ControlMessage *reclassifyReply = (ControlMessage*)reply;
+	if( reclassifyReply->m_controlType != CONTROL_RECLASSIFY_ALL_REPLY )
+	{
+		//Received the wrong kind of control message
+		delete reclassifyReply;
+		return false;
+	}
+	bool retSuccess = reclassifyReply->m_success;
+	delete reclassifyReply;
+	return retSuccess;
+}

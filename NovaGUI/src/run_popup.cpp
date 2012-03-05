@@ -19,6 +19,7 @@
 #include "run_popup.h"
 #include "novagui.h"
 #include "Logger.h"
+#include "NovadControl.h"
 
 #include <QDir>
 #include <string>
@@ -115,7 +116,7 @@ void Run_Popup::on_startButton_clicked()
 {
 	if(savePreferences())
 	{
-		StartNova();
+		StartNovad();
 	}
 	this->close();
 }

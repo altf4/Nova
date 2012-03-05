@@ -76,7 +76,7 @@ struct novaComponent novaComponents[NOVA_COMPONENTS];
 void sighandler(int param)
 {
 	param = param;
-	StopNova();
+	StopNovad();
 	exit(EXIT_SUCCESS);
 }
 
@@ -309,7 +309,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 void NovaGUI::closeEvent(QCloseEvent * e)
 {
 	e = e;
-	StopNova();
+	StopNovad();
 }
 
 /************************************************
@@ -810,25 +810,6 @@ void NovaGUI::UpdateSuspectWidgets()
 		ui.overallSuspectClassificationBar->setValue(100);
 	}
 }
-void NovaGUI::SaveAllSuspects()
-{
-	 QString filename = QFileDialog::getSaveFileName(this,
-			tr("Save Suspect List"), QDir::currentPath(),
-			tr("Documents (*.txt)"));
-
-	if (filename.isNull())
-	{
-		return;
-	}
-
-	//TODO: Set the filename?
-
-	message.SetMessage(WRITE_SUSPECTS, filename.toStdString());
-	msgLen = message.SerialzeMessage(msgBuffer);
-
-	//Sends the message to all Nova processes
-	SendToNovad(msgBuffer, msgLen);
-}
 
 //Clears the suspect tables completely.
 void NovaGUI::ClearSuspectList()
@@ -851,7 +832,7 @@ void NovaGUI::ClearSuspectList()
 
 void NovaGUI::on_actionRunNova_triggered()
 {
-	StartNova();
+	StartNovad();
 }
 
 void NovaGUI::on_actionRunNovaAs_triggered()
@@ -862,7 +843,7 @@ void NovaGUI::on_actionRunNovaAs_triggered()
 
 void NovaGUI::on_actionStopNova_triggered()
 {
-	StopNova();
+	StopNovad();
 
 	// Were we in training mode?
 	if (Config::Inst()->getIsTraining())
@@ -882,7 +863,7 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	StopNova();
+	StopNovad();
 	exit(EXIT_SUCCESS);
 }
 
@@ -911,7 +892,7 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 		string suspectStr = list->currentItem()->text().toStdString();
 		in_addr_t addr = inet_addr(suspectStr.c_str());
 		HideSuspect(addr);
-		ClearSuspect(suspectStr);
+		ClearSuspect(addr);
 	}
 }
 
@@ -935,6 +916,16 @@ void NovaGUI::on_actionHide_Suspect_triggered()
 
 void NovaGUI::on_actionSave_Suspects_triggered()
 {
+	QString filename = QFileDialog::getSaveFileName(this,
+		tr("Save Suspect List"), QDir::currentPath(),
+		tr("Documents (*.txt)"));
+
+	if (filename.isNull())
+	{
+		return;
+	}
+
+	//TODO: Set the filename?
 	SaveAllSuspects();
 }
 
@@ -1083,7 +1074,7 @@ void NovaGUI::on_runButton_clicked()
 	// haystack.config you wanted to use, kept rewriting it on start.
 	// Commented for now until the Node setup works in the GUI.
 	//writeHoneyd();
-	StartNova();
+	StartNovad();
 }
 void NovaGUI::on_stopButton_clicked()
 {
@@ -1166,16 +1157,15 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 	int row = ui.systemStatusTable->currentRow();
 	novaComponents[row].shouldBeRunning = false;
 
-	//Sets the message
-	message.SetMessage(EXIT);
-	msgLen = message.SerialzeMessage(msgBuffer);
-
 	switch (row)
 	{
 		case COMPONENT_NOVAD:
-			SendToNovad(msgBuffer, msgLen);
+		{
+			StopNovad();
 			break;
+		}
 		case COMPONENT_DMH:
+		{
 			if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
 			{
 				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
@@ -1185,7 +1175,9 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 				system(killString.toStdString().c_str());
 			}
 			break;
+		}
 		case COMPONENT_HSH:
+		{
 			if (novaComponents[COMPONENT_HSH].process != NULL && novaComponents[COMPONENT_HSH].process->pid() != 0)
 			{
 				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
@@ -1195,6 +1187,7 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 				system(killString.toStdString().c_str());
 			}
 			break;
+		}
 	}
 }
 
@@ -1223,10 +1216,7 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 
 void NovaGUI::on_actionSystemStatReload_triggered()
 {
-	//Sets the message
-	message.SetMessage(RELOAD);
-	msgLen = message.SerialzeMessage(msgBuffer);
-	SendToNovad(msgBuffer, msgLen);
+	ReclassifyAllSuspects();
 }
 
 void NovaGUI::on_systemStatStartButton_clicked()
@@ -1408,70 +1398,6 @@ void *NovadListenLoop(void *ptr)
 		((NovaGUI*)ptr)->ReceiveSuspectFromNovad(NovadOutSocket);
 	}
 	return NULL;
-}
-
-//Removes all information on a suspect
-void ClearSuspect(string suspectStr)
-{
-	pthread_rwlock_wrlock(&lock);
-	SuspectTable.erase(inet_addr(suspectStr.c_str()));
-	message.SetMessage(CLEAR_SUSPECT, suspectStr);
-	msgLen = message.SerialzeMessage(msgBuffer);
-	SendToNovad(msgBuffer, msgLen);
-	pthread_rwlock_unlock(&lock);
-}
-
-//Deletes all Suspect information for the GUI and Nova
-void ClearAllSuspects()
-{
-	pthread_rwlock_wrlock(&lock);
-	SuspectTable.clear();
-	message.SetMessage(CLEAR_ALL);
-	msgLen = message.SerialzeMessage(msgBuffer);
-	SendToNovad(msgBuffer, msgLen);
-	pthread_rwlock_unlock(&lock);
-}
-
-void StopNova()
-{
-	for (uint i = 0; i < NOVA_COMPONENTS; i++)
-	{
-		novaComponents[i].shouldBeRunning = false;
-	}
-	//Sets the message
-	message.SetMessage(EXIT);
-	msgLen = message.SerialzeMessage(msgBuffer);
-
-	//Sends the message to all Nova processes
-	SendToNovad(msgBuffer, msgLen);
-
-	// Close Honeyd processes
-	FILE * out = popen("pidof honeyd","r");
-	if(out != NULL)
-	{
-		char buffer[1024];
-		char * line = fgets(buffer, sizeof(buffer), out);
-
-		if (line != NULL)
-		{
-			string cmd = "sudo kill " + string(line);
-			if(cmd.size() > 5)
-				system(cmd.c_str());
-		}
-	}
-	pclose(out);
-}
-
-
-void StartNova()
-{
-	// Start and processes that aren't running already
-	for (uint i = 0; i < NOVA_COMPONENTS; i++)
-	{
-		if(novaComponents[i].process == NULL || !novaComponents[i].process->pid())
-			StartComponent(&novaComponents[i]);
-	}
-
 }
 
 void StartComponent(novaComponent *component)

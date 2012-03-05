@@ -88,9 +88,6 @@ public:
     //Removes an individual suspect from display until it's information is updated
     void HideSuspect(in_addr_t addr);
 
-    // Tells CE to save suspects to file
-    void SaveAllSuspects();
-
     //Clears the suspect tables completely.
     void ClearSuspectList();
 
@@ -189,26 +186,14 @@ void *NovadListenLoop(void *ptr);
 
 void *StatusUpdate(void *ptr);
 
-///Socket closing workaround for namespace issue.
-void CloseSocket(int sock);
-
-//Closes the Nova processes
-void StopNova();
-
-//Starts the Nova processes
-void StartNova();
-
 // Start one component of Nova
 void StartComponent(novaComponent *component);
 
 //Saves the socket addresses for re-use.
 void InitSocketAddresses();
 
-//Deletes all Suspect information for the GUI and Nova
-void ClearAllSuspects();
-
-//Removes all information on a suspect
-void ClearSuspect(string suspectStr);
+//Close a socket. Resolves a namespace issue
+void CloseSocket(int sock);
 
 }
 #endif // NOVAGUI_H

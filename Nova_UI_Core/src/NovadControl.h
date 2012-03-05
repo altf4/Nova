@@ -19,6 +19,8 @@
 #ifndef NOVADCONTROL_H_
 #define NOVADCONTROL_H_
 
+#include <arpa/inet.h>
+
 namespace Nova
 {
 
@@ -33,6 +35,19 @@ bool StopNovad();
 //Asks Novad to save the suspect list to persistent storage
 //	returns - true if saved correctly, false on error
 bool SaveAllSuspects();
+
+//Asks Novad to forget all data on all suspects that it has
+//	returns - true if all suspects cleared successfully, false on error
+bool ClearAllSuspects();
+
+//Asks Novad to forget data on the specified suspect
+//	suspectAddress - The IP address (unique identifier) of the suspect to forget
+//	returns - true is suspect has been cleared successfully, false on error
+bool ClearSuspect(in_addr_t suspectAddress);
+
+//Asks Novad to reclassify all suspects
+//	returns - true if all suspects have been reclassified, false on error
+bool ReclassifyAllSuspects();
 
 
 }
