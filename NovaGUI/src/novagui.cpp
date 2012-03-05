@@ -944,7 +944,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 	if (data.isNull())
 		return;
 
-	trainingSuspectMap* map = ParseTrainingDb(data.toStdString());
+	trainingSuspectMap* map = TrainingData::ParseTrainingDb(data.toStdString());
 	if (map == NULL)
 	{
 		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
@@ -957,7 +957,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 	if (classifier->exec() == QDialog::Rejected)
 		return;
 
-	string dataFileContent = MakaDataFile(*map);
+	string dataFileContent = TrainingData::MakaDataFile(*map);
 
 	ofstream out (Config::Inst()->getPathTrainingFile().data());
 	out << dataFileContent;
@@ -972,7 +972,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 	if (data.isNull())
 		return;
 
-	trainingDumpMap* trainingDump = ParseEngineCaptureFile(data.toStdString());
+	trainingDumpMap* trainingDump = TrainingData::ParseEngineCaptureFile(data.toStdString());
 
 	if (trainingDump == NULL)
 	{
@@ -980,7 +980,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
-	ThinTrainingPoints(trainingDump, Config::Inst()->getThinningDistance());
+	TrainingData::ThinTrainingPoints(trainingDump, Config::Inst()->getThinningDistance());
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 
@@ -995,7 +995,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 	if (outputFile.isNull())
 		return;
 
-	if (!CaptureToTrainingDb(outputFile.toStdString(), headerMap))
+	if (!TrainingData::CaptureToTrainingDb(outputFile.toStdString(), headerMap))
 	{
 		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing the input files. Please see the logs for more details.");
 	}

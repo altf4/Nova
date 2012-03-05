@@ -72,21 +72,6 @@ uint GetSerializedAddr(u_char * buf);
 // Returns the number of bits used in the mask when given in in_addr_t form
 int GetMaskBits(in_addr_t range);
 
-// Convert CE dump to Training DB format and append it
-bool CaptureToTrainingDb(string dbFile, trainingSuspectMap* selectionOptions);
-
-// Parse a CE dump file
-trainingDumpMap* ParseEngineCaptureFile(string captureFile);
-
-// Parse a Training DB file
-trainingSuspectMap* ParseTrainingDb(string dbPath);
-
-// Create a CE data file from a subset of the Training DB file
-string MakaDataFile(trainingSuspectMap& db);
-
-// Removes consecutive points who's squared distance is less than a specified distance
-void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold);
-
 //Returns the Hex character for integers 0-15, any other value returns an empty string ("")
 string intToHexAscii(uint val);
 
