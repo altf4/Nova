@@ -167,29 +167,57 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				logger->Log(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
 
 			pthread_rwlock_unlock(&suspectTableLock);
+
+			ControlMessage *clearAllSuspectsReply = new ControlMessage();
+			clearAllSuspectsReply->m_controlType = CONTROL_CLEAR_ALL_REPLY;
+			clearAllSuspectsReply->m_success = true;
+			UI_Message::WriteMessage(clearAllSuspectsReply, socketFD);
+			delete clearAllSuspectsReply;
+
 			break;
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
 			//TODO: Replace with new suspect table class
-			suspectKey = inet_addr(msg.GetValue().c_str());
 			pthread_rwlock_wrlock(&suspectTableLock);
-			suspectsSinceLastSave[suspectKey] = suspects[suspectKey];
+			suspectsSinceLastSave[controlMessage.m_suspectAddress] = suspects[controlMessage.m_suspectAddress];
 			suspects.set_deleted_key(5);
 			suspects.erase(suspectKey);
 			suspects.clear_deleted_key();
 			RefreshStateFile();
 			pthread_rwlock_unlock(&suspectTableLock);
+
+			//TODO: Should check for errors here and return result
+			ControlMessage *clearSuspectReply = new ControlMessage();
+			clearSuspectReply->m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
+			clearSuspectReply->m_success = true;
+			UI_Message::WriteMessage(clearSuspectReply, socketFD);
+			delete clearSuspectReply;
+
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			SaveSuspectsToFile(globalConfig->getPathCESaveFile());
+			SaveSuspectsToFile(globalConfig->getPathCESaveFile()); //TODO: Should check for errors here and return result
+
+			ControlMessage *saveSuspectsReply = new ControlMessage();
+			saveSuspectsReply->m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;
+			saveSuspectsReply->m_success = true;
+			UI_Message::WriteMessage(saveSuspectsReply, socketFD);
+			delete saveSuspectsReply;
+
 			break;
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
-			Reload();
+			Reload(); //TODO: Should check for errors here and return result
+
+			ControlMessage *reclassifyAllReply = new ControlMessage();
+			reclassifyAllReply->m_controlType = CONTROL_RECLASSIFY_ALL_REPLY;
+			reclassifyAllReply->m_success = true;
+			UI_Message::WriteMessage(reclassifyAllReply, socketFD);
+			delete reclassifyAllReply;
+
 			break;
 		}
 		default:

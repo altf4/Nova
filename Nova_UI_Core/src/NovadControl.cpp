@@ -36,22 +36,73 @@ bool Nova::StopNovad()
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
+		delete killRequest;
 		return false;
 	}
+	delete killRequest;
 
 	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
-	if( reply == NULL )
+	if(reply == NULL)
 	{
 		//There was an error receiving the reply
 		//TODO: Log this fact
 		return false;
 	}
+	if(reply->m_messageType != CONTROL_MESSAGE )
+	{
+		//Received the wrong kind of control message
+		delete reply;
+		return false;
+	}
+
 	ControlMessage *killReply = (ControlMessage*)reply;
 	if( killReply->m_controlType != CONTROL_EXIT_REPLY )
 	{
-		//Received the wrong kind of message
+		//Received the wrong kind of control message
+		delete killReply;
 		return false;
 	}
-	return killReply->m_success;
-
+	bool retSuccess = killReply->m_success;
+	delete killReply;
+	return retSuccess;
 }
+
+bool Nova::SaveAllSuspects()
+{
+	ControlMessage *saveRequest = new ControlMessage();
+	saveRequest->m_controlType = CONTROL_SAVE_SUSPECTS_REQUEST;
+	if( UI_Message::WriteMessage(saveRequest, 0) ) //TODO: Change this to a real socket
+	{
+		//There was an error in sending the message
+		//TODO: Log this fact
+		delete saveRequest;
+		return false;
+	}
+	delete saveRequest;
+
+	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	if(reply == NULL)
+	{
+		//There was an error receiving the reply
+		//TODO: Log this fact
+		return false;
+	}
+	if(reply->m_messageType != CONTROL_MESSAGE )
+	{
+		//Received the wrong kind of control message
+		delete reply;
+		return false;
+	}
+
+	ControlMessage *saveReply = (ControlMessage*)reply;
+	if( saveReply->m_controlType != CONTROL_SAVE_SUSPECTS_REPLY )
+	{
+		//Received the wrong kind of control message
+		delete saveReply;
+		return false;
+	}
+	bool retSuccess = saveReply->m_success;
+	delete saveReply;
+	return retSuccess;
+}
+

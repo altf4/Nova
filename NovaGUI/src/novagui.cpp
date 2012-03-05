@@ -21,6 +21,7 @@
 #include "novaconfig.h"
 #include "nova_manual.h"
 #include "classifierPrompt.h"
+#include "NovadControl.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -821,6 +822,7 @@ void NovaGUI::SaveAllSuspects()
 		return;
 	}
 
+	//TODO: Set the filename?
 
 	message.SetMessage(WRITE_SUSPECTS, filename.toStdString());
 	msgLen = message.SerialzeMessage(msgBuffer);
@@ -1522,33 +1524,6 @@ void InitSocketAddresses()
 	//Builds the address
 	NovadInAddress.sun_family = AF_UNIX;
 	strcpy(NovadInAddress.sun_path, key.c_str());
-}
-
-void SendToNovad(u_char * data, int size)
-{
-	//Opens the socket
-	if ((NovadInSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadInSocket);
-		exit(EXIT_FAILURE);
-	}
-	//Sends the message
-	len = strlen(NovadInAddress.sun_path) + sizeof(NovadInAddress.sun_family);
-	if (connect(NovadInSocket, (struct sockaddr *)&NovadInAddress, len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadInSocket);
-		return;
-	}
-
-	else if (send(NovadInSocket, data, size, 0) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d send: %s", __FILE__, __LINE__, strerror(errno));
-		close(NovadInSocket);
-		return;
-	}
-	close(NovadInSocket);
 }
 
 void CloseSocket(int sock)

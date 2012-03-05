@@ -30,6 +30,10 @@ bool StartNovad();
 //	returns - True upon successfully stopping the novad process, false on error
 bool StopNovad();
 
+//Asks Novad to save the suspect list to persistent storage
+//	returns - true if saved correctly, false on error
+bool SaveAllSuspects();
+
 
 }
 

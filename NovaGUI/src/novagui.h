@@ -205,9 +205,6 @@ void StartComponent(novaComponent *component);
 //Saves the socket addresses for re-use.
 void InitSocketAddresses();
 
-//Sends the GUIMsg object serialized inside the 'data' buffer with size n
-void SendToNovad(u_char * data, int size);
-
 //Deletes all Suspect information for the GUI and Nova
 void ClearAllSuspects();
 

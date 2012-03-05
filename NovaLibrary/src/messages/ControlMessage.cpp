@@ -114,26 +114,102 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Suspect IP to clear
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_suspectAddress);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			memcpy(&m_suspectAddress, buffer, sizeof(m_suspectAddress));
+			buffer += sizeof(m_suspectAddress);
+
 			break;
 		}
 		case CONTROL_CLEAR_SUSPECT_REPLY:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			memcpy(&m_success, buffer, sizeof(m_success));
+			buffer += sizeof(m_success);
+
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REPLY:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			memcpy(&m_success, buffer, sizeof(m_success));
+			buffer += sizeof(m_success);
+
 			break;
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
 			break;
 		}
 		case CONTROL_RECLASSIFY_ALL_REPLY:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			memcpy(&m_success, buffer, sizeof(m_success));
+			buffer += sizeof(m_success);
+
 			break;
 		}
 		case CONTROL_INVALID:
@@ -232,27 +308,115 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_suspectAddress);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_suspectAddress, sizeof(m_suspectAddress));
+			buffer += sizeof(m_suspectAddress);
+
 			break;
 		}
 		case CONTROL_CLEAR_SUSPECT_REPLY:
 		{
-			break;
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_success, sizeof(m_success));
+			buffer += sizeof(m_success);
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REPLY:
 		{
-			break;
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_success, sizeof(m_success));
+			buffer += sizeof(m_success);
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+
 			break;
 		}
 		case CONTROL_RECLASSIFY_ALL_REPLY:
 		{
-			break;
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			//		3) Boolean success
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_success, sizeof(m_success));
+			buffer += sizeof(m_success);
 		}
 		case CONTROL_INVALID:
 		{

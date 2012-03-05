@@ -4,22 +4,22 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/ClassificationEngine.cpp \
 ../src/Control.cpp \
 ../src/Novad.cpp \
 ../src/ProtocolHandler.cpp 
-../src/ClassificationEngine.cpp \
 
 OBJS += \
+./src/ClassificationEngine.o \
 ./src/Control.o \
 ./src/Novad.o \
 ./src/ProtocolHandler.o 
-./src/ClassificationEngine.o \
 
 CPP_DEPS += \
+./src/ClassificationEngine.d \
 ./src/Control.d \
 ./src/Novad.d \
 ./src/ProtocolHandler.d 
-./src/ClassificationEngine.d \
 
 
 # Each subdirectory must supply rules for building sources it contributes
