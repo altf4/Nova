@@ -268,6 +268,24 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	ifstream myfile (inFilePath.data());
 	string line;
 
+		// Clear max and min values
+		for (int i = 0; i < DIM; i++)
+			m_maxFeatureValues[i] = 0;
+
+		for (int i = 0; i < DIM; i++)
+			m_minFeatureValues[i] = 0;
+
+		for (int i = 0; i < DIM; i++)
+			m_meanFeatureValues[i] = 0;
+
+		// Reload the data file
+		if (m_dataPts != NULL)
+			annDeallocPts(m_dataPts);
+		if (m_normalizedDataPts != NULL)
+			annDeallocPts(m_normalizedDataPts);
+
+		m_dataPtsWithClass.clear();
+
 	//string array to check whether a line in data.txt file has the right number of fields
 	string fieldsCheck[DIM];
 	bool valid = true;
