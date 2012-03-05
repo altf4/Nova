@@ -69,12 +69,6 @@ string GetLocalIP(const char *dev);
 // Returns: IP address of the serialized suspect
 uint GetSerializedAddr(u_char * buf);
 
-// Returns the number of bits used in the mask when given in in_addr_t form
-int GetMaskBits(in_addr_t range);
-
-//Returns the Hex character for integers 0-15, any other value returns an empty string ("")
-string intToHexAscii(uint val);
-
 }
 
 #endif /* NOVAUTIL_H_ */

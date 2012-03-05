@@ -43,6 +43,18 @@ HoneydConfiguration::HoneydConfiguration()
 	m_scripts.set_deleted_key("Deleted");
 }
 
+int HoneydConfiguration::GetMaskBits(in_addr_t mask)
+{
+	mask = ~mask;
+	int i = 32;
+	while(mask != 0)
+	{
+		mask = mask/2;
+		i--;
+	}
+	return i;
+}
+
 //Calls all load functions
 void HoneydConfiguration::LoadAllTemplates()
 {
