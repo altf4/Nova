@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "ProtocolHandler.h"
-#include "NOVAConfiguration.h"
+#include "Config.h"
 #include "Logger.h"
 #include "Control.h"
 #include "Novad.h"
@@ -36,7 +36,6 @@ using namespace Nova;
 using boost::format;
 
 extern string userHomePath;
-extern NOVAConfiguration *globalConfig;
 extern Logger *logger;
 
 //Launches a UI Handling thread, and returns
@@ -162,7 +161,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				delete it->second;
 			suspectsSinceLastSave.clear();
 
-			string delString = "rm -f " + globalConfig->getPathCESaveFile();
+			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
 			if(system(delString.c_str()) == -1)
 				logger->Log(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
 
@@ -198,7 +197,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			SaveSuspectsToFile(globalConfig->getPathCESaveFile()); //TODO: Should check for errors here and return result
+			SaveSuspectsToFile(Config::Inst()->getPathCESaveFile()); //TODO: Should check for errors here and return result
 
 			ControlMessage *saveSuspectsReply = new ControlMessage();
 			saveSuspectsReply->m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;
