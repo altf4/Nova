@@ -16,7 +16,7 @@
 // Description : Nova Daemon to perform network anti-reconnaissance
 //============================================================================
 
-#include "NOVAConfiguration.h"
+#include "Config.h"
 #include "SuspectTable.h"
 #include "NovaUtil.h"
 #include "Logger.h"
@@ -43,8 +43,6 @@ using namespace std;
 using boost::format;
 
 string userHomePath, novaConfigPath;
-NOVAConfiguration *globalConfig;
-Logger *logger;
 
 // Maintains a list of suspects and information on network activity
 SuspectHashTable suspects;
@@ -84,18 +82,6 @@ socklen_t * sockSizePtr = (socklen_t*)&socketSize;
 
 // Misc
 int len;
-const char *outFile;				//output for data points during trainingthos
-
-
-// Nova Configuration Variables (read from config file)
-string trainingCapFile;
-string SMTP_addr;
-string SMTP_domain;
-in_port_t SMTP_port;
-Nova::userMap service_pref;
-vector<string> email_recipients;
-
-// End configured variables
 
 time_t lastLoadTime;
 time_t lastSaveTime;
@@ -126,13 +112,8 @@ int main()
 	//TODO: Perhaps move this into its own init function?
 	userHomePath = GetHomePath();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
-	logger = new Logger(novaConfigPath.c_str(), true);
-
 	if(chdir(userHomePath.c_str()) == -1)
-		logger->Log(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
-
-	globalConfig = new NOVAConfiguration();
-	globalConfig->LoadConfig();
+		LOG(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
 
 	pthread_rwlock_init(&suspectTableLock, NULL);
 	pthread_rwlock_init(&sessionLock, NULL);
@@ -141,11 +122,11 @@ int main()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
 
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
 
 	// XXX 'suspects' SuspectTable init todo
 	suspects.set_empty_key(0);
@@ -162,24 +143,14 @@ int main()
 	pthread_t silentAlarmListenThread;
 	pthread_t ipUpdateThread;
 
-	engine = new ClassificationEngine(logger, globalConfig, &suspects);
+	engine = new ClassificationEngine(&suspects);
 
 	Reload();
 
 	//Are we Training or Classifying?
-	if(globalConfig->getIsTraining())
+	if(Config::Inst()->getIsTraining())
 	{
-		// We suffix the training capture files with the date/time
-		time_t rawtime;
-		time ( &rawtime );
-		struct tm * timeinfo = localtime(&rawtime);
-
-		char buffer [40];
-		strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
-		trainingCapFile = userHomePath + "/" + globalConfig->getPathTrainingCapFolder() + "/training" + buffer + ".dump";
-
-
-		pthread_create(&trainingLoopThread,NULL,TrainingLoop,(void *)outFile);
+		pthread_create(&trainingLoopThread,NULL,TrainingLoop,NULL);
 	}
 	else
 	{
@@ -196,14 +167,14 @@ int main()
 	}
 	else
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to set up file watcher for the honeyd IP list file. DHCP addresse in honeyd will not be read")
+		LOG(ERROR, (format("File %1% at line %2%: Unable to set up file watcher for the honeyd IP list file. DHCP addresse in honeyd will not be read")
 				%__LINE__%__FILE__).str());
 	}
 
 	Start_Packet_Handler();
 
 	//Shouldn't get here!
-	logger->Log(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen, something went very wrong.")%__LINE__%__FILE__).str());
+	LOG(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen, something went very wrong.")%__LINE__%__FILE__).str());
 	close(IPCsock);
 
 	return EXIT_FAILURE;
@@ -213,7 +184,7 @@ void Nova::AppendToStateFile()
 {
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
 
 	// Don't bother saving if no new suspect data, just confuses deserialization
 	// XXX 'suspectsSinceLastSave.Size()' SuspectTable todo
@@ -241,17 +212,17 @@ void Nova::AppendToStateFile()
 	if (dataSize == 0)
 		return;
 
-	ofstream out(globalConfig->getPathCESaveFile().data(), ofstream::binary | ofstream::app);
+	ofstream out(Config::Inst()->getPathCESaveFile().data(), ofstream::binary | ofstream::app);
 	if(!out.is_open())
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the CE state file %3%")%__LINE__%__FILE__%globalConfig->getPathCESaveFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file %3%")%__LINE__%__FILE__%Config::Inst()->getPathCESaveFile()).str());
 		return;
 	}
 
 	out.write((char*)&lastSaveTime, sizeof lastSaveTime);
 	out.write((char*)&dataSize, sizeof dataSize);
 
-	logger->Log(DEBUG, (format("File %1% at line %2%: Appending %3% bytes to the CE state file")%__LINE__%__FILE__%dataSize).str());
+	LOG(DEBUG, (format("File %1% at line %2%: Appending %3% bytes to the CE state file")%__LINE__%__FILE__%dataSize).str());
 
 	// Serialize our suspect table
 	// XXX 'suspectsSinceLastSave' SuspectTable && iterator todo
@@ -282,13 +253,13 @@ void Nova::LoadStateFile()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
 
 	// Open input file
-	ifstream in(globalConfig->getPathCESaveFile().data(), ios::binary | ios::in);
+	ifstream in(Config::Inst()->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open CE state file. This is normal for the first run.")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open CE state file. This is normal for the first run.")%__LINE__%__FILE__).str());
 		return;
 	}
 
@@ -302,7 +273,7 @@ void Nova::LoadStateFile()
 		// Bytes left, but not enough to make a header (timestamp + size)?
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
-			logger->Log(ERROR, "The CE state file may be corrupt",
+			LOG(ERROR, "The CE state file may be corrupt",
 					(format("File %1% at line %2%: CE state file should have another entry, but only contains %3% more bytes")%__LINE__%__FILE__%lengthLeft).str());
 			break;
 		}
@@ -313,9 +284,9 @@ void Nova::LoadStateFile()
 		in.read((char*) &dataSize, sizeof dataSize);
 		lengthLeft -= sizeof dataSize;
 
-		if (globalConfig->getDataTTL() && (timeStamp < lastLoadTime - globalConfig->getDataTTL()))
+		if (Config::Inst()->getDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->getDataTTL()))
 		{
-			logger->Log(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
+			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
 			continue;
@@ -324,7 +295,7 @@ void Nova::LoadStateFile()
 		// Not as many bytes left as the size of the entry?
 		if (lengthLeft < dataSize)
 		{
-			logger->Log(ERROR, "The CE state file may be corruput, unable to read all data from it",
+			LOG(ERROR, "The CE state file may be corruput, unable to read all data from it",
 					(format("File %1% at line %2%: CE state file should have another entry of size %3% but only has %4% bytes left")
 							%__LINE__%__FILE__%dataSize%lengthLeft).str());
 			break;
@@ -371,22 +342,22 @@ void Nova::RefreshStateFile()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
 
 	// Open input file
-	ifstream in(globalConfig->getPathCESaveFile().data(), ios::binary | ios::in);
+	ifstream in(Config::Inst()->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the CE state file at %3%")%__LINE__%__FILE__%globalConfig->getPathCESaveFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathCESaveFile()).str());
 		return;
 	}
 
 	// Open the tmp file
-	string tmpFile = globalConfig->getPathCESaveFile() + ".tmp";
+	string tmpFile = Config::Inst()->getPathCESaveFile() + ".tmp";
 	ofstream out(tmpFile.data(), ios::binary);
 	if(!out.is_open())
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%: Unable to open the temporary CE state file at %3%")%__LINE__%__FILE__%tmpFile).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the temporary CE state file at %3%")%__LINE__%__FILE__%tmpFile).str());
 		in.close();
 		return;
 	}
@@ -401,7 +372,7 @@ void Nova::RefreshStateFile()
 		// Bytes left, but not enough to make a header (timestamp + size)?
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
-			logger->Log(ERROR, "The CE state file may be corrupt", (format("File %1% at line %2%: CE state file should have another entry, but only contains %3% more bytes")
+			LOG(ERROR, "The CE state file may be corrupt", (format("File %1% at line %2%: CE state file should have another entry, but only contains %3% more bytes")
 					%__LINE__%__FILE__%lengthLeft).str());
 			break;
 		}
@@ -412,9 +383,9 @@ void Nova::RefreshStateFile()
 		in.read((char*) &dataSize, sizeof dataSize);
 		lengthLeft -= sizeof dataSize;
 
-		if (globalConfig->getDataTTL() && (timeStamp < lastLoadTime - globalConfig->getDataTTL()))
+		if (Config::Inst()->getDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->getDataTTL()))
 		{
-			logger->Log(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
+			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
 			continue;
@@ -423,7 +394,7 @@ void Nova::RefreshStateFile()
 		// Not as many bytes left as the size of the entry?
 		if (lengthLeft < dataSize)
 		{
-			logger->Log(ERROR, "The CE state file may be corrupt",
+			LOG(ERROR, "The CE state file may be corrupt",
 					(format("File %1% at line %2%: Data file should have another entry of size %3%, but contains only %4% bytes left")%__LINE__%__FILE__%dataSize%lengthLeft).str());
 			break;
 		}
@@ -488,9 +459,9 @@ void Nova::RefreshStateFile()
 	out.close();
 	in.close();
 
-	string copyCommand = "cp -f " + tmpFile + " " + globalConfig->getPathCESaveFile();
+	string copyCommand = "cp -f " + tmpFile + " " + Config::Inst()->getPathCESaveFile();
 	if (system(copyCommand.c_str()) == -1)
-		logger->Log(ERROR, "Failed to write to the CE state file. This may be a permission problem, or the folder may not exist.",
+		LOG(ERROR, "Failed to write to the CE state file. This may be a permission problem, or the folder may not exist.",
 				(format("File %1% at line %2%: Unable to copy CE state tmp file to CE state file. System call to '%3' failed")
 						%__LINE__%__FILE__%copyCommand).str());
 }
@@ -503,13 +474,12 @@ void Nova::Reload()
 	LoadConfiguration();
 
 	// Reload the configuration file
-	globalConfig->LoadConfig();
+	Config::Inst()->LoadConfig();
 
 	// Did our data file move?
-	globalConfig->getPathTrainingFile() = userHomePath + "/" +globalConfig->getPathTrainingFile();
-	outFile = globalConfig->getPathTrainingFile().c_str();
+	Config::Inst()->getPathTrainingFile() = userHomePath + "/" +Config::Inst()->getPathTrainingFile();
 
-	engine->LoadDataPointsFromFile(globalConfig->getPathTrainingFile());
+	engine->LoadDataPointsFromFile(Config::Inst()->getPathTrainingFile());
 
 	// Set everyone to be reclassified
 	// XXX 'suspectsSinceLastSave' SuspectTableIterator todo
@@ -529,14 +499,14 @@ void *Nova::ClassificationLoop(void *ptr)
 
 	//Builds the Silent Alarm Network address
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(globalConfig->getSaPort());
+	serv_addr.sin_port = htons(Config::Inst()->getSaPort());
 
 	LoadStateFile();
 
 	//Classification Loop
 	do
 	{
-		sleep(globalConfig->getClassificationTimeout());
+		sleep(Config::Inst()->getClassificationTimeout());
 		pthread_rwlock_wrlock(&suspectTableLock);
 		//Calculate the "true" Feature Set for each Suspect
 		// XXX 'suspects' SuspectTableIterator todo
@@ -549,7 +519,7 @@ void *Nova::ClassificationLoop(void *ptr)
 					it->second->m_features.m_unsentData->UpdateEvidence(it->second->m_evidence[i]);
 				}
 				it->second->m_evidence.clear();
-				it->second->CalculateFeatures(engine->featureMask);
+				it->second->CalculateFeatures();
 			}
 		}
 		//Calculate the normalized feature sets, actually used by ANN
@@ -577,16 +547,16 @@ void *Nova::ClassificationLoop(void *ptr)
 		}
 		pthread_rwlock_unlock(&suspectTableLock);
 
-		if (globalConfig->getSaveFreq() > 0)
-			if ((time(NULL) - lastSaveTime) > globalConfig->getSaveFreq())
+		if (Config::Inst()->getSaveFreq() > 0)
+			if ((time(NULL) - lastSaveTime) > Config::Inst()->getSaveFreq())
 			{
 				pthread_rwlock_wrlock(&suspectTableLock);
 				AppendToStateFile();
 				pthread_rwlock_unlock(&suspectTableLock);
 			}
 
-		if (globalConfig->getDataTTL() > 0)
-			if ((time(NULL) - lastLoadTime) > globalConfig->getDataTTL())
+		if (Config::Inst()->getDataTTL() > 0)
+			if ((time(NULL) - lastLoadTime) > Config::Inst()->getDataTTL())
 			{
 				pthread_rwlock_wrlock(&suspectTableLock);
 				AppendToStateFile();
@@ -606,11 +576,11 @@ void *Nova::ClassificationLoop(void *ptr)
 				pthread_rwlock_unlock(&suspectTableLock);
 			}
 
-	} while(globalConfig->getClassificationTimeout());
+	} while(Config::Inst()->getClassificationTimeout());
 
 	//Shouldn't get here!!
-	if(globalConfig->getClassificationTimeout())
-		logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+	if(Config::Inst()->getClassificationTimeout())
+		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
 
 	return NULL;
 }
@@ -624,11 +594,20 @@ void *Nova::TrainingLoop(void *ptr)
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
 
+	// We suffix the training capture files with the date/time
+	time_t rawtime;
+	time ( &rawtime );
+	struct tm * timeinfo = localtime(&rawtime);
+	char buffer [40];
+	strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
+
+
+	string trainingCapFile = userHomePath + "/" + Config::Inst()->getPathTrainingCapFolder() + "/training" + buffer + ".dump";
 
 	//Training Loop
 	do
 	{
-		sleep(globalConfig->getClassificationTimeout());
+		sleep(Config::Inst()->getClassificationTimeout());
 		ofstream myfile (trainingCapFile.data(), ios::app);
 
 		if (myfile.is_open())
@@ -640,7 +619,7 @@ void *Nova::TrainingLoop(void *ptr)
 
 				if(it->second->GetNeedsFeatureUpdate())
 				{
-					it->second->CalculateFeatures(~0);
+					it->second->CalculateFeatures();
 					if(it->second->m_annPoint == NULL)
 						it->second->m_annPoint = annAllocPt(DIM);
 
@@ -664,15 +643,15 @@ void *Nova::TrainingLoop(void *ptr)
 		}
 		else
 		{
-			logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to open the training capture file %3% for writing. Can not save training data.")
+			LOG(CRITICAL, (format("File %1% at line %2%: Unable to open the training capture file %3% for writing. Can not save training data.")
 					%__LINE__%__FILE__%trainingCapFile).str());
 		}
 		myfile.close();
-	} while(globalConfig->getClassificationTimeout());
+	} while(Config::Inst()->getClassificationTimeout());
 
 	//Shouldn't get here!
-	if (globalConfig->getClassificationTimeout())
-		logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")
+	if (Config::Inst()->getClassificationTimeout())
+		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")
 				%__LINE__%__FILE__).str());
 
 	return NULL;
@@ -686,13 +665,13 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
-		logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to create the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+		LOG(CRITICAL, (format("File %1% at line %2%: Unable to create the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
 
 	sendaddr.sin_family = AF_INET;
-	sendaddr.sin_port = htons(globalConfig->getSaPort());
+	sendaddr.sin_port = htons(Config::Inst()->getSaPort());
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
 
 	memset(sendaddr.sin_zero,'\0', sizeof sendaddr.sin_zero);
@@ -701,27 +680,27 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
-		logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+		LOG(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
 
 	stringstream ss;
-	ss << "sudo iptables -A INPUT -p udp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with icmp-port-unreachable";
+	ss << "sudo iptables -A INPUT -p udp --dport " << Config::Inst()->getSaPort() << " -j REJECT --reject-with icmp-port-unreachable";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
+	    LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 	}
 	ss.str("");
-	ss << "sudo iptables -A INPUT -p tcp --dport " << globalConfig->getSaPort() << " -j REJECT --reject-with tcp-reset";
+	ss << "sudo iptables -A INPUT -p tcp --dport " << Config::Inst()->getSaPort() << " -j REJECT --reject-with tcp-reset";
 	if(system(ss.str().c_str()) == -1)
 	{
-	    logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
+	    LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 	}
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
     {
-    	logger->Log(CRITICAL, (format("File %1% at line %2%: Unable to listen on the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+    	LOG(CRITICAL, (format("File %1% at line %2%: Unable to listen on the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
         exit(EXIT_FAILURE);
     }
@@ -737,7 +716,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		//Blocking call
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
-			logger->Log(ERROR, (format("File %1% at line %2%: Problem when accepting incoming silent alarm connection. Errno: %3%")
+			LOG(ERROR, (format("File %1% at line %2%: Problem when accepting incoming silent alarm connection. Errno: %3%")
 					%__LINE__%__FILE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
@@ -745,7 +724,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
-			logger->Log(CRITICAL, (format("File %1% at line %2%: Problem when recieving incomping silent alarm connection. Errno: %3%")
+			LOG(CRITICAL, (format("File %1% at line %2%: Problem when receiving incoming silent alarm connection. Errno: %3%")
 					%__LINE__%__FILE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
@@ -782,17 +761,17 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		}
 		suspects[addr]->SetFlaggedByAlarm(true);
 		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-		logger->Log(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")%__LINE__%__FILE__%(suspects[addr]->ToString(engine->featureEnabled))).str());
+		LOG(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")%__LINE__%__FILE__%suspects[addr]->ToString()).str());
 
 		pthread_rwlock_unlock(&suspectTableLock);
 
-		if(!globalConfig->getClassificationTimeout())
+		if(!Config::Inst()->getClassificationTimeout())
 			ClassificationLoop(NULL);
 
 		close(connectionSocket);
 	}
 	close(sockfd);
-	logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+	LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
 	return NULL;
 }
 
@@ -801,7 +780,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 {
 	char suspectAddr[INET_ADDRSTRLEN];
 	string commandLine;
-	string hostAddrString = GetLocalIP(globalConfig->getInterface().c_str());
+	string hostAddrString = GetLocalIP(Config::Inst()->getInterface().c_str());
 	u_char serializedBuffer[MAX_MSG_SIZE];
 
 	uint dataLen = suspect->SerializeSuspect(serializedBuffer);
@@ -809,7 +788,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 	//If the hostility hasn't changed don't bother the DM
 	if(oldClassification != suspect->GetIsHostile())
 	{
-		if(suspect->GetIsHostile() && globalConfig->getIsDmEnabled())
+		if(suspect->GetIsHostile() && Config::Inst()->getIsDmEnabled())
 		{
 			in_addr temp = suspect->GetInAddr();
 			inet_ntop(AF_INET, &(temp), suspectAddr, INET_ADDRSTRLEN);
@@ -819,7 +798,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 			commandLine += " -s ";
 			commandLine += suspectAddr;
 			commandLine += " -j DNAT --to-destination ";
-			commandLine += globalConfig->getDoppelIp();
+			commandLine += Config::Inst()->getDoppelIp();
 
 			system(commandLine.c_str());
 		}
@@ -833,7 +812,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 			commandLine += " -s ";
 			commandLine += suspectAddr;
 			commandLine += " -j DNAT --to-destination ";
-			commandLine += globalConfig->getDoppelIp();
+			commandLine += Config::Inst()->getDoppelIp();
 
 			system(commandLine.c_str());
 		}
@@ -852,9 +831,9 @@ void Nova::SilentAlarm(Suspect *suspect)
 			suspect->m_features.m_unsentData->clearFeatureData();
 
 			//Update other Nova Instances with latest suspect Data
-			for(uint i = 0; i < globalConfig->getNeighbors().size(); i++)
+			for(uint i = 0; i < Config::Inst()->getNeighbors().size(); i++)
 			{
-				serv_addr.sin_addr.s_addr = globalConfig->getNeighbors()[i];
+				serv_addr.sin_addr.s_addr = Config::Inst()->getNeighbors()[i];
 
 				stringstream ss;
 				string commandLine;
@@ -864,19 +843,19 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 				if(system(commandLine.c_str()) == -1)
 				{
-					logger->Log(INFO, "Failed to update iptables.", "Failed to update iptables.");
+					LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 				}
 
 
 				int i;
-				for(i = 0; i < globalConfig->getSaMaxAttempts(); i++)
+				for(i = 0; i < Config::Inst()->getSaMaxAttempts(); i++)
 				{
 					if(KnockPort(OPEN))
 					{
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 						{
-							logger->Log(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
+							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
 									%__LINE__%__FILE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
@@ -887,12 +866,12 @@ void Nova::SilentAlarm(Suspect *suspect)
 							if(errno == EHOSTUNREACH)
 							{
 								//set to max attempts to hit the failed connect condition
-								i = globalConfig->getSaMaxAttempts();
-								logger->Log(ERROR, (format("File %1% at line %2%: Unable to connect to host to send silent alarm. Errno: %3%")
+								i = Config::Inst()->getSaMaxAttempts();
+								LOG(ERROR, (format("File %1% at line %2%: Unable to connect to host to send silent alarm. Errno: %3%")
 										%__LINE__%__FILE__%strerror(errno)).str());
 								break;
 							}
-							logger->Log(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
+							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
 									%__LINE__%__FILE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
@@ -901,7 +880,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 					}
 				}
 				//If connecting failed
-				if(i == globalConfig->getSaMaxAttempts() )
+				if(i == Config::Inst()->getSaMaxAttempts() )
 				{
 					close(sockfd);
 					ss.str("");
@@ -909,21 +888,21 @@ void Nova::SilentAlarm(Suspect *suspect)
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
+						LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 					}
 					continue;
 				}
 
 				if( send(sockfd, serializedBuffer, dataLen, 0) == -1)
 				{
-					logger->Log(ERROR, (format("File %1% at line %2%: Error in TCP Send of silent alarm. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+					LOG(ERROR, (format("File %1% at line %2%: Error in TCP Send of silent alarm. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 					close(sockfd);
 					ss.str("");
 					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
 					commandLine = ss.str();
 					if(system(commandLine.c_str()) == -1)
 					{
-						logger->Log(INFO, "Failed to update iptables.", "Failed to update iptables.");
+						LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 					}
 					continue;
 				}
@@ -934,7 +913,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				commandLine = ss.str();
 				if(system(commandLine.c_str()) == -1)
 				{
-					logger->Log(ERROR, "Failed to update iptables.", "Failed to update iptables.");
+					LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
 				}
 			}
 		}while(dataLen == MORE_DATA);
@@ -945,7 +924,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 bool Nova::KnockPort(bool mode)
 {
 	stringstream ss;
-	ss << globalConfig->getKey();
+	ss << Config::Inst()->getKey();
 
 	//mode == OPEN (true)
 	if(mode)
@@ -955,7 +934,7 @@ bool Nova::KnockPort(bool mode)
 	else
 		ss << "SHUT";
 
-	uint keyDataLen = globalConfig->getKey().size() + 4;
+	uint keyDataLen = Config::Inst()->getKey().size() + 4;
 	u_char keyBuf[1024];
 	bzero(keyBuf, 1024);
 	memcpy(keyBuf, ss.str().c_str(), ss.str().size());
@@ -965,20 +944,20 @@ bool Nova::KnockPort(bool mode)
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %s")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %s")%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
 	}
 
 	if( sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %s")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %s")%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
 	}
 
 	close(sockfd);
-	sleep(globalConfig->getSaSleepDuration());
+	sleep(Config::Inst()->getSaSleepDuration());
 	return true;
 }
 
@@ -988,14 +967,14 @@ bool Nova::Start_Packet_Handler()
 	char errbuf[PCAP_ERRBUF_SIZE];
 
 	int ret;
-	usePcapFile = globalConfig->getReadPcap();
+	usePcapFile = Config::Inst()->getReadPcap();
 	string haystackAddresses_csv = "";
 
 	struct bpf_program fp;			/* The compiled filter expression */
 	char filter_exp[64];
 
 
-	haystackAddresses = GetHaystackAddresses(globalConfig->getPathConfigHoneydHs());
+	haystackAddresses = GetHaystackAddresses(Config::Inst()->getPathConfigHoneydHs());
 	haystackDhcpAddresses = GetHaystackDhcpAddresses(dhcpListFile);
 	haystackAddresses_csv = ConstructFilterString();
 
@@ -1003,66 +982,66 @@ bool Nova::Start_Packet_Handler()
 	if(usePcapFile)
 	{
 		sleep(1); //To allow time for other processes to open
-		handle = pcap_open_offline(globalConfig->getPathPcapFile().c_str(), errbuf);
+		handle = pcap_open_offline(Config::Inst()->getPathPcapFile().c_str(), errbuf);
 
 		if(handle == NULL)
 		{
-			logger->Log(CRITICAL, (format("File %1% at line %2%: Couldn't open file: %3%: %4%")%__FILE__%__LINE__%globalConfig->getPathPcapFile().c_str()%errbuf).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't open pcapc file: %3%: %4%")%__FILE__%__LINE__%Config::Inst()->getPathPcapFile().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			logger->Log(CRITICAL, (format("File %1% at line %2%: Couldn't parse filter: %3%: %4%")%__LINE__%filter_exp%pcap_geterr(handle)).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't parse pcap filter: %3%: %4%")%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			logger->Log(CRITICAL, (format("File %1% at line %2%: Couldn't install filter: %3%: %4%")% __FILE__%__LINE__%filter_exp%pcap_geterr(handle)).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't install pcap filter: %3%: %4%")% __FILE__%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 		//First process any packets in the file then close all the sessions
 		pcap_loop(handle, -1, Packet_Handler,NULL);
 
 		TCPTimeout(NULL);
-		if (!globalConfig->getIsTraining())
+		if (!Config::Inst()->getIsTraining())
 			ClassificationLoop(NULL);
 		else
 			TrainingLoop(NULL);
 
-		if(globalConfig->getGotoLive()) usePcapFile = false; //If we are going to live capture set the flag.
+		if(Config::Inst()->getGotoLive()) usePcapFile = false; //If we are going to live capture set the flag.
 	}
 
 
 	if(!usePcapFile)
 	{
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-		handle = pcap_open_live(globalConfig->getInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
+		handle = pcap_open_live(Config::Inst()->getInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
 
 		if(handle == NULL)
 		{
-			logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't open device: %3% %4%")% __FILE__%__LINE__%globalConfig->getInterface().c_str()%errbuf).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Unable to open the network interface for live capture: %3% %4%")% __FILE__%__LINE__%Config::Inst()->getInterface().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
 		/* ask pcap for the network address and mask of the device */
-		ret = pcap_lookupnet(globalConfig->getInterface().c_str(), &netp, &maskp, errbuf);
+		ret = pcap_lookupnet(Config::Inst()->getInterface().c_str(), &netp, &maskp, errbuf);
 
 		if(ret == -1)
 		{
-			logger->Log(ERROR, (format("File %1% at line %2%: %3%")% __FILE__%__LINE__%errbuf).str());
+			LOG(ERROR, (format("File %1% at line %2%: Unable to get the network address and mask of the interface. Error: %3%")% __FILE__%__LINE__%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't install filter:%3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Couldn't install filter:%3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 		//"Main Loop"
@@ -1085,7 +1064,7 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 
 	if(packet == NULL)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Didn't grab packet!")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Failed to capture packet!")% __FILE__%__LINE__).str());
 		return;
 	}
 
@@ -1157,9 +1136,9 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 		}
 
 		// Allow for continuous classification
-		if(!globalConfig->getClassificationTimeout())
+		if(!Config::Inst()->getClassificationTimeout())
 		{
-			if (!globalConfig->getIsTraining())
+			if (!Config::Inst()->getIsTraining())
 				ClassificationLoop(NULL);
 			else
 				TrainingLoop(NULL);
@@ -1171,27 +1150,27 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 	}
 	else
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Unknown Non-IP Packet Received")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Unknown Non-IP Packet Received. Nova is ignoring it.")% __FILE__%__LINE__).str());
 		return;
 	}
 }
 
 void Nova::SaveSuspectsToFile(string filename)
 {
-	logger->Log(NOTICE, (format("File %1% at line %2%:  Got request to save file to %3%")% __FILE__%__LINE__% filename).str());
+	LOG(NOTICE, (format("File %1% at line %2%:  Got request to save file to %3%")% __FILE__%__LINE__% filename).str());
 
 	ofstream out(filename.c_str());
 
 	if(!out.is_open())
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")% __FILE__%__LINE__% filename).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")% __FILE__%__LINE__% filename).str());
 		return;
 	}
 
 	pthread_rwlock_rdlock(&suspectTableLock);
 	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
 	{
-		out << it->second->ToString(engine->featureEnabled) << endl;
+		out << it->second->ToString() << endl;
 	}
 	pthread_rwlock_unlock(&suspectTableLock);
 
@@ -1210,21 +1189,21 @@ void Nova::SendToUI(Suspect *suspect)
 
 	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Unable to create GUI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to create GUI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
 
 	if (connect(GUISendSocket, GUISendPtr, GUILen) == -1)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Unable to connect to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to connect to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
 
 	if (send(GUISendSocket, GUIData, GUIDataLen, 0) == -1)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Unable to send to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to send to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(GUISendSocket);
 		return;
 	}
@@ -1234,19 +1213,18 @@ void Nova::SendToUI(Suspect *suspect)
 
 void Nova::LoadConfiguration()
 {
-	string hostAddrString = GetLocalIP(globalConfig->getInterface().c_str());
+	string hostAddrString = GetLocalIP(Config::Inst()->getInterface().c_str());
 
 	if(hostAddrString.size() == 0)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Bad interface, no IP's associated!")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Bad ethernet interface, no IP's associated!")% __FILE__%__LINE__).str());
 		exit(EXIT_FAILURE);
 	}
 
 	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
 
 
-	string enabledFeatureMask = globalConfig->getEnabledFeatures();
-	engine->SetEnabledFeatures(globalConfig->getEnabledFeatures());
+	string enabledFeatureMask = Config::Inst()->getEnabledFeatures();
 }
 
 
@@ -1281,7 +1259,7 @@ string Nova::ConstructFilterString()
 		filterString = "dst host 0.0.0.0";
 	}
 
-	logger->Log(DEBUG, "Pcap filter string is %1%" + filterString);
+	LOG(DEBUG, "Pcap filter string is " + filterString);
 	return filterString;
 }
 
@@ -1304,10 +1282,10 @@ void *Nova::UpdateIPFilter(void *ptr)
 				string haystackAddresses_csv = ConstructFilterString();
 
 				if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-					logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%: Couldn't parse pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 
 				if (pcap_setfilter(handle, &fp) == -1)
-					logger->Log(ERROR, (format("File %1% at line %2%:  Couldn't install filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%:  Couldn't install pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			}
 		}
 		else
@@ -1348,11 +1326,11 @@ vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 	//Path to the main log file
 	ifstream honeydConfFile (honeyDConfigPath.c_str());
 	vector <string> retAddresses;
-	retAddresses.push_back(GetLocalIP(globalConfig->getInterface().c_str()));
+	retAddresses.push_back(GetLocalIP(Config::Inst()->getInterface().c_str()));
 
 	if( honeydConfFile == NULL)
 	{
-		logger->Log(ERROR, (format("File %1% at line %2%:  Error opening log file. Does it exist?")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Error opening log file. Does it exist?")% __FILE__%__LINE__).str());
 		exit(EXIT_FAILURE);
 	}
 
@@ -1402,7 +1380,7 @@ void *Nova::TCPTimeout(void *ptr)
 				//If were reading packets from a file, assume all packets have been loaded and go beyond timeout threshhold
 				if(usePcapFile)
 				{
-					currentTime = packetTime+3+globalConfig->getTcpTimout();
+					currentTime = packetTime+3+Config::Inst()->getTcpTimout();
 				}
 				// If it exists)
 				if(packetTime + 2 < currentTime)
@@ -1418,10 +1396,10 @@ void *Nova::TCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if(!globalConfig->getClassificationTimeout())
+						if(!Config::Inst()->getClassificationTimeout())
 						{
 							pthread_rwlock_unlock(&sessionLock);
-							if (!globalConfig->getIsTraining())
+							if (!Config::Inst()->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
@@ -1432,7 +1410,7 @@ void *Nova::TCPTimeout(void *ptr)
 						SessionTable[it->first].fin = false;
 					}
 					//If this session is timed out
-					else if(packetTime + globalConfig->getTcpTimout() < currentTime)
+					else if(packetTime + Config::Inst()->getTcpTimout() < currentTime)
 					{
 						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
@@ -1442,10 +1420,10 @@ void *Nova::TCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if(!globalConfig->getClassificationTimeout())
+						if(!Config::Inst()->getClassificationTimeout())
 						{
 							pthread_rwlock_unlock(&sessionLock);
-							if (!globalConfig->getIsTraining())
+							if (!Config::Inst()->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
@@ -1460,7 +1438,7 @@ void *Nova::TCPTimeout(void *ptr)
 		}
 		pthread_rwlock_unlock(&sessionLock);
 		//Check only once every TCP_CHECK_FREQ seconds
-		sleep(globalConfig->getTcpCheckFreq());
+		sleep(Config::Inst()->getTcpCheckFreq());
 	}while(!usePcapFile);
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
@@ -1468,7 +1446,7 @@ void *Nova::TCPTimeout(void *ptr)
 	if(usePcapFile) return NULL;
 
 
-	logger->Log(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+	LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
 	return NULL;
 }
 

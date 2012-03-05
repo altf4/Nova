@@ -25,6 +25,10 @@
 #include "Defines.h"
 #include <cstring>
 
+// A macro to make logging prettier
+#define LOG Logger::Inst()->Log
+
+
 using namespace std;
 using namespace google;
 
@@ -63,21 +67,16 @@ typedef struct MessageOptions optionsInfo;
 class Logger
 {
 public:
-	// Constructor for the Logger class.
-	// args: string parent. The name of the module (or file) that called the logger object
-	//		 char const * configFilePath. The path to the file to parse for logging configuration options.
-	//       bool init. If true, call the LoadConfiguration method. Should only be true
-	//                  in the LoadConfig methods for a given module.
-	//					If false, don't call LoadConfiguration, just populate the levels
-	//					map. If false, when logging the userMap that is passed to the
-	//					Logging method must be the userMap saved in the process,
-	//					not the one in the messageInfo struct.
-	Logger(char const * configFilePath, bool init);
+	// Logger is a singleton, this gets an instance of the logger
+	static Logger* Inst();
+
 	~Logger();
+
 	// SaveLoggerConfiguration: will save LoggerConfiguration to the given filename.
 	// No use for this right now, a placeholder for future gui applications. Will
 	// definitely change.
 	void SaveLoggerConfiguration(string filename);
+
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
@@ -94,6 +93,10 @@ public:
 	void setUserLogPreferences(string logPrefString);
 	void setUserLogPreferences(Nova::Levels messageLevel, Nova::Services services);
 
+protected:
+	// Constructor for the Logger class.
+	Logger();
+
 private:
 	// Notify makes use of the libnotify methods to produce
 	// a notification with the desired level to the desktop.
@@ -101,12 +104,7 @@ private:
 	//       	libNotify message.
 	//       	string message. The content of the libNotify message
 	void Notify(uint16_t level, string message);
-	// ParseAddressesString: takes in the comma separated string of email recipients
-	// and returns a vector containing each individual email address. May not need this
-	// in the future, depending on how forgiving the SMTP methods are in Poco, but for
-	// now I thought it a good idea to have.
-	// args: 	string addresses. comma separated string of email addresses.
-	vector<string> ParseAddressesString(string addresses);
+
 	// Log will be the method that calls syslog
 	// args: 	uint16_t level. The level of severity to tell syslog to log with.
 	//       	string message. The message to send to syslog in string form.
@@ -119,18 +117,14 @@ private:
 	// 		 	email's content.
 	//       	vector<string> recipients. Who the email will be sent to.
 	void Mail(uint16_t level, string message);
-	// clean the elements in the toClean vector, i.e. removing trailing commas, etc.
-	vector<string> CleanAddresses(vector<string> toClean);
+
+
 	// takes in a character, and returns a Services type; for use when
 	// parsing the SERVICE_PREFERENCES string from the NOVAConfig.txt file.
 	Nova::Levels parseLevelFromChar(char parse);
+
 	// Load Configuration: loads the SMTP info and service level preferences
-	// from NovaConfig.txt.
-	// args:   char const * filename. This tells the method where the config
-	// 		   file is for parsing.
-	// return: uint16_t ( 0 | 1). On 0, one of the options was not set, and has
-	// 		   no default. On 1, everything's fine.
-	uint16_t LoadConfiguration(char const* filename);
+	uint16_t LoadConfiguration();
 	string getBitmask(Nova::Levels level);
 
 public:
@@ -140,6 +134,7 @@ private:
 	static const string m_prefixes[];
 	optionsInfo m_messageInfo;
 	pthread_rwlock_t m_logLock;
+	static Logger *m_loggerInstance;
 };
 
 }

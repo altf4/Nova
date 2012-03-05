@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "Suspect.h"
+#include "Config.h"
 #include <sstream>
 
 using namespace std;
@@ -86,7 +87,7 @@ Suspect::Suspect(Packet packet)
 }
 
 
-string Suspect::ToString(bool featureEnabled[])
+string Suspect::ToString()
 {
 	RdlockSuspect();
 	stringstream ss;
@@ -107,47 +108,47 @@ string Suspect::ToString(bool featureEnabled[])
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 
-	if (featureEnabled[DISTINCT_IPS])
+	if (Config::Inst()->isFeatureEnabled(DISTINCT_IPS))
 	{
 		ss << " Distinct IPs Contacted: " << m_features.m_features[DISTINCT_IPS] << "\n";
 	}
 
-	if (featureEnabled[IP_TRAFFIC_DISTRIBUTION])
+	if (Config::Inst()->isFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
 		ss << " Haystack Traffic Distribution: " << m_features.m_features[IP_TRAFFIC_DISTRIBUTION] << "\n";
 	}
 
-	if (featureEnabled[DISTINCT_PORTS])
+	if (Config::Inst()->isFeatureEnabled(DISTINCT_PORTS))
 	{
 		ss << " Distinct Ports Contacted: " << m_features.m_features[DISTINCT_PORTS] << "\n";
 	}
 
-	if (featureEnabled[PORT_TRAFFIC_DISTRIBUTION])
+	if (Config::Inst()->isFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
 	{
 		ss << " Port Traffic Distribution: "  <<  m_features.m_features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
 	}
 
-	if (featureEnabled[HAYSTACK_EVENT_FREQUENCY])
+	if (Config::Inst()->isFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
 	{
 		ss << " Haystack Events: " << m_features.m_features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
 	}
 
-	if (featureEnabled[PACKET_SIZE_MEAN])
+	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_MEAN))
 	{
 		ss << " Mean Packet Size: " << m_features.m_features[PACKET_SIZE_MEAN] << "\n";
 	}
 
-	if (featureEnabled[PACKET_SIZE_DEVIATION])
+	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_DEVIATION))
 	{
 		ss << " Packet Size Variance: " << m_features.m_features[PACKET_SIZE_DEVIATION] << "\n";
 	}
 
-	if (featureEnabled[PACKET_INTERVAL_MEAN])
+	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_MEAN))
 	{
 		ss << " Mean Packet Interval: " << m_features.m_features[PACKET_INTERVAL_MEAN] << "\n";
 	}
 
-	if (featureEnabled[PACKET_INTERVAL_DEVIATION])
+	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_DEVIATION))
 	{
 		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
@@ -183,10 +184,10 @@ void Suspect::ClearEvidence() //TODO
 		UnlockSuspect();
 }
 
-void Suspect::CalculateFeatures(uint32_t featuresEnabled)
+void Suspect::CalculateFeatures()
 {
 	WrlockSuspect();
-	m_features.CalculateAll(featuresEnabled);
+	m_features.CalculateAll();
 	UnlockSuspect();
 }
 
