@@ -23,7 +23,7 @@
 #include "ui_novagui.h"
 #include "Suspect.h"
 #include "loggerwindow.h"
-#include "NOVAConfiguration.h"
+#include "Config.h"
 #include "HoneydConfiguration.h"
 
 #include <QProcess>
@@ -62,7 +62,6 @@ public:
 
     bool m_isHelpUp;
     HoneydConfiguration *honeydConfig;
-    NOVAConfiguration *configuration;
 
     DialogPrompter *prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
@@ -99,7 +98,7 @@ public:
     void closeEvent(QCloseEvent * e);
 
     //Get preliminary config information
-    void InitSession();
+    void InitConfiguration();
     void InitPaths();
     void InitNovadCommands();
 

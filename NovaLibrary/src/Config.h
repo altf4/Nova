@@ -20,18 +20,20 @@
 #define NOVACONFIGURATION_H_
 
 #include "HashMapStructs.h"
+#include "Defines.h"
 
 using namespace std;
 
 namespace Nova {
 
-class NOVAConfiguration {
+class Config {
 
 public:
-	NOVAConfiguration(string configFilePath, string userConfigFilePath);
-	NOVAConfiguration();
+	// This is a singleton class, use this to access it
+	static Config* Inst();
 
-	~NOVAConfiguration();
+
+	~Config();
 
 	// Loads and parses a NOVA configuration file
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
@@ -58,6 +60,8 @@ public:
     string getDoppelInterface() const;
     string getDoppelIp() const;
     string getEnabledFeatures() const;
+    bool isFeatureEnabled(int i) const;
+    uint getEnabledFeatureCount() const;
     string getInterface() const;
     string getPathCESaveFile() const;
     string getPathConfigHoneydDm() const;
@@ -97,7 +101,7 @@ public:
     void setDataTTL(int dataTTL);
     void setDoppelInterface(string doppelInterface);
     void setDoppelIp(string doppelIp);
-    void setEnabledFeatures(string enabledFeatures);
+    void setEnabledFeatures(string enabledFeatureMask);
     void setEps(double eps);
     void setGotoLive(bool gotoLive);
     void setInterface(string interface);
@@ -122,15 +126,40 @@ public:
     void setKey(string key);
     void setNeigbors(vector<in_addr_t> neighbors);
     void setGroup(string group);
+    string getLoggerPreferences() const;
+    string getSMTPAddr() const;
+    string getSMTPDomain() const;
+    vector<string> getSMTPEmailRecipients() const;
+    in_port_t getSMTPPort() const;
+    void setLoggerPreferences(string loggerPreferences);
+    void setSMTPAddr(string SMTPAddr);
+    void setSMTPDomain(string SMTPDomain);
+	void setSMTPPort(in_port_t SMTPPort);
+
+    // Set with a vector of email addresses
+    void setSMTPEmailRecipients(vector<string> SMTPEmailRecipients);
+    // Set with a CSV string from the config file
+    void setSMTPEmailRecipients(string SMTPEmailRecipients);
+
+protected:
+	Config();
 
 private:
+	static Config *m_instance;
+
 	static const string m_prefixes[];
 	static const string m_requiredFiles[];
 
 	string m_interface;
 	string m_doppelIp;
 	string m_doppelInterface;
-	string m_enabledFeatures;
+
+	// Enabled feature stuff, we provide a few formats and helpers
+	string m_enabledFeatureMask;
+	bool m_isFeatureEnabled[DIM];
+	uint m_enabledFeatureCount;
+	double m_squrtEnabledFeatures;
+
 
 	string m_pathConfigHoneydHs;
 	string m_pathConfigHoneydDm;
@@ -160,6 +189,18 @@ private:
 	bool m_useTerminals;
 	bool m_isTraining;
 	bool m_isDmEnabled;
+
+	// the SMTP server domain name for display purposes
+	string SMTPDomain;
+	// the email address that will be set as sender
+	string SMTPAddr;
+	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
+	in_port_t SMTPPort;
+
+	string loggerPreferences;
+	// a vector containing the email recipients; may move this into the actual classes
+	// as opposed to being in this struct
+	vector<string> SMTPEmailRecipients;
 
 	// User config options
 	vector<in_addr_t> m_neighbors;

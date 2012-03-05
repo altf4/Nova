@@ -19,7 +19,7 @@
 #include "novaconfig.h"
 #include "subnetPopup.h"
 #include "NovaComplexDialog.h"
-#include "NOVAConfiguration.h"
+#include "Config.h"
 
 #include <boost/foreach.hpp>
 #include <QFileDialog>
@@ -1132,35 +1132,34 @@ bool NovaConfig::DisplayMACPrefixWindow()
 
 void NovaConfig::LoadNovadPreferences()
 {
-	NOVAConfiguration *NConfig = new NOVAConfiguration();
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
-	ui.interfaceEdit->setText(QString::fromStdString(NConfig->getInterface()));
-	ui.dataEdit->setText(QString::fromStdString(NConfig->getPathTrainingFile()));
+	ui.interfaceEdit->setText(QString::fromStdString(Config::Inst()->getInterface()));
+	ui.dataEdit->setText(QString::fromStdString(Config::Inst()->getPathTrainingFile()));
 
-	ui.saAttemptsMaxEdit->setText(QString::number(NConfig->getSaMaxAttempts()));
-	ui.saAttemptsTimeEdit->setText(QString::number(NConfig->getSaSleepDuration()));
-	ui.saPortEdit->setText(QString::number(NConfig->getSaPort()));
-	ui.ceIntensityEdit->setText(QString::number(NConfig->getK()));
-	ui.ceErrorEdit->setText(QString::number(NConfig->getEps()));
-	ui.ceFrequencyEdit->setText(QString::number(NConfig->getTcpCheckFreq()));
-	ui.ceThresholdEdit->setText(QString::number(NConfig->getClassificationThreshold()));
-	ui.tcpTimeoutEdit->setText(QString::number(NConfig->getClassificationTimeout()));
-	ui.tcpFrequencyEdit->setText(QString::number(NConfig->getTcpCheckFreq()));
+	ui.saAttemptsMaxEdit->setText(QString::number(Config::Inst()->getSaMaxAttempts()));
+	ui.saAttemptsTimeEdit->setText(QString::number(Config::Inst()->getSaSleepDuration()));
+	ui.saPortEdit->setText(QString::number(Config::Inst()->getSaPort()));
+	ui.ceIntensityEdit->setText(QString::number(Config::Inst()->getK()));
+	ui.ceErrorEdit->setText(QString::number(Config::Inst()->getEps()));
+	ui.ceFrequencyEdit->setText(QString::number(Config::Inst()->getClassificationTimeout()));
+	ui.ceThresholdEdit->setText(QString::number(Config::Inst()->getClassificationThreshold()));
+	ui.tcpTimeoutEdit->setText(QString::number(Config::Inst()->getTcpTimout()));
+	ui.tcpFrequencyEdit->setText(QString::number(Config::Inst()->getTcpCheckFreq()));
 
-	ui.trainingCheckBox->setChecked(NConfig->getIsTraining());
-	ui.hsConfigEdit->setText((QString)NConfig->getPathConfigHoneydHs().c_str());
+	ui.trainingCheckBox->setChecked(Config::Inst()->getIsTraining());
+	ui.hsConfigEdit->setText((QString)Config::Inst()->getPathConfigHoneydHs().c_str());
 
-	ui.dmConfigEdit->setText((QString)NConfig->getPathConfigHoneydDm().c_str());
-	ui.dmIPEdit->setText((QString)NConfig->getDoppelIp().c_str());
-	ui.dmCheckBox->setChecked(NConfig->getIsDmEnabled());
-	ui.pcapCheckBox->setChecked(NConfig->getReadPcap());
+	ui.dmConfigEdit->setText((QString)Config::Inst()->getPathConfigHoneydDm().c_str());
+	ui.dmIPEdit->setText((QString)Config::Inst()->getDoppelIp().c_str());
+	ui.dmCheckBox->setChecked(Config::Inst()->getIsDmEnabled());
+	ui.pcapCheckBox->setChecked(Config::Inst()->getReadPcap());
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
-	ui.pcapEdit->setText((QString)NConfig->getPathPcapFile().c_str());
-	ui.liveCapCheckBox->setChecked(NConfig->getGotoLive());
-	ui.terminalCheckBox->setChecked(NConfig->getUseTerminals());
+	ui.pcapEdit->setText((QString)Config::Inst()->getPathPcapFile().c_str());
+	ui.liveCapCheckBox->setChecked(Config::Inst()->getGotoLive());
+	ui.terminalCheckBox->setChecked(Config::Inst()->getUseTerminals());
 	{
-		string featuresEnabled = NConfig->getEnabledFeatures();
+		string featuresEnabled = Config::Inst()->getEnabledFeatures();
 		ui.featureList->clear();
 		// Populate the list, row order is based on dimension macros
 		ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
@@ -1191,7 +1190,6 @@ void NovaConfig::LoadNovadPreferences()
 				GetFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
 	}
 	closelog();
-	delete NConfig;
 }
 
 //Draws the current honeyd configuration
@@ -1413,7 +1411,7 @@ void NovaConfig::on_okButton_clicked()
 	closelog();
 	//Save changes
 	PushData();
-	m_mainwindow->configuration = new NOVAConfiguration();
+	m_mainwindow->InitConfiguration();
 	m_loading->unlock();
 	this->close();
 }
@@ -1439,7 +1437,7 @@ void NovaConfig::on_applyButton_clicked()
 	//Reloads honeyd configuration to assert concurrency
 	LoadHaystackConfiguration();
 
-	m_mainwindow->configuration = new NOVAConfiguration();
+	m_mainwindow->InitConfiguration();
 
 	m_loading->unlock();
 	closelog();
@@ -1448,8 +1446,6 @@ void NovaConfig::on_applyButton_clicked()
 
 bool NovaConfig::SaveConfigurationToFile() {
 	string line, prefix;
-	NOVAConfiguration *config = new NOVAConfiguration();
-	config->LoadConfig();
 
 	stringstream ss;
 
@@ -1462,29 +1458,29 @@ bool NovaConfig::SaveConfigurationToFile() {
 			ss << 0;
 	}
 
-	config->setIsDmEnabled(ui.dmCheckBox->isChecked());
-	config->setIsTraining(ui.trainingCheckBox->isChecked());
-	config->setInterface(this->ui.interfaceEdit->displayText().toStdString());
-	config->setPathTrainingFile(this->ui.dataEdit->displayText().toStdString());
-	config->setSaSleepDuration(this->ui.saAttemptsTimeEdit->displayText().toDouble());
-	config->setSaMaxAttempts(this->ui.saAttemptsMaxEdit->displayText().toInt());
-	config->setSaPort(this->ui.saPortEdit->displayText().toInt());
-	config->setK(this->ui.ceIntensityEdit->displayText().toInt());
-	config->setEps(this->ui.ceErrorEdit->displayText().toDouble());
-	config->setClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
-	config->setClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
-	config->setPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
-	config->setDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
-	config->setPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
-	config->setTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
-	config->setTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
-	config->setPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
-	config->setEnabledFeatures(ss.str());
-	config->setReadPcap(ui.pcapCheckBox->isChecked());
-	config->setGotoLive(ui.liveCapCheckBox->isChecked());
-	config->setUseTerminals(ui.terminalCheckBox->isChecked());
+	Config::Inst()->setIsDmEnabled(ui.dmCheckBox->isChecked());
+	Config::Inst()->setIsTraining(ui.trainingCheckBox->isChecked());
+	Config::Inst()->setInterface(this->ui.interfaceEdit->displayText().toStdString());
+	Config::Inst()->setPathTrainingFile(this->ui.dataEdit->displayText().toStdString());
+	Config::Inst()->setSaSleepDuration(this->ui.saAttemptsTimeEdit->displayText().toDouble());
+	Config::Inst()->setSaMaxAttempts(this->ui.saAttemptsMaxEdit->displayText().toInt());
+	Config::Inst()->setSaPort(this->ui.saPortEdit->displayText().toInt());
+	Config::Inst()->setK(this->ui.ceIntensityEdit->displayText().toInt());
+	Config::Inst()->setEps(this->ui.ceErrorEdit->displayText().toDouble());
+	Config::Inst()->setClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
+	Config::Inst()->setClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
+	Config::Inst()->setPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
+	Config::Inst()->setDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
+	Config::Inst()->setPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
+	Config::Inst()->setTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
+	Config::Inst()->setTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
+	Config::Inst()->setPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
+	Config::Inst()->setEnabledFeatures(ss.str());
+	Config::Inst()->setReadPcap(ui.pcapCheckBox->isChecked());
+	Config::Inst()->setGotoLive(ui.liveCapCheckBox->isChecked());
+	Config::Inst()->setUseTerminals(ui.terminalCheckBox->isChecked());
 
-	return config->SaveConfig();
+	return Config::Inst()->SaveConfig();
 }
 
 //Exit the window and ignore any changes since opening or apply was pressed

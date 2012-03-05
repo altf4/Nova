@@ -47,7 +47,7 @@ public:
 	// Converts suspect into a human readable string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the string
 	// Returns: Human readable string of the given feature
-	string ToString(bool featureEnabled[]);
+	string ToString();
 
 	// Add an additional piece of evidence to this suspect
 	// Does not take actions like reclassifying or calculating features.
@@ -69,7 +69,7 @@ public:
 	// Calculates the feature set for this suspect
 	// 		isTraining - True for training data gathering mode
 	//		featuresEnabled - bitmask of features to calculate
-	int CalculateFeatures(uint32_t featuresEnabled);
+	int CalculateFeatures();
 
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored

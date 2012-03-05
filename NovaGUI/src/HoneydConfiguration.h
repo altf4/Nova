@@ -19,7 +19,7 @@
 #ifndef _HONEYDCONFIGURATION
 #define _HONEYDCONFIGURATION
 
-#include "NOVAConfiguration.h"
+#include "Config.h"
 #include "NovaGuiTypes.h"
 #include "Defines.h"
 
@@ -75,7 +75,6 @@ public:
     void SetProfiles(ProfileTable profile);
 
 private:
-    NOVAConfiguration *m_configuration;
     string m_homePath;
 
     //Storing these trees allow for easy modification and writing of the XML files

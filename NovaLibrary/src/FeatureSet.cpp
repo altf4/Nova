@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "FeatureSet.h"
+#include "Config.h"
 #include <math.h>
 #include <sys/un.h>
 
@@ -72,49 +73,49 @@ void FeatureSet::ClearFeatureSet()
 }
 
 
-void FeatureSet::CalculateAll(uint32_t featuresEnabled)
+void FeatureSet::CalculateAll()
 {
 	CalculateTimeInterval();
 
 	UpdateFeatureData(INCLUDE);
 
-	if(featuresEnabled & IP_TRAFFIC_DISTRIBUTION_MASK)
+	if (Config::Inst()->isFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
 			Calculate(IP_TRAFFIC_DISTRIBUTION);
 	}
-	if(featuresEnabled & PORT_TRAFFIC_DISTRIBUTION_MASK)
+	if (Config::Inst()->isFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
 	{
 			Calculate(PORT_TRAFFIC_DISTRIBUTION);
 	}
-	if(featuresEnabled & HAYSTACK_EVENT_FREQUENCY_MASK)
+	if (Config::Inst()->isFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
 	{
 			Calculate(HAYSTACK_EVENT_FREQUENCY);
 	}
-	if(featuresEnabled & PACKET_SIZE_MEAN_MASK)
+	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_MEAN))
 	{
 			Calculate(PACKET_SIZE_MEAN);
 	}
-	if(featuresEnabled & PACKET_SIZE_DEVIATION_MASK)
+	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_DEVIATION))
 	{
-		if(!(featuresEnabled & PACKET_SIZE_MEAN_MASK))
+		if (!Config::Inst()->isFeatureEnabled(PACKET_SIZE_MEAN))
 			Calculate(PACKET_SIZE_MEAN);
 		Calculate(PACKET_SIZE_DEVIATION);
 	}
-	if(featuresEnabled & DISTINCT_IPS_MASK)
+	if (Config::Inst()->isFeatureEnabled(DISTINCT_IPS))
 	{
 			Calculate(DISTINCT_IPS);
 	}
-	if(featuresEnabled & DISTINCT_PORTS_MASK)
+	if (Config::Inst()->isFeatureEnabled(DISTINCT_PORTS))
 	{
 			Calculate(DISTINCT_PORTS);
 	}
-	if(featuresEnabled & PACKET_INTERVAL_MEAN_MASK)
+	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_MEAN))
 	{
 			Calculate(PACKET_INTERVAL_MEAN);
 	}
-	if(featuresEnabled & PACKET_INTERVAL_DEVIATION_MASK)
+	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_DEVIATION))
 	{
-			if(!(featuresEnabled & PACKET_INTERVAL_MEAN_MASK))
+		if (!Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_MEAN))
 				Calculate(PACKET_INTERVAL_MEAN);
 			Calculate(PACKET_INTERVAL_DEVIATION);
 	}

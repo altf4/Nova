@@ -16,7 +16,7 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================/*
 
-#include "NOVAConfiguration.h"
+#include "Config.h"
 #include <fstream>
 #include "Logger.h"
 #include <syslog.h>
@@ -24,22 +24,50 @@
 #include <sys/un.h>
 #include <sstream>
 #include "NovaUtil.h"
+#include <math.h>
 
 using namespace std;
 
 namespace Nova
 {
 
-const string NOVAConfiguration::m_prefixes[] = 	{ "INTERFACE", "HS_HONEYD_CONFIG",
-		"TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE",
-		"USE_TERMINALS", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS",
-		"IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS",
-		"SA_SLEEP_DURATION", "DM_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE",
-		"DM_ENABLED", "ENABLED_FEATURES","TRAINING_CAP_FOLDER", "THINNING_DISTANCE",
-		"SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE"};
+const string Config::m_prefixes[] = {
+		"INTERFACE",
+		"HS_HONEYD_CONFIG",
+		"TCP_TIMEOUT",
+		"TCP_CHECK_FREQ",
+		"READ_PCAP",
+		"PCAP_FILE",
+		"GO_TO_LIVE",
+		"USE_TERMINALS",
+		"CLASSIFICATION_TIMEOUT",
+		"SILENT_ALARM_PORT",
+		"K",
+		"EPS",
+		"IS_TRAINING",
+		"CLASSIFICATION_THRESHOLD",
+		"DATAFILE",
+		"SA_MAX_ATTEMPTS",
+		"SA_SLEEP_DURATION",
+		"DM_HONEYD_CONFIG",
+		"DOPPELGANGER_IP",
+		"DOPPELGANGER_INTERFACE",
+		"DM_ENABLED",
+		"ENABLED_FEATURES",
+		"TRAINING_CAP_FOLDER",
+		"THINNING_DISTANCE",
+		"SAVE_FREQUENCY",
+		"DATA_TTL",
+		"CE_SAVE_FILE",
+		"SMTP_ADDR",
+		"SMTP_PORT",
+		"SMTP_DOMAIN",
+		"RECIPIENTS",
+		"SERVICE_PREFERENCES"
+};
 
 // Files we need to run (that will be loaded with defaults if deleted)
-const string NOVAConfiguration::m_requiredFiles[] = {
+const string Config::m_requiredFiles[] = {
 		"/settings",
 		"/Config/NOVAConfig.txt",
 		"/scripts.xml",
@@ -49,8 +77,17 @@ const string NOVAConfiguration::m_requiredFiles[] = {
 		"/templates/nodes.xml"
 };
 
+Config* Config::m_instance = NULL;
+
+Config* Config::Inst()
+{
+	if (m_instance == NULL)
+		m_instance = new Config();
+	return m_instance;
+}
+
 // Loads the configuration file into the class's state data
-void NOVAConfiguration::LoadConfig()
+void Config::LoadConfig()
 {
 	string line;
 	string prefix;
@@ -421,7 +458,7 @@ void NOVAConfiguration::LoadConfig()
 				line = line.substr(prefix.size() + 1, line.size());
 				if (line.size() == DIM)
 				{
-					m_enabledFeatures = line;
+					setEnabledFeatures(line);
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -497,6 +534,89 @@ void NOVAConfiguration::LoadConfig()
 				}
 				continue;
 			}
+
+
+			// SMTP_ADDR
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPAddr(line);
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+
+			//SMTP_PORT
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPPort(((in_port_t) atoi(line.c_str())));
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SMTP_DOMAIN
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPDomain(line);
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//RECIPIENTS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setSMTPAddr(line);
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SERVICE_PREFERENCES
+			//TODO: make method for parsing string to map criticality level to service
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					setLoggerPreferences(line);
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
 		}
 	}
 	else
@@ -516,7 +636,7 @@ void NOVAConfiguration::LoadConfig()
 	closelog();
 }
 
-bool NOVAConfiguration::LoadUserConfig()
+bool Config::LoadUserConfig()
 {
 	string prefix, line;
 	uint i = 0;
@@ -583,7 +703,7 @@ bool NOVAConfiguration::LoadUserConfig()
 	return returnValue;
 }
 
-bool NOVAConfiguration::SaveConfig() {
+bool Config::SaveConfig() {
 	string line, prefix;
 
 	//Rewrite the config file with the new settings
@@ -791,7 +911,7 @@ bool NOVAConfiguration::SaveConfig() {
 
 
 
-void NOVAConfiguration::SetDefaults()
+void Config::SetDefaults()
 {
 	openlog(__FUNCTION__, OPEN_SYSL, LOG_AUTHPRIV);
 
@@ -820,13 +940,13 @@ void NOVAConfiguration::SetDefaults()
 	m_saSleepDuration = .5;
 	m_doppelIp = "10.0.0.1";
 	m_doppelInterface = "lo";
-	m_enabledFeatures = "111111111";
+	m_enabledFeatureMask = "111111111";
 	m_thinningDistance = 0;
 	m_saveFreq = 1440;
 	m_dataTTL = 0;
 }
 
-bool NOVAConfiguration::AddUserToGroup()
+bool Config::AddUserToGroup()
 {
 	bool returnValue = true;
 	if( system("gksudo --description 'Add your user to the privileged nova user group. "
@@ -843,7 +963,7 @@ bool NOVAConfiguration::AddUserToGroup()
 // Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 //	Returns: True if (after the function) the user has all necessary ~/.nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
-bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
+bool Config::InitUserConfigs(string homeNovaPath)
 {
 	bool returnValue = true;
 	struct stat fileAttr;
@@ -874,10 +994,10 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 		// Do all of the important files exist?
 		for (uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
 		{
-			string fullPath = homeNovaPath + NOVAConfiguration::m_requiredFiles[i];
+			string fullPath = homeNovaPath + Config::m_requiredFiles[i];
 			if (stat (fullPath.c_str(), &fileAttr ) != 0)
 			{
-				string defaultLocation = "/etc/nova/.nova" + NOVAConfiguration::m_requiredFiles[i];
+				string defaultLocation = "/etc/nova/.nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 				syslog(SYSL_ERR, "Warning: The file %s does not exist but is required for Nova to function. Restoring default file from %s",fullPath.c_str(), defaultLocation.c_str());
 				if (system(copyCommand.c_str()) == -1)
@@ -911,7 +1031,7 @@ bool NOVAConfiguration::InitUserConfigs(string homeNovaPath)
 	return returnValue;
 }
 
-string NOVAConfiguration::toString()
+string Config::toString()
 {
 	std::stringstream ss;
 	ss << "getConfigFilePath() " << getConfigFilePath() << endl;
@@ -949,336 +1069,426 @@ string NOVAConfiguration::toString()
 	return ss.str();
 }
 
-NOVAConfiguration::NOVAConfiguration()
+Config::Config()
 {
-	this->m_configFilePath = GetHomePath() + "/Config/NOVAConfig.txt";
-	this->m_userConfigFilePath = GetHomePath() + "/settings";
+	m_configFilePath = GetHomePath() + "/Config/NOVAConfig.txt";
+	m_userConfigFilePath = GetHomePath() + "/settings";
 	SetDefaults();
 	LoadConfig();
 	LoadUserConfig();
 }
 
-NOVAConfiguration::NOVAConfiguration(string configFilePath, string userConfigFilePath)
-{
-	this->m_configFilePath = configFilePath;
-	this->m_userConfigFilePath = userConfigFilePath;
-	SetDefaults();
-	LoadConfig();
-	LoadUserConfig();
-}
-
-NOVAConfiguration::~NOVAConfiguration()
+Config::~Config()
 {
 }
 
-double NOVAConfiguration::getClassificationThreshold() const
+double Config::getClassificationThreshold() const
 {
 	return m_classificationThreshold;
 }
 
-int NOVAConfiguration::getClassificationTimeout() const
+int Config::getClassificationTimeout() const
 {
 	return m_classificationTimeout;
 }
 
-string NOVAConfiguration::getConfigFilePath() const
+string Config::getConfigFilePath() const
 {
 	return m_configFilePath;
 }
 
-int NOVAConfiguration::getDataTTL() const
+int Config::getDataTTL() const
 {
 	return m_dataTTL;
 }
 
-string NOVAConfiguration::getDoppelInterface() const
+string Config::getDoppelInterface() const
 {
 	return m_doppelInterface;
 }
 
-string NOVAConfiguration::getDoppelIp() const
+string Config::getDoppelIp() const
 {
 	return m_doppelIp;
 }
 
-string NOVAConfiguration::getEnabledFeatures() const
+string Config::getEnabledFeatures() const
 {
-	return m_enabledFeatures;
+	return m_enabledFeatureMask;
 }
 
-double NOVAConfiguration::getEps() const
+uint Config::getEnabledFeatureCount() const
+{
+	return m_enabledFeatureCount;
+}
+
+bool Config::isFeatureEnabled(int i) const
+{
+	return m_isFeatureEnabled[i];
+}
+
+double Config::getEps() const
 {
 	return m_eps;
 }
 
-bool NOVAConfiguration::getGotoLive() const
+bool Config::getGotoLive() const
 {
 	return m_gotoLive;
 }
 
-string NOVAConfiguration::getInterface() const
+string Config::getInterface() const
 {
 	return m_interface;
 }
 
-bool NOVAConfiguration::getIsDmEnabled() const
+bool Config::getIsDmEnabled() const
 {
 	return m_isDmEnabled;
 }
 
-bool NOVAConfiguration::getIsTraining() const
+bool Config::getIsTraining() const
 {
 	return m_isTraining;
 }
 
-int NOVAConfiguration::getK() const
+int Config::getK() const
 {
 	return m_k;
 }
 
-string NOVAConfiguration::getPathCESaveFile() const
+string Config::getPathCESaveFile() const
 {
 	return m_pathCESaveFile;
 }
 
-string NOVAConfiguration::getPathConfigHoneydDm() const
+string Config::getPathConfigHoneydDm() const
 {
 	return m_pathConfigHoneydDm;
 }
 
-string NOVAConfiguration::getPathConfigHoneydHs() const
+string Config::getPathConfigHoneydHs() const
 {
 	return m_pathConfigHoneydHs;
 }
 
-string NOVAConfiguration::getPathPcapFile() const
+string Config::getPathPcapFile() const
 {
 	return m_pathPcapFile;
 }
 
-string NOVAConfiguration::getPathTrainingCapFolder() const
+string Config::getPathTrainingCapFolder() const
 {
 	return m_pathTrainingCapFolder;
 }
 
-string NOVAConfiguration::getPathTrainingFile() const
+string Config::getPathTrainingFile() const
 {
 	return m_pathTrainingFile;
 }
 
-bool NOVAConfiguration::getReadPcap() const
+bool Config::getReadPcap() const
 {
 	return m_readPcap;
 }
 
-int NOVAConfiguration::getSaMaxAttempts() const
+int Config::getSaMaxAttempts() const
 {
 	return m_saMaxAttempts;
 }
 
-int NOVAConfiguration::getSaPort() const
+int Config::getSaPort() const
 {
 	return m_saPort;
 }
 
-double NOVAConfiguration::getSaSleepDuration() const
+double Config::getSaSleepDuration() const
 {
 	return m_saSleepDuration;
 }
 
-int NOVAConfiguration::getSaveFreq() const
+int Config::getSaveFreq() const
 {
 	return m_saveFreq;
 }
 
-int NOVAConfiguration::getTcpCheckFreq() const
+int Config::getTcpCheckFreq() const
 {
 	return m_tcpCheckFreq;
 }
 
-int NOVAConfiguration::getTcpTimout() const
+int Config::getTcpTimout() const
 {
 	return m_tcpTimout;
 }
 
-int NOVAConfiguration::getThinningDistance() const
+int Config::getThinningDistance() const
 {
 	return m_thinningDistance;
 }
 
-bool NOVAConfiguration::getUseTerminals() const
+bool Config::getUseTerminals() const
 {
 	return m_useTerminals;
 }
 
-string NOVAConfiguration::getKey() const
+string Config::getKey() const
 {
 	return m_key;
 }
 
-vector<in_addr_t> NOVAConfiguration::getNeighbors() const
+vector<in_addr_t> Config::getNeighbors() const
 {
 	return m_neighbors;
 }
 
-string NOVAConfiguration::getGroup() const
+string Config::getGroup() const
 {
 	return m_group;
 }
 
-void NOVAConfiguration::setClassificationThreshold(double classificationThreshold)
+void Config::setClassificationThreshold(double classificationThreshold)
 {
 	this->m_classificationThreshold = classificationThreshold;
 }
 
-void NOVAConfiguration::setClassificationTimeout(int classificationTimeout)
+void Config::setClassificationTimeout(int classificationTimeout)
 {
 	this->m_classificationTimeout = classificationTimeout;
 }
 
-void NOVAConfiguration::setConfigFilePath(string configFilePath)
+void Config::setConfigFilePath(string configFilePath)
 {
 	this->m_configFilePath = configFilePath;
 }
 
-void NOVAConfiguration::setDataTTL(int dataTTL)
+void Config::setDataTTL(int dataTTL)
 {
 	this->m_dataTTL = dataTTL;
 }
 
-void NOVAConfiguration::setDoppelInterface(string doppelInterface)
+void Config::setDoppelInterface(string doppelInterface)
 {
 	this->m_doppelInterface = doppelInterface;
 }
 
-void NOVAConfiguration::setDoppelIp(string doppelIp)
+void Config::setDoppelIp(string doppelIp)
 {
 	this->m_doppelIp = doppelIp;
 }
 
-void NOVAConfiguration::setEnabledFeatures(string enabledFeatures)
+void Config::setEnabledFeatures(string enabledFeatureMask)
 {
-	this->m_enabledFeatures = enabledFeatures;
+	m_enabledFeatureCount = 0;
+	for (uint i = 0; i < DIM; i++)
+	{
+		if ('1' == enabledFeatureMask.at(i))
+		{
+			m_isFeatureEnabled[i] = true;
+			m_enabledFeatureCount++;
+		}
+		else
+		{
+			m_isFeatureEnabled[i] = false;
+		}
+	}
+
+	m_squrtEnabledFeatures = sqrt(m_enabledFeatureCount);
+	m_enabledFeatureMask = enabledFeatureMask;
 }
 
-void NOVAConfiguration::setEps(double eps)
+void Config::setEps(double eps)
 {
 	this->m_eps = eps;
 }
 
-void NOVAConfiguration::setGotoLive(bool gotoLive)
+void Config::setGotoLive(bool gotoLive)
 {
 	this->m_gotoLive = gotoLive;
 }
 
-void NOVAConfiguration::setInterface(string interface)
+void Config::setInterface(string interface)
 {
 	this->m_interface = interface;
 }
 
-void NOVAConfiguration::setIsDmEnabled(bool isDmEnabled)
+void Config::setIsDmEnabled(bool isDmEnabled)
 {
 	this->m_isDmEnabled = isDmEnabled;
 }
 
-void NOVAConfiguration::setIsTraining(bool isTraining)
+void Config::setIsTraining(bool isTraining)
 {
 	this->m_isTraining = isTraining;
 }
 
-void NOVAConfiguration::setK(int k)
+void Config::setK(int k)
 {
 	this->m_k = k;
 }
 
-void NOVAConfiguration::setPathCESaveFile(string pathCESaveFile)
+void Config::setPathCESaveFile(string pathCESaveFile)
 {
 	this->m_pathCESaveFile = pathCESaveFile;
 }
 
-void NOVAConfiguration::setPathConfigHoneydDm(string pathConfigHoneydDm)
+void Config::setPathConfigHoneydDm(string pathConfigHoneydDm)
 {
 	this->m_pathConfigHoneydDm = pathConfigHoneydDm;
 }
 
-void NOVAConfiguration::setPathConfigHoneydHs(string pathConfigHoneydHs)
+void Config::setPathConfigHoneydHs(string pathConfigHoneydHs)
 {
 	this->m_pathConfigHoneydHs = pathConfigHoneydHs;
 }
 
-void NOVAConfiguration::setPathPcapFile(string pathPcapFile)
+void Config::setPathPcapFile(string pathPcapFile)
 {
 	this->m_pathPcapFile = pathPcapFile;
 }
 
-void NOVAConfiguration::setPathTrainingCapFolder(string pathTrainingCapFolder)
+void Config::setPathTrainingCapFolder(string pathTrainingCapFolder)
 {
 	this->m_pathTrainingCapFolder = pathTrainingCapFolder;
 }
 
-void NOVAConfiguration::setPathTrainingFile(string pathTrainingFile)
+void Config::setPathTrainingFile(string pathTrainingFile)
 {
 	this->m_pathTrainingFile = pathTrainingFile;
 }
 
-void NOVAConfiguration::setReadPcap(bool readPcap)
+void Config::setReadPcap(bool readPcap)
 {
 	this->m_readPcap = readPcap;
 }
 
-void NOVAConfiguration::setSaMaxAttempts(int saMaxAttempts)
+void Config::setSaMaxAttempts(int saMaxAttempts)
 {
 	this->m_saMaxAttempts = saMaxAttempts;
 }
 
-void NOVAConfiguration::setSaPort(int saPort)
+void Config::setSaPort(int saPort)
 {
 	this->m_saPort = saPort;
 }
 
-void NOVAConfiguration::setSaSleepDuration(double saSleepDuration)
+void Config::setSaSleepDuration(double saSleepDuration)
 {
 	this->m_saSleepDuration = saSleepDuration;
 }
 
-void NOVAConfiguration::setSaveFreq(int saveFreq)
+void Config::setSaveFreq(int saveFreq)
 {
 	this->m_saveFreq = saveFreq;
 }
 
-void NOVAConfiguration::setTcpCheckFreq(int tcpCheckFreq)
+void Config::setTcpCheckFreq(int tcpCheckFreq)
 {
 	this->m_tcpCheckFreq = tcpCheckFreq;
 }
 
-void NOVAConfiguration::setTcpTimout(int tcpTimout)
+void Config::setTcpTimout(int tcpTimout)
 {
 	this->m_tcpTimout = tcpTimout;
 }
 
-void NOVAConfiguration::setThinningDistance(int thinningDistance)
+void Config::setThinningDistance(int thinningDistance)
 {
 	this->m_thinningDistance = thinningDistance;
 }
 
-void NOVAConfiguration::setUseTerminals(bool useTerminals)
+void Config::setUseTerminals(bool useTerminals)
 {
 	this->m_useTerminals = useTerminals;
 }
 
-void NOVAConfiguration::setKey(string key)
+void Config::setKey(string key)
 {
 	this->m_key = key;
 }
 
-void NOVAConfiguration::setNeigbors(vector<in_addr_t> neighbors)
+void Config::setNeigbors(vector<in_addr_t> neighbors)
 {
 	this->m_neighbors = neighbors;
 }
 
-void NOVAConfiguration::setGroup(string group)
+void Config::setGroup(string group)
 {
 	m_group = group;
+}
+
+string Config::getLoggerPreferences() const
+{
+	return loggerPreferences;
+}
+
+string Config::getSMTPAddr() const
+{
+	return SMTPAddr;
+}
+
+string Config::getSMTPDomain() const
+{
+	return SMTPDomain;
+}
+
+vector<string> Config::getSMTPEmailRecipients() const
+{
+	return SMTPEmailRecipients;
+}
+
+in_port_t Config::getSMTPPort() const
+{
+	return SMTPPort;
+}
+
+void Config::setLoggerPreferences(string loggerPreferences)
+{
+	this->loggerPreferences = loggerPreferences;
+}
+
+void Config::setSMTPAddr(string SMTPAddr)
+{
+	this->SMTPAddr = SMTPAddr;
+}
+
+void Config::setSMTPDomain(string SMTPDomain)
+{
+	this->SMTPDomain = SMTPDomain;
+}
+
+void Config::setSMTPEmailRecipients(vector<string> SMTPEmailRecipients)
+{
+	this->SMTPEmailRecipients = SMTPEmailRecipients;
+}
+
+void Config::setSMTPEmailRecipients(string SMTPEmailRecipients)
+{
+	 vector<string> addresses;
+	 istringstream iss(SMTPEmailRecipients);
+
+	 copy(istream_iterator<string>(iss),
+		  istream_iterator<string>(),
+		  back_inserter<vector <string> >(addresses));
+
+	vector<string> out = addresses;
+
+	for(uint16_t i = 0; i < addresses.size(); i++)
+	{
+		uint16_t endSubStr = addresses[i].find(",", 0);
+
+		if(endSubStr != addresses[i].npos)
+		{
+			out[i] = addresses[i].substr(0, endSubStr);
+		}
+	}
+
+	this->SMTPEmailRecipients = out;
+}
+
+void Config::setSMTPPort(in_port_t SMTPPort)
+{
+	this->SMTPPort = SMTPPort;
 }
 
 }

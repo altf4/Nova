@@ -32,12 +32,6 @@
 //Hash table for current list of suspects
 typedef google::dense_hash_map<in_addr_t, ANNpoint, tr1::hash<in_addr_t>, eqaddr > lastPointHash;
 
-enum normalizationType {
-	NONORM, 		// Does no data normalization. Feature must already be in a range from 0 to 1
-	LINEAR,			// Simple linear normalization by dividing data by the max
-	LINEAR_SHIFT, 	// Shifts min value to 0 before doing linear normalization
-	LOGARITHMIC		// Logarithmic normalization, larger outlier value will have less of an effect
-};
 
 namespace Nova{
 
@@ -57,35 +51,6 @@ void *TrainingLoop(void *ptr);
 // Startup routine for thread that listens for Silent Alarms from other Nova instances
 //		prt - Required for pthread start routines
 void *SilentAlarmLoop(void *ptr);
-
-// Performs classification on given suspect
-//		suspect - suspect to classify based on current evidence
-// Note: this updates the classification of the suspect in dataPtsWithClass as well as it's isHostile variable
-void Classify(Suspect *suspect);
-
-// Normalized a single value
-double Normalize(normalizationType type, double value, double min, double max);
-
-// Calculates normalized data points and stores into 'normalizedDataPts'
-void NormalizeDataPoints();
-
-// Forms the normalized kd tree, called once on start up
-// Will be called again if the a suspect's max value for a feature exceeds the current maximum for normalization
-void FormKdTree();
-
-// Prints a single ANN point, p, to stream, out
-//		out - steam to print to
-//		p 	- ANN point to print
-void PrintPt(ostream &out, ANNpoint p);
-
-// Reads into the list of suspects from a file specified by inFilePath
-//		inFilePath - path to input file, should contain Feature dimensions
-//					 followed by hostile classification (0 or 1), all space separated
-void LoadDataPointsFromFile(string inFilePath);
-
-// Writes the list of suspects out to a file specified by outFilePath
-//		outFilePath - path to output file
-void WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree);
 
 // Send a silent alarm
 //		suspect - Suspect to send alarm about

@@ -102,13 +102,15 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
-	if( !NOVAConfiguration::InitUserConfigs(GetHomePath()) )
+	if( !Config::InitUserConfigs(GetHomePath()) )
 	{
 		syslog(SYSL_ERR, "Error: InitUserConfigs failed. Your home folder and permissions may not have been configured properly");	
 		//exit(EXIT_FAILURE);
 	}
 
-	InitSession();
+	InitConfiguration();
+	InitPaths();
+	InitNovadCommands();
 	InitiateSystemStatus();
 
 	// Create the dialog generator
@@ -313,11 +315,15 @@ void NovaGUI::closeEvent(QCloseEvent * e)
  * Gets preliminary information
  ************************************************/
 
-void NovaGUI::InitSession()
+void NovaGUI::InitConfiguration()
 {
-	InitPaths();
-	configuration = new NOVAConfiguration();
-	InitNovadCommands();
+	for (uint i = 0; i < DIM; i++)
+	{
+		if ('1' == Config::Inst()->getEnabledFeatures().at(i))
+			m_featureEnabled[i] = true;
+		else
+			m_featureEnabled[i] = false;
+	}
 }
 
 void NovaGUI::InitNovadCommands()
@@ -333,8 +339,8 @@ void NovaGUI::InitNovadCommands()
 	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + configuration->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + configuration->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + Config::Inst()->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + Config::Inst()->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
 void NovaGUI::InitPaths()
@@ -713,7 +719,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		{
 			ui.hostileList->setCurrentRow(i);
 		}
-		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString().c_str()));
 	}
 	//Else if the mainItem exists and suspect is not hostile
 	else if(sItem->mainItem != NULL)
@@ -728,7 +734,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		sItem->mainItem->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 		sItem->mainItem->setForeground(brush);
 
-		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
+		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString().c_str()));
 
 		int i = 0;
 		if(ui.hostileList->count())
@@ -742,7 +748,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		}
 		ui.hostileList->insertItem(i, sItem->mainItem);
 	}
-	sItem->item->setToolTip(QString(sItem->suspect->ToString(m_featureEnabled).c_str()));
+	sItem->item->setToolTip(QString(sItem->suspect->ToString().c_str()));
 	UpdateSuspectWidgets();
 	pthread_rwlock_unlock(&lock);
 	m_editingSuspectList = false;
@@ -857,7 +863,7 @@ void NovaGUI::on_actionStopNova_triggered()
 	StopNova();
 
 	// Were we in training mode?
-	if (configuration->getIsTraining())
+	if (Config::Inst()->getIsTraining())
 	{
 		prompter->DisplayPrompt(LAUNCH_TRAINING_MERGE,
 			"ClassificationEngine was in training mode. Would you like to merge the capture file into the training database now?",
@@ -882,7 +888,7 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 {
 	m_editingSuspectList = true;
 	ClearAllSuspects();
-	QFile::remove(QString::fromStdString(configuration->getPathCESaveFile()));
+	QFile::remove(QString::fromStdString(Config::Inst()->getPathCESaveFile()));
 	DrawAllSuspects();
 	m_editingSuspectList = false;
 }
@@ -933,7 +939,7 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 void NovaGUI::on_actionMakeDataFile_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("File to select classifications from"), QString::fromStdString(configuration->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
+			 tr("File to select classifications from"), QString::fromStdString(Config::Inst()->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
 	if (data.isNull())
 		return;
@@ -953,7 +959,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 
 	string dataFileContent = MakaDataFile(*map);
 
-	ofstream out (configuration->getPathTrainingFile().data());
+	ofstream out (Config::Inst()->getPathTrainingFile().data());
 	out << dataFileContent;
 	out.close();
 }
@@ -961,7 +967,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 void NovaGUI::on_actionTrainingData_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("Classification Engine Data Dump"), QString::fromStdString(configuration->getPathTrainingFile()), tr("NOVA Classification Dump (*.dump)"));
+			 tr("Classification Engine Data Dump"), QString::fromStdString(Config::Inst()->getPathTrainingFile()), tr("NOVA Classification Dump (*.dump)"));
 
 	if (data.isNull())
 		return;
@@ -974,7 +980,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
-	ThinTrainingPoints(trainingDump, configuration->getThinningDistance());
+	ThinTrainingPoints(trainingDump, Config::Inst()->getThinningDistance());
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 
@@ -984,7 +990,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 	trainingSuspectMap* headerMap = classifier->getStateData();
 
 	QString outputFile = QFileDialog::getSaveFileName(this,
-			tr("Classification Database File"), QString::fromStdString(configuration->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
+			tr("Classification Database File"), QString::fromStdString(Config::Inst()->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
 	if (outputFile.isNull())
 		return;
@@ -1126,7 +1132,7 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 	novaComponents[row].shouldBeRunning = false;
 
 	// Fix for honeyd not closing with gnome-terminal + sudo
-	if (configuration->getUseTerminals() && process != NULL && process->pid() &&
+	if (Config::Inst()->getUseTerminals() && process != NULL && process->pid() &&
 			(ui.systemStatusTable->currentRow() == COMPONENT_DMH || ui.systemStatusTable->currentRow() == COMPONENT_HSH))
 	{
 		QString killString = QString("sudo pkill -TERM -P ") + QString::number(process->pid());
@@ -1240,7 +1246,7 @@ void NovaGUI::on_clearSuspectsButton_clicked()
 {
 	m_editingSuspectList = true;
 	ClearAllSuspects();
-	QFile::remove(QString::fromStdString(configuration->getPathCESaveFile()));
+	QFile::remove(QString::fromStdString(Config::Inst()->getPathCESaveFile()));
 	DrawAllSuspects();
 	m_editingSuspectList = false;
 }
@@ -1257,7 +1263,7 @@ void NovaGUI::on_suspectList_itemSelectionChanged()
 		if(ui.suspectList->currentItem() != NULL)
 		{
 			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
-			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString(m_featureEnabled).c_str()));
+			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString().c_str()));
 			SetFeatureDistances(SuspectTable[addr].suspect);
 		}
 		pthread_rwlock_unlock(&lock);
@@ -1471,9 +1477,8 @@ void StartNova()
 void StartComponent(novaComponent *component)
 {
 	QString program;
-	NOVAConfiguration config;
 
-	if (config.getUseTerminals())
+	if (Config::Inst()->getUseTerminals())
 		program = QString::fromStdString(component->terminalCommand);
 	else
 		program = QString::fromStdString(component->noTerminalCommand);

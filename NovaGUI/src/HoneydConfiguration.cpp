@@ -29,7 +29,6 @@ using boost::property_tree::xml_parser::trim_whitespace;
 
 HoneydConfiguration::HoneydConfiguration()
 {
-	m_configuration = new NOVAConfiguration();
 	m_homePath = GetHomePath();
 
 	m_subnets.set_empty_key("");
@@ -123,7 +122,7 @@ void HoneydConfiguration::LoadNodesTemplate()
 		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 		{
 			//Find the specified group
-			if(!v.second.get<std::string>("name").compare(m_configuration->getGroup()))
+			if(!v.second.get<std::string>("name").compare(Config::Inst()->getGroup()))
 			{
 				try //Null Check
 				{
@@ -151,7 +150,7 @@ void HoneydConfiguration::LoadNodesTemplate()
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, m_configuration->getGroup().c_str(), string(e.what()).c_str());
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, Config::Inst()->getGroup().c_str(), string(e.what()).c_str());
 	}
 }
 
@@ -507,7 +506,7 @@ void HoneydConfiguration::SaveAllTemplates()
 	BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 	{
 		//Find the specified group
-		if(!v.second.get<std::string>("name").compare(m_configuration->getGroup()))
+		if(!v.second.get<std::string>("name").compare(Config::Inst()->getGroup()))
 		{
 			//Load Subnets first, they are needed before we can load nodes
 			v.second.put_child("subnets", m_subnetTree);
@@ -610,11 +609,11 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 		}
 	}
 
-	ofstream outFile(m_configuration->getPathConfigHoneydHs().data());
+	ofstream outFile(Config::Inst()->getPathConfigHoneydHs().data());
 	outFile << out.str() << endl;
 	outFile.close();
 
-	ofstream doppelOutFile(m_configuration->getPathConfigHoneydDm().data());
+	ofstream doppelOutFile(Config::Inst()->getPathConfigHoneydDm().data());
 	doppelOutFile << doppelOut.str() << endl;
 	doppelOutFile.close();
 }
@@ -743,7 +742,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 					n.MAC = v.second.get<std::string>("MAC");
 				}
 				catch(...){}
-				if(!n.IP.compare(m_configuration->getDoppelIp()))
+				if(!n.IP.compare(Config::Inst()->getDoppelIp()))
 				{
 					n.name = "Doppelganger";
 					n.sub = n.interface;
