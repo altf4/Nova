@@ -95,3 +95,6 @@ NovaGUI/moc_run_popup.cpp
 /DoppelgangerModule/Release/DoppelgangerModule
 /LocalTrafficMonitor/Release/LocalTrafficMonitor
 /Nova_UI_Core/Debug/Nova_UI_Core
+/Installer/.nova/Config/doppelganger.config
+/Installer/.nova/Data/data.txt
+/Installer/.nova/Data/training.db
