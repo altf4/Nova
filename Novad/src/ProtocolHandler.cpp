@@ -36,7 +36,6 @@ using namespace Nova;
 using boost::format;
 
 extern string userHomePath;
-extern Logger *logger;
 
 //Launches a UI Handling thread, and returns
 void Spawn_UI_Handler()
@@ -49,7 +48,7 @@ void Spawn_UI_Handler()
 
     if ((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
-    	logger->Log(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  socket: %s")% __FILE__%__LINE__% strerror(errno)).str());
+    	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  socket: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	return;
     }
 
@@ -60,14 +59,14 @@ void Spawn_UI_Handler()
 
     if (bind(IPCSocket, (struct sockaddr *)&msgLocal, len) == -1)
     {
-    	logger->Log(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  bind: %s")% __FILE__%__LINE__% strerror(errno)).str());
+    	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  bind: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	close(IPCSocket);
     	return;
     }
 
     if (listen(IPCSocket, SOMAXCONN) == -1)
     {
-    	logger->Log(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
+    	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	close(IPCSocket);
     	return;
     }
@@ -79,7 +78,7 @@ void Spawn_UI_Handler()
     	//Blocking call
 		if ((*msgSocket = accept(IPCSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
 		{
-			logger->Log(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
+			LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
 			close(IPCSocket);
 			return;
 		}
@@ -103,7 +102,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 		if( message == NULL )
 		{
 			//There was an error reading this message
-			logger->Log(DEBUG, "There was an error reading a message from the UI",
+			LOG(DEBUG, "There was an error reading a message from the UI",
 					(format("File %1% at line %2%: Deserialization error.")% __FILE__%__LINE__).str());
 			delete message;
 			continue;
@@ -120,7 +119,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 			default:
 			{
 				//There was an error reading this message
-				logger->Log(DEBUG, "There was an error reading a message from the UI",
+				LOG(DEBUG, "There was an error reading a message from the UI",
 						(format("File %1% at line %2%: Invalid message type")% __FILE__%__LINE__).str());
 				delete message;
 				continue;
@@ -163,7 +162,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
 			if(system(delString.c_str()) == -1)
-				logger->Log(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
+				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
 
 			pthread_rwlock_unlock(&suspectTableLock);
 
@@ -221,7 +220,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		default:
 		{
-			logger->Log(DEBUG, "UI sent us an invalid message",
+			LOG(DEBUG, "UI sent us an invalid message",
 					(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
 		}
 	}
