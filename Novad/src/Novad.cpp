@@ -110,8 +110,7 @@ ClassificationEngine *engine;
 
 int main()
 {
-	//TODO: Perhaps move this into its own init function?
-	userHomePath = GetHomePath();
+	userHomePath = Config::Inst()->getPathHome();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
 	if(chdir(userHomePath.c_str()) == -1)
 		LOG(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);

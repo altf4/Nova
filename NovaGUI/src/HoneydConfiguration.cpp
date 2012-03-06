@@ -29,7 +29,7 @@ using boost::property_tree::xml_parser::trim_whitespace;
 
 HoneydConfiguration::HoneydConfiguration()
 {
-	m_homePath = GetHomePath();
+	m_homePath = Config::Inst()->getPathHome();
 
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");

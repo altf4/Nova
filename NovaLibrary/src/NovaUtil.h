@@ -29,35 +29,11 @@
 using namespace std;
 using namespace Nova;
 
-/************************************************/
-/********* Common Typedefs and Structs **********/
-/************************************************/
-
-
-/*****************************************************************************/
-/** NovaUtil namespace is ONLY for functions repeated in multiple processes **/
-/** and that don't fit into a category large enough to warrant a new class ***/
-/*****************************************************************************/
-
 namespace Nova{
 
 // Encrpyts/decrypts a char buffer of size 'size' depending on mode
 // TODO: Comment more on this once it's written
 void CryptBuffer(u_char * buf, uint size, bool mode);
-
-// Reads the paths file and returns the homePath of nova
-// Returns: Something like "/home/user/.nova"
-string GetHomePath();
-// Reads the paths file and returns the readPath of nova
-// Returns: Something like "/usr/share/nova"
-string GetReadPath();
-// Reads the paths file and returns the writePath of nova
-// Returns: Something like "/etc/nova"
-string GetWritePath();
-// Replaces any env vars in 'path' and returns the absolute path
-// 		path - String containing a path with env vars (eg $HOME)
-// Returns: Path with env vars resolved and replaced with real values
-string ResolvePathVars(string path);
 
 }
 
