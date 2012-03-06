@@ -548,8 +548,8 @@ void *Nova::ClassificationLoop(void *ptr)
 	//Classification Loop
 	do
 	{
-		suspects.Wrlock();
 		sleep(Config::Inst()->getClassificationTimeout());
+		suspects.Wrlock();
 		//Calculate the "true" Feature Set for each Suspect
 		// XXX 'suspects' SuspectTableIterator todo
 		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() != suspects.Size(); ++it)
@@ -559,7 +559,7 @@ void *Nova::ClassificationLoop(void *ptr)
 				if(suspects[it.GetKey()].UpdateEvidence())
 				{
 					suspects.Unlock();
-					suspects[it.GetKey()].SetOwner(pthread_self());
+					suspects[it.GetKey()].SetOwner();
 					suspects.Wrlock();
 					suspects[it.GetKey()].UpdateEvidence();
 					suspects[it.GetKey()].CalculateFeatures();

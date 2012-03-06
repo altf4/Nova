@@ -158,8 +158,9 @@ public:
 	//Returns a reference to a suspect,
 	Suspect& operator[](uint64_t realKey);
 
+	Suspect m_emptySuspect;
 
-protected:
+//protected:
 
 	// Google Dense Hashmap used for constant time key lookups
 	SuspectHashTable m_table;
@@ -181,9 +182,6 @@ private:
 	uint64_t m_deleted_key;
 
 	vector<pthread_t> m_owners;
-
-	Suspect m_emptySuspect;
-
 
 };
 

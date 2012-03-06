@@ -163,7 +163,7 @@ public:
 
 
 	//Returns a copy of the suspects FeatureSet, must not be locked or is locked by the owner
-	FeatureSet GetFeatureSet();
+	FeatureSet& GetFeatureSet();
 	//Sets or overwrites the suspects FeatureSet, must have the lock to perform this operation
 	// Returns (0) on Success and (-1) if the suspect is currently owned by another thread
 	// Note: If you wish to block until the Suspect can be set, release any other locked resources and
@@ -204,9 +204,8 @@ public:
 	//Returns true if the suspect is checked out by a thread
 	bool HasOwner();
 
-	//Sets the pthread_t 'owner'
-	//		tid: unique thread identifier retrieved from pthread_self();
-	void SetOwner(pthread_t tid);
+	//Sets the pthread_t 'owner' to the calling thread
+	void SetOwner();
 
 	//Flags the suspect as no longer 'checked out'
 	int ResetOwner();

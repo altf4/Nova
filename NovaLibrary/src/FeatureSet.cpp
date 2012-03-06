@@ -45,7 +45,6 @@ FeatureSet::FeatureSet()
 
 FeatureSet::~FeatureSet()
 {
-	delete m_unsentData;
 }
 
 
