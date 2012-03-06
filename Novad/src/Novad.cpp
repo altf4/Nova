@@ -150,11 +150,6 @@ int main()
 		LOG(DEBUG, "Connected to UI",
 				(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
 	}
-	else
-	{
-		LOG(WARNING, "Failed to connect to UI",
-				(format("File %1% at line %2%: Connection initialization to UI failed")%__LINE__%__FILE__).str());
-	}
 
 	engine = new ClassificationEngine(&suspects);
 
