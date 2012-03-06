@@ -227,8 +227,13 @@ Suspect SuspectTable::CheckOut(in_addr_t key)
 					m_table[realKey]->SetOwner();
 					Suspect ret = *m_table[realKey];
 					FeatureSet * fs = new FeatureSet();
-					*fs  = *ret.GetFeatureSet().m_unsentData;
+					*fs  = ret.GetUnsentFeatureSet();
 					ret.SetFeatureSet(fs);
+
+					FeatureSet * ufs = new FeatureSet();
+					*ufs  = ret.GetUnsentFeatureSet();
+					ret.SetUnsentFeatureSet(ufs);
+
 					Unlock();
 					return ret;
 				}

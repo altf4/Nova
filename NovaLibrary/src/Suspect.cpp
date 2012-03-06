@@ -558,12 +558,12 @@ int Suspect::SetIsLive(bool b)
 
 
 //Returns a copy of the suspects FeatureSet
-FeatureSet& Suspect::GetFeatureSet()
+FeatureSet Suspect::GetFeatureSet()
 {
 	RdlockSuspect();
-	FeatureSet * ret = &m_features;
+	FeatureSet ret = m_features;
 	UnlockSuspect();
-	return *ret;
+	return ret;
 }
 
 //Returns a copy of the suspects FeatureSet
@@ -592,6 +592,18 @@ int Suspect::SetFeatureSet(FeatureSet *fs)
 		return -1;
 	WrlockSuspect();
 	m_features.operator =(*fs);
+	UnlockSuspect();
+	return 0;
+}
+
+//Sets or overwrites the suspects FeatureSet
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::SetUnsentFeatureSet(FeatureSet *fs)
+{
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+		return -1;
+	WrlockSuspect();
+	m_unsentFeatures.operator =(*fs);
 	UnlockSuspect();
 	return 0;
 }

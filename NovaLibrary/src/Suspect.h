@@ -172,6 +172,8 @@ public:
 	// using the blocking SetOwner function to wait on the suspects lock.
 	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
 	int SetFeatureSet(FeatureSet *fs);
+	int SetUnsentFeatureSet(FeatureSet *fs);
+
 
 	//Adds the feature set 'fs' to the suspect's feature set
 	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
