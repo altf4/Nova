@@ -145,6 +145,17 @@ int main()
 	pthread_t silentAlarmListenThread;
 	pthread_t ipUpdateThread;
 
+	if(ConnectToUI())
+	{
+		LOG(DEBUG, "Connected to UI",
+				(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
+	}
+	else
+	{
+		LOG(WARNING, "Failed to connect to UI",
+				(format("File %1% at line %2%: Connection initialization to UI failed")%__LINE__%__FILE__).str());
+	}
+
 	engine = new ClassificationEngine(&suspects);
 
 	Reload();
@@ -544,7 +555,16 @@ void *Nova::ClassificationLoop(void *ptr)
 					if(it->second->GetIsLive())
 						SilentAlarm(it->second);
 				}
-				SendSuspectToUI(it->second);	//TODO: log failure
+				if(SendSuspectToUI(it->second))
+				{
+					LOG(DEBUG, "Sent a suspect to the UI",
+							(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
+				}
+				else
+				{
+					LOG(WARNING, "Failed to send suspect to UI",
+							(format("File %1% at line %2%: Sending suspec to UI failed")%__LINE__%__FILE__).str());
+				}
 			}
 		}
 		pthread_rwlock_unlock(&suspectTableLock);
@@ -638,7 +658,16 @@ void *Nova::TrainingLoop(void *ptr)
 
 					it->second->SetNeedsFeatureUpdate(false);
 					//cout << it->second->ToString(featureEnabled);
-					SendSuspectToUI(it->second);	//TODO: log failure
+					if(SendSuspectToUI(it->second))
+					{
+						LOG(DEBUG, "Sent a suspect to the UI",
+								(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
+					}
+					else
+					{
+						LOG(WARNING, "Failed to send suspect to UI",
+								(format("File %1% at line %2%: Sending suspec to UI failed")%__LINE__%__FILE__).str());
+					}
 				}
 			}
 			pthread_rwlock_unlock(&suspectTableLock);
