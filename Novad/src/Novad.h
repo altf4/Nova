@@ -62,10 +62,6 @@ bool KnockPort(bool mode);
 // Returns: false if any sort of error
 bool Start_Packet_Handler();
 
-// Sends output to the UI
-//	suspect - suspect to serialize GUI data and send
-void SendToUI(Suspect *suspect);
-
 // Loads configuration variables
 //		configFilePath - Location of configuration file
 void LoadConfiguration();

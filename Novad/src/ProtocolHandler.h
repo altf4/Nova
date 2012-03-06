@@ -21,10 +21,12 @@
 
 #include "messages/UI_Message.h"
 #include "messages/ControlMessage.h"
+#include "Suspect.h"
 
 namespace Nova
 {
 
+//This is the only thread Novad needs to call to set up a UI Message Handler
 //Launches a UI Handling thread, and returns
 void Spawn_UI_Handler();
 
@@ -37,6 +39,19 @@ void *Handle_UI_Thread(void *socketVoidPtr);
 //	controlMessage - A reference to the received ControlMessage
 //	socketFD - The socket on which to contact the UI
 void HandleControlMessage(ControlMessage &controlMessage, int socketFD);
+
+
+//Commands and Updates to UI:
+
+//Initializes connection (socket) to UI
+//Must be called once before any of the following functions
+//	returns - True if successfully connected to UI, false on error
+bool ConnectToUI();
+
+//Sends (updates) a single suspect to the UI for display to the user
+//	suspect - The suspect to send
+//	returns - True if successfully sent to UI, false on error
+bool SendSuspectToUI(Suspect *suspect);
 
 }
 #endif /* PROTOCOLHANDLER_H_ */

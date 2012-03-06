@@ -21,6 +21,7 @@
 #include "Logger.h"
 #include "Control.h"
 #include "Novad.h"
+#include "messages/CallbackMessage.h"
 
 #include "pthread.h"
 #include <sys/types.h>
@@ -34,6 +35,8 @@
 
 using namespace Nova;
 using boost::format;
+
+int callbackSocket;
 
 extern string userHomePath;
 
@@ -224,4 +227,70 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 					(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
 		}
 	}
+}
+
+bool Nova::ConnectToUI()
+{
+	//Builds the key path
+	string homePath = Config::Inst()->getPathHome();
+	string key = homePath;
+	key += "/key";
+	key += UI_LISTEN_FILENAME;
+
+	struct sockaddr_un UIAddress;
+
+	//Builds the address
+	UIAddress.sun_family = AF_UNIX;
+	strcpy(UIAddress.sun_path, key.c_str());
+
+	if ((callbackSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	{
+		LOG(ERROR, "Unable to connect to UI",
+				(format("File %1% at line %2%:  Unable to create UI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		close(callbackSocket);
+		return false;
+	}
+
+	if (connect(callbackSocket, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
+	{
+		LOG(ERROR, "Unable to connect to UI", (
+				format("File %1% at line %2%:  Unable to connect() to UI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		close(callbackSocket);
+		return false;
+	}
+
+	return true;
+}
+
+
+bool Nova::SendSuspectToUI(Suspect *suspect)
+{
+	CallbackMessage *suspectUpdate = new CallbackMessage();
+	suspectUpdate->m_suspect = suspect;
+	suspectUpdate->m_callbackType = CALLBACK_SUSPECT_UDPATE;
+	if(!UI_Message::WriteMessage(suspectUpdate, callbackSocket))
+	{
+		delete suspectUpdate;
+		return false;
+	}
+	delete suspectUpdate;
+
+	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket);
+	if(suspectReply == NULL)
+	{
+		return false;
+	}
+	if(suspectReply->m_messageType != CALLBACK_MESSAGE)
+	{
+		delete suspectReply;
+		return false;
+	}
+	CallbackMessage *suspectCallback = (CallbackMessage*)suspectReply;
+	if(suspectCallback->m_callbackType != CALLBACK_SUSPECT_UDPATE_ACK)
+	{
+		delete suspectCallback;
+		return false;
+	}
+
+	return true;
 }

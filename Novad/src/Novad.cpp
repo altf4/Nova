@@ -24,6 +24,7 @@
 #include "Novad.h"
 #include "Control.h"
 #include "ClassificationEngine.h"
+#include "ProtocolHandler.h"
 
 #include <vector>
 #include <math.h>
@@ -543,7 +544,7 @@ void *Nova::ClassificationLoop(void *ptr)
 					if(it->second->GetIsLive())
 						SilentAlarm(it->second);
 				}
-				SendToUI(it->second);
+				SendSuspectToUI(it->second);	//TODO: log failure
 			}
 		}
 		pthread_rwlock_unlock(&suspectTableLock);
@@ -637,7 +638,7 @@ void *Nova::TrainingLoop(void *ptr)
 
 					it->second->SetNeedsFeatureUpdate(false);
 					//cout << it->second->ToString(featureEnabled);
-					SendToUI(it->second);
+					SendSuspectToUI(it->second);	//TODO: log failure
 				}
 			}
 			pthread_rwlock_unlock(&suspectTableLock);
@@ -1178,40 +1179,6 @@ void Nova::SaveSuspectsToFile(string filename)
 
 	out.close();
 }
-
-
-void Nova::SendToUI(Suspect *suspect)
-{
-	if (!enableGUI)
-		return;
-
-	u_char GUIData[MAX_MSG_SIZE];
-
-	uint GUIDataLen = suspect->SerializeSuspect(GUIData);
-
-	if ((GUISendSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to create GUI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
-		close(GUISendSocket);
-		return;
-	}
-
-	if (connect(GUISendSocket, GUISendPtr, GUILen) == -1)
-	{
-		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to connect to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
-		close(GUISendSocket);
-		return;
-	}
-
-	if (send(GUISendSocket, GUIData, GUIDataLen, 0) == -1)
-	{
-		LOG(ERROR, "Unable to connect to GUI", (format("File %1% at line %2%:  Unable to send to GUI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
-		close(GUISendSocket);
-		return;
-	}
-	close(GUISendSocket);
-}
-
 
 void Nova::LoadConfiguration()
 {
