@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/ClassificationEngine.cpp \
 ../src/Novad.cpp 
 
 OBJS += \
+./src/ClassificationEngine.o \
 ./src/Novad.o 
 
 CPP_DEPS += \
+./src/ClassificationEngine.d \
 ./src/Novad.d 
 
 
