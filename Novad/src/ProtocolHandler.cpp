@@ -165,12 +165,12 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 //				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
 //
 //			pthread_rwlock_unlock(&suspectTableLock);
-//
-//			ControlMessage *clearAllSuspectsReply = new ControlMessage();
-//			clearAllSuspectsReply->m_controlType = CONTROL_CLEAR_ALL_REPLY;
-//			clearAllSuspectsReply->m_success = true;
-//			UI_Message::WriteMessage(clearAllSuspectsReply, socketFD);
-//			delete clearAllSuspectsReply;
+
+			ControlMessage *clearAllSuspectsReply = new ControlMessage();
+			clearAllSuspectsReply->m_controlType = CONTROL_CLEAR_ALL_REPLY;
+			clearAllSuspectsReply->m_success = true;
+			UI_Message::WriteMessage(clearAllSuspectsReply, socketFD);
+			delete clearAllSuspectsReply;
 
 			break;
 		}
@@ -184,13 +184,13 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 //			suspects.clear_deleted_key();
 //			RefreshStateFile();
 //			pthread_rwlock_unlock(&suspectTableLock);
-//
-//			//TODO: Should check for errors here and return result
-//			ControlMessage *clearSuspectReply = new ControlMessage();
-//			clearSuspectReply->m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
-//			clearSuspectReply->m_success = true;
-//			UI_Message::WriteMessage(clearSuspectReply, socketFD);
-//			delete clearSuspectReply;
+
+			//TODO: Should check for errors here and return result
+			ControlMessage *clearSuspectReply = new ControlMessage();
+			clearSuspectReply->m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
+			clearSuspectReply->m_success = true;
+			UI_Message::WriteMessage(clearSuspectReply, socketFD);
+			delete clearSuspectReply;
 
 			break;
 		}
