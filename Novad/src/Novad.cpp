@@ -32,6 +32,8 @@
 #include <fstream>
 #include <sstream>
 #include <sys/un.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include <signal.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
@@ -109,8 +111,7 @@ ClassificationEngine *engine;
 
 int main()
 {
-	//TODO: Perhaps move this into its own init function?
-	userHomePath = GetHomePath();
+	userHomePath = Config::Inst()->getPathHome();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
 	if(chdir(userHomePath.c_str()) == -1)
 		LOG(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
@@ -740,7 +741,8 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 		pthread_rwlock_wrlock(&suspectTableLock);
 
-		uint addr = GetSerializedAddr(buf);
+		uint addr = 0;
+		memcpy(&addr, buf, 4);
 		SuspectHashTable::iterator it = suspects.find(addr);
 
 		//If this is a new suspect put it in the table
@@ -1463,5 +1465,45 @@ void Nova::UpdateSuspect(Packet packet)
 
 	suspects[addr]->SetIsLive(usePcapFile);
 	pthread_rwlock_unlock(&suspectTableLock);
+}
+
+string Nova::GetLocalIP(const char *dev)
+{
+	static struct ifreq ifreqs[20];
+	struct ifconf ifconf;
+	uint  nifaces, i;
+
+	memset(&ifconf,0,sizeof(ifconf));
+	ifconf.ifc_buf = (char*) (ifreqs);
+	ifconf.ifc_len = sizeof(ifreqs);
+
+	int sock, rval;
+	sock = socket(AF_INET,SOCK_STREAM,0);
+
+	if(sock < 0)
+	{
+		LOG(ERROR, "Unable to determine the local interface's IP address", (format("File %1% at line %2%:  Error creating socket to check interface IP: %3%")% __FILE__%__LINE__%strerror(errno)).str());
+	}
+
+	if((rval = ioctl(sock, SIOCGIFCONF , (char*) &ifconf)) < 0 )
+	{
+		LOG(ERROR, "Unable to determine the local interface's IP address", (format("File %1% at line %2%:  Error with getLocalIP socket ioctl(SIOGIFCONF): %3%")% __FILE__%__LINE__%strerror(errno)).str());
+	}
+
+	close(sock);
+	nifaces =  ifconf.ifc_len/sizeof(struct ifreq);
+
+	for(i = 0; i < nifaces; i++)
+	{
+		if( strcmp(ifreqs[i].ifr_name, dev) == 0 )
+		{
+			char ip_addr [ INET_ADDRSTRLEN ];
+			struct sockaddr_in *b = (struct sockaddr_in *) &(ifreqs[i].ifr_addr);
+
+			inet_ntop(AF_INET, &(b->sin_addr), ip_addr, INET_ADDRSTRLEN);
+			return string(ip_addr);
+		}
+	}
+	return string("");
 }
 

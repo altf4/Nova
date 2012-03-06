@@ -114,6 +114,11 @@ void *TCPTimeout( void *ptr );
 //		packet : Packet headers to used for the evidence
 void UpdateSuspect(Packet packet);
 
+// Gets local IP address for interface
+//		dev - Device name, e.g. "eth0"
+// Returns: IP addresses
+string GetLocalIP(const char *dev);
+
 
 }
 

@@ -882,7 +882,7 @@ void NovaConfig::UpdateFeatureListItem(QListWidgetItem* newFeatureEntry, char en
 
 void NovaConfig::LoadNmapPersonalitiesFromFile()
 {
-	string NMapFile = GetReadPath() + "/nmap-os-db";
+	string NMapFile = Config::Inst()->getPathReadFolder() + "/nmap-os-db";
 	ifstream nmapPers(NMapFile.c_str());
 	string line, fprint, prefix, printClass;
 	if(nmapPers.is_open())
