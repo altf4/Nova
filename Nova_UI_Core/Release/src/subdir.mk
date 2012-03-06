@@ -8,6 +8,7 @@ CPP_SRCS += \
 ../src/Connection.cpp \
 ../src/NovadControl.cpp \
 ../src/StatusQueries.cpp \
+../src/TrainingData.cpp \
 ../src/VendorMacDb.cpp 
 
 OBJS += \
@@ -15,6 +16,7 @@ OBJS += \
 ./src/Connection.o \
 ./src/NovadControl.o \
 ./src/StatusQueries.o \
+./src/TrainingData.o \
 ./src/VendorMacDb.o 
 
 CPP_DEPS += \
@@ -22,6 +24,7 @@ CPP_DEPS += \
 ./src/Connection.d \
 ./src/NovadControl.d \
 ./src/StatusQueries.d \
+./src/TrainingData.d \
 ./src/VendorMacDb.d 
 
 

@@ -17,8 +17,8 @@
 //============================================================================
 
 #include "Connection.h"
-#include "Defines.h"
 #include "NovaUtil.h"
+#include "Config.h"
 
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -36,7 +36,7 @@ struct sockaddr_un UI_Address, novadAddress;
 bool Nova::ConnectToNovad()
 {
 	//Builds the key path
-	string homePath = GetHomePath();
+	string homePath = Config::Inst()->getPathHome();
 	string key = homePath;
 	key += "/key";
 	key += NOVAD_LISTEN_FILENAME;
