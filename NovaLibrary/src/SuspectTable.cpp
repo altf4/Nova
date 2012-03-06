@@ -59,7 +59,9 @@ SuspectTable::~SuspectTable()
 // Returns the SuspectTableIterator
 SuspectTableIterator SuspectTable::Begin()
 {
+	Rdlock();
 	SuspectTableIterator it = SuspectTableIterator(&m_table, &m_keys);
+	Unlock();
 	return it;
 }
 

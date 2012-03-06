@@ -197,6 +197,7 @@ void ClassificationEngine::NormalizeDataPoints()
 		// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
 		int ai = 0;
 		cout << "Key : Index ( " << it.GetKey() << " : " << it.GetIndex() << " )"<< endl;
+		cout << "Suspect is " << it.Current().ToString() << endl;
 		FeatureSet fs = it.Current().GetFeatureSet();
 		for(int i = 0;i < DIM;i++)
 		{

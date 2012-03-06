@@ -102,7 +102,17 @@ Suspect& SuspectTableIterator::Current()
 	if((m_index >= 0) && (m_index < m_keys_ref.size()))
 	{
 		it = m_table_ref.find(m_keys_ref.at(m_index));
-		return *m_table_ref[it->first];
+
+		if (it != m_table_ref.end())
+		{
+			return *m_table_ref[it->first];
+		}
+		else
+		{
+			cout << "This really shouldn't happen (but is)" << endl;
+			cout << "Table size is " << m_table_ref.size() << endl;
+		}
+
 	}
 	else
 	{
