@@ -234,7 +234,7 @@ bool Nova::ConnectToUI()
 	//Builds the key path
 	string homePath = Config::Inst()->getPathHome();
 	string key = homePath;
-	key += "/key";
+	key += "/key/";
 	key += UI_LISTEN_FILENAME;
 
 	struct sockaddr_un UIAddress;
@@ -245,7 +245,7 @@ bool Nova::ConnectToUI()
 
 	if ((callbackSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(ERROR, "Unable to connect to UI",
+		LOG(WARNING, "Unable to connect to UI",
 				(format("File %1% at line %2%:  Unable to create UI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(callbackSocket);
 		return false;
@@ -253,7 +253,7 @@ bool Nova::ConnectToUI()
 
 	if (connect(callbackSocket, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
 	{
-		LOG(ERROR, "Unable to connect to UI", (
+		LOG(WARNING, "Unable to connect to UI", (
 				format("File %1% at line %2%:  Unable to connect() to UI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 		close(callbackSocket);
 		return false;

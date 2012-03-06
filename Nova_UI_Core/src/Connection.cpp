@@ -38,7 +38,7 @@ bool Nova::ConnectToNovad()
 	//Builds the key path
 	string homePath = Config::Inst()->getPathHome();
 	string key = homePath;
-	key += "/key";
+	key += "/key/";
 	key += NOVAD_LISTEN_FILENAME;
 
 	//Builds the address
@@ -48,7 +48,7 @@ bool Nova::ConnectToNovad()
 
 	//Builds the key path
 	key = homePath;
-	key += "/key";
+	key += "/key/";
 	key += NOVAD_LISTEN_FILENAME;
 
 	//Builds the address
