@@ -39,6 +39,7 @@ public:
 
 	//Empty constructor
 	UI_Message();
+	virtual ~UI_Message();
 
 	//Reads a UI_Message from the given socket
 	//	NOTE: Blocking call, will wait until message appears

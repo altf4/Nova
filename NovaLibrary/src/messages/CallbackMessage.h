@@ -20,6 +20,7 @@
 #define CALLBACKMESSAGE_H_
 
 #include "UI_Message.h"
+#include "../Suspect.h"
 
 #define CALLBACK_MSG_MIN_SIZE 2
 
@@ -39,6 +40,7 @@ class CallbackMessage : public UI_Message
 public:
 
 	CallbackMessage();
+	~CallbackMessage();
 
 	//Deserialization constructor
 	//	buffer - pointer to array in memory where serialized ControlMessage resides
@@ -54,6 +56,8 @@ public:
 
 
 	enum CallbackType m_callbackType;
+	uint32_t m_suspectLength;
+	Suspect *m_suspect;
 
 };
 
