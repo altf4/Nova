@@ -21,14 +21,18 @@
 #ifndef CALLBACKHANDLER_H_
 #define CALLBACKHANDLER_H_
 
-enum CallbackType: char
+#include "Suspect.h"
+
+enum CallbackChangeType: char
 {
 	CALLBACK_ERROR = 0,		//There was an error in receiving the callback message
+	CALLBACK_NEW_SUSPECT,	//Received a new suspect from Novad
 };
 
 struct CallbackChange
 {
-	enum CallbackType type;
+	enum CallbackChangeType type;
+	Suspect *suspect;		//Used in type: CALLBACK_NEW_SUSPECT
 };
 
 namespace Nova
@@ -36,7 +40,7 @@ namespace Nova
 
 //Receives a single callback message and returns its details
 //	NOTE: Blocking call. Should be run from within its own looping thread
-//	returns - A struct describing what Novad is asking
+//	returns - A struct describing what Novad is asking the UI to change
 struct CallbackChange ProcessCallbackMessage();
 
 }

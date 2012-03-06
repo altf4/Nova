@@ -30,10 +30,7 @@ CallbackMessage::CallbackMessage()
 
 CallbackMessage::~CallbackMessage()
 {
-	if(m_suspect != NULL)
-	{
-		delete m_suspect;
-	}
+
 }
 
 CallbackMessage::CallbackMessage(char *buffer, uint32_t length)

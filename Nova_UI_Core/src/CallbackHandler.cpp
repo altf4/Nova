@@ -19,6 +19,7 @@
 
 #include "CallbackHandler.h"
 #include "messages/UI_Message.h"
+#include "messages/CallbackMessage.h"
 
 using namespace Nova;
 
@@ -36,18 +37,32 @@ struct CallbackChange ProcessCallbackMessage()
 	{
 		return change;
 	}
-	if( message->m_messageType )
-	MatchLobbyMessage *match_message = (MatchLobbyMessage*)message;
-
-	switch(message->type)
+	if( message->m_messageType != CALLBACK_MESSAGE)
 	{
-		case TEAM_CHANGED_NOTIFICATION:
-		{
+		return change;
+	}
+	CallbackMessage *callbackMessage = (CallbackMessage*)message;
 
+	switch(callbackMessage->m_callbackType)
+	{
+		case CALLBACK_SUSPECT_UDPATE:
+		{
+			change.type = CALLBACK_NEW_SUSPECT;
+			change.suspect = callbackMessage->m_suspect;
+
+			CallbackMessage *callbackAck = new CallbackMessage();
+			callbackAck->m_callbackType = CALLBACK_SUSPECT_UDPATE_ACK;
+			if(!UI_Message::WriteMessage(callbackAck, UI_ListenSocket))
+			{
+				//TODO: log this? We failed to send the ack
+			}
+			break;
 		}
 		default:
 		{
-			return change;
+			break;
 		}
 	}
+	delete callbackMessage;
+	return change;
 }
