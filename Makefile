@@ -25,11 +25,13 @@ clean: clean-debug clean-release
 
 clean-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
+	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
 	$(MAKE) -C NovaGUI debug-clean
 
 clean-release:
 	$(MAKE) -C NovaLibrary/Release clean
+	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
 	$(MAKE) -C NovaGUI debug-clean
 
@@ -39,8 +41,10 @@ install: install-release
 install-release:
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
 	install Novad/Release/Novad $(DESTDIR)/usr/bin
+	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
@@ -71,8 +75,10 @@ install-release:
 install-debug:
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
 	install Novad/Debug/Novad $(DESTDIR)/usr/bin
+	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
@@ -106,6 +112,7 @@ uninstall:
 	rm -rf $(DESTDIR)/$(HOME)/.nova
 	rm -f $(DESTDIR)/usr/bin/NovaGUI
 	rm -f $(DESTDIR)/usr/bin/Novad
+	rm -f $(DESTDIR)/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
