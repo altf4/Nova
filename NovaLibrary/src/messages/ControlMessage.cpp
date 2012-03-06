@@ -29,6 +29,11 @@ ControlMessage::ControlMessage()
 	m_messageType = CONTROL_MESSAGE;
 }
 
+ControlMessage::~ControlMessage()
+{
+
+}
+
 ControlMessage::ControlMessage(char *buffer, uint32_t length)
 {
 	if( length < CONTROL_MSG_MIN_SIZE )

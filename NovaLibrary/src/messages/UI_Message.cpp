@@ -25,6 +25,16 @@
 
 using namespace Nova;
 
+UI_Message::UI_Message()
+{
+
+}
+
+UI_Message::~UI_Message()
+{
+
+}
+
 UI_Message *UI_Message::ReadMessage(int connectFD)
 {
 	//perform read operations ...
@@ -105,4 +115,9 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 			return NULL;
 		}
 	}
+}
+
+char *UI_Message::Serialize(uint32_t *length)
+{
+	//Doesn't actually get called
 }

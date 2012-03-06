@@ -27,7 +27,7 @@ extern int UI_ListenSocket;
 extern int novadListenSocket;
 
 
-struct CallbackChange ProcessCallbackMessage()
+struct CallbackChange Nova::ProcessCallbackMessage()
 {
 	struct CallbackChange change;
 	change.type = CALLBACK_ERROR;

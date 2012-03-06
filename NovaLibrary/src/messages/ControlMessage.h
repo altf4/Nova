@@ -59,6 +59,8 @@ public:
 	//Empty constructor
 	ControlMessage();
 
+	virtual ~ControlMessage();
+
 	//Deserialization constructor
 	//	buffer - pointer to array in memory where serialized ControlMessage resides
 	//	length - the length of this array

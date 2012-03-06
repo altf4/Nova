@@ -23,6 +23,7 @@
 #include "classifierPrompt.h"
 #include "NovadControl.h"
 #include "Connection.h"
+#include "CallbackHandler.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -414,26 +415,7 @@ void NovaGUI::UpdateSystemStatus()
 
 bool NovaGUI::ReceiveSuspectFromNovad()
 {
-	//Suspect* suspect = new Suspect();
 
-	try
-	{
-		suspect->DeserializeSuspect(buf);
-		bzero(buf, bytesRead);
-	}
-	catch(std::exception e)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d Error interpreting received Suspect: %s", __FILE__, __LINE__, string(e.what()).c_str());
-		delete suspect;
-		return false;
-	}
-
-	struct suspectItem sItem;
-	sItem.suspect = suspect;
-	sItem.item = NULL;
-	sItem.mainItem = NULL;
-	ProcessReceivedSuspect(sItem);
-	return true;
 }
 
 void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
@@ -1341,10 +1323,32 @@ void *StatusUpdate(void *ptr)
 
 void *NovadListenLoop(void *ptr)
 {
+	struct CallbackChange change;
+
 	while(true)
 	{
-		((NovaGUI*)ptr)->ReceiveSuspectFromNovad();
+		change = ProcessCallbackMessage();
+
+		switch(change.type)
+		{
+			case CALLBACK_ERROR:
+			{
+				//TODO: log?
+				break;
+			}
+			case CALLBACK_NEW_SUSPECT:
+			{
+				struct suspectItem suspectItem;
+				suspectItem.suspect = change.suspect;
+				suspectItem.item = NULL;
+				suspectItem.mainItem = NULL;
+				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem);
+
+				break;
+			}
+		}
 	}
+
 	return NULL;
 }
 

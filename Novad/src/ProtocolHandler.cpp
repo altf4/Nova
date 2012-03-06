@@ -38,7 +38,7 @@ using boost::format;
 extern string userHomePath;
 
 //Launches a UI Handling thread, and returns
-void Spawn_UI_Handler()
+void Nova::Spawn_UI_Handler()
 {
 	struct sockaddr_un msgRemote, msgLocal;
 	int socketSize, IPCSocket;
@@ -89,7 +89,7 @@ void Spawn_UI_Handler()
 
 }
 
-void *Handle_UI_Thread(void *socketVoidPtr)
+void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 {
 	//Get the argument out, put it on the stack, free it from the heap so we don't forget
 	int *socketPtr = (int*)socketVoidPtr;
@@ -131,7 +131,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	return NULL;
 }
 
-void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
+void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 {
 	switch(controlMessage.m_controlType)
 	{
@@ -151,46 +151,46 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_CLEAR_ALL_REQUEST:
 		{
 			//TODO: Replace with new suspect table class
-			pthread_rwlock_wrlock(&suspectTableLock);
-			for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
-				delete it->second;
-			suspects.clear();
-
-			for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
-				delete it->second;
-			suspectsSinceLastSave.clear();
-
-			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
-			if(system(delString.c_str()) == -1)
-				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
-
-			pthread_rwlock_unlock(&suspectTableLock);
-
-			ControlMessage *clearAllSuspectsReply = new ControlMessage();
-			clearAllSuspectsReply->m_controlType = CONTROL_CLEAR_ALL_REPLY;
-			clearAllSuspectsReply->m_success = true;
-			UI_Message::WriteMessage(clearAllSuspectsReply, socketFD);
-			delete clearAllSuspectsReply;
+//			pthread_rwlock_wrlock(&suspectTableLock);
+//			for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
+//				delete it->second;
+//			suspects.clear();
+//
+//			for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
+//				delete it->second;
+//			suspectsSinceLastSave.clear();
+//
+//			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
+//			if(system(delString.c_str()) == -1)
+//				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
+//
+//			pthread_rwlock_unlock(&suspectTableLock);
+//
+//			ControlMessage *clearAllSuspectsReply = new ControlMessage();
+//			clearAllSuspectsReply->m_controlType = CONTROL_CLEAR_ALL_REPLY;
+//			clearAllSuspectsReply->m_success = true;
+//			UI_Message::WriteMessage(clearAllSuspectsReply, socketFD);
+//			delete clearAllSuspectsReply;
 
 			break;
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
-			//TODO: Replace with new suspect table class
-			pthread_rwlock_wrlock(&suspectTableLock);
-			suspectsSinceLastSave[controlMessage.m_suspectAddress] = suspects[controlMessage.m_suspectAddress];
-			suspects.set_deleted_key(5);
-			suspects.erase(suspectKey);
-			suspects.clear_deleted_key();
-			RefreshStateFile();
-			pthread_rwlock_unlock(&suspectTableLock);
-
-			//TODO: Should check for errors here and return result
-			ControlMessage *clearSuspectReply = new ControlMessage();
-			clearSuspectReply->m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
-			clearSuspectReply->m_success = true;
-			UI_Message::WriteMessage(clearSuspectReply, socketFD);
-			delete clearSuspectReply;
+//			//TODO: Replace with new suspect table class
+//			pthread_rwlock_wrlock(&suspectTableLock);
+//			suspectsSinceLastSave[controlMessage.m_suspectAddress] = suspects[controlMessage.m_suspectAddress];
+//			suspects.set_deleted_key(5);
+//			suspects.erase(suspectKey);
+//			suspects.clear_deleted_key();
+//			RefreshStateFile();
+//			pthread_rwlock_unlock(&suspectTableLock);
+//
+//			//TODO: Should check for errors here and return result
+//			ControlMessage *clearSuspectReply = new ControlMessage();
+//			clearSuspectReply->m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
+//			clearSuspectReply->m_success = true;
+//			UI_Message::WriteMessage(clearSuspectReply, socketFD);
+//			delete clearSuspectReply;
 
 			break;
 		}
