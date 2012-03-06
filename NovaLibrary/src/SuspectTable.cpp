@@ -37,8 +37,10 @@ SuspectTable::SuspectTable()
 	uint64_t initKey = 0;
 	initKey--;
 	m_table.set_empty_key(initKey);
+	m_empty_key = initKey;
 	initKey--;
 	m_table.set_deleted_key(initKey);
+	m_deleted_key = initKey;
 }
 
 // Default Deconstructor for SuspectTable
@@ -50,7 +52,6 @@ SuspectTable::~SuspectTable()
 	{
 		delete it->second;
 	}
-	Unlock();
 	pthread_rwlock_destroy(&m_lock);
 }
 
@@ -95,7 +96,7 @@ SuspectTableIterator SuspectTable::Find(in_addr_t  key)
 	}
 	else
 	{
-		SuspectTableIterator it = SuspectTableIterator();
+		SuspectTableIterator it = SuspectTableIterator(&m_table, &m_keys);
 		it += m_table.size();
 		Unlock();
 		return it;
@@ -127,6 +128,7 @@ SuspectTableRet SuspectTable::AddNewSuspect(Suspect * suspect)
 		Suspect * s = new Suspect();
 		*s = *suspect;
 		m_table[realKey] = s;
+		m_keys.push_back(realKey);
 		Unlock();
 		return SUCCESS;
 	}
@@ -158,6 +160,7 @@ SuspectTableRet SuspectTable::AddNewSuspect(Packet packet)
 		Unlock();
 		Wrlock();
 		m_table[realKey] = s;
+		m_keys.push_back(realKey);
 		Unlock();
 		return SUCCESS;
 	}
@@ -221,21 +224,24 @@ Suspect SuspectTable::CheckOut(in_addr_t key)
 			{
 				if(!m_table[realKey]->HasOwner() || pthread_equal(m_table[realKey]->GetOwner(), pthread_self()))
 				{
-					m_table[realKey]->SetOwner(pthread_self());
+					m_table[realKey]->SetOwner();
 					Suspect ret = *m_table[realKey];
+					FeatureSet * fs = new FeatureSet();
+					*fs  = *ret.GetFeatureSet().m_unsentData;
+					ret.SetFeatureSet(fs);
 					Unlock();
 					return ret;
 				}
 				else
 				{
 					Unlock();
-					return Suspect();
+					return m_emptySuspect;
 				}
 			}
 		}
 	}
 	Unlock();
-	return Suspect();
+	return m_emptySuspect;
 }
 
 //Lookup and get an Asynchronous copy of the Suspect
@@ -248,12 +254,10 @@ Suspect SuspectTable::Peek(in_addr_t  key)
 	if(IsValidKey(key))
 	{
 		uint64_t realKey = key;
-		Suspect ret = *m_table[realKey];
-		Unlock();
-		return ret;
+		return *m_table[realKey];
 	}
 	Unlock();
-	return Suspect();
+	return m_emptySuspect;
 }
 
 //Erases a suspect from the table if it is not locked
@@ -384,7 +388,7 @@ SuspectTableRet SuspectTable::Clear(bool blockUntilDone)
 		if(blockUntilDone || !m_table[m_keys[i]]->HasOwner()
 				|| pthread_equal(m_table[m_keys[i]]->GetOwner(), pthread_self()))
 		{
-			m_table[m_keys[i]]->SetOwner(pthread_self());
+			m_table[m_keys[i]]->SetOwner();
 			lockedKeys.push_back(m_keys[i]);
 			m_keys.erase(m_keys.begin()+i);
 		}
@@ -485,7 +489,8 @@ void SuspectTable::Rdlock()
 		return;
 	}
 	pthread_rwlock_rdlock(&m_lock);
-	m_owners.push_back(pthread_self());
+	pthread_t tid = pthread_self();
+	m_owners.push_back(tid);
 }
 
 // Read locks the suspect

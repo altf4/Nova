@@ -32,11 +32,12 @@ namespace Nova
 
 
 //Default iterator constructor
-SuspectTableIterator::SuspectTableIterator(SuspectHashTable * table, vector<uint64_t> * keys)
+SuspectTableIterator::SuspectTableIterator(SuspectHashTable* table, vector<uint64_t>* keys)
+: m_table_ref(*table), m_keys_ref(*keys)
 {
+	m_table_ref = *table;
+	m_keys_ref = *keys;
 	m_index = 0;
-	m_table_ref = table;
-	m_keys_ref = keys;
 }
 
 //Default iterator deconstructor
@@ -46,68 +47,67 @@ SuspectTableIterator::~SuspectTableIterator()
 }
 
 //Gets the Next Suspect in the table and increments the iterator
-// Returns a copy of the Suspect
-Suspect SuspectTableIterator::Next()
+// Returns a reference to the Suspect
+Suspect& SuspectTableIterator::Next()
 {
 	m_index++;
-	if(m_index >= m_table_ref->size())
+	if(m_index >= m_table_ref.size())
 		m_index = 0;
-	SuspectHashTable::iterator it = m_table_ref->find(m_keys_ref->at(m_index));
-	return *it->second;
+	SuspectHashTable::iterator it = m_table_ref.find(m_keys_ref.at(m_index));
+	return *m_table_ref[it->first];
 }
 
 //Gets the Next Suspect in the table, does not increment the iterator
-// Returns a copy of the Suspect
-Suspect SuspectTableIterator::LookAhead()
+// Returns a reference to the Suspect
+Suspect& SuspectTableIterator::LookAhead()
 {
 	SuspectHashTable::iterator it;
-	if((m_index+1) == m_table_ref->size())
-		it = m_table_ref->find(m_keys_ref->front());
+	if((m_index+1) == m_table_ref.size())
+		it = m_table_ref.find(m_keys_ref.front());
 	else
-		it = m_table_ref->find(m_keys_ref->at(m_index+1));
-	return *it->second;
+		it = m_table_ref.find(m_keys_ref.at(m_index+1));
+	return *m_table_ref[it->first];
 }
 
 //Gets the Previous Suspect in the Table and decrements the iterator
-// Returns a copy of the Suspect
-Suspect SuspectTableIterator::Previous()
+// Returns a reference to the Suspect
+Suspect& SuspectTableIterator::Previous()
 {
 	SuspectHashTable::iterator it;
 	m_index--;
 	if(m_index < 0)
-		it = m_table_ref->find(m_keys_ref->size()-1);
-	return *it->second;
+		it = m_table_ref.find(m_keys_ref.size()-1);
+	return *m_table_ref[it->first];
 
 }
 
 //Gets the Previous Suspect in the Table, does not decrement the iterator
-// Returns a copy of the Suspect
-Suspect SuspectTableIterator::LookBack()
+// Returns a reference to the Suspect
+Suspect& SuspectTableIterator::LookBack()
 {
 	SuspectHashTable::iterator it;
 	if(m_index > 0)
-		it = m_table_ref->find(m_keys_ref->at(m_index -1));
+		it = m_table_ref.find(m_keys_ref.at(m_index -1));
 	else
-		it = m_table_ref->find(m_keys_ref->back());
-	return *it->second;
+		it = m_table_ref.find(m_keys_ref.back());
+	return *m_table_ref[it->first];
 
 }
 
 //Gets the Current Suspect in the Table
-// Returns a copy of the Suspect
-Suspect SuspectTableIterator::Current()
+// Returns a reference to the Suspect
+Suspect& SuspectTableIterator::Current()
 {
 	SuspectHashTable::iterator it;
-	if((m_index >= 0) && (m_index < m_keys_ref->size()))
+	if((m_index >= 0) && (m_index < m_keys_ref.size()))
 	{
-		it = m_table_ref->find(m_keys_ref->at(m_index));
+		it = m_table_ref.find(m_keys_ref.at(m_index));
+		return *m_table_ref[it->first];
 	}
 	else
 	{
-		it = m_table_ref->end();
+		return *m_table_ref.end()->second;
 	}
-
-	return *it->second;
 }
 
 // Gets a reference to the index of the iterator
@@ -119,7 +119,9 @@ uint& SuspectTableIterator::GetIndex()
 
 in_addr_t SuspectTableIterator::GetKey()
 {
-	return static_cast<in_addr_t>(m_keys_ref->at(m_index));
+	in_addr_t ret;
+	memcpy(&m_keys_ref.at(m_index), &ret, 4);
+	return ret;
 }
 
 //Increments the iterator by 1

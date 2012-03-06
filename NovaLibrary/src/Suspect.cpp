@@ -558,12 +558,12 @@ int Suspect::SetIsLive(bool b)
 
 
 //Returns a copy of the suspects FeatureSet
-FeatureSet Suspect::GetFeatureSet()
+FeatureSet& Suspect::GetFeatureSet()
 {
 	RdlockSuspect();
-	FeatureSet ret = m_features;
+	FeatureSet * ret = &m_features;
 	UnlockSuspect();
-	return ret;
+	return *ret;
 }
 
 //Returns a copy of the suspects FeatureSet
@@ -732,11 +732,11 @@ bool Suspect::HasOwner()
 //		tid: unique thread identifier retrieved from pthread_self();
 // Note: This function will block until the owner can be set, use HasOwner()
 // if you want to prevent a blocking call.
-void Suspect::SetOwner(pthread_t tid)
+void Suspect::SetOwner()
 {
 	WrlockSuspect();
 	m_hasOwner = true;
-	m_owner = tid;
+	m_owner = pthread_self();
 	UnlockSuspect();
 	RdlockSuspect();
 }

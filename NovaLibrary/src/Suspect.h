@@ -206,9 +206,8 @@ public:
 	//Returns true if the suspect is checked out by a thread
 	bool HasOwner();
 
-	//Sets the pthread_t 'owner'
-	//		tid: unique thread identifier retrieved from pthread_self();
-	void SetOwner(pthread_t tid);
+	//Sets the pthread_t 'owner' to the calling thread
+	void SetOwner();
 
 	//Flags the suspect as no longer 'checked out'
 	int ResetOwner();
