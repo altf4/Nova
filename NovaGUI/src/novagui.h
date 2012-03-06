@@ -179,10 +179,11 @@ private:
 	char * m_pathsFile;
 };
 
-namespace Nova {
+namespace Nova
+{
 
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
-void *NovadListenLoop(void *ptr);
+void *CallbackLoop(void *ptr);
 
 void *StatusUpdate(void *ptr);
 

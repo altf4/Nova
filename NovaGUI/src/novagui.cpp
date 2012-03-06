@@ -180,9 +180,9 @@ NovaGUI::NovaGUI(QWidget *parent)
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::BlockingQueuedConnection);
 
-	pthread_t CEListenThread, StatusUpdateThread;
+	pthread_t CallbackThread, StatusUpdateThread;
 
-	pthread_create(&CEListenThread, NULL, NovadListenLoop, this);
+	pthread_create(&CallbackThread, NULL, CallbackLoop, this);
 	pthread_create(&StatusUpdateThread, NULL, StatusUpdate, this);
 }
 
@@ -1313,7 +1313,7 @@ void *StatusUpdate(void *ptr)
 	return NULL;
 }
 
-void *NovadListenLoop(void *ptr)
+void *CallbackLoop(void *ptr)
 {
 	struct CallbackChange change;
 
