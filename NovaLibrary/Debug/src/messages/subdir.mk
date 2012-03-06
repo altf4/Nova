@@ -4,14 +4,17 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/messages/CallbackMessage.cpp \
 ../src/messages/ControlMessage.cpp \
 ../src/messages/UI_Message.cpp 
 
 OBJS += \
+./src/messages/CallbackMessage.o \
 ./src/messages/ControlMessage.o \
 ./src/messages/UI_Message.o 
 
 CPP_DEPS += \
+./src/messages/CallbackMessage.d \
 ./src/messages/ControlMessage.d \
 ./src/messages/UI_Message.d 
 

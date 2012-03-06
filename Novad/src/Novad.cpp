@@ -492,7 +492,7 @@ void Nova::Reload()
 void *Nova::ClassificationLoop(void *ptr)
 {
 	//Builds the GUI address
-	string GUIKey = userHomePath + NOVAD_IN_FILENAME;
+	string GUIKey = userHomePath + NOVAD_LISTEN_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);
@@ -589,7 +589,7 @@ void *Nova::ClassificationLoop(void *ptr)
 void *Nova::TrainingLoop(void *ptr)
 {
 	//Builds the GUI address
-	string GUIKey = userHomePath + NOVAD_IN_FILENAME;
+	string GUIKey = userHomePath + NOVAD_LISTEN_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
 	strcpy(GUISendRemote.sun_path, GUIKey.c_str());
 	GUILen = strlen(GUISendRemote.sun_path) + sizeof(GUISendRemote.sun_family);

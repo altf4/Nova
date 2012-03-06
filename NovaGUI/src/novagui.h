@@ -74,7 +74,7 @@ public:
     Ui::NovaGUIClass ui;
 
     ///Receive a input from Classification Engine.
-    bool ReceiveSuspectFromNovad(int socket);
+    bool ReceiveSuspectFromNovad();
 
     ///Processes the recieved suspect in the suspect table
     void ProcessReceivedSuspect(suspectItem suspect);
@@ -188,12 +188,6 @@ void *StatusUpdate(void *ptr);
 
 // Start one component of Nova
 void StartComponent(novaComponent *component);
-
-//Saves the socket addresses for re-use.
-void InitSocketAddresses();
-
-//Close a socket. Resolves a namespace issue
-void CloseSocket(int sock);
 
 }
 #endif // NOVAGUI_H

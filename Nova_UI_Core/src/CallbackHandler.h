@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : ProtocolHandler.h
+// Name        : CallbackHandler.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,30 +13,33 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Manages the message sending protocol to and from the Nova UI
+// Description : Functions for reading messages on the UI callback socket
+//				IE: asynchronous messages received from Novad
 //============================================================================
 
-#ifndef PROTOCOLHANDLER_H_
-#define PROTOCOLHANDLER_H_
 
-#include "messages/UI_Message.h"
-#include "messages/ControlMessage.h"
+#ifndef CALLBACKHANDLER_H_
+#define CALLBACKHANDLER_H_
+
+enum CallbackType: char
+{
+	CALLBACK_ERROR = 0,		//There was an error in receiving the callback message
+};
+
+struct CallbackChange
+{
+	enum CallbackType type;
+};
 
 namespace Nova
 {
 
-//Launches a UI Handling thread, and returns
-void Spawn_UI_Handler();
-
-//Looping thread which receives UI messages and handles them
-//	NOTE: Must manually free() the socketPtr after using it.
-//		This eliminates a race condition on passing the socket parameter
-void *Handle_UI_Thread(void *socketVoidPtr);
-
-//Processes a single ControlMessage received from the UI
-//	controlMessage - A reference to the received ControlMessage
-//	socketFD - The socket on which to contact the UI
-void HandleControlMessage(ControlMessage &controlMessage, int socketFD);
+//Receives a single callback message and returns its details
+//	NOTE: Blocking call. Should be run from within its own looping thread
+//	returns - A struct describing what Novad is asking
+struct CallbackChange ProcessCallbackMessage();
 
 }
-#endif /* PROTOCOLHANDLER_H_ */
+
+
+#endif /* CALLBACKHANDLER_H_ */

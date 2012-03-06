@@ -22,6 +22,9 @@
 
 using namespace Nova;
 
+extern int UI_ListenSocket;
+extern int novadListenSocket;
+
 bool Nova::StartNovad()
 {
 	//TODO: Obviously, fill this out to do something
@@ -32,7 +35,7 @@ bool Nova::StopNovad()
 {
 	ControlMessage *killRequest = new ControlMessage();
 	killRequest->m_controlType = CONTROL_EXIT_REQUEST;
-	if( UI_Message::WriteMessage(killRequest, 0) ) //TODO: Change this to a real socket
+	if( UI_Message::WriteMessage(killRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -41,7 +44,7 @@ bool Nova::StopNovad()
 	}
 	delete killRequest;
 
-	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
 	{
 		//There was an error receiving the reply
@@ -71,7 +74,7 @@ bool Nova::SaveAllSuspects()
 {
 	ControlMessage *saveRequest = new ControlMessage();
 	saveRequest->m_controlType = CONTROL_SAVE_SUSPECTS_REQUEST;
-	if( UI_Message::WriteMessage(saveRequest, 0) ) //TODO: Change this to a real socket
+	if( UI_Message::WriteMessage(saveRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -80,7 +83,7 @@ bool Nova::SaveAllSuspects()
 	}
 	delete saveRequest;
 
-	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
 	{
 		//There was an error receiving the reply
@@ -110,7 +113,7 @@ bool Nova::ClearAllSuspects()
 {
 	ControlMessage *clearRequest = new ControlMessage();
 	clearRequest->m_controlType = CONTROL_CLEAR_ALL_REQUEST;
-	if( UI_Message::WriteMessage(clearRequest, 0) ) //TODO: Change this to a real socket
+	if( UI_Message::WriteMessage(clearRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -119,7 +122,7 @@ bool Nova::ClearAllSuspects()
 	}
 	delete clearRequest;
 
-	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
 	{
 		//There was an error receiving the reply
@@ -150,7 +153,7 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 	ControlMessage *clearRequest = new ControlMessage();
 	clearRequest->m_controlType = CONTROL_CLEAR_SUSPECT_REQUEST;
 	clearRequest->m_suspectAddress = suspectAddress;
-	if( UI_Message::WriteMessage(clearRequest, 0) ) //TODO: Change this to a real socket
+	if( UI_Message::WriteMessage(clearRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -159,7 +162,7 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 	}
 	delete clearRequest;
 
-	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
 	{
 		//There was an error receiving the reply
@@ -189,7 +192,7 @@ bool Nova::ReclassifyAllSuspects()
 {
 	ControlMessage *reclassifyRequest = new ControlMessage();
 	reclassifyRequest->m_controlType = CONTROL_RECLASSIFY_ALL_REQUEST;
-	if( UI_Message::WriteMessage(reclassifyRequest, 0) ) //TODO: Change this to a real socket
+	if( UI_Message::WriteMessage(reclassifyRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -198,7 +201,7 @@ bool Nova::ReclassifyAllSuspects()
 	}
 	delete reclassifyRequest;
 
-	UI_Message *reply = UI_Message::ReadMessage(0); //TODO: Change this to a real socket
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
 	{
 		//There was an error receiving the reply

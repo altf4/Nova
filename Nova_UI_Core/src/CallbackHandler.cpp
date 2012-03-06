@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : ProtocolHandler.h
+// Name        : CallbackHandler.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,30 +13,41 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Manages the message sending protocol to and from the Nova UI
+// Description : Functions for reading messages on the UI callback socket
+//				IE: asynchronous messages received from Novad
 //============================================================================
 
-#ifndef PROTOCOLHANDLER_H_
-#define PROTOCOLHANDLER_H_
-
+#include "CallbackHandler.h"
 #include "messages/UI_Message.h"
-#include "messages/ControlMessage.h"
 
-namespace Nova
+using namespace Nova;
+
+extern int UI_ListenSocket;
+extern int novadListenSocket;
+
+
+struct CallbackChange ProcessCallbackMessage()
 {
+	struct CallbackChange change;
+	change.type = CALLBACK_ERROR;
 
-//Launches a UI Handling thread, and returns
-void Spawn_UI_Handler();
+	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket);
+	if( message == NULL)
+	{
+		return change;
+	}
+	if( message->m_messageType )
+	MatchLobbyMessage *match_message = (MatchLobbyMessage*)message;
 
-//Looping thread which receives UI messages and handles them
-//	NOTE: Must manually free() the socketPtr after using it.
-//		This eliminates a race condition on passing the socket parameter
-void *Handle_UI_Thread(void *socketVoidPtr);
+	switch(message->type)
+	{
+		case TEAM_CHANGED_NOTIFICATION:
+		{
 
-//Processes a single ControlMessage received from the UI
-//	controlMessage - A reference to the received ControlMessage
-//	socketFD - The socket on which to contact the UI
-void HandleControlMessage(ControlMessage &controlMessage, int socketFD);
-
+		}
+		default:
+		{
+			return change;
+		}
+	}
 }
-#endif /* PROTOCOLHANDLER_H_ */

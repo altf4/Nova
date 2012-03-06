@@ -67,3 +67,8 @@
 /// Configs for openlog (first is with terminals, second is without
 #define OPEN_SYSL (LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR)
 #define NO_TERM_SYSL (LOG_CONS | LOG_PID | LOG_NDELAY)
+
+// Filename of the IPC file Novad will listen on
+#define NOVAD_LISTEN_FILENAME "Novad_Listen"
+// Filename of the IPC file Nova's UI will listen on
+#define UI_LISTEN_FILENAME "UI_Listen"

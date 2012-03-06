@@ -43,8 +43,8 @@ void Spawn_UI_Handler()
 	struct sockaddr_un msgRemote, msgLocal;
 	int socketSize, IPCSocket;
 	int len;
-	string inKeyPath = userHomePath + NOVAD_IN_FILENAME;
-	string outKeyPath = userHomePath + NOVAD_OUT_FILENAME;
+	string inKeyPath = userHomePath + NOVAD_LISTEN_FILENAME;
+	string outKeyPath = userHomePath + UI_LISTEN_FILENAME;
 
     if ((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {

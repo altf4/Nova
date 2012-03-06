@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : ProtocolHandler.h
+// Name        : Connection.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,30 +13,25 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Manages the message sending protocol to and from the Nova UI
+// Description : Manages connections out to Novad, initializes and closes them
 //============================================================================
-
-#ifndef PROTOCOLHANDLER_H_
-#define PROTOCOLHANDLER_H_
-
-#include "messages/UI_Message.h"
-#include "messages/ControlMessage.h"
+#ifndef CONNECTION_H_
+#define CONNECTION_H_
 
 namespace Nova
 {
 
-//Launches a UI Handling thread, and returns
-void Spawn_UI_Handler();
+//Initializes a connection out to Novad over IPC
+//	NOTE: Must be called first, before any message sending or receiving in other files can be run
+//	returns - true if a successful connection is established, false if no connection (error)
+//	NOTE: If a connection already exists, then the function does nothing and returns true
+bool ConnectToNovad();
 
-//Looping thread which receives UI messages and handles them
-//	NOTE: Must manually free() the socketPtr after using it.
-//		This eliminates a race condition on passing the socket parameter
-void *Handle_UI_Thread(void *socketVoidPtr);
-
-//Processes a single ControlMessage received from the UI
-//	controlMessage - A reference to the received ControlMessage
-//	socketFD - The socket on which to contact the UI
-void HandleControlMessage(ControlMessage &controlMessage, int socketFD);
+//Closes any connection Novad over IPC
+//	returns - true if no connections to Novad exists, false if there is a connection (error)
+//	NOTE: If there was already no connection, then the function does nothing and returns true
+bool CloseNovadConnection();
 
 }
-#endif /* PROTOCOLHANDLER_H_ */
+
+#endif /* CONNECTION_H_ */

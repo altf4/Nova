@@ -4,16 +4,22 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/CallbackHandler.cpp \
+../src/Connection.cpp \
 ../src/NovadControl.cpp \
 ../src/StatusQueries.cpp \
 ../src/VendorMacDb.cpp 
 
 OBJS += \
+./src/CallbackHandler.o \
+./src/Connection.o \
 ./src/NovadControl.o \
 ./src/StatusQueries.o \
 ./src/VendorMacDb.o 
 
 CPP_DEPS += \
+./src/CallbackHandler.d \
+./src/Connection.d \
 ./src/NovadControl.d \
 ./src/StatusQueries.d \
 ./src/VendorMacDb.d 

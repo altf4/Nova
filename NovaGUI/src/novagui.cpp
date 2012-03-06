@@ -22,12 +22,11 @@
 #include "nova_manual.h"
 #include "classifierPrompt.h"
 #include "NovadControl.h"
+#include "Connection.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <sys/socket.h>
 #include <QFileDialog>
-#include <sys/un.h>
 #include <signal.h>
 #include <syslog.h>
 #include <errno.h>
@@ -37,13 +36,7 @@
 using namespace std;
 using namespace Nova;
 
-//Socket communication variables
-int NovadOutSocket, NovadInSocket;
-struct sockaddr_un NovadOutAddress, NovadInAddress;
-int len;
-
 //GUI to Nova message variables
-UI_Message message = UI_Message();
 u_char msgBuffer[MAX_GUIMSG_SIZE];
 int msgLen = 0;
 
@@ -179,34 +172,10 @@ NovaGUI::NovaGUI(QWidget *parent)
 	qRegisterMetaType<in_addr_t>("in_addr_t");
 	qRegisterMetaType<QItemSelection>("QItemSelection");
 
-	//Sets up the socket addresses
-	InitSocketAddresses();
 
-	//Create listening socket, listen thread and draw thread --------------
-	pthread_t CEListenThread;
-	pthread_t StatusUpdateThread;
-
-	if((NovadOutSocket = socket(AF_UNIX,SOCK_STREAM,0)) == -1)
+	if(!ConnectToNovad())
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadOutSocket);
-		exit(EXIT_FAILURE);
-	}
-
-	len = strlen(NovadOutAddress.sun_path) + sizeof(NovadOutAddress.sun_family);
-
-	if(bind(NovadOutSocket,(struct sockaddr *)&NovadOutAddress,len) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadOutSocket);
-		exit(EXIT_FAILURE);
-	}
-
-	if(listen(NovadOutSocket, SOCKET_QUEUE_SIZE) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(NovadOutSocket);
-		exit(EXIT_FAILURE);
+		//TODO Handle this case. What do we do if you can't connect to Novad?
 	}
 
 	//Sets initial view
@@ -218,8 +187,10 @@ NovaGUI::NovaGUI(QWidget *parent)
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::BlockingQueuedConnection);
 
-	pthread_create(&CEListenThread,NULL,NovadListenLoop, this);
-	pthread_create(&StatusUpdateThread,NULL,StatusUpdate, this);
+	pthread_t CEListenThread, StatusUpdateThread;
+
+	pthread_create(&CEListenThread, NULL, NovadListenLoop, this);
+	pthread_create(&StatusUpdateThread, NULL, StatusUpdate, this);
 }
 
 NovaGUI::~NovaGUI()
@@ -441,32 +412,9 @@ void NovaGUI::UpdateSystemStatus()
  * Suspect Functions
  ************************************************/
 
-bool NovaGUI::ReceiveSuspectFromNovad(int socket)
+bool NovaGUI::ReceiveSuspectFromNovad()
 {
-	struct sockaddr_un remote;
-	int socketSize, connectionSocket;
-	socketSize = sizeof(remote);
-
-	//Blocking call
-	if ((connectionSocket = accept(socket, (struct sockaddr *)&remote, (socklen_t*)&socketSize)) == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d accept: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(connectionSocket);
-		return false;
-	}
-	if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, 0 )) == 0)
-	{
-		return false;
-	}
-	else if(bytesRead == -1)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d recv: %s", __FILE__, __LINE__, strerror(errno));
-		CloseSocket(connectionSocket);
-		return false;
-	}
-	CloseSocket(connectionSocket);
-
-	Suspect* suspect = new Suspect();
+	//Suspect* suspect = new Suspect();
 
 	try
 	{
@@ -1395,7 +1343,7 @@ void *NovadListenLoop(void *ptr)
 {
 	while(true)
 	{
-		((NovaGUI*)ptr)->ReceiveSuspectFromNovad(NovadOutSocket);
+		((NovaGUI*)ptr)->ReceiveSuspectFromNovad();
 	}
 	return NULL;
 }
@@ -1422,37 +1370,6 @@ void StartComponent(novaComponent *component)
 
 	component->process = new QProcess();
 	component->process->start(program);
-}
-
-
-/************************************************
- * Socket Functions
- ************************************************/
-
-void InitSocketAddresses()
-{
-
-	//CE IN --------------------------------------------------
-	//Builds the key path
-	string key = NOVAD_IN_FILENAME;
-	key = homePath + key;
-	//Builds the address
-	NovadOutAddress.sun_family = AF_UNIX;
-	strcpy(NovadOutAddress.sun_path, key.c_str());
-	unlink(NovadOutAddress.sun_path);
-
-	//CE OUT -------------------------------------------------
-	//Builds the key path
-	key = NOVAD_OUT_FILENAME;
-	key = homePath + key;
-	//Builds the address
-	NovadInAddress.sun_family = AF_UNIX;
-	strcpy(NovadInAddress.sun_path, key.c_str());
-}
-
-void CloseSocket(int sock)
-{
-	close(sock);
 }
 
 }
