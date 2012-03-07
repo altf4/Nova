@@ -36,6 +36,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket);
 	if( message == NULL)
 	{
+		change.type = CALLBACK_HUNG_UP;
 		return change;
 	}
 	if( message->m_messageType != CALLBACK_MESSAGE)

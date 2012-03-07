@@ -106,15 +106,11 @@ NovaGUI::NovaGUI(QWidget *parent)
 	InitPaths();
 	InitNovadCommands();
 	InitiateSystemStatus();
-	if(!InitCallbackSocket())
+
+	if(!StartCallbackLoop())
 	{
 		LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-				(format("File %1% at line %2%:  InitCallbackSocket() failed.: %s")% __FILE__%__LINE__% strerror(errno)).str());
-	}
-	else
-	{
-		pthread_t CallbackThread;
-		pthread_create(&CallbackThread, NULL, CallbackLoop, this);
+						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %s")% __FILE__%__LINE__% strerror(errno)).str());
 	}
 
 	// Create the dialog generator
@@ -1318,19 +1314,41 @@ void *StatusUpdate(void *ptr)
 	return NULL;
 }
 
+bool StartCallbackLoop()
+{
+	bool success = InitCallbackSocket();
+	if(success)
+	{
+		pthread_t callbackHelperThread;
+		pthread_create(&callbackHelperThread, NULL, CallbackLoopHelper, NULL);
+	}
+	return success;
+}
+
+void *CallbackLoopHelper(void *ptr)
+{
+	while(true)
+	{
+		int len = sizeof(struct sockaddr_un);
+		//Blocking call
+		if ((UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len)) == -1)
+		{
+			LOG(ERROR, "Couldn't listen for Novad", (format("File %1% at line %2%:  accept: %s")% __FILE__%__LINE__% strerror(errno)).str());
+			CloseNovadConnection();
+			return false;
+		}
+		else
+		{
+			pthread_t callbackThread;
+			pthread_create(&callbackThread, NULL, CallbackLoop, NULL);
+		}
+	}
+}
+
 void *CallbackLoop(void *ptr)
 {
+
 	struct CallbackChange change;
-
-	int len = sizeof(struct sockaddr_un);
-	//Blocking call
-	if ((UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len)) == -1)
-	{
-		LOG(ERROR, "Couldn't listen for Novad", (format("File %1% at line %2%:  accept: %s")% __FILE__%__LINE__% strerror(errno)).str());
-		CloseNovadConnection();
-		return false;
-	}
-
 
 	while(true)
 	{
@@ -1341,9 +1359,16 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_ERROR:
 			{
 				//TODO: Die after X consecutive errors?
-				LOG(ERROR, "Failed to connect to UI",
+				LOG(ERROR, "Failed to connect to Novad",
 					(format("File %1% at line %2%:  Got a callback_error message")% __FILE__%__LINE__).str());
 				break;
+			}
+			case CALLBACK_HUNG_UP:
+			{
+				LOG(ERROR, "Novad hung up",
+					(format("File %1% at line %2%:  Got a callback_error message: CALLBACK_HUNG_UP")% __FILE__%__LINE__).str());
+
+				return NULL;
 			}
 			case CALLBACK_NEW_SUSPECT:
 			{
@@ -1352,7 +1377,7 @@ void *CallbackLoop(void *ptr)
 				suspectItem.item = NULL;
 				suspectItem.mainItem = NULL;
 				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem);
-
+				CloseNovadConnection();
 				break;
 			}
 		}

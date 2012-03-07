@@ -75,6 +75,8 @@ bool Nova::InitCallbackSocket()
 
 bool Nova::ConnectToNovad()
 {
+	//TODO: If sockets aren't 0, then just make sure we're still connected
+
 	//Builds the key path
 	string key = Config::Inst()->getPathHome();
 	key += "/keys";
@@ -187,6 +189,10 @@ bool Nova::CloseNovadConnection()
 		close(novadListenSocket);
 		success = false;
 	}
+
+	UI_parentSocket = 0;
+	UI_ListenSocket = 0;
+	novadListenSocket = 0;
 
 	return success;
 }
