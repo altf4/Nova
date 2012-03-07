@@ -21,8 +21,13 @@
 namespace Nova
 {
 
+//Initializes the Callback socket. IE: The socket the UI listens on
+//	NOTE: This must be run first, preferably at startup
+//	returns - true if socket successfully initialized, false on error (such as another UI already listening)
+bool InitCallbackSocket();
+
 //Initializes a connection out to Novad over IPC
-//	NOTE: Must be called first, before any message sending or receiving in other files can be run
+//	NOTE: Must be called before any message can be sent to Novad (but after InitCallbackSocket())
 //	returns - true if a successful connection is established, false if no connection (error)
 //	NOTE: If a connection already exists, then the function does nothing and returns true
 bool ConnectToNovad();

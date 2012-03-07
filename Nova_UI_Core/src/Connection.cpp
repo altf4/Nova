@@ -19,6 +19,7 @@
 #include "Connection.h"
 #include "NovaUtil.h"
 #include "Config.h"
+#include "messages/ControlMessage.h"
 
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -33,27 +34,18 @@ using namespace std;
 int UI_ListenSocket = 0, novadListenSocket = 0;
 struct sockaddr_un UI_Address, novadAddress;
 
-bool Nova::ConnectToNovad()
+bool Nova::InitCallbackSocket()
 {
 	//Builds the key path
 	string homePath = Config::Inst()->getPathHome();
 	string key = homePath;
 	key += "/key/";
-	key += NOVAD_LISTEN_FILENAME;
+	key += UI_LISTEN_FILENAME;
 
 	//Builds the address
 	UI_Address.sun_family = AF_UNIX;
 	strcpy(UI_Address.sun_path, key.c_str());
 	unlink(UI_Address.sun_path);
-
-	//Builds the key path
-	key = homePath;
-	key += "/key/";
-	key += NOVAD_LISTEN_FILENAME;
-
-	//Builds the address
-	novadAddress.sun_family = AF_UNIX;
-	strcpy(novadAddress.sun_path, key.c_str());
 
 	if((UI_ListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -78,6 +70,19 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
+	return true;
+}
+
+bool Nova::ConnectToNovad()
+{
+	//Builds the key path
+	string key = Config::Inst()->getPathHome();
+	key += "/key/";
+	key += NOVAD_LISTEN_FILENAME;
+
+	//Builds the address
+	novadAddress.sun_family = AF_UNIX;
+	strcpy(novadAddress.sun_path, key.c_str());
 
 	if((novadListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -94,23 +99,89 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
-	return true;
+	ControlMessage *connectRequest = new ControlMessage();
+	connectRequest->m_controlType = CONTROL_CONNECT_REQUEST;
+	if(!UI_Message::WriteMessage(connectRequest, novadListenSocket))
+	{
+		delete connectRequest;
+		syslog(SYSL_ERR, "File: %s Line: %d Message: %s", __FILE__, __LINE__, strerror(errno));
+		close(novadListenSocket);
+		return false;
+	}
+	delete connectRequest;
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	if(reply == NULL)
+	{
+		close(novadListenSocket);
+		return false;
+	}
+	if(reply->m_messageType != CONTROL_MESSAGE)
+	{
+		delete reply;
+		close(novadListenSocket);
+		return false;
+	}
+	ControlMessage *connectionReply = (ControlMessage*)reply;
+	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
+	{
+		close(novadListenSocket);
+		return false;
+	}
+	bool replySuccess = connectionReply->m_success;
+	delete connectionReply;
+
+	return replySuccess;
 }
 
 bool Nova::CloseNovadConnection()
 {
+	bool success = true;
+
+	ControlMessage *disconnectNotice = new ControlMessage();
+	disconnectNotice->m_controlType = CONTROL_DISCONNECT_NOTICE;
+	if(!UI_Message::WriteMessage(disconnectNotice, novadListenSocket))
+	{
+		success = false;
+	}
+	delete disconnectNotice;
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	if(reply == NULL)
+	{
+		success = false;
+	}
+	else
+	{
+		if(reply->m_messageType != CONTROL_MESSAGE)
+		{
+			delete reply;
+			success = false;
+		}
+		else
+		{
+			ControlMessage *connectionReply = (ControlMessage*)reply;
+			if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
+			{
+				success = false;
+			}
+		}
+
+	}
+
 	if(close(UI_ListenSocket))
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
 		close(UI_ListenSocket);
-		return false;
+		success = false;
 	}
 
 	if(close(novadListenSocket))
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
 		close(novadListenSocket);
-		return false;
+		success = false;
 	}
-	return true;
+
+	return success;
 }

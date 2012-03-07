@@ -40,11 +40,13 @@ int callbackSocket;
 
 extern string userHomePath;
 
+struct sockaddr_un msgRemote, msgLocal;
+int UIsocketSize, IPCSocket;
+
 //Launches a UI Handling thread, and returns
-void Nova::Spawn_UI_Handler()
+bool Nova::Spawn_UI_Handler()
 {
-	struct sockaddr_un msgRemote, msgLocal;
-	int socketSize, IPCSocket;
+
 	int len;
 	string inKeyPath = userHomePath + NOVAD_LISTEN_FILENAME;
 	string outKeyPath = userHomePath + UI_LISTEN_FILENAME;
@@ -52,7 +54,7 @@ void Nova::Spawn_UI_Handler()
     if ((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
     	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  socket: %s")% __FILE__%__LINE__% strerror(errno)).str());
-    	return;
+    	return false;
     }
 
     msgLocal.sun_family = AF_UNIX;
@@ -64,32 +66,39 @@ void Nova::Spawn_UI_Handler()
     {
     	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  bind: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	close(IPCSocket);
-    	return;
+    	return false;
     }
 
     if (listen(IPCSocket, SOMAXCONN) == -1)
     {
     	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	close(IPCSocket);
-    	return;
+    	return false;
     }
 
+    pthread_t helperThread;
+    pthread_create(&helperThread, NULL, Handle_UI_Helper, NULL);
+
+    return true;
+}
+
+void *Nova::Handle_UI_Helper(void *ptr)
+{
     while(true)
     {
     	int *msgSocket = (int*)malloc(sizeof(int));
 
     	//Blocking call
-		if ((*msgSocket = accept(IPCSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&socketSize)) == -1)
+		if ((*msgSocket = accept(IPCSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
 		{
 			LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
 			close(IPCSocket);
-			return;
+			return false;
 		}
 
 		pthread_t UI_thread;
 		pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocket);
     }
-
 }
 
 void *Nova::Handle_UI_Thread(void *socketVoidPtr)
@@ -218,6 +227,27 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			reclassifyAllReply->m_success = true;
 			UI_Message::WriteMessage(reclassifyAllReply, socketFD);
 			delete reclassifyAllReply;
+
+			break;
+		}
+		case CONTROL_CONNECT_REQUEST:
+		{
+			ControlMessage *connectReply = new ControlMessage();
+			connectReply->m_controlType = CONTROL_CONNECT_REPLY;
+			connectReply->m_success = ConnectToUI();
+			UI_Message::WriteMessage(connectReply, socketFD);
+			delete connectReply;
+
+			break;
+		}
+		case CONTROL_DISCONNECT_NOTICE:
+		{
+			close(callbackSocket);
+
+			ControlMessage *disconnectReply = new ControlMessage();
+			disconnectReply->m_controlType = CONTROL_DISCONNECT_ACK;
+			UI_Message::WriteMessage(disconnectReply, socketFD);
+			delete disconnectReply;
 
 			break;
 		}

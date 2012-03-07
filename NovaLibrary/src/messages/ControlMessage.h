@@ -43,6 +43,10 @@ enum ControlType: char
 	CONTROL_SAVE_SUSPECTS_REPLY,	//Reply from Novad with success
 	CONTROL_RECLASSIFY_ALL_REQUEST,	//Request for Novad to reclassify all suspects
 	CONTROL_RECLASSIFY_ALL_REPLY,	//Reply from Novad with success
+	CONTROL_CONNECT_REQUEST,		//Request to connect to Novad from UI
+	CONTROL_CONNECT_REPLY,			//Reply from Novad with success
+	CONTROL_DISCONNECT_NOTICE,		//Notice to Novad that the UI is closing
+	CONTROL_DISCONNECT_ACK,			//Acknowledgment of the disconnect notice
 	CONTROL_INVALID,
 };
 

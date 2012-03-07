@@ -73,9 +73,6 @@ public:
     ~NovaGUI();
     Ui::NovaGUIClass ui;
 
-    ///Receive a input from Classification Engine.
-    bool ReceiveSuspectFromNovad();
-
     ///Processes the recieved suspect in the suspect table
     void ProcessReceivedSuspect(suspectItem suspect);
 

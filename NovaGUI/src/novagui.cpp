@@ -99,6 +99,17 @@ NovaGUI::NovaGUI(QWidget *parent)
 	InitPaths();
 	InitNovadCommands();
 	InitiateSystemStatus();
+	if(!InitCallbackSocket())
+	{
+		//TODO: ERROR LOG
+	}
+	else
+	{
+		if(!ConnectToNovad())
+		{
+			//TODO: LOG WARNING
+		}
+	}
 
 	// Create the dialog generator
 	prompter= new DialogPrompter();
@@ -164,12 +175,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	//This register meta type function needs to be called for any object types passed through a signal
 	qRegisterMetaType<in_addr_t>("in_addr_t");
 	qRegisterMetaType<QItemSelection>("QItemSelection");
-
-
-	if(!ConnectToNovad())
-	{
-		//TODO Handle this case. What do we do if you can't connect to Novad?
-	}
 
 	//Sets initial view
 	this->ui.stackedWidget->setCurrentIndex(0);
@@ -404,11 +409,6 @@ void NovaGUI::UpdateSystemStatus()
 /************************************************
  * Suspect Functions
  ************************************************/
-
-bool NovaGUI::ReceiveSuspectFromNovad()
-{
-
-}
 
 void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
 {
@@ -1361,6 +1361,8 @@ void StartComponent(novaComponent *component)
 		component->process->kill();
 		delete component->process;
 	}
+
+	ConnectToNovad();
 
 	component->shouldBeRunning = true;
 

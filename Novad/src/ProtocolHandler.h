@@ -27,8 +27,13 @@ namespace Nova
 {
 
 //This is the only thread Novad needs to call to set up a UI Message Handler
-//Launches a UI Handling thread, and returns
-void Spawn_UI_Handler();
+//Launches a UI Handling thread
+//	returns - true if listening successfully, false on error
+bool Spawn_UI_Handler();
+
+//Helper thread launched by Spawn_UI_Handler() so that it can return
+//	Loops, listening on the main IPC socket for new connections. When one is found, spawn a new thread to handle it (Handle_UI_Thread)
+void *Handle_UI_Helper(void *ptr);
 
 //Looping thread which receives UI messages and handles them
 //	NOTE: Must manually free() the socketPtr after using it.

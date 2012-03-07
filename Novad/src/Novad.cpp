@@ -145,11 +145,7 @@ int main()
 	pthread_t silentAlarmListenThread;
 	pthread_t ipUpdateThread;
 
-	if(ConnectToUI())
-	{
-		LOG(DEBUG, "Connected to UI",
-				(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
-	}
+	Spawn_UI_Handler();
 
 	engine = new ClassificationEngine(&suspects);
 

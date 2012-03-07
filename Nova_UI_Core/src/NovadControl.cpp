@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : StatusQueries.h
+// Name        : NovadControl.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include "NovadControl.h"
 #include "messages/UI_Message.h"
 #include "messages/ControlMessage.h"
+#include "Connection.h"
 
 using namespace Nova;
 
@@ -27,8 +28,13 @@ extern int novadListenSocket;
 
 bool Nova::StartNovad()
 {
-	//TODO: Obviously, fill this out to do something
-	return false;
+	if(!ConnectToNovad())
+	{
+		//TODO: If nova isn't already started, then manually start the process ourselves
+		return false;
+	}
+
+	return true;
 }
 
 bool Nova::StopNovad()
