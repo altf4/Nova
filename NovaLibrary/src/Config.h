@@ -44,6 +44,9 @@ public:
 	// TODO: SaveUserConfig();
 	// We don't have any GUI stuff to edit this.. but we should
 
+	// Loads the PATH file (usually in /etc)
+	bool LoadPaths();
+
 	// Loads default values for all variables
 	void SetDefaults();
 
@@ -141,6 +144,12 @@ public:
     // Set with a CSV string from the config file
     void setSMTPEmailRecipients(string SMTPEmailRecipients);
 
+    // Getters for the paths stored in /etc
+    string getPathBinaries() const;
+    string getPathWriteFolder() const;
+    string getPathReadFolder() const;
+    string getPathHome() const;
+
 protected:
 	Config();
 
@@ -208,6 +217,16 @@ private:
 
 	string m_configFilePath;
 	string m_userConfigFilePath;
+
+
+	// Options from the PATHS file (currently /etc/nova/paths)
+	string pathBinaries;
+	string pathWriteFolder;
+	string pathReadFolder;
+	string pathHome;
+
+	// Used for loading the nova path file, resolves paths with env vars to full paths
+	static string ResolvePathVars(string path);
 };
 }
 

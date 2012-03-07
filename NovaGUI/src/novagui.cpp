@@ -100,14 +100,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	m_isHelpUp = false;
 
-	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
-
-	if( !Config::InitUserConfigs(GetHomePath()) )
-	{
-		syslog(SYSL_ERR, "Error: InitUserConfigs failed. Your home folder and permissions may not have been configured properly");	
-		//exit(EXIT_FAILURE);
-	}
-
 	InitConfiguration();
 	InitPaths();
 	InitNovadCommands();
@@ -345,9 +337,9 @@ void NovaGUI::InitNovadCommands()
 }
 void NovaGUI::InitPaths()
 {
-	homePath = GetHomePath();
-	readPath = GetReadPath();
-	writePath = GetWritePath();
+	homePath = Config::Inst()->getPathHome();
+	readPath = Config::Inst()->getPathReadFolder();
+	writePath = Config::Inst()->getPathWriteFolder();
 
 	if((homePath == "") || (readPath == "") || (writePath == ""))
 	{

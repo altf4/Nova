@@ -44,7 +44,7 @@ all: libNova_UI_Core.so
 libNova_UI_Core.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -shared -o"libNova_UI_Core.so" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../NovaLibrary/Release -shared -Wl,-soname=Nova_UI_Core -o"libNova_UI_Core.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

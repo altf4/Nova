@@ -156,7 +156,7 @@ void Config::LoadConfig()
 					}
 					else
 						m_interface = line;
-						isValid[prefixIndex] = true;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -703,7 +703,96 @@ bool Config::LoadUserConfig()
 	return returnValue;
 }
 
-bool Config::SaveConfig() {
+bool Config::LoadPaths()
+{
+	//Get locations of nova files
+	ifstream *paths =  new ifstream(PATHS_FILE);
+	string prefix, line;
+
+	if(paths->is_open())
+	{
+		while(paths->good())
+		{
+			getline(*paths,line);
+
+			prefix = "NOVA_HOME";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				pathHome = ResolvePathVars(line);
+				continue;
+			}
+
+			prefix = "NOVA_RD";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				pathReadFolder = ResolvePathVars(line);
+				continue;
+			}
+
+			prefix = "NOVA_WR";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				pathWriteFolder = ResolvePathVars(line);
+				continue;
+			}
+
+			prefix = "NOVA_BIN";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				pathBinaries = ResolvePathVars(line);
+				continue;
+			}
+		}
+	}
+	paths->close();
+	delete paths;
+
+	return true;
+}
+
+string Config::ResolvePathVars(string path)
+{
+	int start = 0;
+	int end = 0;
+	string var = "";
+
+	while((start = path.find("$",end)) != -1)
+	{
+		end = path.find("/", start);
+		//If no path after environment var
+		if(end == -1)
+		{
+
+			var = path.substr(start+1, path.size());
+			var = getenv(var.c_str());
+			path = path.substr(0,start) + var;
+		}
+		else
+		{
+			var = path.substr(start+1, end-1);
+			var = getenv(var.c_str());
+			var = var + path.substr(end, path.size());
+			if(start > 0)
+			{
+				path = path.substr(0,start)+var;
+			}
+			else
+			{
+				path = var;
+			}
+		}
+	}
+	if(var.compare(""))
+		return var;
+	else return path;
+}
+
+bool Config::SaveConfig()
+{
 	string line, prefix;
 
 	//Rewrite the config file with the new settings
@@ -950,7 +1039,7 @@ bool Config::AddUserToGroup()
 {
 	bool returnValue = true;
 	if( system("gksudo --description 'Add your user to the privileged nova user group. "
-					"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
+			"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to add user to the 'nova' group");
 		returnValue = false;
@@ -969,25 +1058,25 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	struct stat fileAttr;
 	char buffer[256];
 
-    // Does ~/.nova exist?
+	// Does ~/.nova exist?
 	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		// Are we in the nova group? Run 'groups' and parse output
 		string groupsResult = "";
 		FILE* pipe = popen("groups", "r");
-	    while(!feof(pipe))
-	        if(fgets(buffer, 256, pipe) != NULL)
-	        	groupsResult += buffer;
+		while(!feof(pipe))
+			if(fgets(buffer, 256, pipe) != NULL)
+				groupsResult += buffer;
 
-	    stringstream ss(groupsResult);
-	    string group;
-	    bool found = false;
-	    while (ss >> group)
-	    	if (group == "nova")
-	    		found = true;
+		stringstream ss(groupsResult);
+		string group;
+		bool found = false;
+		while (ss >> group)
+			if (group == "nova")
+				found = true;
 
-	    // Add them to the group if need be
-	    if (!found)
+		// Add them to the group if need be
+		if (!found)
 			if (!AddUserToGroup())
 				returnValue = false;
 
@@ -1071,8 +1160,18 @@ string Config::toString()
 
 Config::Config()
 {
-	m_configFilePath = GetHomePath() + "/Config/NOVAConfig.txt";
-	m_userConfigFilePath = GetHomePath() + "/settings";
+	LoadPaths();
+
+	openlog("NovaConfigurator", OPEN_SYSL, LOG_AUTHPRIV);
+
+	if(!this->InitUserConfigs(this->getPathHome()))
+	{
+		syslog(SYSL_ERR, "Error: InitUserConfigs failed. Your home folder and permissions may not have been configured properly");
+		//exit(EXIT_FAILURE);
+	}
+
+	m_configFilePath = getPathHome() + "/Config/NOVAConfig.txt";
+	m_userConfigFilePath = getPathHome() + "/settings";
 	SetDefaults();
 	LoadConfig();
 	LoadUserConfig();
@@ -1464,12 +1563,12 @@ void Config::setSMTPEmailRecipients(vector<string> SMTPEmailRecipients)
 
 void Config::setSMTPEmailRecipients(string SMTPEmailRecipients)
 {
-	 vector<string> addresses;
-	 istringstream iss(SMTPEmailRecipients);
+	vector<string> addresses;
+	istringstream iss(SMTPEmailRecipients);
 
-	 copy(istream_iterator<string>(iss),
-		  istream_iterator<string>(),
-		  back_inserter<vector <string> >(addresses));
+	copy(istream_iterator<string>(iss),
+			istream_iterator<string>(),
+			back_inserter<vector <string> >(addresses));
 
 	vector<string> out = addresses;
 
@@ -1489,6 +1588,26 @@ void Config::setSMTPEmailRecipients(string SMTPEmailRecipients)
 void Config::setSMTPPort(in_port_t SMTPPort)
 {
 	this->SMTPPort = SMTPPort;
+}
+
+string Config::getPathBinaries() const
+{
+	return pathBinaries;
+}
+
+string Config::getPathWriteFolder() const
+{
+	return pathWriteFolder;
+}
+
+string Config::getPathReadFolder() const
+{
+	return pathReadFolder;
+}
+
+string Config::getPathHome() const
+{
+	return pathHome;
 }
 
 }

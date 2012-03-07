@@ -21,6 +21,7 @@
 #include "ui_subnetPopup.h"
 #include "NovaGuiTypes.h"
 #include "NovaUtil.h"
+#include "HoneydConfiguration.h"
 
 #include <QtGui/QSpinBox>
 #include <arpa/inet.h>
@@ -54,7 +55,7 @@ protected:
 	{
 		QString temp = QString(text);
 		in_addr_t mask = ntohl(inet_addr(temp.toStdString().c_str()));
-		return GetMaskBits(mask);
+		return HoneydConfiguration::GetMaskBits(mask);
 	}
 
 	QString textFromValue(int value) const

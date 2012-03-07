@@ -74,6 +74,10 @@ public:
     void SetScripts(ScriptTable scripts);
     void SetProfiles(ProfileTable profile);
 
+    // Returns the number of bits used in the mask when given in in_addr_t form
+    static int GetMaskBits(in_addr_t mask);
+
+
 private:
     string m_homePath;
 

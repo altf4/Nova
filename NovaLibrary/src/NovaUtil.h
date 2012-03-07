@@ -29,51 +29,11 @@
 using namespace std;
 using namespace Nova;
 
-/************************************************/
-/********* Common Typedefs and Structs **********/
-/************************************************/
-
-
-/*****************************************************************************/
-/** NovaUtil namespace is ONLY for functions repeated in multiple processes **/
-/** and that don't fit into a category large enough to warrant a new class ***/
-/*****************************************************************************/
-
 namespace Nova{
 
 // Encrpyts/decrypts a char buffer of size 'size' depending on mode
 // TODO: Comment more on this once it's written
 void CryptBuffer(u_char * buf, uint size, bool mode);
-
-// Reads the paths file and returns the homePath of nova
-// Returns: Something like "/home/user/.nova"
-string GetHomePath();
-// Reads the paths file and returns the readPath of nova
-// Returns: Something like "/usr/share/nova"
-string GetReadPath();
-// Reads the paths file and returns the writePath of nova
-// Returns: Something like "/etc/nova"
-string GetWritePath();
-// Replaces any env vars in 'path' and returns the absolute path
-// 		path - String containing a path with env vars (eg $HOME)
-// Returns: Path with env vars resolved and replaced with real values
-string ResolvePathVars(string path);
-
-// Gets local IP address for interface
-//		dev - Device name, e.g. "eth0"
-// Returns: IP addresses
-string GetLocalIP(const char *dev);
-
-// Extracts and returns the IP Address from a serialized suspect located at buf
-//		buf - Contains serialized suspect data
-// Returns: IP address of the serialized suspect
-uint GetSerializedAddr(u_char * buf);
-
-// Returns the number of bits used in the mask when given in in_addr_t form
-int GetMaskBits(in_addr_t range);
-
-//Returns the Hex character for integers 0-15, any other value returns an empty string ("")
-string intToHexAscii(uint val);
 
 }
 

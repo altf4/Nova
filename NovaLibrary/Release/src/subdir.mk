@@ -4,10 +4,10 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/Config.cpp \
 ../src/FeatureSet.cpp \
 ../src/GUIMsg.cpp \
 ../src/Logger.cpp \
-../src/NOVAConfiguration.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
 ../src/Suspect.cpp \
@@ -15,10 +15,10 @@ CPP_SRCS += \
 ../src/SuspectTableIterator.cpp 
 
 OBJS += \
+./src/Config.o \
 ./src/FeatureSet.o \
 ./src/GUIMsg.o \
 ./src/Logger.o \
-./src/NOVAConfiguration.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
 ./src/Suspect.o \
@@ -26,10 +26,10 @@ OBJS += \
 ./src/SuspectTableIterator.o 
 
 CPP_DEPS += \
+./src/Config.d \
 ./src/FeatureSet.d \
 ./src/GUIMsg.d \
 ./src/Logger.d \
-./src/NOVAConfiguration.d \
 ./src/NovaUtil.d \
 ./src/Point.d \
 ./src/Suspect.d \

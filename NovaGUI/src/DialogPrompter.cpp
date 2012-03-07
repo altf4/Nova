@@ -18,6 +18,7 @@
 #include "DialogPrompter.h"
 #include "NovaUtil.h"
 #include "Logger.h"
+#include "Config.h"
 
 #include <QAction>
 #include <syslog.h>
@@ -37,7 +38,7 @@ const string DialogPrompter::noPrefix = "message default no";
 DialogPrompter::DialogPrompter(string configurationFilePath /*= ""*/)
 {
 	if (!configurationFilePath.compare(""))
-		configurationFile = GetHomePath() + "/settings";
+		configurationFile =Config::Inst()->getPathHome() + "/settings";
 	LoadDefaultActions();
 }
 
