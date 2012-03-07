@@ -39,7 +39,7 @@ bool Nova::InitCallbackSocket()
 	//Builds the key path
 	string homePath = Config::Inst()->getPathHome();
 	string key = homePath;
-	key += "/key/";
+	key += "/keys/";
 	key += UI_LISTEN_FILENAME;
 
 	//Builds the address
@@ -77,7 +77,7 @@ bool Nova::ConnectToNovad()
 {
 	//Builds the key path
 	string key = Config::Inst()->getPathHome();
-	key += "/key/";
+	key += "/keys/";
 	key += NOVAD_LISTEN_FILENAME;
 
 	//Builds the address
@@ -87,14 +87,12 @@ bool Nova::ConnectToNovad()
 	if((novadListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(UI_ListenSocket);
 		return false;
 	}
 
 	if(connect(novadListenSocket, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
-		close(UI_ListenSocket);
 		close(novadListenSocket);
 		return false;
 	}
