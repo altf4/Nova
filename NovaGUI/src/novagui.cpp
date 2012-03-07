@@ -24,18 +24,25 @@
 #include "NovadControl.h"
 #include "Connection.h"
 #include "CallbackHandler.h"
+#include "Logger.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <QFileDialog>
 #include <signal.h>
 #include <syslog.h>
 #include <errno.h>
 #include <QDir>
-
+#include <sys/un.h>
 
 using namespace std;
 using namespace Nova;
+using boost::format;
+
+extern int UI_parentSocket;
+extern int UI_ListenSocket;
+extern struct sockaddr_un UI_Address;
 
 //GUI to Nova message variables
 u_char msgBuffer[MAX_GUIMSG_SIZE];
@@ -101,14 +108,13 @@ NovaGUI::NovaGUI(QWidget *parent)
 	InitiateSystemStatus();
 	if(!InitCallbackSocket())
 	{
-		//TODO: ERROR LOG
+		LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
+				(format("File %1% at line %2%:  InitCallbackSocket() failed.: %s")% __FILE__%__LINE__% strerror(errno)).str());
 	}
 	else
 	{
-		if(!ConnectToNovad())
-		{
-			//TODO: LOG WARNING
-		}
+		pthread_t CallbackThread;
+		pthread_create(&CallbackThread, NULL, CallbackLoop, this);
 	}
 
 	// Create the dialog generator
@@ -185,9 +191,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::BlockingQueuedConnection);
 
-	pthread_t CallbackThread, StatusUpdateThread;
+	pthread_t StatusUpdateThread;
 
-	pthread_create(&CallbackThread, NULL, CallbackLoop, this);
 	pthread_create(&StatusUpdateThread, NULL, StatusUpdate, this);
 }
 
@@ -1317,6 +1322,16 @@ void *CallbackLoop(void *ptr)
 {
 	struct CallbackChange change;
 
+	int len = sizeof(struct sockaddr_un);
+	//Blocking call
+	if ((UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len)) == -1)
+	{
+		LOG(ERROR, "Couldn't listen for Novad", (format("File %1% at line %2%:  accept: %s")% __FILE__%__LINE__% strerror(errno)).str());
+		CloseNovadConnection();
+		return false;
+	}
+
+
 	while(true)
 	{
 		change = ProcessCallbackMessage();
@@ -1325,7 +1340,9 @@ void *CallbackLoop(void *ptr)
 		{
 			case CALLBACK_ERROR:
 			{
-				//TODO: log?
+				//TODO: Die after X consecutive errors?
+				LOG(ERROR, "Failed to connect to UI",
+					(format("File %1% at line %2%:  Got a callback_error message")% __FILE__%__LINE__).str());
 				break;
 			}
 			case CALLBACK_NEW_SUSPECT:

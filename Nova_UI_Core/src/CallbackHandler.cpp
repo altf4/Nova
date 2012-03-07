@@ -23,6 +23,7 @@
 
 using namespace Nova;
 
+extern int UI_parentSocket;
 extern int UI_ListenSocket;
 extern int novadListenSocket;
 

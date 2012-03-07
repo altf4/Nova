@@ -48,8 +48,8 @@ bool Nova::Spawn_UI_Handler()
 {
 
 	int len;
-	string inKeyPath = userHomePath + NOVAD_LISTEN_FILENAME;
-	string outKeyPath = userHomePath + UI_LISTEN_FILENAME;
+	string inKeyPath = userHomePath + "/keys" + NOVAD_LISTEN_FILENAME;
+	string outKeyPath = userHomePath + "/keys" + UI_LISTEN_FILENAME;
 
     if ((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
@@ -114,10 +114,10 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 		if( message == NULL )
 		{
 			//There was an error reading this message
-			LOG(DEBUG, "There was an error reading a message from the UI",
+			LOG(DEBUG, "The UI hung up",
 					(format("File %1% at line %2%: Deserialization error.")% __FILE__%__LINE__).str());
 			delete message;
-			continue;
+			break;
 		}
 		switch(message->m_messageType)
 		{
@@ -264,7 +264,7 @@ bool Nova::ConnectToUI()
 	//Builds the key path
 	string homePath = Config::Inst()->getPathHome();
 	string key = homePath;
-	key += "/key/";
+	key += "/keys";
 	key += UI_LISTEN_FILENAME;
 
 	struct sockaddr_un UIAddress;

@@ -410,6 +410,8 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Put the Control Message type in
 			memcpy(buffer, &m_success, sizeof(m_success));
 			buffer += sizeof(m_success);
+
+			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
@@ -446,6 +448,8 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Put the Control Message type in
 			memcpy(buffer, &m_success, sizeof(m_success));
 			buffer += sizeof(m_success);
+
+			break;
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
@@ -482,6 +486,8 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Put the Control Message type in
 			memcpy(buffer, &m_success, sizeof(m_success));
 			buffer += sizeof(m_success);
+
+			break;
 		}
 		case CONTROL_CONNECT_REQUEST:
 		{
@@ -518,6 +524,8 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Put the Control Message type in
 			memcpy(buffer, &m_success, sizeof(m_success));
 			buffer += sizeof(m_success);
+
+			break;
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{

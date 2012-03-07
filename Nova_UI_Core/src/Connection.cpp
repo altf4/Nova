@@ -31,7 +31,7 @@
 using namespace std;
 
 //Socket communication variables
-int UI_ListenSocket = 0, novadListenSocket = 0;
+int UI_parentSocket = 0, UI_ListenSocket = 0, novadListenSocket = 0;
 struct sockaddr_un UI_Address, novadAddress;
 
 bool Nova::InitCallbackSocket()
@@ -39,7 +39,7 @@ bool Nova::InitCallbackSocket()
 	//Builds the key path
 	string homePath = Config::Inst()->getPathHome();
 	string key = homePath;
-	key += "/keys/";
+	key += "/keys";
 	key += UI_LISTEN_FILENAME;
 
 	//Builds the address
@@ -47,26 +47,26 @@ bool Nova::InitCallbackSocket()
 	strcpy(UI_Address.sun_path, key.c_str());
 	unlink(UI_Address.sun_path);
 
-	if((UI_ListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((UI_parentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
-		close(UI_ListenSocket);
+		close(UI_parentSocket);
 		return false;
 	}
 
 	int len = strlen(UI_Address.sun_path) + sizeof(UI_Address.sun_family);
 
-	if(bind(UI_ListenSocket,(struct sockaddr *)&UI_Address,len) == -1)
+	if(bind(UI_parentSocket,(struct sockaddr *)&UI_Address,len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
-		close(UI_ListenSocket);
+		close(UI_parentSocket);
 		return false;
 	}
 
-	if(listen(UI_ListenSocket, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(UI_parentSocket, SOCKET_QUEUE_SIZE) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
-		close(UI_ListenSocket);
+		close(UI_parentSocket);
 		return false;
 	}
 
@@ -77,7 +77,7 @@ bool Nova::ConnectToNovad()
 {
 	//Builds the key path
 	string key = Config::Inst()->getPathHome();
-	key += "/keys/";
+	key += "/keys";
 	key += NOVAD_LISTEN_FILENAME;
 
 	//Builds the address
@@ -165,6 +165,13 @@ bool Nova::CloseNovadConnection()
 			}
 		}
 
+	}
+
+	if(close(UI_parentSocket))
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
+		close(UI_parentSocket);
+		success = false;
 	}
 
 	if(close(UI_ListenSocket))

@@ -18,7 +18,7 @@
 
 #include "StatusQueries.h"
 
-extern int UI_ListenSocket;
+extern int UI_parentSocket;
 extern int novadListenSocket;
 
 bool Nova::IsUp()
