@@ -36,12 +36,12 @@
 using namespace Nova;
 using boost::format;
 
-int callbackSocket;
+int callbackSocket = -1, IPCSocket = -1;
 
 extern string userHomePath;
 
 struct sockaddr_un msgRemote, msgLocal;
-int UIsocketSize, IPCSocket;
+int UIsocketSize;
 
 //Launches a UI Handling thread, and returns
 bool Nova::Spawn_UI_Handler()
