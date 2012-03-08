@@ -181,8 +181,9 @@ namespace Nova
 
 //Listen on IPC for messages from Novad
 //	NOTE: This is the only callback function you need to call
+//	Takes in the GUI object (IE: "this" from the calling context)
 //	returns - true if server set successfully, false on error
-bool StartCallbackLoop();
+bool StartCallbackLoop(void *ptr);
 
 //Accepts new incoming connections and spawns a new thread (CallbackLoop) for them as they come
 void *CallbackLoopHelper(void *ptr);

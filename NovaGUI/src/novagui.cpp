@@ -107,7 +107,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	InitNovadCommands();
 	InitiateSystemStatus();
 
-	if(!StartCallbackLoop())
+	if(!StartCallbackLoop(this))
 	{
 		LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
 						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %s")% __FILE__%__LINE__% strerror(errno)).str());
@@ -1314,13 +1314,13 @@ void *StatusUpdate(void *ptr)
 	return NULL;
 }
 
-bool StartCallbackLoop()
+bool StartCallbackLoop(void *ptr)
 {
 	bool success = InitCallbackSocket();
 	if(success)
 	{
 		pthread_t callbackHelperThread;
-		pthread_create(&callbackHelperThread, NULL, CallbackLoopHelper, NULL);
+		pthread_create(&callbackHelperThread, NULL, CallbackLoopHelper, ptr);
 	}
 	return success;
 }
@@ -1340,7 +1340,7 @@ void *CallbackLoopHelper(void *ptr)
 		else
 		{
 			pthread_t callbackThread;
-			pthread_create(&callbackThread, NULL, CallbackLoop, NULL);
+			pthread_create(&callbackThread, NULL, CallbackLoop, ptr);
 		}
 	}
 }
