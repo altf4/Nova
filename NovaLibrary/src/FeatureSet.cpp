@@ -46,6 +46,7 @@ FeatureSet::FeatureSet()
 FeatureSet::~FeatureSet()
 {
 	delete m_unsentData;
+	m_unsentData = NULL;
 }
 
 
