@@ -116,7 +116,6 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 			//There was an error reading this message
 			LOG(DEBUG, "The UI hung up",
 					(format("File %1% at line %2%: Deserialization error.")% __FILE__%__LINE__).str());
-			delete message;
 			break;
 		}
 		switch(message->m_messageType)
@@ -312,6 +311,7 @@ bool Nova::SendSuspectToUI(Suspect *suspect)
 		delete suspectCallback;
 		return false;
 	}
+	delete suspectCallback;
 
 	return true;
 }

@@ -123,6 +123,7 @@ bool Nova::ConnectToNovad()
 	ControlMessage *connectionReply = (ControlMessage*)reply;
 	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 	{
+		delete connectionReply;
 		close(novadListenSocket);
 		return false;
 	}
@@ -160,6 +161,7 @@ bool Nova::CloseNovadConnection()
 			ControlMessage *connectionReply = (ControlMessage*)reply;
 			if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 			{
+				delete connectionReply;
 				success = false;
 			}
 		}
