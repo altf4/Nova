@@ -158,8 +158,8 @@ protected:
 private:
 	static Config *m_instance;
 
-	static string m_prefixes[];
-	static string m_requiredFiles[];
+	__attribute__ ((visibility ("hidden"))) static string m_prefixes[];
+	__attribute__ ((visibility ("hidden"))) static string m_requiredFiles[];
 
 	string m_interface;
 	string m_doppelIp;
