@@ -1377,7 +1377,6 @@ void *CallbackLoop(void *ptr)
 				suspectItem.item = NULL;
 				suspectItem.mainItem = NULL;
 				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem);
-				CloseNovadConnection();
 				break;
 			}
 		}
