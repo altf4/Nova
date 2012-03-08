@@ -52,9 +52,9 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.type = CALLBACK_NEW_SUSPECT;
 			change.suspect = callbackMessage->m_suspect;
 
-			CallbackMessage *callbackAck = new CallbackMessage();
-			callbackAck->m_callbackType = CALLBACK_SUSPECT_UDPATE_ACK;
-			if(!UI_Message::WriteMessage(callbackAck, UI_ListenSocket))
+			CallbackMessage callbackAck;
+			callbackAck.m_callbackType = CALLBACK_SUSPECT_UDPATE_ACK;
+			if(!UI_Message::WriteMessage(&callbackAck, UI_ListenSocket))
 			{
 				//TODO: log this? We failed to send the ack
 			}

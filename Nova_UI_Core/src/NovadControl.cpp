@@ -39,16 +39,14 @@ bool Nova::StartNovad()
 
 bool Nova::StopNovad()
 {
-	ControlMessage *killRequest = new ControlMessage();
-	killRequest->m_controlType = CONTROL_EXIT_REQUEST;
-	if( UI_Message::WriteMessage(killRequest, novadListenSocket) )
+	ControlMessage killRequest;
+	killRequest.m_controlType = CONTROL_EXIT_REQUEST;
+	if( UI_Message::WriteMessage(&killRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
-		delete killRequest;
 		return false;
 	}
-	delete killRequest;
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
@@ -78,16 +76,14 @@ bool Nova::StopNovad()
 
 bool Nova::SaveAllSuspects()
 {
-	ControlMessage *saveRequest = new ControlMessage();
-	saveRequest->m_controlType = CONTROL_SAVE_SUSPECTS_REQUEST;
-	if( UI_Message::WriteMessage(saveRequest, novadListenSocket) )
+	ControlMessage saveRequest;
+	saveRequest.m_controlType = CONTROL_SAVE_SUSPECTS_REQUEST;
+	if( UI_Message::WriteMessage(&saveRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
-		delete saveRequest;
 		return false;
 	}
-	delete saveRequest;
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
@@ -117,16 +113,14 @@ bool Nova::SaveAllSuspects()
 
 bool Nova::ClearAllSuspects()
 {
-	ControlMessage *clearRequest = new ControlMessage();
-	clearRequest->m_controlType = CONTROL_CLEAR_ALL_REQUEST;
-	if( UI_Message::WriteMessage(clearRequest, novadListenSocket) )
+	ControlMessage clearRequest;
+	clearRequest.m_controlType = CONTROL_CLEAR_ALL_REQUEST;
+	if( UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
-		delete clearRequest;
 		return false;
 	}
-	delete clearRequest;
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
@@ -156,17 +150,15 @@ bool Nova::ClearAllSuspects()
 
 bool Nova::ClearSuspect(in_addr_t suspectAddress)
 {
-	ControlMessage *clearRequest = new ControlMessage();
-	clearRequest->m_controlType = CONTROL_CLEAR_SUSPECT_REQUEST;
-	clearRequest->m_suspectAddress = suspectAddress;
-	if( UI_Message::WriteMessage(clearRequest, novadListenSocket) )
+	ControlMessage clearRequest;
+	clearRequest.m_controlType = CONTROL_CLEAR_SUSPECT_REQUEST;
+	clearRequest.m_suspectAddress = suspectAddress;
+	if( UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
-		delete clearRequest;
 		return false;
 	}
-	delete clearRequest;
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
@@ -196,16 +188,14 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 
 bool Nova::ReclassifyAllSuspects()
 {
-	ControlMessage *reclassifyRequest = new ControlMessage();
-	reclassifyRequest->m_controlType = CONTROL_RECLASSIFY_ALL_REQUEST;
-	if( UI_Message::WriteMessage(reclassifyRequest, novadListenSocket) )
+	ControlMessage reclassifyRequest;
+	reclassifyRequest.m_controlType = CONTROL_RECLASSIFY_ALL_REQUEST;
+	if( UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
-		delete reclassifyRequest;
 		return false;
 	}
-	delete reclassifyRequest;
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)

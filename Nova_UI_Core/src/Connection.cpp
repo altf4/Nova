@@ -99,16 +99,14 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
-	ControlMessage *connectRequest = new ControlMessage();
-	connectRequest->m_controlType = CONTROL_CONNECT_REQUEST;
-	if(!UI_Message::WriteMessage(connectRequest, novadListenSocket))
+	ControlMessage connectRequest;
+	connectRequest.m_controlType = CONTROL_CONNECT_REQUEST;
+	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket))
 	{
-		delete connectRequest;
 		syslog(SYSL_ERR, "File: %s Line: %d Message: %s", __FILE__, __LINE__, strerror(errno));
 		close(novadListenSocket);
 		return false;
 	}
-	delete connectRequest;
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
@@ -138,13 +136,12 @@ bool Nova::CloseNovadConnection()
 {
 	bool success = true;
 
-	ControlMessage *disconnectNotice = new ControlMessage();
-	disconnectNotice->m_controlType = CONTROL_DISCONNECT_NOTICE;
-	if(!UI_Message::WriteMessage(disconnectNotice, novadListenSocket))
+	ControlMessage disconnectNotice;
+	disconnectNotice.m_controlType = CONTROL_DISCONNECT_NOTICE;
+	if(!UI_Message::WriteMessage(&disconnectNotice, novadListenSocket))
 	{
 		success = false;
 	}
-	delete disconnectNotice;
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)

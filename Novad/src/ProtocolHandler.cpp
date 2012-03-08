@@ -150,12 +150,11 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_EXIT_REQUEST:
 		{
 			//TODO: Check for any reason why might not want to exit
-			ControlMessage *exitReply = new ControlMessage();
-			exitReply->m_controlType = CONTROL_EXIT_REPLY;
-			exitReply->m_success = true;
+			ControlMessage exitReply;
+			exitReply.m_controlType = CONTROL_EXIT_REPLY;
+			exitReply.m_success = true;
 
-			UI_Message::WriteMessage(exitReply, socketFD);
-			delete exitReply;
+			UI_Message::WriteMessage(&exitReply, socketFD);
 			SaveAndExit(0);
 
 			break;
@@ -178,11 +177,10 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 //
 //			pthread_rwlock_unlock(&suspectTableLock);
 
-			ControlMessage *clearAllSuspectsReply = new ControlMessage();
-			clearAllSuspectsReply->m_controlType = CONTROL_CLEAR_ALL_REPLY;
-			clearAllSuspectsReply->m_success = true;
-			UI_Message::WriteMessage(clearAllSuspectsReply, socketFD);
-			delete clearAllSuspectsReply;
+			ControlMessage clearAllSuspectsReply;
+			clearAllSuspectsReply.m_controlType = CONTROL_CLEAR_ALL_REPLY;
+			clearAllSuspectsReply.m_success = true;
+			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
 
 			break;
 		}
@@ -198,11 +196,10 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 //			pthread_rwlock_unlock(&suspectTableLock);
 
 			//TODO: Should check for errors here and return result
-			ControlMessage *clearSuspectReply = new ControlMessage();
-			clearSuspectReply->m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
-			clearSuspectReply->m_success = true;
-			UI_Message::WriteMessage(clearSuspectReply, socketFD);
-			delete clearSuspectReply;
+			ControlMessage clearSuspectReply;
+			clearSuspectReply.m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
+			clearSuspectReply.m_success = true;
+			UI_Message::WriteMessage(&clearSuspectReply, socketFD);
 
 			break;
 		}
@@ -210,11 +207,10 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			SaveSuspectsToFile(Config::Inst()->getPathCESaveFile()); //TODO: Should check for errors here and return result
 
-			ControlMessage *saveSuspectsReply = new ControlMessage();
-			saveSuspectsReply->m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;
-			saveSuspectsReply->m_success = true;
-			UI_Message::WriteMessage(saveSuspectsReply, socketFD);
-			delete saveSuspectsReply;
+			ControlMessage saveSuspectsReply;
+			saveSuspectsReply.m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;
+			saveSuspectsReply.m_success = true;
+			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
 
 			break;
 		}
@@ -222,21 +218,19 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			Reload(); //TODO: Should check for errors here and return result
 
-			ControlMessage *reclassifyAllReply = new ControlMessage();
-			reclassifyAllReply->m_controlType = CONTROL_RECLASSIFY_ALL_REPLY;
-			reclassifyAllReply->m_success = true;
-			UI_Message::WriteMessage(reclassifyAllReply, socketFD);
-			delete reclassifyAllReply;
+			ControlMessage reclassifyAllReply;
+			reclassifyAllReply.m_controlType = CONTROL_RECLASSIFY_ALL_REPLY;
+			reclassifyAllReply.m_success = true;
+			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
 
 			break;
 		}
 		case CONTROL_CONNECT_REQUEST:
 		{
-			ControlMessage *connectReply = new ControlMessage();
-			connectReply->m_controlType = CONTROL_CONNECT_REPLY;
-			connectReply->m_success = ConnectToUI();
-			UI_Message::WriteMessage(connectReply, socketFD);
-			delete connectReply;
+			ControlMessage connectReply;
+			connectReply.m_controlType = CONTROL_CONNECT_REPLY;
+			connectReply.m_success = ConnectToUI();
+			UI_Message::WriteMessage(&connectReply, socketFD);
 
 			break;
 		}
@@ -244,10 +238,9 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			close(callbackSocket);
 
-			ControlMessage *disconnectReply = new ControlMessage();
-			disconnectReply->m_controlType = CONTROL_DISCONNECT_ACK;
-			UI_Message::WriteMessage(disconnectReply, socketFD);
-			delete disconnectReply;
+			ControlMessage disconnectReply;
+			disconnectReply.m_controlType = CONTROL_DISCONNECT_ACK;
+			UI_Message::WriteMessage(&disconnectReply, socketFD);
 
 			break;
 		}
@@ -295,15 +288,13 @@ bool Nova::ConnectToUI()
 
 bool Nova::SendSuspectToUI(Suspect *suspect)
 {
-	CallbackMessage *suspectUpdate = new CallbackMessage();
-	suspectUpdate->m_suspect = suspect;
-	suspectUpdate->m_callbackType = CALLBACK_SUSPECT_UDPATE;
-	if(!UI_Message::WriteMessage(suspectUpdate, callbackSocket))
+	CallbackMessage suspectUpdate;
+	suspectUpdate.m_suspect = suspect;
+	suspectUpdate.m_callbackType = CALLBACK_SUSPECT_UDPATE;
+	if(!UI_Message::WriteMessage(&suspectUpdate, callbackSocket))
 	{
-		delete suspectUpdate;
 		return false;
 	}
-	delete suspectUpdate;
 
 	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket);
 	if(suspectReply == NULL)
