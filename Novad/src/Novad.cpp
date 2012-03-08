@@ -557,8 +557,8 @@ void *Nova::ClassificationLoop(void *ptr)
 				}
 				else
 				{
-					LOG(WARNING, "Failed to send suspect to UI",
-							(format("File %1% at line %2%: Sending suspec to UI failed")%__LINE__%__FILE__).str());
+					LOG(NOTICE, "Failed to send suspect to UI",
+							(format("File %1% at line %2%: Sending suspect to UI failed")%__LINE__%__FILE__).str());
 				}
 			}
 		}
@@ -660,8 +660,8 @@ void *Nova::TrainingLoop(void *ptr)
 					}
 					else
 					{
-						LOG(WARNING, "Failed to send suspect to UI",
-								(format("File %1% at line %2%: Sending suspec to UI failed")%__LINE__%__FILE__).str());
+						LOG(NOTICE, "Failed to send suspect to UI",
+								(format("File %1% at line %2%: Sending suspect to UI failed")%__LINE__%__FILE__).str());
 					}
 				}
 			}
