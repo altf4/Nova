@@ -40,6 +40,7 @@ Point::Point(uint enabledFeatures)
 Point::~Point()
 {
 	annDeallocPt(m_annPoint);
+	m_annPoint = NULL;
 	m_classification = 0;
 }
 }

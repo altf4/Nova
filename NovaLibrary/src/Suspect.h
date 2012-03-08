@@ -202,6 +202,10 @@ public:
 	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
 	int SetAnnPoint(ANNpoint a);
 
+	//Deallocates the suspect's ANNpoint and sets it to NULL, must have the lock to perform this operation
+	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+	int ClearAnnPoint();
+
 	//Returns the pthread_t owner, returns NULL if suspect is not checked out
 	pthread_t GetOwner();
 
@@ -213,6 +217,10 @@ public:
 
 	//Flags the suspect as no longer 'checked out'
 	int ResetOwner();
+
+	Suspect& operator=(Suspect &rhs);
+	Suspect& operator=(Suspect rhs);
+	Suspect& operator*(Suspect* rhs);
 
 private:
 

@@ -186,18 +186,20 @@ void ClassificationEngine::Classify(Suspect *suspect)
     delete [] dists;
 
     annClose();
+    annDeallocPt(aNN);
 	suspect->SetNeedsClassificationUpdate(false);
 }
 
 
 void ClassificationEngine::NormalizeDataPoints()
 {
+	Suspect suspectCopy;
 	for(SuspectTableIterator it = m_suspects.Begin(); it.GetIndex() != m_suspects.Size(); ++it)
 	{
 		// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
 		int ai = 0;
-		cout << "Key : Index ( " << it.GetKey() << " : " << it.GetIndex() << " )"<< endl;
-		cout << "Suspect is " << it.Current().ToString() << endl;
+		suspectCopy = m_suspects.CheckOut(it.GetKey());
+		suspectCopy.SetOwner();
 		FeatureSet fs = it.Current().GetFeatureSet();
 		for(int i = 0;i < DIM;i++)
 		{
@@ -215,20 +217,23 @@ void ClassificationEngine::NormalizeDataPoints()
 				ai++;
 			}
 		}
-		m_suspects[it.GetKey()].SetFeatureSet(&fs);
+		suspectCopy.SetFeatureSet(&fs);
+		m_suspects.CheckIn(&suspectCopy);
 	}
-
 	//Normalize the suspect points
 	for(SuspectTableIterator it = m_suspects.Begin(); it.GetIndex() != m_suspects.Size(); ++it)
 	{
 		if(it.Current().GetNeedsFeatureUpdate())
 		{
+			suspectCopy = m_suspects.CheckOut(it.GetKey());
+			suspectCopy.SetOwner();
 			int ai = 0;
-			ANNpoint aNN = it.Current().GetAnnPoint();
+			ANNpoint aNN = suspectCopy.GetAnnPoint();
 			if(aNN == NULL)
 			{
-				m_suspects[it.GetKey()].SetAnnPoint(annAllocPt(Config::Inst()->getEnabledFeatureCount()));
-				aNN = it.Current().GetAnnPoint();
+				aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+				suspectCopy.SetAnnPoint(aNN);
+				aNN = suspectCopy.GetAnnPoint();
 			}
 
 			for(int i = 0; i < DIM; i++)
@@ -237,7 +242,7 @@ void ClassificationEngine::NormalizeDataPoints()
 				{
 					if(m_maxFeatureValues[ai] != 0)
 					{
-						aNN[ai] = Normalize(m_normalization[i], it.Current().GetFeatureSet().m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
+						aNN[ai] = Normalize(m_normalization[i], suspectCopy.GetFeatureSet().m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 					}
 					else
 					{
@@ -247,8 +252,10 @@ void ClassificationEngine::NormalizeDataPoints()
 					ai++;
 				}
 			}
-			m_suspects[it.GetKey()].SetAnnPoint(aNN);
-			m_suspects[it.GetKey()].SetNeedsFeatureUpdate(false);
+			suspectCopy.SetAnnPoint(aNN);
+			suspectCopy.SetNeedsFeatureUpdate(false);
+			m_suspects.CheckIn(&suspectCopy);
+			annDeallocPt(aNN);
 		}
 	}
 }

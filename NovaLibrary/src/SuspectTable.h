@@ -59,10 +59,10 @@ public:
 	SuspectTableIterator End();
 
 	// Get a SuspectTableIterator that points to the element at key;
-	// 		key: in_addr_t of the Suspect
+	// 		key: uint64_t of the Suspect
 	// Returns a SuspectTableIterator, if the suspect cannot be found the iterator's index is equal to the table's size
 	// Note: there are no guarantees about the state or existence of the Suspect in the table after this call.
-	SuspectTableIterator Find(in_addr_t  key);
+	SuspectTableIterator Find(uint64_t  key);
 
 	// Adds the Suspect pointed to in 'suspect' into the table using suspect->GetIPAddress() as the key;
 	// 		suspect: pointer to the Suspect you wish to add
@@ -83,35 +83,35 @@ public:
 	SuspectTableRet CheckIn(Suspect * suspect);
 
 	// Copies out a suspect and marks the suspect so that it cannot be written or deleted
-	// 		key: in_addr_t of the Suspect
+	// 		key: uint64_t of the Suspect
 	// Returns empty Suspect on failure.
 	// Note: A 'Checked Out' Suspect cannot be modified until is has been replaced by the suspect 'Checked In'
 	// 		However the suspect can continue to be read. It is similar to having a read lock.
-	Suspect CheckOut(in_addr_t key);
+	Suspect CheckOut(uint64_t key);
 
 	// Lookup and get an Asynchronous copy of the Suspect
-	// 		key: in_addr_t of the Suspect
+	// 		key: uint64_t of the Suspect
 	// Returns an empty suspect on failure
 	// Note: there are no guarantees about the state or existence of the Suspect in the table after this call.
-	Suspect Peek(in_addr_t  key);
+	Suspect Peek(uint64_t  key);
 
 	// Erases a suspect from the table if it is not locked
-	// 		key: in_addr_t of the Suspect
+	// 		key: uint64_t of the Suspect
 	// Returns 0 on success.
-	SuspectTableRet Erase(in_addr_t key);
+	SuspectTableRet Erase(uint64_t key);
 
-	// Iterates over the Suspect Table and returns a vector containing each Hostile Suspect's in_addr_t
-	// Returns a vector of hostile suspect in_addr_t keys
-	vector<in_addr_t> GetHostileSuspectKeys();
+	// Iterates over the Suspect Table and returns a vector containing each Hostile Suspect's uint64_t
+	// Returns a vector of hostile suspect uint64_t keys
+	vector<uint64_t> GetHostileSuspectKeys();
 
-	// Iterates over the Suspect Table and returns a vector containing each Benign Suspect's in_addr_t
-	// Returns a vector of benign suspect in_addr_t keys
-	vector<in_addr_t> GetBenignSuspectKeys();
+	// Iterates over the Suspect Table and returns a vector containing each Benign Suspect's uint64_t
+	// Returns a vector of benign suspect uint64_t keys
+	vector<uint64_t> GetBenignSuspectKeys();
 
 	// Looks at the hostility of the suspect at key
-	// 		key: in_addr_t of the Suspect
+	// 		key: uint64_t of the Suspect
 	// Returns (0) for Benign, (1) for Hostile, and (-2) if the key is invalid
-	SuspectTableRet GetHostility(in_addr_t key);
+	SuspectTableRet GetHostility(uint64_t key);
 
 	// Get the size of the Suspect Table
 	// Returns the size of the Table
@@ -128,9 +128,28 @@ public:
 	SuspectTableRet Clear(bool blockUntilDone = true);
 
 	// Checks the validity of the key
-	//		key: The in_addr_t of the Suspect
+	//		key: The uint64_t of the Suspect
 	// Returns true if there is a suspect associated with the given key, false otherwise
-	bool IsValidKey(in_addr_t key);
+	bool IsValidKey(uint64_t key);
+
+	//Returns a reference to a suspect,
+	Suspect operator[](uint64_t realKey);
+
+	Suspect m_emptySuspect;
+
+//protected:
+
+	// Google Dense Hashmap used for constant time key lookups
+	SuspectHashTable m_table;
+
+	// Lock used to maintain concurrency between threads
+	pthread_rwlock_t m_lock;
+
+	vector<uint64_t> m_keys;
+
+
+
+private:
 
 	// Write locks the suspect
 	// Note: This function will block until the lock is acquired
@@ -151,28 +170,6 @@ public:
 	// Unlocks the suspect
 	// Returns: (true) If the table was already or successfully unlocked, (false) if the table is locked by someone else
 	bool Unlock();
-
-	//Returns a reference to a suspect,
-	Suspect& operator[](in_addr_t key);
-
-	//Returns a reference to a suspect,
-	Suspect& operator[](uint64_t realKey);
-
-	Suspect m_emptySuspect;
-
-//protected:
-
-	// Google Dense Hashmap used for constant time key lookups
-	SuspectHashTable m_table;
-
-	// Lock used to maintain concurrency between threads
-	pthread_rwlock_t m_lock;
-
-	vector<uint64_t> m_keys;
-
-
-
-private:
 
 	// Returns true if the current thread has a lock on the Table
 	bool IsOwner();

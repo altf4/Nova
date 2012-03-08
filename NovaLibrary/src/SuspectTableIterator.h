@@ -33,37 +33,37 @@ class SuspectTableIterator
 
 public:
 	// Default iterator constructor
-	SuspectTableIterator(SuspectHashTable *table, vector<uint64_t> *keys);
+	SuspectTableIterator(SuspectHashTable *table, vector<uint64_t> *keys, pthread_rwlock_t *lock);
 
 	// Default iterator deconstructor
 	~SuspectTableIterator();
 
 	// Gets the Next Suspect in the table and increments the iterator
 	// Returns a copy of the Suspect
-	Suspect& Next();
+	Suspect Next();
 
 	// Gets the Next Suspect in the table, does not increment the iterator
 	// Returns a copy of the Suspect
-	Suspect& LookAhead();
+	Suspect LookAhead();
 
 	// Gets the Previous Suspect in the Table and decrements the iterator
 	// Returns a copy of the Suspect
-	Suspect& Previous();
+	Suspect Previous();
 
 	// Gets the Previous Suspect in the Table, does not decrement the iterator
 	// Returns a copy of the Suspect
-	Suspect& LookBack();
+	Suspect LookBack();
 
 	// Gets the Current Suspect in the Table
 	// Returns a copy of the Suspect
-	Suspect& Current();
+	Suspect Current();
 
 	// Gets a reference to the index of the iterator
 	// Returns a reference to m_index
-	uint& GetIndex();
+	uint GetIndex();
 
 	// Returns the in_addr_t associated with the current iterator's position
-	in_addr_t GetKey();
+	uint64_t GetKey();
 
 	// Increments the iterator by 1
 	// Returns 'this'
@@ -92,6 +92,8 @@ private:
 	SuspectHashTable& m_table_ref;
 
 	vector<uint64_t>& m_keys_ref;
+
+	pthread_rwlock_t& m_lock_ref;
 
 };
 }

@@ -53,12 +53,11 @@ Suspect::Suspect()
 
 Suspect::~Suspect()
 {
-	WrlockSuspect();
+	pthread_rwlock_destroy(&m_lock);
 	if(m_annPoint != NULL)
 	{
-		annDeallocPt(m_annPoint);
+		m_annPoint = NULL;
 	}
-	pthread_rwlock_destroy(&m_lock);
 }
 
 
@@ -80,8 +79,8 @@ Suspect::Suspect(Packet packet)
 
 	for(int i = 0; i < DIM; i++)
 		m_featureAccuracy[i] = 0;
+	m_evidence.push_back(packet);
 	pthread_rwlock_unlock(&m_lock);
-	AddEvidence(packet);
 }
 
 
@@ -679,7 +678,18 @@ int Suspect::SetFeatureAccuracy(featureIndex fi, double d)
 ANNpoint Suspect::GetAnnPoint()
 {
 	RdlockSuspect();
-	ANNpoint ret =  m_annPoint;
+	if(m_annPoint == NULL)
+	{
+
+		UnlockSuspect();
+		return NULL;
+	}
+
+	ANNpoint ret =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
+	for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+	{
+		ret[i] = m_annPoint[i];
+	}
 	UnlockSuspect();
 	return ret;
 }
@@ -691,7 +701,39 @@ int Suspect::SetAnnPoint(ANNpoint a)
 	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
 		return -1;
 	WrlockSuspect();
-	*m_annPoint = *a;
+	if(a == NULL)
+	{
+		if(m_annPoint != NULL)
+		{
+			m_annPoint = NULL;
+		}
+		UnlockSuspect();
+		return 0;
+	}
+	if(m_annPoint == NULL)
+	{
+		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+	}
+	for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+	{
+		m_annPoint[i] = a[i];
+	}
+	UnlockSuspect();
+	return 0;
+}
+
+//Deallocates the suspect's ANNpoint and sets it to NULL, must have the lock to perform this operation
+// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
+int Suspect::ClearAnnPoint()
+{
+	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
+			return -1;
+	WrlockSuspect();
+	if(m_annPoint != NULL)
+	{
+		annDeallocPt(m_annPoint);
+		m_annPoint = NULL;
+	}
 	UnlockSuspect();
 	return 0;
 }
@@ -699,16 +741,30 @@ int Suspect::SetAnnPoint(ANNpoint a)
 //Write locks the suspect
 void Suspect::WrlockSuspect()
 {
-	if(m_hasOwner && pthread_equal(m_owner, pthread_self()))
-		pthread_rwlock_unlock(&m_lock);
+	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
+	{
+		if(!pthread_rwlock_tryrdlock(&m_lock))
+		{
+			pthread_rwlock_unlock(&m_lock);
+			pthread_rwlock_unlock(&m_lock);
+			pthread_rwlock_wrlock(&m_lock);
+		}
+		return;
+	}
 	pthread_rwlock_wrlock(&m_lock);
 }
 
 //Read locks the suspect
 void Suspect::RdlockSuspect()
 {
-	if(m_hasOwner && pthread_equal(m_owner, pthread_self()))
-		pthread_rwlock_unlock(&m_lock);
+	if(!pthread_rwlock_tryrdlock(&m_lock))
+	{
+		if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
+		{
+			pthread_rwlock_unlock(&m_lock);
+		}
+		return;
+	}
 	pthread_rwlock_rdlock(&m_lock);
 }
 
@@ -716,8 +772,10 @@ void Suspect::RdlockSuspect()
 void Suspect::UnlockSuspect()
 {
 	pthread_rwlock_unlock(&m_lock);
-	if(m_hasOwner && pthread_equal(m_owner, pthread_self()))
+	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
+	{
 		pthread_rwlock_rdlock(&m_lock);
+	}
 }
 
 //Returns the pthread_t owner
@@ -757,15 +815,114 @@ void Suspect::SetOwner()
 // Returns (-1) if the caller is not the owner, (1) if the Suspect has no owner or (0) on success
 int Suspect::ResetOwner()
 {
+
 	if(m_hasOwner == false)
 		return 1;
 	if(pthread_equal(m_owner, pthread_self()))
 	{
 		m_hasOwner = false;
-		UnlockSuspect();
+		m_owner = 0;
+		pthread_rwlock_unlock(&m_lock);
+		pthread_rwlock_destroy(&m_lock);
+		pthread_rwlock_init(&m_lock, NULL);
 		return 0;
 	}
 	else
 		return -1;
 }
+
+Suspect& Suspect::operator=(Suspect &rhs)
+{
+	WrlockSuspect();
+	m_features = rhs.m_features;
+	m_unsentFeatures = rhs.m_unsentFeatures;
+
+	if(m_annPoint == NULL)
+	{
+		if(rhs.m_annPoint != NULL)
+		{
+			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		}
+	}
+
+	if(m_annPoint != NULL)
+	{
+		if(rhs.m_annPoint == NULL)
+		{
+			annDeallocPt(m_annPoint);
+			m_annPoint = NULL;
+		}
+		else
+		{
+			memcpy(rhs.m_annPoint, m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
+		}
+	}
+
+	m_evidence = rhs.m_evidence;
+	for(uint i = 0; i < DIM; i++)
+	{
+		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
+	}
+
+	m_IpAddress = rhs.m_IpAddress;
+	m_classification = rhs.m_classification;
+	m_hostileNeighbors = rhs.m_hostileNeighbors;
+	m_isHostile = rhs.m_isHostile;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
+	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
+	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
+	m_isLive = rhs.m_isLive;
+	m_owner = rhs.m_owner;
+	m_hasOwner = rhs.m_hasOwner;
+	UnlockSuspect();
+	return *this;
+}
+
+Suspect& Suspect::operator=(Suspect rhs)
+{
+	WrlockSuspect();
+	m_features = rhs.m_features;
+	m_unsentFeatures = rhs.m_unsentFeatures;
+
+	if(m_annPoint == NULL)
+	{
+		if(rhs.m_annPoint != NULL)
+		{
+			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		}
+	}
+
+	if(m_annPoint != NULL)
+	{
+		if(rhs.m_annPoint == NULL)
+		{
+			annDeallocPt(m_annPoint);
+			m_annPoint = NULL;
+		}
+		else
+		{
+			memcpy(rhs.m_annPoint, m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
+		}
+	}
+
+	m_evidence = rhs.m_evidence;
+	for(uint i = 0; i < DIM; i++)
+	{
+		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
+	}
+
+	m_IpAddress = rhs.m_IpAddress;
+	m_classification = rhs.m_classification;
+	m_hostileNeighbors = rhs.m_hostileNeighbors;
+	m_isHostile = rhs.m_isHostile;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
+	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
+	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
+	m_isLive = rhs.m_isLive;
+	m_owner = rhs.m_owner;
+	m_hasOwner = rhs.m_hasOwner;
+	UnlockSuspect();
+	return *this;
+}
+
 }
