@@ -58,7 +58,6 @@ Suspect::~Suspect()
 		annDeallocPt(m_annPoint);
 	}
 	pthread_rwlock_destroy(&m_lock);
-	delete m_features.m_unsentData;
 }
 
 
