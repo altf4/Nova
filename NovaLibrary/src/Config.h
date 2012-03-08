@@ -59,43 +59,43 @@ public:
     string toString();
 
     // Getters
-    string getConfigFilePath() const;
-    string getDoppelInterface() const;
-    string getDoppelIp() const;
-    string getEnabledFeatures() const;
-    bool isFeatureEnabled(int i) const;
-    uint getEnabledFeatureCount() const;
-    string getInterface() const;
-    string getPathCESaveFile() const;
-    string getPathConfigHoneydDm() const;
-    string getPathConfigHoneydHs() const;
-    string getPathPcapFile() const;
-    string getPathTrainingCapFolder() const;
-    string getPathTrainingFile() const;
-    string getKey() const;
-    vector<in_addr_t> getNeighbors() const;
+    string getConfigFilePath() ;
+    string getDoppelInterface() ;
+    string getDoppelIp() ;
+    string getEnabledFeatures() ;
+    bool isFeatureEnabled(int i) ;
+    uint getEnabledFeatureCount() ;
+    string getInterface() ;
+    string getPathCESaveFile() ;
+    string getPathConfigHoneydDm() ;
+    string getPathConfigHoneydHs() ;
+    string getPathPcapFile() ;
+    string getPathTrainingCapFolder() ;
+    string getPathTrainingFile() ;
+    string getKey() ;
+    vector<in_addr_t> getNeighbors() ;
 
-    bool getReadPcap() const;
-    bool getUseTerminals() const;
-    bool getIsDmEnabled() const;
-    bool getIsTraining() const;
-    bool getGotoLive() const;
+    bool getReadPcap() ;
+    bool getUseTerminals() ;
+    bool getIsDmEnabled() ;
+    bool getIsTraining() ;
+    bool getGotoLive() ;
 
-    int getClassificationTimeout() const;
-    int getDataTTL() const;
-    int getK() const;
-    int getSaMaxAttempts() const;
-    int getSaPort() const;
-    int getSaveFreq() const;
-    int getTcpCheckFreq() const;
-    int getTcpTimout() const;
-    int getThinningDistance() const;
+    int getClassificationTimeout() ;
+    int getDataTTL() ;
+    int getK() ;
+    int getSaMaxAttempts() ;
+    int getSaPort() ;
+    int getSaveFreq() ;
+    int getTcpCheckFreq() ;
+    int getTcpTimout() ;
+    int getThinningDistance() ;
 
-    double getClassificationThreshold() const;
-    double getSaSleepDuration() const;
-    double getEps() const;
+    double getClassificationThreshold() ;
+    double getSaSleepDuration() ;
+    double getEps() ;
 
-    string getGroup() const;
+    string getGroup() ;
 
     // Setters
     void setClassificationThreshold(double classificationThreshold);
@@ -129,11 +129,11 @@ public:
     void setKey(string key);
     void setNeigbors(vector<in_addr_t> neighbors);
     void setGroup(string group);
-    string getLoggerPreferences() const;
-    string getSMTPAddr() const;
-    string getSMTPDomain() const;
-    vector<string> getSMTPEmailRecipients() const;
-    in_port_t getSMTPPort() const;
+    string getLoggerPreferences() ;
+    string getSMTPAddr() ;
+    string getSMTPDomain() ;
+    vector<string> getSMTPEmailRecipients() ;
+    in_port_t getSMTPPort() ;
     void setLoggerPreferences(string loggerPreferences);
     void setSMTPAddr(string SMTPAddr);
     void setSMTPDomain(string SMTPDomain);
@@ -145,10 +145,10 @@ public:
     void setSMTPEmailRecipients(string SMTPEmailRecipients);
 
     // Getters for the paths stored in /etc
-    string getPathBinaries() const;
-    string getPathWriteFolder() const;
-    string getPathReadFolder() const;
-    string getPathHome() const;
+    string getPathBinaries() ;
+    string getPathWriteFolder() ;
+    string getPathReadFolder() ;
+    string getPathHome() ;
 
 protected:
 	Config();
@@ -156,8 +156,8 @@ protected:
 private:
 	static Config *m_instance;
 
-	static const string m_prefixes[];
-	static const string m_requiredFiles[];
+	static string m_prefixes[];
+	static string m_requiredFiles[];
 
 	string m_interface;
 	string m_doppelIp;
@@ -225,8 +225,17 @@ private:
 	string pathReadFolder;
 	string pathHome;
 
+	pthread_rwlock_t lock;
+
 	// Used for loading the nova path file, resolves paths with env vars to full paths
 	static string ResolvePathVars(string path);
+
+	// Non-locking versions of some functions for internal use
+	void setEnabledFeatures_noLocking(string enabledFeatureMask);
+
+    // Set with a CSV string from the config file
+    void setSMTPEmailRecipients_noLocking(string SMTPEmailRecipients);
+
 };
 }
 
