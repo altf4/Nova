@@ -837,25 +837,15 @@ Suspect& Suspect::operator=(Suspect &rhs)
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
-	if(m_annPoint == NULL)
-	{
-		if(rhs.m_annPoint != NULL)
-		{
-			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-		}
-	}
-
 	if(m_annPoint != NULL)
 	{
-		if(rhs.m_annPoint == NULL)
-		{
-			annDeallocPt(m_annPoint);
-			m_annPoint = NULL;
-		}
-		else
-		{
-			memcpy(rhs.m_annPoint, m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
-		}
+		annDeallocPt(m_annPoint);
+	}
+
+	if(rhs.m_annPoint != NULL)
+	{
+		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		memcpy(m_annPoint, rhs.m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
 	}
 
 	m_evidence = rhs.m_evidence;
@@ -884,25 +874,15 @@ Suspect& Suspect::operator=(Suspect rhs)
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
-	if(m_annPoint == NULL)
-	{
-		if(rhs.m_annPoint != NULL)
-		{
-			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-		}
-	}
-
 	if(m_annPoint != NULL)
 	{
-		if(rhs.m_annPoint == NULL)
-		{
-			annDeallocPt(m_annPoint);
-			m_annPoint = NULL;
-		}
-		else
-		{
-			memcpy(rhs.m_annPoint, m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
-		}
+		annDeallocPt(m_annPoint);
+	}
+
+	if(rhs.m_annPoint != NULL)
+	{
+		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		memcpy(m_annPoint, rhs.m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
 	}
 
 	m_evidence = rhs.m_evidence;

@@ -97,10 +97,16 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	for(int i = 0; i < DIM; i++)
 	{
 		fi = (featureIndex)i;
-		suspect->SetFeatureAccuracy(fi, 0);
+		if (suspect->SetFeatureAccuracy(fi, 0) != 0)
+		{
+			LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__LINE__%__FILE__).str());
+		}
 	}
 
-	suspect->SetHostileNeighbors(0);
+	if (suspect->SetHostileNeighbors(0) != 0)
+	{
+		LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__LINE__%__FILE__).str());
+	}
 
 	//Determine classification according to weight by distance
 	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
@@ -123,7 +129,10 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 				fi = (featureIndex)j;
 				d  = suspect->GetFeatureAccuracy(fi) + distance;
-				suspect->SetFeatureAccuracy(fi, d);
+				if (suspect->SetFeatureAccuracy(fi, d)  != 0)
+				{
+					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__LINE__%__FILE__).str());
+				}
 			}
 		}
 
@@ -138,7 +147,10 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 1)
 			{
 				classifyCount += (sqrtDIM - dists[i]);
-				suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1);
+				if (suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1)  != 0)
+				{
+					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__LINE__%__FILE__).str());
+				}
 			}
 			//If benign
 			else if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 0)
