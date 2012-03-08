@@ -139,6 +139,8 @@ public:
     void setSMTPDomain(string SMTPDomain);
 	void setSMTPPort(in_port_t SMTPPort);
 
+	double getSqurtEnabledFeatures();
+
     // Set with a vector of email addresses
     void setSMTPEmailRecipients(vector<string> SMTPEmailRecipients);
     // Set with a CSV string from the config file

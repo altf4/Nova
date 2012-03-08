@@ -79,6 +79,7 @@ void ClassificationEngine::FormKdTree()
 
 void ClassificationEngine::Classify(Suspect *suspect)
 {
+	double sqrtDIM = Config::Inst()->getSqurtEnabledFeatures();
 	int k = Config::Inst()->getK();
 	double d;
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
@@ -136,13 +137,13 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			//If Hostile
 			if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 1)
 			{
-				classifyCount += (sqrt(DIM) - dists[i]);
+				classifyCount += (sqrtDIM - dists[i]);
 				suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1);
 			}
 			//If benign
 			else if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 0)
 			{
-				classifyCount -= (sqrt(DIM) - dists[i]);
+				classifyCount -= (sqrtDIM - dists[i]);
 			}
 			else
 			{
@@ -166,7 +167,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	}
 
 
-	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * sqrt(DIM) )));
+	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM )));
 
 	// Fix for rounding errors caused by double's not being precise enough if DIM is something like 2
 	if (suspect->GetClassification() < 0)

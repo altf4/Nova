@@ -80,9 +80,6 @@ private:
 	// Types of normalization to apply to our features
 	static normalizationType m_normalization[];
 
-	//Used in classification algorithm. Store it here so we only need to calculate it once
-	double m_sqrtDIM;
-
 	vector <Point*> m_dataPtsWithClass;
 
 	// kdtree stuff

@@ -1829,5 +1829,10 @@ string Config::getPathHome()
 	return pathHome;
 }
 
+double Config::getSqurtEnabledFeatures()
+{
+	return m_squrtEnabledFeatures;
+}
+
 }
 
