@@ -29,9 +29,6 @@ using namespace std;
 
 namespace Nova
 {
-
-	const string Logger::m_prefixes[] = { "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "RECIPIENTS", "SERVICE_PREFERENCES" };
-
 	Logger *Logger::m_loggerInstance = NULL;
 
 	Logger *Logger::Inst()

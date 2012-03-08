@@ -131,7 +131,6 @@ public:
 	levelsMap m_levels;
 
 private:
-	static const string m_prefixes[];
 	optionsInfo m_messageInfo;
 	pthread_rwlock_t m_logLock;
 	static Logger *m_loggerInstance;
