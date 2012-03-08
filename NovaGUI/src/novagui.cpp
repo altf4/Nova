@@ -997,7 +997,11 @@ void NovaGUI::on_runButton_clicked()
 	// haystack.config you wanted to use, kept rewriting it on start.
 	// Commented for now until the Node setup works in the GUI.
 	//writeHoneyd();
-	StartNovad();
+	for(uint i = 0; i < NOVA_COMPONENTS; i ++)
+	{
+		StartComponent(&(novaComponents[i]));
+	}
+
 }
 void NovaGUI::on_stopButton_clicked()
 {
@@ -1333,7 +1337,8 @@ void *CallbackLoopHelper(void *ptr)
 		//Blocking call
 		if ((UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len)) == -1)
 		{
-			LOG(ERROR, "Couldn't listen for Novad", (format("File %1% at line %2%:  accept: %s")% __FILE__%__LINE__% strerror(errno)).str());
+			LOG(ERROR, "Couldn't listen for Novad. Is qt already running?",
+					(format("File %1% at line %2%:  Qt accept failed")% __FILE__%__LINE__).str());
 			CloseNovadConnection();
 			return false;
 		}
@@ -1403,12 +1408,16 @@ void StartComponent(novaComponent *component)
 		delete component->process;
 	}
 
-	ConnectToNovad();
-
 	component->shouldBeRunning = true;
 
 	component->process = new QProcess();
 	component->process->start(program);
+
+	//If it's the Nova Daemon we're starting, then connect out to it.
+	if(component->name.compare("NOVA Daemon") == 0)
+	{
+		ConnectToNovad();
+	}
 }
 
 }
