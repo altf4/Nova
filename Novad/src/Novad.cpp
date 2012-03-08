@@ -110,6 +110,10 @@ ClassificationEngine *engine;
 
 int main()
 {
+	// Let both of these initialize before we have multiple threads going
+	Config::Inst();
+	Logger::Inst();
+
 	userHomePath = Config::Inst()->getPathHome();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
 	if(chdir(userHomePath.c_str()) == -1)
