@@ -41,7 +41,7 @@ bool Nova::StopNovad()
 {
 	ControlMessage killRequest;
 	killRequest.m_controlType = CONTROL_EXIT_REQUEST;
-	if( UI_Message::WriteMessage(&killRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -78,7 +78,7 @@ bool Nova::SaveAllSuspects()
 {
 	ControlMessage saveRequest;
 	saveRequest.m_controlType = CONTROL_SAVE_SUSPECTS_REQUEST;
-	if( UI_Message::WriteMessage(&saveRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&saveRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -115,7 +115,7 @@ bool Nova::ClearAllSuspects()
 {
 	ControlMessage clearRequest;
 	clearRequest.m_controlType = CONTROL_CLEAR_ALL_REQUEST;
-	if( UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -153,7 +153,7 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 	ControlMessage clearRequest;
 	clearRequest.m_controlType = CONTROL_CLEAR_SUSPECT_REQUEST;
 	clearRequest.m_suspectAddress = suspectAddress;
-	if( UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
@@ -190,7 +190,7 @@ bool Nova::ReclassifyAllSuspects()
 {
 	ControlMessage reclassifyRequest;
 	reclassifyRequest.m_controlType = CONTROL_RECLASSIFY_ALL_REQUEST;
-	if( UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact

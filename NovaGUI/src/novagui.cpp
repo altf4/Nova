@@ -794,6 +794,11 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 {
 	m_editingSuspectList = true;
 	ClearAllSuspects();
+
+	pthread_rwlock_wrlock(&lock);
+	SuspectTable.clear();
+	pthread_rwlock_unlock(&lock);
+
 	QFile::remove(QString::fromStdString(Config::Inst()->getPathCESaveFile()));
 	DrawAllSuspects();
 	m_editingSuspectList = false;

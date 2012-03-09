@@ -22,6 +22,7 @@
 #include "Control.h"
 #include "Novad.h"
 #include "messages/CallbackMessage.h"
+#include "SuspectTableIterator.h"
 
 #include "pthread.h"
 #include <sys/types.h>
@@ -39,6 +40,9 @@ using boost::format;
 int callbackSocket = -1, IPCSocket = -1;
 
 extern string userHomePath;
+extern pthread_rwlock_t suspectTableLock;
+extern SuspectHashTable suspects;
+extern SuspectHashTable suspectsSinceLastSave;
 
 struct sockaddr_un msgRemote, msgLocal;
 int UIsocketSize;
@@ -161,20 +165,21 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_CLEAR_ALL_REQUEST:
 		{
 			//TODO: Replace with new suspect table class
-//			pthread_rwlock_wrlock(&suspectTableLock);
-//			for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
-//				delete it->second;
-//			suspects.clear();
-//
-//			for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
-//				delete it->second;
-//			suspectsSinceLastSave.clear();
-//
-//			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
-//			if(system(delString.c_str()) == -1)
-//				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
-//
-//			pthread_rwlock_unlock(&suspectTableLock);
+
+			pthread_rwlock_wrlock(&suspectTableLock);
+
+			for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
+				delete it->second;
+			suspects.clear();
+
+			for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
+				delete it->second;
+			suspectsSinceLastSave.clear();
+
+			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
+			if(system(delString.c_str()) == -1)
+				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
+			pthread_rwlock_unlock(&suspectTableLock);
 
 			ControlMessage clearAllSuspectsReply;
 			clearAllSuspectsReply.m_controlType = CONTROL_CLEAR_ALL_REPLY;
@@ -186,13 +191,13 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
 //			//TODO: Replace with new suspect table class
-//			pthread_rwlock_wrlock(&suspectTableLock);
-//			suspectsSinceLastSave[controlMessage.m_suspectAddress] = suspects[controlMessage.m_suspectAddress];
-//			suspects.set_deleted_key(5);
-//			suspects.erase(suspectKey);
-//			suspects.clear_deleted_key();
-//			RefreshStateFile();
-//			pthread_rwlock_unlock(&suspectTableLock);
+			pthread_rwlock_wrlock(&suspectTableLock);
+			suspectsSinceLastSave[controlMessage.m_suspectAddress] = suspects[controlMessage.m_suspectAddress];
+			suspects.set_deleted_key(5);
+			suspects.erase(controlMessage.m_suspectAddress);
+			suspects.clear_deleted_key();
+			RefreshStateFile();
+			pthread_rwlock_unlock(&suspectTableLock);
 
 			//TODO: Should check for errors here and return result
 			ControlMessage clearSuspectReply;
