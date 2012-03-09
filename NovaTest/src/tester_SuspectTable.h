@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : tester_Suspect.h
+// Name        : tester_SuspectTable.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,41 +13,28 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : This file contains unit tests for the class Suspect
+// Description : This file contains unit tests for the class SuspectTable
 //============================================================================/*
 
 #include "gtest/gtest.h"
 
-#include "Suspect.h"
+#include "SuspectTable.h"
 
 using namespace Nova;
 using namespace std;
 
 namespace {
-// The test fixture for testing class Suspect.
-class SuspectTest : public ::testing::Test {
+// The test fixture for testing class SuspectTable.
+class SuspectTableTest : public ::testing::Test {
 protected:
 	// Objects declared here can be used by all tests in the test case
-	Suspect *testObject;
+	SuspectTable *testObject;
 
-	SuspectTest() {
-		testObject = new Suspect();
+	SuspectTableTest() {
+		testObject = new SuspectTable();
 	}
 };
 
 
-// Check that someMethod functions
-TEST_F(SuspectTest, test_OwnerFunctionality)
-{
-	EXPECT_FALSE(testObject->HasOwner());
-
-	EXPECT_NO_FATAL_FAILURE(testObject->SetOwner());
-	EXPECT_TRUE(testObject->HasOwner());
-	EXPECT_TRUE(pthread_equal(testObject->GetOwner(), pthread_self()));
-
-	EXPECT_EQ(0, testObject->ResetOwner());
-	EXPECT_FALSE(testObject->HasOwner());
-
-}
-}
+// TODO
 
