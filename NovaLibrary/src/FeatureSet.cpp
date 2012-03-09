@@ -223,7 +223,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	case PACKET_INTERVAL_MEAN:
 	{
 		m_features[PACKET_INTERVAL_MEAN] = (((double) m_totalInterval)
-								/ ((double) (m_packetCount)));
+								/ ((double) (m_intervalTable.size())));
 		break;
 	}
 
@@ -231,7 +231,7 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	///Measures the distribution of intervals between packets
 	case PACKET_INTERVAL_DEVIATION:
 	{
-		double totalCount = m_packetCount;
+		double totalCount = m_intervalTable.size();
 		double mean = 0;
 		double variance = 0;
 
@@ -659,6 +659,59 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 	}
 
 	return offset;
+}
+
+bool FeatureSet::operator ==(const FeatureSet &rhs) const
+{
+	if (m_packTable != rhs.m_packTable)
+		return false;
+
+	if (m_portTable != rhs.m_portTable)
+		return false;
+
+	if (m_portMax != rhs.m_portMax)
+		return false;
+
+	if (m_haystackEvents != rhs.m_haystackEvents)
+		return false;
+
+
+	/* These don't get serialized/deserialized.. should they?
+	 if (m_startTime != rhs.m_startTime)
+		return false;
+
+	if (m_endTime != rhs.m_endTime)
+		return false;
+
+	if (m_last_time != rhs.m_last_time)
+		return false;
+	 */
+
+	if (m_totalInterval != rhs.m_totalInterval)
+		return false;
+
+	if (m_bytesTotal != rhs.m_bytesTotal)
+		return false;
+
+	if (m_intervalTable != rhs.m_intervalTable)
+		return false;
+
+	if (m_IPTable != rhs.m_IPTable)
+		return false;
+
+	if (m_packetCount != rhs.m_packetCount)
+		return false;
+
+	for (int i = 0; i < DIM; i++)
+		if (m_features[i] != rhs.m_features[i])
+			return false;
+
+	return true;
+}
+
+bool FeatureSet::operator !=(const FeatureSet &rhs) const
+{
+	return !(*this == rhs);
 }
 
 /*
