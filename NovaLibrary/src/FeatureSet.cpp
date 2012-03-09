@@ -222,8 +222,15 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	///Measures the distribution of intervals between packets
 	case PACKET_INTERVAL_MEAN:
 	{
-		m_features[PACKET_INTERVAL_MEAN] = (((double) m_totalInterval)
-								/ ((double) (m_intervalTable.size())));
+		if (m_intervalTable.size() == 0)
+		{
+			m_features[PACKET_INTERVAL_MEAN] = 0;
+		}
+		else
+		{
+			m_features[PACKET_INTERVAL_MEAN] = (((double) m_totalInterval)
+									/ ((double) (m_intervalTable.size())));
+		}
 		break;
 	}
 
