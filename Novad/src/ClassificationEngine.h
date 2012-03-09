@@ -29,6 +29,8 @@
 #include "Config.h"
 #include "SuspectTable.h"
 
+namespace Nova
+{
 
 enum normalizationType {
 	NONORM, 		// Does no data normalization. Feature must already be in a range from 0 to 1
@@ -36,6 +38,7 @@ enum normalizationType {
 	LINEAR_SHIFT, 	// Shifts min value to 0 before doing linear normalization
 	LOGARITHMIC		// Logarithmic normalization, larger outlier value will have less of an effect
 };
+
 
 class ClassificationEngine
 {
@@ -96,5 +99,6 @@ private:
 	SuspectTable &m_suspects;
 };
 
+} // End namespace
 
 #endif /* CLASSIFICATIONENGINE_H_ */
