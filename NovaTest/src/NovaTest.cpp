@@ -5,6 +5,7 @@
 #include "tester_FeatureSet.h"
 #include "tester_Suspect.h"
 #include "tester_SuspectTable.h"
+#include "tester_ClassificationEngine.h"
 
 int main(int argc, char **argv)
 {

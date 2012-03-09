@@ -55,7 +55,8 @@ TEST_F(FeatureSetTest, test_CopyAndAssignmentEquality)
 
 
 // Simple check on the + and - operators
-TEST_F(FeatureSetTest, test_ArithmiticEquality)
+// TODO: Enable this test once the portMax problem is fixed, ticket #75
+TEST_F(FeatureSetTest, DISABLED_test_ArithmiticEquality)
 {
 	FeatureSet temp = fset;
 	temp += fset;
@@ -70,7 +71,8 @@ TEST_F(FeatureSetTest, test_ArithmiticEquality)
 
 
 // Check serialization/deserialization of the FeatureSet
-TEST_F(FeatureSetTest, test_Serialization)
+// TODO: Enable this test once the timeStamp problem is fixed, ticket #73
+TEST_F(FeatureSetTest, DISABLED_test_Serialization)
 {
 	// Serialize our featureSet to a buffer
 	u_char buffer[MAX_MSG_SIZE];

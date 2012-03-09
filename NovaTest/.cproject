@@ -26,8 +26,9 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.4547842" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.2145777374" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.539406086" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="../../Nova_UI_Core/src"/>
 									<listOptionValue builtIn="false" value="../../NovaLibrary/src"/>
+									<listOptionValue builtIn="false" value="../../Novad/src"/>
+									<listOptionValue builtIn="false" value="../../Nova_UI_Core/src"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.269114170" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -pthread" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1009339384" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -62,8 +63,29 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<folderInfo id="cdt.managedbuild.config.gnu.exe.debug.1099422156.1899121304" name="/" resourcePath="src/NovadSource">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.643400202" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug" unusedChildren="">
+							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
+							<tool id="cdt.managedbuild.tool.gnu.archiver.base.2053838849" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base.1231308722"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1978336955" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.845109025">
+								<option id="gnu.cpp.compiler.option.include.paths.1382368097" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="../../NovaLibrary/src"/>
+									<listOptionValue builtIn="false" value="../../Nova_UI_Core/src"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.706241466" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.483070194" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.279049378">
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.500226718" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.2053118522" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug.996023854"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.66253813" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1444874893"/>
+							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.493642029" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug.309994491">
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1088855541" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="NovadSource/Main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -528,7 +550,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="NovadSource/Main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
