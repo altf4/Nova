@@ -47,10 +47,10 @@ protected:
 TEST_F(FeatureSetTest, test_CopyAndAssignmentEquality)
 {
 	FeatureSet assignment = fset;
-	EXPECT_EQ(true, assignment == fset);
+	EXPECT_TRUE(assignment == fset);
 
 	FeatureSet copy(fset);
-	EXPECT_EQ(true, copy == fset);
+	EXPECT_TRUE(copy == fset);
 }
 
 
@@ -65,7 +65,7 @@ TEST_F(FeatureSetTest, test_ArithmiticEquality)
 	temp.CalculateAll();
 
 	// We should end up back where we started
-	EXPECT_EQ(true, temp == fset);
+	EXPECT_TRUE(temp == fset);
 }
 
 
@@ -75,15 +75,15 @@ TEST_F(FeatureSetTest, test_Serialization)
 	// Serialize our featureSet to a buffer
 	u_char buffer[MAX_MSG_SIZE];
 	bzero(buffer, MAX_MSG_SIZE);
-	fset.SerializeFeatureData(&buffer[0]);
+	EXPECT_NO_FATAL_FAILURE(fset.SerializeFeatureData(&buffer[0]));
 
 	// Deserialize it and see if we end up with an exact copy
 	FeatureSet deserializedCopy;
-	deserializedCopy.DeserializeFeatureData(buffer);
-	deserializedCopy.CalculateAll();
+	EXPECT_NO_FATAL_FAILURE(deserializedCopy.DeserializeFeatureData(buffer));
+	EXPECT_NO_FATAL_FAILURE(deserializedCopy.CalculateAll());
 
 	// TODO: Make the FeatureSet equality operator compare the timestamps as well, see issue #73
-	EXPECT_EQ(true, fset == deserializedCopy);
+	EXPECT_TRUE(fset == deserializedCopy);
 }
 
 
