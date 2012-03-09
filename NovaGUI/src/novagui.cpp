@@ -1392,6 +1392,13 @@ void *CallbackLoop(void *ptr)
 
 void StartComponent(novaComponent *component)
 {
+	pthread_t startComponentThread;
+	pthread_create(&startComponentThread, NULL, StartComponentHelper, (void*)component);
+}
+
+void *StartComponentHelper(void *ptr)
+{
+	novaComponent *component = (novaComponent*)ptr;
 	QString program;
 
 	if (Config::Inst()->getUseTerminals())
@@ -1416,8 +1423,21 @@ void StartComponent(novaComponent *component)
 	//If it's the Nova Daemon we're starting, then connect out to it.
 	if(component->name.compare("NOVA Daemon") == 0)
 	{
-		ConnectToNovad();
+		if(!ConnectToNovad())
+		{
+			sleep(1);
+			if(!ConnectToNovad())
+			{
+				sleep(1);
+				if(!ConnectToNovad())
+				{
+					sleep(1);
+				}
+			}
+		}
 	}
+
+	return NULL;
 }
 
 }

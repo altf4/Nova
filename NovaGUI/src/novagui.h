@@ -193,8 +193,12 @@ void *CallbackLoop(void *ptr);
 
 void *StatusUpdate(void *ptr);
 
-// Start one component of Nova
+//Start one component of Nova
 void StartComponent(novaComponent *component);
+
+//Helper thread for StartComponent
+//	runs the start command in a new thread, so that we can sleep() without locking the whole GUI
+void *StartComponentHelper(void *ptr);
 
 }
 #endif // NOVAGUI_H
