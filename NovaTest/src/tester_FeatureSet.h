@@ -42,6 +42,7 @@ protected:
 
 };
 
+
 // Check copy constructor and equality operator
 TEST_F(FeatureSetTest, test_CopyAndAssignmentEquality)
 {
@@ -51,6 +52,7 @@ TEST_F(FeatureSetTest, test_CopyAndAssignmentEquality)
 	FeatureSet copy(fset);
 	EXPECT_EQ(true, copy == fset);
 }
+
 
 // Simple check on the + and - operators
 TEST_F(FeatureSetTest, test_ArithmiticEquality)
@@ -65,7 +67,6 @@ TEST_F(FeatureSetTest, test_ArithmiticEquality)
 	// We should end up back where we started
 	EXPECT_EQ(true, temp == fset);
 }
-
 
 
 // Check serialization/deserialization of the FeatureSet
@@ -84,6 +85,7 @@ TEST_F(FeatureSetTest, test_Serialization)
 	// TODO: Make the FeatureSet equality operator compare the timestamps as well, see issue #73
 	EXPECT_EQ(true, fset == deserializedCopy);
 }
+
 
 // Check if the features got computed correctly
 TEST_F(FeatureSetTest, test_Calculate)

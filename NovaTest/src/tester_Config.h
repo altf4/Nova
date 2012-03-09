@@ -20,6 +20,7 @@ TEST_F(ConfigTest, test_instanceNotNull)
 	EXPECT_NE((Config*)0, Config::Inst());
 }
 
+
 // Tests that changing the enabled features sets all needed config options
 TEST_F(ConfigTest, test_setEnabledFeatures) {
 	string enabledFeatureString = "110010011";
