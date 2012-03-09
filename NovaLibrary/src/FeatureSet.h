@@ -96,9 +96,6 @@ public:
 	//Number of packets total
 	uint32_t m_packetCount;
 
-	//Table of IP addresses and associated packet counts
-	IP_Table m_IPTable;
-
 	FeatureSet();
 	~FeatureSet();
 	// Clears out the current values, and also any temp variables used to calculate them
@@ -108,6 +105,9 @@ public:
 
 	FeatureSet& operator-=(FeatureSet &rhs);
 	FeatureSet& operator+=(FeatureSet &rhs);
+	bool operator ==(const FeatureSet &rhs) const;
+	bool operator !=(const FeatureSet &rhs) const;
+
 
 	// Calculates all features in the feature set
 	//		featuresEnabled - Bitmask of which features are enabled, e.g. 0b111 would enable the first 3
@@ -175,6 +175,9 @@ private:
 	Interval_Table m_intervalTable;
 
 	time_t m_last_time;
+
+	//Table of IP addresses and associated packet counts
+	IP_Table m_IPTable;
 };
 }
 
