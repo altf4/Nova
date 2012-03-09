@@ -36,6 +36,8 @@ typedef google::dense_hash_map<in_addr_t, ANNpoint, tr1::hash<in_addr_t>, eqaddr
 namespace Nova
 {
 
+int RunNovaD();
+
 // Start routine for a separate thread which infinite loops, periodically
 // updating all the classifications for all the current suspects
 //		prt - Required for pthread start routines

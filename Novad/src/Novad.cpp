@@ -109,7 +109,7 @@ pthread_rwlock_t sessionLock;
 
 ClassificationEngine *engine;
 
-int main()
+int Nova::RunNovaD()
 {
 	suspects.Resize(INIT_SIZE_SMALL);
 	suspectsSinceLastSave.Resize(INIT_SIZE_SMALL);

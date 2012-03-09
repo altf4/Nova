@@ -6,18 +6,21 @@
 CPP_SRCS += \
 ../src/ClassificationEngine.cpp \
 ../src/Control.cpp \
+../src/Main.cpp \
 ../src/Novad.cpp \
 ../src/ProtocolHandler.cpp 
 
 OBJS += \
 ./src/ClassificationEngine.o \
 ./src/Control.o \
+./src/Main.o \
 ./src/Novad.o \
 ./src/ProtocolHandler.o 
 
 CPP_DEPS += \
 ./src/ClassificationEngine.d \
 ./src/Control.d \
+./src/Main.d \
 ./src/Novad.d \
 ./src/ProtocolHandler.d 
 
