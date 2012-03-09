@@ -48,8 +48,8 @@ using boost::format;
 string userHomePath, novaConfigPath;
 
 // Maintains a list of suspects and information on network activity
-SuspectHashTable suspects;
-SuspectHashTable suspectsSinceLastSave;
+SuspectTable suspects;
+SuspectTable suspectsSinceLastSave;
 static TCPSessionHashTable SessionTable;
 
 static struct sockaddr_in hostAddr;
@@ -105,23 +105,26 @@ bool usePcapFile;
 
 pthread_t TCP_timeout_thread;
 pthread_rwlock_t sessionLock;
-pthread_rwlock_t suspectTableLock;
 
 
 ClassificationEngine *engine;
 
 int main()
 {
+	suspects.Resize(INIT_SIZE_SMALL);
+	suspectsSinceLastSave.Resize(INIT_SIZE_SMALL);
+
+	SessionTable.set_empty_key("");
+	SessionTable.resize(INIT_SIZE_HUGE);
+
 	// Let both of these initialize before we have multiple threads going
 	Config::Inst();
 	Logger::Inst();
-
 	userHomePath = Config::Inst()->getPathHome();
 	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
 	if(chdir(userHomePath.c_str()) == -1)
 		LOG(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
 
-	pthread_rwlock_init(&suspectTableLock, NULL);
 	pthread_rwlock_init(&sessionLock, NULL);
 
 	signal(SIGINT, SaveAndExit);
@@ -134,16 +137,6 @@ int main()
 	if (lastSaveTime == ((time_t)-1))
 		LOG(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
 
-	// XXX 'suspects' SuspectTable init todo
-	suspects.set_empty_key(0);
-	suspects.resize(INIT_SIZE_SMALL);
-	SessionTable.set_empty_key("");
-	SessionTable.resize(INIT_SIZE_HUGE);
-
-	// XXX 'suspectsSinceLastSave' SuspectTable init todo
-	suspectsSinceLastSave.set_empty_key(0);
-	suspectsSinceLastSave.resize(INIT_SIZE_SMALL);
-
 	pthread_t classificationLoopThread;
 	pthread_t trainingLoopThread;
 	pthread_t silentAlarmListenThread;
@@ -151,7 +144,7 @@ int main()
 
 	Spawn_UI_Handler();
 
-	engine = new ClassificationEngine(&suspects);
+	engine = new ClassificationEngine(suspects);
 
 	Reload();
 
@@ -175,14 +168,15 @@ int main()
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to set up file watcher for the honeyd IP list file. DHCP addresse in honeyd will not be read")
-				%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to set up file watcher for the honeyd IP"
+				" list file. DHCP addresse in honeyd will not be read")%__LINE__%__FILE__).str());
 	}
 
 	Start_Packet_Handler();
 
 	//Shouldn't get here!
-	LOG(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen, something went very wrong.")%__LINE__%__FILE__).str());
+	LOG(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen,"
+			" something went very wrong.")%__LINE__%__FILE__).str());
 	close(IPCsock);
 
 	return EXIT_FAILURE;
@@ -192,30 +186,28 @@ void Nova::AppendToStateFile()
 {
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
-		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time()"
+				" failed")%__LINE__%__FILE__).str());
 
 	// Don't bother saving if no new suspect data, just confuses deserialization
-	// XXX 'suspectsSinceLastSave.Size()' SuspectTable todo
-	if (suspectsSinceLastSave.size() <= 0)
+	if (suspectsSinceLastSave.Size() <= 0)
 		return;
 
 	u_char tableBuffer[MAX_MSG_SIZE];
 	uint32_t dataSize = 0;
-	uint32_t index = 0;
 
 	// Compute the total dataSize
-	// XXX 'suspectsSinceLastSave' SuspectTable && iterator todo
-	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
+	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() <  suspectsSinceLastSave.Size(); ++it)
 	{
-		if (!it->second->m_features.m_packetCount)
+		if (!it.Current().GetFeatureSet().m_packetCount)
+		{
 			continue;
-
-		index = it->second->SerializeSuspect(tableBuffer);
-		index += it->second->m_features.SerializeFeatureData(tableBuffer + index);
-
-		dataSize += index;
+		}
+		else
+		{
+			dataSize += it.Current().SerializeSuspectWithData(tableBuffer);
+		}
 	}
-
 	// No suspects with packets to update
 	if (dataSize == 0)
 		return;
@@ -223,35 +215,29 @@ void Nova::AppendToStateFile()
 	ofstream out(Config::Inst()->getPathCESaveFile().data(), ofstream::binary | ofstream::app);
 	if(!out.is_open())
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file %3%")%__LINE__%__FILE__%Config::Inst()->getPathCESaveFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file %3%")
+				%__LINE__%__FILE__%Config::Inst()->getPathCESaveFile()).str());
 		return;
 	}
 
 	out.write((char*)&lastSaveTime, sizeof lastSaveTime);
 	out.write((char*)&dataSize, sizeof dataSize);
 
-	LOG(DEBUG, (format("File %1% at line %2%: Appending %3% bytes to the CE state file")%__LINE__%__FILE__%dataSize).str());
-
+	LOG(DEBUG, (format("File %1% at line %2%: Appending %3% bytes to the CE state file")
+			%__LINE__%__FILE__%dataSize).str());
+	Suspect suspectCopy;
 	// Serialize our suspect table
-	// XXX 'suspectsSinceLastSave' SuspectTable && iterator todo
-	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
+	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() < suspectsSinceLastSave.Size(); ++it)
 	{
-		if (!it->second->m_features.m_packetCount)
+		if (!it.Current().GetFeatureSet().m_packetCount)
 			continue;
-
-		index = it->second->SerializeSuspect(tableBuffer);
-		index += it->second->m_features.SerializeFeatureData(tableBuffer + index);
-
-		out.write((char*) tableBuffer, index);
+		suspectCopy = suspectsSinceLastSave.CheckOut(it.GetKey());
+		dataSize = suspectCopy.SerializeSuspectWithData(tableBuffer);
+		suspectsSinceLastSave.CheckIn(&suspectCopy);
+		out.write((char*) tableBuffer, dataSize);
 	}
-
 	out.close();
-
-	// Clear out the unsaved data table (they're all saved now)
-	// XXX 'suspectsSinceLastSave' SuspectTable && iterator todo
-	for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
-		delete it->second;
-	suspectsSinceLastSave.clear();
+	suspectsSinceLastSave.Clear();
 }
 
 void Nova::LoadStateFile()
@@ -261,13 +247,15 @@ void Nova::LoadStateFile()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")
+				%__LINE__%__FILE__).str());
 
 	// Open input file
 	ifstream in(Config::Inst()->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open CE state file. This is normal for the first run.")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open CE state file. This is normal for "
+				"the first run.")%__LINE__%__FILE__).str());
 		return;
 	}
 
@@ -281,8 +269,8 @@ void Nova::LoadStateFile()
 		// Bytes left, but not enough to make a header (timestamp + size)?
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
-			LOG(ERROR, "The CE state file may be corrupt",
-					(format("File %1% at line %2%: CE state file should have another entry, but only contains %3% more bytes")%__LINE__%__FILE__%lengthLeft).str());
+			LOG(ERROR, "The CE state file may be corrupt",(format("File %1% at line %2%: CE state file "
+				"should have another entry, but only contains %3% more bytes")%__LINE__%__FILE__%lengthLeft).str());
 			break;
 		}
 
@@ -294,7 +282,9 @@ void Nova::LoadStateFile()
 
 		if (Config::Inst()->getDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->getDataTTL()))
 		{
-			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
+			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")
+					%__LINE__%__FILE__%(int)timeStamp).str());
+
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
 			continue;
@@ -304,8 +294,9 @@ void Nova::LoadStateFile()
 		if (lengthLeft < dataSize)
 		{
 			LOG(ERROR, "The CE state file may be corruput, unable to read all data from it",
-					(format("File %1% at line %2%: CE state file should have another entry of size %3% but only has %4% bytes left")
-							%__LINE__%__FILE__%dataSize%lengthLeft).str());
+				(format("File %1% at line %2%: CE state file should have another entry of size %3% "
+				"but only has %4% bytes left")%__LINE__%__FILE__%dataSize%lengthLeft).str());
+
 			break;
 		}
 
@@ -315,25 +306,29 @@ void Nova::LoadStateFile()
 
 		// Read each suspect
 		uint32_t bytesSoFar = 0;
+		Suspect suspectCopy;
 		while (bytesSoFar < dataSize)
 		{
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
-			suspectBytes += newSuspect->m_features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->GetFeatureSet().DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 			bytesSoFar += suspectBytes;
 
-			if(suspects.find(newSuspect->GetIpAddress()) == suspects.end())
+			if(!suspects.IsValidKey(newSuspect->GetIpAddress()))
 			{
-				suspects[newSuspect->GetIpAddress()] = newSuspect;
-				suspects[newSuspect->GetIpAddress()]->SetNeedsFeatureUpdate(true);
-				suspects[newSuspect->GetIpAddress()]->SetNeedsClassificationUpdate(true);
+				newSuspect->SetNeedsClassificationUpdate(true);
+				newSuspect->SetNeedsFeatureUpdate(true);
+				suspects.AddNewSuspect(newSuspect);
 			}
 			else
 			{
-				suspects[newSuspect->GetIpAddress()]->m_features += newSuspect->m_features;
-				suspects[newSuspect->GetIpAddress()]->SetNeedsFeatureUpdate(true);
-				suspects[newSuspect->GetIpAddress()]->SetNeedsClassificationUpdate(true);
+				suspectCopy = suspects.CheckOut(newSuspect->GetIpAddress());
+				FeatureSet fs = newSuspect->GetFeatureSet();
+				suspectCopy.AddFeatureSet(&fs);
+				suspectCopy.SetNeedsFeatureUpdate(true);
+				suspectCopy.SetNeedsClassificationUpdate(true);
+				suspects.CheckIn(&suspectCopy);
 				delete newSuspect;
 			}
 		}
@@ -350,13 +345,15 @@ void Nova::RefreshStateFile()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__
+				%__FILE__).str());
 
 	// Open input file
 	ifstream in(Config::Inst()->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathCESaveFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file at %3%")%__LINE__
+				%__FILE__%Config::Inst()->getPathCESaveFile()).str());
 		return;
 	}
 
@@ -365,7 +362,8 @@ void Nova::RefreshStateFile()
 	ofstream out(tmpFile.data(), ios::binary);
 	if(!out.is_open())
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the temporary CE state file at %3%")%__LINE__%__FILE__%tmpFile).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the temporary CE state file at %3%"
+				)%__LINE__%__FILE__%tmpFile).str());
 		in.close();
 		return;
 	}
@@ -380,8 +378,8 @@ void Nova::RefreshStateFile()
 		// Bytes left, but not enough to make a header (timestamp + size)?
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
-			LOG(ERROR, "The CE state file may be corrupt", (format("File %1% at line %2%: CE state file should have another entry, but only contains %3% more bytes")
-					%__LINE__%__FILE__%lengthLeft).str());
+			LOG(ERROR, "The CE state file may be corrupt", (format("File %1% at line %2%: CE state file "
+					"should have another entry, but only contains %3% more bytes")%__LINE__%__FILE__%lengthLeft).str());
 			break;
 		}
 
@@ -393,7 +391,9 @@ void Nova::RefreshStateFile()
 
 		if (Config::Inst()->getDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->getDataTTL()))
 		{
-			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")%__LINE__%__FILE__%(int)timeStamp).str());
+			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")
+					%__LINE__%__FILE__%(int)timeStamp).str());
+
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
 			continue;
@@ -403,7 +403,9 @@ void Nova::RefreshStateFile()
 		if (lengthLeft < dataSize)
 		{
 			LOG(ERROR, "The CE state file may be corrupt",
-					(format("File %1% at line %2%: Data file should have another entry of size %3%, but contains only %4% bytes left")%__LINE__%__FILE__%dataSize%lengthLeft).str());
+				(format("File %1% at line %2%: Data file should have another entry of size %3%, "
+				"but contains only %4% bytes left")%__LINE__%__FILE__%dataSize%lengthLeft).str());
+
 			break;
 		}
 
@@ -418,40 +420,22 @@ void Nova::RefreshStateFile()
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
-			suspectBytes += newSuspect->m_features.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->GetFeatureSet().DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 
-			// Did a suspect get cleared? Not in suspects anymore, but still is suspectsSinceLastSave
-			// XXX 'suspectsSinceLastSave' SuspectTableIterator todo
-			SuspectHashTable::iterator saveIter = suspectsSinceLastSave.find(newSuspect->GetIpAddress());
-			// XXX 'suspectsSinceLastSave' SuspectTableIterator todo
-			SuspectHashTable::iterator normalIter = suspects.find(newSuspect->GetIpAddress());
-			if (normalIter == suspects.end() && saveIter != suspectsSinceLastSave.end())
+			if(!suspects.IsValidKey(newSuspect->GetIpAddress())
+					&& suspectsSinceLastSave.IsValidKey(newSuspect->GetIpAddress()))
 			{
-				cout << "Deleting suspect" << endl;
 				in_addr_t key = newSuspect->GetIpAddress();
-				deletedKeys.push_back(key);
-				Suspect *currentSuspect = suspectsSinceLastSave[key];
-				suspectsSinceLastSave.set_deleted_key(5);
-				suspectsSinceLastSave.erase(key);
-				suspectsSinceLastSave.clear_deleted_key();
-
-				delete currentSuspect;
-			}
-
-			vector<in_addr_t>::iterator vIter = find (deletedKeys.begin(), deletedKeys.end(), newSuspect->GetIpAddress());
-			if (vIter != deletedKeys.end())
-			{
+				suspectsSinceLastSave.Erase(key);
 				// Shift the rest of the data over on top of our bad suspect
-				memmove(tableBuffer+bytesSoFar,
-						tableBuffer+bytesSoFar+suspectBytes,
-						(dataSize-bytesSoFar-suspectBytes)*sizeof(tableBuffer[0]));
+				memmove(tableBuffer + bytesSoFar, tableBuffer + bytesSoFar + suspectBytes,
+						(dataSize - bytesSoFar - suspectBytes) * sizeof(tableBuffer[0]));
 				dataSize -= suspectBytes;
 			}
 			else
 			{
 				bytesSoFar += suspectBytes;
 			}
-
 			delete newSuspect;
 		}
 
@@ -470,15 +454,12 @@ void Nova::RefreshStateFile()
 	string copyCommand = "cp -f " + tmpFile + " " + Config::Inst()->getPathCESaveFile();
 	if (system(copyCommand.c_str()) == -1)
 		LOG(ERROR, "Failed to write to the CE state file. This may be a permission problem, or the folder may not exist.",
-				(format("File %1% at line %2%: Unable to copy CE state tmp file to CE state file. System call to '%3' failed")
-						%__LINE__%__FILE__%copyCommand).str());
+			(format("File %1% at line %2%: Unable to copy CE state tmp file to CE state file."
+			" System call to '%3' failed")%__LINE__%__FILE__%copyCommand).str());
 }
 
 void Nova::Reload()
 {
-	// Aquire a lock to stop the other threads from classifying till we're done
-	pthread_rwlock_wrlock(&suspectTableLock);
-
 	LoadConfiguration();
 
 	// Reload the configuration file
@@ -488,13 +469,15 @@ void Nova::Reload()
 	Config::Inst()->getPathTrainingFile() = userHomePath + "/" +Config::Inst()->getPathTrainingFile();
 
 	engine->LoadDataPointsFromFile(Config::Inst()->getPathTrainingFile());
-
+	Suspect suspectCopy;
 	// Set everyone to be reclassified
-	// XXX 'suspectsSinceLastSave' SuspectTableIterator todo
-	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
-		it->second->SetNeedsClassificationUpdate(true);
-
-	pthread_rwlock_unlock(&suspectTableLock);
+	for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
+	{
+		suspectCopy = suspects.CheckOut(it.GetKey());
+		suspectCopy.SetNeedsFeatureUpdate(true);
+		suspectCopy.SetNeedsClassificationUpdate(true);
+		suspects.CheckIn(&suspectCopy);
+	}
 }
 
 void *Nova::ClassificationLoop(void *ptr)
@@ -510,24 +493,20 @@ void *Nova::ClassificationLoop(void *ptr)
 	serv_addr.sin_port = htons(Config::Inst()->getSaPort());
 
 	LoadStateFile();
-
 	//Classification Loop
 	do
 	{
 		sleep(Config::Inst()->getClassificationTimeout());
-		pthread_rwlock_wrlock(&suspectTableLock);
 		//Calculate the "true" Feature Set for each Suspect
 		// XXX 'suspects' SuspectTableIterator todo
-		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 		{
-			if(it->second->GetNeedsFeatureUpdate())
+			if(it.Current().GetNeedsFeatureUpdate())
 			{
-				for(uint i = 0; i < it->second->m_evidence.size(); i++)
-				{
-					it->second->m_features.m_unsentData->UpdateEvidence(it->second->m_evidence[i]);
-				}
-				it->second->m_evidence.clear();
-				it->second->CalculateFeatures();
+				Suspect suspectCopy = suspects.CheckOut(it.GetKey());
+				suspectCopy.UpdateEvidence();
+				suspectCopy.CalculateFeatures();
+				suspects.CheckIn(&suspectCopy);
 			}
 		}
 		//Calculate the normalized feature sets, actually used by ANN
@@ -535,22 +514,24 @@ void *Nova::ClassificationLoop(void *ptr)
 		engine->NormalizeDataPoints();
 
 		//Perform classification on each suspect
-		// XXX 'suspects' SuspectTableIterator todo
-		for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 		{
-			if(it->second->GetNeedsClassificationUpdate())
+			if(it.Current().GetNeedsClassificationUpdate())
 			{
-				oldClassification = it->second->GetIsHostile();
-				engine->Classify(it->second);
+				Suspect suspectCopy = suspects.CheckOut(it.GetKey());
+				oldClassification = suspectCopy.GetIsHostile();
+				engine->Classify(&suspectCopy);
 
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
-				if(it->second->GetIsHostile() || oldClassification)
+				if(suspectCopy.GetIsHostile() || oldClassification)
 				{
-					if(it->second->GetIsLive())
-						SilentAlarm(it->second);
+					if(suspectCopy.GetIsLive())
+					{
+						SilentAlarm(&suspectCopy);
+					}
 				}
-				if(SendSuspectToUI(it->second))
+				if(SendSuspectToUI(&suspectCopy))
 				{
 					LOG(DEBUG, "Sent a suspect to the UI",
 							(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
@@ -560,44 +541,36 @@ void *Nova::ClassificationLoop(void *ptr)
 					LOG(NOTICE, "Failed to send suspect to UI",
 							(format("File %1% at line %2%: Sending suspect to UI failed")%__LINE__%__FILE__).str());
 				}
+				suspects.CheckIn(&suspectCopy);
 			}
 		}
-		pthread_rwlock_unlock(&suspectTableLock);
-
 		if (Config::Inst()->getSaveFreq() > 0)
+		{
 			if ((time(NULL) - lastSaveTime) > Config::Inst()->getSaveFreq())
 			{
-				pthread_rwlock_wrlock(&suspectTableLock);
 				AppendToStateFile();
-				pthread_rwlock_unlock(&suspectTableLock);
 			}
+		}
 
 		if (Config::Inst()->getDataTTL() > 0)
-			if ((time(NULL) - lastLoadTime) > Config::Inst()->getDataTTL())
+		{
+			if((time(NULL) - lastLoadTime) > Config::Inst()->getDataTTL())
 			{
-				pthread_rwlock_wrlock(&suspectTableLock);
 				AppendToStateFile();
 				RefreshStateFile();
-
-				// XXX 'suspects' SuspectTableIterator todo
-				for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
-					delete it->second;
-				suspects.clear();
-
-				// XXX 'suspects' SuspectTableIterator todo
-				for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
-					delete it->second;
-				suspectsSinceLastSave.clear();
-
+				suspects.Clear();
+				suspectsSinceLastSave.Clear();
 				LoadStateFile();
-				pthread_rwlock_unlock(&suspectTableLock);
 			}
-
+		}
 	} while(Config::Inst()->getClassificationTimeout());
 
 	//Shouldn't get here!!
 	if(Config::Inst()->getClassificationTimeout())
-		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+	{
+		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% "
+				"at line %2%: Should never get here")%__LINE__%__FILE__).str());
+	}
 
 	return NULL;
 }
@@ -619,8 +592,9 @@ void *Nova::TrainingLoop(void *ptr)
 	strftime (buffer,40,"%m-%d-%y_%H-%M-%S",timeinfo);
 
 
-	string trainingCapFile = userHomePath + "/" + Config::Inst()->getPathTrainingCapFolder() + "/training" + buffer + ".dump";
-
+	string trainingCapFile = userHomePath + "/" + Config::Inst()->getPathTrainingCapFolder() + "/training"
+			+ buffer + ".dump";
+	Suspect suspectCopy;
 	//Training Loop
 	do
 	{
@@ -629,31 +603,31 @@ void *Nova::TrainingLoop(void *ptr)
 
 		if (myfile.is_open())
 		{
-			pthread_rwlock_wrlock(&suspectTableLock);
 			//Calculate the "true" Feature Set for each Suspect
-			for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+			for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 			{
-
-				if(it->second->GetNeedsFeatureUpdate())
+				if(it.Current().GetNeedsFeatureUpdate())
 				{
-					it->second->CalculateFeatures();
-					if(it->second->m_annPoint == NULL)
-						it->second->m_annPoint = annAllocPt(DIM);
-
+					suspectCopy = suspects.CheckOut(it.GetKey());
+					ANNpoint aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+					aNN = suspectCopy.GetAnnPoint();
+					suspectCopy.CalculateFeatures();
+					if(aNN == NULL)
+						aNN = annAllocPt(DIM);
 
 					for(int j=0; j < DIM; j++)
-						it->second->m_annPoint[j] = it->second->m_features.m_features[j];
+					{
+						aNN[j] = suspectCopy.GetFeatureSet().m_features[j];
 
-						myfile << string(inet_ntoa(it->second->GetInAddr())) << " ";
-
+						myfile << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
 						for(int j=0; j < DIM; j++)
-							myfile << it->second->m_annPoint[j] << " ";
-
+						{
+							myfile << aNN[j] << " ";
+						}
 						myfile << "\n";
-
-					it->second->SetNeedsFeatureUpdate(false);
-					//cout << it->second->ToString(featureEnabled);
-					if(SendSuspectToUI(it->second))
+					suspectCopy.SetAnnPoint(aNN);
+					suspectCopy.SetNeedsFeatureUpdate(false);
+					if(SendSuspectToUI(&suspectCopy))
 					{
 						LOG(DEBUG, "Sent a suspect to the UI",
 								(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
@@ -663,22 +637,23 @@ void *Nova::TrainingLoop(void *ptr)
 						LOG(NOTICE, "Failed to send suspect to UI",
 								(format("File %1% at line %2%: Sending suspect to UI failed")%__LINE__%__FILE__).str());
 					}
+					suspects.CheckIn(&suspectCopy);
+					annDeallocPt(aNN);
 				}
 			}
-			pthread_rwlock_unlock(&suspectTableLock);
 		}
 		else
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Unable to open the training capture file %3% for writing. Can not save training data.")
-					%__LINE__%__FILE__%trainingCapFile).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Unable to open the training capture file "
+					"%3% for writing. Can not save training data.")%__LINE__%__FILE__%trainingCapFile).str());
 		}
 		myfile.close();
 	} while(Config::Inst()->getClassificationTimeout());
 
 	//Shouldn't get here!
 	if (Config::Inst()->getClassificationTimeout())
-		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")
-				%__LINE__%__FILE__).str());
+		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format(
+				"File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
 
 	return NULL;
 }
@@ -691,7 +666,8 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
-		LOG(CRITICAL, (format("File %1% at line %2%: Unable to create the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+		LOG(CRITICAL, (format("File %1% at line %2%: Unable to create the silent alarm socket."
+				" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -706,13 +682,15 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
-		LOG(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+		LOG(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket."
+				" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
 
 	stringstream ss;
-	ss << "sudo iptables -A INPUT -p udp --dport " << Config::Inst()->getSaPort() << " -j REJECT --reject-with icmp-port-unreachable";
+	ss << "sudo iptables -A INPUT -p udp --dport " << Config::Inst()->getSaPort() << " -j REJECT"
+			" --reject-with icmp-port-unreachable";
 	if(system(ss.str().c_str()) == -1)
 	{
 	    LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
@@ -726,12 +704,14 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
     {
-    	LOG(CRITICAL, (format("File %1% at line %2%: Unable to listen on the silent alarm socket. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+    	LOG(CRITICAL, (format("File %1% at line %2%: Unable to listen on the silent alarm socket."
+    			" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 		close(sockfd);
         exit(EXIT_FAILURE);
     }
 
 	int connectionSocket, bytesRead;
+	Suspect suspectCopy;
 
 	//Accept incoming Silent Alarm TCP Connections
 	while(1)
@@ -742,16 +722,16 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		//Blocking call
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
-			LOG(ERROR, (format("File %1% at line %2%: Problem when accepting incoming silent alarm connection. Errno: %3%")
-					%__LINE__%__FILE__%strerror(errno)).str());
+			LOG(ERROR, (format("File %1% at line %2%: Problem when accepting incoming silent alarm connection."
+					" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
 		}
 
 		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Problem when receiving incoming silent alarm connection. Errno: %3%")
-					%__LINE__%__FILE__%strerror(errno)).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Problem when receiving incoming silent alarm connection."
+					" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
 		}
@@ -764,33 +744,33 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		}
 		CryptBuffer(buf, bytesRead, DECRYPT);
 
-		pthread_rwlock_wrlock(&suspectTableLock);
-
-		uint addr = 0;
+		in_addr_t addr = 0;
 		memcpy(&addr, buf, 4);
-		SuspectHashTable::iterator it = suspects.find(addr);
-
-		//If this is a new suspect put it in the table
-		if(it == suspects.end())
-		{
-			suspects[addr] = new Suspect();
-			suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
-			//We set isHostile to false so that when we classify the first time
-			// the suspect will go from benign to hostile and be sent to the doppelganger module
-			suspects[addr]->SetIsHostile(false);
-		}
+		uint64_t key = addr;
+		Suspect * newSuspect = new Suspect();
+		newSuspect->DeserializeSuspectWithData(buf, BROADCAST_DATA);
 		//If this suspect exists, update the information
+		if(suspects.IsValidKey(key))
+		{
+			suspectCopy = suspects.CheckOut(key);
+			suspectCopy.SetFlaggedByAlarm(true);
+			FeatureSet fs = newSuspect->GetFeatureSet();
+			suspectCopy.AddFeatureSet(&fs);
+			suspects.CheckIn(&suspectCopy);
+		}
+		//If this is a new suspect put it in the table
 		else
 		{
-			//This function will overwrite everything except the information used to calculate the classification
-			// a combined classification will be given next classification loop
-			suspects[addr]->DeserializeSuspectWithData(buf, BROADCAST_DATA);
+			newSuspect->SetIsHostile(false);
+			newSuspect->SetFlaggedByAlarm(true);
+			//We set isHostile to false so that when we classify the first time
+			// the suspect will go from benign to hostile and be sent to the doppelganger module
+			suspects.AddNewSuspect(newSuspect);
 		}
-		suspects[addr]->SetFlaggedByAlarm(true);
-		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-		LOG(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")%__LINE__%__FILE__%suspects[addr]->ToString()).str());
 
-		pthread_rwlock_unlock(&suspectTableLock);
+		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
+		LOG(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")
+				%__LINE__%__FILE__%suspects[addr].ToString()).str());
 
 		if(!Config::Inst()->getClassificationTimeout())
 			ClassificationLoop(NULL);
@@ -798,10 +778,10 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		close(connectionSocket);
 	}
 	close(sockfd);
-	LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+	LOG(CRITICAL, "The code should never get here, something went very wrong.",
+			(format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
 	return NULL;
 }
-
 
 void Nova::SilentAlarm(Suspect *suspect)
 {
@@ -844,18 +824,15 @@ void Nova::SilentAlarm(Suspect *suspect)
 			system(commandLine.c_str());
 		}
 	}
-	if(suspect->m_features.m_unsentData->m_packetCount)
+	if(suspect->GetUnsentFeatureSet().m_packetCount)
 	{
 		do
 		{
-			dataLen = suspect->SerializeSuspect(serializedBuffer);
-
-			// Serialize the unsent data
-			dataLen += suspect->m_features.m_unsentData->SerializeFeatureData(serializedBuffer+dataLen);
+			dataLen = suspect->SerializeSuspectWithData(serializedBuffer);
 			// Move the unsent data to the sent side
-			suspect->m_features.UpdateFeatureData(true);
+			suspect->UpdateFeatureData(INCLUDE);
 			// Clear the unsent data
-			suspect->m_features.m_unsentData->clearFeatureData();
+			suspect->ClearUnsentData();
 
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < Config::Inst()->getNeighbors().size(); i++)
@@ -882,8 +859,8 @@ void Nova::SilentAlarm(Suspect *suspect)
 						//Send Silent Alarm to other Nova Instances with feature Data
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 						{
-							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
-									%__LINE__%__FILE__%strerror(errno)).str());
+							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm."
+									" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
 						}
@@ -894,12 +871,12 @@ void Nova::SilentAlarm(Suspect *suspect)
 							{
 								//set to max attempts to hit the failed connect condition
 								i = Config::Inst()->getSaMaxAttempts();
-								LOG(ERROR, (format("File %1% at line %2%: Unable to connect to host to send silent alarm. Errno: %3%")
-										%__LINE__%__FILE__%strerror(errno)).str());
+								LOG(ERROR, (format("File %1% at line %2%: Unable to connect to host to send silent alarm."
+										" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 								break;
 							}
-							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm. Errno: %3%")
-									%__LINE__%__FILE__%strerror(errno)).str());
+							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm."
+									" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
 						}
@@ -922,7 +899,9 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 				if( send(sockfd, serializedBuffer, dataLen, 0) == -1)
 				{
-					LOG(ERROR, (format("File %1% at line %2%: Error in TCP Send of silent alarm. Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+					LOG(ERROR, (format("File %1% at line %2%: Error in TCP Send of silent alarm."
+							" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+
 					close(sockfd);
 					ss.str("");
 					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
@@ -971,14 +950,16 @@ bool Nova::KnockPort(bool mode)
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %s")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %s")
+				%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
 	}
 
 	if( sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %s")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %s")
+				%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
 	}
@@ -1013,18 +994,21 @@ bool Nova::Start_Packet_Handler()
 
 		if(handle == NULL)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't open pcapc file: %3%: %4%")%__FILE__%__LINE__%Config::Inst()->getPathPcapFile().c_str()%errbuf).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't open pcapc file: %3%: %4%")
+					%__FILE__%__LINE__%Config::Inst()->getPathPcapFile().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't parse pcap filter: %3%: %4%")%__LINE__%filter_exp%pcap_geterr(handle)).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't parse pcap filter: %3%: %4%")
+					%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't install pcap filter: %3%: %4%")% __FILE__%__LINE__%filter_exp%pcap_geterr(handle)).str());
+			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't install pcap filter: %3%: %4%")
+					% __FILE__%__LINE__%filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 		//First process any packets in the file then close all the sessions
@@ -1047,7 +1031,8 @@ bool Nova::Start_Packet_Handler()
 
 		if(handle == NULL)
 		{
-			LOG(ERROR, (format("File %1% at line %2%:  Unable to open the network interface for live capture: %3% %4%")% __FILE__%__LINE__%Config::Inst()->getInterface().c_str()%errbuf).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Unable to open the network interface for live capture:"
+					" %3% %4%")% __FILE__%__LINE__%Config::Inst()->getInterface().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
@@ -1056,19 +1041,22 @@ bool Nova::Start_Packet_Handler()
 
 		if(ret == -1)
 		{
-			LOG(ERROR, (format("File %1% at line %2%: Unable to get the network address and mask of the interface. Error: %3%")% __FILE__%__LINE__%errbuf).str());
+			LOG(ERROR, (format("File %1% at line %2%: Unable to get the network address and mask "
+					"of the interface. Error: %3%")% __FILE__%__LINE__%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
 		{
-			LOG(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Couldn't parse filter: %3% %4%")
+					% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 
 		if (pcap_setfilter(handle, &fp) == -1)
 		{
-			LOG(ERROR, (format("File %1% at line %2%:  Couldn't install filter:%3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Couldn't install filter:%3% %4%")
+					% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
 			exit(EXIT_FAILURE);
 		}
 		//"Main Loop"
@@ -1177,7 +1165,8 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Unknown Non-IP Packet Received. Nova is ignoring it.")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Unknown Non-IP Packet Received. Nova is ignoring it.")
+				% __FILE__%__LINE__).str());
 		return;
 	}
 }
@@ -1190,17 +1179,14 @@ void Nova::SaveSuspectsToFile(string filename)
 
 	if(!out.is_open())
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")% __FILE__%__LINE__% filename).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")
+				% __FILE__%__LINE__% filename).str());
 		return;
 	}
-
-	pthread_rwlock_rdlock(&suspectTableLock);
-	for (SuspectHashTable::iterator it = suspects.begin() ; it != suspects.end(); it++)
+	for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 	{
-		out << it->second->ToString() << endl;
+		out << it.Current().ToString() << endl;
 	}
-	pthread_rwlock_unlock(&suspectTableLock);
-
 	out.close();
 }
 
@@ -1210,7 +1196,8 @@ void Nova::LoadConfiguration()
 
 	if(hostAddrString.size() == 0)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Bad ethernet interface, no IP's associated!")% __FILE__%__LINE__).str());
+		LOG(ERROR, (format("File %1% at line %2%:  Bad ethernet interface, no IP's associated!")
+				% __FILE__%__LINE__).str());
 		exit(EXIT_FAILURE);
 	}
 
@@ -1270,15 +1257,20 @@ void *Nova::UpdateIPFilter(void *ptr)
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read (notifyFd, buf, BUF_LEN);
 			if (readLen > 0) {
-				watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+				watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO
+						| IN_MODIFY | IN_DELETE);
 				haystackDhcpAddresses = GetHaystackDhcpAddresses(dhcpListFile);
 				string haystackAddresses_csv = ConstructFilterString();
 
 				if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%: Couldn't parse pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%: "
+							"Couldn't parse pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%
+							pcap_geterr(handle)).str());
 
 				if (pcap_setfilter(handle, &fp) == -1)
-					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%:  Couldn't install pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%pcap_geterr(handle)).str());
+					LOG(ERROR, "Unable to enable packet capture", (format("File %1% at line %2%:  "
+							"Couldn't install pcap filter: %3% %4%")% __FILE__%__LINE__% filter_exp%
+							pcap_geterr(handle)).str());
 			}
 		}
 		else
@@ -1364,13 +1356,14 @@ void *Nova::TCPTimeout(void *ptr)
 		time_t currentTime = time(NULL);
 		time_t packetTime;
 
-		for (TCPSessionHashTable::iterator it = SessionTable.begin() ; it != SessionTable.end(); it++ )
+		for(TCPSessionHashTable::iterator it = SessionTable.begin(); it != SessionTable.end(); it++ )
 		{
 
 			if(it->second.session.size() > 0)
 			{
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
-				//If were reading packets from a file, assume all packets have been loaded and go beyond timeout threshhold
+				//If were reading packets from a file, assume all packets have been loaded and go beyond
+				// timeout threshhold
 				if(usePcapFile)
 				{
 					currentTime = packetTime+3+Config::Inst()->getTcpTimout();
@@ -1381,7 +1374,7 @@ void *Nova::TCPTimeout(void *ptr)
 					//If session has been finished for more than two seconds
 					if(it->second.fin == true)
 					{
-						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
+						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
@@ -1405,7 +1398,7 @@ void *Nova::TCPTimeout(void *ptr)
 					//If this session is timed out
 					else if(packetTime + Config::Inst()->getTcpTimout() < currentTime)
 					{
-						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
+						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
 							pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
@@ -1439,25 +1432,33 @@ void *Nova::TCPTimeout(void *ptr)
 	if(usePcapFile) return NULL;
 
 
-	LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+	LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%:"
+			" Should never get here")%__LINE__%__FILE__).str());
 	return NULL;
 }
 
 void Nova::UpdateSuspect(Packet packet)
 {
-	in_addr_t addr = packet.ip_hdr.ip_src.s_addr;
-	pthread_rwlock_wrlock(&suspectTableLock);
+	Suspect * newSuspect = new Suspect(packet);
+	in_addr_t addr = newSuspect->GetIpAddress();
 	//If our suspect is new
-	if(suspects.find(addr) == suspects.end())
-		suspects[addr] = new Suspect(packet);
+	if(!suspects.IsValidKey(addr))
+	{
+		newSuspect->SetNeedsClassificationUpdate(true);
+		newSuspect->SetNeedsFeatureUpdate(true);
+		newSuspect->SetIsLive(usePcapFile);
+		suspects.AddNewSuspect(newSuspect);
+	}
 	//Else our suspect exists
 	else
-		suspects[addr]->AddEvidence(packet);
-
-	suspects[addr]->SetIsLive(usePcapFile);
-	pthread_rwlock_unlock(&suspectTableLock);
+	{
+		Suspect suspectCopy = suspects.CheckOut(addr);
+		suspectCopy.AddEvidence(packet);
+		suspectCopy.SetIsLive(usePcapFile);
+		suspects.CheckIn(&suspectCopy);
+		delete newSuspect;
+	}
 }
-
 string Nova::GetLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
@@ -1497,4 +1498,3 @@ string Nova::GetLocalIP(const char *dev)
 	}
 	return string("");
 }
-

@@ -16,6 +16,8 @@
 // Description : Iterator used for traversing over a Suspect Table
 //============================================================================/*
 
+#include <math.h>
+
 #include "SuspectTableIterator.h"
 
 using namespace std;
@@ -30,11 +32,13 @@ namespace Nova
 
 
 //Default iterator constructor
-SuspectTableIterator::SuspectTableIterator(SuspectHashTable * table, vector<in_addr_t> * keys)
+SuspectTableIterator::SuspectTableIterator(SuspectHashTable* table, vector<uint64_t>* keys, pthread_rwlock_t *lock)
+: m_table_ref(*table), m_keys_ref(*keys), m_lock_ref(*lock)
 {
+	m_table_ref = *table;
+	m_keys_ref = *keys;
+	m_lock_ref = *lock;
 	m_index = 0;
-	m_table_ref = table;
-	m_keys_ref = keys;
 }
 
 //Default iterator deconstructor
@@ -44,60 +48,163 @@ SuspectTableIterator::~SuspectTableIterator()
 }
 
 //Gets the Next Suspect in the table and increments the iterator
-// Returns a copy of the Suspect
+// Returns a reference to the Suspect
 Suspect SuspectTableIterator::Next()
 {
+	pthread_rwlock_rdlock(&m_lock_ref);
 	m_index++;
-	if(m_index >= m_table_ref->size())
+	if(m_index >= m_keys_ref.size())
+	{
 		m_index = 0;
-	SuspectHashTable::iterator it = m_table_ref->find(m_keys_ref->at(m_index));
-	return *it->second;
+	}
+
+	SuspectHashTable::iterator it = m_table_ref.find(m_keys_ref[m_index]);
+	if(it != m_table_ref.end())
+	{
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
+	else
+	{
+		it = m_table_ref.begin();
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
 }
 
 //Gets the Next Suspect in the table, does not increment the iterator
-// Returns a copy of the Suspect
+// Returns a reference to the Suspect
 Suspect SuspectTableIterator::LookAhead()
 {
+	pthread_rwlock_rdlock(&m_lock_ref);
 	SuspectHashTable::iterator it;
-	if((m_index+1) == m_table_ref->size())
-		it = m_table_ref->find(m_keys_ref->front());
+	//Make sure we have a valid index for the key query
+	if((m_index+1) >= m_keys_ref.size())
+	{
+		it = m_table_ref.begin();
+	}
 	else
-		it = m_table_ref->find(m_keys_ref->at(m_index+1));
-	return *it->second;
+	{
+		it = m_table_ref.find(m_keys_ref[m_index+1]);
+	}
+
+	//Make sure the key returned a suspect
+	if(it != m_table_ref.end())
+	{
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
+	else
+	{
+		it = m_table_ref.begin();
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
 }
 
 //Gets the Previous Suspect in the Table and decrements the iterator
-// Returns a copy of the Suspect
+// Returns a reference to the Suspect
 Suspect SuspectTableIterator::Previous()
 {
-	SuspectHashTable::iterator it;
+	pthread_rwlock_rdlock(&m_lock_ref);
 	m_index--;
-	if(m_index < 0)
-		it = m_table_ref->find(m_keys_ref->size()-1);
-	return *it->second;
+	if(m_index >= m_keys_ref.size())
+	{
+		m_index = m_keys_ref.size()-1;
+	}
 
+	SuspectHashTable::iterator it = m_table_ref.find(m_keys_ref[m_index]);
+
+	if(it != m_table_ref.end())
+	{
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
+	else
+	{
+		it = m_table_ref.begin();
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
 }
 
 //Gets the Previous Suspect in the Table, does not decrement the iterator
-// Returns a copy of the Suspect
+// Returns a reference to the Suspect
 Suspect SuspectTableIterator::LookBack()
 {
+	pthread_rwlock_rdlock(&m_lock_ref);
 	SuspectHashTable::iterator it;
-	if(m_index > 0)
-		it = m_table_ref->find(m_keys_ref->at(m_index -1));
+	//Make sure we have a valid index for the key query
+	if((m_index-1) >= m_keys_ref.size())
+	{
+		it = m_table_ref.begin();
+		it.operator ++(m_table_ref.size()-1);
+	}
 	else
-		it = m_table_ref->find(m_keys_ref->back());
-	return *it->second;
+	{
+		it = m_table_ref.find(m_keys_ref[m_index-1]);
+	}
 
+	//Make sure the key returned a suspect
+	if(it != m_table_ref.end())
+	{
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
+	else
+	{
+		it = m_table_ref.begin();
+		it.operator ++(m_table_ref.size()-1);
+		pthread_rwlock_unlock(&m_lock_ref);
+		return *it->second;
+	}
 }
 
 //Gets the Current Suspect in the Table
-// Returns a copy of the Suspect
+// Returns a reference to the Suspect
 Suspect SuspectTableIterator::Current()
 {
+	pthread_rwlock_rdlock(&m_lock_ref);
 	SuspectHashTable::iterator it;
-	it = m_table_ref->find(m_keys_ref->at(m_index));
+	if((m_index >= 0) && (m_index < m_keys_ref.size()))
+	{
+		it = m_table_ref.find(m_keys_ref[m_index]);
+
+		if (it != m_table_ref.end())
+		{
+			pthread_rwlock_unlock(&m_lock_ref);
+			return *it->second;
+		}
+	}
+	it = m_table_ref.begin();
+	pthread_rwlock_unlock(&m_lock_ref);
 	return *it->second;
+}
+
+// Gets a reference to the index of the iterator
+// Returns a reference to m_index
+uint SuspectTableIterator::GetIndex()
+{
+	return m_index;
+}
+
+uint64_t SuspectTableIterator::GetKey()
+{
+	pthread_rwlock_rdlock(&m_lock_ref);
+	uint64_t ret;
+	if(m_index < m_keys_ref.size())
+	{
+		ret = m_keys_ref[m_index];
+		if(m_table_ref.find(ret) == m_table_ref.end())
+			ret = m_table_ref.begin()->first;
+	}
+	else
+	{
+		ret = m_table_ref.begin()->first;
+	}
+	memcpy(&m_keys_ref.at(m_index), &ret, 4);
+	pthread_rwlock_unlock(&m_lock_ref);
+	return ret;
 }
 
 //Increments the iterator by 1

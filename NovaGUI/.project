@@ -3,8 +3,8 @@
 	<name>NovaGUI</name>
 	<comment></comment>
 	<projects>
-		<project>NovaLibrary</project>
 		<project>Nova_UI_Core</project>
+		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

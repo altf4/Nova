@@ -39,14 +39,11 @@ FeatureSet::FeatureSet()
 	m_IPTable.resize(INIT_SIZE_SMALL);
 	m_portTable.resize(INIT_SIZE_MEDIUM);
 	m_packTable.resize(INIT_SIZE_LARGE);
-
-	m_unsentData = NULL;
 }
 
 FeatureSet::~FeatureSet()
 {
-	delete m_unsentData;
-	m_unsentData = NULL;
+
 }
 
 
@@ -77,8 +74,6 @@ void FeatureSet::ClearFeatureSet()
 void FeatureSet::CalculateAll()
 {
 	CalculateTimeInterval();
-
-	UpdateFeatureData(INCLUDE);
 
 	if (Config::Inst()->isFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
@@ -120,9 +115,6 @@ void FeatureSet::CalculateAll()
 				Calculate(PACKET_INTERVAL_MEAN);
 			Calculate(PACKET_INTERVAL_DEVIATION);
 	}
-
-
-	UpdateFeatureData(REMOVE);
 }
 
 
@@ -268,6 +260,10 @@ void FeatureSet::CalculateTimeInterval()
 	{
 		m_totalInterval = m_endTime - m_startTime;
 	}
+	else
+	{
+		m_totalInterval = 0;
+	}
 }
 
 void FeatureSet::UpdateEvidence(Packet packet)
@@ -356,7 +352,20 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	}
 }
 
-FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
+FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
+{
+	if(m_startTime > rhs.m_startTime)
+	{
+		m_startTime = rhs.m_startTime;
+	}
+	if(m_endTime < rhs.m_endTime)
+	{
+		m_endTime = rhs.m_endTime;
+	}
+	if(m_last_time < rhs.m_last_time)
+	{
+		m_last_time = rhs.m_last_time;
+	}
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
 	m_bytesTotal += rhs.m_bytesTotal;
@@ -381,7 +390,20 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
 	return *this;
 }
 
-FeatureSet& FeatureSet::operator-=(FeatureSet &rhs) {
+FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
+{
+	if(m_startTime > rhs.m_startTime)
+	{
+		m_startTime = rhs.m_startTime;
+	}
+	if(m_endTime < rhs.m_endTime)
+	{
+		m_endTime = rhs.m_endTime;
+	}
+	if(m_last_time < rhs.m_last_time)
+	{
+		m_last_time = rhs.m_last_time;
+	}
 	m_totalInterval -= rhs.m_totalInterval;
 	m_packetCount -= rhs.m_packetCount;
 	m_bytesTotal -= rhs.m_bytesTotal;
@@ -401,15 +423,6 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs) {
 
 	return *this;
 }
-
-void FeatureSet::UpdateFeatureData(bool include)
-{
-	if(include)
-		*this += *m_unsentData;
-	else
-		*this -= *m_unsentData;
-}
-
 
 uint32_t FeatureSet::SerializeFeatureSet(u_char * buf)
 {
@@ -677,5 +690,45 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 	return offset;
 }
+
+/*
+FeatureSet& FeatureSet::operator=(FeatureSet &rhs)
+{
+	this->m_IPTable = rhs.m_IPTable;
+	this->m_bytesTotal = rhs.m_bytesTotal;
+	this->m_endTime = rhs.m_endTime;
+	*this->m_features = *rhs.m_features;
+	this->m_haystackEvents = rhs.m_haystackEvents;
+	this->m_intervalTable = rhs.m_intervalTable;
+	this->m_last_time = rhs.m_last_time;
+	this->m_packTable = rhs.m_packTable;
+	this->m_packetCount = rhs.m_packetCount;
+	this->m_portMax = rhs.m_portMax;
+	this->m_portTable = rhs.m_portTable;
+	this->m_startTime = rhs.m_startTime;
+	this->m_totalInterval = rhs.m_totalInterval;
+
+	return *this;
+}
+
+FeatureSet& FeatureSet::operator=(FeatureSet rhs)
+{
+	delete m_unsentData;
+	this->m_IPTable = rhs.m_IPTable;
+	this->m_bytesTotal = rhs.m_bytesTotal;
+	this->m_endTime = rhs.m_endTime;
+	*this->m_features = *rhs.m_features;
+	this->m_haystackEvents = rhs.m_haystackEvents;
+	this->m_intervalTable = rhs.m_intervalTable;
+	this->m_last_time = rhs.m_last_time;
+	this->m_packTable = rhs.m_packTable;
+	this->m_packetCount = rhs.m_packetCount;
+	this->m_portMax = rhs.m_portMax;
+	this->m_portTable = rhs.m_portTable;
+	this->m_startTime = rhs.m_startTime;
+	this->m_totalInterval = rhs.m_totalInterval;
+
+	return *this;
+}*/
 
 }
