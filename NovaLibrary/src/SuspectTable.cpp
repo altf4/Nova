@@ -361,7 +361,7 @@ vector<uint64_t> SuspectTable::GetBenignSuspectKeys()
 
 //Looks at the hostility of the suspect at key
 //		key: uint64_t of the Suspect
-// Returns 0 for Benign, 1 for Hostile, and -1 if the key is invalid
+// Returns 0 for Benign, 1 for Hostile, and -2 if the key is invalid
 SuspectTableRet SuspectTable::GetHostility(uint64_t key)
 {
 	if(!IsValidKey(key))
