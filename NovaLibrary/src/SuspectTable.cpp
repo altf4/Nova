@@ -35,7 +35,6 @@ SuspectTable::SuspectTable()
 	m_keys.clear();
 	m_owners.clear();
 	pthread_rwlock_init(&m_lock, NULL);
-	pthread_rwlock_init(&m_ownerLock, NULL);
 
 	uint64_t initKey = 0;
 	initKey--;
@@ -174,7 +173,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
-			Wrlock();
+			Rdlock();
 
 			//If no owner become the owner
 			if(!m_table[key]->HasOwner())
@@ -207,9 +206,14 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				m_table[key]->SetIsLive(suspectCopy.GetIsLive());
 				m_table[key]->SetNeedsClassificationUpdate(suspectCopy.GetNeedsClassificationUpdate());
 				m_table[key]->SetNeedsFeatureUpdate(suspectCopy.GetNeedsFeatureUpdate());
-
 				fs = suspectCopy.GetUnsentFeatureSet();
 				m_table[key]->SetUnsentFeatureSet(&fs);
+				m_table[key]->ClearEvidence();
+				vector<Packet> temp = suspectCopy.GetEvidence();
+				for(uint i = 0; i < temp.size(); i++)
+				{
+					m_table[key]->AddEvidence(temp[i]);
+				}
 				m_table[key]->ResetOwner();
 				Unlock();
 				return SUCCESS;

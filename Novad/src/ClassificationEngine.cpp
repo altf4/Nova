@@ -207,14 +207,12 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 void ClassificationEngine::NormalizeDataPoints()
 {
-	Suspect suspectCopy;
 	for(SuspectTableIterator it = m_suspects.Begin(); it.GetIndex() != m_suspects.Size(); ++it)
 	{
 		// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
 		int ai = 0;
-		suspectCopy = m_suspects.CheckOut(it.GetKey());
-		suspectCopy.SetOwner();
-		FeatureSet fs = it.Current().GetFeatureSet();
+		Suspect suspectCopy = m_suspects.CheckOut(it.GetKey());
+		FeatureSet fs = suspectCopy.GetFeatureSet();
 		for(int i = 0;i < DIM;i++)
 		{
 			if (Config::Inst()->isFeatureEnabled(i))
@@ -239,16 +237,14 @@ void ClassificationEngine::NormalizeDataPoints()
 	{
 		if(it.Current().GetNeedsFeatureUpdate())
 		{
-			suspectCopy = m_suspects.CheckOut(it.GetKey());
+			Suspect suspectCopy = m_suspects.CheckOut(it.GetKey());
 			suspectCopy.SetOwner();
 			int ai = 0;
-			ANNpoint aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-			aNN = suspectCopy.GetAnnPoint();
+			ANNpoint aNN = suspectCopy.GetAnnPoint();
+
 			if(aNN == NULL)
 			{
 				aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-				suspectCopy.SetAnnPoint(aNN);
-				aNN = suspectCopy.GetAnnPoint();
 			}
 
 			for(int i = 0; i < DIM; i++)
@@ -270,7 +266,6 @@ void ClassificationEngine::NormalizeDataPoints()
 			suspectCopy.SetAnnPoint(aNN);
 			suspectCopy.SetNeedsFeatureUpdate(false);
 			m_suspects.CheckIn(&suspectCopy);
-			annDeallocPt(aNN);
 		}
 	}
 }
@@ -411,7 +406,13 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 						//Set the max values of each feature. (Used later in normalization)
 						if(temp > m_maxFeatureValues[actualDimension])
+						{
 							m_maxFeatureValues[actualDimension] = temp;
+						}
+						if(temp < m_minFeatureValues[actualDimension])
+						{
+							m_minFeatureValues[actualDimension] = temp;
+						}
 
 						m_meanFeatureValues[actualDimension] += temp;
 

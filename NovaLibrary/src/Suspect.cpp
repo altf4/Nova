@@ -852,7 +852,11 @@ Suspect& Suspect::operator=(Suspect &rhs)
 		m_annPoint = NULL;
 	}
 
-	m_evidence = rhs.m_evidence;
+	m_evidence.clear();
+	for(uint i = 0; i < rhs.m_evidence.size(); i++)
+	{
+		m_evidence.push_back(rhs.m_evidence[i]);
+	}
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
@@ -896,7 +900,11 @@ Suspect& Suspect::operator=(Suspect rhs)
 		m_annPoint = NULL;
 	}
 
-	m_evidence = rhs.m_evidence;
+	m_evidence.clear();
+	for(uint i = 0; i < rhs.m_evidence.size(); i++)
+	{
+		m_evidence.push_back(rhs.m_evidence[i]);
+	}
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
