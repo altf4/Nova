@@ -260,6 +260,10 @@ void FeatureSet::CalculateTimeInterval()
 	{
 		m_totalInterval = m_endTime - m_startTime;
 	}
+	else
+	{
+		m_totalInterval = 0;
+	}
 }
 
 void FeatureSet::UpdateEvidence(Packet packet)
@@ -348,7 +352,20 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	}
 }
 
-FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
+FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
+{
+	if(m_startTime > rhs.m_startTime)
+	{
+		m_startTime = rhs.m_startTime;
+	}
+	if(m_endTime < rhs.m_endTime)
+	{
+		m_endTime = rhs.m_endTime;
+	}
+	if(m_last_time < rhs.m_last_time)
+	{
+		m_last_time = rhs.m_last_time;
+	}
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
 	m_bytesTotal += rhs.m_bytesTotal;
@@ -373,7 +390,20 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs) {
 	return *this;
 }
 
-FeatureSet& FeatureSet::operator-=(FeatureSet &rhs) {
+FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
+{
+	if(m_startTime > rhs.m_startTime)
+	{
+		m_startTime = rhs.m_startTime;
+	}
+	if(m_endTime < rhs.m_endTime)
+	{
+		m_endTime = rhs.m_endTime;
+	}
+	if(m_last_time < rhs.m_last_time)
+	{
+		m_last_time = rhs.m_last_time;
+	}
 	m_totalInterval -= rhs.m_totalInterval;
 	m_packetCount -= rhs.m_packetCount;
 	m_bytesTotal -= rhs.m_bytesTotal;
@@ -697,13 +727,7 @@ FeatureSet& FeatureSet::operator=(FeatureSet rhs)
 	this->m_portTable = rhs.m_portTable;
 	this->m_startTime = rhs.m_startTime;
 	this->m_totalInterval = rhs.m_totalInterval;
-	if(rhs.m_unsentData != NULL)
-	{
-		FeatureSet fs = *rhs.m_unsentData;
-		m_unsentData = &fs;
-	}
-	else
-		m_unsentData = NULL;
+
 	return *this;
 }*/
 

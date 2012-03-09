@@ -54,10 +54,6 @@ Suspect::Suspect()
 Suspect::~Suspect()
 {
 	pthread_rwlock_destroy(&m_lock);
-	if(m_annPoint != NULL)
-	{
-		m_annPoint = NULL;
-	}
 }
 
 
@@ -214,10 +210,9 @@ int Suspect::CalculateFeatures()
 	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
 		return -1;
 	WrlockSuspect();
-
-	m_features += m_unsentFeatures;
+	UpdateFeatureData(INCLUDE);
 	m_features.CalculateAll();
-	m_features -= m_unsentFeatures;
+	UpdateFeatureData(REMOVE);
 	UnlockSuspect();
 	return 0;
 }
@@ -837,15 +832,24 @@ Suspect& Suspect::operator=(Suspect &rhs)
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
-	if(m_annPoint != NULL)
-	{
-		annDeallocPt(m_annPoint);
-	}
-
 	if(rhs.m_annPoint != NULL)
 	{
-		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-		memcpy(m_annPoint, rhs.m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
+		if(m_annPoint == NULL)
+		{
+			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		}
+		for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+		{
+			m_annPoint[i] = rhs.m_annPoint[i];
+		}
+	}
+	else
+	{
+		if(m_annPoint != NULL)
+		{
+			annDeallocPt(m_annPoint);
+		}
+		m_annPoint = NULL;
 	}
 
 	m_evidence = rhs.m_evidence;
@@ -862,8 +866,6 @@ Suspect& Suspect::operator=(Suspect &rhs)
 	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
-	m_owner = rhs.m_owner;
-	m_hasOwner = rhs.m_hasOwner;
 	UnlockSuspect();
 	return *this;
 }
@@ -874,15 +876,24 @@ Suspect& Suspect::operator=(Suspect rhs)
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
-	if(m_annPoint != NULL)
-	{
-		annDeallocPt(m_annPoint);
-	}
-
 	if(rhs.m_annPoint != NULL)
 	{
-		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-		memcpy(m_annPoint, rhs.m_annPoint, sizeof(ANNcoord)*Config::Inst()->getEnabledFeatureCount());
+		if(m_annPoint == NULL)
+		{
+			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		}
+		for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+		{
+			m_annPoint[i] = rhs.m_annPoint[i];
+		}
+	}
+	else
+	{
+		if(m_annPoint != NULL)
+		{
+			annDeallocPt(m_annPoint);
+		}
+		m_annPoint = NULL;
 	}
 
 	m_evidence = rhs.m_evidence;
@@ -899,8 +910,6 @@ Suspect& Suspect::operator=(Suspect rhs)
 	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
-	m_owner = rhs.m_owner;
-	m_hasOwner = rhs.m_hasOwner;
 	UnlockSuspect();
 	return *this;
 }

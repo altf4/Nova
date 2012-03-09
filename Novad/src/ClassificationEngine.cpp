@@ -84,7 +84,8 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	double d;
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
-	ANNpoint aNN = suspect->GetAnnPoint();
+	ANNpoint aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+	aNN = suspect->GetAnnPoint();
 	featureIndex fi;
 
 	m_kdTree->annkSearch(							// search
@@ -241,7 +242,8 @@ void ClassificationEngine::NormalizeDataPoints()
 			suspectCopy = m_suspects.CheckOut(it.GetKey());
 			suspectCopy.SetOwner();
 			int ai = 0;
-			ANNpoint aNN = suspectCopy.GetAnnPoint();
+			ANNpoint aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+			aNN = suspectCopy.GetAnnPoint();
 			if(aNN == NULL)
 			{
 				aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());

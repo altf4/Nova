@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "SuspectTable.h"
+#include "Config.h"
 
 using namespace std;
 using namespace Nova;
@@ -80,9 +81,9 @@ SuspectTableIterator SuspectTable::End()
 // Note: there are no guarantees about the state or existence of the Suspect in the table after this call.
 SuspectTableIterator SuspectTable::Find(uint64_t  key)
 {
-	Rdlock();
 	if(IsValidKey(key))
 	{
+		Rdlock();
 		SuspectTableIterator it = SuspectTableIterator(&m_table, &m_keys, &m_lock);
 		for(uint i = 0; i < m_keys.size(); i++)
 		{
@@ -97,6 +98,7 @@ SuspectTableIterator SuspectTable::Find(uint64_t  key)
 	}
 	else
 	{
+		Rdlock();
 		SuspectTableIterator it = SuspectTableIterator(&m_table, &m_keys, &m_lock);
 		it += m_table.size();
 		Unlock();
@@ -109,16 +111,13 @@ SuspectTableIterator SuspectTable::Find(uint64_t  key)
 // Returns (0) on Success, (2) if the suspect exists, and (-2) if the key is invalid;
 SuspectTableRet SuspectTable::AddNewSuspect(Suspect * suspect)
 {
-	Rdlock();
 	uint64_t key = suspect->GetIpAddress();
 	if(IsValidKey(key))
 	{
-		Unlock();
 		return SUSPECT_EXISTS;
 	}
 	else if((key == m_table.empty_key()) || (key == m_table.deleted_key()))
 	{
-		Unlock();
 		return KEY_INVALID;
 	}
 	else
@@ -136,24 +135,20 @@ SuspectTableRet SuspectTable::AddNewSuspect(Suspect * suspect)
 // Returns (0) on Success, and (2) if the suspect exists;
 SuspectTableRet SuspectTable::AddNewSuspect(Packet packet)
 {
-	Rdlock();
 	Suspect * s = new Suspect(packet);
 	uint64_t key = s->GetIpAddress();
 	if(IsValidKey(key))
 	{
-		Unlock();
 		delete s;
 		return SUSPECT_EXISTS;
 	}
 	else if((key == m_table.empty_key()) || (key == m_table.deleted_key()))
 	{
-		Unlock();
 		delete s;
 		return KEY_INVALID;
 	}
 	else
 	{
-		Unlock();
 		Wrlock();
 		m_table[key] = s;
 		m_keys.push_back(key);
@@ -170,7 +165,6 @@ SuspectTableRet SuspectTable::AddNewSuspect(Packet packet)
 // Note:  This function blocks until it can acquire a write lock on the suspect
 SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 {
-	Rdlock();
 	Suspect suspectCopy = *suspect;
 	suspectCopy.ResetOwner();
 
@@ -191,7 +185,8 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			//If the owner is this thread
 			if(pthread_equal(m_table[key]->GetOwner(), pthread_self()))
 			{
-				ANNpoint aNN = suspectCopy.GetAnnPoint();
+				ANNpoint aNN =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
+				aNN = suspectCopy.GetAnnPoint();
 				m_table[key]->SetAnnPoint(aNN);
 				annDeallocPt(aNN);
 				m_table[key]->SetClassification(suspectCopy.GetClassification());
@@ -227,7 +222,6 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			}
 		}
 	}
-	Unlock();
 	//suspectCopy.ResetOwner();
 	return KEY_INVALID;
 }
@@ -239,9 +233,9 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 // Note: If you wish to block until the suspect is available use suspect->SetOwner();
 Suspect SuspectTable::CheckOut(uint64_t key)
 {
-	Rdlock();
 	if(IsValidKey(key))
 	{
+		Rdlock();
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
@@ -254,8 +248,9 @@ Suspect SuspectTable::CheckOut(uint64_t key)
 			}
 			else
 			{
-				Wrlock();
+				Unlock();
 				m_table[key]->SetOwner();
+				Rdlock();
 				Suspect ret = *m_table[key];
 				ret.ResetOwner();
 				Unlock();
@@ -263,7 +258,7 @@ Suspect SuspectTable::CheckOut(uint64_t key)
 			}
 		}
 	}
-	Wrlock();
+	Rdlock();
 	m_table[key] = &m_emptySuspect;
 	Suspect ret = *m_table[key];
 	ret.ResetOwner();
@@ -277,9 +272,9 @@ Suspect SuspectTable::CheckOut(uint64_t key)
 // Note: there are no guarantees about the state or existence of the Suspect in the table after this call.
 Suspect SuspectTable::Peek(uint64_t  key)
 {
-	Rdlock();
 	if(IsValidKey(key))
 	{
+		Rdlock();
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
@@ -289,7 +284,7 @@ Suspect SuspectTable::Peek(uint64_t  key)
 			return ret;
 		}
 	}
-	Wrlock();
+	Rdlock();
 	m_table[key] = &m_emptySuspect;
 	Suspect ret = *m_table[key];
 	ret.ResetOwner();
@@ -302,14 +297,13 @@ Suspect SuspectTable::Peek(uint64_t  key)
 // Returns (0) on success, (-2) if the suspect does not exist, (-1) if the suspect is checked out
 SuspectTableRet SuspectTable::Erase(uint64_t key)
 {
-	Rdlock();
 	if(!IsValidKey(key))
 	{
-		Unlock();
 		return KEY_INVALID;
 	}
 	else
 	{
+		Rdlock();
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
@@ -329,7 +323,6 @@ SuspectTableRet SuspectTable::Erase(uint64_t key)
 			return SUCCESS;
 		}
 	}
-	Unlock();
 	//Shouldn't get here, IsValidKey should cover this case, this is here only to prevent warnings or incase of error
 	return KEY_INVALID;
 }
@@ -367,13 +360,12 @@ vector<uint64_t> SuspectTable::GetBenignSuspectKeys()
 // Returns 0 for Benign, 1 for Hostile, and -1 if the key is invalid
 SuspectTableRet SuspectTable::GetHostility(uint64_t key)
 {
-	Rdlock();
 	if(!IsValidKey(key))
 	{
-		Unlock();
 		return SUSPECT_CHECKED_OUT;
 	}
-	else if(m_table[key]->GetIsHostile())
+	Rdlock();
+	if(m_table[key]->GetIsHostile())
 	{
 		Unlock();
 		return SUSPECT_NOT_CHECKED_OUT;
@@ -448,7 +440,7 @@ bool SuspectTable::IsValidKey(uint64_t key)
 // Note: This function will block until the lock is acquired
 void SuspectTable::Wrlock()
 {
-	pthread_rwlock_wrlock(&m_ownerLock);
+
 	//Checks if the thread already has a lock
 	if(IsOwner())
 	{
@@ -457,7 +449,7 @@ void SuspectTable::Wrlock()
 		{
 			pthread_rwlock_unlock(&m_lock);
 			pthread_rwlock_wrlock(&m_lock);
-			pthread_rwlock_unlock(&m_ownerLock);
+
 			return;
 		}
 
@@ -471,10 +463,8 @@ void SuspectTable::Wrlock()
 			}
 		}
 	}
-
-	m_owners.push_back(pthread_self());
-	pthread_rwlock_unlock(&m_ownerLock);
 	pthread_rwlock_wrlock(&m_lock);
+	m_owners.push_back(pthread_self());
 
 }
 
@@ -499,8 +489,10 @@ bool SuspectTable::TryWrlock()
 	//If the current thread doesn't have a lock we attempt a read lock
 	if(!pthread_rwlock_trywrlock(&m_lock))
 	{
+
 		//If we get a lock we store the thread as an owner
 		m_owners.push_back(pthread_self());
+
 		return true;
 	}
 	//If we fail to get a lock
@@ -511,7 +503,7 @@ bool SuspectTable::TryWrlock()
 // Note: This function will block until the lock is acquired
 void SuspectTable::Rdlock()
 {
-	pthread_rwlock_wrlock(&m_ownerLock);
+
 	//Checks if the thread already has a lock
 	if(IsOwner())
 	{
@@ -522,14 +514,14 @@ void SuspectTable::Rdlock()
 			pthread_rwlock_rdlock(&m_lock);
 		}
 
-		pthread_rwlock_unlock(&m_ownerLock);
+
 		//If this thread is one of many owners then it must have a read lock already so we can return true;
 		return;
 	}
 
-	m_owners.push_back(pthread_self());
-	pthread_rwlock_unlock(&m_ownerLock);
 	pthread_rwlock_rdlock(&m_lock);
+	m_owners.push_back(pthread_self());
+
 }
 
 // Read locks the suspect
@@ -537,6 +529,7 @@ void SuspectTable::Rdlock()
 // Note: May block if the table is already read locked by this thread.
 bool SuspectTable::TryRdlock()
 {
+
 	//Checks if the thread already has a lock
 	if(IsOwner())
 	{
@@ -547,6 +540,7 @@ bool SuspectTable::TryRdlock()
 			pthread_rwlock_rdlock(&m_lock);
 		}
 		//If this thread is one of many owners then it must have a read lock already so we can return true;
+
 		return true;
 	}
 
@@ -555,11 +549,13 @@ bool SuspectTable::TryRdlock()
 	{
 		//If we get a new read lock we store the thread as an owner
 		m_owners.push_back(pthread_self());
+
 		return true;
 	}
 	//If we fail to get a read lock then it's currently write locked by another thread
 	else
 	{
+
 		return false;
 	}
 }
@@ -568,7 +564,6 @@ bool SuspectTable::TryRdlock()
 // Returns: (true) If the table was already or successfully unlocked, (false) if the table is locked by someone else
 bool SuspectTable::Unlock()
 {
-	pthread_rwlock_wrlock(&m_ownerLock);
 	//Checks if the thread already has a lock
 	for(uint i = 0; i < m_owners.size(); i++)
 	{
@@ -576,11 +571,10 @@ bool SuspectTable::Unlock()
 		{
 			m_owners.erase(m_owners.begin()+i);
 			pthread_rwlock_unlock(&m_lock);
-			pthread_rwlock_unlock(&m_ownerLock);
+
 			return true;
 		}
 	}
-	pthread_rwlock_unlock(&m_ownerLock);
 	return false;
 }
 

@@ -551,7 +551,6 @@ void *Nova::ClassificationLoop(void *ptr)
 	serv_addr.sin_port = htons(Config::Inst()->getSaPort());
 
 	LoadStateFile();
-	Suspect suspectCopy;
 	//Classification Loop
 	do
 	{
@@ -562,7 +561,7 @@ void *Nova::ClassificationLoop(void *ptr)
 		{
 			if(it.Current().GetNeedsFeatureUpdate())
 			{
-				suspectCopy = suspects.CheckOut(it.GetKey());
+				Suspect suspectCopy = suspects.CheckOut(it.GetKey());
 				suspectCopy.UpdateEvidence();
 				suspectCopy.CalculateFeatures();
 				suspects.CheckIn(&suspectCopy);
@@ -577,7 +576,7 @@ void *Nova::ClassificationLoop(void *ptr)
 		{
 			if(it.Current().GetNeedsClassificationUpdate())
 			{
-				suspectCopy = suspects.CheckOut(it.GetKey());
+				Suspect suspectCopy = suspects.CheckOut(it.GetKey());
 				oldClassification = suspectCopy.GetIsHostile();
 				engine->Classify(&suspectCopy);
 
@@ -659,7 +658,8 @@ void *Nova::TrainingLoop(void *ptr)
 				if(it.Current().GetNeedsFeatureUpdate())
 				{
 					suspectCopy = suspects.CheckOut(it.GetKey());
-					ANNpoint aNN = suspectCopy.GetAnnPoint();
+					ANNpoint aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+					aNN = suspectCopy.GetAnnPoint();
 					suspectCopy.CalculateFeatures();
 					if(aNN == NULL)
 						aNN = annAllocPt(DIM);
