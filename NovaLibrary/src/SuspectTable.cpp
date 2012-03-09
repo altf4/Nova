@@ -366,16 +366,16 @@ SuspectTableRet SuspectTable::GetHostility(uint64_t key)
 {
 	if(!IsValidKey(key))
 	{
-		return SUSPECT_CHECKED_OUT;
+		return KEY_INVALID;
 	}
 	Rdlock();
 	if(m_table[key]->GetIsHostile())
 	{
 		Unlock();
-		return SUSPECT_NOT_CHECKED_OUT;
+		return (SuspectTableRet)1;
 	}
 	Unlock();
-	return SUCCESS;
+	return (SuspectTableRet)0;
 }
 
 //Get the size of the Suspect Table
