@@ -98,3 +98,4 @@ NovaGUI/moc_run_popup.cpp
 /Installer/.nova/Config/doppelganger.config
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Data/training.db
+/NovaTest/Debug/NovaTest
