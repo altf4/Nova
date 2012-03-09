@@ -625,6 +625,7 @@ void *Nova::TrainingLoop(void *ptr)
 							myfile << aNN[j] << " ";
 						}
 						myfile << "\n";
+					}
 					suspectCopy.SetAnnPoint(aNN);
 					suspectCopy.SetNeedsFeatureUpdate(false);
 					if(SendSuspectToUI(&suspectCopy))

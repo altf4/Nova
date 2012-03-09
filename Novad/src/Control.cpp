@@ -20,15 +20,11 @@
 #include "Control.h"
 #include "Novad.h"
 
-extern pthread_rwlock_t suspectTableLock;
-
 void Nova::SaveAndExit(int param)
 {
 	system("sudo iptables -F");
 
-	pthread_rwlock_wrlock(&suspectTableLock);
 	AppendToStateFile();
-	pthread_rwlock_unlock(&suspectTableLock);
 
 	exit(EXIT_SUCCESS);
 }

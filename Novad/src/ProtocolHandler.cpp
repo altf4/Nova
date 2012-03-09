@@ -22,6 +22,7 @@
 #include "Control.h"
 #include "Novad.h"
 #include "messages/CallbackMessage.h"
+#include "SuspectTable.h"
 #include "SuspectTableIterator.h"
 
 #include "pthread.h"
@@ -41,8 +42,8 @@ int callbackSocket = -1, IPCSocket = -1;
 
 extern string userHomePath;
 extern pthread_rwlock_t suspectTableLock;
-extern SuspectHashTable suspects;
-extern SuspectHashTable suspectsSinceLastSave;
+extern SuspectTable suspects;
+extern SuspectTable suspectsSinceLastSave;
 
 struct sockaddr_un msgRemote, msgLocal;
 int UIsocketSize;
@@ -166,38 +167,35 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			//TODO: Replace with new suspect table class
 
-			pthread_rwlock_wrlock(&suspectTableLock);
-
-			for (SuspectHashTable::iterator it = suspects.begin(); it != suspects.end(); it++)
-				delete it->second;
-			suspects.clear();
-
-			for (SuspectHashTable::iterator it = suspectsSinceLastSave.begin(); it != suspectsSinceLastSave.end(); it++)
-				delete it->second;
-			suspectsSinceLastSave.clear();
-
+			suspects.Clear();
+			suspectsSinceLastSave.Clear();
 			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
+			bool successResult = true;
 			if(system(delString.c_str()) == -1)
-				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")% __FILE__%__LINE__).str());
-			pthread_rwlock_unlock(&suspectTableLock);
+			{
+				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")
+										% __FILE__%__LINE__).str());
+				successResult = false;
+			}
 
 			ControlMessage clearAllSuspectsReply;
 			clearAllSuspectsReply.m_controlType = CONTROL_CLEAR_ALL_REPLY;
-			clearAllSuspectsReply.m_success = true;
+			clearAllSuspectsReply.m_success = successResult;
 			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
 
 			break;
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
-//			//TODO: Replace with new suspect table class
-			pthread_rwlock_wrlock(&suspectTableLock);
-			suspectsSinceLastSave[controlMessage.m_suspectAddress] = suspects[controlMessage.m_suspectAddress];
-			suspects.set_deleted_key(5);
-			suspects.erase(controlMessage.m_suspectAddress);
-			suspects.clear_deleted_key();
+			if(suspects.IsValidKey(controlMessage.m_suspectAddress))
+			{
+				suspects.Erase(controlMessage.m_suspectAddress);
+			}
+			if(suspectsSinceLastSave.IsValidKey(controlMessage.m_suspectAddress))
+			{
+				suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
+			}
 			RefreshStateFile();
-			pthread_rwlock_unlock(&suspectTableLock);
 
 			//TODO: Should check for errors here and return result
 			ControlMessage clearSuspectReply;
