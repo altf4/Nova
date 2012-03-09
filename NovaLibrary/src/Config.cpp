@@ -1831,6 +1831,9 @@ string Config::getPathHome()
 
 double Config::getSqurtEnabledFeatures()
 {
+	pthread_rwlock_rdlock(&lock);
+	double m_squrtEnabledFeatures= this->m_squrtEnabledFeatures;
+	pthread_rwlock_unlock(&lock);
 	return m_squrtEnabledFeatures;
 }
 
