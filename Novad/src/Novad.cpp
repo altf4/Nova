@@ -345,15 +345,15 @@ void Nova::RefreshStateFile()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__LINE__
-				%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")%__FILE__
+				%__LINE__).str());
 
 	// Open input file
 	ifstream in(Config::Inst()->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file at %3%")%__LINE__
-				%__FILE__%Config::Inst()->getPathCESaveFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file at %3%")%__FILE__
+				%__LINE__%Config::Inst()->getPathCESaveFile()).str());
 		return;
 	}
 
