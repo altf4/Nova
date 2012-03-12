@@ -31,7 +31,7 @@
 using namespace std;
 
 //Socket communication variables
-int UI_parentSocket = 0, UI_ListenSocket = 0, novadListenSocket = 0;
+int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
 struct sockaddr_un UI_Address, novadAddress;
 
 bool Nova::InitCallbackSocket()
