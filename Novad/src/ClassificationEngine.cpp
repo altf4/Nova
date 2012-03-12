@@ -65,7 +65,7 @@ void ClassificationEngine::FormKdTree()
 			}
 			else
 			{
-				LOG(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__LINE__%__FILE__).str());
+				LOG(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__FILE__%__LINE__).str());
 				break;
 			}
 		}
@@ -100,13 +100,13 @@ void ClassificationEngine::Classify(Suspect *suspect)
 		fi = (featureIndex)i;
 		if (suspect->SetFeatureAccuracy(fi, 0) != 0)
 		{
-			LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__LINE__%__FILE__).str());
+			LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__FILE__%__LINE__).str());
 		}
 	}
 
 	if (suspect->SetHostileNeighbors(0) != 0)
 	{
-		LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__LINE__%__FILE__).str());
+		LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__FILE__%__LINE__).str());
 	}
 
 	//Determine classification according to weight by distance
@@ -132,7 +132,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 				d  = suspect->GetFeatureAccuracy(fi) + distance;
 				if (suspect->SetFeatureAccuracy(fi, d)  != 0)
 				{
-					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__LINE__%__FILE__).str());
+					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__FILE__%__LINE__).str());
 				}
 			}
 		}
@@ -140,7 +140,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 		if(nnIdx[i] == -1)
 		{
 			LOG(ERROR, (format("File %1% at line %2%: Unable to find a nearest neighbor for Data point %3% Try decreasing the Error bound")
-					%__LINE__%__FILE__%i).str());
+					%__FILE__%__LINE__%i).str());
 		}
 		else
 		{
@@ -150,7 +150,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 				classifyCount += (sqrtDIM - dists[i]);
 				if (suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1)  != 0)
 				{
-					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__LINE__%__FILE__).str());
+					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__FILE__%__LINE__).str());
 				}
 			}
 			//If benign
@@ -162,7 +162,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			{
 				//error case; Data points must be 0 or 1
 				LOG(ERROR, (format("File %1% at line %2%: Data point has invalid classification. Should by 0 or 1, but is %3%")
-						%__LINE__%__FILE__%m_dataPtsWithClass[nnIdx[i]]->m_classification).str());
+						%__FILE__%__LINE__%m_dataPtsWithClass[nnIdx[i]]->m_classification).str());
 
 				suspect->SetClassification(-1);
 				delete [] nnIdx;							// clean things up
@@ -258,7 +258,7 @@ void ClassificationEngine::NormalizeDataPoints()
 					else
 					{
 						LOG(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
-								%__LINE__%__FILE__).str());
+								%__FILE__%__LINE__).str());
 					}
 					ai++;
 				}
@@ -329,7 +329,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 
 	myfile.close();
@@ -439,7 +439,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%Config::Inst()->getPathTrainingFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->getPathTrainingFile()).str());
 	}
 	myfile.close();
 
@@ -515,7 +515,7 @@ void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree*
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__LINE__%__FILE__%outFilePath).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%outFilePath).str());
 
 	}
 	myfile.close();

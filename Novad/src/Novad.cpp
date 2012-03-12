@@ -131,11 +131,11 @@ int Nova::RunNovaD()
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
-		LOG(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__FILE__%__LINE__).str());
 
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
-		LOG(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__LINE__%__FILE__).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to get system time with time()")%__FILE__%__LINE__).str());
 
 	pthread_t classificationLoopThread;
 	pthread_t trainingLoopThread;
@@ -169,14 +169,14 @@ int Nova::RunNovaD()
 	else
 	{
 		LOG(ERROR, (format("File %1% at line %2%: Unable to set up file watcher for the honeyd IP"
-				" list file. DHCP addresse in honeyd will not be read")%__LINE__%__FILE__).str());
+				" list file. DHCP addresse in honeyd will not be read")%__FILE__%__LINE__).str());
 	}
 
 	Start_Packet_Handler();
 
 	//Shouldn't get here!
 	LOG(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen,"
-			" something went very wrong.")%__LINE__%__FILE__).str());
+			" something went very wrong.")%__FILE__%__LINE__).str());
 	close(IPCsock);
 
 	return EXIT_FAILURE;
@@ -187,7 +187,7 @@ void Nova::AppendToStateFile()
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
 		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time()"
-				" failed")%__LINE__%__FILE__).str());
+				" failed")%__FILE__%__LINE__).str());
 
 	// Don't bother saving if no new suspect data, just confuses deserialization
 	if (suspectsSinceLastSave.Size() <= 0)
@@ -216,7 +216,7 @@ void Nova::AppendToStateFile()
 	if(!out.is_open())
 	{
 		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file %3%")
-				%__LINE__%__FILE__%Config::Inst()->getPathCESaveFile()).str());
+				%__FILE__%__LINE__%Config::Inst()->getPathCESaveFile()).str());
 		return;
 	}
 
@@ -224,7 +224,7 @@ void Nova::AppendToStateFile()
 	out.write((char*)&dataSize, sizeof dataSize);
 
 	LOG(DEBUG, (format("File %1% at line %2%: Appending %3% bytes to the CE state file")
-			%__LINE__%__FILE__%dataSize).str());
+			%__FILE__%__LINE__%dataSize).str());
 	Suspect suspectCopy;
 	// Serialize our suspect table
 	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() < suspectsSinceLastSave.Size(); ++it)
@@ -248,14 +248,14 @@ void Nova::LoadStateFile()
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
 		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time() failed")
-				%__LINE__%__FILE__).str());
+				%__FILE__%__LINE__).str());
 
 	// Open input file
 	ifstream in(Config::Inst()->getPathCESaveFile().data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
 		LOG(ERROR, (format("File %1% at line %2%: Unable to open CE state file. This is normal for "
-				"the first run.")%__LINE__%__FILE__).str());
+				"the first run.")%__FILE__%__LINE__).str());
 		return;
 	}
 
@@ -270,7 +270,7 @@ void Nova::LoadStateFile()
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
 			LOG(ERROR, "The CE state file may be corrupt",(format("File %1% at line %2%: CE state file "
-				"should have another entry, but only contains %3% more bytes")%__LINE__%__FILE__%lengthLeft).str());
+				"should have another entry, but only contains %3% more bytes")%__FILE__%__LINE__%lengthLeft).str());
 			break;
 		}
 
@@ -283,7 +283,7 @@ void Nova::LoadStateFile()
 		if (Config::Inst()->getDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->getDataTTL()))
 		{
 			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")
-					%__LINE__%__FILE__%(int)timeStamp).str());
+					%__FILE__%__LINE__%(int)timeStamp).str());
 
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
@@ -295,7 +295,7 @@ void Nova::LoadStateFile()
 		{
 			LOG(ERROR, "The CE state file may be corruput, unable to read all data from it",
 				(format("File %1% at line %2%: CE state file should have another entry of size %3% "
-				"but only has %4% bytes left")%__LINE__%__FILE__%dataSize%lengthLeft).str());
+				"but only has %4% bytes left")%__FILE__%__LINE__%dataSize%lengthLeft).str());
 
 			break;
 		}
@@ -363,7 +363,7 @@ void Nova::RefreshStateFile()
 	if(!out.is_open())
 	{
 		LOG(ERROR, (format("File %1% at line %2%: Unable to open the temporary CE state file at %3%"
-				)%__LINE__%__FILE__%tmpFile).str());
+				)%__FILE__%__LINE__%tmpFile).str());
 		in.close();
 		return;
 	}
@@ -379,7 +379,7 @@ void Nova::RefreshStateFile()
 		if (lengthLeft < (sizeof timeStamp + sizeof dataSize))
 		{
 			LOG(ERROR, "The CE state file may be corrupt", (format("File %1% at line %2%: CE state file "
-					"should have another entry, but only contains %3% more bytes")%__LINE__%__FILE__%lengthLeft).str());
+					"should have another entry, but only contains %3% more bytes")%__FILE__%__LINE__%lengthLeft).str());
 			break;
 		}
 
@@ -392,7 +392,7 @@ void Nova::RefreshStateFile()
 		if (Config::Inst()->getDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->getDataTTL()))
 		{
 			LOG(DEBUG, (format("File %1% at line %2%: Throwing out old CE state with timestamp of %3%")
-					%__LINE__%__FILE__%(int)timeStamp).str());
+					%__FILE__%__LINE__%(int)timeStamp).str());
 
 			in.seekg(dataSize, ifstream::cur);
 			lengthLeft -= dataSize;
@@ -404,7 +404,7 @@ void Nova::RefreshStateFile()
 		{
 			LOG(ERROR, "The CE state file may be corrupt",
 				(format("File %1% at line %2%: Data file should have another entry of size %3%, "
-				"but contains only %4% bytes left")%__LINE__%__FILE__%dataSize%lengthLeft).str());
+				"but contains only %4% bytes left")%__FILE__%__LINE__%dataSize%lengthLeft).str());
 
 			break;
 		}
@@ -455,7 +455,7 @@ void Nova::RefreshStateFile()
 	if (system(copyCommand.c_str()) == -1)
 		LOG(ERROR, "Failed to write to the CE state file. This may be a permission problem, or the folder may not exist.",
 			(format("File %1% at line %2%: Unable to copy CE state tmp file to CE state file."
-			" System call to '%3' failed")%__LINE__%__FILE__%copyCommand).str());
+			" System call to '%3' failed")%__FILE__%__LINE__%copyCommand).str());
 }
 
 void Nova::Reload()
@@ -534,12 +534,12 @@ void *Nova::ClassificationLoop(void *ptr)
 				if(SendSuspectToUI(&suspectCopy))
 				{
 					LOG(DEBUG, "Sent a suspect to the UI",
-							(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
+							(format("File %1% at line %2%: Successfully sent suspect")%__FILE__%__LINE__).str());
 				}
 				else
 				{
 					LOG(NOTICE, "Failed to send suspect to UI",
-							(format("File %1% at line %2%: Sending suspect to UI failed")%__LINE__%__FILE__).str());
+							(format("File %1% at line %2%: Sending suspect to UI failed")%__FILE__%__LINE__).str());
 				}
 				suspects.CheckIn(&suspectCopy);
 			}
@@ -569,7 +569,7 @@ void *Nova::ClassificationLoop(void *ptr)
 	if(Config::Inst()->getClassificationTimeout())
 	{
 		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% "
-				"at line %2%: Should never get here")%__LINE__%__FILE__).str());
+				"at line %2%: Should never get here")%__FILE__%__LINE__).str());
 	}
 
 	return NULL;
@@ -631,12 +631,12 @@ void *Nova::TrainingLoop(void *ptr)
 					if(SendSuspectToUI(&suspectCopy))
 					{
 						LOG(DEBUG, "Sent a suspect to the UI",
-								(format("File %1% at line %2%: Successfully sent suspect")%__LINE__%__FILE__).str());
+								(format("File %1% at line %2%: Successfully sent suspect")%__FILE__%__LINE__).str());
 					}
 					else
 					{
 						LOG(NOTICE, "Failed to send suspect to UI",
-								(format("File %1% at line %2%: Sending suspect to UI failed")%__LINE__%__FILE__).str());
+								(format("File %1% at line %2%: Sending suspect to UI failed")%__FILE__%__LINE__).str());
 					}
 					suspects.CheckIn(&suspectCopy);
 					annDeallocPt(aNN);
@@ -646,7 +646,7 @@ void *Nova::TrainingLoop(void *ptr)
 		else
 		{
 			LOG(CRITICAL, (format("File %1% at line %2%: Unable to open the training capture file "
-					"%3% for writing. Can not save training data.")%__LINE__%__FILE__%trainingCapFile).str());
+					"%3% for writing. Can not save training data.")%__FILE__%__LINE__%trainingCapFile).str());
 		}
 		myfile.close();
 	} while(Config::Inst()->getClassificationTimeout());
@@ -654,7 +654,7 @@ void *Nova::TrainingLoop(void *ptr)
 	//Shouldn't get here!
 	if (Config::Inst()->getClassificationTimeout())
 		LOG(CRITICAL, "The code should never get here, something went very wrong.", (format(
-				"File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+				"File %1% at line %2%: Should never get here")%__FILE__%__LINE__).str());
 
 	return NULL;
 }
@@ -668,7 +668,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
 		LOG(CRITICAL, (format("File %1% at line %2%: Unable to create the silent alarm socket."
-				" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+				" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -684,7 +684,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
 		LOG(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket."
-				" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+				" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -706,7 +706,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
     if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
     {
     	LOG(CRITICAL, (format("File %1% at line %2%: Unable to listen on the silent alarm socket."
-    			" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+    			" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
         exit(EXIT_FAILURE);
     }
@@ -724,7 +724,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
 			LOG(ERROR, (format("File %1% at line %2%: Problem when accepting incoming silent alarm connection."
-					" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+					" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
 		}
@@ -732,7 +732,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL)) == -1)
 		{
 			LOG(CRITICAL, (format("File %1% at line %2%: Problem when receiving incoming silent alarm connection."
-					" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+					" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 			close(connectionSocket);
 			continue;
 		}
@@ -771,7 +771,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 		LOG(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")
-				%__LINE__%__FILE__%suspects[addr].ToString()).str());
+				%__FILE__%__LINE__%suspects[addr].ToString()).str());
 
 		if(!Config::Inst()->getClassificationTimeout())
 			ClassificationLoop(NULL);
@@ -780,7 +780,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	}
 	close(sockfd);
 	LOG(CRITICAL, "The code should never get here, something went very wrong.",
-			(format("File %1% at line %2%: Should never get here")%__LINE__%__FILE__).str());
+			(format("File %1% at line %2%: Should never get here")%__FILE__%__LINE__).str());
 	return NULL;
 }
 
@@ -861,7 +861,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 						if ((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
 						{
 							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm."
-									" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+									" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
 						}
@@ -873,11 +873,11 @@ void Nova::SilentAlarm(Suspect *suspect)
 								//set to max attempts to hit the failed connect condition
 								i = Config::Inst()->getSaMaxAttempts();
 								LOG(ERROR, (format("File %1% at line %2%: Unable to connect to host to send silent alarm."
-										" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+										" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 								break;
 							}
 							LOG(ERROR, (format("File %1% at line %2%: Unable to open socket to send silent alarm."
-									" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+									" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 							close(sockfd);
 							continue;
 						}
@@ -901,7 +901,7 @@ void Nova::SilentAlarm(Suspect *suspect)
 				if( send(sockfd, serializedBuffer, dataLen, 0) == -1)
 				{
 					LOG(ERROR, (format("File %1% at line %2%: Error in TCP Send of silent alarm."
-							" Errno: %3%")%__LINE__%__FILE__%strerror(errno)).str());
+							" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 
 					close(sockfd);
 					ss.str("");
@@ -1434,7 +1434,7 @@ void *Nova::TCPTimeout(void *ptr)
 
 
 	LOG(CRITICAL, "The code should never get here, something went very wrong.", (format("File %1% at line %2%:"
-			" Should never get here")%__LINE__%__FILE__).str());
+			" Should never get here")%__FILE__%__LINE__).str());
 	return NULL;
 }
 
