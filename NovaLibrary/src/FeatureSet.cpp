@@ -62,9 +62,8 @@ void FeatureSet::ClearFeatureSet()
 	m_haystackEvents = 0;
 	m_packetCount = 0;
 	m_bytesTotal = 0;
-	m_last_time = 0;
+	m_lastTime = 0;
 
-	m_portMax = 0;
 	//Features
 	for(int i = 0; i < DIM; i++)
 		m_features[i] = 0;
@@ -149,9 +148,17 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 	case PORT_TRAFFIC_DISTRIBUTION:
 	{
 		m_features[PORT_TRAFFIC_DISTRIBUTION] = 0;
+		double portMax = 0;
+		for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+		{
+			if(it->second > portMax)
+			{
+				portMax = it->second;
+			}
+		}
 		for (Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
 		{
-			m_features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)m_portMax);
+			m_features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / portMax);
 		}
 
 		m_features[PORT_TRAFFIC_DISTRIBUTION] = m_features[PORT_TRAFFIC_DISTRIBUTION] / (double)m_portTable.size();
@@ -325,27 +332,19 @@ void FeatureSet::UpdateEvidence(Packet packet)
 
 	m_portTable[dst_port] += packet_count;
 
-	//Checks for the max to avoid iterating through the entire table every update
-	//Since number of ports can grow very large during a scan this will distribute the computation more evenly
-	//Since the IP will tend to be relatively small compared to number of events, it's max is found during the call.
-	if(m_portTable[dst_port] > m_portMax)
-	{
-		m_portMax = m_portTable[dst_port];
-	}
-
 	for(uint32_t i = 0; i < IP_packet_sizes.size(); i++)
 	{
 		m_packTable[IP_packet_sizes[i]]++;
 	}
 
-	if(m_last_time != 0)
-		m_intervalTable[packet_intervals[0] - m_last_time]++;
+	if(m_lastTime != 0)
+		m_intervalTable[packet_intervals[0] - m_lastTime]++;
 
 	for(uint32_t i = 1; i < packet_intervals.size(); i++)
 	{
 		m_intervalTable[packet_intervals[i] - packet_intervals[i-1]]++;
 	}
-	m_last_time = packet_intervals.back();
+	m_lastTime = packet_intervals.back();
 
 	//Accumulate to find the lowest Start time and biggest end time.
 	if(packet.pcap_header.ts.tv_sec < m_startTime)
@@ -369,30 +368,35 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 	{
 		m_endTime = rhs.m_endTime;
 	}
-	if(m_last_time < rhs.m_last_time)
+	if(m_lastTime < rhs.m_lastTime)
 	{
-		m_last_time = rhs.m_last_time;
+		m_lastTime = rhs.m_lastTime;
 	}
+
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
 	m_bytesTotal += rhs.m_bytesTotal;
 	m_haystackEvents += rhs.m_haystackEvents;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
+	{
 		m_IPTable[it->first] += rhs.m_IPTable[it->first];
+	}
 
 	for(Port_Table::iterator it = rhs.m_portTable.begin(); it != rhs.m_portTable.end(); it++)
 	{
 		m_portTable[it->first] += rhs.m_portTable[it->first];
-		if (m_portTable[it->first] > m_portMax)
-			m_portMax = m_portTable[it->first];
 	}
 
 	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
+	{
 		m_packTable[it->first] += rhs.m_packTable[it->first];
+	}
 
 	for(Interval_Table::iterator it = rhs.m_intervalTable.begin(); it != rhs.m_intervalTable.end(); it++)
+	{
 		m_intervalTable[it->first] += rhs.m_intervalTable[it->first];
+	}
 
 	return *this;
 }
@@ -407,9 +411,9 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	{
 		m_endTime = rhs.m_endTime;
 	}
-	if(m_last_time < rhs.m_last_time)
+	if(m_lastTime < rhs.m_lastTime)
 	{
-		m_last_time = rhs.m_last_time;
+		m_lastTime = rhs.m_lastTime;
 	}
 	m_totalInterval -= rhs.m_totalInterval;
 	m_packetCount -= rhs.m_packetCount;
@@ -506,15 +510,25 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 	memcpy(buf+offset, &m_bytesTotal, sizeof m_bytesTotal);
 	offset += sizeof m_bytesTotal;
 
-	memcpy(buf+offset, &m_portMax, sizeof m_portMax);
-	offset += sizeof m_portMax;
+	memcpy(buf+offset, &m_startTime, sizeof m_startTime);
+	offset += sizeof m_startTime;
+
+	memcpy(buf+offset, &m_endTime, sizeof m_endTime);
+	offset += sizeof m_endTime;
+
+	memcpy(buf+offset, &m_lastTime, sizeof m_lastTime);
+	offset += sizeof m_lastTime;
 
 	//These tables all just place their key followed by the data
 	uint32_t tempInt;
 
-	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (count < m_maxTableEntries); it++)
+	{
 		if(it->second)
+		{
 			count++;
+		}
+	}
 
 	//The size of the Table
 	tempInt = count - table_entries;
@@ -533,9 +547,13 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 		}
 	}
 
-	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (count < m_maxTableEntries); it++)
+	{
 		if(it->second)
+		{
 			count++;
+		}
+	}
 
 	//The size of the Table
 	tempInt = count - table_entries;
@@ -554,9 +572,13 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 		}
 	}
 
-	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (count < m_maxTableEntries); it++)
+	{
 		if(it->second)
+		{
 			count++;
+		}
+	}
 
 	//The size of the Table
 	tempInt = count - table_entries;
@@ -575,9 +597,13 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 		}
 	}
 
-	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (count < MAX_TABLE_ENTRIES); it++)
+	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (count < m_maxTableEntries); it++)
+	{
 		if(it->second)
+		{
 			count++;
+		}
+	}
 
 	//The size of the Table
 	tempInt = count - table_entries;
@@ -628,11 +654,17 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 	m_bytesTotal += temp;
 	offset += sizeof m_bytesTotal;
 
-	memcpy(&temp, buf+offset, sizeof m_portMax);
-	offset += sizeof m_portMax;
+	memcpy(&temp, buf+offset, sizeof m_startTime);
+	m_startTime += temp;
+	offset += sizeof m_startTime;
 
-	if(temp > m_portMax)
-		m_portMax = temp;
+	memcpy(&temp, buf+offset, sizeof m_endTime);
+	m_endTime += temp;
+	offset += sizeof m_endTime;
+
+	memcpy(&temp, buf+offset, sizeof m_lastTime);
+	m_lastTime += temp;
+	offset += sizeof m_lastTime;
 
 	/***************************************************************************************************
 	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
@@ -700,29 +732,24 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 bool FeatureSet::operator ==(const FeatureSet &rhs) const
 {
-	if (m_packTable != rhs.m_packTable)
-		return false;
+	//This may not be true, the could have different tables with the same contents
+	//if (m_packTable != rhs.m_packTable)
+	//	return false;
 
-	if (m_portTable != rhs.m_portTable)
-		return false;
-
-	if (m_portMax != rhs.m_portMax)
-		return false;
+	//if (m_portTable != rhs.m_portTable)
+	//	return false;
 
 	if (m_haystackEvents != rhs.m_haystackEvents)
 		return false;
 
-
-	/* These don't get serialized/deserialized.. should they?
 	 if (m_startTime != rhs.m_startTime)
 		return false;
 
 	if (m_endTime != rhs.m_endTime)
 		return false;
 
-	if (m_last_time != rhs.m_last_time)
+	if (m_lastTime != rhs.m_lastTime)
 		return false;
-	 */
 
 	if (m_totalInterval != rhs.m_totalInterval)
 		return false;
@@ -730,11 +757,12 @@ bool FeatureSet::operator ==(const FeatureSet &rhs) const
 	if (m_bytesTotal != rhs.m_bytesTotal)
 		return false;
 
-	if (m_intervalTable != rhs.m_intervalTable)
-		return false;
+	//This may not be true, the could have different tables with the same contents
+	//if (m_intervalTable != rhs.m_intervalTable)
+	//	return false;
 
-	if (m_IPTable != rhs.m_IPTable)
-		return false;
+	//if (m_IPTable != rhs.m_IPTable)
+	//	return false;
 
 	if (m_packetCount != rhs.m_packetCount)
 		return false;
@@ -763,7 +791,6 @@ FeatureSet& FeatureSet::operator=(FeatureSet &rhs)
 	this->m_last_time = rhs.m_last_time;
 	this->m_packTable = rhs.m_packTable;
 	this->m_packetCount = rhs.m_packetCount;
-	this->m_portMax = rhs.m_portMax;
 	this->m_portTable = rhs.m_portTable;
 	this->m_startTime = rhs.m_startTime;
 	this->m_totalInterval = rhs.m_totalInterval;
@@ -783,7 +810,6 @@ FeatureSet& FeatureSet::operator=(FeatureSet rhs)
 	this->m_last_time = rhs.m_last_time;
 	this->m_packTable = rhs.m_packTable;
 	this->m_packetCount = rhs.m_packetCount;
-	this->m_portMax = rhs.m_portMax;
 	this->m_portTable = rhs.m_portTable;
 	this->m_startTime = rhs.m_startTime;
 	this->m_totalInterval = rhs.m_totalInterval;
