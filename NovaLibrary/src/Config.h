@@ -147,10 +147,11 @@ public:
     void setSMTPEmailRecipients(string SMTPEmailRecipients);
 
     // Getters for the paths stored in /etc
-    string getPathBinaries() ;
-    string getPathWriteFolder() ;
-    string getPathReadFolder() ;
-    string getPathHome() ;
+    string getPathBinaries();
+    string getPathWriteFolder();
+    string getPathReadFolder();
+    string getPathHome();
+    string getPathIcon();
 
 protected:
 	Config();
@@ -226,6 +227,7 @@ private:
 	string pathWriteFolder;
 	string pathReadFolder;
 	string pathHome;
+	string pathIcon;
 
 	pthread_rwlock_t lock;
 

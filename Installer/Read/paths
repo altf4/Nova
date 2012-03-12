@@ -2,3 +2,4 @@ NOVA_HOME $HOME/.nova
 NOVA_BIN /usr/local/bin
 NOVA_WR /usr/share/nova
 NOVA_RD /etc/nova
+NOVA_ICON /usr/share/nova/icons/nova-icon.png

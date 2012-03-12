@@ -756,6 +756,14 @@ bool Config::LoadPaths()
 				pathBinaries = ResolvePathVars(line);
 				continue;
 			}
+
+			prefix = "NOVA_ICON";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size()+1,line.size());
+				pathIcon = ResolvePathVars(line);
+				continue;
+			}
 		}
 	}
 	paths->close();
@@ -1819,6 +1827,14 @@ string Config::getPathReadFolder()
 	string pathReadFolder = this->pathReadFolder;
 	pthread_rwlock_unlock(&lock);
 	return pathReadFolder;
+}
+
+string Config::getPathIcon()
+{
+	pthread_rwlock_rdlock(&lock);
+	string pathIcon= this->pathIcon;
+	pthread_rwlock_unlock(&lock);
+	return pathIcon;
 }
 
 string Config::getPathHome()
