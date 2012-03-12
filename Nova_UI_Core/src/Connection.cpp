@@ -168,14 +168,15 @@ bool Nova::CloseNovadConnection()
 
 	}
 
-	if(close(UI_ListenSocket))
+
+	if(UI_ListenSocket != -1 && close(UI_ListenSocket))
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
 		close(UI_ListenSocket);
 		success = false;
 	}
 
-	if(close(novadListenSocket))
+	if(novadListenSocket != -1 && close(novadListenSocket))
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
 		close(novadListenSocket);

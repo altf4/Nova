@@ -300,17 +300,17 @@ void NovaGUI::InitConfiguration()
 void NovaGUI::InitNovadCommands()
 {
 	novaComponents[COMPONENT_NOVAD].name = "NOVA Daemon";
-	novaComponents[COMPONENT_NOVAD].terminalCommand = "xterm -geometry \"+0+600\" -e Novad";
+	novaComponents[COMPONENT_NOVAD].terminalCommand = "nohup xterm -geometry \"+0+600\" -e Novad";
 	novaComponents[COMPONENT_NOVAD].noTerminalCommand = "nohup Novad";
 	novaComponents[COMPONENT_NOVAD].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
-	novaComponents[COMPONENT_DMH].terminalCommand ="xterm -geometry \"+500+0\" -e sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
+	novaComponents[COMPONENT_DMH].terminalCommand ="nohup xterm -geometry \"+500+0\" -e sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
 	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
 
 	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + Config::Inst()->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	novaComponents[COMPONENT_HSH].terminalCommand ="nohup xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + Config::Inst()->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + Config::Inst()->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
 }
@@ -1081,6 +1081,8 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 		QString killString = QString("sudo kill ") + QString::number(process->pid());
 		system(killString.toStdString().c_str());
 	}
+
+	cout << "PID is " << process->pid() << endl;
 }
 
 
@@ -1399,13 +1401,6 @@ void *CallbackLoop(void *ptr)
 
 void StartComponent(novaComponent *component)
 {
-	pthread_t startComponentThread;
-	pthread_create(&startComponentThread, NULL, StartComponentHelper, (void*)component);
-}
-
-void *StartComponentHelper(void *ptr)
-{
-	novaComponent *component = (novaComponent*)ptr;
 	QString program;
 
 	if (Config::Inst()->getUseTerminals())
@@ -1426,6 +1421,14 @@ void *StartComponentHelper(void *ptr)
 
 	component->process = new QProcess();
 	component->process->start(program);
+
+	pthread_t startComponentThread;
+	pthread_create(&startComponentThread, NULL, StartComponentHelper, (void*)component);
+}
+
+void *StartComponentHelper(void *ptr)
+{
+	novaComponent *component = (novaComponent*)ptr;
 
 	//If it's the Nova Daemon we're starting, then connect out to it.
 	if(component->name.compare("NOVA Daemon") == 0)

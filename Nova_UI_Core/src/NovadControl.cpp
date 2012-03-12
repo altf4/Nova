@@ -21,6 +21,8 @@
 #include "messages/ControlMessage.h"
 #include "Connection.h"
 
+#include <stdio.h>
+
 using namespace Nova;
 
 extern int UI_parentSocket;
@@ -39,6 +41,22 @@ bool Nova::StartNovad()
 
 bool Nova::StopNovad()
 {
+	// Kill honeyd processes
+	FILE * out = popen("pidof honeyd","r");
+	if(out != NULL)
+	{
+		char buffer[1024];
+		char * line = fgets(buffer, sizeof(buffer), out);
+
+		if (line != NULL)
+		{
+			string cmd = "sudo kill " + string(line);
+			if(cmd.size() > 5)
+				system(cmd.c_str());
+		}
+	}
+	pclose(out);
+
 	ControlMessage killRequest;
 	killRequest.m_controlType = CONTROL_EXIT_REQUEST;
 	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket) )
