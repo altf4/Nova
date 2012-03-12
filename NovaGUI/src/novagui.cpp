@@ -110,7 +110,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	if(!StartCallbackLoop(this))
 	{
 		LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %s")% __FILE__%__LINE__% strerror(errno)).str());
+						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__% strerror(errno)).str());
 	}
 
 	// Create the dialog generator
