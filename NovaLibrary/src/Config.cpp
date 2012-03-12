@@ -623,7 +623,8 @@ void Config::LoadConfig()
 	}
 	else
 	{
-		syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__);
+		//TODO replace with LOG()
+		syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__); //TODO replace with LOG()
 	}
 
 
@@ -633,6 +634,7 @@ void Config::LoadConfig()
 		{
 			// TODO: Make this say which config option is invalid again
 			syslog(SYSL_INFO, "Line: %d Configuration option %s is invalid in the configuration file", __LINE__, m_prefixes[i].c_str());
+			//TODO replace with LOG()
 		}
 	}
 	closelog();
@@ -669,6 +671,7 @@ bool Config::LoadUserConfig()
 					if((int)nbr == -1)
 					{
 						syslog(SYSL_ERR, "Line: %d Invalid IP address parsed on line %d of the settings file.", __LINE__, i);
+						//TODO replace with LOG()
 						returnValue = false;
 					}
 					else if(nbr)
@@ -688,6 +691,7 @@ bool Config::LoadUserConfig()
 				else
 				{
 					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
+					//TODO replace with LOG()
 					returnValue = false;
 				}
 			}
@@ -818,7 +822,7 @@ bool Config::SaveConfig()
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
 	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
-	system(copyCommand.c_str());
+	if(system(copyCommand.c_str()) != 0); //TODO ERROR handling
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_configFilePath.c_str());
 
@@ -1000,6 +1004,7 @@ bool Config::SaveConfig()
 	{
 		openlog("Novaconfiguration", OPEN_SYSL, LOG_AUTHPRIV);
 		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
+		//TODO replace with LOG()
 		closelog();
 		in->close();
 		out->close();
@@ -1014,8 +1019,7 @@ bool Config::SaveConfig()
 	out->close();
 	delete in;
 	delete out;
-	system("rm -f Config/.NOVAConfig.tmp");
-
+	if(system("rm -f Config/.NOVAConfig.tmp") != 0); //TODO ERROR handling.
 	pthread_rwlock_unlock(&lock);
 	return true;
 }
@@ -1064,10 +1068,14 @@ bool Config::AddUserToGroup()
 			"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to add user to the 'nova' group");
+		//TODO replace with LOG()
 		returnValue = false;
 	}
 	else
+	{
+		//TODO replace with LOG()
 		syslog(SYSL_INFO, "Added your user to the 'nova' group. You may need to log in and out for this to take affect.");
+	}
 	return returnValue;
 }
 
@@ -1110,9 +1118,13 @@ bool Config::InitUserConfigs(string homeNovaPath)
 			{
 				string defaultLocation = "/etc/nova/.nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
+				//TODO replace with LOG()
 				syslog(SYSL_ERR, "Warning: The file %s does not exist but is required for Nova to function. Restoring default file from %s",fullPath.c_str(), defaultLocation.c_str());
 				if (system(copyCommand.c_str()) == -1)
+				{
+					//TODO replace with LOG()
 					syslog(SYSL_ERR, "Error: Unable to copy file %s to %s.",fullPath.c_str(), defaultLocation.c_str());
+				}
 			}
 		}
 	}
@@ -1126,6 +1138,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
+			//TODO replace with LOG()
 			returnValue = false;
 		}
 
@@ -1135,6 +1148,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 		else
 		{
 			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
+			//TODO replace with LOG()
 			returnValue = false;
 		}
 	}
@@ -1192,6 +1206,7 @@ Config::Config()
 
 	if(!this->InitUserConfigs(this->getPathHome()))
 	{
+		//TODO replace with LOG()
 		syslog(SYSL_ERR, "Error: InitUserConfigs failed. Your home folder and permissions may not have been configured properly");
 		//exit(EXIT_FAILURE);
 	}

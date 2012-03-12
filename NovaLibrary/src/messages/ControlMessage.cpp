@@ -290,8 +290,8 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 }
 char *ControlMessage::Serialize(uint32_t *length)
 {
-	char *buffer, *originalBuffer;
-	uint32_t messageSize;
+	char *buffer = NULL, *originalBuffer = NULL;
+	uint32_t messageSize = 0;
 
 	switch(m_controlType)
 	{

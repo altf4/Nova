@@ -120,4 +120,5 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 char *UI_Message::Serialize(uint32_t *length)
 {
 	//Doesn't actually get called
+	return NULL;
 }
