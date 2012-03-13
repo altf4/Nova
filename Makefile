@@ -54,6 +54,7 @@ install-release:
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
+	cp -rp Installer/.nova $(HOME)/.nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/usr/share/nova/icons
@@ -88,6 +89,7 @@ install-debug:
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -rp Installer/.nova $(DESTDIR)/etc/nova
+	cp -rp Installer/.nova $(HOME)/.nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/usr/share/nova/icons
@@ -109,10 +111,9 @@ install-debug:
 uninstall:
 	rm -rf $(DESTDIR)/etc/nova
 	rm -rf $(DESTDIR)/usr/share/nova
-	rm -rf $(DESTDIR)/$(HOME)/.nova
 	rm -f $(DESTDIR)/usr/bin/NovaGUI
 	rm -f $(DESTDIR)/usr/bin/Novad
-	rm -f $(DESTDIR)/libNova_UI_Core.so
+	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf

@@ -681,7 +681,8 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
 	socklen_t sendaddrSize = sizeof sendaddr;
 
-	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
+
+	if(::bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
 		LOG(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket."
 				" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
@@ -808,7 +809,10 @@ void Nova::SilentAlarm(Suspect *suspect)
 			commandLine += " -j DNAT --to-destination ";
 			commandLine += Config::Inst()->getDoppelIp();
 
-			system(commandLine.c_str());
+			if(system(commandLine.c_str()) != 0)
+			{
+				//TODO Logging
+			}
 		}
 		else
 		{
@@ -822,7 +826,10 @@ void Nova::SilentAlarm(Suspect *suspect)
 			commandLine += " -j DNAT --to-destination ";
 			commandLine += Config::Inst()->getDoppelIp();
 
-			system(commandLine.c_str());
+			if(system(commandLine.c_str()) != 0)
+			{
+				//TODO Logging
+			}
 		}
 	}
 	if(suspect->GetUnsentFeatureSet().m_packetCount)

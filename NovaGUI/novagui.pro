@@ -41,6 +41,7 @@ FORMS += UI/subnetPopup.ui \
 RESOURCES += 
 INCLUDEPATH += ../NovaLibrary/src
 INCLUDEPATH += ../Nova_UI_Core/src
+QMAKE_CXXFLAGS += -std=c++0x
 CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
 else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
 CONFIG(debug, debug|release):LIBS += ../Nova_UI_Core/Debug/libNova_UI_Core.so
