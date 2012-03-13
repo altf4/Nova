@@ -52,7 +52,12 @@ bool Nova::StopNovad()
 		{
 			string cmd = "sudo kill " + string(line);
 			if(cmd.size() > 5)
-				system(cmd.c_str());
+			{
+				if(system(cmd.c_str()) != 0)
+				{
+					//TODO Add Logging
+				}
+			}
 		}
 	}
 	pclose(out);

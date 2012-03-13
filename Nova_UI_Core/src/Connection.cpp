@@ -53,10 +53,9 @@ bool Nova::InitCallbackSocket()
 		close(UI_parentSocket);
 		return false;
 	}
+	socklen_t len = sizeof(UI_Address);
 
-	int len = strlen(UI_Address.sun_path) + sizeof(UI_Address.sun_family);
-
-	if(bind(UI_parentSocket,(struct sockaddr *)&UI_Address,len) == -1)
+	if(::bind(UI_parentSocket,(struct sockaddr *)&UI_Address, len) == -1)
 	{
 		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
 		close(UI_parentSocket);

@@ -22,7 +22,10 @@
 
 void Nova::SaveAndExit(int param)
 {
-	system("sudo iptables -F");
+	if(system("sudo iptables -F") != 0)
+	{
+		//TODO Logging
+	}
 
 	AppendToStateFile();
 

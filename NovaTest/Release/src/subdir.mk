@@ -4,32 +4,20 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/ClassificationEngine.cpp \
-../src/Control.cpp \
-../src/Main.cpp \
-../src/Novad.cpp \
-../src/ProtocolHandler.cpp 
+../src/NovaTest.cpp 
 
 OBJS += \
-./src/ClassificationEngine.o \
-./src/Control.o \
-./src/Main.o \
-./src/Novad.o \
-./src/ProtocolHandler.o 
+./src/NovaTest.o 
 
 CPP_DEPS += \
-./src/ClassificationEngine.d \
-./src/Control.d \
-./src/Main.d \
-./src/Novad.d \
-./src/ProtocolHandler.d 
+./src/NovaTest.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I../../NovaLibrary/src/ -O3 -Wall -c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -O3 -Wall -c -fmessage-length=0 -std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
