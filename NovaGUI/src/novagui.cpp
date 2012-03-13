@@ -76,7 +76,6 @@ struct novaComponent novaComponents[NOVA_COMPONENTS];
 //Called when process receives a SIGINT, like if you press ctrl+c
 void sighandler(int param)
 {
-	param = param;
 	StopNovad();
 	exit(EXIT_SUCCESS);
 }
@@ -278,7 +277,6 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 
 void NovaGUI::closeEvent(QCloseEvent * e)
 {
-	e = e;
 	StopNovad();
 }
 
@@ -1357,6 +1355,8 @@ void *CallbackLoopHelper(void *ptr)
 			pthread_create(&callbackThread, NULL, CallbackLoop, ptr);
 		}
 	}
+
+	return NULL;
 }
 
 void *CallbackLoop(void *ptr)

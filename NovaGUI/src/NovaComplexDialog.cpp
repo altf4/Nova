@@ -51,6 +51,7 @@ NovaComplexDialog::NovaComplexDialog(whichDialog type,string* retval, QWidget *p
 			ui.searchEdit->setText((QString)filter.c_str());
 			this->blockSignals(false);
 			on_searchButton_clicked();
+			break;
 		default:
 			break;
 	}

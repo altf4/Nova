@@ -41,7 +41,6 @@ using boost::format;
 int callbackSocket = -1, IPCSocket = -1;
 
 extern string userHomePath;
-extern pthread_rwlock_t suspectTableLock;
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
 
@@ -104,6 +103,8 @@ void *Nova::Handle_UI_Helper(void *ptr)
 		pthread_t UI_thread;
 		pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocket);
     }
+
+    return NULL;
 }
 
 void *Nova::Handle_UI_Thread(void *socketVoidPtr)
@@ -250,7 +251,9 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			LOG(DEBUG, "UI sent us an invalid message",
 					(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
+			break;
 		}
+
 	}
 }
 

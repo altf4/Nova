@@ -1276,7 +1276,10 @@ void NovaConfig::UpdateLookupKeys()
 	if(m_selectedSubnet)
 	{
 		//Asserts the subnet still exists
-		if(subnets.find(m_currentSubnet) != subnets.end());
+		if(subnets.find(m_currentSubnet) != subnets.end())
+		{
+
+		}
 		//If not it sets it to the front or NULL
 		else if(subnets.size())
 		{
@@ -1318,12 +1321,19 @@ void NovaConfig::UpdateLookupKeys()
 	}
 
 	//Asserts the profile still exists
-	if(profiles.find(m_currentProfile) != profiles.end());
+	if(profiles.find(m_currentProfile) != profiles.end())
+	{
+
+	}
 	//If not it sets it to the front or NULL
 	else if(profiles.size())
+	{
 		m_currentProfile = profiles.begin()->first;
+	}
 	else
+	{
 		m_currentProfile = "";
+	}
 }
 /************************************************
  * Browse file system dialog box signals
@@ -3400,6 +3410,7 @@ void NovaConfig::on_actionNodeAdd_triggered()
 					ss << n.pfile << " on " << n.interface << "-" << i;
 					n.name = ss.str();
 				}
+				break;
 			}
 		}
 		n.enabled = false;

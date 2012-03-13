@@ -37,5 +37,5 @@ int main(int argc, char *argv[])
 
     NovaGUI w;
     w.show();
-    a.exec();
+    return a.exec();
 }
