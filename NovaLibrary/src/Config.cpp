@@ -1074,7 +1074,7 @@ bool Config::AddUserToGroup()
 	if( system("gksudo --description 'Add your user to the privileged nova user group. "
 			"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to add user to the 'nova' group");
+		syslog(SYSL_ERR, "File: %s Line: %d gksudo: %s", __FILE__, __LINE__, "Was not able to add user to the 'nova' group");
 		//TODO replace with LOG()
 		returnValue = false;
 	}
@@ -1142,9 +1142,9 @@ bool Config::InitUserConfigs(string homeNovaPath)
 			returnValue = false;
 
 		//TODO: Do this command programmatically. Not by calling system()
-		if( system("cp -rf /etc/nova/.nova $HOME") == -1)
+		if( system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
+			syslog(SYSL_ERR, "File: %s Line: %d: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
 			//TODO replace with LOG()
 			returnValue = false;
 		}
@@ -1154,7 +1154,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 			return returnValue;
 		else
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
+			syslog(SYSL_ERR, "File: %s Line: %d: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
 			//TODO replace with LOG()
 			returnValue = false;
 		}
