@@ -70,7 +70,10 @@ SuspectTableIterator SuspectTable::Begin()
 SuspectTableIterator SuspectTable::End()
 {
 	SuspectTableIterator it = SuspectTableIterator(&m_table, &m_keys, &m_lock);
-	it.Previous();
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		it.Next();
+	}
 	return it;
 }
 
@@ -263,8 +266,7 @@ Suspect SuspectTable::CheckOut(uint64_t key)
 		}
 	}
 	Rdlock();
-	m_table[key] = &m_emptySuspect;
-	Suspect ret = *m_table[key];
+	Suspect ret = m_emptySuspect;
 	ret.ResetOwner();
 	Unlock();
 	return ret;
@@ -289,8 +291,7 @@ Suspect SuspectTable::Peek(uint64_t  key)
 		}
 	}
 	Rdlock();
-	m_table[key] = &m_emptySuspect;
-	Suspect ret = *m_table[key];
+	Suspect ret = m_emptySuspect;
 	ret.ResetOwner();
 	Unlock();
 	return ret;

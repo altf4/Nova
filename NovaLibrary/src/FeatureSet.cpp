@@ -741,12 +741,6 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 bool FeatureSet::operator ==(const FeatureSet &rhs) const
 {
-	//This may not be true, the could have different tables with the same contents
-	//if (m_packTable != rhs.m_packTable)
-	//	return false;
-
-	//if (m_portTable != rhs.m_portTable)
-	//	return false;
 
 	if (m_haystackEvents != rhs.m_haystackEvents)
 		return false;
@@ -766,13 +760,6 @@ bool FeatureSet::operator ==(const FeatureSet &rhs) const
 	if (m_bytesTotal != rhs.m_bytesTotal)
 		return false;
 
-	//This may not be true, the could have different tables with the same contents
-	//if (m_intervalTable != rhs.m_intervalTable)
-	//	return false;
-
-	//if (m_IPTable != rhs.m_IPTable)
-	//	return false;
-
 	if (m_packetCount != rhs.m_packetCount)
 		return false;
 
@@ -788,42 +775,5 @@ bool FeatureSet::operator !=(const FeatureSet &rhs) const
 	return !(*this == rhs);
 }
 
-/*
-FeatureSet& FeatureSet::operator=(FeatureSet &rhs)
-{
-	this->m_IPTable = rhs.m_IPTable;
-	this->m_bytesTotal = rhs.m_bytesTotal;
-	this->m_endTime = rhs.m_endTime;
-	*this->m_features = *rhs.m_features;
-	this->m_haystackEvents = rhs.m_haystackEvents;
-	this->m_intervalTable = rhs.m_intervalTable;
-	this->m_last_time = rhs.m_last_time;
-	this->m_packTable = rhs.m_packTable;
-	this->m_packetCount = rhs.m_packetCount;
-	this->m_portTable = rhs.m_portTable;
-	this->m_startTime = rhs.m_startTime;
-	this->m_totalInterval = rhs.m_totalInterval;
-
-	return *this;
-}
-
-FeatureSet& FeatureSet::operator=(FeatureSet rhs)
-{
-	delete m_unsentData;
-	this->m_IPTable = rhs.m_IPTable;
-	this->m_bytesTotal = rhs.m_bytesTotal;
-	this->m_endTime = rhs.m_endTime;
-	*this->m_features = *rhs.m_features;
-	this->m_haystackEvents = rhs.m_haystackEvents;
-	this->m_intervalTable = rhs.m_intervalTable;
-	this->m_last_time = rhs.m_last_time;
-	this->m_packTable = rhs.m_packTable;
-	this->m_packetCount = rhs.m_packetCount;
-	this->m_portTable = rhs.m_portTable;
-	this->m_startTime = rhs.m_startTime;
-	this->m_totalInterval = rhs.m_totalInterval;
-
-	return *this;
-}*/
 
 }
