@@ -39,6 +39,7 @@
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
 #include <iostream>
+#include <time.h>
 
 #include <boost/format.hpp>
 
