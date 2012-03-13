@@ -36,14 +36,14 @@ TEST_F(ConfigTest, test_setEnabledFeatures) {
 	EXPECT_EQ(sqrt(5), Config::Inst()->getSqurtEnabledFeatures());
 
 	// Check if it correctly set all the enabled/disabled feature values
-	EXPECT_EQ(true, Config::Inst()->isFeatureEnabled(0));
-	EXPECT_EQ(true, Config::Inst()->isFeatureEnabled(1));
-	EXPECT_EQ(false, Config::Inst()->isFeatureEnabled(2));
-	EXPECT_EQ(false, Config::Inst()->isFeatureEnabled(3));
-	EXPECT_EQ(true, Config::Inst()->isFeatureEnabled(4));
-	EXPECT_EQ(false, Config::Inst()->isFeatureEnabled(5));
-	EXPECT_EQ(false, Config::Inst()->isFeatureEnabled(6));
-	EXPECT_EQ(true, Config::Inst()->isFeatureEnabled(7));
-	EXPECT_EQ(true, Config::Inst()->isFeatureEnabled(8));
+	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(0));
+	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(1));
+	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(2));
+	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(3));
+	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(4));
+	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(5));
+	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(6));
+	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(7));
+	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(8));
 }
 

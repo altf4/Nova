@@ -100,14 +100,14 @@ TEST_F(SuspectTableTest, GetKeys) {
 
 TEST_F(SuspectTableTest, IsValidKey) {
 	// Test for proper result on an empty table
-	EXPECT_EQ(false, table.IsValidKey(0));
-	EXPECT_EQ(false, table.IsValidKey(42));
+	EXPECT_FALSE(table.IsValidKey(0));
+	EXPECT_FALSE(table.IsValidKey(42));
 
 	InitSuspects();
-	EXPECT_EQ(false, table.IsValidKey(0));
-	EXPECT_EQ(false, table.IsValidKey(42));
-	EXPECT_EQ(true, table.IsValidKey(1));
-	EXPECT_EQ(true, table.IsValidKey(2));
+	EXPECT_FALSE(table.IsValidKey(0));
+	EXPECT_FALSE(table.IsValidKey(42));
+	EXPECT_TRUE(table.IsValidKey(1));
+	EXPECT_TRUE(table.IsValidKey(2));
 }
 
 TEST_F(SuspectTableTest, Erase) {
