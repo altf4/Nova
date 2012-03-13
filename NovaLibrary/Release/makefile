@@ -45,7 +45,7 @@ all: libNovaLibrary.a
 libNovaLibrary.a: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC Archiver'
-	ar -r "libNovaLibrary.a" $(OBJS) $(USER_OBJS) $(LIBS)
+	ar -r  "libNovaLibrary.a" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
