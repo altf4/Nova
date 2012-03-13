@@ -27,6 +27,7 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.2145777374" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.539406086" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/src"/>
+									<listOptionValue builtIn="false" value="../../../gtest-1.6.0/include"/>
 									<listOptionValue builtIn="false" value="../../Novad/src"/>
 									<listOptionValue builtIn="false" value="../../Nova_UI_Core/src"/>
 								</option>

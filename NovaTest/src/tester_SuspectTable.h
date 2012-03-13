@@ -51,8 +51,7 @@ TEST_F(SuspectTableTest, Begin) {
 	EXPECT_EQ((uint)0, table.Begin().GetIndex());
 }
 
-// TODO: Enable this test once ticket #76 is closed
-TEST_F(SuspectTableTest, DISABLED_End) {
+TEST_F(SuspectTableTest, End) {
 	// Test for proper result on an empty table
 	EXPECT_EQ((uint)0, table.End().GetIndex());
 
@@ -133,7 +132,7 @@ TEST_F(SuspectTableTest, GetHostility) {
 	EXPECT_EQ(1, table.GetHostility(2));
 }
 
-TEST_F(SuspectTableTest, DISABLED_CheckInAndOut) {
+TEST_F(SuspectTableTest, CheckInAndOut) {
 	Suspect *s = new Suspect();
 	s->SetIpAddress(42);
 
@@ -172,7 +171,7 @@ TEST_F(SuspectTableTest, DISABLED_CheckInAndOut) {
 }
 
 // TODO: Enable this test again when ticket
-TEST_F(SuspectTableTest, DISABLED_Peek) {
+TEST_F(SuspectTableTest, Peek) {
 	// Test for proper result on an empty table
 	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.Peek(42).GetIpAddress());
 
