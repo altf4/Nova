@@ -59,11 +59,6 @@ struct Session
 };
 
 
-//UDP has max payload of 65535 bytes
-//serializeSuspect requires 201 bytes, serializeFeatureData requires 36 bytes, bytes left = 65334
-// each entry in a table takes 8 bytes 65334/8 = 8166.75
-#define MAX_TABLE_ENTRIES 8166
-
 //boolean values for updateFeatureData()
 #define INCLUDE true
 #define REMOVE false
@@ -149,7 +144,6 @@ public:
 
 	//FeatureSet(const FeatureSet &rhs);
 	//FeatureSet& operator=(FeatureSet &rhs);
-
 private:
 	//Temporary variables used to calculate Features
 
@@ -158,14 +152,14 @@ private:
 
 	//Table of Ports and associated packet counts
 	Port_Table m_portTable;
-	//Max packet count to a port, used for normalizing
-	uint32_t m_portMax;
 
 	//Tracks the number of HS events
 	uint32_t m_haystackEvents;
 
 	time_t m_startTime;
 	time_t m_endTime;
+	time_t m_lastTime;
+
 	time_t m_totalInterval;
 
 	//Total number of bytes in all packets
@@ -174,10 +168,15 @@ private:
 	///A table of the intervals between packet arrival times for tracking traffic over time.
 	Interval_Table m_intervalTable;
 
-	time_t m_last_time;
-
 	//Table of IP addresses and associated packet counts
 	IP_Table m_IPTable;
+
+	static const uint32_t m_maxTableEntries = ((65355 -
+		//(Suspect Members) IP + Classificiation + 5x flags + hostile neighbors + featureAccuracy[DIM]
+		((sizeof(in_addr_t) + sizeof(double) + 5*(sizeof(bool)) +  sizeof(int32_t) + DIM*(sizeof(double)))
+		// (features[DIM]) + (FeatureSetData constant var byte size)
+		+ (DIM*(sizeof(double))) + (7*(sizeof(uint32_t)) + 4*(sizeof(time_t)))))/8);
+
 };
 }
 

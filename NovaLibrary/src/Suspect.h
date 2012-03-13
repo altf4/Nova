@@ -243,7 +243,7 @@ private:
 	//		0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
 	//		-1 indicates no classification or error.
 	double m_classification;
-	int m_hostileNeighbors;
+	int32_t m_hostileNeighbors;
 
 	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
 	bool m_isHostile;
