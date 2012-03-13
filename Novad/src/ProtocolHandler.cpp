@@ -246,6 +246,14 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			break;
 		}
+		case CONTROL_PING:
+		{
+			ControlMessage connectReply;
+			connectReply.m_controlType = CONTROL_PONG;
+			UI_Message::WriteMessage(&connectReply, socketFD);
+
+			break;
+		}
 		default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message",
