@@ -951,7 +951,7 @@ bool Nova::KnockPort(bool mode)
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %s")
+		LOG(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %3%")
 				%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
@@ -959,7 +959,7 @@ bool Nova::KnockPort(bool mode)
 
 	if( sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %s")
+		LOG(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %3%")
 				%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
@@ -1022,6 +1022,9 @@ bool Nova::Start_Packet_Handler()
 			TrainingLoop(NULL);
 
 		if(Config::Inst()->getGotoLive()) usePcapFile = false; //If we are going to live capture set the flag.
+
+		LOG(DEBUG, "Done processing PCAP file");
+		exit(EXIT_SUCCESS);
 	}
 
 
