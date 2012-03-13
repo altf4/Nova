@@ -655,16 +655,25 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 	offset += sizeof m_bytesTotal;
 
 	memcpy(&temp, buf+offset, sizeof m_startTime);
-	m_startTime += temp;
 	offset += sizeof m_startTime;
+	if(m_startTime > (time_t)temp)
+	{
+		m_startTime = temp;
+	}
 
 	memcpy(&temp, buf+offset, sizeof m_endTime);
-	m_endTime += temp;
 	offset += sizeof m_endTime;
+	if(m_endTime < (time_t)temp)
+	{
+		m_endTime = temp;
+	}
 
 	memcpy(&temp, buf+offset, sizeof m_lastTime);
-	m_lastTime += temp;
 	offset += sizeof m_lastTime;
+	if(m_lastTime < (time_t)temp)
+	{
+		m_lastTime = temp;
+	}
 
 	/***************************************************************************************************
 	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
