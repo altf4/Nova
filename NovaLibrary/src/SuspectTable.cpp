@@ -299,7 +299,7 @@ Suspect SuspectTable::Peek(uint64_t  key)
 
 //Erases a suspect from the table if it is not locked
 //		key: uint64_t of the Suspect
-// Returns (0) on success, (-2) if the suspect does not exist, (-1) if the suspect is checked out
+// Returns (0) on success, (-2) if the suspect does not exist (key is invalid)
 SuspectTableRet SuspectTable::Erase(uint64_t key)
 {
 	if(!IsValidKey(key))
