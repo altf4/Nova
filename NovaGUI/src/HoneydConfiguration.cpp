@@ -487,7 +487,7 @@ void HoneydConfiguration::SaveAllTemplates()
 		pt.put<std::string>("IP", temp);
 
 		//Gets the mask from mask bits then put it in XML
-		in_addr_t mask = pow(2, 32-it->second.maskBits) - 1;
+		in_addr_t mask = ::pow(2, 32-it->second.maskBits) - 1;
 		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
 		mask = ~mask; //After getting the inverse of this we have the mask in host addr form.
 		//Convert to network order, put in in_addr struct

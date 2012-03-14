@@ -1276,20 +1276,19 @@ void NovaConfig::UpdateLookupKeys()
 	if(m_selectedSubnet)
 	{
 		//Asserts the subnet still exists
-		if(subnets.find(m_currentSubnet) != subnets.end())
+		if(subnets.find(m_currentSubnet) == subnets.end())
 		{
-
-		}
-		//If not it sets it to the front or NULL
-		else if(subnets.size())
-		{
-			m_currentNode = "";
-			m_currentSubnet = subnets.begin()->first;
-		}
-		else
-		{
-			m_selectedSubnet = false;
-			m_currentSubnet = "";
+			//If not it sets it to the front or NULL
+			if(subnets.size())
+			{
+				m_currentNode = "";
+				m_currentSubnet = subnets.begin()->first;
+			}
+			else
+			{
+				m_selectedSubnet = false;
+				m_currentSubnet = "";
+			}
 		}
 	}
 	else if(!m_selectedSubnet)
@@ -1321,18 +1320,17 @@ void NovaConfig::UpdateLookupKeys()
 	}
 
 	//Asserts the profile still exists
-	if(profiles.find(m_currentProfile) != profiles.end())
+	if(profiles.find(m_currentProfile) == profiles.end())
 	{
-
-	}
-	//If not it sets it to the front or NULL
-	else if(profiles.size())
-	{
-		m_currentProfile = profiles.begin()->first;
-	}
-	else
-	{
-		m_currentProfile = "";
+		//If not it sets it to the front or NULL
+		if(profiles.size())
+		{
+			m_currentProfile = profiles.begin()->first;
+		}
+		else
+		{
+			m_currentProfile = "";
+		}
 	}
 }
 /************************************************

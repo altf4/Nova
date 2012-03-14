@@ -34,6 +34,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
 		<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
@@ -160,6 +161,7 @@
 		<pathentry base-path="/usr/include/qt4" include="QtTest" kind="inc" path="" system="true"/>
 		<pathentry base-path="/usr/include/qt4" include="QtHelp" kind="inc" path="" system="true"/>
 		<pathentry base-path="/usr/include/qt4" include="QtCore" kind="inc" path="" system="true"/>
+		<pathentry base-path="NovaGUI" include="UI_headers" kind="inc" path="" system="true"/>
 		<pathentry kind="src" path=""/>
 		<pathentry kind="out" path=""/>
 		<pathentry kind="prj" path="/NovaLibrary"/>

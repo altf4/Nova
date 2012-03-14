@@ -76,8 +76,9 @@ struct novaComponent novaComponents[NOVA_COMPONENTS];
 //Called when process receives a SIGINT, like if you press ctrl+c
 void sighandler(int param)
 {
+	param = EXIT_SUCCESS;
 	StopNovad();
-	exit(EXIT_SUCCESS);
+	::exit(param);
 }
 
 NovaGUI::NovaGUI(QWidget *parent)
@@ -109,7 +110,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	if(!StartCallbackLoop(this))
 	{
 		LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
 	}
 
 	// Create the dialog generator
@@ -275,7 +276,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 	}
 }
 
-void NovaGUI::closeEvent(QCloseEvent * e)
+void NovaGUI::closeEvent()
 {
 	StopNovad();
 }
@@ -320,7 +321,7 @@ void NovaGUI::InitPaths()
 
 	if((homePath == "") || (readPath == "") || (writePath == ""))
 	{
-		exit(EXIT_FAILURE);
+		::exit(EXIT_FAILURE);
 	}
 
 	QDir::setCurrent((QString)homePath.c_str());
@@ -785,7 +786,7 @@ void NovaGUI::on_actionConfigure_triggered()
 void  NovaGUI::on_actionExit_triggered()
 {
 	StopNovad();
-	exit(EXIT_SUCCESS);
+	::exit(EXIT_SUCCESS);
 }
 
 void NovaGUI::on_actionClear_All_Suspects_triggered()
@@ -1059,10 +1060,16 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 			(ui.systemStatusTable->currentRow() == COMPONENT_DMH || ui.systemStatusTable->currentRow() == COMPONENT_HSH))
 	{
 		QString killString = QString("sudo pkill -TERM -P ") + QString::number(process->pid());
-		system(killString.toStdString().c_str());
+		if(::system(killString.toStdString().c_str()) != 0)
+		{
+			//XXX LOG();
+		}
 
 		killString = QString("sudo kill ") + QString::number(process->pid());
-		system(killString.toStdString().c_str());
+		if(::system(killString.toStdString().c_str()) != 0)
+		{
+			//XXX LOG();
+		}
 	}
 
 	// Politely ask the process to die
@@ -1077,7 +1084,10 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 	if(process != NULL && process->pid())
 	{
 		QString killString = QString("sudo kill ") + QString::number(process->pid());
-		system(killString.toStdString().c_str());
+		if(::system(killString.toStdString().c_str()) != 0)
+		{
+			//XXX LOG();
+		}
 	}
 
 	cout << "PID is " << process->pid() << endl;
@@ -1101,10 +1111,16 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 			if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
 			{
 				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
-				system(killString.toStdString().c_str());
+				if(::system(killString.toStdString().c_str()) != 0)
+				{
+					//XXX LOG();
+				}
 
 				killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
-				system(killString.toStdString().c_str());
+				if(::system(killString.toStdString().c_str()) != 0)
+				{
+					//XXX LOG();
+				}
 			}
 			break;
 		}
@@ -1113,10 +1129,16 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 			if (novaComponents[COMPONENT_HSH].process != NULL && novaComponents[COMPONENT_HSH].process->pid() != 0)
 			{
 				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
-				system(killString.toStdString().c_str());
+				if(::system(killString.toStdString().c_str()) != 0)
+				{
+					//XXX LOG();
+				}
 
 				killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
-				system(killString.toStdString().c_str());
+				if(::system(killString.toStdString().c_str()) != 0)
+				{
+					//XXX LOG();
+				}
 			}
 			break;
 		}

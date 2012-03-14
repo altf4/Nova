@@ -39,7 +39,7 @@ public:
 				, Qt::CaseInsensitive, QRegExp::RegExp), this);
 		setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
 		setWrapping(true);
-		setRange(0, (pow(2,24)-1));
+		setRange(0, (::pow(2,24)-1));
 
 		if(MACAddr.size() < 17)
 		{

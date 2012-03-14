@@ -89,7 +89,7 @@ public:
     void ClearSuspectList();
 
     //Action to do when the window closes.
-    void closeEvent(QCloseEvent * e);
+    void closeEvent();
 
     //Get preliminary config information
     void InitConfiguration();

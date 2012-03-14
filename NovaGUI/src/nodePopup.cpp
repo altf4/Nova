@@ -91,51 +91,63 @@ void nodePopup::loadNode()
 	int count = 0;
 	int numBits = 32 - s.maskBits;
 
-	in_addr_t base = pow(2, numBits);
-	in_addr_t flatConst = pow(2,32)- base;
+	in_addr_t base = ::pow(2, numBits);
+	in_addr_t flatConst = ::pow(2,32)- base;
 
 	flatConst = flatConst & editNode.realIP;
 	in_addr_t flatBase = flatConst;
 	count = s.maskBits/8;
 
-	switch(count)
+	while(count < 4)
 	{
-		case 0:
-			ui.ipSpinBox0->setReadOnly(false);
-			if(numBits > 32)
-				numBits = 32;
-			base = pow(2,32)-1;
-			flatBase = flatConst & base;
-			base = pow(2, numBits)-1;
-			ui.ipSpinBox0->setRange((flatBase >> 24), (flatBase+base) >> 24);
-
-		case 1:
-
-			ui.ipSpinBox1->setReadOnly(false);
-			if(numBits > 24)
-				numBits = 24;
-			base = pow(2, 24)-1;
-			flatBase = flatConst & base;
-			base = pow(2, numBits)-1;
-			ui.ipSpinBox1->setRange(flatBase >> 16, (flatBase+base) >> 16);
-
-		case 2:
-			ui.ipSpinBox2->setReadOnly(false);
-			if(numBits > 16)
-				numBits = 16;
-			base = pow(2, 16)-1;
-			flatBase = flatConst & base;
-			base = pow(2, numBits)-1;
-			ui.ipSpinBox2->setRange(flatBase >> 8, (flatBase+base) >> 8);
-
-		case 3:
-			ui.ipSpinBox3->setReadOnly(false);
-			if(numBits > 8)
-				numBits = 8;
-			base = pow(2, 8)-1;
-			flatBase = flatConst & base;
-			base = pow(2, numBits)-1;
-			ui.ipSpinBox3->setRange(flatBase, (flatBase+base));
+		switch(count)
+		{
+			case 0:
+			{
+				ui.ipSpinBox0->setReadOnly(false);
+				if(numBits > 32)
+					numBits = 32;
+				base = ::pow(2,32)-1;
+				flatBase = flatConst & base;
+				base = ::pow(2, numBits)-1;
+				ui.ipSpinBox0->setRange((flatBase >> 24), (flatBase+base) >> 24);
+				break;
+			}
+			case 1:
+			{
+				ui.ipSpinBox1->setReadOnly(false);
+				if(numBits > 24)
+					numBits = 24;
+				base = ::pow(2, 24)-1;
+				flatBase = flatConst & base;
+				base = ::pow(2, numBits)-1;
+				ui.ipSpinBox1->setRange(flatBase >> 16, (flatBase+base) >> 16);
+				break;
+			}
+			case 2:
+			{
+				ui.ipSpinBox2->setReadOnly(false);
+				if(numBits > 16)
+					numBits = 16;
+				base = ::pow(2, 16)-1;
+				flatBase = flatConst & base;
+				base = ::pow(2, numBits)-1;
+				ui.ipSpinBox2->setRange(flatBase >> 8, (flatBase+base) >> 8);
+				break;
+			}
+			case 3:
+			{
+				ui.ipSpinBox3->setReadOnly(false);
+				if(numBits > 8)
+					numBits = 8;
+				base = ::pow(2, 8)-1;
+				flatBase = flatConst & base;
+				base = ::pow(2, numBits)-1;
+				ui.ipSpinBox3->setRange(flatBase, (flatBase+base));
+				break;
+			}
+		}
+		count++;
 	}
 	ui.ipSpinBox3->setValue(editNode.realIP & 255);
 	ui.ipSpinBox2->setValue((editNode.realIP >> 8) & 255);
@@ -260,13 +272,19 @@ int nodePopup::validateNodeSettings()
 		}
 	}
 	if(novaParent->subnets[editNode.sub].base == editNode.realIP)
+	{
 		ipConflict = true;
+	}
 
 	int ret = 0;
 	if(ipConflict)
+	{
 		ret = 1;
+	}
 	else if(macConflict)
+	{
 		ret = 2;
+	}
 	novaParent->m_loading->unlock();
 	return ret;
 }
