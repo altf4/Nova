@@ -344,11 +344,9 @@ void NovaGUI::InitiateSystemStatus()
 {
 	// Pull in the icons now that homePath is set
 	string greenPath = "/usr/share/nova/icons/greendot.png";
-	string yellowPath = "/usr/share/nova/icons/yellowdot.png";
 	string redPath = "/usr/share/nova/icons/reddot.png";
 
 	m_greenIcon = new QIcon(QPixmap(QString::fromStdString(greenPath)));
-	m_yellowIcon = new QIcon(QPixmap(QString::fromStdString(yellowPath)));
 	m_redIcon = new QIcon(QPixmap(QString::fromStdString(redPath)));
 
 	// Populate the System Status table with empty widgets
