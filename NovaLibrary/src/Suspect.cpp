@@ -881,6 +881,9 @@ Suspect::Suspect(const Suspect &rhs)
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
+	m_owner = 0;
+	m_hasOwner = false;
+
 	if(rhs.m_annPoint != NULL)
 	{
 		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
