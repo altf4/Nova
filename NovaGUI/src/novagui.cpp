@@ -46,14 +46,6 @@ extern int UI_parentSocket;
 extern int UI_ListenSocket;
 extern struct sockaddr_un UI_Address;
 
-//GUI to Nova message variables
-u_char msgBuffer[MAX_GUIMSG_SIZE];
-int msgLen = 0;
-
-//Receive Suspect variables
-u_char buf[MAX_MSG_SIZE];
-int bytesRead;
-
 pthread_rwlock_t lock;
 string homePath, readPath, writePath;
 
