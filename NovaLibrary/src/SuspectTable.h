@@ -132,8 +132,6 @@ public:
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	bool IsValidKey(uint64_t key);
 
-	//Returns a reference to a suspect,
-	Suspect operator[](uint64_t realKey);
 
 	Suspect m_emptySuspect;
 
@@ -174,6 +172,12 @@ private:
 
 	// Returns true if the current thread has a lock on the Table
 	bool IsOwner();
+
+	//Returns the number of 'owners' the table has
+	int NumOwners();
+
+	//Returns a reference to a suspect,
+	//Suspect operator[](uint64_t realKey);
 
 	uint64_t m_empty_key;
 
