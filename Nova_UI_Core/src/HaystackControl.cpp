@@ -25,9 +25,9 @@ using namespace Nova;
 
 bool Nova::StartHaystack()
 {
-	string executeString = "nohup sudo honeyd -d -i lo -f " + Config::Inst()->getPathHome()
+	string executeString = "nohup sudo honeyd -d -i eth0 -i lo -f " + Config::Inst()->getPathHome()
 					+ "/Config/haystack.config -p " + Config::Inst()->getPathReadFolder()
-					+ "nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+					+ "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 
 	int pid = fork();
 	if(pid == -1)
@@ -98,7 +98,7 @@ bool Nova::IsHaystackUp()
 	pclose(out);
 	return retSuccess;
 }
-
+/*
 bool Nova::StartDoppelganger()
 {
 	string executeString = "nohup sudo honeyd -d -i lo -f " + Config::Inst()->getPathHome()
@@ -174,4 +174,4 @@ bool Nova::IsDoppelgangerUp()
 	}
 	pclose(out);
 	return retSuccess;
-}
+} */
