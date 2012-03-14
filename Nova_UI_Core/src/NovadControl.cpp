@@ -25,7 +25,6 @@
 
 using namespace Nova;
 
-extern int UI_parentSocket;
 extern int novadListenSocket;
 
 bool Nova::StartNovad()

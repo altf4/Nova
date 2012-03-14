@@ -4,5 +4,5 @@ using namespace Nova;
 
 int main()
 {
-	RunNovaD();
+	return RunNovaD();
 }

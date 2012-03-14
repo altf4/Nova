@@ -35,7 +35,6 @@
 #include <errno.h>
 #include <QDir>
 #include <sys/un.h>
-#include <string>
 
 using namespace std;
 using namespace Nova;
@@ -1378,7 +1377,7 @@ void *CallbackLoopHelper(void *ptr)
 			pthread_create(&callbackThread, NULL, CallbackLoop, ptr);
 		}
 	}
-	//XXX logging - shouldn't get here
+
 	return NULL;
 }
 

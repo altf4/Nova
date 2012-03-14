@@ -822,7 +822,11 @@ bool Config::SaveConfig()
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
 	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
-	if(system(copyCommand.c_str()) != 0); //TODO ERROR handling
+	if(system(copyCommand.c_str()) != 0)
+	{
+		//TODO ERROR handling
+	}
+
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_configFilePath.c_str());
 
@@ -1019,7 +1023,10 @@ bool Config::SaveConfig()
 	out->close();
 	delete in;
 	delete out;
-	if(system("rm -f Config/.NOVAConfig.tmp") != 0); //TODO ERROR handling.
+	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
+	{
+		//TODO ERROR handling.
+	}
 	pthread_rwlock_unlock(&lock);
 	return true;
 }

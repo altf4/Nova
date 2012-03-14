@@ -44,7 +44,7 @@ all: Novad
 Novad: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L../../NovaLibrary/Debug/ -o"Novad" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../NovaLibrary/Debug/ -pthread -o"Novad" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

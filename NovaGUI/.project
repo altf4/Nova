@@ -84,7 +84,7 @@
 			</arguments>
 		</buildCommand>
 		<buildCommand>
-			<name>org.eclipse.cdt.codan.core.codanBuilder</name>
+			<name>org.eclipse.linuxtools.rpm.rpmlint.rpmlintBuilder</name>
 			<arguments>
 			</arguments>
 		</buildCommand>
@@ -95,6 +95,6 @@
 		<nature>org.eclipse.cdt.make.core.makeNature</nature>
 		<nature>org.eclipse.cdt.make.core.ScannerConfigNature</nature>
 		<nature>com.trolltech.qtcppproject.QtNature</nature>
-		<nature>org.eclipse.cdt.codan.core.codanNature</nature>
+		<nature>org.eclipse.linuxtools.rpm.rpmlint.rpmlintNature</nature>
 	</natures>
 </projectDescription>
