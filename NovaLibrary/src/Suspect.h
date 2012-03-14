@@ -218,8 +218,8 @@ public:
 	//Flags the suspect as no longer 'checked out'
 	int ResetOwner();
 
-	Suspect& operator=(Suspect &rhs);
-	Suspect& operator=(Suspect rhs);
+	Suspect& operator=(const Suspect &rhs);
+	Suspect(const Suspect &rhs);
 	Suspect& operator*(Suspect* rhs);
 
 private:

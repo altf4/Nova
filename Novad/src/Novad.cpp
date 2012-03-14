@@ -25,6 +25,7 @@
 #include "Control.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
+#include "FeatureSet.h"
 
 #include <vector>
 #include <math.h>
@@ -564,7 +565,12 @@ void *Nova::ClassificationLoop(void *ptr)
 				LoadStateFile();
 			}
 		}
-	} while(Config::Inst()->getClassificationTimeout());
+	} while(Config::Inst()->getClassificationTimeout() && !usePcapFile);
+
+	if (usePcapFile)
+	{
+		return NULL;
+	}
 
 	//Shouldn't get here!!
 	if(Config::Inst()->getClassificationTimeout())
@@ -1024,10 +1030,6 @@ bool Nova::Start_Packet_Handler()
 		pcap_loop(handle, -1, Packet_Handler,NULL);
 
 		TCPTimeout(NULL);
-		if (!Config::Inst()->getIsTraining())
-			ClassificationLoop(NULL);
-		else
-			TrainingLoop(NULL);
 
 		if(Config::Inst()->getGotoLive()) usePcapFile = false; //If we are going to live capture set the flag.
 
@@ -1388,20 +1390,20 @@ void *Nova::TCPTimeout(void *ptr)
 					{
 						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						// Allow for continuous classification
 						if(!Config::Inst()->getClassificationTimeout())
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							if (!Config::Inst()->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						SessionTable[it->first].session.clear();
@@ -1412,20 +1414,20 @@ void *Nova::TCPTimeout(void *ptr)
 					{
 						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						// Allow for continuous classification
 						if(!Config::Inst()->getClassificationTimeout())
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							if (!Config::Inst()->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						SessionTable[it->first].session.clear();
