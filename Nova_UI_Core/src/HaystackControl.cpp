@@ -28,10 +28,21 @@ bool Nova::StartHaystack()
 	string executeString = "nohup sudo honeyd -d -i lo -f " + Config::Inst()->getPathHome()
 					+ "/Config/haystack.config -p " + Config::Inst()->getPathReadFolder()
 					+ "nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
-	if(system(executeString.c_str()) == EXIT_FAILURE)
+
+	int pid = fork();
+	if(pid == -1)
 	{
+		//Fork failed
 		return false;
 	}
+
+	//If we are the child process (IE: Haystack)
+	if(pid == 0)
+	{
+		system(executeString.c_str());
+		exit(EXIT_SUCCESS);
+	}
+
 	return true;
 }
 
@@ -93,10 +104,21 @@ bool Nova::StartDoppelganger()
 	string executeString = "nohup sudo honeyd -d -i lo -f " + Config::Inst()->getPathHome()
 					+ "/Config/doppelganger.config -p " + Config::Inst()->getPathReadFolder()
 					+ "/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
-	if(system(executeString.c_str()) == EXIT_FAILURE)
+
+	int pid = fork();
+	if(pid == -1)
 	{
+		//Fork failed
 		return false;
 	}
+
+	//If we are the child process (IE: Haystack)
+	if(pid == 0)
+	{
+		system(executeString.c_str());
+		exit(EXIT_SUCCESS);
+	}
+
 	return true;
 }
 
