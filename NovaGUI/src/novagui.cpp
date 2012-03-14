@@ -1105,8 +1105,7 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 		}
 		default:
 		{
-			LOG(ERROR, (format("File %1% at line %2%: System call: "
-				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
+			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring")%__FILE__%__LINE__).str());
 			return;
 		}
 	}
@@ -1136,8 +1135,7 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 		}
 		default:
 		{
-			LOG(ERROR, (format("File %1% at line %2%: System call: "
-				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
+			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring")%__FILE__%__LINE__).str());
 			break;
 		}
 	}
