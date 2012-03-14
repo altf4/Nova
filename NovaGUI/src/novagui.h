@@ -44,16 +44,6 @@ struct suspectItem
 };
 typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectGUIHashTable;
 
-
-struct novaComponent
-{
-	string name;
-	string terminalCommand;
-	string noTerminalCommand;
-	QProcess *process;
-	bool shouldBeRunning;
-};
-
 class NovaGUI : public QMainWindow
 {
     Q_OBJECT
@@ -94,7 +84,6 @@ public:
     //Get preliminary config information
     void InitConfiguration();
     void InitPaths();
-    void InitNovadCommands();
 
     void SetFeatureDistances(Suspect* suspect);
 
@@ -192,13 +181,6 @@ void *CallbackLoopHelper(void *ptr);
 void *CallbackLoop(void *ptr);
 
 void *StatusUpdate(void *ptr);
-
-//Start one component of Nova
-void StartComponent(novaComponent *component);
-
-//Helper thread for StartComponent
-//	runs the start command in a new thread, so that we can sleep() without locking the whole GUI
-void *StartComponentHelper(void *ptr);
 
 }
 #endif // NOVAGUI_H
