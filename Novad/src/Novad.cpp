@@ -500,7 +500,6 @@ void *Nova::ClassificationLoop(void *ptr)
 	{
 		sleep(Config::Inst()->getClassificationTimeout());
 		//Calculate the "true" Feature Set for each Suspect
-		// XXX 'suspects' SuspectTableIterator todo
 		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 		{
 			if(it.Current().GetNeedsFeatureUpdate())
@@ -818,7 +817,8 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 			if(system(commandLine.c_str()) != 0)
 			{
-				//TODO Logging
+				LOG(ERROR, (format("File %1% at line %2%: System call: "
+					"'%3%' has failed.")%__FILE__%__LINE__%commandLine.c_str()).str());
 			}
 		}
 		else
@@ -835,7 +835,8 @@ void Nova::SilentAlarm(Suspect *suspect)
 
 			if(system(commandLine.c_str()) != 0)
 			{
-				//TODO Logging
+				LOG(ERROR, (format("File %1% at line %2%: System call: "
+					"'%3%' has failed.")%__FILE__%__LINE__%commandLine.c_str()).str());
 			}
 		}
 	}

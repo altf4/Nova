@@ -1062,13 +1062,15 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 		QString killString = QString("sudo pkill -TERM -P ") + QString::number(process->pid());
 		if(::system(killString.toStdString().c_str()) != 0)
 		{
-			//XXX LOG();
+			LOG(ERROR, (format("File %1% at line %2%: System call: "
+				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 		}
 
 		killString = QString("sudo kill ") + QString::number(process->pid());
 		if(::system(killString.toStdString().c_str()) != 0)
 		{
-			//XXX LOG();
+			LOG(ERROR, (format("File %1% at line %2%: System call: "
+				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 		}
 	}
 
@@ -1086,7 +1088,8 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 		QString killString = QString("sudo kill ") + QString::number(process->pid());
 		if(::system(killString.toStdString().c_str()) != 0)
 		{
-			//XXX LOG();
+			LOG(ERROR, (format("File %1% at line %2%: System call: "
+				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 		}
 	}
 
@@ -1113,13 +1116,15 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
 				if(::system(killString.toStdString().c_str()) != 0)
 				{
-					//XXX LOG();
+					LOG(ERROR, (format("File %1% at line %2%: System call: "
+						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 				}
 
 				killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
 				if(::system(killString.toStdString().c_str()) != 0)
 				{
-					//XXX LOG();
+					LOG(ERROR, (format("File %1% at line %2%: System call: "
+						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 				}
 			}
 			break;
@@ -1131,13 +1136,15 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
 				if(::system(killString.toStdString().c_str()) != 0)
 				{
-					//XXX LOG();
+					LOG(ERROR, (format("File %1% at line %2%: System call: "
+						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 				}
 
 				killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
 				if(::system(killString.toStdString().c_str()) != 0)
 				{
-					//XXX LOG();
+					LOG(ERROR, (format("File %1% at line %2%: System call: "
+						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 				}
 			}
 			break;

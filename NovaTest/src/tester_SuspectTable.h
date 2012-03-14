@@ -164,6 +164,11 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 
 	// Make sure we can't check out the same suspect more than once
 	// xxx: Apparently this is allowed. Make sure the desired functionality is to allow multiple CheckIns in a row
+
+	/* ^^^ regarding above - This is allowed, it performs a manual check out if the suspect isn't already checked out
+	 however this call will fail if another thread beats you to it or the suspect is erased so don't expect it in that case.
+	 - Dave S */
+
 	// EXPECT_EQ(SUSPECT_NOT_CHECKED_OUT, table.CheckIn(&checkedOutS1));
 
 	EXPECT_EQ(SUCCESS, table.CheckIn(&checkedOutS2));
