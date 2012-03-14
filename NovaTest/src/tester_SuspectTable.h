@@ -51,8 +51,7 @@ TEST_F(SuspectTableTest, Begin) {
 	EXPECT_EQ((uint)0, table.Begin().GetIndex());
 }
 
-// TODO: Enable this test once ticket #76 is closed
-TEST_F(SuspectTableTest, DISABLED_End) {
+TEST_F(SuspectTableTest, End) {
 	// Test for proper result on an empty table
 	EXPECT_EQ((uint)0, table.End().GetIndex());
 
@@ -100,14 +99,14 @@ TEST_F(SuspectTableTest, GetKeys) {
 
 TEST_F(SuspectTableTest, IsValidKey) {
 	// Test for proper result on an empty table
-	EXPECT_EQ(false, table.IsValidKey(0));
-	EXPECT_EQ(false, table.IsValidKey(42));
+	EXPECT_FALSE(table.IsValidKey(0));
+	EXPECT_FALSE(table.IsValidKey(42));
 
 	InitSuspects();
-	EXPECT_EQ(false, table.IsValidKey(0));
-	EXPECT_EQ(false, table.IsValidKey(42));
-	EXPECT_EQ(true, table.IsValidKey(1));
-	EXPECT_EQ(true, table.IsValidKey(2));
+	EXPECT_FALSE(table.IsValidKey(0));
+	EXPECT_FALSE(table.IsValidKey(42));
+	EXPECT_TRUE(table.IsValidKey(1));
+	EXPECT_TRUE(table.IsValidKey(2));
 }
 
 TEST_F(SuspectTableTest, Erase) {
@@ -133,7 +132,7 @@ TEST_F(SuspectTableTest, GetHostility) {
 	EXPECT_EQ(1, table.GetHostility(2));
 }
 
-TEST_F(SuspectTableTest, DISABLED_CheckInAndOut) {
+TEST_F(SuspectTableTest, CheckInAndOut) {
 	Suspect *s = new Suspect();
 	s->SetIpAddress(42);
 
@@ -165,6 +164,11 @@ TEST_F(SuspectTableTest, DISABLED_CheckInAndOut) {
 
 	// Make sure we can't check out the same suspect more than once
 	// xxx: Apparently this is allowed. Make sure the desired functionality is to allow multiple CheckIns in a row
+
+	/* ^^^ regarding above - This is allowed, it performs a manual check out if the suspect isn't already checked out
+	 however this call will fail if another thread beats you to it or the suspect is erased so don't expect it in that case.
+	 - Dave S */
+
 	// EXPECT_EQ(SUSPECT_NOT_CHECKED_OUT, table.CheckIn(&checkedOutS1));
 
 	EXPECT_EQ(SUCCESS, table.CheckIn(&checkedOutS2));
@@ -172,7 +176,7 @@ TEST_F(SuspectTableTest, DISABLED_CheckInAndOut) {
 }
 
 // TODO: Enable this test again when ticket
-TEST_F(SuspectTableTest, DISABLED_Peek) {
+TEST_F(SuspectTableTest, Peek) {
 	// Test for proper result on an empty table
 	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.Peek(42).GetIpAddress());
 

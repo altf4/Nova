@@ -110,7 +110,7 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		j = 0;
 		if(testStr.size() > 6)
 			j = testStr.size() - 6;
-		for(j = j; j < testStr.size(); j++)
+		for(; j < testStr.size(); j++)
 		{
 			if(!(i%2)&& i )
 			{
@@ -121,7 +121,7 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		}
 
 		//Randomly generate the remaining portion
-		addr.second = ((uint)rand() & (uint)(pow(2,24)-1));
+		addr.second = ((uint)rand() & (uint)(pow(2.0,24)-1));
 
 		//Convert the second part to a string and format it for output
 		bzero(addrBuffer, 8);
@@ -140,7 +140,7 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		j = 0;
 		if(testStr.size() > 6)
 			j = testStr.size() - 6;
-		for(j = j; j < testStr.size(); j++)
+		for(; j < testStr.size(); j++)
 		{
 			if(!(i%2)&& (i!=6))
 			{

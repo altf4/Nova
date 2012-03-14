@@ -41,7 +41,6 @@ using boost::format;
 int callbackSocket = -1, IPCSocket = -1;
 
 extern string userHomePath;
-extern pthread_rwlock_t suspectTableLock;
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
 
@@ -56,7 +55,7 @@ bool Nova::Spawn_UI_Handler()
 	string inKeyPath = userHomePath + "/keys" + NOVAD_LISTEN_FILENAME;
 	string outKeyPath = userHomePath + "/keys" + UI_LISTEN_FILENAME;
 
-    if ((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    if((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
     	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  socket: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	return false;
@@ -67,14 +66,14 @@ bool Nova::Spawn_UI_Handler()
     unlink(msgLocal.sun_path);
     len = strlen(msgLocal.sun_path) + sizeof(msgLocal.sun_family);
 
-    if (bind(IPCSocket, (struct sockaddr *)&msgLocal, len) == -1)
+    if(::bind(IPCSocket, (struct sockaddr *)&msgLocal, len) == -1)
     {
     	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  bind: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	close(IPCSocket);
     	return false;
     }
 
-    if (listen(IPCSocket, SOMAXCONN) == -1)
+    if(listen(IPCSocket, SOMAXCONN) == -1)
     {
     	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
     	close(IPCSocket);
@@ -94,7 +93,7 @@ void *Nova::Handle_UI_Helper(void *ptr)
     	int *msgSocket = (int*)malloc(sizeof(int));
 
     	//Blocking call
-		if ((*msgSocket = accept(IPCSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
+		if((*msgSocket = accept(IPCSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
 		{
 			LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
 			close(IPCSocket);
@@ -104,6 +103,8 @@ void *Nova::Handle_UI_Helper(void *ptr)
 		pthread_t UI_thread;
 		pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocket);
     }
+
+    return NULL;
 }
 
 void *Nova::Handle_UI_Thread(void *socketVoidPtr)
@@ -258,7 +259,9 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			LOG(DEBUG, "UI sent us an invalid message",
 					(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
+			break;
 		}
+
 	}
 }
 
@@ -276,7 +279,7 @@ bool Nova::ConnectToUI()
 	UIAddress.sun_family = AF_UNIX;
 	strcpy(UIAddress.sun_path, key.c_str());
 
-	if ((callbackSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((callbackSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG(WARNING, "Unable to connect to UI",
 				(format("File %1% at line %2%:  Unable to create UI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
@@ -284,7 +287,7 @@ bool Nova::ConnectToUI()
 		return false;
 	}
 
-	if (connect(callbackSocket, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
+	if(connect(callbackSocket, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
 	{
 		LOG(WARNING, "Unable to connect to UI", (
 				format("File %1% at line %2%:  Unable to connect() to UI: %3%")% __FILE__%__LINE__% strerror(errno)).str());

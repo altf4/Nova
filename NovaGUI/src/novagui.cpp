@@ -75,9 +75,9 @@ SuspectGUIHashTable SuspectTable;
 //Called when process receives a SIGINT, like if you press ctrl+c
 void sighandler(int param)
 {
-	param = param;
+	param = EXIT_SUCCESS;
 	StopNovad();
-	exit(EXIT_SUCCESS);
+	::exit(param);
 }
 
 NovaGUI::NovaGUI(QWidget *parent)
@@ -108,7 +108,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	if(!StartCallbackLoop(this))
 	{
 		LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
 	}
 
 	// Create the dialog generator
@@ -301,9 +301,8 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 	}
 }
 
-void NovaGUI::closeEvent(QCloseEvent * e)
+void NovaGUI::closeEvent()
 {
-	e = e;
 	StopNovad();
 }
 
@@ -330,7 +329,7 @@ void NovaGUI::InitPaths()
 
 	if((homePath == "") || (readPath == "") || (writePath == ""))
 	{
-		exit(EXIT_FAILURE);
+		::exit(EXIT_FAILURE);
 	}
 
 	QDir::setCurrent((QString)homePath.c_str());
@@ -794,7 +793,7 @@ void NovaGUI::on_actionConfigure_triggered()
 void  NovaGUI::on_actionExit_triggered()
 {
 	StopNovad();
-	exit(EXIT_SUCCESS);
+	::exit(EXIT_SUCCESS);
 }
 
 void NovaGUI::on_actionClear_All_Suspects_triggered()
@@ -1106,7 +1105,8 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 		}
 		default:
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+			LOG(ERROR, (format("File %1% at line %2%: System call: "
+				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 			return;
 		}
 	}
@@ -1136,7 +1136,8 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 		}
 		default:
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+			LOG(ERROR, (format("File %1% at line %2%: System call: "
+				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
 			break;
 		}
 	}

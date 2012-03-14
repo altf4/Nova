@@ -38,21 +38,28 @@ NovaComplexDialog::NovaComplexDialog(whichDialog type,string* retval, QWidget *p
 	switch(type)
 	{
 		case PersonalityDialog:
+		{
 			this->setWindowTitle((const QString&)"Select an Operating System");
 			ui.displayLabel->setText((const QString&)"Select which operating system you would like to emulate");
 			ui.helpLabel->setText((const QString&)"Navigate down the tree, select an operating system and press 'Select'");
 			ui.searchButton->setDefault(true);
 			drawPersonalities("");
 			break;
+		}
 		case MACDialog:
+		{
 			ui.searchButton->setDefault(true);
 			this->setWindowTitle((const QString&)"Select a MAC Vendor");
 			this->blockSignals(true);
 			ui.searchEdit->setText((QString)filter.c_str());
 			this->blockSignals(false);
 			on_searchButton_clicked();
-		default:
 			break;
+		}
+		default:
+		{
+			break;
+		}
 	}
 	ui.searchEdit->setFocus();
 }

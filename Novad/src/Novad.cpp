@@ -25,6 +25,7 @@
 #include "Control.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
+#include "FeatureSet.h"
 
 #include <vector>
 #include <math.h>
@@ -39,6 +40,7 @@
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
 #include <iostream>
+#include <time.h>
 
 #include <boost/format.hpp>
 
@@ -498,7 +500,6 @@ void *Nova::ClassificationLoop(void *ptr)
 	{
 		sleep(Config::Inst()->getClassificationTimeout());
 		//Calculate the "true" Feature Set for each Suspect
-		// XXX 'suspects' SuspectTableIterator todo
 		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 		{
 			if(it.Current().GetNeedsFeatureUpdate())
@@ -563,7 +564,12 @@ void *Nova::ClassificationLoop(void *ptr)
 				LoadStateFile();
 			}
 		}
-	} while(Config::Inst()->getClassificationTimeout());
+	} while(Config::Inst()->getClassificationTimeout() && !usePcapFile);
+
+	if (usePcapFile)
+	{
+		return NULL;
+	}
 
 	//Shouldn't get here!!
 	if(Config::Inst()->getClassificationTimeout())
@@ -681,7 +687,8 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
 	socklen_t sendaddrSize = sizeof sendaddr;
 
-	if(bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
+
+	if(::bind(sockfd,sockaddrPtr,sendaddrSize) == -1)
 	{
 		LOG(CRITICAL, (format("File %1% at line %2%: Unable to bind to the silent alarm socket."
 				" Errno: %3%")%__FILE__%__LINE__%strerror(errno)).str());
@@ -808,7 +815,11 @@ void Nova::SilentAlarm(Suspect *suspect)
 			commandLine += " -j DNAT --to-destination ";
 			commandLine += Config::Inst()->getDoppelIp();
 
-			system(commandLine.c_str());
+			if(system(commandLine.c_str()) != 0)
+			{
+				LOG(ERROR, (format("File %1% at line %2%: System call: "
+					"'%3%' has failed.")%__FILE__%__LINE__%commandLine.c_str()).str());
+			}
 		}
 		else
 		{
@@ -822,7 +833,11 @@ void Nova::SilentAlarm(Suspect *suspect)
 			commandLine += " -j DNAT --to-destination ";
 			commandLine += Config::Inst()->getDoppelIp();
 
-			system(commandLine.c_str());
+			if(system(commandLine.c_str()) != 0)
+			{
+				LOG(ERROR, (format("File %1% at line %2%: System call: "
+					"'%3%' has failed.")%__FILE__%__LINE__%commandLine.c_str()).str());
+			}
 		}
 	}
 	if(suspect->GetUnsentFeatureSet().m_packetCount)
@@ -951,7 +966,7 @@ bool Nova::KnockPort(bool mode)
 	//Send Port knock to other Nova Instances
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %s")
+		LOG(ERROR, (format("File %1% at line %2%:  Error in port knocking. Can't create socket: %3%")
 				%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
@@ -959,7 +974,7 @@ bool Nova::KnockPort(bool mode)
 
 	if( sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, inSocketSize) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %s")
+		LOG(ERROR, (format("File %1% at line %2%:  Error in UDP Send for port knocking: %3%")
 				%__FILE__%__LINE__%strerror(errno)).str());
 		close(sockfd);
 		return false;
@@ -1016,12 +1031,11 @@ bool Nova::Start_Packet_Handler()
 		pcap_loop(handle, -1, Packet_Handler,NULL);
 
 		TCPTimeout(NULL);
-		if (!Config::Inst()->getIsTraining())
-			ClassificationLoop(NULL);
-		else
-			TrainingLoop(NULL);
 
 		if(Config::Inst()->getGotoLive()) usePcapFile = false; //If we are going to live capture set the flag.
+
+		LOG(DEBUG, "Done processing PCAP file");
+		exit(EXIT_SUCCESS);
 	}
 
 
@@ -1377,20 +1391,20 @@ void *Nova::TCPTimeout(void *ptr)
 					{
 						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						// Allow for continuous classification
 						if(!Config::Inst()->getClassificationTimeout())
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							if (!Config::Inst()->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						SessionTable[it->first].session.clear();
@@ -1401,20 +1415,20 @@ void *Nova::TCPTimeout(void *ptr)
 					{
 						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						// Allow for continuous classification
 						if(!Config::Inst()->getClassificationTimeout())
 						{
-							pthread_rwlock_unlock(&sessionLock);
+							//pthread_rwlock_unlock(&sessionLock);
 							if (!Config::Inst()->getIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
-							pthread_rwlock_wrlock(&sessionLock);
+							//pthread_rwlock_wrlock(&sessionLock);
 						}
 
 						SessionTable[it->first].session.clear();

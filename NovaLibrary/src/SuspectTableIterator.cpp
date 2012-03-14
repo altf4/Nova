@@ -62,13 +62,15 @@ Suspect SuspectTableIterator::Next()
 	if(it != m_table_ref.end())
 	{
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 	else
 	{
 		it = m_table_ref.begin();
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 }
 
@@ -92,13 +94,15 @@ Suspect SuspectTableIterator::LookAhead()
 	if(it != m_table_ref.end())
 	{
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 	else
 	{
 		it = m_table_ref.begin();
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 }
 
@@ -118,13 +122,15 @@ Suspect SuspectTableIterator::Previous()
 	if(it != m_table_ref.end())
 	{
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 	else
 	{
 		it = m_table_ref.begin();
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 }
 
@@ -149,14 +155,16 @@ Suspect SuspectTableIterator::LookBack()
 	if(it != m_table_ref.end())
 	{
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 	else
 	{
 		it = m_table_ref.begin();
 		it.operator ++(m_table_ref.size()-1);
 		pthread_rwlock_unlock(&m_lock_ref);
-		return *it->second;
+		Suspect ret = *it->second;
+		return ret;
 	}
 }
 
@@ -172,13 +180,15 @@ Suspect SuspectTableIterator::Current()
 
 		if (it != m_table_ref.end())
 		{
+			Suspect ret = *it->second;
 			pthread_rwlock_unlock(&m_lock_ref);
-			return *it->second;
+			return ret;
 		}
 	}
 	it = m_table_ref.begin();
+	Suspect ret = *it->second;
 	pthread_rwlock_unlock(&m_lock_ref);
-	return *it->second;
+	return ret;
 }
 
 // Gets a reference to the index of the iterator

@@ -144,6 +144,7 @@ public:
 
 	// Lock used to maintain concurrency between threads
 	pthread_rwlock_t m_lock;
+	pthread_rwlock_t m_ownerLock;
 
 	vector<uint64_t> m_keys;
 

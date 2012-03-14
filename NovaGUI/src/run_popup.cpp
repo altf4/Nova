@@ -26,8 +26,10 @@
 #include <fstream>
 #include <syslog.h>
 #include <QFileDialog>
+#include <boost/format.hpp>
 
 using namespace std;
+using boost::format;
 
 Run_Popup::Run_Popup(QWidget *parent, string home)
     : QMainWindow(parent)
@@ -145,7 +147,11 @@ bool Run_Popup::savePreferences()
 {
 	string line, prefix;
 
-	system("cp Config/NOVAConfig.txt Config/.NOVAConfig.tmp");
+	if(::system("cp Config/NOVAConfig.txt Config/.NOVAConfig.tmp") != 0)
+	{
+		LOG(ERROR, (format("File %1% at line %2%: System call: "
+			"'cp Config/NOVAConfig.txt Config/.NOVAConfig.tmp' has failed.")%__FILE__%__LINE__).str());
+	}
 	ifstream *in = new ifstream("Config/.NOVAConfig.tmp");
 	ofstream *out = new ofstream("Config/NOVAConfig.txt");
 
@@ -200,7 +206,11 @@ bool Run_Popup::savePreferences()
 		out->close();
 		delete out;
 		delete in;
-		system("rm Config/.NOVAConfig.tmp");
+		if(::system("rm Config/.NOVAConfig.tmp") != 0)
+		{
+			LOG(ERROR, (format("File %1% at line %2%: System call: "
+				"'rm Config/.NOVAConfig.tmp' has failed.")%__FILE__%__LINE__).str());
+		}
 		syslog(SYSL_ERR, "File: %s Line: %d Unable to open Config file.", __FILE__, __LINE__);
 		return false;
 	}
@@ -208,6 +218,10 @@ bool Run_Popup::savePreferences()
 	out->close();
 	delete in;
 	delete out;
-	system("rm Config/.NOVAConfig.tmp");
+	if(::system("rm Config/.NOVAConfig.tmp") != 0)
+	{
+		LOG(ERROR, (format("File %1% at line %2%: System call: "
+						"'rm Config/.NOVAConfig.tmp' has failed.")%__FILE__%__LINE__).str());
+	}
 	return true;
 }

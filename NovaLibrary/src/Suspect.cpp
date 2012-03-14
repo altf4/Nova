@@ -21,6 +21,7 @@
 #include "Config.h"
 #include "FeatureSet.h"
 
+#include <errno.h>
 #include <sstream>
 
 using namespace std;
@@ -826,7 +827,7 @@ int Suspect::ResetOwner()
 		return -1;
 }
 
-Suspect& Suspect::operator=(Suspect &rhs)
+Suspect& Suspect::operator=(const Suspect &rhs)
 {
 	WrlockSuspect();
 	m_features = rhs.m_features;
@@ -874,18 +875,16 @@ Suspect& Suspect::operator=(Suspect &rhs)
 	return *this;
 }
 
-Suspect& Suspect::operator=(Suspect rhs)
+Suspect::Suspect(const Suspect &rhs)
 {
-	WrlockSuspect();
+	pthread_rwlock_init(&m_lock, NULL);
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
 	if(rhs.m_annPoint != NULL)
 	{
-		if(m_annPoint == NULL)
-		{
-			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-		}
+		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+
 		for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
 		{
 			m_annPoint[i] = rhs.m_annPoint[i];
@@ -893,14 +892,9 @@ Suspect& Suspect::operator=(Suspect rhs)
 	}
 	else
 	{
-		if(m_annPoint != NULL)
-		{
-			annDeallocPt(m_annPoint);
-		}
 		m_annPoint = NULL;
 	}
 
-	m_evidence.clear();
 	for(uint i = 0; i < rhs.m_evidence.size(); i++)
 	{
 		m_evidence.push_back(rhs.m_evidence[i]);
@@ -918,8 +912,6 @@ Suspect& Suspect::operator=(Suspect rhs)
 	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
-	UnlockSuspect();
-	return *this;
 }
 
 }

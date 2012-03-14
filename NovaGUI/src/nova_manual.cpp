@@ -46,9 +46,8 @@ Nova_Manual::~Nova_Manual()
 }
 
 //Action to take when window is closing
-void Nova_Manual::closeEvent(QCloseEvent * e)
+void Nova_Manual::closeEvent()
 {
-	e = e;
 	mainw->m_isHelpUp = false;
 }
 

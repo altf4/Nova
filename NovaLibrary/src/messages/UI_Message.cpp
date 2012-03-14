@@ -65,6 +65,11 @@ UI_Message *UI_Message::ReadMessage(int connectFD)
 
 bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 {
+	if (connectFD == -1)
+	{
+		return false;
+	}
+
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
 
