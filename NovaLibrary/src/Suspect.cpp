@@ -818,7 +818,6 @@ int Suspect::ResetOwner()
 	{
 		m_hasOwner = false;
 		m_owner = 0;
-		pthread_rwlock_unlock(&m_lock);
 		pthread_rwlock_destroy(&m_lock);
 		pthread_rwlock_init(&m_lock, NULL);
 		return 0;
@@ -878,13 +877,13 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 Suspect::Suspect(const Suspect &rhs)
 {
 	pthread_rwlock_init(&m_lock, NULL);
+	pthread_rwlock_wrlock(&m_lock);
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
 	if(rhs.m_annPoint != NULL)
 	{
 		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-
 		for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
 		{
 			m_annPoint[i] = rhs.m_annPoint[i];
@@ -895,6 +894,7 @@ Suspect::Suspect(const Suspect &rhs)
 		m_annPoint = NULL;
 	}
 
+	m_evidence.clear();
 	for(uint i = 0; i < rhs.m_evidence.size(); i++)
 	{
 		m_evidence.push_back(rhs.m_evidence[i]);
@@ -912,6 +912,7 @@ Suspect::Suspect(const Suspect &rhs)
 	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
+	pthread_rwlock_unlock(&m_lock);
 }
 
 }

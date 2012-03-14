@@ -778,7 +778,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 		LOG(CRITICAL, (format("File %1% at line %2%: Got a silent alarm!. Suspect: %3%")
-				%__FILE__%__LINE__%suspects[addr].ToString()).str());
+				%__FILE__%__LINE__%newSuspect->ToString()).str());
 
 		if(!Config::Inst()->getClassificationTimeout())
 			ClassificationLoop(NULL);
@@ -1046,8 +1046,8 @@ bool Nova::Start_Packet_Handler()
 
 		if(handle == NULL)
 		{
-			LOG(ERROR, (format("File %1% at line %2%:  Unable to open the network interface for live capture:"
-					" %3% %4%")% __FILE__%__LINE__%Config::Inst()->getInterface().c_str()%errbuf).str());
+			LOG(ERROR, (format("File %1% at line %2%:  Unable to open network interface %3% for live capture:"
+					"%4%")% __FILE__%__LINE__%Config::Inst()->getInterface().c_str()%errbuf).str());
 			exit(EXIT_FAILURE);
 		}
 

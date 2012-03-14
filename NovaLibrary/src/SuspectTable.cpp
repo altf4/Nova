@@ -177,7 +177,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
-			Rdlock();
+			Wrlock();
 
 			//If no owner become the owner
 			if(!m_table[key]->HasOwner())
@@ -190,6 +190,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			{
 				ANNpoint aNN =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
+				m_table[key]->ResetOwner();
 				m_table[key]->SetAnnPoint(aNN);
 				annDeallocPt(aNN);
 				m_table[key]->SetClassification(suspectCopy.GetClassification());
@@ -218,7 +219,6 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				{
 					m_table[key]->AddEvidence(temp[i]);
 				}
-				m_table[key]->ResetOwner();
 				Unlock();
 				return SUCCESS;
 			}
@@ -243,7 +243,7 @@ Suspect SuspectTable::CheckOut(uint64_t key)
 {
 	if(IsValidKey(key))
 	{
-		Rdlock();
+		Wrlock();
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
@@ -258,7 +258,7 @@ Suspect SuspectTable::CheckOut(uint64_t key)
 			{
 				Unlock();
 				m_table[key]->SetOwner();
-				Rdlock();
+				Wrlock();
 				Suspect ret = *m_table[key];
 				ret.ResetOwner();
 				Unlock();
@@ -266,7 +266,7 @@ Suspect SuspectTable::CheckOut(uint64_t key)
 			}
 		}
 	}
-	Rdlock();
+	Wrlock();
 	Suspect ret = m_emptySuspect;
 	ret.ResetOwner();
 	Unlock();
@@ -447,34 +447,14 @@ bool SuspectTable::IsValidKey(uint64_t key)
 // Note: This function will block until the lock is acquired
 void SuspectTable::Wrlock()
 {
-	pthread_rwlock_wrlock(&m_ownerLock);
 	//Checks if the thread already has a lock
 	if(IsOwner())
 	{
-		//If the table's only owner is this thread we assert a write lock
-		if(m_owners.size() == 1)
-		{
-			pthread_rwlock_unlock(&m_lock);
-			pthread_rwlock_wrlock(&m_lock);
-			pthread_rwlock_unlock(&m_ownerLock);
-			return;
-		}
-
-		//If this thread is one of many owners then we release our lock
-		for(uint i = 0; i < m_owners.size(); i++)
-		{
-			if(pthread_equal(m_owners[i], pthread_self()))
-			{
-				m_owners.erase(m_owners.begin()+i);
-				pthread_rwlock_unlock(&m_lock);
-			}
-		}
+		pthread_rwlock_unlock(&m_lock);
+		pthread_rwlock_wrlock(&m_lock);
+		return;
 	}
-
-	pthread_rwlock_unlock(&m_ownerLock);
-
 	pthread_rwlock_wrlock(&m_lock);
-
 	pthread_rwlock_wrlock(&m_ownerLock);
 	m_owners.push_back(pthread_self());
 	pthread_rwlock_unlock(&m_ownerLock);
@@ -490,7 +470,7 @@ bool SuspectTable::TryWrlock()
 	if(IsOwner())
 	{
 		//If the table's only owner is this thread we assert a write lock
-		if(m_owners.size() == 1)
+		if(NumOwners() == 1)
 		{
 			pthread_rwlock_unlock(&m_lock);
 			pthread_rwlock_wrlock(&m_lock);
@@ -502,10 +482,10 @@ bool SuspectTable::TryWrlock()
 	//If the current thread doesn't have a lock we attempt a read lock
 	if(!pthread_rwlock_trywrlock(&m_lock))
 	{
-
+		pthread_rwlock_wrlock(&m_ownerLock);
 		//If we get a lock we store the thread as an owner
 		m_owners.push_back(pthread_self());
-
+		pthread_rwlock_unlock(&m_ownerLock);
 		return true;
 	}
 	//If we fail to get a lock
@@ -516,27 +496,22 @@ bool SuspectTable::TryWrlock()
 // Note: This function will block until the lock is acquired
 void SuspectTable::Rdlock()
 {
-	pthread_rwlock_wrlock(&m_ownerLock);
 	//Checks if the thread already has a lock
 	if(IsOwner())
 	{
 		//If the table's only owner is this thread it may be write locked, so we assert a read lock
-		if(m_owners.size() == 1)
+		if(NumOwners() == 1)
 		{
 			pthread_rwlock_unlock(&m_lock);
 			pthread_rwlock_rdlock(&m_lock);
 		}
 
-		pthread_rwlock_unlock(&m_ownerLock);
 		//If this thread is one of many owners then it must have a read lock already so we can return true;
 		return;
 	}
 	else
 	{
-		pthread_rwlock_unlock(&m_ownerLock);
-
 		pthread_rwlock_rdlock(&m_lock);
-
 		pthread_rwlock_wrlock(&m_ownerLock);
 		m_owners.push_back(pthread_self());
 		pthread_rwlock_unlock(&m_ownerLock);
@@ -553,7 +528,7 @@ bool SuspectTable::TryRdlock()
 	if(IsOwner())
 	{
 		//If the table's only owner is this thread it may be write locked, so we assert a read lock
-		if(m_owners.size() == 1)
+		if(NumOwners() == 1)
 		{
 			pthread_rwlock_unlock(&m_lock);
 			pthread_rwlock_rdlock(&m_lock);
@@ -566,8 +541,10 @@ bool SuspectTable::TryRdlock()
 	//If the current thread doesn't have a lock we attempt a read lock
 	if(!pthread_rwlock_tryrdlock(&m_lock))
 	{
+		pthread_rwlock_wrlock(&m_ownerLock);
 		//If we get a new read lock we store the thread as an owner
 		m_owners.push_back(pthread_self());
+		pthread_rwlock_unlock(&m_ownerLock);
 
 		return true;
 	}
@@ -590,7 +567,36 @@ bool SuspectTable::Unlock()
 		if(pthread_equal(m_owners[i], pthread_self()))
 		{
 			m_owners.erase(m_owners.begin()+i);
+			pthread_rwlock_unlock(&m_ownerLock);
 			pthread_rwlock_unlock(&m_lock);
+			return true;
+		}
+	}
+	pthread_rwlock_unlock(&m_ownerLock);
+	return false;
+}
+
+/*Suspect SuspectTable::operator[](uint64_t key)
+{
+	if(IsValidKey(key))
+	{
+		return *m_table[key];
+	}
+	else
+	{
+		return m_emptySuspect;
+	}
+}*/
+
+// Returns true if the current thread has a lock on the Table
+bool SuspectTable::IsOwner()
+{
+	pthread_rwlock_rdlock(&m_ownerLock);
+	//Checks if the thread already has a lock
+	for(uint i = 0; i < m_owners.size(); i++)
+	{
+		if(pthread_equal(m_owners[i], pthread_self()))
+		{
 			pthread_rwlock_unlock(&m_ownerLock);
 			return true;
 		}
@@ -599,27 +605,13 @@ bool SuspectTable::Unlock()
 	return false;
 }
 
-Suspect SuspectTable::operator[](uint64_t key)
+int SuspectTable::NumOwners()
 {
-	if(IsValidKey(key))
-		return *m_table[key];
-	else
-	{
-		return m_emptySuspect;
-	}
+	pthread_rwlock_rdlock(&m_ownerLock);
+	int ret = m_owners.size();
+	pthread_rwlock_unlock(&m_ownerLock);
+	return ret;
+
+}
 }
 
-// Returns true if the current thread has a lock on the Table
-bool SuspectTable::IsOwner()
-{
-	//Checks if the thread already has a lock
-	for(uint i = 0; i < m_owners.size(); i++)
-	{
-		if(pthread_equal(m_owners[i], pthread_self()))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-}
