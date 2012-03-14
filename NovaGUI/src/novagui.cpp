@@ -63,8 +63,8 @@ SuspectGUIHashTable SuspectTable;
 
 // Defines the order of components in the process list and novaComponents array
 #define COMPONENT_NOVAD 0
-#define COMPONENT_DMH 1
-#define COMPONENT_HSH 2
+#define COMPONENT_HSH 1
+#define COMPONENT_DMH 2
 
 #define NOVA_COMPONENTS 3
 
@@ -358,15 +358,14 @@ void NovaGUI::InitiateSystemStatus()
 
 	// Add labels for our components
 	ui.systemStatusTable->item(COMPONENT_NOVAD, 0)->setText("Novad");
-	ui.systemStatusTable->item(COMPONENT_DMH, 0)->setText("Haystack");
-	ui.systemStatusTable->item(COMPONENT_HSH, 0)->setText("Doppelganger");
+	ui.systemStatusTable->item(COMPONENT_HSH, 0)->setText("Haystack");
+	ui.systemStatusTable->item(COMPONENT_DMH, 0)->setText("Doppelganger");
 }
 
 
 void NovaGUI::UpdateSystemStatus()
 {
 	QTableWidgetItem *item;
-	QTableWidgetItem *pidItem;
 
 	//Novad
 	item = ui.systemStatusTable->item(COMPONENT_NOVAD, 0);
@@ -380,8 +379,8 @@ void NovaGUI::UpdateSystemStatus()
 	}
 
 	//Haystack
-	item = ui.systemStatusTable->item(COMPONENT_HSH, 0);
-	if(IsHaystackUp())
+	item = ui.systemStatusTable->item(COMPONENT_DMH, 0);
+	if(IsDoppelgangerUp())
 	{
 		item->setIcon(*m_greenIcon);
 	}
@@ -391,8 +390,8 @@ void NovaGUI::UpdateSystemStatus()
 	}
 
 	//Doppelganger
-	item = ui.systemStatusTable->item(COMPONENT_DMH, 0);
-	if(IsDoppelgangerUp())
+	item = ui.systemStatusTable->item(COMPONENT_HSH, 0);
+	if(IsHaystackUp())
 	{
 		item->setIcon(*m_greenIcon);
 	}
