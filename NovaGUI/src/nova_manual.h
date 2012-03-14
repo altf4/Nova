@@ -28,7 +28,7 @@ class Nova_Manual : public QMainWindow
 public:
     Nova_Manual(QWidget *parent);
     ~Nova_Manual();
-    void closeEvent(QCloseEvent * e);
+    void closeEvent();
     void setToSelected();
     void setPaths();
 
