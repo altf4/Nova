@@ -153,7 +153,6 @@ Q_SIGNALS:
 private:
 	const QIcon* m_greenIcon;
 	const QIcon* m_redIcon;
-	const QIcon* m_yellowIcon;
 
 	QMenu * m_suspectMenu;
 	QMenu * m_systemStatMenu;
