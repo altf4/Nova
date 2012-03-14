@@ -762,6 +762,7 @@ void NovaGUI::ClearSuspectList()
 void NovaGUI::on_actionRunNova_triggered()
 {
 	StartNovad();
+	ConnectToNovad();
 }
 
 void NovaGUI::on_actionRunNovaAs_triggered()
@@ -1009,6 +1010,7 @@ void NovaGUI::on_runButton_clicked()
 	// Commented for now until the Node setup works in the GUI.
 	//writeHoneyd();
 	StartNovad();
+	ConnectToNovad();
 	StartHaystack();
 	StartDoppelganger();
 
@@ -1151,6 +1153,7 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 		case COMPONENT_NOVAD:
 		{
 			StartNovad();
+			ConnectToNovad();
 			break;
 		}
 		case COMPONENT_HSH:
