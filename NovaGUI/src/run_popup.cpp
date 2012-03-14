@@ -120,7 +120,7 @@ void Run_Popup::on_startButton_clicked()
 	if(savePreferences())
 	{
 		StartNovad();
-		ConnectToNovad();
+		TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
 	}
 	this->close();
 }
