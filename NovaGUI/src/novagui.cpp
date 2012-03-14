@@ -76,7 +76,6 @@ SuspectGUIHashTable SuspectTable;
 void sighandler(int param)
 {
 	param = EXIT_SUCCESS;
-	StopNovad();
 	::exit(param);
 }
 
