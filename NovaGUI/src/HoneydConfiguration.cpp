@@ -547,7 +547,6 @@ void HoneydConfiguration::SaveAllTemplates()
 void HoneydConfiguration::WriteHoneydConfiguration()
 {
 	stringstream out;
-	stringstream doppelOut;
 
 	vector<string> profilesParsed;
 
@@ -557,7 +556,6 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 		{
 			string pString = ProfileToString(&it->second);
 			out << pString;
-			doppelOut << pString;
 			profilesParsed.push_back(it->first);
 		}
 	}
@@ -586,7 +584,6 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 			{
 				string pString = ProfileToString(&it->second);
 				out << pString;
-				doppelOut << pString;
 				profilesParsed.push_back(it->first);
 
 			}
@@ -601,9 +598,9 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 		{
 			continue;
 		}
-		else if(!it->second.name.compare("Doppelganger"))
+		else if(!it->second.name.compare("Doppelganger") && Config::Inst()->getIsDmEnabled())
 		{
-			doppelOut << "bind " << it->second.IP << " " << it->second.pfile << endl;
+			out << "bind " << it->second.IP << " " << it->second.pfile << endl;
 		}
 		else switch (m_profiles[it->second.pfile].type)
 		{
@@ -624,10 +621,6 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 	ofstream outFile(Config::Inst()->getPathConfigHoneydHs().data());
 	outFile << out.str() << endl;
 	outFile.close();
-
-	ofstream doppelOutFile(Config::Inst()->getPathConfigHoneydDm().data());
-	doppelOutFile << doppelOut.str() << endl;
-	doppelOutFile.close();
 }
 
 

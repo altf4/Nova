@@ -66,7 +66,7 @@ SuspectGUIHashTable SuspectTable;
 #define COMPONENT_HSH 1
 #define COMPONENT_DMH 2
 
-#define NOVA_COMPONENTS 3
+#define NOVA_COMPONENTS 2
 
 /************************************************
  * Constructors, Destructors and Closing Actions
@@ -274,14 +274,14 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			}
 			case COMPONENT_DMH:
 			{
-				if(IsDoppelgangerUp())
+				/*if(IsDoppelgangerUp())
 				{
 					m_systemStatMenu->addAction(ui.actionSystemStatKill);
 				}
 				else
 				{
 					m_systemStatMenu->addAction(ui.actionSystemStatStart);
-				}
+				}*/
 				break;
 			}
 			default:
@@ -378,8 +378,8 @@ void NovaGUI::UpdateSystemStatus()
 		item->setIcon(*m_redIcon);
 	}
 
-	//Haystack
-	item = ui.systemStatusTable->item(COMPONENT_DMH, 0);
+	//Doppelganger
+	/*item = ui.systemStatusTable->item(COMPONENT_DMH, 0);
 	if(IsDoppelgangerUp())
 	{
 		item->setIcon(*m_greenIcon);
@@ -387,9 +387,9 @@ void NovaGUI::UpdateSystemStatus()
 	else
 	{
 		item->setIcon(*m_redIcon);
-	}
+	}*/
 
-	//Doppelganger
+	//Haystack
 	item = ui.systemStatusTable->item(COMPONENT_HSH, 0);
 	if(IsHaystackUp())
 	{
@@ -403,9 +403,13 @@ void NovaGUI::UpdateSystemStatus()
 	// Update the buttons if need be
 	int row = ui.systemStatusTable->currentRow();
 	if (row < 0 || row > NOVA_COMPONENTS)
+	{
 		return;
+	}
 	else
+	{
 		on_systemStatusTable_itemSelectionChanged();
+	}
 }
 
 
@@ -1010,7 +1014,7 @@ void NovaGUI::on_runButton_clicked()
 	StartNovad();
 	TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
 	StartHaystack();
-	StartDoppelganger();
+	//StartDoppelganger();
 
 }
 void NovaGUI::on_stopButton_clicked()
@@ -1055,11 +1059,10 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 				ui.systemStatKillButton->setDisabled(true);
 			}
 			break;
-			break;
 		}
 		case COMPONENT_DMH:
 		{
-			if(IsDoppelgangerUp())
+			/*if(IsDoppelgangerUp())
 			{
 				ui.systemStatStartButton->setDisabled(true);
 				ui.systemStatStopButton->setDisabled(false);
@@ -1070,8 +1073,7 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 				ui.systemStatStartButton->setDisabled(false);
 				ui.systemStatStopButton->setDisabled(true);
 				ui.systemStatKillButton->setDisabled(true);
-			}
-			break;
+			}*/
 			break;
 		}
 		default:
@@ -1100,7 +1102,7 @@ void NovaGUI::on_actionSystemStatKill_triggered()
 		}
 		case COMPONENT_DMH:
 		{
-			StopDoppelganger();
+			//StopDoppelganger();
 			break;
 		}
 		default:
@@ -1125,7 +1127,7 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 		}
 		case COMPONENT_DMH:
 		{
-			StopDoppelganger();
+			//StopDoppelganger();
 			break;
 		}
 		case COMPONENT_HSH:
@@ -1161,7 +1163,7 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 		}
 		case COMPONENT_DMH:
 		{
-			StartDoppelganger();
+			//StartDoppelganger();
 			break;
 		}
 		default:
