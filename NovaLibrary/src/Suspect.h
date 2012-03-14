@@ -218,6 +218,9 @@ public:
 	//Flags the suspect as no longer 'checked out'
 	int ResetOwner();
 
+	//Unlocks the suspect if the thread is the owner but preserves ownership flags and values.
+	void UnlockAsOwner();
+
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);
 	Suspect& operator*(Suspect* rhs);

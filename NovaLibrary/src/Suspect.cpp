@@ -739,13 +739,20 @@ void Suspect::WrlockSuspect()
 {
 	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
 	{
-		if(!pthread_rwlock_tryrdlock(&m_lock))
+		//If unlocked by owner this should succeed
+		if(pthread_rwlock_trywrlock(&m_lock))
+		{
+			return;
+		}
+		else
 		{
 			pthread_rwlock_unlock(&m_lock);
-			pthread_rwlock_unlock(&m_lock);
+			if(m_lock.__data.__nr_readers == 1)
+			{
+				pthread_rwlock_unlock(&m_lock);
+			}
 			pthread_rwlock_wrlock(&m_lock);
 		}
-		return;
 	}
 	pthread_rwlock_wrlock(&m_lock);
 }
@@ -800,11 +807,17 @@ bool Suspect::HasOwner()
 // if you want to prevent a blocking call.
 void Suspect::SetOwner()
 {
-	WrlockSuspect();
+	pthread_rwlock_wrlock(&m_lock);
+	while(m_hasOwner == true)
+	{
+		pthread_rwlock_unlock(&m_lock);
+		sleep(0.5);
+		pthread_rwlock_wrlock(&m_lock);
+	}
 	m_hasOwner = true;
 	m_owner = pthread_self();
-	UnlockSuspect();
-	RdlockSuspect();
+	pthread_rwlock_unlock(&m_lock);
+	pthread_rwlock_rdlock(&m_lock);
 }
 
 //Flags the suspect as no longer 'checked out'
@@ -824,6 +837,14 @@ int Suspect::ResetOwner()
 	}
 	else
 		return -1;
+}
+
+void Suspect::UnlockAsOwner()
+{
+	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
+	{
+		pthread_rwlock_unlock(&m_lock);
+	}
 }
 
 Suspect& Suspect::operator=(const Suspect &rhs)

@@ -190,7 +190,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			{
 				ANNpoint aNN =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
-				m_table[key]->ResetOwner();
+				m_table[key]->UnlockAsOwner();
 				m_table[key]->SetAnnPoint(aNN);
 				annDeallocPt(aNN);
 				m_table[key]->SetClassification(suspectCopy.GetClassification());
@@ -219,6 +219,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				{
 					m_table[key]->AddEvidence(temp[i]);
 				}
+				m_table[key]->ResetOwner();
 				Unlock();
 				return SUCCESS;
 			}
