@@ -19,9 +19,14 @@
 
 #include "SuspectTable.h"
 #include "Config.h"
+#include "Logger.h"
+
+#include "boost/format.hpp"
 
 using namespace std;
 using namespace Nova;
+using boost::format;
+
 namespace Nova
 {
 
@@ -191,7 +196,10 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				ANNpoint aNN =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
 				m_table[key]->UnlockAsOwner();
-				m_table[key]->SetAnnPoint(aNN);
+				if (m_table[key]->SetAnnPoint(aNN) != 0)
+				{
+					LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
+				}
 				annDeallocPt(aNN);
 				m_table[key]->SetClassification(suspectCopy.GetClassification());
 

@@ -658,7 +658,10 @@ void *Nova::TrainingLoop(void *ptr)
 						}
 						myfile << "\n";
 					}
-					suspectCopy.SetAnnPoint(aNN);
+					if (suspectCopy.SetAnnPoint(aNN) != 0)
+					{
+						LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
+					}
 					suspectCopy.SetNeedsFeatureUpdate(false);
 					if(SendSuspectToUI(&suspectCopy))
 					{
