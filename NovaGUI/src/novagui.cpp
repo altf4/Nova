@@ -741,6 +741,7 @@ void NovaGUI::on_actionRunNovaAs_triggered()
 void NovaGUI::on_actionStopNova_triggered()
 {
 	StopNovad();
+	StopHaystack();
 
 	// Were we in training mode?
 	if (Config::Inst()->getIsTraining())
@@ -760,7 +761,6 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	StopNovad();
 	::exit(EXIT_SUCCESS);
 }
 
