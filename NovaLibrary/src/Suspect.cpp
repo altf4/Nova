@@ -739,13 +739,20 @@ void Suspect::WrlockSuspect()
 {
 	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
 	{
-		if(!pthread_rwlock_tryrdlock(&m_lock))
+		//If unlocked by owner this should succeed
+		if(pthread_rwlock_trywrlock(&m_lock))
+		{
+			return;
+		}
+		else
 		{
 			pthread_rwlock_unlock(&m_lock);
-			pthread_rwlock_unlock(&m_lock);
+			if(m_lock.__data.__nr_readers == 1)
+			{
+				pthread_rwlock_unlock(&m_lock);
+			}
 			pthread_rwlock_wrlock(&m_lock);
 		}
-		return;
 	}
 	pthread_rwlock_wrlock(&m_lock);
 }
@@ -800,11 +807,17 @@ bool Suspect::HasOwner()
 // if you want to prevent a blocking call.
 void Suspect::SetOwner()
 {
-	WrlockSuspect();
+	pthread_rwlock_wrlock(&m_lock);
+	while(m_hasOwner == true)
+	{
+		pthread_rwlock_unlock(&m_lock);
+		sleep(0.5);
+		pthread_rwlock_wrlock(&m_lock);
+	}
 	m_hasOwner = true;
 	m_owner = pthread_self();
-	UnlockSuspect();
-	RdlockSuspect();
+	pthread_rwlock_unlock(&m_lock);
+	pthread_rwlock_rdlock(&m_lock);
 }
 
 //Flags the suspect as no longer 'checked out'
@@ -824,6 +837,14 @@ int Suspect::ResetOwner()
 	}
 	else
 		return -1;
+}
+
+void Suspect::UnlockAsOwner()
+{
+	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
+	{
+		pthread_rwlock_unlock(&m_lock);
+	}
 }
 
 Suspect& Suspect::operator=(const Suspect &rhs)
@@ -852,11 +873,7 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 		m_annPoint = NULL;
 	}
 
-	m_evidence.clear();
-	for(uint i = 0; i < rhs.m_evidence.size(); i++)
-	{
-		m_evidence.push_back(rhs.m_evidence[i]);
-	}
+	m_evidence = rhs.m_evidence;
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
@@ -881,6 +898,9 @@ Suspect::Suspect(const Suspect &rhs)
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
 
+	m_owner = 0;
+	m_hasOwner = false;
+
 	if(rhs.m_annPoint != NULL)
 	{
 		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
@@ -894,11 +914,8 @@ Suspect::Suspect(const Suspect &rhs)
 		m_annPoint = NULL;
 	}
 
-	m_evidence.clear();
-	for(uint i = 0; i < rhs.m_evidence.size(); i++)
-	{
-		m_evidence.push_back(rhs.m_evidence[i]);
-	}
+	m_evidence = rhs.m_evidence;
+
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];

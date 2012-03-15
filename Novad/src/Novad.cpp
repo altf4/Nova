@@ -52,6 +52,7 @@ string userHomePath, novaConfigPath;
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
 SuspectTable suspectsSinceLastSave;
+pthread_mutex_t suspectsSinceLastSaveLock;
 static TCPSessionHashTable SessionTable;
 
 static struct sockaddr_in hostAddr;
@@ -119,6 +120,8 @@ int Nova::RunNovaD()
 	SessionTable.set_empty_key("");
 	SessionTable.resize(INIT_SIZE_HUGE);
 
+	pthread_mutex_init(&suspectsSinceLastSaveLock, NULL);
+
 	// Let both of these initialize before we have multiple threads going
 	Config::Inst();
 	Logger::Inst();
@@ -157,6 +160,7 @@ int Nova::RunNovaD()
 	}
 	else
 	{
+		LoadStateFile();
 		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
 		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
 	}
@@ -186,6 +190,7 @@ int Nova::RunNovaD()
 
 void Nova::AppendToStateFile()
 {
+	pthread_mutex_lock(&suspectsSinceLastSaveLock);
 	lastSaveTime = time(NULL);
 	if (lastSaveTime == ((time_t)-1))
 		LOG(ERROR, (format("File %1% at line %2%: Unable to get timestamp, call to time()"
@@ -193,7 +198,10 @@ void Nova::AppendToStateFile()
 
 	// Don't bother saving if no new suspect data, just confuses deserialization
 	if (suspectsSinceLastSave.Size() <= 0)
+	{
+		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 		return;
+	}
 
 	u_char tableBuffer[MAX_MSG_SIZE];
 	uint32_t dataSize = 0;
@@ -201,24 +209,33 @@ void Nova::AppendToStateFile()
 	// Compute the total dataSize
 	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() <  suspectsSinceLastSave.Size(); ++it)
 	{
-		if (!it.Current().GetFeatureSet().m_packetCount)
+		Suspect currentSuspect = suspectsSinceLastSave.CheckOut(it.GetKey());
+		currentSuspect.UpdateEvidence();
+		currentSuspect.UpdateFeatureData(true);
+		currentSuspect.CalculateFeatures();
+		suspectsSinceLastSave.CheckIn(&currentSuspect);
+		if (!currentSuspect.GetFeatureSet().m_packetCount)
 		{
 			continue;
 		}
 		else
 		{
-			dataSize += it.Current().SerializeSuspectWithData(tableBuffer);
+			dataSize += currentSuspect.SerializeSuspectWithData(tableBuffer);
 		}
 	}
 	// No suspects with packets to update
 	if (dataSize == 0)
+	{
+		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 		return;
+	}
 
 	ofstream out(Config::Inst()->getPathCESaveFile().data(), ofstream::binary | ofstream::app);
 	if(!out.is_open())
 	{
 		LOG(ERROR, (format("File %1% at line %2%: Unable to open the CE state file %3%")
 				%__FILE__%__LINE__%Config::Inst()->getPathCESaveFile()).str());
+		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 		return;
 	}
 
@@ -229,17 +246,20 @@ void Nova::AppendToStateFile()
 			%__FILE__%__LINE__%dataSize).str());
 	Suspect suspectCopy;
 	// Serialize our suspect table
-	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() < suspectsSinceLastSave.Size(); ++it)
+	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() <  suspectsSinceLastSave.Size(); ++it)
 	{
-		if (!it.Current().GetFeatureSet().m_packetCount)
-			continue;
 		suspectCopy = suspectsSinceLastSave.CheckOut(it.GetKey());
+
+		if (!suspectCopy.GetFeatureSet().m_packetCount)
+			continue;
 		dataSize = suspectCopy.SerializeSuspectWithData(tableBuffer);
 		suspectsSinceLastSave.CheckIn(&suspectCopy);
 		out.write((char*) tableBuffer, dataSize);
 	}
 	out.close();
 	suspectsSinceLastSave.Clear();
+
+	pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 }
 
 void Nova::LoadStateFile()
@@ -314,7 +334,10 @@ void Nova::LoadStateFile()
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
-			suspectBytes += newSuspect->GetFeatureSet().DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+
+			FeatureSet fs = newSuspect->GetFeatureSet();
+			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			newSuspect->SetFeatureSet(&fs);
 			bytesSoFar += suspectBytes;
 
 			if(!suspects.IsValidKey(newSuspect->GetIpAddress()))
@@ -341,6 +364,7 @@ void Nova::LoadStateFile()
 
 void Nova::RefreshStateFile()
 {
+	/*
 	time_t timeStamp;
 	uint32_t dataSize;
 	vector<in_addr_t> deletedKeys;
@@ -458,6 +482,7 @@ void Nova::RefreshStateFile()
 		LOG(ERROR, "Failed to write to the CE state file. This may be a permission problem, or the folder may not exist.",
 			(format("File %1% at line %2%: Unable to copy CE state tmp file to CE state file."
 			" System call to '%3' failed")%__FILE__%__LINE__%copyCommand).str());
+	 */
 }
 
 void Nova::Reload()
@@ -494,7 +519,6 @@ void *Nova::ClassificationLoop(void *ptr)
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(Config::Inst()->getSaPort());
 
-	LoadStateFile();
 	//Classification Loop
 	do
 	{
@@ -508,6 +532,7 @@ void *Nova::ClassificationLoop(void *ptr)
 				suspectCopy.UpdateEvidence();
 				suspectCopy.CalculateFeatures();
 				suspects.CheckIn(&suspectCopy);
+
 			}
 		}
 		//Calculate the normalized feature sets, actually used by ANN
@@ -1015,6 +1040,7 @@ bool Nova::Start_Packet_Handler()
 			exit(EXIT_FAILURE);
 		}
 		if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+		//if (pcap_compile(handle, &fp, "dst net 192.168.10 && !dst host 192.168.10.255" , 0, maskp) == -1)
 		{
 			LOG(CRITICAL, (format("File %1% at line %2%: Couldn't parse pcap filter: %3%: %4%")
 					%__LINE__%filter_exp%pcap_geterr(handle)).str());
@@ -1035,7 +1061,6 @@ bool Nova::Start_Packet_Handler()
 		if(Config::Inst()->getGotoLive()) usePcapFile = false; //If we are going to live capture set the flag.
 
 		LOG(DEBUG, "Done processing PCAP file");
-		exit(EXIT_SUCCESS);
 	}
 
 
@@ -1463,6 +1488,12 @@ void Nova::UpdateSuspect(Packet packet)
 		newSuspect->SetNeedsFeatureUpdate(true);
 		newSuspect->SetIsLive(usePcapFile);
 		suspects.AddNewSuspect(newSuspect);
+
+		// Make a copy to add to the other table
+		Suspect *newSuspectCopy = new Suspect(*newSuspect);
+		pthread_mutex_lock(&suspectsSinceLastSaveLock);
+		suspectsSinceLastSave.AddNewSuspect(newSuspectCopy);
+		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 	}
 	//Else our suspect exists
 	else
@@ -1471,6 +1502,14 @@ void Nova::UpdateSuspect(Packet packet)
 		suspectCopy.AddEvidence(packet);
 		suspectCopy.SetIsLive(usePcapFile);
 		suspects.CheckIn(&suspectCopy);
+
+		pthread_mutex_lock(&suspectsSinceLastSaveLock);
+		Suspect suspectCopy2 = suspectsSinceLastSave.CheckOut(addr);
+		suspectCopy2.AddEvidence(packet);
+		suspectCopy2.SetIsLive(usePcapFile);
+		suspectsSinceLastSave.CheckIn(&suspectCopy2);
+		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+
 		delete newSuspect;
 	}
 }

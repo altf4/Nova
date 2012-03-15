@@ -43,6 +43,7 @@ int callbackSocket = -1, IPCSocket = -1;
 extern string userHomePath;
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
+extern pthread_mutex_t suspectsSinceLastSaveLock;
 
 struct sockaddr_un msgRemote, msgLocal;
 int UIsocketSize;
@@ -169,7 +170,9 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			//TODO: Replace with new suspect table class
 
 			suspects.Clear();
+			pthread_mutex_lock(&suspectsSinceLastSaveLock);
 			suspectsSinceLastSave.Clear();
+			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
@@ -192,10 +195,14 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			{
 				suspects.Erase(controlMessage.m_suspectAddress);
 			}
+
+			pthread_mutex_lock(&suspectsSinceLastSaveLock);
 			if(suspectsSinceLastSave.IsValidKey(controlMessage.m_suspectAddress))
 			{
 				suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
 			}
+			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+
 			RefreshStateFile();
 
 			//TODO: Should check for errors here and return result
