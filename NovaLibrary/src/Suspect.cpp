@@ -740,7 +740,7 @@ void Suspect::WrlockSuspect()
 	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
 	{
 		//If unlocked by owner this should succeed
-		if(pthread_rwlock_trywrlock(&m_lock))
+		if(!pthread_rwlock_trywrlock(&m_lock))
 		{
 			return;
 		}
