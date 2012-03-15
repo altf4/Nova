@@ -280,7 +280,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 
 void NovaGUI::closeEvent()
 {
-	StopNovad();
+
 }
 
 /************************************************
