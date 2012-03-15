@@ -17,9 +17,41 @@
 //============================================================================
 
 #include "StatusQueries.h"
+#include "messages/ControlMessage.h"
+
+extern int novadListenSocket;
 
 bool Nova::IsUp()
 {
-	//TODO: Obviously, fill this out to do something
-	return false;
+
+	ControlMessage ping;
+	ping.m_controlType = CONTROL_PING;
+	if(!UI_Message::WriteMessage(&ping, novadListenSocket) )
+	{
+		//There was an error in sending the message
+		return false;
+	}
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	if(reply == NULL)
+	{
+		//There was an error receiving the reply
+		return false;
+	}
+	if(reply->m_messageType != CONTROL_MESSAGE )
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return false;
+	}
+
+	ControlMessage *pong = (ControlMessage*)reply;
+	if(pong->m_controlType != CONTROL_PONG)
+	{
+		//Received the wrong kind of control message
+		delete pong;
+		return false;
+	}
+	delete pong;
+	return true;
 }

@@ -277,7 +277,7 @@ Module</string>
              <bool>false</bool>
             </property>
             <property name="rowCount">
-             <number>3</number>
+             <number>2</number>
             </property>
             <attribute name="horizontalHeaderCascadingSectionResizes">
              <bool>true</bool>
@@ -294,22 +294,6 @@ Module</string>
             <attribute name="verticalHeaderDefaultSectionSize">
              <number>25</number>
             </attribute>
-            <attribute name="verticalHeaderVisible">
-             <bool>false</bool>
-            </attribute>
-            <attribute name="verticalHeaderDefaultSectionSize">
-             <number>25</number>
-            </attribute>
-            <attribute name="horizontalHeaderStretchLastSection">
-             <bool>true</bool>
-            </attribute>
-            <attribute name="horizontalHeaderCascadingSectionResizes">
-             <bool>true</bool>
-            </attribute>
-            <attribute name="horizontalHeaderDefaultSectionSize">
-             <number>180</number>
-            </attribute>
-            <row/>
             <row/>
             <row/>
             <column>
@@ -317,28 +301,10 @@ Module</string>
               <string>Component</string>
              </property>
             </column>
-            <column>
-             <property name="text">
-              <string>PID</string>
-             </property>
-            </column>
            </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="nStatButtonBox">
-            <item>
-             <widget class="QPushButton" name="systemStatKillButton">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Kill Process</string>
-              </property>
-             </widget>
-            </item>
             <item>
              <widget class="QPushButton" name="systemStatStopButton">
               <property name="maximumSize">
@@ -348,7 +314,7 @@ Module</string>
                </size>
               </property>
               <property name="text">
-               <string>Stop Process</string>
+               <string>Stop Component</string>
               </property>
              </widget>
             </item>
@@ -361,7 +327,7 @@ Module</string>
                </size>
               </property>
               <property name="text">
-               <string>Start Process</string>
+               <string>Start Component</string>
               </property>
              </widget>
             </item>

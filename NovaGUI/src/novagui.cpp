@@ -22,6 +22,8 @@
 #include "nova_manual.h"
 #include "classifierPrompt.h"
 #include "NovadControl.h"
+#include "HaystackControl.h"
+#include "StatusQueries.h"
 #include "Connection.h"
 #include "CallbackHandler.h"
 #include "Logger.h"
@@ -44,14 +46,6 @@ extern int UI_parentSocket;
 extern int UI_ListenSocket;
 extern struct sockaddr_un UI_Address;
 
-//GUI to Nova message variables
-u_char msgBuffer[MAX_GUIMSG_SIZE];
-int msgLen = 0;
-
-//Receive Suspect variables
-u_char buf[MAX_MSG_SIZE];
-int bytesRead;
-
 pthread_rwlock_t lock;
 string homePath, readPath, writePath;
 
@@ -61,13 +55,9 @@ SuspectGUIHashTable SuspectTable;
 
 // Defines the order of components in the process list and novaComponents array
 #define COMPONENT_NOVAD 0
-#define COMPONENT_DMH 1
-#define COMPONENT_HSH 2
+#define COMPONENT_HSH 1
 
-#define NOVA_COMPONENTS 3
-
-
-struct novaComponent novaComponents[NOVA_COMPONENTS];
+#define NOVA_COMPONENTS 2
 
 /************************************************
  * Constructors, Destructors and Closing Actions
@@ -77,7 +67,6 @@ struct novaComponent novaComponents[NOVA_COMPONENTS];
 void sighandler(int param)
 {
 	param = EXIT_SUCCESS;
-	StopNovad();
 	::exit(param);
 }
 
@@ -104,7 +93,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	InitConfiguration();
 	InitPaths();
-	InitNovadCommands();
 	InitiateSystemStatus();
 
 	if(!StartCallbackLoop(this))
@@ -246,25 +234,39 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 		m_systemStatMenu->clear();
 
 		int row = ui.systemStatusTable->currentRow();
-		if (row < 0 || row > NOVA_COMPONENTS)
-		{
-			syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
-			return;
-		}
 
-		if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
+		switch (row)
 		{
-			m_systemStatMenu->addAction(ui.actionSystemStatKill);
-
-			if (row != COMPONENT_DMH && row != COMPONENT_HSH)
-				m_systemStatMenu->addAction(ui.actionSystemStatStop);
-
-			if (row == COMPONENT_NOVAD)
-				m_systemStatMenu->addAction(ui.actionSystemStatReload);
-		}
-		else
-		{
-			m_systemStatMenu->addAction(ui.actionSystemStatStart);
+			case COMPONENT_NOVAD:
+			{
+				if(IsUp())
+				{
+					m_systemStatMenu->addAction(ui.actionSystemStatReload);
+					m_systemStatMenu->addAction(ui.actionSystemStatStop);
+				}
+				else
+				{
+					m_systemStatMenu->addAction(ui.actionSystemStatStart);
+				}
+				break;
+			}
+			case COMPONENT_HSH:
+			{
+				if(IsHaystackUp())
+				{
+					m_systemStatMenu->addAction(ui.actionSystemStatStop);
+				}
+				else
+				{
+					m_systemStatMenu->addAction(ui.actionSystemStatStart);
+				}
+				break;
+			}
+			default:
+			{
+				syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+				return;
+			}
 		}
 
 		QPoint globalPos = event->globalPos();
@@ -296,23 +298,6 @@ void NovaGUI::InitConfiguration()
 	}
 }
 
-void NovaGUI::InitNovadCommands()
-{
-	novaComponents[COMPONENT_NOVAD].name = "NOVA Daemon";
-	novaComponents[COMPONENT_NOVAD].terminalCommand = "nohup xterm -geometry \"+0+600\" -e Novad";
-	novaComponents[COMPONENT_NOVAD].noTerminalCommand = "nohup Novad";
-	novaComponents[COMPONENT_NOVAD].shouldBeRunning = false;
-
-	novaComponents[COMPONENT_DMH].name ="Doppelganger Honeyd";
-	novaComponents[COMPONENT_DMH].terminalCommand ="nohup xterm -geometry \"+500+0\" -e sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
-	novaComponents[COMPONENT_DMH].noTerminalCommand ="nohup sudo honeyd -d -i lo -f "+homePath+"/Config/doppelganger.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydDoppservice.log 10.0.0.0/8";
-	novaComponents[COMPONENT_DMH].shouldBeRunning = false;
-
-	novaComponents[COMPONENT_HSH].name ="Haystack Honeyd";
-	novaComponents[COMPONENT_HSH].terminalCommand ="nohup xterm -geometry \"+0+0\" -e sudo honeyd -d -i " + Config::Inst()->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
-	novaComponents[COMPONENT_HSH].noTerminalCommand ="nohup sudo honeyd -d -i " + Config::Inst()->getInterface() + " -f "+homePath+"/Config/haystack.config -p "+readPath+"/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
-	novaComponents[COMPONENT_HSH].shouldBeRunning = false;
-}
 void NovaGUI::InitPaths()
 {
 	homePath = Config::Inst()->getPathHome();
@@ -337,11 +322,9 @@ void NovaGUI::InitiateSystemStatus()
 {
 	// Pull in the icons now that homePath is set
 	string greenPath = "/usr/share/nova/icons/greendot.png";
-	string yellowPath = "/usr/share/nova/icons/yellowdot.png";
 	string redPath = "/usr/share/nova/icons/reddot.png";
 
 	m_greenIcon = new QIcon(QPixmap(QString::fromStdString(greenPath)));
-	m_yellowIcon = new QIcon(QPixmap(QString::fromStdString(yellowPath)));
 	m_redIcon = new QIcon(QPixmap(QString::fromStdString(redPath)));
 
 	// Populate the System Status table with empty widgets
@@ -350,57 +333,47 @@ void NovaGUI::InitiateSystemStatus()
 			ui.systemStatusTable->setItem(i, j,  new QTableWidgetItem());
 
 	// Add labels for our components
-	ui.systemStatusTable->item(COMPONENT_NOVAD,0)->setText(QString::fromStdString(novaComponents[COMPONENT_NOVAD].name));
-	ui.systemStatusTable->item(COMPONENT_DMH,0)->setText(QString::fromStdString(novaComponents[COMPONENT_DMH].name));
-	ui.systemStatusTable->item(COMPONENT_HSH,0)->setText(QString::fromStdString(novaComponents[COMPONENT_HSH].name));
+	ui.systemStatusTable->item(COMPONENT_NOVAD, 0)->setText("Novad");
+	ui.systemStatusTable->item(COMPONENT_HSH, 0)->setText("Haystack");
 }
 
 
 void NovaGUI::UpdateSystemStatus()
 {
 	QTableWidgetItem *item;
-	QTableWidgetItem *pidItem;
 
-	for (uint i = 0; i < NOVA_COMPONENTS; i++)
+	//Novad
+	item = ui.systemStatusTable->item(COMPONENT_NOVAD, 0);
+	if(IsUp())
 	{
-		item = ui.systemStatusTable->item(i,0);
-		pidItem = ui.systemStatusTable->item(i,1);
+		item->setIcon(*m_greenIcon);
+	}
+	else
+	{
+		item->setIcon(*m_redIcon);
+	}
 
-		if (novaComponents[i].process == NULL || !novaComponents[i].process->pid())
-		{
-			pidItem->setText("");
-
-			// Restart processes that died for some reason
-			if (novaComponents[i].shouldBeRunning)
-			{
-				syslog(SYSL_ERR, "File: %s Line: %d GUI has detected a dead process %s. Restarting it.", __FILE__, __LINE__, novaComponents[i].name.c_str());
-				item->setIcon(*m_yellowIcon);
-				StartComponent(&novaComponents[i]);
-			}
-			else
-			{
-				item->setIcon(*m_redIcon);
-			}
-
-		}
-		else
-		{
-			// The process is running, but it shouldn't be. Make it yellow
-			if (novaComponents[i].shouldBeRunning)
-				item->setIcon(*m_greenIcon);
-			else
-				item->setIcon(*m_yellowIcon);
-
-			pidItem->setText(QString::number(novaComponents[i].process->pid()));
-		}
+	//Haystack
+	item = ui.systemStatusTable->item(COMPONENT_HSH, 0);
+	if(IsHaystackUp())
+	{
+		item->setIcon(*m_greenIcon);
+	}
+	else
+	{
+		item->setIcon(*m_redIcon);
 	}
 
 	// Update the buttons if need be
 	int row = ui.systemStatusTable->currentRow();
 	if (row < 0 || row > NOVA_COMPONENTS)
+	{
 		return;
+	}
 	else
+	{
 		on_systemStatusTable_itemSelectionChanged();
+	}
 }
 
 
@@ -755,6 +728,7 @@ void NovaGUI::ClearSuspectList()
 void NovaGUI::on_actionRunNova_triggered()
 {
 	StartNovad();
+	TryWaitConenctToNovad(2000);	//TODO: Call this asynchronously
 }
 
 void NovaGUI::on_actionRunNovaAs_triggered()
@@ -1001,10 +975,10 @@ void NovaGUI::on_runButton_clicked()
 	// haystack.config you wanted to use, kept rewriting it on start.
 	// Commented for now until the Node setup works in the GUI.
 	//writeHoneyd();
-	for(uint i = 0; i < NOVA_COMPONENTS; i ++)
-	{
-		StartComponent(&(novaComponents[i]));
-	}
+	StartNovad();
+	TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+	StartHaystack();
+	//StartDoppelganger();
 
 }
 void NovaGUI::on_stopButton_clicked()
@@ -1016,91 +990,47 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 {
 	int row = ui.systemStatusTable->currentRow();
 
-	if (row < 0 || row > NOVA_COMPONENTS)
+	switch(row)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
-		return;
-	}
-
-	if (novaComponents[row].process != NULL && novaComponents[row].process->pid())
-	{
-		ui.systemStatStartButton->setDisabled(true);
-		ui.systemStatKillButton->setDisabled(false);
-
-		// We can't send a stop signal to honeyd, force using the kill button
-		if (row == COMPONENT_DMH || row == COMPONENT_HSH)
-			ui.systemStatStopButton->setDisabled(true);
-		else
-			ui.systemStatStopButton->setDisabled(false);
-
-	}
-	else
-	{
-		ui.systemStatStartButton->setDisabled(false);
-		ui.systemStatStopButton->setDisabled(true);
-		ui.systemStatKillButton->setDisabled(true);
+		case COMPONENT_NOVAD:
+		{
+			if(IsUp())
+			{
+				ui.systemStatStartButton->setDisabled(true);
+				ui.systemStatStopButton->setDisabled(false);
+			}
+			else
+			{
+				ui.systemStatStartButton->setDisabled(false);
+				ui.systemStatStopButton->setDisabled(true);
+			}
+			break;
+		}
+		case COMPONENT_HSH:
+		{
+			if(IsHaystackUp())
+			{
+				ui.systemStatStartButton->setDisabled(true);
+				ui.systemStatStopButton->setDisabled(false);
+			}
+			else
+			{
+				ui.systemStatStartButton->setDisabled(false);
+				ui.systemStatStopButton->setDisabled(true);
+			}
+			break;
+		}
+		default:
+		{
+			syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+			return;
+		}
 	}
 }
-
-void NovaGUI::on_actionSystemStatKill_triggered()
-{
-	int row = ui.systemStatusTable->currentRow();
-
-	if (row < 0 || row > NOVA_COMPONENTS)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
-		return;
-	}
-
-	QProcess *process = novaComponents[row].process;
-	novaComponents[row].shouldBeRunning = false;
-
-	// Fix for honeyd not closing with gnome-terminal + sudo
-	if (Config::Inst()->getUseTerminals() && process != NULL && process->pid() &&
-			(ui.systemStatusTable->currentRow() == COMPONENT_DMH || ui.systemStatusTable->currentRow() == COMPONENT_HSH))
-	{
-		QString killString = QString("sudo pkill -TERM -P ") + QString::number(process->pid());
-		if(::system(killString.toStdString().c_str()) != 0)
-		{
-			LOG(ERROR, (format("File %1% at line %2%: System call: "
-				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
-		}
-
-		killString = QString("sudo kill ") + QString::number(process->pid());
-		if(::system(killString.toStdString().c_str()) != 0)
-		{
-			LOG(ERROR, (format("File %1% at line %2%: System call: "
-				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
-		}
-	}
-
-	// Politely ask the process to die
-	if(process != NULL && process->pid())
-		process->terminate();
-
-	// Tell the process to die in a stern voice
-	if(process != NULL && process->pid())
-		process->kill();
-
-	// Give up telling it to die and kill it ourselves with the power of root
-	if(process != NULL && process->pid())
-	{
-		QString killString = QString("sudo kill ") + QString::number(process->pid());
-		if(::system(killString.toStdString().c_str()) != 0)
-		{
-			LOG(ERROR, (format("File %1% at line %2%: System call: "
-				"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
-		}
-	}
-
-	cout << "PID is " << process->pid() << endl;
-}
-
 
 void NovaGUI::on_actionSystemStatStop_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
-	novaComponents[row].shouldBeRunning = false;
 
 	switch (row)
 	{
@@ -1109,44 +1039,14 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 			StopNovad();
 			break;
 		}
-		case COMPONENT_DMH:
-		{
-			if (novaComponents[COMPONENT_DMH].process != NULL && novaComponents[COMPONENT_DMH].process->pid() != 0)
-			{
-				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
-				if(::system(killString.toStdString().c_str()) != 0)
-				{
-					LOG(ERROR, (format("File %1% at line %2%: System call: "
-						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
-				}
-
-				killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_DMH].process->pid());
-				if(::system(killString.toStdString().c_str()) != 0)
-				{
-					LOG(ERROR, (format("File %1% at line %2%: System call: "
-						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
-				}
-			}
-			break;
-		}
 		case COMPONENT_HSH:
 		{
-			if (novaComponents[COMPONENT_HSH].process != NULL && novaComponents[COMPONENT_HSH].process->pid() != 0)
-			{
-				QString killString = QString("sudo pkill -TERM -P ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
-				if(::system(killString.toStdString().c_str()) != 0)
-				{
-					LOG(ERROR, (format("File %1% at line %2%: System call: "
-						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
-				}
-
-				killString = QString("sudo kill ") + QString::number(novaComponents[COMPONENT_HSH].process->pid());
-				if(::system(killString.toStdString().c_str()) != 0)
-				{
-					LOG(ERROR, (format("File %1% at line %2%: System call: "
-						"'%3%' has failed.")%__FILE__%__LINE__%killString.toStdString().c_str()).str());
-				}
-			}
+			StopHaystack();
+			break;
+		}
+		default:
+		{
+			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring")%__FILE__%__LINE__).str());
 			break;
 		}
 	}
@@ -1157,18 +1057,23 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
 
-	switch (row) {
-	case COMPONENT_NOVAD:
-		StartComponent(&novaComponents[COMPONENT_NOVAD]);
-		break;
-	case COMPONENT_HSH:
-		StartComponent(&novaComponents[COMPONENT_HSH]);
-		break;
-	case COMPONENT_DMH:
-		StartComponent(&novaComponents[COMPONENT_DMH]);
-		break;
-	default:
-		return;
+	switch (row)
+	{
+		case COMPONENT_NOVAD:
+		{
+			StartNovad();
+			TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+			break;
+		}
+		case COMPONENT_HSH:
+		{
+			StartHaystack();
+			break;
+		}
+		default:
+		{
+			return;
+		}
 	}
 
 	UpdateSystemStatus();
@@ -1183,11 +1088,6 @@ void NovaGUI::on_actionSystemStatReload_triggered()
 void NovaGUI::on_systemStatStartButton_clicked()
 {
 	on_actionSystemStatStart_triggered();
-}
-
-void NovaGUI::on_systemStatKillButton_clicked()
-{
-	on_actionSystemStatKill_triggered();
 }
 
 void NovaGUI::on_systemStatStopButton_clicked()
@@ -1376,7 +1276,7 @@ void *CallbackLoopHelper(void *ptr)
 			LOG(ERROR, "Couldn't listen for Novad. Is qt already running?",
 					(format("File %1% at line %2%:  Qt accept failed")% __FILE__%__LINE__).str());
 			CloseNovadConnection();
-			return false;
+			break;
 		}
 		else
 		{
@@ -1428,55 +1328,4 @@ void *CallbackLoop(void *ptr)
 	return NULL;
 }
 
-void StartComponent(novaComponent *component)
-{
-	QString program;
-
-	if (Config::Inst()->getUseTerminals())
-		program = QString::fromStdString(component->terminalCommand);
-	else
-		program = QString::fromStdString(component->noTerminalCommand);
-
-	syslog(SYSL_INFO, "Running start command: %s", program.toStdString().c_str());
-
-	// Is the process already running?
-	if (component->process != NULL)
-	{
-		component->process->kill();
-		delete component->process;
-	}
-
-	component->shouldBeRunning = true;
-
-	component->process = new QProcess();
-	component->process->start(program);
-
-	pthread_t startComponentThread;
-	pthread_create(&startComponentThread, NULL, StartComponentHelper, (void*)component);
-}
-
-void *StartComponentHelper(void *ptr)
-{
-	novaComponent *component = (novaComponent*)ptr;
-
-	//If it's the Nova Daemon we're starting, then connect out to it.
-	if(component->name.compare("NOVA Daemon") == 0)
-	{
-		if(!ConnectToNovad())
-		{
-			sleep(1);
-			if(!ConnectToNovad())
-			{
-				sleep(1);
-				if(!ConnectToNovad())
-				{
-					sleep(1);
-				}
-			}
-		}
-	}
-
-	return NULL;
-}
-
-}
+};

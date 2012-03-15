@@ -32,6 +32,13 @@ bool InitCallbackSocket();
 //	NOTE: If a connection already exists, then the function does nothing and returns true
 bool ConnectToNovad();
 
+//Tries to connect to Novad, waiting for at most timeout_ms milliseconds
+//	timeout_ms - The amount of time in milliseconds at maximum to wait for a connection
+//	NOTE: Blocks for at most timeout_ms milliseconds
+//	returns - true if a successful connection is established, false if no connection (error)
+//	NOTE: If a connection already exists, then the function does nothing and returns true
+bool TryWaitConenctToNovad(int timeout_ms);
+
 //Closes any connection Novad over IPC
 //	returns - true if no connections to Novad exists, false if there is a connection (error)
 //	NOTE: If there was already no connection, then the function does nothing and returns true

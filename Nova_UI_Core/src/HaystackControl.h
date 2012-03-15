@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : CallbackHandler.h
+// Name        : Haystack.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,38 +13,30 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Functions for reading messages on the UI callback socket
-//				IE: asynchronous messages received from Novad
+// Description : Controls the Honeyd Haystack and Doppelganger processes
 //============================================================================
 
-
-#ifndef CALLBACKHANDLER_H_
-#define CALLBACKHANDLER_H_
-
-#include "Suspect.h"
-
-enum CallbackChangeType: char
-{
-	CALLBACK_ERROR = 0,		//There was an error in receiving the callback message
-	CALLBACK_HUNG_UP,		//Novad hung up on us
-	CALLBACK_NEW_SUSPECT,	//Received a new suspect from Novad
-};
-
-struct CallbackChange
-{
-	enum CallbackChangeType type;
-	Suspect *suspect;		//Used in type: CALLBACK_NEW_SUSPECT
-};
+#ifndef HAYSTACKCONTROL_H_
+#define HAYSTACKCONTROL_H_
 
 namespace Nova
 {
 
-//Receives a single callback message and returns its details
-//	NOTE: Blocking call. Should be run from within its own looping thread
-//	returns - A struct describing what Novad is asking the UI to change
-struct CallbackChange ProcessCallbackMessage();
+//Starts the Honeyd Haystack process
+//	returns - True if haystack successfully started, false on error
+//	NOTE: If the haystack is already running, this function does nothing and returns true
+bool StartHaystack();
+
+//Stops the Honeyd Haystack process
+//	returns - True if haystack successfully stopped, false on error
+//	NOTEL if the haystack is already dead, this function does nothing and returns true
+bool StopHaystack();
+
+//Returns whether the Haystack is running or not
+//	returns - True if honeyd haystack is running, false if not running
+bool IsHaystackUp();
 
 }
 
 
-#endif /* CALLBACKHANDLER_H_ */
+#endif /* HAYSTACKCONTROL_H_ */

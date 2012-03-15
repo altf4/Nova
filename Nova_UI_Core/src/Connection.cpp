@@ -20,6 +20,7 @@
 #include "NovaUtil.h"
 #include "Config.h"
 #include "messages/ControlMessage.h"
+#include "StatusQueries.h"
 
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -74,7 +75,10 @@ bool Nova::InitCallbackSocket()
 
 bool Nova::ConnectToNovad()
 {
-	//TODO: If sockets aren't 0, then just make sure we're still connected
+	if(IsUp())
+	{
+		return true;
+	}
 
 	//Builds the key path
 	string key = Config::Inst()->getPathHome();
@@ -130,6 +134,21 @@ bool Nova::ConnectToNovad()
 	delete connectionReply;
 
 	return replySuccess;
+}
+
+
+bool Nova::TryWaitConenctToNovad(int timeout_ms)
+{
+	if(ConnectToNovad())
+	{
+		return true;
+	}
+	else
+	{
+		//usleep takes in microsecond argument. Convert to milliseconds
+		usleep(timeout_ms * 1000);
+		return ConnectToNovad();
+	}
 }
 
 bool Nova::CloseNovadConnection()
