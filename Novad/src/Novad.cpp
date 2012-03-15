@@ -364,7 +364,6 @@ void Nova::LoadStateFile()
 
 void Nova::RefreshStateFile()
 {
-	/*
 	time_t timeStamp;
 	uint32_t dataSize;
 	vector<in_addr_t> deletedKeys;
@@ -446,7 +445,10 @@ void Nova::RefreshStateFile()
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
-			suspectBytes += newSuspect->GetFeatureSet().DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+
+			FeatureSet fs = newSuspect->GetFeatureSet();
+			fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			newSuspect->SetFeatureSet(&fs);
 
 			if(!suspects.IsValidKey(newSuspect->GetIpAddress())
 					&& suspectsSinceLastSave.IsValidKey(newSuspect->GetIpAddress()))
@@ -482,7 +484,6 @@ void Nova::RefreshStateFile()
 		LOG(ERROR, "Failed to write to the CE state file. This may be a permission problem, or the folder may not exist.",
 			(format("File %1% at line %2%: Unable to copy CE state tmp file to CE state file."
 			" System call to '%3' failed")%__FILE__%__LINE__%copyCommand).str());
-	 */
 }
 
 void Nova::Reload()
