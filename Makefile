@@ -27,13 +27,15 @@ clean-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
+	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 
 clean-release:
 	$(MAKE) -C NovaLibrary/Release clean
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
-	$(MAKE) -C NovaGUI debug-clean
+	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C NovaGUI release-clean
 
 install: install-release
 
@@ -114,5 +116,5 @@ uninstall:
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	#rm -f $(DESTDIR)/usr/share/man/man1/LocalTrafficMonitor.1.gz
-	sh Installer/postrm
+	#sh Installer/postrm
 
