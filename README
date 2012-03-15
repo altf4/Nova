@@ -148,15 +148,15 @@ error message to see what's wrong.
 
     sudo make install
 
-- This will set permissions for required files as well as place the
-binaries in /usr/bin so that they can be referenced by the GUI and the
-command line. Any errors here are likely the result of an absent function
-definition, refer to the above steps notes to remedy the problem.
-
 - Note: If either of these steps error out, it is suggested that you run
 the cleaning command before trying to run them again (i.e. if make errors
 out, use sudo make clean to clean Nova's files up before running sudo
 make all again. For sudo make install use the command sudo make uninstall.]
+
+- Finally, while logged in as the user you plan to run Novad with, 
+run the following command to add your user to the 'nova' permission group,
+
+    sudo bash InitializeNova.sh
 
 - As a workaround to a current installation bug, you have to log out of
 your current user and then log back in, in order for the permissions set during

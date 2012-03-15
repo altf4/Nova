@@ -280,7 +280,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 
 void NovaGUI::closeEvent()
 {
-	StopNovad();
+
 }
 
 /************************************************
@@ -729,6 +729,7 @@ void NovaGUI::on_actionRunNova_triggered()
 {
 	StartNovad();
 	TryWaitConenctToNovad(2000);	//TODO: Call this asynchronously
+	StartHaystack();
 }
 
 void NovaGUI::on_actionRunNovaAs_triggered()
@@ -740,6 +741,7 @@ void NovaGUI::on_actionRunNovaAs_triggered()
 void NovaGUI::on_actionStopNova_triggered()
 {
 	StopNovad();
+	StopHaystack();
 
 	// Were we in training mode?
 	if (Config::Inst()->getIsTraining())
@@ -759,7 +761,6 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	StopNovad();
 	::exit(EXIT_SUCCESS);
 }
 
@@ -971,10 +972,6 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
-	// TODO: Put this back? It was really annoying if you had an existing
-	// haystack.config you wanted to use, kept rewriting it on start.
-	// Commented for now until the Node setup works in the GUI.
-	//writeHoneyd();
 	StartNovad();
 	TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
 	StartHaystack();
