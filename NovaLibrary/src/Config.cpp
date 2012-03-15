@@ -1080,24 +1080,6 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	// Does ~/.nova exist?
 	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
-		// Are we in the nova group? Run 'groups' and parse output
-		string groupsResult = "";
-		FILE* pipe = popen("groups", "r");
-		while(!feof(pipe))
-			if(fgets(buffer, 256, pipe) != NULL)
-				groupsResult += buffer;
-
-		stringstream ss(groupsResult);
-		string group;
-		bool found = false;
-		while (ss >> group)
-			if (group == "nova")
-				found = true;
-
-		if (!found)
-		{
-			LOG(WARNING, "It appears 'nova' is not in the output of 'groups' for your user. This could cause problems. If you're running as root, it's safe to ignore this.");
-		}
 		// Do all of the important files exist?
 		for (uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
 		{
