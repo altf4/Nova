@@ -56,7 +56,6 @@ SuspectGUIHashTable SuspectTable;
 // Defines the order of components in the process list and novaComponents array
 #define COMPONENT_NOVAD 0
 #define COMPONENT_HSH 1
-#define COMPONENT_DMH 2
 
 #define NOVA_COMPONENTS 2
 
@@ -242,7 +241,6 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			{
 				if(IsUp())
 				{
-					m_systemStatMenu->addAction(ui.actionSystemStatKill);
 					m_systemStatMenu->addAction(ui.actionSystemStatReload);
 					m_systemStatMenu->addAction(ui.actionSystemStatStop);
 				}
@@ -256,24 +254,12 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			{
 				if(IsHaystackUp())
 				{
-					m_systemStatMenu->addAction(ui.actionSystemStatKill);
+					m_systemStatMenu->addAction(ui.actionSystemStatStop);
 				}
 				else
 				{
 					m_systemStatMenu->addAction(ui.actionSystemStatStart);
 				}
-				break;
-			}
-			case COMPONENT_DMH:
-			{
-				/*if(IsDoppelgangerUp())
-				{
-					m_systemStatMenu->addAction(ui.actionSystemStatKill);
-				}
-				else
-				{
-					m_systemStatMenu->addAction(ui.actionSystemStatStart);
-				}*/
 				break;
 			}
 			default:
@@ -349,7 +335,6 @@ void NovaGUI::InitiateSystemStatus()
 	// Add labels for our components
 	ui.systemStatusTable->item(COMPONENT_NOVAD, 0)->setText("Novad");
 	ui.systemStatusTable->item(COMPONENT_HSH, 0)->setText("Haystack");
-	ui.systemStatusTable->item(COMPONENT_DMH, 0)->setText("Doppelganger");
 }
 
 
@@ -367,17 +352,6 @@ void NovaGUI::UpdateSystemStatus()
 	{
 		item->setIcon(*m_redIcon);
 	}
-
-	//Doppelganger
-	/*item = ui.systemStatusTable->item(COMPONENT_DMH, 0);
-	if(IsDoppelgangerUp())
-	{
-		item->setIcon(*m_greenIcon);
-	}
-	else
-	{
-		item->setIcon(*m_redIcon);
-	}*/
 
 	//Haystack
 	item = ui.systemStatusTable->item(COMPONENT_HSH, 0);
@@ -1024,13 +998,11 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 			{
 				ui.systemStatStartButton->setDisabled(true);
 				ui.systemStatStopButton->setDisabled(false);
-				ui.systemStatKillButton->setDisabled(false);
 			}
 			else
 			{
 				ui.systemStatStartButton->setDisabled(false);
 				ui.systemStatStopButton->setDisabled(true);
-				ui.systemStatKillButton->setDisabled(true);
 			}
 			break;
 		}
@@ -1040,30 +1012,12 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 			{
 				ui.systemStatStartButton->setDisabled(true);
 				ui.systemStatStopButton->setDisabled(false);
-				ui.systemStatKillButton->setDisabled(false);
 			}
 			else
 			{
 				ui.systemStatStartButton->setDisabled(false);
 				ui.systemStatStopButton->setDisabled(true);
-				ui.systemStatKillButton->setDisabled(true);
 			}
-			break;
-		}
-		case COMPONENT_DMH:
-		{
-			/*if(IsDoppelgangerUp())
-			{
-				ui.systemStatStartButton->setDisabled(true);
-				ui.systemStatStopButton->setDisabled(false);
-				ui.systemStatKillButton->setDisabled(false);
-			}
-			else
-			{
-				ui.systemStatStartButton->setDisabled(false);
-				ui.systemStatStopButton->setDisabled(true);
-				ui.systemStatKillButton->setDisabled(true);
-			}*/
 			break;
 		}
 		default:
@@ -1074,36 +1028,6 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 	}
 }
 
-void NovaGUI::on_actionSystemStatKill_triggered()
-{
-	int row = ui.systemStatusTable->currentRow();
-
-	switch (row)
-	{
-		case COMPONENT_NOVAD:
-		{
-			StopNovad();
-			break;
-		}
-		case COMPONENT_HSH:
-		{
-			StopHaystack();
-			break;
-		}
-		case COMPONENT_DMH:
-		{
-			//StopDoppelganger();
-			break;
-		}
-		default:
-		{
-			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring")%__FILE__%__LINE__).str());
-			return;
-		}
-	}
-}
-
-
 void NovaGUI::on_actionSystemStatStop_triggered()
 {
 	int row = ui.systemStatusTable->currentRow();
@@ -1113,11 +1037,6 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 		case COMPONENT_NOVAD:
 		{
 			StopNovad();
-			break;
-		}
-		case COMPONENT_DMH:
-		{
-			//StopDoppelganger();
 			break;
 		}
 		case COMPONENT_HSH:
@@ -1151,11 +1070,6 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 			StartHaystack();
 			break;
 		}
-		case COMPONENT_DMH:
-		{
-			//StartDoppelganger();
-			break;
-		}
 		default:
 		{
 			return;
@@ -1174,11 +1088,6 @@ void NovaGUI::on_actionSystemStatReload_triggered()
 void NovaGUI::on_systemStatStartButton_clicked()
 {
 	on_actionSystemStatStart_triggered();
-}
-
-void NovaGUI::on_systemStatKillButton_clicked()
-{
-	on_actionSystemStatKill_triggered();
 }
 
 void NovaGUI::on_systemStatStopButton_clicked()

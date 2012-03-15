@@ -110,7 +110,6 @@ private Q_SLOTS:
 	void on_actionHelp_2_triggered();
 	void on_actionLogger_triggered();
 
-	void on_actionSystemStatKill_triggered();
 	void on_actionSystemStatStop_triggered();
 	void on_actionSystemStatStart_triggered();
 	void on_actionSystemStatReload_triggered();
@@ -131,7 +130,6 @@ private Q_SLOTS:
 	//System Status widgets
 	void on_systemStatStartButton_clicked();
 	void on_systemStatStopButton_clicked();
-	void on_systemStatKillButton_clicked();
 	void on_systemStatusTable_itemSelectionChanged();
 
 	//Suspect view widgets
