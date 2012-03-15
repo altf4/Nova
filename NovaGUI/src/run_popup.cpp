@@ -121,6 +121,7 @@ void Run_Popup::on_startButton_clicked()
 	{
 		StartNovad();
 		TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+		StartHaystack();
 	}
 	this->close();
 }
