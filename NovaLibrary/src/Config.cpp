@@ -1068,24 +1068,6 @@ void Config::SetDefaults()
 	m_dataTTL = 0;
 }
 
-bool Config::AddUserToGroup()
-{
-	bool returnValue = true;
-	if( system("gksudo --description 'Add your user to the privileged nova user group. "
-			"(Required for Nova to run)'  \"usermod -a -G nova $USER\"") != 0)
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d gksudo: %s", __FILE__, __LINE__, "Was not able to add user to the 'nova' group");
-		//TODO replace with LOG()
-		returnValue = false;
-	}
-	else
-	{
-		//TODO replace with LOG()
-		syslog(SYSL_INFO, "Added your user to the 'nova' group. You may need to log in and out for this to take affect.");
-	}
-	return returnValue;
-}
-
 // Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 //	Returns: True if (after the function) the user has all necessary ~/.nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
@@ -1112,11 +1094,10 @@ bool Config::InitUserConfigs(string homeNovaPath)
 			if (group == "nova")
 				found = true;
 
-		// Add them to the group if need be
 		if (!found)
-			if (!AddUserToGroup())
-				returnValue = false;
-
+		{
+			LOG(WARNING, "It appears 'nova' is not in the output of 'groups' for your user. This could cause problems. If you're running as root, it's safe to ignore this.");
+		}
 		// Do all of the important files exist?
 		for (uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
 		{
@@ -1137,10 +1118,6 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	}
 	else
 	{
-		// Try adding the user to the nova group
-		if (!AddUserToGroup())
-			returnValue = false;
-
 		//TODO: Do this command programmatically. Not by calling system()
 		if( system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
 		{
