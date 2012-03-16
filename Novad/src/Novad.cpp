@@ -121,18 +121,21 @@ int Nova::RunNovaD()
 	SessionTable.resize(INIT_SIZE_HUGE);
 
 	pthread_mutex_init(&suspectsSinceLastSaveLock, NULL);
+	pthread_rwlock_init(&sessionLock, NULL);
 
 	// Let both of these initialize before we have multiple threads going
 	Config::Inst();
 	Logger::Inst();
 	userHomePath = Config::Inst()->getPathHome();
-	novaConfigPath = userHomePath + "/Config/NOVAConfig.txt";
+
+	// Change our working folder into the config folder so our relative paths are correct
 	if(chdir(userHomePath.c_str()) == -1)
 		LOG(INFO, "Failed to change directory to " + userHomePath, "Failed to change directory to " + userHomePath);
 
-	pthread_rwlock_init(&sessionLock, NULL);
-
+	// Set up our signal handlers
+	signal(SIGKILL, SaveAndExit);
 	signal(SIGINT, SaveAndExit);
+	signal(SIGTERM, SaveAndExit);
 
 	lastLoadTime = time(NULL);
 	if (lastLoadTime == ((time_t)-1))
@@ -186,6 +189,16 @@ int Nova::RunNovaD()
 	close(IPCsock);
 
 	return EXIT_FAILURE;
+}
+
+void Nova::MaskKillSignals()
+{
+	sigset_t x;
+	sigemptyset (&x);
+	sigaddset(&x, SIGKILL);
+	sigaddset(&x, SIGTERM);
+	sigaddset(&x, SIGINT);
+	sigprocmask(SIG_BLOCK, &x, NULL);
 }
 
 void Nova::AppendToStateFile()
@@ -515,6 +528,8 @@ void Nova::Reload()
 
 void *Nova::ClassificationLoop(void *ptr)
 {
+	MaskKillSignals();
+
 	//Builds the GUI address
 	string GUIKey = userHomePath + NOVAD_LISTEN_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
@@ -606,6 +621,8 @@ void *Nova::ClassificationLoop(void *ptr)
 
 void *Nova::TrainingLoop(void *ptr)
 {
+	MaskKillSignals();
+
 	//Builds the GUI address
 	string GUIKey = userHomePath + NOVAD_LISTEN_FILENAME;
 	GUISendRemote.sun_family = AF_UNIX;
@@ -692,6 +709,8 @@ void *Nova::TrainingLoop(void *ptr)
 
 void *Nova::SilentAlarmLoop(void *ptr)
 {
+	MaskKillSignals();
+
 	int sockfd;
 	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
@@ -1285,6 +1304,8 @@ string Nova::ConstructFilterString()
 
 void *Nova::UpdateIPFilter(void *ptr)
 {
+	MaskKillSignals();
+
 	while (true)
 	{
 		if (watch > 0)
@@ -1389,6 +1410,7 @@ vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 
 void *Nova::TCPTimeout(void *ptr)
 {
+	MaskKillSignals();
 	do
 	{
 		pthread_rwlock_wrlock(&sessionLock);

@@ -117,6 +117,10 @@ void UpdateSuspect(Packet packet);
 // Returns: IP addresses
 string GetLocalIP(const char *dev);
 
+// Masks the kill signals of a thread so they will get
+// sent to the main thread's signal handler.
+void MaskKillSignals();
+
 
 }
 
