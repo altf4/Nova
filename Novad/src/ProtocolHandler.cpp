@@ -235,7 +235,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			SaveSuspectsToFile(Config::Inst()->getPathCESaveFile()); //TODO: Should check for errors here and return result
+			suspects.SaveSuspectsToFile(Config::Inst()->getPathCESaveFile()); //TODO: Should check for errors here and return result
 
 			ControlMessage saveSuspectsReply;
 			saveSuspectsReply.m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;

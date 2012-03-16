@@ -132,6 +132,9 @@ public:
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	bool IsValidKey(uint64_t key);
 
+	// Saves suspectTable to a human readable text file
+	void SaveSuspectsToFile(std::string filename);
+
 
 	Suspect m_emptySuspect;
 

@@ -58,10 +58,6 @@ bool Start_Packet_Handler();
 //		configFilePath - Location of configuration file
 void LoadConfiguration();
 
-// Dump the suspect information to a file
-//		filename - Path to file to write to
-void SaveSuspectsToFile(std::string filename);
-
 // Append to state file
 void AppendToStateFile();
 

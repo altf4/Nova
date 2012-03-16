@@ -21,6 +21,8 @@
 #include "Config.h"
 #include "Logger.h"
 
+#include <fstream>
+
 #include "boost/format.hpp"
 
 using namespace std;
@@ -620,6 +622,25 @@ int SuspectTable::NumOwners()
 	pthread_rwlock_unlock(&m_ownerLock);
 	return ret;
 
+}
+
+void SuspectTable::SaveSuspectsToFile(string filename)
+{
+	LOG(NOTICE, (format("File %1% at line %2%:  Got request to save file to %3%")% __FILE__%__LINE__% filename).str());
+
+	ofstream out(filename.c_str());
+
+	if(!out.is_open())
+	{
+		LOG(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")
+				% __FILE__%__LINE__% filename).str());
+		return;
+	}
+	for(SuspectTableIterator it = Begin(); it.GetIndex() < Size(); ++it)
+	{
+		out << it.Current().ToString() << endl;
+	}
+	out.close();
 }
 }
 
