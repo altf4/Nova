@@ -41,22 +41,9 @@ namespace Nova
 
 int RunNovaD();
 
-// Start routine for a separate thread which infinite loops, periodically
-// updating all the classifications for all the current suspects
-//		prt - Required for pthread start routines
-void *ClassificationLoop(void *ptr);
-
-// Start routine for thread that calculates training data, and used for writing to file.
-//		prt - Required for pthread start routines
-void *TrainingLoop(void *ptr);
-
-// Startup routine for thread that listens for Silent Alarms from other Nova instances
-//		prt - Required for pthread start routines
-void *SilentAlarmLoop(void *ptr);
-
 // Send a silent alarm
 //		suspect - Suspect to send alarm about
-void SilentAlarm(Suspect *suspect);
+void SilentAlarm(Suspect *suspect, int oldClassification);
 
 // Knocks on the port of the neighboring nova instance to open or close it
 //		mode - true for OPEN, false for CLOSE
@@ -96,7 +83,6 @@ void Reload();
 std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
 std::vector <std::string> GetHaystackDhcpAddresses(std::string honeyDConfigPath);
 
-void *UpdateIPFilter(void *ptr);
 std::string ConstructFilterString();
 
 // Callback function that is passed to pcap_loop(..) and called each time a packet is received
@@ -104,12 +90,6 @@ std::string ConstructFilterString();
 //		pkthdr - pcap packet header
 //		packet - packet data
 void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet);
-
-// Startup rotuine for thread periodically checking for TCP timeout.
-// IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
-// This thread looks for old tcp sessions and declares them terminated
-//		ptr - Required for pthread start routines
-void *TCPTimeout( void *ptr );
 
 // Updates a suspect with evidence to be processed later
 //		packet : Packet headers to used for the evidence

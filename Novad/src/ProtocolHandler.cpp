@@ -41,7 +41,7 @@ using boost::format;
 
 int callbackSocket = -1, IPCSocket = -1;
 
-extern string userHomePath;
+
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
 extern pthread_mutex_t suspectsSinceLastSaveLock;
@@ -54,8 +54,8 @@ bool Nova::Spawn_UI_Handler()
 {
 
 	int len;
-	string inKeyPath = userHomePath + "/keys" + NOVAD_LISTEN_FILENAME;
-	string outKeyPath = userHomePath + "/keys" + UI_LISTEN_FILENAME;
+	string inKeyPath = Config::Inst()->getPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
+	string outKeyPath = Config::Inst()->getPathHome() + "/keys" + UI_LISTEN_FILENAME;
 
     if((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
