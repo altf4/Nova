@@ -42,10 +42,6 @@ using namespace std;
 using namespace Nova;
 using boost::format;
 
-extern int UI_parentSocket;
-extern int UI_ListenSocket;
-extern struct sockaddr_un UI_Address;
-
 pthread_rwlock_t lock;
 string homePath, readPath, writePath;
 
@@ -94,12 +90,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	InitConfiguration();
 	InitPaths();
 	InitiateSystemStatus();
-
-	if(!StartCallbackLoop(this))
-	{
-		LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
-	}
 
 	// Create the dialog generator
 	prompter= new DialogPrompter();
@@ -727,8 +717,19 @@ void NovaGUI::ClearSuspectList()
 
 void NovaGUI::on_actionRunNova_triggered()
 {
+	if(IsUp())
+	{
+		return;
+	}
 	StartNovad();
-	TryWaitConenctToNovad(2000);	//TODO: Call this asynchronously
+	if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
+	{
+		if(!StartCallbackLoop(this))
+		{
+			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
+				(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
+		}
+	}
 	StartHaystack();
 }
 
@@ -972,11 +973,20 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
+	if(IsUp())
+	{
+		return;
+	}
 	StartNovad();
-	TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+	if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
+	{
+		if(!StartCallbackLoop(this))
+		{
+			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
+				(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
+		}
+	}
 	StartHaystack();
-	//StartDoppelganger();
-
 }
 void NovaGUI::on_stopButton_clicked()
 {
@@ -1058,8 +1068,19 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 	{
 		case COMPONENT_NOVAD:
 		{
+			if(IsUp())
+			{
+				return;
+			}
 			StartNovad();
-			TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+			if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
+			{
+				if(!StartCallbackLoop(this))
+				{
+					LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
+						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
+				}
+			}
 			break;
 		}
 		case COMPONENT_HSH:
@@ -1253,36 +1274,9 @@ void *StatusUpdate(void *ptr)
 
 bool StartCallbackLoop(void *ptr)
 {
-	bool success = InitCallbackSocket();
-	if(success)
-	{
-		pthread_t callbackHelperThread;
-		pthread_create(&callbackHelperThread, NULL, CallbackLoopHelper, ptr);
-	}
-	return success;
-}
-
-void *CallbackLoopHelper(void *ptr)
-{
-	while(true)
-	{
-		int len = sizeof(struct sockaddr_un);
-		//Blocking call
-		if ((UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len)) == -1)
-		{
-			LOG(ERROR, "Couldn't listen for Novad. Is qt already running?",
-					(format("File %1% at line %2%:  Qt accept failed")% __FILE__%__LINE__).str());
-			CloseNovadConnection();
-			break;
-		}
-		else
-		{
-			pthread_t callbackThread;
-			pthread_create(&callbackThread, NULL, CallbackLoop, ptr);
-		}
-	}
-
-	return NULL;
+	pthread_t callbackThread;
+	pthread_create(&callbackThread, NULL, CallbackLoop, ptr);
+	return true;
 }
 
 void *CallbackLoop(void *ptr)

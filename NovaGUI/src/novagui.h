@@ -168,9 +168,6 @@ namespace Nova
 //	returns - true if server set successfully, false on error
 bool StartCallbackLoop(void *ptr);
 
-//Accepts new incoming connections and spawns a new thread (CallbackLoop) for them as they come
-void *CallbackLoopHelper(void *ptr);
-
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CallbackLoop(void *ptr);
 
