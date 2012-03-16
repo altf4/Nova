@@ -25,6 +25,8 @@
 #include "Defines.h"
 #include "Logger.h"
 
+using namespace std;
+using namespace Nova;
 
 trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 {

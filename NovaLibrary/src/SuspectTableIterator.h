@@ -24,7 +24,7 @@
 
 #include "Suspect.h"
 
-typedef google::dense_hash_map<uint64_t, Suspect *, tr1::hash<uint64_t>, eqkey > SuspectHashTable;
+typedef google::dense_hash_map<uint64_t, Nova::Suspect *, std::tr1::hash<uint64_t>, eqkey > SuspectHashTable;
 
 namespace Nova {
 
@@ -33,7 +33,7 @@ class SuspectTableIterator
 
 public:
 	// Default iterator constructor
-	SuspectTableIterator(SuspectHashTable *table, vector<uint64_t> *keys, pthread_rwlock_t *lock);
+	SuspectTableIterator(SuspectHashTable *table, std::vector<uint64_t> *keys, pthread_rwlock_t *lock);
 
 	// Default iterator deconstructor
 	~SuspectTableIterator();
@@ -91,7 +91,7 @@ private:
 
 	SuspectHashTable& m_table_ref;
 
-	vector<uint64_t>& m_keys_ref;
+	std::vector<uint64_t>& m_keys_ref;
 
 	pthread_rwlock_t& m_lock_ref;
 

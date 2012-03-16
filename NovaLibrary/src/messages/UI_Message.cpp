@@ -20,9 +20,11 @@
 #include "ControlMessage.h"
 #include "CallbackMessage.h"
 
-#include "string.h"
+#include <string>
 #include <vector>
 
+
+using namespace std;
 using namespace Nova;
 
 UI_Message::UI_Message()

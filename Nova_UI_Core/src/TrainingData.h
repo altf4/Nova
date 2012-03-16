@@ -29,30 +29,30 @@ struct _trainingSuspect
 {
 	bool isHostile;
 	bool isIncluded;
-	string uid;
-	string description;
-	vector<string>* points;
+	std::string uid;
+	std::string description;
+	std::vector<std::string>* points;
 };
 
 typedef struct _trainingSuspect trainingSuspect;
 
-typedef google::dense_hash_map<string, trainingSuspect*, tr1::hash<string>, eqstr > trainingSuspectMap;
-typedef google::dense_hash_map<string, vector<string>*, tr1::hash<string>, eqstr > trainingDumpMap;
+typedef google::dense_hash_map<std::string, trainingSuspect*, std::tr1::hash<std::string>, eqstr > trainingSuspectMap;
+typedef google::dense_hash_map<std::string, std::vector<std::string>*, std::tr1::hash<std::string>, eqstr > trainingDumpMap;
 
 class TrainingData
 {
 public:
 	// Convert CE dump to Training DB format and append it
-	static bool CaptureToTrainingDb(string dbFile, trainingSuspectMap* selectionOptions);
+	static bool CaptureToTrainingDb(std::string dbFile, trainingSuspectMap* selectionOptions);
 
 	// Parse a CE dump file
-	static trainingDumpMap* ParseEngineCaptureFile(string captureFile);
+	static trainingDumpMap* ParseEngineCaptureFile(std::string captureFile);
 
 	// Parse a Training DB file
-	static trainingSuspectMap* ParseTrainingDb(string dbPath);
+	static trainingSuspectMap* ParseTrainingDb(std::string dbPath);
 
 	// Create a CE data file from a subset of the Training DB file
-	static string MakaDataFile(trainingSuspectMap& db);
+	static std::string MakaDataFile(trainingSuspectMap& db);
 
 	// Removes consecutive points who's squared distance is less than a specified distance
 	static void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold);

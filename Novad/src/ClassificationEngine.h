@@ -62,11 +62,11 @@ public:
 	// Reads into the list of suspects from a file specified by inFilePath
 	//		inFilePath - path to input file, should contain Feature dimensions
 	//					 followed by hostile classification (0 or 1), all space separated
-	void LoadDataPointsFromFile(string inFilePath);
+	void LoadDataPointsFromFile(std::string inFilePath);
 
 	// Writes the list of suspects out to a file specified by outFilePath
 	//		outFilePath - path to output file
-	void WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree);
+	void WriteDataPointsToFile(std::string outFilePath, ANNkd_tree* tree);
 
 	// Normalized a single value
 	static double Normalize(normalizationType type, double value, double min, double max);
@@ -74,7 +74,7 @@ public:
 	// Prints a single ANN point, p, to stream, out
 	//		out - steam to print to
 	//		p 	- ANN point to print
-	void PrintPt(ostream &out, ANNpoint p);
+	void PrintPt(std::ostream &out, ANNpoint p);
 
 private:
 	// Disable the empty constructor, we need the logger/config/suspect table to do anything
@@ -83,7 +83,7 @@ private:
 	// Types of normalization to apply to our features
 	static normalizationType m_normalization[];
 
-	vector <Point*> m_dataPtsWithClass;
+	std::vector <Point*> m_dataPtsWithClass;
 
 	// kdtree stuff
 	int m_nPts;						//actual number of data points

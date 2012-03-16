@@ -24,13 +24,16 @@
 #include "Suspect.h"
 #include <arpa/inet.h>
 
+#include <vector>
+#include <string>
+
 //Mode to knock on the silent alarm port
 #define OPEN true
 #define CLOSE false
 
 
 //Hash table for current list of suspects
-typedef google::dense_hash_map<in_addr_t, ANNpoint, tr1::hash<in_addr_t>, eqaddr > lastPointHash;
+typedef google::dense_hash_map<in_addr_t, ANNpoint, std::tr1::hash<in_addr_t>, eqaddr > lastPointHash;
 
 
 namespace Nova
@@ -70,7 +73,7 @@ void LoadConfiguration();
 
 // Dump the suspect information to a file
 //		filename - Path to file to write to
-void SaveSuspectsToFile(string filename);
+void SaveSuspectsToFile(std::string filename);
 
 // Append to state file
 void AppendToStateFile();
@@ -90,11 +93,11 @@ void Reload();
 // Parse through the honeyd config file and get the list of IP addresses used
 //		honeyDConfigPath - path to honeyd configuration file
 // Returns: vector containing IP addresses of all honeypots
-vector <string> GetHaystackAddresses(string honeyDConfigPath);
-vector <string> GetHaystackDhcpAddresses(string honeyDConfigPath);
+std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
+std::vector <std::string> GetHaystackDhcpAddresses(std::string honeyDConfigPath);
 
 void *UpdateIPFilter(void *ptr);
-string ConstructFilterString();
+std::string ConstructFilterString();
 
 // Callback function that is passed to pcap_loop(..) and called each time a packet is received
 //		useless - Unused
@@ -115,7 +118,7 @@ void UpdateSuspect(Packet packet);
 // Gets local IP address for interface
 //		dev - Device name, e.g. "eth0"
 // Returns: IP addresses
-string GetLocalIP(const char *dev);
+std::string GetLocalIP(const char *dev);
 
 // Masks the kill signals of a thread so they will get
 // sent to the main thread's signal handler.

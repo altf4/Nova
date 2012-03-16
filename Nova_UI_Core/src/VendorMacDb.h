@@ -22,8 +22,11 @@
 
 #include "HashMapStructs.h"
 
-typedef google::dense_hash_map<uint, string, tr1::hash<uint>, eqint> MACToVendorTable;
-typedef google::dense_hash_map<string, vector<uint> *,  tr1::hash<string>, eqstr > VendorToMACTable;
+#include <string>
+#include <vector>
+
+typedef google::dense_hash_map<uint, std::string, std::tr1::hash<uint>, eqint> MACToVendorTable;
+typedef google::dense_hash_map<std::string, std::vector<uint> *,  std::tr1::hash<std::string>, eqstr > VendorToMACTable;
 
 class VendorMacDb
 {
@@ -32,30 +35,30 @@ public:
 
 	// Uses a user defined vendor -> mac prefix file
 	//		macVendorFile: Prefix file path. Contains MAC prefix followed by the name of the vendor
-	VendorMacDb(string macVendorFile);
+	VendorMacDb(std::string macVendorFile);
 
 	// Loads the prefix file and populates it's internal state
 	void LoadPrefixFile();
 
 	// Generates a random MAC address for a vendor
 	//		vendor: Name of vendor to use for the prefix
-	string GenerateRandomMAC(string vendor);
+	std::string GenerateRandomMAC(std::string vendor);
 
 	// Finds a vendor based on a MAC prefix
-	string LookupVendor(uint MACPrefix);
+	std::string LookupVendor(uint MACPrefix);
 
-	// Searches for a vendor that matches a string
+	// Searches for a vendor that matches a std::string
 	//		partialVendorName: Any part of the vendor name
-	vector <string> SearchVendors(string partialVendorName);
+	std::vector <std::string> SearchVendors(std::string partialVendorName);
 
 	// Checks if a vendor name is known
-	bool IsVendorValid(string vendor);
+	bool IsVendorValid(std::string vendor);
 
 
 private:
 	MACToVendorTable m_MACVendorTable;
 	VendorToMACTable m_vendorMACTable;
-	string m_macVendorFile;
+	std::string m_macVendorFile;
 };
 
 

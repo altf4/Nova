@@ -23,9 +23,6 @@
 #include "FeatureSet.h"
 #include "Point.h"
 
-using namespace std;
-using namespace Nova;
-
 namespace Nova{
 
 // A Suspect represents a single actor on the network, whether good or bad.
@@ -44,10 +41,10 @@ public:
 	//		packet - Used to set the IP address and initial evidence of the suspect
 	Suspect(Packet packet);
 
-	// Converts suspect into a human readable string
-	//		featureEnabled: Array of size DIM that specifies which features to return in the string
-	// Returns: Human readable string of the given feature
-	string ToString();
+	// Converts suspect into a human readable std::string
+	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
+	// Returns: Human readable std::string of the given feature
+	std::string ToString();
 
 	// Add an additional piece of evidence to this suspect
 	// Does not take actions like reclassifying or calculating features.
@@ -59,10 +56,10 @@ public:
 	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
 	int UpdateEvidence();
 
-	// Returns a copy of the evidence vector so that it can be read.
-	vector <Packet> GetEvidence();
+	// Returns a copy of the evidence std::vector so that it can be read.
+	std::vector <Packet> GetEvidence();
 
-	//Clears the evidence vector
+	//Clears the evidence std::vector
 	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
 	int ClearEvidence();
 
@@ -228,7 +225,7 @@ private:
 	ANNpoint m_annPoint;
 
 	// A listing of all the events (evidence) that originated from this suspect
-	vector <Packet> m_evidence;
+	std::vector <Packet> m_evidence;
 
 	double m_featureAccuracy[DIM];
 

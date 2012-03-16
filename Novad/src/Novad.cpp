@@ -45,6 +45,7 @@
 #include <boost/format.hpp>
 
 using namespace std;
+using namespace Nova;
 using boost::format;
 
 string userHomePath, novaConfigPath;

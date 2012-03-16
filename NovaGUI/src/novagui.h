@@ -28,13 +28,10 @@
 
 #include <QProcess>
 
-using namespace std;
-using namespace Nova;
-
 struct suspectItem
 {
 	//The suspect information
-	Suspect * suspect;
+	Nova::Suspect * suspect;
 
 	//The associated item for the suspect view list
 	QListWidgetItem * item;
@@ -85,7 +82,7 @@ public:
     void InitConfiguration();
     void InitPaths();
 
-    void SetFeatureDistances(Suspect* suspect);
+    void SetFeatureDistances(Nova::Suspect* suspect);
 
     void LoadNovadConfiguration();
 

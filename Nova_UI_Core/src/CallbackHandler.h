@@ -33,7 +33,7 @@ enum CallbackChangeType: char
 struct CallbackChange
 {
 	enum CallbackChangeType type;
-	Suspect *suspect;		//Used in type: CALLBACK_NEW_SUSPECT
+	Nova::Suspect *suspect;		//Used in type: CALLBACK_NEW_SUSPECT
 };
 
 namespace Nova

@@ -23,9 +23,6 @@
 #include "NovaGuiTypes.h"
 #include "Defines.h"
 
-using namespace Nova;
-using boost::property_tree::ptree;
-
 class HoneydConfiguration
 {
 public:
@@ -44,18 +41,18 @@ public:
     void LoadNodesTemplate();
 
     //set profile configurations
-    void LoadProfileSettings(ptree *ptr, profile *p);
+    void LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
     //add ports or subsystems
-    void LoadProfileServices(ptree *ptr, profile *p);
+    void LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
     //recursive descent down profile tree
-    void LoadProfileChildren(string parent);
+    void LoadProfileChildren(std::string parent);
 
-    string ProfileToString(profile* p);
+    std::string ProfileToString(profile* p);
 
     //Load stored subnets in ptr
-    void LoadSubnets(ptree *ptr);
+    void LoadSubnets(boost::property_tree::ptree *ptr);
     //Load stored honeyd nodes ptr
-    void LoadNodes(ptree *ptr);
+    void LoadNodes(boost::property_tree::ptree *ptr);
 
     //Saves the current configuration information to XML files
     void SaveAllTemplates();
@@ -79,16 +76,16 @@ public:
 
 
 private:
-    string m_homePath;
+    std::string m_homePath;
 
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.
-    ptree m_groupTree;
-    ptree m_portTree;
-    ptree m_profileTree;
-    ptree m_scriptTree;
-    ptree m_nodesTree;
-    ptree m_subnetTree;
+    boost::property_tree::ptree m_groupTree;
+    boost::property_tree::ptree m_portTree;
+    boost::property_tree::ptree m_profileTree;
+    boost::property_tree::ptree m_scriptTree;
+    boost::property_tree::ptree m_nodesTree;
+    boost::property_tree::ptree m_subnetTree;
 
     SubnetTable m_subnets;
     PortTable m_ports;

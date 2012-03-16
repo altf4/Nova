@@ -21,16 +21,12 @@
 
 #include "ui_run_popup.h"
 
-using namespace std;
-
 class Run_Popup : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    string homePath;
-
-    Run_Popup(QWidget *parent = 0, string homePath = "");
+    Run_Popup(QWidget *parent = 0);
     ~Run_Popup();
 
     void loadPreferences();

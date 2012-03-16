@@ -26,11 +26,11 @@
 #include <QFileDialog>
 
 using namespace std;
+using namespace Nova;
 
-Run_Popup::Run_Popup(QWidget *parent, string home)
+Run_Popup::Run_Popup(QWidget *parent)
     : QMainWindow(parent)
 {
-	homePath = home;
 	ui.setupUi(this);
 	loadPreferences();
 }

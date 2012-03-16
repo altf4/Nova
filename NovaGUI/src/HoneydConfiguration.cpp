@@ -25,7 +25,10 @@
 #include <math.h>
 
 using namespace std;
+using namespace Nova;
+using boost::property_tree::ptree;
 using boost::property_tree::xml_parser::trim_whitespace;
+
 
 HoneydConfiguration::HoneydConfiguration()
 {

@@ -23,8 +23,10 @@
 #include "StatusQueries.h"
 
 #include <stdio.h>
+#include <unistd.h>
 
 using namespace Nova;
+using namespace std;
 
 extern int novadListenSocket;
 

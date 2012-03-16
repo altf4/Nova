@@ -26,9 +26,6 @@
 #include <vector>
 #include <arpa/inet.h>
 
-using namespace std;
-using namespace Nova;
-
 namespace Nova{
 
 // Encrpyts/decrypts a char buffer of size 'size' depending on mode

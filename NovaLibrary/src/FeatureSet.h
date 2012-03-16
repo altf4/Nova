@@ -28,8 +28,6 @@
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 
-using namespace std;
-
 ///	A struct version of a packet, as received from libpcap
 struct _packet
 {
@@ -55,7 +53,7 @@ typedef struct _packet Packet;
 struct Session
 {
 	bool fin;
-	vector<Packet> session;
+	std::vector<Packet> session;
 };
 
 
@@ -64,13 +62,13 @@ struct Session
 #define REMOVE false
 
 //Table of IP destinations and a count;
-typedef google::dense_hash_map<in_addr_t, uint32_t, tr1::hash<in_addr_t>, eqaddr > IP_Table;
+typedef google::dense_hash_map<in_addr_t, uint32_t, std::tr1::hash<in_addr_t>, eqaddr > IP_Table;
 //Table of destination ports and a count;
-typedef google::dense_hash_map<in_port_t, uint32_t, tr1::hash<in_port_t>, eqport > Port_Table;
+typedef google::dense_hash_map<in_port_t, uint32_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef google::dense_hash_map<uint32_t, uint32_t, tr1::hash<int>, eqint > Packet_Table;
+typedef google::dense_hash_map<uint32_t, uint32_t, std::tr1::hash<int>, eqint > Packet_Table;
 //Table of packet intervals and a count
-typedef google::dense_hash_map<time_t, uint32_t, tr1::hash<time_t>, eqtime > Interval_Table;
+typedef google::dense_hash_map<time_t, uint32_t, std::tr1::hash<time_t>, eqtime > Interval_Table;
 
 enum featureIndex{IP_TRAFFIC_DISTRIBUTION = 0, PORT_TRAFFIC_DISTRIBUTION = 1, HAYSTACK_EVENT_FREQUENCY = 2,
 	PACKET_SIZE_DEVIATION = 4, PACKET_SIZE_MEAN = 3, DISTINCT_IPS =5, DISTINCT_PORTS = 6,

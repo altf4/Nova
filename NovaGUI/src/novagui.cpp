@@ -734,7 +734,7 @@ void NovaGUI::on_actionRunNova_triggered()
 
 void NovaGUI::on_actionRunNovaAs_triggered()
 {
-	Run_Popup *w = new Run_Popup(this, homePath);
+	Run_Popup *w = new Run_Popup(this);
 	w->show();
 }
 

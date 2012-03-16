@@ -21,7 +21,6 @@
 #include <QtGui/QMessageBox>
 #include <QtGui/QCheckBox>
 
-using namespace std;
 enum dialogType {
 	notSet = 0,
 	notifyPrompt,

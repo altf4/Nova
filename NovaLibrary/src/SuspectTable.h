@@ -26,7 +26,7 @@
 #include "Suspect.h"
 #include "SuspectTableIterator.h"
 
-typedef google::dense_hash_map<uint64_t, Suspect *, tr1::hash<uint64_t>, eqkey > SuspectHashTable;
+typedef google::dense_hash_map<uint64_t, Nova::Suspect *, std::tr1::hash<uint64_t>, eqkey > SuspectHashTable;
 
 namespace Nova {
 
@@ -100,13 +100,13 @@ public:
 	// Returns 0 on success.
 	SuspectTableRet Erase(uint64_t key);
 
-	// Iterates over the Suspect Table and returns a vector containing each Hostile Suspect's uint64_t
-	// Returns a vector of hostile suspect uint64_t keys
-	vector<uint64_t> GetHostileSuspectKeys();
+	// Iterates over the Suspect Table and returns a std::vector containing each Hostile Suspect's uint64_t
+	// Returns a std::vector of hostile suspect uint64_t keys
+	std::vector<uint64_t> GetHostileSuspectKeys();
 
-	// Iterates over the Suspect Table and returns a vector containing each Benign Suspect's uint64_t
-	// Returns a vector of benign suspect uint64_t keys
-	vector<uint64_t> GetBenignSuspectKeys();
+	// Iterates over the Suspect Table and returns a std::vector containing each Benign Suspect's uint64_t
+	// Returns a std::vector of benign suspect uint64_t keys
+	std::vector<uint64_t> GetBenignSuspectKeys();
 
 	// Looks at the hostility of the suspect at key
 	// 		key: uint64_t of the Suspect
@@ -144,7 +144,7 @@ public:
 	pthread_rwlock_t m_lock;
 	pthread_rwlock_t m_ownerLock;
 
-	vector<uint64_t> m_keys;
+	std::vector<uint64_t> m_keys;
 
 
 
@@ -183,7 +183,7 @@ private:
 
 	uint64_t m_deleted_key;
 
-	vector<pthread_t> m_owners;
+	std::vector<pthread_t> m_owners;
 
 };
 

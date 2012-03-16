@@ -22,8 +22,6 @@
 #include "HashMapStructs.h"
 #include "Defines.h"
 
-using namespace std;
-
 namespace Nova {
 
 class Config {
@@ -53,26 +51,26 @@ public:
 	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 	//	Returns: True if (after the function) the user has all necessary ~/.nova config files
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
-    static bool InitUserConfigs(string homeNovaPath);
+    static bool InitUserConfigs(std::string homeNovaPath);
 
-    string toString();
+    std::string toString();
 
     // Getters
-    string getConfigFilePath() ;
-    string getDoppelInterface() ;
-    string getDoppelIp() ;
-    string getEnabledFeatures() ;
+    std::string getConfigFilePath() ;
+    std::string getDoppelInterface() ;
+    std::string getDoppelIp() ;
+    std::string getEnabledFeatures() ;
     bool isFeatureEnabled(int i) ;
     uint getEnabledFeatureCount() ;
-    string getInterface() ;
-    string getPathCESaveFile() ;
-    string getPathConfigHoneydDm() ;
-    string getPathConfigHoneydHs() ;
-    string getPathPcapFile() ;
-    string getPathTrainingCapFolder() ;
-    string getPathTrainingFile() ;
-    string getKey() ;
-    vector<in_addr_t> getNeighbors() ;
+    std::string getInterface() ;
+    std::string getPathCESaveFile() ;
+    std::string getPathConfigHoneydDm() ;
+    std::string getPathConfigHoneydHs() ;
+    std::string getPathPcapFile() ;
+    std::string getPathTrainingCapFolder() ;
+    std::string getPathTrainingFile() ;
+    std::string getKey() ;
+    std::vector<in_addr_t> getNeighbors() ;
 
     bool getReadPcap() ;
     bool getUseTerminals() ;
@@ -94,28 +92,28 @@ public:
     double getSaSleepDuration() ;
     double getEps() ;
 
-    string getGroup() ;
+    std::string getGroup() ;
 
     // Setters
     void setClassificationThreshold(double classificationThreshold);
     void setClassificationTimeout(int classificationTimeout);
-    void setConfigFilePath(string configFilePath);
+    void setConfigFilePath(std::string configFilePath);
     void setDataTTL(int dataTTL);
-    void setDoppelInterface(string doppelInterface);
-    void setDoppelIp(string doppelIp);
-    void setEnabledFeatures(string enabledFeatureMask);
+    void setDoppelInterface(std::string doppelInterface);
+    void setDoppelIp(std::string doppelIp);
+    void setEnabledFeatures(std::string enabledFeatureMask);
     void setEps(double eps);
     void setGotoLive(bool gotoLive);
-    void setInterface(string interface);
+    void setInterface(std::string interface);
     void setIsDmEnabled(bool isDmEnabled);
     void setIsTraining(bool isTraining);
     void setK(int k);
-    void setPathCESaveFile(string pathCESaveFile);
-    void setPathConfigHoneydDm(string pathConfigHoneydDm);
-    void setPathConfigHoneydHs(string pathConfigHoneydHs);
-    void setPathPcapFile(string pathPcapFile);
-    void setPathTrainingCapFolder(string pathTrainingCapFolder);
-    void setPathTrainingFile(string pathTrainingFile);
+    void setPathCESaveFile(std::string pathCESaveFile);
+    void setPathConfigHoneydDm(std::string pathConfigHoneydDm);
+    void setPathConfigHoneydHs(std::string pathConfigHoneydHs);
+    void setPathPcapFile(std::string pathPcapFile);
+    void setPathTrainingCapFolder(std::string pathTrainingCapFolder);
+    void setPathTrainingFile(std::string pathTrainingFile);
     void setReadPcap(bool readPcap);
     void setSaMaxAttempts(int saMaxAttempts);
     void setSaPort(int saPort);
@@ -125,32 +123,32 @@ public:
     void setTcpTimout(int tcpTimout);
     void setThinningDistance(int thinningDistance);
     void setUseTerminals(bool useTerminals);
-    void setKey(string key);
-    void setNeigbors(vector<in_addr_t> neighbors);
-    void setGroup(string group);
-    string getLoggerPreferences() ;
-    string getSMTPAddr() ;
-    string getSMTPDomain() ;
-    vector<string> getSMTPEmailRecipients() ;
+    void setKey(std::string key);
+    void setNeigbors(std::vector<in_addr_t> neighbors);
+    void setGroup(std::string group);
+    std::string getLoggerPreferences() ;
+    std::string getSMTPAddr() ;
+    std::string getSMTPDomain() ;
+    std::vector<std::string> getSMTPEmailRecipients() ;
     in_port_t getSMTPPort() ;
-    void setLoggerPreferences(string loggerPreferences);
-    void setSMTPAddr(string SMTPAddr);
-    void setSMTPDomain(string SMTPDomain);
+    void setLoggerPreferences(std::string loggerPreferences);
+    void setSMTPAddr(std::string SMTPAddr);
+    void setSMTPDomain(std::string SMTPDomain);
 	void setSMTPPort(in_port_t SMTPPort);
 
 	double getSqurtEnabledFeatures();
 
     // Set with a vector of email addresses
-    void setSMTPEmailRecipients(vector<string> SMTPEmailRecipients);
-    // Set with a CSV string from the config file
-    void setSMTPEmailRecipients(string SMTPEmailRecipients);
+    void setSMTPEmailRecipients(std::vector<std::string> SMTPEmailRecipients);
+    // Set with a CSV std::string from the config file
+    void setSMTPEmailRecipients(std::string SMTPEmailRecipients);
 
     // Getters for the paths stored in /etc
-    string getPathBinaries();
-    string getPathWriteFolder();
-    string getPathReadFolder();
-    string getPathHome();
-    string getPathIcon();
+    std::string getPathBinaries();
+    std::string getPathWriteFolder();
+    std::string getPathReadFolder();
+    std::string getPathHome();
+    std::string getPathIcon();
 
 protected:
 	Config();
@@ -158,28 +156,28 @@ protected:
 private:
 	static Config *m_instance;
 
-	__attribute__ ((visibility ("hidden"))) static string m_prefixes[];
-	__attribute__ ((visibility ("hidden"))) static string m_requiredFiles[];
+	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
+	__attribute__ ((visibility ("hidden"))) static std::string m_requiredFiles[];
 
-	string m_interface;
-	string m_doppelIp;
-	string m_doppelInterface;
+	std::string m_interface;
+	std::string m_doppelIp;
+	std::string m_doppelInterface;
 
 	// Enabled feature stuff, we provide a few formats and helpers
-	string m_enabledFeatureMask;
+	std::string m_enabledFeatureMask;
 	bool m_isFeatureEnabled[DIM];
 	uint m_enabledFeatureCount;
 	double m_squrtEnabledFeatures;
 
 
-	string m_pathConfigHoneydHs;
-	string m_pathConfigHoneydDm;
-	string m_pathPcapFile;
-	string m_pathTrainingFile;
-	string m_pathTrainingCapFolder;
-	string m_pathCESaveFile;
+	std::string m_pathConfigHoneydHs;
+	std::string m_pathConfigHoneydDm;
+	std::string m_pathPcapFile;
+	std::string m_pathTrainingFile;
+	std::string m_pathTrainingCapFolder;
+	std::string m_pathCESaveFile;
 
-	string m_group;
+	std::string m_group;
 
 	int m_tcpTimout;
 	int m_tcpCheckFreq;
@@ -201,42 +199,42 @@ private:
 	bool m_isDmEnabled;
 
 	// the SMTP server domain name for display purposes
-	string m_SMTPDomain;
+	std::string m_SMTPDomain;
 	// the email address that will be set as sender
-	string m_SMTPAddr;
+	std::string m_SMTPAddr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
 	in_port_t m_SMTPPort;
 
-	string m_loggerPreferences;
+	std::string m_loggerPreferences;
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
-	vector<string> m_SMTPEmailRecipients;
+	std::vector<std::string> m_SMTPEmailRecipients;
 
 	// User config options
-	vector<in_addr_t> m_neighbors;
-	string m_key;
+	std::vector<in_addr_t> m_neighbors;
+	std::string m_key;
 
-	string m_configFilePath;
-	string m_userConfigFilePath;
+	std::string m_configFilePath;
+	std::string m_userConfigFilePath;
 
 
 	// Options from the PATHS file (currently /etc/nova/paths)
-	string m_pathBinaries;
-	string m_pathWriteFolder;
-	string m_pathReadFolder;
-	string m_pathHome;
-	string m_pathIcon;
+	std::string m_pathBinaries;
+	std::string m_pathWriteFolder;
+	std::string m_pathReadFolder;
+	std::string m_pathHome;
+	std::string m_pathIcon;
 
 	pthread_rwlock_t m_lock;
 
 	// Used for loading the nova path file, resolves paths with env vars to full paths
-	static string ResolvePathVars(string path);
+	static std::string ResolvePathVars(std::string path);
 
 	// Non-locking versions of some functions for internal use
-	void setEnabledFeatures_noLocking(string enabledFeatureMask);
+	void setEnabledFeatures_noLocking(std::string enabledFeatureMask);
 
-    // Set with a CSV string from the config file
-    void setSMTPEmailRecipients_noLocking(string SMTPEmailRecipients);
+    // Set with a CSV std::string from the config file
+    void setSMTPEmailRecipients_noLocking(std::string SMTPEmailRecipients);
 
 };
 }

@@ -36,6 +36,7 @@
 #include <boost/format.hpp>
 
 using namespace Nova;
+using namespace std;
 using boost::format;
 
 int callbackSocket = -1, IPCSocket = -1;

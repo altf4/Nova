@@ -26,6 +26,9 @@
 #include <sstream>
 #include <string.h>
 
+using namespace std;
+using namespace Nova;
+
 VendorMacDb::VendorMacDb()
 {
 	m_macVendorFile =  Config::Inst()->getPathReadFolder() + "/nmap-mac-prefixes";

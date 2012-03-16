@@ -19,7 +19,6 @@
 #ifndef CONTROLMESSAGE_H_
 #define CONTROLMESSAGE_H_
 
-#include <string>
 #include <sys/types.h>
 #include <arpa/inet.h>
 
@@ -51,8 +50,6 @@ enum ControlType: char
 	CONTROL_PONG,					//Reply from Novad to verify it's alive
 	CONTROL_INVALID,
 };
-
-using namespace std;
 
 namespace Nova
 {

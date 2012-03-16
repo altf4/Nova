@@ -36,8 +36,6 @@
 #define CLONE_NODE 1
 #define EDIT_NODE 2
 
-using namespace std;
-
 enum recursiveDirection{ALL = 0, UP, DOWN};
 
 class NovaConfig : public QMainWindow
@@ -125,9 +123,9 @@ public:
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     void LoadProfilesFromTree(string parent);
     //set profile configurations (only called in LoadProfilesFromTree)
-    void LoadProfileSettings(ptree *ptr, profile *p);
+    void LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
     //add ports or subsystems (only called in LoadProfilesFromTree)
-    void LoadProfileServices(ptree *ptr, profile *p);
+    void LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
     //recursive descent down profile tree (only called in LoadProfilesFromTree)
     void LoadProfileChildren(string parent);
 

@@ -21,6 +21,7 @@
 #include <boost/format.hpp>
 
 using namespace std;
+using namespace Nova;
 using boost::format;
 
 // Normalization method to use on each feature

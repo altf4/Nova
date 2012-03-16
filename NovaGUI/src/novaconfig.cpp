@@ -30,6 +30,7 @@
 
 using namespace std;
 using namespace Nova;
+using boost::property_tree::ptree;
 
 /************************************************
  * Construct and Initialize GUI

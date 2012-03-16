@@ -19,8 +19,8 @@
 #include "HaystackControl.h"
 #include "Config.h"
 
+using namespace std;
 using namespace Nova;
-
 
 
 bool Nova::StartHaystack()

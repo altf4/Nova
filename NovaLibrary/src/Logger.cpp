@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <syslog.h>
+#include <string.h>
 #include <libnotify/notify.h>
 
 using namespace std;

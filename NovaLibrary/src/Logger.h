@@ -23,14 +23,10 @@
 
 #include "HashMapStructs.h"
 #include "Defines.h"
-#include <cstring>
 
 // A macro to make logging prettier
 #define LOG Logger::Inst()->Log
 
-
-using namespace std;
-using namespace google;
 
 namespace Nova
 {
@@ -43,23 +39,23 @@ enum Services {SYSLOG, LIBNOTIFY, EMAIL};
 // make newer scheme make sense
 enum Levels {DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
 
-typedef vector<pair<uint16_t, string> > levelsMap;
-typedef vector<pair< pair<Nova::Services, Nova::Levels>, char > > userMap;
+typedef std::vector<std::pair<uint16_t, std::string> > levelsMap;
+typedef std::vector<std::pair< std::pair<Nova::Services, Nova::Levels>, char > > userMap;
 
 
 //There will be more than this, most likely
 struct MessageOptions
 {
 	// the SMTP server domain name for display purposes
-	string smtp_domain;
+	std::string smtp_domain;
 	// the email address that will be set as sender
-	string smtp_addr;
+	std::string smtp_addr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
 	in_port_t smtp_port;
 	userMap service_preferences;
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
-	vector<string> email_recipients;
+	std::vector<std::string> email_recipients;
 };
 
 typedef struct MessageOptions optionsInfo;
@@ -75,22 +71,22 @@ public:
 	// SaveLoggerConfiguration: will save LoggerConfiguration to the given filename.
 	// No use for this right now, a placeholder for future gui applications. Will
 	// definitely change.
-	void SaveLoggerConfiguration(string filename);
+	void SaveLoggerConfiguration(std::string filename);
 
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Log(Nova::Levels messageLevel, string messageBasic, string messageAdv = "");
+	void Log(Nova::Levels messageLevel, std::string messageBasic, std::string messageAdv = "");
 
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
-	// args: 	string logPrefString: this method is used for reading from the config file
+	// args: 	std::string logPrefString: this method is used for reading from the config file
 	// args: 	Nova::Levels messageLevel, Nova::Services services: this is for individual
 	//       	adjustments to the struct from the GUI; may change the name but as they
 	//		 	are both used to set the preferences I figured it'd be okay.
 	//       	Given Nova::Levels level will have have Nova::Services services mapped to it inside
 	//       	the inModuleSettings userMap, and the new map will be returned.
-	void setUserLogPreferences(string logPrefString);
+	void setUserLogPreferences(std::string logPrefString);
 	void setUserLogPreferences(Nova::Levels messageLevel, Nova::Services services);
 
 protected:
@@ -102,30 +98,30 @@ private:
 	// a notification with the desired level to the desktop.
 	// args: 	uint16_t level. The level of severity to print in the
 	//       	libNotify message.
-	//       	string message. The content of the libNotify message
-	void Notify(uint16_t level, string message);
+	//       	std::string message. The content of the libNotify message
+	void Notify(uint16_t level, std::string message);
 
 	// Log will be the method that calls syslog
 	// args: 	uint16_t level. The level of severity to tell syslog to log with.
-	//       	string message. The message to send to syslog in string form.
-	void LogToFile(uint16_t level, string message);
+	//       	std::string message. The message to send to syslog in std::string form.
+	void LogToFile(uint16_t level, std::string message);
 	// Mail will, obviously, email people.
 	// args: 	uint16_t level. The level of severity with which to apply
-	// 		 	when sending the email. Used primarily to extract a string from the
+	// 		 	when sending the email. Used primarily to extract a std::string from the
 	// 		 	levels map.
-	//		 	string message. This will be the string that is sent as the
+	//		 	std::string message. This will be the std::string that is sent as the
 	// 		 	email's content.
-	//       	vector<string> recipients. Who the email will be sent to.
-	void Mail(uint16_t level, string message);
+	//       	vector<std::string> recipients. Who the email will be sent to.
+	void Mail(uint16_t level, std::string message);
 
 
 	// takes in a character, and returns a Services type; for use when
-	// parsing the SERVICE_PREFERENCES string from the NOVAConfig.txt file.
+	// parsing the SERVICE_PREFERENCES std::string from the NOVAConfig.txt file.
 	Nova::Levels parseLevelFromChar(char parse);
 
 	// Load Configuration: loads the SMTP info and service level preferences
 	uint16_t LoadConfiguration();
-	string getBitmask(Nova::Levels level);
+	std::string getBitmask(Nova::Levels level);
 
 public:
 	levelsMap m_levels;

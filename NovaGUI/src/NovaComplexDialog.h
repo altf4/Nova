@@ -21,8 +21,6 @@
 #include "ui_NovaComplexDialog.h"
 #include "novaconfig.h"
 
-using namespace std;
-
 enum whichDialog {MACDialog, PersonalityDialog};
 
 class NovaComplexDialog : public QDialog

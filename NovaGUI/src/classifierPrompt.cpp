@@ -21,6 +21,8 @@
 #include <QContextMenuEvent>
 #include <sstream>
 
+using namespace std;
+
 classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
 : QDialog(parent)
 {
