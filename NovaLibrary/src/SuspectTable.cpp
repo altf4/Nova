@@ -76,7 +76,7 @@ SuspectTableIterator SuspectTable::Begin()
 SuspectTableIterator SuspectTable::End()
 {
 	SuspectTableIterator it = SuspectTableIterator(&m_table, &m_keys, &m_lock);
-	for(uint i = 0; i < m_keys.size(); i++)
+	for(uint i = 1; i < m_keys.size(); i++)
 	{
 		it.Next();
 	}
