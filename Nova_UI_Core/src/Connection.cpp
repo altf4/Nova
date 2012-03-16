@@ -35,10 +35,15 @@ using namespace std;
 int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
 struct sockaddr_un UI_Address, novadAddress;
 
-bool Nova::InitCallbackSocket()
+bool callbackInitialized = false;
+
+//Initializes the Callback socket. IE: The socket the UI listens on
+//	NOTE: This is run internally and not meant to be executed by the user
+//	returns - true if socket successfully initialized, false on error (such as another UI already listening)
+bool InitCallbackSocket()
 {
 	//Builds the key path
-	string homePath = Config::Inst()->getPathHome();
+	string homePath = Nova::Config::Inst()->getPathHome();
 	string key = homePath;
 	key += "/keys";
 	key += UI_LISTEN_FILENAME;
@@ -70,11 +75,21 @@ bool Nova::InitCallbackSocket()
 		return false;
 	}
 
+	callbackInitialized = true;
 	return true;
 }
 
 bool Nova::ConnectToNovad()
 {
+	if(!callbackInitialized)
+	{
+		if(!InitCallbackSocket())
+		{
+			//TODO Log
+			return false;
+		}
+	}
+
 	if(IsUp())
 	{
 		return true;
@@ -111,6 +126,16 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
+	//Wait for a connection on the callback socket
+	int len = sizeof(struct sockaddr_un);
+	UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
+	if (UI_ListenSocket == -1)
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d accept: %s", __FILE__, __LINE__, strerror(errno));
+		close(UI_ListenSocket);
+		return false;
+	}
+
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
 	{
@@ -139,6 +164,15 @@ bool Nova::ConnectToNovad()
 
 bool Nova::TryWaitConenctToNovad(int timeout_ms)
 {
+	if(!callbackInitialized)
+	{
+		if(!InitCallbackSocket())
+		{
+			//TODO Log
+			return false;
+		}
+	}
+
 	if(ConnectToNovad())
 	{
 		return true;
@@ -154,6 +188,7 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 bool Nova::CloseNovadConnection()
 {
 	bool success = true;
+	callbackInitialized = false;
 
 	ControlMessage disconnectNotice;
 	disconnectNotice.m_controlType = CONTROL_DISCONNECT_NOTICE;
