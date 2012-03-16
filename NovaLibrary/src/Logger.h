@@ -25,7 +25,7 @@
 #include "Defines.h"
 
 // A macro to make logging prettier
-#define LOG Logger::Inst()->Log
+#define LOG Nova::Logger::Inst()->Log
 
 
 namespace Nova
