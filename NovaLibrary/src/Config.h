@@ -201,16 +201,16 @@ private:
 	bool m_isDmEnabled;
 
 	// the SMTP server domain name for display purposes
-	string SMTPDomain;
+	string m_SMTPDomain;
 	// the email address that will be set as sender
-	string SMTPAddr;
+	string m_SMTPAddr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
-	in_port_t SMTPPort;
+	in_port_t m_SMTPPort;
 
-	string loggerPreferences;
+	string m_loggerPreferences;
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
-	vector<string> SMTPEmailRecipients;
+	vector<string> m_SMTPEmailRecipients;
 
 	// User config options
 	vector<in_addr_t> m_neighbors;
@@ -221,13 +221,13 @@ private:
 
 
 	// Options from the PATHS file (currently /etc/nova/paths)
-	string pathBinaries;
-	string pathWriteFolder;
-	string pathReadFolder;
-	string pathHome;
-	string pathIcon;
+	string m_pathBinaries;
+	string m_pathWriteFolder;
+	string m_pathReadFolder;
+	string m_pathHome;
+	string m_pathIcon;
 
-	pthread_rwlock_t lock;
+	pthread_rwlock_t m_lock;
 
 	// Used for loading the nova path file, resolves paths with env vars to full paths
 	static string ResolvePathVars(string path);
