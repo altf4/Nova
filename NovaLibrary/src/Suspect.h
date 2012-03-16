@@ -260,6 +260,11 @@ private:
 	pthread_t m_owner;
 	bool m_hasOwner;
 
+// Make these public when running unit tests
+#ifdef GTEST_INCLUDE_GTEST_GTEST_H_
+public:
+#endif
+
 	//Write locks the suspect
 	void WrlockSuspect();
 

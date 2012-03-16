@@ -49,5 +49,24 @@ TEST_F(SuspectTest, test_OwnerFunctionality)
 	EXPECT_FALSE(testObject->HasOwner());
 
 }
+
+TEST_F(SuspectTest, test_locking)
+{
+	// WARNING: These may deadlock if there are problems
+	testObject->RdlockSuspect();
+	testObject->UnlockSuspect();
+
+	testObject->WrlockSuspect();
+	testObject->UnlockSuspect();
+
+	testObject->SetOwner();
+	testObject->WrlockSuspect();
+	testObject->UnlockSuspect();
+
+	testObject->RdlockSuspect();
+	testObject->UnlockSuspect();
+	testObject->ResetOwner();
+}
+
 }
 
