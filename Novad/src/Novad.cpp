@@ -164,7 +164,6 @@ int Nova::RunNovaD()
 	}
 	else
 	{
-		LoadStateFile();
 		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
 		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
 	}
@@ -1086,6 +1085,8 @@ bool Nova::Start_Packet_Handler()
 
 	if(!usePcapFile)
 	{
+		LoadStateFile();
+
 		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
 		handle = pcap_open_live(Config::Inst()->getInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
 
