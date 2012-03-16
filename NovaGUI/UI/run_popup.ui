@@ -147,16 +147,6 @@
      </spacer>
     </item>
     <item>
-     <widget class="QCheckBox" name="terminalCheckBox">
-      <property name="layoutDirection">
-       <enum>Qt::LeftToRight</enum>
-      </property>
-      <property name="text">
-       <string>&amp;Display Processes in Terminals</string>
-      </property>
-     </widget>
-    </item>
-    <item>
      <spacer name="horizontalSpacer_2">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>

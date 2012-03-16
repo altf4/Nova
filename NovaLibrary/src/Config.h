@@ -197,7 +197,6 @@ private:
 
 	bool m_readPcap;
 	bool m_gotoLive;
-	bool m_useTerminals;
 	bool m_isTraining;
 	bool m_isDmEnabled;
 

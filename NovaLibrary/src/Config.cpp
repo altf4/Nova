@@ -39,7 +39,6 @@ string Config::m_prefixes[] = {
 		"READ_PCAP",
 		"PCAP_FILE",
 		"GO_TO_LIVE",
-		"USE_TERMINALS",
 		"CLASSIFICATION_TIMEOUT",
 		"SILENT_ALARM_PORT",
 		"K",
@@ -242,20 +241,6 @@ void Config::LoadConfig()
 				if (line.size() > 0)
 				{
 					m_gotoLive = line.c_str();
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// USE_TERMINALS
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					m_useTerminals = line.c_str();
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -991,16 +976,6 @@ bool Config::SaveConfig()
 				continue;
 			}
 
-			prefix = "USE_TERMINALS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(getUseTerminals())
-					*out << "USE_TERMINALS 1" << endl;
-				else
-					*out << "USE_TERMINALS 0" << endl;
-				continue;
-			}
-
 			*out << line << endl;
 		}
 	}
@@ -1049,7 +1024,6 @@ void Config::SetDefaults()
 	m_tcpCheckFreq = 3;
 	m_readPcap = false;
 	m_gotoLive = true;
-	m_useTerminals = false;
 	m_isDmEnabled = true;
 
 	m_classificationTimeout = 3;
@@ -1075,7 +1049,6 @@ bool Config::InitUserConfigs(string homeNovaPath)
 {
 	bool returnValue = true;
 	struct stat fileAttr;
-	char buffer[256];
 
 	// Does ~/.nova exist?
 	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
@@ -1140,7 +1113,6 @@ string Config::toString()
 	ss << "getPathTrainingFile() " << getPathTrainingFile() << endl;
 
 	ss << "getReadPcap() " << getReadPcap() << endl;
-	ss << "getUseTerminals() " << getUseTerminals() << endl;
 	ss << "getIsDmEnabled() " << getIsDmEnabled() << endl;
 	ss << "getIsTraining() " << getIsTraining() << endl;
 	ss << "getGotoLive() " << getGotoLive() << endl;
@@ -1417,14 +1389,6 @@ int Config::getThinningDistance()
 	return m_thinningDistance;
 }
 
-bool Config::getUseTerminals()
-{
-	pthread_rwlock_rdlock(&lock);
-	bool m_useTerminals = this->m_useTerminals;
-	pthread_rwlock_unlock(&lock);
-	return m_useTerminals;
-}
-
 string Config::getKey()
 {
 	pthread_rwlock_rdlock(&lock);
@@ -1656,13 +1620,6 @@ void Config::setThinningDistance(int thinningDistance)
 {
 	pthread_rwlock_wrlock(&lock);
 	this->m_thinningDistance = thinningDistance;
-	pthread_rwlock_unlock(&lock);
-}
-
-void Config::setUseTerminals(bool useTerminals)
-{
-	pthread_rwlock_wrlock(&lock);
-	this->m_useTerminals = useTerminals;
 	pthread_rwlock_unlock(&lock);
 }
 
