@@ -141,13 +141,6 @@ public:
 	int SetNeedsClassificationUpdate(bool b);
 
 
-	//Returns the needs feature update bool, must not be locked or is locked by the owner
-	bool GetNeedsFeatureUpdate();
-	//Sets the neeeds feature update bool, must have the lock to perform this operation
-	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
-	int SetNeedsFeatureUpdate(bool b);
-
-
 	//Returns the flagged by silent alarm bool, must not be locked or is locked by the owner
 	bool GetFlaggedByAlarm();
 	//Sets the flagged by silent alarm bool, must have the lock to perform this operation
@@ -254,10 +247,6 @@ private:
 	// Does the classification need updating?
 	//		IE: Has the evidence changed since last it was calculated?
 	bool m_needsClassificationUpdate;
-
-	// Does the FeatureSet need updating?
-	//		IE: Has the evidence changed since last it was calculated?
-	bool m_needsFeatureUpdate;
 
 	// Has this suspect been the subject of an alarm from another Nova instance?
 	bool m_flaggedByAlarm;

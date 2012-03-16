@@ -398,7 +398,7 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
 		delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
 	}
 	//We borrow the flag to show there is new information.
-	suspectItem.suspect->SetNeedsFeatureUpdate(true);
+	suspectItem.suspect->SetNeedsClassificationUpdate(true);
 	//Update the entry in the table
 	SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
 	pthread_rwlock_unlock(&lock);
@@ -489,7 +489,7 @@ void NovaGUI::DrawAllSuspects()
 		//Point to the new items
 		it->second.item = item;
 		//Reset the flags
-		suspect->SetNeedsFeatureUpdate(false);
+		suspect->SetNeedsClassificationUpdate(false);
 		it->second.suspect = suspect;
 	}
 	UpdateSuspectWidgets();

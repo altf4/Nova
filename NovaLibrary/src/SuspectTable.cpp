@@ -218,7 +218,6 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				m_table[key]->SetIsHostile(suspectCopy.GetIsHostile());
 				m_table[key]->SetIsLive(suspectCopy.GetIsLive());
 				m_table[key]->SetNeedsClassificationUpdate(suspectCopy.GetNeedsClassificationUpdate());
-				m_table[key]->SetNeedsFeatureUpdate(suspectCopy.GetNeedsFeatureUpdate());
 				fs = suspectCopy.GetUnsentFeatureSet();
 				m_table[key]->SetUnsentFeatureSet(&fs);
 				m_table[key]->ClearEvidence();

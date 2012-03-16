@@ -39,7 +39,6 @@ Suspect::Suspect()
 	m_hostileNeighbors = 0;
 	m_classification = -1;
 	m_needsClassificationUpdate = true;
-	m_needsFeatureUpdate = true;
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
@@ -69,7 +68,6 @@ Suspect::Suspect(Packet packet)
 	m_classification = -1;
 	m_isHostile = false;
 	m_needsClassificationUpdate = true;
-	m_needsFeatureUpdate = true;
 	m_isLive = true;
 	m_annPoint = NULL;
 	m_flaggedByAlarm = false;
@@ -161,7 +159,6 @@ int Suspect::AddEvidence(Packet packet)
 		return -1;
 	WrlockSuspect();
 	m_evidence.push_back(packet);
-	m_needsFeatureUpdate = true;
 	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 	return 0;
@@ -235,8 +232,6 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	offset+= sizeof m_isHostile;
 	memcpy(buf+offset, &m_needsClassificationUpdate, sizeof m_needsClassificationUpdate);
 	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(buf+offset, &m_needsFeatureUpdate, sizeof m_needsFeatureUpdate);
-	offset+= sizeof m_needsFeatureUpdate;
 	memcpy(buf+offset, &m_flaggedByAlarm, sizeof m_flaggedByAlarm);
 	offset+= sizeof m_flaggedByAlarm;
 	memcpy(buf+offset, &m_isLive, sizeof m_isLive);
@@ -288,8 +283,6 @@ uint32_t Suspect::DeserializeSuspect(u_char * buf)
 	offset+= sizeof m_isHostile;
 	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
 	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(&m_needsFeatureUpdate, buf+offset, sizeof m_needsFeatureUpdate);
-	offset+= sizeof m_needsFeatureUpdate;
 	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
 	offset+= sizeof m_flaggedByAlarm;
 	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
@@ -328,8 +321,6 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	offset+= sizeof m_isHostile;
 	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
 	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(&m_needsFeatureUpdate, buf+offset, sizeof m_needsFeatureUpdate);
-	offset+= sizeof m_needsFeatureUpdate;
 	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
 	offset+= sizeof m_flaggedByAlarm;
 	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
@@ -353,7 +344,6 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	else
 		offset += m_features.DeserializeFeatureData(buf+offset);
 
-	m_needsFeatureUpdate = true;
 	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 
@@ -487,28 +477,6 @@ int Suspect::SetNeedsClassificationUpdate(bool b)
 	UnlockSuspect();
 	return 0;
 }
-
-
-//Returns the needs feature update bool
-bool Suspect::GetNeedsFeatureUpdate()
-{
-	RdlockSuspect();
-	bool ret = m_needsFeatureUpdate;
-	UnlockSuspect();
-	return ret;
-}
-//Sets the neeeds feature update bool
-// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
-int Suspect::SetNeedsFeatureUpdate(bool b)
-{
-	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
-		return -1;
-	WrlockSuspect();
-	m_needsFeatureUpdate = b;
-	UnlockSuspect();
-	return 0;
-}
-
 
 //Returns the flagged by silent alarm bool
 bool Suspect::GetFlaggedByAlarm()
@@ -884,7 +852,6 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
-	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 	UnlockSuspect();
@@ -926,7 +893,6 @@ Suspect::Suspect(const Suspect &rhs)
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
-	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 	pthread_rwlock_unlock(&m_lock);

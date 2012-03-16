@@ -53,7 +53,7 @@ public:
 	void Classify(Suspect *suspect);
 
 	// Calculates normalized data points and stores into 'normalizedDataPts'
-	void NormalizeDataPoints();
+	void NormalizeDataPoint(Suspect *suspectCopy);
 
 	// Forms the normalized kd tree, called once on start up
 	// Will be called again if the a suspect's max value for a feature exceeds the current maximum for normalization

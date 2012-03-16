@@ -340,21 +340,27 @@ void Nova::LoadStateFile()
 			newSuspect->SetFeatureSet(&fs);
 			bytesSoFar += suspectBytes;
 
-			if(!suspects.IsValidKey(newSuspect->GetIpAddress()))
+			// If our suspect has no evidence, throw it out
+			if (newSuspect->GetFeatureSet().m_packetCount == 0)
 			{
-				newSuspect->SetNeedsClassificationUpdate(true);
-				newSuspect->SetNeedsFeatureUpdate(true);
-				suspects.AddNewSuspect(newSuspect);
+				LOG(WARNING,"CEState file contained a suspect with no packets for evidence. Throwing out this suspect.");
 			}
 			else
 			{
-				suspectCopy = suspects.CheckOut(newSuspect->GetIpAddress());
-				FeatureSet fs = newSuspect->GetFeatureSet();
-				suspectCopy.AddFeatureSet(&fs);
-				suspectCopy.SetNeedsFeatureUpdate(true);
-				suspectCopy.SetNeedsClassificationUpdate(true);
-				suspects.CheckIn(&suspectCopy);
-				delete newSuspect;
+				if(!suspects.IsValidKey(newSuspect->GetIpAddress()))
+				{
+					newSuspect->SetNeedsClassificationUpdate(true);
+					suspects.AddNewSuspect(newSuspect);
+				}
+				else
+				{
+					suspectCopy = suspects.CheckOut(newSuspect->GetIpAddress());
+					FeatureSet fs = newSuspect->GetFeatureSet();
+					suspectCopy.AddFeatureSet(&fs);
+					suspectCopy.SetNeedsClassificationUpdate(true);
+					suspects.CheckIn(&suspectCopy);
+					delete newSuspect;
+				}
 			}
 		}
 	}
@@ -502,7 +508,6 @@ void Nova::Reload()
 	for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 	{
 		suspectCopy = suspects.CheckOut(it.GetKey());
-		suspectCopy.SetNeedsFeatureUpdate(true);
 		suspectCopy.SetNeedsClassificationUpdate(true);
 		suspects.CheckIn(&suspectCopy);
 	}
@@ -527,26 +532,16 @@ void *Nova::ClassificationLoop(void *ptr)
 		//Calculate the "true" Feature Set for each Suspect
 		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 		{
-			if(it.Current().GetNeedsFeatureUpdate())
-			{
-				Suspect suspectCopy = suspects.CheckOut(it.GetKey());
-				suspectCopy.UpdateEvidence();
-				suspectCopy.CalculateFeatures();
-				suspects.CheckIn(&suspectCopy);
+			Suspect suspectCopy;
 
-			}
-		}
-		//Calculate the normalized feature sets, actually used by ANN
-		//	Writes into Suspect ANNPoints
-		engine->NormalizeDataPoints();
-
-		//Perform classification on each suspect
-		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
-		{
 			if(it.Current().GetNeedsClassificationUpdate())
 			{
-				Suspect suspectCopy = suspects.CheckOut(it.GetKey());
+				suspectCopy = suspects.CheckOut(it.GetKey());
+				suspectCopy.UpdateEvidence();
+				suspectCopy.CalculateFeatures();
 				oldClassification = suspectCopy.GetIsHostile();
+
+				engine->NormalizeDataPoint(&suspectCopy);
 				engine->Classify(&suspectCopy);
 
 				//If suspect is hostile and this Nova instance has unique information
@@ -571,6 +566,7 @@ void *Nova::ClassificationLoop(void *ptr)
 				suspects.CheckIn(&suspectCopy);
 			}
 		}
+
 		if (Config::Inst()->getSaveFreq() > 0)
 		{
 			if ((time(NULL) - lastSaveTime) > Config::Inst()->getSaveFreq())
@@ -638,7 +634,7 @@ void *Nova::TrainingLoop(void *ptr)
 			//Calculate the "true" Feature Set for each Suspect
 			for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 			{
-				if(it.Current().GetNeedsFeatureUpdate())
+				if(it.Current().GetNeedsClassificationUpdate())
 				{
 					suspectCopy = suspects.CheckOut(it.GetKey());
 					ANNpoint aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
@@ -662,7 +658,7 @@ void *Nova::TrainingLoop(void *ptr)
 					{
 						LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
 					}
-					suspectCopy.SetNeedsFeatureUpdate(false);
+					suspectCopy.SetNeedsClassificationUpdate(false);
 					if(SendSuspectToUI(&suspectCopy))
 					{
 						LOG(DEBUG, "Sent a suspect to the UI",
@@ -1489,7 +1485,6 @@ void Nova::UpdateSuspect(Packet packet)
 	if(!suspects.IsValidKey(addr))
 	{
 		newSuspect->SetNeedsClassificationUpdate(true);
-		newSuspect->SetNeedsFeatureUpdate(true);
 		newSuspect->SetIsLive(usePcapFile);
 		suspects.AddNewSuspect(newSuspect);
 
