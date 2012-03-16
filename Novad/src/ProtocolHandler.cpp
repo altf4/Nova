@@ -22,8 +22,10 @@
 #include "Control.h"
 #include "Novad.h"
 #include "messages/CallbackMessage.h"
+#include "messages/ControlMessage.h"
 #include "SuspectTable.h"
 #include "SuspectTableIterator.h"
+
 
 #include "pthread.h"
 #include <sys/types.h>
