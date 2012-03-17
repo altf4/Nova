@@ -21,6 +21,7 @@
 #include <QLayout>
 #include <QAction>
 
+using namespace std;
 
 //Default constructor, used for instantiation only
 DialogPrompt::DialogPrompt(QWidget *parent)
