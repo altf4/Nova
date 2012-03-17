@@ -858,6 +858,41 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 	return *this;
 }
 
+bool Suspect::operator==(const Suspect &rhs) const
+{
+	if (m_features != rhs.m_features)
+		return false;
+
+	if (m_annPoint != rhs.m_annPoint)
+		return false;
+
+	if (m_IpAddress.s_addr != rhs.m_IpAddress.s_addr)
+		return false;
+
+	if (m_classification != rhs.m_classification)
+		return false;
+
+	if (m_hostileNeighbors != rhs.m_hostileNeighbors)
+		return false;
+
+	for (int i = 0; i < DIM; i++)
+		if (m_featureAccuracy[i] != rhs.m_featureAccuracy[i])
+			return false;
+
+	if (m_isHostile != rhs.m_isHostile)
+		return false;
+
+	if (m_flaggedByAlarm != rhs.m_flaggedByAlarm)
+		return false;
+
+	return true;
+}
+
+bool Suspect::operator !=(const Suspect &rhs) const
+{
+	return !(*this == rhs);
+}
+
 Suspect::Suspect(const Suspect &rhs)
 {
 	pthread_rwlock_init(&m_lock, NULL);

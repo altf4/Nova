@@ -215,6 +215,10 @@ public:
 	Suspect(const Suspect &rhs);
 	Suspect& operator*(Suspect* rhs);
 
+	// Equality operator, mainly used for test cases
+	bool operator==(const Suspect &rhs) const;
+	bool operator!=(const Suspect &rhs) const;
+
 private:
 
 	// The Feature Set for this Suspect
