@@ -54,12 +54,12 @@ private:
     void makeRow(trainingSuspect* header, int row);
     void DisplaySuspectEntries();
 
-    QMenu * menu;
-    int groups;
+    QMenu * m_menu;
+    int m_groups;
 
-    bool allowDescriptionEdit;
-    bool updating;
-	trainingSuspectMap* suspects;
+    bool m_allowDescriptionEdit;
+    bool m_updating;
+	trainingSuspectMap* m_suspects;
     Ui::classifierPromptClass ui;
 };
 

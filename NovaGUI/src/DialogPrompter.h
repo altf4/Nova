@@ -71,7 +71,7 @@ public:
 	void LoadDefaultActions();
 
 	// List of registered message types
-	std::vector<messageType> registeredMessageTypes;
+	std::vector<messageType> m_registeredMessageTypes;
 
 private:
 	// Translates a msg and action to a std::string for the settings file
@@ -81,13 +81,13 @@ private:
 	std::string MakeConfigurationLine(messageHandle msg, defaultChoice action);
 
 	// Path to the settings file
-	std::string configurationFile;
+	std::string m_configurationFile;
 
 	// Configuration file prefixes defined here in case we want to change them later
-	static const std::string showPrefix;
-	static const std::string hidePrefix;
-	static const std::string yesPrefix;
-	static const std::string noPrefix;
+	static const std::string m_showPrefix;
+	static const std::string m_hidePrefix;
+	static const std::string m_yesPrefix;
+	static const std::string m_noPrefix;
 };
 
 #endif /* DIALOGPROMPTER_H_ */

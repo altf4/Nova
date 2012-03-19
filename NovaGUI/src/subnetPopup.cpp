@@ -36,11 +36,11 @@ subnetPopup::subnetPopup(QWidget * parent, subnet * s)
 {
 	ui.setupUi(this);
 	nParent = (NovaConfig *)parent;
-	editSubnet = *s;
-	subName = editSubnet.name;
-	maskEdit = new MaskSpinBox(this, s);
-	ui.maskHBox->insertWidget(0, maskEdit);
-	loadSubnet();
+	m_editSubnet = *s;
+	subName = m_editSubnet.name;
+	m_maskEdit = new MaskSpinBox(this, s);
+	ui.maskHBox->insertWidget(0, m_maskEdit);
+	LoadSubnet();
 }
 
 subnetPopup::~subnetPopup()
@@ -54,10 +54,10 @@ subnetPopup::~subnetPopup()
  ************************************************/
 
 //saves the changes to a Subnet
-void subnetPopup::saveSubnet()
+void subnetPopup::SaveSubnet()
 {
-	editSubnet.name = ui.interfaceEdit->text().toStdString();
-	editSubnet.maskBits = maskEdit->value();
+	m_editSubnet.name = ui.interfaceEdit->text().toStdString();
+	m_editSubnet.maskBits = m_maskEdit->value();
 
 	in_addr_t temp = (ui.ipSpinBox0->value() << 24) +(ui.ipSpinBox1->value() << 16)
 			+ (ui.ipSpinBox2->value() << 8) + (ui.ipSpinBox3->value());
@@ -68,25 +68,25 @@ void subnetPopup::saveSubnet()
 	inTemp.s_addr = htonl(temp);
 
 	stringstream ss;
-	ss << inet_ntoa(inTemp) << '/' << editSubnet.maskBits;
-	editSubnet.address = ss.str();
+	ss << inet_ntoa(inTemp) << '/' << m_editSubnet.maskBits;
+	m_editSubnet.address = ss.str();
 
-	editSubnet.mask = maskEdit->text().toStdString();
+	m_editSubnet.mask = m_maskEdit->text().toStdString();
 
-	in_addr_t maskTemp = ntohl(inet_addr(editSubnet.mask.c_str()));
-	editSubnet.base = (temp & maskTemp);
-	editSubnet.max = editSubnet.base + ~maskTemp;
+	in_addr_t maskTemp = ntohl(inet_addr(m_editSubnet.mask.c_str()));
+	m_editSubnet.base = (temp & maskTemp);
+	m_editSubnet.max = m_editSubnet.base + ~maskTemp;
 
 	vector<string> addList;
 	addList.clear();
-	while(editSubnet.nodes.size())
+	while(m_editSubnet.nodes.size())
 	{
 		conflict = false;
-		node tempNode = nParent->nodes[editSubnet.nodes.back()];
-		editSubnet.nodes.pop_back();
+		node tempNode = nParent->m_nodes[m_editSubnet.nodes.back()];
+		m_editSubnet.nodes.pop_back();
 
-		tempNode.interface = editSubnet.name;
-		tempNode.sub = editSubnet.name;
+		tempNode.interface = m_editSubnet.name;
+		tempNode.sub = m_editSubnet.name;
 
 		tempNode.realIP = (tempNode.realIP & ~maskTemp);
 		//If the subnet has been modified to take the IP of a current node,
@@ -94,16 +94,16 @@ void subnetPopup::saveSubnet()
 		if(tempNode.realIP == (subNewIP & ~maskTemp))
 			tempNode.realIP = (subnetRealIP & ~maskTemp);
 
-		for(uint i = 0; i < editSubnet.nodes.size(); i++)
-			if(tempNode.realIP == (nParent->nodes[editSubnet.nodes[i]].realIP & ~maskTemp))
+		for(uint i = 0; i < m_editSubnet.nodes.size(); i++)
+			if(tempNode.realIP == (nParent->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
 				conflict = true;
 
 		for(uint i = 0; i < addList.size(); i++)
-			if(tempNode.realIP == (nParent->nodes[addList[i]].realIP & ~maskTemp))
+			if(tempNode.realIP == (nParent->m_nodes[addList[i]].realIP & ~maskTemp))
 				conflict = true;
 		if((tempNode.realIP == 0) || (tempNode.realIP == ~maskTemp))
 			conflict = true;
-		tempNode.realIP += editSubnet.base;
+		tempNode.realIP += m_editSubnet.base;
 
 		if((tempNode.realIP == subNewIP) || conflict)
 		{
@@ -125,9 +125,9 @@ void subnetPopup::saveSubnet()
 					tempNode.realIP++;
 					continue;
 				}
-				for(uint i = 0; i < editSubnet.nodes.size(); i++)
+				for(uint i = 0; i < m_editSubnet.nodes.size(); i++)
 				{
-					if(tempNode.realIP == (nParent->nodes[editSubnet.nodes[i]].realIP & ~maskTemp))
+					if(tempNode.realIP == (nParent->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
 					{
 						conflict = true;
 						tempNode.realIP++;
@@ -136,7 +136,7 @@ void subnetPopup::saveSubnet()
 				}
 				if(!conflict) for(uint i = 0; i < addList.size(); i++)
 				{
-					if(tempNode.realIP == (nParent->nodes[addList[i]].realIP & ~maskTemp))
+					if(tempNode.realIP == (nParent->m_nodes[addList[i]].realIP & ~maskTemp))
 					{
 						conflict = true;
 						tempNode.realIP++;
@@ -144,51 +144,51 @@ void subnetPopup::saveSubnet()
 					}
 				}
 			}
-			tempNode.realIP += editSubnet.base;
+			tempNode.realIP += m_editSubnet.base;
 			if(conflict)
 			{
-				nParent->nodes.erase(tempNode.name);
+				nParent->m_nodes.erase(tempNode.name);
 				continue;
 			}
 		}
 		inTemp.s_addr = htonl(tempNode.realIP);
 		tempNode.IP = inet_ntoa(inTemp);
-		if(nParent->profiles[tempNode.pfile].type == static_IP)
+		if(nParent->m_profiles[tempNode.pfile].type == static_IP)
 		{
-			nParent->nodes.erase(tempNode.name);
+			nParent->m_nodes.erase(tempNode.name);
 			tempNode.name = tempNode.IP;
-			nParent->nodes[tempNode.name] = tempNode;
+			nParent->m_nodes[tempNode.name] = tempNode;
 		}
 		else
-			nParent->nodes[tempNode.name] = tempNode;
+			nParent->m_nodes[tempNode.name] = tempNode;
 
 		addList.push_back(tempNode.name);
 	}
 
-	editSubnet.nodes = addList;
+	m_editSubnet.nodes = addList;
 	subnetRealIP = subNewIP;
 }
 
 //loads the selected Subnet's options
-void subnetPopup::loadSubnet()
+void subnetPopup::LoadSubnet()
 {
-	maskEdit->setValue(editSubnet.maskBits);
-	ui.interfaceEdit->setText(editSubnet.name.c_str());
+	m_maskEdit->setValue(m_editSubnet.maskBits);
+	ui.interfaceEdit->setText(m_editSubnet.name.c_str());
 
-	in_addr_t temp = ntohl(inet_addr(editSubnet.address.substr(0,editSubnet.address.find('/',0)).c_str()));
+	in_addr_t temp = ntohl(inet_addr(m_editSubnet.address.substr(0,m_editSubnet.address.find('/',0)).c_str()));
 	subnetRealIP = temp;
 	ui.ipSpinBox3->setValue(temp & 255);
 	ui.ipSpinBox2->setValue((temp >> 8) & 255);
 	ui.ipSpinBox1->setValue((temp >> 16) & 255);
 	ui.ipSpinBox0->setValue((temp >> 24) & 255);
 	//number of nodes + network address, gateway and broadcast address
-	int n = editSubnet.nodes.size() + 3;
+	int n = m_editSubnet.nodes.size() + 3;
 	int count = 0;
 	while((n/=2) > 0)
 	{
 		count++;
 	}
-	maskEdit->setRange(0, 31-count);
+	m_maskEdit->setRange(0, 31-count);
 	temp = 0;
 	int i;
 	for(i = 0; i < 31-count; i++)
@@ -207,22 +207,22 @@ void subnetPopup::loadSubnet()
  ************************************************/
 
 //Copies the data from parent novaconfig and adjusts the pointers
-void subnetPopup::pullData()
+void subnetPopup::PullData()
 {
-	editSubnet = nParent->subnets[subName];
+	m_editSubnet = nParent->m_subnets[subName];
 }
 
 //Copies the data to parent novaconfig and adjusts the pointers
-void subnetPopup::pushData()
+void subnetPopup::PushData()
 {
 	nParent->m_loading->lock();
-	nParent->subnets.erase(subName);
-	nParent->subnets[editSubnet.name] = editSubnet;
+	nParent->m_subnets.erase(subName);
+	nParent->m_subnets[m_editSubnet.name] = m_editSubnet;
 	nParent->m_loading->unlock();
 	nParent->UpdateLookupKeys();
 
 	nParent->LoadAllNodes();
-	subName = editSubnet.name;
+	subName = m_editSubnet.name;
 }
 
 /************************************************
@@ -237,22 +237,22 @@ void subnetPopup::on_cancelButton_clicked()
 
 void subnetPopup::on_okButton_clicked()
 {
-	saveSubnet();
-	pushData();
+	SaveSubnet();
+	PushData();
 	this->close();
 }
 
 void subnetPopup::on_restoreButton_clicked()
 {
-	pullData();
-	loadSubnet();
+	PullData();
+	LoadSubnet();
 }
 
 void subnetPopup::on_applyButton_clicked()
 {
-	saveSubnet();
-	pushData();
-	pullData();
-	loadSubnet();
+	SaveSubnet();
+	PushData();
+	PullData();
+	LoadSubnet();
 }
 

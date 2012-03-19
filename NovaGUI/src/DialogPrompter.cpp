@@ -29,35 +29,35 @@ using namespace std;
 using namespace Nova;
 
 // Prefixes for the configuration file
-const string DialogPrompter::showPrefix = "message show";
-const string DialogPrompter::hidePrefix = "message hide";
-const string DialogPrompter::yesPrefix = "message default yes";
-const string DialogPrompter::noPrefix = "message default no";
+const string DialogPrompter::m_showPrefix = "message show";
+const string DialogPrompter::m_hidePrefix = "message hide";
+const string DialogPrompter::m_yesPrefix = "message default yes";
+const string DialogPrompter::m_noPrefix = "message default no";
 
 
 DialogPrompter::DialogPrompter(string configurationFilePath /*= ""*/)
 {
 	if (!configurationFilePath.compare(""))
-		configurationFile =Config::Inst()->GetPathHome() + "/settings";
+		m_configurationFile =Config::Inst()->GetPathHome() + "/settings";
 	LoadDefaultActions();
 }
 
 
 messageHandle DialogPrompter::RegisterDialog(messageType t)
 {
-	for (uint i = 0; i < registeredMessageTypes.size(); i++)
+	for (uint i = 0; i < m_registeredMessageTypes.size(); i++)
 	{
-		if (!registeredMessageTypes[i].descriptionUID.compare(t.descriptionUID) && registeredMessageTypes[i].type == t.type)
+		if (!m_registeredMessageTypes[i].descriptionUID.compare(t.descriptionUID) && m_registeredMessageTypes[i].type == t.type)
 			return i;
 	}
-	registeredMessageTypes.push_back(t);
-	return (registeredMessageTypes.size() - 1);
+	m_registeredMessageTypes.push_back(t);
+	return (m_registeredMessageTypes.size() - 1);
 }
 
 
 void DialogPrompter::LoadDefaultActions()
 {
-	ifstream config(configurationFile.data());
+	ifstream config(m_configurationFile.data());
 	string line;
 
 	string description, prefix;
@@ -72,32 +72,32 @@ void DialogPrompter::LoadDefaultActions()
 				continue;
 
 			// Extract the info from the file
-			if (!line.substr(0, showPrefix.length()).compare(showPrefix))
+			if (!line.substr(0, m_showPrefix.length()).compare(m_showPrefix))
 			{
 				action = CHOICE_SHOW;
-				prefix = showPrefix;
+				prefix = m_showPrefix;
 			}
-			else if (!line.substr(0, hidePrefix.length()).compare(hidePrefix))
+			else if (!line.substr(0, m_hidePrefix.length()).compare(m_hidePrefix))
 			{
 				action = CHOICE_HIDE;
-				prefix = hidePrefix;
+				prefix = m_hidePrefix;
 			}
-			else if (!line.substr(0, yesPrefix.length()).compare(yesPrefix))
+			else if (!line.substr(0, m_yesPrefix.length()).compare(m_yesPrefix))
 			{
 				action = CHOICE_DEFAULT;
-				prefix = yesPrefix;
+				prefix = m_yesPrefix;
 			}
-			else if (!line.substr(0, noPrefix.length()).compare(noPrefix))
+			else if (!line.substr(0, m_noPrefix.length()).compare(m_noPrefix))
 			{
 				action = CHOICE_ALT;
-				prefix = noPrefix;
+				prefix = m_noPrefix;
 			}
 			else
 			{
 				continue;
 			}
 
-			line = line.substr(showPrefix.length() + 1);
+			line = line.substr(m_showPrefix.length() + 1);
 			type = (dialogType)atoi(line.substr(0, line.find_first_of(" ")).c_str());
 			description = line.substr(line.find_first_of(" ") + 1);
 
@@ -106,12 +106,12 @@ void DialogPrompter::LoadDefaultActions()
 			t->descriptionUID = description;
 			t->type = type;
 
-			registeredMessageTypes.push_back(*t);
+			m_registeredMessageTypes.push_back(*t);
 		}
 	}
 	else
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Unable to open settings file: %s", __FILE__, __LINE__, configurationFile.c_str());
+		syslog(SYSL_ERR, "File: %s Line: %d Unable to open settings file: %s", __FILE__, __LINE__, m_configurationFile.c_str());
 	}
 }
 
@@ -119,10 +119,10 @@ void DialogPrompter::LoadDefaultActions()
 void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 {
 	// Set in our local sate
-	registeredMessageTypes[msg].action = action;
+	m_registeredMessageTypes[msg].action = action;
 
 	// Pull in the old config file
-	ifstream config(configurationFile.data());
+	ifstream config(m_configurationFile.data());
 	string line, trimmedLine, description, prefix;
 	dialogType type;
 	stringstream ss;
@@ -138,27 +138,27 @@ void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 				continue;
 
 			// Extract the info from the file
-			if (!line.substr(0, showPrefix.length()).compare(showPrefix))
-				prefix = showPrefix;
-			else if (!line.substr(0, hidePrefix.length()).compare(hidePrefix))
-				prefix = hidePrefix;
-			else if (!line.substr(0, yesPrefix.length()).compare(yesPrefix))
-				prefix = yesPrefix;
-			else if (!line.substr(0, noPrefix.length()).compare(noPrefix))
-				prefix = noPrefix;
+			if (!line.substr(0, m_showPrefix.length()).compare(m_showPrefix))
+				prefix = m_showPrefix;
+			else if (!line.substr(0, m_hidePrefix.length()).compare(m_hidePrefix))
+				prefix = m_hidePrefix;
+			else if (!line.substr(0, m_yesPrefix.length()).compare(m_yesPrefix))
+				prefix = m_yesPrefix;
+			else if (!line.substr(0, m_noPrefix.length()).compare(m_noPrefix))
+				prefix = m_noPrefix;
 			else
 				prefix = "";
 
 			if (prefix.compare(""))
 			{
 				// Trim off the prefix
-				trimmedLine = line.substr(showPrefix.length() + 1);
+				trimmedLine = line.substr(m_showPrefix.length() + 1);
 
 				type = (dialogType)atoi(trimmedLine.substr(0, trimmedLine.find_first_of(" ")).c_str());
 				description = trimmedLine.substr(trimmedLine.find_first_of(" ") + 1);
 
 				// Found an entry
-				if (!description.compare(registeredMessageTypes[msg].descriptionUID) && type == registeredMessageTypes[msg].type)
+				if (!description.compare(m_registeredMessageTypes[msg].descriptionUID) && type == m_registeredMessageTypes[msg].type)
 				{
 					found = true;
 					ss << MakeConfigurationLine(msg, action);
@@ -180,7 +180,7 @@ void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 
 	// Write out string version to the file
 	ofstream outFile;
-	outFile.open(configurationFile.data());
+	outFile.open(m_configurationFile.data());
 	outFile << ss.str();
 	outFile.close();
 }
@@ -193,20 +193,20 @@ string DialogPrompter::MakeConfigurationLine(messageHandle msg, defaultChoice ac
 	switch (action)
 	{
 	case CHOICE_SHOW:
-		ss << showPrefix;
+		ss << m_showPrefix;
 		break;
 	case CHOICE_HIDE:
-		ss << hidePrefix;
+		ss << m_hidePrefix;
 		break;
 	case CHOICE_DEFAULT:
-		ss << yesPrefix;
+		ss << m_yesPrefix;
 		break;
 	case CHOICE_ALT:
-		ss << noPrefix;
+		ss << m_noPrefix;
 		break;
 	}
 
-	ss  << " " << registeredMessageTypes[msg].type << " " <<  registeredMessageTypes[msg].descriptionUID << endl;
+	ss  << " " << m_registeredMessageTypes[msg].type << " " <<  m_registeredMessageTypes[msg].descriptionUID << endl;
 
 	return ss.str();
 }
@@ -215,33 +215,33 @@ string DialogPrompter::MakeConfigurationLine(messageHandle msg, defaultChoice ac
 defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt, QAction * defaultAction, QAction * alternativeAction, QWidget *parent /*= 0*/)
 {
 	// Do we have a default action for this messageType?
-	if (registeredMessageTypes[handle].action == CHOICE_HIDE)
+	if (m_registeredMessageTypes[handle].action == CHOICE_HIDE)
 	{
 		return CHOICE_DEFAULT;
 	}
-	else if (registeredMessageTypes[handle].action == CHOICE_DEFAULT)
+	else if (m_registeredMessageTypes[handle].action == CHOICE_DEFAULT)
 	{
 		if (defaultAction != NULL)
 			defaultAction->trigger();
 		return CHOICE_DEFAULT;
 	}
-	else if (registeredMessageTypes[handle].action == CHOICE_ALT)
+	else if (m_registeredMessageTypes[handle].action == CHOICE_ALT)
 	{
 		if (alternativeAction != NULL)
 			alternativeAction->trigger();
 		return CHOICE_ALT;
 	}
 
-	dialogType dialog = registeredMessageTypes[handle].type;
+	dialogType dialog = m_registeredMessageTypes[handle].type;
 
 	DialogPrompt *dialogBox = new DialogPrompt(dialog, defaultAction, alternativeAction,
 			QString::fromStdString(messageTxt),
-			QString::fromStdString(registeredMessageTypes[handle].descriptionUID), parent);
+			QString::fromStdString(m_registeredMessageTypes[handle].descriptionUID), parent);
 
 	// Prompt the user
 	defaultChoice action = dialogBox->exec();
 
-	if (dialogBox->checkBox->isChecked())
+	if (dialogBox->m_checkBox->isChecked())
 				SetDefaultAction(handle, action);
 
 	return action;

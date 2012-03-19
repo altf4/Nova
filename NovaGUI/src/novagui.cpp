@@ -92,8 +92,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 	InitiateSystemStatus();
 
 	// Create the dialog generator
-	prompter= new DialogPrompter();
-	honeydConfig = new HoneydConfiguration();
+	m_prompter= new DialogPrompter();
+	m_honeydConfig = new HoneydConfiguration();
 
 	// Register our desired error message types
 	messageType t;
@@ -103,54 +103,54 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t.type = errorPrompt;
 
 	t.descriptionUID = "Failure reading config files";
-	CONFIG_READ_FAIL = prompter->RegisterDialog(t);
+	CONFIG_READ_FAIL = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Failure writing config files";
-	CONFIG_WRITE_FAIL = prompter->RegisterDialog(t);
+	CONFIG_WRITE_FAIL = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Failure reading honeyd files";
-	HONEYD_READ_FAIL = prompter->RegisterDialog(t);
+	HONEYD_READ_FAIL = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Failure loading honeyd config files";
-	HONEYD_LOAD_FAIL = prompter->RegisterDialog(t);
+	HONEYD_LOAD_FAIL = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Unexpected file entries";
-	UNEXPECTED_ENTRY = prompter->RegisterDialog(t);
+	UNEXPECTED_ENTRY = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Honeyd subnets out of range";
-	HONEYD_INVALID_SUBNET = prompter->RegisterDialog(t);
+	HONEYD_INVALID_SUBNET = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Cannot delete the selected port";
-	CANNOT_DELETE_PORT = prompter->RegisterDialog(t);
+	CANNOT_DELETE_PORT = m_prompter->RegisterDialog(t);
 
 	// Action required notification prompts
 	t.type = notifyActionPrompt;
 
 	t.descriptionUID = "Request to merge CE capture into training Db";
-	LAUNCH_TRAINING_MERGE = prompter->RegisterDialog(t);
+	LAUNCH_TRAINING_MERGE = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Cannot inherit the selected port";
-	CANNOT_INHERIT_PORT = prompter->RegisterDialog(t);
+	CANNOT_INHERIT_PORT = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Cannot delete the selected item";
-	CANNOT_DELETE_ITEM = prompter->RegisterDialog(t);
+	CANNOT_DELETE_ITEM = m_prompter->RegisterDialog(t);
 
 	// Preventable warnings
 	t.type = warningPreventablePrompt;
 
 	t.descriptionUID = "No Doppelganger could be found";
-	NO_DOPP = prompter->RegisterDialog(t);
+	NO_DOPP = m_prompter->RegisterDialog(t);
 
 	// Misc other prompts
 	t.descriptionUID = "Problem inheriting port";
 	t.type = notifyPrompt;
-	NO_ANCESTORS = prompter->RegisterDialog(t);
+	NO_ANCESTORS = m_prompter->RegisterDialog(t);
 
 	t.descriptionUID = "Loading a Haystack Node Failed";
 	t.type = warningPrompt;
-	NODE_LOAD_FAIL = prompter->RegisterDialog(t);
+	NODE_LOAD_FAIL = m_prompter->RegisterDialog(t);
 
-	honeydConfig->LoadAllTemplates();
+	m_honeydConfig->LoadAllTemplates();
 
 	//This register meta type function needs to be called for any object types passed through a signal
 	qRegisterMetaType<in_addr_t>("in_addr_t");
@@ -747,7 +747,7 @@ void NovaGUI::on_actionStopNova_triggered()
 	// Were we in training mode?
 	if (Config::Inst()->GetIsTraining())
 	{
-		prompter->DisplayPrompt(LAUNCH_TRAINING_MERGE,
+		m_prompter->DisplayPrompt(LAUNCH_TRAINING_MERGE,
 			"ClassificationEngine was in training mode. Would you like to merge the capture file into the training database now?",
 			ui.actionTrainingData, NULL);
 	}
@@ -843,7 +843,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 	trainingSuspectMap* map = TrainingData::ParseTrainingDb(data.toStdString());
 	if (map == NULL)
 	{
-		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
+		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
 		return;
 	}
 
@@ -872,7 +872,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 
 	if (trainingDump == NULL)
 	{
-		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
+		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
 		return;
 	}
 
@@ -893,7 +893,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 
 	if (!TrainingData::CaptureToTrainingDb(outputFile.toStdString(), headerMap))
 	{
-		prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing the input files. Please see the logs for more details.");
+		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing the input files. Please see the logs for more details.");
 	}
 }
 

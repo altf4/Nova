@@ -27,23 +27,23 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 : QDialog(parent)
 {
 	ui.setupUi(this);
-	groups = 0;
-	menu = new QMenu(this);
+	m_groups = 0;
+	m_menu = new QMenu(this);
 
-	allowDescriptionEdit = true;
+	m_allowDescriptionEdit = true;
 
-	suspects = new trainingSuspectMap();
-	suspects->set_empty_key("");
-	suspects->set_deleted_key("!");
+	m_suspects = new trainingSuspectMap();
+	m_suspects->set_empty_key("");
+	m_suspects->set_deleted_key("!");
 
 	for (trainingDumpMap::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
 	{
-		(*suspects)[it->first] = new trainingSuspect();
-		(*suspects)[it->first]->isIncluded = false;
-		(*suspects)[it->first]->isHostile = false;
-		(*suspects)[it->first]->uid = it->first;
-		(*suspects)[it->first]->description = "Description for " + it->first;
-		(*suspects)[it->first]->points = it->second;
+		(*m_suspects)[it->first] = new trainingSuspect();
+		(*m_suspects)[it->first]->isIncluded = false;
+		(*m_suspects)[it->first]->isHostile = false;
+		(*m_suspects)[it->first]->uid = it->first;
+		(*m_suspects)[it->first]->description = "Description for " + it->first;
+		(*m_suspects)[it->first]->points = it->second;
 	}
 
 	DisplaySuspectEntries();
@@ -53,10 +53,10 @@ classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
 : QDialog(parent)
 {
 	ui.setupUi(this);
-	groups = 0;
-	menu = new QMenu(this);
-	suspects = map;
-	allowDescriptionEdit = false;
+	m_groups = 0;
+	m_menu = new QMenu(this);
+	m_suspects = map;
+	m_allowDescriptionEdit = false;
 
 	DisplaySuspectEntries();
 }
@@ -69,22 +69,22 @@ void classifierPrompt::DisplaySuspectEntries()
 
 
 	int row = 0;
-	for (trainingSuspectMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	for (trainingSuspectMap::iterator it = m_suspects->begin(); it != m_suspects->end(); it++)
 	{
-		makeRow((*suspects)[it->first], row);
+		makeRow((*m_suspects)[it->first], row);
 		row++;
 	}
 }
 
 void classifierPrompt::contextMenuEvent(QContextMenuEvent * event)
 {
-	menu->clear();
+	m_menu->clear();
 
 	// Only display in edit mode
-	if (allowDescriptionEdit)
-		menu->addAction(ui.actionCombineEntries);
+	if (m_allowDescriptionEdit)
+		m_menu->addAction(ui.actionCombineEntries);
 
-	menu->exec(event->globalPos());
+	m_menu->exec(event->globalPos());
 }
 
 void classifierPrompt::on_actionCombineEntries_triggered()
@@ -107,35 +107,35 @@ void classifierPrompt::on_actionCombineEntries_triggered()
 		return;
 
 	stringstream ss;
-	ss << "Group " << groups;
+	ss << "Group " << m_groups;
 	string rootuid = ss.str();
-	groups++;
-	(*suspects)[rootuid] = new trainingSuspect();
-	(*suspects)[rootuid]->points = new vector<string>();
-	(*suspects)[rootuid]->isIncluded = true;
-	(*suspects)[rootuid]->isHostile = true;
-	(*suspects)[rootuid]->uid = rootuid;
-	(*suspects)[rootuid]->description = "User specified group";
+	m_groups++;
+	(*m_suspects)[rootuid] = new trainingSuspect();
+	(*m_suspects)[rootuid]->points = new vector<string>();
+	(*m_suspects)[rootuid]->isIncluded = true;
+	(*m_suspects)[rootuid]->isHostile = true;
+	(*m_suspects)[rootuid]->uid = rootuid;
+	(*m_suspects)[rootuid]->description = "User specified group";
 
 	for (uint i = 0; i < idsToMerge.size(); i++)
 	{
 		string id = idsToMerge.at(i);
 
-		if ((*suspects)[id]->points == NULL)
+		if ((*m_suspects)[id]->points == NULL)
 		{
 			cout << "Null points" << endl;
 			continue;
 		}
 
 		// Append all the old suspect's points to our new group entry
-		for(uint j = 0; j < (*suspects)[id]->points->size(); j++)
+		for(uint j = 0; j < (*m_suspects)[id]->points->size(); j++)
 		{
-			(*suspects)[rootuid]->points->push_back((*suspects)[id]->points->at(j));
+			(*m_suspects)[rootuid]->points->push_back((*m_suspects)[id]->points->at(j));
 		}
 
-		delete (*suspects)[id]->points;
-		delete (*suspects)[id];
-		suspects->erase(id);
+		delete (*m_suspects)[id]->points;
+		delete (*m_suspects)[id];
+		m_suspects->erase(id);
 	}
 
 	DisplaySuspectEntries();
@@ -143,7 +143,7 @@ void classifierPrompt::on_actionCombineEntries_triggered()
 
 void classifierPrompt::makeRow(trainingSuspect* header, int row)
 {
-	updating = true;
+	m_updating = true;
 
 	ui.tableWidget->insertRow(row);
 
@@ -158,7 +158,7 @@ void classifierPrompt::makeRow(trainingSuspect* header, int row)
 
 	QTableWidgetItem* descriptionItem = new QTableWidgetItem();
 
-	if (allowDescriptionEdit)
+	if (m_allowDescriptionEdit)
 		descriptionItem->setFlags(descriptionItem->flags() |= Qt::ItemIsEditable);
 	else
 		descriptionItem->setFlags(descriptionItem->flags() &= ~Qt::ItemIsEditable);
@@ -171,12 +171,12 @@ void classifierPrompt::makeRow(trainingSuspect* header, int row)
 
 	updateRow(header, row);
 
-	updating = false;
+	m_updating = false;
 }
 
 void classifierPrompt::updateRow(trainingSuspect* header, int row)
 {
-	updating = true;
+	m_updating = true;
 
 	if (!header->isIncluded)
 		ui.tableWidget->item(row,0)->setCheckState(Qt::Unchecked);
@@ -191,15 +191,15 @@ void classifierPrompt::updateRow(trainingSuspect* header, int row)
 	ui.tableWidget->item(row,2)->setText(QString::fromStdString(header->uid));
 	ui.tableWidget->item(row,3)->setText(QString::fromStdString(header->description));
 
-	updating = false;
+	m_updating = false;
 }
 
 void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 {
-	if (updating)
+	if (m_updating)
 		return;
 
-	trainingSuspect* header = (*suspects)[ui.tableWidget->item(row, 2)->text().toStdString()];
+	trainingSuspect* header = (*m_suspects)[ui.tableWidget->item(row, 2)->text().toStdString()];
 
 	switch (col)
 	{
@@ -225,13 +225,13 @@ void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 
 classifierPrompt::~classifierPrompt()
 {
-	for (trainingSuspectMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	for (trainingSuspectMap::iterator it = m_suspects->begin(); it != m_suspects->end(); it++)
 		delete it->second;
 }
 
 trainingSuspectMap* classifierPrompt::getStateData()
 {
-    return suspects;
+    return m_suspects;
 }
 
 void classifierPrompt::on_okayButton_clicked()

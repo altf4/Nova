@@ -92,17 +92,17 @@ public:
     subnetPopup(QWidget *parent = 0, subnet *s  = NULL);
     ~subnetPopup();
 
-    subnet editSubnet;
-    MaskSpinBox * maskEdit;
+    subnet m_editSubnet;
+    MaskSpinBox * m_maskEdit;
 
     //Saves the current configuration
-    void saveSubnet();
+    void SaveSubnet();
     //Loads the last saved configuration
-    void loadSubnet();
+    void LoadSubnet();
     //Copies the data from parent novaconfig and adjusts the pointers
-    void pullData();
+    void PullData();
     //Copies the data to parent novaconfig and adjusts the pointers
-    void pushData();
+    void PushData();
 
 
 private Q_SLOTS:

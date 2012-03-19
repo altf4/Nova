@@ -48,9 +48,9 @@ class NovaGUI : public QMainWindow
 public:
 
     bool m_isHelpUp;
-    HoneydConfiguration *honeydConfig;
+    HoneydConfiguration *m_honeydConfig;
 
-    DialogPrompter *prompter;
+    DialogPrompter *m_prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
     messageHandle HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
     messageHandle LAUNCH_TRAINING_MERGE, NODE_LOAD_FAIL, CANNOT_DELETE_PORT, CANNOT_DELETE_ITEM;

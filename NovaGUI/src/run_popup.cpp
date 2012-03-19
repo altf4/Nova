@@ -32,7 +32,7 @@ Run_Popup::Run_Popup(QWidget *parent)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
-	loadPreferences();
+	LoadPreferences();
 }
 
 Run_Popup::~Run_Popup()
@@ -40,7 +40,7 @@ Run_Popup::~Run_Popup()
 
 }
 
-void Run_Popup::loadPreferences()
+void Run_Popup::LoadPreferences()
 {
 	ui.trainingCheckBox->setChecked(Config::Inst()->GetIsTraining());
 	ui.pcapCheckBox->setChecked(Config::Inst()->GetReadPcap());
@@ -56,7 +56,7 @@ void Run_Popup::on_pcapCheckBox_stateChanged(int state)
 
 void Run_Popup::on_startButton_clicked()
 {
-	if(savePreferences())
+	if(SavePreferences())
 	{
 		StartNovad();
 		TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
@@ -85,7 +85,7 @@ void Run_Popup::on_pcapButton_clicked()
 	}
 }
 
-bool Run_Popup::savePreferences()
+bool Run_Popup::SavePreferences()
 {
 	Config::Inst()->SetIsTraining(ui.trainingCheckBox->isChecked());
 	Config::Inst()->SetReadPcap(ui.pcapCheckBox->isChecked());

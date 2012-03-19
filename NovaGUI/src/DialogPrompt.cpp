@@ -27,11 +27,11 @@ using namespace std;
 DialogPrompt::DialogPrompt(QWidget *parent)
     : QMessageBox(parent)
 {
-	type = notSet;
-	defaultAct = NULL;
-	alternativeAct = NULL;
-	checkBoxLabel = NULL;
-	checkBox = NULL;
+	m_type = notSet;
+	m_defaultAct = NULL;
+	m_alternativeAct = NULL;
+	m_checkBoxLabel = NULL;
+	m_checkBox = NULL;
 }
 
 //Constructs a notification box, if it is a preventable warning then spawn the box before taking the action
@@ -42,8 +42,8 @@ DialogPrompt::DialogPrompt(dialogType type, const QString &title, const QString 
 {
 	this->setText(title);
 	this->setWindowTitle(text);
-	checkBoxLabel = new QLabel();
-	checkBox = new QCheckBox();
+	m_checkBoxLabel = new QLabel();
+	m_checkBox = new QCheckBox();
 
 	SetMessageType(type);
 }
@@ -58,10 +58,10 @@ DialogPrompt::DialogPrompt(dialogType type, QAction * defaultAction, QAction * a
 {
 	this->setText(title);
 	this->setWindowTitle(text);
-	this->defaultAct = defaultAction;
-	this->alternativeAct = alternativeAction;
-	this->checkBoxLabel = new QLabel();
-	this->checkBox = new QCheckBox();
+	this->m_defaultAct = defaultAction;
+	this->m_alternativeAct = alternativeAction;
+	this->m_checkBoxLabel = new QLabel();
+	this->m_checkBox = new QCheckBox();
 
 	SetMessageType(type);
 }
@@ -76,13 +76,13 @@ defaultChoice DialogPrompt::exec()
 	// This is a bit hackish, but Qt doesn't have a yes/no dialog box with a "always do this" checkbox,
 	// so this inserts one and shifts the buttons below it
 	QLayoutItem *buttons = ((QGridLayout*)layout())->itemAtPosition(2, 0);
-	((QGridLayout*)layout())->addWidget(checkBoxLabel, 2, 1);
-	((QGridLayout*)layout())->addWidget(checkBox, 2, 0);
+	((QGridLayout*)layout())->addWidget(m_checkBoxLabel, 2, 1);
+	((QGridLayout*)layout())->addWidget(m_checkBox, 2, 0);
 	((QGridLayout*)layout())->addWidget(buttons->widget(), 3, 0, 1, 2);
 
 	int selectedButton = QMessageBox::exec();
 
-	switch(this->type)
+	switch(this->m_type)
 	{
 		case notifyPrompt:
 		case warningPrompt:
@@ -99,14 +99,14 @@ defaultChoice DialogPrompt::exec()
 		case warningActionPrompt:
 			if (selectedButton == QMessageBox::Yes)
 			{
-				if (defaultAct != NULL)
-					defaultAct->trigger();
+				if (m_defaultAct != NULL)
+					m_defaultAct->trigger();
 				return CHOICE_DEFAULT;
 			}
 			else if (selectedButton == QMessageBox::No)
 			{
-				if (alternativeAct != NULL)
-					alternativeAct->trigger();
+				if (m_alternativeAct != NULL)
+					m_alternativeAct->trigger();
 				return CHOICE_ALT;
 			}
 			else
@@ -120,38 +120,38 @@ defaultChoice DialogPrompt::exec()
 // a value of -1 will be returned as a check to prevent the action.
 void DialogPrompt::SetMessageType(dialogType type)
 {
-	this->type = type;
-	switch(this->type)
+	this->m_type = type;
+	switch(this->m_type)
 	{
 		case notifyPrompt:
 			this->setIcon(QMessageBox::Information);
 			setStandardButtons(QMessageBox::Ok);
-			checkBoxLabel->setText(QString::fromStdString("Do not show this message again"));
+			m_checkBoxLabel->setText(QString::fromStdString("Do not show this message again"));
 			break;
 		case warningPrompt:
 			this->setIcon(QMessageBox::Warning);
 			setStandardButtons(QMessageBox::Ok);
-			checkBoxLabel->setText(QString::fromStdString("Do not show this warning again"));
+			m_checkBoxLabel->setText(QString::fromStdString("Do not show this warning again"));
 			break;
 		case errorPrompt:
 			this->setIcon(QMessageBox::Critical);
 			setStandardButtons(QMessageBox::Ok);
-			checkBoxLabel->setText(QString::fromStdString("Do not show this message again"));
+			m_checkBoxLabel->setText(QString::fromStdString("Do not show this message again"));
 			break;
 		case warningPreventablePrompt:
 			this->setIcon(QMessageBox::Warning);
 			this->setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-			checkBoxLabel->setText(QString::fromStdString("Always take this action"));
+			m_checkBoxLabel->setText(QString::fromStdString("Always take this action"));
 			break;
 		case notifyActionPrompt:
 			this->setIcon(QMessageBox::Question);
 			QMessageBox::setStandardButtons(QMessageBox::No | QMessageBox::Yes | QMessageBox::Cancel);
-			checkBoxLabel->setText(QString::fromStdString("Always take this option"));
+			m_checkBoxLabel->setText(QString::fromStdString("Always take this option"));
 			break;
 		case warningActionPrompt:
 			this->setIcon(QMessageBox::Warning);
 			QMessageBox::setStandardButtons(QMessageBox::No | QMessageBox::Yes | QMessageBox::Cancel);
-			checkBoxLabel->setText(QString::fromStdString("Always take this option"));
+			m_checkBoxLabel->setText(QString::fromStdString("Always take this option"));
 			break;
 		default:
 			this->setIcon(QMessageBox::NoIcon);
@@ -163,30 +163,30 @@ void DialogPrompt::SetMessageType(dialogType type)
 // yes on a question based prompt that action will occur
 void DialogPrompt::SetDefaultAction(QAction * action)
 {
-	defaultAct = action;
+	m_defaultAct = action;
 }
 
 //Sets the alternative action to take, create and action ahead of time and when the user clicks
 // No on a question based prompt that action will occur
 void DialogPrompt::SetAlternativeAction(QAction * action)
 {
-	alternativeAct = action;
+	m_alternativeAct = action;
 }
 
 //Returns the message type a value of 0 here means the is currently no message type.
 dialogType DialogPrompt::GetMessageType()
 {
-	return type;
+	return m_type;
 }
 
 //Returns a pointer to the default action
 QAction * DialogPrompt::GetDefaultAction()
 {
-	return defaultAct;
+	return m_defaultAct;
 }
 
 //Returns a pointer to the alternative action
 QAction * DialogPrompt::GetAlternativeAction()
 {
-	return alternativeAct;
+	return m_alternativeAct;
 }

@@ -36,7 +36,7 @@ class HexMACSpinBox : public QSpinBox
 public:
 	HexMACSpinBox(QWidget * parent = 0, std::string MACAddr = "", macType which = macSuffix) : QSpinBox(parent)
 	{
-		validator = new QRegExpValidator(QRegExp("([0-9A-Fa-f][0-9A-Fa-f][:]){0,2}[0-9A-Fa-f][0-9A-Fa-f]"
+		m_validator = new QRegExpValidator(QRegExp("([0-9A-Fa-f][0-9A-Fa-f][:]){0,2}[0-9A-Fa-f][0-9A-Fa-f]"
 				, Qt::CaseInsensitive, QRegExp::RegExp), this);
 		setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
 		setWrapping(true);
@@ -88,12 +88,12 @@ protected:
 	{
 		if(this->lineEdit()->text().size() < 8)
 			return QValidator::Intermediate;
-		return validator->validate(text, pos);
+		return m_validator->validate(text, pos);
 	}
 
 private:
 
-    QRegExpValidator *validator;
+    QRegExpValidator *m_validator;
 };
 
 
@@ -106,20 +106,20 @@ public:
     nodePopup(QWidget *parent = 0, node *n  = NULL);
     ~nodePopup();
 
-    HexMACSpinBox * ethernetEdit;
-    HexMACSpinBox * prefixEthEdit;
+    HexMACSpinBox * m_ethernetEdit;
+    HexMACSpinBox * m_prefixEthEdit;
 
     //Saves the current configuration
-    void saveNode();
+    void SaveNode();
     //Loads the last saved configuration
-    void loadNode();
+    void LoadNode();
     //Copies the data from parent novaconfig and adjusts the pointers
-    void pullData();
+    void PullData();
     //Copies the data to parent novaconfig and adjusts the pointers
-    void pushData();
+    void PushData();
 
     //Checks for IP or MAC conflicts
-    int validateNodeSettings();
+    int ValidateNodeSettings();
 
 private Q_SLOTS:
 

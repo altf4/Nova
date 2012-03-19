@@ -43,11 +43,11 @@ class NovaConfig : public QMainWindow
 	Q_OBJECT
 
 public:
-	std::vector<std::pair<std::string, std::string> > nmapPersonalities;
+	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
 
-	SubnetTable subnets;
-	NodeTable nodes;
-	ProfileTable profiles;
+	SubnetTable m_subnets;
+	NodeTable m_nodes;
+	ProfileTable m_profiles;
 
     QMutex * m_loading;
 
@@ -278,10 +278,10 @@ private:
     VendorMacDb m_macAddresses;
 
 
-    std::string homePath;
+    std::string m_homePath;
 
-    PortTable ports;
-    ScriptTable scripts;
+    PortTable m_ports;
+    ScriptTable m_scripts;
 };
 
 class TreeItemComboBox : public QComboBox
@@ -292,8 +292,8 @@ public:
 
 	TreeItemComboBox(NovaConfig * parent = 0, QTreeWidgetItem* buddy = 0)
 	{
-		this->parent = parent;
-		this->buddy = buddy;
+		this->m_parent = parent;
+		this->m_buddy = buddy;
 		this->setFocusPolicy(Qt::ClickFocus);
 		this->setContextMenuPolicy(Qt::NoContextMenu);
 		this->setAutoFillBackground(true);
@@ -301,14 +301,14 @@ public:
 	}
 	~TreeItemComboBox(){}
 
-	NovaConfig * parent;
-	QTreeWidgetItem * buddy;
+	NovaConfig * m_parent;
+	QTreeWidgetItem * m_buddy;
 
 public Q_SLOTS:
 	void setCurrentIndex(int index)
 	{
 		QComboBox::setCurrentIndex(index);
-		Q_EMIT notifyParent(buddy, true);
+		Q_EMIT notifyParent(m_buddy, true);
 	}
 
 	Q_SIGNALS:
@@ -322,7 +322,7 @@ protected:
 	void focusInEvent(QFocusEvent * e)
 	{
 		e->ignore();
-		Q_EMIT notifyParent(buddy, false);
+		Q_EMIT notifyParent(m_buddy, false);
 	}
 
 };

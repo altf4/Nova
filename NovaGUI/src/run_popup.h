@@ -29,8 +29,8 @@ public:
     Run_Popup(QWidget *parent = 0);
     ~Run_Popup();
 
-    void loadPreferences();
-    bool savePreferences();
+    void LoadPreferences();
+    bool SavePreferences();
 
 private Q_SLOTS:
 
