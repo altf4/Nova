@@ -29,12 +29,6 @@ console.info("Logging to ./serverLog.log");
 var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
 app.use(express.logger({stream: logFile}));
 
-/*
-app.post('/nova\.s',function(req,res){
-	console.info("received request at nova.s");
-	res.send('hello world ['+req+']');
-    });
-*/
 console.info("Serving static GET at /var/www");
 app.use(express.static('/var/www'));
 
