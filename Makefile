@@ -55,11 +55,11 @@ install-release:
 	mkdir -p $(DESTDIR)/usr/share/applications
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
-	cp -fru Installer/Write/nova/.nova $(DESTDIR)/etc/nova
+	cp -frup Installer/Write/nova/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
-	cp -fru Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -fru Installer/Read/icons $(DESTDIR)/usr/share/nova
+	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
+	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
@@ -88,11 +88,11 @@ install-debug:
 	mkdir -p $(DESTDIR)/usr/share/applications
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
-	cp -fru Installer/Write/nova/.nova $(DESTDIR)/etc/nova
+	cp -frup Installer/Write/nova/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
-	cp -fru Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -fru Installer/Read/icons $(DESTDIR)/usr/share/nova
+	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
+	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
