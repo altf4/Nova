@@ -17,11 +17,16 @@
 //============================================================================
 
 #include "classifierPrompt.h"
-#include <QtGui/QMenu>
+#include "Logger.h"
+
+#include <boost/format.hpp>
 #include <QContextMenuEvent>
+#include <QtGui/QMenu>
 #include <sstream>
 
 using namespace std;
+using namespace Nova;
+using boost::format;
 
 classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
 : QDialog(parent)
@@ -36,7 +41,7 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 	m_suspects->set_empty_key("");
 	m_suspects->set_deleted_key("!");
 
-	for (trainingDumpMap::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
+	for(trainingDumpMap::iterator it = trainingDump->begin(); it != trainingDump->end(); it++)
 	{
 		(*m_suspects)[it->first] = new trainingSuspect();
 		(*m_suspects)[it->first]->isIncluded = false;
@@ -64,12 +69,14 @@ classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
 void classifierPrompt::DisplaySuspectEntries()
 {
 	//ui.tableWidget->clear();
-	for (int i=ui.tableWidget->rowCount()-1; i>=0; --i)
+	for(int i=ui.tableWidget->rowCount()-1; i>=0; --i)
+	{
 	  ui.tableWidget->removeRow(i);
+	}
 
 
 	int row = 0;
-	for (trainingSuspectMap::iterator it = m_suspects->begin(); it != m_suspects->end(); it++)
+	for(trainingSuspectMap::iterator it = m_suspects->begin(); it != m_suspects->end(); it++)
 	{
 		makeRow((*m_suspects)[it->first], row);
 		row++;
@@ -81,8 +88,10 @@ void classifierPrompt::contextMenuEvent(QContextMenuEvent * event)
 	m_menu->clear();
 
 	// Only display in edit mode
-	if (m_allowDescriptionEdit)
+	if(m_allowDescriptionEdit)
+	{
 		m_menu->addAction(ui.actionCombineEntries);
+	}
 
 	m_menu->exec(event->globalPos());
 }
@@ -93,18 +102,22 @@ void classifierPrompt::on_actionCombineEntries_triggered()
 
 	// Figure out what's selected
 	QList<QTableWidgetSelectionRange> selectRanges = ui.tableWidget->selectedRanges();
-	for (int i =0; i != selectRanges.size(); ++i) {
+	for(int i =0; i != selectRanges.size(); ++i)
+	{
 		QTableWidgetSelectionRange range = selectRanges.at(i);
 		int top = range.topRow();
 		int bottom = range.bottomRow();
-		for (int i = top; i <= bottom; ++i) {
+		for(int i = top; i <= bottom; ++i)
+		{
 			idsToMerge.push_back(ui.tableWidget->item(i, 2)->text().toStdString());
 		}
 	}
 
 	// Return if less than 2 entries are trying to be combined
-	if (idsToMerge.size() < 2)
+	if(idsToMerge.size() < 2)
+	{
 		return;
+	}
 
 	stringstream ss;
 	ss << "Group " << m_groups;
@@ -117,11 +130,11 @@ void classifierPrompt::on_actionCombineEntries_triggered()
 	(*m_suspects)[rootuid]->uid = rootuid;
 	(*m_suspects)[rootuid]->description = "User specified group";
 
-	for (uint i = 0; i < idsToMerge.size(); i++)
+	for(uint i = 0; i < idsToMerge.size(); i++)
 	{
 		string id = idsToMerge.at(i);
 
-		if ((*m_suspects)[id]->points == NULL)
+		if((*m_suspects)[id]->points == NULL)
 		{
 			cout << "Null points" << endl;
 			continue;
@@ -158,11 +171,14 @@ void classifierPrompt::makeRow(trainingSuspect* header, int row)
 
 	QTableWidgetItem* descriptionItem = new QTableWidgetItem();
 
-	if (m_allowDescriptionEdit)
+	if(m_allowDescriptionEdit)
+	{
 		descriptionItem->setFlags(descriptionItem->flags() |= Qt::ItemIsEditable);
+	}
 	else
+	{
 		descriptionItem->setFlags(descriptionItem->flags() &= ~Qt::ItemIsEditable);
-
+	}
 
 	ui.tableWidget->setItem(row, 0, chkBoxItem);
 	ui.tableWidget->setItem(row, 1, includeItem);
@@ -178,15 +194,23 @@ void classifierPrompt::updateRow(trainingSuspect* header, int row)
 {
 	m_updating = true;
 
-	if (!header->isIncluded)
+	if(!header->isIncluded)
+	{
 		ui.tableWidget->item(row,0)->setCheckState(Qt::Unchecked);
+	}
 	else
+	{
 		ui.tableWidget->item(row,0)->setCheckState(Qt::Checked);
+	}
 
-	if (!header->isHostile)
+	if(!header->isHostile)
+	{
 		ui.tableWidget->item(row,1)->setCheckState(Qt::Unchecked);
+	}
 	else
+	{
 		ui.tableWidget->item(row,1)->setCheckState(Qt::Checked);
+	}
 
 	ui.tableWidget->item(row,2)->setText(QString::fromStdString(header->uid));
 	ui.tableWidget->item(row,3)->setText(QString::fromStdString(header->description));
@@ -196,37 +220,57 @@ void classifierPrompt::updateRow(trainingSuspect* header, int row)
 
 void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 {
-	if (m_updating)
+	if(m_updating)
+	{
 		return;
+	}
 
 	trainingSuspect* header = (*m_suspects)[ui.tableWidget->item(row, 2)->text().toStdString()];
 
-	switch (col)
+	switch(col)
 	{
-	case 0:
-		if (ui.tableWidget->item(row,0)->checkState() == Qt::Checked)
-			header->isIncluded = true;
-		else
-			header->isIncluded = false;
-
-		break;
-	case 1:
-		if (ui.tableWidget->item(row,1)->checkState() == Qt::Checked)
-			header->isHostile = true;
-		else
-			header->isHostile = false;
-
-		break;
-	case 3:
-		header->description = ui.tableWidget->item(row, 3)->text().toStdString();
-		break;
+		case 0:
+		{
+			if(ui.tableWidget->item(row,0)->checkState() == Qt::Checked)
+			{
+				header->isIncluded = true;
+			}
+			else
+			{
+				header->isIncluded = false;
+			}
+			break;
+		}
+		case 1:
+		{
+			if(ui.tableWidget->item(row,1)->checkState() == Qt::Checked)
+			{
+				header->isHostile = true;
+			}
+			else
+			{
+				header->isHostile = false;
+			}
+			break;
+		}
+		case 3:
+		{
+			header->description = ui.tableWidget->item(row, 3)->text().toStdString();
+			break;
+		}
+		default:
+		{
+			break;
+		}
 	}
 }
 
 classifierPrompt::~classifierPrompt()
 {
-	for (trainingSuspectMap::iterator it = m_suspects->begin(); it != m_suspects->end(); it++)
+	for(trainingSuspectMap::iterator it = m_suspects->begin(); it != m_suspects->end(); it++)
+	{
 		delete it->second;
+	}
 }
 
 trainingSuspectMap* classifierPrompt::getStateData()
