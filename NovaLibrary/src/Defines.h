@@ -32,10 +32,6 @@
 // Max table entries takes 65408 bytes
 #define MORE_DATA 65533
 
-//The maximum GUI message size, while this can be increased up to MAX_MSG_SIZE
-// it should remain as small as possible, GUI messages aren't large.
-#define MAX_GUIMSG_SIZE 256
-
 //Number of messages to queue in a listening socket before ignoring requests until the queue is open
 #define SOCKET_QUEUE_SIZE 50
 

@@ -20,19 +20,34 @@
 #include "messages/UI_Message.h"
 #include "messages/ControlMessage.h"
 #include "Connection.h"
+#include "StatusQueries.h"
 
 #include <stdio.h>
+#include <unistd.h>
 
 using namespace Nova;
+using namespace std;
 
 extern int novadListenSocket;
 
 bool Nova::StartNovad()
 {
-	if(!ConnectToNovad())
+	if(IsUp())
 	{
-		//TODO: If nova isn't already started, then manually start the process ourselves
+		return true;
+	}
+
+	int pid = fork();
+	if(pid == -1)
+	{
 		return false;
+	}
+
+	//If we are the child process (IE: Novad)
+	if(pid == 0)
+	{
+		system("nohup Novad");
+		exit(EXIT_SUCCESS);
 	}
 
 	return true;
@@ -40,27 +55,6 @@ bool Nova::StartNovad()
 
 bool Nova::StopNovad()
 {
-	// Kill honeyd processes
-	FILE * out = popen("pidof honeyd","r");
-	if(out != NULL)
-	{
-		char buffer[1024];
-		char * line = fgets(buffer, sizeof(buffer), out);
-
-		if (line != NULL)
-		{
-			string cmd = "sudo kill " + string(line);
-			if(cmd.size() > 5)
-			{
-				if(system(cmd.c_str()) != 0)
-				{
-					//TODO Add Logging
-				}
-			}
-		}
-	}
-	pclose(out);
-
 	ControlMessage killRequest;
 	killRequest.m_controlType = CONTROL_EXIT_REQUEST;
 	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket) )
@@ -93,6 +87,8 @@ bool Nova::StopNovad()
 	}
 	bool retSuccess = killReply->m_success;
 	delete killReply;
+	close(novadListenSocket);
+	novadListenSocket = -1;
 	return retSuccess;
 }
 

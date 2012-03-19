@@ -121,5 +121,10 @@
 			<type>1</type>
 			<locationURI>PARENT-2-ECLIPSE_HOME/Code/Nova/Novad/src/ProtocolHandler.h</locationURI>
 		</link>
+		<link>
+			<name>src/NovadSource/Threads.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-2-ECLIPSE_HOME/Code/Nova/Novad/src/Threads.cpp</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>

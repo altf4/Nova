@@ -18,6 +18,8 @@
 #include "NovaComplexDialog.h"
 #include "NovaGuiTypes.h"
 
+using namespace std;
+
 class NovaConfig;
 
 NovaComplexDialog::NovaComplexDialog(QWidget *parent)

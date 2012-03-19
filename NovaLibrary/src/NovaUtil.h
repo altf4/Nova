@@ -20,14 +20,7 @@
 #ifndef NOVAUTIL_H_
 #define NOVAUTIL_H_
 
-#include "messages/UI_Message.h"
-#include "HashMapStructs.h"
-#include <string>
-#include <vector>
-#include <arpa/inet.h>
-
-using namespace std;
-using namespace Nova;
+#include "sys/types.h"
 
 namespace Nova{
 

@@ -1,50 +1,42 @@
 //============================================================================
-// Name        : run_popup.h
+// Name        : Haystack.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : This provides a run dialog where the user can override the configuration
-//	options provided in the config file and set things like training mode/pcap file.
+// Description : Controls the Honeyd Haystack and Doppelganger processes
 //============================================================================
-#ifndef RUN_POPUP_H
-#define RUN_POPUP_H
 
-#include "ui_run_popup.h"
+#ifndef HAYSTACKCONTROL_H_
+#define HAYSTACKCONTROL_H_
 
-class Run_Popup : public QMainWindow
+namespace Nova
 {
-    Q_OBJECT
 
-public:
-    Run_Popup(QWidget *parent = 0);
-    ~Run_Popup();
+//Starts the Honeyd Haystack process
+//	returns - True if haystack successfully started, false on error
+//	NOTE: If the haystack is already running, this function does nothing and returns true
+bool StartHaystack();
 
-    void loadPreferences();
-    bool savePreferences();
+//Stops the Honeyd Haystack process
+//	returns - True if haystack successfully stopped, false on error
+//	NOTEL if the haystack is already dead, this function does nothing and returns true
+bool StopHaystack();
 
-private Q_SLOTS:
+//Returns whether the Haystack is running or not
+//	returns - True if honeyd haystack is running, false if not running
+bool IsHaystackUp();
 
-//Main buttons
-void on_cancelButton_clicked();
-void on_startButton_clicked();
+}
 
-//Opens browse dialog for pcap file
-void on_pcapButton_clicked();
-//Check Box signal for enabling group box
-void on_pcapCheckBox_stateChanged(int state);
 
-private:
-    Ui::Run_PopupClass ui;
-};
-
-#endif // RUN_POPUP_H
+#endif /* HAYSTACKCONTROL_H_ */

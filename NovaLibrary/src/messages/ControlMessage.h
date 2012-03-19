@@ -19,7 +19,6 @@
 #ifndef CONTROLMESSAGE_H_
 #define CONTROLMESSAGE_H_
 
-#include <string>
 #include <sys/types.h>
 #include <arpa/inet.h>
 
@@ -47,10 +46,10 @@ enum ControlType: char
 	CONTROL_CONNECT_REPLY,			//Reply from Novad with success
 	CONTROL_DISCONNECT_NOTICE,		//Notice to Novad that the UI is closing
 	CONTROL_DISCONNECT_ACK,			//Acknowledgment of the disconnect notice
+	CONTROL_PING,					//Request to Novad to see if it's alive
+	CONTROL_PONG,					//Reply from Novad to verify it's alive
 	CONTROL_INVALID,
 };
-
-using namespace std;
 
 namespace Nova
 {

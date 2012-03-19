@@ -19,9 +19,16 @@
 
 #include "SuspectTable.h"
 #include "Config.h"
+#include "Logger.h"
+
+#include <fstream>
+
+#include "boost/format.hpp"
 
 using namespace std;
 using namespace Nova;
+using boost::format;
+
 namespace Nova
 {
 
@@ -71,7 +78,7 @@ SuspectTableIterator SuspectTable::Begin()
 SuspectTableIterator SuspectTable::End()
 {
 	SuspectTableIterator it = SuspectTableIterator(&m_table, &m_keys, &m_lock);
-	for(uint i = 0; i < m_keys.size(); i++)
+	for(uint i = 1; i < m_keys.size(); i++)
 	{
 		it.Next();
 	}
@@ -190,8 +197,11 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			{
 				ANNpoint aNN =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
-				m_table[key]->ResetOwner();
-				m_table[key]->SetAnnPoint(aNN);
+				m_table[key]->UnlockAsOwner();
+				if (m_table[key]->SetAnnPoint(aNN) != 0)
+				{
+					LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
+				}
 				annDeallocPt(aNN);
 				m_table[key]->SetClassification(suspectCopy.GetClassification());
 
@@ -210,7 +220,6 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				m_table[key]->SetIsHostile(suspectCopy.GetIsHostile());
 				m_table[key]->SetIsLive(suspectCopy.GetIsLive());
 				m_table[key]->SetNeedsClassificationUpdate(suspectCopy.GetNeedsClassificationUpdate());
-				m_table[key]->SetNeedsFeatureUpdate(suspectCopy.GetNeedsFeatureUpdate());
 				fs = suspectCopy.GetUnsentFeatureSet();
 				m_table[key]->SetUnsentFeatureSet(&fs);
 				m_table[key]->ClearEvidence();
@@ -219,6 +228,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				{
 					m_table[key]->AddEvidence(temp[i]);
 				}
+				m_table[key]->ResetOwner();
 				Unlock();
 				return SUCCESS;
 			}
@@ -612,6 +622,25 @@ int SuspectTable::NumOwners()
 	pthread_rwlock_unlock(&m_ownerLock);
 	return ret;
 
+}
+
+void SuspectTable::SaveSuspectsToFile(string filename)
+{
+	LOG(NOTICE, (format("File %1% at line %2%:  Got request to save file to %3%")% __FILE__%__LINE__% filename).str());
+
+	ofstream out(filename.c_str());
+
+	if(!out.is_open())
+	{
+		LOG(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")
+				% __FILE__%__LINE__% filename).str());
+		return;
+	}
+	for(SuspectTableIterator it = Begin(); it.GetIndex() < Size(); ++it)
+	{
+		out << it.Current().ToString() << endl;
+	}
+	out.close();
 }
 }
 

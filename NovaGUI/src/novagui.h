@@ -28,13 +28,10 @@
 
 #include <QProcess>
 
-using namespace std;
-using namespace Nova;
-
 struct suspectItem
 {
 	//The suspect information
-	Suspect * suspect;
+	Nova::Suspect * suspect;
 
 	//The associated item for the suspect view list
 	QListWidgetItem * item;
@@ -42,17 +39,7 @@ struct suspectItem
 	//We need a second item because an item can only be in one list at a time
 	QListWidgetItem * mainItem;
 };
-typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectGUIHashTable;
-
-
-struct novaComponent
-{
-	string name;
-	string terminalCommand;
-	string noTerminalCommand;
-	QProcess *process;
-	bool shouldBeRunning;
-};
+typedef google::dense_hash_map<in_addr_t, suspectItem, std::tr1::hash<in_addr_t>, eqaddr > SuspectGUIHashTable;
 
 class NovaGUI : public QMainWindow
 {
@@ -94,9 +81,8 @@ public:
     //Get preliminary config information
     void InitConfiguration();
     void InitPaths();
-    void InitNovadCommands();
 
-    void SetFeatureDistances(Suspect* suspect);
+    void SetFeatureDistances(Nova::Suspect* suspect);
 
     void LoadNovadConfiguration();
 
@@ -121,7 +107,6 @@ private Q_SLOTS:
 	void on_actionHelp_2_triggered();
 	void on_actionLogger_triggered();
 
-	void on_actionSystemStatKill_triggered();
 	void on_actionSystemStatStop_triggered();
 	void on_actionSystemStatStart_triggered();
 	void on_actionSystemStatReload_triggered();
@@ -142,7 +127,6 @@ private Q_SLOTS:
 	//System Status widgets
 	void on_systemStatStartButton_clicked();
 	void on_systemStatStopButton_clicked();
-	void on_systemStatKillButton_clicked();
 	void on_systemStatusTable_itemSelectionChanged();
 
 	//Suspect view widgets
@@ -164,7 +148,6 @@ Q_SIGNALS:
 private:
 	const QIcon* m_greenIcon;
 	const QIcon* m_redIcon;
-	const QIcon* m_yellowIcon;
 
 	QMenu * m_suspectMenu;
 	QMenu * m_systemStatMenu;
@@ -185,20 +168,10 @@ namespace Nova
 //	returns - true if server set successfully, false on error
 bool StartCallbackLoop(void *ptr);
 
-//Accepts new incoming connections and spawns a new thread (CallbackLoop) for them as they come
-void *CallbackLoopHelper(void *ptr);
-
 /// This is a blocking function. If nothing is received, then wait on this thread for an answer
 void *CallbackLoop(void *ptr);
 
 void *StatusUpdate(void *ptr);
-
-//Start one component of Nova
-void StartComponent(novaComponent *component);
-
-//Helper thread for StartComponent
-//	runs the start command in a new thread, so that we can sleep() without locking the whole GUI
-void *StartComponentHelper(void *ptr);
 
 }
 #endif // NOVAGUI_H

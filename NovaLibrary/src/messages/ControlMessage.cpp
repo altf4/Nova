@@ -277,6 +277,34 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 
 			break;
 		}
+		case CONTROL_PING:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			break;
+		}
+		case CONTROL_PONG:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			break;
+		}
 		case CONTROL_INVALID:
 		{
 			break;
@@ -545,6 +573,40 @@ char *ControlMessage::Serialize(uint32_t *length)
 			break;
 		}
 		case CONTROL_DISCONNECT_ACK:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+
+			break;
+		}
+		case CONTROL_PING:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) ControlMessage Type
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			//Put the UI Message type in
+			memcpy(buffer, &m_messageType, sizeof(m_messageType));
+			buffer += sizeof(m_messageType);
+			//Put the Control Message type in
+			memcpy(buffer, &m_controlType, sizeof(m_controlType));
+			buffer += sizeof(m_controlType);
+
+			break;
+		}
+		case CONTROL_PONG:
 		{
 			//Uses: 1) UI_Message Type
 			//		2) ControlMessage Type

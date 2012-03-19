@@ -252,17 +252,6 @@ PCAP_FILE ../masterPcap
 GO_TO_LIVE 0
 
 ############################################
-# USE_TERMINALS #
-############################################
-#
-# Give logging output in terminals.
-#	0: No teriminal output
-#	1: Terminal logging output
-# EXAMPLE:
-#USE_TERMINALS 0
-USE_TERMINALS 1
-
-############################################
 # SA_MAX_ATTEMPTS #
 ############################################
 #

@@ -30,6 +30,7 @@
 
 using namespace std;
 using namespace Nova;
+using boost::property_tree::ptree;
 
 /************************************************
  * Construct and Initialize GUI
@@ -1157,7 +1158,6 @@ void NovaConfig::LoadNovadPreferences()
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
 	ui.pcapEdit->setText((QString)Config::Inst()->getPathPcapFile().c_str());
 	ui.liveCapCheckBox->setChecked(Config::Inst()->getGotoLive());
-	ui.terminalCheckBox->setChecked(Config::Inst()->getUseTerminals());
 	{
 		string featuresEnabled = Config::Inst()->getEnabledFeatures();
 		ui.featureList->clear();
@@ -1486,7 +1486,6 @@ bool NovaConfig::SaveConfigurationToFile() {
 	Config::Inst()->setEnabledFeatures(ss.str());
 	Config::Inst()->setReadPcap(ui.pcapCheckBox->isChecked());
 	Config::Inst()->setGotoLive(ui.liveCapCheckBox->isChecked());
-	Config::Inst()->setUseTerminals(ui.terminalCheckBox->isChecked());
 
 	return Config::Inst()->SaveConfig();
 }

@@ -26,14 +26,14 @@
 enum CallbackChangeType: char
 {
 	CALLBACK_ERROR = 0,		//There was an error in receiving the callback message
-	CALLBACK_HUNG_UP,
+	CALLBACK_HUNG_UP,		//Novad hung up on us
 	CALLBACK_NEW_SUSPECT,	//Received a new suspect from Novad
 };
 
 struct CallbackChange
 {
 	enum CallbackChangeType type;
-	Suspect *suspect;		//Used in type: CALLBACK_NEW_SUSPECT
+	Nova::Suspect *suspect;		//Used in type: CALLBACK_NEW_SUSPECT
 };
 
 namespace Nova

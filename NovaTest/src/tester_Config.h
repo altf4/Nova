@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "math.h"
 
+using namespace std;
 using namespace Nova;
 
 class ConfigTest : public ::testing::Test {

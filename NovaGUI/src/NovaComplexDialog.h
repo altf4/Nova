@@ -21,8 +21,6 @@
 #include "ui_NovaComplexDialog.h"
 #include "novaconfig.h"
 
-using namespace std;
-
 enum whichDialog {MACDialog, PersonalityDialog};
 
 class NovaComplexDialog : public QDialog
@@ -30,15 +28,15 @@ class NovaComplexDialog : public QDialog
     Q_OBJECT
 
 public:
-    string * retVal;
+    std::string * retVal;
     //Default constructor, shouldn't be used
     NovaComplexDialog(QWidget *parent = 0);
     //Standard constructor, specify which dialog type you wish to create
-    NovaComplexDialog(whichDialog type, string* retValue, QWidget *parent = 0, string filter = "");
+    NovaComplexDialog(whichDialog type, std::string* retValue, QWidget *parent = 0, std::string filter = "");
     ~NovaComplexDialog();
 
     //Draws the parsed personalities in the widget
-    void drawPersonalities(string filterStr);
+    void drawPersonalities(std::string filterStr);
     //Sets the help message displayed at the bottom of the window to provide the user hints on usage.
     void setHelpMsg(const QString& str);
     //Returns the help message displayed at the bottom of the window to provide the user hints on usage.

@@ -26,10 +26,12 @@ namespace Nova
 
 //Runs the Novad process
 //	returns - True upon successfully running the novad process, false on error
+//	NOTE: This function will return true if Novad was already running
 bool StartNovad();
 
 //Kills the Novad process
 //	returns - True upon successfully stopping the novad process, false on error
+//	NOTE: This function will return true if Novad was already dead
 bool StopNovad();
 
 //Asks Novad to save the suspect list to persistent storage

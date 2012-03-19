@@ -22,8 +22,10 @@
 #include "Control.h"
 #include "Novad.h"
 #include "messages/CallbackMessage.h"
+#include "messages/ControlMessage.h"
 #include "SuspectTable.h"
 #include "SuspectTableIterator.h"
+
 
 #include "pthread.h"
 #include <sys/types.h>
@@ -36,13 +38,15 @@
 #include <boost/format.hpp>
 
 using namespace Nova;
+using namespace std;
 using boost::format;
 
 int callbackSocket = -1, IPCSocket = -1;
 
-extern string userHomePath;
+
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
+extern pthread_mutex_t suspectsSinceLastSaveLock;
 
 struct sockaddr_un msgRemote, msgLocal;
 int UIsocketSize;
@@ -52,8 +56,8 @@ bool Nova::Spawn_UI_Handler()
 {
 
 	int len;
-	string inKeyPath = userHomePath + "/keys" + NOVAD_LISTEN_FILENAME;
-	string outKeyPath = userHomePath + "/keys" + UI_LISTEN_FILENAME;
+	string inKeyPath = Config::Inst()->getPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
+	string outKeyPath = Config::Inst()->getPathHome() + "/keys" + UI_LISTEN_FILENAME;
 
     if((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
@@ -160,6 +164,10 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			exitReply.m_success = true;
 
 			UI_Message::WriteMessage(&exitReply, socketFD);
+
+			LOG(NOTICE, "Quitting: Got an exit request from the UI. Goodbye!",
+					(format("File %1% at line %2%: Got a CONTROL_EXIT_REQUEST, quitting.")% __FILE__%__LINE__).str());
+
 			SaveAndExit(0);
 
 			break;
@@ -169,13 +177,15 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			//TODO: Replace with new suspect table class
 
 			suspects.Clear();
+			pthread_mutex_lock(&suspectsSinceLastSaveLock);
 			suspectsSinceLastSave.Clear();
+			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
 			{
 				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")
-										% __FILE__%__LINE__).str());
+						% __FILE__%__LINE__).str());
 				successResult = false;
 			}
 
@@ -183,6 +193,12 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			clearAllSuspectsReply.m_controlType = CONTROL_CLEAR_ALL_REPLY;
 			clearAllSuspectsReply.m_success = successResult;
 			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
+
+			if(successResult)
+			{
+				LOG(DEBUG, "Cleared all suspects due to UI request",
+						(format("File %1% at line %2%: Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.")% __FILE__%__LINE__).str());
+			}
 
 			break;
 		}
@@ -192,10 +208,14 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			{
 				suspects.Erase(controlMessage.m_suspectAddress);
 			}
+
+			pthread_mutex_lock(&suspectsSinceLastSaveLock);
 			if(suspectsSinceLastSave.IsValidKey(controlMessage.m_suspectAddress))
 			{
 				suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
 			}
+			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+
 			RefreshStateFile();
 
 			//TODO: Should check for errors here and return result
@@ -204,16 +224,26 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			clearSuspectReply.m_success = true;
 			UI_Message::WriteMessage(&clearSuspectReply, socketFD);
 
+			struct in_addr suspectAddress;
+			suspectAddress.s_addr = controlMessage.m_suspectAddress;
+
+			LOG(DEBUG, "Cleared a suspect due to UI request",
+					(format("File %1% at line %2%: Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: %3%.")% __FILE__%__LINE__
+					%inet_ntoa(suspectAddress)).str());
+
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			SaveSuspectsToFile(Config::Inst()->getPathCESaveFile()); //TODO: Should check for errors here and return result
+			suspects.SaveSuspectsToFile(Config::Inst()->getPathCESaveFile()); //TODO: Should check for errors here and return result
 
 			ControlMessage saveSuspectsReply;
 			saveSuspectsReply.m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;
 			saveSuspectsReply.m_success = true;
 			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
+
+			LOG(DEBUG, "Saved suspects to file due to UI request",
+					(format("File %1% at line %2%: Got a CONTROL_SAVE_SUSPECTS_REQUEST, saved all suspects.")% __FILE__%__LINE__).str());
 
 			break;
 		}
@@ -226,14 +256,29 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			reclassifyAllReply.m_success = true;
 			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
 
+			LOG(DEBUG, "Reclassified all suspects due to UI request",
+					(format("File %1% at line %2%: Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.")% __FILE__%__LINE__).str());
 			break;
 		}
 		case CONTROL_CONNECT_REQUEST:
 		{
+			bool successResult = ConnectToUI();
+
 			ControlMessage connectReply;
 			connectReply.m_controlType = CONTROL_CONNECT_REPLY;
-			connectReply.m_success = ConnectToUI();
+			connectReply.m_success = successResult;
 			UI_Message::WriteMessage(&connectReply, socketFD);
+
+			if(successResult)
+			{
+				LOG(NOTICE, "Connected to UI!",
+						(format("File %1% at line %2%: Got a CONTROL_CONNECT_REQUEST, succeeded.")% __FILE__%__LINE__).str());
+			}
+			else
+			{
+				LOG(WARNING, "Tried to connect to UI, but failed",
+						(format("File %1% at line %2%: Got a CONTROL_CONNECT_REQUEST, failed to connect.")% __FILE__%__LINE__).str());
+			}
 
 			break;
 		}
@@ -244,6 +289,21 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			ControlMessage disconnectReply;
 			disconnectReply.m_controlType = CONTROL_DISCONNECT_ACK;
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
+
+			LOG(NOTICE, "The UI hung up",
+					(format("File %1% at line %2%: Got a CONTROL_DISCONNECT_NOTICE, closed down socket.")% __FILE__%__LINE__).str());
+
+			break;
+		}
+		case CONTROL_PING:
+		{
+			ControlMessage connectReply;
+			connectReply.m_controlType = CONTROL_PONG;
+			UI_Message::WriteMessage(&connectReply, socketFD);
+
+			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
+			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
+			//	(format("File %1% at line %2%: Got a CONTROL_PING, sent a PONG.")% __FILE__%__LINE__).str());
 
 			break;
 		}

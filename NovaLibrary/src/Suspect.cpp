@@ -39,7 +39,6 @@ Suspect::Suspect()
 	m_hostileNeighbors = 0;
 	m_classification = -1;
 	m_needsClassificationUpdate = true;
-	m_needsFeatureUpdate = true;
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
@@ -69,7 +68,6 @@ Suspect::Suspect(Packet packet)
 	m_classification = -1;
 	m_isHostile = false;
 	m_needsClassificationUpdate = true;
-	m_needsFeatureUpdate = true;
 	m_isLive = true;
 	m_annPoint = NULL;
 	m_flaggedByAlarm = false;
@@ -161,7 +159,6 @@ int Suspect::AddEvidence(Packet packet)
 		return -1;
 	WrlockSuspect();
 	m_evidence.push_back(packet);
-	m_needsFeatureUpdate = true;
 	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 	return 0;
@@ -235,8 +232,6 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	offset+= sizeof m_isHostile;
 	memcpy(buf+offset, &m_needsClassificationUpdate, sizeof m_needsClassificationUpdate);
 	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(buf+offset, &m_needsFeatureUpdate, sizeof m_needsFeatureUpdate);
-	offset+= sizeof m_needsFeatureUpdate;
 	memcpy(buf+offset, &m_flaggedByAlarm, sizeof m_flaggedByAlarm);
 	offset+= sizeof m_flaggedByAlarm;
 	memcpy(buf+offset, &m_isLive, sizeof m_isLive);
@@ -288,8 +283,6 @@ uint32_t Suspect::DeserializeSuspect(u_char * buf)
 	offset+= sizeof m_isHostile;
 	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
 	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(&m_needsFeatureUpdate, buf+offset, sizeof m_needsFeatureUpdate);
-	offset+= sizeof m_needsFeatureUpdate;
 	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
 	offset+= sizeof m_flaggedByAlarm;
 	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
@@ -328,8 +321,6 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	offset+= sizeof m_isHostile;
 	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
 	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(&m_needsFeatureUpdate, buf+offset, sizeof m_needsFeatureUpdate);
-	offset+= sizeof m_needsFeatureUpdate;
 	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
 	offset+= sizeof m_flaggedByAlarm;
 	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
@@ -353,7 +344,6 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	else
 		offset += m_features.DeserializeFeatureData(buf+offset);
 
-	m_needsFeatureUpdate = true;
 	m_needsClassificationUpdate = true;
 	UnlockSuspect();
 
@@ -487,28 +477,6 @@ int Suspect::SetNeedsClassificationUpdate(bool b)
 	UnlockSuspect();
 	return 0;
 }
-
-
-//Returns the needs feature update bool
-bool Suspect::GetNeedsFeatureUpdate()
-{
-	RdlockSuspect();
-	bool ret = m_needsFeatureUpdate;
-	UnlockSuspect();
-	return ret;
-}
-//Sets the neeeds feature update bool
-// Returns (0) on Success, (-1) if the Suspect is checked out by someone else.
-int Suspect::SetNeedsFeatureUpdate(bool b)
-{
-	if(m_hasOwner && !pthread_equal(m_owner, pthread_self()))
-		return -1;
-	WrlockSuspect();
-	m_needsFeatureUpdate = b;
-	UnlockSuspect();
-	return 0;
-}
-
 
 //Returns the flagged by silent alarm bool
 bool Suspect::GetFlaggedByAlarm()
@@ -739,13 +707,20 @@ void Suspect::WrlockSuspect()
 {
 	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
 	{
-		if(!pthread_rwlock_tryrdlock(&m_lock))
+		//If unlocked by owner this should succeed
+		if(!pthread_rwlock_trywrlock(&m_lock))
+		{
+			return;
+		}
+		else
 		{
 			pthread_rwlock_unlock(&m_lock);
-			pthread_rwlock_unlock(&m_lock);
+			if(m_lock.__data.__nr_readers == 1)
+			{
+				pthread_rwlock_unlock(&m_lock);
+			}
 			pthread_rwlock_wrlock(&m_lock);
 		}
-		return;
 	}
 	pthread_rwlock_wrlock(&m_lock);
 }
@@ -800,11 +775,17 @@ bool Suspect::HasOwner()
 // if you want to prevent a blocking call.
 void Suspect::SetOwner()
 {
-	WrlockSuspect();
+	pthread_rwlock_wrlock(&m_lock);
+	while(m_hasOwner == true)
+	{
+		pthread_rwlock_unlock(&m_lock);
+		sleep(0.5);
+		pthread_rwlock_wrlock(&m_lock);
+	}
 	m_hasOwner = true;
 	m_owner = pthread_self();
-	UnlockSuspect();
-	RdlockSuspect();
+	pthread_rwlock_unlock(&m_lock);
+	pthread_rwlock_rdlock(&m_lock);
 }
 
 //Flags the suspect as no longer 'checked out'
@@ -824,6 +805,14 @@ int Suspect::ResetOwner()
 	}
 	else
 		return -1;
+}
+
+void Suspect::UnlockAsOwner()
+{
+	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
+	{
+		pthread_rwlock_unlock(&m_lock);
+	}
 }
 
 Suspect& Suspect::operator=(const Suspect &rhs)
@@ -852,11 +841,7 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 		m_annPoint = NULL;
 	}
 
-	m_evidence.clear();
-	for(uint i = 0; i < rhs.m_evidence.size(); i++)
-	{
-		m_evidence.push_back(rhs.m_evidence[i]);
-	}
+	m_evidence = rhs.m_evidence;
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
@@ -867,11 +852,45 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
-	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 	UnlockSuspect();
 	return *this;
+}
+
+bool Suspect::operator==(const Suspect &rhs) const
+{
+	if (m_features != rhs.m_features)
+		return false;
+
+	if (m_annPoint != rhs.m_annPoint)
+		return false;
+
+	if (m_IpAddress.s_addr != rhs.m_IpAddress.s_addr)
+		return false;
+
+	if (m_classification != rhs.m_classification)
+		return false;
+
+	if (m_hostileNeighbors != rhs.m_hostileNeighbors)
+		return false;
+
+	for (int i = 0; i < DIM; i++)
+		if (m_featureAccuracy[i] != rhs.m_featureAccuracy[i])
+			return false;
+
+	if (m_isHostile != rhs.m_isHostile)
+		return false;
+
+	if (m_flaggedByAlarm != rhs.m_flaggedByAlarm)
+		return false;
+
+	return true;
+}
+
+bool Suspect::operator !=(const Suspect &rhs) const
+{
+	return !(*this == rhs);
 }
 
 Suspect::Suspect(const Suspect &rhs)
@@ -897,11 +916,8 @@ Suspect::Suspect(const Suspect &rhs)
 		m_annPoint = NULL;
 	}
 
-	m_evidence.clear();
-	for(uint i = 0; i < rhs.m_evidence.size(); i++)
-	{
-		m_evidence.push_back(rhs.m_evidence[i]);
-	}
+	m_evidence = rhs.m_evidence;
+
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
@@ -912,7 +928,6 @@ Suspect::Suspect(const Suspect &rhs)
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
-	m_needsFeatureUpdate = rhs.m_needsFeatureUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 	pthread_rwlock_unlock(&m_lock);

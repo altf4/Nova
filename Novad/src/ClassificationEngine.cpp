@@ -21,6 +21,7 @@
 #include <boost/format.hpp>
 
 using namespace std;
+using namespace Nova;
 using boost::format;
 
 // Normalization method to use on each feature
@@ -84,8 +85,14 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	double d;
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
-	ANNpoint aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-	aNN = suspect->GetAnnPoint();
+	ANNpoint aNN = suspect->GetAnnPoint();
+
+	if (aNN == NULL)
+	{
+		LOG(ERROR, (format("File %1% at line %2%: Classify is attempting to classify a suspect with an empty ANN point. Aborting.")%__FILE__%__LINE__).str());
+		return;
+	}
+
 	featureIndex fi;
 
 	m_kdTree->annkSearch(							// search
@@ -205,68 +212,56 @@ void ClassificationEngine::Classify(Suspect *suspect)
 }
 
 
-void ClassificationEngine::NormalizeDataPoints()
+void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
 {
-	for(SuspectTableIterator it = m_suspects.Begin(); it.GetIndex() != m_suspects.Size(); ++it)
+	// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
+	int ai = 0;
+	FeatureSet fs = suspectCopy->GetFeatureSet();
+	for(int i = 0;i < DIM;i++)
 	{
-		// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
-		int ai = 0;
-		Suspect suspectCopy = m_suspects.CheckOut(it.GetKey());
-		FeatureSet fs = suspectCopy.GetFeatureSet();
-		for(int i = 0;i < DIM;i++)
+		if (Config::Inst()->isFeatureEnabled(i))
 		{
-			if (Config::Inst()->isFeatureEnabled(i))
+			if(fs.m_features[i] > m_maxFeatureValues[ai])
 			{
-				if(fs.m_features[i] > m_maxFeatureValues[ai])
-				{
-					fs.m_features[i] = m_maxFeatureValues[ai];
-					//For proper normalization the upper bound for a feature is the max value of the data.
-				}
-				else if (fs.m_features[i] < m_minFeatureValues[ai])
-				{
-					fs.m_features[i] = m_minFeatureValues[ai];
-				}
-				ai++;
+				fs.m_features[i] = m_maxFeatureValues[ai];
+				//For proper normalization the upper bound for a feature is the max value of the data.
 			}
+			else if (fs.m_features[i] < m_minFeatureValues[ai])
+			{
+				fs.m_features[i] = m_minFeatureValues[ai];
+			}
+			ai++;
 		}
-		suspectCopy.SetFeatureSet(&fs);
-		m_suspects.CheckIn(&suspectCopy);
 	}
-	//Normalize the suspect points
-	for(SuspectTableIterator it = m_suspects.Begin(); it.GetIndex() != m_suspects.Size(); ++it)
+	suspectCopy->SetFeatureSet(&fs);
+	ANNpoint aNN = suspectCopy->GetAnnPoint();
+	ai = 0;
+
+	if(aNN == NULL)
 	{
-		if(it.Current().GetNeedsFeatureUpdate())
+		aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+	}
+
+	for(int i = 0; i < DIM; i++)
+	{
+		if (Config::Inst()->isFeatureEnabled(i))
 		{
-			Suspect suspectCopy = m_suspects.CheckOut(it.GetKey());
-			suspectCopy.SetOwner();
-			int ai = 0;
-			ANNpoint aNN = suspectCopy.GetAnnPoint();
-
-			if(aNN == NULL)
+			if(m_maxFeatureValues[ai] != 0)
 			{
-				aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+				aNN[ai] = Normalize(m_normalization[i], suspectCopy->GetFeatureSet().m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 			}
-
-			for(int i = 0; i < DIM; i++)
+			else
 			{
-				if (Config::Inst()->isFeatureEnabled(i))
-				{
-					if(m_maxFeatureValues[ai] != 0)
-					{
-						aNN[ai] = Normalize(m_normalization[i], suspectCopy.GetFeatureSet().m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
-					}
-					else
-					{
-						LOG(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
-								%__FILE__%__LINE__).str());
-					}
-					ai++;
-				}
+				LOG(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
+						%__FILE__%__LINE__).str());
 			}
-			suspectCopy.SetAnnPoint(aNN);
-			suspectCopy.SetNeedsFeatureUpdate(false);
-			m_suspects.CheckIn(&suspectCopy);
+			ai++;
 		}
+	}
+
+	if (suspectCopy->SetAnnPoint(aNN) != 0)
+	{
+		LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
 	}
 }
 

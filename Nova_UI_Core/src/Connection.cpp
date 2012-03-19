@@ -20,6 +20,7 @@
 #include "NovaUtil.h"
 #include "Config.h"
 #include "messages/ControlMessage.h"
+#include "StatusQueries.h"
 
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -34,10 +35,15 @@ using namespace std;
 int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
 struct sockaddr_un UI_Address, novadAddress;
 
-bool Nova::InitCallbackSocket()
+bool callbackInitialized = false;
+
+//Initializes the Callback socket. IE: The socket the UI listens on
+//	NOTE: This is run internally and not meant to be executed by the user
+//	returns - true if socket successfully initialized, false on error (such as another UI already listening)
+bool InitCallbackSocket()
 {
 	//Builds the key path
-	string homePath = Config::Inst()->getPathHome();
+	string homePath = Nova::Config::Inst()->getPathHome();
 	string key = homePath;
 	key += "/keys";
 	key += UI_LISTEN_FILENAME;
@@ -69,12 +75,25 @@ bool Nova::InitCallbackSocket()
 		return false;
 	}
 
+	callbackInitialized = true;
 	return true;
 }
 
 bool Nova::ConnectToNovad()
 {
-	//TODO: If sockets aren't 0, then just make sure we're still connected
+	if(!callbackInitialized)
+	{
+		if(!InitCallbackSocket())
+		{
+			//TODO Log
+			return false;
+		}
+	}
+
+	if(IsUp())
+	{
+		return true;
+	}
 
 	//Builds the key path
 	string key = Config::Inst()->getPathHome();
@@ -107,6 +126,16 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
+	//Wait for a connection on the callback socket
+	int len = sizeof(struct sockaddr_un);
+	UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
+	if (UI_ListenSocket == -1)
+	{
+		syslog(SYSL_ERR, "File: %s Line: %d accept: %s", __FILE__, __LINE__, strerror(errno));
+		close(UI_ListenSocket);
+		return false;
+	}
+
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
 	if(reply == NULL)
 	{
@@ -132,9 +161,34 @@ bool Nova::ConnectToNovad()
 	return replySuccess;
 }
 
+
+bool Nova::TryWaitConenctToNovad(int timeout_ms)
+{
+	if(!callbackInitialized)
+	{
+		if(!InitCallbackSocket())
+		{
+			//TODO Log
+			return false;
+		}
+	}
+
+	if(ConnectToNovad())
+	{
+		return true;
+	}
+	else
+	{
+		//usleep takes in microsecond argument. Convert to milliseconds
+		usleep(timeout_ms * 1000);
+		return ConnectToNovad();
+	}
+}
+
 bool Nova::CloseNovadConnection()
 {
 	bool success = true;
+	callbackInitialized = false;
 
 	ControlMessage disconnectNotice;
 	disconnectNotice.m_controlType = CONTROL_DISCONNECT_NOTICE;

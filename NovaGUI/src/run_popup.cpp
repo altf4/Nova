@@ -18,23 +18,19 @@
 //============================================================================
 #include "run_popup.h"
 #include "novagui.h"
-#include "Logger.h"
+#include "Connection.h"
 #include "NovadControl.h"
+#include "HaystackControl.h"
 
 #include <QDir>
-#include <string>
-#include <fstream>
-#include <syslog.h>
 #include <QFileDialog>
-#include <boost/format.hpp>
 
 using namespace std;
-using boost::format;
+using namespace Nova;
 
-Run_Popup::Run_Popup(QWidget *parent, string home)
+Run_Popup::Run_Popup(QWidget *parent)
     : QMainWindow(parent)
 {
-	homePath = home;
 	ui.setupUi(this);
 	loadPreferences();
 }
@@ -46,67 +42,11 @@ Run_Popup::~Run_Popup()
 
 void Run_Popup::loadPreferences()
 {
-	string line, prefix;
-
-	//Read from CE Config
-	ifstream config("Config/NOVAConfig.txt");
-
-	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
-
-	// TODO: Just pass the NovaConfig object in here.. or make a new one, no need to read file manually here
-	if(config.is_open())
-	{
-		while(config.good())
-		{
-			getline(config,line);
-
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.trainingCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.pcapCheckBox->setChecked(atoi(line.c_str()));
-				ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
-				continue;
-			}
-
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.pcapEdit->setText(line.c_str());
-				continue;
-			}
-
-			prefix = "GO_TO_LIVE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.liveCapCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-
-			prefix = "USE_TERMINALS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				ui.terminalCheckBox->setChecked(atoi(line.c_str()));
-				continue;
-			}
-		}
-	}
-	else
-	{
-		syslog(SYSL_ERR, "File: %s Line: %d Unable to open Config file.", __FILE__, __LINE__);
-		this->close();
-	}
+	ui.trainingCheckBox->setChecked(Config::Inst()->getIsTraining());
+	ui.pcapCheckBox->setChecked(Config::Inst()->getReadPcap());
+	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
+	ui.pcapEdit->setText(Config::Inst()->getPathPcapFile().c_str());
+	ui.liveCapCheckBox->setChecked(Config::Inst()->getGotoLive());
 }
 
 void Run_Popup::on_pcapCheckBox_stateChanged(int state)
@@ -119,6 +59,8 @@ void Run_Popup::on_startButton_clicked()
 	if(savePreferences())
 	{
 		StartNovad();
+		TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+		StartHaystack();
 	}
 	this->close();
 }
@@ -145,83 +87,9 @@ void Run_Popup::on_pcapButton_clicked()
 
 bool Run_Popup::savePreferences()
 {
-	string line, prefix;
-
-	if(::system("cp Config/NOVAConfig.txt Config/.NOVAConfig.tmp") != 0)
-	{
-		LOG(ERROR, (format("File %1% at line %2%: System call: "
-			"'cp Config/NOVAConfig.txt Config/.NOVAConfig.tmp' has failed.")%__FILE__%__LINE__).str());
-	}
-	ifstream *in = new ifstream("Config/.NOVAConfig.tmp");
-	ofstream *out = new ofstream("Config/NOVAConfig.txt");
-
-
-	if(in->is_open() && out->is_open())
-	{
-		while(in->good())
-		{
-			getline(*in, line);
-
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << "IS_TRAINING " << this->ui.trainingCheckBox->isChecked() << endl;
-				continue;
-			}
-
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << "READ_PCAP " << this->ui.pcapCheckBox->isChecked() << endl;
-				continue;
-			}
-
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << "PCAP_FILE " << this->ui.pcapEdit->text().toStdString() << endl;
-				continue;
-			}
-
-			prefix = "GO_TO_LIVE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << "GO_TO_LIVE " << this->ui.liveCapCheckBox->isChecked() << endl;
-				continue;
-			}
-
-			prefix = "USE_TERMINALS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << "USE_TERMINALS " << this->ui.terminalCheckBox->isChecked() << endl;
-				continue;
-			}
-
-			*out << line << endl;
-		}
-	}
-	else
-	{
-		in->close();
-		out->close();
-		delete out;
-		delete in;
-		if(::system("rm Config/.NOVAConfig.tmp") != 0)
-		{
-			LOG(ERROR, (format("File %1% at line %2%: System call: "
-				"'rm Config/.NOVAConfig.tmp' has failed.")%__FILE__%__LINE__).str());
-		}
-		syslog(SYSL_ERR, "File: %s Line: %d Unable to open Config file.", __FILE__, __LINE__);
-		return false;
-	}
-	in->close();
-	out->close();
-	delete in;
-	delete out;
-	if(::system("rm Config/.NOVAConfig.tmp") != 0)
-	{
-		LOG(ERROR, (format("File %1% at line %2%: System call: "
-						"'rm Config/.NOVAConfig.tmp' has failed.")%__FILE__%__LINE__).str());
-	}
-	return true;
+	Config::Inst()->setIsTraining(ui.trainingCheckBox->isChecked());
+	Config::Inst()->setReadPcap(ui.pcapCheckBox->isChecked());
+	Config::Inst()->setPathPcapFile(ui.pcapEdit->text().toStdString());
+	Config::Inst()->setGotoLive(ui.liveCapCheckBox->isChecked());
+	return Config::Inst()->SaveConfig();
 }

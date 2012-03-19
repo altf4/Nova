@@ -27,13 +27,15 @@ clean-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
+	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 
 clean-release:
 	$(MAKE) -C NovaLibrary/Release clean
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
-	$(MAKE) -C NovaGUI debug-clean
+	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C NovaGUI release-clean
 
 install: install-release
 
@@ -53,11 +55,11 @@ install-release:
 	mkdir -p $(DESTDIR)/usr/share/applications
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
-	cp -frp Installer/Write/nova/.nova $(DESTDIR)/etc/nova
+	cp -fru Installer/Write/nova/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
-	cp -frp Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -frp Installer/Read/icons $(DESTDIR)/usr/share/nova
+	cp -fru Installer/Write/nova $(DESTDIR)/usr/share/
+	cp -fru Installer/Read/icons $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
@@ -86,11 +88,11 @@ install-debug:
 	mkdir -p $(DESTDIR)/usr/share/applications
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
-	cp -frp Installer/Write/nova/.nova $(DESTDIR)/etc/nova
+	cp -fru Installer/Write/nova/.nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
-	cp -frp Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -frp Installer/Read/icons $(DESTDIR)/usr/share/nova
+	cp -fru Installer/Write/nova $(DESTDIR)/usr/share/
+	cp -fru Installer/Read/icons $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
@@ -114,5 +116,5 @@ uninstall:
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	#rm -f $(DESTDIR)/usr/share/man/man1/LocalTrafficMonitor.1.gz
-	sh Installer/postrm
+	#sh Installer/postrm
 

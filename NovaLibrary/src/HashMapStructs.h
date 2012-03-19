@@ -24,15 +24,13 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 /************************************************************************/
 /********** Equality operators used by google's dense hash maps *********/
 /************************************************************************/
 
 struct eqstr
 {
-  bool operator()(string s1, string s2) const
+  bool operator()(std::string s1, std::string s2) const
   {
     return !(s1.compare(s2));
   }
@@ -79,6 +77,6 @@ struct eqkey
 };
 
 ///The Value is a vector of IP headers
-typedef google::dense_hash_map<string, struct Session, tr1::hash<string>, eqstr > TCPSessionHashTable;
+typedef google::dense_hash_map<std::string, struct Session, std::tr1::hash<std::string>, eqstr > TCPSessionHashTable;
 
 #endif /* HASHMAPSTRUCTS_H_ */

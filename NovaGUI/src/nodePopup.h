@@ -23,6 +23,7 @@
 
 #include <QtGui/QSpinBox>
 #include <math.h>
+#include <string.h>
 
 enum macType{macPrefix = 0, macSuffix = 1};
 
@@ -33,7 +34,7 @@ class HexMACSpinBox : public QSpinBox
 	Q_OBJECT
 
 public:
-	HexMACSpinBox(QWidget * parent = 0, string MACAddr = "", macType which = macSuffix) : QSpinBox(parent)
+	HexMACSpinBox(QWidget * parent = 0, std::string MACAddr = "", macType which = macSuffix) : QSpinBox(parent)
 	{
 		validator = new QRegExpValidator(QRegExp("([0-9A-Fa-f][0-9A-Fa-f][:]){0,2}[0-9A-Fa-f][0-9A-Fa-f]"
 				, Qt::CaseInsensitive, QRegExp::RegExp), this);

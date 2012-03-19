@@ -33,5 +33,6 @@ void Nova::SaveAndExit(int param)
 
 	AppendToStateFile();
 
+	LOG(NOTICE, "Novad is now exiting");
 	exit(EXIT_SUCCESS);
 }

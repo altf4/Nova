@@ -21,16 +21,18 @@
 namespace Nova
 {
 
-//Initializes the Callback socket. IE: The socket the UI listens on
-//	NOTE: This must be run first, preferably at startup
-//	returns - true if socket successfully initialized, false on error (such as another UI already listening)
-bool InitCallbackSocket();
-
 //Initializes a connection out to Novad over IPC
 //	NOTE: Must be called before any message can be sent to Novad (but after InitCallbackSocket())
 //	returns - true if a successful connection is established, false if no connection (error)
 //	NOTE: If a connection already exists, then the function does nothing and returns true
 bool ConnectToNovad();
+
+//Tries to connect to Novad, waiting for at most timeout_ms milliseconds
+//	timeout_ms - The amount of time in milliseconds at maximum to wait for a connection
+//	NOTE: Blocks for at most timeout_ms milliseconds
+//	returns - true if a successful connection is established, false if no connection (error)
+//	NOTE: If a connection already exists, then the function does nothing and returns true
+bool TryWaitConenctToNovad(int timeout_ms);
 
 //Closes any connection Novad over IPC
 //	returns - true if no connections to Novad exists, false if there is a connection (error)
