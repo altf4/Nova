@@ -281,7 +281,7 @@ void NovaGUI::InitConfiguration()
 {
 	for (uint i = 0; i < DIM; i++)
 	{
-		if ('1' == Config::Inst()->getEnabledFeatures().at(i))
+		if ('1' == Config::Inst()->GetEnabledFeatures().at(i))
 			m_featureEnabled[i] = true;
 		else
 			m_featureEnabled[i] = false;
@@ -290,9 +290,9 @@ void NovaGUI::InitConfiguration()
 
 void NovaGUI::InitPaths()
 {
-	homePath = Config::Inst()->getPathHome();
-	readPath = Config::Inst()->getPathReadFolder();
-	writePath = Config::Inst()->getPathWriteFolder();
+	homePath = Config::Inst()->GetPathHome();
+	readPath = Config::Inst()->GetPathReadFolder();
+	writePath = Config::Inst()->GetPathWriteFolder();
 
 	if((homePath == "") || (readPath == "") || (writePath == ""))
 	{
@@ -745,7 +745,7 @@ void NovaGUI::on_actionStopNova_triggered()
 	StopHaystack();
 
 	// Were we in training mode?
-	if (Config::Inst()->getIsTraining())
+	if (Config::Inst()->GetIsTraining())
 	{
 		prompter->DisplayPrompt(LAUNCH_TRAINING_MERGE,
 			"ClassificationEngine was in training mode. Would you like to merge the capture file into the training database now?",
@@ -774,7 +774,7 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 	SuspectTable.clear();
 	pthread_rwlock_unlock(&lock);
 
-	QFile::remove(QString::fromStdString(Config::Inst()->getPathCESaveFile()));
+	QFile::remove(QString::fromStdString(Config::Inst()->GetPathCESaveFile()));
 	DrawAllSuspects();
 	m_editingSuspectList = false;
 }
@@ -835,7 +835,7 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 void NovaGUI::on_actionMakeDataFile_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("File to select classifications from"), QString::fromStdString(Config::Inst()->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
+			 tr("File to select classifications from"), QString::fromStdString(Config::Inst()->GetPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
 	if (data.isNull())
 		return;
@@ -855,7 +855,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 
 	string dataFileContent = TrainingData::MakaDataFile(*map);
 
-	ofstream out (Config::Inst()->getPathTrainingFile().data());
+	ofstream out (Config::Inst()->GetPathTrainingFile().data());
 	out << dataFileContent;
 	out.close();
 }
@@ -863,7 +863,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 void NovaGUI::on_actionTrainingData_triggered()
 {
 	 QString data = QFileDialog::getOpenFileName(this,
-			 tr("Classification Engine Data Dump"), QString::fromStdString(Config::Inst()->getPathTrainingFile()), tr("NOVA Classification Dump (*.dump)"));
+			 tr("Classification Engine Data Dump"), QString::fromStdString(Config::Inst()->GetPathTrainingFile()), tr("NOVA Classification Dump (*.dump)"));
 
 	if (data.isNull())
 		return;
@@ -876,7 +876,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 		return;
 	}
 
-	TrainingData::ThinTrainingPoints(trainingDump, Config::Inst()->getThinningDistance());
+	TrainingData::ThinTrainingPoints(trainingDump, Config::Inst()->GetThinningDistance());
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 
@@ -886,7 +886,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 	trainingSuspectMap* headerMap = classifier->getStateData();
 
 	QString outputFile = QFileDialog::getSaveFileName(this,
-			tr("Classification Database File"), QString::fromStdString(Config::Inst()->getPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
+			tr("Classification Database File"), QString::fromStdString(Config::Inst()->GetPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
 	if (outputFile.isNull())
 		return;
@@ -1117,7 +1117,7 @@ void NovaGUI::on_clearSuspectsButton_clicked()
 {
 	m_editingSuspectList = true;
 	ClearAllSuspects();
-	QFile::remove(QString::fromStdString(Config::Inst()->getPathCESaveFile()));
+	QFile::remove(QString::fromStdString(Config::Inst()->GetPathCESaveFile()));
 	DrawAllSuspects();
 	m_editingSuspectList = false;
 }

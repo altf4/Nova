@@ -38,7 +38,7 @@ const string DialogPrompter::noPrefix = "message default no";
 DialogPrompter::DialogPrompter(string configurationFilePath /*= ""*/)
 {
 	if (!configurationFilePath.compare(""))
-		configurationFile =Config::Inst()->getPathHome() + "/settings";
+		configurationFile =Config::Inst()->GetPathHome() + "/settings";
 	LoadDefaultActions();
 }
 

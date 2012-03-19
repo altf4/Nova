@@ -195,7 +195,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			//If the owner is this thread
 			if(pthread_equal(m_table[key]->GetOwner(), pthread_self()))
 			{
-				ANNpoint aNN =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
+				ANNpoint aNN =  annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
 				m_table[key]->UnlockAsOwner();
 				if (m_table[key]->SetAnnPoint(aNN) != 0)

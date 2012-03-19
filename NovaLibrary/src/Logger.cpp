@@ -42,11 +42,11 @@ namespace Nova
 // Loads the configuration file into the class's state data
 	uint16_t Logger::LoadConfiguration()
 	{
-		m_messageInfo.smtp_addr = Config::Inst()->getSMTPAddr();
-		m_messageInfo.smtp_port = Config::Inst()->getSMTPPort();
-		m_messageInfo.smtp_domain = Config::Inst()->getSMTPDomain();
-		m_messageInfo.email_recipients = Config::Inst()->getSMTPEmailRecipients();
-		setUserLogPreferences(Config::Inst()->getLoggerPreferences());
+		m_messageInfo.smtp_addr = Config::Inst()->GetSMTPAddr();
+		m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
+		m_messageInfo.smtp_domain = Config::Inst()->GetSMTPDomain();
+		m_messageInfo.email_recipients = Config::Inst()->GetSMTPEmailRecipients();
+		setUserLogPreferences(Config::Inst()->GetLoggerPreferences());
 
 		return 1;
 	}
@@ -90,12 +90,12 @@ namespace Nova
 		notify_init("Nova");
 		#ifdef NOTIFY_CHECK_VERSION
 		#if NOTIFY_CHECK_VERSION (0, 7, 0)
-		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->getPathIcon().c_str());
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str());
 		#else
-		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->getPathIcon().c_str(), NULL);
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str(), NULL);
 		#endif
 		#else
-		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->getPathIcon().c_str(), NULL);
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str(), NULL);
 		#endif
 		notify_notification_set_timeout(note, 3000);
 		notify_notification_show(note, NULL);

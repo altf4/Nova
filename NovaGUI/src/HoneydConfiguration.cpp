@@ -32,7 +32,7 @@ using boost::property_tree::xml_parser::trim_whitespace;
 
 HoneydConfiguration::HoneydConfiguration()
 {
-	m_homePath = Config::Inst()->getPathHome();
+	m_homePath = Config::Inst()->GetPathHome();
 
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
@@ -137,7 +137,7 @@ void HoneydConfiguration::LoadNodesTemplate()
 		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 		{
 			//Find the specified group
-			if(!v.second.get<std::string>("name").compare(Config::Inst()->getGroup()))
+			if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 			{
 				try //Null Check
 				{
@@ -165,7 +165,7 @@ void HoneydConfiguration::LoadNodesTemplate()
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, Config::Inst()->getGroup().c_str(), string(e.what()).c_str());
+		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, Config::Inst()->GetGroup().c_str(), string(e.what()).c_str());
 	}
 }
 
@@ -521,7 +521,7 @@ void HoneydConfiguration::SaveAllTemplates()
 	BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 	{
 		//Find the specified group
-		if(!v.second.get<std::string>("name").compare(Config::Inst()->getGroup()))
+		if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 		{
 			//Load Subnets first, they are needed before we can load nodes
 			v.second.put_child("subnets", m_subnetTree);
@@ -601,7 +601,7 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 		{
 			continue;
 		}
-		else if(!it->second.name.compare("Doppelganger") && Config::Inst()->getIsDmEnabled())
+		else if(!it->second.name.compare("Doppelganger") && Config::Inst()->GetIsDmEnabled())
 		{
 			out << "bind " << it->second.IP << " " << it->second.pfile << endl;
 		}
@@ -621,7 +621,7 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 		}
 	}
 
-	ofstream outFile(Config::Inst()->getPathConfigHoneydHs().data());
+	ofstream outFile(Config::Inst()->GetPathConfigHoneydHS().data());
 	outFile << out.str() << endl;
 	outFile.close();
 }
@@ -750,7 +750,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 					n.MAC = v.second.get<std::string>("MAC");
 				}
 				catch(...){}
-				if(!n.IP.compare(Config::Inst()->getDoppelIp()))
+				if(!n.IP.compare(Config::Inst()->GetDoppelIp()))
 				{
 					n.name = "Doppelganger";
 					n.sub = n.interface;

@@ -55,7 +55,7 @@ void ClassificationEngine::FormKdTree()
 	delete m_kdTree;
 	//Normalize the data points
 	//Foreach data point
-	for(uint j = 0;j < Config::Inst()->getEnabledFeatureCount();j++)
+	for(uint j = 0;j < Config::Inst()->GetEnabledFeatureCount();j++)
 	{
 		//Foreach feature within the data point
 		for(int i=0;i < m_nPts;i++)
@@ -74,14 +74,14 @@ void ClassificationEngine::FormKdTree()
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
-					Config::Inst()->getEnabledFeatureCount());						// dimension of space
+					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
 }
 
 
 void ClassificationEngine::Classify(Suspect *suspect)
 {
-	double sqrtDIM = Config::Inst()->getSqurtEnabledFeatures();
-	int k = Config::Inst()->getK();
+	double sqrtDIM = Config::Inst()->GetSqurtEnabledFeatures();
+	int k = Config::Inst()->GetK();
 	double d;
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
@@ -100,7 +100,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			k,									// number of near neighbors
 			nnIdx,								// nearest neighbors (returned)
 			dists,								// distance (returned)
-			Config::Inst()->getEps());								// error bound
+			Config::Inst()->GetEps());								// error bound
 
 	for(int i = 0; i < DIM; i++)
 	{
@@ -126,7 +126,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 		dists[i] = sqrt(dists[i]);				// unsquare distance
 		for(int j = 0; j < DIM; j++)
 		{
-			if (Config::Inst()->isFeatureEnabled(j))
+			if (Config::Inst()->IsFeatureEnabled(j))
 			{
 				double distance = (aNN[j] - m_kdTree->thePoints()[nnIdx[i]][j]);
 
@@ -195,7 +195,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	else if (suspect->GetClassification() > 1)
 		suspect->SetClassification(1);
 
-	if( suspect->GetClassification() > Config::Inst()->getClassificationThreshold())
+	if( suspect->GetClassification() > Config::Inst()->GetClassificationThreshold())
 	{
 		suspect->SetIsHostile(true);
 	}
@@ -219,7 +219,7 @@ void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
 	FeatureSet fs = suspectCopy->GetFeatureSet();
 	for(int i = 0;i < DIM;i++)
 	{
-		if (Config::Inst()->isFeatureEnabled(i))
+		if (Config::Inst()->IsFeatureEnabled(i))
 		{
 			if(fs.m_features[i] > m_maxFeatureValues[ai])
 			{
@@ -239,12 +239,12 @@ void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
 
 	if(aNN == NULL)
 	{
-		aNN = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 	}
 
 	for(int i = 0; i < DIM; i++)
 	{
-		if (Config::Inst()->isFeatureEnabled(i))
+		if (Config::Inst()->IsFeatureEnabled(i))
 		{
 			if(m_maxFeatureValues[ai] != 0)
 			{
@@ -269,7 +269,7 @@ void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
 void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 {
 	out << "(" << p[0];
-	for(uint i = 1;i < Config::Inst()->getEnabledFeatureCount();i++)
+	for(uint i = 1;i < Config::Inst()->GetEnabledFeatureCount();i++)
 	{
 		out << ", " << p[i];
 	}
@@ -324,7 +324,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->getPathTrainingFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->GetPathTrainingFile()).str());
 	}
 
 	myfile.close();
@@ -332,8 +332,8 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	//Open the file again, allocate the number of points and assign
 	myfile.open(inFilePath.data(), ifstream::in);
-	m_dataPts = annAllocPts(maxPts, Config::Inst()->getEnabledFeatureCount()); // allocate data points
-	m_normalizedDataPts = annAllocPts(maxPts, Config::Inst()->getEnabledFeatureCount());
+	m_dataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount()); // allocate data points
+	m_normalizedDataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount());
 
 
 	if (myfile.is_open())
@@ -386,7 +386,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			//if the line is valid, continue as normal
 			if(valid)
 			{
-				m_dataPtsWithClass.push_back(new Point(Config::Inst()->getEnabledFeatureCount()));
+				m_dataPtsWithClass.push_back(new Point(Config::Inst()->GetEnabledFeatureCount()));
 
 				// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
 				int actualDimension = 0;
@@ -394,7 +394,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 				{
 					double temp = strtod(fieldsCheck[defaultDimension].data(), NULL);
 
-					if(Config::Inst()->isFeatureEnabled(defaultDimension))
+					if(Config::Inst()->IsFeatureEnabled(defaultDimension))
 					{
 						m_dataPtsWithClass[i]->m_annPoint[actualDimension] = temp;
 						m_dataPts[i][actualDimension] = temp;
@@ -434,14 +434,14 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->getPathTrainingFile()).str());
+		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->GetPathTrainingFile()).str());
 	}
 	myfile.close();
 
 	//Normalize the data points
 
 	//Foreach feature within the data point
-	for(uint j = 0;j < Config::Inst()->getEnabledFeatureCount();j++)
+	for(uint j = 0;j < Config::Inst()->GetEnabledFeatureCount();j++)
 	{
 		//Foreach data point
 		for(int i=0;i < m_nPts;i++)
@@ -453,7 +453,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
-					Config::Inst()->getEnabledFeatureCount());						// dimension of space
+					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
 }
 
 double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)

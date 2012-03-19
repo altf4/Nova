@@ -883,7 +883,7 @@ void NovaConfig::UpdateFeatureListItem(QListWidgetItem* newFeatureEntry, char en
 
 void NovaConfig::LoadNmapPersonalitiesFromFile()
 {
-	string NMapFile = Config::Inst()->getPathReadFolder() + "/nmap-os-db";
+	string NMapFile = Config::Inst()->GetPathReadFolder() + "/nmap-os-db";
 	ifstream nmapPers(NMapFile.c_str());
 	string line, fprint, prefix, printClass;
 	if(nmapPers.is_open())
@@ -1135,31 +1135,31 @@ void NovaConfig::LoadNovadPreferences()
 {
 	openlog("NovaGUI", OPEN_SYSL, LOG_AUTHPRIV);
 
-	ui.interfaceEdit->setText(QString::fromStdString(Config::Inst()->getInterface()));
-	ui.dataEdit->setText(QString::fromStdString(Config::Inst()->getPathTrainingFile()));
+	ui.interfaceEdit->setText(QString::fromStdString(Config::Inst()->GetInterface()));
+	ui.dataEdit->setText(QString::fromStdString(Config::Inst()->GetPathTrainingFile()));
 
-	ui.saAttemptsMaxEdit->setText(QString::number(Config::Inst()->getSaMaxAttempts()));
-	ui.saAttemptsTimeEdit->setText(QString::number(Config::Inst()->getSaSleepDuration()));
-	ui.saPortEdit->setText(QString::number(Config::Inst()->getSaPort()));
-	ui.ceIntensityEdit->setText(QString::number(Config::Inst()->getK()));
-	ui.ceErrorEdit->setText(QString::number(Config::Inst()->getEps()));
-	ui.ceFrequencyEdit->setText(QString::number(Config::Inst()->getClassificationTimeout()));
-	ui.ceThresholdEdit->setText(QString::number(Config::Inst()->getClassificationThreshold()));
-	ui.tcpTimeoutEdit->setText(QString::number(Config::Inst()->getTcpTimout()));
-	ui.tcpFrequencyEdit->setText(QString::number(Config::Inst()->getTcpCheckFreq()));
+	ui.saAttemptsMaxEdit->setText(QString::number(Config::Inst()->GetSaMaxAttempts()));
+	ui.saAttemptsTimeEdit->setText(QString::number(Config::Inst()->GetSaSleepDuration()));
+	ui.saPortEdit->setText(QString::number(Config::Inst()->GetSaPort()));
+	ui.ceIntensityEdit->setText(QString::number(Config::Inst()->GetK()));
+	ui.ceErrorEdit->setText(QString::number(Config::Inst()->GetEps()));
+	ui.ceFrequencyEdit->setText(QString::number(Config::Inst()->GetClassificationTimeout()));
+	ui.ceThresholdEdit->setText(QString::number(Config::Inst()->GetClassificationThreshold()));
+	ui.tcpTimeoutEdit->setText(QString::number(Config::Inst()->GetTcpTimout()));
+	ui.tcpFrequencyEdit->setText(QString::number(Config::Inst()->GetTcpCheckFreq()));
 
-	ui.trainingCheckBox->setChecked(Config::Inst()->getIsTraining());
-	ui.hsConfigEdit->setText((QString)Config::Inst()->getPathConfigHoneydHs().c_str());
+	ui.trainingCheckBox->setChecked(Config::Inst()->GetIsTraining());
+	ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
 
-	ui.dmConfigEdit->setText((QString)Config::Inst()->getPathConfigHoneydDm().c_str());
-	ui.dmIPEdit->setText((QString)Config::Inst()->getDoppelIp().c_str());
-	ui.dmCheckBox->setChecked(Config::Inst()->getIsDmEnabled());
-	ui.pcapCheckBox->setChecked(Config::Inst()->getReadPcap());
+	ui.dmConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydDM().c_str());
+	ui.dmIPEdit->setText((QString)Config::Inst()->GetDoppelIp().c_str());
+	ui.dmCheckBox->setChecked(Config::Inst()->GetIsDmEnabled());
+	ui.pcapCheckBox->setChecked(Config::Inst()->GetReadPcap());
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
-	ui.pcapEdit->setText((QString)Config::Inst()->getPathPcapFile().c_str());
-	ui.liveCapCheckBox->setChecked(Config::Inst()->getGotoLive());
+	ui.pcapEdit->setText((QString)Config::Inst()->GetPathPcapFile().c_str());
+	ui.liveCapCheckBox->setChecked(Config::Inst()->GetGotoLive());
 	{
-		string featuresEnabled = Config::Inst()->getEnabledFeatures();
+		string featuresEnabled = Config::Inst()->GetEnabledFeatures();
 		ui.featureList->clear();
 		// Populate the list, row order is based on dimension macros
 		ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
@@ -1466,26 +1466,26 @@ bool NovaConfig::SaveConfigurationToFile() {
 			ss << 0;
 	}
 
-	Config::Inst()->setIsDmEnabled(ui.dmCheckBox->isChecked());
-	Config::Inst()->setIsTraining(ui.trainingCheckBox->isChecked());
-	Config::Inst()->setInterface(this->ui.interfaceEdit->displayText().toStdString());
-	Config::Inst()->setPathTrainingFile(this->ui.dataEdit->displayText().toStdString());
-	Config::Inst()->setSaSleepDuration(this->ui.saAttemptsTimeEdit->displayText().toDouble());
-	Config::Inst()->setSaMaxAttempts(this->ui.saAttemptsMaxEdit->displayText().toInt());
-	Config::Inst()->setSaPort(this->ui.saPortEdit->displayText().toInt());
-	Config::Inst()->setK(this->ui.ceIntensityEdit->displayText().toInt());
-	Config::Inst()->setEps(this->ui.ceErrorEdit->displayText().toDouble());
-	Config::Inst()->setClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
-	Config::Inst()->setClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
-	Config::Inst()->setPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
-	Config::Inst()->setDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
-	Config::Inst()->setPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
-	Config::Inst()->setTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
-	Config::Inst()->setTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
-	Config::Inst()->setPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
-	Config::Inst()->setEnabledFeatures(ss.str());
-	Config::Inst()->setReadPcap(ui.pcapCheckBox->isChecked());
-	Config::Inst()->setGotoLive(ui.liveCapCheckBox->isChecked());
+	Config::Inst()->SetIsDmEnabled(ui.dmCheckBox->isChecked());
+	Config::Inst()->SetIsTraining(ui.trainingCheckBox->isChecked());
+	Config::Inst()->SetInterface(this->ui.interfaceEdit->displayText().toStdString());
+	Config::Inst()->SetPathTrainingFile(this->ui.dataEdit->displayText().toStdString());
+	Config::Inst()->SetSaSleepDuration(this->ui.saAttemptsTimeEdit->displayText().toDouble());
+	Config::Inst()->SetSaMaxAttempts(this->ui.saAttemptsMaxEdit->displayText().toInt());
+	Config::Inst()->SetSaPort(this->ui.saPortEdit->displayText().toInt());
+	Config::Inst()->SetK(this->ui.ceIntensityEdit->displayText().toInt());
+	Config::Inst()->SetEps(this->ui.ceErrorEdit->displayText().toDouble());
+	Config::Inst()->SetClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
+	Config::Inst()->SetClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
+	Config::Inst()->SetPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
+	Config::Inst()->SetDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
+	Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
+	Config::Inst()->SetTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
+	Config::Inst()->SetTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
+	Config::Inst()->SetPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
+	Config::Inst()->SetEnabledFeatures(ss.str());
+	Config::Inst()->SetReadPcap(ui.pcapCheckBox->isChecked());
+	Config::Inst()->SetGotoLive(ui.liveCapCheckBox->isChecked());
 
 	return Config::Inst()->SaveConfig();
 }

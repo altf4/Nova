@@ -53,102 +53,104 @@ public:
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
     static bool InitUserConfigs(std::string homeNovaPath);
 
-    std::string toString();
+    std::string ToString();
 
     // Getters
-    std::string getConfigFilePath() ;
-    std::string getDoppelInterface() ;
-    std::string getDoppelIp() ;
-    std::string getEnabledFeatures() ;
-    bool isFeatureEnabled(int i) ;
-    uint getEnabledFeatureCount() ;
-    std::string getInterface() ;
-    std::string getPathCESaveFile() ;
-    std::string getPathConfigHoneydDm() ;
-    std::string getPathConfigHoneydHs() ;
-    std::string getPathPcapFile() ;
-    std::string getPathTrainingCapFolder() ;
-    std::string getPathTrainingFile() ;
-    std::string getKey() ;
-    std::vector<in_addr_t> getNeighbors() ;
+    std::string GetConfigFilePath();
+    std::string GetDoppelInterface();
+    std::string GetDoppelIp();
+    std::string GetEnabledFeatures();
+    bool IsFeatureEnabled(int i) ;
+    uint GetEnabledFeatureCount();
+    std::string GetInterface();
+    std::string GetPathCESaveFile();
+    std::string GetPathConfigHoneydDM();
+    std::string GetPathConfigHoneydHS();
+    std::string GetPathPcapFile();
+    std::string GetPathTrainingCapFolder();
+    std::string GetPathTrainingFile();
+    std::string GetKey();
+    std::vector<in_addr_t> GetNeighbors();
 
-    bool getReadPcap() ;
-    bool getUseTerminals() ;
-    bool getIsDmEnabled() ;
-    bool getIsTraining() ;
-    bool getGotoLive() ;
+    bool GetReadPcap();
+    bool GetUseTerminals();
+    bool GetIsDmEnabled();
+    bool GetIsTraining();
+    bool GetGotoLive();
 
-    int getClassificationTimeout() ;
-    int getDataTTL() ;
-    int getK() ;
-    int getSaMaxAttempts() ;
-    int getSaPort() ;
-    int getSaveFreq() ;
-    int getTcpCheckFreq() ;
-    int getTcpTimout() ;
-    int getThinningDistance() ;
+    int GetClassificationTimeout();
+    int GetDataTTL();
+    int GetK();
+    int GetSaMaxAttempts();
+    int GetSaPort();
+    int GetSaveFreq();
+    int GetTcpCheckFreq();
+    int GetTcpTimout();
+    int GetThinningDistance();
 
-    double getClassificationThreshold() ;
-    double getSaSleepDuration() ;
-    double getEps() ;
+    double GetClassificationThreshold();
+    double GetSaSleepDuration();
+    double GetEps();
 
-    std::string getGroup() ;
+    std::string GetGroup();
 
     // Setters
-    void setClassificationThreshold(double classificationThreshold);
-    void setClassificationTimeout(int classificationTimeout);
-    void setConfigFilePath(std::string configFilePath);
-    void setDataTTL(int dataTTL);
-    void setDoppelInterface(std::string doppelInterface);
-    void setDoppelIp(std::string doppelIp);
-    void setEnabledFeatures(std::string enabledFeatureMask);
-    void setEps(double eps);
-    void setGotoLive(bool gotoLive);
-    void setInterface(std::string interface);
-    void setIsDmEnabled(bool isDmEnabled);
-    void setIsTraining(bool isTraining);
-    void setK(int k);
-    void setPathCESaveFile(std::string pathCESaveFile);
-    void setPathConfigHoneydDm(std::string pathConfigHoneydDm);
-    void setPathConfigHoneydHs(std::string pathConfigHoneydHs);
-    void setPathPcapFile(std::string pathPcapFile);
-    void setPathTrainingCapFolder(std::string pathTrainingCapFolder);
-    void setPathTrainingFile(std::string pathTrainingFile);
-    void setReadPcap(bool readPcap);
-    void setSaMaxAttempts(int saMaxAttempts);
-    void setSaPort(int saPort);
-    void setSaSleepDuration(double saSleepDuration);
-    void setSaveFreq(int saveFreq);
-    void setTcpCheckFreq(int tcpCheckFreq);
-    void setTcpTimout(int tcpTimout);
-    void setThinningDistance(int thinningDistance);
-    void setUseTerminals(bool useTerminals);
-    void setKey(std::string key);
-    void setNeigbors(std::vector<in_addr_t> neighbors);
-    void setGroup(std::string group);
-    std::string getLoggerPreferences() ;
-    std::string getSMTPAddr() ;
-    std::string getSMTPDomain() ;
-    std::vector<std::string> getSMTPEmailRecipients() ;
-    in_port_t getSMTPPort() ;
-    void setLoggerPreferences(std::string loggerPreferences);
-    void setSMTPAddr(std::string SMTPAddr);
-    void setSMTPDomain(std::string SMTPDomain);
-	void setSMTPPort(in_port_t SMTPPort);
+    void SetClassificationThreshold(double classificationThreshold);
+    void SetClassificationTimeout(int classificationTimeout);
+    void SetConfigFilePath(std::string configFilePath);
+    void SetDataTTL(int dataTTL);
+    void SetDoppelInterface(std::string doppelInterface);
+    void SetDoppelIp(std::string doppelIp);
+    void SetEnabledFeatures(std::string enabledFeatureMask);
+    void SetEps(double eps);
+    void SetGotoLive(bool gotoLive);
+    void SetInterface(std::string interface);
+    void SetIsDmEnabled(bool isDmEnabled);
+    void SetIsTraining(bool isTraining);
+    void SetK(int k);
+    void SetPathCESaveFile(std::string pathCESaveFile);
+    void SetPathConfigHoneydDm(std::string pathConfigHoneydDm);
+    void SetPathConfigHoneydHs(std::string pathConfigHoneydHs);
+    void SetPathPcapFile(std::string pathPcapFile);
+    void SetPathTrainingCapFolder(std::string pathTrainingCapFolder);
+    void SetPathTrainingFile(std::string pathTrainingFile);
+    void SetReadPcap(bool readPcap);
+    void SetSaMaxAttempts(int saMaxAttempts);
+    void SetSaPort(int saPort);
+    void SetSaSleepDuration(double saSleepDuration);
+    void SetSaveFreq(int saveFreq);
+    void SetTcpCheckFreq(int tcpCheckFreq);
+    void SetTcpTimout(int tcpTimout);
+    void SetThinningDistance(int thinningDistance);
+    void SetUseTerminals(bool useTerminals);
+    void SetKey(std::string key);
+    void SetNeigbors(std::vector<in_addr_t> neighbors);
+    void SetGroup(std::string group);
 
-	double getSqurtEnabledFeatures();
+    std::string GetLoggerPreferences();
+    std::string GetSMTPAddr();
+    std::string GetSMTPDomain();
+    std::vector<std::string> GetSMTPEmailRecipients();
+    in_port_t GetSMTPPort();
+
+    void SetLoggerPreferences(std::string loggerPreferences);
+    void SetSMTPAddr(std::string SMTPAddr);
+    void SetSMTPDomain(std::string SMTPDomain);
+	void SetSMTPPort(in_port_t SMTPPort);
+
+	double GetSqurtEnabledFeatures();
 
     // Set with a vector of email addresses
-    void setSMTPEmailRecipients(std::vector<std::string> SMTPEmailRecipients);
+    void SetSMTPEmailRecipients(std::vector<std::string> SMTPEmailRecipients);
     // Set with a CSV std::string from the config file
-    void setSMTPEmailRecipients(std::string SMTPEmailRecipients);
+    void SetSMTPEmailRecipients(std::string SMTPEmailRecipients);
 
     // Getters for the paths stored in /etc
-    std::string getPathBinaries();
-    std::string getPathWriteFolder();
-    std::string getPathReadFolder();
-    std::string getPathHome();
-    std::string getPathIcon();
+    std::string GetPathBinaries();
+    std::string GetPathWriteFolder();
+    std::string GetPathReadFolder();
+    std::string GetPathHome();
+    std::string GetPathIcon();
 
 protected:
 	Config();
@@ -231,10 +233,10 @@ private:
 	static std::string ResolvePathVars(std::string path);
 
 	// Non-locking versions of some functions for internal use
-	void setEnabledFeatures_noLocking(std::string enabledFeatureMask);
+	void SetEnabledFeatures_noLocking(std::string enabledFeatureMask);
 
     // Set with a CSV std::string from the config file
-    void setSMTPEmailRecipients_noLocking(std::string SMTPEmailRecipients);
+    void SetSMTPEmailRecipients_noLocking(std::string SMTPEmailRecipients);
 
 };
 }

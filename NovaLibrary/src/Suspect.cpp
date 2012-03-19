@@ -100,47 +100,47 @@ string Suspect::ToString()
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 
-	if (Config::Inst()->isFeatureEnabled(DISTINCT_IPS))
+	if (Config::Inst()->IsFeatureEnabled(DISTINCT_IPS))
 	{
 		ss << " Distinct IPs Contacted: " << m_features.m_features[DISTINCT_IPS] << "\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
+	if (Config::Inst()->IsFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
 		ss << " Haystack Traffic Distribution: " << m_features.m_features[IP_TRAFFIC_DISTRIBUTION] << "\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(DISTINCT_PORTS))
+	if (Config::Inst()->IsFeatureEnabled(DISTINCT_PORTS))
 	{
 		ss << " Distinct Ports Contacted: " << m_features.m_features[DISTINCT_PORTS] << "\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
+	if (Config::Inst()->IsFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
 	{
 		ss << " Port Traffic Distribution: "  <<  m_features.m_features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
+	if (Config::Inst()->IsFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
 	{
 		ss << " Haystack Events: " << m_features.m_features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_MEAN))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
 	{
 		ss << " Mean Packet Size: " << m_features.m_features[PACKET_SIZE_MEAN] << "\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_DEVIATION))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_DEVIATION))
 	{
 		ss << " Packet Size Variance: " << m_features.m_features[PACKET_SIZE_DEVIATION] << "\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_MEAN))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
 	{
 		ss << " Mean Packet Interval: " << m_features.m_features[PACKET_INTERVAL_MEAN] << "\n";
 	}
 
-	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_DEVIATION))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
 	{
 		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
@@ -649,8 +649,8 @@ ANNpoint Suspect::GetAnnPoint()
 		return NULL;
 	}
 
-	ANNpoint ret =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
-	for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+	ANNpoint ret =  annAllocPt(Config::Inst()->GetEnabledFeatureCount());
+	for(uint i = 0; i < Config::Inst()->GetEnabledFeatureCount(); i++)
 	{
 		ret[i] = m_annPoint[i];
 	}
@@ -676,9 +676,9 @@ int Suspect::SetAnnPoint(ANNpoint a)
 	}
 	if(m_annPoint == NULL)
 	{
-		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+		m_annPoint = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 	}
-	for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+	for(uint i = 0; i < Config::Inst()->GetEnabledFeatureCount(); i++)
 	{
 		m_annPoint[i] = a[i];
 	}
@@ -825,9 +825,9 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 	{
 		if(m_annPoint == NULL)
 		{
-			m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
+			m_annPoint = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 		}
-		for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+		for(uint i = 0; i < Config::Inst()->GetEnabledFeatureCount(); i++)
 		{
 			m_annPoint[i] = rhs.m_annPoint[i];
 		}
@@ -905,8 +905,8 @@ Suspect::Suspect(const Suspect &rhs)
 
 	if(rhs.m_annPoint != NULL)
 	{
-		m_annPoint = annAllocPt(Config::Inst()->getEnabledFeatureCount());
-		for(uint i = 0; i < Config::Inst()->getEnabledFeatureCount(); i++)
+		m_annPoint = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
+		for(uint i = 0; i < Config::Inst()->GetEnabledFeatureCount(); i++)
 		{
 			m_annPoint[i] = rhs.m_annPoint[i];
 		}

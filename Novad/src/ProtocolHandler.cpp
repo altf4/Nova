@@ -56,8 +56,8 @@ bool Nova::Spawn_UI_Handler()
 {
 
 	int len;
-	string inKeyPath = Config::Inst()->getPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
-	string outKeyPath = Config::Inst()->getPathHome() + "/keys" + UI_LISTEN_FILENAME;
+	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
+	string outKeyPath = Config::Inst()->GetPathHome() + "/keys" + UI_LISTEN_FILENAME;
 
     if((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
@@ -180,7 +180,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			pthread_mutex_lock(&suspectsSinceLastSaveLock);
 			suspectsSinceLastSave.Clear();
 			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
-			string delString = "rm -f " + Config::Inst()->getPathCESaveFile();
+			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
 			{
@@ -235,7 +235,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			suspects.SaveSuspectsToFile(Config::Inst()->getPathCESaveFile()); //TODO: Should check for errors here and return result
+			suspects.SaveSuspectsToFile(Config::Inst()->GetPathCESaveFile()); //TODO: Should check for errors here and return result
 
 			ControlMessage saveSuspectsReply;
 			saveSuspectsReply.m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;
@@ -320,7 +320,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 bool Nova::ConnectToUI()
 {
 	//Builds the key path
-	string homePath = Config::Inst()->getPathHome();
+	string homePath = Config::Inst()->GetPathHome();
 	string key = homePath;
 	key += "/keys";
 	key += UI_LISTEN_FILENAME;

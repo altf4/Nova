@@ -81,12 +81,12 @@ void *Nova::ClassificationLoop(void *ptr)
 
 	//Builds the Silent Alarm Network address
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(Config::Inst()->getSaPort());
+	serv_addr.sin_port = htons(Config::Inst()->GetSaPort());
 
 	//Classification Loop
 	do
 	{
-		sleep(Config::Inst()->getClassificationTimeout());
+		sleep(Config::Inst()->GetClassificationTimeout());
 		//Calculate the "true" Feature Set for each Suspect
 		for (SuspectTableIterator it = suspects.Begin();
 				it.GetIndex() < suspects.Size(); ++it)
@@ -130,17 +130,17 @@ void *Nova::ClassificationLoop(void *ptr)
 			}
 		}
 
-		if (Config::Inst()->getSaveFreq() > 0)
+		if (Config::Inst()->GetSaveFreq() > 0)
 		{
-			if ((time(NULL) - lastSaveTime) > Config::Inst()->getSaveFreq())
+			if ((time(NULL) - lastSaveTime) > Config::Inst()->GetSaveFreq())
 			{
 				AppendToStateFile();
 			}
 		}
 
-		if (Config::Inst()->getDataTTL() > 0)
+		if (Config::Inst()->GetDataTTL() > 0)
 		{
-			if ((time(NULL) - lastLoadTime) > Config::Inst()->getDataTTL())
+			if ((time(NULL) - lastLoadTime) > Config::Inst()->GetDataTTL())
 			{
 				AppendToStateFile();
 				RefreshStateFile();
@@ -149,15 +149,15 @@ void *Nova::ClassificationLoop(void *ptr)
 				LoadStateFile();
 			}
 		}
-	} while (Config::Inst()->getClassificationTimeout() && !Config::Inst()->getReadPcap());
+	} while (Config::Inst()->GetClassificationTimeout() && !Config::Inst()->GetReadPcap());
 
-	if (Config::Inst()->getReadPcap())
+	if (Config::Inst()->GetReadPcap())
 	{
 		return NULL;
 	}
 
 	//Shouldn't get here!!
-	if (Config::Inst()->getClassificationTimeout())
+	if (Config::Inst()->GetClassificationTimeout())
 	{
 		LOG(CRITICAL,
 				"The code should never get here, something went very wrong.",
@@ -180,14 +180,14 @@ void *Nova::TrainingLoop(void *ptr)
 	char buffer[40];
 	strftime(buffer, 40, "%m-%d-%y_%H-%M-%S", timeinfo);
 
-	string trainingCapFile = Config::Inst()->getPathHome() + "/"
-			+ Config::Inst()->getPathTrainingCapFolder() + "/training" + buffer
+	string trainingCapFile = Config::Inst()->GetPathHome() + "/"
+			+ Config::Inst()->GetPathTrainingCapFolder() + "/training" + buffer
 			+ ".dump";
 	Suspect suspectCopy;
 	//Training Loop
 	do
 	{
-		sleep(Config::Inst()->getClassificationTimeout());
+		sleep(Config::Inst()->GetClassificationTimeout());
 		ofstream myfile(trainingCapFile.data(), ios::app);
 
 		if (myfile.is_open())
@@ -200,7 +200,7 @@ void *Nova::TrainingLoop(void *ptr)
 				{
 					suspectCopy = suspects.CheckOut(it.GetKey());
 					ANNpoint aNN = annAllocPt(
-							Config::Inst()->getEnabledFeatureCount());
+							Config::Inst()->GetEnabledFeatureCount());
 					aNN = suspectCopy.GetAnnPoint();
 					suspectCopy.CalculateFeatures();
 					if (aNN == NULL)
@@ -254,10 +254,10 @@ void *Nova::TrainingLoop(void *ptr)
 							% __FILE__ % __LINE__ % trainingCapFile).str());
 		}
 		myfile.close();
-	} while (Config::Inst()->getClassificationTimeout());
+	} while (Config::Inst()->GetClassificationTimeout());
 
 	//Shouldn't get here!
-	if (Config::Inst()->getClassificationTimeout())
+	if (Config::Inst()->GetClassificationTimeout())
 		LOG(CRITICAL,
 				"The code should never get here, something went very wrong.",
 				(format("File %1% at line %2%: Should never get here")
@@ -286,7 +286,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	}
 
 	sendaddr.sin_family = AF_INET;
-	sendaddr.sin_port = htons(Config::Inst()->getSaPort());
+	sendaddr.sin_port = htons(Config::Inst()->GetSaPort());
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
 
 	memset(sendaddr.sin_zero, '\0', sizeof sendaddr.sin_zero);
@@ -306,7 +306,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 
 	stringstream ss;
 	ss << "sudo iptables -A INPUT -p udp --dport "
-			<< Config::Inst()->getSaPort() << " -j REJECT"
+			<< Config::Inst()->GetSaPort() << " -j REJECT"
 					" --reject-with icmp-port-unreachable";
 	if (system(ss.str().c_str()) == -1)
 	{
@@ -314,7 +314,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	}
 	ss.str("");
 	ss << "sudo iptables -A INPUT -p tcp --dport "
-			<< Config::Inst()->getSaPort()
+			<< Config::Inst()->GetSaPort()
 			<< " -j REJECT --reject-with tcp-reset";
 	if (system(ss.str().c_str()) == -1)
 	{
@@ -404,7 +404,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 						"File %1% at line %2%: Got a silent alarm!. Suspect: %3%")
 						% __FILE__ % __LINE__ % newSuspect->ToString()).str());
 
-		if (!Config::Inst()->getClassificationTimeout())
+		if (!Config::Inst()->GetClassificationTimeout())
 			ClassificationLoop(NULL);
 
 		close(connectionSocket);
@@ -486,10 +486,10 @@ void *Nova::TCPTimeout(void *ptr)
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
 				//If were reading packets from a file, assume all packets have been loaded and go beyond
 				// timeout threshhold
-				if (Config::Inst()->getReadPcap())
+				if (Config::Inst()->GetReadPcap())
 				{
 					currentTime = packetTime + 3
-							+ Config::Inst()->getTcpTimout();
+							+ Config::Inst()->GetTcpTimout();
 				}
 				// If it exists)
 				if (packetTime + 2 < currentTime)
@@ -507,10 +507,10 @@ void *Nova::TCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if (!Config::Inst()->getClassificationTimeout())
+						if (!Config::Inst()->GetClassificationTimeout())
 						{
 							//pthread_rwlock_unlock(&sessionLock);
-							if (!Config::Inst()->getIsTraining())
+							if (!Config::Inst()->GetIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
@@ -521,7 +521,7 @@ void *Nova::TCPTimeout(void *ptr)
 						SessionTable[it->first].fin = false;
 					}
 					//If this session is timed out
-					else if (packetTime + Config::Inst()->getTcpTimout()
+					else if (packetTime + Config::Inst()->GetTcpTimout()
 							< currentTime)
 					{
 						for (uint p = 0;
@@ -534,10 +534,10 @@ void *Nova::TCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if (!Config::Inst()->getClassificationTimeout())
+						if (!Config::Inst()->GetClassificationTimeout())
 						{
 							//pthread_rwlock_unlock(&sessionLock);
-							if (!Config::Inst()->getIsTraining())
+							if (!Config::Inst()->GetIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
@@ -552,12 +552,12 @@ void *Nova::TCPTimeout(void *ptr)
 		}
 		pthread_rwlock_unlock(&sessionLock);
 		//Check only once every TCP_CHECK_FREQ seconds
-		sleep(Config::Inst()->getTcpCheckFreq());
-	} while (!Config::Inst()->getReadPcap());
+		sleep(Config::Inst()->GetTcpCheckFreq());
+	} while (!Config::Inst()->GetReadPcap());
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
-	if (Config::Inst()->getReadPcap())
+	if (Config::Inst()->GetReadPcap())
 		return NULL;
 
 	LOG(CRITICAL, "The code should never get here, something went very wrong.",

@@ -43,7 +43,7 @@ bool callbackInitialized = false;
 bool InitCallbackSocket()
 {
 	//Builds the key path
-	string homePath = Nova::Config::Inst()->getPathHome();
+	string homePath = Nova::Config::Inst()->GetPathHome();
 	string key = homePath;
 	key += "/keys";
 	key += UI_LISTEN_FILENAME;
@@ -96,7 +96,7 @@ bool Nova::ConnectToNovad()
 	}
 
 	//Builds the key path
-	string key = Config::Inst()->getPathHome();
+	string key = Config::Inst()->GetPathHome();
 	key += "/keys";
 	key += NOVAD_LISTEN_FILENAME;
 
