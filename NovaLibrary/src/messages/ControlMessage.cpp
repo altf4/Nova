@@ -18,6 +18,7 @@
 
 #include "ControlMessage.h"
 #include <sys/un.h>
+#include <iostream>
 
 using namespace std;
 
@@ -158,12 +159,15 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 			//Uses: 1) UI_Message Type
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_filePath);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
 				return;
 			}
+
+			memcpy(m_filePath, buffer, sizeof(m_filePath));
+			buffer += sizeof(m_filePath);
 
 			break;
 		}
@@ -445,7 +449,7 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Type
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_filePath);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -455,6 +459,9 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
+
+			memcpy(buffer, m_filePath, sizeof(m_filePath));
+			buffer += sizeof(m_filePath);
 
 			break;
 		}

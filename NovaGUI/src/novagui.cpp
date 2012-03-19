@@ -829,7 +829,7 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 	}
 
 	//TODO: Set the filename?
-	SaveAllSuspects();
+	SaveAllSuspects(filename.toStdString());
 }
 
 void NovaGUI::on_actionMakeDataFile_triggered()

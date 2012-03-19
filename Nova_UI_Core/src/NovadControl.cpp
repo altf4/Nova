@@ -22,6 +22,8 @@
 #include "Connection.h"
 #include "StatusQueries.h"
 
+#include <iostream>
+
 #include <stdio.h>
 #include <unistd.h>
 
@@ -92,10 +94,12 @@ bool Nova::StopNovad()
 	return retSuccess;
 }
 
-bool Nova::SaveAllSuspects()
+bool Nova::SaveAllSuspects(std::string file)
 {
 	ControlMessage saveRequest;
 	saveRequest.m_controlType = CONTROL_SAVE_SUSPECTS_REQUEST;
+	strcpy(saveRequest.m_filePath, file.c_str());
+
 	if(!UI_Message::WriteMessage(&saveRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message

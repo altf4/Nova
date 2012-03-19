@@ -19,6 +19,8 @@
 #ifndef NOVADCONTROL_H_
 #define NOVADCONTROL_H_
 
+#include <string>
+#include <cstring>
 #include <arpa/inet.h>
 
 namespace Nova
@@ -36,7 +38,7 @@ bool StopNovad();
 
 //Asks Novad to save the suspect list to persistent storage
 //	returns - true if saved correctly, false on error
-bool SaveAllSuspects();
+bool SaveAllSuspects(std::string file);
 
 //Asks Novad to forget all data on all suspects that it has
 //	returns - true if all suspects cleared successfully, false on error
