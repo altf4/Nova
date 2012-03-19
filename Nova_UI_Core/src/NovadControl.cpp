@@ -39,20 +39,14 @@ bool Nova::StartNovad()
 		return true;
 	}
 
-	int pid = fork();
-	if(pid == -1)
+	if(system("nohup Novad > /dev/null &") != 0)
 	{
 		return false;
 	}
-
-	//If we are the child process (IE: Novad)
-	if(pid == 0)
+	else
 	{
-		system("nohup Novad");
-		exit(EXIT_SUCCESS);
+		return true;
 	}
-
-	return true;
 }
 
 bool Nova::StopNovad()
