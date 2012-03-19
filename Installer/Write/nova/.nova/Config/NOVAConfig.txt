@@ -132,7 +132,7 @@ THINNING_DISTANCE 0.001
 #
 # EXAMPLE:
 #CLASSIFICATION_THRESHOLD .5
-CLASSIFICATION_THRESHOLD .5
+CLASSIFICATION_THRESHOLD 0.5
 
 ############################################
 # DM_HONEYD_CONFIG #
@@ -249,7 +249,7 @@ PCAP_FILE ../masterPcap
 # 
 # EXAMPLE:
 #GO_TO_LIVE 1
-GO_TO_LIVE 0
+GO_TO_LIVE 1
 
 ############################################
 # SA_MAX_ATTEMPTS #

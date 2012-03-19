@@ -16,26 +16,28 @@
 // Description : Manages connections out to Novad, initializes and closes them
 //============================================================================
 
-#include "Connection.h"
-#include "NovaUtil.h"
-#include "Config.h"
 #include "messages/ControlMessage.h"
 #include "StatusQueries.h"
+#include "Connection.h"
+#include "NovaUtil.h"
+#include "Logger.h"
+#include "Config.h"
 
+#include <string>
+#include <cerrno>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <string>
-#include "stdlib.h"
-#include "syslog.h"
-#include <cerrno>
-
-using namespace std;
+#include <boost/format.hpp>
 
 //Socket communication variables
 int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
 struct sockaddr_un UI_Address, novadAddress;
 
 bool callbackInitialized = false;
+
+using namespace std;
+using namespace Nova;
+using boost::format;
 
 //Initializes the Callback socket. IE: The socket the UI listens on
 //	NOTE: This is run internally and not meant to be executed by the user
@@ -55,7 +57,7 @@ bool InitCallbackSocket()
 
 	if((UI_parentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: socket: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(UI_parentSocket);
 		return false;
 	}
@@ -63,14 +65,14 @@ bool InitCallbackSocket()
 
 	if(::bind(UI_parentSocket,(struct sockaddr *)&UI_Address, len) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: bind: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(UI_parentSocket);
 		return false;
 	}
 
 	if(listen(UI_parentSocket, SOCKET_QUEUE_SIZE) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: listen: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(UI_parentSocket);
 		return false;
 	}
@@ -85,7 +87,7 @@ bool Nova::ConnectToNovad()
 	{
 		if(!InitCallbackSocket())
 		{
-			//TODO Log
+			LOG(ERROR, (format("File %1% at line %2%: InitCallbackSocket failed.")%__FILE__%__LINE__).str());
 			return false;
 		}
 	}
@@ -106,13 +108,13 @@ bool Nova::ConnectToNovad()
 
 	if((novadListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: socket: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		return false;
 	}
 
 	if(connect(novadListenSocket, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: connect: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(novadListenSocket);
 		return false;
 	}
@@ -121,7 +123,7 @@ bool Nova::ConnectToNovad()
 	connectRequest.m_controlType = CONTROL_CONNECT_REQUEST;
 	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket))
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Message: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: Message: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(novadListenSocket);
 		return false;
 	}
@@ -131,7 +133,7 @@ bool Nova::ConnectToNovad()
 	UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
 	if (UI_ListenSocket == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d accept: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: accept: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(UI_ListenSocket);
 		return false;
 	}
@@ -168,7 +170,7 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 	{
 		if(!InitCallbackSocket())
 		{
-			//TODO Log
+			LOG(ERROR, (format("File %1% at line %2%: InitCallbackSocket Failed")%__FILE__%__LINE__).str());
 			return false;
 		}
 	}
@@ -224,14 +226,14 @@ bool Nova::CloseNovadConnection()
 
 	if(UI_ListenSocket != -1 && close(UI_ListenSocket))
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: close: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(UI_ListenSocket);
 		success = false;
 	}
 
 	if(novadListenSocket != -1 && close(novadListenSocket))
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, (format("File %1% at line %2%: close: %3%")%__FILE__%__LINE__%strerror(errno)).str());
 		close(novadListenSocket);
 		success = false;
 	}
