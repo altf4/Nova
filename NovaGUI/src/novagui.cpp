@@ -33,7 +33,6 @@
 #include <boost/format.hpp>
 #include <QFileDialog>
 #include <signal.h>
-#include <syslog.h>
 #include <errno.h>
 #include <QDir>
 #include <sys/un.h>
@@ -44,7 +43,6 @@ using boost::format;
 
 pthread_rwlock_t lock;
 string homePath, readPath, writePath;
-
 
 //General variables like tables, flags, locks, etc.
 SuspectGUIHashTable SuspectTable;
@@ -74,10 +72,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 	SuspectTable.set_empty_key(1);
 	SuspectTable.set_deleted_key(5);
 
-
 	m_editingSuspectList = false;
 	m_pathsFile = (char*)"/etc/nova/paths";
-
 
 	ui.setupUi(this);
 
@@ -175,7 +171,6 @@ NovaGUI::~NovaGUI()
 
 }
 
-
 //Draws the suspect context menu
 void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 {
@@ -254,7 +249,8 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			}
 			default:
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+				LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring.")
+					%__FILE__%__LINE__).str());
 				return;
 			}
 		}
@@ -279,12 +275,16 @@ void NovaGUI::closeEvent()
 
 void NovaGUI::InitConfiguration()
 {
-	for (uint i = 0; i < DIM; i++)
+	for(uint i = 0; i < DIM; i++)
 	{
-		if ('1' == Config::Inst()->GetEnabledFeatures().at(i))
+		if('1' == Config::Inst()->GetEnabledFeatures().at(i))
+		{
 			m_featureEnabled[i] = true;
+		}
 		else
+		{
 			m_featureEnabled[i] = false;
+		}
 	}
 }
 
@@ -307,7 +307,6 @@ void NovaGUI::SystemStatusRefresh()
 	Q_EMIT refreshSystemStatus();
 }
 
-
 void NovaGUI::InitiateSystemStatus()
 {
 	// Pull in the icons now that homePath is set
@@ -318,15 +317,17 @@ void NovaGUI::InitiateSystemStatus()
 	m_redIcon = new QIcon(QPixmap(QString::fromStdString(redPath)));
 
 	// Populate the System Status table with empty widgets
-	for (int i = 0; i < ui.systemStatusTable->rowCount(); i++)
-		for (int j = 0; j < ui.systemStatusTable->columnCount(); j++)
+	for(int i = 0; i < ui.systemStatusTable->rowCount(); i++)
+	{
+		for(int j = 0; j < ui.systemStatusTable->columnCount(); j++)
+		{
 			ui.systemStatusTable->setItem(i, j,  new QTableWidgetItem());
-
+		}
+	}
 	// Add labels for our components
 	ui.systemStatusTable->item(COMPONENT_NOVAD, 0)->setText("Novad");
 	ui.systemStatusTable->item(COMPONENT_HSH, 0)->setText("Haystack");
 }
-
 
 void NovaGUI::UpdateSystemStatus()
 {
@@ -356,7 +357,7 @@ void NovaGUI::UpdateSystemStatus()
 
 	// Update the buttons if need be
 	int row = ui.systemStatusTable->currentRow();
-	if (row < 0 || row > NOVA_COMPONENTS)
+	if(row < 0 || row > NOVA_COMPONENTS)
 	{
 		return;
 	}
@@ -365,9 +366,6 @@ void NovaGUI::UpdateSystemStatus()
 		on_systemStatusTable_itemSelectionChanged();
 	}
 }
-
-
-
 
 /************************************************
  * Suspect Functions
@@ -412,13 +410,13 @@ void NovaGUI::DrawAllSuspects()
 	QColor color;
 
 	pthread_rwlock_wrlock(&lock);
-	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
+	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		str = (QString) string(inet_ntoa(it->second.suspect->GetInAddr())).c_str();
 		suspect = it->second.suspect;
 		//Create the colors for the draw
 
-		if (suspect->GetClassification() < 0)
+		if(suspect->GetClassification() < 0)
 		{
 			// In training mode, classification is never set and ends up at -1
 			// Make it a nice blue so it's clear that it hasn't classified
@@ -450,7 +448,9 @@ void NovaGUI::DrawAllSuspects()
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
 				if(SuspectTable[addr].suspect->GetClassification() < suspect->GetClassification())
+				{
 					break;
+				}
 			}
 		}
 		ui.suspectList->insertItem(i, item);
@@ -470,7 +470,9 @@ void NovaGUI::DrawAllSuspects()
 				{
 					addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
 					if(SuspectTable[addr].suspect->GetClassification() < suspect->GetClassification())
+					{
 						break;
+					}
 				}
 			}
 			ui.hostileList->insertItem(i, mainItem);
@@ -503,7 +505,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 	str = (QString) string(inet_ntoa(sItem->suspect->GetInAddr())).c_str();
 
 	//Create the colors for the draw
-	if (sItem->suspect->GetClassification() < 0)
+	if(sItem->suspect->GetClassification() < 0)
 	{
 		// In training mode, classification is never set and ends up at -1
 		// Make it a nice blue so it's clear that it hasn't classified
@@ -532,7 +534,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 
 		//If this is our current selection flag it so we can update the selection if we change the index
 		if(current_row == ui.suspectList->row(sItem->item))
+		{
 			selected = true;
+		}
 
 		ui.suspectList->removeItemWidget(sItem->item);
 
@@ -543,7 +547,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
 				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
+				{
 					break;
+				}
 			}
 		}
 		ui.suspectList->insertItem(i, sItem->item);
@@ -569,7 +575,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
 				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
+				{
 					break;
+				}
 			}
 		}
 		ui.suspectList->insertItem(i, sItem->item);
@@ -585,7 +593,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 
 		//If this is our current selection flag it so we can update the selection if we change the index
 		if(current_row == ui.hostileList->row(sItem->mainItem))
+		{
 			selected = true;
+		}
 
 		ui.hostileList->removeItemWidget(sItem->mainItem);
 		int i = 0;
@@ -595,7 +605,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			{
 				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
 				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
+				{
 					break;
+				}
 			}
 		}
 		ui.hostileList->insertItem(i, sItem->mainItem);
@@ -629,7 +641,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			{
 				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
 				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
+				{
 					break;
+				}
 			}
 		}
 		ui.hostileList->insertItem(i, sItem->mainItem);
@@ -644,7 +658,7 @@ void NovaGUI::UpdateSuspectWidgets()
 {
 	double hostileAcc = 0, benignAcc = 0, totalAcc = 0;
 
-	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
+	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		if(it->second.suspect->GetIsHostile())
 		{
@@ -703,7 +717,7 @@ void NovaGUI::ClearSuspectList()
 	this->ui.suspectList->clear();
 	this->ui.hostileList->clear();
 	//Since clearing permenantly deletes the items we need to make sure the suspects point to null
-	for (SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
+	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		it->second.item = NULL;
 		it->second.mainItem = NULL;
@@ -745,7 +759,7 @@ void NovaGUI::on_actionStopNova_triggered()
 	StopHaystack();
 
 	// Were we in training mode?
-	if (Config::Inst()->GetIsTraining())
+	if(Config::Inst()->GetIsTraining())
 	{
 		m_prompter->DisplayPrompt(LAUNCH_TRAINING_MERGE,
 			"ClassificationEngine was in training mode. Would you like to merge the capture file into the training database now?",
@@ -823,7 +837,7 @@ void NovaGUI::on_actionSave_Suspects_triggered()
 		tr("Save Suspect List"), QDir::currentPath(),
 		tr("Documents (*.txt)"));
 
-	if (filename.isNull())
+	if(filename.isNull())
 	{
 		return;
 	}
@@ -837,21 +851,24 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 	 QString data = QFileDialog::getOpenFileName(this,
 			 tr("File to select classifications from"), QString::fromStdString(Config::Inst()->GetPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
-	if (data.isNull())
+	if(data.isNull())
+	{
 		return;
+	}
 
 	trainingSuspectMap* map = TrainingData::ParseTrainingDb(data.toStdString());
-	if (map == NULL)
+	if(map == NULL)
 	{
 		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
 		return;
 	}
 
-
 	classifierPrompt* classifier = new classifierPrompt(map);
 
-	if (classifier->exec() == QDialog::Rejected)
+	if(classifier->exec() == QDialog::Rejected)
+	{
 		return;
+	}
 
 	string dataFileContent = TrainingData::MakaDataFile(*map);
 
@@ -865,12 +882,14 @@ void NovaGUI::on_actionTrainingData_triggered()
 	 QString data = QFileDialog::getOpenFileName(this,
 			 tr("Classification Engine Data Dump"), QString::fromStdString(Config::Inst()->GetPathTrainingFile()), tr("NOVA Classification Dump (*.dump)"));
 
-	if (data.isNull())
+	if(data.isNull())
+	{
 		return;
+	}
 
 	trainingDumpMap* trainingDump = TrainingData::ParseEngineCaptureFile(data.toStdString());
 
-	if (trainingDump == NULL)
+	if(trainingDump == NULL)
 	{
 		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
 		return;
@@ -880,18 +899,22 @@ void NovaGUI::on_actionTrainingData_triggered()
 
 	classifierPrompt* classifier = new classifierPrompt(trainingDump);
 
-	if (classifier->exec() == QDialog::Rejected)
+	if(classifier->exec() == QDialog::Rejected)
+	{
 		return;
+	}
 
 	trainingSuspectMap* headerMap = classifier->getStateData();
 
 	QString outputFile = QFileDialog::getSaveFileName(this,
 			tr("Classification Database File"), QString::fromStdString(Config::Inst()->GetPathTrainingFile()), tr("NOVA Classification Database (*.db)"));
 
-	if (outputFile.isNull())
+	if(outputFile.isNull())
+	{
 		return;
+	}
 
-	if (!TrainingData::CaptureToTrainingDb(outputFile.toStdString(), headerMap))
+	if(!TrainingData::CaptureToTrainingDb(outputFile.toStdString(), headerMap))
 	{
 		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing the input files. Please see the logs for more details.");
 	}
@@ -1029,7 +1052,8 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 		}
 		default:
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d Invalid System Status Selection Row, ignoring", __FILE__, __LINE__);
+			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring.")
+				%__FILE__%__LINE__).str());
 			return;
 		}
 	}
@@ -1053,12 +1077,12 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 		}
 		default:
 		{
-			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring")%__FILE__%__LINE__).str());
+			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring")
+				%__FILE__%__LINE__).str());
 			break;
 		}
 	}
 }
-
 
 void NovaGUI::on_actionSystemStatStart_triggered()
 {
@@ -1078,7 +1102,8 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 				if(!StartCallbackLoop(this))
 				{
 					LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
+						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")
+						% __FILE__%__LINE__%(::strerror(errno))).str());
 				}
 			}
 			break;
@@ -1096,7 +1121,6 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 
 	UpdateSystemStatus();
 }
-
 
 void NovaGUI::on_actionSystemStatReload_triggered()
 {
@@ -1122,7 +1146,6 @@ void NovaGUI::on_clearSuspectsButton_clicked()
 	m_editingSuspectList = false;
 }
 
-
 /************************************************
  * List Signal Handlers
  ************************************************/
@@ -1145,41 +1168,62 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 {
 	int row = 0;
 	ui.suspectDistances->clear();
-	for (int i = 0; i < DIM; i++)
+	for(int i = 0; i < DIM; i++)
 	{
-		if (m_featureEnabled[i])
+		if(m_featureEnabled[i])
 		{
 			QString featureLabel;
-
 			switch (i)
 			{
-			case IP_TRAFFIC_DISTRIBUTION:
-				featureLabel = tr("IP Traffic Distribution");
-				break;
-			case PORT_TRAFFIC_DISTRIBUTION:
-				featureLabel = tr("Port Traffic Distribution");
-				break;
-			case HAYSTACK_EVENT_FREQUENCY:
-				featureLabel = tr("Haystack Event Frequency");
-				break;
-			case PACKET_SIZE_MEAN:
-				featureLabel = tr("Packet Size Mean");
-				break;
-			case PACKET_SIZE_DEVIATION:
-				featureLabel = tr("Packet Size Deviation");
-				break;
-			case DISTINCT_IPS:
-				featureLabel = tr("IPs Contacted");
-				break;
-			case DISTINCT_PORTS:
-				featureLabel = tr("Ports Contacted");
-				break;
-			case PACKET_INTERVAL_MEAN:
-				featureLabel = tr("Packet Interval Mean");
-				break;
-			case PACKET_INTERVAL_DEVIATION:
-				featureLabel = tr("Packet Interval Deviation");
-				break;
+				case IP_TRAFFIC_DISTRIBUTION:
+				{
+					featureLabel = tr("IP Traffic Distribution");
+					break;
+				}
+				case PORT_TRAFFIC_DISTRIBUTION:
+				{
+					featureLabel = tr("Port Traffic Distribution");
+					break;
+				}
+				case HAYSTACK_EVENT_FREQUENCY:
+				{
+					featureLabel = tr("Haystack Event Frequency");
+					break;
+				}
+				case PACKET_SIZE_MEAN:
+				{
+					featureLabel = tr("Packet Size Mean");
+					break;
+				}
+				case PACKET_SIZE_DEVIATION:
+				{
+					featureLabel = tr("Packet Size Deviation");
+					break;
+				}
+				case DISTINCT_IPS:
+				{
+					featureLabel = tr("IPs Contacted");
+					break;
+				}
+				case DISTINCT_PORTS:
+				{
+					featureLabel = tr("Ports Contacted");
+					break;
+				}
+				case PACKET_INTERVAL_MEAN:
+				{
+					featureLabel = tr("Packet Interval Mean");
+					break;
+				}
+				case PACKET_INTERVAL_DEVIATION:
+				{
+					featureLabel = tr("Packet Interval Deviation");
+					break;
+				}
+				default:
+				{
+					break;
+				}
 			}
 
 			ui.suspectDistances->insertItem(row, featureLabel + tr(" Accuracy"));
@@ -1195,21 +1239,21 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 
 			if(suspect->GetFeatureAccuracy((featureIndex)i) < 0)
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E",
-						__FILE__, __LINE__, suspect->GetFeatureAccuracy((featureIndex)i));
+				LOG(ERROR, (format("File %1% at line %2%: GUI got invalid feature accuracy (should be between 0 and 1), but is %3%.")
+					%__FILE__%__LINE__%suspect->GetFeatureAccuracy((featureIndex)i)).str());
 				suspect->SetFeatureAccuracy((featureIndex)i, 0);
 			}
-			else if (suspect->GetFeatureAccuracy((featureIndex)i) > 1)
+			else if(suspect->GetFeatureAccuracy((featureIndex)i) > 1)
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d GUI got invalid feature accuracy (should be between 0 and 1), but is  %E",
-						__FILE__, __LINE__, suspect->GetFeatureAccuracy((featureIndex)i));
+				LOG(ERROR, (format("File %1% at line %2%: GUI got invalid feature accuracy (should be between 0 and 1), but is %3%.")
+					%__FILE__%__LINE__%suspect->GetFeatureAccuracy((featureIndex)i)).str());
 				suspect->SetFeatureAccuracy((featureIndex)i, 1);
 			}
 
 			bar->setValue((int)((1 - suspect->GetFeatureAccuracy((featureIndex)i)/1.0)*100));
-			bar->setStyleSheet(
-				"QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
-				QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5, stop: 0 yellow, stop: 1 green);}");
+			bar->setStyleSheet("QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
+				 QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1,"
+				" y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
 			formatString.append(QString::number(suspect->GetFeatureSet().m_features[i]));
 			bar->setFormat(formatString);
@@ -1313,9 +1357,12 @@ void *CallbackLoop(void *ptr)
 				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem);
 				break;
 			}
+			default:
+			{
+				break;
+			}
 		}
 	}
-
 	return NULL;
 }
 

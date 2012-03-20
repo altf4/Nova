@@ -35,7 +35,6 @@ const string DialogPrompter::m_hidePrefix = "message hide";
 const string DialogPrompter::m_yesPrefix = "message default yes";
 const string DialogPrompter::m_noPrefix = "message default no";
 
-
 DialogPrompter::DialogPrompter(string configurationFilePath /*= ""*/)
 {
 	if(!configurationFilePath.compare(""))
@@ -45,18 +44,19 @@ DialogPrompter::DialogPrompter(string configurationFilePath /*= ""*/)
 	LoadDefaultActions();
 }
 
-
 messageHandle DialogPrompter::RegisterDialog(messageType t)
 {
 	for(uint i = 0; i < m_registeredMessageTypes.size(); i++)
 	{
-		if(!m_registeredMessageTypes[i].descriptionUID.compare(t.descriptionUID) && m_registeredMessageTypes[i].type == t.type)
+		if(!m_registeredMessageTypes[i].descriptionUID.compare(t.descriptionUID)
+			&& m_registeredMessageTypes[i].type == t.type)
+		{
 			return i;
+		}
 	}
 	m_registeredMessageTypes.push_back(t);
 	return (m_registeredMessageTypes.size() - 1);
 }
-
 
 void DialogPrompter::LoadDefaultActions()
 {
@@ -72,7 +72,9 @@ void DialogPrompter::LoadDefaultActions()
 		while (config.good())
 		{
 			if(!getline(config, line))
+			{
 				continue;
+			}
 
 			// Extract the info from the file
 			if(!line.substr(0, m_showPrefix.length()).compare(m_showPrefix))
@@ -119,7 +121,6 @@ void DialogPrompter::LoadDefaultActions()
 	}
 }
 
-
 void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 {
 	// Set in our local sate
@@ -139,19 +140,30 @@ void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 		while (config.good())
 		{
 			if(!getline(config, line))
+			{
 				continue;
-
+			}
 			// Extract the info from the file
 			if(!line.substr(0, m_showPrefix.length()).compare(m_showPrefix))
+			{
 				prefix = m_showPrefix;
+			}
 			else if(!line.substr(0, m_hidePrefix.length()).compare(m_hidePrefix))
+			{
 				prefix = m_hidePrefix;
+			}
 			else if(!line.substr(0, m_yesPrefix.length()).compare(m_yesPrefix))
+			{
 				prefix = m_yesPrefix;
+			}
 			else if(!line.substr(0, m_noPrefix.length()).compare(m_noPrefix))
+			{
 				prefix = m_noPrefix;
+			}
 			else
+			{
 				prefix = "";
+			}
 
 			if(prefix.compare(""))
 			{
@@ -168,17 +180,22 @@ void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 					ss << MakeConfigurationLine(msg, action);
 				}
 				else
+				{
 					ss << line << endl;
+				}
 			}
 			else
+			{
 				ss << line << endl;
-
+			}
 		}
 	}
 
 	// Append a new line if we didn't find one to edit
 	if(!found)
+	{
 		ss << MakeConfigurationLine(msg, action);
+	}
 
 	config.close();
 
@@ -188,7 +205,6 @@ void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 	outFile << ss.str();
 	outFile.close();
 }
-
 
 string DialogPrompter::MakeConfigurationLine(messageHandle msg, defaultChoice action)
 {
@@ -223,7 +239,6 @@ string DialogPrompter::MakeConfigurationLine(messageHandle msg, defaultChoice ac
 	ss  << " " << m_registeredMessageTypes[msg].type << " " <<  m_registeredMessageTypes[msg].descriptionUID << endl;
 	return ss.str();
 }
-
 
 defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt, QAction * defaultAction, QAction * alternativeAction, QWidget *parent /*= 0*/)
 {
