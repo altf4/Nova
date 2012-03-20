@@ -61,7 +61,7 @@ bool Nova::IsUp()
 	return true;
 }
 
-vector<in_addr_t> *Nova::GetSuspectList(SuspectListType listType)
+vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 {
 	RequestMessage request;
 	request.m_requestType = REQUEST_SUSPECTLIST;

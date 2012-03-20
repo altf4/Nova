@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : StatusQueries.h
+// Name        : NovaCLI.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,25 +13,22 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Handles requests for information from Novad
+// Description : Command line interface for Nova
 //============================================================================
 
-#ifndef STATUSQUERIES_H_
-#define STATUSQUERIES_H_
-
-#include <vector>
-#include <arpa/inet.h>
+#ifndef NOVACLI_H_
+#define NOVACLI_H_
 
 #include "messages/RequestMessage.h"
 
 namespace Nova
 {
-
-//Queries Novad to see if it is currently up or down
-//	returns - True if Novad is up, false if down
-bool IsUp();
-
-std::vector<in_addr_t> *GetSuspectList(enum SuspectListType listType);
-
+	void StartNova();
+	void StartHaystack();
+	void StopNova();
+	void StopHaystack();
+	void PrintSuspectList(enum SuspectListType listType);
 }
-#endif /* STATUSQUERIES_H_ */
+
+
+#endif /* NOVACLI_H_ */
