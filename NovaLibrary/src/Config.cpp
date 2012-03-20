@@ -16,7 +16,6 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================/*
 
-#include <boost/format.hpp>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <fstream>
@@ -28,7 +27,6 @@
 #include "NovaUtil.h"
 
 using namespace std;
-using boost::format;
 
 namespace Nova
 {
@@ -612,8 +610,7 @@ void Config::LoadConfig()
 	}
 	else
 	{
-		LOG(INFO, (format("File %1% at Line %2%: No configuration file found.")
-			%__FILE__%__LINE__).str());
+		LOG(INFO, "No configuration file found", "");
 	}
 
 
@@ -621,8 +618,8 @@ void Config::LoadConfig()
 	{
 		if(!isValid[i])
 		{
-			LOG(INFO, (format("File %1% at Line %2%: Configuration option %3% is invalid in the configuration file.")
-				%__FILE__%__LINE__%m_prefixes[i]).str());
+			LOG(INFO, "Invalid configuration option.",
+				"Configuration option "+ m_prefixes[i]+" is invalid in the configuration file.");
 		}
 	}
 	pthread_rwlock_unlock(&m_lock);
@@ -644,7 +641,6 @@ bool Config::LoadUserConfig()
 		{
 			getline(settings, line);
 			i++;
-
 			prefix = "neighbor";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -656,8 +652,9 @@ bool Config::LoadUserConfig()
 
 					if((int)nbr == -1)
 					{
-						LOG(ERROR, (format("File %1% at line %2%: Invalid IP address parsed on line %3% of the settings file.")
-							%__FILE__%__LINE__%i).str());
+						stringstream ss;
+						ss << "Invalid IP address parsed on line " << i << " of the settings file.";
+						LOG(ERROR, "Invalid IP address parsed.", ss.str());
 						returnValue = false;
 					}
 					else if(nbr)
@@ -678,8 +675,9 @@ bool Config::LoadUserConfig()
 				}
 				else
 				{
-					LOG(ERROR, (format("File %1% at line %2%: Invalid Key parsed on line %3% of the settings file.")
-						%__FILE__%__LINE__%i).str());
+					stringstream ss;
+					ss << "Invalid Key parsed on line " << i << " of the settings file.";
+					LOG(ERROR, "Invalid Key parsed.", ss.str());
 					returnValue = false;
 				}
 			}
@@ -812,8 +810,7 @@ bool Config::SaveConfig()
 	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
-		LOG(ERROR, (format("File %1% at Line %2%: System Call %3% has failed.")
-			%__FILE__%__LINE__%copyCommand).str());
+		LOG(ERROR, "Problem saving current configuration.","System Call "+copyCommand+" has failed.");
 	}
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
@@ -1000,7 +997,7 @@ bool Config::SaveConfig()
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at Line %2%: Error writing to Nova config file.")%__FILE__%__LINE__).str());
+		LOG(ERROR, "Problem saving current configuration.", "");
 		in->close();
 		out->close();
 		delete in;
@@ -1015,8 +1012,7 @@ bool Config::SaveConfig()
 	delete out;
 	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
 	{
-		LOG(ERROR, (format("File %1% at Line %2%: System Command rm -f Config/.NOVAConfig.tmp has failed.")
-			%__FILE__%__LINE__).str());
+		LOG(ERROR, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
 	}
 	pthread_rwlock_unlock(&m_lock);
 	return true;
@@ -1065,7 +1061,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	struct stat fileAttr;
 
 	// Does ~/.nova exist?
-	if(stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+	if(stat(homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		// Do all of the important files exist?
 		for(uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
@@ -1076,13 +1072,12 @@ bool Config::InitUserConfigs(string homeNovaPath)
 				string defaultLocation = "/etc/nova/.nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 
-				LOG(ERROR, (format("File %1% at Line %2%: Warning: The file %3% does not exist but is required for Nova to function. "
-					"Restoring default file from %3%")%__FILE__%__LINE__%fullPath%defaultLocation).str());
-
+				LOG(ERROR, "File not found.",
+					"The file "+fullPath+" does not exist; Using defaults located at "+defaultLocation);
 				if(system(copyCommand.c_str()) == -1)
 				{
-					LOG(ERROR, (format("File %1% at Line %2%: System Command %3% has failed.")
-						%__FILE__%__LINE__%copyCommand).str());
+					LOG(ERROR,"Unable to load defaults from "+defaultLocation,
+							"System Command "+copyCommand+" has failed.");
 				}
 			}
 		}
@@ -1092,8 +1087,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 		//TODO: Do this command programmatically. Not by calling system()
 		if(system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
 		{
-			LOG(ERROR, (format("File %1% at Line %2%: Was not able to create user $HOME/.nova directory")
-				%__FILE__%__LINE__).str());
+			LOG(ERROR, "Was not able to create directory /usr/share/nova/.nova", "");
 			returnValue = false;
 		}
 
@@ -1104,8 +1098,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 		}
 		else
 		{
-			LOG(ERROR, (format("File %1% at Line %2%: Was not able to create user $HOME/.nova directory")
-				%__FILE__%__LINE__).str());
+			LOG(ERROR, "Was not able to create directory /usr/share/nova/.nova", "");
 			returnValue = false;
 		}
 	}
@@ -1160,8 +1153,7 @@ Config::Config()
 
 	if(!this->InitUserConfigs(this->GetPathHome()))
 	{
-		LOG(ERROR, (format("File %1% at Line %2% Error: InitUserConfigs failed. Your home folder and permissions"
-			" may not have been configured properly")%__FILE__%__LINE__).str());
+		LOG(ERROR, "InitUserConfigs failed.","");
 	}
 
 	m_configFilePath = GetPathHome() + "/Config/NOVAConfig.txt";

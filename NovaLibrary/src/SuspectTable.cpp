@@ -22,12 +22,10 @@
 #include "Logger.h"
 
 #include <fstream>
-
-#include "boost/format.hpp"
+#include <sstream>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 namespace Nova
 {
@@ -198,9 +196,12 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 				ANNpoint aNN =  annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
 				m_table[key]->UnlockAsOwner();
-				if (m_table[key]->SetAnnPoint(aNN) != 0)
+				int eVal = m_table[key]->SetAnnPoint(aNN);
+				if (eVal != 0)
 				{
-					LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
+					std::stringstream ss;
+					ss << "SetAnnPoint Failed on suspect " << key << " with return value: " << eVal << ".";
+					LOG(CRITICAL, "Error updating suspect.", ss.str());
 				}
 				annDeallocPt(aNN);
 				m_table[key]->SetClassification(suspectCopy.GetClassification());
@@ -627,14 +628,12 @@ int SuspectTable::NumOwners()
 
 void SuspectTable::SaveSuspectsToFile(string filename)
 {
-	LOG(NOTICE, (format("File %1% at line %2%:  Got request to save file to %3%")% __FILE__%__LINE__% filename).str());
-
+	LOG(NOTICE, "Saving Suspects...", "Saving Suspects in a text format to file "+filename);
 	ofstream out(filename.c_str());
-
 	if(!out.is_open())
 	{
-		LOG(ERROR, (format("File %1% at line %2%:  Error: Unable to open file %3% to save suspect data.")
-				% __FILE__%__LINE__% filename).str());
+		LOG(ERROR,"Unable to open file requested file.",
+			"Unable to open or create file located at "+filename+".");
 		return;
 	}
 	for(SuspectTableIterator it = Begin(); it.GetIndex() < Size(); ++it)
