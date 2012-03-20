@@ -25,26 +25,26 @@ TEST_F(ConfigTest, test_instanceNotNull)
 // Tests that changing the enabled features sets all needed config options
 TEST_F(ConfigTest, test_setEnabledFeatures) {
 	string enabledFeatureString = "110010011";
-	Config::Inst()->setEnabledFeatures(enabledFeatureString);
+	Config::Inst()->SetEnabledFeatures(enabledFeatureString);
 
 	// Check the enabled feature mask string
-	EXPECT_EQ(enabledFeatureString, Config::Inst()->getEnabledFeatures());
+	EXPECT_EQ(enabledFeatureString, Config::Inst()->GetEnabledFeatures());
 
 	// Check the count of enabled features
-	EXPECT_EQ(5, Config::Inst()->getEnabledFeatureCount());
+	EXPECT_EQ(5, Config::Inst()->GetEnabledFeatureCount());
 
 	// Check the squrt of the enabled features
-	EXPECT_EQ(sqrt(5), Config::Inst()->getSqurtEnabledFeatures());
+	EXPECT_EQ(sqrt(5), Config::Inst()->GetSqurtEnabledFeatures());
 
 	// Check if it correctly set all the enabled/disabled feature values
-	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(0));
-	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(1));
-	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(2));
-	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(3));
-	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(4));
-	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(5));
-	EXPECT_FALSE(Config::Inst()->isFeatureEnabled(6));
-	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(7));
-	EXPECT_TRUE(Config::Inst()->isFeatureEnabled(8));
+	EXPECT_TRUE(Config::Inst()->IsFeatureEnabled(0));
+	EXPECT_TRUE(Config::Inst()->IsFeatureEnabled(1));
+	EXPECT_FALSE(Config::Inst()->IsFeatureEnabled(2));
+	EXPECT_FALSE(Config::Inst()->IsFeatureEnabled(3));
+	EXPECT_TRUE(Config::Inst()->IsFeatureEnabled(4));
+	EXPECT_FALSE(Config::Inst()->IsFeatureEnabled(5));
+	EXPECT_FALSE(Config::Inst()->IsFeatureEnabled(6));
+	EXPECT_TRUE(Config::Inst()->IsFeatureEnabled(7));
+	EXPECT_TRUE(Config::Inst()->IsFeatureEnabled(8));
 }
 
