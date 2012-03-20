@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Messages coming asynchronously from Novad to the UI
+// Description : Requests from the GUI to Novad to get current state information
 //============================================================================
 
 #include <string.h>
@@ -92,8 +92,6 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 		}
 		case RequestType::REQUEST_SUSPECTLIST:
 		{
-			//Uses: 1) UI_Message Type
-			//		2) request Type
 			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_listType);
 			if(length != expectedSize)
 			{
@@ -162,6 +160,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Type
 			//		2) request Message Type
+			// 		3) Type of list we want (all, hostile, benign)
 			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_listType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
@@ -170,7 +169,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			memcpy(buffer, &m_messageType, sizeof(m_messageType));
 			buffer += sizeof(m_messageType);
 
-			//Put the Control Message type in
+			//Put the Request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
 

@@ -376,7 +376,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 			}
 			default:
 				LOG(DEBUG, "UI sent us an invalid message",
-						(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
+						(format("File %1% at line %2%: Got an unexpected RequestMessage type")% __FILE__%__LINE__).str());
 				break;
 			}
 
@@ -387,7 +387,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 			default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message",
-					(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
+					(format("File %1% at line %2%: Got an unexpected RequestMessage type")% __FILE__%__LINE__).str());
 			break;
 		}
 

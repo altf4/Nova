@@ -190,8 +190,6 @@ void StopHaystackWrapper()
 
 void PrintSuspectList(enum SuspectListType listType)
 {
-	CloseNovadConnection();
-
 	if (!ConnectToNovad())
 	{
 		cout << "Failed to connect to Nova" << endl;
@@ -215,5 +213,7 @@ void PrintSuspectList(enum SuspectListType listType)
 		char *address = inet_ntoa(tmp);
 		cout << address << endl;
 	}
+
+	CloseNovadConnection();
 }
 }

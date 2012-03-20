@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Messages coming asynchronously from Novad to the UI
+// Description : Requests from the GUI to Novad to get current state information
 //============================================================================
 
 #ifndef RequestMessage_H_
@@ -32,6 +32,7 @@ enum RequestType: char
 	// Requests for lists of suspect IPs
 	REQUEST_SUSPECTLIST= 0,
 	REQUEST_SUSPECTLIST_REPLY,
+
 };
 
 enum SuspectListType : char
@@ -53,7 +54,7 @@ public:
 	~RequestMessage();
 
 	//Deserialization constructor
-	//	buffer - pointer to array in memory where serialized ControlMessage resides
+	//	buffer - pointer to array in memory where serialized RequestMessage resides
 	//	length - the length of this array
 	//	On error, sets m_serializeError to true, on success sets it to false
 	RequestMessage(char *buffer, uint32_t length);
@@ -62,13 +63,20 @@ public:
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
-	char *Serialize(uint32_t *length);
-
 
 	enum RequestType m_requestType;
+
+	// For suspect list
 	enum SuspectListType m_listType;
 	uint32_t m_suspectListLength;
 	std::vector<in_addr_t> m_suspectList;
+
+protected:
+	//Serializes the requestinto a char array
+	//	*length - Return parameter, specifies the length of the serialized array returned
+	// Returns - A pointer to the serialized array
+	//	NOTE: The caller must manually free() the returned buffer after use
+	char *Serialize(uint32_t *length);
 };
 
 }
