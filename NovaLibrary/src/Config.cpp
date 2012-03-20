@@ -16,72 +16,78 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================/*
 
-#include "Config.h"
-#include <fstream>
-#include "Logger.h"
-#include <syslog.h>
+#include <boost/format.hpp>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <fstream>
 #include <sstream>
-#include "NovaUtil.h"
 #include <math.h>
 
+#include "Config.h"
+#include "Logger.h"
+#include "NovaUtil.h"
+
 using namespace std;
+using boost::format;
 
 namespace Nova
 {
 
-string Config::m_prefixes[] = {
-		"INTERFACE",
-		"HS_HONEYD_CONFIG",
-		"TCP_TIMEOUT",
-		"TCP_CHECK_FREQ",
-		"READ_PCAP",
-		"PCAP_FILE",
-		"GO_TO_LIVE",
-		"CLASSIFICATION_TIMEOUT",
-		"SILENT_ALARM_PORT",
-		"K",
-		"EPS",
-		"IS_TRAINING",
-		"CLASSIFICATION_THRESHOLD",
-		"DATAFILE",
-		"SA_MAX_ATTEMPTS",
-		"SA_SLEEP_DURATION",
-		"DM_HONEYD_CONFIG",
-		"DOPPELGANGER_IP",
-		"DOPPELGANGER_INTERFACE",
-		"DM_ENABLED",
-		"ENABLED_FEATURES",
-		"TRAINING_CAP_FOLDER",
-		"THINNING_DISTANCE",
-		"SAVE_FREQUENCY",
-		"DATA_TTL",
-		"CE_SAVE_FILE",
-		"SMTP_ADDR",
-		"SMTP_PORT",
-		"SMTP_DOMAIN",
-		"RECIPIENTS",
-		"SERVICE_PREFERENCES"
+string Config::m_prefixes[] =
+{
+	"INTERFACE",
+	"HS_HONEYD_CONFIG",
+	"TCP_TIMEOUT",
+	"TCP_CHECK_FREQ",
+	"READ_PCAP",
+	"PCAP_FILE",
+	"GO_TO_LIVE",
+	"CLASSIFICATION_TIMEOUT",
+	"SILENT_ALARM_PORT",
+	"K",
+	"EPS",
+	"IS_TRAINING",
+	"CLASSIFICATION_THRESHOLD",
+	"DATAFILE",
+	"SA_MAX_ATTEMPTS",
+	"SA_SLEEP_DURATION",
+	"DM_HONEYD_CONFIG",
+	"DOPPELGANGER_IP",
+	"DOPPELGANGER_INTERFACE",
+	"DM_ENABLED",
+	"ENABLED_FEATURES",
+	"TRAINING_CAP_FOLDER",
+	"THINNING_DISTANCE",
+	"SAVE_FREQUENCY",
+	"DATA_TTL",
+	"CE_SAVE_FILE",
+	"SMTP_ADDR",
+	"SMTP_PORT",
+	"SMTP_DOMAIN",
+	"RECIPIENTS",
+	"SERVICE_PREFERENCES"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
-string Config::m_requiredFiles[] = {
-		"/settings",
-		"/Config/NOVAConfig.txt",
-		"/scripts.xml",
-		"/templates/ports.xml",
-		"/templates/profiles.xml",
-		"/templates/routes.xml",
-		"/templates/nodes.xml"
+string Config::m_requiredFiles[] =
+{
+	"/settings",
+	"/Config/NOVAConfig.txt",
+	"/scripts.xml",
+	"/templates/ports.xml",
+	"/templates/profiles.xml",
+	"/templates/routes.xml",
+	"/templates/nodes.xml"
 };
 
 Config* Config::m_instance = NULL;
 
 Config* Config::Inst()
 {
-	if (m_instance == NULL)
+	if(m_instance == NULL)
+	{
 		m_instance = new Config();
+	}
 	return m_instance;
 }
 
@@ -96,11 +102,9 @@ void Config::LoadConfig()
 
 	bool isValid[sizeof(m_prefixes)/sizeof(m_prefixes[0])];
 
-	openlog("Novaconfiguration", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
-
 	ifstream config(m_configFilePath.c_str());
 
-	if (config.is_open())
+	if(config.is_open())
 	{
 		while (config.good())
 		{
@@ -108,19 +112,18 @@ void Config::LoadConfig()
 			prefixIndex = 0;
 			prefix = m_prefixes[prefixIndex];
 
-
 			// INTERFACE
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					// Try and detect a default interface by checking what the default route in the IP kernel's IP table is
-					if (strcmp(line.c_str(), "default") == 0)
+					if(strcmp(line.c_str(), "default") == 0)
 					{
 
 						FILE * out = popen("netstat -rn", "r");
-						if (out != NULL)
+						if(out != NULL)
 						{
 							char buffer[2048];
 							char * column;
@@ -133,12 +136,12 @@ void Config::LoadConfig()
 								column = strtok(line, " \t\n");
 
 								// Wait until we have the default route entry, ignore other entries
-								if (strcmp(column, "0.0.0.0") == 0)
+								if(strcmp(column, "0.0.0.0") == 0)
 								{
 									while (column != NULL)
 									{
 										// Get the column that has the interface name
-										if (currentColumn == 7)
+										if(currentColumn == 7)
 										{
 
 											m_interface = column;
@@ -156,7 +159,9 @@ void Config::LoadConfig()
 						pclose(out);
 					}
 					else
+					{
 						m_interface = line;
+					}
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -165,10 +170,10 @@ void Config::LoadConfig()
 			// HS_HONEYD_CONFIG
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathConfigHoneydHs  = line;
 					isValid[prefixIndex] = true;
@@ -179,10 +184,10 @@ void Config::LoadConfig()
 			// TCP_TIMEOUT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_tcpTimout = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -193,10 +198,10 @@ void Config::LoadConfig()
 			// TCP_CHECK_FREQ
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_tcpCheckFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -207,10 +212,10 @@ void Config::LoadConfig()
 			// READ_PCAP
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					m_readPcap = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -221,10 +226,10 @@ void Config::LoadConfig()
 			// PCAP_FILE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathPcapFile = line;
 					isValid[prefixIndex] = true;
@@ -235,10 +240,10 @@ void Config::LoadConfig()
 			// GO_TO_LIVE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_gotoLive = line.c_str();
 					isValid[prefixIndex] = true;
@@ -249,10 +254,10 @@ void Config::LoadConfig()
 			// CLASSIFICATION_TIMEOUT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) >= 0)
+				if(atoi(line.c_str()) >= 0)
 				{
 					m_classificationTimeout = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -263,7 +268,7 @@ void Config::LoadConfig()
 			// SILENT_ALARM_PORT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				if(line.size() == prefix.size())
 				{
@@ -272,7 +277,7 @@ void Config::LoadConfig()
 
 				line = line.substr(prefix.size() + 1, line.size());
 
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_saPort = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -283,10 +288,10 @@ void Config::LoadConfig()
 			// K
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_k = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -297,10 +302,10 @@ void Config::LoadConfig()
 			// EPS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) >= 0)
+				if(atof(line.c_str()) >= 0)
 				{
 					m_eps = atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -311,10 +316,10 @@ void Config::LoadConfig()
 			// IS_TRAINING
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					m_isTraining = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -325,10 +330,10 @@ void Config::LoadConfig()
 			// CLASSIFICATION_THRESHOLD
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) >= 0)
+				if(atof(line.c_str()) >= 0)
 				{
 					m_classificationThreshold= atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -339,10 +344,10 @@ void Config::LoadConfig()
 			// DATAFILE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0 && !line.substr(line.size() - 4,
+				if(line.size() > 0 && !line.substr(line.size() - 4,
 						line.size()).compare(".txt"))
 				{
 					m_pathTrainingFile = line;
@@ -354,10 +359,10 @@ void Config::LoadConfig()
 			// SA_MAX_ATTEMPTS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_saMaxAttempts = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -368,10 +373,10 @@ void Config::LoadConfig()
 			// SA_SLEEP_DURATION
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) >= 0)
+				if(atof(line.c_str()) >= 0)
 				{
 					m_saSleepDuration = atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -382,10 +387,10 @@ void Config::LoadConfig()
 			// DM_HONEYD_CONFIG
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathConfigHoneydDm = line;
 					isValid[prefixIndex] = true;
@@ -397,10 +402,10 @@ void Config::LoadConfig()
 			// DOPPELGANGER_IP
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_doppelIp = line;
 					isValid[prefixIndex] = true;
@@ -411,10 +416,10 @@ void Config::LoadConfig()
 			// DOPPELGANGER_INTERFACE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_doppelInterface = line;
 					isValid[prefixIndex] = true;
@@ -425,10 +430,10 @@ void Config::LoadConfig()
 			// DM_ENABLED
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					m_isDmEnabled = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -440,10 +445,10 @@ void Config::LoadConfig()
 			// ENABLED_FEATURES
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() == DIM)
+				if(line.size() == DIM)
 				{
 					SetEnabledFeatures_noLocking(line);
 					isValid[prefixIndex] = true;
@@ -455,10 +460,10 @@ void Config::LoadConfig()
 			// TRAINING_CAP_FOLDER
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathTrainingCapFolder = line;
 					isValid[prefixIndex] = true;
@@ -469,10 +474,10 @@ void Config::LoadConfig()
 			// THINNING_DISTANCE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) > 0)
+				if(atof(line.c_str()) > 0)
 				{
 					m_thinningDistance = atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -483,10 +488,10 @@ void Config::LoadConfig()
 			// SAVE_FREQUENCY
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_saveFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -497,10 +502,10 @@ void Config::LoadConfig()
 			// DATA_TTL
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) >= 0)
+				if(atoi(line.c_str()) >= 0)
 				{
 					m_dataTTL = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -511,10 +516,10 @@ void Config::LoadConfig()
 			// CE_SAVE_FILE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathCESaveFile = line;
 					isValid[prefixIndex] = true;
@@ -601,29 +606,25 @@ void Config::LoadConfig()
 					m_loggerPreferences = line;
 					isValid[prefixIndex] = true;
 				}
-
 				continue;
 			}
 		}
 	}
 	else
 	{
-		//TODO replace with LOG()
-		syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__); //TODO replace with LOG()
+		LOG(INFO, (format("File %1% at Line %2%: No configuration file found.")
+			%__FILE__%__LINE__).str());
 	}
 
 
-	for (uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
+	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
-		if (!isValid[i])
+		if(!isValid[i])
 		{
-			// TODO: Make this say which config option is invalid again
-			syslog(SYSL_INFO, "Line: %d Configuration option %s is invalid in the configuration file", __LINE__, m_prefixes[i].c_str());
-			//TODO replace with LOG()
+			LOG(INFO, (format("File %1% at Line %2%: Configuration option %3% is invalid in the configuration file.")
+				%__FILE__%__LINE__%m_prefixes[i]).str());
 		}
 	}
-	closelog();
-
 	pthread_rwlock_unlock(&m_lock);
 }
 
@@ -655,8 +656,8 @@ bool Config::LoadUserConfig()
 
 					if((int)nbr == -1)
 					{
-						syslog(SYSL_ERR, "Line: %d Invalid IP address parsed on line %d of the settings file.", __LINE__, i);
-						//TODO replace with LOG()
+						LOG(ERROR, (format("File %1% at line %2%: Invalid IP address parsed on line %3% of the settings file.")
+							%__FILE__%__LINE__%i).str());
 						returnValue = false;
 					}
 					else if(nbr)
@@ -672,11 +673,13 @@ bool Config::LoadUserConfig()
 				line = line.substr(prefix.size()+1,line.size());
 				//TODO Key should be 256 characters, hard check for this once implemented
 				if((line.size() > 0) && (line.size() < 257))
+				{
 					m_key = line;
+				}
 				else
 				{
-					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
-					//TODO replace with LOG()
+					LOG(ERROR, (format("File %1% at line %2%: Invalid Key parsed on line %3% of the settings file.")
+						%__FILE__%__LINE__%i).str());
 					returnValue = false;
 				}
 			}
@@ -809,7 +812,8 @@ bool Config::SaveConfig()
 	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
-		//TODO ERROR handling
+		LOG(ERROR, (format("File %1% at Line %2%: System Call %3% has failed.")
+			%__FILE__%__LINE__%copyCommand).str());
 	}
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
@@ -819,7 +823,7 @@ bool Config::SaveConfig()
 	{
 		while(in->good())
 		{
-			if (!getline(*in, line))
+			if(!getline(*in, line))
 			{
 				continue;
 			}
@@ -828,9 +832,13 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				if(GetIsDmEnabled())
+				{
 					*out << "DM_ENABLED 1"<<endl;
+				}
 				else
+				{
 					*out << "DM_ENABLED 0"<<endl;
+				}
 				continue;
 			}
 
@@ -838,9 +846,13 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				if(GetIsTraining())
-					*out << "IS_TRAINING 1"<<endl;
+				{
+					*out << "IS_TRAINING 1"<< endl;
+				}
 				else
+				{
 					*out << "IS_TRAINING 0"<<endl;
+				}
 				continue;
 			}
 
@@ -960,9 +972,13 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				if(GetReadPcap())
-					*out << "READ_PCAP 1"<< endl;
+				{
+					*out << "READ_PCAP 1"<<  endl;
+				}
 				else
+				{
 					*out << "READ_PCAP 0"<< endl;
+				}
 				continue;
 			}
 
@@ -970,26 +986,25 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				if(GetGotoLive())
+				{
 					*out << "GO_TO_LIVE 1" << endl;
+				}
 				else
+				{
 					*out << "GO_TO_LIVE 0" << endl;
+				}
 				continue;
 			}
-
 			*out << line << endl;
 		}
 	}
 	else
 	{
-		openlog("Novaconfiguration", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
-		//TODO replace with LOG()
-		closelog();
+		LOG(ERROR, (format("File %1% at Line %2%: Error writing to Nova config file.")%__FILE__%__LINE__).str());
 		in->close();
 		out->close();
 		delete in;
 		delete out;
-
 		pthread_rwlock_unlock(&m_lock);
 		return false;
 	}
@@ -1000,7 +1015,8 @@ bool Config::SaveConfig()
 	delete out;
 	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
 	{
-		//TODO ERROR handling.
+		LOG(ERROR, (format("File %1% at Line %2%: System Command rm -f Config/.NOVAConfig.tmp has failed.")
+			%__FILE__%__LINE__).str());
 	}
 	pthread_rwlock_unlock(&m_lock);
 	return true;
@@ -1010,8 +1026,6 @@ bool Config::SaveConfig()
 
 void Config::SetDefaults()
 {
-	openlog(__FUNCTION__, OPEN_SYSL, LOG_AUTHPRIV);
-
 	m_interface = "default";
 	m_pathConfigHoneydHs 	= "Config/haystack.config";
 	m_pathPcapFile 		= "../pcapfile";
@@ -1043,7 +1057,7 @@ void Config::SetDefaults()
 }
 
 // Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
-//	Returns: True if (after the function) the user has all necessary ~/.nova config files
+//	Returns: True if(after the function) the user has all necessary ~/.nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
 bool Config::InitUserConfigs(string homeNovaPath)
 {
@@ -1051,22 +1065,24 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	struct stat fileAttr;
 
 	// Does ~/.nova exist?
-	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+	if(stat( homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		// Do all of the important files exist?
-		for (uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
+		for(uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
 		{
 			string fullPath = homeNovaPath + Config::m_requiredFiles[i];
-			if (stat (fullPath.c_str(), &fileAttr ) != 0)
+			if(stat (fullPath.c_str(), &fileAttr ) != 0)
 			{
 				string defaultLocation = "/etc/nova/.nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
-				//TODO replace with LOG()
-				syslog(SYSL_ERR, "Warning: The file %s does not exist but is required for Nova to function. Restoring default file from %s",fullPath.c_str(), defaultLocation.c_str());
-				if (system(copyCommand.c_str()) == -1)
+
+				LOG(ERROR, (format("File %1% at Line %2%: Warning: The file %3% does not exist but is required for Nova to function. "
+					"Restoring default file from %3%")%__FILE__%__LINE__%fullPath%defaultLocation).str());
+
+				if(system(copyCommand.c_str()) == -1)
 				{
-					//TODO replace with LOG()
-					syslog(SYSL_ERR, "Error: Unable to copy file %s to %s.",fullPath.c_str(), defaultLocation.c_str());
+					LOG(ERROR, (format("File %1% at Line %2%: System Command %3% has failed.")
+						%__FILE__%__LINE__%copyCommand).str());
 				}
 			}
 		}
@@ -1074,20 +1090,22 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	else
 	{
 		//TODO: Do this command programmatically. Not by calling system()
-		if( system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
+		if(system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			//TODO replace with LOG()
+			LOG(ERROR, (format("File %1% at Line %2%: Was not able to create user $HOME/.nova directory")
+				%__FILE__%__LINE__).str());
 			returnValue = false;
 		}
 
 		//Check the ~/.nova dir again
-		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+		if(stat(homeNovaPath.c_str(), &fileAttr) == 0)
+		{
 			return returnValue;
+		}
 		else
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			//TODO replace with LOG()
+			LOG(ERROR, (format("File %1% at Line %2%: Was not able to create user $HOME/.nova directory")
+				%__FILE__%__LINE__).str());
 			returnValue = false;
 		}
 	}
@@ -1140,13 +1158,10 @@ Config::Config()
 	pthread_rwlock_init(&m_lock, NULL);
 	LoadPaths();
 
-	openlog("NovaConfigurator", OPEN_SYSL, LOG_AUTHPRIV);
-
 	if(!this->InitUserConfigs(this->GetPathHome()))
 	{
-		//TODO replace with LOG()
-		syslog(SYSL_ERR, "Error: InitUserConfigs failed. Your home folder and permissions may not have been configured properly");
-		//exit(EXIT_FAILURE);
+		LOG(ERROR, (format("File %1% at Line %2% Error: InitUserConfigs failed. Your home folder and permissions"
+			" may not have been configured properly")%__FILE__%__LINE__).str());
 	}
 
 	m_configFilePath = GetPathHome() + "/Config/NOVAConfig.txt";
@@ -1158,6 +1173,7 @@ Config::Config()
 
 Config::~Config()
 {
+
 }
 
 double Config::GetClassificationThreshold()
@@ -1458,9 +1474,9 @@ void Config::SetDoppelIp(string doppelIp)
 void Config::SetEnabledFeatures_noLocking(string enabledFeatureMask)
 {
 	m_enabledFeatureCount = 0;
-	for (uint i = 0; i < DIM; i++)
+	for(uint i = 0; i < DIM; i++)
 	{
-		if ('1' == enabledFeatureMask.at(i))
+		if('1' == enabledFeatureMask.at(i))
 		{
 			m_isFeatureEnabled[i] = true;
 			m_enabledFeatureCount++;

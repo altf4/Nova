@@ -319,7 +319,7 @@ SuspectTableRet SuspectTable::Erase(uint64_t key)
 	}
 	else
 	{
-		Rdlock();
+		Wrlock();
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
@@ -338,6 +338,7 @@ SuspectTableRet SuspectTable::Erase(uint64_t key)
 			Unlock();
 			return SUCCESS;
 		}
+		Unlock();
 	}
 	//Shouldn't get here, IsValidKey should cover this case, this is here only to prevent warnings or incase of error
 	return KEY_INVALID;
