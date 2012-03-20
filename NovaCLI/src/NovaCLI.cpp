@@ -41,6 +41,7 @@ int main(int argc, const char *argv[])
 		PrintUsage();
 	}
 
+	// Listing suspect IP addresses
 	if (!strcmp(argv[1], "list"))
 	{
 		if (argc < 3)
@@ -65,6 +66,8 @@ int main(int argc, const char *argv[])
 			PrintUsage();
 		}
 	}
+
+	// Starting components
 	else if (!strcmp(argv[1], "start"))
 	{
 		if (argc < 3)
@@ -85,6 +88,8 @@ int main(int argc, const char *argv[])
 			PrintUsage();
 		}
 	}
+
+	// Stopping components
 	else if (!strcmp(argv[1], "stop"))
 	{
 		if (argc < 3)
@@ -105,6 +110,24 @@ int main(int argc, const char *argv[])
 			PrintUsage();
 		}
 	}
+
+	// Getting suspect information
+	else if (!strcmp(argv[1], "get"))
+	{
+		if (argc < 3)
+		{
+			PrintUsage();
+		}
+
+		in_addr_t address;
+		if (inet_pton(AF_INET, argv[2], &address) != 1)
+		{
+			cout << "Error: Unable to convert to IP address" << endl;
+			exit(EXIT_FAILURE);
+		}
+
+		PrintSuspect(address);
+	}
 	else
 	{
 		PrintUsage();
@@ -121,7 +144,10 @@ void PrintUsage()
 	cout << "Usage:" << endl;
 	cout << "    NovaCLI start nova|haystack" << endl;
 	cout << "    NovaCLI stop nova|haystack" << endl;
-	cout << "    NovaCLI list all|hostile|benign" << endl << endl;
+	cout << "    NovaCLI list all|hostile|benign" << endl;
+	cout << "    NovaCLI get xxx.xxx.xxx.xxx" << endl;
+
+	cout << endl;
 	exit(EXIT_FAILURE);
 }
 
@@ -166,11 +192,7 @@ void StartHaystackWrapper()
 
 void StopNovaWrapper()
 {
-	if (!ConnectToNovad())
-	{
-		cout << "Failed to connect to Nova" << endl;
-		exit(EXIT_FAILURE);
-	}
+	Connect();
 
 	if(StopNovad())
 	{
@@ -194,16 +216,31 @@ void StopHaystackWrapper()
 	}
 }
 
-void PrintSuspectList(enum SuspectListType listType)
+void PrintSuspect(in_addr_t address)
 {
-	if (!ConnectToNovad())
+	Connect();
+
+	Suspect *suspect = GetSuspect(address);
+
+	if (suspect != NULL)
 	{
-		cout << "Failed to connect to Nova" << endl;
-		exit(EXIT_FAILURE);
+		cout << "Suspect:" << endl;
+		cout << suspect->ToString() << endl;
+	}
+	else
+	{
+		cout << "Error: No suspect received" << endl;
 	}
 
+	CloseNovadConnection();
+}
+
+void PrintSuspectList(enum SuspectListType listType)
+{
+	Connect();
+
 	vector<in_addr_t> *suspects;
-	suspects = GetSuspectList(SUSPECTLIST_ALL);
+	suspects = GetSuspectList(listType);
 
 
 	if (suspects == NULL)
@@ -222,4 +259,14 @@ void PrintSuspectList(enum SuspectListType listType)
 
 	CloseNovadConnection();
 }
+
+void Connect()
+{
+	if (!ConnectToNovad())
+	{
+		cout << "Failed to connect to Nova" << endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
 }

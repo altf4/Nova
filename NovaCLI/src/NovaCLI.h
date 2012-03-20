@@ -23,14 +23,19 @@
 
 namespace NovaCLI
 {
-	void StartNovaWrapper();
-	void StartHaystackWrapper();
-	void StopNovaWrapper();
-	void StopHaystackWrapper();
-	void PrintSuspectList(enum SuspectListType listType);
 
+// Connect to Novad if we can, otherwise print error and exit
+void Connect();
 
-	void PrintUsage();
+void StartNovaWrapper();
+void StartHaystackWrapper();
+void StopNovaWrapper();
+void StopHaystackWrapper();
+
+void PrintSuspect(in_addr_t address);
+void PrintSuspectList(enum SuspectListType listType);
+
+void PrintUsage();
 }
 
 
