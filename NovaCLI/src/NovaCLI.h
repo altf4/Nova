@@ -21,13 +21,16 @@
 
 #include "messages/RequestMessage.h"
 
-namespace Nova
+namespace NovaCLI
 {
-	void StartNova();
-	void StartHaystack();
-	void StopNova();
-	void StopHaystack();
+	void StartNovaWrapper();
+	void StartHaystackWrapper();
+	void StopNovaWrapper();
+	void StopHaystackWrapper();
 	void PrintSuspectList(enum SuspectListType listType);
+
+
+	void PrintUsage();
 }
 
 

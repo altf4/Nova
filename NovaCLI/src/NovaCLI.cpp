@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : NovaCLI.h
+// Name        : NovaCLI.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 
 #include "NovaCLI.h"
 #include "Connection.h"
+#include "HaystackControl.h"
+#include "NovadControl.h"
 #include "StatusQueries.h"
 
 
@@ -29,11 +31,23 @@
 namespace po = boost::program_options;
 using namespace std;
 using namespace Nova;
+using namespace NovaCLI;
 
 int main(int argc, const char *argv[])
 {
+	// Fail if no arguements
+	if (argc < 2)
+	{
+		PrintUsage();
+	}
+
 	if (!strcmp(argv[1], "list"))
 	{
+		if (argc < 3)
+		{
+			PrintUsage();
+		}
+
 		if (!strcmp(argv[2], "all"))
 		{
 			PrintSuspectList(SUSPECTLIST_ALL);
@@ -48,57 +62,130 @@ int main(int argc, const char *argv[])
 		}
 		else
 		{
-			cout << "Error: Unknown suspect list type. Should be: 'all', 'hostile', or 'benign'" << endl;
+			PrintUsage();
 		}
 	}
 	else if (!strcmp(argv[1], "start"))
 	{
+		if (argc < 3)
+		{
+			PrintUsage();
+		}
+
 		if (!strcmp(argv[2], "nova"))
 		{
-			StartNova();
+			StartNovaWrapper();
 		}
 		else if (!strcmp(argv[2], "haystack"))
 		{
-			StartHaystack();
+			StartHaystackWrapper();
+		}
+		else
+		{
+			PrintUsage();
 		}
 	}
 	else if (!strcmp(argv[1], "stop"))
 	{
+		if (argc < 3)
+		{
+			PrintUsage();
+		}
+
 		if (!strcmp(argv[2], "nova"))
 		{
-			StopNova();
+			StopNovaWrapper();
 		}
 		else if (!strcmp(argv[2], "haystack"))
 		{
-			StopHaystack();
+			StopHaystackWrapper();
 		}
+		else
+		{
+			PrintUsage();
+		}
+	}
+	else
+	{
+		PrintUsage();
 	}
 
 	return EXIT_SUCCESS;
 }
 
-
-namespace Nova
+namespace NovaCLI
 {
 
-void StartNova()
+void PrintUsage()
 {
-
+	cout << "Usage:" << endl;
+	cout << "    NovaCLI start nova|haystack" << endl;
+	cout << "    NovaCLI stop nova|haystack" << endl;
+	cout << "    NovaCLI list all|hostile|benign" << endl << endl;
+	exit(EXIT_FAILURE);
 }
 
-void StartHaystack()
+void StartNovaWrapper()
 {
-
+	if (!ConnectToNovad())
+	{
+		if (StartNovad())
+		{
+			cout << "Started Novad" << endl;
+		}
+		else
+		{
+			cout << "Failed to start Novad" << endl;
+		}
+	}
+	else
+	{
+		cout << "Novad is already running" << endl;
+		CloseNovadConnection();
+	}
 }
 
-void StopNova()
+void StartHaystackWrapper()
 {
-
+	if (!IsHaystackUp())
+	{
+		if (StartHaystack())
+		{
+			cout << "Started Haystack" << endl;
+		}
+		else
+		{
+			cout << "Failed to start Haystack" << endl;
+		}
+	}
+	else
+	{
+		cout << "Haystack is already running" << endl;
+	}
 }
 
-void StopHaystack()
+void StopNovaWrapper()
 {
+	if(StopNovad())
+	{
+		cout << "Novad has been stopped" << endl;
+	}
+	else
+	{
+		cout << "There was a problem stopping Novad" << endl;
+	}
+}
 
+void StopHaystackWrapper()
+{
+	if (StopHaystack())
+	{
+		cout << "Haystack has been stopped" << endl;
+	}
+	else
+	{
+		cout << "There was a problem stopping the Haystack" << endl;
+	}
 }
 
 void PrintSuspectList(enum SuspectListType listType)
