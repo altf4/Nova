@@ -33,6 +33,7 @@ void StopNovaWrapper();
 void StopHaystackWrapper();
 
 void PrintSuspect(in_addr_t address);
+void PrintAllSuspects();
 void PrintSuspectList(enum SuspectListType listType);
 
 void PrintUsage();

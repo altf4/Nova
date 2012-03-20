@@ -119,14 +119,22 @@ int main(int argc, const char *argv[])
 			PrintUsage();
 		}
 
-		in_addr_t address;
-		if (inet_pton(AF_INET, argv[2], &address) != 1)
+		if (!strcmp(argv[2], "all"))
 		{
-			cout << "Error: Unable to convert to IP address" << endl;
-			exit(EXIT_FAILURE);
+			PrintAllSuspects();
 		}
+		else
+		{
+			// Some early error checking for the
+			in_addr_t address;
+			if (inet_pton(AF_INET, argv[2], &address) != 1)
+			{
+				cout << "Error: Unable to convert to IP address" << endl;
+				exit(EXIT_FAILURE);
+			}
 
-		PrintSuspect(address);
+			PrintSuspect(address);
+		}
 	}
 	else
 	{
@@ -145,6 +153,7 @@ void PrintUsage()
 	cout << "    NovaCLI start nova|haystack" << endl;
 	cout << "    NovaCLI stop nova|haystack" << endl;
 	cout << "    NovaCLI list all|hostile|benign" << endl;
+	cout << "    NovaCLI get all" << endl;
 	cout << "    NovaCLI get xxx.xxx.xxx.xxx" << endl;
 
 	cout << endl;
@@ -233,6 +242,41 @@ void PrintSuspect(in_addr_t address)
 	}
 
 	CloseNovadConnection();
+}
+
+void PrintAllSuspects()
+{
+	Connect();
+
+	vector<in_addr_t> *suspects;
+	suspects = GetSuspectList(SUSPECTLIST_ALL);
+
+	if (suspects == NULL)
+	{
+		cout << "Failed to get suspect list" << endl;
+		exit(EXIT_FAILURE);
+	}
+
+	for (uint i = 0; i < suspects->size(); i++)
+	{
+		Suspect *suspect = GetSuspect(suspects->at(i));
+
+		if (suspect != NULL)
+		{
+			cout << "Suspect:" << endl;
+			cout << suspect->ToString() << endl;
+		}
+		else
+		{
+			cout << "Error: No suspect received" << endl;
+		}
+
+		delete suspect;
+
+	}
+
+	CloseNovadConnection();
+
 }
 
 void PrintSuspectList(enum SuspectListType listType)
