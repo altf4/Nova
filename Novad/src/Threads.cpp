@@ -30,24 +30,20 @@
 
 #include <vector>
 #include <math.h>
+#include <time.h>
 #include <string>
 #include <errno.h>
 #include <fstream>
 #include <sstream>
 #include <sys/un.h>
-#include <sys/ioctl.h>
 #include <net/if.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
-#include <time.h>
-
-
-#include <boost/format.hpp>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 // Maintains a list of suspects and information on network activity
 extern SuspectTable suspects;
@@ -93,7 +89,7 @@ void *Nova::ClassificationLoop(void *ptr)
 		{
 			Suspect suspectCopy;
 
-			if (it.Current().GetNeedsClassificationUpdate())
+			if(it.Current().GetNeedsClassificationUpdate())
 			{
 				suspectCopy = suspects.CheckOut(it.GetKey());
 				suspectCopy.UpdateEvidence();
@@ -105,42 +101,36 @@ void *Nova::ClassificationLoop(void *ptr)
 
 				//If suspect is hostile and this Nova instance has unique information
 				// 			(not just from silent alarms)
-				if (suspectCopy.GetIsHostile() || oldClassification)
+				if(suspectCopy.GetIsHostile() || oldClassification)
 				{
-					if (suspectCopy.GetIsLive())
+					if(suspectCopy.GetIsLive())
 					{
 						SilentAlarm(&suspectCopy, oldClassification);
 					}
 				}
-				if (SendSuspectToUI(&suspectCopy))
+				if(SendSuspectToUI(&suspectCopy))
 				{
-					LOG(DEBUG, "Sent a suspect to the UI",
-							(format(
-									"File %1% at line %2%: Successfully sent suspect")
-									% __FILE__ % __LINE__).str());
+					LOG(DEBUG, "Sent a suspect to the UI.","Successfully sent suspect.");
 				}
 				else
 				{
-					LOG(NOTICE, "Failed to send suspect to UI",
-							(format(
-									"File %1% at line %2%: Sending suspect to UI failed")
-									% __FILE__ % __LINE__).str());
+					LOG(NOTICE, "Failed to send suspect to UI","Sending suspect to UI failed.");
 				}
 				suspects.CheckIn(&suspectCopy);
 			}
 		}
 
-		if (Config::Inst()->GetSaveFreq() > 0)
+		if(Config::Inst()->GetSaveFreq() > 0)
 		{
-			if ((time(NULL) - lastSaveTime) > Config::Inst()->GetSaveFreq())
+			if((time(NULL) - lastSaveTime) > Config::Inst()->GetSaveFreq())
 			{
 				AppendToStateFile();
 			}
 		}
 
-		if (Config::Inst()->GetDataTTL() > 0)
+		if(Config::Inst()->GetDataTTL() > 0)
 		{
-			if ((time(NULL) - lastLoadTime) > Config::Inst()->GetDataTTL())
+			if((time(NULL) - lastLoadTime) > Config::Inst()->GetDataTTL())
 			{
 				AppendToStateFile();
 				RefreshStateFile();
@@ -151,19 +141,15 @@ void *Nova::ClassificationLoop(void *ptr)
 		}
 	} while (Config::Inst()->GetClassificationTimeout() && !Config::Inst()->GetReadPcap());
 
-	if (Config::Inst()->GetReadPcap())
+	if(Config::Inst()->GetReadPcap())
 	{
 		return NULL;
 	}
 
 	//Shouldn't get here!!
-	if (Config::Inst()->GetClassificationTimeout())
+	if(Config::Inst()->GetClassificationTimeout())
 	{
-		LOG(CRITICAL,
-				"The code should never get here, something went very wrong.",
-				(format("File %1% "
-						"at line %2%: Should never get here") % __FILE__
-						% __LINE__).str());
+		LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
 	}
 
 	return NULL;
@@ -190,20 +176,20 @@ void *Nova::TrainingLoop(void *ptr)
 		sleep(Config::Inst()->GetClassificationTimeout());
 		ofstream myfile(trainingCapFile.data(), ios::app);
 
-		if (myfile.is_open())
+		if(myfile.is_open())
 		{
 			//Calculate the "true" Feature Set for each Suspect
 			for (SuspectTableIterator it = suspects.Begin();
 					it.GetIndex() < suspects.Size(); ++it)
 			{
-				if (it.Current().GetNeedsClassificationUpdate())
+				if(it.Current().GetNeedsClassificationUpdate())
 				{
 					suspectCopy = suspects.CheckOut(it.GetKey());
 					ANNpoint aNN = annAllocPt(
 							Config::Inst()->GetEnabledFeatureCount());
 					aNN = suspectCopy.GetAnnPoint();
 					suspectCopy.CalculateFeatures();
-					if (aNN == NULL)
+					if(aNN == NULL)
 						aNN = annAllocPt(DIM);
 
 					for (int j = 0; j < DIM; j++)
@@ -218,27 +204,18 @@ void *Nova::TrainingLoop(void *ptr)
 						}
 						myfile << "\n";
 					}
-					if (suspectCopy.SetAnnPoint(aNN) != 0)
+					if(suspectCopy.SetAnnPoint(aNN) != 0)
 					{
-						LOG(CRITICAL,
-								(format(
-										"File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")
-										% __FILE__ % __LINE__).str());
+						LOG(CRITICAL,"Failed to set Ann Point on suspect.", "");
 					}
 					suspectCopy.SetNeedsClassificationUpdate(false);
-					if (SendSuspectToUI(&suspectCopy))
+					if(SendSuspectToUI(&suspectCopy))
 					{
-						LOG(DEBUG, "Sent a suspect to the UI",
-								(format(
-										"File %1% at line %2%: Successfully sent suspect")
-										% __FILE__ % __LINE__).str());
+						LOG(DEBUG, "Sent a suspect to the UI.","Successfully sent suspect.");
 					}
 					else
 					{
-						LOG(NOTICE, "Failed to send suspect to UI",
-								(format(
-										"File %1% at line %2%: Sending suspect to UI failed")
-										% __FILE__ % __LINE__).str());
+						LOG(NOTICE, "Failed to send suspect to UI","Sending suspect to UI failed.");
 					}
 					suspects.CheckIn(&suspectCopy);
 					annDeallocPt(aNN);
@@ -247,22 +224,17 @@ void *Nova::TrainingLoop(void *ptr)
 		}
 		else
 		{
-			LOG(CRITICAL,
-					(format(
-							"File %1% at line %2%: Unable to open the training capture file "
-									"%3% for writing. Can not save training data.")
-							% __FILE__ % __LINE__ % trainingCapFile).str());
+			LOG(CRITICAL, "Unable to open the training capture file.",
+				"Unable to open training capture file at: "+trainingCapFile);
 		}
 		myfile.close();
 	} while (Config::Inst()->GetClassificationTimeout());
 
 	//Shouldn't get here!
-	if (Config::Inst()->GetClassificationTimeout())
-		LOG(CRITICAL,
-				"The code should never get here, something went very wrong.",
-				(format("File %1% at line %2%: Should never get here")
-						% __FILE__ % __LINE__).str());
-
+	if(Config::Inst()->GetClassificationTimeout())
+	{
+		LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
+	}
 	return NULL;
 }
 
@@ -274,13 +246,10 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	u_char buf[MAX_MSG_SIZE];
 	struct sockaddr_in sendaddr;
 
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(CRITICAL,
-				(format(
-						"File %1% at line %2%: Unable to create the silent alarm socket."
-								" Errno: %3%") % __FILE__ % __LINE__
-						% strerror(errno)).str());
+		LOG(CRITICAL, "Unable to create the silent alarm socket.",
+				"Unable to create the silent alarm socket: "+string(strerror(errno)));
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -293,13 +262,10 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
 	socklen_t sendaddrSize = sizeof sendaddr;
 
-	if (::bind(sockfd, sockaddrPtr, sendaddrSize) == -1)
+	if(::bind(sockfd, sockaddrPtr, sendaddrSize) == -1)
 	{
-		LOG(CRITICAL,
-				(format(
-						"File %1% at line %2%: Unable to bind to the silent alarm socket."
-								" Errno: %3%") % __FILE__ % __LINE__
-						% strerror(errno)).str());
+		LOG(CRITICAL, "Unable to bind to the silent alarm socket.",
+			"Unable to bind to the silent alarm socket: "+string(strerror(errno)));
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -308,26 +274,23 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	ss << "sudo iptables -A INPUT -p udp --dport "
 			<< Config::Inst()->GetSaPort() << " -j REJECT"
 					" --reject-with icmp-port-unreachable";
-	if (system(ss.str().c_str()) == -1)
+	if(system(ss.str().c_str()) == -1)
 	{
-		LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
+		LOG(ERROR, "Failed to update iptables.", "");
 	}
 	ss.str("");
 	ss << "sudo iptables -A INPUT -p tcp --dport "
 			<< Config::Inst()->GetSaPort()
 			<< " -j REJECT --reject-with tcp-reset";
-	if (system(ss.str().c_str()) == -1)
+	if(system(ss.str().c_str()) == -1)
 	{
-		LOG(ERROR, "Failed to update iptables.", "Failed to update iptables.");
+		LOG(ERROR, "Failed to update iptables.", "");
 	}
 
-	if (listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
 	{
-		LOG(CRITICAL,
-				(format(
-						"File %1% at line %2%: Unable to listen on the silent alarm socket."
-								" Errno: %3%") % __FILE__ % __LINE__
-						% strerror(errno)).str());
+		LOG(CRITICAL, "Unable to listen on the silent alarm socket.",
+			"Unable to listen on the silent alarm socket.: "+string(strerror(errno)));
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
@@ -342,32 +305,23 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		bzero(buf, MAX_MSG_SIZE);
 
 		//Blocking call
-		if ((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize))
-				== -1)
+		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
 		{
-			LOG(ERROR,
-					(format(
-							"File %1% at line %2%: Problem when accepting incoming silent alarm connection."
-									" Errno: %3%") % __FILE__ % __LINE__
-							% strerror(errno)).str());
-			close(connectionSocket);
+			LOG(CRITICAL, "Problem while accepting incoming silent alarm connection.",
+				"Problem while accepting incoming silent alarm connection: "+string(strerror(errno)));
 			continue;
 		}
 
-		if ((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL))
-				== -1)
+		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL))== -1)
 		{
-			LOG(CRITICAL,
-					(format(
-							"File %1% at line %2%: Problem when receiving incoming silent alarm connection."
-									" Errno: %3%") % __FILE__ % __LINE__
-							% strerror(errno)).str());
+			LOG(CRITICAL, "Problem while receiving incoming silent alarm connection.",
+				"Problem while receiving incoming silent alarm connection: "+string(strerror(errno)));
 			close(connectionSocket);
 			continue;
 		}
 
 		//If this is from ourselves, then drop it.
-		if (hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
+		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
 		{
 			close(connectionSocket);
 			continue;
@@ -380,7 +334,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		Suspect * newSuspect = new Suspect();
 		newSuspect->DeserializeSuspectWithData(buf, BROADCAST_DATA);
 		//If this suspect exists, update the information
-		if (suspects.IsValidKey(key))
+		if(suspects.IsValidKey(key))
 		{
 			suspectCopy = suspects.CheckOut(key);
 			suspectCopy.SetFlaggedByAlarm(true);
@@ -399,20 +353,16 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		}
 
 		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
-		LOG(CRITICAL,
-				(format(
-						"File %1% at line %2%: Got a silent alarm!. Suspect: %3%")
-						% __FILE__ % __LINE__ % newSuspect->ToString()).str());
-
-		if (!Config::Inst()->GetClassificationTimeout())
+		LOG(CRITICAL, string("Got a silent alarm!. Suspect: "+ newSuspect->ToString()), "");
+		if(!Config::Inst()->GetClassificationTimeout())
+		{
 			ClassificationLoop(NULL);
+		}
 
 		close(connectionSocket);
 	}
 	close(sockfd);
-	LOG(CRITICAL, "The code should never get here, something went very wrong.",
-			(format("File %1% at line %2%: Should never get here") % __FILE__
-					% __LINE__).str());
+	LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
 	return NULL;
 }
 
@@ -422,7 +372,7 @@ void *Nova::UpdateIPFilter(void *ptr)
 
 	while (true)
 	{
-		if (watch > 0)
+		if(watch > 0)
 		{
 			int BUF_LEN = (1024 * (sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
@@ -431,27 +381,23 @@ void *Nova::UpdateIPFilter(void *ptr)
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read(notifyFd, buf, BUF_LEN);
-			if (readLen > 0)
+			if(readLen > 0)
 			{
 				watch = inotify_add_watch(notifyFd, dhcpListFile.c_str(),
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 				haystackDhcpAddresses = GetHaystackDhcpAddresses(dhcpListFile);
 				string haystackAddresses_csv = ConstructFilterString();
 
-				if (pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0,
-						maskp) == -1)
-					LOG(ERROR, "Unable to enable packet capture",
-							(format("File %1% at line %2%: "
-									"Couldn't parse pcap filter: %3% %4%")
-									% __FILE__ % __LINE__ % filter_exp
-									% pcap_geterr(handle)).str());
-
-				if (pcap_setfilter(handle, &fp) == -1)
-					LOG(ERROR, "Unable to enable packet capture",
-							(format("File %1% at line %2%:  "
-									"Couldn't install pcap filter: %3% %4%")
-									% __FILE__ % __LINE__ % filter_exp
-									% pcap_geterr(handle)).str());
+				if(pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0,maskp) == -1)
+				{
+					LOG(ERROR, "Unable to enable packet capture.",
+						"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handle));
+				}
+				if(pcap_setfilter(handle, &fp) == -1)
+				{
+					LOG(ERROR, "Unable to enable packet capture.",
+						"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handle));
+				}
 			}
 		}
 		else
@@ -481,21 +427,21 @@ void *Nova::TCPTimeout(void *ptr)
 				it != SessionTable.end(); it++)
 		{
 
-			if (it->second.session.size() > 0)
+			if(it->second.session.size() > 0)
 			{
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
 				//If were reading packets from a file, assume all packets have been loaded and go beyond
 				// timeout threshhold
-				if (Config::Inst()->GetReadPcap())
+				if(Config::Inst()->GetReadPcap())
 				{
 					currentTime = packetTime + 3
 							+ Config::Inst()->GetTcpTimout();
 				}
 				// If it exists)
-				if (packetTime + 2 < currentTime)
+				if(packetTime + 2 < currentTime)
 				{
 					//If session has been finished for more than two seconds
-					if (it->second.fin == true)
+					if(it->second.fin == true)
 					{
 						for (uint p = 0;
 								p < (SessionTable[it->first].session).size();
@@ -507,10 +453,10 @@ void *Nova::TCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if (!Config::Inst()->GetClassificationTimeout())
+						if(!Config::Inst()->GetClassificationTimeout())
 						{
 							//pthread_rwlock_unlock(&sessionLock);
-							if (!Config::Inst()->GetIsTraining())
+							if(!Config::Inst()->GetIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
@@ -521,7 +467,7 @@ void *Nova::TCPTimeout(void *ptr)
 						SessionTable[it->first].fin = false;
 					}
 					//If this session is timed out
-					else if (packetTime + Config::Inst()->GetTcpTimout()
+					else if(packetTime + Config::Inst()->GetTcpTimout()
 							< currentTime)
 					{
 						for (uint p = 0;
@@ -534,10 +480,10 @@ void *Nova::TCPTimeout(void *ptr)
 						}
 
 						// Allow for continuous classification
-						if (!Config::Inst()->GetClassificationTimeout())
+						if(!Config::Inst()->GetClassificationTimeout())
 						{
 							//pthread_rwlock_unlock(&sessionLock);
-							if (!Config::Inst()->GetIsTraining())
+							if(!Config::Inst()->GetIsTraining())
 								ClassificationLoop(NULL);
 							else
 								TrainingLoop(NULL);
@@ -557,11 +503,10 @@ void *Nova::TCPTimeout(void *ptr)
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.
-	if (Config::Inst()->GetReadPcap())
+	if(Config::Inst()->GetReadPcap())
+	{
 		return NULL;
-
-	LOG(CRITICAL, "The code should never get here, something went very wrong.",
-			(format("File %1% at line %2%:"
-					" Should never get here") % __FILE__ % __LINE__).str());
+	}
+	LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
 	return NULL;
 }

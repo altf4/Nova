@@ -19,7 +19,6 @@
 #include <fstream>
 #include <sstream>
 #include <ANN/ANN.h>
-#include <boost/format.hpp>
 
 #include "TrainingData.h"
 #include "Defines.h"
@@ -27,7 +26,6 @@
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 {

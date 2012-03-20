@@ -20,19 +20,16 @@
 #include "Control.h"
 #include "Logger.h"
 #include "Novad.h"
-#include <boost/format.hpp>
 
-using boost::format;
 void Nova::SaveAndExit(int param)
 {
 	if(system("sudo iptables -F") != 0)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: System call: "
-			"'sudo iptables -F' has failed.")%__FILE__%__LINE__).str());
+		LOG(ERROR, "System call: 'sudo iptables -F' has failed.", "");
 	}
 
 	AppendToStateFile();
 
-	LOG(NOTICE, "Novad is now exiting");
+	LOG(NOTICE, "Novad is now exiting.", "");
 	exit(EXIT_SUCCESS);
 }

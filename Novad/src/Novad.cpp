@@ -31,7 +31,6 @@
 #include <vector>
 #include <math.h>
 #include <time.h>
-#include <string>
 #include <errno.h>
 #include <fstream>
 #include <sstream>
@@ -42,11 +41,9 @@
 #include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
-#include <boost/format.hpp>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;

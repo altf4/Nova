@@ -27,7 +27,6 @@
 #include <cerrno>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <boost/format.hpp>
 
 //Socket communication variables
 int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
@@ -37,8 +36,6 @@ bool callbackInitialized = false;
 
 using namespace std;
 using namespace Nova;
-using boost::format;
-
 //Initializes the Callback socket. IE: The socket the UI listens on
 //	NOTE: This is run internally and not meant to be executed by the user
 //	returns - true if socket successfully initialized, false on error (such as another UI already listening)

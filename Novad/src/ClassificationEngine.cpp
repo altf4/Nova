@@ -18,11 +18,10 @@
 
 #include "ClassificationEngine.h"
 
-#include <boost/format.hpp>
+#include <sstream>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 // Normalization method to use on each feature
 // TODO: Make this a configuration var somewhere in Novaconfig.txt?
@@ -66,7 +65,8 @@ void ClassificationEngine::FormKdTree()
 			}
 			else
 			{
-				LOG(ERROR, (format("File %1% at line %2%: The max value of a feature was 0. Is the training data file corrupt or missing?")%__FILE__%__LINE__).str());
+				LOG(ERROR,"Problem normalizing training data.",
+					"The max value of a feature was 0, the training data file may be corrupt or missing.");
 				break;
 			}
 		}
@@ -87,9 +87,10 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 	ANNpoint aNN = suspect->GetAnnPoint();
 
-	if (aNN == NULL)
+	if(aNN == NULL)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Classify is attempting to classify a suspect with an empty ANN point. Aborting.")%__FILE__%__LINE__).str());
+		LOG(ERROR, "Classification engine has encountered an error.",
+			"Classify is attempting to classify a suspect with an empty ANN point. Aborting.");
 		return;
 	}
 
@@ -105,15 +106,17 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	for(int i = 0; i < DIM; i++)
 	{
 		fi = (featureIndex)i;
-		if (suspect->SetFeatureAccuracy(fi, 0) != 0)
+		if(suspect->SetFeatureAccuracy(fi, 0) != 0)
 		{
-			LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__FILE__%__LINE__).str());
+			LOG(ERROR, "Classification engine has encountered an error.",
+				"Call to SetFeatureAccuracy failed.");
 		}
 	}
 
-	if (suspect->SetHostileNeighbors(0) != 0)
+	if(suspect->SetHostileNeighbors(0) != 0)
 	{
-		LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__FILE__%__LINE__).str());
+		LOG(ERROR, "Classification engine has encountered an error.",
+			"Call to SetHostileNeighbors failed.");
 	}
 
 	//Determine classification according to weight by distance
@@ -126,28 +129,30 @@ void ClassificationEngine::Classify(Suspect *suspect)
 		dists[i] = sqrt(dists[i]);				// unsquare distance
 		for(int j = 0; j < DIM; j++)
 		{
-			if (Config::Inst()->IsFeatureEnabled(j))
+			if(Config::Inst()->IsFeatureEnabled(j))
 			{
 				double distance = (aNN[j] - m_kdTree->thePoints()[nnIdx[i]][j]);
 
-				if (distance < 0)
+				if(distance < 0)
 				{
 					distance *= -1;
 				}
 
 				fi = (featureIndex)j;
 				d  = suspect->GetFeatureAccuracy(fi) + distance;
-				if (suspect->SetFeatureAccuracy(fi, d)  != 0)
+				if(suspect->SetFeatureAccuracy(fi, d)  != 0)
 				{
-					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetFeatureAccuracy failed")%__FILE__%__LINE__).str());
+					LOG(ERROR, "Classification engine has encountered an error.",
+						"Call to SetFeatureAccuracy failed.");
 				}
 			}
 		}
 
 		if(nnIdx[i] == -1)
 		{
-			LOG(ERROR, (format("File %1% at line %2%: Unable to find a nearest neighbor for Data point %3% Try decreasing the Error bound")
-					%__FILE__%__LINE__%i).str());
+			stringstream ss;
+			ss << "Unable to find a nearest neighbor for Data point " << i <<" Try decreasing the Error bound";
+			LOG(ERROR, "Classification engine has encountered an error.", ss.str());
 		}
 		else
 		{
@@ -155,9 +160,9 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 1)
 			{
 				classifyCount += (sqrtDIM - dists[i]);
-				if (suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1)  != 0)
+				if(suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1)  != 0)
 				{
-					LOG(ERROR, "Classification engine has encountered an error", (format("File %1% at line %2%: Call to SetHostileNeighbors failed")%__FILE__%__LINE__).str());
+					LOG(ERROR, "Classification engine has encountered an error.","Call to SetHostileNeighbors failed.");
 				}
 			}
 			//If benign
@@ -167,10 +172,9 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			}
 			else
 			{
-				//error case; Data points must be 0 or 1
-				LOG(ERROR, (format("File %1% at line %2%: Data point has invalid classification. Should by 0 or 1, but is %3%")
-						%__FILE__%__LINE__%m_dataPtsWithClass[nnIdx[i]]->m_classification).str());
-
+				stringstream ss;
+				ss << "Data point has invalid classification. Should by 0 or 1, but is " << m_dataPtsWithClass[nnIdx[i]]->m_classification;
+				LOG(ERROR, "Classification engine has encountered an error.", ss.str());
 				suspect->SetClassification(-1);
 				delete [] nnIdx;							// clean things up
 				delete [] dists;
@@ -190,9 +194,9 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM )));
 
 	// Fix for rounding errors caused by double's not being precise enough if DIM is something like 2
-	if (suspect->GetClassification() < 0)
+	if(suspect->GetClassification() < 0)
 		suspect->SetClassification(0);
-	else if (suspect->GetClassification() > 1)
+	else if(suspect->GetClassification() > 1)
 		suspect->SetClassification(1);
 
 	if( suspect->GetClassification() > Config::Inst()->GetClassificationThreshold())
@@ -219,14 +223,14 @@ void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
 	FeatureSet fs = suspectCopy->GetFeatureSet();
 	for(int i = 0;i < DIM;i++)
 	{
-		if (Config::Inst()->IsFeatureEnabled(i))
+		if(Config::Inst()->IsFeatureEnabled(i))
 		{
 			if(fs.m_features[i] > m_maxFeatureValues[ai])
 			{
 				fs.m_features[i] = m_maxFeatureValues[ai];
 				//For proper normalization the upper bound for a feature is the max value of the data.
 			}
-			else if (fs.m_features[i] < m_minFeatureValues[ai])
+			else if(fs.m_features[i] < m_minFeatureValues[ai])
 			{
 				fs.m_features[i] = m_minFeatureValues[ai];
 			}
@@ -244,7 +248,7 @@ void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
 
 	for(int i = 0; i < DIM; i++)
 	{
-		if (Config::Inst()->IsFeatureEnabled(i))
+		if(Config::Inst()->IsFeatureEnabled(i))
 		{
 			if(m_maxFeatureValues[ai] != 0)
 			{
@@ -252,16 +256,16 @@ void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
 			}
 			else
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?")
-						%__FILE__%__LINE__).str());
+				LOG(ERROR, "Classification engine has encountered an error.",
+					"Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?");
 			}
 			ai++;
 		}
 	}
 
-	if (suspectCopy->SetAnnPoint(aNN) != 0)
+	if(suspectCopy->SetAnnPoint(aNN) != 0)
 	{
-		LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
+		LOG(CRITICAL, "Classification engine has encountered a critical error.", "Failed to set Ann Point on suspect");
 	}
 }
 
@@ -283,20 +287,30 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	string line;
 
 		// Clear max and min values
-		for (int i = 0; i < DIM; i++)
+		for(int i = 0; i < DIM; i++)
+		{
 			m_maxFeatureValues[i] = 0;
+		}
 
-		for (int i = 0; i < DIM; i++)
+		for(int i = 0; i < DIM; i++)
+		{
 			m_minFeatureValues[i] = 0;
+		}
 
-		for (int i = 0; i < DIM; i++)
+		for(int i = 0; i < DIM; i++)
+		{
 			m_meanFeatureValues[i] = 0;
+		}
 
 		// Reload the data file
-		if (m_dataPts != NULL)
+		if(m_dataPts != NULL)
+		{
 			annDeallocPts(m_dataPts);
-		if (m_normalizedDataPts != NULL)
+		}
+		if(m_normalizedDataPts != NULL)
+		{
 			annDeallocPts(m_normalizedDataPts);
+		}
 
 		m_dataPtsWithClass.clear();
 
@@ -309,7 +323,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	int badLines = 0;
 
 	//Count the number of data points for allocation
-	if (myfile.is_open())
+	if(myfile.is_open())
 	{
 		while (!myfile.eof())
 		{
@@ -324,7 +338,8 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->GetPathTrainingFile()).str());
+		LOG(ERROR,"Classification Engine has encountered a problem",
+			"Unable to open the training data file at "+ Config::Inst()->GetPathTrainingFile()+".");
 	}
 
 	myfile.close();
@@ -336,7 +351,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	m_normalizedDataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount());
 
 
-	if (myfile.is_open())
+	if(myfile.is_open())
 	{
 		i = 0;
 
@@ -434,7 +449,8 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%Config::Inst()->GetPathTrainingFile()).str());
+		LOG(ERROR,"Classification Engine has encountered a problem",
+			"Unable to open the training data file at "+inFilePath+".");
 	}
 	myfile.close();
 
@@ -496,7 +512,7 @@ void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree*
 {
 	ofstream myfile (outFilePath.data());
 
-	if (myfile.is_open())
+	if(myfile.is_open())
 	{
 		for(int i = 0; i < tree->nPoints(); i++ )
 		{
@@ -510,8 +526,8 @@ void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree*
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Unable to open the training data file at %3%")%__FILE__%__LINE__%outFilePath).str());
-
+		LOG(ERROR,"Classification Engine has encountered a problem",
+			"Unable to open the training data file at "+outFilePath+".");
 	}
 	myfile.close();
 
