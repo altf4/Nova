@@ -204,17 +204,8 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
-			if(suspects.IsValidKey(controlMessage.m_suspectAddress))
-			{
-				suspects.Erase(controlMessage.m_suspectAddress);
-			}
-
-			pthread_mutex_lock(&suspectsSinceLastSaveLock);
-			if(suspectsSinceLastSave.IsValidKey(controlMessage.m_suspectAddress))
-			{
-				suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
-			}
-			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+			suspects.Erase(controlMessage.m_suspectAddress);
+			suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
 
 			RefreshStateFile();
 

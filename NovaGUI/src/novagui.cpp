@@ -809,6 +809,9 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 		string suspectStr = list->currentItem()->text().toStdString();
 		in_addr_t addr = inet_addr(suspectStr.c_str());
 		HideSuspect(addr);
+		pthread_rwlock_wrlock(&lock);
+		SuspectTable.erase(addr);
+		pthread_rwlock_unlock(&lock);
 		ClearSuspect(addr);
 	}
 }
