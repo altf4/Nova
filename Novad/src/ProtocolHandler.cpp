@@ -240,13 +240,11 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				//TODO: possibly make a logger call here for incorrect file name, probably need to check name in a more
 				// comprehensive way. This may not be needed, as I can't see a way for execution to get here,
 				// but better safe than sorry
-				suspects.SaveSuspectsToFile(Config::Inst()->GetPathCESaveFile()); //TODO: Should check for errors here and return results
+				suspects.SaveSuspectsToFile(string("save.txt")); //TODO: Should check for errors here and return results
 			}
 			else
 			{
-				Config::Inst()->SetPathCESaveFile(controlMessage.m_filePath);
-
-				suspects.SaveSuspectsToFile(Config::Inst()->GetPathCESaveFile()); //TODO: Should check for errors here and return result
+				suspects.SaveSuspectsToFile(string(controlMessage.m_filePath)); //TODO: Should check for errors here and return result
 			}
 
 			ControlMessage saveSuspectsReply;
