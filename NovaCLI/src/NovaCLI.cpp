@@ -166,6 +166,12 @@ void StartHaystackWrapper()
 
 void StopNovaWrapper()
 {
+	if (!ConnectToNovad())
+	{
+		cout << "Failed to connect to Nova" << endl;
+		exit(EXIT_FAILURE);
+	}
+
 	if(StopNovad())
 	{
 		cout << "Novad has been stopped" << endl;
