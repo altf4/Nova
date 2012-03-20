@@ -23,6 +23,7 @@
 #include "Novad.h"
 #include "messages/CallbackMessage.h"
 #include "messages/ControlMessage.h"
+#include "messages/RequestMessage.h"
 #include "SuspectTable.h"
 #include "SuspectTableIterator.h"
 
@@ -103,9 +104,12 @@ void *Nova::Handle_UI_Helper(void *ptr)
 			close(IPCSocket);
 			return false;
 		}
-
-		pthread_t UI_thread;
-		pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocket);
+		else
+		{
+			pthread_t UI_thread;
+			pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocket);
+			pthread_detach(UI_thread);
+		}
     }
 
     return NULL;
@@ -135,6 +139,13 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 				ControlMessage *controlMessage = (ControlMessage*)message;
 				HandleControlMessage(*controlMessage, socketFD);
 				delete controlMessage;
+				break;
+			}
+			case REQUEST_MESSAGE:
+			{
+				RequestMessage *msg = (RequestMessage*)message;
+				HandleRequestMessage(*msg, socketFD);
+				delete msg;
 				break;
 			}
 			default:
@@ -317,6 +328,72 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 	}
 }
+
+void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
+{
+	switch(msg.m_requestType)
+	{
+		case REQUEST_SUSPECTLIST:
+		{
+			RequestMessage reply;
+			reply.m_requestType = REQUEST_SUSPECTLIST_REPLY;
+			reply.m_listType = msg.m_listType;
+
+			switch (msg.m_listType)
+			{
+			case SUSPECTLIST_ALL:
+			{
+				vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+				for (uint i = 0; i < benign.size(); i++)
+				{
+					reply.m_suspectList.push_back((in_addr_t)benign.at(i));
+				}
+
+				vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+				for (uint i = 0; i < hostile.size(); i++)
+				{
+					reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+				}
+				break;
+			}
+			case SUSPECTLIST_HOSTILE:
+			{
+				vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+				for (uint i = 0; i < hostile.size(); i++)
+				{
+					reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+				}
+				break;
+			}
+			case SUSPECTLIST_BENIGN:
+			{
+				vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+				for (uint i = 0; i < benign.size(); i++)
+				{
+					reply.m_suspectList.push_back((in_addr_t)benign.at(i));
+				}
+				break;
+			}
+			default:
+				LOG(DEBUG, "UI sent us an invalid message",
+						(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
+				break;
+			}
+
+
+			UI_Message::WriteMessage(&reply, socketFD);
+			break;
+		}
+			default:
+		{
+			LOG(DEBUG, "UI sent us an invalid message",
+					(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
+			break;
+		}
+
+	}
+}
+
 
 bool Nova::ConnectToUI()
 {

@@ -19,6 +19,7 @@
 #include "UI_Message.h"
 #include "ControlMessage.h"
 #include "CallbackMessage.h"
+#include "RequestMessage.h"
 
 #include <string>
 #include <vector>
@@ -110,6 +111,16 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 		case CALLBACK_MESSAGE:
 		{
 			CallbackMessage *message = new CallbackMessage(buffer, length);
+			if(message->m_serializeError)
+			{
+				delete message;
+				return NULL;
+			}
+			return message;
+		}
+		case REQUEST_MESSAGE:
+		{
+			RequestMessage *message = new RequestMessage(buffer, length);
 			if(message->m_serializeError)
 			{
 				delete message;

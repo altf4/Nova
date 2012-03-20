@@ -111,6 +111,7 @@ int Nova::RunNovaD()
 	signal(SIGKILL, SaveAndExit);
 	signal(SIGINT, SaveAndExit);
 	signal(SIGTERM, SaveAndExit);
+	signal(SIGPIPE, SIG_IGN);
 
 	lastLoadTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
@@ -172,6 +173,7 @@ void Nova::MaskKillSignals()
 	sigaddset(&x, SIGKILL);
 	sigaddset(&x, SIGTERM);
 	sigaddset(&x, SIGINT);
+	sigaddset(&x, SIGPIPE);
 	sigprocmask(SIG_BLOCK, &x, NULL);
 }
 
