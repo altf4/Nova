@@ -134,14 +134,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
-
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
-
-			//Put the request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
+			buffer += SerializeHeader(buffer);
 
 			//Length of list suspect buffer
 			memcpy(buffer, &m_listType, sizeof(m_listType));
@@ -164,14 +157,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_listType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
-
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
-
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
+			buffer += SerializeHeader(buffer);
 
 			// Puth the type of list we're requesting
 			memcpy(buffer, &m_listType, sizeof(m_listType));
@@ -189,4 +175,19 @@ char *RequestMessage::Serialize(uint32_t *length)
 	return originalBuffer;
 }
 
+int RequestMessage::SerializeHeader(char *buffer)
+{
+	int bytes = 0;
+	//Put the UI Message type in
+	memcpy(buffer, &m_messageType, sizeof(m_messageType));
+	buffer += sizeof(m_messageType);
+	bytes += sizeof(m_messageType);
+
+	//Put the Request Message type in
+	memcpy(buffer, &m_requestType, sizeof(m_requestType));
+	buffer += sizeof(m_requestType);
+	bytes += sizeof(m_messageType);
+
+	return bytes;
+}
 }

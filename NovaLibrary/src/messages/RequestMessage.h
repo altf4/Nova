@@ -33,6 +33,9 @@ enum RequestType: char
 	REQUEST_SUSPECTLIST= 0,
 	REQUEST_SUSPECTLIST_REPLY,
 
+	// Request for an individual suspect
+	REQUEST_SUSPECT,
+	REQUEST_SUSPECT_REPLY,
 };
 
 enum SuspectListType : char
@@ -77,6 +80,11 @@ protected:
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
 	char *Serialize(uint32_t *length);
+
+	// Serializes just the UI message and request message type into the buffer
+	//	*buffer: Pointer to where to store the serialized values
+	// Returns: Number of bytes written to *buffer
+	int SerializeHeader(char *buffer);
 };
 
 }
