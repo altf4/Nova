@@ -8,6 +8,7 @@ release:
 	$(MAKE) -C NovaLibrary/Release
 	$(MAKE) -C Nova_UI_Core/Release
 	$(MAKE) -C Novad/Release
+	$(MAKE) -C NovaCLI/Release
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
 	
@@ -16,6 +17,7 @@ debug:
 	$(MAKE) -C NovaLibrary/Debug
 	$(MAKE) -C Nova_UI_Core/Debug
 	$(MAKE) -C Novad/Debug
+	$(MAKE) -C NovaCLI/Debug
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 	
@@ -27,6 +29,7 @@ clean-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
+	$(MAKE) -C NovaCLI/Debug clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 
@@ -34,6 +37,7 @@ clean-release:
 	$(MAKE) -C NovaLibrary/Release clean
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
+	$(MAKE) -C NovaCLI/Release clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 
@@ -45,6 +49,7 @@ install-release:
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
+	install NovaCLI/Release/NovaCLI $(DESTDIR)/usr/bin
 	install Novad/Release/Novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
@@ -78,6 +83,7 @@ install-debug:
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
+	install NovaCLI/Debug/NovaCLI $(DESTDIR)/usr/bin
 	install Novad/Debug/Novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
@@ -110,6 +116,7 @@ uninstall:
 	rm -rf $(DESTDIR)/etc/nova
 	rm -rf $(DESTDIR)/usr/share/nova
 	rm -f $(DESTDIR)/usr/bin/NovaGUI
+	rm -f $(DESTDIR)/usr/bin/NovaCLI
 	rm -f $(DESTDIR)/usr/bin/Novad
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
