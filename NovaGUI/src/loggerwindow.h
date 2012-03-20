@@ -20,11 +20,11 @@ public:
 private:
     void InitializeLoggingWindow();
     void UpdateLoggingWindow();
-    void HideSelected(QString level, bool isProcess);
-    void ShowSelected(QString level, bool isProcess);
+    void HideSelected(QString level);
+    void ShowSelected(QString level);
     void AdjustColumnWidths();
     void UpdateLogDisplay();
-    bool ShouldBeVisible(QString level, QString process);
+    bool ShouldBeVisible(QString level);
     QTreeWidgetItem * GenerateLogTabEntry(QString line);
     QTreeWidgetItem * LogFileNotFound();
 

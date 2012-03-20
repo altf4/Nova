@@ -106,72 +106,93 @@ QTreeWidgetItem * LoggerWindow::GenerateLogTabEntry(QString line)
 {
 	QTreeWidgetItem * ret = new QTreeWidgetItem();
 	QStringList parse = line.split(" ", QString::SkipEmptyParts);
-	QString time(parse[0] + " " + parse[1]+ " " + parse[2]);
-	ret->setText(0, time);
-	QString process(parse[5].mid(0, (parse[5].size() - 1)));
-	ret->setText(1, process);
-	QString level(parse[6]);
-	ret->setText(2, level);
-	QString message(parse[7]);
 
-	for(int i = 8; i < parse.size(); i++)
+	if(parse[4].compare("last") != 0)
 	{
-		message.append(" ");
-		message.append(parse[i]);
+		QString time(parse[0] + " " + parse[1]+ " " + parse[2]);
+		ret->setText(0, time);
+		QString level(parse[5]);
+		ret->setText(1, level);
+		QString message(parse[6]);
+
+		for(int i = 7; i < parse.size(); i++)
+		{
+			message.append(" ");
+			message.append(parse[i]);
+		}
+
+		ret->setText(2, message);
+		if(!level.compare("INFO"))
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				ret->setBackgroundColor(i, "skyblue");
+			}
+		}
+		else if(!level.compare("NOTICE"))
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				ret->setBackgroundColor(i, "darkseagreen");
+			}
+		}
+		else if(!level.compare("WARNING"))
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				ret->setBackgroundColor(i, "yellow");
+			}
+		}
+		else if(!level.compare("ERROR"))
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				ret->setBackgroundColor(i, "tomato");
+			}
+		}
+		else if(!level.compare("CRITICAL"))
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				ret->setBackgroundColor(i, "orangered");
+			}
+		}
+		else if(!level.compare("ALERT"))
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				ret->setBackgroundColor(i, "red");
+			}
+		}
+		else if(!level.compare("EMERGENCY"))
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				ret->setBackgroundColor(i, "black");
+				ret->setForeground(i, QBrush("white"));
+			}
+		}
+		return ret;
 	}
-
-	ret->setText(3, message);
-	if(!level.compare("INFO"))
+	else
 	{
+		QString time(parse[0] + " " + parse[1]+ " " + parse[2]);
+		ret->setText(0, time);
+		QString level("INFO");
+		ret->setText(1, level);
+		QString message(parse[4]);
+		for(int i = 5; i < parse.size(); i++)
+		{
+			message.append(" ");
+			message.append(parse[i]);
+		}
+		ret->setText(2, message);
 		for(int i = 0; i < 4; i++)
 		{
 			ret->setBackgroundColor(i, "skyblue");
 		}
+		return ret;
 	}
-	else if(!level.compare("NOTICE"))
-	{
-		for(int i = 0; i < 4; i++)
-		{
-			ret->setBackgroundColor(i, "darkseagreen");
-		}
-	}
-	else if(!level.compare("WARNING"))
-	{
-		for(int i = 0; i < 4; i++)
-		{
-			ret->setBackgroundColor(i, "yellow");
-		}
-	}
-	else if(!level.compare("ERROR"))
-	{
-		for(int i = 0; i < 4; i++)
-		{
-			ret->setBackgroundColor(i, "tomato");
-		}
-	}
-	else if(!level.compare("CRITICAL"))
-	{
-		for(int i = 0; i < 4; i++)
-		{
-			ret->setBackgroundColor(i, "orangered");
-		}
-	}
-	else if(!level.compare("ALERT"))
-	{
-		for(int i = 0; i < 4; i++)
-		{
-			ret->setBackgroundColor(i, "red");
-		}
-	}
-	else if(!level.compare("EMERGENCY"))
-	{
-		for(int i = 0; i < 4; i++)
-		{
-			ret->setBackgroundColor(i, "black");
-			ret->setForeground(i, QBrush("white"));
-		}
-	}
-	return ret;
 }
 
 QTreeWidgetItem * LoggerWindow::LogFileNotFound()
@@ -222,7 +243,7 @@ void LoggerWindow::on_applyFilter_clicked()
 	QTreeWidgetItemIterator it(ui.logDisplay);
 	while(*it)
 	{
-		if(ShouldBeVisible((*it)->text(2), (*it)->text(1)))
+		if(ShouldBeVisible((*it)->text(1)))
 		{
 			(*it)->setHidden(false);
 		}
@@ -234,34 +255,9 @@ void LoggerWindow::on_applyFilter_clicked()
 	}
 }
 
-bool LoggerWindow::ShouldBeVisible(QString level, QString process)
+bool LoggerWindow::ShouldBeVisible(QString level)
 {
 	bool show = false;
-
-	if(process == "ClassificationEngine" && ui.checkClassification->isChecked())
-	{
-		show = true;
-	}
-
-	else if(process == "LocalTrafficMonitor" && ui.checkLocalTraffic->isChecked())
-	{
-		show = true;
-	}
-
-	else if(process == "Haystack" && ui.checkHaystack->isChecked())
-	{
-		show = true;
-	}
-
-	else if(process == "DoppelgangerModule" && ui.checkDoppelganger->isChecked())
-	{
-		show = true;
-	}
-
-	else
-	{
-		return false;
-	}
 
 	if(level == "DEBUG" && ui.checkDebug->isChecked())
 	{
@@ -317,49 +313,25 @@ void LoggerWindow::on_linesBox_currentIndexChanged(const QString & text)
 	UpdateLogDisplay();
 }
 
-void LoggerWindow::HideSelected(QString level, bool isProcess)
+void LoggerWindow::HideSelected(QString level)
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
-	if(isProcess)
+	while(*it)
 	{
-		while(*it)
-		{
-			if((*it)->text(1) == level)
-			(*it)->setHidden(true);
-			++it;
-		}
-	}
-	else
-	{
-		while(*it)
-		{
-			if((*it)->text(2) == level && !((*it)->isHidden()))
-			(*it)->setHidden(true);
-			++it;
-		}
+		if((*it)->text(2) == level && !((*it)->isHidden()))
+		(*it)->setHidden(true);
+		++it;
 	}
 }
 
-void LoggerWindow::ShowSelected(QString level, bool isProcess)
+void LoggerWindow::ShowSelected(QString level)
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
-	if(isProcess)
+	while(*it)
 	{
-		while(*it)
-		{
-			if((*it)->text(1) == level)
-			(*it)->setHidden(false);
-			++it;
-		}
-	}
-	else
-	{
-		while(*it)
-		{
-			if((*it)->text(2) == level && ((*it)->isHidden()))
-			(*it)->setHidden(false);
-			++it;
-		}
+		if((*it)->text(2) == level && ((*it)->isHidden()))
+		(*it)->setHidden(false);
+		++it;
 	}
 }
 
