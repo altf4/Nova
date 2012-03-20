@@ -20,15 +20,25 @@
 #define RequestMessage_H_
 
 #include "UI_Message.h"
-#include "../Suspect.h"
 
-#define REQUEST_MSG_MIN_SIZE 2
+#include <vector>
+#include <arpa/inet.h>
+
+#define REQUEST_MSG_MIN_SIZE 3
 
 //The different message types
 enum RequestType: char
 {
-	REQUEST_SUSPECTLIST= 0,		//Request a list of suspect IPs
-	REQUEST_SUSPECTLIST_REPLY,	//Reply with a list of suspect IPs
+	// Requests for lists of suspect IPs
+	REQUEST_SUSPECTLIST= 0,
+	REQUEST_SUSPECTLIST_REPLY,
+};
+
+enum SuspectListType : char
+{
+	SUSPECTLIST_ALL = 0,
+	SUSPECTLIST_HOSTILE,
+	SUSPECTLIST_BENIGN
 };
 
 namespace Nova
@@ -56,9 +66,9 @@ public:
 
 
 	enum RequestType m_requestType;
-	uint32_t m_suspectIPListLength;
-	vector<in_addr_t> suspectIPList;
-
+	enum SuspectListType m_listType;
+	uint32_t m_suspectListLength;
+	std::vector<in_addr_t> m_suspectList;
 };
 
 }

@@ -19,12 +19,19 @@
 #ifndef STATUSQUERIES_H_
 #define STATUSQUERIES_H_
 
+#include <vector>
+#include <arpa/inet.h>
+
+#include "messages/RequestMessage.h"
+
 namespace Nova
 {
 
 //Queries Novad to see if it is currently up or down
 //	returns - True if Novad is up, false if down
 bool IsUp();
+
+std::vector<in_addr_t> *GetSuspectList(SuspectListType listType);
 
 }
 #endif /* STATUSQUERIES_H_ */

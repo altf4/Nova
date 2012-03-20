@@ -6,6 +6,7 @@
 #include "tester_Suspect.h"
 #include "tester_SuspectTable.h"
 #include "tester_ClassificationEngine.h"
+#include "tester_RequestMessage.h"
 
 int main(int argc, char **argv)
 {

@@ -18,8 +18,13 @@
 
 #include "StatusQueries.h"
 #include "messages/ControlMessage.h"
+#include "messages/RequestMessage.h"
+
+#include <iostream>
 
 extern int novadListenSocket;
+using namespace Nova;
+using namespace std;
 
 bool Nova::IsUp()
 {
@@ -54,4 +59,46 @@ bool Nova::IsUp()
 	}
 	delete pong;
 	return true;
+}
+
+vector<in_addr_t> *Nova::GetSuspectList(SuspectListType listType)
+{
+	RequestMessage request;
+	request.m_requestType = REQUEST_SUSPECTLIST;
+	request.m_listType = listType;
+
+	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
+	{
+		//There was an error in sending the message
+		return NULL;
+	}
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	if(reply == NULL)
+	{
+		//There was an error receiving the reply
+		return NULL;
+	}
+
+	if(reply->m_messageType != REQUEST_MESSAGE )
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return NULL;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_requestType != REQUEST_SUSPECTLIST_REPLY)
+	{
+		//Received the wrong kind of control message
+		delete requestReply;
+		return NULL;
+	}
+
+
+	vector<in_addr_t> *ret = new vector<in_addr_t>;
+	*ret = requestReply->m_suspectList;
+
+	delete requestReply;
+	return ret;
 }

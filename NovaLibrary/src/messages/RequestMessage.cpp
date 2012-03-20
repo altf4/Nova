@@ -16,8 +16,10 @@
 // Description : Messages coming asynchronously from Novad to the UI
 //============================================================================
 
-#include "RequestMessage.h"
 #include <string.h>
+
+#include "RequestMessage.h"
+#include "../Defines.h"
 
 namespace Nova
 {
@@ -25,6 +27,7 @@ namespace Nova
 RequestMessage::RequestMessage()
 {
 	m_messageType = REQUEST_MESSAGE;
+	m_suspectListLength = 0;
 }
 
 RequestMessage::~RequestMessage()
@@ -49,33 +52,41 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 	memcpy(&m_requestType, buffer, sizeof(m_requestType));
 	buffer += sizeof(m_requestType);
 
+	//Copy the request list type
+	memcpy(&m_listType, buffer, sizeof(m_listType));
+	buffer += sizeof(m_listType);
+
 	switch(m_requestType)
 	{
 		case RequestType::REQUEST_SUSPECTLIST_REPLY:
 		{
-			//Uses: 1) UI_Message Type
-			//		2) ControlMessage Type
-			//		3) Length of incoming suspect list
-			//		3) Serialized suspect
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength);
-			if(length <= expectedSize)
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType);
+			if(length < expectedSize)
 			{
 				m_serializeError = true;
 				return;
 			}
 
-			memcpy(&m_suspectLength, buffer, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength);
+			memcpy(&m_suspectListLength, buffer, sizeof(m_suspectListLength));
+			buffer += sizeof(m_suspectListLength);
 
-			expectedSize += m_suspectLength;
+			expectedSize += m_suspectListLength;
 			if(expectedSize != length)
 			{
 				m_serializeError = true;
 				return;
 			}
 
-			m_suspect = new Suspect();
-			m_suspect->DeserializeSuspect((u_char*)buffer);
+			m_suspectList.clear();
+			for (uint i = 0; i < m_suspectListLength; i += sizeof(in_addr_t))
+			{
+				in_addr_t address;
+
+				memcpy(&address, buffer, sizeof(in_addr_t));
+				buffer += sizeof(in_addr_t);
+
+				m_suspectList.push_back(address);
+			}
 
 			break;
 		}
@@ -83,7 +94,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 		{
 			//Uses: 1) UI_Message Type
 			//		2) request Type
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType);
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_listType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -107,56 +118,66 @@ char *RequestMessage::Serialize(uint32_t *length)
 
 	switch(m_requestType)
 	{
-		case RequestType::REQUEST_SUSPECTLIST_REPLY:
+		case REQUEST_SUSPECTLIST_REPLY:
 		{
-			//Uses: 1) UI_Message Type
-			//		2) ControlMessage Type
-			//		3) Length of incoming serialized suspect
-			//		3) Serialized suspect
-			if(m_suspect == NULL)
+			char suspectTempBuffer[MAX_MSG_SIZE];
+			char *buffer = &suspectTempBuffer[0];
+			m_suspectListLength = 0;
+
+			for (uint i = 0; i < m_suspectList.size(); i++)
 			{
-				return NULL;
-			}
-			char *suspectTempBuffer[MAX_MSG_SIZE];
-			m_suspectLength = m_suspect->SerializeSuspect((u_char*)suspectTempBuffer);
-			if(m_suspectLength == 0)
-			{
-				return NULL;
+				in_addr_t address = m_suspectList.at(i);
+				memcpy(buffer, &address, sizeof(in_addr_t));
+				buffer += sizeof(in_addr_t);
+
+				m_suspectListLength += sizeof(in_addr_t);
 			}
 
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength;
+			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
 			//Put the UI Message type in
 			memcpy(buffer, &m_messageType, sizeof(m_messageType));
 			buffer += sizeof(m_messageType);
+
 			//Put the request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
-			//Length of suspect buffer
-			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength);
-			//Suspect buffer itself
-			memcpy(buffer, suspectTempBuffer, m_suspectLength);
-			buffer += m_suspectLength;
+
+			//Length of list suspect buffer
+			memcpy(buffer, &m_listType, sizeof(m_listType));
+			buffer += sizeof(m_listType);
+
+			memcpy(buffer, &m_suspectListLength, sizeof(m_suspectListLength));
+			buffer += sizeof(m_suspectListLength);
+
+			//Suspect list buffer itself
+			memcpy(buffer, suspectTempBuffer, m_suspectListLength);
+			buffer += m_suspectListLength;
 
 			break;
 		}
-		case RequestType::REQUEST_SUSPECTLIST:
+		case REQUEST_SUSPECTLIST:
 		{
 			//Uses: 1) UI_Message Type
 			//		2) request Message Type
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType);
+			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_listType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
 			//Put the UI Message type in
 			memcpy(buffer, &m_messageType, sizeof(m_messageType));
 			buffer += sizeof(m_messageType);
+
 			//Put the Control Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
+
+			// Puth the type of list we're requesting
+			memcpy(buffer, &m_listType, sizeof(m_listType));
+			buffer += sizeof(m_listType);
+
 
 			break;
 		}
