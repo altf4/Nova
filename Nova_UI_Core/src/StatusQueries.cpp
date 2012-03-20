@@ -102,3 +102,47 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 	delete requestReply;
 	return ret;
 }
+
+Suspect *Nova::GetSuspect(in_addr_t address)
+{
+	RequestMessage request;
+	request.m_messageType = REQUEST_MESSAGE;
+	request.m_requestType = REQUEST_SUSPECT;
+	request.m_suspectAddress = address;
+
+
+	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
+	{
+		//There was an error in sending the message
+		return NULL;
+	}
+
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	if(reply == NULL)
+	{
+		//There was an error receiving the reply
+		return NULL;
+	}
+
+	if(reply->m_messageType != REQUEST_MESSAGE)
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return NULL;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_requestType != REQUEST_SUSPECT_REPLY)
+	{
+		//Received the wrong kind of control message
+		delete requestReply;
+		return NULL;
+	}
+
+	Suspect *returnSuspect = new Suspect();
+	*returnSuspect = *requestReply->m_suspect;
+	delete requestReply;
+
+	return returnSuspect;
+}

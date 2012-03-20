@@ -20,6 +20,7 @@
 #define RequestMessage_H_
 
 #include "UI_Message.h"
+#include "../Suspect.h"
 
 #include <vector>
 #include <arpa/inet.h>
@@ -73,6 +74,11 @@ public:
 	enum SuspectListType m_listType;
 	uint32_t m_suspectListLength;
 	std::vector<in_addr_t> m_suspectList;
+
+	// For returning a single suspect
+	Suspect *m_suspect;
+	uint32_t m_suspectLength;
+	in_addr_t m_suspectAddress;
 
 protected:
 	//Serializes the requestinto a char array

@@ -37,6 +37,7 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 {
 	if( length < CALLBACK_MSG_MIN_SIZE )
 	{
+		m_serializeError = true;
 		return;
 	}
 

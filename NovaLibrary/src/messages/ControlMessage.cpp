@@ -39,6 +39,7 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 {
 	if( length < CONTROL_MSG_MIN_SIZE )
 	{
+		m_serializeError = true;
 		return;
 	}
 
