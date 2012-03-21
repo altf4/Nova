@@ -68,6 +68,8 @@ struct sockaddr_in hostAddr;
 time_t lastLoadTime;
 time_t lastSaveTime;
 
+string trainingCapFile;
+
 //HS Vars
 string dhcpListFile = "/var/log/honeyd/ipList";
 vector<string> haystackAddresses;
@@ -136,6 +138,18 @@ int Nova::RunNovaD()
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
 	{
+		// We suffix the training capture files with the date/time
+		time_t rawtime;
+		time(&rawtime);
+		struct tm * timeinfo = localtime(&rawtime);
+		char buffer[40];
+		strftime(buffer, 40, "%m-%d-%y_%H-%M-%S", timeinfo);
+
+		trainingCapFile = Config::Inst()->GetPathHome() + "/"
+				+ Config::Inst()->GetPathTrainingCapFolder() + "/training" + buffer
+				+ ".dump";
+
+
 		pthread_create(&trainingLoopThread,NULL,TrainingLoop,NULL);
 	}
 	else
@@ -154,16 +168,24 @@ int Nova::RunNovaD()
 	else
 	{
 		LOG(ERROR, (format("File %1% at line %2%: Unable to set up file watcher for the honeyd IP"
-			" list file. DHCP addresse in honeyd will not be read")%__FILE__%__LINE__).str());
+			" list file. DHCP addresses in honeyd will not be read")%__FILE__%__LINE__).str());
 	}
 
 	Start_Packet_Handler();
 
-	//Shouldn't get here!
-	LOG(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen,"
-		" something went very wrong.")%__FILE__%__LINE__).str());
 
-	return EXIT_FAILURE;
+	if (!Config::Inst()->GetIsTraining())
+	{
+		//Shouldn't get here!
+		LOG(CRITICAL, (format("File %1% at line %2%: Main thread ended. This should never happen,"
+			" something went very wrong.")%__FILE__%__LINE__).str());
+
+		return EXIT_FAILURE;
+	}
+	else
+	{
+		return EXIT_SUCCESS;
+	}
 }
 
 void Nova::MaskKillSignals()

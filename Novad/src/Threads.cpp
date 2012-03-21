@@ -62,6 +62,8 @@ extern struct sockaddr_in serv_addr;
 extern time_t lastLoadTime;
 extern time_t lastSaveTime;
 
+extern string trainingCapFile;
+
 //HS Vars
 extern string dhcpListFile;
 extern vector<string> haystackDhcpAddresses;
@@ -173,16 +175,6 @@ void *Nova::TrainingLoop(void *ptr)
 {
 	MaskKillSignals();
 
-	// We suffix the training capture files with the date/time
-	time_t rawtime;
-	time(&rawtime);
-	struct tm * timeinfo = localtime(&rawtime);
-	char buffer[40];
-	strftime(buffer, 40, "%m-%d-%y_%H-%M-%S", timeinfo);
-
-	string trainingCapFile = Config::Inst()->GetPathHome() + "/"
-			+ Config::Inst()->GetPathTrainingCapFolder() + "/training" + buffer
-			+ ".dump";
 	Suspect suspectCopy;
 	//Training Loop
 	do
@@ -192,15 +184,13 @@ void *Nova::TrainingLoop(void *ptr)
 
 		if (myfile.is_open())
 		{
-			//Calculate the "true" Feature Set for each Suspect
-			for (SuspectTableIterator it = suspects.Begin();
-					it.GetIndex() < suspects.Size(); ++it)
+			// Calculate the "true" Feature Set for each Suspect
+			for (SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 			{
 				if (it.Current().GetNeedsClassificationUpdate())
 				{
 					suspectCopy = suspects.CheckOut(it.GetKey());
-					ANNpoint aNN = annAllocPt(
-							Config::Inst()->GetEnabledFeatureCount());
+					ANNpoint aNN = annAllocPt(DIM);
 					aNN = suspectCopy.GetAnnPoint();
 					suspectCopy.CalculateFeatures();
 					if (aNN == NULL)
@@ -226,6 +216,8 @@ void *Nova::TrainingLoop(void *ptr)
 										% __FILE__ % __LINE__).str());
 					}
 					suspectCopy.SetNeedsClassificationUpdate(false);
+					suspects.CheckIn(&suspectCopy);
+
 					if (SendSuspectToUI(&suspectCopy))
 					{
 						LOG(DEBUG, "Sent a suspect to the UI",
@@ -240,7 +232,6 @@ void *Nova::TrainingLoop(void *ptr)
 										"File %1% at line %2%: Sending suspect to UI failed")
 										% __FILE__ % __LINE__).str());
 					}
-					suspects.CheckIn(&suspectCopy);
 					annDeallocPt(aNN);
 				}
 			}
