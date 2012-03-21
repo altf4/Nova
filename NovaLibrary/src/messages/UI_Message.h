@@ -47,7 +47,7 @@ public:
 	//	NOTE: Blocking call, will wait until message appears
 	//	connectFD - A valid socket
 	// Returns - Pointer to newly allocated UI_Message object
-	//				returns NULL on error
+	//				returns an ErrorMessage object on error. Will never return NULL.
 	//	NOTE: The caller must manually delete the returned object when finished with it
 	static UI_Message *ReadMessage(int connectFD);
 

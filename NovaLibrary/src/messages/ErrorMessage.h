@@ -30,6 +30,7 @@ enum ErrorType: char
 	//(IE: NOT meant to be remotely sent or received)
 	ERROR_SOCKET_CLOSED = 0,		//Message could not be read because the socket was closed
 	ERROR_MALFORMED_MESSAGE,		//Message was received, but could not deserialize
+	ERROR_UNKNOWN_MESSAGE_TYPE,		//The primary message type is unknown
 
 	//Error codes for actual remote messages
 	ERROR_PROTOCOL_MISTAKE,			//Reply from Novad with success
@@ -43,7 +44,7 @@ class ErrorMessage : public UI_Message
 
 public:
 
-	ErrorMessage();
+	ErrorMessage(enum ErrorType errorType);
 	~ErrorMessage();
 
 	//Deserialization constructor

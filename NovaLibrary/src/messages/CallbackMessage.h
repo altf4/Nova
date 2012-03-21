@@ -39,7 +39,7 @@ class CallbackMessage : public UI_Message
 
 public:
 
-	CallbackMessage();
+	CallbackMessage(enum CallbackType callbackType);
 	~CallbackMessage();
 
 	//Deserialization constructor
