@@ -130,6 +130,15 @@ int Nova::RunNovaD()
 
 	Reload();
 
+	if(Config::Inst()->GetIsDmEnabled())
+	{
+		string commandLine = "sudo iptables -A FORWARD -i lo -j DROP";
+		system(commandLine.c_str());
+		commandLine = "sudo route add -host "+Config::Inst()->GetDoppelIp()+" dev lo";
+		system(commandLine.c_str());
+		commandLine = "sudo iptables -t nat -F";
+		system(commandLine.c_str());
+	}
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
 	{
