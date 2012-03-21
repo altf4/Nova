@@ -24,9 +24,10 @@
 #include "HashMapStructs.h"
 #include "Defines.h"
 
-// A macro to make logging prettier
-#define LOG Nova::Logger::Inst()->Log
+#include <string.h>
 
+// A macro to make logging prettier
+#define LOG(t,s,r) Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
 
 namespace Nova
 {
@@ -76,7 +77,8 @@ public:
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Log(Nova::Levels messageLevel, std::string messageBasic, std::string messageAdv = "");
+	void Log(Nova::Levels messageLevel, const char* messageBasic, const char* messageAdv,
+		const char* file, const int& line);
 
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
@@ -133,5 +135,4 @@ private:
 };
 
 }
-
 #endif /* Logger_H_ */

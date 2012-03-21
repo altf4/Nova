@@ -22,12 +22,10 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <boost/format.hpp>
 #include <math.h>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 using boost::property_tree::ptree;
 using boost::property_tree::xml_parser::trim_whitespace;
 
@@ -95,7 +93,7 @@ void HoneydConfiguration::LoadPortsTemplate()
 
 			if(!p.portName.compare(""))
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files.")%__FILE__%__LINE__).str());
+				LOG(ERROR, "Problem loading honeyd XML files.", "");
 				continue;
 			}
 
@@ -119,8 +117,7 @@ void HoneydConfiguration::LoadPortsTemplate()
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading ports: %3%")
-			%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading ports: "+string(e.what())+".", "");
 	}
 }
 
@@ -156,22 +153,19 @@ void HoneydConfiguration::LoadNodesTemplate()
 					}
 					catch(std::exception &e)
 					{
-						LOG(ERROR, (format("File %1% at line %2%: Problem loading nodes: %3%.")
-							%__FILE__%__LINE__%string(e.what())).str());
+						LOG(ERROR, "Problem loading nodes: "+string(e.what())+".", "");
 					}
 				}
 				catch(std::exception &e)
 				{
-					LOG(ERROR, (format("File %1% at line %2%: Problem loading subnets: %3%.")
-						%__FILE__%__LINE__%string(e.what())).str());
+					LOG(ERROR, "Problem loading subnets: "+string(e.what())+".", "");
 				}
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading group: %3% - %4%")
-			%__FILE__%__LINE__%Config::Inst()->GetGroup()%string(e.what())).str());
+		LOG(ERROR, "Problem loading groups: "+Config::Inst()->GetGroup()+" - "+string(e.what()) +".", "");
 	}
 }
 
@@ -243,7 +237,7 @@ void HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading profile set parameters: %3%")%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading profile set parameters: "+string(e.what())+".", "");
 	}
 }
 
@@ -323,7 +317,7 @@ void HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading profile add parameters: %3%")%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading profile add parameters: "+string(e.what())+".", "");
 	}
 }
 
@@ -347,8 +341,7 @@ void HoneydConfiguration::LoadProfileChildren(string parent)
 
 			if(!prof.name.compare(""))
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files")
-					%__FILE__%__LINE__).str());
+				LOG(ERROR, "Problem loading honeyd XML files.", "");
 				continue;
 			}
 
@@ -390,8 +383,7 @@ void HoneydConfiguration::LoadProfileChildren(string parent)
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading sub profiles: %3%")
-			%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading sub profiles: "+string(e.what())+".", "");
 	}
 }
 
@@ -415,8 +407,7 @@ void HoneydConfiguration::LoadScriptsTemplate()
 
 			if(!s.name.compare(""))
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files")%__FILE__%__LINE__).str());
-
+				LOG(ERROR, "Problem loading honeyd XML files.","");
 				continue;
 			}
 
@@ -426,8 +417,7 @@ void HoneydConfiguration::LoadScriptsTemplate()
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading scripts: %3%")%__FILE__%__LINE__%string(e.what())).str());
-
+		LOG(ERROR, "Problem loading scripts: "+string(e.what())+".", "");
 	}
 }
 
@@ -719,15 +709,13 @@ void HoneydConfiguration::LoadSubnets(ptree *ptr)
 			}
 			else
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Unexpected Entry in file: %3%")%__FILE__%__LINE__% string(v.first.data())).str());
-
+				LOG(ERROR, "Unexpected Entry in file: "+string(v.first.data())+".", "");
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading subnets: %3%")%__FILE__%__LINE__%string(e.what())).str());
-
+		LOG(ERROR, "Problem loading subnets: "+string(e.what()), "");
 	}
 }
 
@@ -759,8 +747,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 
 				if(!n.pfile.compare(""))
 				{
-					LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files")%__FILE__%__LINE__).str());
-
+					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
 				}
 
@@ -796,8 +783,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 
 						if(!n.name.compare(""))
 						{
-							LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files")
-								%__FILE__%__LINE__).str());
+							LOG(ERROR, "Problem loading honeyd XML files.", "");
 							continue;
 						}
 
@@ -847,9 +833,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						//If no subnet found, can't use node unless it's doppelganger.
 						else
 						{
-							LOG(ERROR, (format("File %1% at line %2%: Node at IP: %3% is outside all valid "
-								"subnet ranges")%__FILE__%__LINE__%n.IP).str());
-
+							LOG(ERROR, "Node at IP: "+ n.IP+"is outside all valid subnet ranges.", "");
 						}
 						break;
 					}
@@ -860,27 +844,21 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						//If no MAC is set, there's a problem
 						if(!n.MAC.size())
 						{
-							LOG(ERROR, (format("File %1% at line %2%: DHCP Enabled node using profile %3% "
-								"does not have a MAC Address.")%__FILE__%__LINE__%string(n.pfile)).str());
-
+							LOG(ERROR, "DHCP Enabled node using profile: "+ n.pfile+"does not have a MAC Address.", "");
 							continue;
 						}
 
 						//Associated MAC is already in use, this is not allowed, throw out the node
 						if(m_nodes.find(n.MAC) != m_nodes.end())
 						{
-							LOG(ERROR, (format("File %1% at line %2%: Duplicate MAC address detected "
-								"in node: %3%")%__FILE__%__LINE__% n.MAC).str());
-
+							LOG(ERROR, "Duplicate MAC address detected in node: "+ n.MAC, "");
 							continue;
 						}
 						n.name = n.MAC;
 
 						if(!n.name.compare(""))
 						{
-							LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files")
-								%__FILE__%__LINE__).str());
-
+							LOG(ERROR, "Problem loading honeyd XML files.", "");
 							continue;
 						}
 
@@ -888,9 +866,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						// If no valid subnet/interface found
 						if(!n.sub.compare(""))
 						{
-							LOG(ERROR, (format("File %1% at line %2%: DHCP Enabled Node with MAC: %3% "
-								"is unable to resolve it's interface.")%__FILE__%__LINE__%n.MAC).str());
-
+							LOG(ERROR, "DHCP Enabled Node with MAC: "+n.MAC+" is unable to resolve it's interface.","");
 							continue;
 						}
 
@@ -909,9 +885,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 
 						if(!n.name.compare(""))
 						{
-							LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files")
-								%__FILE__%__LINE__).str());
-
+							LOG(ERROR, "Problem loading honeyd XML files.", "");
 							continue;
 						}
 
@@ -927,8 +901,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						// If no valid subnet/interface found
 						if(!n.sub.compare(""))
 						{
-							LOG(ERROR, (format("File %1% at line %2%: DHCP Enabled Node is unable to resolve "
-									"it's interface: %s.")%__FILE__%__LINE__%n.interface).str());
+							LOG(ERROR, "DHCP Enabled Node is unable to resolve it's interface: " +n.interface,"");
 							continue;
 						}
 						//save the node in the table
@@ -946,15 +919,13 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 			}
 			else
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Unexpected Entry in file: %3%")
-					%__FILE__%__LINE__% string(v.first.data())).str());
+				LOG(ERROR, "Unexpected Entry in file: "+string(v.first.data()), "");
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading nodes: %3%")
-			%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading nodes: "+ string(e.what()), "");
 	}
 }
 
@@ -983,8 +954,7 @@ void HoneydConfiguration::LoadProfilesTemplate()
 
 				if(!p.name.compare(""))
 				{
-					LOG(ERROR, (format("File %1% at line %2%: Problem loading honeyd XML files")
-						%__FILE__%__LINE__).str());
+					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
 				}
 
@@ -1031,15 +1001,13 @@ void HoneydConfiguration::LoadProfilesTemplate()
 			}
 			else
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Invalid XML Path %3%")
-					%__FILE__%__LINE__%string(v.first.data())).str());
+				LOG(ERROR, "Invalid XML Path " +string(v.first.data())+".", "");
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading Profiles: %3%")
-			%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading Profiles: "+string(e.what())+".", "");
 	}
 }
 
@@ -1106,8 +1074,7 @@ string HoneydConfiguration::ProfileToString(profile* p)
 				}
 				else
 				{
-					LOG(ERROR, (format("File %1% at line %2%: Error writing profile port script %3%: Path to script is null")
-						%__FILE__%__LINE__%scriptName).str());
+					LOG(ERROR, "Error writing profile port script.", "Path to script "+scriptName+" is null.");
 				}
 			}
 			else

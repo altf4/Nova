@@ -56,28 +56,38 @@ namespace Nova
 
 	}
 
-	void Logger::Log(Nova::Levels messageLevel, string messageBasic, string messageAdv)
+	void Logger::Log(Nova::Levels messageLevel, const char* messageBasic,  const char* messageAdv,
+			const char* file,  const int& line)
 	{
 		pthread_rwlock_wrlock(&m_logLock);
 		string mask = getBitmask(messageLevel);
-
+		string tempStr = (string)messageAdv;
+		stringstream ss;
+		ss << "File " << file << " at line " << line << ": ";
 		// No advanced message? Log the same thing to both
-		if (messageAdv == "")
-			messageAdv = messageBasic;
+		if(tempStr == "")
+		{
+			ss << (string)messageBasic;
+		}
+		else
+		{
+			ss << (string)messageAdv;
+		}
+		tempStr = messageBasic;
 
 		if(mask.at(0) == '1')
 		{
-			Notify(messageLevel, messageBasic);
+			Notify(messageLevel, tempStr);
 		}
 
 		if(mask.at(1) == '1')
 		{
-			LogToFile(messageLevel, messageAdv);
+			LogToFile(messageLevel, ss.str());
 		}
 
 		if(mask.at(2) == '1')
 		{
-			Mail(messageLevel, messageBasic);
+			Mail(messageLevel, tempStr);
 		}
 
 		pthread_rwlock_unlock(&m_logLock);

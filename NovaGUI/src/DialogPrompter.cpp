@@ -23,11 +23,9 @@
 #include <QAction>
 #include <sstream>
 #include <fstream>
-#include <boost/format.hpp>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 // Prefixes for the configuration file
 const string DialogPrompter::m_showPrefix = "message show";
@@ -116,8 +114,7 @@ void DialogPrompter::LoadDefaultActions()
 	}
 	else
 	{
-		LOG(ERROR, (format("File: %s Line: %d Unable to open settings file: %s")
-			%__FILE__%__LINE__%m_configurationFile.c_str()).str());
+		LOG(ERROR, "Unable to open settings file: "+m_configurationFile,"");
 	}
 }
 

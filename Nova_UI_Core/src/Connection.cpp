@@ -27,7 +27,6 @@
 #include <cerrno>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <boost/format.hpp>
 
 //Socket communication variables
 int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
@@ -37,8 +36,6 @@ bool callbackInitialized = false;
 
 using namespace std;
 using namespace Nova;
-using boost::format;
-
 //Initializes the Callback socket. IE: The socket the UI listens on
 //	NOTE: This is run internally and not meant to be executed by the user
 //	returns - true if socket successfully initialized, false on error (such as another UI already listening)
@@ -57,7 +54,7 @@ bool InitCallbackSocket()
 
 	if((UI_parentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: socket: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket);
 		return false;
 	}
@@ -65,14 +62,14 @@ bool InitCallbackSocket()
 
 	if(::bind(UI_parentSocket,(struct sockaddr *)&UI_Address, len) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: bind: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " bind: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket);
 		return false;
 	}
 
 	if(listen(UI_parentSocket, SOCKET_QUEUE_SIZE) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: listen: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " listen: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket);
 		return false;
 	}
@@ -87,7 +84,7 @@ bool Nova::ConnectToNovad()
 	{
 		if(!InitCallbackSocket())
 		{
-			LOG(ERROR, (format("File %1% at line %2%: InitCallbackSocket failed.")%__FILE__%__LINE__).str());
+			//No logging needed, InitCallbackSocket logs if it fails
 			return false;
 		}
 	}
@@ -108,13 +105,13 @@ bool Nova::ConnectToNovad()
 
 	if((novadListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: socket: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		return false;
 	}
 
 	if(connect(novadListenSocket, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: connect: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " connect: "+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		return false;
 	}
@@ -123,7 +120,7 @@ bool Nova::ConnectToNovad()
 	connectRequest.m_controlType = CONTROL_CONNECT_REQUEST;
 	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket))
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Message: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		return false;
 	}
@@ -133,7 +130,7 @@ bool Nova::ConnectToNovad()
 	UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
 	if (UI_ListenSocket == -1)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: accept: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
 		close(UI_ListenSocket);
 		return false;
 	}
@@ -170,7 +167,7 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 	{
 		if(!InitCallbackSocket())
 		{
-			LOG(ERROR, (format("File %1% at line %2%: InitCallbackSocket Failed")%__FILE__%__LINE__).str());
+			//No logging needed, InitCallbackSocket logs if it fails
 			return false;
 		}
 	}
@@ -226,14 +223,14 @@ bool Nova::CloseNovadConnection()
 
 	if(UI_ListenSocket != -1 && close(UI_ListenSocket))
 	{
-		LOG(ERROR, (format("File %1% at line %2%: close: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(UI_ListenSocket);
 		success = false;
 	}
 
 	if(novadListenSocket != -1 && close(novadListenSocket))
 	{
-		LOG(ERROR, (format("File %1% at line %2%: close: %3%")%__FILE__%__LINE__%strerror(errno)).str());
+		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		success = false;
 	}

@@ -30,7 +30,6 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <boost/format.hpp>
 #include <QFileDialog>
 #include <signal.h>
 #include <errno.h>
@@ -39,7 +38,6 @@
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 pthread_rwlock_t lock;
 string homePath, readPath, writePath;
@@ -249,8 +247,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 			}
 			default:
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring.")
-					%__FILE__%__LINE__).str());
+				LOG(ERROR, "Invalid System Status Selection Row, ignoring.","");
 				return;
 			}
 		}
@@ -741,7 +738,7 @@ void NovaGUI::on_actionRunNova_triggered()
 		if(!StartCallbackLoop(this))
 		{
 			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-				(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
+				"InitCallbackSocket() failed: "+string(strerror(errno))+".");
 		}
 	}
 	StartHaystack();
@@ -795,7 +792,7 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 
 void NovaGUI::on_actionClear_Suspect_triggered()
 {
-	QListWidget * list;
+	QListWidget * list = NULL;
 	if(ui.suspectList->hasFocus())
 	{
 		list = ui.suspectList;
@@ -818,7 +815,7 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 
 void NovaGUI::on_actionHide_Suspect_triggered()
 {
-	QListWidget * list;
+	QListWidget * list = NULL;
 	if(ui.suspectList->hasFocus())
 	{
 		list = ui.suspectList;
@@ -862,7 +859,7 @@ void NovaGUI::on_actionMakeDataFile_triggered()
 	trainingSuspectMap* map = TrainingData::ParseTrainingDb(data.toStdString());
 	if(map == NULL)
 	{
-		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
+		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file "+ data.toStdString());
 		return;
 	}
 
@@ -894,7 +891,7 @@ void NovaGUI::on_actionTrainingData_triggered()
 
 	if(trainingDump == NULL)
 	{
-		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file " + data.toStdString());
+		m_prompter->DisplayPrompt(CONFIG_READ_FAIL, "Error parsing file "+ data.toStdString());
 		return;
 	}
 
@@ -1009,7 +1006,7 @@ void NovaGUI::on_runButton_clicked()
 		if(!StartCallbackLoop(this))
 		{
 			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-				(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")% __FILE__%__LINE__%(::strerror(errno))).str());
+				"InitCallbackSocket() failed: "+string(strerror(errno))+".");
 		}
 	}
 	StartHaystack();
@@ -1055,8 +1052,7 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 		}
 		default:
 		{
-			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring.")
-				%__FILE__%__LINE__).str());
+			LOG(ERROR, "Invalid System Status Selection Row, ignoring.","");
 			return;
 		}
 	}
@@ -1080,8 +1076,7 @@ void NovaGUI::on_actionSystemStatStop_triggered()
 		}
 		default:
 		{
-			LOG(ERROR, (format("File %1% at line %2%: Invalid System Status Selection Row, ignoring")
-				%__FILE__%__LINE__).str());
+			LOG(ERROR, "Invalid System Status Selection Row, ignoring","");
 			break;
 		}
 	}
@@ -1105,8 +1100,7 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 				if(!StartCallbackLoop(this))
 				{
 					LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-						(format("File %1% at line %2%:  InitCallbackSocket() failed.: %3%")
-						% __FILE__%__LINE__%(::strerror(errno))).str());
+						"InitCallbackSocket() failed: "+string(strerror(errno))+".");
 				}
 			}
 			break;
@@ -1229,8 +1223,8 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 				}
 			}
 
-			ui.suspectDistances->insertItem(row, featureLabel + tr(" Accuracy"));
-			QString formatString = "%p% | ";
+			ui.suspectDistances->insertItem(row, featureLabel + tr("Accuracy"));
+			QString formatString = "%p%| ";
 			formatString.append(featureLabel);
 			formatString.append(": ");
 
@@ -1240,16 +1234,19 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 			bar->setMaximum(100);
 			bar->setTextVisible(true);
 
+			double d = suspect->GetFeatureAccuracy((featureIndex)i);
+			stringstream ss;
+			ss.str("");
+			ss << "GUI got invalid feature accuracy of: " << d << " (range is 0-1).";
+
 			if(suspect->GetFeatureAccuracy((featureIndex)i) < 0)
 			{
-				LOG(ERROR, (format("File %1% at line %2%: GUI got invalid feature accuracy (should be between 0 and 1), but is %3%.")
-					%__FILE__%__LINE__%suspect->GetFeatureAccuracy((featureIndex)i)).str());
+				LOG(ERROR, ss.str(), "");
 				suspect->SetFeatureAccuracy((featureIndex)i, 0);
 			}
 			else if(suspect->GetFeatureAccuracy((featureIndex)i) > 1)
 			{
-				LOG(ERROR, (format("File %1% at line %2%: GUI got invalid feature accuracy (should be between 0 and 1), but is %3%.")
-					%__FILE__%__LINE__%suspect->GetFeatureAccuracy((featureIndex)i)).str());
+				LOG(ERROR, ss.str(), "");
 				suspect->SetFeatureAccuracy((featureIndex)i, 1);
 			}
 
@@ -1328,27 +1325,21 @@ bool StartCallbackLoop(void *ptr)
 
 void *CallbackLoop(void *ptr)
 {
-
 	struct CallbackChange change;
-
 	while(true)
 	{
 		change = ProcessCallbackMessage();
-
 		switch(change.type)
 		{
 			case CALLBACK_ERROR:
 			{
 				//TODO: Die after X consecutive errors?
-				LOG(ERROR, "Failed to connect to Novad",
-					(format("File %1% at line %2%:  Got a callback_error message")% __FILE__%__LINE__).str());
+				LOG(ERROR, "Failed to connect to Novad", "Got a callback_error message");
 				break;
 			}
 			case CALLBACK_HUNG_UP:
 			{
-				LOG(ERROR, "Novad hung up",
-					(format("File %1% at line %2%:  Got a callback_error message: CALLBACK_HUNG_UP")% __FILE__%__LINE__).str());
-
+				LOG(ERROR, "Novad hung up", "Got a callback_error message: CALLBACK_HUNG_UP");
 				return NULL;
 			}
 			case CALLBACK_NEW_SUSPECT:

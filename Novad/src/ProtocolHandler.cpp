@@ -32,15 +32,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <string.h>
 #include <cerrno>
 #include <stdio.h>
 #include <stdlib.h>
-#include <boost/format.hpp>
 
 using namespace Nova;
 using namespace std;
-using boost::format;
 
 int callbackSocket = -1, IPCSocket = -1;
 
@@ -62,7 +59,7 @@ bool Nova::Spawn_UI_Handler()
 
     if((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
-    	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  socket: %s")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Failed to connect to UI", "socket: "+string(strerror(errno)));
     	return false;
     }
 
@@ -73,15 +70,15 @@ bool Nova::Spawn_UI_Handler()
 
     if(::bind(IPCSocket, (struct sockaddr *)&msgLocal, len) == -1)
     {
-    	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  bind: %s")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(ERROR, "Failed to connect to UI", "bind: "+string(strerror(errno)));
     	close(IPCSocket);
     	return false;
     }
 
     if(listen(IPCSocket, SOMAXCONN) == -1)
     {
-    	LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
-    	close(IPCSocket);
+		LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
+		close(IPCSocket);
     	return false;
     }
 
@@ -100,7 +97,7 @@ void *Nova::Handle_UI_Helper(void *ptr)
     	//Blocking call
 		if((*msgSocket = accept(IPCSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
 		{
-			LOG(ERROR, "Failed to connect to UI", (format("File %1% at line %2%:  listen: %s")% __FILE__%__LINE__% strerror(errno)).str());
+			LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
 			close(IPCSocket);
 			return false;
 		}
@@ -128,8 +125,7 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 		if( message == NULL )
 		{
 			//There was an error reading this message
-			LOG(DEBUG, "The UI hung up",
-					(format("File %1% at line %2%: Deserialization error.")% __FILE__%__LINE__).str());
+			LOG(DEBUG, "The UI hung up","Deserialization error.");
 			break;
 		}
 		switch(message->m_messageType)
@@ -151,8 +147,7 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 			default:
 			{
 				//There was an error reading this message
-				LOG(DEBUG, "There was an error reading a message from the UI",
-						(format("File %1% at line %2%: Invalid message type")% __FILE__%__LINE__).str());
+				LOG(DEBUG, "There was an error reading a message from the UI", "Invalid message type");
 				delete message;
 				continue;
 			}
@@ -177,8 +172,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			UI_Message::WriteMessage(&exitReply, socketFD);
 
 			LOG(NOTICE, "Quitting: Got an exit request from the UI. Goodbye!",
-					(format("File %1% at line %2%: Got a CONTROL_EXIT_REQUEST, quitting.")% __FILE__%__LINE__).str());
-
+					"Got a CONTROL_EXIT_REQUEST, quitting.");
 			SaveAndExit(0);
 
 			break;
@@ -195,8 +189,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
 			{
-				LOG(ERROR, (format("File %1% at line %2%:  Unable to delete CE state file. System call to rm failed.")
-						% __FILE__%__LINE__).str());
+				LOG(ERROR, "Unable to delete CE state file. System call to rm failed.","");
 				successResult = false;
 			}
 
@@ -208,7 +201,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			if(successResult)
 			{
 				LOG(DEBUG, "Cleared all suspects due to UI request",
-						(format("File %1% at line %2%: Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.")% __FILE__%__LINE__).str());
+						"Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.");
 			}
 
 			break;
@@ -230,9 +223,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			suspectAddress.s_addr = controlMessage.m_suspectAddress;
 
 			LOG(DEBUG, "Cleared a suspect due to UI request",
-					(format("File %1% at line %2%: Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: %3%.")% __FILE__%__LINE__
-					%inet_ntoa(suspectAddress)).str());
-
+					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+".");
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
@@ -246,7 +237,8 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			}
 			else
 			{
-				suspects.SaveSuspectsToFile(string(controlMessage.m_filePath)); //TODO: Should check for errors here and return result
+				suspects.SaveSuspectsToFile(string(controlMessage.m_filePath));
+				//TODO: Should check for errors here and return result
 			}
 
 			ControlMessage saveSuspectsReply;
@@ -255,8 +247,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
 
 			LOG(DEBUG, "Saved suspects to file due to UI request",
-					(format("File %1% at line %2%: Got a CONTROL_SAVE_SUSPECTS_REQUEST, saved all suspects.")% __FILE__%__LINE__).str());
-
+				"Got a CONTROL_SAVE_SUSPECTS_REQUEST, saved all suspects.");
 			break;
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
@@ -269,7 +260,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
 
 			LOG(DEBUG, "Reclassified all suspects due to UI request",
-					(format("File %1% at line %2%: Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.")% __FILE__%__LINE__).str());
+				"Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.");
 			break;
 		}
 		case CONTROL_CONNECT_REQUEST:
@@ -283,13 +274,11 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			if(successResult)
 			{
-				LOG(NOTICE, "Connected to UI!",
-						(format("File %1% at line %2%: Got a CONTROL_CONNECT_REQUEST, succeeded.")% __FILE__%__LINE__).str());
+				LOG(NOTICE, "Connected to UI!","Got a CONTROL_CONNECT_REQUEST, succeeded.");
 			}
 			else
 			{
-				LOG(WARNING, "Tried to connect to UI, but failed",
-						(format("File %1% at line %2%: Got a CONTROL_CONNECT_REQUEST, failed to connect.")% __FILE__%__LINE__).str());
+				LOG(WARNING, "Tried to connect to UI, but failed", "Got a CONTROL_CONNECT_REQUEST, failed to connect.");
 			}
 
 			break;
@@ -302,8 +291,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			disconnectReply.m_controlType = CONTROL_DISCONNECT_ACK;
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
 
-			LOG(NOTICE, "The UI hung up",
-					(format("File %1% at line %2%: Got a CONTROL_DISCONNECT_NOTICE, closed down socket.")% __FILE__%__LINE__).str());
+			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
 
 			break;
 		}
@@ -315,14 +303,13 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
 			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
-			//	(format("File %1% at line %2%: Got a CONTROL_PING, sent a PONG.")% __FILE__%__LINE__).str());
+			//	"Got a CONTROL_PING, sent a PONG.");
 
 			break;
 		}
 		default:
 		{
-			LOG(DEBUG, "UI sent us an invalid message",
-					(format("File %1% at line %2%: Got an unexpected ControlMessage type")% __FILE__%__LINE__).str());
+			LOG(DEBUG, "UI sent us an invalid message","Got an unexpected ControlMessage type");
 			break;
 		}
 
@@ -375,8 +362,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 				break;
 			}
 			default:
-				LOG(DEBUG, "UI sent us an invalid message",
-						(format("File %1% at line %2%: Got an unexpected RequestMessage type")% __FILE__%__LINE__).str());
+				LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
 				break;
 			}
 
@@ -398,8 +384,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 			default:
 		{
-			LOG(DEBUG, "UI sent us an invalid message",
-					(format("File %1% at line %2%: Got an unexpected RequestMessage type")% __FILE__%__LINE__).str());
+			LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
 			break;
 		}
 
@@ -423,16 +408,14 @@ bool Nova::ConnectToUI()
 
 	if((callbackSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(WARNING, "Unable to connect to UI",
-				(format("File %1% at line %2%:  Unable to create UI socket: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(WARNING, "Unable to connect to UI", "Unable to create UI socket: "+string(strerror(errno)));
 		close(callbackSocket);
 		return false;
 	}
 
 	if(connect(callbackSocket, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
 	{
-		LOG(WARNING, "Unable to connect to UI", (
-				format("File %1% at line %2%:  Unable to connect() to UI: %3%")% __FILE__%__LINE__% strerror(errno)).str());
+		LOG(WARNING, "Unable to connect to UI", "Unable to connect to UI: "+string(strerror(errno)));
 		close(callbackSocket);
 		return false;
 	}

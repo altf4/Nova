@@ -19,7 +19,6 @@
 #include <fstream>
 #include <sstream>
 #include <ANN/ANN.h>
-#include <boost/format.hpp>
 
 #include "TrainingData.h"
 #include "Defines.h"
@@ -27,7 +26,6 @@
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 {
@@ -45,8 +43,7 @@ trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 
 			if(firstDelim == string::npos)
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Error: Invalid or corrupt CE capture file.")
-					%__FILE__%__LINE__).str());
+				LOG(ERROR, "Invalid or corrupt CE capture file.", "");
 				return NULL;
 			}
 
@@ -64,8 +61,7 @@ trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Error: unable to open CE capture file for reading.")
-			%__FILE__%__LINE__).str());
+		LOG(ERROR, "Unable to open CE capture file for reading.", "");
 		return NULL;
 	}
 	dataFile.close();
@@ -98,8 +94,7 @@ trainingSuspectMap* TrainingData::ParseTrainingDb(string dbPath)
 
 					if(delimIndex == string::npos)
 					{
-						LOG(ERROR, (format("File %1% at line %2%: Error: Invalid or corrupt DB training file.")
-							%__FILE__%__LINE__).str());
+						LOG(ERROR, "Invalid or corrupt DB training file.", "");
 						return NULL;
 					}
 
@@ -113,8 +108,7 @@ trainingSuspectMap* TrainingData::ParseTrainingDb(string dbPath)
 					delimIndex = line.find_first_of('"');
 					if(delimIndex == string::npos)
 					{
-						LOG(ERROR, (format("File %1% at line %2%: Error: Invalid or corrupt DB training file.")
-							%__FILE__%__LINE__).str());
+						LOG(ERROR, "Invalid or corrupt DB training file.", "");
 						return NULL;
 					}
 
@@ -139,8 +133,7 @@ trainingSuspectMap* TrainingData::ParseTrainingDb(string dbPath)
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Error: unable to open training DB file for reading.")
-			%__FILE__%__LINE__).str());
+		LOG(ERROR, "Unable to open training DB file for reading.", "");
 		return NULL;
 	}
 	stream.close();
@@ -283,9 +276,12 @@ void TrainingData::ThinTrainingPoints(trainingDumpMap* suspects, double distance
 			}
 		}
 	}
-
-	LOG(INFO, (format("File %1% at line %2%: Total points: %3%")%__FILE__%__LINE__%numTotal).str());
-	LOG(INFO, (format("File %1% at line %2%: Number Thinned: %3%")%__FILE__%__LINE__%numThinned).str());
+	stringstream ss;
+	ss << " Total points: "  << numTotal;
+	LOG(INFO, ss.str(), "");
+	ss.str("");
+	ss << " Number Thinned:" << numThinned;
+	LOG(INFO, ss.str(), "");
 
 	annDeallocPt(newerPoint);
 	annDeallocPt(olderPoint);

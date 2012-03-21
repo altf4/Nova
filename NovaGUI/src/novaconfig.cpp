@@ -24,7 +24,6 @@
 #include "NovaComplexDialog.h"
 
 #include <boost/foreach.hpp>
-#include <boost/format.hpp>
 #include <QFileDialog>
 #include <errno.h>
 #include <fstream>
@@ -32,7 +31,6 @@
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 using boost::property_tree::ptree;
 
 /************************************************
@@ -230,9 +228,9 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 				//If the port isn't inherited and the profile has no parent
 				else
 				{
-					LOG(ERROR, (format("File %1% at line %2%: Cannot inherit without any ancestors.")
-						%__FILE__%__LINE__).str());
-					m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->NO_ANCESTORS, "Cannot inherit without any ancestors.");
+					LOG(ERROR, "Cannot inherit without any ancestors.", "");
+					m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->NO_ANCESTORS,
+						"Cannot inherit without any ancestors.");
 				}
 				break;
 			}
@@ -428,9 +426,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 			}
 			if(i == p->ports.size())
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Port %3% could not be found in profile %4%")
-					%__FILE__%__LINE__%prt->portName%p->name).str());
-
+				LOG(ERROR, "Port "+prt->portName+" could not be found in profile " + p->name+".", "");
 				m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_DELETE_PORT, "Port " + prt->portName
 					+ " cannot be found.");
 			}
@@ -544,8 +540,8 @@ void NovaConfig::on_defaultActionListWidget_currentRowChanged()
 	}
 	else
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Invalid user dialog default action selected, shouldn't get here.")
-			%__FILE__%__LINE__).str());
+		LOG(ERROR, "Invalid user dialog default action selected, shouldn't get here.", "");
+
 	}
 }
 
@@ -724,8 +720,8 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 			if((!(temp.portNum.compare(prt.portNum))) && (!(temp.type.compare(prt.type)))
 					&& temp.portName.compare(oldPort))
 			{
-				LOG(ERROR, (format("File %1% at line %2%: WARNING: Port number and protocol already used.")
-					%__FILE__%__LINE__).str());
+				LOG(ERROR, "WARNING: Port number and protocol already used.", "");
+
 				portName = "";
 			}
 		}
@@ -1037,8 +1033,7 @@ void NovaConfig::LoadNmapPersonalitiesFromFile()
 				}
 				else
 				{
-					LOG(ERROR, (format("File %1% at line %2%: ERROR: Unable to load nmap fingerpint: %3%")
-						%__FILE__%__LINE__%fprint).str());
+					LOG(ERROR, "ERROR: Unable to load nmap fingerpint: "+fprint, "");
 				}
 			}
 		}
@@ -1550,9 +1545,9 @@ void NovaConfig::on_okButton_clicked()
 	SaveProfileSettings();
 	if(!SaveConfigurationToFile())
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Error writing to Nova config file.")
-			%__FILE__%__LINE__).str());
-		m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file");
+		LOG(ERROR, "Error writing to Nova config file.", "");
+		m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CONFIG_WRITE_FAIL,
+			"Error: Unable to write to NOVA configuration file");
 		this->close();
 	}
 	//Save changes
@@ -1569,9 +1564,10 @@ void NovaConfig::on_applyButton_clicked()
 	SaveProfileSettings();
 	if(!SaveConfigurationToFile())
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Error writing to Nova config file.")
-			%__FILE__%__LINE__).str());
-		m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CONFIG_WRITE_FAIL, "Error: Unable to write to NOVA configuration file ");
+		LOG(ERROR, "Error writing to Nova config file.", "");
+
+		m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CONFIG_WRITE_FAIL,
+			"Error: Unable to write to NOVA configuration file ");
 		this->close();
 	}
 	//Reloads NOVAConfig preferences to assert concurrency
@@ -1693,8 +1689,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 		}
 		else
 		{
-			LOG(ERROR, (format("File %1% at line %2%: Unable to set stackedWidget page index from treeWidgetItem")
-				%__FILE__%__LINE__).str());
+			LOG(ERROR, "Unable to set stackedWidget page index from treeWidgetItem", "");
 		}
 	}
 }
@@ -2472,14 +2467,13 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 			}
 			else
 			{
-				LOG(ERROR, (format("File %1% at line %2%: Invalid XML Path %3%")
-					%__FILE__%__LINE__%string(v.first.data())).str());
+				LOG(ERROR, "Invalid XML Path "+string(v.first.data()), "");
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading Profiles: %3%")%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading Profiles: "+string(e.what()), "");
 		m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->HONEYD_LOAD_FAIL, "Problem loading Profiles: " + string(e.what()));
 	}
 }
@@ -2551,8 +2545,7 @@ void NovaConfig::LoadProfileSettings(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading profile set parameters: %3%")
-				%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading profile set parameters: "+string(e.what()), "");
 	}
 }
 
@@ -2632,8 +2625,7 @@ void NovaConfig::LoadProfileServices(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading profile add parameters: %3%")
-			%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading profile add parameters: "+string(e.what()), "");
 	}
 }
 
@@ -2710,8 +2702,7 @@ void NovaConfig::LoadProfileChildren(string parent)
 	}
 	catch(std::exception &e)
 	{
-		LOG(ERROR, (format("File %1% at line %2%: Problem loading sub profiles: %3%")
-			%__FILE__%__LINE__%string(e.what())).str());
+		LOG(ERROR, "Problem loading sub profiles: "+string(e.what()), "");
 	}
 }
 
@@ -3026,9 +3017,7 @@ void NovaConfig::on_actionProfileDelete_triggered()
 		}
 		if(nodeExists)
 		{
-			LOG(ERROR, (format("File %1% at line %2%: ERROR: A Node is currently using this profile.")
-				%__FILE__%__LINE__).str());
-
+			LOG(ERROR, "ERROR: A Node is currently using this profile.","");
 			if(m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_DELETE_ITEM, "Profile "
 				+m_currentProfile+" cannot be deleted because some nodes are currently using it, would you like to "
 				"disable all nodes currently using it?",ui.actionNo_Action, ui.actionNo_Action, this) == CHOICE_DEFAULT)
@@ -3050,8 +3039,7 @@ void NovaConfig::on_actionProfileDelete_triggered()
 	}
 	else if(!m_currentProfile.compare("default"))
 	{
-		LOG(INFO, (format("File %1% at line %2%: Notify: Cannot delete the default profile.")
-				%__FILE__%__LINE__).str());
+		LOG(INFO, "Notify: Cannot delete the default profile.","");
 
 		if(m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_DELETE_ITEM, "Cannot delete the default profile, "
 			"would you like to disable the Haystack instead?",ui.actionNo_Action, ui.actionNo_Action, this) == CHOICE_DEFAULT)
