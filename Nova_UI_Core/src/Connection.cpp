@@ -186,6 +186,11 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 
 bool Nova::CloseNovadConnection()
 {
+	if((novadListenSocket == -1) && (UI_ListenSocket == -1))
+	{
+		return true;
+	}
+
 	bool success = true;
 	callbackInitialized = false;
 
