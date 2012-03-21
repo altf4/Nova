@@ -49,7 +49,7 @@ install-release:
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
-	install NovaCLI/Release/NovaCLI $(DESTDIR)/usr/bin
+	install NovaCLI/Release/novacli $(DESTDIR)/usr/bin
 	install Novad/Release/Novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
@@ -84,7 +84,7 @@ install-debug:
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
-	install NovaCLI/Debug/NovaCLI $(DESTDIR)/usr/bin
+	install NovaCLI/Debug/novacli $(DESTDIR)/usr/bin
 	install Novad/Debug/Novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
@@ -118,7 +118,7 @@ uninstall:
 	rm -rf $(DESTDIR)/etc/nova
 	rm -rf $(DESTDIR)/usr/share/nova
 	rm -f $(DESTDIR)/usr/bin/NovaGUI
-	rm -f $(DESTDIR)/usr/bin/NovaCLI
+	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/Novad
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
