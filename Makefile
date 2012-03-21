@@ -56,6 +56,7 @@ install-release: install-data install-docs
 	install NovaCLI/Release/novacli $(DESTDIR)/usr/bin
 	install Novad/Release/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
+	sh Installer/postinst
 
 #requires root
 install-debug: install-data install-docs
@@ -66,6 +67,7 @@ install-debug: install-data install-docs
 	install NovaCLI/Debug/novacli $(DESTDIR)/usr/bin
 	install Novad/Debug/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
+	sh Installer/postinst
 	
 install-data:
 	#make folder in etc with path locations to nova files
@@ -90,7 +92,6 @@ install-data:
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# Copy the bash completion files
 	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
-	sh Installer/postinst
 
 install-docs:
 	# TODO: Combine man pages
