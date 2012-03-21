@@ -21,6 +21,9 @@
 
 #include "messages/RequestMessage.h"
 
+// Name of the CLI executable
+#define EXECUTABLE_NAME "NovaCLI"
+
 namespace NovaCLI
 {
 
@@ -29,6 +32,10 @@ void Connect();
 
 void StartNovaWrapper();
 void StartHaystackWrapper();
+
+void StatusNovaWrapper();
+void StatusHaystackWrapper();
+
 void StopNovaWrapper();
 void StopHaystackWrapper();
 

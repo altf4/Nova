@@ -21,6 +21,7 @@
 #include "HaystackControl.h"
 #include "NovadControl.h"
 #include "StatusQueries.h"
+#include "Logger.h"
 
 
 #include <iostream>
@@ -33,6 +34,7 @@ using namespace std;
 using namespace Nova;
 using namespace NovaCLI;
 
+
 int main(int argc, const char *argv[])
 {
 	// Fail if no arguements
@@ -40,6 +42,10 @@ int main(int argc, const char *argv[])
 	{
 		PrintUsage();
 	}
+
+	// We parse the input arguments here,
+	// but refer to other functions to do any
+	// actual work.
 
 	// Listing suspect IP addresses
 	if (!strcmp(argv[1], "list"))
@@ -60,6 +66,28 @@ int main(int argc, const char *argv[])
 		else if (!strcmp(argv[2], "benign"))
 		{
 			PrintSuspectList(SUSPECTLIST_BENIGN);
+		}
+		else
+		{
+			PrintUsage();
+		}
+	}
+
+	// Checking status of components
+	else if (!strcmp(argv[1], "status"))
+	{
+		if (argc < 3)
+		{
+			PrintUsage();
+		}
+
+		if (!strcmp(argv[2], "nova"))
+		{
+			StatusNovaWrapper();
+		}
+		else if (!strcmp(argv[2], "haystack"))
+		{
+			StatusHaystackWrapper();
 		}
 		else
 		{
@@ -150,14 +178,46 @@ namespace NovaCLI
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-	cout << "    NovaCLI start nova|haystack" << endl;
-	cout << "    NovaCLI stop nova|haystack" << endl;
-	cout << "    NovaCLI list all|hostile|benign" << endl;
-	cout << "    NovaCLI get all" << endl;
-	cout << "    NovaCLI get xxx.xxx.xxx.xxx" << endl;
-
+	cout << "    " << EXECUTABLE_NAME << " status nova|haystack" << endl;
+	cout << "    " << EXECUTABLE_NAME << " start nova|haystack" << endl;
+	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
+	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
+	cout << "    " << EXECUTABLE_NAME << " get all" << endl;
+	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
 	cout << endl;
+
 	exit(EXIT_FAILURE);
+}
+
+void StatusNovaWrapper()
+{
+	if (!ConnectToNovad())
+	{
+		cout << "Novad Status: Not running" << endl;
+	}
+	else
+	{
+		if (IsUp())
+		{
+			cout << "Novad Status: Running and responding" << endl;
+		}
+		else
+		{
+			cout << "Novad Status: Not responding" << endl;
+		}
+	}
+}
+
+void StatusHaystackWrapper()
+{
+	if (IsHaystackUp())
+	{
+		cout << "Haystack Status: Running" << endl;
+	}
+	else
+	{
+		cout << "Haystack Status: Not running" << endl;
+	}
 }
 
 void StartNovaWrapper()
@@ -308,7 +368,7 @@ void Connect()
 {
 	if (!ConnectToNovad())
 	{
-		cout << "Failed to connect to Nova" << endl;
+		cout << "ERROR: Unable to connect to Nova" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
