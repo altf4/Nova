@@ -24,7 +24,7 @@ namespace Nova
 
 ErrorMessage::ErrorMessage()
 {
-	m_messageType = CALLBACK_MESSAGE;
+	m_messageType = ERROR_MESSAGE;
 }
 
 ErrorMessage::~ErrorMessage()
