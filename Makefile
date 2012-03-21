@@ -48,9 +48,9 @@ install-release:
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
+	install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/Release/novacli $(DESTDIR)/usr/bin
-	install Novad/Release/Novad $(DESTDIR)/usr/bin
+	install Novad/Release/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
@@ -75,8 +75,8 @@ install-release:
 	# Copy the bash completion files
 	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
 	# TODO: Combine man pages
-	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
-	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
+	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
+	gzip -c Installer/Read/manpages/novagui.1 > Installer/Read/manpages/novagui.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	sh Installer/postinst
 
@@ -85,9 +85,9 @@ install-debug:
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	install NovaGUI/NovaGUI $(DESTDIR)/usr/bin
+	install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/Debug/novacli $(DESTDIR)/usr/bin
-	install Novad/Debug/Novad $(DESTDIR)/usr/bin
+	install Novad/Debug/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
@@ -112,8 +112,8 @@ install-debug:
 	# Copy the bash completion files
 	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
 	# TODO: Combine man pages
-	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
-	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
+	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
+	gzip -c Installer/Read/manpages/novagui.1 > Installer/Read/manpages/novagui.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 	sh Installer/postinst
 
@@ -121,14 +121,13 @@ install-debug:
 uninstall:
 	rm -rf $(DESTDIR)/etc/nova
 	rm -rf $(DESTDIR)/usr/share/nova
-	rm -f $(DESTDIR)/usr/bin/NovaGUI
+	rm -f $(DESTDIR)/usr/bin/novagui
 	rm -f $(DESTDIR)/usr/bin/novacli
-	rm -f $(DESTDIR)/usr/bin/Novad
+	rm -f $(DESTDIR)/usr/bin/novad
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
-	#rm -f $(DESTDIR)/usr/share/man/man1/LocalTrafficMonitor.1.gz
 	#sh Installer/postrm
 
