@@ -370,6 +370,18 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 			UI_Message::WriteMessage(&reply, socketFD);
 			break;
 		}
+
+		case REQUEST_SUSPECT:
+		{
+			RequestMessage reply;
+			reply.m_requestType = REQUEST_SUSPECT_REPLY;
+			reply.m_suspect = new Suspect();
+			*reply.m_suspect = suspects.Peek(msg.m_suspectAddress);
+			UI_Message::WriteMessage(&reply, socketFD);
+
+			break;
+		}
+
 			default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");

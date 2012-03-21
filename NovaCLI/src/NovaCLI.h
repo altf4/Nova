@@ -21,16 +21,29 @@
 
 #include "messages/RequestMessage.h"
 
+// Name of the CLI executable
+#define EXECUTABLE_NAME "NovaCLI"
+
 namespace NovaCLI
 {
-	void StartNovaWrapper();
-	void StartHaystackWrapper();
-	void StopNovaWrapper();
-	void StopHaystackWrapper();
-	void PrintSuspectList(enum SuspectListType listType);
 
+// Connect to Novad if we can, otherwise print error and exit
+void Connect();
 
-	void PrintUsage();
+void StartNovaWrapper();
+void StartHaystackWrapper();
+
+void StatusNovaWrapper();
+void StatusHaystackWrapper();
+
+void StopNovaWrapper();
+void StopHaystackWrapper();
+
+void PrintSuspect(in_addr_t address);
+void PrintAllSuspects();
+void PrintSuspectList(enum SuspectListType listType);
+
+void PrintUsage();
 }
 
 

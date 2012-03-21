@@ -31,7 +31,15 @@ namespace Nova
 //	returns - True if Novad is up, false if down
 bool IsUp();
 
+// Gets a list of suspect addresses currently classified
+//	 listType: Type of list to get (all, just hostile, just benign)
+//	Returns: list of addresses
 std::vector<in_addr_t> *GetSuspectList(enum SuspectListType listType);
+
+// Gets a suspect from the daemon
+// address: IP address of the suspect
+// Returns: Pointer to the suspect
+Suspect *GetSuspect(in_addr_t address);
 
 }
 #endif /* STATUSQUERIES_H_ */

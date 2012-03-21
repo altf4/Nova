@@ -20,6 +20,7 @@
 #define RequestMessage_H_
 
 #include "UI_Message.h"
+#include "../Suspect.h"
 
 #include <vector>
 #include <arpa/inet.h>
@@ -33,6 +34,9 @@ enum RequestType: char
 	REQUEST_SUSPECTLIST= 0,
 	REQUEST_SUSPECTLIST_REPLY,
 
+	// Request for an individual suspect
+	REQUEST_SUSPECT,
+	REQUEST_SUSPECT_REPLY,
 };
 
 enum SuspectListType : char
@@ -71,12 +75,22 @@ public:
 	uint32_t m_suspectListLength;
 	std::vector<in_addr_t> m_suspectList;
 
+	// For returning a single suspect
+	Suspect *m_suspect;
+	uint32_t m_suspectLength;
+	in_addr_t m_suspectAddress;
+
 protected:
 	//Serializes the requestinto a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
 	char *Serialize(uint32_t *length);
+
+	// Serializes just the UI message and request message type into the buffer
+	//	*buffer: Pointer to where to store the serialized values
+	// Returns: Number of bytes written to *buffer
+	int SerializeHeader(char *buffer);
 };
 
 }
