@@ -72,6 +72,8 @@ install-release:
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
+	# Copy the bash completion files
+	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
 	# TODO: Combine man pages
 	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
 	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
@@ -107,6 +109,8 @@ install-debug:
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
+	# Copy the bash completion files
+	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
 	# TODO: Combine man pages
 	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
 	gzip -c Installer/Read/manpages/NovaGUI.1 > Installer/Read/manpages/NovaGUI.1.gz
