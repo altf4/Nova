@@ -30,7 +30,6 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <boost/format.hpp>
 #include <QFileDialog>
 #include <signal.h>
 #include <errno.h>
@@ -39,7 +38,6 @@
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 pthread_rwlock_t lock;
 string homePath, readPath, writePath;
@@ -1255,7 +1253,7 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 			bar->setValue((int)((1 - suspect->GetFeatureAccuracy((featureIndex)i)/1.0)*100));
 			bar->setStyleSheet("QProgressBar:horizontal {border: 1px solid gray;background: white;padding: 1px;} \
 				 QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1,"
-				"y2: 0.5, stop: 0 yellow, stop: 1 green);}");
+				" y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
 			formatString.append(QString::number(suspect->GetFeatureSet().m_features[i]));
 			bar->setFormat(formatString);

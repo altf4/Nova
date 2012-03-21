@@ -22,12 +22,10 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <boost/format.hpp>
 #include <math.h>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 using boost::property_tree::ptree;
 using boost::property_tree::xml_parser::trim_whitespace;
 

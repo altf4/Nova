@@ -23,11 +23,9 @@
 #include <QAction>
 #include <sstream>
 #include <fstream>
-#include <boost/format.hpp>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 // Prefixes for the configuration file
 const string DialogPrompter::m_showPrefix = "message show";

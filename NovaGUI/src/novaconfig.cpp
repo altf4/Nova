@@ -24,7 +24,6 @@
 #include "NovaComplexDialog.h"
 
 #include <boost/foreach.hpp>
-#include <boost/format.hpp>
 #include <QFileDialog>
 #include <errno.h>
 #include <fstream>
@@ -32,7 +31,6 @@
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 using boost::property_tree::ptree;
 
 /************************************************

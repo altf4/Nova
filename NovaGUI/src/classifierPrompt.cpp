@@ -19,14 +19,12 @@
 #include "classifierPrompt.h"
 #include "Logger.h"
 
-#include <boost/format.hpp>
 #include <QContextMenuEvent>
 #include <QtGui/QMenu>
 #include <sstream>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
 : QDialog(parent)
