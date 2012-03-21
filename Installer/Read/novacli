@@ -27,6 +27,12 @@ _novacli()
 	    COMPREPLY=( $(compgen -W "all" -- ${cur}) )
 	return 0
 	;;
+	
+	clear)	
+	    COMPREPLY=( $(compgen -W "all" -- ${cur}) )
+	return 0
+	;;
+    
     
     esac
 

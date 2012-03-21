@@ -22,7 +22,7 @@
 #include "messages/RequestMessage.h"
 
 // Name of the CLI executable
-#define EXECUTABLE_NAME "NovaCLI"
+#define EXECUTABLE_NAME "novacli"
 
 namespace NovaCLI
 {
@@ -41,6 +41,10 @@ void StopHaystackWrapper();
 
 void PrintSuspect(in_addr_t address);
 void PrintAllSuspects();
+
+void ClearSuspectWrapper(in_addr_t address);
+void ClearAllSuspectsWrapper();
+
 void PrintSuspectList(enum SuspectListType listType);
 
 void PrintUsage();
