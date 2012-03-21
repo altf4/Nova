@@ -135,11 +135,25 @@ int Nova::RunNovaD()
 	if(Config::Inst()->GetIsDmEnabled())
 	{
 		string commandLine = "sudo iptables -A FORWARD -i lo -j DROP";
-		system(commandLine.c_str());
+
+		if(system(commandLine.c_str()) != 0)
+		{
+			LOG(ERROR, "Error setting up system for Doppelganger", "'iptables -A FORWARD -i lo -j DROP' could not be added to iptables rules");
+		}
+
 		commandLine = "sudo route add -host "+Config::Inst()->GetDoppelIp()+" dev lo";
-		system(commandLine.c_str());
+
+		if(system(commandLine.c_str()) != 0)
+		{
+			LOG(ERROR, "Error setting up system for Doppelganger", "Command 'sudo route add -host Config::Inst()->GetDoppelIp() dev lo' could not execute");
+		}
+
 		commandLine = "sudo iptables -t nat -F";
-		system(commandLine.c_str());
+
+		if(system(commandLine.c_str()) != 0)
+		{
+			LOG(ERROR, "Error setting up system for Doppelganger", "'iptables -t nat -F' could not be added to iptables rules");
+		}
 	}
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
