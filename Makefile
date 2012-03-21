@@ -70,6 +70,7 @@ install-release:
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# TODO: Combine man pages
 	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
@@ -104,6 +105,7 @@ install-debug:
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# TODO: Combine man pages
 	gzip -c Installer/Read/manpages/Novad.1 > Installer/Read/manpages/Novad.1.gz
@@ -122,6 +124,7 @@ uninstall:
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
+	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 	#rm -f $(DESTDIR)/usr/share/man/man1/LocalTrafficMonitor.1.gz
 	#sh Installer/postrm
 
