@@ -496,7 +496,7 @@ void Nova::Reload()
 
 void Nova::SilentAlarm(Suspect *suspect, int oldClassification)
 {
-	int sockfd;
+	int sockfd = 0;
 	char suspectAddr[INET_ADDRSTRLEN];
 	string commandLine;
 	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());

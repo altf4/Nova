@@ -792,7 +792,7 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 
 void NovaGUI::on_actionClear_Suspect_triggered()
 {
-	QListWidget * list;
+	QListWidget * list = NULL;
 	if(ui.suspectList->hasFocus())
 	{
 		list = ui.suspectList;
@@ -815,7 +815,7 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 
 void NovaGUI::on_actionHide_Suspect_triggered()
 {
-	QListWidget * list;
+	QListWidget * list = NULL;
 	if(ui.suspectList->hasFocus())
 	{
 		list = ui.suspectList;
