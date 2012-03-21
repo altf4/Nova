@@ -111,7 +111,7 @@ bool Nova::ConnectToNovad()
 
 	if(connect(novadListenSocket, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
-		LOG(ERROR, " connect: "+string(strerror(errno))+".", "");
+		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		return false;
 	}
