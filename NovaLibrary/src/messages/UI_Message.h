@@ -31,7 +31,8 @@ enum UI_MessageType: char
 {
 	CONTROL_MESSAGE = 0,
 	CALLBACK_MESSAGE,
-	REQUEST_MESSAGE
+	REQUEST_MESSAGE,
+	ERROR_MESSAGE
 };
 
 class UI_Message
