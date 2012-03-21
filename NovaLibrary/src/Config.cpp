@@ -241,9 +241,9 @@ void Config::LoadConfig()
 			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
+				if(atoi(line.c_str()) >= 0)
 				{
-					m_gotoLive = line.c_str();
+					m_gotoLive = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
