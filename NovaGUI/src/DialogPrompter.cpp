@@ -116,8 +116,7 @@ void DialogPrompter::LoadDefaultActions()
 	}
 	else
 	{
-		LOG(ERROR, (format("File: %s Line: %d Unable to open settings file: %s")
-			%__FILE__%__LINE__%m_configurationFile.c_str()).str());
+		LOG(ERROR, "Unable to open settings file: "+m_configurationFile,"");
 	}
 }
 
