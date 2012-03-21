@@ -59,7 +59,11 @@ SuspectGUIHashTable SuspectTable;
 void sighandler(int param)
 {
 	param = EXIT_SUCCESS;
-	::exit(param);
+	if(!CloseNovadConnection())
+	{
+		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
+	}
+	QCoreApplication::exit(EXIT_SUCCESS);
 }
 
 NovaGUI::NovaGUI(QWidget *parent)
@@ -166,7 +170,10 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 NovaGUI::~NovaGUI()
 {
-
+	if(!CloseNovadConnection())
+	{
+		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
+	}
 }
 
 //Draws the suspect context menu
@@ -263,7 +270,10 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent * event)
 
 void NovaGUI::closeEvent()
 {
-
+	if(!CloseNovadConnection())
+	{
+		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
+	}
 }
 
 /************************************************
@@ -773,7 +783,11 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	::exit(EXIT_SUCCESS);
+	if(!CloseNovadConnection())
+	{
+		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
+	}
+	QCoreApplication::exit(EXIT_SUCCESS);
 }
 
 void NovaGUI::on_actionClear_All_Suspects_triggered()
