@@ -481,7 +481,7 @@ void Nova::RefreshStateFile()
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
 
 			FeatureSet fs = newSuspect->GetFeatureSet();
-			fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 			newSuspect->SetFeatureSet(&fs);
 
 			if(!suspects.IsValidKey(newSuspect->GetIpAddress())

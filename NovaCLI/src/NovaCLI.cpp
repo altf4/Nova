@@ -164,6 +164,33 @@ int main(int argc, const char *argv[])
 			PrintSuspect(address);
 		}
 	}
+
+	// Clearing suspect information
+	else if (!strcmp(argv[1], "clear"))
+	{
+		if (argc < 3)
+		{
+			PrintUsage();
+		}
+
+		if (!strcmp(argv[2], "all"))
+		{
+			ClearAllSuspectsWrapper();
+		}
+		else
+		{
+			// Some early error checking for the
+			in_addr_t address;
+			if (inet_pton(AF_INET, argv[2], &address) != 1)
+			{
+				cout << "Error: Unable to convert to IP address" << endl;
+				exit(EXIT_FAILURE);
+			}
+
+			ClearSuspectWrapper(address);
+		}
+	}
+
 	else
 	{
 		PrintUsage();
@@ -184,6 +211,8 @@ void PrintUsage()
 	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get all" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
+	cout << "    " << EXECUTABLE_NAME << " clear all" << endl;
+	cout << "    " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);
@@ -205,6 +234,8 @@ void StatusNovaWrapper()
 		{
 			cout << "Novad Status: Not responding" << endl;
 		}
+
+		CloseNovadConnection();
 	}
 }
 
@@ -359,6 +390,38 @@ void PrintSuspectList(enum SuspectListType listType)
 		tmp.s_addr = suspects->at(i);
 		char *address = inet_ntoa(tmp);
 		cout << address << endl;
+	}
+
+	CloseNovadConnection();
+}
+
+void ClearAllSuspectsWrapper()
+{
+	Connect();
+
+	if (ClearAllSuspects())
+	{
+		cout << "Suspects have been cleared" << endl;
+	}
+	else
+	{
+		cout << "There was an error when clearing the suspects" << endl;
+	}
+
+	CloseNovadConnection();
+}
+
+void ClearSuspectWrapper(in_addr_t address)
+{
+	Connect();
+
+	if (ClearSuspect(address))
+	{
+		cout << "Suspect data has been cleared for this suspect" << endl;
+	}
+	else
+	{
+		cout << "There was an errer when trying to clear the suspect data for this suspect" << endl;
 	}
 
 	CloseNovadConnection();
