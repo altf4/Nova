@@ -29,8 +29,7 @@ using namespace std;
 bool Nova::IsUp()
 {
 
-	ControlMessage ping;
-	ping.m_controlType = CONTROL_PING;
+	ControlMessage ping(CONTROL_PING);
 	if(!UI_Message::WriteMessage(&ping, novadListenSocket) )
 	{
 		//There was an error in sending the message
@@ -63,8 +62,7 @@ bool Nova::IsUp()
 
 vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 {
-	RequestMessage request;
-	request.m_requestType = REQUEST_SUSPECTLIST;
+	RequestMessage request(REQUEST_SUSPECTLIST);
 	request.m_listType = listType;
 
 	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
@@ -105,9 +103,7 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 
 Suspect *Nova::GetSuspect(in_addr_t address)
 {
-	RequestMessage request;
-	request.m_messageType = REQUEST_MESSAGE;
-	request.m_requestType = REQUEST_SUSPECT;
+	RequestMessage request(REQUEST_SUSPECT);
 	request.m_suspectAddress = address;
 
 

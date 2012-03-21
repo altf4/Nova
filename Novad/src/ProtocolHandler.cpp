@@ -126,6 +126,7 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 		{
 			//There was an error reading this message
 			LOG(DEBUG, "The UI hung up","Deserialization error.");
+			close(socketFD);
 			break;
 		}
 		switch(message->m_messageType)
@@ -154,7 +155,6 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 		}
 	}
 
-	//Should not ever get here. Return value only present to suppress compiler warning
 	return NULL;
 }
 
@@ -165,8 +165,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_EXIT_REQUEST:
 		{
 			//TODO: Check for any reason why might not want to exit
-			ControlMessage exitReply;
-			exitReply.m_controlType = CONTROL_EXIT_REPLY;
+			ControlMessage exitReply(CONTROL_EXIT_REPLY);
 			exitReply.m_success = true;
 
 			UI_Message::WriteMessage(&exitReply, socketFD);
@@ -193,8 +192,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				successResult = false;
 			}
 
-			ControlMessage clearAllSuspectsReply;
-			clearAllSuspectsReply.m_controlType = CONTROL_CLEAR_ALL_REPLY;
+			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY);
 			clearAllSuspectsReply.m_success = successResult;
 			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
 
@@ -214,8 +212,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			RefreshStateFile();
 
 			//TODO: Should check for errors here and return result
-			ControlMessage clearSuspectReply;
-			clearSuspectReply.m_controlType = CONTROL_CLEAR_SUSPECT_REPLY;
+			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY);
 			clearSuspectReply.m_success = true;
 			UI_Message::WriteMessage(&clearSuspectReply, socketFD);
 
@@ -241,8 +238,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				//TODO: Should check for errors here and return result
 			}
 
-			ControlMessage saveSuspectsReply;
-			saveSuspectsReply.m_controlType = CONTROL_SAVE_SUSPECTS_REPLY;
+			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY);
 			saveSuspectsReply.m_success = true;
 			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
 
@@ -254,8 +250,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			Reload(); //TODO: Should check for errors here and return result
 
-			ControlMessage reclassifyAllReply;
-			reclassifyAllReply.m_controlType = CONTROL_RECLASSIFY_ALL_REPLY;
+			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY);
 			reclassifyAllReply.m_success = true;
 			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
 
@@ -267,8 +262,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			bool successResult = ConnectToUI();
 
-			ControlMessage connectReply;
-			connectReply.m_controlType = CONTROL_CONNECT_REPLY;
+			ControlMessage connectReply(CONTROL_CONNECT_REPLY);
 			connectReply.m_success = successResult;
 			UI_Message::WriteMessage(&connectReply, socketFD);
 
@@ -287,8 +281,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			close(callbackSocket);
 
-			ControlMessage disconnectReply;
-			disconnectReply.m_controlType = CONTROL_DISCONNECT_ACK;
+			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK);
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
 
 			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
@@ -297,8 +290,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_PING:
 		{
-			ControlMessage connectReply;
-			connectReply.m_controlType = CONTROL_PONG;
+			ControlMessage connectReply(CONTROL_PONG);
 			UI_Message::WriteMessage(&connectReply, socketFD);
 
 			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
@@ -322,48 +314,49 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 	{
 		case REQUEST_SUSPECTLIST:
 		{
-			RequestMessage reply;
-			reply.m_requestType = REQUEST_SUSPECTLIST_REPLY;
+			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY);
 			reply.m_listType = msg.m_listType;
 
 			switch (msg.m_listType)
 			{
-			case SUSPECTLIST_ALL:
-			{
-				vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
-				for (uint i = 0; i < benign.size(); i++)
+				case SUSPECTLIST_ALL:
 				{
-					reply.m_suspectList.push_back((in_addr_t)benign.at(i));
-				}
+					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					for (uint i = 0; i < benign.size(); i++)
+					{
+						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
+					}
 
-				vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
-				for (uint i = 0; i < hostile.size(); i++)
-				{
-					reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					for (uint i = 0; i < hostile.size(); i++)
+					{
+						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+					}
+					break;
 				}
-				break;
-			}
-			case SUSPECTLIST_HOSTILE:
-			{
-				vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
-				for (uint i = 0; i < hostile.size(); i++)
+				case SUSPECTLIST_HOSTILE:
 				{
-					reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					for (uint i = 0; i < hostile.size(); i++)
+					{
+						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+					}
+					break;
 				}
-				break;
-			}
-			case SUSPECTLIST_BENIGN:
-			{
-				vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
-				for (uint i = 0; i < benign.size(); i++)
+				case SUSPECTLIST_BENIGN:
 				{
-					reply.m_suspectList.push_back((in_addr_t)benign.at(i));
+					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					for (uint i = 0; i < benign.size(); i++)
+					{
+						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
+					}
+					break;
 				}
-				break;
-			}
-			default:
-				LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
-				break;
+				default:
+				{
+					LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
+					break;
+				}
 			}
 
 
@@ -373,8 +366,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 		case REQUEST_SUSPECT:
 		{
-			RequestMessage reply;
-			reply.m_requestType = REQUEST_SUSPECT_REPLY;
+			RequestMessage reply(REQUEST_SUSPECT_REPLY);
 			reply.m_suspect = new Suspect();
 			*reply.m_suspect = suspects.Peek(msg.m_suspectAddress);
 			UI_Message::WriteMessage(&reply, socketFD);
@@ -382,7 +374,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 			break;
 		}
 
-			default:
+		default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
 			break;
@@ -426,9 +418,8 @@ bool Nova::ConnectToUI()
 
 bool Nova::SendSuspectToUI(Suspect *suspect)
 {
-	CallbackMessage suspectUpdate;
+	CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE);
 	suspectUpdate.m_suspect = suspect;
-	suspectUpdate.m_callbackType = CALLBACK_SUSPECT_UDPATE;
 	if(!UI_Message::WriteMessage(&suspectUpdate, callbackSocket))
 	{
 		return false;

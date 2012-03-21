@@ -24,10 +24,11 @@
 namespace Nova
 {
 
-RequestMessage::RequestMessage()
+RequestMessage::RequestMessage(enum RequestType requestType)
 {
 	m_messageType = REQUEST_MESSAGE;
 	m_suspectListLength = 0;
+	m_requestType = requestType;
 }
 
 RequestMessage::~RequestMessage()
