@@ -20,3 +20,9 @@ service rsyslog restart
 
 #reload sysctl settings.
 start procps
+
+mkfifo /usr/share/nova/NovaMailPipe
+
+chown ${SUDO_USER} /usr/share/nova/NovaMailPipe
+
+#bash `pwd`/NovaCron ${SUDO_USER} 
