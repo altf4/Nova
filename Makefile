@@ -83,6 +83,7 @@ install-data:
 	mkdir -p $(DESTDIR)/usr/share/nova
 	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
 	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
+	cp -fup  Installer/Write/nova_mailer $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
@@ -107,6 +108,7 @@ uninstall:
 	rm -f $(DESTDIR)/usr/bin/novagui
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
+	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
