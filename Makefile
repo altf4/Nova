@@ -22,10 +22,11 @@ debug:
 	$(MAKE) -C NovaGUI debug
 	
 test:
-	# Make symlinks to the novad code
-	rm -fr NovaTest/NovadSource
-	mkdir -p NovaTest/NovadSource
+	# Make new links to the cpp files
+	rm -fr NovaTest/NovadSource/*.cpp
 	ln Novad/src/*.cpp NovaTest/NovadSource/
+	# Make new links to the h files
+	rm -fr NovaTest/NovadSource/*.h
 	ln Novad/src/*.h NovaTest/NovadSource/
 	rm -f NovaTest/NovadSource/Main.cpp
 	$(MAKE) -C NovaTest/Debug
