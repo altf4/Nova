@@ -9,7 +9,7 @@ if( ! n.IsUp() )
 
 n.OnNewSuspect(function(suspect)
 { 
-    console.info("New suspect: " + suspect.ToString());
+    console.info("New suspect: " + suspect.GetInAddr());
     console.info("Suspect list: " + n.getSuspectList());
 });
 
