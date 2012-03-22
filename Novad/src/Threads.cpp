@@ -448,7 +448,7 @@ void *Nova::TCPTimeout(void *ptr)
 							if(!Config::Inst()->GetIsTraining())
 								ClassificationLoop(NULL);
 							else
-								TrainingLoop(NULL);
+								UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
 							//pthread_rwlock_wrlock(&sessionLock);
 						}
 

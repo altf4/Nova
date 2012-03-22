@@ -178,7 +178,7 @@ int RunNovaD()
 				+ ".dump";
 
 
-		if (!Config::Inst()->GetReadPcap())
+		if (Config::Inst()->GetReadPcap())
 		{
 			Config::Inst()->SetClassificationThreshold(0);
 			Config::Inst()->SetClassificationTimeout(0);
@@ -1186,6 +1186,12 @@ string GetLocalIP(const char *dev)
 void UpdateAndStore(uint64_t suspect)
 {
 	Suspect suspectCopy = suspects.CheckOut(suspect);
+
+	// If the checkout failed and we got  the empty suspect
+	if (suspectCopy.GetIpAddress() == 0)
+	{
+		return;
+	}
 
 	if(suspectCopy.GetNeedsClassificationUpdate())
 	{
