@@ -21,6 +21,13 @@ debug:
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 	
+test:
+	# Make symlinks to the novad code
+	rm -fr NovaTest/NovadSource/*
+	ln Novad/src/*.cpp NovaTest/NovadSource/
+	ln Novad/src/*.h NovaTest/NovadSource/
+	rm -f NovaTest/NovadSource/Main.cpp
+	$(MAKE) -C NovaTest/Debug
 
 
 #Cleans both Release and Debug
@@ -43,7 +50,10 @@ clean-release:
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 
-
+clean-test:
+	rm -fr NovaTest/NovadSource/*
+	$(MAKE) -C NovaTest/Debug clean
+	
 
 install: install-release
 
