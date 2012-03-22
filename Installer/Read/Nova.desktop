@@ -12,5 +12,5 @@ Comment=Qt Front End for Nova system
 GenericName=Network Anti-Reconnaissance
 Icon=/usr/share/nova/icons/nova-icon.png
 Categories=GNOME;QT;Network;Security;
-Exec=NovaGUI
+Exec=novagui
 

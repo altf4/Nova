@@ -1,0 +1,44 @@
+#!bash
+# Bash completion support for the Nova command line interface
+
+_novacli() 
+{
+    local cur prev opts components listtypes
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    
+    opts="status start stop list get"
+    components="nova haystack"
+    listtypes="all hostile benign" 
+
+    case "${prev}" in
+	status|start|stop)	
+	    COMPREPLY=( $(compgen -W "${components}" -- ${cur}) )
+	return 0
+	;;
+    
+	list)	
+	    COMPREPLY=( $(compgen -W "${listtypes}" -- ${cur}) )
+	return 0
+	;;
+    
+	get)	
+	    COMPREPLY=( $(compgen -W "all" -- ${cur}) )
+	return 0
+	;;
+	
+	clear)	
+	    COMPREPLY=( $(compgen -W "all" -- ${cur}) )
+	return 0
+	;;
+    
+    
+    esac
+
+    # Display the options for first arg
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    return 0
+}
+
+complete -F _novacli novacli

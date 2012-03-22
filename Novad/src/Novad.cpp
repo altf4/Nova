@@ -145,7 +145,7 @@ int Nova::RunNovaD()
 
 		if(system(commandLine.c_str()) != 0)
 		{
-			LOG(ERROR, "Error setting up system for Doppelganger", "Command 'sudo route add -host Config::Inst()->GetDoppelIp() dev lo' could not execute");
+			LOG(ERROR, "Error setting up system for Doppelganger", "Failed to execute command: " + commandLine);
 		}
 
 		commandLine = "sudo iptables -t nat -F";
@@ -481,7 +481,7 @@ void Nova::RefreshStateFile()
 			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
 
 			FeatureSet fs = newSuspect->GetFeatureSet();
-			fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
 			newSuspect->SetFeatureSet(&fs);
 
 			if(!suspects.IsValidKey(newSuspect->GetIpAddress())

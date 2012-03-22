@@ -103,3 +103,8 @@ NovaGUI/moc_run_popup.cpp
 /Nova_UI_Core/Release/Nova_UI_Core
 /NovaTest/Debug
 /NovaLibrary/.settings/org.eclipse.cdt.codan.core.prefs
+/Novad/Debug/novad
+/Novad/Release/novad
+/NovaGUI/novagui
+/NovaCLI/Release/novacli
+/NovaCLI/Debug/novacli

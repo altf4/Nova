@@ -111,7 +111,7 @@ bool Nova::ConnectToNovad()
 
 	if(connect(novadListenSocket, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
-		LOG(ERROR, " connect: "+string(strerror(errno))+".", "");
+		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		return false;
 	}
@@ -186,6 +186,11 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 
 bool Nova::CloseNovadConnection()
 {
+	if((novadListenSocket == -1) && (UI_ListenSocket == -1))
+	{
+		return true;
+	}
+
 	bool success = true;
 	callbackInitialized = false;
 
