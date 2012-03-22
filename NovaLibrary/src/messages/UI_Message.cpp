@@ -59,7 +59,11 @@ UI_Message *UI_Message::ReadMessage(int connectFD)
 			return new ErrorMessage(ERROR_SOCKET_CLOSED);
 		}
 	}
-
+	//When a connection is remotely closed, read() returns 0
+	if(input.size() == 0)
+	{
+		return new ErrorMessage(ERROR_SOCKET_CLOSED);
+	}
 	if(input.size() < MESSAGE_MIN_SIZE)
 	{
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);

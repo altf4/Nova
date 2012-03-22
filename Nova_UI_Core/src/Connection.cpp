@@ -135,11 +135,6 @@ bool Nova::ConnectToNovad()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
-	{
-		close(novadListenSocket);
-		return false;
-	}
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
@@ -200,28 +195,22 @@ bool Nova::CloseNovadConnection()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
+		delete reply;
 		success = false;
 	}
 	else
 	{
-		if(reply->m_messageType != CONTROL_MESSAGE)
+		ControlMessage *connectionReply = (ControlMessage*)reply;
+		if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
 		{
-			delete reply;
+			delete connectionReply;
 			success = false;
 		}
-		else
-		{
-			ControlMessage *connectionReply = (ControlMessage*)reply;
-			if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
-			{
-				delete connectionReply;
-				success = false;
-			}
-		}
-
 	}
+
+
 
 
 	if(UI_ListenSocket != -1 && close(UI_ListenSocket))

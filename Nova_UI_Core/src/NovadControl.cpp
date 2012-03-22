@@ -19,6 +19,7 @@
 #include "NovadControl.h"
 #include "messages/UI_Message.h"
 #include "messages/ControlMessage.h"
+#include "messages/ErrorMessage.h"
 #include "Connection.h"
 #include "StatusQueries.h"
 
@@ -60,10 +61,14 @@ bool Nova::StopNovad()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -100,10 +105,14 @@ bool Nova::SaveAllSuspects(std::string file)
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -136,10 +145,14 @@ bool Nova::ClearAllSuspects()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -173,10 +186,14 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -209,10 +226,14 @@ bool Nova::ReclassifyAllSuspects()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )

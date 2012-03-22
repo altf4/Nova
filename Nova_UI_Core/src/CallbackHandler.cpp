@@ -20,6 +20,7 @@
 #include "CallbackHandler.h"
 #include "messages/UI_Message.h"
 #include "messages/CallbackMessage.h"
+#include "messages/ErrorMessage.h"
 
 using namespace Nova;
 
@@ -31,13 +32,21 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 	change.type = CALLBACK_ERROR;
 
 	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket);
-	if( message == NULL)
+	if( message->m_messageType == ERROR_MESSAGE)
 	{
-		change.type = CALLBACK_HUNG_UP;
+		ErrorMessage *errorMessage = (ErrorMessage*)message;
+		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			change.type = CALLBACK_HUNG_UP;
+		}
+		//TODO: Do we care about the other error message types here?
+
+		delete errorMessage;
 		return change;
 	}
 	if( message->m_messageType != CALLBACK_MESSAGE)
 	{
+		delete message;
 		return change;
 	}
 	CallbackMessage *callbackMessage = (CallbackMessage*)message;

@@ -24,6 +24,7 @@
 #include "messages/CallbackMessage.h"
 #include "messages/ControlMessage.h"
 #include "messages/RequestMessage.h"
+#include "messages/ErrorMessage.h"
 #include "SuspectTable.h"
 #include "SuspectTableIterator.h"
 
@@ -122,13 +123,6 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 	while(true)
 	{
 		UI_Message *message = UI_Message::ReadMessage(socketFD);
-		if( message == NULL )
-		{
-			//There was an error reading this message
-			LOG(DEBUG, "The UI hung up","Deserialization error.");
-			close(socketFD);
-			break;
-		}
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
@@ -144,6 +138,41 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 				HandleRequestMessage(*msg, socketFD);
 				delete msg;
 				break;
+			}
+			case ERROR_MESSAGE:
+			{
+				ErrorMessage *errorMessage = (ErrorMessage*)message;
+				switch(errorMessage->m_errorType)
+				{
+					case ERROR_SOCKET_CLOSED:
+					{
+						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
+						close(socketFD);
+						return NULL;
+					}
+					case ERROR_MALFORMED_MESSAGE:
+					{
+						LOG(NOTICE, "There was an error reading a message from the UI", "Got a message but it was not deserialized correctly");
+						break;
+					}
+					case ERROR_UNKNOWN_MESSAGE_TYPE:
+					{
+						LOG(NOTICE, "There was an error reading a message from the UI", "Received an unknown message type.");
+						break;
+					}
+					case ERROR_PROTOCOL_MISTAKE:
+					{
+						LOG(NOTICE, "We sent a bad message to the UI", "Received an ERROR_PROTOCOL_MISTAKE.");
+						break;
+					}
+					default:
+					{
+						LOG(NOTICE, "There was an error reading a message from the UI", "Unknown error type. Should see this!");
+						break;
+					}
+				}
+				break;
+
 			}
 			default:
 			{
@@ -426,8 +455,19 @@ bool Nova::SendSuspectToUI(Suspect *suspect)
 	}
 
 	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket);
-	if(suspectReply == NULL)
+	if(suspectReply->m_messageType == ERROR_MESSAGE )
 	{
+		ErrorMessage *error = (ErrorMessage*)suspectReply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			//Only bother closing the socket if it's not already closed
+			if(callbackSocket != -1)
+			{
+				close(callbackSocket);
+				callbackSocket = -1;
+			}
+		}
+		delete error;
 		return false;
 	}
 	if(suspectReply->m_messageType != CALLBACK_MESSAGE)
