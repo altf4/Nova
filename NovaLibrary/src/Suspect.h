@@ -64,8 +64,6 @@ public:
 	int ClearEvidence();
 
 	// Calculates the feature set for this suspect
-	// 		isTraining - True for training data gathering mode
-	//		featuresEnabled - bitmask of features to calculate
 	int CalculateFeatures();
 
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
