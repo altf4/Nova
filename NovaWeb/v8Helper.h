@@ -3,7 +3,7 @@
 
 #include "v8.h"
 #include <string>
-using std::string;
+
 template <typename T> T* Unwrap(v8::Handle<v8::Object> obj, int fieldIndex=0)
 {
     using namespace v8;
@@ -30,7 +30,7 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 
 // Specialization for std::string
 template<typename V8_RETURN, typename T, std::string (T::*F)(void)>
-struct InvokeMethod_impl<V8_RETURN, string, T, F>
+struct InvokeMethod_impl<V8_RETURN, std::string, T, F>
 {
 static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 {
