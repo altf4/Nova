@@ -23,7 +23,8 @@ debug:
 	
 test:
 	# Make symlinks to the novad code
-	rm -fr NovaTest/NovadSource/*
+	rm -fr NovaTest/NovadSource
+	mkdir -p NovaTest/NovadSource
 	ln Novad/src/*.cpp NovaTest/NovadSource/
 	ln Novad/src/*.h NovaTest/NovadSource/
 	rm -f NovaTest/NovadSource/Main.cpp
