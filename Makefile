@@ -22,6 +22,8 @@ debug:
 	$(MAKE) -C NovaGUI debug
 	
 test:
+	# Make the folder if it doesn't exist
+	mkdir -p NovaTest/NovadSource
 	# Make new links to the cpp files
 	rm -fr NovaTest/NovadSource/*.cpp
 	ln Novad/src/*.cpp NovaTest/NovadSource/
