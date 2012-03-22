@@ -14,7 +14,7 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Exposes Nova_UI_Core as a module for the node.js environment.
-//============================================================================/*
+//============================================================================
 
 #include <v8.h>
 #include <node.h>
@@ -27,6 +27,8 @@
 #include "Suspect.h"
 #include "Logger.h"
 #include <boost/format.hpp>
+
+#include "SuspectJs.h"
 
 using namespace node;
 using namespace v8;
@@ -121,7 +123,8 @@ private:
         Suspect* suspect = static_cast<Suspect*>(req->data);
 		HandleScope scope;
 		LOG(DEBUG,"Invoking new suspect callback");
-        m_CallbackFunction->Call(m_CallbackFunction, 0, NULL);
+        Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
+        m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
         return 0;
     }
 

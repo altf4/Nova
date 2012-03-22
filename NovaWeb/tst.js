@@ -7,9 +7,9 @@ if( ! n.IsUp() )
     console.info("Start Novad: " + n.StartNovad());
 }
 
-n.OnNewSuspect(function()
+n.OnNewSuspect(function(suspect)
 { 
-    console.info("New suspect!");
+    console.info("New suspect: " + suspect.ToString());
     console.info("Suspect list: " + n.getSuspectList());
 });
 
