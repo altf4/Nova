@@ -148,6 +148,9 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 					{
 						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
 						close(socketFD);
+						close(callbackSocket);
+						socketFD = -1;
+						callbackSocket = -1;
 						return NULL;
 					}
 					case ERROR_MALFORMED_MESSAGE:
@@ -308,10 +311,13 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
-			close(callbackSocket);
-
 			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK);
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
+
+			close(socketFD);
+			close(callbackSocket);
+			socketFD = -1;
+			callbackSocket = -1;
 
 			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
 
