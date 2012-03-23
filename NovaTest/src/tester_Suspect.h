@@ -70,6 +70,7 @@ TEST_F(SuspectTest, EvidenceAddingRemoving)
 
 	EXPECT_EQ(0, memcmp(&suspect->GetEvidence().at(0), &p1, sizeof(p1)));
 	EXPECT_EQ(0, memcmp(&suspect->GetEvidence().at(1), &p2, sizeof(p2)));
+	FAIL();
 
 	EXPECT_EQ(0, suspect->ClearEvidence());
 	EXPECT_EQ(0, suspect->GetEvidence().size());
