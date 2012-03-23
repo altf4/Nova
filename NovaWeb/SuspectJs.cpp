@@ -22,6 +22,9 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
         Local<Template> proto = m_SuspectTemplate->PrototypeTemplate();
         proto->Set("ToString",     FunctionTemplate::New(InvokeMethod<String, std::string, Suspect, &Suspect::ToString>) );
         proto->Set("GetInAddr", FunctionTemplate::New(InvokeMethod<String,  struct ::in_addr, Suspect, &Suspect::GetInAddr>) );
+        proto->Set("GetClassification", FunctionTemplate::New(InvokeMethod<Number, double, Suspect, &Suspect::GetClassification>) );
+        proto->Set("GetIsHostile", FunctionTemplate::New(InvokeMethod<Boolean, bool, Suspect, &Suspect::GetIsHostile>) );
+        proto->Set("GetFlaggedByAlarm", FunctionTemplate::New(InvokeMethod<Boolean, bool, Suspect, &Suspect::GetFlaggedByAlarm>) );
     }
 
     // Get the template for the type

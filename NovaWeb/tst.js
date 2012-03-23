@@ -1,16 +1,15 @@
 
-var nova = require('nova.node');
-var n = new nova.Instance();
-console.info("Nova up: " + n.IsUp());
-if( ! n.IsUp() )
+var novaNode = require('nova.node');
+var nova = new novaNode.Instance();
+console.info("Nova up: " + nova.IsUp());
+if( ! nova.IsUp() )
 {
-    console.info("Start Novad: " + n.StartNovad());
+    console.info("Start Novad: " + nova.StartNovad());
 }
 
-n.OnNewSuspect(function(suspect)
+nova.OnNewSuspect(function(suspect)
 { 
     console.info("New suspect: " + suspect.GetInAddr());
-    console.info("Suspect list: " + n.getSuspectList());
 });
 
 var fs = require('fs');
@@ -36,14 +35,50 @@ console.info("Listening on 8080");
 app.listen(8080);
 
 var everyone = require("now").initialize(app);
-everyone.now.IsUp = function(callback) { 
-    callback(n.IsUp());
+
+// Functions to be called by clients
+everyone.now.IsUp = function(callback) 
+{ 
+    callback(nova.IsUp());
 }
 
+everyone.now.ClearAllSuspects = function(callback)
+{
+    nova.ClearAllSuspects();
+}
 
+everyone.now.OnNewSuspect = function(callback) 
+{   
+    nova.OnNewSuspect(function(suspect){ 
+            console.log("Calling back client with suspect: " + suspect.GetInAddr());            
+            var s = new Object();
+            objCopy(suspect,s);
+            callback(s); 
+        });
+}
 
 process.on('SIGINT', function()
 {
-    n.Shutdown();
+    nova.Shutdown();
     process.exit();
 });
+
+function objCopy(src,dst)
+{
+    for (var member in src)
+    {
+        if( typeof src[member] == 'function' )
+        {
+            dst[member] = src[member]();
+        }
+// Need to think about this
+//        else if ( typeof src[member] == 'object' )
+//        {
+//            copyOver(src[member], dst[member]);
+//        }
+        else
+        {
+            dst[member] = src[member];
+        }
+    }
+}
