@@ -39,7 +39,10 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: NovaTest
+all: pre-build main-build
+
+# Main-build Target
+main-build: NovaTest
 
 # Tool invocations
 NovaTest: $(OBJS) $(USER_OBJS)
@@ -54,7 +57,11 @@ clean:
 	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) NovaTest
 	-@echo ' '
 
+pre-build:
+	-cd ../../;make test-prepare
+	-@echo ' '
+
 .PHONY: all clean dependents
-.SECONDARY:
+.SECONDARY: main-build pre-build
 
 -include ../makefile.targets
