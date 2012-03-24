@@ -93,37 +93,9 @@ void *Nova::ClassificationLoop(void *ptr)
 		for (SuspectTableIterator it = suspects.Begin();
 				it.GetIndex() < suspects.Size(); ++it)
 		{
-			Suspect suspectCopy;
-
 			if(it.Current().GetNeedsClassificationUpdate())
 			{
-				suspectCopy = suspects.CheckOut(it.GetKey());
-				suspectCopy.UpdateEvidence();
-				suspectCopy.CalculateFeatures();
-				int oldClassification = suspectCopy.GetIsHostile();
-
-				engine->NormalizeDataPoint(&suspectCopy);
-				engine->Classify(&suspectCopy);
-
-				//If suspect is hostile and this Nova instance has unique information
-				// 			(not just from silent alarms)
-				if(suspectCopy.GetIsHostile() || oldClassification)
-				{
-					if(suspectCopy.GetIsLive())
-					{
-						SilentAlarm(&suspectCopy, oldClassification);
-					}
-				}
-
-				if(SendSuspectToUI(&suspectCopy))
-				{
-					LOG(DEBUG, (format("Sent a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
-				}
-				else
-				{
-					LOG(DEBUG, (format("Failed to send a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
-				}
-				suspects.CheckIn(&suspectCopy);
+				UpdateAndClassify(it.GetKey());
 			}
 		}
 
@@ -299,6 +271,8 @@ void *Nova::SilentAlarmLoop(void *ptr)
 			FeatureSet fs = newSuspect->GetFeatureSet();
 			suspectCopy.AddFeatureSet(&fs);
 			suspects.CheckIn(&suspectCopy);
+
+			// TODO: This looks like it may be a memory leak of newSuspect
 		}
 		//If this is a new suspect put it in the table
 		else
@@ -314,7 +288,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		LOG(CRITICAL, string("Got a silent alarm!. Suspect: "+ newSuspect->ToString()), "");
 		if(!Config::Inst()->GetClassificationTimeout())
 		{
-			ClassificationLoop(NULL);
+			UpdateAndClassify(newSuspect->GetIpAddress());
 		}
 
 		close(connectionSocket);
@@ -417,7 +391,7 @@ void *Nova::TCPTimeout(void *ptr)
 							{
 								//pthread_rwlock_unlock(&sessionLock);
 								if(!Config::Inst()->GetIsTraining())
-									ClassificationLoop(NULL);
+									UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
 								else
 									UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
 								//pthread_rwlock_wrlock(&sessionLock);
@@ -446,7 +420,7 @@ void *Nova::TCPTimeout(void *ptr)
 						{
 							//pthread_rwlock_unlock(&sessionLock);
 							if(!Config::Inst()->GetIsTraining())
-								ClassificationLoop(NULL);
+								UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
 							else
 								UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
 							//pthread_rwlock_wrlock(&sessionLock);

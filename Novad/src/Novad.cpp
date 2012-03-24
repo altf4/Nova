@@ -945,7 +945,7 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 		{
 			if(!Config::Inst()->GetIsTraining())
 			{
-				ClassificationLoop(NULL);
+				UpdateAndClassify(packet_info.ip_hdr.ip_src.s_addr);
 			}
 			else
 			{
@@ -1187,7 +1187,7 @@ void UpdateAndStore(uint64_t suspect)
 {
 	Suspect suspectCopy = suspects.CheckOut(suspect);
 
-	// If the checkout failed and we got  the empty suspect
+	// If the checkout failed and we got the empty suspect
 	if (suspectCopy.GetIpAddress() == 0)
 	{
 		return;
@@ -1213,7 +1213,46 @@ void UpdateAndStore(uint64_t suspect)
 }
 
 
+void UpdateAndClassify(uint64_t suspect)
+{
+	Suspect suspectCopy = suspects.CheckOut(suspect);
+
+	// If the checkout failed and we got the empty suspect
+	if (suspectCopy.GetIpAddress() == 0)
+	{
+		return;
+	}
+
+	if(suspectCopy.GetNeedsClassificationUpdate())
+	{
+		suspectCopy.UpdateEvidence();
+		suspectCopy.CalculateFeatures();
+		int oldClassification = suspectCopy.GetIsHostile();
+
+		engine->NormalizeDataPoint(&suspectCopy);
+		engine->Classify(&suspectCopy);
+
+		//If suspect is hostile and this Nova instance has unique information
+		// 			(not just from silent alarms)
+		if(suspectCopy.GetIsHostile() || oldClassification)
+		{
+			if(suspectCopy.GetIsLive())
+			{
+				SilentAlarm(&suspectCopy, oldClassification);
+			}
+		}
+
+		if(SendSuspectToUI(&suspectCopy))
+		{
+			LOG(DEBUG, (format("Sent a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+		}
+		else
+		{
+			LOG(DEBUG, (format("Failed to send a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+		}
+	}
+
+	suspects.CheckIn(&suspectCopy);
 }
 
-
-
+}
