@@ -87,8 +87,7 @@ void *Nova::ClassificationLoop(void *ptr)
 	{
 		sleep(Config::Inst()->GetClassificationTimeout());
 		//Calculate the "true" Feature Set for each Suspect
-		for (SuspectTableIterator it = suspects.Begin();
-				it.GetIndex() < suspects.Size(); ++it)
+		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 		{
 			if(it.Current().GetNeedsClassificationUpdate())
 			{

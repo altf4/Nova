@@ -29,22 +29,33 @@ class Doppelganger
 
 public:
 
+	//Constructor for a doppelganger object
+	// suspects: Uses the hostile suspects in this suspect table to determine Dopp routing
 	Doppelganger(SuspectTable& suspects);
 
+	//Deconstructor
 	~Doppelganger();
 
+	//Synchrnoizes an initialized Doppelganger object with it's suspect table
+	// *Note if the Dopp was never initialized this function initializes it.
 	void UpdateDoppelganger();
 
+	//Clears the routing rules, this disables the doppelganger until init is called again.
 	void ClearDoppelganger();
 
+	//Initializes the base routing rules the Doppelganger needs to operate.
+	// * Note: This function will simply return without executing if the Doppelganger has
+	// called InitDoppelganger since construction or the last ClearDoppelganger();
 	void InitDoppelganger();
 
+	//Clears and Initializes the Doppelganger then updates the routing list from scratch.
 	void ResetDoppelganger();
 
 private:
 
 	SuspectTable& m_suspectTable;
 	std::vector<uint64_t> m_suspectKeys;
+	bool m_initialized;
 
 };
 }

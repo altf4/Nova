@@ -26,37 +26,47 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
-std::string hostIP;
+using namespace std;
+
+string hostIP;
 
 namespace Nova
 {
 
+//Constructor for a doppelganger object
+// suspects: Uses the hostile suspects in this suspect table to determine Dopp routing
 Doppelganger::Doppelganger(SuspectTable& suspects)
 : m_suspectTable(suspects)
 {
 	hostIP = GetLocalIP(Config::Inst()->GetInterface().c_str());
-	InitDoppelganger();
+	m_initialized = false;
 }
 
+//Deconstructor
 Doppelganger::~Doppelganger()
 {
-
 }
 
+//Synchrnoizes an initialized Doppelganger object with it's suspect table
+// *Note if the Dopp was never initialized this function initializes it.
 void Doppelganger::UpdateDoppelganger()
 {
+	if(!m_initialized)
+	{
+		InitDoppelganger();
+	}
 	//Get latest list of hostile suspects
-	std::vector<uint64_t> keys = m_suspectTable.GetHostileSuspectKeys();
-	std::vector<uint64_t> keysCopy = keys;
+	vector<uint64_t> keys = m_suspectTable.GetHostileSuspectKeys();
+	vector<uint64_t> keysCopy = keys;
 
 	//A few variable declarations
 	uint64_t temp = 0, i = 0;
 	bool found = false;
 
-	std::string prefix = "sudo iptables -t nat -I DOPP -s ";
-	std::string suffix = " -j DNAT --to-destination "+Config::Inst()->GetDoppelIp();
+	string prefix = "sudo iptables -t nat -I DOPP -s ";
+	string suffix = " -j DNAT --to-destination "+Config::Inst()->GetDoppelIp();
 
-	std::stringstream ss;
+	stringstream ss;
 	in_addr inAddr;
 
 	//Until we've finished checking each hostile suspect
@@ -74,6 +84,8 @@ void Doppelganger::UpdateDoppelganger()
 			if(m_suspectKeys[i] == temp)
 			{
 				found = true;
+				//Erase matched suspect from previous suspect list, this tells us if any suspects were removed
+				m_suspectKeys.erase(m_suspectKeys.begin() + i);
 				break;
 			}
 		}
@@ -82,17 +94,14 @@ void Doppelganger::UpdateDoppelganger()
 		if(!found)
 		{
 			ss.str("");
-			inAddr.s_addr = htonl((in_addr_t)temp);
+			inAddr.s_addr = (in_addr_t)temp;
 			ss << prefix << inet_ntoa(inAddr) << suffix;
 			if(system(ss.str().c_str()) != 0)
 			{
 				LOG(ERROR, "Error routing suspect to Doppelganger", "Command '"+ss.str()+"' was unsuccessful.");
 			}
 		}
-		//Erase matched suspect from previous suspect list, this tells us if any suspects were removed
-		m_suspectKeys.erase(m_suspectKeys.begin() + i);
 	}
-
 	prefix = "sudo iptables -t nat -D DOPP -s ";
 
 	//If any suspects remain in m_suspectKeys then they need to be removed from the rule chain
@@ -102,8 +111,10 @@ void Doppelganger::UpdateDoppelganger()
 		m_suspectKeys.pop_back();
 
 		ss.str("");
-		inAddr.s_addr = htonl((in_addr_t)temp);
+		inAddr.s_addr = (in_addr_t)temp;
 		ss << prefix << inet_ntoa(inAddr) << suffix;
+
+
 		if(system(ss.str().c_str()) != 0)
 		{
 			LOG(ERROR, "Error removing suspect from Doppelganger list.", "Command '"+ss.str()+"' was unsuccessful.");
@@ -112,9 +123,10 @@ void Doppelganger::UpdateDoppelganger()
 	m_suspectKeys = keysCopy;
 }
 
+//Clears the routing rules, this disables the doppelganger until init is called again.
 void Doppelganger::ClearDoppelganger()
 {
-	std::string commandLine, prefix = "sudo iptables -F";
+	string commandLine, prefix = "sudo iptables -F";
 
 	commandLine = prefix + "-D FORWARD -i "+  Config::Inst()->GetDoppelInterface() + " -j DROP";
 	if(system(commandLine.c_str()) != 0)
@@ -123,7 +135,7 @@ void Doppelganger::ClearDoppelganger()
 	}
 
 	prefix = "sudo iptables -t nat ";
-	commandLine = prefix + "-F DOPP";
+	commandLine = prefix + "-F";
 	if(system(commandLine.c_str()) != 0)
 	{
 		LOG(DEBUG, "Unable to remove Doppelganger rule, does it exist?", "Command '"+commandLine+"' was unsuccessful.");
@@ -146,11 +158,19 @@ void Doppelganger::ClearDoppelganger()
 	{
 		LOG(DEBUG, "Unable to remove Doppelganger host, does it exist?", "Command '"+commandLine+"' was unsuccessful.");
 	}
+	m_initialized = false;
 }
 
+//Initializes the base routing rules the Doppelganger needs to operate.
+// * Note: This function will simply return without executing if the Doppelganger has
+// called InitDoppelganger since construction or the last ClearDoppelganger();
 void Doppelganger::InitDoppelganger()
 {
-	std::string commandLine = "sudo iptables -A FORWARD -i "+Config::Inst()->GetDoppelInterface()+" -j DROP";
+	if(m_initialized)
+	{
+		return;
+	}
+	string commandLine = "sudo iptables -A FORWARD -i "+Config::Inst()->GetDoppelInterface()+" -j DROP";
 
 	if(system(commandLine.c_str()) != 0)
 	{
@@ -182,15 +202,17 @@ void Doppelganger::InitDoppelganger()
 	{
 		LOG(ERROR, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful.");
 	}
+	m_initialized = true;
 }
 
+//Clears and Initializes the Doppelganger then updates the routing list from scratch.
 void Doppelganger::ResetDoppelganger()
 {
 	ClearDoppelganger();
 	InitDoppelganger();
 
 	hostIP = GetLocalIP(Config::Inst()->GetInterface().c_str());
-	std::string buf, commandLine, prefix = "sudo ipables -t nat ";
+	string buf, commandLine, prefix = "sudo ipables -t nat ";
 
 	commandLine = prefix + "-F DOPP";
 	if(system(commandLine.c_str()) != 0)
@@ -201,15 +223,15 @@ void Doppelganger::ResetDoppelganger()
 	m_suspectKeys = m_suspectTable.GetHostileSuspectKeys();
 
 	prefix = "sudo iptables -t nat -I DOPP -s ";
-	std::string suffix = " -j DNAT --to-destination "+Config::Inst()->GetDoppelIp();
+	string suffix = " -j DNAT --to-destination "+Config::Inst()->GetDoppelIp();
 
-	std::stringstream ss;
+	stringstream ss;
 	in_addr inAddr;
 
 	for(uint i = 0; i < m_suspectKeys.size(); i++)
 	{
 		ss.str("");
-		inAddr.s_addr = htonl((in_addr_t)m_suspectKeys[i]);
+		inAddr.s_addr = (in_addr_t)m_suspectKeys[i];
 		ss << prefix << inet_ntoa(inAddr) << suffix;
 		if(system(ss.str().c_str()) != 0)
 		{

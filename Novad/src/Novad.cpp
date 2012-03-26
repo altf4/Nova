@@ -1141,14 +1141,13 @@ void UpdateAndClassify(uint64_t suspect)
 
 		if(SendSuspectToUI(&suspectCopy))
 		{
-			LOG(DEBUG, (format("Sent a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+			LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
 		}
 		else
 		{
-			LOG(DEBUG, (format("Failed to send a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
 		}
 	}
-
 	suspects.CheckIn(&suspectCopy);
 }
 
