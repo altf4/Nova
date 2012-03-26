@@ -28,7 +28,7 @@ extern int novadListenSocket;
 using namespace Nova;
 using namespace std;
 
-bool Nova::IsUp()
+bool Nova::IsNovadUp()
 {
 
 	ControlMessage ping(CONTROL_PING);

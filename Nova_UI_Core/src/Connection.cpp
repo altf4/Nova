@@ -89,7 +89,7 @@ bool Nova::ConnectToNovad()
 		}
 	}
 
-	if(IsUp())
+	if(IsNovadUp())
 	{
 		return true;
 	}

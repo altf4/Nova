@@ -29,7 +29,7 @@ namespace Nova
 
 //Queries Novad to see if it is currently up or down
 //	returns - True if Novad is up, false if down
-bool IsUp();
+bool IsNovadUp();
 
 // Gets a list of suspect addresses currently classified
 //	 listType: Type of list to get (all, just hostile, just benign)

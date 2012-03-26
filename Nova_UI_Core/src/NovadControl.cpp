@@ -35,7 +35,7 @@ extern int novadListenSocket;
 
 bool Nova::StartNovad()
 {
-	if(IsUp())
+	if(IsNovadUp())
 	{
 		return true;
 	}
