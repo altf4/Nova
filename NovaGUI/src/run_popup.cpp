@@ -59,7 +59,7 @@ void Run_Popup::on_startButton_clicked()
 	if(SavePreferences())
 	{
 		StartNovad();
-		TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+		((NovaGUI*)parent())->ConnectGuiToNovad();
 		StartHaystack();
 	}
 	this->close();

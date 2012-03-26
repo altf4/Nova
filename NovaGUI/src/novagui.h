@@ -61,7 +61,8 @@ public:
     Ui::NovaGUIClass ui;
 
     ///Processes the recieved suspect in the suspect table
-    void ProcessReceivedSuspect(suspectItem suspect);
+    	// initialization - if initializing suspects, don't overwrite existing ones and don't use the qsignal for drawing
+    void ProcessReceivedSuspect(suspectItem suspect, bool initialization);
 
     void SystemStatusRefresh();
 
@@ -85,6 +86,9 @@ public:
     void SetFeatureDistances(Nova::Suspect* suspect);
 
     void LoadNovadConfiguration();
+
+    // Connect to novad and make the callback socket
+    bool ConnectGuiToNovad();
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
