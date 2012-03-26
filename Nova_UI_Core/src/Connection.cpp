@@ -116,8 +116,7 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
-	ControlMessage connectRequest;
-	connectRequest.m_controlType = CONTROL_CONNECT_REQUEST;
+	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
 	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket))
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
@@ -136,11 +135,6 @@ bool Nova::ConnectToNovad()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
-	{
-		close(novadListenSocket);
-		return false;
-	}
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
@@ -194,36 +188,29 @@ bool Nova::CloseNovadConnection()
 	bool success = true;
 	callbackInitialized = false;
 
-	ControlMessage disconnectNotice;
-	disconnectNotice.m_controlType = CONTROL_DISCONNECT_NOTICE;
+	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
 	if(!UI_Message::WriteMessage(&disconnectNotice, novadListenSocket))
 	{
 		success = false;
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
+		delete reply;
 		success = false;
 	}
 	else
 	{
-		if(reply->m_messageType != CONTROL_MESSAGE)
+		ControlMessage *connectionReply = (ControlMessage*)reply;
+		if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
 		{
-			delete reply;
+			delete connectionReply;
 			success = false;
 		}
-		else
-		{
-			ControlMessage *connectionReply = (ControlMessage*)reply;
-			if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
-			{
-				delete connectionReply;
-				success = false;
-			}
-		}
-
 	}
+
+
 
 
 	if(UI_ListenSocket != -1 && close(UI_ListenSocket))

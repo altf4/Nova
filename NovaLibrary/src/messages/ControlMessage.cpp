@@ -25,9 +25,10 @@ using namespace std;
 namespace Nova
 {
 
-ControlMessage::ControlMessage()
+ControlMessage::ControlMessage(enum ControlType controlType)
 {
 	m_messageType = CONTROL_MESSAGE;
+	m_controlType = controlType;
 }
 
 ControlMessage::~ControlMessage()

@@ -16,9 +16,11 @@
 // Description : Handles requests for information from Novad
 //============================================================================
 
+#include "Connection.h"
 #include "StatusQueries.h"
 #include "messages/ControlMessage.h"
 #include "messages/RequestMessage.h"
+#include "messages/ErrorMessage.h"
 
 #include <iostream>
 
@@ -29,8 +31,7 @@ using namespace std;
 bool Nova::IsUp()
 {
 
-	ControlMessage ping;
-	ping.m_controlType = CONTROL_PING;
+	ControlMessage ping(CONTROL_PING);
 	if(!UI_Message::WriteMessage(&ping, novadListenSocket) )
 	{
 		//There was an error in sending the message
@@ -38,9 +39,14 @@ bool Nova::IsUp()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -63,8 +69,7 @@ bool Nova::IsUp()
 
 vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 {
-	RequestMessage request;
-	request.m_requestType = REQUEST_SUSPECTLIST;
+	RequestMessage request(REQUEST_SUSPECTLIST);
 	request.m_listType = listType;
 
 	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
@@ -74,12 +79,16 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		return NULL;
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
+		return false;
 	}
-
 	if(reply->m_messageType != REQUEST_MESSAGE )
 	{
 		//Received the wrong kind of message
@@ -105,9 +114,7 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 
 Suspect *Nova::GetSuspect(in_addr_t address)
 {
-	RequestMessage request;
-	request.m_messageType = REQUEST_MESSAGE;
-	request.m_requestType = REQUEST_SUSPECT;
+	RequestMessage request(REQUEST_SUSPECT);
 	request.m_suspectAddress = address;
 
 
@@ -119,12 +126,16 @@ Suspect *Nova::GetSuspect(in_addr_t address)
 
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		return NULL;
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
+		return false;
 	}
-
 	if(reply->m_messageType != REQUEST_MESSAGE)
 	{
 		//Received the wrong kind of message
