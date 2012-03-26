@@ -21,6 +21,21 @@ debug:
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 	
+test-prepare:
+	# Make the folder if it doesn't exist
+	mkdir -p NovaTest/NovadSource
+	# Make new links to the cpp files
+	rm -fr NovaTest/NovadSource/*.cpp
+	ln Novad/src/*.cpp NovaTest/NovadSource/
+	# Make new links to the h files
+	rm -fr NovaTest/NovadSource/*.h
+	ln Novad/src/*.h NovaTest/NovadSource/
+	# Delete the link to Main so we don't have multiple def of main()
+	rm -f NovaTest/NovadSource/Main.cpp
+
+test: test-prepare
+	$(MAKE) -C NovaTest/Debug
+
 
 
 #Cleans both Release and Debug
@@ -43,7 +58,10 @@ clean-release:
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 
-
+clean-test:
+	rm -fr NovaTest/NovadSource/*
+	$(MAKE) -C NovaTest/Debug clean
+	
 
 install: install-release
 

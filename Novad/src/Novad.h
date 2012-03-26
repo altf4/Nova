@@ -103,6 +103,9 @@ void MaskKillSignals();
 // Updates suspect and stores it as a training data point
 void UpdateAndStore(uint64_t suspect);
 
+// Updates data and classification for a suspect
+void UpdateAndClassify(uint64_t suspect);
+
 
 }
 
