@@ -48,8 +48,7 @@ ClassificationEngine::ClassificationEngine(SuspectTable &table)
 
 ClassificationEngine::~ClassificationEngine()
 {
-	m_dopp->ClearDoppelganger();
-	delete m_dopp;
+
 }
 
 void ClassificationEngine::FormKdTree()

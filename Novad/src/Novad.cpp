@@ -203,8 +203,7 @@ int RunNovaD()
 	if (!Config::Inst()->GetIsTraining())
 	{
 		//Shouldn't get here!
-	LOG(CRITICAL, "Main thread ended. This should never happen, something went very wrong.", "");
-
+		LOG(CRITICAL, "Main thread ended. This should never happen, something went very wrong.", "");
 		return EXIT_FAILURE;
 	}
 	else

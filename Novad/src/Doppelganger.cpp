@@ -114,7 +114,7 @@ void Doppelganger::UpdateDoppelganger()
 
 void Doppelganger::ClearDoppelganger()
 {
-	std::string commandLine, prefix = "sudo ipables ";
+	std::string commandLine, prefix = "sudo iptables -F";
 
 	commandLine = prefix + "-D FORWARD -i "+  Config::Inst()->GetDoppelInterface() + " -j DROP";
 	if(system(commandLine.c_str()) != 0)
@@ -164,17 +164,17 @@ void Doppelganger::InitDoppelganger()
 		LOG(ERROR, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful.");
 	}
 
-	commandLine = "sudo iptables -t nat -F DOPP";
-
-	if(system(commandLine.c_str()) != 0)
-	{
-		LOG(ERROR, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful.");
-	}
-
 	commandLine = "sudo iptables -t nat -N DOPP";
 	if(system(commandLine.c_str()) != 0)
 	{
-		LOG(ERROR, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful.");
+		LOG(WARNING, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful."
+			" Attempting to flush 'DOPP' rule chain if it already exists.");
+		commandLine = "sudo iptables -t nat -F DOPP";
+		if(system(commandLine.c_str()) != 0)
+		{
+			LOG(ERROR, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful."
+				" Unable to flush or create 'DOPP' rule-chain");
+		}
 	}
 
 	commandLine = "sudo iptables -t nat -I PREROUTING -d "+hostIP+" -j DOPP";
