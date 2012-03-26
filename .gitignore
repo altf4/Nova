@@ -108,3 +108,4 @@ NovaGUI/moc_run_popup.cpp
 /NovaGUI/novagui
 /NovaCLI/Release/novacli
 /NovaCLI/Debug/novacli
+/NovaTest/NovadSource/*
