@@ -6,6 +6,7 @@
 CPP_SRCS += \
 ../NovadSource/ClassificationEngine.cpp \
 ../NovadSource/Control.cpp \
+../NovadSource/Doppelganger.cpp \
 ../NovadSource/Novad.cpp \
 ../NovadSource/ProtocolHandler.cpp \
 ../NovadSource/Threads.cpp 
@@ -13,6 +14,7 @@ CPP_SRCS += \
 OBJS += \
 ./NovadSource/ClassificationEngine.o \
 ./NovadSource/Control.o \
+./NovadSource/Doppelganger.o \
 ./NovadSource/Novad.o \
 ./NovadSource/ProtocolHandler.o \
 ./NovadSource/Threads.o 
@@ -20,6 +22,7 @@ OBJS += \
 CPP_DEPS += \
 ./NovadSource/ClassificationEngine.d \
 ./NovadSource/Control.d \
+./NovadSource/Doppelganger.d \
 ./NovadSource/Novad.d \
 ./NovadSource/ProtocolHandler.d \
 ./NovadSource/Threads.d 
