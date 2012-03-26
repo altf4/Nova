@@ -16,18 +16,17 @@
 // Description : Novad thread loops
 //============================================================================
 
-#include "Config.h"
-#include "SuspectTable.h"
-#include "NovaUtil.h"
-#include "Logger.h"
-#include "Point.h"
-#include "Novad.h"
-#include "Control.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
+#include "SuspectTable.h"
 #include "FeatureSet.h"
+#include "NovaUtil.h"
 #include "Threads.h"
-#include "boost/format.hpp"
+#include "Control.h"
+#include "Logger.h"
+#include "Config.h"
+#include "Point.h"
+#include "Novad.h"
 
 #include <vector>
 #include <math.h>
@@ -42,8 +41,6 @@
 #include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
-
-using boost::format;
 
 using namespace std;
 using namespace Nova;
@@ -117,15 +114,16 @@ void *Nova::ClassificationLoop(void *ptr)
 
 				if(SendSuspectToUI(&suspectCopy))
 				{
-					LOG(DEBUG, (format("Sent a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+					LOG(DEBUG, "Sent a suspect to the UI: " + string(inet_ntoa(suspectCopy.GetInAddr())), "");
 				}
 				else
 				{
-					LOG(DEBUG, (format("Failed to send a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+					LOG(DEBUG, "Failed to send a suspect to the UI: "+ string(inet_ntoa(suspectCopy.GetInAddr())), "");
 				}
 				suspects.CheckIn(&suspectCopy);
 			}
 		}
+		engine->m_dopp->UpdateDoppelganger();
 
 		if(Config::Inst()->GetSaveFreq() > 0)
 		{

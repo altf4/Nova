@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : NovaUtil.h
+// Name        : Doppelganger.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,28 +13,40 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Utility class for storing functions that are used by multiple
-//				 processes but don't warrant their own class
-//============================================================================/*
+// Description : Set of functions used by Novad for masking local host information
+//============================================================================
 
-#ifndef NOVAUTIL_H_
-#define NOVAUTIL_H_
+#ifndef DOPPELGANGER_H_
+#define DOPPELGANGER_H_
 
-#include <string>
+#include "SuspectTable.h"
 
-#include "sys/types.h"
+namespace Nova
+{
 
-namespace Nova{
+class Doppelganger
+{
 
-// Encrpyts/decrypts a char buffer of size 'size' depending on mode
-// TODO: Comment more on this once it's written
-void CryptBuffer(u_char * buf, uint size, bool mode);
+public:
 
-// Gets local IP address for interface
-//		dev - Device name, e.g. "eth0"
-// Returns: IP addresses
-std::string GetLocalIP(const char *dev);
+	Doppelganger(SuspectTable& suspects);
 
+	~Doppelganger();
+
+	void UpdateDoppelganger();
+
+	void ClearDoppelganger();
+
+	void InitDoppelganger();
+
+	void ResetDoppelganger();
+
+private:
+
+	SuspectTable& m_suspectTable;
+	std::vector<uint64_t> m_suspectKeys;
+
+};
 }
 
-#endif /* NOVAUTIL_H_ */
+#endif /* DOPPELGANGER_H_ */

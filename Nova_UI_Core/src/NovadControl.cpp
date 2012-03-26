@@ -39,7 +39,7 @@ bool Nova::StartNovad()
 		return true;
 	}
 
-	if(system("nohup novad > /dev/null &") != 0)
+	if(system("nohup novad > /dev/null&") != 0)
 	{
 		return false;
 	}

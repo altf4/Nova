@@ -23,13 +23,9 @@
 
 void Nova::SaveAndExit(int param)
 {
-	if(system("sudo iptables -F") != 0)
-	{
-		LOG(ERROR, "System call: 'sudo iptables -F' has failed.", "");
-	}
-
 	AppendToStateFile();
-
+	system("sudo iptables -F");
+	system("sudo iptables -t nat -F");
 	LOG(NOTICE, "Novad is now exiting.", "");
 	exit(EXIT_SUCCESS);
 }

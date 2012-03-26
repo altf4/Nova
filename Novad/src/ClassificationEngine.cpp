@@ -17,6 +17,7 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
+#include "Config.h"
 
 #include <sstream>
 
@@ -42,11 +43,13 @@ ClassificationEngine::ClassificationEngine(SuspectTable &table)
 {
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
+	m_dopp = new Doppelganger(m_suspects);
 }
 
 ClassificationEngine::~ClassificationEngine()
 {
-
+	m_dopp->ClearDoppelganger();
+	delete m_dopp;
 }
 
 void ClassificationEngine::FormKdTree()

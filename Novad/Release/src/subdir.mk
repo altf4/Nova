@@ -6,6 +6,7 @@
 CPP_SRCS += \
 ../src/ClassificationEngine.cpp \
 ../src/Control.cpp \
+../src/Doppelganger.cpp \
 ../src/Main.cpp \
 ../src/Novad.cpp \
 ../src/ProtocolHandler.cpp \
@@ -14,6 +15,7 @@ CPP_SRCS += \
 OBJS += \
 ./src/ClassificationEngine.o \
 ./src/Control.o \
+./src/Doppelganger.o \
 ./src/Main.o \
 ./src/Novad.o \
 ./src/ProtocolHandler.o \
@@ -22,6 +24,7 @@ OBJS += \
 CPP_DEPS += \
 ./src/ClassificationEngine.d \
 ./src/Control.d \
+./src/Doppelganger.d \
 ./src/Main.d \
 ./src/Novad.d \
 ./src/ProtocolHandler.d \
@@ -32,7 +35,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I../../NovaLibrary/src/ -O3 -Wall -c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I../../NovaLibrary/src/ -I../../Nova_UI_Core/src/ -O3 -Wall -c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

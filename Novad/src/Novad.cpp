@@ -35,17 +35,13 @@
 #include <fstream>
 #include <sstream>
 #include <sys/un.h>
-#include <net/if.h>
 #include <signal.h>
 #include <iostream>
-#include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
-#include <boost/format.hpp>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
@@ -133,35 +129,17 @@ int RunNovaD()
 		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
 	}
 
+	//Need to load the configuration before making the Classification Engine for setting up the DM
+	//Reload requires a CE object so we do a partial config load here.
+	LoadConfiguration();
+	//Loads the configuration file
+	Config::Inst()->LoadConfig();
+
 	engine = new ClassificationEngine(suspects);
 
 	Spawn_UI_Handler();
 
 	Reload();
-
-	if(Config::Inst()->GetIsDmEnabled())
-	{
-		string commandLine = "sudo iptables -A FORWARD -i lo -j DROP";
-
-		if(system(commandLine.c_str()) != 0)
-		{
-			LOG(ERROR, "Error setting up system for Doppelganger", "'iptables -A FORWARD -i lo -j DROP' could not be added to iptables rules");
-		}
-
-		commandLine = "sudo route add -host "+Config::Inst()->GetDoppelIp()+" dev lo";
-
-		if(system(commandLine.c_str()) != 0)
-		{
-			LOG(ERROR, "Error setting up system for Doppelganger", "Failed to execute command: " + commandLine);
-		}
-
-		commandLine = "sudo iptables -t nat -F";
-
-		if(system(commandLine.c_str()) != 0)
-		{
-			LOG(ERROR, "Error setting up system for Doppelganger", "'iptables -t nat -F' could not be added to iptables rules");
-		}
-	}
 
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
@@ -571,51 +549,12 @@ void Reload()
 void SilentAlarm(Suspect *suspect, int oldClassification)
 {
 	int sockfd = 0;
-	char suspectAddr[INET_ADDRSTRLEN];
 	string commandLine;
 	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
 	u_char serializedBuffer[MAX_MSG_SIZE];
 
 	uint dataLen = suspect->SerializeSuspect(serializedBuffer);
 
-	//If the hostility hasn't changed don't bother the DM
-	if(oldClassification != suspect->GetIsHostile())
-	{
-		if(suspect->GetIsHostile() && Config::Inst()->GetIsDmEnabled())
-		{
-			in_addr temp = suspect->GetInAddr();
-			inet_ntop(AF_INET, &(temp), suspectAddr, INET_ADDRSTRLEN);
-
-			commandLine = "sudo iptables -t nat -A PREROUTING -d ";
-			commandLine += hostAddrString;
-			commandLine += " -s ";
-			commandLine += suspectAddr;
-			commandLine += " -j DNAT --to-destination ";
-			commandLine += Config::Inst()->GetDoppelIp();
-
-			if(system(commandLine.c_str()) != 0)
-			{
-				LOG(ERROR, "Problem with Silent Alarm", "System Call: " + commandLine +" has failed.");
-			}
-		}
-		else
-		{
-			in_addr temp = suspect->GetInAddr();
-			inet_ntop(AF_INET, &(temp), suspectAddr, INET_ADDRSTRLEN);
-
-			commandLine = "sudo iptables -t nat -D PREROUTING -d ";
-			commandLine += hostAddrString;
-			commandLine += " -s ";
-			commandLine += suspectAddr;
-			commandLine += " -j DNAT --to-destination ";
-			commandLine += Config::Inst()->GetDoppelIp();
-
-			if(system(commandLine.c_str()) != 0)
-			{
-				LOG(ERROR, "Problem with Silent Alarm", "System Call: " + commandLine +" has failed.");
-			}
-		}
-	}
 	if(suspect->GetUnsentFeatureSet().m_packetCount)
 	{
 		do
@@ -1102,11 +1041,11 @@ void UpdateSuspect(Packet packet)
 		{
 			if(SendSuspectToUI(newSuspect))
 			{
-				LOG(DEBUG, (format("Sent a suspect to the UI: %1%")%inet_ntoa(newSuspect->GetInAddr())).str(), "");
+				LOG(DEBUG, "Sent a suspect to the UI: " + string(inet_ntoa(newSuspect->GetInAddr())), "");
 			}
 			else
 			{
-				LOG(DEBUG, (format("Failed to send a suspect to the UI: %1%")%inet_ntoa(newSuspect->GetInAddr())).str(), "");
+				LOG(DEBUG, "Failed to send a suspect to the UI: "+ string(inet_ntoa(newSuspect->GetInAddr())), "");
 			}
 		}
 
@@ -1139,47 +1078,6 @@ void UpdateSuspect(Packet packet)
 
 		delete newSuspect;
 	}
-}
-string GetLocalIP(const char *dev)
-{
-	static struct ifreq ifreqs[20];
-	struct ifconf ifconf;
-	uint  nifaces, i;
-
-	memset(&ifconf,0,sizeof(ifconf));
-	ifconf.ifc_buf = (char*) (ifreqs);
-	ifconf.ifc_len = sizeof(ifreqs);
-
-	int sock, rval;
-	sock = socket(AF_INET,SOCK_STREAM,0);
-
-	if(sock < 0)
-	{
-		LOG(ERROR, "Unable to determine the local interface's IP address.",
-			"Error creating socket to check interface IP: "+string(strerror(errno)));
-	}
-
-	if((rval = ioctl(sock, SIOCGIFCONF , (char*) &ifconf)) < 0 )
-	{
-		LOG(ERROR, "Unable to determine the local interface's IP address.",
-			"Error with getLocalIP socket ioctl(SIOGIFCONF): "+string(strerror(errno)));
-	}
-
-	close(sock);
-	nifaces =  ifconf.ifc_len/sizeof(struct ifreq);
-
-	for(i = 0; i < nifaces; i++)
-	{
-		if( strcmp(ifreqs[i].ifr_name, dev) == 0 )
-		{
-			char ip_addr [ INET_ADDRSTRLEN ];
-			struct sockaddr_in *b = (struct sockaddr_in *) &(ifreqs[i].ifr_addr);
-
-			inet_ntop(AF_INET, &(b->sin_addr), ip_addr, INET_ADDRSTRLEN);
-			return string(ip_addr);
-		}
-	}
-	return string("");
 }
 
 

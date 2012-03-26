@@ -6,6 +6,7 @@
 CPP_SRCS += \
 ../src/ClassificationEngine.cpp \
 ../src/Control.cpp \
+../src/Doppelganger.cpp \
 ../src/Main.cpp \
 ../src/Novad.cpp \
 ../src/ProtocolHandler.cpp \
@@ -14,6 +15,7 @@ CPP_SRCS += \
 OBJS += \
 ./src/ClassificationEngine.o \
 ./src/Control.o \
+./src/Doppelganger.o \
 ./src/Main.o \
 ./src/Novad.o \
 ./src/ProtocolHandler.o \
@@ -22,6 +24,7 @@ OBJS += \
 CPP_DEPS += \
 ./src/ClassificationEngine.d \
 ./src/Control.d \
+./src/Doppelganger.d \
 ./src/Main.d \
 ./src/Novad.d \
 ./src/ProtocolHandler.d \
