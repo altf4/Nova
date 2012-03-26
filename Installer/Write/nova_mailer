@@ -1,0 +1,200 @@
+#!/bin/bash
+
+# Usage: nova_mailer [(pipe_absolute_path | null) (emails_absolute_path | null)]
+
+#Note that you can put either the absolute path, or the string null; 
+# you can't just leave pipe_absolute_path empty and enter the string for the 
+# emails_absolute_path and expect correct results, it'll just put the default
+# path in for both. In addition, if you're calling this from the -u update flag
+# in the NovaCron script, if you have changed the path for either variable
+# and wish to keep one but change the other, you must enter the absolute path
+# of the one to keep, if you enter null it will reset to the default. 
+# Working to extend the functionality to allow smarter parsing of the arguments
+# but right now it's as outlined above.
+#Note as well that on the first run of this script, it is going to pull in 
+# emails from the NOVAConfig.txt file; there are dummy email addresses present
+# in that file until changed, either manually or through the GUI. This can be 
+# problematic, as you'll have useless emails floating around if you run the 
+# NovaCron script (or this one) before setting the list to the correct 
+# email alert recipients. 
+#If you run this script as root, and the emails file or NovaMailPipe are absent, 
+# it will create those files with group and user as root. This will impede the 
+# proper execution of this script, unless it is always going to be run as root
+# from that point on. Be sure to change the group and user permissions to the 
+# appropriate user if this script is run as sudo by accident
+
+#enforce a 1 second timeout for input data; may not need this, as the mail
+# script is running as a cron job; every chosen time increment, 
+# it'll grab everything it can from the pipe it's set to listen to and then 
+# it'll go dormant again.
+TMOUT=1
+FIRST=0
+
+#regular expression for email checking
+REGEX=[[:alnum:][:graph:]]*@[[:alnum:][:graph:]]*
+
+#variable to hold the path to the pipe that'll have all mailable alerts sent to
+# it. mostly used to save ~40 characters worth of typing
+if [[ $# -eq "2" && $1 != "null" ]]
+then
+	pipe=$1
+else
+	pipe=/usr/share/nova/NovaMailPipe
+fi
+
+#variable to hold the path to the file that contains all email recipients for 
+# email alerts; as of now, it's a hard-coded list, but there will be a mechanism
+# to update this file once the GUI situation gets itself a little more worked 
+# out.
+if [[ $# -eq "2" && $2 != "null" ]]
+then
+	recipients=$2
+else
+	recipients=/usr/share/nova/emails
+fi
+
+#this code block procures all the emails from the emails file and puts them in
+# an acceptable format for use with the mailx command.
+if [[ -e $recipients ]]
+then
+{
+	#while there are emails in the file
+	while read line
+	do
+	{
+		#This if is used to make sure what's being read is an email.
+		# Not very robust yet, but good enough for a prototype.
+		# =~ is used for regex comparison in bash; [:alnum:]
+		# designates any alphanumeric character.
+		if [[ $line =~ $REGEX ]]
+		then
+		{
+			#Concatenates the found email to the EMAIL variable.
+			EMAIL=$EMAIL' '$line
+		}
+		fi
+		shift
+	}
+	done <$recipients
+}
+else
+{
+	echo "Creating the email file"
+	configFile=/usr/share/nova/.nova/Config/NOVAConfig.txt
+
+	if [[ -e $configFile ]]
+	then
+	{
+		while read line
+		do
+		{
+			if [[ $line =~ \# ]]
+			then
+				shift
+				continue
+			else
+			{
+				if [[ $line =~ "RECIPIENTS "$REGEX* ]]
+				then
+				{
+					for word in $line
+					do
+						echo $word >> $recipients
+					done
+				}
+				fi
+			}
+			fi
+			shift
+		}
+		done <$configFile
+		
+		#while there are emails in the file
+		while read line
+		do
+		{
+			#This if is used to make sure what's being read is an email.
+			# Not very robust yet, but good enough for a prototype.
+			# =~ is used for regex comparison in bash; [:alnum:]
+			# designates any alphanumeric character.
+			if [[ $line =~ $REGEX ]]
+			then
+			{
+				#Concatenates the found email to the EMAIL variable.
+				EMAIL=$EMAIL' '$line
+			}
+			else
+			{
+				echo "Not valid email"
+			}
+			fi
+			shift
+		}
+		done <$recipients
+	}
+	else
+	{
+		echo "Nova configuration file is not present, have you installed?"
+		exit 1;
+	}
+	fi	
+}
+fi
+
+
+if [ -z "$EMAIL" ]
+then
+{
+	echo "Emails file empty. Have you set the recipients list yet?"
+	echo "Exiting..."
+	exit 1;
+}
+fi
+
+#if the pipe exists, execute the mail loop (should never fail unless pipe is 
+# removed by the user).
+if [[ -p $pipe ]]
+then
+{
+	#I want to find some way to conglomerate all the messages from a mail 
+	# loop period into one string and then email; as it stands right now,
+	# every email address in the emails file will recieve an email for 
+	# every given alert; that's too much.
+	CONTENT=$CONTENT
+
+	while read line
+	do
+	{
+		echo ${line} | grep "message repeated" > /dev/null 2>&1
+		if test $? -eq 1
+		then
+		{
+			if [[ $FIRST -eq 0 ]]
+			then
+			{
+				CONTENT=$line
+				let "FIRST += 1"
+			}
+			else
+			{
+				CONTENT=$CONTENT'\n'$line
+			}
+			fi
+		}
+		fi
+	}
+	done <$pipe
+	
+	echo "EMAIL is "$EMAIL
+	
+	echo "${CONTENT}" | mailx -s "Nova Email Alert" ${EMAIL}
+}
+
+#else, if pipe isn't there, create it. None of the emails prior to the pipe's
+# creation would be present, so no need to execute the mail loop; just make
+# the pipe and wait for the next cron execution to do any mailing work.
+else
+{
+	mkfifo $pipe
+}
+fi

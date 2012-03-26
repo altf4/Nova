@@ -1150,11 +1150,7 @@ void NovaGUI::on_systemStatStopButton_clicked()
 
 void NovaGUI::on_clearSuspectsButton_clicked()
 {
-	m_editingSuspectList = true;
-	ClearAllSuspects();
-	QFile::remove(QString::fromStdString(Config::Inst()->GetPathCESaveFile()));
-	DrawAllSuspects();
-	m_editingSuspectList = false;
+	on_actionClear_All_Suspects_triggered();
 }
 
 /************************************************

@@ -21,6 +21,21 @@ debug:
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 	
+test-prepare:
+	# Make the folder if it doesn't exist
+	mkdir -p NovaTest/NovadSource
+	# Make new links to the cpp files
+	rm -fr NovaTest/NovadSource/*.cpp
+	ln Novad/src/*.cpp NovaTest/NovadSource/
+	# Make new links to the h files
+	rm -fr NovaTest/NovadSource/*.h
+	ln Novad/src/*.h NovaTest/NovadSource/
+	# Delete the link to Main so we don't have multiple def of main()
+	rm -f NovaTest/NovadSource/Main.cpp
+
+test: test-prepare
+	$(MAKE) -C NovaTest/Debug
+
 
 
 #Cleans both Release and Debug
@@ -43,7 +58,10 @@ clean-release:
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 
-
+clean-test:
+	rm -fr NovaTest/NovadSource/*
+	$(MAKE) -C NovaTest/Debug clean
+	
 
 install: install-release
 
@@ -83,6 +101,7 @@ install-data:
 	mkdir -p $(DESTDIR)/usr/share/nova
 	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
 	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
+	cp -fup  Installer/Write/nova_mailer $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
@@ -107,6 +126,7 @@ uninstall:
 	rm -f $(DESTDIR)/usr/bin/novagui
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
+	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop

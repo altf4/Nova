@@ -27,6 +27,7 @@
 #include "ProtocolHandler.h"
 #include "FeatureSet.h"
 #include "Threads.h"
+#include "boost/format.hpp"
 
 #include <vector>
 #include <math.h>
@@ -41,6 +42,8 @@
 #include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
+
+using boost::format;
 
 using namespace std;
 using namespace Nova;
@@ -59,6 +62,7 @@ extern time_t lastLoadTime;
 extern time_t lastSaveTime;
 
 extern string trainingCapFile;
+extern ofstream trainingFileStream;
 
 //HS Vars
 extern string dhcpListFile;
@@ -89,36 +93,9 @@ void *Nova::ClassificationLoop(void *ptr)
 		for (SuspectTableIterator it = suspects.Begin();
 				it.GetIndex() < suspects.Size(); ++it)
 		{
-			Suspect suspectCopy;
-
 			if(it.Current().GetNeedsClassificationUpdate())
 			{
-				suspectCopy = suspects.CheckOut(it.GetKey());
-				suspectCopy.UpdateEvidence();
-				suspectCopy.CalculateFeatures();
-				int oldClassification = suspectCopy.GetIsHostile();
-
-				engine->NormalizeDataPoint(&suspectCopy);
-				engine->Classify(&suspectCopy);
-
-				//If suspect is hostile and this Nova instance has unique information
-				// 			(not just from silent alarms)
-				if(suspectCopy.GetIsHostile() || oldClassification)
-				{
-					if(suspectCopy.GetIsLive())
-					{
-						SilentAlarm(&suspectCopy, oldClassification);
-					}
-				}
-				if(SendSuspectToUI(&suspectCopy))
-				{
-					LOG(DEBUG, "Sent a suspect to the UI.","Successfully sent suspect.");
-				}
-				else
-				{
-					LOG(NOTICE, "Failed to send suspect to UI","Sending suspect to UI failed.");
-				}
-				suspects.CheckIn(&suspectCopy);
+				UpdateAndClassify(it.GetKey());
 			}
 		}
 
@@ -161,56 +138,18 @@ void *Nova::TrainingLoop(void *ptr)
 {
 	MaskKillSignals();
 
-	Suspect suspectCopy;
 	//Training Loop
 	do
 	{
 		sleep(Config::Inst()->GetClassificationTimeout());
-		ofstream myfile(trainingCapFile.data(), ios::app);
+		trainingFileStream.open(trainingCapFile.data(), ios::app);
 
-		if(myfile.is_open())
+		if(trainingFileStream.is_open())
 		{
 			// Calculate the "true" Feature Set for each Suspect
 			for (SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 			{
-				if(it.Current().GetNeedsClassificationUpdate())
-				{
-					suspectCopy = suspects.CheckOut(it.GetKey());
-					ANNpoint aNN = annAllocPt(DIM);
-					aNN = suspectCopy.GetAnnPoint();
-					suspectCopy.CalculateFeatures();
-					if(aNN == NULL)
-						aNN = annAllocPt(DIM);
-
-					for (int j = 0; j < DIM; j++)
-					{
-						aNN[j] = suspectCopy.GetFeatureSet().m_features[j];
-
-						myfile << string(inet_ntoa(suspectCopy.GetInAddr()))
-								<< " ";
-						for (int j = 0; j < DIM; j++)
-						{
-							myfile << aNN[j] << " ";
-						}
-						myfile << "\n";
-					}
-					if(suspectCopy.SetAnnPoint(aNN) != 0)
-					{
-						LOG(CRITICAL,"Failed to set Ann Point on suspect.", "");
-					}
-					suspectCopy.SetNeedsClassificationUpdate(false);
-					suspects.CheckIn(&suspectCopy);
-
-					if(SendSuspectToUI(&suspectCopy))
-					{
-						LOG(DEBUG, "Sent a suspect to the UI.","Successfully sent suspect.");
-					}
-					else
-					{
-						LOG(NOTICE, "Failed to send suspect to UI","Sending suspect to UI failed.");
-					}
-					annDeallocPt(aNN);
-				}
+					UpdateAndStore(it.GetKey());
 			}
 		}
 		else
@@ -218,7 +157,7 @@ void *Nova::TrainingLoop(void *ptr)
 			LOG(CRITICAL, "Unable to open the training capture file.",
 				"Unable to open training capture file at: "+trainingCapFile);
 		}
-		myfile.close();
+		trainingFileStream.close();
 	} while (Config::Inst()->GetClassificationTimeout());
 
 	//Shouldn't get here!
@@ -332,6 +271,8 @@ void *Nova::SilentAlarmLoop(void *ptr)
 			FeatureSet fs = newSuspect->GetFeatureSet();
 			suspectCopy.AddFeatureSet(&fs);
 			suspects.CheckIn(&suspectCopy);
+
+			// TODO: This looks like it may be a memory leak of newSuspect
 		}
 		//If this is a new suspect put it in the table
 		else
@@ -347,7 +288,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 		LOG(CRITICAL, string("Got a silent alarm!. Suspect: "+ newSuspect->ToString()), "");
 		if(!Config::Inst()->GetClassificationTimeout())
 		{
-			ClassificationLoop(NULL);
+			UpdateAndClassify(newSuspect->GetIpAddress());
 		}
 
 		close(connectionSocket);
@@ -446,12 +387,16 @@ void *Nova::TCPTimeout(void *ptr)
 						// Allow for continuous classification
 						if(!Config::Inst()->GetClassificationTimeout())
 						{
-							//pthread_rwlock_unlock(&sessionLock);
-							if(!Config::Inst()->GetIsTraining())
-								ClassificationLoop(NULL);
-							else
-								TrainingLoop(NULL);
-							//pthread_rwlock_wrlock(&sessionLock);
+							if (it->second.session.size() > 0)
+							{
+								//pthread_rwlock_unlock(&sessionLock);
+								if(!Config::Inst()->GetIsTraining())
+									UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
+								else
+									UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
+								//pthread_rwlock_wrlock(&sessionLock);
+							}
+
 						}
 
 						SessionTable[it->first].session.clear();
@@ -475,9 +420,9 @@ void *Nova::TCPTimeout(void *ptr)
 						{
 							//pthread_rwlock_unlock(&sessionLock);
 							if(!Config::Inst()->GetIsTraining())
-								ClassificationLoop(NULL);
+								UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
 							else
-								TrainingLoop(NULL);
+								UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
 							//pthread_rwlock_wrlock(&sessionLock);
 						}
 

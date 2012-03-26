@@ -41,9 +41,11 @@
 #include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
+#include <boost/format.hpp>
 
 using namespace std;
 using namespace Nova;
+using boost::format;
 
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
@@ -67,6 +69,8 @@ time_t lastSaveTime;
 
 string trainingCapFile;
 
+ofstream trainingFileStream;
+
 //HS Vars
 string dhcpListFile = "/var/log/honeyd/ipList";
 vector<string> haystackAddresses;
@@ -87,7 +91,10 @@ pthread_t silentAlarmListenThread;
 pthread_t ipUpdateThread;
 pthread_t TCP_timeout_thread;
 
-int Nova::RunNovaD()
+namespace Nova
+{
+
+int RunNovaD()
 {
 	suspects.Resize(INIT_SIZE_SMALL);
 	suspectsSinceLastSave.Resize(INIT_SIZE_SMALL);
@@ -155,6 +162,7 @@ int Nova::RunNovaD()
 			LOG(ERROR, "Error setting up system for Doppelganger", "'iptables -t nat -F' could not be added to iptables rules");
 		}
 	}
+
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
 	{
@@ -170,7 +178,24 @@ int Nova::RunNovaD()
 				+ ".dump";
 
 
-		pthread_create(&trainingLoopThread,NULL,TrainingLoop,NULL);
+		if (Config::Inst()->GetReadPcap())
+		{
+			Config::Inst()->SetClassificationThreshold(0);
+			Config::Inst()->SetClassificationTimeout(0);
+
+			trainingFileStream.open(trainingCapFile.data(), ios::app);
+
+			if(!trainingFileStream.is_open())
+			{
+				LOG(CRITICAL, "Unable to open the training capture file.",
+					"Unable to open training capture file at: "+trainingCapFile);
+				exit(EXIT_FAILURE);
+			}
+		}
+		else
+		{
+			pthread_create(&trainingLoopThread,NULL,TrainingLoop,NULL);
+		}
 	}
 	else
 	{
@@ -178,16 +203,20 @@ int Nova::RunNovaD()
 		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
 	}
 
-	notifyFd = inotify_init ();
+	// If we're not reading from a pcap, monitor for IP changes in the honeyd file
+	if (!Config::Inst()->GetReadPcap())
+	{
+		notifyFd = inotify_init ();
 
-	if(notifyFd > 0)
-	{
-		watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
-		pthread_create(&ipUpdateThread, NULL, UpdateIPFilter,NULL);
-	}
-	else
-	{
-		LOG(ERROR, "Unable to set up file watcher for the honeyd IP list file.","");
+		if(notifyFd > 0)
+		{
+			watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+			pthread_create(&ipUpdateThread, NULL, UpdateIPFilter,NULL);
+		}
+		else
+		{
+			LOG(ERROR, "Unable to set up file watcher for the honeyd IP list file.","");
+		}
 	}
 
 	Start_Packet_Handler();
@@ -206,7 +235,7 @@ int Nova::RunNovaD()
 	}
 }
 
-void Nova::MaskKillSignals()
+void MaskKillSignals()
 {
 	sigset_t x;
 	sigemptyset (&x);
@@ -217,7 +246,7 @@ void Nova::MaskKillSignals()
 	sigprocmask(SIG_BLOCK, &x, NULL);
 }
 
-void Nova::AppendToStateFile()
+void AppendToStateFile()
 {
 	pthread_mutex_lock(&suspectsSinceLastSaveLock);
 	lastSaveTime = time(NULL);
@@ -296,7 +325,7 @@ void Nova::AppendToStateFile()
 	pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 }
 
-void Nova::LoadStateFile()
+void LoadStateFile()
 {
 	time_t timeStamp;
 	uint32_t dataSize;
@@ -400,7 +429,7 @@ void Nova::LoadStateFile()
 	in.close();
 }
 
-void Nova::RefreshStateFile()
+void RefreshStateFile()
 {
 	time_t timeStamp;
 	uint32_t dataSize;
@@ -520,7 +549,7 @@ void Nova::RefreshStateFile()
 	}
 }
 
-void Nova::Reload()
+void Reload()
 {
 	LoadConfiguration();
 
@@ -539,7 +568,7 @@ void Nova::Reload()
 }
 
 
-void Nova::SilentAlarm(Suspect *suspect, int oldClassification)
+void SilentAlarm(Suspect *suspect, int oldClassification)
 {
 	int sockfd = 0;
 	char suspectAddr[INET_ADDRSTRLEN];
@@ -686,7 +715,7 @@ void Nova::SilentAlarm(Suspect *suspect, int oldClassification)
 }
 
 
-bool Nova::KnockPort(bool mode)
+bool KnockPort(bool mode)
 {
 	int sockfd;
 	stringstream ss;
@@ -733,7 +762,7 @@ bool Nova::KnockPort(bool mode)
 }
 
 
-bool Nova::Start_Packet_Handler()
+bool Start_Packet_Handler()
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -781,6 +810,7 @@ bool Nova::Start_Packet_Handler()
 
 		if(Config::Inst()->GetGotoLive()) Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
 
+		trainingFileStream.close();
 		LOG(DEBUG, "Done processing PCAP file", "");
 	}
 
@@ -830,7 +860,7 @@ bool Nova::Start_Packet_Handler()
 	return false;
 }
 
-void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
 	//Memory assignments moved outside packet handler to increase performance
 	int dest_port;
@@ -915,11 +945,11 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 		{
 			if(!Config::Inst()->GetIsTraining())
 			{
-				ClassificationLoop(NULL);
+				UpdateAndClassify(packet_info.ip_hdr.ip_src.s_addr);
 			}
 			else
 			{
-				TrainingLoop(NULL);
+				UpdateAndStore(packet_info.ip_hdr.ip_src.s_addr);
 			}
 		}
 	}
@@ -934,7 +964,7 @@ void Nova::Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const
 	}
 }
 
-void Nova::LoadConfiguration()
+void LoadConfiguration()
 {
 	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
 
@@ -948,7 +978,7 @@ void Nova::LoadConfiguration()
 }
 
 
-string Nova::ConstructFilterString()
+string ConstructFilterString()
 {
 	//Flatten out the vectors into a csv string
 	string filterString = "";
@@ -990,7 +1020,7 @@ string Nova::ConstructFilterString()
 }
 
 
-vector <string> Nova::GetHaystackDhcpAddresses(string dhcpListFile)
+vector <string> GetHaystackDhcpAddresses(string dhcpListFile)
 {
 	ifstream dhcpFile(dhcpListFile.data());
 	vector<string> haystackDhcpAddresses;
@@ -1016,7 +1046,7 @@ vector <string> Nova::GetHaystackDhcpAddresses(string dhcpListFile)
 	return haystackDhcpAddresses;
 }
 
-vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
+vector <string> GetHaystackAddresses(string honeyDConfigPath)
 {
 	//Path to the main log file
 	ifstream honeydConfFile(honeyDConfigPath.c_str());
@@ -1057,7 +1087,7 @@ vector <string> Nova::GetHaystackAddresses(string honeyDConfigPath)
 	return retAddresses;
 }
 
-void Nova::UpdateSuspect(Packet packet)
+void UpdateSuspect(Packet packet)
 {
 	Suspect * newSuspect = new Suspect(packet);
 	in_addr_t addr = newSuspect->GetIpAddress();
@@ -1066,6 +1096,20 @@ void Nova::UpdateSuspect(Packet packet)
 	{
 		newSuspect->SetNeedsClassificationUpdate(true);
 		newSuspect->SetIsLive(Config::Inst()->GetReadPcap());
+
+		// If we're in training mode, we only send new suspects to the GUI
+		if (Config::Inst()->GetIsTraining())
+		{
+			if(SendSuspectToUI(newSuspect))
+			{
+				LOG(DEBUG, (format("Sent a suspect to the UI: %1%")%inet_ntoa(newSuspect->GetInAddr())).str(), "");
+			}
+			else
+			{
+				LOG(DEBUG, (format("Failed to send a suspect to the UI: %1%")%inet_ntoa(newSuspect->GetInAddr())).str(), "");
+			}
+		}
+
 		suspects.AddNewSuspect(newSuspect);
 
 		// Make a copy to add to the other table
@@ -1082,17 +1126,21 @@ void Nova::UpdateSuspect(Packet packet)
 		suspectCopy.SetIsLive(Config::Inst()->GetReadPcap());
 		suspects.CheckIn(&suspectCopy);
 
-		pthread_mutex_lock(&suspectsSinceLastSaveLock);
-		Suspect suspectCopy2 = suspectsSinceLastSave.CheckOut(addr);
-		suspectCopy2.AddEvidence(packet);
-		suspectCopy2.SetIsLive(Config::Inst()->GetReadPcap());
-		suspectsSinceLastSave.CheckIn(&suspectCopy2);
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+		// Don't care about the state file if we're training
+		if (!Config::Inst()->GetIsTraining())
+		{
+			pthread_mutex_lock(&suspectsSinceLastSaveLock);
+			Suspect suspectCopy2 = suspectsSinceLastSave.CheckOut(addr);
+			suspectCopy2.AddEvidence(packet);
+			suspectCopy2.SetIsLive(Config::Inst()->GetReadPcap());
+			suspectsSinceLastSave.CheckIn(&suspectCopy2);
+			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+		}
 
 		delete newSuspect;
 	}
 }
-string Nova::GetLocalIP(const char *dev)
+string GetLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
 	struct ifconf ifconf;
@@ -1132,4 +1180,79 @@ string Nova::GetLocalIP(const char *dev)
 		}
 	}
 	return string("");
+}
+
+
+void UpdateAndStore(uint64_t suspect)
+{
+	Suspect suspectCopy = suspects.CheckOut(suspect);
+
+	// If the checkout failed and we got the empty suspect
+	if (suspectCopy.GetIpAddress() == 0)
+	{
+		return;
+	}
+
+	if(suspectCopy.GetNeedsClassificationUpdate())
+	{
+
+		suspectCopy.UpdateEvidence();
+		suspectCopy.CalculateFeatures();
+
+		trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
+		for (int j = 0; j < DIM; j++)
+		{
+			trainingFileStream << suspectCopy.GetFeatureSet().m_features[j] << " ";
+		}
+		trainingFileStream << "\n";
+
+		suspectCopy.SetNeedsClassificationUpdate(false);
+	}
+
+	suspects.CheckIn(&suspectCopy);
+}
+
+
+void UpdateAndClassify(uint64_t suspect)
+{
+	Suspect suspectCopy = suspects.CheckOut(suspect);
+
+	// If the checkout failed and we got the empty suspect
+	if (suspectCopy.GetIpAddress() == 0)
+	{
+		return;
+	}
+
+	if(suspectCopy.GetNeedsClassificationUpdate())
+	{
+		suspectCopy.UpdateEvidence();
+		suspectCopy.CalculateFeatures();
+		int oldClassification = suspectCopy.GetIsHostile();
+
+		engine->NormalizeDataPoint(&suspectCopy);
+		engine->Classify(&suspectCopy);
+
+		//If suspect is hostile and this Nova instance has unique information
+		// 			(not just from silent alarms)
+		if(suspectCopy.GetIsHostile() || oldClassification)
+		{
+			if(suspectCopy.GetIsLive())
+			{
+				SilentAlarm(&suspectCopy, oldClassification);
+			}
+		}
+
+		if(SendSuspectToUI(&suspectCopy))
+		{
+			LOG(DEBUG, (format("Sent a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+		}
+		else
+		{
+			LOG(DEBUG, (format("Failed to send a suspect to the UI: %1%")%inet_ntoa(suspectCopy.GetInAddr())).str(), "");
+		}
+	}
+
+	suspects.CheckIn(&suspectCopy);
+}
+
 }
