@@ -87,8 +87,9 @@ bool Nova::StopNovad()
 	}
 	bool retSuccess = killReply->m_success;
 	delete killReply;
-	close(novadListenSocket);
-	novadListenSocket = -1;
+
+	CloseNovadConnection();
+
 	return retSuccess;
 }
 
