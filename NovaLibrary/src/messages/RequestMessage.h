@@ -54,7 +54,7 @@ class RequestMessage : public UI_Message
 
 public:
 
-	RequestMessage();
+	RequestMessage(enum RequestType requestType);
 	~RequestMessage();
 
 	//Deserialization constructor

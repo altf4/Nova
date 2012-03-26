@@ -336,6 +336,45 @@ void NovaGUI::InitiateSystemStatus()
 	ui.systemStatusTable->item(COMPONENT_HSH, 0)->setText("Haystack");
 }
 
+bool NovaGUI::ConnectGuiToNovad()
+{
+	if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
+	{
+		if(!StartCallbackLoop(this))
+		{
+			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
+					"InitCallbackSocket() failed: "+string(strerror(errno))+".");
+			return false;
+		}
+
+		// Get the list of current suspects
+		vector<in_addr_t> *suspectIpList = GetSuspectList(SUSPECTLIST_ALL);
+
+		for (uint i = 0; i < suspectIpList->size(); i++)
+		{
+			struct suspectItem suspectItem;
+			suspectItem.suspect = GetSuspect(suspectIpList->at(i));
+
+			// Case of the empty suspect
+			if (suspectItem.suspect->GetIpAddress() == 0)
+			{
+				delete suspectItem.suspect;
+				continue;
+			}
+
+			suspectItem.item = NULL;
+			suspectItem.mainItem = NULL;
+			this->ProcessReceivedSuspect(suspectItem, false);
+		}
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void NovaGUI::UpdateSystemStatus()
 {
 	QTableWidgetItem *item;
@@ -378,13 +417,18 @@ void NovaGUI::UpdateSystemStatus()
  * Suspect Functions
  ************************************************/
 
-void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
+void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initialization)
 {
 
 	pthread_rwlock_wrlock(&lock);
 	//If the suspect already exists in our table
 	if(SuspectTable.find(suspectItem.suspect->GetIpAddress()) != SuspectTable.end())
 	{
+		if (!initialization)
+		{
+			return;
+		}
+
 		//We point to the same item so it doesn't need to be deleted.
 		suspectItem.item = SuspectTable[suspectItem.suspect->GetIpAddress()].item;
 		suspectItem.mainItem = SuspectTable[suspectItem.suspect->GetIpAddress()].mainItem;
@@ -397,7 +441,14 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
 	//Update the entry in the table
 	SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
 	pthread_rwlock_unlock(&lock);
-	Q_EMIT newSuspect(suspectItem.suspect->GetIpAddress());
+	if (initialization)
+	{
+		Q_EMIT newSuspect(suspectItem.suspect->GetIpAddress());
+	}
+	else
+	{
+		DrawSuspect(suspectItem.suspect->GetIpAddress());
+	}
 }
 
 /************************************************
@@ -743,14 +794,7 @@ void NovaGUI::on_actionRunNova_triggered()
 		return;
 	}
 	StartNovad();
-	if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
-	{
-		if(!StartCallbackLoop(this))
-		{
-			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-				"InitCallbackSocket() failed: "+string(strerror(errno))+".");
-		}
-	}
+	ConnectGuiToNovad();
 	StartHaystack();
 }
 
@@ -1015,14 +1059,7 @@ void NovaGUI::on_runButton_clicked()
 		return;
 	}
 	StartNovad();
-	if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
-	{
-		if(!StartCallbackLoop(this))
-		{
-			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-				"InitCallbackSocket() failed: "+string(strerror(errno))+".");
-		}
-	}
+	ConnectGuiToNovad();
 	StartHaystack();
 }
 void NovaGUI::on_stopButton_clicked()
@@ -1109,14 +1146,7 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 				return;
 			}
 			StartNovad();
-			if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
-			{
-				if(!StartCallbackLoop(this))
-				{
-					LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
-						"InitCallbackSocket() failed: "+string(strerror(errno))+".");
-				}
-			}
+			ConnectGuiToNovad();
 			break;
 		}
 		case COMPONENT_HSH:
@@ -1358,7 +1388,7 @@ void *CallbackLoop(void *ptr)
 				suspectItem.suspect = change.suspect;
 				suspectItem.item = NULL;
 				suspectItem.mainItem = NULL;
-				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem);
+				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem, true);
 				break;
 			}
 			default:

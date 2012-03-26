@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : CallbackMessage.h
+// Name        : ErrorMessage.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,48 +13,51 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Messages coming asynchronously from Novad to the UI
+// Description : Message describing some error condition
 //============================================================================
 
-#ifndef CALLBACKMESSAGE_H_
-#define CALLBACKMESSAGE_H_
+#ifndef ERRORMESSAGE_H_
+#define ERRORMESSAGE_H_
 
 #include "UI_Message.h"
-#include "../Suspect.h"
 
-#define CALLBACK_MSG_MIN_SIZE 2
+#define ERROR_MSG_MIN_SIZE 2
 
 //The different message types
-enum CallbackType: char
+enum ErrorType: char
 {
-	CALLBACK_SUSPECT_UDPATE = 0,		//Request for Novad to exit
-	CALLBACK_SUSPECT_UDPATE_ACK,		//Reply from Novad with success
+	//Return code types
+	//(IE: NOT meant to be remotely sent or received)
+	ERROR_SOCKET_CLOSED = 0,		//Message could not be read because the socket was closed
+	ERROR_MALFORMED_MESSAGE,		//Message was received, but could not deserialize
+	ERROR_UNKNOWN_MESSAGE_TYPE,		//The primary message type is unknown
+
+	//Error codes for actual remote messages
+	ERROR_PROTOCOL_MISTAKE,			//Reply from Novad with success
 };
 
 namespace Nova
 {
 
-class CallbackMessage : public UI_Message
+class ErrorMessage : public UI_Message
 {
 
 public:
 
-	CallbackMessage(enum CallbackType callbackType);
-	~CallbackMessage();
+	ErrorMessage(enum ErrorType errorType);
+	~ErrorMessage();
 
 	//Deserialization constructor
 	//	buffer - pointer to array in memory where serialized ControlMessage resides
 	//	length - the length of this array
 	//	On error, sets m_serializeError to true, on success sets it to false
-	CallbackMessage(char *buffer, uint32_t length);
+	ErrorMessage(char *buffer, uint32_t length);
 
-
-	enum CallbackType m_callbackType;
-	uint32_t m_suspectLength;
-	Suspect *m_suspect;
+	enum ErrorType m_errorType;
 
 protected:
-	//Serializes the UI_Message object into a char array
+
+	//Serializes the ErrorMessage object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
@@ -63,4 +66,4 @@ protected:
 
 }
 
-#endif /* CALLBACKMESSAGE_H_ */
+#endif /* ERRORMESSAGE_H_ */
