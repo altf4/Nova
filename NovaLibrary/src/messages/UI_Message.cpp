@@ -24,6 +24,8 @@
 
 #include <string>
 #include <vector>
+#include <sys/socket.h>
+#include <errno.h>
 
 
 using namespace std;
@@ -39,12 +41,17 @@ UI_Message::~UI_Message()
 
 }
 
-UI_Message *UI_Message::ReadMessage(int connectFD)
+UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 {
 	//perform read operations ...
 	char buff[4096];
 	int bytesRead = 4096;
 	vector <char> input;
+
+	struct timeval tv;
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+	setsockopt(connectFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
 
 	while( bytesRead == 4096)
 	{
@@ -55,8 +62,17 @@ UI_Message *UI_Message::ReadMessage(int connectFD)
 		}
 		else
 		{
-			//The socket died on us!
-			return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			// Was this a timeout error?
+			if (errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				return new ErrorMessage(ERROR_TIMEOUT);
+			}
+			else
+			{
+				//The socket died on us!
+				return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			}
+
 		}
 	}
 	//When a connection is remotely closed, read() returns 0

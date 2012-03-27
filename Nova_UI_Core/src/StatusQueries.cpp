@@ -21,6 +21,7 @@
 #include "messages/ControlMessage.h"
 #include "messages/RequestMessage.h"
 #include "messages/ErrorMessage.h"
+#include "Logger.h"
 
 #include <iostream>
 
@@ -47,7 +48,14 @@ bool Nova::IsNovadUp(bool tryToConnect)
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
 	if(reply->m_messageType == ERROR_MESSAGE )
 	{
 		ErrorMessage *error = (ErrorMessage*)reply;
@@ -87,7 +95,14 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 		return NULL;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
 	if(reply->m_messageType == ERROR_MESSAGE )
 	{
 		ErrorMessage *error = (ErrorMessage*)reply;
@@ -134,7 +149,14 @@ Suspect *Nova::GetSuspect(in_addr_t address)
 	}
 
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
 	if(reply->m_messageType == ERROR_MESSAGE )
 	{
 		ErrorMessage *error = (ErrorMessage*)reply;
