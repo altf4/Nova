@@ -37,6 +37,7 @@
 #include <sys/un.h>
 #include <signal.h>
 #include <iostream>
+#include <sys/file.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
 
@@ -92,6 +93,14 @@ namespace Nova
 
 int RunNovaD()
 {
+	Config::Inst();
+
+	if (!LockNovad())
+	{
+		cout << "ERROR: Novad is already running. Please close all other instances before continuing." << endl;
+		exit(EXIT_FAILURE);
+	}
+
 	suspects.Resize(INIT_SIZE_SMALL);
 	suspectsSinceLastSave.Resize(INIT_SIZE_SMALL);
 
@@ -101,8 +110,7 @@ int RunNovaD()
 	pthread_mutex_init(&suspectsSinceLastSaveLock, NULL);
 	pthread_rwlock_init(&sessionLock, NULL);
 
-	// Let both of these initialize before we have multiple threads going
-	Config::Inst();
+	// Let the logger initialize before we have multiple threads going
 	Logger::Inst();
 
 	// Change our working folder into the config folder so our relative paths are correct
@@ -209,6 +217,22 @@ int RunNovaD()
 	else
 	{
 		return EXIT_SUCCESS;
+	}
+}
+
+bool LockNovad()
+{
+	int lockFile = open((Config::Inst()->GetPathHome() + "novad.lock").data(), O_CREAT | O_RDWR, 0666);
+	int rc = flock(lockFile, LOCK_EX | LOCK_NB);
+	if(rc)
+	{
+		// Someone else has this file open
+		return false;
+	}
+	else
+	{
+		// We have the file open, it will be released if the process dies for any reason
+		return true;
 	}
 }
 
