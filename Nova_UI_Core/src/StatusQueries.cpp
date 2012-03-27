@@ -28,8 +28,17 @@ extern int novadListenSocket;
 using namespace Nova;
 using namespace std;
 
-bool Nova::IsNovadUp()
+bool Nova::IsNovadUp(bool tryToConnect)
 {
+
+	if(tryToConnect)
+	{
+		//If we couldn't connect, then it's definitely not up
+		if(!ConnectToNovad())
+		{
+			return false;
+		}
+	}
 
 	ControlMessage ping(CONTROL_PING);
 	if(!UI_Message::WriteMessage(&ping, novadListenSocket) )
