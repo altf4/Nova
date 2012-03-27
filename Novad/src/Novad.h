@@ -41,6 +41,9 @@ namespace Nova
 
 int RunNovaD();
 
+// Locks to ensure only one instance of novad running
+bool LockNovad();
+
 // Send a silent alarm
 //		suspect - Suspect to send alarm about
 void SilentAlarm(Suspect *suspect, int oldClassification);
