@@ -23,8 +23,11 @@
 
 #include "HashMapStructs.h"
 #include "Defines.h"
+#include "Config.h"
 
 #include <string.h>
+#include <iostream>
+#include <stdlib.h>
 
 // A macro to make logging prettier
 #define LOG(t,s,r) Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
@@ -82,14 +85,17 @@ public:
 
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
-	// args: 	std::string logPrefString: this method is used for reading from the config file
-	// args: 	Nova::Levels messageLevel, Nova::Services services: this is for individual
-	//       	adjustments to the struct from the GUI; may change the name but as they
-	//		 	are both used to set the preferences I figured it'd be okay.
-	//       	Given Nova::Levels level will have have Nova::Services services mapped to it inside
-	//       	the inModuleSettings userMap, and the new map will be returned.
-	void setUserLogPreferences(std::string logPrefString);
-	void setUserLogPreferences(Nova::Levels messageLevel, Nova::Services services);
+	// args: 	std::string logPrefString: this method is used for reading from the Config file
+	void SetUserLogPreferences(std::string logPrefString);
+
+	// This version serves to update the preference string one service at a time.
+	// args: services: service to change
+	//       messageLevel: what level to change the service to
+	//       upDown: a '+' indicates a range of level or higher; a '-' indicates a range of
+	//               level or lower. A '0' indicates clear previous range modifiers. Thus, if you're
+	//               just wanting to change the level, and not the range modifier, you have to put the
+	//               range modifier that's present in the NOVAConfig.txt file as the argument.
+	void SetUserLogPreferences(Nova::Services services, Nova::Levels messageLevel, char upDown);
 
 protected:
 	// Constructor for the Logger class.
@@ -107,6 +113,7 @@ private:
 	// args: 	uint16_t level. The level of severity to tell syslog to log with.
 	//       	std::string message. The message to send to syslog in std::string form.
 	void LogToFile(uint16_t level, std::string message);
+
 	// Mail will, obviously, email people.
 	// args: 	uint16_t level. The level of severity with which to apply
 	// 		 	when sending the email. Used primarily to extract a std::string from the
@@ -123,6 +130,7 @@ private:
 
 	// Load Configuration: loads the SMTP info and service level preferences
 	uint16_t LoadConfiguration();
+
 	std::string getBitmask(Nova::Levels level);
 
 public:

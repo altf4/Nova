@@ -390,10 +390,10 @@ RECIPIENTS first@email.send, second@email.send
 #
 # LEVELS:  0 = DEBUG 
 #          1 = INFO
-#		   2 = NOTICE
+#	   2 = NOTICE
 #          3 = WARNING
 #          4 = ERROR
-#          5 = CRITICAl
+#          5 = CRITICAL
 #          6 = ALERT
 #          7 = EMERGENCY
 # (+ | -): Plus indicates use the service at this level or higher,

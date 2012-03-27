@@ -46,7 +46,7 @@ namespace Nova
 		m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
 		m_messageInfo.smtp_domain = Config::Inst()->GetSMTPDomain();
 		m_messageInfo.email_recipients = Config::Inst()->GetSMTPEmailRecipients();
-		setUserLogPreferences(Config::Inst()->GetLoggerPreferences());
+		SetUserLogPreferences(Config::Inst()->GetLoggerPreferences());
 
 		return 1;
 	}
@@ -121,10 +121,12 @@ namespace Nova
 
 	void Logger::Mail(uint16_t level, string message)
 	{
-
+		openlog("NovaMail", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(level, "%s %s", (m_levels[level].second).c_str(), message.c_str());
+		closelog();
 	}
 
-	void Logger::setUserLogPreferences(string logPrefString)
+	void Logger::SetUserLogPreferences(string logPrefString)
 	{
 		uint16_t size = logPrefString.size() + 1;
 		char * tokens;
@@ -190,20 +192,145 @@ namespace Nova
 		return DEBUG;
 	}
 
-	/*void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
+	void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels messageTypeLevel, char upDown = '0')
 	{
-		userMap output = messageInfo.service_preferences;
-		bool end = false;
+		bool found = false;
+		char * tokens;
+		char * parse;
+		uint16_t j = 0;
+		pair <pair <Nova::Services, Nova::Levels>, char> push;
+		pair <Nova::Services, Nova::Levels> insert;
+		char check[256];
+		char logPref[16];
+		char *pch;
+		string configTest = Config::Inst()->GetConfigFilePath();
+		ifstream settings(configTest.c_str());
 
-		for(uint16_t i = 0; i < messageInfo.service_preferences.size() && !end; i++)
+		while(settings.good())
 		{
-			if(messageInfo.service_preferences[i].first == messageTypeLevel)
+			check[0] = 0;
+			settings.getline(check, 256);
+
+			if(!strlen(check))
 			{
-				messageInfo.service_preferences[i].second = services;
-				end = true;
+				continue;
+			}
+
+			pch = strtok(check, " \n");
+
+			if(!strlen(pch) and !strcmp(pch, "#"))
+			{
+				continue;
+			}
+			else if(!strcmp(pch, "SERVICE_PREFERENCES"))
+			{
+				pch = strtok(NULL, " \n");
+				strcpy(logPref, pch);
+				found = true;
 			}
 		}
-	}*/
+		if(found)
+		{
+			for(uint16_t i = 0; i < strlen(logPref); i += 4)
+			{
+				if(logPref[i] == (char)(services + 48))
+				{
+					logPref[i + 2] = (char)(messageTypeLevel + 48);
+
+					if(upDown != '0' and logPref[i + 3] != ';')
+					{
+						logPref[i + 3] = upDown;
+						i++;
+					}
+					else if(upDown != '0' and logPref[i + 3] == ';')
+					{
+
+						char temp[16];
+						strcpy(temp, logPref);
+						logPref[i + 3] = upDown;
+
+						for(int j = i + 4; j < 16; j++)
+						{
+							logPref[j] = temp[j - 1];
+						}
+
+						i++;
+					}
+					else if(upDown == '0' and logPref[i + 3] != ';')
+					{
+						char temp[16];
+						strcpy(temp, logPref);
+						logPref[i + 3] = ';';
+
+						for(int j = i + 4; j < 16; j++)
+						{
+							logPref[j] = temp[j + 1];
+						}
+
+						i++;
+					}
+					else if(upDown == '0' and logPref[i + 3] == ';')
+					{
+						continue;
+					}
+				}
+			}
+
+			Config::Inst()->SetLoggerPreferences(std::string(logPref));
+
+			tokens = new char[strlen(logPref) + 1];
+			strcpy(tokens, logPref);
+
+			std::cout << tokens << endl;
+
+			parse = strtok(tokens, ";");
+			m_messageInfo.service_preferences.clear();
+
+			while(parse != NULL)
+			{
+				switch(parse[0])
+				{
+					case '0': insert.first = SYSLOG;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+					case '1': insert.first = LIBNOTIFY;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+					case '2': insert.first = EMAIL;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+				}
+
+				if(parse[3] == '-')
+				{
+					upDown = '-';
+				}
+				else if(parse[3] == '+')
+				{
+					upDown = '+';
+				}
+				else
+				{
+					upDown = '0';
+				}
+
+				push.first = insert;
+				push.second = upDown;
+				m_messageInfo.service_preferences.push_back(push);
+				parse = strtok(NULL, ";");
+				j++;
+			}
+		}
+		else
+		{
+			//the line containing the service_preferences was not found in the ConfigFile,
+			//end update.
+		}
+
+		settings.close();
+
+		//update the NOVAConfig.txt file
+	}
 
 	string Logger::getBitmask(Nova::Levels level)
 	{
@@ -308,6 +435,7 @@ namespace Nova
 		}
 
 		LoadConfiguration();
+		SetUserLogPreferences(SYSLOG, WARNING, '-');
 	}
 
 	Logger::~Logger()
