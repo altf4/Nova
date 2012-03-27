@@ -17,6 +17,7 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
+#include "Config.h"
 
 #include <sstream>
 
@@ -42,6 +43,8 @@ ClassificationEngine::ClassificationEngine(SuspectTable &table)
 {
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
+	m_dopp = new Doppelganger(m_suspects);
+	m_dopp->InitDoppelganger();
 }
 
 ClassificationEngine::~ClassificationEngine()

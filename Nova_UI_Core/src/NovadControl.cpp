@@ -19,6 +19,7 @@
 #include "NovadControl.h"
 #include "messages/UI_Message.h"
 #include "messages/ControlMessage.h"
+#include "messages/ErrorMessage.h"
 #include "Connection.h"
 #include "StatusQueries.h"
 
@@ -34,12 +35,12 @@ extern int novadListenSocket;
 
 bool Nova::StartNovad()
 {
-	if(IsUp())
+	if(IsNovadUp())
 	{
 		return true;
 	}
 
-	if(system("nohup novad > /dev/null &") != 0)
+	if(system("nohup novad > /dev/null&") != 0)
 	{
 		return false;
 	}
@@ -51,8 +52,7 @@ bool Nova::StartNovad()
 
 bool Nova::StopNovad()
 {
-	ControlMessage killRequest;
-	killRequest.m_controlType = CONTROL_EXIT_REQUEST;
+	ControlMessage killRequest(CONTROL_EXIT_REQUEST);
 	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
@@ -61,10 +61,14 @@ bool Nova::StopNovad()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -83,15 +87,15 @@ bool Nova::StopNovad()
 	}
 	bool retSuccess = killReply->m_success;
 	delete killReply;
-	close(novadListenSocket);
-	novadListenSocket = -1;
+
+	CloseNovadConnection();
+
 	return retSuccess;
 }
 
 bool Nova::SaveAllSuspects(std::string file)
 {
-	ControlMessage saveRequest;
-	saveRequest.m_controlType = CONTROL_SAVE_SUSPECTS_REQUEST;
+	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST);
 	strcpy(saveRequest.m_filePath, file.c_str());
 
 	if(!UI_Message::WriteMessage(&saveRequest, novadListenSocket) )
@@ -102,10 +106,14 @@ bool Nova::SaveAllSuspects(std::string file)
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -129,8 +137,7 @@ bool Nova::SaveAllSuspects(std::string file)
 
 bool Nova::ClearAllSuspects()
 {
-	ControlMessage clearRequest;
-	clearRequest.m_controlType = CONTROL_CLEAR_ALL_REQUEST;
+	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST);
 	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
@@ -139,10 +146,14 @@ bool Nova::ClearAllSuspects()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -166,8 +177,7 @@ bool Nova::ClearAllSuspects()
 
 bool Nova::ClearSuspect(in_addr_t suspectAddress)
 {
-	ControlMessage clearRequest;
-	clearRequest.m_controlType = CONTROL_CLEAR_SUSPECT_REQUEST;
+	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST);
 	clearRequest.m_suspectAddress = suspectAddress;
 	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
 	{
@@ -177,10 +187,14 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -204,8 +218,7 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 
 bool Nova::ReclassifyAllSuspects()
 {
-	ControlMessage reclassifyRequest;
-	reclassifyRequest.m_controlType = CONTROL_RECLASSIFY_ALL_REQUEST;
+	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST);
 	if(!UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket) )
 	{
 		//There was an error in sending the message
@@ -214,10 +227,14 @@ bool Nova::ReclassifyAllSuspects()
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	if(reply->m_messageType == ERROR_MESSAGE )
 	{
-		//There was an error receiving the reply
-		//TODO: Log this fact
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )

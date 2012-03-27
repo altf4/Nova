@@ -25,8 +25,8 @@ using namespace Nova;
 
 bool Nova::StartHaystack()
 {
-	string executeString = "nohup sudo honeyd -d -i eth0 -i lo -f " + Config::Inst()->GetPathHome()
-		+ "/Config/haystack.config -p " + Config::Inst()->GetPathReadFolder()
+	string executeString = "nohup sudo honeyd -d -i "+Config::Inst()->GetInterface()+" -i "+Config::Inst()->GetDoppelInterface()
+		+" -f " + Config::Inst()->GetPathHome() + "/Config/haystack.config -p " + Config::Inst()->GetPathReadFolder()
 		+ "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
 
 	if(system(executeString.c_str()) != 0)

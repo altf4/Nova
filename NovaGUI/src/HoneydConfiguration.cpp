@@ -596,16 +596,19 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 	}
 
 	// Start node section
-	out << endl << endl;
 	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		if(!it->second.enabled)
 		{
 			continue;
 		}
-		else if(!it->second.name.compare("Doppelganger") && Config::Inst()->GetIsDmEnabled())
+		//We write the dopp regardless of whether or not it is enabled so that it can be toggled during runtime.
+		else if(!it->second.name.compare("Doppelganger"))
 		{
-			out << "bind " << it->second.IP << " " << it->second.pfile << endl;
+			string pString = DoppProfileToString(&m_profiles[it->second.pfile]);
+			out << endl << pString;
+			out << "bind " << it->second.IP << " DoppelgangerReservedTemplate" << endl << endl;
+			//Use configured or discovered loopback
 		}
 		else switch (m_profiles[it->second.pfile].type)
 		{
@@ -1087,6 +1090,69 @@ string HoneydConfiguration::ProfileToString(profile* p)
 	return out.str();
 }
 
+//
+string HoneydConfiguration::DoppProfileToString(profile* p)
+{
+	stringstream out;
+	out << "create DoppelgangerReservedTemplate" << endl;
+
+	out << "set DoppelgangerReservedTemplate default tcp action " << p->tcpAction << endl;
+	out << "set DoppelgangerReservedTemplate default udp action " << p->udpAction << endl;
+	out << "set DoppelgangerReservedTemplate default icmp action " << p->icmpAction << endl;
+
+	if(p->personality.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->personality << '"' << endl;
+	}
+
+	if(p->uptime.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " uptime " << p->uptime << endl;
+	}
+
+	if(p->dropRate.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->dropRate << endl;
+	}
+
+	for (uint i = 0; i < p->ports.size(); i++)
+	{
+		// Only include non-inherited ports
+		if(!p->ports[i].second)
+		{
+			out << "add DoppelgangerReservedTemplate";
+			if(!m_ports[p->ports[i].first].type.compare("TCP"))
+			{
+				out << " tcp port ";
+			}
+			else
+			{
+				out << " udp port ";
+			}
+			out << m_ports[p->ports[i].first].portNum << " ";
+
+			if(!(m_ports[p->ports[i].first].behavior.compare("script")))
+			{
+				string scriptName = m_ports[p->ports[i].first].scriptName;
+
+				if(m_scripts[scriptName].path.compare(""))
+				{
+					out << '"' << m_scripts[scriptName].path << '"'<< endl;
+				}
+				else
+				{
+					LOG(ERROR, "Error writing profile port script.", "Path to script "+scriptName+" is null.");
+				}
+			}
+			else
+			{
+				out << m_ports[p->ports[i].first].behavior << endl;
+			}
+		}
+	}
+	out << endl;
+	return out.str();
+}
 
 SubnetTable HoneydConfiguration::GetSubnets() const
 {

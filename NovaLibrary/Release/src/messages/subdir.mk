@@ -6,18 +6,21 @@
 CPP_SRCS += \
 ../src/messages/CallbackMessage.cpp \
 ../src/messages/ControlMessage.cpp \
+../src/messages/ErrorMessage.cpp \
 ../src/messages/RequestMessage.cpp \
 ../src/messages/UI_Message.cpp 
 
 OBJS += \
 ./src/messages/CallbackMessage.o \
 ./src/messages/ControlMessage.o \
+./src/messages/ErrorMessage.o \
 ./src/messages/RequestMessage.o \
 ./src/messages/UI_Message.o 
 
 CPP_DEPS += \
 ./src/messages/CallbackMessage.d \
 ./src/messages/ControlMessage.d \
+./src/messages/ErrorMessage.d \
 ./src/messages/RequestMessage.d \
 ./src/messages/UI_Message.d 
 

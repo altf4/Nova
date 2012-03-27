@@ -16,18 +16,17 @@
 // Description : Novad thread loops
 //============================================================================
 
-#include "Config.h"
-#include "SuspectTable.h"
-#include "NovaUtil.h"
-#include "Logger.h"
-#include "Point.h"
-#include "Novad.h"
-#include "Control.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
+#include "SuspectTable.h"
 #include "FeatureSet.h"
+#include "NovaUtil.h"
 #include "Threads.h"
-#include "boost/format.hpp"
+#include "Control.h"
+#include "Logger.h"
+#include "Config.h"
+#include "Point.h"
+#include "Novad.h"
 
 #include <vector>
 #include <math.h>
@@ -42,8 +41,6 @@
 #include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
-
-using boost::format;
 
 using namespace std;
 using namespace Nova;
@@ -90,14 +87,14 @@ void *Nova::ClassificationLoop(void *ptr)
 	{
 		sleep(Config::Inst()->GetClassificationTimeout());
 		//Calculate the "true" Feature Set for each Suspect
-		for (SuspectTableIterator it = suspects.Begin();
-				it.GetIndex() < suspects.Size(); ++it)
+		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
 		{
 			if(it.Current().GetNeedsClassificationUpdate())
 			{
 				UpdateAndClassify(it.GetKey());
 			}
 		}
+		engine->m_dopp->UpdateDoppelganger();
 
 		if(Config::Inst()->GetSaveFreq() > 0)
 		{

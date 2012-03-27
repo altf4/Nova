@@ -22,10 +22,11 @@
 namespace Nova
 {
 
-CallbackMessage::CallbackMessage()
+CallbackMessage::CallbackMessage(enum CallbackType callbackType)
 {
 	m_suspect = NULL;
 	m_messageType = CALLBACK_MESSAGE;
+	m_callbackType = callbackType;
 }
 
 CallbackMessage::~CallbackMessage()

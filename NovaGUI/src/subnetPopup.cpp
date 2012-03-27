@@ -56,17 +56,21 @@ subnetPopup::~subnetPopup()
 //saves the changes to a Subnet
 void subnetPopup::SaveSubnet()
 {
+	//Get subnet name and mask bits
 	m_editSubnet.name = ui.interfaceEdit->text().toStdString();
 	m_editSubnet.maskBits = m_maskEdit->value();
 
+	//Extract IP address
 	in_addr_t temp = (ui.ipSpinBox0->value() << 24) +(ui.ipSpinBox1->value() << 16)
 			+ (ui.ipSpinBox2->value() << 8) + (ui.ipSpinBox3->value());
 	in_addr_t subNewIP = temp;
 
+	//Init some values
 	bool conflict = false;
 	in_addr inTemp;
 	inTemp.s_addr = htonl(temp);
 
+	//Format IP address
 	stringstream ss;
 	ss << inet_ntoa(inTemp) << '/' << m_editSubnet.maskBits;
 	m_editSubnet.address = ss.str();
@@ -79,6 +83,8 @@ void subnetPopup::SaveSubnet()
 
 	vector<string> addList;
 	addList.clear();
+
+	//Search for nodes that need to reflect any changes
 	while(m_editSubnet.nodes.size())
 	{
 		conflict = false;
@@ -92,17 +98,31 @@ void subnetPopup::SaveSubnet()
 		//If the subnet has been modified to take the IP of a current node,
 		// attempt to give the node the IP the subnet was using previously
 		if(tempNode.realIP == (subNewIP & ~maskTemp))
+		{
 			tempNode.realIP = (subnetRealIP & ~maskTemp);
+		}
 
 		for(uint i = 0; i < m_editSubnet.nodes.size(); i++)
+		{
 			if(tempNode.realIP == (nParent->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
+			{
 				conflict = true;
+			}
+		}
 
 		for(uint i = 0; i < addList.size(); i++)
+		{
 			if(tempNode.realIP == (nParent->m_nodes[addList[i]].realIP & ~maskTemp))
+			{
 				conflict = true;
+			}
+		}
+
 		if((tempNode.realIP == 0) || (tempNode.realIP == ~maskTemp))
+		{
 			conflict = true;
+		}
+
 		tempNode.realIP += m_editSubnet.base;
 
 		if((tempNode.realIP == subNewIP) || conflict)
@@ -144,7 +164,9 @@ void subnetPopup::SaveSubnet()
 					}
 				}
 			}
+
 			tempNode.realIP += m_editSubnet.base;
+
 			if(conflict)
 			{
 				nParent->m_nodes.erase(tempNode.name);
@@ -153,14 +175,20 @@ void subnetPopup::SaveSubnet()
 		}
 		inTemp.s_addr = htonl(tempNode.realIP);
 		tempNode.IP = inet_ntoa(inTemp);
-		if(nParent->m_profiles[tempNode.pfile].type == static_IP)
+
+		//If node has a static IP it's name needs to change with it's IP
+		//the only exception to this is the Doppelganger, it's name is always the same.
+		if((tempNode.name.compare("Doppelganger")) &&
+			(nParent->m_profiles[tempNode.pfile].type == static_IP))
 		{
 			nParent->m_nodes.erase(tempNode.name);
 			tempNode.name = tempNode.IP;
 			nParent->m_nodes[tempNode.name] = tempNode;
 		}
 		else
+		{
 			nParent->m_nodes[tempNode.name] = tempNode;
+		}
 
 		addList.push_back(tempNode.name);
 	}

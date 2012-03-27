@@ -17,19 +17,19 @@
 //			controlling the Novad process and operation
 //============================================================================
 
+#include "Doppelganger.h"
 #include "Control.h"
+#include "Config.h"
 #include "Logger.h"
 #include "Novad.h"
 
 void Nova::SaveAndExit(int param)
 {
-	if(system("sudo iptables -F") != 0)
-	{
-		LOG(ERROR, "System call: 'sudo iptables -F' has failed.", "");
-	}
-
 	AppendToStateFile();
-
+	system("sudo iptables -F");
+	system("sudo iptables -t nat -F");
+	system("sudo iptables -t nat -X DOPP");
+	system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str());
 	LOG(NOTICE, "Novad is now exiting.", "");
 	exit(EXIT_SUCCESS);
 }

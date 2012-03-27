@@ -12,7 +12,7 @@
 			</interface>
 			<interface>
 				<name>lo</name>
-				<IP>10.0.0.1</IP>
+				<IP>10.0.0.0</IP>
 				<mask>255.0.0.0</mask>
 				<enabled>true</enabled>
 				<isReal>true</isReal>

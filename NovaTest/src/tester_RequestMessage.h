@@ -31,7 +31,7 @@ class RequestMessageTestClass : RequestMessage
 class RequestMessageTest : public ::testing::Test {
 protected:
 	// Objects declared here can be used by all tests in the test case
-	RequestMessageTestClass testObject;
+	RequestMessageTestClass *testObject;
 
 	// Unused methods here may be deleted
 	RequestMessageTest() {
@@ -41,10 +41,12 @@ protected:
 
 };
 
-// Tests go here. Multiple small tests are better than one large test, as each test
-// will get a pass/fail and debugging information associated with it.
+TEST_F(RequestMessageTest, test_constructorDestructor)
+{
+	RequestMessage *test1 = new RequestMessage(REQUEST_SUSPECTLIST);
+	delete test1;
+}
 
-// Check that someMethod functions
 /*
  *  Disabled until we can figure out how to test protected members
 TEST_F(RequestMessageTest, test_RequestSuspectlist)

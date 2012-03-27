@@ -36,7 +36,9 @@ enum SuspectTableRet : int32_t
 	SUSPECT_CHECKED_OUT = -1, //If the suspect is checked out by another thread,
 	SUCCESS = 0, //The call succeeded
 	SUSPECT_NOT_CHECKED_OUT = 1, //The suspect isn't checked out, only returned by CheckIn()
-	SUSPECT_EXISTS = 2 //If the suspect already exists, only returned by AddNewSuspect()
+	SUSPECT_EXISTS = 2, //If the suspect already exists, only returned by AddNewSuspect()
+	IS_HOSTILE = -3, //Returned by GetHostility if the suspect is hostile
+	IS_BENIGN = 3	//Returned by GetHostility if the suspect is benign
 };
 
 class SuspectTable
@@ -110,7 +112,7 @@ public:
 
 	// Looks at the hostility of the suspect at key
 	// 		key: uint64_t of the Suspect
-	// Returns (0) for Benign, (1) for Hostile, and (-2) if the key is invalid
+	// Returns (3) for Benign, (-3) for Hostile, and (-2) if the key is invalid
 	SuspectTableRet GetHostility(uint64_t key);
 
 	// Get the size of the Suspect Table

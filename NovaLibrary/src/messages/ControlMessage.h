@@ -60,7 +60,7 @@ class ControlMessage : public UI_Message
 public:
 
 	//Empty constructor
-	ControlMessage();
+	ControlMessage(enum ControlType controlType);
 
 	virtual ~ControlMessage();
 

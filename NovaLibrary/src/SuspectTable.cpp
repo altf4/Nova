@@ -351,10 +351,14 @@ vector<uint64_t> SuspectTable::GetHostileSuspectKeys()
 {
 	vector<uint64_t> ret;
 	ret.clear();
-	Rdlock();
+	Wrlock();
 	for(SuspectHashTable::iterator it = m_table.begin(); it != m_table.end(); it++)
+	{
 		if(it->second->GetIsHostile())
+		{
 			ret.push_back(it->first);
+		}
+	}
 	Unlock();
 	return ret;
 }
@@ -365,10 +369,14 @@ vector<uint64_t> SuspectTable::GetBenignSuspectKeys()
 {
 	vector<uint64_t> ret;
 	ret.clear();
-	Rdlock();
+	Wrlock();
 	for(SuspectHashTable::iterator it = m_table.begin(); it != m_table.end(); it++)
+	{
 		if(!it->second->GetIsHostile())
+		{
 			ret.push_back(it->first);
+		}
+	}
 	Unlock();
 	return ret;
 }
@@ -386,10 +394,10 @@ SuspectTableRet SuspectTable::GetHostility(uint64_t key)
 	if(m_table[key]->GetIsHostile())
 	{
 		Unlock();
-		return (SuspectTableRet)1;
+		return IS_HOSTILE;
 	}
 	Unlock();
-	return (SuspectTableRet)0;
+	return IS_BENIGN;
 }
 
 //Get the size of the Suspect Table

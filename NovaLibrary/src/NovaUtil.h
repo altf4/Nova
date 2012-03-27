@@ -20,6 +20,8 @@
 #ifndef NOVAUTIL_H_
 #define NOVAUTIL_H_
 
+#include <string>
+
 #include "sys/types.h"
 
 namespace Nova{
@@ -27,6 +29,11 @@ namespace Nova{
 // Encrpyts/decrypts a char buffer of size 'size' depending on mode
 // TODO: Comment more on this once it's written
 void CryptBuffer(u_char * buf, uint size, bool mode);
+
+// Gets local IP address for interface
+//		dev - Device name, e.g. "eth0"
+// Returns: IP addresses
+std::string GetLocalIP(const char *dev);
 
 }
 

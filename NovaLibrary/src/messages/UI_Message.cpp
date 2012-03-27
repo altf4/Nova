@@ -20,6 +20,7 @@
 #include "ControlMessage.h"
 #include "CallbackMessage.h"
 #include "RequestMessage.h"
+#include "ErrorMessage.h"
 
 #include <string>
 #include <vector>
@@ -54,13 +55,18 @@ UI_Message *UI_Message::ReadMessage(int connectFD)
 		}
 		else
 		{
-			return NULL;
+			//The socket died on us!
+			return new ErrorMessage(ERROR_SOCKET_CLOSED);
 		}
 	}
-
+	//When a connection is remotely closed, read() returns 0
+	if(input.size() == 0)
+	{
+		return new ErrorMessage(ERROR_SOCKET_CLOSED);
+	}
 	if(input.size() < MESSAGE_MIN_SIZE)
 	{
-		return NULL;
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
 	return UI_Message::Deserialize(input.data(), input.size());
@@ -90,7 +96,7 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 {
 	if(length < MESSAGE_MIN_SIZE)
 	{
-		return NULL;
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
 	enum UI_MessageType thisType;
@@ -104,7 +110,7 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 			if(message->m_serializeError)
 			{
 				delete message;
-				return NULL;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 			}
 			return message;
 		}
@@ -114,7 +120,7 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 			if(message->m_serializeError)
 			{
 				delete message;
-				return NULL;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 			}
 			return message;
 		}
@@ -124,13 +130,23 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 			if(message->m_serializeError)
 			{
 				delete message;
-				return NULL;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+			}
+			return message;
+		}
+		case ERROR_MESSAGE:
+		{
+			ErrorMessage *message = new ErrorMessage(buffer, length);
+			if(message->m_serializeError)
+			{
+				delete message;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 			}
 			return message;
 		}
 		default:
 		{
-			return NULL;
+			return new ErrorMessage(ERROR_UNKNOWN_MESSAGE_TYPE);
 		}
 	}
 }

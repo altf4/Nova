@@ -47,7 +47,13 @@ public:
     //recursive descent down profile tree
     void LoadProfileChildren(std::string parent);
 
+    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
     std::string ProfileToString(profile* p);
+
+    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
+    // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
+    std::string DoppProfileToString(profile* p);
+
 
     //Load stored subnets in ptr
     void LoadSubnets(boost::property_tree::ptree *ptr);
