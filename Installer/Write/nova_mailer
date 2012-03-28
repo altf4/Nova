@@ -153,13 +153,8 @@ fi
 if [[ -p $pipe ]]
 then
 {
-	#I want to find some way to conglomerate all the messages from a mail 
-	# loop period into one string and then email; as it stands right now,
-	# every email address in the emails file will recieve an email for 
-	# every given alert; that's too much.
 	CONTENT=$CONTENT
-
-	while read line
+	while read -t 1 line
 	do
 	{
 		echo ${line} | grep "message repeated" > /dev/null 2>&1
@@ -180,7 +175,7 @@ then
 		}
 		fi
 	}
-	done <$pipe 3>$pipe
+	done <>"$pipe" 
 	
 	if [[ ! -z $CONTENT ]] 
 	then
