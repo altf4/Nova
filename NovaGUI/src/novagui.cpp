@@ -734,9 +734,15 @@ void NovaGUI::UpdateSuspectWidgets()
 	}
 
 	int numBenign = ui.suspectList->count() - ui.hostileList->count();
+	int numHostile = ui.hostileList->count();
+
 	stringstream ss;
 	ss << numBenign;
-	ui.numBenignEdit->setText(QString(ss.str().c_str()));
+	ui.numBenignEdit->setText(QString::fromStdString(ss.str()));
+
+	stringstream ssHostile;
+	ssHostile << numHostile;
+	ui.numHostileEdit->setText(QString::fromStdString(ssHostile.str()));
 
 	if(numBenign)
 	{
@@ -749,6 +755,8 @@ void NovaGUI::UpdateSuspectWidgets()
 		ui.benignClassificationBar->setValue(100);
 		ui.benignSuspectClassificationBar->setValue(100);
 	}
+
+
 	if(ui.hostileList->count())
 	{
 		hostileAcc /= ui.hostileList->count();
