@@ -194,54 +194,49 @@ namespace Nova
 
 	void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels messageTypeLevel, char upDown = '0')
 	{
-		bool found = false;
 		char * tokens;
 		char * parse;
 		uint16_t j = 0;
 		pair <pair <Nova::Services, Nova::Levels>, char> push;
 		pair <Nova::Services, Nova::Levels> insert;
-		char check[256];
 		char logPref[16];
-		char *pch;
-		string configTest = Config::Inst()->GetConfigFilePath();
-		ifstream settings(configTest.c_str());
+		int oldLength;
 
-		while(settings.good())
+		strcpy(logPref, Config::Inst()->GetLoggerPreferences().c_str());
+
+		//If we didn't get a null string from the above statement,
+		// continue with the parsing.
+		if(strlen(logPref) > 0)
 		{
-			check[0] = 0;
-			settings.getline(check, 256);
+			//store the length of the string before it's modified -- we'll need this later
+			oldLength = strlen(logPref) + 1;
 
-			if(!strlen(check))
-			{
-				continue;
-			}
-
-			pch = strtok(check, " \n");
-
-			if(!strlen(pch) and !strcmp(pch, "#"))
-			{
-				continue;
-			}
-			else if(!strcmp(pch, "SERVICE_PREFERENCES"))
-			{
-				pch = strtok(NULL, " \n");
-				strcpy(logPref, pch);
-				found = true;
-			}
-		}
-		if(found)
-		{
+			//This for-loop will traverse through the string searching for the
+			// character numeric representation of the services enum member passed
+			// as an argument to the function.
 			for(uint16_t i = 0; i < strlen(logPref); i += 4)
 			{
+				//If it finds it...
 				if(logPref[i] == (char)(services + 48))
 				{
+					//It replaces the pair's constituent message level with the messageTypeLevel
+					// argument that was passed.
 					logPref[i + 2] = (char)(messageTypeLevel + 48);
 
+					//Now we have to deal with some formatting issues:
+					//If a change to the current range modifier
+					// is requested, and there is a '+' or '-' at
+					// the requisite place in the string, replace it and
+					// move on the the next pair
 					if(upDown != '0' and logPref[i + 3] != ';')
 					{
 						logPref[i + 3] = upDown;
 						i++;
 					}
+					//Else, if there's a change requested and there's currently no
+					// range modifier, shift everything to the right one (and out
+					// of the range modifers spot) and place the range modifier into the
+					// character array
 					else if(upDown != '0' and logPref[i + 3] == ';')
 					{
 
@@ -256,6 +251,8 @@ namespace Nova
 
 						i++;
 					}
+					//If nullification was requested, and there's a range modifier, remove it,
+					// shift everything to the left and move on
 					else if(upDown == '0' and logPref[i + 3] != ';')
 					{
 						char temp[16];
@@ -269,6 +266,7 @@ namespace Nova
 
 						i++;
 					}
+					//Else if there's a 0 and no range modifer, do nothing.
 					else if(upDown == '0' and logPref[i + 3] == ';')
 					{
 						continue;
@@ -276,16 +274,18 @@ namespace Nova
 				}
 			}
 
+			//Set the Config class instance's logger preference string to the new one
 			Config::Inst()->SetLoggerPreferences(std::string(logPref));
 
 			tokens = new char[strlen(logPref) + 1];
 			strcpy(tokens, logPref);
 
-			std::cout << tokens << endl;
-
 			parse = strtok(tokens, ";");
 			m_messageInfo.service_preferences.clear();
 
+			//Parsing to update the m_messageInfo struct used in the logger class
+			// to dynamically determine what services are called for for a given log
+			// message's level
 			while(parse != NULL)
 			{
 				switch(parse[0])
@@ -320,16 +320,15 @@ namespace Nova
 				parse = strtok(NULL, ";");
 				j++;
 			}
+
+			delete tokens;
 		}
 		else
 		{
-			//the line containing the service_preferences was not found in the ConfigFile,
-			//end update.
+			//log preference string in Config is null, log error and kick out of function
+			LOG(WARNING, "Unable to set new user preferences.",
+			"Unable to change user log preferences, due to NULL in Config class; check that the Config file is formatted correctly");
 		}
-
-		settings.close();
-
-		//update the NOVAConfig.txt file
 	}
 
 	string Logger::getBitmask(Nova::Levels level)
@@ -435,7 +434,6 @@ namespace Nova
 		}
 
 		LoadConfiguration();
-		SetUserLogPreferences(SYSLOG, WARNING, '-');
 	}
 
 	Logger::~Logger()
