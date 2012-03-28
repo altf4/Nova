@@ -71,8 +71,13 @@ NovaGUI::NovaGUI(QWidget *parent)
 {
 	signal(SIGINT, sighandler);
 	pthread_rwlock_init(&lock, NULL);
-	SuspectTable.set_empty_key(1);
-	SuspectTable.set_deleted_key(5);
+
+	uint64_t initKey = 0;
+	initKey--;
+	SuspectTable.set_empty_key(initKey);
+	initKey--;
+	SuspectTable.set_deleted_key(initKey);
+
 
 	m_editingSuspectList = false;
 	m_pathsFile = (char*)"/etc/nova/paths";
