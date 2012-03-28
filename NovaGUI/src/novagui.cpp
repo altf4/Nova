@@ -160,7 +160,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	this->ui.suspectButton->setFlat(false);
 	this->ui.doppelButton->setFlat(false);
 	this->ui.haystackButton->setFlat(false);
-	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::QueuedConnection);
 	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::BlockingQueuedConnection);
 
 	pthread_t StatusUpdateThread;
@@ -439,16 +439,14 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initializatio
 	//We borrow the flag to show there is new information.
 	suspectItem.suspect->SetNeedsClassificationUpdate(true);
 	//Update the entry in the table
+
 	SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
+	in_addr_t address = suspectItem.suspect->GetIpAddress();
+
 	pthread_rwlock_unlock(&lock);
-	if (initialization)
-	{
-		Q_EMIT newSuspect(suspectItem.suspect->GetIpAddress());
-	}
-	else
-	{
-		DrawSuspect(suspectItem.suspect->GetIpAddress());
-	}
+
+
+	Q_EMIT newSuspect(address);
 }
 
 /************************************************
