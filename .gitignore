@@ -109,3 +109,4 @@ NovaGUI/moc_run_popup.cpp
 /NovaCLI/Release/novacli
 /NovaCLI/Debug/novacli
 /NovaTest/NovadSource/*
+/RemoteSystemsTempFiles/.project
