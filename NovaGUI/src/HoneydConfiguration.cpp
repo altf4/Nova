@@ -32,7 +32,21 @@ using boost::property_tree::xml_parser::trim_whitespace;
 
 HoneydConfiguration::HoneydConfiguration()
 {
-	m_homePath = Config::Inst()->GetPathHome();
+	switch(Config::Inst()->GetHaystackStorage())
+	{
+		case 'E':
+		{
+			m_homePath = Config::Inst()->GetUserPath();
+			break;
+		}
+		case 'M':
+		case 'I':
+		default:
+		{
+			m_homePath = Config::Inst()->GetPathHome();
+			break;
+		}
+	}
 
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
@@ -546,10 +560,8 @@ void HoneydConfiguration::SaveAllTemplates()
 	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
 }
 
-
-
 //Writes the current configuration to honeyd configs
-void HoneydConfiguration::WriteHoneydConfiguration()
+void HoneydConfiguration::WriteHoneydConfiguration(string path)
 {
 	stringstream out;
 
@@ -637,8 +649,7 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 			}
 		}
 	}
-
-	ofstream outFile(Config::Inst()->GetPathConfigHoneydHS().data());
+	ofstream outFile(path);
 	outFile << out.str() << endl;
 	outFile.close();
 }

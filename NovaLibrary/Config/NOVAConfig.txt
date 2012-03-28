@@ -16,7 +16,6 @@
 #INTERFACE eth0
 INTERFACE eth0
 
-
 ############################################
 # DATAFILE #
 ############################################
@@ -135,15 +134,15 @@ THINNING_DISTANCE 0.001
 CLASSIFICATION_THRESHOLD .5
 
 ############################################
-# DM_HONEYD_CONFIG #
+# USER_HONEYD_CONFIG #
 ############################################
 #
 # Path relative to ~/.nova where the honeyd
 # configuration file resides.
 #
 # EXAMPLE:
-#DM_HONEYD_CONFIG Config/doppelganger.config
-DM_HONEYD_CONFIG Config/doppelganger.config
+#USER_HONEYD_CONFIG Config/user_honeyd.config
+USER_HONEYD_CONFIG Config/user_honeyd.config
 
 ############################################
 # DOPPELGANGER_IP #
@@ -192,8 +191,8 @@ DM_ENABLED 1
 # be parsed for used IP addresses. 
 # 
 # EXAMPLE:
-#HS_HONEYD_CONFIG Config/haystack.config
-HS_HONEYD_CONFIG Config/haystack.config
+#HS_HONEYD_CONFIG Config/nova_honeyd.config
+HS_HONEYD_CONFIG Config/nova_honeyd.config
 
 ############################################
 # TCP_TIMEOUT #
@@ -249,18 +248,7 @@ PCAP_FILE ../masterPcap
 # 
 # EXAMPLE:
 #GO_TO_LIVE 1
-GO_TO_LIVE 0
-
-############################################
-# USE_TERMINALS #
-############################################
-#
-# Give logging output in terminals.
-#	0: No teriminal output
-#	1: Terminal logging output
-# EXAMPLE:
-#USE_TERMINALS 0
-USE_TERMINALS 1
+GO_TO_LIVE 1
 
 ############################################
 # SA_MAX_ATTEMPTS #
@@ -336,8 +324,6 @@ DATA_TTL 0
 #CE_SAVE_FILE CESaveFile
 CE_SAVE_FILE CESaveFile
 
-
-
 # Logging Stuff #
 
 ############################################
@@ -402,3 +388,16 @@ RECIPIENTS first@email.send, second@email.send
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
 SERVICE_PREFERENCES 0:7-;1:7-;2:0;
+
+############################################
+# HAYSTACK_STORAGE #
+############################################
+#
+# Specifies the way Nova loads and saves the haystack
+# ( 'I' | 'E [dir]' | 'M [path]' )
+# I - (Internal) Store haystack at /usr/share/nova/.nova/Config
+# E [dir] - (External) Store haystack at directory specified at HAYSTACK_EXTERNAL_DIR
+# M [path] - (Manual) Run honeyd using the configuration file specified instead of Nova's configuration
+#
+# HAYSTACK_STORAGE I
+HAYSTACK_STORAGE I

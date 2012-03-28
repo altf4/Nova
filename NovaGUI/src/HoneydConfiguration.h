@@ -63,7 +63,7 @@ public:
     //Saves the current configuration information to XML files
     void SaveAllTemplates();
     //Writes the current configuration to honeyd configs
-    void WriteHoneydConfiguration();
+    void WriteHoneydConfiguration(std::string path);
 
     SubnetTable GetSubnets() const;
     PortTable GetPorts() const;

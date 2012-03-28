@@ -93,7 +93,7 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 				m_mainwindow->m_prompter->m_registeredMessageTypes[i].descriptionUID)));
 	}
 
-	ui.treeWidget->expandAll();
+	ui.menuTreeWidget->expandAll();
 
 	ui.featureList->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(ui.featureList, SIGNAL(customContextMenuRequested(const QPoint &)), this,
@@ -1281,8 +1281,8 @@ void NovaConfig::LoadNovadPreferences()
 	ui.trainingCheckBox->setChecked(Config::Inst()->GetIsTraining());
 	ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
 
-	ui.dmConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydDM().c_str());
-	ui.dmIPEdit->setText((QString)Config::Inst()->GetDoppelIp().c_str());
+	// XXX ui.dmConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+	// XXX ui.dmIPEdit->setText((QString)Config::Inst()->GetDoppelIp().c_str());
 	ui.dmCheckBox->setChecked(Config::Inst()->GetIsDmEnabled());
 	ui.pcapCheckBox->setChecked(Config::Inst()->GetReadPcap());
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
@@ -1377,10 +1377,23 @@ void NovaConfig::PushData()
 	m_mainwindow->m_honeydConfig->SetSubnets(m_subnets);
 	m_mainwindow->m_honeydConfig->SetNodes(m_nodes);
 	m_mainwindow->m_honeydConfig->SetPorts(m_ports);
-
-	//Saves the current configuration to XML files
 	m_mainwindow->m_honeydConfig->SaveAllTemplates();
-	m_mainwindow->m_honeydConfig->WriteHoneydConfiguration();
+	//Saves the current configuration to XML files
+	if(true) //XXX if Using nova to configure, stored internally
+	{
+		m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
+	}
+	else if(true) //XXX If storing the templates/configs externally.
+	{
+		string path = Config::Inst()->GetPathConfigHoneydUser();
+		string dir = path.substr(0, path.find_last_of('/'));
+
+		m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(path);
+	}
+	else // XXX If not using nova to configure the HS
+	{
+		//XXX - Do nothing probably, revisit this
+	}
 }
 
 //Pulls the last stored configuration from novagui
@@ -1518,22 +1531,6 @@ void NovaConfig::on_hsConfigButton_clicked()
 	LoadHaystackConfiguration();
 }
 
-void NovaConfig::on_dmConfigButton_clicked()
-{
-	//Gets the current path location
-	QDir path = QDir::current();
-
-	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Doppelganger Config File"), path.path(), tr("Text Files (*.config)"));
-
-	//Gets the relative path using the absolute path in fileName and the current path
-	if(fileName != NULL)
-	{
-		fileName = path.relativeFilePath(fileName);
-		ui.dmConfigEdit->setText(fileName);
-	}
-}
-
 /************************************************
  * General Preferences GUI Signals
  ************************************************/
@@ -1607,8 +1604,8 @@ bool NovaConfig::SaveConfigurationToFile()
 	Config::Inst()->SetEps(this->ui.ceErrorEdit->displayText().toDouble());
 	Config::Inst()->SetClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
 	Config::Inst()->SetClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
-	Config::Inst()->SetPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
-	Config::Inst()->SetDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
+	// XXX Config::Inst()->SetPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
+	// XXX Config::Inst()->SetDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
 	Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
 	Config::Inst()->SetTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
 	Config::Inst()->SetTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
@@ -1644,9 +1641,9 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	m_loading->unlock();
 }
 
-void NovaConfig::on_treeWidget_itemSelectionChanged()
+void NovaConfig::on_menuTreeWidget_itemSelectionChanged()
 {
-	QTreeWidgetItem * item = ui.treeWidget->selectedItems().first();
+	QTreeWidgetItem * item = ui.menuTreeWidget->selectedItems().first();
 
 	//If last window was the profile window, save any changes
 	if(m_editingItems && m_profiles.size())
@@ -1658,7 +1655,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 	//If it's a top level item the page corresponds to their index in the tree
 	//Any new top level item should be inserted at the corresponding index and the defines
 	// for the lower level items will need to be adjusted appropriately.
-	int i = ui.treeWidget->indexOfTopLevelItem(item);
+	int i = ui.menuTreeWidget->indexOfTopLevelItem(item);
 
 	if(i != -1)
 	{
@@ -1669,27 +1666,27 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 	{
 		//Find the parent and keep getting parents until we have a top level item
 		QTreeWidgetItem * parent = item->parent();
-		while(ui.treeWidget->indexOfTopLevelItem(parent) == -1)
+		while(ui.menuTreeWidget->indexOfTopLevelItem(parent) == -1)
 		{
 			parent = parent->parent();
 		}
-		if(ui.treeWidget->indexOfTopLevelItem(parent) == HAYSTACK_MENU_INDEX)
+		if(ui.menuTreeWidget->indexOfTopLevelItem(parent) == HAYSTACK_MENU_INDEX)
 		{
 			//If the 'Nodes' Item
 			if(parent->child(NODE_INDEX) == item)
 			{
-				ui.stackedWidget->setCurrentIndex(ui.treeWidget->topLevelItemCount());
+				ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount());
 			}
 			//If the 'Profiles' item
 			else if(parent->child(PROFILE_INDEX) == item)
 			{
 				m_editingItems = true;
-				ui.stackedWidget->setCurrentIndex(ui.treeWidget->topLevelItemCount()+1);
+				ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount()+1);
 			}
 		}
 		else
 		{
-			LOG(ERROR, "Unable to set stackedWidget page index from treeWidgetItem", "");
+			LOG(ERROR, "Unable to set stackedWidget page index from menuTreeWidgetItem", "");
 		}
 	}
 }
@@ -2966,7 +2963,7 @@ void NovaConfig::SetInputValidators()
 	// Doppelganger
 	// TODO: Make a custom validator for ipv4 and ipv6 IP addresses
 	// For now we just make sure someone doesn't enter whitespace
-	ui.dmIPEdit->setValidator(noSpaceValidator);
+	// XXX ui.dmIPEdit->setValidator(noSpaceValidator);
 }
 
 /******************************************
@@ -3753,11 +3750,11 @@ void NovaConfig::on_actionNodeCustomizeProfile_triggered()
 {
 	m_loading->lock();
 	m_currentProfile = m_nodes[m_currentNode].pfile;
-	ui.stackedWidget->setCurrentIndex(ui.treeWidget->topLevelItemCount()+1);
-	QTreeWidgetItem * item = ui.treeWidget->topLevelItem(HAYSTACK_MENU_INDEX);
-	item = ui.treeWidget->itemBelow(item);
-	item = ui.treeWidget->itemBelow(item);
-	ui.treeWidget->setCurrentItem(item);
+	ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount()+1);
+	QTreeWidgetItem * item = ui.menuTreeWidget->topLevelItem(HAYSTACK_MENU_INDEX);
+	item = ui.menuTreeWidget->itemBelow(item);
+	item = ui.menuTreeWidget->itemBelow(item);
+	ui.menuTreeWidget->setCurrentItem(item);
 	ui.profileTreeWidget->setCurrentItem(m_profiles[m_currentProfile].profileItem);
 	m_loading->unlock();
 	Q_EMIT on_actionProfileAdd_triggered();

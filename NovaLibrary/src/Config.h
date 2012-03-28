@@ -64,7 +64,7 @@ public:
     uint GetEnabledFeatureCount();
     std::string GetInterface();
     std::string GetPathCESaveFile();
-    std::string GetPathConfigHoneydDM();
+    std::string GetPathConfigHoneydUser();
     std::string GetPathConfigHoneydHS();
     std::string GetPathPcapFile();
     std::string GetPathTrainingCapFolder();
@@ -109,7 +109,7 @@ public:
     void SetIsTraining(bool isTraining);
     void SetK(int k);
     void SetPathCESaveFile(std::string pathCESaveFile);
-    void SetPathConfigHoneydDm(std::string pathConfigHoneydDm);
+    void SetPathConfigHoneydUser(std::string pathConfigHoneydUser);
     void SetPathConfigHoneydHs(std::string pathConfigHoneydHs);
     void SetPathPcapFile(std::string pathPcapFile);
     void SetPathTrainingCapFolder(std::string pathTrainingCapFolder);
@@ -152,6 +152,12 @@ public:
     std::string GetPathHome();
     std::string GetPathIcon();
 
+    char GetHaystackStorage();
+    void SetHaystackStorage(char haystackStorage);
+
+    std::string GetUserPath();
+    void SetUserPath(std::string userPath);
+
 protected:
 	Config();
 
@@ -173,7 +179,7 @@ private:
 
 
 	std::string m_pathConfigHoneydHs;
-	std::string m_pathConfigHoneydDm;
+	std::string m_pathConfigHoneydUser;
 	std::string m_pathPcapFile;
 	std::string m_pathTrainingFile;
 	std::string m_pathTrainingCapFolder;
@@ -226,6 +232,9 @@ private:
 	std::string m_pathReadFolder;
 	std::string m_pathHome;
 	std::string m_pathIcon;
+
+	char m_haystackStorage;
+	std::string m_userPath;
 
 	pthread_rwlock_t m_lock;
 
