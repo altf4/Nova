@@ -27,7 +27,7 @@
 #include <string.h>
 
 // A macro to make logging prettier
-#define LOG(t,s,r) Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
+#define LOG(t,s,r) Nova::Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
 
 namespace Nova
 {
