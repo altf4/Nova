@@ -31,6 +31,7 @@ enum ErrorType: char
 	ERROR_SOCKET_CLOSED = 0,		//Message could not be read because the socket was closed
 	ERROR_MALFORMED_MESSAGE,		//Message was received, but could not deserialize
 	ERROR_UNKNOWN_MESSAGE_TYPE,		//The primary message type is unknown
+	ERROR_TIMEOUT, 					//The call to read() timed out
 
 	//Error codes for actual remote messages
 	ERROR_PROTOCOL_MISTAKE,			//Reply from Novad with success

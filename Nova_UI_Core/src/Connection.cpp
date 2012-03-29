@@ -17,6 +17,7 @@
 //============================================================================
 
 #include "messages/ControlMessage.h"
+#include "messages/ErrorMessage.h"
 #include "StatusQueries.h"
 #include "Connection.h"
 #include "NovaUtil.h"
@@ -134,7 +135,14 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
@@ -194,7 +202,14 @@ bool Nova::CloseNovadConnection()
 		success = false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;

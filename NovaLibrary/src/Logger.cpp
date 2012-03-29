@@ -46,7 +46,7 @@ namespace Nova
 		m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
 		m_messageInfo.smtp_domain = Config::Inst()->GetSMTPDomain();
 		m_messageInfo.email_recipients = Config::Inst()->GetSMTPEmailRecipients();
-		setUserLogPreferences(Config::Inst()->GetLoggerPreferences());
+		SetUserLogPreferences(Config::Inst()->GetLoggerPreferences());
 
 		return 1;
 	}
@@ -121,10 +121,12 @@ namespace Nova
 
 	void Logger::Mail(uint16_t level, string message)
 	{
-
+		openlog("NovaMail", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(level, "%s %s", (m_levels[level].second).c_str(), message.c_str());
+		closelog();
 	}
 
-	void Logger::setUserLogPreferences(string logPrefString)
+	void Logger::SetUserLogPreferences(string logPrefString)
 	{
 		uint16_t size = logPrefString.size() + 1;
 		char * tokens;
@@ -190,20 +192,144 @@ namespace Nova
 		return DEBUG;
 	}
 
-	/*void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
+	void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels messageTypeLevel, char upDown = '0')
 	{
-		userMap output = messageInfo.service_preferences;
-		bool end = false;
+		char * tokens;
+		char * parse;
+		uint16_t j = 0;
+		pair <pair <Nova::Services, Nova::Levels>, char> push;
+		pair <Nova::Services, Nova::Levels> insert;
+		char logPref[16];
+		int oldLength;
 
-		for(uint16_t i = 0; i < messageInfo.service_preferences.size() && !end; i++)
+		strcpy(logPref, Config::Inst()->GetLoggerPreferences().c_str());
+
+		//If we didn't get a null string from the above statement,
+		// continue with the parsing.
+		if(strlen(logPref) > 0)
 		{
-			if(messageInfo.service_preferences[i].first == messageTypeLevel)
+			//store the length of the string before it's modified -- we'll need this later
+			oldLength = strlen(logPref) + 1;
+
+			//This for-loop will traverse through the string searching for the
+			// character numeric representation of the services enum member passed
+			// as an argument to the function.
+			for(uint16_t i = 0; i < strlen(logPref); i += 4)
 			{
-				messageInfo.service_preferences[i].second = services;
-				end = true;
+				//If it finds it...
+				if(logPref[i] == (char)(services + 48))
+				{
+					//It replaces the pair's constituent message level with the messageTypeLevel
+					// argument that was passed.
+					logPref[i + 2] = (char)(messageTypeLevel + 48);
+
+					//Now we have to deal with some formatting issues:
+					//If a change to the current range modifier
+					// is requested, and there is a '+' or '-' at
+					// the requisite place in the string, replace it and
+					// move on the the next pair
+					if(upDown != '0' and logPref[i + 3] != ';')
+					{
+						logPref[i + 3] = upDown;
+						i++;
+					}
+					//Else, if there's a change requested and there's currently no
+					// range modifier, shift everything to the right one (and out
+					// of the range modifers spot) and place the range modifier into the
+					// character array
+					else if(upDown != '0' and logPref[i + 3] == ';')
+					{
+
+						char temp[16];
+						strcpy(temp, logPref);
+						logPref[i + 3] = upDown;
+
+						for(int j = i + 4; j < 16; j++)
+						{
+							logPref[j] = temp[j - 1];
+						}
+
+						i++;
+					}
+					//If nullification was requested, and there's a range modifier, remove it,
+					// shift everything to the left and move on
+					else if(upDown == '0' and logPref[i + 3] != ';')
+					{
+						char temp[16];
+						strcpy(temp, logPref);
+						logPref[i + 3] = ';';
+
+						for(int j = i + 4; j < 16; j++)
+						{
+							logPref[j] = temp[j + 1];
+						}
+
+						i++;
+					}
+					//Else if there's a 0 and no range modifer, do nothing.
+					else if(upDown == '0' and logPref[i + 3] == ';')
+					{
+						continue;
+					}
+				}
 			}
+
+			//Set the Config class instance's logger preference string to the new one
+			Config::Inst()->SetLoggerPreferences(std::string(logPref));
+
+			tokens = new char[strlen(logPref) + 1];
+			strcpy(tokens, logPref);
+
+			parse = strtok(tokens, ";");
+			m_messageInfo.service_preferences.clear();
+
+			//Parsing to update the m_messageInfo struct used in the logger class
+			// to dynamically determine what services are called for for a given log
+			// message's level
+			while(parse != NULL)
+			{
+				switch(parse[0])
+				{
+					case '0': insert.first = SYSLOG;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+					case '1': insert.first = LIBNOTIFY;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+					case '2': insert.first = EMAIL;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+				}
+
+				if(parse[3] == '-')
+				{
+					upDown = '-';
+				}
+				else if(parse[3] == '+')
+				{
+					upDown = '+';
+				}
+				else
+				{
+					upDown = '0';
+				}
+
+				push.first = insert;
+				push.second = upDown;
+				m_messageInfo.service_preferences.push_back(push);
+				parse = strtok(NULL, ";");
+				j++;
+			}
+
+			delete tokens;
 		}
-	}*/
+		else
+		{
+			//log preference string in Config is null, log error and kick out of function
+			LOG(WARNING, "Unable to set new user preferences.",
+			"Unable to change user log preferences, due to NULL in Config class; check that the Config file is formatted correctly");
+		}
+	}
 
 	string Logger::getBitmask(Nova::Levels level)
 	{

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Usage: nova_mailer [(pipe_absolute_path | null) (emails_absolute_path | null)]
-
 #Note that you can put either the absolute path, or the string null; 
 # you can't just leave pipe_absolute_path empty and enter the string for the 
 # emails_absolute_path and expect correct results, it'll just put the default
@@ -79,7 +78,6 @@ then
 }
 else
 {
-	echo "Creating the email file"
 	configFile=/usr/share/nova/.nova/Config/NOVAConfig.txt
 
 	if [[ -e $configFile ]]
@@ -146,7 +144,6 @@ if [ -z "$EMAIL" ]
 then
 {
 	echo "Emails file empty. Have you set the recipients list yet?"
-	echo "Exiting..."
 	exit 1;
 }
 fi
@@ -156,13 +153,8 @@ fi
 if [[ -p $pipe ]]
 then
 {
-	#I want to find some way to conglomerate all the messages from a mail 
-	# loop period into one string and then email; as it stands right now,
-	# every email address in the emails file will recieve an email for 
-	# every given alert; that's too much.
 	CONTENT=$CONTENT
-
-	while read line
+	while read -t 1 line
 	do
 	{
 		echo ${line} | grep "message repeated" > /dev/null 2>&1
@@ -183,11 +175,14 @@ then
 		}
 		fi
 	}
-	done <$pipe
+	done <>"$pipe" 
 	
-	echo "EMAIL is "$EMAIL
-	
-	echo "${CONTENT}" | mailx -s "Nova Email Alert" ${EMAIL}
+	if [[ ! -z $CONTENT ]] 
+	then
+	{
+		echo "${CONTENT}" | mailx -s "Nova Email Alert" ${EMAIL}
+	}
+	fi	
 }
 
 #else, if pipe isn't there, create it. None of the emails prior to the pipe's
