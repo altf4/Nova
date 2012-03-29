@@ -355,6 +355,12 @@ bool NovaGUI::ConnectGuiToNovad()
 		// Get the list of current suspects
 		vector<in_addr_t> *suspectIpList = GetSuspectList(SUSPECTLIST_ALL);
 
+		// Failed to get an IP list for same reason
+		if (suspectIpList == NULL)
+		{
+			return false;
+		}
+
 		for (uint i = 0; i < suspectIpList->size(); i++)
 		{
 			struct suspectItem suspectItem;

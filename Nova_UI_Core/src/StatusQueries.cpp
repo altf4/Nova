@@ -100,7 +100,7 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
+		return NULL;
 	}
 
 	if(reply->m_messageType == ERROR_MESSAGE )
@@ -111,7 +111,7 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 			CloseNovadConnection();
 		}
 		delete error;
-		return false;
+		return NULL;
 	}
 	if(reply->m_messageType != REQUEST_MESSAGE )
 	{
