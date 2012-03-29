@@ -28,6 +28,7 @@
 #include <string.h>
 #include <iostream>
 #include <stdlib.h>
+#include <vector>
 
 // A macro to make logging prettier
 #define LOG(t,s,r) Nova::Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
@@ -132,6 +133,27 @@ private:
 	uint16_t LoadConfiguration();
 
 	std::string getBitmask(Nova::Levels level);
+
+	//This will clear the emails file and place the argument vector's strings
+	// into it as the emails content.
+	// args: std::vector<std::string> recs: vector of email strings
+	void SetEmailRecipients(std::vector<std::string> recs);
+
+	//This will merely append the argument vector's strings to the emails file
+	// args: std::vector<std::string> recs: vector of email strings
+	void AppendEmailRecipients(std::vector<std::string> recs);
+
+	//Don't know about this yet, may not end up being in the final cut
+	//void ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append);
+
+	//This function will parse through the file and remove each email that's found in the
+	// argument vector
+	// args: std::vector<std::string> recs: vector of email strings
+	void RemoveEmailRecipients(std::vector<std::string> recs);
+
+	//This method just clears the emails file; if it's empty the
+	// mailer script won't run
+	void ClearEmailRecipients();
 
 public:
 	levelsMap m_levels;
