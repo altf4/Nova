@@ -25,6 +25,9 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
         proto->Set("GetClassification", FunctionTemplate::New(InvokeMethod<Number, double, Suspect, &Suspect::GetClassification>) );
         proto->Set("GetIsHostile", FunctionTemplate::New(InvokeMethod<Boolean, bool, Suspect, &Suspect::GetIsHostile>) );
         proto->Set("GetFlaggedByAlarm", FunctionTemplate::New(InvokeMethod<Boolean, bool, Suspect, &Suspect::GetFlaggedByAlarm>) );
+
+        // Accessing features is a special case
+        proto->Set("GetFeatures", FunctionTemplate::New(GetFeatures) );
     }
 
     // Get the template for the type
