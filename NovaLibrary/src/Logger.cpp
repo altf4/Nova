@@ -413,7 +413,29 @@ namespace Nova
 
 	void Logger::AppendEmailRecipients(std::vector<std::string> recs)
 	{
-		//TODO: put in controls for duplicate emails, i.e. if it's there, don't write.
+		fstream repeat("/usr/share/nova/emails", ios::in | ios::out);
+		std::vector<std::string> check;
+
+		while(repeat.good())
+		{
+			std::string temp;
+			getline(repeat, temp);
+			check.push_back(temp);
+		}
+
+		repeat.close();
+
+		for(uint16_t i = 0; i < check.size(); i++)
+		{
+				for(uint16_t j = 0; j < recs.size(); j++)
+				{
+					if(check[i].compare(recs[j]) == 0)
+					{
+						recs.erase(recs.begin() + j);
+					}
+				}
+		}
+
 		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::app);
 
 		if(!recipients.fail())
@@ -428,25 +450,57 @@ namespace Nova
 		recipients.close();
 	}
 
-	void Logger::ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append)
+	/*void Logger::ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append)
 	{
 
-	}
+	}*/
 
 	void Logger::RemoveEmailRecipients(std::vector<std::string> recs)
 	{
 		//check through the vector; if an email is in the vector and present in the file,
 		// do not rewrite to the new emails file. If and email isn't there, don't do anything.
 		// If an email in the vector doesn't correspond to any email in the file, do nothing.
-		fstream recipients("/usr/share/nova/emails");
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out);
+		std::vector<std::string> check;
+		bool print = true;
+
+		while(recipients.good())
+		{
+			std::string temp;
+			getline(recipients, temp);
+			check.push_back(temp);
+		}
 
 		recipients.close();
+
+		fstream writer("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+
+		for(uint16_t i = 0; i < check.size(); i++)
+		{
+			print = true;
+
+			for(uint16_t j = 0; j < recs.size(); j++)
+			{
+				if(check[i].compare(recs[j]) == 0)
+				{
+					print = false;
+				}
+			}
+
+			if(print)
+			{
+				writer.write(check[i].c_str(), check[i].size());
+				writer.put('\n');
+			}
+		}
+
+		writer.close();
 	}
 
 	void Logger::ClearEmailRecipients()
 	{
 		//open the file with ios::trunc and then close it
-		fstream recipients("/usr/share/nova/emails", ios::trunc);
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
 		recipients.close();
 	}
 
@@ -482,16 +536,6 @@ namespace Nova
 		}
 
 		LoadConfiguration();
-		std::vector<std::string> test;
-		std::vector<std::string> removeTest;
-		removeTest.push_back("fail1");
-		removeTest.push_back("fail5");
-		test.push_back("fail1");
-		test.push_back("fail2");
-		SetEmailRecipients(test);
-		test.push_back("fail3");
-		test.push_back("fail4");
-		AppendEmailRecipients(test);
 	}
 
 	Logger::~Logger()
