@@ -18,6 +18,7 @@
 
 #include <v8.h>
 #include <node.h>
+#include <boost/format.hpp>
 
 /* Nova headers */
 #include "Connection.h"
@@ -26,8 +27,8 @@
 #include "CallbackHandler.h"
 #include "Suspect.h"
 #include "Logger.h"
-#include <boost/format.hpp>
 
+/* NovaNode headers */
 #include "SuspectJs.h"
 #include "v8Helper.h"
 
@@ -252,18 +253,6 @@ public:
         // even if the original object upon which OnNewSuspect() was invoked has been
         // let go.
     }
-/*
-	template <typename V8_RETURN, typename NATIVE_RETURN,  NATIVE_RETURN (*F)()> 
-	static Handle<Value> InvokeMethod(const Arguments& args)
-	{
-		HandleScope scope;
-		NovaNode* hw = ObjectWrap::Unwrap<NovaNode>(args.This());
-		hw->m_count++;
-
-		Local<V8_RETURN> result = Local<V8_RETURN>::New( V8_RETURN::New( F() ));
-		return scope.Close(result);
-	}   
-*/
 };
 
 Persistent<FunctionTemplate> NovaNode::s_ct;
