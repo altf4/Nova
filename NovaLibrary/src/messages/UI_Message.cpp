@@ -43,49 +43,98 @@ UI_Message::~UI_Message()
 
 UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 {
-	//perform read operations ...
-	char buff[4096];
-	int bytesRead = 4096;
-	vector <char> input;
+	uint32_t length = 0;
+	char buff[sizeof(length)];
+	uint totalBytesRead = 0;
+	int bytesRead = 0;
 
 	struct timeval tv;
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 	setsockopt(connectFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
 
-	while( bytesRead == 4096)
+	// Read in the message length
+	while( totalBytesRead < sizeof(length))
 	{
-		bytesRead = read(connectFD, buff, 4096);
-		if( bytesRead >= 0 )
-		{
-			input.insert(input.end(), buff, buff + bytesRead);
-		}
-		else
+		bytesRead = read(connectFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
+
+		if( bytesRead < 0 )
 		{
 			// Was this a timeout error?
 			if (errno == EWOULDBLOCK || errno == EAGAIN)
 			{
+				close(connectFD);
 				return new ErrorMessage(ERROR_TIMEOUT);
 			}
 			else
 			{
+				close(connectFD);
+
 				//The socket died on us!
 				return new ErrorMessage(ERROR_SOCKET_CLOSED);
 			}
-
+		}
+		else
+		{
+			totalBytesRead += bytesRead;
 		}
 	}
-	//When a connection is remotely closed, read() returns 0
-	if(input.size() == 0)
+
+	// Make sure the length appears valid
+	// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
+	memcpy(&length, buff, sizeof(length));
+	if (length == 0)
 	{
-		return new ErrorMessage(ERROR_SOCKET_CLOSED);
-	}
-	if(input.size() < MESSAGE_MIN_SIZE)
-	{
+		close(connectFD);
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
-	return UI_Message::Deserialize(input.data(), input.size());
+	char *buffer = (char*)malloc(length);
+
+	if (buffer == NULL)
+	{
+		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
+		close(connectFD);
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+	}
+
+	// Read in the actual message
+	totalBytesRead = 0;
+	bytesRead = 0;
+	while(totalBytesRead < length)
+	{
+		bytesRead = read(connectFD, buffer + totalBytesRead, length - totalBytesRead);
+
+		if( bytesRead < 0 )
+		{
+			// Was this a timeout error?
+			if (errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				close(connectFD);
+				return new ErrorMessage(ERROR_TIMEOUT);
+			}
+			else
+			{
+				close(connectFD);
+
+				//The socket died on us!
+				return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			}
+		}
+		else
+		{
+			totalBytesRead += bytesRead;
+		}
+	}
+
+
+	if(length < MESSAGE_MIN_SIZE)
+	{
+		close(connectFD);
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+	}
+
+	return UI_Message::Deserialize(buffer, length);
 }
 
 bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
@@ -98,6 +147,14 @@ bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
 
+	// Send the message length
+	if (write(connectFD, &length, sizeof(length)) < 0)
+	{
+		free(buffer);
+		return false;
+	}
+
+	// Send the message
 	if( write(connectFD, buffer, length) < 0 )
 	{
 		free(buffer);
