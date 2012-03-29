@@ -71,8 +71,13 @@ NovaGUI::NovaGUI(QWidget *parent)
 {
 	signal(SIGINT, sighandler);
 	pthread_rwlock_init(&lock, NULL);
-	SuspectTable.set_empty_key(1);
-	SuspectTable.set_deleted_key(5);
+
+	uint64_t initKey = 0;
+	initKey--;
+	SuspectTable.set_empty_key(initKey);
+	initKey--;
+	SuspectTable.set_deleted_key(initKey);
+
 
 	m_editingSuspectList = false;
 	m_pathsFile = (char*)"/etc/nova/paths";
@@ -729,9 +734,15 @@ void NovaGUI::UpdateSuspectWidgets()
 	}
 
 	int numBenign = ui.suspectList->count() - ui.hostileList->count();
+	int numHostile = ui.hostileList->count();
+
 	stringstream ss;
 	ss << numBenign;
-	ui.numBenignEdit->setText(QString(ss.str().c_str()));
+	ui.numBenignEdit->setText(QString::fromStdString(ss.str()));
+
+	stringstream ssHostile;
+	ssHostile << numHostile;
+	ui.numHostileEdit->setText(QString::fromStdString(ssHostile.str()));
 
 	if(numBenign)
 	{
@@ -744,6 +755,8 @@ void NovaGUI::UpdateSuspectWidgets()
 		ui.benignClassificationBar->setValue(100);
 		ui.benignSuspectClassificationBar->setValue(100);
 	}
+
+
 	if(ui.hostileList->count())
 	{
 		hostileAcc /= ui.hostileList->count();

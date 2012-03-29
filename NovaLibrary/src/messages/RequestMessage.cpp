@@ -175,20 +175,9 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		4) Size of list
 			//		5) List of suspect IPs
 
-			char suspectTempBuffer[MAX_MSG_SIZE];
-			char *buffer = &suspectTempBuffer[0];
-			m_suspectListLength = 0;
-
-			for (uint i = 0; i < m_suspectList.size(); i++)
-			{
-				in_addr_t address = m_suspectList.at(i);
-				memcpy(buffer, &address, sizeof(in_addr_t));
-				buffer += sizeof(in_addr_t);
-
-				m_suspectListLength += sizeof(in_addr_t);
-			}
-
+			m_suspectListLength = sizeof(in_addr_t) * m_suspectList.size();
 			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType);
+
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 			buffer += SerializeHeader(buffer);
@@ -202,8 +191,12 @@ char *RequestMessage::Serialize(uint32_t *length)
 			buffer += sizeof(m_suspectListLength);
 
 			//Suspect list buffer itself
-			memcpy(buffer, suspectTempBuffer, m_suspectListLength);
-			buffer += m_suspectListLength;
+			for (uint i = 0; i < m_suspectList.size(); i++)
+			{
+				in_addr_t address = m_suspectList.at(i);
+				memcpy(buffer, &address, sizeof(in_addr_t));
+				buffer += sizeof(in_addr_t);
+			}
 
 			break;
 		}
