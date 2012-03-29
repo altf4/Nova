@@ -1,11 +1,11 @@
 
 var novaNode = require('nova.node');
 var nova = new novaNode.Instance();
-console.info("Nova up: " + nova.IsUp());
-if( ! nova.IsUp() )
-{
-    console.info("Start Novad: " + nova.StartNovad());
-}
+console.info("Nova up: " + nova.IsNovadUp(true));
+//if( ! nova.IsNovadUp() )
+//{
+//    console.info("Start Novad: " + nova.StartNovad());
+//}
 
 nova.OnNewSuspect(function(suspect)
 { 
@@ -37,9 +37,9 @@ app.listen(8080);
 var everyone = require("now").initialize(app);
 
 // Functions to be called by clients
-everyone.now.IsUp = function(callback) 
+everyone.now.IsNovadUp = function(callback) 
 { 
-    callback(nova.IsUp());
+    callback(nova.IsNovadUp(false));
 }
 
 everyone.now.ClearAllSuspects = function(callback)
