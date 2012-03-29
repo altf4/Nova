@@ -132,7 +132,7 @@ THINNING_DISTANCE 0.001
 #
 # EXAMPLE:
 #CLASSIFICATION_THRESHOLD .5
-CLASSIFICATION_THRESHOLD .5
+CLASSIFICATION_THRESHOLD 0.5
 
 ############################################
 # DM_HONEYD_CONFIG #
@@ -249,7 +249,7 @@ PCAP_FILE ../masterPcap
 # 
 # EXAMPLE:
 #GO_TO_LIVE 1
-GO_TO_LIVE 0
+GO_TO_LIVE 1
 
 ############################################
 # SA_MAX_ATTEMPTS #
@@ -390,4 +390,4 @@ RECIPIENTS first@email.send, second@email.send
 #          If you want to use a particular service for just one level,
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
-SERVICE_PREFERENCES 0:4+;1:7-;2:0;
+SERVICE_PREFERENCES 0:4+;1:7-;2:5+;

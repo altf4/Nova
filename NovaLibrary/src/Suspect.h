@@ -64,8 +64,6 @@ public:
 	int ClearEvidence();
 
 	// Calculates the feature set for this suspect
-	// 		isTraining - True for training data gathering mode
-	//		featuresEnabled - bitmask of features to calculate
 	int CalculateFeatures();
 
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
@@ -214,6 +212,10 @@ public:
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);
 	Suspect& operator*(Suspect* rhs);
+
+	// Equality operator, mainly used for test cases
+	bool operator==(const Suspect &rhs) const;
+	bool operator!=(const Suspect &rhs) const;
 
 private:
 

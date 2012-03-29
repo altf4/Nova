@@ -41,6 +41,9 @@ namespace Nova
 
 int RunNovaD();
 
+// Locks to ensure only one instance of novad running
+bool LockNovad();
+
 // Send a silent alarm
 //		suspect - Suspect to send alarm about
 void SilentAlarm(Suspect *suspect, int oldClassification);
@@ -57,10 +60,6 @@ bool Start_Packet_Handler();
 // Loads configuration variables
 //		configFilePath - Location of configuration file
 void LoadConfiguration();
-
-// Dump the suspect information to a file
-//		filename - Path to file to write to
-void SaveSuspectsToFile(std::string filename);
 
 // Append to state file
 void AppendToStateFile();
@@ -95,14 +94,15 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 //		packet : Packet headers to used for the evidence
 void UpdateSuspect(Packet packet);
 
-// Gets local IP address for interface
-//		dev - Device name, e.g. "eth0"
-// Returns: IP addresses
-std::string GetLocalIP(const char *dev);
-
 // Masks the kill signals of a thread so they will get
 // sent to the main thread's signal handler.
 void MaskKillSignals();
+
+// Updates suspect and stores it as a training data point
+void UpdateAndStore(uint64_t suspect);
+
+// Updates data and classification for a suspect
+void UpdateAndClassify(uint64_t suspect);
 
 
 }

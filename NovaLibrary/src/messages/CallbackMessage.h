@@ -39,7 +39,7 @@ class CallbackMessage : public UI_Message
 
 public:
 
-	CallbackMessage();
+	CallbackMessage(enum CallbackType callbackType);
 	~CallbackMessage();
 
 	//Deserialization constructor
@@ -48,17 +48,17 @@ public:
 	//	On error, sets m_serializeError to true, on success sets it to false
 	CallbackMessage(char *buffer, uint32_t length);
 
-	//Serializes the UI_Message object into a char array
-	//	*length - Return parameter, specifies the length of the serialized array returned
-	// Returns - A pointer to the serialized array
-	//	NOTE: The caller must manually free() the returned buffer after use
-	char *Serialize(uint32_t *length);
-
 
 	enum CallbackType m_callbackType;
 	uint32_t m_suspectLength;
 	Suspect *m_suspect;
 
+protected:
+	//Serializes the UI_Message object into a char array
+	//	*length - Return parameter, specifies the length of the serialized array returned
+	// Returns - A pointer to the serialized array
+	//	NOTE: The caller must manually free() the returned buffer after use
+	char *Serialize(uint32_t *length);
 };
 
 }

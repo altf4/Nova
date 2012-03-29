@@ -18,22 +18,22 @@ public:
     ~LoggerWindow();
 
 private:
-    void initializeLoggingWindow();
-    void updateLoggingWindow();
-    void hideSelected(QString level, bool isProcess);
-    void showSelected(QString level, bool isProcess);
-    void adjustColumnWidths();
-    void updateLogDisplay();
-    bool shouldBeVisible(QString level, QString process);
-    QTreeWidgetItem * generateLogTabEntry(QString line);
-    QTreeWidgetItem * logFileNotFound();
+    void InitializeLoggingWindow();
+    void UpdateLoggingWindow();
+    void HideSelected(QString level);
+    void ShowSelected(QString level);
+    void AdjustColumnWidths();
+    void UpdateLogDisplay();
+    bool ShouldBeVisible(QString level);
+    QTreeWidgetItem * GenerateLogTabEntry(QString line);
+    QTreeWidgetItem * LogFileNotFound();
 
 private:
     Ui::LoggerWindowClass ui;
-    bool isBasic;
-    bool settingsBoxShowing;
-    uint16_t showNumberOfLogs;
-    QString viewLevels;
+    bool m_isBasic;
+    bool m_settingsBoxShowing;
+    uint16_t m_showNumberOfLogs;
+    QString m_viewLevels;
 
 private Q_SLOTS:
 	void on_settingsButton_clicked();

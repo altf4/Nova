@@ -16,72 +16,76 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================/*
 
-#include "Config.h"
-#include <fstream>
-#include "Logger.h"
-#include <syslog.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <fstream>
 #include <sstream>
-#include "NovaUtil.h"
 #include <math.h>
+
+#include "Config.h"
+#include "Logger.h"
+#include "NovaUtil.h"
 
 using namespace std;
 
 namespace Nova
 {
 
-string Config::m_prefixes[] = {
-		"INTERFACE",
-		"HS_HONEYD_CONFIG",
-		"TCP_TIMEOUT",
-		"TCP_CHECK_FREQ",
-		"READ_PCAP",
-		"PCAP_FILE",
-		"GO_TO_LIVE",
-		"CLASSIFICATION_TIMEOUT",
-		"SILENT_ALARM_PORT",
-		"K",
-		"EPS",
-		"IS_TRAINING",
-		"CLASSIFICATION_THRESHOLD",
-		"DATAFILE",
-		"SA_MAX_ATTEMPTS",
-		"SA_SLEEP_DURATION",
-		"DM_HONEYD_CONFIG",
-		"DOPPELGANGER_IP",
-		"DOPPELGANGER_INTERFACE",
-		"DM_ENABLED",
-		"ENABLED_FEATURES",
-		"TRAINING_CAP_FOLDER",
-		"THINNING_DISTANCE",
-		"SAVE_FREQUENCY",
-		"DATA_TTL",
-		"CE_SAVE_FILE",
-		"SMTP_ADDR",
-		"SMTP_PORT",
-		"SMTP_DOMAIN",
-		"RECIPIENTS",
-		"SERVICE_PREFERENCES"
+string Config::m_prefixes[] =
+{
+	"INTERFACE",
+	"HS_HONEYD_CONFIG",
+	"TCP_TIMEOUT",
+	"TCP_CHECK_FREQ",
+	"READ_PCAP",
+	"PCAP_FILE",
+	"GO_TO_LIVE",
+	"CLASSIFICATION_TIMEOUT",
+	"SILENT_ALARM_PORT",
+	"K",
+	"EPS",
+	"IS_TRAINING",
+	"CLASSIFICATION_THRESHOLD",
+	"DATAFILE",
+	"SA_MAX_ATTEMPTS",
+	"SA_SLEEP_DURATION",
+	"DM_HONEYD_CONFIG",
+	"DOPPELGANGER_IP",
+	"DOPPELGANGER_INTERFACE",
+	"DM_ENABLED",
+	"ENABLED_FEATURES",
+	"TRAINING_CAP_FOLDER",
+	"THINNING_DISTANCE",
+	"SAVE_FREQUENCY",
+	"DATA_TTL",
+	"CE_SAVE_FILE",
+	"SMTP_ADDR",
+	"SMTP_PORT",
+	"SMTP_DOMAIN",
+	"RECIPIENTS",
+	"SERVICE_PREFERENCES"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
-string Config::m_requiredFiles[] = {
-		"/settings",
-		"/Config/NOVAConfig.txt",
-		"/scripts.xml",
-		"/templates/ports.xml",
-		"/templates/profiles.xml",
-		"/templates/routes.xml",
-		"/templates/nodes.xml"
+string Config::m_requiredFiles[] =
+{
+	"/settings",
+	"/Config/NOVAConfig.txt",
+	"/scripts.xml",
+	"/templates/ports.xml",
+	"/templates/profiles.xml",
+	"/templates/routes.xml",
+	"/templates/nodes.xml"
 };
 
 Config* Config::m_instance = NULL;
 
 Config* Config::Inst()
 {
-	if (m_instance == NULL)
+	if(m_instance == NULL)
+	{
 		m_instance = new Config();
+	}
 	return m_instance;
 }
 
@@ -96,11 +100,9 @@ void Config::LoadConfig()
 
 	bool isValid[sizeof(m_prefixes)/sizeof(m_prefixes[0])];
 
-	openlog("Novaconfiguration", LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR, LOG_AUTHPRIV);
-
 	ifstream config(m_configFilePath.c_str());
 
-	if (config.is_open())
+	if(config.is_open())
 	{
 		while (config.good())
 		{
@@ -108,19 +110,18 @@ void Config::LoadConfig()
 			prefixIndex = 0;
 			prefix = m_prefixes[prefixIndex];
 
-
 			// INTERFACE
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					// Try and detect a default interface by checking what the default route in the IP kernel's IP table is
-					if (strcmp(line.c_str(), "default") == 0)
+					if(strcmp(line.c_str(), "default") == 0)
 					{
 
 						FILE * out = popen("netstat -rn", "r");
-						if (out != NULL)
+						if(out != NULL)
 						{
 							char buffer[2048];
 							char * column;
@@ -133,12 +134,12 @@ void Config::LoadConfig()
 								column = strtok(line, " \t\n");
 
 								// Wait until we have the default route entry, ignore other entries
-								if (strcmp(column, "0.0.0.0") == 0)
+								if(strcmp(column, "0.0.0.0") == 0)
 								{
 									while (column != NULL)
 									{
 										// Get the column that has the interface name
-										if (currentColumn == 7)
+										if(currentColumn == 7)
 										{
 
 											m_interface = column;
@@ -156,7 +157,9 @@ void Config::LoadConfig()
 						pclose(out);
 					}
 					else
+					{
 						m_interface = line;
+					}
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -165,10 +168,10 @@ void Config::LoadConfig()
 			// HS_HONEYD_CONFIG
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathConfigHoneydHs  = line;
 					isValid[prefixIndex] = true;
@@ -179,10 +182,10 @@ void Config::LoadConfig()
 			// TCP_TIMEOUT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_tcpTimout = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -193,10 +196,10 @@ void Config::LoadConfig()
 			// TCP_CHECK_FREQ
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_tcpCheckFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -207,10 +210,10 @@ void Config::LoadConfig()
 			// READ_PCAP
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					m_readPcap = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -221,10 +224,10 @@ void Config::LoadConfig()
 			// PCAP_FILE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathPcapFile = line;
 					isValid[prefixIndex] = true;
@@ -235,12 +238,12 @@ void Config::LoadConfig()
 			// GO_TO_LIVE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(atoi(line.c_str()) >= 0)
 				{
-					m_gotoLive = line.c_str();
+					m_gotoLive = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -249,10 +252,10 @@ void Config::LoadConfig()
 			// CLASSIFICATION_TIMEOUT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) >= 0)
+				if(atoi(line.c_str()) >= 0)
 				{
 					m_classificationTimeout = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -263,7 +266,7 @@ void Config::LoadConfig()
 			// SILENT_ALARM_PORT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				if(line.size() == prefix.size())
 				{
@@ -272,7 +275,7 @@ void Config::LoadConfig()
 
 				line = line.substr(prefix.size() + 1, line.size());
 
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_saPort = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -283,10 +286,10 @@ void Config::LoadConfig()
 			// K
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_k = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -297,10 +300,10 @@ void Config::LoadConfig()
 			// EPS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) >= 0)
+				if(atof(line.c_str()) >= 0)
 				{
 					m_eps = atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -311,10 +314,10 @@ void Config::LoadConfig()
 			// IS_TRAINING
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					m_isTraining = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -325,10 +328,10 @@ void Config::LoadConfig()
 			// CLASSIFICATION_THRESHOLD
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) >= 0)
+				if(atof(line.c_str()) >= 0)
 				{
 					m_classificationThreshold= atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -339,10 +342,10 @@ void Config::LoadConfig()
 			// DATAFILE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0 && !line.substr(line.size() - 4,
+				if(line.size() > 0 && !line.substr(line.size() - 4,
 						line.size()).compare(".txt"))
 				{
 					m_pathTrainingFile = line;
@@ -354,10 +357,10 @@ void Config::LoadConfig()
 			// SA_MAX_ATTEMPTS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_saMaxAttempts = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -368,10 +371,10 @@ void Config::LoadConfig()
 			// SA_SLEEP_DURATION
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) >= 0)
+				if(atof(line.c_str()) >= 0)
 				{
 					m_saSleepDuration = atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -382,10 +385,10 @@ void Config::LoadConfig()
 			// DM_HONEYD_CONFIG
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathConfigHoneydDm = line;
 					isValid[prefixIndex] = true;
@@ -397,10 +400,10 @@ void Config::LoadConfig()
 			// DOPPELGANGER_IP
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_doppelIp = line;
 					isValid[prefixIndex] = true;
@@ -411,10 +414,10 @@ void Config::LoadConfig()
 			// DOPPELGANGER_INTERFACE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_doppelInterface = line;
 					isValid[prefixIndex] = true;
@@ -425,10 +428,10 @@ void Config::LoadConfig()
 			// DM_ENABLED
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					m_isDmEnabled = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -440,12 +443,12 @@ void Config::LoadConfig()
 			// ENABLED_FEATURES
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() == DIM)
+				if(line.size() == DIM)
 				{
-					setEnabledFeatures_noLocking(line);
+					SetEnabledFeatures_noLocking(line);
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -455,10 +458,10 @@ void Config::LoadConfig()
 			// TRAINING_CAP_FOLDER
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathTrainingCapFolder = line;
 					isValid[prefixIndex] = true;
@@ -469,10 +472,10 @@ void Config::LoadConfig()
 			// THINNING_DISTANCE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atof(line.c_str()) > 0)
+				if(atof(line.c_str()) > 0)
 				{
 					m_thinningDistance = atof(line.c_str());
 					isValid[prefixIndex] = true;
@@ -483,10 +486,10 @@ void Config::LoadConfig()
 			// SAVE_FREQUENCY
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) > 0)
+				if(atoi(line.c_str()) > 0)
 				{
 					m_saveFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -497,10 +500,10 @@ void Config::LoadConfig()
 			// DATA_TTL
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (atoi(line.c_str()) >= 0)
+				if(atoi(line.c_str()) >= 0)
 				{
 					m_dataTTL = atoi(line.c_str());
 					isValid[prefixIndex] = true;
@@ -511,10 +514,10 @@ void Config::LoadConfig()
 			// CE_SAVE_FILE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
-			if (!line.substr(0, prefix.size()).compare(prefix))
+			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
-				if (line.size() > 0)
+				if(line.size() > 0)
 				{
 					m_pathCESaveFile = line;
 					isValid[prefixIndex] = true;
@@ -581,7 +584,7 @@ void Config::LoadConfig()
 
 				if(line.size() > 0)
 				{
-					setSMTPEmailRecipients_noLocking(line);
+					SetSMTPEmailRecipients_noLocking(line);
 					isValid[prefixIndex] = true;
 				}
 
@@ -601,29 +604,24 @@ void Config::LoadConfig()
 					m_loggerPreferences = line;
 					isValid[prefixIndex] = true;
 				}
-
 				continue;
 			}
 		}
 	}
 	else
 	{
-		//TODO replace with LOG()
-		syslog(SYSL_INFO, "Line: %d No configuration file found.", __LINE__); //TODO replace with LOG()
+		LOG(INFO, "No configuration file found", "");
 	}
 
 
-	for (uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
+	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
-		if (!isValid[i])
+		if(!isValid[i])
 		{
-			// TODO: Make this say which config option is invalid again
-			syslog(SYSL_INFO, "Line: %d Configuration option %s is invalid in the configuration file", __LINE__, m_prefixes[i].c_str());
-			//TODO replace with LOG()
+			LOG(INFO, "Invalid configuration option.",
+				"Configuration option "+ m_prefixes[i]+" is invalid in the configuration file.");
 		}
 	}
-	closelog();
-
 	pthread_rwlock_unlock(&m_lock);
 }
 
@@ -643,7 +641,6 @@ bool Config::LoadUserConfig()
 		{
 			getline(settings, line);
 			i++;
-
 			prefix = "neighbor";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -655,8 +652,9 @@ bool Config::LoadUserConfig()
 
 					if((int)nbr == -1)
 					{
-						syslog(SYSL_ERR, "Line: %d Invalid IP address parsed on line %d of the settings file.", __LINE__, i);
-						//TODO replace with LOG()
+						stringstream ss;
+						ss << "Invalid IP address parsed on line " << i << " of the settings file.";
+						LOG(ERROR, "Invalid IP address parsed.", ss.str());
 						returnValue = false;
 					}
 					else if(nbr)
@@ -672,11 +670,14 @@ bool Config::LoadUserConfig()
 				line = line.substr(prefix.size()+1,line.size());
 				//TODO Key should be 256 characters, hard check for this once implemented
 				if((line.size() > 0) && (line.size() < 257))
+				{
 					m_key = line;
+				}
 				else
 				{
-					syslog(SYSL_ERR, "Line: %d Invalid Key parsed on line %d of the settings file.", __LINE__, i);
-					//TODO replace with LOG()
+					stringstream ss;
+					ss << "Invalid Key parsed on line " << i << " of the settings file.";
+					LOG(ERROR, "Invalid Key parsed.", ss.str());
 					returnValue = false;
 				}
 			}
@@ -809,7 +810,7 @@ bool Config::SaveConfig()
 	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
-		//TODO ERROR handling
+		LOG(ERROR, "Problem saving current configuration.","System Call "+copyCommand+" has failed.");
 	}
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
@@ -819,7 +820,7 @@ bool Config::SaveConfig()
 	{
 		while(in->good())
 		{
-			if (!getline(*in, line))
+			if(!getline(*in, line))
 			{
 				continue;
 			}
@@ -827,169 +828,180 @@ bool Config::SaveConfig()
 			prefix = "DM_ENABLED";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				if(getIsDmEnabled())
+				if(GetIsDmEnabled())
+				{
 					*out << "DM_ENABLED 1"<<endl;
+				}
 				else
+				{
 					*out << "DM_ENABLED 0"<<endl;
+				}
 				continue;
 			}
 
 			prefix = "IS_TRAINING";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				if(getIsTraining())
-					*out << "IS_TRAINING 1"<<endl;
+				if(GetIsTraining())
+				{
+					*out << "IS_TRAINING 1"<< endl;
+				}
 				else
+				{
 					*out << "IS_TRAINING 0"<<endl;
+				}
 				continue;
 			}
 
 			prefix = "INTERFACE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getInterface() << endl;
+				*out << prefix << " " << GetInterface() << endl;
 				continue;
 			}
 
 			prefix = "DATAFILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getPathTrainingFile() << endl;
+				*out << prefix << " " << GetPathTrainingFile() << endl;
 				continue;
 			}
 
 			prefix = "SA_SLEEP_DURATION";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getSaSleepDuration() << endl;
+				*out << prefix << " " << GetSaSleepDuration() << endl;
 				continue;
 			}
 
 			prefix = "SA_MAX_ATTEMPTS";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getSaMaxAttempts() << endl;
+				*out << prefix << " " << GetSaMaxAttempts() << endl;
 				continue;
 			}
 
 			prefix = "SILENT_ALARM_PORT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getSaPort() << endl;
+				*out << prefix << " " << GetSaPort() << endl;
 				continue;
 			}
 
 			prefix = "K";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getK() << endl;
+				*out << prefix << " " << GetK() << endl;
 				continue;
 			}
 
 			prefix = "EPS";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getEps() << endl;
+				*out << prefix << " " << GetEps() << endl;
 				continue;
 			}
 
 			prefix = "CLASSIFICATION_TIMEOUT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getClassificationTimeout() << endl;
+				*out << prefix << " " << GetClassificationTimeout() << endl;
 				continue;
 			}
 
 			prefix = "CLASSIFICATION_THRESHOLD";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getClassificationThreshold() << endl;
+				*out << prefix << " " << GetClassificationThreshold() << endl;
 				continue;
 			}
 
 			prefix = "DM_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getPathConfigHoneydDm() << endl;
+				*out << prefix << " " << GetPathConfigHoneydDM() << endl;
 				continue;
 			}
 
 			prefix = "DOPPELGANGER_IP";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getDoppelIp() << endl;
+				*out << prefix << " " << GetDoppelIp() << endl;
 				continue;
 			}
 
 			prefix = "HS_HONEYD_CONFIG";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getPathConfigHoneydHs() << endl;
+				*out << prefix << " " << GetPathConfigHoneydHS() << endl;
 				continue;
 			}
 
 			prefix = "TCP_TIMEOUT";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getTcpTimout() << endl;
+				*out << prefix << " " << GetTcpTimout() << endl;
 				continue;
 			}
 
 			prefix = "TCP_CHECK_FREQ";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getTcpCheckFreq()  << endl;
+				*out << prefix << " " << GetTcpCheckFreq()  << endl;
 				continue;
 			}
 
 			prefix = "PCAP_FILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " <<  getPathPcapFile() << endl;
+				*out << prefix << " " <<  GetPathPcapFile() << endl;
 				continue;
 			}
 
 			prefix = "ENABLED_FEATURES";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				*out << prefix << " " << getEnabledFeatures() << endl;
+				*out << prefix << " " << GetEnabledFeatures() << endl;
 				continue;
 			}
 
 			prefix = "READ_PCAP";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				if(getReadPcap())
-					*out << "READ_PCAP 1"<< endl;
+				if(GetReadPcap())
+				{
+					*out << "READ_PCAP 1"<<  endl;
+				}
 				else
+				{
 					*out << "READ_PCAP 0"<< endl;
+				}
 				continue;
 			}
 
 			prefix = "GO_TO_LIVE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
-				if(getGotoLive())
+				if(GetGotoLive())
+				{
 					*out << "GO_TO_LIVE 1" << endl;
+				}
 				else
+				{
 					*out << "GO_TO_LIVE 0" << endl;
+				}
 				continue;
 			}
-
 			*out << line << endl;
 		}
 	}
 	else
 	{
-		openlog("Novaconfiguration", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(SYSL_ERR, "File: %s Line: %d Error writing to Nova config file.", __FILE__, __LINE__);
-		//TODO replace with LOG()
-		closelog();
+		LOG(ERROR, "Problem saving current configuration.", "");
 		in->close();
 		out->close();
 		delete in;
 		delete out;
-
 		pthread_rwlock_unlock(&m_lock);
 		return false;
 	}
@@ -1000,7 +1012,7 @@ bool Config::SaveConfig()
 	delete out;
 	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
 	{
-		//TODO ERROR handling.
+		LOG(ERROR, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
 	}
 	pthread_rwlock_unlock(&m_lock);
 	return true;
@@ -1010,8 +1022,6 @@ bool Config::SaveConfig()
 
 void Config::SetDefaults()
 {
-	openlog(__FUNCTION__, OPEN_SYSL, LOG_AUTHPRIV);
-
 	m_interface = "default";
 	m_pathConfigHoneydHs 	= "Config/haystack.config";
 	m_pathPcapFile 		= "../pcapfile";
@@ -1043,7 +1053,7 @@ void Config::SetDefaults()
 }
 
 // Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
-//	Returns: True if (after the function) the user has all necessary ~/.nova config files
+//	Returns: True if(after the function) the user has all necessary ~/.nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
 bool Config::InitUserConfigs(string homeNovaPath)
 {
@@ -1051,22 +1061,23 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	struct stat fileAttr;
 
 	// Does ~/.nova exist?
-	if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+	if(stat(homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		// Do all of the important files exist?
-		for (uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
+		for(uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
 		{
 			string fullPath = homeNovaPath + Config::m_requiredFiles[i];
-			if (stat (fullPath.c_str(), &fileAttr ) != 0)
+			if(stat (fullPath.c_str(), &fileAttr ) != 0)
 			{
 				string defaultLocation = "/etc/nova/.nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
-				//TODO replace with LOG()
-				syslog(SYSL_ERR, "Warning: The file %s does not exist but is required for Nova to function. Restoring default file from %s",fullPath.c_str(), defaultLocation.c_str());
-				if (system(copyCommand.c_str()) == -1)
+
+				LOG(ERROR, "File not found.",
+					"The file "+fullPath+" does not exist; Using defaults located at "+defaultLocation);
+				if(system(copyCommand.c_str()) == -1)
 				{
-					//TODO replace with LOG()
-					syslog(SYSL_ERR, "Error: Unable to copy file %s to %s.",fullPath.c_str(), defaultLocation.c_str());
+					LOG(ERROR,"Unable to load defaults from "+defaultLocation,
+							"System Command "+copyCommand+" has failed.");
 				}
 			}
 		}
@@ -1074,20 +1085,20 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	else
 	{
 		//TODO: Do this command programmatically. Not by calling system()
-		if( system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
+		if(system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			//TODO replace with LOG()
+			LOG(ERROR, "Was not able to create directory /usr/share/nova/.nova", "");
 			returnValue = false;
 		}
 
 		//Check the ~/.nova dir again
-		if ( stat( homeNovaPath.c_str(), &fileAttr ) == 0)
+		if(stat(homeNovaPath.c_str(), &fileAttr) == 0)
+		{
 			return returnValue;
+		}
 		else
 		{
-			syslog(SYSL_ERR, "File: %s Line: %d: %s", __FILE__, __LINE__, "Was not able to create user $HOME/.nova directory");
-			//TODO replace with LOG()
+			LOG(ERROR, "Was not able to create directory /usr/share/nova/.nova", "");
 			returnValue = false;
 		}
 	}
@@ -1095,41 +1106,41 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	return returnValue;
 }
 
-string Config::toString()
+string Config::ToString()
 {
 	pthread_rwlock_rdlock(&m_lock);
 
 	std::stringstream ss;
-	ss << "getConfigFilePath() " << getConfigFilePath() << endl;
-	ss << "getDoppelInterface() " << getDoppelInterface() << endl;
-	ss << "getDoppelIp() " << getDoppelIp() << endl;
-	ss << "getEnabledFeatures() " << getEnabledFeatures() << endl;
-	ss << "getInterface() " << getInterface() << endl;
-	ss << "getPathCESaveFile() " << getPathCESaveFile() << endl;
-	ss << "getPathConfigHoneydDm() " << getPathConfigHoneydDm() << endl;
-	ss << "getPathConfigHoneydHs() " << getPathConfigHoneydHs() << endl;
-	ss << "getPathPcapFile() " << getPathPcapFile() << endl;
-	ss << "getPathTrainingCapFolder() " << getPathTrainingCapFolder() << endl;
-	ss << "getPathTrainingFile() " << getPathTrainingFile() << endl;
+	ss << "getConfigFilePath() " << GetConfigFilePath() << endl;
+	ss << "getDoppelInterface() " << GetDoppelInterface() << endl;
+	ss << "getDoppelIp() " << GetDoppelIp() << endl;
+	ss << "getEnabledFeatures() " << GetEnabledFeatures() << endl;
+	ss << "getInterface() " << GetInterface() << endl;
+	ss << "getPathCESaveFile() " << GetPathCESaveFile() << endl;
+	ss << "getPathConfigHoneydDm() " << GetPathConfigHoneydDM() << endl;
+	ss << "getPathConfigHoneydHs() " << GetPathConfigHoneydHS() << endl;
+	ss << "getPathPcapFile() " << GetPathPcapFile() << endl;
+	ss << "getPathTrainingCapFolder() " << GetPathTrainingCapFolder() << endl;
+	ss << "getPathTrainingFile() " << GetPathTrainingFile() << endl;
 
-	ss << "getReadPcap() " << getReadPcap() << endl;
-	ss << "getIsDmEnabled() " << getIsDmEnabled() << endl;
-	ss << "getIsTraining() " << getIsTraining() << endl;
-	ss << "getGotoLive() " << getGotoLive() << endl;
+	ss << "getReadPcap() " << GetReadPcap() << endl;
+	ss << "GetIsDmEnabled() " << GetIsDmEnabled() << endl;
+	ss << "getIsTraining() " << GetIsTraining() << endl;
+	ss << "getGotoLive() " << GetGotoLive() << endl;
 
-	ss << "getClassificationTimeout() " << getClassificationTimeout() << endl;
-	ss << "getDataTTL() " << getDataTTL() << endl;
-	ss << "getK() " << getK() << endl;
-	ss << "getSaMaxAttempts() " << getSaMaxAttempts() << endl;
-	ss << "getSaPort() " << getSaPort() << endl;
-	ss << "getSaveFreq() " << getSaveFreq() << endl;
-	ss << "getTcpCheckFreq() " << getTcpCheckFreq() << endl;
-	ss << "getTcpTimout() " << getTcpTimout() << endl;
-	ss << "getThinningDistance() " << getThinningDistance() << endl;
+	ss << "getClassificationTimeout() " << GetClassificationTimeout() << endl;
+	ss << "getDataTTL() " << GetDataTTL() << endl;
+	ss << "getK() " << GetK() << endl;
+	ss << "getSaMaxAttempts() " << GetSaMaxAttempts() << endl;
+	ss << "getSaPort() " << GetSaPort() << endl;
+	ss << "getSaveFreq() " << GetSaveFreq() << endl;
+	ss << "getTcpCheckFreq() " << GetTcpCheckFreq() << endl;
+	ss << "getTcpTimout() " << GetTcpTimout() << endl;
+	ss << "getThinningDistance() " << GetThinningDistance() << endl;
 
-	ss << "getClassificationThreshold() " << getClassificationThreshold() << endl;
-	ss << "getSaSleepDuration() " << getSaSleepDuration() << endl;
-	ss << "getEps() " << getEps() << endl;
+	ss << "getClassificationThreshold() " << GetClassificationThreshold() << endl;
+	ss << "getSaSleepDuration() " << GetSaSleepDuration() << endl;
+	ss << "getEps() " << GetEps() << endl;
 
 	pthread_rwlock_unlock(&m_lock);
 	return ss.str();
@@ -1140,17 +1151,13 @@ Config::Config()
 	pthread_rwlock_init(&m_lock, NULL);
 	LoadPaths();
 
-	openlog("NovaConfigurator", OPEN_SYSL, LOG_AUTHPRIV);
-
-	if(!this->InitUserConfigs(this->getPathHome()))
+	if(!this->InitUserConfigs(this->GetPathHome()))
 	{
-		//TODO replace with LOG()
-		syslog(SYSL_ERR, "Error: InitUserConfigs failed. Your home folder and permissions may not have been configured properly");
-		//exit(EXIT_FAILURE);
+		LOG(ERROR, "InitUserConfigs failed.","");
 	}
 
-	m_configFilePath = getPathHome() + "/Config/NOVAConfig.txt";
-	m_userConfigFilePath = getPathHome() + "/settings";
+	m_configFilePath = GetPathHome() + "/Config/NOVAConfig.txt";
+	m_userConfigFilePath = GetPathHome() + "/settings";
 	SetDefaults();
 	LoadConfig();
 	LoadUserConfig();
@@ -1158,9 +1165,10 @@ Config::Config()
 
 Config::~Config()
 {
+
 }
 
-double Config::getClassificationThreshold()
+double Config::GetClassificationThreshold()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	double m_classificationThreshold = this->m_classificationThreshold;
@@ -1168,7 +1176,7 @@ double Config::getClassificationThreshold()
 	return m_classificationThreshold;
 }
 
-int Config::getClassificationTimeout()
+int Config::GetClassificationTimeout()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_classificationTimeout = this->m_classificationTimeout;
@@ -1176,7 +1184,7 @@ int Config::getClassificationTimeout()
 	return m_classificationTimeout;
 }
 
-string Config::getConfigFilePath()
+string Config::GetConfigFilePath()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_configFilePath = this->m_configFilePath;
@@ -1184,7 +1192,7 @@ string Config::getConfigFilePath()
 	return m_configFilePath;
 }
 
-int Config::getDataTTL()
+int Config::GetDataTTL()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_dataTTL = this->m_dataTTL;
@@ -1192,7 +1200,7 @@ int Config::getDataTTL()
 	return m_dataTTL;
 }
 
-string Config::getDoppelInterface()
+string Config::GetDoppelInterface()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_doppelInterface = this->m_doppelInterface;
@@ -1200,7 +1208,7 @@ string Config::getDoppelInterface()
 	return m_doppelInterface;
 }
 
-string Config::getDoppelIp()
+string Config::GetDoppelIp()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_doppelIp = this->m_doppelIp;
@@ -1208,7 +1216,7 @@ string Config::getDoppelIp()
 	return m_doppelIp;
 }
 
-string Config::getEnabledFeatures()
+string Config::GetEnabledFeatures()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_enabledFeatureMask = this->m_enabledFeatureMask;
@@ -1216,7 +1224,7 @@ string Config::getEnabledFeatures()
 	return m_enabledFeatureMask;
 }
 
-uint Config::getEnabledFeatureCount()
+uint Config::GetEnabledFeatureCount()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	uint m_enabledFeatureCount = this->m_enabledFeatureCount;
@@ -1224,12 +1232,12 @@ uint Config::getEnabledFeatureCount()
 	return m_enabledFeatureCount;
 }
 
-bool Config::isFeatureEnabled(int i)
+bool Config::IsFeatureEnabled(int i)
 {
 	return m_isFeatureEnabled[i];
 }
 
-double Config::getEps()
+double Config::GetEps()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	double m_eps = this->m_eps;
@@ -1237,7 +1245,7 @@ double Config::getEps()
 	return m_eps;
 }
 
-bool Config::getGotoLive()
+bool Config::GetGotoLive()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	bool m_gotoLive = this->m_gotoLive;
@@ -1245,7 +1253,7 @@ bool Config::getGotoLive()
 	return m_gotoLive;
 }
 
-string Config::getInterface()
+string Config::GetInterface()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_interface = this->m_interface;
@@ -1253,7 +1261,7 @@ string Config::getInterface()
 	return m_interface;
 }
 
-bool Config::getIsDmEnabled()
+bool Config::GetIsDmEnabled()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	bool m_isDmEnabled = this->m_isDmEnabled;
@@ -1261,7 +1269,7 @@ bool Config::getIsDmEnabled()
 	return m_isDmEnabled;
 }
 
-bool Config::getIsTraining()
+bool Config::GetIsTraining()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	bool m_isTraining = this->m_isTraining;
@@ -1269,7 +1277,7 @@ bool Config::getIsTraining()
 	return m_isTraining;
 }
 
-int Config::getK()
+int Config::GetK()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_k = this->m_k;
@@ -1277,7 +1285,7 @@ int Config::getK()
 	return m_k;
 }
 
-string Config::getPathCESaveFile()
+string Config::GetPathCESaveFile()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_pathCESaveFile = this->m_pathCESaveFile;
@@ -1285,7 +1293,7 @@ string Config::getPathCESaveFile()
 	return m_pathCESaveFile;
 }
 
-string Config::getPathConfigHoneydDm()
+string Config::GetPathConfigHoneydDM()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_pathConfigHoneydDm = this->m_pathConfigHoneydDm;
@@ -1293,7 +1301,7 @@ string Config::getPathConfigHoneydDm()
 	return m_pathConfigHoneydDm;
 }
 
-string Config::getPathConfigHoneydHs()
+string Config::GetPathConfigHoneydHS()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_pathConfigHoneydHs = this->m_pathConfigHoneydHs;
@@ -1301,7 +1309,7 @@ string Config::getPathConfigHoneydHs()
 	return m_pathConfigHoneydHs;
 }
 
-string Config::getPathPcapFile()
+string Config::GetPathPcapFile()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_pathPcapFile = this->m_pathPcapFile;
@@ -1309,7 +1317,7 @@ string Config::getPathPcapFile()
 	return m_pathPcapFile;
 }
 
-string Config::getPathTrainingCapFolder()
+string Config::GetPathTrainingCapFolder()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_pathTrainingCapFolder = this->m_pathTrainingCapFolder;
@@ -1317,7 +1325,7 @@ string Config::getPathTrainingCapFolder()
 	return m_pathTrainingCapFolder;
 }
 
-string Config::getPathTrainingFile()
+string Config::GetPathTrainingFile()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_pathTrainingFile = this->m_pathTrainingFile;
@@ -1325,7 +1333,7 @@ string Config::getPathTrainingFile()
 	return m_pathTrainingFile;
 }
 
-bool Config::getReadPcap()
+bool Config::GetReadPcap()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	bool m_readPcap = this->m_readPcap;
@@ -1333,7 +1341,7 @@ bool Config::getReadPcap()
 	return m_readPcap;
 }
 
-int Config::getSaMaxAttempts()
+int Config::GetSaMaxAttempts()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_saMaxAttempts = this->m_saMaxAttempts;
@@ -1341,7 +1349,7 @@ int Config::getSaMaxAttempts()
 	return m_saMaxAttempts;
 }
 
-int Config::getSaPort()
+int Config::GetSaPort()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_saPort = this->m_saPort;
@@ -1349,7 +1357,7 @@ int Config::getSaPort()
 	return m_saPort;
 }
 
-double Config::getSaSleepDuration()
+double Config::GetSaSleepDuration()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	double m_saSleepDuration = this->m_saSleepDuration;
@@ -1357,7 +1365,7 @@ double Config::getSaSleepDuration()
 	return m_saSleepDuration;
 }
 
-int Config::getSaveFreq()
+int Config::GetSaveFreq()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_saveFreq = this->m_saveFreq;
@@ -1365,7 +1373,7 @@ int Config::getSaveFreq()
 	return m_saveFreq;
 }
 
-int Config::getTcpCheckFreq()
+int Config::GetTcpCheckFreq()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_tcpCheckFreq = this->m_tcpCheckFreq;
@@ -1373,7 +1381,7 @@ int Config::getTcpCheckFreq()
 	return m_tcpCheckFreq;
 }
 
-int Config::getTcpTimout()
+int Config::GetTcpTimout()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_tcpTimout = this->m_tcpTimout;
@@ -1381,7 +1389,7 @@ int Config::getTcpTimout()
 	return m_tcpTimout;
 }
 
-int Config::getThinningDistance()
+int Config::GetThinningDistance()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	int m_thinningDistance = this->m_thinningDistance;
@@ -1389,7 +1397,7 @@ int Config::getThinningDistance()
 	return m_thinningDistance;
 }
 
-string Config::getKey()
+string Config::GetKey()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_key = this->m_key;
@@ -1397,7 +1405,7 @@ string Config::getKey()
 	return m_key;
 }
 
-vector<in_addr_t> Config::getNeighbors()
+vector<in_addr_t> Config::GetNeighbors()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	vector<in_addr_t> m_neighbors = this->m_neighbors;
@@ -1405,7 +1413,7 @@ vector<in_addr_t> Config::getNeighbors()
 	return m_neighbors;
 }
 
-string Config::getGroup()
+string Config::GetGroup()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string m_group = this->m_group;
@@ -1413,54 +1421,54 @@ string Config::getGroup()
 	return m_group;
 }
 
-void Config::setClassificationThreshold(double classificationThreshold)
+void Config::SetClassificationThreshold(double classificationThreshold)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_classificationThreshold = classificationThreshold;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setClassificationTimeout(int classificationTimeout)
+void Config::SetClassificationTimeout(int classificationTimeout)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_classificationTimeout = classificationTimeout;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setConfigFilePath(string configFilePath)
+void Config::SetConfigFilePath(string configFilePath)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_configFilePath = configFilePath;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setDataTTL(int dataTTL)
+void Config::SetDataTTL(int dataTTL)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_dataTTL = dataTTL;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setDoppelInterface(string doppelInterface)
+void Config::SetDoppelInterface(string doppelInterface)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_doppelInterface = doppelInterface;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setDoppelIp(string doppelIp)
+void Config::SetDoppelIp(string doppelIp)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_doppelIp = doppelIp;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setEnabledFeatures_noLocking(string enabledFeatureMask)
+void Config::SetEnabledFeatures_noLocking(string enabledFeatureMask)
 {
 	m_enabledFeatureCount = 0;
-	for (uint i = 0; i < DIM; i++)
+	for(uint i = 0; i < DIM; i++)
 	{
-		if ('1' == enabledFeatureMask.at(i))
+		if('1' == enabledFeatureMask.at(i))
 		{
 			m_isFeatureEnabled[i] = true;
 			m_enabledFeatureCount++;
@@ -1476,175 +1484,175 @@ void Config::setEnabledFeatures_noLocking(string enabledFeatureMask)
 }
 
 
-void Config::setEnabledFeatures(string enabledFeatureMask)
+void Config::SetEnabledFeatures(string enabledFeatureMask)
 {
 	pthread_rwlock_wrlock(&m_lock);
-	setEnabledFeatures_noLocking(enabledFeatureMask);
+	SetEnabledFeatures_noLocking(enabledFeatureMask);
 	pthread_rwlock_rdlock(&m_lock);
 }
 
-void Config::setEps(double eps)
+void Config::SetEps(double eps)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_eps = eps;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setGotoLive(bool gotoLive)
+void Config::SetGotoLive(bool gotoLive)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_gotoLive = gotoLive;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setInterface(string interface)
+void Config::SetInterface(string interface)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_interface = interface;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setIsDmEnabled(bool isDmEnabled)
+void Config::SetIsDmEnabled(bool isDmEnabled)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_isDmEnabled = isDmEnabled;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setIsTraining(bool isTraining)
+void Config::SetIsTraining(bool isTraining)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_isTraining = isTraining;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setK(int k)
+void Config::SetK(int k)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_k = k;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setPathCESaveFile(string pathCESaveFile)
+void Config::SetPathCESaveFile(string pathCESaveFile)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_pathCESaveFile = pathCESaveFile;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setPathConfigHoneydDm(string pathConfigHoneydDm)
+void Config::SetPathConfigHoneydDm(string pathConfigHoneydDm)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_pathConfigHoneydDm = pathConfigHoneydDm;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setPathConfigHoneydHs(string pathConfigHoneydHs)
+void Config::SetPathConfigHoneydHs(string pathConfigHoneydHs)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_pathConfigHoneydHs = pathConfigHoneydHs;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setPathPcapFile(string pathPcapFile)
+void Config::SetPathPcapFile(string pathPcapFile)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_pathPcapFile = pathPcapFile;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setPathTrainingCapFolder(string pathTrainingCapFolder)
+void Config::SetPathTrainingCapFolder(string pathTrainingCapFolder)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_pathTrainingCapFolder = pathTrainingCapFolder;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setPathTrainingFile(string pathTrainingFile)
+void Config::SetPathTrainingFile(string pathTrainingFile)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_pathTrainingFile = pathTrainingFile;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setReadPcap(bool readPcap)
+void Config::SetReadPcap(bool readPcap)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_readPcap = readPcap;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSaMaxAttempts(int saMaxAttempts)
+void Config::SetSaMaxAttempts(int saMaxAttempts)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_saMaxAttempts = saMaxAttempts;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSaPort(int saPort)
+void Config::SetSaPort(int saPort)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_saPort = saPort;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSaSleepDuration(double saSleepDuration)
+void Config::SetSaSleepDuration(double saSleepDuration)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_saSleepDuration = saSleepDuration;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSaveFreq(int saveFreq)
+void Config::SetSaveFreq(int saveFreq)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_saveFreq = saveFreq;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setTcpCheckFreq(int tcpCheckFreq)
+void Config::SetTcpCheckFreq(int tcpCheckFreq)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_tcpCheckFreq = tcpCheckFreq;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setTcpTimout(int tcpTimout)
+void Config::SetTcpTimout(int tcpTimout)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_tcpTimout = tcpTimout;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setThinningDistance(int thinningDistance)
+void Config::SetThinningDistance(int thinningDistance)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_thinningDistance = thinningDistance;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setKey(string key)
+void Config::SetKey(string key)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_key = key;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setNeigbors(vector<in_addr_t> neighbors)
+void Config::SetNeigbors(vector<in_addr_t> neighbors)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_neighbors = neighbors;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setGroup(string group)
+void Config::SetGroup(string group)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	m_group = group;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-string Config::getLoggerPreferences()
+string Config::GetLoggerPreferences()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string loggerPreferences = this->m_loggerPreferences;
@@ -1652,7 +1660,7 @@ string Config::getLoggerPreferences()
 	return loggerPreferences;
 }
 
-string Config::getSMTPAddr()
+string Config::GetSMTPAddr()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string SMTPAddr = this->m_SMTPAddr;
@@ -1660,7 +1668,7 @@ string Config::getSMTPAddr()
 	return SMTPAddr;
 }
 
-string Config::getSMTPDomain()
+string Config::GetSMTPDomain()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string SMTPDomain = this->m_SMTPDomain;
@@ -1668,7 +1676,7 @@ string Config::getSMTPDomain()
 	return SMTPDomain;
 }
 
-vector<string> Config::getSMTPEmailRecipients()
+vector<string> Config::GetSMTPEmailRecipients()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	vector<string> SMTPEmailRecipients = this->m_SMTPEmailRecipients;
@@ -1676,7 +1684,7 @@ vector<string> Config::getSMTPEmailRecipients()
 	return SMTPEmailRecipients;
 }
 
-in_port_t Config::getSMTPPort()
+in_port_t Config::GetSMTPPort()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	in_port_t SMTPPort = this->m_SMTPPort;
@@ -1684,35 +1692,35 @@ in_port_t Config::getSMTPPort()
 	return SMTPPort;
 }
 
-void Config::setLoggerPreferences(string loggerPreferences)
+void Config::SetLoggerPreferences(string loggerPreferences)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_loggerPreferences = loggerPreferences;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSMTPAddr(string SMTPAddr)
+void Config::SetSMTPAddr(string SMTPAddr)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_SMTPAddr = SMTPAddr;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSMTPDomain(string SMTPDomain)
+void Config::SetSMTPDomain(string SMTPDomain)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_SMTPDomain = SMTPDomain;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSMTPEmailRecipients(vector<string> SMTPEmailRecipients)
+void Config::SetSMTPEmailRecipients(vector<string> SMTPEmailRecipients)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_SMTPEmailRecipients = SMTPEmailRecipients;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void Config::setSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
+void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 {
 	vector<string> addresses;
 	istringstream iss(SMTPEmailRecipients);
@@ -1736,14 +1744,14 @@ void Config::setSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 	this->m_SMTPEmailRecipients = out;
 }
 
-void Config::setSMTPPort(in_port_t SMTPPort)
+void Config::SetSMTPPort(in_port_t SMTPPort)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	this->m_SMTPPort = SMTPPort;
 	pthread_rwlock_unlock(&m_lock);
 }
 
-string Config::getPathBinaries()
+string Config::GetPathBinaries()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string pathBinaries = this->m_pathBinaries;
@@ -1751,7 +1759,7 @@ string Config::getPathBinaries()
 	return pathBinaries;
 }
 
-string Config::getPathWriteFolder()
+string Config::GetPathWriteFolder()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string pathWriteFolder = this->m_pathWriteFolder;
@@ -1759,7 +1767,7 @@ string Config::getPathWriteFolder()
 	return pathWriteFolder;
 }
 
-string Config::getPathReadFolder()
+string Config::GetPathReadFolder()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string pathReadFolder = this->m_pathReadFolder;
@@ -1767,7 +1775,7 @@ string Config::getPathReadFolder()
 	return pathReadFolder;
 }
 
-string Config::getPathIcon()
+string Config::GetPathIcon()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string pathIcon= this->m_pathIcon;
@@ -1775,7 +1783,7 @@ string Config::getPathIcon()
 	return pathIcon;
 }
 
-string Config::getPathHome()
+string Config::GetPathHome()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	string pathHome = this->m_pathHome;
@@ -1783,7 +1791,7 @@ string Config::getPathHome()
 	return pathHome;
 }
 
-double Config::getSqurtEnabledFeatures()
+double Config::GetSqurtEnabledFeatures()
 {
 	pthread_rwlock_rdlock(&m_lock);
 	double m_squrtEnabledFeatures= this->m_squrtEnabledFeatures;

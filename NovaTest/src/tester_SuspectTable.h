@@ -128,8 +128,8 @@ TEST_F(SuspectTableTest, GetHostility) {
 
 	InitSuspects();
 	EXPECT_EQ(KEY_INVALID, table.GetHostility(42));
-	EXPECT_EQ(0, table.GetHostility(1));
-	EXPECT_EQ(1, table.GetHostility(2));
+	EXPECT_EQ(IS_BENIGN, table.GetHostility(1));
+	EXPECT_EQ(IS_HOSTILE, table.GetHostility(2));
 }
 
 TEST_F(SuspectTableTest, CheckInAndOut) {

@@ -24,10 +24,10 @@
 
 #include "ANN/ANN.h"
 
-#include "Suspect.h"
 #include "Logger.h"
-#include "Config.h"
+#include "Suspect.h"
 #include "SuspectTable.h"
+#include "Doppelganger.h"
 
 namespace Nova
 {
@@ -75,6 +75,8 @@ public:
 	//		out - steam to print to
 	//		p 	- ANN point to print
 	void PrintPt(std::ostream &out, ANNpoint p);
+
+	Doppelganger *m_dopp;
 
 private:
 	// Disable the empty constructor, we need the logger/config/suspect table to do anything

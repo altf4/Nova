@@ -29,12 +29,12 @@ public:
     Nova_Manual(QWidget *parent);
     ~Nova_Manual();
     void closeEvent();
-    void setToSelected();
-    void setPaths();
+    void SetToSelected();
+    void SetPaths();
 
 private:
     Ui::Nova_ManualClass ui;
-    QStringList *paths;
+    QStringList *m_paths;
 
 private Q_SLOTS:
 	void on_helpTree_itemSelectionChanged();

@@ -27,8 +27,8 @@ Nova_Manual::Nova_Manual(QWidget *parent)
 	ui.setupUi(this);
 	mainw = (NovaGUI *)parent;
 
-	paths = new QStringList();
-	setPaths();
+	m_paths = new QStringList();
+	SetPaths();
 
 	// TODO: There's something up with the use of QStringList and
 	//       passing it to setSourcePaths, as well as setSource.
@@ -36,7 +36,7 @@ Nova_Manual::Nova_Manual(QWidget *parent)
 	//		 and it says that it can't create the actual variable for paths...
 
 	// set default help page here, as well as Text Browser Search Paths
-	ui.displayHelp->setSearchPaths(*paths);
+	ui.displayHelp->setSearchPaths(*m_paths);
 	ui.helpTree->setCurrentItem((ui.helpTree->itemAt(0,0)));
 }
 
@@ -51,9 +51,9 @@ void Nova_Manual::closeEvent()
 	mainw->m_isHelpUp = false;
 }
 
-void Nova_Manual::setPaths()
+void Nova_Manual::SetPaths()
 {
-	*paths << "/home/addison/Code/Nova/NovaGUI/HelpDocs/";
+	*m_paths << "/home/addison/Code/Nova/NovaGUI/HelpDocs/";
 }
 
 void Nova_Manual::on_helpTree_itemSelectionChanged()

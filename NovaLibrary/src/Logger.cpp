@@ -42,11 +42,11 @@ namespace Nova
 // Loads the configuration file into the class's state data
 	uint16_t Logger::LoadConfiguration()
 	{
-		m_messageInfo.smtp_addr = Config::Inst()->getSMTPAddr();
-		m_messageInfo.smtp_port = Config::Inst()->getSMTPPort();
-		m_messageInfo.smtp_domain = Config::Inst()->getSMTPDomain();
-		m_messageInfo.email_recipients = Config::Inst()->getSMTPEmailRecipients();
-		setUserLogPreferences(Config::Inst()->getLoggerPreferences());
+		m_messageInfo.smtp_addr = Config::Inst()->GetSMTPAddr();
+		m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
+		m_messageInfo.smtp_domain = Config::Inst()->GetSMTPDomain();
+		m_messageInfo.email_recipients = Config::Inst()->GetSMTPEmailRecipients();
+		SetUserLogPreferences(Config::Inst()->GetLoggerPreferences());
 
 		return 1;
 	}
@@ -56,28 +56,38 @@ namespace Nova
 
 	}
 
-	void Logger::Log(Nova::Levels messageLevel, string messageBasic, string messageAdv)
+	void Logger::Log(Nova::Levels messageLevel, const char* messageBasic,  const char* messageAdv,
+			const char* file,  const int& line)
 	{
 		pthread_rwlock_wrlock(&m_logLock);
 		string mask = getBitmask(messageLevel);
-
+		string tempStr = (string)messageAdv;
+		stringstream ss;
+		ss << "File " << file << " at line " << line << ": ";
 		// No advanced message? Log the same thing to both
-		if (messageAdv == "")
-			messageAdv = messageBasic;
+		if(tempStr == "")
+		{
+			ss << (string)messageBasic;
+		}
+		else
+		{
+			ss << (string)messageAdv;
+		}
+		tempStr = messageBasic;
 
 		if(mask.at(0) == '1')
 		{
-			Notify(messageLevel, messageBasic);
+			Notify(messageLevel, tempStr);
 		}
 
 		if(mask.at(1) == '1')
 		{
-			LogToFile(messageLevel, messageAdv);
+			LogToFile(messageLevel, ss.str());
 		}
 
 		if(mask.at(2) == '1')
 		{
-			Mail(messageLevel, messageBasic);
+			Mail(messageLevel, tempStr);
 		}
 
 		pthread_rwlock_unlock(&m_logLock);
@@ -90,12 +100,12 @@ namespace Nova
 		notify_init("Nova");
 		#ifdef NOTIFY_CHECK_VERSION
 		#if NOTIFY_CHECK_VERSION (0, 7, 0)
-		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->getPathIcon().c_str());
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str());
 		#else
-		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->getPathIcon().c_str(), NULL);
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str(), NULL);
 		#endif
 		#else
-		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->getPathIcon().c_str(), NULL);
+		note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str(), NULL);
 		#endif
 		notify_notification_set_timeout(note, 3000);
 		notify_notification_show(note, NULL);
@@ -111,10 +121,12 @@ namespace Nova
 
 	void Logger::Mail(uint16_t level, string message)
 	{
-
+		openlog("NovaMail", OPEN_SYSL, LOG_AUTHPRIV);
+		syslog(level, "%s %s", (m_levels[level].second).c_str(), message.c_str());
+		closelog();
 	}
 
-	void Logger::setUserLogPreferences(string logPrefString)
+	void Logger::SetUserLogPreferences(string logPrefString)
 	{
 		uint16_t size = logPrefString.size() + 1;
 		char * tokens;
@@ -180,20 +192,140 @@ namespace Nova
 		return DEBUG;
 	}
 
-	/*void Logger::setUserLogPreferences(Nova::Levels messageTypeLevel, Nova::Services services)
+	void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels messageTypeLevel, char upDown = '0')
 	{
-		userMap output = messageInfo.service_preferences;
-		bool end = false;
+		char * tokens;
+		char * parse;
+		uint16_t j = 0;
+		pair <pair <Nova::Services, Nova::Levels>, char> push;
+		pair <Nova::Services, Nova::Levels> insert;
+		char logPref[16];
 
-		for(uint16_t i = 0; i < messageInfo.service_preferences.size() && !end; i++)
+		strcpy(logPref, Config::Inst()->GetLoggerPreferences().c_str());
+
+		//If we didn't get a null string from the above statement,
+		// continue with the parsing.
+		if(strlen(logPref) > 0)
 		{
-			if(messageInfo.service_preferences[i].first == messageTypeLevel)
+			//This for-loop will traverse through the string searching for the
+			// character numeric representation of the services enum member passed
+			// as an argument to the function.
+			for(uint16_t i = 0; i < strlen(logPref); i += 4)
 			{
-				messageInfo.service_preferences[i].second = services;
-				end = true;
+				//If it finds it...
+				if(logPref[i] == (char)(services + 48))
+				{
+					//It replaces the pair's constituent message level with the messageTypeLevel
+					// argument that was passed.
+					logPref[i + 2] = (char)(messageTypeLevel + 48);
+
+					//Now we have to deal with some formatting issues:
+					//If a change to the current range modifier
+					// is requested, and there is a '+' or '-' at
+					// the requisite place in the string, replace it and
+					// move on the the next pair
+					if(upDown != '0' and logPref[i + 3] != ';')
+					{
+						logPref[i + 3] = upDown;
+						i++;
+					}
+					//Else, if there's a change requested and there's currently no
+					// range modifier, shift everything to the right one (and out
+					// of the range modifers spot) and place the range modifier into the
+					// character array
+					else if(upDown != '0' and logPref[i + 3] == ';')
+					{
+
+						char temp[16];
+						strcpy(temp, logPref);
+						logPref[i + 3] = upDown;
+
+						for(int j = i + 4; j < 16; j++)
+						{
+							logPref[j] = temp[j - 1];
+						}
+
+						i++;
+					}
+					//If nullification was requested, and there's a range modifier, remove it,
+					// shift everything to the left and move on
+					else if(upDown == '0' and logPref[i + 3] != ';')
+					{
+						char temp[16];
+						strcpy(temp, logPref);
+						logPref[i + 3] = ';';
+
+						for(int j = i + 4; j < 16; j++)
+						{
+							logPref[j] = temp[j + 1];
+						}
+
+						i++;
+					}
+					//Else if there's a 0 and no range modifer, do nothing.
+					else if(upDown == '0' and logPref[i + 3] == ';')
+					{
+						continue;
+					}
+				}
 			}
+
+			//Set the Config class instance's logger preference string to the new one
+			Config::Inst()->SetLoggerPreferences(std::string(logPref));
+
+			tokens = new char[strlen(logPref) + 1];
+			strcpy(tokens, logPref);
+
+			parse = strtok(tokens, ";");
+			m_messageInfo.service_preferences.clear();
+
+			//Parsing to update the m_messageInfo struct used in the logger class
+			// to dynamically determine what services are called for for a given log
+			// message's level
+			while(parse != NULL)
+			{
+				switch(parse[0])
+				{
+					case '0': insert.first = SYSLOG;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+					case '1': insert.first = LIBNOTIFY;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+					case '2': insert.first = EMAIL;
+							insert.second = parseLevelFromChar(parse[2]);
+							break;
+				}
+
+				if(parse[3] == '-')
+				{
+					upDown = '-';
+				}
+				else if(parse[3] == '+')
+				{
+					upDown = '+';
+				}
+				else
+				{
+					upDown = '0';
+				}
+
+				push.first = insert;
+				push.second = upDown;
+				m_messageInfo.service_preferences.push_back(push);
+				parse = strtok(NULL, ";");
+				j++;
+			}
+
+			delete tokens;
 		}
-	}*/
+		else
+		{
+			//log preference string in Config is null, log error and kick out of function
+			LOG(WARNING, "Unable to set new user preferences.",
+			"Unable to change user log preferences, due to NULL in Config class; check that the Config file is formatted correctly");
+		}
+	}
 
 	string Logger::getBitmask(Nova::Levels level)
 	{
@@ -264,6 +396,112 @@ namespace Nova
 		}
 
 		return mask;
+	}
+
+	void Logger::SetEmailRecipients(std::vector<std::string> recs)
+	{
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+
+		for(uint16_t i = 0; i < recs.size(); i++)
+		{
+			recipients.write(recs[i].c_str(), recs[i].size());
+			recipients.put('\n');
+		}
+
+		recipients.close();
+	}
+
+	void Logger::AppendEmailRecipients(std::vector<std::string> recs)
+	{
+		fstream repeat("/usr/share/nova/emails", ios::in | ios::out);
+		std::vector<std::string> check;
+
+		while(repeat.good())
+		{
+			std::string temp;
+			getline(repeat, temp);
+			check.push_back(temp);
+		}
+
+		repeat.close();
+
+		for(uint16_t i = 0; i < check.size(); i++)
+		{
+				for(uint16_t j = 0; j < recs.size(); j++)
+				{
+					if(check[i].compare(recs[j]) == 0)
+					{
+						recs.erase(recs.begin() + j);
+					}
+				}
+		}
+
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::app);
+
+		if(!recipients.fail())
+		{
+			for(uint16_t i = 0; i < recs.size(); i++)
+			{
+				recipients.write(recs[i].c_str(), recs[i].size());
+				recipients.put('\n');
+			}
+		}
+
+		recipients.close();
+	}
+
+	/*void Logger::ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append)
+	{
+
+	}*/
+
+	void Logger::RemoveEmailRecipients(std::vector<std::string> recs)
+	{
+		//check through the vector; if an email is in the vector and present in the file,
+		// do not rewrite to the new emails file. If and email isn't there, don't do anything.
+		// If an email in the vector doesn't correspond to any email in the file, do nothing.
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out);
+		std::vector<std::string> check;
+		bool print = true;
+
+		while(recipients.good())
+		{
+			std::string temp;
+			getline(recipients, temp);
+			check.push_back(temp);
+		}
+
+		recipients.close();
+
+		fstream writer("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+
+		for(uint16_t i = 0; i < check.size(); i++)
+		{
+			print = true;
+
+			for(uint16_t j = 0; j < recs.size(); j++)
+			{
+				if(check[i].compare(recs[j]) == 0)
+				{
+					print = false;
+				}
+			}
+
+			if(print)
+			{
+				writer.write(check[i].c_str(), check[i].size());
+				writer.put('\n');
+			}
+		}
+
+		writer.close();
+	}
+
+	void Logger::ClearEmailRecipients()
+	{
+		//open the file with ios::trunc and then close it
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+		recipients.close();
 	}
 
 	Logger::Logger()

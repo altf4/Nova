@@ -18,10 +18,10 @@
 
 #include "HoneydConfiguration.h"
 #include "NovaUtil.h"
+#include "Logger.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <syslog.h>
 #include <math.h>
 
 using namespace std;
@@ -32,7 +32,7 @@ using boost::property_tree::xml_parser::trim_whitespace;
 
 HoneydConfiguration::HoneydConfiguration()
 {
-	m_homePath = Config::Inst()->getPathHome();
+	m_homePath = Config::Inst()->GetPathHome();
 
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
@@ -91,9 +91,9 @@ void HoneydConfiguration::LoadPortsTemplate()
 			//Required xml entries
 			p.portName = v.second.get<std::string>("name");
 
-			if (!p.portName.compare(""))
+			if(!p.portName.compare(""))
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				LOG(ERROR, "Problem loading honeyd XML files.", "");
 				continue;
 			}
 
@@ -117,7 +117,7 @@ void HoneydConfiguration::LoadPortsTemplate()
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading ports: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		LOG(ERROR, "Problem loading ports: "+string(e.what())+".", "");
 	}
 }
 
@@ -137,7 +137,7 @@ void HoneydConfiguration::LoadNodesTemplate()
 		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 		{
 			//Find the specified group
-			if(!v.second.get<std::string>("name").compare(Config::Inst()->getGroup()))
+			if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 			{
 				try //Null Check
 				{
@@ -153,19 +153,19 @@ void HoneydConfiguration::LoadNodesTemplate()
 					}
 					catch(std::exception &e)
 					{
-						syslog(SYSL_ERR, "File: %s Line: %d Problem loading nodes: %s", __FILE__, __LINE__, string(e.what()).c_str());
+						LOG(ERROR, "Problem loading nodes: "+string(e.what())+".", "");
 					}
 				}
 				catch(std::exception &e)
 				{
-					syslog(SYSL_ERR, "File: %s Line: %d Problem loading subnets: %s", __FILE__, __LINE__, string(e.what()).c_str());
+					LOG(ERROR, "Problem loading subnets: "+string(e.what())+".", "");
 				}
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading group: %s - %s", __FILE__, __LINE__, Config::Inst()->getGroup().c_str(), string(e.what()).c_str());
+		LOG(ERROR, "Problem loading groups: "+Config::Inst()->GetGroup()+" - "+string(e.what()) +".", "");
 	}
 }
 
@@ -237,7 +237,7 @@ void HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile set parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		LOG(ERROR, "Problem loading profile set parameters: "+string(e.what())+".", "");
 	}
 }
 
@@ -279,7 +279,9 @@ void HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 					portPair.first = prt->portName;
 					portPair.second = false;
 					if(!p->ports.size())
+					{
 						p->ports.push_back(portPair);
+					}
 					else
 					{
 						uint i = 0;
@@ -293,9 +295,13 @@ void HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 							break;
 						}
 						if(i < p->ports.size())
+						{
 							p->ports.insert(p->ports.begin()+i, portPair);
+						}
 						else
+						{
 							p->ports.push_back(portPair);
+						}
 					}
 				}
 				continue;
@@ -311,7 +317,7 @@ void HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading profile add parameters: %s", __FILE__, __LINE__, string(e.what()).c_str());
+		LOG(ERROR, "Problem loading profile add parameters: "+string(e.what())+".", "");
 	}
 }
 
@@ -333,9 +339,9 @@ void HoneydConfiguration::LoadProfileChildren(string parent)
 			//Gets name, initializes DHCP
 			prof.name = v.second.get<std::string>("name");
 
-			if (!prof.name.compare(""))
+			if(!prof.name.compare(""))
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
+				LOG(ERROR, "Problem loading honeyd XML files.", "");
 				continue;
 			}
 
@@ -368,7 +374,6 @@ void HoneydConfiguration::LoadProfileChildren(string parent)
 			//Saves the profile
 			m_profiles[prof.name] = prof;
 
-
 			try //Conditional: if profile has children (not leaf)
 			{
 				LoadProfileChildren(prof.name);
@@ -378,8 +383,7 @@ void HoneydConfiguration::LoadProfileChildren(string parent)
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading sub profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
-
+		LOG(ERROR, "Problem loading sub profiles: "+string(e.what())+".", "");
 	}
 }
 
@@ -401,10 +405,9 @@ void HoneydConfiguration::LoadScriptsTemplate()
 			//Each script consists of a name and path to that script
 			s.name = v.second.get<std::string>("name");
 
-			if (!s.name.compare(""))
+			if(!s.name.compare(""))
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-
+				LOG(ERROR, "Problem loading honeyd XML files.","");
 				continue;
 			}
 
@@ -414,8 +417,7 @@ void HoneydConfiguration::LoadScriptsTemplate()
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading scripts: %s", __FILE__, __LINE__, string(e.what()).c_str());
-
+		LOG(ERROR, "Problem loading scripts: "+string(e.what())+".", "");
 	}
 }
 
@@ -521,7 +523,7 @@ void HoneydConfiguration::SaveAllTemplates()
 	BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 	{
 		//Find the specified group
-		if(!v.second.get<std::string>("name").compare(Config::Inst()->getGroup()))
+		if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 		{
 			//Load Subnets first, they are needed before we can load nodes
 			v.second.put_child("subnets", m_subnetTree);
@@ -555,7 +557,7 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 
 	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if (!it->second.parentProfile.compare(""))
+		if(!it->second.parentProfile.compare(""))
 		{
 			string pString = ProfileToString(&it->second);
 			out << pString;
@@ -576,7 +578,7 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 					parentFound = true;
 					continue;
 				}
-				if (!it->first.compare(profilesParsed[i]))
+				if(!it->first.compare(profilesParsed[i]))
 				{
 					selfMatched = true;
 					break;
@@ -594,34 +596,49 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 	}
 
 	// Start node section
-	out << endl << endl;
 	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if (!it->second.enabled)
+		if(!it->second.enabled)
 		{
 			continue;
 		}
-		else if(!it->second.name.compare("Doppelganger") && Config::Inst()->getIsDmEnabled())
+		//We write the dopp regardless of whether or not it is enabled so that it can be toggled during runtime.
+		else if(!it->second.name.compare("Doppelganger"))
 		{
-			out << "bind " << it->second.IP << " " << it->second.pfile << endl;
+			string pString = DoppProfileToString(&m_profiles[it->second.pfile]);
+			out << endl << pString;
+			out << "bind " << it->second.IP << " DoppelgangerReservedTemplate" << endl << endl;
+			//Use configured or discovered loopback
 		}
 		else switch (m_profiles[it->second.pfile].type)
 		{
 			case static_IP:
+			{
 				out << "bind " << it->second.IP << " " << it->second.pfile << endl;
 				if(it->second.MAC.compare(""))
+				{
 					out << "set " << it->second.IP << " ethernet \"" << it->second.MAC << "\"" << endl;
+				}
 				break;
+			}
 			case staticDHCP:
+			{
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet \"" << it->second.MAC << "\"" << endl;
 				break;
+			}
 			case randomDHCP:
+			{
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
 				break;
+			}
+			default:
+			{
+				break;
+			}
 		}
 	}
 
-	ofstream outFile(Config::Inst()->getPathConfigHoneydHs().data());
+	ofstream outFile(Config::Inst()->GetPathConfigHoneydHS().data());
 	outFile << out.str() << endl;
 	outFile.close();
 }
@@ -695,15 +712,13 @@ void HoneydConfiguration::LoadSubnets(ptree *ptr)
 			}
 			else
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d Unexpected Entry in file: %s", __FILE__, __LINE__, string(v.first.data()).c_str());
-
+				LOG(ERROR, "Unexpected Entry in file: "+string(v.first.data())+".", "");
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading subnets: %s", __FILE__, __LINE__, string(e.what()).c_str());
-
+		LOG(ERROR, "Problem loading subnets: "+string(e.what()), "");
 	}
 }
 
@@ -733,10 +748,9 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 				n.enabled = v.second.get<bool>("enabled");
 				n.pfile = v.second.get<std::string>("profile.name");
 
-				if (!n.pfile.compare(""))
+				if(!n.pfile.compare(""))
 				{
-					syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-
+					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
 				}
 
@@ -750,7 +764,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 					n.MAC = v.second.get<std::string>("MAC");
 				}
 				catch(...){}
-				if(!n.IP.compare(Config::Inst()->getDoppelIp()))
+				if(!n.IP.compare(Config::Inst()->GetDoppelIp()))
 				{
 					n.name = "Doppelganger";
 					n.sub = n.interface;
@@ -766,13 +780,13 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 
 					//***** STATIC IP ********//
 					case static_IP:
+					{
 
 						n.name = n.IP;
 
-						if (!n.name.compare(""))
+						if(!n.name.compare(""))
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-
+							LOG(ERROR, "Problem loading honeyd XML files.", "");
 							continue;
 						}
 
@@ -786,7 +800,9 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						{
 							//If node falls outside a subnets range skip it
 							if((n.realIP < it->second.base) || (n.realIP > it->second.max))
+							{
 								continue;
+							}
 							//If this is the smallest range
 							if(it->second.maskBits > max)
 							{
@@ -820,40 +836,32 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						//If no subnet found, can't use node unless it's doppelganger.
 						else
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d Node at IP: %s is outside all valid subnet "
-									"ranges", __FILE__, __LINE__, n.IP.c_str());
-
+							LOG(ERROR, "Node at IP: "+ n.IP+"is outside all valid subnet ranges.", "");
 						}
 						break;
-
+					}
 
 					//***** STATIC DHCP (static MAC) ********//
 					case staticDHCP:
-
+					{
 						//If no MAC is set, there's a problem
 						if(!n.MAC.size())
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled node using profile %s "
-									"does not have a MAC Address.",
-									__FILE__, __LINE__, string(n.pfile).c_str());
-
+							LOG(ERROR, "DHCP Enabled node using profile: "+ n.pfile+"does not have a MAC Address.", "");
 							continue;
 						}
 
 						//Associated MAC is already in use, this is not allowed, throw out the node
 						if(m_nodes.find(n.MAC) != m_nodes.end())
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d Duplicate MAC address detected "
-									"in node: %s", __FILE__, __LINE__, n.MAC.c_str());
-
+							LOG(ERROR, "Duplicate MAC address detected in node: "+ n.MAC, "");
 							continue;
 						}
 						n.name = n.MAC;
 
-						if (!n.name.compare(""))
+						if(!n.name.compare(""))
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-
+							LOG(ERROR, "Problem loading honeyd XML files.", "");
 							continue;
 						}
 
@@ -861,9 +869,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						// If no valid subnet/interface found
 						if(!n.sub.compare(""))
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node with MAC: %s "
-									"is unable to resolve it's interface.",__FILE__, __LINE__, n.MAC.c_str());
-
+							LOG(ERROR, "DHCP Enabled Node with MAC: "+n.MAC+" is unable to resolve it's interface.","");
 							continue;
 						}
 
@@ -873,16 +879,16 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						//Put address of saved node in subnet's list of nodes.
 						m_subnets[m_nodes[n.name].sub].nodes.push_back(n.name);
 						break;
+					}
 
 					//***** RANDOM DHCP (random MAC each time run) ********//
 					case randomDHCP:
-
+					{
 						n.name = n.pfile + " on " + n.interface;
 
-						if (!n.name.compare(""))
+						if(!n.name.compare(""))
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-
+							LOG(ERROR, "Problem loading honeyd XML files.", "");
 							continue;
 						}
 
@@ -898,8 +904,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						// If no valid subnet/interface found
 						if(!n.sub.compare(""))
 						{
-							syslog(SYSL_ERR, "File: %s Line: %d DHCP Enabled Node is unable to resolve "
-									"it's interface: %s.", __FILE__, __LINE__, n.interface.c_str());
+							LOG(ERROR, "DHCP Enabled Node is unable to resolve it's interface: " +n.interface,"");
 							continue;
 						}
 						//save the node in the table
@@ -908,19 +913,22 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						//Put address of saved node in subnet's list of nodes.
 						m_subnets[m_nodes[n.name].sub].nodes.push_back(n.name);
 						break;
+					}
+					default:
+					{
+						break;
+					}
 				}
 			}
 			else
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d Unexpected Entry in file: %s", __FILE__, __LINE__, string(v.first.data()).c_str());
-
+				LOG(ERROR, "Unexpected Entry in file: "+string(v.first.data()), "");
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading nodes: %s", __FILE__, __LINE__, string(e.what()).c_str());
-
+		LOG(ERROR, "Problem loading nodes: "+ string(e.what()), "");
 	}
 }
 
@@ -947,10 +955,9 @@ void HoneydConfiguration::LoadProfilesTemplate()
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				p.name = v.second.get<std::string>("name");
 
-				if (!p.name.compare(""))
+				if(!p.name.compare(""))
 				{
-					syslog(SYSL_ERR, "File: %s Line: %d Problem loading honeyd XML files", __FILE__, __LINE__);
-
+					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
 				}
 
@@ -997,14 +1004,13 @@ void HoneydConfiguration::LoadProfilesTemplate()
 			}
 			else
 			{
-				syslog(SYSL_ERR, "File: %s Line: %d Invalid XML Path %s", __FILE__, __LINE__, string(v.first.data()).c_str());
+				LOG(ERROR, "Invalid XML Path " +string(v.first.data())+".", "");
 			}
 		}
 	}
 	catch(std::exception &e)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Problem loading Profiles: %s", __FILE__, __LINE__, string(e.what()).c_str());
-
+		LOG(ERROR, "Problem loading Profiles: "+string(e.what())+".", "");
 	}
 }
 
@@ -1012,47 +1018,67 @@ string HoneydConfiguration::ProfileToString(profile* p)
 {
 	stringstream out;
 
-	if (!p->parentProfile.compare("default") || !p->parentProfile.compare(""))
+	if(!p->parentProfile.compare("default") || !p->parentProfile.compare(""))
+	{
 		out << "create " << p->name << endl;
+	}
 	else
+	{
 		out << "clone " << p->parentProfile << " " << p->name << endl;
+	}
 
 	out << "set " << p->name  << " default tcp action " << p->tcpAction << endl;
 	out << "set " << p->name  << " default udp action " << p->udpAction << endl;
 	out << "set " << p->name  << " default icmp action " << p->icmpAction << endl;
 
-	if (p->personality.compare(""))
+	if(p->personality.compare(""))
+	{
 		out << "set " << p->name << " personality \"" << p->personality << '"' << endl;
+	}
 
-	if (p->ethernet.compare(""))
+	if(p->ethernet.compare(""))
+	{
 		out << "set " << p->name << " ethernet \"" << p->ethernet << '"' << endl;
+	}
 
-	if (p->uptime.compare(""))
+	if(p->uptime.compare(""))
+	{
 		out << "set " << p->name << " uptime " << p->uptime << endl;
+	}
 
-	if (p->dropRate.compare(""))
+	if(p->dropRate.compare(""))
+	{
 		out << "set " << p->name << " droprate in " << p->dropRate << endl;
+	}
 
 	for (uint i = 0; i < p->ports.size(); i++)
 	{
 		// Only include non-inherited ports
-		if (!p->ports[i].second)
+		if(!p->ports[i].second)
 		{
 			out << "add " << p->name;
 			if(!m_ports[p->ports[i].first].type.compare("TCP"))
+			{
 				out << " tcp port ";
+			}
 			else
+			{
 				out << " udp port ";
+			}
 			out << m_ports[p->ports[i].first].portNum << " ";
 
-			if (!(m_ports[p->ports[i].first].behavior.compare("script")))
+			if(!(m_ports[p->ports[i].first].behavior.compare("script")))
 			{
 				string scriptName = m_ports[p->ports[i].first].scriptName;
 
-				if (m_scripts[scriptName].path.compare(""))
+				if(m_scripts[scriptName].path.compare(""))
+				{
 					out << '"' << m_scripts[scriptName].path << '"'<< endl;
+				}
 				else
-					syslog(SYSL_ERR, "File: %s Line: %d Error writing profile port script %s: Path to script is null", __FILE__, __LINE__, scriptName.c_str());
+				{
+					LOG(ERROR, "Error writing profile port script.", "Path to script "+scriptName+" is null.");
+				}
 			}
 			else
 			{
@@ -1060,11 +1086,73 @@ string HoneydConfiguration::ProfileToString(profile* p)
 			}
 		}
 	}
-
 	out << endl;
 	return out.str();
 }
 
+//
+string HoneydConfiguration::DoppProfileToString(profile* p)
+{
+	stringstream out;
+	out << "create DoppelgangerReservedTemplate" << endl;
+
+	out << "set DoppelgangerReservedTemplate default tcp action " << p->tcpAction << endl;
+	out << "set DoppelgangerReservedTemplate default udp action " << p->udpAction << endl;
+	out << "set DoppelgangerReservedTemplate default icmp action " << p->icmpAction << endl;
+
+	if(p->personality.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->personality << '"' << endl;
+	}
+
+	if(p->uptime.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " uptime " << p->uptime << endl;
+	}
+
+	if(p->dropRate.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->dropRate << endl;
+	}
+
+	for (uint i = 0; i < p->ports.size(); i++)
+	{
+		// Only include non-inherited ports
+		if(!p->ports[i].second)
+		{
+			out << "add DoppelgangerReservedTemplate";
+			if(!m_ports[p->ports[i].first].type.compare("TCP"))
+			{
+				out << " tcp port ";
+			}
+			else
+			{
+				out << " udp port ";
+			}
+			out << m_ports[p->ports[i].first].portNum << " ";
+
+			if(!(m_ports[p->ports[i].first].behavior.compare("script")))
+			{
+				string scriptName = m_ports[p->ports[i].first].scriptName;
+
+				if(m_scripts[scriptName].path.compare(""))
+				{
+					out << '"' << m_scripts[scriptName].path << '"'<< endl;
+				}
+				else
+				{
+					LOG(ERROR, "Error writing profile port script.", "Path to script "+scriptName+" is null.");
+				}
+			}
+			else
+			{
+				out << m_ports[p->ports[i].first].behavior << endl;
+			}
+		}
+	}
+	out << endl;
+	return out.str();
+}
 
 SubnetTable HoneydConfiguration::GetSubnets() const
 {

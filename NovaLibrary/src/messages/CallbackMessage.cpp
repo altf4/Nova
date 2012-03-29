@@ -22,10 +22,11 @@
 namespace Nova
 {
 
-CallbackMessage::CallbackMessage()
+CallbackMessage::CallbackMessage(enum CallbackType callbackType)
 {
 	m_suspect = NULL;
 	m_messageType = CALLBACK_MESSAGE;
+	m_callbackType = callbackType;
 }
 
 CallbackMessage::~CallbackMessage()
@@ -37,6 +38,7 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 {
 	if( length < CALLBACK_MSG_MIN_SIZE )
 	{
+		m_serializeError = true;
 		return;
 	}
 
@@ -118,7 +120,7 @@ char *CallbackMessage::Serialize(uint32_t *length)
 			{
 				return NULL;
 			}
-			char *suspectTempBuffer[MAX_MSG_SIZE];
+			char suspectTempBuffer[MAX_MSG_SIZE];
 			m_suspectLength = m_suspect->SerializeSuspect((u_char*)suspectTempBuffer);
 			if(m_suspectLength == 0)
 			{

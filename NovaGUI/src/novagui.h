@@ -39,7 +39,7 @@ struct suspectItem
 	//We need a second item because an item can only be in one list at a time
 	QListWidgetItem * mainItem;
 };
-typedef google::dense_hash_map<in_addr_t, suspectItem, tr1::hash<in_addr_t>, eqaddr > SuspectGUIHashTable;
+typedef google::dense_hash_map<uint64_t, suspectItem, std::tr1::hash<uint64_t>, eqaddr > SuspectGUIHashTable;
 
 class NovaGUI : public QMainWindow
 {
@@ -48,9 +48,9 @@ class NovaGUI : public QMainWindow
 public:
 
     bool m_isHelpUp;
-    HoneydConfiguration *honeydConfig;
+    HoneydConfiguration *m_honeydConfig;
 
-    DialogPrompter *prompter;
+    DialogPrompter *m_prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;
     messageHandle HONEYD_LOAD_FAIL, UNEXPECTED_ENTRY, HONEYD_INVALID_SUBNET;
     messageHandle LAUNCH_TRAINING_MERGE, NODE_LOAD_FAIL, CANNOT_DELETE_PORT, CANNOT_DELETE_ITEM;
@@ -61,7 +61,8 @@ public:
     Ui::NovaGUIClass ui;
 
     ///Processes the recieved suspect in the suspect table
-    void ProcessReceivedSuspect(suspectItem suspect);
+    	// initialization - if initializing suspects, don't overwrite existing ones and don't use the qsignal for drawing
+    void ProcessReceivedSuspect(suspectItem suspect, bool initialization);
 
     void SystemStatusRefresh();
 
@@ -85,6 +86,9 @@ public:
     void SetFeatureDistances(Nova::Suspect* suspect);
 
     void LoadNovadConfiguration();
+
+    // Connect to novad and make the callback socket
+    bool ConnectGuiToNovad();
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);

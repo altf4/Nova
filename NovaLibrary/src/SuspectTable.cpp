@@ -21,11 +21,11 @@
 #include "Config.h"
 #include "Logger.h"
 
-#include "boost/format.hpp"
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace Nova;
-using boost::format;
 
 namespace Nova
 {
@@ -193,12 +193,15 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			//If the owner is this thread
 			if(pthread_equal(m_table[key]->GetOwner(), pthread_self()))
 			{
-				ANNpoint aNN =  annAllocPt(Config::Inst()->getEnabledFeatureCount());
+				ANNpoint aNN =  annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
 				m_table[key]->UnlockAsOwner();
-				if (m_table[key]->SetAnnPoint(aNN) != 0)
+				int eVal = m_table[key]->SetAnnPoint(aNN);
+				if (eVal != 0)
 				{
-					LOG(CRITICAL, (format("File %1% at line %2%: Failed to set Ann Point on suspect. This may cause a segfault in the future.")%__FILE__%__LINE__).str());
+					std::stringstream ss;
+					ss << "SetAnnPoint Failed on suspect " << key << " with return value: " << eVal << ".";
+					LOG(CRITICAL, "Error updating suspect.", ss.str());
 				}
 				annDeallocPt(aNN);
 				m_table[key]->SetClassification(suspectCopy.GetClassification());
@@ -317,7 +320,7 @@ SuspectTableRet SuspectTable::Erase(uint64_t key)
 	}
 	else
 	{
-		Rdlock();
+		Wrlock();
 		SuspectHashTable::iterator it = m_table.find(key);
 		if(it != m_table.end())
 		{
@@ -336,6 +339,7 @@ SuspectTableRet SuspectTable::Erase(uint64_t key)
 			Unlock();
 			return SUCCESS;
 		}
+		Unlock();
 	}
 	//Shouldn't get here, IsValidKey should cover this case, this is here only to prevent warnings or incase of error
 	return KEY_INVALID;
@@ -347,10 +351,14 @@ vector<uint64_t> SuspectTable::GetHostileSuspectKeys()
 {
 	vector<uint64_t> ret;
 	ret.clear();
-	Rdlock();
+	Wrlock();
 	for(SuspectHashTable::iterator it = m_table.begin(); it != m_table.end(); it++)
+	{
 		if(it->second->GetIsHostile())
+		{
 			ret.push_back(it->first);
+		}
+	}
 	Unlock();
 	return ret;
 }
@@ -361,10 +369,14 @@ vector<uint64_t> SuspectTable::GetBenignSuspectKeys()
 {
 	vector<uint64_t> ret;
 	ret.clear();
-	Rdlock();
+	Wrlock();
 	for(SuspectHashTable::iterator it = m_table.begin(); it != m_table.end(); it++)
+	{
 		if(!it->second->GetIsHostile())
+		{
 			ret.push_back(it->first);
+		}
+	}
 	Unlock();
 	return ret;
 }
@@ -382,10 +394,10 @@ SuspectTableRet SuspectTable::GetHostility(uint64_t key)
 	if(m_table[key]->GetIsHostile())
 	{
 		Unlock();
-		return (SuspectTableRet)1;
+		return IS_HOSTILE;
 	}
 	Unlock();
-	return (SuspectTableRet)0;
+	return IS_BENIGN;
 }
 
 //Get the size of the Suspect Table
@@ -620,6 +632,23 @@ int SuspectTable::NumOwners()
 	pthread_rwlock_unlock(&m_ownerLock);
 	return ret;
 
+}
+
+void SuspectTable::SaveSuspectsToFile(string filename)
+{
+	LOG(NOTICE, "Saving Suspects...", "Saving Suspects in a text format to file "+filename);
+	ofstream out(filename.c_str());
+	if(!out.is_open())
+	{
+		LOG(ERROR,"Unable to open file requested file.",
+			"Unable to open or create file located at "+filename+".");
+		return;
+	}
+	for(SuspectTableIterator it = Begin(); it.GetIndex() < Size(); ++it)
+	{
+		out << it.Current().ToString() << endl;
+	}
+	out.close();
 }
 }
 

@@ -55,6 +55,8 @@ Thumbs.db
 #######################
 Novad/Release/Novad
 Novad/Debug/Novad
+NovaCLI/Release/NovaCLI
+NovaCLI/Debug/NovaCLI
 NovaGUI/.settings/
 NovaGUI/Makefile
 NovaGUI/Makefile.Debug
@@ -101,4 +103,9 @@ NovaGUI/moc_run_popup.cpp
 /Nova_UI_Core/Release/Nova_UI_Core
 /NovaTest/Debug
 /NovaLibrary/.settings/org.eclipse.cdt.codan.core.prefs
-/RemoteSystemsTempFiles/.project
+/Novad/Debug/novad
+/Novad/Release/novad
+/NovaGUI/novagui
+/NovaCLI/Release/novacli
+/NovaCLI/Debug/novacli
+/NovaTest/NovadSource/*

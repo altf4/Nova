@@ -25,25 +25,18 @@ using namespace Nova;
 
 bool Nova::StartHaystack()
 {
-	string executeString = "nohup sudo honeyd -d -i eth0 -i lo -f " + Config::Inst()->getPathHome()
-					+ "/Config/haystack.config -p " + Config::Inst()->getPathReadFolder()
-					+ "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	string executeString = "nohup sudo honeyd -d -i "+Config::Inst()->GetInterface()+" -i "+Config::Inst()->GetDoppelInterface()
+		+" -f " + Config::Inst()->GetPathHome() + "/Config/haystack.config -p " + Config::Inst()->GetPathReadFolder()
+		+ "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
 
-	int pid = fork();
-	if(pid == -1)
+	if(system(executeString.c_str()) != 0)
 	{
-		//Fork failed
 		return false;
 	}
-
-	//If we are the child process (IE: Haystack)
-	if(pid == 0)
+	else
 	{
-		system(executeString.c_str());
-		exit(EXIT_SUCCESS);
+		return true;
 	}
-
-	return true;
 }
 
 bool  Nova::StopHaystack()

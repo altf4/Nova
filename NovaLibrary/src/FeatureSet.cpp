@@ -74,43 +74,43 @@ void FeatureSet::CalculateAll()
 {
 	CalculateTimeInterval();
 
-	if (Config::Inst()->isFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
+	if (Config::Inst()->IsFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
 			Calculate(IP_TRAFFIC_DISTRIBUTION);
 	}
-	if (Config::Inst()->isFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
+	if (Config::Inst()->IsFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
 	{
 			Calculate(PORT_TRAFFIC_DISTRIBUTION);
 	}
-	if (Config::Inst()->isFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
+	if (Config::Inst()->IsFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
 	{
 			Calculate(HAYSTACK_EVENT_FREQUENCY);
 	}
-	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_MEAN))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
 	{
 			Calculate(PACKET_SIZE_MEAN);
 	}
-	if (Config::Inst()->isFeatureEnabled(PACKET_SIZE_DEVIATION))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_DEVIATION))
 	{
-		if (!Config::Inst()->isFeatureEnabled(PACKET_SIZE_MEAN))
+		if (!Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
 			Calculate(PACKET_SIZE_MEAN);
 		Calculate(PACKET_SIZE_DEVIATION);
 	}
-	if (Config::Inst()->isFeatureEnabled(DISTINCT_IPS))
+	if (Config::Inst()->IsFeatureEnabled(DISTINCT_IPS))
 	{
 			Calculate(DISTINCT_IPS);
 	}
-	if (Config::Inst()->isFeatureEnabled(DISTINCT_PORTS))
+	if (Config::Inst()->IsFeatureEnabled(DISTINCT_PORTS))
 	{
 			Calculate(DISTINCT_PORTS);
 	}
-	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_MEAN))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
 	{
 			Calculate(PACKET_INTERVAL_MEAN);
 	}
-	if (Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_DEVIATION))
+	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
 	{
-		if (!Config::Inst()->isFeatureEnabled(PACKET_INTERVAL_MEAN))
+		if (!Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
 				Calculate(PACKET_INTERVAL_MEAN);
 			Calculate(PACKET_INTERVAL_DEVIATION);
 	}

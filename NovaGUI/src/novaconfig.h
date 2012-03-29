@@ -43,15 +43,15 @@ class NovaConfig : public QMainWindow
 	Q_OBJECT
 
 public:
-	vector<pair<string, string> > nmapPersonalities;
+	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
 
-	SubnetTable subnets;
-	NodeTable nodes;
-	ProfileTable profiles;
+	SubnetTable m_subnets;
+	NodeTable m_nodes;
+	ProfileTable m_profiles;
 
     QMutex * m_loading;
 
-    NovaConfig(QWidget *parent = 0, string homePath = "");
+    NovaConfig(QWidget *parent = 0, std::string homePath = "");
 
     ~NovaConfig();
 
@@ -63,8 +63,8 @@ public:
     void DisplayNmapPersonalityWindow();
     //Renames the nodes to the correct unique identifier based on node type;
     bool SyncAllNodesWithProfiles();
-    //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
-    string LookupMACVendor(uint MACPrefix);
+    //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor std::string
+    std::string LookupMACVendor(uint MACPrefix);
     //Load MAC vendor prefix choices from nmap mac prefix file
     void LoadMACAddressVendorPrefixesFromFile();
     //Load nmap personalities from the nmap-os-db file
@@ -72,7 +72,7 @@ public:
 
     //Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
     // *note conflicts are only checked for locally, weird things may happen if the address is already being used.
-    string GenerateUniqueMACAddress(string vendor);
+    std::string GenerateUniqueMACAddress(std::string vendor);
 
     // Creates a new item for the featureList
     //		name - Name to be displayed, e.g. "Ports Contacted"
@@ -104,9 +104,9 @@ public:
 
     //Creates a tree widget item for the profile based on it's parent
     //If no parent it is created as a root node
-    void CreateProfileItem(string pstr);
+    void CreateProfileItem(std::string pstr);
     //Creates a ptree for a profile with current values
-    void CreateProfileTree(string name);
+    void CreateProfileTree(std::string name);
 
     //Temporarily stores changed configuration options when selection is changed
     // to permanently store these changes call pushData();
@@ -114,20 +114,20 @@ public:
     //saves the inheritance values of the profiles, called by saveProfile
     void SaveInheritedProfileSettings();
     //Removes a profile, all of it's children and any nodes that currently use it
-    void DeleteProfile(string name);
+    void DeleteProfile(std::string name);
 
     //Recreates the profile tree of all ancestors
     //This needs to be called after adding, deleting or storing changes to a profile.
-    void UpdateProfileTree(string name, recursiveDirection direction);
+    void UpdateProfileTree(std::string name, recursiveDirection direction);
 
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
-    void LoadProfilesFromTree(string parent);
+    void LoadProfilesFromTree(std::string parent);
     //set profile configurations (only called in LoadProfilesFromTree)
     void LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
     //add ports or subsystems (only called in LoadProfilesFromTree)
     void LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
     //recursive descent down profile tree (only called in LoadProfilesFromTree)
-    void LoadProfileChildren(string parent);
+    void LoadProfileChildren(std::string parent);
 
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
@@ -257,9 +257,9 @@ private:
     Ui::NovaConfigClass ui;
 
     //Keys used to maintain and lookup current selections
-    string m_currentProfile;
-    string m_currentNode;
-    string m_currentSubnet;
+    std::string m_currentProfile;
+    std::string m_currentNode;
+    std::string m_currentSubnet;
 
     nodePopup * m_nodewindow;
     NovaGUI * m_mainwindow;
@@ -273,15 +273,15 @@ private:
     bool m_loadingDefaultActions;
 
     //Value set by dialog windows
-    string m_retVal;
+    std::string m_retVal;
 
     VendorMacDb m_macAddresses;
 
 
-    string homePath;
+    std::string m_homePath;
 
-    PortTable ports;
-    ScriptTable scripts;
+    PortTable m_ports;
+    ScriptTable m_scripts;
 };
 
 class TreeItemComboBox : public QComboBox
@@ -292,8 +292,8 @@ public:
 
 	TreeItemComboBox(NovaConfig * parent = 0, QTreeWidgetItem* buddy = 0)
 	{
-		this->parent = parent;
-		this->buddy = buddy;
+		this->m_parent = parent;
+		this->m_buddy = buddy;
 		this->setFocusPolicy(Qt::ClickFocus);
 		this->setContextMenuPolicy(Qt::NoContextMenu);
 		this->setAutoFillBackground(true);
@@ -301,14 +301,14 @@ public:
 	}
 	~TreeItemComboBox(){}
 
-	NovaConfig * parent;
-	QTreeWidgetItem * buddy;
+	NovaConfig * m_parent;
+	QTreeWidgetItem * m_buddy;
 
 public Q_SLOTS:
 	void setCurrentIndex(int index)
 	{
 		QComboBox::setCurrentIndex(index);
-		Q_EMIT notifyParent(buddy, true);
+		Q_EMIT notifyParent(m_buddy, true);
 	}
 
 	Q_SIGNALS:
@@ -322,7 +322,7 @@ protected:
 	void focusInEvent(QFocusEvent * e)
 	{
 		e->ignore();
-		Q_EMIT notifyParent(buddy, false);
+		Q_EMIT notifyParent(m_buddy, false);
 	}
 
 };

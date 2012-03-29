@@ -71,16 +71,16 @@ public:
     void SetDefaultAction(QAction * action);
     void SetAlternativeAction(QAction * action);
     dialogType GetMessageType();
-    QAction * GetDefaultAction();
-    QAction * GetAlternativeAction();
+    QAction *GetDefaultAction();
+    QAction *GetAlternativeAction();
 
-    QCheckBox *checkBox;
+    QCheckBox *m_checkBox;
 
 private:
-    dialogType type;
-    QAction * defaultAct;
-    QAction * alternativeAct;
-	QLabel *checkBoxLabel;
+    dialogType m_type;
+    QAction *m_defaultAct;
+    QAction *m_alternativeAct;
+	QLabel *m_checkBoxLabel;
 };
 
 #endif // DIALOGPROMPT_H

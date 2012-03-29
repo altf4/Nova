@@ -16,26 +16,54 @@
 // Description : Handles requests for information from Novad
 //============================================================================
 
+#include "Connection.h"
 #include "StatusQueries.h"
 #include "messages/ControlMessage.h"
+#include "messages/RequestMessage.h"
+#include "messages/ErrorMessage.h"
+#include "Logger.h"
+
+#include <iostream>
 
 extern int novadListenSocket;
+using namespace Nova;
+using namespace std;
 
-bool Nova::IsUp()
+bool Nova::IsNovadUp(bool tryToConnect)
 {
 
-	ControlMessage ping;
-	ping.m_controlType = CONTROL_PING;
+	if(tryToConnect)
+	{
+		//If we couldn't connect, then it's definitely not up
+		if(!ConnectToNovad())
+		{
+			return false;
+		}
+	}
+
+	ControlMessage ping(CONTROL_PING);
 	if(!UI_Message::WriteMessage(&ping, novadListenSocket) )
 	{
 		//There was an error in sending the message
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
-		//There was an error receiving the reply
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	if(reply->m_messageType == ERROR_MESSAGE )
+	{
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -54,4 +82,109 @@ bool Nova::IsUp()
 	}
 	delete pong;
 	return true;
+}
+
+vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
+{
+	RequestMessage request(REQUEST_SUSPECTLIST);
+	request.m_listType = listType;
+
+	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
+	{
+		//There was an error in sending the message
+		return NULL;
+	}
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return NULL;
+	}
+
+	if(reply->m_messageType == ERROR_MESSAGE )
+	{
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
+		return NULL;
+	}
+	if(reply->m_messageType != REQUEST_MESSAGE )
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return NULL;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_requestType != REQUEST_SUSPECTLIST_REPLY)
+	{
+		//Received the wrong kind of control message
+		delete requestReply;
+		return NULL;
+	}
+
+
+	vector<in_addr_t> *ret = new vector<in_addr_t>;
+	*ret = requestReply->m_suspectList;
+
+	delete requestReply;
+	return ret;
+}
+
+Suspect *Nova::GetSuspect(in_addr_t address)
+{
+	RequestMessage request(REQUEST_SUSPECT);
+	request.m_suspectAddress = address;
+
+
+	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
+	{
+		//There was an error in sending the message
+		return NULL;
+	}
+
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	if(reply->m_messageType == ERROR_MESSAGE )
+	{
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
+		return false;
+	}
+	if(reply->m_messageType != REQUEST_MESSAGE)
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return NULL;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_requestType != REQUEST_SUSPECT_REPLY)
+	{
+		//Received the wrong kind of control message
+		delete requestReply;
+		return NULL;
+	}
+
+	Suspect *returnSuspect = new Suspect();
+	*returnSuspect = *requestReply->m_suspect;
+	delete requestReply;
+
+	return returnSuspect;
 }

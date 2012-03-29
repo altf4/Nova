@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = NovaGUI
+TARGET = novagui
 QT += core \
     gui
 HEADERS += src/HoneydConfiguration.h \

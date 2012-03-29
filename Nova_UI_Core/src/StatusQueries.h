@@ -19,12 +19,29 @@
 #ifndef STATUSQUERIES_H_
 #define STATUSQUERIES_H_
 
+#include <vector>
+#include <arpa/inet.h>
+
+#include "messages/RequestMessage.h"
+
 namespace Nova
 {
 
 //Queries Novad to see if it is currently up or down
+//	tryToConnect - Optional boolean to indicate whether this function should also try to connect to Novad before testing IsUp()
+//		You should generally just leave this alone as true.
 //	returns - True if Novad is up, false if down
-bool IsUp();
+bool IsNovadUp(bool tryToConnect = true);
+
+// Gets a list of suspect addresses currently classified
+//	 listType: Type of list to get (all, just hostile, just benign)
+//	Returns: list of addresses
+std::vector<in_addr_t> *GetSuspectList(enum SuspectListType listType);
+
+// Gets a suspect from the daemon
+// address: IP address of the suspect
+// Returns: Pointer to the suspect
+Suspect *GetSuspect(in_addr_t address);
 
 }
 #endif /* STATUSQUERIES_H_ */

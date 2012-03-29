@@ -60,7 +60,7 @@ class ControlMessage : public UI_Message
 public:
 
 	//Empty constructor
-	ControlMessage();
+	ControlMessage(enum ControlType controlType);
 
 	virtual ~ControlMessage();
 
@@ -69,12 +69,6 @@ public:
 	//	length - the length of this array
 	//	On error, sets m_serializeError to true, on success sets it to false
 	ControlMessage(char *buffer, uint32_t length);
-
-	//Serializes the UI_Message object into a char array
-	//	*length - Return parameter, specifies the length of the serialized array returned
-	// Returns - A pointer to the serialized array
-	//	NOTE: The caller must manually free() the returned buffer after use
-	char *Serialize(uint32_t *length);
 
 	enum ControlType m_controlType;
 
@@ -85,6 +79,13 @@ public:
 
 	//Did the requested command succeed?
 	bool m_success;
+
+protected:
+	//Serializes the UI_Message object into a char array
+	//	*length - Return parameter, specifies the length of the serialized array returned
+	// Returns - A pointer to the serialized array
+	//	NOTE: The caller must manually free() the returned buffer after use
+	char *Serialize(uint32_t *length);
 };
 }
 

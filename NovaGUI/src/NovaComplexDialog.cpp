@@ -18,22 +18,24 @@
 #include "NovaComplexDialog.h"
 #include "NovaGuiTypes.h"
 
+using namespace std;
+
 class NovaConfig;
 
 NovaComplexDialog::NovaComplexDialog(QWidget *parent)
     : QDialog(parent)
 {
-	retVal = NULL;
-	novaParent = (NovaConfig *)parent;
+	m_retVal = NULL;
+	m_novaParent = (NovaConfig *)parent;
 	ui.setupUi(this);
-	type = MACDialog;
+	m_type = MACDialog;
 }
 NovaComplexDialog::NovaComplexDialog(whichDialog type,string* retval, QWidget *parent, string filter)
 	: QDialog(parent)
 {
-	retVal = retval;
-	novaParent = (NovaConfig *)parent;
-	this->type = type;
+	m_retVal = retval;
+	m_novaParent = (NovaConfig *)parent;
+	this->m_type = type;
 	ui.setupUi(this);
 	switch(type)
 	{
@@ -43,7 +45,7 @@ NovaComplexDialog::NovaComplexDialog(whichDialog type,string* retval, QWidget *p
 			ui.displayLabel->setText((const QString&)"Select which operating system you would like to emulate");
 			ui.helpLabel->setText((const QString&)"Navigate down the tree, select an operating system and press 'Select'");
 			ui.searchButton->setDefault(true);
-			drawPersonalities("");
+			DrawPersonalities("");
 			break;
 		}
 		case MACDialog:
@@ -70,41 +72,41 @@ NovaComplexDialog::~NovaComplexDialog()
 }
 
 //Sets the help message displayed at the bottom of the window to provide the user hints on usage.
-void NovaComplexDialog::setHelpMsg(const QString& str)
+void NovaComplexDialog::SetHelpMsg(const QString& str)
 {
 	ui.helpLabel->setText(str);
 }
 
 //Returns the help message displayed at the bottom of the window to provide the user hints on usage.
-QString NovaComplexDialog::getHelpMsg()
+QString NovaComplexDialog::GetHelpMsg()
 {
 	return ui.helpLabel->text();
 }
 
 //Sets the description at the top on the window to inform the user of the window's purpose.
-void NovaComplexDialog::setInfoMsg(const QString& str)
+void NovaComplexDialog::SetInfoMsg(const QString& str)
 {
 	ui.displayLabel->setText(str);
 }
 
 //Returns the description at the top on the window to inform the user of the window's purpose.
-QString NovaComplexDialog::getInfoMsg()
+QString NovaComplexDialog::GetInfoMsg()
 {
 	return ui.displayLabel->text();
 }
 
 //Returns the object's 'type' enum
-whichDialog NovaComplexDialog::getType()
+whichDialog NovaComplexDialog::GetType()
 {
-	return type;
+	return m_type;
 }
 
-void NovaComplexDialog::drawPersonalities(string filterStr)
+void NovaComplexDialog::DrawPersonalities(string filterStr)
 {
 	ui.treeWidget->clear();
 	QTreeWidgetItem * item = NULL;
 	QTreeWidgetItem * index = NULL;
-	vector<pair<string,string> > * printList = &novaParent->nmapPersonalities;
+	vector<pair<string,string> > * printList = &m_novaParent->m_nmapPersonalities;
 	string fprint;
 	string printClass;
 	string temp;
@@ -200,7 +202,7 @@ void NovaComplexDialog::drawPersonalities(string filterStr)
 
 void NovaComplexDialog::on_cancelButton_clicked()
 {
-	*retVal = "";
+	*m_retVal = "";
 	this->close();
 }
 
@@ -209,7 +211,7 @@ void NovaComplexDialog::on_selectButton_clicked()
 	if((ui.treeWidget->currentItem() != NULL) && !ui.treeWidget->currentItem()->childCount())
 	{
 		string ret = ui.treeWidget->currentItem()->text(0).toStdString();
-		*retVal = ret;
+		*m_retVal = ret;
 		this->close();
 	}
 }
@@ -219,7 +221,7 @@ void NovaComplexDialog::on_searchButton_clicked()
 	QTreeWidgetItem * item = NULL;
 	string filterStr = ui.searchEdit->text().toStdString();
 
-	if(type == MACDialog)
+	if(m_type == MACDialog)
 	{
 		VendorMacDb db;
 		db.LoadPrefixFile();
@@ -232,9 +234,9 @@ void NovaComplexDialog::on_searchButton_clicked()
 		}
 		ui.treeWidget->sortItems(0, Qt::AscendingOrder);
 	}
-	if(type == PersonalityDialog)
+	if(m_type == PersonalityDialog)
 	{
-		drawPersonalities(filterStr);
+		DrawPersonalities(filterStr);
 	}
 }
 

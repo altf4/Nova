@@ -31,7 +31,7 @@ using namespace Nova;
 
 VendorMacDb::VendorMacDb()
 {
-	m_macVendorFile =  Config::Inst()->getPathReadFolder() + "/nmap-mac-prefixes";
+	m_macVendorFile =  Config::Inst()->GetPathReadFolder() + "/nmap-mac-prefixes";
 	m_MACVendorTable.set_empty_key(16777216); //2^24, invalid MAC prefix.
 	m_vendorMACTable.set_empty_key("");
 }

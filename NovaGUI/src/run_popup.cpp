@@ -32,7 +32,7 @@ Run_Popup::Run_Popup(QWidget *parent)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
-	loadPreferences();
+	LoadPreferences();
 }
 
 Run_Popup::~Run_Popup()
@@ -40,13 +40,13 @@ Run_Popup::~Run_Popup()
 
 }
 
-void Run_Popup::loadPreferences()
+void Run_Popup::LoadPreferences()
 {
-	ui.trainingCheckBox->setChecked(Config::Inst()->getIsTraining());
-	ui.pcapCheckBox->setChecked(Config::Inst()->getReadPcap());
+	ui.trainingCheckBox->setChecked(Config::Inst()->GetIsTraining());
+	ui.pcapCheckBox->setChecked(Config::Inst()->GetReadPcap());
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
-	ui.pcapEdit->setText(Config::Inst()->getPathPcapFile().c_str());
-	ui.liveCapCheckBox->setChecked(Config::Inst()->getGotoLive());
+	ui.pcapEdit->setText(Config::Inst()->GetPathPcapFile().c_str());
+	ui.liveCapCheckBox->setChecked(Config::Inst()->GetGotoLive());
 }
 
 void Run_Popup::on_pcapCheckBox_stateChanged(int state)
@@ -56,10 +56,10 @@ void Run_Popup::on_pcapCheckBox_stateChanged(int state)
 
 void Run_Popup::on_startButton_clicked()
 {
-	if(savePreferences())
+	if(SavePreferences())
 	{
 		StartNovad();
-		TryWaitConenctToNovad(2000);		//TODO: Call this asynchronously
+		((NovaGUI*)parent())->ConnectGuiToNovad();
 		StartHaystack();
 	}
 	this->close();
@@ -85,11 +85,11 @@ void Run_Popup::on_pcapButton_clicked()
 	}
 }
 
-bool Run_Popup::savePreferences()
+bool Run_Popup::SavePreferences()
 {
-	Config::Inst()->setIsTraining(ui.trainingCheckBox->isChecked());
-	Config::Inst()->setReadPcap(ui.pcapCheckBox->isChecked());
-	Config::Inst()->setPathPcapFile(ui.pcapEdit->text().toStdString());
-	Config::Inst()->setGotoLive(ui.liveCapCheckBox->isChecked());
+	Config::Inst()->SetIsTraining(ui.trainingCheckBox->isChecked());
+	Config::Inst()->SetReadPcap(ui.pcapCheckBox->isChecked());
+	Config::Inst()->SetPathPcapFile(ui.pcapEdit->text().toStdString());
+	Config::Inst()->SetGotoLive(ui.liveCapCheckBox->isChecked());
 	return Config::Inst()->SaveConfig();
 }

@@ -21,6 +21,7 @@
 
 #include "messages/UI_Message.h"
 #include "messages/ControlMessage.h"
+#include "messages/RequestMessage.h"
 #include "Suspect.h"
 
 namespace Nova
@@ -44,6 +45,7 @@ void *Handle_UI_Thread(void *socketVoidPtr);
 //	controlMessage - A reference to the received ControlMessage
 //	socketFD - The socket on which to contact the UI
 void HandleControlMessage(ControlMessage &controlMessage, int socketFD);
+void HandleRequestMessage(RequestMessage &requestMessage, int socketFD);
 
 
 //Commands and Updates to UI:

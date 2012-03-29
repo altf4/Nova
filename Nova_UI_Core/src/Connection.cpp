@@ -16,20 +16,18 @@
 // Description : Manages connections out to Novad, initializes and closes them
 //============================================================================
 
+#include "messages/ControlMessage.h"
+#include "messages/ErrorMessage.h"
+#include "StatusQueries.h"
 #include "Connection.h"
 #include "NovaUtil.h"
+#include "Logger.h"
 #include "Config.h"
-#include "messages/ControlMessage.h"
-#include "StatusQueries.h"
 
+#include <string>
+#include <cerrno>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <string>
-#include "stdlib.h"
-#include "syslog.h"
-#include <cerrno>
-
-using namespace std;
 
 //Socket communication variables
 int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
@@ -37,13 +35,15 @@ struct sockaddr_un UI_Address, novadAddress;
 
 bool callbackInitialized = false;
 
+using namespace std;
+using namespace Nova;
 //Initializes the Callback socket. IE: The socket the UI listens on
 //	NOTE: This is run internally and not meant to be executed by the user
 //	returns - true if socket successfully initialized, false on error (such as another UI already listening)
 bool InitCallbackSocket()
 {
 	//Builds the key path
-	string homePath = Nova::Config::Inst()->getPathHome();
+	string homePath = Nova::Config::Inst()->GetPathHome();
 	string key = homePath;
 	key += "/keys";
 	key += UI_LISTEN_FILENAME;
@@ -55,7 +55,7 @@ bool InitCallbackSocket()
 
 	if((UI_parentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket);
 		return false;
 	}
@@ -63,14 +63,14 @@ bool InitCallbackSocket()
 
 	if(::bind(UI_parentSocket,(struct sockaddr *)&UI_Address, len) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d bind: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " bind: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket);
 		return false;
 	}
 
 	if(listen(UI_parentSocket, SOCKET_QUEUE_SIZE) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d listen: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " listen: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket);
 		return false;
 	}
@@ -85,18 +85,18 @@ bool Nova::ConnectToNovad()
 	{
 		if(!InitCallbackSocket())
 		{
-			//TODO Log
+			//No logging needed, InitCallbackSocket logs if it fails
 			return false;
 		}
 	}
 
-	if(IsUp())
+	if(IsNovadUp(false))
 	{
 		return true;
 	}
 
 	//Builds the key path
-	string key = Config::Inst()->getPathHome();
+	string key = Config::Inst()->GetPathHome();
 	key += "/keys";
 	key += NOVAD_LISTEN_FILENAME;
 
@@ -106,22 +106,21 @@ bool Nova::ConnectToNovad()
 
 	if((novadListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d socket: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		return false;
 	}
 
 	if(connect(novadListenSocket, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d connect: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		return false;
 	}
 
-	ControlMessage connectRequest;
-	connectRequest.m_controlType = CONTROL_CONNECT_REQUEST;
+	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
 	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket))
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d Message: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		return false;
 	}
@@ -131,17 +130,19 @@ bool Nova::ConnectToNovad()
 	UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
 	if (UI_ListenSocket == -1)
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d accept: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
 		close(UI_ListenSocket);
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
-		close(novadListenSocket);
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
 		return false;
 	}
+
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
@@ -168,7 +169,7 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 	{
 		if(!InitCallbackSocket())
 		{
-			//TODO Log
+			//No logging needed, InitCallbackSocket logs if it fails
 			return false;
 		}
 	}
@@ -187,51 +188,56 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 
 bool Nova::CloseNovadConnection()
 {
+	if((novadListenSocket == -1) && (UI_ListenSocket == -1))
+	{
+		return true;
+	}
+
 	bool success = true;
 	callbackInitialized = false;
 
-	ControlMessage disconnectNotice;
-	disconnectNotice.m_controlType = CONTROL_DISCONNECT_NOTICE;
+	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
 	if(!UI_Message::WriteMessage(&disconnectNotice, novadListenSocket))
 	{
 		success = false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket);
-	if(reply == NULL)
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	if(reply->m_messageType != CONTROL_MESSAGE)
+	{
+		delete reply;
 		success = false;
 	}
 	else
 	{
-		if(reply->m_messageType != CONTROL_MESSAGE)
+		ControlMessage *connectionReply = (ControlMessage*)reply;
+		if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
 		{
-			delete reply;
+			delete connectionReply;
 			success = false;
 		}
-		else
-		{
-			ControlMessage *connectionReply = (ControlMessage*)reply;
-			if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
-			{
-				delete connectionReply;
-				success = false;
-			}
-		}
-
 	}
+
+
 
 
 	if(UI_ListenSocket != -1 && close(UI_ListenSocket))
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(UI_ListenSocket);
 		success = false;
 	}
 
 	if(novadListenSocket != -1 && close(novadListenSocket))
 	{
-		syslog(SYSL_ERR, "File: %s Line: %d close: %s", __FILE__, __LINE__, strerror(errno));
+		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(novadListenSocket);
 		success = false;
 	}

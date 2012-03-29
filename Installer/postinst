@@ -3,7 +3,7 @@
 set -e
 
 #Set pcap permissions
-setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/Novad
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/novad
 setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
 
 #make nova group
@@ -20,3 +20,16 @@ service rsyslog restart
 
 #reload sysctl settings.
 start procps
+
+# Remove the Mail pipe if it already exists
+rm -f /usr/share/nova/NovaMailPipe
+
+mkfifo /usr/share/nova/NovaMailPipe
+
+chown ${SUDO_USER} /usr/share/nova/NovaMailPipe
+
+echo "" >/usr/share/nova/emails
+
+chown ${SUDO_USER} /usr/share/nova/emails
+
+#bash `pwd`/NovaCron ${SUDO_USER} 

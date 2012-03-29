@@ -24,6 +24,8 @@
 
 #define MESSAGE_MIN_SIZE 1
 
+#define REPLY_TIMEOUT 3
+
 namespace Nova
 {
 
@@ -31,6 +33,8 @@ enum UI_MessageType: char
 {
 	CONTROL_MESSAGE = 0,
 	CALLBACK_MESSAGE,
+	REQUEST_MESSAGE,
+	ERROR_MESSAGE
 };
 
 class UI_Message
@@ -44,10 +48,11 @@ public:
 	//Reads a UI_Message from the given socket
 	//	NOTE: Blocking call, will wait until message appears
 	//	connectFD - A valid socket
+	//	timeout - Number of seconds to before returning a timeout error if no message received
 	// Returns - Pointer to newly allocated UI_Message object
-	//				returns NULL on error
+	//				returns an ErrorMessage object on error. Will never return NULL.
 	//	NOTE: The caller must manually delete the returned object when finished with it
-	static UI_Message *ReadMessage(int connectFD);
+	static UI_Message *ReadMessage(int connectFD, int timeout = 0);
 
 	//Writes a given UI_Message to the provided socket
 	//	message - A pointer to the message object to send

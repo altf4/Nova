@@ -19,9 +19,13 @@
 #include "UI_Message.h"
 #include "ControlMessage.h"
 #include "CallbackMessage.h"
+#include "RequestMessage.h"
+#include "ErrorMessage.h"
 
 #include <string>
 #include <vector>
+#include <sys/socket.h>
+#include <errno.h>
 
 
 using namespace std;
@@ -37,32 +41,93 @@ UI_Message::~UI_Message()
 
 }
 
-UI_Message *UI_Message::ReadMessage(int connectFD)
+UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 {
-	//perform read operations ...
-	char buff[4096];
-	int bytesRead = 4096;
-	vector <char> input;
+	uint32_t length = 0;
+	char buff[sizeof(length)];
+	uint totalBytesRead = 0;
+	int bytesRead = 0;
 
-	while( bytesRead == 4096)
+	struct timeval tv;
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+	setsockopt(connectFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+
+	// Read in the message length
+	while( totalBytesRead < sizeof(length))
 	{
-		bytesRead = read(connectFD, buff, 4096);
-		if( bytesRead >= 0 )
+		bytesRead = read(connectFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
+
+		if( bytesRead < 0 )
 		{
-			input.insert(input.end(), buff, buff + bytesRead);
+			// Was this a timeout error?
+			if (errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				return new ErrorMessage(ERROR_TIMEOUT);
+			}
+			else
+			{
+
+				//The socket died on us!
+				return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			}
 		}
 		else
 		{
-			return NULL;
+			totalBytesRead += bytesRead;
 		}
 	}
 
-	if(input.size() < MESSAGE_MIN_SIZE)
+	// Make sure the length appears valid
+	// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
+	memcpy(&length, buff, sizeof(length));
+	if (length == 0)
 	{
-		return NULL;
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
-	return UI_Message::Deserialize(input.data(), input.size());
+	char *buffer = (char*)malloc(length);
+
+	if (buffer == NULL)
+	{
+		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+	}
+
+	// Read in the actual message
+	totalBytesRead = 0;
+	bytesRead = 0;
+	while(totalBytesRead < length)
+	{
+		bytesRead = read(connectFD, buffer + totalBytesRead, length - totalBytesRead);
+
+		if( bytesRead < 0 )
+		{
+			// Was this a timeout error?
+			if (errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				return new ErrorMessage(ERROR_TIMEOUT);
+			}
+			else
+			{
+
+				//The socket died on us!
+				return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			}
+		}
+		else
+		{
+			totalBytesRead += bytesRead;
+		}
+	}
+
+
+	if(length < MESSAGE_MIN_SIZE)
+	{
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+	}
+
+	return UI_Message::Deserialize(buffer, length);
 }
 
 bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
@@ -75,6 +140,14 @@ bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
 
+	// Send the message length
+	if (write(connectFD, &length, sizeof(length)) < 0)
+	{
+		free(buffer);
+		return false;
+	}
+
+	// Send the message
 	if( write(connectFD, buffer, length) < 0 )
 	{
 		free(buffer);
@@ -89,7 +162,7 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 {
 	if(length < MESSAGE_MIN_SIZE)
 	{
-		return NULL;
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
 	enum UI_MessageType thisType;
@@ -103,7 +176,7 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 			if(message->m_serializeError)
 			{
 				delete message;
-				return NULL;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 			}
 			return message;
 		}
@@ -113,13 +186,33 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 			if(message->m_serializeError)
 			{
 				delete message;
-				return NULL;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+			}
+			return message;
+		}
+		case REQUEST_MESSAGE:
+		{
+			RequestMessage *message = new RequestMessage(buffer, length);
+			if(message->m_serializeError)
+			{
+				delete message;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+			}
+			return message;
+		}
+		case ERROR_MESSAGE:
+		{
+			ErrorMessage *message = new ErrorMessage(buffer, length);
+			if(message->m_serializeError)
+			{
+				delete message;
+				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 			}
 			return message;
 		}
 		default:
 		{
-			return NULL;
+			return new ErrorMessage(ERROR_UNKNOWN_MESSAGE_TYPE);
 		}
 	}
 }
