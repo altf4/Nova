@@ -715,14 +715,13 @@ void Suspect::WrlockSuspect()
 		else
 		{
 			pthread_rwlock_unlock(&m_lock);
-			if(m_lock.__data.__nr_readers == 1)
-			{
-				pthread_rwlock_unlock(&m_lock);
-			}
 			pthread_rwlock_wrlock(&m_lock);
 		}
 	}
-	pthread_rwlock_wrlock(&m_lock);
+	else
+	{
+		pthread_rwlock_wrlock(&m_lock);
+	}
 }
 
 //Read locks the suspect
@@ -742,10 +741,14 @@ void Suspect::RdlockSuspect()
 //Unlocks the suspect
 void Suspect::UnlockSuspect()
 {
-	pthread_rwlock_unlock(&m_lock);
 	if(pthread_equal(m_owner, pthread_self()) && m_hasOwner)
 	{
+		pthread_rwlock_unlock(&m_lock);
 		pthread_rwlock_rdlock(&m_lock);
+	}
+	else
+	{
+		pthread_rwlock_unlock(&m_lock);
 	}
 }
 
@@ -792,19 +795,26 @@ void Suspect::SetOwner()
 // Returns (-1) if the caller is not the owner, (1) if the Suspect has no owner or (0) on success
 int Suspect::ResetOwner()
 {
-
+	pthread_rwlock_rdlock(&m_lock);
 	if(m_hasOwner == false)
+	{
+		pthread_rwlock_unlock(&m_lock);
 		return 1;
+	}
+
 	if(pthread_equal(m_owner, pthread_self()))
 	{
 		m_hasOwner = false;
 		m_owner = 0;
-		pthread_rwlock_destroy(&m_lock);
-		pthread_rwlock_init(&m_lock, NULL);
+		pthread_rwlock_unlock(&m_lock);
+		pthread_rwlock_unlock(&m_lock);
 		return 0;
 	}
 	else
+	{
+		pthread_rwlock_unlock(&m_lock);
 		return -1;
+	}
 }
 
 void Suspect::UnlockAsOwner()

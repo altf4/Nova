@@ -35,9 +35,6 @@ namespace Nova
 SuspectTableIterator::SuspectTableIterator(SuspectHashTable* table, vector<uint64_t>* keys, pthread_rwlock_t *lock)
 : m_table_ref(*table), m_keys_ref(*keys), m_lock_ref(*lock)
 {
-	m_table_ref = *table;
-	m_keys_ref = *keys;
-	m_lock_ref = *lock;
 	m_index = 0;
 }
 

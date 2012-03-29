@@ -1072,10 +1072,11 @@ void UpdateSuspect(Packet packet)
 			}
 		}
 
-		suspects.AddNewSuspect(newSuspect);
-
 		// Make a copy to add to the other table
 		Suspect *newSuspectCopy = new Suspect(*newSuspect);
+
+		suspects.AddNewSuspect(newSuspect);
+
 		pthread_mutex_lock(&suspectsSinceLastSaveLock);
 		suspectsSinceLastSave.AddNewSuspect(newSuspectCopy);
 		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
