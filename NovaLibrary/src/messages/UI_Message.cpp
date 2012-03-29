@@ -63,12 +63,10 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 			// Was this a timeout error?
 			if (errno == EWOULDBLOCK || errno == EAGAIN)
 			{
-				close(connectFD);
 				return new ErrorMessage(ERROR_TIMEOUT);
 			}
 			else
 			{
-				close(connectFD);
 
 				//The socket died on us!
 				return new ErrorMessage(ERROR_SOCKET_CLOSED);
@@ -85,7 +83,6 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 	memcpy(&length, buff, sizeof(length));
 	if (length == 0)
 	{
-		close(connectFD);
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
@@ -94,7 +91,6 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 	if (buffer == NULL)
 	{
 		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
-		close(connectFD);
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
@@ -110,12 +106,10 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 			// Was this a timeout error?
 			if (errno == EWOULDBLOCK || errno == EAGAIN)
 			{
-				close(connectFD);
 				return new ErrorMessage(ERROR_TIMEOUT);
 			}
 			else
 			{
-				close(connectFD);
 
 				//The socket died on us!
 				return new ErrorMessage(ERROR_SOCKET_CLOSED);
@@ -130,7 +124,6 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 
 	if(length < MESSAGE_MIN_SIZE)
 	{
-		close(connectFD);
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
