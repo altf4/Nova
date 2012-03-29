@@ -24,9 +24,10 @@ cert: fs.readFileSync('servercert.pem'),
 
 var app = express.createServer(express_options);
 
-console.info("Logging to ./serverLog.log");
-var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
-app.use(express.logger({stream: logFile}));
+// Do the following for logging
+//console.info("Logging to ./serverLog.log");
+//var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
+//app.use(express.logger({stream: logFile}));
 
 console.info("Serving static GET at /var/www");
 app.use(express.static('/var/www'));

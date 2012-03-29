@@ -81,7 +81,7 @@ private:
 		do
 		{
             cb = ProcessCallbackMessage();
-            LOG(DEBUG,"callback type " + cb.type,"");
+//            LOG(DEBUG,"callback type " + cb.type,"");
 			switch( cb.type )
 			{
 			case CALLBACK_NEW_SUSPECT:
