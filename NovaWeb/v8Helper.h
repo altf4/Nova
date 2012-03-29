@@ -14,17 +14,13 @@ template <typename T> T* Unwrap(v8::Handle<v8::Object> obj, int fieldIndex=0)
     void* ptr = objectHandle->Value();
     return static_cast<T*>(ptr);
 }
-/*
-template <typename V8> bool v8Cast(const V8& arg)
-{
-    return arg->BooleanValue();
-}
 
-template <typename V8> std::string v8Cast(const V8& arg)
-{
-    return arg->StringValue();
-}
-*/
+// For invocation of standalone (non-member) functions,
+// zero-argument version.
+// NOTE: if partial specialization will be required for non-member functions, duplicate the
+// "funny template approach" below that is set up for emulation of partial specialization
+// of member functions.  Everything would be the same except without the 
+// "typename T" and the "T::"
 template <typename V8_RETURN, typename NATIVE_RETURN,  NATIVE_RETURN (*F)()> 
 v8::Handle<v8::Value> InvokeMethod(const v8::Arguments __attribute((__unused__)) & args)
 {
@@ -35,7 +31,9 @@ v8::Handle<v8::Value> InvokeMethod(const v8::Arguments __attribute((__unused__))
 	return scope.Close(result);
 }   
 
-// one-argument version version
+// Invocation of standalone (non-member) functions,
+// one-argument version version.
+// See note above regarding partial specialization, if it is ever required.
 template <typename V8_RETURN, typename NATIVE_RETURN, typename V8_P1, typename NATIVE_P1, NATIVE_RETURN (*F)(NATIVE_P1)> 
 v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 {
@@ -53,9 +51,10 @@ v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
     return scope.Close(result);
 }
 
-// Funny template approach to enable emulated partial specialization
+// Invocation of member methods,
+// zero-argument version.
 //
-// no-argument version
+// Funny template approach is used to enable emulated partial specialization.
 template <typename V8_RETURN, typename NATIVE_RETURN, typename T, NATIVE_RETURN (T::*F)(void)> 
 struct InvokeMethod_impl
 {
@@ -70,9 +69,8 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 } 
 };
 
-// Funny template approach to enable emulated partial specialization
-//
-// one-argument version version
+// Invocation of member methods,
+// one-argument version.
 template <typename V8_RETURN, typename NATIVE_RETURN, typename T, typename V8_P1, typename NATIVE_P1, NATIVE_RETURN (T::*F)(NATIVE_P1)> 
 struct InvokeMethod_impl_1
 {
@@ -94,7 +92,10 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 } 
 };
 
-// Specialization for std::string
+
+// Invocation of member methods, 
+// zero-argument version.
+// Specialization for std::string return type.
 template<typename V8_RETURN, typename T, std::string (T::*F)(void)>
 struct InvokeMethod_impl<V8_RETURN, std::string, T, F>
 {
@@ -109,7 +110,9 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 } 
 };
 
-// Specialization for in_addr
+// Invocation of member methods,
+// zero argument version.
+// Specialization for in_addr return type.
 template<typename V8_RETURN, typename T, in_addr (T::*F)(void)>
 struct InvokeMethod_impl<V8_RETURN, in_addr, T, F>
 {
@@ -126,20 +129,22 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 } 
 };
 
-// The wrapper template function to invoke the funny static class members
-// above who provide partial specialization where required.
+// Invocation of member methods,
+// zero argument version.
 //
-// no-argument version
+// This wrapper template function along with the classes above
+// emulates partial specialization where required.
 template <typename V8_RETURN, typename NATIVE_RETURN, typename T, NATIVE_RETURN (T::*F)(void)> 
 static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 {
     return InvokeMethod_impl<V8_RETURN, NATIVE_RETURN, T, F >::InvokeMethod(args);
 }
 
-// The wrapper template function to invoke the funny static class members
-// above who provide partial specialization where required.
+// Invocation of member methods,
+// one argument version.
 //
-// one-argument version
+// This wrapper template function along with the classes above
+// emulates partial specialization where required.
 template <typename V8_RETURN, typename NATIVE_RETURN, typename T, typename V8_P1, typename NATIVE_P1, NATIVE_RETURN (T::*F)(NATIVE_P1)> 
 static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 {
