@@ -31,7 +31,7 @@ TEST_F(ConfigTest, test_setEnabledFeatures) {
 	EXPECT_EQ(enabledFeatureString, Config::Inst()->GetEnabledFeatures());
 
 	// Check the count of enabled features
-	EXPECT_EQ(5, Config::Inst()->GetEnabledFeatureCount());
+	EXPECT_EQ((uint)5, Config::Inst()->GetEnabledFeatureCount());
 
 	// Check the squrt of the enabled features
 	EXPECT_EQ(sqrt(5), Config::Inst()->GetSqurtEnabledFeatures());

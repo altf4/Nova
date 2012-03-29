@@ -182,6 +182,6 @@ TEST_F(SuspectTableTest, Peek) {
 
 	InitSuspects();
 	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.Peek(42).GetIpAddress());
-	EXPECT_EQ(1, table.Peek(1).GetIpAddress());
-	EXPECT_EQ(2, table.Peek(2).GetIpAddress());
+	EXPECT_EQ((uint)1, table.Peek(1).GetIpAddress());
+	EXPECT_EQ((uint)2, table.Peek(2).GetIpAddress());
 }

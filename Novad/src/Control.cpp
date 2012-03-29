@@ -26,10 +26,22 @@
 void Nova::SaveAndExit(int param)
 {
 	AppendToStateFile();
-	system("sudo iptables -F");
-	system("sudo iptables -t nat -F");
-	system("sudo iptables -t nat -X DOPP");
-	system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str());
+	if(system("sudo iptables -F") == -1)
+	{
+		// TODO Logging
+	}
+	if(system("sudo iptables -t nat -F") == -1)
+	{
+		// TODO Logging
+	}
+	if(system("sudo iptables -t nat -X DOPP") == -1)
+	{
+		// TODO Logging
+	}
+	if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
+	{
+		// TODO Logging
+	}
 	LOG(NOTICE, "Novad is now exiting.", "");
 	exit(EXIT_SUCCESS);
 }
