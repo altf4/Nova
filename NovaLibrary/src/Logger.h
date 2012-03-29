@@ -28,6 +28,7 @@
 #include <string.h>
 #include <iostream>
 #include <stdlib.h>
+#include <vector>
 
 // A macro to make logging prettier
 #define LOG(t,s,r) Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
@@ -132,6 +133,16 @@ private:
 	uint16_t LoadConfiguration();
 
 	std::string getBitmask(Nova::Levels level);
+
+	void SetEmailRecipients(std::vector<std::string> recs);
+
+	void AppendEmailRecipients(std::vector<std::string> recs);
+
+	void ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append);
+
+	void RemoveEmailRecipients(std::vector<std::string> recs);
+
+	void ClearEmailRecipients();
 
 public:
 	levelsMap m_levels;

@@ -200,7 +200,6 @@ namespace Nova
 		pair <pair <Nova::Services, Nova::Levels>, char> push;
 		pair <Nova::Services, Nova::Levels> insert;
 		char logPref[16];
-		int oldLength;
 
 		strcpy(logPref, Config::Inst()->GetLoggerPreferences().c_str());
 
@@ -208,9 +207,6 @@ namespace Nova
 		// continue with the parsing.
 		if(strlen(logPref) > 0)
 		{
-			//store the length of the string before it's modified -- we'll need this later
-			oldLength = strlen(logPref) + 1;
-
 			//This for-loop will traverse through the string searching for the
 			// character numeric representation of the services enum member passed
 			// as an argument to the function.
@@ -402,6 +398,58 @@ namespace Nova
 		return mask;
 	}
 
+	void Logger::SetEmailRecipients(std::vector<std::string> recs)
+	{
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+
+		for(uint16_t i = 0; i < recs.size(); i++)
+		{
+			recipients.write(recs[i].c_str(), recs[i].size());
+			recipients.put('\n');
+		}
+
+		recipients.close();
+	}
+
+	void Logger::AppendEmailRecipients(std::vector<std::string> recs)
+	{
+		//TODO: put in controls for duplicate emails, i.e. if it's there, don't write.
+		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::app);
+
+		if(!recipients.fail())
+		{
+			for(uint16_t i = 0; i < recs.size(); i++)
+			{
+				recipients.write(recs[i].c_str(), recs[i].size());
+				recipients.put('\n');
+			}
+		}
+
+		recipients.close();
+	}
+
+	void Logger::ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append)
+	{
+
+	}
+
+	void Logger::RemoveEmailRecipients(std::vector<std::string> recs)
+	{
+		//check through the vector; if an email is in the vector and present in the file,
+		// do not rewrite to the new emails file. If and email isn't there, don't do anything.
+		// If an email in the vector doesn't correspond to any email in the file, do nothing.
+		fstream recipients("/usr/share/nova/emails");
+
+		recipients.close();
+	}
+
+	void Logger::ClearEmailRecipients()
+	{
+		//open the file with ios::trunc and then close it
+		fstream recipients("/usr/share/nova/emails", ios::trunc);
+		recipients.close();
+	}
+
 	Logger::Logger()
 	{
 		pthread_rwlock_init(&m_logLock, NULL);
@@ -434,6 +482,16 @@ namespace Nova
 		}
 
 		LoadConfiguration();
+		std::vector<std::string> test;
+		std::vector<std::string> removeTest;
+		removeTest.push_back("fail1");
+		removeTest.push_back("fail5");
+		test.push_back("fail1");
+		test.push_back("fail2");
+		SetEmailRecipients(test);
+		test.push_back("fail3");
+		test.push_back("fail4");
+		AppendEmailRecipients(test);
 	}
 
 	Logger::~Logger()

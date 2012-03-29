@@ -28,4 +28,8 @@ mkfifo /usr/share/nova/NovaMailPipe
 
 chown ${SUDO_USER} /usr/share/nova/NovaMailPipe
 
+echo "" >/usr/share/nova/emails
+
+chown ${SUDO_USER} /usr/share/nova/emails
+
 #bash `pwd`/NovaCron ${SUDO_USER} 
