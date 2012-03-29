@@ -1211,3 +1211,15 @@ void HoneydConfiguration::SetProfiles(ProfileTable profiles)
 	m_profiles.clear_no_resize();
 	m_profiles = profiles;
 }
+
+//Setter for the directory to read from and write to
+void HoneydConfiguration::SetHomePath(std::string homePath)
+{
+	m_homePath = homePath;
+}
+
+//Getter for the directory to read from and write to
+std::string HoneydConfiguration::GetHomePath()
+{
+	return m_homePath;
+}

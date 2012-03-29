@@ -77,6 +77,11 @@ public:
     void SetScripts(ScriptTable scripts);
     void SetProfiles(ProfileTable profile);
 
+    //Setter for the directory to read from and write to
+    void SetHomePath(std::string homePath);
+    //Getter for the directory to read from and write to
+    std::string GetHomePath();
+
     // Returns the number of bits used in the mask when given in in_addr_t form
     static int GetMaskBits(in_addr_t mask);
 

@@ -25,6 +25,7 @@
 
 #include <boost/foreach.hpp>
 #include <QFileDialog>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fstream>
 #include <QDir>
@@ -223,7 +224,6 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 								" from any ancestors, would you like to keep it?", ui.actionNo_Action, ui.actionDeletePort, this);
 						m_loading->lock();
 					}
-					//TODO display prompt that allows the user to delete the port or do nothing if port isn't found
 				}
 				//If the port isn't inherited and the profile has no parent
 				else
@@ -1279,11 +1279,49 @@ void NovaConfig::LoadNovadPreferences()
 	ui.tcpFrequencyEdit->setText(QString::number(Config::Inst()->GetTcpCheckFreq()));
 
 	ui.trainingCheckBox->setChecked(Config::Inst()->GetIsTraining());
-	ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
+	switch(Config::Inst()->GetHaystackStorage())
+	{
+		case 'M':
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			ui.hsSummaryGroupBox->setEnabled(false);
+			ui.nodesGroupBox->setEnabled(false);
+			ui.profileGroupBox->setEnabled(false);
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			break;
+		}
+		case 'E':
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			break;
+		}
+		default:
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
+			break;
+		}
+	}
 
-	// XXX ui.dmConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
-	// XXX ui.dmIPEdit->setText((QString)Config::Inst()->GetDoppelIp().c_str());
-	ui.dmCheckBox->setChecked(Config::Inst()->GetIsDmEnabled());
+	//Set first ip byte
+	string ip = Config::Inst()->GetDoppelIp();
+	int index = ip.find_first_of('.');
+	ui.dmIPSpinBox_0->setValue(atoi(ip.substr(0,ip.find_first_of('.')).c_str()));
+
+	//Set second ip byte
+	ip = ip.substr(index+1, ip.size());
+	index = ip.find_first_of('.');
+	ui.dmIPSpinBox_1->setValue(atoi(ip.substr(0,ip.find_first_of('.')).c_str()));
+
+	//Set third ip byte
+	ip = ip.substr(index+1, ip.size());
+	index = ip.find_first_of('.');
+	ui.dmIPSpinBox_2->setValue(atoi(ip.substr(0,ip.find_first_of('.')).c_str()));
+
+	//Set fourth ip byte
+	ip = ip.substr(index+1, ip.size());
+	index = ip.find_first_of('.');
+	ui.dmIPSpinBox_3->setValue(atoi(ip.c_str()));
+
 	ui.pcapCheckBox->setChecked(Config::Inst()->GetReadPcap());
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
 	ui.pcapEdit->setText((QString)Config::Inst()->GetPathPcapFile().c_str());
@@ -1371,6 +1409,23 @@ void NovaConfig::PushData()
 	//Clean up unused ports
 	CleanPorts();
 
+	string path = "";
+	switch(Config::Inst()->GetHaystackStorage())
+	{
+		case 'E':
+		{
+			path = Config::Inst()->GetPathConfigHoneydUser();
+			break;
+		}
+		default:
+		{
+			path = Config::Inst()->GetPathConfigHoneydHS();
+			break;
+		}
+	}
+	string dir = path.substr(0, path.find_last_of('/'));
+	m_mainwindow->m_honeydConfig->SetHomePath(path);
+
 	//Copies the tables
 	m_mainwindow->m_honeydConfig->SetScripts(m_scripts);
 	m_mainwindow->m_honeydConfig->SetProfiles(m_profiles);
@@ -1379,20 +1434,23 @@ void NovaConfig::PushData()
 	m_mainwindow->m_honeydConfig->SetPorts(m_ports);
 	m_mainwindow->m_honeydConfig->SaveAllTemplates();
 	//Saves the current configuration to XML files
-	if(true) //XXX if Using nova to configure, stored internally
+	switch(Config::Inst()->GetHaystackStorage())
 	{
-		m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
-	}
-	else if(true) //XXX If storing the templates/configs externally.
-	{
-		string path = Config::Inst()->GetPathConfigHoneydUser();
-		string dir = path.substr(0, path.find_last_of('/'));
-
-		m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(path);
-	}
-	else // XXX If not using nova to configure the HS
-	{
-		//XXX - Do nothing probably, revisit this
+		case 'I':
+		{
+			m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
+			break;
+		}
+		case 'E':
+		{
+			m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydUser());
+			break;
+		}
+		default:
+		{
+			//Any other case we don't write to honeyd
+			break;
+		}
 	}
 }
 
@@ -1604,9 +1662,21 @@ bool NovaConfig::SaveConfigurationToFile()
 	Config::Inst()->SetEps(this->ui.ceErrorEdit->displayText().toDouble());
 	Config::Inst()->SetClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
 	Config::Inst()->SetClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
-	// XXX Config::Inst()->SetPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
-	// XXX Config::Inst()->SetDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
-	Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
+
+	ss.str("");
+	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value() << "."
+		<< ui.dmIPSpinBox_3->value();
+	Config::Inst()->SetDoppelIp(ss.str());
+
+	//If index isn't 0
+	if(ui.hsSaveTypeComboBox->currentIndex())
+	{
+		Config::Inst()->SetPathConfigHoneydUser(this->ui.hsConfigEdit->displayText().toStdString());
+	}
+	else
+	{
+		Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString());
+	}
 	Config::Inst()->SetTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
 	Config::Inst()->SetTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
 	Config::Inst()->SetPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
@@ -3880,4 +3950,92 @@ void NovaConfig::on_dropRateSlider_valueChanged()
 	stringstream ss;
 	ss << ui.dropRateSlider->value() << "%";
 	ui.dropRateSetting->setText((QString)ss.str().c_str());
+}
+
+
+//Doppelganger IP Address Spin boxes
+void NovaConfig::on_dmIPSpinBox_0_valueChanged(int value)
+{
+	stringstream ss;
+	ss << value << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
+		<< "." << ui.dmIPSpinBox_3->value();
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+void NovaConfig::on_dmIPSpinBox_1_valueChanged(int value)
+{
+	stringstream ss;
+	ss << ui.dmIPSpinBox_0->value() << "." << value << "." << ui.dmIPSpinBox_2->value()
+		<< "." << ui.dmIPSpinBox_3->value();
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+void NovaConfig::on_dmIPSpinBox_2_valueChanged(int value)
+{
+	stringstream ss;
+	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << value
+		<< "." << ui.dmIPSpinBox_3->value();
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+void NovaConfig::on_dmIPSpinBox_3_valueChanged(int value)
+{
+	stringstream ss;
+	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
+		<< "." << value;
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+//Haystack storage type combo box
+void NovaConfig::on_hsSaveTypeComboBox_currentIndexChanged(int index)
+{
+	switch(index)
+	{
+		case 2:
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			ui.hsSummaryGroupBox->setEnabled(false);
+			ui.nodesGroupBox->setEnabled(false);
+			ui.profileGroupBox->setEnabled(false);
+			break;
+		}
+		case 1:
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			ui.hsSummaryGroupBox->setEnabled(true);
+			ui.nodesGroupBox->setEnabled(true);
+			ui.profileGroupBox->setEnabled(true);
+			break;
+		}
+		case 0:
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
+			ui.hsSummaryGroupBox->setEnabled(true);
+			ui.nodesGroupBox->setEnabled(true);
+			ui.profileGroupBox->setEnabled(true);
+			break;
+		}
+		default:
+		{
+			cout << "IP Conflict" << endl;
+			//TODO Error Logging
+			break;
+		}
+	}
 }

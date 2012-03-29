@@ -250,6 +250,15 @@ void portTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 //Custom signal for combo box items in the tree changing
 void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited);
 
+//Doppelganger IP Address Spin boxes
+void on_dmIPSpinBox_0_valueChanged(int value);
+void on_dmIPSpinBox_1_valueChanged(int value);
+void on_dmIPSpinBox_2_valueChanged(int value);
+void on_dmIPSpinBox_3_valueChanged(int value);
+
+//Haystack storage type combo box
+void on_hsSaveTypeComboBox_currentIndexChanged(int index);
+
 private:
 	void SetInputValidators();
     Ui::NovaConfigClass ui;
