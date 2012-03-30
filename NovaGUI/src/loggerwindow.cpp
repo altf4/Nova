@@ -110,8 +110,16 @@ void LoggerWindow::InitializeLoggingWindow()
 
 	file.close();
 
-	ui.applyFilter->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F));
-	ui.applyFilter->setToolTip("Shortcut: Shift+F");
+	ui.checkDebug->setChecked(false);
+	ui.checkInfo->setChecked(false);
+	ui.checkNotice->setChecked(false);
+
+	HideSelected("DEBUG");
+	HideSelected("INFO");
+	HideSelected("NOTICE");
+
+	//ui.applyFilter->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F));
+	//ui.applyFilter->setToolTip("Shortcut: Shift+F");
 	ui.closeButton->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
 	ui.closeButton->setToolTip("Shortcut: Ctrl+Q");
 	ui.settingsButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_S));
@@ -439,7 +447,7 @@ void LoggerWindow::on_clearButton_clicked()
 	ui.logDisplay->clear();
 }
 
-void LoggerWindow::on_applyFilter_clicked()
+/*void LoggerWindow::on_applyFilter_clicked()
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
 	while(*it)
@@ -453,6 +461,102 @@ void LoggerWindow::on_applyFilter_clicked()
 			(*it)->setHidden(true);
 		}
 		++it;
+	}
+}*/
+
+void LoggerWindow::on_checkDebug_stateChanged()
+{
+	if(ui.checkDebug->checkState() == Qt::Checked)
+	{
+		ShowSelected("DEBUG");
+	}
+	else
+	{
+		HideSelected("DEBUG");
+	}
+}
+
+void LoggerWindow::on_checkInfo_stateChanged()
+{
+	if(ui.checkInfo->checkState() == Qt::Checked)
+	{
+		ShowSelected("INFO");
+	}
+	else
+	{
+		HideSelected("INFO");
+	}
+}
+
+void LoggerWindow::on_checkNotice_stateChanged()
+{
+	if(ui.checkNotice->checkState() == Qt::Checked)
+	{
+		ShowSelected("NOTICE");
+	}
+	else
+	{
+		HideSelected("NOTICE");
+	}
+}
+
+void LoggerWindow::on_checkWarning_stateChanged()
+{
+	if(ui.checkWarning->checkState() == Qt::Checked)
+	{
+		ShowSelected("WARNING");
+	}
+	else
+	{
+		HideSelected("WARNING");
+	}
+}
+
+void LoggerWindow::on_checkError_stateChanged()
+{
+	if(ui.checkError->checkState() == Qt::Checked)
+	{
+		ShowSelected("ERROR");
+	}
+	else
+	{
+		HideSelected("ERROR");
+	}
+}
+
+void LoggerWindow::on_checkCritical_stateChanged()
+{
+	if(ui.checkCritical->checkState() == Qt::Checked)
+	{
+		ShowSelected("CRITICAL");
+	}
+	else
+	{
+		HideSelected("CRITICAL");
+	}
+}
+
+void LoggerWindow::on_checkAlert_stateChanged()
+{
+	if(ui.checkAlert->checkState() == Qt::Checked)
+	{
+		ShowSelected("ALERT");
+	}
+	else
+	{
+		HideSelected("ALERT");
+	}
+}
+
+void LoggerWindow::on_checkEmergency_stateChanged()
+{
+	if(ui.checkEmergency->checkState() == Qt::Checked)
+	{
+		ShowSelected("EMERGENCY");
+	}
+	else
+	{
+		HideSelected("EMERGENCY");
 	}
 }
 
@@ -517,9 +621,10 @@ void LoggerWindow::on_linesBox_currentIndexChanged(const QString & text)
 void LoggerWindow::HideSelected(QString level)
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
+
 	while(*it)
 	{
-		if((*it)->text(2) == level && !((*it)->isHidden()))
+		if((*it)->text(1) == level && !((*it)->isHidden()))
 		(*it)->setHidden(true);
 		++it;
 	}
@@ -528,9 +633,10 @@ void LoggerWindow::HideSelected(QString level)
 void LoggerWindow::ShowSelected(QString level)
 {
 	QTreeWidgetItemIterator it(ui.logDisplay);
+
 	while(*it)
 	{
-		if((*it)->text(2) == level && ((*it)->isHidden()))
+		if((*it)->text(1) == level && ((*it)->isHidden()))
 		(*it)->setHidden(false);
 		++it;
 	}

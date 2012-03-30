@@ -24,7 +24,7 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>630</width>
+    <width>16777215</width>
     <height>16777215</height>
    </size>
   </property>
@@ -383,13 +383,6 @@
                 </widget>
                </item>
               </layout>
-             </item>
-             <item>
-              <widget class="QPushButton" name="applyFilter">
-               <property name="text">
-                <string>Apply &amp;Filters</string>
-               </property>
-              </widget>
              </item>
              <item>
               <widget class="QListWidget" name="emailsList">
