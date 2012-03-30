@@ -72,7 +72,7 @@ TEST_F(SuspectTest, EvidenceAddingRemoving)
 	EXPECT_EQ(0, memcmp(&suspect->GetEvidence().at(1), &p2, sizeof(p2)));
 
 	EXPECT_EQ(0, suspect->ClearEvidence());
-	EXPECT_EQ(0, suspect->GetEvidence().size());
+	EXPECT_EQ((uint)0, suspect->GetEvidence().size());
 }
 
 TEST_F(SuspectTest, EvidenceProcessing)
@@ -89,7 +89,7 @@ TEST_F(SuspectTest, EvidenceProcessing)
 	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 
 	// Do we have the correct packet count?
-	EXPECT_EQ(2, suspect->GetFeatureSet().m_packetCount);
+	EXPECT_EQ((uint)2, suspect->GetFeatureSet().m_packetCount);
 
 
 	FeatureSet fset = suspect->GetFeatureSet();

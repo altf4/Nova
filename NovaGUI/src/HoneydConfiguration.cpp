@@ -32,8 +32,15 @@ using boost::property_tree::xml_parser::trim_whitespace;
 
 HoneydConfiguration::HoneydConfiguration()
 {
+	//TODO Implement once we support multiple configurations
+	/*switch(Config::Inst()->GetHaystackStorage())
+	{
+		default:
+		{
+			break;
+		}
+	}*/
 	m_homePath = Config::Inst()->GetPathHome();
-
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
 	m_nodes.set_empty_key("");
@@ -541,15 +548,20 @@ void HoneydConfiguration::SaveAllTemplates()
 	}
 	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 	write_xml(m_homePath+"/scripts.xml", m_scriptTree, std::locale(), settings);
+	if(system("cd templates/") == -1)
+	{
+		if(system("mkdir templates") == -1)
+		{
+			//TODO Log error here
+		}
+	}
 	write_xml(m_homePath+"/templates/ports.xml", m_portTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
 }
 
-
-
 //Writes the current configuration to honeyd configs
-void HoneydConfiguration::WriteHoneydConfiguration()
+void HoneydConfiguration::WriteHoneydConfiguration(string path)
 {
 	stringstream out;
 
@@ -637,8 +649,7 @@ void HoneydConfiguration::WriteHoneydConfiguration()
 			}
 		}
 	}
-
-	ofstream outFile(Config::Inst()->GetPathConfigHoneydHS().data());
+	ofstream outFile(path);
 	outFile << out.str() << endl;
 	outFile.close();
 }
@@ -1199,4 +1210,16 @@ void HoneydConfiguration::SetProfiles(ProfileTable profiles)
 {
 	m_profiles.clear_no_resize();
 	m_profiles = profiles;
+}
+
+//Setter for the directory to read from and write to
+void HoneydConfiguration::SetHomePath(std::string homePath)
+{
+	m_homePath = homePath;
+}
+
+//Getter for the directory to read from and write to
+std::string HoneydConfiguration::GetHomePath()
+{
+	return m_homePath;
 }

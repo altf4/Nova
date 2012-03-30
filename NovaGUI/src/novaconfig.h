@@ -26,7 +26,7 @@
 #include <QMutex>
 #include <QWheelEvent>
 
-#define HAYSTACK_MENU_INDEX 5
+#define HAYSTACK_MENU_INDEX 4
 #define NODE_INDEX 0
 #define PROFILE_INDEX 1
 #define FROM_NOVA_CONFIG false
@@ -165,7 +165,7 @@ void onFeatureClick(const QPoint & pos);
 void on_actionNo_Action_triggered();
 
 //Which menu item is selected
-void on_treeWidget_itemSelectionChanged();
+void on_menuTreeWidget_itemSelectionChanged();
 //General Preferences Buttons
 void on_cancelButton_clicked();
 void on_okButton_clicked();
@@ -176,8 +176,6 @@ void on_applyButton_clicked();
 void on_pcapButton_clicked();
 void on_dataButton_clicked();
 void on_hsConfigButton_clicked();
-void on_dmConfigButton_clicked();
-
 void on_msgTypeListWidget_currentRowChanged();
 void on_defaultActionListWidget_currentRowChanged();
 
@@ -251,6 +249,15 @@ void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);
 void portTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 //Custom signal for combo box items in the tree changing
 void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited);
+
+//Doppelganger IP Address Spin boxes
+void on_dmIPSpinBox_0_valueChanged(int value);
+void on_dmIPSpinBox_1_valueChanged(int value);
+void on_dmIPSpinBox_2_valueChanged(int value);
+void on_dmIPSpinBox_3_valueChanged(int value);
+
+//Haystack storage type combo box
+void on_hsSaveTypeComboBox_currentIndexChanged(int index);
 
 private:
 	void SetInputValidators();

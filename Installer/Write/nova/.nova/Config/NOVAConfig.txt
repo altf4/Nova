@@ -16,7 +16,6 @@
 #INTERFACE eth0
 INTERFACE eth0
 
-
 ############################################
 # DATAFILE #
 ############################################
@@ -132,18 +131,18 @@ THINNING_DISTANCE 0.001
 #
 # EXAMPLE:
 #CLASSIFICATION_THRESHOLD .5
-CLASSIFICATION_THRESHOLD 0.5
+CLASSIFICATION_THRESHOLD .5
 
 ############################################
-# DM_HONEYD_CONFIG #
+# USER_HONEYD_CONFIG #
 ############################################
 #
 # Path relative to ~/.nova where the honeyd
 # configuration file resides.
 #
 # EXAMPLE:
-#DM_HONEYD_CONFIG Config/doppelganger.config
-DM_HONEYD_CONFIG Config/doppelganger.config
+#USER_HONEYD_CONFIG Config/user_honeyd.config
+USER_HONEYD_CONFIG Config/user_honeyd.config
 
 ############################################
 # DOPPELGANGER_IP #
@@ -192,8 +191,8 @@ DM_ENABLED 1
 # be parsed for used IP addresses. 
 # 
 # EXAMPLE:
-#HS_HONEYD_CONFIG Config/haystack.config
-HS_HONEYD_CONFIG Config/haystack.config
+#HS_HONEYD_CONFIG Config/haystack_honeyd.config
+HS_HONEYD_CONFIG Config/haystack_honeyd.config
 
 ############################################
 # TCP_TIMEOUT #
@@ -325,8 +324,6 @@ DATA_TTL 0
 #CE_SAVE_FILE CESaveFile
 CE_SAVE_FILE CESaveFile
 
-
-
 # Logging Stuff #
 
 ############################################
@@ -373,8 +370,8 @@ RECIPIENTS first@email.send, second@email.send
 # SERVICE_PREFERENCES #
 ############################################
 #
-# SERVICE: 0 = LIBNOTIFY
-#	       1 = SYSLOG
+# SERVICE: 0 = SYSLOG
+#	       1 = LIBNOTIFY
 #		   2 = EMAIL
 #
 # LEVELS:  0 = DEBUG 
@@ -391,3 +388,16 @@ RECIPIENTS first@email.send, second@email.send
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
 SERVICE_PREFERENCES 0:4+;1:7-;2:5+;
+
+############################################
+# HAYSTACK_STORAGE #
+############################################
+#
+# Specifies the way Nova loads and saves the haystack
+# ( 'I' | 'M [path]' )
+# I - (Internal - Default) Store haystack at /usr/share/nova/.nova/Config
+# M [path] - (Manual) Run honeyd using the configuration in the file specified instead of Nova's configuration
+#
+# HAYSTACK_STORAGE I
+HAYSTACK_STORAGE I
+

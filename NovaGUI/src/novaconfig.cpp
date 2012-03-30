@@ -25,6 +25,7 @@
 
 #include <boost/foreach.hpp>
 #include <QFileDialog>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fstream>
 #include <QDir>
@@ -93,7 +94,7 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 				m_mainwindow->m_prompter->m_registeredMessageTypes[i].descriptionUID)));
 	}
 
-	ui.treeWidget->expandAll();
+	ui.menuTreeWidget->expandAll();
 
 	ui.featureList->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(ui.featureList, SIGNAL(customContextMenuRequested(const QPoint &)), this,
@@ -223,7 +224,6 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 								" from any ancestors, would you like to keep it?", ui.actionNo_Action, ui.actionDeletePort, this);
 						m_loading->lock();
 					}
-					//TODO display prompt that allows the user to delete the port or do nothing if port isn't found
 				}
 				//If the port isn't inherited and the profile has no parent
 				else
@@ -1279,11 +1279,51 @@ void NovaConfig::LoadNovadPreferences()
 	ui.tcpFrequencyEdit->setText(QString::number(Config::Inst()->GetTcpCheckFreq()));
 
 	ui.trainingCheckBox->setChecked(Config::Inst()->GetIsTraining());
-	ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
+	switch(Config::Inst()->GetHaystackStorage())
+	{
+		case 'M':
+		{
+			ui.hsSaveTypeComboBox->setCurrentIndex(1);
+			ui.hsSummaryGroupBox->setEnabled(false);
+			ui.nodesGroupBox->setEnabled(false);
+			ui.profileGroupBox->setEnabled(false);
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			break;
+		}
+		/*case 'E': TODO Implement once we have multiple configurations
+		{
+			ui.hsSaveTypeComboBox->setCurrentIndex(1);
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			break;
+		}*/
+		default:
+		{
+			ui.hsSaveTypeComboBox->setCurrentIndex(0);
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
+			break;
+		}
+	}
 
-	ui.dmConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydDM().c_str());
-	ui.dmIPEdit->setText((QString)Config::Inst()->GetDoppelIp().c_str());
-	ui.dmCheckBox->setChecked(Config::Inst()->GetIsDmEnabled());
+	//Set first ip byte
+	string ip = Config::Inst()->GetDoppelIp();
+	int index = ip.find_first_of('.');
+	ui.dmIPSpinBox_0->setValue(atoi(ip.substr(0,ip.find_first_of('.')).c_str()));
+
+	//Set second ip byte
+	ip = ip.substr(index+1, ip.size());
+	index = ip.find_first_of('.');
+	ui.dmIPSpinBox_1->setValue(atoi(ip.substr(0,ip.find_first_of('.')).c_str()));
+
+	//Set third ip byte
+	ip = ip.substr(index+1, ip.size());
+	index = ip.find_first_of('.');
+	ui.dmIPSpinBox_2->setValue(atoi(ip.substr(0,ip.find_first_of('.')).c_str()));
+
+	//Set fourth ip byte
+	ip = ip.substr(index+1, ip.size());
+	index = ip.find_first_of('.');
+	ui.dmIPSpinBox_3->setValue(atoi(ip.c_str()));
+
 	ui.pcapCheckBox->setChecked(Config::Inst()->GetReadPcap());
 	ui.pcapGroupBox->setEnabled(ui.pcapCheckBox->isChecked());
 	ui.pcapEdit->setText((QString)Config::Inst()->GetPathPcapFile().c_str());
@@ -1371,6 +1411,19 @@ void NovaConfig::PushData()
 	//Clean up unused ports
 	CleanPorts();
 
+	string path = "";
+	//TODO Implement this once we support multiple configurations
+	/*switch(Config::Inst()->GetHaystackStorage())
+	{
+		default:
+		{
+			break;
+		}
+	}*/
+	path = Config::Inst()->GetPathHome();
+
+	m_mainwindow->m_honeydConfig->SetHomePath(path);
+
 	//Copies the tables
 	m_mainwindow->m_honeydConfig->SetScripts(m_scripts);
 	m_mainwindow->m_honeydConfig->SetProfiles(m_profiles);
@@ -1380,7 +1433,8 @@ void NovaConfig::PushData()
 
 	//Saves the current configuration to XML files
 	m_mainwindow->m_honeydConfig->SaveAllTemplates();
-	m_mainwindow->m_honeydConfig->WriteHoneydConfiguration();
+	m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(path);
+
 }
 
 //Pulls the last stored configuration from novagui
@@ -1507,31 +1561,19 @@ void NovaConfig::on_hsConfigButton_clicked()
 	//Gets the current path location
 	QDir path = QDir::current();
 	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Haystack Config File"),  path.path(), tr("Text Files (*.config)"));
-
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Choose a File Location"),
+			path.path(), tr("Text Files (*.config)"));
+	QFile file(fileName);
 	//Gets the relative path using the absolute path in fileName and the current path
-	if(fileName != NULL)
+	if(!file.exists())
 	{
-		fileName = path.relativeFilePath(fileName);
-		ui.hsConfigEdit->setText(fileName);
+		file.open(file.ReadWrite);
+		file.close();
 	}
-	LoadHaystackConfiguration();
-}
-
-void NovaConfig::on_dmConfigButton_clicked()
-{
-	//Gets the current path location
-	QDir path = QDir::current();
-
-	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Doppelganger Config File"), path.path(), tr("Text Files (*.config)"));
-
-	//Gets the relative path using the absolute path in fileName and the current path
-	if(fileName != NULL)
-	{
-		fileName = path.relativeFilePath(fileName);
-		ui.dmConfigEdit->setText(fileName);
-	}
+	fileName = file.fileName();
+	fileName = path.relativeFilePath(fileName);
+	ui.hsConfigEdit->setText(fileName);
+	//LoadHaystackConfiguration();
 }
 
 /************************************************
@@ -1607,13 +1649,33 @@ bool NovaConfig::SaveConfigurationToFile()
 	Config::Inst()->SetEps(this->ui.ceErrorEdit->displayText().toDouble());
 	Config::Inst()->SetClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
 	Config::Inst()->SetClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
-	Config::Inst()->SetPathConfigHoneydDm(this->ui.dmConfigEdit->displayText().toStdString() );
-	Config::Inst()->SetDoppelIp(this->ui.dmIPEdit->displayText().toStdString() );
-	Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString() );
+	Config::Inst()->SetEnabledFeatures(ss.str());
+
+	ss.str("");
+	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value() << "."
+		<< ui.dmIPSpinBox_3->value();
+	Config::Inst()->SetDoppelIp(ss.str());
+
+	switch(ui.hsSaveTypeComboBox->currentIndex())
+	{
+		case 1:
+		{
+			Config::Inst()->SetHaystackStorage('M');
+			Config::Inst()->SetPathConfigHoneydUser(this->ui.hsConfigEdit->displayText().toStdString());
+			break;
+		}
+		case 0:
+		default:
+		{
+			Config::Inst()->SetHaystackStorage('I');
+			Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString());
+			break;
+		}
+	}
+
 	Config::Inst()->SetTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
 	Config::Inst()->SetTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
-	Config::Inst()->SetPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
-	Config::Inst()->SetEnabledFeatures(ss.str());
+	Config::Inst()->SetPathPcapFile(ui.pcapEdit->displayText().toStdString());
 	Config::Inst()->SetReadPcap(ui.pcapCheckBox->isChecked());
 	Config::Inst()->SetGotoLive(ui.liveCapCheckBox->isChecked());
 
@@ -1644,9 +1706,9 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	m_loading->unlock();
 }
 
-void NovaConfig::on_treeWidget_itemSelectionChanged()
+void NovaConfig::on_menuTreeWidget_itemSelectionChanged()
 {
-	QTreeWidgetItem * item = ui.treeWidget->selectedItems().first();
+	QTreeWidgetItem * item = ui.menuTreeWidget->selectedItems().first();
 
 	//If last window was the profile window, save any changes
 	if(m_editingItems && m_profiles.size())
@@ -1658,7 +1720,7 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 	//If it's a top level item the page corresponds to their index in the tree
 	//Any new top level item should be inserted at the corresponding index and the defines
 	// for the lower level items will need to be adjusted appropriately.
-	int i = ui.treeWidget->indexOfTopLevelItem(item);
+	int i = ui.menuTreeWidget->indexOfTopLevelItem(item);
 
 	if(i != -1)
 	{
@@ -1669,27 +1731,27 @@ void NovaConfig::on_treeWidget_itemSelectionChanged()
 	{
 		//Find the parent and keep getting parents until we have a top level item
 		QTreeWidgetItem * parent = item->parent();
-		while(ui.treeWidget->indexOfTopLevelItem(parent) == -1)
+		while(ui.menuTreeWidget->indexOfTopLevelItem(parent) == -1)
 		{
 			parent = parent->parent();
 		}
-		if(ui.treeWidget->indexOfTopLevelItem(parent) == HAYSTACK_MENU_INDEX)
+		if(ui.menuTreeWidget->indexOfTopLevelItem(parent) == HAYSTACK_MENU_INDEX)
 		{
 			//If the 'Nodes' Item
 			if(parent->child(NODE_INDEX) == item)
 			{
-				ui.stackedWidget->setCurrentIndex(ui.treeWidget->topLevelItemCount());
+				ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount());
 			}
 			//If the 'Profiles' item
 			else if(parent->child(PROFILE_INDEX) == item)
 			{
 				m_editingItems = true;
-				ui.stackedWidget->setCurrentIndex(ui.treeWidget->topLevelItemCount()+1);
+				ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount()+1);
 			}
 		}
 		else
 		{
-			LOG(ERROR, "Unable to set stackedWidget page index from treeWidgetItem", "");
+			LOG(ERROR, "Unable to set stackedWidget page index from menuTreeWidgetItem", "");
 		}
 	}
 }
@@ -2966,7 +3028,7 @@ void NovaConfig::SetInputValidators()
 	// Doppelganger
 	// TODO: Make a custom validator for ipv4 and ipv6 IP addresses
 	// For now we just make sure someone doesn't enter whitespace
-	ui.dmIPEdit->setValidator(noSpaceValidator);
+	// XXX ui.dmIPEdit->setValidator(noSpaceValidator);
 }
 
 /******************************************
@@ -3753,11 +3815,11 @@ void NovaConfig::on_actionNodeCustomizeProfile_triggered()
 {
 	m_loading->lock();
 	m_currentProfile = m_nodes[m_currentNode].pfile;
-	ui.stackedWidget->setCurrentIndex(ui.treeWidget->topLevelItemCount()+1);
-	QTreeWidgetItem * item = ui.treeWidget->topLevelItem(HAYSTACK_MENU_INDEX);
-	item = ui.treeWidget->itemBelow(item);
-	item = ui.treeWidget->itemBelow(item);
-	ui.treeWidget->setCurrentItem(item);
+	ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount()+1);
+	QTreeWidgetItem * item = ui.menuTreeWidget->topLevelItem(HAYSTACK_MENU_INDEX);
+	item = ui.menuTreeWidget->itemBelow(item);
+	item = ui.menuTreeWidget->itemBelow(item);
+	ui.menuTreeWidget->setCurrentItem(item);
 	ui.profileTreeWidget->setCurrentItem(m_profiles[m_currentProfile].profileItem);
 	m_loading->unlock();
 	Q_EMIT on_actionProfileAdd_triggered();
@@ -3883,4 +3945,84 @@ void NovaConfig::on_dropRateSlider_valueChanged()
 	stringstream ss;
 	ss << ui.dropRateSlider->value() << "%";
 	ui.dropRateSetting->setText((QString)ss.str().c_str());
+}
+
+
+//Doppelganger IP Address Spin boxes
+void NovaConfig::on_dmIPSpinBox_0_valueChanged(int value)
+{
+	stringstream ss;
+	ss << value << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
+		<< "." << ui.dmIPSpinBox_3->value();
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+void NovaConfig::on_dmIPSpinBox_1_valueChanged(int value)
+{
+	stringstream ss;
+	ss << ui.dmIPSpinBox_0->value() << "." << value << "." << ui.dmIPSpinBox_2->value()
+		<< "." << ui.dmIPSpinBox_3->value();
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+void NovaConfig::on_dmIPSpinBox_2_valueChanged(int value)
+{
+	stringstream ss;
+	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << value
+		<< "." << ui.dmIPSpinBox_3->value();
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+void NovaConfig::on_dmIPSpinBox_3_valueChanged(int value)
+{
+	stringstream ss;
+	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
+		<< "." << value;
+	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		cout << "IP Conflict" << endl;
+		//TODO Error Logging
+	}
+}
+
+//Haystack storage type combo box
+void NovaConfig::on_hsSaveTypeComboBox_currentIndexChanged(int index)
+{
+	switch(index)
+	{
+		case 1:
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			ui.hsSummaryGroupBox->setEnabled(false);
+			ui.nodesGroupBox->setEnabled(false);
+			ui.profileGroupBox->setEnabled(false);
+			break;
+		}
+		case 0:
+		{
+			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
+			ui.hsSummaryGroupBox->setEnabled(true);
+			ui.nodesGroupBox->setEnabled(true);
+			ui.profileGroupBox->setEnabled(true);
+			break;
+		}
+		default:
+		{
+			cout << "IP Conflict" << endl;
+			//TODO Error Logging
+			break;
+		}
+	}
 }
