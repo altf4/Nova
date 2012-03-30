@@ -21,10 +21,7 @@
 #include "novaconfig.h"
 #include "nova_manual.h"
 #include "classifierPrompt.h"
-#include "NovadControl.h"
-#include "HaystackControl.h"
-#include "StatusQueries.h"
-#include "Connection.h"
+#include "nova_ui_core.h"
 #include "CallbackHandler.h"
 #include "Logger.h"
 

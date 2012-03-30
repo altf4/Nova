@@ -18,9 +18,7 @@
 //============================================================================
 #include "run_popup.h"
 #include "novagui.h"
-#include "Connection.h"
-#include "NovadControl.h"
-#include "HaystackControl.h"
+#include "nova_ui_core.h"
 
 #include <QDir>
 #include <QFileDialog>
