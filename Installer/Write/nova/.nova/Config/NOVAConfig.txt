@@ -191,8 +191,8 @@ DM_ENABLED 1
 # be parsed for used IP addresses. 
 # 
 # EXAMPLE:
-#HS_HONEYD_CONFIG Config/nova_honeyd.config
-HS_HONEYD_CONFIG Config/nova_honeyd.config
+#HS_HONEYD_CONFIG Config/haystack_honeyd.config
+HS_HONEYD_CONFIG Config/haystack_honeyd.config
 
 ############################################
 # TCP_TIMEOUT #
@@ -394,10 +394,10 @@ SERVICE_PREFERENCES 0:4+;1:7-;2:5+;
 ############################################
 #
 # Specifies the way Nova loads and saves the haystack
-# ( 'I' | 'E [dir]' | 'M [path]' )
-# I - (Internal) Store haystack at /usr/share/nova/.nova/Config
-# E [dir] - (External) Store haystack at directory specified at HAYSTACK_EXTERNAL_DIR
-# M [path] - (Manual) Run honeyd using the configuration file specified instead of Nova's configuration
+# ( 'I' | 'M [path]' )
+# I - (Internal - Default) Store haystack at /usr/share/nova/.nova/Config
+# M [path] - (Manual) Run honeyd using the configuration in the file specified instead of Nova's configuration
 #
 # HAYSTACK_STORAGE I
 HAYSTACK_STORAGE I
+

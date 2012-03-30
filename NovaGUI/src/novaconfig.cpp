@@ -1283,20 +1283,22 @@ void NovaConfig::LoadNovadPreferences()
 	{
 		case 'M':
 		{
-			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
+			ui.hsSaveTypeComboBox->setCurrentIndex(1);
 			ui.hsSummaryGroupBox->setEnabled(false);
 			ui.nodesGroupBox->setEnabled(false);
 			ui.profileGroupBox->setEnabled(false);
 			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
 			break;
 		}
-		case 'E':
+		/*case 'E': TODO Implement once we have multiple configurations
 		{
+			ui.hsSaveTypeComboBox->setCurrentIndex(1);
 			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
 			break;
-		}
+		}*/
 		default:
 		{
+			ui.hsSaveTypeComboBox->setCurrentIndex(0);
 			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydHS().c_str());
 			break;
 		}
@@ -1410,20 +1412,16 @@ void NovaConfig::PushData()
 	CleanPorts();
 
 	string path = "";
-	switch(Config::Inst()->GetHaystackStorage())
+	//TODO Implement this once we support multiple configurations
+	/*switch(Config::Inst()->GetHaystackStorage())
 	{
-		case 'E':
-		{
-			path = Config::Inst()->GetPathConfigHoneydUser();
-			break;
-		}
 		default:
 		{
-			path = Config::Inst()->GetPathConfigHoneydHS();
 			break;
 		}
-	}
-	string dir = path.substr(0, path.find_last_of('/'));
+	}*/
+	path = Config::Inst()->GetPathHome();
+
 	m_mainwindow->m_honeydConfig->SetHomePath(path);
 
 	//Copies the tables
@@ -1432,26 +1430,11 @@ void NovaConfig::PushData()
 	m_mainwindow->m_honeydConfig->SetSubnets(m_subnets);
 	m_mainwindow->m_honeydConfig->SetNodes(m_nodes);
 	m_mainwindow->m_honeydConfig->SetPorts(m_ports);
-	m_mainwindow->m_honeydConfig->SaveAllTemplates();
+
 	//Saves the current configuration to XML files
-	switch(Config::Inst()->GetHaystackStorage())
-	{
-		case 'I':
-		{
-			m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
-			break;
-		}
-		case 'E':
-		{
-			m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydUser());
-			break;
-		}
-		default:
-		{
-			//Any other case we don't write to honeyd
-			break;
-		}
-	}
+	m_mainwindow->m_honeydConfig->SaveAllTemplates();
+	m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(path);
+
 }
 
 //Pulls the last stored configuration from novagui
@@ -1578,15 +1561,19 @@ void NovaConfig::on_hsConfigButton_clicked()
 	//Gets the current path location
 	QDir path = QDir::current();
 	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Haystack Config File"),  path.path(), tr("Text Files (*.config)"));
-
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Choose a File Location"),
+			path.path(), tr("Text Files (*.config)"));
+	QFile file(fileName);
 	//Gets the relative path using the absolute path in fileName and the current path
-	if(fileName != NULL)
+	if(!file.exists())
 	{
-		fileName = path.relativeFilePath(fileName);
-		ui.hsConfigEdit->setText(fileName);
+		file.open(file.ReadWrite);
+		file.close();
 	}
-	LoadHaystackConfiguration();
+	fileName = file.fileName();
+	fileName = path.relativeFilePath(fileName);
+	ui.hsConfigEdit->setText(fileName);
+	//LoadHaystackConfiguration();
 }
 
 /************************************************
@@ -1662,25 +1649,33 @@ bool NovaConfig::SaveConfigurationToFile()
 	Config::Inst()->SetEps(this->ui.ceErrorEdit->displayText().toDouble());
 	Config::Inst()->SetClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
 	Config::Inst()->SetClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
+	Config::Inst()->SetEnabledFeatures(ss.str());
 
 	ss.str("");
 	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value() << "."
 		<< ui.dmIPSpinBox_3->value();
 	Config::Inst()->SetDoppelIp(ss.str());
 
-	//If index isn't 0
-	if(ui.hsSaveTypeComboBox->currentIndex())
+	switch(ui.hsSaveTypeComboBox->currentIndex())
 	{
-		Config::Inst()->SetPathConfigHoneydUser(this->ui.hsConfigEdit->displayText().toStdString());
+		case 1:
+		{
+			Config::Inst()->SetHaystackStorage('M');
+			Config::Inst()->SetPathConfigHoneydUser(this->ui.hsConfigEdit->displayText().toStdString());
+			break;
+		}
+		case 0:
+		default:
+		{
+			Config::Inst()->SetHaystackStorage('I');
+			Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString());
+			break;
+		}
 	}
-	else
-	{
-		Config::Inst()->SetPathConfigHoneydHs(this->ui.hsConfigEdit->displayText().toStdString());
-	}
+
 	Config::Inst()->SetTcpTimout(this->ui.tcpTimeoutEdit->displayText().toInt());
 	Config::Inst()->SetTcpCheckFreq(this->ui.tcpFrequencyEdit->displayText().toInt());
-	Config::Inst()->SetPathPcapFile(ui.pcapEdit->displayText().toStdString()  );
-	Config::Inst()->SetEnabledFeatures(ss.str());
+	Config::Inst()->SetPathPcapFile(ui.pcapEdit->displayText().toStdString());
 	Config::Inst()->SetReadPcap(ui.pcapCheckBox->isChecked());
 	Config::Inst()->SetGotoLive(ui.liveCapCheckBox->isChecked());
 
@@ -4007,20 +4002,12 @@ void NovaConfig::on_hsSaveTypeComboBox_currentIndexChanged(int index)
 {
 	switch(index)
 	{
-		case 2:
+		case 1:
 		{
 			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
 			ui.hsSummaryGroupBox->setEnabled(false);
 			ui.nodesGroupBox->setEnabled(false);
 			ui.profileGroupBox->setEnabled(false);
-			break;
-		}
-		case 1:
-		{
-			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
-			ui.hsSummaryGroupBox->setEnabled(true);
-			ui.nodesGroupBox->setEnabled(true);
-			ui.profileGroupBox->setEnabled(true);
 			break;
 		}
 		case 0:

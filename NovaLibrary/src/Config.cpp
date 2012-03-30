@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Class to load and parse the NOVA configuration file
@@ -49,7 +49,7 @@ string Config::m_prefixes[] =
 	"DATAFILE",
 	"SA_MAX_ATTEMPTS",
 	"SA_SLEEP_DURATION",
-	"MANUAL_HONEYD_CONFIG",
+	"USER_HONEYD_CONFIG",
 	"DOPPELGANGER_IP",
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
@@ -620,7 +620,7 @@ void Config::LoadConfig()
 
 					switch(line.at(0))
 					{
-						case 'E':
+						case 'E'://E will be implemented with multiple configuration support
 						case 'M':
 						{
 							m_haystackStorage = line.at(0);
@@ -635,7 +635,7 @@ void Config::LoadConfig()
 						case 'I':
 						{
 							m_haystackStorage = 'I';
-							m_userPath = "";
+							m_userPath = m_pathHome + "/Config/haystack_honeyd.config";
 							isValid[prefixIndex] = true;
 							break;
 						}
@@ -838,8 +838,13 @@ string Config::ResolvePathVars(string path)
 		}
 	}
 	if(var.compare(""))
+	{
 		return var;
-	else return path;
+	}
+	else
+	{
+		return path;
+	}
 }
 
 bool Config::SaveConfig()
@@ -1038,7 +1043,7 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				*out << prefix << " " <<  m_haystackStorage;
-				if((m_haystackStorage == 'E') || (m_haystackStorage == 'M'))
+				if(m_haystackStorage == 'M')
 				{
 					*out << " " << m_userPath;
 				}

@@ -32,22 +32,15 @@ using boost::property_tree::xml_parser::trim_whitespace;
 
 HoneydConfiguration::HoneydConfiguration()
 {
-	switch(Config::Inst()->GetHaystackStorage())
+	//TODO Implement once we support multiple configurations
+	/*switch(Config::Inst()->GetHaystackStorage())
 	{
-		case 'E':
-		{
-			m_homePath = Config::Inst()->GetUserPath();
-			break;
-		}
-		case 'M':
-		case 'I':
 		default:
 		{
-			m_homePath = Config::Inst()->GetPathHome();
 			break;
 		}
-	}
-
+	}*/
+	m_homePath = Config::Inst()->GetPathHome();
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
 	m_nodes.set_empty_key("");
@@ -555,6 +548,13 @@ void HoneydConfiguration::SaveAllTemplates()
 	}
 	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 	write_xml(m_homePath+"/scripts.xml", m_scriptTree, std::locale(), settings);
+	if(system("cd templates/") == -1)
+	{
+		if(system("mkdir templates") == -1)
+		{
+			//TODO Log error here
+		}
+	}
 	write_xml(m_homePath+"/templates/ports.xml", m_portTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);

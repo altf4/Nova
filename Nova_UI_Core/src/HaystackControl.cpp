@@ -27,7 +27,7 @@ bool Nova::StartHaystack()
 {
 	string executeString = "nohup sudo honeyd -d -i " + Config::Inst()->GetInterface() + " -i "
 		+ Config::Inst()->GetDoppelInterface()+" -f ";
-
+	executeString += Config::Inst()->GetPathHome() + '/';
 	switch(Config::Inst()->GetHaystackStorage())
 	{
 		case 'I':
@@ -35,7 +35,6 @@ bool Nova::StartHaystack()
 			executeString += Config::Inst()->GetPathConfigHoneydHS();
 			break;
 		}
-		case 'E':
 		case 'M':
 		{
 			executeString += Config::Inst()->GetPathConfigHoneydUser();
@@ -49,7 +48,7 @@ bool Nova::StartHaystack()
 
 	executeString += " -p " + Config::Inst()->GetPathReadFolder() + "/nmap-os-db -s "
 		"/var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
-
+	cout << executeString << endl;
 	if(system(executeString.c_str()) != 0)
 	{
 		return false;
