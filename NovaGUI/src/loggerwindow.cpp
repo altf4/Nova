@@ -1,3 +1,21 @@
+//============================================================================
+// Name        : novagui.cpp
+// Copyright   : DataSoft Corporation 2011-2012
+//	Nova is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   Nova is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
+// Description : Class to show the Log viewing window and handle the GUI logic
+//============================================================================
+
 #include "loggerwindow.h"
 
 using namespace Nova;
@@ -13,9 +31,60 @@ LoggerWindow::LoggerWindow(QWidget *parent)
 	m_settingsBoxShowing = false;
 	m_showNumberOfLogs = 0;
 	InitializeLoggingWindow();
+	InitializeRecipientsList();
 	this->setFocus();
 	//create listening thread
 	//reference NovaGUI CEListen, etc...
+}
+
+void LoggerWindow::InitializeRecipientsList()
+{
+	//QRegExp rx("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b\\b\\,[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
+	//QValidator *validator = new QRegExpValidator(rx, this);
+	bool empty = false;
+	ui.setEmailsButton->setDisabled(true);
+	ui.appendEmailsButton->setDisabled(true);
+	ui.removeEmailsButton->setDisabled(true);
+	ui.emailEdit->setPlaceholderText("Enter a comma separated list of emails here...");
+	//ui.emailEdit->setValidator(validator);
+
+	QListWidgetItem * item = new QListWidgetItem("Emails file is empty, or does not exist...");
+	item->setFlags(Qt::NoItemFlags);
+	QFile file("/usr/share/nova/emails");
+
+	if(!file.open(QIODevice::ReadOnly))
+	{
+		ui.emailsList->addItem(item);
+		ui.setEmailsButton->setDisabled(false);
+	}
+	else
+	{
+		QTextStream in(&file);
+
+		do
+		{
+			QString pass = in.readLine();
+
+			if(pass == 0)
+			{
+				ui.emailsList->addItem(item);
+				ui.setEmailsButton->setDisabled(false);
+				empty = true;
+			}
+			else if(pass > 0)
+			{
+				ui.emailsList->addItem(pass);
+			}
+		}while(!in.atEnd() && !empty);
+	}
+	if(!empty)
+	{
+		ui.appendEmailsButton->setDisabled(false);
+		ui.removeEmailsButton->setDisabled(false);
+		ui.removeEmailsButton->setText("Clear Emails");
+	}
+
+	file.close();
 }
 
 void LoggerWindow::InitializeLoggingWindow()
@@ -38,7 +107,7 @@ void LoggerWindow::InitializeLoggingWindow()
 
 		AdjustColumnWidths();
 	}
-	//TODO: Add icons for checkboxes
+
 	file.close();
 
 	ui.applyFilter->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F));
@@ -219,17 +288,151 @@ void LoggerWindow::on_settingsButton_clicked()
 	}
 }
 
-/*void LoggerWindow::on_saveButton_clicked()
+void LoggerWindow::on_setEmailsButton_clicked()
 {
-	if(ui.logTabContainer->currentIndex() == 0)
+	if(ui.emailEdit->text().isEmpty())
 	{
-
+		//If there's nothing there to parse, do nothing
 	}
-	else if(ui.logTabContainer->currentIndex() == 1)
+	else
 	{
+		/*QString * valid = new QString(ui.emailEdit->text());
 
+		if(ui.emailEdit->validator()->validate(valid, 0) == QValidator::Acceptable)
+		{
+			ui.emailsList->addItem("switch worked");
+		}*/
+
+		std::vector<std::string> recs;
+
+		QString * text = new QString(ui.emailEdit->text());
+		QStringList parse = text->split(", ", QString::SkipEmptyParts);
+
+		ui.emailsList->clear();
+
+		for(int i = 0; i < parse.size(); i++)
+		{
+			ui.emailsList->addItem(parse[i]);
+			recs.push_back(parse[i].toStdString());
+		}
+
+		Logger::Inst()->SetEmailRecipients(recs);
+
+		ui.emailEdit->clear();
+		ui.setEmailsButton->setDisabled(true);
+		ui.appendEmailsButton->setDisabled(false);
+		ui.removeEmailsButton->setDisabled(false);
+		ui.removeEmailsButton->setText("Clear Emails");
 	}
-}*/
+}
+
+void LoggerWindow::on_appendEmailsButton_clicked()
+{
+	bool add = true;
+
+	if(ui.emailEdit->text().isEmpty())
+	{
+		//If there's nothing there to parse, do nothing
+	}
+	else
+	{
+		/*QString * valid = new QString(ui.emailEdit->text());
+
+		if(ui.emailEdit->validator()->validate(valid, 0) == QValidator::Acceptable)
+		{
+			ui.emailsList->addItem("switch worked");
+		}*/
+
+		std::vector<std::string> recs;
+
+		QString * text = new QString(ui.emailEdit->text());
+		QStringList parse = text->split(", ", QString::SkipEmptyParts);
+
+		for(int i = 0; i < parse.size(); i++)
+		{
+			add = true;
+
+			for(int j = 0; j < ui.emailsList->count() and add; j++)
+			{
+				if(!ui.emailsList->item(j)->text().compare(parse[i]))
+				{
+					add = false;
+				}
+			}
+
+			if(add)
+			{
+				ui.emailsList->addItem(parse[i]);
+				recs.push_back(parse[i].toStdString());
+			}
+		}
+
+		Logger::Inst()->AppendEmailRecipients(recs);
+		ui.emailEdit->clear();
+	}
+}
+
+void LoggerWindow::on_removeEmailsButton_clicked()
+{
+	if(!ui.removeEmailsButton->text().compare("Clear Emails"))
+	{
+		ui.emailsList->clear();
+		Logger::Inst()->ClearEmailRecipients();
+		ui.removeEmailsButton->setDisabled(true);
+		ui.appendEmailsButton->setDisabled(true);
+		ui.setEmailsButton->setDisabled(false);
+	}
+	else
+	{
+		std::vector<std::string> recs;
+		//throw in some debug prints to see what's in this QList
+		QList<QListWidgetItem *> selected = ui.emailsList->selectedItems();
+
+		for(uint16_t i = 0; i < selected.size(); i++)
+		{
+			recs.push_back(selected[i]->text().toStdString());
+			delete selected[i];
+		}
+
+		Logger::Inst()->RemoveEmailRecipients(recs);
+
+		if(ui.emailsList->count() == 0)
+		{
+			ui.removeEmailsButton->setDisabled(true);
+			ui.appendEmailsButton->setDisabled(true);
+			ui.setEmailsButton->setDisabled(false);
+		}
+	}
+}
+
+void LoggerWindow::on_clearEditButton_clicked()
+{
+	ui.emailEdit->clear();
+}
+
+void LoggerWindow::on_emailsList_itemSelectionChanged()
+{
+	bool change = true;
+
+	if(!ui.removeEmailsButton->text().compare("Clear Emails"))
+	{
+		ui.removeEmailsButton->setText("Remove Emails");
+	}
+	else
+	{
+		for(uint16_t i = 0; i < ui.emailsList->count(); i++)
+		{
+			if(ui.emailsList->item(i)->isSelected())
+			{
+				change = false;
+			}
+		}
+		if(change)
+		{
+			ui.removeEmailsButton->setText("Clear Emails");
+		}
+	}
+}
 
 void LoggerWindow::on_clearButton_clicked()
 {
@@ -238,8 +441,6 @@ void LoggerWindow::on_clearButton_clicked()
 
 void LoggerWindow::on_applyFilter_clicked()
 {
- // ME for filter options enforced here, find a way to manage checkbox toggle permissions
-
 	QTreeWidgetItemIterator it(ui.logDisplay);
 	while(*it)
 	{

@@ -57,10 +57,10 @@ struct MessageOptions
 	std::string smtp_addr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
 	in_port_t smtp_port;
-	userMap service_preferences;
+	userMap m_service_preferences;
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
-	std::vector<std::string> email_recipients;
+	std::vector<std::string> m_email_recipients;
 };
 
 typedef struct MessageOptions optionsInfo;
@@ -72,11 +72,6 @@ public:
 	static Logger* Inst();
 
 	~Logger();
-
-	// SaveLoggerConfiguration: will save LoggerConfiguration to the given filename.
-	// No use for this right now, a placeholder for future gui applications. Will
-	// definitely change.
-	void SaveLoggerConfiguration(std::string filename);
 
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
@@ -97,6 +92,27 @@ public:
 	//               just wanting to change the level, and not the range modifier, you have to put the
 	//               range modifier that's present in the NOVAConfig.txt file as the argument.
 	void SetUserLogPreferences(Nova::Services services, Nova::Levels messageLevel, char upDown);
+
+	//This will clear the emails file and place the argument vector's strings
+	// into it as the emails content.
+	// args: std::vector<std::string> recs: vector of email strings
+	void SetEmailRecipients(std::vector<std::string> recs);
+
+	//This will merely append the argument vector's strings to the emails file
+	// args: std::vector<std::string> recs: vector of email strings
+	void AppendEmailRecipients(std::vector<std::string> recs);
+
+	//Don't know about this yet, may not end up being in the final cut
+	//void ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append);
+
+	//This function will parse through the file and remove each email that's found in the
+	// argument vector
+	// args: std::vector<std::string> recs: vector of email strings
+	void RemoveEmailRecipients(std::vector<std::string> recs);
+
+	//This method just clears the emails file; if it's empty the
+	// mailer script won't run
+	void ClearEmailRecipients();
 
 protected:
 	// Constructor for the Logger class.
@@ -133,27 +149,6 @@ private:
 	uint16_t LoadConfiguration();
 
 	std::string getBitmask(Nova::Levels level);
-
-	//This will clear the emails file and place the argument vector's strings
-	// into it as the emails content.
-	// args: std::vector<std::string> recs: vector of email strings
-	void SetEmailRecipients(std::vector<std::string> recs);
-
-	//This will merely append the argument vector's strings to the emails file
-	// args: std::vector<std::string> recs: vector of email strings
-	void AppendEmailRecipients(std::vector<std::string> recs);
-
-	//Don't know about this yet, may not end up being in the final cut
-	//void ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append);
-
-	//This function will parse through the file and remove each email that's found in the
-	// argument vector
-	// args: std::vector<std::string> recs: vector of email strings
-	void RemoveEmailRecipients(std::vector<std::string> recs);
-
-	//This method just clears the emails file; if it's empty the
-	// mailer script won't run
-	void ClearEmailRecipients();
 
 public:
 	levelsMap m_levels;
