@@ -63,12 +63,20 @@ private Q_SLOTS:
 	void on_settingsButton_clicked();
 	void on_clearButton_clicked();
 	void on_closeButton_clicked();
-	void on_applyFilter_clicked();
+	//void on_applyFilter_clicked();
 	void on_setEmailsButton_clicked();
 	void on_appendEmailsButton_clicked();
 	void on_removeEmailsButton_clicked();
 	void on_clearEditButton_clicked();
 	void on_emailsList_itemSelectionChanged();
+	void on_checkDebug_stateChanged();
+	void on_checkInfo_stateChanged();
+	void on_checkNotice_stateChanged();
+	void on_checkWarning_stateChanged();
+	void on_checkError_stateChanged();
+	void on_checkCritical_stateChanged();
+	void on_checkAlert_stateChanged();
+	void on_checkEmergency_stateChanged();
 	void on_linesBox_currentIndexChanged(const QString & text);
 };
 
