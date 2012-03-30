@@ -16,8 +16,7 @@
 // Description : Handles requests for information from Novad
 //============================================================================
 
-#include "Connection.h"
-#include "StatusQueries.h"
+#include "Commands.h"
 #include "messages/ControlMessage.h"
 #include "messages/RequestMessage.h"
 #include "messages/ErrorMessage.h"

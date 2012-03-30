@@ -18,8 +18,7 @@
 
 #include "messages/ControlMessage.h"
 #include "messages/ErrorMessage.h"
-#include "StatusQueries.h"
-#include "Connection.h"
+#include "Commands.h"
 #include "NovaUtil.h"
 #include "Logger.h"
 #include "Config.h"

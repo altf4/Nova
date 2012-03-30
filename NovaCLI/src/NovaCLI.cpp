@@ -17,10 +17,7 @@
 //============================================================================
 
 #include "NovaCLI.h"
-#include "Connection.h"
-#include "HaystackControl.h"
-#include "NovadControl.h"
-#include "StatusQueries.h"
+#include "nova_ui_core.h"
 #include "Logger.h"
 
 
