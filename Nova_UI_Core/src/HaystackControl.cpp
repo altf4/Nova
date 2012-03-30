@@ -16,7 +16,7 @@
 // Description : Controls the Honeyd Haystack and Doppelganger processes
 //============================================================================
 
-#include "HaystackControl.h"
+#include "Commands.h"
 #include "Config.h"
 
 using namespace std;
