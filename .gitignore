@@ -109,3 +109,6 @@ NovaGUI/moc_run_popup.cpp
 /NovaCLI/Release/novacli
 /NovaCLI/Debug/novacli
 /NovaTest/NovadSource/*
+/NovaWeb/build/*
+/NovaWeb/www/dojo
+/NovaWeb/.lock-wscript

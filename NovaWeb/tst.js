@@ -32,8 +32,8 @@ var app = express.createServer(express_options);
 console.info("Serving static GET at /var/www");
 app.use(express.static('/var/www'));
 
-console.info("Listening on 8080");
-app.listen(8080);
+console.info("Listening on 8042");
+app.listen(8042);
 
 var everyone = require("now").initialize(app);
 
