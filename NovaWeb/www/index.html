@@ -15,9 +15,9 @@
     <script>
 
       require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser"]);
+      
 
       require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){
-
         dojo.addOnLoad(function(){
 
           now.IsNovadUp(function(isNovadUp){
@@ -27,24 +27,57 @@
           suspectStore = new dojo.store.Observable(new dojo.store.Memory());
           suspectStore.idProperty="GetInAddr";
           var suspectGrid;
+
+	  // Formatter for the classification
+	  function classificationFormatter(d)
+	  {
+		var num = new Number(d);
+		return (num.toFixed(6));
+	  }
+	 
+	  // Formatter for the floating point features
+	  function featureFormatter(d)
+	  {
+		var num = new Number(d);
+		return (num.toFixed(2));
+	  }
+
+
           require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!"],
                   function(DataGrid,ObjectStore){
+
                      suspectGrid = new DataGrid(
                         {
                           store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
-                          structure: [ {name:"Address", field:"GetInAddr"}, 
-                                       {name:"Classification", field:"GetClassification", width:"200px"},
-                                       {name:"Hostile", field:"GetIsHostile"}                            
+                          structure: [ {name:"Address", field:"GetInAddr", width:"150px"}, 
+                                       {name:"Classification", field:"GetClassification", width:"150px", formatter: classificationFormatter},
+				       {name:"Hostile", field:"GetIsHostile"},
+				       {name:"IP traffic distribution", field:"ip_traffic_distribution", formatter: featureFormatter},
+				       {name:"Port traffic distribution", field:"port_traffic_distribution", formatter: featureFormatter},
+				       {name:"Haystack event frequency", field:"haystack_event_frequency", formatter: featureFormatter},
+				       {name:"Packet Size Mean", field:"packet_size_mean", formatter: featureFormatter},
+				       {name:"Packet Size Deviation", field:"packet_size_deviation", formatter: featureFormatter},
+				       {name:"IPs Contacted", field:"distinct_ips"},
+				       {name:"Ports Contacted", field:"distinct_ports"},
+				       {name:"Packet Interval Mean", field:"packet_interval_mean", formatter: featureFormatter},
+				       {name:"Packet Interval Deviation", field:"packet_interval_deviation", formatter: featureFormatter},
                                      ],
                         }, 
                         "nova_suspects"
                      );
+
                      suspectGrid.startup();
           });
 
 
           now.OnNewSuspect(function(suspect){
-             if( suspectStore.get(suspect.GetInAddr) )
+	    // This is probably a really bad way to do this...
+	     for (var i in suspect.GetFeatures) {  
+		 console.log("feature: " + i + " = " + suspect.GetFeatures[i]);
+		 suspect[i] = suspect.GetFeatures[i];
+		}
+             
+	     if( suspectStore.get(suspect.GetInAddr) )
              {       
                suspectStore.put(suspect,{id: suspect.GetInAddr, overwrite: true});
                suspectGrid.render();
@@ -53,6 +86,7 @@
              {
                suspectStore.add(suspect,{id: suspect.GetInAddr}); 
              }
+
           });
       
         });
