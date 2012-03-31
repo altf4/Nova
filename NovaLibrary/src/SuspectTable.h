@@ -24,9 +24,9 @@
 #include <vector>
 
 #include "Suspect.h"
-#include "SuspectTableIterator.h"
 
 typedef google::dense_hash_map<uint64_t, Nova::Suspect *, std::tr1::hash<uint64_t>, eqkey > SuspectHashTable;
+typedef google::dense_hash_map<uint64_t, pthread_rwlock_t *, std::tr1::hash<uint64_t>, eqkey> SuspectLockTable;
 
 namespace Nova {
 
@@ -52,20 +52,6 @@ public:
 	// Default Deconstructor for SuspectTable
 	~SuspectTable();
 
-	// Get a SuspectTableIterator that points to the beginning of the table
-	// Returns the SuspectTableIterator
-	SuspectTableIterator Begin();
-
-	// Get a SuspectTableIterator that points to the last element in the table;
-	// Returns the SuspectTableIterator
-	SuspectTableIterator End();
-
-	// Get a SuspectTableIterator that points to the element at key;
-	// 		key: uint64_t of the Suspect
-	// Returns a SuspectTableIterator, if the suspect cannot be found the iterator's index is equal to the table's size
-	// Note: there are no guarantees about the state or existence of the Suspect in the table after this call.
-	SuspectTableIterator Find(uint64_t  key);
-
 	// Adds the Suspect pointed to in 'suspect' into the table using suspect->GetIPAddress() as the key;
 	// 		suspect: pointer to the Suspect you wish to add
 	// Returns (0) on Success, and (2) if the suspect exists;
@@ -75,6 +61,9 @@ public:
 	// 		packet: copy of the packet you whish to create a suspect from
 	// Returns (0) on Success, and (2) if the suspect exists;
 	SuspectTableRet AddNewSuspect(Packet packet);
+
+	//XXX
+	SuspectTableRet AddEvidenceToSuspect(in_addr_t key, Packet packet);
 
 	// Copies the suspect pointed to in 'suspect', into the table at location key
 	// 		suspect: pointer to the Suspect you wish to copy in
@@ -89,31 +78,39 @@ public:
 	// Returns empty Suspect on failure.
 	// Note: A 'Checked Out' Suspect cannot be modified until is has been replaced by the suspect 'Checked In'
 	// 		However the suspect can continue to be read. It is similar to having a read lock.
-	Suspect CheckOut(uint64_t key);
+	Suspect CheckOut(in_addr_t ipAddr);
 
 	// Lookup and get an Asynchronous copy of the Suspect
 	// 		key: uint64_t of the Suspect
 	// Returns an empty suspect on failure
-	// Note: there are no guarantees about the state or existence of the Suspect in the table after this call.
-	Suspect Peek(uint64_t  key);
+	// Note: To modify or lock a suspect use CheckOut();
+	// Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
+	Suspect GetSuspect(in_addr_t ipAddr);
+
+	// Lookup and get an Asynchronous copy of the Suspect
+	// 		key: uint64_t of the Suspect
+	// Returns an empty suspect on failure
+	// Note: To modify or lock a suspect use CheckOut();
+	// Note: This is the same as GetSuspect except is does not copy the feature set object which can grow very large.
+	Suspect GetSuspectStatus(in_addr_t ipAddr);
 
 	// Erases a suspect from the table if it is not locked
 	// 		key: uint64_t of the Suspect
 	// Returns 0 on success.
-	SuspectTableRet Erase(uint64_t key);
+	SuspectTableRet Erase(in_addr_t ipAddr);
 
 	// Iterates over the Suspect Table and returns a std::vector containing each Hostile Suspect's uint64_t
-	// Returns a std::vector of hostile suspect uint64_t keys
+	// Returns a std::vector of hostile suspect in_addr_t ipAddrs
 	std::vector<uint64_t> GetHostileSuspectKeys();
 
 	// Iterates over the Suspect Table and returns a std::vector containing each Benign Suspect's uint64_t
-	// Returns a std::vector of benign suspect uint64_t keys
+	// Returns a std::vector of benign suspect in_addr_t ipAddrs
 	std::vector<uint64_t> GetBenignSuspectKeys();
 
 	// Looks at the hostility of the suspect at key
 	// 		key: uint64_t of the Suspect
 	// Returns (3) for Benign, (-3) for Hostile, and (-2) if the key is invalid
-	SuspectTableRet GetHostility(uint64_t key);
+	SuspectTableRet GetHostility(in_addr_t ipAddr);
 
 	// Get the size of the Suspect Table
 	// Returns the size of the Table
@@ -132,11 +129,10 @@ public:
 	// Checks the validity of the key
 	//		key: The uint64_t of the Suspect
 	// Returns true if there is a suspect associated with the given key, false otherwise
-	bool IsValidKey(uint64_t key);
+	bool IsValidKey(in_addr_t ipAddr);
 
 	// Saves suspectTable to a human readable text file
 	void SaveSuspectsToFile(std::string filename);
-
 
 	Suspect m_emptySuspect;
 
@@ -147,48 +143,14 @@ public:
 
 	// Lock used to maintain concurrency between threads
 	pthread_rwlock_t m_lock;
-	pthread_rwlock_t m_ownerLock;
 
 	std::vector<uint64_t> m_keys;
 
-
-
 private:
-
-	// Write locks the suspect
-	// Note: This function will block until the lock is acquired
-	void Wrlock();
-
-	// Write locks the suspect
-	// Returns (true) if the lock was acquired, (false) if the table is locked by someone else
-	bool TryWrlock();
-
-	// Read locks the suspect
-	// Note: This function will block until the lock is acquired
-	void Rdlock();
-
-	// Read locks the suspect
-	// Returns (true) if the lock was acquired, (false) if the table is locked by someone else
-	bool TryRdlock();
-
-	// Unlocks the suspect
-	// Returns: (true) If the table was already or successfully unlocked, (false) if the table is locked by someone else
-	bool Unlock();
-
-	// Returns true if the current thread has a lock on the Table
-	bool IsOwner();
-
-	//Returns the number of 'owners' the table has
-	int NumOwners();
-
-	//Returns a reference to a suspect,
-	//Suspect operator[](uint64_t realKey);
 
 	uint64_t m_empty_key;
 
 	uint64_t m_deleted_key;
-
-	std::vector<pthread_t> m_owners;
 
 };
 
