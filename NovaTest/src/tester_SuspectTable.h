@@ -111,23 +111,23 @@ TEST_F(SuspectTableTest, IsValidKey) {
 
 TEST_F(SuspectTableTest, Erase) {
 	// Test for proper result on an empty table
-	EXPECT_EQ(KEY_INVALID, table.Erase(42));
+	EXPECT_EQ(SUSPECT_KEY_INVALID, table.Erase(42));
 
 	InitSuspects();
-	EXPECT_EQ(KEY_INVALID, table.Erase(42));
+	EXPECT_EQ(SUSPECT_KEY_INVALID, table.Erase(42));
 
 	//EXPECT_EQ(SUSPECT_NOT_CHECKED_OUT , table.Erase(1));
 	//table.CheckOut(1);
 
-	EXPECT_EQ(SUCCESS, table.Erase(1));
+	EXPECT_EQ(SUSPECT_TABLE_CALL_SUCCEESS, table.Erase(1));
 }
 
 TEST_F(SuspectTableTest, GetHostility) {
 	// Test for proper result on an empty table
-	EXPECT_EQ(KEY_INVALID, table.GetHostility(42));
+	EXPECT_EQ(SUSPECT_KEY_INVALID, table.GetHostility(42));
 
 	InitSuspects();
-	EXPECT_EQ(KEY_INVALID, table.GetHostility(42));
+	EXPECT_EQ(SUSPECT_KEY_INVALID, table.GetHostility(42));
 	EXPECT_EQ(IS_BENIGN, table.GetHostility(1));
 	EXPECT_EQ(IS_HOSTILE, table.GetHostility(2));
 }
@@ -137,15 +137,15 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 	s->SetIpAddress(42);
 
 	// Check in a suspect that wasn't in the table
-	EXPECT_EQ(KEY_INVALID, table.CheckIn(s));
-	EXPECT_EQ(KEY_INVALID, table.CheckIn(s));
+	EXPECT_EQ(SUSPECT_KEY_INVALID, table.CheckIn(s));
+	EXPECT_EQ(SUSPECT_KEY_INVALID, table.CheckIn(s));
 
 	// Test for proper result on an empty table
 	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut((uint64_t)42).GetIpAddress());
 	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut((in_addr_t)42).GetIpAddress());
 
 	// Check in a suspect that wasn't in the table
-	EXPECT_EQ(KEY_INVALID, table.CheckIn(s));
+	EXPECT_EQ(SUSPECT_KEY_INVALID, table.CheckIn(s));
 
 	InitSuspects();
 
@@ -160,7 +160,7 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 	EXPECT_EQ(s2->GetIpAddress(), checkedOutS2.GetIpAddress());
 
 	// Check them back in
-	EXPECT_EQ(SUCCESS, table.CheckIn(&checkedOutS1));
+	EXPECT_EQ(SUSPECT_TABLE_CALL_SUCCEESS, table.CheckIn(&checkedOutS1));
 
 	// Make sure we can't check out the same suspect more than once
 	// xxx: Apparently this is allowed. Make sure the desired functionality is to allow multiple CheckIns in a row
@@ -171,7 +171,7 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 
 	// EXPECT_EQ(SUSPECT_NOT_CHECKED_OUT, table.CheckIn(&checkedOutS1));
 
-	EXPECT_EQ(SUCCESS, table.CheckIn(&checkedOutS2));
+	EXPECT_EQ(SUSPECT_TABLE_CALL_SUCCEESS, table.CheckIn(&checkedOutS2));
 
 }
 

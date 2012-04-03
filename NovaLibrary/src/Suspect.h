@@ -75,8 +75,6 @@ public:
 	// 			 a value of false subtracts unsent data from the main table
 	void UpdateFeatureData(bool include);
 
-	// The main FeatureSet for this Suspect
-	FeatureSet m_features;
 	//Returns a copy of the suspects FeatureSet
 	FeatureSet GetFeatureSet();
 	//Sets or overwrites the suspects FeatureSet
@@ -88,8 +86,6 @@ public:
 	//Clears the feature set of the suspect
 	void ClearFeatureSet();
 
-	// FeatureSet containing data not yet sent through a SA
-	FeatureSet m_unsentFeatures;
 	//Returns a copy of the suspects unsent FeatureSet
 	FeatureSet GetUnsentFeatureSet();
 	//Sets or overwrites the suspects unsent FeatureSet
@@ -97,24 +93,11 @@ public:
 	//Clears the unsent feature set of the suspect
 	void ClearUnsentData();
 
-	// Array of values that represent the quality of suspect classification on each feature
-	double m_featureAccuracy[DIM];
 	//Returns the accuracy double of the feature using featureIndex fi
 	double GetFeatureAccuracy(featureIndex fi);
 	//Sets the accuracy double of the feature using featureIndex fi
 	void SetFeatureAccuracy(featureIndex fi, double d);
 
-	// The feature set in the format that ANN requires.
-	ANNpoint m_annPoint;
-	//Returns the suspect's ANNpoint
-	ANNpoint GetAnnPoint();
-	//Sets the suspect's ANNpoint
-	void SetAnnPoint(ANNpoint a);
-	//Deallocates the suspect's ANNpoint and sets it to NULL
-	void ClearAnnPoint();
-
-	// A vector of packets that have yet to be processed
-	std::vector <Packet> m_evidence;
 	// Returns a copy of the evidence std::vector so that it can be read.
 	std::vector <Packet> GetEvidence();
 	// Sets the evidence vector to the one passed
@@ -129,8 +112,6 @@ public:
 	//Clears the evidence std::vector
 	void ClearEvidence();
 
-	// The IP address of the suspect. Serves as a unique identifier for the Suspect
-	struct in_addr m_IpAddress;
 	//Returns a copy of the suspects in_addr
 	//Returns: Suspect's in_addr or NULL on failure
 	in_addr GetInAddr();
@@ -143,48 +124,32 @@ public:
 	//Sets the suspects in_addr_t
 	void SetIpAddress(in_addr_t ip);
 
-	// The current classification assigned to this suspect.
-	//	0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
-	//	-1 indicates no classification or error.
-	double m_classification;
 	//Returns a copy of the Suspects classification double
 	// Returns -1 on failure
 	double GetClassification();
 	//Sets the suspect's classification
 	void SetClassification(double n);
 
-
-	//The number of datapoints flagged as hostile that were matched to the suspect (max val == k in the config)
-	int32_t m_hostileNeighbors;
 	//Returns the number of hostile neighbors
 	int GetHostileNeighbors();
 	//Sets the number of hostile neighbors
 	void SetHostileNeighbors(int i);
 
-	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
-	bool m_isHostile;
 	//Returns the hostility bool of the suspect
 	bool GetIsHostile();
 	//Sets the hostility bool of the suspect
 	void SetIsHostile(bool b);
 
-	// Does the classification need updating?
-	//	IE: Has the evidence changed since last it was calculated?
-	bool m_needsClassificationUpdate;
 	//Returns the needs classification bool
 	bool GetNeedsClassificationUpdate();
 	//Sets the needs classification bool
 	void SetNeedsClassificationUpdate(bool b);
 
-	// Has this suspect been the subject of an alarm from another Nova instance?
-	bool m_flaggedByAlarm;
 	//Returns the flagged by silent alarm bool
 	bool GetFlaggedByAlarm();
 	//Sets the flagged by silent alarm bool
 	void SetFlaggedByAlarm(bool b);
 
-	// Is this a live capture or is NOVA reading from a pcap file?
-	bool m_isLive;
 	//Returns the 'from live capture' bool
 	bool GetIsLive();
 	//Sets the 'from live capture' bool
@@ -198,6 +163,33 @@ public:
 	bool operator==(const Suspect &rhs) const;
 	bool operator!=(const Suspect &rhs) const;
 
+private:
+
+	// The main FeatureSet for this Suspect
+	FeatureSet m_features;
+	// FeatureSet containing data not yet sent through a SA
+	FeatureSet m_unsentFeatures;
+	// Array of values that represent the quality of suspect classification on each feature
+	double m_featureAccuracy[DIM];
+	// A vector of packets that have yet to be processed
+	std::vector <Packet> m_evidence;
+	// The IP address of the suspect. Serves as a unique identifier for the Suspect
+	struct in_addr m_IpAddress;
+	// The current classification assigned to this suspect.
+	//	0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
+	//	-1 indicates no classification or error.
+	double m_classification;
+	//The number of datapoints flagged as hostile that were matched to the suspect (max val == k in the config)
+	int32_t m_hostileNeighbors;
+	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
+	bool m_isHostile;
+	// Does the classification need updating?
+	//	IE: Has the evidence changed since last it was calculated?
+	bool m_needsClassificationUpdate;
+	// Has this suspect been the subject of an alarm from another Nova instance?
+	bool m_flaggedByAlarm;
+	// Is this a live capture or is NOVA reading from a pcap file?
+	bool m_isLive;
 };
 
 }

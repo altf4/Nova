@@ -88,7 +88,8 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	double d;
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
-	ANNpoint aNN = suspect->GetAnnPoint();
+	ANNpoint aNN = suspect->GetAnnPoint(); //XXX Allocate the ann point
+	// XXX copy the values and normalize, then search.
 
 	if(aNN == NULL)
 	{
@@ -219,7 +220,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 }
 
 
-void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
+void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy) //XXX change to operate on an ANNpont
 {
 	// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
 	int ai = 0;

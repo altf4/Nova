@@ -38,7 +38,6 @@ Suspect::Suspect()
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
-	m_annPoint = NULL;
 	m_evidence.clear();
 
 	for(int i = 0; i < DIM; i++)
@@ -61,7 +60,6 @@ Suspect::Suspect(Packet packet)
 	m_isHostile = false;
 	m_needsClassificationUpdate = true;
 	m_isLive = true;
-	m_annPoint = NULL;
 	m_flaggedByAlarm = false;
 
 	for(int i = 0; i < DIM; i++)
@@ -479,67 +477,10 @@ void Suspect::SetFeatureAccuracy(featureIndex fi, double d)
 	m_featureAccuracy[fi] = d;
 }
 
-//Returns a copy of the suspect's ANNpoint
-ANNpoint Suspect::GetAnnPoint()
-{
-	return m_annPoint;
-}
-
-//Sets the suspect's ANNpoint, must have the lock to perform this operation
-void Suspect::SetAnnPoint(ANNpoint a)
-{
-	if(a == NULL)
-	{
-		if(m_annPoint != NULL)
-		{
-			m_annPoint = NULL;
-		}
-	}
-	if(m_annPoint == NULL)
-	{
-		m_annPoint = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
-	}
-	for(uint i = 0; i < Config::Inst()->GetEnabledFeatureCount(); i++)
-	{
-		m_annPoint[i] = a[i];
-	}
-}
-
-//Deallocates the suspect's ANNpoint and sets it to NULL, must have the lock to perform this operation
-void Suspect::ClearAnnPoint()
-{
-	if(m_annPoint != NULL)
-	{
-		annDeallocPt(m_annPoint);
-		m_annPoint = NULL;
-	}
-}
-
 Suspect& Suspect::operator=(const Suspect &rhs)
 {
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
-
-	if(rhs.m_annPoint != NULL)
-	{
-		if(m_annPoint == NULL)
-		{
-			m_annPoint = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
-		}
-		for(uint i = 0; i < Config::Inst()->GetEnabledFeatureCount(); i++)
-		{
-			m_annPoint[i] = rhs.m_annPoint[i];
-		}
-	}
-	else
-	{
-		if(m_annPoint != NULL)
-		{
-			annDeallocPt(m_annPoint);
-		}
-		m_annPoint = NULL;
-	}
-
 	m_evidence = rhs.m_evidence;
 	for(uint i = 0; i < DIM; i++)
 	{
@@ -562,11 +503,6 @@ bool Suspect::operator==(const Suspect &rhs) const
 	{
 		return false;
 	}
-	if (m_annPoint != rhs.m_annPoint)
-	{
-		return false;
-	}
-
 	if (m_IpAddress.s_addr != rhs.m_IpAddress.s_addr)
 	{
 		return false;
@@ -611,19 +547,6 @@ Suspect::Suspect(const Suspect &rhs)
 {
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
-
-	if(rhs.m_annPoint != NULL)
-	{
-		m_annPoint = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
-		for(uint i = 0; i < Config::Inst()->GetEnabledFeatureCount(); i++)
-		{
-			m_annPoint[i] = rhs.m_annPoint[i];
-		}
-	}
-	else
-	{
-		m_annPoint = NULL;
-	}
 
 	m_evidence = rhs.m_evidence;
 
