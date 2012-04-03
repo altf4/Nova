@@ -23,6 +23,10 @@
           now.IsNovadUp(function(isNovadUp){
            dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
           });
+          
+          now.IsHaystackUp(function(isHaystackUp){
+           dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
+          });
 
           suspectStore = new dojo.store.Observable(new dojo.store.Memory());
           suspectStore.idProperty="GetInAddr";
@@ -121,21 +125,17 @@
       
       <!-- Header panel -->
       <div class="edgePanel" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top', splitter: 'true'">
-	<div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="design: 'sidebar'" style="height: 70px;">
+	<div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="design: 'sidebar'" style="height: 125px;">
 
 	  <!-- Header center -->
 	  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'">    
 	    <H1>NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System</H1>
 	  </div>
 
-	  <!-- Header 2nd from right  -->
-	  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'right',layoutPriority:2" class="edgePanel">
-	    Status: 
-	  </div>
-
-	  <!-- Header right  -->
-	  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'right',layoutPriority:1">
-	    <div id="nova_status">unknown</div>
+	  <!-- Header bottom -->
+	  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom',layoutPriority:1">
+	    <div style="float: left">Novad Status: </div><div id="nova_status">unknown</div>
+	    <div style="float: left">Haystack Status: </div><div id="haystack_status">unknown</div>
 	  </div>
 
 	</div>

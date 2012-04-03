@@ -43,6 +43,11 @@ everyone.now.IsNovadUp = function(callback)
     callback(nova.IsNovadUp(false));
 }
 
+everyone.now.IsHaystackUp = function(callback) 
+{ 
+    callback(nova.IsHaystackUp());
+}
+
 everyone.now.ClearAllSuspects = function(callback)
 {
     nova.ClearAllSuspects();
