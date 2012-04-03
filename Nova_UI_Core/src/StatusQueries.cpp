@@ -21,12 +21,15 @@
 #include "messages/RequestMessage.h"
 #include "messages/ErrorMessage.h"
 #include "Logger.h"
+#include "Socket.h"
+#include "Lock.h"
 
 #include <iostream>
 
-extern int novadListenSocket;
 using namespace Nova;
 using namespace std;
+
+extern Socket novadListenSocket;
 
 bool Nova::IsNovadUp(bool tryToConnect)
 {
@@ -40,14 +43,16 @@ bool Nova::IsNovadUp(bool tryToConnect)
 		}
 	}
 
+	Lock lock(&novadListenSocket.m_mutex);
+
 	ControlMessage ping(CONTROL_PING);
-	if(!UI_Message::WriteMessage(&ping, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&ping, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -85,16 +90,18 @@ bool Nova::IsNovadUp(bool tryToConnect)
 
 vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 {
+	Lock lock(&novadListenSocket.m_mutex);
+
 	RequestMessage request(REQUEST_SUSPECTLIST);
 	request.m_listType = listType;
 
-	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		return NULL;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -137,18 +144,20 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 
 Suspect *Nova::GetSuspect(in_addr_t address)
 {
+	Lock lock(&novadListenSocket.m_mutex);
+
 	RequestMessage request(REQUEST_SUSPECT);
 	request.m_suspectAddress = address;
 
 
-	if(!UI_Message::WriteMessage(&request, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		return NULL;
 	}
 
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");

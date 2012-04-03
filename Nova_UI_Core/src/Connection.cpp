@@ -22,25 +22,30 @@
 #include "NovaUtil.h"
 #include "Logger.h"
 #include "Config.h"
+#include "Socket.h"
+#include "Lock.h"
 
 #include <string>
 #include <cerrno>
 #include <sys/un.h>
 #include <sys/socket.h>
 
+using namespace std;
+using namespace Nova;
+
 //Socket communication variables
-int UI_parentSocket = -1, UI_ListenSocket = -1, novadListenSocket = -1;
+Socket UI_parentSocket, UI_ListenSocket, novadListenSocket;
 struct sockaddr_un UI_Address, novadAddress;
 
 bool callbackInitialized = false;
 
-using namespace std;
-using namespace Nova;
 //Initializes the Callback socket. IE: The socket the UI listens on
 //	NOTE: This is run internally and not meant to be executed by the user
 //	returns - true if socket successfully initialized, false on error (such as another UI already listening)
 bool InitCallbackSocket()
 {
+	Lock lock(&UI_parentSocket.m_mutex);
+
 	//Builds the key path
 	string homePath = Nova::Config::Inst()->GetPathHome();
 	string key = homePath;
@@ -52,25 +57,25 @@ bool InitCallbackSocket()
 	strcpy(UI_Address.sun_path, key.c_str());
 	unlink(UI_Address.sun_path);
 
-	if((UI_parentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((UI_parentSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
-		close(UI_parentSocket);
+		close(UI_parentSocket.m_socketFD);
 		return false;
 	}
 	socklen_t len = sizeof(UI_Address);
 
-	if(::bind(UI_parentSocket,(struct sockaddr *)&UI_Address, len) == -1)
+	if(::bind(UI_parentSocket.m_socketFD,(struct sockaddr *)&UI_Address, len) == -1)
 	{
 		LOG(ERROR, " bind: "+string(strerror(errno))+".", "");
-		close(UI_parentSocket);
+		close(UI_parentSocket.m_socketFD);
 		return false;
 	}
 
-	if(listen(UI_parentSocket, SOCKET_QUEUE_SIZE) == -1)
+	if(listen(UI_parentSocket.m_socketFD, SOCKET_QUEUE_SIZE) == -1)
 	{
 		LOG(ERROR, " listen: "+string(strerror(errno))+".", "");
-		close(UI_parentSocket);
+		close(UI_parentSocket.m_socketFD);
 		return false;
 	}
 
@@ -94,6 +99,8 @@ bool Nova::ConnectToNovad()
 		return true;
 	}
 
+	Lock lock(&novadListenSocket.m_mutex);
+
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
 	key += "/keys";
@@ -103,38 +110,38 @@ bool Nova::ConnectToNovad()
 	novadAddress.sun_family = AF_UNIX;
 	strcpy(novadAddress.sun_path, key.c_str());
 
-	if((novadListenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((novadListenSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		return false;
 	}
 
-	if(connect(novadListenSocket, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
+	if(connect(novadListenSocket.m_socketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
 		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
-		close(novadListenSocket);
+		close(novadListenSocket.m_socketFD);
 		return false;
 	}
 
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
-	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket))
+	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket.m_socketFD))
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
-		close(novadListenSocket);
+		close(novadListenSocket.m_socketFD);
 		return false;
 	}
 
 	//Wait for a connection on the callback socket
 	int len = sizeof(struct sockaddr_un);
-	UI_ListenSocket = accept(UI_parentSocket, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
-	if (UI_ListenSocket == -1)
+	UI_ListenSocket.m_socketFD = accept(UI_parentSocket.m_socketFD, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
+	if (UI_ListenSocket.m_socketFD == -1)
 	{
 		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
-		close(UI_ListenSocket);
+		close(UI_ListenSocket.m_socketFD);
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -145,14 +152,14 @@ bool Nova::ConnectToNovad()
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
-		close(novadListenSocket);
+		close(novadListenSocket.m_socketFD);
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
 	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 	{
 		delete connectionReply;
-		close(novadListenSocket);
+		close(novadListenSocket.m_socketFD);
 		return false;
 	}
 	bool replySuccess = connectionReply->m_success;
@@ -187,7 +194,9 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 
 bool Nova::CloseNovadConnection()
 {
-	if((novadListenSocket == -1) && (UI_ListenSocket == -1))
+	Lock lock(&novadListenSocket.m_mutex);
+
+	if((novadListenSocket.m_socketFD == -1) && (UI_ListenSocket.m_socketFD == -1))
 	{
 		return true;
 	}
@@ -196,12 +205,12 @@ bool Nova::CloseNovadConnection()
 	callbackInitialized = false;
 
 	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
-	if(!UI_Message::WriteMessage(&disconnectNotice, novadListenSocket))
+	if(!UI_Message::WriteMessage(&disconnectNotice, novadListenSocket.m_socketFD))
 	{
 		success = false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -227,22 +236,22 @@ bool Nova::CloseNovadConnection()
 
 
 
-	if(UI_ListenSocket != -1 && close(UI_ListenSocket))
+	if(UI_ListenSocket.m_socketFD != -1 && close(UI_ListenSocket.m_socketFD))
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
-		close(UI_ListenSocket);
+		close(UI_ListenSocket.m_socketFD);
 		success = false;
 	}
 
-	if(novadListenSocket != -1 && close(novadListenSocket))
+	if(novadListenSocket.m_socketFD != -1 && close(novadListenSocket.m_socketFD))
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
-		close(novadListenSocket);
+		close(novadListenSocket.m_socketFD);
 		success = false;
 	}
 
-	UI_ListenSocket = -1;
-	novadListenSocket = -1;
+	UI_ListenSocket.m_socketFD = -1;
+	novadListenSocket.m_socketFD = -1;
 
 	return success;
 }

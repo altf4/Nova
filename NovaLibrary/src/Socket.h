@@ -13,15 +13,13 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : A synchronized socket class
+// Description : A synchronized socket class. Not much more than a pairing of a file descriptor and mutex
 //============================================================================
 
 #ifndef SOCKET_H_
 #define SOCKET_H_
 
 #include "pthread.h"
-
-#include "../Lock.h"
 
 namespace Nova
 {
@@ -30,16 +28,22 @@ class Socket
 {
 public:
 
-	Socket(int socketFD)
+	Socket()
 	{
-		m_socketFD = socketFD;
-		pthread_mutex_init(&m_mutex, NULL);
+		m_socketFD = -1;
+
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+		pthread_mutex_init(&m_mutex, &attr);
+	}
+	~Socket()
+	{
+		close(m_socketFD);
 	}
 
 	int m_socketFD;
-
-private:
-
 	pthread_mutex_t m_mutex;
 };
 
