@@ -53,6 +53,32 @@ everyone.now.ClearAllSuspects = function(callback)
     nova.ClearAllSuspects();
 }
 
+
+
+everyone.now.StartHaystack = function(callback)
+{
+    nova.StartHaystack();
+}
+
+everyone.now.StopHaystack = function(callback)
+{
+    nova.StopHaystack();
+}
+
+
+
+everyone.now.StartNovad = function(callback)
+{
+    var nova = new novaNode.Instance();
+    nova.StartNovad();
+}
+
+everyone.now.StopNovad = function(callback)
+{
+    nova.StopNovad();
+}
+
+
 everyone.now.OnNewSuspect = function(callback) 
 {   
     nova.OnNewSuspect(function(suspect){ 

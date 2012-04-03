@@ -147,13 +147,17 @@ public:
 
 		// Javascript member methods
 		NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "IsNovadUp", (InvokeMethod<Boolean, bool, Boolean, bool, Nova::IsNovadUp>) );
 		NODE_SET_PROTOTYPE_METHOD(s_ct, "OnNewSuspect", registerOnNewSuspect );
 
-		/* NovadControl.h */
 		NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<Boolean, bool, Nova::StartNovad>) );
 		NODE_SET_PROTOTYPE_METHOD(s_ct, "StopNovad", (InvokeMethod<Boolean, bool, Nova::StopNovad>) );
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "IsHaystackUp", (InvokeMethod<Boolean, bool, Nova::IsHaystackUp>) );
+
+		NODE_SET_PROTOTYPE_METHOD(s_ct, "StartHaystack", (InvokeMethod<Boolean, bool, Nova::StartHaystack>) );
+		NODE_SET_PROTOTYPE_METHOD(s_ct, "StopHaystack", (InvokeMethod<Boolean, bool, Nova::StopHaystack>) );
+		
+		NODE_SET_PROTOTYPE_METHOD(s_ct, "IsNovadUp", (InvokeMethod<Boolean, bool, Boolean, bool, Nova::IsNovadUp>) );
+                NODE_SET_PROTOTYPE_METHOD(s_ct, "IsHaystackUp", (InvokeMethod<Boolean, bool, Nova::IsHaystackUp>) );
+//		
 //		NODE_SET_PROTOTYPE_METHOD(s_ct, "SaveAllSuspects", (InvokeMethod<Boolean, bool, Nova::SaveAllSuspects>) );
 		NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", (InvokeMethod<Boolean, bool, Nova::ClearAllSuspects>) );
 		//NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", (InvokeMethod<Boolean, bool, Nova::ClearSuspect>) )

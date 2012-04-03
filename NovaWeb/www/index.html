@@ -144,12 +144,37 @@
       
       <!-- Left panel -->
       <div id="leftCol" class="edgePanel" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'left', splitter: true">
+
+	<button data-dojo-type="dijit.form.Button" type="button">Start Nova
+	  <script type="dojo/method" data-dojo-event="onClick">
+	    now.StartNovad();
+	  </script>
+	</button>
+	
+        <button data-dojo-type="dijit.form.Button" type="button">Stop Nova
+	  <script type="dojo/method" data-dojo-event="onClick">
+	    now.StopNovad();
+	  </script>
+	</button>
+            
+	<button data-dojo-type="dijit.form.Button" type="button">Start Haystack
+	  <script type="dojo/method" data-dojo-event="onClick">
+	    now.StartHaystack();
+	  </script>
+	</button>
+	
+        <button data-dojo-type="dijit.form.Button" type="button">Stop Haystack
+	  <script type="dojo/method" data-dojo-event="onClick">
+	    now.StopHaystack();
+	  </script>
+	</button>
+            
+
 	<button data-dojo-type="dijit.form.Button" type="button">Clear All Suspects
 	  <script type="dojo/method" data-dojo-event="onClick">
 	    now.ClearAllSuspects();
 	  </script>
 	</button>
-
       <!-- End of left panel -->
       </div>
 
