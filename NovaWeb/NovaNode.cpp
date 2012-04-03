@@ -21,10 +21,7 @@
 #include <boost/format.hpp>
 
 /* Nova headers */
-#include "Connection.h"
-#include "StatusQueries.h"
-#include "NovadControl.h"
-#include "CallbackHandler.h"
+#include "nova_ui_core.h"
 #include "Suspect.h"
 #include "Logger.h"
 
