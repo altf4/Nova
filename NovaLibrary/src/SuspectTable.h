@@ -42,7 +42,7 @@ enum SuspectTableRet : int32_t
 {
 	SUSPECT_KEY_INVALID = -2, //The key cannot be associated with (or assigned to) a recognized suspect
 	SUSPECT_NOT_CHECKED_OUT = -1, //The suspect isn't checked out by this thread
-	SUSPECT_TABLE_CALL_SUCCEESS = 0, //The call succeeded
+	SUSPECT_TABLE_CALL_SUCCESS = 0, //The call succeeded
 };
 
 class SuspectTable
@@ -139,17 +139,17 @@ public:
 	void UpdateSuspect(Suspect *); //XXX
 
 	// Checks the validity of the key - public thread-safe version
-	//		key: The in_addr_t of the Suspect
+	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	bool IsValidKey(in_addr_t ipAddr);
+
+	Suspect m_emptySuspect;
 
 private:
 
 	uint64_t m_empty_key;
 
 	uint64_t m_deleted_key;
-
-	Suspect m_emptySuspect;
 
 	// Google Dense Hashmap used for constant time key lookups
 	SuspectHashTable m_suspectTable;
@@ -161,10 +161,29 @@ private:
 	std::vector<uint64_t> m_keys;
 
 	// Checks the validity of the key - private use non-locking version
-	//		key: The uint64_t of the Suspect
+	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	// *Note: Assumes you have already locked the table
-	bool IsValidKey_NoLocking(in_addr_t key);
+	bool IsValidKey_NonBlocking(in_addr_t key);
+
+	//Used by threads about to block on a suspect
+	// 		key: IP address of the suspect as a uint value (host byte order)
+	// Note: lock won't be deleted until the ref count is 0, but the Suspect can still be.
+	bool LockSuspect(in_addr_t key);
+
+	//Used by threads done blocking on a suspect
+	// 		key: IP address of the suspect as a uint value (host byte order)
+	// Returns (true) if the Lock could be unlocked and still exists and
+	// (false) if the Suspect has been deleted or could not be unlocked.
+	// Note: automatically deletes the lock if the suspect has been deleted and the ref count is 0
+	bool UnlockSuspect(in_addr_t key);
+
+	//Used internally, Calls to this function check if ref_cnt is 0 and deleted == true
+	// if so then we remove the Suspect lock, this is done to prevent destroying a lock a thread is blocking on
+	// 		key: IP address of the suspect as a uint value (host byte order)
+	// Returns (true) if the Lock doesn't exist or it was successfully removed
+	// false if threads are blocking on it or the Suspect has not been erased
+	bool CleanSuspectLock(in_addr_t key);
 
 };
 
