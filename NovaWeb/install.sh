@@ -5,8 +5,8 @@
 #   Nodejs v0.6.12
 #   cvv8 headers in /usr/include
 
-ln -T -s www /var/www
-ln -T -s www/dojo-release-1.7.1 www/dojo
+ln -f -T -s www /var/www
+ln -f -T -s dojo-release-1.7.1 www/dojo
 
 node-waf configure
 node-waf
