@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Haystack.h
+// Name        : nova_ui_core.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,30 +13,15 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Controls the Honeyd Haystack and Doppelganger processes
+// Description : Master header for implementing a User Interface to the Nova
+//		network security application
 //============================================================================
 
-#ifndef HAYSTACKCONTROL_H_
-#define HAYSTACKCONTROL_H_
+#ifndef NOVA_UI_CORE_H_
+#define NOVA_UI_CORE_H_
 
-namespace Nova
-{
-
-//Starts the Honeyd Haystack process
-//	returns - True if haystack successfully started, false on error
-//	NOTE: If the haystack is already running, this function does nothing and returns true
-bool StartHaystack();
-
-//Stops the Honeyd Haystack process
-//	returns - True if haystack successfully stopped, false on error
-//	NOTEL if the haystack is already dead, this function does nothing and returns true
-bool StopHaystack();
-
-//Returns whether the Haystack is running or not
-//	returns - True if honeyd haystack is running, false if not running
-bool IsHaystackUp();
-
-}
+#include "Commands.h"
+#include "CallbackHandler.h"
 
 
-#endif /* HAYSTACKCONTROL_H_ */
+#endif /* NOVA_UI_CORE_H_ */

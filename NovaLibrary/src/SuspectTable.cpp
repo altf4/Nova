@@ -195,7 +195,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 			{
 				ANNpoint aNN =  annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 				aNN = suspectCopy.GetAnnPoint();
-				m_table[key]->UnlockAsOwner();
+				//m_table[key]->UnlockAsOwner();
 				int eVal = m_table[key]->SetAnnPoint(aNN);
 				if (eVal != 0)
 				{

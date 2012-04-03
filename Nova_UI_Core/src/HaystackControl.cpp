@@ -16,7 +16,7 @@
 // Description : Controls the Honeyd Haystack and Doppelganger processes
 //============================================================================
 
-#include "HaystackControl.h"
+#include "Commands.h"
 #include "Config.h"
 
 using namespace std;
@@ -25,10 +25,30 @@ using namespace Nova;
 
 bool Nova::StartHaystack()
 {
-	string executeString = "nohup sudo honeyd -d -i "+Config::Inst()->GetInterface()+" -i "+Config::Inst()->GetDoppelInterface()
-		+" -f " + Config::Inst()->GetPathHome() + "/Config/haystack.config -p " + Config::Inst()->GetPathReadFolder()
-		+ "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
+	string executeString = "nohup sudo honeyd -d -i " + Config::Inst()->GetInterface() + " -i "
+		+ Config::Inst()->GetDoppelInterface()+" -f ";
+	executeString += Config::Inst()->GetPathHome() + '/';
+	switch(Config::Inst()->GetHaystackStorage())
+	{
+		case 'I':
+		{
+			executeString += Config::Inst()->GetPathConfigHoneydHS();
+			break;
+		}
+		case 'M':
+		{
+			executeString += Config::Inst()->GetPathConfigHoneydUser();
+			break;
+		}
+		default:
+		{
+			return false;
+		}
+	}
 
+	executeString += " -p " + Config::Inst()->GetPathReadFolder() + "/nmap-os-db -s "
+		"/var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
+	cout << executeString << endl;
 	if(system(executeString.c_str()) != 0)
 	{
 		return false;

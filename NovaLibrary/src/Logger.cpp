@@ -45,15 +45,10 @@ namespace Nova
 		m_messageInfo.smtp_addr = Config::Inst()->GetSMTPAddr();
 		m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
 		m_messageInfo.smtp_domain = Config::Inst()->GetSMTPDomain();
-		m_messageInfo.email_recipients = Config::Inst()->GetSMTPEmailRecipients();
+		m_messageInfo.m_email_recipients = Config::Inst()->GetSMTPEmailRecipients();
 		SetUserLogPreferences(Config::Inst()->GetLoggerPreferences());
 
 		return 1;
-	}
-
-	void Logger::SaveLoggerConfiguration(string filename)
-	{
-
 	}
 
 	void Logger::Log(Nova::Levels messageLevel, const char* messageBasic,  const char* messageAdv,
@@ -169,7 +164,7 @@ namespace Nova
 			}
 			push.first = insert;
 			push.second = upDown;
-			m_messageInfo.service_preferences.push_back(push);
+			m_messageInfo.m_service_preferences.push_back(push);
 			parse = strtok(NULL, ";");
 			j++;
 		}
@@ -277,7 +272,7 @@ namespace Nova
 			strcpy(tokens, logPref);
 
 			parse = strtok(tokens, ";");
-			m_messageInfo.service_preferences.clear();
+			m_messageInfo.m_service_preferences.clear();
 
 			//Parsing to update the m_messageInfo struct used in the logger class
 			// to dynamically determine what services are called for for a given log
@@ -312,7 +307,7 @@ namespace Nova
 
 				push.first = insert;
 				push.second = upDown;
-				m_messageInfo.service_preferences.push_back(push);
+				m_messageInfo.m_service_preferences.push_back(push);
 				parse = strtok(NULL, ";");
 				j++;
 			}
@@ -332,21 +327,21 @@ namespace Nova
 		string mask = "";
 		char upDown;
 
-		for(uint16_t i = 0; i < m_messageInfo.service_preferences.size(); i++)
+		for(uint16_t i = 0; i < m_messageInfo.m_service_preferences.size(); i++)
 		{
-			upDown = m_messageInfo.service_preferences[i].second;
+			upDown = m_messageInfo.m_service_preferences[i].second;
 
-			if(m_messageInfo.service_preferences[i].first.first == SYSLOG)
+			if(m_messageInfo.m_service_preferences[i].first.first == SYSLOG)
 			{
-				if(m_messageInfo.service_preferences[i].first.second == level)
+				if(m_messageInfo.m_service_preferences[i].first.second == level)
 				{
 					mask += "1";
 				}
-				else if(m_messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				else if(m_messageInfo.m_service_preferences[i].first.second < level && upDown == '+')
 				{
 					mask += "1";
 				}
-				else if(m_messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				else if(m_messageInfo.m_service_preferences[i].first.second > level && upDown == '-')
 				{
 					mask += "1";
 				}
@@ -355,17 +350,17 @@ namespace Nova
 					mask += "0";
 				}
 			}
-			else if(m_messageInfo.service_preferences[i].first.first == LIBNOTIFY)
+			else if(m_messageInfo.m_service_preferences[i].first.first == LIBNOTIFY)
 			{
-				if(m_messageInfo.service_preferences[i].first.second == level)
+				if(m_messageInfo.m_service_preferences[i].first.second == level)
 				{
 					mask += "1";
 				}
-				else if(m_messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				else if(m_messageInfo.m_service_preferences[i].first.second < level && upDown == '+')
 				{
 					mask += "1";
 				}
-				else if(m_messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				else if(m_messageInfo.m_service_preferences[i].first.second > level && upDown == '-')
 				{
 					mask += "1";
 				}
@@ -374,17 +369,17 @@ namespace Nova
 					mask += "0";
 				}
 			}
-			else if(m_messageInfo.service_preferences[i].first.first == EMAIL)
+			else if(m_messageInfo.m_service_preferences[i].first.first == EMAIL)
 			{
-				if(m_messageInfo.service_preferences[i].first.second == level)
+				if(m_messageInfo.m_service_preferences[i].first.second == level)
 				{
 					mask += "1";
 				}
-				else if(m_messageInfo.service_preferences[i].first.second < level && upDown == '+')
+				else if(m_messageInfo.m_service_preferences[i].first.second < level && upDown == '+')
 				{
 					mask += "1";
 				}
-				else if(m_messageInfo.service_preferences[i].first.second > level && upDown == '-')
+				else if(m_messageInfo.m_service_preferences[i].first.second > level && upDown == '-')
 				{
 					mask += "1";
 				}
@@ -452,7 +447,7 @@ namespace Nova
 
 	/*void Logger::ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append)
 	{
-
+		// I'll do this one later, the functionality is more of a luxury than a necessity anyways
 	}*/
 
 	void Logger::RemoveEmailRecipients(std::vector<std::string> recs)
