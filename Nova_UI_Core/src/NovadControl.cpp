@@ -21,16 +21,17 @@
 #include "messages/ErrorMessage.h"
 #include "Commands.h"
 #include "Logger.h"
+#include "Socket.h"
+#include "Lock.h"
 
 #include <iostream>
-
 #include <stdio.h>
 #include <unistd.h>
 
 using namespace Nova;
 using namespace std;
 
-extern int novadListenSocket;
+extern Socket novadListenSocket;
 
 bool Nova::StartNovad()
 {
@@ -51,15 +52,17 @@ bool Nova::StartNovad()
 
 bool Nova::StopNovad()
 {
+	Lock lock(&novadListenSocket.m_mutex);
+
 	ControlMessage killRequest(CONTROL_EXIT_REQUEST);
-	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -101,17 +104,19 @@ bool Nova::StopNovad()
 
 bool Nova::SaveAllSuspects(std::string file)
 {
+	Lock lock(&novadListenSocket.m_mutex);
+
 	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST);
 	strcpy(saveRequest.m_filePath, file.c_str());
 
-	if(!UI_Message::WriteMessage(&saveRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&saveRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -150,15 +155,17 @@ bool Nova::SaveAllSuspects(std::string file)
 
 bool Nova::ClearAllSuspects()
 {
+	Lock lock(&novadListenSocket.m_mutex);
+
 	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST);
-	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -197,16 +204,18 @@ bool Nova::ClearAllSuspects()
 
 bool Nova::ClearSuspect(in_addr_t suspectAddress)
 {
+	Lock lock(&novadListenSocket.m_mutex);
+
 	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST);
 	clearRequest.m_suspectAddress = suspectAddress;
-	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -245,15 +254,17 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 
 bool Nova::ReclassifyAllSuspects()
 {
+	Lock lock(&novadListenSocket.m_mutex);
+
 	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST);
-	if(!UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket) )
+	if(!UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
