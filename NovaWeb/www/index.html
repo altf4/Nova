@@ -13,6 +13,9 @@
     <script type="text/javascript" src="/nowjs/now.js"></script>
 
     <script>
+
+    var suspectStore;
+    var suspectGrid;
     
     function updateNovadStatus(isNovadUp){
         dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
@@ -20,6 +23,14 @@
  
     function updateHaystackStatus(isHaystackUp){
         dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
+    };
+
+    var clearSuspects = function(items, request)
+    {
+        dojo.forEach(items, function(i) {
+                console.log("Deleted item " + i);
+                suspectGrid.store.deleteItem(i);
+        });
     };
  
 
@@ -36,7 +47,6 @@
 
           suspectStore = new dojo.store.Observable(new dojo.store.Memory());
           suspectStore.idProperty="GetInAddr";
-          var suspectGrid;
 
           // Formatter for the classification
           function classificationFormatter(d)
@@ -177,6 +187,7 @@
 
         <button data-dojo-type="dijit.form.Button" type="button">Clear All Suspects
           <script type="dojo/method" data-dojo-event="onClick">
+            suspectGrid.store.fetch({onComplete: clearSuspects});
             now.ClearAllSuspects();
           </script>
         </button>
