@@ -624,6 +624,105 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 	return offset;
 }
 
+uint32_t FeatureSet::GetFeatureDataLength()
+{
+	uint32_t out = 0;
+	uint32_t count = 0;
+	uint32_t table_entries = 0;
+
+	out += sizeof(m_totalInterval) + sizeof(m_haystackEvents) + sizeof(m_packetCount)
+			+ sizeof(m_bytesTotal) + sizeof(m_startTime) + sizeof(m_endTime)
+			+ sizeof(m_lastTime);
+
+	uint32_t tempInt = 0;
+
+	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof(tempInt);
+
+	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof(tempInt);
+
+	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof tempInt;
+
+	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof tempInt;
+
+	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	return out;
+}
+
 
 uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 {

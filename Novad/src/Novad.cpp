@@ -574,9 +574,9 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 	int sockfd = 0;
 	string commandLine;
 	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
-	u_char serializedBuffer[MAX_MSG_SIZE];
 
-	uint dataLen = suspect->SerializeSuspect(serializedBuffer);
+	uint32_t dataLen = suspect->GetSerializeSuspectLength(true);
+	u_char serializedBuffer[dataLen];
 
 	if(suspect->GetUnsentFeatureSet().m_packetCount)
 	{

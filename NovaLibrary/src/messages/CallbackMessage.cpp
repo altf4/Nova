@@ -120,8 +120,10 @@ char *CallbackMessage::Serialize(uint32_t *length)
 			{
 				return NULL;
 			}
-			char suspectTempBuffer[MAX_MSG_SIZE];
+			uint32_t bufferSize = m_suspect->GetSerializeSuspectLength(false);
+			char * suspectTempBuffer[bufferSize];
 			m_suspectLength = m_suspect->SerializeSuspect((u_char*)suspectTempBuffer);
+
 			if(m_suspectLength == 0)
 			{
 				return NULL;

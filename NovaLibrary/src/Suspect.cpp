@@ -254,6 +254,33 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	return offset;
 }
 
+uint32_t Suspect::GetSerializeSuspectLength(bool GetData)
+{
+	RdlockSuspect();
+
+	uint32_t messageSize;
+
+	//Adds the sizeof results for the static required fields to messageSize
+	messageSize = sizeof(m_IpAddress.s_addr) + sizeof(m_classification) + sizeof(m_isHostile)
+			+ sizeof(m_needsClassificationUpdate) + sizeof(m_flaggedByAlarm) + sizeof(m_isLive)
+			+ sizeof(m_hostileNeighbors);
+	//Adds the dynamic elements to the messageSize
+	for(uint32_t i = 0; i < DIM; i++)
+	{
+		messageSize += sizeof(m_featureAccuracy[i]) + sizeof(m_features.m_features[i]);
+	}
+
+	if(GetData)
+	{
+		messageSize += m_features.GetFeatureDataLength();
+	}
+
+	UnlockSuspect();
+
+	return messageSize;
+}
+
+
 // Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
 //		buf - Pointer to buffer where serialized data will be stored
 // Returns: number of bytes set in the buffer
