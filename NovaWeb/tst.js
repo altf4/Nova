@@ -1,6 +1,7 @@
 
 var novaNode = require('nova.node');
 var nova = new novaNode.Instance();
+console.log("STARTUP: Created a new instance of novaNode");
 console.info("Nova up: " + nova.IsNovadUp(true));
 //if( ! nova.IsNovadUp() )
 //{
@@ -40,6 +41,7 @@ var everyone = require("now").initialize(app);
 // Functions to be called by clients
 everyone.now.IsNovadUp = function(callback) 
 { 
+    nova.CheckConnection();
     callback(nova.IsNovadUp(false));
 }
 
@@ -50,6 +52,7 @@ everyone.now.IsHaystackUp = function(callback)
 
 everyone.now.ClearAllSuspects = function(callback)
 {
+    nova.CheckConnection();
     nova.ClearAllSuspects();
 }
 
@@ -70,10 +73,12 @@ everyone.now.StopHaystack = function(callback)
 everyone.now.StartNovad = function(callback)
 {
     nova.StartNovad();
+    nova.CheckConnection();
 }
 
 everyone.now.StopNovad = function(callback)
 {
+    nova.CloseNovadConnection();
     nova.StopNovad();
 }
 

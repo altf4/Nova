@@ -44,10 +44,12 @@ class NovaNode: ObjectWrap
         static bool m_NovaCallbackHandlingContinue;
         static Persistent<Function> m_CallbackFunction;
         static bool m_CallbackRegistered;
+        static bool m_callbackRunning;
 
         static void InitNovaCallbackProcessing()
         {
             m_CallbackRegistered = false;
+            m_callbackRunning = false;
 
             eio_custom(NovaCallbackHandling, EIO_PRI_DEFAULT, AfterNovaCallbackHandling, (void*)0);
 
@@ -60,7 +62,7 @@ class NovaNode: ObjectWrap
                 return;
             }
 
-            if( ! Nova::ConnectToNovad() )
+            if( ! Nova::TryWaitConenctToNovad(3000) )
             {
                 LOG(ERROR, "Error connecting to Novad","");
                 return;
@@ -76,6 +78,7 @@ class NovaNode: ObjectWrap
 
             LOG(DEBUG, "Initializing Novad callback processing","");
 
+            m_callbackRunning = true;
             do
             {
                 cb = ProcessCallbackMessage();
@@ -96,6 +99,7 @@ class NovaNode: ObjectWrap
             }
             while(cb.type != CALLBACK_HUNG_UP);         
             LOG(DEBUG, "Novad hung up, closing callback processing","");
+            m_callbackRunning = false;
         }
 
         static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
@@ -148,6 +152,10 @@ class NovaNode: ObjectWrap
             // Javascript member methods
             NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
             NODE_SET_PROTOTYPE_METHOD(s_ct, "OnNewSuspect", registerOnNewSuspect );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "CheckConnection", CheckConnection );
+
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "CloseNovadConnection", (InvokeMethod<Boolean, bool, Nova::CloseNovadConnection>) );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "ConnectToNovad", (InvokeMethod<Boolean, bool, Nova::ConnectToNovad>) );
 
             NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<Boolean, bool, Nova::StartNovad>) );
             NODE_SET_PROTOTYPE_METHOD(s_ct, "StopNovad", (InvokeMethod<Boolean, bool, Nova::StopNovad>) );
@@ -169,10 +177,29 @@ class NovaNode: ObjectWrap
             target->Set(String::NewSymbol("Instance"),
                     s_ct->GetFunction());
 
+            //LOG(DEBUG, "Attempting to connect to Novad...", "");
+            //CheckConnection();
             CheckInitNova();
             InitNovaCallbackProcessing();
             LOG(DEBUG, "Initialized NovaNode","");
         }
+
+        // Checks if we lost the connection. If so, tries to reconnect
+        static Handle<Value> CheckConnection(const Arguments __attribute__((__unused__)) & args)
+        {
+            HandleScope scope;
+            
+            if (!m_callbackRunning)
+            {
+                LOG(DEBUG, "Attempting to connect to Novad...", "");
+                CheckInitNova();
+                InitNovaCallbackProcessing();
+             }
+            
+            Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+            return scope.Close(result);
+        }
+
 
         static Handle<Value> Shutdown(const Arguments __attribute__((__unused__)) & args)
         {
@@ -261,6 +288,7 @@ Persistent<FunctionTemplate> NovaNode::s_ct;
 
 Persistent<Function> NovaNode::m_CallbackFunction=Persistent<Function>();
 bool NovaNode::m_CallbackRegistered=false;
+bool NovaNode::m_callbackRunning=false;
 pthread_t NovaNode::m_NovaCallbackThread=0;
 
 extern "C" {
