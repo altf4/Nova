@@ -38,223 +38,223 @@ class NovaNode;
 
 class NovaNode: ObjectWrap
 {
-private:
-	int m_count;
-	static pthread_t m_NovaCallbackThread;
-	static bool m_NovaCallbackHandlingContinue;
-	static Persistent<Function> m_CallbackFunction;
-	static bool m_CallbackRegistered;
+    private:
+        int m_count;
+        static pthread_t m_NovaCallbackThread;
+        static bool m_NovaCallbackHandlingContinue;
+        static Persistent<Function> m_CallbackFunction;
+        static bool m_CallbackRegistered;
 
-	static void InitNovaCallbackProcessing()
-	{
-		m_CallbackRegistered = false;
-
-        eio_custom(NovaCallbackHandling, EIO_PRI_DEFAULT, AfterNovaCallbackHandling, (void*)0);
-
-	}
-
-	static void CheckInitNova()
-	{
-        if( Nova::IsNovadUp() )
+        static void InitNovaCallbackProcessing()
         {
-            return;
+            m_CallbackRegistered = false;
+
+            eio_custom(NovaCallbackHandling, EIO_PRI_DEFAULT, AfterNovaCallbackHandling, (void*)0);
+
         }
 
-        if( ! Nova::ConnectToNovad() )
+        static void CheckInitNova()
         {
-			LOG(ERROR, "Error connecting to Novad","");
-            return;
+            if( Nova::IsNovadUp() )
+            {
+                return;
+            }
+
+            if( ! Nova::ConnectToNovad() )
+            {
+                LOG(ERROR, "Error connecting to Novad","");
+                return;
+            }
+
+            LOG(DEBUG, "CheckInitNova complete","");
         }
 
-        LOG(DEBUG, "CheckInitNova complete","");
-    }
+        static void NovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
+        {
+            using namespace Nova;
+            CallbackChange cb;
 
-	static void NovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
-	{
-		using namespace Nova;
-		CallbackChange cb;
+            LOG(DEBUG, "Initializing Novad callback processing","");
 
-        LOG(DEBUG, "Initializing Novad callback processing","");
+            do
+            {
+                cb = ProcessCallbackMessage();
+                //            LOG(DEBUG,"callback type " + cb.type,"");
+                switch( cb.type )
+                {
+                    case CALLBACK_NEW_SUSPECT:
+                        HandleNewSuspect(cb.suspect);
+                        break;
 
-		do
-		{
-            cb = ProcessCallbackMessage();
-//            LOG(DEBUG,"callback type " + cb.type,"");
-			switch( cb.type )
-			{
-			case CALLBACK_NEW_SUSPECT:
-				HandleNewSuspect(cb.suspect);
-				break;
+                    case CALLBACK_ERROR:
+                        HandleCallbackError();
+                        break;
 
-			case CALLBACK_ERROR:
-				HandleCallbackError();
-				break;
+                    default:
+                        break;
+                }
+            }
+            while(cb.type != CALLBACK_HUNG_UP);         
+            LOG(DEBUG, "Novad hung up, closing callback processing","");
+        }
 
-			default:
-				break;
-			}
-		}
-		while(cb.type != CALLBACK_HUNG_UP);	    
-        LOG(DEBUG, "Novad hung up, closing callback processing","");
-	}
+        static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
+        {
+            return 0;
+        }
 
-    static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
-    {
-        return 0;
-    }
+        static void HandleNewSuspect(Suspect* suspect)
+        {
+            LOG(DEBUG, "Novad informed us of new suspect", "");
 
-	static void HandleNewSuspect(Suspect* suspect)
-	{
-        LOG(DEBUG, "Novad informed us of new suspect", "");
+            if( m_CallbackRegistered )
+            {
+                eio_req* req = (eio_req*) calloc(sizeof(*req),1);
+                req->data = (void*) suspect;
+                eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
+            }
+        }
 
-		if( m_CallbackRegistered )
-		{
-            eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-            req->data = (void*) suspect;
-            eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
-		}
-	}
-
-    static int HandleNewSuspectOnV8Thread(eio_req* req)
-    {
-        Suspect* suspect = static_cast<Suspect*>(req->data);
-		HandleScope scope;
-		LOG(DEBUG,"Invoking new suspect callback","");
-        Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
-        m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
-        return 0;
-    }
+        static int HandleNewSuspectOnV8Thread(eio_req* req)
+        {
+            Suspect* suspect = static_cast<Suspect*>(req->data);
+            HandleScope scope;
+            LOG(DEBUG,"Invoking new suspect callback","");
+            Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
+            m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+            return 0;
+        }
 
 
-	static void HandleCallbackError()
-	{
-        LOG(ERROR, "Novad provided CALLBACK_ERROR, will continue and move on","");
-	}
+        static void HandleCallbackError()
+        {
+            LOG(ERROR, "Novad provided CALLBACK_ERROR, will continue and move on","");
+        }
 
-public:
+    public:
 
-	static Persistent<FunctionTemplate> s_ct;
+        static Persistent<FunctionTemplate> s_ct;
 
-	static void Init(Handle<Object> target)
-	{
-		HandleScope scope;
+        static void Init(Handle<Object> target)
+        {
+            HandleScope scope;
 
-		Local<FunctionTemplate> t = FunctionTemplate::New(New);
+            Local<FunctionTemplate> t = FunctionTemplate::New(New);
 
-		s_ct = Persistent<FunctionTemplate>::New(t);
-		s_ct->InstanceTemplate()->SetInternalFieldCount(11);
-		s_ct->SetClassName(String::NewSymbol("NovaNode"));
+            s_ct = Persistent<FunctionTemplate>::New(t);
+            s_ct->InstanceTemplate()->SetInternalFieldCount(11);
+            s_ct->SetClassName(String::NewSymbol("NovaNode"));
 
-		// Javascript member methods
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "OnNewSuspect", registerOnNewSuspect );
+            // Javascript member methods
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "OnNewSuspect", registerOnNewSuspect );
 
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<Boolean, bool, Nova::StartNovad>) );
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "StopNovad", (InvokeMethod<Boolean, bool, Nova::StopNovad>) );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<Boolean, bool, Nova::StartNovad>) );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "StopNovad", (InvokeMethod<Boolean, bool, Nova::StopNovad>) );
 
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "StartHaystack", (InvokeMethod<Boolean, bool, Nova::StartHaystack>) );
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "StopHaystack", (InvokeMethod<Boolean, bool, Nova::StopHaystack>) );
-		
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "IsNovadUp", (InvokeMethod<Boolean, bool, Boolean, bool, Nova::IsNovadUp>) );
-                NODE_SET_PROTOTYPE_METHOD(s_ct, "IsHaystackUp", (InvokeMethod<Boolean, bool, Nova::IsHaystackUp>) );
-//		
-//		NODE_SET_PROTOTYPE_METHOD(s_ct, "SaveAllSuspects", (InvokeMethod<Boolean, bool, Nova::SaveAllSuspects>) );
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", (InvokeMethod<Boolean, bool, Nova::ClearAllSuspects>) );
-		//NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", (InvokeMethod<Boolean, bool, Nova::ClearSuspect>) )
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "ReclassifyAllSuspects", (InvokeMethod<Boolean, bool, Nova::ReclassifyAllSuspects>) );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "StartHaystack", (InvokeMethod<Boolean, bool, Nova::StartHaystack>) );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "StopHaystack", (InvokeMethod<Boolean, bool, Nova::StopHaystack>) );
 
-		NODE_SET_PROTOTYPE_METHOD(s_ct, "Shutdown", Shutdown );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "IsNovadUp", (InvokeMethod<Boolean, bool, Boolean, bool, Nova::IsNovadUp>) );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "IsHaystackUp", (InvokeMethod<Boolean, bool, Nova::IsHaystackUp>) );
+            //              
+            //              NODE_SET_PROTOTYPE_METHOD(s_ct, "SaveAllSuspects", (InvokeMethod<Boolean, bool, Nova::SaveAllSuspects>) );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", (InvokeMethod<Boolean, bool, Nova::ClearAllSuspects>) );
+            //NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", (InvokeMethod<Boolean, bool, Nova::ClearSuspect>) )
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "ReclassifyAllSuspects", (InvokeMethod<Boolean, bool, Nova::ReclassifyAllSuspects>) );
 
-		// Javascript object constructor
-		target->Set(String::NewSymbol("Instance"),
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "Shutdown", Shutdown );
+
+            // Javascript object constructor
+            target->Set(String::NewSymbol("Instance"),
                     s_ct->GetFunction());
-	    
-		CheckInitNova();
-		InitNovaCallbackProcessing();
-        LOG(DEBUG, "Initialized NovaNode","");
-	}
 
-	static Handle<Value> Shutdown(const Arguments __attribute__((__unused__)) & args)
-	{
-		HandleScope scope;
-        LOG(DEBUG, "Shutdown... closing Novad connection","");
+            CheckInitNova();
+            InitNovaCallbackProcessing();
+            LOG(DEBUG, "Initialized NovaNode","");
+        }
 
-        Nova::CloseNovadConnection();
-		Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
-        return scope.Close(result);
-    }
+        static Handle<Value> Shutdown(const Arguments __attribute__((__unused__)) & args)
+        {
+            HandleScope scope;
+            LOG(DEBUG, "Shutdown... closing Novad connection","");
 
-	NovaNode() :
-		m_count(0)
-	{
-	}
+            Nova::CloseNovadConnection();
+            Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+            return scope.Close(result);
+        }
 
-	~NovaNode()
-	{
-	}
+        NovaNode() :
+            m_count(0)
+        {
+        }
 
-	static Handle<Value> New(const Arguments& args)
-	{
-		HandleScope scope;
-		NovaNode* hw = new NovaNode();
-		hw->Wrap(args.This());
-		return args.This();
-	}
+        ~NovaNode()
+        {
+        }
 
-	static Handle<Value> getSuspectList(const Arguments& args)
-	{
-		HandleScope scope;
-		NovaNode* hw = ObjectWrap::Unwrap<NovaNode>(args.This());
-		hw->m_count++;
+        static Handle<Value> New(const Arguments& args)
+        {
+            HandleScope scope;
+            NovaNode* hw = new NovaNode();
+            hw->Wrap(args.This());
+            return args.This();
+        }
 
-		Handle<String> filterArgument;
-		if( args.Length() == 1 )
-		{
-			filterArgument=args[0]->ToString();
-		}
-		else
-		{
-			filterArgument=String::New("");
-		}
+        static Handle<Value> getSuspectList(const Arguments& args)
+        {
+            HandleScope scope;
+            NovaNode* hw = ObjectWrap::Unwrap<NovaNode>(args.This());
+            hw->m_count++;
 
-		// we don't yet have a method like this in the Nova core API.
-		// so we're faking this out for now...
-		Local<Array> result = Array::New(3);
-		result->Set(Integer::New(0), String::New("suspect1"));
-		result->Set(Integer::New(1), String::New("suspect2"));
-		result->Set(Integer::New(2), String::New("suspect3"));
+            Handle<String> filterArgument;
+            if( args.Length() == 1 )
+            {
+                filterArgument=args[0]->ToString();
+            }
+            else
+            {
+                filterArgument=String::New("");
+            }
 
-		return scope.Close(result);
-	}
+            // we don't yet have a method like this in the Nova core API.
+            // so we're faking this out for now...
+            Local<Array> result = Array::New(3);
+            result->Set(Integer::New(0), String::New("suspect1"));
+            result->Set(Integer::New(1), String::New("suspect2"));
+            result->Set(Integer::New(2), String::New("suspect3"));
 
-	static Handle<Value> registerOnNewSuspect(const Arguments& args)
-	{
-		HandleScope scope;
+            return scope.Close(result);
+        }
 
-		if( ! args[0]->IsFunction() )
-		{
-            LOG(DEBUG, 
-                "Attempted to register OnNewSuspect with non-function, excepting","");
-			return ThrowException(Exception::TypeError(String::New("Argument must be a function")));
-		}
-	 
-		m_CallbackFunction = Persistent<Function>::New( args[0].As<Function>() );
-        m_CallbackFunction.MakeWeak(0, HandleOnNewSuspectWeakCollect);
+        static Handle<Value> registerOnNewSuspect(const Arguments& args)
+        {
+            HandleScope scope;
 
-		Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
-		m_CallbackRegistered = true;
-		return scope.Close(result);	 
-	}
+            if( ! args[0]->IsFunction() )
+            {
+                LOG(DEBUG, 
+                        "Attempted to register OnNewSuspect with non-function, excepting","");
+                return ThrowException(Exception::TypeError(String::New("Argument must be a function")));
+            }
 
-    // Invoked when the only one referring to an OnNewSuspect handler is us, i.e. no JS objects
-    // are holding onto it.  So it's up to us to decide what to do about it.
-    static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter)
-    {
-        // For now, we do nothing, meaning that the callback will always stay registered
-        // and continue to be invoked
-        // even if the original object upon which OnNewSuspect() was invoked has been
-        // let go.
-    }
+            m_CallbackFunction = Persistent<Function>::New( args[0].As<Function>() );
+            m_CallbackFunction.MakeWeak(0, HandleOnNewSuspectWeakCollect);
+
+            Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+            m_CallbackRegistered = true;
+            return scope.Close(result);      
+        }
+
+        // Invoked when the only one referring to an OnNewSuspect handler is us, i.e. no JS objects
+        // are holding onto it.  So it's up to us to decide what to do about it.
+        static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter)
+        {
+            // For now, we do nothing, meaning that the callback will always stay registered
+            // and continue to be invoked
+            // even if the original object upon which OnNewSuspect() was invoked has been
+            // let go.
+        }
 };
 
 Persistent<FunctionTemplate> NovaNode::s_ct;
@@ -264,12 +264,12 @@ bool NovaNode::m_CallbackRegistered=false;
 pthread_t NovaNode::m_NovaCallbackThread=0;
 
 extern "C" {
-	static void init (Handle<Object> target)
-	{
-		NovaNode::Init(target);
-	}
+    static void init (Handle<Object> target)
+    {
+        NovaNode::Init(target);
+    }
 
-	NODE_MODULE(nova, init);
+    NODE_MODULE(nova, init);
 
 
 }
