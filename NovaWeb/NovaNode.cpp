@@ -151,7 +151,7 @@ class NovaNode: ObjectWrap
 
             // Javascript member methods
             NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
-            NODE_SET_PROTOTYPE_METHOD(s_ct, "OnNewSuspect", registerOnNewSuspect );
+            NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
             NODE_SET_PROTOTYPE_METHOD(s_ct, "CheckConnection", CheckConnection );
 
             NODE_SET_PROTOTYPE_METHOD(s_ct, "CloseNovadConnection", (InvokeMethod<Boolean, bool, Nova::CloseNovadConnection>) );
@@ -218,6 +218,7 @@ class NovaNode: ObjectWrap
 
         ~NovaNode()
         {
+        
         }
 
         static Handle<Value> New(const Arguments& args)

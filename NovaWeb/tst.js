@@ -8,10 +8,10 @@ console.log("STARTUP: Created a new instance of novaNode");
 //    console.info("Start Novad: " + nova.StartNovad());
 //}
 
-nova.OnNewSuspect(function(suspect)
-{ 
-    console.info("New suspect: " + suspect.GetInAddr());
-});
+//nova.OnNewSuspect(function(suspect)
+//{ 
+//    console.info("New suspect: " + suspect.GetInAddr());
+//});
 
 var fs = require('fs');
 var express=require('express');
@@ -81,16 +81,16 @@ everyone.now.StopNovad = function(callback)
     nova.CloseNovadConnection();
 }
 
+var distributeSuspect = function(suspect)
+{
+	console.log("Sending suspect to clients: " + suspect.GetInAddr());            
+	var s = new Object();
+	objCopy(suspect, s);
+	everyone.now.OnNewSuspect(s)
+};
+nova.registerOnNewSuspect(distributeSuspect);
+console.log("Registered NewSuspect callback function.");
 
-everyone.now.OnNewSuspect = function(callback) 
-{   
-    nova.OnNewSuspect(function(suspect){ 
-            console.log("Calling back client with suspect: " + suspect.GetInAddr());            
-            var s = new Object();
-            objCopy(suspect,s);
-            callback(s); 
-        });
-}
 
 process.on('SIGINT', function()
 {

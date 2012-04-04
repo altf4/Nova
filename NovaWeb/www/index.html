@@ -90,7 +90,7 @@
           });
 
 
-          now.OnNewSuspect(function(suspect){
+          now.OnNewSuspect = function(suspect){
             // This is probably a really bad way to do this...
              for (var i in suspect.GetFeatures) {  
                  suspect[i] = suspect.GetFeatures[i];
@@ -106,7 +106,7 @@
                suspectStore.add(suspect,{id: suspect.GetInAddr}); 
              }
 
-          });
+          };
       
         });
               
