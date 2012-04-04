@@ -69,7 +69,6 @@ everyone.now.StopHaystack = function(callback)
 
 everyone.now.StartNovad = function(callback)
 {
-    var nova = new novaNode.Instance();
     nova.StartNovad();
 }
 
