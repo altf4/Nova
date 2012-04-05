@@ -32,7 +32,6 @@
 
 using namespace std;
 using namespace Nova;
-
 //Socket communication variables
 Socket UI_parentSocket, UI_ListenSocket, novadListenSocket;
 struct sockaddr_un UI_Address, novadAddress;
@@ -83,7 +82,9 @@ bool InitCallbackSocket()
 	return true;
 }
 
-bool Nova::ConnectToNovad()
+namespace Nova
+{
+bool ConnectToNovad()
 {
 	if(!callbackInitialized)
 	{
@@ -169,7 +170,7 @@ bool Nova::ConnectToNovad()
 }
 
 
-bool Nova::TryWaitConenctToNovad(int timeout_ms)
+bool TryWaitConnectToNovad(int timeout_ms)
 {
 	if(!callbackInitialized)
 	{
@@ -192,7 +193,7 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 	}
 }
 
-bool Nova::CloseNovadConnection()
+bool CloseNovadConnection()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -254,4 +255,5 @@ bool Nova::CloseNovadConnection()
 	novadListenSocket.m_socketFD = -1;
 
 	return success;
+}
 }

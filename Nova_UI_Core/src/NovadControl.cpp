@@ -33,7 +33,9 @@ using namespace std;
 
 extern Socket novadListenSocket;
 
-bool Nova::StartNovad()
+namespace Nova
+{
+bool StartNovad()
 {
 	if(IsNovadUp())
 	{
@@ -50,7 +52,7 @@ bool Nova::StartNovad()
 	}
 }
 
-bool Nova::StopNovad()
+bool StopNovad()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -102,7 +104,7 @@ bool Nova::StopNovad()
 	return retSuccess;
 }
 
-bool Nova::SaveAllSuspects(std::string file)
+bool SaveAllSuspects(std::string file)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -153,7 +155,7 @@ bool Nova::SaveAllSuspects(std::string file)
 	return retSuccess;
 }
 
-bool Nova::ClearAllSuspects()
+bool ClearAllSuspects()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -202,7 +204,7 @@ bool Nova::ClearAllSuspects()
 	return retSuccess;
 }
 
-bool Nova::ClearSuspect(in_addr_t suspectAddress)
+bool ClearSuspect(in_addr_t suspectAddress)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -252,7 +254,7 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 	return retSuccess;
 }
 
-bool Nova::ReclassifyAllSuspects()
+bool ReclassifyAllSuspects()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -299,4 +301,5 @@ bool Nova::ReclassifyAllSuspects()
 	bool retSuccess = reclassifyReply->m_success;
 	delete reclassifyReply;
 	return retSuccess;
+}
 }

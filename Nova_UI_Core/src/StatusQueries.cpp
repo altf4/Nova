@@ -31,7 +31,9 @@ using namespace std;
 
 extern Socket novadListenSocket;
 
-bool Nova::IsNovadUp(bool tryToConnect)
+namespace Nova
+{
+bool IsNovadUp(bool tryToConnect)
 {
 
 	if(tryToConnect)
@@ -88,7 +90,7 @@ bool Nova::IsNovadUp(bool tryToConnect)
 	return true;
 }
 
-vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
+vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -142,7 +144,7 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 	return ret;
 }
 
-Suspect *Nova::GetSuspect(in_addr_t address)
+Suspect *GetSuspect(in_addr_t address)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -195,4 +197,5 @@ Suspect *Nova::GetSuspect(in_addr_t address)
 	delete requestReply;
 
 	return returnSuspect;
+}
 }

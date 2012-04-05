@@ -50,8 +50,10 @@ extern pthread_mutex_t suspectsSinceLastSaveLock;
 struct sockaddr_un msgRemote, msgLocal;
 int UIsocketSize;
 
+namespace Nova
+{
 //Launches a UI Handling thread, and returns
-bool Nova::Spawn_UI_Handler()
+bool Spawn_UI_Handler()
 {
 	Lock lock(&IPCSocket.m_mutex);
 
@@ -90,7 +92,7 @@ bool Nova::Spawn_UI_Handler()
     return true;
 }
 
-void *Nova::Handle_UI_Helper(void *ptr)
+void *Handle_UI_Helper(void *ptr)
 {
     while(true)
     {
@@ -116,7 +118,7 @@ void *Nova::Handle_UI_Helper(void *ptr)
     return NULL;
 }
 
-void *Nova::Handle_UI_Thread(void *socketVoidPtr)
+void *Handle_UI_Thread(void *socketVoidPtr)
 {
 	//Get the argument out, put it on the stack, free it from the heap so we don't forget
 	Socket *controlSocket = (Socket*)socketVoidPtr;
@@ -194,7 +196,7 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 	return NULL;
 }
 
-void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
+void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 {
 	switch(controlMessage.m_controlType)
 	{
@@ -347,7 +349,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 	}
 }
 
-void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
+void HandleRequestMessage(RequestMessage &msg, int socketFD)
 {
 	switch(msg.m_requestType)
 	{
@@ -423,7 +425,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 }
 
 
-bool Nova::ConnectToUI()
+bool ConnectToUI()
 {
 	Lock lock(&callbackSocket.m_mutex);
 
@@ -457,7 +459,7 @@ bool Nova::ConnectToUI()
 }
 
 
-bool Nova::SendSuspectToUI(Suspect *suspect)
+bool SendSuspectToUI(Suspect *suspect)
 {
 	Lock lock(&callbackSocket.m_mutex);
 
@@ -498,4 +500,5 @@ bool Nova::SendSuspectToUI(Suspect *suspect)
 	delete suspectCallback;
 
 	return true;
+}
 }
