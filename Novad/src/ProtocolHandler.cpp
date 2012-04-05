@@ -46,6 +46,7 @@ Socket callbackSocket, IPCSocket;
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
 extern pthread_mutex_t suspectsSinceLastSaveLock;
+extern time_t startTime;
 
 struct sockaddr_un msgRemote, msgLocal;
 int UIsocketSize;
@@ -410,6 +411,15 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
 			reply.m_suspect = new Suspect();
 			*reply.m_suspect = suspects.Peek(msg.m_suspectAddress);
+			UI_Message::WriteMessage(&reply, socketFD);
+
+			break;
+		}
+
+		case REQUEST_UPTIME:
+		{
+			RequestMessage reply(REQUEST_UPTIME_REPLY);
+			reply.m_uptime = time(NULL) - startTime;
 			UI_Message::WriteMessage(&reply, socketFD);
 
 			break;

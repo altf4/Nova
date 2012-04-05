@@ -90,6 +90,56 @@ bool IsNovadUp(bool tryToConnect)
 	return true;
 }
 
+int GetUptime()
+{
+	Lock lock(&novadListenSocket.m_mutex);
+
+	RequestMessage request(REQUEST_UPTIME);
+
+	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
+	{
+		return 0;
+	}
+
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return 0;
+	}
+
+	if(reply->m_messageType == ERROR_MESSAGE )
+	{
+		ErrorMessage *error = (ErrorMessage*)reply;
+		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseNovadConnection();
+		}
+		delete error;
+		return 0;
+	}
+	if(reply->m_messageType != REQUEST_MESSAGE )
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return 0;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_requestType != REQUEST_UPTIME_REPLY)
+	{
+		//Received the wrong kind of control message
+		delete requestReply;
+		return 0;
+	}
+
+	int ret = requestReply->m_uptime;
+
+	delete requestReply;
+	return ret;
+}
+
 vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 {
 	Lock lock(&novadListenSocket.m_mutex);
@@ -136,7 +186,6 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 		return NULL;
 	}
 
-
 	vector<in_addr_t> *ret = new vector<in_addr_t>;
 	*ret = requestReply->m_suspectList;
 
@@ -164,7 +213,7 @@ Suspect *GetSuspect(in_addr_t address)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
+		return NULL;
 	}
 
 	if(reply->m_messageType == ERROR_MESSAGE )
@@ -175,7 +224,7 @@ Suspect *GetSuspect(in_addr_t address)
 			CloseNovadConnection();
 		}
 		delete error;
-		return false;
+		return NULL;
 	}
 	if(reply->m_messageType != REQUEST_MESSAGE)
 	{

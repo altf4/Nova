@@ -16,17 +16,17 @@
 // Description : Parent message class for GUI communication with Nova processes
 //============================================================================/*
 
-#include "UI_Message.h"
-#include "ControlMessage.h"
 #include "CallbackMessage.h"
+#include "ControlMessage.h"
 #include "RequestMessage.h"
 #include "ErrorMessage.h"
+#include "UI_Message.h"
+#include "../Logger.h"
 
 #include <string>
 #include <vector>
-#include <sys/socket.h>
 #include <errno.h>
-
+#include <sys/socket.h>
 
 using namespace std;
 using namespace Nova;
@@ -83,6 +83,7 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 	memcpy(&length, buff, sizeof(length));
 	if (length == 0)
 	{
+		LOG(DEBUG, "Invalid length when deserializing UI message", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
@@ -91,6 +92,7 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 	if (buffer == NULL)
 	{
 		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
+		LOG(DEBUG, "Malloc failed when deserializing UI message", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
@@ -124,6 +126,7 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 
 	if(length < MESSAGE_MIN_SIZE)
 	{
+		LOG(DEBUG, "Invalid length when deserializing UI message. Length is less than MESSAGE_MIN_SIZE", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 

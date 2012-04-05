@@ -194,6 +194,12 @@ int main(int argc, const char *argv[])
 		}
 	}
 
+	// Checking status of components
+	else if (!strcmp(argv[1], "uptime"))
+	{
+		PrintUptime();
+	}
+
 	else
 	{
 		PrintUsage();
@@ -427,6 +433,13 @@ void ClearSuspectWrapper(in_addr_t address)
 		cout << "There was an errer when trying to clear the suspect data for this suspect" << endl;
 	}
 
+	CloseNovadConnection();
+}
+
+void PrintUptime()
+{
+	Connect();
+	cout << "Uptime is: " << GetUptime() << endl;
 	CloseNovadConnection();
 }
 

@@ -64,6 +64,9 @@ struct sockaddr_in hostAddr;
 time_t lastLoadTime;
 time_t lastSaveTime;
 
+// Time novad started, used for uptime and pcap capture names
+time_t startTime;
+
 string trainingCapFile;
 
 ofstream trainingFileStream;
@@ -128,13 +131,19 @@ int RunNovaD()
 	lastLoadTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
 	{
-		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
+		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
 	}
 
 	lastSaveTime = time(NULL);
 	if(lastSaveTime == ((time_t)-1))
 	{
-		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
+		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
+	}
+
+	startTime = time(NULL);
+	if(startTime == ((time_t)-1))
+	{
+		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
 	}
 
 	//Need to load the configuration before making the Classification Engine for setting up the DM
