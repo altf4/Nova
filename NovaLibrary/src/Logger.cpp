@@ -70,17 +70,17 @@ namespace Nova
 		}
 		tempStr = messageBasic;
 
-		if(mask.at(0) == '1')
+		if(mask.at(LIBNOTIFY) == '1')
 		{
 			LogToFile(messageLevel, ss.str());
 		}
 
-		if(mask.at(1) == '1')
+		if(mask.at(SYSLOG) == '1')
 		{
 			Notify(messageLevel, tempStr);
 		}
 
-		if(mask.at(2) == '1')
+		if(mask.at(EMAIL) == '1')
 		{
 			Mail(messageLevel, tempStr);
 		}
@@ -205,7 +205,7 @@ namespace Nova
 			//This for-loop will traverse through the string searching for the
 			// character numeric representation of the services enum member passed
 			// as an argument to the function.
-			for(uint16_t i = 0; i < strlen(logPref); i += 4)
+			for(uint16_t i = 0; i < strlen(logPref); i += 5)
 			{
 				//If it finds it...
 				if(logPref[i] == ';')

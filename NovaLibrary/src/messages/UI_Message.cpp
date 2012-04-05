@@ -139,19 +139,44 @@ bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
+	
+	// Total bytes of a write() call that need to be sent
+	uint32_t bytesSoFar;
+
+	// Return value of the write() call, actual bytes sent
+	uint32_t bytesWritten;
 
 	// Send the message length
-	if (write(connectFD, &length, sizeof(length)) < 0)
+	bytesSoFar = 0;
+    while (bytesSoFar < sizeof(length))
 	{
-		free(buffer);
-		return false;
+		bytesWritten = write(connectFD, &length, sizeof(length) - bytesSoFar);
+		if (bytesWritten < 0)
+		{
+			free(buffer);
+			return false;
+		}
+		else
+		{
+			bytesSoFar += bytesWritten;
+		}
 	}
 
+	
 	// Send the message
-	if( write(connectFD, buffer, length) < 0 )
+	bytesSoFar = 0;
+	while (bytesSoFar < length)
 	{
-		free(buffer);
-		return false;
+		bytesWritten = write(connectFD, buffer, length - bytesSoFar);
+		if (bytesWritten < 0)
+		{
+			free(buffer);
+			return false;
+		}
+		else
+		{
+			bytesSoFar += bytesWritten;
+		}
 	}
 
 	free(buffer);
