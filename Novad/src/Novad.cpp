@@ -222,7 +222,7 @@ int RunNovaD()
 
 bool LockNovad()
 {
-	int lockFile = open((Config::Inst()->GetPathHome() + "novad.lock").data(), O_CREAT | O_RDWR, 0666);
+	int lockFile = open((Config::Inst()->GetPathHome() + "/novad.lock").data(), O_CREAT | O_RDWR, 0666);
 	int rc = flock(lockFile, LOCK_EX | LOCK_NB);
 	if(rc)
 	{
