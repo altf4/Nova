@@ -535,10 +535,6 @@ namespace Nova
 		}
 
 		LoadConfiguration();
-
-		SetUserLogPreferences(SYSLOG, EMERGENCY, '+');
-		SetUserLogPreferences(LIBNOTIFY, EMERGENCY, '+');
-		SetUserLogPreferences(EMAIL, EMERGENCY, '+');
 	}
 
 	Logger::~Logger()
