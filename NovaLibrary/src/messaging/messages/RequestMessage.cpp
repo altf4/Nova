@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "RequestMessage.h"
-#include "../Defines.h"
+#include "../../Defines.h"
 
 namespace Nova
 {

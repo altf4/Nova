@@ -23,7 +23,7 @@
 #include "string"
 
 #include "Suspect.h"
-#include "messages/RequestMessage.h"
+#include "messaging/messages/RequestMessage.h"
 
 namespace Nova
 {

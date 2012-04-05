@@ -16,13 +16,13 @@
 // Description : Manages connections out to Novad, initializes and closes them
 //============================================================================
 
-#include "messages/ControlMessage.h"
-#include "messages/ErrorMessage.h"
+#include "messaging/messages/ControlMessage.h"
+#include "messaging/messages/ErrorMessage.h"
+#include "messaging/Socket.h"
 #include "Commands.h"
 #include "NovaUtil.h"
 #include "Logger.h"
 #include "Config.h"
-#include "Socket.h"
 #include "Lock.h"
 
 #include <string>

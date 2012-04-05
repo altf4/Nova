@@ -16,12 +16,12 @@
 // Description : Controls the Novad process itself, in terms of stopping and starting
 //============================================================================
 
-#include "messages/UI_Message.h"
-#include "messages/ControlMessage.h"
-#include "messages/ErrorMessage.h"
+#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/ControlMessage.h"
+#include "messaging/messages/ErrorMessage.h"
+#include "messaging/Socket.h"
 #include "Commands.h"
 #include "Logger.h"
-#include "Socket.h"
 #include "Lock.h"
 
 #include <iostream>

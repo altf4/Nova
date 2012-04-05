@@ -60,6 +60,14 @@ public:
 	// Returns - true on successfully sending the object, false on error
 	static bool WriteMessage(UI_Message *message, int connectFD);
 
+	//Creates a new UI_Message from a given buffer. Calls the appropriate child constructor
+	//	buffer - char pointer to a buffer in memory where the serialized message is at
+	//	length - length of the buffer
+	// Returns - Pointer to newly allocated UI_Message object
+	//				returns NULL on error
+	//	NOTE: The caller must manually delete the returned object when finished with it
+	static UI_Message *Deserialize(char *buffer, uint32_t length);
+
 	enum UI_MessageType m_messageType;
 
 protected:
@@ -74,16 +82,6 @@ protected:
 	//	(Since constructors can't return NULL)
 	//Not ever sent.
 	bool m_serializeError;
-
-private:
-
-	//Creates a new UI_Message from a given buffer. Calls the appropriate child constructor
-	//	buffer - char pointer to a buffer in memory where the serialized message is at
-	//	length - length of the buffer
-	// Returns - Pointer to newly allocated UI_Message object
-	//				returns NULL on error
-	//	NOTE: The caller must manually delete the returned object when finished with it
-	static UI_Message *Deserialize(char *buffer, uint32_t length);
 
 };
 

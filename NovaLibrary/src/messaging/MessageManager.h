@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : NovaCLI.h
+// Name        : MessageManager.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,42 +13,45 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Command line interface for Nova
+// Description : Manages all incoming messages on sockets
 //============================================================================
 
-#ifndef NOVACLI_H_
-#define NOVACLI_H_
+#ifndef MESSAGEMANAGER_H_
+#define MESSAGEMANAGER_H_
 
-#include "messaging/messages/RequestMessage.h"
+#include "messages/UI_Message.h"
+#include "MessageQueue.h"
 
-// Name of the CLI executable
-#define EXECUTABLE_NAME "novacli"
+#include <map>
+#include "pthread.h"
 
-namespace NovaCLI
+namespace Nova
 {
 
-// Connect to Novad if we can, otherwise print error and exit
-void Connect();
+class MessageManager
+{
 
-void StartNovaWrapper();
-void StartHaystackWrapper();
+public:
 
-void StatusNovaWrapper();
-void StatusHaystackWrapper();
+	MessageManager &Instance();
 
-void StopNovaWrapper();
-void StopHaystackWrapper();
+	Nova::UI_Message *GetMessage(int socketFD);
 
-void PrintSuspect(in_addr_t address);
-void PrintAllSuspects();
+	void StartSocket(int socketFD);
 
-void ClearSuspectWrapper(in_addr_t address);
-void ClearAllSuspectsWrapper();
+	//success/fail
+	void CloseSocket(int socketFD);
 
-void PrintSuspectList(enum SuspectListType listType);
+private:
 
-void PrintUsage();
+	static MessageManager *m_instance;
+
+	MessageManager();
+
+	pthread_mutex_t m_queuesMutex;
+	std::map<int, MessageQueue*> m_queues;
+};
+
 }
 
-
-#endif /* NOVACLI_H_ */
+#endif /* MESSAGEMANAGER_H_ */

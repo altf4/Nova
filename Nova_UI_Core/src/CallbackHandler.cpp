@@ -18,10 +18,10 @@
 //============================================================================
 
 #include "CallbackHandler.h"
-#include "messages/UI_Message.h"
-#include "messages/CallbackMessage.h"
-#include "messages/ErrorMessage.h"
-#include "Socket.h"
+#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/CallbackMessage.h"
+#include "messaging/messages/ErrorMessage.h"
+#include "messaging/Socket.h"
 #include "Lock.h"
 
 using namespace Nova;

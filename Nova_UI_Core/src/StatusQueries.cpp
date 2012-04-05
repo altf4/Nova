@@ -17,11 +17,11 @@
 //============================================================================
 
 #include "Commands.h"
-#include "messages/ControlMessage.h"
-#include "messages/RequestMessage.h"
-#include "messages/ErrorMessage.h"
+#include "messaging/messages/ControlMessage.h"
+#include "messaging/messages/RequestMessage.h"
+#include "messaging/messages/ErrorMessage.h"
+#include "messaging/Socket.h"
 #include "Logger.h"
-#include "Socket.h"
 #include "Lock.h"
 
 #include <iostream>

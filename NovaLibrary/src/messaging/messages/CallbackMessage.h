@@ -20,7 +20,7 @@
 #define CALLBACKMESSAGE_H_
 
 #include "UI_Message.h"
-#include "../Suspect.h"
+#include "../../Suspect.h"
 
 #define CALLBACK_MSG_MIN_SIZE 2
 

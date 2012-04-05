@@ -20,7 +20,7 @@
 #define RequestMessage_H_
 
 #include "UI_Message.h"
-#include "../Suspect.h"
+#include "../../Suspect.h"
 
 #include <vector>
 #include <arpa/inet.h>

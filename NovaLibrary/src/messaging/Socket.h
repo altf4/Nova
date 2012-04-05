@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : NovaCLI.h
+// Name        : Socket.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,42 +13,42 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Command line interface for Nova
+// Description : A synchronized socket class. Not much more than a pairing of a file descriptor and mutex
 //============================================================================
 
-#ifndef NOVACLI_H_
-#define NOVACLI_H_
+#ifndef SOCKET_H_
+#define SOCKET_H_
 
-#include "messaging/messages/RequestMessage.h"
+#include "pthread.h"
+#include "unistd.h"
 
-// Name of the CLI executable
-#define EXECUTABLE_NAME "novacli"
-
-namespace NovaCLI
+namespace Nova
 {
 
-// Connect to Novad if we can, otherwise print error and exit
-void Connect();
+class Socket
+{
+public:
 
-void StartNovaWrapper();
-void StartHaystackWrapper();
+	Socket()
+	{
+		m_socketFD = -1;
 
-void StatusNovaWrapper();
-void StatusHaystackWrapper();
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
-void StopNovaWrapper();
-void StopHaystackWrapper();
+		pthread_mutex_init(&m_mutex, &attr);
+	}
+	~Socket()
+	{
+		close(m_socketFD);
+	}
 
-void PrintSuspect(in_addr_t address);
-void PrintAllSuspects();
+	int m_socketFD;
+	pthread_mutex_t m_mutex;
+};
 
-void ClearSuspectWrapper(in_addr_t address);
-void ClearAllSuspectsWrapper();
-
-void PrintSuspectList(enum SuspectListType listType);
-
-void PrintUsage();
 }
 
 
-#endif /* NOVACLI_H_ */
+#endif /* SOCKET_H_ */

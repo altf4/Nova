@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Socket.h
+// Name        : MessageQueue.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,41 +13,54 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : A synchronized socket class. Not much more than a pairing of a file descriptor and mutex
+// Description : An item in the MessageManager's table. Contains a queue of received
+//	messages on a particular socket
 //============================================================================
 
-#ifndef SOCKET_H_
-#define SOCKET_H_
+#ifndef MESSAGEQUEUE_H_
+#define MESSAGEQUEUE_H_
+
+#include "messages/UI_Message.h"
 
 #include "pthread.h"
+#include <queue>
 
 namespace Nova
 {
 
-class Socket
+class MessageQueue
 {
 public:
 
-	Socket()
-	{
-		m_socketFD = -1;
+	MessageQueue(int socketFD, pthread_t callbackHandler);
 
-		pthread_mutexattr_t attr;
-		pthread_mutexattr_init(&attr);
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+	//Will block and wait until the queue has been flushed by calls to PopMessage
+	~MessageQueue();
 
-		pthread_mutex_init(&m_mutex, &attr);
-	}
-	~Socket()
-	{
-		close(m_socketFD);
-	}
+	//blocking call
+	UI_Message *PopMessage();
 
-	int m_socketFD;
-	pthread_mutex_t m_mutex;
+private:
+
+	//Producer thread, adds to queue
+	static void *StaticThreadHelper(void *ptr);
+
+	void PushMessage(UI_Message *message);
+
+	void *ProducerThread();
+
+	std::queue<UI_Message*> m_messages;
+	int m_socket;
+
+	pthread_cond_t m_wakeupCondition;
+	pthread_t m_callbackThread;
+	pthread_t m_producerThread;
+	pthread_mutex_t m_queueMutex;
+
 };
+
 
 }
 
 
-#endif /* SOCKET_H_ */
+#endif /* MESSAGEQUEUE_H_ */
