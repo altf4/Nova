@@ -92,7 +92,6 @@ NovaCLI/Debug/novacli
 
 #MISC
 /RemoteSystemsTempFiles/.project
-/Nova_UI_Core/Debug/Nova_UI_Core
 /Installer/.nova/Config/doppelganger.config
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Data/training.db
