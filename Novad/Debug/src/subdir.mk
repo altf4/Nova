@@ -10,6 +10,7 @@ CPP_SRCS += \
 ../src/Main.cpp \
 ../src/Novad.cpp \
 ../src/ProtocolHandler.cpp \
+../src/SuspectTable.cpp \
 ../src/Threads.cpp 
 
 OBJS += \
@@ -19,6 +20,7 @@ OBJS += \
 ./src/Main.o \
 ./src/Novad.o \
 ./src/ProtocolHandler.o \
+./src/SuspectTable.o \
 ./src/Threads.o 
 
 CPP_DEPS += \
@@ -28,6 +30,7 @@ CPP_DEPS += \
 ./src/Main.d \
 ./src/Novad.d \
 ./src/ProtocolHandler.d \
+./src/SuspectTable.d \
 ./src/Threads.d 
 
 

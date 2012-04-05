@@ -21,6 +21,8 @@
 #define SUSPECTTABLE_H_
 
 #include <arpa/inet.h>
+#include <iostream>
+#include <fstream>
 #include <vector>
 
 #include "Suspect.h"
@@ -66,8 +68,16 @@ public:
 	// Returns true on Success, and false if the suspect already exists
 	bool AddNewSuspect(Packet packet);
 
-	//XXX
+	// If the table contains a suspect associated with 'key', then it adds 'packet' to it's evidence
+	//		key: IP address of the suspect as a uint value (host byte order)
+	//		packet: packet struct to be added into the suspect's list of evidence.
+	// Returns (true) if the call succeeds, (false) if the suspect could not be located
+	// Note: this is faster than Checking out a suspect adding the evidence and checking it in but is equivalent
 	bool AddEvidenceToSuspect(in_addr_t key, Packet packet);
+
+	bool UpdateSuspect(in_addr_t key);
+
+	void UpdateAllSuspects();
 
 	// Copies the suspect pointed to in 'suspect', into the table location associated with key
 	// 		suspect: pointer to the Suspect you wish to copy in
@@ -89,34 +99,46 @@ public:
 	// Returns empty Suspect on failure.
 	// Note: A 'Checked Out' Suspect cannot be modified until is has been replaced by the suspect 'Checked In'
 	// 		However the suspect can continue to be read. It is similar to having a read lock.
-	Suspect CheckOut(in_addr_t ipAddr);
+	Suspect CheckOut(in_addr_t key);
 
 	// Lookup and get an Asynchronous copy of the Suspect
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns an empty suspect on failure
 	// Note: To modify or lock a suspect use CheckOut();
 	// Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
-	Suspect GetSuspect(in_addr_t ipAddr);
+	Suspect GetSuspect(in_addr_t key);
 
-	// Lookup and get an Asynchronous copy of the Suspect
+	// Get a lightweight copy of the suspect using 'key' used only to query basic bools, IP address, and classification.
 	// 		key: IP address of the suspect as a uint value (host byte order)
-	// Returns an empty suspect on failure
-	// Note: To modify or lock a suspect use CheckOut();
-	// Note: This is the same as GetSuspect except is does not copy the feature set object which can grow very large.
-	Suspect GetSuspectStatus(in_addr_t ipAddr);
+	// Returns: if the call does not succeed returns an empty/invalid suspect (Classification == -1)
+	// 		otherwise it returns a shallow copy of the suspect.
+	// Note: The suspect returned has an empty feature set and evidence vector
+	Suspect GetSuspectStatus(in_addr_t key);
 
-	// Erases a suspect from the table if it is not locked
+	//Erases a suspect from the table if it is not locked
 	// 		key: IP address of the suspect as a uint value (host byte order)
-	// Returns 0 on success.
-	SuspectTableRet Erase(in_addr_t ipAddr);
+	// Returns (true) on success, (false) if the suspect does not exist (key is invalid)
+	bool Erase(in_addr_t key);
 
-	// Iterates over the Suspect Table and returns a std::vector containing each Hostile Suspect's uint64_t
-	// Returns a std::vector of hostile suspect in_addr_t ipAddrs
-	std::vector<uint64_t> GetHostileSuspectKeys();
+	// Clears the Suspect Table of all entries
+	// Note: Locks may still persist until all threads unlock or return from blocking on them.
+	void EraseAllSuspects();
 
-	// Iterates over the Suspect Table and returns a std::vector containing each Benign Suspect's uint64_t
-	// Returns a std::vector of benign suspect in_addr_t ipAddrs
-	std::vector<uint64_t> GetBenignSuspectKeys();
+	// This function returns a vector of suspects keys the caller can iterate over to access the table.
+	// Returns a std::vector of every suspect currently in the table
+	std::vector<uint64_t> GetAllKeys();
+
+	// This function returns a vector of suspects keys the caller can iterate over to access the table.
+	// Returns a std::vector containing all hostile suspect keys
+	std::vector<uint64_t> GetKeys_of_HostileSuspects();
+
+	// This function returns a vector of suspects keys the caller can iterate over to access the table.
+	// Returns a std::vector containing all benign suspect keys
+	std::vector<uint64_t> GetKeys_of_BenignSuspects();
+
+	// This function returns a vector of suspects keys the caller can iterate over to access the table.
+	// Returns a std::vector containing the keys of all suspects that need a classification update.
+	std::vector<uint64_t>GetKeys_of_ModifiedSuspects();
 
 	// Get the size of the Suspect Table
 	// Returns the size of the Table
@@ -127,21 +149,27 @@ public:
 	// Note: Choosing an initial size that covers normal usage can improve performance.
 	void Resize(uint size);
 
-	// Clears the Suspect Table of all entries
-	// Returns (0) on Success, and (-1) if the table cannot be cleared safely
-	// Note: Locks may still persist until all threads unlock or return from blocking on them.
-	void EraseAllSuspects();
-
 	// Saves suspectTable to a human readable text file
 	void SaveSuspectsToFile(std::string filename);
 
-	void UpdateAllSuspects(); //XXX
-	void UpdateSuspect(Suspect *); //XXX
+	//Iterates over the table, serializing each suspect and dumping the raw data to out
+	//		out: ofstream you wish to write the contents to
+	// Returns: size in bytes of data written
+	//Note: Information can be retrieved by deserializing at the beginning of the dump and using the value returned
+	// as an offset to start the next deserialization
+	uint32_t DumpContents(std::ofstream out);
+
+	//Iterates over the table, serializing each suspect and dumping the raw data to out
+	//		out: ofstream you wish to write the contents to
+	// Returns: size in bytes of data written
+	//Note: Information can be retrieved by deserializing at the beginning of the dump and using the value returned
+	// as an offset to start the next deserialization
+	uint32_t ReadContents(std::ifstream in); //XXX
 
 	// Checks the validity of the key - public thread-safe version
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
-	bool IsValidKey(in_addr_t ipAddr);
+	bool IsValidKey(in_addr_t key);
 
 	Suspect m_emptySuspect;
 

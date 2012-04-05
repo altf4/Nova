@@ -249,81 +249,43 @@ void MaskKillSignals()
 
 void AppendToStateFile()
 {
-	pthread_mutex_lock(&suspectsSinceLastSaveLock);
 	lastSaveTime = time(NULL);
 	if(lastSaveTime == ((time_t)-1))
 	{
 		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
 	}
-
 	// Don't bother saving if no new suspect data, just confuses deserialization
 	if(suspectsSinceLastSave.Size() <= 0)
 	{
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 		return;
 	}
 
 	u_char tableBuffer[MAX_MSG_SIZE];
 	uint32_t dataSize = 0;
-
-	// Compute the total dataSize
-	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() <  suspectsSinceLastSave.Size(); ++it)
-	{
-		Suspect currentSuspect = suspectsSinceLastSave.CheckOut(it.GetKey());
-		currentSuspect.UpdateEvidence();
-		currentSuspect.UpdateFeatureData(true);
-		currentSuspect.CalculateFeatures();
-		suspectsSinceLastSave.CheckIn(&currentSuspect);
-		if(!currentSuspect.GetFeatureSet().m_packetCount)
-		{
-			continue;
-		}
-		else
-		{
-			dataSize += currentSuspect.SerializeSuspectWithData(tableBuffer);
-		}
-	}
-	// No suspects with packets to update
-	if(dataSize == 0)
-	{
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
-		return;
-	}
-
 	ofstream out(Config::Inst()->GetPathCESaveFile().data(), ofstream::binary | ofstream::app);
+
 	if(!out.is_open())
 	{
-		LOG(ERROR, "Problem with CE State File",
-			"Unable to open the CE state file at "+ Config::Inst()->GetPathCESaveFile());
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
-		return;
+		LOG(WARNING, "Unable to open CE state file.", "");
 	}
 
-	out.write((char*)&lastSaveTime, sizeof lastSaveTime);
-	out.write((char*)&dataSize, sizeof dataSize);
+	// Compute the total dataSize
+	suspectsSinceLastSave.UpdateAllSuspects();
+	dataSize = suspectsSinceLastSave.DumpContents(out, lastSaveTime);
 
 	stringstream ss;
-	ss << "Appending " << dataSize << " bytes to the CE state file at " << Config::Inst()->GetPathCESaveFile();
+	if(dataSize)
+	{
+		ss << "Appending " << dataSize << " bytes to the CE state file at " << Config::Inst()->GetPathCESaveFile();
+	}
+	else
+	{
+		ss << "Unable to write any Suspects to the state file, func: 'DumpContents' returned 0.";
+	}
 	LOG(DEBUG,ss.str(),"");
 
-	Suspect suspectCopy;
-	// Serialize our suspect table
-	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() <  suspectsSinceLastSave.Size(); ++it)
-	{
-		suspectCopy = suspectsSinceLastSave.CheckOut(it.GetKey());
-
-		if(!suspectCopy.GetFeatureSet().m_packetCount)
-		{
-			continue;
-		}
-		dataSize = suspectCopy.SerializeSuspectWithData(tableBuffer);
-		suspectsSinceLastSave.CheckIn(&suspectCopy);
-		out.write((char*) tableBuffer, dataSize);
-	}
 	out.close();
-	suspectsSinceLastSave.Clear();
-
-	pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+	suspectsSinceLastSave.EraseAllSuspects();
 }
 
 void LoadStateFile()
@@ -559,10 +521,11 @@ void Reload()
 
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 	Suspect suspectCopy;
+	vector<uint64_t> keys = suspects.GetAllKeys();
 	// Set everyone to be reclassified
-	for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
+	for(uint i = 0;i < keys.size(); i++)
 	{
-		suspectCopy = suspects.CheckOut(it.GetKey());
+		suspectCopy = suspects.CheckOut(keys[i]);
 		suspectCopy.SetNeedsClassificationUpdate(true);
 		suspects.CheckIn(&suspectCopy);
 	}
@@ -1151,7 +1114,6 @@ void UpdateAndClassify(uint64_t suspect)
 		suspectCopy.CalculateFeatures();
 		int oldClassification = suspectCopy.GetIsHostile();
 
-		engine->NormalizeDataPoint(&suspectCopy);
 		engine->Classify(&suspectCopy);
 
 		//If suspect is hostile and this Nova instance has unique information

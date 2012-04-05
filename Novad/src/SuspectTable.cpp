@@ -17,6 +17,7 @@
 // 		list of suspects.
 //============================================================================/*
 
+#include "ClassificationEngine.h"
 #include "SuspectTable.h"
 #include "Config.h"
 #include "Logger.h"
@@ -188,6 +189,45 @@ bool SuspectTable::AddEvidenceToSuspect(in_addr_t key, Packet packet)
 	pthread_rwlock_unlock(&m_lock);
 	return false;
 }
+// Updates a suspects evidence and calculates the FeatureSet
+//		key: IP address of the suspect as a uint value (host byte order)
+// Returns true if the call succeeds, false if the suspect could not be located
+bool SuspectTable::UpdateSuspect(in_addr_t key)
+{
+	pthread_rwlock_wrlock(&m_lock);
+	if(IsValidKey_NoLocking(key))
+	{
+		Suspect* suspect = m_suspectTable[key];
+		if(suspect->GetNeedsClassificationUpdate())
+		{
+			suspect->UpdateEvidence();
+			suspect->CalculateFeatures();
+		}
+		pthread_rwlock_unlock(&m_lock);
+		return true;
+	}
+	pthread_rwlock_unlock(&m_lock);
+	return false;
+}
+
+// Updates every suspects evidence and calculates the FeatureSet
+void SuspectTable::UpdateAllSuspects()
+{
+	pthread_rwlock_wrlock(&m_lock);
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		if(IsValidKey_NoLocking(m_keys[i]))
+		{
+			Suspect* suspect = m_suspectTable[m_keys[i]];
+			if(suspect->GetNeedsClassificationUpdate())
+			{
+				suspect->UpdateEvidence();
+				suspect->CalculateFeatures();
+			}
+		}
+	}
+	pthread_rwlock_unlock(&m_lock);
+}
 
 // Copies the suspect pointed to in 'suspect', into the table at location key
 //		suspect: the Suspect you wish to check in
@@ -278,7 +318,7 @@ SuspectTableRet SuspectTable::CheckIn(in_addr_t key)
 }
 
 //Copies out a suspect and marks the suspect so that it cannot be written or deleted
-//		key: uint64_t of the Suspect
+//		key: IP address of the suspect as a uint value (host byte order)
 // Returns a copy of the Suspect associated with 'key', it returns an empty suspect if that key is Invalid.
 // Note: This function read locks the suspect until CheckIn(&suspect) or suspect->UnsetOwner() is called.
 Suspect SuspectTable::CheckOut(in_addr_t key)
@@ -307,7 +347,7 @@ Suspect SuspectTable::CheckOut(in_addr_t key)
 }
 
 // Lookup and get an Asynchronous copy of the Suspect
-// 		key: uint64_t of the Suspect
+// 		key: IP address of the suspect as a uint value (host byte order)
 // Returns an empty suspect on failure
 // Note: To modify or lock a suspect use CheckOut();
 // Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
@@ -330,10 +370,35 @@ Suspect SuspectTable::GetSuspect(in_addr_t key)
 	}
 }
 
+// Get a lightweight copy of the suspect using 'key' used only to query basic bools, IP address, and classification.
+// 		key: IP address of the suspect as a uint value (host byte order)
+// Returns: if the call does not succeed returns an empty/invalid suspect (Classification == -1)
+// 		otherwise it returns a shallow copy of the suspect.
+// Note: The suspect returned has an empty feature set and evidence vector
+Suspect SuspectTable::GetSuspectStatus(in_addr_t key)
+{
+	pthread_rwlock_rdlock(&m_lock);
+	Suspect ret = m_emptySuspect;
+	if(IsValidKey_NonBlocking(key))
+	{
+		Suspect *temp = m_suspectTable[key];
+		ret.SetInAddr(temp->GetInAddr());
+		ret.SetClassification(temp->GetClassification());
+		ret.SetNeedsClassificationUpdate(temp->GetNeedsClassificationUpdate());
+		ret.SetIsHostile(temp->GetIsHostile());
+		ret.SetIsLive(temp->GetIsLive());
+		ret.SetFlaggedByAlarm(temp->GetFlaggedByAlarm());
+		pthread_rwlock_unlock(&m_lock);
+		return ret;
+	}
+	pthread_rwlock_unlock(&m_lock);
+	return ret;
+}
+
 //Erases a suspect from the table if it is not locked
-//		key: uint64_t of the Suspect
-// Returns (0) on success, (-2) if the suspect does not exist (key is invalid)
-SuspectTableRet SuspectTable::Erase(in_addr_t key)
+// 		key: IP address of the suspect as a uint value (host byte order)
+// Returns (true) on success, (false) if the suspect does not exist (key is invalid)
+bool SuspectTable::Erase(in_addr_t key)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	if(IsValidKey_NonBlocking(key))
@@ -356,14 +421,51 @@ SuspectTableRet SuspectTable::Erase(in_addr_t key)
 		}
 		CleanSuspectLock(key);
 		pthread_rwlock_unlock(&m_lock);
-		return SUSPECT_TABLE_CALL_SUCCESS;
+		return true;
 	}
-	return SUSPECT_KEY_INVALID;
+	return false;
 }
 
-//Iterates over the Suspect Table and returns a vector containing each Hostile Suspect's uint64_t
-// Returns a vector of hostile suspect in_addr_t temps
-vector<uint64_t> SuspectTable::GetHostileSuspectKeys()
+// Clears the Suspect Table of all entries
+// Note: Locks may still persist until all threads unlock or return from blocking on them.
+void SuspectTable::EraseAllSuspects()
+{
+	pthread_rwlock_wrlock(&m_lock);
+	m_keys.clear();
+	for(SuspectLockTable::iterator it = m_lockTable.begin(); it != m_lockTable.end(); it++)
+	{
+		m_lockTable[it->first].deleted = true;
+		CleanSuspectLock(it->first);
+	}
+	for(SuspectHashTable::iterator it = m_suspectTable.begin(); it != m_suspectTable.end(); it++)
+	{
+		delete m_suspectTable[it->first];
+	}
+	m_suspectTable.clear();
+	pthread_rwlock_unlock(&m_lock);
+}
+
+// This function returns a vector of suspects keys the caller can iterate over to access the table.
+// Returns a std::vector of every suspect currently in the table
+vector<uint64_t> SuspectTable::GetAllKeys()
+{
+	vector<uint64_t> ret;
+	ret.clear();
+	pthread_rwlock_rdlock(&m_lock);
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		if(IsValidKey_NonBlocking(m_keys[i]))
+		{
+			ret.push_back(m_keys[i]);
+		}
+	}
+	pthread_rwlock_unlock(&m_lock);
+	return ret;
+}
+
+// This function returns a vector of suspects keys the caller can iterate over to access the table.
+// Returns a std::vector containing all hostile suspect keys
+vector<uint64_t> SuspectTable::GetKeys_of_HostileSuspects()
 {
 	vector<uint64_t> ret;
 	ret.clear();
@@ -382,9 +484,9 @@ vector<uint64_t> SuspectTable::GetHostileSuspectKeys()
 	return ret;
 }
 
-//Iterates over the Suspect Table and returns a vector containing each Benign Suspect's uint64_t
-// Returns a vector of benign suspect in_addr_t temps
-vector<uint64_t> SuspectTable::GetBenignSuspectKeys()
+// This function returns a vector of suspects keys the caller can iterate over to access the table.
+// Returns a std::vector containing all benign suspect keys
+vector<uint64_t> SuspectTable::GetKeys_of_BenignSuspects()
 {
 	vector<uint64_t> ret;
 	ret.clear();
@@ -403,6 +505,26 @@ vector<uint64_t> SuspectTable::GetBenignSuspectKeys()
 	return ret;
 }
 
+// This function returns a vector of suspects keys the caller can iterate over to access the table.
+// Returns a std::vector containing the keys of all suspects that need a classification update.
+vector<uint64_t> SuspectTable::GetKeys_of_ModifiedSuspects()
+{
+	vector<uint64_t> ret;
+	ret.clear();
+	pthread_rwlock_rdlock(&m_lock);
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		if(IsValidKey_NonBlocking(m_keys[i]))
+		{
+			if(m_suspectTable[m_keys[i]]->GetNeedsClassificationUpdate())
+			{
+				ret.push_back(m_keys[i]);
+			}
+		}
+	}
+	pthread_rwlock_unlock(&m_lock);
+	return ret;
+}
 //Get the size of the Suspect Table
 // Returns the size of the Table
 uint SuspectTable::Size()
@@ -420,23 +542,6 @@ void SuspectTable::Resize(uint size)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	m_suspectTable.resize(size);
-	pthread_rwlock_unlock(&m_lock);
-}
-
-void SuspectTable::EraseAllSuspects()
-{
-	pthread_rwlock_wrlock(&m_lock);
-	m_keys.clear();
-	for(SuspectLockTable::iterator it = m_lockTable.begin(); it != m_lockTable.end(); it++)
-	{
-		m_lockTable[it->first].deleted = true;
-		CleanSuspectLock(it->first);
-	}
-	for(SuspectHashTable::iterator it = m_suspectTable.begin(); it != m_suspectTable.end(); it++)
-	{
-		delete m_suspectTable[it->first];
-	}
-	m_suspectTable.clear();
 	pthread_rwlock_unlock(&m_lock);
 }
 
@@ -462,18 +567,47 @@ void SuspectTable::SaveSuspectsToFile(string filename)
 	pthread_rwlock_unlock(&m_lock);
 }
 
-void SuspectTable::UpdateAllSuspects() //XXX
+//Iterates over the table, serializing each suspect and dumping the raw data to out
+//		out: ofstream you wish to write the contents to
+//Note: Information can be retrieved using ReadContents
+uint32_t SuspectTable::DumpContents(ofstream out)
 {
+	pthread_rwlock_rdlock(&m_lock);
+	if(!out.is_open())
+	{
+		return 0;
+	}
+	uint32_t ret = 0, dataSize = 0;
+	u_char tableBuffer[MAX_MSG_SIZE];
 
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		Suspect * suspect = m_suspectTable[m_keys[i]]);
+
+		if(!suspect->GetFeatureSet().m_packetCount)
+		{
+			continue;
+		}
+		out.write((char*) tableBuffer, dataSize);
+		dataSize = suspect->SerializeSuspectWithData(tableBuffer);
+		ret += dataSize;
+	}
+
+	pthread_rwlock_unlock(&m_lock);
+	return ret;
 }
 
-void SuspectTable::UpdateSuspect(Suspect *) //XXX
+uint32_t SuspectTable::ReadContents(ifstream in)
 {
+	pthread_rwlock_wrlock(&m_lock);
+	uint32_t ret = 0;
 
+	pthread_rwlock_unlock(&m_lock);
+	return ret;
 }
 
 // Checks the validity of the key - public thread-safe version
-//		key: The in_addr_t of the Suspect
+//		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise
 bool SuspectTable::IsValidKey(in_addr_t key)
 {
@@ -485,7 +619,7 @@ bool SuspectTable::IsValidKey(in_addr_t key)
 }
 
 // Checks the validity of the key - private use non-locking version
-//		key: The uint64_t of the Suspect
+//		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise
 // *Note: Assumes you have already locked the table
 bool SuspectTable::IsValidKey_NonBlocking(in_addr_t key)
