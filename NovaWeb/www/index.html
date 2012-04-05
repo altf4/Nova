@@ -17,13 +17,31 @@
     var suspectStore;
     var suspectGrid;
     
-    function updateNovadStatus(isNovadUp){
+    now.updateNovadStatus = function (isNovadUp){
         dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
      };
  
-    function updateHaystackStatus(isHaystackUp){
+    now.updateHaystackStatus = function (isHaystackUp){
         dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
     };
+          
+	now.OnNewSuspect = function(suspect){
+		// This is probably a really bad way to do this...
+		for (var i in suspect.GetFeatures) {  
+			suspect[i] = suspect.GetFeatures[i];
+		}
+
+		if( suspectStore.get(suspect.GetInAddr) )
+		{       
+			suspectStore.put(suspect,{id: suspect.GetInAddr, overwrite: true});
+			suspectGrid.render();
+		}
+		else
+		{
+			suspectStore.add(suspect,{id: suspect.GetInAddr}); 
+		}
+	};
+      
 
     var clearSuspects = function(items, request)
     {
@@ -41,8 +59,8 @@
         dojo.addOnLoad(function(){
 
           // Update the status every 5 seconds
-          setInterval("now.IsNovadUp(updateNovadStatus)", 5000);
-          setInterval("now.IsHaystackUp(updateHaystackStatus)", 5000);
+          //setInterval("now.IsNovadUp(updateNovadStatus)", 5000);
+          //setInterval("now.IsHaystackUp(updateHaystackStatus)", 5000);
 
 
           suspectStore = new dojo.store.Observable(new dojo.store.Memory());
@@ -90,24 +108,6 @@
           });
 
 
-          now.OnNewSuspect = function(suspect){
-            // This is probably a really bad way to do this...
-             for (var i in suspect.GetFeatures) {  
-                 suspect[i] = suspect.GetFeatures[i];
-                }
-             
-             if( suspectStore.get(suspect.GetInAddr) )
-             {       
-               suspectStore.put(suspect,{id: suspect.GetInAddr, overwrite: true});
-               suspectGrid.render();
-             }
-             else
-             {
-               suspectStore.add(suspect,{id: suspect.GetInAddr}); 
-             }
-
-          };
-      
         });
               
         }); });

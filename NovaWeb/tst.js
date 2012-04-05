@@ -38,17 +38,10 @@ app.listen(8042);
 
 var everyone = require("now").initialize(app);
 
+
+
+
 // Functions to be called by clients
-everyone.now.IsNovadUp = function(callback) 
-{ 
-    callback(nova.IsNovadUp(true));
-}
-
-everyone.now.IsHaystackUp = function(callback) 
-{ 
-    callback(nova.IsHaystackUp());
-}
-
 everyone.now.ClearAllSuspects = function(callback)
 {
     nova.CheckConnection();
@@ -117,3 +110,12 @@ function objCopy(src,dst)
         }
     }
 }
+
+
+setInterval(function() {
+	everyone.now.updateHaystackStatus(nova.IsHaystackUp());
+	everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+}, 5000);
+
+
+
