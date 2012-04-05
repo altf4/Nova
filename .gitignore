@@ -78,11 +78,17 @@ NovaCLI/Debug/novacli
 
 #UI_Core
 /Nova_UI_Core/Debug/libNova_UI_Core.so
+/Nova_UI_Core/Debug/Nova_UI_Core
 /Nova_UI_Core/Release/libNova_UI_Core.so
 
 #NovaTest
 /NovaTest/Debug
 /NovaTest/NovadSource/*
+
+# NovaWeb
+/NovaWeb/www/dojo
+/NovaWeb/build/*
+/NovaWeb/.lock-wscript
 
 #MISC
 /RemoteSystemsTempFiles/.project
