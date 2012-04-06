@@ -147,7 +147,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			}
 
 			m_suspect = new Suspect();
-			m_suspect->DeserializeSuspect((u_char*)buffer);
+			m_suspect->Deserialize((u_char*)buffer);
 
 			break;
 		}
@@ -243,7 +243,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			// 		4) The requested suspect
 
 			char suspectTempBuffer[MAX_MSG_SIZE];
-			m_suspectLength = m_suspect->SerializeSuspect((u_char*)suspectTempBuffer);
+			m_suspectLength = m_suspect->Serialize((u_char*)suspectTempBuffer);
 
 			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength ;
 			buffer = (char*)malloc(messageSize);

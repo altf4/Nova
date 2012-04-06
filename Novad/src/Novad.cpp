@@ -280,7 +280,7 @@ void AppendToStateFile()
 		}
 		else
 		{
-			dataSize += currentSuspect.SerializeSuspectWithData(tableBuffer);
+			dataSize += currentSuspect.Serialize(tableBuffer, true);
 		}
 	}
 	// No suspects with packets to update
@@ -316,7 +316,7 @@ void AppendToStateFile()
 		{
 			continue;
 		}
-		dataSize = suspectCopy.SerializeSuspectWithData(tableBuffer);
+		dataSize = suspectCopy.Serialize(tableBuffer, true);
 		suspectsSinceLastSave.CheckIn(&suspectCopy);
 		out.write((char*) tableBuffer, dataSize);
 	}
@@ -394,7 +394,7 @@ void LoadStateFile()
 		{
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
-			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->Deserialize(tableBuffer + bytesSoFar + suspectBytes);
 
 			FeatureSet fs = newSuspect->GetFeatureSet();
 			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
@@ -508,7 +508,7 @@ void RefreshStateFile()
 		{
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
-			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->Deserialize(tableBuffer + bytesSoFar + suspectBytes);
 
 			FeatureSet fs = newSuspect->GetFeatureSet();
 			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
@@ -575,14 +575,14 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 	string commandLine;
 	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
 
-	uint32_t dataLen = suspect->GetSerializeSuspectLength(true);
+	uint32_t dataLen = suspect->GetSerializeLength(true);
 	u_char serializedBuffer[dataLen];
 
 	if(suspect->GetUnsentFeatureSet().m_packetCount)
 	{
 		do
 		{
-			dataLen = suspect->SerializeSuspectWithData(serializedBuffer);
+			dataLen = suspect->Serialize(serializedBuffer, true);
 			// Move the unsent data to the sent side
 			suspect->UpdateFeatureData(INCLUDE);
 			// Clear the unsent data
