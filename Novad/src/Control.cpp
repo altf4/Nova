@@ -23,7 +23,9 @@
 #include "Logger.h"
 #include "Novad.h"
 
-void Nova::SaveAndExit(int param)
+namespace Nova
+{
+void SaveAndExit(int param)
 {
 	AppendToStateFile();
 	if(system("sudo iptables -F") == -1)
@@ -44,4 +46,5 @@ void Nova::SaveAndExit(int param)
 	}
 	LOG(NOTICE, "Novad is now exiting.", "");
 	exit(EXIT_SUCCESS);
+}
 }

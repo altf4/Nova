@@ -71,6 +71,13 @@ public:
 	// Returns: number of bytes set in the buffer
 	uint32_t SerializeSuspect(u_char * buf);
 
+	// Returns an unsigned, 32 bit integer that represents the length of the
+	// Suspect to be serialized (in bytes).
+	//      GetData - If true, include the FeatureSetData length in this calculation;
+	//                if false, don't.
+	// Returns: number of bytes to allocate to serialization buffer
+	uint32_t GetSerializeSuspectLength(bool GetData);
+
 	// Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer

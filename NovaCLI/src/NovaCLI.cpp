@@ -40,6 +40,12 @@ int main(int argc, const char *argv[])
 		PrintUsage();
 	}
 
+	Config::Inst();
+
+	// Disable notifications and email in the CLI
+	Logger::Inst()->SetUserLogPreferences(LIBNOTIFY, EMERGENCY, '+');
+	Logger::Inst()->SetUserLogPreferences(EMAIL, EMERGENCY, '+');
+
 	// We parse the input arguments here,
 	// but refer to other functions to do any
 	// actual work.
@@ -186,6 +192,12 @@ int main(int argc, const char *argv[])
 
 			ClearSuspectWrapper(address);
 		}
+	}
+
+	// Checking status of components
+	else if (!strcmp(argv[1], "uptime"))
+	{
+		PrintUptime();
 	}
 
 	else
@@ -421,6 +433,13 @@ void ClearSuspectWrapper(in_addr_t address)
 		cout << "There was an errer when trying to clear the suspect data for this suspect" << endl;
 	}
 
+	CloseNovadConnection();
+}
+
+void PrintUptime()
+{
+	Connect();
+	cout << "Uptime is: " << GetUptime() << endl;
 	CloseNovadConnection();
 }
 

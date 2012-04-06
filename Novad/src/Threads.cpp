@@ -74,7 +74,9 @@ extern int watch;
 extern pthread_rwlock_t sessionLock;
 extern ClassificationEngine *engine;
 
-void *Nova::ClassificationLoop(void *ptr)
+namespace Nova
+{
+void *ClassificationLoop(void *ptr)
 {
 	MaskKillSignals();
 
@@ -131,7 +133,7 @@ void *Nova::ClassificationLoop(void *ptr)
 	return NULL;
 }
 
-void *Nova::TrainingLoop(void *ptr)
+void *TrainingLoop(void *ptr)
 {
 	MaskKillSignals();
 
@@ -165,7 +167,7 @@ void *Nova::TrainingLoop(void *ptr)
 	return NULL;
 }
 
-void *Nova::SilentAlarmLoop(void *ptr)
+void *SilentAlarmLoop(void *ptr)
 {
 	MaskKillSignals();
 
@@ -295,7 +297,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	return NULL;
 }
 
-void *Nova::UpdateIPFilter(void *ptr)
+void *UpdateIPFilter(void *ptr)
 {
 	MaskKillSignals();
 
@@ -342,7 +344,7 @@ void *Nova::UpdateIPFilter(void *ptr)
 	return NULL;
 }
 
-void *Nova::TCPTimeout(void *ptr)
+void *TCPTimeout(void *ptr)
 {
 	MaskKillSignals();
 	do
@@ -442,4 +444,5 @@ void *Nova::TCPTimeout(void *ptr)
 	}
 	LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
 	return NULL;
+}
 }

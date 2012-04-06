@@ -140,6 +140,12 @@ public:
 	// Returns: number of bytes set in the buffer
 	uint32_t SerializeFeatureData(u_char *buf);
 
+	// Method that will return the sizeof of all values in the given feature set;
+	// for use in SerializeSuspect
+	// Returns: sum of the sizeof of all elements in the feature data
+	// 			that would be serialized
+	uint32_t GetFeatureDataLength();
+
 	//FeatureSet(const FeatureSet &rhs);
 	//FeatureSet& operator=(FeatureSet &rhs);
 private:
