@@ -292,6 +292,7 @@ uint32_t Suspect::GetSerializeLength(bool getData)
 uint32_t Suspect::Deserialize(u_char * buf, bool getData, bool isLocal)
 {
 	WrlockSuspect();
+
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
@@ -325,11 +326,21 @@ uint32_t Suspect::Deserialize(u_char * buf, bool getData, bool isLocal)
 	{
 		if(isLocal)
 		{
-				offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+			if(offset + m_unsentFeatures.GetFeatureDataLength() >= SANITY_CHECK)
+			{
+				return 0;
+			}
+
+			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
 		}
 		else
 		{
-				offset += m_features.DeserializeFeatureData(buf+offset);
+			if(offset + m_features.GetFeatureDataLength() >= SANITY_CHECK)
+			{
+				return 0;
+			}
+
+			offset += m_features.DeserializeFeatureData(buf+offset);
 		}
 
 		m_needsClassificationUpdate = true;

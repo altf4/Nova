@@ -255,19 +255,18 @@ void *SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
-		else if(sizeof(buf) >= 268435456)
-		{
-			// Probably toss a log in here to report a buffer that's too large
-			close(connectionSocket);
-			continue;
-		}
+
 		CryptBuffer(buf, bytesRead, DECRYPT);
 
 		in_addr_t addr = 0;
 		memcpy(&addr, buf, 4);
 		uint64_t key = addr;
 		Suspect * newSuspect = new Suspect();
-		newSuspect->Deserialize(buf, true, BROADCAST_DATA);
+		if(newSuspect->Deserialize(buf, true, BROADCAST_DATA) == 0)
+		{
+			close(connectionSocket);
+			continue;
+		}
 		//If this suspect exists, update the information
 		if(suspects.IsValidKey(key))
 		{
