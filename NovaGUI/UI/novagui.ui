@@ -239,6 +239,16 @@ Module</string>
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="uptimeLabel">
+            <property name="text">
+             <string>Novad Uptime: 0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QTableWidget" name="systemStatusTable">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -651,7 +661,7 @@ Module</string>
      <x>0</x>
      <y>0</y>
      <width>846</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

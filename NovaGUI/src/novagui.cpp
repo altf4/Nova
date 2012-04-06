@@ -392,10 +392,21 @@ void NovaGUI::UpdateSystemStatus()
 	if(IsNovadUp(false))
 	{
 		item->setIcon(*m_greenIcon);
+
+		int uptime = GetUptime();
+		int uptimeSeconds =  uptime % 60;
+		int uptimeMinutes =  uptime / 60 % 60;
+		int uptimeHours =    uptime / 60 / 60;
+
+		stringstream ss;
+		ss << "Novad Uptime: " << uptimeHours << " hours : " << uptimeMinutes << " minutes : " << uptimeSeconds << " seconds";
+
+		ui.uptimeLabel->setText(QString::fromStdString(ss.str()));
 	}
 	else
 	{
 		item->setIcon(*m_redIcon);
+		ui.uptimeLabel->setText(QString());
 	}
 
 	//Haystack
