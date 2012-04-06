@@ -67,7 +67,12 @@ bool IsNovadUp(bool tryToConnect)
 		ErrorMessage *error = (ErrorMessage*)reply;
 		if(error->m_errorType == ERROR_SOCKET_CLOSED)
 		{
-			CloseNovadConnection();
+			// This was breaking things during the mess of isNovadUp calls
+			// when the QT GUi starts and connects to novad. If there was some
+			// important reason for it being here that I don't know about, we
+			// might need to put it back and track down why exactly it was
+			// causing problems.
+			//CloseNovadConnection();
 		}
 		delete error;
 		return false;
