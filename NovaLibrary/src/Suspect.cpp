@@ -218,7 +218,7 @@ int Suspect::CalculateFeatures()
 // Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 //		buf - Pointer to buffer where serialized data will be stored
 // Returns: number of bytes set in the buffer
-uint32_t Suspect::SerializeSuspect(u_char * buf)
+uint32_t Suspect::Serialize(u_char * buf, bool getData)
 {
 	RdlockSuspect();
 	uint32_t offset = 0;
@@ -249,12 +249,18 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
 	offset += m_features.SerializeFeatureSet(buf+offset);
+
+	if(getData)
+	{
+		offset += m_features.SerializeFeatureData(buf + offset);
+	}
+
 	UnlockSuspect();
 
 	return offset;
 }
 
-uint32_t Suspect::GetSerializeSuspectLength(bool GetData)
+uint32_t Suspect::GetSerializeLength(bool getData)
 {
 	RdlockSuspect();
 
@@ -270,7 +276,7 @@ uint32_t Suspect::GetSerializeSuspectLength(bool GetData)
 		messageSize += sizeof(m_featureAccuracy[i]) + sizeof(m_features.m_features[i]);
 	}
 
-	if(GetData)
+	if(getData)
 	{
 		messageSize += m_features.GetFeatureDataLength();
 	}
@@ -280,61 +286,10 @@ uint32_t Suspect::GetSerializeSuspectLength(bool GetData)
 	return messageSize;
 }
 
-
-// Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
-//		buf - Pointer to buffer where serialized data will be stored
-// Returns: number of bytes set in the buffer
-uint32_t Suspect::SerializeSuspectWithData(u_char * buf)
-{
-	RdlockSuspect();  //Double read lock should be ok
-	uint32_t offset = SerializeSuspect(buf);
-	offset += m_features.SerializeFeatureData(buf + offset);
-	UnlockSuspect();
-	return offset;
-}
-
 // Reads Suspect information from a buffer originally populated by serializeSuspect
 //		buf - Pointer to buffer where the serialized suspect is
 // Returns: number of bytes read from the buffer
-uint32_t Suspect::DeserializeSuspect(u_char * buf)
-{
-	WrlockSuspect();
-	uint32_t offset = 0;
-
-	//Copies the value and increases the offset
-	memcpy(&m_IpAddress.s_addr, buf, sizeof m_IpAddress.s_addr);
-	offset+= sizeof m_IpAddress.s_addr;
-	memcpy(&m_classification, buf+offset, sizeof m_classification);
-	offset+= sizeof m_classification;
-	memcpy(&m_isHostile, buf+offset, sizeof m_isHostile);
-	offset+= sizeof m_isHostile;
-	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
-	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
-	offset+= sizeof m_flaggedByAlarm;
-	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
-	offset+= sizeof m_isLive;
-	memcpy(&m_hostileNeighbors, buf+offset, sizeof m_hostileNeighbors);
-	offset+= sizeof m_hostileNeighbors;
-
-	//Copies the value and increases the offset
-	for(uint32_t i = 0; i < DIM; i++)
-	{
-		memcpy(&m_featureAccuracy[i], buf+offset, sizeof m_featureAccuracy[i]);
-		offset+= sizeof m_featureAccuracy[i];
-	}
-
-	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
-	//	returns the number of bytes read from the buffer
-	offset += m_features.DeserializeFeatureSet(buf+offset);
-	UnlockSuspect();
-
-
-	return offset;
-}
-
-
-uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
+uint32_t Suspect::Deserialize(u_char * buf, bool getData, bool isLocal)
 {
 	WrlockSuspect();
 	uint32_t offset = 0;
@@ -366,13 +321,22 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	//	returns the number of bytes read from the buffer
 	offset += m_features.DeserializeFeatureSet(buf+offset);
 
-	if(isLocal)
-		offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
-	else
-		offset += m_features.DeserializeFeatureData(buf+offset);
+	if(getData)
+	{
+		if(isLocal)
+		{
+				offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+		}
+		else
+		{
+				offset += m_features.DeserializeFeatureData(buf+offset);
+		}
 
-	m_needsClassificationUpdate = true;
+		m_needsClassificationUpdate = true;
+	}
+
 	UnlockSuspect();
+
 
 	return offset;
 }
