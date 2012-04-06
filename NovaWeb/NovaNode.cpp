@@ -62,7 +62,7 @@ class NovaNode: ObjectWrap
                 return;
             }
 
-            if( ! Nova::TryWaitConenctToNovad(3000) )
+            if( ! Nova::TryWaitConnectToNovad(3000) )
             {
                 LOG(ERROR, "Error connecting to Novad","");
                 return;
