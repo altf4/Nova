@@ -18,6 +18,9 @@
 
 #include "MessageManager.h"
 #include "../Lock.h"
+#include "messages/ErrorMessage.h"
+
+#include <sys/socket.h>
 
 namespace Nova
 {
@@ -26,7 +29,7 @@ MessageManager *MessageManager::m_instance = NULL;
 
 MessageManager::MessageManager()
 {
-	pthread_mutex_init(&m_queuesMutex, NULL);
+	pthread_mutex_init(&m_queuesLock, NULL);
 }
 
 MessageManager &MessageManager::Instance()
@@ -40,39 +43,70 @@ MessageManager &MessageManager::Instance()
 
 UI_Message *MessageManager::GetMessage(int socketFD)
 {
-	Lock lock(&m_queuesMutex);
+
+	pthread_mutex_lock(&m_queuesLock);
+
+	if(m_queueLocks.count(socketFD) == 0)
+	{
+		//Initialize the queue lock, and lock it
+		pthread_mutex_init(&m_queueLocks[socketFD], NULL);
+	}
+	Lock lock(&m_queueLocks[socketFD]);
+
+	pthread_mutex_unlock(&m_queuesLock);
+
+	UI_Message *retMessage;
 
 	if(m_queues.count(socketFD) > 0)
 	{
-		m_queues[socketFD]->PopMessage();
+		retMessage = m_queues[socketFD]->PopMessage();
 	}
+	else
+	{
+		return new ErrorMessage(ERROR_SOCKET_CLOSED);
+	}
+
+	if(retMessage->m_messageType == ERROR_MESSAGE)
+	{
+		ErrorMessage *errorMessage = (ErrorMessage*)retMessage;
+		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			delete m_queues[socketFD];
+			m_queues.erase(socketFD);
+		}
+	}
+
+	return retMessage;
 }
 
-//success/fail
 void MessageManager::StartSocket(int socketFD)
 {
-	Lock lock(&m_queuesMutex);
+	Lock lock(&m_queuesLock);
 
-	if(m_queues.count(socketFD) == 0)
+	if(m_queueLocks.count(socketFD) > 0)
 	{
-		//TODO XXX OMG fix this later. CALLBACKS!!!
-		pthread_t todo;
-		m_queues[socketFD] = new MessageQueue(socketFD, todo);
+		//If there's already a Queue here, do nothing
+		return;
 	}
+
+	pthread_rwlock_init(&m_queueLocks[socketFD], NULL);
+
+	Lock wrlock(&m_queueLocks[socketFD]);
+
+	//TODO XXX OMG fix this later. CALLBACKS!!!
+	pthread_t todo;
+	m_queues[socketFD] = new MessageQueue(socketFD, todo);
+
 }
 
-//success/fail
 void MessageManager::CloseSocket(int socketFD)
 {
-	Lock lock(&m_queuesMutex);
+	Lock lock(&m_queuesLock);
 
 	if(m_queues.count(socketFD) > 0)
 	{
-		delete m_queues[socketFD];
-		m_queues.erase(socketFD);
+		shutdown(socketFD, SHUT_RDWR);
 	}
 }
 
 }
-
-

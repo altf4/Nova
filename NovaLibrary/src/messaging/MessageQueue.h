@@ -34,7 +34,8 @@ public:
 
 	MessageQueue(int socketFD, pthread_t callbackHandler);
 
-	//Will block and wait until the queue has been flushed by calls to PopMessage
+	//Will block and wait until no threads are waiting on its queue
+	//	To prevent a thread from waking up in a destroyed object
 	~MessageQueue();
 
 	//blocking call
@@ -51,12 +52,13 @@ private:
 
 	std::queue<UI_Message*> m_messages;
 	int m_socket;
+	bool isShutDown;
 
 	pthread_cond_t m_wakeupCondition;
-	pthread_t m_callbackThread;
-	pthread_t m_producerThread;
+	pthread_t m_callbackThread;			//Thread sleeping for a callback
+	pthread_t m_producerThread;			//Thread looping read calls on the underlying socket
 	pthread_mutex_t m_queueMutex;
-
+	pthread_mutex_t m_popMutex;
 };
 
 

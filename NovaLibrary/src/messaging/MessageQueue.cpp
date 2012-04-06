@@ -32,6 +32,7 @@ namespace Nova
 MessageQueue::MessageQueue(int socketFD, pthread_t callbackHandler)
 {
 	pthread_mutex_init(&m_queueMutex, NULL);
+	pthread_mutex_init(&m_popMutex, NULL);
 	pthread_cond_init(&m_wakeupCondition, NULL);
 
 	m_socket = socketFD;
@@ -42,9 +43,16 @@ MessageQueue::MessageQueue(int socketFD, pthread_t callbackHandler)
 
 MessageQueue::~MessageQueue()
 {
+	//Shutdown will cause the producer thread to make an ErrorMessage then quit
 	shutdown(m_socket, SHUT_RDWR);
-	pthread_join(m_producerThread, NULL);
+	//We then must wait for the popping thread to finish
+	//	Can't let it wake up into a destroyed object
+	//	So this lock will either wait for the pop message to finish, or just
+	//	go ahead if there is none
+	Lock lockPop(&m_popMutex);
+
 	pthread_mutex_destroy(&m_queueMutex);
+	pthread_mutex_destroy(&m_popMutex);
 	pthread_cond_destroy(&m_wakeupCondition);
 }
 
@@ -52,7 +60,8 @@ MessageQueue::~MessageQueue()
 //blocking call
 UI_Message *MessageQueue::PopMessage()
 {
-	Lock lock(&m_queueMutex);
+	Lock lockPop(&m_popMutex);
+	Lock lockQueue(&m_queueMutex);
 
 	//While loop to protect against spurious wakeups
 	while(m_messages.empty())
@@ -74,11 +83,10 @@ void MessageQueue::PushMessage(UI_Message *message)
 {
 	Lock lock(&m_queueMutex);
 
-	//Wake up a reader who may be blocked, waiting for a message
-	if(m_messages.empty())
-	{
-		pthread_cond_signal(&m_wakeupCondition);
-	}
+	m_messages.push(message);
+
+	//If there are no sleeping threads, this simply does nothing
+	pthread_cond_signal(&m_wakeupCondition);
 
 	m_messages.push(message);
 }

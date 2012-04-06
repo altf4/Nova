@@ -39,7 +39,12 @@ public:
 
 	void StartSocket(int socketFD);
 
-	//success/fail
+	//Closes the socket at the given file descriptor
+	//	socketFD: The file descriptor of the socket to close
+	//	NOTE: This will not immediately destroy the underlying MessageQueue. It will close the socket
+	//		such that no new messages can be read on it. At which point the read loop will mark the
+	//		queue as closed with an ErrorMessage with the appropriate sub-type and then exit.
+	//		The queue will not be actually destroyed until this last message is popped off.
 	void CloseSocket(int socketFD);
 
 private:
@@ -48,8 +53,12 @@ private:
 
 	MessageManager();
 
-	pthread_mutex_t m_queuesMutex;
+	//Mutex for the lock map
+	pthread_mutex_t m_queuesLock;
+
+	//These two maps must be kept synchronized
 	std::map<int, MessageQueue*> m_queues;
+	std::map<int, pthread_mutex_t> m_queueLocks;
 };
 
 }
