@@ -241,57 +241,79 @@ class NovaNode: ObjectWrap
         static Handle<Value> getSuspectList(const Arguments& args)
         {
             HandleScope scope;
-            NovaNode* hw = ObjectWrap::Unwrap<NovaNode>(args.This());
-            hw->m_count++;
 
-            Handle<String> filterArgument;
-            if( args.Length() == 1 )
-            {
-                filterArgument=args[0]->ToString();
-            }
-            else
-            {
-                filterArgument=String::New("");
-            }
-
-            // we don't yet have a method like this in the Nova core API.
-            // so we're faking this out for now...
-            Local<Array> result = Array::New(3);
-            result->Set(Integer::New(0), String::New("suspect1"));
-            result->Set(Integer::New(1), String::New("suspect2"));
-            result->Set(Integer::New(2), String::New("suspect3"));
-
-            return scope.Close(result);
-        }
-
-        static Handle<Value> registerOnNewSuspect(const Arguments& args)
-        {
-            HandleScope scope;
-
-            if( ! args[0]->IsFunction() )
+			LOG(DEBUG, "Triggered getSuspectList", "");
+            
+			if( ! args[0]->IsFunction() )
             {
                 LOG(DEBUG, 
                         "Attempted to register OnNewSuspect with non-function, excepting","");
                 return ThrowException(Exception::TypeError(String::New("Argument must be a function")));
             }
 
-            m_CallbackFunction = Persistent<Function>::New( args[0].As<Function>() );
-            m_CallbackFunction.MakeWeak(0, HandleOnNewSuspectWeakCollect);
+        	Local<Function> callbackFunction;
+            callbackFunction = Local<Function>::New( args[0].As<Function>() );
 
-            Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
-            m_CallbackRegistered = true;
-            return scope.Close(result);      
-        }
+			vector<in_addr_t> *suspects;
+			suspects = GetSuspectList(SUSPECTLIST_ALL);
 
-        // Invoked when the only one referring to an OnNewSuspect handler is us, i.e. no JS objects
-        // are holding onto it.  So it's up to us to decide what to do about it.
-        static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter)
-        {
-            // For now, we do nothing, meaning that the callback will always stay registered
-            // and continue to be invoked
-            // even if the original object upon which OnNewSuspect() was invoked has been
-            // let go.
-        }
+			if (suspects == NULL)
+			{
+				cout << "Failed to get suspect list" << endl;
+			}
+			{
+
+				for (uint i = 0; i < suspects->size(); i++)
+				{
+					Suspect *suspect = GetSuspect(suspects->at(i));
+
+					if (suspect != NULL)
+					{
+						HandleNewSuspect(suspect);
+						//Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
+						//callbackFunction->Call(callbackFunction, 1, argv);
+						//delete suspect;
+					}
+					else
+					{
+						cout << "Error: No suspect received" << endl;
+					}
+				}
+			}
+
+
+			Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+			return scope.Close(result);
+		}
+
+		static Handle<Value> registerOnNewSuspect(const Arguments& args)
+		{
+			HandleScope scope;
+
+			if( ! args[0]->IsFunction() )
+			{
+				LOG(DEBUG, 
+						"Attempted to register OnNewSuspect with non-function, excepting","");
+				return ThrowException(Exception::TypeError(String::New("Argument must be a function")));
+			}
+
+			m_CallbackFunction = Persistent<Function>::New( args[0].As<Function>() );
+			m_CallbackFunction.MakeWeak(0, HandleOnNewSuspectWeakCollect);
+
+			Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+			m_CallbackRegistered = true;
+			return scope.Close(result);      
+		}
+
+		// Invoked when the only one referring to an OnNewSuspect handler is us, i.e. no JS objects
+		// are holding onto it.  So it's up to us to decide what to do about it.
+		static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter)
+		{
+			// For now, we do nothing, meaning that the callback will always stay registered
+			// and continue to be invoked
+			// even if the original object upon which OnNewSuspect() was invoked has been
+			// let go.
+		}
 };
 
 Persistent<FunctionTemplate> NovaNode::s_ct;
@@ -303,12 +325,12 @@ bool NovaNode::m_callbackRunning=false;
 pthread_t NovaNode::m_NovaCallbackThread=0;
 
 extern "C" {
-    static void init (Handle<Object> target)
-    {
-        NovaNode::Init(target);
-    }
+	static void init (Handle<Object> target)
+	{
+		NovaNode::Init(target);
+	}
 
-    NODE_MODULE(nova, init);
+	NODE_MODULE(nova, init);
 
 
 }

@@ -74,6 +74,14 @@ everyone.now.StopNovad = function(callback)
     nova.CloseNovadConnection();
 }
 
+
+everyone.now.sendAllSuspects = function(callback)
+{
+	console.log("Triggered tst.jst sendAllSuspects");
+	nova.getSuspectList(callback);
+}
+
+
 var distributeSuspect = function(suspect)
 {
 	console.log("Sending suspect to clients: " + suspect.GetInAddr());            
