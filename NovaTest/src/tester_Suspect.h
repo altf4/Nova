@@ -129,10 +129,10 @@ TEST_F(SuspectTest, Serialization)
 	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 
 	u_char buffer[MAX_MSG_SIZE];
-	suspect->SerializeSuspectWithData(&buffer[0]);
+	suspect->Serialize(&buffer[0], true);
 
 	Suspect *suspectCopy = new Suspect();
-	suspectCopy->DeserializeSuspectWithData(&buffer[0], false);
+	suspectCopy->Deserialize(&buffer[0], true, false);
 
 	EXPECT_EQ(*suspect, *suspectCopy);
 
