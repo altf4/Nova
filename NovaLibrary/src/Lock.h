@@ -49,6 +49,19 @@ public:
 		}
 	}
 
+	//Blank constructor meant to be used in conjunction with GetLock
+	Lock()
+	{
+		isMutex = true;
+	}
+
+	//Allows the user to get a lock outside the scope of where the Lock object is declared
+	void GetLock(pthread_mutex_t *lock)
+	{
+		m_mutex = lock;
+		pthread_mutex_lock(m_mutex);
+	}
+
 	~Lock()
 	{
 		if(isMutex)
