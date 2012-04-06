@@ -44,16 +44,16 @@ MessageManager &MessageManager::Instance()
 UI_Message *MessageManager::GetMessage(int socketFD)
 {
 
-	pthread_mutex_lock(&m_queuesLock);
-
-	if(m_queueLocks.count(socketFD) == 0)
+	Lock queueLock;
 	{
-		//Initialize the queue lock, and lock it
-		pthread_mutex_init(&m_queueLocks[socketFD], NULL);
+		Lock queueLock(&m_queuesLock);
+		if(m_queueLocks.count(socketFD) == 0)
+		{
+			//If there is no lock object here yet, initialize it
+			pthread_mutex_init(&m_queueLocks[socketFD], NULL);
+		}
+		queueLock.GetLock(&m_queueLocks[socketFD]);
 	}
-	Lock lock(&m_queueLocks[socketFD]);
-
-	pthread_mutex_unlock(&m_queuesLock);
 
 	UI_Message *retMessage;
 
@@ -81,17 +81,15 @@ UI_Message *MessageManager::GetMessage(int socketFD)
 
 void MessageManager::StartSocket(int socketFD)
 {
-	Lock lock(&m_queuesLock);
+	Lock queueLock(&m_queuesLock);
 
-	if(m_queueLocks.count(socketFD) > 0)
+	if(m_queueLocks.count(socketFD) == 0)
 	{
-		//If there's already a Queue here, do nothing
-		return;
+		//If there is no lock object here yet, initialize it
+		pthread_mutex_init(&m_queueLocks[socketFD], NULL);
 	}
 
-	pthread_rwlock_init(&m_queueLocks[socketFD], NULL);
-
-	Lock wrlock(&m_queueLocks[socketFD]);
+	Lock lock(&m_queueLocks[socketFD]);
 
 	//TODO XXX OMG fix this later. CALLBACKS!!!
 	pthread_t todo;
