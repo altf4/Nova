@@ -18,7 +18,8 @@
 
 #include <v8.h>
 #include <node.h>
-#include <boost/format.hpp>
+
+#include <map>
 
 /* Nova headers */
 #include "nova_ui_core.h"
@@ -31,8 +32,8 @@
 
 using namespace node;
 using namespace v8;
-using boost::format;
 using namespace Nova;
+using namespace std;
 
 class NovaNode;
 
@@ -45,6 +46,7 @@ class NovaNode: ObjectWrap
         static Persistent<Function> m_CallbackFunction;
         static bool m_CallbackRegistered;
         static bool m_callbackRunning;
+		static map<in_addr_t, Suspect*> m_suspects;
 
         static void InitNovaCallbackProcessing()
         {
@@ -110,6 +112,12 @@ class NovaNode: ObjectWrap
         static void HandleNewSuspect(Suspect* suspect)
         {
             LOG(DEBUG, "Novad informed us of new suspect", "");
+
+			if (m_suspects.count(suspect->GetIpAddress()) == 0)
+			{
+				delete m_suspects[suspect->GetIpAddress()];
+		    }	
+			m_suspects[suspect->GetIpAddress()] = suspect;
 
             if( m_CallbackRegistered )
             {
@@ -228,7 +236,8 @@ class NovaNode: ObjectWrap
             hw->Wrap(args.This());
             return args.This();
         }
-
+        
+		
         static Handle<Value> getSuspectList(const Arguments& args)
         {
             HandleScope scope;
@@ -288,6 +297,7 @@ class NovaNode: ObjectWrap
 Persistent<FunctionTemplate> NovaNode::s_ct;
 
 Persistent<Function> NovaNode::m_CallbackFunction=Persistent<Function>();
+std::map<in_addr_t, Suspect*> NovaNode::m_suspects = map<in_addr_t, Suspect*>();
 bool NovaNode::m_CallbackRegistered=false;
 bool NovaNode::m_callbackRunning=false;
 pthread_t NovaNode::m_NovaCallbackThread=0;
