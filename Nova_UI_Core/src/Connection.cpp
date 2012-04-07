@@ -102,6 +102,7 @@ bool ConnectToNovad()
 		return true;
 	}
 
+	Lock lock(&novadListenSocket.m_mutex);
 
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();

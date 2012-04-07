@@ -9,9 +9,7 @@ CPP_SRCS += \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
-../src/Suspect.cpp \
-../src/SuspectTable.cpp \
-../src/SuspectTableIterator.cpp 
+../src/Suspect.cpp 
 
 OBJS += \
 ./src/Config.o \
@@ -19,9 +17,7 @@ OBJS += \
 ./src/Logger.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
-./src/Suspect.o \
-./src/SuspectTable.o \
-./src/SuspectTableIterator.o 
+./src/Suspect.o 
 
 CPP_DEPS += \
 ./src/Config.d \
@@ -29,9 +25,7 @@ CPP_DEPS += \
 ./src/Logger.d \
 ./src/NovaUtil.d \
 ./src/Point.d \
-./src/Suspect.d \
-./src/SuspectTable.d \
-./src/SuspectTableIterator.d 
+./src/Suspect.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

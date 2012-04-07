@@ -256,89 +256,50 @@ void MaskKillSignals()
 	sigprocmask(SIG_BLOCK, &x, NULL);
 }
 
+//Appends the evidence gathered on suspects since the last save to the statefile
 void AppendToStateFile()
 {
-	pthread_mutex_lock(&suspectsSinceLastSaveLock);
+	//Store the time we started the save for ref later.
 	lastSaveTime = time(NULL);
-	if(lastSaveTime == ((time_t)-1))
+	//if time(NULL) failed
+	if(lastSaveTime == ~0)
 	{
 		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
 	}
 
-	// Don't bother saving if no new suspect data, just confuses deserialization
+	//If there are no suspects to save
 	if(suspectsSinceLastSave.Size() <= 0)
 	{
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
 		return;
 	}
 
-	u_char tableBuffer[MAX_MSG_SIZE];
-	uint32_t dataSize = 0;
-
-	// Compute the total dataSize
-	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() <  suspectsSinceLastSave.Size(); ++it)
-	{
-		Suspect currentSuspect = suspectsSinceLastSave.CheckOut(it.GetKey());
-		currentSuspect.UpdateEvidence();
-		currentSuspect.UpdateFeatureData(true);
-		currentSuspect.CalculateFeatures();
-		suspectsSinceLastSave.CheckIn(&currentSuspect);
-		if(!currentSuspect.GetFeatureSet().m_packetCount)
-		{
-			continue;
-		}
-		else
-		{
-			dataSize += currentSuspect.Serialize(tableBuffer, true);
-		}
-	}
-	// No suspects with packets to update
-	if(dataSize == 0)
-	{
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
-		return;
-	}
-
+	//Open the output file
 	ofstream out(Config::Inst()->GetPathCESaveFile().data(), ofstream::binary | ofstream::app);
-	if(!out.is_open())
-	{
-		LOG(ERROR, "Problem with CE State File",
-			"Unable to open the CE state file at "+ Config::Inst()->GetPathCESaveFile());
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
-		return;
-	}
 
-	out.write((char*)&lastSaveTime, sizeof lastSaveTime);
-	out.write((char*)&dataSize, sizeof dataSize);
+	//Update the feature set and dump the contents of the table to the output file
+	suspectsSinceLastSave.UpdateAllSuspects();
+	uint32_t dataSize;
+	dataSize = suspectsSinceLastSave.DumpContents(&out, lastSaveTime);
 
+	//Check that the dump was successful, print the results as a debug message.
 	stringstream ss;
-	ss << "Appending " << dataSize << " bytes to the CE state file at " << Config::Inst()->GetPathCESaveFile();
-	LOG(DEBUG,ss.str(),"");
-
-	Suspect suspectCopy;
-	// Serialize our suspect table
-	for(SuspectTableIterator it = suspectsSinceLastSave.Begin(); it.GetIndex() <  suspectsSinceLastSave.Size(); ++it)
+	if(dataSize)
 	{
-		suspectCopy = suspectsSinceLastSave.CheckOut(it.GetKey());
-
-		if(!suspectCopy.GetFeatureSet().m_packetCount)
-		{
-			continue;
-		}
-		dataSize = suspectCopy.Serialize(tableBuffer, true);
-		suspectsSinceLastSave.CheckIn(&suspectCopy);
-		out.write((char*) tableBuffer, dataSize);
+		ss << "Appending " << dataSize << " bytes to the CE state file at " << Config::Inst()->GetPathCESaveFile();
 	}
+	else
+	{
+		ss << "Unable to write any Suspects to the state file. func: 'DumpContents' returned 0.";
+	}
+	LOG(DEBUG,ss.str(),"");
 	out.close();
-	suspectsSinceLastSave.Clear();
-
-	pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+	//Clear the table;
+	suspectsSinceLastSave.EraseAllSuspects();
 }
 
+//Loads the statefile by reading table state dumps that haven't expired yet.
 void LoadStateFile()
 {
-	time_t timeStamp;
-	uint32_t dataSize;
 
 	lastLoadTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
@@ -358,101 +319,42 @@ void LoadStateFile()
 	in.seekg (0, ios::end);
 	uint lengthLeft = in.tellg();
 	in.seekg (0, ios::beg);
-
+	uint timestamp = lastLoadTime - Config::Inst()->GetDataTTL();
 	while (in.is_open() && !in.eof() && lengthLeft)
 	{
-		// Bytes left, but not enough to make a header (timestamp + size)?
-		if(lengthLeft < (sizeof timeStamp + sizeof dataSize))
-		{
-			LOG(ERROR, "The CE state file may be corruput", "");
-			break;
-		}
-
-		in.read((char*) &timeStamp, sizeof timeStamp);
-		lengthLeft -= sizeof timeStamp;
-
-		in.read((char*) &dataSize, sizeof dataSize);
-		lengthLeft -= sizeof dataSize;
-
-		if(Config::Inst()->GetDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->GetDataTTL()))
-		{
-			stringstream ss;
-			ss << "Throwing out old CE state at time: " << timeStamp << ".";
-			LOG(DEBUG,"Throwing out old CE state.", ss.str());
-
-			in.seekg(dataSize, ifstream::cur);
-			lengthLeft -= dataSize;
-			continue;
-		}
-
-		// Not as many bytes left as the size of the entry?
-		if(lengthLeft < dataSize)
-		{
-			LOG(ERROR, "The CE state file may be corruput", "");
-			break;
-		}
-
-		u_char tableBuffer[dataSize];
-		in.read((char*) tableBuffer, dataSize);
-		lengthLeft -= dataSize;
-
-		// Read each suspect
-		uint32_t bytesSoFar = 0;
-		Suspect suspectCopy;
-		while (bytesSoFar < dataSize)
-		{
-			Suspect* newSuspect = new Suspect();
-			uint32_t suspectBytes = 0;
-			suspectBytes += newSuspect->Deserialize(tableBuffer + bytesSoFar + suspectBytes);
-
-			FeatureSet fs = newSuspect->GetFeatureSet();
-			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
-			newSuspect->SetFeatureSet(&fs);
-			bytesSoFar += suspectBytes;
-
-			// If our suspect has no evidence, throw it out
-			if(newSuspect->GetFeatureSet().m_packetCount == 0)
-			{
-				LOG(WARNING,"Discarding invalid suspect.",
-					"A suspect containing no evidence was detected and discarded");
-			}
-			else
-			{
-				if(!suspects.IsValidKey(newSuspect->GetIpAddress()))
-				{
-					newSuspect->SetNeedsClassificationUpdate(true);
-					suspects.AddNewSuspect(newSuspect);
-				}
-				else
-				{
-					suspectCopy = suspects.CheckOut(newSuspect->GetIpAddress());
-					FeatureSet fs = newSuspect->GetFeatureSet();
-					suspectCopy.AddFeatureSet(&fs);
-					suspectCopy.SetNeedsClassificationUpdate(true);
-					suspects.CheckIn(&suspectCopy);
-					delete newSuspect;
-				}
-			}
-		}
+		lengthLeft -= suspects.ReadContents(&in, timestamp);
 	}
-
 	in.close();
 }
 
+//Refreshes the state file by parsing the contents and writing un-expired state dumps to the new state file
 void RefreshStateFile()
 {
-	time_t timeStamp;
-	uint32_t dataSize;
+	//Variable assignments
+	uint32_t dataSize = 0;
 	vector<in_addr_t> deletedKeys;
+	uint bytesRead = 0, cur = 0, lengthLeft = 0;
+	time_t saveTime = 0;
+
+	string ceFile = Config::Inst()->GetPathCESaveFile();
+	string tmpFile = Config::Inst()->GetPathCESaveFile() + ".tmp";
 
 	lastLoadTime = time(NULL);
-	if(lastLoadTime == ((time_t)-1))
+	time_t timestamp = lastLoadTime - Config::Inst()->GetDataTTL();
+
+	//Check that we have a valid timestamp for the last load time.
+	if(lastLoadTime == (~0)) // == -1 in signed vals
 	{
 		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
 	}
-
+	if(system(string("cp -f -p "+ceFile+" "+tmpFile).c_str()) != 0)
+	{
+		LOG(ERROR, "Unable to refresh CE State File.",
+				string("Unable to refresh CE State File: cp -f -p "+ceFile+" "+tmpFile+ " failed."));
+		return;
+	}
 	// Open input file
-	ifstream in(Config::Inst()->GetPathCESaveFile().data(), ios::binary | ios::in);
+	ifstream in(tmpFile.data(), ios::binary | ios::in);
 	if(!in.is_open())
 	{
 		LOG(ERROR,"Problem with CE State File",
@@ -460,9 +362,7 @@ void RefreshStateFile()
 		return;
 	}
 
-	// Open the tmp file
-	string tmpFile = Config::Inst()->GetPathCESaveFile() + ".tmp";
-	ofstream out(tmpFile.data(), ios::binary);
+	ofstream out(ceFile.data(), ios::binary | ios::trunc);
 	if(!out.is_open())
 	{
 		LOG(ERROR, "Problem with CE State File", "Unable to open the temporary CE state file.");
@@ -470,93 +370,51 @@ void RefreshStateFile()
 		return;
 	}
 
-	// get length of input for error checking of partially written files
+	//Get some variables about the input size for error checking.
 	in.seekg (0, ios::end);
-	uint lengthLeft = in.tellg();
+	lengthLeft = in.tellg();
 	in.seekg (0, ios::beg);
 
 	while (in.is_open() && !in.eof() && lengthLeft)
 	{
-		// Bytes left, but not enough to make a header (timestamp + size)?
-		if(lengthLeft < (sizeof timeStamp + sizeof dataSize))
+		//Save our position
+		cur = in.tellg();
+
+		//If we can get the timestamp and data size
+		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
 		{
-			LOG(ERROR, "Problem with CE State File","The CE state file may be corrupt");
-			break;
+			LOG(ERROR, "The CE state file may be corruput", "");
+			return;
 		}
 
-		in.read((char*) &timeStamp, sizeof timeStamp);
-		lengthLeft -= sizeof timeStamp;
+		//Read the timestamp and dataSize
+		in.read((char*)&saveTime, sizeof saveTime);
+		in.read((char*)&dataSize, sizeof dataSize);
+		bytesRead = dataSize + sizeof dataSize + sizeof saveTime;
 
-		in.read((char*) &dataSize, sizeof dataSize);
-		lengthLeft -= sizeof dataSize;
-
-		if(Config::Inst()->GetDataTTL() && (timeStamp < lastLoadTime - Config::Inst()->GetDataTTL()))
+		//If the data has expired, skip past
+		if(saveTime < timestamp)
 		{
+			//Print debug msg
 			stringstream ss;
-			ss << "Throwing out old CE state at time: " << timeStamp << ".";
+			ss << "Throwing out old CE state at time: " << saveTime << ".";
 			LOG(DEBUG,"Throwing out old CE state.", ss.str());
-			in.seekg(dataSize, ifstream::cur);
-			lengthLeft -= dataSize;
-			continue;
-		}
 
-		// Not as many bytes left as the size of the entry?
-		if(lengthLeft < dataSize)
+			//Skip past expired data
+			in.seekg(dataSize, ios::cur);
+		}
+		else
 		{
-			LOG(ERROR, "The CE state file may be corrupt","");
-			break;
+			char buf[dataSize];
+			in.read(buf, dataSize);
+			out.write((char*)&saveTime, sizeof saveTime);
+			out.write((char*)&dataSize, sizeof dataSize);
+			out.write(buf, dataSize);
 		}
-
-		u_char tableBuffer[dataSize];
-		in.read((char*) tableBuffer, dataSize);
-		lengthLeft -= dataSize;
-
-		// Read each suspect
-		uint32_t bytesSoFar = 0;
-		while (bytesSoFar < dataSize)
-		{
-			Suspect* newSuspect = new Suspect();
-			uint32_t suspectBytes = 0;
-			suspectBytes += newSuspect->Deserialize(tableBuffer + bytesSoFar + suspectBytes);
-
-			FeatureSet fs = newSuspect->GetFeatureSet();
-			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
-			newSuspect->SetFeatureSet(&fs);
-
-			if(!suspects.IsValidKey(newSuspect->GetIpAddress())
-					&& suspectsSinceLastSave.IsValidKey(newSuspect->GetIpAddress()))
-			{
-				in_addr_t key = newSuspect->GetIpAddress();
-				suspectsSinceLastSave.Erase(key);
-				// Shift the rest of the data over on top of our bad suspect
-				memmove(tableBuffer + bytesSoFar, tableBuffer + bytesSoFar + suspectBytes,
-						(dataSize - bytesSoFar - suspectBytes) * sizeof(tableBuffer[0]));
-				dataSize -= suspectBytes;
-			}
-			else
-			{
-				bytesSoFar += suspectBytes;
-			}
-			delete newSuspect;
-		}
-
-		// If the entry is valid still, write it to the tmp file
-		if(dataSize > 0)
-		{
-			out.write((char*) &timeStamp, sizeof timeStamp);
-			out.write((char*) &dataSize, sizeof dataSize);
-			out.write((char*) tableBuffer, dataSize);
-		}
+		lengthLeft -= bytesRead;
 	}
-
-	out.close();
 	in.close();
-
-	string copyCommand = "cp -f " + tmpFile + " " + Config::Inst()->GetPathCESaveFile();
-	if(system(copyCommand.c_str()) == -1)
-	{
-		LOG(ERROR, "Problem with CE State File", "System Call: " + copyCommand +" has failed.");
-	}
+	out.close();
 }
 
 void Reload()
@@ -568,10 +426,11 @@ void Reload()
 
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 	Suspect suspectCopy;
+	vector<uint64_t> keys = suspects.GetAllKeys();
 	// Set everyone to be reclassified
-	for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
+	for(uint i = 0;i < keys.size(); i++)
 	{
-		suspectCopy = suspects.CheckOut(it.GetKey());
+		suspectCopy = suspects.CheckOut(keys[i]);
 		suspectCopy.SetNeedsClassificationUpdate(true);
 		suspects.CheckIn(&suspectCopy);
 	}
@@ -860,9 +719,13 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 		packet_info.pcap_header = *pkthdr;
 		//If this is to the host
 		if(packet_info.ip_hdr.ip_dst.s_addr == hostAddr.sin_addr.s_addr)
+		{
 			packet_info.fromHaystack = FROM_LTM;
+		}
 		else
+		{
 			packet_info.fromHaystack = FROM_HAYSTACK_DP;
+		}
 
 		//IF UDP or ICMP
 		if(ip_hdr->ip_p == 17 )
@@ -1060,129 +923,82 @@ vector <string> GetHaystackAddresses(string honeyDConfigPath)
 
 void UpdateSuspect(Packet packet)
 {
-	Suspect * newSuspect = new Suspect(packet);
-	in_addr_t addr = newSuspect->GetIpAddress();
-	//If our suspect is new
-	if(!suspects.IsValidKey(addr))
+	//Attempt to add the evidence into the table, if it fails the suspect doesn't exist in this table
+	in_addr_t key = packet.ip_hdr.ip_src.s_addr;
+	if(!suspects.AddEvidenceToSuspect(key, packet))
 	{
-		newSuspect->SetNeedsClassificationUpdate(true);
-		newSuspect->SetIsLive(Config::Inst()->GetReadPcap());
-
-		// If we're in training mode, we only send new suspects to the GUI
-		if (Config::Inst()->GetIsTraining())
-		{
-			if(SendSuspectToUI(newSuspect))
-			{
-				LOG(DEBUG, "Sent a suspect to the UI: " + string(inet_ntoa(newSuspect->GetInAddr())), "");
-			}
-			else
-			{
-				LOG(DEBUG, "Failed to send a suspect to the UI: "+ string(inet_ntoa(newSuspect->GetInAddr())), "");
-			}
-		}
-
-		// Make a copy to add to the other table
-		Suspect *newSuspectCopy = new Suspect(*newSuspect);
-
-		suspects.AddNewSuspect(newSuspect);
-
-		pthread_mutex_lock(&suspectsSinceLastSaveLock);
-		suspectsSinceLastSave.AddNewSuspect(newSuspectCopy);
-		pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+		suspects.AddNewSuspect(packet);
 	}
-	//Else our suspect exists
+	//Attempt to add the evidence into the table, if it fails the suspect doesn't exist in this table
+	if(!Config::Inst()->GetIsTraining() && !suspectsSinceLastSave.AddEvidenceToSuspect(key, packet))
+	{
+		suspectsSinceLastSave.AddNewSuspect(packet);
+	}
+}
+
+
+void UpdateAndStore(in_addr_t key)
+{
+	suspects.UpdateSuspect(key);
+	Suspect suspectCopy = suspects.GetSuspect(key);
+
+	// If the checkout failed and we got the empty suspect
+	if(suspectCopy.GetClassification() == -1)
+	{
+		return;
+	}
+
+	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
+	for (int j = 0; j < DIM; j++)
+	{
+		trainingFileStream << suspectCopy.GetFeatureSet().m_features[j] << " ";
+	}
+	trainingFileStream << "\n";
+	if(SendSuspectToUI(&suspectCopy))
+	{
+		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
+	}
 	else
 	{
-		Suspect suspectCopy = suspects.CheckOut(addr);
-		suspectCopy.AddEvidence(packet);
-		suspectCopy.SetIsLive(Config::Inst()->GetReadPcap());
-		suspects.CheckIn(&suspectCopy);
-
-		// Don't care about the state file if we're training
-		if (!Config::Inst()->GetIsTraining())
-		{
-			pthread_mutex_lock(&suspectsSinceLastSaveLock);
-			Suspect suspectCopy2 = suspectsSinceLastSave.CheckOut(addr);
-			suspectCopy2.AddEvidence(packet);
-			suspectCopy2.SetIsLive(Config::Inst()->GetReadPcap());
-			suspectsSinceLastSave.CheckIn(&suspectCopy2);
-			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
-		}
-
-		delete newSuspect;
+		LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
 	}
 }
 
 
-void UpdateAndStore(uint64_t suspect)
+void UpdateAndClassify(in_addr_t key)
 {
-	Suspect suspectCopy = suspects.CheckOut(suspect);
-
-	// If the checkout failed and we got the empty suspect
-	if (suspectCopy.GetIpAddress() == 0)
+	Suspect suspectCopy = suspects.GetSuspect(key);
+	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;
 	}
 
-	if(suspectCopy.GetNeedsClassificationUpdate())
-	{
+	//Get the old hostility bool
+	bool oldIsHostile = suspectCopy.GetIsHostile();
+	suspects.UpdateSuspect(key);
 
-		suspectCopy.UpdateEvidence();
-		suspectCopy.CalculateFeatures();
-
-		trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
-		for (int j = 0; j < DIM; j++)
-		{
-			trainingFileStream << suspectCopy.GetFeatureSet().m_features[j] << " ";
-		}
-		trainingFileStream << "\n";
-
-		suspectCopy.SetNeedsClassificationUpdate(false);
-	}
-
-	suspects.CheckIn(&suspectCopy);
-}
-
-
-void UpdateAndClassify(uint64_t suspect)
-{
-	Suspect suspectCopy = suspects.CheckOut(suspect);
-
-	// If the checkout failed and we got the empty suspect
-	if (suspectCopy.GetIpAddress() == 0)
+	suspectCopy = suspects.GetSuspect(key);
+	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;
 	}
 
-	if(suspectCopy.GetNeedsClassificationUpdate())
+	if(suspectCopy.GetIsHostile() || oldIsHostile)
 	{
-		suspectCopy.UpdateEvidence();
-		suspectCopy.CalculateFeatures();
-		int oldClassification = suspectCopy.GetIsHostile();
-
-		engine->NormalizeDataPoint(&suspectCopy);
-		engine->Classify(&suspectCopy);
-
-		//If suspect is hostile and this Nova instance has unique information
-		// 			(not just from silent alarms)
-		if(suspectCopy.GetIsHostile() || oldClassification)
+		if(suspectCopy.GetIsLive())
 		{
-			if(suspectCopy.GetIsLive())
-			{
-				SilentAlarm(&suspectCopy, oldClassification);
-			}
-		}
-
-		if(SendSuspectToUI(&suspectCopy))
-		{
-			LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
-		}
-		else
-		{
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
+			SilentAlarm(&suspectCopy, oldIsHostile);
 		}
 	}
-	suspects.CheckIn(&suspectCopy);
+
+	if(SendSuspectToUI(&suspectCopy))
+	{
+		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
+	}
+	else
+	{
+		LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
+	}
 }
 
 }
