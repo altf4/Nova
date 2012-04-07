@@ -58,15 +58,12 @@ Suspect::Suspect(Packet packet)
 	m_hostileNeighbors = 0;
 	m_classification = -1;
 	m_isHostile = false;
-	m_needsClassificationUpdate = true;
-	m_isLive = true;
+	AddEvidence(packet);
 	m_flaggedByAlarm = false;
-
 	for(int i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = 0;
 	}
-	m_evidence.push_back(packet);
 }
 
 
@@ -145,6 +142,7 @@ void Suspect::AddEvidence(Packet packet)
 {
 	m_evidence.push_back(packet);
 	m_needsClassificationUpdate = true;
+	m_isLive = (Config::Inst()->GetReadPcap());
 }
 
 // Proccesses all packets in m_evidence and puts them into the suspects unsent FeatureSet data
@@ -214,6 +212,28 @@ uint32_t Suspect::SerializeSuspect(u_char * buf)
 	return offset;
 }
 
+uint32_t Suspect::GetSerializeSuspectLength(bool GetData)
+{
+	uint32_t messageSize;
+
+	//Adds the sizeof results for the static required fields to messageSize
+	messageSize = sizeof(m_IpAddress.s_addr) + sizeof(m_classification) + sizeof(m_isHostile)
+			+ sizeof(m_needsClassificationUpdate) + sizeof(m_flaggedByAlarm) + sizeof(m_isLive)
+			+ sizeof(m_hostileNeighbors);
+	//Adds the dynamic elements to the messageSize
+	for(uint32_t i = 0; i < DIM; i++)
+	{
+		messageSize += sizeof(m_featureAccuracy[i]) + sizeof(m_features.m_features[i]);
+	}
+
+	if(GetData)
+	{
+		messageSize += m_features.GetFeatureDataLength();
+	}
+	return messageSize;
+}
+
+
 // Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
 //		buf - Pointer to buffer where serialized data will be stored
 // Returns: number of bytes set in the buffer
@@ -262,7 +282,7 @@ uint32_t Suspect::DeserializeSuspect(u_char * buf)
 }
 
 
-uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
+uint32_t Suspect::DeserializeSuspectWithData(u_char * buf)
 {
 	uint32_t offset = 0;
 
@@ -292,15 +312,7 @@ uint32_t Suspect::DeserializeSuspectWithData(u_char * buf, bool isLocal)
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
 	offset += m_features.DeserializeFeatureSet(buf+offset);
-
-	if(isLocal)
-	{
-		offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
-	}
-	else
-	{
-		offset += m_features.DeserializeFeatureData(buf+offset);
-	}
+	offset += m_features.DeserializeFeatureData(buf+offset);
 
 	m_needsClassificationUpdate = true;
 

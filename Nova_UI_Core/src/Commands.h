@@ -78,7 +78,7 @@ bool ConnectToNovad();
 //	NOTE: Blocks for at most timeout_ms milliseconds
 //	returns - true if a successful connection is established, false if no connection (error)
 //	NOTE: If a connection already exists, then the function does nothing and returns true
-bool TryWaitConenctToNovad(int timeout_ms);
+bool TryWaitConnectToNovad(int timeout_ms);
 
 //Closes any connection Novad over IPC
 //	returns - true if no connections to Novad exists, false if there is a connection (error)

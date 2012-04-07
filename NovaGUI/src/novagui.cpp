@@ -340,7 +340,7 @@ void NovaGUI::InitiateSystemStatus()
 
 bool NovaGUI::ConnectGuiToNovad()
 {
-	if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
+	if(TryWaitConnectToNovad(2000))	//TODO: Call this asynchronously
 	{
 		if(!StartCallbackLoop(this))
 		{

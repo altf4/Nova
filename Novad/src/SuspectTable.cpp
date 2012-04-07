@@ -21,6 +21,7 @@
 #include "SuspectTable.h"
 #include "Config.h"
 #include "Logger.h"
+#include "Novad.h"
 
 #include <fstream>
 #include <sstream>
@@ -29,6 +30,8 @@
 
 using namespace std;
 using namespace Nova;
+
+extern ClassificationEngine* engine;
 
 namespace Nova
 {
@@ -55,6 +58,7 @@ SuspectTable::SuspectTable()
 	initKey--;
 	m_suspectTable.set_deleted_key(initKey);
 	m_deleted_key = initKey;
+	m_emptySuspect.SetClassification(EMPTY_SUSPECT_CLASSIFICATION);
 }
 
 // Default Deconstructor for SuspectTable
@@ -113,7 +117,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 		pthread_rwlock_unlock(&m_lock);
 		return true;
 	}
-	//Else this suspect already exists, we cannot add it again.
+	//Else this suspect already exists, we cannot add it again->
 	pthread_rwlock_unlock(&m_lock);
 	return false;
 }
@@ -158,7 +162,7 @@ bool SuspectTable::AddNewSuspect(Packet packet)
 		pthread_rwlock_unlock(&m_lock);
 		return true;
 	}
-	//Else this suspect already exists, we cannot add it again.
+	//Else this suspect already exists, we cannot add it again->
 	pthread_rwlock_unlock(&m_lock);
 	return false;
 }
@@ -191,20 +195,24 @@ bool SuspectTable::AddEvidenceToSuspect(in_addr_t key, Packet packet)
 }
 // Updates a suspects evidence and calculates the FeatureSet
 //		key: IP address of the suspect as a uint value (host byte order)
-// Returns true if the call succeeds, false if the suspect could not be located
+// Returns (true) if the call succeeds, (false) if the suspect doesn't exist or doesn't need updating
 bool SuspectTable::UpdateSuspect(in_addr_t key)
 {
 	pthread_rwlock_wrlock(&m_lock);
-	if(IsValidKey_NoLocking(key))
+	if(IsValidKey_NonBlocking(key))
 	{
 		Suspect* suspect = m_suspectTable[key];
 		if(suspect->GetNeedsClassificationUpdate())
 		{
 			suspect->UpdateEvidence();
 			suspect->CalculateFeatures();
+			if(Config::Inst()->GetIsTraining())
+			{
+				engine->Classify(suspect);
+			}
+			pthread_rwlock_unlock(&m_lock);
+			return true;
 		}
-		pthread_rwlock_unlock(&m_lock);
-		return true;
 	}
 	pthread_rwlock_unlock(&m_lock);
 	return false;
@@ -216,13 +224,17 @@ void SuspectTable::UpdateAllSuspects()
 	pthread_rwlock_wrlock(&m_lock);
 	for(uint i = 0; i < m_keys.size(); i++)
 	{
-		if(IsValidKey_NoLocking(m_keys[i]))
+		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
 			Suspect* suspect = m_suspectTable[m_keys[i]];
 			if(suspect->GetNeedsClassificationUpdate())
 			{
 				suspect->UpdateEvidence();
 				suspect->CalculateFeatures();
+				if(!Config::Inst()->GetIsTraining())
+				{
+					engine->Classify(suspect);
+				}
 			}
 		}
 	}
@@ -267,7 +279,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 		}
 	}
 	//Attempt to unlock the Suspect anyway, harmless if the suspect doesn't exist and
-	// necessary if it has been deleted while the suspect was checked out.
+	// necessary if it has been deleted while the suspect was checked out->
 	// this call will decrease the ref count, unlock the mutex and delete it if needed
 	UnlockSuspect(key);
 	pthread_rwlock_unlock(&m_lock);
@@ -310,7 +322,7 @@ SuspectTableRet SuspectTable::CheckIn(in_addr_t key)
 		}
 	}
 	//Attempt to unlock the Suspect anyway, harmless if the suspect doesn't exist and
-	// necessary if it has been deleted while the suspect was checked out.
+	// necessary if it has been deleted while the suspect was checked out->
 	// this call will decrease the ref count, unlock the mutex and delete it if needed
 	UnlockSuspect(key);
 	pthread_rwlock_unlock(&m_lock);
@@ -569,42 +581,173 @@ void SuspectTable::SaveSuspectsToFile(string filename)
 
 //Iterates over the table, serializing each suspect and dumping the raw data to out
 //		out: ofstream you wish to write the contents to
+//		timestamp: the timestamp you wish to mark the table's contents with
 //Note: Information can be retrieved using ReadContents
-uint32_t SuspectTable::DumpContents(ofstream out)
+uint32_t SuspectTable::DumpContents(ofstream *out, time_t timestamp)
 {
 	pthread_rwlock_rdlock(&m_lock);
-	if(!out.is_open())
+	//Get save time
+	if(!out->is_open())
 	{
-		return 0;
+		LOG(WARNING, "Unable to open CE state file.", "");
 	}
+	if(timestamp == 0)
+	{
+		timestamp = time(NULL);
+	}
+
 	uint32_t ret = 0, dataSize = 0;
 	u_char tableBuffer[MAX_MSG_SIZE];
-
 	for(uint i = 0; i < m_keys.size(); i++)
 	{
-		Suspect * suspect = m_suspectTable[m_keys[i]]);
-
-		if(!suspect->GetFeatureSet().m_packetCount)
+		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
-			continue;
+			Suspect * suspect = m_suspectTable[m_keys[i]];
+			if(!suspect->GetFeatureSet().m_packetCount)
+			{
+				continue;
+			}
+			dataSize += suspect->GetSerializeSuspectLength(true);
 		}
-		out.write((char*) tableBuffer, dataSize);
-		dataSize = suspect->SerializeSuspectWithData(tableBuffer);
-		ret += dataSize;
 	}
-
+	out->write((char*)&timestamp, sizeof timestamp);
+	out->write((char*)&dataSize, sizeof dataSize);
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		if(IsValidKey_NonBlocking(m_keys[i]))
+		{
+			Suspect * suspect = m_suspectTable[m_keys[i]];
+			if(!suspect->GetFeatureSet().m_packetCount)
+			{
+				continue;
+			}
+			dataSize = suspect->SerializeSuspectWithData(tableBuffer);
+			out->write((char*) tableBuffer, dataSize);
+			ret += dataSize;
+		}
+	}
 	pthread_rwlock_unlock(&m_lock);
 	return ret;
 }
 
-uint32_t SuspectTable::ReadContents(ifstream in)
+uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	uint32_t ret = 0;
+	if(!in->is_open())
+	{
+		LOG(WARNING, "Unable to open CE state file.", "");
+	}
+	uint32_t cur = in->tellg();
+	in->seekg(0,ifstream::end);
+	uint32_t lengthLeft = (uint32_t)in->tellg() - cur;
 
+	in->seekg(cur, ifstream::beg);
+
+	time_t saveTime = 0;
+	uint32_t dataSize = 0;
+
+	while(in->is_open() && !in->eof())
+	{
+		// Bytes left, but not enough to make a header (timestamp + size)?
+		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
+		{
+			LOG(ERROR, "The state file may be corruput", "");
+			return 0;
+		}
+
+		in->read((char*) &saveTime, sizeof saveTime);
+		lengthLeft -= sizeof saveTime;
+		in->read((char*) &dataSize, sizeof dataSize);
+		lengthLeft -= sizeof dataSize;
+
+		// Not as many bytes left as the size of the entry?
+		if(lengthLeft < dataSize)
+		{
+			LOG(ERROR, "The CE state file may be corruput", "");
+			return 0;
+		}
+		if(saveTime < timestamp)
+		{
+			stringstream ss;
+			ss << "Throwing out old CE state at time: " << saveTime << ".";
+			LOG(DEBUG,"Throwing out old CE state.", ss.str());
+			in->seekg(dataSize, ifstream::cur);
+			return 0;
+		}
+
+		u_char tableBuffer[dataSize];
+		in->read((char*) tableBuffer, dataSize);
+		lengthLeft -= dataSize;
+
+		// Read each suspect
+		uint32_t offset = 0;
+		while(offset < dataSize)
+		{
+			Suspect* newSuspect = new Suspect();
+			offset += newSuspect->DeserializeSuspectWithData(tableBuffer+ offset);
+			in_addr_t key = newSuspect->GetIpAddress();
+			// If our suspect has no evidence, throw it out
+			if(newSuspect->GetFeatureSet().m_packetCount == 0)
+			{
+				LOG(WARNING,"Discarding invalid suspect.",
+					"A suspect containing no evidence was detected and discarded");
+				delete newSuspect;
+				continue;
+			}
+
+			if(IsValidKey_NonBlocking(key))
+			{
+				FeatureSet fs = newSuspect->GetFeatureSet();
+				LockSuspect(key);
+				m_suspectTable[key]->AddFeatureSet(&fs);
+				m_suspectTable[key]->SetNeedsClassificationUpdate(true);
+				UnlockSuspect(key);
+				delete newSuspect;
+				continue;
+			}
+			else
+			{
+				//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
+				if(m_lockTable.find(key) != m_lockTable.end())
+				{
+					//Wait for the suspect lock, this call releases the table while blocking.
+					LockSuspect(key);
+					//Reverse the deletion flag
+					m_lockTable[key].deleted = false;
+					newSuspect->SetNeedsClassificationUpdate(true);
+					//Allocate the Suspect and copy the contents
+					m_suspectTable[key] = newSuspect;
+					//Store the key
+					m_keys.push_back(key);
+					UnlockSuspect(key);
+				}
+				else //Else we need to init a SuspectLock
+				{
+					pthread_mutexattr_t * tempAttr = NULL;
+					pthread_mutexattr_init(tempAttr);
+					pthread_mutexattr_settype(tempAttr, PTHREAD_MUTEX_ERRORCHECK);
+					//Destroy before init just to be safe
+					pthread_mutex_destroy(&m_lockTable[key].lock);
+					pthread_mutex_init(&m_lockTable[key].lock, tempAttr);
+					//Safe to delete the attr after init.
+					delete tempAttr;
+					m_lockTable[key].deleted = false;
+					m_lockTable[key].ref_cnt = 0;
+					newSuspect->SetNeedsClassificationUpdate(true);
+					//Allocate the Suspect and copy the contents
+					m_suspectTable[key] = newSuspect;
+					//Store the key
+					m_keys.push_back(key);
+				}
+			}
+		}
+	}
+	ret = (uint32_t)in->tellg() - cur;
 	pthread_rwlock_unlock(&m_lock);
 	return ret;
 }
+
 
 // Checks the validity of the key - public thread-safe version
 //		key: IP address of the suspect as a uint value (host byte order)
@@ -618,6 +761,10 @@ bool SuspectTable::IsValidKey(in_addr_t key)
 	return ret;
 }
 
+bool SuspectTable::IsEmptySuspect(Suspect * suspect)
+{
+	return (suspect->GetClassification() == EMPTY_SUSPECT_CLASSIFICATION);
+}
 // Checks the validity of the key - private use non-locking version
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise

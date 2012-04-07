@@ -27,6 +27,8 @@
 
 #include "Suspect.h"
 
+#define EMPTY_SUSPECT_CLASSIFICATION -1337
+
 typedef google::dense_hash_map<uint64_t, Nova::Suspect *, std::tr1::hash<uint64_t>, eqkey > SuspectHashTable;
 
 struct SuspectLock
@@ -157,19 +159,21 @@ public:
 	// Returns: size in bytes of data written
 	//Note: Information can be retrieved by deserializing at the beginning of the dump and using the value returned
 	// as an offset to start the next deserialization
-	uint32_t DumpContents(std::ofstream out);
+	uint32_t DumpContents(std::ofstream *out, time_t timestamp = 0);
 
 	//Iterates over the table, serializing each suspect and dumping the raw data to out
 	//		out: ofstream you wish to write the contents to
 	// Returns: size in bytes of data written
 	//Note: Information can be retrieved by deserializing at the beginning of the dump and using the value returned
 	// as an offset to start the next deserialization
-	uint32_t ReadContents(std::ifstream in); //XXX
+	uint32_t ReadContents(std::ifstream *in, time_t timestamp = 0); //XXX
 
 	// Checks the validity of the key - public thread-safe version
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	bool IsValidKey(in_addr_t key);
+
+	bool IsEmptySuspect(Suspect * suspect);
 
 	Suspect m_emptySuspect;
 
@@ -212,7 +216,6 @@ private:
 	// Returns (true) if the Lock doesn't exist or it was successfully removed
 	// false if threads are blocking on it or the Suspect has not been erased
 	bool CleanSuspectLock(in_addr_t key);
-
 };
 
 }

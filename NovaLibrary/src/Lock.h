@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Control.cpp
+// Name        : Lock.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,38 +13,38 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Set of functions Novad can call to perform tasks related to
-//			controlling the Novad process and operation
+// Description : Simple wrapper class for easy use of pthread mutex locking
 //============================================================================
 
-#include "Doppelganger.h"
-#include "Control.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Novad.h"
+#ifndef LOCK_H_
+#define LOCK_H_
+
+#include "pthread.h"
 
 namespace Nova
 {
-void SaveAndExit(int param)
+
+class Lock
 {
-	AppendToStateFile();
-	if(system("sudo iptables -F") == -1)
+
+public:
+	Lock(pthread_mutex_t *lock)
 	{
-		// TODO Logging
+		m_lock = lock;
+		pthread_mutex_lock(m_lock);
 	}
-	if(system("sudo iptables -t nat -F") == -1)
+
+	~Lock()
 	{
-		// TODO Logging
+		pthread_mutex_unlock(m_lock);
 	}
-	if(system("sudo iptables -t nat -X DOPP") == -1)
-	{
-		// TODO Logging
-	}
-	if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
-	{
-		// TODO Logging
-	}
-	LOG(NOTICE, "Novad is now exiting.", "");
-	exit(EXIT_SUCCESS);
+
+private:
+	pthread_mutex_t *m_lock;
+
+};
+
 }
-}
+
+
+#endif /* LOCK_H_ */

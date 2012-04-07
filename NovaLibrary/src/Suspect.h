@@ -54,21 +54,29 @@ public:
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
 	uint32_t SerializeSuspect(u_char * buf);
-	// Reads Suspect information from a buffer originally populated by serializeSuspect
-	//		buf - Pointer to buffer where the serialized suspect is
-	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeSuspect(u_char * buf);
 
 	// Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
 	uint32_t SerializeSuspectWithData(u_char * buf);
+
+	// Reads Suspect information from a buffer originally populated by serializeSuspect
+	//		buf - Pointer to buffer where the serialized suspect is
+	// Returns: number of bytes read from the buffer
+	uint32_t DeserializeSuspect(u_char * buf);
+
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	// expects featureSet data appended by serializeFeatureData after serializeSuspect
 	//		buf - Pointer to buffer where serialized data resides
-	//		isLocal - Specifies whether this data is from a Silent Alarm (false) or local packets (true)
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeSuspectWithData(u_char * buf, bool isLocal);
+	uint32_t DeserializeSuspectWithData(u_char * buf);
+
+	// Returns an unsigned, 32 bit integer that represents the length of the
+	// Suspect to be serialized (in bytes).
+	//      GetData - If true, include the FeatureSetData length in this calculation;
+	//                if false, don't.
+	// Returns: number of bytes to allocate to serialization buffer
+	uint32_t GetSerializeSuspectLength(bool GetData);
 
 	// Includes and Excludes separately tracked data for feature set calculation
 	// include - a value of true adds unsent data into the main table

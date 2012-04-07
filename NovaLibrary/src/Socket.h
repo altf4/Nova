@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Control.cpp
+// Name        : Socket.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,38 +13,41 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Set of functions Novad can call to perform tasks related to
-//			controlling the Novad process and operation
+// Description : A synchronized socket class. Not much more than a pairing of a file descriptor and mutex
 //============================================================================
 
-#include "Doppelganger.h"
-#include "Control.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Novad.h"
+#ifndef SOCKET_H_
+#define SOCKET_H_
+
+#include "pthread.h"
 
 namespace Nova
 {
-void SaveAndExit(int param)
+
+class Socket
 {
-	AppendToStateFile();
-	if(system("sudo iptables -F") == -1)
+public:
+
+	Socket()
 	{
-		// TODO Logging
+		m_socketFD = -1;
+
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+		pthread_mutex_init(&m_mutex, &attr);
 	}
-	if(system("sudo iptables -t nat -F") == -1)
+	~Socket()
 	{
-		// TODO Logging
+		close(m_socketFD);
 	}
-	if(system("sudo iptables -t nat -X DOPP") == -1)
-	{
-		// TODO Logging
-	}
-	if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
-	{
-		// TODO Logging
-	}
-	LOG(NOTICE, "Novad is now exiting.", "");
-	exit(EXIT_SUCCESS);
+
+	int m_socketFD;
+	pthread_mutex_t m_mutex;
+};
+
 }
-}
+
+
+#endif /* SOCKET_H_ */

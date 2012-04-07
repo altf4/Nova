@@ -16,49 +16,51 @@
 // Description : Manages the message sending protocol to and from the Nova UI
 //============================================================================
 
-#include "ProtocolHandler.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Control.h"
-#include "Novad.h"
+
 #include "messages/CallbackMessage.h"
 #include "messages/ControlMessage.h"
 #include "messages/RequestMessage.h"
 #include "messages/ErrorMessage.h"
+#include "ProtocolHandler.h"
 #include "SuspectTable.h"
-#include "SuspectTableIterator.h"
+#include "Control.h"
+#include "Socket.h"
+#include "Config.h"
+#include "Logger.h"
+#include "Novad.h"
+#include "Lock.h"
 
-
-#include "pthread.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <cerrno>
 #include <stdio.h>
+#include <sys/un.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 using namespace Nova;
 using namespace std;
 
-int callbackSocket = -1, IPCSocket = -1;
-
+Socket callbackSocket, IPCSocket;
 
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
-extern pthread_mutex_t suspectsSinceLastSaveLock;
 
 struct sockaddr_un msgRemote, msgLocal;
 int UIsocketSize;
 
-//Launches a UI Handling thread, and returns
-bool Nova::Spawn_UI_Handler()
+namespace Nova
 {
+//Launches a UI Handling thread, and returns
+bool Spawn_UI_Handler()
+{
+	Lock lock(&IPCSocket.m_mutex);
 
 	int len;
 	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
 	string outKeyPath = Config::Inst()->GetPathHome() + "/keys" + UI_LISTEN_FILENAME;
 
-    if((IPCSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    if((IPCSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "socket: "+string(strerror(errno)));
     	return false;
@@ -69,17 +71,17 @@ bool Nova::Spawn_UI_Handler()
     unlink(msgLocal.sun_path);
     len = strlen(msgLocal.sun_path) + sizeof(msgLocal.sun_family);
 
-    if(::bind(IPCSocket, (struct sockaddr *)&msgLocal, len) == -1)
+    if(::bind(IPCSocket.m_socketFD, (struct sockaddr *)&msgLocal, len) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "bind: "+string(strerror(errno)));
-    	close(IPCSocket);
+    	close(IPCSocket.m_socketFD);
     	return false;
     }
 
-    if(listen(IPCSocket, SOMAXCONN) == -1)
+    if(listen(IPCSocket.m_socketFD, SOMAXCONN) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
-		close(IPCSocket);
+		close(IPCSocket.m_socketFD);
     	return false;
     }
 
@@ -89,22 +91,24 @@ bool Nova::Spawn_UI_Handler()
     return true;
 }
 
-void *Nova::Handle_UI_Helper(void *ptr)
+void *Handle_UI_Helper(void *ptr)
 {
     while(true)
     {
-    	int *msgSocket = (int*)malloc(sizeof(int));
+    	int msgSocketFD;
 
     	//Blocking call
-		if((*msgSocket = accept(IPCSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
+		if((msgSocketFD = accept(IPCSocket.m_socketFD, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
 		{
 			LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
-			close(IPCSocket);
+			close(IPCSocket.m_socketFD);
 			return false;
 		}
 		else
 		{
 			pthread_t UI_thread;
+			Socket *msgSocket = new Socket();
+			msgSocket->m_socketFD = msgSocketFD;
 			pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocket);
 			pthread_detach(UI_thread);
 		}
@@ -113,29 +117,29 @@ void *Nova::Handle_UI_Helper(void *ptr)
     return NULL;
 }
 
-void *Nova::Handle_UI_Thread(void *socketVoidPtr)
+void *Handle_UI_Thread(void *socketVoidPtr)
 {
 	//Get the argument out, put it on the stack, free it from the heap so we don't forget
-	int *socketPtr = (int*)socketVoidPtr;
-	int socketFD = *socketPtr;
-	free(socketPtr);
+	Socket *controlSocket = (Socket*)socketVoidPtr;
 
 	while(true)
 	{
-		UI_Message *message = UI_Message::ReadMessage(socketFD);
+		Lock lock(&controlSocket->m_mutex);
+
+		UI_Message *message = UI_Message::ReadMessage(controlSocket->m_socketFD);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
 			{
 				ControlMessage *controlMessage = (ControlMessage*)message;
-				HandleControlMessage(*controlMessage, socketFD);
+				HandleControlMessage(*controlMessage, controlSocket->m_socketFD);
 				delete controlMessage;
 				break;
 			}
 			case REQUEST_MESSAGE:
 			{
 				RequestMessage *msg = (RequestMessage*)message;
-				HandleRequestMessage(*msg, socketFD);
+				HandleRequestMessage(*msg, controlSocket->m_socketFD);
 				delete msg;
 				break;
 			}
@@ -147,10 +151,10 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 					case ERROR_SOCKET_CLOSED:
 					{
 						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
-						close(socketFD);
-						close(callbackSocket);
-						socketFD = -1;
-						callbackSocket = -1;
+						delete controlSocket;
+						controlSocket = NULL;
+						close(callbackSocket.m_socketFD);
+						callbackSocket.m_socketFD = -1;
 						return NULL;
 					}
 					case ERROR_MALFORMED_MESSAGE:
@@ -187,10 +191,11 @@ void *Nova::Handle_UI_Thread(void *socketVoidPtr)
 		}
 	}
 
+	delete controlSocket;
 	return NULL;
 }
 
-void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
+void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 {
 	switch(controlMessage.m_controlType)
 	{
@@ -212,10 +217,8 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			//TODO: Replace with new suspect table class
 
-			suspects.Clear();
-			pthread_mutex_lock(&suspectsSinceLastSaveLock);
-			suspectsSinceLastSave.Clear();
-			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+			suspects.EraseAllSuspects();
+			suspectsSinceLastSave.EraseAllSuspects();
 			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
@@ -315,9 +318,9 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
 
 			close(socketFD);
-			close(callbackSocket);
+			close(callbackSocket.m_socketFD);
 			socketFD = -1;
-			callbackSocket = -1;
+			callbackSocket.m_socketFD = -1;
 
 			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
 
@@ -343,7 +346,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 	}
 }
 
-void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
+void HandleRequestMessage(RequestMessage &msg, int socketFD)
 {
 	switch(msg.m_requestType)
 	{
@@ -356,13 +359,13 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 			{
 				case SUSPECTLIST_ALL:
 				{
-					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
 					for (uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
 					}
 
-					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
 					for (uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
@@ -371,7 +374,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 				}
 				case SUSPECTLIST_HOSTILE:
 				{
-					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
 					for (uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
@@ -380,7 +383,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 				}
 				case SUSPECTLIST_BENIGN:
 				{
-					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
 					for (uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
@@ -403,7 +406,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
 			reply.m_suspect = new Suspect();
-			*reply.m_suspect = suspects.Peek(msg.m_suspectAddress);
+			*reply.m_suspect = suspects.GetSuspect(msg.m_suspectAddress);
 			UI_Message::WriteMessage(&reply, socketFD);
 
 			break;
@@ -419,8 +422,10 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 }
 
 
-bool Nova::ConnectToUI()
+bool ConnectToUI()
 {
+	Lock lock(&callbackSocket.m_mutex);
+
 	//Builds the key path
 	string homePath = Config::Inst()->GetPathHome();
 	string key = homePath;
@@ -433,17 +438,17 @@ bool Nova::ConnectToUI()
 	UIAddress.sun_family = AF_UNIX;
 	strcpy(UIAddress.sun_path, key.c_str());
 
-	if((callbackSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((callbackSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG(WARNING, "Unable to connect to UI", "Unable to create UI socket: "+string(strerror(errno)));
-		close(callbackSocket);
+		close(callbackSocket.m_socketFD);
 		return false;
 	}
 
-	if(connect(callbackSocket, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
+	if(connect(callbackSocket.m_socketFD, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
 	{
 		LOG(WARNING, "Unable to connect to UI", "Unable to connect to UI: "+string(strerror(errno)));
-		close(callbackSocket);
+		close(callbackSocket.m_socketFD);
 		return false;
 	}
 
@@ -451,26 +456,28 @@ bool Nova::ConnectToUI()
 }
 
 
-bool Nova::SendSuspectToUI(Suspect *suspect)
+bool SendSuspectToUI(Suspect *suspect)
 {
+	Lock lock(&callbackSocket.m_mutex);
+
 	CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE);
 	suspectUpdate.m_suspect = suspect;
-	if(!UI_Message::WriteMessage(&suspectUpdate, callbackSocket))
+	if(!UI_Message::WriteMessage(&suspectUpdate, callbackSocket.m_socketFD))
 	{
 		return false;
 	}
 
-	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket);
+	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket.m_socketFD);
 	if(suspectReply->m_messageType == ERROR_MESSAGE )
 	{
 		ErrorMessage *error = (ErrorMessage*)suspectReply;
 		if(error->m_errorType == ERROR_SOCKET_CLOSED)
 		{
 			//Only bother closing the socket if it's not already closed
-			if(callbackSocket != -1)
+			if(callbackSocket.m_socketFD != -1)
 			{
-				close(callbackSocket);
-				callbackSocket = -1;
+				close(callbackSocket.m_socketFD);
+				callbackSocket.m_socketFD = -1;
 			}
 		}
 		delete error;
@@ -490,4 +497,5 @@ bool Nova::SendSuspectToUI(Suspect *suspect)
 	delete suspectCallback;
 
 	return true;
+}
 }

@@ -21,17 +21,21 @@
 #include "messages/UI_Message.h"
 #include "messages/CallbackMessage.h"
 #include "messages/ErrorMessage.h"
+#include "Socket.h"
+#include "Lock.h"
 
 using namespace Nova;
 
-extern int UI_ListenSocket;
+extern Socket UI_ListenSocket;
 
 struct CallbackChange Nova::ProcessCallbackMessage()
 {
+	Lock lock(&UI_ListenSocket.m_mutex);
+
 	struct CallbackChange change;
 	change.type = CALLBACK_ERROR;
 
-	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket);
+	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket.m_socketFD);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
@@ -59,7 +63,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.suspect = callbackMessage->m_suspect;
 
 			CallbackMessage callbackAck(CALLBACK_SUSPECT_UDPATE_ACK);
-			if(!UI_Message::WriteMessage(&callbackAck, UI_ListenSocket))
+			if(!UI_Message::WriteMessage(&callbackAck, UI_ListenSocket.m_socketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}

@@ -20,10 +20,9 @@
 #include "Config.h"
 
 using namespace std;
-using namespace Nova;
-
-
-bool Nova::StartHaystack()
+namespace Nova
+{
+bool StartHaystack()
 {
 	string executeString = "nohup sudo honeyd -d -i " + Config::Inst()->GetInterface() + " -i "
 		+ Config::Inst()->GetDoppelInterface()+" -f ";
@@ -59,7 +58,7 @@ bool Nova::StartHaystack()
 	}
 }
 
-bool  Nova::StopHaystack()
+bool StopHaystack()
 {
 	// Kill honeyd processes
 	FILE *out = popen("pidof honeyd","r");
@@ -90,7 +89,7 @@ bool  Nova::StopHaystack()
 	return retSuccess;
 }
 
-bool Nova::IsHaystackUp()
+bool IsHaystackUp()
 {
 	FILE *out = popen("pidof honeyd","r");
 	bool retSuccess = false;
@@ -110,4 +109,5 @@ bool Nova::IsHaystackUp()
 	}
 	pclose(out);
 	return retSuccess;
+}
 }
