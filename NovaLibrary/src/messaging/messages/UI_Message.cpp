@@ -158,6 +158,40 @@ bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 	return true;
 }
 
+bool UI_Message::DeserializeHeader(char **buffer)
+{
+	if(buffer == NULL)
+	{
+		return false;
+	}
+	if(*buffer == NULL)
+	{
+		return false;
+	}
+
+	memcpy(&m_protocolDirection, *buffer, sizeof(m_protocolDirection));
+	*buffer += sizeof(m_protocolDirection);
+
+	if((m_protocolDirection != DIRECTION_TO_UI) && (m_protocolDirection != DIRECTION_TO_NOVAD))
+	{
+		return false;
+	}
+
+	memcpy(&m_messageType, *buffer, sizeof(m_messageType));
+	*buffer += sizeof(m_messageType);
+
+	return true;
+}
+
+void UI_Message::SerializeHeader(char **buffer)
+{
+	memcpy(*buffer, &m_protocolDirection, sizeof(m_protocolDirection));
+	*buffer += sizeof(m_protocolDirection);
+
+	memcpy(*buffer, &m_messageType, sizeof(m_messageType));
+	*buffer += sizeof(m_messageType);
+}
+
 UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
 {
 	if(length < MESSAGE_MIN_SIZE)

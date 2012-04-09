@@ -24,11 +24,12 @@
 namespace Nova
 {
 
-RequestMessage::RequestMessage(enum RequestType requestType)
+RequestMessage::RequestMessage(enum RequestType requestType, enum ProtocolDirection direction)
 {
 	m_messageType = REQUEST_MESSAGE;
 	m_suspectListLength = 0;
 	m_requestType = requestType;
+	m_protocolDirection = direction;
 }
 
 RequestMessage::~RequestMessage()
@@ -46,9 +47,12 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 	m_serializeError = false;
 
-	// Deserialize the message type
-	memcpy(&m_messageType, buffer, sizeof(m_messageType));
-	buffer += sizeof(m_messageType);
+	//Deserialize the UI_Message header
+	if(!DeserializeHeader(&buffer))
+	{
+		m_serializeError = true;
+		return;
+	}
 
 	// Deserialize the request message type
 	memcpy(&m_requestType, buffer, sizeof(m_requestType));
@@ -169,18 +173,22 @@ char *RequestMessage::Serialize(uint32_t *length)
 	{
 		case REQUEST_SUSPECTLIST_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 			// 		3) Type of list being returned (all, hostile, benign)
 			//		4) Size of list
 			//		5) List of suspect IPs
 
 			m_suspectListLength = sizeof(in_addr_t) * m_suspectList.size();
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType);
 
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
-			buffer += SerializeHeader(buffer);
+
+			SerializeHeader(&buffer);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
 
 			//Length of list suspect buffer
 			memcpy(buffer, &m_listType, sizeof(m_listType));
@@ -202,14 +210,17 @@ char *RequestMessage::Serialize(uint32_t *length)
 		}
 		case REQUEST_SUSPECTLIST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) request Message Type
 			// 		3) Type of list we want (all, hostile, benign)
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_listType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
-			// Serialize 1) and 2)
-			buffer += SerializeHeader(buffer);
+
+			SerializeHeader(&buffer);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
 
 			// Put the type of list we're requesting
 			memcpy(buffer, &m_listType, sizeof(m_listType));
@@ -220,15 +231,17 @@ char *RequestMessage::Serialize(uint32_t *length)
 
 		case REQUEST_SUSPECT:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 			// 		3) IP address of suspect being requested in in_addr_t format
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectAddress);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			// Serialize 1) and 2)
-			buffer += SerializeHeader(buffer);
+			SerializeHeader(&buffer);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
 
 			// Serialize our IP
 			memcpy(buffer, &m_suspectAddress, sizeof(m_suspectAddress));
@@ -237,7 +250,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 		}
 		case REQUEST_SUSPECT_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 			//		3) Size of the requested suspect
 			// 		4) The requested suspect
@@ -245,12 +258,14 @@ char *RequestMessage::Serialize(uint32_t *length)
 			char suspectTempBuffer[MAX_MSG_SIZE];
 			m_suspectLength = m_suspect->SerializeSuspect((u_char*)suspectTempBuffer);
 
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength ;
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength ;
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			// Serialize 1) and 2)
-			buffer += SerializeHeader(buffer);
+			SerializeHeader(&buffer);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
 
 			// Serialize the size of the suspect
 			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
@@ -271,21 +286,4 @@ char *RequestMessage::Serialize(uint32_t *length)
 	return originalBuffer;
 }
 
-int RequestMessage::SerializeHeader(char *buffer)
-{
-	//Serializes: 	1) UI_Message Type
-	//				2) request Message Type
-	int bytes = 0;
-	//Put the UI Message type in
-	memcpy(buffer, &m_messageType, sizeof(m_messageType));
-	buffer += sizeof(m_messageType);
-	bytes += sizeof(m_messageType);
-
-	//Put the Request Message type in
-	memcpy(buffer, &m_requestType, sizeof(m_requestType));
-	buffer += sizeof(m_requestType);
-	bytes += sizeof(m_messageType);
-
-	return bytes;
-}
 }

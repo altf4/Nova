@@ -45,7 +45,10 @@ class ErrorMessage : public UI_Message
 
 public:
 
+	//Constructor for "local" messages (Not sent)
 	ErrorMessage(enum ErrorType errorType);
+	//Constructor for "remote" messages (Sent over socket)
+	ErrorMessage(enum ErrorType errorType, enum ProtocolDirection direction);
 	~ErrorMessage();
 
 	//Deserialization constructor
