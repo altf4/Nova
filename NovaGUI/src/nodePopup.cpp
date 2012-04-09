@@ -68,8 +68,8 @@ void nodePopup::SaveNode()
 //loads the selected node's options
 void nodePopup::LoadNode()
 {
-	subnet s = novaParent->m_subnets[editNode.sub];
-	profile p = novaParent->m_profiles[editNode.pfile];
+	subnet s = novaParent->m_honeydConfig->m_subnets[editNode.sub];
+	profile p = novaParent->m_honeydConfig->m_profiles[editNode.pfile];
 
 	ui.ethernetVendorEdit->setText((QString)p.ethernet.c_str());
 	if(editNode.MAC.length() == 17)
@@ -162,20 +162,20 @@ void nodePopup::LoadNode()
 //Copies the data from parent novaconfig and adjusts the pointers
 void nodePopup::PullData()
 {
-	editNode = novaParent->m_nodes[editNode.name];
+	editNode = novaParent->m_honeydConfig->m_nodes[editNode.name];
 }
 
 //Copies the data to parent novaconfig and adjusts the pointers
 void nodePopup::PushData()
 {
 	novaParent->m_loading->lock();
-	novaParent->m_nodes[editNode.name] = editNode;
+	novaParent->m_honeydConfig->m_nodes[editNode.name] = editNode;
 	novaParent->SyncAllNodesWithProfiles();
 
 	//The node may have a new name after updateNodeTypes depending on changes made and profile type
-	if(novaParent->m_profiles[editNode.pfile].type == staticDHCP)
+	if(novaParent->m_honeydConfig->m_profiles[editNode.pfile].type == staticDHCP)
 		editNode.name = editNode.MAC;
-	if(novaParent->m_profiles[editNode.pfile].type == static_IP)
+	if(novaParent->m_honeydConfig->m_profiles[editNode.pfile].type == static_IP)
 		editNode.name = editNode.IP;
 	novaParent->m_loading->unlock();
 	novaParent->LoadAllNodes();
@@ -255,7 +255,7 @@ int nodePopup::ValidateNodeSettings()
 	novaParent->m_loading->lock();
 	bool ipConflict = false;
 	bool macConflict = false;
-	for(NodeTable::iterator it = novaParent->m_nodes.begin(); it != novaParent->m_nodes.end(); it++)
+	for(NodeTable::iterator it = novaParent->m_honeydConfig->m_nodes.begin(); it != novaParent->m_honeydConfig->m_nodes.end(); it++)
 	{
 		if(it->second.name.compare(editNode.name))
 		{
@@ -271,7 +271,7 @@ int nodePopup::ValidateNodeSettings()
 			}
 		}
 	}
-	if(novaParent->m_subnets[editNode.sub].base == editNode.realIP)
+	if(novaParent->m_honeydConfig->m_subnets[editNode.sub].base == editNode.realIP)
 	{
 		ipConflict = true;
 	}

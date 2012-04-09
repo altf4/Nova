@@ -220,17 +220,18 @@ void HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
 				p->inherited[ETHERNET] = false;
 				continue;
 			}
-			prefix = "uptime";
+			prefix = "uptimeMin";
 			if(!string(v.first.data()).compare(prefix))
 			{
-				p->uptime = v.second.data();
+				p->uptimeMin = v.second.data();
 				p->inherited[UPTIME] = false;
 				continue;
 			}
-			prefix = "uptimeRange";
+			prefix = "uptimeMax";
 			if(!string(v.first.data()).compare(prefix))
 			{
-				p->uptimeRange = v.second.data();
+				p->uptimeMax = v.second.data();
+				p->inherited[UPTIME] = false;
 				continue;
 			}
 			prefix = "dropRate";
@@ -1052,10 +1053,6 @@ string HoneydConfiguration::ProfileToString(profile* p)
 		out << "set " << p->name << " ethernet \"" << p->ethernet << '"' << endl;
 	}
 
-	if(p->uptime.compare(""))
-	{
-		out << "set " << p->name << " uptime " << p->uptime << endl;
-	}
 
 	if(p->dropRate.compare(""))
 	{
@@ -1116,10 +1113,6 @@ string HoneydConfiguration::DoppProfileToString(profile* p)
 		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->personality << '"' << endl;
 	}
 
-	if(p->uptime.compare(""))
-	{
-		out << "set DoppelgangerReservedTemplate" << " uptime " << p->uptime << endl;
-	}
 
 	if(p->dropRate.compare(""))
 	{
@@ -1222,4 +1215,250 @@ void HoneydConfiguration::SetHomePath(std::string homePath)
 std::string HoneydConfiguration::GetHomePath()
 {
 	return m_homePath;
+}
+
+
+
+// TODO TODO TODO
+std::vector<std::string> HoneydConfiguration::GetProfileChildren(std::string parent)
+{
+	vector<std::string> childProfiles;
+
+	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if (it->second.parentProfile == parent)
+		{
+			childProfiles.push_back(it->second.name);
+		}
+	}
+
+	return childProfiles;
+}
+
+std::pair<hdConfigReturn, profileType> HoneydConfiguration::GetProfileType(profileName profile)
+{
+	pair<hdConfigReturn, profileType> ret;
+
+	ProfileTable::iterator it = m_profiles.find(profile);
+	if (it == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = profileType::static_IP;
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	ret.second = it->second.type;
+	return ret;
+}
+
+std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetEthernet(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].ethernet == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].ethernet;
+
+	return ret;
+}
+
+std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetPersonality(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].personality == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].personality;
+
+	return ret;
+}
+
+std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetDroprate(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].dropRate == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].dropRate;
+
+	return ret;
+
+}
+
+std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionTCP(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].tcpAction == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].tcpAction;
+
+	return ret;
+
+}
+
+std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionUDP(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].udpAction == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].udpAction;
+
+	return ret;
+}
+
+std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionICMP(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].icmpAction == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].icmpAction;
+
+	return ret;
+
+}
+
+std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMin(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].uptimeMin == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].uptimeMin;
+
+	return ret;
+}
+
+std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName profile)
+{
+	pair<hdConfigReturn, string> ret;
+
+	// Make sure the input profile name exists
+	if (m_profiles.find(profile) == m_profiles.end())
+	{
+		ret.first = NO_SUCH_KEY;
+		ret.second = "";
+		return ret;
+	}
+
+	ret.first = NOT_INHERITED;
+	profileName parent = profile;
+
+	while (m_profiles[parent].uptimeMax == "")
+	{
+		ret.first = INHERITED;
+		parent = m_profiles[parent].parentProfile;
+	}
+
+	ret.second = m_profiles[parent].uptimeMax;
+
+	return ret;
 }

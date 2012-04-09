@@ -23,6 +23,18 @@
 #include "NovaGuiTypes.h"
 #include "Defines.h"
 
+
+// TODO: Move to nova namespace
+typedef std::string profileName;
+
+enum hdConfigReturn
+{
+	INHERITED,
+	NOT_INHERITED,
+	NO_SUCH_KEY
+};
+
+
 class HoneydConfiguration
 {
 public:
@@ -86,7 +98,23 @@ public:
     static int GetMaskBits(in_addr_t mask);
 
 
-private:
+
+    // TODO
+	std::vector<std::string> GetProfileChildren(std::string parent);
+
+	std::pair <hdConfigReturn, profileType> GetProfileType(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetEthernet(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetPersonality(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetDroprate(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetActionTCP(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetActionUDP(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetActionICMP(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetUptimeMin(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetUptimeMax(profileName profile);
+
+
+	// TODO: this should be private eventually
+public:
     std::string m_homePath;
 
     //Storing these trees allow for easy modification and writing of the XML files

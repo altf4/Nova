@@ -95,8 +95,8 @@ struct profile
 	std::string icmpAction;
 	std::string personality;
 	std::string ethernet;
-	std::string uptime;
-	std::string uptimeRange;
+	std::string uptimeMin;
+	std::string uptimeMax;
 	std::string dropRate;
 	profileType type;
 	bool inherited[INHERITED_MAX];

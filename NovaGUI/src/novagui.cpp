@@ -93,7 +93,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	// Create the dialog generator
 	m_prompter= new DialogPrompter();
-	m_honeydConfig = new HoneydConfiguration();
 
 	// Register our desired error message types
 	messageType t;
@@ -150,7 +149,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t.type = warningPrompt;
 	NODE_LOAD_FAIL = m_prompter->RegisterDialog(t);
 
-	m_honeydConfig->LoadAllTemplates();
 
 	//This register meta type function needs to be called for any object types passed through a signal
 	qRegisterMetaType<in_addr_t>("in_addr_t");

@@ -45,9 +45,7 @@ class NovaConfig : public QMainWindow
 public:
 	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
 
-	SubnetTable m_subnets;
-	NodeTable m_nodes;
-	ProfileTable m_profiles;
+	HoneydConfiguration *m_honeydConfig;
 
     QMutex * m_loading;
 
@@ -287,8 +285,6 @@ private:
 
     std::string m_homePath;
 
-    PortTable m_ports;
-    ScriptTable m_scripts;
 };
 
 class TreeItemComboBox : public QComboBox
