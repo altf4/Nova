@@ -79,21 +79,19 @@ UI_Message *MessageManager::GetMessage(int socketFD)
 	return retMessage;
 }
 
-void MessageManager::StartSocket(int socketFD)
+void MessageManager::StartSocket(Socket socket)
 {
 	Lock queueLock(&m_queuesLock);
 
-	if(m_queueLocks.count(socketFD) == 0)
+	if(m_queueLocks.count(socket.m_socketFD) == 0)
 	{
 		//If there is no lock object here yet, initialize it
-		pthread_mutex_init(&m_queueLocks[socketFD], NULL);
+		pthread_mutex_init(&m_queueLocks[socket.m_socketFD], NULL);
 	}
 
-	Lock lock(&m_queueLocks[socketFD]);
+	Lock lock(&m_queueLocks[socket.m_socketFD]);
 
-	//TODO XXX OMG fix this later. CALLBACKS!!!
-	pthread_t todo;
-	m_queues[socketFD] = new MessageQueue(socketFD, todo);
+	m_queues[socket.m_socketFD] = new MessageQueue(socket);
 
 }
 

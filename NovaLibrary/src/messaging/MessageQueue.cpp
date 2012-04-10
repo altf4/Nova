@@ -29,14 +29,18 @@
 namespace Nova
 {
 
-MessageQueue::MessageQueue(int socketFD, pthread_t callbackHandler)
+MessageQueue::MessageQueue(Socket &socket)
+:m_socket(socket)
 {
-	pthread_mutex_init(&m_queueMutex, NULL);
+	pthread_mutex_init(&m_forwardQueueMutex, NULL);
 	pthread_mutex_init(&m_popMutex, NULL);
-	pthread_cond_init(&m_wakeupCondition, NULL);
+	pthread_mutex_init(&m_callbackRegisterMutex, NULL);
+	pthread_mutex_init(&m_callbackCondMutex, NULL);
+	pthread_mutex_init(&m_callbackQueueMutex, NULL);
+	pthread_cond_init(&m_readWakeupCondition, NULL);
+	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
-	m_socket = socketFD;
-	m_callbackThread = callbackHandler;
+	m_callbackDoWakeup = false;
 
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
 }
@@ -44,33 +48,39 @@ MessageQueue::MessageQueue(int socketFD, pthread_t callbackHandler)
 MessageQueue::~MessageQueue()
 {
 	//Shutdown will cause the producer thread to make an ErrorMessage then quit
-	shutdown(m_socket, SHUT_RDWR);
+	shutdown(m_socket.m_socketFD, SHUT_RDWR);
+
 	//We then must wait for the popping thread to finish
 	//	Can't let it wake up into a destroyed object
 	//	So this lock will either wait for the pop message to finish, or just
 	//	go ahead if there is none
 	Lock lockPop(&m_popMutex);
 
-	pthread_mutex_destroy(&m_queueMutex);
+	pthread_mutex_destroy(&m_forwardQueueMutex);
 	pthread_mutex_destroy(&m_popMutex);
-	pthread_cond_destroy(&m_wakeupCondition);
+	pthread_mutex_destroy(&m_callbackRegisterMutex);
+	pthread_mutex_destroy(&m_callbackCondMutex);
+	pthread_mutex_destroy(&m_callbackQueueMutex);
+	pthread_cond_destroy(&m_readWakeupCondition);
+	pthread_cond_destroy(&m_callbackWakeupCondition);
 }
-
 
 //blocking call
 UI_Message *MessageQueue::PopMessage()
 {
+	//Only one thread in this function at a time
 	Lock lockPop(&m_popMutex);
-	Lock lockQueue(&m_queueMutex);
+	//Protection for the queue structure
+	Lock lockQueue(&m_forwardQueueMutex);
 
 	//While loop to protect against spurious wakeups
-	while(m_messages.empty())
+	while(m_forwardQueue.empty())
 	{
-		pthread_cond_wait(&m_wakeupCondition, &m_queueMutex);
+		pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
 	}
 
-	UI_Message* retMessage = m_messages.front();
-	m_messages.pop();
+	UI_Message* retMessage = m_forwardQueue.front();
+	m_forwardQueue.pop();
 	return retMessage;
 }
 
@@ -81,14 +91,38 @@ void *MessageQueue::StaticThreadHelper(void *ptr)
 
 void MessageQueue::PushMessage(UI_Message *message)
 {
-	Lock lock(&m_queueMutex);
+	//Protection for the queue structure
+	Lock lock(&m_forwardQueueMutex);
 
-	m_messages.push(message);
+	m_forwardQueue.push(message);
 
-	//If there are no sleeping threads, this simply does nothing
-	pthread_cond_signal(&m_wakeupCondition);
+	//XXX TODO: proper condition check for callback!!!!!
+	if(message)
+	{
+		Lock condLock(&m_callbackCondMutex);
+		m_callbackDoWakeup = true;
+		pthread_cond_signal(&m_readWakeupCondition);
+	}
+	else
+	{
+		//If there are no sleeping threads, this simply does nothing
+		pthread_cond_signal(&m_readWakeupCondition);
+	}
+}
 
-	m_messages.push(message);
+void MessageQueue::RegisterCallback()
+{
+	//Only one thread in this function at a time
+	Lock lock(&m_callbackRegisterMutex);
+	//Protection for the m_callbackDoWakeup bool
+	Lock condLock(&m_callbackCondMutex);
+
+	while(!m_callbackDoWakeup)
+	{
+		pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackCondMutex);
+	}
+
+	m_callbackDoWakeup = false;
 }
 
 void *MessageQueue::ProducerThread()
@@ -103,7 +137,7 @@ void *MessageQueue::ProducerThread()
 		// Read in the message length
 		while( totalBytesRead < sizeof(length))
 		{
-			bytesRead = read(m_socket, buff + totalBytesRead, sizeof(length) - totalBytesRead);
+			bytesRead = read(m_socket.m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
 
 			if( bytesRead < 0 )
 			{
@@ -141,7 +175,7 @@ void *MessageQueue::ProducerThread()
 		bytesRead = 0;
 		while(totalBytesRead < length)
 		{
-			bytesRead = read(m_socket, buffer + totalBytesRead, length - totalBytesRead);
+			bytesRead = read(m_socket.m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
 
 			if( bytesRead < 0 )
 			{

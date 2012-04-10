@@ -37,7 +37,7 @@ public:
 
 	Nova::UI_Message *GetMessage(int socketFD);
 
-	void StartSocket(int socketFD);
+	void StartSocket(Socket socket);
 
 	//Closes the socket at the given file descriptor
 	//	socketFD: The file descriptor of the socket to close

@@ -21,6 +21,7 @@
 #define MESSAGEQUEUE_H_
 
 #include "messages/UI_Message.h"
+#include "Socket.h"
 
 #include "pthread.h"
 #include <queue>
@@ -32,7 +33,7 @@ class MessageQueue
 {
 public:
 
-	MessageQueue(int socketFD, pthread_t callbackHandler);
+	MessageQueue(Socket &socket);
 
 	//Will block and wait until no threads are waiting on its queue
 	//	To prevent a thread from waking up in a destroyed object
@@ -40,6 +41,9 @@ public:
 
 	//blocking call
 	UI_Message *PopMessage();
+
+	//Blocks until a callback message has been received
+	void RegisterCallback();
 
 private:
 
@@ -50,19 +54,24 @@ private:
 
 	void *ProducerThread();
 
-	std::queue<UI_Message*> m_messages;
-	int m_socket;
+	std::queue<UI_Message*> m_forwardQueue;
+	std::queue<UI_Message*> m_callbackQueue;
 	bool isShutDown;
 
-	pthread_cond_t m_wakeupCondition;
-	pthread_t m_callbackThread;			//Thread sleeping for a callback
-	pthread_t m_producerThread;			//Thread looping read calls on the underlying socket
-	pthread_mutex_t m_queueMutex;
-	pthread_mutex_t m_popMutex;
+	Socket &m_socket;
+
+	pthread_cond_t m_readWakeupCondition;
+	pthread_cond_t m_callbackWakeupCondition;	//Condition for sleeping for a callback
+	bool m_callbackDoWakeup;					//Bool also necessary for waking up callback thread
+	pthread_t m_producerThread;					//Thread looping read calls on the underlying socket
+
+	pthread_mutex_t m_forwardQueueMutex;		//Protects access to the forward message queue
+	pthread_mutex_t m_callbackQueueMutex;		//Protects access to the callback message queue
+	pthread_mutex_t m_popMutex;					//Separate mutex for the pop function. Only one can be popping
+	pthread_mutex_t m_callbackRegisterMutex;	//Allows only one function to be waiting for callback
+	pthread_mutex_t m_callbackCondMutex;		//Protects access to m_callbackDoWakeup
 };
 
-
 }
-
 
 #endif /* MESSAGEQUEUE_H_ */
