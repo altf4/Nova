@@ -25,16 +25,34 @@ cert: fs.readFileSync('servercert.pem'),
 
 var app = express.createServer(express_options);
 
+
+app.configure(function () {
+	app.use(express.methodOverride());
+	app.use(express.bodyParser());
+	app.use(app.router);
+});
+
+
 // Do the following for logging
 //console.info("Logging to ./serverLog.log");
 //var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
 //app.use(express.logger({stream: logFile}));
 
+
 console.info("Serving static GET at /var/www");
 app.use(express.static('/var/www'));
 
+app.post('/', function(req, res) {
+	console.info("GOT A POST REQUEST FOR CONFIGURATION! YAY!" + "interface was " + req.body.interface);
+	
+});
+
+
+
 console.info("Listening on 8042");
 app.listen(8042);
+
+
 
 var everyone = require("now").initialize(app);
 
@@ -77,20 +95,19 @@ everyone.now.StopNovad = function(callback)
 
 everyone.now.sendAllSuspects = function(callback)
 {
-	console.log("Triggered tst.jst sendAllSuspects");
 	nova.getSuspectList(callback);
 }
 
 
 var distributeSuspect = function(suspect)
 {
-	console.log("Sending suspect to clients: " + suspect.GetInAddr());            
+	//console.log("Sending suspect to clients: " + suspect.GetInAddr());            
 	var s = new Object();
 	objCopy(suspect, s);
 	everyone.now.OnNewSuspect(s)
 };
 nova.registerOnNewSuspect(distributeSuspect);
-console.log("Registered NewSuspect callback function.");
+//console.log("Registered NewSuspect callback function.");
 
 
 process.on('SIGINT', function()
