@@ -201,7 +201,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_EXIT_REQUEST:
 		{
 			//TODO: Check for any reason why might not want to exit
-			ControlMessage exitReply(CONTROL_EXIT_REPLY);
+			ControlMessage exitReply(CONTROL_EXIT_REPLY, DIRECTION_TO_NOVAD);
 			exitReply.m_success = true;
 
 			UI_Message::WriteMessage(&exitReply, socketFD);
@@ -228,7 +228,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				successResult = false;
 			}
 
-			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY);
+			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY, DIRECTION_TO_NOVAD);
 			clearAllSuspectsReply.m_success = successResult;
 			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
 
@@ -248,7 +248,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			RefreshStateFile();
 
 			//TODO: Should check for errors here and return result
-			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY);
+			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
 			clearSuspectReply.m_success = true;
 			UI_Message::WriteMessage(&clearSuspectReply, socketFD);
 
@@ -274,7 +274,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				//TODO: Should check for errors here and return result
 			}
 
-			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY);
+			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY, DIRECTION_TO_NOVAD);
 			saveSuspectsReply.m_success = true;
 			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
 
@@ -286,7 +286,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			Reload(); //TODO: Should check for errors here and return result
 
-			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY);
+			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY, DIRECTION_TO_NOVAD);
 			reclassifyAllReply.m_success = true;
 			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
 
@@ -298,7 +298,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			bool successResult = ConnectToUI();
 
-			ControlMessage connectReply(CONTROL_CONNECT_REPLY);
+			ControlMessage connectReply(CONTROL_CONNECT_REPLY, DIRECTION_TO_NOVAD);
 			connectReply.m_success = successResult;
 			UI_Message::WriteMessage(&connectReply, socketFD);
 
@@ -315,7 +315,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
-			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK);
+			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK, DIRECTION_TO_NOVAD);
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
 
 			close(socketFD);
@@ -329,7 +329,7 @@ void Nova::HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_PING:
 		{
-			ControlMessage connectReply(CONTROL_PONG);
+			ControlMessage connectReply(CONTROL_PONG, DIRECTION_TO_NOVAD);
 			UI_Message::WriteMessage(&connectReply, socketFD);
 
 			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
@@ -353,7 +353,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 	{
 		case REQUEST_SUSPECTLIST:
 		{
-			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY);
+			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_listType = msg.m_listType;
 
 			switch (msg.m_listType)
@@ -405,7 +405,7 @@ void Nova::HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 		case REQUEST_SUSPECT:
 		{
-			RequestMessage reply(REQUEST_SUSPECT_REPLY);
+			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_suspect = new Suspect();
 			*reply.m_suspect = suspects.Peek(msg.m_suspectAddress);
 			UI_Message::WriteMessage(&reply, socketFD);
@@ -461,7 +461,7 @@ bool Nova::SendSuspectToUI(Suspect *suspect)
 {
 	Lock lock(&callbackSocket.m_mutex);
 
-	CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE);
+	CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE, DIRECTION_TO_UI);
 	suspectUpdate.m_suspect = suspect;
 	if(!UI_Message::WriteMessage(&suspectUpdate, callbackSocket.m_socketFD))
 	{
