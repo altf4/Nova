@@ -54,7 +54,7 @@ bool Nova::StopNovad()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	ControlMessage killRequest(CONTROL_EXIT_REQUEST);
+	ControlMessage killRequest(CONTROL_EXIT_REQUEST, DIRECTION_TO_NOVAD);
 	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
@@ -106,7 +106,7 @@ bool Nova::SaveAllSuspects(std::string file)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST);
+	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST, DIRECTION_TO_NOVAD);
 	strcpy(saveRequest.m_filePath, file.c_str());
 
 	if(!UI_Message::WriteMessage(&saveRequest, novadListenSocket.m_socketFD) )
@@ -157,7 +157,7 @@ bool Nova::ClearAllSuspects()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST);
+	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST, DIRECTION_TO_NOVAD);
 	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
@@ -206,7 +206,7 @@ bool Nova::ClearSuspect(in_addr_t suspectAddress)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST);
+	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST, DIRECTION_TO_NOVAD);
 	clearRequest.m_suspectAddress = suspectAddress;
 	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket.m_socketFD) )
 	{
@@ -256,7 +256,7 @@ bool Nova::ReclassifyAllSuspects()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST);
+	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST, DIRECTION_TO_NOVAD);
 	if(!UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message

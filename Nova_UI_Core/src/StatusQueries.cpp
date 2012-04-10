@@ -45,7 +45,7 @@ bool Nova::IsNovadUp(bool tryToConnect)
 
 	Lock lock(&novadListenSocket.m_mutex);
 
-	ControlMessage ping(CONTROL_PING);
+	ControlMessage ping(CONTROL_PING, DIRECTION_TO_NOVAD);
 	if(!UI_Message::WriteMessage(&ping, novadListenSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
@@ -92,7 +92,7 @@ vector<in_addr_t> *Nova::GetSuspectList(enum SuspectListType listType)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	RequestMessage request(REQUEST_SUSPECTLIST);
+	RequestMessage request(REQUEST_SUSPECTLIST, DIRECTION_TO_NOVAD);
 	request.m_listType = listType;
 
 	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
@@ -146,7 +146,7 @@ Suspect *Nova::GetSuspect(in_addr_t address)
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	RequestMessage request(REQUEST_SUSPECT);
+	RequestMessage request(REQUEST_SUSPECT, DIRECTION_TO_NOVAD);
 	request.m_suspectAddress = address;
 
 

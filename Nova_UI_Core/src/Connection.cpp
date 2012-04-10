@@ -123,7 +123,7 @@ bool Nova::ConnectToNovad()
 		return false;
 	}
 
-	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
+	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
 	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket.m_socketFD))
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
@@ -204,7 +204,7 @@ bool Nova::CloseNovadConnection()
 	bool success = true;
 	callbackInitialized = false;
 
-	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
+	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE, DIRECTION_TO_NOVAD);
 	if(!UI_Message::WriteMessage(&disconnectNotice, novadListenSocket.m_socketFD))
 	{
 		success = false;
