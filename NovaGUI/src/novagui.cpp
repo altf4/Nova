@@ -53,9 +53,8 @@ SuspectGUIHashTable SuspectTable;
  ************************************************/
 
 //Called when process receives a SIGINT, like if you press ctrl+c
-void sighandler(int param)
+void sighandler(int __attribute__((unused)) param)
 {
-	param = EXIT_SUCCESS;
 	if(!CloseNovadConnection())
 	{
 		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
