@@ -334,10 +334,13 @@ void NovaConfig::on_actionAddPort_triggered()
 			behaviorBox->addItem("open");
 			behaviorBox->addItem("block");
 			behaviorBox->insertSeparator(3);
-			for(ScriptTable::iterator it = m_honeydConfig->m_scripts.begin(); it != m_honeydConfig->m_scripts.end(); it++)
+
+			vector<string> scriptNames = m_honeydConfig->GetScriptNames();
+			for(vector<string>::iterator it = scriptNames.begin(); it != scriptNames.end(); it++)
 			{
-				behaviorBox->addItem((QString)it->first.c_str());
+				behaviorBox->addItem((QString)(*it).c_str());
 			}
+
 			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -2158,10 +2161,13 @@ void NovaConfig::LoadProfileSettings()
 			behaviorBox->addItem("open");
 			behaviorBox->addItem("block");
 			behaviorBox->insertSeparator(3);
-			for(ScriptTable::iterator it = m_honeydConfig->m_scripts.begin(); it != m_honeydConfig->m_scripts.end(); it++)
+
+			vector<string> scriptNames = m_honeydConfig->GetScriptNames();
+			for(vector<string>::iterator it = scriptNames.begin(); it != scriptNames.end(); it++)
 			{
-				behaviorBox->addItem((QString)it->first.c_str());
+				behaviorBox->addItem((QString)(*it).c_str());
 			}
+
 			behaviorBox->setFont(tempFont);
 			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 

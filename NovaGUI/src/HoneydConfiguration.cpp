@@ -1462,3 +1462,16 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName 
 
 	return ret;
 }
+
+
+std::vector<std::string> HoneydConfiguration::GetScriptNames()
+{
+	vector<string> ret;
+	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	{
+		ret.push_back(it->first);
+	}
+
+	return ret;
+}
+

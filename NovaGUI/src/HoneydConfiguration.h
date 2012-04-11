@@ -112,9 +112,12 @@ public:
 	std::pair <hdConfigReturn, std::string> GetUptimeMin(profileName profile);
 	std::pair <hdConfigReturn, std::string> GetUptimeMax(profileName profile);
 
+	// Returns list of all available scripts
+	std::vector<std::string> GetScriptNames();
 
-	// TODO: this should be private eventually
-public:
+
+
+private:
     std::string m_homePath;
 
     //Storing these trees allow for easy modification and writing of the XML files
@@ -126,11 +129,14 @@ public:
     boost::property_tree::ptree m_nodesTree;
     boost::property_tree::ptree m_subnetTree;
 
+    ScriptTable m_scripts;
+
+// TODO: this should be private eventually
+public:
     SubnetTable m_subnets;
     PortTable m_ports;
     ProfileTable m_profiles;
     NodeTable m_nodes;
-    ScriptTable m_scripts;
 };
 
 #endif
