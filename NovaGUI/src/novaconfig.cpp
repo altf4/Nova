@@ -112,10 +112,11 @@ void NovaConfig::PushData()
 		{
 			break;
 		}
-	}*/
-	path = Config::Inst()->GetPathHome();
+	}
+	//m_honeydConfig->SetHomePath(path);
+	*/
 
-	m_honeydConfig->SetHomePath(path);
+	path = Config::Inst()->GetPathConfigHoneydHS();
 
 	/* Copies the tables
 	m_honeydConfig->SetScripts(m_honeydConfig->m_scripts);
