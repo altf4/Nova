@@ -29,6 +29,8 @@ using namespace Nova;
 using boost::property_tree::ptree;
 using boost::property_tree::xml_parser::trim_whitespace;
 
+namespace Nova
+{
 
 HoneydConfiguration::HoneydConfiguration()
 {
@@ -1158,53 +1160,6 @@ string HoneydConfiguration::DoppProfileToString(profile* p)
 	return out.str();
 }
 
-SubnetTable HoneydConfiguration::GetSubnets() const
-{
-	return m_subnets;
-}
-PortTable HoneydConfiguration::GetPorts() const
-{
-	return m_ports;
-}
-NodeTable HoneydConfiguration::GetNodes() const
-{
-	return m_nodes;
-}
-ScriptTable HoneydConfiguration::GetScripts() const
-{
-	return m_scripts;
-}
-ProfileTable HoneydConfiguration::GetProfiles() const
-{
-	return m_profiles;
-}
-
-void HoneydConfiguration::SetSubnets(SubnetTable subnets)
-{
-	m_subnets.clear_no_resize();
-	m_subnets = subnets;
-}
-void HoneydConfiguration::SetPorts(PortTable ports)
-{
-	m_ports.clear_no_resize();
-	m_ports = ports;
-}
-void HoneydConfiguration::SetNodes(NodeTable nodes)
-{
-	m_nodes.clear_no_resize();
-	m_nodes = nodes;
-}
-void HoneydConfiguration::SetScripts(ScriptTable scripts)
-{
-	m_scripts.clear_no_resize();
-	m_scripts = scripts;
-}
-void HoneydConfiguration::SetProfiles(ProfileTable profiles)
-{
-	m_profiles.clear_no_resize();
-	m_profiles = profiles;
-}
-
 //Setter for the directory to read from and write to
 void HoneydConfiguration::SetHomePath(std::string homePath)
 {
@@ -1219,7 +1174,6 @@ std::string HoneydConfiguration::GetHomePath()
 
 
 
-// TODO TODO TODO
 std::vector<std::string> HoneydConfiguration::GetProfileChildren(std::string parent)
 {
 	vector<std::string> childProfiles;
@@ -1474,4 +1428,7 @@ std::vector<std::string> HoneydConfiguration::GetScriptNames()
 
 	return ret;
 }
+
+}
+
 

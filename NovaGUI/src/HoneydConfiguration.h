@@ -23,8 +23,9 @@
 #include "NovaGuiTypes.h"
 #include "Defines.h"
 
+namespace Nova
+{
 
-// TODO: Move to nova namespace
 typedef std::string profileName;
 
 enum hdConfigReturn
@@ -43,21 +44,7 @@ public:
     //XML Read Functions
     //calls main load functions
     void LoadAllTemplates();
-    //load all scripts
-    void LoadScriptsTemplate();
-    //load all ports
-    void LoadPortsTemplate();
-    //load all profiles
-    void LoadProfilesTemplate();
-    //load current honeyd configuration group
-    void LoadNodesTemplate();
 
-    //set profile configurations
-    void LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
-    //add ports or subsystems
-    void LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
-    //recursive descent down profile tree
-    void LoadProfileChildren(std::string parent);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
     std::string ProfileToString(profile* p);
@@ -66,28 +53,10 @@ public:
     // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
     std::string DoppProfileToString(profile* p);
 
-
-    //Load stored subnets in ptr
-    void LoadSubnets(boost::property_tree::ptree *ptr);
-    //Load stored honeyd nodes ptr
-    void LoadNodes(boost::property_tree::ptree *ptr);
-
     //Saves the current configuration information to XML files
     void SaveAllTemplates();
     //Writes the current configuration to honeyd configs
     void WriteHoneydConfiguration(std::string path);
-
-    SubnetTable GetSubnets() const;
-    PortTable GetPorts() const;
-    NodeTable GetNodes() const;
-    ScriptTable GetScripts() const;
-    ProfileTable GetProfiles() const;
-
-    void SetSubnets(SubnetTable subnets);
-    void SetPorts(PortTable ports);
-    void SetNodes(NodeTable nodes);
-    void SetScripts(ScriptTable scripts);
-    void SetProfiles(ProfileTable profile);
 
     //Setter for the directory to read from and write to
     void SetHomePath(std::string homePath);
@@ -116,6 +85,12 @@ public:
 	std::vector<std::string> GetScriptNames();
 
 
+// TODO: this should be private eventually
+public:
+	SubnetTable m_subnets;
+	PortTable m_ports;
+	ProfileTable m_profiles;
+	NodeTable m_nodes;
 
 private:
     std::string m_homePath;
@@ -131,12 +106,30 @@ private:
 
     ScriptTable m_scripts;
 
-// TODO: this should be private eventually
-public:
-    SubnetTable m_subnets;
-    PortTable m_ports;
-    ProfileTable m_profiles;
-    NodeTable m_nodes;
+    //load all scripts
+    void LoadScriptsTemplate();
+    //load all ports
+    void LoadPortsTemplate();
+    //load all profiles
+    void LoadProfilesTemplate();
+    //load current honeyd configuration group
+    void LoadNodesTemplate();
+
+    //set profile configurations
+    void LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
+    //add ports or subsystems
+    void LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
+    //recursive descent down profile tree
+    void LoadProfileChildren(std::string parent);
+
+    //Load stored subnets in ptr
+    void LoadSubnets(boost::property_tree::ptree *ptr);
+    //Load stored honeyd nodes ptr
+    void LoadNodes(boost::property_tree::ptree *ptr);
+
+
 };
+
+}
 
 #endif
