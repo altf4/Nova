@@ -2702,30 +2702,14 @@ void NovaConfig::on_actionProfileDelete_triggered()
 	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && m_currentProfile.compare("default")
 		&& (m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end()))
 	{
-		bool nodeExists = false;
-		//Find out if any nodes use this profile
-		for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin(); it != m_honeydConfig->m_nodes.end(); it++)
-		{
-			//if we find a node using this profile
-			if(!it->second.pfile.compare(m_currentProfile))
-			{
-				nodeExists = true;
-			}
-		}
-		if(nodeExists)
+		if( m_honeydConfig->IsProfileUsed(m_currentProfile))
 		{
 			LOG(ERROR, "ERROR: A Node is currently using this profile.","");
 			if(m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_DELETE_ITEM, "Profile "
 				+m_currentProfile+" cannot be deleted because some nodes are currently using it, would you like to "
 				"disable all nodes currently using it?",ui.actionNo_Action, ui.actionNo_Action, this) == CHOICE_DEFAULT)
 			{
-				for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin(); it != m_honeydConfig->m_nodes.end(); it++)
-				{
-					if(!it->second.pfile.compare(m_currentProfile))
-					{
-						m_honeydConfig->m_nodes[it->second.name].enabled = false;
-					}
-				}
+				m_honeydConfig->DisableProfileNodes(m_currentProfile);
 			}
 		}
 		//TODO appropriate display prompt here
@@ -2912,23 +2896,24 @@ void NovaConfig::LoadAllNodes()
 	struct node * n = NULL;
 
 	QTreeWidgetItem * item = NULL;
+	QTreeWidgetItem * hsItem = NULL;
 	ui.nodeTreeWidget->clear();
 	ui.hsNodeTreeWidget->clear();
 
 	for(SubnetTable::iterator it = m_honeydConfig->m_subnets.begin(); it != m_honeydConfig->m_subnets.end(); it++)
 	{
 		//create the subnet item for the Haystack menu tree
-		item = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
-		item->setText(0, (QString)it->second.address.c_str());
+		hsItem = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
+		hsItem->setText(0, (QString)it->second.address.c_str());
 		if(it->second.isRealDevice)
 		{
-			item->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
+			hsItem->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
 		}
 		else
 		{
-			item->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
+			hsItem->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
 		}
-		it->second.item = item;
+		it->second.item = hsItem;
 
 		//create the subnet item for the node edit tree
 		item = new QTreeWidgetItem(ui.nodeTreeWidget, 0);
@@ -2961,7 +2946,6 @@ void NovaConfig::LoadAllNodes()
 			item = new QTreeWidgetItem(it->second.item, 0);
 			item->setText(0, (QString)n->name.c_str());
 			item->setText(1, (QString)n->pfile.c_str());
-			n->item = item;
 
 			//Create the node item for the node edit tree
 			item = new QTreeWidgetItem(it->second.nodeItem, 0);
@@ -2982,7 +2966,6 @@ void NovaConfig::LoadAllNodes()
 			pfileBox->setCurrentIndex(pfileBox->findText(n->pfile.c_str()));
 
 			ui.nodeTreeWidget->setItemWidget(item, 1, pfileBox);
-			n->nodeItem = item;
 			if(!n->name.compare("Doppelganger"))
 			{
 				ui.dmCheckBox->setChecked(n->enabled);
@@ -2992,23 +2975,32 @@ void NovaConfig::LoadAllNodes()
 			if(!n->enabled)
 			{
 				whitebrush.setStyle(Qt::NoBrush);
-				n->nodeItem->setBackground(0,greybrush);
-				n->nodeItem->setForeground(0,whitebrush);
-				n->item->setBackground(0,greybrush);
-				n->item->setForeground(0,whitebrush);
+				hsItem->setBackground(0,greybrush);
+				hsItem->setForeground(0,whitebrush);
+				item->setBackground(0,greybrush);
+				item->setForeground(0,whitebrush);
 			}
 		}
 	}
 	ui.nodeTreeWidget->expandAll();
-	if(m_honeydConfig->m_nodes.size()+m_honeydConfig->m_subnets.size())
+
+	// Reselect the last selected node if need be
+	QList<QTreeWidgetItem*> items;
+
+	items = ui.nodeTreeWidget->findItems(QString::fromStdString(m_currentNode),Qt::MatchExactly | Qt::MatchRecursive, 0);
+	for (int i = 0; i < items.length(); i++)
 	{
-		if(m_honeydConfig->m_nodes.find(m_currentNode) != m_honeydConfig->m_nodes.end())
+		items.at(i)->setSelected(true);
+	}
+
+	if (!items.length())
+	{
+		if(m_honeydConfig->m_subnets.size())
 		{
-			ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_nodes[m_currentNode].nodeItem);
-		}
-		else if(m_honeydConfig->m_subnets.find(m_currentSubnet) != m_honeydConfig->m_subnets.end())
-		{
-			ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
+			if(m_honeydConfig->m_subnets.find(m_currentSubnet) != m_honeydConfig->m_subnets.end())
+			{
+				ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
+			}
 		}
 	}
 	m_loading->unlock();
@@ -3179,8 +3171,20 @@ void NovaConfig::DeleteNode(node *n)
 		return;
 	}
 
-	ui.nodeTreeWidget->removeItemWidget(n->nodeItem, 0);
-	ui.hsNodeTreeWidget->removeItemWidget(n->item, 0);
+	QList<QTreeWidgetItem*> items;
+
+	items = ui.nodeTreeWidget->findItems(QString::fromStdString(n->name), Qt::MatchExactly | Qt::MatchRecursive, 0);
+	for (int i = 0; i < items.length(); i++)
+	{
+		ui.nodeTreeWidget->removeItemWidget(items.at(i), 0);
+	}
+
+	items = ui.hsNodeTreeWidget->findItems(QString::fromStdString(n->name), Qt::MatchExactly | Qt::MatchRecursive, 0);
+	for (int i = 0; i < items.length(); i++)
+	{
+		ui.hsNodeTreeWidget->removeItemWidget(items.at(i), 0);
+	}
+
 	subnet * s = &m_honeydConfig->m_subnets[n->sub];
 
 	for(uint i = 0; i < s->nodes.size(); i++)
@@ -3367,7 +3371,7 @@ void NovaConfig::on_actionNodeEnable_triggered()
 	}
 	else
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_nodes[m_currentNode].nodeItem);
+		//ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_nodes[m_currentNode].nodeItem);
 	}
 	m_loading->unlock();
 }
@@ -3399,7 +3403,7 @@ void NovaConfig::on_actionNodeDisable_triggered()
 	}
 	else
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_nodes[m_currentNode].nodeItem);
+		//ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_nodes[m_currentNode].nodeItem);
 	}
 	m_loading->unlock();
 }

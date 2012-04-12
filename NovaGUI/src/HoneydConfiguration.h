@@ -92,6 +92,7 @@ public:
 
 	bool IsMACUsed(std::string mac);
 	bool IsIPUsed(std::string ip);
+	bool IsProfileUsed(std::string profile);
 
 	// Regenerates the MAC addresses for nodes of this profile
 	void RegenerateMACAddresses(std::string profileName);
@@ -105,6 +106,8 @@ public:
 
     void EnableNode(std::string node);
     void DisableNode(std::string node);
+
+    void DisableProfileNodes(std::string profile);
 
 
 // TODO: this should be private eventually

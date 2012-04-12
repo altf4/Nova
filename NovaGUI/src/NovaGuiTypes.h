@@ -117,8 +117,6 @@ typedef google::dense_hash_map<std::string, profile, std::tr1::hash<std::string>
 struct node
 {
 	std::string name;
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * nodeItem;
 	std::string sub;
 	std::string interface;
 	std::string pfile;

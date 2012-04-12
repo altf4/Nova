@@ -1380,6 +1380,21 @@ bool HoneydConfiguration::IsIPUsed(std::string ip)
 	return false;
 }
 
+bool HoneydConfiguration::IsProfileUsed(std::string profile)
+{
+	//Find out if any nodes use this profile
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		//if we find a node using this profile
+		if(!it->second.pfile.compare(profile))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void HoneydConfiguration::RegenerateMACAddresses(string profileName)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
@@ -1464,6 +1479,17 @@ void HoneydConfiguration::DisableNode(std::string node)
 	m_nodes[node].enabled = false;
 }
 
+void HoneydConfiguration::DisableProfileNodes(std::string profile)
+{
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(!it->second.pfile.compare(profile))
+		{
+			DisableNode(it->first);
+		}
+	}
+}
+
 bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std::string macAddress, std::string interface, std::string subnet)
 {
 	node newNode;
@@ -1475,8 +1501,6 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 		newNode.realIP = htonl(inet_addr(newNode.IP.c_str()));
 	}
 
-	newNode.item = NULL;
-	newNode.nodeItem = NULL;
 	newNode.pfile = profile;
 	newNode.enabled = true;
 	newNode.MAC = macAddress;
@@ -1507,7 +1531,6 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 	//TODO add error checking
 	return true;
 }
-
 
 }
 
