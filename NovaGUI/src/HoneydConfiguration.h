@@ -22,6 +22,20 @@
 #include "Config.h"
 #include "NovaGuiTypes.h"
 #include "Defines.h"
+#include "VendorMacDb.h"
+
+namespace Nova
+{
+
+typedef std::string profileName;
+
+enum hdConfigReturn
+{
+	INHERITED,
+	NOT_INHERITED,
+	NO_SUCH_KEY
+};
+
 
 class HoneydConfiguration
 {
@@ -31,6 +45,91 @@ public:
     //XML Read Functions
     //calls main load functions
     void LoadAllTemplates();
+
+
+    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
+    std::string ProfileToString(profile* p);
+
+    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
+    // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
+    std::string DoppProfileToString(profile* p);
+
+    //Saves the current configuration information to XML files
+    void SaveAllTemplates();
+    //Writes the current configuration to honeyd configs
+    void WriteHoneydConfiguration(std::string path);
+
+    //Setter for the directory to read from and write to
+    void SetHomePath(std::string homePath);
+    //Getter for the directory to read from and write to
+    std::string GetHomePath();
+
+    // Returns the number of bits used in the mask when given in in_addr_t form
+    static int GetMaskBits(in_addr_t mask);
+
+
+    // Some high level node creation methods
+
+    // Add a node with static IP and static MAC
+    bool AddNewNode(std::string profile, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
+
+
+    // TODO
+	std::vector<std::string> GetProfileChildren(std::string parent);
+	std::vector<std::string> GetProfileNames();
+
+	std::pair <hdConfigReturn, std::string> GetEthernet(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetPersonality(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetDroprate(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetActionTCP(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetActionUDP(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetActionICMP(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetUptimeMin(profileName profile);
+	std::pair <hdConfigReturn, std::string> GetUptimeMax(profileName profile);
+
+	// Returns list of all available scripts
+	std::vector<std::string> GetScriptNames();
+
+	bool IsMACUsed(std::string mac);
+	bool IsIPUsed(std::string ip);
+
+	// Regenerates the MAC addresses for nodes of this profile
+	void RegenerateMACAddresses(std::string profileName);
+	std::string GenerateUniqueMACAddress(std::string vendor);
+
+    //If a profile is edited, this function updates the changes for the rest of the GUI
+    void UpdateProfile(bool deleteProfile, profile *p);
+
+    //Deletes a single node, called from deleteNodes();
+    void DeleteNode(node *n);
+
+    void EnableNode(std::string node);
+    void DisableNode(std::string node);
+
+
+// TODO: this should be private eventually
+public:
+	SubnetTable m_subnets;
+	PortTable m_ports;
+	ProfileTable m_profiles;
+    NodeTable m_nodes;
+
+private:
+    std::string m_homePath;
+
+    VendorMacDb m_macAddresses;
+
+    //Storing these trees allow for easy modification and writing of the XML files
+    //Without having to reconstruct the tree from scratch.
+    boost::property_tree::ptree m_groupTree;
+    boost::property_tree::ptree m_portTree;
+    boost::property_tree::ptree m_profileTree;
+    boost::property_tree::ptree m_scriptTree;
+    boost::property_tree::ptree m_nodesTree;
+    boost::property_tree::ptree m_subnetTree;
+
+    ScriptTable m_scripts;
+
     //load all scripts
     void LoadScriptsTemplate();
     //load all ports
@@ -47,62 +146,14 @@ public:
     //recursive descent down profile tree
     void LoadProfileChildren(std::string parent);
 
-    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
-    std::string ProfileToString(profile* p);
-
-    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
-    // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
-    std::string DoppProfileToString(profile* p);
-
-
     //Load stored subnets in ptr
     void LoadSubnets(boost::property_tree::ptree *ptr);
     //Load stored honeyd nodes ptr
     void LoadNodes(boost::property_tree::ptree *ptr);
 
-    //Saves the current configuration information to XML files
-    void SaveAllTemplates();
-    //Writes the current configuration to honeyd configs
-    void WriteHoneydConfiguration(std::string path);
 
-    SubnetTable GetSubnets() const;
-    PortTable GetPorts() const;
-    NodeTable GetNodes() const;
-    ScriptTable GetScripts() const;
-    ProfileTable GetProfiles() const;
-
-    void SetSubnets(SubnetTable subnets);
-    void SetPorts(PortTable ports);
-    void SetNodes(NodeTable nodes);
-    void SetScripts(ScriptTable scripts);
-    void SetProfiles(ProfileTable profile);
-
-    //Setter for the directory to read from and write to
-    void SetHomePath(std::string homePath);
-    //Getter for the directory to read from and write to
-    std::string GetHomePath();
-
-    // Returns the number of bits used in the mask when given in in_addr_t form
-    static int GetMaskBits(in_addr_t mask);
-
-
-private:
-    std::string m_homePath;
-
-    //Storing these trees allow for easy modification and writing of the XML files
-    //Without having to reconstruct the tree from scratch.
-    boost::property_tree::ptree m_groupTree;
-    boost::property_tree::ptree m_portTree;
-    boost::property_tree::ptree m_profileTree;
-    boost::property_tree::ptree m_scriptTree;
-    boost::property_tree::ptree m_nodesTree;
-    boost::property_tree::ptree m_subnetTree;
-
-    SubnetTable m_subnets;
-    PortTable m_ports;
-    ProfileTable m_profiles;
-    NodeTable m_nodes;
-    ScriptTable m_scripts;
 };
+
+}
 
 #endif

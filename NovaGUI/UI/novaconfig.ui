@@ -115,7 +115,7 @@
          <string/>
         </property>
         <property name="currentIndex">
-         <number>4</number>
+         <number>6</number>
         </property>
         <widget class="QWidget" name="generalPage">
          <layout class="QVBoxLayout" name="genVertBox">
@@ -1758,56 +1758,6 @@ p, li { white-space: pre-wrap; }
                     <number>6</number>
                    </property>
                    <item row="0" column="0">
-                    <widget class="QLabel" name="IPModeLabel">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>IP Addressing</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="1">
-                    <widget class="QComboBox" name="dhcpComboBox">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <item>
-                      <property name="text">
-                       <string>Static IP</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>DHCP - Static MAC</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>DHCP - Random MAC</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
-                   <item row="1" column="0">
                     <widget class="QLabel" name="profileLabel">
                      <property name="minimumSize">
                       <size>
@@ -1829,7 +1779,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="1">
+                   <item row="0" column="1">
                     <widget class="QLineEdit" name="profileEdit">
                      <property name="minimumSize">
                       <size>
@@ -1845,7 +1795,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="0">
+                   <item row="1" column="0">
                     <widget class="QLabel" name="ethernetLabel">
                      <property name="minimumSize">
                       <size>
@@ -1867,7 +1817,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="1">
+                   <item row="1" column="1">
                     <layout class="QHBoxLayout" name="ethernetForm">
                      <property name="spacing">
                       <number>0</number>
@@ -1912,7 +1862,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="3" column="0">
+                   <item row="2" column="0">
                     <widget class="QLabel" name="uptimeLabel">
                      <property name="minimumSize">
                       <size>
@@ -1934,7 +1884,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="1">
+                   <item row="2" column="1">
                     <layout class="QHBoxLayout" name="uptimeForm" stretch="25,1,25,25">
                      <property name="spacing">
                       <number>0</number>
@@ -1999,7 +1949,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="4" column="0">
+                   <item row="3" column="0">
                     <widget class="QLabel" name="personalityLabel">
                      <property name="minimumSize">
                       <size>
@@ -2021,7 +1971,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="1">
+                   <item row="3" column="1">
                     <layout class="QHBoxLayout" name="personalityForm">
                      <property name="spacing">
                       <number>0</number>
@@ -2066,7 +2016,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="5" column="0">
+                   <item row="4" column="0">
                     <widget class="QLabel" name="dropRateLabel">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -2094,7 +2044,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="1">
+                   <item row="4" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_2">
                      <item>
                       <widget class="QLabel" name="dropRateSetting">
@@ -2145,7 +2095,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="6" column="0" colspan="2">
+                   <item row="5" column="0" colspan="2">
                     <widget class="QLabel" name="label">
                      <property name="font">
                       <font>
@@ -2160,7 +2110,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="7" column="0" colspan="2">
+                   <item row="6" column="0" colspan="2">
                     <layout class="QHBoxLayout" name="horizontalLayout_8">
                      <property name="spacing">
                       <number>0</number>
@@ -2224,31 +2174,7 @@ p, li { white-space: pre-wrap; }
                    <property name="verticalSpacing">
                     <number>7</number>
                    </property>
-                   <item row="0" column="0">
-                    <widget class="QCheckBox" name="ipModeCheckBox">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>27</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <italic>true</italic>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>Inherit</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="0" colspan="2">
+                   <item row="0" column="0" colspan="2">
                     <spacer name="inheritSpacer">
                      <property name="orientation">
                       <enum>Qt::Vertical</enum>
@@ -2264,7 +2190,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </spacer>
                    </item>
-                   <item row="2" column="0">
+                   <item row="1" column="0">
                     <widget class="QCheckBox" name="ethernetCheckBox">
                      <property name="minimumSize">
                       <size>
@@ -2288,7 +2214,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="0">
+                   <item row="2" column="0">
                     <widget class="QCheckBox" name="uptimeCheckBox">
                      <property name="minimumSize">
                       <size>
@@ -2312,7 +2238,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="0">
+                   <item row="3" column="0">
                     <widget class="QCheckBox" name="personalityCheckBox">
                      <property name="minimumSize">
                       <size>
@@ -2336,7 +2262,7 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="0">
+                   <item row="4" column="0">
                     <widget class="QCheckBox" name="dropRateCheckBox">
                      <property name="minimumSize">
                       <size>
@@ -2708,7 +2634,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>24</height>
+     <height>20</height>
     </rect>
    </property>
   </widget>

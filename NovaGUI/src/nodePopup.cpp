@@ -37,10 +37,26 @@ nodePopup::nodePopup(QWidget * parent, node * n)
 	ui.setupUi(this);
 	novaParent = (NovaConfig *)parent;
 	editNode = *n;
+
 	m_ethernetEdit = new HexMACSpinBox(this, editNode.MAC, macSuffix);
 	m_prefixEthEdit = new HexMACSpinBox(this, editNode.MAC, macPrefix);
 	ui.ethernetHBox->insertWidget(0, m_ethernetEdit);
 	ui.ethernetHBox->insertWidget(0, m_prefixEthEdit);
+
+
+	vector<string> profiles = novaParent->m_honeydConfig->GetProfileNames();
+	int index = 0;
+	for (vector<string>::iterator it = profiles .begin(); it != profiles.end(); it++)
+	{
+		ui.nodeProfileComboBox->addItem(QString::fromStdString(*it));
+
+		if ((*it) == editNode.pfile)
+		{
+			ui.nodeProfileComboBox->setCurrentIndex(index);
+		}
+		index++;
+	}
+
 	LoadNode();
 }
 
@@ -63,15 +79,58 @@ void nodePopup::SaveNode()
 	in_addr inTemp;
 	inTemp.s_addr = htonl(editNode.realIP);
 	editNode.IP = inet_ntoa(inTemp);
+	editNode.pfile = ui.nodeProfileComboBox->currentText().toStdString();
+
+	if (ui.isDHCP->isChecked())
+	{
+		editNode.IP = "DHCP";
+	}
+
+	if (ui.isRandomMAC->isChecked())
+	{
+		editNode.MAC = "RANDOM";
+	}
+}
+
+void nodePopup::on_isDHCP_stateChanged()
+{
+	if (ui.isDHCP->isChecked())
+	{
+		ui.ipSpinBox3->setDisabled(true);
+		ui.ipSpinBox2->setDisabled(true);
+		ui.ipSpinBox1->setDisabled(true);
+		ui.ipSpinBox0->setDisabled(true);
+	}
+	else
+	{
+		ui.ipSpinBox3->setDisabled(false);
+		ui.ipSpinBox2->setDisabled(false);
+		ui.ipSpinBox1->setDisabled(false);
+		ui.ipSpinBox0->setDisabled(false);
+	}
+}
+
+void nodePopup::on_isRandomMAC_stateChanged()
+{
+	if (ui.isRandomMAC->isChecked())
+	{
+		m_ethernetEdit->setDisabled(true);
+		m_prefixEthEdit->setDisabled(true);
+	}
+	else
+	{
+		m_ethernetEdit->setDisabled(false);
+		m_prefixEthEdit->setDisabled(false);
+	}
+
 }
 
 //loads the selected node's options
 void nodePopup::LoadNode()
 {
-	subnet s = novaParent->m_subnets[editNode.sub];
-	profile p = novaParent->m_profiles[editNode.pfile];
+	subnet s = novaParent->m_honeydConfig->m_subnets[editNode.sub];
+	profile p = novaParent->m_honeydConfig->m_profiles[editNode.pfile];
 
-	ui.ethernetVendorEdit->setText((QString)p.ethernet.c_str());
 	if(editNode.MAC.length() == 17)
 	{
 		QString prefixStr = QString(editNode.MAC.substr(0, 8).c_str()).toLower();
@@ -87,6 +146,10 @@ void nodePopup::LoadNode()
 		m_prefixEthEdit->setValue(0);
 		m_ethernetEdit->setValue(0);
 	}
+
+
+	ui.isRandomMAC->setChecked(editNode.MAC == "RANDOM");
+	ui.isDHCP->setChecked(editNode.IP == "DHCP");
 
 	int count = 0;
 	int numBits = 32 - s.maskBits;
@@ -149,37 +212,16 @@ void nodePopup::LoadNode()
 		}
 		count++;
 	}
+
 	ui.ipSpinBox3->setValue(editNode.realIP & 255);
 	ui.ipSpinBox2->setValue((editNode.realIP >> 8) & 255);
 	ui.ipSpinBox1->setValue((editNode.realIP >> 16) & 255);
 	ui.ipSpinBox0->setValue((editNode.realIP >> 24) & 255);
+
+	ui.isRandomMAC->setChecked(editNode.MAC == "RANDOM");
+	ui.isDHCP->setChecked(editNode.IP == "DHCP");
 }
 
-/************************************************
- * Data Transfer Functions
- ************************************************/
-
-//Copies the data from parent novaconfig and adjusts the pointers
-void nodePopup::PullData()
-{
-	editNode = novaParent->m_nodes[editNode.name];
-}
-
-//Copies the data to parent novaconfig and adjusts the pointers
-void nodePopup::PushData()
-{
-	novaParent->m_loading->lock();
-	novaParent->m_nodes[editNode.name] = editNode;
-	novaParent->SyncAllNodesWithProfiles();
-
-	//The node may have a new name after updateNodeTypes depending on changes made and profile type
-	if(novaParent->m_profiles[editNode.pfile].type == staticDHCP)
-		editNode.name = editNode.MAC;
-	if(novaParent->m_profiles[editNode.pfile].type == static_IP)
-		editNode.name = editNode.IP;
-	novaParent->m_loading->unlock();
-	novaParent->LoadAllNodes();
-}
 
 /************************************************
  * General GUI Signal Handling
@@ -193,30 +235,13 @@ void nodePopup::on_cancelButton_clicked()
 
 void nodePopup::on_okButton_clicked()
 {
-	NovaGUI * mainwindow  = (NovaGUI*)novaParent->parent();
-	SaveNode();
-	int ret = ValidateNodeSettings();
-	switch(ret)
-	{
-		case 0:
-			PushData();
-			this->close();
-			break;
-		case 1:
-			mainwindow->m_prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
-					"This Node requires a unique IP address");
-			break;
-		case 2:
-			mainwindow->m_prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
-					"DHCP Enabled nodes requires a unique MAC Address.");
-			break;
-	}
-	on_restoreButton_clicked();
+	on_applyButton_clicked();
+	novaParent->LoadAllNodes();
+	this->close();
 }
 
 void nodePopup::on_restoreButton_clicked()
 {
-	PullData();
 	LoadNode();
 }
 
@@ -228,7 +253,7 @@ void nodePopup::on_applyButton_clicked()
 	switch(ret)
 	{
 		case 0:
-			PushData();
+			novaParent->m_honeydConfig->AddNewNode(editNode.pfile, editNode.IP, editNode.MAC, editNode.interface, editNode.sub);
 			break;
 		case 1:
 			mainwindow->m_prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
@@ -243,46 +268,65 @@ void nodePopup::on_applyButton_clicked()
 
 }
 
+
+
 void nodePopup::on_generateButton_clicked()
 {
-	editNode.MAC = novaParent->GenerateUniqueMACAddress(ui.ethernetVendorEdit->text().toStdString());
-	LoadNode();
-	SaveNode();
+	if (ui.isRandomMAC->isChecked())
+	{
+		return;
+	}
+
+	editNode.MAC = novaParent->m_honeydConfig->GenerateUniqueMACAddress(novaParent->m_honeydConfig->m_profiles[editNode.pfile].ethernet);
+	QString prefixStr = QString(editNode.MAC.substr(0, 8).c_str()).toLower();
+	prefixStr = prefixStr.remove(':');
+	m_prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));
+
+	QString suffixStr = QString(editNode.MAC.substr(9, 8).c_str()).toLower();
+	suffixStr = suffixStr.remove(':');
+	m_ethernetEdit->setValue(suffixStr.toInt(NULL, 16));
 }
 
 int nodePopup::ValidateNodeSettings()
 {
 	novaParent->m_loading->lock();
-	bool ipConflict = false;
-	bool macConflict = false;
-	for(NodeTable::iterator it = novaParent->m_nodes.begin(); it != novaParent->m_nodes.end(); it++)
+
+	bool ipConflict;
+	bool macConflict;
+
+	if (editNode.IP == "DHCP")
 	{
-		if(it->second.name.compare(editNode.name))
+		ipConflict = false;
+	}
+	else
+	{
+		ipConflict = novaParent->m_honeydConfig->IsIPUsed(editNode.IP);
+
+		if(novaParent->m_honeydConfig->m_subnets[editNode.sub].base == editNode.realIP)
 		{
-			if(it->second.realIP == editNode.realIP)
-			{
-				ipConflict = true;
-				break;
-			}
-			if(!it->second.MAC.compare(editNode.MAC))
-			{
-				macConflict = true;
-				break;
-			}
+			ipConflict = true;
 		}
 	}
-	if(novaParent->m_subnets[editNode.sub].base == editNode.realIP)
+
+	if (editNode.MAC == "RANDOM")
 	{
-		ipConflict = true;
+		macConflict = false;
 	}
+	else
+	{
+		macConflict = novaParent->m_honeydConfig->IsMACUsed(editNode.MAC);
+	}
+
 
 	int ret = 0;
 	if(ipConflict)
 	{
+		// TODO: Get rid of magic return numbers
 		ret = 1;
 	}
 	else if(macConflict)
 	{
+		// TODO: Get rid of magic return numbers
 		ret = 2;
 	}
 	novaParent->m_loading->unlock();

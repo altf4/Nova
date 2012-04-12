@@ -68,3 +68,5 @@
 #define NOVAD_LISTEN_FILENAME "/Novad_Listen"
 // Filename of the IPC file Nova's UI will listen on
 #define UI_LISTEN_FILENAME "/UI_Listen"
+
+#define SANITY_CHECK 268435456 // 2 ^ 28
