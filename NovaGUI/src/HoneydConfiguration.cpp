@@ -1479,6 +1479,30 @@ void HoneydConfiguration::DisableNode(std::string node)
 	m_nodes[node].enabled = false;
 }
 
+bool HoneydConfiguration::DeleteNode(std::string node)
+{
+	// Make sure the node exists
+	if (m_nodes.find(node) == m_nodes.end())
+	{
+		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		return false;
+	}
+
+	subnet * s = &m_subnets[m_nodes[node].sub];
+
+	for(uint i = 0; i < s->nodes.size(); i++)
+	{
+		if(!s->nodes[i].compare(node))
+		{
+			s->nodes.erase(s->nodes.begin()+i);
+		}
+	}
+
+	m_nodes.erase(node);
+
+	return true;
+}
+
 void HoneydConfiguration::DisableProfileNodes(std::string profile)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)

@@ -102,7 +102,7 @@ public:
     void UpdateProfile(bool deleteProfile, profile *p);
 
     //Deletes a single node, called from deleteNodes();
-    void DeleteNode(node *n);
+    bool DeleteNode(std::string node);
 
     void EnableNode(std::string node);
     void DisableNode(std::string node);

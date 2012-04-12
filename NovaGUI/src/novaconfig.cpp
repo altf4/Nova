@@ -3072,6 +3072,8 @@ void NovaConfig::DeleteNodes()
 	//If there are no more items in the list make sure it is clear then return.
 	else
 	{
+		LOG(CRITICAL, "Should never get here. Attempting to delete a GUI item, but there are no GUI items left.", "");
+		/* Should never get here
 		//Although this is here as a safeguard incase the other two conditions fail
 		// it shouldn't ever be hit because the doppelganger and loopback should always exist
 		vector<subnet> physicalDevs;
@@ -3102,6 +3104,7 @@ void NovaConfig::DeleteNodes()
 		m_loading->unlock();
 		LoadAllNodes();
 		return;
+		*/
 	}
 
 	//If we are deleteing a subnet, remove each node first then remove the subnet.
@@ -3116,7 +3119,7 @@ void NovaConfig::DeleteNodes()
 			m_currentNode = s->nodes.front();
 			if(m_currentNode.compare(""))
 			{
-				DeleteNode(&m_honeydConfig->m_nodes[m_currentNode]);
+				DeleteNode(m_currentNode);
 			}
 		}
 		if(!m_honeydConfig->m_subnets[m_currentSubnet].isRealDevice)
@@ -3132,7 +3135,7 @@ void NovaConfig::DeleteNodes()
 	{
 		if(m_currentNode.compare("Doppelganger"))
 		{
-			DeleteNode(&m_honeydConfig->m_nodes[m_currentNode]);
+			DeleteNode(m_currentNode);
 		}
 	}
 
@@ -3163,38 +3166,29 @@ void NovaConfig::DeleteNodes()
 }
 
 // Removes the node from item widgets and data structures.
-void NovaConfig::DeleteNode(node *n)
+void NovaConfig::DeleteNode(std::string node)
 {
 	//Cannot delete doppelganger node
-	if(!n->name.compare("Doppelganger"))
+	if(node == "Doppelganger")
 	{
 		return;
 	}
 
 	QList<QTreeWidgetItem*> items;
 
-	items = ui.nodeTreeWidget->findItems(QString::fromStdString(n->name), Qt::MatchExactly | Qt::MatchRecursive, 0);
+	items = ui.nodeTreeWidget->findItems(QString::fromStdString(node), Qt::MatchExactly | Qt::MatchRecursive, 0);
 	for (int i = 0; i < items.length(); i++)
 	{
 		ui.nodeTreeWidget->removeItemWidget(items.at(i), 0);
 	}
 
-	items = ui.hsNodeTreeWidget->findItems(QString::fromStdString(n->name), Qt::MatchExactly | Qt::MatchRecursive, 0);
+	items = ui.hsNodeTreeWidget->findItems(QString::fromStdString(node), Qt::MatchExactly | Qt::MatchRecursive, 0);
 	for (int i = 0; i < items.length(); i++)
 	{
 		ui.hsNodeTreeWidget->removeItemWidget(items.at(i), 0);
 	}
 
-	subnet * s = &m_honeydConfig->m_subnets[n->sub];
-
-	for(uint i = 0; i < s->nodes.size(); i++)
-	{
-		if(!s->nodes[i].compare(n->name))
-		{
-			s->nodes.erase(s->nodes.begin()+i);
-		}
-	}
-	m_honeydConfig->m_nodes.erase(n->name);
+	m_honeydConfig->DeleteNode(node);
 }
 
 /******************************************
