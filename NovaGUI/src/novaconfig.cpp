@@ -3301,6 +3301,13 @@ void NovaConfig::on_actionNodeClone_triggered()
 		m_loading->lock();
 		node n = m_honeydConfig->m_nodes[m_currentNode];
 		m_loading->unlock();
+
+		// Can't clone the doppelganger, only allowed one right now
+		if (n.name == "Doppelganger")
+		{
+			return;
+		}
+
 		nodePopup * editNode =  new nodePopup(this, &n);
 		editNode->show();
 	}
@@ -3310,6 +3317,12 @@ void  NovaConfig::on_actionNodeEdit_triggered()
 {
 	if(!m_selectedSubnet)
 	{
+		// Can't change the doppel IP here, you change it in the doppel settings
+		if (m_currentNode == "Doppelganger")
+		{
+			return;
+		}
+
 		nodePopup * editNode =  new nodePopup(this, &m_honeydConfig->m_nodes[m_currentNode]);
 		editNode->show();
 	}

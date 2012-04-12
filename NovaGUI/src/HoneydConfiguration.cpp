@@ -515,16 +515,19 @@ void HoneydConfiguration::SaveAllTemplates()
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		pt = it->second.tree;
-		//Required xml entires
-		pt.put<std::string>("interface", it->second.interface);
-
-		pt.put<std::string>("IP", it->second.IP);
-		pt.put<bool>("enabled", it->second.enabled);
 
 		// No need to save names besides the doppel, we can derive them
-		if (it->second.name == "DOPPELGANGER")
+		if (it->second.name == "Doppelganger")
+		{
+			// Make sure the IP reflects whatever is being used right now
+			it->second.IP = Config::Inst()->GetDoppelIp();
 			pt.put<std::string>("name", it->second.name);
+		}
 
+		//Required xml entires
+		pt.put<std::string>("interface", it->second.interface);
+		pt.put<std::string>("IP", it->second.IP);
+		pt.put<bool>("enabled", it->second.enabled);
 		pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
 		m_nodesTree.add_child("node",pt);
