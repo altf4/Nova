@@ -518,14 +518,14 @@ void HoneydConfiguration::SaveAllTemplates()
 		//Required xml entires
 		pt.put<std::string>("interface", it->second.interface);
 
-		if (it->second.IP.size())
-			pt.put<std::string>("IP", it->second.IP);
-
+		pt.put<std::string>("IP", it->second.IP);
 		pt.put<bool>("enabled", it->second.enabled);
-		pt.put<std::string>("name", it->second.name);
 
-		if(it->second.MAC.size())
-			pt.put<std::string>("MAC", it->second.MAC);
+		// No need to save names besides the doppel, we can derive them
+		if (it->second.name == "DOPPELGANGER")
+			pt.put<std::string>("name", it->second.name);
+
+		pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
 		m_nodesTree.add_child("node",pt);
 	}
@@ -1490,7 +1490,7 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 	if (newNode.name == "DHCP - RANDOM")
 	{
 		//Finds a unique identifier
-		uint i = 0;
+		uint i = 1;
 		while((m_nodes.find(newNode.name) != m_nodes.end()) && (i < j))
 		{
 			i++;

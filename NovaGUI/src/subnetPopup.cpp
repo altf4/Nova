@@ -174,20 +174,22 @@ void subnetPopup::SaveSubnet()
 			}
 		}
 		inTemp.s_addr = htonl(tempNode.realIP);
-		tempNode.IP = inet_ntoa(inTemp);
+
+		if (tempNode.IP != "DHCP")
+		{
+			tempNode.IP = inet_ntoa(inTemp);
+		}
 
 		//If node has a static IP it's name needs to change with it's IP
 		//the only exception to this is the Doppelganger, it's name is always the same.
-		if(tempNode.name.compare("Doppelganger") && tempNode.IP.length())
+		if(tempNode.name.compare("Doppelganger") && tempNode.IP.length() && tempNode.IP != "DHCP")
 		{
 			nParent->m_honeydConfig->m_nodes.erase(tempNode.name);
-			tempNode.name = tempNode.IP;
-			nParent->m_honeydConfig->m_nodes[tempNode.name] = tempNode;
+			tempNode.name = tempNode.IP + " - " + tempNode.MAC;
 		}
-		else
-		{
-			nParent->m_honeydConfig->m_nodes[tempNode.name] = tempNode;
-		}
+
+		nParent->m_honeydConfig->m_nodes[tempNode.name] = tempNode;
+
 
 		addList.push_back(tempNode.name);
 	}
