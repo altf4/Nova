@@ -235,9 +235,6 @@ bool CloseNovadConnection()
 		}
 	}
 
-
-
-
 	if(UI_ListenSocket.m_socketFD != -1 && close(UI_ListenSocket.m_socketFD))
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");

@@ -178,8 +178,7 @@ void subnetPopup::SaveSubnet()
 
 		//If node has a static IP it's name needs to change with it's IP
 		//the only exception to this is the Doppelganger, it's name is always the same.
-		if((tempNode.name.compare("Doppelganger")) &&
-			(nParent->m_honeydConfig->m_profiles[tempNode.pfile].type == static_IP))
+		if(tempNode.name.compare("Doppelganger") && tempNode.IP.length())
 		{
 			nParent->m_honeydConfig->m_nodes.erase(tempNode.name);
 			tempNode.name = tempNode.IP;
@@ -247,7 +246,6 @@ void subnetPopup::PushData()
 	nParent->m_honeydConfig->m_subnets.erase(subName);
 	nParent->m_honeydConfig->m_subnets[m_editSubnet.name] = m_editSubnet;
 	nParent->m_loading->unlock();
-	nParent->UpdateLookupKeys();
 
 	nParent->LoadAllNodes();
 	subName = m_editSubnet.name;

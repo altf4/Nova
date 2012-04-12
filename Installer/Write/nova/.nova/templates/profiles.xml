@@ -9,7 +9,6 @@
 			<ethernet>Dell</ethernet>
 			<dropRate>0</dropRate>
 		</set>
-		<type>1</type>
 		<add>
 			<ports/>
 		</add>
@@ -23,7 +22,6 @@
 					<uptimeMin>1546550</uptimeMin>
 					<uptimeMax>2006550</uptimeMax>
 				</set>
-				<type>1</type>
 				<add>
 					<ports>
 						<port>20_TCP_open</port>
@@ -87,7 +85,6 @@
 					<uptimeMin>1327650</uptimeMin>
 					<uptimeMax>1327650</uptimeMax>
 				</set>
-				<type>0</type>
 				<add>
 					<ports>
 						<port>23_TCP_Telnet Router</port>

@@ -22,6 +22,7 @@
 #include "Config.h"
 #include "NovaGuiTypes.h"
 #include "Defines.h"
+#include "VendorMacDb.h"
 
 namespace Nova
 {
@@ -67,11 +68,16 @@ public:
     static int GetMaskBits(in_addr_t mask);
 
 
+    // Some high level node creation methods
+
+    // Add a node with static IP and static MAC
+    bool AddNewNode(std::string profile, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
+
 
     // TODO
 	std::vector<std::string> GetProfileChildren(std::string parent);
+	std::vector<std::string> GetProfileNames();
 
-	std::pair <hdConfigReturn, profileType> GetProfileType(profileName profile);
 	std::pair <hdConfigReturn, std::string> GetEthernet(profileName profile);
 	std::pair <hdConfigReturn, std::string> GetPersonality(profileName profile);
 	std::pair <hdConfigReturn, std::string> GetDroprate(profileName profile);
@@ -84,16 +90,34 @@ public:
 	// Returns list of all available scripts
 	std::vector<std::string> GetScriptNames();
 
+	bool IsMACUsed(std::string mac);
+	bool IsIPUsed(std::string ip);
+
+	// Regenerates the MAC addresses for nodes of this profile
+	void RegenerateMACAddresses(std::string profileName);
+	std::string GenerateUniqueMACAddress(std::string vendor);
+
+    //If a profile is edited, this function updates the changes for the rest of the GUI
+    void UpdateProfile(bool deleteProfile, profile *p);
+
+    //Deletes a single node, called from deleteNodes();
+    void DeleteNode(node *n);
+
+    void EnableNode(std::string node);
+    void DisableNode(std::string node);
+
 
 // TODO: this should be private eventually
 public:
 	SubnetTable m_subnets;
 	PortTable m_ports;
 	ProfileTable m_profiles;
-	NodeTable m_nodes;
+    NodeTable m_nodes;
 
 private:
     std::string m_homePath;
+
+    VendorMacDb m_macAddresses;
 
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.
