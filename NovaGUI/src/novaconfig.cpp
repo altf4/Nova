@@ -1034,8 +1034,8 @@ void NovaConfig::LoadNmapPersonalitiesFromFile()
 				//Remove 'Fingerprint ' prefix.
 				line = line.substr(prefix.size()+1,line.size());
 				//If there are multiple fingerprints on this line, locate the end of the first.
-				uint i = line.find(" or", 0);
-				uint j = line.find(";", 0);
+				size_t i = line.find(" or", 0);
+				size_t j = line.find(";", 0);
 
 				//trim the line down to the first fingerprint
 				if((i != string::npos) && (j != string::npos))
