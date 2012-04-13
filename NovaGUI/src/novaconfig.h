@@ -127,6 +127,8 @@ public:
     //Populates the tree widget with the current node configuration
     void LoadAllNodes();
 
+    // Checks the value in the spin boxes to see if it's a used IP or not
+    bool IsDoppelIPValid();
 
     //Updates children when inherited ports are changed
     void UpdatePorts();

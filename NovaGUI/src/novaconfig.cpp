@@ -3149,7 +3149,7 @@ void NovaConfig::DeleteNodes()
 	else if(!nextIsSubnet)
 	{
 		m_currentNode = name;
-		m_currentSubnet = m_honeydConfig->m_nodes[m_currentNode].sub;
+		m_currentSubnet = m_honeydConfig->GetNodeSubnet(m_currentNode);
 		m_selectedSubnet = false;
 		m_loading->unlock();
 		LoadAllNodes();
@@ -3207,7 +3207,7 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 			if(ui.nodeTreeWidget->indexOfTopLevelItem(item) == -1)
 			{
 				m_currentNode = item->text(0).toStdString();
-				m_currentSubnet = m_honeydConfig->m_nodes[m_currentNode].sub;
+				m_currentSubnet = m_honeydConfig->GetNodeSubnet(m_currentNode);
 				m_selectedSubnet = false;
 			}
 			else //If it's a subnet
@@ -3288,10 +3288,7 @@ void NovaConfig::on_actionNodeAdd_triggered()
 
 void NovaConfig::on_actionNodeDelete_triggered()
 {
-	if(m_honeydConfig->m_subnets.size() || m_honeydConfig->m_nodes.size())
-	{
-		DeleteNodes();
-	}
+	DeleteNodes();
 }
 
 void NovaConfig::on_actionNodeClone_triggered()
@@ -3356,7 +3353,7 @@ void NovaConfig::on_actionNodeEnable_triggered()
 		subnet s = m_honeydConfig->m_subnets[m_currentSubnet];
 		for(uint i = 0; i < s.nodes.size(); i++)
 		{
-			m_honeydConfig->m_nodes[s.nodes[i]].enabled = true;
+			m_honeydConfig->EnableNode(s.nodes[i]);
 
 		}
 		s.enabled = true;
@@ -3364,8 +3361,7 @@ void NovaConfig::on_actionNodeEnable_triggered()
 	}
 	else
 	{
-		m_honeydConfig->m_nodes[m_currentNode].enabled = true;
-		m_honeydConfig->m_subnets[m_honeydConfig->m_nodes[m_currentNode].sub].enabled = true;
+		m_honeydConfig->EnableNode(m_currentNode);
 	}
 
 	//Draw the nodes and restore selection
@@ -3390,14 +3386,15 @@ void NovaConfig::on_actionNodeDisable_triggered()
 		subnet s = m_honeydConfig->m_subnets[m_currentSubnet];
 		for(uint i = 0; i < s.nodes.size(); i++)
 		{
-			m_honeydConfig->m_nodes[s.nodes[i]].enabled = false;
+
+			m_honeydConfig->DisableNode(s.nodes[i]);
 		}
 		s.enabled = false;
 		m_honeydConfig->m_subnets[m_currentSubnet] = s;
 	}
 	else
 	{
-		m_honeydConfig->m_nodes[m_currentNode].enabled = false;
+		m_honeydConfig->DisableNode(m_currentNode);
 	}
 
 	//Draw the nodes and restore selection
@@ -3470,49 +3467,51 @@ void NovaConfig::on_dropRateSlider_valueChanged()
 }
 
 
+bool NovaConfig::IsDoppelIPValid()
+{
+	stringstream ss;
+	ss 		<< ui.dmIPSpinBox_0->value() << "."
+			<< ui.dmIPSpinBox_1->value() << "."
+			<< ui.dmIPSpinBox_2->value() << "."
+			<< ui.dmIPSpinBox_3->value();
+
+	if(m_honeydConfig->IsIPUsed(ss.str()) && (ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		return false;
+	}
+	return true;
+}
 //Doppelganger IP Address Spin boxes
-void NovaConfig::on_dmIPSpinBox_0_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_0_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << value << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
-		<< "." << ui.dmIPSpinBox_3->value();
-	if((m_honeydConfig->m_nodes.find(ss.str()) != m_honeydConfig->m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_1_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_1_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << ui.dmIPSpinBox_0->value() << "." << value << "." << ui.dmIPSpinBox_2->value()
-		<< "." << ui.dmIPSpinBox_3->value();
-	if((m_honeydConfig->m_nodes.find(ss.str()) != m_honeydConfig->m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_2_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_2_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << value
-		<< "." << ui.dmIPSpinBox_3->value();
-	if((m_honeydConfig->m_nodes.find(ss.str()) != m_honeydConfig->m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_3_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_3_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
-		<< "." << value;
-	if((m_honeydConfig->m_nodes.find(ss.str()) != m_honeydConfig->m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging

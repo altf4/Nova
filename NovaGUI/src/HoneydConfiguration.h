@@ -103,10 +103,9 @@ public:
 
     //Deletes a single node, called from deleteNodes();
     bool DeleteNode(std::string node);
-
-    void EnableNode(std::string node);
-    void DisableNode(std::string node);
-
+    std::string GetNodeSubnet(std::string node);
+    bool EnableNode(std::string node);
+    bool DisableNode(std::string node);
     void DisableProfileNodes(std::string profile);
 
 

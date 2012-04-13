@@ -1186,33 +1186,6 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetPersonality(profi
 	return ret;
 }
 
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetDroprate(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].dropRate == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].dropRate;
-
-	return ret;
-
-}
-
 std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionTCP(profileName profile)
 {
 	pair<hdConfigReturn, string> ret;
@@ -1470,16 +1443,35 @@ void HoneydConfiguration::UpdateProfile(bool deleteProfile, profile * p)
 	}
 }
 
-void HoneydConfiguration::EnableNode(std::string node)
+bool HoneydConfiguration::EnableNode(std::string node)
 {
-	// TODO: Make sure the node exists
+	// Make sure the node exists
+	if (m_nodes.find(node) == m_nodes.end())
+	{
+		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		return false;
+	}
+
 	m_nodes[node].enabled = true;
+
+	// Enable the subnet of this node
+	m_subnets[m_nodes[node].sub].enabled = true;
+
+	return true;
 }
 
-void HoneydConfiguration::DisableNode(std::string node)
+bool HoneydConfiguration::DisableNode(std::string node)
 {
-	// TODO: Make sure the node exists
+	// Make sure the node exists
+	if (m_nodes.find(node) == m_nodes.end())
+	{
+		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		return false;
+	}
+
 	m_nodes[node].enabled = false;
+
+	return true;
 }
 
 bool HoneydConfiguration::DeleteNode(std::string node)
@@ -1504,6 +1496,11 @@ bool HoneydConfiguration::DeleteNode(std::string node)
 	m_nodes.erase(node);
 
 	return true;
+}
+
+std::string HoneydConfiguration::GetNodeSubnet(std::string node)
+{
+	return m_nodes[node].sub;
 }
 
 void HoneydConfiguration::DisableProfileNodes(std::string profile)
