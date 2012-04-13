@@ -43,6 +43,11 @@ UI_Message::~UI_Message()
 
 UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 {
+	if (connectFD < 0)
+	{
+		return new ErrorMessage(ERROR_SOCKET_CLOSED);
+	}
+
 	uint32_t length = 0;
 	char buff[sizeof(length)];
 	uint totalBytesRead = 0;

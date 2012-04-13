@@ -60,6 +60,7 @@ bool InitCallbackSocket()
 	{
 		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket.m_socketFD);
+		UI_parentSocket.m_socketFD = -1;
 		return false;
 	}
 	socklen_t len = sizeof(UI_Address);
@@ -68,6 +69,7 @@ bool InitCallbackSocket()
 	{
 		LOG(ERROR, " bind: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket.m_socketFD);
+		UI_parentSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -75,6 +77,7 @@ bool InitCallbackSocket()
 	{
 		LOG(ERROR, " listen: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket.m_socketFD);
+		UI_parentSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -122,6 +125,7 @@ bool ConnectToNovad()
 	{
 		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -130,6 +134,7 @@ bool ConnectToNovad()
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -140,6 +145,7 @@ bool ConnectToNovad()
 	{
 		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
 		close(UI_ListenSocket.m_socketFD);
+		UI_ListenSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -155,6 +161,7 @@ bool ConnectToNovad()
 	{
 		delete reply;
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
@@ -162,6 +169,7 @@ bool ConnectToNovad()
 	{
 		delete connectionReply;
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 	bool replySuccess = connectionReply->m_success;
@@ -173,15 +181,6 @@ bool ConnectToNovad()
 
 bool TryWaitConnectToNovad(int timeout_ms)
 {
-	if(!callbackInitialized)
-	{
-		if(!InitCallbackSocket())
-		{
-			//No logging needed, InitCallbackSocket logs if it fails
-			return false;
-		}
-	}
-
 	if(ConnectToNovad())
 	{
 		return true;
@@ -239,6 +238,7 @@ bool CloseNovadConnection()
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(UI_ListenSocket.m_socketFD);
+		UI_ListenSocket.m_socketFD = -1;
 		success = false;
 	}
 
@@ -246,6 +246,7 @@ bool CloseNovadConnection()
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		success = false;
 	}
 
