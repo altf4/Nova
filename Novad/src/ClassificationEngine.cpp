@@ -93,7 +93,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 	//Allocate the ANNpoint;
 	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
-	FeatureSet fs = suspect->GetFeatureSet();
+	FeatureSet fs = suspect->GetFeatureSet(MAIN_FEATURES);
 	uint ai = 0;
 
 	//Iterate over the features, asserting the range is [min,max] and normalizing over that range
@@ -111,7 +111,8 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			}
 			if(m_maxFeatureValues[ai] != 0)
 			{
-				aNN[ai] = Normalize(m_normalization[i], suspect->GetFeatureSet().m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
+				aNN[ai] = Normalize(m_normalization[i], suspect->GetFeatureSet(MAIN_FEATURES).m_features[i],
+					m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 			}
 			else
 			{
@@ -121,7 +122,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			ai++;
 		}
 	}
-	suspect->SetFeatureSet(&fs);
+	suspect->SetFeatureSet(&fs, MAIN_FEATURES);
 
 	if(aNN == NULL)
 	{

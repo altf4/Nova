@@ -86,8 +86,6 @@ namespace Nova
 {
 bool ConnectToNovad()
 {
-	Lock lock(&novadListenSocket.m_mutex);
-
 	if(!callbackInitialized)
 	{
 		if(!InitCallbackSocket())

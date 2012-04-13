@@ -320,9 +320,15 @@ void LoadStateFile()
 	uint lengthLeft = in.tellg();
 	in.seekg (0, ios::beg);
 	uint timestamp = lastLoadTime - Config::Inst()->GetDataTTL();
+	uint numBytes = 0;
 	while (in.is_open() && !in.eof() && lengthLeft)
 	{
-		lengthLeft -= suspects.ReadContents(&in, timestamp);
+		if((numBytes = suspects.ReadContents(&in, timestamp)) == 0)
+		{
+			//No need to log, ReadContents already does so
+			break;
+		}
+		lengthLeft -= numBytes;
 	}
 	in.close();
 }
@@ -443,18 +449,31 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 	string commandLine;
 	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
 
-	uint32_t dataLen = suspect->GetSerializeLength(true);
+	Suspect suspectCopy = suspects.CheckOut(suspect->GetIpAddress());
+	if(suspects.IsEmptySuspect(&suspectCopy))
+	{
+		LOG(WARNING, "Attempted to broadcast Silent Alarm for an Invalid suspect","");
+		return;
+	}
+
+	uint32_t dataLen = suspectCopy.GetSerializeLength(UNSENT_FEATURE_DATA);
 	u_char serializedBuffer[dataLen];
 
-	if(suspect->GetUnsentFeatureSet().m_packetCount)
+	if(suspectCopy.GetFeatureSet(UNSENT_FEATURES).m_packetCount)
 	{
 		do
 		{
-			dataLen = suspect->Serialize(serializedBuffer, true);
-			// Move the unsent data to the sent side
-			suspect->UpdateFeatureData(INCLUDE);
-			// Clear the unsent data
-			suspect->ClearUnsentData();
+			if(dataLen != suspectCopy.Serialize(serializedBuffer, UNSENT_FEATURE_DATA))
+			{
+				stringstream ss;
+				ss << "Serialization of Suspect with key: " << suspectCopy.GetIpAddress();
+				ss << " returned a size != " << dataLen;
+				LOG(ERROR, "Unable to Serialize Suspect", ss.str());
+				return;
+			}
+			suspectCopy.UpdateFeatureData(INCLUDE);
+			suspectCopy.ClearFeatureData(UNSENT_FEATURES);
+			suspects.CheckIn(&suspectCopy);
 
 			//Update other Nova Instances with latest suspect Data
 			for(uint i = 0; i < Config::Inst()->GetNeighbors().size(); i++)
@@ -951,7 +970,7 @@ void UpdateAndStore(in_addr_t key)
 	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
 	for (int j = 0; j < DIM; j++)
 	{
-		trainingFileStream << suspectCopy.GetFeatureSet().m_features[j] << " ";
+		trainingFileStream << suspectCopy.GetFeatureSet(MAIN_FEATURES).m_features[j] << " ";
 	}
 	trainingFileStream << "\n";
 	if(SendSuspectToUI(&suspectCopy))

@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Maintains and calculates distinct features for individual Suspects
@@ -23,8 +23,8 @@
 #include <sys/un.h>
 
 using namespace std;
-namespace Nova{
 
+namespace Nova{
 
 FeatureSet::FeatureSet()
 {
@@ -43,9 +43,7 @@ FeatureSet::FeatureSet()
 
 FeatureSet::~FeatureSet()
 {
-
 }
-
 
 void FeatureSet::ClearFeatureSet()
 {
@@ -66,14 +64,15 @@ void FeatureSet::ClearFeatureSet()
 
 	//Features
 	for(int i = 0; i < DIM; i++)
+	{
 		m_features[i] = 0;
+	}
 }
 
 
 void FeatureSet::CalculateAll()
 {
 	CalculateTimeInterval();
-
 	if (Config::Inst()->IsFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
 			Calculate(IP_TRAFFIC_DISTRIBUTION);
@@ -93,7 +92,9 @@ void FeatureSet::CalculateAll()
 	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_DEVIATION))
 	{
 		if (!Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
+		{
 			Calculate(PACKET_SIZE_MEAN);
+		}
 		Calculate(PACKET_SIZE_DEVIATION);
 	}
 	if (Config::Inst()->IsFeatureEnabled(DISTINCT_IPS))
@@ -110,9 +111,11 @@ void FeatureSet::CalculateAll()
 	}
 	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
 	{
-		if (!Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
-				Calculate(PACKET_INTERVAL_MEAN);
-			Calculate(PACKET_INTERVAL_DEVIATION);
+		if(!Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
+		{
+			Calculate(PACKET_INTERVAL_MEAN);
+		}
+		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
 }
 
@@ -121,150 +124,119 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 {
 	switch (featureDimension)
 	{
-
-	///The traffic distribution across the haystacks relative to host traffic
-	case IP_TRAFFIC_DISTRIBUTION:
-	{
-		m_features[IP_TRAFFIC_DISTRIBUTION] = 0;
-
-		//Max packet count to an IP, used for normalizing
-		uint32_t IPMax = 0;
-		for (IP_Table::iterator it = m_IPTable.begin() ; it != m_IPTable.end(); it++)
+		///The traffic distribution across the haystacks relative to host traffic
+		case IP_TRAFFIC_DISTRIBUTION:
 		{
-			if(it->second > IPMax)
-				IPMax = it->second;
-		}
-		for (IP_Table::iterator it = m_IPTable.begin() ; it != m_IPTable.end(); it++)
-		{
-			m_features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)IPMax);
-		}
-
-		m_features[IP_TRAFFIC_DISTRIBUTION] = m_features[IP_TRAFFIC_DISTRIBUTION] / (double)m_IPTable.size();
-		break;
-	}
-
-
-	///The traffic distribution across ports contacted
-	case PORT_TRAFFIC_DISTRIBUTION:
-	{
-		m_features[PORT_TRAFFIC_DISTRIBUTION] = 0;
-		double portMax = 0;
-		for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
-		{
-			if(it->second > portMax)
+			//Max packet count to an IP, used for normalizing
+			uint32_t IPMax = 0;
+			m_features[IP_TRAFFIC_DISTRIBUTION] = 0;
+			for (IP_Table::iterator it = m_IPTable.begin() ; it != m_IPTable.end(); it++)
 			{
-				portMax = it->second;
+				if(it->second > IPMax)
+				{
+					IPMax = it->second;
+				}
 			}
+			for (IP_Table::iterator it = m_IPTable.begin() ; it != m_IPTable.end(); it++)
+			{
+				m_features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)IPMax);
+			}
+			m_features[IP_TRAFFIC_DISTRIBUTION] = m_features[IP_TRAFFIC_DISTRIBUTION] / (double)m_IPTable.size();
+			break;
 		}
-		for (Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+		///The traffic distribution across ports contacted
+		case PORT_TRAFFIC_DISTRIBUTION:
 		{
-			m_features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / portMax);
+			m_features[PORT_TRAFFIC_DISTRIBUTION] = 0;
+			double portMax = 0;
+			for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+			{
+				if(it->second > portMax)
+				{
+					portMax = it->second;
+				}
+			}
+			for (Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+			{
+				m_features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / portMax);
+			}
+
+			m_features[PORT_TRAFFIC_DISTRIBUTION] = m_features[PORT_TRAFFIC_DISTRIBUTION] / (double)m_portTable.size();
+			break;
 		}
-
-		m_features[PORT_TRAFFIC_DISTRIBUTION] = m_features[PORT_TRAFFIC_DISTRIBUTION] / (double)m_portTable.size();
-		break;
-	}
-
-	///Number of ScanEvents that the suspect is responsible for per second
-	case HAYSTACK_EVENT_FREQUENCY:
-	{
-		// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
-		if(m_totalInterval)
+		///Number of ScanEvents that the suspect is responsible for per second
+		case HAYSTACK_EVENT_FREQUENCY:
 		{
-			m_features[HAYSTACK_EVENT_FREQUENCY] = ((double)(m_haystackEvents)) / (double)(m_totalInterval);
+			// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
+			if(m_totalInterval)
+			{
+				m_features[HAYSTACK_EVENT_FREQUENCY] = ((double)(m_haystackEvents)) / (double)(m_totalInterval);
+			}
+			else
+			{
+				//If interval is 0, no time based information, use a default of 1 for the interval
+				m_features[HAYSTACK_EVENT_FREQUENCY] = (double)(m_haystackEvents);
+			}
+			break;
 		}
-		else
+		///Measures the distribution of packet sizes
+		case PACKET_SIZE_MEAN:
 		{
-			//If interval is 0, no time based information, use a default of 1 for the interval
-			m_features[HAYSTACK_EVENT_FREQUENCY] = (double)(m_haystackEvents);
+			m_features[PACKET_SIZE_MEAN] = (double)m_bytesTotal / (double)m_packetCount;
+			break;
 		}
-		break;
-	}
-
-
-	///Measures the distribution of packet sizes
-	case PACKET_SIZE_MEAN:
-	{
-		m_features[PACKET_SIZE_MEAN] = (double)m_bytesTotal / (double)m_packetCount;
-		break;
-	}
-
-
-	///Measures the distribution of packet sizes
-	case PACKET_SIZE_DEVIATION:
-	{
-		double count = m_packetCount;
-		double mean = 0;
-		double variance = 0;
-		//Calculate mean
-		mean = m_features[PACKET_SIZE_MEAN];
-
-		//Calculate variance
-		for(Packet_Table::iterator it = m_packTable.begin() ; it != m_packTable.end(); it++)
+		///Measures the distribution of packet sizes
+		case PACKET_SIZE_DEVIATION:
 		{
-			// number of packets multiplied by (packet_size - mean)^2 divided by count
-			variance += (it->second * pow((it->first - mean), 2))/ count;
+			//Calculate Mean
+			double count = m_packetCount, mean = m_features[PACKET_SIZE_MEAN], variance = 0;
+			//Calculate variance
+			for(Packet_Table::iterator it = m_packTable.begin() ; it != m_packTable.end(); it++)
+			{
+				// number of packets multiplied by (packet_size - mean)^2 divided by count
+				variance += (it->second * pow((it->first - mean), 2))/ count;
+			}
+
+			m_features[PACKET_SIZE_DEVIATION] = sqrt(variance);
+			break;
 		}
-
-		m_features[PACKET_SIZE_DEVIATION] = sqrt(variance);
-		break;
-	}
-
-
-	/// Number of distinct IP addresses contacted
-	case DISTINCT_IPS:
-	{
-		m_features[DISTINCT_IPS] = m_IPTable.size();
-		break;
-	}
-
-
-	/// Number of distinct ports contacted
-	case DISTINCT_PORTS:
-	{
-		m_features[DISTINCT_PORTS] =  m_portTable.size();
-		break;
-	}
-
-	///Measures the distribution of intervals between packets
-	case PACKET_INTERVAL_MEAN:
-	{
-		if (m_intervalTable.size() == 0)
+		/// Number of distinct IP addresses contacted
+		case DISTINCT_IPS:
 		{
-			m_features[PACKET_INTERVAL_MEAN] = 0;
+			m_features[DISTINCT_IPS] = m_IPTable.size();
+			break;
 		}
-		else
+		/// Number of distinct ports contacted
+		case DISTINCT_PORTS:
 		{
-			m_features[PACKET_INTERVAL_MEAN] = (((double) m_totalInterval)
-									/ ((double) (m_intervalTable.size())));
+			m_features[DISTINCT_PORTS] =  m_portTable.size();
+			break;
 		}
-		break;
-	}
-
-
-	///Measures the distribution of intervals between packets
-	case PACKET_INTERVAL_DEVIATION:
-	{
-		double totalCount = m_intervalTable.size();
-		double mean = 0;
-		double variance = 0;
-
-		mean = m_features[PACKET_INTERVAL_MEAN];
-
-		for (Interval_Table::iterator it = m_intervalTable.begin() ; it != m_intervalTable.end(); it++)
+		///Measures the distribution of intervals between packets
+		case PACKET_INTERVAL_MEAN:
 		{
-			variance += it->second*(pow((it->first - mean), 2)/totalCount);
+			if (m_intervalTable.size() == 0)
+			{
+				m_features[PACKET_INTERVAL_MEAN] = 0;
+				break;
+			}
+			m_features[PACKET_INTERVAL_MEAN] = (((double)m_totalInterval)/((double)(m_intervalTable.size())));
 		}
-
-		m_features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
-		break;
-	}
-
-	default:
-	{
-		break;
-	}
-
+		///Measures the distribution of intervals between packets
+		case PACKET_INTERVAL_DEVIATION:
+		{
+			double mean = m_features[PACKET_INTERVAL_MEAN], variance = 0, totalCount = m_intervalTable.size();
+			for (Interval_Table::iterator it = m_intervalTable.begin() ; it != m_intervalTable.end(); it++)
+			{
+				variance += it->second*(pow((it->first - mean), 2)/totalCount);
+			}
+			m_features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
+			break;
+		}
+		default:
+		{
+			break;
+		}
 	}
 }
 
@@ -322,11 +294,9 @@ void FeatureSet::UpdateEvidence(Packet packet)
 		m_IPTable[packet.ip_hdr.ip_dst.s_addr] += packet_count;
 		m_haystackEvents++;
 	}
-	//Else from a host
+	//If from local host, put into designated bin
 	else
 	{
-		//Put the packet count into a bin that is never used so that
-		// all host events for a suspect go into the same bin
 		m_IPTable[1] +=  packet_count;
 	}
 
@@ -338,7 +308,9 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	}
 
 	if(m_lastTime != 0)
+	{
 		m_intervalTable[packet_intervals[0] - m_lastTime]++;
+	}
 
 	for(uint32_t i = 1; i < packet_intervals.size(); i++)
 	{
@@ -421,16 +393,22 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	m_haystackEvents -= rhs.m_haystackEvents;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
+	{
 		m_IPTable[it->first] -= rhs.m_IPTable[it->first];
-
+	}
 	for(Port_Table::iterator it = rhs.m_portTable.begin(); it != rhs.m_portTable.end(); it++)
+	{
 		m_portTable[it->first] -= rhs.m_portTable[it->first];
+	}
 
 	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
+	{
 		m_packTable[it->first] -= rhs.m_packTable[it->first];
-
+	}
 	for(Interval_Table::iterator it = rhs.m_intervalTable.begin(); it != rhs.m_intervalTable.end(); it++)
+	{
 		m_intervalTable[it->first] -= rhs.m_intervalTable[it->first];
+	}
 
 	return *this;
 }
@@ -467,7 +445,7 @@ uint32_t FeatureSet::DeserializeFeatureSet(u_char * buf)
 	return offset;
 }
 
-void FeatureSet::clearFeatureData()
+void FeatureSet::ClearFeatureData()
 {
 		m_totalInterval = 0;
 		m_haystackEvents = 0;
@@ -475,18 +453,10 @@ void FeatureSet::clearFeatureData()
 		m_bytesTotal = 0;
 
 		m_startTime = m_endTime;
-
-		for(Interval_Table::iterator it = m_intervalTable.begin(); it != m_intervalTable.end(); it++)
-			m_intervalTable[it->first] = 0;
-
-		for(Packet_Table::iterator it = m_packTable.begin(); it != m_packTable.end(); it++)
-			m_packTable[it->first] = 0;
-
-		for(IP_Table::iterator it = m_IPTable.begin(); it != m_IPTable.end(); it++)
-			m_IPTable[it->first] = 0;
-
-		for(Port_Table::iterator it = m_portTable.begin(); it != m_portTable.end(); it++)
-			m_portTable[it->first] = 0;
+		m_intervalTable.clear_no_resize();
+		m_packTable.clear_no_resize();
+		m_IPTable.clear_no_resize();
+		m_portTable.clear_no_resize();
 }
 
 uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
@@ -626,100 +596,44 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 
 uint32_t FeatureSet::GetFeatureDataLength()
 {
-	uint32_t out = 0;
-	uint32_t count = 0;
-	uint32_t table_entries = 0;
+	uint32_t out = 0, count = 0;
 
-	out += sizeof(m_totalInterval) + sizeof(m_haystackEvents) + sizeof(m_packetCount)
-			+ sizeof(m_bytesTotal) + sizeof(m_startTime) + sizeof(m_endTime)
-			+ sizeof(m_lastTime);
+	//Vars we need to send useable Data
+	out += sizeof(m_totalInterval) + sizeof(m_haystackEvents) + sizeof(m_packetCount) + sizeof(m_bytesTotal)
+		+ sizeof(m_startTime) + sizeof(m_endTime) + sizeof(m_lastTime)
+		//Each table has a total num entries val before it
+		+ 4*sizeof(out);
 
-	uint32_t tempInt = 0;
-
-	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (count < m_maxTableEntries); it++)
+	for(Interval_Table::iterator it = m_intervalTable.begin();	it != m_intervalTable.end(); it++)
 	{
 		if(it->second)
 		{
 			count++;
 		}
 	}
-
-	tempInt = count - table_entries;
-	out += sizeof(tempInt);
-
-	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			out += sizeof it->first;
-			out += sizeof it->second;
-		}
-	}
-
-	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (count < m_maxTableEntries); it++)
+	for(Packet_Table::iterator it = m_packTable.begin(); it != m_packTable.end(); it++)
 	{
 		if(it->second)
 		{
 			count++;
 		}
 	}
-
-	tempInt = count - table_entries;
-	out += sizeof(tempInt);
-
-	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			out += sizeof it->first;
-			out += sizeof it->second;
-		}
-	}
-
-	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (count < m_maxTableEntries); it++)
+	for(IP_Table::iterator it = m_IPTable.begin(); it != m_IPTable.end(); it++)
 	{
 		if(it->second)
 		{
 			count++;
 		}
 	}
-
-	tempInt = count - table_entries;
-	out += sizeof tempInt;
-
-	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			out += sizeof it->first;
-			out += sizeof it->second;
-		}
-	}
-
-	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (count < m_maxTableEntries); it++)
+	for(Port_Table::iterator it = m_portTable.begin(); it != m_portTable.end(); it++)
 	{
 		if(it->second)
 		{
 			count++;
 		}
 	}
-
-	tempInt = count - table_entries;
-	out += sizeof tempInt;
-
-	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			out += sizeof it->first;
-			out += sizeof it->second;
-		}
-	}
-
+	//pair of uint32_t vars per entry, with 'count' number of entries
+	out += 2*sizeof(uint32_t)*count;
 	return out;
 }
 

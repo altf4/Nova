@@ -23,6 +23,25 @@
 #include "FeatureSet.h"
 #include "Point.h"
 
+//If the feature data is local
+#define LOCAL_DATA true
+//If the feature data is broadcast from another nova instance
+#define BROADCAST_DATA false
+
+enum SerializeFeatureMode: uint8_t
+{
+	NO_FEATURE_DATA = 0,
+	UNSENT_FEATURE_DATA = 1,
+	MAIN_FEATURE_DATA = 2,
+	ALL_FEATURE_DATA = 3
+};
+
+enum FeatureMode: bool
+{
+	UNSENT_FEATURES = true,
+	MAIN_FEATURES = false,
+};
+
 namespace Nova{
 
 // A Suspect represents a single actor on the network, whether good or bad.
@@ -47,25 +66,36 @@ public:
 	// Returns: Human readable std::string of the given feature
 	std::string ToString();
 
+	// Add an additional piece of evidence to this suspect
+	// Does not take actions like reclassifying or calculating features.
+	//		packet - Packet headers to extract evidence from
+	void AddEvidence(Packet packet);
+	// Proccesses all packets in m_evidence and puts them into the suspects unsent FeatureSet data
+	void UpdateEvidence();
+	//Returns a copy of the evidence vector so that it can be read.
+	std::vector<Packet> GetEvidence();
+	//Clears the evidence std::vector
+	void ClearEvidence();
+
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();
 
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t Serialize(u_char * buf, bool getData = false);
+	uint32_t Serialize(u_char * buf, SerializeFeatureMode whichFeatures);
 
 	// Returns an unsigned, 32 bit integer that represents the length of the
 	// Suspect to be serialized (in bytes).
 	//      GetData - If true, include the FeatureSetData length in this calculation;
 	//                if false, don't.
 	// Returns: number of bytes to allocate to serialization buffer
-	uint32_t GetSerializeLength(bool getData = false);
+	uint32_t GetSerializeLength(SerializeFeatureMode whichFeatures);
 
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	//		buf - Pointer to buffer where the serialized suspect is
 	// Returns: number of bytes read from the buffer
-	uint32_t Deserialize(u_char * buf, bool getData = false, bool isLocal = false);
+	uint32_t Deserialize(u_char * buf, SerializeFeatureMode whichFeatures);
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
 	//Returns: Suspect's in_addr or NULL on failure
@@ -109,6 +139,39 @@ public:
 	bool GetIsLive();
 	//Sets the 'from live capture' bool
 	void SetIsLive(bool b);
+
+	// Includes and Excludes separately tracked data for feature set calculation
+	// include - a value of true adds unsent data into the main table
+	// 			 a value of false subtracts unsent data from the main table
+	void UpdateFeatureData(bool include);
+	//Clears the FeatureData of a suspect
+	// whichFeatures: specifies which FeatureSet's Data to clear
+	void ClearFeatureData(FeatureMode whichFeatures = MAIN_FEATURES);
+
+	//Returns a copy of the suspects FeatureSet
+	FeatureSet GetFeatureSet(FeatureMode whichFeatures = MAIN_FEATURES);
+	//Sets or overwrites the suspects FeatureSet
+	void SetFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
+
+	//Clears the feature set of the suspect
+	// whichFeatures: specifies which FeatureSet to clear
+	void ClearFeatureSet(FeatureMode whichFeatures = MAIN_FEATURES);
+
+	//Adds the feature set 'fs' to the suspect's feature set
+	void AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
+	//Subtracts the feature set 'fs' from the suspect's feature set
+	void SubtractFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
+
+
+	//Returns the accuracy double of the feature using featureIndex 'fi'
+	// 	fi: featureIndex enum of the feature you wish to set, (see FeatureSet.h for values)
+	// Returns the value of the feature accuracy for the feature specified
+	double GetFeatureAccuracy(featureIndex fi);
+
+	//Sets the accuracy double of the feature using featureIndex 'fi'
+	// 	fi: featureIndex enum of the feature you wish to set, (see FeatureSet.h for values)
+	// 	 d: the value you wish to set the feature accuracy to
+	void SetFeatureAccuracy(featureIndex fi, double d);
 
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);

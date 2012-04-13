@@ -156,7 +156,7 @@ void Suspect::UpdateEvidence()
 }
 
 //Returns a copy of the evidence vector so that it can be read.
-vector <Packet> Suspect::GetEvidence()
+vector<Packet> Suspect::GetEvidence()
 {
 	return m_evidence;
 }
@@ -178,7 +178,7 @@ void Suspect::CalculateFeatures()
 // Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 //		buf - Pointer to buffer where serialized data will be stored
 // Returns: number of bytes set in the buffer
-uint32_t Suspect::Serialize(u_char * buf, bool getData)
+uint32_t Suspect::Serialize(u_char * buf, SerializeFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
 
@@ -208,96 +208,97 @@ uint32_t Suspect::Serialize(u_char * buf, bool getData)
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
 	offset += m_features.SerializeFeatureSet(buf+offset);
-
-	if(getData)
+	switch(whichFeatures)
 	{
-		offset += m_features.SerializeFeatureData(buf + offset);
+		case UNSENT_FEATURE_DATA:
+		{
+			if(offset + m_unsentFeatures.GetFeatureDataLength() >= SANITY_CHECK)
+			{
+				return 0;
+			}
+			offset += m_unsentFeatures.SerializeFeatureData(buf + offset);
+			break;
+		}
+		case MAIN_FEATURE_DATA:
+		{
+			if(offset + m_features.GetFeatureDataLength() >= SANITY_CHECK)
+			{
+				return 0;
+			}
+			offset += m_features.SerializeFeatureData(buf + offset);
+			break;
+		}
+		case ALL_FEATURE_DATA:
+		{
+			if(offset + m_features.GetFeatureDataLength() >= SANITY_CHECK)
+			{
+				return 0;
+			}
+			offset += m_features.SerializeFeatureData(buf + offset);
+			if(offset + m_unsentFeatures.GetFeatureDataLength() >= SANITY_CHECK)
+			{
+				return 0;
+			}
+			offset += m_unsentFeatures.SerializeFeatureData(buf + offset);
+			break;
+		}
+		case NO_FEATURE_DATA:
+		default:
+		{
+			break;
+		}
 	}
-
-	UnlockSuspect();
-
 	return offset;
 }
 
-uint32_t Suspect::GetSerializeLength(bool getData)
+uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 {
-	RdlockSuspect();
-
-	uint32_t messageSize;
-
 	//Adds the sizeof results for the static required fields to messageSize
-	messageSize = sizeof(m_IpAddress.s_addr) + sizeof(m_classification) + sizeof(m_isHostile)
-			+ sizeof(m_needsClassificationUpdate) + sizeof(m_flaggedByAlarm) + sizeof(m_isLive)
-			+ sizeof(m_hostileNeighbors);
+	uint32_t messageSize =
+		sizeof(m_IpAddress.s_addr)
+		+ sizeof(m_classification)
+		+ sizeof(m_isHostile)
+		+ sizeof(m_needsClassificationUpdate)
+		+ sizeof(m_flaggedByAlarm)
+		+ sizeof(m_isLive)
+		+ sizeof(m_hostileNeighbors);
 	//Adds the dynamic elements to the messageSize
 	for(uint32_t i = 0; i < DIM; i++)
 	{
 		messageSize += sizeof(m_featureAccuracy[i]) + sizeof(m_features.m_features[i]);
 	}
-
-	if(getData)
+	switch(whichFeatures)
 	{
-		messageSize += m_features.GetFeatureDataLength();
+		case UNSENT_FEATURE_DATA:
+		{
+			messageSize += m_unsentFeatures.GetFeatureDataLength();
+			break;
+		}
+		case MAIN_FEATURE_DATA:
+		{
+			messageSize += m_features.GetFeatureDataLength();
+			break;
+		}
+		case ALL_FEATURE_DATA:
+		{
+			messageSize += m_features.GetFeatureDataLength();
+			messageSize += m_unsentFeatures.GetFeatureDataLength();
+			break;
+		}
+		case NO_FEATURE_DATA:
+		default:
+		{
+			break;
+		}
 	}
 	return messageSize;
 }
 
-
-// Stores the Suspect and FeatureSet information into the buffer, retrieved using deserializeSuspectWithData
-//		buf - Pointer to buffer where serialized data will be stored
-// Returns: number of bytes set in the buffer
-uint32_t Suspect::SerializeSuspectWithData(u_char * buf)
-{  //Double read lock should be ok
-	uint32_t offset = SerializeSuspect(buf);
-	offset += m_features.SerializeFeatureData(buf + offset);
->>>>>>> SuspectTableRevamp
-	return offset;
-}
-
-uint32_t Suspect::GetSerializeLength(bool getData)
-{
-<<<<<<< HEAD
-	RdlockSuspect();
-=======
-	uint32_t offset = 0;
->>>>>>> SuspectTableRevamp
-
-	uint32_t messageSize;
-
-	//Adds the sizeof results for the static required fields to messageSize
-	messageSize = sizeof(m_IpAddress.s_addr) + sizeof(m_classification) + sizeof(m_isHostile)
-			+ sizeof(m_needsClassificationUpdate) + sizeof(m_flaggedByAlarm) + sizeof(m_isLive)
-			+ sizeof(m_hostileNeighbors);
-	//Adds the dynamic elements to the messageSize
-	for(uint32_t i = 0; i < DIM; i++)
-	{
-		messageSize += sizeof(m_featureAccuracy[i]) + sizeof(m_features.m_features[i]);
-	}
-
-<<<<<<< HEAD
-	if(getData)
-	{
-		messageSize += m_features.GetFeatureDataLength();
-	}
-
-	UnlockSuspect();
-=======
-	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
-	//	returns the number of bytes read from the buffer
-	offset += m_features.DeserializeFeatureSet(buf+offset);
->>>>>>> SuspectTableRevamp
-
-	return messageSize;
-}
-
-<<<<<<< HEAD
 // Reads Suspect information from a buffer originally populated by serializeSuspect
 //		buf - Pointer to buffer where the serialized suspect is
 // Returns: number of bytes read from the buffer
-uint32_t Suspect::Deserialize(u_char * buf, bool getData, bool isLocal)
+uint32_t Suspect::Deserialize(u_char * buf, SerializeFeatureMode whichFeatures)
 {
-	WrlockSuspect();
-
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
@@ -326,29 +327,29 @@ uint32_t Suspect::Deserialize(u_char * buf, bool getData, bool isLocal)
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
 	offset += m_features.DeserializeFeatureSet(buf+offset);
-
-	if(getData)
+	switch(whichFeatures)
 	{
-		if(isLocal)
+		case UNSENT_FEATURE_DATA:
 		{
-			if(offset + m_unsentFeatures.GetFeatureDataLength() >= SANITY_CHECK)
-			{
-				return 0;
-			}
-
 			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+			break;
 		}
-		else
+		case MAIN_FEATURE_DATA:
 		{
-			if(offset + m_features.GetFeatureDataLength() >= SANITY_CHECK)
-			{
-				return 0;
-			}
-
 			offset += m_features.DeserializeFeatureData(buf+offset);
+			break;
 		}
-
-		m_needsClassificationUpdate = true;
+		case ALL_FEATURE_DATA:
+		{
+			offset += m_features.DeserializeFeatureData(buf+offset);
+			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+			break;
+		}
+		case NO_FEATURE_DATA:
+		default:
+		{
+			break;
+		}
 	}
 	return offset;
 }
@@ -451,19 +452,6 @@ void Suspect::SetIsLive(bool b)
 	m_isLive = b;
 }
 
-
-//Returns a copy of the suspects FeatureSet
-FeatureSet Suspect::GetFeatureSet()
-{
-	return m_features;
-}
-
-//Returns a copy of the suspects FeatureSet
-FeatureSet Suspect::GetUnsentFeatureSet()
-{
-	return m_unsentFeatures;
-}
-
 void Suspect::UpdateFeatureData(bool include)
 {
 	if(include)
@@ -476,40 +464,124 @@ void Suspect::UpdateFeatureData(bool include)
 	}
 }
 
-
-//Sets or overwrites the suspects FeatureSet
-void Suspect::SetFeatureSet(FeatureSet *fs)
+//Clears the FeatureData of a suspect
+// whichFeatures: specifies which FeatureSet's Data to clear
+void Suspect::ClearFeatureData(FeatureMode whichFeatures)
 {
-	m_features.operator =(*fs);
+	switch(whichFeatures)
+	{
+		default:
+		case MAIN_FEATURES:
+		{
+			m_features.ClearFeatureData();
+			break;
+		}
+		case UNSENT_FEATURES:
+		{
+			m_unsentFeatures.ClearFeatureData();
+			break;
+		}
+	}
+}
+
+//Returns a copy of the suspects FeatureSet
+FeatureSet Suspect::GetFeatureSet(FeatureMode whichFeatures)
+{
+	switch(whichFeatures)
+	{
+		default:
+		case MAIN_FEATURES:
+		{
+			return m_features;
+			break;
+		}
+		case UNSENT_FEATURES:
+		{
+			return m_unsentFeatures;
+			break;
+		}
+	}
 }
 
 //Sets or overwrites the suspects FeatureSet
-void Suspect::SetUnsentFeatureSet(FeatureSet *fs)
+void Suspect::SetFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 {
-	m_unsentFeatures.operator =(*fs);
+	switch(whichFeatures)
+	{
+		default:
+		case MAIN_FEATURES:
+		{
+			m_features.operator =(*fs);
+			break;
+		}
+		case UNSENT_FEATURES:
+		{
+			m_unsentFeatures.operator =(*fs);
+			break;
+		}
+	}
+
 }
 
 //Adds the feature set 'fs' to the suspect's feature set
-void Suspect::AddFeatureSet(FeatureSet *fs)
+void Suspect::AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 {
-	m_features += *fs;
+	switch(whichFeatures)
+	{
+		default:
+		case MAIN_FEATURES:
+		{
+			m_features += *fs;
+			break;
+		}
+		case UNSENT_FEATURES:
+		{
+			m_unsentFeatures += *fs;
+			break;
+		}
+	}
+
 }
 //Subtracts the feature set 'fs' from the suspect's feature set
-void Suspect::SubtractFeatureSet(FeatureSet *fs)
+void Suspect::SubtractFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 {
-	m_features -= *fs;
+	switch(whichFeatures)
+	{
+		default:
+		case MAIN_FEATURES:
+		{
+			m_features -= *fs;
+			break;
+		}
+		case UNSENT_FEATURES:
+		{
+			m_unsentFeatures -= *fs;
+			break;
+		}
+	}
 }
 
 //Clears the feature set of the suspect
-void Suspect::ClearFeatureSet()
+// whichFeatures: specifies which FeatureSet to clear
+void Suspect::ClearFeatureSet(FeatureMode whichFeatures)
 {
-	m_features.ClearFeatureSet();
-}
-
-//Clears the unsent feature set of the suspect
-void Suspect::ClearUnsentData()
-{
-	m_unsentFeatures.ClearFeatureSet();
+	switch(whichFeatures)
+	{
+		case MAIN_FEATURES:
+		{
+			m_features.ClearFeatureSet();
+			break;
+		}
+		case UNSENT_FEATURES:
+		{
+			m_unsentFeatures.ClearFeatureSet();
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
 }
 
 //Returns the accuracy double of the feature using featureIndex 'fi'

@@ -260,7 +260,7 @@ void *SilentAlarmLoop(void *ptr)
 		memcpy(&addr, buf, 4);
 		uint64_t key = addr;
 		Suspect * newSuspect = new Suspect();
-		if(newSuspect->Deserialize(buf, true, BROADCAST_DATA) == 0)
+		if(newSuspect->Deserialize(buf, MAIN_FEATURE_DATA) == 0)
 		{
 			close(connectionSocket);
 			continue;
@@ -270,8 +270,8 @@ void *SilentAlarmLoop(void *ptr)
 		{
 			suspectCopy = suspects.CheckOut(key);
 			suspectCopy.SetFlaggedByAlarm(true);
-			FeatureSet fs = newSuspect->GetFeatureSet();
-			suspectCopy.AddFeatureSet(&fs);
+			FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
+			suspectCopy.AddFeatureSet(&fs, MAIN_FEATURES);
 			suspects.CheckIn(&suspectCopy);
 
 			// TODO: This looks like it may be a memory leak of newSuspect

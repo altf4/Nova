@@ -44,20 +44,21 @@ namespace Nova
 SuspectTable::SuspectTable()
 {
 	m_keys.clear();
-	pthread_rwlockattr_t * tempAttr = NULL;
-	pthread_rwlockattr_init(tempAttr);
-	pthread_rwlockattr_setkind_np(tempAttr,PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	pthread_rwlock_init(&m_lock, tempAttr);
-	//After initializing the lock it is safe to delete the attr
-	delete tempAttr;
+	pthread_rwlockattr_t tempAttr;
+	pthread_rwlockattr_init(&tempAttr);
+	pthread_rwlockattr_setkind_np(&tempAttr,PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+	pthread_rwlock_init(&m_lock, &tempAttr);
 
 	uint64_t initKey = 0;
 	initKey--;
 	m_suspectTable.set_empty_key(initKey);
+	m_lockTable.set_empty_key(initKey);
 	m_empty_key = initKey;
 	initKey--;
 	m_suspectTable.set_deleted_key(initKey);
+	m_lockTable.set_deleted_key(initKey);
 	m_deleted_key = initKey;
+
 	m_emptySuspect.SetClassification(EMPTY_SUSPECT_CLASSIFICATION);
 }
 
@@ -99,14 +100,12 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 		}
 		//Else we need to init a SuspectLock
 		{
-			pthread_mutexattr_t * tempAttr = NULL;
-			pthread_mutexattr_init(tempAttr);
-			pthread_mutexattr_settype(tempAttr, PTHREAD_MUTEX_ERRORCHECK);
+			pthread_mutexattr_t tempAttr;
+			pthread_mutexattr_init(&tempAttr);
+			pthread_mutexattr_settype(&tempAttr, PTHREAD_MUTEX_ERRORCHECK);
 			//Destroy before init just to be safe
 			pthread_mutex_destroy(&m_lockTable[key].lock);
-			pthread_mutex_init(&m_lockTable[key].lock, tempAttr);
-			//Safe to delete the attr after init.
-			delete tempAttr;
+			pthread_mutex_init(&m_lockTable[key].lock, &tempAttr);
 			m_lockTable[key].deleted = false;
 			m_lockTable[key].ref_cnt = 0;
 		}
@@ -144,14 +143,12 @@ bool SuspectTable::AddNewSuspect(Packet packet)
 		}
 		//Else we need to init a SuspectLock
 		{
-			pthread_mutexattr_t * tempAttr = NULL;
-			pthread_mutexattr_init(tempAttr);
-			pthread_mutexattr_settype(tempAttr, PTHREAD_MUTEX_ERRORCHECK);
+			pthread_mutexattr_t tempAttr;
+			pthread_mutexattr_init(&tempAttr);
+			pthread_mutexattr_settype(&tempAttr, PTHREAD_MUTEX_ERRORCHECK);
 			//Destroy before init just to be safe
 			pthread_mutex_destroy(&m_lockTable[key].lock);
-			pthread_mutex_init(&m_lockTable[key].lock, tempAttr);
-			//Safe to delete the attr after init.
-			delete tempAttr;
+			pthread_mutex_init(&m_lockTable[key].lock, &tempAttr);
 			m_lockTable[key].deleted = false;
 			m_lockTable[key].ref_cnt = 0;
 		}
@@ -603,11 +600,11 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t timestamp)
 		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
 			Suspect * suspect = m_suspectTable[m_keys[i]];
-			if(!suspect->GetFeatureSet().m_packetCount)
+			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount)
 			{
 				continue;
 			}
-			dataSize += suspect->GetSerializeSuspectLength(true);
+			dataSize += suspect->GetSerializeLength(MAIN_FEATURE_DATA);
 		}
 	}
 	out->write((char*)&timestamp, sizeof timestamp);
@@ -617,11 +614,11 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t timestamp)
 		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
 			Suspect * suspect = m_suspectTable[m_keys[i]];
-			if(!suspect->GetFeatureSet().m_packetCount)
+			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount)
 			{
 				continue;
 			}
-			dataSize = suspect->SerializeSuspectWithData(tableBuffer);
+			dataSize = suspect->Serialize(tableBuffer, MAIN_FEATURE_DATA);
 			out->write((char*) tableBuffer, dataSize);
 			ret += dataSize;
 		}
@@ -673,7 +670,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 			ss << "Throwing out old CE state at time: " << saveTime << ".";
 			LOG(DEBUG,"Throwing out old CE state.", ss.str());
 			in->seekg(dataSize, ifstream::cur);
-			return 0;
+			return (sizeof(timestamp) + sizeof(dataSize) + dataSize);
 		}
 
 		u_char tableBuffer[dataSize];
@@ -685,10 +682,10 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 		while(offset < dataSize)
 		{
 			Suspect* newSuspect = new Suspect();
-			offset += newSuspect->DeserializeSuspectWithData(tableBuffer+ offset);
+			offset += newSuspect->Deserialize(tableBuffer+ offset, MAIN_FEATURE_DATA);
 			in_addr_t key = newSuspect->GetIpAddress();
 			// If our suspect has no evidence, throw it out
-			if(newSuspect->GetFeatureSet().m_packetCount == 0)
+			if(newSuspect->GetFeatureSet(MAIN_FEATURES).m_packetCount == 0)
 			{
 				LOG(WARNING,"Discarding invalid suspect.",
 					"A suspect containing no evidence was detected and discarded");
@@ -698,9 +695,9 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 
 			if(IsValidKey_NonBlocking(key))
 			{
-				FeatureSet fs = newSuspect->GetFeatureSet();
+				FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
 				LockSuspect(key);
-				m_suspectTable[key]->AddFeatureSet(&fs);
+				m_suspectTable[key]->AddFeatureSet(&fs, MAIN_FEATURES);
 				m_suspectTable[key]->SetNeedsClassificationUpdate(true);
 				UnlockSuspect(key);
 				delete newSuspect;
@@ -724,14 +721,12 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 				}
 				else //Else we need to init a SuspectLock
 				{
-					pthread_mutexattr_t * tempAttr = NULL;
-					pthread_mutexattr_init(tempAttr);
-					pthread_mutexattr_settype(tempAttr, PTHREAD_MUTEX_ERRORCHECK);
+					pthread_mutexattr_t tempAttr;
+					pthread_mutexattr_init(&tempAttr);
+					pthread_mutexattr_settype(&tempAttr, PTHREAD_MUTEX_ERRORCHECK);
 					//Destroy before init just to be safe
 					pthread_mutex_destroy(&m_lockTable[key].lock);
-					pthread_mutex_init(&m_lockTable[key].lock, tempAttr);
-					//Safe to delete the attr after init.
-					delete tempAttr;
+					pthread_mutex_init(&m_lockTable[key].lock, &tempAttr);
 					m_lockTable[key].deleted = false;
 					m_lockTable[key].ref_cnt = 0;
 					newSuspect->SetNeedsClassificationUpdate(true);

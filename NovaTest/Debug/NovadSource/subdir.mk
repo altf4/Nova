@@ -9,6 +9,7 @@ CPP_SRCS += \
 ../NovadSource/Doppelganger.cpp \
 ../NovadSource/Novad.cpp \
 ../NovadSource/ProtocolHandler.cpp \
+../NovadSource/SuspectTable.cpp \
 ../NovadSource/Threads.cpp 
 
 OBJS += \
@@ -17,6 +18,7 @@ OBJS += \
 ./NovadSource/Doppelganger.o \
 ./NovadSource/Novad.o \
 ./NovadSource/ProtocolHandler.o \
+./NovadSource/SuspectTable.o \
 ./NovadSource/Threads.o 
 
 CPP_DEPS += \
@@ -25,6 +27,7 @@ CPP_DEPS += \
 ./NovadSource/Doppelganger.d \
 ./NovadSource/Novad.d \
 ./NovadSource/ProtocolHandler.d \
+./NovadSource/SuspectTable.d \
 ./NovadSource/Threads.d 
 
 
