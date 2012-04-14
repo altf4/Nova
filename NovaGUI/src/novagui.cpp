@@ -1399,7 +1399,8 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_ERROR:
 			{
 				//TODO: Die after X consecutive errors?
-				LOG(ERROR, "Failed to connect to Novad", "Got a callback_error message");
+				LOG(ERROR, "Failed to connect to Novad", "Got a callback_error message, Hanging up");
+				return NULL;
 				break;
 			}
 			case CALLBACK_HUNG_UP:

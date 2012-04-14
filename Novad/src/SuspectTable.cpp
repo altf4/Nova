@@ -432,6 +432,7 @@ bool SuspectTable::Erase(in_addr_t key)
 		pthread_rwlock_unlock(&m_lock);
 		return true;
 	}
+	pthread_rwlock_unlock(&m_lock);
 	return false;
 }
 
@@ -563,6 +564,7 @@ void SuspectTable::SaveSuspectsToFile(string filename)
 	{
 		LOG(ERROR,"Unable to open file requested file.",
 			"Unable to open or create file located at "+filename+".");
+		pthread_rwlock_unlock(&m_lock);
 		return;
 	}
 	for(uint i = 0; i < m_keys.size(); i++)
@@ -650,6 +652,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
 		{
 			LOG(ERROR, "The state file may be corruput", "");
+			pthread_rwlock_unlock(&m_lock);
 			return 0;
 		}
 
@@ -662,6 +665,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 		if(lengthLeft < dataSize)
 		{
 			LOG(ERROR, "The CE state file may be corruput", "");
+			pthread_rwlock_unlock(&m_lock);
 			return 0;
 		}
 		if(saveTime < timestamp)
@@ -670,6 +674,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 			ss << "Throwing out old CE state at time: " << saveTime << ".";
 			LOG(DEBUG,"Throwing out old CE state.", ss.str());
 			in->seekg(dataSize, ifstream::cur);
+			pthread_rwlock_unlock(&m_lock);
 			return (sizeof(timestamp) + sizeof(dataSize) + dataSize);
 		}
 
