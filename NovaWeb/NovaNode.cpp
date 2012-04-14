@@ -50,7 +50,6 @@ class NovaNode: ObjectWrap
 
 		static void InitNovaCallbackProcessing()
 		{
-			m_CallbackRegistered = false;
 			m_callbackRunning = false;
 
 			eio_custom(NovaCallbackHandling, EIO_PRI_DEFAULT, AfterNovaCallbackHandling, (void*)0);
