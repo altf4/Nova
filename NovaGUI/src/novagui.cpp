@@ -1317,7 +1317,7 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 				 QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1,"
 				" y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
-			formatString.append(QString::number(suspect->GetFeatureSet().m_features[i]));
+			formatString.append(QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
 			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();
@@ -1396,7 +1396,8 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_ERROR:
 			{
 				//TODO: Die after X consecutive errors?
-				LOG(ERROR, "Failed to connect to Novad", "Got a callback_error message");
+				LOG(ERROR, "Failed to connect to Novad", "Got a callback_error message, Hanging up");
+				return NULL;
 				break;
 			}
 			case CALLBACK_HUNG_UP:
