@@ -123,10 +123,10 @@ private Q_SLOTS:
 	void on_isRandomMAC_stateChanged();
 
 private:
-	node m_editNode;
 	node *m_parentNode;
 	bool m_editingNode;
     Ui::nodePopupClass ui;
+    node m_editNode;
 };
 
 #endif // NODEPOPUP_H
