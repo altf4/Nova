@@ -124,6 +124,7 @@ private Q_SLOTS:
 
 private:
     Ui::nodePopupClass ui;
+    node m_editNode;
 };
 
 #endif // NODEPOPUP_H
