@@ -29,13 +29,15 @@ NovaConfig * novaParent;
  * Construct and Initialize GUI
  ************************************************/
 
-nodePopup::nodePopup(QWidget * parent, node * n)
+nodePopup::nodePopup(QWidget * parent, node * n, bool editingNode)
     : QMainWindow(parent)
 {
 	//homePath = GetHomePath();
 	ui.setupUi(this);
 	novaParent = (NovaConfig *)parent;
-	m_editNode = *n;
+	m_parentNode = n;
+	m_editingNode = editingNode;
+
 
 	m_ethernetEdit = new HexMACSpinBox(this, m_editNode.MAC, macSuffix);
 	m_prefixEthEdit = new HexMACSpinBox(this, m_editNode.MAC, macPrefix);
@@ -127,6 +129,7 @@ void nodePopup::on_isRandomMAC_stateChanged()
 //loads the selected node's options
 void nodePopup::LoadNode()
 {
+	m_editNode = *m_parentNode;
 	subnet s = novaParent->m_honeydConfig->m_subnets[m_editNode.sub];
 	profile p = novaParent->m_honeydConfig->m_profiles[m_editNode.pfile];
 
@@ -149,6 +152,13 @@ void nodePopup::LoadNode()
 
 	ui.isRandomMAC->setChecked(m_editNode.MAC == "RANDOM");
 	ui.isDHCP->setChecked(m_editNode.IP == "DHCP");
+
+
+	// Make sure the spin box has something useful in case they turn off dhcp
+	if (m_editNode.IP == "DHCP")
+	{
+		m_editNode.realIP = novaParent->m_honeydConfig->m_subnets[m_editNode.sub].base;
+	}
 
 	int count = 0;
 	int numBits = 32 - s.maskBits;
@@ -252,6 +262,10 @@ void nodePopup::on_applyButton_clicked()
 	switch(ret)
 	{
 		case 0:
+			if (m_editingNode)
+			{
+				novaParent->m_honeydConfig->DeleteNode(m_parentNode->name);
+			}
 			novaParent->m_honeydConfig->AddNewNode(m_editNode.pfile, m_editNode.IP, m_editNode.MAC, m_editNode.interface, m_editNode.sub);
 			break;
 		case 1:
@@ -263,11 +277,8 @@ void nodePopup::on_applyButton_clicked()
 					"DHCP Enabled nodes requires a unique MAC Address.");
 			break;
 	}
-	on_restoreButton_clicked();
 
 }
-
-
 
 void nodePopup::on_generateButton_clicked()
 {
