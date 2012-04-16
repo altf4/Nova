@@ -96,7 +96,7 @@ class nodePopup : public QMainWindow
 
 public:
 
-    nodePopup(QWidget *parent = 0, node *n  = NULL);
+    nodePopup(QWidget *parent = 0, node *n  = NULL, bool editingNode = false);
     ~nodePopup();
 
     HexMACSpinBox * m_ethernetEdit;
@@ -123,6 +123,9 @@ private Q_SLOTS:
 	void on_isRandomMAC_stateChanged();
 
 private:
+	node m_editNode;
+	node *m_parentNode;
+	bool m_editingNode;
     Ui::nodePopupClass ui;
 };
 

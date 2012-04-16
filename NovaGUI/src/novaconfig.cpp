@@ -3320,7 +3320,7 @@ void  NovaConfig::on_actionNodeEdit_triggered()
 			return;
 		}
 
-		nodePopup * editNode =  new nodePopup(this, &m_honeydConfig->m_nodes[m_currentNode]);
+		nodePopup * editNode =  new nodePopup(this, &m_honeydConfig->m_nodes[m_currentNode], true);
 		editNode->show();
 	}
 	else
