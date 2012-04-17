@@ -86,11 +86,24 @@ app.post('/configureNovaSave', function(req, res) {
 	}
 	
 	res.writeHead(200, "OK", {'Content-Type': 'text/html'});
+	res.write('<HTML>');
+	res.write('<HEAD>');
+	res.write('<script language="Javascript">');
+	res.write('var time = null\n');
+	res.write('function move() {');
+	res.write('window.location = "configureNova";');
+	res.write('}');
+	res.write('</script>');
+	res.write('</HEAD><BODY>');
+	res.write('<body onload = "timer=setTimeout(\'move()\',2000)">');
+	
 	if (result) {
 		res.write("Settings saved! You will be redirected back to the settings page...");
 	} else {
 		res.write("There was an error when attempting to write settings to configuration file");
 	}
+
+	res.write('</BODY></HTML>');
 	res.end();
 });
 

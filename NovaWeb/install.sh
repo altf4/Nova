@@ -46,12 +46,28 @@ node-waf configure
 echo "========================================"
 echo "Building NOVA node"
 echo "========================================"
+node-waf clean
+node-waf
+
+
+cd NodeNovaConfig
+echo "========================================"
+echo "Configuring NOVAConfig node"
+echo "========================================"
+node-waf configure
+
+# Compile the nova node
+# (This needs to be done every time the source changes)
+echo "========================================"
+echo "Building NOVAConfig node"
+echo "========================================"
+node-waf clean
 node-waf
 
 # To run the Nova Web interface,
-# bash$ NODE_PATH=build/Release node tst.js
+# bash$ node tst.js
 
 echo "========================================"
 echo "Installation finished"
-echo "To run the web interface, run "NODE_PATH=build/Release node tst.js" from the NovaWeb folder"
+echo "To run the web interface, run "node tst.js" from the NovaWeb folder"
 echo "========================================"

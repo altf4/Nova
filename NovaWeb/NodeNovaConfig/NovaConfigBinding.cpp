@@ -17,7 +17,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   // Prototype
   tpl->PrototypeTemplate()->Set(String::NewSymbol("ReadSetting"),FunctionTemplate::New(ReadSetting)->GetFunction());
-  //tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteSetting"),FunctionTemplate::New(WriteSetting)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteSetting"),FunctionTemplate::New(WriteSetting)->GetFunction());
 
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
