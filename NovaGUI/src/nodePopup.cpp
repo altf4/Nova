@@ -69,9 +69,6 @@ nodePopup::~nodePopup()
 //saves the changes to a node
 void nodePopup::SaveNode()
 {
-	m_editNode.MAC = m_prefixEthEdit->text().toStdString() + ":"+ m_ethernetEdit->text().toStdString();
-
-
 	m_editNode.pfile = ui.nodeProfileComboBox->currentText().toStdString();
 
 	if(ui.isDHCP->isChecked())
@@ -90,6 +87,11 @@ void nodePopup::SaveNode()
 	{
 		m_editNode.MAC = "RANDOM";
 	}
+	else
+	{
+		m_editNode.MAC = m_prefixEthEdit->text().toStdString() + ":"+ m_ethernetEdit->text().toStdString();
+	}
+	m_editNode.name = m_editNode.IP + " - " + m_editNode.MAC;
 }
 
 void nodePopup::on_isDHCP_stateChanged()
@@ -179,6 +181,15 @@ void nodePopup::LoadNode()
 		m_ethernetEdit->setVisible(true);
 	}
 
+	int count = 0;
+	int numBits = 32 - s.maskBits;
+
+	in_addr_t base = ::pow(2, numBits);
+	in_addr_t flatConst = ::pow(2,32)- base;
+
+	flatConst = flatConst & s.base;
+	in_addr_t flatBase = flatConst;
+	count = s.maskBits/8;
 
 	//See if we're using dhcp and update the window to reflect which case it is
 	ui.isDHCP->setChecked(!m_editNode.IP.compare("DHCP"));
@@ -192,20 +203,9 @@ void nodePopup::LoadNode()
 		ui.ipSpinBox1->setVisible(false);
 		ui.ipSpinBox2->setVisible(false);
 		ui.ipSpinBox3->setVisible(false);
-		//at the time this comment was written it is strictly checked earlier that each node has a valid subnet,
-		// if that changes, segfault-like crashes could happen here.
-		m_editNode.realIP &= novaParent->m_honeydConfig->m_subnets[m_editNode.sub].base;
+		//We take the previous 'realIP' and apply the subnets mask to assert the ip is within the subnet
+		m_editNode.realIP = (m_editNode.realIP & (base-1)) + flatBase;
 	}
-
-	int count = 0;
-	int numBits = 32 - s.maskBits;
-
-	in_addr_t base = ::pow(2, numBits);
-	in_addr_t flatConst = ::pow(2,32)- base;
-
-	flatConst = flatConst & m_editNode.realIP;
-	in_addr_t flatBase = flatConst;
-	count = s.maskBits/8;
 
 	while(count < 4)
 	{
@@ -298,29 +298,37 @@ void nodePopup::on_restoreButton_clicked()
 
 void nodePopup::on_applyButton_clicked()
 {
-	NovaGUI * mainwindow  = (NovaGUI*)novaParent->parent();
 	SaveNode();
+
+	NovaGUI * mainwindow  = (NovaGUI*)novaParent->parent();
 	nodeConflictType ret = ValidateNodeSettings();
 	switch(ret)
 	{
-		case 0:
+		case NO_CONFLICT:
 		{
-			if (m_editingNode)
+			//If we're editing we don't need to add a new node
+			if(m_editingNode)
 			{
+				//If we have a new name, clean up the old node
+				if(!m_editNode.name.compare(m_parentNode->name))
+				{
+					novaParent->m_honeydConfig->m_nodes[m_editNode.name] = m_editNode;
+					break;
+				}
 				novaParent->m_honeydConfig->DeleteNode(m_parentNode->name);
 			}
 			novaParent->m_honeydConfig->AddNewNode(m_editNode.pfile, m_editNode.IP, m_editNode.MAC, m_editNode.interface, m_editNode.sub);
 			break;
 		}
-		case 1:
+		case IP_CONFLICT:
 		{
-			mainwindow->m_prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
+			m_prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
 					"This Node requires a unique IP address");
 			break;
 		}
-		case 2:
+		case MAC_CONFLICT:
 		{
-			mainwindow->m_prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
+			m_prompter->DisplayPrompt(mainwindow->NODE_LOAD_FAIL,
 					"DHCP Enabled nodes requires a unique MAC Address.");
 			break;
 		}
@@ -351,20 +359,33 @@ nodeConflictType nodePopup::ValidateNodeSettings()
 
 	bool ipConflict = false;
 	bool macConflict = false;
+	// If the IP or MAC hasn't changed and we aren't using DHCP and/or RANDOM
+	// then the IsUsed checks will return true (ie conflict) when it finds itself
+	// Thus we skip validation only in the case that 1. the IP and/or MAC remains unchanged
+	// and 2. We are editing a Node, not creating one.
 
-	if(m_editNode.IP != "DHCP")
+	//If were editing the node and the IP hasn't changed that's ok.
+	if(!m_editingNode || m_editNode.IP.compare(m_parentNode->IP))
 	{
-		ipConflict = novaParent->m_honeydConfig->IsIPUsed(m_editNode.IP);
-		if(novaParent->m_honeydConfig->m_subnets[m_editNode.sub].base == m_editNode.realIP)
+		//If the IP is DHCP we don't care if theres a conflict
+		if(m_editNode.IP != "DHCP")
 		{
-			ipConflict = true;
+			ipConflict = novaParent->m_honeydConfig->IsIPUsed(m_editNode.IP);
+			if(novaParent->m_honeydConfig->m_subnets[m_editNode.sub].base == m_editNode.realIP)
+			{
+				ipConflict = true;
+			}
+		}
+	}
+	//If were editing the node and the MAC hasn't changed that's ok.
+	if(!m_editingNode || m_editNode.MAC.compare(m_parentNode->MAC))
+	{
+		if(m_editNode.MAC != "RANDOM")
+		{
+			macConflict = novaParent->m_honeydConfig->IsMACUsed(m_editNode.MAC);
 		}
 	}
 
-	if(m_editNode.MAC != "RANDOM")
-	{
-		macConflict = novaParent->m_honeydConfig->IsMACUsed(m_editNode.MAC);
-	}
 
 	nodeConflictType ret = NO_CONFLICT;
 	if(ipConflict)

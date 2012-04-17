@@ -1347,7 +1347,7 @@ bool HoneydConfiguration::IsIPUsed(std::string ip)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.IP.compare(ip))
+		if(!it->second.IP.compare(ip) && it->second.name.compare(ip))
 		{
 			return true;
 		}
@@ -1518,7 +1518,7 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 	newNode.IP = ipAddress;
 	newNode.interface = interface;
 
-	if (newNode.IP != "DHCP")
+	if(newNode.IP != "DHCP")
 	{
 		newNode.realIP = htonl(inet_addr(newNode.IP.c_str()));
 	}

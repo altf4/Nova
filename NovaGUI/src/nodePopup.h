@@ -97,6 +97,8 @@ class nodePopup : public QMainWindow
 
 public:
 
+    DialogPrompter * m_prompter;
+
     nodePopup(QWidget *parent = 0, node *n  = NULL, bool editingNode = false);
     ~nodePopup();
 
@@ -129,7 +131,6 @@ private:
     Ui::nodePopupClass ui;
     node m_editNode;
 
-    DialogPrompter * m_prompter;
 };
 
 #endif // NODEPOPUP_H
