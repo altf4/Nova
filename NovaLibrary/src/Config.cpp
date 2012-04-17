@@ -652,7 +652,8 @@ void Config::LoadConfig()
 	}
 	else
 	{
-		LOG(INFO, "No configuration file found", "");
+		// Do not call LOG here, Config and Logger are not yet initialized
+		cout << "CRITICAL ERROR: No configuration file found!" << endl;
 	}
 
 
@@ -660,8 +661,8 @@ void Config::LoadConfig()
 	{
 		if(!isValid[i])
 		{
-			LOG(INFO, "Invalid configuration option.",
-				"Configuration option "+ m_prefixes[i]+" is invalid in the configuration file.");
+			// Do not call LOG here, Config and Logger are not yet initialized
+			cout << "Invalid configuration option" << m_prefixes[i] << " is invalid in the configuration file." << endl;
 		}
 	}
 	pthread_rwlock_unlock(&m_lock);
@@ -1134,9 +1135,10 @@ bool Config::InitUserConfigs(string homeNovaPath)
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 
 				cout << "The required file " << fullPath << " does not exist. Copying it from the defaults folder." << endl;
-				if(system(copyCommand.c_str()) == -1)
+				if(system(copyCommand.c_str()) != 0)
 				{
 					cout << "Unable to load defaults from " << defaultLocation << "System Command " << copyCommand <<" has failed." << endl;
+					returnValue = false;
 				}
 			}
 		}
@@ -1212,7 +1214,8 @@ Config::Config()
 
 	if(!InitUserConfigs(GetPathHome()))
 	{
-		LOG(ERROR, "InitUserConfigs failed.","");
+		// Do not call LOG here, Config and logger are not yet initialized
+		cout << "CRITICAL ERROR: InitUserConfigs failed" << endl;
 	}
 
 	m_configFilePath = GetPathHome() + "/Config/NOVAConfig.txt";
