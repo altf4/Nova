@@ -146,6 +146,8 @@ public:
     // Saves the configuration to the config file, returns true if success
     bool SaveConfigurationToFile();
 
+    void SetSelectedNode(std::string node);
+
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
 

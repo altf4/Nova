@@ -287,6 +287,7 @@ void nodePopup::on_cancelButton_clicked()
 void nodePopup::on_okButton_clicked()
 {
 	on_applyButton_clicked();
+
 	novaParent->LoadAllNodes();
 	this->close();
 }
@@ -318,6 +319,10 @@ void nodePopup::on_applyButton_clicked()
 				novaParent->m_honeydConfig->DeleteNode(m_parentNode->name);
 			}
 			novaParent->m_honeydConfig->AddNewNode(m_editNode.pfile, m_editNode.IP, m_editNode.MAC, m_editNode.interface, m_editNode.sub);
+
+			// Make our new node the current selection
+			novaParent->SetSelectedNode(m_editNode.name);
+
 			break;
 		}
 		case IP_CONFLICT:
