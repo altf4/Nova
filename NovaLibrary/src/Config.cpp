@@ -71,6 +71,10 @@ string Config::m_prefixes[] =
 string Config::m_requiredFiles[] =
 {
 	"/settings",
+	"/Config",
+	"/Data",
+	"/keys",
+	"/templates",
 	"/Config/NOVAConfig.txt",
 	"/scripts.xml",
 	"/templates/ports.xml",
