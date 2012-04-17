@@ -20,6 +20,7 @@
 
 #include "ui_nodePopup.h"
 #include "NovaGuiTypes.h"
+#include "novagui.h"
 
 #include <QtGui/QSpinBox>
 #include <math.h>
@@ -96,6 +97,8 @@ class nodePopup : public QMainWindow
 
 public:
 
+    DialogPrompter * m_prompter;
+
     nodePopup(QWidget *parent = 0, node *n  = NULL, bool editingNode = false);
     ~nodePopup();
 
@@ -109,7 +112,7 @@ public:
     void LoadNode();
 
     //Checks for IP or MAC conflicts
-    int ValidateNodeSettings();
+    nodeConflictType ValidateNodeSettings();
 
 private Q_SLOTS:
 
@@ -127,6 +130,7 @@ private:
 	bool m_editingNode;
     Ui::nodePopupClass ui;
     node m_editNode;
+
 };
 
 #endif // NODEPOPUP_H

@@ -65,7 +65,8 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 
 	//Store parent and load UI
 	m_mainwindow = (NovaGUI*)parent;
-
+	//Set up a Reference to the dialog prompter
+	m_prompter = m_mainwindow->m_prompter;
 	// Set up the GUI
 	ui.setupUi(this);
 	SetInputValidators();
