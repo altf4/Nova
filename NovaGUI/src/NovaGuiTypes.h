@@ -42,6 +42,13 @@ enum profileIndex {
 	, DROP_RATE
 };
 
+enum nodeConflictType : char
+{
+	NO_CONFLICT,
+	IP_CONFLICT,
+	MAC_CONFLICT
+};
+
 //used to maintain information on imported scripts
 struct script
 {

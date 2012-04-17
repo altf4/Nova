@@ -132,5 +132,5 @@ uninstall:
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
-	#sh Installer/postrm
+	sh Installer/postrm
 

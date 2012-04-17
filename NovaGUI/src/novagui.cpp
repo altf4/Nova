@@ -159,8 +159,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 	this->ui.suspectButton->setFlat(false);
 	this->ui.doppelButton->setFlat(false);
 	this->ui.haystackButton->setFlat(false);
-	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::QueuedConnection);
-	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::AutoConnection);
+	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::AutoConnection);
 
 	pthread_t StatusUpdateThread;
 

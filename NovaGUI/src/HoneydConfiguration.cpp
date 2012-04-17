@@ -22,6 +22,7 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+#include <arpa/inet.h>
 #include <math.h>
 
 using namespace std;
@@ -1334,12 +1335,11 @@ bool HoneydConfiguration::IsMACUsed(std::string mac)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if (it->second.MAC == mac)
+		if(!it->second.MAC.compare(mac))
 		{
 			return true;
 		}
 	}
-
 	return false;
 }
 
@@ -1347,12 +1347,11 @@ bool HoneydConfiguration::IsIPUsed(std::string ip)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if (it->second.IP == ip)
+		if(!it->second.IP.compare(ip))
 		{
 			return true;
 		}
 	}
-
 	return false;
 }
 
@@ -1367,7 +1366,6 @@ bool HoneydConfiguration::IsProfileUsed(std::string profile)
 			return true;
 		}
 	}
-
 	return false;
 }
 

@@ -42,11 +42,14 @@ class NovaConfig : public QMainWindow
 	Q_OBJECT
 
 public:
+
 	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
 
 	Nova::HoneydConfiguration *m_honeydConfig;
 
     QMutex * m_loading;
+
+    NovaGUI * m_mainwindow;
 
     NovaConfig(QWidget *parent = 0, std::string homePath = "");
 
@@ -257,7 +260,6 @@ private:
     std::string m_currentSubnet;
 
     nodePopup * m_nodewindow;
-    NovaGUI * m_mainwindow;
     QMenu * m_portMenu;
     QMenu * m_profileTreeMenu;
     QMenu * m_nodeTreeMenu;
@@ -269,10 +271,10 @@ private:
 
     //Value set by dialog windows
     std::string m_retVal;
-
-
     std::string m_homePath;
 
+	// Reference to the dialog prompter initialized in novagui
+	DialogPrompter *m_prompter;
 };
 
 class TreeItemComboBox : public QComboBox

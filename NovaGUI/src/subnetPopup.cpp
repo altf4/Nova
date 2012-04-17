@@ -19,6 +19,8 @@
 #include "novaconfig.h"
 #include "novagui.h"
 
+#include <arpa/inet.h>
+
 using namespace std;
 using namespace Nova;
 
