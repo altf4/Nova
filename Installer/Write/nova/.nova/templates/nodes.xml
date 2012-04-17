@@ -22,28 +22,19 @@
 			<node>
 				<interface>eth0</interface>
 				<IP>DHCP</IP>
-				<MAC>RANDOM</MAC>
 				<enabled>true</enabled>
+				<MAC>00:24:e8:9f:f1:e6</MAC>
 				<profile>
-					<name>WinServer</name>
+					<name>BSDServer</name>
 				</profile>
-			</node>
-			<node>
-				<interface>lo</interface>
-				<IP>10.0.0.1</IP>
-				<enabled>true</enabled>
-				<profile>
-					<name>Doppelganger</name>
-				</profile>
-				<name>Doppelganger</name>
 			</node>
 			<node>
 				<interface>eth0</interface>
 				<IP>DHCP</IP>
-				<MAC>RANDOM</MAC>
 				<enabled>true</enabled>
+				<MAC>00:11:43:52:28:bf</MAC>
 				<profile>
-					<name>BSDServer</name>
+					<name>WinServer</name>
 				</profile>
 			</node>
 			<node>
@@ -54,6 +45,16 @@
 				<profile>
 					<name>LinuxServer</name>
 				</profile>
+			</node>
+			<node>
+				<interface>lo</interface>
+				<IP>10.0.0.1</IP>
+				<enabled>true</enabled>
+				<profile>
+					<name>Doppelganger</name>
+				</profile>
+				<name>Doppelganger</name>
+				<MAC/>
 			</node>
 		</nodes>
 	</group>
