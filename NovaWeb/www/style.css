@@ -59,3 +59,34 @@ html, body {
     height: 550px;
 }
 
+label{
+float: left;
+width: 300px;
+font-weight: bold;
+}
+
+input, textarea{
+width: 400px;
+margin-bottom: 5px;
+}
+
+textarea{
+width: 250px;
+height: 150px;
+}
+
+.boxes{
+width: 1em;
+}
+
+#submitbutton{
+margin-left: 120px;
+margin-top: 5px;
+width: 300px;
+}
+
+br{
+clear: left;
+}
+
+

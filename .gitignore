@@ -91,6 +91,7 @@ NovaCLI/Debug/novacli
 # NovaWeb
 /NovaWeb/www/dojo
 /NovaWeb/build/*
+/NovaWeb/NodeNovaConfig/build/*
 /NovaWeb/.lock-wscript
 
 #MISC
@@ -98,3 +99,4 @@ NovaCLI/Debug/novacli
 /Installer/.nova/Config/doppelganger.config
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Data/training.db
+/NovaWeb/NodeNovaConfig/.lock-wscript
