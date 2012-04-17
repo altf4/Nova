@@ -13,8 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : An item in the MessageManager's table. Contains a queue of received
-//	messages on a particular socket
+// Description : An item in the MessageManager's table. Contains a pair of queues
+//	of received messages on a particular socket
 //============================================================================
 
 #include "MessageQueue.h"
@@ -29,7 +29,7 @@
 namespace Nova
 {
 
-MessageQueue::MessageQueue(Socket &socket)
+MessageQueue::MessageQueue(Socket &socket, enum ProtocolDirection direction)
 :m_socket(socket)
 {
 	pthread_mutex_init(&m_forwardQueueMutex, NULL);
@@ -41,6 +41,7 @@ MessageQueue::MessageQueue(Socket &socket)
 	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
 	m_callbackDoWakeup = false;
+	m_forwardDirection = direction;
 
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
 }
@@ -96,9 +97,10 @@ void MessageQueue::PushMessage(UI_Message *message)
 
 	m_forwardQueue.push(message);
 
-	//XXX TODO: proper condition check for callback!!!!!
-	if(message)
+	//If this is a callback message (not the forward direction)
+	if(message->m_protocolDirection != m_forwardDirection)
 	{
+		//Protection for the m_callbackDoWakeup bool
 		Lock condLock(&m_callbackCondMutex);
 		m_callbackDoWakeup = true;
 		pthread_cond_signal(&m_readWakeupCondition);

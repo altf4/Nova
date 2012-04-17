@@ -13,8 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : An item in the MessageManager's table. Contains a queue of received
-//	messages on a particular socket
+// Description : An item in the MessageManager's table. Contains a pair of queues
+//	of received messages on a particular socket
 //============================================================================
 
 #ifndef MESSAGEQUEUE_H_
@@ -33,7 +33,7 @@ class MessageQueue
 {
 public:
 
-	MessageQueue(Socket &socket);
+	MessageQueue(Socket &socket, enum ProtocolDirection direction);
 
 	//Will block and wait until no threads are waiting on its queue
 	//	To prevent a thread from waking up in a destroyed object
@@ -57,6 +57,8 @@ private:
 	std::queue<UI_Message*> m_forwardQueue;
 	std::queue<UI_Message*> m_callbackQueue;
 	bool isShutDown;
+
+	enum ProtocolDirection m_forwardDirection;
 
 	Socket &m_socket;
 

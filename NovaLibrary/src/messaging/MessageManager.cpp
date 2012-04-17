@@ -18,6 +18,7 @@
 
 #include "MessageManager.h"
 #include "../Lock.h"
+#include "../Logger.h"
 #include "messages/ErrorMessage.h"
 
 #include <sys/socket.h>
@@ -27,16 +28,23 @@ namespace Nova
 
 MessageManager *MessageManager::m_instance = NULL;
 
-MessageManager::MessageManager()
+MessageManager::MessageManager(enum ProtocolDirection direction)
 {
 	pthread_mutex_init(&m_queuesLock, NULL);
+	m_forwardDirection = direction;
+}
+
+void MessageManager::Initialize(enum ProtocolDirection direction)
+{
+	m_instance = new MessageManager(direction);
 }
 
 MessageManager &MessageManager::Instance()
 {
 	if (m_instance == NULL)
 	{
-		m_instance = new MessageManager();
+		LOG(ERROR, "Critical error in Message Manager", "Critical error in MessageManager: You must first initialize it with a direction"
+				"before calling Instance()");
 	}
 	return *m_instance;
 }
@@ -91,7 +99,7 @@ void MessageManager::StartSocket(Socket socket)
 
 	Lock lock(&m_queueLocks[socket.m_socketFD]);
 
-	m_queues[socket.m_socketFD] = new MessageQueue(socket);
+	m_queues[socket.m_socketFD] = new MessageQueue(socket, m_forwardDirection);
 
 }
 
