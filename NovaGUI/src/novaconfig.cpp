@@ -1374,6 +1374,11 @@ void NovaConfig::on_applyButton_clicked()
 	m_loading->unlock();
 }
 
+void NovaConfig::SetSelectedNode(string node)
+{
+	m_currentNode = node;
+}
+
 bool NovaConfig::SaveConfigurationToFile()
 {
 	string line, prefix;
