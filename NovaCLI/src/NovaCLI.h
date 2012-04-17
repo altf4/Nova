@@ -47,6 +47,8 @@ void ClearAllSuspectsWrapper();
 
 void PrintSuspectList(enum SuspectListType listType);
 
+void PrintUptime();
+
 void PrintUsage();
 }
 

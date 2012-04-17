@@ -74,7 +74,9 @@ extern int watch;
 extern pthread_rwlock_t sessionLock;
 extern ClassificationEngine *engine;
 
-void *Nova::ClassificationLoop(void *ptr)
+namespace Nova
+{
+void *ClassificationLoop(void *ptr)
 {
 	MaskKillSignals();
 
@@ -131,7 +133,7 @@ void *Nova::ClassificationLoop(void *ptr)
 	return NULL;
 }
 
-void *Nova::TrainingLoop(void *ptr)
+void *TrainingLoop(void *ptr)
 {
 	MaskKillSignals();
 
@@ -165,7 +167,7 @@ void *Nova::TrainingLoop(void *ptr)
 	return NULL;
 }
 
-void *Nova::SilentAlarmLoop(void *ptr)
+void *SilentAlarmLoop(void *ptr)
 {
 	MaskKillSignals();
 
@@ -253,13 +255,18 @@ void *Nova::SilentAlarmLoop(void *ptr)
 			close(connectionSocket);
 			continue;
 		}
+
 		CryptBuffer(buf, bytesRead, DECRYPT);
 
 		in_addr_t addr = 0;
 		memcpy(&addr, buf, 4);
 		uint64_t key = addr;
 		Suspect * newSuspect = new Suspect();
-		newSuspect->DeserializeSuspectWithData(buf, BROADCAST_DATA);
+		if(newSuspect->Deserialize(buf, true, BROADCAST_DATA) == 0)
+		{
+			close(connectionSocket);
+			continue;
+		}
 		//If this suspect exists, update the information
 		if(suspects.IsValidKey(key))
 		{
@@ -295,7 +302,7 @@ void *Nova::SilentAlarmLoop(void *ptr)
 	return NULL;
 }
 
-void *Nova::UpdateIPFilter(void *ptr)
+void *UpdateIPFilter(void *ptr)
 {
 	MaskKillSignals();
 
@@ -342,7 +349,7 @@ void *Nova::UpdateIPFilter(void *ptr)
 	return NULL;
 }
 
-void *Nova::TCPTimeout(void *ptr)
+void *TCPTimeout(void *ptr)
 {
 	MaskKillSignals();
 	do
@@ -442,4 +449,5 @@ void *Nova::TCPTimeout(void *ptr)
 	}
 	LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
 	return NULL;
+}
 }

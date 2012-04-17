@@ -64,6 +64,9 @@ struct sockaddr_in hostAddr;
 time_t lastLoadTime;
 time_t lastSaveTime;
 
+// Time novad started, used for uptime and pcap capture names
+time_t startTime;
+
 string trainingCapFile;
 
 ofstream trainingFileStream;
@@ -128,13 +131,19 @@ int RunNovaD()
 	lastLoadTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
 	{
-		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
+		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
 	}
 
 	lastSaveTime = time(NULL);
 	if(lastSaveTime == ((time_t)-1))
 	{
-		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
+		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
+	}
+
+	startTime = time(NULL);
+	if(startTime == ((time_t)-1))
+	{
+		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
 	}
 
 	//Need to load the configuration before making the Classification Engine for setting up the DM
@@ -222,7 +231,7 @@ int RunNovaD()
 
 bool LockNovad()
 {
-	int lockFile = open((Config::Inst()->GetPathHome() + "novad.lock").data(), O_CREAT | O_RDWR, 0666);
+	int lockFile = open((Config::Inst()->GetPathHome() + "/novad.lock").data(), O_CREAT | O_RDWR, 0666);
 	int rc = flock(lockFile, LOCK_EX | LOCK_NB);
 	if(rc)
 	{
@@ -280,7 +289,7 @@ void AppendToStateFile()
 		}
 		else
 		{
-			dataSize += currentSuspect.SerializeSuspectWithData(tableBuffer);
+			dataSize += currentSuspect.Serialize(tableBuffer, true);
 		}
 	}
 	// No suspects with packets to update
@@ -316,7 +325,7 @@ void AppendToStateFile()
 		{
 			continue;
 		}
-		dataSize = suspectCopy.SerializeSuspectWithData(tableBuffer);
+		dataSize = suspectCopy.Serialize(tableBuffer, true);
 		suspectsSinceLastSave.CheckIn(&suspectCopy);
 		out.write((char*) tableBuffer, dataSize);
 	}
@@ -394,7 +403,7 @@ void LoadStateFile()
 		{
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
-			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->Deserialize(tableBuffer + bytesSoFar + suspectBytes);
 
 			FeatureSet fs = newSuspect->GetFeatureSet();
 			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
@@ -508,7 +517,7 @@ void RefreshStateFile()
 		{
 			Suspect* newSuspect = new Suspect();
 			uint32_t suspectBytes = 0;
-			suspectBytes += newSuspect->DeserializeSuspect(tableBuffer + bytesSoFar + suspectBytes);
+			suspectBytes += newSuspect->Deserialize(tableBuffer + bytesSoFar + suspectBytes);
 
 			FeatureSet fs = newSuspect->GetFeatureSet();
 			suspectBytes += fs.DeserializeFeatureData(tableBuffer + bytesSoFar + suspectBytes);
@@ -574,15 +583,15 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 	int sockfd = 0;
 	string commandLine;
 	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
-	u_char serializedBuffer[MAX_MSG_SIZE];
 
-	uint dataLen = suspect->SerializeSuspect(serializedBuffer);
+	uint32_t dataLen = suspect->GetSerializeLength(true);
+	u_char serializedBuffer[dataLen];
 
 	if(suspect->GetUnsentFeatureSet().m_packetCount)
 	{
 		do
 		{
-			dataLen = suspect->SerializeSuspectWithData(serializedBuffer);
+			dataLen = suspect->Serialize(serializedBuffer, true);
 			// Move the unsent data to the sent side
 			suspect->UpdateFeatureData(INCLUDE);
 			// Clear the unsent data

@@ -8,7 +8,7 @@ _novacli()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    opts="status start stop list get"
+    opts="status start stop list get uptime"
     components="nova haystack"
     listtypes="all hostile benign" 
 
@@ -30,6 +30,11 @@ _novacli()
 	
 	clear)	
 	    COMPREPLY=( $(compgen -W "all" -- ${cur}) )
+	return 0
+	;;
+	
+	uptime)	
+	    COMPREPLY=()
 	return 0
 	;;
     

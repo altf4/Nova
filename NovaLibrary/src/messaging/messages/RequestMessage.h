@@ -25,7 +25,7 @@
 #include <vector>
 #include <arpa/inet.h>
 
-#define REQUEST_MSG_MIN_SIZE 3
+#define REQUEST_MSG_MIN_SIZE 2
 
 //The different message types
 enum RequestType: char
@@ -37,6 +37,10 @@ enum RequestType: char
 	// Request for an individual suspect
 	REQUEST_SUSPECT,
 	REQUEST_SUSPECT_REPLY,
+
+	// Request for the uptime of novad
+	REQUEST_UPTIME,
+	REQUEST_UPTIME_REPLY,
 };
 
 enum SuspectListType : char
@@ -79,6 +83,9 @@ public:
 	Suspect *m_suspect;
 	uint32_t m_suspectLength;
 	in_addr_t m_suspectAddress;
+
+	// For uptime
+	uint32_t m_uptime;
 
 protected:
 	//Serializes the requestinto a char array

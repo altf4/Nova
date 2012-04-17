@@ -31,10 +31,23 @@
 **********************************************************************/
 #define INHERITED_MAX 8
 
-enum profileType { static_IP = 0, staticDHCP = 1, randomDHCP = 2};
+enum profileIndex {
+	TYPE
+	, TCP_ACTION
+	, UDP_ACTION
+	, ICMP_ACTION
+	, PERSONALITY
+	, ETHERNET
+	, UPTIME
+	, DROP_RATE
+};
 
-enum profileIndex { TYPE = 0, TCP_ACTION = 1, UDP_ACTION = 2, ICMP_ACTION = 3,
-	PERSONALITY = 4, ETHERNET = 5, UPTIME = 6, DROP_RATE = 7};
+enum nodeConflictType : char
+{
+	NO_CONFLICT,
+	IP_CONFLICT,
+	MAC_CONFLICT
+};
 
 //used to maintain information on imported scripts
 struct script
@@ -95,10 +108,9 @@ struct profile
 	std::string icmpAction;
 	std::string personality;
 	std::string ethernet;
-	std::string uptime;
-	std::string uptimeRange;
+	std::string uptimeMin;
+	std::string uptimeMax;
 	std::string dropRate;
-	profileType type;
 	bool inherited[INHERITED_MAX];
 	std::vector<std::pair<std::string, bool> > ports;
 	std::string parentProfile;
@@ -112,8 +124,6 @@ typedef google::dense_hash_map<std::string, profile, std::tr1::hash<std::string>
 struct node
 {
 	std::string name;
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * nodeItem;
 	std::string sub;
 	std::string interface;
 	std::string pfile;

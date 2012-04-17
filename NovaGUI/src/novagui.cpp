@@ -53,9 +53,8 @@ SuspectGUIHashTable SuspectTable;
  ************************************************/
 
 //Called when process receives a SIGINT, like if you press ctrl+c
-void sighandler(int param)
+void sighandler(int __attribute__((unused)) param)
 {
-	param = EXIT_SUCCESS;
 	if(!CloseNovadConnection())
 	{
 		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
@@ -93,7 +92,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 	// Create the dialog generator
 	m_prompter= new DialogPrompter();
-	m_honeydConfig = new HoneydConfiguration();
 
 	// Register our desired error message types
 	messageType t;
@@ -150,7 +148,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	t.type = warningPrompt;
 	NODE_LOAD_FAIL = m_prompter->RegisterDialog(t);
 
-	m_honeydConfig->LoadAllTemplates();
 
 	//This register meta type function needs to be called for any object types passed through a signal
 	qRegisterMetaType<in_addr_t>("in_addr_t");
@@ -162,8 +159,8 @@ NovaGUI::NovaGUI(QWidget *parent)
 	this->ui.suspectButton->setFlat(false);
 	this->ui.doppelButton->setFlat(false);
 	this->ui.haystackButton->setFlat(false);
-	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::QueuedConnection);
-	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::AutoConnection);
+	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::AutoConnection);
 
 	pthread_t StatusUpdateThread;
 
@@ -340,7 +337,7 @@ void NovaGUI::InitiateSystemStatus()
 
 bool NovaGUI::ConnectGuiToNovad()
 {
-	if(TryWaitConenctToNovad(2000))	//TODO: Call this asynchronously
+	if(TryWaitConnectToNovad(2000))	//TODO: Call this asynchronously
 	{
 		if(!StartCallbackLoop(this))
 		{
@@ -392,10 +389,21 @@ void NovaGUI::UpdateSystemStatus()
 	if(IsNovadUp(false))
 	{
 		item->setIcon(*m_greenIcon);
+
+		int uptime = GetUptime();
+		int uptimeSeconds =  uptime % 60;
+		int uptimeMinutes =  uptime / 60 % 60;
+		int uptimeHours =    uptime / 60 / 60;
+
+		stringstream ss;
+		ss << "Novad Uptime: " << uptimeHours << " hours : " << uptimeMinutes << " minutes : " << uptimeSeconds << " seconds";
+
+		ui.uptimeLabel->setText(QString::fromStdString(ss.str()));
 	}
 	else
 	{
 		item->setIcon(*m_redIcon);
+		ui.uptimeLabel->setText(QString());
 	}
 
 	//Haystack

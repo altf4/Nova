@@ -24,6 +24,7 @@
 #include "NovaComplexDialog.h"
 
 #include <boost/foreach.hpp>
+#include <netinet/in.h>
 #include <QFileDialog>
 #include <arpa/inet.h>
 #include <errno.h>
@@ -46,6 +47,8 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	m_nodeTreeMenu = new QMenu(this);
 	m_loading = new QMutex(QMutex::NonRecursive);
 
+	m_honeydConfig = new HoneydConfiguration();
+
     //Keys used to maintain and lookup current selections
     m_currentProfile = "";
     m_currentNode = "";
@@ -59,21 +62,11 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	//store current directory / base path for Nova
 	m_homePath = home;
 
-	//Initialize hash tables
-	m_subnets.set_empty_key("");
-	m_subnets.set_deleted_key("DELETED");
-	m_nodes.set_empty_key("");
-	m_nodes.set_deleted_key("DELETED");
-	m_profiles.set_empty_key("");
-	m_profiles.set_deleted_key("DELETED");
-	m_ports.set_empty_key("");
-	m_ports.set_deleted_key("DELETED");
-	m_scripts.set_empty_key("");
-	m_scripts.set_deleted_key("DELETED");
 
 	//Store parent and load UI
 	m_mainwindow = (NovaGUI*)parent;
-
+	//Set up a Reference to the dialog prompter
+	m_prompter = m_mainwindow->m_prompter;
 	// Set up the GUI
 	ui.setupUi(this);
 	SetInputValidators();
@@ -82,8 +75,6 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	LoadNovadPreferences();
 	PullData();
 	LoadHaystackConfiguration();
-
-	m_macAddresses.LoadPrefixFile();
 
 	LoadNmapPersonalitiesFromFile();
 	m_loading->unlock();
@@ -105,6 +96,66 @@ NovaConfig::~NovaConfig()
 {
 
 }
+
+
+//Saves the changes to parent novagui window
+void NovaConfig::PushData()
+{
+	//Clean up unused ports
+	CleanPorts();
+
+	string path = "";
+	//TODO Implement this once we support multiple configurations
+	/*switch(Config::Inst()->GetHaystackStorage())
+	{
+		default:
+		{
+			break;
+		}
+	}
+	//m_honeydConfig->SetHomePath(path);
+	*/
+
+	path = Config::Inst()->GetPathConfigHoneydHS();
+
+	/* Copies the tables
+	m_honeydConfig->SetScripts(m_honeydConfig->m_scripts);
+	mainwindow->m_honeydConfig->SetProfiles(m_profiles);
+	m_honeydConfig->SetSubnets(m_honeydConfig->m_subnets);
+	m_honeydConfig->SetNodes(m_nodes);
+	m_honeydConfig->SetPorts(m_honeydConfig->m_ports);
+	*/
+
+	//Saves the current configuration to XML files
+	m_honeydConfig->SaveAllTemplates();
+	m_honeydConfig->WriteHoneydConfiguration(path);
+
+}
+
+//Pulls the last stored configuration from novagui
+//used on start up or to undo all changes (currently defaults button)
+void NovaConfig::PullData()
+{
+	//Clears the tables
+	/*
+	m_honeydConfig->m_subnets.clear_no_resize();
+	m_nodes.clear_no_resize();
+	m_profiles.clear_no_resize();
+	m_honeydConfig->m_ports.clear_no_resize();
+	m_honeydConfig->m_scripts.clear_no_resize();
+	*/
+
+	/* Copies the tables
+	m_honeydConfig->m_scripts = m_honeydConfig->GetScripts();
+	m_honeydConfig->m_subnets = m_honeydConfig->GetSubnets();
+	m_nodes = m_honeydConfig->GetNodes();
+	m_honeydConfig->m_ports = m_honeydConfig->GetPorts();
+	m_profiles = m_honeydConfig->GetProfiles();
+	*/
+
+	m_honeydConfig->LoadAllTemplates();
+}
+
 
 void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 {
@@ -182,16 +233,16 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 	if(!ui.portTreeWidget->selectedItems().empty())
 	{
 		port * prt = NULL;
-		for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+		for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
 		{
 			if(ui.portTreeWidget->currentItem() == it->second.item)
 			{
 				//iterators are copies not the actual items
-				prt = &m_ports[it->second.portName];
+				prt = &m_honeydConfig->m_ports[it->second.portName];
 				break;
 			}
 		}
-		profile * p = &m_profiles[m_currentProfile];
+		profile * p = &m_honeydConfig->m_profiles[m_currentProfile];
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
 			if(!p->ports[i].first.compare(prt->portName))
@@ -205,12 +256,12 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 				//If the port isn't inherited and the profile has parents
 				else if(p->parentProfile.compare(""))
 				{
-					profile * parent = &m_profiles[p->parentProfile];
+					profile * parent = &m_honeydConfig->m_profiles[p->parentProfile];
 					uint j = 0;
 					//check for the inherited port
 					for(j = 0; j < parent->ports.size(); j++)
 					{
-						port temp = m_ports[parent->ports[j].first];
+						port temp = m_honeydConfig->m_ports[parent->ports[j].first];
 						if(!prt->portNum.compare(temp.portNum) && !prt->type.compare(temp.type))
 						{
 							p->ports[i].first = temp.portName;
@@ -245,9 +296,9 @@ void NovaConfig::on_actionAddPort_triggered()
 {
 	if(m_loading->tryLock())
 	{
-		if(m_profiles.find(m_currentProfile) != m_profiles.end())
+		if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
 		{
-			profile p = m_profiles[m_currentProfile];
+			profile p = m_honeydConfig->m_profiles[m_currentProfile];
 
 			port pr;
 			pr.portNum = "0";
@@ -283,10 +334,13 @@ void NovaConfig::on_actionAddPort_triggered()
 			behaviorBox->addItem("open");
 			behaviorBox->addItem("block");
 			behaviorBox->insertSeparator(3);
-			for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+
+			vector<string> scriptNames = m_honeydConfig->GetScriptNames();
+			for(vector<string>::iterator it = scriptNames.begin(); it != scriptNames.end(); it++)
 			{
-				behaviorBox->addItem((QString)it->first.c_str());
+				behaviorBox->addItem((QString)(*it).c_str());
 			}
+
 			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -306,7 +360,7 @@ void NovaConfig::on_actionAddPort_triggered()
 			bool conflict = false;
 			for(uint i = 0; i < p.ports.size(); i++)
 			{
-				port temp = m_ports[p.ports[i].first];
+				port temp = m_honeydConfig->m_ports[p.ports[i].first];
 				if(!pr.portNum.compare(temp.portNum) && !pr.type.compare(temp.type))
 				{
 					conflict = true;
@@ -315,17 +369,17 @@ void NovaConfig::on_actionAddPort_triggered()
 			if(!conflict)
 			{
 				p.ports.insert(p.ports.begin(),portPair);
-				m_ports[pr.portName] = pr;
-				m_profiles[p.name] = p;
+				m_honeydConfig->m_ports[pr.portName] = pr;
+				m_honeydConfig->m_profiles[p.name] = p;
 
 				portPair.second = true;
 				vector<profile> profList;
-				for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+				for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 				{
 					profile ptemp = it->second;
 					while(ptemp.parentProfile.compare("") && ptemp.parentProfile.compare(p.name))
 					{
-						ptemp = m_profiles[ptemp.parentProfile];
+						ptemp = m_honeydConfig->m_profiles[ptemp.parentProfile];
 					}
 					if(!ptemp.parentProfile.compare(p.name))
 					{
@@ -333,7 +387,7 @@ void NovaConfig::on_actionAddPort_triggered()
 						conflict = false;
 						for(uint i = 0; i < ptemp.ports.size(); i++)
 						{
-							port temp = m_ports[ptemp.ports[i].first];
+							port temp = m_honeydConfig->m_ports[ptemp.ports[i].first];
 							if(!pr.portNum.compare(temp.portNum) && !pr.type.compare(temp.type))
 							{
 								conflict = true;
@@ -344,12 +398,12 @@ void NovaConfig::on_actionAddPort_triggered()
 							ptemp.ports.insert(ptemp.ports.begin(),portPair);
 						}
 					}
-					m_profiles[ptemp.name] = ptemp;
+					m_honeydConfig->m_profiles[ptemp.name] = ptemp;
 				}
 			}
 			LoadProfileSettings();
 			SaveProfileSettings();
-			ui.portTreeWidget->editItem(m_ports[pr.portName].item, 0);
+			ui.portTreeWidget->editItem(m_honeydConfig->m_ports[pr.portName].item, 0);
 		}
 		m_loading->unlock();
 	}
@@ -364,16 +418,16 @@ void NovaConfig::on_actionDeletePort_triggered()
 	if(!ui.portTreeWidget->selectedItems().empty())
 	{
 		port * prt = NULL;
-		for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+		for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
 		{
 			if(ui.portTreeWidget->currentItem() == it->second.item)
 			{
 				//iterators are copies not the actual items
-				prt = &m_ports[it->second.portName];
+				prt = &m_honeydConfig->m_ports[it->second.portName];
 				break;
 			}
 		}
-		profile * p = &m_profiles[m_currentProfile];
+		profile * p = &m_honeydConfig->m_profiles[m_currentProfile];
 		uint i;
 		for(i = 0; i < p->ports.size(); i++)
 		{
@@ -383,13 +437,13 @@ void NovaConfig::on_actionDeletePort_triggered()
 				//If valid parent
 				if(p->parentProfile.compare(""))
 				{
-					profile * parent = &m_profiles[p->parentProfile];
+					profile * parent = &m_honeydConfig->m_profiles[p->parentProfile];
 					bool matched = false;
 					//check for the inherited port
 					for(uint j = 0; j < parent->ports.size(); j++)
 					{
-						if((!prt->type.compare(m_ports[parent->ports[j].first].type))
-								&& (!prt->portNum.compare(m_ports[parent->ports[j].first].portNum)))
+						if((!prt->type.compare(m_honeydConfig->m_ports[parent->ports[j].first].type))
+								&& (!prt->portNum.compare(m_honeydConfig->m_ports[parent->ports[j].first].portNum)))
 						{
 							p->ports[i].second = true;
 							p->ports[i].first = parent->ports[j].first;
@@ -408,7 +462,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 				}
 
 				//Check for children with inherited port.
-				for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+				for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 				{
 					if(!it->second.parentProfile.compare(p->name))
 					{
@@ -568,17 +622,6 @@ void NovaConfig::on_featureDisableButton_clicked()
 	AdvanceFeatureSelection();
 }
 
-//Inheritance Check boxes
-void NovaConfig::on_ipModeCheckBox_stateChanged()
-{
-	if(m_loading->tryLock())
-	{
-		SaveProfileSettings();
-		LoadProfileSettings();
-		m_loading->unlock();
-	}
-}
-
 void NovaConfig::on_ethernetCheckBox_stateChanged()
 {
 	if(m_loading->tryLock())
@@ -665,19 +708,19 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 	{
 		//Ensure the signaling item is selected
 		ui.portTreeWidget->setCurrentItem(item);
-		profile p = m_profiles[m_currentProfile];
+		profile p = m_honeydConfig->m_profiles[m_currentProfile];
 		string oldPort;
 		port oldPrt;
 
 		//Find the port before the changes
-		for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+		for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
 		{
 			if(it->second.item == item)
 			{
 				oldPort = it->second.portName;
 			}
 		}
-		oldPrt = m_ports[oldPort];
+		oldPrt = m_honeydConfig->m_ports[oldPort];
 
 		//Use the combo boxes to update the hidden text underneath them.
 		TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
@@ -693,7 +736,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 
 		port prt;
 		//Locate the port in the table or create the port if it doesn't exist
-		if(m_ports.find(portName) == m_ports.end())
+		if(m_honeydConfig->m_ports.find(portName) == m_honeydConfig->m_ports.end())
 		{
 			prt.portName = portName;
 			prt.portNum = item->text(0).toStdString();
@@ -705,17 +748,17 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 				prt.scriptName = prt.behavior;
 				prt.behavior = "script";
 			}
-			m_ports[portName] = prt;
+			m_honeydConfig->m_ports[portName] = prt;
 		}
 		else
 		{
-			prt = m_ports[portName];
+			prt = m_honeydConfig->m_ports[portName];
 		}
 
 		//Check for port conflicts
 		for(uint i = 0; i < p.ports.size(); i++)
 		{
-			port temp = m_ports[p.ports[i].first];
+			port temp = m_honeydConfig->m_ports[p.ports[i].first];
 			//If theres a conflict other than with the old port
 			if((!(temp.portNum.compare(prt.portNum))) && (!(temp.type.compare(prt.type)))
 					&& temp.portName.compare(oldPort))
@@ -743,12 +786,12 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 
 			//If the port number or protocol is different, check for inherited ports
 			if((prt.portNum.compare(oldPrt.portNum) || prt.type.compare(oldPrt.type))
-				&& (m_profiles.find(p.parentProfile) != m_profiles.end()))
+				&& (m_honeydConfig->m_profiles.find(p.parentProfile) != m_honeydConfig->m_profiles.end()))
 			{
-				profile parent = m_profiles[p.parentProfile];
+				profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 				for(uint i = 0; i < parent.ports.size(); i++)
 				{
-					port temp = m_ports[parent.ports[i].first];
+					port temp = m_honeydConfig->m_ports[parent.ports[i].first];
 					//If a parent's port matches the number and protocol of the old port being removed
 					if((!(temp.portNum.compare(oldPrt.portNum))) && (!(temp.type.compare(oldPrt.type))))
 					{
@@ -775,7 +818,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 			uint i = 0;
 			for(i = 0; i < p.ports.size(); i++)
 			{
-				port temp = m_ports[p.ports[i].first];
+				port temp = m_honeydConfig->m_ports[p.ports[i].first];
 				if((atoi(temp.portNum.c_str())) < (atoi(prt.portNum.c_str())))
 				{
 					continue;
@@ -791,7 +834,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 				p.ports.push_back(portPair);
 			}
 
-			m_profiles[p.name] = p;
+			m_honeydConfig->m_profiles[p.name] = p;
 			//Check for children who inherit the port
 			vector<string> updateList;
 			updateList.push_back(m_currentProfile);
@@ -804,7 +847,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 				//In this while, no changes have been found
 				changed = false;
 				//Check profile table for children of currentProfile at it's children and so on
-				for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+				for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 				{
 					//Profile invalid to add to start
 					valid = false;
@@ -835,17 +878,17 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 							}
 						}
 
-						profile parentTemp = m_profiles[ptemp.parentProfile];
+						profile parentTemp = m_honeydConfig->m_profiles[ptemp.parentProfile];
 
 						//insert any ports the parent has that doesn't conflict
 						for(uint i = 0; i < parentTemp.ports.size(); i++)
 						{
 							bool conflict = false;
-							port pr = m_ports[parentTemp.ports[i].first];
+							port pr = m_honeydConfig->m_ports[parentTemp.ports[i].first];
 							//Check the child for conflicts
 							for(uint j = 0; j < ptemp.ports.size(); j++)
 							{
-								port temp = m_ports[ptemp.ports[j].first];
+								port temp = m_honeydConfig->m_ports[ptemp.ports[j].first];
 								if(!temp.portNum.compare(pr.portNum) && !temp.type.compare(pr.type))
 								{
 									conflict = true;
@@ -859,7 +902,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 								uint j = 0;
 								for(j = 0; j < ptemp.ports.size(); j++)
 								{
-									port temp = m_ports[ptemp.ports[j].first];
+									port temp = m_honeydConfig->m_ports[ptemp.ports[j].first];
 									if((atoi(temp.portNum.c_str())) < (atoi(pr.portNum.c_str())))
 										continue;
 
@@ -876,7 +919,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 							}
 						}
 						updateList.push_back(ptemp.name);
-						m_profiles[ptemp.name] = ptemp;
+						m_honeydConfig->m_profiles[ptemp.name] = ptemp;
 						//Since we found at least one profile this iteration flag as changed
 						// so we can check for it's children
 						changed = true;
@@ -888,7 +931,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		LoadProfileSettings();
 		SaveProfileSettings();
 		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
-		ui.portTreeWidget->setCurrentItem(m_ports[prt.portName].item);
+		ui.portTreeWidget->setCurrentItem(m_honeydConfig->m_ports[prt.portName].item);
 		m_loading->unlock();
 		LoadAllProfiles();
 	}
@@ -992,8 +1035,8 @@ void NovaConfig::LoadNmapPersonalitiesFromFile()
 				//Remove 'Fingerprint ' prefix.
 				line = line.substr(prefix.size()+1,line.size());
 				//If there are multiple fingerprints on this line, locate the end of the first.
-				uint i = line.find(" or", 0);
-				uint j = line.find(";", 0);
+				size_t i = line.find(" or", 0);
+				size_t j = line.find(";", 0);
 
 				//trim the line down to the first fingerprint
 				if((i != string::npos) && (j != string::npos))
@@ -1041,17 +1084,6 @@ void NovaConfig::LoadNmapPersonalitiesFromFile()
 	nmapPers.close();
 }
 
-string NovaConfig::GenerateUniqueMACAddress(string vendor)
-{
-	string addrStrm;
-	do
-	{
-		addrStrm = m_macAddresses.GenerateRandomMAC(vendor);
-
-	}while(m_nodes.find(addrStrm) != m_nodes.end());
-
-	return addrStrm;
-}
 
 //Load Personality choices from nmap fingerprints file
 void NovaConfig::DisplayNmapPersonalityWindow()
@@ -1064,165 +1096,8 @@ void NovaConfig::DisplayNmapPersonalityWindow()
 		ui.personalityEdit->setText((QString)m_retVal.c_str());
 	}
 }
-bool NovaConfig::SyncAllNodesWithProfiles()
-{
-	bool nameUnique = false;
-	stringstream ss;
-	uint i = 0, j = 0;
-	j = ~j; // 2^32-1
-	vector<string> delList;
-	vector<node> addList;
-	string prefix = "";
 
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		node tempNode = it->second;
-		if(tempNode.name.compare("Doppelganger"))
-		{
-			 switch(m_profiles[tempNode.pfile].type)
-			 {
-				case static_IP:
-				{
-					//If name/key is not the IP
-					if(it->second.name.compare(tempNode.IP))
-					{
-						if(m_nodes.find(tempNode.IP) != m_nodes.end())
-						{
-							uint i;
-							for(i = 0; i < addList.size(); i++)
-							{
-								if(!addList[i].name.compare(tempNode.IP))
-								{
-									break;
-								}
-								//Ensures that at least one node will remain if there is a conflict
-								if((i+1) == addList.size())
-								{
-									addList.push_back(tempNode);
-								}
-							}
-							if(i == addList.size())
-							{
-								m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->NODE_LOAD_FAIL, "Statically addressed node using "
-									"profile " + tempNode.pfile + " requires a unique IP Address. Conflicting node has been deleted.");
-							}
-							delList.push_back(it->second.name);
-						}
-						else
-						{
-							if(!tempNode.name.compare(m_currentNode))
-							{
-								m_currentNode = tempNode.IP;
-							}
-							tempNode.name = tempNode.IP;
-							delList.push_back(it->second.name);
-							addList.push_back(tempNode);
-						}
-					}
-					break;
-				}
-				case staticDHCP:
-				{
-					//If there is no MAC
-					if(!tempNode.MAC.size())
-					{
-						tempNode.MAC = GenerateUniqueMACAddress(m_profiles[tempNode.pfile].ethernet);
-					}
-					//If name/key is not the MAC
-					if(it->second.name.compare(tempNode.MAC))
-					{
-						if(m_nodes.find(tempNode.MAC) != m_nodes.end())
-						{
-							m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->NODE_LOAD_FAIL, "DHCP Enabled node using profile "
-									"" + tempNode.pfile + " requires a unique MAC Address. Conflicting node has been deleted.");
-							delList.push_back(it->second.name);
-						}
-						else
-						{
-							if(!tempNode.name.compare(m_currentNode))
-							{
-								m_currentNode = tempNode.MAC;
-							}
-							tempNode.name = tempNode.MAC;
-							delList.push_back(it->second.name);
-							addList.push_back(tempNode);
-						}
-					}
-					break;
-				}
-				case randomDHCP:
-				{
-					prefix = tempNode.pfile + " on " + tempNode.interface;
-					//If the key is at least long enough to be correct
-					if(it->second.name.size() >= prefix.size())
-					{
-						//If the key starts with the correct prefix do nothing
-						if(!it->second.name.substr(0,prefix.size()).compare(prefix))
-						{
-							break;
-						}
-					}
-					//If the key doesn't start with the correct prefix, generate the correct name
-					if(!tempNode.name.compare(m_currentNode))
-					{
-						m_currentNode = prefix;
-					}
-					tempNode.name = prefix;
-					i = 0;
-					ss.str("");
-					//Finds a unique identifier
-					while(i < j)
-					{
-						nameUnique = true;
-						for(uint k = 0; k < addList.size(); k++)
-						{
-							if(!addList[k].name.compare(tempNode.name))
-								nameUnique = false;
-						}
-						if(m_nodes.find(tempNode.name) != m_nodes.end())
-						{
-							nameUnique = false;
-						}
 
-						if(nameUnique)
-						{
-							break;
-						}
-						i++;
-						ss.str("");
-						ss << tempNode.pfile << " on " << tempNode.interface << "-" << i;
-						tempNode.name = ss.str();
-					}
-					if(!prefix.compare(m_currentNode))
-					{
-						m_currentNode = tempNode.name;
-					}
-					delList.push_back(it->second.name);
-					addList.push_back(tempNode);
-					break;
-				}
-				default:
-				{
-					break;
-				}
-			 }
-		}
-	}
-	while(!delList.empty())
-	{
-		string delStr = delList.back();
-		delList.pop_back();
-		DeleteNode(&m_nodes[delStr]);
-	}
-	while(!addList.empty())
-	{
-		node tempNode = addList.back();
-		addList.pop_back();
-		m_nodes[tempNode.name] = tempNode;
-		m_subnets[tempNode.sub].nodes.push_back(tempNode.name);
-	}
-	return true;
-}
 //Load MAC vendor prefix choices from nmap mac prefix file
 bool NovaConfig::DisplayMACPrefixWindow()
 {
@@ -1235,30 +1110,26 @@ bool NovaConfig::DisplayMACPrefixWindow()
 		ui.ethernetEdit->setText((QString)m_retVal.c_str());
 
 		//If there is no change in vendor, nothing left to be done.
-		if(m_profiles[m_currentProfile].ethernet.compare(m_retVal))
+		if(m_honeydConfig->m_profiles[m_currentProfile].ethernet.compare(m_retVal))
 		{
 			return true;
 		}
-		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-		{
-			if(!it->second.pfile.compare(m_currentProfile))
-			{
-				it->second.MAC = GenerateUniqueMACAddress(m_retVal);
-			}
-		}
+
+		m_honeydConfig->RegenerateMACAddresses(m_currentProfile);
+
 		//If IP's arent staticDHCP, key wont change so do nothing
-		if(m_profiles[m_currentProfile].type != staticDHCP)
-		{
-			return true;
-		}
-		if(SyncAllNodesWithProfiles())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		//if(m_honeydConfig->m_profiles[m_currentProfile].type != staticDHCP)
+		//{
+		//	return true;
+		//}
+		//if(SyncAllNodesWithProfiles())
+		//{
+		//	return true;
+		//}
+		//else
+		//{
+		//	return false;
+		//}
 	}
 	return false;
 }
@@ -1364,8 +1235,6 @@ void NovaConfig::LoadNovadPreferences()
 //Draws the current honeyd configuration
 void NovaConfig::LoadHaystackConfiguration()
 {
-	//Sets an initial selection
-	UpdateLookupKeys();
 	//Draws all profile heriarchy
 	m_loading->unlock();
 	LoadAllProfiles();
@@ -1380,10 +1249,10 @@ void NovaConfig::CleanPorts()
 {
 	vector<string> delList;
 	bool found;
-	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+	for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
 	{
 		found = false;
-		for(ProfileTable::iterator jt = m_profiles.begin(); (jt != m_profiles.end()) && !found; jt++)
+		for(ProfileTable::iterator jt = m_honeydConfig->m_profiles.begin(); (jt != m_honeydConfig->m_profiles.end()) && !found; jt++)
 		{
 			for(uint i = 0; (i < jt->second.ports.size()) && !found; i++)
 			{
@@ -1400,128 +1269,11 @@ void NovaConfig::CleanPorts()
 	}
 	while(!delList.empty())
 	{
-		m_ports.erase(delList.back());
+		m_honeydConfig->m_ports.erase(delList.back());
 		delList.pop_back();
 	}
 }
 
-//Saves the changes to parent novagui window
-void NovaConfig::PushData()
-{
-	//Clean up unused ports
-	CleanPorts();
-
-	string path = "";
-	//TODO Implement this once we support multiple configurations
-	/*switch(Config::Inst()->GetHaystackStorage())
-	{
-		default:
-		{
-			break;
-		}
-	}*/
-	path = Config::Inst()->GetPathHome();
-
-	m_mainwindow->m_honeydConfig->SetHomePath(path);
-
-	//Copies the tables
-	m_mainwindow->m_honeydConfig->SetScripts(m_scripts);
-	m_mainwindow->m_honeydConfig->SetProfiles(m_profiles);
-	m_mainwindow->m_honeydConfig->SetSubnets(m_subnets);
-	m_mainwindow->m_honeydConfig->SetNodes(m_nodes);
-	m_mainwindow->m_honeydConfig->SetPorts(m_ports);
-
-	//Saves the current configuration to XML files
-	m_mainwindow->m_honeydConfig->SaveAllTemplates();
-	m_mainwindow->m_honeydConfig->WriteHoneydConfiguration(path);
-
-}
-
-//Pulls the last stored configuration from novagui
-//used on start up or to undo all changes (currently defaults button)
-void NovaConfig::PullData()
-{
-	//Clears the tables
-	m_subnets.clear_no_resize();
-	m_nodes.clear_no_resize();
-	m_profiles.clear_no_resize();
-	m_ports.clear_no_resize();
-	m_scripts.clear_no_resize();
-
-	//Copies the tables
-	m_scripts = m_mainwindow->m_honeydConfig->GetScripts();
-	m_subnets = m_mainwindow->m_honeydConfig->GetSubnets();
-	m_nodes = m_mainwindow->m_honeydConfig->GetNodes();
-	m_ports = m_mainwindow->m_honeydConfig->GetPorts();
-	m_profiles = m_mainwindow->m_honeydConfig->GetProfiles();
-}
-
-//Attempts to use the same key previously used, if that key is no longer available
-//It selects a new one if possible
-void NovaConfig::UpdateLookupKeys()
-{
-	if(m_selectedSubnet)
-	{
-		//Asserts the subnet still exists
-		if(m_subnets.find(m_currentSubnet) == m_subnets.end())
-		{
-			//If not it sets it to the front or NULL
-			if(m_subnets.size())
-			{
-				m_currentNode = "";
-				m_currentSubnet = m_subnets.begin()->first;
-			}
-			else
-			{
-				m_selectedSubnet = false;
-				m_currentSubnet = "";
-			}
-		}
-	}
-	else if(!m_selectedSubnet)
-	{
-
-		//Asserts the node still exists
-		if(m_nodes.find(m_currentNode) != m_nodes.end())
-		{
-			m_currentSubnet = m_nodes[m_currentNode].sub;
-		}
-		//If not it sets it to the front or NULL
-		else if(m_nodes.size())
-		{
-			m_currentNode = m_nodes.begin()->first;
-			m_currentSubnet = m_nodes[m_currentNode].sub;
-		}
-		//should never get hit since we have a doppelganger but is here just incase
-		else
-		{
-			m_currentNode = "";
-			if(m_subnets.size())
-			{
-				m_currentSubnet = m_subnets.begin()->first;
-				m_selectedSubnet = true;
-			}
-			else
-			{
-				m_currentSubnet = "";
-			}
-		}
-	}
-
-	//Asserts the profile still exists
-	if(m_profiles.find(m_currentProfile) == m_profiles.end())
-	{
-		//If not it sets it to the front or NULL
-		if(m_profiles.size())
-		{
-			m_currentProfile = m_profiles.begin()->first;
-		}
-		else
-		{
-			m_currentProfile = "";
-		}
-	}
-}
 /************************************************
  * Browse file system dialog box signals
  ************************************************/
@@ -1697,7 +1449,7 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	//Reloads from NOVAConfig
 	LoadNovadPreferences();
 	//Has NovaGUI reload honeyd configuration from XML files
-	m_mainwindow->m_honeydConfig->LoadAllTemplates();
+	m_honeydConfig->LoadAllTemplates();
 	//Pulls honeyd configuration
 	PullData();
 	m_loading->lock();
@@ -1711,7 +1463,7 @@ void NovaConfig::on_menuTreeWidget_itemSelectionChanged()
 	QTreeWidgetItem * item = ui.menuTreeWidget->selectedItems().first();
 
 	//If last window was the profile window, save any changes
-	if(m_editingItems && m_profiles.size())
+	if(m_editingItems && m_honeydConfig->m_profiles.size())
 	{
 		SaveProfileSettings();
 	}
@@ -1767,7 +1519,16 @@ void NovaConfig::on_dmCheckBox_stateChanged(int state)
 	{
 		return;
 	}
-	m_nodes["Doppelganger"].enabled = state;
+
+	if (state)
+	{
+		m_honeydConfig->EnableNode("Doppelganger");
+	}
+	else
+	{
+		m_honeydConfig->DisableNode("Doppelganger");
+	}
+
 	m_loading->unlock();
 	LoadAllNodes();
 }
@@ -1782,38 +1543,6 @@ void NovaConfig::on_pcapCheckBox_stateChanged(int state)
 
 /******************************************
  * Profile Menu GUI Functions *************/
-
-/* Enables or disables options specific for reading from pcap file */
-void NovaConfig::on_dhcpComboBox_currentIndexChanged(int index)
-{
-	if(!m_loading->tryLock())
-	{
-		return;
-	}
-
-	vector<string> delList;
-	vector<node> addList;
-
-	//If the current ethernet is an invalid selection
-	//TODO this should display a dialog asking the user if they wish to pick a valid ethernet or cancel mode change
-	if(m_macAddresses.IsVendorValid(m_profiles[m_currentProfile].ethernet) && (index == staticDHCP))
-	{
-		if(!DisplayMACPrefixWindow())
-		{
-			ui.dhcpComboBox->setCurrentIndex((int)m_profiles[m_currentProfile].type);
-			m_loading->unlock();
-			return;
-		}
-	}
-
-	m_profiles[m_currentProfile].type = (profileType)index;
-	ui.dhcpComboBox->setCurrentIndex((int)m_profiles[m_currentProfile].type);
-	SaveProfileSettings();
-	LoadProfileSettings();
-	SyncAllNodesWithProfiles();
-	m_loading->unlock();
-	LoadAllNodes();
-}
 
 //Combo box signal for changing the uptime behavior
 void NovaConfig::on_uptimeBehaviorComboBox_currentIndexChanged(int index)
@@ -1834,27 +1563,28 @@ void NovaConfig::SaveProfileSettings()
 	struct port pr;
 
 	//Saves any modifications to the last selected profile object.
-	if(m_profiles.find(m_currentProfile) != m_profiles.end())
+	if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
 	{
-		profile p = m_profiles[m_currentProfile];
+		profile p = m_honeydConfig->m_profiles[m_currentProfile];
 		//currentProfile->name is set in updateProfile
 		p.ethernet = ui.ethernetEdit->displayText().toStdString();
 		p.tcpAction = ui.tcpActionComboBox->currentText().toStdString();
 		p.udpAction = ui.udpActionComboBox->currentText().toStdString();
 		p.icmpAction = ui.icmpActionComboBox->currentText().toStdString();
-		p.uptime = ui.uptimeEdit->displayText().toStdString();
+
+
+		p.uptimeMin = ui.uptimeEdit->displayText().toStdString();
 		//If random in range behavior
 		if(ui.uptimeBehaviorComboBox->currentIndex())
 		{
-			p.uptimeRange = ui.uptimeRangeEdit->displayText().toStdString();
+			p.uptimeMax = ui.uptimeRangeEdit->displayText().toStdString();
 		}
 		//If flat behavior
 		else
 		{
-			p.uptimeRange = "";
+			p.uptimeMax = p.uptimeMin;
 		}
 		p.personality = ui.personalityEdit->displayText().toStdString();
-		p.type = (profileType)ui.dhcpComboBox->currentIndex();
 		stringstream ss;
 		ss << ui.dropRateSlider->value();
 		p.dropRate = ss.str();
@@ -1862,7 +1592,7 @@ void NovaConfig::SaveProfileSettings()
 		//Save the port table
 		for(int i = 0; i < ui.portTreeWidget->topLevelItemCount(); i++)
 		{
-			pr = m_ports[p.ports[i].first];
+			pr = m_honeydConfig->m_ports[p.ports[i].first];
 			item = ui.portTreeWidget->topLevelItem(i);
 			pr.portNum = item->text(0).toStdString();
 			TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
@@ -1889,10 +1619,10 @@ void NovaConfig::SaveProfileSettings()
 			}
 
 			p.ports[i].first = pr.portName;
-			m_ports[p.ports[i].first] = pr;
+			m_honeydConfig->m_ports[p.ports[i].first] = pr;
 			p.ports[i].second = item->font(0).italic();
 		}
-		m_profiles[m_currentProfile] = p;
+		m_honeydConfig->m_profiles[m_currentProfile] = p;
 		SaveInheritedProfileSettings();
 		CreateProfileTree(m_currentProfile);
 	}
@@ -1900,40 +1630,34 @@ void NovaConfig::SaveProfileSettings()
 
 void NovaConfig::SaveInheritedProfileSettings()
 {
-	profile p = m_profiles[m_currentProfile];
-
-	p.inherited[TYPE] = ui.ipModeCheckBox->isChecked();
-	if(ui.ipModeCheckBox->isChecked())
-	{
-		p.type = m_profiles[p.parentProfile].type;
-	}
+	profile p = m_honeydConfig->m_profiles[m_currentProfile];
 
 	p.inherited[TCP_ACTION] = ui.tcpCheckBox->isChecked();
 	if(ui.tcpCheckBox->isChecked())
 	{
-		p.tcpAction = m_profiles[p.parentProfile].tcpAction;
+		p.tcpAction = m_honeydConfig->m_profiles[p.parentProfile].tcpAction;
 	}
 	p.inherited[UDP_ACTION] = ui.udpCheckBox->isChecked();
 	if(ui.udpCheckBox->isChecked())
 	{
-		p.udpAction = m_profiles[p.parentProfile].udpAction;
+		p.udpAction = m_honeydConfig->m_profiles[p.parentProfile].udpAction;
 	}
 	p.inherited[ICMP_ACTION] = ui.icmpCheckBox->isChecked();
 	if(ui.icmpCheckBox->isChecked())
 	{
-		p.icmpAction = m_profiles[p.parentProfile].icmpAction;
+		p.icmpAction = m_honeydConfig->m_profiles[p.parentProfile].icmpAction;
 	}
 	p.inherited[ETHERNET] = ui.ethernetCheckBox->isChecked();
 	if(ui.ethernetCheckBox->isChecked())
 	{
-		p.ethernet = m_profiles[p.parentProfile].ethernet;
+		p.ethernet = m_honeydConfig->m_profiles[p.parentProfile].ethernet;
 	}
 	p.inherited[UPTIME] = ui.uptimeCheckBox->isChecked();
 	if(ui.uptimeCheckBox->isChecked())
 	{
-		p.uptime = m_profiles[p.parentProfile].uptime;
-		p.uptimeRange = m_profiles[p.parentProfile].uptimeRange;
-		if(m_profiles[p.parentProfile].uptimeRange.compare(""))
+		p.uptimeMin = m_honeydConfig->m_profiles[p.parentProfile].uptimeMin;
+		p.uptimeMax = m_honeydConfig->m_profiles[p.parentProfile].uptimeMax;
+		if(m_honeydConfig->m_profiles[p.parentProfile].uptimeMin == m_honeydConfig->m_profiles[p.parentProfile].uptimeMax)
 		{
 			ui.uptimeBehaviorComboBox->setCurrentIndex(1);
 		}
@@ -1946,21 +1670,21 @@ void NovaConfig::SaveInheritedProfileSettings()
 	p.inherited[PERSONALITY] = ui.personalityCheckBox->isChecked();
 	if(ui.personalityCheckBox->isChecked())
 	{
-		p.personality = m_profiles[p.parentProfile].personality;
+		p.personality = m_honeydConfig->m_profiles[p.parentProfile].personality;
 	}
 	p.inherited[DROP_RATE] = ui.dropRateCheckBox->isChecked();
 	if(ui.dropRateCheckBox->isChecked())
 	{
-		p.dropRate = m_profiles[p.parentProfile].dropRate;
+		p.dropRate = m_honeydConfig->m_profiles[p.parentProfile].dropRate;
 	}
-	m_profiles[m_currentProfile] = p;
+	m_honeydConfig->m_profiles[m_currentProfile] = p;
 
 }
 //Removes a profile, all of it's children and any nodes that currently use it
 void NovaConfig::DeleteProfile(string name)
 {
 	//Recursive descent to find and call delete on any children of the profile
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 	{
 		//If the profile at the iterator is a child of this profile
 		if(!it->second.parentProfile.compare(name))
@@ -1973,15 +1697,15 @@ void NovaConfig::DeleteProfile(string name)
 	if(!name.compare(m_currentProfile))
 	{
 		//Store a copy of the profile for cleanup after deletion
-		profile  p = m_profiles[name];
+		profile  p = m_honeydConfig->m_profiles[name];
 
 		QTreeWidgetItem * item = NULL, *temp = NULL;
 
 		//If there is at least one other profile after deleting all children
-		if(m_profiles.size() > 1)
+		if(m_honeydConfig->m_profiles.size() > 1)
 		{
 			//Get the current profile item
-			item = m_profiles[m_currentProfile].profileItem;
+			item = m_honeydConfig->m_profiles[m_currentProfile].profileItem;
 			//Try to find another profile below it
 			temp = ui.profileTreeWidget->itemBelow(item);
 
@@ -2000,16 +1724,16 @@ void NovaConfig::DeleteProfile(string name)
 		ui.hsProfileTreeWidget->removeItemWidget(p.item, 0);
 
 		//Clear the tree of the current profile (may not be needed)
-		m_profiles[name].tree.clear();
+		m_honeydConfig->m_profiles[name].tree.clear();
 
 		//Erase the profile from the table and any nodes that use it
-		UpdateProfile(DELETE_PROFILE, &m_profiles[name]);
+		m_honeydConfig->UpdateProfile(DELETE_PROFILE, &m_honeydConfig->m_profiles[name]);
 
 		//If this profile has a parent
 		if(p.parentProfile.compare(""))
 		{
 			//save a copy of the parent
-			profile parent = m_profiles[p.parentProfile];
+			profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 
 			//point to the profiles subtree of parent-copy ptree and clear it
 			ptree * pt = &parent.tree.get_child("profiles");
@@ -2020,7 +1744,7 @@ void NovaConfig::DeleteProfile(string name)
 			//* but boost's iterator implementation doesn't seem to be able to access data
 			//* correctly and are frequently invalidated.
 
-			for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+			for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 			{
 				if(!it->second.parentProfile.compare(parent.name))
 				{
@@ -2030,7 +1754,7 @@ void NovaConfig::DeleteProfile(string name)
 			}	//parent-copy now has the ptree of all children except deleted profile
 
 			//point to the original parent's profiles subtree and replace it with our new ptree
-			ptree * treePtr = &m_profiles[p.parentProfile].tree.get_child("profiles");
+			ptree * treePtr = &m_honeydConfig->m_profiles[p.parentProfile].tree.get_child("profiles");
 			treePtr->clear();
 			*treePtr = *pt;
 
@@ -2055,7 +1779,7 @@ void NovaConfig::DeleteProfile(string name)
 	else
 	{
 		//Erase the profile from the table and any nodes that use it
-		UpdateProfile(DELETE_PROFILE, &m_profiles[name]);
+		m_honeydConfig->UpdateProfile(DELETE_PROFILE, &m_honeydConfig->m_profiles[name]);
 	}
 }
 
@@ -2065,7 +1789,7 @@ void NovaConfig::LoadProfileSettings()
 	port pr;
 	QTreeWidgetItem * item = NULL;
 	//If the selected profile can be found
-	if(m_profiles.find(m_currentProfile) != m_profiles.end())
+	if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
 	{
 		LoadInheritedProfileSettings();
 		//Clear the tree widget and load new selections
@@ -2080,18 +1804,18 @@ void NovaConfig::LoadProfileSettings()
 
 		ui.portTreeWidget->clear();
 
-		profile * p = &m_profiles[m_currentProfile];
+		profile * p = &m_honeydConfig->m_profiles[m_currentProfile];
 		//Set the variables of the profile
 		ui.profileEdit->setText((QString)p->name.c_str());
 		ui.ethernetEdit->setText((QString)p->ethernet.c_str());
 		ui.tcpActionComboBox->setCurrentIndex( ui.tcpActionComboBox->findText(p->tcpAction.c_str() ) );
 		ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->udpAction.c_str() ) );
 		ui.icmpActionComboBox->setCurrentIndex( ui.icmpActionComboBox->findText(p->icmpAction.c_str() ) );
-		ui.uptimeEdit->setText((QString)p->uptime.c_str());
-		if(p->uptimeRange.compare(""))
+		ui.uptimeEdit->setText((QString)p->uptimeMin.c_str());
+		if(p->uptimeMax != p->uptimeMin)
 		{
 			ui.uptimeBehaviorComboBox->setCurrentIndex(1);
-			ui.uptimeRangeEdit->setText((QString)p->uptimeRange.c_str());
+			ui.uptimeRangeEdit->setText((QString)p->uptimeMax.c_str());
 			ui.uptimeRangeLabel->setVisible(true);
 			ui.uptimeRangeEdit->setVisible(true);
 		}
@@ -2102,7 +1826,6 @@ void NovaConfig::LoadProfileSettings()
 			ui.uptimeRangeEdit->setVisible(false);
 		}
 		ui.personalityEdit->setText((QString)p->personality.c_str());
-		ui.dhcpComboBox->setCurrentIndex(p->type);
 		if(p->dropRate.size())
 		{
 			ui.dropRateSlider->setValue(atoi(p->dropRate.c_str()));
@@ -2119,7 +1842,7 @@ void NovaConfig::LoadProfileSettings()
 		//Populate the port table
 		for(uint i = 0; i < p->ports.size(); i++)
 		{
-			pr =m_ports[p->ports[i].first];
+			pr =m_honeydConfig->m_ports[p->ports[i].first];
 
 			//These don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
@@ -2156,10 +1879,13 @@ void NovaConfig::LoadProfileSettings()
 			behaviorBox->addItem("open");
 			behaviorBox->addItem("block");
 			behaviorBox->insertSeparator(3);
-			for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+
+			vector<string> scriptNames = m_honeydConfig->GetScriptNames();
+			for(vector<string>::iterator it = scriptNames.begin(); it != scriptNames.end(); it++)
 			{
-				behaviorBox->addItem((QString)it->first.c_str());
+				behaviorBox->addItem((QString)(*it).c_str());
 			}
+
 			behaviorBox->setFont(tempFont);
 			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
@@ -2186,7 +1912,7 @@ void NovaConfig::LoadProfileSettings()
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
 			pr.item = item;
-			m_ports[pr.portName] = pr;
+			m_honeydConfig->m_ports[pr.portName] = pr;
 			if(!portCurrentString.compare(pr.portName))
 			{
 				ui.portTreeWidget->setCurrentItem(pr.item);
@@ -2208,7 +1934,6 @@ void NovaConfig::LoadProfileSettings()
 		ui.uptimeBehaviorComboBox->setCurrentIndex(0);
 		ui.uptimeRangeLabel->setVisible(false);
 		ui.uptimeRangeEdit->setVisible(false);
-		ui.dhcpComboBox->setCurrentIndex(0);
 		ui.dropRateSlider->setValue(0);
 		ui.dropRateSetting->setText("0%");
 		ui.profileEdit->setEnabled(false);
@@ -2219,7 +1944,6 @@ void NovaConfig::LoadProfileSettings()
 		ui.uptimeEdit->setEnabled(false);
 		ui.personalityEdit->setEnabled(false);
 		ui.uptimeBehaviorComboBox->setEnabled(false);
-		ui.dhcpComboBox->setEnabled(false);
 		ui.dropRateSlider->setEnabled(false);
 	}
 }
@@ -2227,17 +1951,7 @@ void NovaConfig::LoadProfileSettings()
 void NovaConfig::LoadInheritedProfileSettings()
 {
 	QFont tempFont;
-	profile * p = &m_profiles[m_currentProfile];
-
-	ui.ipModeCheckBox->setChecked(p->inherited[TYPE]);
-	ui.ipModeCheckBox->setEnabled(p->parentProfile.compare(""));
-	//We set again incase the checkbox was disabled (previous selection was root profile)
-	ui.ipModeCheckBox->setChecked(p->inherited[TYPE]);
-
-	tempFont = QFont(ui.IPModeLabel->font());
-	tempFont.setItalic(p->inherited[TYPE]);
-	ui.IPModeLabel->setFont(tempFont);
-	ui.dhcpComboBox->setEnabled(!p->inherited[TYPE]);
+	profile * p = &m_honeydConfig->m_profiles[m_currentProfile];
 
 	ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->udpAction.c_str() ) );
 	ui.icmpActionComboBox->setCurrentIndex( ui.icmpActionComboBox->findText(p->icmpAction.c_str() ) );
@@ -2321,21 +2035,16 @@ void NovaConfig::LoadInheritedProfileSettings()
 	ui.dropRateSetting->setFont(tempFont);
 	ui.dropRateSlider->setEnabled(!p->inherited[DROP_RATE]);
 
-	if(ui.ipModeCheckBox->isChecked())
-	{
-		p->type = m_profiles[p->parentProfile].type;
-	}
-
 	if(ui.ethernetCheckBox->isChecked())
 	{
-		p->ethernet = m_profiles[p->parentProfile].ethernet;
+		p->ethernet = m_honeydConfig->m_profiles[p->parentProfile].ethernet;
 	}
 
 	if(ui.uptimeCheckBox->isChecked())
 	{
-		p->uptime = m_profiles[p->parentProfile].uptime;
-		p->uptimeRange = m_profiles[p->parentProfile].uptimeRange;
-		if(m_profiles[p->parentProfile].uptimeRange.compare(""))
+		p->uptimeMin = m_honeydConfig->m_profiles[p->parentProfile].uptimeMin;
+		p->uptimeMax = m_honeydConfig->m_profiles[p->parentProfile].uptimeMax;
+		if(m_honeydConfig->m_profiles[p->parentProfile].uptimeMin == m_honeydConfig->m_profiles[p->parentProfile].uptimeMax)
 		{
 			ui.uptimeBehaviorComboBox->setCurrentIndex(1);
 		}
@@ -2347,23 +2056,23 @@ void NovaConfig::LoadInheritedProfileSettings()
 
 	if(ui.personalityCheckBox->isChecked())
 	{
-		p->personality = m_profiles[p->parentProfile].personality;
+		p->personality = m_honeydConfig->m_profiles[p->parentProfile].personality;
 	}
 	if(ui.dropRateCheckBox->isChecked())
 	{
-		p->dropRate = m_profiles[p->parentProfile].dropRate;
+		p->dropRate = m_honeydConfig->m_profiles[p->parentProfile].dropRate;
 	}
 	if(ui.tcpCheckBox->isChecked())
 	{
-		p->tcpAction = m_profiles[p->parentProfile].tcpAction;
+		p->tcpAction = m_honeydConfig->m_profiles[p->parentProfile].tcpAction;
 	}
 	if(ui.udpCheckBox->isChecked())
 	{
-		p->udpAction = m_profiles[p->parentProfile].udpAction;
+		p->udpAction = m_honeydConfig->m_profiles[p->parentProfile].udpAction;
 	}
 	if(ui.icmpCheckBox->isChecked())
 	{
-		p->icmpAction = m_profiles[p->parentProfile].icmpAction;
+		p->icmpAction = m_honeydConfig->m_profiles[p->parentProfile].icmpAction;
 	}
 }
 
@@ -2374,7 +2083,7 @@ void NovaConfig::LoadInheritedProfileSettings()
 void NovaConfig::UpdateProfileTree(string name, recursiveDirection direction)
 {
 	//Copy the profile
-	profile p = m_profiles[name];
+	profile p = m_honeydConfig->m_profiles[name];
 	bool up = false, down = false;
 	switch(direction)
 	{
@@ -2399,7 +2108,7 @@ void NovaConfig::UpdateProfileTree(string name, recursiveDirection direction)
 	if(down)
 	{
 		//Find all children
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 		{
 			//If child is found
 			if(!it->second.parentProfile.compare(p.name))
@@ -2410,13 +2119,13 @@ void NovaConfig::UpdateProfileTree(string name, recursiveDirection direction)
 				p.tree.add_child("profiles.profile", it->second.tree);
 			}
 		}
-		m_profiles[name] = p;
+		m_honeydConfig->m_profiles[name] = p;
 	}
 	//If the original calling profile has a parent to update
 	if(p.parentProfile.compare("") && up)
 	{
 		//Get the parents name and create an empty ptree
-		profile parent = m_profiles[p.parentProfile];
+		profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 		ptree pt;
 		pt.clear();
 		pt.add_child("profile", p.tree);
@@ -2425,7 +2134,7 @@ void NovaConfig::UpdateProfileTree(string name, recursiveDirection direction)
 		// Ideally we could just replace the individual child but the data structure doesn't seem
 		// to support this very well when all keys in the ptree (ie. profiles.profile) are the same
 		// because the ptree iterators just don't seem to work correctly and documentation is very poor
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 		{
 			if(!it->second.parentProfile.compare(parent.name))
 			{
@@ -2434,7 +2143,7 @@ void NovaConfig::UpdateProfileTree(string name, recursiveDirection direction)
 		}
 		//Replace the parent's profiles subtree (stores all children) with the new one
 		parent.tree.put_child("profiles", pt);
-		m_profiles[parent.name] = parent;
+		m_honeydConfig->m_profiles[parent.name] = parent;
 		//Recursively ascend to update all ancestors
 		UpdateProfileTree(parent.name, UP);
 	}
@@ -2446,7 +2155,7 @@ void NovaConfig::UpdateProfileTree(string name, recursiveDirection direction)
 void NovaConfig::LoadProfilesFromTree(string parent)
 {
 	using boost::property_tree::ptree;
-	ptree * ptr, pt = m_profiles[parent].tree;
+	ptree * ptr, pt = m_honeydConfig->m_profiles[parent].tree;
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, pt.get_child("profiles"))
@@ -2454,7 +2163,7 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 			//Generic profile, essentially a honeyd template
 			if(!string(v.first.data()).compare("profile"))
 			{
-				profile p = m_profiles[parent];
+				profile p = m_honeydConfig->m_profiles[parent];
 				//Root profile has no parent
 				p.parentProfile = parent;
 				p.tree = v.second;
@@ -2464,15 +2173,6 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 					p.inherited[i] = true;
 				}
 
-				//Name required, DCHP boolean intialized (set in loadProfileSet)
-				p.name = v.second.get<std::string>("name");
-				try
-				{
-					p.type = (profileType)v.second.get<int>("type");
-					p.inherited[TYPE] = false;
-				}
-				catch(...){}
-
 				//Asserts the name is unique, if it is not it finds a unique name
 				// up to the range of 2^32
 				string profileStr = p.name;
@@ -2480,7 +2180,7 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 				uint i = 0, j = 0;
 				j = ~j; //2^32-1
 
-				while((m_profiles.find(p.name) != m_profiles.end()) && (i < j))
+				while((m_honeydConfig->m_profiles.find(p.name) != m_honeydConfig->m_profiles.end()) && (i < j))
 				{
 					ss.str("");
 					i++;
@@ -2508,7 +2208,7 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 				catch(...){}
 
 				//Save the profile
-				m_profiles[p.name] = p;
+				m_honeydConfig->m_profiles[p.name] = p;
 				UpdateProfileTree(p.name, ALL);
 
 				try //Conditional: has children profiles
@@ -2583,17 +2283,16 @@ void NovaConfig::LoadProfileSettings(ptree *ptr, profile *p)
 				p->inherited[ETHERNET] = false;
 				continue;
 			}
-			prefix = "uptime";
+			prefix = "uptimeMax";
 			if(!string(v.first.data()).compare(prefix))
 			{
-				p->uptime = v.second.data();
-				p->inherited[UPTIME] = false;
+				p->uptimeMax = v.second.data();
 				continue;
 			}
-			prefix = "uptimeRange";
+			prefix = "uptimeMin";
 			if(!string(v.first.data()).compare(prefix))
 			{
-				p->uptimeRange = v.second.data();
+				p->uptimeMin = v.second.data();
 				continue;
 			}
 			prefix = "dropRate";
@@ -2633,13 +2332,13 @@ void NovaConfig::LoadProfileServices(ptree *ptr, profile *p)
 				//Iterates through the ports
 				BOOST_FOREACH(ptree::value_type &v2, ptr->get_child("ports"))
 				{
-					prt = &m_ports[v2.second.data()];
+					prt = &m_honeydConfig->m_ports[v2.second.data()];
 
 					//Checks inherited ports for conflicts
 					for(uint i = 0; i < p->ports.size(); i++)
 					{
 						//Erase inherited port if a conflict is found
-						if(!prt->portNum.compare(m_ports[p->ports[i].first].portNum) && !prt->type.compare(m_ports[p->ports[i].first].type))
+						if(!prt->portNum.compare(m_honeydConfig->m_ports[p->ports[i].first].portNum) && !prt->type.compare(m_honeydConfig->m_ports[p->ports[i].first].type))
 						{
 							p->ports.erase(p->ports.begin()+i);
 						}
@@ -2657,7 +2356,7 @@ void NovaConfig::LoadProfileServices(ptree *ptr, profile *p)
 						uint i = 0;
 						for(i = 0; i < p->ports.size(); i++)
 						{
-							port * temp = &m_ports[p->ports[i].first];
+							port * temp = &m_honeydConfig->m_ports[p->ports[i].first];
 							if((atoi(temp->portNum.c_str())) < (atoi(prt->portNum.c_str())))
 							{
 								continue;
@@ -2694,7 +2393,7 @@ void NovaConfig::LoadProfileServices(ptree *ptr, profile *p)
 //Recurisve descent down a profile tree, inherits parent, sets values and continues if not leaf.
 void NovaConfig::LoadProfileChildren(string parent)
 {
-	ptree ptr = m_profiles[parent].tree;
+	ptree ptr = m_honeydConfig->m_profiles[parent].tree;
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, ptr.get_child("profiles"))
@@ -2702,7 +2401,7 @@ void NovaConfig::LoadProfileChildren(string parent)
 			ptree *ptr2;
 
 			//Inherits parent,
-			profile prof = m_profiles[parent];
+			profile prof = m_honeydConfig->m_profiles[parent];
 			prof.tree = v.second;
 			prof.parentProfile = parent;
 
@@ -2721,7 +2420,7 @@ void NovaConfig::LoadProfileChildren(string parent)
 
 			//Asserts the name is unique, if it is not it finds a unique name
 			// up to the range of 2^32
-			while((m_profiles.find(prof.name) != m_profiles.end()) && (i < j))
+			while((m_honeydConfig->m_profiles.find(prof.name) != m_honeydConfig->m_profiles.end()) && (i < j))
 			{
 				ss.str("");
 				i++;
@@ -2729,13 +2428,6 @@ void NovaConfig::LoadProfileChildren(string parent)
 				prof.name = ss.str();
 			}
 			prof.tree.put<std::string>("name", prof.name);
-
-			try //Conditional: If profile overrides type
-			{
-				prof.type = (profileType)v.second.get<int>("type");
-				prof.inherited[TYPE] = false;
-			}
-			catch(...){}
 
 			try //Conditional: If profile has set configurations different from parent
 			{
@@ -2752,7 +2444,7 @@ void NovaConfig::LoadProfileChildren(string parent)
 			catch(...){}
 
 			//Saves the profile
-			m_profiles[prof.name] = prof;
+			m_honeydConfig->m_profiles[prof.name] = prof;
 			UpdateProfileTree(prof.name, ALL);
 
 			try //Conditional: if profile has children (not leaf)
@@ -2777,23 +2469,23 @@ void NovaConfig::LoadAllProfiles()
 	ui.hsProfileTreeWidget->sortByColumn(0,Qt::AscendingOrder);
 	ui.profileTreeWidget->sortByColumn(0,Qt::AscendingOrder);
 
-	if(m_profiles.size())
+	if(m_honeydConfig->m_profiles.size())
 	{
 		//First sets all pointers to NULL, clear has already deleted so these pointers are invalid
 		// createProfileItem then uses these NULL pointers as a flag to avoid creating duplicate items
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 		{
 			it->second.item = NULL;
 			it->second.profileItem = NULL;
 		}
 		//calls createProfileItem on every profile, this will first assert that all ancestors have items
 		// and create them if not to draw the table correctly, thus the need for the NULL pointer as a flag
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 		{
 			CreateProfileItem(it->second.name);
 		}
 		//Sets the current selection to the original selection
-		ui.profileTreeWidget->setCurrentItem(m_profiles[m_currentProfile].profileItem);
+		//ui.profileTreeWidget->setCurrentItem(m_honeydConfig->m_profiles[m_currentProfile].profileItem);
 		//populates the window and expand the profile heirarchy
 		ui.hsProfileTreeWidget->expandAll();
 		ui.profileTreeWidget->expandAll();
@@ -2810,7 +2502,7 @@ void NovaConfig::LoadAllProfiles()
 //Creates tree widget items for a profile and all ancestors if they need one.
 void NovaConfig::CreateProfileItem(string pstr)
 {
-	profile p = m_profiles[pstr];
+	profile p = m_honeydConfig->m_profiles[pstr];
 	//If the profile hasn't had an item created yet
 	if(p.item == NULL)
 	{
@@ -2837,15 +2529,15 @@ void NovaConfig::CreateProfileItem(string pstr)
 		else
 		{
 			//find the parent and assert that they have an item
-			if(m_profiles.find(p.parentProfile) != m_profiles.end())
+			if(m_honeydConfig->m_profiles.find(p.parentProfile) != m_honeydConfig->m_profiles.end())
 			{
-				profile parent = m_profiles[p.parentProfile];
+				profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 
 				if(parent.item == NULL)
 				{
 					//if parent has no item recursively ascend until all parents do
 					CreateProfileItem(p.parentProfile);
-					parent = m_profiles[p.parentProfile];
+					parent = m_honeydConfig->m_profiles[p.parentProfile];
 				}
 				//Now that all ancestors have items, create the profile's item
 
@@ -2862,7 +2554,7 @@ void NovaConfig::CreateProfileItem(string pstr)
 				p.profileItem = item;
 			}
 		}
-		m_profiles[p.name] = p;
+		m_honeydConfig->m_profiles[p.name] = p;
 	}
 }
 
@@ -2870,7 +2562,7 @@ void NovaConfig::CreateProfileItem(string pstr)
 void NovaConfig::CreateProfileTree(string name)
 {
 	ptree temp;
-	profile p = m_profiles[name];
+	profile p = m_honeydConfig->m_profiles[name];
 	if(p.name.compare(""))
 	{
 		temp.put<std::string>("name", p.name);
@@ -2895,21 +2587,17 @@ void NovaConfig::CreateProfileTree(string name)
 	{
 		temp.put<std::string>("set.ethernet", p.ethernet);
 	}
-	if(p.uptime.compare("") && !p.inherited[UPTIME])
+	if(p.uptimeMin.compare("") && !p.inherited[UPTIME])
 	{
-		temp.put<std::string>("set.uptime", p.uptime);
+		temp.put<std::string>("set.uptimeMin", p.uptimeMin);
 	}
-	if(p.uptimeRange.compare("") && !p.inherited[UPTIME])
+	if(p.uptimeMax.compare("") && !p.inherited[UPTIME])
 	{
-		temp.put<std::string>("set.uptimeRange", p.uptimeRange);
+		temp.put<std::string>("set.uptimeMax", p.uptimeMax);
 	}
 	if(p.dropRate.compare("") && !p.inherited[DROP_RATE])
 	{
 		temp.put<std::string>("set.dropRate", p.dropRate);
-	}
-	if(!p.inherited[TYPE])
-	{
-		temp.put<int>("type", p.type);
 	}
 
 	//Populates the ports, if none are found create an empty field because it is expected.
@@ -2936,60 +2624,8 @@ void NovaConfig::CreateProfileTree(string name)
 
 	//copy the tree over and update ancestors
 	p.tree = temp;
-	m_profiles[name] = p;
+	m_honeydConfig->m_profiles[name] = p;
 	UpdateProfileTree(name, ALL);
-}
-
-//Either deletes a profile or updates the window to reflect a profile name change
-void NovaConfig::UpdateProfile(bool deleteProfile, profile * p)
-{
-	//If the profile is being deleted
-	if(deleteProfile)
-	{
-		vector<string> delList;
-		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-		{
-			if(!it->second.pfile.compare(p->name))
-			{
-				delList.push_back(it->second.name);
-			}
-		}
-		while(!delList.empty())
-		{
-			DeleteNode(&m_nodes[delList.back()]);
-			delList.pop_back();
-		}
-		m_profiles.erase(p->name);
-	}
-	//If the profile needs to be updated
-	else
-	{
-		string pfile = p->profileItem->text(0).toStdString();
-		profile tempPfile = * p;
-
-		//If item text and profile name don't match, we need to update
-		if(tempPfile.name.compare(pfile))
-		{
-			//Set the profile to the correct name and put the profile in the table
-			m_profiles[pfile] = tempPfile;
-			m_profiles[pfile].name = pfile;
-
-			//Find all nodes who use this profile and update to the new one
-			for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-			{
-				if(!it->second.pfile.compare(tempPfile.name))
-				{
-					it->second.pfile = pfile;
-				}
-			}
-			if(!tempPfile.name.compare(m_currentProfile))
-			{
-				m_currentProfile = pfile;
-			}
-			//Remove the old profile and update the currentProfile pointer
-			m_profiles.erase(tempPfile.name);
-		}
-	}
 }
 
 void NovaConfig::SetInputValidators()
@@ -3041,7 +2677,7 @@ void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 	{
 		return;
 	}
-	if(m_profiles.size())
+	if(m_honeydConfig->m_profiles.size())
 	{
 		//Save old profile
 		SaveProfileSettings();
@@ -3065,32 +2701,16 @@ void NovaConfig::on_deleteButton_clicked()
 void NovaConfig::on_actionProfileDelete_triggered()
 {
 	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && m_currentProfile.compare("default")
-		&& (m_profiles.find(m_currentProfile) != m_profiles.end()))
+		&& (m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end()))
 	{
-		bool nodeExists = false;
-		//Find out if any nodes use this profile
-		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-		{
-			//if we find a node using this profile
-			if(!it->second.pfile.compare(m_currentProfile))
-			{
-				nodeExists = true;
-			}
-		}
-		if(nodeExists)
+		if( m_honeydConfig->IsProfileUsed(m_currentProfile))
 		{
 			LOG(ERROR, "ERROR: A Node is currently using this profile.","");
 			if(m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_DELETE_ITEM, "Profile "
 				+m_currentProfile+" cannot be deleted because some nodes are currently using it, would you like to "
 				"disable all nodes currently using it?",ui.actionNo_Action, ui.actionNo_Action, this) == CHOICE_DEFAULT)
 			{
-				for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-				{
-					if(!it->second.pfile.compare(m_currentProfile))
-					{
-						m_nodes[it->second.name].enabled = false;
-					}
-				}
+				m_honeydConfig->DisableProfileNodes(m_currentProfile);
 			}
 		}
 		//TODO appropriate display prompt here
@@ -3112,7 +2732,7 @@ void NovaConfig::on_actionProfileDelete_triggered()
 			string tempNode = m_currentNode;
 			m_currentNode = "";
 			string tempNet = m_currentSubnet;
-			for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+			for(SubnetTable::iterator it = m_honeydConfig->m_subnets.begin(); it != m_honeydConfig->m_subnets.end(); it++)
 			{
 				m_currentSubnet = it->second.name;
 				on_actionNodeDisable_triggered();
@@ -3145,7 +2765,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	j = ~j; // 2^32-1
 
 	//Finds a unique identifier
-	while((m_profiles.find(temp.name) != m_profiles.end()) && (i < j))
+	while((m_honeydConfig->m_profiles.find(temp.name) != m_honeydConfig->m_profiles.end()) && (i < j))
 	{
 		i++;
 		ss.str("");
@@ -3153,10 +2773,10 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		temp.name = ss.str();
 	}
 	//If there is currently a selected profile, that profile will be the parent of the new profile
-	if(m_profiles.find(m_currentProfile) != m_profiles.end())
+	if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
 	{
 		string tempName = temp.name;
-		temp = m_profiles[m_currentProfile];
+		temp = m_honeydConfig->m_profiles[m_currentProfile];
 		temp.name = tempName;
 		temp.parentProfile = m_currentProfile;
 		for(uint i = 0; i < INHERITED_MAX; i++)
@@ -3178,8 +2798,8 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		temp.tcpAction = "reset";
 		temp.udpAction = "reset";
 		temp.icmpAction = "reset";
-		temp.type = static_IP;
-		temp.uptime = "0";
+		temp.uptimeMin = "0";
+		temp.uptimeMax = "0";
 		temp.dropRate = "0";
 		temp.ports.clear();
 		m_currentProfile = temp.name;
@@ -3189,7 +2809,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		}
 	}
 	//Puts the profile in the table, creates a ptree and loads the new configuration
-	m_profiles[temp.name] = temp;
+	m_honeydConfig->m_profiles[temp.name] = temp;
 	CreateProfileTree(temp.name);
 	m_loading->unlock();
 	LoadAllProfiles();
@@ -3206,12 +2826,12 @@ void NovaConfig::on_actionProfileClone_triggered()
 {
 
 	//Do nothing if no profiles
-	if(m_profiles.size())
+	if(m_honeydConfig->m_profiles.size())
 	{
 		m_loading->lock();
 		QTreeWidgetItem * item = ui.profileTreeWidget->selectedItems().first();
 		string profileStr = item->text(0).toStdString();
-		profile p = m_profiles[m_currentProfile];
+		profile p = m_honeydConfig->m_profiles[m_currentProfile];
 
 		stringstream ss;
 		uint i = 1, j = 0;
@@ -3223,7 +2843,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 		p.name = ss.str();
 
 		//Check for name in use, if so increase number until unique name is found
-		while((m_profiles.find(p.name) != m_profiles.end()) && (i < j))
+		while((m_honeydConfig->m_profiles.find(p.name) != m_honeydConfig->m_profiles.end()) && (i < j))
 		{
 			ss.str("");
 			i++;
@@ -3233,7 +2853,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 		p.tree.put<std::string>("name",p.name);
 		//Change the profile name and put in the table, update the current profile
 		//Extract all descendants, create a ptree, update with new configuration
-		m_profiles[p.name] = p;
+		m_honeydConfig->m_profiles[p.name] = p;
 		LoadProfilesFromTree(p.name);
 		UpdateProfileTree(p.name, ALL);
 		m_loading->unlock();
@@ -3248,13 +2868,13 @@ void NovaConfig::on_profileEdit_editingFinished()
 	{
 		return;
 	}
-	if(!m_profiles.empty())
+	if(!m_honeydConfig->m_profiles.empty())
 	{
-		m_profiles[m_currentProfile].item->setText(0,ui.profileEdit->displayText());
-		m_profiles[m_currentProfile].profileItem->setText(0,ui.profileEdit->displayText());
+		m_honeydConfig->m_profiles[m_currentProfile].item->setText(0,ui.profileEdit->displayText());
+		m_honeydConfig->m_profiles[m_currentProfile].profileItem->setText(0,ui.profileEdit->displayText());
 		//If the name has changed we need to move it in the profile hash table and point all
 		//nodes that use the profile to the new location.
-		UpdateProfile(UPDATE_PROFILE, &m_profiles[m_currentProfile]);
+		m_honeydConfig->UpdateProfile(UPDATE_PROFILE, &m_honeydConfig->m_profiles[m_currentProfile]);
 		SaveProfileSettings();
 		LoadProfileSettings();
 		m_loading->unlock();
@@ -3277,23 +2897,24 @@ void NovaConfig::LoadAllNodes()
 	struct node * n = NULL;
 
 	QTreeWidgetItem * item = NULL;
+	QTreeWidgetItem * hsItem = NULL;
 	ui.nodeTreeWidget->clear();
 	ui.hsNodeTreeWidget->clear();
 
-	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+	for(SubnetTable::iterator it = m_honeydConfig->m_subnets.begin(); it != m_honeydConfig->m_subnets.end(); it++)
 	{
 		//create the subnet item for the Haystack menu tree
-		item = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
-		item->setText(0, (QString)it->second.address.c_str());
+		hsItem = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
+		hsItem->setText(0, (QString)it->second.address.c_str());
 		if(it->second.isRealDevice)
 		{
-			item->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
+			hsItem->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
 		}
 		else
 		{
-			item->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
+			hsItem->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
 		}
-		it->second.item = item;
+		it->second.item = hsItem;
 
 		//create the subnet item for the node edit tree
 		item = new QTreeWidgetItem(ui.nodeTreeWidget, 0);
@@ -3320,13 +2941,12 @@ void NovaConfig::LoadAllNodes()
 		for(uint i = 0; i < it->second.nodes.size(); i++)
 		{
 
-			n = &m_nodes[it->second.nodes[i]];
+			n = &m_honeydConfig->m_nodes[it->second.nodes[i]];
 
 			//Create the node item for the Haystack tree
 			item = new QTreeWidgetItem(it->second.item, 0);
 			item->setText(0, (QString)n->name.c_str());
 			item->setText(1, (QString)n->pfile.c_str());
-			n->item = item;
 
 			//Create the node item for the node edit tree
 			item = new QTreeWidgetItem(it->second.nodeItem, 0);
@@ -3335,7 +2955,7 @@ void NovaConfig::LoadAllNodes()
 
 			TreeItemComboBox *pfileBox = new TreeItemComboBox(this, item);
 			uint i = 0;
-			for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+			for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 			{
 				pfileBox->addItem(it->second.name.c_str());
 				pfileBox->setItemText(i, it->second.name.c_str());
@@ -3347,33 +2967,41 @@ void NovaConfig::LoadAllNodes()
 			pfileBox->setCurrentIndex(pfileBox->findText(n->pfile.c_str()));
 
 			ui.nodeTreeWidget->setItemWidget(item, 1, pfileBox);
-			n->nodeItem = item;
 			if(!n->name.compare("Doppelganger"))
 			{
 				ui.dmCheckBox->setChecked(n->enabled);
 				//Enable the loopback subnet as well if DM is enabled
-				m_subnets[n->sub].enabled |= n->enabled;
+				m_honeydConfig->m_subnets[n->sub].enabled |= n->enabled;
 			}
 			if(!n->enabled)
 			{
 				whitebrush.setStyle(Qt::NoBrush);
-				n->nodeItem->setBackground(0,greybrush);
-				n->nodeItem->setForeground(0,whitebrush);
-				n->item->setBackground(0,greybrush);
-				n->item->setForeground(0,whitebrush);
+				hsItem->setBackground(0,greybrush);
+				hsItem->setForeground(0,whitebrush);
+				item->setBackground(0,greybrush);
+				item->setForeground(0,whitebrush);
 			}
 		}
 	}
 	ui.nodeTreeWidget->expandAll();
-	if(m_nodes.size()+m_subnets.size())
+
+	// Reselect the last selected node if need be
+	QList<QTreeWidgetItem*> items;
+
+	items = ui.nodeTreeWidget->findItems(QString::fromStdString(m_currentNode),Qt::MatchExactly | Qt::MatchRecursive, 0);
+	for (int i = 0; i < items.length(); i++)
 	{
-		if(m_nodes.find(m_currentNode) != m_nodes.end())
+		items.at(i)->setSelected(true);
+	}
+
+	if (!items.length())
+	{
+		if(m_honeydConfig->m_subnets.size())
 		{
-			ui.nodeTreeWidget->setCurrentItem(m_nodes[m_currentNode].nodeItem);
-		}
-		else if(m_subnets.find(m_currentSubnet) != m_subnets.end())
-		{
-			ui.nodeTreeWidget->setCurrentItem(m_subnets[m_currentSubnet].nodeItem);
+			if(m_honeydConfig->m_subnets.find(m_currentSubnet) != m_honeydConfig->m_subnets.end())
+			{
+				ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
+			}
 		}
 	}
 	m_loading->unlock();
@@ -3389,10 +3017,10 @@ void NovaConfig::DeleteNodes()
 	m_loading->lock();
 
 	//If a subnet is selected and there's another to select
-	if((m_subnets.size() > 1) && m_selectedSubnet)
+	if((m_honeydConfig->m_subnets.size() > 1) && m_selectedSubnet)
 	{
 		//Get current subnet index and pre-select another one preferring lower item first
-		int tempI = ui.nodeTreeWidget->indexOfTopLevelItem(m_subnets[m_currentSubnet].nodeItem);
+		int tempI = ui.nodeTreeWidget->indexOfTopLevelItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
 
 		//If the current subnet is at the bottom of the list
 		if((tempI + 1) == ui.nodeTreeWidget->topLevelItemCount())
@@ -3415,7 +3043,7 @@ void NovaConfig::DeleteNodes()
 	}
 	//If there is at least one other item and we have a node selected
 	//Since we cannot delete a physical device's subnet we can still have a selection.
-	else if((m_nodes.size()+m_subnets.size()) > 1)
+	else if((m_honeydConfig->m_nodes.size()+m_honeydConfig->m_subnets.size()) > 1)
 	{
 		//Try to select the bottom item first
 		temp = ui.nodeTreeWidget->itemBelow(ui.nodeTreeWidget->selectedItems().first());
@@ -3445,42 +3073,45 @@ void NovaConfig::DeleteNodes()
 	//If there are no more items in the list make sure it is clear then return.
 	else
 	{
+		LOG(CRITICAL, "Should never get here. Attempting to delete a GUI item, but there are no GUI items left.", "");
+		/* Should never get here
 		//Although this is here as a safeguard incase the other two conditions fail
 		// it shouldn't ever be hit because the doppelganger and loopback should always exist
 		vector<subnet> physicalDevs;
-		node dmTemp = m_nodes["Doppelganger"];
+		node dmTemp = m_honeydConfig->m_nodes["Doppelganger"];
 		m_selectedSubnet = true;
-		for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+		for(SubnetTable::iterator it = m_honeydConfig->m_subnets.begin(); it != m_honeydConfig->m_subnets.end(); it++)
 		{
 			if(it->second.isRealDevice)
 			{
 				physicalDevs.push_back(it->second);
 			}
 		}
-		m_subnets.clear_no_resize();
-		m_nodes.clear_no_resize();
-		m_nodes["Doppelganger"] = dmTemp;
+		m_honeydConfig->m_subnets.clear_no_resize();
+		m_honeydConfig->m_nodes.clear_no_resize();
+		m_honeydConfig->m_nodes["Doppelganger"] = dmTemp;
 		while(!physicalDevs.size())
 		{
-			m_subnets[physicalDevs.back().name] = physicalDevs.back();
+			m_honeydConfig->m_subnets[physicalDevs.back().name] = physicalDevs.back();
 			m_currentSubnet = physicalDevs.back().name;
 			on_actionNodeDisable_triggered();
 			m_loading->lock();
 			physicalDevs.pop_back();
 		}
-		m_subnets[dmTemp.sub].nodes.push_back(dmTemp.name);
+		m_honeydConfig->m_subnets[dmTemp.sub].nodes.push_back(dmTemp.name);
 		m_currentNode = "Doppelganger";
-		m_currentSubnet = m_nodes[m_currentNode].sub;
+		m_currentSubnet = m_honeydConfig->m_nodes[m_currentNode].sub;
 		m_selectedSubnet = false;
 		m_loading->unlock();
 		LoadAllNodes();
 		return;
+		*/
 	}
 
 	//If we are deleteing a subnet, remove each node first then remove the subnet.
 	if(m_selectedSubnet)
 	{
-		subnet * s = &m_subnets[m_currentSubnet];
+		subnet * s = &m_honeydConfig->m_subnets[m_currentSubnet];
 		//Get initial size
 		uint nodesSize = s->nodes.size();
 		//Delete front and get new front until empty
@@ -3489,15 +3120,15 @@ void NovaConfig::DeleteNodes()
 			m_currentNode = s->nodes.front();
 			if(m_currentNode.compare(""))
 			{
-				DeleteNode(&m_nodes[m_currentNode]);
+				DeleteNode(m_currentNode);
 			}
 		}
-		if(!m_subnets[m_currentSubnet].isRealDevice)
+		if(!m_honeydConfig->m_subnets[m_currentSubnet].isRealDevice)
 		{
 			//Remove the subnet from the list and delete from table
 			ui.nodeTreeWidget->removeItemWidget(s->nodeItem, 0);
 			ui.hsNodeTreeWidget->removeItemWidget(s->item, 0);
-			m_subnets.erase(m_currentSubnet);
+			m_honeydConfig->m_subnets.erase(m_currentSubnet);
 		}
 	}
 	//Delete the selected node
@@ -3505,12 +3136,12 @@ void NovaConfig::DeleteNodes()
 	{
 		if(m_currentNode.compare("Doppelganger"))
 		{
-			DeleteNode(&m_nodes[m_currentNode]);
+			DeleteNode(m_currentNode);
 		}
 	}
 
 	//If the currentSelection cannot be deleted it is either the doppelganger or a real device.
-	if((m_selectedSubnet && m_subnets[m_currentSubnet].isRealDevice) || (!m_currentNode.compare("Doppelganger")))
+	if((m_selectedSubnet && m_honeydConfig->m_subnets[m_currentSubnet].isRealDevice) || (!m_currentNode.compare("Doppelganger")))
 	{
 		m_loading->unlock();
 		on_actionNodeDisable_triggered();
@@ -3519,7 +3150,7 @@ void NovaConfig::DeleteNodes()
 	else if(!nextIsSubnet)
 	{
 		m_currentNode = name;
-		m_currentSubnet = m_nodes[m_currentNode].sub;
+		m_currentSubnet = m_honeydConfig->GetNodeSubnet(m_currentNode);
 		m_selectedSubnet = false;
 		m_loading->unlock();
 		LoadAllNodes();
@@ -3536,26 +3167,29 @@ void NovaConfig::DeleteNodes()
 }
 
 // Removes the node from item widgets and data structures.
-void NovaConfig::DeleteNode(node *n)
+void NovaConfig::DeleteNode(std::string node)
 {
 	//Cannot delete doppelganger node
-	if(!n->name.compare("Doppelganger"))
+	if(node == "Doppelganger")
 	{
 		return;
 	}
 
-	ui.nodeTreeWidget->removeItemWidget(n->nodeItem, 0);
-	ui.hsNodeTreeWidget->removeItemWidget(n->item, 0);
-	subnet * s = &m_subnets[n->sub];
+	QList<QTreeWidgetItem*> items;
 
-	for(uint i = 0; i < s->nodes.size(); i++)
+	items = ui.nodeTreeWidget->findItems(QString::fromStdString(node), Qt::MatchExactly | Qt::MatchRecursive, 0);
+	for (int i = 0; i < items.length(); i++)
 	{
-		if(!s->nodes[i].compare(n->name))
-		{
-			s->nodes.erase(s->nodes.begin()+i);
-		}
+		ui.nodeTreeWidget->removeItemWidget(items.at(i), 0);
 	}
-	m_nodes.erase(n->name);
+
+	items = ui.hsNodeTreeWidget->findItems(QString::fromStdString(node), Qt::MatchExactly | Qt::MatchRecursive, 0);
+	for (int i = 0; i < items.length(); i++)
+	{
+		ui.hsNodeTreeWidget->removeItemWidget(items.at(i), 0);
+	}
+
+	m_honeydConfig->DeleteNode(node);
 }
 
 /******************************************
@@ -3574,7 +3208,7 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 			if(ui.nodeTreeWidget->indexOfTopLevelItem(item) == -1)
 			{
 				m_currentNode = item->text(0).toStdString();
-				m_currentSubnet = m_nodes[m_currentNode].sub;
+				m_currentSubnet = m_honeydConfig->GetNodeSubnet(m_currentNode);
 				m_selectedSubnet = false;
 			}
 			else //If it's a subnet
@@ -3598,32 +3232,14 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edi
 			string oldPfile;
 			if(!ui.nodeTreeWidget->selectedItems().isEmpty())
 			{
-				node * n = &m_nodes[item->text(0).toStdString()];
+				node * n = &m_honeydConfig->m_nodes[item->text(0).toStdString()];
 				oldPfile = n->pfile;
 				TreeItemComboBox * pfileBox = (TreeItemComboBox* )ui.nodeTreeWidget->itemWidget(item, 1);
 				n->pfile = pfileBox->currentText().toStdString();
 			}
-			if(SyncAllNodesWithProfiles())
-			{
-				item = m_nodes[m_currentNode].nodeItem;
-				ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
-				ui.nodeTreeWidget->setCurrentItem(item);
-			}
-			else
-			{
-				node * n = &m_nodes[item->text(0).toStdString()];
-				TreeItemComboBox * pfileBox = (TreeItemComboBox* )ui.nodeTreeWidget->itemWidget(item, 1);
-				n->pfile = oldPfile;
-				pfileBox->setCurrentIndex(pfileBox->findText((QString)oldPfile.c_str()));
 
-				SyncAllNodesWithProfiles();
-				item = m_nodes[m_currentNode].nodeItem;
-				ui.nodeTreeWidget->setFocus(Qt::OtherFocusReason);
-				ui.nodeTreeWidget->setCurrentItem(item);
-			}
 			m_loading->unlock();
 			LoadAllNodes();
-			UpdateLookupKeys();
 		}
 		else
 		{
@@ -3638,7 +3254,7 @@ void NovaConfig::on_actionSubnetAdd_triggered()
 	if(m_currentSubnet.compare(""))
 	{
 		m_loading->lock();
-		subnet s = m_subnets[m_currentSubnet];
+		subnet s = m_honeydConfig->m_subnets[m_currentSubnet];
 		s.name = m_currentSubnet + "-1";
 		s.address = "0.0.0.0/24";
 		s.nodes.clear();
@@ -3649,75 +3265,23 @@ void NovaConfig::on_actionSubnetAdd_triggered()
 		s.maskBits = 24;
 		s.max = 255;
 		s.isRealDevice = false;
-		m_subnets[s.name] = s;
+		m_honeydConfig->m_subnets[s.name] = s;
 		m_currentSubnet = s.name;
 		m_loading->unlock();
-		subnetPopup * editSubnet = new subnetPopup(this, &m_subnets[m_currentSubnet]);
+		subnetPopup * editSubnet = new subnetPopup(this, &m_honeydConfig->m_subnets[m_currentSubnet]);
 		editSubnet->show();
 	}
 }
 // Right click menus for the Node tree
 void NovaConfig::on_actionNodeAdd_triggered()
 {
-
 	if(m_currentSubnet.compare(""))
 	{
-		m_loading->lock();
 		node n;
 		n.sub = m_currentSubnet;
-		n.realIP = m_subnets[n.sub].base;
-		in_addr temp;
-		temp.s_addr = n.realIP;
-		n.IP = inet_ntoa(temp);
-		n.MAC = "";
+		n.interface = m_honeydConfig->m_subnets[m_currentSubnet].name;
+		n.realIP = m_honeydConfig->m_subnets[m_currentSubnet].base;
 		n.pfile = "default";
-		n.interface = n.sub;
-		switch(m_profiles[n.pfile].type)
-		{
-			case static_IP:
-			{
-				n.name = n.IP;
-				break;
-			}
-			case staticDHCP:
-			{
-				n.MAC = GenerateUniqueMACAddress(m_profiles[n.pfile].ethernet);
-				n.name = n.MAC;
-				break;
-			}
-			case randomDHCP:
-			{
-				string prefix = n.pfile + " on " + n.interface;
-				//If the key doesn't start with the correct prefix, generate the correct name
-				n.name = prefix;
-				int i = 0;
-				int j = ~i;
-				stringstream ss;
-				bool nameUnique;
-				//Finds a unique identifier
-				while(i < j)
-				{
-					nameUnique = true;
-					if(m_nodes.find(n.name) != m_nodes.end())
-						nameUnique = false;
-
-					if(nameUnique)
-						break;
-					i++;
-					ss.str("");
-					ss << n.pfile << " on " << n.interface << "-" << i;
-					n.name = ss.str();
-				}
-				break;
-			}
-		}
-		n.enabled = false;
-		n.item = NULL;
-		n.nodeItem = NULL;
-		m_nodes[n.name] = n;
-		m_currentNode = n.name;
-		m_subnets[n.sub].nodes.push_back(n.name);
-		m_loading->unlock();
 		nodePopup * editNode =  new nodePopup(this, &n);
 		editNode->show();
 	}
@@ -3725,73 +3289,23 @@ void NovaConfig::on_actionNodeAdd_triggered()
 
 void NovaConfig::on_actionNodeDelete_triggered()
 {
-	if(m_subnets.size() || m_nodes.size())
-	{
-		DeleteNodes();
-	}
+	DeleteNodes();
 }
 
 void NovaConfig::on_actionNodeClone_triggered()
 {
-	m_loading->lock();
-	node n;
-	if(m_nodes.find(m_currentNode) != m_nodes.end())
+	if (m_currentNode.compare(""))
 	{
-		n = m_nodes[m_currentNode];
-		n.realIP = m_subnets[n.sub].base;
-		in_addr temp;
-		temp.s_addr = n.realIP;
-		n.IP = inet_ntoa(temp);
-		n.MAC = "";
-		switch(m_profiles[n.pfile].type)
-		{
-			case static_IP:
-			{
-				n.name = n.IP;
-				break;
-			}
-			case staticDHCP:
-			{
-				n.MAC = GenerateUniqueMACAddress(m_profiles[n.pfile].ethernet);
-				n.name = n.MAC;
-				break;
-			}
-			case randomDHCP:
-			{
-				string prefix = n.pfile + " on " + n.interface;
-				//If the key doesn't start with the correct prefix, generate the correct name
-				n.name = prefix;
-				uint i = 0;
-				uint j = ~i;
-				stringstream ss;
-				bool nameUnique;
-				//Finds a unique identifier
-				while(i < j)
-				{
-					nameUnique = true;
-					if(m_nodes.find(n.name) != m_nodes.end())
-					{
-						nameUnique = false;
-					}
-					if(nameUnique)
-					{
-						break;
-					}
-					i++;
-					ss.str("");
-					ss << n.pfile << " on " << n.interface << "-" << i;
-					n.name = ss.str();
-					nameUnique = true;
-				}
-				break;
-			}
-		}
-		n.item = NULL;
-		n.nodeItem = NULL;
-		m_nodes[n.name] = n;
-		m_currentNode = n.name;
-		m_subnets[n.sub].nodes.push_back(n.name);
+		m_loading->lock();
+		node n = m_honeydConfig->m_nodes[m_currentNode];
 		m_loading->unlock();
+
+		// Can't clone the doppelganger, only allowed one right now
+		if (n.name == "Doppelganger")
+		{
+			return;
+		}
+
 		nodePopup * editNode =  new nodePopup(this, &n);
 		editNode->show();
 	}
@@ -3801,12 +3315,18 @@ void  NovaConfig::on_actionNodeEdit_triggered()
 {
 	if(!m_selectedSubnet)
 	{
-		nodePopup * editNode =  new nodePopup(this, &m_nodes[m_currentNode]);
+		// Can't change the doppel IP here, you change it in the doppel settings
+		if (m_currentNode == "Doppelganger")
+		{
+			return;
+		}
+
+		nodePopup * editNode =  new nodePopup(this, &m_honeydConfig->m_nodes[m_currentNode], true);
 		editNode->show();
 	}
 	else
 	{
-		subnetPopup * editSubnet = new subnetPopup(this, &m_subnets[m_currentSubnet]);
+		subnetPopup * editSubnet = new subnetPopup(this, &m_honeydConfig->m_subnets[m_currentSubnet]);
 		editSubnet->show();
 	}
 }
@@ -3814,16 +3334,16 @@ void  NovaConfig::on_actionNodeEdit_triggered()
 void NovaConfig::on_actionNodeCustomizeProfile_triggered()
 {
 	m_loading->lock();
-	m_currentProfile = m_nodes[m_currentNode].pfile;
+	m_currentProfile = m_honeydConfig->m_nodes[m_currentNode].pfile;
 	ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount()+1);
 	QTreeWidgetItem * item = ui.menuTreeWidget->topLevelItem(HAYSTACK_MENU_INDEX);
 	item = ui.menuTreeWidget->itemBelow(item);
 	item = ui.menuTreeWidget->itemBelow(item);
 	ui.menuTreeWidget->setCurrentItem(item);
-	ui.profileTreeWidget->setCurrentItem(m_profiles[m_currentProfile].profileItem);
+	ui.profileTreeWidget->setCurrentItem(m_honeydConfig->m_profiles[m_currentProfile].profileItem);
 	m_loading->unlock();
 	Q_EMIT on_actionProfileAdd_triggered();
-	m_nodes[m_currentNode].pfile = m_currentProfile;
+	m_honeydConfig->m_nodes[m_currentNode].pfile = m_currentProfile;
 	LoadHaystackConfiguration();
 }
 
@@ -3831,19 +3351,18 @@ void NovaConfig::on_actionNodeEnable_triggered()
 {
 	if(m_selectedSubnet)
 	{
-		subnet s = m_subnets[m_currentSubnet];
+		subnet s = m_honeydConfig->m_subnets[m_currentSubnet];
 		for(uint i = 0; i < s.nodes.size(); i++)
 		{
-			m_nodes[s.nodes[i]].enabled = true;
+			m_honeydConfig->EnableNode(s.nodes[i]);
 
 		}
 		s.enabled = true;
-		m_subnets[m_currentSubnet] = s;
+		m_honeydConfig->m_subnets[m_currentSubnet] = s;
 	}
 	else
 	{
-		m_nodes[m_currentNode].enabled = true;
-		m_subnets[m_nodes[m_currentNode].sub].enabled = true;
+		m_honeydConfig->EnableNode(m_currentNode);
 	}
 
 	//Draw the nodes and restore selection
@@ -3852,11 +3371,11 @@ void NovaConfig::on_actionNodeEnable_triggered()
 	m_loading->lock();
 	if(m_selectedSubnet)
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_subnets[m_currentSubnet].nodeItem);
+		ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
 	}
 	else
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_nodes[m_currentNode].nodeItem);
+		//ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_nodes[m_currentNode].nodeItem);
 	}
 	m_loading->unlock();
 }
@@ -3865,17 +3384,18 @@ void NovaConfig::on_actionNodeDisable_triggered()
 {
 	if(m_selectedSubnet)
 	{
-		subnet s = m_subnets[m_currentSubnet];
+		subnet s = m_honeydConfig->m_subnets[m_currentSubnet];
 		for(uint i = 0; i < s.nodes.size(); i++)
 		{
-			m_nodes[s.nodes[i]].enabled = false;
+
+			m_honeydConfig->DisableNode(s.nodes[i]);
 		}
 		s.enabled = false;
-		m_subnets[m_currentSubnet] = s;
+		m_honeydConfig->m_subnets[m_currentSubnet] = s;
 	}
 	else
 	{
-		m_nodes[m_currentNode].enabled = false;
+		m_honeydConfig->DisableNode(m_currentNode);
 	}
 
 	//Draw the nodes and restore selection
@@ -3884,11 +3404,11 @@ void NovaConfig::on_actionNodeDisable_triggered()
 	m_loading->lock();
 	if(m_selectedSubnet)
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_subnets[m_currentSubnet].nodeItem);
+		ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
 	}
 	else
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_nodes[m_currentNode].nodeItem);
+		//ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_nodes[m_currentNode].nodeItem);
 	}
 	m_loading->unlock();
 }
@@ -3948,49 +3468,51 @@ void NovaConfig::on_dropRateSlider_valueChanged()
 }
 
 
+bool NovaConfig::IsDoppelIPValid()
+{
+	stringstream ss;
+	ss 		<< ui.dmIPSpinBox_0->value() << "."
+			<< ui.dmIPSpinBox_1->value() << "."
+			<< ui.dmIPSpinBox_2->value() << "."
+			<< ui.dmIPSpinBox_3->value();
+
+	if(m_honeydConfig->IsIPUsed(ss.str()) && (ss.str().compare(Config::Inst()->GetDoppelIp())))
+	{
+		return false;
+	}
+	return true;
+}
 //Doppelganger IP Address Spin boxes
-void NovaConfig::on_dmIPSpinBox_0_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_0_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << value << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
-		<< "." << ui.dmIPSpinBox_3->value();
-	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_1_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_1_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << ui.dmIPSpinBox_0->value() << "." << value << "." << ui.dmIPSpinBox_2->value()
-		<< "." << ui.dmIPSpinBox_3->value();
-	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_2_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_2_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << value
-		<< "." << ui.dmIPSpinBox_3->value();
-	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_3_valueChanged(int value)
+void NovaConfig::on_dmIPSpinBox_3_valueChanged(int __attribute__((unused)) value)
 {
-	stringstream ss;
-	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value()
-		<< "." << value;
-	if((m_nodes.find(ss.str()) != m_nodes.end()) && (!ss.str().compare(Config::Inst()->GetDoppelIp())))
+	if (!IsDoppelIPValid())
 	{
 		cout << "IP Conflict" << endl;
 		//TODO Error Logging

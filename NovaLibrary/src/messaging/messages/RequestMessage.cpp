@@ -130,6 +130,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 			break;
 		}
+
 		case REQUEST_SUSPECT_REPLY:
 		{
 			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength);
@@ -151,10 +152,39 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			}
 
 			m_suspect = new Suspect();
-			m_suspect->DeserializeSuspect((u_char*)buffer);
+			m_suspect->Deserialize((u_char*)buffer);
 
 			break;
 		}
+
+		case REQUEST_UPTIME:
+		{
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			break;
+		}
+
+		case REQUEST_UPTIME_REPLY:
+		{
+			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_uptime);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			// Deserialize the uptime
+			memcpy(&m_uptime, buffer, sizeof(m_uptime));
+			buffer += sizeof(m_uptime);
+
+			break;
+		}
+
 
 		default:
 		{
@@ -256,7 +286,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			// 		4) The requested suspect
 
 			char suspectTempBuffer[MAX_MSG_SIZE];
-			m_suspectLength = m_suspect->SerializeSuspect((u_char*)suspectTempBuffer);
+			m_suspectLength = m_suspect->Serialize((u_char*)suspectTempBuffer);
 
 			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength ;
 			buffer = (char*)malloc(messageSize);
@@ -274,6 +304,41 @@ char *RequestMessage::Serialize(uint32_t *length)
 			// Serialize our suspect
 			memcpy(buffer, suspectTempBuffer, m_suspectLength);
 			buffer += m_suspectLength;
+
+			break;
+		}
+
+		case REQUEST_UPTIME:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) Request Message Type
+
+			messageSize = sizeof(m_messageType) + sizeof(m_requestType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			// Serialize 1) and 2)
+			buffer += SerializeHeader(buffer);
+
+			break;
+		}
+
+		case REQUEST_UPTIME_REPLY:
+		{
+			//Uses: 1) UI_Message Type
+			//		2) Request Message Type
+			//		3) The uptime
+
+			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_uptime);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			// Serialize 1) and 2)
+			buffer += SerializeHeader(buffer);
+
+			// Serialize the uptime
+			memcpy(buffer, &m_uptime, sizeof(m_uptime));
+			buffer += sizeof(m_uptime );
 
 			break;
 		}

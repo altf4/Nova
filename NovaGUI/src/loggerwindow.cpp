@@ -118,6 +118,8 @@ void LoggerWindow::InitializeLoggingWindow()
 	HideSelected("INFO");
 	HideSelected("NOTICE");
 
+	ui.logDisplay->sortItems(0, Qt::DescendingOrder);
+
 	//ui.applyFilter->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F));
 	//ui.applyFilter->setToolTip("Shortcut: Shift+F");
 	ui.closeButton->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));

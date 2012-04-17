@@ -491,6 +491,9 @@ void FeatureSet::clearFeatureData()
 
 uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 {
+	// Uncomment this if you want to print the line, index, and size of each item deserialized
+	// This can be diffed with the DESERIALIZATION_DEBUGGING output to find offset mismatches
+    //#define SERIALIZATION_DEBUGGING true
 	uint32_t offset = 0;
 	uint32_t count = 0;
 	uint32_t table_entries = 0;
@@ -500,24 +503,46 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 
 	memcpy(buf+offset, &m_totalInterval, sizeof m_totalInterval);
 	offset += sizeof m_totalInterval;
+#ifdef SERIALIZATION_DEBUGGING
+	int item = 0;
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
+#endif
 
 	memcpy(buf+offset, &m_haystackEvents, sizeof m_haystackEvents);
 	offset += sizeof m_haystackEvents;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_haystackEvents << endl;
+#endif
 
 	memcpy(buf+offset, &m_packetCount, sizeof m_packetCount);
 	offset += sizeof m_packetCount;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_packetCount << endl;
+#endif
 
 	memcpy(buf+offset, &m_bytesTotal, sizeof m_bytesTotal);
 	offset += sizeof m_bytesTotal;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_bytesTotal << endl;
+#endif
 
 	memcpy(buf+offset, &m_startTime, sizeof m_startTime);
 	offset += sizeof m_startTime;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_startTime << endl;
+#endif
 
 	memcpy(buf+offset, &m_endTime, sizeof m_endTime);
 	offset += sizeof m_endTime;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_endTime << endl;
+#endif
 
 	memcpy(buf+offset, &m_lastTime, sizeof m_lastTime);
 	offset += sizeof m_lastTime;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_lastTime << endl;
+#endif
 
 	//These tables all just place their key followed by the data
 	uint32_t tempInt;
@@ -534,6 +559,9 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 	tempInt = count - table_entries;
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
+#endif
 
 	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (table_entries < count); it++)
 	{
@@ -542,8 +570,15 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
+#ifdef SERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
+#endif
+
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
+#ifdef SERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
+#endif
 		}
 	}
 
@@ -559,6 +594,9 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 	tempInt = count - table_entries;
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
+#endif
 
 	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (table_entries < count); it++)
 	{
@@ -567,8 +605,15 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
+#ifdef SERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
+#endif
+
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
+#endif
 		}
 	}
 
@@ -584,6 +629,9 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 	tempInt = count - table_entries;
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
+#endif
 
 	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (table_entries < count); it++)
 	{
@@ -592,8 +640,15 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
+#ifdef SERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
+#endif
+
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
+#ifdef SERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
+#endif
 		}
 	}
 
@@ -609,6 +664,9 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 	tempInt = count - table_entries;
 	memcpy(buf+offset, &tempInt, sizeof tempInt);
 	offset += sizeof tempInt;
+#ifdef SERIALIZATION_DEBUGGING
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
+#endif
 
 	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (table_entries < count); it++)
 	{
@@ -617,16 +675,126 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 			table_entries++;
 			memcpy(buf+offset, &it->first, sizeof it->first);
 			offset += sizeof it->first;
+#ifdef SERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
+#endif
+
 			memcpy(buf+offset, &it->second, sizeof it->second);
 			offset += sizeof it->second;
+#ifdef SERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
+#endif
 		}
 	}
 	return offset;
 }
 
+uint32_t FeatureSet::GetFeatureDataLength()
+{
+	uint32_t out = 0;
+	uint32_t count = 0;
+	uint32_t table_entries = 0;
+
+	out += sizeof(m_totalInterval) + sizeof(m_haystackEvents) + sizeof(m_packetCount)
+			+ sizeof(m_bytesTotal) + sizeof(m_startTime) + sizeof(m_endTime)
+			+ sizeof(m_lastTime);
+
+	uint32_t tempInt = 0;
+
+	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof(tempInt);
+
+	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof(tempInt);
+
+	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof tempInt;
+
+	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	tempInt = count - table_entries;
+	out += sizeof tempInt;
+
+	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			out += sizeof it->first;
+			out += sizeof it->second;
+		}
+	}
+
+	return out;
+}
+
 
 uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 {
+	// Uncomment this if you want to print the line, index, and size of each item deserialized
+	// This can be diffed with the SERIALIZATION_DEBUGGING output to find offset mismatches
+	//#define DESERIALIZATION_DEBUGGING true
+
 	uint32_t offset = 0;
 
 	//Bytes in a word, used for everything but port #'s
@@ -634,6 +802,7 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 	//Temporary variables to store and track data during deserialization
 	uint32_t temp = 0;
+	time_t timeTemp;
 	uint32_t tempCount = 0;
 	in_port_t port = 0;
 
@@ -641,21 +810,37 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 	memcpy(&temp, buf+offset, sizeof m_totalInterval);
 	m_totalInterval += temp;
 	offset += sizeof m_totalInterval;
+#ifdef DESERIALIZATION_DEBUGGING
+	int item = 0;
+	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
+#endif
 
 	memcpy(&temp, buf+offset, sizeof m_haystackEvents);
 	m_haystackEvents += temp;
 	offset += sizeof m_haystackEvents;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_haystackEvents << endl;
+#endif
 
 	memcpy(&temp, buf+offset, sizeof m_packetCount);
 	m_packetCount += temp;
 	offset += sizeof m_packetCount;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_packetCount << endl;
+#endif
 
 	memcpy(&temp, buf+offset, sizeof m_bytesTotal);
 	m_bytesTotal += temp;
 	offset += sizeof m_bytesTotal;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_bytesTotal << endl;
+#endif
 
 	memcpy(&temp, buf+offset, sizeof m_startTime);
 	offset += sizeof m_startTime;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_startTime << endl;
+#endif
 	if(m_startTime > (time_t)temp)
 	{
 		m_startTime = temp;
@@ -663,6 +848,9 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 	memcpy(&temp, buf+offset, sizeof m_endTime);
 	offset += sizeof m_endTime;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_endTime << endl;
+#endif
 	if(m_endTime < (time_t)temp)
 	{
 		m_endTime = temp;
@@ -670,6 +858,9 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 	memcpy(&temp, buf+offset, sizeof m_lastTime);
 	offset += sizeof m_lastTime;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_lastTime << endl;
+#endif
 	if(m_lastTime < (time_t)temp)
 	{
 		m_lastTime = temp;
@@ -682,56 +873,99 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 	memcpy(&table_size, buf+offset, sizeof table_size);
 	offset += sizeof table_size;
-
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
+#endif
 	//Packet interval table
 	for(uint32_t i = 0; i < table_size;)
 	{
-		memcpy(&temp, buf+offset, sizeof temp);
-		offset += sizeof temp;
+		memcpy(&temp, buf+offset, sizeof timeTemp);
+		offset += sizeof timeTemp;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
+#endif
+
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
+#endif
+
 		m_intervalTable[temp] += tempCount;
 		i++;
 	}
 
 	memcpy(&table_size, buf+offset, sizeof table_size);
 	offset += sizeof table_size;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
+#endif
 
 	//Packet size table
 	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
+#endif
+
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
+#endif
+
 		m_packTable[temp] += tempCount;
 		i++;
 	}
 
 	memcpy(&table_size, buf+offset, sizeof table_size);
 	offset += sizeof table_size;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
+#endif
 
 	//IP table
 	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&temp, buf+offset, sizeof temp);
 		offset += sizeof temp;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
+#endif
+
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
+#endif
+
 		m_IPTable[temp] += tempCount;
 		i++;
 	}
 
 	memcpy(&table_size, buf+offset, sizeof table_size);
 	offset += sizeof table_size;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
+#endif
 
 	//Port table
 	for(uint32_t i = 0; i < table_size;)
 	{
 		memcpy(&port, buf+offset, sizeof port);
 		offset += sizeof port;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof port << endl;
+#endif
+
 		memcpy(&tempCount, buf+offset, sizeof tempCount);
 		offset += sizeof tempCount;
+#ifdef DESERIALIZATION_DEBUGGING
+			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
+#endif
+
 		m_portTable[port] += tempCount;
 		i++;
 	}

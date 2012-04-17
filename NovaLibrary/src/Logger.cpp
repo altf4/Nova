@@ -70,17 +70,17 @@ namespace Nova
 		}
 		tempStr = messageBasic;
 
-		if(mask.at(0) == '1')
+		if(mask.at(LIBNOTIFY) == '1')
 		{
 			Notify(messageLevel, tempStr);
 		}
 
-		if(mask.at(1) == '1')
+		if(mask.at(SYSLOG) == '1')
 		{
 			LogToFile(messageLevel, ss.str());
 		}
 
-		if(mask.at(2) == '1')
+		if(mask.at(EMAIL) == '1')
 		{
 			Mail(messageLevel, tempStr);
 		}
@@ -208,11 +208,15 @@ namespace Nova
 			for(uint16_t i = 0; i < strlen(logPref); i += 4)
 			{
 				//If it finds it...
-				if(logPref[i] == (char)(services + 48))
+				if(logPref[i] == ';')
+				{
+					i++;
+				}
+				if(logPref[i] == (char)(services + '0'))
 				{
 					//It replaces the pair's constituent message level with the messageTypeLevel
 					// argument that was passed.
-					logPref[i + 2] = (char)(messageTypeLevel + 48);
+					logPref[i + 2] = (char)(messageTypeLevel + '0');
 
 					//Now we have to deal with some formatting issues:
 					//If a change to the current range modifier

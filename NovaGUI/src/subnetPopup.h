@@ -55,7 +55,7 @@ protected:
 	{
 		QString temp = QString(text);
 		in_addr_t mask = ntohl(inet_addr(temp.toStdString().c_str()));
-		return HoneydConfiguration::GetMaskBits(mask);
+		return Nova::HoneydConfiguration::GetMaskBits(mask);
 	}
 
 	QString textFromValue(int value) const

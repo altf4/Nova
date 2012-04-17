@@ -1,0 +1,141 @@
+<style type="text/css">
+
+label{
+float: left;
+width: 300px;
+font-weight: bold;
+}
+
+input, textarea{
+width: 180px;
+margin-bottom: 5px;
+}
+
+textarea{
+width: 250px;
+height: 150px;
+}
+
+.boxes{
+width: 1em;
+}
+
+#submitbutton{
+margin-left: 120px;
+margin-top: 5px;
+width: 300px;
+}
+
+br{
+clear: left;
+}
+
+</style>
+
+<HTML>
+<BODY>
+
+<H1> NOVA Configuration </H1>
+<form method="post" action="/">
+	<label>Interface</label>
+	<input type="text" name="interface" value="" /><br />
+
+	<label>Data File</label>
+	<input type="text" name="datafile" value="" /><br />
+
+	<label>Silent Alarm Port</label>
+	<input type="text" name="saport" value="" /><br />
+
+	<label>Silent Alarm Connection Attempts</label>
+	<input type="text" name="saconnectattempts" value="" /><br />
+
+	<label>K</label>
+	<input type="text" name="k" value="" /><br />
+
+	<label>EPS</label>
+	<input type="text" name="EPS" value="" /><br />
+
+	<label>Classification Timeout</label>
+	<input type="text" name="classification_timeout" value="" /><br />
+
+	<label>Training Capture Folder</label>
+	<input type="text" name="training_cap_folder" value="" /><br />
+
+	<label>Thinning Distance</label>
+	<input type="text" name="thinning_distance" value="" /><br />
+
+	<label>Classification Threshold</label>
+	<input type="text" name="classification_threshold" value="" /><br />
+
+	<label>User Honeyd Config</label>
+	<input type="text" name="user_honeyd_config" value="" /><br />
+
+	<label>Doppelganger IP Address</label>
+	<input type="text" name="Doppelganger_ip" value="" /><br />
+
+	<label>Doppelganger Interface</label>
+	<input type="text" name="doppelganger_interface" value="" /><br />
+	
+	<label>Haystack Honeyd Config</label>
+	<input type="text" name="hs_honeyd_config" value="" /><br />
+
+	<label>TCP Timeout</label>
+	<input type="text" name="tcp_timeout" value="" /><br />
+
+	<label>TCP Check Frequency</label>
+	<input type="text" name="tcp_check_freq" value="" /><br />
+
+	<label>Pcap file path</label>
+	<input type="text" name="pcac_file" value="" /><br />
+
+	<label>Silent Alarm Max connection attempts</label>
+	<input type="text" name="sa_max_attempts" value="" /><br />
+	
+	<label>Silent Alarm Sleep Duration</label>
+	<input type="text" name="sa_sleep_duration" value="" /><br />
+	
+	<label>Enabled Featureset Mask</label>
+	<input type="text" name="enabled_features" value="" /><br />
+	
+	<label>Data TTL</label>
+	<input type="text" name="data_ttl" value="" /><br />
+	
+	<label>State Save File</label>
+	<input type="text" name="ce_save_file" value="" /><br />
+	
+	<label>SMTP Address</label>
+	<input type="text" name="smtp_addr" value="" /><br />
+	
+	<label>SMTP Port</label>
+	<input type="text" name="smtp_port" value="" /><br />
+	
+	<label>SMTP Domain</label>
+	<input type="text" name="smtp_domain" value="" /><br />
+	
+	<label>Email Recipients</label>
+	<input type="text" name="recipients" value="" /><br />
+	
+	<label>Log Preferences</label>
+	<input type="text" name="service_preferences" value="" /><br />
+	
+	<label>Haystack Storage</label>
+	<input type="text" name="haystack_storage" value="" /><br />
+	
+	<label>Doppelganger Enabled?</label>
+	<input type="checkbox" name="dm_enabled" value="" /><br />
+
+	<label>Training?</label>
+	<input type="checkbox" name="is_training" value="" /><br />
+	
+	<label>Read Pcap?</label>
+	<input type="checkbox" name="read_pcap" value="" /><br />
+
+	<label>Go to live capture?</label>
+	<input type="checkbox" name="go_to_live" value="" /><br />
+	
+
+	<input type="submit" name="submitbutton" id="submitbutton" value="Save Settings" />
+
+</form>
+</BODY>
+</HTML>

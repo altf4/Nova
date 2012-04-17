@@ -21,7 +21,6 @@
 #include "ui_novaconfig.h"
 #include "novagui.h"
 #include "nodePopup.h"
-#include "VendorMacDb.h"
 
 #include <QMutex>
 #include <QWheelEvent>
@@ -43,13 +42,14 @@ class NovaConfig : public QMainWindow
 	Q_OBJECT
 
 public:
+
 	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
 
-	SubnetTable m_subnets;
-	NodeTable m_nodes;
-	ProfileTable m_profiles;
+	Nova::HoneydConfiguration *m_honeydConfig;
 
     QMutex * m_loading;
+
+    NovaGUI * m_mainwindow;
 
     NovaConfig(QWidget *parent = 0, std::string homePath = "");
 
@@ -61,18 +61,12 @@ public:
     bool DisplayMACPrefixWindow();
     //Load Personality choices from nmap fingerprints file
     void DisplayNmapPersonalityWindow();
-    //Renames the nodes to the correct unique identifier based on node type;
+
     bool SyncAllNodesWithProfiles();
-    //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor std::string
-    std::string LookupMACVendor(uint MACPrefix);
-    //Load MAC vendor prefix choices from nmap mac prefix file
-    void LoadMACAddressVendorPrefixesFromFile();
+
+
     //Load nmap personalities from the nmap-os-db file
     void LoadNmapPersonalitiesFromFile();
-
-    //Randomly selects one of the ranges associated with vendor and generates the remainder of the MAC address
-    // *note conflicts are only checked for locally, weird things may happen if the address is already being used.
-    std::string GenerateUniqueMACAddress(std::string vendor);
 
     // Creates a new item for the featureList
     //		name - Name to be displayed, e.g. "Ports Contacted"
@@ -131,13 +125,13 @@ public:
 
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
-    //Deletes a single node, called from deleteNodes();
-    void DeleteNode(node *n);
+    void DeleteNode(std::string node);
+
     //Populates the tree widget with the current node configuration
     void LoadAllNodes();
 
-    //If a profile is edited, this function updates the changes for the rest of the GUI
-    void UpdateProfile(bool deleteProfile, profile *p);
+    // Checks the value in the spin boxes to see if it's a used IP or not
+    bool IsDoppelIPValid();
 
     //Updates children when inherited ports are changed
     void UpdatePorts();
@@ -183,8 +177,6 @@ void on_defaultActionListWidget_currentRowChanged();
 void on_dmCheckBox_stateChanged(int state);
 //Check Box signal for enabling pcap settings group box
 void on_pcapCheckBox_stateChanged(int state);
-//Combo box signal for enabling or disabling dhcp IP resolution
-void on_dhcpComboBox_currentIndexChanged(int index);
 //Combo box signal for changing the uptime behavior
 void on_uptimeBehaviorComboBox_currentIndexChanged(int index);
 
@@ -212,7 +204,6 @@ void on_featureEnableButton_clicked();
 void on_featureDisableButton_clicked();
 
 //Inheritance Check boxes
-void on_ipModeCheckBox_stateChanged();
 void on_ethernetCheckBox_stateChanged();
 void on_uptimeCheckBox_stateChanged();
 void on_personalityCheckBox_stateChanged();
@@ -269,7 +260,6 @@ private:
     std::string m_currentSubnet;
 
     nodePopup * m_nodewindow;
-    NovaGUI * m_mainwindow;
     QMenu * m_portMenu;
     QMenu * m_profileTreeMenu;
     QMenu * m_nodeTreeMenu;
@@ -281,14 +271,10 @@ private:
 
     //Value set by dialog windows
     std::string m_retVal;
-
-    VendorMacDb m_macAddresses;
-
-
     std::string m_homePath;
 
-    PortTable m_ports;
-    ScriptTable m_scripts;
+	// Reference to the dialog prompter initialized in novagui
+	DialogPrompter *m_prompter;
 };
 
 class TreeItemComboBox : public QComboBox

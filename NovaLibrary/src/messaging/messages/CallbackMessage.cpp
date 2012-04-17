@@ -82,7 +82,7 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 			}
 
 			m_suspect = new Suspect();
-			m_suspect->DeserializeSuspect((u_char*)buffer);
+			m_suspect->Deserialize((u_char*)buffer);
 
 			break;
 		}
@@ -124,8 +124,10 @@ char *CallbackMessage::Serialize(uint32_t *length)
 			{
 				return NULL;
 			}
-			char suspectTempBuffer[MAX_MSG_SIZE];
-			m_suspectLength = m_suspect->SerializeSuspect((u_char*)suspectTempBuffer);
+			uint32_t bufferSize = m_suspect->GetSerializeLength(false);
+			char * suspectTempBuffer[bufferSize];
+			m_suspectLength = m_suspect->Serialize((u_char*)suspectTempBuffer);
+
 			if(m_suspectLength == 0)
 			{
 				return NULL;

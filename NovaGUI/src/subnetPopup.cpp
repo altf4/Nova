@@ -19,6 +19,8 @@
 #include "novaconfig.h"
 #include "novagui.h"
 
+#include <arpa/inet.h>
+
 using namespace std;
 using namespace Nova;
 
@@ -88,7 +90,7 @@ void subnetPopup::SaveSubnet()
 	while(m_editSubnet.nodes.size())
 	{
 		conflict = false;
-		node tempNode = nParent->m_nodes[m_editSubnet.nodes.back()];
+		node tempNode = nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes.back()];
 		m_editSubnet.nodes.pop_back();
 
 		tempNode.interface = m_editSubnet.name;
@@ -104,7 +106,7 @@ void subnetPopup::SaveSubnet()
 
 		for(uint i = 0; i < m_editSubnet.nodes.size(); i++)
 		{
-			if(tempNode.realIP == (nParent->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
+			if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
 			{
 				conflict = true;
 			}
@@ -112,7 +114,7 @@ void subnetPopup::SaveSubnet()
 
 		for(uint i = 0; i < addList.size(); i++)
 		{
-			if(tempNode.realIP == (nParent->m_nodes[addList[i]].realIP & ~maskTemp))
+			if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[addList[i]].realIP & ~maskTemp))
 			{
 				conflict = true;
 			}
@@ -147,7 +149,7 @@ void subnetPopup::SaveSubnet()
 				}
 				for(uint i = 0; i < m_editSubnet.nodes.size(); i++)
 				{
-					if(tempNode.realIP == (nParent->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
+					if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
 					{
 						conflict = true;
 						tempNode.realIP++;
@@ -156,7 +158,7 @@ void subnetPopup::SaveSubnet()
 				}
 				if(!conflict) for(uint i = 0; i < addList.size(); i++)
 				{
-					if(tempNode.realIP == (nParent->m_nodes[addList[i]].realIP & ~maskTemp))
+					if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[addList[i]].realIP & ~maskTemp))
 					{
 						conflict = true;
 						tempNode.realIP++;
@@ -169,26 +171,27 @@ void subnetPopup::SaveSubnet()
 
 			if(conflict)
 			{
-				nParent->m_nodes.erase(tempNode.name);
+				nParent->m_honeydConfig->m_nodes.erase(tempNode.name);
 				continue;
 			}
 		}
 		inTemp.s_addr = htonl(tempNode.realIP);
-		tempNode.IP = inet_ntoa(inTemp);
+
+		if (tempNode.IP != "DHCP")
+		{
+			tempNode.IP = inet_ntoa(inTemp);
+		}
 
 		//If node has a static IP it's name needs to change with it's IP
 		//the only exception to this is the Doppelganger, it's name is always the same.
-		if((tempNode.name.compare("Doppelganger")) &&
-			(nParent->m_profiles[tempNode.pfile].type == static_IP))
+		if(tempNode.name.compare("Doppelganger") && tempNode.IP.length() && tempNode.IP != "DHCP")
 		{
-			nParent->m_nodes.erase(tempNode.name);
-			tempNode.name = tempNode.IP;
-			nParent->m_nodes[tempNode.name] = tempNode;
+			nParent->m_honeydConfig->m_nodes.erase(tempNode.name);
+			tempNode.name = tempNode.IP + " - " + tempNode.MAC;
 		}
-		else
-		{
-			nParent->m_nodes[tempNode.name] = tempNode;
-		}
+
+		nParent->m_honeydConfig->m_nodes[tempNode.name] = tempNode;
+
 
 		addList.push_back(tempNode.name);
 	}
@@ -237,17 +240,16 @@ void subnetPopup::LoadSubnet()
 //Copies the data from parent novaconfig and adjusts the pointers
 void subnetPopup::PullData()
 {
-	m_editSubnet = nParent->m_subnets[subName];
+	m_editSubnet = nParent->m_honeydConfig->m_subnets[subName];
 }
 
 //Copies the data to parent novaconfig and adjusts the pointers
 void subnetPopup::PushData()
 {
 	nParent->m_loading->lock();
-	nParent->m_subnets.erase(subName);
-	nParent->m_subnets[m_editSubnet.name] = m_editSubnet;
+	nParent->m_honeydConfig->m_subnets.erase(subName);
+	nParent->m_honeydConfig->m_subnets[m_editSubnet.name] = m_editSubnet;
 	nParent->m_loading->unlock();
-	nParent->UpdateLookupKeys();
 
 	nParent->LoadAllNodes();
 	subName = m_editSubnet.name;

@@ -16,17 +16,17 @@
 // Description : Parent message class for GUI communication with Nova processes
 //============================================================================/*
 
-#include "UI_Message.h"
-#include "ControlMessage.h"
 #include "CallbackMessage.h"
+#include "ControlMessage.h"
 #include "RequestMessage.h"
 #include "ErrorMessage.h"
+#include "UI_Message.h"
+#include "../Logger.h"
 
 #include <string>
 #include <vector>
-#include <sys/socket.h>
 #include <errno.h>
-
+#include <sys/socket.h>
 
 using namespace std;
 using namespace Nova;
@@ -43,6 +43,11 @@ UI_Message::~UI_Message()
 
 UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 {
+	if (connectFD < 0)
+	{
+		return new ErrorMessage(ERROR_SOCKET_CLOSED);
+	}
+
 	uint32_t length = 0;
 	char buff[sizeof(length)];
 	uint totalBytesRead = 0;
@@ -83,6 +88,7 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 	memcpy(&length, buff, sizeof(length));
 	if (length == 0)
 	{
+		LOG(DEBUG, "Invalid length when deserializing UI message", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
@@ -91,6 +97,7 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 	if (buffer == NULL)
 	{
 		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
+		LOG(DEBUG, "Malloc failed when deserializing UI message", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
@@ -124,6 +131,7 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 
 	if(length < MESSAGE_MIN_SIZE)
 	{
+		LOG(DEBUG, "Invalid length when deserializing UI message. Length is less than MESSAGE_MIN_SIZE", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
@@ -139,19 +147,44 @@ bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
+	
+	// Total bytes of a write() call that need to be sent
+	uint32_t bytesSoFar;
+
+	// Return value of the write() call, actual bytes sent
+	uint32_t bytesWritten;
 
 	// Send the message length
-	if (write(connectFD, &length, sizeof(length)) < 0)
+	bytesSoFar = 0;
+    while (bytesSoFar < sizeof(length))
 	{
-		free(buffer);
-		return false;
+		bytesWritten = write(connectFD, &length, sizeof(length) - bytesSoFar);
+		if (bytesWritten < 0)
+		{
+			free(buffer);
+			return false;
+		}
+		else
+		{
+			bytesSoFar += bytesWritten;
+		}
 	}
 
+	
 	// Send the message
-	if( write(connectFD, buffer, length) < 0 )
+	bytesSoFar = 0;
+	while (bytesSoFar < length)
 	{
-		free(buffer);
-		return false;
+		bytesWritten = write(connectFD, buffer, length - bytesSoFar);
+		if (bytesWritten < 0)
+		{
+			free(buffer);
+			return false;
+		}
+		else
+		{
+			bytesSoFar += bytesWritten;
+		}
 	}
 
 	free(buffer);

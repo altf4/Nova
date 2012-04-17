@@ -20,6 +20,7 @@
 
 #include "ui_nodePopup.h"
 #include "NovaGuiTypes.h"
+#include "novagui.h"
 
 #include <QtGui/QSpinBox>
 #include <math.h>
@@ -84,13 +85,6 @@ protected:
 		return ret;
 	}
 
-	QValidator::State validate(QString &text, int &pos) const
-	{
-		if(this->lineEdit()->text().size() < 8)
-			return QValidator::Intermediate;
-		return m_validator->validate(text, pos);
-	}
-
 private:
 
     QRegExpValidator *m_validator;
@@ -103,7 +97,9 @@ class nodePopup : public QMainWindow
 
 public:
 
-    nodePopup(QWidget *parent = 0, node *n  = NULL);
+    DialogPrompter * m_prompter;
+
+    nodePopup(QWidget *parent = 0, node *n  = NULL, bool editingNode = false);
     ~nodePopup();
 
     HexMACSpinBox * m_ethernetEdit;
@@ -111,15 +107,12 @@ public:
 
     //Saves the current configuration
     void SaveNode();
+
     //Loads the last saved configuration
     void LoadNode();
-    //Copies the data from parent novaconfig and adjusts the pointers
-    void PullData();
-    //Copies the data to parent novaconfig and adjusts the pointers
-    void PushData();
 
     //Checks for IP or MAC conflicts
-    int ValidateNodeSettings();
+    nodeConflictType ValidateNodeSettings();
 
 private Q_SLOTS:
 
@@ -129,9 +122,15 @@ private Q_SLOTS:
 	void on_restoreButton_clicked();
 	void on_applyButton_clicked();
 	void on_generateButton_clicked();
+	void on_isDHCP_stateChanged();
+	void on_isRandomMAC_stateChanged();
 
 private:
+	node *m_parentNode;
+	bool m_editingNode;
     Ui::nodePopupClass ui;
+    node m_editNode;
+
 };
 
 #endif // NODEPOPUP_H

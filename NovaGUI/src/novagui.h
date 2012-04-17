@@ -48,7 +48,6 @@ class NovaGUI : public QMainWindow
 public:
 
     bool m_isHelpUp;
-    HoneydConfiguration *m_honeydConfig;
 
     DialogPrompter *m_prompter;
     messageHandle CONFIG_READ_FAIL, CONFIG_WRITE_FAIL, HONEYD_READ_FAIL;

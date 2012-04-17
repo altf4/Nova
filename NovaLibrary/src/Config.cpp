@@ -1118,6 +1118,9 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	bool returnValue = true;
 	struct stat fileAttr;
 
+	// Important note
+	// This is called before the logger is initialized. Calling LOG here will likely result in a crash. Just use cout instead.
+
 	// Does ~/.nova exist?
 	if(stat(homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
@@ -1130,12 +1133,10 @@ bool Config::InitUserConfigs(string homeNovaPath)
 				string defaultLocation = "/etc/nova/.nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 
-				LOG(ERROR, "File not found.",
-					"The file "+fullPath+" does not exist; Using defaults located at "+defaultLocation);
+				cout << "The required file " << fullPath << " does not exist. Copying it from the defaults folder." << endl;
 				if(system(copyCommand.c_str()) == -1)
 				{
-					LOG(ERROR,"Unable to load defaults from "+defaultLocation,
-							"System Command "+copyCommand+" has failed.");
+					cout << "Unable to load defaults from " << defaultLocation << "System Command " << copyCommand <<" has failed." << endl;
 				}
 			}
 		}
@@ -1145,7 +1146,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 		//TODO: Do this command programmatically. Not by calling system()
 		if(system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
 		{
-			LOG(ERROR, "Was not able to create directory /usr/share/nova/.nova", "");
+			cout << "Was unable to create directory /usr/share/nova/.nova" << endl;
 			returnValue = false;
 		}
 
@@ -1156,7 +1157,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 		}
 		else
 		{
-			LOG(ERROR, "Was not able to create directory /usr/share/nova/.nova", "");
+			cout << "Was unable to create directory /usr/share/nova/.nova" << endl;
 			returnValue = false;
 		}
 	}

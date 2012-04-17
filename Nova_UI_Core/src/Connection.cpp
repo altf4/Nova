@@ -32,7 +32,6 @@
 
 using namespace std;
 using namespace Nova;
-
 //Socket communication variables
 Socket UI_parentSocket, UI_ListenSocket, novadListenSocket;
 struct sockaddr_un UI_Address, novadAddress;
@@ -61,6 +60,7 @@ bool InitCallbackSocket()
 	{
 		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket.m_socketFD);
+		UI_parentSocket.m_socketFD = -1;
 		return false;
 	}
 	socklen_t len = sizeof(UI_Address);
@@ -69,6 +69,7 @@ bool InitCallbackSocket()
 	{
 		LOG(ERROR, " bind: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket.m_socketFD);
+		UI_parentSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -76,6 +77,7 @@ bool InitCallbackSocket()
 	{
 		LOG(ERROR, " listen: "+string(strerror(errno))+".", "");
 		close(UI_parentSocket.m_socketFD);
+		UI_parentSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -83,8 +85,12 @@ bool InitCallbackSocket()
 	return true;
 }
 
-bool Nova::ConnectToNovad()
+namespace Nova
 {
+bool ConnectToNovad()
+{
+	Lock lock(&novadListenSocket.m_mutex);
+
 	if(!callbackInitialized)
 	{
 		if(!InitCallbackSocket())
@@ -99,7 +105,6 @@ bool Nova::ConnectToNovad()
 		return true;
 	}
 
-	Lock lock(&novadListenSocket.m_mutex);
 
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
@@ -120,6 +125,7 @@ bool Nova::ConnectToNovad()
 	{
 		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -128,6 +134,7 @@ bool Nova::ConnectToNovad()
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -138,6 +145,7 @@ bool Nova::ConnectToNovad()
 	{
 		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
 		close(UI_ListenSocket.m_socketFD);
+		UI_ListenSocket.m_socketFD = -1;
 		return false;
 	}
 
@@ -153,6 +161,7 @@ bool Nova::ConnectToNovad()
 	{
 		delete reply;
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
@@ -160,6 +169,7 @@ bool Nova::ConnectToNovad()
 	{
 		delete connectionReply;
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		return false;
 	}
 	bool replySuccess = connectionReply->m_success;
@@ -169,17 +179,8 @@ bool Nova::ConnectToNovad()
 }
 
 
-bool Nova::TryWaitConenctToNovad(int timeout_ms)
+bool TryWaitConnectToNovad(int timeout_ms)
 {
-	if(!callbackInitialized)
-	{
-		if(!InitCallbackSocket())
-		{
-			//No logging needed, InitCallbackSocket logs if it fails
-			return false;
-		}
-	}
-
 	if(ConnectToNovad())
 	{
 		return true;
@@ -192,7 +193,7 @@ bool Nova::TryWaitConenctToNovad(int timeout_ms)
 	}
 }
 
-bool Nova::CloseNovadConnection()
+bool CloseNovadConnection()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
@@ -233,13 +234,11 @@ bool Nova::CloseNovadConnection()
 		}
 	}
 
-
-
-
 	if(UI_ListenSocket.m_socketFD != -1 && close(UI_ListenSocket.m_socketFD))
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(UI_ListenSocket.m_socketFD);
+		UI_ListenSocket.m_socketFD = -1;
 		success = false;
 	}
 
@@ -247,6 +246,7 @@ bool Nova::CloseNovadConnection()
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
 		close(novadListenSocket.m_socketFD);
+		novadListenSocket.m_socketFD = -1;
 		success = false;
 	}
 
@@ -254,4 +254,5 @@ bool Nova::CloseNovadConnection()
 	novadListenSocket.m_socketFD = -1;
 
 	return success;
+}
 }
