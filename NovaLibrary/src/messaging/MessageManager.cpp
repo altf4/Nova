@@ -46,12 +46,11 @@ MessageManager &MessageManager::Instance()
 		LOG(ERROR, "Critical error in Message Manager", "Critical error in MessageManager: You must first initialize it with a direction"
 				"before calling Instance()");
 	}
-	return *m_instance;
+	return *MessageManager::m_instance;
 }
 
-UI_Message *MessageManager::GetMessage(int socketFD)
+UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection direction)
 {
-
 	Lock queueLock;
 	{
 		Lock queueLock(&m_queuesLock);
@@ -67,7 +66,7 @@ UI_Message *MessageManager::GetMessage(int socketFD)
 
 	if(m_queues.count(socketFD) > 0)
 	{
-		retMessage = m_queues[socketFD]->PopMessage();
+		retMessage = m_queues[socketFD]->PopMessage(direction);
 	}
 	else
 	{

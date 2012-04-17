@@ -128,7 +128,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	{
 		Lock lock(&controlSocket->m_mutex);
 
-		UI_Message *message = UI_Message::ReadMessage(controlSocket->m_socketFD);
+		UI_Message *message = UI_Message::ReadMessage(controlSocket->m_socketFD, DIRECTION_TO_NOVAD);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
@@ -480,7 +480,7 @@ bool SendSuspectToUI(Suspect *suspect)
 		return false;
 	}
 
-	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket.m_socketFD);
+	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket.m_socketFD, DIRECTION_TO_UI);
 	if(suspectReply->m_messageType == ERROR_MESSAGE )
 	{
 		ErrorMessage *error = (ErrorMessage*)suspectReply;

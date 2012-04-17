@@ -21,6 +21,7 @@
 #include "RequestMessage.h"
 #include "ErrorMessage.h"
 #include "UI_Message.h"
+#include "../MessageManager.h"
 #include "../../Logger.h"
 
 #include <string>
@@ -41,101 +42,9 @@ UI_Message::~UI_Message()
 
 }
 
-UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
+UI_Message *UI_Message::ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout)
 {
-	if (connectFD < 0)
-	{
-		return new ErrorMessage(ERROR_SOCKET_CLOSED);
-	}
-
-	uint32_t length = 0;
-	char buff[sizeof(length)];
-	uint totalBytesRead = 0;
-	int bytesRead = 0;
-
-	struct timeval tv;
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-	setsockopt(connectFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
-
-	// Read in the message length
-	while( totalBytesRead < sizeof(length))
-	{
-		bytesRead = read(connectFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
-
-		if( bytesRead < 0 )
-		{
-			// Was this a timeout error?
-			if (errno == EWOULDBLOCK || errno == EAGAIN)
-			{
-				return new ErrorMessage(ERROR_TIMEOUT);
-			}
-			else
-			{
-
-				//The socket died on us!
-				return new ErrorMessage(ERROR_SOCKET_CLOSED);
-			}
-		}
-		else
-		{
-			totalBytesRead += bytesRead;
-		}
-	}
-
-	// Make sure the length appears valid
-	// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
-	memcpy(&length, buff, sizeof(length));
-	if (length == 0)
-	{
-		LOG(DEBUG, "Invalid length when deserializing UI message", "");
-		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
-	}
-
-	char *buffer = (char*)malloc(length);
-
-	if (buffer == NULL)
-	{
-		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
-		LOG(DEBUG, "Malloc failed when deserializing UI message", "");
-		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
-	}
-
-	// Read in the actual message
-	totalBytesRead = 0;
-	bytesRead = 0;
-	while(totalBytesRead < length)
-	{
-		bytesRead = read(connectFD, buffer + totalBytesRead, length - totalBytesRead);
-
-		if( bytesRead < 0 )
-		{
-			// Was this a timeout error?
-			if (errno == EWOULDBLOCK || errno == EAGAIN)
-			{
-				return new ErrorMessage(ERROR_TIMEOUT);
-			}
-			else
-			{
-
-				//The socket died on us!
-				return new ErrorMessage(ERROR_SOCKET_CLOSED);
-			}
-		}
-		else
-		{
-			totalBytesRead += bytesRead;
-		}
-	}
-
-
-	if(length < MESSAGE_MIN_SIZE)
-	{
-		LOG(DEBUG, "Invalid length when deserializing UI message. Length is less than MESSAGE_MIN_SIZE", "");
-		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
-	}
-
-	return UI_Message::Deserialize(buffer, length);
+	return MessageManager::Instance().GetMessage(connectFD, direction);
 }
 
 bool UI_Message::WriteMessage(UI_Message *message, int connectFD)

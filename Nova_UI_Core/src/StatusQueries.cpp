@@ -54,7 +54,7 @@ bool IsNovadUp(bool tryToConnect)
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -106,7 +106,7 @@ int GetUptime()
 		return 0;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -158,7 +158,7 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 		return NULL;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -213,7 +213,7 @@ Suspect *GetSuspect(in_addr_t address)
 	}
 
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");

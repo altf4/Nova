@@ -40,7 +40,7 @@ public:
 	~MessageQueue();
 
 	//blocking call
-	UI_Message *PopMessage();
+	UI_Message *PopMessage(enum ProtocolDirection direction);
 
 	//Blocks until a callback message has been received
 	void RegisterCallback();

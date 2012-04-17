@@ -36,9 +36,9 @@ public:
 	//Initialize must be called exactly once at the begining of the program, before and calls to Instance()
 	//	It informs the MessageManager which side of the protocol it will be handling.
 	void Initialize(enum ProtocolDirection direction);
-	MessageManager &Instance();
+	static MessageManager &Instance();
 
-	Nova::UI_Message *GetMessage(int socketFD);
+	Nova::UI_Message *GetMessage(int socketFD, enum ProtocolDirection direction);
 
 	void StartSocket(Socket socket);
 

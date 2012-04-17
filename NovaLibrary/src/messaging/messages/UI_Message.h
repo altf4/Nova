@@ -32,7 +32,7 @@
 namespace Nova
 {
 
-//The direction that this message's PROTOCOL (not individual message) is going
+//The direction that this message's PROTOCOL (not individual message) is going. Who initiated the first message in the protocol
 //	IE: Is this a callback for Novad or the UI?
 //Value is used by MessageQueue to allow for dumb queueing of messages
 //	Otherwise the queue would have to be aware of the protocol used to know the direction
@@ -65,7 +65,7 @@ public:
 	// Returns - Pointer to newly allocated UI_Message object
 	//				returns an ErrorMessage object on error. Will never return NULL.
 	//	NOTE: The caller must manually delete the returned object when finished with it
-	static UI_Message *ReadMessage(int connectFD, int timeout = 0);
+	static UI_Message *ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout = 0);
 
 	//Writes a given UI_Message to the provided socket
 	//	message - A pointer to the message object to send

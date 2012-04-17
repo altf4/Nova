@@ -67,21 +67,41 @@ MessageQueue::~MessageQueue()
 }
 
 //blocking call
-UI_Message *MessageQueue::PopMessage()
+UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction)
 {
 	//Only one thread in this function at a time
 	Lock lockPop(&m_popMutex);
-	//Protection for the queue structure
-	Lock lockQueue(&m_forwardQueueMutex);
+	UI_Message* retMessage;
 
-	//While loop to protect against spurious wakeups
-	while(m_forwardQueue.empty())
+	if(direction == m_forwardDirection)
 	{
-		pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
+		//Protection for the queue structure
+		Lock lockQueue(&m_forwardQueueMutex);
+
+		//While loop to protect against spurious wakeups
+		while(m_forwardQueue.empty())
+		{
+			pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
+		}
+
+		retMessage = m_forwardQueue.front();
+		m_forwardQueue.pop();
+	}
+	else
+	{
+		//Protection for the queue structure
+		Lock lockQueue(&m_callbackQueueMutex);
+
+		//While loop to protect against spurious wakeups
+		while(m_callbackQueue.empty())
+		{
+			pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
+		}
+
+		retMessage = m_callbackQueue.front();
+		m_callbackQueue.pop();
 	}
 
-	UI_Message* retMessage = m_forwardQueue.front();
-	m_forwardQueue.pop();
 	return retMessage;
 }
 
@@ -103,6 +123,7 @@ void MessageQueue::PushMessage(UI_Message *message)
 		//Protection for the m_callbackDoWakeup bool
 		Lock condLock(&m_callbackCondMutex);
 		m_callbackDoWakeup = true;
+		pthread_cond_signal(&m_callbackWakeupCondition);
 		pthread_cond_signal(&m_readWakeupCondition);
 	}
 	else

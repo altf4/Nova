@@ -35,7 +35,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 	struct CallbackChange change;
 	change.type = CALLBACK_ERROR;
 
-	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket.m_socketFD);
+	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket.m_socketFD, DIRECTION_TO_UI);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
