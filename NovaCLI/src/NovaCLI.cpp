@@ -152,7 +152,15 @@ int main(int argc, const char *argv[])
 
 		if (!strcmp(argv[2], "all"))
 		{
-			PrintAllSuspects();
+			PrintAllSuspects(SUSPECTLIST_ALL);
+		}
+		else if (!strcmp(argv[2], "hostile"))
+		{
+			PrintAllSuspects(SUSPECTLIST_HOSTILE);
+		}
+		else if (!strcmp(argv[2], "benign"))
+		{
+			PrintAllSuspects(SUSPECTLIST_BENIGN);
 		}
 		else
 		{
@@ -218,7 +226,7 @@ void PrintUsage()
 	cout << "    " << EXECUTABLE_NAME << " start nova|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
-	cout << "    " << EXECUTABLE_NAME << " get all" << endl;
+	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear all" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
@@ -344,12 +352,12 @@ void PrintSuspect(in_addr_t address)
 	CloseNovadConnection();
 }
 
-void PrintAllSuspects()
+void PrintAllSuspects(enum SuspectListType listType)
 {
 	Connect();
 
 	vector<in_addr_t> *suspects;
-	suspects = GetSuspectList(SUSPECTLIST_ALL);
+	suspects = GetSuspectList(listType);
 
 	if (suspects == NULL)
 	{
