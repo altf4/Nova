@@ -418,7 +418,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 		case REQUEST_UPTIME:
 		{
-			RequestMessage reply(REQUEST_UPTIME_REPLY);
+			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_uptime = time(NULL) - startTime;
 			UI_Message::WriteMessage(&reply, socketFD);
 

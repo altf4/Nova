@@ -21,7 +21,7 @@
 #include "RequestMessage.h"
 #include "ErrorMessage.h"
 #include "UI_Message.h"
-#include "../Logger.h"
+#include "../../Logger.h"
 
 #include <string>
 #include <vector>

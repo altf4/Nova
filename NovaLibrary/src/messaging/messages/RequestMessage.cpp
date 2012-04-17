@@ -310,15 +310,17 @@ char *RequestMessage::Serialize(uint32_t *length)
 
 		case REQUEST_UPTIME:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			// Serialize 1) and 2)
-			buffer += SerializeHeader(buffer);
+			SerializeHeader(&buffer);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
 
 			break;
 		}
@@ -329,12 +331,14 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		2) Request Message Type
 			//		3) The uptime
 
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_uptime);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_uptime);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			// Serialize 1) and 2)
-			buffer += SerializeHeader(buffer);
+			SerializeHeader(&buffer);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
 
 			// Serialize the uptime
 			memcpy(buffer, &m_uptime, sizeof(m_uptime));

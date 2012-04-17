@@ -99,7 +99,7 @@ int GetUptime()
 {
 	Lock lock(&novadListenSocket.m_mutex);
 
-	RequestMessage request(REQUEST_UPTIME);
+	RequestMessage request(REQUEST_UPTIME, DIRECTION_TO_NOVAD);
 
 	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
 	{
