@@ -343,7 +343,6 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			LOG(DEBUG, "UI sent us an invalid message","Got an unexpected ControlMessage type");
 			break;
 		}
-
 	}
 }
 

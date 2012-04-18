@@ -139,7 +139,7 @@ bool ConnectToNovad()
 
 	//Wait for a connection on the callback socket
 	int len = sizeof(struct sockaddr_un);
-	UI_ListenSocket.m_socketFD = accept(UI_parentSocket.m_socketFD, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
+	UI_ListenSocket.m_socketFD = accept(UI_parentSocket.m_socketFD, (struct sockaddr *)&UI_Address, sizeof(UI_Address));
 	if (UI_ListenSocket.m_socketFD == -1)
 	{
 		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
