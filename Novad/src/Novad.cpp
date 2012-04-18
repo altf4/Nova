@@ -319,11 +319,15 @@ void LoadStateFile()
 	in.seekg (0, ios::end);
 	uint lengthLeft = in.tellg();
 	in.seekg (0, ios::beg);
-	uint timestamp = lastLoadTime - Config::Inst()->GetDataTTL();
+	uint expirationTime = lastLoadTime - Config::Inst()->GetDataTTL();
+	if(Config::Inst()->GetDataTTL() == 0)
+	{
+		expirationTime = 0;
+	}
 	uint numBytes = 0;
 	while (in.is_open() && !in.eof() && lengthLeft)
 	{
-		if((numBytes = suspects.ReadContents(&in, timestamp)) == 0)
+		if((numBytes = suspects.ReadContents(&in, expirationTime)) == 0)
 		{
 			//No need to log, ReadContents already does so
 			break;

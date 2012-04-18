@@ -582,7 +582,7 @@ void SuspectTable::SaveSuspectsToFile(string filename)
 //		out: ofstream you wish to write the contents to
 //		timestamp: the timestamp you wish to mark the table's contents with
 //Note: Information can be retrieved using ReadContents
-uint32_t SuspectTable::DumpContents(ofstream *out, time_t timestamp)
+uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 {
 	pthread_rwlock_rdlock(&m_lock);
 	//Get save time
@@ -590,9 +590,9 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t timestamp)
 	{
 		LOG(WARNING, "Unable to open CE state file.", "");
 	}
-	if(timestamp == 0)
+	if(saveTime == 0)
 	{
-		timestamp = time(NULL);
+		saveTime = time(NULL);
 	}
 
 	uint32_t ret = 0, dataSize = 0;
@@ -609,7 +609,7 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t timestamp)
 			dataSize += suspect->GetSerializeLength(MAIN_FEATURE_DATA);
 		}
 	}
-	out->write((char*)&timestamp, sizeof timestamp);
+	out->write((char*)&saveTime, sizeof saveTime);
 	out->write((char*)&dataSize, sizeof dataSize);
 	for(uint i = 0; i < m_keys.size(); i++)
 	{
@@ -629,7 +629,7 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t timestamp)
 	return ret;
 }
 
-uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
+uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	uint32_t ret = 0;
@@ -646,10 +646,10 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 	time_t saveTime = 0;
 	uint32_t dataSize = 0;
 
-	while(in->is_open() && !in->eof())
+	while(in->is_open() && !in->eof() && lengthLeft)
 	{
 		// Bytes left, but not enough to make a header (timestamp + size)?
-		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
+		if(lengthLeft < (sizeof expirationTime + sizeof dataSize))
 		{
 			LOG(ERROR, "The state file may be corruput", "");
 			pthread_rwlock_unlock(&m_lock);
@@ -668,14 +668,14 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t timestamp)
 			pthread_rwlock_unlock(&m_lock);
 			return 0;
 		}
-		if(saveTime < timestamp)
+		if(saveTime < expirationTime)
 		{
 			stringstream ss;
 			ss << "Throwing out old CE state at time: " << saveTime << ".";
 			LOG(DEBUG,"Throwing out old CE state.", ss.str());
 			in->seekg(dataSize, ifstream::cur);
 			pthread_rwlock_unlock(&m_lock);
-			return (sizeof(timestamp) + sizeof(dataSize) + dataSize);
+			return (sizeof(expirationTime) + sizeof(dataSize) + dataSize);
 		}
 
 		u_char tableBuffer[dataSize];
