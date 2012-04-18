@@ -602,11 +602,12 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
 			Suspect * suspect = m_suspectTable[m_keys[i]];
-			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount)
+			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
+				&& !suspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
 			{
 				continue;
 			}
-			dataSize += suspect->GetSerializeLength(MAIN_FEATURE_DATA);
+			dataSize += suspect->GetSerializeLength(ALL_FEATURE_DATA);
 		}
 	}
 	out->write((char*)&saveTime, sizeof saveTime);
@@ -616,11 +617,12 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
 			Suspect * suspect = m_suspectTable[m_keys[i]];
-			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount)
+			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
+				&& !suspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
 			{
 				continue;
 			}
-			dataSize = suspect->Serialize(tableBuffer, MAIN_FEATURE_DATA);
+			dataSize = suspect->Serialize(tableBuffer, ALL_FEATURE_DATA);
 			out->write((char*) tableBuffer, dataSize);
 			ret += dataSize;
 		}
@@ -687,10 +689,11 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 		while(offset < dataSize)
 		{
 			Suspect* newSuspect = new Suspect();
-			offset += newSuspect->Deserialize(tableBuffer+ offset, MAIN_FEATURE_DATA);
+			offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
 			in_addr_t key = newSuspect->GetIpAddress();
 			// If our suspect has no evidence, throw it out
-			if(newSuspect->GetFeatureSet(MAIN_FEATURES).m_packetCount == 0)
+			if(!newSuspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
+					|| !newSuspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
 			{
 				LOG(WARNING,"Discarding invalid suspect.",
 					"A suspect containing no evidence was detected and discarded");
@@ -700,8 +703,9 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 
 			if(IsValidKey_NonBlocking(key))
 			{
-				FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
 				LockSuspect(key);
+				newSuspect->UpdateFeatureData(INCLUDE);
+				FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
 				m_suspectTable[key]->AddFeatureSet(&fs, MAIN_FEATURES);
 				m_suspectTable[key]->SetNeedsClassificationUpdate(true);
 				UnlockSuspect(key);
@@ -735,6 +739,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					m_lockTable[key].deleted = false;
 					m_lockTable[key].ref_cnt = 0;
 					newSuspect->SetNeedsClassificationUpdate(true);
+					newSuspect->UpdateFeatureData(INCLUDE);
 					//Allocate the Suspect and copy the contents
 					m_suspectTable[key] = newSuspect;
 					//Store the key

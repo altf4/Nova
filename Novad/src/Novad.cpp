@@ -46,10 +46,8 @@ using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
-
 // Suspects not yet written to the state file
 SuspectTable suspectsSinceLastSave;
-pthread_mutex_t suspectsSinceLastSaveLock;
 
 // TCP session tracking table
 TCPSessionHashTable SessionTable;
@@ -110,7 +108,6 @@ int RunNovaD()
 	SessionTable.set_empty_key("");
 	SessionTable.resize(INIT_SIZE_HUGE);
 
-	pthread_mutex_init(&suspectsSinceLastSaveLock, NULL);
 	pthread_rwlock_init(&sessionLock, NULL);
 
 	// Let the logger initialize before we have multiple threads going
@@ -277,7 +274,6 @@ void AppendToStateFile()
 	ofstream out(Config::Inst()->GetPathCESaveFile().data(), ofstream::binary | ofstream::app);
 
 	//Update the feature set and dump the contents of the table to the output file
-	suspectsSinceLastSave.UpdateAllSuspects();
 	uint32_t dataSize;
 	dataSize = suspectsSinceLastSave.DumpContents(&out, lastSaveTime);
 
@@ -1014,6 +1010,15 @@ void UpdateAndClassify(in_addr_t key)
 		if(suspectCopy.GetIsLive())
 		{
 			SilentAlarm(&suspectCopy, oldIsHostile);
+		}
+	}
+	if(!Config::Inst()->GetIsTraining())
+	{
+		suspectCopy = suspectsSinceLastSave.CheckOut(key);
+		if(!suspectsSinceLastSave.IsEmptySuspect(&suspectCopy))
+		{
+			suspectCopy.UpdateEvidence();
+			suspectsSinceLastSave.CheckIn(&suspectCopy);
 		}
 	}
 
