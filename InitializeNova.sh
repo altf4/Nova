@@ -7,7 +7,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Add the user to the nova group
-usermod -a -G nova $USER
+usermod -a -G nova $SUDO_USER
 
 # Add /etc/sudoers.d to the sudoers file if needed
 if grep -q "#includedir /etc/sudoers.d" /etc/sudoers; then

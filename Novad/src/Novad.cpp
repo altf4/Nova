@@ -958,15 +958,18 @@ void UpdateSuspect(Packet packet)
 
 void UpdateAndStore(in_addr_t key)
 {
-	suspects.UpdateSuspect(key);
-	Suspect suspectCopy = suspects.GetSuspect(key);
-
 	// If the checkout failed and we got the empty suspect
-	if(suspectCopy.GetClassification() == -1)
+	Suspect suspectCopy = suspects.GetSuspect(key);
+	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;
 	}
-
+	suspects.UpdateSuspect(key);
+	suspectCopy = suspects.GetSuspect(key);
+	if(suspects.IsEmptySuspect(&suspectCopy))
+	{
+		return;
+	}
 	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
 	for (int j = 0; j < DIM; j++)
 	{
@@ -986,6 +989,7 @@ void UpdateAndStore(in_addr_t key)
 
 void UpdateAndClassify(in_addr_t key)
 {
+	// If the checkout failed and we got the empty suspect
 	Suspect suspectCopy = suspects.GetSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
@@ -995,7 +999,6 @@ void UpdateAndClassify(in_addr_t key)
 	//Get the old hostility bool
 	bool oldIsHostile = suspectCopy.GetIsHostile();
 	suspects.UpdateSuspect(key);
-
 	suspectCopy = suspects.GetSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{

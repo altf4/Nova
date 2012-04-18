@@ -361,12 +361,15 @@ bool NovaGUI::ConnectGuiToNovad()
 			suspectItem.suspect = GetSuspect(suspectIpList->at(i));
 
 			// Case of the empty suspect
-			if (suspectItem.suspect->GetIpAddress() == 0)
+			if(suspectItem.suspect == NULL)
+			{
+				continue;
+			}
+			else if(suspectItem.suspect->GetIpAddress() == 0)
 			{
 				delete suspectItem.suspect;
 				continue;
 			}
-
 			suspectItem.item = NULL;
 			suspectItem.mainItem = NULL;
 			this->ProcessReceivedSuspect(suspectItem, false);
@@ -1396,7 +1399,7 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_ERROR:
 			{
 				//TODO: Die after X consecutive errors?
-				LOG(ERROR, "Failed to connect to Novad", "Got a callback_error message, Hanging up");
+				LOG(ERROR, "Failed to connect to Novad", "Got a callback_error message");
 				break;
 			}
 			case CALLBACK_HUNG_UP:

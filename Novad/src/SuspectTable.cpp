@@ -203,7 +203,7 @@ bool SuspectTable::UpdateSuspect(in_addr_t key)
 		{
 			suspect->UpdateEvidence();
 			suspect->CalculateFeatures();
-			if(Config::Inst()->GetIsTraining())
+			if(!Config::Inst()->GetIsTraining())
 			{
 				engine->Classify(suspect);
 			}

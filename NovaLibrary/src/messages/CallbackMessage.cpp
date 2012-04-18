@@ -76,7 +76,7 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 				return;
 			}
 			m_suspect = new Suspect();
-			if(m_suspect->Deserialize((u_char*)buffer, NO_FEATURE_DATA) != expectedSize)
+			if(m_suspect->Deserialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
 			{
 				m_serializeError = true;
 				return;
