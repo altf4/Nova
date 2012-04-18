@@ -71,6 +71,10 @@ string Config::m_prefixes[] =
 string Config::m_requiredFiles[] =
 {
 	"/settings",
+	"/Config",
+	"/Data",
+	"/keys",
+	"/templates",
 	"/Config/NOVAConfig.txt",
 	"/scripts.xml",
 	"/templates/ports.xml",
@@ -652,7 +656,8 @@ void Config::LoadConfig()
 	}
 	else
 	{
-		LOG(INFO, "No configuration file found", "");
+		// Do not call LOG here, Config and Logger are not yet initialized
+		cout << "CRITICAL ERROR: No configuration file found!" << endl;
 	}
 
 
@@ -660,8 +665,8 @@ void Config::LoadConfig()
 	{
 		if(!isValid[i])
 		{
-			LOG(INFO, "Invalid configuration option.",
-				"Configuration option "+ m_prefixes[i]+" is invalid in the configuration file.");
+			// Do not call LOG here, Config and Logger are not yet initialized
+			cout << "Invalid configuration option" << m_prefixes[i] << " is invalid in the configuration file." << endl;
 		}
 	}
 	pthread_rwlock_unlock(&m_lock);
@@ -1070,7 +1075,7 @@ bool Config::SaveConfig()
 	delete out;
 	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
 	{
-		LOG(ERROR, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
+		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
 	}
 	pthread_rwlock_unlock(&m_lock);
 	return true;
@@ -1134,9 +1139,10 @@ bool Config::InitUserConfigs(string homeNovaPath)
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 
 				cout << "The required file " << fullPath << " does not exist. Copying it from the defaults folder." << endl;
-				if(system(copyCommand.c_str()) == -1)
+				if(system(copyCommand.c_str()) != 0)
 				{
 					cout << "Unable to load defaults from " << defaultLocation << "System Command " << copyCommand <<" has failed." << endl;
+					returnValue = false;
 				}
 			}
 		}
@@ -1212,7 +1218,8 @@ Config::Config()
 
 	if(!InitUserConfigs(GetPathHome()))
 	{
-		LOG(ERROR, "InitUserConfigs failed.","");
+		// Do not call LOG here, Config and logger are not yet initialized
+		cout << "CRITICAL ERROR: InitUserConfigs failed" << endl;
 	}
 
 	m_configFilePath = GetPathHome() + "/Config/NOVAConfig.txt";
@@ -1225,6 +1232,110 @@ Config::Config()
 Config::~Config()
 {
 
+}
+
+
+std::string Config::ReadSetting(std::string key)
+{
+	pthread_rwlock_wrlock(&m_lock);
+
+	string line;
+	string value;
+
+	ifstream config(m_configFilePath.c_str());
+
+	if(config.is_open())
+	{
+		while (config.good())
+		{
+			getline(config, line);
+
+			if(!line.substr(0, key.size()).compare(key))
+			{
+				line = line.substr(key.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					value = line;
+					break;
+				}
+				continue;
+			}
+		}
+
+		config.close();
+		pthread_rwlock_unlock(&m_lock);
+		return value;
+	}
+	else
+	{
+		LOG(ERROR, "Unable to read configuration file", "");
+		pthread_rwlock_unlock(&m_lock);
+		return "";
+	}
+}
+
+bool Config::WriteSetting(std::string key, std::string value)
+{
+	pthread_rwlock_wrlock(&m_lock);
+	string line;
+	bool error = false;
+
+	//Rewrite the config file with the new settings
+	string configurationBackup = m_configFilePath + ".tmp";
+	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
+	if(system(copyCommand.c_str()) != 0)
+	{
+		LOG(ERROR, "Problem saving current configuration.","System Call "+copyCommand+" has failed.");
+	}
+
+	ifstream *in = new ifstream(configurationBackup.c_str());
+	ofstream *out = new ofstream(m_configFilePath.c_str());
+
+	if(out->is_open() && in->is_open())
+	{
+		while(in->good())
+		{
+			if(!getline(*in, line))
+			{
+				continue;
+			}
+
+
+			if(!line.substr(0,key.size()).compare(key))
+			{
+				*out << key << " " << value << endl;
+				continue;
+			}
+
+			*out << line << endl;
+		}
+	}
+	else
+	{
+		error = true;
+	}
+
+	in->close();
+	out->close();
+	delete in;
+	delete out;
+
+	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
+	{
+		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
+	}
+
+	pthread_rwlock_unlock(&m_lock);
+
+	if (error)
+	{
+		LOG(ERROR, "Problem saving current configuration.", "");
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 double Config::GetClassificationThreshold()

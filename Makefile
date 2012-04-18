@@ -36,6 +36,9 @@ test-prepare:
 test: test-prepare
 	$(MAKE) -C NovaTest/Debug
 
+# Make debug + test
+all-test: debug test
+
 
 
 #Cleans both Release and Debug
@@ -119,8 +122,8 @@ install-docs:
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
-#Requires root
-uninstall:
+
+uninstall-files:
 	rm -rf $(DESTDIR)/etc/nova
 	rm -rf $(DESTDIR)/usr/share/nova
 	rm -f $(DESTDIR)/usr/bin/novagui
@@ -132,5 +135,19 @@ uninstall:
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
+
+uninstall-permissions:
 	sh Installer/postrm
+
+uninstall: uninstall-files uninstall-permissions
+
+# Reinstall nova without messing up the permissions
+reinstall: uninstall-files install
+reinstall-debug: uninstall-files install-debug
+
+# Does a frest uninstall, clean, build, and install
+reset-debug: uninstall-files clean clean-test debug test install-debug
+reset: uninstall-files clean clean-test release test install-release
+
+
 
