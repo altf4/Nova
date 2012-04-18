@@ -37,10 +37,13 @@ public:
 		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
 		pthread_mutex_init(&m_mutex, &attr);
+		pthread_mutexattr_destroy(&attr);
+
 	}
 	~Socket()
 	{
 		close(m_socketFD);
+		pthread_mutex_destroy(&m_mutex);
 	}
 
 	int m_socketFD;

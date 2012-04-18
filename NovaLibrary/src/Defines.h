@@ -45,11 +45,6 @@
 #define ENCRYPT true
 #define DECRYPT false
 
-//If the feature data is local
-#define LOCAL_DATA true
-//If the feature data is broadcast from another nova instance
-#define BROADCAST_DATA false
-
 //From the Haystack or Doppelganger Module
 #define FROM_HAYSTACK_DP true
 //From the Local Traffic Monitor

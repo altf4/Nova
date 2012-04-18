@@ -69,17 +69,18 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 
 			memcpy(&m_suspectLength, buffer, sizeof(m_suspectLength));
 			buffer += sizeof(m_suspectLength);
-
 			expectedSize += m_suspectLength;
-			if(expectedSize != length)
+			if((expectedSize != length) > SANITY_CHECK)
 			{
 				m_serializeError = true;
 				return;
 			}
-
 			m_suspect = new Suspect();
-			m_suspect->Deserialize((u_char*)buffer);
-
+			if(m_suspect->Deserialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			{
+				m_serializeError = true;
+				return;
+			}
 			break;
 		}
 		case CALLBACK_SUSPECT_UDPATE_ACK:
@@ -120,10 +121,7 @@ char *CallbackMessage::Serialize(uint32_t *length)
 			{
 				return NULL;
 			}
-			uint32_t bufferSize = m_suspect->GetSerializeLength(false);
-			char * suspectTempBuffer[bufferSize];
-			m_suspectLength = m_suspect->Serialize((u_char*)suspectTempBuffer);
-
+			m_suspectLength = m_suspect->GetSerializeLength(NO_FEATURE_DATA);
 			if(m_suspectLength == 0)
 			{
 				return NULL;
@@ -142,10 +140,11 @@ char *CallbackMessage::Serialize(uint32_t *length)
 			//Length of suspect buffer
 			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
 			buffer += sizeof(m_suspectLength);
-			//Suspect buffer itself
-			memcpy(buffer, suspectTempBuffer, m_suspectLength);
+			if(m_suspect->Serialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			{
+				return NULL;
+			}
 			buffer += m_suspectLength;
-
 			break;
 		}
 		case CALLBACK_SUSPECT_UDPATE_ACK:

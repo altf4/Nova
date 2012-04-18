@@ -55,7 +55,7 @@ bool IsNovadUp(bool tryToConnect)
 	}
 
 	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if((reply->m_messageType == ERROR_MESSAGE) && (((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT))
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);

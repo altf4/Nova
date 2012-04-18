@@ -31,23 +31,23 @@
 enum RequestType: char
 {
 	// Requests for lists of suspect IPs
-	REQUEST_SUSPECTLIST= 0,
-	REQUEST_SUSPECTLIST_REPLY,
+	REQUEST_SUSPECTLIST = 0,
+	REQUEST_SUSPECTLIST_REPLY = 1,
 
 	// Request for an individual suspect
-	REQUEST_SUSPECT,
-	REQUEST_SUSPECT_REPLY,
+	REQUEST_SUSPECT = 2,
+	REQUEST_SUSPECT_REPLY = 3,
 
 	// Request for the uptime of novad
-	REQUEST_UPTIME,
-	REQUEST_UPTIME_REPLY,
+	REQUEST_UPTIME = 4,
+	REQUEST_UPTIME_REPLY = 5,
 };
 
 enum SuspectListType : char
 {
 	SUSPECTLIST_ALL = 0,
-	SUSPECTLIST_HOSTILE,
-	SUSPECTLIST_BENIGN
+	SUSPECTLIST_HOSTILE = 1,
+	SUSPECTLIST_BENIGN = 2
 };
 
 namespace Nova

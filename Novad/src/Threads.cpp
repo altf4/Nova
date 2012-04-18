@@ -47,7 +47,6 @@ using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
 extern SuspectTable suspects;
-extern SuspectTable suspectsSinceLastSave;
 extern TCPSessionHashTable SessionTable;
 
 extern struct sockaddr_in hostAddr;
@@ -89,12 +88,10 @@ void *ClassificationLoop(void *ptr)
 	{
 		sleep(Config::Inst()->GetClassificationTimeout());
 		//Calculate the "true" Feature Set for each Suspect
-		for(SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
+		vector<uint64_t> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
+		for(uint i = 0; i < updateKeys.size(); i++)
 		{
-			if(it.Current().GetNeedsClassificationUpdate())
-			{
-				UpdateAndClassify(it.GetKey());
-			}
+			UpdateAndClassify(updateKeys[i]);
 		}
 		engine->m_dopp->UpdateDoppelganger();
 
@@ -111,13 +108,12 @@ void *ClassificationLoop(void *ptr)
 			if((time(NULL) - lastLoadTime) > Config::Inst()->GetDataTTL())
 			{
 				AppendToStateFile();
+				suspects.EraseAllSuspects();
 				RefreshStateFile();
-				suspects.Clear();
-				suspectsSinceLastSave.Clear();
 				LoadStateFile();
 			}
 		}
-	} while (Config::Inst()->GetClassificationTimeout() && !Config::Inst()->GetReadPcap());
+	}while(Config::Inst()->GetClassificationTimeout() && !Config::Inst()->GetReadPcap());
 
 	if(Config::Inst()->GetReadPcap())
 	{
@@ -145,10 +141,12 @@ void *TrainingLoop(void *ptr)
 
 		if(trainingFileStream.is_open())
 		{
-			// Calculate the "true" Feature Set for each Suspect
-			for (SuspectTableIterator it = suspects.Begin(); it.GetIndex() < suspects.Size(); ++it)
+			// Get list of Suspects that need a classification and feature update
+			vector<uint64_t> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
+			suspects.UpdateAllSuspects();
+			for(uint i = 0; i < updateKeys.size(); i++)
 			{
-					UpdateAndStore(it.GetKey());
+				UpdateAndStore(updateKeys[i]);
 			}
 		}
 		else
@@ -262,7 +260,7 @@ void *SilentAlarmLoop(void *ptr)
 		memcpy(&addr, buf, 4);
 		uint64_t key = addr;
 		Suspect * newSuspect = new Suspect();
-		if(newSuspect->Deserialize(buf, true, BROADCAST_DATA) == 0)
+		if(newSuspect->Deserialize(buf, MAIN_FEATURE_DATA) == 0)
 		{
 			close(connectionSocket);
 			continue;
@@ -272,8 +270,8 @@ void *SilentAlarmLoop(void *ptr)
 		{
 			suspectCopy = suspects.CheckOut(key);
 			suspectCopy.SetFlaggedByAlarm(true);
-			FeatureSet fs = newSuspect->GetFeatureSet();
-			suspectCopy.AddFeatureSet(&fs);
+			FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
+			suspectCopy.AddFeatureSet(&fs, MAIN_FEATURES);
 			suspects.CheckIn(&suspectCopy);
 
 			// TODO: This looks like it may be a memory leak of newSuspect
@@ -288,7 +286,6 @@ void *SilentAlarmLoop(void *ptr)
 			suspects.AddNewSuspect(newSuspect);
 		}
 
-		//We need to move host traffic data from broadcast into the bin for this host, and remove the old bin
 		LOG(CRITICAL, string("Got a silent alarm!. Suspect: "+ newSuspect->ToString()), "");
 		if(!Config::Inst()->GetClassificationTimeout())
 		{
@@ -355,14 +352,11 @@ void *TCPTimeout(void *ptr)
 	do
 	{
 		pthread_rwlock_wrlock(&sessionLock);
-
 		time_t currentTime = time(NULL);
 		time_t packetTime;
 
-		for (TCPSessionHashTable::iterator it = SessionTable.begin();
-				it != SessionTable.end(); it++)
+		for (TCPSessionHashTable::iterator it = SessionTable.begin(); it != SessionTable.end(); it++)
 		{
-
 			if(it->second.session.size() > 0)
 			{
 				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
@@ -370,66 +364,55 @@ void *TCPTimeout(void *ptr)
 				// timeout threshhold
 				if(Config::Inst()->GetReadPcap())
 				{
-					currentTime = packetTime + 3
-							+ Config::Inst()->GetTcpTimout();
+					currentTime = packetTime + 3 + Config::Inst()->GetTcpTimout();
 				}
-				// If it exists)
+				// If it exists
 				if(packetTime + 2 < currentTime)
 				{
 					//If session has been finished for more than two seconds
 					if(it->second.fin == true)
 					{
-						for (uint p = 0;
-								p < (SessionTable[it->first].session).size();
-								p++)
+						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							//pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
-							//pthread_rwlock_wrlock(&sessionLock);
 						}
-
 						// Allow for continuous classification
 						if(!Config::Inst()->GetClassificationTimeout())
 						{
-							if (it->second.session.size() > 0)
+							if(it->second.session.size() > 0)
 							{
-								//pthread_rwlock_unlock(&sessionLock);
 								if(!Config::Inst()->GetIsTraining())
+								{
 									UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
+								}
 								else
+								{
 									UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
-								//pthread_rwlock_wrlock(&sessionLock);
+								}
 							}
-
 						}
-
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
 					}
 					//If this session is timed out
-					else if(packetTime + Config::Inst()->GetTcpTimout()
-							< currentTime)
+					else if(packetTime + Config::Inst()->GetTcpTimout()	< currentTime)
 					{
-						for (uint p = 0;
-								p < (SessionTable[it->first].session).size();
-								p++)
+						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
 						{
-							//pthread_rwlock_unlock(&sessionLock);
 							UpdateSuspect(SessionTable[it->first].session[p]);
-							//pthread_rwlock_wrlock(&sessionLock);
 						}
-
 						// Allow for continuous classification
 						if(!Config::Inst()->GetClassificationTimeout())
 						{
-							//pthread_rwlock_unlock(&sessionLock);
 							if(!Config::Inst()->GetIsTraining())
+							{
 								UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
+							}
 							else
+							{
 								UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
-							//pthread_rwlock_wrlock(&sessionLock);
+							}
 						}
-
 						SessionTable[it->first].session.clear();
 						SessionTable[it->first].fin = false;
 					}
@@ -439,7 +422,7 @@ void *TCPTimeout(void *ptr)
 		pthread_rwlock_unlock(&sessionLock);
 		//Check only once every TCP_CHECK_FREQ seconds
 		sleep(Config::Inst()->GetTcpCheckFreq());
-	} while (!Config::Inst()->GetReadPcap());
+	}while(!Config::Inst()->GetReadPcap());
 
 	//After a pcap file is read we do one iteration of this function to clear out the sessions
 	//This is return is to prevent an error being thrown when there isn't one.

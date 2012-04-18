@@ -16,27 +16,27 @@
 // Description : Manages the message sending protocol to and from the Nova UI
 //============================================================================
 
-#include "ProtocolHandler.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Control.h"
-#include "Novad.h"
+
 #include "messages/CallbackMessage.h"
 #include "messages/ControlMessage.h"
 #include "messages/RequestMessage.h"
 #include "messages/ErrorMessage.h"
+#include "ProtocolHandler.h"
 #include "SuspectTable.h"
-#include "SuspectTableIterator.h"
+#include "Control.h"
 #include "Socket.h"
+#include "Config.h"
+#include "Logger.h"
+#include "Novad.h"
 #include "Lock.h"
 
-#include "pthread.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <cerrno>
 #include <stdio.h>
+#include <sys/un.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 using namespace Nova;
 using namespace std;
@@ -45,7 +45,6 @@ Socket callbackSocket, IPCSocket;
 
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
-extern pthread_mutex_t suspectsSinceLastSaveLock;
 extern time_t startTime;
 
 struct sockaddr_un msgRemote, msgLocal;
@@ -219,10 +218,8 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			//TODO: Replace with new suspect table class
 
-			suspects.Clear();
-			pthread_mutex_lock(&suspectsSinceLastSaveLock);
-			suspectsSinceLastSave.Clear();
-			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+			suspects.EraseAllSuspects();
+			suspectsSinceLastSave.EraseAllSuspects();
 			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
@@ -346,7 +343,6 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			LOG(DEBUG, "UI sent us an invalid message","Got an unexpected ControlMessage type");
 			break;
 		}
-
 	}
 }
 
@@ -363,13 +359,13 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			{
 				case SUSPECTLIST_ALL:
 				{
-					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
 					for (uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
 					}
 
-					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
 					for (uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
@@ -378,7 +374,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				}
 				case SUSPECTLIST_HOSTILE:
 				{
-					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
 					for (uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
@@ -387,7 +383,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				}
 				case SUSPECTLIST_BENIGN:
 				{
-					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
 					for (uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
@@ -410,7 +406,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
 			reply.m_suspect = new Suspect();
-			*reply.m_suspect = suspects.Peek(msg.m_suspectAddress);
+			*reply.m_suspect = suspects.GetSuspect(msg.m_suspectAddress);
 			UI_Message::WriteMessage(&reply, socketFD);
 
 			break;
