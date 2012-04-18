@@ -7,9 +7,15 @@
 #######################################################
 # Dependencies you must manually get first
 #######################################################
-#   Nodejs v0.6.12
+#   Nodejs (tested on v0.6.12 and v0.6.15)
 #	Currently at: https://github.com/joyent/node/zipball/v0.6.12
 #	Install with the standard ./configure && make && sudo make install
+#
+# OR on Ubuntu you can install the newest nodejs with apt-get via,
+#   sudo apt-get install python-software-properties
+#   sudo add-apt-repository ppa:chris-lea/node.js
+#   sudo apt-get update
+#   sudo apt-get install nodejs nodejs-dev npm
 #
 #######################################################
 #   cvv8 headers in /usr/include
@@ -29,12 +35,7 @@ ln -f -T -s ~/Code/Nova/NovaWeb/www /var/www
 echo "========================================"
 echo "Making a symlink to our current Dojo version"
 echo "========================================"
-ln -f -T -s dojo-release-1.7.1 www/dojo
-
-echo "========================================"
-echo "Installing Nowjs"
-echo "========================================"
-npm install now -g 
+ln -f -T -s dojo-release-1.7.1 /var/www/dojo
 
 echo "========================================"
 echo "Configuring NOVA node"
@@ -64,8 +65,8 @@ echo "========================================"
 node-waf clean
 node-waf
 
-# To run the Nova Web interface,
-# bash$ node tst.js
+# To run the Nova Web interface from the NovaWeb folder,
+#   node main.js
 
 echo "========================================"
 echo "Installation finished"
