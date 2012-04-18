@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Parent message class for GUI communication with Nova processes
@@ -32,9 +32,9 @@ namespace Nova
 enum UI_MessageType: char
 {
 	CONTROL_MESSAGE = 0,
-	CALLBACK_MESSAGE = 1,
-	REQUEST_MESSAGE = 2,
-	ERROR_MESSAGE = 3
+	CALLBACK_MESSAGE,
+	REQUEST_MESSAGE,
+	ERROR_MESSAGE
 };
 
 class UI_Message
