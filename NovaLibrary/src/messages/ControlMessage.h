@@ -33,22 +33,22 @@
 enum ControlType: char
 {
 	CONTROL_EXIT_REQUEST = 0,		//Request for Novad to exit
-	CONTROL_EXIT_REPLY,				//Reply from Novad with success
-	CONTROL_CLEAR_ALL_REQUEST,		//Request for Novad to clear all suspects
-	CONTROL_CLEAR_ALL_REPLY,		//Reply from Novad with success
-	CONTROL_CLEAR_SUSPECT_REQUEST,	//Request for Novad to clear specified suspect
-	CONTROL_CLEAR_SUSPECT_REPLY,	//Reply from Novad with success
-	CONTROL_SAVE_SUSPECTS_REQUEST,	//Request for Novad to save the suspects list to persistent storage
-	CONTROL_SAVE_SUSPECTS_REPLY,	//Reply from Novad with success
-	CONTROL_RECLASSIFY_ALL_REQUEST,	//Request for Novad to reclassify all suspects
-	CONTROL_RECLASSIFY_ALL_REPLY,	//Reply from Novad with success
-	CONTROL_CONNECT_REQUEST,		//Request to connect to Novad from UI
-	CONTROL_CONNECT_REPLY,			//Reply from Novad with success
-	CONTROL_DISCONNECT_NOTICE,		//Notice to Novad that the UI is closing
-	CONTROL_DISCONNECT_ACK,			//Acknowledgment of the disconnect notice
-	CONTROL_PING,					//Request to Novad to see if it's alive
-	CONTROL_PONG,					//Reply from Novad to verify it's alive
-	CONTROL_INVALID,
+	CONTROL_EXIT_REPLY = 1,				//Reply from Novad with success
+	CONTROL_CLEAR_ALL_REQUEST = 2,		//Request for Novad to clear all suspects
+	CONTROL_CLEAR_ALL_REPLY = 3,		//Reply from Novad with success
+	CONTROL_CLEAR_SUSPECT_REQUEST = 4,	//Request for Novad to clear specified suspect
+	CONTROL_CLEAR_SUSPECT_REPLY = 5,	//Reply from Novad with success
+	CONTROL_SAVE_SUSPECTS_REQUEST = 6,	//Request for Novad to save the suspects list to persistent storage
+	CONTROL_SAVE_SUSPECTS_REPLY = 7,	//Reply from Novad with success
+	CONTROL_RECLASSIFY_ALL_REQUEST = 8,	//Request for Novad to reclassify all suspects
+	CONTROL_RECLASSIFY_ALL_REPLY = 9,	//Reply from Novad with success
+	CONTROL_CONNECT_REQUEST = 10,		//Request to connect to Novad from UI
+	CONTROL_CONNECT_REPLY = 11,			//Reply from Novad with success
+	CONTROL_DISCONNECT_NOTICE = 12,		//Notice to Novad that the UI is closing
+	CONTROL_DISCONNECT_ACK = 13,			//Acknowledgment of the disconnect notice
+	CONTROL_PING = 14,					//Request to Novad to see if it's alive
+	CONTROL_PONG = 15,					//Reply from Novad to verify it's alive
+	CONTROL_INVALID = 16
 };
 
 namespace Nova

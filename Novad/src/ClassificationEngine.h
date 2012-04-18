@@ -26,7 +26,6 @@
 
 #include "Logger.h"
 #include "Suspect.h"
-#include "SuspectTable.h"
 #include "Doppelganger.h"
 
 namespace Nova
@@ -51,9 +50,6 @@ public:
 	//		suspect - suspect to classify based on current evidence
 	// Note: this updates the classification of the suspect in dataPtsWithClass as well as it's isHostile variable
 	void Classify(Suspect *suspect);
-
-	// Calculates normalized data points and stores into 'normalizedDataPts'
-	void NormalizeDataPoint(Suspect *suspectCopy);
 
 	// Forms the normalized kd tree, called once on start up
 	// Will be called again if the a suspect's max value for a feature exceeds the current maximum for normalization
@@ -98,7 +94,6 @@ private:
 	double m_minFeatureValues[DIM];
 	double m_meanFeatureValues[DIM];
 
-	SuspectTable &m_suspects;
 };
 
 } // End namespace

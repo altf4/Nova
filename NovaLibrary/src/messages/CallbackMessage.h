@@ -28,7 +28,7 @@
 enum CallbackType: char
 {
 	CALLBACK_SUSPECT_UDPATE = 0,		//Request for Novad to exit
-	CALLBACK_SUSPECT_UDPATE_ACK,		//Reply from Novad with success
+	CALLBACK_SUSPECT_UDPATE_ACK = 1,		//Reply from Novad with success
 };
 
 namespace Nova

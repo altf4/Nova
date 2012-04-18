@@ -17,6 +17,7 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
+#include "SuspectTable.h"
 #include "Config.h"
 
 #include <sstream>
@@ -38,12 +39,11 @@ normalizationType ClassificationEngine::m_normalization[] = {
 		LOGARITHMIC
 };
 
-ClassificationEngine::ClassificationEngine(SuspectTable &table)
-: m_suspects(table)
+ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
 {
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
-	m_dopp = new Doppelganger(m_suspects);
+	m_dopp = new Doppelganger(suspects);
 	m_dopp->InitDoppelganger();
 }
 
@@ -86,18 +86,50 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	double sqrtDIM = Config::Inst()->GetSqurtEnabledFeatures();
 	int k = Config::Inst()->GetK();
 	double d;
+	featureIndex fi;
+
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
-	ANNpoint aNN = suspect->GetAnnPoint();
+
+	//Allocate the ANNpoint;
+	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
+	FeatureSet fs = suspect->GetFeatureSet(MAIN_FEATURES);
+	uint ai = 0;
+
+	//Iterate over the features, asserting the range is [min,max] and normalizing over that range
+	for(int i = 0;i < DIM;i++)
+	{
+		if(Config::Inst()->IsFeatureEnabled(i))
+		{
+			if(fs.m_features[i] > m_maxFeatureValues[ai])
+			{
+				fs.m_features[i] = m_maxFeatureValues[ai];
+			}
+			else if(fs.m_features[i] < m_minFeatureValues[ai])
+			{
+				fs.m_features[i] = m_minFeatureValues[ai];
+			}
+			if(m_maxFeatureValues[ai] != 0)
+			{
+				aNN[ai] = Normalize(m_normalization[i], suspect->GetFeatureSet(MAIN_FEATURES).m_features[i],
+					m_minFeatureValues[ai], m_maxFeatureValues[ai]);
+			}
+			else
+			{
+				LOG(ERROR, "Classification engine has encountered an error.",
+					"Max value for a feature is 0. Normalization failed.");
+			}
+			ai++;
+		}
+	}
+	suspect->SetFeatureSet(&fs, MAIN_FEATURES);
 
 	if(aNN == NULL)
 	{
 		LOG(ERROR, "Classification engine has encountered an error.",
-			"Classify is attempting to classify a suspect with an empty ANN point. Aborting.");
+			"Classify had trouble allocating the ANN point. Aborting.");
 		return;
 	}
-
-	featureIndex fi;
 
 	m_kdTree->annkSearch(							// search
 			aNN,								// query point
@@ -109,18 +141,9 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	for(int i = 0; i < DIM; i++)
 	{
 		fi = (featureIndex)i;
-		if(suspect->SetFeatureAccuracy(fi, 0) != 0)
-		{
-			LOG(ERROR, "Classification engine has encountered an error.",
-				"Call to SetFeatureAccuracy failed.");
-		}
+		suspect->SetFeatureAccuracy(fi, 0);
 	}
-
-	if(suspect->SetHostileNeighbors(0) != 0)
-	{
-		LOG(ERROR, "Classification engine has encountered an error.",
-			"Call to SetHostileNeighbors failed.");
-	}
+	suspect->SetHostileNeighbors(0);
 
 	//Determine classification according to weight by distance
 	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
@@ -143,11 +166,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 
 				fi = (featureIndex)j;
 				d  = suspect->GetFeatureAccuracy(fi) + distance;
-				if(suspect->SetFeatureAccuracy(fi, d)  != 0)
-				{
-					LOG(ERROR, "Classification engine has encountered an error.",
-						"Call to SetFeatureAccuracy failed.");
-				}
+				suspect->SetFeatureAccuracy(fi, d);
 			}
 		}
 
@@ -163,10 +182,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 			if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 1)
 			{
 				classifyCount += (sqrtDIM - dists[i]);
-				if(suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1)  != 0)
-				{
-					LOG(ERROR, "Classification engine has encountered an error.","Call to SetHostileNeighbors failed.");
-				}
+				suspect->SetHostileNeighbors(suspect->GetHostileNeighbors()+1);
 			}
 			//If benign
 			else if(m_dataPtsWithClass[nnIdx[i]]->m_classification == 0)
@@ -193,16 +209,19 @@ void ClassificationEngine::Classify(Suspect *suspect)
 		suspect->SetFeatureAccuracy(fi, d);
 	}
 
-
 	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM )));
 
 	// Fix for rounding errors caused by double's not being precise enough if DIM is something like 2
 	if(suspect->GetClassification() < 0)
+	{
 		suspect->SetClassification(0);
+	}
 	else if(suspect->GetClassification() > 1)
+	{
 		suspect->SetClassification(1);
+	}
 
-	if( suspect->GetClassification() > Config::Inst()->GetClassificationThreshold())
+	if(suspect->GetClassification() > Config::Inst()->GetClassificationThreshold())
 	{
 		suspect->SetIsHostile(true);
 	}
@@ -210,6 +229,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	{
 		suspect->SetIsHostile(false);
 	}
+
 	delete [] nnIdx;							// clean things up
     delete [] dists;
 
@@ -217,61 +237,6 @@ void ClassificationEngine::Classify(Suspect *suspect)
     annDeallocPt(aNN);
 	suspect->SetNeedsClassificationUpdate(false);
 }
-
-
-void ClassificationEngine::NormalizeDataPoint(Suspect *suspectCopy)
-{
-	// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
-	int ai = 0;
-	FeatureSet fs = suspectCopy->GetFeatureSet();
-	for(int i = 0;i < DIM;i++)
-	{
-		if(Config::Inst()->IsFeatureEnabled(i))
-		{
-			if(fs.m_features[i] > m_maxFeatureValues[ai])
-			{
-				fs.m_features[i] = m_maxFeatureValues[ai];
-				//For proper normalization the upper bound for a feature is the max value of the data.
-			}
-			else if(fs.m_features[i] < m_minFeatureValues[ai])
-			{
-				fs.m_features[i] = m_minFeatureValues[ai];
-			}
-			ai++;
-		}
-	}
-	suspectCopy->SetFeatureSet(&fs);
-	ANNpoint aNN = suspectCopy->GetAnnPoint();
-	ai = 0;
-
-	if(aNN == NULL)
-	{
-		aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
-	}
-
-	for(int i = 0; i < DIM; i++)
-	{
-		if(Config::Inst()->IsFeatureEnabled(i))
-		{
-			if(m_maxFeatureValues[ai] != 0)
-			{
-				aNN[ai] = Normalize(m_normalization[i], suspectCopy->GetFeatureSet().m_features[i], m_minFeatureValues[ai], m_maxFeatureValues[ai]);
-			}
-			else
-			{
-				LOG(ERROR, "Classification engine has encountered an error.",
-					"Max value for a feature is 0. Normalization failed. Is the training data corrupt or missing?");
-			}
-			ai++;
-		}
-	}
-
-	if(suspectCopy->SetAnnPoint(aNN) != 0)
-	{
-		LOG(CRITICAL, "Classification engine has encountered a critical error.", "Failed to set Ann Point on suspect");
-	}
-}
-
 
 void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 {

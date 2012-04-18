@@ -134,8 +134,9 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 		LOG(DEBUG, "Invalid length when deserializing UI message. Length is less than MESSAGE_MIN_SIZE", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
-
-	return UI_Message::Deserialize(buffer, length);
+	UI_Message* ret = UI_Message::Deserialize(buffer, length);
+	free(buffer);
+	return ret;
 }
 
 bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
@@ -145,17 +146,16 @@ bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 		return false;
 	}
 
-	uint32_t length;
+	uint32_t length = 0;
 	char *buffer = message->Serialize(&length);
 	
 	// Total bytes of a write() call that need to be sent
-	uint32_t bytesSoFar;
+	uint32_t bytesSoFar = 0;
 
 	// Return value of the write() call, actual bytes sent
-	uint32_t bytesWritten;
+	uint32_t bytesWritten = 0;
 
 	// Send the message length
-	bytesSoFar = 0;
     while (bytesSoFar < sizeof(length))
 	{
 		bytesWritten = write(connectFD, &length, sizeof(length) - bytesSoFar);

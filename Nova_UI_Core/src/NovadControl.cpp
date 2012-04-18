@@ -37,7 +37,7 @@ namespace Nova
 {
 bool StartNovad()
 {
-	if(IsNovadUp())
+	if(IsNovadUp(false))
 	{
 		return true;
 	}

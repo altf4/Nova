@@ -146,10 +146,12 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 				m_serializeError = true;
 				return;
 			}
-
 			m_suspect = new Suspect();
-			m_suspect->Deserialize((u_char*)buffer);
-
+			if(m_suspect->Deserialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			{
+				m_serializeError = true;
+				return;
+			}
 			break;
 		}
 
@@ -272,10 +274,13 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		3) Size of the requested suspect
 			// 		4) The requested suspect
 
-			char suspectTempBuffer[MAX_MSG_SIZE];
-			m_suspectLength = m_suspect->Serialize((u_char*)suspectTempBuffer);
+			m_suspectLength = m_suspect->GetSerializeLength(NO_FEATURE_DATA);
+			if(m_suspectLength == 0)
+			{
+				return NULL;
+			}
 
-			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength ;
+			messageSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength;
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -285,11 +290,12 @@ char *RequestMessage::Serialize(uint32_t *length)
 			// Serialize the size of the suspect
 			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
 			buffer += sizeof(m_suspectLength );
-
 			// Serialize our suspect
-			memcpy(buffer, suspectTempBuffer, m_suspectLength);
+			if(m_suspect->Serialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			{
+				return NULL;
+			}
 			buffer += m_suspectLength;
-
 			break;
 		}
 

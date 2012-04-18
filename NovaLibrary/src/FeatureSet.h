@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Maintains and calculates distinct features for individual Suspects
@@ -70,9 +70,18 @@ typedef google::dense_hash_map<uint32_t, uint32_t, std::tr1::hash<int>, eqint > 
 //Table of packet intervals and a count
 typedef google::dense_hash_map<time_t, uint32_t, std::tr1::hash<time_t>, eqtime > Interval_Table;
 
-enum featureIndex{IP_TRAFFIC_DISTRIBUTION = 0, PORT_TRAFFIC_DISTRIBUTION = 1, HAYSTACK_EVENT_FREQUENCY = 2,
-	PACKET_SIZE_DEVIATION = 4, PACKET_SIZE_MEAN = 3, DISTINCT_IPS =5, DISTINCT_PORTS = 6,
-	PACKET_INTERVAL_MEAN = 7, PACKET_INTERVAL_DEVIATION = 8};
+enum featureIndex: uint8_t
+{
+	IP_TRAFFIC_DISTRIBUTION = 0,
+	PORT_TRAFFIC_DISTRIBUTION = 1,
+	HAYSTACK_EVENT_FREQUENCY = 2,
+	PACKET_SIZE_MEAN = 3,
+	PACKET_SIZE_DEVIATION = 4,
+	DISTINCT_IPS = 5,
+	DISTINCT_PORTS = 6,
+	PACKET_INTERVAL_MEAN = 7,
+	PACKET_INTERVAL_DEVIATION = 8
+};
 
 namespace Nova{
 
@@ -91,9 +100,11 @@ public:
 
 	FeatureSet();
 	~FeatureSet();
+
 	// Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
-	void clearFeatureData();
+
+	void ClearFeatureData();
 
 
 	FeatureSet& operator-=(FeatureSet &rhs);
@@ -175,11 +186,18 @@ private:
 	//Table of IP addresses and associated packet counts
 	IP_Table m_IPTable;
 
-	static const uint32_t m_maxTableEntries = ((65355 -
-		//(Suspect Members) IP + Classificiation + 5x flags + hostile neighbors + featureAccuracy[DIM]
-		((sizeof(in_addr_t) + sizeof(double) + 5*(sizeof(bool)) +  sizeof(int32_t) + DIM*(sizeof(double)))
-		// (features[DIM]) + (FeatureSetData constant var byte size)
-		+ (DIM*(sizeof(double))) + (7*(sizeof(uint32_t)) + 4*(sizeof(time_t)))))/8);
+	//XXX Temporarily using SANITY_CHECK/2, rather than that, we should serialize a total byte size before the
+	// feature data then proceed like before, this will allow Deserialized to perform a real sanity checking and
+	// this max table entries var can be replaced with a total bytesize check
+	static const uint32_t m_maxTableEntries = (((SANITY_CHECK) -
+		//(Message Handling m_messageType + (m_callbackType || m_requestType) + m_suspectLength
+		((3*sizeof(uint32_t)
+		//(Suspect Members) IP + Classificiation + 5x flags + hostile neighbors + featureAccuracy[DIM] + features[DIM]
+		+ sizeof(in_addr_t)+ sizeof(double) + 5*(sizeof(bool)) +  sizeof(int32_t) + 2*DIM*(sizeof(double)))
+		// + 2*(FeatureSetData constant var byte size) (could serialized two feature sets)
+		+ (2*(7*(sizeof(uint32_t)) + 4*(sizeof(time_t))))))
+		// All of the Above divided by (8 bytes per table entry) * (up to two feature sets per serialization)
+		/(8*2));
 
 };
 }
