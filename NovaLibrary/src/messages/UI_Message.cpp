@@ -134,8 +134,9 @@ UI_Message *UI_Message::ReadMessage(int connectFD, int timeout)
 		LOG(DEBUG, "Invalid length when deserializing UI message. Length is less than MESSAGE_MIN_SIZE", "");
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
+	UI_Message* ret = UI_Message::Deserialize(buffer, length);
 	free(buffer);
-	return UI_Message::Deserialize(buffer, length);
+	return ret;
 }
 
 bool UI_Message::WriteMessage(UI_Message *message, int connectFD)

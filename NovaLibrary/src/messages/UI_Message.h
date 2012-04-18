@@ -32,9 +32,9 @@ namespace Nova
 enum UI_MessageType: char
 {
 	CONTROL_MESSAGE = 0,
-	CALLBACK_MESSAGE,
-	REQUEST_MESSAGE,
-	ERROR_MESSAGE
+	CALLBACK_MESSAGE = 1,
+	REQUEST_MESSAGE = 2,
+	ERROR_MESSAGE = 3
 };
 
 class UI_Message

@@ -243,7 +243,7 @@ void StatusNovaWrapper()
 	}
 	else
 	{
-		if (IsNovadUp())
+		if (IsNovadUp(false))
 		{
 			cout << "Novad Status: Running and responding" << endl;
 		}

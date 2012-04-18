@@ -54,7 +54,11 @@ bool InitCallbackSocket()
 	//Builds the address
 	UI_Address.sun_family = AF_UNIX;
 	strcpy(UI_Address.sun_path, key.c_str());
-	unlink(UI_Address.sun_path);
+	if(unlink(UI_Address.sun_path) != 0)
+	{
+		LOG(ERROR, " unlink: " + string(strerror(errno))+".","");
+		return false;
+	}
 
 	if((UI_parentSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
@@ -89,6 +93,7 @@ namespace Nova
 {
 bool ConnectToNovad()
 {
+
 	if(!callbackInitialized)
 	{
 		if(!InitCallbackSocket())
@@ -102,7 +107,6 @@ bool ConnectToNovad()
 	{
 		return true;
 	}
-
 	Lock lock(&novadListenSocket.m_mutex);
 
 	//Builds the key path
@@ -139,7 +143,7 @@ bool ConnectToNovad()
 
 	//Wait for a connection on the callback socket
 	int len = sizeof(struct sockaddr_un);
-	UI_ListenSocket.m_socketFD = accept(UI_parentSocket.m_socketFD, (struct sockaddr *)&UI_Address, sizeof(UI_Address));
+	UI_ListenSocket.m_socketFD = accept(UI_parentSocket.m_socketFD, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
 	if (UI_ListenSocket.m_socketFD == -1)
 	{
 		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
