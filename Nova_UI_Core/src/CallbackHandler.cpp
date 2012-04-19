@@ -27,20 +27,20 @@
 
 using namespace Nova;
 
-extern Socket UI_ListenSocket;
+extern Socket IPCSocket;
 
 struct CallbackChange Nova::ProcessCallbackMessage()
 {
 	//Wait for a callback to occur
-	MessageManager::Instance().RegisterCallback(UI_ListenSocket.m_socketFD);
+	MessageManager::Instance().RegisterCallback(IPCSocket.m_socketFD);
 
 	//Claim the socket's mutex, so another protocol doesn't get mixed up in between
-	Lock lock(&UI_ListenSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
 	struct CallbackChange change;
 	change.type = CALLBACK_ERROR;
 
-	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket.m_socketFD, DIRECTION_TO_UI);
+	UI_Message *message = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_UI);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
@@ -68,7 +68,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.suspect = callbackMessage->m_suspect;
 
 			CallbackMessage callbackAck(CALLBACK_SUSPECT_UDPATE_ACK, DIRECTION_TO_UI);
-			if(!UI_Message::WriteMessage(&callbackAck, UI_ListenSocket.m_socketFD))
+			if(!UI_Message::WriteMessage(&callbackAck, IPCSocket.m_socketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}

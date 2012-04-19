@@ -29,7 +29,7 @@
 using namespace Nova;
 using namespace std;
 
-extern Socket novadListenSocket;
+extern Socket IPCSocket;
 
 namespace Nova
 {
@@ -45,16 +45,16 @@ bool IsNovadUp(bool tryToConnect)
 		}
 	}
 
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
 	ControlMessage ping(CONTROL_PING, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&ping, novadListenSocket.m_socketFD) )
+	if(!UI_Message::WriteMessage(&ping, IPCSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -97,16 +97,16 @@ bool IsNovadUp(bool tryToConnect)
 
 int GetUptime()
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
 	RequestMessage request(REQUEST_UPTIME, DIRECTION_TO_NOVAD);
 
-	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
+	if(!UI_Message::WriteMessage(&request, IPCSocket.m_socketFD) )
 	{
 		return 0;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -147,18 +147,18 @@ int GetUptime()
 
 vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
 	RequestMessage request(REQUEST_SUSPECTLIST, DIRECTION_TO_NOVAD);
 	request.m_listType = listType;
 
-	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
+	if(!UI_Message::WriteMessage(&request, IPCSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		return NULL;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -200,20 +200,20 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 
 Suspect *GetSuspect(in_addr_t address)
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
 	RequestMessage request(REQUEST_SUSPECT, DIRECTION_TO_NOVAD);
 	request.m_suspectAddress = address;
 
 
-	if(!UI_Message::WriteMessage(&request, novadListenSocket.m_socketFD) )
+	if(!UI_Message::WriteMessage(&request, IPCSocket.m_socketFD) )
 	{
 		//There was an error in sending the message
 		return NULL;
 	}
 
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");

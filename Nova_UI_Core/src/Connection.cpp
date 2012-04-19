@@ -18,6 +18,7 @@
 
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/ErrorMessage.h"
+#include "messaging/MessageManager.h"
 #include "messaging/Socket.h"
 #include "Commands.h"
 #include "NovaUtil.h"
@@ -33,78 +34,27 @@
 using namespace std;
 using namespace Nova;
 //Socket communication variables
-Socket UI_parentSocket, UI_ListenSocket, novadListenSocket;
+Socket IPCSocket;
 struct sockaddr_un UI_Address, novadAddress;
 
-bool callbackInitialized = false;
-
-//Initializes the Callback socket. IE: The socket the UI listens on
-//	NOTE: This is run internally and not meant to be executed by the user
-//	returns - true if socket successfully initialized, false on error (such as another UI already listening)
-bool InitCallbackSocket()
-{
-	Lock lock(&UI_parentSocket.m_mutex);
-
-	//Builds the key path
-	string homePath = Nova::Config::Inst()->GetPathHome();
-	string key = homePath;
-	key += "/keys";
-	key += UI_LISTEN_FILENAME;
-
-	//Builds the address
-	UI_Address.sun_family = AF_UNIX;
-	strcpy(UI_Address.sun_path, key.c_str());
-	unlink(UI_Address.sun_path);
-
-	if((UI_parentSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-	{
-		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
-		close(UI_parentSocket.m_socketFD);
-		UI_parentSocket.m_socketFD = -1;
-		return false;
-	}
-	socklen_t len = sizeof(UI_Address);
-
-	if(::bind(UI_parentSocket.m_socketFD,(struct sockaddr *)&UI_Address, len) == -1)
-	{
-		LOG(ERROR, " bind: "+string(strerror(errno))+".", "");
-		close(UI_parentSocket.m_socketFD);
-		UI_parentSocket.m_socketFD = -1;
-		return false;
-	}
-
-	if(listen(UI_parentSocket.m_socketFD, SOCKET_QUEUE_SIZE) == -1)
-	{
-		LOG(ERROR, " listen: "+string(strerror(errno))+".", "");
-		close(UI_parentSocket.m_socketFD);
-		UI_parentSocket.m_socketFD = -1;
-		return false;
-	}
-
-	callbackInitialized = true;
-	return true;
-}
+bool isFirstConnect = true;
 
 namespace Nova
 {
 bool ConnectToNovad()
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
-	if(!callbackInitialized)
+	if(isFirstConnect)
 	{
-		if(!InitCallbackSocket())
-		{
-			//No logging needed, InitCallbackSocket logs if it fails
-			return false;
-		}
+		MessageManager::Initialize(DIRECTION_TO_NOVAD);
+		isFirstConnect = false;
 	}
 
 	if(IsNovadUp(false))
 	{
 		return true;
 	}
-
 
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
@@ -115,41 +65,30 @@ bool ConnectToNovad()
 	novadAddress.sun_family = AF_UNIX;
 	strcpy(novadAddress.sun_path, key.c_str());
 
-	if((novadListenSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((IPCSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		return false;
 	}
 
-	if(connect(novadListenSocket.m_socketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
+	if(connect(IPCSocket.m_socketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
 		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
-		close(novadListenSocket.m_socketFD);
-		novadListenSocket.m_socketFD = -1;
+		close(IPCSocket.m_socketFD);
+		IPCSocket.m_socketFD = -1;
 		return false;
 	}
 
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&connectRequest, novadListenSocket.m_socketFD))
+	if(!UI_Message::WriteMessage(&connectRequest, IPCSocket.m_socketFD))
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
-		close(novadListenSocket.m_socketFD);
-		novadListenSocket.m_socketFD = -1;
+		close(IPCSocket.m_socketFD);
+		IPCSocket.m_socketFD = -1;
 		return false;
 	}
 
-	//Wait for a connection on the callback socket
-	int len = sizeof(struct sockaddr_un);
-	UI_ListenSocket.m_socketFD = accept(UI_parentSocket.m_socketFD, (struct sockaddr *)&UI_Address, (socklen_t*)&len);
-	if (UI_ListenSocket.m_socketFD == -1)
-	{
-		LOG(ERROR, " accept: "+string(strerror(errno))+".", "");
-		close(UI_ListenSocket.m_socketFD);
-		UI_ListenSocket.m_socketFD = -1;
-		return false;
-	}
-
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -160,16 +99,16 @@ bool ConnectToNovad()
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
-		close(novadListenSocket.m_socketFD);
-		novadListenSocket.m_socketFD = -1;
+		close(IPCSocket.m_socketFD);
+		IPCSocket.m_socketFD = -1;
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
 	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 	{
 		delete connectionReply;
-		close(novadListenSocket.m_socketFD);
-		novadListenSocket.m_socketFD = -1;
+		close(IPCSocket.m_socketFD);
+		IPCSocket.m_socketFD = -1;
 		return false;
 	}
 	bool replySuccess = connectionReply->m_success;
@@ -195,23 +134,22 @@ bool TryWaitConnectToNovad(int timeout_ms)
 
 bool CloseNovadConnection()
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
-	if((novadListenSocket.m_socketFD == -1) && (UI_ListenSocket.m_socketFD == -1))
+	if(IPCSocket.m_socketFD == -1)
 	{
 		return true;
 	}
 
 	bool success = true;
-	callbackInitialized = false;
 
 	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&disconnectNotice, novadListenSocket.m_socketFD))
+	if(!UI_Message::WriteMessage(&disconnectNotice, IPCSocket.m_socketFD))
 	{
 		success = false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -234,24 +172,15 @@ bool CloseNovadConnection()
 		}
 	}
 
-	if(UI_ListenSocket.m_socketFD != -1 && close(UI_ListenSocket.m_socketFD))
+	if(IPCSocket.m_socketFD != -1 && close(IPCSocket.m_socketFD))
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
-		close(UI_ListenSocket.m_socketFD);
-		UI_ListenSocket.m_socketFD = -1;
+		close(IPCSocket.m_socketFD);
+		IPCSocket.m_socketFD = -1;
 		success = false;
 	}
 
-	if(novadListenSocket.m_socketFD != -1 && close(novadListenSocket.m_socketFD))
-	{
-		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
-		close(novadListenSocket.m_socketFD);
-		novadListenSocket.m_socketFD = -1;
-		success = false;
-	}
-
-	UI_ListenSocket.m_socketFD = -1;
-	novadListenSocket.m_socketFD = -1;
+	IPCSocket.m_socketFD = -1;
 
 	return success;
 }

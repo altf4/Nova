@@ -42,7 +42,7 @@
 using namespace Nova;
 using namespace std;
 
-Socket callbackSocket, IPCSocket;
+Socket IPCSocket;
 
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
@@ -161,8 +161,8 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
 						delete controlSocket;
 						controlSocket = NULL;
-						close(callbackSocket.m_socketFD);
-						callbackSocket.m_socketFD = -1;
+						close(IPCSocket.m_socketFD);
+						IPCSocket.m_socketFD = -1;
 						return NULL;
 					}
 					case ERROR_MALFORMED_MESSAGE:
@@ -328,9 +328,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
 
 			close(socketFD);
-			close(callbackSocket.m_socketFD);
 			socketFD = -1;
-			callbackSocket.m_socketFD = -1;
 
 			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
 
@@ -443,7 +441,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 bool ConnectToUI()
 {
-	Lock lock(&callbackSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
 	//Builds the key path
 	string homePath = Config::Inst()->GetPathHome();
@@ -457,17 +455,17 @@ bool ConnectToUI()
 	UIAddress.sun_family = AF_UNIX;
 	strcpy(UIAddress.sun_path, key.c_str());
 
-	if((callbackSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((IPCSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG(WARNING, "Unable to connect to UI", "Unable to create UI socket: "+string(strerror(errno)));
-		close(callbackSocket.m_socketFD);
+		close(IPCSocket.m_socketFD);
 		return false;
 	}
 
-	if(connect(callbackSocket.m_socketFD, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
+	if(connect(IPCSocket.m_socketFD, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
 	{
 		LOG(WARNING, "Unable to connect to UI", "Unable to connect to UI: "+string(strerror(errno)));
-		close(callbackSocket.m_socketFD);
+		close(IPCSocket.m_socketFD);
 		return false;
 	}
 
@@ -477,26 +475,26 @@ bool ConnectToUI()
 
 bool SendSuspectToUI(Suspect *suspect)
 {
-	Lock lock(&callbackSocket.m_mutex);
+	Lock lock(&IPCSocket.m_mutex);
 
 	CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE, DIRECTION_TO_UI);
 	suspectUpdate.m_suspect = suspect;
-	if(!UI_Message::WriteMessage(&suspectUpdate, callbackSocket.m_socketFD))
+	if(!UI_Message::WriteMessage(&suspectUpdate, IPCSocket.m_socketFD))
 	{
 		return false;
 	}
 
-	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket.m_socketFD, DIRECTION_TO_UI);
+	UI_Message *suspectReply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_UI);
 	if(suspectReply->m_messageType == ERROR_MESSAGE )
 	{
 		ErrorMessage *error = (ErrorMessage*)suspectReply;
 		if(error->m_errorType == ERROR_SOCKET_CLOSED)
 		{
 			//Only bother closing the socket if it's not already closed
-			if(callbackSocket.m_socketFD != -1)
+			if(IPCSocket.m_socketFD != -1)
 			{
-				close(callbackSocket.m_socketFD);
-				callbackSocket.m_socketFD = -1;
+				close(IPCSocket.m_socketFD);
+				IPCSocket.m_socketFD = -1;
 			}
 		}
 		delete error;
