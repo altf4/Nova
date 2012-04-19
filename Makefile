@@ -37,7 +37,8 @@ test: test-prepare
 	$(MAKE) -C NovaTest/Debug
 
 web:
-	cd NovaWeb;bash install.sh
+	cd NovaWeb;npm --unsafe-perm install
+	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
 
 # Make debug + test
 all-test: debug test
@@ -131,6 +132,7 @@ install-docs:
 install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
+	cd NovaWeb; bash install.sh
 
 
 uninstall-files:
