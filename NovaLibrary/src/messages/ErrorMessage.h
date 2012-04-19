@@ -29,12 +29,12 @@ enum ErrorType: char
 	//Return code types
 	//(IE: NOT meant to be remotely sent or received)
 	ERROR_SOCKET_CLOSED = 0,		//Message could not be read because the socket was closed
-	ERROR_MALFORMED_MESSAGE = 1,		//Message was received, but could not deserialize
-	ERROR_UNKNOWN_MESSAGE_TYPE = 2,		//The primary message type is unknown
-	ERROR_TIMEOUT = 3, 					//The call to read() timed out
+	ERROR_MALFORMED_MESSAGE,		//Message was received, but could not deserialize
+	ERROR_UNKNOWN_MESSAGE_TYPE,		//The primary message type is unknown
+	ERROR_TIMEOUT, 					//The call to read() timed out
 
 	//Error codes for actual remote messages
-	ERROR_PROTOCOL_MISTAKE = 4			//Reply from Novad with success
+	ERROR_PROTOCOL_MISTAKE			//Reply from Novad with success
 };
 
 namespace Nova
