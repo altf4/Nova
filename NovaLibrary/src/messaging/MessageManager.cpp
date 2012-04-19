@@ -53,7 +53,7 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 {
 	Lock queueLock;
 	{
-		Lock queueLock(&m_queuesLock);
+		Lock queuesLock(&m_queuesLock);
 		if(m_queueLocks.count(socketFD) == 0)
 		{
 			//If there is no lock object here yet, initialize it
