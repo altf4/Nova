@@ -1,7 +1,7 @@
-var novaNode = require('./build/Release/nova.node');
+var novaNode = require('nova.node');
 var nova = new novaNode.Instance();
 
-var novaconfig = require('./NodeNovaConfig/build/Release/novaconfig');
+var novaconfig = require('novaconfig.node');
 var config = new novaconfig.NovaConfigBinding();
 
 var fs = require('fs');
