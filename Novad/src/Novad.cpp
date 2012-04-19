@@ -1012,6 +1012,16 @@ void UpdateAndClassify(in_addr_t key)
 			SilentAlarm(&suspectCopy, oldIsHostile);
 		}
 	}
+
+	if(SendSuspectToUI(&suspectCopy))
+	{
+		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
+	}
+	else
+	{
+		LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
+	}
+
 	if(!Config::Inst()->GetIsTraining())
 	{
 		suspectCopy = suspectsSinceLastSave.CheckOut(key);
@@ -1022,14 +1032,6 @@ void UpdateAndClassify(in_addr_t key)
 		}
 	}
 
-	if(SendSuspectToUI(&suspectCopy))
-	{
-		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
-	}
-	else
-	{
-		LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
-	}
 }
 
 }
