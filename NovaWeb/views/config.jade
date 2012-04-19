@@ -1,5 +1,8 @@
 extends layout
 
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+
 block content
   form(method="post", action="/configureNovaSave")
     h2 General Configuration
