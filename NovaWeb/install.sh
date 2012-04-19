@@ -23,6 +23,9 @@
 #	Install by copying the include/cvv8 folder to /usr/include/
 #
 #######################################################
+# npm packages you may need
+#   npm install jade
+#######################################################
 
 # Note: If you have another web server using /var/www,
 # you may need to change the path in tst.js or delete

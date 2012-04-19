@@ -1,0 +1,147 @@
+extends layout
+
+block content
+  form(method="post", action="/configureNovaSave")
+    h2 General Configuration
+    label Interface
+    input(type="text", name="INTERFACE", value=INTERFACE)
+    br
+  
+    h2 Silent Alarm
+    label Port
+    input(type="SILENT_ALARM_PORT", name="", value=SILENT_ALARM_PORT)
+    br
+    
+    label Max Connection Attempts
+    input(type="text", name="SA_MAX_ATTEMPTS", value=SA_MAX_ATTEMPTS)
+    br
+    
+    label Sleep Duration
+    input(type="SA_SLEEP_DURATION", name="", value=SA_SLEEP_DURATION)
+    br
+  
+    h2 File Paths
+    label Path to state save file
+    input(type="CE_SAVE_FILE", name="", value=CE_SAVE_FILE)
+    br
+    
+    label Path to training file
+    input(type="DATAFILE", name="", value=DATAFILE)
+    br
+     
+    label Path to PCAP file
+    input(type="PCAP_FILE", name="", value=PCAP_FILE)
+    br
+  
+    label Path to user Honeyd config
+    input(type="USER_HONEYD_CONFIG", name="", value=USER_HONEYD_CONFIG)
+    br
+    
+    
+    label Path to Haystack Honeyd Config File
+    input(type="HS_HONEYD_CONFIG", name="", value=HS_HONEYD_CONFIG)
+    br
+  
+    h2 TCP Timeout
+    label TCP Timeout
+    input(type="TCP_TIMEOUT", name="", value=TCP_TIMEOUT)
+    br
+  
+    label TCP Timeout Check Frequency
+    input(type="TCP_CHECK_FREQ", name="", value=TCP_CHECK_FREQ)
+    br
+  
+    h2 Special Run Settings
+    label Read PCAP file?
+    input(type="READ_PCAP", name="", value=READ_PCAP)
+    br
+  
+    label Go to live capture after PCAP?
+    input(type="GO_TO_LIVE", name="", value=GO_TO_LIVE)
+    br
+    
+  
+    h2 Classification Settings
+    label Features Mask
+    input(type="ENABLED_FEATURES", name="", value=ENABLED_FEATURES)
+    br
+    
+    label Neighbors
+    input(type="K", name="", value=K)
+    br
+    
+    label Classification Timeout
+    input(type="CLASSIFICATION_TIMEOUT", name="", value=CLASSIFICATION_TIMEOUT)
+    br
+  
+    label EPS
+    input(type="EPS", name="", value=EPS)
+    br
+  
+    label Classification Threshold
+    input(type="CLASSIFICATION_THRESHOLD", name="", value=CLASSIFICATION_THRESHOLD)
+    br
+  
+    h2 Training Mode Settings
+    label Training mode?
+    input(type="IS_TRAINING", name="", value=IS_TRAINING)
+    br
+    
+    label Training Capture folder
+    input(type="TRAINING_CAP_FOLDER", name="", value=TRAINING_CAP_FOLDER)
+    br
+    
+    label Thinning Distance
+    input(type="THINNING_DISTANCE", name="", value=THINNING_DISTANCE)
+    br
+  
+    h2 Doppelganger
+    label Doppelganger IP
+    input(type="DOPPELGANGER_IP", name="", value=DOPPELGANGER_IP)
+    br
+  
+    label Doppelganger Interface
+    input(type="DOPPELGANGER_INTERFACE", name="", value=DOPPELGANGER_INTERFACE)
+    br
+  
+    label Doppelganger Enabled?
+    input(type="DM_ENABLED", name="", value=DM_ENABLED)
+    br 
+  
+    label State save frequency
+    input(type="SAVE_FREQUENCY", name="", value=SAVE_FREQUENCY)
+    br
+  
+    label Data TTL
+    input(type="DATA_TTL", name="", value=DATA_TTL)
+    br
+  
+    h2 Email Notifications
+    label SMTP Address
+    input(type="SMTP_ADDR", name="", value=SMTP_ADDR)
+    br
+  
+    label SMTP Port
+    input(type="SMTP_PORT", name="", value=SMTP_PORT)
+    br
+  
+    label SMTP Domain
+    input(type="SMTP_DOMAIN", name="", value=SMTP_DOMAIN)
+    br
+  
+    label Email Recipients
+    input(type="RECIPIENTS", name="", value=RECIPIENTS)
+    br
+  
+    h2 Logger Settings
+    label Service Preferences
+    input(type="SERVICE_PREFERENCES", name="", value=SERVICE_PREFERENCES)
+    br
+  
+    label Haystack Storage
+    input(type="HAYSTACK_STORAGE", name="", value=HAYSTACK_STORAGE)
+    br
+  
+    br
+    input(type="Submit",value="Save Settings")
+  
