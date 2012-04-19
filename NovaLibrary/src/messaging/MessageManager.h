@@ -35,7 +35,8 @@ public:
 
 	//Initialize must be called exactly once at the begining of the program, before and calls to Instance()
 	//	It informs the MessageManager which side of the protocol it will be handling.
-	void Initialize(enum ProtocolDirection direction);
+	//	IE: DIRECTION_TO_UI is for Novad, DIRECTION_TO_NOVAD is for a UI
+	static void Initialize(enum ProtocolDirection direction);
 	static MessageManager &Instance();
 
 	Nova::UI_Message *GetMessage(int socketFD, enum ProtocolDirection direction);
@@ -49,6 +50,9 @@ public:
 	//		queue as closed with an ErrorMessage with the appropriate sub-type and then exit.
 	//		The queue will not be actually destroyed until this last message is popped off.
 	void CloseSocket(int socketFD);
+
+	//Waits for a new callback protocol to start on the given socket
+	void RegisterCallback(int socketFD);
 
 private:
 

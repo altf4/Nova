@@ -112,4 +112,24 @@ void MessageManager::CloseSocket(int socketFD)
 	}
 }
 
+void MessageManager::RegisterCallback(int socketFD)
+{
+	bool foundIt = false;
+
+	{
+		Lock lock(&m_queuesLock);
+
+		if(m_queues.count(socketFD) > 0)
+		{
+			foundIt = true;
+		}
+	}
+
+	if(foundIt)
+	{
+		m_queues[socketFD]->RegisterCallback();
+	}
+
+}
+
 }

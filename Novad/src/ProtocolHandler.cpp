@@ -26,6 +26,7 @@
 #include "messaging/messages/RequestMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/Socket.h"
+#include "messaging/MessageManager.h"
 #include "SuspectTable.h"
 #include "SuspectTableIterator.h"
 #include "Lock.h"
@@ -126,7 +127,12 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 
 	while(true)
 	{
-		Lock lock(&controlSocket->m_mutex);
+		//Wait for a callback to occur
+		MessageManager::Instance().RegisterCallback(controlSocket->m_socketFD);
+
+		//TODO: Is this actually necessary? Might not be
+		//Claim the socket's mutex, so another protocol doesn't get mixed up in between
+		Lock lock = Lock(&controlSocket->m_mutex);
 
 		UI_Message *message = UI_Message::ReadMessage(controlSocket->m_socketFD, DIRECTION_TO_NOVAD);
 		switch(message->m_messageType)

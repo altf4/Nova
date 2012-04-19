@@ -16,6 +16,7 @@
 // Description : Nova Daemon to perform network anti-reconnaissance
 //============================================================================
 
+#include "messaging/MessageManager.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
 #include "SuspectTable.h"
@@ -97,6 +98,7 @@ namespace Nova
 int RunNovaD()
 {
 	Config::Inst();
+	MessageManager::Initialize(DIRECTION_TO_UI);
 
 	if (!LockNovad())
 	{

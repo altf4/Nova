@@ -22,6 +22,7 @@
 #include "messaging/messages/CallbackMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/Socket.h"
+#include "messaging/MessageManager.h"
 #include "Lock.h"
 
 using namespace Nova;
@@ -30,6 +31,10 @@ extern Socket UI_ListenSocket;
 
 struct CallbackChange Nova::ProcessCallbackMessage()
 {
+	//Wait for a callback to occur
+	MessageManager::Instance().RegisterCallback(UI_ListenSocket.m_socketFD);
+
+	//Claim the socket's mutex, so another protocol doesn't get mixed up in between
 	Lock lock(&UI_ListenSocket.m_mutex);
 
 	struct CallbackChange change;
