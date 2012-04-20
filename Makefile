@@ -46,7 +46,7 @@ all-test: debug test
 
 
 #Cleans both Release and Debug
-clean: clean-debug clean-release clean-web
+clean: clean-debug clean-release
 	rm -f Installer/Read/manpages/*.gz
 
 clean-debug:
