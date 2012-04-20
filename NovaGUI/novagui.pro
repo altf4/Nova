@@ -2,9 +2,7 @@ TEMPLATE = app
 TARGET = novagui
 QT += core \
     gui
-HEADERS += src/HoneydConfiguration.h \
-	src/subnetPopup.h \
-    src/NovaGuiTypes.h \
+HEADERS += src/subnetPopup.h \
     src/loggerwindow.h \
     src/classifierPrompt.h \
     src/nova_manual.h \
@@ -16,8 +14,7 @@ HEADERS += src/HoneydConfiguration.h \
     src/novaconfig.h \
     src/novagui.h \
     src/run_popup.h
-SOURCES += src/HoneydConfiguration.cpp \
-	src/subnetPopup.cpp \
+SOURCES += src/subnetPopup.cpp \
     src/loggerwindow.cpp \
     src/classifierPrompt.cpp \
     src/nova_manual.cpp \
