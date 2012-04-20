@@ -1393,51 +1393,46 @@ string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
 }
 
 //Either deletes a profile or updates the window to reflect a profile name change
-void HoneydConfiguration::UpdateProfile(bool deleteProfile, profile * p)
+void HoneydConfiguration::DeleteProfile(profile * p)
 {
-	//If the profile is being deleted
-	if(deleteProfile)
+	vector<string> delList;
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		vector<string> delList;
+		if(!it->second.pfile.compare(p->name))
+		{
+			delList.push_back(it->second.name);
+		}
+	}
+	while(!delList.empty())
+	{
+		m_nodes.erase(m_nodes[delList.back()].name);
+		delList.pop_back();
+	}
+	m_profiles.erase(p->name);
+}
+
+void HoneydConfiguration::RenameProfile(profile * p, string newName)
+{
+	string oldName = p->name;
+
+	//If item text and profile name don't match, we need to update
+	if(oldName != newName)
+	{
+		//Set the profile to the correct name and put the profile in the table
+		m_profiles[newName] = *p;
+		m_profiles[newName].name = newName;
+
+		//Find all nodes who use this profile and update to the new one
 		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 		{
-			if(!it->second.pfile.compare(p->name))
+			if(!it->second.pfile.compare(oldName))
 			{
-				delList.push_back(it->second.name);
+				it->second.pfile = newName;
 			}
 		}
-		while(!delList.empty())
-		{
-			m_nodes.erase(m_nodes[delList.back()].name);
-			delList.pop_back();
-		}
-		m_profiles.erase(p->name);
-	}
-	//If the profile needs to be updated
-	else
-	{
-		string pfile = p->profileItem->text(0).toStdString();
-		profile tempPfile = * p;
 
-		//If item text and profile name don't match, we need to update
-		if(tempPfile.name.compare(pfile))
-		{
-			//Set the profile to the correct name and put the profile in the table
-			m_profiles[pfile] = tempPfile;
-			m_profiles[pfile].name = pfile;
-
-			//Find all nodes who use this profile and update to the new one
-			for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-			{
-				if(!it->second.pfile.compare(tempPfile.name))
-				{
-					it->second.pfile = pfile;
-				}
-			}
-
-			//Remove the old profile and update the currentProfile pointer
-			m_profiles.erase(tempPfile.name);
-		}
+		//Remove the old profile and update the currentProfile pointer
+		m_profiles.erase(oldName);
 	}
 }
 

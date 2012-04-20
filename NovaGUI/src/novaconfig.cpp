@@ -69,12 +69,17 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	m_prompter = m_mainwindow->m_prompter;
 	// Set up the GUI
 	ui.setupUi(this);
+
+	// for internal use only
+	ui.portTreeWidget->setColumnHidden(3, true);
+
 	SetInputValidators();
 	m_loading->lock();
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
 	LoadNovadPreferences();
 	PullData();
 	LoadHaystackConfiguration();
+
 
 	LoadNmapPersonalitiesFromFile();
 	m_loading->unlock();
@@ -235,7 +240,7 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 		port * prt = NULL;
 		for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
 		{
-			if(ui.portTreeWidget->currentItem() == it->second.item)
+			if(IsPortTreeWidgetItem(it->second.portName, ui.portTreeWidget->currentItem()))
 			{
 				//iterators are copies not the actual items
 				prt = &m_honeydConfig->m_ports[it->second.portName];
@@ -351,8 +356,7 @@ void NovaConfig::on_actionAddPort_triggered()
 
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
-			pr.item = item;
-			ui.portTreeWidget->setCurrentItem(pr.item);
+			ui.portTreeWidget->setCurrentItem(item);
 			pair<string, bool> portPair;
 			portPair.first = pr.portName;
 			portPair.second = false;
@@ -403,7 +407,9 @@ void NovaConfig::on_actionAddPort_triggered()
 			}
 			LoadProfileSettings();
 			SaveProfileSettings();
-			ui.portTreeWidget->editItem(m_honeydConfig->m_ports[pr.portName].item, 0);
+
+			// TODO QT Port fix
+			//ui.portTreeWidget->editItem(item, 0);
 		}
 		m_loading->unlock();
 	}
@@ -420,7 +426,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 		port * prt = NULL;
 		for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
 		{
-			if(ui.portTreeWidget->currentItem() == it->second.item)
+			if(IsPortTreeWidgetItem(it->second.portName, ui.portTreeWidget->currentItem()))
 			{
 				//iterators are copies not the actual items
 				prt = &m_honeydConfig->m_ports[it->second.portName];
@@ -713,14 +719,21 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		port oldPrt;
 
 		//Find the port before the changes
-		for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
-		{
-			if(it->second.item == item)
-			{
-				oldPort = it->second.portName;
-			}
-		}
+		//for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
+		//{
+		//*****************************************************
+		// Can'to do this anymore.
+		//	if(it->second.item == item)
+		//*****************************************************
+		//	{
+		//		oldPort = it->second.portName;
+		//	}
+		//}
+		//oldPort = item->text(0).toStdString() + "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
+
+		oldPort = item->text(3).toStdString();
 		oldPrt = m_honeydConfig->m_ports[oldPort];
+
 
 		//Use the combo boxes to update the hidden text underneath them.
 		TreeItemComboBox * qTypeBox = (TreeItemComboBox*)ui.portTreeWidget->itemWidget(item, 1);
@@ -733,6 +746,8 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		// this is pulled from the recently updated hidden text and reflects any changes
 		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString()
 				+ "_" + item->text(2).toStdString();
+		item->setText(3, QString::fromStdString(portName));
+
 
 		port prt;
 		//Locate the port in the table or create the port if it doesn't exist
@@ -931,7 +946,9 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		LoadProfileSettings();
 		SaveProfileSettings();
 		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
-		ui.portTreeWidget->setCurrentItem(m_honeydConfig->m_ports[prt.portName].item);
+
+		// TODO
+		//ui.portTreeWidget->setCurrentItem(m_honeydConfig->m_ports[prt.portName].item);
 		m_loading->unlock();
 		LoadAllProfiles();
 	}
@@ -1710,7 +1727,7 @@ void NovaConfig::DeleteProfile(string name)
 		if(m_honeydConfig->m_profiles.size() > 1)
 		{
 			//Get the current profile item
-			item = m_honeydConfig->m_profiles[m_currentProfile].profileItem;
+			item = GetProfileTreeWidgetItem(m_currentProfile);
 			//Try to find another profile below it
 			temp = ui.profileTreeWidget->itemBelow(item);
 
@@ -1725,14 +1742,14 @@ void NovaConfig::DeleteProfile(string name)
 			}
 		}
 		//Remove the current profiles tree widget items
-		ui.profileTreeWidget->removeItemWidget(p.profileItem, 0);
-		ui.hsProfileTreeWidget->removeItemWidget(p.item, 0);
+		ui.profileTreeWidget->removeItemWidget(GetProfileTreeWidgetItem(p.name), 0);
+		ui.hsProfileTreeWidget->removeItemWidget(GetProfileHsTreeWidgetItem(p.name), 0);
 
 		//Clear the tree of the current profile (may not be needed)
 		m_honeydConfig->m_profiles[name].tree.clear();
 
 		//Erase the profile from the table and any nodes that use it
-		m_honeydConfig->UpdateProfile(DELETE_PROFILE, &m_honeydConfig->m_profiles[name]);
+		m_honeydConfig->DeleteProfile(&m_honeydConfig->m_profiles[name]);
 
 		//If this profile has a parent
 		if(p.parentProfile.compare(""))
@@ -1784,7 +1801,7 @@ void NovaConfig::DeleteProfile(string name)
 	else
 	{
 		//Erase the profile from the table and any nodes that use it
-		m_honeydConfig->UpdateProfile(DELETE_PROFILE, &m_honeydConfig->m_profiles[name]);
+		m_honeydConfig->DeleteProfile(&m_honeydConfig->m_profiles[name]);
 	}
 }
 
@@ -1812,6 +1829,7 @@ void NovaConfig::LoadProfileSettings()
 		profile * p = &m_honeydConfig->m_profiles[m_currentProfile];
 		//Set the variables of the profile
 		ui.profileEdit->setText((QString)p->name.c_str());
+		ui.profileEdit->setEnabled(true);
 		ui.ethernetEdit->setText((QString)p->ethernet.c_str());
 		ui.tcpActionComboBox->setCurrentIndex( ui.tcpActionComboBox->findText(p->tcpAction.c_str() ) );
 		ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->udpAction.c_str() ) );
@@ -1885,6 +1903,8 @@ void NovaConfig::LoadProfileSettings()
 			behaviorBox->addItem("block");
 			behaviorBox->insertSeparator(3);
 
+			item->setText(3, QString::fromStdString(p->ports[i].first));
+
 			vector<string> scriptNames = m_honeydConfig->GetScriptNames();
 			for(vector<string>::iterator it = scriptNames.begin(); it != scriptNames.end(); it++)
 			{
@@ -1916,11 +1936,10 @@ void NovaConfig::LoadProfileSettings()
 
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
-			pr.item = item;
 			m_honeydConfig->m_ports[pr.portName] = pr;
 			if(!portCurrentString.compare(pr.portName))
 			{
-				ui.portTreeWidget->setCurrentItem(pr.item);
+				ui.portTreeWidget->setCurrentItem(item);
 			}
 		}
 	}
@@ -2016,6 +2035,7 @@ void NovaConfig::LoadInheritedProfileSettings()
 	ui.uptimeRangeEdit->setFont(tempFont);
 	ui.uptimeRangeLabel->setFont(tempFont);
 	ui.uptimeEdit->setEnabled(!p->inherited[UPTIME]);
+
 	ui.uptimeBehaviorComboBox->setFont(tempFont);
 	ui.uptimeBehaviorComboBox->setEnabled(!p->inherited[UPTIME]);
 
@@ -2476,13 +2496,6 @@ void NovaConfig::LoadAllProfiles()
 
 	if(m_honeydConfig->m_profiles.size())
 	{
-		//First sets all pointers to NULL, clear has already deleted so these pointers are invalid
-		// createProfileItem then uses these NULL pointers as a flag to avoid creating duplicate items
-		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
-		{
-			it->second.item = NULL;
-			it->second.profileItem = NULL;
-		}
 		//calls createProfileItem on every profile, this will first assert that all ancestors have items
 		// and create them if not to draw the table correctly, thus the need for the NULL pointer as a flag
 		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
@@ -2504,12 +2517,105 @@ void NovaConfig::LoadAllProfiles()
 	m_loading->unlock();
 }
 
+
+
+QTreeWidgetItem * NovaConfig::GetProfileTreeWidgetItem(string profileName)
+{
+	QList<QTreeWidgetItem*> items = ui.profileTreeWidget->findItems(QString::fromStdString(profileName),Qt::MatchExactly | Qt::MatchRecursive, 0);
+	if (items.size())
+	{
+		return items.at(0);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+QTreeWidgetItem * NovaConfig::GetProfileHsTreeWidgetItem(string profileName)
+{
+	QList<QTreeWidgetItem*> items = ui.hsProfileTreeWidget->findItems(QString::fromStdString(profileName),Qt::MatchExactly | Qt::MatchRecursive, 0);
+	if (items.size())
+	{
+		return items.at(0);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+
+QTreeWidgetItem * NovaConfig::GetSubnetTreeWidgetItem(string subnetName)
+{
+	QList<QTreeWidgetItem*> items = ui.nodeTreeWidget->findItems(QString::fromStdString(subnetName), Qt::MatchExactly, 0);
+	if (items.size())
+	{
+		return items.at(0);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+
+
+QTreeWidgetItem * NovaConfig::GetSubnetHsTreeWidgetItem(string subnetName)
+{
+	QList<QTreeWidgetItem*> items = ui.hsNodeTreeWidget->findItems(QString::fromStdString(subnetName), Qt::MatchExactly, 0);
+	if (items.size())
+	{
+		return items.at(0);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+QTreeWidgetItem * NovaConfig::GetNodeTreeWidgetItem(string nodeName)
+{
+	QList<QTreeWidgetItem*> items = ui.nodeTreeWidget->findItems(QString::fromStdString(nodeName), Qt::MatchExactly, 0);
+	if (items.size())
+	{
+		return items.at(0);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+QTreeWidgetItem * NovaConfig::GetNodeHsTreeWidgetItem(string nodeName)
+{
+	QList<QTreeWidgetItem*> items = ui.hsNodeTreeWidget->findItems(QString::fromStdString(nodeName), Qt::MatchExactly, 0);
+	if (items.size())
+	{
+		return items.at(0);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+
+bool NovaConfig::IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item)
+{
+	stringstream ss;
+	ss << item->text(0).toStdString() << "_";
+	ss << item->text(1).toStdString() << "_";
+	ss << item->text(2).toStdString();
+	return (ss.str() == port);
+}
+
 //Creates tree widget items for a profile and all ancestors if they need one.
 void NovaConfig::CreateProfileItem(string pstr)
 {
 	profile p = m_honeydConfig->m_profiles[pstr];
 	//If the profile hasn't had an item created yet
-	if(p.item == NULL)
+	if(GetProfileTreeWidgetItem(p.name) == NULL)
 	{
 		QTreeWidgetItem * item = NULL;
 		//get the name
@@ -2523,12 +2629,10 @@ void NovaConfig::CreateProfileItem(string pstr)
 			// and destructor of the tree widget does that already.
 			item = new QTreeWidgetItem(ui.hsProfileTreeWidget,0);
 			item->setText(0, (QString)profileStr.c_str());
-			p.item = item;
 
 			//Create the profile item for the profile tree
 			item = new QTreeWidgetItem(ui.profileTreeWidget,0);
 			item->setText(0, (QString)profileStr.c_str());
-			p.profileItem = item;
 		}
 		//if the profile has ancestors
 		else
@@ -2538,7 +2642,7 @@ void NovaConfig::CreateProfileItem(string pstr)
 			{
 				profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 
-				if(parent.item == NULL)
+				if(GetProfileTreeWidgetItem(parent.name) == NULL)
 				{
 					//if parent has no item recursively ascend until all parents do
 					CreateProfileItem(p.parentProfile);
@@ -2549,14 +2653,12 @@ void NovaConfig::CreateProfileItem(string pstr)
 				//*NOTE*
 				//These items don't need to be deleted because the clear function
 				// and destructor of the tree widget does that already.
-				item = new QTreeWidgetItem(parent.item,0);
+				item = new QTreeWidgetItem(item = GetProfileHsTreeWidgetItem(parent.name), 0);
 				item->setText(0, (QString)profileStr.c_str());
-				p.item = item;
 
 				//Create the profile item for the profile tree
-				item = new QTreeWidgetItem(parent.profileItem,0);
+				item = new QTreeWidgetItem(item = GetProfileTreeWidgetItem(parent.name), 0);
 				item->setText(0, (QString)profileStr.c_str());
-				p.profileItem = item;
 			}
 		}
 		m_honeydConfig->m_profiles[p.name] = p;
@@ -2875,11 +2977,11 @@ void NovaConfig::on_profileEdit_editingFinished()
 	}
 	if(!m_honeydConfig->m_profiles.empty())
 	{
-		m_honeydConfig->m_profiles[m_currentProfile].item->setText(0,ui.profileEdit->displayText());
-		m_honeydConfig->m_profiles[m_currentProfile].profileItem->setText(0,ui.profileEdit->displayText());
+		GetProfileTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
+		GetProfileHsTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
 		//If the name has changed we need to move it in the profile hash table and point all
 		//nodes that use the profile to the new location.
-		m_honeydConfig->UpdateProfile(UPDATE_PROFILE, &m_honeydConfig->m_profiles[m_currentProfile]);
+		m_honeydConfig->RenameProfile(&m_honeydConfig->m_profiles[m_currentProfile], ui.profileEdit->displayText().toStdString());
 		SaveProfileSettings();
 		LoadProfileSettings();
 		m_loading->unlock();
@@ -2906,41 +3008,42 @@ void NovaConfig::LoadAllNodes()
 	ui.nodeTreeWidget->clear();
 	ui.hsNodeTreeWidget->clear();
 
+	QTreeWidgetItem * subnetItem = NULL;
+	QTreeWidgetItem * subnetHsItem = NULL;
+
 	for(SubnetTable::iterator it = m_honeydConfig->m_subnets.begin(); it != m_honeydConfig->m_subnets.end(); it++)
 	{
 		//create the subnet item for the Haystack menu tree
-		hsItem = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
-		hsItem->setText(0, (QString)it->second.address.c_str());
+		subnetHsItem  = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
+		subnetHsItem ->setText(0, (QString)it->second.address.c_str());
 		if(it->second.isRealDevice)
 		{
-			hsItem->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
+			subnetHsItem ->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
 		}
 		else
 		{
-			hsItem->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
+			subnetHsItem ->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
 		}
-		it->second.item = hsItem;
 
 		//create the subnet item for the node edit tree
-		item = new QTreeWidgetItem(ui.nodeTreeWidget, 0);
-		item->setText(0, (QString)it->second.address.c_str());
+		subnetItem = new QTreeWidgetItem(ui.nodeTreeWidget, 0);
+		subnetItem->setText(0, (QString)it->second.address.c_str());
 		if(it->second.isRealDevice)
 		{
-			item->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
+			subnetItem->setText(1, (QString)"Physical Device - "+it->second.name.c_str());
 		}
 		else
 		{
-			item->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
+			subnetItem->setText(1, (QString)"Virtual Interface - "+it->second.name.c_str());
 		}
-		it->second.nodeItem = item;
 
 		if(!it->second.enabled)
 		{
 			whitebrush.setStyle(Qt::NoBrush);
-			it->second.nodeItem->setBackground(0,greybrush);
-			it->second.nodeItem->setForeground(0,whitebrush);
-			it->second.item->setBackground(0,greybrush);
-			it->second.item->setForeground(0,whitebrush);
+			subnetItem->setBackground(0,greybrush);
+			subnetItem->setForeground(0,whitebrush);
+			subnetHsItem->setBackground(0,greybrush);
+			subnetHsItem->setForeground(0,whitebrush);
 		}
 
 		for(uint i = 0; i < it->second.nodes.size(); i++)
@@ -2949,12 +3052,12 @@ void NovaConfig::LoadAllNodes()
 			n = &m_honeydConfig->m_nodes[it->second.nodes[i]];
 
 			//Create the node item for the Haystack tree
-			item = new QTreeWidgetItem(it->second.item, 0);
+			item = new QTreeWidgetItem(subnetHsItem, 0);
 			item->setText(0, (QString)n->name.c_str());
 			item->setText(1, (QString)n->pfile.c_str());
 
 			//Create the node item for the node edit tree
-			item = new QTreeWidgetItem(it->second.nodeItem, 0);
+			item = new QTreeWidgetItem(subnetItem, 0);
 			item->setText(0, (QString)n->name.c_str());
 			item->setText(1, (QString)n->pfile.c_str());
 
@@ -2991,21 +3094,21 @@ void NovaConfig::LoadAllNodes()
 	ui.nodeTreeWidget->expandAll();
 
 	// Reselect the last selected node if need be
-	QList<QTreeWidgetItem*> items;
-
-	items = ui.nodeTreeWidget->findItems(QString::fromStdString(m_currentNode),Qt::MatchExactly | Qt::MatchRecursive, 0);
-	for (int i = 0; i < items.length(); i++)
+	QTreeWidgetItem* nodeItem = GetNodeTreeWidgetItem(m_currentNode);
+	if (nodeItem != NULL)
 	{
-		items.at(i)->setSelected(true);
+		nodeItem->setSelected(true);
 	}
-
-	if (!items.length())
+	else
 	{
 		if(m_honeydConfig->m_subnets.size())
 		{
 			if(m_honeydConfig->m_subnets.find(m_currentSubnet) != m_honeydConfig->m_subnets.end())
 			{
-				ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
+				if (GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
+				{
+					ui.nodeTreeWidget->setCurrentItem(GetSubnetTreeWidgetItem(m_currentSubnet));
+				}
 			}
 		}
 	}
@@ -3022,10 +3125,11 @@ void NovaConfig::DeleteNodes()
 	m_loading->lock();
 
 	//If a subnet is selected and there's another to select
+	// TODO: Clean this up, maybe just comments. It's rather unclear what this is supposed to be doing
 	if((m_honeydConfig->m_subnets.size() > 1) && m_selectedSubnet)
 	{
 		//Get current subnet index and pre-select another one preferring lower item first
-		int tempI = ui.nodeTreeWidget->indexOfTopLevelItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
+		int tempI = ui.nodeTreeWidget->indexOfTopLevelItem(GetSubnetTreeWidgetItem(m_currentSubnet));
 
 		//If the current subnet is at the bottom of the list
 		if((tempI + 1) == ui.nodeTreeWidget->topLevelItemCount())
@@ -3128,11 +3232,11 @@ void NovaConfig::DeleteNodes()
 				DeleteNode(m_currentNode);
 			}
 		}
-		if(!m_honeydConfig->m_subnets[m_currentSubnet].isRealDevice)
+		if(m_honeydConfig->m_subnets[m_currentSubnet].isRealDevice)
 		{
 			//Remove the subnet from the list and delete from table
-			ui.nodeTreeWidget->removeItemWidget(s->nodeItem, 0);
-			ui.hsNodeTreeWidget->removeItemWidget(s->item, 0);
+			ui.nodeTreeWidget->removeItemWidget(GetSubnetTreeWidgetItem(m_currentSubnet), 0);
+			ui.hsNodeTreeWidget->removeItemWidget(GetSubnetHsTreeWidgetItem(m_currentSubnet), 0);
 			m_honeydConfig->m_subnets.erase(m_currentSubnet);
 		}
 	}
@@ -3180,22 +3284,22 @@ void NovaConfig::DeleteNode(std::string node)
 		return;
 	}
 
-	QList<QTreeWidgetItem*> items;
-
-	items = ui.nodeTreeWidget->findItems(QString::fromStdString(node), Qt::MatchExactly | Qt::MatchRecursive, 0);
-	for (int i = 0; i < items.length(); i++)
+	QTreeWidgetItem *item = GetNodeTreeWidgetItem(node);
+	if (item != NULL)
 	{
-		ui.nodeTreeWidget->removeItemWidget(items.at(i), 0);
+		ui.nodeTreeWidget->removeItemWidget(item, 0);
 	}
 
-	items = ui.hsNodeTreeWidget->findItems(QString::fromStdString(node), Qt::MatchExactly | Qt::MatchRecursive, 0);
-	for (int i = 0; i < items.length(); i++)
+	item = GetNodeHsTreeWidgetItem(node);
+	if (item != NULL)
 	{
-		ui.hsNodeTreeWidget->removeItemWidget(items.at(i), 0);
+		ui.hsNodeTreeWidget->removeItemWidget(item, 0);
 	}
 
 	m_honeydConfig->DeleteNode(node);
 }
+
+
 
 /******************************************
  * Node Menu GUI Signals ******************/
@@ -3264,8 +3368,6 @@ void NovaConfig::on_actionSubnetAdd_triggered()
 		s.address = "0.0.0.0/24";
 		s.nodes.clear();
 		s.enabled = false;
-		s.item = NULL;
-		s.nodeItem = NULL;
 		s.base = 0;
 		s.maskBits = 24;
 		s.max = 255;
@@ -3345,7 +3447,7 @@ void NovaConfig::on_actionNodeCustomizeProfile_triggered()
 	item = ui.menuTreeWidget->itemBelow(item);
 	item = ui.menuTreeWidget->itemBelow(item);
 	ui.menuTreeWidget->setCurrentItem(item);
-	ui.profileTreeWidget->setCurrentItem(m_honeydConfig->m_profiles[m_currentProfile].profileItem);
+	ui.profileTreeWidget->setCurrentItem(GetProfileTreeWidgetItem(m_currentProfile));
 	m_loading->unlock();
 	Q_EMIT on_actionProfileAdd_triggered();
 	m_honeydConfig->m_nodes[m_currentNode].pfile = m_currentProfile;
@@ -3376,7 +3478,10 @@ void NovaConfig::on_actionNodeEnable_triggered()
 	m_loading->lock();
 	if(m_selectedSubnet)
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
+		if (GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
+		{
+			ui.nodeTreeWidget->setCurrentItem(GetSubnetTreeWidgetItem(m_currentSubnet));
+		}
 	}
 	else
 	{
@@ -3409,7 +3514,10 @@ void NovaConfig::on_actionNodeDisable_triggered()
 	m_loading->lock();
 	if(m_selectedSubnet)
 	{
-		ui.nodeTreeWidget->setCurrentItem(m_honeydConfig->m_subnets[m_currentSubnet].nodeItem);
+		if (GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
+		{
+			ui.nodeTreeWidget->setCurrentItem(GetSubnetTreeWidgetItem(m_currentSubnet));
+		}
 	}
 	else
 	{

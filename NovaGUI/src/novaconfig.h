@@ -25,15 +25,11 @@
 #include <QMutex>
 #include <QWheelEvent>
 
+
+// TODO: Clean this up. At a minimum add some descriptive comments, maybe replace with enums
 #define HAYSTACK_MENU_INDEX 4
 #define NODE_INDEX 0
 #define PROFILE_INDEX 1
-#define FROM_NOVA_CONFIG false
-#define DELETE_PROFILE true
-#define UPDATE_PROFILE false
-#define ADD_NODE 0
-#define CLONE_NODE 1
-#define EDIT_NODE 2
 
 enum recursiveDirection{ALL = 0, UP, DOWN};
 
@@ -241,7 +237,7 @@ void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);
 //Custom signal for combo box items in the tree changing
 void portTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 //Custom signal for combo box items in the tree changing
-void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited);
+void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 
 //Doppelganger IP Address Spin boxes
 void on_dmIPSpinBox_0_valueChanged(int value);
@@ -254,10 +250,22 @@ void on_hsSaveTypeComboBox_currentIndexChanged(int index);
 
 private:
 	void SetInputValidators();
+
+    // These replace the QT pointers that were in the data structures,
+    // they all return a pointer to the QTreeWidgetItem corresponding to a table key
+    QTreeWidgetItem * GetProfileTreeWidgetItem(std::string profileName);
+    QTreeWidgetItem * GetProfileHsTreeWidgetItem(std::string profileName);
+    QTreeWidgetItem * GetSubnetTreeWidgetItem(std::string subnetName);
+    QTreeWidgetItem * GetSubnetHsTreeWidgetItem(std::string subnetName);
+    QTreeWidgetItem * GetNodeTreeWidgetItem(std::string nodeName);
+    QTreeWidgetItem * GetNodeHsTreeWidgetItem(std::string nodeName);
+    bool IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item);
+
     Ui::NovaConfigClass ui;
 
     //Keys used to maintain and lookup current selections
     std::string m_currentProfile;
+    std::string m_currentPort;
     std::string m_currentNode;
     std::string m_currentSubnet;
 

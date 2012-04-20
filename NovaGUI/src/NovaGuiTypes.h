@@ -22,7 +22,6 @@
 #include "HashMapStructs.h"
 
 #include <boost/property_tree/ptree.hpp>
-#include <QtGui/QTreeWidgetItem>
 #include <arpa/inet.h>
 #include <string>
 
@@ -63,7 +62,6 @@ typedef google::dense_hash_map<std::string, script, std::tr1::hash<std::string>,
 //used to maintain information about a port, it's type and behavior
 struct port
 {
-	QTreeWidgetItem * item;
 	std::string portName;
 	std::string portNum;
 	std::string type;
@@ -79,8 +77,6 @@ typedef google::dense_hash_map<std::string, port, std::tr1::hash<std::string>, e
 //used to keep track of subnet gui items and allow for easy access
 struct subnet
 {
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * nodeItem;
 	std::string name;
 	std::string address;
 	std::string mask;
@@ -100,8 +96,6 @@ typedef google::dense_hash_map<std::string, subnet, std::tr1::hash<std::string>,
 //used to keep track of haystack profile gui items and allow for easy access
 struct profile
 {
-	QTreeWidgetItem * item;
-	QTreeWidgetItem * profileItem;
 	std::string name;
 	std::string tcpAction;
 	std::string udpAction;

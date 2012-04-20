@@ -99,7 +99,8 @@ public:
 	std::string GenerateUniqueMACAddress(std::string vendor);
 
     //If a profile is edited, this function updates the changes for the rest of the GUI
-    void UpdateProfile(bool deleteProfile, profile *p);
+    void DeleteProfile(profile *p);
+    void RenameProfile(profile *p, std::string newName);
 
     //Deletes a single node, called from deleteNodes();
     bool DeleteNode(std::string node);
