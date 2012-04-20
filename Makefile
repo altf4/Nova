@@ -36,6 +36,10 @@ test-prepare:
 test: test-prepare
 	$(MAKE) -C NovaTest/Debug
 
+web:
+	cd NovaWeb;npm --unsafe-perm install
+	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
+
 # Make debug + test
 all-test: debug test
 
@@ -64,7 +68,10 @@ clean-release:
 clean-test:
 	rm -fr NovaTest/NovadSource/*
 	$(MAKE) -C NovaTest/Debug clean
-	
+
+clean-web:
+	cd NovaWeb; node-waf clean
+	cd NovaWeb/NodeNovaConfig; node-waf clean
 
 install: install-release
 
@@ -121,6 +128,11 @@ install-docs:
 	gzip -c Installer/Read/manpages/novagui.1 > Installer/Read/manpages/novagui.1.gz
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+
+install-web:
+	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
+	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
+	cd NovaWeb; bash install.sh
 
 
 uninstall-files:

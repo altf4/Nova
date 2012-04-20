@@ -40,38 +40,41 @@ echo "Making a symlink to our current Dojo version"
 echo "========================================"
 ln -f -T -s dojo-release-1.7.1 /var/www/dojo
 
-echo "========================================"
-echo "Configuring NOVA node"
-echo "========================================"
-node-waf configure
-
-# Compile the nova node
-# (This needs to be done every time the source changes)
-echo "========================================"
-echo "Building NOVA node"
-echo "========================================"
-node-waf clean
-node-waf
 
 
-cd NodeNovaConfig
-echo "========================================"
-echo "Configuring NOVAConfig node"
-echo "========================================"
-node-waf configure
-
-# Compile the nova node
-# (This needs to be done every time the source changes)
-echo "========================================"
-echo "Building NOVAConfig node"
-echo "========================================"
-node-waf clean
-node-waf
-
-# To run the Nova Web interface from the NovaWeb folder,
-#   node main.js
-
-echo "========================================"
-echo "Installation finished"
-echo "To run the web interface, run "node tst.js" from the NovaWeb folder"
-echo "========================================"
+## This has all been depricated, now just do 'npm install'
+#echo "========================================"
+#echo "Configuring NOVA node"
+#echo "========================================"
+#node-waf configure
+#
+## Compile the nova node
+## (This needs to be done every time the source changes)
+#echo "========================================"
+#echo "Building NOVA node"
+#echo "========================================"
+#node-waf clean
+#node-waf
+#
+#
+#cd NodeNovaConfig
+#echo "========================================"
+#echo "Configuring NOVAConfig node"
+#echo "========================================"
+#node-waf configure
+#
+## Compile the nova node
+## (This needs to be done every time the source changes)
+#echo "========================================"
+#echo "Building NOVAConfig node"
+#echo "========================================"
+#node-waf clean
+#node-waf
+#
+## To run the Nova Web interface from the NovaWeb folder,
+##   node main.js
+#
+#echo "========================================"
+#echo "Installation finished"
+#echo "To run the web interface, run "node tst.js" from the NovaWeb folder"
+#echo "========================================"

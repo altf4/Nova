@@ -92,6 +92,7 @@ NovaCLI/Debug/novacli
 /NovaWeb/www/dojo
 /NovaWeb/build/*
 /NovaWeb/NodeNovaConfig/build/*
+/NovaWeb/node_modules
 /NovaWeb/.lock-wscript
 
 #MISC
