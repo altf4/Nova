@@ -1,3 +1,4 @@
+doctype 5
 html(lang="en")
   head
     meta(charset="utf-8")
@@ -10,14 +11,14 @@ html(lang="en")
     script(type="text/javascript", src="/nowjs/now.js")
     script
       require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser"],
-      function(ready){
-      dojo.addOnLoad(function(){
-      dojo.style("appLayout", "opacity", 0);
-      dojo.fadeOut({node:"splash", delay:0}).play();
-      dojo.style("appLayout", "visibility", "visible");
-      dojo.fadeIn({node:"appLayout", delay:0}).play();
-      });
-      }
+        function(ready){
+          dojo.addOnLoad(function(){
+            dojo.style("appLayout", "opacity", 0);
+            dojo.fadeOut({node:"splash", delay:0}).play();
+            dojo.style("appLayout", "visibility", "visible");
+            dojo.fadeIn({node:"appLayout", delay:0}).play();
+          });
+        }
       );
     block headerAdditions
 
@@ -53,24 +54,34 @@ html(lang="en")
         
         button(data-dojo-type="dijit.form.Button", type="button") Start Nova
           script(type="dojo/method", data-dojo-event="onClick") now.StartNovad();
+        br 
         
         button(data-dojo-type="dijit.form.Button",type="button") Stop Nova
           script(type="dojo/method", data-dojo-event="onClick") now.StopNovad();
+        br
         
         br
-        br
+
         button(data-dojo-type="dijit.form.Button",type="button") Start Haystack
           script(type="dojo/method", data-dojo-event="onClick") now.StartHaystack();
-        
+        br
+
         button(data-dojo-type="dijit.form.Button",type="button") Stop Haystack
           script(type="dojo/method", data-dojo-event="onClick") now.StopHaystack();
-        
         br
+
         br
         button(data-dojo-type="dijit.form.Button",type="button") Clear All Suspects
           script(type="dojo/method", data-dojo-event="onClick") now.ClearAllSuspects();suspectGrid.store.fetch({onComplete: clearSuspects});
-       
         br
+        
         br
+
         button(data-dojo-type="dijit.form.Button",type="button") Configure Nova
           script(type="dojo/method", data-dojo-event="onClick") window.location = "configureNova";
+        br
+
+        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd
+          script(type="dojo/method", data-dojo-event="onClick") window.location = "configureHoneyd";
+        br
+

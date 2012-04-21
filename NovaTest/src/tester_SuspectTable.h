@@ -83,15 +83,15 @@ TEST_F(SuspectTableTest, IsValidKey) {
 
 TEST_F(SuspectTableTest, Erase) {
 	// Test for proper result on an empty table
-	EXPECT_EQ(false, table.Erase(42));
+	EXPECT_FALSE(table.Erase(42));
 
 	InitSuspects();
-	EXPECT_EQ(false, table.Erase(42));
+	EXPECT_FALSE(table.Erase(42));
 
 	//EXPECT_EQ(SUSPECT_NOT_CHECKED_OUT , table.Erase(1));
 	//table.CheckOut(1);
 
-	EXPECT_EQ(true, table.Erase(1));
+	EXPECT_TRUE(table.Erase(1));
 }
 
 

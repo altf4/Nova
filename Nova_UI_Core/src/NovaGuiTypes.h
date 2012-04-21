@@ -30,6 +30,11 @@
 **********************************************************************/
 #define INHERITED_MAX 8
 
+
+namespace Nova
+{
+
+
 enum profileIndex {
 	TYPE
 	, TCP_ACTION
@@ -130,5 +135,8 @@ struct node
 
 //Container for accessing node items
 typedef google::dense_hash_map<std::string, node, std::tr1::hash<std::string>, eqstr > NodeTable;
+
+}
+
 
 #endif /* NOVAGUITYPES_H_ */

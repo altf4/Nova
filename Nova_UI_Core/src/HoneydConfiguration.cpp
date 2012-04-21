@@ -71,7 +71,7 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 }
 
 //Calls all load functions
-void HoneydConfiguration::LoadAllTemplates()
+bool HoneydConfiguration::LoadAllTemplates()
 {
 	m_scripts.clear_no_resize();
 	m_ports.clear_no_resize();
@@ -83,6 +83,8 @@ void HoneydConfiguration::LoadAllTemplates()
 	LoadPortsTemplate();
 	LoadProfilesTemplate();
 	LoadNodesTemplate();
+
+	return true;
 }
 
 //Loads ports from file
@@ -555,13 +557,6 @@ void HoneydConfiguration::SaveAllTemplates()
 	}
 	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 	write_xml(m_homePath+"/scripts.xml", m_scriptTree, std::locale(), settings);
-	if(system("cd templates/") == -1)
-	{
-		if(system("mkdir templates") == -1)
-		{
-			//TODO Log error here
-		}
-	}
 	write_xml(m_homePath+"/templates/ports.xml", m_portTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
@@ -748,7 +743,6 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 			if(!string(v.first.data()).compare("node"))
 			{
 				node n;
-				int max = 0;
 				stringstream ss;
 				uint j = 0;
 				j = ~j; // 2^32-1
@@ -806,31 +800,8 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 
 					if (n.IP != "DHCP")
 					{
-						//intialize subnet to NULL and check for smallest bounding subnet
 						n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
-						//Tracks the mask with smallest range by comparing num of bits used.
-
-
-						//Check each subnet
-						for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
-						{
-							//If node falls outside a subnets range skip it
-							if((n.realIP < it->second.base) || (n.realIP > it->second.max))
-							{
-								continue;
-							}
-							//If this is the smallest range
-							if(it->second.maskBits > max)
-							{
-								//If node isn't using host's address
-								if(it->second.address.compare(n.IP))
-								{
-									max = it->second.maskBits;
-									n.sub = it->second.name;
-								}
-							}
-						}
-
+						n.sub = FindSubnet(n.realIP);
 						//If we have a subnet and node is unique
 						if(n.sub != "")
 						{
@@ -879,6 +850,28 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 	{
 		LOG(ERROR, "Problem loading nodes: "+ string(e.what()), "");
 	}
+}
+
+string HoneydConfiguration::FindSubnet(in_addr_t ip)
+{
+	string subnet = "";
+	int max = 0;
+	//Check each subnet
+	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+	{
+		//If node falls outside a subnets range skip it
+		if((ip < it->second.base) || (ip > it->second.max))
+		{
+			continue;
+		}
+		//If this is the smallest range
+		if(it->second.maskBits > max)
+		{
+			subnet = it->second.name;
+		}
+	}
+
+	return subnet;
 }
 
 void HoneydConfiguration::LoadProfilesTemplate()
@@ -1134,6 +1127,19 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 
 	return childProfiles;
 }
+
+std::vector<std::string> HoneydConfiguration::GetSubnetNames()
+{
+	vector<std::string> childProfiles;
+
+	for (SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+	{
+		childProfiles.push_back(it->second.name);
+	}
+
+	return childProfiles;
+}
+
 
 std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetEthernet(profileName profile)
 {
@@ -1507,24 +1513,79 @@ void HoneydConfiguration::DisableProfileNodes(std::string profile)
 	}
 }
 
+bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std::string interface, std::string subnet, int numberOfNodes)
+{
+	if (numberOfNodes <= 0)
+	{
+		LOG(ERROR, "Must create 1 or more nodes", "");
+	}
+
+	int i;
+	in_addr currentAddr;
+
+	if (ipAddress != "DHCP")
+	{
+		currentAddr.s_addr = inet_addr(ipAddress.c_str());
+	}
+
+
+	for (i = 0; i < numberOfNodes; i++)
+	{
+		if (ipAddress == "DHCP")
+		{
+			if (!AddNewNode(profile, "DHCP", "RANDOM", interface, subnet))
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if (!AddNewNode(profile, string(inet_ntoa(currentAddr)), "RANDOM", interface, subnet))
+			{
+				return false;
+			}
+			currentAddr.s_addr = ntohl((htonl(currentAddr.s_addr) + 1));
+		}
+	}
+
+	return true;
+}
+
 bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std::string macAddress, std::string interface, std::string subnet)
 {
 	node newNode;
 	newNode.IP = ipAddress;
 	newNode.interface = interface;
+	cout << "Adding new node " << profile << ipAddress << macAddress << interface << subnet <<endl;
 
 	if(newNode.IP != "DHCP")
 	{
 		newNode.realIP = htonl(inet_addr(newNode.IP.c_str()));
 	}
 
+	// Figure out it's subnet
+	if (subnet == "")
+	{
+		if(newNode.IP == "DHCP")
+		{
+			newNode.sub = newNode.interface;
+		}
+		else
+		{
+			newNode.sub = FindSubnet(newNode.realIP);
+		}
+	}
+	else
+	{
+		newNode.sub = subnet;
+	}
+
+
 	newNode.pfile = profile;
 	newNode.enabled = true;
 	newNode.MAC = macAddress;
-	newNode.sub = subnet;
 
 	newNode.name = newNode.IP + " - " + newNode.MAC;
-
 
 	uint j = ~0;
 	stringstream ss;
@@ -1541,9 +1602,11 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 		}
 	}
 
-
 	m_nodes[newNode.name] = newNode;
-	m_subnets[newNode.sub].nodes.push_back(newNode.name);
+	if (newNode.sub != "")
+		m_subnets[newNode.sub].nodes.push_back(newNode.name);
+	else
+		LOG(WARNING, "No subnet was set for new node. This could make certain features unstable", "");
 
 	//TODO add error checking
 	return true;
