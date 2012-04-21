@@ -7,7 +7,6 @@
 #include "tester_SuspectTable.h"
 #include "tester_ClassificationEngine.h"
 #include "tester_RequestMessage.h"
-#include "tester_HoneydConfiguration.h"
 
 int main(int argc, char **argv)
 {
