@@ -33,7 +33,7 @@ in_addr_t subnetRealIP;
  * Construct and Initialize GUI
  ************************************************/
 
-subnetPopup::subnetPopup(QWidget * parent, subnet * s)
+subnetPopup::subnetPopup(QWidget * parent, Nova::subnet * s)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
