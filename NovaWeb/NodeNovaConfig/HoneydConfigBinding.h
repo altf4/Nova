@@ -2,6 +2,8 @@
 #define HONEYDCONFIGBINDING_H
 
 #include <node.h>
+#include <v8.h>
+#include "v8Helper.h"
 #include "HoneydConfiguration.h"
 
 class HoneydConfigBinding : public node::ObjectWrap {
@@ -17,8 +19,11 @@ class HoneydConfigBinding : public node::ObjectWrap {
   static v8::Handle<v8::Value> SaveAllTemplates(const v8::Arguments& args);
   static v8::Handle<v8::Value> LoadAllTemplates(const v8::Arguments& args);
   static v8::Handle<v8::Value> GetProfileNames(const v8::Arguments& args);
+  static v8::Handle<v8::Value> GetNodeNames(const v8::Arguments& args);
   static v8::Handle<v8::Value> GetSubnetNames(const v8::Arguments& args);
   static v8::Handle<v8::Value> AddNewNodes(const v8::Arguments& args);
+  
+  static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);
   
   Nova::HoneydConfiguration *m_conf;
 };

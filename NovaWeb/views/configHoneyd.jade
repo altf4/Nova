@@ -16,8 +16,42 @@ block headerAdditions
       document.getElementById("ip3").disabled = ipEditEnabled;
       document.getElementById("ip4").disabled = ipEditEnabled;
      }
+  
+  script(type="text/javascript")
+          /*set up data store*/
+          var layoutNodes = [[
+            { field: "Enabled", name: "Enabled", width: '100px' },
+            { field: "Name", name: "Name", width: '200px' },
+            { field: "Profile", name: "Profile", width: '100px' },
+            { field: "IP", name: "IP", width: '150px' },
+            { field: "MAC", name: "MAC", width: '150px' },
+          ]];
 
 block content
+  h1 Current Honeyd Nodes
+  table#nodeTable(style="display: none")
+    thead
+      tr
+        th Enabled
+        th Name
+        th Profile
+        th IP
+        th MAC
+    tbody
+      each node, i in nodes
+        tr
+          td #{node.IsEnabled()}
+          td #{node.GetName()}
+          td #{node.GetProfile()}
+          td #{node.GetIP()}
+          td #{node.GetMAC()}
+ 
+  div(data-dojo-type="dojox.data.HtmlStore", data-dojo-props="dataId:'nodeTable'", data-dojo-id="gridStore")
+  div(style="height: 250px; width: 720px;")
+    div#grid(data-dojo-type="dojox.grid.DataGrid", data-dojo-props="store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40")
+  
+  br
+  br
   form(method="post", action="/configureHoneydSave")
     h2 Create Honeyd Nodes
     
@@ -51,4 +85,4 @@ block content
      
       br
       br
-      input(type="Submit",value="Create Nodes")
+      input(type="Submit",value="Create New Nodes")

@@ -99,7 +99,7 @@ public:
 
     DialogPrompter * m_prompter;
 
-    nodePopup(QWidget *parent = 0, Nova::node *n  = NULL, bool editingNode = false);
+    nodePopup(QWidget *parent = 0, Nova::Node *n  = NULL, bool editingNode = false);
     ~nodePopup();
 
     HexMACSpinBox * m_ethernetEdit;
@@ -126,10 +126,10 @@ private Q_SLOTS:
 	void on_isRandomMAC_stateChanged();
 
 private:
-	Nova::node *m_parentNode;
+	Nova::Node *m_parentNode;
 	bool m_editingNode;
     Ui::nodePopupClass ui;
-    Nova::node m_editNode;
+    Nova::Node m_editNode;
 
 };
 

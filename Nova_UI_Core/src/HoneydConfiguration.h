@@ -78,6 +78,7 @@ public:
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
 	std::vector<std::string> GetProfileNames();
+	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
 
 
@@ -109,10 +110,13 @@ public:
 
     //Deletes a single node, called from deleteNodes();
     bool DeleteNode(std::string node);
+    Node * GetNode(std::string name);
+
     std::string GetNodeSubnet(std::string node);
     bool EnableNode(std::string node);
     bool DisableNode(std::string node);
     void DisableProfileNodes(std::string profile);
+
 
 
 // TODO: this should be private eventually

@@ -5,6 +5,8 @@ var novaconfig = require('novaconfig.node');
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
 
+
+
 honeydConfig.LoadAllTemplates();
 
 var fs = require('fs');
@@ -131,9 +133,16 @@ app.get('/configureNova', function(req, res) {
 });
 
 app.get('/configureHoneyd', function(req, res) {
-     res.render('configHoneyd.jade', 
+	 var nodeNames = honeydConfig.GetNodeNames();
+	 var nodes = [];
+	 for (var i = 0; i < nodeNames.length; i++) {
+		nodes.push(honeydConfig.GetNode(nodeNames[i]));
+	 }
+     
+	 res.render('configHoneyd.jade', 
 	 { locals: {
 	 	profiles: honeydConfig.GetProfileNames()
+	 	,nodes: nodes
 		,subnets:  honeydConfig.GetSubnetNames() 	
 	}})
 });
@@ -253,7 +262,7 @@ function objCopy(src,dst) {
 
 
 setInterval(function() {
-		//everyone.now.updateHaystackStatus(nova.IsHaystackUp());
-		//everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
+		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 }, 5000);
 

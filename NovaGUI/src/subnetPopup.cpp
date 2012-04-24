@@ -90,7 +90,7 @@ void subnetPopup::SaveSubnet()
 	while(m_editSubnet.nodes.size())
 	{
 		conflict = false;
-		node tempNode = nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes.back()];
+		Node tempNode = nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes.back()];
 		m_editSubnet.nodes.pop_back();
 
 		tempNode.interface = m_editSubnet.name;

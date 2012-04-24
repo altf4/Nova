@@ -742,7 +742,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 		{
 			if(!string(v.first.data()).compare("node"))
 			{
-				node n;
+				Node n;
 				stringstream ss;
 				uint j = 0;
 				j = ~j; // 2^32-1
@@ -1128,16 +1128,29 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 	return childProfiles;
 }
 
+std::vector<std::string> HoneydConfiguration::GetNodeNames()
+{
+	vector<std::string> childnodes;
+
+	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		childnodes.push_back(it->second.name);
+	}
+
+	return childnodes;
+}
+
+
 std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 {
-	vector<std::string> childProfiles;
+	vector<std::string> childSubnets;
 
 	for (SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
-		childProfiles.push_back(it->second.name);
+		childSubnets.push_back(it->second.name);
 	}
 
-	return childProfiles;
+	return childSubnets;
 }
 
 
@@ -1497,6 +1510,13 @@ bool HoneydConfiguration::DeleteNode(std::string node)
 	return true;
 }
 
+Node * HoneydConfiguration::GetNode(std::string name)
+{
+	Node *ret = new Node();
+	*ret = m_nodes[name];
+	return ret;
+}
+
 std::string HoneydConfiguration::GetNodeSubnet(std::string node)
 {
 	return m_nodes[node].sub;
@@ -1553,7 +1573,7 @@ bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std
 
 bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std::string macAddress, std::string interface, std::string subnet)
 {
-	node newNode;
+	Node newNode;
 	newNode.IP = ipAddress;
 	newNode.interface = interface;
 	cout << "Adding new node " << profile << ipAddress << macAddress << interface << subnet <<endl;

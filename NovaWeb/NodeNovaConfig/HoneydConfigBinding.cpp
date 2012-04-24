@@ -1,6 +1,7 @@
 #define BUILDING_NODE_EXTENSION
 #include <node.h>
 #include "HoneydConfigBinding.h"
+#include "HoneydTypesJs.h"
 #include "v8Helper.h"
 
 using namespace v8;
@@ -20,8 +21,11 @@ void HoneydConfigBinding::Init(Handle<Object> target)
   tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(LoadAllTemplates)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(SaveAllTemplates)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(GetProfileNames)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNodeNames"),FunctionTemplate::New(GetNodeNames)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSubnetNames"),FunctionTemplate::New(GetSubnetNames)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction());
+  
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
 
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -73,6 +77,20 @@ Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args)
 	return scope.Close(Boolean::New(obj->m_conf->AddNewNodes(profile,ipAddress,interface,subnet,count)));
 }
 
+Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if (args.Length() != 1)
+	{
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+	}
+
+	std::string name = cvv8::CastFromJS<std::string>(args[0]);
+	return scope.Close(HoneydNodeJs::WrapNode(obj->m_conf->GetNode(name)));
+}
+
 Handle<Value> HoneydConfigBinding::GetProfileNames(const Arguments& args) 
 {
 	HandleScope scope;
@@ -82,6 +100,19 @@ Handle<Value> HoneydConfigBinding::GetProfileNames(const Arguments& args)
     std::string value = cvv8::CastFromJS<std::string>( args[1] );
 
 	Handle<Value> names = cvv8::CastToJS(obj->m_conf->GetProfileNames());
+
+	return scope.Close(names);
+}
+
+Handle<Value> HoneydConfigBinding::GetNodeNames(const Arguments& args) 
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+    std::string key = cvv8::CastFromJS<std::string>( args[0] );
+    std::string value = cvv8::CastFromJS<std::string>( args[1] );
+
+	Handle<Value> names = cvv8::CastToJS(obj->m_conf->GetNodeNames());
 
 	return scope.Close(names);
 }

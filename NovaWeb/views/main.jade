@@ -58,13 +58,13 @@ block headerAdditions
         return (num.toFixed(2));
       }
     
-	require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!"],
+    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!"],
     function(DataGrid,ObjectStore){
     suspectGrid = new DataGrid(
     {
       store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
       structure: [ 
-	    {name:"Address", field:"GetInAddr", width:"150px"}, 
+        {name:"Address", field:"GetInAddr", width:"150px"}, 
         {name:"Classification", field:"GetClassification", width:"150px", formatter: classificationFormatter},
         {name:"Hostile", field:"GetIsHostile"},
         {name:"IP traffic distribution", field:"ip_traffic_distribution", formatter: featureFormatter},

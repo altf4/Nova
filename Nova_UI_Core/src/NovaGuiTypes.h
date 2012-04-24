@@ -120,7 +120,7 @@ struct profile
 typedef google::dense_hash_map<std::string, profile, std::tr1::hash<std::string>, eqstr > ProfileTable;
 
 //used to keep track of haystack node gui items and allow for easy access
-struct node
+struct Node
 {
 	std::string name;
 	std::string sub;
@@ -131,10 +131,19 @@ struct node
 	in_addr_t realIP;
 	bool enabled;
 	boost::property_tree::ptree tree;
+
+	// This is for the Javascript bindings in the web interface
+	inline std::string GetName() {return name;}
+	inline std::string GetSubnet() {return sub;}
+	inline std::string GetInterface() {return interface;}
+	inline std::string GetProfile() {return pfile;}
+	inline std::string GetIP() {return IP;}
+	inline std::string GetMAC() {return MAC;}
+	inline bool IsEnabled() {return enabled;}
 };
 
 //Container for accessing node items
-typedef google::dense_hash_map<std::string, node, std::tr1::hash<std::string>, eqstr > NodeTable;
+typedef google::dense_hash_map<std::string, Node, std::tr1::hash<std::string>, eqstr > NodeTable;
 
 }
 
