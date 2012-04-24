@@ -50,13 +50,9 @@ void HandleRequestMessage(RequestMessage &requestMessage, int socketFD);
 
 //Commands and Updates to UI:
 
-//Initializes connection (socket) to UI
-//Must be called once before any of the following functions
-//	returns - True if successfully connected to UI, false on error
-bool ConnectToUI();
-
 //Sends (updates) a single suspect to the UI for display to the user
 //	suspect - The suspect to send
+//	socket - The socket of the UI to send to
 //	returns - True if successfully sent to UI, false on error
 bool SendSuspectToUI(Suspect *suspect);
 

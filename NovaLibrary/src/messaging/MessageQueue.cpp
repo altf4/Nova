@@ -25,12 +25,12 @@
 #include <errno.h>
 #include "unistd.h"
 #include "string.h"
+#include "stdio.h"
 
 namespace Nova
 {
 
-MessageQueue::MessageQueue(Socket &socket, enum ProtocolDirection direction)
-:m_socket(socket)
+MessageQueue::MessageQueue(int socket, enum ProtocolDirection direction)
 {
 	pthread_mutex_init(&m_forwardQueueMutex, NULL);
 	pthread_mutex_init(&m_popMutex, NULL);
@@ -42,6 +42,7 @@ MessageQueue::MessageQueue(Socket &socket, enum ProtocolDirection direction)
 
 	m_callbackDoWakeup = false;
 	m_forwardDirection = direction;
+	m_socketFD = socket;
 
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
 }
@@ -49,13 +50,15 @@ MessageQueue::MessageQueue(Socket &socket, enum ProtocolDirection direction)
 MessageQueue::~MessageQueue()
 {
 	//Shutdown will cause the producer thread to make an ErrorMessage then quit
-	shutdown(m_socket.m_socketFD, SHUT_RDWR);
+	shutdown(m_socketFD, SHUT_RDWR);
 
 	//We then must wait for the popping thread to finish
 	//	Can't let it wake up into a destroyed object
 	//	So this lock will either wait for the pop message to finish, or just
 	//	go ahead if there is none
-	Lock lockPop(&m_popMutex);
+	{
+		Lock lockPop();
+	}
 
 	pthread_mutex_destroy(&m_forwardQueueMutex);
 	pthread_mutex_destroy(&m_popMutex);
@@ -160,12 +163,13 @@ void *MessageQueue::ProducerThread()
 		// Read in the message length
 		while( totalBytesRead < sizeof(length))
 		{
-			bytesRead = read(m_socket.m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
+			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
 
 			if( bytesRead < 0 )
 			{
 				//The socket died on us!
 				//Put an error message on the queue, and quit reading
+				perror(NULL);
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
 				return NULL;
 			}
@@ -198,7 +202,7 @@ void *MessageQueue::ProducerThread()
 		bytesRead = 0;
 		while(totalBytesRead < length)
 		{
-			bytesRead = read(m_socket.m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
+			bytesRead = read(m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
 
 			if( bytesRead < 0 )
 			{

@@ -21,6 +21,7 @@
 
 #include "pthread.h"
 #include "unistd.h"
+#include <sys/socket.h>
 
 namespace Nova
 {
@@ -32,20 +33,24 @@ public:
 	Socket()
 	{
 		m_socketFD = -1;
+		m_mutex = new pthread_mutex_t;
 
 		pthread_mutexattr_t attr;
 		pthread_mutexattr_init(&attr);
 		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
-		pthread_mutex_init(&m_mutex, &attr);
+		pthread_mutex_init(m_mutex, &attr);
 	}
 	~Socket()
 	{
-		close(m_socketFD);
+		shutdown(m_socketFD, SHUT_RDWR);
+		m_socketFD = -1;
+		pthread_mutex_destroy(m_mutex);
+		delete m_mutex;
 	}
 
 	int m_socketFD;
-	pthread_mutex_t m_mutex;
+	pthread_mutex_t *m_mutex;
 };
 
 }

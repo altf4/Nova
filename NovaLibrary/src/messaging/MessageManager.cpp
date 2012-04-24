@@ -31,6 +31,7 @@ MessageManager *MessageManager::m_instance = NULL;
 MessageManager::MessageManager(enum ProtocolDirection direction)
 {
 	pthread_mutex_init(&m_queuesLock, NULL);
+	pthread_mutex_init(&m_socketsLock, NULL);
 	m_forwardDirection = direction;
 }
 
@@ -51,26 +52,29 @@ MessageManager &MessageManager::Instance()
 
 UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection direction)
 {
-	Lock queueLock;
+
+	//Initialize the queue lock, if it doesn't exist
 	{
 		Lock queuesLock(&m_queuesLock);
 		if(m_queueLocks.count(socketFD) == 0)
 		{
 			//If there is no lock object here yet, initialize it
-			pthread_mutex_init(&m_queueLocks[socketFD], NULL);
+			m_queueLocks[socketFD] = new pthread_mutex_t;
+			pthread_mutex_init(m_queueLocks[socketFD], NULL);
 		}
-		queueLock.GetLock(&m_queueLocks[socketFD]);
 	}
 
 	UI_Message *retMessage;
-
-	if(m_queues.count(socketFD) > 0)
 	{
-		retMessage = m_queues[socketFD]->PopMessage(direction);
-	}
-	else
-	{
-		return new ErrorMessage(ERROR_SOCKET_CLOSED);
+		Lock lock(m_queueLocks[socketFD]);
+		if(m_queues.count(socketFD) > 0)
+		{
+			retMessage = m_queues[socketFD]->PopMessage(direction);
+		}
+		else
+		{
+			return new ErrorMessage(ERROR_SOCKET_CLOSED);
+		}
 	}
 
 	if(retMessage->m_messageType == ERROR_MESSAGE)
@@ -78,28 +82,83 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 		ErrorMessage *errorMessage = (ErrorMessage*)retMessage;
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
-			delete m_queues[socketFD];
-			m_queues.erase(socketFD);
+			{
+				Lock lock(m_queueLocks[socketFD]);
+				delete m_queues[socketFD];
+				m_queues.erase(socketFD);
+			}
+			{
+				Lock lock(m_socketLocks[socketFD]);
+				delete m_sockets[socketFD];
+				m_sockets.erase(socketFD);
+			}
+
 		}
 	}
 
 	return retMessage;
 }
 
-void MessageManager::StartSocket(Socket socket)
+void MessageManager::StartSocket(int socketFD)
 {
-	Lock queueLock(&m_queuesLock);
-
-	if(m_queueLocks.count(socket.m_socketFD) == 0)
+	//Initialize the socket lock if it doesn't yet exist
 	{
-		//If there is no lock object here yet, initialize it
-		pthread_mutex_init(&m_queueLocks[socket.m_socketFD], NULL);
+		Lock socketLock(&m_socketsLock);
+		if(m_socketLocks.count(socketFD) == 0)
+		{
+			//If there is no lock object here yet, initialize it
+			m_socketLocks[socketFD] = new pthread_mutex_t;
+			pthread_mutex_init(m_socketLocks[socketFD], NULL);
+		}
 	}
 
-	Lock lock(&m_queueLocks[socket.m_socketFD]);
+	//Initialize the socket object if it doesn't already exist
+	{
+		Lock sockLock(m_socketLocks[socketFD]);
+		if(m_sockets.count(socketFD) == 0)
+		{
+			m_sockets[socketFD] = new Socket();
+			m_sockets[socketFD]->m_socketFD = socketFD;
+		}
 
-	m_queues[socket.m_socketFD] = new MessageQueue(socket, m_forwardDirection);
+	}
 
+	pthread_mutex_t *qMutex;
+	//Initialize the queue lock if it doesn't yet exist
+	{
+		Lock queueLock(&m_queuesLock);
+		if(m_queueLocks.count(socketFD) == 0)
+		{
+			//If there is no lock object here yet, initialize it
+			m_queueLocks[socketFD] = new pthread_mutex_t;
+			pthread_mutex_init(m_queueLocks[socketFD], NULL);
+		}
+		qMutex = m_queueLocks[socketFD];
+	}
+
+	//Initialize the MessageQueue if it doesn't yet exist
+	//	NOTE: We use the above qMutex in order to avoid a nested lock situation
+	{
+		Lock qLock(qMutex);
+		if(m_queues.count(socketFD) == 0)
+		{
+			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
+		}
+	}
+}
+
+Lock MessageManager::UseSocket(int socketFD)
+{
+	Lock lock(&m_socketsLock);
+
+	if(m_socketLocks.count(socketFD) == 0)
+	{
+		//If there is no lock object here yet, initialize it
+		m_queueLocks[socketFD] = new pthread_mutex_t;
+		pthread_mutex_init(m_queueLocks[socketFD], NULL);
+	}
+
+	return Lock(m_socketLocks[socketFD]);
 }
 
 void MessageManager::CloseSocket(int socketFD)

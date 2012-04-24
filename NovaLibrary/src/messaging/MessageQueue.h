@@ -33,7 +33,7 @@ class MessageQueue
 {
 public:
 
-	MessageQueue(Socket &socket, enum ProtocolDirection direction);
+	MessageQueue(int socket, enum ProtocolDirection direction);
 
 	//Will block and wait until no threads are waiting on its queue
 	//	To prevent a thread from waking up in a destroyed object
@@ -60,7 +60,7 @@ private:
 
 	enum ProtocolDirection m_forwardDirection;
 
-	Socket &m_socket;
+	int m_socketFD;
 
 	pthread_cond_t m_readWakeupCondition;
 	pthread_cond_t m_callbackWakeupCondition;	//Condition for sleeping for a callback

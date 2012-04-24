@@ -21,6 +21,7 @@
 
 #include "messages/UI_Message.h"
 #include "MessageQueue.h"
+#include "../Lock.h"
 
 #include <map>
 #include "pthread.h"
@@ -41,7 +42,13 @@ public:
 
 	Nova::UI_Message *GetMessage(int socketFD, enum ProtocolDirection direction);
 
-	void StartSocket(Socket socket);
+	void StartSocket(int socketFD);
+
+	//Informs the message manager that you would like to use the specified socket
+	//	socketFD - The socket file descriptor to use
+	//NOTE: On success, this is a blocking call.
+	//TODO: Error case?
+	Lock UseSocket(int socketFD);
 
 	//Closes the socket at the given file descriptor
 	//	socketFD: The file descriptor of the socket to close
@@ -64,12 +71,19 @@ private:
 	//		DIRECTION_TO_NOVAD: We are a Nova UI
 	MessageManager(enum ProtocolDirection direction);
 
-	//Mutex for the lock map
-	pthread_mutex_t m_queuesLock;
+	//Mutexes for the lock maps
+	pthread_mutex_t m_queuesLock;		//protects m_queueLocks
+	pthread_mutex_t m_socketsLock;		//protects m_socketLocks
 
 	//These two maps must be kept synchronized
+	//	Maintains the message queues
 	std::map<int, MessageQueue*> m_queues;
-	std::map<int, pthread_mutex_t> m_queueLocks;
+	std::map<int, pthread_mutex_t*> m_queueLocks;
+
+	//These two maps must be kept synchronized
+	//	Maintains the socket objects
+	std::map<int, Socket*> m_sockets;
+	std::map<int, pthread_mutex_t*> m_socketLocks;
 
 	enum ProtocolDirection m_forwardDirection;
 };

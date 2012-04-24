@@ -34,7 +34,7 @@
 using namespace std;
 using namespace Nova;
 //Socket communication variables
-Socket IPCSocket;
+int IPCSocketFD = -1;
 struct sockaddr_un UI_Address, novadAddress;
 
 bool isFirstConnect = true;
@@ -43,7 +43,7 @@ namespace Nova
 {
 bool ConnectToNovad()
 {
-	Lock lock(&IPCSocket.m_mutex);
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
 	if(isFirstConnect)
 	{
@@ -65,30 +65,32 @@ bool ConnectToNovad()
 	novadAddress.sun_family = AF_UNIX;
 	strcpy(novadAddress.sun_path, key.c_str());
 
-	if((IPCSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if((IPCSocketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
 		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
 		return false;
 	}
 
-	if(connect(IPCSocket.m_socketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
+	if(connect(IPCSocketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
 		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
-		close(IPCSocket.m_socketFD);
-		IPCSocket.m_socketFD = -1;
+		close(IPCSocketFD);
+		IPCSocketFD = -1;
 		return false;
 	}
+
+	MessageManager::Instance().StartSocket(IPCSocketFD);
 
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&connectRequest, IPCSocket.m_socketFD))
+	if(!UI_Message::WriteMessage(&connectRequest, IPCSocketFD))
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
-		close(IPCSocket.m_socketFD);
-		IPCSocket.m_socketFD = -1;
+		close(IPCSocketFD);
+		IPCSocketFD = -1;
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -99,16 +101,16 @@ bool ConnectToNovad()
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
-		close(IPCSocket.m_socketFD);
-		IPCSocket.m_socketFD = -1;
+		close(IPCSocketFD);
+		IPCSocketFD = -1;
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
 	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 	{
 		delete connectionReply;
-		close(IPCSocket.m_socketFD);
-		IPCSocket.m_socketFD = -1;
+		close(IPCSocketFD);
+		IPCSocketFD = -1;
 		return false;
 	}
 	bool replySuccess = connectionReply->m_success;
@@ -134,9 +136,9 @@ bool TryWaitConnectToNovad(int timeout_ms)
 
 bool CloseNovadConnection()
 {
-	Lock lock(&IPCSocket.m_mutex);
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
-	if(IPCSocket.m_socketFD == -1)
+	if(IPCSocketFD == -1)
 	{
 		return true;
 	}
@@ -144,12 +146,12 @@ bool CloseNovadConnection()
 	bool success = true;
 
 	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&disconnectNotice, IPCSocket.m_socketFD))
+	if(!UI_Message::WriteMessage(&disconnectNotice, IPCSocketFD))
 	{
 		success = false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocket.m_socketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -172,15 +174,15 @@ bool CloseNovadConnection()
 		}
 	}
 
-	if(IPCSocket.m_socketFD != -1 && close(IPCSocket.m_socketFD))
+	if(IPCSocketFD != -1 && close(IPCSocketFD))
 	{
 		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
-		close(IPCSocket.m_socketFD);
-		IPCSocket.m_socketFD = -1;
+		close(IPCSocketFD);
+		IPCSocketFD = -1;
 		success = false;
 	}
 
-	IPCSocket.m_socketFD = -1;
+	IPCSocketFD = -1;
 
 	return success;
 }
