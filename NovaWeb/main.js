@@ -3,6 +3,11 @@ var nova = new novaNode.Instance();
 
 var novaconfig = require('novaconfig.node');
 var config = new novaconfig.NovaConfigBinding();
+var honeydConfig = new novaconfig.HoneydConfigBinding();
+
+
+
+honeydConfig.LoadAllTemplates();
 
 var fs = require('fs');
 var jade = require('jade');
@@ -39,10 +44,13 @@ app.use(express.static('/var/www'));
 
 console.info("Listening on 8042");
 app.listen(8042);
-var everyone = require("now").initialize(app);
+var nowjs = require("now");
+var everyone = nowjs.initialize(app);
+
 		
 		
 // Nova config stuff		
+// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
 var configItems = [
 	"INTERFACE",
 	"HS_HONEYD_CONFIG",
@@ -124,6 +132,42 @@ app.get('/configureNova', function(req, res) {
 	 })
 });
 
+app.get('/configureHoneyd', function(req, res) {
+	 var nodeNames = honeydConfig.GetNodeNames();
+	 var nodes = [];
+	 for (var i = 0; i < nodeNames.length; i++) {
+		nodes.push(honeydConfig.GetNode(nodeNames[i]));
+	 }
+     
+	 res.render('configHoneyd.jade', 
+	 { locals: {
+	 	profiles: honeydConfig.GetProfileNames()
+	 	,nodes: nodes
+		,subnets:  honeydConfig.GetSubnetNames() 	
+	}})
+});
+
+app.post('/configureHoneydSave', function(req, res) {
+	var ipAddress;
+	if (req.body["ipType"] == "DHCP") {
+		ipAddress = "DHCP";
+	} else {
+		ipAddress = req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"] + "." + req.body["ip4"];
+	}
+
+	var profile = req.body["profile"];
+	var intface = req.body["interface"];
+	var subnet = "";
+	var count = Number(req.body["nodeCount"]);
+
+	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
+	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
+	honeydConfig.SaveAllTemplates();
+     
+	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configureHoneyd'"}})
+
+});
+
 app.post('/configureNovaSave', function(req, res) {
 	var result = true;
 	for (var item = 0; item < configItems.length; item++) {
@@ -134,26 +178,7 @@ app.post('/configureNovaSave', function(req, res) {
 		}
 	}
 	
-	res.writeHead(200, "OK", {'Content-Type': 'text/html'});
-	res.write('<HTML>');
-	res.write('<HEAD>');
-	res.write('<script language="Javascript">');
-	res.write('var time = null\n');
-	res.write('function move() {');
-	res.write('window.location = "configureNova";');
-	res.write('}');
-	res.write('</script>');
-	res.write('</HEAD><BODY>');
-	res.write('<body onload = "timer=setTimeout(\'move()\',2000)">');
-	
-	if (result) {
-		res.write("Settings saved! You will be redirected back to the settings page...");
-	} else {
-		res.write("There was an error when attempting to write settings to configuration file");
-	}
-
-	res.write('</BODY></HTML>');
-	res.end();
+	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configureNova'"}})	
 });
 
 // Functions to be called by clients
@@ -234,10 +259,10 @@ function objCopy(src,dst) {
 }
 
 
+
+
 setInterval(function() {
 		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 }, 5000);
-
-
 

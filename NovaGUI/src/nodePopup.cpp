@@ -29,7 +29,7 @@ NovaConfig * novaParent;
  * Construct and Initialize GUI
  ************************************************/
 
-nodePopup::nodePopup(QWidget * parent, node * n, bool editingNode)
+nodePopup::nodePopup(QWidget * parent, Nova::Node * n, bool editingNode)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);

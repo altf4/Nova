@@ -3001,7 +3001,7 @@ void NovaConfig::LoadAllNodes()
 	greybrush.setStyle(Qt::SolidPattern);
 	QBrush blackbrush(QColor(0, 0, 0, 255));
 	blackbrush.setStyle(Qt::NoBrush);
-	struct node * n = NULL;
+	struct Node * n = NULL;
 
 	QTreeWidgetItem * item = NULL;
 	QTreeWidgetItem * hsItem = NULL;
@@ -3341,7 +3341,7 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edi
 			string oldPfile;
 			if(!ui.nodeTreeWidget->selectedItems().isEmpty())
 			{
-				node * n = &m_honeydConfig->m_nodes[item->text(0).toStdString()];
+				Node * n = &m_honeydConfig->m_nodes[item->text(0).toStdString()];
 				oldPfile = n->pfile;
 				TreeItemComboBox * pfileBox = (TreeItemComboBox* )ui.nodeTreeWidget->itemWidget(item, 1);
 				n->pfile = pfileBox->currentText().toStdString();
@@ -3384,7 +3384,7 @@ void NovaConfig::on_actionNodeAdd_triggered()
 {
 	if(m_currentSubnet.compare(""))
 	{
-		node n;
+		Node n;
 		n.sub = m_currentSubnet;
 		n.interface = m_honeydConfig->m_subnets[m_currentSubnet].name;
 		n.realIP = m_honeydConfig->m_subnets[m_currentSubnet].base;
@@ -3404,7 +3404,7 @@ void NovaConfig::on_actionNodeClone_triggered()
 	if (m_currentNode.compare(""))
 	{
 		m_loading->lock();
-		node n = m_honeydConfig->m_nodes[m_currentNode];
+		Node n = m_honeydConfig->m_nodes[m_currentNode];
 		m_loading->unlock();
 
 		// Can't clone the doppelganger, only allowed one right now

@@ -44,7 +44,7 @@ public:
 
     //XML Read Functions
     //calls main load functions
-    void LoadAllTemplates();
+    bool LoadAllTemplates();
 
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
@@ -72,12 +72,18 @@ public:
 
     // Add a node with static IP and static MAC
     bool AddNewNode(std::string profile, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
+    bool AddNewNodes(std::string profile, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
 
 
-    // TODO
 	std::vector<std::string> GetProfileChildren(std::string parent);
-	std::vector<std::string> GetProfileNames();
 
+	std::vector<std::string> GetProfileNames();
+	std::vector<std::string> GetNodeNames();
+	std::vector<std::string> GetSubnetNames();
+
+
+	// These were an attempt to make things easier to bind with javascript. Didn't work well,
+	// right now these are unused and can probably be thrown out.
 	std::pair <hdConfigReturn, std::string> GetEthernet(profileName profile);
 	std::pair <hdConfigReturn, std::string> GetPersonality(profileName profile);
 	std::pair <hdConfigReturn, std::string> GetDroprate(profileName profile);
@@ -104,10 +110,13 @@ public:
 
     //Deletes a single node, called from deleteNodes();
     bool DeleteNode(std::string node);
+    Node * GetNode(std::string name);
+
     std::string GetNodeSubnet(std::string node);
     bool EnableNode(std::string node);
     bool DisableNode(std::string node);
     void DisableProfileNodes(std::string profile);
+
 
 
 // TODO: this should be private eventually
@@ -119,6 +128,7 @@ public:
 
 private:
     std::string m_homePath;
+
 
     VendorMacDb m_macAddresses;
 
@@ -154,7 +164,7 @@ private:
     //Load stored honeyd nodes ptr
     void LoadNodes(boost::property_tree::ptree *ptr);
 
-
+    std::string FindSubnet(in_addr_t ip);
 };
 
 }
