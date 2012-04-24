@@ -80,6 +80,7 @@ block headerAdditions
     {
       store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
       sortInfo: -2,
+      autoWidth: true,
       structure: [ 
         {name:"Address", field:"GetInAddr", width:"150px"}, 
         {name:"Classification", field:"GetClassification", width:"300px", formatter: classificationFormatter},

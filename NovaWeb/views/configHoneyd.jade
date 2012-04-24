@@ -47,8 +47,8 @@ block content
           td #{node.GetMAC()}
  
   div(data-dojo-type="dojox.data.HtmlStore", data-dojo-props="dataId:'nodeTable'", data-dojo-id="gridStore")
-  div(style="height: 250px; width: 720px;")
-    div#grid(data-dojo-type="dojox.grid.DataGrid", data-dojo-props="store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40")
+  div(style="height: 250px;")
+    div#grid(data-dojo-type="dojox.grid.DataGrid", data-dojo-props="store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true")
   
   br
   br
