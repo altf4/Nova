@@ -223,6 +223,17 @@ everyone.now.sendAllSuspects = function(callback)
 }
 
 
+
+// Deletes a honeyd node
+everyone.now.deleteNode = function(nodeName)
+{
+	console.log("Deleting honeyd node " + nodeName);
+	honeydConfig.DeleteNode(nodeName);
+	honeydConfig.SaveAllTemplates();
+}
+
+
+
 var distributeSuspect = function(suspect)
 {
 	//console.log("Sending suspect to clients: " + suspect.GetInAddr());            
@@ -262,7 +273,12 @@ function objCopy(src,dst) {
 
 
 setInterval(function() {
-		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
-		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+		try {
+			everyone.now.updateHaystackStatus(nova.IsHaystackUp());
+			everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+		} catch (err)
+		{
+
+		}
 }, 5000);
 

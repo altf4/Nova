@@ -18,6 +18,10 @@ void HoneydConfigBinding::Init(Handle<Object> target)
   tpl->SetClassName(String::NewSymbol("HoneydConfigBinding"));
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   // Prototype
+  
+  // TODO: Ask ace about doing this the template way. The following segfaults,
+  //tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeMethod<Boolean, bool, HoneydConfiguration, &HoneydConfiguration::LoadAllTemplates>));
+  
   tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(LoadAllTemplates)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(SaveAllTemplates)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(GetProfileNames)->GetFunction());
@@ -26,11 +30,13 @@ void HoneydConfigBinding::Init(Handle<Object> target)
   tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction());
   
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(DeleteNode)->GetFunction());
 
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
   target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
 }
+
 
 Handle<Value> HoneydConfigBinding::New(const Arguments& args)
 {
@@ -43,6 +49,8 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
   return args.This();
 }
 
+
+// Hacky work around helper functions
 Handle<Value> HoneydConfigBinding::LoadAllTemplates(const Arguments& args) 
 {
 	HandleScope scope;
@@ -89,6 +97,20 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 
 	std::string name = cvv8::CastFromJS<std::string>(args[0]);
 	return scope.Close(HoneydNodeJs::WrapNode(obj->m_conf->GetNode(name)));
+}
+
+Handle<Value> HoneydConfigBinding::DeleteNode(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if (args.Length() != 1)
+	{
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+	}
+
+	std::string name = cvv8::CastFromJS<std::string>(args[0]);
+	return scope.Close(Boolean::New(obj->m_conf->DeleteNode(name)));
 }
 
 Handle<Value> HoneydConfigBinding::GetProfileNames(const Arguments& args) 

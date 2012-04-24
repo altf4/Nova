@@ -4,6 +4,8 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
 
   script
+    var grid;
+    
     function ipTypeChanged() {
       var ipEditEnabled;
       if (document.getElementById("ipType").value == "DHCP") {
@@ -16,6 +18,26 @@ block headerAdditions
       document.getElementById("ip3").disabled = ipEditEnabled;
       document.getElementById("ip4").disabled = ipEditEnabled;
      }
+    
+    function deleteSelectedItems() {
+      var items = grid.selection.getSelected();
+      dojo.forEach(items, function(selectedItem) {
+        console.log(grid.store.getValues(selectedItem, "Name"));
+        now.deleteNode(grid.store.getValues(selectedItem, "Name"));
+      });
+
+      // Reload the page
+      location.reload(true);
+    }
+
+
+    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore"],
+
+    function(DataGrid,ObjectStore){
+      var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
+      grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
+      dojo.byId("gridDiv").appendChild(grid.domNode);
+    });
   
   script(type="text/javascript")
           /*set up data store*/
@@ -46,10 +68,12 @@ block content
           td #{node.GetIP()}
           td #{node.GetMAC()}
  
-  div(data-dojo-type="dojox.data.HtmlStore", data-dojo-props="dataId:'nodeTable'", data-dojo-id="gridStore")
   div(style="height: 250px;")
-    div#grid(data-dojo-type="dojox.grid.DataGrid", data-dojo-props="store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true")
-  
+    div#gridDiv(style="height: 250px")
+ 
+
+  button(onClick="deleteSelectedItems()") Delete Selected Nodes 
+
   br
   br
   form(method="post", action="/configureHoneydSave")
