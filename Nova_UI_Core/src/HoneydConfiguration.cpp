@@ -1477,7 +1477,7 @@ bool HoneydConfiguration::DisableNode(std::string node)
 	// Make sure the node exists
 	if (m_nodes.find(node) == m_nodes.end())
 	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		LOG(WARNING, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
 		return false;
 	}
 
@@ -1488,10 +1488,17 @@ bool HoneydConfiguration::DisableNode(std::string node)
 
 bool HoneydConfiguration::DeleteNode(std::string node)
 {
+	// We don't delete the doppelganger node, only edit it
+	if (node == "Doppelganger")
+	{
+		LOG(WARNING, "Attempt to delete the Doppelganger node denied", "");
+		return false;
+	}
+
 	// Make sure the node exists
 	if (m_nodes.find(node) == m_nodes.end())
 	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		LOG(WARNING, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
 		return false;
 	}
 

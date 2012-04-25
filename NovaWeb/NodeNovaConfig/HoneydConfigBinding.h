@@ -22,6 +22,7 @@ class HoneydConfigBinding : public node::ObjectWrap {
   static v8::Handle<v8::Value> GetNodeNames(const v8::Arguments& args);
   static v8::Handle<v8::Value> GetSubnetNames(const v8::Arguments& args);
   static v8::Handle<v8::Value> AddNewNodes(const v8::Arguments& args);
+  static v8::Handle<v8::Value> AddNewNode(const v8::Arguments& args);
   
   static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);
   static v8::Handle<v8::Value> DeleteNode(const v8::Arguments& args);

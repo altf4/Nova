@@ -1,11 +1,10 @@
 var novaNode = require('nova.node');
-var nova = new novaNode.Instance();
-
 var novaconfig = require('novaconfig.node');
+
+
+var nova = new novaNode.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
-
-
 
 honeydConfig.LoadAllTemplates();
 
@@ -46,45 +45,6 @@ console.info("Listening on 8042");
 app.listen(8042);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
-
-		
-		
-// Nova config stuff		
-// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-var configItems = [
-	"INTERFACE",
-	"HS_HONEYD_CONFIG",
-	"TCP_TIMEOUT",
-	"TCP_CHECK_FREQ",
-	"READ_PCAP",
-	"PCAP_FILE",
-	"GO_TO_LIVE",
-	"CLASSIFICATION_TIMEOUT",
-	"SILENT_ALARM_PORT",
-	"K",
-	"EPS",
-	"IS_TRAINING",
-	"CLASSIFICATION_THRESHOLD",
-	"DATAFILE",
-	"SA_MAX_ATTEMPTS",
-	"SA_SLEEP_DURATION",
-	"USER_HONEYD_CONFIG",
-	"DOPPELGANGER_IP",
-	"DOPPELGANGER_INTERFACE",
-	"DM_ENABLED",
-	"ENABLED_FEATURES",
-	"TRAINING_CAP_FOLDER",
-	"THINNING_DISTANCE",
-	"SAVE_FREQUENCY",
-	"DATA_TTL",
-	"CE_SAVE_FILE",
-	"SMTP_ADDR",
-	"SMTP_PORT",
-	"SMTP_DOMAIN",
-	"RECIPIENTS",
-	"SERVICE_PREFERENCES",
-	"HAYSTACK_STORAGE"
-];
 
 
 app.get('/', function(req, res) {
@@ -128,11 +88,11 @@ app.get('/configureNova', function(req, res) {
 			,SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
 			,HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
 		}
-
 	 })
 });
 
 app.get('/configureHoneyd', function(req, res) {
+	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
 	 var nodes = [];
 	 for (var i = 0; i < nodeNames.length; i++) {
@@ -144,6 +104,21 @@ app.get('/configureHoneyd', function(req, res) {
 	 	profiles: honeydConfig.GetProfileNames()
 	 	,nodes: nodes
 		,subnets:  honeydConfig.GetSubnetNames() 	
+	}})
+});
+
+app.get('/editHoneydNode', function(req, res) {
+	nodeName = req.query["node"];
+	// TODO: Error checking for bad node names
+	
+	node = honeydConfig.GetNode(nodeName); 
+	res.render('editHoneydNode.jade', 
+	{ locals : {
+		oldName: nodeName
+	 	, profiles: honeydConfig.GetProfileNames()
+		, profile: node.GetProfile()
+		, ip: node.GetIP()
+		, mac: node.GetMAC()
 	}})
 });
 
@@ -168,7 +143,42 @@ app.post('/configureHoneydSave', function(req, res) {
 
 });
 
+app.post('/editHoneydNodeSave', function(req, res) {
+	var profile = req.body["profile"];
+	var intface = req.body["interface"];
+	var oldName = req.body["oldName"];
+	var subnet = "";
+	
+	var ipAddress;
+	if (req.body["ipType"] == "DHCP") {
+		ipAddress = "DHCP";
+	} else {
+		ipAddress = req.body["ip0"] + "." +  req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"];
+	}
+	
+	var macAddress;	
+	if (req.body["macType"] == "RANDOM") {
+		macAddress = "RANDOM";
+	} else {
+		macAddress = req.body["mac0"] + ":" + req.body["mac1"] + ":" + req.body["mac2"] + ":" + req.body["mac3"] + ":" + req.body["mac4"] + ":" + req.body["mac5"];
+	}
+    // Delete the old node and then add the new one	
+	honeydConfig.DeleteNode(oldName);
+	honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet);
+	honeydConfig.SaveAllTemplates();
+     
+	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configureHoneyd'"}})
+
+});
+
 app.post('/configureNovaSave', function(req, res) {
+	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
+	var configItems = ["INTERFACE","HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
+		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
+		"SA_MAX_ATTEMPTS","SA_SLEEP_DURATION","USER_HONEYD_CONFIG","DOPPELGANGER_IP","DOPPELGANGER_INTERFACE","DM_ENABLED",
+		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
+		"SMTP_PORT","SMTP_DOMAIN","RECIPIENTS","SERVICE_PREFERENCES","HAYSTACK_STORAGE"];
+
 	var result = true;
 	for (var item = 0; item < configItems.length; item++) {
 		if (req.body[configItems[item]] !== undefined) {
@@ -268,8 +278,6 @@ function objCopy(src,dst) {
 		}
 	}
 }
-
-
 
 
 setInterval(function() {

@@ -30,6 +30,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
   tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction());
   
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNode"),FunctionTemplate::New(AddNewNode)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(DeleteNode)->GetFunction());
 
 
@@ -83,6 +84,26 @@ Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args)
     int count = cvv8::JSToInt32( args[4] );
 
 	return scope.Close(Boolean::New(obj->m_conf->AddNewNodes(profile,ipAddress,interface,subnet,count)));
+}
+
+
+Handle<Value> HoneydConfigBinding::AddNewNode(const Arguments& args) 
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+    
+	if( args.Length() < 5 )
+    {
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+    }
+
+    std::string profile = cvv8::CastFromJS<std::string>( args[0] );
+    std::string ipAddress = cvv8::CastFromJS<std::string>( args[1] );
+    std::string mac = cvv8::CastFromJS<std::string>( args[2] );
+    std::string interface = cvv8::CastFromJS<std::string>( args[3] );
+    std::string subnet = cvv8::CastFromJS<std::string>( args[4] );
+
+	return scope.Close(Boolean::New(obj->m_conf->AddNewNode(profile,ipAddress,mac, interface,subnet)));
 }
 
 Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)

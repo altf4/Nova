@@ -30,8 +30,19 @@ block headerAdditions
       location.reload(true);
     }
 
+    function editSelectedItem() {
+      var items = grid.selection.getSelected();
+      if (items.length != 1)
+      {
+        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 node for editing"});
+        dialog.show();
+        return;
+      }
+      window.location.href = "editHoneydNode?node=" + grid.store.getValues(items[0], "Name");
+    }
 
-    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore"],
+
+    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
 
     function(DataGrid,ObjectStore){
       var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
@@ -43,7 +54,7 @@ block headerAdditions
           /*set up data store*/
           var layoutNodes = [[
             { field: "Enabled", name: "Enabled", width: '100px' },
-            { field: "Name", name: "Name", width: '200px' },
+            { field: "Name", name: "Name", width: '400px' },
             { field: "Profile", name: "Profile", width: '100px' },
             { field: "IP", name: "IP", width: '150px' },
             { field: "MAC", name: "MAC", width: '150px' },
@@ -73,40 +84,39 @@ block content
  
 
   button(onClick="deleteSelectedItems()") Delete Selected Nodes 
+  button(onClick="editSelectedItem()") Edit Selected Node
 
   br
   br
   form(method="post", action="/configureHoneydSave")
     h2 Create Honeyd Nodes
+    label Profile
+    select(name="profile")
+      each profile, i in profiles
+        option #{profile}
+    br
+
+    label Number of nodes to create
+    input(type="number", name="nodeCount", min="1", value="1")
     
-    form(method="post", action="addHoneydNodes)
-      label Profile
-      select(name="profile")
-        each profile, i in profiles
-          option #{profile}
-      br
+    br
+    label Network Interface
+    // TODO: Somehow show the user valid interface options
+    input(type="text", name="interface", value="eth0")
+   
+    br
+    label IP Address Range Type
+    select#ipType(name="ipType", onChange="ipTypeChanged()")
+      option DHCP
+      option IP Range
 
-      label Number of nodes to create
-      input(type="number", name="nodeCount", min="1", value="1")
-      
-      br
-      label Network Interface
-      // TODO: Somehow show the user valid interface options
-      input(type="text", name="interface", value="eth0")
-     
-      br
-      label IP Address Range Type
-      select#ipType(name="ipType", onChange="ipTypeChanged()")
-        option DHCP
-        option IP Range
-
-      br
-      label Starting IP address
-      input.ip#ip1(type="number", name="ip1", min="0", max="255", value="192", disabled="disabled")
-      input.ip#ip2(type="number", name="ip2", min="0", max="255", value="168", disabled="disabled")
-      input.ip#ip3(type="number", name="ip3", min="0", max="255", value="0", disabled="disabled")
-      input.ip#ip4(type="number", name="ip4", min="0", max="255", value="1", disabled="disabled")
-     
-      br
-      br
-      input(type="Submit",value="Create New Nodes")
+    br
+    label Starting IP address
+    input.ip#ip1(type="number", name="ip1", min="0", max="255", value="192", disabled="disabled")
+    input.ip#ip2(type="number", name="ip2", min="0", max="255", value="168", disabled="disabled")
+    input.ip#ip3(type="number", name="ip3", min="0", max="255", value="0", disabled="disabled")
+    input.ip#ip4(type="number", name="ip4", min="0", max="255", value="1", disabled="disabled")
+   
+    br
+    br
+    input(type="Submit",value="Create New Nodes")
