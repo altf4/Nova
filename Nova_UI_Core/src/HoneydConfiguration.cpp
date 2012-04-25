@@ -1542,39 +1542,36 @@ void HoneydConfiguration::DisableProfileNodes(std::string profile)
 
 bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std::string interface, std::string subnet, int numberOfNodes)
 {
-	if (numberOfNodes <= 0)
+	if(numberOfNodes <= 0)
 	{
 		LOG(ERROR, "Must create 1 or more nodes", "");
 	}
 
-	int i;
-	in_addr currentAddr;
-
-	if (ipAddress != "DHCP")
+	if(ipAddress == "DHCP")
 	{
-		currentAddr.s_addr = inet_addr(ipAddress.c_str());
-	}
-
-
-	for (i = 0; i < numberOfNodes; i++)
-	{
-		if (ipAddress == "DHCP")
+		for(int i = 0; i < numberOfNodes; i++)
 		{
 			if (!AddNewNode(profile, "DHCP", "RANDOM", interface, subnet))
 			{
 				return false;
 			}
 		}
-		else
+	}
+	else
+	{
+		in_addr_t sAddr = ntohl(inet_addr(ipAddress.c_str()));
+		//Removes un-init compiler warning given for in_addr currentAddr;
+		in_addr currentAddr = *(in_addr *)&sAddr;
+		for(int i = 0; i < numberOfNodes; i++)
 		{
+			currentAddr.s_addr = htonl(sAddr);
 			if (!AddNewNode(profile, string(inet_ntoa(currentAddr)), "RANDOM", interface, subnet))
 			{
 				return false;
 			}
-			currentAddr.s_addr = ntohl((htonl(currentAddr.s_addr) + 1));
+			sAddr++;
 		}
 	}
-
 	return true;
 }
 

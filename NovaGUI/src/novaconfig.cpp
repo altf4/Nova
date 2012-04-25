@@ -3232,7 +3232,7 @@ void NovaConfig::DeleteNodes()
 				DeleteNode(m_currentNode);
 			}
 		}
-		if(m_honeydConfig->m_subnets[m_currentSubnet].isRealDevice)
+		if(!m_honeydConfig->m_subnets[m_currentSubnet].isRealDevice)
 		{
 			//Remove the subnet from the list and delete from table
 			ui.nodeTreeWidget->removeItemWidget(GetSubnetTreeWidgetItem(m_currentSubnet), 0);
