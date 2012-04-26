@@ -66,7 +66,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			memcpy(&m_listType, buffer, sizeof(m_listType));
 			buffer += sizeof(m_listType);
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType);
 			if(length < expectedSize)
 			{
 				m_serializeError = true;
@@ -100,7 +100,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 		}
 		case REQUEST_SUSPECTLIST:
 		{
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_listType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -117,7 +117,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_SUSPECT:
 		{
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectAddress);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -133,7 +133,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_SUSPECT_REPLY:
 		{
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_suspectLength);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
 			if(length < expectedSize)
 			{
 				m_serializeError = true;
@@ -159,7 +159,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_UPTIME:
 		{
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -171,7 +171,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_UPTIME_REPLY:
 		{
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_requestType) + sizeof(m_uptime);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_uptime);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;

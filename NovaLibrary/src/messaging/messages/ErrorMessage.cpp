@@ -67,7 +67,7 @@ ErrorMessage::ErrorMessage(char *buffer, uint32_t length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) Callback Type
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_errorType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_errorType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;

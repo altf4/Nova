@@ -64,7 +64,7 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 			//		2) ControlMessage Type
 			//		3) Length of incoming serialized suspect
 			//		3) Serialized suspect
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_callbackType) + sizeof(m_suspectLength);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_callbackType) + sizeof(m_suspectLength);
 			if(length <= expectedSize)
 			{
 				m_serializeError = true;
@@ -90,7 +90,7 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) Callback Type
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_callbackType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_callbackType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;

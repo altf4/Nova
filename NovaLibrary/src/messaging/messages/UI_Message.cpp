@@ -111,6 +111,9 @@ bool UI_Message::DeserializeHeader(char **buffer)
 		return false;
 	}
 
+	memcpy(&m_messageType, *buffer, sizeof(m_messageType));
+	*buffer += sizeof(m_messageType);
+
 	memcpy(&m_protocolDirection, *buffer, sizeof(m_protocolDirection));
 	*buffer += sizeof(m_protocolDirection);
 
@@ -119,19 +122,16 @@ bool UI_Message::DeserializeHeader(char **buffer)
 		return false;
 	}
 
-	memcpy(&m_messageType, *buffer, sizeof(m_messageType));
-	*buffer += sizeof(m_messageType);
-
 	return true;
 }
 
 void UI_Message::SerializeHeader(char **buffer)
 {
-	memcpy(*buffer, &m_protocolDirection, sizeof(m_protocolDirection));
-	*buffer += sizeof(m_protocolDirection);
-
 	memcpy(*buffer, &m_messageType, sizeof(m_messageType));
 	*buffer += sizeof(m_messageType);
+
+	memcpy(*buffer, &m_protocolDirection, sizeof(m_protocolDirection));
+	*buffer += sizeof(m_protocolDirection);
 }
 
 UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
