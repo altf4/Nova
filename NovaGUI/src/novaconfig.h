@@ -121,7 +121,7 @@ public:
 
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
-    void DeleteNode(std::string node);
+    bool DeleteNode(std::string node);
 
     //Populates the tree widget with the current node configuration
     void LoadAllNodes();
