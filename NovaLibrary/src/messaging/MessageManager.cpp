@@ -53,6 +53,7 @@ MessageManager &MessageManager::Instance()
 UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection direction)
 {
 
+	pthread_mutex_t *mutex;
 	//Initialize the queue lock, if it doesn't exist
 	{
 		Lock queuesLock(&m_queuesLock);
@@ -62,11 +63,12 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 			m_queueLocks[socketFD] = new pthread_mutex_t;
 			pthread_mutex_init(m_queueLocks[socketFD], NULL);
 		}
+		mutex = m_queueLocks[socketFD];
 	}
 
 	UI_Message *retMessage;
 	{
-		Lock lock(m_queueLocks[socketFD]);
+		Lock lock(mutex);
 		if(m_queues.count(socketFD) > 0)
 		{
 			retMessage = m_queues[socketFD]->PopMessage(direction);
@@ -149,16 +151,21 @@ void MessageManager::StartSocket(int socketFD)
 
 Lock MessageManager::UseSocket(int socketFD)
 {
-	Lock lock(&m_socketsLock);
-
-	if(m_socketLocks.count(socketFD) == 0)
+	int isPresent;
 	{
-		//If there is no lock object here yet, initialize it
-		m_queueLocks[socketFD] = new pthread_mutex_t;
-		pthread_mutex_init(m_queueLocks[socketFD], NULL);
+		Lock lock(&m_socketsLock);
+		isPresent = m_socketLocks.count(socketFD);
 	}
 
-	return Lock(m_socketLocks[socketFD]);
+	if(isPresent == 0)
+	{
+		//TODO: You should probably not get here if you're calling things in the right order
+		//So print a warning?
+		StartSocket(socketFD);
+	}
+
+	Lock lock(&m_socketsLock);
+	return Lock(m_sockets[socketFD]->m_mutex);
 }
 
 void MessageManager::CloseSocket(int socketFD)
@@ -174,19 +181,20 @@ void MessageManager::CloseSocket(int socketFD)
 void MessageManager::RegisterCallback(int socketFD)
 {
 	bool foundIt = false;
-
+	MessageQueue *queue;
 	{
 		Lock lock(&m_queuesLock);
 
 		if(m_queues.count(socketFD) > 0)
 		{
 			foundIt = true;
+			queue = m_queues[socketFD];
 		}
 	}
 
 	if(foundIt)
 	{
-		m_queues[socketFD]->RegisterCallback();
+		queue->RegisterCallback();
 	}
 
 }

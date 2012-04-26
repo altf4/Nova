@@ -22,7 +22,6 @@
 #include "messages/ErrorMessage.h"
 
 #include <sys/socket.h>
-#include <errno.h>
 #include "unistd.h"
 #include "string.h"
 #include "stdio.h"
@@ -115,15 +114,17 @@ void *MessageQueue::StaticThreadHelper(void *ptr)
 
 void MessageQueue::PushMessage(UI_Message *message)
 {
-	//Protection for the queue structure
-	Lock lock(&m_forwardQueueMutex);
-
-	m_forwardQueue.push(message);
-
 	//If this is a callback message (not the forward direction)
 	if(message->m_protocolDirection != m_forwardDirection)
 	{
+		{
+			//Protection for the queue structure
+			Lock lock(&m_callbackQueueMutex);
+			m_callbackQueue.push(message);
+		}
+
 		//Protection for the m_callbackDoWakeup bool
+		//Wake up anyone sleeping for a callback message!
 		Lock condLock(&m_callbackCondMutex);
 		m_callbackDoWakeup = true;
 		pthread_cond_signal(&m_callbackWakeupCondition);
@@ -131,6 +132,12 @@ void MessageQueue::PushMessage(UI_Message *message)
 	}
 	else
 	{
+		{
+			//Protection for the queue structure
+			Lock lock(&m_forwardQueueMutex);
+			m_forwardQueue.push(message);
+		}
+
 		//If there are no sleeping threads, this simply does nothing
 		pthread_cond_signal(&m_readWakeupCondition);
 	}
@@ -169,7 +176,6 @@ void *MessageQueue::ProducerThread()
 			{
 				//The socket died on us!
 				//Put an error message on the queue, and quit reading
-				perror(NULL);
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
 				return NULL;
 			}

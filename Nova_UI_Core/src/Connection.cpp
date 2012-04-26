@@ -35,7 +35,6 @@ using namespace std;
 using namespace Nova;
 //Socket communication variables
 int IPCSocketFD = -1;
-struct sockaddr_un UI_Address, novadAddress;
 
 bool isFirstConnect = true;
 
@@ -43,8 +42,6 @@ namespace Nova
 {
 bool ConnectToNovad()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
-
 	if(isFirstConnect)
 	{
 		MessageManager::Initialize(DIRECTION_TO_NOVAD);
@@ -56,12 +53,15 @@ bool ConnectToNovad()
 		return true;
 	}
 
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
 	key += "/keys";
 	key += NOVAD_LISTEN_FILENAME;
 
 	//Builds the address
+	struct sockaddr_un novadAddress;
 	novadAddress.sun_family = AF_UNIX;
 	strcpy(novadAddress.sun_path, key.c_str());
 

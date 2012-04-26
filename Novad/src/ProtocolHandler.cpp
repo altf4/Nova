@@ -43,7 +43,7 @@ using namespace Nova;
 using namespace std;
 
 Socket IPCParentSocket;
-int tempIPCSocketFD;
+int tempIPCSocketFD = -1;
 
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
