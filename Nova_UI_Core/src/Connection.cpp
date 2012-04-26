@@ -36,18 +36,16 @@ using namespace Nova;
 //Socket communication variables
 int IPCSocketFD = -1;
 
-bool isFirstConnect = true;
-
 namespace Nova
 {
+
+void InitializeUI()
+{
+	MessageManager::Initialize(DIRECTION_TO_NOVAD);
+}
+
 bool ConnectToNovad()
 {
-	if(isFirstConnect)
-	{
-		MessageManager::Initialize(DIRECTION_TO_NOVAD);
-		isFirstConnect = false;
-	}
-
 	if(IsNovadUp(false))
 	{
 		return true;

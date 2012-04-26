@@ -89,6 +89,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	InitConfiguration();
 	InitPaths();
 	InitiateSystemStatus();
+	InitializeUI();
 
 	// Create the dialog generator
 	m_prompter= new DialogPrompter();

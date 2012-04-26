@@ -37,7 +37,10 @@ MessageManager::MessageManager(enum ProtocolDirection direction)
 
 void MessageManager::Initialize(enum ProtocolDirection direction)
 {
-	m_instance = new MessageManager(direction);
+	if(m_instance == NULL)
+	{
+		m_instance = new MessageManager(direction);
+	}
 }
 
 MessageManager &MessageManager::Instance()
