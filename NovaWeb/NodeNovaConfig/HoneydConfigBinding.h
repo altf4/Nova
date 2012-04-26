@@ -26,6 +26,9 @@ class HoneydConfigBinding : public node::ObjectWrap {
   
   static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);
   static v8::Handle<v8::Value> DeleteNode(const v8::Arguments& args);
+
+  static v8::Handle<v8::Value> GetProfile(const v8::Arguments& args);
+
   
   Nova::HoneydConfiguration *m_conf;
 };

@@ -2,6 +2,8 @@ var novaNode = require('nova.node');
 var novaconfig = require('novaconfig.node');
 
 
+
+
 var nova = new novaNode.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
@@ -51,7 +53,7 @@ app.get('/', function(req, res) {
      res.render('main.jade');
  });
 
-app.get('/configureNova', function(req, res) {
+app.get('/configNova', function(req, res) {
      res.render('config.jade', 
 	 {
 		locals: {
@@ -91,7 +93,7 @@ app.get('/configureNova', function(req, res) {
 	 })
 });
 
-app.get('/configureHoneyd', function(req, res) {
+app.get('/configHoneydNodes', function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
 	 var nodes = [];
@@ -107,6 +109,22 @@ app.get('/configureHoneyd', function(req, res) {
 	}})
 });
 
+
+app.get('/configHoneydProfiles', function(req, res) {
+	honeydConfig.LoadAllTemplates();
+	 var profileNames = honeydConfig.GetProfileNames();
+	 var profiles = [];
+	 for (var i = 0; i < profileNames.length; i++) {
+		profiles.push(honeydConfig.GetProfile(profileNames[i]));
+	 }
+     
+	 res.render('configHoneydProfiles.jade', 
+	 { locals: {
+	 	profileNames: honeydConfig.GetProfileNames()
+	 	,profiles: profiles
+	}})
+});
+
 app.get('/editHoneydNode', function(req, res) {
 	nodeName = req.query["node"];
 	// TODO: Error checking for bad node names
@@ -119,6 +137,17 @@ app.get('/editHoneydNode', function(req, res) {
 		, profile: node.GetProfile()
 		, ip: node.GetIP()
 		, mac: node.GetMAC()
+	}})
+});
+
+app.get('/editHoneydProfile', function(req, res) {
+	profileName = req.query["profile"];
+	// TODO: Error checking for bad node names
+	
+	profile = honeydConfig.GetProfile(profileName); 
+	res.render('editHoneydProfile.jade', 
+	{ locals : {
+		oldName: profileName
 	}})
 });
 
@@ -241,6 +270,18 @@ everyone.now.deleteNode = function(nodeName)
 	honeydConfig.DeleteNode(nodeName);
 	honeydConfig.SaveAllTemplates();
 }
+
+everyone.now.GetProfile = function(profileName, callback) {
+	var profile = honeydConfig.GetProfile(profileName);
+	console.log("Got eth " + profile.GetEthernet() + " for profile " + profileName);
+	callback(profile);
+}
+
+ everyone.now.test = function(val, callback){
+ 	var profile = honeydConfig.GetProfile(val);
+	console.log("Got eth " + profile.GetEthernet() + " for profile " + profileName);
+    callback(profile);
+ }
 
 
 

@@ -1128,6 +1128,20 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 	return childProfiles;
 }
 
+Nova::profile * HoneydConfiguration::GetProfile(std::string name)
+{
+	if (m_profiles.find(name) == m_profiles.end())
+	{
+		return NULL;
+	}
+	else
+	{
+		profile *ret = new profile();
+		*ret = m_profiles[name];
+		return ret;
+	}
+}
+
 std::vector<std::string> HoneydConfiguration::GetNodeNames()
 {
 	vector<std::string> childnodes;

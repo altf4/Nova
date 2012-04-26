@@ -1,0 +1,131 @@
+extends layout
+
+
+block headerAdditions
+  //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  script
+    var currentName = "#{oldName}";
+    
+    function prefillForms(profile) {
+        console.log(Object.keys(profile));
+        document.getElementById("ethernet").value = profile.GetEthernet();
+    }
+
+    now.ready(function() {
+        now.test('default', function(msg){
+           // 'foo bar!' is printed
+           console.log(Object.keys(msg));
+           console.log(msg.GetEthernet());
+      });
+    });
+
+
+block content
+  mixin defaultActionBox(i)
+    select(id=i)
+      option reset
+      option block
+      option open
+
+  h2 Editing Profile
+  form(method="post", action="/editHoneydProfileSave")
+
+    table()
+      col
+      col
+      col(style="width:200px")
+      col(style="width:300px")
+      
+      tr
+        td
+        td
+        td(style="text-align:right")
+          label Profile Name
+        td
+          input(type="text", name="name", value = oldName)
+      
+ 
+      tr
+        td
+          input(type="checkbox", name="inheritPersonality") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Operating System Personality
+        td
+          input(type="text", name="personality")
+      
+      tr
+        td
+          input(type="checkbox", name="inheritEthernet") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Ethernet Vendor
+        td
+          input(type="text", name="ethernet")
+      
+      tr
+        td
+          input(type="checkbox", name="inheritDropRate") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Packet Drop Percentage
+        td
+          input(type="number", name="dropRate", min=0, max=100)
+
+
+      tr
+        td
+          input(type="checkbox", name="inheritUptime") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Fixed or static uptime?
+        td
+          select(name="uptimeType")
+            option Fixed
+            option Range
+
+      tr
+        td
+          input(type="checkbox", name="inheritUptime") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Uptime Range
+        td
+          input(type="number", name="uptimeMin", min=0)
+          input(type="number", name="uptimeMax", min=0)
+
+      tr
+        td
+          input(type="checkbox", name="inheritTcpAction") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default TCP Action
+        td
+          mixin defaultActionBox('tcpAction')
+  
+      tr
+        td
+          input(type="checkbox", name="inheritUdpAction") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default UDP Action
+        td
+          mixin defaultActionBox('udpAction')
+      tr
+        td
+          input(type="checkbox", name="inheritIcmpAction") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default ICMP Action
+        td
+          mixin defaultActionBox('icmpAction')
+
+

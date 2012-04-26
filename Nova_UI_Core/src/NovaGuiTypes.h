@@ -75,6 +75,16 @@ struct port
 	std::string proxyIP;
 	std::string proxyPort;
 	boost::property_tree::ptree tree;
+
+	// This is for the Javascript web interface bindings
+	inline std::string GetPortName() {return portName;}
+	inline std::string GetPortNum() {return portNum;}
+	inline std::string GetType() {return type;}
+	inline std::string GetBehavior() {return behavior;}
+	inline std::string GetScriptName() {return scriptName;}
+	inline std::string GetProxyIP() {return proxyIP;}
+	inline std::string GetProxyPort() {return proxyPort;}
+
 };
 //Container for accessing port items
 typedef google::dense_hash_map<std::string, port, std::tr1::hash<std::string>, eqstr > PortTable;
@@ -114,6 +124,52 @@ struct profile
 	std::vector<std::pair<std::string, bool> > ports;
 	std::string parentProfile;
 	boost::property_tree::ptree tree;
+
+
+
+	// This is for the Javascript bindings in the web interface
+	inline std::string GetName() {return name;}
+	inline std::string GetTcpAction() {return tcpAction;}
+	inline std::string GetUdpAction() {return udpAction;}
+	inline std::string GetIcmpAction() {return icmpAction;}
+	inline std::string GetPersonality() {return personality;}
+	inline std::string GetEthernet() {return ethernet;}
+	inline std::string GetUptimeMin() {return uptimeMin;}
+	inline std::string GetUptimeMax() {return uptimeMax;}
+	inline std::string GetDropRate() {return dropRate;}
+	inline std::string GetParentProfile() {return parentProfile;}
+
+	inline std::vector<bool> GetInheritance()
+	{
+		std::vector<bool> ret;
+		for (int i = 0; i < INHERITED_MAX; i++)
+		{
+			ret.push_back(inherited[i]);
+		}
+		return ret;
+	}
+
+	// Work around for inability to get the std::pair to javascript
+	inline std::vector<std::string> GetPortNames()
+	{
+		std::vector<std::string> ret;
+		for (std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
+		{
+			ret.push_back(it->first);
+		}
+		return ret;
+	}
+
+	// Work around for inability to get the std::pair to javascript
+	inline std::vector<bool> GetPortInheritance()
+	{
+		std::vector<bool> ret;
+		for (std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
+		{
+			ret.push_back(it->second);
+		}
+		return ret;
+	}
 };
 
 //Container for accessing profile items

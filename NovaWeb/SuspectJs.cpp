@@ -30,8 +30,6 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
         proto->Set("GetFeatures", FunctionTemplate::New(GetFeatures) );
     }
 
-    // Get the template for the type
-    Handle<FunctionTemplate> t = m_SuspectTemplate;
     // Get the constructor from the template
     Handle<Function> ctor = m_SuspectTemplate->GetFunction();
     // Instantiate the object with the constructor

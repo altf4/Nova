@@ -7,8 +7,8 @@ html(lang="en")
     link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
     link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
 
-    script(src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
     script(type="text/javascript", src="/nowjs/now.js")
+    script(type="text/javascript", src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
     script
       require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],
         function(ready){
@@ -78,10 +78,14 @@ html(lang="en")
         br
 
         button(data-dojo-type="dijit.form.Button",type="button") Configure Nova
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configureNova";
+          script(type="dojo/method", data-dojo-event="onClick") window.location = "configNova";
+        br
+        
+        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Profiles
+          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydProfiles";
         br
 
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configureHoneyd";
+        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Nodes
+          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydNodes";
         br
 
