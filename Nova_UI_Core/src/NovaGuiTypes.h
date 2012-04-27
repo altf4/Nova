@@ -149,6 +149,14 @@ struct profile
 		return ret;
 	}
 
+	inline bool isTcpActionInherited() {return inherited[TCP_ACTION];}
+	inline bool isUdpActionInherited() {return inherited[UDP_ACTION];}
+	inline bool isIcmpActionInherited() {return inherited[ICMP_ACTION];}
+	inline bool isPersonalityInherited() {return inherited[PERSONALITY];}
+	inline bool isEthernetInherited() {return inherited[ETHERNET];}
+	inline bool isUptimeInherited() {return inherited[UPTIME];}
+	inline bool isDropRateInherited() {return inherited[DROP_RATE];}
+
 	// Work around for inability to get the std::pair to javascript
 	inline std::vector<std::string> GetPortNames()
 	{

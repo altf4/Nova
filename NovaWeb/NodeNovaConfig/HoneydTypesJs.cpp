@@ -65,6 +65,15 @@ Handle<Object> HoneydNodeJs::WrapProfile(profile *pfile)
         proto->Set("GetDropRate",  FunctionTemplate::New(InvokeMethod<String, std::string, profile, &Nova::profile::GetDropRate>) );
         proto->Set("GetParentProfile",  FunctionTemplate::New(InvokeMethod<String, std::string, profile, &Nova::profile::GetParentProfile>));
         
+        proto->Set("isTcpActionInherited",  FunctionTemplate::New(InvokeMethod<Boolean, bool, profile, &Nova::profile::isTcpActionInherited>));
+        proto->Set("isUdpActionInherited",  FunctionTemplate::New(InvokeMethod<Boolean, bool, profile, &Nova::profile::isUdpActionInherited>));
+        proto->Set("isIcmpActionInherited",  FunctionTemplate::New(InvokeMethod<Boolean, bool, profile, &Nova::profile::isIcmpActionInherited>));
+        proto->Set("isPersonalityInherited",  FunctionTemplate::New(InvokeMethod<Boolean, bool, profile, &Nova::profile::isPersonalityInherited>));
+        proto->Set("isEthernetInherited",  FunctionTemplate::New(InvokeMethod<Boolean, bool, profile, &Nova::profile::isEthernetInherited>));
+        proto->Set("isUptimeInherited",  FunctionTemplate::New(InvokeMethod<Boolean, bool, profile, &Nova::profile::isUptimeInherited>));
+        proto->Set("isDropRateInherited",  FunctionTemplate::New(InvokeMethod<Boolean, bool, profile, &Nova::profile::isDropRateInherited>));
+ 
+        
         // The InvokeMethod template doesn't currently support CastToJs, need helper functions here
         proto->Set(String::NewSymbol("GetPortNames"),FunctionTemplate::New(HoneydNodeJs::GetPortNames)->GetFunction());
 

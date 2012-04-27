@@ -5,18 +5,131 @@ block headerAdditions
   //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   script
     var currentName = "#{oldName}";
+    var profile;
+
+    var inheritanceChanged = function() {};
+    var uptimeTypeChanged = function() {};
     
-    function prefillForms(profile) {
-        console.log(Object.keys(profile));
-        document.getElementById("ethernet").value = profile.GetEthernet();
+    require(["dojo/domReady!", "dojo/ready"], function() {
+
+    uptimeTypeChanged = function() {
+        if (dojo.byId("uptimeType").selectedIndex == 0) {
+            dojo.byId("uptimeMax").style.display = "none";
+        } else {
+            dojo.byId("uptimeMax").style.display = "block"; 
+        }
+    }
+    
+    inheritanceChanged = function() {
+        if (dojo.byId("personality").disabled = dojo.byId("inheritPersonality").checked) {
+            dojo.byId("personality").value = profile.personality;
+        }
+
+        if (dojo.byId("ethernet").disabled = dojo.byId("inheritEthernet").checked) {
+            dojo.byId("ethernet").value = profile.ethernet;
+        }
+
+        if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) {
+            dojo.byId("dropRate").value = profile.dropRate;
+        }
+        
+        if (dojo.byId("uptimeMin").disabled = dojo.byId("inheritUptime").checked) {
+            dojo.byId("uptimeMin").value = profile.uptimeMin;
+        }
+
+        if (dojo.byId("uptimeMax").disabled = dojo.byId("inheritUptime").checked) {
+            dojo.byId("uptimeMax").value = profile.uptimeMax;
+        }
+
+        if (dojo.byId("uptimeType").disabled = dojo.byId("inheritUptime").checked) {
+            if (profile.uptimeMin == profile.uptimeMax) {
+               dojo.byId("uptimeType").selectedIndex = 0;
+            } else {
+               dojo.byId("uptimeType").selectedIndex = 1; 
+            }
+        }
+        
+        if (dojo.byId("tcpAction").disabled = dojo.byId("inheritTcpAction").checked) {
+            if (profile.tcpAction == "reset") {
+                dojo.byId("tcpAction").selectedIndex = 0;
+            } else if (profile.tcpAction == "block") {
+                dojo.byId("tcpAction").selectedIndex = 1;
+            } else if (profile.tcpAction == "open") {
+                dojo.byId("tcpAction").selectedIndex = 2;
+            }
+        }
+        
+        if (dojo.byId("udpAction").disabled = dojo.byId("inheritUdpAction").checked) {
+            if (profile.udpAction == "reset") {
+                dojo.byId("udpAction").selectedIndex = 0;
+            } else if (profile.udpAction == "block") {
+                dojo.byId("udpAction").selectedIndex = 1;
+            } else if (profile.udpAction == "open") {
+                dojo.byId("udpAction").selectedIndex = 2;
+            }
+        }
+        
+        if (dojo.byId("icmpAction").disabled = dojo.byId("inheritIcmpAction").checked) {
+            if (profile.icmpAction == "reset") {
+                dojo.byId("icmpAction").selectedIndex = 0;
+            } else if (profile.icmpAction == "block") {
+                dojo.byId("icmpAction").selectedIndex = 1;
+            } else if (profile.icmpAction == "open") {
+                dojo.byId("icmpAction").selectedIndex = 2;
+            }
+        }
+        
+        
+        uptimeTypeChanged();
     }
 
     now.ready(function() {
-        now.test('default', function(msg){
-           // 'foo bar!' is printed
-           console.log(Object.keys(msg));
-           console.log(msg.GetEthernet());
+        now.GetProfile(currentName, function(pfile){
+        profile = pfile;
+
+        dojo.byId("name").value = profile.name;
+        
+        if (profile.tcpAction == "reset") {
+          dojo.byId("tcpAction").selectedIndex = 0;
+        } else if (profile.tcpAction == "block") {
+          dojo.byId("tcpAction").selectedIndex = 1;
+        } else if (profile.tcpAction == "open") {
+          dojo.byId("tcpAction").selectedIndex = 2;
+        }
+
+        if (profile.udpAction == "reset") {
+          dojo.byId("udpAction").selectedIndex = 0;
+        } else if (profile.udpAction == "block") {
+          dojo.byId("udpAction").selectedIndex = 1;
+        } else if (profile.udpAction == "open") {
+          dojo.byId("udpAction").selectedIndex = 2;
+        }
+       
+        if (profile.icmpAction == "reset") {
+          dojo.byId("icmpAction").selectedIndex = 0;
+        } else if (profile.icmpAction == "block") {
+          dojo.byId("icmpAction").selectedIndex = 1;
+        } else if (profile.icmpAction == "open") {
+          dojo.byId("icmpAction").selectedIndex = 2;
+        }
+
+        dojo.byId("personality").value = profile.personality;
+        dojo.byId("ethernet").value = profile.ethernet;
+        dojo.byId("uptimeMin").value = profile.uptimeMin;
+        dojo.byId("uptimeMax").value = profile.uptimeMax;
+        dojo.byId("dropRate").value = profile.dropRate;
+
+        dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
+        dojo.byId("inheritEthernet").checked = profile.isEthernetInherited;
+        dojo.byId("inheritDropRate").checked = profile.isDropRateInherited;
+        dojo.byId("inheritUptime").checked = profile.isUptimeInherited;
+        dojo.byId("inheritTcpAction").checked = profile.isTcpActionInherited;
+        dojo.byId("inheritUdpAction").checked = profile.isUdpActionInherited;
+        dojo.byId("inheritIcmpAction").checked = profile.isIcmpActionInherited;
+
+        inheritanceChanged();
       });
+    });
     });
 
 
@@ -42,66 +155,64 @@ block content
         td(style="text-align:right")
           label Profile Name
         td
-          input(type="text", name="name", value = oldName)
+          input#name(type="text", name="name")
       
  
       tr
         td
-          input(type="checkbox", name="inheritPersonality") 
+          input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
         td
           label Inherit?
         td(style="text-align:right")
           label Operating System Personality
         td
-          input(type="text", name="personality")
+          input#personality(type="text", name="personality")
       
       tr
         td
-          input(type="checkbox", name="inheritEthernet") 
+          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
         td
           label Inherit?
         td(style="text-align:right")
           label Ethernet Vendor
         td
-          input(type="text", name="ethernet")
+          input#ethernet(type="text", name="ethernet")
       
       tr
         td
-          input(type="checkbox", name="inheritDropRate") 
+          input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
         td
           label Inherit?
         td(style="text-align:right")
           label Packet Drop Percentage
         td
-          input(type="number", name="dropRate", min=0, max=100)
+          input#dropRate(type="number", name="dropRate", min=0, max=100)
 
 
       tr
         td
-          input(type="checkbox", name="inheritUptime") 
+          input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
         td
           label Inherit?
         td(style="text-align:right")
-          label Fixed or static uptime?
+          label Fixed uptime or uptime range?
         td
-          select(name="uptimeType")
+          select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
             option Fixed
             option Range
 
       tr
         td
-          input(type="checkbox", name="inheritUptime") 
         td
-          label Inherit?
         td(style="text-align:right")
           label Uptime Range
         td
-          input(type="number", name="uptimeMin", min=0)
-          input(type="number", name="uptimeMax", min=0)
+          input#uptimeMin(type="number", name="uptimeMin", min=0)
+          input#uptimeMax(type="number", name="uptimeMax", min=0)
 
       tr
         td
-          input(type="checkbox", name="inheritTcpAction") 
+          input#inheritTcpAction(type="checkbox", name="inheritTcpAction", onclick="inheritanceChanged()") 
         td
           label Inherit?
         td(style="text-align:right")
@@ -111,7 +222,7 @@ block content
   
       tr
         td
-          input(type="checkbox", name="inheritUdpAction") 
+          input#inheritUdpAction(type="checkbox", name="inheritUdpAction", onclick="inheritanceChanged()") 
         td
           label Inherit?
         td(style="text-align:right")
@@ -120,7 +231,7 @@ block content
           mixin defaultActionBox('udpAction')
       tr
         td
-          input(type="checkbox", name="inheritIcmpAction") 
+          input#inheritIcmpAction(type="checkbox", name="inheritIcmpAction", onclick="inheritanceChanged()") 
         td
           label Inherit?
         td(style="text-align:right")

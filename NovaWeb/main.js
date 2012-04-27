@@ -273,8 +273,28 @@ everyone.now.deleteNode = function(nodeName)
 
 everyone.now.GetProfile = function(profileName, callback) {
 	var profile = honeydConfig.GetProfile(profileName);
-	console.log("Got eth " + profile.GetEthernet() + " for profile " + profileName);
-	callback(profile);
+	
+    // Nowjs can't pass the object with methods, they need to be member vars
+    profile.name = profile.GetName();
+    profile.tcpAction = profile.GetTcpAction();
+    profile.udpAction = profile.GetUdpAction();
+    profile.icmpAction = profile.GetIcmpAction();
+    profile.personality = profile.GetPersonality();
+    profile.ethernet = profile.GetEthernet();
+    profile.uptimeMin = profile.GetUptimeMin();
+    profile.uptimeMax = profile.GetUptimeMax();
+    profile.dropRate = profile.GetDropRate();
+
+    profile.isTcpActionInherited = profile.isTcpActionInherited();
+    profile.isUdpActionInherited = profile.isUdpActionInherited();
+    profile.isIcmpActionInherited = profile.isIcmpActionInherited();
+    profile.isPersonalityInherited = profile.isPersonalityInherited();
+    profile.isEthernetInherited = profile.isEthernetInherited();
+    profile.isUptimeInherited = profile.isUptimeInherited();
+    profile.isDropRateInherited = profile.isDropRateInherited();
+
+
+    callback(profile);
 }
 
  everyone.now.test = function(val, callback){
