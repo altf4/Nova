@@ -151,7 +151,7 @@ app.get('/editHoneydProfile', function(req, res) {
 	}})
 });
 
-app.post('/configureHoneydSave', function(req, res) {
+app.post('/editHoneydNodesSave', function(req, res) {
 	var ipAddress;
 	if (req.body["ipType"] == "DHCP") {
 		ipAddress = "DHCP";
@@ -168,7 +168,7 @@ app.post('/configureHoneydSave', function(req, res) {
 	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
 	honeydConfig.SaveAllTemplates();
      
-	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configureHoneyd'"}})
+	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configHoneydNodes'"}})
 
 });
 
@@ -196,7 +196,7 @@ app.post('/editHoneydNodeSave', function(req, res) {
 	honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet);
 	honeydConfig.SaveAllTemplates();
      
-	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configureHoneyd'"}})
+	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configHoneydNodes'"}})
 
 });
 
