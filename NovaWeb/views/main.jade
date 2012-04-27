@@ -1,5 +1,36 @@
 extends layout
 
+block topPannelAdditions
+  div(style="float: left") Novad Status:&nbsp 
+  div#nova_status unknown
+  div(style="float: left") Haystack Status:&nbsp  
+  div#haystack_status unknown
+
+block buttonPannelAdditions
+  button(data-dojo-type="dijit.form.Button", type="button") Start Nova
+    script(type="dojo/method", data-dojo-event="onClick") now.StartNovad();
+  br 
+  
+  button(data-dojo-type="dijit.form.Button",type="button") Stop Nova
+    script(type="dojo/method", data-dojo-event="onClick") now.StopNovad();
+  br
+  
+  br
+
+  button(data-dojo-type="dijit.form.Button",type="button") Start Haystack
+    script(type="dojo/method", data-dojo-event="onClick") now.StartHaystack();
+  br
+
+  button(data-dojo-type="dijit.form.Button",type="button") Stop Haystack
+    script(type="dojo/method", data-dojo-event="onClick") now.StopHaystack();
+  br
+
+  br
+  button(data-dojo-type="dijit.form.Button",type="button") Clear All Suspects
+    script(type="dojo/method", data-dojo-event="onClick") now.ClearAllSuspects();suspectGrid.store.fetch({onComplete: clearSuspects});
+  br
+  
+
 block content
   div#nova_suspects_header
     h1 Suspect List
