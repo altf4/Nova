@@ -1142,6 +1142,17 @@ Nova::profile * HoneydConfiguration::GetProfile(std::string name)
 	}
 }
 
+Nova::port * HoneydConfiguration::GetPort(std::string name)
+{
+	if (m_ports.find(name) != m_ports.end())
+	{
+		port *p = new port();
+		*p = m_ports[name];
+		return p;
+	}
+	return NULL;
+}
+
 std::vector<std::string> HoneydConfiguration::GetNodeNames()
 {
 	vector<std::string> childnodes;

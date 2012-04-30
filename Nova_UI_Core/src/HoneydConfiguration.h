@@ -79,6 +79,7 @@ public:
 
 	std::vector<std::string> GetProfileNames();
 	Nova::profile * GetProfile(std::string name);
+	Nova::port * GetPort(std::string name);
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
