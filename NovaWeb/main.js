@@ -1,10 +1,9 @@
-var novaNode = require('nova.node');
 var novaconfig = require('novaconfig.node');
 
 
 
 
-var nova = new novaNode.Instance();
+var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
 var vendorToMacDb = new novaconfig.VendorMacDbBinding();
