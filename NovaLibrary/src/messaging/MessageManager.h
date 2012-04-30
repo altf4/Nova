@@ -42,6 +42,7 @@ public:
 
 	Nova::UI_Message *GetMessage(int socketFD, enum ProtocolDirection direction);
 
+	//NOTE: Safely does nothing if socketFD already exists in the manager
 	void StartSocket(int socketFD);
 
 	//Informs the message manager that you would like to use the specified socket
@@ -71,7 +72,10 @@ private:
 	//		DIRECTION_TO_NOVAD: We are a Nova UI
 	MessageManager(enum ProtocolDirection direction);
 
-	//Mutexes for the lock maps
+	//Looks up the mutex in the m_queueLocks list
+	Lock LockQueue(int socketFD);
+
+	//Mutexes for the lock maps;
 	pthread_mutex_t m_queuesLock;		//protects m_queueLocks
 	pthread_mutex_t m_socketsLock;		//protects m_socketLocks
 
@@ -80,9 +84,6 @@ private:
 	std::map<int, MessageQueue*> m_queues;
 	std::map<int, pthread_mutex_t*> m_queueLocks;
 
-	//These two maps must be kept synchronized
-	//	Maintains the socket objects
-	std::map<int, Socket*> m_sockets;
 	std::map<int, pthread_mutex_t*> m_socketLocks;
 
 	enum ProtocolDirection m_forwardDirection;

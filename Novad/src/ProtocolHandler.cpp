@@ -25,7 +25,6 @@
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/RequestMessage.h"
 #include "messaging/messages/ErrorMessage.h"
-#include "messaging/Socket.h"
 #include "messaging/MessageManager.h"
 #include "SuspectTable.h"
 #include "SuspectTableIterator.h"
@@ -42,7 +41,7 @@
 using namespace Nova;
 using namespace std;
 
-Socket IPCParentSocket;
+int IPCParentSocket;
 int tempIPCSocketFD = -1;
 
 extern SuspectTable suspects;
@@ -58,13 +57,11 @@ namespace Nova
 //Launches a UI Handling thread, and returns
 bool Spawn_UI_Handler()
 {
-	Lock lock(IPCParentSocket.m_mutex);
-
 	int len;
 	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
 	string outKeyPath = Config::Inst()->GetPathHome() + "/keys" + UI_LISTEN_FILENAME;
 
-    if((IPCParentSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "socket: "+string(strerror(errno)));
     	return false;
@@ -75,17 +72,17 @@ bool Spawn_UI_Handler()
     unlink(msgLocal.sun_path);
     len = strlen(msgLocal.sun_path) + sizeof(msgLocal.sun_family);
 
-    if(::bind(IPCParentSocket.m_socketFD, (struct sockaddr *)&msgLocal, len) == -1)
+    if(::bind(IPCParentSocket, (struct sockaddr *)&msgLocal, len) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "bind: "+string(strerror(errno)));
-    	close(IPCParentSocket.m_socketFD);
+    	close(IPCParentSocket);
     	return false;
     }
 
-    if(listen(IPCParentSocket.m_socketFD, SOMAXCONN) == -1)
+    if(listen(IPCParentSocket, SOMAXCONN) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
-		close(IPCParentSocket.m_socketFD);
+		close(IPCParentSocket);
     	return false;
     }
 
@@ -102,10 +99,10 @@ void *Handle_UI_Helper(void *ptr)
     	int msgSocketFD;
 
     	//Blocking call
-		if((msgSocketFD = accept(IPCParentSocket.m_socketFD, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
+		if((msgSocketFD = accept(IPCParentSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
 		{
 			LOG(ERROR, "Failed to connect to UI", "accept: " + string(strerror(errno)));
-			close(IPCParentSocket.m_socketFD);
+			close(IPCParentSocket);
 			return false;
 		}
 		else

@@ -1181,7 +1181,7 @@ void UpdateAndClassify(uint64_t suspect)
 		}
 		else
 		{
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
+			//LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
 		}
 	}
 	suspects.CheckIn(&suspectCopy);

@@ -21,7 +21,6 @@
 #include "messaging/messages/UI_Message.h"
 #include "messaging/messages/CallbackMessage.h"
 #include "messaging/messages/ErrorMessage.h"
-#include "messaging/Socket.h"
 #include "messaging/MessageManager.h"
 #include "Lock.h"
 

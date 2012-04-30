@@ -20,7 +20,6 @@
 #include "messaging/messages/UI_Message.h"
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/ErrorMessage.h"
-#include "messaging/Socket.h"
 #include "Commands.h"
 #include "Logger.h"
 #include "Lock.h"

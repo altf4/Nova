@@ -23,6 +23,10 @@
 
 #include <sys/socket.h>
 
+//TODO: Get rid of this after debugging
+#include <iostream>
+using namespace std;
+
 namespace Nova
 {
 
@@ -55,23 +59,9 @@ MessageManager &MessageManager::Instance()
 
 UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection direction)
 {
-
-	pthread_mutex_t *mutex;
-	//Initialize the queue lock, if it doesn't exist
-	{
-		Lock queuesLock(&m_queuesLock);
-		if(m_queueLocks.count(socketFD) == 0)
-		{
-			//If there is no lock object here yet, initialize it
-			m_queueLocks[socketFD] = new pthread_mutex_t;
-			pthread_mutex_init(m_queueLocks[socketFD], NULL);
-		}
-		mutex = m_queueLocks[socketFD];
-	}
-
 	UI_Message *retMessage;
 	{
-		Lock lock(mutex);
+		Lock lock = LockQueue(socketFD);
 		if(m_queues.count(socketFD) > 0)
 		{
 			retMessage = m_queues[socketFD]->PopMessage(direction);
@@ -88,15 +78,12 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
 			{
-				Lock lock(m_queueLocks[socketFD]);
+				Lock lock = LockQueue(socketFD);
 				delete m_queues[socketFD];
 				m_queues.erase(socketFD);
 			}
-			{
-				Lock lock(m_socketLocks[socketFD]);
-				delete m_sockets[socketFD];
-				m_sockets.erase(socketFD);
-			}
+
+			cout << "DELETED SOCKET: " << socketFD << endl;
 
 		}
 	}
@@ -106,6 +93,8 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 
 void MessageManager::StartSocket(int socketFD)
 {
+	cout << "Number of MessageQueues open = " << m_queues.size() << endl;
+
 	//Initialize the socket lock if it doesn't yet exist
 	{
 		Lock socketLock(&m_socketsLock);
@@ -117,17 +106,19 @@ void MessageManager::StartSocket(int socketFD)
 		}
 	}
 
-	//Initialize the socket object if it doesn't already exist
+	//Initialize the MessageQueue if it doesn't yet exist
 	{
-		Lock sockLock(m_socketLocks[socketFD]);
-		if(m_sockets.count(socketFD) == 0)
+		Lock lock = LockQueue(socketFD);
+		if(m_queues.count(socketFD) == 0)
 		{
-			m_sockets[socketFD] = new Socket();
-			m_sockets[socketFD]->m_socketFD = socketFD;
+			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
 		}
-
 	}
+}
 
+//Looks up the mutex in the m_queueLocks list
+Lock MessageManager::LockQueue(int socketFD)
+{
 	pthread_mutex_t *qMutex;
 	//Initialize the queue lock if it doesn't yet exist
 	{
@@ -141,34 +132,16 @@ void MessageManager::StartSocket(int socketFD)
 		qMutex = m_queueLocks[socketFD];
 	}
 
-	//Initialize the MessageQueue if it doesn't yet exist
-	//	NOTE: We use the above qMutex in order to avoid a nested lock situation
-	{
-		Lock qLock(qMutex);
-		if(m_queues.count(socketFD) == 0)
-		{
-			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
-		}
-	}
+	return Lock(qMutex);
 }
 
 Lock MessageManager::UseSocket(int socketFD)
 {
-	int isPresent;
-	{
-		Lock lock(&m_socketsLock);
-		isPresent = m_socketLocks.count(socketFD);
-	}
 
-	if(isPresent == 0)
-	{
-		//TODO: You should probably not get here if you're calling things in the right order
-		//So print a warning?
-		StartSocket(socketFD);
-	}
+	StartSocket(socketFD);
 
 	Lock lock(&m_socketsLock);
-	return Lock(m_sockets[socketFD]->m_mutex);
+	return Lock(m_socketLocks[socketFD]);
 }
 
 void MessageManager::CloseSocket(int socketFD)
@@ -178,6 +151,8 @@ void MessageManager::CloseSocket(int socketFD)
 	if(m_queues.count(socketFD) > 0)
 	{
 		shutdown(socketFD, SHUT_RDWR);
+		close(socketFD);
+		cout << "CLOSED IT!: << " << socketFD << endl;
 	}
 }
 

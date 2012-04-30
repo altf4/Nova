@@ -21,7 +21,6 @@
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/RequestMessage.h"
 #include "messaging/messages/ErrorMessage.h"
-#include "messaging/Socket.h"
 #include "Logger.h"
 #include "Lock.h"
 

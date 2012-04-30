@@ -19,7 +19,6 @@
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/MessageManager.h"
-#include "messaging/Socket.h"
 #include "Commands.h"
 #include "NovaUtil.h"
 #include "Logger.h"

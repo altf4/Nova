@@ -21,7 +21,6 @@
 #define MESSAGEQUEUE_H_
 
 #include "messages/UI_Message.h"
-#include "Socket.h"
 
 #include "pthread.h"
 #include <queue>
