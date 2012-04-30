@@ -17,6 +17,7 @@
 //============================================================================
 #include "NovaComplexDialog.h"
 #include "NovaGuiTypes.h"
+#include "OsPersonalityDb.h"
 
 using namespace std;
 
@@ -106,7 +107,11 @@ void NovaComplexDialog::DrawPersonalities(string filterStr)
 	ui.treeWidget->clear();
 	QTreeWidgetItem * item = NULL;
 	QTreeWidgetItem * index = NULL;
-	vector<pair<string,string> > * printList = &m_novaParent->m_nmapPersonalities;
+
+	OsPersonalityDb db;
+	db.LoadNmapPersonalitiesFromFile();
+	vector<pair<string,string> > * printList = &db.m_nmapPersonalities;
+
 	string fprint;
 	string printClass;
 	string temp;

@@ -9,6 +9,7 @@ CPP_SRCS += \
 ../src/HaystackControl.cpp \
 ../src/HoneydConfiguration.cpp \
 ../src/NovadControl.cpp \
+../src/OsPersonalityDb.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
 ../src/VendorMacDb.cpp 
@@ -19,6 +20,7 @@ OBJS += \
 ./src/HaystackControl.o \
 ./src/HoneydConfiguration.o \
 ./src/NovadControl.o \
+./src/OsPersonalityDb.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
 ./src/VendorMacDb.o 
@@ -29,6 +31,7 @@ CPP_DEPS += \
 ./src/HaystackControl.d \
 ./src/HoneydConfiguration.d \
 ./src/NovadControl.d \
+./src/OsPersonalityDb.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \
 ./src/VendorMacDb.d 

@@ -39,8 +39,6 @@ class NovaConfig : public QMainWindow
 
 public:
 
-	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
-
 	Nova::HoneydConfiguration *m_honeydConfig;
 
     QMutex * m_loading;
