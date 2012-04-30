@@ -7,6 +7,7 @@ var novaconfig = require('novaconfig.node');
 var nova = new novaNode.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
+var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 
 honeydConfig.LoadAllTemplates();
 
@@ -145,9 +146,12 @@ app.get('/editHoneydProfile', function(req, res) {
 	// TODO: Error checking for bad node names
 	
 	profile = honeydConfig.GetProfile(profileName); 
+	vendors = vendorToMacDb.GetVendorNames();
+
 	res.render('editHoneydProfile.jade', 
 	{ locals : {
 		oldName: profileName
+		, vendors: vendors
 	}})
 });
 

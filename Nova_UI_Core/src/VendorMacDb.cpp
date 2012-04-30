@@ -187,3 +187,12 @@ vector<string> VendorMacDb::SearchVendors(string partialVendorName)
 
 	return matches;
 }
+
+vector<string> VendorMacDb::GetVendorNames() {
+	vector<string> names;
+	for (VendorToMACTable::iterator it = m_vendorMACTable.begin(); it != m_vendorMACTable.end(); it++)
+	{
+		names.push_back(it->first);
+	}
+	return names;
+}

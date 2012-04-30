@@ -9,8 +9,7 @@ block headerAdditions
 
     var inheritanceChanged = function() {};
     var uptimeTypeChanged = function() {};
-    
-    require(["dojo/domReady!", "dojo/ready"], function() {
+    require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
 
     uptimeTypeChanged = function() {
         if (dojo.byId("uptimeType").selectedIndex == 0) {
@@ -141,6 +140,7 @@ block content
       option open
 
   h2 Editing Profile
+
   form(method="post", action="/editHoneydProfileSave")
 
     table()
@@ -176,7 +176,9 @@ block content
         td(style="text-align:right")
           label Ethernet Vendor
         td
-          input#ethernet(type="text", name="ethernet")
+          select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+            each vendor in vendors
+              option(value="#{vendor}") #{vendor}
       
       tr
         td
@@ -200,7 +202,7 @@ block content
           select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
             option Fixed
             option Range
-
+        
       tr
         td
         td

@@ -51,8 +51,13 @@ public:
 	//		partialVendorName: Any part of the vendor name
 	std::vector <std::string> SearchVendors(std::string partialVendorName);
 
+	// Gets list of all the vendor names
+	std::vector <std::string> GetVendorNames();
+
 	// Checks if a vendor name is known
 	bool IsVendorValid(std::string vendor);
+
+
 
 
 private:
