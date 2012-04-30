@@ -8,6 +8,7 @@ var nova = new novaNode.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
 var vendorToMacDb = new novaconfig.VendorMacDbBinding();
+var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
 
 honeydConfig.LoadAllTemplates();
 
@@ -142,16 +143,13 @@ app.get('/editHoneydNode', function(req, res) {
 });
 
 app.get('/editHoneydProfile', function(req, res) {
-	profileName = req.query["profile"];
-	// TODO: Error checking for bad node names
-	
-	profile = honeydConfig.GetProfile(profileName); 
-	vendors = vendorToMacDb.GetVendorNames();
+	profileName = req.query["profile"]; 
 
 	res.render('editHoneydProfile.jade', 
 	{ locals : {
 		oldName: profileName
-		, vendors: vendors
+		, vendors: vendorToMacDb.GetVendorNames()
+		, personalities: osPersonalityDb.GetPersonalityOptions()
 	}})
 });
 

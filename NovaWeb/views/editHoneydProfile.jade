@@ -22,10 +22,16 @@ block headerAdditions
     inheritanceChanged = function() {
         if (dojo.byId("personality").disabled = dojo.byId("inheritPersonality").checked) {
             dojo.byId("personality").value = profile.personality;
+            dijit.byId("personality").setDisabled(true);
+        } else {
+            dijit.byId("personality").setDisabled(false);
         }
 
         if (dojo.byId("ethernet").disabled = dojo.byId("inheritEthernet").checked) {
             dojo.byId("ethernet").value = profile.ethernet;
+            dijit.byId("ethernet").setDisabled(true);
+        } else {
+            dijit.byId("ethernet").setDisabled(false);
         }
 
         if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) {
@@ -166,7 +172,9 @@ block content
         td(style="text-align:right")
           label Operating System Personality
         td
-          input#personality(type="text", name="personality")
+          select#personality(data-dojo-type="dijit.form.FilteringSelect", name="personality", autocomplete="true", pageSize=10)
+            each os in personalities
+              option(value="#{os}") #{os}
       
       tr
         td

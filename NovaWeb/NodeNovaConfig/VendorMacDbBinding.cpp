@@ -42,9 +42,6 @@ v8::Handle<Value> VendorMacDbBinding::GetVendorNames(const Arguments& args)
 	v8::HandleScope scope;
 	VendorMacDbBinding* obj = ObjectWrap::Unwrap<VendorMacDbBinding>(args.This());
 
-    std::string key = cvv8::CastFromJS<std::string>( args[0] );
-    std::string value = cvv8::CastFromJS<std::string>( args[1] );
-
 	v8::Handle<Value> names = cvv8::CastToJS(obj->m_db->GetVendorNames());
 
 	return scope.Close(names);
