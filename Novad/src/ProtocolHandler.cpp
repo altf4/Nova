@@ -405,8 +405,8 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
-			reply.m_suspect = new Suspect();
-			*reply.m_suspect = suspects.Peek(msg.m_suspectAddress);
+			Suspect tempSuspect = suspects.Peek(msg.m_suspectAddress);
+			reply.m_suspect = &tempSuspect;
 			UI_Message::WriteMessage(&reply, socketFD);
 
 			break;
