@@ -9,13 +9,125 @@ block headerAdditions
 
     var inheritanceChanged = function() {};
     var uptimeTypeChanged = function() {};
+    var deletePort = function() {};
+    var addPort = function(port) {};
+    var portBehaviorChanged = function() {};
+
+    var portIndexes = [];
+    var loaded = false;
+
     require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
+
+    addPort = function(port) {
+        if (port == undefined) {
+            port = function() {};
+            port.portNum = 0;
+            port.type = "TCP";
+            port.behavior = "open";
+            port.script = "";
+        }
+
+        var portDiv = document.getElementById("portTable");
+        var portUID;
+
+        if (portIndexes.length > 0) {
+            portUID = portIndexes[portIndexes.length - 1] + 1;
+        } else {
+            portUID = 0;
+        }
+        
+        portIndexes.push(portUID);
+
+        var row = "<tr id='portRow" + portUID + "'>";
+
+        row += "<td><input type='number' min=1 max=65535 value=" + port.portNum + "> </td>";
+        
+        row += "<td><select>"; 
+        options = ["UDP", "TCP"];
+        for (j = 0; j < options.length; j++) {
+            if (port.behavior == options[j]) {
+                row += "<option SELECTED>" + options[j] + "</option>";
+            } else {
+                row += "<option>" + options[j] + "</option>";
+            }
+        }
+        row += "</select></td>";
+
+        row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>"; 
+        options = ["open", "reset", "closed", "script"];
+        for (j = 0; j < options.length; j++) {
+            if (port.behavior == options[j]) {
+                row += "<option SELECTED>" + options[j] + "</option>";
+            } else {
+                row += "<option>" + options[j] + "</option>";
+            }
+        }
+        row += "</select></td>";
+        
+
+
+        row += "<td><select id='portScriptDrop";
+        row += portUID;
+        row += "'>"; 
+        var scripts = "#{scripts}";
+        options = scripts.split(",");
+        matchingScriptFound = false;
+        for (j = 0; j < options.length; j++) {
+            if (port.scriptName == options[j]) {
+                row += "<option SELECTED>" + options[j] + "</option>";
+                matchingScriptFound = true;
+            } else {
+                row += "<option>" + options[j] + "</option>";
+            }
+        }
+
+        // Have a blank option if no script is selected
+        if (!matchingScriptFound) {
+            row += "<option SELECTED> </option>";
+        } else {
+            row += "<option></option>";
+        }
+        row += "</td></select>"; 
+
+
+        // Delete button 
+        if (port.isInherited) {
+          row += "<td><button type='button' disabled = 'true'/> Inherited </td>";
+        } else {
+          row += "<td><button type='button' onClick='deletePort(" + portUID + ")'/> Delete </td>";
+        }
+ 
+        row += "</tr>";
+
+        portDiv.innerHTML += row;
+
+        portBehaviorChanged();
+    }  
 
     uptimeTypeChanged = function() {
         if (dojo.byId("uptimeType").selectedIndex == 0) {
             dojo.byId("uptimeMax").style.display = "none";
         } else {
             dojo.byId("uptimeMax").style.display = "block"; 
+        }
+    }
+
+    portBehaviorChanged = function() {
+        for (var i = 0; i < portIndexes.length; i++) {
+            if (document.getElementById("portBehavior" + portIndexes[i]).value == "script") {
+                document.getElementById("portScriptDrop" + portIndexes[i]).disabled = false;
+            } else {
+                document.getElementById("portScriptDrop" + portIndexes[i]).disabled = true;
+            }
+        }
+    }
+
+    deletePort = function(portUID) {
+        var row = document.getElementById("portRow" + portUID);
+        row.parentNode.removeChild(row);
+        var idx = portIndexes.indexOf(portUID);
+        if (idx != -1) {
+            portIndexes.splice(idx, 1);
         }
     }
     
@@ -89,6 +201,18 @@ block headerAdditions
     }
 
     now.ready(function() {
+        if (loaded) {
+          return;
+        } else {
+          loaded = true;
+        }
+
+        now.GetPorts(currentName, function(ports) {
+            for (var i = 0; i < ports.length; i++) {
+                addPort(ports[i]);
+            }
+        });
+
         now.GetProfile(currentName, function(pfile){
         profile = pfile;
 
@@ -133,6 +257,7 @@ block headerAdditions
         dojo.byId("inheritIcmpAction").checked = profile.isIcmpActionInherited;
 
         inheritanceChanged();
+        portBehaviorChanged();
       });
     });
     });
@@ -249,4 +374,15 @@ block content
         td
           mixin defaultActionBox('icmpAction')
 
+    br
+    h3 Profile Port Configuration
+    table#portTable
+
+    button(type="button", onClick="addPort()") Add New Port
+
+    br
+    br
+    br
+    
+    button(type="submit") Save Changes
 

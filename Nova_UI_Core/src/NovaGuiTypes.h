@@ -85,6 +85,10 @@ struct port
 	inline std::string GetProxyIP() {return proxyIP;}
 	inline std::string GetProxyPort() {return proxyPort;}
 
+	// This is only for the Javascript web interface, avoid use in C++
+	bool isInherited;
+	inline bool GetIsInherited() {return isInherited;};
+
 };
 //Container for accessing port items
 typedef google::dense_hash_map<std::string, port, std::tr1::hash<std::string>, eqstr > PortTable;
