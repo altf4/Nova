@@ -40,7 +40,7 @@ public:
 	static void Initialize(enum ProtocolDirection direction);
 	static MessageManager &Instance();
 
-	Nova::UI_Message *GetMessage(int socketFD, enum ProtocolDirection direction);
+	Nova::UI_Message *GetMessage(int socketFD, enum ProtocolDirection direction, int timeout);
 
 	//NOTE: Safely does nothing if socketFD already exists in the manager
 	void StartSocket(int socketFD);

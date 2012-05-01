@@ -143,7 +143,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 		//Claim the socket's mutex, so another protocol doesn't get mixed up in between
 		Lock lock = MessageManager::Instance().UseSocket(controlSocket);
 
-		UI_Message *message = UI_Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD);
+		UI_Message *message = UI_Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
@@ -441,7 +441,7 @@ bool SendSuspectToUI(Suspect *suspect)
 		return false;
 	}
 
-	UI_Message *suspectReply = UI_Message::ReadMessage(tempIPCSocketFD, DIRECTION_TO_UI);
+	UI_Message *suspectReply = UI_Message::ReadMessage(tempIPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
 	if(suspectReply->m_messageType == ERROR_MESSAGE )
 	{
 		ErrorMessage *error = (ErrorMessage*)suspectReply;

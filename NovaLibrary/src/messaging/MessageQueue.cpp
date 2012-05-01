@@ -25,6 +25,8 @@
 #include "unistd.h"
 #include "string.h"
 #include "stdio.h"
+#include <sys/time.h>
+#include "errno.h"
 
 namespace Nova
 {
@@ -83,39 +85,92 @@ MessageQueue::~MessageQueue()
 }
 
 //blocking call
-UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction)
+UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 {
 	//Only one thread in this function at a time
 	Lock lockPop(&m_popMutex);
 	UI_Message* retMessage;
 
-	if(direction == m_forwardDirection)
+	//If indefinite read:
+	if(timeout == 0)
 	{
-		//Protection for the queue structure
-		Lock lockQueue(&m_forwardQueueMutex);
-
-		//While loop to protect against spurious wakeups
-		while(m_forwardQueue.empty())
+		if(direction == m_forwardDirection)
 		{
-			pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
-		}
+			//Protection for the queue structure
+			Lock lockQueue(&m_forwardQueueMutex);
 
-		retMessage = m_forwardQueue.front();
-		m_forwardQueue.pop();
+			//While loop to protect against spurious wakeups
+			while(m_forwardQueue.empty())
+			{
+				pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
+			}
+
+			retMessage = m_forwardQueue.front();
+			m_forwardQueue.pop();
+		}
+		else
+		{
+			//Protection for the queue structure
+			Lock lockQueue(&m_callbackQueueMutex);
+
+			//While loop to protect against spurious wakeups
+			while(m_callbackQueue.empty())
+			{
+				pthread_cond_wait(&m_readWakeupCondition, &m_callbackQueueMutex);
+			}
+
+			retMessage = m_callbackQueue.front();
+			m_callbackQueue.pop();
+		}
 	}
+	//Read with timeout
 	else
 	{
-		//Protection for the queue structure
-		Lock lockQueue(&m_callbackQueueMutex);
+		struct timespec timespec;
+		struct timeval timeval;
+		gettimeofday(&timeval, NULL);		//TODO: Check this for error return code
+	    timespec.tv_sec  = timeval.tv_sec;
+	    timespec.tv_nsec = timeval.tv_usec * 1000;
+	    timespec.tv_sec += timeout;
 
-		//While loop to protect against spurious wakeups
-		while(m_callbackQueue.empty())
+		if(direction == m_forwardDirection)
 		{
-			pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
-		}
+			//Protection for the queue structure
+			Lock lockQueue(&m_forwardQueueMutex);
 
-		retMessage = m_callbackQueue.front();
-		m_callbackQueue.pop();
+			//While loop to protect against spurious wakeups
+			while(m_forwardQueue.empty())
+			{
+				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
+				if (errCondition == ETIMEDOUT)
+				{
+					retMessage = new ErrorMessage(ERROR_TIMEOUT);
+					break;
+				}
+			}
+
+			retMessage = m_forwardQueue.front();
+			m_forwardQueue.pop();
+		}
+		else
+		{
+			//Protection for the queue structure
+			Lock lockQueue(&m_callbackQueueMutex);
+
+			//While loop to protect against spurious wakeups
+			while(m_callbackQueue.empty())
+			{
+				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
+				if (errCondition == ETIMEDOUT)
+				{
+					retMessage = new ErrorMessage(ERROR_TIMEOUT);
+					break;
+				}
+			}
+
+			retMessage = m_callbackQueue.front();
+			m_callbackQueue.pop();
+		}
 	}
 
 	return retMessage;

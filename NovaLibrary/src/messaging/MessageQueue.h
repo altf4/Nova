@@ -39,7 +39,7 @@ public:
 	~MessageQueue();
 
 	//blocking call
-	UI_Message *PopMessage(enum ProtocolDirection direction);
+	UI_Message *PopMessage(enum ProtocolDirection direction, int timeout);
 
 	//Blocks until a callback message has been received
 	//	returns true if a callback message is ready and waiting for us

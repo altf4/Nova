@@ -44,7 +44,7 @@ UI_Message::~UI_Message()
 
 UI_Message *UI_Message::ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout)
 {
-	return MessageManager::Instance().GetMessage(connectFD, direction);
+	return MessageManager::Instance().GetMessage(connectFD, direction, timeout);
 }
 
 bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
