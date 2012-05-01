@@ -144,8 +144,7 @@ UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeo
 				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
 				if (errCondition == ETIMEDOUT)
 				{
-					retMessage = new ErrorMessage(ERROR_TIMEOUT);
-					break;
+					return new ErrorMessage(ERROR_TIMEOUT);
 				}
 			}
 
@@ -163,8 +162,7 @@ UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeo
 				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
 				if (errCondition == ETIMEDOUT)
 				{
-					retMessage = new ErrorMessage(ERROR_TIMEOUT);
-					break;
+					return new ErrorMessage(ERROR_TIMEOUT);
 				}
 			}
 
@@ -243,7 +241,7 @@ void *MessageQueue::ProducerThread()
 		{
 			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
 
-			if( bytesRead < 0 )
+			if(bytesRead <= 0)
 			{
 				//The socket died on us!
 				//Mark the queue as closed, put an error message on the queue, and quit reading
@@ -282,7 +280,7 @@ void *MessageQueue::ProducerThread()
 		{
 			bytesRead = read(m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
 
-			if( bytesRead < 0 )
+			if(bytesRead <= 0)
 			{
 				//The socket died on us!
 				//Mark the queue as closed, put an error message on the queue, and quit reading

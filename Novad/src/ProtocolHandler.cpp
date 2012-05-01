@@ -442,20 +442,6 @@ bool SendSuspectToUI(Suspect *suspect)
 	}
 
 	UI_Message *suspectReply = UI_Message::ReadMessage(tempIPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
-	if(suspectReply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)suspectReply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			//Only bother closing the socket if it's not already closed
-			if(tempIPCSocketFD != -1)
-			{
-				MessageManager::Instance().CloseSocket(tempIPCSocketFD);
-			}
-		}
-		delete error;
-		return false;
-	}
 	if(suspectReply->m_messageType != CALLBACK_MESSAGE)
 	{
 		delete suspectReply;

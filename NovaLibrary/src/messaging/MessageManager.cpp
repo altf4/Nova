@@ -73,7 +73,18 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 		}
 	}
 
-	return queue->PopMessage(direction, timeout);
+	UI_Message *message = queue->PopMessage(direction, timeout);
+	if(message->m_messageType == ERROR_MESSAGE)
+	{
+		ErrorMessage *errorMessage = (ErrorMessage*)message;
+		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
+		{
+			CloseSocket(socketFD);
+			cout << "CLOSED FROM GetMessage()!: << " << socketFD << endl;
+		}
+	}
+
+	return message;
 }
 
 void MessageManager::StartSocket(int socketFD)
@@ -119,7 +130,6 @@ void MessageManager::CloseSocket(int socketFD)
 	{
 		shutdown(socketFD, SHUT_RDWR);
 		close(socketFD);
-		cout << "CLOSED IT!: << " << socketFD << endl;
 	}
 }
 
