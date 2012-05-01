@@ -37,6 +37,7 @@ test: test-prepare
 	$(MAKE) -C NovaTest/Debug
 
 web:
+	cd NovaWeb;npm --unsafe-perm install
 	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
 
 # Make debug + test
