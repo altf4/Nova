@@ -34,7 +34,7 @@ class MessageManager
 
 public:
 
-	//Initialize must be called exactly once at the begining of the program, before and calls to Instance()
+	//Initialize must be called exactly once at the beginning of the program, before and calls to Instance()
 	//	It informs the MessageManager which side of the protocol it will be handling.
 	//	IE: DIRECTION_TO_UI is for Novad, DIRECTION_TO_NOVAD is for a UI
 	static void Initialize(enum ProtocolDirection direction);
@@ -60,7 +60,7 @@ public:
 	void CloseSocket(int socketFD);
 
 	//Waits for a new callback protocol to start on the given socket
-	void RegisterCallback(int socketFD);
+	bool RegisterCallback(int socketFD);
 
 private:
 
@@ -72,19 +72,14 @@ private:
 	//		DIRECTION_TO_NOVAD: We are a Nova UI
 	MessageManager(enum ProtocolDirection direction);
 
-	//Looks up the mutex in the m_queueLocks list
-	Lock LockQueue(int socketFD);
-
 	//Mutexes for the lock maps;
 	pthread_mutex_t m_queuesLock;		//protects m_queueLocks
-	pthread_mutex_t m_socketsLock;		//protects m_socketLocks
+	pthread_mutex_t m_protocolLock;		//protects m_socketLocks
 
 	//These two maps must be kept synchronized
 	//	Maintains the message queues
 	std::map<int, MessageQueue*> m_queues;
-	std::map<int, pthread_mutex_t*> m_queueLocks;
-
-	std::map<int, pthread_mutex_t*> m_socketLocks;
+	std::map<int, pthread_mutex_t*> m_protocolLocks;
 
 	enum ProtocolDirection m_forwardDirection;
 };

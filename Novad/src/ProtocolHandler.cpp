@@ -132,7 +132,12 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	while(keepLooping)
 	{
 		//Wait for a callback to occur
-		MessageManager::Instance().RegisterCallback(controlSocket);
+		//If register comes back false, then the socket was closed. So exit the thread
+		if(!MessageManager::Instance().RegisterCallback(controlSocket))
+		{
+			keepLooping = false;
+			continue;
+		}
 
 		//TODO: Is this actually necessary? Might not be
 		//Claim the socket's mutex, so another protocol doesn't get mixed up in between

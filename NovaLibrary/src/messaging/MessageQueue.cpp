@@ -39,6 +39,7 @@ MessageQueue::MessageQueue(int socket, enum ProtocolDirection direction)
 	pthread_cond_init(&m_readWakeupCondition, NULL);
 	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
+	m_isShutDown = false;
 	m_callbackDoWakeup = false;
 	m_forwardDirection = direction;
 	m_socketFD = socket;
@@ -50,20 +51,17 @@ MessageQueue::~MessageQueue()
 {
 	//Shutdown will cause the producer thread to make an ErrorMessage then quit
 	shutdown(m_socketFD, SHUT_RDWR);
+	close(m_socketFD);
 
-	//We then must wait for the popping thread to finish
-	//	Can't let it wake up into a destroyed object
-	//	So this lock will either wait for the pop message to finish, or just
-	//	go ahead if there is none
-	{
-		Lock lockPop();
-	}
+	//Wait for the producer thread to finish,
+	// We can't have his object destroyed out from underneath him
+	pthread_join(m_producerThread, NULL);
 
 	pthread_mutex_destroy(&m_forwardQueueMutex);
-	pthread_mutex_destroy(&m_popMutex);
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
 	pthread_mutex_destroy(&m_callbackCondMutex);
 	pthread_mutex_destroy(&m_callbackQueueMutex);
+	pthread_mutex_destroy(&m_popMutex);
 	pthread_cond_destroy(&m_readWakeupCondition);
 	pthread_cond_destroy(&m_callbackWakeupCondition);
 }
@@ -143,7 +141,7 @@ void MessageQueue::PushMessage(UI_Message *message)
 	}
 }
 
-void MessageQueue::RegisterCallback()
+bool MessageQueue::RegisterCallback()
 {
 	//Only one thread in this function at a time
 	Lock lock(&m_callbackRegisterMutex);
@@ -156,6 +154,8 @@ void MessageQueue::RegisterCallback()
 	}
 
 	m_callbackDoWakeup = false;
+
+	return !m_isShutDown;
 }
 
 void *MessageQueue::ProducerThread()
@@ -175,7 +175,8 @@ void *MessageQueue::ProducerThread()
 			if( bytesRead < 0 )
 			{
 				//The socket died on us!
-				//Put an error message on the queue, and quit reading
+				//Mark the queue as closed, put an error message on the queue, and quit reading
+				m_isShutDown = true;
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
 				return NULL;
 			}
@@ -213,7 +214,8 @@ void *MessageQueue::ProducerThread()
 			if( bytesRead < 0 )
 			{
 				//The socket died on us!
-				//Put an error message on the queue, and quit reading
+				//Mark the queue as closed, put an error message on the queue, and quit reading
+				m_isShutDown = true;
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
 				return NULL;
 			}

@@ -42,7 +42,9 @@ public:
 	UI_Message *PopMessage(enum ProtocolDirection direction);
 
 	//Blocks until a callback message has been received
-	void RegisterCallback();
+	//	returns true if a callback message is ready and waiting for us
+	//			false if message queue has been closed and needs to be deleted
+	bool RegisterCallback();
 
 private:
 
@@ -55,7 +57,7 @@ private:
 
 	std::queue<UI_Message*> m_forwardQueue;
 	std::queue<UI_Message*> m_callbackQueue;
-	bool isShutDown;
+	bool m_isShutDown;
 
 	enum ProtocolDirection m_forwardDirection;
 

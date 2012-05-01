@@ -30,14 +30,19 @@ extern int IPCSocketFD;
 
 struct CallbackChange Nova::ProcessCallbackMessage()
 {
+	struct CallbackChange change;
+	change.type = CALLBACK_ERROR;
+
 	//Wait for a callback to occur
-	MessageManager::Instance().RegisterCallback(IPCSocketFD);
+	//	If it comes back false, then that means the socket is dead
+	if(!MessageManager::Instance().RegisterCallback(IPCSocketFD))
+	{
+		change.type = CALLBACK_HUNG_UP;
+		return change;
+	}
 
 	//Claim the socket's mutex, so another protocol doesn't get mixed up in between
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
-
-	struct CallbackChange change;
-	change.type = CALLBACK_ERROR;
 
 	UI_Message *message = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI);
 	if( message->m_messageType == ERROR_MESSAGE)

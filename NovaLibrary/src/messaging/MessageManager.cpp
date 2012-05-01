@@ -35,7 +35,7 @@ MessageManager *MessageManager::m_instance = NULL;
 MessageManager::MessageManager(enum ProtocolDirection direction)
 {
 	pthread_mutex_init(&m_queuesLock, NULL);
-	pthread_mutex_init(&m_socketsLock, NULL);
+	pthread_mutex_init(&m_protocolLock, NULL);
 	m_forwardDirection = direction;
 }
 
@@ -59,12 +59,14 @@ MessageManager &MessageManager::Instance()
 
 UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection direction)
 {
-	UI_Message *retMessage;
+
+	MessageQueue *queue;
+
 	{
-		Lock lock = LockQueue(socketFD);
+		Lock lock(&m_queuesLock);
 		if(m_queues.count(socketFD) > 0)
 		{
-			retMessage = m_queues[socketFD]->PopMessage(direction);
+			queue = m_queues[socketFD];
 		}
 		else
 		{
@@ -72,43 +74,16 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 		}
 	}
 
-	if(retMessage->m_messageType == ERROR_MESSAGE)
-	{
-		ErrorMessage *errorMessage = (ErrorMessage*)retMessage;
-		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			{
-				Lock lock = LockQueue(socketFD);
-				delete m_queues[socketFD];
-				m_queues.erase(socketFD);
-			}
-
-			cout << "DELETED SOCKET: " << socketFD << endl;
-
-		}
-	}
-
-	return retMessage;
+	return queue->PopMessage(direction);
 }
 
 void MessageManager::StartSocket(int socketFD)
 {
 	cout << "Number of MessageQueues open = " << m_queues.size() << endl;
 
-	//Initialize the socket lock if it doesn't yet exist
-	{
-		Lock socketLock(&m_socketsLock);
-		if(m_socketLocks.count(socketFD) == 0)
-		{
-			//If there is no lock object here yet, initialize it
-			m_socketLocks[socketFD] = new pthread_mutex_t;
-			pthread_mutex_init(m_socketLocks[socketFD], NULL);
-		}
-	}
-
 	//Initialize the MessageQueue if it doesn't yet exist
 	{
-		Lock lock = LockQueue(socketFD);
+		Lock lock(&m_queuesLock);
 		if(m_queues.count(socketFD) == 0)
 		{
 			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
@@ -116,32 +91,25 @@ void MessageManager::StartSocket(int socketFD)
 	}
 }
 
-//Looks up the mutex in the m_queueLocks list
-Lock MessageManager::LockQueue(int socketFD)
-{
-	pthread_mutex_t *qMutex;
-	//Initialize the queue lock if it doesn't yet exist
-	{
-		Lock queueLock(&m_queuesLock);
-		if(m_queueLocks.count(socketFD) == 0)
-		{
-			//If there is no lock object here yet, initialize it
-			m_queueLocks[socketFD] = new pthread_mutex_t;
-			pthread_mutex_init(m_queueLocks[socketFD], NULL);
-		}
-		qMutex = m_queueLocks[socketFD];
-	}
-
-	return Lock(qMutex);
-}
-
 Lock MessageManager::UseSocket(int socketFD)
 {
-
+	//Creates a message queue, if one does not already exist
 	StartSocket(socketFD);
 
-	Lock lock(&m_socketsLock);
-	return Lock(m_socketLocks[socketFD]);
+	pthread_mutex_t *mutex;
+	{
+		//Initialize the protocol lock if it doesn't yet exist
+		Lock lock(&m_protocolLock);
+		if(m_protocolLocks.count(socketFD) == 0)
+		{
+			//If there is no lock object here yet, initialize it
+			m_protocolLocks[socketFD] = new pthread_mutex_t;
+			pthread_mutex_init(m_protocolLocks[socketFD], NULL);
+		}
+		mutex =  m_protocolLocks[socketFD];
+	}
+
+	return Lock(mutex);
 }
 
 void MessageManager::CloseSocket(int socketFD)
@@ -156,7 +124,7 @@ void MessageManager::CloseSocket(int socketFD)
 	}
 }
 
-void MessageManager::RegisterCallback(int socketFD)
+bool MessageManager::RegisterCallback(int socketFD)
 {
 	bool foundIt = false;
 	MessageQueue *queue;
@@ -172,9 +140,20 @@ void MessageManager::RegisterCallback(int socketFD)
 
 	if(foundIt)
 	{
-		queue->RegisterCallback();
-	}
+		//If register comes back false, then we have to clean up the dead MessageQueue
+		bool isQueueAlive = queue->RegisterCallback();
+		if(!isQueueAlive)
+		{
+			//Destructor here is a blocking call. So we call that before locking the queues mutex
+			delete queue;
+			Lock lock(&m_queuesLock);
+			m_queues.erase(socketFD);
 
+			cout << "DELETED SOCKET: " << socketFD << endl;
+		}
+		return isQueueAlive;
+	}
+	return false;
 }
 
 }
