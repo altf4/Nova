@@ -69,7 +69,7 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 		}
 		else
 		{
-			return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			return new ErrorMessage(ERROR_SOCKET_CLOSED, direction);
 		}
 	}
 
@@ -80,7 +80,6 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
 			CloseSocket(socketFD);
-			cout << "CLOSED FROM GetMessage()!: << " << socketFD << endl;
 		}
 	}
 

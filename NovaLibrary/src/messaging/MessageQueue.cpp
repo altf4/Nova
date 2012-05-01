@@ -144,7 +144,7 @@ UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeo
 				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
 				if (errCondition == ETIMEDOUT)
 				{
-					return new ErrorMessage(ERROR_TIMEOUT);
+					return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
 				}
 			}
 
@@ -162,7 +162,7 @@ UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeo
 				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
 				if (errCondition == ETIMEDOUT)
 				{
-					return new ErrorMessage(ERROR_TIMEOUT);
+					return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
 				}
 			}
 
@@ -246,7 +246,9 @@ void *MessageQueue::ProducerThread()
 				//The socket died on us!
 				//Mark the queue as closed, put an error message on the queue, and quit reading
 				m_isShutDown = true;
-				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
+				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
+				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
+				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
 				return NULL;
 			}
 			else
@@ -260,7 +262,7 @@ void *MessageQueue::ProducerThread()
 		memcpy(&length, buff, sizeof(length));
 		if (length == 0)
 		{
-			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE));
+			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
 			continue;
 		}
 
@@ -269,7 +271,7 @@ void *MessageQueue::ProducerThread()
 		if (buffer == NULL)
 		{
 			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
-			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE));
+			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
 			continue;
 		}
 
@@ -285,7 +287,9 @@ void *MessageQueue::ProducerThread()
 				//The socket died on us!
 				//Mark the queue as closed, put an error message on the queue, and quit reading
 				m_isShutDown = true;
-				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
+				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
+				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
+				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
 				return NULL;
 			}
 			else
@@ -297,11 +301,11 @@ void *MessageQueue::ProducerThread()
 
 		if(length < MESSAGE_MIN_SIZE)
 		{
-			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE));
+			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
 			continue;
 		}
 
-		PushMessage(UI_Message::Deserialize(buffer, length));
+		PushMessage(UI_Message::Deserialize(buffer, length, m_forwardDirection));
 		continue;
 	}
 

@@ -76,10 +76,11 @@ public:
 	//Creates a new UI_Message from a given buffer. Calls the appropriate child constructor
 	//	buffer - char pointer to a buffer in memory where the serialized message is at
 	//	length - length of the buffer
+	//	direction - protocol direction that we expect the message to be going. Used in error conditions when there is no valid message
 	// Returns - Pointer to newly allocated UI_Message object
 	//				returns NULL on error
 	//	NOTE: The caller must manually delete the returned object when finished with it
-	static UI_Message *Deserialize(char *buffer, uint32_t length);
+	static UI_Message *Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction);
 
 	enum ProtocolDirection m_protocolDirection;
 

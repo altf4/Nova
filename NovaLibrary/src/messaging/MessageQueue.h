@@ -57,7 +57,7 @@ private:
 
 	std::queue<UI_Message*> m_forwardQueue;
 	std::queue<UI_Message*> m_callbackQueue;
-	bool m_isShutDown;
+	bool m_isShutDown;							//TODO: Synchronize this. Needs to have a mutex around access to it
 
 	enum ProtocolDirection m_forwardDirection;
 

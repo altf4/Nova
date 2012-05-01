@@ -22,12 +22,6 @@
 namespace Nova
 {
 
-ErrorMessage::ErrorMessage(enum ErrorType errorType)
-{
-	m_messageType = ERROR_MESSAGE;
-	m_errorType = errorType;
-}
-
 ErrorMessage::ErrorMessage(enum ErrorType errorType, enum ProtocolDirection direction)
 {
 	m_messageType = ERROR_MESSAGE;

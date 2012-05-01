@@ -134,63 +134,51 @@ void UI_Message::SerializeHeader(char **buffer)
 	*buffer += sizeof(m_protocolDirection);
 }
 
-UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length)
+UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction)
 {
 	if(length < MESSAGE_MIN_SIZE)
 	{
-		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE, direction);
 	}
 
 	enum UI_MessageType thisType;
 	memcpy(&thisType, buffer, MESSAGE_MIN_SIZE);
 
+	UI_Message *message;
 	switch(thisType)
 	{
 		case CONTROL_MESSAGE:
 		{
-			ControlMessage *message = new ControlMessage(buffer, length);
-			if(message->m_serializeError)
-			{
-				delete message;
-				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
-			}
-			return message;
+			message = new ControlMessage(buffer, length);
+			break;
 		}
 		case CALLBACK_MESSAGE:
 		{
-			CallbackMessage *message = new CallbackMessage(buffer, length);
-			if(message->m_serializeError)
-			{
-				delete message;
-				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
-			}
-			return message;
+			message = new CallbackMessage(buffer, length);
+			break;
 		}
 		case REQUEST_MESSAGE:
 		{
-			RequestMessage *message = new RequestMessage(buffer, length);
-			if(message->m_serializeError)
-			{
-				delete message;
-				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
-			}
-			return message;
+			message = new RequestMessage(buffer, length);
+			break;
 		}
 		case ERROR_MESSAGE:
 		{
-			ErrorMessage *message = new ErrorMessage(buffer, length);
-			if(message->m_serializeError)
-			{
-				delete message;
-				return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
-			}
-			return message;
+			message = new ErrorMessage(buffer, length);
+			break;
 		}
 		default:
 		{
-			return new ErrorMessage(ERROR_UNKNOWN_MESSAGE_TYPE);
+			return new ErrorMessage(ERROR_UNKNOWN_MESSAGE_TYPE, direction);
 		}
 	}
+
+	if(message->m_serializeError)
+	{
+		delete message;
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE, direction);
+	}
+	return message;
 }
 
 char *UI_Message::Serialize(uint32_t *length)
