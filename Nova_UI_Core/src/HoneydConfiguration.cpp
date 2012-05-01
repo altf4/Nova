@@ -1436,7 +1436,6 @@ string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
 	return addrStrm;
 }
 
-//Either deletes a profile or updates the window to reflect a profile name change
 void HoneydConfiguration::DeleteProfile(profile * p)
 {
 	vector<string> delList;
@@ -1453,6 +1452,16 @@ void HoneydConfiguration::DeleteProfile(profile * p)
 		delList.pop_back();
 	}
 	m_profiles.erase(p->name);
+}
+
+bool HoneydConfiguration::DeleteProfile(std::string profileName)
+{
+	// TODO @ Dave
+	LOG(WARNING, "TODO. This is a dummy function. No profile was actually deleted TODO", "");
+
+	/*
+	 * The web UI currently calls this for attempts to delete a profile
+	 */
 }
 
 void HoneydConfiguration::RenameProfile(profile * p, string newName)

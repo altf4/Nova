@@ -272,6 +272,28 @@ everyone.now.deleteNode = function(nodeName)
 	honeydConfig.SaveAllTemplates();
 }
 
+everyone.now.deleteProfile = function(profileName)
+{
+	var returnValue = true;
+	
+	if (!honeydConfig.DeleteProfile(profileName)) {
+		returnValue = false;
+	}
+	
+	
+	if (!honeydConfig.SaveAllTemplates()) {
+		returnValue = false;
+	}
+	
+	if (returnValue) {
+		console.log("Deleted honeyd profile " + profileName);
+	} else {
+		console.log("Failed deleted honeyd profile " + profileName);
+	}
+
+	return returnValue;
+}
+
 everyone.now.GetProfile = function(profileName, callback) {
 	var profile = honeydConfig.GetProfile(profileName);
 	

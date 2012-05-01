@@ -32,6 +32,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNode"),FunctionTemplate::New(AddNewNode)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(DeleteNode)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
 
   
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
@@ -148,6 +149,20 @@ Handle<Value> HoneydConfigBinding::DeleteNode(const Arguments& args)
 
 	std::string name = cvv8::CastFromJS<std::string>(args[0]);
 	return scope.Close(Boolean::New(obj->m_conf->DeleteNode(name)));
+}
+
+Handle<Value> HoneydConfigBinding::DeleteProfile(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if (args.Length() != 1)
+	{
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+	}
+
+	std::string name = cvv8::CastFromJS<std::string>(args[0]);
+	return scope.Close(Boolean::New(obj->m_conf->DeleteProfile(name)));
 }
 
 Handle<Value> HoneydConfigBinding::GetProfileNames(const Arguments& args) 
