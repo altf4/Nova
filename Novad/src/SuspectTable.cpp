@@ -610,21 +610,26 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 			dataSize += suspect->GetSerializeLength(ALL_FEATURE_DATA);
 		}
 	}
-	out->write((char*)&saveTime, sizeof saveTime);
-	out->write((char*)&dataSize, sizeof dataSize);
-	for(uint i = 0; i < m_keys.size(); i++)
+	if(dataSize)
 	{
-		if(IsValidKey_NonBlocking(m_keys[i]))
+		out->write((char*)&saveTime, sizeof saveTime);
+		ret += sizeof saveTime;
+		out->write((char*)&dataSize, sizeof dataSize);
+		ret += sizeof dataSize;
+		for(uint i = 0; i < m_keys.size(); i++)
 		{
-			Suspect * suspect = m_suspectTable[m_keys[i]];
-			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
-				&& !suspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
+			if(IsValidKey_NonBlocking(m_keys[i]))
 			{
-				continue;
+				Suspect * suspect = m_suspectTable[m_keys[i]];
+				if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
+					&& !suspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
+				{
+					continue;
+				}
+				dataSize = suspect->Serialize(tableBuffer, ALL_FEATURE_DATA);
+				out->write((char*) tableBuffer, dataSize);
+				ret += dataSize;
 			}
-			dataSize = suspect->Serialize(tableBuffer, ALL_FEATURE_DATA);
-			out->write((char*) tableBuffer, dataSize);
-			ret += dataSize;
 		}
 	}
 	pthread_rwlock_unlock(&m_lock);
@@ -693,7 +698,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			in_addr_t key = newSuspect->GetIpAddress();
 			// If our suspect has no evidence, throw it out
 			if(!newSuspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
-					|| !newSuspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
+					&& !newSuspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
 			{
 				LOG(WARNING,"Discarding invalid suspect.",
 					"A suspect containing no evidence was detected and discarded");
