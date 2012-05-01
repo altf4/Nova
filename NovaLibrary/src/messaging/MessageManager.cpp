@@ -88,8 +88,6 @@ UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection dire
 
 void MessageManager::StartSocket(int socketFD)
 {
-	cout << "Number of MessageQueues open = " << m_queues.size() << endl;
-
 	//Initialize the MessageQueue if it doesn't yet exist
 	{
 		Lock lock(&m_queuesLock);
