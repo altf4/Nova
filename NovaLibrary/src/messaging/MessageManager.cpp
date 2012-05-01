@@ -144,8 +144,13 @@ bool MessageManager::RegisterCallback(int socketFD)
 		bool isQueueAlive = queue->RegisterCallback();
 		if(!isQueueAlive)
 		{
+
 			//Destructor here is a blocking call. So we call that before locking the queues mutex
-			delete queue;
+			{
+				//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
+				Lock protocolLock(UseSocket(socketFD));
+				delete queue;
+			}
 			Lock lock(&m_queuesLock);
 			m_queues.erase(socketFD);
 

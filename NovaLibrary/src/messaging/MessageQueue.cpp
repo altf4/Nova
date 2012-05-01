@@ -47,15 +47,31 @@ MessageQueue::MessageQueue(int socket, enum ProtocolDirection direction)
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
 }
 
+//Destructor should only be called by the callback thread, and also only while
+//	the protocol lock in MessageManager is held. This is done to avoid
+//	race conditions in deleting the object.
 MessageQueue::~MessageQueue()
 {
 	//Shutdown will cause the producer thread to make an ErrorMessage then quit
+	//This is probably redundant, but we do it again just to make sure
 	shutdown(m_socketFD, SHUT_RDWR);
 	close(m_socketFD);
 
 	//Wait for the producer thread to finish,
 	// We can't have his object destroyed out from underneath him
 	pthread_join(m_producerThread, NULL);
+
+	//Delete any straggling messages in the queues
+	while(!m_forwardQueue.empty())
+	{
+		delete m_forwardQueue.front();
+		m_forwardQueue.pop();
+	}
+	while(!m_callbackQueue.empty())
+	{
+		delete m_callbackQueue.front();
+		m_callbackQueue.pop();
+	}
 
 	pthread_mutex_destroy(&m_forwardQueueMutex);
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
