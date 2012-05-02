@@ -53,7 +53,7 @@ MessageManager &MessageManager::Instance()
 	return *MessageManager::m_instance;
 }
 
-UI_Message *MessageManager::GetMessage(int socketFD, enum ProtocolDirection direction, int timeout)
+UI_Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection direction, int timeout)
 {
 	MessageQueue *queue;
 

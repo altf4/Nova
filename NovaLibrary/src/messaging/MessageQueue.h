@@ -32,13 +32,28 @@ class MessageQueue
 {
 public:
 
-	MessageQueue(int socket, enum ProtocolDirection direction);
+	//Contructor for MessageQueue
+	//	socketFD - The socket file descriptor the queue will listen on
+	//	direction - The protocol direction that is considered forward
+	MessageQueue(int socketFD, enum ProtocolDirection forwardDirection);
 
-	//Will block and wait until no threads are waiting on its queue
-	//	To prevent a thread from waking up in a destroyed object
+	//Destructor should only be called by the callback thread, and also only while
+	//	the protocol lock in MessageManager is held. This is done to avoid
+	//	race conditions in deleting the object.
 	~MessageQueue();
 
-	//blocking call
+	//Pop off a message from the specified direction
+	//	ProtocolDirection - Which direction is PROTOCOL to which this message belongs initiated
+	//	timeout - How long (in seconds) to wait for the message before giving up
+	// Returns - A pointer to a valid UI_Message object. Never NULL. Caller is responsible for life cycle of this message
+	//		On error, this function returns an ErrorMessage with the details of the error
+	//		IE: Returns ErrorMessage of type ERROR_TIMEOUT if timeout has been exceeded
+	//	NOTE: You must have the lock on the socket by calling UseSocket() prior to calling this
+	//		(Or bad things will happen)
+	//	NOTE: Blocking function
+	//	NOTE: Will automatically call CloseSocket() for you if the message returned happens to be an ERROR_MESSAGE
+	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
+	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
 	UI_Message *PopMessage(enum ProtocolDirection direction, int timeout);
 
 	//Blocks until a callback message has been received
@@ -48,11 +63,17 @@ public:
 
 private:
 
-	//Producer thread, adds to queue
+	//Producer thread helper. Used so that the producer thread can be a member of the MessageQueue class
+	//	pthreads normally are static
 	static void *StaticThreadHelper(void *ptr);
 
+	//Pushes a new message onto the appropriate message queue
+	//	message - The UI_Message to push
+	//	NOTE: tThe direction of the message is read directly from the message itself
 	void PushMessage(UI_Message *message);
 
+	//Thread which continually loops, doing read() calls on the underlying socket and pushing messages read onto the queues
+	//	Thread quits as soon as read fails (returns <= 0). This can be made to happen through a CloseSocket() call from MessageManager
 	void *ProducerThread();
 
 	std::queue<UI_Message*> m_forwardQueue;

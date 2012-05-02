@@ -31,7 +31,7 @@
 namespace Nova
 {
 
-MessageQueue::MessageQueue(int socket, enum ProtocolDirection direction)
+MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection)
 {
 	pthread_mutex_init(&m_forwardQueueMutex, NULL);
 	pthread_mutex_init(&m_popMutex, NULL);
@@ -43,8 +43,8 @@ MessageQueue::MessageQueue(int socket, enum ProtocolDirection direction)
 
 	m_isShutDown = false;
 	m_callbackDoWakeup = false;
-	m_forwardDirection = direction;
-	m_socketFD = socket;
+	m_forwardDirection = forwardDirection;
+	m_socketFD = socketFD;
 
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
 }
