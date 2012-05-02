@@ -19,9 +19,11 @@
 
 #include "ClassificationEngine.h"
 #include "SuspectTable.h"
+#include "HashMap.h"
 #include "Config.h"
 #include "Logger.h"
 #include "Novad.h"
+
 
 #include <fstream>
 #include <sstream>
@@ -694,7 +696,19 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 		while(offset < dataSize)
 		{
 			Suspect* newSuspect = new Suspect();
-			offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
+
+			try {
+				offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
+			} catch (Nova::emptyKeyException& e) {
+				LOG(ERROR, "The state file may be corrupt, a hash table empty key exception was caught during deserialization", "");
+				pthread_rwlock_unlock(&m_lock);
+				return 0;
+			} catch (Nova::deleteKeyException& e) {
+				LOG(ERROR, "The state file may be corrupt, a hash table empty key exception was caught during deserialization", "");
+				pthread_rwlock_unlock(&m_lock);
+				return 0;
+			}
+
 			in_addr_t key = newSuspect->GetIpAddress();
 			// If our suspect has no evidence, throw it out
 			if(!newSuspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
