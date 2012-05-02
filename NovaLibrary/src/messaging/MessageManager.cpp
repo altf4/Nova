@@ -23,10 +23,6 @@
 
 #include <sys/socket.h>
 
-//TODO: Get rid of this after debugging
-#include <iostream>
-using namespace std;
-
 namespace Nova
 {
 
@@ -159,8 +155,6 @@ bool MessageManager::RegisterCallback(int socketFD)
 			}
 			Lock lock(&m_queuesLock);
 			m_queues.erase(socketFD);
-
-			cout << "DELETED SOCKET: " << socketFD << endl;
 		}
 		return isQueueAlive;
 	}
