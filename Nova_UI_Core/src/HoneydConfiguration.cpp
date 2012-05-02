@@ -35,14 +35,6 @@ namespace Nova
 
 HoneydConfiguration::HoneydConfiguration()
 {
-	//TODO Implement once we support multiple configurations
-	/*switch(Config::Inst()->GetHaystackStorage())
-	{
-		default:
-		{
-			break;
-		}
-	}*/
 	m_macAddresses.LoadPrefixFile();
 
 	m_homePath = Config::Inst()->GetPathHome();
@@ -68,6 +60,95 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 		i--;
 	}
 	return i;
+}
+
+//Adds a port with the specified configuration into the port table
+//	portNum: Must be a valid port number (1-65535)
+//	isTCP: if true the port uses TCP, if false it uses UDP
+//	behavior: how this port treats incoming connections
+//	scriptName: this parameter is only used if behavior == SCRIPT, in which case it designates
+//		the key of the script it can lookup and execute for incoming connections on the port
+//	Note(s): If CleanPorts is called before using this port in a profile, it will be deleted
+//			If using a script it must exist in the script table before calling this function
+//Returns: the port name if successful and an empty string if unsuccessful
+string HoneydConfiguration::AddPort(uint16_t portNum, bool isTCP, portBehavior behavior, string scriptName)
+{
+	port pr;
+	//Check the validity and assign the port number
+	if(!portNum)
+	{
+		LOG(ERROR, "Cannot create port: Port Number of 0 is Invalid.", "");
+		return "";
+	}
+	pr.portNum = portNum;
+
+	//Assign the port type (UDP or TCP)
+	if(isTCP)
+	{
+		pr.type = "TCP";
+	}
+	else
+	{
+		pr.type = "UDP";
+	}
+
+	//Check and assign the port behavior
+	switch(behavior)
+	{
+		case BLOCK:
+		{
+			pr.behavior = "block";
+			break;
+		}
+		case OPEN:
+		{
+			pr.behavior = "open";
+			break;
+		}
+		case RESET:
+		{
+			pr.behavior = "reset";
+			break;
+		}
+		case SCRIPT:
+		{
+			//If the script does not exist
+			if(m_scripts.find(scriptName) == m_scripts.end())
+			{
+				LOG(ERROR, "Cannot create port: specified script "+ scriptName +" does not exist.", "");
+				return "";
+			}
+			pr.behavior = "script";
+			pr.scriptName = scriptName;
+			break;
+		}
+		default:
+		{
+			LOG(ERROR, "Cannot create port: Attempting to use unknown port behavior", "");
+			return "";
+		}
+	}
+
+	//	Creates the ports unique identifier these names won't collide unless the port is the same
+	if(behavior == SCRIPT)
+	{
+		pr.portName = "" + pr.portNum + "_" + pr.type + "_" + pr.scriptName;
+	}
+	else
+	{
+		pr.portName = "" + pr.portNum + "_" + pr.type + "_" + pr.behavior;
+	}
+
+	//Checks if the port already exists
+	if(m_ports.find(pr.portName) != m_ports.end())
+	{
+		LOG(DEBUG, "Cannot create port: Specified port " + pr.portName + " already exists.", "");
+		return "";
+	}
+
+	//Adds the port into the table
+	m_ports[pr.portName] = pr;
+	return pr.portName;
 }
 
 //Calls all load functions
@@ -1128,26 +1209,26 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 	return childProfiles;
 }
 
-Nova::profile * HoneydConfiguration::GetProfile(std::string name)
+Nova::profile * HoneydConfiguration::GetProfile(std::string profileName)
 {
-	if (m_profiles.find(name) == m_profiles.end())
+	if (m_profiles.find(profileName) == m_profiles.end())
 	{
 		return NULL;
 	}
 	else
 	{
 		profile *ret = new profile();
-		*ret = m_profiles[name];
+		*ret = m_profiles[profileName];
 		return ret;
 	}
 }
 
-Nova::port * HoneydConfiguration::GetPort(std::string name)
+Nova::port * HoneydConfiguration::GetPort(std::string portName)
 {
-	if (m_ports.find(name) != m_ports.end())
+	if(m_ports.find(portName) != m_ports.end())
 	{
 		port *p = new port();
-		*p = m_ports[name];
+		*p = m_ports[portName];
 		return p;
 	}
 	return NULL;
@@ -1399,13 +1480,13 @@ bool HoneydConfiguration::IsIPUsed(std::string ip)
 	return false;
 }
 
-bool HoneydConfiguration::IsProfileUsed(std::string profile)
+bool HoneydConfiguration::IsProfileUsed(std::string profileName)
 {
 	//Find out if any nodes use this profile
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		//if we find a node using this profile
-		if(!it->second.pfile.compare(profile))
+		if(!it->second.pfile.compare(profileName))
 		{
 			return true;
 		}
@@ -1413,7 +1494,7 @@ bool HoneydConfiguration::IsProfileUsed(std::string profile)
 	return false;
 }
 
-void HoneydConfiguration::RegenerateMACAddresses(string profileName)
+void HoneydConfiguration::GenerateMACAddresses(string profileName)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
@@ -1431,45 +1512,32 @@ string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
 	do
 	{
 		addrStrm = m_macAddresses.GenerateRandomMAC(vendor);
-	} while (IsMACUsed(addrStrm));
+	}while(IsMACUsed(addrStrm));
 
 	return addrStrm;
 }
-
-void HoneydConfiguration::DeleteProfile(profile * p)
+//Inserts the profile into the honeyd configuration
+//	profile: pointer to the profile you wish to add
+//	Returns (true) if the profile could be created, (false) if it cannot.
+bool HoneydConfiguration::AddProfile(profile * profile)
 {
-	vector<string> delList;
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	if(m_profiles.find(profile->name) == m_profiles.end())
 	{
-		if(!it->second.pfile.compare(p->name))
-		{
-			delList.push_back(it->second.name);
-		}
+		m_profiles[profile->name] = *profile;
+		CreateProfileTree(profile->name);
+		UpdateProfileTree(profile->name, ALL);
+		return true;
 	}
-	while(!delList.empty())
-	{
-		m_nodes.erase(m_nodes[delList.back()].name);
-		delList.pop_back();
-	}
-	m_profiles.erase(p->name);
+	return false;
 }
 
-bool HoneydConfiguration::DeleteProfile(std::string profileName)
-{
-	// TODO @ Dave
-	LOG(WARNING, "TODO. This is a dummy function. No profile was actually deleted TODO", "");
-
-	/*
-	 * The web UI currently calls this for attempts to delete a profile
-	 */
-}
-
-void HoneydConfiguration::RenameProfile(profile * p, string newName)
+bool HoneydConfiguration::RenameProfile(profile * p, string newName)
 {
 	string oldName = p->name;
 
 	//If item text and profile name don't match, we need to update
-	if(oldName != newName)
+	if(newName.compare(m_profiles.empty_key()) && newName.compare(m_profiles.deleted_key())
+		&& (oldName != newName) && (m_profiles.find(p->name) != m_profiles.end()))
 	{
 		//Set the profile to the correct name and put the profile in the table
 		m_profiles[newName] = *p;
@@ -1484,97 +1552,194 @@ void HoneydConfiguration::RenameProfile(profile * p, string newName)
 			}
 		}
 
-		//Remove the old profile and update the currentProfile pointer
-		m_profiles.erase(oldName);
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		{
+			if(!it->second.parentProfile.compare(oldName))
+			{
+				it->second.parentProfile = newName;
+			}
+		}
+		DeleteProfile(oldName);
+		UpdateProfileTree(newName, ALL);
+		return true;
+	}
+	return false;
+}
+
+//Makes the profile named child inherit the profile named parent
+// child: the name of the child profile
+// parent: the name of the parent profile
+// Returns: (true) if successful, (false) if either name could not be found
+bool HoneydConfiguration::InheritProfile(std::string child, std::string parent)
+{
+	//If the child can be found
+	if(m_profiles.find(child) != m_profiles.end())
+	{
+		//If the new parent can be found
+		if(m_profiles.find(parent) != m_profiles.end())
+		{
+			string oldParent = m_profiles[child].parentProfile;
+			m_profiles[child].parentProfile = parent;
+			//If the child has an old parent
+			if((oldParent.compare("")) && (m_profiles.find(oldParent) != m_profiles.end()))
+			{
+				UpdateProfileTree(parent, ALL);
+			}
+			//Updates the child with the new inheritance and any modified values since last update
+			CreateProfileTree(child);
+			UpdateProfileTree(child, ALL);
+			return true;
+		}
+	}
+	return false;
+}
+
+//Iterates over the profiles, recreating the entire property tree structure
+void HoneydConfiguration::UpdateAllProfiles()
+{
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		//If this is a root node
+		if(!it->second.parentProfile.compare(""))
+		{
+			CreateProfileTree(it->first);
+			UpdateProfileTree(it->first, DOWN);
+		}
 	}
 }
 
-bool HoneydConfiguration::EnableNode(std::string node)
+bool HoneydConfiguration::EnableNode(std::string nodeName)
 {
 	// Make sure the node exists
-	if (m_nodes.find(node) == m_nodes.end())
+	if (m_nodes.find(nodeName) == m_nodes.end())
 	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		LOG(ERROR, string("There was an attempt to enable a honeyd node (name = ")
+			+ nodeName + string(" that doesn't exist"), "");
 		return false;
 	}
 
-	m_nodes[node].enabled = true;
+	m_nodes[nodeName].enabled = true;
 
 	// Enable the subnet of this node
-	m_subnets[m_nodes[node].sub].enabled = true;
+	m_subnets[m_nodes[nodeName].sub].enabled = true;
 
 	return true;
 }
 
-bool HoneydConfiguration::DisableNode(std::string node)
+bool HoneydConfiguration::DisableNode(std::string nodeName)
 {
 	// Make sure the node exists
-	if (m_nodes.find(node) == m_nodes.end())
+	if (m_nodes.find(nodeName) == m_nodes.end())
 	{
-		LOG(WARNING, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		LOG(ERROR, string("There was an attempt to disable a honeyd node (name = ")
+			+ nodeName + string(" that doesn't exist"), "");
 		return false;
 	}
 
-	m_nodes[node].enabled = false;
-
+	m_nodes[nodeName].enabled = false;
 	return true;
 }
 
-bool HoneydConfiguration::DeleteNode(std::string node)
+bool HoneydConfiguration::DeleteNode(std::string nodeName)
 {
 	// We don't delete the doppelganger node, only edit it
-	if (node == "Doppelganger")
+	if(nodeName == "Doppelganger")
 	{
-		LOG(WARNING, "Attempt to delete the Doppelganger node denied", "");
+		LOG(WARNING, "Unable to delete the Doppelganger node", "");
 		return false;
 	}
 
 	// Make sure the node exists
-	if (m_nodes.find(node) == m_nodes.end())
+	if(m_nodes.find(nodeName) == m_nodes.end())
 	{
-		LOG(WARNING, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		LOG(ERROR, string("There was an attempt to retrieve a honeyd node (name = ")
+			+ nodeName + string(" that doesn't exist"), "");
 		return false;
 	}
 
-	subnet * s = &m_subnets[m_nodes[node].sub];
-
+	//Update the Subnet
+	subnet * s = &m_subnets[m_nodes[nodeName].sub];
 	for(uint i = 0; i < s->nodes.size(); i++)
 	{
-		if(!s->nodes[i].compare(node))
+		if(!s->nodes[i].compare(nodeName))
 		{
 			s->nodes.erase(s->nodes.begin()+i);
 		}
 	}
 
-	m_nodes.erase(node);
-
+	//Delete the node
+	m_nodes.erase(nodeName);
 	return true;
 }
 
-Node * HoneydConfiguration::GetNode(std::string name)
+Node * HoneydConfiguration::GetNode(std::string nodeName)
 {
+	// Make sure the node exists
+	if(m_nodes.find(nodeName) == m_nodes.end())
+	{
+		LOG(ERROR, string("There was an attempt to retrieve a honeyd node (name = ")
+			+ nodeName + string(" that doesn't exist"), "");
+		return NULL;
+	}
 	Node *ret = new Node();
-	*ret = m_nodes[name];
+	*ret = m_nodes[nodeName];
 	return ret;
 }
 
-std::string HoneydConfiguration::GetNodeSubnet(std::string node)
+std::string HoneydConfiguration::GetNodeSubnet(std::string nodeName)
 {
-	return m_nodes[node].sub;
+	// Make sure the node exists
+	if(m_nodes.find(nodeName) == m_nodes.end())
+	{
+		LOG(ERROR, string("There was an attempt to retrieve the subnet of a honeyd node (name = ")
+			+ nodeName + string(" that doesn't exist"), "");
+		return "";
+	}
+	return m_nodes[nodeName].sub;
 }
 
-void HoneydConfiguration::DisableProfileNodes(std::string profile)
+void HoneydConfiguration::DisableProfileNodes(std::string profileName)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.pfile.compare(profile))
+		if(!it->second.pfile.compare(profileName))
 		{
 			DisableNode(it->first);
 		}
 	}
 }
 
-bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std::string interface, std::string subnet, int numberOfNodes)
+//Checks for ports that aren't used and removes them from the table if so
+void HoneydConfiguration::CleanPorts()
+{
+	vector<string> delList;
+	bool found;
+	for(PortTable::iterator it =m_ports.begin(); it != m_ports.end(); it++)
+	{
+		found = false;
+		for(ProfileTable::iterator jt = m_profiles.begin(); (jt != m_profiles.end()) && !found; jt++)
+		{
+			for(uint i = 0; (i < jt->second.ports.size()) && !found; i++)
+			{
+				if(!jt->second.ports[i].first.compare(it->first))
+				{
+					found = true;
+				}
+			}
+		}
+		if(!found)
+		{
+			delList.push_back(it->first);
+		}
+	}
+	while(!delList.empty())
+	{
+		m_ports.erase(delList.back());
+		delList.pop_back();
+	}
+}
+
+bool HoneydConfiguration::AddNewNodes(std::string profileName, string ipAddress, std::string interface, std::string subnet, int numberOfNodes)
 {
 	if(numberOfNodes <= 0)
 	{
@@ -1585,7 +1750,7 @@ bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std
 	{
 		for(int i = 0; i < numberOfNodes; i++)
 		{
-			if (!AddNewNode(profile, "DHCP", "RANDOM", interface, subnet))
+			if(!AddNewNode(profileName, "DHCP", "RANDOM", interface, subnet))
 			{
 				return false;
 			}
@@ -1599,7 +1764,7 @@ bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std
 		for(int i = 0; i < numberOfNodes; i++)
 		{
 			currentAddr.s_addr = htonl(sAddr);
-			if (!AddNewNode(profile, string(inet_ntoa(currentAddr)), "RANDOM", interface, subnet))
+			if (!AddNewNode(profileName, string(inet_ntoa(currentAddr)), "RANDOM", interface, subnet))
 			{
 				return false;
 			}
@@ -1609,12 +1774,12 @@ bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std
 	return true;
 }
 
-bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std::string macAddress, std::string interface, std::string subnet)
+bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, std::string macAddress, std::string interface, std::string subnet)
 {
 	Node newNode;
 	newNode.IP = ipAddress;
 	newNode.interface = interface;
-	cout << "Adding new node " << profile << ipAddress << macAddress << interface << subnet <<endl;
+	cout << "Adding new node " << profileName << ipAddress << macAddress << interface << subnet <<endl;
 
 	if(newNode.IP != "DHCP")
 	{
@@ -1639,7 +1804,7 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 	}
 
 
-	newNode.pfile = profile;
+	newNode.pfile = profileName;
 	newNode.enabled = true;
 	newNode.MAC = macAddress;
 
@@ -1662,14 +1827,270 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 
 	m_nodes[newNode.name] = newNode;
 	if (newNode.sub != "")
+	{
 		m_subnets[newNode.sub].nodes.push_back(newNode.name);
+	}
 	else
+	{
 		LOG(WARNING, "No subnet was set for new node. This could make certain features unstable", "");
+	}
 
 	//TODO add error checking
 	return true;
 }
 
+//Removes a profile and all associated nodes from the Honeyd configuration
+//	profileName: name of the profile you wish to delete
+//	originalCall: used internally to designate the recursion's base condition, can old be set with
+//		private access. Behavior is undefined if the first DeleteProfile call has originalCall == false
+// 	Returns: (true) if successful and (false) if the profile could not be found
+bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCall)
+{
+	if(m_profiles.find(profileName) == m_profiles.end())
+	{
+		return false;
+	}
+	//Recursive descent to find and call delete on any children of the profile
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		//If the profile at the iterator is a child of this profile
+		if(!it->second.parentProfile.compare(profileName))
+		{
+			DeleteProfile(it->first, false);
+		}
+	}
+	profile p = m_profiles[profileName];
+
+	//Delete any nodes using the profile
+	vector<string> delList;
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(!it->second.pfile.compare(p.name))
+		{
+			delList.push_back(it->second.name);
+		}
+	}
+	while(!delList.empty())
+	{
+		m_nodes.erase(m_nodes[delList.back()].name);
+		delList.pop_back();
+	}
+	m_profiles.erase(profileName);
+
+	//If it is not the original profile to be deleted skip this part
+	if(originalCall)
+	{
+		//If this profile has a parent
+		if(m_profiles.find(p.parentProfile) != m_profiles.end())
+		{
+			//save a copy of the parent
+			profile parent = m_profiles[p.parentProfile];
+
+			//point to the profiles subtree of parent-copy ptree and clear it
+			ptree * pt = &parent.tree.get_child("profiles");
+			pt->clear();
+
+			//Find all profiles still in the table that are sibilings of deleted profile
+			//* We should be using an iterator to find the original profile and erase it
+			//* but boost's iterator implementation doesn't seem to be able to access data
+			//* correctly and are frequently invalidated.
+
+			for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+			{
+				if(!it->second.parentProfile.compare(parent.name))
+				{
+					//Put sibiling profiles into the tree
+					pt->add_child("profile", it->second.tree);
+				}
+			}	//parent-copy now has the ptree of all children except deleted profile
+
+			//point to the original parent's profiles subtree and replace it with our new ptree
+			ptree * treePtr = &m_profiles[p.parentProfile].tree.get_child("profiles");
+			treePtr->clear();
+			*treePtr = *pt;
+
+			//Updates all ancestors with the deletion
+			UpdateProfileTree(profileName, UP);
+		}
+		else
+		{
+			LOG(ERROR, string("Parent profile with name: ") + p.parentProfile + string(" doesn't exist"), "");
+		}
+	}
+	return true;
+}
+
+//Recreates the profile tree of ancestors, children or both
+//	Note: This needs to be called after making changes to a profile to update the hierarchy
+//	Returns (true) if successful and (false) if no profile with name 'profileName' exists
+bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirection direction)
+{
+	if(m_profiles.find(profileName) == m_profiles.end())
+	{
+		return false;
+	}
+	else if(m_profiles[profileName].name.compare(profileName))
+	{
+		LOG(DEBUG, "Profile key: " + profileName + " does not match profile name of: "
+			+ m_profiles[profileName].name + ". Setting profile name to the value of profile key.", "");
+			m_profiles[profileName].name = profileName;
+	}
+	//Copy the profile
+	profile p = m_profiles[profileName];
+	bool up = false, down = false;
+	switch(direction)
+	{
+		case UP:
+		{
+			up = true;
+			break;
+		}
+		case DOWN:
+		{
+			down = true;
+			break;
+		}
+		case ALL:
+		default:
+		{
+			up = true;
+			down = true;
+			break;
+		}
+	}
+	if(down)
+	{
+		//Find all children
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		{
+			//If child is found
+			if(!it->second.parentProfile.compare(p.name))
+			{
+				CreateProfileTree(it->second.name);
+				//Update the child
+				UpdateProfileTree(it->second.name, DOWN);
+				//Put the child in the parent's ptree
+				p.tree.add_child("profiles.profile", it->second.tree);
+			}
+		}
+		m_profiles[profileName] = p;
+	}
+	//If the original calling profile has a parent to update
+	if(p.parentProfile.compare("") && up)
+	{
+		//Get the parents name and create an empty ptree
+		profile parent = m_profiles[p.parentProfile];
+		ptree pt;
+		pt.clear();
+		pt.add_child("profile", p.tree);
+
+		//Find all children of the parent and put them in the empty ptree
+		// Ideally we could just replace the individual child but the data structure doesn't seem
+		// to support this very well when all keys in the ptree (ie. profiles.profile) are the same
+		// because the ptree iterators just don't seem to work correctly and documentation is very poor
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		{
+			if(!it->second.parentProfile.compare(parent.name))
+			{
+				pt.add_child("profile", it->second.tree);
+			}
+		}
+		//Replace the parent's profiles subtree (stores all children) with the new one
+		parent.tree.put_child("profiles", pt);
+		m_profiles[parent.name] = parent;
+		//Recursively ascend to update all ancestors
+		CreateProfileTree(parent.name);
+		UpdateProfileTree(parent.name, UP);
+	}
+	return true;
+}
+
+//Creates a ptree for a profile from scratch using the values found in the table
+//	name: the name of the profile you wish to create a new tree for
+//	Note: this only creates a leaf-node profile tree, after this call it will have no children.
+//		to put the children back into the tree and place the this new tree into the parent's hierarchy
+//		you must first call UpdateProfileTree(name, ALL);
+//	Returns (true) if successful and (false) if no profile with name 'profileName' exists
+bool HoneydConfiguration::CreateProfileTree(string profileName)
+{
+	ptree temp;
+	if(m_profiles.find(profileName) == m_profiles.end())
+	{
+		return false;
+	}
+	profile p = m_profiles[profileName];
+	if(p.name.compare(""))
+	{
+		temp.put<std::string>("name", p.name);
+	}
+	if(p.tcpAction.compare("") && !p.inherited[TCP_ACTION])
+	{
+		temp.put<std::string>("set.TCP", p.tcpAction);
+	}
+	if(p.udpAction.compare("") && !p.inherited[UDP_ACTION])
+	{
+		temp.put<std::string>("set.UDP", p.udpAction);
+	}
+	if(p.icmpAction.compare("") && !p.inherited[ICMP_ACTION])
+	{
+		temp.put<std::string>("set.ICMP", p.icmpAction);
+	}
+	if(p.personality.compare("") && !p.inherited[PERSONALITY])
+	{
+		temp.put<std::string>("set.personality", p.personality);
+	}
+	if(p.ethernet.compare("") && !p.inherited[ETHERNET])
+	{
+		temp.put<std::string>("set.ethernet", p.ethernet);
+	}
+	if(p.uptimeMin.compare("") && !p.inherited[UPTIME])
+	{
+		temp.put<std::string>("set.uptimeMin", p.uptimeMin);
+	}
+	if(p.uptimeMax.compare("") && !p.inherited[UPTIME])
+	{
+		temp.put<std::string>("set.uptimeMax", p.uptimeMax);
+	}
+	if(p.dropRate.compare("") && !p.inherited[DROP_RATE])
+	{
+		temp.put<std::string>("set.dropRate", p.dropRate);
+	}
+
+	//Populates the ports, if none are found create an empty field because it is expected.
+	ptree pt;
+	if(p.ports.size())
+	{
+		temp.put_child("add.ports",pt);
+		for(uint i = 0; i < p.ports.size(); i++)
+		{
+			//If the port isn't inherited
+			if(!p.ports[i].second)
+			{
+				temp.add<std::string>("add.ports.port", p.ports[i].first);
+			}
+		}
+	}
+	else
+	{
+		temp.put_child("add.ports",pt);
+	}
+	//put empty ptree in profiles as well because it is expected, does not matter that it is the same
+	// as the one in add.ports if profile has no ports, since both are empty.
+	temp.put_child("profiles", pt);
+
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if(!it->second.parentProfile.compare(profileName))
+		{
+			temp.add_child("profiles.profile", it->second.tree);
+		}
+	}
+
+	//copy the tree over and update ancestors
+	p.tree = temp;
+	m_profiles[profileName] = p;
+	return true;
+}
 }
 
 

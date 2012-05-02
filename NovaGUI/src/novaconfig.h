@@ -31,8 +31,6 @@
 #define NODE_INDEX 0
 #define PROFILE_INDEX 1
 
-enum recursiveDirection{ALL = 0, UP, DOWN};
-
 class NovaConfig : public QMainWindow
 {
 	Q_OBJECT
@@ -93,20 +91,16 @@ public:
     //Creates a tree widget item for the profile based on it's parent
     //If no parent it is created as a root node
     void CreateProfileItem(std::string pstr);
-    //Creates a ptree for a profile with current values
-    void CreateProfileTree(std::string name);
+
 
     //Temporarily stores changed configuration options when selection is changed
     // to permanently store these changes call pushData();
     void SaveProfileSettings();
     //saves the inheritance values of the profiles, called by saveProfile
     void SaveInheritedProfileSettings();
+
     //Removes a profile, all of it's children and any nodes that currently use it
     void DeleteProfile(std::string name);
-
-    //Recreates the profile tree of all ancestors
-    //This needs to be called after adding, deleting or storing changes to a profile.
-    void UpdateProfileTree(std::string name, recursiveDirection direction);
 
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     void LoadProfilesFromTree(std::string parent);
@@ -126,16 +120,6 @@ public:
 
     // Checks the value in the spin boxes to see if it's a used IP or not
     bool IsDoppelIPValid();
-
-    //Updates children when inherited ports are changed
-    void UpdatePorts();
-    //Checks for ports that aren't used and removes them from the table if so
-    void CleanPorts();
-
-    //Pushes the current configuration to novagui (Apply or Ok signal)
-    void PushData();
-    //Pulls the configuration stored in novagui
-    void PullData();
 
     // Saves the configuration to the config file, returns true if success
     bool SaveConfigurationToFile();

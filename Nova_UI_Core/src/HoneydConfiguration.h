@@ -36,9 +36,23 @@ enum hdConfigReturn
 	NO_SUCH_KEY
 };
 
+enum portBehavior
+{
+	BLOCK = 0,
+	RESET,
+	OPEN,
+	SCRIPT
+};
+enum recursiveDirection
+{
+	ALL = 0,
+	UP,
+	DOWN
+};
 
 class HoneydConfiguration
 {
+
 public:
     HoneydConfiguration();
 
@@ -67,6 +81,16 @@ public:
     // Returns the number of bits used in the mask when given in in_addr_t form
     static int GetMaskBits(in_addr_t mask);
 
+    //Adds a port with the specified configuration into the port table
+    //	portNum: Must be a valid port number (1-65535)
+    //	isTCP: if true the port uses TCP, if false it uses UDP
+    //	behavior: how this port treats incoming connections
+    //	scriptName: this parameter is only used if behavior == SCRIPT, in which case it designates
+    //		the key of the script it can lookup and execute for incoming connections on the port
+    //	Note(s): If CleanPorts is called before using this port in a profile, it will be deleted
+    //			If using a script it must exist in the script table before calling this function
+    //Returns: the port name if successful and an empty string if unsuccessful
+    std::string AddPort(uint16_t portNum, bool isTCP, portBehavior behavior, std::string scriptName = "");
 
     // Some high level node creation methods
 
@@ -104,13 +128,40 @@ public:
 	bool IsProfileUsed(std::string profile);
 
 	// Regenerates the MAC addresses for nodes of this profile
-	void RegenerateMACAddresses(std::string profileName);
+	void GenerateMACAddresses(std::string profileName);
 	std::string GenerateUniqueMACAddress(std::string vendor);
 
-    void DeleteProfile(profile *p);
-    bool DeleteProfile(std::string profileName);
+	//Inserts the profile into the honeyd configuration
+	//	profile: pointer to the profile you wish to add
+	//	Returns (true) if the profile could be created, (false) if it cannot.
+	bool AddProfile(profile * profile);
 
-    void RenameProfile(profile *p, std::string newName);
+	//Updates the profile with any modified information
+	//	Note: to modify inheritance us InheritProfile, just changing the parentProfile value and calling
+	//		this function may leave a copy of the profile as a child of the old parent next load
+	bool UpdateProfile(std::string profileName)
+	{
+		return UpdateProfileTree(profileName, ALL);
+	}
+
+    bool RenameProfile(profile *p, std::string newName);
+
+    //Makes the profile named child inherit the profile named parent
+    // child: the name of the child profile
+    // parent: the name of the parent profile
+    // Returns: (true) if successful, (false) if either name could not be found
+    bool InheritProfile(std::string child, std::string parent);
+
+    //Iterates over the profiles, recreating the entire property tree structure
+    void UpdateAllProfiles();
+
+	//Removes a profile and all associated nodes from the Honeyd configuration
+	//	profileName: name of the profile you wish to delete
+	// 	Returns: (true) if successful and (false) if the profile could not be found
+	bool DeleteProfile(std::string profileName)
+    {
+    	return DeleteProfile(profileName, true);
+    }
 
     //Deletes a single node, called from deleteNodes();
     bool DeleteNode(std::string node);
@@ -121,7 +172,8 @@ public:
     bool DisableNode(std::string node);
     void DisableProfileNodes(std::string profile);
 
-
+    //Checks for ports that aren't used and removes them from the table if so
+    void CleanPorts();
 
 // TODO: this should be private eventually
 public:
@@ -167,6 +219,21 @@ private:
     void LoadSubnets(boost::property_tree::ptree *ptr);
     //Load stored honeyd nodes ptr
     void LoadNodes(boost::property_tree::ptree *ptr);
+
+    bool DeleteProfile(std::string profileName, bool originalCall);
+
+	//Recreates the profile tree of ancestors, children or both
+    //	Note: This needs to be called after making changes to a profile to update the hierarchy
+    //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
+    bool UpdateProfileTree(std::string profileName, recursiveDirection direction);
+
+    //Creates a ptree for a profile from scratch using the values found in the table
+    //	name: the name of the profile you wish to create a new tree for
+    //	Note: this only creates a leaf-node profile tree, after this call it will have no children.
+    //		to put the children back into the tree and place the this new tree into the parent's hierarchy
+    //		you must first call UpdateProfileTree(name, ALL);
+    //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
+    bool CreateProfileTree(std::string profileName);
 
     std::string FindSubnet(in_addr_t ip);
 };
