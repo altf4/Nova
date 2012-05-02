@@ -308,6 +308,7 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.uptimeMin = profile.GetUptimeMin();
     profile.uptimeMax = profile.GetUptimeMax();
     profile.dropRate = profile.GetDropRate();
+    profile.parentProfile = profile.GetParentProfile();
 
     profile.isTcpActionInherited = profile.isTcpActionInherited();
     profile.isUdpActionInherited = profile.isUdpActionInherited();
@@ -335,11 +336,9 @@ everyone.now.GetPorts = function (profileName, callback) {
 }
 
 
- everyone.now.test = function(val, callback){
- 	var profile = honeydConfig.GetProfile(val);
-	console.log("Got eth " + profile.GetEthernet() + " for profile " + profileName);
-    callback(profile);
- }
+everyone.now.SaveProfile = function(profile, callback) {
+    // TODO: Make the Javascript/C++ transmutation magic happen here
+}
 
 
 
