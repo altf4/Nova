@@ -24,6 +24,7 @@
 #include "../Lock.h"
 
 #include <map>
+#include <vector>
 #include "pthread.h"
 
 namespace Nova
@@ -79,6 +80,13 @@ public:
 	//	socketFD - The socket file descriptor to wait on
 	//	NOTE: Blocking call
 	bool RegisterCallback(int socketFD);
+
+	//Gets a current list of all the open sockets in the manager
+	//	Returns - A vector of socket file descriptors
+	//	NOTE: No locks are provided for these sockets. You're just given the descriptors. This necessarily means that by the time you
+	//		get around to trying to read/write to the socket, it might have been closed. Or a new socket might have appeared that won't
+	//		be included in this list. You'll just have to deal with this fact.
+	std::vector <int>GetSocketList();
 
 private:
 

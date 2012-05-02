@@ -50,11 +50,10 @@ void HandleRequestMessage(RequestMessage &requestMessage, int socketFD);
 
 //Commands and Updates to UI:
 
-//Sends (updates) a single suspect to the UI for display to the user
+//Sends (updates) a single suspect to all UIs for display to the user
 //	suspect - The suspect to send
 //	socket - The socket of the UI to send to
-//	returns - True if successfully sent to UI, false on error
-bool SendSuspectToUI(Suspect *suspect);
+void SendSuspectToUIs(Suspect *suspect);
 
 }
 #endif /* PROTOCOLHANDLER_H_ */

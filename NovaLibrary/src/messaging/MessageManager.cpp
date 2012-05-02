@@ -161,4 +161,18 @@ bool MessageManager::RegisterCallback(int socketFD)
 	return false;
 }
 
+std::vector <int>MessageManager::GetSocketList()
+{
+	Lock lock(&m_queuesLock);
+	std::vector<int> sockets;
+
+	std::map<int, MessageQueue*>::iterator it;
+	for(it = m_queues.begin(); it != m_queues.end(); ++it)
+	{
+		sockets.push_back(it->first);
+	}
+
+	return sockets;
+}
+
 }

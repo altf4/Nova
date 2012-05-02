@@ -40,8 +40,7 @@
 using namespace Nova;
 using namespace std;
 
-int IPCParentSocket;
-int tempIPCSocketFD = -1;
+int IPCParentSocket = -1;
 
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
@@ -425,31 +424,39 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 	}
 }
 
-bool SendSuspectToUI(Suspect *suspect)
+void SendSuspectToUIs(Suspect *suspect)
 {
-	Lock lock = MessageManager::Instance().UseSocket(tempIPCSocketFD);
+	vector<int> sockets = MessageManager::Instance().GetSocketList();
 
-	CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE, DIRECTION_TO_UI);
-	suspectUpdate.m_suspect = suspect;
-	if(!UI_Message::WriteMessage(&suspectUpdate, tempIPCSocketFD))
+	for(uint i = 0; i < sockets.size(); ++i)
 	{
-		return false;
-	}
+		Lock lock = MessageManager::Instance().UseSocket(sockets[i]);
 
-	UI_Message *suspectReply = UI_Message::ReadMessage(tempIPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
-	if(suspectReply->m_messageType != CALLBACK_MESSAGE)
-	{
-		delete suspectReply;
-		return false;
-	}
-	CallbackMessage *suspectCallback = (CallbackMessage*)suspectReply;
-	if(suspectCallback->m_callbackType != CALLBACK_SUSPECT_UDPATE_ACK)
-	{
+		CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE, DIRECTION_TO_UI);
+		suspectUpdate.m_suspect = suspect;
+		if(!UI_Message::WriteMessage(&suspectUpdate, sockets[i]))
+		{
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			continue;
+		}
+
+		UI_Message *suspectReply = UI_Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		if(suspectReply->m_messageType != CALLBACK_MESSAGE)
+		{
+			delete suspectReply;
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			continue;
+		}
+		CallbackMessage *suspectCallback = (CallbackMessage*)suspectReply;
+		if(suspectCallback->m_callbackType != CALLBACK_SUSPECT_UDPATE_ACK)
+		{
+			delete suspectCallback;
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			continue;
+		}
 		delete suspectCallback;
-		return false;
+		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
 	}
-	delete suspectCallback;
-
-	return true;
 }
+
 }
