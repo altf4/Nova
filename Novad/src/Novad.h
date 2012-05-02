@@ -99,10 +99,10 @@ void UpdateSuspect(Packet packet);
 void MaskKillSignals();
 
 // Updates suspect and stores it as a training data point
-void UpdateAndStore(uint64_t suspect);
+void UpdateAndStore(in_addr_t key);
 
 // Updates data and classification for a suspect
-void UpdateAndClassify(uint64_t suspect);
+void UpdateAndClassify(in_addr_t key);
 
 
 }

@@ -34,7 +34,7 @@ enum ErrorType: char
 	ERROR_TIMEOUT, 					//The call to read() timed out
 
 	//Error codes for actual remote messages
-	ERROR_PROTOCOL_MISTAKE,			//Reply from Novad with success
+	ERROR_PROTOCOL_MISTAKE			//Reply from Novad with success
 };
 
 namespace Nova

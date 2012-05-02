@@ -48,7 +48,7 @@ enum ControlType: char
 	CONTROL_DISCONNECT_ACK,			//Acknowledgment of the disconnect notice
 	CONTROL_PING,					//Request to Novad to see if it's alive
 	CONTROL_PONG,					//Reply from Novad to verify it's alive
-	CONTROL_INVALID,
+	CONTROL_INVALID
 };
 
 namespace Nova

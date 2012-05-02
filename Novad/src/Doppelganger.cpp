@@ -56,7 +56,7 @@ void Doppelganger::UpdateDoppelganger()
 		InitDoppelganger();
 	}
 	//Get latest list of hostile suspects
-	vector<uint64_t> keys = m_suspectTable.GetHostileSuspectKeys();
+	vector<uint64_t> keys = m_suspectTable.GetKeys_of_HostileSuspects();
 	vector<uint64_t> keysCopy = keys;
 
 	//A few variable declarations
@@ -220,7 +220,7 @@ void Doppelganger::ResetDoppelganger()
 		LOG(DEBUG, "Unable to flush Doppelganger rules.", "Command '"+commandLine+"' was unsuccessful.");
 	}
 	m_suspectKeys.clear();
-	m_suspectKeys = m_suspectTable.GetHostileSuspectKeys();
+	m_suspectKeys = m_suspectTable.GetKeys_of_HostileSuspects();
 
 	prefix = "sudo iptables -t nat -I DOPP -s ";
 	string suffix = " -j DNAT --to-destination "+Config::Inst()->GetDoppelIp();

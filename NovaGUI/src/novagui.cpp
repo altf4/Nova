@@ -362,12 +362,15 @@ bool NovaGUI::ConnectGuiToNovad()
 			suspectItem.suspect = GetSuspect(suspectIpList->at(i));
 
 			// Case of the empty suspect
-			if (suspectItem.suspect->GetIpAddress() == 0)
+			if(suspectItem.suspect == NULL)
+			{
+				continue;
+			}
+			else if(suspectItem.suspect->GetIpAddress() == 0)
 			{
 				delete suspectItem.suspect;
 				continue;
 			}
-
 			suspectItem.item = NULL;
 			suspectItem.mainItem = NULL;
 			this->ProcessReceivedSuspect(suspectItem, false);
@@ -1318,7 +1321,7 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 				 QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1,"
 				" y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
-			formatString.append(QString::number(suspect->GetFeatureSet().m_features[i]));
+			formatString.append(QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
 			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();

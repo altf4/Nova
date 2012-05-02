@@ -31,7 +31,7 @@
 enum RequestType: char
 {
 	// Requests for lists of suspect IPs
-	REQUEST_SUSPECTLIST= 0,
+	REQUEST_SUSPECTLIST = 0,
 	REQUEST_SUSPECTLIST_REPLY,
 
 	// Request for an individual suspect
@@ -40,7 +40,7 @@ enum RequestType: char
 
 	// Request for the uptime of novad
 	REQUEST_UPTIME,
-	REQUEST_UPTIME_REPLY,
+	REQUEST_UPTIME_REPLY
 };
 
 enum SuspectListType : char

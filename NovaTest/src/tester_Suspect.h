@@ -64,35 +64,35 @@ protected:
 // Check adding and removing evidence
 TEST_F(SuspectTest, EvidenceAddingRemoving)
 {
-	EXPECT_EQ(0, suspect->AddEvidence(p1));
-	EXPECT_EQ(0, suspect->AddEvidence(p2));
+	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
+	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
 	EXPECT_TRUE(suspect->GetNeedsClassificationUpdate());
 
 	EXPECT_EQ(0, memcmp(&suspect->GetEvidence().at(0), &p1, sizeof(p1)));
 	EXPECT_EQ(0, memcmp(&suspect->GetEvidence().at(1), &p2, sizeof(p2)));
 
-	EXPECT_EQ(0, suspect->ClearEvidence());
+	EXPECT_NO_FATAL_FAILURE(suspect->ClearEvidence());
 	EXPECT_EQ((uint)0, suspect->GetEvidence().size());
 }
 
 TEST_F(SuspectTest, EvidenceProcessing)
 {
-	EXPECT_EQ(0, suspect->AddEvidence(p1));
-	EXPECT_EQ(0, suspect->AddEvidence(p2));
+	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
+	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
 
 	// This isn't exactly an intuitive set of calls to update the evidence...
 	// Convert the packets to evidence
-	EXPECT_EQ(0, suspect->UpdateEvidence());
+	EXPECT_NO_FATAL_FAILURE(suspect->UpdateEvidence());
 	// Calculate the feature values from the evidence
-	EXPECT_EQ(0, suspect->CalculateFeatures());
+	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
 	// Move this stuff from the unsent evidence to the normal evidence
 	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 
 	// Do we have the correct packet count?
-	EXPECT_EQ((uint)2, suspect->GetFeatureSet().m_packetCount);
+	EXPECT_EQ((uint)2, suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount);
 
 
-	FeatureSet fset = suspect->GetFeatureSet();
+	FeatureSet fset = suspect->GetFeatureSet(MAIN_FEATURES);
 
 	// Note: This is stolen from our featureSet test code
 	EXPECT_EQ(fset.m_features[IP_TRAFFIC_DISTRIBUTION], 1);
@@ -106,55 +106,25 @@ TEST_F(SuspectTest, EvidenceProcessing)
 	EXPECT_EQ(fset.m_features[PACKET_INTERVAL_DEVIATION], 0);
 }
 
-// Check that someMethod functions
-TEST_F(SuspectTest, test_OwnerFunctionality)
-{
-	EXPECT_FALSE(suspect->HasOwner());
-
-	EXPECT_NO_FATAL_FAILURE(suspect->SetOwner());
-	EXPECT_TRUE(suspect->HasOwner());
-	EXPECT_TRUE(pthread_equal(suspect->GetOwner(), pthread_self()));
-
-	EXPECT_EQ(0, suspect->ResetOwner());
-	EXPECT_FALSE(suspect->HasOwner());
-}
 
 TEST_F(SuspectTest, Serialization)
 {
 	// Just setup to get a suspect to serialize
-	suspect->AddEvidence(p1);
-	suspect->AddEvidence(p2);
-	EXPECT_EQ(0, suspect->UpdateEvidence());
-	EXPECT_EQ(0, suspect->CalculateFeatures());
+	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
+	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
+	EXPECT_NO_FATAL_FAILURE(suspect->UpdateEvidence());
+	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
 	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 
 	u_char buffer[MAX_MSG_SIZE];
-	suspect->Serialize(&buffer[0], true);
+	EXPECT_NO_FATAL_FAILURE(suspect->Serialize(&buffer[0], MAIN_FEATURE_DATA));
 
 	Suspect *suspectCopy = new Suspect();
-	suspectCopy->Deserialize(&buffer[0], true, false);
+	EXPECT_NO_FATAL_FAILURE(suspectCopy->Deserialize(&buffer[0], MAIN_FEATURE_DATA));
 
 	EXPECT_EQ(*suspect, *suspectCopy);
 
 	EXPECT_NO_FATAL_FAILURE(delete suspectCopy);
-}
-
-TEST_F(SuspectTest, test_locking)
-{
-	// WARNING: These may deadlock if there are problems
-	suspect->RdlockSuspect();
-	suspect->UnlockSuspect();
-
-	suspect->WrlockSuspect();
-	suspect->UnlockSuspect();
-
-	suspect->SetOwner();
-	suspect->WrlockSuspect();
-	suspect->UnlockSuspect();
-
-	suspect->RdlockSuspect();
-	suspect->UnlockSuspect();
-	suspect->ResetOwner();
 }
 
 }

@@ -40,7 +40,7 @@ void StopNovaWrapper();
 void StopHaystackWrapper();
 
 void PrintSuspect(in_addr_t address);
-void PrintAllSuspects();
+void PrintAllSuspects(enum SuspectListType listType);
 
 void ClearSuspectWrapper(in_addr_t address);
 void ClearAllSuspectsWrapper();

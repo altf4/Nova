@@ -26,8 +26,8 @@
 enum CallbackChangeType: char
 {
 	CALLBACK_ERROR = 0,		//There was an error in receiving the callback message
-	CALLBACK_HUNG_UP,		//Novad hung up on us
-	CALLBACK_NEW_SUSPECT,	//Received a new suspect from Novad
+	CALLBACK_HUNG_UP = 1,		//Novad hung up on us
+	CALLBACK_NEW_SUSPECT = 2	//Received a new suspect from Novad
 };
 
 struct CallbackChange

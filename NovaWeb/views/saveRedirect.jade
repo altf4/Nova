@@ -1,0 +1,13 @@
+doctype 5
+html
+  head
+    script(type="text/javascript")
+      var time = null;
+      function move () {
+          window.location = #{redirectLink}; 
+      }
+  body(onload="timer=setTimeout('move()',2000)")
+    div(style="text-align: center")
+      h1 Saving settings. Please wait.
+      img(src="images/novaSplash.png")
+

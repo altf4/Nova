@@ -7,7 +7,9 @@ CPP_SRCS += \
 ../src/CallbackHandler.cpp \
 ../src/Connection.cpp \
 ../src/HaystackControl.cpp \
+../src/HoneydConfiguration.cpp \
 ../src/NovadControl.cpp \
+../src/OsPersonalityDb.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
 ../src/VendorMacDb.cpp 
@@ -16,7 +18,9 @@ OBJS += \
 ./src/CallbackHandler.o \
 ./src/Connection.o \
 ./src/HaystackControl.o \
+./src/HoneydConfiguration.o \
 ./src/NovadControl.o \
+./src/OsPersonalityDb.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
 ./src/VendorMacDb.o 
@@ -25,7 +29,9 @@ CPP_DEPS += \
 ./src/CallbackHandler.d \
 ./src/Connection.d \
 ./src/HaystackControl.d \
+./src/HoneydConfiguration.d \
 ./src/NovadControl.d \
+./src/OsPersonalityDb.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \
 ./src/VendorMacDb.d 

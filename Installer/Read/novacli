@@ -24,7 +24,7 @@ _novacli()
 	;;
     
 	get)	
-	    COMPREPLY=( $(compgen -W "all" -- ${cur}) )
+	    COMPREPLY=( $(compgen -W "${listtypes}" -- ${cur}) )
 	return 0
 	;;
 	

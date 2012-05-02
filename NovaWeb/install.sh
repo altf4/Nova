@@ -7,15 +7,24 @@
 #######################################################
 # Dependencies you must manually get first
 #######################################################
-#   Nodejs v0.6.12
+#   Nodejs (tested on v0.6.12 and v0.6.15)
 #	Currently at: https://github.com/joyent/node/zipball/v0.6.12
 #	Install with the standard ./configure && make && sudo make install
+#
+# OR on Ubuntu you can install the newest nodejs with apt-get via,
+#   sudo apt-get install python-software-properties
+#   sudo add-apt-repository ppa:chris-lea/node.js
+#   sudo apt-get update
+#   sudo apt-get install nodejs nodejs-dev npm
 #
 #######################################################
 #   cvv8 headers in /usr/include
 #	Currently at: http://v8-juice.googlecode.com/files/libv8-convert-20120219.tar.gz
 #	Install by copying the include/cvv8 folder to /usr/include/
 #
+#######################################################
+# npm packages you may need
+#   npm install jade
 #######################################################
 
 # Note: If you have another web server using /var/www,
@@ -29,29 +38,43 @@ ln -f -T -s ~/Code/Nova/NovaWeb/www /var/www
 echo "========================================"
 echo "Making a symlink to our current Dojo version"
 echo "========================================"
-ln -f -T -s dojo-release-1.7.1 www/dojo
+ln -f -T -s dojo-release-1.7.1 /var/www/dojo
 
-echo "========================================"
-echo "Installing Nowjs"
-echo "========================================"
-npm install now -g 
 
-echo "========================================"
-echo "Configuring NOVA node"
-echo "========================================"
-node-waf configure
 
-# Compile the nova node
-# (This needs to be done every time the source changes)
-echo "========================================"
-echo "Building NOVA node"
-echo "========================================"
-node-waf
-
-# To run the Nova Web interface,
-# bash$ NODE_PATH=build/Release node tst.js
-
-echo "========================================"
-echo "Installation finished"
-echo "To run the web interface, run "NODE_PATH=build/Release node tst.js" from the NovaWeb folder"
-echo "========================================"
+## This has all been depricated, now just do 'npm install'
+#echo "========================================"
+#echo "Configuring NOVA node"
+#echo "========================================"
+#node-waf configure
+#
+## Compile the nova node
+## (This needs to be done every time the source changes)
+#echo "========================================"
+#echo "Building NOVA node"
+#echo "========================================"
+#node-waf clean
+#node-waf
+#
+#
+#cd NodeNovaConfig
+#echo "========================================"
+#echo "Configuring NOVAConfig node"
+#echo "========================================"
+#node-waf configure
+#
+## Compile the nova node
+## (This needs to be done every time the source changes)
+#echo "========================================"
+#echo "Building NOVAConfig node"
+#echo "========================================"
+#node-waf clean
+#node-waf
+#
+## To run the Nova Web interface from the NovaWeb folder,
+##   node main.js
+#
+#echo "========================================"
+#echo "Installation finished"
+#echo "To run the web interface, run "node tst.js" from the NovaWeb folder"
+#echo "========================================"

@@ -53,6 +53,14 @@ public:
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
     static bool InitUserConfigs(std::string homeNovaPath);
 
+
+    // These are generic static getters/setters for the web interface
+    // Use of these should be minimized. Instead, use the specific typesafe getter/setter
+    // that you need.
+    std::string ReadSetting(std::string key);
+    bool WriteSetting(std::string key, std::string value);
+
+
     std::string ToString();
 
     // Getters
@@ -157,6 +165,7 @@ public:
 
     std::string GetUserPath();
     void SetUserPath(std::string userPath);
+
 
 protected:
 	Config();

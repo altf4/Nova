@@ -21,6 +21,16 @@ TEST_F(ConfigTest, test_instanceNotNull)
 	EXPECT_NE((Config*)0, Config::Inst());
 }
 
+TEST_F(ConfigTest, test_ReaderWriter)
+{
+	Config::Inst();
+	EXPECT_TRUE(Config::Inst()->WriteSetting("INTERFACE", "foobar"));
+	EXPECT_EQ(Config::Inst()->ReadSetting("INTERFACE"), "foobar");
+
+	EXPECT_TRUE(Config::Inst()->WriteSetting("INTERFACE", "eth0"));
+	EXPECT_EQ(Config::Inst()->ReadSetting("INTERFACE"), "eth0");
+}
+
 
 // Tests that changing the enabled features sets all needed config options
 TEST_F(ConfigTest, test_setEnabledFeatures) {

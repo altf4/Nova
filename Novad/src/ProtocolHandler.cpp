@@ -27,7 +27,6 @@
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/MessageManager.h"
 #include "SuspectTable.h"
-#include "SuspectTableIterator.h"
 #include "Lock.h"
 
 #include "pthread.h"
@@ -46,7 +45,6 @@ int tempIPCSocketFD = -1;
 
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
-extern pthread_mutex_t suspectsSinceLastSaveLock;
 extern time_t startTime;
 
 struct sockaddr_un msgRemote, msgLocal;
@@ -230,10 +228,8 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			//TODO: Replace with new suspect table class
 
-			suspects.Clear();
-			pthread_mutex_lock(&suspectsSinceLastSaveLock);
-			suspectsSinceLastSave.Clear();
-			pthread_mutex_unlock(&suspectsSinceLastSaveLock);
+			suspects.EraseAllSuspects();
+			suspectsSinceLastSave.EraseAllSuspects();
 			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
@@ -342,7 +338,6 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			LOG(DEBUG, "UI sent us an invalid message","Got an unexpected ControlMessage type");
 			break;
 		}
-
 	}
 }
 
@@ -359,13 +354,13 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			{
 				case SUSPECTLIST_ALL:
 				{
-					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
 					for (uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
 					}
 
-					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
 					for (uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
@@ -374,7 +369,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				}
 				case SUSPECTLIST_HOSTILE:
 				{
-					vector<uint64_t> hostile = suspects.GetHostileSuspectKeys();
+					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
 					for (uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
@@ -383,7 +378,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				}
 				case SUSPECTLIST_BENIGN:
 				{
-					vector<uint64_t> benign = suspects.GetBenignSuspectKeys();
+					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
 					for (uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
@@ -405,7 +400,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
-			Suspect tempSuspect = suspects.Peek(msg.m_suspectAddress);
+			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
 			reply.m_suspect = &tempSuspect;
 			UI_Message::WriteMessage(&reply, socketFD);
 

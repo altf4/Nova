@@ -59,3 +59,5 @@ html, body {
     height: 550px;
 }
 
+
+.align-left {float:left; margin: 0 15px 15px 0;}

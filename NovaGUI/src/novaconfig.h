@@ -25,15 +25,11 @@
 #include <QMutex>
 #include <QWheelEvent>
 
+
+// TODO: Clean this up. At a minimum add some descriptive comments, maybe replace with enums
 #define HAYSTACK_MENU_INDEX 4
 #define NODE_INDEX 0
 #define PROFILE_INDEX 1
-#define FROM_NOVA_CONFIG false
-#define DELETE_PROFILE true
-#define UPDATE_PROFILE false
-#define ADD_NODE 0
-#define CLONE_NODE 1
-#define EDIT_NODE 2
 
 enum recursiveDirection{ALL = 0, UP, DOWN};
 
@@ -42,8 +38,6 @@ class NovaConfig : public QMainWindow
 	Q_OBJECT
 
 public:
-
-	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
 
 	Nova::HoneydConfiguration *m_honeydConfig;
 
@@ -117,15 +111,15 @@ public:
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     void LoadProfilesFromTree(std::string parent);
     //set profile configurations (only called in LoadProfilesFromTree)
-    void LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
+    void LoadProfileSettings(boost::property_tree::ptree *ptr, Nova::profile *p);
     //add ports or subsystems (only called in LoadProfilesFromTree)
-    void LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
+    void LoadProfileServices(boost::property_tree::ptree *ptr, Nova::profile *p);
     //recursive descent down profile tree (only called in LoadProfilesFromTree)
     void LoadProfileChildren(std::string parent);
 
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
-    void DeleteNode(std::string node);
+    bool DeleteNode(std::string node);
 
     //Populates the tree widget with the current node configuration
     void LoadAllNodes();
@@ -145,6 +139,8 @@ public:
 
     // Saves the configuration to the config file, returns true if success
     bool SaveConfigurationToFile();
+
+    void SetSelectedNode(std::string node);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
@@ -239,7 +235,7 @@ void on_portTreeWidget_itemChanged(QTreeWidgetItem *item);
 //Custom signal for combo box items in the tree changing
 void portTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 //Custom signal for combo box items in the tree changing
-void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem * item, bool edited);
+void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 
 //Doppelganger IP Address Spin boxes
 void on_dmIPSpinBox_0_valueChanged(int value);
@@ -252,10 +248,22 @@ void on_hsSaveTypeComboBox_currentIndexChanged(int index);
 
 private:
 	void SetInputValidators();
+
+    // These replace the QT pointers that were in the data structures,
+    // they all return a pointer to the QTreeWidgetItem corresponding to a table key
+    QTreeWidgetItem * GetProfileTreeWidgetItem(std::string profileName);
+    QTreeWidgetItem * GetProfileHsTreeWidgetItem(std::string profileName);
+    QTreeWidgetItem * GetSubnetTreeWidgetItem(std::string subnetName);
+    QTreeWidgetItem * GetSubnetHsTreeWidgetItem(std::string subnetName);
+    QTreeWidgetItem * GetNodeTreeWidgetItem(std::string nodeName);
+    QTreeWidgetItem * GetNodeHsTreeWidgetItem(std::string nodeName);
+    bool IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item);
+
     Ui::NovaConfigClass ui;
 
     //Keys used to maintain and lookup current selections
     std::string m_currentProfile;
+    std::string m_currentPort;
     std::string m_currentNode;
     std::string m_currentSubnet;
 
