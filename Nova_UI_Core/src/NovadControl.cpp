@@ -71,17 +71,6 @@ bool StopNovad()
 		delete ((ErrorMessage*)reply);
 		return false;
 	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
-		return false;
-	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		//Received the wrong kind of message
@@ -99,7 +88,7 @@ bool StopNovad()
 	bool retSuccess = killReply->m_success;
 	delete killReply;
 
-	CloseNovadConnection();
+	MessageManager::Instance().CloseSocket(IPCSocketFD);
 
 	return retSuccess;
 }
@@ -123,17 +112,6 @@ bool SaveAllSuspects(std::string file)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -172,17 +150,6 @@ bool ClearAllSuspects()
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -224,17 +191,6 @@ bool ClearSuspect(in_addr_t suspectAddress)
 		delete ((ErrorMessage*)reply);
 		return false;
 	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
-		return false;
-	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		//Received the wrong kind of message
@@ -274,16 +230,6 @@ bool ReclassifyAllSuspects()
 		return false;
 	}
 
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
-		return false;
-	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		//Received the wrong kind of message

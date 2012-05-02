@@ -114,16 +114,6 @@ int GetUptime()
 		return 0;
 	}
 
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
-		return 0;
-	}
 	if(reply->m_messageType != REQUEST_MESSAGE )
 	{
 		//Received the wrong kind of message
@@ -166,16 +156,6 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 		return NULL;
 	}
 
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
-		return NULL;
-	}
 	if(reply->m_messageType != REQUEST_MESSAGE )
 	{
 		//Received the wrong kind of message
@@ -221,16 +201,6 @@ Suspect *GetSuspect(in_addr_t address)
 		return NULL;
 	}
 
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
-		return NULL;
-	}
 	if(reply->m_messageType != REQUEST_MESSAGE)
 	{
 		//Received the wrong kind of message

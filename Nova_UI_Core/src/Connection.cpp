@@ -171,16 +171,8 @@ bool CloseNovadConnection()
 		}
 	}
 
-	if(IPCSocketFD != -1 && close(IPCSocketFD))
-	{
-		LOG(ERROR, " close:"+string(strerror(errno))+".", "");
-		close(IPCSocketFD);
-		IPCSocketFD = -1;
-		success = false;
-	}
-
+	MessageManager::Instance().CloseSocket(IPCSocketFD);
 	IPCSocketFD = -1;
-
 	return success;
 }
 }

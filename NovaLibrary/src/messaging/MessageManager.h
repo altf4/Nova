@@ -40,6 +40,8 @@ public:
 	static void Initialize(enum ProtocolDirection direction);
 	static MessageManager &Instance();
 
+	//NOTE: Will automatically call CloseSocket() for you if the message returned happens to be an ERROR_MESSAGE
+	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
 	Nova::UI_Message *GetMessage(int socketFD, enum ProtocolDirection direction, int timeout);
 
 	//NOTE: Safely does nothing if socketFD already exists in the manager
