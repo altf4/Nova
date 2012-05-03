@@ -64,7 +64,7 @@ void VendorMacDb::LoadPrefixFile()
 				continue;
 			getline(MACPrefixes, vendor);
 			m_MACVendorTable[prefix] = vendor;
-			if(m_vendorMACTable.find(vendor) != m_vendorMACTable.end())
+			if(m_vendorMACTable.keyExists(vendor))
 			{
 				m_vendorMACTable[vendor]->push_back(prefix);
 			}
@@ -159,16 +159,16 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
 string VendorMacDb::LookupVendor(uint MACPrefix)
 {
-	if(m_MACVendorTable.find((uint)(MACPrefix)) != m_MACVendorTable.end())
+	if(m_MACVendorTable.keyExists((uint)(MACPrefix)))
 		return m_MACVendorTable[(uint)(MACPrefix)];
 	else
 		return "";
 }
 
 bool VendorMacDb::IsVendorValid(string vendor)
-	{
-		return (m_vendorMACTable.find(vendor)) == m_vendorMACTable.end();
-	}
+{
+	return m_vendorMACTable.keyExists(vendor);
+}
 
 vector<string> VendorMacDb::SearchVendors(string partialVendorName)
 {

@@ -11,6 +11,10 @@ using namespace std;
 HoneydConfigBinding::HoneydConfigBinding() {};
 HoneydConfigBinding::~HoneydConfigBinding() {};
 
+HoneydConfiguration * HoneydConfigBinding::GetChild() {
+	return m_conf;
+}
+
 void HoneydConfigBinding::Init(Handle<Object> target)
 {
   // Prepare constructor template
@@ -21,21 +25,25 @@ void HoneydConfigBinding::Init(Handle<Object> target)
   
   // TODO: Ask ace about doing this the template way. The following segfaults,
   //tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeMethod<Boolean, bool, HoneydConfiguration, &HoneydConfiguration::LoadAllTemplates>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::LoadAllTemplates>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::SaveAllTemplates>));
+
+
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetProfileNames>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNodeNames"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetNodeNames>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSubnetNames"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetSubnetNames>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScriptNames"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetScriptNames>));
   
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(LoadAllTemplates)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(SaveAllTemplates)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(GetProfileNames)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNodeNames"),FunctionTemplate::New(GetNodeNames)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSubnetNames"),FunctionTemplate::New(GetSubnetNames)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction());
-  
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, std::string, &HoneydConfiguration::DeleteProfile>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, std::string, &HoneydConfiguration::DeleteNode>));
+ 
+
+
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction()); 
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNode"),FunctionTemplate::New(AddNewNode)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(DeleteNode)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
-
-  
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
   target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -53,22 +61,6 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
   return args.This();
 }
 
-
-// Hacky work around helper functions
-Handle<Value> HoneydConfigBinding::LoadAllTemplates(const Arguments& args) 
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-	return scope.Close(Boolean::New(obj->m_conf->LoadAllTemplates()));
-}
-
-Handle<Value> HoneydConfigBinding::SaveAllTemplates(const Arguments& args) 
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-	obj->m_conf->SaveAllTemplates();
-	return scope.Close(Boolean::New(true));
-}
 
 Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args) 
 {
@@ -137,71 +129,28 @@ Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
   return scope.Close(HoneydNodeJs::WrapProfile(obj->m_conf->GetProfile(name)));
 }
 
-Handle<Value> HoneydConfigBinding::DeleteNode(const Arguments& args)
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
 
-	if (args.Length() != 1)
-	{
+Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
+{
+    HandleScope scope;
+    HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+    if (args.Length() != 1)
+    {
         return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
-	}
+    }
 
-	std::string name = cvv8::CastFromJS<std::string>(args[0]);
-	return scope.Close(Boolean::New(obj->m_conf->DeleteNode(name)));
+    std::string name = cvv8::CastFromJS<std::string>(args[0]);
+
+    std::vector<Nova::port> ports = obj->m_conf->GetPorts(name);
+    v8::Local<v8::Array> portArray = v8::Array::New();
+    for (uint i = 0; i < ports.size(); i++) {
+        port *copy = new port();
+        *copy = ports.at(i);
+        portArray->Set(v8::Number::New(i), HoneydNodeJs::WrapPort(copy));
+    }
+
+    return scope.Close(portArray);
 }
 
-Handle<Value> HoneydConfigBinding::DeleteProfile(const Arguments& args)
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-
-	if (args.Length() != 1)
-	{
-        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
-	}
-
-	std::string name = cvv8::CastFromJS<std::string>(args[0]);
-	return scope.Close(Boolean::New(obj->m_conf->DeleteProfile(name)));
-}
-
-Handle<Value> HoneydConfigBinding::GetProfileNames(const Arguments& args) 
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-
-    std::string key = cvv8::CastFromJS<std::string>( args[0] );
-    std::string value = cvv8::CastFromJS<std::string>( args[1] );
-
-	Handle<Value> names = cvv8::CastToJS(obj->m_conf->GetProfileNames());
-
-	return scope.Close(names);
-}
-
-Handle<Value> HoneydConfigBinding::GetNodeNames(const Arguments& args) 
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-
-    std::string key = cvv8::CastFromJS<std::string>( args[0] );
-    std::string value = cvv8::CastFromJS<std::string>( args[1] );
-
-	Handle<Value> names = cvv8::CastToJS(obj->m_conf->GetNodeNames());
-
-	return scope.Close(names);
-}
-
-
-Handle<Value> HoneydConfigBinding::GetSubnetNames(const Arguments& args) 
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-
-    std::string key = cvv8::CastFromJS<std::string>( args[0] );
-    std::string value = cvv8::CastFromJS<std::string>( args[1] );
-
-	Handle<Value> names = cvv8::CastToJS(obj->m_conf->GetSubnetNames());
-
-	return scope.Close(names);
-}
 

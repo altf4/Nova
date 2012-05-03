@@ -13,19 +13,19 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Common hash map structure definitions for use with google dense hashmap
+// Description : Common hash map structure definitions for use with hashmap
 //============================================================================/*
 
 #ifndef HASHMAPSTRUCTS_H_
 #define HASHMAPSTRUCTS_H_
 
-#include <google/dense_hash_map>
+#include "HashMap.h"
 #include <arpa/inet.h>
 #include <vector>
 #include <string>
 
 /************************************************************************/
-/********** Equality operators used by google's dense hash maps *********/
+/********** Equality operators used by hash maps *********/
 /************************************************************************/
 
 struct eqstr
@@ -77,6 +77,6 @@ struct eqkey
 };
 
 ///The Value is a vector of IP headers
-typedef google::dense_hash_map<std::string, struct Session, std::tr1::hash<std::string>, eqstr > TCPSessionHashTable;
+typedef Nova::HashMap<std::string, struct Session, std::tr1::hash<std::string>, eqstr > TCPSessionHashTable;
 
 #endif /* HASHMAPSTRUCTS_H_ */

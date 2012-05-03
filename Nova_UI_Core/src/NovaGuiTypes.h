@@ -62,7 +62,7 @@ struct script
 };
 
 //Container for accessing script items
-typedef google::dense_hash_map<std::string, script, std::tr1::hash<std::string>, eqstr > ScriptTable;
+typedef Nova::HashMap<std::string, script, std::tr1::hash<std::string>, eqstr > ScriptTable;
 
 //used to maintain information about a port, it's type and behavior
 struct port
@@ -85,9 +85,13 @@ struct port
 	inline std::string GetProxyIP() {return proxyIP;}
 	inline std::string GetProxyPort() {return proxyPort;}
 
+	// This is only for the Javascript web interface, avoid use in C++
+	bool isInherited;
+	inline bool GetIsInherited() {return isInherited;};
+
 };
 //Container for accessing port items
-typedef google::dense_hash_map<std::string, port, std::tr1::hash<std::string>, eqstr > PortTable;
+typedef Nova::HashMap<std::string, port, std::tr1::hash<std::string>, eqstr > PortTable;
 
 //used to keep track of subnet gui items and allow for easy access
 struct subnet
@@ -105,7 +109,7 @@ struct subnet
 };
 
 //Container for accessing subnet items
-typedef google::dense_hash_map<std::string, subnet, std::tr1::hash<std::string>, eqstr > SubnetTable;
+typedef Nova::HashMap<std::string, subnet, std::tr1::hash<std::string>, eqstr > SubnetTable;
 
 
 //used to keep track of haystack profile gui items and allow for easy access
@@ -181,7 +185,7 @@ struct profile
 };
 
 //Container for accessing profile items
-typedef google::dense_hash_map<std::string, profile, std::tr1::hash<std::string>, eqstr > ProfileTable;
+typedef Nova::HashMap<std::string, profile, std::tr1::hash<std::string>, eqstr > ProfileTable;
 
 //used to keep track of haystack node gui items and allow for easy access
 struct Node
@@ -207,7 +211,7 @@ struct Node
 };
 
 //Container for accessing node items
-typedef google::dense_hash_map<std::string, Node, std::tr1::hash<std::string>, eqstr > NodeTable;
+typedef Nova::HashMap<std::string, Node, std::tr1::hash<std::string>, eqstr > NodeTable;
 
 }
 

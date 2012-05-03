@@ -148,6 +148,7 @@ app.get('/editHoneydProfile', function(req, res) {
 	{ locals : {
 		oldName: profileName
 		, vendors: vendorToMacDb.GetVendorNames()
+		, scripts: honeydConfig.GetScriptNames()
 		, personalities: osPersonalityDb.GetPersonalityOptions()
 	}})
 });
@@ -307,6 +308,7 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.uptimeMin = profile.GetUptimeMin();
     profile.uptimeMax = profile.GetUptimeMax();
     profile.dropRate = profile.GetDropRate();
+    profile.parentProfile = profile.GetParentProfile();
 
     profile.isTcpActionInherited = profile.isTcpActionInherited();
     profile.isUdpActionInherited = profile.isUdpActionInherited();
@@ -316,15 +318,27 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.isUptimeInherited = profile.isUptimeInherited();
     profile.isDropRateInherited = profile.isDropRateInherited();
 
-
     callback(profile);
 }
 
- everyone.now.test = function(val, callback){
- 	var profile = honeydConfig.GetProfile(val);
-	console.log("Got eth " + profile.GetEthernet() + " for profile " + profileName);
-    callback(profile);
- }
+everyone.now.GetPorts = function (profileName, callback) {
+    var ports = honeydConfig.GetPorts(profileName);
+    for ( var i = 0; i < ports.length; i++) {
+      ports[i].portName = ports[i].GetPortName();
+      ports[i].portNum = ports[i].GetPortNum();
+      ports[i].type = ports[i].GetType();
+      ports[i].behavior = ports[i].GetBehavior();
+      ports[i].scriptName = ports[i].GetScriptName();
+      ports[i].isInherited = ports[i].GetIsInherited();
+    }
+
+    callback(ports);
+}
+
+
+everyone.now.SaveProfile = function(profile, callback) {
+    // TODO: Make the Javascript/C++ transmutation magic happen here
+}
 
 
 

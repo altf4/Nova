@@ -19,9 +19,11 @@
 
 #include "ClassificationEngine.h"
 #include "SuspectTable.h"
+#include "HashMap.h"
 #include "Config.h"
 #include "Logger.h"
 #include "Novad.h"
+
 
 #include <fstream>
 #include <sstream>
@@ -90,7 +92,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 	if(!IsValidKey_NonBlocking(key))
 	{
 		//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
-		if(m_lockTable.find(key) != m_lockTable.end())
+		if(m_lockTable.keyExists(key))
 		{
 			//Wait for the suspect lock, this call releases the table while blocking.
 			LockSuspect(key);
@@ -133,7 +135,7 @@ bool SuspectTable::AddNewSuspect(Packet packet)
 	if(!IsValidKey_NonBlocking(key))
 	{
 		//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
-		if(m_lockTable.find(key) != m_lockTable.end())
+		if(m_lockTable.keyExists(key))
 		{
 			//Wait for the suspect lock, this call releases the table while blocking.
 			LockSuspect(key);
@@ -694,7 +696,19 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 		while(offset < dataSize)
 		{
 			Suspect* newSuspect = new Suspect();
-			offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
+
+			try {
+				offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
+			} catch (Nova::emptyKeyException& e) {
+				LOG(ERROR, "The state file may be corrupt, a hash table empty key exception was caught during deserialization", "");
+				pthread_rwlock_unlock(&m_lock);
+				return 0;
+			} catch (Nova::deleteKeyException& e) {
+				LOG(ERROR, "The state file may be corrupt, a hash table empty key exception was caught during deserialization", "");
+				pthread_rwlock_unlock(&m_lock);
+				return 0;
+			}
+
 			in_addr_t key = newSuspect->GetIpAddress();
 			// If our suspect has no evidence, throw it out
 			if(!newSuspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
@@ -720,7 +734,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			else
 			{
 				//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
-				if(m_lockTable.find(key) != m_lockTable.end())
+				if(m_lockTable.keyExists(key))
 				{
 					//Wait for the suspect lock, this call releases the table while blocking.
 					LockSuspect(key);
@@ -782,7 +796,7 @@ bool SuspectTable::IsEmptySuspect(Suspect * suspect)
 bool SuspectTable::IsValidKey_NonBlocking(in_addr_t key)
 {
 	//If we find a SuspectLock the suspect exists or is scheduled to be deleted
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		return !m_lockTable[key].deleted;
 	}
@@ -796,7 +810,7 @@ bool SuspectTable::IsValidKey_NonBlocking(in_addr_t key)
 bool SuspectTable::LockSuspect(in_addr_t key)
 {
 	//If the suspect has a lock
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		m_lockTable[key].ref_cnt++;
 		pthread_rwlock_unlock(&m_lock);
@@ -815,7 +829,7 @@ bool SuspectTable::LockSuspect(in_addr_t key)
 bool SuspectTable::UnlockSuspect(in_addr_t key)
 {
 	//If the suspect has a lock
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		m_lockTable[key].ref_cnt--;
 		//If unlock fails
@@ -836,7 +850,7 @@ bool SuspectTable::UnlockSuspect(in_addr_t key)
 bool  SuspectTable::CleanSuspectLock(in_addr_t key)
 {
 	//If the suspect has a lock
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		if((m_lockTable[key].ref_cnt <= 0) && m_lockTable[key].deleted)
 		{

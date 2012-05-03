@@ -20,11 +20,11 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
 
         // Javascript methods
         Local<Template> proto = m_SuspectTemplate->PrototypeTemplate();
-        proto->Set("ToString",     FunctionTemplate::New(InvokeMethod<String, std::string, Suspect, &Suspect::ToString>) );
-        proto->Set("GetInAddr", FunctionTemplate::New(InvokeMethod<String,  struct ::in_addr, Suspect, &Suspect::GetInAddr>) );
-        proto->Set("GetClassification", FunctionTemplate::New(InvokeMethod<Number, double, Suspect, &Suspect::GetClassification>) );
-        proto->Set("GetIsHostile", FunctionTemplate::New(InvokeMethod<Boolean, bool, Suspect, &Suspect::GetIsHostile>) );
-        proto->Set("GetFlaggedByAlarm", FunctionTemplate::New(InvokeMethod<Boolean, bool, Suspect, &Suspect::GetFlaggedByAlarm>) );
+        proto->Set("ToString",     		FunctionTemplate::New(InvokeMethod<std::string, Suspect, &Suspect::ToString>) );
+        proto->Set("GetInAddr", 		FunctionTemplate::New(InvokeMethod<struct ::in_addr, Suspect, &Suspect::GetInAddr>) );
+        proto->Set("GetClassification", FunctionTemplate::New(InvokeMethod<double, Suspect, &Suspect::GetClassification>) );
+        proto->Set("GetIsHostile", 		FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetIsHostile>) );
+        proto->Set("GetFlaggedByAlarm", FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetFlaggedByAlarm>) );
 
         // Accessing features is a special case
         proto->Set("GetFeatures", FunctionTemplate::New(GetFeatures) );

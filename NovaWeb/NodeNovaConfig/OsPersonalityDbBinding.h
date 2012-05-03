@@ -9,15 +9,14 @@
 class OsPersonalityDbBinding : public node::ObjectWrap {
  public:
   static void Init(v8::Handle<v8::Object> target);
+  
+  OsPersonalityDb * GetChild();
 
  private:
   OsPersonalityDbBinding();
 
   static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
-  static v8::Handle<v8::Value> GetPersonalityOptions(const v8::Arguments& args);
-
-  
   OsPersonalityDb *m_db;
 };
 

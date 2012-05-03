@@ -55,9 +55,9 @@ public:
     std::string DoppProfileToString(profile* p);
 
     //Saves the current configuration information to XML files
-    void SaveAllTemplates();
+    bool SaveAllTemplates();
     //Writes the current configuration to honeyd configs
-    void WriteHoneydConfiguration(std::string path);
+    bool WriteHoneydConfiguration(std::string path);
 
     //Setter for the directory to read from and write to
     void SetHomePath(std::string homePath);
@@ -121,6 +121,20 @@ public:
     bool DisableNode(std::string node);
     void DisableProfileNodes(std::string profile);
 
+    // This is only for the Javascript UI, avoid use here
+	inline std::vector<port> GetPorts(std::string profile) {
+		std::vector<port> ret;
+		port p;
+
+		for (uint i = 0; i < m_profiles[profile].ports.size(); i++)
+		{
+			p = m_ports[m_profiles[profile].ports.at(i).first];
+			p.isInherited = m_profiles[profile].ports.at(i).second;
+			ret.push_back(p);
+		}
+
+		return ret;
+	}
 
 
 // TODO: this should be private eventually

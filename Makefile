@@ -70,7 +70,6 @@ clean-test:
 	$(MAKE) -C NovaTest/Debug clean
 
 clean-web:
-	cd NovaWeb; node-waf clean
 	cd NovaWeb/NodeNovaConfig; node-waf clean
 
 install: install-release
