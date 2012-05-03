@@ -1212,14 +1212,14 @@ void NovaGUI::on_clearSuspectsButton_clicked()
 /************************************************
  * List Signal Handlers
  ************************************************/
-void NovaGUI::on_suspectList_itemSelectionChanged()
+void NovaGUI::on_suspectList_currentItemChanged(QListWidgetItem * current, QListWidgetItem * previous)
 {
 	if(!m_editingSuspectList)
 	{
 		pthread_rwlock_wrlock(&lock);
-		if(ui.suspectList->currentItem() != NULL)
+		if((ui.suspectList->currentItem() == current) && (current != NULL) && (current != previous))
 		{
-			in_addr_t addr = inet_addr(ui.suspectList->currentItem()->text().toStdString().c_str());
+			in_addr_t addr = inet_addr(current->text().toStdString().c_str());
 			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString().c_str()));
 			SetFeatureDistances(SuspectTable[addr].suspect);
 		}
