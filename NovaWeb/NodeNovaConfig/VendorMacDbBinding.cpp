@@ -8,6 +8,11 @@ using namespace v8;
 VendorMacDbBinding::VendorMacDbBinding() {};
 VendorMacDbBinding::~VendorMacDbBinding() {};
 
+VendorMacDb * VendorMacDbBinding::GetChild()
+{
+	return m_db;
+}
+
 void VendorMacDbBinding::Init(v8::Handle<Object> target)
 {
   // Prepare constructor template
@@ -16,7 +21,7 @@ void VendorMacDbBinding::Init(v8::Handle<Object> target)
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   // Prototype
   
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVendorNames"),FunctionTemplate::New(GetVendorNames)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVendorNames"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, VendorMacDbBinding, VendorMacDb, &VendorMacDb::GetVendorNames>));
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
   target->Set(String::NewSymbol("VendorMacDbBinding"), constructor);
@@ -33,17 +38,5 @@ v8::Handle<Value> VendorMacDbBinding::New(const Arguments& args)
   obj->Wrap(args.This());
 
   return args.This();
-}
-
-
-// Hacky work around helper functions
-v8::Handle<Value> VendorMacDbBinding::GetVendorNames(const Arguments& args) 
-{
-	v8::HandleScope scope;
-	VendorMacDbBinding* obj = ObjectWrap::Unwrap<VendorMacDbBinding>(args.This());
-
-	v8::Handle<Value> names = cvv8::CastToJS(obj->m_db->GetVendorNames());
-
-	return scope.Close(names);
 }
 

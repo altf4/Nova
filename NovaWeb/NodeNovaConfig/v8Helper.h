@@ -3,8 +3,10 @@
 
 #include "v8.h"
 #include "v8-convert.hpp"
+#include <node.h>
 
 #include <string>
+#include <iostream>
 #include <arpa/inet.h>
 
 template <typename T> T* Unwrap(v8::Handle<v8::Object> obj, int fieldIndex=0)
@@ -50,6 +52,12 @@ v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
     Handle<v8::Value> result = cvv8::CastToJS(F(p1));
     return scope.Close(result);
 }
+
+
+
+
+
+
 
 // Invocation of member methods,
 // zero-argument version.
@@ -134,4 +142,85 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 }
 
 
+
+
+
+
+
+
+
+
+
+// Invocation of member methods,
+// zero-argument version.
+//
+// Funny template approach is used to enable emulated partial specialization.
+template <typename NATIVE_RETURN, typename T, typename CHILD_TYPE, NATIVE_RETURN (CHILD_TYPE::*F)(void)> 
+struct InvokeWrappedMethod_impl
+{
+static v8::Handle<v8::Value> InvokeWrappedMethod(const v8::Arguments& args)
+{
+    using namespace v8;
+    HandleScope scope;
+	
+	T* nativeHandler = node::ObjectWrap::Unwrap<T>(args.This());
+	CHILD_TYPE *handler = nativeHandler->GetChild();
+
+    Handle<v8::Value> result = cvv8::CastToJS(  (  (handler)->*(F)  )()  );
+    return scope.Close(result);
+} 
+};
+
+
+// Invocation of member methods,
+// one-argument version.
+template <typename NATIVE_RETURN, typename T, typename CHILD_TYPE, typename NATIVE_P1, NATIVE_RETURN (CHILD_TYPE::*F)(NATIVE_P1)> 
+struct InvokeWrappedMethod_impl_1
+{
+static v8::Handle<v8::Value> InvokeWrappedMethod(const v8::Arguments& args)
+{
+    using namespace v8;
+    HandleScope scope;
+	T* nativeHandler = node::ObjectWrap::Unwrap<T>(args.This());
+
+    if( args.Length() < 1 )
+    {
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+    }
+    
+	NATIVE_P1 p1 = cvv8::CastFromJS<NATIVE_P1>(args[0]);
+	
+	
+	CHILD_TYPE *handler = nativeHandler->GetChild();
+
+    Handle<v8::Value> result = cvv8::CastToJS(  (  (handler)->*(F)  )(p1)  );
+    return scope.Close(result);
+} 
+};
+
+// Invocation of member methods,
+// zero argument version.
+//
+// This wrapper template function along with the classes above
+// emulates partial specialization where required.
+template <typename NATIVE_RETURN, typename T, typename CHILD_TYPE, NATIVE_RETURN (CHILD_TYPE::*F)(void)> 
+static v8::Handle<v8::Value> InvokeWrappedMethod(const v8::Arguments& args)
+{
+    return InvokeWrappedMethod_impl<NATIVE_RETURN, T, CHILD_TYPE, F >::InvokeWrappedMethod(args);
+}
+
+// Invocation of member methods,
+// one argument version.
+//
+// This wrapper template function along with the classes above
+// emulates partial specialization where required.
+template <typename NATIVE_RETURN, typename T, typename CHILD_TYPE, typename NATIVE_P1, NATIVE_RETURN (CHILD_TYPE::*F)(NATIVE_P1)> 
+static v8::Handle<v8::Value> InvokeWrappedMethod(const v8::Arguments& args)
+{
+    return InvokeWrappedMethod_impl_1<NATIVE_RETURN, T, CHILD_TYPE, NATIVE_P1, F >::InvokeWrappedMethod(args);
+}
+
+
+
 #endif // __V8_HELPER
+

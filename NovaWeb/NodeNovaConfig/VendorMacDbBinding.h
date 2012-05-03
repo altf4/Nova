@@ -9,6 +9,7 @@
 class VendorMacDbBinding : public node::ObjectWrap {
  public:
   static void Init(v8::Handle<v8::Object> target);
+  VendorMacDb * GetChild();
 
  private:
   VendorMacDbBinding();
@@ -16,9 +17,6 @@ class VendorMacDbBinding : public node::ObjectWrap {
 
   static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
-  static v8::Handle<v8::Value> GetVendorNames(const v8::Arguments& args);
-
-  
   VendorMacDb *m_db;
 };
 

@@ -36,8 +36,8 @@ struct _trainingSuspect
 
 typedef struct _trainingSuspect trainingSuspect;
 
-typedef google::dense_hash_map<std::string, trainingSuspect*, std::tr1::hash<std::string>, eqstr > trainingSuspectMap;
-typedef google::dense_hash_map<std::string, std::vector<std::string>*, std::tr1::hash<std::string>, eqstr > trainingDumpMap;
+typedef Nova::HashMap<std::string, trainingSuspect*, std::tr1::hash<std::string>, eqstr > trainingSuspectMap;
+typedef Nova::HashMap<std::string, std::vector<std::string>*, std::tr1::hash<std::string>, eqstr > trainingDumpMap;
 
 class TrainingData
 {

@@ -239,7 +239,7 @@ void NovaConfig::on_actionAddPort_triggered()
 {
 	if(m_loading->tryLock())
 	{
-		if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
+		if(m_honeydConfig->m_profiles.keyExists(m_currentProfile))
 		{
 			profile p = m_honeydConfig->m_profiles[m_currentProfile];
 
@@ -688,7 +688,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 
 		port prt;
 		//Locate the port in the table or create the port if it doesn't exist
-		if(m_honeydConfig->m_ports.find(portName) == m_honeydConfig->m_ports.end())
+		if(!m_honeydConfig->m_ports.keyExists(portName))
 		{
 			prt.portName = portName;
 			prt.portNum = item->text(0).toStdString();
@@ -738,7 +738,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 
 			//If the port number or protocol is different, check for inherited ports
 			if((prt.portNum.compare(oldPrt.portNum) || prt.type.compare(oldPrt.type))
-				&& (m_honeydConfig->m_profiles.find(p.parentProfile) != m_honeydConfig->m_profiles.end()))
+				&& (m_honeydConfig->m_profiles.keyExists(p.parentProfile)))
 			{
 				profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 				for(uint i = 0; i < parent.ports.size(); i++)
@@ -1411,7 +1411,7 @@ void NovaConfig::SaveProfileSettings()
 	struct port pr;
 
 	//Saves any modifications to the last selected profile object.
-	if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
+	if(m_honeydConfig->m_profiles.keyExists(m_currentProfile))
 	{
 		profile p = m_honeydConfig->m_profiles[m_currentProfile];
 		//currentProfile->name is set in updateProfile
@@ -1575,7 +1575,7 @@ void NovaConfig::LoadProfileSettings()
 	port pr;
 	QTreeWidgetItem * item = NULL;
 	//If the selected profile can be found
-	if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
+	if(m_honeydConfig->m_profiles.keyExists(m_currentProfile))
 	{
 		LoadInheritedProfileSettings();
 		//Clear the tree widget and load new selections
@@ -1897,7 +1897,7 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 				uint i = 0, j = 0;
 				j = ~j; //2^32-1
 
-				while((m_honeydConfig->m_profiles.find(p.name) != m_honeydConfig->m_profiles.end()) && (i < j))
+				while((m_honeydConfig->m_profiles.keyExists(p.name)) && (i < j))
 				{
 					ss.str("");
 					i++;
@@ -2137,7 +2137,7 @@ void NovaConfig::LoadProfileChildren(string parent)
 
 			//Asserts the name is unique, if it is not it finds a unique name
 			// up to the range of 2^32
-			while((m_honeydConfig->m_profiles.find(prof.name) != m_honeydConfig->m_profiles.end()) && (i < j))
+			while((m_honeydConfig->m_profiles.keyExists(prof.name)) && (i < j))
 			{
 				ss.str("");
 				i++;
@@ -2317,7 +2317,7 @@ void NovaConfig::CreateProfileItem(string pstr)
 		else
 		{
 			//find the parent and assert that they have an item
-			if(m_honeydConfig->m_profiles.find(p.parentProfile) != m_honeydConfig->m_profiles.end())
+			if(m_honeydConfig->m_profiles.keyExists(p.parentProfile))
 			{
 				profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 
@@ -2417,7 +2417,7 @@ void NovaConfig::on_deleteButton_clicked()
 void NovaConfig::on_actionProfileDelete_triggered()
 {
 	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && m_currentProfile.compare("default")
-		&& (m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end()))
+		&& (m_honeydConfig->m_profiles.keyExists(m_currentProfile)))
 	{
 		if( m_honeydConfig->IsProfileUsed(m_currentProfile))
 		{
@@ -2481,7 +2481,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	j = ~j; // 2^32-1
 
 	//Finds a unique identifier
-	while((m_honeydConfig->m_profiles.find(temp.name) != m_honeydConfig->m_profiles.end()) && (i < j))
+	while((m_honeydConfig->m_profiles.keyExists(temp.name)) && (i < j))
 	{
 		i++;
 		ss.str("");
@@ -2489,7 +2489,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		temp.name = ss.str();
 	}
 	//If there is currently a selected profile, that profile will be the parent of the new profile
-	if(m_honeydConfig->m_profiles.find(m_currentProfile) != m_honeydConfig->m_profiles.end())
+	if(m_honeydConfig->m_profiles.keyExists(m_currentProfile))
 	{
 		string tempName = temp.name;
 		temp = m_honeydConfig->m_profiles[m_currentProfile];
@@ -2558,7 +2558,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 		p.name = ss.str();
 
 		//Check for name in use, if so increase number until unique name is found
-		while((m_honeydConfig->m_profiles.find(p.name) != m_honeydConfig->m_profiles.end()) && (i < j))
+		while((m_honeydConfig->m_profiles.keyExists(p.name)) && (i < j))
 		{
 			ss.str("");
 			i++;
@@ -2716,7 +2716,7 @@ void NovaConfig::LoadAllNodes()
 	{
 		if(m_honeydConfig->m_subnets.size())
 		{
-			if(m_honeydConfig->m_subnets.find(m_currentSubnet) != m_honeydConfig->m_subnets.end())
+			if(m_honeydConfig->m_subnets.keyExists(m_currentSubnet))
 			{
 				if (GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
 				{
