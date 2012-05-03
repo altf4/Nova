@@ -1,7 +1,7 @@
 #ifndef NOVAHASH_H_
 #define NOVAHASH_H_
 
-#include "HashMapStructs.h"
+#include <google/dense_hash_map>
 #include <exception>
 
 namespace Nova
@@ -46,16 +46,21 @@ public:
 	void set_deleted_key(KeyType key);
 	void set_empty_key(KeyType key);
 
+	bool keyExists(KeyType key);
+	void erase(KeyType key);
+
 	// Expose generic methods we use
 	void clear();
 	void clear_no_resize();
 	void resize(size_t newSize);
-	int size();
+	uint size();
+	bool empty();
 
 	// Expose the iterators
 	typedef typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator iterator;
 	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator begin();
 	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator end();
+	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator find(KeyType key);
 
 private:
 	google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey> m_map;
@@ -118,6 +123,12 @@ typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
+typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::find(KeyType key)
+{
+	return m_map.find(key);
+}
+
+template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 void HashMap<KeyType,ValueType,HashFcn,EqualKey>::clear()
 {
 	m_map.clear();
@@ -130,9 +141,21 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::resize(size_t size)
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-int HashMap<KeyType,ValueType,HashFcn,EqualKey>::size()
+void HashMap<KeyType,ValueType,HashFcn,EqualKey>::erase(KeyType key)
+{
+	m_map.erase(key);
+}
+
+template<class KeyType, class ValueType, class HashFcn, class EqualKey>
+uint HashMap<KeyType,ValueType,HashFcn,EqualKey>::size()
 {
 	return m_map.size();
+}
+
+template<class KeyType, class ValueType, class HashFcn, class EqualKey>
+bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::empty()
+{
+	return m_map.empty();
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
@@ -141,6 +164,11 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::clear_no_resize()
 	m_map.clear_no_resize();
 }
 
+template<class KeyType, class ValueType, class HashFcn, class EqualKey>
+bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::keyExists(KeyType key)
+{
+	return m_map.find(key) != m_map.end();
+}
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 ValueType& HashMap<KeyType,ValueType,HashFcn,EqualKey>::operator[](KeyType key)

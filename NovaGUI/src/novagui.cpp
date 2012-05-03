@@ -441,7 +441,7 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initializatio
 
 	pthread_rwlock_wrlock(&lock);
 	//If the suspect already exists in our table
-	if(SuspectTable.find(suspectItem.suspect->GetIpAddress()) != SuspectTable.end())
+	if(SuspectTable.keyExists(suspectItem.suspect->GetIpAddress()))
 	{
 		if (!initialization)
 		{

@@ -92,7 +92,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 	if(!IsValidKey_NonBlocking(key))
 	{
 		//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
-		if(m_lockTable.find(key) != m_lockTable.end())
+		if(m_lockTable.keyExists(key))
 		{
 			//Wait for the suspect lock, this call releases the table while blocking.
 			LockSuspect(key);
@@ -135,7 +135,7 @@ bool SuspectTable::AddNewSuspect(Packet packet)
 	if(!IsValidKey_NonBlocking(key))
 	{
 		//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
-		if(m_lockTable.find(key) != m_lockTable.end())
+		if(m_lockTable.keyExists(key))
 		{
 			//Wait for the suspect lock, this call releases the table while blocking.
 			LockSuspect(key);
@@ -734,7 +734,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			else
 			{
 				//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
-				if(m_lockTable.find(key) != m_lockTable.end())
+				if(m_lockTable.keyExists(key))
 				{
 					//Wait for the suspect lock, this call releases the table while blocking.
 					LockSuspect(key);
@@ -796,7 +796,7 @@ bool SuspectTable::IsEmptySuspect(Suspect * suspect)
 bool SuspectTable::IsValidKey_NonBlocking(in_addr_t key)
 {
 	//If we find a SuspectLock the suspect exists or is scheduled to be deleted
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		return !m_lockTable[key].deleted;
 	}
@@ -810,7 +810,7 @@ bool SuspectTable::IsValidKey_NonBlocking(in_addr_t key)
 bool SuspectTable::LockSuspect(in_addr_t key)
 {
 	//If the suspect has a lock
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		m_lockTable[key].ref_cnt++;
 		pthread_rwlock_unlock(&m_lock);
@@ -829,7 +829,7 @@ bool SuspectTable::LockSuspect(in_addr_t key)
 bool SuspectTable::UnlockSuspect(in_addr_t key)
 {
 	//If the suspect has a lock
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		m_lockTable[key].ref_cnt--;
 		//If unlock fails
@@ -850,7 +850,7 @@ bool SuspectTable::UnlockSuspect(in_addr_t key)
 bool  SuspectTable::CleanSuspectLock(in_addr_t key)
 {
 	//If the suspect has a lock
-	if(m_lockTable.find(key) != m_lockTable.end())
+	if(m_lockTable.keyExists(key))
 	{
 		if((m_lockTable[key].ref_cnt <= 0) && m_lockTable[key].deleted)
 		{
