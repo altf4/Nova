@@ -1,7 +1,51 @@
 extends layout
 
+block topPannelAdditions
+  div(style="float: left") Novad Status:&nbsp 
+  div#nova_status unknown
+  div(style="float: left") Haystack Status:&nbsp  
+  div#haystack_status unknown
+
+block buttonPannelAdditions
+  button(data-dojo-type="dijit.form.Button", type="button") Start Nova
+    script(type="dojo/method", data-dojo-event="onClick") now.StartNovad();
+  br 
+  
+  button(data-dojo-type="dijit.form.Button",type="button") Stop Nova
+    script(type="dojo/method", data-dojo-event="onClick") now.StopNovad();
+  br
+  
+  br
+
+  button(data-dojo-type="dijit.form.Button",type="button") Start Haystack
+    script(type="dojo/method", data-dojo-event="onClick") now.StartHaystack();
+  br
+
+  button(data-dojo-type="dijit.form.Button",type="button") Stop Haystack
+    script(type="dojo/method", data-dojo-event="onClick") now.StopHaystack();
+  br
+
+  br
+  button(data-dojo-type="dijit.form.Button",type="button") Clear All Suspects
+    script(type="dojo/method", data-dojo-event="onClick") now.ClearAllSuspects();suspectGrid.store.fetch({onComplete: clearSuspects});
+  br
+  
+
 block content
-  h1 Suspect List
+  div#nova_suspects_header
+    h1 Suspect List
+    button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
+      script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
+        | liveUpdate = !liveUpdate;
+        | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause updates/Auto Scrolling";}
+        | else {dojo.byId("liveUpdateButton").innerHTML = "Pause updates/Auto Scrolling";}
+    br
+    br
+    
+    label Filter by IP (supports * and ?)
+    input#ipFilter(type="text", name="ipFilter", value="*", data-dojo-type="dijit.form.TextBox", intermediateChanges=true, onchange="ipFilterChange()")
+        
+    br
   div#nova_suspects
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
    h4 Novad is not currently connected or running. Try starting it.
@@ -10,9 +54,19 @@ block headerAdditions
   script 
     var suspectStore;
     var suspectGrid;
+    var liveUpdate = true;
+
+    require(["dijit/form/TextBox"]);
+
+    function ipFilterChange() {
+      var filter = dijit.byId("ipFilter").value;
+      dijit.byId("nova_suspects").filter({GetInAddr: filter});
+    }
+    
 
     now.updateNovadStatus = function (isNovadUp){
       dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
+      dojo.byId("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
       dojo.byId("nova_suspects").style.display = isNovadUp ? "block" : "none";
       dojo.byId("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
     };
@@ -22,6 +76,9 @@ block headerAdditions
     };
 
     now.OnNewSuspect = function(suspect){
+       if(!liveUpdate) {
+         return;
+       }
       // This is probably a really bad way to do this...
       for (var i in suspect.GetFeatures) {  
         suspect[i] = suspect.GetFeatures[i];
@@ -42,14 +99,17 @@ block headerAdditions
     };
 
 
-    require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){
+    require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){ 
     dojo.addOnLoad(function(){
       suspectStore = new dojo.store.Observable(new dojo.store.Memory());
       suspectStore.idProperty="GetInAddr";
       // Formatter for the classification
       function classificationFormatter(d) {
-        var num = new Number(d);
-        return (num.toFixed(6));
+        
+        var bar = new dijit.ProgressBar({progress:d, maximum:1}, "bar");
+        return bar;
+        //var num = new Number(d);
+        //return (num.toFixed(6));
       }
 
       // Formatter for the floating point features
@@ -63,13 +123,15 @@ block headerAdditions
     suspectGrid = new DataGrid(
     {
       store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
+      sortInfo: -2,
+      autoWidth: true,
       structure: [ 
         {name:"Address", field:"GetInAddr", width:"150px"}, 
-        {name:"Classification", field:"GetClassification", width:"150px", formatter: classificationFormatter},
+        {name:"Classification", field:"GetClassification", width:"300px", formatter: classificationFormatter},
         {name:"Hostile", field:"GetIsHostile"},
-        {name:"IP traffic distribution", field:"ip_traffic_distribution", formatter: featureFormatter},
-        {name:"Port traffic distribution", field:"port_traffic_distribution", formatter: featureFormatter},
-        {name:"Haystack event frequency", field:"haystack_event_frequency", formatter: featureFormatter},
+        {name:"IP traffic distribution", width:"125px", field:"ip_traffic_distribution", formatter: featureFormatter},
+        {name:"Port traffic distribution", width:"125px", field:"port_traffic_distribution", formatter: featureFormatter},
+        {name:"Haystack event frequency", width:"150px", field:"haystack_event_frequency", formatter: featureFormatter},
         {name:"Packet Size Mean", field:"packet_size_mean", formatter: featureFormatter},
         {name:"Packet Size Deviation", field:"packet_size_deviation", formatter: featureFormatter},
         {name:"IPs Contacted", field:"distinct_ips"},

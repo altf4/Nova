@@ -25,8 +25,8 @@
 #include <string>
 #include <vector>
 
-typedef google::dense_hash_map<uint, std::string, std::tr1::hash<uint>, eqint> MACToVendorTable;
-typedef google::dense_hash_map<std::string, std::vector<uint> *,  std::tr1::hash<std::string>, eqstr > VendorToMACTable;
+typedef Nova::HashMap<uint, std::string, std::tr1::hash<uint>, eqint> MACToVendorTable;
+typedef Nova::HashMap<std::string, std::vector<uint> *,  std::tr1::hash<std::string>, eqstr > VendorToMACTable;
 
 class VendorMacDb
 {
@@ -51,8 +51,13 @@ public:
 	//		partialVendorName: Any part of the vendor name
 	std::vector <std::string> SearchVendors(std::string partialVendorName);
 
+	// Gets list of all the vendor names
+	std::vector <std::string> GetVendorNames();
+
 	// Checks if a vendor name is known
 	bool IsVendorValid(std::string vendor);
+
+
 
 
 private:

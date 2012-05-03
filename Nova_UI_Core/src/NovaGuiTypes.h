@@ -62,7 +62,7 @@ struct script
 };
 
 //Container for accessing script items
-typedef google::dense_hash_map<std::string, script, std::tr1::hash<std::string>, eqstr > ScriptTable;
+typedef Nova::HashMap<std::string, script, std::tr1::hash<std::string>, eqstr > ScriptTable;
 
 //used to maintain information about a port, it's type and behavior
 struct port
@@ -75,9 +75,23 @@ struct port
 	std::string proxyIP;
 	std::string proxyPort;
 	boost::property_tree::ptree tree;
+
+	// This is for the Javascript web interface bindings
+	inline std::string GetPortName() {return portName;}
+	inline std::string GetPortNum() {return portNum;}
+	inline std::string GetType() {return type;}
+	inline std::string GetBehavior() {return behavior;}
+	inline std::string GetScriptName() {return scriptName;}
+	inline std::string GetProxyIP() {return proxyIP;}
+	inline std::string GetProxyPort() {return proxyPort;}
+
+	// This is only for the Javascript web interface, avoid use in C++
+	bool isInherited;
+	inline bool GetIsInherited() {return isInherited;};
+
 };
 //Container for accessing port items
-typedef google::dense_hash_map<std::string, port, std::tr1::hash<std::string>, eqstr > PortTable;
+typedef Nova::HashMap<std::string, port, std::tr1::hash<std::string>, eqstr > PortTable;
 
 //used to keep track of subnet gui items and allow for easy access
 struct subnet
@@ -95,7 +109,7 @@ struct subnet
 };
 
 //Container for accessing subnet items
-typedef google::dense_hash_map<std::string, subnet, std::tr1::hash<std::string>, eqstr > SubnetTable;
+typedef Nova::HashMap<std::string, subnet, std::tr1::hash<std::string>, eqstr > SubnetTable;
 
 
 //used to keep track of haystack profile gui items and allow for easy access
@@ -114,10 +128,64 @@ struct profile
 	std::vector<std::pair<std::string, bool> > ports;
 	std::string parentProfile;
 	boost::property_tree::ptree tree;
+
+
+
+	// This is for the Javascript bindings in the web interface
+	inline std::string GetName() {return name;}
+	inline std::string GetTcpAction() {return tcpAction;}
+	inline std::string GetUdpAction() {return udpAction;}
+	inline std::string GetIcmpAction() {return icmpAction;}
+	inline std::string GetPersonality() {return personality;}
+	inline std::string GetEthernet() {return ethernet;}
+	inline std::string GetUptimeMin() {return uptimeMin;}
+	inline std::string GetUptimeMax() {return uptimeMax;}
+	inline std::string GetDropRate() {return dropRate;}
+	inline std::string GetParentProfile() {return parentProfile;}
+
+	inline std::vector<bool> GetInheritance()
+	{
+		std::vector<bool> ret;
+		for (int i = 0; i < INHERITED_MAX; i++)
+		{
+			ret.push_back(inherited[i]);
+		}
+		return ret;
+	}
+
+	inline bool isTcpActionInherited() {return inherited[TCP_ACTION];}
+	inline bool isUdpActionInherited() {return inherited[UDP_ACTION];}
+	inline bool isIcmpActionInherited() {return inherited[ICMP_ACTION];}
+	inline bool isPersonalityInherited() {return inherited[PERSONALITY];}
+	inline bool isEthernetInherited() {return inherited[ETHERNET];}
+	inline bool isUptimeInherited() {return inherited[UPTIME];}
+	inline bool isDropRateInherited() {return inherited[DROP_RATE];}
+
+	// Work around for inability to get the std::pair to javascript
+	inline std::vector<std::string> GetPortNames()
+	{
+		std::vector<std::string> ret;
+		for (std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
+		{
+			ret.push_back(it->first);
+		}
+		return ret;
+	}
+
+	// Work around for inability to get the std::pair to javascript
+	inline std::vector<bool> GetPortInheritance()
+	{
+		std::vector<bool> ret;
+		for (std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
+		{
+			ret.push_back(it->second);
+		}
+		return ret;
+	}
 };
 
 //Container for accessing profile items
-typedef google::dense_hash_map<std::string, profile, std::tr1::hash<std::string>, eqstr > ProfileTable;
+typedef Nova::HashMap<std::string, profile, std::tr1::hash<std::string>, eqstr > ProfileTable;
 
 //used to keep track of haystack node gui items and allow for easy access
 struct Node
@@ -143,7 +211,7 @@ struct Node
 };
 
 //Container for accessing node items
-typedef google::dense_hash_map<std::string, Node, std::tr1::hash<std::string>, eqstr > NodeTable;
+typedef Nova::HashMap<std::string, Node, std::tr1::hash<std::string>, eqstr > NodeTable;
 
 }
 

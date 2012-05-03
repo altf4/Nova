@@ -39,8 +39,6 @@ class NovaConfig : public QMainWindow
 
 public:
 
-	std::vector<std::pair<std::string, std::string> > m_nmapPersonalities;
-
 	Nova::HoneydConfiguration *m_honeydConfig;
 
     QMutex * m_loading;
@@ -121,7 +119,7 @@ public:
 
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
-    void DeleteNode(std::string node);
+    bool DeleteNode(std::string node);
 
     //Populates the tree widget with the current node configuration
     void LoadAllNodes();

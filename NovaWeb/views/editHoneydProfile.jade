@@ -1,0 +1,452 @@
+extends layout
+
+
+block headerAdditions
+  //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  script
+    var currentName = "#{oldName}";
+    var profile;
+
+    var inheritanceChanged = function() {};
+    var uptimeTypeChanged = function() {};
+    var deletePort = function() {};
+    var addPort = function(port) {};
+    var portBehaviorChanged = function() {};
+    var saveChanges = function() {};
+
+    var portIndexes = [];
+    var loaded = false;
+
+    require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
+
+    saveChanges = function() {
+        var pfile = function() {};
+        
+        pfile.oldName = "#{oldName}";
+        pfile.name = dojo.byId("name").value;
+        pfile.tcpAction = dojo.byId("tcpAction").value;
+        pfile.udpAction = dojo.byId("udpAction").value;
+        pfile.icmpAction = dojo.byId("icmpAction").value;
+        pfile.personality = dojo.byId("personality").value;
+        pfile.ethernet = dojo.byId("ethernet").value;
+        pfile.dropRate = dojo.byId("dropRate").value;
+        pfile.uptimeMin = dojo.byId("uptimeMin").value;
+
+        if (dojo.byId("uptimeType").selectedIndex == 0) {
+            pfile.uptimeMin = dojo.byId("uptimeMin").value;
+        } else {
+            pfile.uptimeMin = dojo.byId("uptimeMin").value;
+        }
+
+
+        pfile.isPersonalityInherited = dojo.byId("inheritPersonality").checked;
+        pfile.isEthernetInherited = dojo.byId("inheritEthernet").checked;
+        pfile.isDropRateInherited = dojo.byId("inheritDropRate").checked;
+        pfile.isUptimeInherited = dojo.byId("inheritUptime").checked;
+        pfile.isTcpActionInherited = dojo.byId("inheritTcpAction").checked;
+        pfile.isUdpActionInherited = dojo.byId("inheritUdpAction").checked;
+        pfile.isIcmpActionInherited = dojo.byId("inheritIcmpAction").checked;
+
+        pfile.ports = [];
+        for (var i = 0; i < portIndexes.length; i++) {
+            var port = function() {};
+            port.portNum = dojo.byId("portNum" + portIndexes[i]).value;
+            port.behavior = dojo.byId("portBehavior" + portIndexes[i]).value;
+            port.type = dojo.byId("portType" + portIndexes[i]).value;
+            pfile.ports.push(port);
+        }
+
+        now.SaveProfile(pfile);
+
+    }
+
+    addPort = function(port) {
+        if (port == undefined) {
+            port = function() {};
+            port.portNum = 0;
+            port.type = "TCP";
+            port.behavior = "open";
+            port.isInherited = false;
+            port.script = "";
+        }
+
+        var portDiv = dojo.byId("portTable");
+        var portUID;
+
+        if (portIndexes.length > 0) {
+            portUID = portIndexes[portIndexes.length - 1] + 1;
+        } else {
+            portUID = 0;
+        }
+        
+        portIndexes.push(portUID);
+
+        var row = "<tr id='portRow" + portUID + "'>";
+
+        if (!port.isInherited) {
+            row += "<td><input id='portNum" + portUID + "' type='number' min=1 max=65535 value=" + port.portNum + "> </td>";
+        } else {
+            row += "<td><input id='portNum" + portUID + "' type='number' disabled='true' min=1 max=65535 value=" + port.portNum + "> </td>";
+        }
+       
+        if (!port.isInherited) {
+            row += "<td><select id ='portType";
+        } else {
+            row += "<td><select disabled='true' id ='portType";
+        }
+        row += portUID;
+        row += "'>";
+        options = ["UDP", "TCP"];
+        for (j = 0; j < options.length; j++) {
+            if (port.type == options[j]) {
+                row += "<option SELECTED>" + options[j] + "</option>";
+            } else {
+                row += "<option>" + options[j] + "</option>";
+            }
+        }
+        row += "</select></td>";
+
+        row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>"; 
+        options = ["open", "reset", "closed", "script"];
+        for (j = 0; j < options.length; j++) {
+            if (port.behavior == options[j]) {
+                row += "<option SELECTED>" + options[j] + "</option>";
+            } else {
+                row += "<option>" + options[j] + "</option>";
+            }
+        }
+        row += "</select></td>";
+        
+
+
+        row += "<td><select id='portScriptDrop";
+        row += portUID;
+        row += "'>"; 
+        var scripts = "#{scripts}";
+        options = scripts.split(",");
+        matchingScriptFound = false;
+        for (j = 0; j < options.length; j++) {
+            if (port.scriptName == options[j]) {
+                row += "<option SELECTED>" + options[j] + "</option>";
+                matchingScriptFound = true;
+            } else {
+                row += "<option>" + options[j] + "</option>";
+            }
+        }
+
+        // Have a blank option if no script is selected
+        if (!matchingScriptFound) {
+            row += "<option disabled='true' SELECTED>NA</option>";
+        } else {
+            row += "<option disabled='true'>NA</option>";
+        }
+        row += "</td></select>"; 
+
+
+        // Delete button 
+        if (port.isInherited) {
+          row += "<td><button type='button' disabled = 'true'/> Inherited </td>";
+        } else {
+          row += "<td><button type='button' onClick='deletePort(" + portUID + ")'/> Delete </td>";
+        }
+ 
+        row += "</tr>";
+
+        portDiv.innerHTML += row;
+
+        portBehaviorChanged();
+    }  
+
+    uptimeTypeChanged = function() {
+        if (dojo.byId("uptimeType").selectedIndex == 0) {
+            dojo.byId("uptimeMax").style.display = "none";
+        } else {
+            dojo.byId("uptimeMax").style.display = "block"; 
+        }
+    }
+
+    portBehaviorChanged = function() {
+        for (var i = 0; i < portIndexes.length; i++) {
+            if (dojo.byId("portBehavior" + portIndexes[i]).value == "script") {
+                dojo.byId("portScriptDrop" + portIndexes[i]).value = "N/A";
+                dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
+            } else {
+                dojo.byId("portScriptDrop" + portIndexes[i]).value = "Please choose script";
+                dojo.byId("portScriptDrop" + portIndexes[i]).disabled = true;
+            }
+        }
+    }
+
+    deletePort = function(portUID) {
+        var row = dojo.byId("portRow" + portUID);
+        row.parentNode.removeChild(row);
+        var idx = portIndexes.indexOf(portUID);
+        if (idx != -1) {
+            portIndexes.splice(idx, 1);
+        }
+    }
+    
+    inheritanceChanged = function() {
+        if (dojo.byId("personality").disabled = dojo.byId("inheritPersonality").checked) {
+            dojo.byId("personality").value = profile.personality;
+            dijit.byId("personality").setDisabled(true);
+        } else {
+            dijit.byId("personality").setDisabled(false);
+        }
+
+        if (dojo.byId("ethernet").disabled = dojo.byId("inheritEthernet").checked) {
+            dojo.byId("ethernet").value = profile.ethernet;
+            dijit.byId("ethernet").setDisabled(true);
+        } else {
+            dijit.byId("ethernet").setDisabled(false);
+        }
+
+        if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) {
+            dojo.byId("dropRate").value = profile.dropRate;
+        }
+        
+        if (dojo.byId("uptimeMin").disabled = dojo.byId("inheritUptime").checked) {
+            dojo.byId("uptimeMin").value = profile.uptimeMin;
+        }
+
+        if (dojo.byId("uptimeMax").disabled = dojo.byId("inheritUptime").checked) {
+            dojo.byId("uptimeMax").value = profile.uptimeMax;
+        }
+
+        if (dojo.byId("uptimeType").disabled = dojo.byId("inheritUptime").checked) {
+            if (profile.uptimeMin == profile.uptimeMax) {
+               dojo.byId("uptimeType").selectedIndex = 0;
+            } else {
+               dojo.byId("uptimeType").selectedIndex = 1; 
+            }
+        }
+        
+        if (dojo.byId("tcpAction").disabled = dojo.byId("inheritTcpAction").checked) {
+            if (profile.tcpAction == "reset") {
+                dojo.byId("tcpAction").selectedIndex = 0;
+            } else if (profile.tcpAction == "block") {
+                dojo.byId("tcpAction").selectedIndex = 1;
+            } else if (profile.tcpAction == "open") {
+                dojo.byId("tcpAction").selectedIndex = 2;
+            }
+        }
+        
+        if (dojo.byId("udpAction").disabled = dojo.byId("inheritUdpAction").checked) {
+            if (profile.udpAction == "reset") {
+                dojo.byId("udpAction").selectedIndex = 0;
+            } else if (profile.udpAction == "block") {
+                dojo.byId("udpAction").selectedIndex = 1;
+            } else if (profile.udpAction == "open") {
+                dojo.byId("udpAction").selectedIndex = 2;
+            }
+        }
+        
+        if (dojo.byId("icmpAction").disabled = dojo.byId("inheritIcmpAction").checked) {
+            if (profile.icmpAction == "reset") {
+                dojo.byId("icmpAction").selectedIndex = 0;
+            } else if (profile.icmpAction == "block") {
+                dojo.byId("icmpAction").selectedIndex = 1;
+            } else if (profile.icmpAction == "open") {
+                dojo.byId("icmpAction").selectedIndex = 2;
+            }
+        }
+        
+        
+        uptimeTypeChanged();
+    }
+
+    now.ready(function() {
+        if (loaded) {
+          return;
+        } else {
+          loaded = true;
+        }
+
+        now.GetPorts(currentName, function(ports) {
+            for (var i = 0; i < ports.length; i++) {
+                addPort(ports[i]);
+            }
+        });
+
+        now.GetProfile(currentName, function(pfile){
+        profile = pfile;
+
+        dojo.byId("name").value = profile.name;
+        dojo.byId("parentName").value = profile.parentProfile;
+        
+        if (profile.tcpAction == "reset") {
+          dojo.byId("tcpAction").selectedIndex = 0;
+        } else if (profile.tcpAction == "block") {
+          dojo.byId("tcpAction").selectedIndex = 1;
+        } else if (profile.tcpAction == "open") {
+          dojo.byId("tcpAction").selectedIndex = 2;
+        }
+
+        if (profile.udpAction == "reset") {
+          dojo.byId("udpAction").selectedIndex = 0;
+        } else if (profile.udpAction == "block") {
+          dojo.byId("udpAction").selectedIndex = 1;
+        } else if (profile.udpAction == "open") {
+          dojo.byId("udpAction").selectedIndex = 2;
+        }
+       
+        if (profile.icmpAction == "reset") {
+          dojo.byId("icmpAction").selectedIndex = 0;
+        } else if (profile.icmpAction == "block") {
+          dojo.byId("icmpAction").selectedIndex = 1;
+        } else if (profile.icmpAction == "open") {
+          dojo.byId("icmpAction").selectedIndex = 2;
+        }
+
+        dojo.byId("personality").value = profile.personality;
+        dojo.byId("ethernet").value = profile.ethernet;
+        dojo.byId("uptimeMin").value = profile.uptimeMin;
+        dojo.byId("uptimeMax").value = profile.uptimeMax;
+        dojo.byId("dropRate").value = profile.dropRate;
+
+        dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
+        dojo.byId("inheritEthernet").checked = profile.isEthernetInherited;
+        dojo.byId("inheritDropRate").checked = profile.isDropRateInherited;
+        dojo.byId("inheritUptime").checked = profile.isUptimeInherited;
+        dojo.byId("inheritTcpAction").checked = profile.isTcpActionInherited;
+        dojo.byId("inheritUdpAction").checked = profile.isUdpActionInherited;
+        dojo.byId("inheritIcmpAction").checked = profile.isIcmpActionInherited;
+
+        inheritanceChanged();
+        portBehaviorChanged();
+      });
+    });
+    });
+
+
+block content
+  mixin defaultActionBox(i)
+    select(id=i)
+      option reset
+      option block
+      option open
+
+  h2 Editing Profile
+
+  form(method="post", action="/editHoneydProfileSave")
+
+    table()
+      col
+      col
+      col(style="width:200px")
+      col(style="width:300px")
+      
+      tr
+        td
+        td
+        td(style="text-align:right")
+          label Profile Name
+        td
+          input#name(type="text", name="name")
+      
+      tr
+        td
+        td
+        td(style="text-align:right")
+          label Parent Profile
+        td
+          input#parentName(type="text", name="name", disabled="true")
+      
+ 
+      tr
+        td
+          input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Operating System Personality
+        td
+          select#personality(data-dojo-type="dijit.form.FilteringSelect", name="personality", autocomplete="true", pageSize=10)
+            each os in personalities
+              option(value="#{os}") #{os}
+      
+      tr
+        td
+          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Ethernet Vendor
+        td
+          select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+            each vendor in vendors
+              option(value="#{vendor}") #{vendor}
+      
+      tr
+        td
+          input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Packet Drop Percentage
+        td
+          input#dropRate(type="number", name="dropRate", min=0, max=100)
+
+
+      tr
+        td
+          input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Fixed uptime or uptime range?
+        td
+          select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
+            option Fixed
+            option Range
+        
+      tr
+        td
+        td
+        td(style="text-align:right")
+          label Uptime Range
+        td
+          input#uptimeMin(type="number", name="uptimeMin", min=0)
+          input#uptimeMax(type="number", name="uptimeMax", min=0)
+
+      tr
+        td
+          input#inheritTcpAction(type="checkbox", name="inheritTcpAction", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default TCP Action
+        td
+          mixin defaultActionBox('tcpAction')
+  
+      tr
+        td
+          input#inheritUdpAction(type="checkbox", name="inheritUdpAction", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default UDP Action
+        td
+          mixin defaultActionBox('udpAction')
+      tr
+        td
+          input#inheritIcmpAction(type="checkbox", name="inheritIcmpAction", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default ICMP Action
+        td
+          mixin defaultActionBox('icmpAction')
+
+    br
+    h3 Profile Port Configuration
+    table#portTable
+
+    button(type="button", onClick="addPort()") Add New Port
+
+    br
+    br
+    br
+    
+    button(type="button", onclick="saveChanges()") Save Changes
+

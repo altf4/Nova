@@ -29,7 +29,7 @@
 
 #define EMPTY_SUSPECT_CLASSIFICATION -1337
 
-typedef google::dense_hash_map<uint64_t, Nova::Suspect *, std::tr1::hash<uint64_t>, eqkey > SuspectHashTable;
+typedef Nova::HashMap<uint64_t, Nova::Suspect *, std::tr1::hash<uint64_t>, eqkey > SuspectHashTable;
 
 struct SuspectLock
 {
@@ -38,7 +38,7 @@ struct SuspectLock
 	bool deleted;
 };
 
-typedef google::dense_hash_map<uint64_t,SuspectLock, std::tr1::hash<uint64_t>, eqkey> SuspectLockTable;
+typedef Nova::HashMap<uint64_t,SuspectLock, std::tr1::hash<uint64_t>, eqkey> SuspectLockTable;
 
 namespace Nova {
 
@@ -183,7 +183,7 @@ private:
 
 	uint64_t m_deleted_key;
 
-	// Google Dense Hashmap used for constant time key lookups
+	// Hashmap used for constant time key lookups
 	SuspectHashTable m_suspectTable;
 	SuspectLockTable m_lockTable;
 

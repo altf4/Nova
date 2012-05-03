@@ -7,10 +7,10 @@ html(lang="en")
     link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
     link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
 
-    script(src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
     script(type="text/javascript", src="/nowjs/now.js")
+    script(type="text/javascript", src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
     script
-      require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore"],
+      require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],
         function(ready){
           dojo.addOnLoad(function(){
             dojo.style("appLayout", "opacity", 0);
@@ -39,49 +39,23 @@ html(lang="en")
             a(href="/")
               img(src="images/novaIcon.png",class="align-left")
               h1 NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System
-            div(style="float: left")
-             | Novad Status:&nbsp 
-            div#nova_status
-              | unknown
-            div(style="float: left")
-             | Haystack Status:&nbsp  
-            div#haystack_status
-             | unknown
-    
+            block topPannelAdditions
     
       // Left panel
       div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: true")
-        
-        button(data-dojo-type="dijit.form.Button", type="button") Start Nova
-          script(type="dojo/method", data-dojo-event="onClick") now.StartNovad();
-        br 
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Stop Nova
-          script(type="dojo/method", data-dojo-event="onClick") now.StopNovad();
-        br
-        
-        br
-
-        button(data-dojo-type="dijit.form.Button",type="button") Start Haystack
-          script(type="dojo/method", data-dojo-event="onClick") now.StartHaystack();
-        br
-
-        button(data-dojo-type="dijit.form.Button",type="button") Stop Haystack
-          script(type="dojo/method", data-dojo-event="onClick") now.StopHaystack();
-        br
-
-        br
-        button(data-dojo-type="dijit.form.Button",type="button") Clear All Suspects
-          script(type="dojo/method", data-dojo-event="onClick") now.ClearAllSuspects();suspectGrid.store.fetch({onComplete: clearSuspects});
-        br
+        block buttonPannelAdditions
         
         br
 
         button(data-dojo-type="dijit.form.Button",type="button") Configure Nova
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configureNova";
+          script(type="dojo/method", data-dojo-event="onClick") window.location = "configNova";
+        br
+        
+        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Profiles
+          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydProfiles";
         br
 
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configureHoneyd";
+        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Nodes
+          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydNodes";
         br
 

@@ -445,7 +445,7 @@ void HoneydConfiguration::LoadScriptsTemplate()
 //To summarize this function only populates the xml data for the values it contains unless it is a new item,
 // it does not clean up, and only creates if it's a new item and then only for the fields that are needed.
 // it does not track profile inheritance either, that should be created when the heirarchy is modified.
-void HoneydConfiguration::SaveAllTemplates()
+bool HoneydConfiguration::SaveAllTemplates()
 {
 	using boost::property_tree::ptree;
 	ptree pt;
@@ -563,7 +563,7 @@ void HoneydConfiguration::SaveAllTemplates()
 }
 
 //Writes the current configuration to honeyd configs
-void HoneydConfiguration::WriteHoneydConfiguration(string path)
+bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 {
 	stringstream out;
 
@@ -789,7 +789,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 					{
 						//Finds a unique identifier
 						uint i = 1;
-						while((m_nodes.find(n.name) != m_nodes.end()) && (i < j))
+						while((m_nodes.keyExists(n.name)) && (i < j))
 						{
 							i++;
 							ss.str("");
@@ -1128,6 +1128,31 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 	return childProfiles;
 }
 
+Nova::profile * HoneydConfiguration::GetProfile(std::string name)
+{
+	if (!m_profiles.keyExists(name))
+	{
+		return NULL;
+	}
+	else
+	{
+		profile *ret = new profile();
+		*ret = m_profiles[name];
+		return ret;
+	}
+}
+
+Nova::port * HoneydConfiguration::GetPort(std::string name)
+{
+	if (m_ports.keyExists(name))
+	{
+		port *p = new port();
+		*p = m_ports[name];
+		return p;
+	}
+	return NULL;
+}
+
 std::vector<std::string> HoneydConfiguration::GetNodeNames()
 {
 	vector<std::string> childnodes;
@@ -1159,7 +1184,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetEthernet(profileN
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
+	if (!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1185,7 +1210,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetPersonality(profi
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
+	if (!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1211,7 +1236,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionTCP(profile
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
+	if (!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1238,7 +1263,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionUDP(profile
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
+	if (!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1264,7 +1289,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionICMP(profil
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
+	if (!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1291,7 +1316,7 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMin(profileName 
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
+	if (!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1317,7 +1342,7 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName 
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
+	if (!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1411,7 +1436,6 @@ string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
 	return addrStrm;
 }
 
-//Either deletes a profile or updates the window to reflect a profile name change
 void HoneydConfiguration::DeleteProfile(profile * p)
 {
 	vector<string> delList;
@@ -1428,6 +1452,16 @@ void HoneydConfiguration::DeleteProfile(profile * p)
 		delList.pop_back();
 	}
 	m_profiles.erase(p->name);
+}
+
+bool HoneydConfiguration::DeleteProfile(std::string profileName)
+{
+	// TODO @ Dave
+	LOG(WARNING, "TODO. This is a dummy function. No profile was actually deleted TODO", "");
+
+	/*
+	 * The web UI currently calls this for attempts to delete a profile
+	 */
 }
 
 void HoneydConfiguration::RenameProfile(profile * p, string newName)
@@ -1458,7 +1492,7 @@ void HoneydConfiguration::RenameProfile(profile * p, string newName)
 bool HoneydConfiguration::EnableNode(std::string node)
 {
 	// Make sure the node exists
-	if (m_nodes.find(node) == m_nodes.end())
+	if (!m_nodes.keyExists(node))
 	{
 		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
 		return false;
@@ -1475,9 +1509,9 @@ bool HoneydConfiguration::EnableNode(std::string node)
 bool HoneydConfiguration::DisableNode(std::string node)
 {
 	// Make sure the node exists
-	if (m_nodes.find(node) == m_nodes.end())
+	if (!m_nodes.keyExists(node))
 	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		LOG(WARNING, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
 		return false;
 	}
 
@@ -1488,10 +1522,17 @@ bool HoneydConfiguration::DisableNode(std::string node)
 
 bool HoneydConfiguration::DeleteNode(std::string node)
 {
-	// Make sure the node exists
-	if (m_nodes.find(node) == m_nodes.end())
+	// We don't delete the doppelganger node, only edit it
+	if (node == "Doppelganger")
 	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
+		LOG(WARNING, "Attempt to delete the Doppelganger node denied", "");
+		return false;
+	}
+
+	// Make sure the node exists
+	if (!m_nodes.keyExists(node))
+	{
+		LOG(WARNING, "There was an attempt to delete a honeyd node (name = " + node + " that doesn't exist", "");
 		return false;
 	}
 
@@ -1535,39 +1576,36 @@ void HoneydConfiguration::DisableProfileNodes(std::string profile)
 
 bool HoneydConfiguration::AddNewNodes(std::string profile, string ipAddress, std::string interface, std::string subnet, int numberOfNodes)
 {
-	if (numberOfNodes <= 0)
+	if(numberOfNodes <= 0)
 	{
 		LOG(ERROR, "Must create 1 or more nodes", "");
 	}
 
-	int i;
-	in_addr currentAddr;
-
-	if (ipAddress != "DHCP")
+	if(ipAddress == "DHCP")
 	{
-		currentAddr.s_addr = inet_addr(ipAddress.c_str());
-	}
-
-
-	for (i = 0; i < numberOfNodes; i++)
-	{
-		if (ipAddress == "DHCP")
+		for(int i = 0; i < numberOfNodes; i++)
 		{
 			if (!AddNewNode(profile, "DHCP", "RANDOM", interface, subnet))
 			{
 				return false;
 			}
 		}
-		else
+	}
+	else
+	{
+		in_addr_t sAddr = ntohl(inet_addr(ipAddress.c_str()));
+		//Removes un-init compiler warning given for in_addr currentAddr;
+		in_addr currentAddr = *(in_addr *)&sAddr;
+		for(int i = 0; i < numberOfNodes; i++)
 		{
+			currentAddr.s_addr = htonl(sAddr);
 			if (!AddNewNode(profile, string(inet_ntoa(currentAddr)), "RANDOM", interface, subnet))
 			{
 				return false;
 			}
-			currentAddr.s_addr = ntohl((htonl(currentAddr.s_addr) + 1));
+			sAddr++;
 		}
 	}
-
 	return true;
 }
 
@@ -1613,7 +1651,7 @@ bool HoneydConfiguration::AddNewNode(std::string profile, string ipAddress, std:
 	{
 		//Finds a unique identifier
 		uint i = 1;
-		while((m_nodes.find(newNode.name) != m_nodes.end()) && (i < j))
+		while((m_nodes.keyExists(newNode.name)) && (i < j))
 		{
 			i++;
 			ss.str("");
