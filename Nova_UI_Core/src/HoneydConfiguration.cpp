@@ -607,7 +607,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		pt = it->second.tree;
 
 		// No need to save names besides the doppel, we can derive them
-		if (it->second.name == "Doppelganger")
+		if(it->second.name == "Doppelganger")
 		{
 			// Make sure the IP reflects whatever is being used right now
 			it->second.IP = Config::Inst()->GetDoppelIp();
@@ -647,6 +647,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 	write_xml(m_homePath+"/templates/ports.xml", m_portTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
+	return true;
 }
 
 //Writes the current configuration to honeyd configs
@@ -714,19 +715,19 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		else
 		{
 			// No IP address, use DHCP
-			if (it->second.IP == "DHCP" && it->second.MAC == "RANDOM")
+			if(it->second.IP == "DHCP" && it->second.MAC == "RANDOM")
 			{
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
 			}
-			else if (it->second.IP == "DHCP" && it->second.MAC != "RANDOM")
+			else if(it->second.IP == "DHCP" && it->second.MAC != "RANDOM")
 			{
 				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet \"" << it->second.MAC << "\"" << endl;
 			}
-			else if (it->second.IP != "DHCP" && it->second.MAC == "RANDOM")
+			else if(it->second.IP != "DHCP" && it->second.MAC == "RANDOM")
 			{
 				out << "bind " << it->second.IP << " " <<  it->second.pfile << endl;
 			}
-			else if (it->second.IP != "DHCP" && it->second.MAC != "RANDOM")
+			else if(it->second.IP != "DHCP" && it->second.MAC != "RANDOM")
 			{
 				out << "clone " << it->second.pfile << it->second.IP << " " << it->second.pfile << endl;
 				out << "set " << it->second.pfile << it->second.IP << " ethernet \"" << it->second.MAC << "\"" << endl;
@@ -736,6 +737,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	ofstream outFile(path);
 	outFile << out.str() << endl;
 	outFile.close();
+	return true;
 }
 
 
@@ -872,7 +874,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 				{
 					n.name = n.IP + " - " + n.MAC;
 
-					if (n.name == "DHCP - RANDOM")
+					if(n.name == "DHCP - RANDOM")
 					{
 						//Finds a unique identifier
 						uint i = 1;
@@ -885,7 +887,7 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 						}
 					}
 
-					if (n.IP != "DHCP")
+					if(n.IP != "DHCP")
 					{
 						n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
 						n.sub = FindSubnet(n.realIP);
@@ -1194,7 +1196,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileChildren(std::string par
 
 	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if (it->second.parentProfile == parent)
+		if(it->second.parentProfile == parent)
 		{
 			childProfiles.push_back(it->second.name);
 		}
@@ -1217,7 +1219,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 
 Nova::profile * HoneydConfiguration::GetProfile(std::string profileName)
 {
-	if (!m_profiles.keyExists(profileName))
+	if(!m_profiles.keyExists(profileName))
 	{
 		return NULL;
 	}
@@ -1231,11 +1233,7 @@ Nova::profile * HoneydConfiguration::GetProfile(std::string profileName)
 
 Nova::port * HoneydConfiguration::GetPort(std::string portName)
 {
-<<<<<<< HEAD
-	if(m_ports.find(portName) != m_ports.end())
-=======
-	if (m_ports.keyExists(name))
->>>>>>> 6f3b05840974911713cf352ef12f27f464cf1468
+	if(m_ports.keyExists(portName))
 	{
 		port *p = new port();
 		*p = m_ports[portName];
@@ -1270,12 +1268,12 @@ std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 }
 
 
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetEthernet(profileName profile)
+/*std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetEthernet(profileName profile)
 {
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (!m_profiles.keyExists(profile))
+	if(!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1301,7 +1299,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetPersonality(profi
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (!m_profiles.keyExists(profile))
+	if(!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1327,7 +1325,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionTCP(profile
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (!m_profiles.keyExists(profile))
+	if(!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1354,7 +1352,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionUDP(profile
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (!m_profiles.keyExists(profile))
+	if(!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1380,7 +1378,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionICMP(profil
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (!m_profiles.keyExists(profile))
+	if(!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1407,7 +1405,7 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMin(profileName 
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (!m_profiles.keyExists(profile))
+	if(!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1433,7 +1431,7 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName 
 	pair<hdConfigReturn, string> ret;
 
 	// Make sure the input profile name exists
-	if (!m_profiles.keyExists(profile))
+	if(!m_profiles.keyExists(profile))
 	{
 		ret.first = NO_SUCH_KEY;
 		ret.second = "";
@@ -1452,7 +1450,7 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName 
 	ret.second = m_profiles[parent].uptimeMax;
 
 	return ret;
-}
+}*/
 
 
 std::vector<std::string> HoneydConfiguration::GetScriptNames()
@@ -1531,7 +1529,7 @@ string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
 //	Returns (true) if the profile could be created, (false) if it cannot.
 bool HoneydConfiguration::AddProfile(profile * profile)
 {
-	if(m_profiles.find(profile->name) == m_profiles.end())
+	if(!m_profiles.keyExists(profile->name))
 	{
 		m_profiles[profile->name] = *profile;
 		CreateProfileTree(profile->name);
@@ -1544,8 +1542,7 @@ bool HoneydConfiguration::AddProfile(profile * profile)
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
 	//If item text and profile name don't match, we need to update
-	if(newName.compare(m_profiles.empty_key()) && newName.compare(m_profiles.deleted_key())
-		&& (oldName != newName) && (m_profiles.find(oldName) != m_profiles.end()))
+	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)))
 	{
 		//Set the profile to the correct name and put the profile in the table
 		m_profiles[oldName].name = newName;
@@ -1581,15 +1578,15 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 bool HoneydConfiguration::InheritProfile(std::string child, std::string parent)
 {
 	//If the child can be found
-	if(m_profiles.find(child) != m_profiles.end())
+	if(m_profiles.keyExists(child))
 	{
 		//If the new parent can be found
-		if(m_profiles.find(parent) != m_profiles.end())
+		if(m_profiles.keyExists(parent))
 		{
 			string oldParent = m_profiles[child].parentProfile;
 			m_profiles[child].parentProfile = parent;
 			//If the child has an old parent
-			if((oldParent.compare("")) && (m_profiles.find(oldParent) != m_profiles.end()))
+			if((oldParent.compare("")) && (m_profiles.keyExists(oldParent)))
 			{
 				UpdateProfileTree(parent, ALL);
 			}
@@ -1619,7 +1616,7 @@ void HoneydConfiguration::UpdateAllProfiles()
 bool HoneydConfiguration::EnableNode(std::string nodeName)
 {
 	// Make sure the node exists
-	if (!m_nodes.keyExists(nodeName))
+	if(!m_nodes.keyExists(nodeName))
 	{
 		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + nodeName + " that doesn't exist", "");
 		return false;
@@ -1636,7 +1633,7 @@ bool HoneydConfiguration::EnableNode(std::string nodeName)
 bool HoneydConfiguration::DisableNode(std::string nodeName)
 {
 	// Make sure the node exists
-	if (!m_nodes.keyExists(nodeName))
+	if(!m_nodes.keyExists(nodeName))
 	{
 		LOG(ERROR, string("There was an attempt to disable a honeyd node (name = ")
 			+ nodeName + string(" that doesn't exist"), "");
@@ -1657,7 +1654,7 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 	}
 
 	// Make sure the node exists
-	if (!m_nodes.keyExists(nodeName))
+	if(!m_nodes.keyExists(nodeName))
 	{
 		LOG(ERROR, string("There was an attempt to retrieve a honeyd node (name = ")
 			+ nodeName + string(" that doesn't exist"), "");
@@ -1771,7 +1768,7 @@ bool HoneydConfiguration::AddNewNodes(std::string profileName, string ipAddress,
 		for(int i = 0; i < numberOfNodes; i++)
 		{
 			currentAddr.s_addr = htonl(sAddr);
-			if (!AddNewNode(profileName, string(inet_ntoa(currentAddr)), "RANDOM", interface, subnet))
+			if(!AddNewNode(profileName, string(inet_ntoa(currentAddr)), "RANDOM", interface, subnet))
 			{
 				return false;
 			}
@@ -1794,7 +1791,7 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	}
 
 	// Figure out it's subnet
-	if (subnet == "")
+	if(subnet == "")
 	{
 		if(newNode.IP == "DHCP")
 		{
@@ -1819,7 +1816,7 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 
 	uint j = ~0;
 	stringstream ss;
-	if (newNode.name == "DHCP - RANDOM")
+	if(newNode.name == "DHCP - RANDOM")
 	{
 		//Finds a unique identifier
 		uint i = 1;
@@ -1833,7 +1830,7 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	}
 
 	m_nodes[newNode.name] = newNode;
-	if (newNode.sub != "")
+	if(newNode.sub != "")
 	{
 		m_subnets[newNode.sub].nodes.push_back(newNode.name);
 	}
@@ -1853,7 +1850,7 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 // 	Returns: (true) if successful and (false) if the profile could not be found
 bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCall)
 {
-	if(m_profiles.find(profileName) == m_profiles.end())
+	if(!m_profiles.keyExists(profileName))
 	{
 		return false;
 	}
@@ -1888,7 +1885,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 	if(originalCall)
 	{
 		//If this profile has a parent
-		if(m_profiles.find(p.parentProfile) != m_profiles.end())
+		if(m_profiles.keyExists(p.parentProfile))
 		{
 			//save a copy of the parent
 			profile parent = m_profiles[p.parentProfile];
@@ -1932,7 +1929,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
 bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirection direction)
 {
-	if(m_profiles.find(profileName) == m_profiles.end())
+	if(!m_profiles.keyExists(profileName))
 	{
 		return false;
 	}
@@ -2021,7 +2018,7 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 bool HoneydConfiguration::CreateProfileTree(string profileName)
 {
 	ptree temp;
-	if(m_profiles.find(profileName) == m_profiles.end())
+	if(!m_profiles.keyExists(profileName))
 	{
 		return false;
 	}

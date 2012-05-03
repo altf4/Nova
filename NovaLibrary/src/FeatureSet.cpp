@@ -254,7 +254,7 @@ void FeatureSet::CalculateTimeInterval()
 
 void FeatureSet::UpdateEvidence(Packet packet)
 {
-	in_port_t dst_port;
+	in_port_t dst_port = 0;
 	uint32_t packet_count;
 	vector <int> IP_packet_sizes;
 	vector <time_t> packet_intervals;
