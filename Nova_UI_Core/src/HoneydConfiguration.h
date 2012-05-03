@@ -55,9 +55,9 @@ public:
     std::string DoppProfileToString(profile* p);
 
     //Saves the current configuration information to XML files
-    void SaveAllTemplates();
+    bool SaveAllTemplates();
     //Writes the current configuration to honeyd configs
-    void WriteHoneydConfiguration(std::string path);
+    bool WriteHoneydConfiguration(std::string path);
 
     //Setter for the directory to read from and write to
     void SetHomePath(std::string homePath);

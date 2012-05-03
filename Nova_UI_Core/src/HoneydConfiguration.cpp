@@ -445,7 +445,7 @@ void HoneydConfiguration::LoadScriptsTemplate()
 //To summarize this function only populates the xml data for the values it contains unless it is a new item,
 // it does not clean up, and only creates if it's a new item and then only for the fields that are needed.
 // it does not track profile inheritance either, that should be created when the heirarchy is modified.
-void HoneydConfiguration::SaveAllTemplates()
+bool HoneydConfiguration::SaveAllTemplates()
 {
 	using boost::property_tree::ptree;
 	ptree pt;
@@ -563,7 +563,7 @@ void HoneydConfiguration::SaveAllTemplates()
 }
 
 //Writes the current configuration to honeyd configs
-void HoneydConfiguration::WriteHoneydConfiguration(string path)
+bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 {
 	stringstream out;
 
