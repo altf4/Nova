@@ -4,29 +4,20 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/messages/CallbackMessage.cpp \
-../src/messages/ControlMessage.cpp \
-../src/messages/ErrorMessage.cpp \
-../src/messages/RequestMessage.cpp \
-../src/messages/UI_Message.cpp 
+../src/messaging/MessageManager.cpp \
+../src/messaging/MessageQueue.cpp 
 
 OBJS += \
-./src/messages/CallbackMessage.o \
-./src/messages/ControlMessage.o \
-./src/messages/ErrorMessage.o \
-./src/messages/RequestMessage.o \
-./src/messages/UI_Message.o 
+./src/messaging/MessageManager.o \
+./src/messaging/MessageQueue.o 
 
 CPP_DEPS += \
-./src/messages/CallbackMessage.d \
-./src/messages/ControlMessage.d \
-./src/messages/ErrorMessage.d \
-./src/messages/RequestMessage.d \
-./src/messages/UI_Message.d 
+./src/messaging/MessageManager.d \
+./src/messaging/MessageQueue.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-src/messages/%.o: ../src/messages/%.cpp
+src/messaging/%.o: ../src/messaging/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
 	g++ -O3 -Wall -c -fmessage-length=0  `pkg-config --libs --cflags libnotify` -std=c++0x -fPIC -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
