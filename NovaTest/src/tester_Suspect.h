@@ -57,6 +57,9 @@ protected:
 		// Note: the byte order gets flipped for this
 		p2.ip_hdr.ip_len = (u_short)1;
 		p2.pcap_header.ts.tv_sec = 20;
+
+
+		Config::Inst()->SetEnabledFeatures("111111111");
 	}
 
 };
