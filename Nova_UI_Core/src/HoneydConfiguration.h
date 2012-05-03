@@ -50,6 +50,12 @@ enum recursiveDirection
 	DOWN
 };
 
+enum portProtocol : bool
+{
+	UDP = 0,
+	TCP
+};
+
 class HoneydConfiguration
 {
 
@@ -60,6 +66,8 @@ public:
     //calls main load functions
     bool LoadAllTemplates();
 
+    // Returns the number of bits used in the mask when given in in_addr_t form
+    static int GetMaskBits(in_addr_t mask);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
     std::string ProfileToString(profile* p);
@@ -78,9 +86,6 @@ public:
     //Getter for the directory to read from and write to
     std::string GetHomePath();
 
-    // Returns the number of bits used in the mask when given in in_addr_t form
-    static int GetMaskBits(in_addr_t mask);
-
     //Adds a port with the specified configuration into the port table
     //	portNum: Must be a valid port number (1-65535)
     //	isTCP: if true the port uses TCP, if false it uses UDP
@@ -90,42 +95,30 @@ public:
     //	Note(s): If CleanPorts is called before using this port in a profile, it will be deleted
     //			If using a script it must exist in the script table before calling this function
     //Returns: the port name if successful and an empty string if unsuccessful
-    std::string AddPort(uint16_t portNum, bool isTCP, portBehavior behavior, std::string scriptName = "");
+    std::string AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, std::string scriptName = "");
 
     // Some high level node creation methods
 
     // Add a node with static IP and static MAC
-    bool AddNewNode(std::string profile, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
-    bool AddNewNodes(std::string profile, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
+    bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
+    bool AddNewNodes(std::string profileName, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
 
 
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
 	std::vector<std::string> GetProfileNames();
-	Nova::profile * GetProfile(std::string name);
-	Nova::port * GetPort(std::string name);
+	Nova::profile * GetProfile(std::string profileName);
+	Nova::port * GetPort(std::string portName);
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
-
-
-	// These were an attempt to make things easier to bind with javascript. Didn't work well,
-	// right now these are unused and can probably be thrown out.
-	std::pair <hdConfigReturn, std::string> GetEthernet(profileName profile);
-	std::pair <hdConfigReturn, std::string> GetPersonality(profileName profile);
-	std::pair <hdConfigReturn, std::string> GetDroprate(profileName profile);
-	std::pair <hdConfigReturn, std::string> GetActionTCP(profileName profile);
-	std::pair <hdConfigReturn, std::string> GetActionUDP(profileName profile);
-	std::pair <hdConfigReturn, std::string> GetActionICMP(profileName profile);
-	std::pair <hdConfigReturn, std::string> GetUptimeMin(profileName profile);
-	std::pair <hdConfigReturn, std::string> GetUptimeMax(profileName profile);
 
 	// Returns list of all available scripts
 	std::vector<std::string> GetScriptNames();
 
 	bool IsMACUsed(std::string mac);
 	bool IsIPUsed(std::string ip);
-	bool IsProfileUsed(std::string profile);
+	bool IsProfileUsed(std::string profileName);
 
 	// Regenerates the MAC addresses for nodes of this profile
 	void GenerateMACAddresses(std::string profileName);
@@ -144,7 +137,7 @@ public:
 		return UpdateProfileTree(profileName, ALL);
 	}
 
-    bool RenameProfile(profile *p, std::string newName);
+    bool RenameProfile(std::string oldName, std::string newName);
 
     //Makes the profile named child inherit the profile named parent
     // child: the name of the child profile
@@ -164,13 +157,13 @@ public:
     }
 
     //Deletes a single node, called from deleteNodes();
-    bool DeleteNode(std::string node);
-    Node * GetNode(std::string name);
+    bool DeleteNode(std::string nodeName);
+    Node * GetNode(std::string nodeName);
 
-    std::string GetNodeSubnet(std::string node);
-    bool EnableNode(std::string node);
-    bool DisableNode(std::string node);
-    void DisableProfileNodes(std::string profile);
+    std::string GetNodeSubnet(std::string nodeName);
+    bool EnableNode(std::string nodeName);
+    bool DisableNode(std::string nodeName);
+    void DisableProfileNodes(std::string profileName);
 
     //Checks for ports that aren't used and removes them from the table if so
     void CleanPorts();

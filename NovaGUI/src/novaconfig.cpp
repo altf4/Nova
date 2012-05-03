@@ -2300,7 +2300,6 @@ void NovaConfig::CreateProfileItem(string pstr)
 		QTreeWidgetItem * item = NULL;
 		//get the name
 		string profileStr = p.name;
-		cout << "Create Profile Item: "<< profileStr << endl;
 		//if the profile has no parents create the item at the top level
 		if(!p.parentProfile.compare(""))
 		{
@@ -2590,7 +2589,7 @@ void NovaConfig::on_profileEdit_editingFinished()
 		GetProfileHsTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
 		//If the name has changed we need to move it in the profile hash table and point all
 		//nodes that use the profile to the new location.
-		m_honeydConfig->RenameProfile(&m_honeydConfig->m_profiles[m_currentProfile], ui.profileEdit->displayText().toStdString());
+		m_honeydConfig->RenameProfile(m_currentProfile, ui.profileEdit->displayText().toStdString());
 		SaveProfileSettings();
 		LoadProfileSettings();
 		m_loading->unlock();
@@ -3167,39 +3166,35 @@ bool NovaConfig::IsDoppelIPValid()
 	return true;
 }
 //Doppelganger IP Address Spin boxes
-void NovaConfig::on_dmIPSpinBox_0_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_0_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_1_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_1_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_2_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_2_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_3_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_3_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
@@ -3226,8 +3221,7 @@ void NovaConfig::on_hsSaveTypeComboBox_currentIndexChanged(int index)
 		}
 		default:
 		{
-			cout << "IP Conflict" << endl;
-			//TODO Error Logging
+			LOG(ERROR, "Haystack save type set to undefined index!", "");
 			break;
 		}
 	}

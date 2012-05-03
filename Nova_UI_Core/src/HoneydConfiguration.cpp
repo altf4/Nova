@@ -71,7 +71,7 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 //	Note(s): If CleanPorts is called before using this port in a profile, it will be deleted
 //			If using a script it must exist in the script table before calling this function
 //Returns: the port name if successful and an empty string if unsuccessful
-string HoneydConfiguration::AddPort(uint16_t portNum, bool isTCP, portBehavior behavior, string scriptName)
+string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, string scriptName)
 {
 	port pr;
 	//Check the validity and assign the port number
@@ -108,6 +108,10 @@ string HoneydConfiguration::AddPort(uint16_t portNum, bool isTCP, portBehavior b
 		case RESET:
 		{
 			pr.behavior = "reset";
+			if(!pr.type.compare("UDP"))
+			{
+				pr.behavior = "block";
+			}
 			break;
 		}
 		case SCRIPT:
@@ -1259,192 +1263,6 @@ std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 	return childSubnets;
 }
 
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetEthernet(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].ethernet == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].ethernet;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetPersonality(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].personality == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].personality;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionTCP(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].tcpAction == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].tcpAction;
-
-	return ret;
-
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionUDP(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].udpAction == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].udpAction;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionICMP(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].icmpAction == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].icmpAction;
-
-	return ret;
-
-}
-
-std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMin(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].uptimeMin == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].uptimeMin;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if (m_profiles.find(profile) == m_profiles.end())
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].uptimeMax == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].parentProfile;
-	}
-
-	ret.second = m_profiles[parent].uptimeMax;
-
-	return ret;
-}
-
-
 std::vector<std::string> HoneydConfiguration::GetScriptNames()
 {
 	vector<string> ret;
@@ -1531,17 +1349,15 @@ bool HoneydConfiguration::AddProfile(profile * profile)
 	return false;
 }
 
-bool HoneydConfiguration::RenameProfile(profile * p, string newName)
+bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
-	string oldName = p->name;
-
 	//If item text and profile name don't match, we need to update
 	if(newName.compare(m_profiles.empty_key()) && newName.compare(m_profiles.deleted_key())
-		&& (oldName != newName) && (m_profiles.find(p->name) != m_profiles.end()))
+		&& (oldName != newName) && (m_profiles.find(oldName) != m_profiles.end()))
 	{
 		//Set the profile to the correct name and put the profile in the table
-		m_profiles[newName] = *p;
-		m_profiles[newName].name = newName;
+		m_profiles[oldName].name = newName;
+		m_profiles[newName] = m_profiles[oldName];
 
 		//Find all nodes who use this profile and update to the new one
 		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)

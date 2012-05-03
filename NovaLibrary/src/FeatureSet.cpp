@@ -286,7 +286,7 @@ void FeatureSet::UpdateEvidence(Packet packet)
 	packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
 
 	m_packetCount += packet_count;
-	m_bytesTotal += ntohs(packet.ip_hdr.ip_len);;
+	m_bytesTotal += ntohs(packet.ip_hdr.ip_len);
 
 	//If from haystack
 	if(packet.fromHaystack)

@@ -222,10 +222,10 @@ void portTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 void nodeTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited);
 
 //Doppelganger IP Address Spin boxes
-void on_dmIPSpinBox_0_valueChanged(int value);
-void on_dmIPSpinBox_1_valueChanged(int value);
-void on_dmIPSpinBox_2_valueChanged(int value);
-void on_dmIPSpinBox_3_valueChanged(int value);
+void on_dmIPSpinBox_0_valueChanged();
+void on_dmIPSpinBox_1_valueChanged();
+void on_dmIPSpinBox_2_valueChanged();
+void on_dmIPSpinBox_3_valueChanged();
 
 //Haystack storage type combo box
 void on_hsSaveTypeComboBox_currentIndexChanged(int index);
