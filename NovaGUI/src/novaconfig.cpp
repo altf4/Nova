@@ -62,7 +62,6 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	//store current directory / base path for Nova
 	m_homePath = home;
 
-
 	//Store parent and load UI
 	m_mainwindow = (NovaGUI*)parent;
 	//Set up a Reference to the dialog prompter
@@ -77,9 +76,8 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	m_loading->lock();
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
 	LoadNovadPreferences();
-	PullData();
+	m_honeydConfig->LoadAllTemplates();
 	LoadHaystackConfiguration();
-
 
 	m_loading->unlock();
 	// Populate the dialog menu
@@ -100,66 +98,6 @@ NovaConfig::~NovaConfig()
 {
 
 }
-
-
-//Saves the changes to parent novagui window
-void NovaConfig::PushData()
-{
-	//Clean up unused ports
-	CleanPorts();
-
-	string path = "";
-	//TODO Implement this once we support multiple configurations
-	/*switch(Config::Inst()->GetHaystackStorage())
-	{
-		default:
-		{
-			break;
-		}
-	}
-	//m_honeydConfig->SetHomePath(path);
-	*/
-
-	path = Config::Inst()->GetPathConfigHoneydHS();
-
-	/* Copies the tables
-	m_honeydConfig->SetScripts(m_honeydConfig->m_scripts);
-	mainwindow->m_honeydConfig->SetProfiles(m_profiles);
-	m_honeydConfig->SetSubnets(m_honeydConfig->m_subnets);
-	m_honeydConfig->SetNodes(m_nodes);
-	m_honeydConfig->SetPorts(m_honeydConfig->m_ports);
-	*/
-
-	//Saves the current configuration to XML files
-	m_honeydConfig->SaveAllTemplates();
-	m_honeydConfig->WriteHoneydConfiguration(path);
-
-}
-
-//Pulls the last stored configuration from novagui
-//used on start up or to undo all changes (currently defaults button)
-void NovaConfig::PullData()
-{
-	//Clears the tables
-	/*
-	m_honeydConfig->m_subnets.clear_no_resize();
-	m_nodes.clear_no_resize();
-	m_profiles.clear_no_resize();
-	m_honeydConfig->m_ports.clear_no_resize();
-	m_honeydConfig->m_scripts.clear_no_resize();
-	*/
-
-	/* Copies the tables
-	m_honeydConfig->m_scripts = m_honeydConfig->GetScripts();
-	m_honeydConfig->m_subnets = m_honeydConfig->GetSubnets();
-	m_nodes = m_honeydConfig->GetNodes();
-	m_honeydConfig->m_ports = m_honeydConfig->GetPorts();
-	m_profiles = m_honeydConfig->GetProfiles();
-	*/
-
-	m_honeydConfig->LoadAllTemplates();
-}
-
 
 void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 {
@@ -188,7 +126,7 @@ void NovaConfig::contextMenuEvent(QContextMenuEvent * event)
 		QPoint globalPos = event->globalPos();
 		m_profileTreeMenu->popup(globalPos);
 	}
-	else if(ui.nodeTreeWidget|| ui.nodeTreeWidget->underMouse())
+	else if(ui.nodeTreeWidget->hasFocus() || ui.nodeTreeWidget->underMouse())
 	{
 		m_nodeTreeMenu->clear();
 		m_nodeTreeMenu->addAction(ui.actionSubnetAdd);
@@ -228,6 +166,7 @@ void NovaConfig::on_actionNo_Action_triggered()
 {
 	return;
 }
+
 void NovaConfig::on_actionToggle_Inherited_triggered()
 {
 	if(!m_loading->tryLock())
@@ -305,10 +244,10 @@ void NovaConfig::on_actionAddPort_triggered()
 			profile p = m_honeydConfig->m_profiles[m_currentProfile];
 
 			port pr;
-			pr.portNum = "0";
+			pr.portNum = "1";
 			pr.type = "TCP";
 			pr.behavior = "open";
-			pr.portName = "0_TCP_open";
+			pr.portName = "1_TCP_open";
 			pr.scriptName = "";
 
 			//These don't need to be deleted because the clear function
@@ -600,7 +539,6 @@ void NovaConfig::on_defaultActionListWidget_currentRowChanged()
 	else
 	{
 		LOG(ERROR, "Invalid user dialog default action selected, shouldn't get here.", "");
-
 	}
 }
 
@@ -1056,21 +994,7 @@ bool NovaConfig::DisplayMACPrefixWindow()
 			return true;
 		}
 
-		m_honeydConfig->RegenerateMACAddresses(m_currentProfile);
-
-		//If IP's arent staticDHCP, key wont change so do nothing
-		//if(m_honeydConfig->m_profiles[m_currentProfile].type != staticDHCP)
-		//{
-		//	return true;
-		//}
-		//if(SyncAllNodesWithProfiles())
-		//{
-		//	return true;
-		//}
-		//else
-		//{
-		//	return false;
-		//}
+		m_honeydConfig->GenerateMACAddresses(m_currentProfile);
 	}
 	return false;
 }
@@ -1185,36 +1109,6 @@ void NovaConfig::LoadHaystackConfiguration()
 	ui.hsNodeTreeWidget->expandAll();
 }
 
-//Checks for ports that aren't used and removes them from the table if so
-void NovaConfig::CleanPorts()
-{
-	vector<string> delList;
-	bool found;
-	for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
-	{
-		found = false;
-		for(ProfileTable::iterator jt = m_honeydConfig->m_profiles.begin(); (jt != m_honeydConfig->m_profiles.end()) && !found; jt++)
-		{
-			for(uint i = 0; (i < jt->second.ports.size()) && !found; i++)
-			{
-				if(!jt->second.ports[i].first.compare(it->first))
-				{
-					found = true;
-				}
-			}
-		}
-		if(!found)
-		{
-			delList.push_back(it->first);
-		}
-	}
-	while(!delList.empty())
-	{
-		m_honeydConfig->m_ports.erase(delList.back());
-		delList.pop_back();
-	}
-}
-
 /************************************************
  * Browse file system dialog box signals
  ************************************************/
@@ -1285,8 +1179,13 @@ void NovaConfig::on_okButton_clicked()
 			"Error: Unable to write to NOVA configuration file");
 		this->close();
 	}
-	//Save changes
-	PushData();
+
+	//Clean up unused ports
+	m_honeydConfig->CleanPorts();
+	//Saves the current configuration to XML files
+	m_honeydConfig->SaveAllTemplates();
+	m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetUserPath());
+
 	m_mainwindow->InitConfiguration();
 	m_loading->unlock();
 	this->close();
@@ -1307,8 +1206,13 @@ void NovaConfig::on_applyButton_clicked()
 	}
 	//Reloads NOVAConfig preferences to assert concurrency
 	LoadNovadPreferences();
-	//Saves honeyd changes
-	PushData();
+
+	//Clean up unused ports
+	m_honeydConfig->CleanPorts();
+	//Saves the current configuration to XML files
+	m_honeydConfig->SaveAllTemplates();
+	m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetUserPath());
+
 	//Reloads honeyd configuration to assert concurrency
 	LoadHaystackConfiguration();
 	m_mainwindow->InitConfiguration();
@@ -1396,8 +1300,6 @@ void NovaConfig::on_defaultsButton_clicked() //TODO
 	LoadNovadPreferences();
 	//Has NovaGUI reload honeyd configuration from XML files
 	m_honeydConfig->LoadAllTemplates();
-	//Pulls honeyd configuration
-	PullData();
 	m_loading->lock();
 	//Populates honeyd configuration pulled
 	LoadHaystackConfiguration();
@@ -1570,7 +1472,7 @@ void NovaConfig::SaveProfileSettings()
 		}
 		m_honeydConfig->m_profiles[m_currentProfile] = p;
 		SaveInheritedProfileSettings();
-		CreateProfileTree(m_currentProfile);
+		m_honeydConfig->UpdateProfile(m_currentProfile);
 	}
 }
 
@@ -1629,104 +1531,42 @@ void NovaConfig::SaveInheritedProfileSettings()
 //Removes a profile, all of it's children and any nodes that currently use it
 void NovaConfig::DeleteProfile(string name)
 {
-	//Recursive descent to find and call delete on any children of the profile
-	for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
+	QTreeWidgetItem * item = NULL, *temp = NULL;
+	//If there is at least one other profile after deleting all children
+	if(m_honeydConfig->m_profiles.size() > 1)
 	{
-		//If the profile at the iterator is a child of this profile
-		if(!it->second.parentProfile.compare(name))
+		//Get the current profile item
+		item = GetProfileTreeWidgetItem(name);
+		//Try to find another profile below it
+		temp = ui.profileTreeWidget->itemBelow(item);
+
+		//If no profile below, find a profile above
+		if(temp == NULL)
 		{
-			DeleteProfile(it->second.name);
+			item = ui.profileTreeWidget->itemAbove(item);
 		}
-	}
-
-	//If it is not the original profile deleted skip this part
-	if(!name.compare(m_currentProfile))
-	{
-		//Store a copy of the profile for cleanup after deletion
-		profile  p = m_honeydConfig->m_profiles[name];
-
-		QTreeWidgetItem * item = NULL, *temp = NULL;
-
-		//If there is at least one other profile after deleting all children
-		if(m_honeydConfig->m_profiles.size() > 1)
-		{
-			//Get the current profile item
-			item = GetProfileTreeWidgetItem(m_currentProfile);
-			//Try to find another profile below it
-			temp = ui.profileTreeWidget->itemBelow(item);
-
-			//If no profile below, find a profile above
-			if(temp == NULL)
-			{
-				item = ui.profileTreeWidget->itemAbove(item);
-			}
-			else
-			{
-				item = temp; //if profile below was found
-			}
-		}
-		//Remove the current profiles tree widget items
-		ui.profileTreeWidget->removeItemWidget(GetProfileTreeWidgetItem(p.name), 0);
-		ui.hsProfileTreeWidget->removeItemWidget(GetProfileHsTreeWidgetItem(p.name), 0);
-
-		//Clear the tree of the current profile (may not be needed)
-		m_honeydConfig->m_profiles[name].tree.clear();
-
-		//Erase the profile from the table and any nodes that use it
-		m_honeydConfig->DeleteProfile(&m_honeydConfig->m_profiles[name]);
-
-		//If this profile has a parent
-		if(p.parentProfile.compare(""))
-		{
-			//save a copy of the parent
-			profile parent = m_honeydConfig->m_profiles[p.parentProfile];
-
-			//point to the profiles subtree of parent-copy ptree and clear it
-			ptree * pt = &parent.tree.get_child("profiles");
-			pt->clear();
-
-			//Find all profiles still in the table that are sibilings of deleted profile
-			//* We should be using an iterator to find the original profile and erase it
-			//* but boost's iterator implementation doesn't seem to be able to access data
-			//* correctly and are frequently invalidated.
-
-			for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
-			{
-				if(!it->second.parentProfile.compare(parent.name))
-				{
-					//Put sibiling profiles into the tree
-					pt->add_child("profile", it->second.tree);
-				}
-			}	//parent-copy now has the ptree of all children except deleted profile
-
-			//point to the original parent's profiles subtree and replace it with our new ptree
-			ptree * treePtr = &m_honeydConfig->m_profiles[p.parentProfile].tree.get_child("profiles");
-			treePtr->clear();
-			*treePtr = *pt;
-
-			//Updates all ancestors with the deletion
-			UpdateProfileTree(p.parentProfile, ALL);
-		}
-		//If an item was found for a new selection
-		if(item != NULL)
-		{	//Set the current selection
-			m_currentProfile = item->text(0).toStdString();
-		}
-		//If no profiles remain
 		else
-		{	//No selection
-			m_currentProfile = "";
+		{
+			item = temp; //if profile below was found
 		}
-		//Redraw honeyd configuration to reflect changes
-		LoadHaystackConfiguration();
 	}
-
-	//If a child profile just delete, no more action needed
+	//Remove the current profiles tree widget items
+	ui.profileTreeWidget->removeItemWidget(GetProfileTreeWidgetItem(name), 0);
+	ui.hsProfileTreeWidget->removeItemWidget(GetProfileHsTreeWidgetItem(name), 0);
+	//If an item was found for a new selection
+	if(item != NULL)
+	{	//Set the current selection
+		m_currentProfile = item->text(0).toStdString();
+	}
+	//If no profiles remain
 	else
-	{
-		//Erase the profile from the table and any nodes that use it
-		m_honeydConfig->DeleteProfile(&m_honeydConfig->m_profiles[name]);
+	{	//No selection
+		m_currentProfile = "";
 	}
+	m_honeydConfig->DeleteProfile(name);
+
+	//Redraw honeyd configuration to reflect changes
+	LoadHaystackConfiguration();
 }
 
 //Populates the window with the selected profile's options
@@ -2025,78 +1865,6 @@ void NovaConfig::LoadInheritedProfileSettings()
 	}
 }
 
-//This is called to update all ancestor ptrees, does not update current ptree to do that call
-// createProfileTree(profile.name) which will call this function afterwards currently this will
-// only be called when a profile is deleted and has no current ptree. to update all other
-// changes use createProfileTree
-void NovaConfig::UpdateProfileTree(string name, recursiveDirection direction)
-{
-	//Copy the profile
-	profile p = m_honeydConfig->m_profiles[name];
-	bool up = false, down = false;
-	switch(direction)
-	{
-		case UP:
-		{
-			up = true;
-			break;
-		}
-		case DOWN:
-		{
-			down = true;
-			break;
-		}
-		case ALL:
-		default:
-		{
-			up = true;
-			down = true;
-			break;
-		}
-	}
-	if(down)
-	{
-		//Find all children
-		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
-		{
-			//If child is found
-			if(!it->second.parentProfile.compare(p.name))
-			{
-				//Update the child
-				UpdateProfileTree(it->second.name, DOWN);
-				//Put the child in the parent's ptree
-				p.tree.add_child("profiles.profile", it->second.tree);
-			}
-		}
-		m_honeydConfig->m_profiles[name] = p;
-	}
-	//If the original calling profile has a parent to update
-	if(p.parentProfile.compare("") && up)
-	{
-		//Get the parents name and create an empty ptree
-		profile parent = m_honeydConfig->m_profiles[p.parentProfile];
-		ptree pt;
-		pt.clear();
-		pt.add_child("profile", p.tree);
-
-		//Find all children of the parent and put them in the empty ptree
-		// Ideally we could just replace the individual child but the data structure doesn't seem
-		// to support this very well when all keys in the ptree (ie. profiles.profile) are the same
-		// because the ptree iterators just don't seem to work correctly and documentation is very poor
-		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
-		{
-			if(!it->second.parentProfile.compare(parent.name))
-			{
-				pt.add_child("profile", it->second.tree);
-			}
-		}
-		//Replace the parent's profiles subtree (stores all children) with the new one
-		parent.tree.put_child("profiles", pt);
-		m_honeydConfig->m_profiles[parent.name] = parent;
-		//Recursively ascend to update all ancestors
-		UpdateProfileTree(parent.name, UP);
-	}
-}
 
 //This is used when a profile is cloned, it allows us to copy a ptree and extract all children from it
 // it is exactly the same as novagui's xml extraction functions except that it gets the ptree from the
@@ -2158,7 +1926,7 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 
 				//Save the profile
 				m_honeydConfig->m_profiles[p.name] = p;
-				UpdateProfileTree(p.name, ALL);
+				m_honeydConfig->UpdateProfile(p.name);
 
 				try //Conditional: has children profiles
 				{
@@ -2394,7 +2162,7 @@ void NovaConfig::LoadProfileChildren(string parent)
 
 			//Saves the profile
 			m_honeydConfig->m_profiles[prof.name] = prof;
-			UpdateProfileTree(prof.name, ALL);
+			m_honeydConfig->UpdateProfile(prof.name);
 
 			try //Conditional: if profile has children (not leaf)
 			{
@@ -2424,7 +2192,7 @@ void NovaConfig::LoadAllProfiles()
 		// and create them if not to draw the table correctly, thus the need for the NULL pointer as a flag
 		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 		{
-			CreateProfileItem(it->second.name);
+			CreateProfileItem(it->first);
 		}
 		//Sets the current selection to the original selection
 		//ui.profileTreeWidget->setCurrentItem(m_honeydConfig->m_profiles[m_currentProfile].profileItem);
@@ -2532,7 +2300,6 @@ void NovaConfig::CreateProfileItem(string pstr)
 		QTreeWidgetItem * item = NULL;
 		//get the name
 		string profileStr = p.name;
-
 		//if the profile has no parents create the item at the top level
 		if(!p.parentProfile.compare(""))
 		{
@@ -2575,76 +2342,6 @@ void NovaConfig::CreateProfileItem(string pstr)
 		}
 		m_honeydConfig->m_profiles[p.name] = p;
 	}
-}
-
-//Populates an emptry ptree with all used values
-void NovaConfig::CreateProfileTree(string name)
-{
-	ptree temp;
-	profile p = m_honeydConfig->m_profiles[name];
-	if(p.name.compare(""))
-	{
-		temp.put<std::string>("name", p.name);
-	}
-	if(p.tcpAction.compare("") && !p.inherited[TCP_ACTION])
-	{
-		temp.put<std::string>("set.TCP", p.tcpAction);
-	}
-	if(p.udpAction.compare("") && !p.inherited[UDP_ACTION])
-	{
-		temp.put<std::string>("set.UDP", p.udpAction);
-	}
-	if(p.icmpAction.compare("") && !p.inherited[ICMP_ACTION])
-	{
-		temp.put<std::string>("set.ICMP", p.icmpAction);
-	}
-	if(p.personality.compare("") && !p.inherited[PERSONALITY])
-	{
-		temp.put<std::string>("set.personality", p.personality);
-	}
-	if(p.ethernet.compare("") && !p.inherited[ETHERNET])
-	{
-		temp.put<std::string>("set.ethernet", p.ethernet);
-	}
-	if(p.uptimeMin.compare("") && !p.inherited[UPTIME])
-	{
-		temp.put<std::string>("set.uptimeMin", p.uptimeMin);
-	}
-	if(p.uptimeMax.compare("") && !p.inherited[UPTIME])
-	{
-		temp.put<std::string>("set.uptimeMax", p.uptimeMax);
-	}
-	if(p.dropRate.compare("") && !p.inherited[DROP_RATE])
-	{
-		temp.put<std::string>("set.dropRate", p.dropRate);
-	}
-
-	//Populates the ports, if none are found create an empty field because it is expected.
-	ptree pt;
-	if(p.ports.size())
-	{
-		temp.put_child("add.ports",pt);
-		for(uint i = 0; i < p.ports.size(); i++)
-		{
-			//If the port isn't inherited
-			if(!p.ports[i].second)
-			{
-				temp.add<std::string>("add.ports.port", p.ports[i].first);
-			}
-		}
-	}
-	else
-	{
-		temp.put_child("add.ports",pt);
-	}
-	//put empty ptree in profiles as well because it is expected, does not matter that it is the same
-	// as the one in add.ports if profile has no ports, since both are empty.
-	temp.put_child("profiles", pt);
-
-	//copy the tree over and update ancestors
-	p.tree = temp;
-	m_honeydConfig->m_profiles[name] = p;
-	UpdateProfileTree(name, ALL);
 }
 
 void NovaConfig::SetInputValidators()
@@ -2828,8 +2525,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		}
 	}
 	//Puts the profile in the table, creates a ptree and loads the new configuration
-	m_honeydConfig->m_profiles[temp.name] = temp;
-	CreateProfileTree(temp.name);
+	m_honeydConfig->AddProfile(&temp);
 	m_loading->unlock();
 	LoadAllProfiles();
 	LoadAllNodes();
@@ -2874,7 +2570,7 @@ void NovaConfig::on_actionProfileClone_triggered()
 		//Extract all descendants, create a ptree, update with new configuration
 		m_honeydConfig->m_profiles[p.name] = p;
 		LoadProfilesFromTree(p.name);
-		UpdateProfileTree(p.name, ALL);
+		m_honeydConfig->UpdateProfile(p.name);
 		m_loading->unlock();
 		LoadAllProfiles();
 		LoadAllNodes();
@@ -2893,7 +2589,7 @@ void NovaConfig::on_profileEdit_editingFinished()
 		GetProfileHsTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
 		//If the name has changed we need to move it in the profile hash table and point all
 		//nodes that use the profile to the new location.
-		m_honeydConfig->RenameProfile(&m_honeydConfig->m_profiles[m_currentProfile], ui.profileEdit->displayText().toStdString());
+		m_honeydConfig->RenameProfile(m_currentProfile, ui.profileEdit->displayText().toStdString());
 		SaveProfileSettings();
 		LoadProfileSettings();
 		m_loading->unlock();
@@ -3470,39 +3166,35 @@ bool NovaConfig::IsDoppelIPValid()
 	return true;
 }
 //Doppelganger IP Address Spin boxes
-void NovaConfig::on_dmIPSpinBox_0_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_0_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_1_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_1_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_2_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_2_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
-void NovaConfig::on_dmIPSpinBox_3_valueChanged(int __attribute__((unused)) value)
+void NovaConfig::on_dmIPSpinBox_3_valueChanged()
 {
 	if (!IsDoppelIPValid())
 	{
-		cout << "IP Conflict" << endl;
-		//TODO Error Logging
+		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
 }
 
@@ -3529,8 +3221,7 @@ void NovaConfig::on_hsSaveTypeComboBox_currentIndexChanged(int index)
 		}
 		default:
 		{
-			cout << "IP Conflict" << endl;
-			//TODO Error Logging
+			LOG(ERROR, "Haystack save type set to undefined index!", "");
 			break;
 		}
 	}
