@@ -129,7 +129,7 @@ void MessageManager::CloseSocket(int socketFD)
 bool MessageManager::RegisterCallback(int socketFD)
 {
 	bool foundIt = false;
-	MessageQueue *queue;
+	MessageQueue *queue = NULL;
 	{
 		Lock lock(&m_queuesLock);
 

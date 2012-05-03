@@ -23,20 +23,26 @@
 using namespace Nova;
 
 // The test fixture for testing class ClassificationEngine.
-class ClassificationEngineTest : public ::testing::Test {
+class ClassificationEngineTest : public ::testing::Test
+{
+
 protected:
+
 	SuspectTable suspects;
 	ClassificationEngine *testObject;
 
 	// Unused methods here may be deleted
-	ClassificationEngineTest() {
+	ClassificationEngineTest()
+	{
 		testObject = new ClassificationEngine(suspects);
-
 	}
 };
 
 // Check that someMethod functions
 TEST_F(ClassificationEngineTest, test_someMethod)
 {
+	bool isDmEn = Config::Inst()->GetIsDmEnabled();
+	Config::Inst()->SetIsDmEnabled(false);
 	EXPECT_EQ(0.42, ClassificationEngine::Normalize(LINEAR, 42, 0, 100));
+	Config::Inst()->SetIsDmEnabled(isDmEn);
 }
