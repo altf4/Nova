@@ -21,6 +21,7 @@ class HoneydConfigBinding : public node::ObjectWrap {
   static v8::Handle<v8::Value> GetProfileNames(const v8::Arguments& args);
   static v8::Handle<v8::Value> GetNodeNames(const v8::Arguments& args);
   static v8::Handle<v8::Value> GetSubnetNames(const v8::Arguments& args);
+  static v8::Handle<v8::Value> GetScriptNames(const v8::Arguments& args);
   static v8::Handle<v8::Value> AddNewNodes(const v8::Arguments& args);
   static v8::Handle<v8::Value> AddNewNode(const v8::Arguments& args);
   
@@ -29,6 +30,7 @@ class HoneydConfigBinding : public node::ObjectWrap {
   static v8::Handle<v8::Value> DeleteProfile(const v8::Arguments& args);
 
   static v8::Handle<v8::Value> GetProfile(const v8::Arguments& args);
+  static v8::Handle<v8::Value> GetPorts(const v8::Arguments& args);
 
   
   Nova::HoneydConfiguration *m_conf;

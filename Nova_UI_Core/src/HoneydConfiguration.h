@@ -168,6 +168,22 @@ public:
     //Checks for ports that aren't used and removes them from the table if so
     void CleanPorts();
 
+    // This is only for the Javascript UI, avoid use here
+	inline std::vector<port> GetPorts(std::string profile) {
+		std::vector<port> ret;
+		port p;
+
+		for (uint i = 0; i < m_profiles[profile].ports.size(); i++)
+		{
+			p = m_ports[m_profiles[profile].ports.at(i).first];
+			p.isInherited = m_profiles[profile].ports.at(i).second;
+			ret.push_back(p);
+		}
+
+		return ret;
+	}
+
+
 // TODO: this should be private eventually
 public:
 	SubnetTable m_subnets;
