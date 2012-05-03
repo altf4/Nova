@@ -78,9 +78,11 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	if(!portNum)
 	{
 		LOG(ERROR, "Cannot create port: Port Number of 0 is Invalid.", "");
-		return "";
+		return string("");
 	}
-	pr.portNum = portNum;
+	stringstream ss;
+	ss << portNum;
+	pr.portNum = ss.str();
 
 	//Assign the port type (UDP or TCP)
 	if(isTCP)
@@ -129,18 +131,18 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 		default:
 		{
 			LOG(ERROR, "Cannot create port: Attempting to use unknown port behavior", "");
-			return "";
+			return string("");
 		}
 	}
 
 	//	Creates the ports unique identifier these names won't collide unless the port is the same
-	if(behavior == SCRIPT)
+	if(!pr.behavior.compare("script"))
 	{
-		pr.portName = "" + pr.portNum + "_" + pr.type + "_" + pr.scriptName;
+		pr.portName = pr.portNum + "_" + pr.type + "_" + pr.scriptName;
 	}
 	else
 	{
-		pr.portName = "" + pr.portNum + "_" + pr.type + "_" + pr.behavior;
+		pr.portName = pr.portNum + "_" + pr.type + "_" + pr.behavior;
 	}
 
 	//Checks if the port already exists

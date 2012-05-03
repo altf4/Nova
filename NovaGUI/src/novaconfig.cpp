@@ -244,10 +244,10 @@ void NovaConfig::on_actionAddPort_triggered()
 			profile p = m_honeydConfig->m_profiles[m_currentProfile];
 
 			port pr;
-			pr.portNum = "0";
+			pr.portNum = "1";
 			pr.type = "TCP";
 			pr.behavior = "open";
-			pr.portName = "0_TCP_open";
+			pr.portName = "1_TCP_open";
 			pr.scriptName = "";
 
 			//These don't need to be deleted because the clear function
