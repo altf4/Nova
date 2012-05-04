@@ -7,8 +7,11 @@
 namespace Nova
 {
 
-// Exceptions we might throw
-class emptyKeyException: public std::exception
+// All hash map exceptions can be caught with this
+class hashMapException : public std::exception {};
+
+// Invalid key access exceptions cat be caught with this
+class emptyKeyException: public hashMapException
 {
   virtual const char* what() const throw()
   {
@@ -16,7 +19,7 @@ class emptyKeyException: public std::exception
   }
 };
 
-class deleteKeyException: public std::exception
+class deleteKeyException: public hashMapException
 {
   virtual const char* what() const throw()
   {
@@ -24,7 +27,7 @@ class deleteKeyException: public std::exception
   }
 };
 
-class emptyKeyNotSetException: public std::exception
+class emptyKeyNotSetException: public hashMapException
 {
 	virtual const char* what() const throw()
 	{

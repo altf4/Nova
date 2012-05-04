@@ -175,7 +175,7 @@ bool HoneydConfiguration::LoadAllTemplates()
 }
 
 //Loads ports from file
-void HoneydConfiguration::LoadPortsTemplate()
+bool HoneydConfiguration::LoadPortsTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -216,15 +216,18 @@ void HoneydConfiguration::LoadPortsTemplate()
 			m_ports[p.portName] = p;
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading ports: "+string(e.what())+".", "");
+		return false;
 	}
+
+	return true;
 }
 
 
 //Loads the subnets and nodes from file for the currently specified group
-void HoneydConfiguration::LoadNodesTemplate()
+bool HoneydConfiguration::LoadNodesTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -252,27 +255,32 @@ void HoneydConfiguration::LoadNodesTemplate()
 						m_nodesTree = v.second.get_child("nodes");
 						LoadNodes(&m_nodesTree);
 					}
-					catch(std::exception &e)
+					catch(Nova::hashMapException &e)
 					{
 						LOG(ERROR, "Problem loading nodes: "+string(e.what())+".", "");
+						return false;
 					}
 				}
-				catch(std::exception &e)
+				catch(Nova::hashMapException &e)
 				{
 					LOG(ERROR, "Problem loading subnets: "+string(e.what())+".", "");
+					return false;
 				}
 			}
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading groups: "+Config::Inst()->GetGroup()+" - "+string(e.what()) +".", "");
+		return false;
 	}
+
+	return true;
 }
 
 
 //Sets the configuration of 'set' values for profile that called it
-void HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
+bool HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
 {
 	string prefix;
 	try
@@ -337,15 +345,18 @@ void HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
 			}
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading profile set parameters: "+string(e.what())+".", "");
+		return false;
 	}
+
+	return true;
 }
 
 //Adds specified ports and subsystems
 // removes any previous port with same number and type to avoid conflicts
-void HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
+bool HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 {
 	string prefix;
 	port * prt;
@@ -417,14 +428,17 @@ void HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 			}
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
+		return true;
 		LOG(ERROR, "Problem loading profile add parameters: "+string(e.what())+".", "");
 	}
+
+	return false;
 }
 
 //Recursive descent down a profile tree, inherits parent, sets values and continues if not leaf.
-void HoneydConfiguration::LoadProfileChildren(string parent)
+bool HoneydConfiguration::LoadProfileChildren(string parent)
 {
 	ptree ptr = m_profiles[parent].tree;
 	try
@@ -453,39 +467,36 @@ void HoneydConfiguration::LoadProfileChildren(string parent)
 			}
 
 
-			try //Conditional: If profile has set configurations different from parent
-			{
+			try {
 				ptr2 = &v.second.get_child("set");
 				LoadProfileSettings(ptr2, &prof);
-			}
-			catch(...){}
+			} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
-			try //Conditional: If profile has port or subsystems different from parent
-			{
+			try {
 				ptr2 = &v.second.get_child("add");
 				LoadProfileServices(ptr2, &prof);
-			}
-			catch(...){}
+			} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 			//Saves the profile
 			m_profiles[prof.name] = prof;
 
-			try //Conditional: if profile has children (not leaf)
-			{
+			try {
 				LoadProfileChildren(prof.name);
-			}
-			catch(...){}
+			} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading sub profiles: "+string(e.what())+".", "");
+		return false;
 	}
+
+	return true;
 }
 
 
 //Loads scripts from file
-void HoneydConfiguration::LoadScriptsTemplate()
+bool HoneydConfiguration::LoadScriptsTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -511,10 +522,13 @@ void HoneydConfiguration::LoadScriptsTemplate()
 			m_scripts[s.name] = s;
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading scripts: "+string(e.what())+".", "");
+		return false;
 	}
+
+	return true;
 }
 
 
@@ -745,7 +759,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 
 //loads subnets from file for current group
-void HoneydConfiguration::LoadSubnets(ptree *ptr)
+bool HoneydConfiguration::LoadSubnets(ptree *ptr)
 {
 	try
 	{
@@ -813,18 +827,22 @@ void HoneydConfiguration::LoadSubnets(ptree *ptr)
 			else
 			{
 				LOG(ERROR, "Unexpected Entry in file: "+string(v.first.data())+".", "");
+				return false;
 			}
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading subnets: "+string(e.what()), "");
+		return false;
 	}
+
+	return true;
 }
 
 
 //loads haystack nodes from file for current group
-void HoneydConfiguration::LoadNodes(ptree *ptr)
+bool HoneydConfiguration::LoadNodes(ptree *ptr)
 {
 	profile p;
 	//ptree * ptr2;
@@ -855,13 +873,12 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 				p = m_profiles[n.pfile];
 
 				//Get mac if present
-				try //Conditional: has "set" values
-				{
+				try {//Conditional: has "set" values
 					//ptr2 = &v.second.get_child("MAC");
 					//pass 'set' subset and pointer to this profile
 					n.MAC = v.second.get<std::string>("MAC");
-				}
-				catch(...){}
+				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+
 				if(!n.IP.compare(Config::Inst()->GetDoppelIp()))
 				{
 					n.name = "Doppelganger";
@@ -938,10 +955,13 @@ void HoneydConfiguration::LoadNodes(ptree *ptr)
 			}
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading nodes: "+ string(e.what()), "");
+		return false;
 	}
+
+	return true;
 }
 
 string HoneydConfiguration::FindSubnet(in_addr_t ip)
@@ -966,7 +986,7 @@ string HoneydConfiguration::FindSubnet(in_addr_t ip)
 	return subnet;
 }
 
-void HoneydConfiguration::LoadProfilesTemplate()
+bool HoneydConfiguration::LoadProfilesTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
@@ -1006,16 +1026,14 @@ void HoneydConfiguration::LoadProfilesTemplate()
 					ptr = &v.second.get_child("set");
 					//pass 'set' subset and pointer to this profile
 					LoadProfileSettings(ptr, &p);
-				}
-				catch(...){}
+				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 				try //Conditional: has "add" values
 				{
 					ptr = &v.second.get_child("add");
 					//pass 'add' subset and pointer to this profile
 					LoadProfileServices(ptr, &p);
-				}
-				catch(...){}
+				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 				//Save the profile
 				m_profiles[p.name] = p;
@@ -1025,8 +1043,7 @@ void HoneydConfiguration::LoadProfilesTemplate()
 					//start recurisive descent down profile tree with this profile as the root
 					//pass subtree and pointer to parent
 					LoadProfileChildren(p.name);
-				}
-				catch(...){}
+				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 			}
 
@@ -1041,10 +1058,13 @@ void HoneydConfiguration::LoadProfilesTemplate()
 			}
 		}
 	}
-	catch(std::exception &e)
+	catch(Nova::hashMapException &e)
 	{
 		LOG(ERROR, "Problem loading Profiles: "+string(e.what())+".", "");
+		return false;
 	}
+
+	return true;
 }
 
 string HoneydConfiguration::ProfileToString(profile* p)
