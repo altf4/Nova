@@ -336,8 +336,40 @@ everyone.now.GetPorts = function (profileName, callback) {
 }
 
 
-everyone.now.SaveProfile = function(profile, callback) {
-    // TODO: Make the Javascript/C++ transmutation magic happen here
+everyone.now.SaveProfile = function(profile, ports, callback) {
+	honeydProfile = new novaconfig.HoneydProfileBinding();
+
+	console.log("Got profile " + profile.name);
+	console.log("Got portlist " + ports.name);
+
+	// Move the Javascript object values to the C++ object
+	honeydProfile.SetName(profile.name);
+	honeydProfile.SetTcpAction(profile.tcpAction);
+	honeydProfile.SetUdpAction(profile.udpAction);
+	honeydProfile.SetIcmpAction(profile.icmpAction);
+	honeydProfile.SetPersonality(profile.personality);
+	honeydProfile.SetEthernet(profile.ethernet);
+	honeydProfile.SetUptimeMin(profile.uptimeMin);
+	honeydProfile.SetUptimeMax(profile.uptimeMax);
+	honeydProfile.SetDropRate(profile.dropRate);
+	honeydProfile.SetParentProfile(profile.parentProfile);
+	honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
+	honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
+	honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
+	honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
+	honeydProfile.setEthernetInherited(profile.isEthernetInherited);
+	honeydProfile.setUptimeInherited(profile.isUptimeInherited);
+	honeydProfile.setDropRateInherited(profile.isDropRateInherited);
+
+	// Add new ports
+	console.log(Object.keys(ports));
+	console.log("Length is " + ports.size);
+	for (var i = 0; i < ports.size; i++) {
+		console.log(ports[i].portNum);
+	}
+
+	// Save the profile
+	
 }
 
 

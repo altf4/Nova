@@ -560,6 +560,8 @@ bool HoneydConfiguration::SaveAllTemplates()
 	write_xml(m_homePath+"/templates/ports.xml", m_portTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
+
+	return true;
 }
 
 //Writes the current configuration to honeyd configs
@@ -649,6 +651,8 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	ofstream outFile(path);
 	outFile << out.str() << endl;
 	outFile.close();
+
+	return true;
 }
 
 

@@ -18,9 +18,11 @@ block headerAdditions
     var loaded = false;
 
     require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
-
+ 
+    function obj() {};
     saveChanges = function() {
-        var pfile = function() {};
+        var pfile = new obj();
+        var ports = new obj();
         
         pfile.oldName = "#{oldName}";
         pfile.name = dojo.byId("name").value;
@@ -47,16 +49,15 @@ block headerAdditions
         pfile.isUdpActionInherited = dojo.byId("inheritUdpAction").checked;
         pfile.isIcmpActionInherited = dojo.byId("inheritIcmpAction").checked;
 
-        pfile.ports = [];
+        ports.size = portIndexes.length;
         for (var i = 0; i < portIndexes.length; i++) {
-            var port = function() {};
-            port.portNum = dojo.byId("portNum" + portIndexes[i]).value;
-            port.behavior = dojo.byId("portBehavior" + portIndexes[i]).value;
-            port.type = dojo.byId("portType" + portIndexes[i]).value;
-            pfile.ports.push(port);
+            ports[i] = new obj();
+            ports[i].portNum = dojo.byId("portNum" + portIndexes[i]).value;
+            ports[i].behavior = dojo.byId("portBehavior" + portIndexes[i]).value;
+            ports[i].type = dojo.byId("portType" + portIndexes[i]).value;
         }
 
-        now.SaveProfile(pfile);
+        now.SaveProfile(pfile, ports, undefined);
 
     }
 
