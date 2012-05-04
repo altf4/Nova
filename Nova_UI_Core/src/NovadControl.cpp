@@ -16,12 +16,12 @@
 // Description : Controls the Novad process itself, in terms of stopping and starting
 //============================================================================
 
-#include "messages/UI_Message.h"
-#include "messages/ControlMessage.h"
-#include "messages/ErrorMessage.h"
+#include "messaging/MessageManager.h"
+#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/ControlMessage.h"
+#include "messaging/messages/ErrorMessage.h"
 #include "Commands.h"
 #include "Logger.h"
-#include "Socket.h"
 #include "Lock.h"
 
 #include <iostream>
@@ -31,7 +31,7 @@
 using namespace Nova;
 using namespace std;
 
-extern Socket novadListenSocket;
+extern int IPCSocketFD;
 
 namespace Nova
 {
@@ -54,32 +54,21 @@ bool StartNovad()
 
 bool StopNovad()
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
-	ControlMessage killRequest(CONTROL_EXIT_REQUEST);
-	if(!UI_Message::WriteMessage(&killRequest, novadListenSocket.m_socketFD) )
+	ControlMessage killRequest(CONTROL_EXIT_REQUEST, DIRECTION_TO_NOVAD);
+	if(!UI_Message::WriteMessage(&killRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -99,41 +88,30 @@ bool StopNovad()
 	bool retSuccess = killReply->m_success;
 	delete killReply;
 
-	CloseNovadConnection();
+	MessageManager::Instance().CloseSocket(IPCSocketFD);
 
 	return retSuccess;
 }
 
 bool SaveAllSuspects(std::string file)
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
-	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST);
+	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST, DIRECTION_TO_NOVAD);
 	strcpy(saveRequest.m_filePath, file.c_str());
 
-	if(!UI_Message::WriteMessage(&saveRequest, novadListenSocket.m_socketFD) )
+	if(!UI_Message::WriteMessage(&saveRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -157,32 +135,21 @@ bool SaveAllSuspects(std::string file)
 
 bool ClearAllSuspects()
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
-	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST);
-	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket.m_socketFD) )
+	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST, DIRECTION_TO_NOVAD);
+	if(!UI_Message::WriteMessage(&clearRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -206,33 +173,22 @@ bool ClearAllSuspects()
 
 bool ClearSuspect(in_addr_t suspectAddress)
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
-	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST);
+	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST, DIRECTION_TO_NOVAD);
 	clearRequest.m_suspectAddress = suspectAddress;
-	if(!UI_Message::WriteMessage(&clearRequest, novadListenSocket.m_socketFD) )
+	if(!UI_Message::WriteMessage(&clearRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
@@ -256,17 +212,17 @@ bool ClearSuspect(in_addr_t suspectAddress)
 
 bool ReclassifyAllSuspects()
 {
-	Lock lock(&novadListenSocket.m_mutex);
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
-	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST);
-	if(!UI_Message::WriteMessage(&reclassifyRequest, novadListenSocket.m_socketFD) )
+	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST, DIRECTION_TO_NOVAD);
+	if(!UI_Message::WriteMessage(&reclassifyRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(novadListenSocket.m_socketFD, REPLY_TIMEOUT);
+	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -274,16 +230,6 @@ bool ReclassifyAllSuspects()
 		return false;
 	}
 
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			CloseNovadConnection();
-		}
-		delete error;
-		return false;
-	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		//Received the wrong kind of message

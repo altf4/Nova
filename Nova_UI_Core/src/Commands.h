@@ -23,10 +23,16 @@
 #include "string"
 
 #include "Suspect.h"
-#include "messages/RequestMessage.h"
+#include "messaging/messages/RequestMessage.h"
 
 namespace Nova
 {
+//************************************************************************
+//**						Initialization								**
+//************************************************************************
+
+//Initializes internal objects and states. MUST be run once first, before any other functions
+void InitializeUI();
 
 //************************************************************************
 //**						Process Operations							**

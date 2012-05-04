@@ -22,11 +22,12 @@
 namespace Nova
 {
 
-CallbackMessage::CallbackMessage(enum CallbackType callbackType)
+CallbackMessage::CallbackMessage(enum CallbackType callbackType, enum ProtocolDirection direction)
 {
 	m_suspect = NULL;
 	m_messageType = CALLBACK_MESSAGE;
 	m_callbackType = callbackType;
+	m_protocolDirection = direction;
 }
 
 CallbackMessage::~CallbackMessage()
@@ -44,9 +45,12 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 
 	m_serializeError = false;
 
-	//Copy the message type
-	memcpy(&m_messageType, buffer, sizeof(m_messageType));
-	buffer += sizeof(m_messageType);
+	//Deserialize the UI_Message header
+	if(!DeserializeHeader(&buffer))
+	{
+		m_serializeError = true;
+		return;
+	}
 
 	//Copy the control message type
 	memcpy(&m_callbackType, buffer, sizeof(m_callbackType));
@@ -56,11 +60,11 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 	{
 		case CALLBACK_SUSPECT_UDPATE:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Length of incoming serialized suspect
 			//		3) Serialized suspect
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_callbackType) + sizeof(m_suspectLength);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_callbackType) + sizeof(m_suspectLength);
 			if(length <= expectedSize)
 			{
 				m_serializeError = true;
@@ -85,9 +89,9 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 		}
 		case CALLBACK_SUSPECT_UDPATE_ACK:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) Callback Type
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_callbackType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_callbackType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -113,7 +117,7 @@ char *CallbackMessage::Serialize(uint32_t *length)
 	{
 		case CALLBACK_SUSPECT_UDPATE:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Length of incoming serialized suspect
 			//		3) Serialized suspect
@@ -127,13 +131,11 @@ char *CallbackMessage::Serialize(uint32_t *length)
 				return NULL;
 			}
 
-			messageSize = sizeof(m_messageType) + sizeof(m_callbackType) + sizeof(m_suspectLength) + m_suspectLength;
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_callbackType) + sizeof(m_suspectLength) + m_suspectLength;
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Callback Message type in
 			memcpy(buffer, &m_callbackType, sizeof(m_callbackType));
 			buffer += sizeof(m_callbackType);
@@ -149,15 +151,13 @@ char *CallbackMessage::Serialize(uint32_t *length)
 		}
 		case CALLBACK_SUSPECT_UDPATE_ACK:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) Callback Message Type
-			messageSize = sizeof(m_messageType) + sizeof(m_callbackType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_callbackType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_callbackType, sizeof(m_callbackType));
 			buffer += sizeof(m_callbackType);

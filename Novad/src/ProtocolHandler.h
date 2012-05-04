@@ -19,9 +19,9 @@
 #ifndef PROTOCOLHANDLER_H_
 #define PROTOCOLHANDLER_H_
 
-#include "messages/UI_Message.h"
-#include "messages/ControlMessage.h"
-#include "messages/RequestMessage.h"
+#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/ControlMessage.h"
+#include "messaging/messages/RequestMessage.h"
 #include "Suspect.h"
 
 namespace Nova
@@ -50,15 +50,10 @@ void HandleRequestMessage(RequestMessage &requestMessage, int socketFD);
 
 //Commands and Updates to UI:
 
-//Initializes connection (socket) to UI
-//Must be called once before any of the following functions
-//	returns - True if successfully connected to UI, false on error
-bool ConnectToUI();
-
-//Sends (updates) a single suspect to the UI for display to the user
+//Sends (updates) a single suspect to all UIs for display to the user
 //	suspect - The suspect to send
-//	returns - True if successfully sent to UI, false on error
-bool SendSuspectToUI(Suspect *suspect);
+//	socket - The socket of the UI to send to
+void SendSuspectToUIs(Suspect *suspect);
 
 }
 #endif /* PROTOCOLHANDLER_H_ */

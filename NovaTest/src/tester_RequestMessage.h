@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-#include "messages/RequestMessage.h"
+#include "messaging/messages/RequestMessage.h"
 
 using namespace Nova;
 
@@ -40,14 +40,13 @@ protected:
 
 
 };
-
+/* Disabled until updated for new RequestMessages
 TEST_F(RequestMessageTest, test_constructorDestructor)
 {
 	RequestMessage *test1 = new RequestMessage(REQUEST_SUSPECTLIST);
 	delete test1;
 }
 
-/*
  *  Disabled until we can figure out how to test protected members
 TEST_F(RequestMessageTest, test_RequestSuspectlist)
 {

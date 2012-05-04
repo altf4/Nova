@@ -160,6 +160,7 @@ void NovaNode::Init(Handle<Object> target)
 
 	//LOG(DEBUG, "Attempting to connect to Novad...", "");
 	//CheckConnection();
+	InitializeUI();
 	CheckInitNova();
 	InitNovaCallbackProcessing();
 	LOG(DEBUG, "Initialized NovaNode","");

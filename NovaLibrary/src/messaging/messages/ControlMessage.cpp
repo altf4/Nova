@@ -25,10 +25,11 @@ using namespace std;
 namespace Nova
 {
 
-ControlMessage::ControlMessage(enum ControlType controlType)
+ControlMessage::ControlMessage(enum ControlType controlType, enum ProtocolDirection direction)
 {
 	m_messageType = CONTROL_MESSAGE;
 	m_controlType = controlType;
+	m_protocolDirection = direction;
 }
 
 ControlMessage::~ControlMessage()
@@ -46,9 +47,12 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 
 	m_serializeError = false;
 
-	//Copy the message type
-	memcpy(&m_messageType, buffer, sizeof(m_messageType));
-	buffer += sizeof(m_messageType);
+	//Deserialize the UI_Message header
+	if(!DeserializeHeader(&buffer))
+	{
+		m_serializeError = true;
+		return;
+	}
 
 	//Copy the control message type
 	memcpy(&m_controlType, buffer, sizeof(m_controlType));
@@ -58,10 +62,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 	{
 		case CONTROL_EXIT_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -72,11 +76,11 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_EXIT_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -90,10 +94,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_CLEAR_ALL_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -104,11 +108,11 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_CLEAR_ALL_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -122,11 +126,11 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Suspect IP to clear
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_suspectAddress);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_suspectAddress);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -140,11 +144,11 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_CLEAR_SUSPECT_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -158,10 +162,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_filePath);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -175,11 +179,11 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_SAVE_SUSPECTS_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -193,10 +197,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -207,11 +211,11 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_RECLASSIFY_ALL_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -225,10 +229,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_CONNECT_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -239,11 +243,11 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_CONNECT_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -257,10 +261,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -271,10 +275,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_DISCONNECT_ACK:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -285,10 +289,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_PING:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -299,10 +303,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		}
 		case CONTROL_PONG:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_controlType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -331,15 +335,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 	{
 		case CONTROL_EXIT_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -348,16 +350,14 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_EXIT_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -369,15 +369,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_CLEAR_ALL_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -386,16 +384,14 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_CLEAR_ALL_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -407,16 +403,14 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_suspectAddress);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_suspectAddress);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -428,16 +422,14 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_CLEAR_SUSPECT_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -449,15 +441,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_filePath);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -469,16 +459,14 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_SAVE_SUSPECTS_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -490,15 +478,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);;
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -507,16 +493,14 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_RECLASSIFY_ALL_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -528,15 +512,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_CONNECT_REQUEST:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -545,16 +527,14 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_CONNECT_REPLY:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -566,15 +546,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -583,15 +561,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_DISCONNECT_ACK:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -600,15 +576,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_PING:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -617,15 +591,13 @@ char *ControlMessage::Serialize(uint32_t *length)
 		}
 		case CONTROL_PONG:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = sizeof(m_messageType) + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);

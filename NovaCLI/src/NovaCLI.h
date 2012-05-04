@@ -19,7 +19,7 @@
 #ifndef NOVACLI_H_
 #define NOVACLI_H_
 
-#include "messages/RequestMessage.h"
+#include "messaging/messages/RequestMessage.h"
 
 // Name of the CLI executable
 #define EXECUTABLE_NAME "novacli"
