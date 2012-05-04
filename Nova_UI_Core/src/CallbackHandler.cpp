@@ -18,24 +18,33 @@
 //============================================================================
 
 #include "CallbackHandler.h"
-#include "messages/UI_Message.h"
-#include "messages/CallbackMessage.h"
-#include "messages/ErrorMessage.h"
-#include "Socket.h"
+#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/CallbackMessage.h"
+#include "messaging/messages/ErrorMessage.h"
+#include "messaging/MessageManager.h"
 #include "Lock.h"
 
 using namespace Nova;
 
-extern Socket UI_ListenSocket;
+extern int IPCSocketFD;
 
 struct CallbackChange Nova::ProcessCallbackMessage()
 {
-	Lock lock(&UI_ListenSocket.m_mutex);
-
 	struct CallbackChange change;
 	change.type = CALLBACK_ERROR;
 
-	UI_Message *message = UI_Message::ReadMessage(UI_ListenSocket.m_socketFD);
+	//Wait for a callback to occur
+	//	If it comes back false, then that means the socket is dead
+	if(!MessageManager::Instance().RegisterCallback(IPCSocketFD))
+	{
+		change.type = CALLBACK_HUNG_UP;
+		return change;
+	}
+
+	//Claim the socket's mutex, so another protocol doesn't get mixed up in between
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
+	UI_Message *message = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
@@ -62,8 +71,8 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.type = CALLBACK_NEW_SUSPECT;
 			change.suspect = callbackMessage->m_suspect;
 
-			CallbackMessage callbackAck(CALLBACK_SUSPECT_UDPATE_ACK);
-			if(!UI_Message::WriteMessage(&callbackAck, UI_ListenSocket.m_socketFD))
+			CallbackMessage callbackAck(CALLBACK_SUSPECT_UDPATE_ACK, DIRECTION_TO_UI);
+			if(!UI_Message::WriteMessage(&callbackAck, IPCSocketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}

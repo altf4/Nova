@@ -20,7 +20,7 @@
 #define RequestMessage_H_
 
 #include "UI_Message.h"
-#include "../Suspect.h"
+#include "../../Suspect.h"
 
 #include <vector>
 #include <arpa/inet.h>
@@ -58,7 +58,7 @@ class RequestMessage : public UI_Message
 
 public:
 
-	RequestMessage(enum RequestType requestType);
+	RequestMessage(enum RequestType requestType, enum ProtocolDirection direction);
 	~RequestMessage();
 
 	//Deserialization constructor
@@ -94,10 +94,6 @@ protected:
 	//	NOTE: The caller must manually free() the returned buffer after use
 	char *Serialize(uint32_t *length);
 
-	// Serializes just the UI message and request message type into the buffer
-	//	*buffer: Pointer to where to store the serialized values
-	// Returns: Number of bytes written to *buffer
-	int SerializeHeader(char *buffer);
 };
 
 }

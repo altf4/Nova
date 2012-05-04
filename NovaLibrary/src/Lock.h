@@ -30,21 +30,56 @@ class Lock
 public:
 	Lock(pthread_mutex_t *lock)
 	{
-		m_lock = lock;
-		pthread_mutex_lock(m_lock);
+		isMutex = true;
+		m_mutex = lock;
+		pthread_mutex_lock(m_mutex);
+	}
+
+	Lock(pthread_rwlock_t *lock, bool isReadLock)
+	{
+		isMutex = false;
+		m_rwlock = lock;
+		if(isReadLock)
+		{
+			pthread_rwlock_rdlock(m_rwlock);
+		}
+		else
+		{
+			pthread_rwlock_wrlock(m_rwlock);
+		}
+	}
+
+	//Blank constructor meant to be used in conjunction with GetLock
+	Lock()
+	{
+		isMutex = true;
+	}
+
+	//Allows the user to get a lock outside the scope of where the Lock object is declared
+	void GetLock(pthread_mutex_t *lock)
+	{
+		m_mutex = lock;
+		pthread_mutex_lock(m_mutex);
 	}
 
 	~Lock()
 	{
-		pthread_mutex_unlock(m_lock);
+		if(isMutex)
+		{
+			pthread_mutex_unlock(m_mutex);
+		}
+		else
+		{
+			pthread_rwlock_unlock(m_rwlock);
+		}
 	}
 
 private:
-	pthread_mutex_t *m_lock;
-
+	bool isMutex;
+	pthread_mutex_t *m_mutex;
+	pthread_rwlock_t *m_rwlock;
 };
 
 }
-
 
 #endif /* LOCK_H_ */

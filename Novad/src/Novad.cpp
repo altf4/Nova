@@ -16,6 +16,7 @@
 // Description : Nova Daemon to perform network anti-reconnaissance
 //============================================================================
 
+#include "messaging/MessageManager.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
 #include "SuspectTable.h"
@@ -97,6 +98,7 @@ namespace Nova
 int RunNovaD()
 {
 	Config::Inst();
+	MessageManager::Initialize(DIRECTION_TO_UI);
 
 	if (!LockNovad())
 	{
@@ -1012,14 +1014,7 @@ void UpdateAndStore(in_addr_t key)
 		trainingFileStream << suspectCopy.GetFeatureSet(MAIN_FEATURES).m_features[j] << " ";
 	}
 	trainingFileStream << "\n";
-	if(SendSuspectToUI(&suspectCopy))
-	{
-		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
-	}
-	else
-	{
-		LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
-	}
+	SendSuspectToUIs(&suspectCopy);
 }
 
 
@@ -1049,14 +1044,7 @@ void UpdateAndClassify(in_addr_t key)
 		}
 	}
 
-	if(SendSuspectToUI(&suspectCopy))
-	{
-		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
-	}
-	else
-	{
-		LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspectCopy.GetInAddr()), "");
-	}
+	SendSuspectToUIs(&suspectCopy);
 
 	if(!Config::Inst()->GetIsTraining())
 	{
@@ -1067,7 +1055,6 @@ void UpdateAndClassify(in_addr_t key)
 			suspectsSinceLastSave.CheckIn(&suspectCopy);
 		}
 	}
-
 }
 
 }

@@ -16,32 +16,31 @@
 // Description : Manages the message sending protocol to and from the Nova UI
 //============================================================================
 
-
-#include "messages/CallbackMessage.h"
-#include "messages/ControlMessage.h"
-#include "messages/RequestMessage.h"
-#include "messages/ErrorMessage.h"
 #include "ProtocolHandler.h"
-#include "SuspectTable.h"
-#include "Control.h"
-#include "Socket.h"
 #include "Config.h"
 #include "Logger.h"
+#include "Control.h"
 #include "Novad.h"
+#include "messaging/messages/CallbackMessage.h"
+#include "messaging/messages/ControlMessage.h"
+#include "messaging/messages/RequestMessage.h"
+#include "messaging/messages/ErrorMessage.h"
+#include "messaging/MessageManager.h"
+#include "SuspectTable.h"
 #include "Lock.h"
 
-#include <cerrno>
-#include <stdio.h>
-#include <sys/un.h>
-#include <stdlib.h>
-#include <pthread.h>
+#include "pthread.h"
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
+#include <cerrno>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace Nova;
 using namespace std;
 
-Socket callbackSocket, IPCSocket;
+int IPCParentSocket = -1;
 
 extern SuspectTable suspects;
 extern SuspectTable suspectsSinceLastSave;
@@ -55,13 +54,11 @@ namespace Nova
 //Launches a UI Handling thread, and returns
 bool Spawn_UI_Handler()
 {
-	Lock lock(&IPCSocket.m_mutex);
-
 	int len;
 	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
 	string outKeyPath = Config::Inst()->GetPathHome() + "/keys" + UI_LISTEN_FILENAME;
 
-    if((IPCSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "socket: "+string(strerror(errno)));
     	return false;
@@ -72,17 +69,17 @@ bool Spawn_UI_Handler()
     unlink(msgLocal.sun_path);
     len = strlen(msgLocal.sun_path) + sizeof(msgLocal.sun_family);
 
-    if(::bind(IPCSocket.m_socketFD, (struct sockaddr *)&msgLocal, len) == -1)
+    if(::bind(IPCParentSocket, (struct sockaddr *)&msgLocal, len) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "bind: "+string(strerror(errno)));
-    	close(IPCSocket.m_socketFD);
+    	close(IPCParentSocket);
     	return false;
     }
 
-    if(listen(IPCSocket.m_socketFD, SOMAXCONN) == -1)
+    if(listen(IPCParentSocket, SOMAXCONN) == -1)
     {
 		LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
-		close(IPCSocket.m_socketFD);
+		close(IPCParentSocket);
     	return false;
     }
 
@@ -99,18 +96,18 @@ void *Handle_UI_Helper(void *ptr)
     	int msgSocketFD;
 
     	//Blocking call
-		if((msgSocketFD = accept(IPCSocket.m_socketFD, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
+		if((msgSocketFD = accept(IPCParentSocket, (struct sockaddr *)&msgRemote, (socklen_t*)&UIsocketSize)) == -1)
 		{
-			LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
-			close(IPCSocket.m_socketFD);
+			LOG(ERROR, "Failed to connect to UI", "accept: " + string(strerror(errno)));
+			close(IPCParentSocket);
 			return false;
 		}
 		else
 		{
 			pthread_t UI_thread;
-			Socket *msgSocket = new Socket();
-			msgSocket->m_socketFD = msgSocketFD;
-			pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocket);
+			int *msgSocketPtr = new int;
+			*msgSocketPtr = msgSocketFD;
+			pthread_create(&UI_thread, NULL, Handle_UI_Thread, (void*)msgSocketPtr);
 			pthread_detach(UI_thread);
 		}
     }
@@ -121,26 +118,42 @@ void *Handle_UI_Helper(void *ptr)
 void *Handle_UI_Thread(void *socketVoidPtr)
 {
 	//Get the argument out, put it on the stack, free it from the heap so we don't forget
-	Socket *controlSocket = (Socket*)socketVoidPtr;
+	int *socketIntPtr = (int*)socketVoidPtr;
+	int controlSocket = *socketIntPtr;
+	delete socketIntPtr;
 
-	while(true)
+	MessageManager::Instance().StartSocket(controlSocket);
+
+	bool keepLooping = true;
+
+	while(keepLooping)
 	{
-		Lock lock(&controlSocket->m_mutex);
+		//Wait for a callback to occur
+		//If register comes back false, then the socket was closed. So exit the thread
+		if(!MessageManager::Instance().RegisterCallback(controlSocket))
+		{
+			keepLooping = false;
+			continue;
+		}
 
-		UI_Message *message = UI_Message::ReadMessage(controlSocket->m_socketFD);
+		//TODO: Is this actually necessary? Might not be
+		//Claim the socket's mutex, so another protocol doesn't get mixed up in between
+		Lock lock = MessageManager::Instance().UseSocket(controlSocket);
+
+		UI_Message *message = UI_Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
 			{
 				ControlMessage *controlMessage = (ControlMessage*)message;
-				HandleControlMessage(*controlMessage, controlSocket->m_socketFD);
+				HandleControlMessage(*controlMessage, controlSocket);
 				delete controlMessage;
 				break;
 			}
 			case REQUEST_MESSAGE:
 			{
 				RequestMessage *msg = (RequestMessage*)message;
-				HandleRequestMessage(*msg, controlSocket->m_socketFD);
+				HandleRequestMessage(*msg, controlSocket);
 				delete msg;
 				break;
 			}
@@ -152,11 +165,8 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 					case ERROR_SOCKET_CLOSED:
 					{
 						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
-						delete controlSocket;
-						controlSocket = NULL;
-						close(callbackSocket.m_socketFD);
-						callbackSocket.m_socketFD = -1;
-						return NULL;
+						keepLooping = false;
+						break;;
 					}
 					case ERROR_MALFORMED_MESSAGE:
 					{
@@ -187,12 +197,11 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 				//There was an error reading this message
 				LOG(DEBUG, "There was an error reading a message from the UI", "Invalid message type");
 				delete message;
-				continue;
+				break;
 			}
 		}
 	}
 
-	delete controlSocket;
 	return NULL;
 }
 
@@ -203,7 +212,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_EXIT_REQUEST:
 		{
 			//TODO: Check for any reason why might not want to exit
-			ControlMessage exitReply(CONTROL_EXIT_REPLY);
+			ControlMessage exitReply(CONTROL_EXIT_REPLY, DIRECTION_TO_NOVAD);
 			exitReply.m_success = true;
 
 			UI_Message::WriteMessage(&exitReply, socketFD);
@@ -228,7 +237,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				successResult = false;
 			}
 
-			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY);
+			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY, DIRECTION_TO_NOVAD);
 			clearAllSuspectsReply.m_success = successResult;
 			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
 
@@ -248,7 +257,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			RefreshStateFile();
 
 			//TODO: Should check for errors here and return result
-			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY);
+			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
 			clearSuspectReply.m_success = true;
 			UI_Message::WriteMessage(&clearSuspectReply, socketFD);
 
@@ -274,7 +283,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				//TODO: Should check for errors here and return result
 			}
 
-			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY);
+			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY, DIRECTION_TO_NOVAD);
 			saveSuspectsReply.m_success = true;
 			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
 
@@ -286,7 +295,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			Reload(); //TODO: Should check for errors here and return result
 
-			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY);
+			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY, DIRECTION_TO_NOVAD);
 			reclassifyAllReply.m_success = true;
 			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
 
@@ -296,32 +305,17 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_CONNECT_REQUEST:
 		{
-			bool successResult = ConnectToUI();
-
-			ControlMessage connectReply(CONTROL_CONNECT_REPLY);
-			connectReply.m_success = successResult;
+			ControlMessage connectReply(CONTROL_CONNECT_REPLY, DIRECTION_TO_NOVAD);
+			connectReply.m_success = true;
 			UI_Message::WriteMessage(&connectReply, socketFD);
-
-			if(successResult)
-			{
-				LOG(NOTICE, "Connected to UI!","Got a CONTROL_CONNECT_REQUEST, succeeded.");
-			}
-			else
-			{
-				LOG(WARNING, "Tried to connect to UI, but failed", "Got a CONTROL_CONNECT_REQUEST, failed to connect.");
-			}
-
 			break;
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
-			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK);
+			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK, DIRECTION_TO_NOVAD);
 			UI_Message::WriteMessage(&disconnectReply, socketFD);
 
-			close(socketFD);
-			close(callbackSocket.m_socketFD);
-			socketFD = -1;
-			callbackSocket.m_socketFD = -1;
+			MessageManager::Instance().CloseSocket(socketFD);
 
 			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
 
@@ -329,7 +323,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_PING:
 		{
-			ControlMessage connectReply(CONTROL_PONG);
+			ControlMessage connectReply(CONTROL_PONG, DIRECTION_TO_NOVAD);
 			UI_Message::WriteMessage(&connectReply, socketFD);
 
 			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
@@ -352,7 +346,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 	{
 		case REQUEST_SUSPECTLIST:
 		{
-			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY);
+			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_listType = msg.m_listType;
 
 			switch (msg.m_listType)
@@ -404,9 +398,9 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 		case REQUEST_SUSPECT:
 		{
-			RequestMessage reply(REQUEST_SUSPECT_REPLY);
-			reply.m_suspect = new Suspect();
-			*reply.m_suspect = suspects.GetSuspect(msg.m_suspectAddress);
+			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
+			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
+			reply.m_suspect = &tempSuspect;
 			UI_Message::WriteMessage(&reply, socketFD);
 
 			break;
@@ -414,7 +408,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 		case REQUEST_UPTIME:
 		{
-			RequestMessage reply(REQUEST_UPTIME_REPLY);
+			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_uptime = time(NULL) - startTime;
 			UI_Message::WriteMessage(&reply, socketFD);
 
@@ -430,81 +424,39 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 	}
 }
 
-
-bool ConnectToUI()
+void SendSuspectToUIs(Suspect *suspect)
 {
-	Lock lock(&callbackSocket.m_mutex);
+	vector<int> sockets = MessageManager::Instance().GetSocketList();
 
-	//Builds the key path
-	string homePath = Config::Inst()->GetPathHome();
-	string key = homePath;
-	key += "/keys";
-	key += UI_LISTEN_FILENAME;
-
-	struct sockaddr_un UIAddress;
-
-	//Builds the address
-	UIAddress.sun_family = AF_UNIX;
-	strcpy(UIAddress.sun_path, key.c_str());
-
-	if((callbackSocket.m_socketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	for(uint i = 0; i < sockets.size(); ++i)
 	{
-		LOG(WARNING, "Unable to connect to UI", "Unable to create UI socket: "+string(strerror(errno)));
-		close(callbackSocket.m_socketFD);
-		return false;
-	}
+		Lock lock = MessageManager::Instance().UseSocket(sockets[i]);
 
-	if(connect(callbackSocket.m_socketFD, (struct sockaddr *)&UIAddress, sizeof(UIAddress)) == -1)
-	{
-		LOG(WARNING, "Unable to connect to UI", "Unable to connect to UI: "+string(strerror(errno)));
-		close(callbackSocket.m_socketFD);
-		return false;
-	}
-
-	return true;
-}
-
-
-bool SendSuspectToUI(Suspect *suspect)
-{
-	Lock lock(&callbackSocket.m_mutex);
-
-	CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE);
-	suspectUpdate.m_suspect = suspect;
-	if(!UI_Message::WriteMessage(&suspectUpdate, callbackSocket.m_socketFD))
-	{
-		return false;
-	}
-
-	UI_Message *suspectReply = UI_Message::ReadMessage(callbackSocket.m_socketFD);
-	if(suspectReply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)suspectReply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE, DIRECTION_TO_UI);
+		suspectUpdate.m_suspect = suspect;
+		if(!UI_Message::WriteMessage(&suspectUpdate, sockets[i]))
 		{
-			//Only bother closing the socket if it's not already closed
-			if(callbackSocket.m_socketFD != -1)
-			{
-				close(callbackSocket.m_socketFD);
-				callbackSocket.m_socketFD = -1;
-			}
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			continue;
 		}
-		delete error;
-		return false;
-	}
-	if(suspectReply->m_messageType != CALLBACK_MESSAGE)
-	{
-		delete suspectReply;
-		return false;
-	}
-	CallbackMessage *suspectCallback = (CallbackMessage*)suspectReply;
-	if(suspectCallback->m_callbackType != CALLBACK_SUSPECT_UDPATE_ACK)
-	{
-		delete suspectCallback;
-		return false;
-	}
-	delete suspectCallback;
 
-	return true;
+		UI_Message *suspectReply = UI_Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		if(suspectReply->m_messageType != CALLBACK_MESSAGE)
+		{
+			delete suspectReply;
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			continue;
+		}
+		CallbackMessage *suspectCallback = (CallbackMessage*)suspectReply;
+		if(suspectCallback->m_callbackType != CALLBACK_SUSPECT_UDPATE_ACK)
+		{
+			delete suspectCallback;
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			continue;
+		}
+		delete suspectCallback;
+		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+	}
 }
+
 }

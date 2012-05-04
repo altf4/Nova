@@ -22,10 +22,11 @@
 namespace Nova
 {
 
-ErrorMessage::ErrorMessage(enum ErrorType errorType)
+ErrorMessage::ErrorMessage(enum ErrorType errorType, enum ProtocolDirection direction)
 {
 	m_messageType = ERROR_MESSAGE;
 	m_errorType = errorType;
+	m_protocolDirection = direction;
 }
 
 ErrorMessage::~ErrorMessage()
@@ -43,9 +44,12 @@ ErrorMessage::ErrorMessage(char *buffer, uint32_t length)
 
 	m_serializeError = false;
 
-	//Copy the message type
-	memcpy(&m_messageType, buffer, sizeof(m_messageType));
-	buffer += sizeof(m_messageType);
+	//Deserialize the UI_Message header
+	if(!DeserializeHeader(&buffer))
+	{
+		m_serializeError = true;
+		return;
+	}
 
 	//Copy the control message type
 	memcpy(&m_errorType, buffer, sizeof(m_errorType));
@@ -55,9 +59,9 @@ ErrorMessage::ErrorMessage(char *buffer, uint32_t length)
 	{
 		case ERROR_PROTOCOL_MISTAKE:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) Callback Type
-			uint32_t expectedSize = sizeof(m_messageType) + sizeof(m_errorType);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_errorType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -83,16 +87,14 @@ char *ErrorMessage::Serialize(uint32_t *length)
 	{
 		case ERROR_PROTOCOL_MISTAKE:
 		{
-			//Uses: 1) UI_Message Type
+			//Uses: 1) UI_Message Header
 			//		2) ErrorMessage Type
 
-			messageSize = sizeof(m_messageType) + sizeof(m_errorType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_errorType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			//Put the UI Message type in
-			memcpy(buffer, &m_messageType, sizeof(m_messageType));
-			buffer += sizeof(m_messageType);
+			SerializeHeader(&buffer);
 			//Put the Control Message type in
 			memcpy(buffer, &m_errorType, sizeof(m_errorType));
 			buffer += sizeof(m_errorType);
