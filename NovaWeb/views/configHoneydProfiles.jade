@@ -41,6 +41,17 @@ block headerAdditions
       window.location.href = "editHoneydProfile?profile=" + grid.store.getValues(items[0], "Name");
     }
 
+    function addChildSelectedItem() {
+      var items = grid.selection.getSelected();
+      if (items.length != 1)
+      {
+        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for parenting"});
+        dialog.show();
+        return;
+      }
+      window.location.href = "addHoneydProfile?parent=" + grid.store.getValues(items[0], "Name");
+    }
+
 
     require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
 
@@ -78,4 +89,5 @@ block content
  
 
   button(onClick="deleteSelectedItems()") Delete Selected Profiles 
-  button(onClick="editSelectedItem()") Edit Selected Profile
+  button(onClick="editSelectedItem()") Edit Selected Profile (TODO)
+  button(onClick="addChildSelectedItem()") Add Child Profile

@@ -149,3 +149,25 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	Config::Inst()->SetIsDmEnabled(dmEn);
 }
 
+
+TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
+{
+	EXPECT_TRUE(m_config->AddPort(1, (portProtocol)1, (portBehavior)0, "NA") == "1_TCP_block");
+	EXPECT_TRUE(m_config->AddPort(2, (portProtocol)1, (portBehavior)1, "NA") == "2_TCP_reset");
+	EXPECT_TRUE(m_config->AddPort(3, (portProtocol)1, (portBehavior)2, "NA") == "3_TCP_open");
+
+	profile * p = new profile();
+	for (int i = 0; i < INHERITED_MAX; i++)
+	{
+		p->inherited[i] = true;
+	}
+	p->name = "test";
+	p->parentProfile = "default";
+	p->AddPort("1_TCP_block", false);
+	p->AddPort("2_TCP_reset", false);
+	p->AddPort("3_TCP_open", false);
+
+	EXPECT_TRUE(m_config->AddProfile(p));
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+}
+

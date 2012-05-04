@@ -6,6 +6,7 @@
 #include "v8Helper.h"
 #include "HoneydConfiguration.h"
 
+
 class HoneydConfigBinding : public node::ObjectWrap {
  public:
   static void Init(v8::Handle<v8::Object> target);
@@ -26,6 +27,7 @@ class HoneydConfigBinding : public node::ObjectWrap {
   static v8::Handle<v8::Value> GetProfile(const v8::Arguments& args);
   
   static v8::Handle<v8::Value> GetPorts(const v8::Arguments& args);
+  static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
 
   
 };

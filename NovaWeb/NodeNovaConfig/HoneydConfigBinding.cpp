@@ -44,6 +44,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
   tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNode"),FunctionTemplate::New(AddNewNode)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
   target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -61,15 +62,34 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
   return args.This();
 }
 
+Handle<Value> HoneydConfigBinding::AddPort(const Arguments& args) 
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+    
+	if( args.Length() != 4 )
+    {
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with 4 parameters")));
+    }
+
+    int portNum = cvv8::JSToInt16( args[0] );
+    Nova::portProtocol isTCP = (Nova::portProtocol)cvv8::JSToInt32( args[1] );
+    Nova::portBehavior portBehavior = (Nova::portBehavior)cvv8::JSToInt32( args[2] );
+    std::string script = cvv8::CastFromJS<std::string>( args[3] );
+
+	cout << "C++ Adding port " << portNum << " " << isTCP << " " << portBehavior << " " << script << endl;
+
+	return scope.Close(String::New(obj->m_conf->AddPort(portNum, isTCP, portBehavior, script).c_str()));
+}
 
 Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args) 
 {
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
     
-	if( args.Length() < 5 )
+	if( args.Length() != 5 )
     {
-        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with 5 parameters")));
     }
 
     std::string profile = cvv8::CastFromJS<std::string>( args[0] );
@@ -87,9 +107,9 @@ Handle<Value> HoneydConfigBinding::AddNewNode(const Arguments& args)
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
     
-	if( args.Length() < 5 )
+	if( args.Length() != 5 )
     {
-        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with 5 parameters")));
     }
 
     std::string profile = cvv8::CastFromJS<std::string>( args[0] );

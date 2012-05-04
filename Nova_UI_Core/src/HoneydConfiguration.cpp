@@ -149,7 +149,7 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	if(m_ports.find(pr.portName) != m_ports.end())
 	{
 		LOG(DEBUG, "Cannot create port: Specified port " + pr.portName + " already exists.", "");
-		return "";
+		return pr.portName;
 	}
 
 	//Adds the port into the table
@@ -648,6 +648,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 	write_xml(m_homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
 	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
 
+	LOG(DEBUG, "Honeyd templates have been saved" ,"");
 	return true;
 }
 
@@ -1854,6 +1855,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 {
 	if(!m_profiles.keyExists(profileName))
 	{
+		LOG(DEBUG, "Attempted to delete profile that does not exist", "");
 		return false;
 	}
 	//Recursive descent to find and call delete on any children of the profile
@@ -1923,6 +1925,8 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			LOG(ERROR, string("Parent profile with name: ") + p.parentProfile + string(" doesn't exist"), "");
 		}
 	}
+
+	LOG(DEBUG, "Deleted profile " + profileName, "");
 	return true;
 }
 

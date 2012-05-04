@@ -16,6 +16,9 @@ class HoneydProfileBinding : public node::ObjectWrap {
   HoneydProfileBinding();
 
   static v8::Handle<v8::Value> New(const v8::Arguments& args);
+  
+  static v8::Handle<v8::Value> Save(const v8::Arguments& args);
+  static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
 
   Nova::profile *m_pfile;
 };
