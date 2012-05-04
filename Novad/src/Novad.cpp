@@ -377,7 +377,7 @@ void RefreshStateFile()
 	//Variable assignments
 	uint32_t dataSize = 0;
 	vector<in_addr_t> deletedKeys;
-	uint bytesRead = 0, cur = 0, lengthLeft = 0;
+	uint bytesRead = 0, lengthLeft = 0;
 	time_t saveTime = 0;
 
 	string ceFile = Config::Inst()->GetPathCESaveFile();
@@ -421,9 +421,6 @@ void RefreshStateFile()
 
 	while (in.is_open() && !in.eof() && lengthLeft)
 	{
-		//Save our position
-		cur = in.tellg();
-
 		//If we can get the timestamp and data size
 		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
 		{
