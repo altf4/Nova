@@ -430,11 +430,11 @@ bool HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 	}
 	catch(Nova::hashMapException &e)
 	{
-		return true;
 		LOG(ERROR, "Problem loading profile add parameters: "+string(e.what())+".", "");
+		return false;
 	}
 
-	return false;
+	return true;
 }
 
 //Recursive descent down a profile tree, inherits parent, sets values and continues if not leaf.
