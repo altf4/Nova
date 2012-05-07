@@ -72,6 +72,9 @@ void RefreshStateFile();
 // Appends all entries in the state file to the suspect table
 void LoadStateFile();
 
+// Do any cleanup needed before exit when in training mode
+void CloseTrainingCapture();
+
 // Force a reload of NOVAConfig/Data.txt while running.
 // This will reclassify all the suspects based on the new data.
 void Reload();

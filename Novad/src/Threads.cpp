@@ -137,24 +137,14 @@ void *TrainingLoop(void *ptr)
 	do
 	{
 		sleep(Config::Inst()->GetClassificationTimeout());
-		trainingFileStream.open(trainingCapFile.data(), ios::app);
 
-		if(trainingFileStream.is_open())
+		// Get list of Suspects that need a classification and feature update
+		vector<uint64_t> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
+		suspects.UpdateAllSuspects();
+		for(uint i = 0; i < updateKeys.size(); i++)
 		{
-			// Get list of Suspects that need a classification and feature update
-			vector<uint64_t> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
-			suspects.UpdateAllSuspects();
-			for(uint i = 0; i < updateKeys.size(); i++)
-			{
-				UpdateAndStore(updateKeys[i]);
-			}
+			UpdateAndStore(updateKeys[i]);
 		}
-		else
-		{
-			LOG(CRITICAL, "Unable to open the training capture file.",
-				"Unable to open training capture file at: "+trainingCapFile);
-		}
-		trainingFileStream.close();
 	} while (Config::Inst()->GetClassificationTimeout());
 
 	//Shouldn't get here!
