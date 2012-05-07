@@ -1939,7 +1939,6 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 
 			//Updates all ancestors with the deletion
 			UpdateProfileTree(p.parentProfile, ALL);
-			UpdateProfileTree(p.parentProfile, ALL);
 		}
 		else
 		{
