@@ -172,7 +172,7 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 }
 
 // This test has been disabled because of ticket #165
-TEST_F(HoneydConfigurationTest, DISABLED_test_profileDeletion)
+TEST_F(HoneydConfigurationTest, test_profileDeletion)
 {
 	profile *parent = new profile();
 	parent->SetName("parent");
@@ -202,6 +202,5 @@ TEST_F(HoneydConfigurationTest, DISABLED_test_profileDeletion)
 	EXPECT_TRUE(m_config->SaveAllTemplates());
 	EXPECT_TRUE(m_config->LoadAllTemplates());
 	EXPECT_TRUE(m_config->m_profiles.find("parent") == m_config->m_profiles.end());
-
 }
 
