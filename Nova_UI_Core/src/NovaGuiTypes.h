@@ -129,6 +129,28 @@ struct profile
 	std::string parentProfile;
 	boost::property_tree::ptree tree;
 
+	// This is for the Javascript bindings in the web interface
+	// They return bool because the templates can't handle void return types
+	inline bool SetName(std::string name) {this->name = name; return true;}
+	inline bool SetTcpAction(std::string tcpAction) {this->tcpAction = tcpAction; return true;}
+	inline bool SetUdpAction(std::string udpAction) {this->udpAction = udpAction; return true;}
+	inline bool SetIcmpAction(std::string icmpAction) {this->icmpAction = icmpAction; return true;}
+	inline bool SetPersonality(std::string personality) {this->personality = personality; return true;}
+	inline bool SetEthernet(std::string ethernet) {this->ethernet = ethernet; return true;}
+	inline bool SetUptimeMin(std::string uptimeMin) {this->uptimeMin = uptimeMin; return true;}
+	inline bool SetUptimeMax(std::string uptimeMax) {this->uptimeMax = uptimeMax; return true;}
+	inline bool SetDropRate(std::string dropRate) {this->dropRate = dropRate; return true;}
+	inline bool SetParentProfile(std::string parentProfile) {this->parentProfile = parentProfile; return true;}
+	inline bool AddPort(std::string portName, bool inherited) {ports.push_back(std::pair<std::string, bool>(portName, inherited)); return true;}
+
+	inline bool setTcpActionInherited(bool inherit) {inherited[TCP_ACTION] = inherit; return true;}
+	inline bool setUdpActionInherited(bool inherit) {inherited[UDP_ACTION] = inherit; return true;}
+	inline bool setIcmpActionInherited(bool inherit) {inherited[ICMP_ACTION] = inherit; return true;}
+	inline bool setPersonalityInherited(bool inherit) {inherited[PERSONALITY] = inherit; return true;}
+	inline bool setEthernetInherited(bool inherit) {inherited[ETHERNET] = inherit; return true;}
+	inline bool setUptimeInherited(bool inherit) {inherited[UPTIME] = inherit; return true;}
+	inline bool setDropRateInherited(bool inherit) {inherited[DROP_RATE] = inherit; return true;}
+
 
 
 	// This is for the Javascript bindings in the web interface

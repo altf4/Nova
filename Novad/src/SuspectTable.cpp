@@ -699,12 +699,8 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 
 			try {
 				offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
-			} catch (Nova::emptyKeyException& e) {
-				LOG(ERROR, "The state file may be corrupt, a hash table empty key exception was caught during deserialization", "");
-				pthread_rwlock_unlock(&m_lock);
-				return 0;
-			} catch (Nova::deleteKeyException& e) {
-				LOG(ERROR, "The state file may be corrupt, a hash table empty key exception was caught during deserialization", "");
+			} catch (Nova::hashMapException& e) {
+				LOG(ERROR, "The state file may be corrupt, a hash table invalid key exception was caught during deserialization", "");
 				pthread_rwlock_unlock(&m_lock);
 				return 0;
 			}

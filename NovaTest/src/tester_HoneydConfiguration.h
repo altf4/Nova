@@ -149,3 +149,59 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	Config::Inst()->SetIsDmEnabled(dmEn);
 }
 
+
+TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
+{
+	EXPECT_TRUE(m_config->AddPort(1, (portProtocol)1, (portBehavior)0, "NA") == "1_TCP_block");
+	EXPECT_TRUE(m_config->AddPort(2, (portProtocol)1, (portBehavior)1, "NA") == "2_TCP_reset");
+	EXPECT_TRUE(m_config->AddPort(3, (portProtocol)1, (portBehavior)2, "NA") == "3_TCP_open");
+
+	profile * p = new profile();
+	for (int i = 0; i < INHERITED_MAX; i++)
+	{
+		p->inherited[i] = true;
+	}
+	p->name = "test";
+	p->parentProfile = "default";
+	p->AddPort("1_TCP_block", false);
+	p->AddPort("2_TCP_reset", false);
+	p->AddPort("3_TCP_open", false);
+
+	EXPECT_TRUE(m_config->AddProfile(p));
+	//EXPECT_TRUE(m_config->SaveAllTemplates());
+}
+
+// This test has been disabled because of ticket #165
+TEST_F(HoneydConfigurationTest, DISABLED_test_profileDeletion)
+{
+	profile *parent = new profile();
+	parent->SetName("parent");
+	parent->SetParentProfile("default");
+	EXPECT_TRUE(m_config->AddProfile(parent));
+
+
+	m_config->UpdateAllProfiles();
+
+	profile *child = new profile();
+	child->SetName("child");
+	child->SetParentProfile("parent");
+	EXPECT_TRUE(m_config->AddProfile(child));
+
+	// Save, reload
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+	EXPECT_TRUE(m_config->LoadAllTemplates());
+
+	// Delete the child and make sure it worked after a reload
+	EXPECT_TRUE(m_config->DeleteProfile("child"));
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+	EXPECT_TRUE(m_config->LoadAllTemplates());
+	EXPECT_TRUE(m_config->m_profiles.find("child") == m_config->m_profiles.end());
+
+	// Delete the parent and make sure it worked after a reload
+	EXPECT_TRUE(m_config->DeleteProfile("parent"));
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+	EXPECT_TRUE(m_config->LoadAllTemplates());
+	EXPECT_TRUE(m_config->m_profiles.find("parent") == m_config->m_profiles.end());
+
+}
+

@@ -4,25 +4,54 @@ extends layout
 block headerAdditions
   //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   script
-    var currentName = "#{oldName}";
     var profile;
+    var portList = new function() {};
+    var newProfile = "#{newProfile}";
+    
+    var currentName;
+    if (newProfile == "true") {
+        currentName = "#{parentName}";
+        console.log("Creating child of profile " + currentName);
+    } else {
+        currentName = "#{oldName}";
+        console.log("Eding profile " + currentName);
+    }
 
     var inheritanceChanged = function() {};
     var uptimeTypeChanged = function() {};
+    var portInheritedChange = function(portUID) {};
     var deletePort = function() {};
     var addPort = function(port) {};
     var portBehaviorChanged = function() {};
     var saveChanges = function() {};
+    var savedChanges = function() {};
 
     var portIndexes = [];
     var loaded = false;
 
-    require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
 
+    function selectItemByValue(elmnt, value) {
+      for(var i=0; i < elmnt.options.length; i++) {
+        if(elmnt.options[i].value == value) {
+          elmnt.selectedIndex = i;
+        }
+      }
+    }
+
+    require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
+    
+    // TODO
+    if (newProfile != "true") {
+        dojo.byId("saveButton").disabled = true;
+    }
+ 
+    function obj() {};
     saveChanges = function() {
-        var pfile = function() {};
+        var pfile = new obj();
+        var ports = new obj();
         
         pfile.oldName = "#{oldName}";
+        pfile.parentProfile = dojo.byId("parentName").value;
         pfile.name = dojo.byId("name").value;
         pfile.tcpAction = dojo.byId("tcpAction").value;
         pfile.udpAction = dojo.byId("udpAction").value;
@@ -47,17 +76,21 @@ block headerAdditions
         pfile.isUdpActionInherited = dojo.byId("inheritUdpAction").checked;
         pfile.isIcmpActionInherited = dojo.byId("inheritIcmpAction").checked;
 
-        pfile.ports = [];
+        ports.size = portIndexes.length;
         for (var i = 0; i < portIndexes.length; i++) {
-            var port = function() {};
-            port.portNum = dojo.byId("portNum" + portIndexes[i]).value;
-            port.behavior = dojo.byId("portBehavior" + portIndexes[i]).value;
-            port.type = dojo.byId("portType" + portIndexes[i]).value;
-            pfile.ports.push(port);
+            ports[i] = new obj();
+            ports[i].portNum = dojo.byId("portNum" + portIndexes[i]).value;
+            ports[i].behavior = dojo.byId("portBehavior" + portIndexes[i]).value;
+            ports[i].type = dojo.byId("portType" + portIndexes[i]).value;
+            ports[i].script = dojo.byId("portScriptDrop" + portIndexes[i]).value;
+            ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
         }
 
-        now.SaveProfile(pfile);
+        now.SaveProfile(pfile, ports, savedChanges);
+    }
 
+    savedChanges = function() {
+        window.location="configHoneydProfiles";
     }
 
     addPort = function(port) {
@@ -67,7 +100,7 @@ block headerAdditions
             port.type = "TCP";
             port.behavior = "open";
             port.isInherited = false;
-            port.script = "";
+            port.scriptName = "NA";
         }
 
         var portDiv = dojo.byId("portTable");
@@ -84,35 +117,34 @@ block headerAdditions
         var row = "<tr id='portRow" + portUID + "'>";
 
         if (!port.isInherited) {
+            row += "<td><input disabled='true' type='checkbox' id='portInherited" + portUID + "'> Inherited? </td>";
             row += "<td><input id='portNum" + portUID + "' type='number' min=1 max=65535 value=" + port.portNum + "> </td>";
-        } else {
-            row += "<td><input id='portNum" + portUID + "' type='number' disabled='true' min=1 max=65535 value=" + port.portNum + "> </td>";
-        }
-       
-        if (!port.isInherited) {
             row += "<td><select id ='portType";
         } else {
+            row += "<td><input type='checkbox' id='portInherited" + portUID + "' onchange='portInheritedChange(" + portUID + ")' CHECKED> Inherited? </td>";
+            row += "<td><input id='portNum" + portUID + "' type='number' disabled='true' min=1 max=65535 value=" + port.portNum + "> </td>";
             row += "<td><select disabled='true' id ='portType";
         }
+       
         row += portUID;
         row += "'>";
         options = ["UDP", "TCP"];
         for (j = 0; j < options.length; j++) {
             if (port.type == options[j]) {
-                row += "<option SELECTED>" + options[j] + "</option>";
+                row += "<option value='" + j + "' SELECTED>" + options[j] + "</option>";
             } else {
-                row += "<option>" + options[j] + "</option>";
+                row += "<option value='" + j + "'>" + options[j] + "</option>";
             }
         }
         row += "</select></td>";
 
         row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>"; 
-        options = ["open", "reset", "closed", "script"];
+        options = ["closed", "reset", "open", "script"];
         for (j = 0; j < options.length; j++) {
             if (port.behavior == options[j]) {
-                row += "<option SELECTED>" + options[j] + "</option>";
+                row += "<option value='" + j + "' SELECTED>" + options[j] + "</option>";
             } else {
-                row += "<option>" + options[j] + "</option>";
+                row += "<option value='" + j + "'>" + options[j] + "</option>";
             }
         }
         row += "</select></td>";
@@ -152,10 +184,39 @@ block headerAdditions
  
         row += "</tr>";
 
-        portDiv.innerHTML += row;
+        dojo.byId("portTable").innerHTML += row;
 
         portBehaviorChanged();
+        portInheritedChange(portUID);
     }  
+
+    // Disable editing if inherited
+    portInheritedChange = function(portUID) {
+        if (dojo.byId("portInherited" + portUID).checked) {
+            dojo.byId("portBehavior" + portUID).disabled = true;
+            dojo.byId("portScriptDrop" + portUID).disabled = true;
+
+            var behavior = portList[Number(dojo.byId("portNum" + portUID).value)].behavior;
+            
+            selectItemByValue(dojo.byId("portScriptDrop" + portUID), "NA");
+
+            if (behavior == "closed") {
+                dojo.byId("portBehavior" + portUID).value = 0;
+            } else if (behavior == "reset") {
+                dojo.byId("portBehavior" + portUID).value = 1;
+            } else if (behavior == "open") {
+                dojo.byId("portBehavior" + portUID).value = 2;
+            } else if (behavior == "script") {
+                dojo.byId("portBehavior" + portUID).value = 3;
+                selectItemByValue(dojo.byId("portScriptDrop" + portUID), portList[Number(dojo.byId("portNum" + portUID).value)].scriptName);
+            }
+
+            
+        } else {
+            dojo.byId("portBehavior" + portUID).disabled = false;
+            portBehaviorChanged(); 
+        }
+    }
 
     uptimeTypeChanged = function() {
         if (dojo.byId("uptimeType").selectedIndex == 0) {
@@ -167,11 +228,11 @@ block headerAdditions
 
     portBehaviorChanged = function() {
         for (var i = 0; i < portIndexes.length; i++) {
-            if (dojo.byId("portBehavior" + portIndexes[i]).value == "script") {
-                dojo.byId("portScriptDrop" + portIndexes[i]).value = "N/A";
-                dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
+            if (dojo.byId("portBehavior" + portIndexes[i]).value == "3") {
+                if (!dojo.byId("portInherited" + portIndexes[i]).checked) {
+                    dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
+                }
             } else {
-                dojo.byId("portScriptDrop" + portIndexes[i]).value = "Please choose script";
                 dojo.byId("portScriptDrop" + portIndexes[i]).disabled = true;
             }
         }
@@ -264,57 +325,73 @@ block headerAdditions
 
         now.GetPorts(currentName, function(ports) {
             for (var i = 0; i < ports.length; i++) {
+                portList[ports[i].portNum] = ports[i];
                 addPort(ports[i]);
             }
+           portBehaviorChanged();
         });
 
-        now.GetProfile(currentName, function(pfile){
-        profile = pfile;
 
-        dojo.byId("name").value = profile.name;
-        dojo.byId("parentName").value = profile.parentProfile;
+          now.GetProfile(currentName, function(pfile){
+          profile = pfile;
         
-        if (profile.tcpAction == "reset") {
-          dojo.byId("tcpAction").selectedIndex = 0;
-        } else if (profile.tcpAction == "block") {
-          dojo.byId("tcpAction").selectedIndex = 1;
-        } else if (profile.tcpAction == "open") {
-          dojo.byId("tcpAction").selectedIndex = 2;
+        if (newProfile == "true") {
+          dojo.byId("name").value = "New Profile";
+          dojo.byId("parentName").value = "#{parentName}";
+          dojo.byId("inheritPersonality").checked = true;
+          dojo.byId("inheritEthernet").checked = true; 
+          dojo.byId("inheritDropRate").checked = true; 
+          dojo.byId("inheritUptime").checked = true; 
+          dojo.byId("inheritTcpAction").checked = true; 
+          dojo.byId("inheritUdpAction").checked = true; 
+          dojo.byId("inheritIcmpAction").checked = true;  
+        } else {
+          dojo.byId("name").value = profile.name;
+          dojo.byId("parentName").value = profile.parentProfile;
+          dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
+          dojo.byId("inheritEthernet").checked = profile.isEthernetInherited;
+          dojo.byId("inheritDropRate").checked = profile.isDropRateInherited;
+          dojo.byId("inheritUptime").checked = profile.isUptimeInherited;
+          dojo.byId("inheritTcpAction").checked = profile.isTcpActionInherited;
+          dojo.byId("inheritUdpAction").checked = profile.isUdpActionInherited;
+          dojo.byId("inheritIcmpAction").checked = profile.isIcmpActionInherited;
         }
 
-        if (profile.udpAction == "reset") {
-          dojo.byId("udpAction").selectedIndex = 0;
-        } else if (profile.udpAction == "block") {
-          dojo.byId("udpAction").selectedIndex = 1;
-        } else if (profile.udpAction == "open") {
-          dojo.byId("udpAction").selectedIndex = 2;
-        }
-       
-        if (profile.icmpAction == "reset") {
-          dojo.byId("icmpAction").selectedIndex = 0;
-        } else if (profile.icmpAction == "block") {
-          dojo.byId("icmpAction").selectedIndex = 1;
-        } else if (profile.icmpAction == "open") {
-          dojo.byId("icmpAction").selectedIndex = 2;
-        }
+          
+          if (profile.tcpAction == "reset") {
+            dojo.byId("tcpAction").selectedIndex = 0;
+          } else if (profile.tcpAction == "block") {
+            dojo.byId("tcpAction").selectedIndex = 1;
+          } else if (profile.tcpAction == "open") {
+            dojo.byId("tcpAction").selectedIndex = 2;
+          }
 
-        dojo.byId("personality").value = profile.personality;
-        dojo.byId("ethernet").value = profile.ethernet;
-        dojo.byId("uptimeMin").value = profile.uptimeMin;
-        dojo.byId("uptimeMax").value = profile.uptimeMax;
-        dojo.byId("dropRate").value = profile.dropRate;
+          if (profile.udpAction == "reset") {
+            dojo.byId("udpAction").selectedIndex = 0;
+          } else if (profile.udpAction == "block") {
+            dojo.byId("udpAction").selectedIndex = 1;
+          } else if (profile.udpAction == "open") {
+            dojo.byId("udpAction").selectedIndex = 2;
+          }
+         
+          if (profile.icmpAction == "reset") {
+            dojo.byId("icmpAction").selectedIndex = 0;
+          } else if (profile.icmpAction == "block") {
+            dojo.byId("icmpAction").selectedIndex = 1;
+          } else if (profile.icmpAction == "open") {
+            dojo.byId("icmpAction").selectedIndex = 2;
+          }
 
-        dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
-        dojo.byId("inheritEthernet").checked = profile.isEthernetInherited;
-        dojo.byId("inheritDropRate").checked = profile.isDropRateInherited;
-        dojo.byId("inheritUptime").checked = profile.isUptimeInherited;
-        dojo.byId("inheritTcpAction").checked = profile.isTcpActionInherited;
-        dojo.byId("inheritUdpAction").checked = profile.isUdpActionInherited;
-        dojo.byId("inheritIcmpAction").checked = profile.isIcmpActionInherited;
+          dojo.byId("personality").value = profile.personality;
+          dojo.byId("ethernet").value = profile.ethernet;
+          dojo.byId("uptimeMin").value = profile.uptimeMin;
+          dojo.byId("uptimeMax").value = profile.uptimeMax;
+          dojo.byId("dropRate").value = profile.dropRate;
 
-        inheritanceChanged();
-        portBehaviorChanged();
-      });
+
+          inheritanceChanged();
+        });
+      
     });
     });
 
@@ -448,5 +525,5 @@ block content
     br
     br
     
-    button(type="button", onclick="saveChanges()") Save Changes
+    button#saveButton(type="button", onclick="saveChanges()") Save Changes
 

@@ -56,7 +56,7 @@ Handle<Value> NovaConfigBinding::WriteSetting(const Arguments& args)
 	HandleScope scope;
 	NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
 
-    if( args.Length() < 2 )
+    if( args.Length() != 2 )
     {
         return ThrowException(Exception::TypeError(String::New("Must be invoked with two parameters")));
     }

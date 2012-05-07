@@ -127,7 +127,7 @@ void NovaNode::Init(Handle<Object> target)
 	Local<FunctionTemplate> t = FunctionTemplate::New(New);
 
 	s_ct = Persistent<FunctionTemplate>::New(t);
-	s_ct->InstanceTemplate()->SetInternalFieldCount(11);
+	s_ct->InstanceTemplate()->SetInternalFieldCount(1);
 	s_ct->SetClassName(String::NewSymbol("NovaNode"));
 
 	// Javascript member methods

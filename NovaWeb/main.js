@@ -147,6 +147,23 @@ app.get('/editHoneydProfile', function(req, res) {
 	res.render('editHoneydProfile.jade', 
 	{ locals : {
 		oldName: profileName
+		, parentName: ""
+		, newProfile: false
+		, vendors: vendorToMacDb.GetVendorNames()
+		, scripts: honeydConfig.GetScriptNames()
+		, personalities: osPersonalityDb.GetPersonalityOptions()
+	}})
+});
+
+
+app.get('/addHoneydProfile', function(req, res) {
+	parentName = req.query["parent"]; 
+
+	res.render('editHoneydProfile.jade', 
+	{ locals : {
+		oldName: parentName
+		, parentName: parentName
+		, newProfile: true
 		, vendors: vendorToMacDb.GetVendorNames()
 		, scripts: honeydConfig.GetScriptNames()
 		, personalities: osPersonalityDb.GetPersonalityOptions()
@@ -296,6 +313,7 @@ everyone.now.deleteProfile = function(profileName)
 }
 
 everyone.now.GetProfile = function(profileName, callback) {
+	console.log("Fetching profile " + profileName);
 	var profile = honeydConfig.GetProfile(profileName);
 	
     // Nowjs can't pass the object with methods, they need to be member vars
@@ -336,21 +354,61 @@ everyone.now.GetPorts = function (profileName, callback) {
 }
 
 
-everyone.now.SaveProfile = function(profile, callback) {
-    // TODO: Make the Javascript/C++ transmutation magic happen here
+everyone.now.SaveProfile = function(profile, ports, callback) {
+	honeydProfile = new novaconfig.HoneydProfileBinding();
+
+	console.log("Got profile " + profile.name);
+	console.log("Got portlist " + ports.name);
+
+	// Move the Javascript object values to the C++ object
+	honeydProfile.SetName(profile.name);
+	honeydProfile.SetTcpAction(profile.tcpAction);
+	honeydProfile.SetUdpAction(profile.udpAction);
+	honeydProfile.SetIcmpAction(profile.icmpAction);
+	honeydProfile.SetPersonality(profile.personality);
+	honeydProfile.SetEthernet(profile.ethernet);
+	honeydProfile.SetUptimeMin(profile.uptimeMin);
+	honeydProfile.SetUptimeMax(profile.uptimeMax);
+	honeydProfile.SetDropRate(profile.dropRate);
+	honeydProfile.SetParentProfile(profile.parentProfile);
+
+	honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
+	honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
+	honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
+	honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
+	honeydProfile.setEthernetInherited(profile.isEthernetInherited);
+	honeydProfile.setUptimeInherited(profile.isUptimeInherited);
+	honeydProfile.setDropRateInherited(profile.isDropRateInherited);
+
+
+	// Add new ports
+	var portName;
+	for (var i = 0; i < ports.size; i++) {
+		console.log("Adding port " + ports[i].portNum + " " + ports[i].type + " " + ports[i].behavior + " " + ports[i].script + " Inheritance: " + ports[i].isInherited);
+		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), Number(ports[i].behavior), ports[i].script);
+
+		if (portName != "") {
+			honeydProfile.AddPort(portName, ports[i].isInherited);
+		}
+	}
+
+	honeydConfig.SaveAllTemplates();
+
+	// Save the profile
+	honeydProfile.Save();
+
+	callback();
 }
 
 
 
 var distributeSuspect = function(suspect)
 {
-	//console.log("Sending suspect to clients: " + suspect.GetInAddr());            
 	var s = new Object();
 	objCopy(suspect, s);
 	everyone.now.OnNewSuspect(s)
 };
 nova.registerOnNewSuspect(distributeSuspect);
-//console.log("Registered NewSuspect callback function.");
 
 
 process.on('SIGINT', function() {

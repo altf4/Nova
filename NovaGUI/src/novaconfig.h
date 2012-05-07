@@ -54,12 +54,6 @@ public:
     //Load Personality choices from nmap fingerprints file
     void DisplayNmapPersonalityWindow();
 
-    bool SyncAllNodesWithProfiles();
-
-
-    //Load nmap personalities from the nmap-os-db file
-    void LoadNmapPersonalitiesFromFile();
-
     // Creates a new item for the featureList
     //		name - Name to be displayed, e.g. "Ports Contacted"
     //		enabled - '1' for enabled, all other disabled
@@ -76,10 +70,6 @@ public:
 
     //Draws the current honeyd configuration for haystack and doppelganger
     void LoadHaystackConfiguration();
-
-    //Updates the 'current' keys, not really pointers just used to access current selections
-    //This is called on start up and by child windows that push modified data
-    void UpdateLookupKeys();
 
     //Populates the window with the select profile's information
     void LoadProfileSettings();
@@ -113,7 +103,6 @@ public:
 
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
-    bool DeleteNode(std::string node);
 
     //Populates the tree widget with the current node configuration
     void LoadAllNodes();
