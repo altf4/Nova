@@ -35,11 +35,6 @@ FeatureSet::FeatureSet()
 
 	ClearFeatureSet();
 
-	m_intervalTable.resize(INIT_SIZE_SMALL);
-	m_IPTable.resize(INIT_SIZE_SMALL);
-	m_portTable.resize(INIT_SIZE_MEDIUM);
-	m_packTable.resize(INIT_SIZE_LARGE);
-}
 
 FeatureSet::~FeatureSet()
 {
