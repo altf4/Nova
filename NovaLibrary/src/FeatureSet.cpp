@@ -34,6 +34,7 @@ FeatureSet::FeatureSet()
 	m_intervalTable.set_empty_key(2147483647);
 
 	ClearFeatureSet();
+}
 
 
 FeatureSet::~FeatureSet()
