@@ -27,7 +27,16 @@ namespace Nova
 {
 void SaveAndExit(int param)
 {
-	AppendToStateFile();
+	if (Config::Inst()->GetIsTraining())
+	{
+		CloseTrainingCapture();
+	}
+	else
+	{
+		AppendToStateFile();
+	}
+
+
 	if(system("sudo iptables -F") == -1)
 	{
 		// TODO Logging
