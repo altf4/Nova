@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "FeatureSet.h"
+#include "Logger.h"
 #include "Config.h"
 #include <math.h>
 #include <sys/un.h>
@@ -278,8 +279,30 @@ void FeatureSet::UpdateEvidence(Packet packet)
 		dst_port =  ntohs(packet.tcp_hdr.dest);
 	}
 
+
 	IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
 	packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
+
+	// Ensure our assumptions about valid packet fields are true
+	if (packet.ip_hdr.ip_dst.s_addr == 0)
+	{
+		LOG(DEBUG, "Got packet with invalid source IP address of 0. Skipping.", "");
+		return;
+	}
+	if (dst_port == 0)
+	{
+		LOG(DEBUG, "Got packet with invalid destination port of 0. Skipping.", "");
+		return;
+	}
+	for(uint32_t i = 1; i < packet_intervals.size(); i++)
+	{
+		if ((packet_intervals[i] - packet_intervals[i-1]) == 0)
+		{
+			LOG(DEBUG, "Got packet stream with invalid interpacket interval of 0. Skipping.", "");
+			return;
+		}
+	}
+	
 
 	m_packetCount += packet_count;
 	m_bytesTotal += ntohs(packet.ip_hdr.ip_len);
