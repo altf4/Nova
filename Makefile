@@ -4,20 +4,24 @@ all: release
 	
 
 #Release Target
-release: 
+novad-release:
 	$(MAKE) -C NovaLibrary/Release
 	$(MAKE) -C Nova_UI_Core/Release
 	$(MAKE) -C Novad/Release
 	$(MAKE) -C NovaCLI/Release
+
+release: novad-release
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
 	
-#Debug target
-debug:
+novad-debug:
 	$(MAKE) -C NovaLibrary/Debug
 	$(MAKE) -C Nova_UI_Core/Debug
 	$(MAKE) -C Novad/Debug
 	$(MAKE) -C NovaCLI/Debug
+
+#Debug target
+debug: novad-debug
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 	
