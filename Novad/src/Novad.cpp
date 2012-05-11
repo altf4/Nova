@@ -717,7 +717,7 @@ bool Start_Packet_Handler()
 		}
 
 		//Set a capture length of 1Kb. Should be more than enough to get the packet headers
-		if (pcap_set_snaplen(handle, BUFSIZ) != 0)
+		if (pcap_set_snaplen(handle, 1024) != 0)
 		{
 			LOG(ERROR, string("Unable to set pcap capture length due to error: ") + pcap_geterr(handle), "");
 		}
@@ -830,20 +830,6 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 			if(!Config::Inst()->GetIsTraining())
 			{
 				UpdateAndClassify(packet_info.ip_hdr.ip_src.s_addr);
-				// Quick check for libpcap dropping packets
-				pcap_stat captureStats;
-				static uint lastDropCount = 0;
-				pcap_stats(handle, &captureStats);
-				if (captureStats.ps_drop != lastDropCount)
-				{
-					if (captureStats.ps_drop > lastDropCount)
-					{
-						stringstream ss;
-						ss << "Libpcap has dropped " << captureStats.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
-						LOG(WARNING, ss.str(), "");
-					}
-					lastDropCount = captureStats.ps_drop;
-				}
 			}
 			else
 			{
@@ -1066,6 +1052,27 @@ void UpdateAndClassify(const in_addr_t& key)
 
 	//Send to UI
 	SendSuspectToUIs(&suspectCopy);
+}
+
+void CheckForDroppedPackets()
+{
+	// Quick check for libpcap dropping packets
+	if (handle != NULL)
+	{
+		pcap_stat captureStats;
+		static uint lastDropCount = 0;
+		int result = pcap_stats(handle, &captureStats);
+		if (result == 0 && captureStats.ps_drop != lastDropCount)
+		{
+			if (captureStats.ps_drop > lastDropCount)
+			{
+				stringstream ss;
+				ss << "Libpcap has dropped " << captureStats.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
+				LOG(WARNING, ss.str(), "");
+			}
+			lastDropCount = captureStats.ps_drop;
+		}
+	}
 }
 
 }

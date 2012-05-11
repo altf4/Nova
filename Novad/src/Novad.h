@@ -107,6 +107,8 @@ void UpdateAndStore(const in_addr_t& key);
 // Updates data and classification for a suspect
 void UpdateAndClassify(const in_addr_t& key);
 
+void CheckForDroppedPackets();
+
 
 }
 
