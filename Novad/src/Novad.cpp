@@ -704,7 +704,7 @@ bool Start_Packet_Handler()
 			exit(EXIT_FAILURE);
 		}
 
-		if (pcap_set_promisc(handle, 0) != 0)
+		if(pcap_set_promisc(handle, 0) != 0)
 		{
 			LOG(ERROR, string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(handle), "");
 		}
@@ -776,21 +776,6 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 		return;
 	}
 
-	// Quick check for libpcap dropping packets
-	pcap_stat captureStats;
-	static uint lastDropCount = 0;
-	pcap_stats(handle, &captureStats);
-	if (captureStats.ps_drop != lastDropCount)
-	{
-		if (captureStats.ps_drop > lastDropCount)
-		{
-			stringstream ss;
-			ss << "Libpcap has dropped " << captureStats.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
-			LOG(WARNING, ss.str(), "");
-		}
-		lastDropCount = captureStats.ps_drop;
-	}
-
 	/* let's start with the ether header... */
 	ethernet = (struct ether_header *) packet;
 
@@ -845,6 +830,20 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 			if(!Config::Inst()->GetIsTraining())
 			{
 				UpdateAndClassify(packet_info.ip_hdr.ip_src.s_addr);
+				// Quick check for libpcap dropping packets
+				pcap_stat captureStats;
+				static uint lastDropCount = 0;
+				pcap_stats(handle, &captureStats);
+				if (captureStats.ps_drop != lastDropCount)
+				{
+					if (captureStats.ps_drop > lastDropCount)
+					{
+						stringstream ss;
+						ss << "Libpcap has dropped " << captureStats.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
+						LOG(WARNING, ss.str(), "");
+					}
+					lastDropCount = captureStats.ps_drop;
+				}
 			}
 			else
 			{
