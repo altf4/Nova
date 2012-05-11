@@ -85,6 +85,8 @@ void *ClassificationLoop(void *ptr)
 	do
 	{
 		sleep(Config::Inst()->GetClassificationTimeout());
+		CheckForDroppedPackets();
+
 		//Calculate the "true" Feature Set for each Suspect
 		vector<uint64_t> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
 		for(uint i = 0; i < updateKeys.size(); i++)
