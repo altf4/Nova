@@ -101,3 +101,6 @@ NovaCLI/Debug/novacli
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Data/training.db
 /NovaWeb/NodeNovaConfig/.lock-wscript
+/NovaWeb/libv8-convert-20120219/*
+/NovaWeb/libv8-convert-20120219.tar.gz.1
+/NovaWeb/libv8-convert-20120219.tar.gz.2

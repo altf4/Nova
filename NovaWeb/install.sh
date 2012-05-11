@@ -3,28 +3,15 @@
 # Install helper script
 #######################################################
 
-
 #######################################################
-# Dependencies you must manually get first
+# Dependencies you must manually get first (or just run getDependencies.sh on Ubuntu)
 #######################################################
 #   Nodejs (tested on v0.6.12 and v0.6.15)
 #	Currently at: https://github.com/joyent/node/zipball/v0.6.12
-#	Install with the standard ./configure && make && sudo make install
 #
-# OR on Ubuntu you can install the newest nodejs with apt-get via,
-#   sudo apt-get install python-software-properties
-#   sudo add-apt-repository ppa:chris-lea/node.js
-#   sudo apt-get update
-#   sudo apt-get install nodejs nodejs-dev npm
-#
-#######################################################
 #   cvv8 headers in /usr/include
 #	Currently at: http://v8-juice.googlecode.com/files/libv8-convert-20120219.tar.gz
 #	Install by copying the include/cvv8 folder to /usr/include/
-#
-#######################################################
-# npm packages you may need
-#   npm install jade
 #######################################################
 
 # Note: If you have another web server using /var/www,
