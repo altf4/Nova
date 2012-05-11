@@ -136,10 +136,6 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 			continue;
 		}
 
-		//TODO: Is this actually necessary? Might not be
-		//Claim the socket's mutex, so another protocol doesn't get mixed up in between
-		Lock lock = MessageManager::Instance().UseSocket(controlSocket);
-
 		UI_Message *message = UI_Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 		switch(message->m_messageType)
 		{

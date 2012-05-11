@@ -78,7 +78,9 @@ private:
 
 	std::queue<UI_Message*> m_forwardQueue;
 	std::queue<UI_Message*> m_callbackQueue;
-	bool m_isShutDown;							//TODO: Synchronize this. Needs to have a mutex around access to it
+
+	bool m_isShutDown;							//Marks the message queue as having been shut down. Just waiting to be destroyed properly
+	pthread_mutex_t m_isShutdownMutex;			//Mutex for threadsafe access to the variable
 
 	enum ProtocolDirection m_forwardDirection;
 
@@ -91,7 +93,6 @@ private:
 
 	pthread_mutex_t m_forwardQueueMutex;		//Protects access to the forward message queue
 	pthread_mutex_t m_callbackQueueMutex;		//Protects access to the callback message queue
-	pthread_mutex_t m_popMutex;					//Separate mutex for the pop function. Only one can be popping
 	pthread_mutex_t m_callbackRegisterMutex;	//Allows only one function to be waiting for callback
 	pthread_mutex_t m_callbackCondMutex;		//Protects access to m_callbackDoWakeup
 };
