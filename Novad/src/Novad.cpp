@@ -717,7 +717,7 @@ bool Start_Packet_Handler()
 		}
 
 		//Set a capture length of 1Kb. Should be more than enough to get the packet headers
-		if (pcap_set_snaplen(handle, BUFSIZ) != 0)
+		if (pcap_set_snaplen(handle, 1024) != 0)
 		{
 			LOG(ERROR, string("Unable to set pcap capture length due to error: ") + pcap_geterr(handle), "");
 		}
