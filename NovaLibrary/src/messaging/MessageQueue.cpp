@@ -34,7 +34,6 @@ namespace Nova
 MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection)
 {
 	pthread_mutex_init(&m_forwardQueueMutex, NULL);
-	pthread_mutex_init(&m_popMutex, NULL);
 	pthread_mutex_init(&m_callbackRegisterMutex, NULL);
 	pthread_mutex_init(&m_callbackCondMutex, NULL);
 	pthread_mutex_init(&m_callbackQueueMutex, NULL);
@@ -80,7 +79,6 @@ MessageQueue::~MessageQueue()
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
 	pthread_mutex_destroy(&m_callbackCondMutex);
 	pthread_mutex_destroy(&m_callbackQueueMutex);
-	pthread_mutex_destroy(&m_popMutex);
 	pthread_mutex_destroy(&m_isShutdownMutex);
 	pthread_cond_destroy(&m_readWakeupCondition);
 	pthread_cond_destroy(&m_callbackWakeupCondition);
@@ -89,8 +87,6 @@ MessageQueue::~MessageQueue()
 //blocking call
 UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 {
-	//Only one thread in this function at a time
-	Lock lockPop(&m_popMutex);
 	UI_Message* retMessage;
 
 	//If indefinite read:

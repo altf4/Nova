@@ -93,7 +93,6 @@ private:
 
 	pthread_mutex_t m_forwardQueueMutex;		//Protects access to the forward message queue
 	pthread_mutex_t m_callbackQueueMutex;		//Protects access to the callback message queue
-	pthread_mutex_t m_popMutex;					//Separate mutex for the pop function. Only one can be popping
 	pthread_mutex_t m_callbackRegisterMutex;	//Allows only one function to be waiting for callback
 	pthread_mutex_t m_callbackCondMutex;		//Protects access to m_callbackDoWakeup
 };
