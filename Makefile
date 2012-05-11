@@ -80,6 +80,9 @@ install: install-release
 
 #Requires root
 install-release: install-data install-docs
+	#release sudoers, does not allow pcap permissions in eclipse
+	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
@@ -91,6 +94,9 @@ install-release: install-data install-docs
 
 #requires root
 install-debug: install-data install-docs
+	#debug sudoers file that allows sudo gdb to pcap without password prompt
+	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
@@ -118,8 +124,6 @@ install-data:
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
-	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# Copy the bash completion files
@@ -146,7 +150,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/novad
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
+	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nov*
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf

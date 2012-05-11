@@ -704,30 +704,34 @@ bool Start_Packet_Handler()
 			exit(EXIT_FAILURE);
 		}
 
-		pcap_set_promisc(handle, 0);
+		if(pcap_set_promisc(handle, 0) != 0)
+		{
+			LOG(ERROR, string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(handle), "");
+		}
 
 		// Set a 20MB buffer
 		// TODO Make this a user configurable option. Too small will cause dropped packets under high load.
 		if (pcap_set_buffer_size(handle, 20*1024*1024) != 0)
 		{
-			LOG(CRITICAL, "Unable to set pcap capture buffer size", "");
-			exit(EXIT_FAILURE);
+			LOG(ERROR, string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(handle), "");
 		}
 
 		//Set a capture length of 1Kb. Should be more than enough to get the packet headers
-		if (pcap_set_snaplen(handle, BUFSIZ) != 0)
+		if (pcap_set_snaplen(handle, 1024) != 0)
 		{
-			LOG(CRITICAL, "Unable to set pcap capture length", "");
-			exit(EXIT_FAILURE);
+			LOG(ERROR, string("Unable to set pcap capture length due to error: ") + pcap_geterr(handle), "");
 		}
 
 		if (pcap_set_timeout(handle, 1000) != 0)
 		{
-			LOG(CRITICAL, "Unable to set pcap timeout value", "");
-			exit(EXIT_FAILURE);
+			LOG(ERROR, string("Unable to set pcap timeout value due to error: ") + pcap_geterr(handle), "");
 		}
 
-		pcap_activate(handle);
+		if (pcap_activate(handle) != 0)
+		{
+			LOG(CRITICAL, string("Unable to activate packet capture due to error: ") + pcap_geterr(handle), "");
+			exit(EXIT_FAILURE);
+		}
 
 
 
@@ -770,21 +774,6 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 	{
 		LOG(ERROR, "Failed to capture packet!","");
 		return;
-	}
-
-	// Quick check for libpcap dropping packets
-	static pcap_stat ps;
-	static uint lastDropCount = 0;
-	pcap_stats(handle, &ps);
-	if (ps.ps_drop != lastDropCount)
-	{
-		if (ps.ps_drop > lastDropCount)
-		{
-			stringstream ss;
-			ss << "Libpcap has dropped " << ps.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
-			LOG(WARNING, ss.str(), "");
-		}
-		lastDropCount = ps.ps_drop;
 	}
 
 	/* let's start with the ether header... */
@@ -1063,6 +1052,27 @@ void UpdateAndClassify(const in_addr_t& key)
 
 	//Send to UI
 	SendSuspectToUIs(&suspectCopy);
+}
+
+void CheckForDroppedPackets()
+{
+	// Quick check for libpcap dropping packets
+	if (handle != NULL)
+	{
+		pcap_stat captureStats;
+		static uint lastDropCount = 0;
+		int result = pcap_stats(handle, &captureStats);
+		if (result == 0 && captureStats.ps_drop != lastDropCount)
+		{
+			if (captureStats.ps_drop > lastDropCount)
+			{
+				stringstream ss;
+				ss << "Libpcap has dropped " << captureStats.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
+				LOG(WARNING, ss.str(), "");
+			}
+			lastDropCount = captureStats.ps_drop;
+		}
+	}
 }
 
 }

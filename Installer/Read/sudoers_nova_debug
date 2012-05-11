@@ -1,0 +1,17 @@
+# /etc/sudoers
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# See the man page for details on how to write a sudoers file.
+#
+
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+Cmnd_Alias NOVACMNDS = /sbin/route, /sbin/iptables, /bin/kill, /usr/bin/honeyd, /usr/bin/pkill
+# User privilege specification
+%nova ALL=(root) NOPASSWD:/usr/bin/gdb
+Defaults!NOVACMNDS exempt_group=nova
+

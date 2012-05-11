@@ -156,8 +156,10 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			{
 				m_features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / portMax);
 			}
-
-			m_features[PORT_TRAFFIC_DISTRIBUTION] = m_features[PORT_TRAFFIC_DISTRIBUTION] / (double)m_portTable.size();
+			if(m_portTable.size())
+			{
+				m_features[PORT_TRAFFIC_DISTRIBUTION] = m_features[PORT_TRAFFIC_DISTRIBUTION] / (double)m_portTable.size();
+			}
 			break;
 		}
 		///Number of ScanEvents that the suspect is responsible for per second
