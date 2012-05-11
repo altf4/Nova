@@ -793,6 +793,20 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 		return;
 	}
 
+	// Quick check for libpcap dropping packets
+	static pcap_stat ps;
+	static uint lastDropCount = 0;
+	pcap_stats(handle, &ps);
+	if (ps.ps_drop != lastDropCount)
+	{
+		if (ps.ps_drop > lastDropCount)
+		{
+			stringstream ss;
+			ss << "Libpcap has dropped " << ps.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
+			LOG(WARNING, ss.str(), "");
+		}
+		lastDropCount = ps.ps_drop;
+	}
 
 	/* let's start with the ether header... */
 	ethernet = (struct ether_header *) packet;
