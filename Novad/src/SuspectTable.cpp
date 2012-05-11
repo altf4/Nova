@@ -126,7 +126,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 // Adds the Suspect pointed to in 'suspect' into the table using the source of the packet as the key;
 // 		packet: copy of the packet you whish to create a suspect from
 // Returns true on Success, and false if the suspect already exists
-bool SuspectTable::AddNewSuspect(Packet packet)
+bool SuspectTable::AddNewSuspect(const Packet& packet)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	Suspect * suspect = new Suspect(packet);
@@ -171,7 +171,7 @@ bool SuspectTable::AddNewSuspect(Packet packet)
 //		packet: packet struct to be added into the suspect's list of evidence.
 // Returns true if the call succeeds, false if the suspect could not be located
 // Note: this is faster than Checking out a suspect adding the evidence and checking it in but is equivalent
-bool SuspectTable::AddEvidenceToSuspect(in_addr_t key, Packet packet)
+bool SuspectTable::AddEvidenceToSuspect(const in_addr_t& key, const Packet& packet)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	if(IsValidKey_NonBlocking(key))
@@ -184,7 +184,8 @@ bool SuspectTable::AddEvidenceToSuspect(in_addr_t key, Packet packet)
 			pthread_rwlock_unlock(&m_lock);
 			return false;
 		}
-		m_suspectTable[key]->AddEvidence(packet);
+		Suspect * suspect = m_suspectTable[key];
+		suspect->AddEvidence(packet);
 		UnlockSuspect(key);
 		pthread_rwlock_unlock(&m_lock);
 		return true;
@@ -195,7 +196,7 @@ bool SuspectTable::AddEvidenceToSuspect(in_addr_t key, Packet packet)
 // Updates a suspects evidence and calculates the FeatureSet
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns (true) if the call succeeds, (false) if the suspect doesn't exist or doesn't need updating
-bool SuspectTable::UpdateSuspect(in_addr_t key)
+bool SuspectTable::ClassifySuspect(const in_addr_t& key)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	if(IsValidKey_NonBlocking(key))
@@ -203,7 +204,6 @@ bool SuspectTable::UpdateSuspect(in_addr_t key)
 		Suspect* suspect = m_suspectTable[key];
 		if(suspect->GetNeedsClassificationUpdate())
 		{
-			suspect->UpdateEvidence();
 			suspect->CalculateFeatures();
 			if(!Config::Inst()->GetIsTraining())
 			{
@@ -228,7 +228,6 @@ void SuspectTable::UpdateAllSuspects()
 			Suspect* suspect = m_suspectTable[m_keys[i]];
 			if(suspect->GetNeedsClassificationUpdate())
 			{
-				suspect->UpdateEvidence();
 				suspect->CalculateFeatures();
 				if(!Config::Inst()->GetIsTraining())
 				{
@@ -290,7 +289,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 // Returns (0) on Success, (-1) if the Suspect is checked out by someone else
 // and (1) if the Suspect is not checked out
 // Note:  This function blocks until it can acquire a write lock on the suspect
-SuspectTableRet SuspectTable::CheckIn(in_addr_t key)
+SuspectTableRet SuspectTable::CheckIn(const in_addr_t& key)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	//If the key has a valid suspect
@@ -332,7 +331,7 @@ SuspectTableRet SuspectTable::CheckIn(in_addr_t key)
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns a copy of the Suspect associated with 'key', it returns an empty suspect if that key is Invalid.
 // Note: This function read locks the suspect until CheckIn(&suspect) or suspect->UnsetOwner() is called.
-Suspect SuspectTable::CheckOut(in_addr_t key)
+Suspect SuspectTable::CheckOut(const in_addr_t& key)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	if(IsValidKey_NonBlocking(key))
@@ -362,7 +361,7 @@ Suspect SuspectTable::CheckOut(in_addr_t key)
 // Returns an empty suspect on failure
 // Note: To modify or lock a suspect use CheckOut();
 // Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
-Suspect SuspectTable::GetSuspect(in_addr_t key)
+Suspect SuspectTable::GetSuspect(const in_addr_t& key)
 {
 	//Read lock the table, Suspects can only change in the table while it's write locked.
 	pthread_rwlock_rdlock(&m_lock);
@@ -386,7 +385,7 @@ Suspect SuspectTable::GetSuspect(in_addr_t key)
 // Returns: if the call does not succeed returns an empty/invalid suspect (Classification == -1)
 // 		otherwise it returns a shallow copy of the suspect.
 // Note: The suspect returned has an empty feature set and evidence vector
-Suspect SuspectTable::GetSuspectStatus(in_addr_t key)
+Suspect SuspectTable::GetSuspectStatus(const in_addr_t& key)
 {
 	pthread_rwlock_rdlock(&m_lock);
 	Suspect ret = m_emptySuspect;
@@ -409,7 +408,7 @@ Suspect SuspectTable::GetSuspectStatus(in_addr_t key)
 //Erases a suspect from the table if it is not locked
 // 		key: IP address of the suspect as a uint value (host byte order)
 // Returns (true) on success, (false) if the suspect does not exist (key is invalid)
-bool SuspectTable::Erase(in_addr_t key)
+bool SuspectTable::Erase(const in_addr_t& key)
 {
 	pthread_rwlock_wrlock(&m_lock);
 	if(IsValidKey_NonBlocking(key))
@@ -772,7 +771,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 // Checks the validity of the key - public thread-safe version
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise
-bool SuspectTable::IsValidKey(in_addr_t key)
+bool SuspectTable::IsValidKey(const in_addr_t& key)
 {
 	pthread_rwlock_rdlock(&m_lock);
 	//If we find a SuspectLock the suspect exists or is scheduled to be deleted
@@ -789,7 +788,7 @@ bool SuspectTable::IsEmptySuspect(Suspect * suspect)
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise
 // *Note: Assumes you have already locked the table
-bool SuspectTable::IsValidKey_NonBlocking(in_addr_t key)
+bool SuspectTable::IsValidKey_NonBlocking(const in_addr_t& key)
 {
 	//If we find a SuspectLock the suspect exists or is scheduled to be deleted
 	if(m_lockTable.keyExists(key))
@@ -803,7 +802,7 @@ bool SuspectTable::IsValidKey_NonBlocking(in_addr_t key)
 // Returns (true) after locking the suspect and (false) if the suspect couldn't be found
 // Note: A suspect's lock won't be deleted until there are no more threads trying to lock it
 // Imporant: table MUST be write locked before calling this.
-bool SuspectTable::LockSuspect(in_addr_t key)
+bool SuspectTable::LockSuspect(const in_addr_t& key)
 {
 	//If the suspect has a lock
 	if(m_lockTable.keyExists(key))
@@ -822,7 +821,7 @@ bool SuspectTable::LockSuspect(in_addr_t key)
 // Returns (true) if the Lock could be unlocked and still exists and
 // (false) if the Suspect has been deleted or could not be unlocked.
 // Note: automatically deletes the lock if the suspect has been deleted and the ref count is 0
-bool SuspectTable::UnlockSuspect(in_addr_t key)
+bool SuspectTable::UnlockSuspect(const in_addr_t& key)
 {
 	//If the suspect has a lock
 	if(m_lockTable.keyExists(key))
@@ -843,7 +842,7 @@ bool SuspectTable::UnlockSuspect(in_addr_t key)
 // 		key: IP address of the suspect as a uint value (host byte order)
 // Returns (true) if the Lock doesn't exist or it was successfully removed
 // false if threads are blocking on it or the Suspect has not been erased
-bool  SuspectTable::CleanSuspectLock(in_addr_t key)
+bool  SuspectTable::CleanSuspectLock(const in_addr_t& key)
 {
 	//If the suspect has a lock
 	if(m_lockTable.keyExists(key))

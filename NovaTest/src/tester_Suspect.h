@@ -70,12 +70,6 @@ TEST_F(SuspectTest, EvidenceAddingRemoving)
 	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
 	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
 	EXPECT_TRUE(suspect->GetNeedsClassificationUpdate());
-
-	EXPECT_EQ(0, memcmp(&suspect->GetEvidence().at(0), &p1, sizeof(p1)));
-	EXPECT_EQ(0, memcmp(&suspect->GetEvidence().at(1), &p2, sizeof(p2)));
-
-	EXPECT_NO_FATAL_FAILURE(suspect->ClearEvidence());
-	EXPECT_EQ((uint)0, suspect->GetEvidence().size());
 }
 
 TEST_F(SuspectTest, EvidenceProcessing)
@@ -83,9 +77,6 @@ TEST_F(SuspectTest, EvidenceProcessing)
 	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
 	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
 
-	// This isn't exactly an intuitive set of calls to update the evidence...
-	// Convert the packets to evidence
-	EXPECT_NO_FATAL_FAILURE(suspect->UpdateEvidence());
 	// Calculate the feature values from the evidence
 	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
 	// Move this stuff from the unsent evidence to the normal evidence
@@ -115,7 +106,6 @@ TEST_F(SuspectTest, Serialization)
 	// Just setup to get a suspect to serialize
 	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
 	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
-	EXPECT_NO_FATAL_FAILURE(suspect->UpdateEvidence());
 	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
 	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 

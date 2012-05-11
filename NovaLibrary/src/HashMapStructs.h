@@ -76,7 +76,4 @@ struct eqkey
 	}
 };
 
-///The Value is a vector of IP headers
-typedef Nova::HashMap<std::string, struct Session, std::tr1::hash<std::string>, eqstr > TCPSessionHashTable;
-
 #endif /* HASHMAPSTRUCTS_H_ */

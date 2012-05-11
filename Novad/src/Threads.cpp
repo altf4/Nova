@@ -47,8 +47,6 @@ using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
 extern SuspectTable suspects;
-extern TCPSessionHashTable SessionTable;
-
 extern struct sockaddr_in hostAddr;
 
 //** Silent Alarm **
@@ -57,8 +55,9 @@ extern struct sockaddr_in serv_addr;
 extern time_t lastLoadTime;
 extern time_t lastSaveTime;
 
-extern string trainingCapFile;
-extern ofstream trainingFileStream;
+//Commented out to suppress unused warnings.
+//extern string trainingCapFile;
+//extern ofstream trainingFileStream;
 
 //HS Vars
 extern string dhcpListFile;
@@ -70,7 +69,6 @@ extern int notifyFd;
 extern int watch;
 
 
-extern pthread_rwlock_t sessionLock;
 extern ClassificationEngine *engine;
 
 namespace Nova
@@ -333,94 +331,6 @@ void *UpdateIPFilter(void *ptr)
 		}
 	}
 
-	return NULL;
-}
-
-void *TCPTimeout(void *ptr)
-{
-	MaskKillSignals();
-	do
-	{
-		pthread_rwlock_wrlock(&sessionLock);
-		time_t currentTime = time(NULL);
-		time_t packetTime;
-
-		for (TCPSessionHashTable::iterator it = SessionTable.begin(); it != SessionTable.end(); it++)
-		{
-			if(it->second.session.size() > 0)
-			{
-				packetTime = it->second.session.back().pcap_header.ts.tv_sec;
-				//If were reading packets from a file, assume all packets have been loaded and go beyond
-				// timeout threshhold
-				if(Config::Inst()->GetReadPcap())
-				{
-					currentTime = packetTime + 3 + Config::Inst()->GetTcpTimout();
-				}
-				// If it exists
-				if(packetTime + 2 < currentTime)
-				{
-					//If session has been finished for more than two seconds
-					if(it->second.fin == true)
-					{
-						for(uint p = 0; p < (SessionTable[it->first].session).size(); p++)
-						{
-							UpdateSuspect(SessionTable[it->first].session[p]);
-						}
-						// Allow for continuous classification
-						if(!Config::Inst()->GetClassificationTimeout())
-						{
-							if(it->second.session.size() > 0)
-							{
-								if(!Config::Inst()->GetIsTraining())
-								{
-									UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
-								}
-								else
-								{
-									UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
-								}
-							}
-						}
-						SessionTable[it->first].session.clear();
-						SessionTable[it->first].fin = false;
-					}
-					//If this session is timed out
-					else if(packetTime + Config::Inst()->GetTcpTimout()	< currentTime)
-					{
-						for (uint p = 0; p < (SessionTable[it->first].session).size(); p++)
-						{
-							UpdateSuspect(SessionTable[it->first].session[p]);
-						}
-						// Allow for continuous classification
-						if(!Config::Inst()->GetClassificationTimeout())
-						{
-							if(!Config::Inst()->GetIsTraining())
-							{
-								UpdateAndClassify(it->second.session.at(0).ip_hdr.ip_src.s_addr);
-							}
-							else
-							{
-								UpdateAndStore(it->second.session.at(0).ip_hdr.ip_src.s_addr);
-							}
-						}
-						SessionTable[it->first].session.clear();
-						SessionTable[it->first].fin = false;
-					}
-				}
-			}
-		}
-		pthread_rwlock_unlock(&sessionLock);
-		//Check only once every TCP_CHECK_FREQ seconds
-		sleep(Config::Inst()->GetTcpCheckFreq());
-	}while(!Config::Inst()->GetReadPcap());
-
-	//After a pcap file is read we do one iteration of this function to clear out the sessions
-	//This is return is to prevent an error being thrown when there isn't one.
-	if(Config::Inst()->GetReadPcap())
-	{
-		return NULL;
-	}
-	LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
 	return NULL;
 }
 }

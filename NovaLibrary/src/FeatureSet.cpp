@@ -32,7 +32,7 @@ FeatureSet::FeatureSet()
 	m_IPTable.set_empty_key(0);
 	m_portTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
-	m_intervalTable.set_empty_key(2147483647);
+	m_intervalTable.set_empty_key(~0);
 
 	ClearFeatureSet();
 }
@@ -54,7 +54,6 @@ void FeatureSet::ClearFeatureSet()
 	m_packTable.clear();
 	m_intervalTable.clear();
 
-	m_haystackEvents = 0;
 	m_packetCount = 0;
 	m_bytesTotal = 0;
 	m_lastTime = 0;
@@ -117,9 +116,9 @@ void FeatureSet::CalculateAll()
 }
 
 
-void FeatureSet::Calculate(uint32_t featureDimension)
+void FeatureSet::Calculate(const uint32_t& featureDimension)
 {
-	switch (featureDimension)
+	switch(featureDimension)
 	{
 		///The traffic distribution across the haystacks relative to host traffic
 		case IP_TRAFFIC_DISTRIBUTION:
@@ -164,15 +163,17 @@ void FeatureSet::Calculate(uint32_t featureDimension)
 		///Number of ScanEvents that the suspect is responsible for per second
 		case HAYSTACK_EVENT_FREQUENCY:
 		{
+			double haystack_events = m_packetCount - m_IPTable[1];
 			// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
 			if(m_totalInterval)
 			{
-				m_features[HAYSTACK_EVENT_FREQUENCY] = ((double)(m_haystackEvents)) / (double)(m_totalInterval);
+				//Packet count - local host contacts == haystack events
+				m_features[HAYSTACK_EVENT_FREQUENCY] = haystack_events / ((double)m_totalInterval);
 			}
 			else
 			{
 				//If interval is 0, no time based information, use a default of 1 for the interval
-				m_features[HAYSTACK_EVENT_FREQUENCY] = (double)(m_haystackEvents);
+				m_features[HAYSTACK_EVENT_FREQUENCY] = haystack_events;
 			}
 			break;
 		}
@@ -249,93 +250,71 @@ void FeatureSet::CalculateTimeInterval()
 	}
 }
 
-void FeatureSet::UpdateEvidence(Packet packet)
+void FeatureSet::UpdateEvidence(const Packet& packet)
 {
-	in_port_t dst_port = 0;
-	uint32_t packet_count;
-	vector <int> IP_packet_sizes;
-	vector <time_t> packet_intervals;
-	struct ip *ip_hdr = &packet.ip_hdr;
-	if(ip_hdr == NULL)
-	{
-		return;
-	}
-	//Start and end times are the same since this is a one packet event
-	packet_count = 1;
-
-	//If UDP
-	if(packet.ip_hdr.ip_p == 17)
-	{
-		dst_port = ntohs(packet.udp_hdr.dest);
-	}
-	//If ICMP
-	else if(packet.ip_hdr.ip_p == 1)
-	{
-		dst_port = -1;
-	}
-	// If TCP
-	else if(packet.ip_hdr.ip_p == 6)
-	{
-		dst_port =  ntohs(packet.tcp_hdr.dest);
-	}
-
-
-	IP_packet_sizes.push_back(ntohs(packet.ip_hdr.ip_len));
-	packet_intervals.push_back(packet.pcap_header.ts.tv_sec);
-
 	// Ensure our assumptions about valid packet fields are true
 	if (packet.ip_hdr.ip_dst.s_addr == 0)
 	{
 		LOG(DEBUG, "Got packet with invalid source IP address of 0. Skipping.", "");
 		return;
 	}
-	if (dst_port == 0)
+	switch(packet.ip_hdr.ip_p)
 	{
-		LOG(DEBUG, "Got packet with invalid destination port of 0. Skipping.", "");
-		return;
-	}
-	for(uint32_t i = 1; i < packet_intervals.size(); i++)
-	{
-		if ((packet_intervals[i] - packet_intervals[i-1]) == 0)
+		//If UDP
+		case 17:
 		{
-			LOG(DEBUG, "Got packet stream with invalid interpacket interval of 0. Skipping.", "");
+			//Avoid empty key error
+			if(packet.udp_hdr.dest)
+			{
+				m_portTable[ntohs(packet.udp_hdr.dest)]++;
+			}
+			break;
+		}
+		//If TCP
+		case 6:
+		{
+			//Avoid empty key error
+			if(packet.tcp_hdr.dest)
+			{
+				m_portTable[ntohs(packet.tcp_hdr.dest)]++;
+			}
+			break;
+		}
+		//If ICMP
+		case 1:
+		{
+			break;
+		}
+		//If untracked IP protocol or error case ignore it
+		default:
+		{
+			LOG(DEBUG, "Dropping packet with unhandled IP protocol." , "");
 			return;
 		}
 	}
-	
 
-	m_packetCount += packet_count;
+	m_packetCount++;
 	m_bytesTotal += ntohs(packet.ip_hdr.ip_len);
 
 	//If from haystack
 	if(packet.fromHaystack)
 	{
-		m_IPTable[packet.ip_hdr.ip_dst.s_addr] += packet_count;
-		m_haystackEvents++;
+		m_IPTable[packet.ip_hdr.ip_dst.s_addr]++;
 	}
 	//If from local host, put into designated bin
 	else
 	{
-		m_IPTable[1] +=  packet_count;
+		m_IPTable[1]++;
 	}
 
-	m_portTable[dst_port] += packet_count;
-
-	for(uint32_t i = 0; i < IP_packet_sizes.size(); i++)
-	{
-		m_packTable[IP_packet_sizes[i]]++;
-	}
+	m_packTable[ntohs(packet.ip_hdr.ip_len)]++;
 
 	if(m_lastTime != 0)
 	{
-		m_intervalTable[packet_intervals[0] - m_lastTime]++;
+		m_intervalTable[packet.pcap_header.ts.tv_sec - m_lastTime]++;
 	}
 
-	for(uint32_t i = 1; i < packet_intervals.size(); i++)
-	{
-		m_intervalTable[packet_intervals[i] - packet_intervals[i-1]]++;
-	}
-	m_lastTime = packet_intervals.back();
+	m_lastTime = packet.pcap_header.ts.tv_sec;
 
 	//Accumulate to find the lowest Start time and biggest end time.
 	if(packet.pcap_header.ts.tv_sec < m_startTime)
@@ -367,7 +346,6 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
 	m_bytesTotal += rhs.m_bytesTotal;
-	m_haystackEvents += rhs.m_haystackEvents;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
 	{
@@ -409,7 +387,6 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	m_totalInterval -= rhs.m_totalInterval;
 	m_packetCount -= rhs.m_packetCount;
 	m_bytesTotal -= rhs.m_bytesTotal;
-	m_haystackEvents -= rhs.m_haystackEvents;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
 	{
@@ -467,15 +444,16 @@ uint32_t FeatureSet::DeserializeFeatureSet(u_char * buf)
 void FeatureSet::ClearFeatureData()
 {
 		m_totalInterval = 0;
-		m_haystackEvents = 0;
 		m_packetCount = 0;
 		m_bytesTotal = 0;
 
-		m_startTime = m_endTime;
-		m_intervalTable.clear_no_resize();
-		m_packTable.clear_no_resize();
-		m_IPTable.clear_no_resize();
-		m_portTable.clear_no_resize();
+		m_startTime = ~0;
+		m_endTime = 0;
+		m_lastTime = 0;
+		m_intervalTable.clear();
+		m_packTable.clear();
+		m_IPTable.clear();
+		m_portTable.clear();
 }
 
 uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
@@ -495,12 +473,6 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 #ifdef SERIALIZATION_DEBUGGING
 	int item = 0;
 	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
-#endif
-
-	memcpy(buf+offset, &m_haystackEvents, sizeof m_haystackEvents);
-	offset += sizeof m_haystackEvents;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_haystackEvents << endl;
 #endif
 
 	memcpy(buf+offset, &m_packetCount, sizeof m_packetCount);
@@ -683,7 +655,7 @@ uint32_t FeatureSet::GetFeatureDataLength()
 	uint32_t out = 0, count = 0;
 
 	//Vars we need to send useable Data
-	out += sizeof(m_totalInterval) + sizeof(m_haystackEvents) + sizeof(m_packetCount) + sizeof(m_bytesTotal)
+	out += sizeof(m_totalInterval) + sizeof(m_packetCount) + sizeof(m_bytesTotal)
 		+ sizeof(m_startTime) + sizeof(m_endTime) + sizeof(m_lastTime)
 		//Each table has a total num entries val before it
 		+ 4*sizeof(out);
@@ -748,12 +720,6 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 #ifdef DESERIALIZATION_DEBUGGING
 	int item = 0;
 	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
-#endif
-	memcpy(&temp, buf+offset, sizeof m_haystackEvents);
-	m_haystackEvents += temp;
-	offset += sizeof m_haystackEvents;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_haystackEvents << endl;
 #endif
 	memcpy(&temp, buf+offset, sizeof m_packetCount);
 	m_packetCount += temp;
@@ -888,11 +854,6 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 
 bool FeatureSet::operator ==(const FeatureSet &rhs) const
 {
-
-	if(m_haystackEvents != rhs.m_haystackEvents)
-	{
-		return false;
-	}
 	if(m_startTime != rhs.m_startTime)
 	{
 		return false;
