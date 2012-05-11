@@ -710,8 +710,7 @@ bool Start_Packet_Handler()
 			LoadStateFile();
 		}
 
-		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-		handle = pcap_open_live(Config::Inst()->GetInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
+		handle = pcap_create(Config::Inst()->GetInterface().c_str(), errbuf);
 
 		if(handle == NULL)
 		{
@@ -719,6 +718,33 @@ bool Start_Packet_Handler()
 				"Unable to open network interface "+Config::Inst()->GetInterface()+" for live capture: "+string(errbuf));
 			exit(EXIT_FAILURE);
 		}
+
+		pcap_set_promisc(handle, 0);
+
+		// Set a 20MB buffer
+		// TODO Make this a user configurable option. Too small will cause dropped packets under high load.
+		if (pcap_set_buffer_size(handle, 20*1024*1024) != 0)
+		{
+			LOG(CRITICAL, "Unable to set pcap capture buffer size", "");
+			exit(EXIT_FAILURE);
+		}
+
+		//Set a capture length of 1Kb. Should be more than enough to get the packet headers
+		if (pcap_set_snaplen(handle, BUFSIZ) != 0)
+		{
+			LOG(CRITICAL, "Unable to set pcap capture length", "");
+			exit(EXIT_FAILURE);
+		}
+
+		if (pcap_set_timeout(handle, 1000) != 0)
+		{
+			LOG(CRITICAL, "Unable to set pcap timeout value", "");
+			exit(EXIT_FAILURE);
+		}
+
+		pcap_activate(handle);
+
+
 
 		/* ask pcap for the network address and mask of the device */
 		ret = pcap_lookupnet(Config::Inst()->GetInterface().c_str(), &netp, &maskp, errbuf);
@@ -742,11 +768,12 @@ bool Start_Packet_Handler()
 				"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handle) +".");
 			exit(EXIT_FAILURE);
 		}
+
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received
 		pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
 
-	    pcap_loop(handle, -1, Packet_Handler, NULL);
+		pcap_loop(handle, -1, Packet_Handler, NULL);
 	}
 	return false;
 }
