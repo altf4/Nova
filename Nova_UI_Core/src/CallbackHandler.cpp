@@ -41,9 +41,6 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 		return change;
 	}
 
-	//Claim the socket's mutex, so another protocol doesn't get mixed up in between
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
-
 	UI_Message *message = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
