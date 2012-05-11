@@ -78,7 +78,9 @@ private:
 
 	std::queue<UI_Message*> m_forwardQueue;
 	std::queue<UI_Message*> m_callbackQueue;
-	bool m_isShutDown;							//TODO: Synchronize this. Needs to have a mutex around access to it
+
+	bool m_isShutDown;							//Marks the message queue as having been shut down. Just waiting to be destroyed properly
+	pthread_mutex_t m_isShutdownMutex;			//Mutex for threadsafe access to the variable
 
 	enum ProtocolDirection m_forwardDirection;
 
