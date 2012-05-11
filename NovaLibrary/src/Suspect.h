@@ -59,23 +59,15 @@ public:
 
 	// Constructor from a Packet
 	//		packet - Used to set the IP address and initial evidence of the suspect
-	Suspect(Packet packet);
+	Suspect(const Packet& packet);
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
 	// Returns: Human readable std::string of the given feature
 	std::string ToString();
 
-	// Add an additional piece of evidence to this suspect
-	// Does not take actions like reclassifying or calculating features.
-	//		packet - Packet headers to extract evidence from
-	void AddEvidence(Packet packet);
-	// Proccesses all packets in m_evidence and puts them into the suspects unsent FeatureSet data
-	void UpdateEvidence();
-	//Returns a copy of the evidence vector so that it can be read.
-	std::vector<Packet> GetEvidence();
-	//Clears the evidence std::vector
-	void ClearEvidence();
+	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
+	void AddEvidence(const Packet& packet);
 
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();
@@ -189,8 +181,6 @@ private:
 	FeatureSet m_unsentFeatures;
 	// Array of values that represent the quality of suspect classification on each feature
 	double m_featureAccuracy[DIM];
-	// A vector of packets that have yet to be processed
-	std::vector <Packet> m_evidence;
 	// The IP address of the suspect. Serves as a unique identifier for the Suspect
 	struct in_addr m_IpAddress;
 	// The current classification assigned to this suspect.

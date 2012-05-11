@@ -48,16 +48,6 @@ struct _packet
 
 typedef struct _packet Packet;
 
-///Hash table for current TCP Sessions
-///Table key is the source network socket, comprised of IP and Port in string format
-///	IE: "192.168.1.1-8080"
-struct Session
-{
-	bool fin;
-	std::vector<Packet> session;
-};
-
-
 //boolean values for updateFeatureData()
 #define INCLUDE true
 #define REMOVE false
@@ -124,11 +114,11 @@ public:
 	// Calculates a feature's value
 	//		featureDimension: feature to calculate, e.g. PACKET_INTERVAL_DEVIATION
 	// Note: this will update the global 'features' array for the given featureDimension index
-	void Calculate(uint featureDimension);
+	void Calculate(const uint& featureDimension);
 
 	// Processes incoming evidence before calculating the features
 	//		packet - packet headers of new packet
-	void UpdateEvidence(Packet packet);
+	void UpdateEvidence(const Packet& packet);
 
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored
@@ -169,9 +159,6 @@ private:
 	//Table of Ports and associated packet counts
 	Port_Table m_portTable;
 
-	//Tracks the number of HS events
-	uint32_t m_haystackEvents;
-
 	time_t m_startTime;
 	time_t m_endTime;
 	time_t m_lastTime;
@@ -195,8 +182,8 @@ private:
 		((3*sizeof(uint32_t)
 		//(Suspect Members) IP + Classificiation + 5x flags + hostile neighbors + featureAccuracy[DIM] + features[DIM]
 		+ sizeof(in_addr_t)+ sizeof(double) + 5*(sizeof(bool)) +  sizeof(int32_t) + 2*DIM*(sizeof(double)))
-		// + 2*(FeatureSetData constant var byte size) (could serialized two feature sets)
-		+ (2*(7*(sizeof(uint32_t)) + 4*(sizeof(time_t))))))
+		// + 2*(4x Table entry count + m_bytesTotal + m_packetCount) (could serialized two feature sets)
+		+ (2*(6*(sizeof(uint32_t)) + 4*(sizeof(time_t))))))
 		// All of the Above divided by (8 bytes per table entry) * (up to two feature sets per serialization)
 		/(8*2));
 

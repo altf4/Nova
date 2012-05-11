@@ -52,10 +52,6 @@ SuspectTable suspects;
 // Suspects not yet written to the state file
 SuspectTable suspectsSinceLastSave;
 
-// TCP session tracking table
-TCPSessionHashTable SessionTable;
-pthread_rwlock_t sessionLock;
-
 //** Silent Alarm **
 struct sockaddr_in serv_addr;
 struct sockaddr* serv_addrPtr = (struct sockaddr *) &serv_addr;
@@ -90,7 +86,6 @@ pthread_t classificationLoopThread;
 pthread_t trainingLoopThread;
 pthread_t silentAlarmListenThread;
 pthread_t ipUpdateThread;
-pthread_t TCP_timeout_thread;
 
 namespace Nova
 {
@@ -105,14 +100,6 @@ int RunNovaD()
 		cout << "ERROR: Novad is already running. Please close all other instances before continuing." << endl;
 		exit(EXIT_FAILURE);
 	}
-
-	suspects.Resize(INIT_SIZE_SMALL);
-	suspectsSinceLastSave.Resize(INIT_SIZE_SMALL);
-
-	SessionTable.set_empty_key("");
-	SessionTable.resize(INIT_SIZE_HUGE);
-
-	pthread_rwlock_init(&sessionLock, NULL);
 
 	// Let the logger initialize before we have multiple threads going
 	Logger::Inst();
@@ -694,8 +681,6 @@ bool Start_Packet_Handler()
 		//First process any packets in the file then close all the sessions
 		pcap_loop(handle, -1, Packet_Handler,NULL);
 
-		TCPTimeout(NULL);
-
 		if(Config::Inst()->GetGotoLive()) Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
 
 		trainingFileStream.close();
@@ -710,8 +695,7 @@ bool Start_Packet_Handler()
 			LoadStateFile();
 		}
 
-		//Open in non-promiscuous mode, since we only want traffic destined for the host machine
-		handle = pcap_open_live(Config::Inst()->GetInterface().c_str(), BUFSIZ, 0, 1000, errbuf);
+		handle = pcap_create(Config::Inst()->GetInterface().c_str(), errbuf);
 
 		if(handle == NULL)
 		{
@@ -719,6 +703,33 @@ bool Start_Packet_Handler()
 				"Unable to open network interface "+Config::Inst()->GetInterface()+" for live capture: "+string(errbuf));
 			exit(EXIT_FAILURE);
 		}
+
+		pcap_set_promisc(handle, 0);
+
+		// Set a 20MB buffer
+		// TODO Make this a user configurable option. Too small will cause dropped packets under high load.
+		if (pcap_set_buffer_size(handle, 20*1024*1024) != 0)
+		{
+			LOG(CRITICAL, "Unable to set pcap capture buffer size", "");
+			exit(EXIT_FAILURE);
+		}
+
+		//Set a capture length of 1Kb. Should be more than enough to get the packet headers
+		if (pcap_set_snaplen(handle, BUFSIZ) != 0)
+		{
+			LOG(CRITICAL, "Unable to set pcap capture length", "");
+			exit(EXIT_FAILURE);
+		}
+
+		if (pcap_set_timeout(handle, 1000) != 0)
+		{
+			LOG(CRITICAL, "Unable to set pcap timeout value", "");
+			exit(EXIT_FAILURE);
+		}
+
+		pcap_activate(handle);
+
+
 
 		/* ask pcap for the network address and mask of the device */
 		ret = pcap_lookupnet(Config::Inst()->GetInterface().c_str(), &netp, &maskp, errbuf);
@@ -744,8 +755,6 @@ bool Start_Packet_Handler()
 		}
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received
-		pthread_create(&TCP_timeout_thread, NULL, TCPTimeout, NULL);
-
 	    pcap_loop(handle, -1, Packet_Handler, NULL);
 	}
 	return false;
@@ -753,12 +762,9 @@ bool Start_Packet_Handler()
 
 void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
-	//Memory assignments moved outside packet handler to increase performance
-	int dest_port;
 	Packet packet_info;
 	struct ether_header *ethernet;  	/* net/ethernet.h */
 	struct ip *ip_hdr; 					/* The IP header */
-	char tcp_socket[55];
 
 	if(packet == NULL)
 	{
@@ -766,6 +772,20 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 		return;
 	}
 
+	// Quick check for libpcap dropping packets
+	static pcap_stat ps;
+	static uint lastDropCount = 0;
+	pcap_stats(handle, &ps);
+	if (ps.ps_drop != lastDropCount)
+	{
+		if (ps.ps_drop > lastDropCount)
+		{
+			stringstream ss;
+			ss << "Libpcap has dropped " << ps.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
+			LOG(WARNING, ss.str(), "");
+		}
+		lastDropCount = ps.ps_drop;
+	}
 
 	/* let's start with the ether header... */
 	ethernet = (struct ether_header *) packet;
@@ -788,52 +808,32 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_cha
 			packet_info.fromHaystack = FROM_HAYSTACK_DP;
 		}
 
-		//IF UDP or ICMP
-		if(ip_hdr->ip_p == 17 )
+		switch(ip_hdr->ip_p)
 		{
-			packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			UpdateSuspect(packet_info);
-		}
-		else if(ip_hdr->ip_p == 1)
-		{
-			packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-			UpdateSuspect(packet_info);
-		}
-		//If TCP...
-		else if(ip_hdr->ip_p == 6)
-		{
-			packet_info.tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
-			dest_port = ntohs(packet_info.tcp_hdr.dest);
-
-			bzero(tcp_socket, 55);
-			snprintf(tcp_socket, 55, "%d-%d-%d", ip_hdr->ip_dst.s_addr, ip_hdr->ip_src.s_addr, dest_port);
-
-			pthread_rwlock_wrlock(&sessionLock);
-			//If this is a new entry...
-			if(SessionTable[tcp_socket].session.size() == 0)
+			//IF UDP
+			case 17:
 			{
-				//Insert packet into Hash Table
-				SessionTable[tcp_socket].session.push_back(packet_info);
-				SessionTable[tcp_socket].fin = false;
+				packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
+				break;
 			}
-
-			//If there is already a session in progress for the given LogEntry
-			else
+			//IF ICMP
+			case 1:
 			{
-				//If Session is ending
-				if(packet_info.tcp_hdr.fin)// Runs appendToStateFile before exiting
-				{
-					SessionTable[tcp_socket].session.push_back(packet_info);
-					SessionTable[tcp_socket].fin = true;
-				}
-				else
-				{
-					//Add this new packet to the session vector
-					SessionTable[tcp_socket].session.push_back(packet_info);
-				}
+				packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
+				break;
 			}
-			pthread_rwlock_unlock(&sessionLock);
+			//IF TCP
+			case 6:
+			{
+				packet_info.tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
+				break;
+			}
+			default:
+			{
+				break;
+			}
 		}
+		UpdateSuspect(packet_info);
 
 		// Allow for continuous classification
 		if(!Config::Inst()->GetClassificationTimeout())
@@ -982,49 +982,57 @@ vector <string> GetHaystackAddresses(string honeyDConfigPath)
 	return retAddresses;
 }
 
-void UpdateSuspect(Packet packet)
+void UpdateSuspect(const Packet& packet)
 {
 	//Attempt to add the evidence into the table, if it fails the suspect doesn't exist in this table
-	in_addr_t key = packet.ip_hdr.ip_src.s_addr;
-	if(!suspects.AddEvidenceToSuspect(key, packet))
+	if(!suspects.AddEvidenceToSuspect(packet.ip_hdr.ip_src.s_addr, packet))
 	{
 		suspects.AddNewSuspect(packet);
 	}
+
 	//Attempt to add the evidence into the table, if it fails the suspect doesn't exist in this table
-	if(!Config::Inst()->GetIsTraining() && !suspectsSinceLastSave.AddEvidenceToSuspect(key, packet))
+	if(!Config::Inst()->GetIsTraining() && !suspectsSinceLastSave.AddEvidenceToSuspect(packet.ip_hdr.ip_src.s_addr, packet))
 	{
 		suspectsSinceLastSave.AddNewSuspect(packet);
 	}
 }
 
 
-void UpdateAndStore(in_addr_t key)
+void UpdateAndStore(const in_addr_t& key)
 {
-	// If the checkout failed and we got the empty suspect
+	//Check for a valid suspect
 	Suspect suspectCopy = suspects.GetSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;
 	}
-	suspects.UpdateSuspect(key);
+
+	//Classify
+	suspects.ClassifySuspect(key);
+
+	//Check that we updated correctly
 	suspectCopy = suspects.GetSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;
 	}
+
+	//Store in training file
 	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
 	for (int j = 0; j < DIM; j++)
 	{
 		trainingFileStream << suspectCopy.GetFeatureSet(MAIN_FEATURES).m_features[j] << " ";
 	}
 	trainingFileStream << "\n";
+
+	//Send to UI
 	SendSuspectToUIs(&suspectCopy);
 }
 
 
-void UpdateAndClassify(in_addr_t key)
+void UpdateAndClassify(const in_addr_t& key)
 {
-	// If the checkout failed and we got the empty suspect
+	//Check for a valid suspect
 	Suspect suspectCopy = suspects.GetSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
@@ -1033,13 +1041,18 @@ void UpdateAndClassify(in_addr_t key)
 
 	//Get the old hostility bool
 	bool oldIsHostile = suspectCopy.GetIsHostile();
-	suspects.UpdateSuspect(key);
+
+	//Classify
+	suspects.ClassifySuspect(key);
+
+	//Check that we updated correctly
 	suspectCopy = suspects.GetSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;
 	}
 
+	//Send silent alarm if needed
 	if(suspectCopy.GetIsHostile() || oldIsHostile)
 	{
 		if(suspectCopy.GetIsLive())
@@ -1048,17 +1061,8 @@ void UpdateAndClassify(in_addr_t key)
 		}
 	}
 
+	//Send to UI
 	SendSuspectToUIs(&suspectCopy);
-
-	if(!Config::Inst()->GetIsTraining())
-	{
-		suspectCopy = suspectsSinceLastSave.CheckOut(key);
-		if(!suspectsSinceLastSave.IsEmptySuspect(&suspectCopy))
-		{
-			suspectCopy.UpdateEvidence();
-			suspectsSinceLastSave.CheckIn(&suspectCopy);
-		}
-	}
 }
 
 }

@@ -38,8 +38,6 @@ Suspect::Suspect()
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
-	m_evidence.clear();
-
 	for(int i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = 0;
@@ -52,7 +50,7 @@ Suspect::~Suspect()
 }
 
 
-Suspect::Suspect(Packet packet)
+Suspect::Suspect(const Packet& packet)
 {
 	m_IpAddress = packet.ip_hdr.ip_src;
 	m_hostileNeighbors = 0;
@@ -135,36 +133,11 @@ string Suspect::ToString()
 	return ss.str();
 }
 
-//	Add an additional piece of evidence to this suspect
-//		packet - Packet headers to extract evidence from
-// Note: Does not take actions like reclassifying or calculating features.
-void Suspect::AddEvidence(Packet packet)
+void Suspect::AddEvidence(const Packet& packet)
 {
-	m_evidence.push_back(packet);
+	m_unsentFeatures.UpdateEvidence(packet);
 	m_needsClassificationUpdate = true;
 	m_isLive = (Config::Inst()->GetReadPcap());
-}
-
-// Proccesses all packets in m_evidence and puts them into the suspects unsent FeatureSet data
-void Suspect::UpdateEvidence()
-{
-	for(uint i = 0; i < m_evidence.size(); i++)
-	{
-		this->m_unsentFeatures.UpdateEvidence(m_evidence[i]);
-	}
-	m_evidence.clear();
-}
-
-//Returns a copy of the evidence vector so that it can be read.
-vector<Packet> Suspect::GetEvidence()
-{
-	return m_evidence;
-}
-
-//Clears the evidence vector
-void Suspect::ClearEvidence()
-{
-	m_evidence.clear();
 }
 
 //Calculates the suspect's features based on it's feature set
@@ -599,7 +572,6 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 {
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
-	m_evidence = rhs.m_evidence;
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
@@ -665,8 +637,6 @@ Suspect::Suspect(const Suspect &rhs)
 {
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
-
-	m_evidence = rhs.m_evidence;
 
 	for(uint i = 0; i < DIM; i++)
 	{
