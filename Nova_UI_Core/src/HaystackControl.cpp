@@ -24,7 +24,7 @@ namespace Nova
 {
 bool StartHaystack()
 {
-	string executeString = "nohup sudo honeyd -d -i " + Config::Inst()->GetInterface() + " -i "
+	string executeString = "nohup sudo honeyd -i " + Config::Inst()->GetInterface() + " -i "
 		+ Config::Inst()->GetDoppelInterface()+" -f ";
 	executeString += Config::Inst()->GetPathHome() + '/';
 	switch(Config::Inst()->GetHaystackStorage())
