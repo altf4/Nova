@@ -252,7 +252,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) Message Header
 			//		2) update Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) +  sizeof(m_IPAddress);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
