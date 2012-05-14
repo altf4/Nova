@@ -1395,7 +1395,7 @@ void *CallbackLoop(void *ptr)
 	while(true)
 	{
 		change = ProcessCallbackMessage();
-		switch(change.type)
+		switch(change.m_type)
 		{
 			case CALLBACK_ERROR:
 			{
@@ -1411,7 +1411,7 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_NEW_SUSPECT:
 			{
 				struct suspectItem suspectItem;
-				suspectItem.suspect = change.suspect;
+				suspectItem.suspect = change.m_suspect;
 				suspectItem.item = NULL;
 				suspectItem.mainItem = NULL;
 				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem, true);

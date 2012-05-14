@@ -28,10 +28,12 @@
 //The different message types
 enum UpdateType: char
 {
-	UPDATE_SUSPECT = 0,				//A new or updated suspect being sent to a UI
-	UPDATE_SUSPECT_ACK = 1,			//Reply from Novad with success
-	UPDATE_ALL_SUSPECTS_CLEARED,	//A UI has cleared all suspect records
-	UPDATE_ALL_SUSPECTS_CLEARED_ACK	//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED
+	UPDATE_SUSPECT = 0,					//A new or updated suspect being sent to a UI
+	UPDATE_SUSPECT_ACK = 1,				//Reply from Novad with success
+	UPDATE_ALL_SUSPECTS_CLEARED,		//A UI has cleared all suspect records
+	UPDATE_ALL_SUSPECTS_CLEARED_ACK,	//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED
+	UPDATE_SUSPECT_CLEARED,				//A single suspect was cleared by a UI
+	UPDATE_SUSPECT_CLEARED_ACK,			//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED_ACK
 };
 
 namespace Nova
@@ -55,6 +57,7 @@ public:
 	enum UpdateType m_updateType;
 	uint32_t m_suspectLength;
 	Suspect *m_suspect;
+	in_addr_t m_IPAddress;
 
 protected:
 	//Serializes the Message object into a char array

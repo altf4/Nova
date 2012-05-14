@@ -62,10 +62,10 @@ void NovaNode::NovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
 	{
 		cb = ProcessCallbackMessage();
 		//            LOG(DEBUG,"callback type " + cb.type,"");
-		switch( cb.type )
+		switch( cb.m_type )
 		{
 			case CALLBACK_NEW_SUSPECT:
-				HandleNewSuspect(cb.suspect);
+				HandleNewSuspect(cb.m_suspect);
 				break;
 
 			case CALLBACK_ERROR:
@@ -76,7 +76,7 @@ void NovaNode::NovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
 				break;
 		}
 	}
-	while(cb.type != CALLBACK_HUNG_UP);         
+	while(cb.m_type != CALLBACK_HUNG_UP);         
 	LOG(DEBUG, "Novad hung up, closing callback processing","");
 	m_callbackRunning = false;
 }
@@ -109,7 +109,7 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
 	LOG(DEBUG,"Invoking new suspect callback","");
-	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
+	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(m_suspect)) };
 	m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
 	return 0;
 }

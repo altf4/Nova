@@ -31,13 +31,13 @@ extern int IPCSocketFD;
 struct CallbackChange Nova::ProcessCallbackMessage()
 {
 	struct CallbackChange change;
-	change.type = CALLBACK_ERROR;
+	change.m_type = CALLBACK_ERROR;
 
 	//Wait for a callback to occur
 	//	If it comes back false, then that means the socket is dead
 	if(!MessageManager::Instance().RegisterCallback(IPCSocketFD))
 	{
-		change.type = CALLBACK_HUNG_UP;
+		change.m_type = CALLBACK_HUNG_UP;
 		return change;
 	}
 
@@ -47,7 +47,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
-			change.type = CALLBACK_HUNG_UP;
+			change.m_type = CALLBACK_HUNG_UP;
 		}
 		//TODO: Do we care about the other error message types here?
 
@@ -65,8 +65,8 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 	{
 		case UPDATE_SUSPECT:
 		{
-			change.type = CALLBACK_NEW_SUSPECT;
-			change.suspect = updateMessage->m_suspect;
+			change.m_type = CALLBACK_NEW_SUSPECT;
+			change.m_suspect = updateMessage->m_suspect;
 
 			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK, DIRECTION_TO_UI);
 			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
@@ -77,9 +77,21 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 		}
 		case UPDATE_ALL_SUSPECTS_CLEARED:
 		{
-			change.type = CALLBACK_ALL_SUSPECTS_CLEARED;
+			change.m_type = CALLBACK_ALL_SUSPECTS_CLEARED;
 
 			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK, DIRECTION_TO_UI);
+			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
+			{
+				//TODO: log this? We failed to send the ack
+			}
+			break;
+		}
+		case UPDATE_SUSPECT_CLEARED:
+		{
+			change.m_type = CALLBACK_SUSPECT_CLEARED;
+			change.m_suspectIP = updateMessage->m_IPAddress;
+
+			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK, DIRECTION_TO_UI);
 			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
 			{
 				//TODO: log this? We failed to send the ack
