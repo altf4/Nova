@@ -20,7 +20,7 @@
 #ifndef UPDATEMESSAGE_H_
 #define UPDATEMESSAGE_H_
 
-#include "UI_Message.h"
+#include "Message.h"
 #include "../../Suspect.h"
 
 #define UPDATE_MSG_MIN_SIZE 2
@@ -35,7 +35,7 @@ enum UpdateType: char
 namespace Nova
 {
 
-class UpdateMessage : public UI_Message
+class UpdateMessage : public Message
 {
 
 public:
@@ -55,7 +55,7 @@ public:
 	Suspect *m_suspect;
 
 protected:
-	//Serializes the UI_Message object into a char array
+	//Serializes the Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use

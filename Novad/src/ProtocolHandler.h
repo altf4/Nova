@@ -19,7 +19,7 @@
 #ifndef PROTOCOLHANDLER_H_
 #define PROTOCOLHANDLER_H_
 
-#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/Message.h"
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/RequestMessage.h"
 #include "Suspect.h"

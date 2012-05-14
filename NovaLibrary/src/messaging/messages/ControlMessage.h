@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
-#include "UI_Message.h"
+#include "Message.h"
 
 //Maximum size of a linux file path
 #define MAX_PATH_SIZE 4096
@@ -54,7 +54,7 @@ enum ControlType: char
 namespace Nova
 {
 
-class ControlMessage : public UI_Message
+class ControlMessage : public Message
 {
 
 public:

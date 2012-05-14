@@ -19,7 +19,7 @@
 #ifndef RequestMessage_H_
 #define RequestMessage_H_
 
-#include "UI_Message.h"
+#include "Message.h"
 #include "../../Suspect.h"
 
 #include <vector>
@@ -53,7 +53,7 @@ enum SuspectListType : char
 namespace Nova
 {
 
-class RequestMessage : public UI_Message
+class RequestMessage : public Message
 {
 
 public:
@@ -67,7 +67,7 @@ public:
 	//	On error, sets m_serializeError to true, on success sets it to false
 	RequestMessage(char *buffer, uint32_t length);
 
-	//Serializes the UI_Message object into a char array
+	//Serializes the Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use

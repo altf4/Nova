@@ -46,7 +46,7 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 
 	m_serializeError = false;
 
-	//Deserialize the UI_Message header
+	//Deserialize the Message header
 	if(!DeserializeHeader(&buffer))
 	{
 		m_serializeError = true;
@@ -61,7 +61,7 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 	{
 		case UPDATE_SUSPECT:
 		{
-			//Uses: 1) UI_Message Header
+			//Uses: 1) Message Header
 			//		2) ControlMessage Type
 			//		3) Length of incoming serialized suspect
 			//		3) Serialized suspect
@@ -90,7 +90,7 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 		}
 		case UPDATE_SUSPECT_ACK:
 		{
-			//Uses: 1) UI_Message Header
+			//Uses: 1) Message Header
 			//		2) update Type
 			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
 			if(length != expectedSize)
@@ -118,7 +118,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 	{
 		case UPDATE_SUSPECT:
 		{
-			//Uses: 1) UI_Message Header
+			//Uses: 1) Message Header
 			//		2) ControlMessage Type
 			//		3) Length of incoming serialized suspect
 			//		3) Serialized suspect
@@ -152,7 +152,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		}
 		case UPDATE_SUSPECT_ACK:
 		{
-			//Uses: 1) UI_Message Header
+			//Uses: 1) Message Header
 			//		2) update Message Type
 			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
 			buffer = (char*)malloc(messageSize);

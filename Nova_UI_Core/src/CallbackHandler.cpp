@@ -18,7 +18,7 @@
 //============================================================================
 
 #include "CallbackHandler.h"
-#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/Message.h"
 #include "messaging/messages/UpdateMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/MessageManager.h"
@@ -41,7 +41,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 		return change;
 	}
 
-	UI_Message *message = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
+	Message *message = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
@@ -69,7 +69,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.suspect = updateMessage->m_suspect;
 
 			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK, DIRECTION_TO_UI);
-			if(!UI_Message::WriteMessage(&callbackAck, IPCSocketFD))
+			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}

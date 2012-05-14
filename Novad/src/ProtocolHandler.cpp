@@ -136,7 +136,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 			continue;
 		}
 
-		UI_Message *message = UI_Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+		Message *message = Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
@@ -211,7 +211,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			ControlMessage exitReply(CONTROL_EXIT_REPLY, DIRECTION_TO_NOVAD);
 			exitReply.m_success = true;
 
-			UI_Message::WriteMessage(&exitReply, socketFD);
+			Message::WriteMessage(&exitReply, socketFD);
 
 			LOG(NOTICE, "Quitting: Got an exit request from the UI. Goodbye!",
 					"Got a CONTROL_EXIT_REQUEST, quitting.");
@@ -235,7 +235,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY, DIRECTION_TO_NOVAD);
 			clearAllSuspectsReply.m_success = successResult;
-			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
+			Message::WriteMessage(&clearAllSuspectsReply, socketFD);
 
 			if(successResult)
 			{
@@ -255,7 +255,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			//TODO: Should check for errors here and return result
 			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
 			clearSuspectReply.m_success = true;
-			UI_Message::WriteMessage(&clearSuspectReply, socketFD);
+			Message::WriteMessage(&clearSuspectReply, socketFD);
 
 			struct in_addr suspectAddress;
 			suspectAddress.s_addr = controlMessage.m_suspectAddress;
@@ -281,7 +281,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY, DIRECTION_TO_NOVAD);
 			saveSuspectsReply.m_success = true;
-			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
+			Message::WriteMessage(&saveSuspectsReply, socketFD);
 
 			LOG(DEBUG, "Saved suspects to file due to UI request",
 				"Got a CONTROL_SAVE_SUSPECTS_REQUEST, saved all suspects.");
@@ -293,7 +293,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY, DIRECTION_TO_NOVAD);
 			reclassifyAllReply.m_success = true;
-			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
+			Message::WriteMessage(&reclassifyAllReply, socketFD);
 
 			LOG(DEBUG, "Reclassified all suspects due to UI request",
 				"Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.");
@@ -303,13 +303,13 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			ControlMessage connectReply(CONTROL_CONNECT_REPLY, DIRECTION_TO_NOVAD);
 			connectReply.m_success = true;
-			UI_Message::WriteMessage(&connectReply, socketFD);
+			Message::WriteMessage(&connectReply, socketFD);
 			break;
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
 			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK, DIRECTION_TO_NOVAD);
-			UI_Message::WriteMessage(&disconnectReply, socketFD);
+			Message::WriteMessage(&disconnectReply, socketFD);
 
 			MessageManager::Instance().CloseSocket(socketFD);
 
@@ -320,7 +320,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		case CONTROL_PING:
 		{
 			ControlMessage connectReply(CONTROL_PONG, DIRECTION_TO_NOVAD);
-			UI_Message::WriteMessage(&connectReply, socketFD);
+			Message::WriteMessage(&connectReply, socketFD);
 
 			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
 			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
@@ -388,7 +388,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			}
 
 
-			UI_Message::WriteMessage(&reply, socketFD);
+			Message::WriteMessage(&reply, socketFD);
 			break;
 		}
 
@@ -397,7 +397,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
 			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
 			reply.m_suspect = &tempSuspect;
-			UI_Message::WriteMessage(&reply, socketFD);
+			Message::WriteMessage(&reply, socketFD);
 
 			break;
 		}
@@ -406,7 +406,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 		{
 			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_uptime = time(NULL) - startTime;
-			UI_Message::WriteMessage(&reply, socketFD);
+			Message::WriteMessage(&reply, socketFD);
 
 			break;
 		}
@@ -430,13 +430,13 @@ void SendSuspectToUIs(Suspect *suspect)
 
 		UpdateMessage suspectUpdate(UPDATE_SUSPECT, DIRECTION_TO_UI);
 		suspectUpdate.m_suspect = suspect;
-		if(!UI_Message::WriteMessage(&suspectUpdate, sockets[i]))
+		if(!Message::WriteMessage(&suspectUpdate, sockets[i]))
 		{
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
 			continue;
 		}
 
-		UI_Message *suspectReply = UI_Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			delete suspectReply;

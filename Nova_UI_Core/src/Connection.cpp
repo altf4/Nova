@@ -79,7 +79,7 @@ bool ConnectToNovad()
 	MessageManager::Instance().StartSocket(IPCSocketFD);
 
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&connectRequest, IPCSocketFD))
+	if(!Message::WriteMessage(&connectRequest, IPCSocketFD))
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
 		close(IPCSocketFD);
@@ -87,7 +87,7 @@ bool ConnectToNovad()
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -143,12 +143,12 @@ bool CloseNovadConnection()
 	bool success = true;
 
 	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&disconnectNotice, IPCSocketFD))
+	if(!Message::WriteMessage(&disconnectNotice, IPCSocketFD))
 	{
 		success = false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
