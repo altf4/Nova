@@ -75,6 +75,10 @@ block headerAdditions
       dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
     };
 
+    now.AllSuspectsCleared = function() {
+      suspectGrid.store.fetch({onComplete: clearSuspects});
+    }
+
     now.OnNewSuspect = function(suspect){
        if(!liveUpdate) {
          return;

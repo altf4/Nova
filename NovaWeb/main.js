@@ -408,6 +408,14 @@ var distributeSuspect = function(suspect)
 	objCopy(suspect, s);
 	everyone.now.OnNewSuspect(s)
 };
+
+var distributeAllSuspectsCleared = function()
+{
+	console.log("Distribute all suspects cleared called in main.js");
+	everyone.now.AllSuspectsCleared();
+}
+
+nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
 nova.registerOnNewSuspect(distributeSuspect);
 
 
