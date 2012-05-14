@@ -221,8 +221,6 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_CLEAR_ALL_REQUEST:
 		{
-			//TODO: Replace with new suspect table class
-
 			suspects.EraseAllSuspects();
 			suspectsSinceLastSave.EraseAllSuspects();
 			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
