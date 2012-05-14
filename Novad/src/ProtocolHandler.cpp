@@ -239,6 +239,42 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			{
 				LOG(DEBUG, "Cleared all suspects due to UI request",
 						"Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.");
+
+				//TODO: Do this in a new thread?
+				//Notify all of the UIs
+				vector<int> sockets = MessageManager::Instance().GetSocketList();
+				for(uint i = 0; i < sockets.size(); ++i)
+				{
+					//Don't send an update to the UI that gave us the request
+					if(sockets[i] == socketFD)
+					{
+						continue;
+					}
+
+					UpdateMessage update(UPDATE_ALL_SUSPECTS_CLEARED, DIRECTION_TO_UI);
+					if(!Message::WriteMessage(&update, sockets[i]))
+					{
+						LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
+						continue;
+					}
+
+					Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+					if(suspectReply->m_messageType != UPDATE_MESSAGE)
+					{
+						delete suspectReply;
+						LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
+						continue;
+					}
+					UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
+					if(suspectCallback->m_updateType != UPDATE_ALL_SUSPECTS_CLEARED_ACK)
+					{
+						delete suspectCallback;
+						LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
+						continue;
+					}
+					delete suspectCallback;
+				}
+
 			}
 
 			break;

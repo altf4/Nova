@@ -28,8 +28,10 @@
 //The different message types
 enum UpdateType: char
 {
-	UPDATE_SUSPECT = 0,		//Request for Novad to exit
-	UPDATE_SUSPECT_ACK = 1,	//Reply from Novad with success
+	UPDATE_SUSPECT = 0,				//A new or updated suspect being sent to a UI
+	UPDATE_SUSPECT_ACK = 1,			//Reply from Novad with success
+	UPDATE_ALL_SUSPECTS_CLEARED,	//A UI has cleared all suspect records
+	UPDATE_ALL_SUSPECTS_CLEARED_ACK	//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED
 };
 
 namespace Nova

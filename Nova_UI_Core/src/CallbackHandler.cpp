@@ -75,6 +75,17 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			}
 			break;
 		}
+		case UPDATE_ALL_SUSPECTS_CLEARED:
+		{
+			change.type = CALLBACK_ALL_SUSPECTS_CLEARED;
+
+			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK, DIRECTION_TO_UI);
+			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
+			{
+				//TODO: log this? We failed to send the ack
+			}
+			break;
+		}
 		default:
 		{
 			break;

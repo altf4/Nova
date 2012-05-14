@@ -101,6 +101,30 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 
 			break;
 		}
+		case UPDATE_ALL_SUSPECTS_CLEARED:
+		{
+			//Uses: 1) Message Header
+			//		2) Update Type
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+			break;
+		}
+		case UPDATE_ALL_SUSPECTS_CLEARED_ACK:
+		{
+			//Uses: 1) Message Header
+			//		2) Update Type
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+			break;
+		}
 		default:
 		{
 			m_serializeError = true;
@@ -151,6 +175,36 @@ char *UpdateMessage::Serialize(uint32_t *length)
 			break;
 		}
 		case UPDATE_SUSPECT_ACK:
+		{
+			//Uses: 1) Message Header
+			//		2) update Message Type
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			SerializeHeader(&buffer);
+			//Put the Control Message type in
+			memcpy(buffer, &m_updateType, sizeof(m_updateType));
+			buffer += sizeof(m_updateType);
+
+			break;
+		}
+		case UPDATE_ALL_SUSPECTS_CLEARED:
+		{
+			//Uses: 1) Message Header
+			//		2) update Message Type
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			SerializeHeader(&buffer);
+			//Put the Control Message type in
+			memcpy(buffer, &m_updateType, sizeof(m_updateType));
+			buffer += sizeof(m_updateType);
+
+			break;
+		}
+		case UPDATE_ALL_SUSPECTS_CLEARED_ACK:
 		{
 			//Uses: 1) Message Header
 			//		2) update Message Type
