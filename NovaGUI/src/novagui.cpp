@@ -800,7 +800,7 @@ void NovaGUI::ClearSuspectList()
 	pthread_rwlock_wrlock(&lock);
 	this->ui.suspectList->clear();
 	this->ui.hostileList->clear();
-	//Since clearing permenantly deletes the items we need to make sure the suspects point to null
+	//Since clearing permanently deletes the items we need to make sure the suspects point to null
 	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		it->second.item = NULL;
@@ -1415,6 +1415,11 @@ void *CallbackLoop(void *ptr)
 				suspectItem.item = NULL;
 				suspectItem.mainItem = NULL;
 				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem, true);
+				break;
+			}
+			case CALLBACK_ALL_SUSPECTS_CLEARED:
+			{
+				((NovaGUI*)ptr)->ClearSuspectList();
 				break;
 			}
 			default:
