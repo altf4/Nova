@@ -21,7 +21,7 @@
 #include "Logger.h"
 #include "Control.h"
 #include "Novad.h"
-#include "messaging/messages/CallbackMessage.h"
+#include "messaging/messages/UpdateMessage.h"
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/RequestMessage.h"
 #include "messaging/messages/ErrorMessage.h"
@@ -428,7 +428,7 @@ void SendSuspectToUIs(Suspect *suspect)
 	{
 		Lock lock = MessageManager::Instance().UseSocket(sockets[i]);
 
-		CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE, DIRECTION_TO_UI);
+		UpdateMessage suspectUpdate(UPDATE_SUSPECT, DIRECTION_TO_UI);
 		suspectUpdate.m_suspect = suspect;
 		if(!UI_Message::WriteMessage(&suspectUpdate, sockets[i]))
 		{
@@ -437,14 +437,14 @@ void SendSuspectToUIs(Suspect *suspect)
 		}
 
 		UI_Message *suspectReply = UI_Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
-		if(suspectReply->m_messageType != CALLBACK_MESSAGE)
+		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			delete suspectReply;
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
 			continue;
 		}
-		CallbackMessage *suspectCallback = (CallbackMessage*)suspectReply;
-		if(suspectCallback->m_callbackType != CALLBACK_SUSPECT_UDPATE_ACK)
+		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
+		if(suspectCallback->m_updateType != UPDATE_SUSPECT_ACK)
 		{
 			delete suspectCallback;
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");

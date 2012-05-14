@@ -45,7 +45,7 @@ enum ProtocolDirection: char
 enum UI_MessageType: char
 {
 	CONTROL_MESSAGE = 0,
-	CALLBACK_MESSAGE,
+	UPDATE_MESSAGE,
 	REQUEST_MESSAGE,
 	ERROR_MESSAGE
 };

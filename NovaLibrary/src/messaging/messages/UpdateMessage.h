@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : CallbackMessage.h
+// Name        : UpdateMessage.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,43 +13,44 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Messages coming asynchronously from Novad to the UI
+// Description : Messages coming asynchronously from Novad to the UI, updating
+//		the UI with some new piece of information
 //============================================================================
 
-#ifndef CALLBACKMESSAGE_H_
-#define CALLBACKMESSAGE_H_
+#ifndef UPDATEMESSAGE_H_
+#define UPDATEMESSAGE_H_
 
 #include "UI_Message.h"
 #include "../../Suspect.h"
 
-#define CALLBACK_MSG_MIN_SIZE 2
+#define UPDATE_MSG_MIN_SIZE 2
 
 //The different message types
-enum CallbackType: char
+enum UpdateType: char
 {
-	CALLBACK_SUSPECT_UDPATE = 0,		//Request for Novad to exit
-	CALLBACK_SUSPECT_UDPATE_ACK = 1,		//Reply from Novad with success
+	UPDATE_SUSPECT = 0,		//Request for Novad to exit
+	UPDATE_SUSPECT_ACK = 1,	//Reply from Novad with success
 };
 
 namespace Nova
 {
 
-class CallbackMessage : public UI_Message
+class UpdateMessage : public UI_Message
 {
 
 public:
 
-	CallbackMessage(enum CallbackType callbackType, enum ProtocolDirection direction);
-	~CallbackMessage();
+	UpdateMessage(enum UpdateType updateType, enum ProtocolDirection direction);
+	~UpdateMessage();
 
 	//Deserialization constructor
-	//	buffer - pointer to array in memory where serialized ControlMessage resides
+	//	buffer - pointer to array in memory where serialized UpdateMessage resides
 	//	length - the length of this array
 	//	On error, sets m_serializeError to true, on success sets it to false
-	CallbackMessage(char *buffer, uint32_t length);
+	UpdateMessage(char *buffer, uint32_t length);
 
 
-	enum CallbackType m_callbackType;
+	enum UpdateType m_updateType;
 	uint32_t m_suspectLength;
 	Suspect *m_suspect;
 
@@ -63,4 +64,4 @@ protected:
 
 }
 
-#endif /* CALLBACKMESSAGE_H_ */
+#endif /* UPDATEMESSAGE_H_ */

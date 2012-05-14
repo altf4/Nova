@@ -16,7 +16,7 @@
 // Description : Parent message class for GUI communication with Nova processes
 //============================================================================/*
 
-#include "CallbackMessage.h"
+#include "UpdateMessage.h"
 #include "ControlMessage.h"
 #include "RequestMessage.h"
 #include "ErrorMessage.h"
@@ -152,9 +152,9 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length, enum Protocol
 			message = new ControlMessage(buffer, length);
 			break;
 		}
-		case CALLBACK_MESSAGE:
+		case UPDATE_MESSAGE:
 		{
-			message = new CallbackMessage(buffer, length);
+			message = new UpdateMessage(buffer, length);
 			break;
 		}
 		case REQUEST_MESSAGE:

@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : CallbackMessage.cpp
+// Name        : UpdateMessage.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,31 +13,32 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Messages coming asynchronously from Novad to the UI
+// Description : Messages coming asynchronously from Novad to the UI, updating
+//		the UI with some new piece of information
 //============================================================================
 
-#include "CallbackMessage.h"
+#include "UpdateMessage.h"
 #include <string.h>
 
 namespace Nova
 {
 
-CallbackMessage::CallbackMessage(enum CallbackType callbackType, enum ProtocolDirection direction)
+UpdateMessage::UpdateMessage(enum UpdateType updateType, enum ProtocolDirection direction)
 {
 	m_suspect = NULL;
-	m_messageType = CALLBACK_MESSAGE;
-	m_callbackType = callbackType;
+	m_messageType = UPDATE_MESSAGE;
+	m_updateType = updateType;
 	m_protocolDirection = direction;
 }
 
-CallbackMessage::~CallbackMessage()
+UpdateMessage::~UpdateMessage()
 {
 
 }
 
-CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
+UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 {
-	if( length < CALLBACK_MSG_MIN_SIZE )
+	if( length < UPDATE_MSG_MIN_SIZE )
 	{
 		m_serializeError = true;
 		return;
@@ -53,18 +54,18 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 	}
 
 	//Copy the control message type
-	memcpy(&m_callbackType, buffer, sizeof(m_callbackType));
-	buffer += sizeof(m_callbackType);
+	memcpy(&m_updateType, buffer, sizeof(m_updateType));
+	buffer += sizeof(m_updateType);
 
-	switch(m_callbackType)
+	switch(m_updateType)
 	{
-		case CALLBACK_SUSPECT_UDPATE:
+		case UPDATE_SUSPECT:
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Length of incoming serialized suspect
 			//		3) Serialized suspect
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_callbackType) + sizeof(m_suspectLength);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength);
 			if(length <= expectedSize)
 			{
 				m_serializeError = true;
@@ -87,11 +88,11 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 			}
 			break;
 		}
-		case CALLBACK_SUSPECT_UDPATE_ACK:
+		case UPDATE_SUSPECT_ACK:
 		{
 			//Uses: 1) UI_Message Header
-			//		2) Callback Type
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_callbackType);
+			//		2) update Type
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -108,14 +109,14 @@ CallbackMessage::CallbackMessage(char *buffer, uint32_t length)
 	}
 }
 
-char *CallbackMessage::Serialize(uint32_t *length)
+char *UpdateMessage::Serialize(uint32_t *length)
 {
 	char *buffer, *originalBuffer;
 	uint32_t messageSize;
 
-	switch(m_callbackType)
+	switch(m_updateType)
 	{
-		case CALLBACK_SUSPECT_UDPATE:
+		case UPDATE_SUSPECT:
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
@@ -131,14 +132,14 @@ char *CallbackMessage::Serialize(uint32_t *length)
 				return NULL;
 			}
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_callbackType) + sizeof(m_suspectLength) + m_suspectLength;
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength) + m_suspectLength;
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
 			SerializeHeader(&buffer);
-			//Put the Callback Message type in
-			memcpy(buffer, &m_callbackType, sizeof(m_callbackType));
-			buffer += sizeof(m_callbackType);
+			//Put the update Message type in
+			memcpy(buffer, &m_updateType, sizeof(m_updateType));
+			buffer += sizeof(m_updateType);
 			//Length of suspect buffer
 			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
 			buffer += sizeof(m_suspectLength);
@@ -149,18 +150,18 @@ char *CallbackMessage::Serialize(uint32_t *length)
 			buffer += m_suspectLength;
 			break;
 		}
-		case CALLBACK_SUSPECT_UDPATE_ACK:
+		case UPDATE_SUSPECT_ACK:
 		{
 			//Uses: 1) UI_Message Header
-			//		2) Callback Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_callbackType);
+			//		2) update Message Type
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
 			SerializeHeader(&buffer);
 			//Put the Control Message type in
-			memcpy(buffer, &m_callbackType, sizeof(m_callbackType));
-			buffer += sizeof(m_callbackType);
+			memcpy(buffer, &m_updateType, sizeof(m_updateType));
+			buffer += sizeof(m_updateType);
 
 			break;
 		}
