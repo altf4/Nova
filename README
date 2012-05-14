@@ -2,20 +2,9 @@
 What is Nova?
 ===============================
 
-The Network Obfuscation and Virtualized Anti-reconnaissance System (Nova) is a
-software tool developed to detect network based reconnaissance efforts and to
-deny the attacker access to real network data while providing false information
-regarding the number and types of systems connected to the network.
+    Nova is a software application for preventing and detecting hostile Network Reconnaissance. It does this by first creating a large array of thin virtual machines on the target network. These VMs are created using an updated Honeyd to be extremely lightweight. They're not your typical VMs that you might see from VirtualBox or VMWare. They just appear to be real from the perspective of the network, and run network "services" which are just shell scripts.
 
-* Nova will limit the effects of cyber attacks by detecting the activity and
-* providing false data to the attacker
-
-* Nova will spoof network data to attackers thus revealing their intentions
-
-* Autonomous agents combine lightweight virtualization, attacker classification,
-* dynamic rerouting for asset protection, and diverse mechanisms for provision
-* of false information to attackers
-
+    Second, Nova uses machine learning algorithms to automatically detect and classify attempts at hostile reconnaissance, so there's no need to go searching manually through your honeypot's log files.
 
 ===============================
 The Installation Guide
