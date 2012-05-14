@@ -13,7 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Parent message class for GUI communication with Nova processes
+// Description : Parent message class for all message subtypes. Suitable for any
+//		communications over a stream socket
 //============================================================================
 
 #ifndef Message_H_
