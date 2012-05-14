@@ -14,6 +14,8 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Message objects sent to control Novad's operation
+//	Novad should reply either with a success message or an ack. For more complicated
+//	return messages, consider using RequestMessage instead.
 //============================================================================
 
 #ifndef CONTROLMESSAGE_H_
@@ -46,8 +48,6 @@ enum ControlType: char
 	CONTROL_CONNECT_REPLY,			//Reply from Novad with success
 	CONTROL_DISCONNECT_NOTICE,		//Notice to Novad that the UI is closing
 	CONTROL_DISCONNECT_ACK,			//Acknowledgment of the disconnect notice
-	CONTROL_PING,					//Request to Novad to see if it's alive
-	CONTROL_PONG,					//Reply from Novad to verify it's alive
 	CONTROL_INVALID
 };
 

@@ -317,17 +317,6 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			break;
 		}
-		case CONTROL_PING:
-		{
-			ControlMessage connectReply(CONTROL_PONG, DIRECTION_TO_NOVAD);
-			Message::WriteMessage(&connectReply, socketFD);
-
-			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
-			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
-			//	"Got a CONTROL_PING, sent a PONG.");
-
-			break;
-		}
 		default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message","Got an unexpected ControlMessage type");
@@ -391,7 +380,6 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			Message::WriteMessage(&reply, socketFD);
 			break;
 		}
-
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
@@ -401,7 +389,6 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 			break;
 		}
-
 		case REQUEST_UPTIME:
 		{
 			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
@@ -410,7 +397,17 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 			break;
 		}
+		case REQUEST_PING:
+		{
+			RequestMessage connectReply(REQUEST_PONG, DIRECTION_TO_NOVAD);
+			Message::WriteMessage(&connectReply, socketFD);
 
+			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
+			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
+			//	"Got a CONTROL_PING, sent a PONG.");
+
+			break;
+		}
 		default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");

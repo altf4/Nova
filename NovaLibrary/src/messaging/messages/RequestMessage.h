@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Requests from the GUI to Novad to get current state information
+// Description : Requests from the UI to Novad to get current state information
 //============================================================================
 
 #ifndef RequestMessage_H_
@@ -40,7 +40,10 @@ enum RequestType: char
 
 	// Request for the uptime of novad
 	REQUEST_UPTIME,
-	REQUEST_UPTIME_REPLY
+	REQUEST_UPTIME_REPLY,
+
+	REQUEST_PING,					//Request to Novad to see if it's alive
+	REQUEST_PONG					//Reply from Novad to verify it's alive
 };
 
 enum SuspectListType : char

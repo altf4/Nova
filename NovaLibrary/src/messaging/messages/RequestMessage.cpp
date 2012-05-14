@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Requests from the GUI to Novad to get current state information
+// Description : Requests from the UI to Novad to get current state information
 //============================================================================
 
 #include <string.h>
@@ -186,6 +186,34 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 			break;
 		}
+		case REQUEST_PING:
+		{
+			//Uses: 1) UI_Message Header
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			break;
+		}
+		case REQUEST_PONG:
+		{
+			//Uses: 1) UI_Message Header
+			//		2) ControlMessage Type
+
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			break;
+		}
 
 
 		default:
@@ -349,6 +377,36 @@ char *RequestMessage::Serialize(uint32_t *length)
 			// Serialize the uptime
 			memcpy(buffer, &m_uptime, sizeof(m_uptime));
 			buffer += sizeof(m_uptime );
+
+			break;
+		}
+		case REQUEST_PING:
+		{
+			//Uses: 1) UI_Message Header
+			//		2) ControlMessage Type
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			SerializeHeader(&buffer);
+			//Put the Control Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
+
+			break;
+		}
+		case REQUEST_PONG:
+		{
+			//Uses: 1) UI_Message Header
+			//		2) ControlMessage Type
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			SerializeHeader(&buffer);
+			//Put the Control Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
 
 			break;
 		}

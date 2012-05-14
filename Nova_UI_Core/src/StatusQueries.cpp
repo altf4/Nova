@@ -47,7 +47,7 @@ bool IsNovadUp(bool tryToConnect)
 
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
-	ControlMessage ping(CONTROL_PING, DIRECTION_TO_NOVAD);
+	RequestMessage ping(REQUEST_PING, DIRECTION_TO_NOVAD);
 	if(!Message::WriteMessage(&ping, IPCSocketFD) )
 	{
 		//There was an error in sending the message
@@ -77,15 +77,15 @@ bool IsNovadUp(bool tryToConnect)
 		delete error;
 		return false;
 	}
-	if(reply->m_messageType != CONTROL_MESSAGE )
+	if(reply->m_messageType != REQUEST_MESSAGE )
 	{
 		//Received the wrong kind of message
 		delete reply;
 		return false;
 	}
 
-	ControlMessage *pong = (ControlMessage*)reply;
-	if(pong->m_controlType != CONTROL_PONG)
+	RequestMessage *pong = (RequestMessage*)reply;
+	if(pong->m_requestType != REQUEST_PONG)
 	{
 		//Received the wrong kind of control message
 		delete pong;
