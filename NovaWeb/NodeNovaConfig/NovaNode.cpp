@@ -73,7 +73,6 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 				break;
 
 			case CALLBACK_ALL_SUSPECTS_CLEARED:
-				LOG(CRITICAL, "HandleAllSuspectsCleared being called", "");
 				HandleAllSuspectsCleared();
 				break;
 
@@ -93,8 +92,6 @@ int NovaNode::AfterNovaCallbackHandling(eio_req*)
 
 void NovaNode::HandleNewSuspect(Suspect* suspect)
 {
-	LOG(DEBUG, "Novad informed us of new suspect", "");
-
 	if (m_suspects.count(suspect->GetIpAddress()) == 0)
 	{
 		delete m_suspects[suspect->GetIpAddress()];
@@ -111,8 +108,6 @@ void NovaNode::HandleNewSuspect(Suspect* suspect)
 
 void NovaNode::HandleAllSuspectsCleared()
 {
-	LOG(CRITICAL, "HandleAllSuspectsCleared called", "");
-
 	for (map<in_addr_t, Suspect*>::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
 	{
 		delete ((*it).second);
@@ -130,7 +125,6 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 {
 	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
-	LOG(DEBUG,"Invoking new suspect callback","");
 	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
 	m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
 	return 0;
@@ -139,7 +133,6 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 int NovaNode::HandleAllClearedOnV8Thread(eio_req*)
 {
 	HandleScope scope;
-	LOG(DEBUG,"Invoking AllSuspectsCleared callback","");
 	m_SuspectsClearedCallback->Call(m_SuspectsClearedCallback, 0, NULL);
 	return 0;
 }
