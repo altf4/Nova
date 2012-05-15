@@ -240,41 +240,8 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				LOG(DEBUG, "Cleared all suspects due to UI request",
 						"Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.");
 
-				//TODO: Do this in a new thread?
-				//Notify all of the UIs
-				vector<int> sockets = MessageManager::Instance().GetSocketList();
-				for(uint i = 0; i < sockets.size(); ++i)
-				{
-					//Don't send an update to the UI that gave us the request
-					if(sockets[i] == socketFD)
-					{
-						continue;
-					}
-
-					UpdateMessage update(UPDATE_ALL_SUSPECTS_CLEARED, DIRECTION_TO_UI);
-					if(!Message::WriteMessage(&update, sockets[i]))
-					{
-						LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
-						continue;
-					}
-
-					Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
-					if(suspectReply->m_messageType != UPDATE_MESSAGE)
-					{
-						delete suspectReply;
-						LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
-						continue;
-					}
-					UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
-					if(suspectCallback->m_updateType != UPDATE_ALL_SUSPECTS_CLEARED_ACK)
-					{
-						delete suspectCallback;
-						LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
-						continue;
-					}
-					delete suspectCallback;
-				}
-
+				UpdateMessage *updateMessage = new UpdateMessage(UPDATE_ALL_SUSPECTS_CLEARED, DIRECTION_TO_UI);
+				NotifyUIs(updateMessage, UPDATE_ALL_SUSPECTS_CLEARED_ACK, socketFD);
 			}
 
 			break;
@@ -296,6 +263,11 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			LOG(DEBUG, "Cleared a suspect due to UI request",
 					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+".");
+
+			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
+			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, socketFD);
+
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
@@ -484,6 +456,77 @@ void SendSuspectToUIs(Suspect *suspect)
 		delete suspectCallback;
 		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
 	}
+}
+
+void NotifyUIs(UpdateMessage *updateMessage, enum UpdateType ackType, int socketFD_sender)
+{
+	if(updateMessage == NULL)
+	{
+		return;
+	}
+
+	struct UI_NotificationPackage *args = new UI_NotificationPackage();
+	args->m_updateMessage = updateMessage;
+	args->m_ackType = ackType;
+	args->m_socketFD_sender = socketFD_sender;
+
+	pthread_t notifyThread;
+	int errorCode = pthread_create(&notifyThread, NULL, NotifyUIsHelper, args);
+	if(errorCode != 0 )
+	{
+		if(errorCode == EAGAIN)
+		{
+			LOG(WARNING, "pthread error: Could not make a new thread!", "pthread errno: EAGAIN. PTHREAD_THREADS_MAX would have been exceeded or "
+					"not enough system resources.");
+		}
+		if(errorCode == EPERM)
+		{
+			LOG(WARNING, "pthread error: Insufficient permissions", "pthread errno: EPERM. Insufficient permissions");
+		}
+	}
+	pthread_detach(notifyThread);
+}
+
+void *NotifyUIsHelper(void *ptr)
+{
+	struct UI_NotificationPackage *arguments = (struct UI_NotificationPackage*)ptr;
+
+	//Notify all of the UIs
+	vector<int> sockets = MessageManager::Instance().GetSocketList();
+	for(uint i = 0; i < sockets.size(); ++i)
+	{
+		//Don't send an update to the UI that gave us the request
+		if(sockets[i] == arguments->m_socketFD_sender)
+		{
+			continue;
+		}
+
+		if(!Message::WriteMessage(arguments->m_updateMessage, sockets[i]))
+		{
+			LOG(NOTICE, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
+			continue;
+		}
+
+		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		if(suspectReply->m_messageType != UPDATE_MESSAGE)
+		{
+			delete suspectReply;
+			LOG(NOTICE, "Failed to send message to UI", "Got the wrong message type in response after sending a Clear All Suspects Notify");
+			continue;
+		}
+		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
+		if(suspectCallback->m_updateType != arguments->m_ackType)
+		{
+			delete suspectCallback;
+			LOG(NOTICE, "Failed to send message to UI", "Got the wrong UpdateMessage subtype in response after sending a Clear All Suspects Notify");
+			continue;
+		}
+		delete suspectCallback;
+	}
+
+	delete arguments->m_updateMessage;
+	delete arguments;
+	return NULL;
 }
 
 }

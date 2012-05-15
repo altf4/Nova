@@ -29,12 +29,14 @@ enum CallbackChangeType: char
 	CALLBACK_HUNG_UP,				//Novad hung up on us
 	CALLBACK_NEW_SUSPECT,			//Received a new suspect from Novad
 	CALLBACK_ALL_SUSPECTS_CLEARED,	//Another UI cleared the suspects list
+	CALLBACK_SUSPECT_CLEARED,		//A single specified suspect was cleared
 };
 
 struct CallbackChange
 {
-	enum CallbackChangeType type;
-	Nova::Suspect *suspect;		//Used in type: CALLBACK_NEW_SUSPECT
+	enum CallbackChangeType m_type;
+	Nova::Suspect *m_suspect;			//Used in type: CALLBACK_NEW_SUSPECT
+	in_addr_t m_suspectIP;				//Used in CALLBACK_SUSPECT_CLEARED
 };
 
 namespace Nova
