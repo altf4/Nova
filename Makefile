@@ -4,20 +4,24 @@ all: release
 	
 
 #Release Target
-release: 
+novad-release:
 	$(MAKE) -C NovaLibrary/Release
 	$(MAKE) -C Nova_UI_Core/Release
 	$(MAKE) -C Novad/Release
 	$(MAKE) -C NovaCLI/Release
+
+release: novad-release
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
 	
-#Debug target
-debug:
+novad-debug:
 	$(MAKE) -C NovaLibrary/Debug
 	$(MAKE) -C Nova_UI_Core/Debug
 	$(MAKE) -C Novad/Debug
 	$(MAKE) -C NovaCLI/Debug
+
+#Debug target
+debug: novad-debug
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 	
@@ -76,6 +80,7 @@ install: install-release
 
 #Requires root
 install-release: install-data install-docs
+
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
@@ -87,6 +92,7 @@ install-release: install-data install-docs
 
 #requires root
 install-debug: install-data install-docs
+
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
@@ -113,13 +119,19 @@ install-data:
 	cp -fup  Installer/Write/nova_mailer $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
-	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
+	#Install permissions
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# Copy the bash completion files
 	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
+
+install-pcap-debug:
+	#debug sudoers file that allows sudo gdb to pcap without password prompt
+	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	install Installer/Read/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
 
 install-docs:
 	# TODO: Combine man pages
@@ -143,6 +155,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
+	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf

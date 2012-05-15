@@ -39,7 +39,7 @@ namespace Nova
 // may not need this, trying to determine if this is a good way to
 // tell the class how to allocate service use or if using the enum
 // below would be better
-enum Services {SYSLOG, LIBNOTIFY, EMAIL};
+enum Services {SYSLOG = 0, LIBNOTIFY, EMAIL};
 // enum for NovaMessaging to use. May have to switch around the order to
 // make newer scheme make sense
 enum Levels {DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
@@ -91,7 +91,7 @@ public:
 	//               level or lower. A '0' indicates clear previous range modifiers. Thus, if you're
 	//               just wanting to change the level, and not the range modifier, you have to put the
 	//               range modifier that's present in the NOVAConfig.txt file as the argument.
-	void SetUserLogPreferences(Nova::Services services, Nova::Levels messageLevel, char upDown);
+	void SetUserLogPreferences(Nova::Services services, Nova::Levels messageLevel, char upDown = '0');
 
 	//This will clear the emails file and place the argument vector's strings
 	// into it as the emails content.

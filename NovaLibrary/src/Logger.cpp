@@ -187,7 +187,7 @@ namespace Nova
 		return DEBUG;
 	}
 
-	void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels messageTypeLevel, char upDown = '0')
+	void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels messageTypeLevel, char upDown)
 	{
 		char * tokens;
 		char * parse;
@@ -329,7 +329,7 @@ namespace Nova
 	string Logger::getBitmask(Nova::Levels level)
 	{
 		string mask = "";
-		char upDown;
+		char upDown = '0';
 
 		for(uint16_t i = 0; i < m_messageInfo.m_service_preferences.size(); i++)
 		{
@@ -339,61 +339,60 @@ namespace Nova
 			{
 				if(m_messageInfo.m_service_preferences[i].first.second == level)
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else if(m_messageInfo.m_service_preferences[i].first.second < level && upDown == '+')
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else if(m_messageInfo.m_service_preferences[i].first.second > level && upDown == '-')
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else
 				{
-					mask += "0";
+					mask.append("0");
 				}
 			}
 			else if(m_messageInfo.m_service_preferences[i].first.first == LIBNOTIFY)
 			{
 				if(m_messageInfo.m_service_preferences[i].first.second == level)
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else if(m_messageInfo.m_service_preferences[i].first.second < level && upDown == '+')
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else if(m_messageInfo.m_service_preferences[i].first.second > level && upDown == '-')
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else
 				{
-					mask += "0";
+					mask.append("0");
 				}
 			}
 			else if(m_messageInfo.m_service_preferences[i].first.first == EMAIL)
 			{
 				if(m_messageInfo.m_service_preferences[i].first.second == level)
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else if(m_messageInfo.m_service_preferences[i].first.second < level && upDown == '+')
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else if(m_messageInfo.m_service_preferences[i].first.second > level && upDown == '-')
 				{
-					mask += "1";
+					mask.append("1");
 				}
 				else
 				{
-					mask += "0";
+					mask.append("0");
 				}
 			}
 		}
-
 		return mask;
 	}
 

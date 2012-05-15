@@ -53,7 +53,7 @@ MessageManager &MessageManager::Instance()
 	return *MessageManager::m_instance;
 }
 
-UI_Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection direction, int timeout)
+Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection direction, int timeout)
 {
 	MessageQueue *queue;
 
@@ -69,7 +69,7 @@ UI_Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection dire
 		}
 	}
 
-	UI_Message *message = queue->PopMessage(direction, timeout);
+	Message *message = queue->PopMessage(direction, timeout);
 	if(message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
@@ -150,11 +150,12 @@ bool MessageManager::RegisterCallback(int socketFD)
 			//Destructor here is a blocking call. So we call that before locking the queues mutex
 			{
 				//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
-				Lock protocolLock(UseSocket(socketFD));
+				Lock protocolLock = UseSocket(socketFD);
 				delete queue;
+
+				Lock lock(&m_queuesLock);
+				m_queues.erase(socketFD);
 			}
-			Lock lock(&m_queuesLock);
-			m_queues.erase(socketFD);
 		}
 		return isQueueAlive;
 	}

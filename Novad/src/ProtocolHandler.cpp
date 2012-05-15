@@ -21,7 +21,7 @@
 #include "Logger.h"
 #include "Control.h"
 #include "Novad.h"
-#include "messaging/messages/CallbackMessage.h"
+#include "messaging/messages/UpdateMessage.h"
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/RequestMessage.h"
 #include "messaging/messages/ErrorMessage.h"
@@ -136,11 +136,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 			continue;
 		}
 
-		//TODO: Is this actually necessary? Might not be
-		//Claim the socket's mutex, so another protocol doesn't get mixed up in between
-		Lock lock = MessageManager::Instance().UseSocket(controlSocket);
-
-		UI_Message *message = UI_Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+		Message *message = Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
@@ -215,7 +211,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			ControlMessage exitReply(CONTROL_EXIT_REPLY, DIRECTION_TO_NOVAD);
 			exitReply.m_success = true;
 
-			UI_Message::WriteMessage(&exitReply, socketFD);
+			Message::WriteMessage(&exitReply, socketFD);
 
 			LOG(NOTICE, "Quitting: Got an exit request from the UI. Goodbye!",
 					"Got a CONTROL_EXIT_REQUEST, quitting.");
@@ -225,8 +221,6 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_CLEAR_ALL_REQUEST:
 		{
-			//TODO: Replace with new suspect table class
-
 			suspects.EraseAllSuspects();
 			suspectsSinceLastSave.EraseAllSuspects();
 			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
@@ -239,12 +233,15 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY, DIRECTION_TO_NOVAD);
 			clearAllSuspectsReply.m_success = successResult;
-			UI_Message::WriteMessage(&clearAllSuspectsReply, socketFD);
+			Message::WriteMessage(&clearAllSuspectsReply, socketFD);
 
 			if(successResult)
 			{
 				LOG(DEBUG, "Cleared all suspects due to UI request",
 						"Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.");
+
+				UpdateMessage *updateMessage = new UpdateMessage(UPDATE_ALL_SUSPECTS_CLEARED, DIRECTION_TO_UI);
+				NotifyUIs(updateMessage, UPDATE_ALL_SUSPECTS_CLEARED_ACK, socketFD);
 			}
 
 			break;
@@ -259,13 +256,18 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			//TODO: Should check for errors here and return result
 			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
 			clearSuspectReply.m_success = true;
-			UI_Message::WriteMessage(&clearSuspectReply, socketFD);
+			Message::WriteMessage(&clearSuspectReply, socketFD);
 
 			struct in_addr suspectAddress;
 			suspectAddress.s_addr = controlMessage.m_suspectAddress;
 
 			LOG(DEBUG, "Cleared a suspect due to UI request",
 					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+".");
+
+			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
+			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, socketFD);
+
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
@@ -285,7 +287,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY, DIRECTION_TO_NOVAD);
 			saveSuspectsReply.m_success = true;
-			UI_Message::WriteMessage(&saveSuspectsReply, socketFD);
+			Message::WriteMessage(&saveSuspectsReply, socketFD);
 
 			LOG(DEBUG, "Saved suspects to file due to UI request",
 				"Got a CONTROL_SAVE_SUSPECTS_REQUEST, saved all suspects.");
@@ -297,7 +299,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY, DIRECTION_TO_NOVAD);
 			reclassifyAllReply.m_success = true;
-			UI_Message::WriteMessage(&reclassifyAllReply, socketFD);
+			Message::WriteMessage(&reclassifyAllReply, socketFD);
 
 			LOG(DEBUG, "Reclassified all suspects due to UI request",
 				"Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.");
@@ -307,28 +309,17 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			ControlMessage connectReply(CONTROL_CONNECT_REPLY, DIRECTION_TO_NOVAD);
 			connectReply.m_success = true;
-			UI_Message::WriteMessage(&connectReply, socketFD);
+			Message::WriteMessage(&connectReply, socketFD);
 			break;
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
 			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK, DIRECTION_TO_NOVAD);
-			UI_Message::WriteMessage(&disconnectReply, socketFD);
+			Message::WriteMessage(&disconnectReply, socketFD);
 
 			MessageManager::Instance().CloseSocket(socketFD);
 
 			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
-
-			break;
-		}
-		case CONTROL_PING:
-		{
-			ControlMessage connectReply(CONTROL_PONG, DIRECTION_TO_NOVAD);
-			UI_Message::WriteMessage(&connectReply, socketFD);
-
-			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
-			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
-			//	"Got a CONTROL_PING, sent a PONG.");
 
 			break;
 		}
@@ -392,29 +383,37 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			}
 
 
-			UI_Message::WriteMessage(&reply, socketFD);
+			Message::WriteMessage(&reply, socketFD);
 			break;
 		}
-
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
 			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
 			reply.m_suspect = &tempSuspect;
-			UI_Message::WriteMessage(&reply, socketFD);
+			Message::WriteMessage(&reply, socketFD);
 
 			break;
 		}
-
 		case REQUEST_UPTIME:
 		{
 			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_uptime = time(NULL) - startTime;
-			UI_Message::WriteMessage(&reply, socketFD);
+			Message::WriteMessage(&reply, socketFD);
 
 			break;
 		}
+		case REQUEST_PING:
+		{
+			RequestMessage connectReply(REQUEST_PONG, DIRECTION_TO_NOVAD);
+			Message::WriteMessage(&connectReply, socketFD);
 
+			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
+			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
+			//	"Got a CONTROL_PING, sent a PONG.");
+
+			break;
+		}
 		default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
@@ -432,23 +431,23 @@ void SendSuspectToUIs(Suspect *suspect)
 	{
 		Lock lock = MessageManager::Instance().UseSocket(sockets[i]);
 
-		CallbackMessage suspectUpdate(CALLBACK_SUSPECT_UDPATE, DIRECTION_TO_UI);
+		UpdateMessage suspectUpdate(UPDATE_SUSPECT, DIRECTION_TO_UI);
 		suspectUpdate.m_suspect = suspect;
-		if(!UI_Message::WriteMessage(&suspectUpdate, sockets[i]))
+		if(!Message::WriteMessage(&suspectUpdate, sockets[i]))
 		{
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
 			continue;
 		}
 
-		UI_Message *suspectReply = UI_Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
-		if(suspectReply->m_messageType != CALLBACK_MESSAGE)
+		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			delete suspectReply;
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
 			continue;
 		}
-		CallbackMessage *suspectCallback = (CallbackMessage*)suspectReply;
-		if(suspectCallback->m_callbackType != CALLBACK_SUSPECT_UDPATE_ACK)
+		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
+		if(suspectCallback->m_updateType != UPDATE_SUSPECT_ACK)
 		{
 			delete suspectCallback;
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
@@ -457,6 +456,77 @@ void SendSuspectToUIs(Suspect *suspect)
 		delete suspectCallback;
 		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
 	}
+}
+
+void NotifyUIs(UpdateMessage *updateMessage, enum UpdateType ackType, int socketFD_sender)
+{
+	if(updateMessage == NULL)
+	{
+		return;
+	}
+
+	struct UI_NotificationPackage *args = new UI_NotificationPackage();
+	args->m_updateMessage = updateMessage;
+	args->m_ackType = ackType;
+	args->m_socketFD_sender = socketFD_sender;
+
+	pthread_t notifyThread;
+	int errorCode = pthread_create(&notifyThread, NULL, NotifyUIsHelper, args);
+	if(errorCode != 0 )
+	{
+		if(errorCode == EAGAIN)
+		{
+			LOG(WARNING, "pthread error: Could not make a new thread!", "pthread errno: EAGAIN. PTHREAD_THREADS_MAX would have been exceeded or "
+					"not enough system resources.");
+		}
+		if(errorCode == EPERM)
+		{
+			LOG(WARNING, "pthread error: Insufficient permissions", "pthread errno: EPERM. Insufficient permissions");
+		}
+	}
+	pthread_detach(notifyThread);
+}
+
+void *NotifyUIsHelper(void *ptr)
+{
+	struct UI_NotificationPackage *arguments = (struct UI_NotificationPackage*)ptr;
+
+	//Notify all of the UIs
+	vector<int> sockets = MessageManager::Instance().GetSocketList();
+	for(uint i = 0; i < sockets.size(); ++i)
+	{
+		//Don't send an update to the UI that gave us the request
+		if(sockets[i] == arguments->m_socketFD_sender)
+		{
+			continue;
+		}
+
+		if(!Message::WriteMessage(arguments->m_updateMessage, sockets[i]))
+		{
+			LOG(NOTICE, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
+			continue;
+		}
+
+		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		if(suspectReply->m_messageType != UPDATE_MESSAGE)
+		{
+			delete suspectReply;
+			LOG(NOTICE, "Failed to send message to UI", "Got the wrong message type in response after sending a Clear All Suspects Notify");
+			continue;
+		}
+		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
+		if(suspectCallback->m_updateType != arguments->m_ackType)
+		{
+			delete suspectCallback;
+			LOG(NOTICE, "Failed to send message to UI", "Got the wrong UpdateMessage subtype in response after sending a Clear All Suspects Notify");
+			continue;
+		}
+		delete suspectCallback;
+	}
+
+	delete arguments->m_updateMessage;
+	delete arguments;
+	return NULL;
 }
 
 }

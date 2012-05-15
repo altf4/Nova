@@ -18,8 +18,8 @@
 //============================================================================
 
 #include "CallbackHandler.h"
-#include "messaging/messages/UI_Message.h"
-#include "messaging/messages/CallbackMessage.h"
+#include "messaging/messages/Message.h"
+#include "messaging/messages/UpdateMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/MessageManager.h"
 #include "Lock.h"
@@ -31,48 +31,68 @@ extern int IPCSocketFD;
 struct CallbackChange Nova::ProcessCallbackMessage()
 {
 	struct CallbackChange change;
-	change.type = CALLBACK_ERROR;
+	change.m_type = CALLBACK_ERROR;
 
 	//Wait for a callback to occur
 	//	If it comes back false, then that means the socket is dead
 	if(!MessageManager::Instance().RegisterCallback(IPCSocketFD))
 	{
-		change.type = CALLBACK_HUNG_UP;
+		change.m_type = CALLBACK_HUNG_UP;
 		return change;
 	}
 
-	//Claim the socket's mutex, so another protocol doesn't get mixed up in between
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
-
-	UI_Message *message = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
+	Message *message = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
-			change.type = CALLBACK_HUNG_UP;
+			change.m_type = CALLBACK_HUNG_UP;
 		}
 		//TODO: Do we care about the other error message types here?
 
 		delete errorMessage;
 		return change;
 	}
-	if( message->m_messageType != CALLBACK_MESSAGE)
+	if( message->m_messageType != UPDATE_MESSAGE)
 	{
 		delete message;
 		return change;
 	}
-	CallbackMessage *callbackMessage = (CallbackMessage*)message;
+	UpdateMessage *updateMessage = (UpdateMessage*)message;
 
-	switch(callbackMessage->m_callbackType)
+	switch(updateMessage->m_updateType)
 	{
-		case CALLBACK_SUSPECT_UDPATE:
+		case UPDATE_SUSPECT:
 		{
-			change.type = CALLBACK_NEW_SUSPECT;
-			change.suspect = callbackMessage->m_suspect;
+			change.m_type = CALLBACK_NEW_SUSPECT;
+			change.m_suspect = updateMessage->m_suspect;
 
-			CallbackMessage callbackAck(CALLBACK_SUSPECT_UDPATE_ACK, DIRECTION_TO_UI);
-			if(!UI_Message::WriteMessage(&callbackAck, IPCSocketFD))
+			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK, DIRECTION_TO_UI);
+			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
+			{
+				//TODO: log this? We failed to send the ack
+			}
+			break;
+		}
+		case UPDATE_ALL_SUSPECTS_CLEARED:
+		{
+			change.m_type = CALLBACK_ALL_SUSPECTS_CLEARED;
+
+			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK, DIRECTION_TO_UI);
+			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
+			{
+				//TODO: log this? We failed to send the ack
+			}
+			break;
+		}
+		case UPDATE_SUSPECT_CLEARED:
+		{
+			change.m_type = CALLBACK_SUSPECT_CLEARED;
+			change.m_suspectIP = updateMessage->m_IPAddress;
+
+			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK, DIRECTION_TO_UI);
+			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}
@@ -83,6 +103,6 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			break;
 		}
 	}
-	delete callbackMessage;
+	delete updateMessage;
 	return change;
 }

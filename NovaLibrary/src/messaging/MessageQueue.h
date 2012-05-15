@@ -20,7 +20,7 @@
 #ifndef MESSAGEQUEUE_H_
 #define MESSAGEQUEUE_H_
 
-#include "messages/UI_Message.h"
+#include "messages/Message.h"
 
 #include "pthread.h"
 #include <queue>
@@ -45,7 +45,7 @@ public:
 	//Pop off a message from the specified direction
 	//	ProtocolDirection - Which direction is PROTOCOL to which this message belongs initiated
 	//	timeout - How long (in seconds) to wait for the message before giving up
-	// Returns - A pointer to a valid UI_Message object. Never NULL. Caller is responsible for life cycle of this message
+	// Returns - A pointer to a valid Message object. Never NULL. Caller is responsible for life cycle of this message
 	//		On error, this function returns an ErrorMessage with the details of the error
 	//		IE: Returns ErrorMessage of type ERROR_TIMEOUT if timeout has been exceeded
 	//	NOTE: You must have the lock on the socket by calling UseSocket() prior to calling this
@@ -54,7 +54,7 @@ public:
 	//	NOTE: Will automatically call CloseSocket() for you if the message returned happens to be an ERROR_MESSAGE
 	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
-	UI_Message *PopMessage(enum ProtocolDirection direction, int timeout);
+	Message *PopMessage(enum ProtocolDirection direction, int timeout);
 
 	//Blocks until a callback message has been received
 	//	returns true if a callback message is ready and waiting for us
@@ -68,17 +68,19 @@ private:
 	static void *StaticThreadHelper(void *ptr);
 
 	//Pushes a new message onto the appropriate message queue
-	//	message - The UI_Message to push
+	//	message - The Message to push
 	//	NOTE: tThe direction of the message is read directly from the message itself
-	void PushMessage(UI_Message *message);
+	void PushMessage(Message *message);
 
 	//Thread which continually loops, doing read() calls on the underlying socket and pushing messages read onto the queues
 	//	Thread quits as soon as read fails (returns <= 0). This can be made to happen through a CloseSocket() call from MessageManager
 	void *ProducerThread();
 
-	std::queue<UI_Message*> m_forwardQueue;
-	std::queue<UI_Message*> m_callbackQueue;
-	bool m_isShutDown;							//TODO: Synchronize this. Needs to have a mutex around access to it
+	std::queue<Message*> m_forwardQueue;
+	std::queue<Message*> m_callbackQueue;
+
+	bool m_isShutDown;							//Marks the message queue as having been shut down. Just waiting to be destroyed properly
+	pthread_mutex_t m_isShutdownMutex;			//Mutex for threadsafe access to the variable
 
 	enum ProtocolDirection m_forwardDirection;
 
@@ -91,7 +93,6 @@ private:
 
 	pthread_mutex_t m_forwardQueueMutex;		//Protects access to the forward message queue
 	pthread_mutex_t m_callbackQueueMutex;		//Protects access to the callback message queue
-	pthread_mutex_t m_popMutex;					//Separate mutex for the pop function. Only one can be popping
 	pthread_mutex_t m_callbackRegisterMutex;	//Allows only one function to be waiting for callback
 	pthread_mutex_t m_callbackCondMutex;		//Protects access to m_callbackDoWakeup
 };

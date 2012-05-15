@@ -19,7 +19,7 @@
 #ifndef ERRORMESSAGE_H_
 #define ERRORMESSAGE_H_
 
-#include "UI_Message.h"
+#include "Message.h"
 
 #define ERROR_MSG_MIN_SIZE 2
 
@@ -40,7 +40,7 @@ enum ErrorType: char
 namespace Nova
 {
 
-class ErrorMessage : public UI_Message
+class ErrorMessage : public Message
 {
 
 public:

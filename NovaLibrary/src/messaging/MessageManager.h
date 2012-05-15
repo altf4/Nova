@@ -19,7 +19,7 @@
 #ifndef MESSAGEMANAGER_H_
 #define MESSAGEMANAGER_H_
 
-#include "messages/UI_Message.h"
+#include "messages/Message.h"
 #include "MessageQueue.h"
 #include "../Lock.h"
 
@@ -45,7 +45,7 @@ public:
 	//	socketFD - The file descriptor of the socket to grab from
 	//	ProtocolDirection - Which direction is PROTOCOL to which this message belongs initiated
 	//	timeout - How long (in seconds) to wait for the message before giving up
-	// Returns - A pointer to a valid UI_Message object. Never NULL. Caller is responsible for life cycle of this message
+	// Returns - A pointer to a valid Message object. Never NULL. Caller is responsible for life cycle of this message
 	//		On error, this function returns an ErrorMessage with the details of the error
 	//		IE: Returns ErrorMessage of type ERROR_TIMEOUT if timeout has been exceeded
 	//	NOTE: You must have the lock on the socket by calling UseSocket() prior to calling this
@@ -54,7 +54,7 @@ public:
 	//	NOTE: Will automatically call CloseSocket() for you if the message returned happens to be an ERROR_MESSAGE
 	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
-	Nova::UI_Message *PopMessage(int socketFD, enum ProtocolDirection direction, int timeout);
+	Nova::Message *PopMessage(int socketFD, enum ProtocolDirection direction, int timeout);
 
 	//Initializes the socket and its underlying MessageQueues. Should be called prior to other socket operations on this socketFD
 	//	Failing to call StartSocket prior to use will cause you to get get ErrorMessges (but not crash)

@@ -68,16 +68,16 @@ public:
 	// Adds the Suspect pointed to in 'suspect' into the table using the source of the packet as the key;
 	// 		packet: copy of the packet you whish to create a suspect from
 	// Returns true on Success, and false if the suspect already exists
-	bool AddNewSuspect(Packet packet);
+	bool AddNewSuspect(const Packet& packet);
 
 	// If the table contains a suspect associated with 'key', then it adds 'packet' to it's evidence
 	//		key: IP address of the suspect as a uint value (host byte order)
 	//		packet: packet struct to be added into the suspect's list of evidence.
 	// Returns (true) if the call succeeds, (false) if the suspect could not be located
 	// Note: this is faster than Checking out a suspect adding the evidence and checking it in but is equivalent
-	bool AddEvidenceToSuspect(in_addr_t key, Packet packet);
+	bool AddEvidenceToSuspect(const in_addr_t& key, const Packet& packet);
 
-	bool UpdateSuspect(in_addr_t key);
+	bool ClassifySuspect(const in_addr_t& key);
 
 	void UpdateAllSuspects();
 
@@ -94,33 +94,33 @@ public:
 	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else
 	// and (1) if the Suspect is not checked out
 	// Note:  This function blocks until it can acquire a write lock on the suspect
-	SuspectTableRet CheckIn(in_addr_t key);
+	SuspectTableRet CheckIn(const in_addr_t& key);
 
 	// Copies out a suspect and marks the suspect so that it cannot be written or deleted
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns empty Suspect on failure.
 	// Note: A 'Checked Out' Suspect cannot be modified until is has been replaced by the suspect 'Checked In'
 	// 		However the suspect can continue to be read. It is similar to having a read lock.
-	Suspect CheckOut(in_addr_t key);
+	Suspect CheckOut(const in_addr_t& key);
 
 	// Lookup and get an Asynchronous copy of the Suspect
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns an empty suspect on failure
 	// Note: To modify or lock a suspect use CheckOut();
 	// Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
-	Suspect GetSuspect(in_addr_t key);
+	Suspect GetSuspect(const in_addr_t& key);
 
 	// Get a lightweight copy of the suspect using 'key' used only to query basic bools, IP address, and classification.
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns: if the call does not succeed returns an empty/invalid suspect (Classification == -1)
 	// 		otherwise it returns a shallow copy of the suspect.
 	// Note: The suspect returned has an empty feature set and evidence vector
-	Suspect GetSuspectStatus(in_addr_t key);
+	Suspect GetSuspectStatus(const in_addr_t& key);
 
 	//Erases a suspect from the table if it is not locked
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns (true) on success, (false) if the suspect does not exist (key is invalid)
-	bool Erase(in_addr_t key);
+	bool Erase(const in_addr_t& key);
 
 	// Clears the Suspect Table of all entries
 	// Note: Locks may still persist until all threads unlock or return from blocking on them.
@@ -171,7 +171,7 @@ public:
 	// Checks the validity of the key - public thread-safe version
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
-	bool IsValidKey(in_addr_t key);
+	bool IsValidKey(const in_addr_t& key);
 
 	bool IsEmptySuspect(Suspect * suspect);
 
@@ -196,26 +196,26 @@ private:
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	// *Note: Assumes you have already locked the table
-	bool IsValidKey_NonBlocking(in_addr_t key);
+	bool IsValidKey_NonBlocking(const in_addr_t& key);
 
 	//Used by threads about to block on a suspect
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Note: lock won't be deleted until the ref count is 0, but the Suspect can still be.
-	bool LockSuspect(in_addr_t key);
+	bool LockSuspect(const in_addr_t& key);
 
 	//Used by threads done blocking on a suspect
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns (true) if the Lock could be unlocked and still exists and
 	// (false) if the Suspect has been deleted or could not be unlocked.
 	// Note: automatically deletes the lock if the suspect has been deleted and the ref count is 0
-	bool UnlockSuspect(in_addr_t key);
+	bool UnlockSuspect(const in_addr_t& key);
 
 	//Used internally, Calls to this function check if ref_cnt is 0 and deleted == true
 	// if so then we remove the Suspect lock, this is done to prevent destroying a lock a thread is blocking on
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns (true) if the Lock doesn't exist or it was successfully removed
 	// false if threads are blocking on it or the Suspect has not been erased
-	bool CleanSuspectLock(in_addr_t key);
+	bool CleanSuspectLock(const in_addr_t& key);
 };
 
 }

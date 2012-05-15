@@ -34,10 +34,10 @@ namespace Nova
 MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection)
 {
 	pthread_mutex_init(&m_forwardQueueMutex, NULL);
-	pthread_mutex_init(&m_popMutex, NULL);
 	pthread_mutex_init(&m_callbackRegisterMutex, NULL);
 	pthread_mutex_init(&m_callbackCondMutex, NULL);
 	pthread_mutex_init(&m_callbackQueueMutex, NULL);
+	pthread_mutex_init(&m_isShutdownMutex, NULL);
 	pthread_cond_init(&m_readWakeupCondition, NULL);
 	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
@@ -79,17 +79,15 @@ MessageQueue::~MessageQueue()
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
 	pthread_mutex_destroy(&m_callbackCondMutex);
 	pthread_mutex_destroy(&m_callbackQueueMutex);
-	pthread_mutex_destroy(&m_popMutex);
+	pthread_mutex_destroy(&m_isShutdownMutex);
 	pthread_cond_destroy(&m_readWakeupCondition);
 	pthread_cond_destroy(&m_callbackWakeupCondition);
 }
 
 //blocking call
-UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
+Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 {
-	//Only one thread in this function at a time
-	Lock lockPop(&m_popMutex);
-	UI_Message* retMessage;
+	Message* retMessage;
 
 	//If indefinite read:
 	if(timeout == 0)
@@ -179,7 +177,7 @@ void *MessageQueue::StaticThreadHelper(void *ptr)
 	return reinterpret_cast<MessageQueue*>(ptr)->ProducerThread();
 }
 
-void MessageQueue::PushMessage(UI_Message *message)
+void MessageQueue::PushMessage(Message *message)
 {
 	//If this is a callback message (not the forward direction)
 	if(message->m_protocolDirection != m_forwardDirection)
@@ -214,16 +212,20 @@ bool MessageQueue::RegisterCallback()
 {
 	//Only one thread in this function at a time
 	Lock lock(&m_callbackRegisterMutex);
-	//Protection for the m_callbackDoWakeup bool
-	Lock condLock(&m_callbackCondMutex);
 
-	while(!m_callbackDoWakeup)
 	{
-		pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackCondMutex);
+		//Protection for the m_callbackDoWakeup bool
+		Lock condLock(&m_callbackCondMutex);
+		while(!m_callbackDoWakeup)
+		{
+			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackCondMutex);
+		}
+
+		m_callbackDoWakeup = false;
 	}
 
-	m_callbackDoWakeup = false;
 
+	Lock shutdownLock(&m_isShutdownMutex);
 	return !m_isShutDown;
 }
 
@@ -244,8 +246,11 @@ void *MessageQueue::ProducerThread()
 			if(bytesRead <= 0)
 			{
 				//The socket died on us!
-				//Mark the queue as closed, put an error message on the queue, and quit reading
-				m_isShutDown = true;
+				{
+					Lock shutdownLock(&m_isShutdownMutex);
+					//Mark the queue as closed, put an error message on the queue, and quit reading
+					m_isShutDown = true;
+				}
 				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
@@ -285,8 +290,11 @@ void *MessageQueue::ProducerThread()
 			if(bytesRead <= 0)
 			{
 				//The socket died on us!
-				//Mark the queue as closed, put an error message on the queue, and quit reading
-				m_isShutDown = true;
+				{
+					Lock shutdownLock(&m_isShutdownMutex);
+					//Mark the queue as closed, put an error message on the queue, and quit reading
+					m_isShutDown = true;
+				}
 				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
@@ -305,7 +313,7 @@ void *MessageQueue::ProducerThread()
 			continue;
 		}
 
-		PushMessage(UI_Message::Deserialize(buffer, length, m_forwardDirection));
+		PushMessage(Message::Deserialize(buffer, length, m_forwardDirection));
 		continue;
 	}
 
