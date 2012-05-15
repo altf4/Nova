@@ -800,7 +800,7 @@ void NovaGUI::ClearSuspectList()
 	pthread_rwlock_wrlock(&lock);
 	this->ui.suspectList->clear();
 	this->ui.hostileList->clear();
-	//Since clearing permenantly deletes the items we need to make sure the suspects point to null
+	//Since clearing permanently deletes the items we need to make sure the suspects point to null
 	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		it->second.item = NULL;
@@ -1340,13 +1340,22 @@ void NovaGUI::HideSuspect(in_addr_t addr)
 {
 	pthread_rwlock_wrlock(&lock);
 	m_editingSuspectList = true;
-	suspectItem * sItem = &SuspectTable[addr];
-	if(!sItem->item->isSelected())
+
+	if(!SuspectTable.keyExists(addr))
 	{
 		pthread_rwlock_unlock(&lock);
 		m_editingSuspectList = false;
 		return;
 	}
+
+	suspectItem *sItem = &SuspectTable[addr];
+	if(sItem == NULL)
+	{
+		pthread_rwlock_unlock(&lock);
+		m_editingSuspectList = false;
+		return;
+	}
+
 	ui.suspectList->removeItemWidget(sItem->item);
 	delete sItem->item;
 	sItem->item = NULL;
@@ -1395,7 +1404,7 @@ void *CallbackLoop(void *ptr)
 	while(true)
 	{
 		change = ProcessCallbackMessage();
-		switch(change.type)
+		switch(change.m_type)
 		{
 			case CALLBACK_ERROR:
 			{
@@ -1411,10 +1420,23 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_NEW_SUSPECT:
 			{
 				struct suspectItem suspectItem;
-				suspectItem.suspect = change.suspect;
+				suspectItem.suspect = change.m_suspect;
 				suspectItem.item = NULL;
 				suspectItem.mainItem = NULL;
 				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem, true);
+				break;
+			}
+			case CALLBACK_ALL_SUSPECTS_CLEARED:
+			{
+				((NovaGUI*)ptr)->ClearSuspectList();
+				break;
+			}
+			case CALLBACK_SUSPECT_CLEARED:
+			{
+				((NovaGUI*)ptr)->HideSuspect(change.m_suspectIP);
+				pthread_rwlock_wrlock(&lock);
+				SuspectTable.erase(change.m_suspectIP);
+				pthread_rwlock_unlock(&lock);
 				break;
 			}
 			default:

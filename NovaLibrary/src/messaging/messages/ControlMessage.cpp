@@ -14,6 +14,8 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Message objects sent to control Novad's operation
+//	Novad should reply either with a success message or an ack. For more complicated
+//	return messages, consider using RequestMessage instead.
 //============================================================================
 
 #include "ControlMessage.h"
@@ -287,34 +289,6 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 
 			break;
 		}
-		case CONTROL_PING:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			break;
-		}
-		case CONTROL_PONG:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			break;
-		}
 		case CONTROL_INVALID:
 		{
 			break;
@@ -560,36 +534,6 @@ char *ControlMessage::Serialize(uint32_t *length)
 			break;
 		}
 		case CONTROL_DISCONNECT_ACK:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer);
-			//Put the Control Message type in
-			memcpy(buffer, &m_controlType, sizeof(m_controlType));
-			buffer += sizeof(m_controlType);
-
-			break;
-		}
-		case CONTROL_PING:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer);
-			//Put the Control Message type in
-			memcpy(buffer, &m_controlType, sizeof(m_controlType));
-			buffer += sizeof(m_controlType);
-
-			break;
-		}
-		case CONTROL_PONG:
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type

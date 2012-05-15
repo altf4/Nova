@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : UI_Message.cpp
+// Name        : Message.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,14 +13,15 @@
 //   
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Parent message class for GUI communication with Nova processes
-//============================================================================/*
+// Description : Parent message class for all message subtypes. Suitable for any
+//		communications over a stream socket
+//============================================================================
 
-#include "CallbackMessage.h"
+#include "UpdateMessage.h"
 #include "ControlMessage.h"
 #include "RequestMessage.h"
 #include "ErrorMessage.h"
-#include "UI_Message.h"
+#include "Message.h"
 #include "../MessageManager.h"
 #include "../../Logger.h"
 
@@ -32,22 +33,22 @@
 using namespace std;
 using namespace Nova;
 
-UI_Message::UI_Message()
+Message::Message()
 {
 
 }
 
-UI_Message::~UI_Message()
+Message::~Message()
 {
 
 }
 
-UI_Message *UI_Message::ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout)
+Message *Message::ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout)
 {
 	return MessageManager::Instance().PopMessage(connectFD, direction, timeout);
 }
 
-bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
+bool Message::WriteMessage(Message *message, int connectFD)
 {
 	if (connectFD == -1)
 	{
@@ -100,7 +101,7 @@ bool UI_Message::WriteMessage(UI_Message *message, int connectFD)
 	return true;
 }
 
-bool UI_Message::DeserializeHeader(char **buffer)
+bool Message::DeserializeHeader(char **buffer)
 {
 	if(buffer == NULL)
 	{
@@ -125,7 +126,7 @@ bool UI_Message::DeserializeHeader(char **buffer)
 	return true;
 }
 
-void UI_Message::SerializeHeader(char **buffer)
+void Message::SerializeHeader(char **buffer)
 {
 	memcpy(*buffer, &m_messageType, sizeof(m_messageType));
 	*buffer += sizeof(m_messageType);
@@ -134,17 +135,17 @@ void UI_Message::SerializeHeader(char **buffer)
 	*buffer += sizeof(m_protocolDirection);
 }
 
-UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction)
+Message *Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction)
 {
 	if(length < MESSAGE_MIN_SIZE)
 	{
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE, direction);
 	}
 
-	enum UI_MessageType thisType;
+	enum MessageType thisType;
 	memcpy(&thisType, buffer, MESSAGE_MIN_SIZE);
 
-	UI_Message *message;
+	Message *message;
 	switch(thisType)
 	{
 		case CONTROL_MESSAGE:
@@ -152,9 +153,9 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length, enum Protocol
 			message = new ControlMessage(buffer, length);
 			break;
 		}
-		case CALLBACK_MESSAGE:
+		case UPDATE_MESSAGE:
 		{
-			message = new CallbackMessage(buffer, length);
+			message = new UpdateMessage(buffer, length);
 			break;
 		}
 		case REQUEST_MESSAGE:
@@ -181,7 +182,7 @@ UI_Message *UI_Message::Deserialize(char *buffer, uint32_t length, enum Protocol
 	return message;
 }
 
-char *UI_Message::Serialize(uint32_t *length)
+char *Message::Serialize(uint32_t *length)
 {
 	//Doesn't actually get called
 	return NULL;

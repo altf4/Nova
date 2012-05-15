@@ -53,7 +53,7 @@ MessageManager &MessageManager::Instance()
 	return *MessageManager::m_instance;
 }
 
-UI_Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection direction, int timeout)
+Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection direction, int timeout)
 {
 	MessageQueue *queue;
 
@@ -69,7 +69,7 @@ UI_Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection dire
 		}
 	}
 
-	UI_Message *message = queue->PopMessage(direction, timeout);
+	Message *message = queue->PopMessage(direction, timeout);
 	if(message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;

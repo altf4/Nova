@@ -75,6 +75,10 @@ block headerAdditions
       dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
     };
 
+    now.AllSuspectsCleared = function() {
+      suspectGrid.store.fetch({onComplete: clearSuspects});
+    }
+
     now.OnNewSuspect = function(suspect){
        if(!liveUpdate) {
          return;
@@ -93,15 +97,16 @@ block headerAdditions
 
     var clearSuspects = function(items, request){
       dojo.forEach(items, function(i) {
-        console.log("Deleted item " + i);
+        console.log("Deleted item " + i.GetInAddr);
         suspectGrid.store.deleteItem(i);
+        suspectStore.remove(i.GetInAddr);
       });
     };
 
 
     require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){ 
     dojo.addOnLoad(function(){
-      suspectStore = new dojo.store.Observable(new dojo.store.Memory());
+      suspectStore = new dojo.store.Memory();
       suspectStore.idProperty="GetInAddr";
       // Formatter for the classification
       function classificationFormatter(d) {

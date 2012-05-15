@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : UI_Message.h
+// Name        : Message.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,11 +13,12 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Parent message class for GUI communication with Nova processes
+// Description : Parent message class for all message subtypes. Suitable for any
+//		communications over a stream socket
 //============================================================================
 
-#ifndef UI_Message_H_
-#define UI_Message_H_
+#ifndef Message_H_
+#define Message_H_
 
 #include <stdlib.h>
 #include "stdint.h"
@@ -42,64 +43,64 @@ enum ProtocolDirection: char
 	DIRECTION_TO_NOVAD = 1
 };
 
-enum UI_MessageType: char
+enum MessageType: char
 {
 	CONTROL_MESSAGE = 0,
-	CALLBACK_MESSAGE,
+	UPDATE_MESSAGE,
 	REQUEST_MESSAGE,
 	ERROR_MESSAGE
 };
 
-class UI_Message
+class Message
 {
 public:
 
 	//Empty constructor
-	UI_Message();
-	virtual ~UI_Message();
+	Message();
+	virtual ~Message();
 
-	//Reads a UI_Message from the given socket
+	//Reads a Message from the given socket
 	//	NOTE: Blocking call, will wait until message appears
 	//	connectFD - A valid socket
 	//	timeout - Number of seconds to before returning a timeout error if no message received
-	// Returns - Pointer to newly allocated UI_Message object
+	// Returns - Pointer to newly allocated Message object
 	//				returns an ErrorMessage object on error. Will never return NULL.
 	//	NOTE: The caller must manually delete the returned object when finished with it
-	static UI_Message *ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout = 0);
+	static Message *ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout = 0);
 
-	//Writes a given UI_Message to the provided socket
+	//Writes a given Message to the provided socket
 	//	message - A pointer to the message object to send
 	//	connectFD - a valid socket to send the message to
 	// Returns - true on successfully sending the object, false on error
-	static bool WriteMessage(UI_Message *message, int connectFD);
+	static bool WriteMessage(Message *message, int connectFD);
 
-	//Creates a new UI_Message from a given buffer. Calls the appropriate child constructor
+	//Creates a new Message from a given buffer. Calls the appropriate child constructor
 	//	buffer - char pointer to a buffer in memory where the serialized message is at
 	//	length - length of the buffer
 	//	direction - protocol direction that we expect the message to be going. Used in error conditions when there is no valid message
-	// Returns - Pointer to newly allocated UI_Message object
+	// Returns - Pointer to newly allocated Message object
 	//				returns NULL on error
 	//	NOTE: The caller must manually delete the returned object when finished with it
-	static UI_Message *Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction);
+	static Message *Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction);
 
 	enum ProtocolDirection m_protocolDirection;
 
-	enum UI_MessageType m_messageType;
+	enum MessageType m_messageType;
 
 protected:
 
-	//Serializes the UI_Message object into a char array
+	//Serializes the Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
 	virtual char *Serialize(uint32_t *length);
 
-	//Deserialize just the UI_Message header, and advance the buffer input variable
+	//Deserialize just the Message header, and advance the buffer input variable
 	//	buffer: A pointer to the array of serialized bytes representing a message
 	//	returns - True if deserialize happened without error, false on error
 	bool DeserializeHeader(char **buffer);
 
-	//Serializes the UI_Message header into the given array
+	//Serializes the Message header into the given array
 	//	buffer: Pointer to the array where the serialized bytes will go
 	//	NOTE: Assumes there is space in *buffer for the header
 	void SerializeHeader(char **buffer);
@@ -113,4 +114,4 @@ protected:
 
 }
 
-#endif /* UI_Message_H_ */
+#endif /* Message_H_ */

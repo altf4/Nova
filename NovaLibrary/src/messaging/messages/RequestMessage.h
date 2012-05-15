@@ -13,13 +13,13 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Requests from the GUI to Novad to get current state information
+// Description : Requests from the UI to Novad to get current state information
 //============================================================================
 
 #ifndef RequestMessage_H_
 #define RequestMessage_H_
 
-#include "UI_Message.h"
+#include "Message.h"
 #include "../../Suspect.h"
 
 #include <vector>
@@ -40,7 +40,10 @@ enum RequestType: char
 
 	// Request for the uptime of novad
 	REQUEST_UPTIME,
-	REQUEST_UPTIME_REPLY
+	REQUEST_UPTIME_REPLY,
+
+	REQUEST_PING,					//Request to Novad to see if it's alive
+	REQUEST_PONG					//Reply from Novad to verify it's alive
 };
 
 enum SuspectListType : char
@@ -53,7 +56,7 @@ enum SuspectListType : char
 namespace Nova
 {
 
-class RequestMessage : public UI_Message
+class RequestMessage : public Message
 {
 
 public:
@@ -67,7 +70,7 @@ public:
 	//	On error, sets m_serializeError to true, on success sets it to false
 	RequestMessage(char *buffer, uint32_t length);
 
-	//Serializes the UI_Message object into a char array
+	//Serializes the Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use

@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "messaging/MessageManager.h"
-#include "messaging/messages/UI_Message.h"
+#include "messaging/messages/Message.h"
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "Commands.h"
@@ -57,14 +57,14 @@ bool StopNovad()
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
 	ControlMessage killRequest(CONTROL_EXIT_REQUEST, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&killRequest, IPCSocketFD) )
+	if(!Message::WriteMessage(&killRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -100,14 +100,14 @@ bool SaveAllSuspects(std::string file)
 	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST, DIRECTION_TO_NOVAD);
 	strcpy(saveRequest.m_filePath, file.c_str());
 
-	if(!UI_Message::WriteMessage(&saveRequest, IPCSocketFD) )
+	if(!Message::WriteMessage(&saveRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -138,14 +138,14 @@ bool ClearAllSuspects()
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
 	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&clearRequest, IPCSocketFD) )
+	if(!Message::WriteMessage(&clearRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -177,14 +177,14 @@ bool ClearSuspect(in_addr_t suspectAddress)
 
 	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST, DIRECTION_TO_NOVAD);
 	clearRequest.m_suspectAddress = suspectAddress;
-	if(!UI_Message::WriteMessage(&clearRequest, IPCSocketFD) )
+	if(!Message::WriteMessage(&clearRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -215,14 +215,14 @@ bool ReclassifyAllSuspects()
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
 	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST, DIRECTION_TO_NOVAD);
-	if(!UI_Message::WriteMessage(&reclassifyRequest, IPCSocketFD) )
+	if(!Message::WriteMessage(&reclassifyRequest, IPCSocketFD) )
 	{
 		//There was an error in sending the message
 		//TODO: Log this fact
 		return false;
 	}
 
-	UI_Message *reply = UI_Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");

@@ -85,9 +85,9 @@ MessageQueue::~MessageQueue()
 }
 
 //blocking call
-UI_Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
+Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 {
-	UI_Message* retMessage;
+	Message* retMessage;
 
 	//If indefinite read:
 	if(timeout == 0)
@@ -177,7 +177,7 @@ void *MessageQueue::StaticThreadHelper(void *ptr)
 	return reinterpret_cast<MessageQueue*>(ptr)->ProducerThread();
 }
 
-void MessageQueue::PushMessage(UI_Message *message)
+void MessageQueue::PushMessage(Message *message)
 {
 	//If this is a callback message (not the forward direction)
 	if(message->m_protocolDirection != m_forwardDirection)
@@ -313,7 +313,7 @@ void *MessageQueue::ProducerThread()
 			continue;
 		}
 
-		PushMessage(UI_Message::Deserialize(buffer, length, m_forwardDirection));
+		PushMessage(Message::Deserialize(buffer, length, m_forwardDirection));
 		continue;
 	}
 
