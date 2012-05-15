@@ -236,7 +236,7 @@ app.post('/configureNovaSave', function(req, res) {
 		}
 	}
 	
-	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configureNova'"}})	
+	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configNova'"}})	
 });
 
 // Functions to be called by clients
