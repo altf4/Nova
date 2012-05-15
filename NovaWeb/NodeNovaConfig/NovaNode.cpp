@@ -136,11 +136,10 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 	return 0;
 }
 
-int NovaNode::HandleAllClearedOnV8Thread(eio_req* req)
+int NovaNode::HandleAllClearedOnV8Thread(eio_req*)
 {
 	HandleScope scope;
 	LOG(DEBUG,"Invoking AllSuspectsCleared callback","");
-	Local<Value> argv[1];
 	m_SuspectsClearedCallback->Call(m_SuspectsClearedCallback, 0, NULL);
 	return 0;
 }
