@@ -33,9 +33,8 @@ block headerAdditions
     function errorMessageCallback(sucess, message) {
       if(sucess != true) {
         alert("Unable to complete operation due to error: " + message);
-      } else {
-        location.reload(true);
       }
+      location.reload(true);
     }
 
     function editSelectedItem() {

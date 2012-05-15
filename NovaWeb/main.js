@@ -292,7 +292,7 @@ everyone.now.deleteNodes = function(nodeNames, callback)
 		console.log("Deleting honeyd node " + nodeName);
 
 		if (!honeydConfig.DeleteNode(nodeName)) {
-			callback(false, "Failed to delete node");
+			callback(false, "Failed to delete node " + nodeName);
 			return;
 		}
 
@@ -306,19 +306,24 @@ everyone.now.deleteNodes = function(nodeNames, callback)
 	callback(true, "");
 }
 
-everyone.now.deleteProfile = function(profileName, callback)
-{	
-	if (!honeydConfig.DeleteProfile(profileName)) {
-		callback(false, "Failed to delete profile" + profileName);
-		return;
+everyone.now.deleteProfiles = function(profileNames, callback)
+{
+	var profileName;
+	for (var i = 0; i < profileNames.length; i++) {
+		profileName = profileNames[i];
+	
+		if (!honeydConfig.DeleteProfile(profileName)) {
+			callback(false, "Failed to delete profile " + profileName);
+			return;
+		}
+	
+	
+		if (!honeydConfig.SaveAllTemplates()) {
+			callback(false, "Failed to save XML templates");
+			return;
+		}
 	}
-	
-	
-	if (!honeydConfig.SaveAllTemplates()) {
-		callback(false, "Failed to save XML templates");
-		return;
-	}
-	
+
 	callback(true, "");
 }
 
