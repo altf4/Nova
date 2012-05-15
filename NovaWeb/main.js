@@ -283,33 +283,43 @@ everyone.now.sendAllSuspects = function(callback)
 
 
 // Deletes a honeyd node
-everyone.now.deleteNode = function(nodeName)
+everyone.now.deleteNodes = function(nodeNames, callback)
 {
-	console.log("Deleting honeyd node " + nodeName);
-	honeydConfig.DeleteNode(nodeName);
-	honeydConfig.SaveAllTemplates();
+	var nodeName;
+	for (var i = 0; i < nodeNames.length; i++) {
+		nodeName = nodeNames[i];
+	
+		console.log("Deleting honeyd node " + nodeName);
+
+		if (!honeydConfig.DeleteNode(nodeName)) {
+			callback(false, "Failed to delete node");
+			return;
+		}
+
+		if (!honeydConfig.SaveAllTemplates())
+		{
+			callback(false, "Failed to save XML templates");
+			return;
+		}
+	}
+	
+	callback(true, "");
 }
 
-everyone.now.deleteProfile = function(profileName)
-{
-	var returnValue = true;
-	
+everyone.now.deleteProfile = function(profileName, callback)
+{	
 	if (!honeydConfig.DeleteProfile(profileName)) {
-		returnValue = false;
+		callback(false, "Failed to delete profile" + profileName);
+		return;
 	}
 	
 	
 	if (!honeydConfig.SaveAllTemplates()) {
-		returnValue = false;
+		callback(false, "Failed to save XML templates");
+		return;
 	}
 	
-	if (returnValue) {
-		console.log("Deleted honeyd profile " + profileName);
-	} else {
-		console.log("Failed deleted honeyd profile " + profileName);
-	}
-
-	return returnValue;
+	callback(true, "");
 }
 
 everyone.now.GetProfile = function(profileName, callback) {
