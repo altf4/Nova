@@ -53,7 +53,7 @@ SuspectGUIHashTable SuspectTable;
  ************************************************/
 
 //Called when process receives a SIGINT, like if you press ctrl+c
-void sighandler(int __attribute__((unused)) param)
+void sighandler(int)
 {
 	if(!CloseNovadConnection())
 	{
