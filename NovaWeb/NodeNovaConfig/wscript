@@ -8,6 +8,7 @@ def configure(conf):
 
 def build(bld):
   bld.env.append_value("LINKFLAGS", "-L../../../NovaLibrary/Debug")
+  bld.env.append_value("LINKFLAGS", "-L../../../Nova_UI_Core/Debug")
   obj = bld.new_task_gen("cxx", "shlib", "node_addon")
   obj.cxxflags = ["-g", "-D_FILE_OFFSET_BITS=64", "-D_LARGEFILE_SOURCE", "-Wall", "-W", "-std=c++0x", "-D_REENTRANT", "-pipe", "-pthread"]
   obj.includes = ["../", "../../Nova_UI_Core/src", "../../NovaLibrary/src", "/usr/include/cvv8/"]  
