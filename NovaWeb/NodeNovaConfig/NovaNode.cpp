@@ -131,7 +131,7 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
 	LOG(DEBUG,"Invoking new suspect callback","");
-	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(m_suspect)) };
+	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
 	m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
 	return 0;
 }
