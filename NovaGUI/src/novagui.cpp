@@ -1340,13 +1340,22 @@ void NovaGUI::HideSuspect(in_addr_t addr)
 {
 	pthread_rwlock_wrlock(&lock);
 	m_editingSuspectList = true;
-	suspectItem * sItem = &SuspectTable[addr];
-	if(!sItem->item->isSelected())
+
+	if(!SuspectTable.keyExists(addr))
 	{
 		pthread_rwlock_unlock(&lock);
 		m_editingSuspectList = false;
 		return;
 	}
+
+	suspectItem *sItem = &SuspectTable[addr];
+	if(sItem == NULL)
+	{
+		pthread_rwlock_unlock(&lock);
+		m_editingSuspectList = false;
+		return;
+	}
+
 	ui.suspectList->removeItemWidget(sItem->item);
 	delete sItem->item;
 	sItem->item = NULL;
@@ -1420,6 +1429,14 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_ALL_SUSPECTS_CLEARED:
 			{
 				((NovaGUI*)ptr)->ClearSuspectList();
+				break;
+			}
+			case CALLBACK_SUSPECT_CLEARED:
+			{
+				((NovaGUI*)ptr)->HideSuspect(change.m_suspectIP);
+				pthread_rwlock_wrlock(&lock);
+				SuspectTable.erase(change.m_suspectIP);
+				pthread_rwlock_unlock(&lock);
 				break;
 			}
 			default:
