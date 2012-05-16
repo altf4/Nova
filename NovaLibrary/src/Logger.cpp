@@ -168,6 +168,9 @@ namespace Nova
 			parse = strtok(NULL, ";");
 			j++;
 		}
+
+		delete parse;
+		delete[] tokens;
 	}
 
 	Nova::Levels Logger::parseLevelFromChar(char parse)
@@ -538,6 +541,7 @@ namespace Nova
 
 	Logger::~Logger()
 	{
+		delete m_loggerInstance;
 	}
 
 }

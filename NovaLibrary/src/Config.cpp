@@ -158,6 +158,9 @@ void Config::LoadConfig()
 
 								line = fgets(buffer, sizeof(buffer), out);
 							}
+
+							delete column;
+							delete line;
 						}
 						pclose(out);
 					}
@@ -660,6 +663,7 @@ void Config::LoadConfig()
 		cout << "CRITICAL ERROR: No configuration file found!" << endl;
 	}
 
+	config.close();
 
 	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
@@ -669,6 +673,7 @@ void Config::LoadConfig()
 			cout << "Invalid configuration option" << m_prefixes[i] << " is invalid in the configuration file." << endl;
 		}
 	}
+
 	pthread_rwlock_unlock(&m_lock);
 }
 
@@ -1231,7 +1236,7 @@ Config::Config()
 
 Config::~Config()
 {
-
+	delete m_instance;
 }
 
 

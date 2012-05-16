@@ -85,7 +85,7 @@ bool Spawn_UI_Handler()
 
     pthread_t helperThread;
     pthread_create(&helperThread, NULL, Handle_UI_Helper, NULL);
-
+    pthread_detach(helperThread);
     return true;
 }
 
@@ -185,6 +185,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 						break;
 					}
 				}
+				delete errorMessage;
 				break;
 
 			}
