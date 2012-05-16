@@ -1884,7 +1884,10 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 		//If the profile at the iterator is a child of this profile
 		if(!it->second.parentProfile.compare(profileName))
 		{
-			DeleteProfile(it->first, false);
+			if (!DeleteProfile(it->first, false))
+			{
+				return false;
+			}
 		}
 	}
 	profile p = m_profiles[profileName];
@@ -1900,7 +1903,11 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 	}
 	while(!delList.empty())
 	{
-		m_nodes.erase(m_nodes[delList.back()].name);
+		if (!DeleteNode(delList.back()))
+		{
+			LOG(DEBUG, "Failed to delete profile because child node deletion failed", "");
+			return false;
+		}
 		delList.pop_back();
 	}
 	m_profiles.erase(profileName);

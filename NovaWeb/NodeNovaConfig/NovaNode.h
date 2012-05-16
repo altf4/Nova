@@ -56,7 +56,7 @@ class NovaNode: ObjectWrap
 		static void HandleNewSuspect(Suspect* suspect);
 		static void HandleAllSuspectsCleared();
 		static int HandleNewSuspectOnV8Thread(eio_req* req);
-		static int HandleAllClearedOnV8Thread(eio_req* req);
+		static int HandleAllClearedOnV8Thread(eio_req*);
 		static void HandleCallbackError();
 
 	public:

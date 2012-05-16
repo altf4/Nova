@@ -24,6 +24,7 @@
 #include "nova_ui_core.h"
 #include "CallbackHandler.h"
 #include "Logger.h"
+#include "Lock.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -36,7 +37,7 @@
 using namespace std;
 using namespace Nova;
 
-pthread_rwlock_t lock;
+pthread_mutex_t suspectTableLock;
 string homePath, readPath, writePath;
 
 //General variables like tables, flags, locks, etc.
@@ -53,7 +54,7 @@ SuspectGUIHashTable SuspectTable;
  ************************************************/
 
 //Called when process receives a SIGINT, like if you press ctrl+c
-void sighandler(int __attribute__((unused)) param)
+void sighandler(int)
 {
 	if(!CloseNovadConnection())
 	{
@@ -66,7 +67,7 @@ NovaGUI::NovaGUI(QWidget *parent)
     : QMainWindow(parent)
 {
 	signal(SIGINT, sighandler);
-	pthread_rwlock_init(&lock, NULL);
+	pthread_mutex_init(&suspectTableLock, NULL);
 
 	uint64_t initKey = 0;
 	initKey--;
@@ -439,32 +440,31 @@ void NovaGUI::UpdateSystemStatus()
 
 void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initialization)
 {
-
-	pthread_rwlock_wrlock(&lock);
-	//If the suspect already exists in our table
-	if(SuspectTable.keyExists(suspectItem.suspect->GetIpAddress()))
+	in_addr_t address;
 	{
-		if (!initialization)
+		Lock lock(&suspectTableLock);
+		//If the suspect already exists in our table
+		if(SuspectTable.keyExists(suspectItem.suspect->GetIpAddress()))
 		{
-			return;
+			if (!initialization)
+			{
+				return;
+			}
+
+			//We point to the same item so it doesn't need to be deleted.
+			suspectItem.item = SuspectTable[suspectItem.suspect->GetIpAddress()].item;
+			suspectItem.mainItem = SuspectTable[suspectItem.suspect->GetIpAddress()].mainItem;
+
+			//Delete the old Suspect since we created and pointed to a new one
+			delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
 		}
+		//We borrow the flag to show there is new information.
+		suspectItem.suspect->SetNeedsClassificationUpdate(true);
+		//Update the entry in the table
 
-		//We point to the same item so it doesn't need to be deleted.
-		suspectItem.item = SuspectTable[suspectItem.suspect->GetIpAddress()].item;
-		suspectItem.mainItem = SuspectTable[suspectItem.suspect->GetIpAddress()].mainItem;
-
-		//Delete the old Suspect since we created and pointed to a new one
-		delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
+		SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
+		address = suspectItem.suspect->GetIpAddress();
 	}
-	//We borrow the flag to show there is new information.
-	suspectItem.suspect->SetNeedsClassificationUpdate(true);
-	//Update the entry in the table
-
-	SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
-	in_addr_t address = suspectItem.suspect->GetIpAddress();
-
-	pthread_rwlock_unlock(&lock);
-
 
 	Q_EMIT newSuspect(address);
 }
@@ -485,7 +485,7 @@ void NovaGUI::DrawAllSuspects()
 	QBrush brush;
 	QColor color;
 
-	pthread_rwlock_wrlock(&lock);
+	Lock lock(&suspectTableLock);
 	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
 		str = (QString) string(inet_ntoa(it->second.suspect->GetInAddr())).c_str();
@@ -561,7 +561,6 @@ void NovaGUI::DrawAllSuspects()
 		it->second.suspect = suspect;
 	}
 	UpdateSuspectWidgets();
-	pthread_rwlock_unlock(&lock);
 	m_editingSuspectList = false;
 }
 
@@ -575,7 +574,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 	QColor color;
 	in_addr_t addr;
 
-	pthread_rwlock_wrlock(&lock);
+	Lock lock(&suspectTableLock);
 	suspectItem * sItem = &SuspectTable[suspectAddr];
 	//Extract Information
 	str = (QString) string(inet_ntoa(sItem->suspect->GetInAddr())).c_str();
@@ -726,7 +725,6 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 	}
 	sItem->item->setToolTip(QString(sItem->suspect->ToString().c_str()));
 	UpdateSuspectWidgets();
-	pthread_rwlock_unlock(&lock);
 	m_editingSuspectList = false;
 }
 
@@ -797,7 +795,7 @@ void NovaGUI::UpdateSuspectWidgets()
 //Clears the suspect tables completely.
 void NovaGUI::ClearSuspectList()
 {
-	pthread_rwlock_wrlock(&lock);
+	Lock lock(&suspectTableLock);
 	this->ui.suspectList->clear();
 	this->ui.hostileList->clear();
 	//Since clearing permanently deletes the items we need to make sure the suspects point to null
@@ -806,7 +804,6 @@ void NovaGUI::ClearSuspectList()
 		it->second.item = NULL;
 		it->second.mainItem = NULL;
 	}
-	pthread_rwlock_unlock(&lock);
 }
 
 /************************************************
@@ -865,9 +862,10 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 	m_editingSuspectList = true;
 	ClearAllSuspects();
 
-	pthread_rwlock_wrlock(&lock);
-	SuspectTable.clear();
-	pthread_rwlock_unlock(&lock);
+	{
+		Lock lock(&suspectTableLock);
+		SuspectTable.clear();
+	}
 
 	QFile::remove(QString::fromStdString(Config::Inst()->GetPathCESaveFile()));
 	DrawAllSuspects();
@@ -890,9 +888,10 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 		string suspectStr = list->currentItem()->text().toStdString();
 		in_addr_t addr = inet_addr(suspectStr.c_str());
 		HideSuspect(addr);
-		pthread_rwlock_wrlock(&lock);
-		SuspectTable.erase(addr);
-		pthread_rwlock_unlock(&lock);
+		{
+			Lock lock(&suspectTableLock);
+			SuspectTable.erase(addr);
+		}
 		ClearSuspect(addr);
 	}
 }
@@ -1216,14 +1215,13 @@ void NovaGUI::on_suspectList_currentItemChanged(QListWidgetItem * current, QList
 {
 	if(!m_editingSuspectList)
 	{
-		pthread_rwlock_wrlock(&lock);
+		Lock lock(&suspectTableLock);
 		if((ui.suspectList->currentItem() == current) && (current != NULL) && (current != previous))
 		{
 			in_addr_t addr = inet_addr(current->text().toStdString().c_str());
 			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString().c_str()));
 			SetFeatureDistances(SuspectTable[addr].suspect);
 		}
-		pthread_rwlock_unlock(&lock);
 	}
 }
 
@@ -1338,12 +1336,11 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
  ************************************************/
 void NovaGUI::HideSuspect(in_addr_t addr)
 {
-	pthread_rwlock_wrlock(&lock);
+	Lock lock(&suspectTableLock);
 	m_editingSuspectList = true;
 
 	if(!SuspectTable.keyExists(addr))
 	{
-		pthread_rwlock_unlock(&lock);
 		m_editingSuspectList = false;
 		return;
 	}
@@ -1351,7 +1348,6 @@ void NovaGUI::HideSuspect(in_addr_t addr)
 	suspectItem *sItem = &SuspectTable[addr];
 	if(sItem == NULL)
 	{
-		pthread_rwlock_unlock(&lock);
 		m_editingSuspectList = false;
 		return;
 	}
@@ -1365,7 +1361,6 @@ void NovaGUI::HideSuspect(in_addr_t addr)
 		delete sItem->mainItem;
 		sItem->mainItem = NULL;
 	}
-	pthread_rwlock_unlock(&lock);
 	m_editingSuspectList = false;
 }
 
@@ -1434,9 +1429,10 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_SUSPECT_CLEARED:
 			{
 				((NovaGUI*)ptr)->HideSuspect(change.m_suspectIP);
-				pthread_rwlock_wrlock(&lock);
-				SuspectTable.erase(change.m_suspectIP);
-				pthread_rwlock_unlock(&lock);
+				{
+					Lock lock(&suspectTableLock);
+					SuspectTable.erase(change.m_suspectIP);
+				}
 				break;
 			}
 			default:

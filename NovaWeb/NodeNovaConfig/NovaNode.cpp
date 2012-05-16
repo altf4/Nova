@@ -50,7 +50,7 @@ void NovaNode::CheckInitNova()
 	LOG(DEBUG, "CheckInitNova complete","");
 }
 
-void NovaNode::NovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
+void NovaNode::NovaCallbackHandling(eio_req*)
 {
 	using namespace Nova;
 	CallbackChange cb;
@@ -86,7 +86,7 @@ void NovaNode::NovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
 	m_callbackRunning = false;
 }
 
-int NovaNode::AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req)
+int NovaNode::AfterNovaCallbackHandling(eio_req*)
 {
 	return 0;
 }
@@ -131,16 +131,15 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
 	LOG(DEBUG,"Invoking new suspect callback","");
-	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(m_suspect)) };
+	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
 	m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
 	return 0;
 }
 
-int NovaNode::HandleAllClearedOnV8Thread(eio_req* req)
+int NovaNode::HandleAllClearedOnV8Thread(eio_req*)
 {
 	HandleScope scope;
 	LOG(DEBUG,"Invoking AllSuspectsCleared callback","");
-	Local<Value> argv[1];
 	m_SuspectsClearedCallback->Call(m_SuspectsClearedCallback, 0, NULL);
 	return 0;
 }
@@ -199,7 +198,7 @@ void NovaNode::Init(Handle<Object> target)
 }
 
 // Checks if we lost the connection. If so, tries to reconnect
-Handle<Value> NovaNode::CheckConnection(const Arguments __attribute__((__unused__)) & args)
+Handle<Value> NovaNode::CheckConnection(const Arguments &)
 {
 	HandleScope scope;
 
@@ -215,7 +214,7 @@ Handle<Value> NovaNode::CheckConnection(const Arguments __attribute__((__unused_
 }
 
 
-Handle<Value> NovaNode::Shutdown(const Arguments __attribute__((__unused__)) & args)
+Handle<Value> NovaNode::Shutdown(const Arguments &)
 {
 	HandleScope scope;
 	LOG(DEBUG, "Shutdown... closing Novad connection","");
@@ -342,7 +341,7 @@ Handle<Value> NovaNode::registerOnAllSuspectsCleared(const Arguments& args)
 
 // Invoked when the only one referring to an OnNewSuspect handler is us, i.e. no JS objects
 // are holding onto it.  So it's up to us to decide what to do about it.
-void NovaNode::HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter)
+void NovaNode::HandleOnNewSuspectWeakCollect(Persistent<Value> , void * )
 {
 	// For now, we do nothing, meaning that the callback will always stay registered
 	// and continue to be invoked

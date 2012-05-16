@@ -21,12 +21,19 @@ block headerAdditions
     
     function deleteSelectedItems() {
       var items = grid.selection.getSelected();
+      var names = [];
       dojo.forEach(items, function(selectedItem) {
-        console.log(grid.store.getValues(selectedItem, "Name"));
-        now.deleteNode(grid.store.getValues(selectedItem, "Name"));
+        names.push(grid.store.getValues(selectedItem, "Name"));
+        
       });
+        now.deleteNodes(names, errorMessageCallback);
 
-      // Reload the page
+    }
+
+    function errorMessageCallback(sucess, message) {
+      if(sucess != true) {
+        alert("Unable to complete operation due to error: " + message);
+      }
       location.reload(true);
     }
 

@@ -20,6 +20,8 @@
 
 #include "Logger.h"
 #include "Config.h"
+#include "Lock.h"
+
 #include <fstream>
 #include <sstream>
 #include <syslog.h>
@@ -54,7 +56,7 @@ namespace Nova
 	void Logger::Log(Nova::Levels messageLevel, const char* messageBasic,  const char* messageAdv,
 			const char* file,  const int& line)
 	{
-		pthread_rwlock_wrlock(&m_logLock);
+		Lock lock(&m_logLock, false);
 		string mask = getBitmask(messageLevel);
 		string tempStr = (string)messageAdv;
 		stringstream ss;
@@ -84,8 +86,6 @@ namespace Nova
 		{
 			Mail(messageLevel, tempStr);
 		}
-
-		pthread_rwlock_unlock(&m_logLock);
 	}
 
 	void Logger::Notify(uint16_t level, string message)
