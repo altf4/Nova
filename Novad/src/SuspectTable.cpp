@@ -622,7 +622,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 		// Bytes left, but not enough to make a header (timestamp + size)?
 		if(lengthLeft < (sizeof expirationTime + sizeof dataSize))
 		{
-			LOG(ERROR, "The state file may be corruput", "");
+			LOG(ERROR, "The state file may be corrupt", "");
 			return 0;
 		}
 
