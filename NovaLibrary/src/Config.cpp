@@ -126,13 +126,13 @@ void Config::LoadConfig()
 					if(strcmp(line.c_str(), "default") == 0)
 					{
 
-						FILE * out = popen("netstat -rn", "r");
+						FILE *out = popen("netstat -rn", "r");
 						if(out != NULL)
 						{
 							char buffer[2048];
-							char * column;
+							char *column;
 							int currentColumn;
-							char * line = fgets(buffer, sizeof(buffer), out);
+							char *line = fgets(buffer, sizeof(buffer), out);
 
 							while (line != NULL)
 							{

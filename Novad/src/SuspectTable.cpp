@@ -86,7 +86,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 {
 	//Write lock the table and check key validity
 	Lock lock(&m_lock, false);
-	Suspect * suspectCopy = new Suspect(*suspect);
+	Suspect *suspectCopy = new Suspect(*suspect);
 	in_addr_t key = suspectCopy->GetIpAddress();
 	//If we return false then there is no suspect at this ip address yet
 	if(!IsValidKey_NonBlocking(key))
@@ -127,7 +127,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 bool SuspectTable::AddNewSuspect(const Packet& packet)
 {
 	Lock lock(&m_lock, false);
-	Suspect * suspect = new Suspect(packet);
+	Suspect *suspect = new Suspect(packet);
 	in_addr_t key = suspect->GetIpAddress();
 	//If we return false then there is no suspect at this ip address yet
 	if(!IsValidKey_NonBlocking(key))
@@ -179,7 +179,7 @@ bool SuspectTable::AddEvidenceToSuspect(const in_addr_t& key, const Packet& pack
 			UnlockSuspect(key);
 			return false;
 		}
-		Suspect * suspect = m_suspectTable[key];
+		Suspect *suspect = m_suspectTable[key];
 		suspect->AddEvidence(packet);
 		UnlockSuspect(key);
 		return true;
@@ -234,7 +234,7 @@ void SuspectTable::UpdateAllSuspects()
 // Returns (0) on Success, (-1) if the Suspect isn't Checked Out by this thread
 // and (-2) if the Suspect does not exist (Key invalid or suspect was deleted)
 // Note:  This function blocks until it can acquire a write lock on the suspect
-SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
+SuspectTableRet SuspectTable::CheckIn(Suspect *suspect)
 {
 	Lock lock(&m_lock, false);
 	in_addr_t key = suspect->GetIpAddress();
@@ -400,7 +400,7 @@ bool SuspectTable::Erase(const in_addr_t& key)
 		SuspectHashTable::iterator it = m_suspectTable.find(key);
 		if(it != m_suspectTable.end())
 		{
-			Suspect * suspectPtr = m_suspectTable[key];
+			Suspect *suspectPtr = m_suspectTable[key];
 			m_suspectTable.erase(key);
 			delete suspectPtr;
 		}
@@ -566,7 +566,7 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 	{
 		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
-			Suspect * suspect = m_suspectTable[m_keys[i]];
+			Suspect *suspect = m_suspectTable[m_keys[i]];
 			if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
 				&& !suspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
 			{
@@ -585,7 +585,7 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 		{
 			if(IsValidKey_NonBlocking(m_keys[i]))
 			{
-				Suspect * suspect = m_suspectTable[m_keys[i]];
+				Suspect *suspect = m_suspectTable[m_keys[i]];
 				if(!suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
 					&& !suspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
 				{
@@ -736,7 +736,7 @@ bool SuspectTable::IsValidKey(const in_addr_t& key)
 	return IsValidKey_NonBlocking(key);
 }
 
-bool SuspectTable::IsEmptySuspect(Suspect * suspect)
+bool SuspectTable::IsEmptySuspect(Suspect *suspect)
 {
 	return (suspect->GetClassification() == EMPTY_SUSPECT_CLASSIFICATION);
 }

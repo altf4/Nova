@@ -59,7 +59,7 @@ public:
     // message type sets the level, title summarizes the problem, text describes the choices
     // default Action is performed on Yes, Alternative Action is performed on No
     // returns -1 so the action that caused the prompt can be prevented
-    DialogPrompt(dialogType type, QAction * defaultAction, QAction * alternativeAction,
+    DialogPrompt(dialogType type, QAction *defaultAction, QAction *alternativeAction,
     		const QString &title, const QString &text, QWidget *parent = 0);
 
     ~DialogPrompt();

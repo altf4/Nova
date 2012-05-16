@@ -16,7 +16,7 @@
 // Description : Class to generate messages based on events inside the program,
 // and maintain information needed for the sending of those events, mostly
 // networking information that is not readily available
-//============================================================================/*
+//============================================================================
 
 #include "Logger.h"
 #include "Config.h"
@@ -124,8 +124,8 @@ namespace Nova
 	void Logger::SetUserLogPreferences(string logPrefString)
 	{
 		uint16_t size = logPrefString.size() + 1;
-		char * tokens;
-		char * parse;
+		char *tokens;
+		char *parse;
 		uint16_t j = 0;
 		pair <pair <Nova::Services, Nova::Levels>, char> push;
 		pair <Nova::Services, Nova::Levels> insert;
@@ -192,8 +192,8 @@ namespace Nova
 
 	void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels messageTypeLevel, char upDown)
 	{
-		char * tokens;
-		char * parse;
+		char *tokens;
+		char *parse;
 		uint16_t j = 0;
 		pair <pair <Nova::Services, Nova::Levels>, char> push;
 		pair <Nova::Services, Nova::Levels> insert;

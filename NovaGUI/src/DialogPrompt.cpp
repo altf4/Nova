@@ -52,7 +52,7 @@ DialogPrompt::DialogPrompt(dialogType type, const QString &title, const QString 
 // message type sets the level, title summarizes the problem, text describes the choices
 // default Action is performed on Yes, Alternative Action is performed on No
 // returns -1 so the action that caused the prompt can be prevented
-DialogPrompt::DialogPrompt(dialogType type, QAction * defaultAction, QAction * alternativeAction,
+DialogPrompt::DialogPrompt(dialogType type, QAction *defaultAction, QAction *alternativeAction,
 		const QString &title, const QString &text, QWidget *parent)
     : QMessageBox(parent)
 {
@@ -161,14 +161,14 @@ void DialogPrompt::SetMessageType(dialogType type)
 
 //Sets the default action to take, create and action ahead of time and when the user clicks
 // yes on a question based prompt that action will occur
-void DialogPrompt::SetDefaultAction(QAction * action)
+void DialogPrompt::SetDefaultAction(QAction *action)
 {
 	m_defaultAct = action;
 }
 
 //Sets the alternative action to take, create and action ahead of time and when the user clicks
 // No on a question based prompt that action will occur
-void DialogPrompt::SetAlternativeAction(QAction * action)
+void DialogPrompt::SetAlternativeAction(QAction *action)
 {
 	m_alternativeAct = action;
 }
@@ -180,13 +180,13 @@ dialogType DialogPrompt::GetMessageType()
 }
 
 //Returns a pointer to the default action
-QAction * DialogPrompt::GetDefaultAction()
+QAction *DialogPrompt::GetDefaultAction()
 {
 	return m_defaultAct;
 }
 
 //Returns a pointer to the alternative action
-QAction * DialogPrompt::GetAlternativeAction()
+QAction *DialogPrompt::GetAlternativeAction()
 {
 	return m_alternativeAct;
 }

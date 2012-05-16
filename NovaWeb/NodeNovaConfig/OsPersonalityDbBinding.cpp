@@ -7,7 +7,7 @@ using namespace v8;
 
 OsPersonalityDbBinding::OsPersonalityDbBinding() {};
 
-OsPersonalityDb * OsPersonalityDbBinding::GetChild() {
+OsPersonalityDb *OsPersonalityDbBinding::GetChild() {
 	return m_db;
 }
 

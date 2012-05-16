@@ -23,13 +23,13 @@ using namespace std;
 using namespace Nova;
 
 //Parent window pointers, allows us to call functions from the parent
-NovaConfig * novaParent;
+NovaConfig *novaParent;
 
 /************************************************
  * Construct and Initialize GUI
  ************************************************/
 
-nodePopup::nodePopup(QWidget * parent, Nova::Node * n, bool editingNode)
+nodePopup::nodePopup(QWidget *parent, Nova::Node *n, bool editingNode)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
@@ -301,7 +301,7 @@ void nodePopup::on_applyButton_clicked()
 {
 	SaveNode();
 
-	NovaGUI * mainwindow  = (NovaGUI*)novaParent->parent();
+	NovaGUI *mainwindow  = (NovaGUI*)novaParent->parent();
 	nodeConflictType ret = ValidateNodeSettings();
 	switch(ret)
 	{

@@ -11,7 +11,7 @@ using namespace std;
 HoneydConfigBinding::HoneydConfigBinding() {};
 HoneydConfigBinding::~HoneydConfigBinding() {};
 
-HoneydConfiguration * HoneydConfigBinding::GetChild() {
+HoneydConfiguration *HoneydConfigBinding::GetChild() {
 	return m_conf;
 }
 
