@@ -267,7 +267,6 @@ SuspectTableRet SuspectTable::CheckIn(Suspect * suspect)
 	// necessary if it has been deleted while the suspect was checked out->
 	// this call will decrease the ref count, unlock the mutex and delete it if needed
 	UnlockSuspect(key);
-	pthread_rwlock_unlock(&m_lock);
 	return SUSPECT_KEY_INVALID;
 }
 
