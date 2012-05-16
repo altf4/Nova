@@ -8,7 +8,7 @@ using namespace v8;
 VendorMacDbBinding::VendorMacDbBinding() {};
 VendorMacDbBinding::~VendorMacDbBinding() {};
 
-VendorMacDb * VendorMacDbBinding::GetChild()
+VendorMacDb *VendorMacDbBinding::GetChild()
 {
 	return m_db;
 }
@@ -32,7 +32,7 @@ v8::Handle<Value> VendorMacDbBinding::New(const Arguments& args)
 {
   v8::HandleScope scope;
 
-  VendorMacDbBinding* obj = new VendorMacDbBinding();
+  VendorMacDbBinding *obj = new VendorMacDbBinding();
   obj->m_db = new VendorMacDb();
   obj->m_db->LoadPrefixFile();
   obj->Wrap(args.This());

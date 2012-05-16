@@ -47,7 +47,7 @@ void VendorMacDb::LoadPrefixFile()
 {
 	ifstream MACPrefixes(m_macVendorFile.c_str());
 	string line, vendor, prefixStr;
-	char * notUsed;
+	char *notUsed;
 	uint prefix;
 	if(MACPrefixes.is_open())
 	{
@@ -70,7 +70,7 @@ void VendorMacDb::LoadPrefixFile()
 			}
 			else
 			{
-				vector<uint> * vect = new vector<uint>;
+				vector<uint> *vect = new vector<uint>;
 				vect->push_back(prefix);
 				m_vendorMACTable[vendor] = vect;
 			}

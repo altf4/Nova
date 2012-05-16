@@ -11,7 +11,7 @@ using namespace Nova;
 
 HoneydProfileBinding::HoneydProfileBinding() {};
 
-profile * HoneydProfileBinding::GetChild() {
+profile *HoneydProfileBinding::GetChild() {
 	return m_pfile;
 }
 

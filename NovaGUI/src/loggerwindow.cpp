@@ -48,7 +48,7 @@ void LoggerWindow::InitializeRecipientsList()
 	ui.emailEdit->setPlaceholderText("Enter a comma separated list of emails here...");
 	//ui.emailEdit->setValidator(validator);
 
-	QListWidgetItem * item = new QListWidgetItem("Emails file is empty, or does not exist...");
+	QListWidgetItem *item = new QListWidgetItem("Emails file is empty, or does not exist...");
 	item->setFlags(Qt::NoItemFlags);
 	QFile file("/usr/share/nova/emails");
 
@@ -181,9 +181,9 @@ void LoggerWindow::UpdateLogDisplay()
 	file.close();
 }
 
-QTreeWidgetItem * LoggerWindow::GenerateLogTabEntry(QString line)
+QTreeWidgetItem *LoggerWindow::GenerateLogTabEntry(QString line)
 {
-	QTreeWidgetItem * ret = new QTreeWidgetItem();
+	QTreeWidgetItem *ret = new QTreeWidgetItem();
 	QStringList parse = line.split(" ", QString::SkipEmptyParts);
 
 	if(parse[4].compare("last") != 0)
@@ -274,10 +274,10 @@ QTreeWidgetItem * LoggerWindow::GenerateLogTabEntry(QString line)
 	}
 }
 
-QTreeWidgetItem * LoggerWindow::LogFileNotFound()
+QTreeWidgetItem *LoggerWindow::LogFileNotFound()
 {
 	QTime time = QTime::currentTime();
-	QTreeWidgetItem * ret = new QTreeWidgetItem();
+	QTreeWidgetItem *ret = new QTreeWidgetItem();
 	ret->setText(0, time.toString());
 	ret->setText(1, "ERROR");
 	ret->setText(3, "Log File not Found");
@@ -306,7 +306,7 @@ void LoggerWindow::on_setEmailsButton_clicked()
 	}
 	else
 	{
-		/*QString * valid = new QString(ui.emailEdit->text());
+		/*QString *valid = new QString(ui.emailEdit->text());
 
 		if(ui.emailEdit->validator()->validate(valid, 0) == QValidator::Acceptable)
 		{
@@ -315,7 +315,7 @@ void LoggerWindow::on_setEmailsButton_clicked()
 
 		std::vector<std::string> recs;
 
-		QString * text = new QString(ui.emailEdit->text());
+		QString *text = new QString(ui.emailEdit->text());
 		QStringList parse = text->split(", ", QString::SkipEmptyParts);
 
 		ui.emailsList->clear();
@@ -346,7 +346,7 @@ void LoggerWindow::on_appendEmailsButton_clicked()
 	}
 	else
 	{
-		/*QString * valid = new QString(ui.emailEdit->text());
+		/*QString *valid = new QString(ui.emailEdit->text());
 
 		if(ui.emailEdit->validator()->validate(valid, 0) == QValidator::Acceptable)
 		{
@@ -355,7 +355,7 @@ void LoggerWindow::on_appendEmailsButton_clicked()
 
 		std::vector<std::string> recs;
 
-		QString * text = new QString(ui.emailEdit->text());
+		QString *text = new QString(ui.emailEdit->text());
 		QStringList parse = text->split(", ", QString::SkipEmptyParts);
 
 		for(int i = 0; i < parse.size(); i++)
