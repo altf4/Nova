@@ -237,7 +237,8 @@ string DialogPrompter::MakeConfigurationLine(messageHandle msg, defaultChoice ac
 	return ss.str();
 }
 
-defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt, QAction * defaultAction, QAction * alternativeAction, QWidget *parent /*= 0*/)
+defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt,
+		QAction *defaultAction, QAction *alternativeAction, QWidget *parent /*= 0*/)
 {
 	// Do we have a default action for this messageType?
 	if(m_registeredMessageTypes[handle].action == CHOICE_HIDE)

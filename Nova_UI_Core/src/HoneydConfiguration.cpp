@@ -14,7 +14,7 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Object for reading and writing Honeyd XML configurations
-//============================================================================/*
+//============================================================================
 
 #include "HoneydConfiguration.h"
 #include "NovaUtil.h"
@@ -359,7 +359,7 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
 bool HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 {
 	string prefix;
-	port * prt;
+	port *prt;
 
 	try
 	{
@@ -400,7 +400,7 @@ bool HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 						uint i = 0;
 						for(i = 0; i < p->ports.size(); i++)
 						{
-							port * temp = &m_ports[p->ports[i].first];
+							port *temp = &m_ports[p->ports[i].first];
 							if((atoi(temp->portNum.c_str())) < (atoi(prt->portNum.c_str())))
 							{
 								continue;
@@ -845,7 +845,7 @@ bool HoneydConfiguration::LoadSubnets(ptree *ptr)
 bool HoneydConfiguration::LoadNodes(ptree *ptr)
 {
 	profile p;
-	//ptree * ptr2;
+	//ptree *ptr2;
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
@@ -990,7 +990,7 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
-	ptree * ptr;
+	ptree *ptr;
 	m_profileTree.clear();
 	try
 	{
@@ -1240,7 +1240,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 	return childProfiles;
 }
 
-Nova::profile * HoneydConfiguration::GetProfile(std::string profileName)
+Nova::profile *HoneydConfiguration::GetProfile(std::string profileName)
 {
 	if(!m_profiles.keyExists(profileName))
 	{
@@ -1254,7 +1254,7 @@ Nova::profile * HoneydConfiguration::GetProfile(std::string profileName)
 	}
 }
 
-Nova::port * HoneydConfiguration::GetPort(std::string portName)
+Nova::port *HoneydConfiguration::GetPort(std::string portName)
 {
 	if(m_ports.keyExists(portName))
 	{
@@ -1550,7 +1550,7 @@ string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
 //Inserts the profile into the honeyd configuration
 //	profile: pointer to the profile you wish to add
 //	Returns (true) if the profile could be created, (false) if it cannot.
-bool HoneydConfiguration::AddProfile(profile * profile)
+bool HoneydConfiguration::AddProfile(profile *profile)
 {
 	if(!m_profiles.keyExists(profile->name))
 	{
@@ -1685,7 +1685,7 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 	}
 
 	//Update the Subnet
-	subnet * s = &m_subnets[m_nodes[nodeName].sub];
+	subnet *s = &m_subnets[m_nodes[nodeName].sub];
 	for(uint i = 0; i < s->nodes.size(); i++)
 	{
 		if(!s->nodes[i].compare(nodeName))
@@ -1699,7 +1699,7 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 	return true;
 }
 
-Node * HoneydConfiguration::GetNode(std::string nodeName)
+Node *HoneydConfiguration::GetNode(std::string nodeName)
 {
 	// Make sure the node exists
 	if(m_nodes.find(nodeName) == m_nodes.end())
@@ -1922,7 +1922,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			profile parent = m_profiles[p.parentProfile];
 
 			//point to the profiles subtree of parent-copy ptree and clear it
-			ptree * pt = &parent.tree.get_child("profiles");
+			ptree *pt = &parent.tree.get_child("profiles");
 			pt->clear();
 
 			//Find all profiles still in the table that are sibilings of deleted profile
@@ -1940,7 +1940,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			}	//parent-copy now has the ptree of all children except deleted profile
 
 			//point to the original parent's profiles subtree and replace it with our new ptree
-			ptree * treePtr = &m_profiles[p.parentProfile].tree.get_child("profiles");
+			ptree *treePtr = &m_profiles[p.parentProfile].tree.get_child("profiles");
 			treePtr->clear();
 			*treePtr = *pt;
 

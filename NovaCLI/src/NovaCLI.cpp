@@ -342,7 +342,6 @@ void PrintSuspect(in_addr_t address)
 
 	if (suspect != NULL)
 	{
-		cout << "Suspect:" << endl;
 		cout << suspect->ToString() << endl;
 	}
 	else
@@ -372,7 +371,6 @@ void PrintAllSuspects(enum SuspectListType listType)
 
 		if (suspect != NULL)
 		{
-			cout << "Suspect:" << endl;
 			cout << suspect->ToString() << endl;
 		}
 		else

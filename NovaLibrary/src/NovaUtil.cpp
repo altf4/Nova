@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Utility class for storing functions that are used by multiple
 //				 processes but don't warrant their own class
-//============================================================================/*
+//============================================================================
 
 #include "NovaUtil.h"
 #include "Logger.h"
@@ -29,7 +29,7 @@ using namespace std;
 
 namespace Nova{
 
-void CryptBuffer(u_char * buf, uint size, bool mode)
+void CryptBuffer(u_char *buf, uint size, bool mode)
 {
 	//TODO
 }

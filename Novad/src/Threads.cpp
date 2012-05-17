@@ -249,7 +249,7 @@ void *SilentAlarmLoop(void *ptr)
 		in_addr_t addr = 0;
 		memcpy(&addr, buf, 4);
 		uint64_t key = addr;
-		Suspect * newSuspect = new Suspect();
+		Suspect *newSuspect = new Suspect();
 		if(newSuspect->Deserialize(buf, MAIN_FEATURE_DATA) == 0)
 		{
 			close(connectionSocket);

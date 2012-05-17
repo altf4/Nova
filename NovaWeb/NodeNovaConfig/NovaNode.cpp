@@ -334,7 +334,7 @@ Handle<Value> NovaNode::registerOnAllSuspectsCleared(const Arguments& args)
 
 // Invoked when the only one referring to an OnNewSuspect handler is us, i.e. no JS objects
 // are holding onto it.  So it's up to us to decide what to do about it.
-void NovaNode::HandleOnNewSuspectWeakCollect(Persistent<Value> , void * )
+void NovaNode::HandleOnNewSuspectWeakCollect(Persistent<Value> , void *)
 {
 	// For now, we do nothing, meaning that the callback will always stay registered
 	// and continue to be invoked

@@ -26,7 +26,7 @@
 using namespace std;
 using namespace Nova;
 
-classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent)
+classifierPrompt::classifierPrompt(trainingDumpMap *trainingDump, QWidget *parent)
 : QDialog(parent)
 {
 	ui.setupUi(this);
@@ -52,7 +52,7 @@ classifierPrompt::classifierPrompt(trainingDumpMap* trainingDump, QWidget *paren
 	DisplaySuspectEntries();
 }
 
-classifierPrompt::classifierPrompt(trainingSuspectMap* map, QWidget *parent)
+classifierPrompt::classifierPrompt(trainingSuspectMap *map, QWidget *parent)
 : QDialog(parent)
 {
 	ui.setupUi(this);
@@ -81,7 +81,7 @@ void classifierPrompt::DisplaySuspectEntries()
 	}
 }
 
-void classifierPrompt::contextMenuEvent(QContextMenuEvent * event)
+void classifierPrompt::contextMenuEvent(QContextMenuEvent *event)
 {
 	m_menu->clear();
 
@@ -152,7 +152,7 @@ void classifierPrompt::on_actionCombineEntries_triggered()
 	DisplaySuspectEntries();
 }
 
-void classifierPrompt::makeRow(trainingSuspect* header, int row)
+void classifierPrompt::makeRow(trainingSuspect *header, int row)
 {
 	m_updating = true;
 
@@ -188,7 +188,7 @@ void classifierPrompt::makeRow(trainingSuspect* header, int row)
 	m_updating = false;
 }
 
-void classifierPrompt::updateRow(trainingSuspect* header, int row)
+void classifierPrompt::updateRow(trainingSuspect *header, int row)
 {
 	m_updating = true;
 
@@ -271,7 +271,7 @@ classifierPrompt::~classifierPrompt()
 	}
 }
 
-trainingSuspectMap* classifierPrompt::getStateData()
+trainingSuspectMap *classifierPrompt::getStateData()
 {
     return m_suspects;
 }

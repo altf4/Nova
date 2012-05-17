@@ -47,6 +47,7 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 	m_socketFD = socketFD;
 
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
+	pthread_detach(m_producerThread);
 }
 
 //Destructor should only be called by the callback thread, and also only while
@@ -277,6 +278,7 @@ void *MessageQueue::ProducerThread()
 		{
 			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
 			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
+			free(buffer);
 			continue;
 		}
 
@@ -298,6 +300,7 @@ void *MessageQueue::ProducerThread()
 				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
+				free(buffer);
 				return NULL;
 			}
 			else
@@ -310,10 +313,12 @@ void *MessageQueue::ProducerThread()
 		if(length < MESSAGE_MIN_SIZE)
 		{
 			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
+			free(buffer);
 			continue;
 		}
 
 		PushMessage(Message::Deserialize(buffer, length, m_forwardDirection));
+		free(buffer);
 		continue;
 	}
 

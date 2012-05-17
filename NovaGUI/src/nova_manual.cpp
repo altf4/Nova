@@ -19,7 +19,7 @@
 #include "nova_manual.h"
 #include "novagui.h"
 
-NovaGUI * mainw;
+NovaGUI *mainw;
 
 Nova_Manual::Nova_Manual(QWidget *parent)
     : QMainWindow(parent)

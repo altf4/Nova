@@ -14,7 +14,7 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Class to load and parse the NOVA configuration file
-//============================================================================/*
+//============================================================================
 
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -25,6 +25,7 @@
 #include "Config.h"
 #include "Logger.h"
 #include "NovaUtil.h"
+#include "Lock.h"
 
 using namespace std;
 
@@ -97,7 +98,7 @@ Config* Config::Inst()
 // Loads the configuration file into the class's state data
 void Config::LoadConfig()
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 
 	string line;
 	string prefix;
@@ -125,13 +126,13 @@ void Config::LoadConfig()
 					if(strcmp(line.c_str(), "default") == 0)
 					{
 
-						FILE * out = popen("netstat -rn", "r");
+						FILE *out = popen("netstat -rn", "r");
 						if(out != NULL)
 						{
 							char buffer[2048];
-							char * column;
+							char *column;
 							int currentColumn;
-							char * line = fgets(buffer, sizeof(buffer), out);
+							char *line = fgets(buffer, sizeof(buffer), out);
 
 							while (line != NULL)
 							{
@@ -158,6 +159,9 @@ void Config::LoadConfig()
 
 								line = fgets(buffer, sizeof(buffer), out);
 							}
+
+							delete column;
+							delete line;
 						}
 						pclose(out);
 					}
@@ -660,6 +664,7 @@ void Config::LoadConfig()
 		cout << "CRITICAL ERROR: No configuration file found!" << endl;
 	}
 
+	config.close();
 
 	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
@@ -669,12 +674,11 @@ void Config::LoadConfig()
 			cout << "Invalid configuration option" << m_prefixes[i] << " is invalid in the configuration file." << endl;
 		}
 	}
-	pthread_rwlock_unlock(&m_lock);
 }
 
 bool Config::LoadUserConfig()
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 
 	string prefix, line;
 	uint i = 0;
@@ -744,13 +748,13 @@ bool Config::LoadUserConfig()
 	}
 	settings.close();
 
-	pthread_rwlock_unlock(&m_lock);
+
 	return returnValue;
 }
 
 bool Config::LoadPaths()
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 
 	//Get locations of nova files
 	ifstream *paths =  new ifstream(PATHS_FILE);
@@ -805,7 +809,7 @@ bool Config::LoadPaths()
 	}
 	paths->close();
 	delete paths;
-	pthread_rwlock_unlock(&m_lock);
+
 
 	return true;
 }
@@ -854,7 +858,7 @@ string Config::ResolvePathVars(string path)
 
 bool Config::SaveConfig()
 {
-	pthread_rwlock_rdlock(&m_lock);
+	Lock lock(&m_lock, true);
 	string line, prefix;
 
 	//Rewrite the config file with the new settings
@@ -1065,7 +1069,7 @@ bool Config::SaveConfig()
 		out->close();
 		delete in;
 		delete out;
-		pthread_rwlock_unlock(&m_lock);
+
 		return false;
 	}
 
@@ -1077,7 +1081,7 @@ bool Config::SaveConfig()
 	{
 		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
 	}
-	pthread_rwlock_unlock(&m_lock);
+
 	return true;
 }
 
@@ -1173,7 +1177,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 
 string Config::ToString()
 {
-	pthread_rwlock_rdlock(&m_lock);
+	Lock lock(&m_lock, true);
 
 	std::stringstream ss;
 	ss << "getConfigFilePath() " << GetConfigFilePath() << endl;
@@ -1207,7 +1211,7 @@ string Config::ToString()
 	ss << "getSaSleepDuration() " << GetSaSleepDuration() << endl;
 	ss << "getEps() " << GetEps() << endl;
 
-	pthread_rwlock_unlock(&m_lock);
+
 	return ss.str();
 }
 
@@ -1231,13 +1235,13 @@ Config::Config()
 
 Config::~Config()
 {
-
+	delete m_instance;
 }
 
 
 std::string Config::ReadSetting(std::string key)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 
 	string line;
 	string value;
@@ -1263,20 +1267,20 @@ std::string Config::ReadSetting(std::string key)
 		}
 
 		config.close();
-		pthread_rwlock_unlock(&m_lock);
+
 		return value;
 	}
 	else
 	{
 		LOG(ERROR, "Unable to read configuration file", "");
-		pthread_rwlock_unlock(&m_lock);
+
 		return "";
 	}
 }
 
 bool Config::WriteSetting(std::string key, std::string value)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	string line;
 	bool error = false;
 
@@ -1325,7 +1329,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
 	}
 
-	pthread_rwlock_unlock(&m_lock);
+
 
 	if (error)
 	{
@@ -1340,300 +1344,230 @@ bool Config::WriteSetting(std::string key, std::string value)
 
 double Config::GetClassificationThreshold()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	double classificationThreshold = m_classificationThreshold;
-	pthread_rwlock_unlock(&m_lock);
-	return classificationThreshold;
+	Lock lock(&m_lock, true);
+	return m_classificationThreshold;
 }
 
 int Config::GetClassificationTimeout()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int classificationTimeout = m_classificationTimeout;
-	pthread_rwlock_unlock(&m_lock);
-	return classificationTimeout;
+	Lock lock(&m_lock, true);
+	return m_classificationTimeout;
 }
 
 string Config::GetConfigFilePath()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string configFilePath = m_configFilePath;
-	pthread_rwlock_unlock(&m_lock);
-	return configFilePath;
+	Lock lock(&m_lock, true);
+	return m_configFilePath;
 }
 
 int Config::GetDataTTL()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int dataTTL = m_dataTTL;
-	pthread_rwlock_unlock(&m_lock);
-	return dataTTL;
+	Lock lock(&m_lock, true);
+	return m_dataTTL;
 }
 
 string Config::GetDoppelInterface()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string doppelInterface = m_doppelInterface;
-	pthread_rwlock_unlock(&m_lock);
-	return doppelInterface;
+	Lock lock(&m_lock, true);
+	return m_doppelInterface;
 }
 
 string Config::GetDoppelIp()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string doppelIp = m_doppelIp;
-	pthread_rwlock_unlock(&m_lock);
-	return doppelIp;
+	Lock lock(&m_lock, true);
+	return m_doppelIp;
 }
 
 string Config::GetEnabledFeatures()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string enabledFeatureMask = m_enabledFeatureMask;
-	pthread_rwlock_unlock(&m_lock);
-	return enabledFeatureMask;
+	Lock lock(&m_lock, true);
+	return m_enabledFeatureMask;
 }
 
 uint Config::GetEnabledFeatureCount()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	uint enabledFeatureCount = m_enabledFeatureCount;
-	pthread_rwlock_unlock(&m_lock);
-	return enabledFeatureCount;
+	Lock lock(&m_lock, true);
+	return m_enabledFeatureCount;
 }
 
 bool Config::IsFeatureEnabled(int i)
 {
-	pthread_rwlock_rdlock(&m_lock);
-	bool isFeatureEnabled = m_isFeatureEnabled[i];
-	pthread_rwlock_unlock(&m_lock);
-	return isFeatureEnabled;
+	Lock lock(&m_lock, true);
+	return m_isFeatureEnabled[i];
 }
 
 double Config::GetEps()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	double eps = m_eps;
-	pthread_rwlock_unlock(&m_lock);
-	return eps;
+	Lock lock(&m_lock, true);
+	return m_eps;
 }
 
 bool Config::GetGotoLive()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	bool gotoLive = m_gotoLive;
-	pthread_rwlock_unlock(&m_lock);
-	return gotoLive;
+	Lock lock(&m_lock, true);
+	return m_gotoLive;
 }
 
 string Config::GetInterface()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string interface = m_interface;
-	pthread_rwlock_unlock(&m_lock);
-	return interface;
+	Lock lock(&m_lock, true);
+	return m_interface;
 }
 
 bool Config::GetIsDmEnabled()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	bool isDmEnabled = m_isDmEnabled;
-	pthread_rwlock_unlock(&m_lock);
-	return isDmEnabled;
+	Lock lock(&m_lock, true);
+	return m_isDmEnabled;
 }
 
 bool Config::GetIsTraining()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	bool isTraining = m_isTraining;
-	pthread_rwlock_unlock(&m_lock);
-	return isTraining;
+	Lock lock(&m_lock, true);
+	return m_isTraining;
 }
 
 int Config::GetK()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int k = m_k;
-	pthread_rwlock_unlock(&m_lock);
-	return k;
+	Lock lock(&m_lock, true);
+	return m_k;
 }
 
 string Config::GetPathCESaveFile()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathCESaveFile = m_pathCESaveFile;
-	pthread_rwlock_unlock(&m_lock);
-	return pathCESaveFile;
+	Lock lock(&m_lock, true);
+	return m_pathCESaveFile;
 }
 
 string Config::GetPathConfigHoneydUser()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathConfigHoneydDm = m_pathConfigHoneydUser;
-	pthread_rwlock_unlock(&m_lock);
-	return pathConfigHoneydDm;
+	Lock lock(&m_lock, true);
+	return m_pathConfigHoneydUser;
 }
 
 string Config::GetPathConfigHoneydHS()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathConfigHoneydHs = m_pathConfigHoneydHs;
-	pthread_rwlock_unlock(&m_lock);
-	return pathConfigHoneydHs;
+	Lock lock(&m_lock, true);
+	return m_pathConfigHoneydHs;
 }
 
 string Config::GetPathPcapFile()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathPcapFile = m_pathPcapFile;
-	pthread_rwlock_unlock(&m_lock);
-	return pathPcapFile;
+	Lock lock(&m_lock, true);
+	return m_pathPcapFile;
 }
 
 string Config::GetPathTrainingCapFolder()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathTrainingCapFolder = m_pathTrainingCapFolder;
-	pthread_rwlock_unlock(&m_lock);
-	return pathTrainingCapFolder;
+	Lock lock(&m_lock, true);
+	return m_pathTrainingCapFolder;
 }
 
 string Config::GetPathTrainingFile()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathTrainingFile = m_pathTrainingFile;
-	pthread_rwlock_unlock(&m_lock);
-	return pathTrainingFile;
+	Lock lock(&m_lock, true);
+	return m_pathTrainingFile;
 }
 
 bool Config::GetReadPcap()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	bool readPcap = m_readPcap;
-	pthread_rwlock_unlock(&m_lock);
-	return readPcap;
+	Lock lock(&m_lock, true);
+	return m_readPcap;
 }
 
 int Config::GetSaMaxAttempts()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int saMaxAttempts = m_saMaxAttempts;
-	pthread_rwlock_unlock(&m_lock);
-	return saMaxAttempts;
+	Lock lock(&m_lock, true);
+	return m_saMaxAttempts;
 }
 
 int Config::GetSaPort()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int saPort = m_saPort;
-	pthread_rwlock_unlock(&m_lock);
-	return saPort;
+	Lock lock(&m_lock, true);
+	return m_saPort;
 }
 
 double Config::GetSaSleepDuration()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	double saSleepDuration = m_saSleepDuration;
-	pthread_rwlock_unlock(&m_lock);
-	return saSleepDuration;
+	Lock lock(&m_lock, true);
+	return m_saSleepDuration;
 }
 
 int Config::GetSaveFreq()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int saveFreq = m_saveFreq;
-	pthread_rwlock_unlock(&m_lock);
-	return saveFreq;
+	Lock lock(&m_lock, true);
+	return m_saveFreq;
 }
 
 int Config::GetTcpCheckFreq()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int tcpCheckFreq = m_tcpCheckFreq;
-	pthread_rwlock_unlock(&m_lock);
-	return tcpCheckFreq;
+	Lock lock(&m_lock, true);
+	return m_tcpCheckFreq;
 }
 
 int Config::GetTcpTimout()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int tcpTimout = m_tcpTimout;
-	pthread_rwlock_unlock(&m_lock);
-	return tcpTimout;
+	Lock lock(&m_lock, true);
+	return m_tcpTimout;
 }
 
 int Config::GetThinningDistance()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	int thinningDistance = m_thinningDistance;
-	pthread_rwlock_unlock(&m_lock);
-	return thinningDistance;
+	Lock lock(&m_lock, true);
+	return m_thinningDistance;
 }
 
 string Config::GetKey()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string key = m_key;
-	pthread_rwlock_unlock(&m_lock);
-	return key;
+	Lock lock(&m_lock, true);
+	return m_key;
 }
 
 vector<in_addr_t> Config::GetNeighbors()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	vector<in_addr_t> neighbors = m_neighbors;
-	pthread_rwlock_unlock(&m_lock);
-	return neighbors;
+	Lock lock(&m_lock, true);
+	return m_neighbors;
 }
 
 string Config::GetGroup()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string group = m_group;
-	pthread_rwlock_unlock(&m_lock);
-	return group;
+	Lock lock(&m_lock, true);
+	return m_group;
 }
 
 void Config::SetClassificationThreshold(double classificationThreshold)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_classificationThreshold = classificationThreshold;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetClassificationTimeout(int classificationTimeout)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_classificationTimeout = classificationTimeout;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetConfigFilePath(string configFilePath)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_configFilePath = configFilePath;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetDataTTL(int dataTTL)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_dataTTL = dataTTL;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetDoppelInterface(string doppelInterface)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_doppelInterface = doppelInterface;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetDoppelIp(string doppelIp)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_doppelIp = doppelIp;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetEnabledFeatures_noLocking(string enabledFeatureMask)
@@ -1659,238 +1593,204 @@ void Config::SetEnabledFeatures_noLocking(string enabledFeatureMask)
 
 void Config::SetEnabledFeatures(string enabledFeatureMask)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	SetEnabledFeatures_noLocking(enabledFeatureMask);
-	pthread_rwlock_rdlock(&m_lock);
 }
 
 void Config::SetEps(double eps)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_eps = eps;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetGotoLive(bool gotoLive)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_gotoLive = gotoLive;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetInterface(string interface)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_interface = interface;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetIsDmEnabled(bool isDmEnabled)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_isDmEnabled = isDmEnabled;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetIsTraining(bool isTraining)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_isTraining = isTraining;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetK(int k)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_k = k;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetPathCESaveFile(string pathCESaveFile)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_pathCESaveFile = pathCESaveFile;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetPathConfigHoneydUser(string pathConfigHoneydUser)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_pathConfigHoneydUser = pathConfigHoneydUser;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetPathConfigHoneydHs(string pathConfigHoneydHs)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_pathConfigHoneydHs = pathConfigHoneydHs;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetPathPcapFile(string pathPcapFile)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_pathPcapFile = pathPcapFile;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetPathTrainingCapFolder(string pathTrainingCapFolder)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_pathTrainingCapFolder = pathTrainingCapFolder;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetPathTrainingFile(string pathTrainingFile)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_pathTrainingFile = pathTrainingFile;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetReadPcap(bool readPcap)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_readPcap = readPcap;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetSaMaxAttempts(int saMaxAttempts)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_saMaxAttempts = saMaxAttempts;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetSaPort(int saPort)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_saPort = saPort;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetSaSleepDuration(double saSleepDuration)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_saSleepDuration = saSleepDuration;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetSaveFreq(int saveFreq)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_saveFreq = saveFreq;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetTcpCheckFreq(int tcpCheckFreq)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_tcpCheckFreq = tcpCheckFreq;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetTcpTimout(int tcpTimout)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_tcpTimout = tcpTimout;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetThinningDistance(int thinningDistance)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_thinningDistance = thinningDistance;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetKey(string key)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_key = key;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetNeigbors(vector<in_addr_t> neighbors)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_neighbors = neighbors;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 void Config::SetGroup(string group)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_group = group;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 string Config::GetLoggerPreferences()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string loggerPreferences = m_loggerPreferences;
-	pthread_rwlock_unlock(&m_lock);
-	return loggerPreferences;
+	Lock lock(&m_lock, true);
+	return m_loggerPreferences;
 }
 
 string Config::GetSMTPAddr()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string SMTPAddr = m_SMTPAddr;
-	pthread_rwlock_unlock(&m_lock);
-	return SMTPAddr;
+	Lock lock(&m_lock, true);
+	return m_SMTPAddr;
 }
 
 string Config::GetSMTPDomain()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string SMTPDomain = m_SMTPDomain;
-	pthread_rwlock_unlock(&m_lock);
-	return SMTPDomain;
+	Lock lock(&m_lock, true);
+	return m_SMTPDomain;
 }
 
 vector<string> Config::GetSMTPEmailRecipients()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	vector<string> SMTPEmailRecipients = m_SMTPEmailRecipients;
-	pthread_rwlock_unlock(&m_lock);
-	return SMTPEmailRecipients;
+	Lock lock(&m_lock, true);
+	return m_SMTPEmailRecipients;
 }
 
 in_port_t Config::GetSMTPPort()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	in_port_t SMTPPort = m_SMTPPort;
-	pthread_rwlock_unlock(&m_lock);
-	return SMTPPort;
+	Lock lock(&m_lock, true);
+	return m_SMTPPort;
 }
 
 void Config::SetLoggerPreferences(string loggerPreferences)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_loggerPreferences = loggerPreferences;
-	pthread_rwlock_unlock(&m_lock);
+
 }
 
 void Config::SetSMTPAddr(string SMTPAddr)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_SMTPAddr = SMTPAddr;
-	pthread_rwlock_unlock(&m_lock);
+
 }
 
 void Config::SetSMTPDomain(string SMTPDomain)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_SMTPDomain = SMTPDomain;
-	pthread_rwlock_unlock(&m_lock);
+
 }
 
 void Config::SetSMTPEmailRecipients(vector<string> SMTPEmailRecipients)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_SMTPEmailRecipients = SMTPEmailRecipients;
-	pthread_rwlock_unlock(&m_lock);
+
 }
 
 void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
@@ -1919,87 +1819,69 @@ void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 
 void Config::SetSMTPPort(in_port_t SMTPPort)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_SMTPPort = SMTPPort;
-	pthread_rwlock_unlock(&m_lock);
+
 }
 
 string Config::GetPathBinaries()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathBinaries = m_pathBinaries;
-	pthread_rwlock_unlock(&m_lock);
-	return pathBinaries;
+	Lock lock(&m_lock, true);
+	return m_pathBinaries;
 }
 
 string Config::GetPathWriteFolder()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathWriteFolder = m_pathWriteFolder;
-	pthread_rwlock_unlock(&m_lock);
-	return pathWriteFolder;
+	Lock lock(&m_lock, true);
+	return m_pathWriteFolder;
 }
 
 string Config::GetPathReadFolder()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathReadFolder = m_pathReadFolder;
-	pthread_rwlock_unlock(&m_lock);
-	return pathReadFolder;
+	Lock lock(&m_lock, true);
+	return m_pathReadFolder;
 }
 
 string Config::GetPathIcon()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathIcon= m_pathIcon;
-	pthread_rwlock_unlock(&m_lock);
-	return pathIcon;
+	Lock lock(&m_lock, true);
+	return m_pathIcon;
 }
 
 string Config::GetPathHome()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string pathHome = m_pathHome;
-	pthread_rwlock_unlock(&m_lock);
-	return pathHome;
+	Lock lock(&m_lock, true);
+	return m_pathHome;
 }
 
 double Config::GetSqurtEnabledFeatures()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	double squrtEnabledFeatures= m_squrtEnabledFeatures;
-	pthread_rwlock_unlock(&m_lock);
-	return squrtEnabledFeatures;
+	Lock lock(&m_lock, true);
+	return m_squrtEnabledFeatures;
 }
 
 char Config::GetHaystackStorage()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	char haystackStorage = m_haystackStorage;
-	pthread_rwlock_unlock(&m_lock);
-	return haystackStorage;
+	Lock lock(&m_lock, true);
+	return m_haystackStorage;
 }
 
 void Config::SetHaystackStorage(char haystackStorage)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_haystackStorage = haystackStorage;
-	pthread_rwlock_unlock(&m_lock);
 }
 
 string Config::GetUserPath()
 {
-	pthread_rwlock_rdlock(&m_lock);
-	string userPath = m_userPath;
-	pthread_rwlock_unlock(&m_lock);
-	return userPath;
+	Lock lock(&m_lock, true);
+	return m_userPath;
 }
 
 void Config::SetUserPath(string userPath)
 {
-	pthread_rwlock_wrlock(&m_lock);
+	Lock lock(&m_lock, false);
 	m_userPath = userPath;
-	pthread_rwlock_unlock(&m_lock);
 }
 }
 

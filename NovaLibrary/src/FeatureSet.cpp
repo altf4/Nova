@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Maintains and calculates distinct features for individual Suspects
 //					for use in classification of the Suspect.
-//============================================================================/*
+//============================================================================
 
 #include "FeatureSet.h"
 #include "Logger.h"
@@ -194,7 +194,7 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			for(Packet_Table::iterator it = m_packTable.begin() ; it != m_packTable.end(); it++)
 			{
 				// number of packets multiplied by (packet_size - mean)^2 divided by count
-				variance += (it->second * pow((it->first - mean), 2))/ count;
+				variance += (it->second *pow((it->first - mean), 2))/ count;
 			}
 
 			m_features[PACKET_SIZE_DEVIATION] = sqrt(variance);
@@ -221,6 +221,7 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 				break;
 			}
 			m_features[PACKET_INTERVAL_MEAN] = (((double)m_totalInterval)/((double)(m_intervalTable.size())));
+			break;
 		}
 		///Measures the distribution of intervals between packets
 		case PACKET_INTERVAL_DEVIATION:
@@ -411,7 +412,7 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	return *this;
 }
 
-uint32_t FeatureSet::SerializeFeatureSet(u_char * buf)
+uint32_t FeatureSet::SerializeFeatureSet(u_char *buf)
 {
 	uint32_t offset = 0;
 
@@ -429,7 +430,7 @@ uint32_t FeatureSet::SerializeFeatureSet(u_char * buf)
 }
 
 
-uint32_t FeatureSet::DeserializeFeatureSet(u_char * buf)
+uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf)
 {
 	uint32_t offset = 0;
 

@@ -25,7 +25,7 @@ using namespace std;
 using namespace Nova;
 
 //Parent window pointers, allows us to call functions from the parent
-NovaConfig * nParent;
+NovaConfig *nParent;
 string subName;
 in_addr_t subnetRealIP;
 
@@ -33,11 +33,11 @@ in_addr_t subnetRealIP;
  * Construct and Initialize GUI
  ************************************************/
 
-subnetPopup::subnetPopup(QWidget * parent, Nova::subnet * s)
+subnetPopup::subnetPopup(QWidget *parent, Nova::subnet *s)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
-	nParent = (NovaConfig *)parent;
+	nParent = (NovaConfig*)parent;
 	m_editSubnet = *s;
 	subName = m_editSubnet.name;
 	m_maskEdit = new MaskSpinBox(this, s);

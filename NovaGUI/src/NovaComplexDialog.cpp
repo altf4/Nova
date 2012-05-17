@@ -105,12 +105,12 @@ whichDialog NovaComplexDialog::GetType()
 void NovaComplexDialog::DrawPersonalities(string filterStr)
 {
 	ui.treeWidget->clear();
-	QTreeWidgetItem * item = NULL;
-	QTreeWidgetItem * index = NULL;
+	QTreeWidgetItem *item = NULL;
+	QTreeWidgetItem *index = NULL;
 
 	OsPersonalityDb db;
 	db.LoadNmapPersonalitiesFromFile();
-	vector<pair<string,string> > * printList = &db.m_nmapPersonalities;
+	vector<pair<string,string> > *printList = &db.m_nmapPersonalities;
 
 	string fprint;
 	string printClass;
@@ -223,7 +223,7 @@ void NovaComplexDialog::on_selectButton_clicked()
 
 void NovaComplexDialog::on_searchButton_clicked()
 {
-	QTreeWidgetItem * item = NULL;
+	QTreeWidgetItem *item = NULL;
 	string filterStr = ui.searchEdit->text().toStdString();
 
 	if(m_type == MACDialog)

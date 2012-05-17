@@ -152,7 +152,7 @@ int RunNovaD()
 		// We suffix the training capture files with the date/time
 		time_t rawtime;
 		time(&rawtime);
-		struct tm * timeinfo = localtime(&rawtime);
+		struct tm *timeinfo = localtime(&rawtime);
 		char buffer[40];
 		strftime(buffer, 40, "%m-%d-%y_%H-%M-%S", timeinfo);
 
@@ -183,6 +183,8 @@ int RunNovaD()
 	{
 		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
 		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
+		pthread_detach(classificationLoopThread);
+		pthread_detach(silentAlarmListenThread);
 	}
 
 	// If we're not reading from a pcap, monitor for IP changes in the honeyd file
@@ -194,6 +196,7 @@ int RunNovaD()
 		{
 			watch = inotify_add_watch (notifyFd, dhcpListFile.c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 			pthread_create(&ipUpdateThread, NULL, UpdateIPFilter,NULL);
+			pthread_detach(ipUpdateThread);
 		}
 		else
 		{
@@ -759,7 +762,10 @@ bool Start_Packet_Handler()
 		}
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received
-	    pcap_loop(handle, -1, Packet_Handler, NULL);
+	    if(pcap_loop(handle, -1, Packet_Handler, NULL) != 0)
+	    {
+	    	LOG(ERROR, pcap_geterr(handle), pcap_geterr(handle));
+	    }
 	}
 	return false;
 }
