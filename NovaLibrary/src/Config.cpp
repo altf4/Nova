@@ -1510,7 +1510,7 @@ int Config::GetTcpTimout()
 	return m_tcpTimout;
 }
 
-int Config::GetThinningDistance()
+double Config::GetThinningDistance()
 {
 	Lock lock(&m_lock, true);
 	return m_thinningDistance;
@@ -1711,7 +1711,7 @@ void Config::SetTcpTimout(int tcpTimout)
 	m_tcpTimout = tcpTimout;
 }
 
-void Config::SetThinningDistance(int thinningDistance)
+void Config::SetThinningDistance(double thinningDistance)
 {
 	Lock lock(&m_lock, false);
 	m_thinningDistance = thinningDistance;
