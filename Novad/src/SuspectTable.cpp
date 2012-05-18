@@ -646,8 +646,9 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			return (sizeof(expirationTime) + sizeof(dataSize) + dataSize);
 		}
 
-		u_char tableBuffer[dataSize];
-		in->read((char*) tableBuffer, dataSize);
+		u_char *tableBuffer = new u_char[dataSize];
+
+		in->read((char*)tableBuffer, dataSize);
 		lengthLeft -= dataSize;
 
 		// Read each suspect
@@ -660,6 +661,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 				offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
 			} catch (Nova::hashMapException& e) {
 				LOG(ERROR, "The state file may be corrupt, a hash table invalid key exception was caught during deserialization", "");
+				delete tableBuffer;
 				return 0;
 			}
 
@@ -720,6 +722,8 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 				}
 			}
 		}
+
+		delete[] tableBuffer;
 	}
 	ret = (uint32_t)in->tellg() - cur;
 	return ret;
