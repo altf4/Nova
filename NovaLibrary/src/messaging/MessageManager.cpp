@@ -112,6 +112,25 @@ Lock MessageManager::UseSocket(int socketFD)
 		mutex =  m_protocolLocks[socketFD];
 	}
 
+	//Increment the MessageQeueu's forward serial number
+	{
+		//Allows us to safely access the message queue
+		Lock protocolLock(mutex);
+
+		MessageQueue *queue;
+		//Initialize the MessageQueue if it doesn't yet exist
+		{
+			Lock lock(&m_queuesLock);
+			if(m_queues.count(socketFD) == 0)
+			{
+				m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
+			}
+			queue = m_queues[socketFD];
+		}
+
+		queue->NextConversation();
+	}
+
 	return Lock(mutex);
 }
 
@@ -174,6 +193,24 @@ std::vector <int>MessageManager::GetSocketList()
 	}
 
 	return sockets;
+}
+
+uint32_t MessageManager::GetSerialNumber(int socketFD,  enum ProtocolDirection direction)
+{
+	StartSocket(socketFD);
+
+	MessageQueue *queue;
+	//Initialize the MessageQueue if it doesn't yet exist
+	{
+		Lock lock(&m_queuesLock);
+		if(m_queues.count(socketFD) == 0)
+		{
+			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
+		}
+		queue = m_queues[socketFD];
+	}
+
+	return queue->GetSerialNumber(direction);
 }
 
 }

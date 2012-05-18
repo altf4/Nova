@@ -55,6 +55,8 @@ bool Message::WriteMessage(Message *message, int connectFD)
 		return false;
 	}
 
+	message->m_serialNumber = MessageManager::Instance().GetSerialNumber(connectFD, message->m_protocolDirection);
+
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
 	
@@ -118,6 +120,9 @@ bool Message::DeserializeHeader(char **buffer)
 	memcpy(&m_protocolDirection, *buffer, sizeof(m_protocolDirection));
 	*buffer += sizeof(m_protocolDirection);
 
+	memcpy(&m_serialNumber, *buffer, sizeof(m_serialNumber));
+	*buffer += sizeof(m_serialNumber);
+
 	if((m_protocolDirection != DIRECTION_TO_UI) && (m_protocolDirection != DIRECTION_TO_NOVAD))
 	{
 		return false;
@@ -133,6 +138,9 @@ void Message::SerializeHeader(char **buffer)
 
 	memcpy(*buffer, &m_protocolDirection, sizeof(m_protocolDirection));
 	*buffer += sizeof(m_protocolDirection);
+
+	memcpy(*buffer, &m_serialNumber, sizeof(m_serialNumber));
+	*buffer += sizeof(m_serialNumber);
 }
 
 Message *Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction)

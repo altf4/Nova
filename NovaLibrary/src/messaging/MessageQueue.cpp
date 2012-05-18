@@ -41,6 +41,9 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 	pthread_cond_init(&m_readWakeupCondition, NULL);
 	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
+	m_expectedcallbackSerial = 0;
+	m_forwardSerialNumber = 0;
+
 	m_isShutDown = false;
 	m_callbackDoWakeup = false;
 	m_forwardDirection = forwardDirection;
@@ -98,28 +101,57 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 			//Protection for the queue structure
 			Lock lockQueue(&m_forwardQueueMutex);
 
-			//While loop to protect against spurious wakeups
-			while(m_forwardQueue.empty())
+			bool gotCorrectSerial = false;
+			while(!gotCorrectSerial)
 			{
-				pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
-			}
+				//While loop to protect against spurious wakeups
+				while(m_forwardQueue.empty())
+				{
+					pthread_cond_wait(&m_readWakeupCondition, &m_forwardQueueMutex);
+				}
 
-			retMessage = m_forwardQueue.front();
-			m_forwardQueue.pop();
+				retMessage = m_forwardQueue.front();
+				m_forwardQueue.pop();
+				if(retMessage->m_serialNumber == m_forwardSerialNumber)
+				{
+					gotCorrectSerial = true;
+				}
+				else
+				{
+					//Discard this message and get a new one
+					//TODO: Must clear this message's internals or it will leak!
+					delete retMessage;
+				}
+			}
 		}
 		else
 		{
 			//Protection for the queue structure
 			Lock lockQueue(&m_callbackQueueMutex);
 
-			//While loop to protect against spurious wakeups
-			while(m_callbackQueue.empty())
+			bool gotCorrectSerial = false;
+			while(!gotCorrectSerial)
 			{
-				pthread_cond_wait(&m_readWakeupCondition, &m_callbackQueueMutex);
+				//While loop to protect against spurious wakeups
+				while(m_callbackQueue.empty())
+				{
+					pthread_cond_wait(&m_readWakeupCondition, &m_callbackQueueMutex);
+				}
+
+				retMessage = m_callbackQueue.front();
+				m_callbackQueue.pop();
+				if(retMessage->m_serialNumber == m_expectedcallbackSerial)
+				{
+					gotCorrectSerial = true;
+				}
+				else
+				{
+					//Discard this message and get a new one
+					//TODO: Must clear this message's internals or it will leak!
+					delete retMessage;
+				}
 			}
 
-			retMessage = m_callbackQueue.front();
-			m_callbackQueue.pop();
 		}
 	}
 	//Read with timeout
@@ -137,36 +169,64 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 			//Protection for the queue structure
 			Lock lockQueue(&m_forwardQueueMutex);
 
-			//While loop to protect against spurious wakeups
-			while(m_forwardQueue.empty())
+			bool gotCorrectSerial = false;
+			while(!gotCorrectSerial)
 			{
-				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
-				if (errCondition == ETIMEDOUT)
+				//While loop to protect against spurious wakeups
+				while(m_forwardQueue.empty())
 				{
-					return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
+					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
+					if (errCondition == ETIMEDOUT)
+					{
+						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
+					}
+				}
+
+				retMessage = m_forwardQueue.front();
+				m_forwardQueue.pop();
+				if(retMessage->m_serialNumber == m_forwardSerialNumber)
+				{
+					gotCorrectSerial = true;
+				}
+				else
+				{
+					//Discard this message and get a new one
+					//TODO: Must clear this message's internals or it will leak!
+					delete retMessage;
 				}
 			}
-
-			retMessage = m_forwardQueue.front();
-			m_forwardQueue.pop();
 		}
 		else
 		{
 			//Protection for the queue structure
 			Lock lockQueue(&m_callbackQueueMutex);
 
-			//While loop to protect against spurious wakeups
-			while(m_callbackQueue.empty())
+			bool gotCorrectSerial = false;
+			while(!gotCorrectSerial)
 			{
-				int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
-				if (errCondition == ETIMEDOUT)
+				//While loop to protect against spurious wakeups
+				while(m_callbackQueue.empty())
 				{
-					return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
+					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
+					if (errCondition == ETIMEDOUT)
+					{
+						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
+					}
+				}
+
+				retMessage = m_callbackQueue.front();
+				m_callbackQueue.pop();
+				if(retMessage->m_serialNumber == m_expectedcallbackSerial)
+				{
+					gotCorrectSerial = true;
+				}
+				else
+				{
+					//Discard this message and get a new one
+					//TODO: Must clear this message's internals or it will leak!
+					delete retMessage;
 				}
 			}
-
-			retMessage = m_callbackQueue.front();
-			m_callbackQueue.pop();
 		}
 	}
 
@@ -225,9 +285,37 @@ bool MessageQueue::RegisterCallback()
 		m_callbackDoWakeup = false;
 	}
 
+	//This is the first message of the protocol. This message contains the serial number we will be expecting later
+	{
+		//Protection for the queue structure
+		Lock lockQueue(&m_callbackQueueMutex);
+		if(!m_callbackQueue.empty())
+		{
+			Message *nextMessage = m_callbackQueue.front();
+			m_expectedcallbackSerial = nextMessage->m_serialNumber;
+		}
+	}
 
 	Lock shutdownLock(&m_isShutdownMutex);
 	return !m_isShutDown;
+}
+
+void MessageQueue::NextConversation()
+{
+	m_forwardSerialNumber++;
+}
+
+uint32_t MessageQueue::GetSerialNumber(enum ProtocolDirection direction)
+{
+	if(direction == m_forwardDirection)
+	{
+		return m_forwardSerialNumber;
+	}
+	else
+	{
+		return m_expectedcallbackSerial;
+	}
+
 }
 
 void *MessageQueue::ProducerThread()
