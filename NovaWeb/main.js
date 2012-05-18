@@ -8,6 +8,7 @@ var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
 var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
+var trainingDb = new novaconfig.CustomizeTrainingBinding();
 
 honeydConfig.LoadAllTemplates();
 
@@ -168,6 +169,26 @@ app.get('/addHoneydProfile', function(req, res) {
 		, scripts: honeydConfig.GetScriptNames()
 		, personalities: osPersonalityDb.GetPersonalityOptions()
 	}})
+});
+
+app.get('/customizeTraining', function(req, res) {
+	res.render('customizeTraining.jade',
+	{ locals : {
+		desc: trainingDb.GetDescriptions()
+		, uids: trainingDb.GetUIDs()
+		, hostiles: trainingDb.GetHostile()	
+	}})
+});
+
+app.post('/customizeTrainingSave', function(req, res){
+  for(var uid in req.body)
+  {
+      trainingDb.SetIncluded(uid, true);
+  }
+	
+	trainingDb.Save();
+	
+	res.render('saveRedirect.jade', { locals: {redirectLink: "'/customizeTraining'"}})	
 });
 
 app.post('/editHoneydNodesSave', function(req, res) {

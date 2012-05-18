@@ -6,6 +6,7 @@
 #include "OsPersonalityDbBinding.h"
 #include "HoneydProfileBinding.h"
 #include "NovaNode.h"
+#include "CustomizeTraining.h"
 
 using namespace v8;
 
@@ -16,6 +17,7 @@ void InitAll(Handle<Object> target) {
   VendorMacDbBinding::Init(target);
   OsPersonalityDbBinding::Init(target);
   HoneydProfileBinding::Init(target);
+  CustomizeTrainingBinding::Init(target);
 }
 
 NODE_MODULE(novaconfig, InitAll)

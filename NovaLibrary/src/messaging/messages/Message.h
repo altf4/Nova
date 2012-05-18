@@ -28,7 +28,7 @@
 #define REPLY_TIMEOUT 3
 
 //Currently, size is 2
-#define MESSADE_HDR_SIZE sizeof(m_protocolDirection) + sizeof(m_messageType)
+#define MESSADE_HDR_SIZE sizeof(m_protocolDirection) + sizeof(m_messageType) + sizeof(m_serialNumber)
 
 namespace Nova
 {
@@ -79,13 +79,15 @@ public:
 	//	length - length of the buffer
 	//	direction - protocol direction that we expect the message to be going. Used in error conditions when there is no valid message
 	// Returns - Pointer to newly allocated Message object
-	//				returns NULL on error
+	//				returns ErrorMessage on error
 	//	NOTE: The caller must manually delete the returned object when finished with it
 	static Message *Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction);
 
 	enum ProtocolDirection m_protocolDirection;
 
 	enum MessageType m_messageType;
+
+	uint32_t m_serialNumber;
 
 protected:
 

@@ -14,7 +14,7 @@ block headerAdditions
         console.log("Creating child of profile " + currentName);
     } else {
         currentName = "#{oldName}";
-        console.log("Eding profile " + currentName);
+        console.log("Editing profile " + currentName);
     }
 
     var inheritanceChanged = function() {};
@@ -326,6 +326,7 @@ block headerAdditions
         now.GetPorts(currentName, function(ports) {
             for (var i = 0; i < ports.length; i++) {
                 portList[ports[i].portNum] = ports[i];
+                ports[i].isInherited = true;
                 addPort(ports[i]);
             }
            portBehaviorChanged();
