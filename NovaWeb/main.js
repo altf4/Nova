@@ -1,8 +1,5 @@
 var novaconfig = require('novaconfig.node');
 
-
-
-
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
@@ -14,8 +11,36 @@ honeydConfig.LoadAllTemplates();
 
 var fs = require('fs');
 var jade = require('jade');
-var express=require('express');
+var express =require('express');
+var util = require('util');
 var https = require('https');
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+
+var tempUser = [ {id:1, username: 'nova', password: 'toor'} ];
+
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+  findById(id, function(err, user) {
+    done(err, user)
+  });
+});
+
+passport.use(new LocalStrategy(
+  function(username, password, done) {
+   process.nextTick(function(){
+     findByUsername(username, function(err, user){
+       if(err) { alert("Error"); return done(err); }
+       if(!user) { alert("No user by this name"); return done(null, false, {message: 'Unknown user ' + username}); }
+       if(user.password != password) { alert("Password wrong"); return done(null, false, { message: 'Invalid password'}); }
+       return done(null, user);
+     })
+   }); 
+  }
+));
 
 // Setup TLS
 var express_options = {
@@ -27,8 +52,13 @@ var app = express.createServer(express_options);
 
 
 app.configure(function () {
-		app.use(express.methodOverride());
+    app.use(express.logger());
 		app.use(express.bodyParser());
+		app.use(express.cookieParser());
+		app.use(express.methodOverride());
+		app.use(express.session({ secret: 'nova toor' }));
+		app.use(passport.initialize());
+		app.use(passport.session());
 		app.use(app.router);
 });
 
@@ -52,7 +82,11 @@ var everyone = nowjs.initialize(app);
 
 
 app.get('/', function(req, res) {
-     res.render('main.jade');
+     res.render('login.jade', 
+     {
+       locals: {
+         user: req.user    
+     }});
  });
 
 app.get('/configNova', function(req, res) {
@@ -178,6 +212,26 @@ app.get('/customizeTraining', function(req, res) {
 		, uids: trainingDb.GetUIDs()
 		, hostiles: trainingDb.GetHostile()	
 	}})
+});
+
+app.get('/logout', function(req, res){
+  req.logout();
+  res.redirect('/');
+});
+
+
+app.post('/auth', passport.authenticate('local', 
+  { failureRedirect: '/', failureFlash: true }), function(req, res){
+    res.redirect('/novaMain');
+});
+
+app.get('/novaMain', ensureAuthenticated, function(req, res) {
+     res.render('novaMain', 
+     {
+       locals: {
+         user: req.user
+         , message: req.flash('error')
+     }});
 });
 
 app.post('/customizeTrainingSave', function(req, res){
@@ -479,6 +533,34 @@ function objCopy(src,dst) {
 	}
 }
 
+function findById(id, fn) {
+  var index = id - 1;
+  if(users[index])
+  {
+    fn(null, users[index]);
+  }
+  else
+  {
+    fn(new Error('User ' + id + ' does not exist'));
+  }
+}
+
+function findByUsername(username, fn) {
+  for(var i = 0, len = tempUser.length; i < len; i++)
+  {
+    var user = tempUser[i];
+    if(user.username === username)
+    {
+      return fn(null, user);
+    }
+  }  
+  return fn(null, null);
+}
+
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) { return next(); }
+  res.redirect('/');
+}
 
 setInterval(function() {
 		try {
