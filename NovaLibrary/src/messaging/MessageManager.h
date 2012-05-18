@@ -88,6 +88,13 @@ public:
 	//		be included in this list. You'll just have to deal with this fact.
 	std::vector <int>GetSocketList();
 
+	//Returns the current serial number for the MessageQueue at the given socket
+	//	socketFD - The socket file descriptor of the serial to return
+	//	direction - The protocol direction of the message you're trying to send
+	//	NOTE: You must have the lock on the socket by calling UseSocket() prior to calling this
+	//		(Or bad things will happen)
+	uint32_t GetSerialNumber(int socketFD,  enum ProtocolDirection direction);
+
 private:
 
 	static MessageManager *m_instance;

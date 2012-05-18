@@ -61,6 +61,15 @@ public:
 	//			false if message queue has been closed and needs to be deleted
 	bool RegisterCallback();
 
+	//Tells the MessageQueue that a new conversation has begun on the forward socket
+	//	This increments m_forwardSerialNumber
+	//	NOTE: You must have the lock on the socket before using this. (Used inside UseSocket)
+	void NextConversation();
+
+	//Returns the current value of the forward serial number
+	//	direction - The protocol direction of the message you're trying to send
+	uint32_t GetSerialNumber(enum ProtocolDirection direction);
+
 private:
 
 	//Producer thread helper. Used so that the producer thread can be a member of the MessageQueue class
@@ -75,6 +84,12 @@ private:
 	//Thread which continually loops, doing read() calls on the underlying socket and pushing messages read onto the queues
 	//	Thread quits as soon as read fails (returns <= 0). This can be made to happen through a CloseSocket() call from MessageManager
 	void *ProducerThread();
+
+	//This serial numbers keeps track of what protocol conversation we are on and expecting
+	//	Forward should be incremented before each conversation (by UseSocket() of MessageManager)
+	//	Callback is updated every received callback message, and parroted back out every sent callback message
+	uint32_t m_expectedcallbackSerial;
+	uint32_t m_forwardSerialNumber;
 
 	std::queue<Message*> m_forwardQueue;
 	std::queue<Message*> m_callbackQueue;
