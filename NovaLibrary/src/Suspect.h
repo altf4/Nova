@@ -65,6 +65,7 @@ public:
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
 	// Returns: Human readable std::string of the given feature
 	std::string ToString();
+	std::string GetIpString();
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
 	void AddEvidence(const Packet& packet);

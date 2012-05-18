@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include "inttypes.h"
 #include "boost/program_options.hpp"
 
 
@@ -153,15 +154,36 @@ int main(int argc, const char *argv[])
 
 		if (!strcmp(argv[2], "all"))
 		{
-			PrintAllSuspects(SUSPECTLIST_ALL);
+			if (argc == 4 && !strcmp(argv[3], "csv"))
+			{
+				PrintAllSuspects(SUSPECTLIST_ALL, true);
+			}
+			else
+			{
+				PrintAllSuspects(SUSPECTLIST_ALL, false);
+			}
 		}
 		else if (!strcmp(argv[2], "hostile"))
 		{
-			PrintAllSuspects(SUSPECTLIST_HOSTILE);
+			if (argc == 4 && !strcmp(argv[3], "csv"))
+			{
+				PrintAllSuspects(SUSPECTLIST_HOSTILE, true);
+			}
+			else
+			{
+				PrintAllSuspects(SUSPECTLIST_HOSTILE, false);
+			}
 		}
 		else if (!strcmp(argv[2], "benign"))
 		{
-			PrintAllSuspects(SUSPECTLIST_BENIGN);
+			if (argc == 4 && !strcmp(argv[3], "csv"))
+			{
+				PrintAllSuspects(SUSPECTLIST_BENIGN, true);
+			}
+			else
+			{
+				PrintAllSuspects(SUSPECTLIST_BENIGN, false);
+			}
 		}
 		else
 		{
@@ -352,7 +374,7 @@ void PrintSuspect(in_addr_t address)
 	CloseNovadConnection();
 }
 
-void PrintAllSuspects(enum SuspectListType listType)
+void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
 
@@ -371,7 +393,19 @@ void PrintAllSuspects(enum SuspectListType listType)
 
 		if (suspect != NULL)
 		{
-			cout << suspect->ToString() << endl;
+			if (!csv)
+			{
+				cout << suspect->ToString() << endl;
+			}
+			else
+			{
+				cout << suspect->GetIpString() << ",";
+				for (int i = 0; i < DIM; i++)
+				{
+					cout << suspect->GetFeatureSet().m_features[i] << ",";
+				}
+				cout << suspect->GetClassification() << endl;
+			}
 		}
 		else
 		{

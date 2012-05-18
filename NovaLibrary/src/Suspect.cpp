@@ -64,6 +64,10 @@ Suspect::Suspect(const Packet& packet)
 	}
 }
 
+string Suspect::GetIpString()
+{
+	return string(inet_ntoa(m_IpAddress));
+}
 
 string Suspect::ToString()
 {
