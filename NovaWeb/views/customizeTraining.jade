@@ -1,0 +1,24 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", name="text/css", href="configstyle.css", media="screen")
+  
+block content
+  div
+    form(method="post", action="/customizeTrainingSave")
+      table(border = "1")
+        thead
+          tr
+            th Include?
+            th Hostility
+            th UID
+            th Description
+        tbody
+          - for (var i = 0; i < hostiles.length; i++)
+            tr
+              td
+                input(type="checkbox", name="#{uids[i]}", value="1", checked)
+              td #{hostiles[i]}
+              td #{uids[i]}
+              td #{desc[i]}
+      input(type="Submit", value="Confirm Training Data Selection")
