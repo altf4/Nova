@@ -18,6 +18,7 @@
 //============================================================================
 
 #include "MessageQueue.h"
+#include "MessageManager.h"
 #include "../Lock.h"
 #include "messages/ErrorMessage.h"
 
@@ -43,6 +44,8 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 
 	m_expectedcallbackSerial = 0;
 	m_forwardSerialNumber = 0;
+
+	m_consecutiveTimeouts = 0;
 
 	m_isShutDown = false;
 	m_callbackDoWakeup = false;
@@ -228,6 +231,29 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				}
 			}
 		}
+	}
+
+	if(retMessage->m_messageType == ERROR_MESSAGE)
+	{
+		ErrorMessage *errorMessage = (ErrorMessage*)retMessage;
+		if(errorMessage->m_errorType == ERROR_TIMEOUT)
+		{
+			m_consecutiveTimeouts++;
+		}
+		else
+		{
+			m_consecutiveTimeouts = 0;
+		}
+	}
+	else
+	{
+		m_consecutiveTimeouts = 0;
+	}
+
+	//If we have had too many timeouts in a row, then close down the socket
+	if(m_consecutiveTimeouts == MAX_CONSECUTIVE_MSG_TIMEOUTS)
+	{
+		MessageManager::Instance().CloseSocket(m_socketFD);
 	}
 
 	return retMessage;
