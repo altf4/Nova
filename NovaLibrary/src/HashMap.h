@@ -45,6 +45,7 @@ public:
 
 	// Exception enabled access method
 	ValueType& operator[](KeyType key);
+	ValueType& get(KeyType key);
 
 	void set_deleted_key(KeyType key);
 	void set_empty_key(KeyType key);
@@ -192,6 +193,12 @@ ValueType& HashMap<KeyType,ValueType,HashFcn,EqualKey>::operator[](KeyType key)
 	{
 		return m_map[key];
 	}
+}
+
+template<class KeyType, class ValueType, class HashFcn, class EqualKey>
+ValueType& HashMap<KeyType,ValueType,HashFcn,EqualKey>::get(KeyType key)
+{
+	return m_map[key];
 }
 
 }
