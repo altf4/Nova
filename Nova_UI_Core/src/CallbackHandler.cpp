@@ -47,7 +47,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
-			change.m_type = CALLBACK_HUNG_UP;
+			change.m_type = CALLBACK_ERROR;
 		}
 		//TODO: Do we care about the other error message types here?
 
