@@ -83,7 +83,10 @@ void Reload();
 //		honeyDConfigPath - path to honeyd configuration file
 // Returns: vector containing IP addresses of all honeypots
 std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
-std::vector <std::string> GetHaystackDhcpAddresses(std::string honeyDConfigPath);
+
+// Reads in a file containing one IP per line and # prefix for comments
+//	returns - vector representation of the IP addresses in the file
+std::vector <std::string> GetIpAddresses(std::string honeyDConfigPath);
 
 std::string ConstructFilterString();
 

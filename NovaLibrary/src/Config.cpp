@@ -65,7 +65,8 @@ string Config::m_prefixes[] =
 	"SMTP_DOMAIN",
 	"RECIPIENTS",
 	"SERVICE_PREFERENCES",
-	"HAYSTACK_STORAGE"
+	"HAYSTACK_STORAGE",
+	"WHITELIST_FILE"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -655,6 +656,22 @@ void Config::LoadConfig()
 				}
 				continue;
 			}
+
+
+			// WHITELIST_FILE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0 && !line.substr(line.size() - 4,
+						line.size()).compare(".txt"))
+				{
+					m_pathWhitelistFile = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
 		}
 	}
 	else
@@ -1092,6 +1109,7 @@ void Config::SetDefaults()
 	m_pathConfigHoneydHs 	= "Config/haystack.config";
 	m_pathPcapFile 		= "../pcapfile";
 	m_pathTrainingFile 	= "Config/data.txt";
+	m_pathWhitelistFile = "Config/whitelist.txt";
 	m_pathConfigHoneydUser	= "Config/doppelganger.config";
 	m_pathTrainingCapFolder = "Data";
 	m_pathCESaveFile = "ceStateSave";
@@ -1467,6 +1485,12 @@ string Config::GetPathTrainingFile()
 	return m_pathTrainingFile;
 }
 
+string Config::GetPathWhitelistFile()
+{
+	Lock lock(&m_lock, true);
+	return m_pathWhitelistFile;
+}
+
 bool Config::GetReadPcap()
 {
 	Lock lock(&m_lock, true);
@@ -1667,6 +1691,13 @@ void Config::SetPathTrainingFile(string pathTrainingFile)
 	Lock lock(&m_lock, false);
 	m_pathTrainingFile = pathTrainingFile;
 }
+
+void Config::SetPathWhitelistFile(string pathWhitelistFile)
+{
+	Lock lock(&m_lock, false);
+	m_pathWhitelistFile = pathWhitelistFile;
+}
+
 
 void Config::SetReadPcap(bool readPcap)
 {
