@@ -16,31 +16,6 @@ var util = require('util');
 var https = require('https');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-/* var mysql = require('mysql');
-
-var use_db = 'nova_cred';
-var use_table = 'creds';
-var query_result;
-
-var client = mysql.createClient({
-  user: 'root'
-  , password: 'root'
-})
-
-client.query("USE " + use_db);
-
-client.query(
-  'SELECT * FROM ' + use_table,
-  function selectCb(err, results, fields) {
-    if (err) {
-      throw err;
-    }
-    
-    console.log(results);
-    client.end();
-  }
-);
-*/
 
 var tempUser = [ {id: 1, username: 'nova', password: 'toor'} ];
 
@@ -265,21 +240,26 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
      });
 });
 
-app.get('/', function(req, res) {
-     res.render('login.jade', 
+app.get('/login', function(req, res){
+  res.render('login.jade'
+  );
+});
+
+app.get('/', ensureAuthenticated, function(req, res) {
+     res.render('main.jade', 
      {
          user: req.user
          , message: req.flash('error')    
      });
 });
 
-app.post('/', 
+app.post('/login', 
   passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
     function(req, res){
     res.redirect('/novaMain');
 });
 
-app.post('/customizeTrainingSave', function(req, res){
+app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
   for(var uid in req.body)
   {
       trainingDb.SetIncluded(uid, true);
@@ -290,7 +270,7 @@ app.post('/customizeTrainingSave', function(req, res){
 	res.render('saveRedirect.jade', { locals: {redirectLink: "'/customizeTraining'"}})	
 });
 
-app.post('/editHoneydNodesSave', function(req, res) {
+app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
 	var ipAddress;
 	if (req.body["ipType"] == "DHCP") {
 		ipAddress = "DHCP";
@@ -311,7 +291,7 @@ app.post('/editHoneydNodesSave', function(req, res) {
 
 });
 
-app.post('/editHoneydNodeSave', function(req, res) {
+app.post('/editHoneydNodeSave', ensureAuthenticated, function(req, res) {
 	var profile = req.body["profile"];
 	var intface = req.body["interface"];
 	var oldName = req.body["oldName"];
@@ -339,7 +319,7 @@ app.post('/editHoneydNodeSave', function(req, res) {
 
 });
 
-app.post('/configureNovaSave', function(req, res) {
+app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
 	var configItems = ["INTERFACE","HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
 		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
@@ -580,7 +560,7 @@ function objCopy(src,dst) {
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
-  res.redirect('/');
+  else { res.redirect('/login'); }
 }
 
 setInterval(function() {
