@@ -73,7 +73,6 @@ string Config::m_requiredFiles[] =
 {
 	"/settings",
 	"/Config",
-	"/Data",
 	"/keys",
 	"/templates",
 	"/Config/NOVAConfig.txt",
@@ -1092,7 +1091,7 @@ void Config::SetDefaults()
 	m_interface = "default";
 	m_pathConfigHoneydHs 	= "Config/haystack.config";
 	m_pathPcapFile 		= "../pcapfile";
-	m_pathTrainingFile 	= "Data/data.txt";
+	m_pathTrainingFile 	= "Config/data.txt";
 	m_pathConfigHoneydUser	= "Config/doppelganger.config";
 	m_pathTrainingCapFolder = "Data";
 	m_pathCESaveFile = "ceStateSave";
