@@ -18,6 +18,7 @@
 //============================================================================
 
 #include "MessageQueue.h"
+#include "MessageManager.h"
 #include "../Lock.h"
 #include "messages/ErrorMessage.h"
 
@@ -43,6 +44,8 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 
 	m_expectedcallbackSerial = 0;
 	m_forwardSerialNumber = 0;
+
+	m_consecutiveTimeouts = 0;
 
 	m_isShutDown = false;
 	m_callbackDoWakeup = false;
@@ -178,6 +181,10 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
+						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
+						{
+							MessageManager::Instance().CloseSocket(m_socketFD);
+						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
 					}
 				}
@@ -210,6 +217,11 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
+						//If we have had too many timeouts in a row, then close down the socket
+						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
+						{
+							MessageManager::Instance().CloseSocket(m_socketFD);
+						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
 					}
 				}
@@ -230,6 +242,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 		}
 	}
 
+	m_consecutiveTimeouts = 0;
 	return retMessage;
 }
 
