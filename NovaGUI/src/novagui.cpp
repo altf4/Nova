@@ -1431,7 +1431,14 @@ void *CallbackLoop(void *ptr)
 				((NovaGUI*)ptr)->HideSuspect(change.m_suspectIP);
 				{
 					Lock lock(&suspectTableLock);
-					SuspectTable.erase(change.m_suspectIP);
+					try
+					{
+						SuspectTable.erase(change.m_suspectIP);
+					}
+					catch (Nova::hashMapException &s)
+					{
+						LOG(ERROR, "Error clearing suspect as commanded from GUI: " + string(s.what()), "");
+					}
 				}
 				break;
 			}
