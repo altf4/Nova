@@ -371,6 +371,16 @@ void *UpdateWhitelistIPFilter(void *ptr)
 					LOG(ERROR, "Unable to enable packet capture.",
 						"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handle));
 				}
+
+				// Clear any suspects that were whitelisted from the GUIs
+				for (uint i = 0; i < whitelistIpAddresses.size(); i++)
+				{
+					suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str()));
+
+					UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+					msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
+					NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+				}
 			}
 		}
 		else
