@@ -16,8 +16,57 @@ var util = require('util');
 var https = require('https');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+/* var mysql = require('mysql');
 
-var tempUser = [ {id:1, username: 'nova', password: 'toor'} ];
+var use_db = 'nova_cred';
+var use_table = 'creds';
+var query_result;
+
+var client = mysql.createClient({
+  user: 'root'
+  , password: 'root'
+})
+
+client.query("USE " + use_db);
+
+client.query(
+  'SELECT * FROM ' + use_table,
+  function selectCb(err, results, fields) {
+    if (err) {
+      throw err;
+    }
+    
+    console.log(results);
+    client.end();
+  }
+);
+*/
+
+var tempUser = [ {id: 1, username: 'nova', password: 'toor'} ];
+
+function findById(id, fn) {
+  var index = id - 1;
+  if(tempUser[index])
+  {
+    fn(null, tempUser[index]);
+  }
+  else
+  {
+    fn(new Error('User ' + id + ' does not exist'));
+  }
+}
+
+function findByUsername(username, fn) {
+  for(var i = 0, len = tempUser.length; i < len; i++)
+  {
+    var user = tempUser[i];
+    if(user.username === username)
+    {
+      return fn(null, user);
+    }
+  }  
+  return fn(null, null);
+}
 
 passport.serializeUser(function(user, done) {
   done(null, user.id);
@@ -33,9 +82,9 @@ passport.use(new LocalStrategy(
   function(username, password, done) {
    process.nextTick(function(){
      findByUsername(username, function(err, user){
-       if(err) { alert("Error"); return done(err); }
-       if(!user) { alert("No user by this name"); return done(null, false, {message: 'Unknown user ' + username}); }
-       if(user.password != password) { alert("Password wrong"); return done(null, false, { message: 'Invalid password'}); }
+       if(err) { return done(err); }
+       if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
+       if(user.password != password) { return done(null, false, { message: 'Invalid password' }); }
        return done(null, user);
      })
    }); 
@@ -52,7 +101,6 @@ var app = express.createServer(express_options);
 
 
 app.configure(function () {
-    app.use(express.logger());
 		app.use(express.bodyParser());
 		app.use(express.cookieParser());
 		app.use(express.methodOverride());
@@ -80,16 +128,7 @@ app.listen(8042);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 
-
-app.get('/', function(req, res) {
-     res.render('login.jade', 
-     {
-       locals: {
-         user: req.user    
-     }});
- });
-
-app.get('/configNova', function(req, res) {
+app.get('/configNova', ensureAuthenticated, function(req, res) {
      res.render('config.jade', 
 	 {
 		locals: {
@@ -129,7 +168,7 @@ app.get('/configNova', function(req, res) {
 	 })
 });
 
-app.get('/configHoneydNodes', function(req, res) {
+app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
 	 var nodes = [];
@@ -146,7 +185,7 @@ app.get('/configHoneydNodes', function(req, res) {
 });
 
 
-app.get('/configHoneydProfiles', function(req, res) {
+app.get('/configHoneydProfiles', ensureAuthenticated, function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var profileNames = honeydConfig.GetProfileNames();
 	 var profiles = [];
@@ -161,7 +200,7 @@ app.get('/configHoneydProfiles', function(req, res) {
 	}})
 });
 
-app.get('/editHoneydNode', function(req, res) {
+app.get('/editHoneydNode', ensureAuthenticated, function(req, res) {
 	nodeName = req.query["node"];
 	// TODO: Error checking for bad node names
 	
@@ -176,7 +215,7 @@ app.get('/editHoneydNode', function(req, res) {
 	}})
 });
 
-app.get('/editHoneydProfile', function(req, res) {
+app.get('/editHoneydProfile', ensureAuthenticated, function(req, res) {
 	profileName = req.query["profile"]; 
 
 	res.render('editHoneydProfile.jade', 
@@ -191,7 +230,7 @@ app.get('/editHoneydProfile', function(req, res) {
 });
 
 
-app.get('/addHoneydProfile', function(req, res) {
+app.get('/addHoneydProfile', ensureAuthenticated, function(req, res) {
 	parentName = req.query["parent"]; 
 
 	res.render('editHoneydProfile.jade', 
@@ -205,7 +244,7 @@ app.get('/addHoneydProfile', function(req, res) {
 	}})
 });
 
-app.get('/customizeTraining', function(req, res) {
+app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
 	res.render('customizeTraining.jade',
 	{ locals : {
 		desc: trainingDb.GetDescriptions()
@@ -219,19 +258,25 @@ app.get('/logout', function(req, res){
   res.redirect('/');
 });
 
-
-app.post('/auth', passport.authenticate('local', 
-  { failureRedirect: '/', failureFlash: true }), function(req, res){
-    res.redirect('/novaMain');
+app.get('/novaMain', ensureAuthenticated, function(req, res) {
+     res.render('main.jade', 
+     {
+         user: req.user
+     });
 });
 
-app.get('/novaMain', ensureAuthenticated, function(req, res) {
-     res.render('novaMain', 
+app.get('/', function(req, res) {
+     res.render('login.jade', 
      {
-       locals: {
          user: req.user
-         , message: req.flash('error')
-     }});
+         , message: req.flash('error')    
+     });
+});
+
+app.post('/', 
+  passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
+    function(req, res){
+    res.redirect('/novaMain');
 });
 
 app.post('/customizeTrainingSave', function(req, res){
@@ -531,30 +576,6 @@ function objCopy(src,dst) {
 			dst[member] = src[member];
 		}
 	}
-}
-
-function findById(id, fn) {
-  var index = id - 1;
-  if(users[index])
-  {
-    fn(null, users[index]);
-  }
-  else
-  {
-    fn(new Error('User ' + id + ' does not exist'));
-  }
-}
-
-function findByUsername(username, fn) {
-  for(var i = 0, len = tempUser.length; i < len; i++)
-  {
-    var user = tempUser[i];
-    if(user.username === username)
-    {
-      return fn(null, user);
-    }
-  }  
-  return fn(null, null);
 }
 
 function ensureAuthenticated(req, res, next) {

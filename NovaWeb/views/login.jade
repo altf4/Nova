@@ -1,11 +1,13 @@
 extends loginlayout
 
 block content
-  form(method="post", action="/auth")
+  form(method="post", action="/")
     label Username
-      input(type="text", name="user", size="20")
+      input(type="text", name="username", size="20")
+    br
     label Password
-      input(type="password", name="password", size="20")        
+      input(type="password", name="password", size="20") 
+    br       
     input(type="Submit", value="Log In")
 
   

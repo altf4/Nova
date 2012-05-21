@@ -9,5 +9,6 @@
 		, "socket.io"	:	"0.9.x"
 		, "passport"	:	"0.1.8"
 		, "passport-local"	:	"0.1.2"
+		, "mysql"	:	"0.9.6"
 	}
 }
