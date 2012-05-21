@@ -78,7 +78,7 @@ then
 }
 else
 {
-	configFile=/usr/share/nova/.nova/Config/NOVAConfig.txt
+	configFile=/usr/share/nova/nova/Config/NOVAConfig.txt
 
 	if [[ -e $configFile ]]
 	then
