@@ -111,7 +111,7 @@ install-data:
 	mkdir -p $(DESTDIR)/usr/share/applications
 	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
-	cp -frup Installer/Write/nova/.nova $(DESTDIR)/etc/nova
+	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
 	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/

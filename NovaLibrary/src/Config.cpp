@@ -1119,8 +1119,8 @@ void Config::SetDefaults()
 	m_dataTTL = 0;
 }
 
-// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
-//	Returns: True if(after the function) the user has all necessary ~/.nova config files
+// Checks to see if the current user has a nova directory, and creates it if not, along with default config files
+//	Returns: True if(after the function) the user has all necessary nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
 bool Config::InitUserConfigs(string homeNovaPath)
 {
@@ -1130,7 +1130,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	// Important note
 	// This is called before the logger is initialized. Calling LOG here will likely result in a crash. Just use cout instead.
 
-	// Does ~/.nova exist?
+	// Does the nova folder exist?
 	if(stat(homeNovaPath.c_str(), &fileAttr ) == 0)
 	{
 		// Do all of the important files exist?
@@ -1139,7 +1139,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 			string fullPath = homeNovaPath + Config::m_requiredFiles[i];
 			if(stat (fullPath.c_str(), &fileAttr ) != 0)
 			{
-				string defaultLocation = "/etc/nova/.nova" + Config::m_requiredFiles[i];
+				string defaultLocation = "/etc/nova/nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 
 				cout << "The required file " << fullPath << " does not exist. Copying it from the defaults folder." << endl;
@@ -1154,20 +1154,20 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	else
 	{
 		//TODO: Do this command programmatically. Not by calling system()
-		if(system("cp -rf /etc/nova/.nova /usr/share/nova") == -1)
+		if(system("cp -rf /etc/nova/nova /usr/share/nova") == -1)
 		{
-			cout << "Was unable to create directory /usr/share/nova/.nova" << endl;
+			cout << "Was unable to create directory /usr/share/nova/nova" << endl;
 			returnValue = false;
 		}
 
-		//Check the ~/.nova dir again
+		//Check the nova dir again
 		if(stat(homeNovaPath.c_str(), &fileAttr) == 0)
 		{
 			return returnValue;
 		}
 		else
 		{
-			cout << "Was unable to create directory /usr/share/nova/.nova" << endl;
+			cout << "Was unable to create directory /usr/share/nova/nova" << endl;
 			returnValue = false;
 		}
 	}

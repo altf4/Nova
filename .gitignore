@@ -97,9 +97,9 @@ NovaCLI/Debug/novacli
 
 #MISC
 /RemoteSystemsTempFiles/.project
-/Installer/.nova/Config/doppelganger.config
-/Installer/.nova/Data/data.txt
-/Installer/.nova/Data/training.db
+/Installer/nova/Config/doppelganger.config
+/Installer/nova/Data/data.txt
+/Installer/nova/Data/training.db
 /NovaWeb/NodeNovaConfig/.lock-wscript
 /NovaWeb/libv8-convert-20120219/*
 /NovaWeb/libv8-convert-20120219.tar.gz.1

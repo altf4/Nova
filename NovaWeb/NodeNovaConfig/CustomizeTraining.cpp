@@ -38,7 +38,7 @@ v8::Handle<Value> CustomizeTrainingBinding::New(const Arguments& args)
 
   CustomizeTrainingBinding *obj = new CustomizeTrainingBinding();
   
-  obj->m_map = TrainingData::ParseTrainingDb("/usr/share/nova/.nova/Data/training.db");
+  obj->m_map = TrainingData::ParseTrainingDb("/usr/share/nova/nova/Config/training.db");
   
   if(obj->m_map == NULL)
   {

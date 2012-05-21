@@ -20,7 +20,7 @@ INTERFACE eth0
 # DATAFILE #
 ############################################
 #
-# Contains a path relative to the ~/.nova/ folder of where
+# Contains a path relative to the nova folder of where
 # the data points file can by located.
 #
 # EXAMPLE:
@@ -137,7 +137,7 @@ CLASSIFICATION_THRESHOLD .5
 # USER_HONEYD_CONFIG #
 ############################################
 #
-# Path relative to ~/.nova where the honeyd
+# Path relative to nova where the honeyd
 # configuration file resides.
 #
 # EXAMPLE:
@@ -186,7 +186,7 @@ DM_ENABLED 1
 # HS_HONEYD_CONFIG #
 ############################################
 #
-# Path relative to ~/.nova where the HoneyD
+# Path relative to nova where the HoneyD
 # configuration file resides. This file will
 # be parsed for used IP addresses. 
 # 
@@ -395,7 +395,7 @@ SERVICE_PREFERENCES 0:0+;1:5+;2:6+;
 #
 # Specifies the way Nova loads and saves the haystack
 # ( 'I' | 'M [path]' )
-# I - (Internal - Default) Store haystack at /usr/share/nova/.nova/Config
+# I - (Internal - Default) Store haystack at /usr/share/nova/nova/Config
 # M [path] - (Manual) Run honeyd using the configuration in the file specified instead of Nova's configuration
 #
 # HAYSTACK_STORAGE I
