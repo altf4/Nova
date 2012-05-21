@@ -156,6 +156,10 @@ int RunNovaD()
 		char buffer[40];
 		strftime(buffer, 40, "%m-%d-%y_%H-%M-%S", timeinfo);
 
+		if (system(string("mkdir " + Config::Inst()->GetPathTrainingCapFolder()).c_str()))
+		{
+			// Not really an problem, throws compiler warning if we don't catch the system call though
+		}
 		trainingCapFile = Config::Inst()->GetPathHome() + "/"
 				+ Config::Inst()->GetPathTrainingCapFolder() + "/training" + buffer
 				+ ".dump";
