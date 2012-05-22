@@ -159,8 +159,6 @@ void Config::LoadConfig()
 
 								line = fgets(buffer, sizeof(buffer), out);
 							}
-
-							delete line;
 						}
 						pclose(out);
 					}
