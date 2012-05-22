@@ -130,7 +130,7 @@ void Config::LoadConfig()
 						if(out != NULL)
 						{
 							char buffer[2048];
-							char *column;
+							char *column = NULL;
 							int currentColumn;
 							char *line = fgets(buffer, sizeof(buffer), out);
 
@@ -160,7 +160,6 @@ void Config::LoadConfig()
 								line = fgets(buffer, sizeof(buffer), out);
 							}
 
-							delete column;
 							delete line;
 						}
 						pclose(out);
