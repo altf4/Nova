@@ -23,6 +23,7 @@ var credTb = 'credentials'
 
 var select;
 var checkPass;
+var my_name;
 
 var client = mysql.createClient({
   user: 'root'
@@ -48,21 +49,20 @@ function findById(id, fn) {
 function findByUsername(username, fn) {
   for(var i = 0, len = tempUser.length; i < len; i++)
   {
-    var user = tempUser[i];
-    if(user.username === username)
+    if(username === my_name)
     {
-      return fn(null, user);
+      return fn(null, username);
     }
   }  
   return fn(null, null);
 }
 
 passport.serializeUser(function(user, done) {
-  done(null, user.id);
+  done(null, user);
 });
 
-passport.deserializeUser(function(id, done) {
-  findById(id, function(err, user) {
+passport.deserializeUser(function(user, done) {
+  findByUsername(user, function(err, user) {
     done(err, user)
   });
 });
@@ -81,14 +81,38 @@ passport.deserializeUser(function(id, done) {
 ));*/
 
 passport.use(new LocalStrategy(
-  function(username, password, done) {
-    process.nextTick(function(){
-      checkUsername(username, function(err, user){
-       if(err) { return done(err); }
-       if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
-       if(!getPassHash(password, queryCredDb)) { return done(null, false, { message: 'Username/password combination is incorrect' }); }
-       
-       return done(null, user);
+  function(username, password, done) 
+  {
+    process.nextTick(function()
+    {
+      checkUsername(username, function(err, user)
+      { 
+         var success;
+         if(err) { return done(err); }
+         if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
+         client.query(
+            'SELECT user, pass FROM ' + credTb + ' WHERE pass = PASSWORD(\'' + password + '\')',
+            function selectCb(err, results, fields, fn) 
+            {
+              if(err) 
+              {
+                throw err;
+              }
+              
+              select = results[0].pass;
+              
+              if(select === results[0].pass && user === results[0].user)
+              {
+                success = true;
+                switcher(err, user, success, done);
+              }
+              else
+              {
+                success = false;
+                switcher(err, user, success, done);
+              }
+            }
+          );
       })
     });
   }
@@ -269,8 +293,11 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
 });
 
 app.get('/login', function(req, res){
-  res.render('login.jade'
-  );
+     res.render('login.jade',
+     {
+         user: req.user
+         , message: req.flash('error')    
+     });
 });
 
 app.get('/', ensureAuthenticated, function(req, res) {
@@ -594,9 +621,9 @@ function ensureAuthenticated(req, res, next) {
 
 function queryCredDb(check) {
     console.log("checkPass value before queryCredDb call: " + check);
-  
+    
     client.query(
-    'SELECT pass FROM ' + credTb + ' WHERE pass = ' + check,
+    'SELECT pass FROM ' + credTb + ' WHERE pass = PASSWORD(\'' + check + '\')',
     function selectCb(err, results, fields) {
       if(err) {
         throw err;
@@ -606,23 +633,21 @@ function queryCredDb(check) {
       
       console.log("queryCredDb results: " + select);
       
-      if(select === check)
+      if(select === results[0].pass)
       {
         console.log("all good");
-        client.end();
         return true;
       }
       else
       {
         console.log("Username password combo incorrect");
-        client.end();
         return false;
       }
     }
   );
 };
 
-function getPassHash(password, fn) {
+/*function getPassHash(password, fn) {
       client.query(
       'SELECT PASSWORD(\'' + password + '\') AS pass',
       function selectCb(err, results, fields) {
@@ -637,7 +662,7 @@ function getPassHash(password, fn) {
         if(checkPass != undefined)
         {
           console.log("getPassHash success");
-          return fn(checkPass);
+          return fn(password);
         }
         else
         {
@@ -647,9 +672,9 @@ function getPassHash(password, fn) {
         }
       }
     );
-};
+};*/
 
-function checkUsername(userName,fn) {
+function checkUsername(userName, fn) {
   client.query(
     'SELECT user FROM ' + credTb + ' WHERE user = \'' + userName + '\'',
     function selectCb(err, results, fields) {
@@ -658,23 +683,26 @@ function checkUsername(userName,fn) {
       }
       if(results[0] == undefined)
       {
-        console.log("Query returned null for username");
         return fn(null, null);
       } 
       else if(userName != results[0].user)
       {
-        console.log("Query returned: " + results[0].user);
-        console.log("Incorrect Username");
         return fn(null, null);
       }
       else
       {
-        console.log("Username " + userName + " equals query result " + results[0].user);
         return fn(null, userName);
       }
     } 
   );
 };
+
+function switcher(err, user, success, done)
+{
+   if(!success) { return done(null, false, { message: 'Username/password combination is incorrect' }); }
+   my_name = user;
+   return done(null, user);
+}
 
 setInterval(function() {
 		try {
