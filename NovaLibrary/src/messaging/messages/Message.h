@@ -66,7 +66,7 @@ public:
 	// Returns - Pointer to newly allocated Message object
 	//				returns an ErrorMessage object on error. Will never return NULL.
 	//	NOTE: The caller must manually delete the returned object when finished with it
-	static Message *ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout = 0);
+	static Message *ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout = REPLY_TIMEOUT);
 
 	//Writes a given Message to the provided socket
 	//	message - A pointer to the message object to send
