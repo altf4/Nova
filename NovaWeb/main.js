@@ -1,8 +1,5 @@
 var novaconfig = require('novaconfig.node');
 
-
-
-
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
@@ -14,8 +11,112 @@ honeydConfig.LoadAllTemplates();
 
 var fs = require('fs');
 var jade = require('jade');
-var express=require('express');
+var express =require('express');
+var util = require('util');
 var https = require('https');
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+var mysql = require('mysql');
+
+var credDb = 'nova_credentials';
+var credTb = 'credentials'
+
+var select;
+var checkPass;
+var my_name;
+
+var client = mysql.createClient({
+  user: 'root'
+  , password: 'root'
+});
+
+client.useDatabase(credDb);
+
+var tempUser = [ {id: 1, username: 'nova', password: 'toor'} ];
+
+function findById(id, fn) {
+  var index = id - 1;
+  if(tempUser[index])
+  {
+    fn(null, tempUser[index]);
+  }
+  else
+  {
+    fn(new Error('User ' + id + ' does not exist'));
+  }
+}
+
+function findByUsername(username, fn) {
+  for(var i = 0, len = tempUser.length; i < len; i++)
+  {
+    if(username === my_name)
+    {
+      return fn(null, username);
+    }
+  }  
+  return fn(null, null);
+}
+
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+  findByUsername(user, function(err, user) {
+    done(err, user)
+  });
+});
+
+/*passport.use(new LocalStrategy(
+  function(username, password, done) {
+   process.nextTick(function(){
+     findByUsername(username, function(err, user){
+       if(err) { return done(err); }
+       if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
+       if(user.password != password) { return done(null, false, { message: 'Invalid password' }); }
+       return done(null, user);
+     })
+   }); 
+  }
+));*/
+
+passport.use(new LocalStrategy(
+  function(username, password, done) 
+  {
+    process.nextTick(function()
+    {
+      checkUsername(username, function(err, user)
+      { 
+         var success;
+         if(err) { return done(err); }
+         if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
+         client.query(
+            'SELECT user, pass FROM ' + credTb + ' WHERE pass = PASSWORD(\'' + password + '\')',
+            function selectCb(err, results, fields, fn) 
+            {
+              if(err) 
+              {
+                throw err;
+              }
+              
+              select = results[0].pass;
+              
+              if(select === results[0].pass && user === results[0].user)
+              {
+                success = true;
+                switcher(err, user, success, done);
+              }
+              else
+              {
+                success = false;
+                switcher(err, user, success, done);
+              }
+            }
+          );
+      })
+    });
+  }
+));
 
 // Setup TLS
 var express_options = {
@@ -27,8 +128,12 @@ var app = express.createServer(express_options);
 
 
 app.configure(function () {
-		app.use(express.methodOverride());
 		app.use(express.bodyParser());
+		app.use(express.cookieParser());
+		app.use(express.methodOverride());
+		app.use(express.session({ secret: 'nova toor' }));
+		app.use(passport.initialize());
+		app.use(passport.session());
 		app.use(app.router);
 });
 
@@ -50,12 +155,7 @@ app.listen(8042);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 
-
-app.get('/', function(req, res) {
-     res.render('main.jade');
- });
-
-app.get('/configNova', function(req, res) {
+app.get('/configNova', ensureAuthenticated, function(req, res) {
      res.render('config.jade', 
 	 {
 		locals: {
@@ -95,7 +195,7 @@ app.get('/configNova', function(req, res) {
 	 })
 });
 
-app.get('/configHoneydNodes', function(req, res) {
+app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
 	 var nodes = [];
@@ -112,7 +212,7 @@ app.get('/configHoneydNodes', function(req, res) {
 });
 
 
-app.get('/configHoneydProfiles', function(req, res) {
+app.get('/configHoneydProfiles', ensureAuthenticated, function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var profileNames = honeydConfig.GetProfileNames();
 	 var profiles = [];
@@ -127,7 +227,7 @@ app.get('/configHoneydProfiles', function(req, res) {
 	}})
 });
 
-app.get('/editHoneydNode', function(req, res) {
+app.get('/editHoneydNode', ensureAuthenticated, function(req, res) {
 	nodeName = req.query["node"];
 	// TODO: Error checking for bad node names
 	
@@ -142,7 +242,7 @@ app.get('/editHoneydNode', function(req, res) {
 	}})
 });
 
-app.get('/editHoneydProfile', function(req, res) {
+app.get('/editHoneydProfile', ensureAuthenticated, function(req, res) {
 	profileName = req.query["profile"]; 
 
 	res.render('editHoneydProfile.jade', 
@@ -157,7 +257,7 @@ app.get('/editHoneydProfile', function(req, res) {
 });
 
 
-app.get('/addHoneydProfile', function(req, res) {
+app.get('/addHoneydProfile', ensureAuthenticated, function(req, res) {
 	parentName = req.query["parent"]; 
 
 	res.render('editHoneydProfile.jade', 
@@ -171,7 +271,7 @@ app.get('/addHoneydProfile', function(req, res) {
 	}})
 });
 
-app.get('/customizeTraining', function(req, res) {
+app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
 	res.render('customizeTraining.jade',
 	{ locals : {
 		desc: trainingDb.GetDescriptions()
@@ -180,7 +280,41 @@ app.get('/customizeTraining', function(req, res) {
 	}})
 });
 
-app.post('/customizeTrainingSave', function(req, res){
+app.get('/logout', function(req, res){
+  req.logout();
+  res.redirect('/');
+});
+
+app.get('/novaMain', ensureAuthenticated, function(req, res) {
+     res.render('main.jade', 
+     {
+         user: req.user
+     });
+});
+
+app.get('/login', function(req, res){
+     res.render('login.jade',
+     {
+         user: req.user
+         , message: req.flash('error')    
+     });
+});
+
+app.get('/', ensureAuthenticated, function(req, res) {
+     res.render('main.jade', 
+     {
+         user: req.user
+         , message: req.flash('error')    
+     });
+});
+
+app.post('/login', 
+  passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
+    function(req, res){
+    res.redirect('/novaMain');
+});
+
+app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
   for(var uid in req.body)
   {
       trainingDb.SetIncluded(uid, true);
@@ -191,7 +325,7 @@ app.post('/customizeTrainingSave', function(req, res){
 	res.render('saveRedirect.jade', { locals: {redirectLink: "'/customizeTraining'"}})	
 });
 
-app.post('/editHoneydNodesSave', function(req, res) {
+app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
 	var ipAddress;
 	if (req.body["ipType"] == "DHCP") {
 		ipAddress = "DHCP";
@@ -212,7 +346,7 @@ app.post('/editHoneydNodesSave', function(req, res) {
 
 });
 
-app.post('/editHoneydNodeSave', function(req, res) {
+app.post('/editHoneydNodeSave', ensureAuthenticated, function(req, res) {
 	var profile = req.body["profile"];
 	var intface = req.body["interface"];
 	var oldName = req.body["oldName"];
@@ -240,7 +374,7 @@ app.post('/editHoneydNodeSave', function(req, res) {
 
 });
 
-app.post('/configureNovaSave', function(req, res) {
+app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
 	var configItems = ["INTERFACE","HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
 		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
@@ -456,6 +590,7 @@ nova.registerOnNewSuspect(distributeSuspect);
 
 
 process.on('SIGINT', function() {
+  client.destroy();
 	nova.Shutdown();
 	process.exit();
 });
@@ -479,6 +614,95 @@ function objCopy(src,dst) {
 	}
 }
 
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) { return next(); }
+  else { res.redirect('/login'); }
+}
+
+function queryCredDb(check) {
+    console.log("checkPass value before queryCredDb call: " + check);
+    
+    client.query(
+    'SELECT pass FROM ' + credTb + ' WHERE pass = PASSWORD(\'' + check + '\')',
+    function selectCb(err, results, fields) {
+      if(err) {
+        throw err;
+      }
+      
+      select = results[0].pass;
+      
+      console.log("queryCredDb results: " + select);
+      
+      if(select === results[0].pass)
+      {
+        console.log("all good");
+        return true;
+      }
+      else
+      {
+        console.log("Username password combo incorrect");
+        return false;
+      }
+    }
+  );
+};
+
+/*function getPassHash(password, fn) {
+      client.query(
+      'SELECT PASSWORD(\'' + password + '\') AS pass',
+      function selectCb(err, results, fields) {
+        if(err) {
+          throw err;
+        }
+        
+        checkPass = results[0].pass;
+        
+        console.log("getPassHash results: " + checkPass);
+        
+        if(checkPass != undefined)
+        {
+          console.log("getPassHash success");
+          return fn(password);
+        }
+        else
+        {
+          console.log("getPassHash failed");
+          client.end();
+          return false;
+        }
+      }
+    );
+};*/
+
+function checkUsername(userName, fn) {
+  client.query(
+    'SELECT user FROM ' + credTb + ' WHERE user = \'' + userName + '\'',
+    function selectCb(err, results, fields) {
+      if(err) {
+        throw err;
+      }
+      if(results[0] == undefined)
+      {
+        return fn(null, null);
+      } 
+      else if(userName != results[0].user)
+      {
+        return fn(null, null);
+      }
+      else
+      {
+        return fn(null, userName);
+      }
+    } 
+  );
+};
+
+function switcher(err, user, success, done)
+{
+   if(!success) { return done(null, false, { message: 'Username/password combination is incorrect' }); }
+   my_name = user;
+   return done(null, user);
+}
 
 setInterval(function() {
 		try {

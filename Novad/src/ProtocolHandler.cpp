@@ -136,7 +136,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 			continue;
 		}
 
-		Message *message = Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+		Message *message = Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
@@ -440,7 +440,7 @@ void SendSuspectToUIs(Suspect *suspect)
 			continue;
 		}
 
-		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			delete suspectReply;
@@ -508,7 +508,7 @@ void *NotifyUIsHelper(void *ptr)
 			continue;
 		}
 
-		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI, REPLY_TIMEOUT);
+		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			delete suspectReply;

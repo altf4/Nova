@@ -41,7 +41,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 		return change;
 	}
 
-	Message *message = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI, REPLY_TIMEOUT);
+	Message *message = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;

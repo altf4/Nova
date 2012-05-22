@@ -7,5 +7,8 @@
 		, "now"			:	"0.8.x"
 		, "jade"		:	"0.25.x"
 		, "socket.io"	:	"0.9.x"
+		, "passport"	:	"0.1.8"
+		, "passport-local"	:	"0.1.2"
+		, "mysql" : "0.9.6"
 	}
 }

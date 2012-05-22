@@ -1,0 +1,13 @@
+extends loginlayout
+
+block content
+  form(method="post", action="/login")
+    label Username
+      input(type="text", name="username", size="20")
+    br
+    label Password
+      input(type="password", name="password", size="20") 
+    br       
+    input(type="Submit", value="Log In")
+
+  

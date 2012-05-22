@@ -40,30 +40,4 @@ html(lang="en")
               img(src="images/novaIcon.png",class="align-left")
               h1 NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System
             block topPannelAdditions
-    
-      // Left panel
-      div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: true")
-        block buttonPannelAdditions
-        
-        br
-
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Nova
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configNova";
-        br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Profiles
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydProfiles";
-        br
-
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Nodes
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydNodes";
-        br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Training Data
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "customizeTraining";
-        br
-        br
-      
-        button(data-dojo-type="dijit.form.Button",type="button") Log Out
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "logout";
 
