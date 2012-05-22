@@ -28,3 +28,9 @@ else
     rm -f /tmp/sudoers.nova
 fi
 
+QUERY="CREATE DATABASE nova_credentials; USE nova_credentials; CREATE TABLE credentials(user VARCHAR(10), pass VARCHAR(50)); INSERT INTO credentials('nova', PASSWORD('toor'));"
+
+/usr/bin/mysql --user=root --password=root <<< $QUERY
+
+echo "A default Nova Web UI account has been created. It is recommended that you"
+echo "delete the account after adding more users, as it doesn't possess a robust password"
