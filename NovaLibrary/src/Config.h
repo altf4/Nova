@@ -77,6 +77,7 @@ public:
     std::string GetPathPcapFile();
     std::string GetPathTrainingCapFolder();
     std::string GetPathTrainingFile();
+    std::string GetPathWhitelistFile();
     std::string GetKey();
     std::vector<in_addr_t> GetNeighbors();
 
@@ -122,6 +123,7 @@ public:
     void SetPathPcapFile(std::string pathPcapFile);
     void SetPathTrainingCapFolder(std::string pathTrainingCapFolder);
     void SetPathTrainingFile(std::string pathTrainingFile);
+    void SetPathWhitelistFile(std::string pathWhitelistFile);
     void SetReadPcap(bool readPcap);
     void SetSaMaxAttempts(int saMaxAttempts);
     void SetSaPort(int saPort);
@@ -191,6 +193,7 @@ private:
 	std::string m_pathConfigHoneydUser;
 	std::string m_pathPcapFile;
 	std::string m_pathTrainingFile;
+	std::string m_pathWhitelistFile;
 	std::string m_pathTrainingCapFolder;
 	std::string m_pathCESaveFile;
 

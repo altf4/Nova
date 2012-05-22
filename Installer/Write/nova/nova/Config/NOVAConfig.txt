@@ -401,3 +401,12 @@ SERVICE_PREFERENCES 0:0+;1:5+;2:6+;
 # HAYSTACK_STORAGE I
 HAYSTACK_STORAGE I
 
+
+############################################
+# WHITELIST_FILE #
+############################################
+#
+# File containing whitelisted IP addresses
+#
+WHITELIST_FILE Config/whitelist.txt
+

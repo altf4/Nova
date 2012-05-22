@@ -40,6 +40,9 @@ void *SilentAlarmLoop(void *ptr);
 // Updates the pcap filter based on DHCP addresses from Honeyd
 void *UpdateIPFilter(void *ptr);
 
+// Updates the pcap filter string based on changes in the whitelist file
+void *UpdateWhitelistIPFilter(void *ptr);
+
 
 // Startup rotuine for thread periodically checking for TCP timeout.
 // IE: Not all TCP sessions get torn down properly. Sometimes they just end midstram
