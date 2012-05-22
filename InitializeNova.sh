@@ -28,7 +28,7 @@ else
     rm -f /tmp/sudoers.nova
 fi
 
-QUERY="CREATE DATABASE nova_credentials; USE nova_credentials; CREATE TABLE credentials(user VARCHAR(10), pass VARCHAR(50)); INSERT INTO credentials('nova', PASSWORD('toor'));"
+QUERY="CREATE DATABASE nova_credentials; USE nova_credentials; CREATE TABLE credentials(user VARCHAR(10), pass VARCHAR(50)); INSERT INTO credentials VALUE('nova', PASSWORD('toor'));"
 
 /usr/bin/mysql --user=root --password=root <<< $QUERY
 
