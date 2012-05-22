@@ -87,7 +87,7 @@ bool ConnectToNovad()
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -148,7 +148,7 @@ bool CloseNovadConnection()
 		success = false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD, REPLY_TIMEOUT);
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
