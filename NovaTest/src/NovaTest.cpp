@@ -8,6 +8,7 @@
 #include "tester_ClassificationEngine.h"
 #include "tester_RequestMessage.h"
 #include "tester_HoneydConfiguration.h"
+#include "tester_WhitelistConfiguration.h"
 
 int main(int argc, char **argv)
 {
