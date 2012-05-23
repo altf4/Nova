@@ -1,0 +1,16 @@
+doctype 5
+html
+  head
+    script(type="text/javascript")
+      var time = null;
+      function move () {
+          window.location = #{redirectLink}; 
+      }
+  body(onload="timer=setTimeout('move()',5000)")
+    div(style="text-align: center")
+      h1 There was an error when attempting operation
+      h2 Error details: #{errorDetails}
+      a(href="#{redirectLink}")
+        h2 Please click here to go back
+        img(src="images/novaSplash.png")
+
