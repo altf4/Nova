@@ -98,83 +98,100 @@ TEST_F(ClassificationEngineTest, DISABLED_test_kFoldCrossValidation)
 		trainingData.at(i) = tmp;
 	}
 
+	Suspect testSuspect;
+	FeatureSet fs;
 
-	int takeAwayDim, takeAwayDim2;
-	char enableMask[DIM];
-	for (takeAwayDim = 0; takeAwayDim < DIM; takeAwayDim++)
+	for (int mask = 1; mask < 1024; mask++)
 	{
-		for (takeAwayDim2 = takeAwayDim; takeAwayDim2 < DIM; takeAwayDim2++)
+		char enableMask[DIM];
+		int enabledFeatureCount = 0;
+
+		for (int d = 0; d < DIM; d++)
 		{
-			for (int d = 0; d < DIM; d++)
-				enableMask[d] = '0';
-
-			if (takeAwayDim == takeAwayDim2)
-				continue;
-
-			enableMask[takeAwayDim] = '1';
-			enableMask[takeAwayDim2] = '1';
-			Config::Inst()->SetEnabledFeatures(string(enableMask));
-
-
-
-			Suspect testSuspect;
-			FeatureSet fs;
-			double falsePositiveRatio = 0, falseNegativeRatio = 0, falseRatio = 0;
-			int falsePositives = 0, falseNegatives = 0;
-
-			for (uint i = 1; i <= FOLDS; i++)
+			if (mask & (1 << d))
 			{
-				int foldStart = (i - 1)*((double)trainingData.size()/(double)FOLDS);
-				int foldEnd = i*((double)trainingData.size()/(double)FOLDS) - 1;
+				enableMask[d] = '1';
+				enabledFeatureCount++;
+			}
+			else
+			{
+				enableMask[d] = '0';
+			}
+		}
 
-				vector<double*> subset = trainingData;
-				if (foldStart == foldEnd)
+		if (enabledFeatureCount != 3)
+		{
+			continue;
+		}
+
+		for (int d = 0; d < DIM; d++)
+		{
+			if (mask & (1 << d))
+			{
+				cout << FeatureSet::m_featureNames[d] << "+";
+			}
+		}
+
+
+		Config::Inst()->SetEnabledFeatures(string(enableMask));
+
+		double falsePositiveRatio = 0, falseNegativeRatio = 0, falseRatio = 0;
+		int falsePositives = 0, falseNegatives = 0;
+
+		for (uint i = 1; i <= FOLDS; i++)
+		{
+			int foldStart = (i - 1)*((double)trainingData.size()/(double)FOLDS);
+			int foldEnd = i*((double)trainingData.size()/(double)FOLDS) - 1;
+
+			vector<double*> subset = trainingData;
+			if (foldStart == foldEnd)
+			{
+				subset.erase(subset.begin() + foldStart);
+			}
+			else
+			{
+				subset.erase(subset.begin() + foldStart, subset.begin() + foldEnd);
+			}
+
+
+			testObject->LoadDataPointsFromVector(subset);
+
+			for (int point = foldStart; point <= foldEnd; point++)
+			{
+				for (int j = 0; j < DIM; j++)
 				{
-					subset.erase(subset.begin() + foldStart);
+					fs.m_features[j] = trainingData.at(point)[j];
 				}
-				else
+
+				testSuspect.SetFeatureSet(&fs, MAIN_FEATURES);
+				testObject->Classify(&testSuspect);
+
+				if (testSuspect.GetIsHostile() && (trainingData.at(point)[DIM] == 0))
 				{
-					subset.erase(subset.begin() + foldStart, subset.begin() + foldEnd);
+					falsePositives++;
 				}
 
-
-				testObject->LoadDataPointsFromVector(subset);
-
-				for (int point = foldStart; point <= foldEnd; point++)
+				if (!testSuspect.GetIsHostile() && (trainingData.at(point)[DIM] == 1))
 				{
-					for (int j = 0; j < DIM; j++)
-					{
-						fs.m_features[j] = trainingData.at(point)[j];
-					}
-
-					testSuspect.SetFeatureSet(&fs, MAIN_FEATURES);
-					testObject->Classify(&testSuspect);
-
-					if (testSuspect.GetIsHostile() && (trainingData.at(point)[DIM] == 0))
-					{
-						falsePositives++;
-					}
-
-					if (!testSuspect.GetIsHostile() && (trainingData.at(point)[DIM] == 1))
-					{
-						falseNegatives++;
-					}
-
+					falseNegatives++;
 				}
 
 			}
 
-			falsePositiveRatio = (double)falsePositives / (double)trainingData.size();
-			falseNegativeRatio = (double)falseNegatives / (double)trainingData.size();
-			falseRatio = 1 - (double)(falseNegatives + falsePositives)/ (double)trainingData.size();
+		}
 
+		//falsePositiveRatio = (double)falsePositives / (double)trainingData.size();
+		//falseNegativeRatio = (double)falseNegatives / (double)trainingData.size();
+		falseRatio = 1 - (double)(falseNegatives + falsePositives)/ (double)trainingData.size();
+
+		/*
 			cout << "False positives: " << falsePositives << endl;
 			cout << "False positives: " << falsePositiveRatio*100 << "%" << endl;
 			cout << "False negatives: " << falseNegatives << endl;
 			cout << "False negatives: " << falseNegativeRatio*100 << "%" << endl;
 			cout << "Overall classification accuracy: " << falseRatio*100 << endl;
 			cout << FeatureSet::m_featureNames[takeAwayDim] << " + " << FeatureSet::m_featureNames[takeAwayDim2] << " " << falseRatio*100  << endl;
-			//cout << falseRatio*100  << endl;
-}
+		 */
+		cout << "," << falseRatio*100  << endl;
 	}
 }
