@@ -36,7 +36,7 @@ v8::Handle<v8::Value> InvokeMethod(const v8::Arguments __attribute((__unused__))
 // Invocation of standalone (non-member) functions,
 // one-argument version version.
 // See note above regarding partial specialization, if it is ever required.
-template <typename NATIVE_RETURN, typename V8_P1, typename NATIVE_P1, NATIVE_RETURN (*F)(NATIVE_P1)> 
+template <typename NATIVE_RETURN, typename NATIVE_P1, NATIVE_RETURN (*F)(NATIVE_P1)> 
 v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 {
     using namespace v8;
@@ -79,7 +79,7 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 
 // Invocation of member methods,
 // one-argument version.
-template <typename NATIVE_RETURN, typename T, typename V8_P1, typename NATIVE_P1, NATIVE_RETURN (T::*F)(NATIVE_P1)> 
+template <typename NATIVE_RETURN, typename T, typename NATIVE_P1, NATIVE_RETURN (T::*F)(NATIVE_P1)> 
 struct InvokeMethod_impl_1
 {
 static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
@@ -135,10 +135,10 @@ static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 //
 // This wrapper template function along with the classes above
 // emulates partial specialization where required.
-template <typename NATIVE_RETURN, typename T, typename V8_P1, typename NATIVE_P1, NATIVE_RETURN (T::*F)(NATIVE_P1)> 
+template <typename NATIVE_RETURN, typename T, typename NATIVE_P1, NATIVE_RETURN (T::*F)(NATIVE_P1)> 
 static v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 {
-    return InvokeMethod_impl_1<NATIVE_RETURN, T, V8_P1, NATIVE_P1, F >::InvokeMethod(args);
+    return InvokeMethod_impl_1<NATIVE_RETURN, T, NATIVE_P1, F >::InvokeMethod(args);
 }
 
 
