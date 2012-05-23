@@ -54,6 +54,26 @@ v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 }
 
 
+// Invocation of standalone (non-member) functions,
+// two-argument version version.
+template <typename NATIVE_RETURN, typename NATIVE_P1, typename NATIVE_P2, NATIVE_RETURN (*F)(NATIVE_P1, NATIVE_P2)> 
+v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
+{
+    using namespace v8;
+    HandleScope scope;
+
+    if( args.Length() < 2 )
+    {
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with two parameters")));
+    }
+
+    NATIVE_P1 p1 = cvv8::CastFromJS<NATIVE_P1>( args[0] );
+    NATIVE_P2 p2 = cvv8::CastFromJS<NATIVE_P2>( args[0] );
+
+    Handle<v8::Value> result = cvv8::CastToJS(F(p1, p2));
+    return scope.Close(result);
+}
+
 
 
 
