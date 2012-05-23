@@ -6,8 +6,24 @@ block headerAdditions
 block content
   form(method="post", action="/configureNovaSave")
     h2 General Configuration
-    label Interface
-    input(type="text", name="INTERFACE", value=INTERFACE)
+    table
+      thead
+        tr 
+          th Interfaces
+      tbody 
+        - for (var i = 0; i < INTERFACES.length; i++)
+          - if(INTERFACES[i] === "eth0")
+              tr 
+                td
+                  input(type="checkbox", value=INTERFACES[i], name="#{INTERFACES[i]}", checked)
+                td
+                  #{INTERFACES[i]}
+          - else
+              tr 
+                td
+                  input(type="checkbox", value=INTERFACES[i], name="#{INTERFACES[i]}")
+                td
+                  #{INTERFACES[i]}
     br
   
     h2 Silent Alarm

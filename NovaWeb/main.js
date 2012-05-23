@@ -145,7 +145,7 @@ app.get('/configNova', ensureAuthenticated, function(req, res) {
      res.render('config.jade', 
 	 {
 		locals: {
-			INTERFACE: config.ReadSetting("INTERFACE")
+			INTERFACES: config.ReadSetting("INTERFACE").split(" ")
 			,HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
 			,TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
 			,TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
