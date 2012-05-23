@@ -12,7 +12,7 @@ block content
   
     h2 Silent Alarm
     label Port
-    input(type="number", step="1", min="1", max="65536", name="SILENT_ALARM_PORT",  value=SILENT_ALARM_PORT)
+    input(type="number", step="1", min="1025", max="65535", name="SILENT_ALARM_PORT",  value=SILENT_ALARM_PORT)
     br
     
     label Max Connection Attempts
@@ -36,7 +36,7 @@ block content
     input(type="text", name="PCAP_FILE",  value=PCAP_FILE)
     br
   
-    label Path to user Honeyd config
+    label Path to User Honeyd Config
     input(type="text", name="USER_HONEYD_CONFIG",  value=USER_HONEYD_CONFIG)
     br
     
