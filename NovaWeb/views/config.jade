@@ -3,16 +3,91 @@ extends layout
 block headerAdditions
   link(rel="stylesheet", name="text/css", href="configstyle.css", media="screen")
 
+  script
+    function changeDisabled()
+    {
+      if(document.getElementById("default").checked)
+      {
+        for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
+        {
+          document.getElementById("if" + i).disabled = true;
+        }
+      }
+      else
+      {
+        for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
+        {
+          document.getElementById("if" + i).disabled = false;
+        }
+      }
+    }
+    
+    function checkAtLeastOne()
+    {
+      var numNotChecked = 0;
+      
+      for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
+      {
+        if(!document.getElementById("if" + i).checked)
+        {
+          numNotChecked++;
+        }
+      }
+      
+      if(numNotChecked == document.getElementById("length").getAttribute("value"))
+      {
+        document.getElementById("if0").checked = true;
+      }
+    }
+
 block content
   form(method="post", action="/configureNovaSave")
     h2 General Configuration
-    label Interface
-    input(type="text", name="INTERFACE", value=INTERFACE)
+    table
+      thead
+        tr 
+          th Interfaces
+      - if (DEFAULT)
+        tbody 
+          - for (var i = 0; i < INTERFACES.length; i++)
+            - if(INTERFACES[i] === "eth0")
+                tr 
+                  td
+                    input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
+                    #{INTERFACES[i]}
+            - else
+                tr 
+                  td
+                    input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()", disabled=true)
+                    #{INTERFACES[i]}
+          tr
+            td
+              input(type="checkbox", value="default", id="default", width=10, onclick="changeDisabled()", checked)
+              "default"
+      - else
+        tbody 
+          - for (var i = 0; i < INTERFACES.length; i++)
+            - if(INTERFACES[i] === "eth0")
+                tr 
+                  td
+                    input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()", checked)
+                    #{INTERFACES[i]}
+            - else
+                tr 
+                  td
+                    input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()")
+                    #{INTERFACES[i]}
+          tr
+            td
+              input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
+              "default"  
+              
+       hidden(id="length", value=INTERFACES.length)      
     br
   
     h2 Silent Alarm
     label Port
-    input(type="number", step="1", min="1", max="65536", name="SILENT_ALARM_PORT",  value=SILENT_ALARM_PORT)
+    input(type="number", step="1", min="1025", max="65535", name="SILENT_ALARM_PORT",  value=SILENT_ALARM_PORT)
     br
     
     label Max Connection Attempts
@@ -36,7 +111,7 @@ block content
     input(type="text", name="PCAP_FILE",  value=PCAP_FILE)
     br
   
-    label Path to user Honeyd config
+    label Path to User Honeyd Config
     input(type="text", name="USER_HONEYD_CONFIG",  value=USER_HONEYD_CONFIG)
     br
     

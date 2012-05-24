@@ -18,6 +18,8 @@ var https = require('https');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var mysql = require('mysql');
+var validCheck = require('validator').check;
+var sanitizeCheck = require('validator').sanitize;
 
 var credDb = 'nova_credentials';
 var credTb = 'credentials'
@@ -71,19 +73,6 @@ passport.deserializeUser(function(user, done) {
   });
 });
 
-/*passport.use(new LocalStrategy(
-  function(username, password, done) {
-   process.nextTick(function(){
-     findByUsername(username, function(err, user){
-       if(err) { return done(err); }
-       if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
-       if(user.password != password) { return done(null, false, { message: 'Invalid password' }); }
-       return done(null, user);
-     })
-   }); 
-  }
-));*/
-
 passport.use(new LocalStrategy(
   function(username, password, done) 
   {
@@ -91,7 +80,6 @@ passport.use(new LocalStrategy(
     {
       checkUsername(username, function(err, user)
       { 
-         var success;
          if(err) { return done(err); }
          if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
          client.query(
@@ -102,18 +90,17 @@ passport.use(new LocalStrategy(
               {
                 throw err;
               }
-              
-              select = results[0].pass;
-              
-              if(select === results[0].pass && user === results[0].user)
+              if(results[0] == undefined)
               {
-                success = true;
-                switcher(err, user, success, done);
+                switcher(err, user, false, done);
+              }
+              else if(user === results[0].user)
+              {
+                switcher(err, user, true, done);
               }
               else
               {
-                success = false;
-                switcher(err, user, success, done);
+                switcher(err, user, false, done);
               }
             }
           );
@@ -129,7 +116,6 @@ key:  fs.readFileSync('../NovaWeb/serverkey.pem'),
 };
 
 var app = express.createServer(express_options);
-
 
 app.configure(function () {
 		app.use(express.bodyParser());
@@ -163,7 +149,8 @@ app.get('/configNova', ensureAuthenticated, function(req, res) {
      res.render('config.jade', 
 	 {
 		locals: {
-			INTERFACE: config.ReadSetting("INTERFACE")
+			INTERFACES: config.ReadSetting("INTERFACE").split(" ") // will be a GetInterfaces() object in config object
+			,DEFAULT: false // should be a getDefault() method in Config object
 			,HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
 			,TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
 			,TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
@@ -305,10 +292,18 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
 });
 
 app.get('/login', function(req, res){
+	 var redirect;
+	 if (req.query["redirect"] != undefined)
+	 {
+		redirect = req.query["redirect"]; 
+	 } else {
+		redirect = "/novaMain";
+	 }
      res.render('login.jade',
      {
          user: req.user
-         , message: req.flash('error')    
+         , message: req.flash('error')  
+		 , redirect: redirect
      });
 });
 
@@ -320,10 +315,17 @@ app.get('/', ensureAuthenticated, function(req, res) {
      });
 });
 
-app.post('/login', 
+app.post('/login*',
   passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
     function(req, res){
-    res.redirect('/novaMain');
+		if (req.query["redirect"] != undefined)
+		{
+        	res.redirect(req.query["redirect"]);
+		}
+		else
+		{
+        	res.redirect('/novaMain');
+		}
 });
 
 app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
@@ -341,9 +343,13 @@ app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
 	var ipAddress;
 	if (req.body["ipType"] == "DHCP") {
 		ipAddress = "DHCP";
-	} else {
+	} else{
 		ipAddress = req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"] + "." + req.body["ip4"];
 	}
+	/*else
+	{
+	  res.redirect('/configHoneydNodes', { locals: { message: "Invalid IP" }} );
+	}*/
 
 	var profile = req.body["profile"];
 	var intface = req.body["interface"];
@@ -379,11 +385,15 @@ app.post('/editHoneydNodeSave', ensureAuthenticated, function(req, res) {
 	}
     // Delete the old node and then add the new one	
 	honeydConfig.DeleteNode(oldName);
-	honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet);
-	honeydConfig.SaveAllTemplates();
-     
-	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configHoneydNodes'"}})
-
+	if(!honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet))
+	{
+	  res.render('error.jade', { locals: { redirectLink: "/configHoneydNodes", errorDetails: "AddNewNode failed" }});
+	}
+	else
+	{
+	  honeydConfig.SaveAllTemplates();
+	  res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
+	}
 });
 
 app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
@@ -393,17 +403,133 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 		"SA_MAX_ATTEMPTS","SA_SLEEP_DURATION","USER_HONEYD_CONFIG","DOPPELGANGER_IP","DOPPELGANGER_INTERFACE","DM_ENABLED",
 		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
 		"SMTP_PORT","SMTP_DOMAIN","RECIPIENTS","SERVICE_PREFERENCES","HAYSTACK_STORAGE"];
-
-	var result = true;
-	for (var item = 0; item < configItems.length; item++) {
-		if (req.body[configItems[item]] !== undefined) {
-			if (!config.WriteSetting(configItems[item], req.body[configItems[item]])) {
-				result = false;
-			}
-		}
-	}
-	
-	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configNova'"}})	
+  
+  var Validator = require('validator').Validator;
+  
+  Validator.prototype.error = function(msg)
+  {
+    this._errors.push(msg);
+  }
+  
+  Validator.prototype.getErrors = function()
+  {
+    return this._errors;
+  }
+  
+  var validator = new Validator();
+  
+  
+  for(var item = 0; item < configItems.length; item++)
+  {
+    switch(configItems[item])
+    {
+      case "SA_SLEEP_DURATION":
+        validator.check(req.body[configItems[item]], 'Must be a nonnegative integer or floating point number').isFloat();
+        break;
+        
+      case "TCP_TIMEOUT":
+        validator.check(req.body[configItems[item]]).isInt();
+        break;
+        
+      case "ENABLED_FEATURES":
+        validator.check(req.body[configItems[item]], 'Enabled Features mask must be nine characters long').len(9, 9);
+        validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
+        break;
+        
+      case "CLASSIFICATION_THRESHOLD":
+        validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
+        validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
+        break;
+        
+      case "EPS":
+        validator.check(req.body[configItems[item]], 'EPS must be a number').isFloat();
+        break;
+        
+      case "THINNING_DISTANCE":
+        validator.check(req.body[configItems[item]], 'Thinning Distance must be a number').isFloat();
+        break;
+        
+      case "DOPPELGANGER_IP":
+        validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
+        var split = req.body[configItems[item]].split('.');
+        
+        if(split.length == 4)
+        {
+          if(split[3] === "0")
+          {
+            validator.check(split[3], 'Can not have last IP octet be 0').equals("255");
+          }
+          if(split[3] === "255")
+          {
+            validator.check(split[3], 'Can not have last IP octet be 255').equals("0");
+          }
+        }
+        
+        //check for 0.0.0.0 and 255.255.255.255
+        var checkIPZero = 0;
+        var checkIPBroad = 0;
+        
+        for(var val = 0; val < split.length; val++)
+        {
+          if(split[val] == "0")
+          {
+            checkIPZero++;
+          }
+          if(split[val] == "255")
+          {
+            checkIPBroad++;
+          } 
+        }
+        
+        if(checkIPZero == 4)
+        {
+          validator.check(checkIPZero, '0.0.0.0 is not a valid IP address').is("200");
+        }
+        if(checkIPBroad == 4)
+        {
+          validator.check(checkIPZero, '255.255.255.255 is not a valid IP address').is("200");
+        }
+        break;
+     
+      case "SMTP_ADDR":
+        //  \\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)
+        validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)');
+        break;
+      /*
+      case "SMTP_DOMAIN":
+        validator.check(req.body[configItems[item]], 'SMTP Domain is the wrong format').regex('(([A-z]|[0-9])*\\.)+(([A-z]|[0-9])*)');
+        break;
+        
+      case "RECIPIENTS":
+        validator.check(req.body[configItems[item]], 'Recipients list should be a comma separated list of email addresses').regex('(((([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*))\\,)*(((([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)))');
+        break;
+      */
+      case "SERVICE_PREFERENCES":
+        validator.check(req.body[configItems[item]], "Service preferences string is of the wrong format").is('0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;');
+        break;
+        
+      default:
+        break;
+    }
+  }
+  
+  
+  var errors = validator.getErrors();
+  
+  if(errors.length > 0)
+  {
+    res.render('error.jade', { locals: {errorDetails: errors, redirectLink: "/configNova"} });
+  }
+  else
+  {
+    //if no errors, send the validated form data to the WriteSetting method
+    for(var item = 0; item < configItems.length; item++)
+    {
+      config.WriteSetting(configItems[item], req.body[configItems[item]]);  
+    }
+    
+    res.render('saveRedirect.jade', { locals: {redirectLink: "'/configNova'"}}) 
+  }
 });
 
 // Functions to be called by clients
@@ -657,8 +783,16 @@ function objCopy(src,dst) {
 }
 
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { return next(); }
-  else { res.redirect('/login'); }
+  if (req.isAuthenticated()) { 
+  	return next(); 
+  } else {
+	 if (req.url != "/login")
+	 {
+  		res.redirect("/login?redirect=" + req.url);
+	 } else {
+  		res.redirect('/login');
+	 }
+  }
 }
 
 function queryCredDb(check) {
