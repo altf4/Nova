@@ -122,7 +122,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	int controlSocket = *socketIntPtr;
 	delete socketIntPtr;
 
-	MessageManager::Instance().StartSocket(controlSocket);
+	MessageManager::Instance().WaitForNewSocket(controlSocket);
 
 	bool keepLooping = true;
 
@@ -490,12 +490,18 @@ void NotifyUIs(UpdateMessage *updateMessage, enum UpdateType ackType, int socket
 
 void *NotifyUIsHelper(void *ptr)
 {
+	int m = random();
+
 	struct UI_NotificationPackage *arguments = (struct UI_NotificationPackage*)ptr;
 
 	//Notify all of the UIs
 	vector<int> sockets = MessageManager::Instance().GetSocketList();
 	for(uint i = 0; i < sockets.size(); ++i)
 	{
+		string str = string("Sending notice for" + sockets[i]);
+		str += + " try: " + m;
+		LOG(NOTICE, str.c_str(), "");
+
 		//Don't send an update to the UI that gave us the request
 		if(sockets[i] == arguments->m_socketFD_sender)
 		{

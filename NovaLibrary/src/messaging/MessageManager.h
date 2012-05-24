@@ -63,6 +63,11 @@ public:
 	//NOTE: Safely does nothing if socketFD already exists in the manager
 	void StartSocket(int socketFD);
 
+	//When a new callback thread has been created, the old MessageQueue might not yet have been cleared out
+	//	We need to wait for it to be deleted.
+	//	NOTE: Blocks until MessageQueue at given socketFD has been removed
+	void WaitForNewSocket(int socketFD);
+
 	//Informs the message manager that you would like to use the specified socket. Locks everyone else out from the socket.
 	//	socketFD - The socket file descriptor to use
 	//NOTE: Blocking function
@@ -115,6 +120,8 @@ private:
 	std::map<int, pthread_mutex_t*> m_protocolLocks;
 
 	enum ProtocolDirection m_forwardDirection;
+
+	pthread_cond_t m_newQueueCondition;
 };
 
 }
