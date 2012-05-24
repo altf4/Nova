@@ -7,6 +7,7 @@
 #include "HoneydProfileBinding.h"
 #include "NovaNode.h"
 #include "CustomizeTraining.h"
+#include "WhitelistConfigurationBinding.h"
 
 using namespace v8;
 
@@ -18,6 +19,7 @@ void InitAll(Handle<Object> target) {
   OsPersonalityDbBinding::Init(target);
   HoneydProfileBinding::Init(target);
   CustomizeTrainingBinding::Init(target);
+  WhitelistConfigurationBinding::Init(target);
 }
 
 NODE_MODULE(novaconfig, InitAll)

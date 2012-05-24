@@ -17,6 +17,7 @@
 //============================================================================
 
 #include "messaging/MessageManager.h"
+#include "WhitelistConfiguration.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
 #include "SuspectTable.h"
@@ -73,6 +74,7 @@ string dhcpListFile = "/var/log/honeyd/ipList";
 vector<string> haystackAddresses;
 vector<string> haystackDhcpAddresses;
 vector<string> whitelistIpAddresses;
+vector<string> whitelistIpRanges;
 pcap_t *handle;
 bpf_u_int32 maskp; /* subnet mask */
 bpf_u_int32 netp; /* ip          */
@@ -674,7 +676,8 @@ bool Start_Packet_Handler()
 
 	haystackAddresses = GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
 	haystackDhcpAddresses = GetIpAddresses(dhcpListFile);
-	whitelistIpAddresses = GetIpAddresses(Config::Inst()->GetPathWhitelistFile());
+	whitelistIpAddresses = WhitelistConfiguration::GetIps();
+	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	haystackAddresses_csv = ConstructFilterString();
 
 	//If we're reading from a packet capture file
@@ -929,6 +932,24 @@ string ConstructFilterString()
 		filterString += whitelistIpAddresses[i];
 
 		if(i+1 != whitelistIpAddresses.size())
+		{
+			filterString += " && ";
+		}
+	}
+
+	// Whitelist the whitelist IP address ranges
+	if(!whitelistIpRanges.empty() && (!whitelistIpAddresses.empty() || !haystackAddresses.empty() || !haystackDhcpAddresses.empty()))
+	{
+		filterString += " && ";
+	}
+	for(uint i = 0; i < whitelistIpRanges.size(); i++)
+	{
+		filterString += "not src net ";
+		filterString += WhitelistConfiguration::GetIp(whitelistIpRanges[i]);
+		filterString += " mask ";
+		filterString += WhitelistConfiguration::GetSubnet(whitelistIpRanges[i]);
+
+		if(i+1 != whitelistIpRanges.size())
 		{
 			filterString += " && ";
 		}

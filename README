@@ -27,17 +27,14 @@ required to compile Nova correctly. Make sure to watch the terminals at the
 beginning of the install process, and be sure to type 'Y' when asked to do so.
 Install the libraries with the following command:
 
-    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git
-libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev
-libcap2-bin libboost-serialization-dev libnotify-dev
+    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev libnotify-dev mysql-server
 
 
 - Now, we'll have to take a quick detour to get another integral component
 of Nova: honeyd. We will have to download some extra libraries for honeyd as
 well; you can get them using this command:
 
-    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev
-libpcre3-dev libedit-dev bison flex libtool automake 
+    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
 
 
 - If you're running Ubuntu 11.10 or higher, you will also need the library
@@ -143,7 +140,8 @@ out, use sudo make clean to clean Nova's files up before running sudo
 make all again. For sudo make install use the command sudo make uninstall.]
 
 - Finally, while logged in as the user you plan to run Novad with, 
-run the following command to add your user to the 'nova' permission group,
+run the following command to add your user to the 'nova' permission group
+and to set up database permissions for the web interface.
 
     sudo bash InitializeNova.sh
 
