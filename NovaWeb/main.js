@@ -292,10 +292,18 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
 });
 
 app.get('/login', function(req, res){
+	 var redirect;
+	 if (req.query["redirect"] != undefined)
+	 {
+		redirect = req.query["redirect"]; 
+	 } else {
+		redirect = "/novaMain";
+	 }
      res.render('login.jade',
      {
          user: req.user
          , message: req.flash('error')  
+		 , redirect: redirect
      });
 });
 
@@ -307,10 +315,17 @@ app.get('/', ensureAuthenticated, function(req, res) {
      });
 });
 
-app.post('/login', 
+app.post('/login*',
   passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
     function(req, res){
-        res.redirect('/novaMain');
+		if (req.query["redirect"] != undefined)
+		{
+        	res.redirect(req.query["redirect"]);
+		}
+		else
+		{
+        	res.redirect('/novaMain');
+		}
 });
 
 app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
@@ -768,8 +783,16 @@ function objCopy(src,dst) {
 }
 
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { return next(); }
-  else { res.redirect('/login'); }
+  if (req.isAuthenticated()) { 
+  	return next(); 
+  } else {
+	 if (req.url != "/login")
+	 {
+  		res.redirect("/login?redirect=" + req.url);
+	 } else {
+  		res.redirect('/login');
+	 }
+  }
 }
 
 function queryCredDb(check) {
