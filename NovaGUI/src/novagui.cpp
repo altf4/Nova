@@ -75,6 +75,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	initKey--;
 	SuspectTable.set_deleted_key(initKey);
 
+	connectedToNovad = false;
 
 	m_editingSuspectList = false;
 	m_pathsFile = (char*)"/etc/nova/paths";
@@ -171,10 +172,11 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 NovaGUI::~NovaGUI()
 {
-	if(!CloseNovadConnection())
+	if(connectedToNovad && !CloseNovadConnection())
 	{
 		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
 	}
+	connectedToNovad = false;
 }
 
 //Draws the suspect context menu
@@ -230,7 +232,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent *event)
 		{
 			case COMPONENT_NOVAD:
 			{
-				if(IsNovadUp(false))
+				if(connectedToNovad && IsNovadUp(false))
 				{
 					m_systemStatMenu->addAction(ui.actionSystemStatReload);
 					m_systemStatMenu->addAction(ui.actionSystemStatStop);
@@ -339,8 +341,10 @@ void NovaGUI::InitiateSystemStatus()
 
 bool NovaGUI::ConnectGuiToNovad()
 {
-	if(TryWaitConnectToNovad(2000))	//TODO: Call this asynchronously
+	if(TryWaitConnectToNovad(500))	//TODO: Call this asynchronously
 	{
+		connectedToNovad = true;
+
 		if(!StartCallbackLoop(this))
 		{
 			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
@@ -391,7 +395,7 @@ void NovaGUI::UpdateSystemStatus()
 
 	//Novad
 	item = ui.systemStatusTable->item(COMPONENT_NOVAD, 0);
-	if(IsNovadUp(false))
+	if(connectedToNovad && IsNovadUp(false))
 	{
 		item->setIcon(*m_greenIcon);
 
@@ -409,6 +413,8 @@ void NovaGUI::UpdateSystemStatus()
 	{
 		item->setIcon(*m_redIcon);
 		ui.uptimeLabel->setText(QString());
+
+		connectedToNovad = false;
 	}
 
 	//Haystack
@@ -812,10 +818,6 @@ void NovaGUI::ClearSuspectList()
 
 void NovaGUI::on_actionRunNova_triggered()
 {
-	if(IsNovadUp(false))
-	{
-		return;
-	}
 	StartNovad();
 	ConnectGuiToNovad();
 	StartHaystack();
@@ -850,10 +852,6 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	if(!CloseNovadConnection())
-	{
-		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
-	}
 	QCoreApplication::exit(EXIT_SUCCESS);
 }
 
@@ -1079,10 +1077,6 @@ void NovaGUI::on_haystackButton_clicked()
 
 void NovaGUI::on_runButton_clicked()
 {
-	if(IsNovadUp(false))
-	{
-		return;
-	}
 	StartNovad();
 	ConnectGuiToNovad();
 	StartHaystack();
@@ -1100,7 +1094,7 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 	{
 		case COMPONENT_NOVAD:
 		{
-			if(IsNovadUp(false))
+			if(connectedToNovad && IsNovadUp(false))
 			{
 				ui.systemStatStartButton->setDisabled(true);
 				ui.systemStatStopButton->setDisabled(false);
@@ -1166,10 +1160,6 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 	{
 		case COMPONENT_NOVAD:
 		{
-			if(IsNovadUp(false))
-			{
-				return;
-			}
 			StartNovad();
 			ConnectGuiToNovad();
 			break;
