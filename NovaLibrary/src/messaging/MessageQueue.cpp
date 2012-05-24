@@ -53,7 +53,6 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 	m_socketFD = socketFD;
 
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
-	pthread_detach(m_producerThread);
 }
 
 //Destructor should only be called by the callback thread, and also only while
@@ -61,6 +60,8 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 //	race conditions in deleting the object.
 MessageQueue::~MessageQueue()
 {
+	printf("xxxDEBUGxxx GOT INTO DESTRUCTOR FOR: %d\n", m_socketFD);
+
 	//Shutdown will cause the producer thread to make an ErrorMessage then quit
 	//This is probably redundant, but we do it again just to make sure
 	shutdown(m_socketFD, SHUT_RDWR);
@@ -181,8 +182,12 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
+						printf("xxxDEBUGxxx TIMEOUT NUMBER: %d ON SOCKET: %d\n", m_consecutiveTimeouts, m_socketFD);
+						printf("xxxDEBUGxxx IS DEAD: %d\n", m_isShutDown);
+
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
+							printf("xxxDEBUGxxx CLOSED SOCKET: %d\n", m_socketFD);
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -217,9 +222,13 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
+						printf("xxxDEBUGxxx TIMEOUT NUMBER: %d ON SOCKET: %d\n", m_consecutiveTimeouts, m_socketFD);
+						printf("xxxDEBUGxxx IS DEAD: %d\n", m_isShutDown);
+
 						//If we have had too many timeouts in a row, then close down the socket
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
+							printf("xxxDEBUGxxx CLOSED SOCKET: %d\n", m_socketFD);
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -343,8 +352,9 @@ void *MessageQueue::ProducerThread()
 		// Read in the message length
 		while( totalBytesRead < sizeof(length))
 		{
+			printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
 			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
-
+			printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
 			if(bytesRead <= 0)
 			{
 				//The socket died on us!
@@ -388,7 +398,9 @@ void *MessageQueue::ProducerThread()
 		bytesRead = 0;
 		while(totalBytesRead < length)
 		{
+			printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
 			bytesRead = read(m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
+			printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
 
 			if(bytesRead <= 0)
 			{

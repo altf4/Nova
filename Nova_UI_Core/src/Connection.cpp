@@ -30,6 +30,8 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 
+#include <sstream>
+
 using namespace std;
 using namespace Nova;
 //Socket communication variables
@@ -90,6 +92,12 @@ bool ConnectToNovad()
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
 	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
+		stringstream ss;
+		ss << "xxxDEBUGxxx GOT SOCKET FD: ";
+		ss << IPCSocketFD;
+
+		LOG(ERROR, ss.str(), "");
+
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
 		return false;

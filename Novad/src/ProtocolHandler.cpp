@@ -161,8 +161,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 					case ERROR_SOCKET_CLOSED:
 					{
 						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
-						keepLooping = false;
-						break;;
+						break;
 					}
 					case ERROR_MALFORMED_MESSAGE:
 					{
