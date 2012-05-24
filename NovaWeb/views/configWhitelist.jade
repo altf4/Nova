@@ -1,0 +1,76 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+
+  script
+    var grid;
+    
+    function deleteSelectedItems() {
+      var items = grid.selection.getSelected();
+      var names = [];
+      dojo.forEach(items, function(selectedItem) {
+        names.push(grid.store.getValues(selectedItem, "whitelistedIp")); 
+      });
+      
+      now.deleteWhitelistEntry(names, errorMessageCallback);
+    }
+
+    function addNewItem()
+    {
+        var value = dojo.byId("newEntry").value;
+        console.log("Value is " + value);
+
+        now.addWhitelistEntry(value, errorMessageCallback);
+    }
+
+    
+    function errorMessageCallback(sucess, message) {
+      if(sucess != true) {
+        var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
+        dialog.show();
+        return;
+      }
+      location.reload(true);
+    }
+
+    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+
+    function(DataGrid,ObjectStore){
+      var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
+      grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
+      dojo.byId("gridDiv").appendChild(grid.domNode);
+    });
+  
+  script(type="text/javascript")
+          /*set up data store*/
+          var layoutProfiles = [[
+            { field: "whitelistedIp", name: "Whitelist Entry", width: '500px' },
+          ]];
+
+block content
+  h1 Current Whitelisted IPs
+  table#profileTable(style="display: none")
+    thead
+      tr
+        th whitelistedIp
+    tbody
+      each ip, i in whitelistedIps
+        tr
+          td #{ip}
+      each ip, i in whitelistedRanges
+        tr
+          td #{ip}
+ 
+  div(style="height: 250px;")
+    div#gridDiv(style="height: 250px")
+
+  button(onClick="deleteSelectedItems()") Delete Selected Entry
+  
+  br
+  br
+  input#newEntry(type="text", value ="192.168.10.1")
+  br
+  button(onClick="addNewItem()") Add New Entry (ip address or ip/netmask combination)
+ 
+

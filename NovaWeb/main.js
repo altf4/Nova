@@ -6,6 +6,7 @@ var honeydConfig = new novaconfig.HoneydConfigBinding();
 var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
 var trainingDb = new novaconfig.CustomizeTrainingBinding();
+var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
 
 honeydConfig.LoadAllTemplates();
 
@@ -26,6 +27,9 @@ var credTb = 'credentials'
 var select;
 var checkPass;
 var my_name;
+
+// TODO: Get this path from the config class
+process.chdir("/usr/share/nova/nova");
 
 var client = mysql.createClient({
   user: 'root'
@@ -107,8 +111,8 @@ passport.use(new LocalStrategy(
 
 // Setup TLS
 var express_options = {
-key:  fs.readFileSync('serverkey.pem'),
-	  cert: fs.readFileSync('servercert.pem'),
+key:  fs.readFileSync('../NovaWeb/serverkey.pem'),
+	  cert: fs.readFileSync('../NovaWeb/servercert.pem'),
 };
 
 var app = express.createServer(express_options);
@@ -263,6 +267,14 @@ app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
 		desc: trainingDb.GetDescriptions()
 		, uids: trainingDb.GetUIDs()
 		, hostiles: trainingDb.GetHostile()	
+	}})
+});
+
+app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
+	res.render('configWhitelist.jade',
+	{ locals : {
+		whitelistedIps: whitelistConfig.GetIps(),
+		whitelistedRanges: whitelistConfig.GetIpRanges()
 	}})
 });
 
@@ -587,6 +599,36 @@ everyone.now.deleteProfiles = function(profileNames, callback)
 			callback(false, "Failed to save XML templates");
 			return;
 		}
+	}
+
+	callback(true, "");
+}
+
+everyone.now.addWhitelistEntry = function(entry, callback)
+{
+
+	// TODO: Input validation. Should be IP address or 'IP/netmask'
+	// Should also be sanitized for newlines/trailing whitespace
+	if (whitelistConfig.AddEntry(entry))
+	{
+		callback(true, "");
+	}
+	else
+	{
+		callback(true, "Attempt to add whitelist entry failed");
+	}
+}
+
+everyone.now.deleteWhitelistEntry = function(whitelistEntryNames, callback)
+{
+	var whitelistEntryName;
+	for (var i = 0; i < whitelistEntryNames.length; i++) {
+		whitelistEntryName = whitelistEntryNames[i];
+	
+		if (!whitelistConfig.DeleteEntry(whitelistEntryName)) {
+			callback(false, "Failed to delete whitelistEntry " + whitelistEntryName);
+			return;
+		}	
 	}
 
 	callback(true, "");
