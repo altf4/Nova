@@ -28,6 +28,7 @@ namespace Nova
 class WhitelistConfiguration
 {
 public:
+	static bool AddEntry(std::string entry);
 	static bool AddIp(std::string ip);
 	static bool AddIpRange(std::string ip, std::string netmask);
 
@@ -36,11 +37,14 @@ public:
 	static std::vector<std::string> GetIps();
 	static std::vector<std::string> GetIpRanges();
 
+	// Some simple abstraction functions to split a IP/subnet line
+	static std::string GetSubnet(std::string whitelistEntry);
+	static std::string GetIp(std::string whitelistEntry);
+
 private:
 	// Gets either IP addresses or IP + netmasks
 	static std::vector<std::string> GetWhitelistedIps(bool getRanges);
 
-	static bool AddEntry(std::string entry);
 };
 
 } /* namespace Nova */

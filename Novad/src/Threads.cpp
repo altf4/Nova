@@ -16,6 +16,7 @@
 // Description : Novad thread loops
 //============================================================================
 
+#include "WhitelistConfiguration.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
 #include "SuspectTable.h"
@@ -63,6 +64,7 @@ extern time_t lastSaveTime;
 extern string dhcpListFile;
 extern vector<string> haystackDhcpAddresses;
 extern vector<string> whitelistIpAddresses;
+extern vector<string> whitelistIpRanges;
 extern pcap_t *handle;
 extern bpf_u_int32 maskp; /* subnet mask */
 
@@ -358,7 +360,8 @@ void *UpdateWhitelistIPFilter(void *ptr)
 			{
 				whitelistWatch = inotify_add_watch(whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(),
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
-				whitelistIpAddresses = GetIpAddresses(Config::Inst()->GetPathWhitelistFile());
+				whitelistIpAddresses = WhitelistConfiguration::GetIps();
+				whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 				string filterString = ConstructFilterString();
 
 				if(pcap_compile(handle, &fp, filterString.data(), 0,maskp) == -1)
@@ -381,6 +384,8 @@ void *UpdateWhitelistIPFilter(void *ptr)
 					msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
 					NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 				}
+
+				// TODO: Should we clear IP range whitelisted suspects? Could be a huge number of clears...
 			}
 		}
 		else

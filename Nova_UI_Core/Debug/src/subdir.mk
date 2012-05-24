@@ -12,8 +12,7 @@ CPP_SRCS += \
 ../src/OsPersonalityDb.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
-../src/VendorMacDb.cpp \
-../src/WhitelistConfiguration.cpp 
+../src/VendorMacDb.cpp 
 
 OBJS += \
 ./src/CallbackHandler.o \
@@ -24,8 +23,7 @@ OBJS += \
 ./src/OsPersonalityDb.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
-./src/VendorMacDb.o \
-./src/WhitelistConfiguration.o 
+./src/VendorMacDb.o 
 
 CPP_DEPS += \
 ./src/CallbackHandler.d \
@@ -36,8 +34,7 @@ CPP_DEPS += \
 ./src/OsPersonalityDb.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \
-./src/VendorMacDb.d \
-./src/WhitelistConfiguration.d 
+./src/VendorMacDb.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

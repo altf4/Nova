@@ -35,7 +35,7 @@ bool WhitelistConfiguration::AddIp(std::string ip)
 
 bool WhitelistConfiguration::AddIpRange(std::string ip, std::string netmask)
 {
-	return WhitelistConfiguration::AddEntry(ip + " " + netmask);
+	return WhitelistConfiguration::AddEntry(ip + "/" + netmask);
 }
 
 
@@ -49,10 +49,13 @@ bool WhitelistConfiguration::DeleteEntry(std::string entry)
 		while(ipListFileStream.good())
 		{
 			string line;
-			getline (ipListFileStream,line);
+			if (getline (ipListFileStream,line) == 0)
+			{
+				continue;
+			}
 			if(line != entry)
 			{
-				ipListNew << line;
+				ipListNew << line << endl;
 			}
 		}
 		ipListFileStream.close();
@@ -89,7 +92,32 @@ std::vector<std::string> WhitelistConfiguration::GetIpRanges()
 	return WhitelistConfiguration::GetWhitelistedIps(true);
 }
 
+string WhitelistConfiguration::GetSubnet(string whitelistEntry)
+{
+	uint seperator = whitelistEntry.find("/");
+	if (seperator != string::npos)
+	{
+		return (whitelistEntry.substr(seperator + 1, string::npos));
+	}
+	else
+	{
+		return "";
+	}
+}
 
+string WhitelistConfiguration::GetIp(string whitelistEntry)
+{
+	uint seperator = whitelistEntry.find("/");
+	if (seperator != string::npos)
+	{
+		return (whitelistEntry.substr(0, seperator));
+	}
+	else
+	{
+		return whitelistEntry;
+	}
+
+}
 
 // Private helper functions
 
@@ -103,16 +131,19 @@ vector<string> WhitelistConfiguration::GetWhitelistedIps(bool getRanges)
 		while(ipListFileStream.good())
 		{
 			string line;
-			getline (ipListFileStream,line);
+			if (getline (ipListFileStream,line) == 0)
+			{
+				break;
+			}
 			if(strcmp(line.c_str(), "") && line.at(0) != '#' )
 			{
 				// Shouldn't have any spaces if it's just an IP
 				// TODO: should trim whitespace at the end of the lines
-				if (line.find(" ") == string::npos && !getRanges)
+				if (line.find("/") == string::npos && !getRanges)
 				{
 					whitelistedAddresses.push_back(line);
 				}
-				else if (line.find(" ") != string::npos && getRanges)
+				else if (line.find("/") != string::npos && getRanges)
 				{
 					whitelistedAddresses.push_back(line);
 				}
@@ -139,7 +170,10 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 		while(ipListFileStream.good())
 		{
 			string line;
-			getline (ipListFileStream,line);
+			if (getline (ipListFileStream,line) == 0)
+			{
+				continue;
+			}
 			if(line == entry)
 			{
 				alreadyExists = true;
@@ -147,7 +181,7 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 			}
 			else
 			{
-				ipListNew << line;
+				ipListNew << line << endl;
 			}
 		}
 		ipListFileStream.close();
@@ -164,7 +198,7 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 		if (whitelist.is_open())
 		{
 			whitelist << ipListNew.str();
-			whitelist << endl << entry;
+			whitelist << entry;
 			whitelist.close();
 		}
 		else
