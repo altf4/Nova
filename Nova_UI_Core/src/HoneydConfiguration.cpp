@@ -1823,6 +1823,11 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 		else
 		{
 			newNode.sub = FindSubnet(newNode.realIP);
+
+			if(newNode.sub == "")
+			{
+				return false;
+			}
 		}
 	}
 	else

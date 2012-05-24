@@ -48,8 +48,9 @@ public:
 
 	// Performs classification on given suspect
 	//		suspect - suspect to classify based on current evidence
+	// 		returns: suspect classification
 	// Note: this updates the classification of the suspect in dataPtsWithClass as well as it's isHostile variable
-	void Classify(Suspect *suspect);
+	double Classify(Suspect *suspect);
 
 	// Forms the normalized kd tree, called once on start up
 	// Will be called again if the a suspect's max value for a feature exceeds the current maximum for normalization
@@ -59,6 +60,7 @@ public:
 	//		inFilePath - path to input file, should contain Feature dimensions
 	//					 followed by hostile classification (0 or 1), all space separated
 	void LoadDataPointsFromFile(std::string inFilePath);
+	void LoadDataPointsFromVector(std::vector<double*> points);
 
 	// Writes the list of suspects out to a file specified by outFilePath
 	//		outFilePath - path to output file

@@ -32,6 +32,8 @@ MessageManager::MessageManager(enum ProtocolDirection direction)
 {
 	pthread_mutex_init(&m_queuesLock, NULL);
 	pthread_mutex_init(&m_protocolLock, NULL);
+	pthread_cond_init(&m_newQueueCondition, NULL);
+
 	m_forwardDirection = direction;
 }
 
@@ -91,6 +93,19 @@ void MessageManager::StartSocket(int socketFD)
 		{
 			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
 		}
+	}
+}
+
+void MessageManager::WaitForNewSocket(int socketFD)
+{
+	//Initialize the MessageQueue if it doesn't yet exist
+	{
+		Lock lock(&m_queuesLock);
+		while(m_queues.count(socketFD) > 0 )
+		{
+			pthread_cond_wait(&m_newQueueCondition, &m_queuesLock);
+		}
+		m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
 	}
 }
 
@@ -174,6 +189,8 @@ bool MessageManager::RegisterCallback(int socketFD)
 
 				Lock lock(&m_queuesLock);
 				m_queues.erase(socketFD);
+
+				pthread_cond_broadcast(&m_newQueueCondition);
 			}
 		}
 		return isQueueAlive;

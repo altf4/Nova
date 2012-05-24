@@ -74,7 +74,7 @@ block content
     label IP address
     - for (var i = 0; i < 4; i++)
       - if (ip == 'DHCP')
-        input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="0", disabled="disabled")
+        input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="1", disabled="disabled")
       - else
         input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="#{ip.split(".")[i]}")
     

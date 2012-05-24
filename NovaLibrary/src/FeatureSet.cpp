@@ -27,6 +27,19 @@ using namespace std;
 
 namespace Nova{
 
+string FeatureSet::m_featureNames[] =
+{
+		"IP_TRAFFIC_DISTRIBUTION",
+		"PORT_TRAFFIC_DISTRIBUTION",
+		"HAYSTACK_EVENT_FREQUENCY",
+		"PACKET_SIZE_MEAN",
+		"PACKET_SIZE_DEVIATION",
+		"DISTINCT_IPS",
+		"DISTINCT_PORTS",
+		"PACKET_INTERVAL_MEAN",
+		"PACKET_INTERVAL_DEVIATION"
+};
+
 FeatureSet::FeatureSet()
 {
 	m_IPTable.set_empty_key(0);

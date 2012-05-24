@@ -43,6 +43,9 @@ ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
 {
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
+
+	// TODO: Put the doppelganger somewhere else...
+	// Doesn't really belong in the CE
 	m_dopp = new Doppelganger(suspects);
 	m_dopp->InitDoppelganger();
 }
@@ -81,7 +84,7 @@ void ClassificationEngine::FormKdTree()
 }
 
 
-void ClassificationEngine::Classify(Suspect *suspect)
+double ClassificationEngine::Classify(Suspect *suspect)
 {
 	double sqrtDIM = Config::Inst()->GetSqurtEnabledFeatures();
 	int k = Config::Inst()->GetK();
@@ -128,7 +131,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 	{
 		LOG(ERROR, "Classification engine has encountered an error.",
 			"Classify had trouble allocating the ANN point. Aborting.");
-		return;
+		return -1;
 	}
 
 	m_kdTree->annkSearch(							// search
@@ -198,7 +201,7 @@ void ClassificationEngine::Classify(Suspect *suspect)
 				delete [] nnIdx;							// clean things up
 				delete [] dists;
 				annClose();
-				return;
+				return -1;
 			}
 		}
 	}
@@ -236,6 +239,8 @@ void ClassificationEngine::Classify(Suspect *suspect)
     annClose();
     annDeallocPt(aNN);
 	suspect->SetNeedsClassificationUpdate(false);
+
+	return suspect->GetClassification();
 }
 
 void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
@@ -247,7 +252,6 @@ void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 	}
 	out << ")\n";
 }
-
 
 void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 {
@@ -438,6 +442,100 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
 					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
+}
+
+void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
+{
+	// Clear max and min values
+	for(int i = 0; i < DIM; i++)
+	{
+		m_maxFeatureValues[i] = 0;
+	}
+
+	for(int i = 0; i < DIM; i++)
+	{
+		m_minFeatureValues[i] = 0;
+	}
+
+	for(int i = 0; i < DIM; i++)
+	{
+		m_meanFeatureValues[i] = 0;
+	}
+
+	// Reload the data file
+	if(m_dataPts != NULL)
+	{
+		annDeallocPts(m_dataPts);
+	}
+	if(m_normalizedDataPts != NULL)
+	{
+		annDeallocPts(m_normalizedDataPts);
+	}
+
+	m_dataPtsWithClass.clear();
+
+	//Open the file again, allocate the number of points and assign
+	m_dataPts = annAllocPts(points.size(), Config::Inst()->GetEnabledFeatureCount()); // allocate data points
+	m_normalizedDataPts = annAllocPts(points.size(), Config::Inst()->GetEnabledFeatureCount());
+
+
+	for (uint i = 0; i < points.size(); i++)
+	{
+		m_dataPtsWithClass.push_back(new Point(Config::Inst()->GetEnabledFeatureCount()));
+
+		// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
+		int actualDimension = 0;
+		for(int defaultDimension = 0;defaultDimension < DIM;defaultDimension++)
+		{
+			double temp = points.at(i)[defaultDimension];
+
+			if(Config::Inst()->IsFeatureEnabled(defaultDimension))
+			{
+				m_dataPtsWithClass[i]->m_annPoint[actualDimension] = temp;
+				m_dataPts[i][actualDimension] = temp;
+
+				//Set the max values of each feature. (Used later in normalization)
+				if(temp > m_maxFeatureValues[actualDimension])
+				{
+					m_maxFeatureValues[actualDimension] = temp;
+				}
+				if(temp < m_minFeatureValues[actualDimension])
+				{
+					m_minFeatureValues[actualDimension] = temp;
+				}
+
+				m_meanFeatureValues[actualDimension] += temp;
+
+				actualDimension++;
+			}
+		}
+
+		m_dataPtsWithClass[i]->m_classification = points.at(i)[DIM];
+	}
+
+	m_nPts = points.size();
+
+	for(int j = 0; j < DIM; j++)
+		m_meanFeatureValues[j] /= m_nPts;
+
+
+	//Normalize the data points
+
+	//Foreach feature within the data point
+	for(uint j = 0;j < Config::Inst()->GetEnabledFeatureCount();j++)
+	{
+		//Foreach data point
+		for(int i=0;i < m_nPts;i++)
+		{
+			m_normalizedDataPts[i][j] = Normalize(m_normalization[j], m_dataPts[i][j], m_minFeatureValues[j], m_maxFeatureValues[j]);
+		}
+	}
+
+	m_kdTree = new ANNkd_tree(					// build search structure
+			m_normalizedDataPts,					// the data points
+					m_nPts,						// number of points
+					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
+
 }
 
 double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)

@@ -289,10 +289,10 @@ bool MessageQueue::RegisterCallback()
 
 	{
 		//Protection for the m_callbackDoWakeup bool
-		Lock condLock(&m_callbackCondMutex);
-		while(!m_callbackDoWakeup)
+		Lock condLock(&m_callbackQueueMutex);
+		while(m_callbackQueue.empty())
 		{
-			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackCondMutex);
+			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackQueueMutex);
 		}
 
 		m_callbackDoWakeup = false;
