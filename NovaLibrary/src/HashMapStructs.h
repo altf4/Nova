@@ -76,4 +76,12 @@ struct eqkey
 	}
 };
 
+struct eq_uint16_t
+{
+	bool operator()(uint16_t s1, uint16_t s2) const
+	{
+		return (s1 == s2);
+	}
+};
+
 #endif /* HASHMAPSTRUCTS_H_ */

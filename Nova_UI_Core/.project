@@ -3,6 +3,7 @@
 	<name>Nova_UI_Core</name>
 	<comment></comment>
 	<projects>
+		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -31,7 +32,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildLocation</key>
-					<value>${workspace_loc:/Nova_UI_Core/Debug}</value>
+					<value>${workspace_loc:/Nova_UI_Core/Release}</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.cleanBuildTarget</key>

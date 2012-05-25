@@ -5,6 +5,8 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/Config.cpp \
+../src/Evidence.cpp \
+../src/EvidenceQueue.cpp \
 ../src/FeatureSet.cpp \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
@@ -14,6 +16,8 @@ CPP_SRCS += \
 
 OBJS += \
 ./src/Config.o \
+./src/Evidence.o \
+./src/EvidenceQueue.o \
 ./src/FeatureSet.o \
 ./src/Logger.o \
 ./src/NovaUtil.o \
@@ -23,6 +27,8 @@ OBJS += \
 
 CPP_DEPS += \
 ./src/Config.d \
+./src/Evidence.d \
+./src/EvidenceQueue.d \
 ./src/FeatureSet.d \
 ./src/Logger.d \
 ./src/NovaUtil.d \
