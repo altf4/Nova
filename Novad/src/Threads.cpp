@@ -256,7 +256,7 @@ void *SilentAlarmLoop(void *ptr)
 		memcpy(&addr, buf, 4);
 		uint64_t key = addr;
 		Suspect *newSuspect = new Suspect();
-		if(newSuspect->Deserialize(buf, MAIN_FEATURE_DATA) == 0)
+		if(newSuspect->Deserialize(buf, MAX_MSG_SIZE, MAIN_FEATURE_DATA) == 0)
 		{
 			close(connectionSocket);
 			continue;
@@ -378,14 +378,50 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				// Clear any suspects that were whitelisted from the GUIs
 				for (uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
-					suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str()));
+					if (suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
+					{
+						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+						msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
+						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+					}
 
-					UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
-					msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
-					NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 				}
 
+				/*
 				// TODO: Should we clear IP range whitelisted suspects? Could be a huge number of clears...
+				// This doesn't work yet.
+				for (uint i = 0; i < whitelistIpRanges.size(); i++)
+				{
+					uint32_t ip = htonl(inet_addr(WhitelistConfiguration::GetIp(whitelistIpRanges.at(i)).c_str()));
+
+					string netmask = WhitelistConfiguration::GetSubnet(whitelistIpRanges.at(i));
+					uint32_t mask;
+					if (netmask != "")
+					{
+						mask = htonl(inet_addr(netmask.c_str()));
+					}
+
+					while (mask != ~0)
+					{
+						if (suspects.Erase(ip))
+						{
+							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+							msg->m_IPAddress = ip;
+							NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+
+							cout << "erased" << endl;
+						}
+
+						in_addr foo;
+						foo.s_addr = ntohl(ip);
+						cout << "Attempted to erase " << inet_ntoa(foo) << endl;
+
+						ip++;
+						mask++;
+					}
+
+				}
+				*/
 			}
 		}
 		else

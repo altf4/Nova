@@ -515,7 +515,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 	{
 		do
 		{
-			if(dataLen != suspectCopy.Serialize(serializedBuffer, UNSENT_FEATURE_DATA))
+			if(dataLen != suspectCopy.Serialize(serializedBuffer, dataLen, UNSENT_FEATURE_DATA))
 			{
 				stringstream ss;
 				ss << "Serialization of Suspect with key: " << suspectCopy.GetIpAddress();

@@ -75,11 +75,11 @@ TEST_F(FeatureSetTest, test_Serialization)
 	// Serialize our featureSet to a buffer
 	u_char buffer[MAX_MSG_SIZE];
 	bzero(buffer, MAX_MSG_SIZE);
-	EXPECT_NO_FATAL_FAILURE(fset.SerializeFeatureData(&buffer[0]));
+	EXPECT_NO_FATAL_FAILURE(fset.SerializeFeatureData(&buffer[0], MAX_MSG_SIZE));
 
 	// Deserialize it and see if we end up with an exact copy
 	FeatureSet deserializedCopy;
-	EXPECT_NO_FATAL_FAILURE(deserializedCopy.DeserializeFeatureData(buffer));
+	EXPECT_NO_FATAL_FAILURE(deserializedCopy.DeserializeFeatureData(buffer, MAX_MSG_SIZE));
 	EXPECT_NO_FATAL_FAILURE(deserializedCopy.CalculateAll());
 
 	// TODO: Make the FeatureSet equality operator compare the timestamps as well, see issue #73

@@ -17,6 +17,7 @@
 //					for use in classification of the Suspect.
 //============================================================================
 
+#include "SerializationHelper.h"
 #include "FeatureSet.h"
 #include "Logger.h"
 #include "Config.h"
@@ -425,7 +426,7 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	return *this;
 }
 
-uint32_t FeatureSet::SerializeFeatureSet(u_char *buf)
+uint32_t FeatureSet::SerializeFeatureSet(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
 
@@ -435,23 +436,21 @@ uint32_t FeatureSet::SerializeFeatureSet(u_char *buf)
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(buf+offset, &m_features[i], sizeof m_features[i]);
-		offset+= sizeof m_features[i];
+		SerializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
 }
 
 
-uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf)
+uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(&m_features[i], buf+offset, sizeof m_features[i]);
-		offset+= sizeof m_features[i];
+		DeserializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
@@ -472,11 +471,8 @@ void FeatureSet::ClearFeatureData()
 		m_portTable.clear();
 }
 
-uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
+uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 {
-	// Uncomment this if you want to print the line, index, and size of each item deserialized
-	// This can be diffed with the DESERIALIZATION_DEBUGGING output to find offset mismatches
-    //#define SERIALIZATION_DEBUGGING true
 	uint32_t offset = 0;
 	uint32_t count = 0;
 	uint32_t table_entries = 0;
@@ -484,42 +480,12 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 
-	memcpy(buf+offset, &m_totalInterval, sizeof m_totalInterval);
-	offset += sizeof m_totalInterval;
-#ifdef SERIALIZATION_DEBUGGING
-	int item = 0;
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
-#endif
-
-	memcpy(buf+offset, &m_packetCount, sizeof m_packetCount);
-	offset += sizeof m_packetCount;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_packetCount << endl;
-#endif
-
-	memcpy(buf+offset, &m_bytesTotal, sizeof m_bytesTotal);
-	offset += sizeof m_bytesTotal;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_bytesTotal << endl;
-#endif
-
-	memcpy(buf+offset, &m_startTime, sizeof m_startTime);
-	offset += sizeof m_startTime;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_startTime << endl;
-#endif
-
-	memcpy(buf+offset, &m_endTime, sizeof m_endTime);
-	offset += sizeof m_endTime;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_endTime << endl;
-#endif
-
-	memcpy(buf+offset, &m_lastTime, sizeof m_lastTime);
-	offset += sizeof m_lastTime;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_lastTime << endl;
-#endif
+	SerializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_startTime, sizeof m_startTime, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_endTime, sizeof m_endTime, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_lastTime, sizeof m_lastTime, bufferSize);
 
 	//These tables all just place their key followed by the data
 	uint32_t tempInt;
@@ -534,28 +500,15 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 
 	//The size of the Table
 	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
+	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
 
 	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second)
 		{
 			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
+			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
+			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
 		}
 	}
 
@@ -569,28 +522,15 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 
 	//The size of the Table
 	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
+	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
 
 	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second)
 		{
 			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
+			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
+			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
 		}
 	}
 
@@ -604,28 +544,15 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 
 	//The size of the Table
 	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
+	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
 
 	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second)
 		{
 			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
+			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
+			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
 		}
 	}
 
@@ -639,28 +566,15 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
 
 	//The size of the Table
 	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
+	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
 
 	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second)
 		{
 			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
+			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
+			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
 		}
 	}
 	return offset;
@@ -712,7 +626,7 @@ uint32_t FeatureSet::GetFeatureDataLength()
 }
 
 
-uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
+uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 {
 	// Uncomment this if you want to print the line, index, and size of each item deserialized
 	// This can be diffed with the SERIALIZATION_DEBUGGING output to find offset mismatches
@@ -730,138 +644,77 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
 	in_port_t port = 0;
 
 	//Required, individual variables for calculation
-	memcpy(&temp, buf+offset, sizeof m_totalInterval);
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_totalInterval, bufferSize);
 	m_totalInterval += temp;
-	offset += sizeof m_totalInterval;
-#ifdef DESERIALIZATION_DEBUGGING
-	int item = 0;
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
-#endif
-	memcpy(&temp, buf+offset, sizeof m_packetCount);
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_packetCount, bufferSize);
 	m_packetCount += temp;
-	offset += sizeof m_packetCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_packetCount << endl;
-#endif
-	memcpy(&temp, buf+offset, sizeof m_bytesTotal);
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_bytesTotal, bufferSize);
 	m_bytesTotal += temp;
-	offset += sizeof m_bytesTotal;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_bytesTotal << endl;
-#endif
-	memcpy(&temp, buf+offset, sizeof m_startTime);
-	offset += sizeof m_startTime;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_startTime << endl;
-#endif
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_startTime, bufferSize);
 	if(m_startTime > (time_t)temp)
 	{
 		m_startTime = temp;
 	}
-	memcpy(&temp, buf+offset, sizeof m_endTime);
-	offset += sizeof m_endTime;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_endTime << endl;
-#endif
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_endTime, bufferSize);
 	if(m_endTime < (time_t)temp)
 	{
 		m_endTime = temp;
 	}
-	memcpy(&temp, buf+offset, sizeof m_lastTime);
-	offset += sizeof m_lastTime;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_lastTime << endl;
-#endif
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_lastTime, bufferSize);
 	if(m_lastTime < (time_t)temp)
 	{
 		m_lastTime = temp;
 	}
+
 	/***************************************************************************************************
 	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
 	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
+	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
 	//Packet interval table
 	for(uint32_t i = 0; i < table_size;)
 	{
-		memcpy(&temp, buf+offset, sizeof timeTemp);
-		offset += sizeof timeTemp;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
+		DeserializeChunk(buf, &offset, (char*)&temp, sizeof timeTemp, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
+
 		m_intervalTable[temp] += tempCount;
 		i++;
 	}
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
+
+	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
 	//Packet size table
 	for(uint32_t i = 0; i < table_size;)
 	{
-		memcpy(&temp, buf+offset, sizeof temp);
-		offset += sizeof temp;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
+		DeserializeChunk(buf, &offset, (char*)&temp, sizeof temp, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
+
 		m_packTable[temp] += tempCount;
 		i++;
 	}
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
+
+	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
 	//IP table
 	for(uint32_t i = 0; i < table_size;)
 	{
-		memcpy(&temp, buf+offset, sizeof temp);
-		offset += sizeof temp;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
+		DeserializeChunk(buf, &offset, (char*)&temp, sizeof temp, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
+
 		m_IPTable[temp] += tempCount;
 		i++;
 	}
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
 
+	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
 	//Port table
 	for(uint32_t i = 0; i < table_size;)
 	{
-		memcpy(&port, buf+offset, sizeof port);
-		offset += sizeof port;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof port << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
+		DeserializeChunk(buf, &offset, (char*)&port, sizeof port, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
+
 		m_portTable[port] += tempCount;
 		i++;
 	}

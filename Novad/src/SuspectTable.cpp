@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "ClassificationEngine.h"
+#include "SerializationHelper.h"
 #include "SuspectTable.h"
 #include "HashMap.h"
 #include "Config.h"
@@ -599,7 +600,7 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 				{
 					continue;
 				}
-				dataSize = suspect->Serialize(tableBuffer, ALL_FEATURE_DATA);
+				dataSize = suspect->Serialize(tableBuffer, MAX_MSG_SIZE, ALL_FEATURE_DATA);
 				out->write((char*) tableBuffer, dataSize);
 				ret += dataSize;
 			}
@@ -666,9 +667,13 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			Suspect* newSuspect = new Suspect();
 
 			try {
-				offset += newSuspect->Deserialize(tableBuffer+ offset, ALL_FEATURE_DATA);
+				offset += newSuspect->Deserialize(tableBuffer+ offset, dataSize - offset, ALL_FEATURE_DATA);
 			} catch (Nova::hashMapException& e) {
 				LOG(ERROR, "The state file may be corrupt, a hash table invalid key exception was caught during deserialization", "");
+				delete tableBuffer;
+				return 0;
+			} catch (Nova::serializationException &e) {
+				LOG(ERROR, "The state file may be corrupt, deserialization of a suspect failed", "");
 				delete tableBuffer;
 				return 0;
 			}

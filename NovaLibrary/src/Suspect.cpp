@@ -17,9 +17,11 @@
 //					features so that each entity can be monitored and classified.
 //============================================================================/*
 
-#include "Suspect.h"
-#include "Config.h"
+#include "SerializationHelper.h"
 #include "FeatureSet.h"
+#include "Suspect.h"
+#include "Logger.h"
+#include "Config.h"
 
 #include <errno.h>
 #include <sstream>
@@ -155,36 +157,28 @@ void Suspect::CalculateFeatures()
 // Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 //		buf - Pointer to buffer where serialized data will be stored
 // Returns: number of bytes set in the buffer
-uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
+uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
-	memcpy(buf, &m_IpAddress.s_addr, sizeof m_IpAddress.s_addr);
-	offset+= sizeof m_IpAddress.s_addr;
-	memcpy(buf+offset, &m_classification, sizeof m_classification);
-	offset+= sizeof m_classification;
-	memcpy(buf+offset, &m_isHostile, sizeof m_isHostile);
-	offset+= sizeof m_isHostile;
-	memcpy(buf+offset, &m_needsClassificationUpdate, sizeof m_needsClassificationUpdate);
-	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(buf+offset, &m_flaggedByAlarm, sizeof m_flaggedByAlarm);
-	offset+= sizeof m_flaggedByAlarm;
-	memcpy(buf+offset, &m_isLive, sizeof m_isLive);
-	offset+= sizeof m_isLive;
-	memcpy(buf+offset, &m_hostileNeighbors, sizeof m_hostileNeighbors);
-	offset+= sizeof m_hostileNeighbors;
+	SerializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_needsClassificationUpdate, sizeof m_needsClassificationUpdate, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(buf+offset, &m_featureAccuracy[i], sizeof m_featureAccuracy[i]);
-		offset+= sizeof m_featureAccuracy[i];
+		SerializeChunk(buf, &offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
 	}
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
-	offset += m_features.SerializeFeatureSet(buf+offset);
+	offset += m_features.SerializeFeatureSet(buf+offset, bufferSize - offset);
 	switch(whichFeatures)
 	{
 		case UNSENT_FEATURE_DATA:
@@ -193,7 +187,7 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			{
 				return 0;
 			}
-			offset += m_unsentFeatures.SerializeFeatureData(buf + offset);
+			offset += m_unsentFeatures.SerializeFeatureData(buf + offset, bufferSize - offset);
 			break;
 		}
 		case MAIN_FEATURE_DATA:
@@ -202,7 +196,7 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			{
 				return 0;
 			}
-			offset += m_features.SerializeFeatureData(buf + offset);
+			offset += m_features.SerializeFeatureData(buf + offset, bufferSize - offset);
 			break;
 		}
 		case ALL_FEATURE_DATA:
@@ -211,12 +205,12 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			{
 				return 0;
 			}
-			offset += m_features.SerializeFeatureData(buf + offset);
+			offset += m_features.SerializeFeatureData(buf + offset, bufferSize - offset);
 			if(offset + m_unsentFeatures.GetFeatureDataLength() >= SANITY_CHECK)
 			{
 				return 0;
 			}
-			offset += m_unsentFeatures.SerializeFeatureData(buf + offset);
+			offset += m_unsentFeatures.SerializeFeatureData(buf + offset, bufferSize - offset);
 			break;
 		}
 		case NO_FEATURE_DATA:
@@ -225,6 +219,7 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			break;
 		}
 	}
+
 	return offset;
 }
 
@@ -274,52 +269,43 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 // Reads Suspect information from a buffer originally populated by serializeSuspect
 //		buf - Pointer to buffer where the serialized suspect is
 // Returns: number of bytes read from the buffer
-uint32_t Suspect::Deserialize(u_char *buf, SerializeFeatureMode whichFeatures)
+uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
 
-	//Copies the value and increases the offset
-	memcpy(&m_IpAddress.s_addr, buf, sizeof m_IpAddress.s_addr);
-	offset+= sizeof m_IpAddress.s_addr;
-	memcpy(&m_classification, buf+offset, sizeof m_classification);
-	offset+= sizeof m_classification;
-	memcpy(&m_isHostile, buf+offset, sizeof m_isHostile);
-	offset+= sizeof m_isHostile;
-	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
-	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
-	offset+= sizeof m_flaggedByAlarm;
-	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
-	offset+= sizeof m_isLive;
-	memcpy(&m_hostileNeighbors, buf+offset, sizeof m_hostileNeighbors);
-	offset+= sizeof m_hostileNeighbors;
+	DeserializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_needsClassificationUpdate, sizeof m_needsClassificationUpdate, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(&m_featureAccuracy[i], buf+offset, sizeof m_featureAccuracy[i]);
-		offset+= sizeof m_featureAccuracy[i];
+		DeserializeChunk(buf, &offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
 	}
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
-	offset += m_features.DeserializeFeatureSet(buf+offset);
+	offset += m_features.DeserializeFeatureSet(buf+offset, bufferSize - offset);
 	switch(whichFeatures)
 	{
 		case UNSENT_FEATURE_DATA:
 		{
-			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset, bufferSize - offset);
 			break;
 		}
 		case MAIN_FEATURE_DATA:
 		{
-			offset += m_features.DeserializeFeatureData(buf+offset);
+			offset += m_features.DeserializeFeatureData(buf+offset, bufferSize - offset);
 			break;
 		}
 		case ALL_FEATURE_DATA:
 		{
-			offset += m_features.DeserializeFeatureData(buf+offset);
-			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+			offset += m_features.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset, bufferSize - offset);
 			break;
 		}
 		case NO_FEATURE_DATA:
