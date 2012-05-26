@@ -3,8 +3,8 @@
 set -e
 
 #Set pcap permissions
-setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/novad
-setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/honeyd
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip CAP_NET_BROADCAST+eip' /usr/bin/novad
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip CAP_NET_BROADCAST+eip' /usr/bin/honeyd
 
 #make nova group
 groupadd -f nova

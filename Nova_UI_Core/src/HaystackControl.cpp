@@ -19,24 +19,33 @@
 #include "Commands.h"
 #include "Config.h"
 
+#include <sstream>
+
 using namespace std;
 namespace Nova
 {
 bool StartHaystack()
 {
-	string executeString = "nohup sudo honeyd -i " + Config::Inst()->GetInterface() + " -i "
-		+ Config::Inst()->GetDoppelInterface()+" -f ";
-	executeString += Config::Inst()->GetPathHome() + '/';
+	stringstream ss;
+	ss << "nohup sudo honeyd ";
+	vector<string> ifList = Config::Inst()->GetInterfaces();
+	while(!ifList.empty())
+	{
+		ss << " -i " << ifList.back();
+		ifList.pop_back();
+	}
+	ss << " -i " << Config::Inst()->GetDoppelInterface();
+	ss << " -f " << Config::Inst()->GetPathHome() <<  '/';
 	switch(Config::Inst()->GetHaystackStorage())
 	{
 		case 'I':
 		{
-			executeString += Config::Inst()->GetPathConfigHoneydHS();
+			ss << Config::Inst()->GetPathConfigHoneydHS();
 			break;
 		}
 		case 'M':
 		{
-			executeString += Config::Inst()->GetPathConfigHoneydUser();
+			ss << Config::Inst()->GetPathConfigHoneydUser();
 			break;
 		}
 		default:
@@ -45,10 +54,11 @@ bool StartHaystack()
 		}
 	}
 
-	executeString += " -p " + Config::Inst()->GetPathReadFolder() + "/nmap-os-db -s "
-		"/var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
-	cout << executeString << endl;
-	if(system(executeString.c_str()) != 0)
+	ss << " -p " << Config::Inst()->GetPathReadFolder();
+	ss << "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
+
+	cout << ss.str() << endl;
+	if(system(ss.str().c_str()) != 0)
 	{
 		return false;
 	}

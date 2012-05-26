@@ -158,21 +158,25 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		case PORT_TRAFFIC_DISTRIBUTION:
 		{
 			m_features[PORT_TRAFFIC_DISTRIBUTION] = 0;
-			double portMax = 0;
-			for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
-			{
-				if(it->second > portMax)
-				{
-					portMax = it->second;
-				}
-			}
-			for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
-			{
-				m_features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / portMax);
-			}
 			if(m_portTable.size())
 			{
-				m_features[PORT_TRAFFIC_DISTRIBUTION] = m_features[PORT_TRAFFIC_DISTRIBUTION] / (double)m_portTable.size();
+				double portDivisor = 0;
+				for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+				{
+					//get the maximum port entry for normalization
+					if(it->second > portDivisor)
+					{
+						portDivisor = it->second;
+					}
+				}
+				//Multiply the maximum entry with the size to get the divisor
+				portDivisor = portDivisor * ((double)m_portTable.size());
+				long long unsigned int temp = 0;
+				for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+				{
+					temp += it->second;
+				}
+				m_features[PORT_TRAFFIC_DISTRIBUTION] = ((double)temp)/portDivisor;
 			}
 			break;
 		}
@@ -267,34 +271,26 @@ void FeatureSet::CalculateTimeInterval()
 	}
 }
 
-void FeatureSet::UpdateEvidence(const Packet& packet)
+void FeatureSet::UpdateEvidence(Evidence *evidence)
 {
 	// Ensure our assumptions about valid packet fields are true
-	if (packet.ip_hdr.ip_dst.s_addr == 0)
+	if(evidence->m_evidencePacket.ip_dst == 0)
 	{
 		LOG(DEBUG, "Got packet with invalid source IP address of 0. Skipping.", "");
 		return;
 	}
-	switch(packet.ip_hdr.ip_p)
+	switch(evidence->m_evidencePacket.ip_p)
 	{
 		//If UDP
 		case 17:
 		{
-			//Avoid empty key error
-			if(packet.udp_hdr.dest)
-			{
-				m_portTable[ntohs(packet.udp_hdr.dest)]++;
-			}
+			m_portTable[evidence->m_evidencePacket.dst_port]++;
 			break;
 		}
 		//If TCP
 		case 6:
 		{
-			//Avoid empty key error
-			if(packet.tcp_hdr.dest)
-			{
-				m_portTable[ntohs(packet.tcp_hdr.dest)]++;
-			}
+			m_portTable[evidence->m_evidencePacket.dst_port]++;
 			break;
 		}
 		//If ICMP
@@ -311,36 +307,25 @@ void FeatureSet::UpdateEvidence(const Packet& packet)
 	}
 
 	m_packetCount++;
-	m_bytesTotal += ntohs(packet.ip_hdr.ip_len);
-
-	//If from haystack
-	if(packet.fromHaystack)
-	{
-		m_IPTable[packet.ip_hdr.ip_dst.s_addr]++;
-	}
-	//If from local host, put into designated bin
-	else
-	{
-		m_IPTable[1]++;
-	}
-
-	m_packTable[ntohs(packet.ip_hdr.ip_len)]++;
+	m_bytesTotal += evidence->m_evidencePacket.ip_len;
+	m_IPTable[evidence->m_evidencePacket.ip_dst]++;
+	m_packTable[evidence->m_evidencePacket.ip_len]++;
 
 	if(m_lastTime != 0)
 	{
-		m_intervalTable[packet.pcap_header.ts.tv_sec - m_lastTime]++;
+		m_intervalTable[evidence->m_evidencePacket.ts - m_lastTime]++;
 	}
 
-	m_lastTime = packet.pcap_header.ts.tv_sec;
+	m_lastTime = evidence->m_evidencePacket.ts;
 
 	//Accumulate to find the lowest Start time and biggest end time.
-	if(packet.pcap_header.ts.tv_sec < m_startTime)
+	if(evidence->m_evidencePacket.ts < m_startTime)
 	{
-		m_startTime = packet.pcap_header.ts.tv_sec;
+		m_startTime = evidence->m_evidencePacket.ts;
 	}
-	if( packet.pcap_header.ts.tv_sec > m_endTime)
+	if(evidence->m_evidencePacket.ts > m_endTime)
 	{
-		m_endTime =  packet.pcap_header.ts.tv_sec;
+		m_endTime =  evidence->m_evidencePacket.ts;
 		CalculateTimeInterval();
 	}
 }
@@ -597,13 +582,7 @@ uint32_t FeatureSet::GetFeatureDataLength()
 			count++;
 		}
 	}
-	for(Packet_Table::iterator it = m_packTable.begin(); it != m_packTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
+
 	for(IP_Table::iterator it = m_IPTable.begin(); it != m_IPTable.end(); it++)
 	{
 		if(it->second)
@@ -614,6 +593,14 @@ uint32_t FeatureSet::GetFeatureDataLength()
 	//pair of uint32_t vars per entry, with 'count' number of entries
 	out += 2*sizeof(uint32_t)*count;
 	count =  0;
+
+	for(Packet_Table::iterator it = m_packTable.begin(); it != m_packTable.end(); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
 	for(Port_Table::iterator it = m_portTable.begin(); it != m_portTable.end(); it++)
 	{
 		if(it->second)
@@ -641,7 +628,7 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	uint32_t temp = 0;
 	time_t timeTemp;
 	uint32_t tempCount = 0;
-	in_port_t port = 0;
+	uint16_t tempShort = 0;
 
 	//Required, individual variables for calculation
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_totalInterval, bufferSize);
@@ -690,10 +677,10 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	//Packet size table
 	for(uint32_t i = 0; i < table_size;)
 	{
-		DeserializeChunk(buf, &offset, (char*)&temp, sizeof temp, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&tempShort, sizeof tempShort, bufferSize);
 		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
 
-		m_packTable[temp] += tempCount;
+		m_packTable[tempShort] += tempCount;
 		i++;
 	}
 
@@ -712,10 +699,10 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	//Port table
 	for(uint32_t i = 0; i < table_size;)
 	{
-		DeserializeChunk(buf, &offset, (char*)&port, sizeof port, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&tempShort, sizeof tempShort, bufferSize);
 		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
 
-		m_portTable[port] += tempCount;
+		m_portTable[tempShort] += tempCount;
 		i++;
 	}
 	return offset;

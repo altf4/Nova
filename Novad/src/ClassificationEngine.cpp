@@ -544,33 +544,30 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 	{
 		case LINEAR:
 		{
-			return value / max;
+			return (value / max);
 		}
 		case LINEAR_SHIFT:
 		{
-			return (value -min) / (max - min);
-		}
-		case LOGARITHMIC:
-		{
-			if(!value || !max)
-				return 0;
-			else return(log(value)/log(max));
-			//return (log(value - min + 1)) / (log(max - min + 1));
+			return ((value -min) / (max - min));
 		}
 		case NONORM:
 		{
 			return value;
 		}
-		default:
+		case LOGARITHMIC:
 		{
-			//logger->Logging(ERROR, "Normalization failed: Normalization type unkown");
-			return 0;
+			//If neither are 0
+			if(value && max)
+			{
+				return (log(value)/log(max));
+			}
 		}
-
+		return 0;
 		// TODO: A sigmoid normalization function could be very useful,
 		// especially if we could somehow use it interactively to set the center and smoothing
 		// while looking at the data visualizations to see what works best for a feature
 	}
+
 }
 
 

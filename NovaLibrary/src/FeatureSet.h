@@ -20,9 +20,10 @@
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
 
-#include "HashMap.h"
-#include "HashMapStructs.h"
 #include "Defines.h"
+#include "Evidence.h"
+#include "HashMapStructs.h"
+
 #include <pcap.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -57,7 +58,7 @@ typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<time_t>, eqtime > IP_Ta
 //Table of destination ports and a count;
 typedef Nova::HashMap<in_port_t, uint32_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<int>, eqint > Packet_Table;
+typedef Nova::HashMap<uint16_t, uint32_t, std::tr1::hash<uint16_t>, eq_uint16_t > Packet_Table;
 //Table of packet intervals and a count
 typedef Nova::HashMap<time_t, uint32_t, std::tr1::hash<time_t>, eqtime > Interval_Table;
 
@@ -120,7 +121,7 @@ public:
 
 	// Processes incoming evidence before calculating the features
 	//		packet - packet headers of new packet
-	void UpdateEvidence(const Packet& packet);
+	void UpdateEvidence(Evidence *evidence);
 
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored

@@ -16,6 +16,17 @@
 // Description : NOVA preferences/configuration window
 //============================================================================
 
+#include <boost/foreach.hpp>
+#include <QRadioButton>
+#include <netinet/in.h>
+#include <QFileDialog>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <errno.h>
+#include <fstream>
+#include <QDir>
+
 #include "Logger.h"
 #include "Config.h"
 #include "NovaUtil.h"
@@ -23,17 +34,10 @@
 #include "subnetPopup.h"
 #include "NovaComplexDialog.h"
 
-#include <boost/foreach.hpp>
-#include <netinet/in.h>
-#include <QFileDialog>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fstream>
-#include <QDir>
-
-using namespace std;
-using namespace Nova;
 using boost::property_tree::ptree;
+using namespace Nova;
+using namespace std;
+
 
 /************************************************
  * Construct and Initialize GUI
@@ -74,6 +78,8 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 
 	SetInputValidators();
 	m_loading->lock();
+	m_radioButtons = new QButtonGroup(ui.loopbackGroupBox);
+	m_interfaceCheckBoxes = new QButtonGroup(ui.interfaceGroupBox);
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
 	LoadNovadPreferences();
 	m_honeydConfig->LoadAllTemplates();
@@ -92,11 +98,21 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	ui.featureList->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(ui.featureList, SIGNAL(customContextMenuRequested(const QPoint &)), this,
 			SLOT(onFeatureClick(const QPoint &)));
+	connect(m_interfaceCheckBoxes, SIGNAL(buttonReleased(QAbstractButton *)), this,
+			SLOT(interfaceCheckBoxes_buttonClicked(QAbstractButton *)));
 }
 
 NovaConfig::~NovaConfig()
 {
 
+}
+
+void NovaConfig::interfaceCheckBoxes_buttonClicked(QAbstractButton * button)
+{
+	if(m_interfaceCheckBoxes->checkedButton() == NULL)
+	{
+		((QCheckBox *)button)->setChecked(true);
+	}
 }
 
 void NovaConfig::contextMenuEvent(QContextMenuEvent *event)
@@ -1001,9 +1017,89 @@ bool NovaConfig::DisplayMACPrefixWindow()
 
 void NovaConfig::LoadNovadPreferences()
 {
-	ui.interfaceEdit->setText(QString::fromStdString(Config::Inst()->GetInterface()));
-	ui.dataEdit->setText(QString::fromStdString(Config::Inst()->GetPathTrainingFile()));
+	struct ifaddrs * devices = NULL;
+	struct ifaddrs *curIf = NULL;
+	stringstream ss;
 
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+
+	QList<QAbstractButton *> radioButtons = m_radioButtons->buttons();
+	while(!radioButtons.isEmpty())
+	{
+		delete radioButtons.takeFirst();
+	}
+	QList<QAbstractButton *> checkBoxes = m_interfaceCheckBoxes->buttons();
+	while(!checkBoxes.isEmpty())
+	{
+		delete checkBoxes.takeFirst();
+	}
+	delete m_radioButtons;
+	delete m_interfaceCheckBoxes;
+	m_radioButtons = new QButtonGroup(ui.loopbackGroupBox);
+	m_radioButtons->setExclusive(true);
+	m_interfaceCheckBoxes = new QButtonGroup(ui.interfaceGroupBox);
+
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if((int)curIf->ifa_addr->sa_family == AF_INET)
+		{
+			//Create radio button for each loop back
+			if(curIf->ifa_flags & IFF_LOOPBACK)
+			{
+				QRadioButton * radioButton = new QRadioButton(QString(curIf->ifa_name), ui.loopbackGroupBox);
+				radioButton->setObjectName(QString(curIf->ifa_name));
+				m_radioButtons->addButton(radioButton);
+				ui.loopbackGroupBoxVLayout->addWidget(radioButton);
+				radioButtons.push_back(radioButton);
+			}
+			//Create check box for each interface
+			else
+			{
+				QCheckBox * checkBox = new QCheckBox(QString(curIf->ifa_name), ui.interfaceGroupBox);
+				checkBox->setObjectName(QString(curIf->ifa_name));
+				m_interfaceCheckBoxes->addButton(checkBox);
+				ui.interfaceGroupBoxVLayout->addWidget(checkBox);
+				checkBoxes.push_back(checkBox);
+			}
+		}
+	}
+	freeifaddrs(devices);
+	if(checkBoxes.size() >= 1)
+	{
+		m_interfaceCheckBoxes->setExclusive(false);
+	}
+	else
+	{
+		m_interfaceCheckBoxes->setExclusive(true);
+	}
+
+	//Select the loopback
+	{
+		QString doppIf = QString::fromStdString(Config::Inst()->GetDoppelInterface());
+		QRadioButton * checkObj = ui.loopbackGroupBox->findChild<QRadioButton *>(doppIf);
+		if(checkObj != NULL)
+		{
+			checkObj->setChecked(true);
+		}
+	}
+	vector<string> ifList = Config::Inst()->GetInterfaces();
+	while(!ifList.empty())
+	{
+		QCheckBox* checkObj = ui.interfaceGroupBox->findChild<QCheckBox *>(QString::fromStdString(ifList.back()));
+		if(checkObj != NULL)
+		{
+			checkObj->setChecked(true);
+		}
+		ifList.pop_back();
+	}
+
+	ui.useAllIfCheckBox->setChecked(Config::Inst()->GetUseAllInterfaces());
+	ui.useAnyLoopbackCheckBox->setChecked(Config::Inst()->GetUseAnyLoopback());
+	ui.dataEdit->setText(QString::fromStdString(Config::Inst()->GetPathTrainingFile()));
 	ui.saAttemptsMaxEdit->setText(QString::number(Config::Inst()->GetSaMaxAttempts()));
 	ui.saAttemptsTimeEdit->setText(QString::number(Config::Inst()->GetSaSleepDuration()));
 	ui.saPortEdit->setText(QString::number(Config::Inst()->GetSaPort()));
@@ -1179,6 +1275,7 @@ void NovaConfig::on_okButton_clicked()
 			"Error: Unable to write to NOVA configuration file");
 		this->close();
 	}
+	LoadNovadPreferences();
 
 	//Clean up unused ports
 	m_honeydConfig->CleanPorts();
@@ -1186,7 +1283,9 @@ void NovaConfig::on_okButton_clicked()
 	m_honeydConfig->SaveAllTemplates();
 	m_honeydConfig->WriteHoneydConfiguration(Config::Inst()->GetUserPath());
 
+	LoadHaystackConfiguration();
 	m_mainwindow->InitConfiguration();
+
 	m_loading->unlock();
 	this->close();
 }
@@ -1242,7 +1341,6 @@ bool NovaConfig::SaveConfigurationToFile()
 	}
 	Config::Inst()->SetIsDmEnabled(ui.dmCheckBox->isChecked());
 	Config::Inst()->SetIsTraining(ui.trainingCheckBox->isChecked());
-	Config::Inst()->SetInterface(this->ui.interfaceEdit->displayText().toStdString());
 	Config::Inst()->SetPathTrainingFile(this->ui.dataEdit->displayText().toStdString());
 	Config::Inst()->SetSaSleepDuration(this->ui.saAttemptsTimeEdit->displayText().toDouble());
 	Config::Inst()->SetSaMaxAttempts(this->ui.saAttemptsMaxEdit->displayText().toInt());
@@ -1252,6 +1350,32 @@ bool NovaConfig::SaveConfigurationToFile()
 	Config::Inst()->SetClassificationTimeout(this->ui.ceFrequencyEdit->displayText().toInt());
 	Config::Inst()->SetClassificationThreshold(this->ui.ceThresholdEdit->displayText().toDouble());
 	Config::Inst()->SetEnabledFeatures(ss.str());
+
+	QList<QAbstractButton *> qButtonList = m_interfaceCheckBoxes->buttons();
+	Config::Inst()->ClearInterfaces();
+	Config::Inst()->SetUseAllInterfaces(ui.useAllIfCheckBox->isChecked());
+
+	for(int i = 0; i < qButtonList.size(); i++)
+	{
+		QCheckBox * checkBoxPtr = (QCheckBox *)qButtonList.at(i);
+		if(checkBoxPtr->isChecked())
+		{
+			Config::Inst()->AddInterface(checkBoxPtr->text().toStdString());
+		}
+	}
+
+	qButtonList = m_radioButtons->buttons();
+
+	Config::Inst()->SetUseAnyLoopback(ui.useAnyLoopbackCheckBox->isChecked());
+	for(int i = 0; i < qButtonList.size(); i++)
+	{
+		//XXX configuration for selection 'any' interface aka 'default'
+		QRadioButton * radioBtnPtr = (QRadioButton *)qButtonList.at(i);
+		if(radioBtnPtr->isChecked())
+		{
+			Config::Inst()->SetDoppelInterface(radioBtnPtr->text().toStdString());
+		}
+	}
 
 	ss.str("");
 	ss << ui.dmIPSpinBox_0->value() << "." << ui.dmIPSpinBox_1->value() << "." << ui.dmIPSpinBox_2->value() << "."
@@ -1287,6 +1411,8 @@ bool NovaConfig::SaveConfigurationToFile()
 //Exit the window and ignore any changes since opening or apply was pressed
 void NovaConfig::on_cancelButton_clicked()
 {
+	//Reloads from NOVAConfig
+	LoadNovadPreferences();
 	this->close();
 }
 
@@ -2354,13 +2480,8 @@ void NovaConfig::SetInputValidators()
 	QDoubleValidator *udoubleValidator = new QDoubleValidator();
 	udoubleValidator->setBottom(0);
 
-	// Disallows whitespace
-	QRegExp rx("\\S+");
-	QRegExpValidator *noSpaceValidator = new QRegExpValidator(rx, this);
-
 	// Set up input validators so user can't enter obviously bad data in the QLineEdits
 	// General settings
-	ui.interfaceEdit->setValidator(noSpaceValidator);
 	ui.saAttemptsMaxEdit->setValidator(uintValidator);
 	ui.saAttemptsTimeEdit->setValidator(udoubleValidator);
 	ui.saPortEdit->setValidator(uintValidator);
@@ -3200,4 +3321,14 @@ void NovaConfig::on_hsSaveTypeComboBox_currentIndexChanged(int index)
 			break;
 		}
 	}
+}
+
+void NovaConfig::on_useAllIfCheckBox_stateChanged()
+{
+	ui.interfaceGroupBox->setEnabled(!ui.useAllIfCheckBox->isChecked());
+}
+
+void NovaConfig::on_useAnyLoopbackCheckBox_stateChanged()
+{
+	ui.loopbackGroupBox->setEnabled(!ui.useAnyLoopbackCheckBox->isChecked());
 }

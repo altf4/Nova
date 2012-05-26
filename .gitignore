@@ -104,3 +104,8 @@ NovaCLI/Debug/novacli
 /NovaWeb/libv8-convert-20120219/*
 /NovaWeb/libv8-convert-20120219.tar.gz.1
 /NovaWeb/libv8-convert-20120219.tar.gz.2
+/Installer/.nova/Config/doppelganger.config
+/Installer/.nova/Data/data.txt
+/Installer/.nova/Data/training.db
+/Installer/Write/nova/.nova/Config/data.csv
+/Novad/core

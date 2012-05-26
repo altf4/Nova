@@ -71,8 +71,9 @@ SuspectTable::~SuspectTable()
 	//Deletes the suspects pointed to by the table
 	for(SuspectHashTable::iterator it = m_suspectTable.begin(); it != m_suspectTable.end(); it++)
 	{
-		delete it->second;
+		delete m_suspectTable[it->first];
 	}
+	m_suspectTable.clear();
 	for(SuspectLockTable::iterator it = m_lockTable.begin(); it != m_lockTable.end(); it++)
 	{
 		pthread_mutex_destroy(&it->second.lock);
@@ -85,50 +86,55 @@ SuspectTable::~SuspectTable()
 // Returns true on Success, and false if the suspect already exists
 bool SuspectTable::AddNewSuspect(Suspect *suspect)
 {
-	//Write lock the table and check key validity
-	Lock lock(&m_lock, false);
-	Suspect *suspectCopy = new Suspect(*suspect);
-	in_addr_t key = suspectCopy->GetIpAddress();
 	//If we return false then there is no suspect at this ip address yet
-	if(!IsValidKey_NonBlocking(key))
+	if(suspect != NULL)
 	{
-		//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
-		if(m_lockTable.keyExists(key))
+		Suspect * suspectCopy = new Suspect(*suspect);
+		in_addr_t key = suspectCopy->GetIpAddress();
+		pthread_rwlock_wrlock(&m_lock);
+		if(!IsValidKey_NonBlocking(key))
 		{
-			//Wait for the suspect lock, this call releases the table while blocking.
-			LockSuspect(key);
-			//Reverse the deletion flag
-			m_lockTable[key].deleted = false;
-			UnlockSuspect(key);
+			//If there is already a SuspectLock this Suspect is listed for deletion but it's lock still exists
+			if(m_lockTable.keyExists(key))
+			{
+				//Wait for the suspect lock, this call releases the table while blocking.
+				LockSuspect(key);
+				//Reverse the deletion flag
+				m_lockTable[key].deleted = false;
+				UnlockSuspect(key);
+			}
+			//Else we need to init a SuspectLock
+			else
+			{
+				pthread_mutexattr_t tempAttr;
+				pthread_mutexattr_init(&tempAttr);
+				pthread_mutexattr_settype(&tempAttr, PTHREAD_MUTEX_ERRORCHECK);
+				//Destroy before init just to be safe
+				pthread_mutex_destroy(&m_lockTable[key].lock);
+				pthread_mutex_init(&m_lockTable[key].lock, &tempAttr);
+				m_lockTable[key].deleted = false;
+				m_lockTable[key].ref_cnt = 0;
+			}
+			//Allocate the Suspect and copy the contents
+			m_suspectTable[key] = suspectCopy;
+			//Store the key
+			m_keys.push_back(key);
+			pthread_rwlock_unlock(&m_lock);
+			return true;
 		}
-		//Else we need to init a SuspectLock
-		{
-			pthread_mutexattr_t tempAttr;
-			pthread_mutexattr_init(&tempAttr);
-			pthread_mutexattr_settype(&tempAttr, PTHREAD_MUTEX_ERRORCHECK);
-			//Destroy before init just to be safe
-			pthread_mutex_destroy(&m_lockTable[key].lock);
-			pthread_mutex_init(&m_lockTable[key].lock, &tempAttr);
-			m_lockTable[key].deleted = false;
-			m_lockTable[key].ref_cnt = 0;
-		}
-		//Allocate the Suspect and copy the contents
-		m_suspectTable[key] = suspectCopy;
-		//Store the key
-		m_keys.push_back(key);
-		return true;
 	}
 	//Else this suspect already exists, we cannot add it again->
+	pthread_rwlock_unlock(&m_lock);
 	return false;
 }
 
 // Adds the Suspect pointed to in 'suspect' into the table using the source of the packet as the key;
 // 		packet: copy of the packet you whish to create a suspect from
 // Returns true on Success, and false if the suspect already exists
-bool SuspectTable::AddNewSuspect(const Packet& packet)
+/*bool SuspectTable::AddNewSuspect(Evidence *evidence)
 {
 	Lock lock(&m_lock, false);
-	Suspect *suspect = new Suspect(packet);
+	Suspect *suspect = new Suspect(evidence);
 	in_addr_t key = suspect->GetIpAddress();
 	//If we return false then there is no suspect at this ip address yet
 	if(!IsValidKey_NonBlocking(key))
@@ -161,32 +167,8 @@ bool SuspectTable::AddNewSuspect(const Packet& packet)
 	}
 	//Else this suspect already exists, we cannot add it again->
 	return false;
-}
+}*/
 
-// If the table contains a suspect associated with 'key', then it adds 'packet' to it's evidence
-//		key: IP address of the suspect as a uint value (host byte order)
-//		packet: packet struct to be added into the suspect's list of evidence.
-// Returns true if the call succeeds, false if the suspect could not be located
-// Note: this is faster than Checking out a suspect adding the evidence and checking it in but is equivalent
-bool SuspectTable::AddEvidenceToSuspect(const in_addr_t& key, const Packet& packet)
-{
-	Lock lock(&m_lock, false);
-	if(IsValidKey_NonBlocking(key))
-	{
-		//Wait for the suspect lock, this call releases the table while blocking.
-		LockSuspect(key);
-		if(!IsValidKey_NonBlocking(key))
-		{
-			UnlockSuspect(key);
-			return false;
-		}
-		Suspect *suspect = m_suspectTable[key];
-		suspect->AddEvidence(packet);
-		UnlockSuspect(key);
-		return true;
-	}
-	return false;
-}
 // Updates a suspects evidence and calculates the FeatureSet
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns (true) if the call succeeds, (false) if the suspect doesn't exist or doesn't need updating
@@ -320,20 +302,13 @@ Suspect SuspectTable::CheckOut(const in_addr_t& key)
 	if(IsValidKey_NonBlocking(key))
 	{
 		LockSuspect(key);
-		if(!IsValidKey_NonBlocking(key))
+		if(IsValidKey_NonBlocking(key))
 		{
-			UnlockSuspect(key);
-			Suspect ret = m_emptySuspect;
-			return ret;
+			return *m_suspectTable[key];
 		}
-		Suspect ret = *m_suspectTable[key];
-		return ret;
+		UnlockSuspect(key);
 	}
-	else
-	{
-		Suspect ret = m_emptySuspect;
-		return ret;
-	}
+	return m_emptySuspect;
 }
 
 // Lookup and get an Asynchronous copy of the Suspect
@@ -387,34 +362,36 @@ Suspect SuspectTable::GetSuspectStatus(const in_addr_t& key)
 bool SuspectTable::Erase(const in_addr_t& key)
 {
 	Lock lock(&m_lock, false);
-	try
+	if(IsValidKey_NonBlocking(key))
 	{
-		if(IsValidKey_NonBlocking(key))
+		//Flag as deleted
+		m_lockTable[key].deleted = true;
+
+		//Remove from key vector
+		for(vector<uint64_t>::iterator vit = m_keys.begin(); vit != m_keys.end(); vit++)
 		{
-			m_lockTable[key].deleted = true;
-			for(vector<uint64_t>::iterator vit = m_keys.begin(); vit != m_keys.end(); vit++)
+			if(*vit == key)
 			{
-				if(*vit == key)
-				{
-					m_keys.erase(vit);
-					break;
-				}
+				m_keys.erase(vit);
+				break;
 			}
-			SuspectHashTable::iterator it = m_suspectTable.find(key);
-			if(it != m_suspectTable.end())
-			{
-				Suspect *suspectPtr = m_suspectTable[key];
-				m_suspectTable.erase(key);
-				delete suspectPtr;
-			}
-			CleanSuspectLock(key);
-			return true;
 		}
-	}
-	catch(Nova::hashMapException &s)
-	{
-		LOG(ERROR, "Unable to erase suspect due to exception: " + string(s.what()), "");
-		return false;
+
+		//Remove from suspect table
+		if(m_suspectTable.keyExists(key))
+		{
+			delete m_suspectTable[key];
+			m_suspectTable.erase(key);
+		}
+
+		//If no threads are blocking on the lock we can destroy it.
+		if(!(m_lockTable[key].ref_cnt > 0))
+		{
+			m_lockTable[key].ref_cnt = 0;
+			pthread_mutex_destroy(&m_lockTable[key].lock);
+			m_lockTable.erase(key);
+		}
+		return true;
 	}
 	return false;
 }
@@ -428,7 +405,13 @@ void SuspectTable::EraseAllSuspects()
 	for(SuspectLockTable::iterator it = m_lockTable.begin(); it != m_lockTable.end(); it++)
 	{
 		m_lockTable[it->first].deleted = true;
-		CleanSuspectLock(it->first);
+		//If no threads are blocking on the lock we can destroy it.
+		if(!(it->second.ref_cnt > 0))
+		{
+			m_lockTable[it->first].ref_cnt = 0;
+			pthread_mutex_destroy(&m_lockTable[it->first].lock);
+			m_lockTable.erase(it->first);
+		}
 	}
 	for(SuspectHashTable::iterator it = m_suspectTable.begin(); it != m_suspectTable.end(); it++)
 	{
@@ -757,6 +740,50 @@ bool SuspectTable::IsEmptySuspect(Suspect *suspect)
 {
 	return (suspect->GetClassification() == EMPTY_SUSPECT_CLASSIFICATION);
 }
+
+//Consumes the linked list of evidence objects, extracting their information and inserting them into the Suspects.
+// evidence: Evidence object, if consuming more than one piece of evidence this is the start
+//				of the linked list.
+// Note: Every evidence object contained in the list is deallocated after use, invalidating the pointers,
+//		this is a specialized function designed only for use by Consumer threads.
+void SuspectTable::ProcessEvidence(Evidence *&evidence)
+{
+	// ~~~ Write lock ~~~
+	Lock lock (&m_lock, false);
+	in_addr_t key = evidence->m_evidencePacket.ip_src;
+	//If this suspect doesn't have a lock, make one.
+	if(!m_lockTable.keyExists(key))
+	{
+		pthread_mutexattr_t mAttr;
+		pthread_mutexattr_init(&mAttr);
+		pthread_mutexattr_settype(&mAttr, PTHREAD_MUTEX_ERRORCHECK);
+		m_lockTable[key] = SuspectLock();
+		pthread_mutex_init(&m_lockTable[key].lock, &mAttr);
+		pthread_mutexattr_destroy(&mAttr);
+		m_lockTable[key].ref_cnt = 0;
+	}
+
+	//Make sure the suspect isn't flagged as deleted then grab it's lock
+	m_lockTable[key].deleted = false;
+	LockSuspect(key);
+
+	//Consume and deallocate all the evidence
+	if(m_suspectTable.keyExists(key))
+	{
+		//If a suspect already exists
+		m_suspectTable[key]->ConsumeEvidence(evidence);
+	}
+	else
+	{
+		//If it needs to be allocated
+		m_keys.push_back(key);
+		m_suspectTable[key] = new Suspect(evidence);
+	}
+
+	//Unlock the suspect (CheckIn)
+	UnlockSuspect(key);
+}
+
 // Checks the validity of the key - private use non-locking version
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise
@@ -778,7 +805,7 @@ bool SuspectTable::IsValidKey_NonBlocking(const in_addr_t& key)
 bool SuspectTable::LockSuspect(const in_addr_t& key)
 {
 	//If the suspect has a lock
-	if(m_lockTable.keyExists(key))
+	if(IsValidKey_NonBlocking(key))
 	{
 		m_lockTable[key].ref_cnt++;
 		pthread_rwlock_unlock(&m_lock);
@@ -796,40 +823,39 @@ bool SuspectTable::LockSuspect(const in_addr_t& key)
 // Note: automatically deletes the lock if the suspect has been deleted and the ref count is 0
 bool SuspectTable::UnlockSuspect(const in_addr_t& key)
 {
-	//If the suspect has a lock
+	//If the lock exists
 	if(m_lockTable.keyExists(key))
 	{
-		m_lockTable[key].ref_cnt--;
-		//If unlock fails
-		if(pthread_mutex_unlock(&m_lockTable[key].lock))
+		//Attempt to unlock
+		if(pthread_mutex_unlock(&m_lockTable[key].lock) != 0)
 		{
+			//	Failed to unlock, lock could be uninitialized or this thread may not have the lock
+			//		either way return false,
 			return false;
 		}
-		return !CleanSuspectLock(key);
-	}
-	return false;
-}
 
-//Used internally, Calls to this function check if ref_cnt is 0 and deleted == true
-// if so then we remove the Suspect lock, this is done to prevent destroying a lock a thread is blocking on
-// 		key: IP address of the suspect as a uint value (host byte order)
-// Returns (true) if the Lock doesn't exist or it was successfully removed
-// false if threads are blocking on it or the Suspect has not been erased
-bool  SuspectTable::CleanSuspectLock(const in_addr_t& key)
-{
-	//If the suspect has a lock
-	if(m_lockTable.keyExists(key))
-	{
-		if((m_lockTable[key].ref_cnt <= 0) && m_lockTable[key].deleted)
+		//Decrement the count if successfully unlocked
+		m_lockTable[key].ref_cnt--;
+
+		//If the Suspect has been deleted
+		if(!m_lockTable[key].deleted)
 		{
+			//Return true, Suspect exists and is Unlocked
+			return true;
+		}
+		//If no more threads are blocking on the lock, destroy it
+		if(!(m_lockTable[key].ref_cnt > 0))
+		{
+			//Destroy the lock and the paired table entry
 			m_lockTable[key].ref_cnt = 0;
 			pthread_mutex_destroy(&m_lockTable[key].lock);
 			m_lockTable.erase(key);
-			return true;
 		}
+		//Return false, Suspect doesn't exists
 		return false;
 	}
-	return true;
+	//Return false, Suspect doesn't exists
+	return false;
 }
 
 }

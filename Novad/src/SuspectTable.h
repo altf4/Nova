@@ -65,17 +65,10 @@ public:
 	// Returns true on Success, and false if the suspect already exists
 	bool AddNewSuspect(Suspect *suspect);
 
-	// Adds the Suspect pointed to in 'suspect' into the table using the source of the packet as the key;
-	// 		packet: copy of the packet you whish to create a suspect from
+	// Adds the Suspect pointed to in 'suspect' into the table using the source of the evidence as the key;
+	// 		evidence: copy of the packet you whish to create a suspect from
 	// Returns true on Success, and false if the suspect already exists
-	bool AddNewSuspect(const Packet& packet);
-
-	// If the table contains a suspect associated with 'key', then it adds 'packet' to it's evidence
-	//		key: IP address of the suspect as a uint value (host byte order)
-	//		packet: packet struct to be added into the suspect's list of evidence.
-	// Returns (true) if the call succeeds, (false) if the suspect could not be located
-	// Note: this is faster than Checking out a suspect adding the evidence and checking it in but is equivalent
-	bool AddEvidenceToSuspect(const in_addr_t& key, const Packet& packet);
+	//bool AddNewSuspect(const Evidence& evidence);
 
 	bool ClassifySuspect(const in_addr_t& key);
 
@@ -173,7 +166,14 @@ public:
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	bool IsValidKey(const in_addr_t& key);
 
-	bool IsEmptySuspect(Suspect * suspect);
+	bool IsEmptySuspect(Suspect *suspect);
+
+	//Consumes the linked list of evidence objects, extracting their information and inserting them into the Suspects.
+	// evidence: Evidence object, if consuming more than one piece of evidence this is the start
+	//				of the linked list.
+	// Note: Every evidence object contained in the list is deallocated after use, invalidating the pointers,
+	//		this is a specialized function designed only for use by Consumer threads.
+	void ProcessEvidence(Evidence *&evidence);
 
 	Suspect m_emptySuspect;
 
@@ -210,12 +210,6 @@ private:
 	// Note: automatically deletes the lock if the suspect has been deleted and the ref count is 0
 	bool UnlockSuspect(const in_addr_t& key);
 
-	//Used internally, Calls to this function check if ref_cnt is 0 and deleted == true
-	// if so then we remove the Suspect lock, this is done to prevent destroying a lock a thread is blocking on
-	// 		key: IP address of the suspect as a uint value (host byte order)
-	// Returns (true) if the Lock doesn't exist or it was successfully removed
-	// false if threads are blocking on it or the Suspect has not been erased
-	bool CleanSuspectLock(const in_addr_t& key);
 };
 
 }
