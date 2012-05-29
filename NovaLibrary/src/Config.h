@@ -142,11 +142,15 @@ public:
     std::string GetSMTPDomain();
     std::vector<std::string> GetSMTPEmailRecipients();
     in_port_t GetSMTPPort();
+    std::string GetSMTPUser();
+    std::string GetSMTPPass();
 
     void SetLoggerPreferences(std::string loggerPreferences);
     void SetSMTPAddr(std::string SMTPAddr);
     void SetSMTPDomain(std::string SMTPDomain);
 	void SetSMTPPort(in_port_t SMTPPort);
+	void SetSMTPUser(std::string SMTPUser);
+	void SetSMTPPass(std::string STMP_Pass);
 
 	double GetSqurtEnabledFeatures();
 
@@ -222,8 +226,15 @@ private:
 	std::string m_SMTPDomain;
 	// the email address that will be set as sender
 	std::string m_SMTPAddr;
-	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
+	// the port for SMTP send; normally 25 if I'm not mistaken, 465 for SSL and 5 hundred something for TLS
 	in_port_t m_SMTPPort;
+
+	// username:password combination for interacting with the SMTP account that acts
+	// as the relay for Nova mail alerts
+	// need to find some way to store the password in an encrypted fashion yet
+	// still have it as a Config private attribute
+	std::string m_SMTPUser;
+	std::string m_SMTPPass;
 
 	std::string m_loggerPreferences;
 	// a vector containing the email recipients; may move this into the actual classes

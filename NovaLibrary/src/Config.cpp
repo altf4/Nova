@@ -1792,11 +1792,35 @@ in_port_t Config::GetSMTPPort()
 	return m_SMTPPort;
 }
 
+std::string Config::GetSMTPUser()
+{
+	Lock lock(&m_lock, true);
+	return m_SMTPUser;
+}
+
+std::string Config::GetSMTPPass()
+{
+	Lock lock(&m_lock, true);
+	return m_SMTPPass;
+}
+
 void Config::SetLoggerPreferences(string loggerPreferences)
 {
 	Lock lock(&m_lock, false);
 	m_loggerPreferences = loggerPreferences;
 
+}
+
+void Config::SetSMTPUser(std::string SMTPUser)
+{
+	Lock lock(&m_lock, true);
+	m_SMTPUser = SMTPUser;
+}
+
+void Config::SetSMTPPass(std::string SMTP_Pass)
+{
+	Lock lock(&m_lock, true);
+	m_SMTPPass = SMTP_Pass;
 }
 
 void Config::SetSMTPAddr(string SMTPAddr)

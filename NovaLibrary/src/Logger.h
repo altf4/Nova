@@ -29,6 +29,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
+#include <ctime>
+#include <curl/curl.h>
 
 // A macro to make logging prettier
 #define LOG(t,s,r) Nova::Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
@@ -53,6 +55,10 @@ struct MessageOptions
 {
 	// the SMTP server domain name for display purposes
 	std::string smtp_domain;
+	// SMTP username for SMTP secure login
+	std::string smtp_user;
+	// SMTP password for SMTP secure login
+	std::string smtp_pass;
 	// the email address that will be set as sender
 	std::string smtp_addr;
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
@@ -61,6 +67,12 @@ struct MessageOptions
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
 	std::vector<std::string> m_email_recipients;
+	// string for sending date to recipient
+};
+
+struct Writer
+{
+	int count;
 };
 
 typedef struct MessageOptions optionsInfo;
@@ -114,6 +126,14 @@ public:
 	// mailer script won't run
 	void ClearEmailRecipients();
 
+	// updates the date string to reflect the current month, day, year
+	void UpdateDateString();
+
+	void SetDateString(std::string toDate);
+
+	// Getter for date string variable
+	std::string GetDateString();
+
 protected:
 	// Constructor for the Logger class.
 	Logger();
@@ -150,6 +170,39 @@ private:
 
 	std::string getBitmask(Nova::Levels level);
 
+	static size_t ReadCallback(void * ptr, size_t size, size_t nmemb, void * userp);
+
+	static long tvdiff(struct timeval newer, struct timeval older)
+	{
+	  return (newer.tv_sec-older.tv_sec)*1000+
+	    (newer.tv_usec-older.tv_usec)/1000;
+	};
+
+	static struct timeval tvnow(void)
+	{
+	  /*
+	  ** time() returns the value of time in seconds since the Epoch.
+	  */
+	  struct timeval now;
+	  now.tv_sec = (long)time(NULL);
+	  now.tv_usec = 0;
+	  return now;
+	};
+
+	std::string GenerateDateString();
+
+	std::string GetContentString();
+
+	std::string GetRecipient();
+
+	std::string GetMailMessage();
+
+	std::string GetSenderString();
+
+	std::string GetCcString();
+
+	void SetMailMessage(std::string message);
+
 public:
 	levelsMap m_levels;
 
@@ -157,6 +210,9 @@ private:
 	optionsInfo m_messageInfo;
 	pthread_rwlock_t m_logLock;
 	static Logger *m_loggerInstance;
+	std::string m_dateString;
+	std::string m_mailMessage;
+	std::vector<std::string> m_mailFormat;
 };
 
 }
