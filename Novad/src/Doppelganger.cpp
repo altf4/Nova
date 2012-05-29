@@ -48,6 +48,11 @@ Doppelganger::~Doppelganger()
 // *Note if the Dopp was never initialized this function initializes it.
 void Doppelganger::UpdateDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	if(!m_initialized)
 	{
 		InitDoppelganger();
@@ -122,6 +127,11 @@ void Doppelganger::UpdateDoppelganger()
 //Clears the routing rules, this disables the doppelganger until init is called again.
 void Doppelganger::ClearDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	string commandLine, prefix = "sudo iptables -F";
 
 	commandLine = prefix + "-D FORWARD -i "+  Config::Inst()->GetDoppelInterface() + " -j DROP";
@@ -167,6 +177,11 @@ void Doppelganger::ClearDoppelganger()
 // called InitDoppelganger since construction or the last ClearDoppelganger();
 void Doppelganger::InitDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	if(m_initialized)
 	{
 		return;
@@ -219,6 +234,11 @@ void Doppelganger::InitDoppelganger()
 //Clears and Initializes the Doppelganger then updates the routing list from scratch.
 void Doppelganger::ResetDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	ClearDoppelganger();
 	InitDoppelganger();
 
