@@ -59,7 +59,7 @@ public:
 
 	// Constructor from a Packet
 	//		packet - Used to set the IP address and initial evidence of the suspect
-	Suspect(const Packet& packet);
+	Suspect(Evidence *&evidence);
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
@@ -68,7 +68,7 @@ public:
 	std::string GetIpString();
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
-	void AddEvidence(const Packet& packet);
+	void ConsumeEvidence(Evidence *&evidence);
 
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();
@@ -76,7 +76,7 @@ public:
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t Serialize(u_char * buf, SerializeFeatureMode whichFeatures);
+	uint32_t Serialize(u_char * buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
 	// Returns an unsigned, 32 bit integer that represents the length of the
 	// Suspect to be serialized (in bytes).
@@ -88,7 +88,7 @@ public:
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	//		buf - Pointer to buffer where the serialized suspect is
 	// Returns: number of bytes read from the buffer
-	uint32_t Deserialize(u_char * buf, SerializeFeatureMode whichFeatures);
+	uint32_t Deserialize(u_char * buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
 	//Returns: Suspect's in_addr or NULL on failure

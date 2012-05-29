@@ -20,6 +20,7 @@
 #define NOVAD_H_
 
 #include "HashMapStructs.h"
+#include "Evidence.h"
 #include "Defines.h"
 #include "Suspect.h"
 #include <arpa/inet.h>
@@ -96,10 +97,6 @@ std::string ConstructFilterString();
 //		packet - packet data
 void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet);
 
-// Updates a suspect with evidence to be processed later
-//		packet : Packet headers to used for the evidence
-void UpdateSuspect(const Packet& packet);
-
 // Masks the kill signals of a thread so they will get
 // sent to the main thread's signal handler.
 void MaskKillSignals();
@@ -110,6 +107,7 @@ void UpdateAndStore(const in_addr_t& key);
 // Updates data and classification for a suspect
 void UpdateAndClassify(const in_addr_t& key);
 
+//Logs and prints if any packets were dropped since the last time this was called
 void CheckForDroppedPackets();
 
 

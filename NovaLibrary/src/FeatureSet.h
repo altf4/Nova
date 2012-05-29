@@ -20,9 +20,10 @@
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
 
-#include "HashMap.h"
-#include "HashMapStructs.h"
 #include "Defines.h"
+#include "Evidence.h"
+#include "HashMapStructs.h"
+
 #include <pcap.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -57,7 +58,7 @@ typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<time_t>, eqtime > IP_Ta
 //Table of destination ports and a count;
 typedef Nova::HashMap<in_port_t, uint32_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<int>, eqint > Packet_Table;
+typedef Nova::HashMap<uint16_t, uint32_t, std::tr1::hash<uint16_t>, eq_uint16_t > Packet_Table;
 //Table of packet intervals and a count
 typedef Nova::HashMap<time_t, uint32_t, std::tr1::hash<time_t>, eqtime > Interval_Table;
 
@@ -120,29 +121,29 @@ public:
 
 	// Processes incoming evidence before calculating the features
 	//		packet - packet headers of new packet
-	void UpdateEvidence(const Packet& packet);
+	void UpdateEvidence(Evidence *evidence);
 
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureSet(u_char *buf);
+	uint32_t SerializeFeatureSet(u_char *buf, uint32_t bufferSize);
 
 	// Deserializes the buffer into the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set resides
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureSet(u_char *buf);
+	uint32_t DeserializeFeatureSet(u_char *buf, uint32_t bufferSize);
 
 	// Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in broadcast data (the second member of uint pairs)
 	//		buf - Pointer to buffer where the serialized Feature data broadcast resides
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureData(u_char *buf);
+	uint32_t DeserializeFeatureData(u_char *buf, uint32_t bufferSize);
 
 	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	// This function doesn't keep data once serialized. Used by the LocalTrafficMonitor and Haystack for sending suspect information
 	//		buf - Pointer to buffer to store serialized data in
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureData(u_char *buf);
+	uint32_t SerializeFeatureData(u_char *buf, uint32_t bufferSize);
 
 	// Method that will return the sizeof of all values in the given feature set;
 	// for use in SerializeSuspect

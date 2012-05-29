@@ -30,33 +30,33 @@ class SuspectTest : public ::testing::Test {
 protected:
 	// Objects declared here can be used by all tests in the test case
 	Suspect *suspect;
-	Packet p1, p2;
+	Evidence p1, p2;
 
 
 	SuspectTest() {
 		suspect = new Suspect();
 
 		// First test packet
-		p1.ip_hdr.ip_p = 6;
-		p1.fromHaystack = false;
+		p1.m_evidencePacket.ip_p = 6;
 		// These are just made up input values that make the math easy
-		p1.tcp_hdr.dest = 80;
-		p1.ip_hdr.ip_dst.s_addr = 1;
+		p1.m_evidencePacket.dst_port = 80;
+		p1.m_evidencePacket.ip_dst = 1;
+		p1.m_evidencePacket.ip_src = 123456;
 
 		// Note: the byte order gets flipped for this
-		p1.ip_hdr.ip_len = (u_short)1;
-		p1.pcap_header.ts.tv_sec = 10;
+		p1.m_evidencePacket.ip_len = (uint16_t)256;
+		p1.m_evidencePacket.ts = 10;
 
 
 		// Second test packet
-		p2.ip_hdr.ip_p = 6;
-		p2.fromHaystack = true;
-		p2.tcp_hdr.dest = 20;
-		p2.ip_hdr.ip_dst.s_addr = 2;
+		p2.m_evidencePacket.ip_p = 6;
+		p2.m_evidencePacket.dst_port = 20;
+		p2.m_evidencePacket.ip_dst = 2;
+		p2.m_evidencePacket.ip_src = 98765;
 
 		// Note: the byte order gets flipped for this
-		p2.ip_hdr.ip_len = (u_short)1;
-		p2.pcap_header.ts.tv_sec = 20;
+		p2.m_evidencePacket.ip_len = (uint16_t)256;
+		p2.m_evidencePacket.ts = 20;
 
 
 		Config::Inst()->SetEnabledFeatures("111111111");
@@ -67,15 +67,23 @@ protected:
 // Check adding and removing evidence
 TEST_F(SuspectTest, EvidenceAddingRemoving)
 {
-	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
-	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
+	Evidence *t1 = new Evidence();
+	Evidence *t2 = new Evidence();
+	*t1 = p1;
+	*t2 = p2;
+	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
+	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
 	EXPECT_TRUE(suspect->GetNeedsClassificationUpdate());
 }
 
 TEST_F(SuspectTest, EvidenceProcessing)
 {
-	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
-	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
+	Evidence *t1 = new Evidence();
+	Evidence *t2 = new Evidence();
+	*t1 = p1;
+	*t2 = p2;
+	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
+	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
 
 	// Calculate the feature values from the evidence
 	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
@@ -103,17 +111,21 @@ TEST_F(SuspectTest, EvidenceProcessing)
 
 TEST_F(SuspectTest, Serialization)
 {
+	Evidence *t1 = new Evidence();
+	Evidence *t2 = new Evidence();
+	*t1 = p1;
+	*t2 = p2;
 	// Just setup to get a suspect to serialize
-	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p1));
-	EXPECT_NO_FATAL_FAILURE(suspect->AddEvidence(p2));
+	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
+	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
 	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
 	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 
 	u_char buffer[MAX_MSG_SIZE];
-	EXPECT_NO_FATAL_FAILURE(suspect->Serialize(&buffer[0], MAIN_FEATURE_DATA));
+	EXPECT_NO_FATAL_FAILURE(suspect->Serialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA));
 
 	Suspect *suspectCopy = new Suspect();
-	EXPECT_NO_FATAL_FAILURE(suspectCopy->Deserialize(&buffer[0], MAIN_FEATURE_DATA));
+	EXPECT_NO_FATAL_FAILURE(suspectCopy->Deserialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA));
 
 	EXPECT_EQ(*suspect, *suspectCopy);
 

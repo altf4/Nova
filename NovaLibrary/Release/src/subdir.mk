@@ -5,28 +5,37 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/Config.cpp \
+../src/Evidence.cpp \
+../src/EvidenceQueue.cpp \
 ../src/FeatureSet.cpp \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
+../src/SerializationHelper.cpp \
 ../src/Suspect.cpp \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
 ./src/Config.o \
+./src/Evidence.o \
+./src/EvidenceQueue.o \
 ./src/FeatureSet.o \
 ./src/Logger.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
+./src/SerializationHelper.o \
 ./src/Suspect.o \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
 ./src/Config.d \
+./src/Evidence.d \
+./src/EvidenceQueue.d \
 ./src/FeatureSet.d \
 ./src/Logger.d \
 ./src/NovaUtil.d \
 ./src/Point.d \
+./src/SerializationHelper.d \
 ./src/Suspect.d \
 ./src/WhitelistConfiguration.d 
 

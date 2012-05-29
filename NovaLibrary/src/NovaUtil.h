@@ -35,6 +35,12 @@ void CryptBuffer(u_char * buf, uint size, bool mode);
 // Returns: IP addresses
 std::string GetLocalIP(const char *dev);
 
+//Removes any instance of the specified character from the front and back of the string
+//		str - pointer to the string you want to modify
+// 		c - character you wish to remove (Whitespace by default)
+// Note: this function will result in an empty string, if every character is == c
+void Trim(std::string& str, char c = ' ');
+
 }
 
 #endif /* NOVAUTIL_H_ */

@@ -28,8 +28,6 @@
 
 using namespace std;
 
-string hostIP;
-
 namespace Nova
 {
 
@@ -38,7 +36,6 @@ namespace Nova
 Doppelganger::Doppelganger(SuspectTable& suspects)
 : m_suspectTable(suspects)
 {
-	hostIP = GetLocalIP(Config::Inst()->GetInterface().c_str());
 	m_initialized = false;
 }
 
@@ -51,6 +48,11 @@ Doppelganger::~Doppelganger()
 // *Note if the Dopp was never initialized this function initializes it.
 void Doppelganger::UpdateDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	if(!m_initialized)
 	{
 		InitDoppelganger();
@@ -94,7 +96,7 @@ void Doppelganger::UpdateDoppelganger()
 		if(!found)
 		{
 			ss.str("");
-			inAddr.s_addr = (in_addr_t)temp;
+			inAddr.s_addr = htonl((in_addr_t)temp);
 			ss << prefix << inet_ntoa(inAddr) << suffix;
 			if(system(ss.str().c_str()) != 0)
 			{
@@ -111,9 +113,8 @@ void Doppelganger::UpdateDoppelganger()
 		m_suspectKeys.pop_back();
 
 		ss.str("");
-		inAddr.s_addr = (in_addr_t)temp;
+		inAddr.s_addr = htonl((in_addr_t)temp);
 		ss << prefix << inet_ntoa(inAddr) << suffix;
-
 
 		if(system(ss.str().c_str()) != 0)
 		{
@@ -126,6 +127,11 @@ void Doppelganger::UpdateDoppelganger()
 //Clears the routing rules, this disables the doppelganger until init is called again.
 void Doppelganger::ClearDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	string commandLine, prefix = "sudo iptables -F";
 
 	commandLine = prefix + "-D FORWARD -i "+  Config::Inst()->GetDoppelInterface() + " -j DROP";
@@ -140,11 +146,16 @@ void Doppelganger::ClearDoppelganger()
 	{
 		LOG(DEBUG, "Unable to remove Doppelganger rule, does it exist?", "Command '"+commandLine+"' was unsuccessful.");
 	}
-
-	commandLine = prefix + "-D PREROUTING -d "+ hostIP + " -j DOPP";
-	if(system(commandLine.c_str()) != 0)
+	vector<string> ifList = Config::Inst()->GetInterfaces();
+	while(!ifList.empty())
 	{
-		LOG(DEBUG, "Unable to remove Doppelganger rule, does it exist?", "Command '"+commandLine+"' was unsuccessful.");
+		string hostIP = GetLocalIP(ifList.back().c_str());
+		commandLine = prefix + "-D PREROUTING -d "+ hostIP + " -j DOPP";
+		if(system(commandLine.c_str()) != 0)
+		{
+			LOG(DEBUG, "Unable to remove Doppelganger rule, does it exist?", "Command '"+commandLine+"' was unsuccessful.");
+		}
+		ifList.pop_back();
 	}
 
 	commandLine = prefix + "-X DOPP";
@@ -166,6 +177,11 @@ void Doppelganger::ClearDoppelganger()
 // called InitDoppelganger since construction or the last ClearDoppelganger();
 void Doppelganger::InitDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	if(m_initialized)
 	{
 		return;
@@ -187,8 +203,8 @@ void Doppelganger::InitDoppelganger()
 	commandLine = "sudo iptables -t nat -N DOPP";
 	if(system(commandLine.c_str()) != 0)
 	{
-		LOG(WARNING, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful."
-			" Attempting to flush 'DOPP' rule chain if it already exists.");
+		/*LOG(NOTICE, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful."
+			" Attempting to flush 'DOPP' rule chain if it already exists.");*/
 		commandLine = "sudo iptables -t nat -F DOPP";
 		if(system(commandLine.c_str()) != 0)
 		{
@@ -196,11 +212,21 @@ void Doppelganger::InitDoppelganger()
 				" Unable to flush or create 'DOPP' rule-chain");
 		}
 	}
-
-	commandLine = "sudo iptables -t nat -I PREROUTING -d "+hostIP+" -j DOPP";
-	if(system(commandLine.c_str()) != 0)
+	vector<string> ifList = Config::Inst()->GetInterfaces();
+	while(!ifList.empty())
 	{
-		LOG(ERROR, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful.");
+		if(!ifList.back().size())
+		{
+			ifList.pop_back();
+			continue;
+		}
+		string hostIP = GetLocalIP(ifList.back().c_str());
+		commandLine = "sudo iptables -t nat -I PREROUTING -d "+hostIP+" -j DOPP";
+		if(system(commandLine.c_str()) != 0)
+		{
+			LOG(ERROR, "Error setting up system for Doppelganger", "Command '"+commandLine+"' was unsuccessful.");
+		}
+		ifList.pop_back();
 	}
 	m_initialized = true;
 }
@@ -208,10 +234,14 @@ void Doppelganger::InitDoppelganger()
 //Clears and Initializes the Doppelganger then updates the routing list from scratch.
 void Doppelganger::ResetDoppelganger()
 {
+	if (!Config::Inst()->GetIsDmEnabled())
+	{
+		return;
+	}
+
 	ClearDoppelganger();
 	InitDoppelganger();
 
-	hostIP = GetLocalIP(Config::Inst()->GetInterface().c_str());
 	string buf, commandLine, prefix = "sudo ipables -t nat ";
 
 	commandLine = prefix + "-F DOPP";
@@ -223,7 +253,7 @@ void Doppelganger::ResetDoppelganger()
 	m_suspectKeys = m_suspectTable.GetKeys_of_HostileSuspects();
 
 	prefix = "sudo iptables -t nat -I DOPP -s ";
-	string suffix = " -j DNAT --to-destination "+Config::Inst()->GetDoppelIp();
+	string suffix = " -j DNAT --to-destination " + Config::Inst()->GetDoppelIp();
 
 	stringstream ss;
 	in_addr inAddr;

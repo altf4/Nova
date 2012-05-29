@@ -46,7 +46,8 @@ else:LIBS += ../Nova_UI_Core/Release/libNova_UI_Core.so
 LIBS += /usr/lib/libboost_serialization.a \
     /usr/lib/libapr-1.a \
     /usr/lib/libann.a \
-    /usr/lib/libaprutil-1.a
+    /usr/lib/libaprutil-1.a \
+    /usr/lib/libpcap.a
 UI_DIR = UI_headers/
 QMAKE_CLEAN += $(TARGET)
 CONFIG += no_keywords
