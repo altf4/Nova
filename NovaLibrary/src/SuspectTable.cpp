@@ -23,7 +23,6 @@
 #include "HashMap.h"
 #include "Config.h"
 #include "Logger.h"
-#include "Novad.h"
 #include "Lock.h"
 
 #include <fstream>
