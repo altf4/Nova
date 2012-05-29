@@ -4,33 +4,21 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../NovadSource/ClassificationEngine.cpp \
 ../NovadSource/Control.cpp \
-../NovadSource/Doppelganger.cpp \
-../NovadSource/EvidenceTable.cpp \
 ../NovadSource/Novad.cpp \
 ../NovadSource/ProtocolHandler.cpp \
-../NovadSource/SuspectTable.cpp \
 ../NovadSource/Threads.cpp 
 
 OBJS += \
-./NovadSource/ClassificationEngine.o \
 ./NovadSource/Control.o \
-./NovadSource/Doppelganger.o \
-./NovadSource/EvidenceTable.o \
 ./NovadSource/Novad.o \
 ./NovadSource/ProtocolHandler.o \
-./NovadSource/SuspectTable.o \
 ./NovadSource/Threads.o 
 
 CPP_DEPS += \
-./NovadSource/ClassificationEngine.d \
 ./NovadSource/Control.d \
-./NovadSource/Doppelganger.d \
-./NovadSource/EvidenceTable.d \
 ./NovadSource/Novad.d \
 ./NovadSource/ProtocolHandler.d \
-./NovadSource/SuspectTable.d \
 ./NovadSource/Threads.d 
 
 
