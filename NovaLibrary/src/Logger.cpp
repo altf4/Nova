@@ -150,8 +150,6 @@ namespace Nova
 	    	return;
 	    }
 
-	    std::cout << "mail recipient is " << m_messageInfo.m_email_recipients[0] << std::endl;
-
 	    if(m_messageInfo.m_email_recipients.size() > 0)
 	    {
 	    	for(uint16_t i = 0; i < m_messageInfo.m_email_recipients.size(); i++)
@@ -174,8 +172,8 @@ namespace Nova
 		ss.str("");
 
 		curl_easy_setopt(curl, CURLOPT_URL, domain.c_str());
-		curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser());
-		curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass());
+		curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser().c_str());
+		curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass().c_str());
 		curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadCallback);
 		curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + Config::Inst()->GetSMTPAddr() + ">").c_str());
 		curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt_list);
@@ -351,23 +349,7 @@ namespace Nova
 
 	void Logger::SetMailMessage(std::string message)
 	{
-		m_mailMessage = message;
-	}
-
-	std::string Logger::GetContentString()
-	{
-		std::string ret;
-
-		ret = GetDateString() + "\n";
-		ret += "To: " + GetRecipient() + "\n";
-		ret += "From: " + m_messageInfo.smtp_addr + "\n";
-		ret += "Subject: Nova Mail Alert\n";
-		ret += "Cc: " + GetCcString() + "\n";
-		ret += "\n";
-		ret += GetMailMessage();
-		ret += "\n";
-
-		return ret;
+		m_mailMessage = message + "\n";
 	}
 
 	std::string Logger::GetSenderString()
@@ -378,15 +360,30 @@ namespace Nova
 
 	std::string Logger::GetCcString()
 	{
+		if(m_messageInfo.m_email_recipients.size() <= 1)
+		{
+			return "\n";
+		}
+
 		std::string ret = "Cc: ";
 
 		for(uint16_t i = 1; i < m_messageInfo.m_email_recipients.size(); i++)
 		{
-			ret += "<" + m_messageInfo.m_email_recipients[i] + ">, ";
+			ret += "<" + m_messageInfo.m_email_recipients[i] + ">";
+
+			if((uint16_t)(i + 1) < m_messageInfo.m_email_recipients.size())
+			{
+				ret += ", ";
+			}
 		}
 
 		ret += "\n";
 		return ret;
+	}
+
+	uint16_t Logger::GetRecipientsLength()
+	{
+		return m_messageInfo.m_email_recipients.size();
 	}
 
 	size_t Logger::ReadCallback(void * ptr, size_t size, size_t nmemb, void * userp)
@@ -394,33 +391,18 @@ namespace Nova
 		struct Writer *counter = (struct Writer *)userp;
 		const char *data;
 
-		const char *text[];
+		std::string debug3 = Logger::Inst()->GetMailMessage();
 
-		if(m_messageInfo.m_email_recipients.size() == 1)
-		{
-			text = {
-				GenerateDateString().c_str(),
-				GetRecipient().c_str(),
-				GetSenderString().c_str(),
+		const char *text[] = {
+				Logger::Inst()->GenerateDateString().c_str(),
+				Logger::Inst()->GetRecipient().c_str(),
+				Logger::Inst()->GetSenderString().c_str(),
 				"Subject: Nova Mail Alert\n",
+				Logger::Inst()->GetCcString().c_str(),
 				"\n",
-				GetMailMessage().c_str(),
+				Logger::Inst()->GetMailMessage().c_str(),
 				"\n",
 				NULL};
-		}
-		else
-		{
-			text = {
-				GenerateDateString().c_str(),
-				GetRecipient().c_str(),
-				GetSenderString().c_str(),
-				"Subject: Nova Mail Alert\n",
-				GetCcString().c_str(),
-				"\n",
-				GetMailMessage().c_str(),
-				"\n",
-				NULL};
-		}
 
 		if(size * nmemb < 1)
 		{

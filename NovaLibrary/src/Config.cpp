@@ -706,6 +706,8 @@ void Config::LoadConfig_Internal()
 
 	config.close();
 
+	SetSMTPSettings_FromFile();
+
 	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
 		if(!isValid[i])
@@ -1731,6 +1733,26 @@ string Config::GetGroup()
 {
 	Lock lock(&m_lock, true);
 	return m_group;
+}
+
+void Config::SetSMTPSettings_FromFile()
+{
+	Lock lock(&m_lock, false);
+
+	std::string debugPath = m_pathHome + "/Config/smtp.txt";
+
+	std::ifstream ifs(m_pathHome + "/Config/smtp.txt");
+
+	char user[256];
+	char pass[256];
+
+	ifs.getline(user, 256, '\n');
+	ifs.getline(pass, 256, '\n');
+
+	m_SMTPUser = std::string(user);
+	m_SMTPPass = std::string(pass);
+
+	ifs.close();
 }
 
 void Config::SetUseAllInterfaces(bool which)

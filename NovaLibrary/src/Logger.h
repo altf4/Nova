@@ -191,8 +191,6 @@ private:
 
 	std::string GenerateDateString();
 
-	std::string GetContentString();
-
 	std::string GetRecipient();
 
 	std::string GetMailMessage();
@@ -202,6 +200,8 @@ private:
 	std::string GetCcString();
 
 	void SetMailMessage(std::string message);
+
+	uint16_t GetRecipientsLength();
 
 public:
 	levelsMap m_levels;

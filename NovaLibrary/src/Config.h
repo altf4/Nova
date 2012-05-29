@@ -152,6 +152,8 @@ public:
 	void SetSMTPUser(std::string SMTPUser);
 	void SetSMTPPass(std::string STMP_Pass);
 
+	void SetSMTPSettings_FromFile();
+
 	double GetSqurtEnabledFeatures();
 
     // Set with a vector of email addresses

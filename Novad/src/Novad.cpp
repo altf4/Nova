@@ -116,18 +116,6 @@ int RunNovaD()
 	// Let the logger initialize before we have multiple threads going
 	Logger::Inst();
 
-// DEBUG
-	std::vector<std::string> test;
-	test.push_back("addison.waldow@datasoft.com");
-
-	Logger::Inst()->SetEmailRecipients(test);
-	Config::Inst()->SetSMTPDomain("smtps://smtp.gmail.com");
-	Config::Inst()->SetSMTPAddr("novatestsmtp@gmail.com");
-
-
-
-	LOG(EMERGENCY, "TEST", "");
-// END DEBUG
 	// Change our working folder into the config folder so our relative paths are correct
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
 	{
