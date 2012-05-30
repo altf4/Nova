@@ -62,6 +62,9 @@ typedef Nova::HashMap<uint16_t, uint32_t, std::tr1::hash<uint16_t>, eq_uint16_t 
 //Table of packet intervals and a count
 typedef Nova::HashMap<time_t, uint32_t, std::tr1::hash<time_t>, eqtime > Interval_Table;
 
+//Table of timestamps, with the dst_ip as the key. Used to track intervals between packets to a host from a particular suspect
+typedef Nova::HashMap<uint32_t, time_t, std::tr1::hash<uint32_t>, eq_uint32_t > LastTimeTable;
+
 enum featureIndex: uint8_t
 {
 	IP_TRAFFIC_DISTRIBUTION = 0,
@@ -176,6 +179,9 @@ private:
 
 	//Table of IP addresses and associated packet counts
 	IP_Table m_IPTable;
+
+	//Table of timestamps for the time at which a host last received a packet from this suspect
+	LastTimeTable m_lastTimes;
 
 	//XXX Temporarily using SANITY_CHECK/2, rather than that, we should serialize a total byte size before the
 	// feature data then proceed like before, this will allow Deserialized to perform a real sanity checking and

@@ -70,7 +70,6 @@ extern vector<string> haystackDhcpAddresses;
 extern vector<string> whitelistIpAddresses;
 extern vector<string> whitelistIpRanges;
 extern vector<pcap_t *> handles;
-extern bpf_u_int32 maskp; /* subnet mask */
 
 extern int honeydDHCPNotifyFd;
 extern int honeydDHCPWatch;
@@ -414,6 +413,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						LOG(ERROR, "Unable to enable packet capture.",
 							"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
 					}
+					pcap_freecode(&fp);
 
 					// Clear any suspects that were whitelisted from the GUIs
 					for (uint i = 0; i < whitelistIpAddresses.size(); i++)

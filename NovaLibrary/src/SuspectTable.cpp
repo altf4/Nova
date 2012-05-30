@@ -792,7 +792,6 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 			*tempEv = *evidence;
 			tempEv->m_next = NULL;
 			m_suspectTable[key] = new Suspect(tempEv);
-			delete tempEv;
 			if(evidence->m_next != NULL)
 			{
 				m_suspectTable[key]->ReadEvidence(evidence->m_next);

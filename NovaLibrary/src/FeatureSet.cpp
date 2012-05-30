@@ -47,6 +47,7 @@ FeatureSet::FeatureSet()
 	m_portTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
 	m_intervalTable.set_empty_key(~0);
+	m_lastTimes.set_empty_key(0);
 
 	ClearFeatureSet();
 }
@@ -67,6 +68,7 @@ void FeatureSet::ClearFeatureSet()
 	m_portTable.clear();
 	m_packTable.clear();
 	m_intervalTable.clear();
+	m_lastTimes.clear();
 
 	m_packetCount = 0;
 	m_bytesTotal = 0;
@@ -311,10 +313,15 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 	m_packTable[evidence->m_evidencePacket.ip_len]++;
 
-	if(m_lastTime != 0)
+	//If we have already gotten a packet from the source to dest host
+	if(m_lastTimes.find(evidence->m_evidencePacket.ip_dst) != m_lastTimes.end())
 	{
-		m_intervalTable[evidence->m_evidencePacket.ts - m_lastTime]++;
+		//Calculate and add the interval into the feature data
+		m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
 	}
+	//Update or Insert the timestamp value in the table
+	m_lastTimes[evidence->m_evidencePacket.ip_dst] = evidence->m_evidencePacket.ts;
+
 
 	m_lastTime = evidence->m_evidencePacket.ts;
 
@@ -454,6 +461,7 @@ void FeatureSet::ClearFeatureData()
 		m_packTable.clear();
 		m_IPTable.clear();
 		m_portTable.clear();
+		m_lastTimes.clear();
 }
 
 uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
