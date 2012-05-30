@@ -118,11 +118,6 @@ public:
 	//Sets the hostility bool of the suspect
 	void SetIsHostile(bool b);
 
-	//Returns the needs classification bool
-	bool GetNeedsClassificationUpdate();
-	//Sets the needs classification bool
-	void SetNeedsClassificationUpdate(bool b);
-
 	//Returns the flagged by silent alarm bool
 	bool GetFlaggedByAlarm();
 	//Sets the flagged by silent alarm bool
@@ -192,9 +187,7 @@ private:
 	int32_t m_hostileNeighbors;
 	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
 	bool m_isHostile;
-	// Does the classification need updating?
-	//	IE: Has the evidence changed since last it was calculated?
-	bool m_needsClassificationUpdate;
+
 	// Has this suspect been the subject of an alarm from another Nova instance?
 	bool m_flaggedByAlarm;
 	// Is this a live capture or is NOVA reading from a pcap file?

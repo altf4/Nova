@@ -464,8 +464,6 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initializatio
 			//Delete the old Suspect since we created and pointed to a new one
 			delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
 		}
-		//We borrow the flag to show there is new information.
-		suspectItem.suspect->SetNeedsClassificationUpdate(true);
 		//Update the entry in the table
 
 		SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
@@ -562,8 +560,6 @@ void NovaGUI::DrawAllSuspects()
 		}
 		//Point to the new items
 		it->second.item = item;
-		//Reset the flags
-		suspect->SetNeedsClassificationUpdate(false);
 		it->second.suspect = suspect;
 	}
 	UpdateSuspectWidgets();

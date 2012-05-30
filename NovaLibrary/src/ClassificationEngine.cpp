@@ -238,7 +238,6 @@ double ClassificationEngine::Classify(Suspect *suspect)
 
     annClose();
     annDeallocPt(aNN);
-	suspect->SetNeedsClassificationUpdate(false);
 
 	return suspect->GetClassification();
 }

@@ -36,7 +36,6 @@ Suspect::Suspect()
 	m_IpAddress.s_addr = 0;
 	m_hostileNeighbors = 0;
 	m_classification = -1;
-	m_needsClassificationUpdate = true;
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
@@ -149,7 +148,6 @@ void Suspect::ConsumeEvidence(Evidence *&evidence)
 		curEvidence = tempEv->m_next;
 		delete tempEv;
 	}
-	m_needsClassificationUpdate = true;
 	m_isLive = (Config::Inst()->GetReadPcap());
 }
 
@@ -172,7 +170,6 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 	SerializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
-	SerializeChunk(buf, &offset,(char*)&m_needsClassificationUpdate, sizeof m_needsClassificationUpdate, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
@@ -237,7 +234,6 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 		sizeof(m_IpAddress.s_addr)
 		+ sizeof(m_classification)
 		+ sizeof(m_isHostile)
-		+ sizeof(m_needsClassificationUpdate)
 		+ sizeof(m_flaggedByAlarm)
 		+ sizeof(m_isLive)
 		+ sizeof(m_hostileNeighbors);
@@ -283,7 +279,6 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 	DeserializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
-	DeserializeChunk(buf, &offset,(char*)&m_needsClassificationUpdate, sizeof m_needsClassificationUpdate, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
@@ -387,17 +382,6 @@ void Suspect::SetIsHostile(bool b)
 	m_isHostile = b;
 }
 
-
-//Returns the needs classification bool
-bool Suspect::GetNeedsClassificationUpdate()
-{
-	return m_needsClassificationUpdate;
-}
-//Sets the needs classification bool
-void Suspect::SetNeedsClassificationUpdate(bool b)
-{
-	m_needsClassificationUpdate = b;
-}
 
 //Returns the flagged by silent alarm bool
 bool Suspect::GetFlaggedByAlarm()
@@ -578,7 +562,6 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 	m_classification = rhs.m_classification;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
-	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 	return *this;
@@ -644,7 +627,6 @@ Suspect::Suspect(const Suspect &rhs)
 	m_classification = rhs.m_classification;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
-	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 }

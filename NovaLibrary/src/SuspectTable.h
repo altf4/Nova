@@ -30,6 +30,7 @@
 #define EMPTY_SUSPECT_CLASSIFICATION -1337
 
 typedef Nova::HashMap<uint64_t, Nova::Suspect *, std::tr1::hash<uint64_t>, eqkey > SuspectHashTable;
+typedef Nova::HashMap<uint64_t, uint64_t, std::tr1::hash<uint64_t>, eqkey > SuspectRequiringUpdate;
 
 struct SuspectLock
 {
@@ -73,6 +74,9 @@ public:
 	bool ClassifySuspect(const in_addr_t& key);
 
 	void UpdateAllSuspects();
+
+	bool GetNeedsClassificationUpdate(uint64_t key);
+	void SetNeedsClassificationUpdate(uint64_t key, bool b);
 
 	// Copies the suspect pointed to in 'suspect', into the table location associated with key
 	// 		suspect: pointer to the Suspect you wish to copy in
@@ -185,10 +189,12 @@ private:
 
 	// Hashmap used for constant time key lookups
 	SuspectHashTable m_suspectTable;
+	SuspectRequiringUpdate m_suspectsNeedingUpdate;
 	SuspectLockTable m_lockTable;
 
 	// Lock used to maintain concurrency between threads
 	pthread_rwlock_t m_lock;
+	pthread_mutex_t m_needsUpdateLock;
 
 	std::vector<uint64_t> m_keys;
 
