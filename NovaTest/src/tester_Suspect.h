@@ -104,7 +104,7 @@ TEST_F(SuspectTest, EvidenceProcessing)
 	EXPECT_EQ(fset.m_features[PACKET_SIZE_MEAN], 256);
 	EXPECT_EQ(fset.m_features[DISTINCT_IPS], 2);
 	EXPECT_EQ(fset.m_features[DISTINCT_PORTS], 2);
-	EXPECT_EQ(fset.m_features[PACKET_INTERVAL_MEAN], 10);
+	EXPECT_EQ(fset.m_features[PACKET_INTERVAL_MEAN], 0);
 	EXPECT_EQ(fset.m_features[PACKET_INTERVAL_DEVIATION], 0);
 }
 
