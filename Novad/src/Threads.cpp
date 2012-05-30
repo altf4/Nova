@@ -49,6 +49,9 @@ using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
 extern SuspectTable suspects;
+// Suspects not yet written to the state file
+extern SuspectTable suspectsSinceLastSave;
+
 extern vector<struct sockaddr_in> hostAddrs;
 
 //** Silent Alarm **
@@ -496,7 +499,12 @@ void *ConsumerLoop(void *ptr)
 	{
 		//Blocks on a mutex/condition if there's no evidence to process
 		Evidence *cur = suspectEvidence.GetEvidence();
-		suspects.ProcessEvidence(cur);
+
+		//Do not deallocate evidence, we still need it
+		suspectsSinceLastSave.ProcessEvidence(cur, true);
+
+		//Consume evidence
+		suspects.ProcessEvidence(cur, false);
 	}
 	return NULL;
 }

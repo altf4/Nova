@@ -745,7 +745,7 @@ bool SuspectTable::IsEmptySuspect(Suspect *suspect)
 //				of the linked list.
 // Note: Every evidence object contained in the list is deallocated after use, invalidating the pointers,
 //		this is a specialized function designed only for use by Consumer threads.
-void SuspectTable::ProcessEvidence(Evidence *&evidence)
+void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 {
 	// ~~~ Write lock ~~~
 	Lock lock (&m_lock, false);
@@ -767,16 +767,42 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence)
 	LockSuspect(key);
 
 	//Consume and deallocate all the evidence
+	//If a suspect already exists
 	if(m_suspectTable.keyExists(key))
 	{
-		//If a suspect already exists
-		m_suspectTable[key]->ConsumeEvidence(evidence);
+		//If we don't want to deallocate the Evidence
+		if(readOnly)
+		{
+			m_suspectTable[key]->ReadEvidence(evidence);
+		}
+		//If we do
+		else
+		{
+			m_suspectTable[key]->ConsumeEvidence(evidence);
+		}
 	}
+	//If it needs to be allocated
 	else
 	{
-		//If it needs to be allocated
 		m_keys.push_back(key);
-		m_suspectTable[key] = new Suspect(evidence);
+		//If we don't want to deallocate the Evidence
+		if(readOnly)
+		{
+			Evidence * tempEv = new Evidence();
+			*tempEv = *evidence;
+			tempEv->m_next = NULL;
+			m_suspectTable[key] = new Suspect(tempEv);
+			delete tempEv;
+			if(evidence->m_next != NULL)
+			{
+				m_suspectTable[key]->ReadEvidence(evidence->m_next);
+			}
+		}
+		//If we do
+		else
+		{
+			m_suspectTable[key] = new Suspect(evidence);
+		}
 	}
 
 	//Unlock the suspect (CheckIn)
