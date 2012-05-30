@@ -50,6 +50,7 @@
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="gtest"/>
+									<listOptionValue builtIn="false" value="curl"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.162266494" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread" valueType="string"/>
 								<option id="gnu.cpp.link.option.paths.226558368" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
