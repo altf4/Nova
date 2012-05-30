@@ -138,6 +138,20 @@ string Suspect::ToString()
 	return ss.str();
 }
 
+//Just like Consume but doesn't deallocate
+void Suspect::ReadEvidence(Evidence *&evidence)
+{
+	Evidence *curEvidence = evidence, *tempEv = NULL;
+	while(curEvidence != NULL)
+	{
+		m_unsentFeatures.UpdateEvidence(curEvidence);
+		tempEv = curEvidence;
+		curEvidence = tempEv->m_next;
+	}
+	m_needsClassificationUpdate = true;
+	m_isLive = (Config::Inst()->GetReadPcap());
+}
+
 void Suspect::ConsumeEvidence(Evidence *&evidence)
 {
 	Evidence *curEvidence = evidence, *tempEv = NULL;

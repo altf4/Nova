@@ -49,6 +49,9 @@ using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
 extern SuspectTable suspects;
+// Suspects not yet written to the state file
+extern SuspectTable suspectsSinceLastSave;
+
 extern vector<struct sockaddr_in> hostAddrs;
 
 //** Silent Alarm **
@@ -67,7 +70,6 @@ extern vector<string> haystackDhcpAddresses;
 extern vector<string> whitelistIpAddresses;
 extern vector<string> whitelistIpRanges;
 extern vector<pcap_t *> handles;
-extern bpf_u_int32 maskp; /* subnet mask */
 
 extern int honeydDHCPNotifyFd;
 extern int honeydDHCPWatch;
@@ -411,6 +413,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						LOG(ERROR, "Unable to enable packet capture.",
 							"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
 					}
+					pcap_freecode(&fp);
 
 					// Clear any suspects that were whitelisted from the GUIs
 					for (uint i = 0; i < whitelistIpAddresses.size(); i++)
@@ -496,7 +499,12 @@ void *ConsumerLoop(void *ptr)
 	{
 		//Blocks on a mutex/condition if there's no evidence to process
 		Evidence *cur = suspectEvidence.GetEvidence();
-		suspects.ProcessEvidence(cur);
+
+		//Do not deallocate evidence, we still need it
+		suspectsSinceLastSave.ProcessEvidence(cur, true);
+
+		//Consume evidence
+		suspects.ProcessEvidence(cur, false);
 	}
 	return NULL;
 }
