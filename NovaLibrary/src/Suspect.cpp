@@ -148,7 +148,6 @@ void Suspect::ReadEvidence(Evidence *&evidence)
 		tempEv = curEvidence;
 		curEvidence = tempEv->m_next;
 	}
-	m_needsClassificationUpdate = true;
 	m_isLive = (Config::Inst()->GetReadPcap());
 }
 
