@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <vector>
 #include <ctime>
-#include <curl/curl.h>
 
 // A macro to make logging prettier
 #define LOG(t,s,r) Nova::Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)
