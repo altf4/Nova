@@ -73,6 +73,10 @@ public:
 	//NOTE: Blocking function
 	Lock UseSocket(int socketFD);
 
+	//Deletes the stupid MessageQueue
+	//	NOTE: Only called by callback thread
+	void DeleteQueue(int socketFD);
+
 	//Closes the socket at the given file descriptor
 	//	socketFD - The file descriptor of the socket to close
 	//	NOTE: This will not immediately destroy the underlying MessageQueue. It will close the socket

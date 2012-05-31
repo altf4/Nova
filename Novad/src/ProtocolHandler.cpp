@@ -198,6 +198,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 		}
 	}
 
+	MessageManager::Instance().DeleteQueue(controlSocket);
 	return NULL;
 }
 

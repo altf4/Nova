@@ -48,7 +48,6 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 	m_consecutiveTimeouts = 0;
 
 	m_isShutDown = false;
-	m_callbackDoWakeup = false;
 	m_forwardDirection = forwardDirection;
 	m_socketFD = socketFD;
 
@@ -95,6 +94,14 @@ MessageQueue::~MessageQueue()
 //blocking call
 Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 {
+	{
+		Lock lock(&m_isShutdownMutex);
+		if(m_isShutDown)
+		{
+			return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+		}
+	}
+
 	Message* retMessage;
 
 	//If indefinite read:
@@ -179,6 +186,13 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				//While loop to protect against spurious wakeups
 				while(m_forwardQueue.empty())
 				{
+					{
+						Lock lock(&m_isShutdownMutex);
+						if(m_isShutDown)
+						{
+							return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+						}
+					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
@@ -217,8 +231,16 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 			while(!gotCorrectSerial)
 			{
 				//While loop to protect against spurious wakeups
+				int n = m_callbackQueue.size();
 				while(m_callbackQueue.empty())
 				{
+					{
+						Lock lock(&m_isShutdownMutex);
+						if(m_isShutDown)
+						{
+							return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+						}
+					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
@@ -274,7 +296,6 @@ void MessageQueue::PushMessage(Message *message)
 		//Protection for the m_callbackDoWakeup bool
 		//Wake up anyone sleeping for a callback message!
 		Lock condLock(&m_callbackCondMutex);
-		m_callbackDoWakeup = true;
 		pthread_cond_signal(&m_callbackWakeupCondition);
 		pthread_cond_signal(&m_readWakeupCondition);
 	}
@@ -304,18 +325,9 @@ bool MessageQueue::RegisterCallback()
 			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackQueueMutex);
 		}
 
-		m_callbackDoWakeup = false;
-	}
-
-	//This is the first message of the protocol. This message contains the serial number we will be expecting later
-	{
-		//Protection for the queue structure
-		Lock lockQueue(&m_callbackQueueMutex);
-		if(!m_callbackQueue.empty())
-		{
-			Message *nextMessage = m_callbackQueue.front();
-			m_expectedcallbackSerial = nextMessage->m_serialNumber;
-		}
+		//This is the first message of the protocol. This message contains the serial number we will be expecting later
+		Message *nextMessage = m_callbackQueue.front();
+		m_expectedcallbackSerial = nextMessage->m_serialNumber;
 	}
 
 	Lock shutdownLock(&m_isShutdownMutex);
@@ -352,9 +364,9 @@ void *MessageQueue::ProducerThread()
 		// Read in the message length
 		while( totalBytesRead < sizeof(length))
 		{
-			printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
+			//printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
 			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
-			printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
+			//printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
 			if(bytesRead <= 0)
 			{
 				//The socket died on us!
@@ -364,8 +376,10 @@ void *MessageQueue::ProducerThread()
 					m_isShutDown = true;
 				}
 				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
+				printf("xxxDEBUGxxx PUSHING ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
+				printf("xxxDEBUGxxx PUSHED ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				return NULL;
 			}
 			else
@@ -398,9 +412,9 @@ void *MessageQueue::ProducerThread()
 		bytesRead = 0;
 		while(totalBytesRead < length)
 		{
-			printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
+			//printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
 			bytesRead = read(m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
-			printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
+			//printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
 
 			if(bytesRead <= 0)
 			{
@@ -411,8 +425,10 @@ void *MessageQueue::ProducerThread()
 					m_isShutDown = true;
 				}
 				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
+				printf("xxxDEBUGxxx PUSHING ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
+				printf("xxxDEBUGxxx PUSHED ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				free(buffer);
 				return NULL;
 			}
@@ -435,6 +451,7 @@ void *MessageQueue::ProducerThread()
 		continue;
 	}
 
+	printf("x\nxxDEBUGxxx SHOULDN'T EVER NEVER EVER GET HERE!!! %d\n\n", m_socketFD);
 	return NULL;
 }
 

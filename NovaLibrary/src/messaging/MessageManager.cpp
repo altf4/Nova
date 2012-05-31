@@ -103,6 +103,7 @@ void MessageManager::WaitForNewSocket(int socketFD)
 		Lock lock(&m_queuesLock);
 		while(m_queues.count(socketFD) > 0 )
 		{
+			MessageQueue *queue = m_queues[socketFD];
 			printf("xxxDEBUGxxx REG CALLBACK RACE!!\n");
 			pthread_cond_wait(&m_newQueueCondition, &m_queuesLock);
 		}
@@ -150,21 +151,48 @@ Lock MessageManager::UseSocket(int socketFD)
 	return Lock(mutex);
 }
 
+void MessageManager::DeleteQueue(int socketFD)
+{
+	MessageQueue *queue = NULL;
+	{
+		Lock lock(&m_queuesLock);
+
+		if(m_queues.count(socketFD) > 0)
+		{
+			queue = m_queues[socketFD];
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	{
+		//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
+		Lock protocolLock = UseSocket(socketFD);
+		delete queue;
+	}
+
+	{
+		Lock lock(&m_queuesLock);
+		m_queues.erase(socketFD);
+	}
+
+	pthread_cond_broadcast(&m_newQueueCondition);
+}
+
 void MessageManager::CloseSocket(int socketFD)
 {
-	Lock lock(&m_queuesLock);
-
-	if(m_queues.count(socketFD) > 0)
+	if(shutdown(socketFD, SHUT_RDWR) == -1)
 	{
-		if(shutdown(socketFD, SHUT_RDWR) == -1)
-		{
-			perror("xxxDEBUGxxx SHUTDOWN ERROR");
-		}
+		perror("xxxDEBUGxxx SHUTDOWN ERROR");
+		printf("xxxDEBUGxxx SHUTDOWN SOCKET %d\n", socketFD);
+	}
 
-		if(close(socketFD) == -1)
-		{
-			perror("xxxDEBUGxxx CLOSE ERROR");
-		}
+	if(close(socketFD) == -1)
+	{
+		perror("xxxDEBUGxxx CLOSE ERROR");
+		printf("xxxDEBUGxxx CLOSE SOCKET %d\n", socketFD);
 	}
 }
 
@@ -189,17 +217,17 @@ bool MessageManager::RegisterCallback(int socketFD)
 		if(!isQueueAlive)
 		{
 
-			//Destructor here is a blocking call. So we call that before locking the queues mutex
-			{
-				//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
-				Lock protocolLock = UseSocket(socketFD);
-				delete queue;
-
-				Lock lock(&m_queuesLock);
-				m_queues.erase(socketFD);
-
-				pthread_cond_broadcast(&m_newQueueCondition);
-			}
+//			//Destructor here is a blocking call. So we call that before locking the queues mutex
+//			{
+//				//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
+//				Lock protocolLock = UseSocket(socketFD);
+//				delete queue;
+//
+//				Lock lock(&m_queuesLock);
+//				m_queues.erase(socketFD);
+//
+//				pthread_cond_broadcast(&m_newQueueCondition);
+//			}
 		}
 		return isQueueAlive;
 	}
