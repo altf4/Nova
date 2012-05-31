@@ -50,7 +50,7 @@ namespace Nova
 		pthread_mutex_lock(&m_lock);
 		if(m_table.find(evidence->m_evidencePacket.ip_src) == m_table.end())
 		{
-			m_table[evidence->m_evidencePacket.ip_src] = new EvidenceQueue();
+			m_table[evidence->m_evidencePacket.ip_src] = new GenericQueue<Evidence>();
 		}
 		//Pushes the evidence and enters the conditional if it's the first piece of evidence
 		if(m_table[evidence->m_evidencePacket.ip_src]->Push(evidence))
