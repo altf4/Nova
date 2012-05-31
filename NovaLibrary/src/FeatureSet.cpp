@@ -47,7 +47,7 @@ FeatureSet::FeatureSet()
 	m_portTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
 	m_intervalTable.set_empty_key(~0);
-	m_lastTimes.set_empty_key(0);
+	m_lastTimes.set_empty_key(~0);
 
 	ClearFeatureSet();
 }
@@ -314,7 +314,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	m_packTable[evidence->m_evidencePacket.ip_len]++;
 
 	//If we have already gotten a packet from the source to dest host
-	if(m_lastTimes.find(evidence->m_evidencePacket.ip_dst) != m_lastTimes.end())
+	if(m_lastTimes.keyExists(evidence->m_evidencePacket.ip_dst))
 	{
 		//Calculate and add the interval into the feature data
 		m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
