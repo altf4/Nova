@@ -174,6 +174,8 @@ public:
 	bool operator==(const Suspect &rhs) const;
 	bool operator!=(const Suspect &rhs) const;
 
+	bool m_needsClassificationUpdate;
+
 private:
 
 	// The main FeatureSet for this Suspect

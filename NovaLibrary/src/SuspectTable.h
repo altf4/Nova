@@ -75,9 +75,6 @@ public:
 
 	void UpdateAllSuspects();
 
-	bool GetNeedsClassificationUpdate(uint64_t key);
-	void SetNeedsClassificationUpdate(uint64_t key, bool b);
-
 	// Copies the suspect pointed to in 'suspect', into the table location associated with key
 	// 		suspect: pointer to the Suspect you wish to copy in
 	// Returns (0) on Success, (-1) if the Suspect is Checked Out by another thread
@@ -189,7 +186,7 @@ private:
 
 	// Hashmap used for constant time key lookups
 	SuspectHashTable m_suspectTable;
-	SuspectRequiringUpdate m_suspectsNeedingUpdate;
+	std::vector<uint64_t> m_suspectsNeedingUpdate;
 	SuspectLockTable m_lockTable;
 
 	// Lock used to maintain concurrency between threads
@@ -197,6 +194,9 @@ private:
 	pthread_mutex_t m_needsUpdateLock;
 
 	std::vector<uint64_t> m_keys;
+
+	// Marks a suspect to be reclassified at some point
+	void SetNeedsClassificationUpdate(uint64_t key);
 
 	// Checks the validity of the key - private use non-locking version
 	// 		key: IP address of the suspect as a uint value (host byte order)

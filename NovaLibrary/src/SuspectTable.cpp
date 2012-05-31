@@ -56,12 +56,10 @@ SuspectTable::SuspectTable()
 	initKey--;
 	m_suspectTable.set_empty_key(initKey);
 	m_lockTable.set_empty_key(initKey);
-	m_suspectsNeedingUpdate.set_empty_key(initKey);
 	m_empty_key = initKey;
 	initKey--;
 	m_suspectTable.set_deleted_key(initKey);
 	m_lockTable.set_deleted_key(initKey);
-	m_suspectsNeedingUpdate.set_deleted_key(initKey);
 	m_deleted_key = initKey;
 
 	m_emptySuspect.SetClassification(EMPTY_SUSPECT_CLASSIFICATION);
@@ -83,29 +81,13 @@ SuspectTable::~SuspectTable()
 	pthread_rwlock_destroy(&m_lock);
 }
 
-//Returns the needs classification bool
-bool SuspectTable::GetNeedsClassificationUpdate(uint64_t key)
-{
-	Lock updateLock(&m_needsUpdateLock);
-	return m_suspectsNeedingUpdate.keyExists(key);
-}
-
 //Sets the needs classification bool
-void SuspectTable::SetNeedsClassificationUpdate(uint64_t key, bool needsUpdate)
+void SuspectTable::SetNeedsClassificationUpdate(uint64_t key)
 {
 	Lock updateLock(&m_needsUpdateLock);
 
-	if (needsUpdate)
-	{
-		m_suspectsNeedingUpdate[key] = needsUpdate;
-	}
-	else
-	{
-		if (m_suspectsNeedingUpdate.keyExists(key))
-		{
-			m_suspectsNeedingUpdate.erase(key);
-		}
-	}
+	m_suspectTable[key]->m_needsClassificationUpdate = true;
+	m_suspectsNeedingUpdate.push_back(key);
 }
 
 //Adds the Suspect pointed to in 'suspect' into the table using suspect->GetIPAddress() as the key;
@@ -209,7 +191,6 @@ bool SuspectTable::ClassifySuspect(const in_addr_t& key)
 		if(!Config::Inst()->GetIsTraining())
 		{
 			engine->Classify(suspect);
-			SetNeedsClassificationUpdate(key, false);
 		}
 		return true;
 	}
@@ -229,7 +210,6 @@ void SuspectTable::UpdateAllSuspects()
 			if(!Config::Inst()->GetIsTraining())
 			{
 				engine->Classify(suspect);
-				SetNeedsClassificationUpdate(m_keys[i], false);
 			}
 
 		}
@@ -507,28 +487,22 @@ vector<uint64_t> SuspectTable::GetKeys_of_ModifiedSuspects()
 	vector<uint64_t> ret;
 	vector<uint64_t> invalidKeys;
 	ret.clear();
-	Lock lock(&m_lock, true);
+	Lock lock(&m_lock, false);
 	Lock updateLock(&m_needsUpdateLock);
 
-	for(SuspectRequiringUpdate::iterator it = m_suspectsNeedingUpdate.begin(); it != m_suspectsNeedingUpdate.end(); it++)
+	ret = m_suspectsNeedingUpdate;
+
+	for (uint i = 0; i < ret.size(); i++)
 	{
-		if(IsValidKey_NonBlocking(it->first))
-		{
-			ret.push_back(it->first);
-		}
-		else
-		{
-			// Case the suspect got deleted but still got left in the needs update pile
-			invalidKeys.push_back(it->first);
-		}
+		m_suspectTable[ret[i]]->m_needsClassificationUpdate = false;
 	}
 
-	for (uint i = 0; i < invalidKeys.size(); i++)
-	{
-		m_suspectsNeedingUpdate.erase(invalidKeys.at(i));
-	}
+	m_suspectsNeedingUpdate.clear();
 	return ret;
 }
+
+
+
 //Get the size of the Suspect Table
 // Returns the size of the Table
 uint SuspectTable::Size()
@@ -711,7 +685,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 				newSuspect->UpdateFeatureData(INCLUDE);
 				FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
 				m_suspectTable[key]->AddFeatureSet(&fs, MAIN_FEATURES);
-				SetNeedsClassificationUpdate(key, true);
+				SetNeedsClassificationUpdate(key);
 				UnlockSuspect(key);
 				delete newSuspect;
 				continue;
@@ -730,7 +704,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					//Store the key
 					m_keys.push_back(key);
 					UnlockSuspect(key);
-					SetNeedsClassificationUpdate(key, true);
+					SetNeedsClassificationUpdate(key);
 				}
 				else //Else we need to init a SuspectLock
 				{
@@ -747,7 +721,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					m_suspectTable[key] = newSuspect;
 					//Store the key
 					m_keys.push_back(key);
-					SetNeedsClassificationUpdate(key, true);
+					SetNeedsClassificationUpdate(key);
 				}
 			}
 		}
@@ -814,7 +788,7 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 		{
 			m_suspectTable[key]->ConsumeEvidence(evidence);
 		}
-		SetNeedsClassificationUpdate(key, true);
+		SetNeedsClassificationUpdate(key);
 	}
 	//If it needs to be allocated
 	else
@@ -836,7 +810,7 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 		else
 		{
 			m_suspectTable[key] = new Suspect(evidence);
-		        SetNeedsClassificationUpdate(key, true);
+		        SetNeedsClassificationUpdate(key);
 		}
 	}
 

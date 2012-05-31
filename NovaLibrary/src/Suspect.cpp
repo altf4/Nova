@@ -36,6 +36,7 @@ Suspect::Suspect()
 	m_IpAddress.s_addr = 0;
 	m_hostileNeighbors = 0;
 	m_classification = -1;
+	m_needsClassificationUpdate = false;
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
@@ -57,6 +58,7 @@ Suspect::Suspect(Evidence *&evidence)
 	m_hostileNeighbors = 0;
 	m_classification = -1;
 	m_isHostile = false;
+	m_needsClassificationUpdate = false;
 	ConsumeEvidence(evidence);
 	m_flaggedByAlarm = false;
 	for(int i = 0; i < DIM; i++)

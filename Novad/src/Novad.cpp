@@ -488,12 +488,8 @@ void Reload()
 
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 	Suspect suspectCopy;
-	vector<uint64_t> keys = suspects.GetAllKeys();
-	// Set everyone to be reclassified
-	for(uint i = 0;i < keys.size(); i++)
-	{
-		suspects.SetNeedsClassificationUpdate((uint64_t)keys[i], true);
-	}
+
+	suspects.UpdateAllSuspects();
 }
 
 
