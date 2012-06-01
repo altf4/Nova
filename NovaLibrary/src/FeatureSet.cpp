@@ -286,13 +286,19 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If UDP
 		case 17:
 		{
-			m_portTable[evidence->m_evidencePacket.dst_port]++;
+			if (evidence->m_evidencePacket.dst_port != 0)
+			{
+				m_portTable[evidence->m_evidencePacket.dst_port]++;
+			}
 			break;
 		}
 		//If TCP
 		case 6:
 		{
-			m_portTable[evidence->m_evidencePacket.dst_port]++;
+			if (evidence->m_evidencePacket.dst_port != 0)
+			{
+				m_portTable[evidence->m_evidencePacket.dst_port]++;
+			}
 			break;
 		}
 		//If ICMP
