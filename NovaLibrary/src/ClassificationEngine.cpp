@@ -118,7 +118,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 			}
 			if(m_maxFeatureValues[ai] != 0)
 			{
-				aNN[ai] = Normalize(m_normalization[i], suspect->GetFeatureSet(MAIN_FEATURES).m_features[i],
+				aNN[ai] = Normalize(m_normalization[i], fs.m_features[i],
 					m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 			}
 			else
