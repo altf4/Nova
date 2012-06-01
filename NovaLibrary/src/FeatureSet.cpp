@@ -47,7 +47,7 @@ FeatureSet::FeatureSet()
 	m_portTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
 	m_intervalTable.set_empty_key(~0);
-	m_lastTimes.set_empty_key(~0);
+	m_lastTimes.set_empty_key(0);
 
 	ClearFeatureSet();
 }
