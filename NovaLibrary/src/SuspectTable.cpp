@@ -86,8 +86,11 @@ void SuspectTable::SetNeedsClassificationUpdate(uint64_t key)
 {
 	Lock updateLock(&m_needsUpdateLock);
 
-	m_suspectTable[key]->m_needsClassificationUpdate = true;
-	m_suspectsNeedingUpdate.push_back(key);
+	if (!m_suspectTable[key]->m_needsClassificationUpdate)
+	{
+		m_suspectTable[key]->m_needsClassificationUpdate = true;
+		m_suspectsNeedingUpdate.push_back(key);
+	}
 }
 
 //Adds the Suspect pointed to in 'suspect' into the table using suspect->GetIPAddress() as the key;
