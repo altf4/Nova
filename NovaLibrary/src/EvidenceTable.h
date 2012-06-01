@@ -21,9 +21,10 @@
 #define EVIDENCETABLE_H_
 
 #include "HashMapStructs.h"
-#include "EvidenceQueue.h"
+#include "GenericQueue.h"
+#include "Evidence.h"
 
-typedef Nova::HashMap<uint64_t, Nova::EvidenceQueue*, std::tr1::hash<uint64_t>, eqkey > EvidenceHashTable;
+typedef Nova::HashMap<uint64_t, Nova::GenericQueue<Nova::Evidence>*, std::tr1::hash<uint64_t>, eqkey > EvidenceHashTable;
 
 namespace Nova
 {
@@ -48,7 +49,7 @@ public:
 
 private:
 
-	EvidenceQueue m_processingList;
+	GenericQueue<Evidence> m_processingList;
 	EvidenceHashTable m_table;
 	pthread_mutex_t m_lock;
 	pthread_cond_t m_cond;

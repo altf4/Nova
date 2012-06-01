@@ -8,7 +8,6 @@ CPP_SRCS += \
 ../src/Config.cpp \
 ../src/Doppelganger.cpp \
 ../src/Evidence.cpp \
-../src/EvidenceQueue.cpp \
 ../src/EvidenceTable.cpp \
 ../src/FeatureSet.cpp \
 ../src/Logger.cpp \
@@ -24,7 +23,6 @@ OBJS += \
 ./src/Config.o \
 ./src/Doppelganger.o \
 ./src/Evidence.o \
-./src/EvidenceQueue.o \
 ./src/EvidenceTable.o \
 ./src/FeatureSet.o \
 ./src/Logger.o \
@@ -40,7 +38,6 @@ CPP_DEPS += \
 ./src/Config.d \
 ./src/Doppelganger.d \
 ./src/Evidence.d \
-./src/EvidenceQueue.d \
 ./src/EvidenceTable.d \
 ./src/FeatureSet.d \
 ./src/Logger.d \

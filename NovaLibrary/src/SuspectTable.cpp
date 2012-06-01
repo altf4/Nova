@@ -50,6 +50,7 @@ SuspectTable::SuspectTable()
 	pthread_rwlockattr_init(&tempAttr);
 	pthread_rwlockattr_setkind_np(&tempAttr,PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 	pthread_rwlock_init(&m_lock, &tempAttr);
+	pthread_mutex_init(&m_needsUpdateLock, NULL);
 
 	uint64_t initKey = 0;
 	initKey--;
@@ -78,6 +79,18 @@ SuspectTable::~SuspectTable()
 		pthread_mutex_destroy(&it->second.lock);
 	}
 	pthread_rwlock_destroy(&m_lock);
+}
+
+//Sets the needs classification bool
+void SuspectTable::SetNeedsClassificationUpdate(uint64_t key)
+{
+	Lock updateLock(&m_needsUpdateLock);
+
+	if (!m_suspectTable[key]->m_needsClassificationUpdate)
+	{
+		m_suspectTable[key]->m_needsClassificationUpdate = true;
+		m_suspectsNeedingUpdate.push_back(key);
+	}
 }
 
 //Adds the Suspect pointed to in 'suspect' into the table using suspect->GetIPAddress() as the key;
@@ -177,15 +190,12 @@ bool SuspectTable::ClassifySuspect(const in_addr_t& key)
 	if(IsValidKey_NonBlocking(key))
 	{
 		Suspect* suspect = m_suspectTable[key];
-		if(suspect->GetNeedsClassificationUpdate())
+		suspect->CalculateFeatures();
+		if(!Config::Inst()->GetIsTraining())
 		{
-			suspect->CalculateFeatures();
-			if(!Config::Inst()->GetIsTraining())
-			{
-				engine->Classify(suspect);
-			}
-			return true;
+			engine->Classify(suspect);
 		}
+		return true;
 	}
 	return false;
 }
@@ -199,14 +209,12 @@ void SuspectTable::UpdateAllSuspects()
 		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
 			Suspect* suspect = m_suspectTable[m_keys[i]];
-			if(suspect->GetNeedsClassificationUpdate())
+			suspect->CalculateFeatures();
+			if(!Config::Inst()->GetIsTraining())
 			{
-				suspect->CalculateFeatures();
-				if(!Config::Inst()->GetIsTraining())
-				{
-					engine->Classify(suspect);
-				}
+				engine->Classify(suspect);
 			}
+
 		}
 	}
 }
@@ -346,7 +354,6 @@ Suspect SuspectTable::GetSuspectStatus(const in_addr_t& key)
 		Suspect *temp = m_suspectTable[key];
 		ret.SetInAddr(temp->GetInAddr());
 		ret.SetClassification(temp->GetClassification());
-		ret.SetNeedsClassificationUpdate(temp->GetNeedsClassificationUpdate());
 		ret.SetIsHostile(temp->GetIsHostile());
 		ret.SetIsLive(temp->GetIsLive());
 		ret.SetFlaggedByAlarm(temp->GetFlaggedByAlarm());
@@ -481,20 +488,26 @@ vector<uint64_t> SuspectTable::GetKeys_of_BenignSuspects()
 vector<uint64_t> SuspectTable::GetKeys_of_ModifiedSuspects()
 {
 	vector<uint64_t> ret;
+	vector<uint64_t> invalidKeys;
 	ret.clear();
-	Lock lock(&m_lock, true);
-	for(uint i = 0; i < m_keys.size(); i++)
+	Lock lock(&m_lock, false);
+	Lock updateLock(&m_needsUpdateLock);
+
+	for (uint i = 0; i < m_suspectsNeedingUpdate.size(); i++)
 	{
-		if(IsValidKey_NonBlocking(m_keys[i]))
+		if (m_lockTable.keyExists(m_suspectsNeedingUpdate[i]))
 		{
-			if(m_suspectTable[m_keys[i]]->GetNeedsClassificationUpdate())
-			{
-				ret.push_back(m_keys[i]);
-			}
+			ret.push_back(m_suspectsNeedingUpdate[i]);
+			m_suspectTable[m_suspectsNeedingUpdate[i]]->m_needsClassificationUpdate = false;
 		}
 	}
+
+	m_suspectsNeedingUpdate.clear();
 	return ret;
 }
+
+
+
 //Get the size of the Suspect Table
 // Returns the size of the Table
 uint SuspectTable::Size()
@@ -677,7 +690,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 				newSuspect->UpdateFeatureData(INCLUDE);
 				FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
 				m_suspectTable[key]->AddFeatureSet(&fs, MAIN_FEATURES);
-				m_suspectTable[key]->SetNeedsClassificationUpdate(true);
+				SetNeedsClassificationUpdate(key);
 				UnlockSuspect(key);
 				delete newSuspect;
 				continue;
@@ -691,12 +704,12 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					LockSuspect(key);
 					//Reverse the deletion flag
 					m_lockTable[key].deleted = false;
-					newSuspect->SetNeedsClassificationUpdate(true);
 					//Allocate the Suspect and copy the contents
 					m_suspectTable[key] = newSuspect;
 					//Store the key
 					m_keys.push_back(key);
 					UnlockSuspect(key);
+					SetNeedsClassificationUpdate(key);
 				}
 				else //Else we need to init a SuspectLock
 				{
@@ -708,12 +721,12 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					pthread_mutex_init(&m_lockTable[key].lock, &tempAttr);
 					m_lockTable[key].deleted = false;
 					m_lockTable[key].ref_cnt = 0;
-					newSuspect->SetNeedsClassificationUpdate(true);
 					newSuspect->UpdateFeatureData(INCLUDE);
 					//Allocate the Suspect and copy the contents
 					m_suspectTable[key] = newSuspect;
 					//Store the key
 					m_keys.push_back(key);
+					SetNeedsClassificationUpdate(key);
 				}
 			}
 		}
@@ -780,6 +793,7 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 		{
 			m_suspectTable[key]->ConsumeEvidence(evidence);
 		}
+		SetNeedsClassificationUpdate(key);
 	}
 	//If it needs to be allocated
 	else
@@ -801,6 +815,7 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 		else
 		{
 			m_suspectTable[key] = new Suspect(evidence);
+		        SetNeedsClassificationUpdate(key);
 		}
 	}
 

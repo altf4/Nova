@@ -26,6 +26,7 @@
 #include <sstream>
 #include <syslog.h>
 #include <string.h>
+#include <curl/curl.h>
 #include <libnotify/notify.h>
 
 using namespace std;

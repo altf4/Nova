@@ -73,7 +73,6 @@ TEST_F(SuspectTest, EvidenceAddingRemoving)
 	*t2 = p2;
 	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
 	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
-	EXPECT_TRUE(suspect->GetNeedsClassificationUpdate());
 }
 
 TEST_F(SuspectTest, EvidenceProcessing)
