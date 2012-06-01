@@ -913,12 +913,11 @@ void Config::LoadInterfaces()
 
 	// ********** ETHERNET INTERFACES ************* //
 	vector<string> interfaces = m_interfaces;
-
+	m_interfaces.clear();
 	//Use all valid devices
 	if(!m_interfaces[0].compare("default"))
 	{
 		m_ifIsDefault = true;
-		m_interfaces.clear();
 		for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 		{
 			if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
@@ -933,7 +932,6 @@ void Config::LoadInterfaces()
 		//Until every interface is matched
 		while(!interfaces.empty())
 		{
-			m_interfaces.clear();
 			//Pop an interface name
 			string temp = interfaces.back();
 			interfaces.pop_back();
