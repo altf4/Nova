@@ -1190,6 +1190,19 @@ void NovaConfig::LoadNovadPreferences()
 
 		ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
 			GetFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
+
+
+		ui.featureList->insertItem(TCP_RATIO_SYN_ACK,
+				GetFeatureListItem(QString("TCP Syn/Ack Ratio"),featuresEnabled.at(TCP_RATIO_SYN_ACK)));
+
+		ui.featureList->insertItem(TCP_RATIO_SYN_RST,
+				GetFeatureListItem(QString("TCP Syn/Rst Ratio"),featuresEnabled.at(TCP_RATIO_SYN_RST)));
+
+		ui.featureList->insertItem(TCP_RATIO_SYN_FIN,
+				GetFeatureListItem(QString("TCP Syn/Fin Ratio"),featuresEnabled.at(TCP_RATIO_SYN_FIN)));
+
+		ui.featureList->insertItem(TCP_RATIO_SYN_SYNACK,
+				GetFeatureListItem(QString("TCP Syn/Synack Ratio"),featuresEnabled.at(TCP_RATIO_SYN_SYNACK)));
 	}
 }
 

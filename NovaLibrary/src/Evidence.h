@@ -28,6 +28,14 @@ using namespace std;
 namespace Nova
 {
 
+struct _tcpFlags
+{
+	bool ack : 1;
+	bool rst : 1;
+	bool syn : 1;
+	bool fin : 1;
+};
+
 struct _evidencePacket //* Total of 18 bytes */
 {
 	uint16_t ip_len; 	//Length in bytes
@@ -36,6 +44,7 @@ struct _evidencePacket //* Total of 18 bytes */
 	uint32_t ip_dst;	//Destination IPv4 address
 	uint16_t dst_port;	//Destination Port (UDP or TCP Only)
 	time_t ts;		//Arrival Timestamp (in seconds)
+	_tcpFlags tcp_hdr;
 };
 
 class Evidence

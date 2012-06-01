@@ -70,6 +70,12 @@ void FeatureSet::ClearFeatureSet()
 	m_intervalTable.clear();
 	m_lastTimes.clear();
 
+	rstCount = 0;
+	ackCount = 0;
+	synCount = 0;
+	finCount = 0;
+	synAckCount = 0;
+
 	m_packetCount = 0;
 	m_bytesTotal = 0;
 	m_lastTime = 0;
@@ -129,6 +135,27 @@ void FeatureSet::CalculateAll()
 		}
 		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_ACK))
+	{
+		Calculate(TCP_RATIO_SYN_ACK);
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_FIN))
+	{
+		Calculate(TCP_RATIO_SYN_FIN);
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_RST))
+	{
+		Calculate(TCP_RATIO_SYN_RST);
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_SYNACK))
+	{
+		Calculate(TCP_RATIO_SYN_SYNACK);
+	}
+
 }
 
 
@@ -254,6 +281,28 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			m_features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
 			break;
 		}
+
+		case TCP_RATIO_SYN_ACK:
+		{
+			m_features[TCP_RATIO_SYN_ACK] = ((double)synCount + 1)/((double)ackCount + 1);
+			break;
+		}
+		case TCP_RATIO_SYN_FIN:
+		{
+			m_features[TCP_RATIO_SYN_FIN] = ((double)synCount + 1)/((double)finCount + 1);
+			break;
+		}
+		case TCP_RATIO_SYN_RST:
+		{
+			m_features[TCP_RATIO_SYN_RST] = ((double)synCount + 1)/((double)rstCount + 1);
+			break;
+		}
+		case TCP_RATIO_SYN_SYNACK:
+		{
+			//cout << "TCP stats: synCount: " << synCount << " synAckCount: " << synAckCount << " ackCount: " << ackCount << " finCount: " << finCount << " rstCount" << rstCount << endl;
+			m_features[TCP_RATIO_SYN_SYNACK] = ((double)synCount + 1)/((double)synAckCount + 1);
+			break;
+		}
 		default:
 		{
 			break;
@@ -293,6 +342,30 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		case 6:
 		{
 			m_portTable[evidence->m_evidencePacket.dst_port]++;
+			if (evidence->m_evidencePacket.tcp_hdr.syn)
+			{
+				synCount++;
+			}
+
+			if (evidence->m_evidencePacket.tcp_hdr.ack)
+			{
+				ackCount++;
+			}
+
+			if (evidence->m_evidencePacket.tcp_hdr.rst)
+			{
+				rstCount++;
+			}
+
+			if (evidence->m_evidencePacket.tcp_hdr.fin)
+			{
+				finCount++;
+			}
+
+			if (evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
+			{
+				synAckCount++;
+			}
 			break;
 		}
 		//If ICMP
@@ -376,6 +449,12 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_intervalTable[it->first] += rhs.m_intervalTable[it->first];
 	}
 
+	synCount += rhs.synCount;
+	ackCount += rhs.ackCount;
+	finCount += rhs.finCount;
+	rstCount += rhs.rstCount;
+	synAckCount += rhs.synAckCount;
+
 	return *this;
 }
 
@@ -414,6 +493,13 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	{
 		m_intervalTable[it->first] -= rhs.m_intervalTable[it->first];
 	}
+
+
+	synCount -= rhs.synCount;
+	ackCount -= rhs.ackCount;
+	finCount -= rhs.finCount;
+	rstCount -= rhs.rstCount;
+	synAckCount -= rhs.synAckCount;
 
 	return *this;
 }

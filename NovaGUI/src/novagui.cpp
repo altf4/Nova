@@ -1267,6 +1267,26 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 					featureLabel = tr("Packet Interval Deviation");
 					break;
 				}
+				case TCP_RATIO_SYN_ACK:
+				{
+					featureLabel = tr("TCP Syn/Ack Ratio");
+					break;
+				}
+				case TCP_RATIO_SYN_FIN:
+				{
+					featureLabel = tr("TCP Syn/Fin Ratio");
+					break;
+				}
+				case TCP_RATIO_SYN_RST:
+				{
+					featureLabel = tr("TCP Syn/Rst Ratio");
+					break;
+				}
+				case TCP_RATIO_SYN_SYNACK:
+				{
+					featureLabel = tr("TCP Syn/SynAck Ratio");
+					break;
+				}
 				default:
 				{
 					break;

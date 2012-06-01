@@ -24,7 +24,7 @@
 //The maximum message size, packets can only fragment up to this size
 #define MAX_MSG_SIZE 65535
 //dimension
-#define DIM 9
+#define DIM 13
 
 //The num of bytes returned by suspect serialization if it hit the maximum size;
 // SerializeSuspect reqs 89 bytes :: SerializeFeatureData reqs 36 bytes

@@ -36,7 +36,11 @@ normalizationType ClassificationEngine::m_normalization[] = {
 		LOGARITHMIC,
 		LOGARITHMIC,
 		LOGARITHMIC,
-		LOGARITHMIC
+		LOGARITHMIC,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT
 };
 
 ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
