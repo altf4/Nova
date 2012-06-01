@@ -17,9 +17,16 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <string>
 #include <exception>
+#include <algorithm>
 
 std::vector<std::string> getSubnetsToScan();
+void calculateDistributionMetrics();
 enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
+
+std::vector<std::pair<std::string, std::string> > aggregate_profiles;
+std::vector<std::string> aggregate_ethvendors;
+std::vector<std::pair<int, std::string> > aggregate_port_services;
+std::vector<std::pair<int, std::string> > aggregate_port_state;
 
 struct port_read
 {
@@ -194,16 +201,29 @@ int main(int argc, char ** argv)
 				std::cout << "Address: " << profile_vec[j].address << std::endl;
 				std::cout << "Open ports: " << profile_vec[j].ports.open_ports << std::endl;
 				std::cout << "Ethernet vendor: " << profile_vec[j].ethernet_vendor << std::endl;
+				aggregate_ethvendors.push_back(profile_vec[j].ethernet_vendor);
 				std::cout << "Personality guess: " << profile_vec[j].personality << std::endl;
 				std::cout << "Personality class: " << profile_vec[j].personality_class << std::endl;
+				std::pair<std::string, std::string> push_profile;
+				push_profile.first = profile_vec[j].personality;
+				push_profile.second = profile_vec[j].personality_class;
+				aggregate_profiles.push_back(push_profile);
 
 				for(uint16_t k = 0; k < profile_vec[j].ports.port_services.size(); k++)
 				{
 					std::cout << "Port " << profile_vec[j].ports.port_services[k].first << " is running " << profile_vec[j].ports.port_services[k].second << ", state is " << profile_vec[j].ports.port_state[k] << std::endl;
+					std::pair<int, std::string> push_services;
+					push_services.first = profile_vec[j].ports.port_services[k].first;
+					push_services.second = profile_vec[j].ports.port_services[k].second;
+					aggregate_port_services.push_back(push_services);
+					push_services.second = profile_vec[j].ports.port_state[k];
+					aggregate_port_state.push_back(push_services);
 				}
 
 				std::cout << std::endl;
 			}
+
+			calculateDistributionMetrics();
 		}
 		catch(std::exception &e)
 		{
@@ -215,6 +235,40 @@ int main(int argc, char ** argv)
 
 	std::cout << std::endl;
 	return OKAY;
+}
+
+void calculateDistributionMetrics()
+{
+	sort(aggregate_profiles.begin(), aggregate_profiles.end());
+
+	std::string comp = aggregate_profiles[0].first;
+
+	std::vector<std::pair<std::string, int> > profileDistribution;
+
+	std::pair<std::string, int> input;
+
+	input.first = comp;
+	input.second = 0;
+
+	for(uint16_t i = 0; i < aggregate_profiles.size(); i++)
+	{
+		if(aggregate_profiles[i].first.compare(comp))
+		{
+			comp = aggregate_profiles[i].first;
+			profileDistribution.push_back(input);
+			input.first = comp;
+			input.second = 0;
+		}
+		else
+		{
+			input.second++;
+		}
+	}
+
+	for(uint16_t i = 0; i < profileDistribution.size(); i++)
+	{
+		std::cout << profileDistribution[i].first << " accounts for " << (100 * ((float)profileDistribution[i].second / (float)profileDistribution.size())) << "% of the scanned network." << std::endl;
+	}
 }
 
 std::vector<std::string> getSubnetsToScan()
