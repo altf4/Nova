@@ -493,11 +493,13 @@ vector<uint64_t> SuspectTable::GetKeys_of_ModifiedSuspects()
 	Lock lock(&m_lock, false);
 	Lock updateLock(&m_needsUpdateLock);
 
-	ret = m_suspectsNeedingUpdate;
-
-	for (uint i = 0; i < ret.size(); i++)
+	for (uint i = 0; i < m_suspectsNeedingUpdate.size(); i++)
 	{
-		m_suspectTable[ret[i]]->m_needsClassificationUpdate = false;
+		if (m_lockTable.keyExists(m_suspectsNeedingUpdate[i]))
+		{
+			ret.push_back(m_suspectsNeedingUpdate[i]);
+			m_suspectTable[m_suspectsNeedingUpdate[i]]->m_needsClassificationUpdate = false;
+		}
 	}
 
 	m_suspectsNeedingUpdate.clear();

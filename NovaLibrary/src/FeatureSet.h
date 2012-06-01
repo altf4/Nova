@@ -76,10 +76,10 @@ enum featureIndex: uint8_t
 	DISTINCT_PORTS = 6,
 	PACKET_INTERVAL_MEAN = 7,
 	PACKET_INTERVAL_DEVIATION = 8,
-	TCP_RATIO_SYN_ACK = 9,
-	TCP_RATIO_SYN_FIN = 10,
-	TCP_RATIO_SYN_RST = 11,
-	TCP_RATIO_SYN_SYNACK = 12
+	TCP_PERCENT_SYN = 9,
+	TCP_PERCENT_FIN = 10,
+	TCP_PERCENT_RST = 11,
+	TCP_PERCENT_SYNACK = 12
 };
 
 namespace Nova{
@@ -98,6 +98,7 @@ public:
 
 	//Number of packets total
 	uint32_t m_packetCount;
+	uint32_t m_tcpPacketCount;
 
 	FeatureSet();
 	~FeatureSet();

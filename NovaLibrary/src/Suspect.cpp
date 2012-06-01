@@ -137,24 +137,24 @@ string Suspect::ToString()
 		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_ACK))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
 	{
-		ss << "TCP Syn/Ack Ratio: " << m_features.m_features[TCP_RATIO_SYN_ACK] << "\n";
+		ss << "TCP Percent SYN: " << m_features.m_features[TCP_PERCENT_SYN] << "\n";
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_FIN))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
 	{
-		ss << "TCP Syn/Fin Ratio: " << m_features.m_features[TCP_RATIO_SYN_FIN] << "\n";
+		ss << "TCP Percent FIN: " << m_features.m_features[TCP_PERCENT_FIN] << "\n";
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_RST))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
 	{
-		ss << "TCP Syn/Rst Ratio: " << m_features.m_features[TCP_RATIO_SYN_RST] << "\n";
+		ss << "TCP Percent RST: " << m_features.m_features[TCP_PERCENT_RST] << "\n";
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_SYNACK))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
 	{
-		ss << "TCP Syn/SynAck Ratio: " << m_features.m_features[TCP_RATIO_SYN_SYNACK] << "\n";
+		ss << "TCP Percent SYN ACK: " << m_features.m_features[TCP_PERCENT_SYNACK] << "\n";
 	}
 
 	return ss.str();

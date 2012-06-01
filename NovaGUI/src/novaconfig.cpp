@@ -1192,17 +1192,17 @@ void NovaConfig::LoadNovadPreferences()
 			GetFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
 
 
-		ui.featureList->insertItem(TCP_RATIO_SYN_ACK,
-				GetFeatureListItem(QString("TCP Syn/Ack Ratio"),featuresEnabled.at(TCP_RATIO_SYN_ACK)));
+		ui.featureList->insertItem(TCP_PERCENT_SYN,
+				GetFeatureListItem(QString("TCP Percent SYN"),featuresEnabled.at(TCP_PERCENT_SYN)));
 
-		ui.featureList->insertItem(TCP_RATIO_SYN_RST,
-				GetFeatureListItem(QString("TCP Syn/Rst Ratio"),featuresEnabled.at(TCP_RATIO_SYN_RST)));
+		ui.featureList->insertItem(TCP_PERCENT_RST,
+				GetFeatureListItem(QString("TCP Perecent RST"),featuresEnabled.at(TCP_PERCENT_RST)));
 
-		ui.featureList->insertItem(TCP_RATIO_SYN_FIN,
-				GetFeatureListItem(QString("TCP Syn/Fin Ratio"),featuresEnabled.at(TCP_RATIO_SYN_FIN)));
+		ui.featureList->insertItem(TCP_PERCENT_FIN,
+				GetFeatureListItem(QString("TCP Percent FIN"),featuresEnabled.at(TCP_PERCENT_FIN)));
 
-		ui.featureList->insertItem(TCP_RATIO_SYN_SYNACK,
-				GetFeatureListItem(QString("TCP Syn/Synack Ratio"),featuresEnabled.at(TCP_RATIO_SYN_SYNACK)));
+		ui.featureList->insertItem(TCP_PERCENT_SYNACK,
+				GetFeatureListItem(QString("TCP Percent SYN ACK"),featuresEnabled.at(TCP_PERCENT_SYNACK)));
 	}
 }
 

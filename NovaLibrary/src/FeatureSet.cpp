@@ -77,6 +77,7 @@ void FeatureSet::ClearFeatureSet()
 	synAckCount = 0;
 
 	m_packetCount = 0;
+	m_tcpPacketCount = 0;
 	m_bytesTotal = 0;
 	m_lastTime = 0;
 
@@ -136,24 +137,24 @@ void FeatureSet::CalculateAll()
 		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_ACK))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
 	{
-		Calculate(TCP_RATIO_SYN_ACK);
+		Calculate(TCP_PERCENT_SYN);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_FIN))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
 	{
-		Calculate(TCP_RATIO_SYN_FIN);
+		Calculate(TCP_PERCENT_FIN);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_RST))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
 	{
-		Calculate(TCP_RATIO_SYN_RST);
+		Calculate(TCP_PERCENT_RST);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_RATIO_SYN_SYNACK))
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
 	{
-		Calculate(TCP_RATIO_SYN_SYNACK);
+		Calculate(TCP_PERCENT_SYNACK);
 	}
 
 }
@@ -282,25 +283,25 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			break;
 		}
 
-		case TCP_RATIO_SYN_ACK:
+		case TCP_PERCENT_SYN:
 		{
-			m_features[TCP_RATIO_SYN_ACK] = ((double)synCount + 1)/((double)ackCount + 1);
+			m_features[TCP_PERCENT_SYN] = ((double)synCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
-		case TCP_RATIO_SYN_FIN:
+		case TCP_PERCENT_FIN:
 		{
-			m_features[TCP_RATIO_SYN_FIN] = ((double)synCount + 1)/((double)finCount + 1);
+			m_features[TCP_PERCENT_FIN] = ((double)finCount)/((double)m_tcpPacketCount+ 1);
 			break;
 		}
-		case TCP_RATIO_SYN_RST:
+		case TCP_PERCENT_RST:
 		{
-			m_features[TCP_RATIO_SYN_RST] = ((double)synCount + 1)/((double)rstCount + 1);
+			m_features[TCP_PERCENT_RST] = ((double)rstCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
-		case TCP_RATIO_SYN_SYNACK:
+		case TCP_PERCENT_SYNACK:
 		{
 			//cout << "TCP stats: synCount: " << synCount << " synAckCount: " << synAckCount << " ackCount: " << ackCount << " finCount: " << finCount << " rstCount" << rstCount << endl;
-			m_features[TCP_RATIO_SYN_SYNACK] = ((double)synCount + 1)/((double)synAckCount + 1);
+			m_features[TCP_PERCENT_SYNACK] = ((double)synAckCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
 		default:
@@ -335,19 +336,31 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If UDP
 		case 17:
 		{
-			m_portTable[evidence->m_evidencePacket.dst_port]++;
+			if (evidence->m_evidencePacket.dst_port != 0)
+			{
+				m_portTable[evidence->m_evidencePacket.dst_port]++;
+			}
 			break;
 		}
 		//If TCP
 		case 6:
 		{
-			m_portTable[evidence->m_evidencePacket.dst_port]++;
-			if (evidence->m_evidencePacket.tcp_hdr.syn)
+			m_tcpPacketCount++;
+			if (evidence->m_evidencePacket.dst_port != 0)
+			{
+				m_portTable[evidence->m_evidencePacket.dst_port]++;
+			}
+
+
+			if (evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
+			{
+				synAckCount++;
+			}
+			else if (evidence->m_evidencePacket.tcp_hdr.syn)
 			{
 				synCount++;
 			}
-
-			if (evidence->m_evidencePacket.tcp_hdr.ack)
+			else if (evidence->m_evidencePacket.tcp_hdr.ack)
 			{
 				ackCount++;
 			}
@@ -362,10 +375,6 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 				finCount++;
 			}
 
-			if (evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
-			{
-				synAckCount++;
-			}
 			break;
 		}
 		//If ICMP
@@ -389,8 +398,29 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	//If we have already gotten a packet from the source to dest host
 	if(m_lastTimes.keyExists(evidence->m_evidencePacket.ip_dst))
 	{
-		//Calculate and add the interval into the feature data
-		m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
+
+		if (evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst] < 0)
+		{
+			/*
+			// This is the case where we have out of order packets... log a message?
+
+			in_addr dst;
+			dst.s_addr = htonl(evidence->m_evidencePacket.ip_dst);
+			char *dstIp = inet_ntoa(dst);
+			cout << dstIp << "<-";
+
+			in_addr src;
+			src.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+			char *srcIp = inet_ntoa(src);
+			cout << srcIp << endl;
+			*/
+		}
+		else
+		{
+			//Calculate and add the interval into the feature data
+			m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
+		}
+
 	}
 	//Update or Insert the timestamp value in the table
 	m_lastTimes[evidence->m_evidencePacket.ip_dst] = evidence->m_evidencePacket.ts;
@@ -427,6 +457,7 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
+	m_tcpPacketCount += rhs.m_tcpPacketCount;
 	m_bytesTotal += rhs.m_bytesTotal;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
@@ -474,6 +505,7 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	}
 	m_totalInterval -= rhs.m_totalInterval;
 	m_packetCount -= rhs.m_packetCount;
+	m_tcpPacketCount -= rhs.m_tcpPacketCount;
 	m_bytesTotal -= rhs.m_bytesTotal;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
@@ -538,6 +570,7 @@ void FeatureSet::ClearFeatureData()
 {
 		m_totalInterval = 0;
 		m_packetCount = 0;
+		m_tcpPacketCount = 0;
 		m_bytesTotal = 0;
 
 		m_startTime = ~0;
