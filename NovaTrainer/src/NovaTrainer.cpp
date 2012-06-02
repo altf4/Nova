@@ -68,6 +68,7 @@ int main(int argc, const char *argv[])
 
 	Config::Inst();
 	Config::Inst()->SetIsDmEnabled(false);
+	Config::Inst()->SetIsTraining(true);
 
 	chdir(Config::Inst()->GetPathHome().c_str());
 
@@ -164,41 +165,20 @@ void update(const in_addr_t& key)
 	in_addr_t foo = key;
 	suspects.ClassifySuspect(foo);
 
-	ANNpoint newerPoint = annAllocPt(DIM);
-	ANNpoint olderPoint = annAllocPt(DIM);
-
 	//Check that we updated correctly
 	Suspect suspectCopy = suspects.GetSuspect(foo);
 
 	//Store in training file if needed
 	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
-	int distance = 0;
+
+
+	FeatureSet fs = suspectCopy.GetFeatureSet(MAIN_FEATURES);
 	for (int j = 0; j < DIM; j++)
 	{
-		newerPoint[j] = suspectCopy.GetFeatureSet(MAIN_FEATURES).m_features[j];
+		trainingFileStream << fs.m_features[j] << " ";
 	}
+	trainingFileStream << " 0\n";
 
-	for(uint d=0; d < DIM; d++)
-	{
-		distance += annDist(d, olderPoint,newerPoint);
-
-	}
-
-	if (lastPoint[0] == -1 || distance > Config::Inst()->GetThinningDistance())
-	{
-		cout << "Pushing point to file with distance of " << distance << endl;
-		for (int j = 0; j < DIM; j++)
-		{
-			lastPoint[j] = suspectCopy.GetFeatureSet(UNSENT_FEATURES).m_features[j];
-			trainingFileStream << lastPoint[j] << " ";
-		}
-		trainingFileStream << "\n";
-	}
-	else
-	{
-
-		cout << "Thinned point with distance of " << distance << endl;
-	}
 
 }
 

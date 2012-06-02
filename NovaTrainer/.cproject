@@ -109,6 +109,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.2084609612" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
 								<option id="gnu.cpp.link.option.libs.99451372" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
+									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 									<listOptionValue builtIn="false" value="pcap"/>
 									<listOptionValue builtIn="false" value="notify"/>
