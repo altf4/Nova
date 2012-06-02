@@ -595,6 +595,7 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 
 	m_IpAddress = rhs.m_IpAddress;
 	m_classification = rhs.m_classification;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
@@ -664,6 +665,7 @@ Suspect::Suspect(const Suspect &rhs)
 	m_isHostile = rhs.m_isHostile;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 }
 
 }

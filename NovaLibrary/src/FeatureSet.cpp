@@ -386,7 +386,8 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		default:
 		{
 			//LOG(DEBUG, "Dropping packet with unhandled IP protocol." , "");
-			return;
+			break;
+			//return;
 		}
 	}
 
