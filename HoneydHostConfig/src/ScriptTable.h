@@ -1,5 +1,5 @@
 /*
- * ScriptTable.cpp
+ * ScriptTable.h
  *
  *  Created on: Jun 1, 2012
  *      Author: victim

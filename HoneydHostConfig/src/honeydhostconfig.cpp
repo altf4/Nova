@@ -19,6 +19,10 @@
 #include <exception>
 #include <algorithm>
 
+#include "PersonalityTable.h"
+#include "ScriptTable.h"
+#include "Personality.h"
+
 std::vector<std::string> getSubnetsToScan();
 void calculateDistributionMetrics();
 enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
