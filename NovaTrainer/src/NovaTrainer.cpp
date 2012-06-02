@@ -168,16 +168,25 @@ void update(const in_addr_t& key)
 	//Check that we updated correctly
 	Suspect suspectCopy = suspects.GetSuspect(foo);
 
+	if (suspects.IsEmptySuspect(&suspectCopy))
+	{
+		cout << "Got an empty suspect when trying to classify" << endl;
+		return;
+	}
+
 	//Store in training file if needed
 	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
 
-
 	FeatureSet fs = suspectCopy.GetFeatureSet(MAIN_FEATURES);
+	if (fs.m_features[0] != fs.m_features[0] )
+	{
+		cout << "This can't be good..." << endl;
+	}
 	for (int j = 0; j < DIM; j++)
 	{
 		trainingFileStream << fs.m_features[j] << " ";
 	}
-	trainingFileStream << " 0\n";
+	trainingFileStream << "\n";
 
 
 }
