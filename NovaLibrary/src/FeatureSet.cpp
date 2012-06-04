@@ -286,13 +286,19 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If UDP
 		case 17:
 		{
-			m_portTable[evidence->m_evidencePacket.dst_port]++;
+			if (evidence->m_evidencePacket.dst_port != 0)
+			{
+				m_portTable[evidence->m_evidencePacket.dst_port]++;
+			}
 			break;
 		}
 		//If TCP
 		case 6:
 		{
-			m_portTable[evidence->m_evidencePacket.dst_port]++;
+			if (evidence->m_evidencePacket.dst_port != 0)
+			{
+				m_portTable[evidence->m_evidencePacket.dst_port]++;
+			}
 			break;
 		}
 		//If ICMP
@@ -316,8 +322,29 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	//If we have already gotten a packet from the source to dest host
 	if(m_lastTimes.keyExists(evidence->m_evidencePacket.ip_dst))
 	{
-		//Calculate and add the interval into the feature data
-		m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
+
+		if (evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst] < 0)
+		{
+			/*
+			// This is the case where we have out of order packets... log a message?
+
+			in_addr dst;
+			dst.s_addr = htonl(evidence->m_evidencePacket.ip_dst);
+			char *dstIp = inet_ntoa(dst);
+			cout << dstIp << "<-";
+
+			in_addr src;
+			src.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+			char *srcIp = inet_ntoa(src);
+			cout << srcIp << endl;
+			*/
+		}
+		else
+		{
+			//Calculate and add the interval into the feature data
+			m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
+		}
+
 	}
 	//Update or Insert the timestamp value in the table
 	m_lastTimes[evidence->m_evidencePacket.ip_dst] = evidence->m_evidencePacket.ts;

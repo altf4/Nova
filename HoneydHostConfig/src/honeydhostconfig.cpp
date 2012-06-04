@@ -2,6 +2,52 @@
 // REQUIRES NMAP 6
 
 #include "honeydhostconfig.h"
+#include <arpa/inet.h>
+#include <vector>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <sys/un.h>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <boost/foreach.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <string>
+#include <exception>
+#include <algorithm>
+
+#include "PersonalityTable.h"
+#include "ScriptTable.h"
+#include "Personality.h"
+
+std::vector<std::string> getSubnetsToScan();
+void calculateDistributionMetrics();
+enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
+
+std::vector<std::pair<std::string, std::string> > aggregate_profiles;
+std::vector<std::string> aggregate_ethvendors;
+std::vector<std::pair<int, std::string> > aggregate_port_services;
+std::vector<std::pair<int, std::string> > aggregate_port_state;
+
+struct port_read
+{
+	int open_ports;
+	std::vector<std::pair<int, std::string> > port_services;
+	std::vector<std::string> port_state;
+};
+
+struct profile_read
+{
+	std::string address;
+	std::string personality;
+	std::string personality_class;
+	std::string ethernet_vendor;
+	struct port_read ports;
+};
 
 struct profile_read parseHost(boost::property_tree::ptree pt2)
 {
