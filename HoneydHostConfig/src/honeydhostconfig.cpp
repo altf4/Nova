@@ -1,48 +1,7 @@
 
 // REQUIRES NMAP 6
 
-#include <arpa/inet.h>
-#include <vector>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <ifaddrs.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <sys/un.h>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <boost/foreach.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <string>
-#include <exception>
-#include <algorithm>
-
-std::vector<std::string> getSubnetsToScan();
-void calculateDistributionMetrics();
-enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
-
-std::vector<std::pair<std::string, std::string> > aggregate_profiles;
-std::vector<std::string> aggregate_ethvendors;
-std::vector<std::pair<int, std::string> > aggregate_port_services;
-std::vector<std::pair<int, std::string> > aggregate_port_state;
-
-struct port_read
-{
-	int open_ports;
-	std::vector<std::pair<int, std::string> > port_services;
-	std::vector<std::string> port_state;
-};
-
-struct profile_read
-{
-	std::string address;
-	std::string personality;
-	std::string personality_class;
-	std::string ethernet_vendor;
-	struct port_read ports;
-};
+#include "honeydhostconfig.h"
 
 struct profile_read parseHost(boost::property_tree::ptree pt2)
 {
@@ -55,7 +14,8 @@ struct profile_read parseHost(boost::property_tree::ptree pt2)
 	BOOST_FOREACH(ptree::value_type &v, pt2.get_child(""))
 	{
 		try
-		{	if(!v.first.compare("address"))
+		{
+			if(!v.first.compare("address"))
 			{
 				if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("ipv4"))
 				{
@@ -72,11 +32,12 @@ struct profile_read parseHost(boost::property_tree::ptree pt2)
 				{
 					try
 					{
-						std::pair<int, std::string> push;
+						std::pair<int, std::pair<std::string, std::string> > push;
 						std::string state = c.second.get<std::string>("state.<xmlattr>.state");
 						ret.ports.port_state.push_back(state);
 						push.first = c.second.get<int>("<xmlattr>.portid");
-						push.second = c.second.get<std::string>("service.<xmlattr>.name");
+						push.second.first = c.second.get<std::string>("<xmlattr>.protocol");
+						push.second.second = c.second.get<std::string>("service.<xmlattr>.name");
 						ret.ports.port_services.push_back(push);
 						i++;
 					}
@@ -149,6 +110,8 @@ std::vector<struct profile_read> load_nmap(const std::string &filename)
 int main(int argc, char ** argv)
 {
 	std::string saveLocation;
+	personalities.set_empty_key("");
+	ports.set_empty_key("");
 
 	std::cout << std::endl;
 
@@ -185,8 +148,6 @@ int main(int argc, char ** argv)
 		while(system(scan.c_str()));
 		try
 		{
-			std::vector<struct profile_read> profile_vec;
-
 			std::string file = "subnet" + ss.str() + ".xml";
 
 			profile_vec = load_nmap(file);
@@ -201,23 +162,17 @@ int main(int argc, char ** argv)
 				std::cout << "Address: " << profile_vec[j].address << std::endl;
 				std::cout << "Open ports: " << profile_vec[j].ports.open_ports << std::endl;
 				std::cout << "Ethernet vendor: " << profile_vec[j].ethernet_vendor << std::endl;
-				aggregate_ethvendors.push_back(profile_vec[j].ethernet_vendor);
 				std::cout << "Personality guess: " << profile_vec[j].personality << std::endl;
 				std::cout << "Personality class: " << profile_vec[j].personality_class << std::endl;
-				std::pair<std::string, std::string> push_profile;
-				push_profile.first = profile_vec[j].personality;
-				push_profile.second = profile_vec[j].personality_class;
-				aggregate_profiles.push_back(push_profile);
 
 				for(uint16_t k = 0; k < profile_vec[j].ports.port_services.size(); k++)
 				{
-					std::cout << "Port " << profile_vec[j].ports.port_services[k].first << " is running " << profile_vec[j].ports.port_services[k].second << ", state is " << profile_vec[j].ports.port_state[k] << std::endl;
-					std::pair<int, std::string> push_services;
-					push_services.first = profile_vec[j].ports.port_services[k].first;
-					push_services.second = profile_vec[j].ports.port_services[k].second;
-					aggregate_port_services.push_back(push_services);
-					push_services.second = profile_vec[j].ports.port_state[k];
-					aggregate_port_state.push_back(push_services);
+					ss.str("");
+					ss << profile_vec[j].ports.port_services[k].first;
+					std::cout << "Port " << profile_vec[j].ports.port_services[k].first << " is running " << profile_vec[j].ports.port_services[k].second.second << ", state is " << profile_vec[j].ports.port_state[k] << std::endl;
+					std::string scriptString = ss.str() + "_" + boost::to_upper_copy(profile_vec[j].ports.port_services[k].second.first) + "_" + profile_vec[j].ports.port_state[k];
+					ports[scriptString]++;
+					ss.str("");
 				}
 
 				std::cout << std::endl;
@@ -239,35 +194,28 @@ int main(int argc, char ** argv)
 
 void calculateDistributionMetrics()
 {
-	sort(aggregate_profiles.begin(), aggregate_profiles.end());
-
-	std::string comp = aggregate_profiles[0].first;
-
-	std::vector<std::pair<std::string, int> > profileDistribution;
-
-	std::pair<std::string, int> input;
-
-	input.first = comp;
-	input.second = 0;
-
-	for(uint16_t i = 0; i < aggregate_profiles.size(); i++)
+	for(uint16_t i = 0; i < profile_vec.size(); i++)
 	{
-		if(aggregate_profiles[i].first.compare(comp))
-		{
-			comp = aggregate_profiles[i].first;
-			profileDistribution.push_back(input);
-			input.first = comp;
-			input.second = 0;
-		}
-		else
-		{
-			input.second++;
-		}
+		personalities[profile_vec[i].personality]++;
 	}
 
-	for(uint16_t i = 0; i < profileDistribution.size(); i++)
+	uint16_t testSum = 0;
+
+	for(Pers_Table::iterator it = personalities.begin(); it != personalities.end(); it++)
 	{
-		std::cout << profileDistribution[i].first << " accounts for " << (100 * ((float)profileDistribution[i].second / (float)profileDistribution.size())) << "% of the scanned network." << std::endl;
+		testSum += it->second;
+	}
+
+	std::cout << "Out of " << testSum << " hosts:" << std::endl;
+
+	for(Pers_Table::iterator it = personalities.begin(); it != personalities.end(); it++)
+	{
+		std::cout << it->second << "(" << ((double)it->second / (double)testSum) * 100 << "%) of the hosts were " << it->first << std::endl;
+	}
+
+	for(Ports_Table::iterator it = ports.begin(); it != ports.end(); it++)
+	{
+		std::cout << it->first << std::endl;
 	}
 }
 
@@ -282,7 +230,7 @@ std::vector<std::string> getSubnetsToScan()
 	struct in_addr address;
 	struct in_addr bitmask;
 	struct in_addr basestruct;
-	//struct in_addr maxstruct;
+	struct in_addr maxstruct;
 	uint32_t ntohl_address;
 	uint32_t ntohl_bitmask;
 	bool there = false;
@@ -332,8 +280,12 @@ std::vector<std::string> getSubnetsToScan()
 			uint32_t base = ntohl_bitmask & ntohl_address;
 			basestruct.s_addr = htonl(base);
 
-			//uint32_t max = ~(ntohl_bitmask) + base;
-			//maxstruct.s_addr = htonl(max);
+			uint32_t max = ~(ntohl_bitmask) + base;
+			maxstruct.s_addr = htonl(max);
+
+			tempHostspace = max - base - 3;
+
+			std::cout << "tempHostspace == " << tempHostspace << std::endl;
 
 			uint32_t mask = ~ntohl_bitmask;
 			int i = 32;
