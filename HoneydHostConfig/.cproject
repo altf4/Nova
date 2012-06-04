@@ -35,11 +35,12 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.271142958" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.base.1147952141" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.libs.1472934550" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/NovaLibrary/Debug/libNovaLibrary.a}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Nova_UI_Core/Debug/libNova_UI_Core.so}&quot;"/>
+									<listOptionValue builtIn="false" value="NovaLibrary"/>
+									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1743265924" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug/"/>
+									<listOptionValue builtIn="false" value="../../Nova_UI_Core/Debug/"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.628944833" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

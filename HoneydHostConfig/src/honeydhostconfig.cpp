@@ -1,7 +1,6 @@
 
 // REQUIRES NMAP 6
 
-#include "honeydhostconfig.h"
 #include <arpa/inet.h>
 #include <vector>
 #include <sys/stat.h>
@@ -20,13 +19,21 @@
 #include <exception>
 #include <algorithm>
 
-#include "PersonalityTable.h"
 #include "ScriptTable.h"
-#include "Personality.h"
+#include "honeydhostconfig.h"
 
-struct profile_read parseHost(boost::property_tree::ptree pt2)
+using namespace Nova;
+
+std::vector<struct profile_read> profile_vec;
+std::vector<uint16_t> leftoverHostspace;
+uint16_t tempHostspace;
+
+struct profile_read Nova::parseHost(boost::property_tree::ptree pt2)
 {
 	using boost::property_tree::ptree;
+
+	// instantiate Personality object here, populate it from the code below
+	Personality * person = new Personality();
 
 	struct profile_read ret;
 
@@ -40,11 +47,16 @@ struct profile_read parseHost(boost::property_tree::ptree pt2)
 			{
 				if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("ipv4"))
 				{
-					ret.address = v.second.get<std::string>("<xmlattr>.addr");
+					//ret.address = v.second.get<std::string>("<xmlattr>.addr");
+					person->m_addresses.push_back(v.second.get<std::string>("<xmlattr>.addr"));
 				}
 				else if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("mac"))
-				{
-					ret.ethernet_vendor = v.second.get<std::string>("<xmlattr>.vendor");
+				{std::vector<struct profile_read> profile_vec;
+				std::vector<uint16_t> leftoverHostspace;
+				uint16_t tempHostspace;
+					//ret.ethernet_vendor = v.second.get<std::string>("<xmlattr>.vendor");
+					person->m_macs.push_back(v.second.get<std::string>("<xmlattr>.addr"));
+					person->AddVendor(v.second.get<std::string>("<xmlattr>.vendor"));
 				}
 			}
 			else if(!v.first.compare("ports"))
@@ -58,7 +70,12 @@ struct profile_read parseHost(boost::property_tree::ptree pt2)
 						ret.ports.port_state.push_back(state);
 						push.first = c.second.get<int>("<xmlattr>.portid");
 						push.second.first = c.second.get<std::string>("<xmlattr>.protocol");
+						std::stringstream ss;
+						ss << c.second.get<int>("<xmlattr>.portid");
+						std::string port_key = ss.str() + "_" + boost::to_upper_copy(c.second.get<std::string>("<xmlattr>.protocal"));
+						ss.str("");
 						push.second.second = c.second.get<std::string>("service.<xmlattr>.name");
+						//person->
 						ret.ports.port_services.push_back(push);
 						i++;
 					}
@@ -102,10 +119,12 @@ struct profile_read parseHost(boost::property_tree::ptree pt2)
 
 	ret.ports.open_ports = i;
 
+	// call AddHost() on the Personality object created at the beginning of this method
+
 	return ret;
 }
 
-std::vector<struct profile_read> load_nmap(const std::string &filename)
+std::vector<struct profile_read> Nova::load_nmap(const std::string &filename)
 {
 	using boost::property_tree::ptree;
 	ptree pt;
@@ -131,6 +150,7 @@ std::vector<struct profile_read> load_nmap(const std::string &filename)
 int main(int argc, char ** argv)
 {
 	std::string saveLocation;
+	// Instantiate PersonalityTable Object here
 	personalities.set_empty_key("");
 	ports.set_empty_key("");
 
@@ -213,8 +233,9 @@ int main(int argc, char ** argv)
 	return OKAY;
 }
 
-void calculateDistributionMetrics()
+void Nova::calculateDistributionMetrics()
 {
+	/*
 	for(uint16_t i = 0; i < profile_vec.size(); i++)
 	{
 		if(personalities.find(profile_vec[i].personality) != personalities.end())
@@ -244,10 +265,10 @@ void calculateDistributionMetrics()
 	for(Ports_Table::iterator it = ports.begin(); it != ports.end(); it++)
 	{
 		std::cout << it->first << std::endl;
-	}
+	}*/
 }
 
-std::vector<std::string> getSubnetsToScan()
+std::vector<std::string> Nova::getSubnetsToScan()
 {
 	struct ifaddrs * devices = NULL;
 	ifaddrs *curIf = NULL;

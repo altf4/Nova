@@ -4,12 +4,18 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/Personality.cpp \
+../src/PersonalityTable.cpp \
 ../src/honeydhostconfig.cpp 
 
 OBJS += \
+./src/Personality.o \
+./src/PersonalityTable.o \
 ./src/honeydhostconfig.o 
 
 CPP_DEPS += \
+./src/Personality.d \
+./src/PersonalityTable.d \
 ./src/honeydhostconfig.d 
 
 

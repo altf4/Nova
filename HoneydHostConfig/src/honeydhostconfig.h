@@ -3,32 +3,15 @@
 
 #include "HashMapStructs.h"
 #include "HashMap.h"
-/*#include <vector>
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <netdb.h>
-#include <iostream>
-#include <net/if.h>
-#include <sys/un.h>
-#include <ifaddrs.h>
-#include <exception>
-#include <algorithm>
-#include <sys/stat.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <boost/foreach.hpp>
-#include <boost/property_tree/xml_parser.hpp>*/
+#include "PersonalityTable.h"
 #include <boost/property_tree/ptree.hpp>
 
-std::vector<struct profile_read> profile_vec;
-std::vector<uint16_t> leftoverHostspace;
-uint16_t tempHostspace;
 typedef Nova::HashMap<std::string, std::pair<uint16_t,std::string>, std::tr1::hash<std::string>, eqstr > Pers_Table;
 typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > Ports_Table;
-Pers_Table personalities;
 // make a vendor MAC db to query for MAC
 
+namespace Nova
+{
 enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
 Pers_Table personalities;
 Ports_Table ports;
@@ -53,5 +36,5 @@ std::vector<struct profile_read> load_nmap(const std::string &filename);
 struct profile_read parseHost(boost::property_tree::ptree pt2);
 std::vector<std::string> getSubnetsToScan();
 void calculateDistributionMetrics();
-
+}
 #endif
