@@ -51,9 +51,7 @@ struct profile_read Nova::parseHost(boost::property_tree::ptree pt2)
 					person->m_addresses.push_back(v.second.get<std::string>("<xmlattr>.addr"));
 				}
 				else if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("mac"))
-				{std::vector<struct profile_read> profile_vec;
-				std::vector<uint16_t> leftoverHostspace;
-				uint16_t tempHostspace;
+				{
 					//ret.ethernet_vendor = v.second.get<std::string>("<xmlattr>.vendor");
 					person->m_macs.push_back(v.second.get<std::string>("<xmlattr>.addr"));
 					person->AddVendor(v.second.get<std::string>("<xmlattr>.vendor"));
