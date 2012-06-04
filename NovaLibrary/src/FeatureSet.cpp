@@ -422,8 +422,6 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 			m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
 		}
 
-		}
-
 	}
 	//Update or Insert the timestamp value in the table
 	m_lastTimes[evidence->m_evidencePacket.ip_dst] = evidence->m_evidencePacket.ts;
