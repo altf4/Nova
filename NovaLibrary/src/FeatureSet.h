@@ -75,7 +75,11 @@ enum featureIndex: uint8_t
 	DISTINCT_IPS = 5,
 	DISTINCT_PORTS = 6,
 	PACKET_INTERVAL_MEAN = 7,
-	PACKET_INTERVAL_DEVIATION = 8
+	PACKET_INTERVAL_DEVIATION = 8,
+	TCP_PERCENT_SYN = 9,
+	TCP_PERCENT_FIN = 10,
+	TCP_PERCENT_RST = 11,
+	TCP_PERCENT_SYNACK = 12
 };
 
 namespace Nova{
@@ -94,6 +98,7 @@ public:
 
 	//Number of packets total
 	uint32_t m_packetCount;
+	uint32_t m_tcpPacketCount;
 
 	FeatureSet();
 	~FeatureSet();
@@ -168,6 +173,13 @@ private:
 	time_t m_startTime;
 	time_t m_endTime;
 	time_t m_lastTime;
+
+	// For some TCP flag ratios and statistics
+	uint32_t rstCount;
+	uint32_t ackCount;
+	uint32_t synCount;
+	uint32_t finCount;
+	uint32_t synAckCount;
 
 	time_t m_totalInterval;
 

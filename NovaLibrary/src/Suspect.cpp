@@ -137,6 +137,26 @@ string Suspect::ToString()
 		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
 	}
 
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
+	{
+		ss << "TCP Percent SYN: " << m_features.m_features[TCP_PERCENT_SYN] << "\n";
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
+	{
+		ss << "TCP Percent FIN: " << m_features.m_features[TCP_PERCENT_FIN] << "\n";
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
+	{
+		ss << "TCP Percent RST: " << m_features.m_features[TCP_PERCENT_RST] << "\n";
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
+	{
+		ss << "TCP Percent SYN ACK: " << m_features.m_features[TCP_PERCENT_SYNACK] << "\n";
+	}
+
 	return ss.str();
 }
 
@@ -575,6 +595,7 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 
 	m_IpAddress = rhs.m_IpAddress;
 	m_classification = rhs.m_classification;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
@@ -644,6 +665,7 @@ Suspect::Suspect(const Suspect &rhs)
 	m_isHostile = rhs.m_isHostile;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 }
 
 }

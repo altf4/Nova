@@ -36,7 +36,11 @@ normalizationType ClassificationEngine::m_normalization[] = {
 		LOGARITHMIC,
 		LOGARITHMIC,
 		LOGARITHMIC,
-		LOGARITHMIC
+		LOGARITHMIC,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT
 };
 
 ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
@@ -114,7 +118,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 			}
 			if(m_maxFeatureValues[ai] != 0)
 			{
-				aNN[ai] = Normalize(m_normalization[i], suspect->GetFeatureSet(MAIN_FEATURES).m_features[i],
+				aNN[ai] = Normalize(m_normalization[i], fs.m_features[i],
 					m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 			}
 			else

@@ -1190,6 +1190,19 @@ void NovaConfig::LoadNovadPreferences()
 
 		ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
 			GetFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
+
+
+		ui.featureList->insertItem(TCP_PERCENT_SYN,
+				GetFeatureListItem(QString("TCP Percent SYN"),featuresEnabled.at(TCP_PERCENT_SYN)));
+
+		ui.featureList->insertItem(TCP_PERCENT_RST,
+				GetFeatureListItem(QString("TCP Perecent RST"),featuresEnabled.at(TCP_PERCENT_RST)));
+
+		ui.featureList->insertItem(TCP_PERCENT_FIN,
+				GetFeatureListItem(QString("TCP Percent FIN"),featuresEnabled.at(TCP_PERCENT_FIN)));
+
+		ui.featureList->insertItem(TCP_PERCENT_SYNACK,
+				GetFeatureListItem(QString("TCP Percent SYN ACK"),featuresEnabled.at(TCP_PERCENT_SYNACK)));
 	}
 }
 

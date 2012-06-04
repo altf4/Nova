@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "Evidence.h"
+#include "netinet/tcp.h"
 
 using namespace std;
 
@@ -68,6 +69,17 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 		offset = packet_at_ip_header + ip_hl*4 + 2;
 		//read in the dest port
 		m_evidencePacket.dst_port = ntohs(*(uint16_t *)offset);
+	}
+
+	if (m_evidencePacket.ip_p == 6)
+	{
+		offset = packet_at_ip_header + ip_hl*4;
+		m_evidencePacket.tcp_hdr.ack = ((tcphdr*)offset)->ack;
+		m_evidencePacket.tcp_hdr.rst = ((tcphdr*)offset)->rst;
+		m_evidencePacket.tcp_hdr.syn = ((tcphdr*)offset)->syn;
+		m_evidencePacket.tcp_hdr.fin = ((tcphdr*)offset)->fin;
+
+
 	}
 }
 

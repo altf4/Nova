@@ -70,7 +70,14 @@ void FeatureSet::ClearFeatureSet()
 	m_intervalTable.clear();
 	m_lastTimes.clear();
 
+	rstCount = 0;
+	ackCount = 0;
+	synCount = 0;
+	finCount = 0;
+	synAckCount = 0;
+
 	m_packetCount = 0;
+	m_tcpPacketCount = 0;
 	m_bytesTotal = 0;
 	m_lastTime = 0;
 
@@ -129,6 +136,27 @@ void FeatureSet::CalculateAll()
 		}
 		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
+	{
+		Calculate(TCP_PERCENT_SYN);
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
+	{
+		Calculate(TCP_PERCENT_FIN);
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
+	{
+		Calculate(TCP_PERCENT_RST);
+	}
+
+	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
+	{
+		Calculate(TCP_PERCENT_SYNACK);
+	}
+
 }
 
 
@@ -254,6 +282,28 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			m_features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
 			break;
 		}
+
+		case TCP_PERCENT_SYN:
+		{
+			m_features[TCP_PERCENT_SYN] = ((double)synCount)/((double)m_tcpPacketCount + 1);
+			break;
+		}
+		case TCP_PERCENT_FIN:
+		{
+			m_features[TCP_PERCENT_FIN] = ((double)finCount)/((double)m_tcpPacketCount+ 1);
+			break;
+		}
+		case TCP_PERCENT_RST:
+		{
+			m_features[TCP_PERCENT_RST] = ((double)rstCount)/((double)m_tcpPacketCount + 1);
+			break;
+		}
+		case TCP_PERCENT_SYNACK:
+		{
+			//cout << "TCP stats: synCount: " << synCount << " synAckCount: " << synAckCount << " ackCount: " << ackCount << " finCount: " << finCount << " rstCount" << rstCount << endl;
+			m_features[TCP_PERCENT_SYNACK] = ((double)synAckCount)/((double)m_tcpPacketCount + 1);
+			break;
+		}
 		default:
 		{
 			break;
@@ -295,10 +345,36 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If TCP
 		case 6:
 		{
+			m_tcpPacketCount++;
 			if (evidence->m_evidencePacket.dst_port != 0)
 			{
 				m_portTable[evidence->m_evidencePacket.dst_port]++;
 			}
+
+
+			if (evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
+			{
+				synAckCount++;
+			}
+			else if (evidence->m_evidencePacket.tcp_hdr.syn)
+			{
+				synCount++;
+			}
+			else if (evidence->m_evidencePacket.tcp_hdr.ack)
+			{
+				ackCount++;
+			}
+
+			if (evidence->m_evidencePacket.tcp_hdr.rst)
+			{
+				rstCount++;
+			}
+
+			if (evidence->m_evidencePacket.tcp_hdr.fin)
+			{
+				finCount++;
+			}
+
 			break;
 		}
 		//If ICMP
@@ -310,7 +386,8 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		default:
 		{
 			//LOG(DEBUG, "Dropping packet with unhandled IP protocol." , "");
-			return;
+			break;
+			//return;
 		}
 	}
 
@@ -343,6 +420,8 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		{
 			//Calculate and add the interval into the feature data
 			m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
+		}
+
 		}
 
 	}
@@ -381,6 +460,7 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
+	m_tcpPacketCount += rhs.m_tcpPacketCount;
 	m_bytesTotal += rhs.m_bytesTotal;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
@@ -403,6 +483,12 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_intervalTable[it->first] += rhs.m_intervalTable[it->first];
 	}
 
+	synCount += rhs.synCount;
+	ackCount += rhs.ackCount;
+	finCount += rhs.finCount;
+	rstCount += rhs.rstCount;
+	synAckCount += rhs.synAckCount;
+
 	return *this;
 }
 
@@ -422,6 +508,7 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	}
 	m_totalInterval -= rhs.m_totalInterval;
 	m_packetCount -= rhs.m_packetCount;
+	m_tcpPacketCount -= rhs.m_tcpPacketCount;
 	m_bytesTotal -= rhs.m_bytesTotal;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
@@ -441,6 +528,13 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	{
 		m_intervalTable[it->first] -= rhs.m_intervalTable[it->first];
 	}
+
+
+	synCount -= rhs.synCount;
+	ackCount -= rhs.ackCount;
+	finCount -= rhs.finCount;
+	rstCount -= rhs.rstCount;
+	synAckCount -= rhs.synAckCount;
 
 	return *this;
 }
@@ -479,6 +573,7 @@ void FeatureSet::ClearFeatureData()
 {
 		m_totalInterval = 0;
 		m_packetCount = 0;
+		m_tcpPacketCount = 0;
 		m_bytesTotal = 0;
 
 		m_startTime = ~0;
