@@ -564,8 +564,12 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 			{
 				return (log(value)/log(max));
 			}
+			break;
 		}
-		return 0;
+		default:
+		{
+			return -1;
+		}
 		// TODO: A sigmoid normalization function could be very useful,
 		// especially if we could somehow use it interactively to set the center and smoothing
 		// while looking at the data visualizations to see what works best for a feature
