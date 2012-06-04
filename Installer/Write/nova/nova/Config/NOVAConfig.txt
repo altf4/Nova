@@ -410,3 +410,13 @@ HAYSTACK_STORAGE I
 #
 WHITELIST_FILE Config/whitelist.txt
 
+
+############################################
+# MIN_PACKET_THRESHOLD #
+############################################
+#
+# Suspects will not be classified, or in
+# some cases will be marked as more benign
+# if there was less packets than this seen.
+MIN_PACKET_THRESHOLD 5
+

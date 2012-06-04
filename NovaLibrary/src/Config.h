@@ -174,6 +174,9 @@ public:
     std::string GetUserPath();
     void SetUserPath(std::string userPath);
 
+    uint GetMinPacketThreshold();
+    void SetMinPacketThreshold(uint packets);
+
 
 protected:
 	Config();
@@ -215,6 +218,7 @@ private:
 	int m_saveFreq;
 	int m_dataTTL;
 	int m_saMaxAttempts;
+	uint m_minPacketThreshold;
 
 	double m_saSleepDuration;
 	double m_eps;

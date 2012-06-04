@@ -88,7 +88,17 @@ string Suspect::ToString()
 	if(!m_isHostile)
 		ss << "not ";
 	ss << "hostile\n";
-	ss <<  " Classification: " <<  m_classification <<  "\n";
+	ss <<  " Classification: ";
+
+	if (m_classification == -2)
+	{
+		ss << " Not enough data\n";
+	}
+	else
+	{
+		ss << m_classification <<  "\n";
+	}
+
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 

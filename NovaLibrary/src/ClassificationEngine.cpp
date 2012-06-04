@@ -101,7 +101,16 @@ double ClassificationEngine::Classify(Suspect *suspect)
 	//Allocate the ANNpoint;
 	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 	FeatureSet fs = suspect->GetFeatureSet(MAIN_FEATURES);
+	FeatureSet ufs = suspect->GetFeatureSet(UNSENT_FEATURES);
 	uint ai = 0;
+
+	// Do we not have enough data to classify?
+	if ((fs.m_packetCount + ufs.m_packetCount) < Config::Inst()->GetMinPacketThreshold())
+	{
+		suspect->SetIsHostile(false);
+		suspect->SetClassification(-2);
+		return -2;
+	}
 
 	//Iterate over the features, asserting the range is [min,max] and normalizing over that range
 	for(int i = 0;i < DIM;i++)

@@ -69,7 +69,8 @@ string Config::m_prefixes[] =
 	"RECIPIENTS",
 	"SERVICE_PREFERENCES",
 	"HAYSTACK_STORAGE",
-	"WHITELIST_FILE"
+	"WHITELIST_FILE",
+	"MIN_PACKET_THRESHOLD"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -696,6 +697,22 @@ void Config::LoadConfig_Internal()
 				}
 				continue;
 			}
+
+			// MIN_PACKET_THRESHOLD
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_minPacketThreshold = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+
 		}
 	}
 	else
@@ -2172,5 +2189,17 @@ void Config::SetUserPath(string userPath)
 	Lock lock(&m_lock, false);
 	m_userPath = userPath;
 }
+
+uint Config::GetMinPacketThreshold()
+{
+	Lock lock(&m_lock, true);
+	return m_minPacketThreshold;
 }
 
+void Config::SetMinPacketThreshold(uint packets)
+{
+	Lock lock(&m_lock, false);
+	m_minPacketThreshold = packets;
+}
+
+}
