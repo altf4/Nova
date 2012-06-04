@@ -5,6 +5,8 @@
  *      Author: victim
  */
 
+#include "HashMapStructs.h"
+#include "HashMap.h"
 
 //total num_hosts is the total num of unique hosts counted.
 //total avail_addrs is the total num of ip addresses avail on the subnet
@@ -39,4 +41,6 @@ class PersonalityTable
 
 	//Start with range of the subnets, decrement every time host is added
 	unsigned long int m_host_addrs_avail;
+
+	//HashMAP[std::string key]; key == Personality, val == ptr to Personality object
 };

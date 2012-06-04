@@ -5,6 +5,9 @@
  *      Author: victim
  */
 
+#include "HashMapStructs.h"
+#include "HashMap.h"
+
 using namespace std;
 
 class Personality
@@ -17,10 +20,14 @@ public:
 
 	unsigned int m_count;
 	unsigned long long int m_port_count;
+	std::string m_personalityClass;
 
-	//MAP[std::string], val == num of times port seen for hosts w/ this personality, string == <port #>_<port type> ex: 10_TCP or 643_UDP
-	//MAP[std::string], val == num of times mac vendor is seen for hosts
-	// w/ this personality, string == vendor name we can look up in the MAC vendor tables
+	//HashMAP[std::string key]; key == MAC Vendor, val == num of times mac vendor is seen for hosts
+	typedef Nova::HashMap<std::string, std::pair<uint16_t,std::string>, std::tr1::hash<std::string>, eqstr > MAC_Table;
+	//HashMap[std::string key]; key == port in format <NUM>_<PROTOCOL>, val == pair<uint count, string of nmap service info>
+	typedef Nova::HashMap<std::string, std::pair<uint16_t, std::string>, std::tr1::hash<std::string>, eqstr > Port_Table;
+	// vector of MAC addresses
+	// vector of IP addresses
 
 };
 

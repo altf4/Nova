@@ -14,7 +14,7 @@
 #include <sstream>
 #include <iostream>
 #include <boost/foreach.hpp>
-#include <boost/property_tree/ptree.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <string>
 #include <exception>
@@ -23,31 +23,6 @@
 #include "PersonalityTable.h"
 #include "ScriptTable.h"
 #include "Personality.h"
-
-std::vector<std::string> getSubnetsToScan();
-void calculateDistributionMetrics();
-enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
-
-std::vector<std::pair<std::string, std::string> > aggregate_profiles;
-std::vector<std::string> aggregate_ethvendors;
-std::vector<std::pair<int, std::string> > aggregate_port_services;
-std::vector<std::pair<int, std::string> > aggregate_port_state;
-
-struct port_read
-{
-	int open_ports;
-	std::vector<std::pair<int, std::string> > port_services;
-	std::vector<std::string> port_state;
-};
-
-struct profile_read
-{
-	std::string address;
-	std::string personality;
-	std::string personality_class;
-	std::string ethernet_vendor;
-	struct port_read ports;
-};
 
 struct profile_read parseHost(boost::property_tree::ptree pt2)
 {
@@ -242,7 +217,14 @@ void calculateDistributionMetrics()
 {
 	for(uint16_t i = 0; i < profile_vec.size(); i++)
 	{
-		personalities[profile_vec[i].personality]++;
+		if(personalities.find(profile_vec[i].personality) != personalities.end())
+		{
+			personalities.get(profile_vec[i].personality)++;
+		}
+		else
+		{
+			personalities[profile_vec[i].personality]++;
+		}
 	}
 
 	uint16_t testSum = 0;
@@ -256,7 +238,7 @@ void calculateDistributionMetrics()
 
 	for(Pers_Table::iterator it = personalities.begin(); it != personalities.end(); it++)
 	{
-		std::cout << it->second << "(" << ((double)it->second / (double)testSum) * 100 << "%) of the hosts were " << it->first << std::endl;
+		std::cout << it->second << "(" << ((double)it->second.first / (double)testSum) * 100 << "%) of the hosts were " << it->first << std::endl;
 	}
 
 	for(Ports_Table::iterator it = ports.begin(); it != ports.end(); it++)

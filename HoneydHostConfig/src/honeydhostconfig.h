@@ -1,8 +1,9 @@
 #ifndef HONEYDHOSTCONFIG_
 #define HONEYDHOSTCONFIG_
 
-#include "HoneydConfiguration.h"
-#include <vector>
+#include "HashMapStructs.h"
+#include "HashMap.h"
+/*#include <vector>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -17,15 +18,17 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/property_tree/xml_parser.hpp>*/
 #include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
 
 std::vector<struct profile_read> profile_vec;
 std::vector<uint16_t> leftoverHostspace;
 uint16_t tempHostspace;
-typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > Pers_Table;
+typedef Nova::HashMap<std::string, std::pair<uint16_t,std::string>, std::tr1::hash<std::string>, eqstr > Pers_Table;
 typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > Ports_Table;
+Pers_Table personalities;
+// make a vendor MAC db to query for MAC
+
 enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
 Pers_Table personalities;
 Ports_Table ports;
