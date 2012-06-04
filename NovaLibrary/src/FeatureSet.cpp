@@ -70,11 +70,11 @@ void FeatureSet::ClearFeatureSet()
 	m_intervalTable.clear();
 	m_lastTimes.clear();
 
-	rstCount = 0;
-	ackCount = 0;
-	synCount = 0;
-	finCount = 0;
-	synAckCount = 0;
+	m_rstCount = 0;
+	m_ackCount = 0;
+	m_synCount = 0;
+	m_finCount = 0;
+	m_synAckCount = 0;
 
 	m_packetCount = 0;
 	m_tcpPacketCount = 0;
@@ -285,23 +285,23 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 
 		case TCP_PERCENT_SYN:
 		{
-			m_features[TCP_PERCENT_SYN] = ((double)synCount)/((double)m_tcpPacketCount + 1);
+			m_features[TCP_PERCENT_SYN] = ((double)m_synCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
 		case TCP_PERCENT_FIN:
 		{
-			m_features[TCP_PERCENT_FIN] = ((double)finCount)/((double)m_tcpPacketCount+ 1);
+			m_features[TCP_PERCENT_FIN] = ((double)m_finCount)/((double)m_tcpPacketCount+ 1);
 			break;
 		}
 		case TCP_PERCENT_RST:
 		{
-			m_features[TCP_PERCENT_RST] = ((double)rstCount)/((double)m_tcpPacketCount + 1);
+			m_features[TCP_PERCENT_RST] = ((double)m_rstCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
 		case TCP_PERCENT_SYNACK:
 		{
 			//cout << "TCP stats: synCount: " << synCount << " synAckCount: " << synAckCount << " ackCount: " << ackCount << " finCount: " << finCount << " rstCount" << rstCount << endl;
-			m_features[TCP_PERCENT_SYNACK] = ((double)synAckCount)/((double)m_tcpPacketCount + 1);
+			m_features[TCP_PERCENT_SYNACK] = ((double)m_synAckCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
 		default:
@@ -354,25 +354,25 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 
 			if (evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
 			{
-				synAckCount++;
+				m_synAckCount++;
 			}
 			else if (evidence->m_evidencePacket.tcp_hdr.syn)
 			{
-				synCount++;
+				m_synCount++;
 			}
 			else if (evidence->m_evidencePacket.tcp_hdr.ack)
 			{
-				ackCount++;
+				m_ackCount++;
 			}
 
 			if (evidence->m_evidencePacket.tcp_hdr.rst)
 			{
-				rstCount++;
+				m_rstCount++;
 			}
 
 			if (evidence->m_evidencePacket.tcp_hdr.fin)
 			{
-				finCount++;
+				m_finCount++;
 			}
 
 			break;
@@ -481,11 +481,11 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_intervalTable[it->first] += rhs.m_intervalTable[it->first];
 	}
 
-	synCount += rhs.synCount;
-	ackCount += rhs.ackCount;
-	finCount += rhs.finCount;
-	rstCount += rhs.rstCount;
-	synAckCount += rhs.synAckCount;
+	m_synCount += rhs.m_synCount;
+	m_ackCount += rhs.m_ackCount;
+	m_finCount += rhs.m_finCount;
+	m_rstCount += rhs.m_rstCount;
+	m_synAckCount += rhs.m_synAckCount;
 
 	return *this;
 }
@@ -528,11 +528,11 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	}
 
 
-	synCount -= rhs.synCount;
-	ackCount -= rhs.ackCount;
-	finCount -= rhs.finCount;
-	rstCount -= rhs.rstCount;
-	synAckCount -= rhs.synAckCount;
+	m_synCount -= rhs.m_synCount;
+	m_ackCount -= rhs.m_ackCount;
+	m_finCount -= rhs.m_finCount;
+	m_rstCount -= rhs.m_rstCount;
+	m_synAckCount -= rhs.m_synAckCount;
 
 	return *this;
 }
@@ -599,6 +599,14 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	SerializeChunk(buf, &offset, (char*)&m_startTime, sizeof m_startTime, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_endTime, sizeof m_endTime, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_lastTime, sizeof m_lastTime, bufferSize);
+
+	SerializeChunk(buf, &offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+
 
 	//These tables all just place their key followed by the data
 	uint32_t tempInt;
@@ -785,6 +793,24 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	{
 		m_lastTime = temp;
 	}
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_rstCount, bufferSize);
+	m_rstCount += temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_ackCount, bufferSize);
+	m_ackCount += temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synCount, bufferSize);
+	m_synCount += temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_finCount, bufferSize);
+	m_finCount += temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synAckCount, bufferSize);
+	m_synAckCount += temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_tcpPacketCount, bufferSize);
+	m_tcpPacketCount += temp;
 
 	/***************************************************************************************************
 	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)

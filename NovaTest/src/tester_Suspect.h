@@ -59,7 +59,7 @@ protected:
 		p2.m_evidencePacket.ts = 20;
 
 
-		Config::Inst()->SetEnabledFeatures("111111111");
+		Config::Inst()->SetEnabledFeatures("1111111111111");
 	}
 
 };

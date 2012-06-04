@@ -8,7 +8,7 @@ class FeatureSetTest : public ::testing::Test {
 protected:
 	FeatureSet fset;
 	virtual void SetUp() {
-		Config::Inst()->SetEnabledFeatures("111111111");
+		Config::Inst()->SetEnabledFeatures("1111111111111");
 
 		// First test packet
 		Evidence p1;

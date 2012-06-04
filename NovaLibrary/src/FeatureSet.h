@@ -175,11 +175,11 @@ private:
 	time_t m_lastTime;
 
 	// For some TCP flag ratios and statistics
-	uint32_t rstCount;
-	uint32_t ackCount;
-	uint32_t synCount;
-	uint32_t finCount;
-	uint32_t synAckCount;
+	uint32_t m_rstCount;
+	uint32_t m_ackCount;
+	uint32_t m_synCount;
+	uint32_t m_finCount;
+	uint32_t m_synAckCount;
 
 	time_t m_totalInterval;
 
