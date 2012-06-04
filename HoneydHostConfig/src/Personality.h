@@ -22,7 +22,7 @@ public:
 
 	void AddVendor(std::string);
 
-	void AddPort(std::string, std::pair<uint16_t, std::string>);
+	void AddPort(std::string, std::string);
 
 	unsigned int m_count;
 	unsigned long long int m_port_count;

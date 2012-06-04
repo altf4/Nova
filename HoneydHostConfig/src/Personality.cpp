@@ -29,10 +29,13 @@ void Personality::AddVendor(string vendor)
 	}
 }
 
-void Personality::AddPort(string port_string, pair<uint16_t, string> port_content)
+void Personality::AddPort(string port_string, string port_service)
 {
 	if(m_ports.find(port_string) == m_ports.end())
 	{
+		pair<uint16_t, string> port_content;
+		port_content.first = 1;
+		port_content.second = port_service;
 		//probably can't do this, check and make sure
 		m_ports[port_string] = port_content;
 	}
