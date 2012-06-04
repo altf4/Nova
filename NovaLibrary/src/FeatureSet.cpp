@@ -617,8 +617,6 @@ void FeatureSet::ClearFeatureData()
 uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
-	uint32_t count = 0;
-	uint32_t table_entries = 0;
 
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
@@ -637,120 +635,12 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
 
+	SerializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, ~0, bufferSize);
+	SerializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, 0, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
 
-	//These tables all just place their key followed by the data
-	uint32_t tempInt;
-
-	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
-
-	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
-			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
-		}
-	}
-
-	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
-
-	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
-			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
-		}
-	}
-
-	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
-
-	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
-			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
-		}
-	}
-
-	for(Port_Table::iterator it = m_PortTCPTable.begin(); (it != m_PortTCPTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
-
-	for(Port_Table::iterator it = m_PortTCPTable.begin(); (it != m_PortTCPTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
-			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
-		}
-	}
-
-
-	for(Port_Table::iterator it = m_PortUDPTable.begin(); (it != m_PortUDPTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
-
-	for(Port_Table::iterator it = m_PortUDPTable.begin(); (it != m_PortUDPTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
-			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
-		}
-	}
 	return offset;
 }
 
@@ -814,20 +704,11 @@ uint32_t FeatureSet::GetFeatureDataLength()
 
 uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 {
-	// Uncomment this if you want to print the line, index, and size of each item deserialized
-	// This can be diffed with the SERIALIZATION_DEBUGGING output to find offset mismatches
-	//#define DESERIALIZATION_DEBUGGING true
-
 	uint32_t offset = 0;
-
-	//Bytes in a word, used for everything but port #'s
-	uint32_t table_size = 0;
 
 	//Temporary variables to store and track data during deserialization
 	uint32_t temp = 0;
-	time_t timeTemp;
-	uint32_t tempCount = 0;
-	uint16_t tempShort = 0;
+
 
 	//Required, individual variables for calculation
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_totalInterval, bufferSize);
@@ -879,60 +760,12 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
 	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
-	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
-	//Packet interval table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		DeserializeChunk(buf, &offset, (char*)&temp, sizeof timeTemp, bufferSize);
-		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
+	DeserializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, bufferSize);
+	DeserializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, bufferSize);
 
-		m_intervalTable[temp] += tempCount;
-		i++;
-	}
-
-	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
-	//Packet size table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		DeserializeChunk(buf, &offset, (char*)&tempShort, sizeof tempShort, bufferSize);
-		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
-
-		m_packTable[tempShort] += tempCount;
-		i++;
-	}
-
-	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
-	//IP table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		DeserializeChunk(buf, &offset, (char*)&temp, sizeof temp, bufferSize);
-		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
-
-		m_IPTable[temp] += tempCount;
-		i++;
-	}
-
-	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
-	//Port table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		DeserializeChunk(buf, &offset, (char*)&tempShort, sizeof tempShort, bufferSize);
-		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
-
-		m_PortTCPTable[tempShort] += tempCount;
-		i++;
-	}
-
-	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
-	//Port table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		DeserializeChunk(buf, &offset, (char*)&tempShort, sizeof tempShort, bufferSize);
-		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
-
-		m_PortUDPTable[tempShort] += tempCount;
-		i++;
-	}
 	return offset;
 }
 
@@ -959,6 +792,26 @@ bool FeatureSet::operator ==(const FeatureSet &rhs) const
 		return false;
 	}
 	if(m_packetCount != rhs.m_packetCount)
+	{
+		return false;
+	}
+	if (m_tcpPacketCount != rhs.m_tcpPacketCount)
+	{
+		return false;
+	}
+	if (m_ackCount != rhs.m_ackCount)
+	{
+		return false;
+	}
+	if (m_synCount != rhs.m_synCount)
+	{
+		return false;
+	}
+	if (m_finCount != rhs.m_finCount)
+	{
+		return false;
+	}
+	if (m_rstCount != rhs.m_rstCount)
 	{
 		return false;
 	}

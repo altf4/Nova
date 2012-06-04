@@ -34,10 +34,74 @@ class serializationException : public std::exception {
 	  }
 };
 
-// Generic serialize/deserialize methods
+/* Serializes (simple memcpy) a chunk of data with checking on buffer bounds
+ *    buf             : Pointer to buffer location where serialized data should go
+ *    offset          : Offset from the buffer (will be incremented by SerializeChunk)
+ *    dataToSerialize : Pointer to data to serialize
+ *    size            : Size of the data to serialize
+ *   maxBufferSize   : Max size of the buffer, throw exception if serialize goes past this
+ */
 bool SerializeChunk(u_char* buf, uint32_t* offset, char* dataToSerialize, uint32_t size, uint32_t maxBufferSize);
 bool DeserializeChunk(u_char* buf, uint32_t* offset, char* deserializeTo, uint32_t size, uint32_t maxBufferSize);
 
+
+/* Serializes a hash map
+ *    buf             : Pointer to buffer location where serialized data should go
+ *    offset          : Offset from the buffer (will be incremented by SerializeChunk)
+ *    dataToSerialize : Reference to the hash map
+ *    nullValue       : Any map entries with this value will be skipped (eg, 0 for bins that store a count)
+ *   maxBufferSize    : Max size of the buffer, throw exception if serialize goes past this
+ */
+template <typename TableType, typename KeyType, typename ValueType>
+inline void SerializeHashTable(u_char* buf, uint32_t* offset, TableType& dataToSerialize, KeyType nullValue, uint32_t maxBufferSize)
+{
+	typename TableType::iterator it = dataToSerialize.begin();
+	typename TableType::iterator last = dataToSerialize.end();
+
+	uint32_t count = 0;
+	while (it != last)
+	{
+		if (it->first != nullValue)
+		{
+			count++;
+		}
+		it++;
+	}
+
+	it = dataToSerialize.begin();
+
+	//The size of the Table
+	SerializeChunk(buf, offset, (char*)&count, sizeof count, maxBufferSize);
+
+	while (it != last)
+	{
+		if (it->first != nullValue)
+		{
+			SerializeChunk(buf, offset, (char*)&it->first, sizeof it->first, maxBufferSize);
+			SerializeChunk(buf, offset, (char*)&it->second, sizeof it->second, maxBufferSize);
+		}
+		it++;
+	}
+}
+
+template <typename TableType, typename KeyType, typename ValueType>
+inline void DeserializeHashTable(u_char* buf, uint32_t* offset, TableType& deserializeTo, uint32_t maxBufferSize)
+{
+	uint32_t tableSize = 0;
+	ValueType value;
+	KeyType key;
+
+	DeserializeChunk(buf, offset, (char*)&tableSize, sizeof tableSize, maxBufferSize);
+
+	for(uint32_t i = 0; i < tableSize;)
+	{
+		DeserializeChunk(buf, offset, (char*)&key, sizeof key, maxBufferSize);
+		DeserializeChunk(buf, offset, (char*)&value, sizeof value, maxBufferSize);
+
+		deserializeTo[key] = value;
+		i++;
+	}
+}
 
 } /* namespace Nova */
 #endif /* SERIALIZATIONHELPER_H_ */
