@@ -168,7 +168,8 @@ private:
 	Packet_Table m_packTable;
 
 	//Table of Ports and associated packet counts
-	Port_Table m_portTable;
+	Port_Table m_PortTCPTable;
+	Port_Table m_PortUDPTable;
 
 	time_t m_startTime;
 	time_t m_endTime;

@@ -44,7 +44,8 @@ string FeatureSet::m_featureNames[] =
 FeatureSet::FeatureSet()
 {
 	m_IPTable.set_empty_key(0);
-	m_portTable.set_empty_key(0);
+	m_PortTCPTable.set_empty_key(0);
+	m_PortUDPTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
 	m_intervalTable.set_empty_key(~0);
 	m_lastTimes.set_empty_key(0);
@@ -65,7 +66,8 @@ void FeatureSet::ClearFeatureSet()
 	m_totalInterval = 0;
 
 	m_IPTable.clear();
-	m_portTable.clear();
+	m_PortTCPTable.clear();
+	m_PortUDPTable.clear();
 	m_packTable.clear();
 	m_intervalTable.clear();
 	m_lastTimes.clear();
@@ -188,10 +190,10 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		case PORT_TRAFFIC_DISTRIBUTION:
 		{
 			m_features[PORT_TRAFFIC_DISTRIBUTION] = 0;
-			if(m_portTable.size())
+			if(m_PortTCPTable.size() || m_PortUDPTable.size())
 			{
 				double portDivisor = 0;
-				for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+				for(Port_Table::iterator it = m_PortTCPTable.begin() ; it != m_PortTCPTable.end(); it++)
 				{
 					//get the maximum port entry for normalization
 					if(it->second > portDivisor)
@@ -199,10 +201,26 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 						portDivisor = it->second;
 					}
 				}
+
+				for(Port_Table::iterator it = m_PortUDPTable.begin() ; it != m_PortUDPTable.end(); it++)
+				{
+					//get the maximum port entry for normalization
+					if(it->second > portDivisor)
+					{
+						portDivisor = it->second;
+					}
+				}
+
+
 				//Multiply the maximum entry with the size to get the divisor
-				portDivisor = portDivisor * ((double)m_portTable.size());
+				portDivisor = portDivisor * ((double)m_PortTCPTable.size() + (double)m_PortUDPTable.size());
 				long long unsigned int temp = 0;
-				for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+				for(Port_Table::iterator it = m_PortTCPTable.begin() ; it != m_PortTCPTable.end(); it++)
+				{
+					temp += it->second;
+				}
+
+				for(Port_Table::iterator it = m_PortUDPTable.begin() ; it != m_PortUDPTable.end(); it++)
 				{
 					temp += it->second;
 				}
@@ -257,7 +275,7 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		/// Number of distinct ports contacted
 		case DISTINCT_PORTS:
 		{
-			m_features[DISTINCT_PORTS] =  m_portTable.size();
+			m_features[DISTINCT_PORTS] =  m_PortTCPTable.size() + m_PortUDPTable.size();
 			break;
 		}
 		///Measures the distribution of intervals between packets
@@ -338,7 +356,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		{
 			if (evidence->m_evidencePacket.dst_port != 0)
 			{
-				m_portTable[evidence->m_evidencePacket.dst_port]++;
+				m_PortUDPTable[evidence->m_evidencePacket.dst_port]++;
 			}
 			break;
 		}
@@ -348,7 +366,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 			m_tcpPacketCount++;
 			if (evidence->m_evidencePacket.dst_port != 0)
 			{
-				m_portTable[evidence->m_evidencePacket.dst_port]++;
+				m_PortTCPTable[evidence->m_evidencePacket.dst_port]++;
 			}
 
 
@@ -466,9 +484,14 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_IPTable[it->first] += rhs.m_IPTable[it->first];
 	}
 
-	for(Port_Table::iterator it = rhs.m_portTable.begin(); it != rhs.m_portTable.end(); it++)
+	for(Port_Table::iterator it = rhs.m_PortTCPTable.begin(); it != rhs.m_PortTCPTable.end(); it++)
 	{
-		m_portTable[it->first] += rhs.m_portTable[it->first];
+		m_PortTCPTable[it->first] += rhs.m_PortTCPTable[it->first];
+	}
+
+	for(Port_Table::iterator it = rhs.m_PortUDPTable.begin(); it != rhs.m_PortUDPTable.end(); it++)
+	{
+		m_PortUDPTable[it->first] += rhs.m_PortUDPTable[it->first];
 	}
 
 	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
@@ -513,9 +536,15 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 	{
 		m_IPTable[it->first] -= rhs.m_IPTable[it->first];
 	}
-	for(Port_Table::iterator it = rhs.m_portTable.begin(); it != rhs.m_portTable.end(); it++)
+
+	for(Port_Table::iterator it = rhs.m_PortTCPTable.begin(); it != rhs.m_PortTCPTable.end(); it++)
 	{
-		m_portTable[it->first] -= rhs.m_portTable[it->first];
+		m_PortTCPTable[it->first] -= rhs.m_PortTCPTable[it->first];
+	}
+
+	for(Port_Table::iterator it = rhs.m_PortUDPTable.begin(); it != rhs.m_PortUDPTable.end(); it++)
+	{
+		m_PortUDPTable[it->first] -= rhs.m_PortUDPTable[it->first];
 	}
 
 	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
@@ -580,7 +609,8 @@ void FeatureSet::ClearFeatureData()
 		m_intervalTable.clear();
 		m_packTable.clear();
 		m_IPTable.clear();
-		m_portTable.clear();
+		m_PortTCPTable.clear();
+		m_PortUDPTable.clear();
 		m_lastTimes.clear();
 }
 
@@ -677,7 +707,7 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 		}
 	}
 
-	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (count < m_maxTableEntries); it++)
+	for(Port_Table::iterator it = m_PortTCPTable.begin(); (it != m_PortTCPTable.end()) && (count < m_maxTableEntries); it++)
 	{
 		if(it->second)
 		{
@@ -689,7 +719,30 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	tempInt = count - table_entries;
 	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
 
-	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (table_entries < count); it++)
+	for(Port_Table::iterator it = m_PortTCPTable.begin(); (it != m_PortTCPTable.end()) && (table_entries < count); it++)
+	{
+		if(it->second)
+		{
+			table_entries++;
+			SerializeChunk(buf, &offset, (char*)&it->first, sizeof it->first, bufferSize);
+			SerializeChunk(buf, &offset, (char*)&it->second, sizeof it->second, bufferSize);
+		}
+	}
+
+
+	for(Port_Table::iterator it = m_PortUDPTable.begin(); (it != m_PortUDPTable.end()) && (count < m_maxTableEntries); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	//The size of the Table
+	tempInt = count - table_entries;
+	SerializeChunk(buf, &offset, (char*)&tempInt, sizeof tempInt, bufferSize);
+
+	for(Port_Table::iterator it = m_PortUDPTable.begin(); (it != m_PortUDPTable.end()) && (table_entries < count); it++)
 	{
 		if(it->second)
 		{
@@ -737,7 +790,17 @@ uint32_t FeatureSet::GetFeatureDataLength()
 			count++;
 		}
 	}
-	for(Port_Table::iterator it = m_portTable.begin(); it != m_portTable.end(); it++)
+
+
+	for(Port_Table::iterator it = m_PortTCPTable.begin(); it != m_PortTCPTable.end(); it++)
+	{
+		if(it->second)
+		{
+			count++;
+		}
+	}
+
+	for(Port_Table::iterator it = m_PortUDPTable.begin(); it != m_PortUDPTable.end(); it++)
 	{
 		if(it->second)
 		{
@@ -856,7 +919,18 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 		DeserializeChunk(buf, &offset, (char*)&tempShort, sizeof tempShort, bufferSize);
 		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
 
-		m_portTable[tempShort] += tempCount;
+		m_PortTCPTable[tempShort] += tempCount;
+		i++;
+	}
+
+	DeserializeChunk(buf, &offset, (char*)&table_size, sizeof table_size, bufferSize);
+	//Port table
+	for(uint32_t i = 0; i < table_size;)
+	{
+		DeserializeChunk(buf, &offset, (char*)&tempShort, sizeof tempShort, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&tempCount, sizeof tempCount, bufferSize);
+
+		m_PortUDPTable[tempShort] += tempCount;
 		i++;
 	}
 	return offset;
