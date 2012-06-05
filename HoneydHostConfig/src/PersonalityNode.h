@@ -11,6 +11,22 @@
 namespace Nova
 {
 
+class PersonalityNode
+{
+
+public:
+
+	//Default constructor
+	PersonalityNode();
+
+	//Deconstructor
+	~PersonalityNode();
+
+	std::string m_key;
+	std::vector<std::pair<std::string, PersonalityNode *>> m_children;
+
+};
+
 }
 
 #endif /* PERSONALITYNODE_H_ */
