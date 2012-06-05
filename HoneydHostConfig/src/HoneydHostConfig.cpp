@@ -1,3 +1,21 @@
+//============================================================================
+// Name        : Novad.cpp
+// Copyright   : DataSoft Corporation 2011-2012
+//	Nova is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   Nova is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
+// Description : Nova Daemon to perform network anti-reconnaissance
+//============================================================================
+
 
 // REQUIRES NMAP 6
 
@@ -20,8 +38,9 @@
 #include <algorithm>
 
 #include "ScriptTable.h"
-#include "honeydhostconfig.h"
+#include "HoneydHostConfig.h"
 
+using namespace std;
 using namespace Nova;
 
 std::vector<uint16_t> leftoverHostspace;
@@ -141,51 +160,38 @@ void Nova::load_nmap(const std::string &filename)
 
 int main(int argc, char ** argv)
 {
-	std::string saveLocation;
-	// Instantiate PersonalityTable Object heres
-	std::cout << std::endl;
+	ErrCode errVar = OKAY;
+	std::vector<std::string> recv = getSubnetsToScan(&errVar);
 
-	if(argc < 2)
+	printRecv(recv);
+
+	errVar = LoadPersonalityTable(recv);
+
+	if(errVar != OKAY)
 	{
-		std::cout << "Outputs will be saved in the current folder." << std::endl;
-		saveLocation = "";
-	}
-	else if(argc == 2)
-	{
-		saveLocation = std::string(argv[1]);
-		if(saveLocation[saveLocation.length() - 1] != '/')
-		{
-			saveLocation += "/";
-		}
-		std::cout << "Outputs will be saved in " << saveLocation << std::endl;
+		std::cout << "Unable to load personality table" << std::endl;
+		return errVar;
 	}
 
-	std::vector<std::string> recv = getSubnetsToScan();
+	return errVar;
+}
 
-	std::cout << "Subnets to be scanned: " << std::endl;
-	for(uint16_t i = 0; i < recv.size(); i++)
-	{
-		std::cout << recv[i] << std::endl;
-	}
-	std::cout << std::endl;
-
+Nova::ErrCode Nova::LoadPersonalityTable(std::vector<std::string> recv)
+{
 	std::stringstream ss;
 
 	for(uint16_t i = 0; i < recv.size(); i++)
 	{
 		ss << i;
-		std::string scan = "sudo nmap -O --osscan-guess -oX " + saveLocation + "subnet" + ss.str() + ".xml " + recv[i] + " >/dev/null";
+		std::string scan = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + recv[i] + " >/dev/null";
 		while(system(scan.c_str()));
 		try
 		{
 			std::string file = "subnet" + ss.str() + ".xml";
 
+			std::cout << file << std::endl;
+
 			load_nmap(file);
-
-			//need to write profile_vec profile_read structs to
-			//honeyd configuration format
-
-			personalities.ListInfo();
 
 			calculateDistributionMetrics();
 		}
@@ -197,8 +203,19 @@ int main(int argc, char ** argv)
 		ss.str();
 	}
 
-	std::cout << std::endl;
+	personalities.ListInfo();
+
 	return OKAY;
+}
+
+void Nova::printRecv(std::vector<std::string> recv)
+{
+	std::cout << "Subnets to be scanned: " << std::endl;
+	for(uint16_t i = 0; i < recv.size(); i++)
+	{
+		std::cout << recv[i] << std::endl;
+	}
+	std::cout << std::endl;
 }
 
 void Nova::calculateDistributionMetrics()
@@ -206,12 +223,13 @@ void Nova::calculateDistributionMetrics()
 
 }
 
-std::vector<std::string> Nova::getSubnetsToScan()
+std::vector<std::string> Nova::getSubnetsToScan(Nova::ErrCode * errVar)
 {
 	struct ifaddrs * devices = NULL;
 	ifaddrs *curIf = NULL;
 	std::stringstream ss;
 	std::vector<std::string> addresses;
+	addresses.clear();
 	char host[NI_MAXHOST];
 	char bmhost[NI_MAXHOST];
 	struct in_addr address;
@@ -227,7 +245,8 @@ std::vector<std::string> Nova::getSubnetsToScan()
 	if(getifaddrs(&devices))
 	{
 		std::cout << "Ethernet Interface Auto-Detection failed" << std::endl;
-		exit(AUTODETECTFAIL);
+		*errVar = AUTODETECTFAIL;
+		return addresses;
 	}
 
 	std::vector<std::string> interfaces;
@@ -243,7 +262,8 @@ std::vector<std::string> Nova::getSubnetsToScan()
 			if(s != 0)
 			{
 				std::cout << "Getting Name info of Interface IP failed" << std::endl;
-				exit(GETNAMEINFOFAIL);
+				*errVar = GETNAMEINFOFAIL;
+				return addresses;
 			}
 
 			s = getnameinfo(curIf->ifa_netmask, sizeof(sockaddr_in), bmhost, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
@@ -251,7 +271,8 @@ std::vector<std::string> Nova::getSubnetsToScan()
 			if(s != 0)
 			{
 				std::cout << "Getting Name info of Interface Netmask failed" << std::endl;
-				exit(GETBITMASKFAIL);
+				*errVar = GETBITMASKFAIL;
+				return addresses;
 			}
 
 			std::string bmhost_push = std::string(bmhost);
