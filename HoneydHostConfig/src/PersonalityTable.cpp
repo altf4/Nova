@@ -35,14 +35,11 @@ void PersonalityTable::AddHost(Personality * add)
 		{
 			if(cur->m_ports.find(it->first) == cur->m_ports.end())
 			{
-				pair<uint16_t, string> push;
-				push.first = 1;
-				push.second = it->second.second;
-				cur->m_ports[it->first] = push;
+				cur->m_ports[it->first] = 1;
 			}
 			else
 			{
-				cur->m_ports[it->first].first++;
+				cur->m_ports[it->first]++;
 			}
 			cur->m_port_count++;
 		}

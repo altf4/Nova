@@ -5,13 +5,10 @@
  *      Author: victim
  */
 
-#include "HashMapStructs.h"
-#include "HashMap.h"
+#include "AutoConfigHashMaps.h"
 
 namespace Nova
 {
-typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > MAC_Table;
-typedef Nova::HashMap<std::string, std::pair<uint16_t, std::string>, std::tr1::hash<std::string>, eqstr > Port_Table;
 
 class Personality
 {
@@ -34,9 +31,11 @@ public:
 	std::vector<std::string> m_macs;
 	// vector of IP addresses
 	std::vector<std::string> m_addresses;
+
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 	MAC_Table m_vendors;
-	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a pair consisting of <uint16_t count, std::string nmap_service>
+
+	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
 	Port_Table m_ports;
 };
 }
