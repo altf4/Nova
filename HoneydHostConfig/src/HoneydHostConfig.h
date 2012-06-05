@@ -32,7 +32,8 @@ enum ErrCode : int
 	AUTODETECTFAIL,
 	GETNAMEINFOFAIL,
 	GETBITMASKFAIL,
-	DONTADDSELF
+	DONTADDSELF,
+	NOMATCHEDPERSONALITY
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost
@@ -43,8 +44,8 @@ void LoadNmap(const std::string &filename);
 // Takes a <host> sub-ptree and parses it for the requisite information, placing said information
 // into a Personality object which then gets passed into the PersonalityTable object
 //  ptree pt2 - <host> subtree of the highest level node in the nmap xml files
-// Returns nothing
-void ParseHost(boost::property_tree::ptree pt2);
+// Returns ErrCode to determine what went wrong
+ErrCode ParseHost(boost::property_tree::ptree pt2);
 
 // Determines what interfaces are present, and the subnets that they're connected to
 //  ErrCode * errVar - ptr to an error code variable so that we can inspect it's value afterward

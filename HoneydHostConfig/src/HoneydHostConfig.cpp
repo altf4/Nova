@@ -51,7 +51,7 @@ Nova::PersonalityTable personalities;
 std::string localMachine;
 //VendorMacDb * macs;
 
-void Nova::ParseHost(boost::property_tree::ptree pt2)
+ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 {
 	using boost::property_tree::ptree;
 
@@ -74,7 +74,7 @@ void Nova::ParseHost(boost::property_tree::ptree pt2)
 					}
 					else
 					{
-						return;
+						return DONTADDSELF;
 					}
 				}
 				else if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("mac"))
@@ -141,7 +141,15 @@ void Nova::ParseHost(boost::property_tree::ptree pt2)
 
 	// call AddHost() on the Personality object created at the beginning of this method
 
+	if(person->m_personalityClass.empty())
+	{
+		std::cout << "Failed to match any personality information to " << person->m_addresses[0] << ", not adding to Personality Table." << std::endl;
+		return NOMATCHEDPERSONALITY;
+	}
+
 	personalities.AddHost(person);
+
+	return OKAY;
 }
 
 void Nova::LoadNmap(const std::string &filename)
@@ -191,8 +199,6 @@ Nova::ErrCode Nova::LoadPersonalityTable(std::vector<std::string> recv)
 		try
 		{
 			std::string file = "subnet" + ss.str() + ".xml";
-
-			std::cout << file << std::endl;
 
 			LoadNmap(file);
 
