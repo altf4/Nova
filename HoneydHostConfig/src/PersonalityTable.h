@@ -28,6 +28,7 @@ namespace Nova
 {
 class PersonalityTable
 {
+public:
 	PersonalityTable();
 	~PersonalityTable();
 
@@ -40,6 +41,8 @@ class PersonalityTable
 	// Dummy function def ->
 	// Generate a haystack that matches only what is seen and to near exact ratios, essentially duplicating the network n times until it's full.
 	void* GenerateExactOutput();
+
+	void ListInfo();
 
 	//Increment every time a host is added
 	unsigned int m_num_of_hosts;

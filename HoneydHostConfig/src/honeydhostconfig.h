@@ -12,28 +12,10 @@ typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr 
 
 namespace Nova
 {
-enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL};
-Pers_Table personalities;
-Ports_Table ports;
+enum ERRCODES {OKAY, AUTODETECTFAIL, GETNAMEINFOFAIL, GETBITMASKFAIL, DONTADDSELF};
 
-struct port_read
-{
-	int open_ports;
-	std::vector<std::pair<int, std::pair<std::string, std::string> > > port_services;
-	std::vector<std::string> port_state;
-};
-
-struct profile_read
-{
-	std::string address;
-	std::string personality;
-	std::string personality_class;
-	std::string ethernet_vendor;
-	struct port_read ports;
-};
-
-std::vector<struct profile_read> load_nmap(const std::string &filename);
-struct profile_read parseHost(boost::property_tree::ptree pt2);
+void load_nmap(const std::string &filename);
+void parseHost(boost::property_tree::ptree pt2);
 std::vector<std::string> getSubnetsToScan();
 void calculateDistributionMetrics();
 }

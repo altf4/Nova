@@ -6,7 +6,7 @@ namespace Nova
 {
 Personality::Personality()
 {
-	m_count = 0;
+	m_count = 1;
 	m_port_count = 0;
 	m_vendors.set_empty_key("");
 	m_ports.set_empty_key("");
@@ -33,15 +33,12 @@ void Personality::AddPort(string port_string, string port_service)
 {
 	if(m_ports.find(port_string) == m_ports.end())
 	{
-		pair<uint16_t, string> port_content;
-		port_content.first = 1;
-		port_content.second = port_service;
 		//probably can't do this, check and make sure
-		m_ports[port_string] = port_content;
+		m_ports[port_string] = 1;
 	}
 	else
 	{
-		m_ports[port_string].first++;
+		m_ports[port_string]++;
 	}
 }
 }

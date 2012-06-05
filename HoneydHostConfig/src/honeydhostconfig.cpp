@@ -24,18 +24,17 @@
 
 using namespace Nova;
 
-std::vector<struct profile_read> profile_vec;
 std::vector<uint16_t> leftoverHostspace;
 uint16_t tempHostspace;
+Nova::PersonalityTable personalities;
+std::string localMachine;
 
-struct profile_read Nova::parseHost(boost::property_tree::ptree pt2)
+void Nova::parseHost(boost::property_tree::ptree pt2)
 {
 	using boost::property_tree::ptree;
 
 	// instantiate Personality object here, populate it from the code below
 	Personality * person = new Personality();
-
-	struct profile_read ret;
 
 	int i = 0;
 
@@ -47,12 +46,17 @@ struct profile_read Nova::parseHost(boost::property_tree::ptree pt2)
 			{
 				if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("ipv4"))
 				{
-					//ret.address = v.second.get<std::string>("<xmlattr>.addr");
-					person->m_addresses.push_back(v.second.get<std::string>("<xmlattr>.addr"));
+					if(localMachine.compare(v.second.get<std::string>("<xmlattr>.addr")))
+					{
+						person->m_addresses.push_back(v.second.get<std::string>("<xmlattr>.addr"));
+					}
+					else
+					{
+						return;
+					}
 				}
 				else if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("mac"))
 				{
-					//ret.ethernet_vendor = v.second.get<std::string>("<xmlattr>.vendor");
 					person->m_macs.push_back(v.second.get<std::string>("<xmlattr>.addr"));
 					person->AddVendor(v.second.get<std::string>("<xmlattr>.vendor"));
 				}
@@ -63,18 +67,12 @@ struct profile_read Nova::parseHost(boost::property_tree::ptree pt2)
 				{
 					try
 					{
-						std::pair<int, std::pair<std::string, std::string> > push;
-						std::string state = c.second.get<std::string>("state.<xmlattr>.state");
-						ret.ports.port_state.push_back(state);
-						push.first = c.second.get<int>("<xmlattr>.portid");
-						push.second.first = c.second.get<std::string>("<xmlattr>.protocol");
 						std::stringstream ss;
 						ss << c.second.get<int>("<xmlattr>.portid");
-						std::string port_key = ss.str() + "_" + boost::to_upper_copy(c.second.get<std::string>("<xmlattr>.protocal"));
+						std::string port_key = ss.str() + "_" + boost::to_upper_copy(c.second.get<std::string>("<xmlattr>.protocol"));
 						ss.str("");
-						push.second.second = c.second.get<std::string>("service.<xmlattr>.name");
-						//person->
-						ret.ports.port_services.push_back(push);
+						std::string port_service = c.second.get<std::string>("service.<xmlattr>.name");
+						person->AddPort(port_key, port_service);
 						i++;
 					}
 					catch(std::exception &e)
@@ -85,25 +83,27 @@ struct profile_read Nova::parseHost(boost::property_tree::ptree pt2)
 			}
 			else if(!v.first.compare("os"))
 			{
+				// Need to determine what to do in the case that an OS class designation doesn't
+				// have all four fields required
 				if(pt2.get<std::string>("os.osmatch.<xmlattr>.name").compare(""))
 				{
-					ret.personality = pt2.get<std::string>("os.osmatch.<xmlattr>.name");
-				}
-				if(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.vendor").compare(""))
-				{
-					ret.personality_class += pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.vendor") + " | ";
-				}
-				if(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osfamily").compare(""))
-				{
-					ret.personality_class += pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osfamily") + " | ";
-				}
-				if(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osgen").compare(""))
-				{
-					ret.personality_class += pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osgen") + " | ";
+					person->m_personalityClass.push_back(pt2.get<std::string>("os.osmatch.<xmlattr>.name"));
 				}
 				if(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.type").compare(""))
 				{
-					ret.personality_class += pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.type");
+					person->m_personalityClass.push_back(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.type"));
+				}
+				if(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osgen").compare(""))
+				{
+					person->m_personalityClass.push_back(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osgen"));
+				}
+				if(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osfamily").compare(""))
+				{
+					person->m_personalityClass.push_back(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.osfamily"));
+				}
+				if(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.vendor").compare(""))
+				{
+					person->m_personalityClass.push_back(pt2.get<std::string>("os.osmatch.osclass.<xmlattr>.vendor"));
 				}
 			}
 			else
@@ -115,19 +115,17 @@ struct profile_read Nova::parseHost(boost::property_tree::ptree pt2)
 		}
 	}
 
-	ret.ports.open_ports = i;
+	person->m_port_count = i;
 
 	// call AddHost() on the Personality object created at the beginning of this method
 
-	return ret;
+	personalities.AddHost(person);
 }
 
-std::vector<struct profile_read> Nova::load_nmap(const std::string &filename)
+void Nova::load_nmap(const std::string &filename)
 {
 	using boost::property_tree::ptree;
 	ptree pt;
-
-	std::vector<struct profile_read> ret;
 
 	read_xml(filename, pt);
 
@@ -135,23 +133,16 @@ std::vector<struct profile_read> Nova::load_nmap(const std::string &filename)
 	{
 		if(!host.first.compare("host"))
 		{
-			struct profile_read push_struct;
 			ptree pt2 = host.second;
-			push_struct = parseHost(pt2);
-			ret.push_back(push_struct);
+			parseHost(pt2);
 		}
 	}
-
-	return ret;
 }
 
 int main(int argc, char ** argv)
 {
 	std::string saveLocation;
-	// Instantiate PersonalityTable Object here
-	personalities.set_empty_key("");
-	ports.set_empty_key("");
-
+	// Instantiate PersonalityTable Object heres
 	std::cout << std::endl;
 
 	if(argc < 2)
@@ -189,33 +180,12 @@ int main(int argc, char ** argv)
 		{
 			std::string file = "subnet" + ss.str() + ".xml";
 
-			profile_vec = load_nmap(file);
+			load_nmap(file);
 
 			//need to write profile_vec profile_read structs to
 			//honeyd configuration format
 
-			for(uint16_t j = 0; j < profile_vec.size(); j++)
-			{
-				std::cout << std::endl;
-
-				std::cout << "Address: " << profile_vec[j].address << std::endl;
-				std::cout << "Open ports: " << profile_vec[j].ports.open_ports << std::endl;
-				std::cout << "Ethernet vendor: " << profile_vec[j].ethernet_vendor << std::endl;
-				std::cout << "Personality guess: " << profile_vec[j].personality << std::endl;
-				std::cout << "Personality class: " << profile_vec[j].personality_class << std::endl;
-
-				for(uint16_t k = 0; k < profile_vec[j].ports.port_services.size(); k++)
-				{
-					ss.str("");
-					ss << profile_vec[j].ports.port_services[k].first;
-					std::cout << "Port " << profile_vec[j].ports.port_services[k].first << " is running " << profile_vec[j].ports.port_services[k].second.second << ", state is " << profile_vec[j].ports.port_state[k] << std::endl;
-					std::string scriptString = ss.str() + "_" + boost::to_upper_copy(profile_vec[j].ports.port_services[k].second.first) + "_" + profile_vec[j].ports.port_state[k];
-					ports[scriptString]++;
-					ss.str("");
-				}
-
-				std::cout << std::endl;
-			}
+			personalities.ListInfo();
 
 			calculateDistributionMetrics();
 		}
@@ -233,37 +203,7 @@ int main(int argc, char ** argv)
 
 void Nova::calculateDistributionMetrics()
 {
-	/*
-	for(uint16_t i = 0; i < profile_vec.size(); i++)
-	{
-		if(personalities.find(profile_vec[i].personality) != personalities.end())
-		{
-			personalities.get(profile_vec[i].personality)++;
-		}
-		else
-		{
-			personalities[profile_vec[i].personality]++;
-		}
-	}
 
-	uint16_t testSum = 0;
-
-	for(Pers_Table::iterator it = personalities.begin(); it != personalities.end(); it++)
-	{
-		testSum += it->second;
-	}
-
-	std::cout << "Out of " << testSum << " hosts:" << std::endl;
-
-	for(Pers_Table::iterator it = personalities.begin(); it != personalities.end(); it++)
-	{
-		std::cout << it->second << "(" << ((double)it->second.first / (double)testSum) * 100 << "%) of the hosts were " << it->first << std::endl;
-	}
-
-	for(Ports_Table::iterator it = ports.begin(); it != ports.end(); it++)
-	{
-		std::cout << it->first << std::endl;
-	}*/
 }
 
 std::vector<std::string> Nova::getSubnetsToScan()
@@ -277,7 +217,7 @@ std::vector<std::string> Nova::getSubnetsToScan()
 	struct in_addr address;
 	struct in_addr bitmask;
 	struct in_addr basestruct;
-	struct in_addr maxstruct;
+	//struct in_addr maxstruct;
 	uint32_t ntohl_address;
 	uint32_t ntohl_bitmask;
 	bool there = false;
@@ -316,6 +256,7 @@ std::vector<std::string> Nova::getSubnetsToScan()
 
 			std::string bmhost_push = std::string(bmhost);
 			std::string host_push = std::string(host);
+			localMachine = host_push;
 			std::cout << "Interface: " << curIf->ifa_name << std::endl;
 			std::cout << "Address: " << host_push << std::endl;
 			std::cout << "Netmask: " << bmhost_push << std::endl;
@@ -327,12 +268,8 @@ std::vector<std::string> Nova::getSubnetsToScan()
 			uint32_t base = ntohl_bitmask & ntohl_address;
 			basestruct.s_addr = htonl(base);
 
-			uint32_t max = ~(ntohl_bitmask) + base;
-			maxstruct.s_addr = htonl(max);
-
-			tempHostspace = max - base - 3;
-
-			std::cout << "tempHostspace == " << tempHostspace << std::endl;
+			//uint32_t max = ~(ntohl_bitmask) + base;
+			//maxstruct.s_addr = htonl(max);
 
 			uint32_t mask = ~ntohl_bitmask;
 			int i = 32;

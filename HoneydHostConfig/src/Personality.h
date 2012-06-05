@@ -11,7 +11,7 @@
 namespace Nova
 {
 typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > MAC_Table;
-typedef Nova::HashMap<std::string, std::pair<uint16_t, std::string>, std::tr1::hash<std::string>, eqstr > Port_Table;
+typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > Port_Table;
 
 class Personality
 {
