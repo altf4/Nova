@@ -583,7 +583,6 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 		// especially if we could somehow use it interactively to set the center and smoothing
 		// while looking at the data visualizations to see what works best for a feature
 	}
-
 }
 
 

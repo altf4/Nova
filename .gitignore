@@ -110,3 +110,8 @@ NovaCLI/Debug/novacli
 /Installer/Write/nova/.nova/Config/data.csv
 /Novad/core
 /NovaTrainer/Debug/novatrainer
+/HoneydHostConfig/subnet0.xml
+/HoneydHostConfig/Debug/HoneydHostConfig
+/HoneydHostConfig/Release/HoneydHostConfig
+/HoneydHostConfig/Debug/honeydhostconfig
+/HoneydHostConfig/Release/honeydhostconfig
