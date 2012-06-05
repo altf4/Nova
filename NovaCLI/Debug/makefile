@@ -40,15 +40,11 @@ endif
 # All Target
 all: novacli
 
-dependents:
-	-cd /home/addison/Code/Nova/NovaLibrary/Debug && $(MAKE) all
-	-cd /home/addison/Code/Nova/Nova_UI_Core/Debug && $(MAKE) all
-
 # Tool invocations
-novacli: $(OBJS) $(USER_OBJS) /home/addison/Code/Nova/NovaLibrary/Debug/libNovaLibrary.a /home/addison/Code/Nova/Nova_UI_Core/Debug/libNova_UI_Core.so
+novacli: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L"/home/addison/Code/Nova/Nova_UI_Core/Debug" -L"/home/addison/Code/Nova/NovaLibrary/Debug" -o "novacli" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../NovaLibrary/Debug/ -L../../Nova_UI_Core/Debug -o "novacli" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -59,7 +55,5 @@ clean:
 
 .PHONY: all clean dependents
 .SECONDARY:
-/home/addison/Code/Nova/NovaLibrary/Debug/libNovaLibrary.a:
-/home/addison/Code/Nova/Nova_UI_Core/Debug/libNova_UI_Core.so:
 
 -include ../makefile.targets

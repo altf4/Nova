@@ -44,16 +44,24 @@ web:
 	cd NovaWeb;npm --unsafe-perm install
 	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
 
+honeyd-config: honeyd-config-release
+
+honeyd-config-release: release
+	$(MAKE) -C HoneydHostConfig/Release
+
+honeyd-config-debug: debug
+	$(MAKE) -C HoneydHostConfig/Debug
+
 # Make debug + test
 all-test: debug test
 
 
 
 #Cleans both Release and Debug
-clean: clean-debug clean-release
+clean: clean-debug clean-release 
 	rm -f Installer/Read/manpages/*.gz
 
-clean-debug:
+clean-debug: clean-honeyd-config
 	$(MAKE) -C NovaLibrary/Debug clean
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
@@ -61,7 +69,7 @@ clean-debug:
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 
-clean-release:
+clean-release: clean-honeyd-config
 	$(MAKE) -C NovaLibrary/Release clean
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
@@ -75,6 +83,10 @@ clean-test:
 
 clean-web:
 	cd NovaWeb/NodeNovaConfig; node-waf clean
+
+clean-honeyd-config:
+	$(MAKE) -C HoneydHostConfig/Debug clean
+	$(MAKE) -C HoneydHostConfig/Release clean
 
 install: install-release
 
@@ -145,6 +157,15 @@ install-web:
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 	cd NovaWeb; bash install.sh
 
+install-honeyd-config: install-honeyd-config-release
+
+install-honeyd-config-release: install-release
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Novad/Release/novad $(DESTDIR)/usr/bin
+
+install-honeyd-config-debug: install-debug
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Novad/Debug/novad $(DESTDIR)/usr/bin
 
 uninstall-files:
 	rm -rf $(DESTDIR)/etc/nova
@@ -153,9 +174,11 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
+	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
+	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_HHConfig
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
