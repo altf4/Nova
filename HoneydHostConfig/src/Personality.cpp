@@ -33,7 +33,6 @@ void Personality::AddPort(string port_string, string port_service)
 {
 	if(m_ports.find(port_string) == m_ports.end())
 	{
-		//probably can't do this, check and make sure
 		m_ports[port_string] = 1;
 	}
 	else

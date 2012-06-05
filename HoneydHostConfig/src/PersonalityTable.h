@@ -45,7 +45,7 @@ public:
 	void ListInfo();
 
 	//Increment every time a host is added
-	unsigned int m_num_of_hosts;
+	unsigned long int m_num_of_hosts;
 
 	//Start with range of the subnets, decrement every time host is added
 	unsigned long int m_host_addrs_avail;

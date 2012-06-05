@@ -17,7 +17,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I../../Nova_UI_Core/src -I../../NovaLibrary/src -O0 -g3 -Wall -c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I"/home/addison/Code/Nova/Nova_UI_Core" -I"/home/addison/Code/Nova/NovaLibrary" -I../../Nova_UI_Core/src -I../../NovaLibrary/src -O0 -g3 -Wall -c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
