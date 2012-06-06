@@ -25,6 +25,8 @@ namespace Nova
 
 PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 {
+	m_profiles.set_empty_key("");
+
 	m_root = PersonalityNode("root");
 	if(persTable != NULL)
 	{
@@ -132,7 +134,39 @@ void PersonalityTree::RecursiveToString(PersonalityNode * persNode)
 	{
 		RecursiveToString(persNode->m_children[i].second);
 	}
+}
 
+void PersonalityTree::GenerateProfileTable()
+{
+	for(uint i = 0; i < m_root.m_children.size(); i++)
+	{
+		RecursiveGenerateProfileTable(m_root.m_children[i].second, m_root.m_key);
+	}
+}
+
+void PersonalityTree::RecursiveGenerateProfileTable(PersonalityNode * node, string parent)
+{
+	if(m_profiles.find(node->m_key) == m_profiles.end())
+	{
+		m_profiles[node->m_key] = node->GenerateProfile(parent);
+	}
+	else
+	{
+		uint16_t i = 0;
+		stringstream ss;
+		ss << i;
+		for(; m_profiles.find(node->m_key + ss.str()) != m_profiles.end(); i++)
+		{
+			ss.str("");
+			ss << i;
+		}
+		m_profiles[node->m_key + ss.str()] = node->GenerateProfile(parent);
+	}
+
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveGenerateProfileTable(node->m_children[i].second, node->m_key);
+	}
 }
 
 void PersonalityTree::GenerateDistributions()
@@ -149,6 +183,34 @@ void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode * node)
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
 		RecursiveGenerateDistributions(node->m_children[i].second);
+	}
+}
+
+void PersonalityTree::DebugPrintProfileTable()
+{
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		cout << endl;
+		cout << "Profile: " << it->second.name << endl;
+		cout << "Parent: " << it->second.parentProfile << endl;
+
+		if(!it->second.personality.empty())
+		{
+			cout << "Personality: " << it->second.personality << endl;
+		}
+		if(!it->second.ethernet.empty())
+		{
+			cout << "MAC vendor: " << it->second.ethernet << endl;
+		}
+		if(!it->second.ports.empty())
+		{
+			cout << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << endl;
+			for(uint16_t i = 0; i < it->second.ports.size(); i++)
+			{
+				cout << "\t" << it->second.ports[i].first << ", " << it->second.ports[i].second << endl;
+			}
+		}
+		cout << endl;
 	}
 }
 

@@ -197,6 +197,10 @@ int main(int argc, char ** argv)
 
 	persTree.GenerateDistributions();
 
+	persTree.GenerateProfileTable();
+
+	persTree.DebugPrintProfileTable();
+
 	return errVar;
 }
 

@@ -74,7 +74,9 @@ string PersonalityNode::ToString()
 string PersonalityNode::GenerateDistribution()
 {
 	stringstream ss;
+
 	ss << endl << "Distributions for " << m_key << ":" << endl;
+
 	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
 		pair<string, double> push_vendor;
@@ -93,6 +95,37 @@ string PersonalityNode::GenerateDistribution()
 	}
 
 	return ss.str();
+}
+
+profile PersonalityNode::GenerateProfile(string parent)
+{
+	profile push;
+
+	push.name = m_key;
+	push.parentProfile = parent;
+
+	if(m_children.size() == 0)
+	{
+		push.personality = m_key;
+	}
+
+	if(m_vendor_dist.size() == 1)
+	{
+		push.ethernet = m_vendor_dist[0].first;
+	}
+
+	for(uint16_t i = 0; i < m_ports_dist.size(); i++)
+	{
+		if(m_ports_dist[i].second == 100)
+		{
+			pair<string, bool> push_port;
+			push_port.first = m_ports_dist[i].first;
+			push_port.second = false;
+			push.ports.push_back(push_port);
+		}
+	}
+
+	return push;
 }
 
 }

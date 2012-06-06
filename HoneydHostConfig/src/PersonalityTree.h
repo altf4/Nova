@@ -50,6 +50,10 @@ public:
 	// Generate a haystack that matches only what is seen and to near exact ratios, essentially duplicating the network n times until it's full.
 	void GenerateExactOutput();
 
+	void GenerateProfileTable();
+
+	void DebugPrintProfileTable();
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
@@ -58,8 +62,11 @@ private:
 
 	std::vector<PersonalityNode *> m_nodes;
 
+	ProfileTable m_profiles;
+
 	void RecursiveToString(PersonalityNode * persNode);
 	void RecursiveGenerateDistributions(PersonalityNode * node);
+	void RecursiveGenerateProfileTable(PersonalityNode * node, std::string parent);
 };
 
 }

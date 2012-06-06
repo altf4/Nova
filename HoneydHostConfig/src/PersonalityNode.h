@@ -20,6 +20,7 @@
 #define PERSONALITYNODE_H_
 
 #include "AutoConfigHashMaps.h"
+#include "NovaGuiTypes.h"
 
 namespace Nova
 {
@@ -52,6 +53,8 @@ public:
 	std::string ToString();
 
 	std::string GenerateDistribution();
+
+	profile GenerateProfile(std::string);
 };
 
 }
