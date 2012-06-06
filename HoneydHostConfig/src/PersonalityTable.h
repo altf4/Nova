@@ -18,7 +18,6 @@
 //               namespace.
 //============================================================================
 
-#include "AutoConfigHashMaps.h"
 #include "Personality.h"
 
 //total num_hosts is the total num of unique hosts counted.
@@ -35,14 +34,18 @@
  */
 
 //HashMap of Personality objects; Key is personality specific name (i.e. Linux 2.6.35-2.6.38), Value is ptr to Personality object
-typedef Nova::HashMap<std::string, Nova::Personality *, std::tr1::hash<std::string>, eqstr > Personality_Table;
+typedef Nova::HashMap<std::string, class Nova::Personality *, std::tr1::hash<std::string>, eqstr > Personality_Table;
 
 namespace Nova
 {
+
 class PersonalityTable
 {
+
 public:
+
 	PersonalityTable();
+
 	~PersonalityTable();
 
 	// Adds a host to the Personality Table if it's not there; if it is, just aggregate the values
@@ -70,4 +73,5 @@ public:
 	//HashMAP[std::string key]; key == Personality, val == ptr to Personality object
 	Personality_Table m_personalities;
 };
+
 }

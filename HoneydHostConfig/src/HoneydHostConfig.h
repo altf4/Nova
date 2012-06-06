@@ -21,7 +21,6 @@
 
 #include "HashMapStructs.h"
 #include "HashMap.h"
-#include "PersonalityTable.h"
 #include <boost/property_tree/ptree.hpp>
 
 namespace Nova
@@ -33,7 +32,8 @@ enum ErrCode : int
 	GETNAMEINFOFAIL,
 	GETBITMASKFAIL,
 	DONTADDSELF,
-	NOMATCHEDPERSONALITY
+	NOMATCHEDPERSONALITY,
+	PARSINGERROR
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost

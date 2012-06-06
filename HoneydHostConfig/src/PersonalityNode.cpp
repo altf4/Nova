@@ -40,15 +40,18 @@ PersonalityNode::PersonalityNode(string key)
 //Deconstructor
 PersonalityNode::~PersonalityNode()
 {
+	vector<PersonalityNode *> delPtrs;
 	for(unsigned int i = 0; i < m_children.size(); i++)
 	{
 		if(m_children[i].second != NULL)
 		{
-			m_children[i].second->~PersonalityNode();
-			m_children[i].second = NULL;
+			delPtrs.push_back(m_children[i].second);
 		}
 	}
-	m_children.clear();
+	for(unsigned int i = 0; i < delPtrs.size(); i++)
+	{
+		delete delPtrs[i];
+	}
 }
 
 string PersonalityNode::ToString()

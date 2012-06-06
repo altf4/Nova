@@ -34,13 +34,12 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 
 PersonalityTree::~PersonalityTree()
 {
-  m_root.~PersonalityNode();
 }
 
 void PersonalityTree::LoadTable(PersonalityTable *persTable)
 {
-	Personality_Table &pTable = persTable->m_personalities;
-	for(Personality_Table::iterator it = pTable.begin(); it != pTable.end(); it++)
+	Personality_Table *pTable = &persTable->m_personalities;
+	for(Personality_Table::iterator it = pTable->begin(); it != pTable->end(); it++)
 	{
 		InsertPersonality(it->second);
 	}
