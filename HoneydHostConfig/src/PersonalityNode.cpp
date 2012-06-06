@@ -34,7 +34,7 @@ PersonalityNode::PersonalityNode(string key)
 	m_vendors.set_empty_key("EMPTY");
 	m_ports.set_deleted_key("DELETED");
 	m_vendors.set_deleted_key("DELETED");
-	m_count = 1;
+	m_count = 0;
 }
 
 //Deconstructor
@@ -57,7 +57,7 @@ PersonalityNode::~PersonalityNode()
 string PersonalityNode::ToString()
 {
 	stringstream ss;
-	ss << m_key << " has " << m_count << " hosts in it's scope." << endl << endl;
+	ss << endl << m_key << " has " << m_count << " hosts in it's scope." << endl << endl;
 	ss << "MAC Address Vendors: <Vendor>, <Number of occurrences>" << endl;
 	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{

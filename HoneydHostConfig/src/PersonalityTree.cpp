@@ -108,6 +108,8 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 	}
 	pers->m_personalityClass.pop_back();
 
+	tablePair->second->m_count += pers->m_count;
+
 	//Recursively descend until all nodes updated
 	if(!pers->m_personalityClass.empty())
 	{
