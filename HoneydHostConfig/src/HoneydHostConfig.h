@@ -53,9 +53,6 @@ ErrCode ParseHost(boost::property_tree::ptree pt2);
 // Returns a vector containings strings of the subnet addresses
 std::vector<std::string> GetSubnetsToScan(ErrCode * errVar);
 
-// Dummy function -> placeholder
-void calculateDistributionMetrics();
-
 // Prints out the subnets that're found during GetSubnetsToScan(errVar)
 //  vector<string> recv - vector of subnets found
 // Only prints, no return value

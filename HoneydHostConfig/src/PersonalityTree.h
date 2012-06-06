@@ -39,6 +39,8 @@ public:
 	//Prints each child of the root node in the tree as a string
 	void ToString();
 
+	void ToXmlTemplate();
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
