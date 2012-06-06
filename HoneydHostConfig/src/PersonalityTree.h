@@ -39,6 +39,8 @@ public:
 	//Prints each child of the root node in the tree as a string
 	void ToString();
 
+	void GenerateDistributions();
+
 	void ToXmlTemplate();
 
 private:
@@ -50,7 +52,7 @@ private:
 	std::vector<PersonalityNode *> m_nodes;
 
 	void RecursiveToString(PersonalityNode * persNode);
-
+	void RecursiveGenerateDistributions(PersonalityNode * node);
 };
 
 }

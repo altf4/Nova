@@ -135,6 +135,23 @@ void PersonalityTree::RecursiveToString(PersonalityNode * persNode)
 
 }
 
+void PersonalityTree::GenerateDistributions()
+{
+	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
+	{
+		RecursiveGenerateDistributions(m_root.m_children[i].second);
+	}
+}
+
+void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode * node)
+{
+	cout << node->GenerateDistribution() << endl;
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveGenerateDistributions(node->m_children[i].second);
+	}
+}
+
 void PersonalityTree::ToXmlTemplate()
 {
 

@@ -47,6 +47,8 @@ public:
 
 	//returns a string representation of node, does not print anything about the children
 	std::string ToString();
+
+	std::string GenerateDistribution();
 };
 
 }

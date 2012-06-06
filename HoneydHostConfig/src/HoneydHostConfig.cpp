@@ -190,8 +190,13 @@ int main(int argc, char ** argv)
 		cout << "Unable to load personality table" << endl;
 		return errVar;
 	}
+
 	PersonalityTree persTree = PersonalityTree(&personalities);
+
 	persTree.ToString();
+
+	persTree.GenerateDistributions();
+
 	return errVar;
 }
 
