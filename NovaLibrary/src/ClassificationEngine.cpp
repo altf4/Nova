@@ -552,38 +552,43 @@ void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 
 double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)
 {
+	double ret = -1;
 	switch (type)
 	{
 		case LINEAR:
 		{
-			return (value / max);
+			ret = (value / max);
+			break;
 		}
 		case LINEAR_SHIFT:
 		{
-			return ((value -min) / (max - min));
+			ret = ((value -min) / (max - min));
+			break;
 		}
 		case NONORM:
 		{
-			return value;
+			ret = value;
+			break;
 		}
 		case LOGARITHMIC:
 		{
+			ret = 0;
 			//If neither are 0
 			if(value && max)
 			{
-				return (log(value)/log(max));
+				ret = (log(value)/log(max));
 			}
 			break;
 		}
 		default:
 		{
-			return -1;
+			break;
 		}
 		// TODO: A sigmoid normalization function could be very useful,
 		// especially if we could somehow use it interactively to set the center and smoothing
 		// while looking at the data visualizations to see what works best for a feature
 	}
-
+	return ret;
 }
 
 
