@@ -24,6 +24,7 @@ public:
 	//Deconstructor
 	~PersonalityNode();
 
+	uint32_t m_count;
 	std::string m_key;
 	std::vector<std::pair<std::string, PersonalityNode *> > m_children;
 
@@ -33,6 +34,8 @@ public:
 	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
 	Port_Table m_ports;
 
+	//returns a string representation of node, does not print anything about the children
+	std::string ToString();
 };
 
 }
