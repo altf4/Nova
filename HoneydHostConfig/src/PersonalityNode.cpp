@@ -73,16 +73,23 @@ string PersonalityNode::ToString()
 
 string PersonalityNode::GenerateDistribution()
 {
-	// Need a port count in PersonalityNode, or sum on the fly. I skew towards the former
 	stringstream ss;
 	ss << endl << "Distributions for " << m_key << ":" << endl;
 	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
-		ss << "\t" << it->first << " constitutes " << (100 * (((double)it->second)/((double)m_count))) << "% of MACs for this scope." << endl;
+		pair<string, double> push_vendor;
+		push_vendor.first = it->first;
+		push_vendor.second = (100 * (((double)it->second)/((double)m_count)));
+		ss << "\t" << it->first << " constitutes " << push_vendor.second << "% of MACs for this scope." << endl;
+		m_vendor_dist.push_back(push_vendor);
 	}
 	for(Port_Table::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
-		ss << "\t" << it->first << " shows up " << (100 * (((double)it->second)/((double)m_count))) << "% of the time for this scope." << endl;
+		pair<string, double> push_ports;
+		push_ports.first = it->first;
+		push_ports.second = (100 * (((double)it->second)/((double)m_count)));
+		ss << "\t" << it->first << " shows up " << push_ports.second << "% of the time for this scope." << endl;
+		m_ports_dist.push_back(push_ports);
 	}
 
 	return ss.str();
