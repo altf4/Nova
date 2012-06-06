@@ -137,7 +137,6 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 
 	if(person->m_personalityClass.empty())
 	{
-		cout << "Failed to match any personality information to " << person->m_addresses[0] << ", not adding to Personality Table." << endl;
 		return NOMATCHEDPERSONALITY;
 	}
 
