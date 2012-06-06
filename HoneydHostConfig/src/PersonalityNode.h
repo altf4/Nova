@@ -39,6 +39,9 @@ public:
 	std::string m_key;
 	std::vector<std::pair<std::string, PersonalityNode *> > m_children;
 
+	std::vector<std::pair<std::string, double> > m_vendor_dist;
+	std::vector<std::pair<std::string, double> > m_ports_dist;
+
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 	MAC_Table m_vendors;
 

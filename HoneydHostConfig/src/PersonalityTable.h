@@ -53,13 +53,6 @@ public:
 	// No return value
 	void AddHost(Personality *add);
 
-	//Dummy function def -> implement to produce fuzzy output from populated table
-	void* GenerateFuzzyOutput();
-
-	// Dummy function def ->
-	// Generate a haystack that matches only what is seen and to near exact ratios, essentially duplicating the network n times until it's full.
-	void* GenerateExactOutput();
-
 	// Void method to print out the information stored within the Personality table into a nice format
 	// Takes no arguments and returns nothing
 	void ListInfo();

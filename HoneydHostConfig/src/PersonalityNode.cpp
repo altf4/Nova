@@ -82,7 +82,7 @@ string PersonalityNode::GenerateDistribution()
 	}
 	for(Port_Table::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
-		ss << "\t" << it->first << " constitutes " << (100 * (((double)it->second)/((double)m_count))) << "% of ports for this scope." << endl;
+		ss << "\t" << it->first << " shows up " << (100 * (((double)it->second)/((double)m_count))) << "% of the time for this scope." << endl;
 	}
 
 	return ss.str();
