@@ -174,8 +174,8 @@ int main(int argc, char ** argv)
 		cout << "Unable to load personality table" << endl;
 		return errVar;
 	}
-	//PersonalityTree persTree = PersonalityTree(&personalities);
-	//persTree.ToString();
+	PersonalityTree persTree = PersonalityTree(&personalities);
+	persTree.ToString();
 	return errVar;
 }
 
