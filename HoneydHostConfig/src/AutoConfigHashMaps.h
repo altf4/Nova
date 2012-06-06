@@ -21,7 +21,6 @@
 #define AUTOCONFIGHASHMAPS_H_
 
 #include "HashMapStructs.h"
-#include "HashMap.h"
 
 //HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > MAC_Table;
