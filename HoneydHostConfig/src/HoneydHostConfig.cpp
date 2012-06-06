@@ -20,15 +20,7 @@
 
 // REQUIRES NMAP 6
 
-#include <arpa/inet.h>
-#include <vector>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <ifaddrs.h>
-#include <net/if.h>
 #include <netdb.h>
-#include <sys/un.h>
-#include <fstream>
 #include <sstream>
 #include <net/if.h>
 #include <ifaddrs.h>
@@ -36,9 +28,6 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <string>
-#include <exception>
-#include <algorithm>
 
 #include "ScriptTable.h"
 #include "VendorMacDb.h"
@@ -134,10 +123,8 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 					person->m_personalityClass.push_back(pt2.get<string>("os.osmatch.osclass.<xmlattr>.vendor"));
 				}
 			}
-			else
-			{}
 		}
-		catch(std::exception &e)
+		catch(exception &e)
 		{
 			/*cout << "Caught Exception : " << e.what() << endl;
 			return PARSINGERROR;*/
@@ -204,8 +191,8 @@ int main(int argc, char ** argv)
 		cout << "Unable to load personality table" << endl;
 		return errVar;
 	}
-	//PersonalityTree persTree = PersonalityTree(&personalities);
-	//persTree.ToString();
+	PersonalityTree persTree = PersonalityTree(&personalities);
+	persTree.ToString();
 	return errVar;
 }
 
@@ -234,11 +221,6 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 
 		ss.str();
 	}
-
-	//macs = new VendorMacDb();
-
-	//macs->LoadPrefixFile();
-
 	personalities.ListInfo();
 
 	calculateDistributionMetrics();

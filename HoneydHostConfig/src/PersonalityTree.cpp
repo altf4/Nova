@@ -72,6 +72,7 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 		tablePair = new pair<string, PersonalityNode *>();
 		tablePair->first = cur;
 		tablePair->second = new PersonalityNode(cur);
+		parent->m_children.push_back(*tablePair);
 	}
 	else
 	{
