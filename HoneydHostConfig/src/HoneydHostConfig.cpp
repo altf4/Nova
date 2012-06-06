@@ -210,8 +210,6 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 			string file = "subnet" + ss.str() + ".xml";
 
 			LoadNmap(file);
-
-			calculateDistributionMetrics();
 		}
 		catch(exception &e)
 		{
@@ -222,8 +220,6 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 		ss.str();
 	}
 	personalities.ListInfo();
-
-	calculateDistributionMetrics();
 
 	return OKAY;
 }
@@ -236,27 +232,6 @@ void Nova::PrintRecv(vector<string> recv)
 		cout << recv[i] << endl;
 	}
 	cout << endl;
-}
-
-void Nova::calculateDistributionMetrics()
-{
-	std::cout << std::endl;
-
-	// need to decide if we're doing distributions on a per vendr/port basis or a per personality basis
-	std::vector<std::pair<std::string, double> > vendor_distribution;
-	std::vector<std::pair<std::string, double> > port_distribution;
-
-	for(Personality_Table::iterator it = personalities.m_personalities.begin(); it != personalities.m_personalities.end(); it++)
-	{
-		for(MAC_Table::iterator i = it->second->m_vendors.begin(); i != it->second->m_vendors.end(); i++)
-		{
-			std::pair<std::string, double> push;
-			push.first = i->first;
-			push.second = (((double)i->second / (double)personalities.m_num_used_hosts) * 100);
-			std::cout << "The MAC vendor " << push.first << " constitutes " << push.second << "% of host MACs." << std::endl;
-			vendor_distribution.push_back(push);
-		}
-	}
 }
 
 vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)

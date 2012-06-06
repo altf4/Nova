@@ -133,6 +133,9 @@ void PersonalityTree::RecursiveToString(PersonalityNode * persNode)
 
 }
 
+void PersonalityTree::ToXmlTemplate()
+{
 
+}
 
 }
