@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Main HH_CONFIG file, performs the subnet acquisition, scanning, and
+// Description : Main HoneydHostConfig file, performs the subnet acquisition, scanning, and
 //               parsing of the resultant .xml output into a PersonalityTable object
 //============================================================================
 
@@ -58,6 +58,9 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 	// instantiate Personality object here, populate it from the code below
 	Personality * person = new Personality();
 
+	personalities.m_num_of_hosts++;
+	personalities.m_host_addrs_avail--;
+
 	int i = 0;
 
 	BOOST_FOREACH(ptree::value_type &v, pt2.get_child(""))
@@ -93,7 +96,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 						ss << c.second.get<int>("<xmlattr>.portid");
 						std::string port_key = ss.str() + "_" + boost::to_upper_copy(c.second.get<std::string>("<xmlattr>.protocol"));
 						ss.str("");
-						std::string port_service = c.second.get<std::string>("service.<xmlattr>.name");
+						//std::string port_service = c.second.get<std::string>("service.<xmlattr>.name");
 						person->AddPort(port_key);
 						i++;
 					}
@@ -143,7 +146,6 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 
 	if(person->m_personalityClass.empty())
 	{
-		std::cout << "Failed to match any personality information to " << person->m_addresses[0] << ", not adding to Personality Table." << std::endl;
 		return NOMATCHEDPERSONALITY;
 	}
 
@@ -164,7 +166,21 @@ void Nova::LoadNmap(const std::string &filename)
 		if(!host.first.compare("host"))
 		{
 			ptree pt2 = host.second;
-			ParseHost(pt2);
+
+			switch(ParseHost(pt2))
+			{
+				case DONTADDSELF:
+					std::cout << "Can't add self as personality yet." << std::endl;
+					break;
+				case NOMATCHEDPERSONALITY:
+					std::cout << "Couldn't obtain personality data on host " << pt2.get<std::string>("address.<xmlattr>.addr") << "." << std::endl;
+					break;
+				case OKAY:
+					break;
+				default:
+					std::cout << "Unknown return value." << std::endl;
+					break;
+			}
 		}
 	}
 }
@@ -201,8 +217,6 @@ Nova::ErrCode Nova::LoadPersonalityTable(std::vector<std::string> recv)
 			std::string file = "subnet" + ss.str() + ".xml";
 
 			LoadNmap(file);
-
-			calculateDistributionMetrics();
 		}
 		catch(std::exception &e)
 		{
@@ -217,6 +231,8 @@ Nova::ErrCode Nova::LoadPersonalityTable(std::vector<std::string> recv)
 	//macs->LoadPrefixFile();
 
 	personalities.ListInfo();
+
+	calculateDistributionMetrics();
 
 	return OKAY;
 }
@@ -233,7 +249,23 @@ void Nova::PrintRecv(std::vector<std::string> recv)
 
 void Nova::calculateDistributionMetrics()
 {
+	std::cout << std::endl;
 
+	// need to decide if we're doing distributions on a per vendr/port basis or a per personality basis
+	std::vector<std::pair<std::string, double> > vendor_distribution;
+	std::vector<std::pair<std::string, double> > port_distribution;
+
+	for(Personality_Table::iterator it = personalities.m_personalities.begin(); it != personalities.m_personalities.end(); it++)
+	{
+		for(MAC_Table::iterator i = it->second->m_vendors.begin(); i != it->second->m_vendors.end(); i++)
+		{
+			std::pair<std::string, double> push;
+			push.first = i->first;
+			push.second = (((double)i->second / (double)personalities.m_num_used_hosts) * 100);
+			std::cout << "The MAC vendor " << push.first << " constitutes " << push.second << "% of host MACs." << std::endl;
+			vendor_distribution.push_back(push);
+		}
+	}
 }
 
 std::vector<std::string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
@@ -302,8 +334,10 @@ std::vector<std::string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 			uint32_t base = ntohl_bitmask & ntohl_address;
 			basestruct.s_addr = htonl(base);
 
-			//uint32_t max = ~(ntohl_bitmask) + base;
+			uint32_t max = ~(ntohl_bitmask) + base;
 			//maxstruct.s_addr = htonl(max);
+
+			personalities.m_host_addrs_avail += max - base - 3;
 
 			uint32_t mask = ~ntohl_bitmask;
 			int i = 32;

@@ -28,6 +28,7 @@ PersonalityTable::PersonalityTable()
 {
 	m_personalities.set_empty_key("");
 	m_num_of_hosts = 0;
+	m_num_used_hosts = 0;
 	m_host_addrs_avail = 0;
 }
 
@@ -36,6 +37,11 @@ PersonalityTable::~PersonalityTable()
 
 void PersonalityTable::ListInfo()
 {
+	std::cout << std::endl;
+	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << std::endl;
+	std::cout << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << std::endl;
+	std::cout << "Hostspace left over: " << m_host_addrs_avail << " addresses." << std::endl;
+
 	for(Personality_Table::iterator it = m_personalities.begin(); it != m_personalities.end(); it++)
 	{
 		std::cout << std::endl;
@@ -79,16 +85,13 @@ void PersonalityTable::ListInfo()
 		{
 			std::cout << "\t" << it2->first << " occurred " << it2->second << " time(s)." << std::endl;
 		}
-
-		std::cout << std::endl;
 	}
 }
 
 // Add a single Host
 void PersonalityTable::AddHost(Personality * add)
 {
-	m_num_of_hosts++;
-	m_host_addrs_avail--;
+	m_num_used_hosts++;
 
 	if(m_personalities.find(add->m_personalityClass[0]) == m_personalities.end())
 	{
@@ -99,10 +102,6 @@ void PersonalityTable::AddHost(Personality * add)
 		Personality * cur = m_personalities[add->m_personalityClass[0]];
 		cur->m_macs.push_back(add->m_macs[0]);
 		cur->m_addresses.push_back(add->m_addresses[0]);
-		if(!add->m_addresses[0].compare("192.168.3.112"))
-		{
-			std::cout << "failbox found" << std::endl;
-		}
 		cur->m_count++;
 
 		for(Port_Table::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)

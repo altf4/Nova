@@ -64,6 +64,9 @@ public:
 	//Increment every time a host is added
 	unsigned long int m_num_of_hosts;
 
+	//Used to keep track of hosts that yielded an actual personality object
+	unsigned long int m_num_used_hosts;
+
 	//Start with range of the subnets, decrement every time host is added
 	unsigned long int m_host_addrs_avail;
 
