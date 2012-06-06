@@ -1,13 +1,25 @@
-/*
- * PersonalityTable.h
- *
- *  Created on: Jun 1, 2012
- *      Author: victim
- */
+//============================================================================
+// Name        : PersonalityTable.h
+// Copyright   : DataSoft Corporation 2011-2012
+//	Nova is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   Nova is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
+// Description : Contains function definitions and member variable declarations
+//               for the PersonalityTable class. Adds the class to the Nova
+//               namespace.
+//============================================================================
 
-#include "HashMapStructs.h"
+#include "AutoConfigHashMaps.h"
 #include "Personality.h"
-#include "HashMap.h"
 
 //total num_hosts is the total num of unique hosts counted.
 //total avail_addrs is the total num of ip addresses avail on the subnet
@@ -22,6 +34,7 @@
  * map of occuring MAC addr vendors, so we know what types of NIC's are used for machines of a similar type on a network.
  */
 
+//HashMap of Personality objects; Key is personality specific name (i.e. Linux 2.6.35-2.6.38), Value is ptr to Personality object
 typedef Nova::HashMap<std::string, Nova::Personality *, std::tr1::hash<std::string>, eqstr > Personality_Table;
 
 namespace Nova
@@ -32,7 +45,9 @@ public:
 	PersonalityTable();
 	~PersonalityTable();
 
-	//Dummy function def -> implement to Add host into the table
+	// Adds a host to the Personality Table if it's not there; if it is, just aggregate the values
+	//  Personality *add - pointer to a Personality object that contains new information for the table
+	// No return value
 	void AddHost(Personality *add);
 
 	//Dummy function def -> implement to produce fuzzy output from populated table
@@ -42,6 +57,8 @@ public:
 	// Generate a haystack that matches only what is seen and to near exact ratios, essentially duplicating the network n times until it's full.
 	void* GenerateExactOutput();
 
+	// Void method to print out the information stored within the Personality table into a nice format
+	// Takes no arguments and returns nothing
 	void ListInfo();
 
 	//Increment every time a host is added

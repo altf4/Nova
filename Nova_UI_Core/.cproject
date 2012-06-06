@@ -51,7 +51,7 @@
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1808630126" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/NovaLibrary/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug"/>
 								</option>
 								<option id="gnu.cpp.link.option.soname.1881455718" name="Shared object name (-Wl,-soname=)" superClass="gnu.cpp.link.option.soname" value="Nova_UI_Core" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.549722548" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -121,7 +121,7 @@
 								<option defaultValue="true" id="gnu.cpp.link.so.release.option.shared.554633349" name="Shared (-shared)" superClass="gnu.cpp.link.so.release.option.shared" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.soname.1403636100" name="Shared object name (-Wl,-soname=)" superClass="gnu.cpp.link.option.soname" value="Nova_UI_Core" valueType="string"/>
 								<option id="gnu.cpp.link.option.paths.1830956771" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/NovaLibrary/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="../../NovaLibrary/Release"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.59215754" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="NovaLibrary"/>

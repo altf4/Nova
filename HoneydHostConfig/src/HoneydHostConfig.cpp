@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Novad.cpp
+// Name        : HoneydHostConfig.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,7 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Nova Daemon to perform network anti-reconnaissance
+// Description : Main HH_CONFIG file, performs the subnet acquisition, scanning, and
+//               parsing of the resultant .xml output into a PersonalityTable object
 //============================================================================
 
 
@@ -39,6 +40,7 @@
 
 #include "ScriptTable.h"
 #include "HoneydHostConfig.h"
+#include "VendorMacDb.h"
 
 using namespace std;
 using namespace Nova;
@@ -47,8 +49,9 @@ std::vector<uint16_t> leftoverHostspace;
 uint16_t tempHostspace;
 Nova::PersonalityTable personalities;
 std::string localMachine;
+//VendorMacDb * macs;
 
-void Nova::parseHost(boost::property_tree::ptree pt2)
+ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 {
 	using boost::property_tree::ptree;
 
@@ -71,7 +74,7 @@ void Nova::parseHost(boost::property_tree::ptree pt2)
 					}
 					else
 					{
-						return;
+						return DONTADDSELF;
 					}
 				}
 				else if(!v.second.get<std::string>("<xmlattr>.addrtype").compare("mac"))
@@ -91,7 +94,7 @@ void Nova::parseHost(boost::property_tree::ptree pt2)
 						std::string port_key = ss.str() + "_" + boost::to_upper_copy(c.second.get<std::string>("<xmlattr>.protocol"));
 						ss.str("");
 						std::string port_service = c.second.get<std::string>("service.<xmlattr>.name");
-						person->AddPort(port_key, port_service);
+						person->AddPort(port_key);
 						i++;
 					}
 					catch(std::exception &e)
@@ -138,10 +141,18 @@ void Nova::parseHost(boost::property_tree::ptree pt2)
 
 	// call AddHost() on the Personality object created at the beginning of this method
 
+	if(person->m_personalityClass.empty())
+	{
+		std::cout << "Failed to match any personality information to " << person->m_addresses[0] << ", not adding to Personality Table." << std::endl;
+		return NOMATCHEDPERSONALITY;
+	}
+
 	personalities.AddHost(person);
+
+	return OKAY;
 }
 
-void Nova::load_nmap(const std::string &filename)
+void Nova::LoadNmap(const std::string &filename)
 {
 	using boost::property_tree::ptree;
 	ptree pt;
@@ -153,7 +164,7 @@ void Nova::load_nmap(const std::string &filename)
 		if(!host.first.compare("host"))
 		{
 			ptree pt2 = host.second;
-			parseHost(pt2);
+			ParseHost(pt2);
 		}
 	}
 }
@@ -161,9 +172,9 @@ void Nova::load_nmap(const std::string &filename)
 int main(int argc, char ** argv)
 {
 	ErrCode errVar = OKAY;
-	std::vector<std::string> recv = getSubnetsToScan(&errVar);
+	std::vector<std::string> recv = GetSubnetsToScan(&errVar);
 
-	printRecv(recv);
+	PrintRecv(recv);
 
 	errVar = LoadPersonalityTable(recv);
 
@@ -189,9 +200,7 @@ Nova::ErrCode Nova::LoadPersonalityTable(std::vector<std::string> recv)
 		{
 			std::string file = "subnet" + ss.str() + ".xml";
 
-			std::cout << file << std::endl;
-
-			load_nmap(file);
+			LoadNmap(file);
 
 			calculateDistributionMetrics();
 		}
@@ -203,12 +212,16 @@ Nova::ErrCode Nova::LoadPersonalityTable(std::vector<std::string> recv)
 		ss.str();
 	}
 
+	//macs = new VendorMacDb();
+
+	//macs->LoadPrefixFile();
+
 	personalities.ListInfo();
 
 	return OKAY;
 }
 
-void Nova::printRecv(std::vector<std::string> recv)
+void Nova::PrintRecv(std::vector<std::string> recv)
 {
 	std::cout << "Subnets to be scanned: " << std::endl;
 	for(uint16_t i = 0; i < recv.size(); i++)
@@ -223,7 +236,7 @@ void Nova::calculateDistributionMetrics()
 
 }
 
-std::vector<std::string> Nova::getSubnetsToScan(Nova::ErrCode * errVar)
+std::vector<std::string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 {
 	struct ifaddrs * devices = NULL;
 	ifaddrs *curIf = NULL;
