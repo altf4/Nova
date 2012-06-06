@@ -326,6 +326,9 @@ void *UpdateIPFilter(void *ptr)
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 				haystackDhcpAddresses = GetIpAddresses(dhcpListFile);
 				string haystackAddresses_csv = ConstructFilterString();
+
+				UpdateHaystackFeatures();
+
 				for(uint i = 0; i < handles.size(); i++)
 				{
 					/* ask pcap for the network address and mask of the device */

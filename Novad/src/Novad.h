@@ -110,6 +110,9 @@ void UpdateAndClassify(const in_addr_t& key);
 //Logs and prints if any packets were dropped since the last time this was called
 void CheckForDroppedPackets();
 
+// Call this to update the featuresets based on a haystack change
+void UpdateHaystackFeatures();
+
 
 }
 

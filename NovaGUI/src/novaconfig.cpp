@@ -1203,6 +1203,10 @@ void NovaConfig::LoadNovadPreferences()
 
 		ui.featureList->insertItem(TCP_PERCENT_SYNACK,
 				GetFeatureListItem(QString("TCP Percent SYN ACK"),featuresEnabled.at(TCP_PERCENT_SYNACK)));
+
+
+		ui.featureList->insertItem(TCP_PERCENT_SYNACK,
+				GetFeatureListItem(QString("Haystack Percent Contacted"),featuresEnabled.at(HAYSTACK_PERCENT_CONTACTED)));
 	}
 }
 

@@ -44,11 +44,16 @@ string FeatureSet::m_featureNames[] =
 FeatureSet::FeatureSet()
 {
 	m_IPTable.set_empty_key(0);
+	m_HaystackIPTable.set_empty_key(0);
 	m_PortTCPTable.set_empty_key(0);
 	m_PortUDPTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
 	m_intervalTable.set_empty_key(~0);
 	m_lastTimes.set_empty_key(0);
+
+	// This could be derrived from the m_HaystackIPTable but it saves
+	// having to iterate over it all the time
+	m_haystackNodesContacted = 0;
 
 	ClearFeatureSet();
 }
@@ -66,6 +71,7 @@ void FeatureSet::ClearFeatureSet()
 	m_totalInterval = 0;
 
 	m_IPTable.clear();
+	m_HaystackIPTable.clear();
 	m_PortTCPTable.clear();
 	m_PortUDPTable.clear();
 	m_packTable.clear();
@@ -159,6 +165,10 @@ void FeatureSet::CalculateAll()
 		Calculate(TCP_PERCENT_SYNACK);
 	}
 
+	if (Config::Inst()->IsFeatureEnabled(HAYSTACK_PERCENT_CONTACTED))
+	{
+		Calculate(HAYSTACK_PERCENT_CONTACTED);
+	}
 }
 
 
@@ -322,6 +332,18 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			m_features[TCP_PERCENT_SYNACK] = ((double)m_synAckCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
+		case HAYSTACK_PERCENT_CONTACTED:
+		{
+			if (m_HaystackIPTable.size())
+			{
+				m_features[HAYSTACK_PERCENT_CONTACTED] = (double)m_haystackNodesContacted / (double)m_HaystackIPTable.size();
+			}
+			else
+			{
+				m_features[HAYSTACK_PERCENT_CONTACTED] = 0;
+			}
+			break;
+		}
 		default:
 		{
 			break;
@@ -412,6 +434,25 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	m_packetCount++;
 	m_bytesTotal += evidence->m_evidencePacket.ip_len;
 	m_IPTable[evidence->m_evidencePacket.ip_dst]++;
+
+	/* Just some debug prints that are useful for figuring out what the haystack is according to the fs
+	cout << "Haystack IP table size is " << m_HaystackIPTable.size() << endl;
+	for (IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
+	{
+		cout << std::hex << "Ip is " << it->first << " with count of " << it->second << endl;
+	}
+	*/
+
+	if (m_HaystackIPTable.keyExists(evidence->m_evidencePacket.ip_dst))
+	{
+		m_HaystackIPTable[evidence->m_evidencePacket.ip_dst]++;
+
+		if (m_HaystackIPTable[evidence->m_evidencePacket.ip_dst] == 1)
+		{
+			m_haystackNodesContacted++;
+		}
+	}
+
 	m_packTable[evidence->m_evidencePacket.ip_len]++;
 
 	//If we have already gotten a packet from the source to dest host
@@ -484,6 +525,15 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_IPTable[it->first] += rhs.m_IPTable[it->first];
 	}
 
+	for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
+	{
+		if (!rhs.m_HaystackIPTable.keyExists(it->first))
+		{
+			m_HaystackIPTable[it->first] += rhs.m_HaystackIPTable[it->first];
+
+		}
+	}
+
 	for(Port_Table::iterator it = rhs.m_PortTCPTable.begin(); it != rhs.m_PortTCPTable.end(); it++)
 	{
 		m_PortTCPTable[it->first] += rhs.m_PortTCPTable[it->first];
@@ -513,6 +563,8 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 	return *this;
 }
 
+/* No longer used as of June 5th 2012,
+ * Delete this at some point when we're sure it's not needed
 FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 {
 	if(m_startTime > rhs.m_startTime)
@@ -565,6 +617,7 @@ FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
 
 	return *this;
 }
+*/
 
 uint32_t FeatureSet::SerializeFeatureSet(u_char *buf, uint32_t bufferSize)
 {
@@ -609,6 +662,14 @@ void FeatureSet::ClearFeatureData()
 		m_intervalTable.clear();
 		m_packTable.clear();
 		m_IPTable.clear();
+
+		m_haystackNodesContacted = 0;
+		for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
+		{
+				m_HaystackIPTable[it->first] = 0;
+		}
+
+
 		m_PortTCPTable.clear();
 		m_PortUDPTable.clear();
 		m_lastTimes.clear();
@@ -634,10 +695,12 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	SerializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_haystackNodesContacted, sizeof m_haystackNodesContacted, bufferSize);
 
 	SerializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, ~0, bufferSize);
 	SerializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, 0, bufferSize);
 	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, 0, bufferSize);
 	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
 	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
 
@@ -712,13 +775,13 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 
 	//Required, individual variables for calculation
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_totalInterval, bufferSize);
-	m_totalInterval += temp;
+	m_totalInterval = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_packetCount, bufferSize);
-	m_packetCount += temp;
+	m_packetCount = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_bytesTotal, bufferSize);
-	m_bytesTotal += temp;
+	m_bytesTotal = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_startTime, bufferSize);
 	if(m_startTime > (time_t)temp)
@@ -739,22 +802,25 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	}
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_rstCount, bufferSize);
-	m_rstCount += temp;
+	m_rstCount = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_ackCount, bufferSize);
-	m_ackCount += temp;
+	m_ackCount = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synCount, bufferSize);
-	m_synCount += temp;
+	m_synCount = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_finCount, bufferSize);
-	m_finCount += temp;
+	m_finCount = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synAckCount, bufferSize);
-	m_synAckCount += temp;
+	m_synAckCount = temp;
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_tcpPacketCount, bufferSize);
-	m_tcpPacketCount += temp;
+	m_tcpPacketCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_haystackNodesContacted, bufferSize);
+	m_haystackNodesContacted = temp;
 
 	/***************************************************************************************************
 	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
@@ -763,10 +829,25 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	DeserializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, bufferSize);
 	DeserializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, bufferSize);
 	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
 	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, bufferSize);
 	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, bufferSize);
 
 	return offset;
+}
+
+void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
+{
+	// TODO (maybe)
+	// We could possibly do something a little more advanced here. If an IP was in
+	// the old list and also is in the new list, we could update the data instead of just
+	// deleting all of our old data. Not worrying about it right now though.
+	m_haystackNodesContacted = 0;
+	m_HaystackIPTable.clear();
+	for (uint i = 0; i < nodes.size(); i++)
+	{
+		m_HaystackIPTable[nodes[i]] = 0;
+	}
 }
 
 bool FeatureSet::operator ==(const FeatureSet &rhs) const

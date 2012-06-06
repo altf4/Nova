@@ -84,8 +84,12 @@ SuspectTable::~SuspectTable()
 //Sets the needs classification bool
 void SuspectTable::SetNeedsClassificationUpdate(uint64_t key)
 {
-	Lock updateLock(&m_needsUpdateLock);
+	SetNeedsClassificationUpdate_noLocking(key);
+}
 
+//Sets the needs classification bool
+void SuspectTable::SetNeedsClassificationUpdate_noLocking(uint64_t key)
+{
 	if (!m_suspectTable[key]->m_needsClassificationUpdate)
 	{
 		m_suspectTable[key]->m_needsClassificationUpdate = true;
@@ -687,7 +691,6 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			if(IsValidKey_NonBlocking(key))
 			{
 				LockSuspect(key);
-				newSuspect->UpdateFeatureData(INCLUDE);
 				FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
 				m_suspectTable[key]->AddFeatureSet(&fs, MAIN_FEATURES);
 				SetNeedsClassificationUpdate(key);
@@ -721,7 +724,6 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					pthread_mutex_init(&m_lockTable[key].lock, &tempAttr);
 					m_lockTable[key].deleted = false;
 					m_lockTable[key].ref_cnt = 0;
-					newSuspect->UpdateFeatureData(INCLUDE);
 					//Allocate the Suspect and copy the contents
 					m_suspectTable[key] = newSuspect;
 					//Store the key
@@ -800,12 +802,20 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 	{
 		m_keys.push_back(key);
 		//If we don't want to deallocate the Evidence
+		// TODO Think this is outdated with the consuming function that doesn't delete evidence
+
+		m_suspectTable[key] = new Suspect();
+
+
+		m_suspectTable[key]->m_features.SetHaystackNodes(m_haystackNodesCached);
+		m_suspectTable[key]->m_unsentFeatures.SetHaystackNodes(m_haystackNodesCached);
+
 		if(readOnly)
 		{
 			Evidence * tempEv = new Evidence();
 			*tempEv = *evidence;
 			tempEv->m_next = NULL;
-			m_suspectTable[key] = new Suspect(tempEv);
+
 			if(evidence->m_next != NULL)
 			{
 				m_suspectTable[key]->ReadEvidence(evidence->m_next);
@@ -814,8 +824,9 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 		//If we do
 		else
 		{
-			m_suspectTable[key] = new Suspect(evidence);
-		        SetNeedsClassificationUpdate(key);
+			m_suspectTable[key]->ConsumeEvidence(evidence);
+
+		    SetNeedsClassificationUpdate(key);
 		}
 	}
 
@@ -895,6 +906,25 @@ bool SuspectTable::UnlockSuspect(const in_addr_t& key)
 	}
 	//Return false, Suspect doesn't exists
 	return false;
+}
+
+void SuspectTable::SetHaystackNodes(std::vector<uint32_t> nodes)
+{
+	Lock lock(&m_lock, false);
+
+	m_haystackNodesCached = nodes;
+
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		if(IsValidKey_NonBlocking(m_keys[i]))
+		{
+			Suspect *suspect = m_suspectTable[m_keys[i]];
+
+			suspect->m_features.SetHaystackNodes(nodes);
+			suspect->m_unsentFeatures.SetHaystackNodes(nodes);
+			SetNeedsClassificationUpdate_noLocking(m_keys[i]);
+		}
+	}
 }
 
 }

@@ -79,7 +79,8 @@ enum featureIndex: uint8_t
 	TCP_PERCENT_SYN = 9,
 	TCP_PERCENT_FIN = 10,
 	TCP_PERCENT_RST = 11,
-	TCP_PERCENT_SYNACK = 12
+	TCP_PERCENT_SYNACK = 12,
+	HAYSTACK_PERCENT_CONTACTED = 13
 };
 
 namespace Nova{
@@ -109,7 +110,6 @@ public:
 	void ClearFeatureData();
 
 
-	FeatureSet& operator-=(FeatureSet &rhs);
 	FeatureSet& operator+=(FeatureSet &rhs);
 	bool operator ==(const FeatureSet &rhs) const;
 	bool operator !=(const FeatureSet &rhs) const;
@@ -159,6 +159,9 @@ public:
 	// 			that would be serialized
 	uint32_t GetFeatureDataLength();
 
+	void SetHaystackNodes(std::vector<uint32_t> nodes);
+
+
 	//FeatureSet(const FeatureSet &rhs);
 	//FeatureSet& operator=(FeatureSet &rhs);
 private:
@@ -192,6 +195,8 @@ private:
 
 	//Table of IP addresses and associated packet counts
 	IP_Table m_IPTable;
+	IP_Table m_HaystackIPTable;
+	int m_haystackNodesContacted;
 
 	//Table of timestamps for the time at which a host last received a packet from this suspect
 	LastTimeTable m_lastTimes;

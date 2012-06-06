@@ -8,7 +8,7 @@ class FeatureSetTest : public ::testing::Test {
 protected:
 	FeatureSet fset;
 	virtual void SetUp() {
-		Config::Inst()->SetEnabledFeatures("1111111111111");
+		Config::Inst()->EnableAllFeatures();
 
 		// First test packet
 		Evidence p1;
@@ -55,21 +55,6 @@ TEST_F(FeatureSetTest, test_CopyAndAssignmentEquality)
 
 	FeatureSet copy(fset);
 	EXPECT_TRUE(copy == fset);
-}
-
-
-// Simple check on the + and - operators
-TEST_F(FeatureSetTest, test_ArithmiticEquality)
-{
-	FeatureSet temp = fset;
-	temp += fset;
-	temp.CalculateAll();
-
-	temp -= fset;
-	temp.CalculateAll();
-
-	// We should end up back where we started
-	EXPECT_TRUE(temp == fset);
 }
 
 

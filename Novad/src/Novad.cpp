@@ -520,7 +520,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 				LOG(ERROR, "Unable to Serialize Suspect", ss.str());
 				return;
 			}
-			suspectCopy.UpdateFeatureData(INCLUDE);
+			//suspectCopy.UpdateFeatureData(INCLUDE);
 			suspectCopy.ClearFeatureData(UNSENT_FEATURES);
 			suspects.CheckIn(&suspectCopy);
 
@@ -676,6 +676,8 @@ bool Start_Packet_Handler()
 	whitelistIpAddresses = WhitelistConfiguration::GetIps();
 	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	haystackAddresses_csv = ConstructFilterString();
+
+	UpdateHaystackFeatures();
 
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
@@ -853,9 +855,9 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr* pkthdr,const u_char*
 		}
 		default:
 		{
-			stringstream ss;
-			ss << "Ignoring a packet with unhandled protocol #" << (uint16_t)(ntohs(((struct ether_header *)packet)->ether_type));
-			LOG(DEBUG, ss.str(), "");
+			//stringstream ss;
+			//ss << "Ignoring a packet with unhandled protocol #" << (uint16_t)(ntohs(((struct ether_header *)packet)->ether_type));
+			//LOG(DEBUG, ss.str(), "");
 			return;
 		}
 	}
@@ -1022,6 +1024,7 @@ vector <string> GetHaystackAddresses(string honeyDConfigPath)
 		//Load the line into a stringstream for easier tokenizing
 		LogInputLineStream << LogInputLine;
 		string token;
+		string honeydTemplate;
 
 		//Is the first word "bind"?
 		getline(LogInputLineStream, token, ' ');
@@ -1033,7 +1036,14 @@ vector <string> GetHaystackAddresses(string honeyDConfigPath)
 
 		//The next token will be the IP address
 		getline(LogInputLineStream, token, ' ');
-		retAddresses.push_back(token);
+
+		// Get the template
+		getline(LogInputLineStream, honeydTemplate, ' ');
+
+		if (honeydTemplate != "DoppelgangerReservedTemplate")
+		{
+			retAddresses.push_back(token);
+		}
 	}
 	return retAddresses;
 }
@@ -1127,6 +1137,24 @@ void CheckForDroppedPackets()
 			dropCounts[i] = captureStats.ps_drop;
 		}
 	}
+}
+
+void UpdateHaystackFeatures()
+{
+	vector<uint32_t> haystackNodes;
+	for (uint i = 0; i < haystackAddresses.size(); i++)
+	{
+		cout << "Address is " << haystackAddresses[i] << endl;
+		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
+	}
+
+	for (uint i = 0; i < haystackDhcpAddresses.size(); i++)
+	{
+		cout << "Address is " << haystackDhcpAddresses[i] << endl;
+		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
+	}
+
+	suspects.SetHaystackNodes(haystackNodes);
 }
 
 }

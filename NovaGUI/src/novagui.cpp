@@ -1287,16 +1287,17 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 					featureLabel = tr("TCP Percent SYN ACK");
 					break;
 				}
+				case HAYSTACK_PERCENT_CONTACTED:
+					featureLabel = tr("Haystack Percent Contacted");
+					break;
 				default:
 				{
 					break;
 				}
 			}
 
-			ui.suspectDistances->insertItem(row, featureLabel + tr("Accuracy"));
-			QString formatString = "%p%| ";
-			formatString.append(featureLabel);
-			formatString.append(": ");
+			ui.suspectDistances->insertItem(row, featureLabel + QString(" : ") + QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
+			QString formatString = "%p% Match to neighboring points";
 
 			row++;
 			QProgressBar* bar = new QProgressBar();
@@ -1325,7 +1326,6 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 				 QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1,"
 				" y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
-			formatString.append(QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
 			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();
