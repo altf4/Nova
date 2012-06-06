@@ -24,6 +24,7 @@ using namespace std;
 
 namespace Nova
 {
+
 PersonalityTable::PersonalityTable()
 {
 	m_personalities.set_empty_key("");
@@ -33,7 +34,9 @@ PersonalityTable::PersonalityTable()
 }
 
 PersonalityTable::~PersonalityTable()
-{}
+{
+
+}
 
 void PersonalityTable::ListInfo()
 {
@@ -97,6 +100,7 @@ void PersonalityTable::AddHost(Personality * add)
 	{
 		m_personalities[add->m_personalityClass[0]] = add;
 	}
+
 	else
 	{
 		Personality * cur = m_personalities[add->m_personalityClass[0]];
@@ -134,4 +138,5 @@ void PersonalityTable::AddHost(Personality * add)
 		delete add;
 	}
 }
+
 }

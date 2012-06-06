@@ -25,6 +25,7 @@ namespace Nova
 
 class Personality
 {
+
 public:
 
 	Personality();
@@ -64,5 +65,6 @@ public:
 	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
 	Port_Table m_ports;
 };
+
 }
 
