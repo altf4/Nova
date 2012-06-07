@@ -1164,45 +1164,11 @@ void NovaConfig::LoadNovadPreferences()
 		string featuresEnabled = Config::Inst()->GetEnabledFeatures();
 		ui.featureList->clear();
 		// Populate the list, row order is based on dimension macros
-		ui.featureList->insertItem(IP_TRAFFIC_DISTRIBUTION,
-			GetFeatureListItem(QString("IP Traffic Distribution"),featuresEnabled.at(IP_TRAFFIC_DISTRIBUTION)));
 
-		ui.featureList->insertItem(PORT_TRAFFIC_DISTRIBUTION,
-			GetFeatureListItem(QString("Port Traffic Distribution"),featuresEnabled.at(PORT_TRAFFIC_DISTRIBUTION)));
-
-		ui.featureList->insertItem(HAYSTACK_EVENT_FREQUENCY,
-			GetFeatureListItem(QString("Haystack Event Frequency"),featuresEnabled.at(HAYSTACK_EVENT_FREQUENCY)));
-
-		ui.featureList->insertItem(PACKET_SIZE_MEAN,
-			GetFeatureListItem(QString("Packet Size Mean"),featuresEnabled.at(PACKET_SIZE_MEAN)));
-
-		ui.featureList->insertItem(PACKET_SIZE_DEVIATION,
-			GetFeatureListItem(QString("Packet Size Deviation"),featuresEnabled.at(PACKET_SIZE_DEVIATION)));
-
-		ui.featureList->insertItem(DISTINCT_IPS,
-			GetFeatureListItem(QString("IPs Contacted"),featuresEnabled.at(DISTINCT_IPS)));
-
-		ui.featureList->insertItem(DISTINCT_PORTS,
-			GetFeatureListItem(QString("Ports Contacted"),featuresEnabled.at(DISTINCT_PORTS)));
-
-		ui.featureList->insertItem(PACKET_INTERVAL_MEAN,
-			GetFeatureListItem(QString("Packet Interval Mean"),featuresEnabled.at(PACKET_INTERVAL_MEAN)));
-
-		ui.featureList->insertItem(PACKET_INTERVAL_DEVIATION,
-			GetFeatureListItem(QString("Packet Interval Deviation"),featuresEnabled.at(PACKET_INTERVAL_DEVIATION)));
-
-
-		ui.featureList->insertItem(TCP_PERCENT_SYN,
-				GetFeatureListItem(QString("TCP Percent SYN"),featuresEnabled.at(TCP_PERCENT_SYN)));
-
-		ui.featureList->insertItem(TCP_PERCENT_RST,
-				GetFeatureListItem(QString("TCP Perecent RST"),featuresEnabled.at(TCP_PERCENT_RST)));
-
-		ui.featureList->insertItem(TCP_PERCENT_FIN,
-				GetFeatureListItem(QString("TCP Percent FIN"),featuresEnabled.at(TCP_PERCENT_FIN)));
-
-		ui.featureList->insertItem(TCP_PERCENT_SYNACK,
-				GetFeatureListItem(QString("TCP Percent SYN ACK"),featuresEnabled.at(TCP_PERCENT_SYNACK)));
+		for (int i = 0; i < DIM; i++)
+		{
+			ui.featureList->insertItem(i, GetFeatureListItem(QString::fromStdString(FeatureSet::m_featureNames[i]),featuresEnabled.at(i)));
+		}
 	}
 }
 

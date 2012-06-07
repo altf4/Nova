@@ -46,25 +46,8 @@ Suspect::Suspect()
 	}
 }
 
-
 Suspect::~Suspect()
 {
-}
-
-
-Suspect::Suspect(Evidence *&evidence)
-{
-	m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
-	m_hostileNeighbors = 0;
-	m_classification = -1;
-	m_isHostile = false;
-	m_needsClassificationUpdate = false;
-	ConsumeEvidence(evidence);
-	m_flaggedByAlarm = false;
-	for(int i = 0; i < DIM; i++)
-	{
-		m_featureAccuracy[i] = 0;
-	}
 }
 
 string Suspect::GetIpString()
@@ -102,69 +85,12 @@ string Suspect::ToString()
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 
-	if (Config::Inst()->IsFeatureEnabled(DISTINCT_IPS))
+	for (int i = 0; i < DIM; i++)
 	{
-		ss << " Distinct IPs Contacted: " << m_features.m_features[DISTINCT_IPS] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
-	{
-		ss << " Haystack Traffic Distribution: " << m_features.m_features[IP_TRAFFIC_DISTRIBUTION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(DISTINCT_PORTS))
-	{
-		ss << " Distinct Ports Contacted: " << m_features.m_features[DISTINCT_PORTS] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
-	{
-		ss << " Port Traffic Distribution: "  <<  m_features.m_features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
-	{
-		ss << " Haystack Events: " << m_features.m_features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
-	{
-		ss << " Mean Packet Size: " << m_features.m_features[PACKET_SIZE_MEAN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_DEVIATION))
-	{
-		ss << " Packet Size Variance: " << m_features.m_features[PACKET_SIZE_DEVIATION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
-	{
-		ss << " Mean Packet Interval: " << m_features.m_features[PACKET_INTERVAL_MEAN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
-	{
-		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
-	{
-		ss << "TCP Percent SYN: " << m_features.m_features[TCP_PERCENT_SYN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
-	{
-		ss << "TCP Percent FIN: " << m_features.m_features[TCP_PERCENT_FIN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
-	{
-		ss << "TCP Percent RST: " << m_features.m_features[TCP_PERCENT_RST] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
-	{
-		ss << "TCP Percent SYN ACK: " << m_features.m_features[TCP_PERCENT_SYNACK] << "\n";
+		if (Config::Inst()->IsFeatureEnabled(i))
+		{
+			ss << FeatureSet::m_featureNames[i] << ": " << m_features.m_features[i] << "\n";
+		}
 	}
 
 	return ss.str();
@@ -177,6 +103,7 @@ void Suspect::ReadEvidence(Evidence *&evidence)
 	while(curEvidence != NULL)
 	{
 		m_unsentFeatures.UpdateEvidence(curEvidence);
+		m_features.UpdateEvidence(curEvidence);
 		tempEv = curEvidence;
 		curEvidence = tempEv->m_next;
 	}
@@ -185,10 +112,16 @@ void Suspect::ReadEvidence(Evidence *&evidence)
 
 void Suspect::ConsumeEvidence(Evidence *&evidence)
 {
+	if (m_IpAddress.s_addr == 0)
+	{
+		m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+	}
+
 	Evidence *curEvidence = evidence, *tempEv = NULL;
 	while(curEvidence != NULL)
 	{
 		m_unsentFeatures.UpdateEvidence(curEvidence);
+		m_features.UpdateEvidence(curEvidence);
 		tempEv = curEvidence;
 		curEvidence = tempEv->m_next;
 		delete tempEv;
@@ -199,9 +132,7 @@ void Suspect::ConsumeEvidence(Evidence *&evidence)
 //Calculates the suspect's features based on it's feature set
 void Suspect::CalculateFeatures()
 {
-	UpdateFeatureData(INCLUDE);
 	m_features.CalculateAll();
-	UpdateFeatureData(REMOVE);
 }
 
 // Stores the Suspect information into the buffer, retrieved using deserializeSuspect
@@ -337,22 +268,35 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
 	offset += m_features.DeserializeFeatureSet(buf+offset, bufferSize - offset);
+
 	switch(whichFeatures)
 	{
 		case UNSENT_FEATURE_DATA:
 		{
-			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			FeatureSet deserializedFs;
+
+			offset += deserializedFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_unsentFeatures += deserializedFs;
 			break;
 		}
 		case MAIN_FEATURE_DATA:
 		{
-			offset += m_features.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			FeatureSet deserializedFs;
+
+			offset += deserializedFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_features += deserializedFs;
 			break;
 		}
 		case ALL_FEATURE_DATA:
 		{
-			offset += m_features.DeserializeFeatureData(buf+offset, bufferSize - offset);
-			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			FeatureSet deserializedUnsentFs;
+			FeatureSet deserializedFs;
+
+			offset += deserializedFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_features += deserializedFs;
+
+			offset += deserializedUnsentFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_unsentFeatures += deserializedUnsentFs;
 			break;
 		}
 		case NO_FEATURE_DATA:
@@ -451,18 +395,6 @@ void Suspect::SetIsLive(bool b)
 	m_isLive = b;
 }
 
-void Suspect::UpdateFeatureData(bool include)
-{
-	if(include)
-	{
-		m_features += m_unsentFeatures;
-	}
-	else
-	{
-		m_features -= m_unsentFeatures;
-	}
-}
-
 //Clears the FeatureData of a suspect
 // whichFeatures: specifies which FeatureSet's Data to clear
 void Suspect::ClearFeatureData(FeatureMode whichFeatures)
@@ -540,24 +472,6 @@ void Suspect::AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 		}
 	}
 
-}
-//Subtracts the feature set 'fs' from the suspect's feature set
-void Suspect::SubtractFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
-{
-	switch(whichFeatures)
-	{
-		default:
-		case MAIN_FEATURES:
-		{
-			m_features -= *fs;
-			break;
-		}
-		case UNSENT_FEATURES:
-		{
-			m_unsentFeatures -= *fs;
-			break;
-		}
-	}
 }
 
 //Clears the feature set of the suspect
