@@ -749,6 +749,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			{
 				out << "clone " << it->second.pfile << it->second.IP << " " << it->second.pfile << endl;
 				out << "set " << it->second.pfile << it->second.IP << " ethernet \"" << it->second.MAC << "\"" << endl;
+				out << "bind " << it->second.IP << " " <<  it->second.pfile << it->second.IP << endl;
 			}
 		}
 	}
