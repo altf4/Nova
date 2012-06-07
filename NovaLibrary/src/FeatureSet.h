@@ -95,7 +95,7 @@ public:
 	/// The actual feature values
 	double m_features[DIM];
 
-	__attribute__ ((visibility ("hidden"))) static std::string m_featureNames[];
+	static std::string m_featureNames[];
 
 	//Number of packets total
 	uint32_t m_packetCount;

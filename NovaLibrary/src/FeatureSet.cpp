@@ -30,15 +30,20 @@ namespace Nova{
 
 string FeatureSet::m_featureNames[] =
 {
-		"IP_TRAFFIC_DISTRIBUTION",
-		"PORT_TRAFFIC_DISTRIBUTION",
-		"HAYSTACK_EVENT_FREQUENCY",
-		"PACKET_SIZE_MEAN",
-		"PACKET_SIZE_DEVIATION",
-		"DISTINCT_IPS",
-		"DISTINCT_PORTS",
-		"PACKET_INTERVAL_MEAN",
-		"PACKET_INTERVAL_DEVIATION"
+		"IP Traffic Distribution",
+		"Port Traffic Distribution",
+		"Haystack Event Frequency",
+		"Packet Size Mean",
+		"Packet Size Deviation",
+		"Protected IPs Contacted",
+		"Ports Contacted",
+		"Packet Interval Mean",
+		"Packet Interval Deviation",
+		"TCP Percent SYN",
+		"TCP Percent FIN",
+		"TCP Percent RST",
+		"TCP Percent SYN ACK",
+		"Haystack Percent Contacted",
 };
 
 FeatureSet::FeatureSet()

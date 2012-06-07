@@ -85,74 +85,12 @@ string Suspect::ToString()
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 
-	if (Config::Inst()->IsFeatureEnabled(DISTINCT_IPS))
+	for (int i = 0; i < DIM; i++)
 	{
-		ss << " Distinct IPs Contacted: " << m_features.m_features[DISTINCT_IPS] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
-	{
-		ss << " Haystack Traffic Distribution: " << m_features.m_features[IP_TRAFFIC_DISTRIBUTION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(DISTINCT_PORTS))
-	{
-		ss << " Distinct Ports Contacted: " << m_features.m_features[DISTINCT_PORTS] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
-	{
-		ss << " Port Traffic Distribution: "  <<  m_features.m_features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
-	{
-		ss << " Haystack Events: " << m_features.m_features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
-	{
-		ss << " Mean Packet Size: " << m_features.m_features[PACKET_SIZE_MEAN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_DEVIATION))
-	{
-		ss << " Packet Size Variance: " << m_features.m_features[PACKET_SIZE_DEVIATION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
-	{
-		ss << " Mean Packet Interval: " << m_features.m_features[PACKET_INTERVAL_MEAN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
-	{
-		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
-	{
-		ss << "TCP Percent SYN: " << m_features.m_features[TCP_PERCENT_SYN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
-	{
-		ss << "TCP Percent FIN: " << m_features.m_features[TCP_PERCENT_FIN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
-	{
-		ss << "TCP Percent RST: " << m_features.m_features[TCP_PERCENT_RST] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
-	{
-		ss << "TCP Percent SYN ACK: " << m_features.m_features[TCP_PERCENT_SYNACK] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
-	{
-		ss << "Haystack Percent Contacted: " << m_features.m_features[HAYSTACK_PERCENT_CONTACTED] << "\n";
+		if (Config::Inst()->IsFeatureEnabled(i))
+		{
+			ss << FeatureSet::m_featureNames[i] << ": " << m_features.m_features[i] << "\n";
+		}
 	}
 
 	return ss.str();
