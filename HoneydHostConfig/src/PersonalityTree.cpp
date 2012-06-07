@@ -152,17 +152,19 @@ void PersonalityTree::RecursiveGenerateProfileTable(PersonalityNode * node, stri
 	}
 	else
 	{
-		uint16_t i = 0;
+		// Probably not the right way of going about this
+		uint16_t i = 1;
 		stringstream ss;
 		ss << i;
+
 		for(; m_profiles.find(node->m_key + ss.str()) != m_profiles.end(); i++)
 		{
 			ss.str("");
 			ss << i;
 		}
+
 		m_profiles[node->m_key + ss.str()] = node->GenerateProfile(parent);
 	}
-
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
 		RecursiveGenerateProfileTable(node->m_children[i].second, node->m_key);
@@ -216,7 +218,18 @@ void PersonalityTree::DebugPrintProfileTable()
 
 void PersonalityTree::ToXmlTemplate()
 {
+	HoneydConfiguration * hhconfig = new HoneydConfiguration();
 
+	vector<string> ret = hhconfig->GetProfileNames();
+
+	cout << endl;
+
+	for(uint16_t i = 0; i < ret.size(); i++)
+	{
+		cout << "Profile in Nova: " << ret[i] << endl;
+	}
+
+	cout << endl;
 }
 
 }

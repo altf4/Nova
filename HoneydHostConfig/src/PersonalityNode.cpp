@@ -41,6 +41,7 @@ PersonalityNode::PersonalityNode(string key)
 PersonalityNode::~PersonalityNode()
 {
 	vector<PersonalityNode *> delPtrs;
+
 	for(unsigned int i = 0; i < m_children.size(); i++)
 	{
 		if(m_children[i].second != NULL)
@@ -48,6 +49,7 @@ PersonalityNode::~PersonalityNode()
 			delPtrs.push_back(m_children[i].second);
 		}
 	}
+
 	for(unsigned int i = 0; i < delPtrs.size(); i++)
 	{
 		delete delPtrs[i];
@@ -59,15 +61,19 @@ string PersonalityNode::ToString()
 	stringstream ss;
 	ss << endl << m_key << " has " << m_count << " hosts in it's scope." << endl << endl;
 	ss << "MAC Address Vendors: <Vendor>, <Number of occurrences>" << endl;
+
 	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
 		ss << it->first << ", " << it->second << endl;
 	}
+
 	ss << endl << "Ports : <Number>_<Protocol>, <Number of occurrences>" << endl;
+
 	for(Port_Table::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		ss << it->first << ", " << it->second << endl;
 	}
+
 	return ss.str();
 }
 
@@ -82,9 +88,10 @@ string PersonalityNode::GenerateDistribution()
 		pair<string, double> push_vendor;
 		push_vendor.first = it->first;
 		push_vendor.second = (100 * (((double)it->second)/((double)m_count)));
-		ss << "\t" << it->first << " constitutes " << push_vendor.second << "% of MACs for this scope." << endl;
+		ss << "\t" << it->first << " constitutes " << push_vendor.second << "% of MAC vendors for this scope." << endl;
 		m_vendor_dist.push_back(push_vendor);
 	}
+
 	for(Port_Table::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		pair<string, double> push_ports;
