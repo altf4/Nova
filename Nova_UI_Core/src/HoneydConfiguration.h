@@ -96,6 +96,7 @@ public:
     //			If using a script it must exist in the script table before calling this function
     //Returns: the port name if successful and an empty string if unsuccessful
     std::string AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, std::string scriptName = "");
+    std::string AddPort(port * prt);
 
     // Some high level node creation methods
 

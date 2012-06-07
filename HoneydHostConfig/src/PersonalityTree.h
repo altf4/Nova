@@ -54,6 +54,8 @@ public:
 
 	void DebugPrintProfileTable();
 
+	void AddAllPorts();
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
@@ -64,9 +66,13 @@ private:
 
 	ProfileTable m_profiles;
 
+	HoneydConfiguration * hhconfig;
+
 	void RecursiveToString(PersonalityNode * persNode);
 	void RecursiveGenerateDistributions(PersonalityNode * node);
 	void RecursiveGenerateProfileTable(PersonalityNode * node, std::string parent);
+	void RecursiveToXmlTemplate(PersonalityNode * node, std::string prefix);
+	void RecursiveAddAllPorts(PersonalityNode * node);
 };
 
 }

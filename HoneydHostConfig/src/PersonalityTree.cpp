@@ -27,6 +27,8 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 {
 	m_profiles.set_empty_key("");
 
+	hhconfig = new HoneydConfiguration();
+
 	m_root = PersonalityNode("root");
 	if(persTable != NULL)
 	{
@@ -41,6 +43,7 @@ PersonalityTree::~PersonalityTree()
 void PersonalityTree::LoadTable(PersonalityTable *persTable)
 {
 	Personality_Table *pTable = &persTable->m_personalities;
+
 	for(Personality_Table::iterator it = pTable->begin(); it != pTable->end(); it++)
 	{
 		InsertPersonality(it->second);
@@ -50,6 +53,7 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 void PersonalityTree::InsertPersonality(Personality *pers)
 {
 	Personality temp = * pers;
+
 	UpdatePersonality(&temp, &m_root);
 }
 
@@ -108,6 +112,7 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 			tablePair->second->m_vendors[it->first] = it->second;
 		}
 	}
+
 	pers->m_personalityClass.pop_back();
 
 	tablePair->second->m_count += pers->m_count;
@@ -146,9 +151,9 @@ void PersonalityTree::GenerateProfileTable()
 
 void PersonalityTree::RecursiveGenerateProfileTable(PersonalityNode * node, string parent)
 {
-	if(m_profiles.find(node->m_key) == m_profiles.end())
+	if(m_profiles.find(parent + " " +node->m_key) == m_profiles.end())
 	{
-		m_profiles[node->m_key] = node->GenerateProfile(parent);
+		m_profiles[parent + " " + node->m_key] = node->GenerateProfile(parent);
 	}
 	else
 	{
@@ -216,9 +221,34 @@ void PersonalityTree::DebugPrintProfileTable()
 	}
 }
 
+void PersonalityTree::RecursiveToXmlTemplate(PersonalityNode * node, string prefix)
+{
+	if(m_profiles.find(prefix + " " + node->m_key) != m_profiles.end())
+	{
+		profile * add = &(m_profiles[prefix + " " + node->m_key]);
+
+		if(!add->parentProfile.compare("root"))
+		{
+			add->parentProfile = "default";
+		}
+
+		for(uint16_t i = 0; i < add->ports.size(); i++)
+		{
+			add->ports[i].first += "_open";
+		}
+
+		hhconfig->AddProfile(add);
+	}
+
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveToXmlTemplate(node->m_children[i].second, node->m_key);
+	}
+}
+
 void PersonalityTree::ToXmlTemplate()
 {
-	HoneydConfiguration * hhconfig = new HoneydConfiguration();
+	hhconfig->LoadAllTemplates();
 
 	vector<string> ret = hhconfig->GetProfileNames();
 
@@ -230,6 +260,63 @@ void PersonalityTree::ToXmlTemplate()
 	}
 
 	cout << endl;
+
+	hhconfig->m_nodes.clear();
+	hhconfig->m_subnets.clear();
+
+	/*for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		profile * prof = &(it->second);
+		hhconfig->AddProfile(prof);
+	}
+	*/
+
+	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
+	{
+		RecursiveToXmlTemplate(m_root.m_children[i].second, m_root.m_key);
+	}
+
+	ret = hhconfig->GetProfileNames();
+
+	cout << "After adding nodes to HoneydConfiguration profile table" << endl;
+
+	cout << endl;
+
+	for(uint16_t i = 0; i < ret.size(); i++)
+	{
+		cout << "Profile in Nova: " << ret[i] << endl;
+	}
+
+	cout << endl;
+
+	hhconfig->SaveAllTemplates();
+}
+
+void PersonalityTree::AddAllPorts()
+{
+	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
+	{
+		RecursiveAddAllPorts(m_root.m_children[i].second);
+	}
+}
+
+void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
+{
+	for(uint16_t i = 0; i < node->m_ports_dist.size(); i++)
+	{
+		port pass;
+
+		pass.portName = node->m_ports_dist[i].first + "_open";
+		pass.portNum = node->m_ports_dist[i].first.substr(0, node->m_ports_dist[i].first.find("_"));
+		pass.type = node->m_ports_dist[i].first.substr(node->m_ports_dist[i].first.find("_") + 1, node->m_ports_dist[i].first.find("_", node->m_ports_dist[i].first.find("_")) + 1);
+		pass.behavior = "open";
+
+		hhconfig->AddPort(&pass);
+	}
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveAddAllPorts(node->m_children[i].second);
+	}
 }
 
 }
