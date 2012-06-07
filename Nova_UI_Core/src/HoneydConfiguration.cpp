@@ -238,8 +238,10 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	try
 	{
 		read_xml(m_homePath+"/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		m_groups.clear();
 		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 		{
+			m_groups.push_back(v.second.get<std::string>("name"));
 			//Find the specified group
 			if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 			{
