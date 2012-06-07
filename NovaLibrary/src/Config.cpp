@@ -1845,6 +1845,18 @@ void Config::SetEnabledFeatures(string enabledFeatureMask)
 	SetEnabledFeatures_noLocking(enabledFeatureMask);
 }
 
+void Config::EnableAllFeatures()
+{
+	Lock lock (&m_lock, false);
+
+	char mask[DIM];
+	for (int i = 0; i < DIM; i++)
+	{
+		mask[i] = '1';
+	}
+	SetEnabledFeatures_noLocking(string(mask));
+}
+
 void Config::SetEps(double eps)
 {
 	Lock lock(&m_lock, false);

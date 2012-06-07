@@ -75,6 +75,8 @@ public:
 
 	void UpdateAllSuspects();
 
+	void SetHaystackNodes(std::vector<uint32_t> nodes);
+
 	// Copies the suspect pointed to in 'suspect', into the table location associated with key
 	// 		suspect: pointer to the Suspect you wish to copy in
 	// Returns (0) on Success, (-1) if the Suspect is Checked Out by another thread
@@ -189,6 +191,10 @@ private:
 	std::vector<uint64_t> m_suspectsNeedingUpdate;
 	SuspectLockTable m_lockTable;
 
+	// List of haystack nodes, cached in the suspectTable
+	// and passed to featureSets when a new suspect is created
+	std::vector<uint32_t> m_haystackNodesCached;
+
 	// Lock used to maintain concurrency between threads
 	pthread_rwlock_t m_lock;
 	pthread_mutex_t m_needsUpdateLock;
@@ -197,6 +203,7 @@ private:
 
 	// Marks a suspect to be reclassified at some point
 	void SetNeedsClassificationUpdate(uint64_t key);
+	void SetNeedsClassificationUpdate_noLocking(uint64_t key);
 
 	// Checks the validity of the key - private use non-locking version
 	// 		key: IP address of the suspect as a uint value (host byte order)

@@ -112,6 +112,7 @@ public:
     void SetDoppelInterface(std::string doppelInterface);
     void SetDoppelIp(std::string doppelIp);
     void SetEnabledFeatures(std::string enabledFeatureMask);
+    void EnableAllFeatures();
     void SetEps(double eps);
     void SetGotoLive(bool gotoLive);
     void SetIsDmEnabled(bool isDmEnabled);

@@ -57,9 +57,6 @@ public:
 	// Destructor. Has to delete the FeatureSet object within.
 	~Suspect();
 
-	// Constructor from a Packet
-	//		packet - Used to set the IP address and initial evidence of the suspect
-	Suspect(Evidence *&evidence);
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
@@ -133,10 +130,6 @@ public:
 	//Sets the 'from live capture' bool
 	void SetIsLive(bool b);
 
-	// Includes and Excludes separately tracked data for feature set calculation
-	// include - a value of true adds unsent data into the main table
-	// 			 a value of false subtracts unsent data from the main table
-	void UpdateFeatureData(bool include);
 	//Clears the FeatureData of a suspect
 	// whichFeatures: specifies which FeatureSet's Data to clear
 	void ClearFeatureData(FeatureMode whichFeatures = MAIN_FEATURES);
@@ -152,8 +145,6 @@ public:
 
 	//Adds the feature set 'fs' to the suspect's feature set
 	void AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
-	//Subtracts the feature set 'fs' from the suspect's feature set
-	void SubtractFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
 
 
 	//Returns the accuracy double of the feature using featureIndex 'fi'
@@ -176,12 +167,13 @@ public:
 
 	bool m_needsClassificationUpdate;
 
-private:
-
 	// The main FeatureSet for this Suspect
 	FeatureSet m_features;
 	// FeatureSet containing data not yet sent through a SA
 	FeatureSet m_unsentFeatures;
+
+private:
+
 	// Array of values that represent the quality of suspect classification on each feature
 	double m_featureAccuracy[DIM];
 	// The IP address of the suspect. Serves as a unique identifier for the Suspect
