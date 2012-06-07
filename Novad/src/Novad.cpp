@@ -109,7 +109,6 @@ int RunNovaD()
 
 	if(!LockNovad())
 	{
-		cout << "ERROR: Novad is already running. Please close all other instances before continuing." << endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -250,9 +249,16 @@ bool LockNovad()
 {
 	int lockFile = open((Config::Inst()->GetPathHome() + "/novad.lock").data(), O_CREAT | O_RDWR, 0666);
 	int rc = flock(lockFile, LOCK_EX | LOCK_NB);
-	if(rc)
+	if(rc != 0)
 	{
-		// Someone else has this file open
+		if (errno == EAGAIN)
+		{
+			cerr << "ERROR: Novad is already running. Please close all other instances before continuing." << endl;
+		}
+		else
+		{
+			cerr << "ERROR: Unable to open the novad.lock file. This could be due to bad file permissions on it. Error was: " << strerror(errno) << endl;
+		}
 		return false;
 	}
 	else
