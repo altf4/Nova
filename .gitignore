@@ -116,3 +116,8 @@ NovaCLI/Debug/novacli
 /Nova_UI_Core/Release/Nova_UI_Core
 /HoneydHostConfig/Debug/subnet0.xml
 /HoneydHostConfig/Debug/test.txt
+/HaystackConfigWizard/debug/moc_HaystackConfigWizard.cpp
+/HaystackConfigWizard/debug/moc_NetworkSelectionPage.cpp
+/HaystackConfigWizard/Makefile
+/HaystackConfigWizard/Makefile.Debug
+/HaystackConfigWizard/Makefile.Release
