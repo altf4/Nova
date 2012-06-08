@@ -4,7 +4,7 @@
 
 -include ../makefile.init
 
-RM := rm -rf
+RM := rm
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -40,20 +40,26 @@ endif
 # All Target
 all: honeydhostconfig
 
+dependents:
+	-cd /home/addison/Code/Nova/NovaLibrary/Release && $(MAKE) clean all
+	-cd /home/addison/Code/Nova/Nova_UI_Core/Release && $(MAKE) clean all
+
 # Tool invocations
-honeydhostconfig: $(OBJS) $(USER_OBJS)
+honeydhostconfig: $(OBJS) $(USER_OBJS) /home/addison/Code/Nova/NovaLibrary/Release/libNovaLibrary.a /home/addison/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "honeydhostconfig" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L"/home/addison/Code/Nova/Nova_UI_Core/Release" -L"/home/addison/Code/Nova/Nova_UI_Core/Release/src" -shared -o "honeydhostconfig" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) honeydhostconfig
+	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(LIBRARIES)$(CPP_DEPS)$(CXX_DEPS)$(C_UPPER_DEPS) honeydhostconfig
 	-@echo ' '
 
 .PHONY: all clean dependents
 .SECONDARY:
+/home/addison/Code/Nova/NovaLibrary/Release/libNovaLibrary.a:
+/home/addison/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so:
 
 -include ../makefile.targets

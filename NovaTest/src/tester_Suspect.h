@@ -59,7 +59,7 @@ protected:
 		p2.m_evidencePacket.ts = 20;
 
 
-		Config::Inst()->SetEnabledFeatures("1111111111111");
+		Config::Inst()->EnableAllFeatures();
 	}
 
 };
@@ -87,7 +87,7 @@ TEST_F(SuspectTest, EvidenceProcessing)
 	// Calculate the feature values from the evidence
 	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
 	// Move this stuff from the unsent evidence to the normal evidence
-	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
+	//EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 
 	// Do we have the correct packet count?
 	EXPECT_EQ((uint)2, suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount);
@@ -118,7 +118,7 @@ TEST_F(SuspectTest, Serialization)
 	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
 	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
 	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
-	EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
+	//EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
 
 	u_char buffer[MAX_MSG_SIZE];
 	EXPECT_NO_FATAL_FAILURE(suspect->Serialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA));

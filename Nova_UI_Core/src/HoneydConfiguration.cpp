@@ -157,6 +157,18 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	return pr.portName;
 }
 
+std::string HoneydConfiguration::AddPort(port * pr)
+{
+	if(m_ports.find(pr->portName) != m_ports.end())
+	{
+		return pr->portName;
+	}
+
+	m_ports[pr->portName] = *pr;
+
+	return pr->portName;
+}
+
 //Calls all load functions
 bool HoneydConfiguration::LoadAllTemplates()
 {

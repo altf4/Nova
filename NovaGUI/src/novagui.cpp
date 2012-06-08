@@ -1219,84 +1219,9 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 	{
 		if(m_featureEnabled[i])
 		{
-			QString featureLabel;
-			switch (i)
-			{
-				case IP_TRAFFIC_DISTRIBUTION:
-				{
-					featureLabel = tr("IP Traffic Distribution");
-					break;
-				}
-				case PORT_TRAFFIC_DISTRIBUTION:
-				{
-					featureLabel = tr("Port Traffic Distribution");
-					break;
-				}
-				case HAYSTACK_EVENT_FREQUENCY:
-				{
-					featureLabel = tr("Haystack Event Frequency");
-					break;
-				}
-				case PACKET_SIZE_MEAN:
-				{
-					featureLabel = tr("Packet Size Mean");
-					break;
-				}
-				case PACKET_SIZE_DEVIATION:
-				{
-					featureLabel = tr("Packet Size Deviation");
-					break;
-				}
-				case DISTINCT_IPS:
-				{
-					featureLabel = tr("IPs Contacted");
-					break;
-				}
-				case DISTINCT_PORTS:
-				{
-					featureLabel = tr("Ports Contacted");
-					break;
-				}
-				case PACKET_INTERVAL_MEAN:
-				{
-					featureLabel = tr("Packet Interval Mean");
-					break;
-				}
-				case PACKET_INTERVAL_DEVIATION:
-				{
-					featureLabel = tr("Packet Interval Deviation");
-					break;
-				}
-				case TCP_PERCENT_SYN:
-				{
-					featureLabel = tr("TCP Percent SYN");
-					break;
-				}
-				case TCP_PERCENT_FIN:
-				{
-					featureLabel = tr("TCP Percent FIN");
-					break;
-				}
-				case TCP_PERCENT_RST:
-				{
-					featureLabel = tr("TCP Percent RST");
-					break;
-				}
-				case TCP_PERCENT_SYNACK:
-				{
-					featureLabel = tr("TCP Percent SYN ACK");
-					break;
-				}
-				default:
-				{
-					break;
-				}
-			}
-
-			ui.suspectDistances->insertItem(row, featureLabel + tr("Accuracy"));
-			QString formatString = "%p%| ";
-			formatString.append(featureLabel);
-			formatString.append(": ");
+			QString featureLabel = QString::fromStdString(FeatureSet::m_featureNames[i]);
+			ui.suspectDistances->insertItem(row, featureLabel + QString(" : ") + QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
+			QString formatString = "%p% Match to neighboring points";
 
 			row++;
 			QProgressBar* bar = new QProgressBar();
@@ -1325,7 +1250,6 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 				 QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1,"
 				" y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
-			formatString.append(QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
 			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();

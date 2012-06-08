@@ -19,8 +19,8 @@
 #ifndef PERSONALITYNODE_H_
 #define PERSONALITYNODE_H_
 
+#include "HoneydConfiguration.h"
 #include "AutoConfigHashMaps.h"
-#include "NovaGuiTypes.h"
 
 namespace Nova
 {
@@ -38,6 +38,7 @@ public:
 
 	uint32_t m_count;
 	std::string m_key;
+	bool hasTwoChildren;
 	std::vector<std::pair<std::string, PersonalityNode *> > m_children;
 
 	std::vector<std::pair<std::string, double> > m_vendor_dist;

@@ -30,7 +30,6 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include "ScriptTable.h"
-#include "VendorMacDb.h"
 #include "PersonalityTree.h"
 #include "HoneydHostConfig.h"
 
@@ -200,6 +199,10 @@ int main(int argc, char ** argv)
 	persTree.GenerateProfileTable();
 
 	persTree.DebugPrintProfileTable();
+
+	persTree.AddAllPorts();
+
+	persTree.ToXmlTemplate();
 
 	return errVar;
 }
