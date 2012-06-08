@@ -117,10 +117,6 @@ private Q_SLOTS:
 	void on_actionTrainingData_triggered();
 	void on_actionMakeDataFile_triggered();
 
-	//Global Widgets
-	void on_mainButton_clicked();
-	void on_suspectButton_clicked();
-
 	//System Status widgets
 	void on_systemStatStartButton_clicked();
 	void on_systemStatStopButton_clicked();
