@@ -31,6 +31,7 @@
 #include "Point.h"
 #include "Novad.h"
 
+
 #include <vector>
 #include <math.h>
 #include <time.h>
@@ -40,6 +41,7 @@
 #include <sys/un.h>
 #include <signal.h>
 #include <iostream>
+#include <ifaddrs.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -683,6 +685,7 @@ bool Start_Packet_Handler()
 	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	haystackAddresses_csv = ConstructFilterString();
 
+
 	UpdateHaystackFeatures();
 
 	//If we're reading from a packet capture file
@@ -892,6 +895,36 @@ string ConstructFilterString()
 {
 	// Whitelist local traffic
 	string filterString = "not src 0.0.0.0 && ";
+
+
+	struct ifaddrs * devices = NULL;
+	struct ifaddrs *curIf = NULL;
+	stringstream ss;
+
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+
+	vector<string> enabledInterfaces = Config::Inst()->GetInterfaces();
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		for (uint i = 0; i < enabledInterfaces.size(); i++)
+		{
+			if(!strcmp(curIf->ifa_name, enabledInterfaces[i].c_str()) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+			{
+				// TODO ipv6 support
+				in_addr interfaceIp;
+				interfaceIp.s_addr = ((sockaddr_in*)curIf->ifa_addr)->sin_addr.s_addr & ((sockaddr_in*)curIf->ifa_netmask)->sin_addr.s_addr;
+				string interfaceIpBase = inet_ntoa(interfaceIp);
+				string interfaceMask = inet_ntoa(((sockaddr_in*)curIf->ifa_netmask)->sin_addr);
+				LOG(DEBUG, "Listening on network " + interfaceIpBase + "/" + interfaceMask, "");
+				filterString += "dst net " + interfaceIpBase + " mask " + interfaceMask + " && ";
+			}
+		}
+	}
+
 	{
 		//Get list of interfaces and insert associated local IP's
 		vector<string> ifList = Config::Inst()->GetInterfaces();

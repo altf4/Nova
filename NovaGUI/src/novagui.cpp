@@ -156,10 +156,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	qRegisterMetaType<in_addr_t>("in_addr_t");
 	qRegisterMetaType<QItemSelection>("QItemSelection");
 
-	//Sets initial view
-	this->ui.stackedWidget->setCurrentIndex(0);
-	this->ui.mainButton->setFlat(true);
-	this->ui.suspectButton->setFlat(false);
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::AutoConnection);
 	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::AutoConnection);
 
@@ -916,24 +912,6 @@ void NovaGUI::on_actionLogger_triggered()
 {
 		LoggerWindow *wi = new LoggerWindow(this);
 		wi->show();
-}
-
-/************************************************
- * View Signal Handlers
- ************************************************/
-
-void NovaGUI::on_mainButton_clicked()
-{
-	this->ui.stackedWidget->setCurrentIndex(0);
-	this->ui.mainButton->setFlat(true);
-	this->ui.suspectButton->setFlat(false);
-}
-
-void NovaGUI::on_suspectButton_clicked()
-{
-	this->ui.stackedWidget->setCurrentIndex(1);
-	this->ui.mainButton->setFlat(false);
-	this->ui.suspectButton->setFlat(true);
 }
 
 /************************************************
