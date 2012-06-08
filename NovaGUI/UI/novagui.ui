@@ -112,9 +112,6 @@
         </item>
         <item row="3" column="0" colspan="2">
          <layout class="QHBoxLayout" name="numBenignHLayout">
-          <property name="spacing">
-           <number>0</number>
-          </property>
           <item>
            <widget class="QLabel" name="numBenignLabel">
             <property name="sizePolicy">
@@ -160,9 +157,6 @@
         </item>
         <item row="3" column="2" colspan="2">
          <layout class="QHBoxLayout" name="numHostileHLayout">
-          <property name="spacing">
-           <number>0</number>
-          </property>
           <item>
            <widget class="QLabel" name="numHostileLabel">
             <property name="sizePolicy">
@@ -196,9 +190,6 @@
         </item>
         <item row="4" column="0" colspan="2">
          <layout class="QHBoxLayout" name="benignSuspectsHLayout">
-          <property name="spacing">
-           <number>0</number>
-          </property>
           <item>
            <widget class="QLabel" name="benignSuspectClassificationLabel">
             <property name="sizePolicy">
@@ -208,10 +199,13 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>     Classification Accuracy : </string>
+             <string>Classification Accuracy : </string>
             </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+            <property name="indent">
+             <number>4</number>
             </property>
            </widget>
           </item>
@@ -235,9 +229,6 @@
         </item>
         <item row="4" column="2" colspan="2">
          <layout class="QHBoxLayout" name="hostileSuspectsHLayout">
-          <property name="spacing">
-           <number>0</number>
-          </property>
           <item>
            <widget class="QLabel" name="hostileSuspectClassificationLabel">
             <property name="sizePolicy">
@@ -247,10 +238,13 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>     Classification Accuracy : </string>
+             <string>Classification Accuracy : </string>
             </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+            <property name="indent">
+             <number>4</number>
             </property>
            </widget>
           </item>
@@ -299,9 +293,6 @@
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
