@@ -158,6 +158,8 @@ void on_deleteButton_clicked();
 void on_profileTreeWidget_itemSelectionChanged();
 void on_profileEdit_editingFinished();
 
+void on_haystackGroupComboBox_currentIndexChanged();
+
 //GUI Signals for Node settings
 void on_nodeEditButton_clicked();
 void on_nodeCloneButton_clicked();

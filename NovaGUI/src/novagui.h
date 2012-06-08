@@ -120,12 +120,6 @@ private Q_SLOTS:
 	//Global Widgets
 	void on_mainButton_clicked();
 	void on_suspectButton_clicked();
-	void on_doppelButton_clicked();
-	void on_haystackButton_clicked();
-
-	//Main view widgets
-	void on_runButton_clicked();
-	void on_stopButton_clicked();
 
 	//System Status widgets
 	void on_systemStatStartButton_clicked();
