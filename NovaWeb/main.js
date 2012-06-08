@@ -432,7 +432,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
         break;
         
       case "ENABLED_FEATURES":
-        validator.check(req.body[configItems[item]], 'Enabled Features mask must be nine characters long').len(9, 9);
+        validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + nova.GetDIM() + 'characters long').len(nova.GetDIM(), nova.GetDIM());
         validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
         break;
         
