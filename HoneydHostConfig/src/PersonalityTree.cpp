@@ -25,19 +25,82 @@ namespace Nova
 
 PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 {
-	m_profiles.set_empty_key("");
-
 	hhconfig = new HoneydConfiguration();
 
-	m_root = PersonalityNode("root");
+	m_root = PersonalityNode("default");
 	if(persTable != NULL)
 	{
 		LoadTable(persTable);
 	}
+	hhconfig->LoadAllTemplates();
+	m_profiles = &hhconfig->m_profiles;
 }
 
 PersonalityTree::~PersonalityTree()
 {
+}
+
+void PersonalityTree::CleanTree()
+{
+	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
+	{
+		RecursiveCleanTree(m_root.m_children[i].second, &m_root);
+	}
+
+	// need to clear m_to_delete
+	for(uint i = 0; i < m_to_delete.size(); i++)
+	{
+		delete m_to_delete[i];
+	}
+}
+
+void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode * parent)
+{
+	if(node->m_children.size() == 0)
+	{
+		return;
+	}
+	bool compress = (node->m_children.size() == 1);
+	string key = node->m_key;
+	profile * p = hhconfig->GetProfile(node->m_key);
+	for(uint i = 0; i < sizeof(p->inherited)/sizeof(bool); i++)
+	{
+		compress &= p->inherited[i];
+	}
+	for(uint i = 0; i < p->ports.size(); i++)
+	{
+		compress &= p->ports[i].second;
+	}
+	for(uint i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveCleanTree(node->m_children[i].second, node);
+	}
+	if(compress)
+	{
+		m_to_delete.push_back(node->m_children[0].second);
+
+		PersonalityNode * child = node->m_children[0].second;
+
+		node->m_children = node->m_children[0].second->m_children;
+
+		child->m_children.clear();
+
+		node->m_key.append(" " + node->m_children[0].first);
+
+		for(uint i = 0; i < node->m_children.size(); i++)
+		{
+			profile *p = hhconfig->GetProfile(node->m_children[i].first);
+			p->parentProfile = node->m_key;
+		}
+
+		for(uint i = 0; i < parent->m_children.size(); i++)
+		{
+			if(parent->m_children[i].second == node)
+			{
+				parent->m_children[i].first = node->m_key;
+			}
+		}
+	}
 }
 
 void PersonalityTree::LoadTable(PersonalityTable *persTable)
@@ -151,9 +214,14 @@ void PersonalityTree::GenerateProfileTable()
 
 void PersonalityTree::RecursiveGenerateProfileTable(PersonalityNode * node, string parent)
 {
-	if(m_profiles.find(parent + " " +node->m_key) == m_profiles.end())
+	if(m_profiles->find(node->m_key) == m_profiles->end())
 	{
-		m_profiles[parent + " " + node->m_key] = node->GenerateProfile(parent);
+		profile tempProf = node->GenerateProfile(parent);
+
+		if(!hhconfig->AddProfile(&tempProf))
+		{
+			cout << tempProf.name << endl;
+		}
 	}
 	else
 	{
@@ -162,13 +230,20 @@ void PersonalityTree::RecursiveGenerateProfileTable(PersonalityNode * node, stri
 		stringstream ss;
 		ss << i;
 
-		for(; m_profiles.find(node->m_key + ss.str()) != m_profiles.end(); i++)
+		for(; m_profiles->find(node->m_key + ss.str()) != m_profiles->end() && (i < ~0); i++)
 		{
 			ss.str("");
 			ss << i;
 		}
 
-		m_profiles[node->m_key + ss.str()] = node->GenerateProfile(parent);
+		node->m_key = node->m_key + ss.str();
+
+		profile tempProf = node->GenerateProfile(parent);
+
+		if(!hhconfig->AddProfile(&tempProf))
+		{
+			cout << tempProf.name << endl;
+		}
 	}
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
@@ -195,7 +270,7 @@ void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode * node)
 
 void PersonalityTree::DebugPrintProfileTable()
 {
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_profiles->begin(); it != m_profiles->end(); it++)
 	{
 		cout << endl;
 		cout << "Profile: " << it->second.name << endl;
@@ -221,55 +296,17 @@ void PersonalityTree::DebugPrintProfileTable()
 	}
 }
 
-void PersonalityTree::RecursiveToXmlTemplate(PersonalityNode * node, string prefix)
-{
-	if(m_profiles.find(prefix + " " + node->m_key) != m_profiles.end())
-	{
-		profile * add = &(m_profiles[prefix + " " + node->m_key]);
-
-		if(!add->parentProfile.compare("root"))
-		{
-			add->parentProfile = "default";
-		}
-
-		for(uint16_t i = 0; i < add->ports.size(); i++)
-		{
-			add->ports[i].first += "_open";
-		}
-
-		hhconfig->AddProfile(add);
-	}
-
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveToXmlTemplate(node->m_children[i].second, node->m_key);
-	}
-}
-
 void PersonalityTree::ToXmlTemplate()
 {
-	hhconfig->LoadAllTemplates();
 
 	vector<string> ret = hhconfig->GetProfileNames();
-
-	cout << endl;
-
-	for(uint16_t i = 0; i < ret.size(); i++)
-	{
-		cout << "Profile in Nova: " << ret[i] << endl;
-	}
-
-	cout << endl;
 
 	hhconfig->m_nodes.clear();
 	hhconfig->m_subnets.clear();
 
-	/*for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		profile * prof = &(it->second);
-		hhconfig->AddProfile(prof);
-	}
-	*/
+	AddAllPorts();
+
+	CleanTree();
 
 	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
 	{
@@ -278,22 +315,26 @@ void PersonalityTree::ToXmlTemplate()
 
 	ret = hhconfig->GetProfileNames();
 
-	cout << "After adding nodes to HoneydConfiguration profile table" << endl;
-
-	cout << endl;
-
 	for(uint16_t i = 0; i < ret.size(); i++)
 	{
-		cout << "Profile in Nova: " << ret[i] << endl;
+		cout << "Profile after Clean: " << ret[i] << endl;
 	}
-
-	cout << endl;
 
 	hhconfig->SaveAllTemplates();
 }
 
+void PersonalityTree::RecursiveToXmlTemplate(PersonalityNode * node, string prefix)
+{
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveToXmlTemplate(node->m_children[i].second, node->m_key);
+	}
+}
+
 void PersonalityTree::AddAllPorts()
 {
+	hhconfig->m_ports.clear();
+
 	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
 	{
 		RecursiveAddAllPorts(m_root.m_children[i].second);
@@ -311,11 +352,21 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
 		pass.type = node->m_ports_dist[i].first.substr(node->m_ports_dist[i].first.find("_") + 1, node->m_ports_dist[i].first.find("_", node->m_ports_dist[i].first.find("_")) + 1);
 		pass.behavior = "open";
 
-		hhconfig->AddPort(&pass);
+		hhconfig->AddPort(pass);
 	}
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
 		RecursiveAddAllPorts(node->m_children[i].second);
+	}
+}
+
+void PersonalityTree::RecursivePrintTree(PersonalityNode * node)
+{
+	cout << node->m_key << endl;
+
+	for(uint i = 0; i < node->m_children.size(); i++)
+	{
+		RecursivePrintTree(node->m_children[i].second);
 	}
 }
 

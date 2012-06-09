@@ -200,8 +200,6 @@ int main(int argc, char ** argv)
 
 	persTree.DebugPrintProfileTable();
 
-	persTree.AddAllPorts();
-
 	persTree.ToXmlTemplate();
 
 	return errVar;
