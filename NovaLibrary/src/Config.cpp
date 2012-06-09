@@ -739,6 +739,60 @@ void Config::LoadConfig_Internal()
 	}
 }
 
+bool Config::SaveUserConfig()
+{
+	Lock lock(&m_lock, true);
+	string line, prefix;
+
+	//Rewrite the config file with the new settings
+	string configurationBackup = m_userConfigFilePath + ".tmp";
+	string copyCommand = "cp -f " + m_userConfigFilePath + " " + configurationBackup;
+	if(system(copyCommand.c_str()) != 0)
+	{
+		LOG(ERROR, "Problem saving current configuration.","System Call "+copyCommand+" has failed.");
+	}
+
+	ifstream *in = new ifstream(configurationBackup.c_str());
+	ofstream *out = new ofstream(m_userConfigFilePath.c_str());
+
+	if(out->is_open() && in->is_open())
+	{
+		while(in->good())
+		{
+			if(!getline(*in, line))
+			{
+				continue;
+			}
+
+			prefix = "group";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << "group " << m_group << endl;
+				continue;
+			}
+
+			*out << line << endl;
+		}
+	}
+	else
+	{
+		LOG(ERROR, "Problem saving current configuration.", "");
+		in->close();
+		out->close();
+		delete in;
+		delete out;
+
+		return false;
+	}
+
+	in->close();
+	out->close();
+	delete in;
+	delete out;
+
+	return true;
+}
+
 bool Config::LoadUserConfig()
 {
 	Lock lock(&m_lock, false);

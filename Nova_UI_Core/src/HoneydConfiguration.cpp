@@ -250,8 +250,10 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	try
 	{
 		read_xml(m_homePath+"/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		m_groups.clear();
 		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 		{
+			m_groups.push_back(v.second.get<std::string>("name"));
 			//Find the specified group
 			if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 			{
@@ -759,6 +761,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			{
 				out << "clone " << it->second.pfile << it->second.IP << " " << it->second.pfile << endl;
 				out << "set " << it->second.pfile << it->second.IP << " ethernet \"" << it->second.MAC << "\"" << endl;
+				out << "bind " << it->second.IP << " " <<  it->second.pfile << it->second.IP << endl;
 			}
 		}
 	}

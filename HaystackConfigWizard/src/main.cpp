@@ -1,12 +1,9 @@
-#include "autoconfigwizard.h"
-
-#include <QtGui>
-#include <QApplication>
+#include "HaystackConfigWizard.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    AutoConfigWizard w;
+    HaystackConfigWizard w;
     w.show();
     return a.exec();
 }
