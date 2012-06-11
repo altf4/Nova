@@ -130,7 +130,7 @@ profile PersonalityNode::GenerateProfile(string parent)
 		{
 			pair<string, bool> push_port;
 			push_port.first = m_ports_dist[i].first;
-			push_port.second = false;
+			push_port.second = true;
 			push.ports.push_back(push_port);
 		}
 	}
