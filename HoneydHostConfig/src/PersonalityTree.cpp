@@ -50,33 +50,44 @@ void PersonalityTree::CleanTree()
 	// need to clear m_to_delete
 	for(uint i = 0; i < m_to_delete.size(); i++)
 	{
+		hhconfig->DeleteProfile(m_to_delete[i]->m_key);
 		delete m_to_delete[i];
 	}
 }
 
 void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode * parent)
 {
+	//If we have no children, this is a leaf node that won't be cleaned, terminate recursion and return.
 	if(node->m_children.size() == 0)
 	{
 		return;
 	}
+
+	// ***** Determine if this node can be cleaned ******
+	//If we have only one child, we may be able to remove
 	bool compress = (node->m_children.size() == 1);
-	string key = node->m_key;
-	profile * p = hhconfig->GetProfile(node->m_key);
-	for(uint i = 0; i < sizeof(p->inherited)/sizeof(bool); i++)
+	profile *prof = hhconfig->GetProfile(node->m_key);
+
+	//If every value for the profile is inherited we can clean
+	for(uint i = 0; i < sizeof(prof->inherited)/sizeof(bool); i++)
 	{
-		compress &= p->inherited[i];
+		compress &= prof->inherited[i];
 	}
-	for(uint i = 0; i < p->ports.size(); i++)
+	for(uint i = 0; i < prof->ports.size(); i++)
 	{
-		compress &= p->ports[i].second;
+		compress &= prof->ports[i].second;
 	}
+
+	//For each child repeat the recursion
 	for(uint i = 0; i < node->m_children.size(); i++)
 	{
 		RecursiveCleanTree(node->m_children[i].second, node);
 	}
+
+	//If we can clean a profile
 	if(compress)
 	{
+		//Store a pointer to the personality node to delete.
 		m_to_delete.push_back(node->m_children[0].second);
 
 		PersonalityNode * child = node->m_children[0].second;
@@ -91,6 +102,7 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		{
 			profile *p = hhconfig->GetProfile(node->m_children[i].first);
 			p->parentProfile = node->m_key;
+			hhconfig->InheritProfile(p->name, p->parentProfile);
 		}
 
 		for(uint i = 0; i < parent->m_children.size(); i++)
