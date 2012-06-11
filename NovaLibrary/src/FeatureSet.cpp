@@ -714,58 +714,31 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 
 uint32_t FeatureSet::GetFeatureDataLength()
 {
-	uint32_t out = 0, count = 0;
+	uint32_t out = 0;
 
 	//Vars we need to send useable Data
-	out += sizeof(m_totalInterval) + sizeof(m_packetCount) + sizeof(m_bytesTotal)
-		+ sizeof(m_startTime) + sizeof(m_endTime) + sizeof(m_lastTime)
-		//Each table has a total num entries val before it
-		+ 4*sizeof(out);
+	out += sizeof(m_totalInterval)
+			+ sizeof(m_packetCount)
+			+ sizeof(m_bytesTotal)
+			+ sizeof(m_startTime)
+			+ sizeof(m_endTime)
+			+ sizeof(m_lastTime);
 
-	for(Interval_Table::iterator it = m_intervalTable.begin();	it != m_intervalTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
+	out += sizeof m_rstCount
+			+ sizeof m_ackCount
+			+ sizeof m_synCount
+			+ sizeof m_finCount
+			+ sizeof m_synAckCount
+			+ sizeof m_tcpPacketCount
+			+ sizeof m_haystackNodesContacted;
 
-	for(IP_Table::iterator it = m_IPTable.begin(); it != m_IPTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-	//pair of uint32_t vars per entry, with 'count' number of entries
-	out += 2*sizeof(uint32_t)*count;
-	count =  0;
+	out += GetSerializeHashTableLength<Interval_Table, time_t, uint32_t> (m_intervalTable, ~0);
+	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint32_t> (m_packTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_IPTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_HaystackIPTable, 0);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortTCPTable, 0);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortUDPTable, 0);
 
-	for(Packet_Table::iterator it = m_packTable.begin(); it != m_packTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-
-	for(Port_Table::iterator it = m_PortTCPTable.begin(); it != m_PortTCPTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	for(Port_Table::iterator it = m_PortUDPTable.begin(); it != m_PortUDPTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-	out += (sizeof(uint32_t) + sizeof(in_port_t))*count;
 	return out;
 }
 

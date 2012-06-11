@@ -75,6 +75,16 @@ TEST_F(FeatureSetTest, test_Serialization)
 	EXPECT_TRUE(fset == deserializedCopy);
 }
 
+TEST_F(FeatureSetTest, test_SerializationLength)
+{
+	int expectedLength = fset.GetFeatureDataLength();
+
+	u_char buffer[MAX_MSG_SIZE];
+	int actualLength = fset.SerializeFeatureData(&buffer[0], MAX_MSG_SIZE);
+
+	EXPECT_EQ(expectedLength, actualLength);
+}
+
 
 // Check if the features got computed correctly
 TEST_F(FeatureSetTest, test_Calculate)

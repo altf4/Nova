@@ -85,6 +85,32 @@ inline void SerializeHashTable(u_char* buf, uint32_t* offset, TableType& dataToS
 }
 
 template <typename TableType, typename KeyType, typename ValueType>
+inline int GetSerializeHashTableLength(TableType& dataToSerialize, KeyType nullValue)
+{
+	typename TableType::iterator it = dataToSerialize.begin();
+	typename TableType::iterator last = dataToSerialize.end();
+
+	uint32_t count = 0;
+	uint32_t length = 0;
+
+	while (it != last)
+	{
+		if (it->first != nullValue)
+		{
+			length += sizeof it->first;
+			length += sizeof it->second;
+			count++;
+		}
+		it++;
+	}
+
+	//The size of the Table
+	length += sizeof count;
+
+	return length;
+}
+
+template <typename TableType, typename KeyType, typename ValueType>
 inline void DeserializeHashTable(u_char* buf, uint32_t* offset, TableType& deserializeTo, uint32_t maxBufferSize)
 {
 	uint32_t tableSize = 0;
