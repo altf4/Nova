@@ -85,6 +85,21 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	m_honeydConfig->LoadAllTemplates();
 	LoadHaystackConfiguration();
 
+	vector<string> nodeGroupOptions = m_honeydConfig->m_groups;
+	QStringList groups;
+	int selectedIndex = 0;
+	for (uint i = 0; i < nodeGroupOptions.size(); i++)
+	{
+		groups << QString::fromStdString(nodeGroupOptions.at(i));
+
+		if (nodeGroupOptions[i] == Config::Inst()->GetGroup())
+		{
+			selectedIndex = i;
+		}
+	}
+	ui.haystackGroupComboBox->addItems(groups);
+	ui.haystackGroupComboBox->setCurrentIndex(selectedIndex);
+
 	m_loading->unlock();
 	// Populate the dialog menu
 	for (uint i = 0; i < m_mainwindow->m_prompter->m_registeredMessageTypes.size(); i++)
@@ -1384,7 +1399,7 @@ bool NovaConfig::SaveConfigurationToFile()
 	Config::Inst()->SetReadPcap(ui.pcapCheckBox->isChecked());
 	Config::Inst()->SetGotoLive(ui.liveCapCheckBox->isChecked());
 
-	return Config::Inst()->SaveConfig();
+	return (Config::Inst()->SaveUserConfig() && Config::Inst()->SaveConfig());
 }
 
 //Exit the window and ignore any changes since opening or apply was pressed
@@ -3310,4 +3325,18 @@ void NovaConfig::on_useAllIfCheckBox_stateChanged()
 void NovaConfig::on_useAnyLoopbackCheckBox_stateChanged()
 {
 	ui.loopbackGroupBox->setEnabled(!ui.useAnyLoopbackCheckBox->isChecked());
+}
+
+void NovaConfig::on_haystackGroupComboBox_currentIndexChanged()
+{
+	if(!m_loading->tryLock())
+	{
+		return;
+	}
+
+	Config::Inst()->SetGroup(ui.haystackGroupComboBox->currentText().toStdString());
+
+	m_honeydConfig->LoadAllTemplates();
+	LoadHaystackConfiguration();
+	m_loading->unlock();
 }

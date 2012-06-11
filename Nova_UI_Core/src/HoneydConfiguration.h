@@ -191,9 +191,10 @@ public:
 	ProfileTable m_profiles;
     NodeTable m_nodes;
 
+    std::vector<std::string> m_groups;
+
 private:
     std::string m_homePath;
-
 
     VendorMacDb m_macAddresses;
 
@@ -216,6 +217,7 @@ private:
     bool LoadProfilesTemplate();
     //load current honeyd configuration group
     bool LoadNodesTemplate();
+
 
     //set profile configurations
     bool LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
