@@ -50,7 +50,6 @@ void PersonalityTree::CleanTree()
 	// need to clear m_to_delete
 	for(uint i = 0; i < m_to_delete.size(); i++)
 	{
-		hhconfig->DeleteProfile(m_to_delete[i]->m_key);
 		delete m_to_delete[i];
 	}
 }
@@ -69,7 +68,7 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 	profile *prof = hhconfig->GetProfile(node->m_key);
 
 	//If every value for the profile is inherited we can clean
-	for(uint i = 0; i < sizeof(p->inherited)/sizeof(bool) && compress; i++)
+	for(uint i = 0; i < sizeof(prof->inherited)/sizeof(bool) && compress; i++)
 	{
 		compress &= prof->inherited[i];
 	}
@@ -96,7 +95,12 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		{
 			if(!parent->m_children[i].first.compare(node->m_key))
 			{
-				parent->m_children[i].first = node->m_key + " " + child->m_key;
+				pair<std::string, PersonalityNode *> newPair;
+				newPair.first = node->m_key + " " + child->m_key;
+				newPair.second = parent->m_children[i].second;
+				parent->m_children.erase(parent->m_children.begin()+i);
+				parent->m_children.insert(parent->m_children.begin()+i, newPair);
+
 			}
 		}
 		string oldKey = node->m_key;
@@ -116,8 +120,6 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		{
 			hhconfig->InheritProfile(node->m_children[i].first, p->name);
 		}
-
-		hhconfig->DeleteProfile(oldKey);
 		hhconfig->DeleteProfile(child->m_key);
 	}
 }
