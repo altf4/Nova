@@ -56,6 +56,8 @@ public:
 
 	void AddAllPorts();
 
+	void CleanTree();
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
@@ -64,7 +66,9 @@ private:
 
 	std::vector<PersonalityNode *> m_nodes;
 
-	ProfileTable m_profiles;
+	std::vector<PersonalityNode *> m_to_delete;
+
+	ProfileTable * m_profiles;
 
 	HoneydConfiguration * hhconfig;
 
@@ -73,6 +77,8 @@ private:
 	void RecursiveGenerateProfileTable(PersonalityNode * node, std::string parent);
 	void RecursiveToXmlTemplate(PersonalityNode * node, std::string prefix);
 	void RecursiveAddAllPorts(PersonalityNode * node);
+	void RecursiveCleanTree(PersonalityNode * node, PersonalityNode * parent);
+	void RecursivePrintTree(PersonalityNode * node);
 };
 
 }

@@ -110,7 +110,10 @@ profile PersonalityNode::GenerateProfile(string parent)
 
 	push.name = m_key;
 	push.parentProfile = parent;
-
+	for(uint i = 0; i < (sizeof(push.inherited)/sizeof(bool)); i++)
+	{
+		push.inherited[i] = true;
+	}
 	if(m_children.size() == 0)
 	{
 		push.personality = m_key;
@@ -131,7 +134,6 @@ profile PersonalityNode::GenerateProfile(string parent)
 			push.ports.push_back(push_port);
 		}
 	}
-
 	return push;
 }
 
