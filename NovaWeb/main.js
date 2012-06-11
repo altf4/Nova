@@ -288,6 +288,7 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
      res.render('main.jade', 
      {
          user: req.user
+	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
      });
 });
 
@@ -311,6 +312,7 @@ app.get('/', ensureAuthenticated, function(req, res) {
      res.render('main.jade', 
      {
          user: req.user
+	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
          , message: req.flash('error')    
      });
 });
