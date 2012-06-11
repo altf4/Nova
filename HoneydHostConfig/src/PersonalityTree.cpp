@@ -97,10 +97,9 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 			{
 				pair<std::string, PersonalityNode *> newPair;
 				newPair.first = node->m_key + " " + child->m_key;
-				newPair.second = parent->m_children[i].second;
+				newPair.second = node;
 				parent->m_children.erase(parent->m_children.begin()+i);
 				parent->m_children.insert(parent->m_children.begin()+i, newPair);
-
 			}
 		}
 		string oldKey = node->m_key;
@@ -111,16 +110,22 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		child->m_children.clear();
 
 		//Create new profile for new key
-		profile * p = new profile(*hhconfig->GetProfile(child->m_key));
+		profile * p = hhconfig->GetProfile(child->m_key);
 		p->name = node->m_key;
+		p->parentProfile = parent->m_key;
 		hhconfig->AddProfile(p);
+		vector<string> profNames = hhconfig->GetProfileNames();
 
 		//Update profile inheritance
-		for(uint i = 0; i < node->m_children.size(); i++)
+		for(uint i = 0; i < profNames.size(); i++)
 		{
-			hhconfig->InheritProfile(node->m_children[i].first, p->name);
+			if(!hhconfig->GetProfile(profNames[i])->parentProfile.compare(oldKey))
+			{
+				hhconfig->InheritProfile(profNames[i], p->name);
+			}
 		}
 		hhconfig->DeleteProfile(child->m_key);
+		hhconfig->DeleteProfile(oldKey);
 	}
 }
 
