@@ -69,11 +69,11 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 	profile *prof = hhconfig->GetProfile(node->m_key);
 
 	//If every value for the profile is inherited we can clean
-	for(uint i = 0; i < sizeof(prof->inherited)/sizeof(bool); i++)
+	for(uint i = 0; i < sizeof(p->inherited)/sizeof(bool) && compress; i++)
 	{
 		compress &= prof->inherited[i];
 	}
-	for(uint i = 0; i < prof->ports.size(); i++)
+	for(uint i = 0; i < prof->ports.size() && compress; i++)
 	{
 		compress &= prof->ports[i].second;
 	}
@@ -88,30 +88,37 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 	if(compress)
 	{
 		//Store a pointer to the personality node to delete.
-		m_to_delete.push_back(node->m_children[0].second);
-
 		PersonalityNode * child = node->m_children[0].second;
+		m_to_delete.push_back(child);
 
-		node->m_children = node->m_children[0].second->m_children;
-
-		child->m_children.clear();
-
-		node->m_key.append(" " + node->m_children[0].first);
-
-		for(uint i = 0; i < node->m_children.size(); i++)
-		{
-			profile *p = hhconfig->GetProfile(node->m_children[i].first);
-			p->parentProfile = node->m_key;
-			hhconfig->InheritProfile(p->name, p->parentProfile);
-		}
-
+		//Updates pers node keys and list
 		for(uint i = 0; i < parent->m_children.size(); i++)
 		{
-			if(parent->m_children[i].second == node)
+			if(!parent->m_children[i].first.compare(node->m_key))
 			{
-				parent->m_children[i].first = node->m_key;
+				parent->m_children[i].first = node->m_key + " " + child->m_key;
 			}
 		}
+		string oldKey = node->m_key;
+		node->m_key = node->m_key + " " + child->m_key;
+
+		//Moves children in the pers nodes/tree
+		node->m_children = child->m_children;
+		child->m_children.clear();
+
+		//Create new profile for new key
+		profile * p = new profile(*hhconfig->GetProfile(child->m_key));
+		p->name = node->m_key;
+		hhconfig->AddProfile(p);
+
+		//Update profile inheritance
+		for(uint i = 0; i < node->m_children.size(); i++)
+		{
+			hhconfig->InheritProfile(node->m_children[i].first, p->name);
+		}
+
+		hhconfig->DeleteProfile(oldKey);
+		hhconfig->DeleteProfile(child->m_key);
 	}
 }
 
