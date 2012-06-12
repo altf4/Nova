@@ -109,11 +109,14 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		node->m_children = child->m_children;
 		child->m_children.clear();
 
+		for(uint16_t i = 0; i < node->m_children.size(); i++)
+		{
+			hhconfig->m_profiles[node->m_children[i].first].parentProfile = node->m_key;
+		}
+
 		//Create new profile for new key
-		profile * p = hhconfig->GetProfile(child->m_key);
-		p->name = node->m_key;
-		p->parentProfile = parent->m_key;
-		hhconfig->AddProfile(p);
+		hhconfig->RenameProfile(oldKey, node->m_key);
+		hhconfig->InheritProfile(node->m_key, parent->m_key);
 		vector<string> profNames = hhconfig->GetProfileNames();
 
 		//Update profile inheritance
@@ -121,11 +124,10 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		{
 			if(!hhconfig->GetProfile(profNames[i])->parentProfile.compare(oldKey))
 			{
-				hhconfig->InheritProfile(profNames[i], p->name);
+				hhconfig->InheritProfile(profNames[i], node->m_key);
 			}
 		}
 		hhconfig->DeleteProfile(child->m_key);
-		hhconfig->DeleteProfile(oldKey);
 	}
 }
 
@@ -343,7 +345,7 @@ void PersonalityTree::ToXmlTemplate()
 
 	for(uint16_t i = 0; i < ret.size(); i++)
 	{
-		cout << "Profile after Clean: " << ret[i] << endl;
+		cout << "Profile after Clean: " << ret[i] << " has parent: " << hhconfig->GetProfile(ret[i])->parentProfile << endl;
 	}
 
 	hhconfig->SaveAllTemplates();
