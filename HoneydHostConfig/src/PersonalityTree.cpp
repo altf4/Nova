@@ -41,87 +41,6 @@ PersonalityTree::~PersonalityTree()
 {
 }
 
-void PersonalityTree::CleanTree()
-{
-	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
-	{
-		RecursiveCleanTree(m_root.m_children[i].second, &m_root);
-	}
-
-	// need to clear m_to_delete
-	for(uint i = 0; i < m_to_delete.size(); i++)
-	{
-		delete m_to_delete[i];
-	}
-}
-
-void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode * parent)
-{
-	//If we have no children, this is a leaf node that won't be cleaned, terminate recursion and return.
-	if(node->m_children.size() == 0)
-	{
-		return;
-	}
-
-	//For each child repeat the recursion
-	for(uint i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveCleanTree(node->m_children[i].second, node);
-	}
-
-	// ***** Determine if this node can be cleaned ******
-	//If we have only one child, we may be able to remove
-	bool compress = (node->m_children.size() == 1);
-	profile *prof = hhconfig->GetProfile(node->m_key);
-
-	//If every value for the profile is inherited we can clean
-	for(uint i = 0; i < sizeof(prof->inherited)/sizeof(bool) && compress; i++)
-	{
-		compress &= prof->inherited[i];
-	}
-	for(uint i = 0; i < prof->ports.size() && compress; i++)
-	{
-		compress &= prof->ports[i].second;
-	}
-
-	//If we can clean a profile
-	if(compress)
-	{
-		//Store a pointer to the personality node to delete.
-		PersonalityNode * child = node->m_children[0].second;
-		m_to_delete.push_back(node);
-
-
-		string oldKey = child->m_key;
-		child->m_key = node->m_key + " " + child->m_key;
-
-		for(uint16_t i = 0; i < child->m_children.size(); i++)
-		{
-			hhconfig->m_profiles[child->m_children[i].first].parentProfile = child->m_key;
-		}
-
-		//Create new profile for new key
-		hhconfig->RenameProfile(oldKey, child->m_key);
-		hhconfig->InheritProfile(child->m_key, parent->m_key);
-
-		//Updates pers node keys and list
-		for(uint i = 0; i < parent->m_children.size(); i++)
-		{
-			if(!parent->m_children[i].first.compare(node->m_key))
-			{
-				pair<std::string, PersonalityNode *> newPair;
-				newPair.first = child->m_key;
-				newPair.second = child;
-				parent->m_children.erase(parent->m_children.begin()+i);
-				parent->m_children.insert(parent->m_children.begin()+i, newPair);
-			}
-		}
-
-		node->m_children.clear();
-		hhconfig->DeleteProfile(node->m_key);
-	}
-}
-
 void PersonalityTree::LoadTable(PersonalityTable *persTable)
 {
 	Personality_Table *pTable = &persTable->m_personalities;
@@ -261,22 +180,6 @@ void PersonalityTree::RecursiveToString(PersonalityNode * persNode)
 	}
 }
 
-void PersonalityTree::GenerateProfileTable()
-{
-	for(uint i = 0; i < m_root.m_children.size(); i++)
-	{
-		RecursiveGenerateProfileTable(m_root.m_children[i].second, m_root.m_key);
-	}
-}
-
-void PersonalityTree::RecursiveGenerateProfileTable(PersonalityNode * node, string parent)
-{
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveGenerateProfileTable(node->m_children[i].second, node->m_key);
-	}
-}
-
 void PersonalityTree::GenerateDistributions()
 {
 	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
@@ -342,15 +245,6 @@ void PersonalityTree::ToXmlTemplate()
 	hhconfig->SaveAllTemplates();
 }
 
-void PersonalityTree::RecursiveToXmlTemplate(PersonalityNode * node, string prefix)
-{
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
-	{
-		// XXX .second is showing up as a NULL value, referencing an already deleted PersonalityNode, figure out why
-		RecursiveToXmlTemplate(node->m_children[i].second, node->m_key);
-	}
-}
-
 void PersonalityTree::AddAllPorts()
 {
 	hhconfig->m_ports.clear();
@@ -358,63 +252,6 @@ void PersonalityTree::AddAllPorts()
 	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
 	{
 		RecursiveAddAllPorts(m_root.m_children[i].second);
-	}
-}
-
-void PersonalityTree::CleanInheritance()
-{
-	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
-	{
-		RecursiveCleanPortInheritance(m_root.m_children[i].second, &m_root);
-		RecursiveCleanMacInheritance(m_root.m_children[i].second, &m_root);
-	}
-}
-
-void PersonalityTree::RecursiveCleanPortInheritance(PersonalityNode * node, PersonalityNode * parent)
-{
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveCleanPortInheritance(node->m_children[i].second, node);
-	}
-	// look at parent and adjust inherited booleans in m_ports
-	if(hhconfig->GetProfile(node->m_key)->parentProfile.compare("default"))
-	{
-		for(uint16_t n = 0; n < node->m_ports_dist.size(); n++)
-		{
-			for(uint16_t p = 0; p < parent->m_ports_dist.size(); p++)
-			{
-				if(!node->m_ports_dist[n].first.compare(parent->m_ports_dist[p].first) && (parent->m_ports_dist[p].second == 100))
-				{
-					for(uint16_t k = 0; k < hhconfig->m_profiles[node->m_key].ports.size(); k++)
-					{
-						if(!hhconfig->m_profiles[node->m_key].ports[k].first.compare(node->m_ports_dist[n].first))
-						{
-							hhconfig->m_profiles[node->m_key].ports[k].second = true;
-							break;
-						}
-					}
-					break;
-				}
-			}
-		}
-	}
-}
-
-void PersonalityTree::RecursiveCleanMacInheritance(PersonalityNode * node, PersonalityNode * parent)
-{
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveCleanMacInheritance(node->m_children[i].second, node);
-	}
-	// look at parent and adjust inherited booleans in m_ports
-	if(hhconfig->GetProfile(node->m_key)->parentProfile.compare("default"))
-	{
-		//If the parent and child each have only one ethernet vendor and they are the same, the child inherits the parent
-		if((parent->m_vendor_dist.size() == 1) && (node->m_vendor_dist.size() == 1)
-			&& (!node->m_vendor_dist[0].first.compare(parent->m_vendor_dist[0].first)))
-		{
-			hhconfig->m_profiles[node->m_key].inherited[ETHERNET] = true;
-		}
 	}
 }
 

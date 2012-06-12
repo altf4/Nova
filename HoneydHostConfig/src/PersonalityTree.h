@@ -53,15 +53,9 @@ public:
 	// Generate a haystack that matches only what is seen and to near exact ratios, essentially duplicating the network n times until it's full.
 	void GenerateExactOutput();
 
-	void GenerateProfileTable();
-
 	void DebugPrintProfileTable();
 
 	void AddAllPorts();
-
-	void CleanTree();
-
-	void CleanInheritance();
 
 private:
 
@@ -79,13 +73,8 @@ private:
 
 	void RecursiveToString(PersonalityNode * persNode);
 	void RecursiveGenerateDistributions(PersonalityNode * node);
-	void RecursiveGenerateProfileTable(PersonalityNode * node, std::string parent);
-	void RecursiveToXmlTemplate(PersonalityNode * node, std::string prefix);
 	void RecursiveAddAllPorts(PersonalityNode * node);
-	void RecursiveCleanTree(PersonalityNode * node, PersonalityNode * parent);
 	void RecursivePrintTree(PersonalityNode * node);
-	void RecursiveCleanPortInheritance(PersonalityNode * node, PersonalityNode * parent);
-	void RecursiveCleanMacInheritance(PersonalityNode * node, PersonalityNode * parent);
 };
 
 }

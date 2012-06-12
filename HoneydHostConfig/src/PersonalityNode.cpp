@@ -107,6 +107,7 @@ profile PersonalityNode::GenerateProfile(profile* parentProfile)
 	push.parentProfile = parentProfile->name;
 
 	m_redundant = (m_children.size() == 1);
+
 	for(uint i = 0; i < (sizeof(push.inherited)/sizeof(bool)); i++)
 	{
 		push.inherited[i] = true;
