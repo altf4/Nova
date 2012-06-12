@@ -2701,14 +2701,28 @@ void NovaConfig::on_profileEdit_editingFinished()
 	if(!m_honeydConfig->m_profiles.empty())
 	{
 		GetProfileTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
-		GetProfileHsTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
+		QTreeWidgetItem *item = GetProfileHsTreeWidgetItem(m_currentProfile);
+		if(item != NULL)
+		{
+			item->setText(0,ui.profileEdit->displayText());
+		}
 		//If the name has changed we need to move it in the profile hash table and point all
 		//nodes that use the profile to the new location.
-		m_honeydConfig->RenameProfile(m_currentProfile, ui.profileEdit->displayText().toStdString());
-		SaveProfileSettings();
+		string newName = ui.profileEdit->displayText().toStdString();
+		if(m_honeydConfig->RenameProfile(m_currentProfile, newName))
+		{
+			m_currentProfile = newName;
+			SaveProfileSettings();
+		}
+		else
+		{
+			LOG(ERROR, "Unable to Rename profile '" + m_currentProfile+ "' to new name " + newName + ".", "Unable to Rename profile '"
+				+ m_currentProfile+ "' to new name " + newName + ". Check '/usr/share/nova/nova/templates/profiles.xml'");
+		}
 		LoadProfileSettings();
 		m_loading->unlock();
 		LoadAllNodes();
+		return;
 	}
 	m_loading->unlock();
 }
