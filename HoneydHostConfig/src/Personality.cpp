@@ -40,10 +40,14 @@ Personality::~Personality()
 
 void Personality::AddVendor(string vendor)
 {
+	// If the vendor does not exist in MAC_Table,
+	// then use the bracket operator to make a new
+	// entry and set its count to 1
 	if(m_vendors.find(vendor) == m_vendors.end())
 	{
 		m_vendors[vendor] = 1;
 	}
+	// Otherwise just increase the count at that key
 	else
 	{
 		m_vendors[vendor]++;
@@ -52,10 +56,14 @@ void Personality::AddVendor(string vendor)
 
 void Personality::AddPort(string port_string)
 {
+	// If the vendor does not exist in Port_Table,
+	// then use the bracket operator to make a new
+	// entry and set its count to 1
 	if(m_ports.find(port_string) == m_ports.end())
 	{
 		m_ports[port_string] = 1;
 	}
+	// Otherwise just increase the count at that key
 	else
 	{
 		m_ports[port_string]++;

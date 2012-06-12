@@ -28,12 +28,13 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 	hhconfig = new HoneydConfiguration();
 
 	m_root = PersonalityNode("default");
+	hhconfig->LoadAllTemplates();
+	m_profiles = &hhconfig->m_profiles;
+
 	if(persTable != NULL)
 	{
 		LoadTable(persTable);
 	}
-	hhconfig->LoadAllTemplates();
-	m_profiles = &hhconfig->m_profiles;
 }
 
 PersonalityTree::~PersonalityTree()
@@ -62,6 +63,12 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		return;
 	}
 
+	//For each child repeat the recursion
+	for(uint i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveCleanTree(node->m_children[i].second, node);
+	}
+
 	// ***** Determine if this node can be cleaned ******
 	//If we have only one child, we may be able to remove
 	bool compress = (node->m_children.size() == 1);
@@ -75,12 +82,6 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 	for(uint i = 0; i < prof->ports.size() && compress; i++)
 	{
 		compress &= prof->ports[i].second;
-	}
-
-	//For each child repeat the recursion
-	for(uint i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveCleanTree(node->m_children[i].second, node);
 	}
 
 	//If we can clean a profile
@@ -116,14 +117,6 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 			}
 		}
 
-		//Update profile inheritance
-		/*for(uint i = 0; i < profNames.size(); i++)
-		{
-			if(!hhconfig->GetProfile(profNames[i])->parentProfile.compare(oldKey))
-			{
-				hhconfig->InheritProfile(profNames[i], node->m_key);
-			}
-		}*/
 		node->m_children.clear();
 		hhconfig->DeleteProfile(node->m_key);
 	}
@@ -137,11 +130,70 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	{
 		InsertPersonality(it->second);
 	}
+	for(uint i = 0; i < m_root.m_children.size(); i++)
+	{
+		GenerateProfiles(m_root.m_children[i].second, &m_root, &hhconfig->m_profiles["default"]);
+	}
+}
+
+void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile)
+{
+	//Create profile object
+	node->GenerateDistributions();
+	if(m_profiles->find(node->m_key) != m_profiles->end())
+	{
+		// Probably not the right way of going about this
+		uint16_t i = 1;
+		stringstream ss;
+		string key = node->m_key;
+		ss << i;
+
+		for(; m_profiles->find(key) != m_profiles->end() && (i < ~0); i++)
+		{
+			ss.str("");
+			ss << node->m_key << i;
+			key = ss.str();
+		}
+	}
+	profile tempProf = node->GenerateProfile(parentProfile);
+	if(!node->m_redundant)
+	{
+		if(!hhconfig->AddProfile(&tempProf))
+		{
+			cout << "Error adding "<< tempProf.name << endl;
+			return;
+		}
+		else
+		{
+			for(uint i = 0; i < node->m_children.size(); i++)
+			{
+				GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[tempProf.name]);
+			}
+		}
+	}
+	else
+	{
+		// Probably not the right way of going about this
+		uint16_t i = 1;
+		stringstream ss;
+		string key = parentProfile->name + " " + node->m_key;
+		ss << i;
+		while(!hhconfig->RenameProfile(parentProfile->name, key))
+		{
+			ss.str("");
+			ss << i;
+			key = parentProfile->name + " " + node->m_key + ss.str();
+		}
+		for(uint i = 0; i < node->m_children.size(); i++)
+		{
+			GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[key]);
+		}
+	}
 }
 
 void PersonalityTree::InsertPersonality(Personality *pers)
 {
-	Personality temp = * pers;
+	Personality temp = *pers;
 
 	UpdatePersonality(&temp, &m_root);
 }
@@ -168,45 +220,24 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 		tablePair->first = cur;
 		tablePair->second = new PersonalityNode(cur);
 		parent->m_children.push_back(*tablePair);
+		delete tablePair;
 	}
-	else
-	{
-		tablePair = &parent->m_children[i];
-	}
+	tablePair = &parent->m_children[i];
 
 	//Insert or count port occurrences
 	for(Port_Table::iterator it = pers->m_ports.begin(); it != pers->m_ports.end(); it++)
 	{
-		//If we found a corresponding entry
-		if(tablePair->second->m_ports.find(it->first) != tablePair->second->m_ports.end())
-		{
-			tablePair->second->m_ports[it->first] += it->second;
-		}
-		else
-		{
-			tablePair->second->m_ports[it->first] = it->second;
-		}
+		tablePair->second->m_ports[it->first] += it->second;
 	}
 
 	//Insert or count MAC vendor occurrences
 	for(MAC_Table::iterator it = pers->m_vendors.begin(); it != pers->m_vendors.end(); it++)
 	{
-		//If we found a corresponding entry
-		if(tablePair->second->m_vendors.find(it->first) != tablePair->second->m_vendors.end())
-		{
-			tablePair->second->m_vendors[it->first] += it->second;
-		}
-		else
-		{
-			tablePair->second->m_vendors[it->first] = it->second;
-		}
+		tablePair->second->m_vendors[it->first] += it->second;
 	}
 
 	pers->m_personalityClass.pop_back();
-
 	tablePair->second->m_count += pers->m_count;
-
-	//Recursively descend until all nodes updated
 	if(!pers->m_personalityClass.empty())
 	{
 		UpdatePersonality(pers, tablePair->second);
@@ -240,37 +271,6 @@ void PersonalityTree::GenerateProfileTable()
 
 void PersonalityTree::RecursiveGenerateProfileTable(PersonalityNode * node, string parent)
 {
-	if(m_profiles->find(node->m_key) == m_profiles->end())
-	{
-		profile tempProf = node->GenerateProfile(parent);
-
-		if(!hhconfig->AddProfile(&tempProf))
-		{
-			cout << tempProf.name << endl;
-		}
-	}
-	else
-	{
-		// Probably not the right way of going about this
-		uint16_t i = 1;
-		stringstream ss;
-		ss << i;
-
-		for(; m_profiles->find(node->m_key + ss.str()) != m_profiles->end() && (i < ~0); i++)
-		{
-			ss.str("");
-			ss << i;
-		}
-
-		node->m_key = node->m_key + ss.str();
-
-		profile tempProf = node->GenerateProfile(parent);
-
-		if(!hhconfig->AddProfile(&tempProf))
-		{
-			cout << tempProf.name << endl;
-		}
-	}
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
 		RecursiveGenerateProfileTable(node->m_children[i].second, node->m_key);
@@ -287,7 +287,7 @@ void PersonalityTree::GenerateDistributions()
 
 void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode * node)
 {
-	cout << node->GenerateDistribution() << endl;
+	node->GenerateDistributions();
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
 		RecursiveGenerateDistributions(node->m_children[i].second);
@@ -331,15 +331,6 @@ void PersonalityTree::ToXmlTemplate()
 	hhconfig->m_subnets.clear();
 
 	AddAllPorts();
-
-	CleanInheritance();
-
-	CleanTree();
-
-	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
-	{
-		RecursiveToXmlTemplate(m_root.m_children[i].second, m_root.m_key);
-	}
 
 	ret = hhconfig->GetProfileNames();
 
