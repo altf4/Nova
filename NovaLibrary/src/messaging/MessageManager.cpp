@@ -169,9 +169,7 @@ void MessageManager::DeleteQueue(int socketFD)
 		//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
 		Lock protocolLock = UseSocket(socketFD);
 		delete queue;
-	}
 
-	{
 		Lock lock(&m_queuesLock);
 		m_queues.erase(socketFD);
 	}
@@ -209,23 +207,7 @@ bool MessageManager::RegisterCallback(int socketFD)
 	if(foundIt)
 	{
 		//If register comes back false, then we have to clean up the dead MessageQueue
-		bool isQueueAlive = queue->RegisterCallback();
-		if(!isQueueAlive)
-		{
-
-//			//Destructor here is a blocking call. So we call that before locking the queues mutex
-//			{
-//				//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
-//				Lock protocolLock = UseSocket(socketFD);
-//				delete queue;
-//
-//				Lock lock(&m_queuesLock);
-//				m_queues.erase(socketFD);
-//
-//				pthread_cond_broadcast(&m_newQueueCondition);
-//			}
-		}
-		return isQueueAlive;
+		return queue->RegisterCallback();
 	}
 	return false;
 }
