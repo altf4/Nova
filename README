@@ -82,37 +82,15 @@ Nova. Use the cd command to enter Honeyd/honeyd/:
 the source directory, follow the next steps in sequence:
 
     Step 1: ./autogen.sh
-
     Step 2: automake
-
-    Step 3: [If you have Ubuntu 11.04 or higher, you must manually edit the
-confifure file. Use your favorite find and replace method or the following
-steps,
-
-    gedit configure 
-
-    ...to open the configuration script in the text editor and use Ctrl-H to
-open the find and replace menu. Into the 'Find:' field, enter /usr/lib/libc.so 
-and for the 'Replace:' field, enter /lib/i386-linux-gnu/libc.so and Replace All.
-
-    Save and quit from editing the file.
-    
-    Step 4: ./configure
-
-    Step 5: make
-    
-    Step 6: make sudo make install
+    Step 3: ./configure
+    Step 4: make
+    Step 5: make sudo make install
 
 
 ===============================
 Building Nova
 ===============================
-
-- Once these steps are complete, and you have not run into any errors, it
-is time to move on to Nova. However, if you ran into any errors, especially when
-running Step 4 or 5, follow the instructions that the script gives to you and
-then try again. Do not move on until Step 4 configures without complaining and
-Step 5 returns no error. 
 
 - Now, onto Nova. Go back to the folder where Nova resides, eg.
 
@@ -124,15 +102,8 @@ use, and if you see a file called Makefile then you're in the right place.
 - Now, to generate all the files that will be needed for install, use the
 command:
 
-    make
-
-- This will generate all the binaries that the program needs to run, as
-well as the libraries and dependencies required for linking and function
-definitions. If there is an error here, check that all of the libraries
-from the beginning section were correctly installed, and refer to the given
-error message to see what's wrong.
-
-    sudo make install
+    Step 1: make
+    Step 2: sudo make install
 
 - Note: If either of these steps error out, it is suggested that you run
 the cleaning command before trying to run them again (i.e. if make errors
@@ -143,19 +114,33 @@ make all again. For sudo make install use the command sudo make uninstall.]
 run the following command to add your user to the 'nova' permission group
 and to set up database permissions for the web interface.
 
-    sudo bash InitializeNova.sh
+    Step 3: sudo bash InitializeNova.sh
 
-- As a workaround to a current installation bug, you have to log out of
-your current user and then log back in, in order for the permissions set during
-installation to complete.
+- Your user will have to be in the "nova" group in order for nova and honeyd to
+run properly. The InitializeNova.sh script will do this, but you must log in and
+back out for the change to take effect.
 
-    -Log out and log back in
+    Step 4: Log out and log back in
 
 - After these steps are completed without errors, Nova is set up on your
-system. You can use the command 'NovaGUI' To start the GUI.
+system. You can use the command 'novagui' To start the QT GUI.
 
 Refer to the Help tab in the GUI and the Nova wiki for more information.
 
+===============================
+ Web Interface
+===============================
+NOVA has a web interface that can be used for a GUI instead of the QT novagui.
+
+There is a getDependencies.sh script provided to download the required dependencies.
+
+To install,
+    Step 1: cd ~/Code/Nova/NovaWeb
+    Step 2: sudo bash getDependencies.sh
+    Step 3: sudo npm install -g forever
+    Step 1: cd ~/Code/Nova
+    Step 4: make web
+    Step 5: sudo make install-web	
 
 ===============================
 Contact us
