@@ -110,3 +110,14 @@ NovaCLI/Debug/novacli
 /Installer/Write/nova/.nova/Config/data.csv
 /Novad/core
 /NovaTrainer/Debug/novatrainer
+/HoneydHostConfig/subnet0.xml
+/HoneydHostConfig/Debug/honeydhostconfig
+/HoneydHostConfig/Release/honeydhostconfig
+/Nova_UI_Core/Release/Nova_UI_Core
+/HoneydHostConfig/Debug/subnet0.xml
+/HoneydHostConfig/Debug/test.txt
+/HaystackConfigWizard/debug/moc_HaystackConfigWizard.cpp
+/HaystackConfigWizard/debug/moc_NetworkSelectionPage.cpp
+/HaystackConfigWizard/Makefile
+/HaystackConfigWizard/Makefile.Debug
+/HaystackConfigWizard/Makefile.Release
