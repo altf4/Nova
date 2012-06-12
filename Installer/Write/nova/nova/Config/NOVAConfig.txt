@@ -14,7 +14,7 @@
 #
 # EXAMPLE:
 #INTERFACE eth0
-INTERFACE eth0
+INTERFACE default
 
 ############################################
 # DATAFILE #
@@ -75,7 +75,7 @@ EPS 0.01
 #
 # EXAMPLE:
 #CLASSIFICATION_TIMEOUT 5
-CLASSIFICATION_TIMEOUT 3
+CLASSIFICATION_TIMEOUT 1
 
 ############################################
 # IS_TRAINING #
@@ -287,7 +287,7 @@ SA_SLEEP_DURATION 0.5
 # 	0: Disabled
 #	1: Enabled
 #
-ENABLED_FEATURES 111111111
+ENABLED_FEATURES 11111111111111
 
 ############################################
 # SAVE_FREQUENCY #
@@ -409,4 +409,36 @@ HAYSTACK_STORAGE I
 # File containing whitelisted IP addresses
 #
 WHITELIST_FILE Config/whitelist.txt
+
+
+############################################
+# MIN_PACKET_THRESHOLD #
+############################################
+#
+# Suspects will not be classified, or in
+# some cases will be marked as more benign
+# if there was less packets than this seen.
+MIN_PACKET_THRESHOLD 5
+
+############################################
+# CUSTOM_PCAP_FILTER #
+############################################
+# 
+# Advanced option for customizing packets
+# that are classified with NOVA. This will
+# either be &&'d with or replace the auto
+# generated filter depending on CUSTOM_PCAP_FILTER_MODE
+#
+# Leave blank if you don't want a custom filter
+CUSTOM_PCAP_FILTER 
+
+
+############################################
+# CUSTOM_PCAP_FILTER_MODE #
+############################################
+# 
+# 0: Append pcap filter with CUSTOM_PCAP_FILTER
+# 1: Override pcap filter with CUSTOM_PCAP_FILTER
+CUSTOM_PCAP_MODE 0
+
 

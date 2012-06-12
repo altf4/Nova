@@ -19,6 +19,7 @@
 #include "WhitelistConfiguration.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
+#include "EvidenceTable.h"
 #include "SuspectTable.h"
 #include "FeatureSet.h"
 #include "NovaUtil.h"
@@ -48,7 +49,10 @@ using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
 extern SuspectTable suspects;
-extern struct sockaddr_in hostAddr;
+// Suspects not yet written to the state file
+extern SuspectTable suspectsSinceLastSave;
+
+extern vector<struct sockaddr_in> hostAddrs;
 
 //** Silent Alarm **
 extern struct sockaddr_in serv_addr;
@@ -65,8 +69,7 @@ extern string dhcpListFile;
 extern vector<string> haystackDhcpAddresses;
 extern vector<string> whitelistIpAddresses;
 extern vector<string> whitelistIpRanges;
-extern pcap_t *handle;
-extern bpf_u_int32 maskp; /* subnet mask */
+extern vector<pcap_t *> handles;
 
 extern int honeydDHCPNotifyFd;
 extern int honeydDHCPWatch;
@@ -74,8 +77,8 @@ extern int honeydDHCPWatch;
 extern int whitelistNotifyFd;
 extern int whitelistWatch;
 
-
 extern ClassificationEngine *engine;
+extern EvidenceTable suspectEvidence;
 
 namespace Nova
 {
@@ -243,11 +246,14 @@ void *SilentAlarmLoop(void *ptr)
 			continue;
 		}
 
-		//If this is from ourselves, then drop it.
-		if(hostAddr.sin_addr.s_addr == sendaddr.sin_addr.s_addr)
+		for(uint i = 0; i < hostAddrs.size(); i++)
 		{
-			close(connectionSocket);
-			continue;
+			//If this is from ourselves, then drop it.
+			if(hostAddrs[i].sin_addr.s_addr == sendaddr.sin_addr.s_addr)
+			{
+				close(connectionSocket);
+				continue;
+			}
 		}
 
 		CryptBuffer(buf, bytesRead, DECRYPT);
@@ -256,7 +262,7 @@ void *SilentAlarmLoop(void *ptr)
 		memcpy(&addr, buf, 4);
 		uint64_t key = addr;
 		Suspect *newSuspect = new Suspect();
-		if(newSuspect->Deserialize(buf, MAIN_FEATURE_DATA) == 0)
+		if(newSuspect->Deserialize(buf, MAX_MSG_SIZE, MAIN_FEATURE_DATA) == 0)
 		{
 			close(connectionSocket);
 			continue;
@@ -305,8 +311,12 @@ void *UpdateIPFilter(void *ptr)
 		{
 			int BUF_LEN = (1024 * (sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
-			struct bpf_program fp; /* The compiled filter expression */
+			char errbuf[PCAP_ERRBUF_SIZE];
 			char filter_exp[64];
+			struct bpf_program *fp = new struct bpf_program();
+
+			bpf_u_int32 maskp; /* subnet mask */
+			bpf_u_int32 netp; /* ip          */
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read(honeydDHCPNotifyFd, buf, BUF_LEN);
@@ -317,17 +327,34 @@ void *UpdateIPFilter(void *ptr)
 				haystackDhcpAddresses = GetIpAddresses(dhcpListFile);
 				string haystackAddresses_csv = ConstructFilterString();
 
-				if(pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0,maskp) == -1)
+				UpdateHaystackFeatures();
+
+				for(uint i = 0; i < handles.size(); i++)
 				{
-					LOG(ERROR, "Unable to enable packet capture.",
-						"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handle));
-				}
-				if(pcap_setfilter(handle, &fp) == -1)
-				{
-					LOG(ERROR, "Unable to enable packet capture.",
-						"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handle));
+					/* ask pcap for the network address and mask of the device */
+					int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
+					if(ret == -1)
+					{
+						LOG(ERROR, "Unable to start packet capture.",
+							"Unable to get the network address and mask: "+string(strerror(errno)));
+						exit(EXIT_FAILURE);
+					}
+
+					if(pcap_compile(handles[i], fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+					{
+						LOG(ERROR, "Unable to enable packet capture.",
+							"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+					}
+					if(pcap_setfilter(handles[i], fp) == -1)
+					{
+						LOG(ERROR, "Unable to enable packet capture.",
+							"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+					}
+					//Free the compiled filter program after assignment, it is no longer needed after set filter
+					pcap_freecode(fp);
 				}
 			}
+			delete fp;
 		}
 		else
 		{
@@ -353,6 +380,10 @@ void *UpdateWhitelistIPFilter(void *ptr)
 			char buf[BUF_LEN];
 			struct bpf_program fp; /* The compiled filter expression */
 			char filter_exp[64];
+			char errbuf[PCAP_ERRBUF_SIZE];
+
+			bpf_u_int32 maskp; /* subnet mask */
+			bpf_u_int32 netp; /* ip          */
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read(whitelistNotifyFd, buf, BUF_LEN);
@@ -363,29 +394,78 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				whitelistIpAddresses = WhitelistConfiguration::GetIps();
 				whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 				string filterString = ConstructFilterString();
-
-				if(pcap_compile(handle, &fp, filterString.data(), 0,maskp) == -1)
+				for(uint i = 0; i < handles.size(); i++)
 				{
-					LOG(ERROR, "Unable to enable packet capture.",
-						"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handle));
-				}
-				if(pcap_setfilter(handle, &fp) == -1)
-				{
-					LOG(ERROR, "Unable to enable packet capture.",
-						"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handle));
+
+					/* ask pcap for the network address and mask of the device */
+					int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
+					if(ret == -1)
+					{
+						LOG(ERROR, "Unable to start packet capture.",
+							"Unable to get the network address and mask: "+string(strerror(errno)));
+						exit(EXIT_FAILURE);
+					}
+
+					if(pcap_compile(handles[i], &fp, filterString.data(), 0, maskp) == -1)
+					{
+						LOG(ERROR, "Unable to enable packet capture.",
+							"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+					}
+					if(pcap_setfilter(handles[i], &fp) == -1)
+					{
+						LOG(ERROR, "Unable to enable packet capture.",
+							"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+					}
+					pcap_freecode(&fp);
+
+					// Clear any suspects that were whitelisted from the GUIs
+					for (uint i = 0; i < whitelistIpAddresses.size(); i++)
+					{
+					if (suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
+					{
+						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+						msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
+						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+					}
 				}
 
-				// Clear any suspects that were whitelisted from the GUIs
-				for (uint i = 0; i < whitelistIpAddresses.size(); i++)
-				{
-					suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str()));
-
-					UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
-					msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
-					NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 				}
 
+				/*
 				// TODO: Should we clear IP range whitelisted suspects? Could be a huge number of clears...
+				// This doesn't work yet.
+				for (uint i = 0; i < whitelistIpRanges.size(); i++)
+				{
+					uint32_t ip = htonl(inet_addr(WhitelistConfiguration::GetIp(whitelistIpRanges.at(i)).c_str()));
+
+					string netmask = WhitelistConfiguration::GetSubnet(whitelistIpRanges.at(i));
+					uint32_t mask;
+					if (netmask != "")
+					{
+						mask = htonl(inet_addr(netmask.c_str()));
+					}
+
+					while (mask != ~0)
+					{
+						if (suspects.Erase(ip))
+						{
+							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+							msg->m_IPAddress = ip;
+							NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+
+							cout << "erased" << endl;
+						}
+
+						in_addr foo;
+						foo.s_addr = ntohl(ip);
+						cout << "Attempted to erase " << inet_ntoa(foo) << endl;
+
+						ip++;
+						mask++;
+					}
+
+				}
+				*/
 			}
 		}
 		else
@@ -400,4 +480,36 @@ void *UpdateWhitelistIPFilter(void *ptr)
 
 	return NULL;
 }
+
+void *StartPcapLoop(void *ptr)
+{
+	u_char * index = new u_char(*(u_char *)ptr);
+	if((*index >= handles.size()) || (handles[*index] == NULL))
+	{
+		LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");
+		exit(EXIT_FAILURE);
+	}
+	pthread_t consumer;
+	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
+	pthread_detach(consumer);
+	pcap_loop(handles[*index], -1, Packet_Handler, index);
+	return NULL;
+}
+
+void *ConsumerLoop(void *ptr)
+{
+	while(true)
+	{
+		//Blocks on a mutex/condition if there's no evidence to process
+		Evidence *cur = suspectEvidence.GetEvidence();
+
+		//Do not deallocate evidence, we still need it
+		suspectsSinceLastSave.ProcessEvidence(cur, true);
+
+		//Consume evidence
+		suspects.ProcessEvidence(cur, false);
+	}
+	return NULL;
+}
+
 }

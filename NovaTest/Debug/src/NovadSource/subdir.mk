@@ -7,19 +7,22 @@ CPP_SRCS += \
 ../src/NovadSource/ClassificationEngine.cpp \
 ../src/NovadSource/Control.cpp \
 ../src/NovadSource/Novad.cpp \
-../src/NovadSource/ProtocolHandler.cpp 
+../src/NovadSource/ProtocolHandler.cpp \
+../src/NovadSource/Threads.cpp 
 
 OBJS += \
 ./src/NovadSource/ClassificationEngine.o \
 ./src/NovadSource/Control.o \
 ./src/NovadSource/Novad.o \
-./src/NovadSource/ProtocolHandler.o 
+./src/NovadSource/ProtocolHandler.o \
+./src/NovadSource/Threads.o 
 
 CPP_DEPS += \
 ./src/NovadSource/ClassificationEngine.d \
 ./src/NovadSource/Control.d \
 ./src/NovadSource/Novad.d \
-./src/NovadSource/ProtocolHandler.d 
+./src/NovadSource/ProtocolHandler.d \
+./src/NovadSource/Threads.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

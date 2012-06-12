@@ -5,12 +5,12 @@
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
-//   
+//
 //   Nova is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
-//   
+//
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Class to load and parse the NOVA configuration file
@@ -38,21 +38,12 @@ public:
 	void LoadConfig();
 	bool SaveConfig();
 
-	bool LoadUserConfig();
-	// TODO: SaveUserConfig();
-	// We don't have any GUI stuff to edit this.. but we should
-
-	// Loads the PATH file (usually in /etc)
-	bool LoadPaths();
-
-	// Loads default values for all variables
-	void SetDefaults();
+	bool SaveUserConfig();
 
 	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 	//	Returns: True if (after the function) the user has all necessary ~/.nova config files
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
     static bool InitUserConfigs(std::string homeNovaPath);
-
 
     // These are generic static getters/setters for the web interface
     // Use of these should be minimized. Instead, use the specific typesafe getter/setter
@@ -68,9 +59,10 @@ public:
     std::string GetDoppelInterface();
     std::string GetDoppelIp();
     std::string GetEnabledFeatures();
-    bool IsFeatureEnabled(int i) ;
     uint GetEnabledFeatureCount();
-    std::string GetInterface();
+    std::string GetInterface(uint i);
+    std::vector<std::string> GetInterfaces();
+    uint GetInterfaceCount();
     std::string GetPathCESaveFile();
     std::string GetPathConfigHoneydUser();
     std::string GetPathConfigHoneydHS();
@@ -86,6 +78,11 @@ public:
     bool GetIsDmEnabled();
     bool GetIsTraining();
     bool GetGotoLive();
+    bool IsFeatureEnabled(uint i);
+
+    bool GetUseAllInterfaces();
+    bool GetUseAnyLoopback();
+
 
     int GetClassificationTimeout();
     int GetDataTTL();
@@ -104,6 +101,12 @@ public:
     std::string GetGroup();
 
     // Setters
+    void AddInterface(std::string interface);
+    void RemoveInterface(std::string interface);
+    void ClearInterfaces();
+    void SetUseAllInterfaces(bool which);
+    void SetUseAnyLoopback(bool which);
+
     void SetClassificationThreshold(double classificationThreshold);
     void SetClassificationTimeout(int classificationTimeout);
     void SetConfigFilePath(std::string configFilePath);
@@ -111,9 +114,9 @@ public:
     void SetDoppelInterface(std::string doppelInterface);
     void SetDoppelIp(std::string doppelIp);
     void SetEnabledFeatures(std::string enabledFeatureMask);
+    void EnableAllFeatures();
     void SetEps(double eps);
     void SetGotoLive(bool gotoLive);
-    void SetInterface(std::string interface);
     void SetIsDmEnabled(bool isDmEnabled);
     void SetIsTraining(bool isTraining);
     void SetK(int k);
@@ -142,11 +145,17 @@ public:
     std::string GetSMTPDomain();
     std::vector<std::string> GetSMTPEmailRecipients();
     in_port_t GetSMTPPort();
+    std::string GetSMTPUser();
+    std::string GetSMTPPass();
 
     void SetLoggerPreferences(std::string loggerPreferences);
     void SetSMTPAddr(std::string SMTPAddr);
     void SetSMTPDomain(std::string SMTPDomain);
 	void SetSMTPPort(in_port_t SMTPPort);
+	void SetSMTPUser(std::string SMTPUser);
+	void SetSMTPPass(std::string STMP_Pass);
+
+	void SetSMTPSettings_FromFile();
 
 	double GetSqurtEnabledFeatures();
 
@@ -168,6 +177,14 @@ public:
     std::string GetUserPath();
     void SetUserPath(std::string userPath);
 
+    uint GetMinPacketThreshold();
+    void SetMinPacketThreshold(uint packets);
+
+	std::string GetCustomPcapString();
+	void SetCustomPcapString(std::string customPcapString);
+	bool GetOverridePcapString();
+	void SetOverridePcapString(bool overridePcapString);
+
 
 protected:
 	Config();
@@ -178,16 +195,17 @@ private:
 	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
 	__attribute__ ((visibility ("hidden"))) static std::string m_requiredFiles[];
 
-	std::string m_interface;
 	std::string m_doppelIp;
-	std::string m_doppelInterface;
+	std::string m_loopbackIF;
+	bool m_loIsDefault;
+	bool m_ifIsDefault;
+	std::vector<std::string>m_interfaces;
 
 	// Enabled feature stuff, we provide a few formats and helpers
 	std::string m_enabledFeatureMask;
 	bool m_isFeatureEnabled[DIM];
 	uint m_enabledFeatureCount;
 	double m_squrtEnabledFeatures;
-
 
 	std::string m_pathConfigHoneydHs;
 	std::string m_pathConfigHoneydUser;
@@ -196,6 +214,8 @@ private:
 	std::string m_pathWhitelistFile;
 	std::string m_pathTrainingCapFolder;
 	std::string m_pathCESaveFile;
+
+	std::string m_customPcapString;
 
 	std::string m_group;
 
@@ -208,6 +228,7 @@ private:
 	int m_saveFreq;
 	int m_dataTTL;
 	int m_saMaxAttempts;
+	uint m_minPacketThreshold;
 
 	double m_saSleepDuration;
 	double m_eps;
@@ -218,12 +239,21 @@ private:
 	bool m_isTraining;
 	bool m_isDmEnabled;
 
+	bool m_overridePcapString;
+
 	// the SMTP server domain name for display purposes
 	std::string m_SMTPDomain;
 	// the email address that will be set as sender
 	std::string m_SMTPAddr;
-	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
+	// the port for SMTP send; normally 25 if I'm not mistaken, 465 for SSL and 5 hundred something for TLS
 	in_port_t m_SMTPPort;
+
+	// username:password combination for interacting with the SMTP account that acts
+	// as the relay for Nova mail alerts
+	// need to find some way to store the password in an encrypted fashion yet
+	// still have it as a Config private attribute
+	std::string m_SMTPUser;
+	std::string m_SMTPPass;
 
 	std::string m_loggerPreferences;
 	// a vector containing the email recipients; may move this into the actual classes
@@ -236,7 +266,6 @@ private:
 
 	std::string m_configFilePath;
 	std::string m_userConfigFilePath;
-
 
 	// Options from the PATHS file (currently /etc/nova/paths)
 	std::string m_pathBinaries;
@@ -259,6 +288,22 @@ private:
     // Set with a CSV std::string from the config file
     void SetSMTPEmailRecipients_noLocking(std::string SMTPEmailRecipients);
 
+	//Attempts to detect and use intefaces returned by pcap_lookupdev
+	void LoadInterfaces();
+
+	// Loads the PATH file (usually in /etc)
+	bool LoadPaths();
+
+	// Loads default values for all variables
+	void SetDefaults();
+
+	bool LoadUserConfig();
+
+	//Private version of LoadConfig so the public version can call LoadInterfaces()
+	//	LoadInterfaces cannot be called until m_instance has been created, but needs to execute after every load
+	//	However the constructor calls LoadConfig, so we use a private version instead that doesn't include
+	//	LoadInterfaces() which is called elsewhere
+	void LoadConfig_Internal();
 };
 }
 

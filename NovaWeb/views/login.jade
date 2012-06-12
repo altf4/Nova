@@ -1,7 +1,7 @@
 extends loginlayout
 
 block content
-  form(method="post", action="/login")
+  form(method="post", action="/login?redirect=#{redirect}")
     label Username
       input(type="text", name="username", size="10")
     br

@@ -75,6 +75,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	initKey--;
 	SuspectTable.set_deleted_key(initKey);
 
+	connectedToNovad = false;
 
 	m_editingSuspectList = false;
 	m_pathsFile = (char*)"/etc/nova/paths";
@@ -155,12 +156,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	qRegisterMetaType<in_addr_t>("in_addr_t");
 	qRegisterMetaType<QItemSelection>("QItemSelection");
 
-	//Sets initial view
-	this->ui.stackedWidget->setCurrentIndex(0);
-	this->ui.mainButton->setFlat(true);
-	this->ui.suspectButton->setFlat(false);
-	this->ui.doppelButton->setFlat(false);
-	this->ui.haystackButton->setFlat(false);
 	connect(this, SIGNAL(newSuspect(in_addr_t)), this, SLOT(DrawSuspect(in_addr_t)), Qt::AutoConnection);
 	connect(this, SIGNAL(refreshSystemStatus()), this, SLOT(UpdateSystemStatus()), Qt::AutoConnection);
 
@@ -171,10 +166,11 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 NovaGUI::~NovaGUI()
 {
-	if(!CloseNovadConnection())
+	if(connectedToNovad && !CloseNovadConnection())
 	{
 		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
 	}
+	connectedToNovad = false;
 }
 
 //Draws the suspect context menu
@@ -184,26 +180,6 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent *event)
 	{
 		m_suspectMenu->clear();
 		if(ui.suspectList->isItemSelected(ui.suspectList->currentItem()))
-		{
-			m_suspectMenu->addAction(ui.actionClear_Suspect);
-			m_suspectMenu->addAction(ui.actionHide_Suspect);
-		}
-
-		m_suspectMenu->addSeparator();
-		m_suspectMenu->addAction(ui.actionClear_All_Suspects);
-		m_suspectMenu->addAction(ui.actionSave_Suspects);
-		m_suspectMenu->addSeparator();
-
-		m_suspectMenu->addAction(ui.actionShow_All_Suspects);
-		m_suspectMenu->addAction(ui.actionHide_Old_Suspects);
-
-		QPoint globalPos = event->globalPos();
-		m_suspectMenu->popup(globalPos);
-	}
-	else if(ui.hostileList->hasFocus() || ui.hostileList->underMouse())
-	{
-		m_suspectMenu->clear();
-		if(ui.hostileList->isItemSelected(ui.hostileList->currentItem()))
 		{
 			m_suspectMenu->addAction(ui.actionClear_Suspect);
 			m_suspectMenu->addAction(ui.actionHide_Suspect);
@@ -230,7 +206,7 @@ void NovaGUI::contextMenuEvent(QContextMenuEvent *event)
 		{
 			case COMPONENT_NOVAD:
 			{
-				if(IsNovadUp(false))
+				if(connectedToNovad && IsNovadUp(false))
 				{
 					m_systemStatMenu->addAction(ui.actionSystemStatReload);
 					m_systemStatMenu->addAction(ui.actionSystemStatStop);
@@ -339,8 +315,10 @@ void NovaGUI::InitiateSystemStatus()
 
 bool NovaGUI::ConnectGuiToNovad()
 {
-	if(TryWaitConnectToNovad(2000))	//TODO: Call this asynchronously
+	if(TryWaitConnectToNovad(500))	//TODO: Call this asynchronously
 	{
+		connectedToNovad = true;
+
 		if(!StartCallbackLoop(this))
 		{
 			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
@@ -391,7 +369,7 @@ void NovaGUI::UpdateSystemStatus()
 
 	//Novad
 	item = ui.systemStatusTable->item(COMPONENT_NOVAD, 0);
-	if(IsNovadUp(false))
+	if(connectedToNovad && IsNovadUp(false))
 	{
 		item->setIcon(*m_greenIcon);
 
@@ -409,6 +387,8 @@ void NovaGUI::UpdateSystemStatus()
 	{
 		item->setIcon(*m_redIcon);
 		ui.uptimeLabel->setText(QString());
+
+		connectedToNovad = false;
 	}
 
 	//Haystack
@@ -458,8 +438,6 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initializatio
 			//Delete the old Suspect since we created and pointed to a new one
 			delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
 		}
-		//We borrow the flag to show there is new information.
-		suspectItem.suspect->SetNeedsClassificationUpdate(true);
 		//Update the entry in the table
 
 		SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
@@ -479,7 +457,6 @@ void NovaGUI::DrawAllSuspects()
 	ClearSuspectList();
 
 	QListWidgetItem *item = NULL;
-	QListWidgetItem *mainItem = NULL;
 	Suspect *suspect = NULL;
 	QString str;
 	QBrush brush;
@@ -531,33 +508,8 @@ void NovaGUI::DrawAllSuspects()
 		}
 		ui.suspectList->insertItem(i, item);
 
-		//If Hostile
-		if(suspect->GetIsHostile())
-		{
-			//Copy the item and add it to the list
-			mainItem = new QListWidgetItem(str,0);
-			mainItem->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
-			mainItem->setForeground(brush);
-
-			i = 0;
-			if(ui.hostileList->count())
-			{
-				for(i = 0; i < ui.hostileList->count(); i++)
-				{
-					addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-					if(SuspectTable[addr].suspect->GetClassification() < suspect->GetClassification())
-					{
-						break;
-					}
-				}
-			}
-			ui.hostileList->insertItem(i, mainItem);
-			it->second.mainItem = mainItem;
-		}
 		//Point to the new items
 		it->second.item = item;
-		//Reset the flags
-		suspect->SetNeedsClassificationUpdate(false);
 		it->second.suspect = suspect;
 	}
 	UpdateSuspectWidgets();
@@ -663,42 +615,10 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 	{
 		sItem->mainItem->setText(str);
 		sItem->mainItem->setForeground(brush);
-		bool selected = false;
-		int current_row = ui.hostileList->currentRow();
 
-		//If this is our current selection flag it so we can update the selection if we change the index
-		if(current_row == ui.hostileList->row(sItem->mainItem))
-		{
-			selected = true;
-		}
-
-		ui.hostileList->removeItemWidget(sItem->mainItem);
-		int i = 0;
-		if(ui.hostileList->count())
-		{
-			for(i = 0; i < ui.hostileList->count(); i++)
-			{
-				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
-				{
-					break;
-				}
-			}
-		}
-		ui.hostileList->insertItem(i, sItem->mainItem);
-
-		//If we need to update the selection
-		if(selected)
-		{
-			ui.hostileList->setCurrentRow(i);
-		}
 		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString().c_str()));
 	}
-	//Else if the mainItem exists and suspect is not hostile
-	else if(sItem->mainItem != NULL)
-	{
-		ui.hostileList->removeItemWidget(sItem->mainItem);
-	}
+
 	//If the mainItem doesn't exist and suspect is hostile
 	else if(sItem->suspect->GetIsHostile())
 	{
@@ -709,19 +629,6 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 
 		sItem->mainItem->setToolTip(QString(sItem->suspect->ToString().c_str()));
 
-		int i = 0;
-		if(ui.hostileList->count())
-		{
-			for(i = 0; i < ui.hostileList->count(); i++)
-			{
-				addr = inet_addr(ui.hostileList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->GetClassification() < sItem->suspect->GetClassification())
-				{
-					break;
-				}
-			}
-		}
-		ui.hostileList->insertItem(i, sItem->mainItem);
 	}
 	sItem->item->setToolTip(QString(sItem->suspect->ToString().c_str()));
 	UpdateSuspectWidgets();
@@ -730,74 +637,64 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 
 void NovaGUI::UpdateSuspectWidgets()
 {
-	double hostileAcc = 0, benignAcc = 0, totalAcc = 0;
+	int benignSuspects = 0;
+	int hostileSuspects = 0;
+
+	double hostileAccuracySum = 0;
+	double benignAccuracySum = 0;
+	double hostileAcc, benignAcc;
 
 	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
+		benignAcc = 0;
+		hostileAcc = 0;
 		if(it->second.suspect->GetIsHostile())
 		{
-			hostileAcc += it->second.suspect->GetClassification();
-			totalAcc += it->second.suspect->GetClassification();
+			hostileSuspects++;
+
+			for (uint i = 0; i < DIM; i++)
+			{
+				if (Config::Inst()->IsFeatureEnabled(i))
+					hostileAcc += 1 - it->second.suspect->GetFeatureAccuracy((featureIndex)i);
+			}
+
+			hostileAccuracySum += hostileAcc/Config::Inst()->GetEnabledFeatureCount();
 		}
 		else
 		{
-			benignAcc += 1-it->second.suspect->GetClassification();
-			totalAcc += 1-it->second.suspect->GetClassification();
+			benignSuspects++;
+
+			for (uint i = 0; i < DIM; i++)
+			{
+				if (Config::Inst()->IsFeatureEnabled(i))
+					benignAcc += 1 - it->second.suspect->GetFeatureAccuracy((featureIndex)i);
+			}
+			benignAccuracySum += benignAcc/Config::Inst()->GetEnabledFeatureCount();
 		}
 	}
 
-	int numBenign = ui.suspectList->count() - ui.hostileList->count();
-	int numHostile = ui.hostileList->count();
-
 	stringstream ss;
-	ss << numBenign;
+	ss << benignSuspects;
 	ui.numBenignEdit->setText(QString::fromStdString(ss.str()));
 
 	stringstream ssHostile;
-	ssHostile << numHostile;
+	ssHostile << hostileSuspects;
 	ui.numHostileEdit->setText(QString::fromStdString(ssHostile.str()));
 
-	if(numBenign)
-	{
-		benignAcc /= numBenign;
-		ui.benignClassificationBar->setValue((int)(benignAcc*100));
-		ui.benignSuspectClassificationBar->setValue((int)(benignAcc*100));
-	}
-	else
-	{
-		ui.benignClassificationBar->setValue(100);
-		ui.benignSuspectClassificationBar->setValue(100);
-	}
+	ui.hostileSuspectClassificationBar->setMaximum(100);
+	ui.benignSuspectClassificationBar->setMaximum(100);
+	ui.hostileSuspectClassificationBar->setValue((hostileAccuracySum/hostileSuspects)*100);
+	ui.benignSuspectClassificationBar->setValue((benignAccuracySum/benignSuspects)*100);
 
-
-	if(ui.hostileList->count())
-	{
-		hostileAcc /= ui.hostileList->count();
-		ui.hostileClassificationBar->setValue((int)(hostileAcc*100));
-		ui.hostileSuspectClassificationBar->setValue((int)(hostileAcc*100));
-	}
-	else
-	{
-		ui.hostileClassificationBar->setValue(100);
-		ui.hostileSuspectClassificationBar->setValue(100);
-	}
-	if(ui.suspectList->count())
-	{
-		totalAcc /= ui.suspectList->count();
-		ui.overallSuspectClassificationBar->setValue((int)(totalAcc*100));
-	}
-	else
-	{
-		ui.overallSuspectClassificationBar->setValue(100);
-	}
 }
+
+
 
 //Clears the suspect tables completely.
 void NovaGUI::ClearSuspectList()
 {
 	Lock lock(&suspectTableLock);
 	this->ui.suspectList->clear();
-	this->ui.hostileList->clear();
 	//Since clearing permanently deletes the items we need to make sure the suspects point to null
 	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
@@ -812,10 +709,6 @@ void NovaGUI::ClearSuspectList()
 
 void NovaGUI::on_actionRunNova_triggered()
 {
-	if(IsNovadUp(false))
-	{
-		return;
-	}
 	StartNovad();
 	ConnectGuiToNovad();
 	StartHaystack();
@@ -850,10 +743,6 @@ void NovaGUI::on_actionConfigure_triggered()
 
 void  NovaGUI::on_actionExit_triggered()
 {
-	if(!CloseNovadConnection())
-	{
-		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
-	}
 	QCoreApplication::exit(EXIT_SUCCESS);
 }
 
@@ -879,10 +768,6 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 	{
 		list = ui.suspectList;
 	}
-	else if(ui.hostileList->hasFocus())
-	{
-		list = ui.hostileList;
-	}
 	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
 	{
 		string suspectStr = list->currentItem()->text().toStdString();
@@ -902,10 +787,6 @@ void NovaGUI::on_actionHide_Suspect_triggered()
 	if(ui.suspectList->hasFocus())
 	{
 		list = ui.suspectList;
-	}
-	else if(ui.hostileList->hasFocus())
-	{
-		list = ui.hostileList;
 	}
 	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
 	{
@@ -1034,63 +915,8 @@ void NovaGUI::on_actionLogger_triggered()
 }
 
 /************************************************
- * View Signal Handlers
- ************************************************/
-
-void NovaGUI::on_mainButton_clicked()
-{
-	this->ui.stackedWidget->setCurrentIndex(0);
-	this->ui.mainButton->setFlat(true);
-	this->ui.suspectButton->setFlat(false);
-	this->ui.doppelButton->setFlat(false);
-	this->ui.haystackButton->setFlat(false);
-}
-
-void NovaGUI::on_suspectButton_clicked()
-{
-	this->ui.stackedWidget->setCurrentIndex(1);
-	this->ui.mainButton->setFlat(false);
-	this->ui.suspectButton->setFlat(true);
-	this->ui.doppelButton->setFlat(false);
-	this->ui.haystackButton->setFlat(false);
-}
-
-void NovaGUI::on_doppelButton_clicked()
-{
-	this->ui.stackedWidget->setCurrentIndex(2);
-	this->ui.mainButton->setFlat(false);
-	this->ui.suspectButton->setFlat(false);
-	this->ui.doppelButton->setFlat(true);
-	this->ui.haystackButton->setFlat(false);
-}
-
-void NovaGUI::on_haystackButton_clicked()
-{
-	this->ui.stackedWidget->setCurrentIndex(3);
-	this->ui.mainButton->setFlat(false);
-	this->ui.suspectButton->setFlat(false);
-	this->ui.doppelButton->setFlat(false);
-	this->ui.haystackButton->setFlat(true);
-}
-
-/************************************************
  * Button Signal Handlers
  ************************************************/
-
-void NovaGUI::on_runButton_clicked()
-{
-	if(IsNovadUp(false))
-	{
-		return;
-	}
-	StartNovad();
-	ConnectGuiToNovad();
-	StartHaystack();
-}
-void NovaGUI::on_stopButton_clicked()
-{
-	Q_EMIT on_actionStopNova_triggered();
-}
 
 void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 {
@@ -1100,7 +926,7 @@ void NovaGUI::on_systemStatusTable_itemSelectionChanged()
 	{
 		case COMPONENT_NOVAD:
 		{
-			if(IsNovadUp(false))
+			if(connectedToNovad && IsNovadUp(false))
 			{
 				ui.systemStatStartButton->setDisabled(true);
 				ui.systemStatStopButton->setDisabled(false);
@@ -1166,10 +992,6 @@ void NovaGUI::on_actionSystemStatStart_triggered()
 	{
 		case COMPONENT_NOVAD:
 		{
-			if(IsNovadUp(false))
-			{
-				return;
-			}
 			StartNovad();
 			ConnectGuiToNovad();
 			break;
@@ -1233,64 +1055,9 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 	{
 		if(m_featureEnabled[i])
 		{
-			QString featureLabel;
-			switch (i)
-			{
-				case IP_TRAFFIC_DISTRIBUTION:
-				{
-					featureLabel = tr("IP Traffic Distribution");
-					break;
-				}
-				case PORT_TRAFFIC_DISTRIBUTION:
-				{
-					featureLabel = tr("Port Traffic Distribution");
-					break;
-				}
-				case HAYSTACK_EVENT_FREQUENCY:
-				{
-					featureLabel = tr("Haystack Event Frequency");
-					break;
-				}
-				case PACKET_SIZE_MEAN:
-				{
-					featureLabel = tr("Packet Size Mean");
-					break;
-				}
-				case PACKET_SIZE_DEVIATION:
-				{
-					featureLabel = tr("Packet Size Deviation");
-					break;
-				}
-				case DISTINCT_IPS:
-				{
-					featureLabel = tr("IPs Contacted");
-					break;
-				}
-				case DISTINCT_PORTS:
-				{
-					featureLabel = tr("Ports Contacted");
-					break;
-				}
-				case PACKET_INTERVAL_MEAN:
-				{
-					featureLabel = tr("Packet Interval Mean");
-					break;
-				}
-				case PACKET_INTERVAL_DEVIATION:
-				{
-					featureLabel = tr("Packet Interval Deviation");
-					break;
-				}
-				default:
-				{
-					break;
-				}
-			}
-
-			ui.suspectDistances->insertItem(row, featureLabel + tr("Accuracy"));
-			QString formatString = "%p%| ";
-			formatString.append(featureLabel);
-			formatString.append(": ");
+			QString featureLabel = QString::fromStdString(FeatureSet::m_featureNames[i]);
+			ui.suspectDistances->insertItem(row, featureLabel + QString(" : ") + QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
+			QString formatString = "%p% Match to neighboring points";
 
 			row++;
 			QProgressBar* bar = new QProgressBar();
@@ -1319,7 +1086,6 @@ void NovaGUI::SetFeatureDistances(Suspect* suspect)
 				 QProgressBar::chunk:horizontal {margin: 0.5px; background: qlineargradient(x1: 0, y1: 0.5, x2: 1,"
 				" y2: 0.5, stop: 0 yellow, stop: 1 green);}");
 
-			formatString.append(QString::number(suspect->GetFeatureSet(MAIN_FEATURES).m_features[i]));
 			bar->setFormat(formatString);
 
 			QListWidgetItem* item = new QListWidgetItem();
@@ -1357,7 +1123,6 @@ void NovaGUI::HideSuspect(in_addr_t addr)
 	sItem->item = NULL;
 	if(sItem->mainItem != NULL)
 	{
-		ui.hostileList->removeItemWidget(sItem->mainItem);
 		delete sItem->mainItem;
 		sItem->mainItem = NULL;
 	}

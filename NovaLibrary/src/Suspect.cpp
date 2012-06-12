@@ -17,9 +17,11 @@
 //					features so that each entity can be monitored and classified.
 //============================================================================/*
 
-#include "Suspect.h"
-#include "Config.h"
+#include "SerializationHelper.h"
 #include "FeatureSet.h"
+#include "Suspect.h"
+#include "Logger.h"
+#include "Config.h"
 
 #include <errno.h>
 #include <sstream>
@@ -34,7 +36,7 @@ Suspect::Suspect()
 	m_IpAddress.s_addr = 0;
 	m_hostileNeighbors = 0;
 	m_classification = -1;
-	m_needsClassificationUpdate = true;
+	m_needsClassificationUpdate = false;
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
@@ -44,24 +46,8 @@ Suspect::Suspect()
 	}
 }
 
-
 Suspect::~Suspect()
 {
-}
-
-
-Suspect::Suspect(const Packet& packet)
-{
-	m_IpAddress = packet.ip_hdr.ip_src;
-	m_hostileNeighbors = 0;
-	m_classification = -1;
-	m_isHostile = false;
-	AddEvidence(packet);
-	m_flaggedByAlarm = false;
-	for(int i = 0; i < DIM; i++)
-	{
-		m_featureAccuracy[i] = 0;
-	}
 }
 
 string Suspect::GetIpString()
@@ -85,106 +71,94 @@ string Suspect::ToString()
 	if(!m_isHostile)
 		ss << "not ";
 	ss << "hostile\n";
-	ss <<  " Classification: " <<  m_classification <<  "\n";
+	ss <<  " Classification: ";
+
+	if (m_classification == -2)
+	{
+		ss << " Not enough data\n";
+	}
+	else
+	{
+		ss << m_classification <<  "\n";
+	}
+
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 
-	if (Config::Inst()->IsFeatureEnabled(DISTINCT_IPS))
+	for (int i = 0; i < DIM; i++)
 	{
-		ss << " Distinct IPs Contacted: " << m_features.m_features[DISTINCT_IPS] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
-	{
-		ss << " Haystack Traffic Distribution: " << m_features.m_features[IP_TRAFFIC_DISTRIBUTION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(DISTINCT_PORTS))
-	{
-		ss << " Distinct Ports Contacted: " << m_features.m_features[DISTINCT_PORTS] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
-	{
-		ss << " Port Traffic Distribution: "  <<  m_features.m_features[PORT_TRAFFIC_DISTRIBUTION]  <<  "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
-	{
-		ss << " Haystack Events: " << m_features.m_features[HAYSTACK_EVENT_FREQUENCY] <<  " per second\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
-	{
-		ss << " Mean Packet Size: " << m_features.m_features[PACKET_SIZE_MEAN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_SIZE_DEVIATION))
-	{
-		ss << " Packet Size Variance: " << m_features.m_features[PACKET_SIZE_DEVIATION] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
-	{
-		ss << " Mean Packet Interval: " << m_features.m_features[PACKET_INTERVAL_MEAN] << "\n";
-	}
-
-	if (Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
-	{
-		ss << " Packet Interval Variance: " << m_features.m_features[PACKET_INTERVAL_DEVIATION] << "\n";
+		if (Config::Inst()->IsFeatureEnabled(i))
+		{
+			ss << FeatureSet::m_featureNames[i] << ": " << m_features.m_features[i] << "\n";
+		}
 	}
 
 	return ss.str();
 }
 
-void Suspect::AddEvidence(const Packet& packet)
+//Just like Consume but doesn't deallocate
+void Suspect::ReadEvidence(Evidence *&evidence)
 {
-	m_unsentFeatures.UpdateEvidence(packet);
-	m_needsClassificationUpdate = true;
+	Evidence *curEvidence = evidence, *tempEv = NULL;
+	while(curEvidence != NULL)
+	{
+		m_unsentFeatures.UpdateEvidence(curEvidence);
+		m_features.UpdateEvidence(curEvidence);
+		tempEv = curEvidence;
+		curEvidence = tempEv->m_next;
+	}
+	m_isLive = (Config::Inst()->GetReadPcap());
+}
+
+void Suspect::ConsumeEvidence(Evidence *&evidence)
+{
+	if (m_IpAddress.s_addr == 0)
+	{
+		m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+	}
+
+	Evidence *curEvidence = evidence, *tempEv = NULL;
+	while(curEvidence != NULL)
+	{
+		m_unsentFeatures.UpdateEvidence(curEvidence);
+		m_features.UpdateEvidence(curEvidence);
+		tempEv = curEvidence;
+		curEvidence = tempEv->m_next;
+		delete tempEv;
+	}
 	m_isLive = (Config::Inst()->GetReadPcap());
 }
 
 //Calculates the suspect's features based on it's feature set
 void Suspect::CalculateFeatures()
 {
-	UpdateFeatureData(INCLUDE);
 	m_features.CalculateAll();
-	UpdateFeatureData(REMOVE);
 }
 
 // Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 //		buf - Pointer to buffer where serialized data will be stored
 // Returns: number of bytes set in the buffer
-uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
+uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
-	memcpy(buf, &m_IpAddress.s_addr, sizeof m_IpAddress.s_addr);
-	offset+= sizeof m_IpAddress.s_addr;
-	memcpy(buf+offset, &m_classification, sizeof m_classification);
-	offset+= sizeof m_classification;
-	memcpy(buf+offset, &m_isHostile, sizeof m_isHostile);
-	offset+= sizeof m_isHostile;
-	memcpy(buf+offset, &m_needsClassificationUpdate, sizeof m_needsClassificationUpdate);
-	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(buf+offset, &m_flaggedByAlarm, sizeof m_flaggedByAlarm);
-	offset+= sizeof m_flaggedByAlarm;
-	memcpy(buf+offset, &m_isLive, sizeof m_isLive);
-	offset+= sizeof m_isLive;
-	memcpy(buf+offset, &m_hostileNeighbors, sizeof m_hostileNeighbors);
-	offset+= sizeof m_hostileNeighbors;
+	SerializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(buf+offset, &m_featureAccuracy[i], sizeof m_featureAccuracy[i]);
-		offset+= sizeof m_featureAccuracy[i];
+		SerializeChunk(buf, &offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
 	}
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
 	//	returns the number of bytes set in the buffer
-	offset += m_features.SerializeFeatureSet(buf+offset);
+	offset += m_features.SerializeFeatureSet(buf+offset, bufferSize - offset);
 	switch(whichFeatures)
 	{
 		case UNSENT_FEATURE_DATA:
@@ -193,7 +167,7 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			{
 				return 0;
 			}
-			offset += m_unsentFeatures.SerializeFeatureData(buf + offset);
+			offset += m_unsentFeatures.SerializeFeatureData(buf + offset, bufferSize - offset);
 			break;
 		}
 		case MAIN_FEATURE_DATA:
@@ -202,7 +176,7 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			{
 				return 0;
 			}
-			offset += m_features.SerializeFeatureData(buf + offset);
+			offset += m_features.SerializeFeatureData(buf + offset, bufferSize - offset);
 			break;
 		}
 		case ALL_FEATURE_DATA:
@@ -211,12 +185,12 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			{
 				return 0;
 			}
-			offset += m_features.SerializeFeatureData(buf + offset);
+			offset += m_features.SerializeFeatureData(buf + offset, bufferSize - offset);
 			if(offset + m_unsentFeatures.GetFeatureDataLength() >= SANITY_CHECK)
 			{
 				return 0;
 			}
-			offset += m_unsentFeatures.SerializeFeatureData(buf + offset);
+			offset += m_unsentFeatures.SerializeFeatureData(buf + offset, bufferSize - offset);
 			break;
 		}
 		case NO_FEATURE_DATA:
@@ -225,6 +199,7 @@ uint32_t Suspect::Serialize(u_char *buf, SerializeFeatureMode whichFeatures)
 			break;
 		}
 	}
+
 	return offset;
 }
 
@@ -235,7 +210,6 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 		sizeof(m_IpAddress.s_addr)
 		+ sizeof(m_classification)
 		+ sizeof(m_isHostile)
-		+ sizeof(m_needsClassificationUpdate)
 		+ sizeof(m_flaggedByAlarm)
 		+ sizeof(m_isLive)
 		+ sizeof(m_hostileNeighbors);
@@ -274,52 +248,55 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 // Reads Suspect information from a buffer originally populated by serializeSuspect
 //		buf - Pointer to buffer where the serialized suspect is
 // Returns: number of bytes read from the buffer
-uint32_t Suspect::Deserialize(u_char *buf, SerializeFeatureMode whichFeatures)
+uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
 
-	//Copies the value and increases the offset
-	memcpy(&m_IpAddress.s_addr, buf, sizeof m_IpAddress.s_addr);
-	offset+= sizeof m_IpAddress.s_addr;
-	memcpy(&m_classification, buf+offset, sizeof m_classification);
-	offset+= sizeof m_classification;
-	memcpy(&m_isHostile, buf+offset, sizeof m_isHostile);
-	offset+= sizeof m_isHostile;
-	memcpy(&m_needsClassificationUpdate, buf+offset, sizeof m_needsClassificationUpdate);
-	offset+= sizeof m_needsClassificationUpdate;
-	memcpy(&m_flaggedByAlarm, buf+offset, sizeof m_flaggedByAlarm);
-	offset+= sizeof m_flaggedByAlarm;
-	memcpy(&m_isLive, buf+offset, sizeof m_isLive);
-	offset+= sizeof m_isLive;
-	memcpy(&m_hostileNeighbors, buf+offset, sizeof m_hostileNeighbors);
-	offset+= sizeof m_hostileNeighbors;
+	DeserializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(&m_featureAccuracy[i], buf+offset, sizeof m_featureAccuracy[i]);
-		offset+= sizeof m_featureAccuracy[i];
+		DeserializeChunk(buf, &offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
 	}
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
 	//	returns the number of bytes read from the buffer
-	offset += m_features.DeserializeFeatureSet(buf+offset);
+	offset += m_features.DeserializeFeatureSet(buf+offset, bufferSize - offset);
+
 	switch(whichFeatures)
 	{
 		case UNSENT_FEATURE_DATA:
 		{
-			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+			FeatureSet deserializedFs;
+
+			offset += deserializedFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_unsentFeatures += deserializedFs;
 			break;
 		}
 		case MAIN_FEATURE_DATA:
 		{
-			offset += m_features.DeserializeFeatureData(buf+offset);
+			FeatureSet deserializedFs;
+
+			offset += deserializedFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_features += deserializedFs;
 			break;
 		}
 		case ALL_FEATURE_DATA:
 		{
-			offset += m_features.DeserializeFeatureData(buf+offset);
-			offset += m_unsentFeatures.DeserializeFeatureData(buf+offset);
+			FeatureSet deserializedUnsentFs;
+			FeatureSet deserializedFs;
+
+			offset += deserializedFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_features += deserializedFs;
+
+			offset += deserializedUnsentFs.DeserializeFeatureData(buf+offset, bufferSize - offset);
+			m_unsentFeatures += deserializedUnsentFs;
 			break;
 		}
 		case NO_FEATURE_DATA:
@@ -395,17 +372,6 @@ void Suspect::SetIsHostile(bool b)
 }
 
 
-//Returns the needs classification bool
-bool Suspect::GetNeedsClassificationUpdate()
-{
-	return m_needsClassificationUpdate;
-}
-//Sets the needs classification bool
-void Suspect::SetNeedsClassificationUpdate(bool b)
-{
-	m_needsClassificationUpdate = b;
-}
-
 //Returns the flagged by silent alarm bool
 bool Suspect::GetFlaggedByAlarm()
 {
@@ -427,18 +393,6 @@ bool Suspect::GetIsLive()
 void Suspect::SetIsLive(bool b)
 {
 	m_isLive = b;
-}
-
-void Suspect::UpdateFeatureData(bool include)
-{
-	if(include)
-	{
-		m_features += m_unsentFeatures;
-	}
-	else
-	{
-		m_features -= m_unsentFeatures;
-	}
 }
 
 //Clears the FeatureData of a suspect
@@ -519,24 +473,6 @@ void Suspect::AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 	}
 
 }
-//Subtracts the feature set 'fs' from the suspect's feature set
-void Suspect::SubtractFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
-{
-	switch(whichFeatures)
-	{
-		default:
-		case MAIN_FEATURES:
-		{
-			m_features -= *fs;
-			break;
-		}
-		case UNSENT_FEATURES:
-		{
-			m_unsentFeatures -= *fs;
-			break;
-		}
-	}
-}
 
 //Clears the feature set of the suspect
 // whichFeatures: specifies which FeatureSet to clear
@@ -583,9 +519,9 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 
 	m_IpAddress = rhs.m_IpAddress;
 	m_classification = rhs.m_classification;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
-	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 	return *this;
@@ -651,9 +587,9 @@ Suspect::Suspect(const Suspect &rhs)
 	m_classification = rhs.m_classification;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
-	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
+	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 }
 
 }

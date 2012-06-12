@@ -154,6 +154,9 @@ void NovaNode::Init(Handle<Object> target)
 	s_ct->SetClassName(String::NewSymbol("NovaNode"));
 
 	// Javascript member methods
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetFeatureNames", GetFeatureNames);
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetDIM", GetDIM);
+	
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnAllSuspectsCleared", registerOnAllSuspectsCleared );
@@ -188,6 +191,28 @@ void NovaNode::Init(Handle<Object> target)
 	CheckInitNova();
 	InitNovaCallbackProcessing();
 	LOG(DEBUG, "Initialized NovaNode","");
+}
+
+
+// Figure out what the names of features are in the featureset
+Handle<Value> NovaNode::GetFeatureNames(const Arguments &)
+{
+	HandleScope scope;
+
+	vector<string> featureNames;
+	for (int i = 0; i < DIM; i++)
+	{
+		featureNames.push_back(Nova::FeatureSet::m_featureNames[i]);
+	}
+
+	return scope.Close(cvv8::CastToJS(featureNames));
+}
+
+Handle<Value> NovaNode::GetDIM(const Arguments &)
+{
+	HandleScope scope;
+
+	return scope.Close(cvv8::CastToJS(DIM));
 }
 
 // Checks if we lost the connection. If so, tries to reconnect

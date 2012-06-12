@@ -121,6 +121,8 @@ protected:
 
 private Q_SLOTS:
 
+void interfaceCheckBoxes_buttonClicked(QAbstractButton * button);
+
 // Right click action on a feature, we manually connect it so no need for proper prefix
 void onFeatureClick(const QPoint & pos);
 
@@ -155,6 +157,8 @@ void on_addButton_clicked();
 void on_deleteButton_clicked();
 void on_profileTreeWidget_itemSelectionChanged();
 void on_profileEdit_editingFinished();
+
+void on_haystackGroupComboBox_currentIndexChanged();
 
 //GUI Signals for Node settings
 void on_nodeEditButton_clicked();
@@ -219,6 +223,9 @@ void on_dmIPSpinBox_3_valueChanged();
 //Haystack storage type combo box
 void on_hsSaveTypeComboBox_currentIndexChanged(int index);
 
+void on_useAllIfCheckBox_stateChanged();
+void on_useAnyLoopbackCheckBox_stateChanged();
+
 private:
 	void SetInputValidators();
 
@@ -244,6 +251,9 @@ private:
     QMenu * m_portMenu;
     QMenu * m_profileTreeMenu;
     QMenu * m_nodeTreeMenu;
+
+    QButtonGroup * m_radioButtons;
+    QButtonGroup * m_interfaceCheckBoxes;
 
     //flag to avoid GUI signal conflicts
     bool m_editingItems;

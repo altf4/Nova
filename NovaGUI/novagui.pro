@@ -52,3 +52,4 @@ QMAKE_CLEAN += $(TARGET)
 CONFIG += no_keywords
 CONFIG += link_pkgconfig
 PKGCONFIG += libnotify
+PKGCONFIG += libcurl

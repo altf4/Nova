@@ -36,7 +36,11 @@ normalizationType ClassificationEngine::m_normalization[] = {
 		LOGARITHMIC,
 		LOGARITHMIC,
 		LOGARITHMIC,
-		LOGARITHMIC
+		LOGARITHMIC,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT,
+		LINEAR_SHIFT
 };
 
 ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
@@ -96,25 +100,33 @@ double ClassificationEngine::Classify(Suspect *suspect)
 
 	//Allocate the ANNpoint;
 	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
-	FeatureSet fs = suspect->GetFeatureSet(MAIN_FEATURES);
+	FeatureSet *fs = &suspect->m_features;
 	uint ai = 0;
+
+	// Do we not have enough data to classify?
+	if (fs->m_packetCount < Config::Inst()->GetMinPacketThreshold())
+	{
+		suspect->SetIsHostile(false);
+		suspect->SetClassification(-2);
+		return -2;
+	}
 
 	//Iterate over the features, asserting the range is [min,max] and normalizing over that range
 	for(int i = 0;i < DIM;i++)
 	{
 		if(Config::Inst()->IsFeatureEnabled(i))
 		{
-			if(fs.m_features[i] > m_maxFeatureValues[ai])
+			if(fs->m_features[i] > m_maxFeatureValues[ai])
 			{
-				fs.m_features[i] = m_maxFeatureValues[ai];
+				fs->m_features[i] = m_maxFeatureValues[ai];
 			}
-			else if(fs.m_features[i] < m_minFeatureValues[ai])
+			else if(fs->m_features[i] < m_minFeatureValues[ai])
 			{
-				fs.m_features[i] = m_minFeatureValues[ai];
+				fs->m_features[i] = m_minFeatureValues[ai];
 			}
 			if(m_maxFeatureValues[ai] != 0)
 			{
-				aNN[ai] = Normalize(m_normalization[i], suspect->GetFeatureSet(MAIN_FEATURES).m_features[i],
+				aNN[ai] = Normalize(m_normalization[i], fs->m_features[i],
 					m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 			}
 			else
@@ -125,7 +137,6 @@ double ClassificationEngine::Classify(Suspect *suspect)
 			ai++;
 		}
 	}
-	suspect->SetFeatureSet(&fs, MAIN_FEATURES);
 
 	if(aNN == NULL)
 	{
@@ -238,7 +249,6 @@ double ClassificationEngine::Classify(Suspect *suspect)
 
     annClose();
     annDeallocPt(aNN);
-	suspect->SetNeedsClassificationUpdate(false);
 
 	return suspect->GetClassification();
 }
@@ -540,37 +550,43 @@ void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 
 double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)
 {
+	double ret = -1;
 	switch (type)
 	{
 		case LINEAR:
 		{
-			return value / max;
+			ret = (value / max);
+			break;
 		}
 		case LINEAR_SHIFT:
 		{
-			return (value -min) / (max - min);
-		}
-		case LOGARITHMIC:
-		{
-			if(!value || !max)
-				return 0;
-			else return(log(value)/log(max));
-			//return (log(value - min + 1)) / (log(max - min + 1));
+			ret = ((value -min) / (max - min));
+			break;
 		}
 		case NONORM:
 		{
-			return value;
+			ret = value;
+			break;
+		}
+		case LOGARITHMIC:
+		{
+			ret = 0;
+			//If neither are 0
+			if(value && max)
+			{
+				ret = (log(value)/log(max));
+			}
+			break;
 		}
 		default:
 		{
-			//logger->Logging(ERROR, "Normalization failed: Normalization type unkown");
-			return 0;
+			break;
 		}
-
 		// TODO: A sigmoid normalization function could be very useful,
 		// especially if we could somehow use it interactively to set the center and smoothing
 		// while looking at the data visualizations to see what works best for a feature
 	}
+	return ret;
 }
 
 

@@ -125,25 +125,33 @@ block headerAdditions
     
     require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!"],
     function(DataGrid,ObjectStore){
+
+    var enabledFeatures = String(#{enabledFeatures});
+    var gridStructure = new Array();
+    gridStructure.push({name:"Address", field:"GetInAddr", width:"150px"});
+    gridStructure.push({name:"Classification", field:"GetClassification", width:"200px", formatter: classificationFormatter});
+    gridStructure.push({name:"Hostile", field:"GetIsHostile"});
+    if (enabledFeatures.charAt(0) == "1") gridStructure.push({name:"IP traffic distribution", field:"0", formatter: featureFormatter});
+    if (enabledFeatures.charAt(1) == "1") gridStructure.push({name:"Port traffic distribution", field:"1", formatter: featureFormatter});
+    if (enabledFeatures.charAt(2) == "1") gridStructure.push({name:"Haystack event frequency", field:"2", formatter: featureFormatter});
+    if (enabledFeatures.charAt(3) == "1") gridStructure.push({name:"Packet Size Mean", field:"3", formatter: featureFormatter});
+    if (enabledFeatures.charAt(4) == "1") gridStructure.push({name:"Packet Size Deviation", field:"4", formatter: featureFormatter});
+    if (enabledFeatures.charAt(5) == "1") gridStructure.push({name:"IPs Contacted", field:"5"});
+    if (enabledFeatures.charAt(6) == "1") gridStructure.push({name:"Ports Contacted", field:"6"});
+    if (enabledFeatures.charAt(7) == "1") gridStructure.push({name:"Packet Interval Mean", field:"7", formatter: featureFormatter});
+    if (enabledFeatures.charAt(8) == "1") gridStructure.push({name:"Packet Interval Deviation", field:"8", formatter: featureFormatter});
+    if (enabledFeatures.charAt(9) == "1") gridStructure.push({name:"TCP Percent SYN", field:"9", formatter: featureFormatter});
+    if (enabledFeatures.charAt(10) == "1") gridStructure.push({name:"TCP Percent FIN", field:"10", formatter: featureFormatter});
+    if (enabledFeatures.charAt(11) == "1") gridStructure.push({name:"TCP Percent RST", field:"11", formatter: featureFormatter});
+    if (enabledFeatures.charAt(12) == "1") gridStructure.push({name:"TCP Percent SYN ACK", field:"12", formatter: featureFormatter});
+    if (enabledFeatures.charAt(13) == "1") gridStructure.push({name:"Haystack Percent Contacted", field:"13", formatter: featureFormatter});
+    
     suspectGrid = new DataGrid(
     {
       store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
       sortInfo: -2,
       autoWidth: true,
-      structure: [ 
-        {name:"Address", field:"GetInAddr", width:"150px"}, 
-        {name:"Classification", field:"GetClassification", width:"300px", formatter: classificationFormatter},
-        {name:"Hostile", field:"GetIsHostile"},
-        {name:"IP traffic distribution", width:"125px", field:"ip_traffic_distribution", formatter: featureFormatter},
-        {name:"Port traffic distribution", width:"125px", field:"port_traffic_distribution", formatter: featureFormatter},
-        {name:"Haystack event frequency", width:"150px", field:"haystack_event_frequency", formatter: featureFormatter},
-        {name:"Packet Size Mean", field:"packet_size_mean", formatter: featureFormatter},
-        {name:"Packet Size Deviation", field:"packet_size_deviation", formatter: featureFormatter},
-        {name:"IPs Contacted", field:"distinct_ips"},
-        {name:"Ports Contacted", field:"distinct_ports"},
-        {name:"Packet Interval Mean", field:"packet_interval_mean", formatter: featureFormatter},
-        {name:"Packet Interval Deviation", field:"packet_interval_deviation", formatter: featureFormatter},
-      ],
+      structure: gridStructure
     }, 
     "nova_suspects"
     );

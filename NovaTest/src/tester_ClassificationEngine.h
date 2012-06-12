@@ -135,7 +135,8 @@ TEST_F(ClassificationEngineTest, DISABLED_test_kFoldCrossValidation)
 
 		Config::Inst()->SetEnabledFeatures(string(enableMask));
 
-		double falsePositiveRatio = 0, falseNegativeRatio = 0, falseRatio = 0;
+		double falseRatio = 0;
+		//double falsePositiveRatio = 0, falseNegativeRatio = 0;
 		int falsePositives = 0, falseNegatives = 0;
 
 		for (uint i = 1; i <= FOLDS; i++)

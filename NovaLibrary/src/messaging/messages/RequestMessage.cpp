@@ -18,6 +18,7 @@
 
 #include <string.h>
 
+#include "../../SerializationHelper.h"
 #include "RequestMessage.h"
 #include "../../Defines.h"
 
@@ -151,8 +152,14 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 				return;
 			}
 			m_suspect = new Suspect();
-			if(m_suspect->Deserialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			try
 			{
+				if(m_suspect->Deserialize((u_char*)buffer, length, NO_FEATURE_DATA) != m_suspectLength)
+				{
+					m_serializeError = true;
+					return;
+				}
+			} catch (Nova::serializationException &e) {
 				m_serializeError = true;
 				return;
 			}
@@ -334,7 +341,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
 			buffer += sizeof(m_suspectLength );
 			// Serialize our suspect
-			if(m_suspect->Serialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			if(m_suspect->Serialize((u_char*)buffer, messageSize, NO_FEATURE_DATA) != m_suspectLength)
 			{
 				return NULL;
 			}

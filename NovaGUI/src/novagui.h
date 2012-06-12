@@ -117,16 +117,6 @@ private Q_SLOTS:
 	void on_actionTrainingData_triggered();
 	void on_actionMakeDataFile_triggered();
 
-	//Global Widgets
-	void on_mainButton_clicked();
-	void on_suspectButton_clicked();
-	void on_doppelButton_clicked();
-	void on_haystackButton_clicked();
-
-	//Main view widgets
-	void on_runButton_clicked();
-	void on_stopButton_clicked();
-
 	//System Status widgets
 	void on_systemStatStartButton_clicked();
 	void on_systemStatStopButton_clicked();
@@ -157,6 +147,8 @@ private:
 
 	bool m_featureEnabled[DIM];
 	bool m_editingSuspectList;
+
+	bool connectedToNovad;
 
 	//Configuration variables
 	char * m_pathsFile;

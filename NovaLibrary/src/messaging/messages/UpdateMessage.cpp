@@ -17,6 +17,7 @@
 //		the UI with some new piece of information
 //============================================================================
 
+#include "../../SerializationHelper.h"
 #include "UpdateMessage.h"
 #include <string.h>
 
@@ -81,8 +82,13 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 				return;
 			}
 			m_suspect = new Suspect();
-			if(m_suspect->Deserialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
-			{
+			try {
+				if(m_suspect->Deserialize((u_char*)buffer, length, NO_FEATURE_DATA) != m_suspectLength)
+				{
+					m_serializeError = true;
+					return;
+				}
+			} catch (Nova::serializationException &e) {
 				m_serializeError = true;
 				return;
 			}
@@ -196,7 +202,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 			//Length of suspect buffer
 			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
 			buffer += sizeof(m_suspectLength);
-			if(m_suspect->Serialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			if(m_suspect->Serialize((u_char*)buffer, messageSize, NO_FEATURE_DATA) != m_suspectLength)
 			{
 				return NULL;
 			}
