@@ -347,7 +347,7 @@ void PersonalityTree::ToXmlTemplate()
 
 	for(uint16_t i = 0; i < ret.size(); i++)
 	{
-		cout << "Profile after Clean: " << ret[i] << endl;
+		cout << "Profile after Clean: " << ret[i] << " has parent: " << hhconfig->GetProfile(ret[i])->parentProfile << endl;
 	}
 
 	hhconfig->SaveAllTemplates();
