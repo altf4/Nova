@@ -2,12 +2,18 @@ extends loginlayout
 
 block content
   form(method="post", action="/login?redirect=#{redirect}")
-    label Username
-      input(type="text", name="username", size="10")
-    br
-    label Password
-      input(type="password", name="password", size="20") 
-    br       
-    input(type="Submit", value="Log In")
-
-  
+    table(align="center", border="0", style="background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;")
+      tr
+        td
+          label Username
+        td
+          input(type="text", name="username", size="20")
+      tr
+        td
+          label Password
+        td
+          input(type="password", name="password", size="20") 
+      tr
+        td
+        td
+          input(type="Submit", value="Log In")
