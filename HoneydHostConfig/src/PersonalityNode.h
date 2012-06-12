@@ -38,7 +38,8 @@ public:
 
 	uint32_t m_count;
 	std::string m_key;
-	bool hasTwoChildren;
+	bool m_redundant;
+
 	std::vector<std::pair<std::string, PersonalityNode *> > m_children;
 
 	std::vector<std::pair<std::string, double> > m_vendor_dist;
@@ -53,9 +54,9 @@ public:
 	//returns a string representation of node, does not print anything about the children
 	std::string ToString();
 
-	std::string GenerateDistribution();
+	void GenerateDistributions();
 
-	profile GenerateProfile(std::string);
+	profile GenerateProfile(profile *parentProfile);
 };
 
 }

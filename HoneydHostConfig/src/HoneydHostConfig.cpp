@@ -194,10 +194,6 @@ int main(int argc, char ** argv)
 
 	persTree.ToString();
 
-	persTree.GenerateDistributions();
-
-	persTree.GenerateProfileTable();
-
 	persTree.DebugPrintProfileTable();
 
 	persTree.ToXmlTemplate();

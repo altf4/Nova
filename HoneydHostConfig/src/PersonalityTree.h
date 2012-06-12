@@ -34,6 +34,9 @@ public:
 	~PersonalityTree();
 
 	void LoadTable(PersonalityTable *persTable);
+
+	void GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile);
+
 	void InsertPersonality(Personality *pers);
 
 	//Prints each child of the root node in the tree as a string

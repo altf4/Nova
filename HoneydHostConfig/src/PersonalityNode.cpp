@@ -35,25 +35,20 @@ PersonalityNode::PersonalityNode(string key)
 	m_ports.set_deleted_key("DELETED");
 	m_vendors.set_deleted_key("DELETED");
 	m_count = 0;
+	m_redundant = false;
 }
 
 //Deconstructor
 PersonalityNode::~PersonalityNode()
 {
-	vector<PersonalityNode *> delPtrs;
-
 	for(unsigned int i = 0; i < m_children.size(); i++)
 	{
 		if(m_children[i].second != NULL)
 		{
-			delPtrs.push_back(m_children[i].second);
+			delete m_children[i].second;
 		}
 	}
-
-	for(unsigned int i = 0; i < delPtrs.size(); i++)
-	{
-		delete delPtrs[i];
-	}
+	m_children.clear();
 }
 
 string PersonalityNode::ToString()
@@ -77,18 +72,15 @@ string PersonalityNode::ToString()
 	return ss.str();
 }
 
-string PersonalityNode::GenerateDistribution()
+void PersonalityNode::GenerateDistributions()
 {
-	stringstream ss;
 
-	ss << endl << "Distributions for " << m_key << ":" << endl;
-
+	m_vendor_dist.clear();
 	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
 		pair<string, double> push_vendor;
 		push_vendor.first = it->first;
 		push_vendor.second = (100 * (((double)it->second)/((double)m_count)));
-		ss << "\t" << it->first << " constitutes " << push_vendor.second << "% of MAC vendors for this scope." << endl;
 		m_vendor_dist.push_back(push_vendor);
 	}
 
@@ -97,33 +89,35 @@ string PersonalityNode::GenerateDistribution()
 		pair<string, double> push_ports;
 		push_ports.first = it->first + "_open";
 		push_ports.second = (100 * (((double)it->second)/((double)m_count)));
-		ss << "\t" << it->first << " shows up " << push_ports.second << "% of the time for this scope." << endl;
 		m_ports_dist.push_back(push_ports);
 	}
-
-	return ss.str();
 }
 
-profile PersonalityNode::GenerateProfile(string parent)
+profile PersonalityNode::GenerateProfile(profile* parentProfile)
 {
 	profile push;
 
 	push.name = m_key;
-	push.parentProfile = parent;
+	push.parentProfile = parentProfile->name;
+
+	m_redundant = (m_children.size() == 1);
 	for(uint i = 0; i < (sizeof(push.inherited)/sizeof(bool)); i++)
 	{
 		push.inherited[i] = true;
 	}
+
 	if(m_children.size() == 0)
 	{
 		push.personality = m_key;
 		push.inherited[PERSONALITY] = false;
+		m_redundant = false;
 	}
 
-	if(m_vendor_dist.size() == 1)
+	if((m_vendor_dist.size() == 1) && m_vendor_dist[0].first.compare(parentProfile->ethernet))
 	{
 		push.ethernet = m_vendor_dist[0].first;
 		push.inherited[ETHERNET] = false;
+		m_redundant = false;
 	}
 
 	for(uint16_t i = 0; i < m_ports_dist.size(); i++)
@@ -133,7 +127,18 @@ profile PersonalityNode::GenerateProfile(string parent)
 			pair<string, bool> push_port;
 			push_port.first = m_ports_dist[i].first;
 			push_port.second = false;
+			for(uint16_t i = 0; i < parentProfile->ports.size(); i++)
+			{
+				if(!parentProfile->ports[i].first.compare(push_port.first))
+				{
+					push_port.second = true;
+				}
+			}
 			push.ports.push_back(push_port);
+			if(!push_port.second)
+			{
+				m_redundant = false;
+			}
 		}
 	}
 	return push;
