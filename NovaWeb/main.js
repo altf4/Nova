@@ -265,6 +265,36 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
      });
 });
 
+app.get('/createNewUser', ensureAuthenticated, function(req, res) {
+	res.render('createNewUser.jade');
+});
+
+app.post('/createNewUser', ensureAuthenticated, function(req, res) {
+	var password = req.body["password"];
+	var userName = req.body["username"];
+	
+    client.query('SELECT user FROM ' + credTb + ' WHERE user = \'' + userName + '\'',
+    function selectCb(err, results, fields) {
+      if(err) {
+	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database" }});
+		return;
+      }
+
+      if(results[0] == undefined)
+      {
+	    
+        client.query('INSERT INTO ' + credTb + ' values(\'' + userName + '\'' + ', SHA1(\'' + password + '\'))');
+		res.render('saveRedirect.jade', { locals: {redirectLink: "'/'"}})	
+        return;
+      } 
+      else
+      {
+	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Username you entered already exists. Please choose another." }});
+		return;
+      }
+	  });
+});
+
 app.get('/login', function(req, res){
 	 var redirect;
 	 if (req.query["redirect"] != undefined)
