@@ -103,8 +103,6 @@ void MessageManager::WaitForNewSocket(int socketFD)
 		Lock lock(&m_queuesLock);
 		while(m_queues.count(socketFD) > 0 )
 		{
-			MessageQueue *queue = m_queues[socketFD];
-			printf("xxxDEBUGxxx REG CALLBACK RACE!!\n");
 			pthread_cond_wait(&m_newQueueCondition, &m_queuesLock);
 		}
 		m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
@@ -185,14 +183,12 @@ void MessageManager::CloseSocket(int socketFD)
 {
 	if(shutdown(socketFD, SHUT_RDWR) == -1)
 	{
-		perror("xxxDEBUGxxx SHUTDOWN ERROR");
-		printf("xxxDEBUGxxx SHUTDOWN SOCKET %d\n", socketFD);
+		LOG(DEBUG, "Failed to shut down socket", "");
 	}
 
 	if(close(socketFD) == -1)
 	{
-		perror("xxxDEBUGxxx CLOSE ERROR");
-		printf("xxxDEBUGxxx CLOSE SOCKET %d\n", socketFD);
+		LOG(DEBUG, "Failed to close socket", "");
 	}
 }
 

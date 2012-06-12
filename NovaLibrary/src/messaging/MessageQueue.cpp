@@ -59,8 +59,6 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 //	race conditions in deleting the object.
 MessageQueue::~MessageQueue()
 {
-	printf("xxxDEBUGxxx GOT INTO DESTRUCTOR FOR: %d\n", m_socketFD);
-
 	//Shutdown will cause the producer thread to make an ErrorMessage then quit
 	//This is probably redundant, but we do it again just to make sure
 	shutdown(m_socketFD, SHUT_RDWR);
@@ -196,12 +194,8 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
-						printf("xxxDEBUGxxx TIMEOUT NUMBER: %d ON SOCKET: %d\n", m_consecutiveTimeouts, m_socketFD);
-						printf("xxxDEBUGxxx IS DEAD: %d\n", m_isShutDown);
-
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
-							printf("xxxDEBUGxxx CLOSED SOCKET: %d\n", m_socketFD);
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -244,13 +238,9 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
-						printf("xxxDEBUGxxx TIMEOUT NUMBER: %d ON SOCKET: %d\n", m_consecutiveTimeouts, m_socketFD);
-						printf("xxxDEBUGxxx IS DEAD: %d\n", m_isShutDown);
-
 						//If we have had too many timeouts in a row, then close down the socket
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
-							printf("xxxDEBUGxxx CLOSED SOCKET: %d\n", m_socketFD);
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -364,9 +354,7 @@ void *MessageQueue::ProducerThread()
 		// Read in the message length
 		while( totalBytesRead < sizeof(length))
 		{
-			//printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
 			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
-			//printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
 			if(bytesRead <= 0)
 			{
 				//The socket died on us!
@@ -376,10 +364,8 @@ void *MessageQueue::ProducerThread()
 					m_isShutDown = true;
 				}
 				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
-				printf("xxxDEBUGxxx PUSHING ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
-				printf("xxxDEBUGxxx PUSHED ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				return NULL;
 			}
 			else
@@ -412,9 +398,7 @@ void *MessageQueue::ProducerThread()
 		bytesRead = 0;
 		while(totalBytesRead < length)
 		{
-			//printf("xxxDEBUGxxx ENTERED READ %d\n", m_socketFD);
 			bytesRead = read(m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
-			//printf("xxxDEBUGxxx RETURNED FROM READ %d\n", m_socketFD);
 
 			if(bytesRead <= 0)
 			{
@@ -425,10 +409,8 @@ void *MessageQueue::ProducerThread()
 					m_isShutDown = true;
 				}
 				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
-				printf("xxxDEBUGxxx PUSHING ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI));
 				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_NOVAD));
-				printf("xxxDEBUGxxx PUSHED ERROR AND CLOSING PRODUCER %d\n", m_socketFD);
 				free(buffer);
 				return NULL;
 			}
@@ -451,7 +433,6 @@ void *MessageQueue::ProducerThread()
 		continue;
 	}
 
-	printf("x\nxxDEBUGxxx SHOULDN'T EVER NEVER EVER GET HERE!!! %d\n\n", m_socketFD);
 	return NULL;
 }
 
