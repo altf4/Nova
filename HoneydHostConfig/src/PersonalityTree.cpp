@@ -88,7 +88,20 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 	{
 		//Store a pointer to the personality node to delete.
 		PersonalityNode * child = node->m_children[0].second;
-		m_to_delete.push_back(child);
+		m_to_delete.push_back(node);
+
+
+		string oldKey = child->m_key;
+		child->m_key = node->m_key + " " + child->m_key;
+
+		for(uint16_t i = 0; i < child->m_children.size(); i++)
+		{
+			hhconfig->m_profiles[child->m_children[i].first].parentProfile = child->m_key;
+		}
+
+		//Create new profile for new key
+		hhconfig->RenameProfile(oldKey, child->m_key);
+		hhconfig->InheritProfile(child->m_key, parent->m_key);
 
 		//Updates pers node keys and list
 		for(uint i = 0; i < parent->m_children.size(); i++)
@@ -96,28 +109,12 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 			if(!parent->m_children[i].first.compare(node->m_key))
 			{
 				pair<std::string, PersonalityNode *> newPair;
-				newPair.first = node->m_key + " " + child->m_key;
-				newPair.second = node;
+				newPair.first = child->m_key;
+				newPair.second = child;
 				parent->m_children.erase(parent->m_children.begin()+i);
 				parent->m_children.insert(parent->m_children.begin()+i, newPair);
 			}
 		}
-		string oldKey = node->m_key;
-		node->m_key = node->m_key + " " + child->m_key;
-
-		//Moves children in the pers nodes/tree
-		node->m_children = child->m_children;
-		child->m_children.clear();
-
-		for(uint16_t i = 0; i < node->m_children.size(); i++)
-		{
-			hhconfig->m_profiles[node->m_children[i].first].parentProfile = node->m_key;
-		}
-
-		//Create new profile for new key
-		hhconfig->RenameProfile(oldKey, node->m_key);
-		hhconfig->InheritProfile(node->m_key, parent->m_key);
-		vector<string> profNames = hhconfig->GetProfileNames();
 
 		//Update profile inheritance
 		/*for(uint i = 0; i < profNames.size(); i++)
@@ -127,7 +124,8 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 				hhconfig->InheritProfile(profNames[i], node->m_key);
 			}
 		}*/
-		hhconfig->DeleteProfile(child->m_key);
+		node->m_children.clear();
+		hhconfig->DeleteProfile(node->m_key);
 	}
 }
 
@@ -357,6 +355,7 @@ void PersonalityTree::RecursiveToXmlTemplate(PersonalityNode * node, string pref
 {
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
+		// XXX .second is showing up as a NULL value, referencing an already deleted PersonalityNode, figure out why
 		RecursiveToXmlTemplate(node->m_children[i].second, node->m_key);
 	}
 }
