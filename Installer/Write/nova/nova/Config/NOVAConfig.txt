@@ -420,3 +420,25 @@ WHITELIST_FILE Config/whitelist.txt
 # if there was less packets than this seen.
 MIN_PACKET_THRESHOLD 5
 
+############################################
+# CUSTOM_PCAP_FILTER #
+############################################
+# 
+# Advanced option for customizing packets
+# that are classified with NOVA. This will
+# either be &&'d with or replace the auto
+# generated filter depending on CUSTOM_PCAP_FILTER_MODE
+#
+# Leave blank if you don't want a custom filter
+CUSTOM_PCAP_FILTER 
+
+
+############################################
+# CUSTOM_PCAP_FILTER_MODE #
+############################################
+# 
+# 0: Append pcap filter with CUSTOM_PCAP_FILTER
+# 1: Override pcap filter with CUSTOM_PCAP_FILTER
+CUSTOM_PCAP_MODE 0
+
+

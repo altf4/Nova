@@ -893,8 +893,19 @@ void LoadConfiguration()
 //Convert monitored ip address into a csv string
 string ConstructFilterString()
 {
-	// Whitelist local traffic
-	string filterString = "not src 0.0.0.0 && ";
+	string filterString = "not src host 0.0.0.0 && ";
+	if (Config::Inst()->GetCustomPcapString() != "") {
+		if (Config::Inst()->GetOverridePcapString())
+		{
+			filterString = Config::Inst()->GetCustomPcapString();
+			LOG(DEBUG, "Pcap filter string is "+filterString,"");
+			return filterString;
+		}
+		else
+		{
+			filterString += Config::Inst()->GetCustomPcapString() + " && ";
+		}
+	}
 
 
 	struct ifaddrs * devices = NULL;

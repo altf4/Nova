@@ -180,6 +180,11 @@ public:
     uint GetMinPacketThreshold();
     void SetMinPacketThreshold(uint packets);
 
+	std::string GetCustomPcapString();
+	void SetCustomPcapString(std::string customPcapString);
+	bool GetOverridePcapString();
+	void SetOverridePcapString(bool overridePcapString);
+
 
 protected:
 	Config();
@@ -210,6 +215,8 @@ private:
 	std::string m_pathTrainingCapFolder;
 	std::string m_pathCESaveFile;
 
+	std::string m_customPcapString;
+
 	std::string m_group;
 
 	int m_tcpTimout;
@@ -231,6 +238,8 @@ private:
 	bool m_gotoLive;
 	bool m_isTraining;
 	bool m_isDmEnabled;
+
+	bool m_overridePcapString;
 
 	// the SMTP server domain name for display purposes
 	std::string m_SMTPDomain;
@@ -295,7 +304,6 @@ private:
 	//	However the constructor calls LoadConfig, so we use a private version instead that doesn't include
 	//	LoadInterfaces() which is called elsewhere
 	void LoadConfig_Internal();
-
 };
 }
 

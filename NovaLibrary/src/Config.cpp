@@ -70,7 +70,9 @@ string Config::m_prefixes[] =
 	"SERVICE_PREFERENCES",
 	"HAYSTACK_STORAGE",
 	"WHITELIST_FILE",
-	"MIN_PACKET_THRESHOLD"
+	"MIN_PACKET_THRESHOLD",
+	"CUSTOM_PCAP_FILTER",
+	"CUSTOM_PCAP_MODE"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -707,6 +709,39 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_minPacketThreshold = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// CUSTOM_PCAP_FILTER
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_customPcapString = line;
+					isValid[prefixIndex] = true;
+				}
+				else
+				{
+					m_customPcapString = "";
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// CUSTOM_PCAP_MODE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_overridePcapString = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -2266,6 +2301,31 @@ void Config::SetMinPacketThreshold(uint packets)
 {
 	Lock lock(&m_lock, false);
 	m_minPacketThreshold = packets;
+}
+
+string Config::GetCustomPcapString()
+{
+	Lock lock(&m_lock, true);
+	return m_customPcapString;
+}
+
+void Config::SetCustomPcapString(std::string customPcapString)
+{
+	Lock lock(&m_lock, false);
+	m_customPcapString = customPcapString;
+}
+
+
+bool Config::GetOverridePcapString()
+{
+	Lock lock(&m_lock, true);
+	return m_overridePcapString;
+}
+
+void Config::SetOverridePcapString(bool overridePcapString)
+{
+	Lock lock(&m_lock, false);
+	m_overridePcapString = overridePcapString;
 }
 
 }
