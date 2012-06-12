@@ -58,6 +58,8 @@ public:
 
 	void CleanTree();
 
+	void CleanInheritance();
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
@@ -79,6 +81,8 @@ private:
 	void RecursiveAddAllPorts(PersonalityNode * node);
 	void RecursiveCleanTree(PersonalityNode * node, PersonalityNode * parent);
 	void RecursivePrintTree(PersonalityNode * node);
+	void RecursiveCleanPortInheritance(PersonalityNode * node, PersonalityNode * parent);
+	void RecursiveCleanMacInheritance(PersonalityNode * node, PersonalityNode * parent);
 };
 
 }

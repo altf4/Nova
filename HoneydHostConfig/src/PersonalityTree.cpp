@@ -109,23 +109,25 @@ void PersonalityTree::RecursiveCleanTree(PersonalityNode * node, PersonalityNode
 		node->m_children = child->m_children;
 		child->m_children.clear();
 
+		for(uint16_t i = 0; i < node->m_children.size(); i++)
+		{
+			hhconfig->m_profiles[node->m_children[i].first].parentProfile = node->m_key;
+		}
+
 		//Create new profile for new key
-		profile * p = hhconfig->GetProfile(child->m_key);
-		p->name = node->m_key;
-		p->parentProfile = parent->m_key;
-		hhconfig->AddProfile(p);
+		hhconfig->RenameProfile(oldKey, node->m_key);
+		hhconfig->InheritProfile(node->m_key, parent->m_key);
 		vector<string> profNames = hhconfig->GetProfileNames();
 
 		//Update profile inheritance
-		for(uint i = 0; i < profNames.size(); i++)
+		/*for(uint i = 0; i < profNames.size(); i++)
 		{
 			if(!hhconfig->GetProfile(profNames[i])->parentProfile.compare(oldKey))
 			{
-				hhconfig->InheritProfile(profNames[i], p->name);
+				hhconfig->InheritProfile(profNames[i], node->m_key);
 			}
-		}
+		}*/
 		hhconfig->DeleteProfile(child->m_key);
-		hhconfig->DeleteProfile(oldKey);
 	}
 }
 
@@ -332,6 +334,8 @@ void PersonalityTree::ToXmlTemplate()
 
 	AddAllPorts();
 
+	CleanInheritance();
+
 	CleanTree();
 
 	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
@@ -367,13 +371,70 @@ void PersonalityTree::AddAllPorts()
 	}
 }
 
+void PersonalityTree::CleanInheritance()
+{
+	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
+	{
+		RecursiveCleanPortInheritance(m_root.m_children[i].second, &m_root);
+		RecursiveCleanMacInheritance(m_root.m_children[i].second, &m_root);
+	}
+}
+
+void PersonalityTree::RecursiveCleanPortInheritance(PersonalityNode * node, PersonalityNode * parent)
+{
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveCleanPortInheritance(node->m_children[i].second, node);
+	}
+	// look at parent and adjust inherited booleans in m_ports
+	if(hhconfig->GetProfile(node->m_key)->parentProfile.compare("default"))
+	{
+		for(uint16_t n = 0; n < node->m_ports_dist.size(); n++)
+		{
+			for(uint16_t p = 0; p < parent->m_ports_dist.size(); p++)
+			{
+				if(!node->m_ports_dist[n].first.compare(parent->m_ports_dist[p].first) && (parent->m_ports_dist[p].second == 100))
+				{
+					for(uint16_t k = 0; k < hhconfig->m_profiles[node->m_key].ports.size(); k++)
+					{
+						if(!hhconfig->m_profiles[node->m_key].ports[k].first.compare(node->m_ports_dist[n].first))
+						{
+							hhconfig->m_profiles[node->m_key].ports[k].second = true;
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+}
+
+void PersonalityTree::RecursiveCleanMacInheritance(PersonalityNode * node, PersonalityNode * parent)
+{
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveCleanMacInheritance(node->m_children[i].second, node);
+	}
+	// look at parent and adjust inherited booleans in m_ports
+	if(hhconfig->GetProfile(node->m_key)->parentProfile.compare("default"))
+	{
+		//If the parent and child each have only one ethernet vendor and they are the same, the child inherits the parent
+		if((parent->m_vendor_dist.size() == 1) && (node->m_vendor_dist.size() == 1)
+			&& (!node->m_vendor_dist[0].first.compare(parent->m_vendor_dist[0].first)))
+		{
+			hhconfig->m_profiles[node->m_key].inherited[ETHERNET] = true;
+		}
+	}
+}
+
 void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
 {
 	for(uint16_t i = 0; i < node->m_ports_dist.size(); i++)
 	{
 		port pass;
 
-		pass.portName = node->m_ports_dist[i].first + "_open";
+		pass.portName = node->m_ports_dist[i].first;
 		pass.portNum = node->m_ports_dist[i].first.substr(0, node->m_ports_dist[i].first.find("_"));
 		pass.type = node->m_ports_dist[i].first.substr(node->m_ports_dist[i].first.find("_") + 1, node->m_ports_dist[i].first.find("_", node->m_ports_dist[i].first.find("_")) + 1);
 		pass.behavior = "open";

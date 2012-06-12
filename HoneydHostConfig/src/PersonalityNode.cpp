@@ -95,7 +95,7 @@ string PersonalityNode::GenerateDistribution()
 	for(Port_Table::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		pair<string, double> push_ports;
-		push_ports.first = it->first;
+		push_ports.first = it->first + "_open";
 		push_ports.second = (100 * (((double)it->second)/((double)m_count)));
 		ss << "\t" << it->first << " shows up " << push_ports.second << "% of the time for this scope." << endl;
 		m_ports_dist.push_back(push_ports);
@@ -117,11 +117,13 @@ profile PersonalityNode::GenerateProfile(string parent)
 	if(m_children.size() == 0)
 	{
 		push.personality = m_key;
+		push.inherited[PERSONALITY] = false;
 	}
 
 	if(m_vendor_dist.size() == 1)
 	{
 		push.ethernet = m_vendor_dist[0].first;
+		push.inherited[ETHERNET] = false;
 	}
 
 	for(uint16_t i = 0; i < m_ports_dist.size(); i++)
@@ -130,7 +132,7 @@ profile PersonalityNode::GenerateProfile(string parent)
 		{
 			pair<string, bool> push_port;
 			push_port.first = m_ports_dist[i].first;
-			push_port.second = true;
+			push_port.second = false;
 			push.ports.push_back(push_port);
 		}
 	}
