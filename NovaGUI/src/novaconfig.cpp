@@ -2714,7 +2714,8 @@ void NovaConfig::on_profileEdit_editingFinished()
 			m_currentProfile = newName;
 			SaveProfileSettings();
 		}
-		else
+		//If we're not simply trying to rename it to itself
+		else if(m_currentProfile.compare(newName))
 		{
 			LOG(ERROR, "Unable to Rename profile '" + m_currentProfile+ "' to new name " + newName + ".", "Unable to Rename profile '"
 				+ m_currentProfile+ "' to new name " + newName + ". Check '/usr/share/nova/nova/templates/profiles.xml'");
