@@ -1886,6 +1886,19 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	return true;
 }
 
+bool HoneydConfiguration::AddSubnet(subnet * add)
+{
+	if(m_subnets.find(add->name) != m_subnets.end())
+	{
+		return false;
+	}
+	else
+	{
+		m_subnets[add->name] = *add;
+		return true;
+	}
+}
+
 //Removes a profile and all associated nodes from the Honeyd configuration
 //	profileName: name of the profile you wish to delete
 //	originalCall: used internally to designate the recursion's base condition, can old be set with

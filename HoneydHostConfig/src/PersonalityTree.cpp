@@ -288,4 +288,9 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode * node)
 	}
 }
 
+bool PersonalityTree::AddSubnet(subnet * add)
+{
+	return hhconfig->AddSubnet(add);
+}
+
 }

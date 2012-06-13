@@ -57,6 +57,8 @@ public:
 
 	void AddAllPorts();
 
+	bool AddSubnet(subnet * add);
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);

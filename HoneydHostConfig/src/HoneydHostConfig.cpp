@@ -40,6 +40,8 @@ vector<uint16_t> leftoverHostspace;
 uint16_t tempHostspace;
 string localMachine;
 
+vector<subnet> subnetsToAdd;
+
 PersonalityTable personalities;
 
 ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
@@ -231,7 +233,10 @@ int main(int argc, char ** argv)
 	PersonalityTree persTree = PersonalityTree(&personalities);
 
 	// for each element in recv
-	//persTree.AddSubnet();
+	for(uint i = 0; i < subnetsToAdd.size(); i++)
+	{
+		persTree.AddSubnet(&subnetsToAdd[i]);
+	}
 
 	persTree.ToString();
 
@@ -269,7 +274,7 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 			return PARSINGERROR;*/
 		}
 
-		ss.str();
+		ss.str("");
 	}
 
 	return OKAY;
@@ -299,6 +304,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 	struct in_addr address;
 	struct in_addr bitmask;
 	struct in_addr basestruct;
+	struct in_addr maxstruct;
 	uint32_t ntohl_address;
 	uint32_t ntohl_bitmask;
 	bool there = false;
@@ -322,7 +328,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 		// If we've found an interface that has an IPv4 address and is NOT a loopback,
 		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
-			pair<string, subnet> push_pair;
+			subnet add;
 			// start processing it to generate the subnet for the interface.
 			there = false;
 			interfaces.push_back(string(curIf->ifa_name));
@@ -382,6 +388,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 
 			// and the max address
 			uint32_t max = ~(ntohl_bitmask) + base;
+			maxstruct.s_addr = htonl(max);
 
 			// and then add max - base (minus three, for the current
 			// host, the .0 address, and the .255 address)
@@ -405,6 +412,17 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 			// Generate a string of the form X.X.X.X/## for use in nmap scans later
 			string push = string(inet_ntoa(basestruct)) + "/" + ss.str();
 
+			ss.str("");
+
+			add.address = push;
+			add.mask = string(inet_ntoa(bitmask));
+			add.maskBits = i;
+			add.base = basestruct.s_addr;
+			add.max = maxstruct.s_addr;
+			add.name = string(curIf->ifa_name);
+			add.enabled = (curIf->ifa_flags & IFF_UP);
+			add.isRealDevice = true;
+
 			// If we have two interfaces that point the same subnet, we only want
 			// to scan once; so, change the "there" flag to reflect that the subnet
 			// exists to prevent it from being pushed again.
@@ -420,6 +438,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 			if(!there)
 			{
 				addresses.push_back(push);
+				subnetsToAdd.push_back(add);
 			}
 			// Otherwise, don't do anything.
 			else
