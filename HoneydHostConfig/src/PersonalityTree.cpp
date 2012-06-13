@@ -17,6 +17,7 @@
 //============================================================================
 
 #include "PersonalityTree.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 
@@ -265,10 +266,14 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
 	{
 		port pass;
 
+		vector<string> tokens;
+
+		boost::split(tokens, node->m_ports_dist[i].first, boost::is_any_of("_"));
+
 		pass.portName = node->m_ports_dist[i].first;
-		pass.portNum = node->m_ports_dist[i].first.substr(0, node->m_ports_dist[i].first.find("_"));
-		pass.type = node->m_ports_dist[i].first.substr(node->m_ports_dist[i].first.find("_") + 1, node->m_ports_dist[i].first.find("_", node->m_ports_dist[i].first.find("_")) + 1);
-		pass.behavior = "open";
+		pass.portNum = tokens[0];
+		pass.type = tokens[1];
+		pass.behavior = tokens[2];
 
 		hhconfig->AddPort(pass);
 	}
