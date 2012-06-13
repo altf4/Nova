@@ -1580,18 +1580,18 @@ bool HoneydConfiguration::AddProfile(profile *profile)
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
 	//If item text and profile name don't match, we need to update
-	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)))
+	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)) && !(m_profiles.keyExists(newName)))
 	{
 		//Set the profile to the correct name and put the profile in the table
-		m_profiles[oldName].name = newName;
 		m_profiles[newName] = m_profiles[oldName];
+		m_profiles[newName].name = newName;
 
 		//Find all nodes who use this profile and update to the new one
 		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 		{
 			if(!it->second.pfile.compare(oldName))
 			{
-				it->second.pfile = newName;
+				m_nodes[it->first].pfile = newName;
 			}
 		}
 
@@ -1599,11 +1599,11 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 		{
 			if(!it->second.parentProfile.compare(oldName))
 			{
-				it->second.parentProfile = newName;
+				InheritProfile(it->first, newName);
 			}
 		}
-		DeleteProfile(oldName);
 		UpdateProfileTree(newName, ALL);
+		DeleteProfile(oldName);
 		return true;
 	}
 	return false;
@@ -1626,7 +1626,7 @@ bool HoneydConfiguration::InheritProfile(std::string child, std::string parent)
 			//If the child has an old parent
 			if((oldParent.compare("")) && (m_profiles.keyExists(oldParent)))
 			{
-				UpdateProfileTree(parent, ALL);
+				UpdateProfileTree(oldParent, ALL);
 			}
 			//Updates the child with the new inheritance and any modified values since last update
 			CreateProfileTree(child);
