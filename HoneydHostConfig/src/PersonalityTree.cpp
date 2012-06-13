@@ -51,30 +51,31 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	}
 	for(uint i = 0; i < m_root.m_children.size(); i++)
 	{
-		GenerateProfiles(m_root.m_children[i].second, &m_root, &hhconfig->m_profiles["default"]);
+		GenerateProfiles(m_root.m_children[i].second, &m_root, &hhconfig->m_profiles["default"], m_root.m_children[i].first);
 	}
 }
 
-void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile)
+void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile, string profileName)
 {
 	//Create profile object
 	node->GenerateDistributions();
-	if(m_profiles->find(node->m_key) != m_profiles->end())
+	profile tempProf = node->GenerateProfile(parentProfile);
+	if(m_profiles->find(tempProf.name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
 		uint16_t i = 1;
 		stringstream ss;
-		string key = node->m_key;
+		string key = profileName;
 		ss << i;
 
 		for(; m_profiles->find(key) != m_profiles->end() && (i < ~0); i++)
 		{
 			ss.str("");
-			ss << node->m_key << i;
+			ss << profileName << i;
 			key = ss.str();
 		}
+		tempProf.name = key;
 	}
-	profile tempProf = node->GenerateProfile(parentProfile);
 	if(!node->m_redundant)
 	{
 		if(!hhconfig->AddProfile(&tempProf))
@@ -86,26 +87,34 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		{
 			for(uint i = 0; i < node->m_children.size(); i++)
 			{
-				GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[tempProf.name]);
+				GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[tempProf.name], node->m_children[i].first);
 			}
 		}
 	}
-	else
+	else if(parent->m_children.size() == 1)
 	{
 		// Probably not the right way of going about this
 		uint16_t i = 1;
 		stringstream ss;
-		string key = parentProfile->name + " " + node->m_key;
+		string key = parentProfile->name + " " + profileName;
 		ss << i;
 		while(!hhconfig->RenameProfile(parentProfile->name, key))
 		{
 			ss.str("");
 			ss << i;
-			key = parentProfile->name + " " + node->m_key + ss.str();
+			key = parentProfile->name + " " + profileName + ss.str();
 		}
 		for(uint i = 0; i < node->m_children.size(); i++)
 		{
-			GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[key]);
+			GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[key], node->m_children[i].first);
+		}
+	}
+	else
+	{
+		string keyPrefix = profileName + " ";
+		for(uint i = 0; i < node->m_children.size(); i++)
+		{
+			GenerateProfiles(node->m_children[i].second, node, parentProfile, keyPrefix + node->m_children[i].first);
 		}
 	}
 }
