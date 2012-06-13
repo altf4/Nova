@@ -11,6 +11,8 @@
 		, "passport-local"	:	"0.1.2"
 		, "mysql" : "0.9.6"
 		, "validator" : "0.4.6-2"
-		, "forever" : ""
+	}
+	, "scripts": {
+		"preinstall": "npm i -g forever"
 	}
 }
