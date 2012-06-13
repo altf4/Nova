@@ -28,6 +28,10 @@ namespace Nova
 //Default constructor
 PersonalityNode::PersonalityNode(string key)
 {
+	// Creates an empty personality node; set the
+	// empty and deleted keys for tables inside the
+	// node class so that the only exception we will
+	// get is accessing the empty key.
 	m_children.clear();
 	m_key = key;
 	m_ports.set_empty_key("EMPTY");
@@ -53,6 +57,8 @@ PersonalityNode::~PersonalityNode()
 
 string PersonalityNode::ToString()
 {
+	// Simple ToString for the personality node for debugging purposes.
+
 	stringstream ss;
 	ss << endl << m_key << " has " << m_count << " hosts in it's scope." << endl << endl;
 	ss << "MAC Address Vendors: <Vendor>, <Number of occurrences>" << endl;
@@ -101,6 +107,7 @@ profile PersonalityNode::GenerateProfile(profile* parentProfile)
 	push.parentProfile = parentProfile->name;
 
 	m_redundant = (m_children.size() == 1);
+
 	for(uint i = 0; i < (sizeof(push.inherited)/sizeof(bool)); i++)
 	{
 		push.inherited[i] = true;
@@ -119,7 +126,9 @@ profile PersonalityNode::GenerateProfile(profile* parentProfile)
 		push.inherited[ETHERNET] = false;
 		m_redundant = false;
 	}
-
+	// Go through every element of the ports distribution
+	// vector and create a pair for the ports vector in the
+	// profile struct for every 100% known port.
 	for(uint16_t i = 0; i < m_ports_dist.size(); i++)
 	{
 		if(m_ports_dist[i].second == 100)

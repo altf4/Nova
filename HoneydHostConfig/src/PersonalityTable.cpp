@@ -40,6 +40,9 @@ PersonalityTable::~PersonalityTable()
 
 void PersonalityTable::ListInfo()
 {
+	// Just a simple print method for outputting the
+	// relevent information for each element of the PersonalityTable,
+	// as well as some information about the table itself.
 	std::cout << std::endl;
 	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << std::endl;
 	std::cout << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << std::endl;
@@ -94,20 +97,37 @@ void PersonalityTable::ListInfo()
 // Add a single Host
 void PersonalityTable::AddHost(Personality * add)
 {
+	// We've gotten to the point where we're adding a host that
+	// has personality data, so increment the number of useful
+	// hosts.
 	m_num_used_hosts++;
 
+	// If the personality pointer that we're passing to the function
+	// doesn't exist in the personalities table, just create a new
+	// instance using the bracket operator and assign the Value to
+	// the pointer we're passing.
 	if(m_personalities.find(add->m_personalityClass[0]) == m_personalities.end())
 	{
 		m_personalities[add->m_personalityClass[0]] = add;
 	}
-
+	// If the personality does exist, however, then
+	// we need to do some extra work to aggregate its attributes
+	// with the existing entry.
 	else
 	{
+		// Create a copy of the pointer that exists within the table
+		// to modify.
 		Personality * cur = m_personalities[add->m_personalityClass[0]];
+		// Since we're adding a host, just grab the single IP and MAC
+		// address that exist inside of the Personality object and
+		// increment the number of times a host has had this personality
+		// by one.
 		cur->m_macs.push_back(add->m_macs[0]);
 		cur->m_addresses.push_back(add->m_addresses[0]);
 		cur->m_count++;
 
+		// Iterate through the Port_Table in the copy and update the
+		// counts for the occurrence of each port
 		for(Port_Table::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)
 		{
 			if(cur->m_ports.find(it->first) == cur->m_ports.end())
@@ -120,8 +140,7 @@ void PersonalityTable::AddHost(Personality * add)
 			}
 			cur->m_port_count++;
 		}
-
-
+		// and do the same for the MAC vendors in the MAC_Table.
 		for(MAC_Table::iterator it = add->m_vendors.begin(); it != add->m_vendors.end(); it++)
 		{
 			if(cur->m_vendors.find(it->first) == cur->m_vendors.end())
@@ -133,8 +152,8 @@ void PersonalityTable::AddHost(Personality * add)
 				cur->m_vendors[it->first]++;
 			}
 		}
-		// rest of stuff
-
+		// Finally, delete the pointer we passed to deallocate
+		// its memory.
 		delete add;
 	}
 }
