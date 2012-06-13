@@ -56,7 +56,7 @@ passport.use(new LocalStrategy(
          if(err) { return done(err); }
          if(!user) { return done(null, false, { message: 'Unknown user ' + username }); }
          client.query(
-            'SELECT user, pass FROM ' + credTb + ' WHERE pass = SHA1(\'' + password + '\')',
+            'SELECT user, pass FROM ' + credTb + ' WHERE pass = SHA1(' + client.escape(password) + ')',
             function selectCb(err, results, fields, fn) 
             {
               if(err) 
@@ -294,7 +294,7 @@ app.post('/createNewUser', ensureAuthenticated, function(req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
 	
-    client.query('SELECT user FROM ' + credTb + ' WHERE user = \'' + userName + '\'',
+    client.query('SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape(userName) + '',
     function selectCb(err, results, fields) {
       if(err) {
 	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database" }});
@@ -304,7 +304,7 @@ app.post('/createNewUser', ensureAuthenticated, function(req, res) {
       if(results[0] == undefined)
       {
 	    
-        client.query('INSERT INTO ' + credTb + ' values(\'' + userName + '\'' + ', SHA1(\'' + password + '\'))');
+        client.query('INSERT INTO ' + credTb + ' values(' + client.escape(userName) + ', SHA1(' + client.escape(password) + '))');
 		res.render('saveRedirect.jade', { locals: {redirectLink: "'/'"}})	
         return;
       } 
@@ -604,8 +604,9 @@ everyone.now.deleteUserEntry = function(usernamesToDelete, callback)
 {
 	var username;
 	for (var i = 0; i < usernamesToDelete.length; i++) {
-		username = usernamesToDelete[i];
- 		client.query('DELETE FROM ' + credTb + ' WHERE user = \'' + username + '\'');
+		username = String(usernamesToDelete[i]);
+		var query = 'DELETE FROM ' + credTb + ' WHERE user = ' + client.escape(username);
+ 		client.query(query);
 	}
 
 	// TODO: Error handling? Bit of a pain async. could change to single SQL query and 
@@ -614,7 +615,7 @@ everyone.now.deleteUserEntry = function(usernamesToDelete, callback)
 }
 
 everyone.now.updateUserPassword = function (username, newPassword, callback) {
-	var query = 'UPDATE ' + credTb + ' SET pass = SHA1(\'' + newPassword +'\') WHERE user = \'' + username + '\'';
+	var query = 'UPDATE ' + credTb + ' SET pass = SHA1(' + client.escape(String(newPassword)) + ') WHERE user = ' + client.escape(String(username));
  	client.query(query,
     function selectCb(err, results, fields) {
     	if(err) {
@@ -849,7 +850,7 @@ function queryCredDb(check) {
     console.log("checkPass value before queryCredDb call: " + check);
     
     client.query(
-    'SELECT pass FROM ' + credTb + ' WHERE pass = SHA1(\'' + check + '\')',
+    'SELECT pass FROM ' + credTb + ' WHERE pass = SHA1(' + client.escape(check) + ')',
     function selectCb(err, results, fields) {
       if(err) {
         throw err;
@@ -902,7 +903,7 @@ function queryCredDb(check) {
 
 function checkUsername(userName, fn) {
   client.query(
-    'SELECT user FROM ' + credTb + ' WHERE user = \'' + userName + '\'',
+    'SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape(userName),
     function selectCb(err, results, fields) {
       if(err) {
         throw err;
