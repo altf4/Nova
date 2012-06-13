@@ -2719,7 +2719,6 @@ void NovaConfig::on_profileEdit_editingFinished()
 			if(m_honeydConfig->RenameProfile(m_currentProfile, newName.toStdString()))
 			{
 				m_currentProfile = newName.toStdString();
-				SaveProfileSettings();
 			}
 			//If we're not simply trying to rename it to itself
 			else if(m_currentProfile.compare(newName.toStdString()))
@@ -2727,6 +2726,7 @@ void NovaConfig::on_profileEdit_editingFinished()
 				LOG(ERROR, "Unable to rename profile '" + m_currentProfile+ "' to new name " + newName.toStdString() + ".", "Unable to rename profile '"
 					+ m_currentProfile+ "' to new name " + newName.toStdString() + ". Check '/usr/share/nova/nova/templates/profiles.xml'");
 			}
+			SaveProfileSettings();
 			LoadProfileSettings();
 			m_loading->unlock();
 			LoadAllNodes();
