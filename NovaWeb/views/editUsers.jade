@@ -7,7 +7,14 @@ block headerAdditions
     var grid;
     
     function deleteSelectedItems() {
+      var numberOfNames = #{usernames.length}
       var items = grid.selection.getSelected();
+        
+        if (items.length >= numberOfNames) {
+            var dialog = new dijit.Dialog({title: "Error", content: "You can not delete all user accounts! It will be impossible to log in."});
+            dialog.show();  
+            return;
+        }
       var names = [];
       dojo.forEach(items, function(selectedItem) {
         names.push(grid.store.getValues(selectedItem, "users")); 

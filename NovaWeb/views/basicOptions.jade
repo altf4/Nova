@@ -1,0 +1,13 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", name="text/css", href="configstyle.css", media="screen")
+
+
+block content
+  form#basicConfigForm(method="post", action="/configureNovaSave")
+    include includes/basicConfigForm
+  button(onClick="document.getElementById('basicConfigForm').submit()") Submit
+//  include includes/advancedConfigForm
+
+  
