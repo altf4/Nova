@@ -216,7 +216,7 @@ void Nova::LoadNmap(const string &filename)
 int main(int argc, char ** argv)
 {
 	ErrCode errVar = OKAY;
-	vector<pair<string, subnet> > recv = GetSubnetsToScan(&errVar);
+	vector<string> recv = GetSubnetsToScan(&errVar);
 
 	PrintRecv(recv);
 
@@ -242,7 +242,7 @@ int main(int argc, char ** argv)
 	return errVar;
 }
 
-Nova::ErrCode Nova::LoadPersonalityTable(vector<pair<string, subnet> > recv)
+Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 {
 	stringstream ss;
 
@@ -252,7 +252,7 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<pair<string, subnet> > recv)
 	for(uint16_t i = 0; i < recv.size(); i++)
 	{
 		ss << i;
-		string scan = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + recv[i].first + " >/dev/null";
+		string scan = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + recv[i] + " >/dev/null";
 		while(system(scan.c_str()));
 		try
 		{
@@ -275,7 +275,7 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<pair<string, subnet> > recv)
 	return OKAY;
 }
 
-void Nova::PrintRecv(vector<pair<string, subnet> > recv)
+void Nova::PrintRecv(vector<string> recv)
 {
 	// Debug method to output what subnets were found by
 	// the GetSubnetsToScan() method.
@@ -287,7 +287,7 @@ void Nova::PrintRecv(vector<pair<string, subnet> > recv)
 	cout << endl;
 }
 
-vector<pair<string, subnet> > Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
+vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 {
 	struct ifaddrs * devices = NULL;
 	ifaddrs *curIf = NULL;

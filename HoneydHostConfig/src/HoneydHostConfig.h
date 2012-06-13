@@ -51,17 +51,17 @@ ErrCode ParseHost(boost::property_tree::ptree pt2);
 //  ErrCode * errVar - ptr to an error code variable so that we can inspect it's value afterward
 //   after if the vector is empty
 // Returns a vector containings strings of the subnet addresses
-std::vector<std::pair<std::string, subnet> > GetSubnetsToScan(ErrCode * errVar);
+std::vector<std::string> GetSubnetsToScan(ErrCode * errVar);
 
 // Prints out the subnets that're found during GetSubnetsToScan(errVar)
 //  vector<string> recv - vector of subnets found
 // Only prints, no return value
-void PrintRecv(std::vector<std::pair <std::string, subnet> > recv);
+void PrintRecv(std::vector<std::string> recv);
 
 // After the subnets are found, pass recv into this function to do the actual scanning
 // and generation of the XML files for parsing
 //  vector<string> recv - vector of subnets
 // Returns an ErrCode signifying success or failure
-ErrCode LoadPersonalityTable(std::vector<std::pair <std::string, subnet> > recv);
+ErrCode LoadPersonalityTable(std::vector<std::string> recv);
 }
 #endif
