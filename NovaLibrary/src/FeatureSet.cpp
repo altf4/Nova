@@ -748,7 +748,7 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	uint32_t offset = 0;
 
 	//Temporary variables to store and track data during deserialization
-	uint32_t temp = 0;
+	uint64_t temp = 0;
 
 
 	//Required, individual variables for calculation

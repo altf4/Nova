@@ -1,7 +1,7 @@
-extends loginlayout
+extends layout
 
 block content
-  form(method="post", action="/login?redirect=#{redirect}")
+  form(method="post", action="/createNewUser", autocomplete="off")
     table(align="center", border="0", style="background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;")
       tr
         td
@@ -16,4 +16,4 @@ block content
       tr
         td
         td
-          input(type="Submit", value="Log In")
+          input(type="Submit", value="Create New User")
