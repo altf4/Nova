@@ -35,7 +35,7 @@ public:
 
 	void LoadTable(PersonalityTable *persTable);
 
-	bool GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile);
+	void GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile, std::string profileName);
 
 	void InsertPersonality(Personality *pers);
 
