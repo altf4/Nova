@@ -216,7 +216,7 @@ void Nova::LoadNmap(const string &filename)
 int main(int argc, char ** argv)
 {
 	ErrCode errVar = OKAY;
-	vector<string> recv = GetSubnetsToScan(&errVar);
+	vector<pair<string, subnet> > recv = GetSubnetsToScan(&errVar);
 
 	PrintRecv(recv);
 
@@ -230,6 +230,9 @@ int main(int argc, char ** argv)
 
 	PersonalityTree persTree = PersonalityTree(&personalities);
 
+	// for each element in recv
+	//persTree.AddSubnet();
+
 	persTree.ToString();
 
 	persTree.DebugPrintProfileTable();
@@ -239,7 +242,7 @@ int main(int argc, char ** argv)
 	return errVar;
 }
 
-Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
+Nova::ErrCode Nova::LoadPersonalityTable(vector<pair<string, subnet> > recv)
 {
 	stringstream ss;
 
@@ -249,7 +252,7 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 	for(uint16_t i = 0; i < recv.size(); i++)
 	{
 		ss << i;
-		string scan = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + recv[i] + " >/dev/null";
+		string scan = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + recv[i].first + " >/dev/null";
 		while(system(scan.c_str()));
 		try
 		{
@@ -272,7 +275,7 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 	return OKAY;
 }
 
-void Nova::PrintRecv(vector<string> recv)
+void Nova::PrintRecv(vector<pair<string, subnet> > recv)
 {
 	// Debug method to output what subnets were found by
 	// the GetSubnetsToScan() method.
@@ -284,7 +287,7 @@ void Nova::PrintRecv(vector<string> recv)
 	cout << endl;
 }
 
-vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
+vector<pair<string, subnet> > Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 {
 	struct ifaddrs * devices = NULL;
 	ifaddrs *curIf = NULL;
@@ -319,6 +322,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 		// If we've found an interface that has an IPv4 address and is NOT a loopback,
 		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
+			pair<string, subnet> push_pair;
 			// start processing it to generate the subnet for the interface.
 			there = false;
 			interfaces.push_back(string(curIf->ifa_name));

@@ -239,9 +239,6 @@ void PersonalityTree::ToXmlTemplate()
 
 	vector<string> ret = hhconfig->GetProfileNames();
 
-	hhconfig->m_nodes.clear();
-	hhconfig->m_subnets.clear();
-
 	AddAllPorts();
 
 	ret = hhconfig->GetProfileNames();
@@ -256,8 +253,6 @@ void PersonalityTree::ToXmlTemplate()
 
 void PersonalityTree::AddAllPorts()
 {
-	hhconfig->m_ports.clear();
-
 	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
 	{
 		RecursiveAddAllPorts(m_root.m_children[i].second);

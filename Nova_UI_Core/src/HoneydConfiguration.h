@@ -104,6 +104,7 @@ public:
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
     bool AddNewNodes(std::string profileName, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
 
+    bool AddSubnet();
 
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
