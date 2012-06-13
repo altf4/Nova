@@ -1023,6 +1023,19 @@ p, li { white-space: pre-wrap; }
                     </item>
                    </layout>
                   </item>
+                  <item>
+                   <spacer name="ceFeaturesVSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
                  </layout>
                 </item>
                </layout>
@@ -1034,11 +1047,27 @@ p, li { white-space: pre-wrap; }
          </layout>
         </widget>
         <widget class="QWidget" name="appearancePage">
-         <layout class="QHBoxLayout" name="appearanceHBox">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <spacer name="appearanceGroupTopVSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
           <item>
            <widget class="QGroupBox" name="apSettingsGroupBox">
             <property name="title">
              <string>Appearance Settings</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
             </property>
             <property name="flat">
              <bool>true</bool>
@@ -1050,35 +1079,56 @@ p, li { white-space: pre-wrap; }
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item row="1" column="0">
+             <item row="0" column="0">
               <widget class="QLabel" name="msgTypeLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Message Dialog</string>
                </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="defaultActionLabel">
-               <property name="text">
-                <string>Default Action</string>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
                </property>
               </widget>
              </item>
-             <item row="2" column="0">
+             <item row="0" column="1">
+              <widget class="QLabel" name="defaultActionLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Default Action</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
               <widget class="QListWidget" name="msgTypeListWidget"/>
              </item>
-             <item row="2" column="1">
+             <item row="1" column="1">
               <widget class="QListWidget" name="defaultActionListWidget"/>
              </item>
-             <item row="0" column="0" colspan="2">
+             <item row="2" column="0" colspan="2">
               <spacer name="appearnceVSpacer">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::MinimumExpanding</enum>
+               </property>
                <property name="sizeHint" stdset="0">
                 <size>
                  <width>20</width>
-                 <height>40</height>
+                 <height>60</height>
                 </size>
                </property>
               </spacer>
@@ -1748,7 +1798,7 @@ p, li { white-space: pre-wrap; }
                 <enum>Qt::ClickFocus</enum>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="genTab">
                 <attribute name="title">
