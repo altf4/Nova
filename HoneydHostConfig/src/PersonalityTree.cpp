@@ -55,7 +55,7 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	}
 }
 
-void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile)
+bool PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile)
 {
 	//Create profile object
 	node->GenerateDistributions();
@@ -80,20 +80,55 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		if(!hhconfig->AddProfile(&tempProf))
 		{
 			cout << "Error adding "<< tempProf.name << endl;
-			return;
+			return false;
 		}
 		else
 		{
-			for(uint i = 0; i < node->m_children.size(); i++)
+			uint size = node->m_children.size();
+			for(uint i = 0; i < size; i++)
 			{
-				GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[tempProf.name]);
+				if(GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[tempProf.name]))
+				{
+					i--;
+				}
+				size = node->m_children.size();
 			}
 		}
 	}
 	else
 	{
+		for(uint i = 0; i < node->m_children.size(); i++)
+		{
+			node->m_children[i].first = node->m_key + " " + node->m_children[i].first;
+			node->m_children[i].second->m_key = node->m_key + " " + node->m_children[i].second->m_key;
+			parent->m_children.push_back(node->m_children[i]);
+		}
+
+		node->m_children.clear();
+
+		for(uint i = 0; i < parent->m_children.size(); i++)
+		{
+			if(!parent->m_children[i].second->m_key.compare(node->m_key))
+			{
+				parent->m_children.erase(parent->m_children.begin() + i);
+			}
+		}
+
+		for(uint i = 0; i < parent->m_children.size(); i++)
+		{
+			cout << parent->m_children[i].second->m_key << endl;
+		}
+
+		for(uint i = 0; i < parent->m_children[0].second->m_children.size(); i++)
+		{
+			cout << parent->m_children[0].second->m_children[i].first << endl;
+		}
+
+		delete node;
+
+		return true;
 		// Probably not the right way of going about this
-		uint16_t i = 1;
+		/*uint16_t i = 1;
 		stringstream ss;
 		string key = parentProfile->name + " " + node->m_key;
 		ss << i;
@@ -106,7 +141,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		for(uint i = 0; i < node->m_children.size(); i++)
 		{
 			GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[key]);
-		}
+		}*/
 	}
 }
 

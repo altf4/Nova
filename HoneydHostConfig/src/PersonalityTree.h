@@ -35,7 +35,7 @@ public:
 
 	void LoadTable(PersonalityTable *persTable);
 
-	void GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile);
+	bool GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile);
 
 	void InsertPersonality(Personality *pers);
 

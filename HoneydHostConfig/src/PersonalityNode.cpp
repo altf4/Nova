@@ -150,6 +150,7 @@ profile PersonalityNode::GenerateProfile(profile* parentProfile)
 			}
 		}
 	}
+
 	return push;
 }
 
