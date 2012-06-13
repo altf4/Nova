@@ -252,6 +252,27 @@ app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
 	}})
 });
 
+app.get('/editUsers', ensureAuthenticated, function(req, res) {
+	var usernames = new Array();
+  client.query(
+    'SELECT user FROM ' + credTb,
+    function (err, results, fields) {
+      if(err) {
+        throw err;
+      }
+
+	var usernames = new Array();
+	for (var i in results) {
+		usernames.push(results[i].user);
+	}
+	res.render('editUsers.jade',
+	{ locals: {
+		usernames: usernames
+	}});
+    } 
+  );
+});
+
 app.get('/logout', function(req, res){
   req.logout();
   res.redirect('/');
@@ -579,6 +600,30 @@ everyone.now.sendAllSuspects = function(callback)
 }
 
 
+everyone.now.deleteUserEntry = function(usernamesToDelete, callback)
+{
+	var username;
+	for (var i = 0; i < usernamesToDelete.length; i++) {
+		username = usernamesToDelete[i];
+ 		client.query('DELETE FROM ' + credTb + ' WHERE user = \'' + username + '\'');
+	}
+
+	// TODO: Error handling? Bit of a pain async. could change to single SQL query and 
+	// put the callback in the callback for .query.
+	callback(true);
+}
+
+everyone.now.updateUserPassword = function (username, newPassword, callback) {
+	var query = 'UPDATE ' + credTb + ' SET pass = SHA1(\'' + newPassword +'\') WHERE user = \'' + username + '\'';
+ 	client.query(query,
+    function selectCb(err, results, fields) {
+    	if(err) {
+        	callback(false, "Unable to access user database: " + err);
+			return;
+      	}
+		callback(true);
+	});	
+}
 
 // Deletes a honeyd node
 everyone.now.deleteNodes = function(nodeNames, callback)

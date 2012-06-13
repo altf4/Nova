@@ -1,0 +1,80 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+
+  script
+    var grid;
+    
+    function deleteSelectedItems() {
+      var items = grid.selection.getSelected();
+      var names = [];
+      dojo.forEach(items, function(selectedItem) {
+        names.push(grid.store.getValues(selectedItem, "users")); 
+      });
+      
+      now.deleteUserEntry(names, errorMessageCallback);
+    }
+
+    function updateUserPass()
+    {
+        var items = grid.selection.getSelected();
+
+        if (items.length != 1) {
+            var dialog = new dijit.Dialog({title: "Error", content: "Please select 1 user account to edit the password of"});
+            dialog.show();  
+            return;
+        }
+        
+        var user = grid.store.getValues(items[0], "users"); 
+        var password = dojo.byId("newPassword").value;
+        now.updateUserPassword(user, password, errorMessageCallback);
+    }
+
+    
+    function errorMessageCallback(sucess, message) {
+      if(sucess != true) {
+        var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
+        dialog.show();
+        return;
+      }
+      location.reload(true);
+    }
+
+    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+
+    function(DataGrid,ObjectStore){
+      var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
+      grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
+      dojo.byId("gridDiv").appendChild(grid.domNode);
+    });
+  
+  script(type="text/javascript")
+          /*set up data store*/
+          var layoutProfiles = [[
+            { field: "users", name: "User", width: '500px' },
+          ]];
+
+block content
+  h1 Existing User Accounts
+  table#profileTable(style="display: none")
+    thead
+      tr
+        th users
+    tbody
+      each name, i in usernames
+        tr
+          td #{name}
+ 
+  div(style="height: 250px;")
+    div#gridDiv(style="height: 250px")
+
+  button(onClick="deleteSelectedItems()") Delete Selected Users
+  
+  br
+  br
+  input#newPassword(type="password")
+  br
+  button(onClick="updateUserPass()") Update User Password
+ 
+
