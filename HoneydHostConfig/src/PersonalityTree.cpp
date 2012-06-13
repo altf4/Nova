@@ -81,12 +81,11 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		if(!hhconfig->AddProfile(&tempProf))
 		{
 			cout << "Error adding "<< tempProf.name << endl;
-			return false;
+			return;
 		}
 		else
 		{
-			uint size = node->m_children.size();
-			for(uint i = 0; i < size; i++)
+			for(uint i = 0; i < node->m_children.size(); i++)
 			{
 				GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[tempProf.name], node->m_children[i].first);
 			}
@@ -95,7 +94,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	else if(parent->m_children.size() == 1)
 	{
 		// Probably not the right way of going about this
-		/*uint16_t i = 1;
+		uint16_t i = 1;
 		stringstream ss;
 		string key = parentProfile->name + " " + profileName;
 		ss << i;
