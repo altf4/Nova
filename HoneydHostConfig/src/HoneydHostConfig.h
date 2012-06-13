@@ -31,7 +31,6 @@ enum ErrCode : int
 	AUTODETECTFAIL,
 	GETNAMEINFOFAIL,
 	GETBITMASKFAIL,
-	DONTADDSELF,
 	NOMATCHEDPERSONALITY,
 	PARSINGERROR
 };
@@ -40,6 +39,11 @@ enum ErrCode : int
 //  const std::string &filename - string of the xml filename to read
 // Returns nothing
 void LoadNmap(const std::string &filename);
+
+// Puts the integer val into m, and shifts it
+// depending on the value of cond. Used for converting
+// a MAC address string into a uint for use with the MAC Vendor Db object.
+void Shift(u_char * m, uint cond, u_char val);
 
 // Takes a <host> sub-ptree and parses it for the requisite information, placing said information
 // into a Personality object which then gets passed into the PersonalityTable object

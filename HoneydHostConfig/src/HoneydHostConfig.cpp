@@ -22,9 +22,14 @@
 
 #include <netdb.h>
 #include <sstream>
+#include <fstream>
+#include <ctype.h>
 #include <net/if.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -32,6 +37,9 @@
 #include "ScriptTable.h"
 #include "PersonalityTree.h"
 #include "HoneydHostConfig.h"
+
+#define DIGIT_OFFSET 48
+#define LOWER_OFFSET 87
 
 using namespace std;
 using namespace Nova;
@@ -43,6 +51,21 @@ string localMachine;
 vector<subnet> subnetsToAdd;
 
 PersonalityTable personalities;
+
+void Nova::Shift(u_char * m, uint cond, u_char val)
+{
+	if(cond % 3 == 0)
+	{
+		u_char b = val;
+		b = b << 4;
+		*m |= b;
+	}
+	else if(cond % 3 == 1)
+	{
+		u_char b = val;
+		*m |= b;
+	}
+}
 
 ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 {
@@ -78,9 +101,50 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 					}
 					else
 					{
-						// We don't support adding the host running the configuration tool
-						// as a personality right now
-						return DONTADDSELF;
+						person->m_addresses.push_back(v.second.get<string>("<xmlattr>.addr"));
+
+						ifstream ifs("/sys/class/net/eth0/address");
+						char mac[18];
+						ifs.getline(mac, 18);
+						string forLoop = string(mac);
+
+						uint counter = 0;
+						person->m_macs.push_back(forLoop);
+
+						// There may be a more efficient way to do this,
+						// merely for if we absolutely have to have the MAC as a string
+						// right now.
+						// It does, however, add the profile of the host
+						// into the tree correctly.
+						uint passToVendor = 0;
+						u_char m = 0;
+						for(uint i = 0; i < forLoop.length() && counter < 3; i++)
+						{
+							if(isdigit(mac[i]) && mac[i] != '0')
+							{
+								Shift(&m, i, mac[i] - DIGIT_OFFSET);
+							}
+							else if(islower(mac[i]) && mac[i] < 'g')
+							{
+								Shift(&m, i, mac[i] - LOWER_OFFSET);
+							}
+							else if(mac[i] != ':' && mac[i] != '0')
+							{
+								cout << "Unknown character found in MAC address string" << endl;
+							}
+							if((i % 3) == 2 || i == forLoop.length() - 1)
+							{
+								uint temp = 0 | m;
+								passToVendor |= (temp << (16 - (8 * counter)));
+								m = 0;
+								counter++;
+							}
+						}
+
+						VendorMacDb * vmd = new VendorMacDb();
+						vmd->LoadPrefixFile();
+
+						person->AddVendor(vmd->LookupVendor(passToVendor));
 					}
 				}
 				// if we've found the mac, add the hardware address to the MACs
@@ -192,10 +256,6 @@ void Nova::LoadNmap(const string &filename)
 			// Call ParseHost on the <host> subtree within the xml file.
 			switch(ParseHost(pt2))
 			{
-				// Graceful recovery from adding self (not supported yet)
-				case DONTADDSELF:
-					std::cout << "Can't add self as personality yet." << std::endl;
-					break;
 				// Output for alerting user that a found host had incomplete
 				// personality data, and thus was not added to the PersonalityTable.
 				case NOMATCHEDPERSONALITY:
