@@ -70,9 +70,9 @@ string PersonalityNode::ToString()
 
 	ss << endl << "Ports : <Number>_<Protocol>, <Number of occurrences>" << endl;
 
-	for(Port_Table::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+	for(PortsTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
-		ss << it->first << ", " << it->second << endl;
+		ss << it->first << ", " << it->second.first << endl;
 	}
 
 	return ss.str();
@@ -90,11 +90,11 @@ void PersonalityNode::GenerateDistributions()
 		m_vendor_dist.push_back(push_vendor);
 	}
 
-	for(Port_Table::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+	for(PortsTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		pair<string, double> push_ports;
 		push_ports.first = it->first + "_open";
-		push_ports.second = (100 * (((double)it->second)/((double)m_count)));
+		push_ports.second = (100 * (((double)it->second.first)/((double)m_count)));
 		m_ports_dist.push_back(push_ports);
 	}
 }

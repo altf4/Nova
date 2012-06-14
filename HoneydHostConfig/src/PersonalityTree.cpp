@@ -31,6 +31,9 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 	m_root = PersonalityNode("default");
 	hhconfig->LoadAllTemplates();
 	m_profiles = &hhconfig->m_profiles;
+	m_scripts = ScriptTable(hhconfig->GetScriptTable());
+
+	m_scripts.PrintScriptsTable();
 
 	if(persTable != NULL)
 	{
@@ -40,6 +43,11 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 
 PersonalityTree::~PersonalityTree()
 {
+}
+
+HoneydConfiguration * PersonalityTree::GetHHConfig()
+{
+	return hhconfig;
 }
 
 void PersonalityTree::LoadTable(PersonalityTable *persTable)
@@ -154,9 +162,9 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 	tablePair = &parent->m_children[i];
 
 	//Insert or count port occurrences
-	for(Port_Table::iterator it = pers->m_ports.begin(); it != pers->m_ports.end(); it++)
+	for(PortsTable::iterator it = pers->m_ports.begin(); it != pers->m_ports.end(); it++)
 	{
-		tablePair->second->m_ports[it->first] += it->second;
+		tablePair->second->m_ports[it->first].first += it->second.first;
 	}
 
 	//Insert or count MAC vendor occurrences

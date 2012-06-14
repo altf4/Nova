@@ -535,7 +535,17 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 				continue;
 			}
 
-			s.service = v.second.get<std::string>("service");
+			try
+			{
+				s.osclass = v.second.get<std::string>("osclass");
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e){};
+			try
+			{
+				s.service = v.second.get<std::string>("service");
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e){};
+
 			s.path = v.second.get<std::string>("path");
 			m_scripts[s.name] = s;
 		}
@@ -576,6 +586,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		pt = it->second.tree;
 		pt.put<std::string>("name", it->second.name);
 		pt.put<std::string>("service", it->second.service);
+		pt.put<std::string>("osclass", it->second.osclass);
 		pt.put<std::string>("path", it->second.path);
 		m_scriptTree.add_child("scripts.script", pt);
 	}
@@ -1785,6 +1796,11 @@ void HoneydConfiguration::CleanPorts()
 		m_ports.erase(delList.back());
 		delList.pop_back();
 	}
+}
+
+ScriptTable HoneydConfiguration::GetScriptTable()
+{
+	return m_scripts;
 }
 
 bool HoneydConfiguration::AddNewNodes(std::string profileName, string ipAddress, std::string interface, std::string subnet, int numberOfNodes)

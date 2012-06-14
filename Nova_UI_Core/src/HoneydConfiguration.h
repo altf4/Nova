@@ -186,6 +186,7 @@ public:
 		return ret;
 	}
 
+	ScriptTable GetScriptTable();
 
 // TODO: this should be private eventually
 public:

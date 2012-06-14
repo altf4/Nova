@@ -76,6 +76,7 @@ void VendorMacDb::LoadPrefixFile()
 			}
 		}
 	}
+	MACPrefixes.close();
 }
 
 

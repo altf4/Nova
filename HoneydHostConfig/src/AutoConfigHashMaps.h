@@ -26,6 +26,10 @@
 typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > MAC_Table;
 
 //HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
-typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > Port_Table;
+typedef Nova::HashMap<std::string, std::pair<uint16_t, std::string>, std::tr1::hash<std::string>, eqstr > PortsTable;
+
+//HashMap of scripts; Key is nmap-style service name (i.e. "ssh", "http", "netbios-ssn", etc.), Value vector of pairs
+// of osclass and path to script
+typedef Nova::HashMap<std::string, std::vector<std::pair<std::string, std::string> >, std::tr1::hash<std::string>, eqstr> Scripts_Table;
 
 #endif /* AUTOCONFIGHASHMAPS_H_ */

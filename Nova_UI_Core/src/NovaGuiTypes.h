@@ -58,6 +58,7 @@ struct script
 {
 	std::string name;
 	std::string service;
+	std::string osclass;
 	std::string path;
 	boost::property_tree::ptree tree;
 };
