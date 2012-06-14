@@ -1021,7 +1021,7 @@ void Config::LoadInterfaces()
 	vector<string> interfaces = m_interfaces;
 	m_interfaces.clear();
 	//Use all valid devices
-	if(!m_interfaces[0].compare("default"))
+	if(!interfaces[0].compare("default"))
 	{
 		m_ifIsDefault = true;
 		for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
