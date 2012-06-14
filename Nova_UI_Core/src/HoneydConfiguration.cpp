@@ -71,7 +71,7 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 //	Note(s): If CleanPorts is called before using this port in a profile, it will be deleted
 //			If using a script it must exist in the script table before calling this function
 //Returns: the port name if successful and an empty string if unsuccessful
-string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, string scriptName)
+string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, string scriptName, string service)
 {
 	port pr;
 	//Check the validity and assign the port number
@@ -134,6 +134,8 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 			return string("");
 		}
 	}
+
+	pr.service = service;
 
 	//	Creates the ports unique identifier these names won't collide unless the port is the same
 	if(!pr.behavior.compare("script"))
@@ -212,6 +214,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 
 			p.portNum = v.second.get<std::string>("number");
 			p.type = v.second.get<std::string>("type");
+			p.service = v.second.get<std::string>("service");
 			p.behavior = v.second.get<std::string>("behavior");
 
 			//If this port uses a script, find and assign it.
@@ -532,6 +535,17 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 				continue;
 			}
 
+			try
+			{
+				s.osclass = v.second.get<std::string>("osclass");
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e){};
+			try
+			{
+				s.service = v.second.get<std::string>("service");
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e){};
+
 			s.path = v.second.get<std::string>("path");
 			m_scripts[s.name] = s;
 		}
@@ -571,6 +585,8 @@ bool HoneydConfiguration::SaveAllTemplates()
 	{
 		pt = it->second.tree;
 		pt.put<std::string>("name", it->second.name);
+		pt.put<std::string>("service", it->second.service);
+		pt.put<std::string>("osclass", it->second.osclass);
 		pt.put<std::string>("path", it->second.path);
 		m_scriptTree.add_child("scripts.script", pt);
 	}
@@ -583,6 +599,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		pt.put<std::string>("name", it->second.portName);
 		pt.put<std::string>("number", it->second.portNum);
 		pt.put<std::string>("type", it->second.type);
+		pt.put<std::string>("service", it->second.service);
 		pt.put<std::string>("behavior", it->second.behavior);
 		//If this port uses a script, save it.
 		if(!it->second.behavior.compare("script") || !it->second.behavior.compare("internal"))
@@ -1832,6 +1849,11 @@ void HoneydConfiguration::CleanPorts()
 		m_ports.erase(delList.back());
 		delList.pop_back();
 	}
+}
+
+ScriptTable HoneydConfiguration::GetScriptTable()
+{
+	return m_scripts;
 }
 
 bool HoneydConfiguration::AddNewNodes(std::string profileName, string ipAddress, std::string interface, std::string subnet, int numberOfNodes)

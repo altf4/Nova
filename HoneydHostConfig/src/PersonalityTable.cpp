@@ -87,9 +87,9 @@ void PersonalityTable::ListInfo()
 
 		std::cout << "Ports for this Personality: " << std::endl;
 
-		for(Port_Table::iterator it2 = it->second->m_ports.begin(); it2 != it->second->m_ports.end(); it2++)
+		for(PortsTable::iterator it2 = it->second->m_ports.begin(); it2 != it->second->m_ports.end(); it2++)
 		{
-			std::cout << "\t" << it2->first << " occurred " << it2->second << " time(s)." << std::endl;
+			std::cout << "\t" << it2->first << " occurred " << it2->second.first << " time(s)." << std::endl;
 		}
 	}
 }
@@ -128,15 +128,16 @@ void PersonalityTable::AddHost(Personality * add)
 
 		// Iterate through the Port_Table in the copy and update the
 		// counts for the occurrence of each port
-		for(Port_Table::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)
+		for(PortsTable::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)
 		{
 			if(cur->m_ports.find(it->first) == cur->m_ports.end())
 			{
-				cur->m_ports[it->first] = 1;
+				cur->m_ports[it->first].first = 1;
+				cur->m_ports[it->first].second = it->second.second;
 			}
 			else
 			{
-				cur->m_ports[it->first]++;
+				cur->m_ports[it->first].first++;
 			}
 			cur->m_port_count++;
 		}

@@ -41,7 +41,7 @@ public:
 	//  std::string port - of the format <NUM>_<PROTOCOL>, to pass to the HashMap
 	// Returns nothing; if the vendor is there, it increments the count, if it isn't it adds it
 	// and sets count to one.
-	void AddPort(std::string);
+	void AddPort(std::string, std::string);
 
 	// count of the number of instances of this personality on the scanned subnets
 	unsigned int m_count;
@@ -63,7 +63,7 @@ public:
 	MAC_Table m_vendors;
 
 	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
-	Port_Table m_ports;
+	PortsTable m_ports;
 };
 
 }

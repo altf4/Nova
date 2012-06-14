@@ -34,7 +34,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "ScriptTable.h"
 #include "PersonalityTree.h"
 #include "HoneydHostConfig.h"
 
@@ -173,7 +172,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 						string port_key = ss.str() + "_" + boost::to_upper_copy(c.second.get<string>("<xmlattr>.protocol"));
 						ss.str("");
 						string port_service = c.second.get<string>("service.<xmlattr>.name");
-						person->AddPort(port_key);
+						person->AddPort(port_key, port_service);
 						i++;
 					}
 					catch(exception &e)

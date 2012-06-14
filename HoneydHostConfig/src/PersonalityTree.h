@@ -21,6 +21,7 @@
 
 #include "PersonalityNode.h"
 #include "PersonalityTable.h"
+#include "ScriptsTable.h"
 
 namespace Nova
 {
@@ -59,6 +60,8 @@ public:
 
 	bool AddSubnet(subnet * add);
 
+	HoneydConfiguration * GetHHConfig();
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
@@ -72,6 +75,8 @@ private:
 	ProfileTable * m_profiles;
 
 	HoneydConfiguration * hhconfig;
+
+	ScriptsTable m_scripts;
 
 	void RecursiveToString(PersonalityNode * persNode);
 	void RecursiveGenerateDistributions(PersonalityNode * node);

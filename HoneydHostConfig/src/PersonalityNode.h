@@ -49,7 +49,7 @@ public:
 	MAC_Table m_vendors;
 
 	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
-	Port_Table m_ports;
+	PortsTable m_ports;
 
 	//returns a string representation of node, does not print anything about the children
 	std::string ToString();

@@ -40,6 +40,8 @@ using namespace Nova;
 pthread_mutex_t suspectTableLock;
 string homePath, readPath, writePath;
 
+bool connectedToNovad = false;
+
 //General variables like tables, flags, locks, etc.
 SuspectGUIHashTable SuspectTable;
 
@@ -56,7 +58,7 @@ SuspectGUIHashTable SuspectTable;
 //Called when process receives a SIGINT, like if you press ctrl+c
 void sighandler(int)
 {
-	if(!CloseNovadConnection())
+	if(connectedToNovad && !CloseNovadConnection())
 	{
 		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
 	}
@@ -66,6 +68,8 @@ void sighandler(int)
 NovaGUI::NovaGUI(QWidget *parent)
     : QMainWindow(parent)
 {
+	connectedToNovad = false;
+
 	signal(SIGINT, sighandler);
 	pthread_mutex_init(&suspectTableLock, NULL);
 
@@ -75,7 +79,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	initKey--;
 	SuspectTable.set_deleted_key(initKey);
 
-	connectedToNovad = false;
 
 	m_editingSuspectList = false;
 	m_pathsFile = (char*)"/etc/nova/paths";

@@ -57,6 +57,8 @@ enum nodeConflictType : char
 struct script
 {
 	std::string name;
+	std::string service;
+	std::string osclass;
 	std::string path;
 	boost::property_tree::ptree tree;
 };
@@ -70,6 +72,7 @@ struct port
 	std::string portName;
 	std::string portNum;
 	std::string type;
+	std::string service;
 	std::string behavior;
 	std::string scriptName;
 	std::string proxyIP;
