@@ -42,10 +42,25 @@ struct CallbackChange
 namespace Nova
 {
 
-//Receives a single callback message and returns its details
-//	NOTE: Blocking call. Should be run from within its own looping thread
-//	returns - A struct describing what Novad is asking the UI to change
-struct CallbackChange ProcessCallbackMessage();
+class CallbackHandler
+{
+
+public:
+
+	CallbackHandler();
+
+	//Receives a single callback message and returns its details
+	//	NOTE: Blocking call. Should be run from within its own looping thread
+	//		You should keep on looping until a CALLBACK_HUNG_UP is returned. When it has,
+	//		The underlying MessageQueue will automatically be deleted for you. You can safely just exit.
+	//	returns - A struct describing what Novad is asking the UI to change
+	struct CallbackChange ProcessCallbackMessage();
+
+private:
+
+	int m_socketFD;
+};
+
 
 }
 

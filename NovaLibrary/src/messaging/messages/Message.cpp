@@ -151,7 +151,7 @@ Message *Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirect
 	}
 
 	enum MessageType thisType;
-	memcpy(&thisType, buffer, MESSAGE_MIN_SIZE);
+	memcpy(&thisType, buffer, sizeof(thisType));
 
 	Message *message;
 	switch(thisType)
