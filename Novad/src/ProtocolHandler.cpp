@@ -122,6 +122,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	int controlSocket = *socketIntPtr;
 	delete socketIntPtr;
 
+	MessageManager::Instance().DeleteQueue(controlSocket);
 	MessageManager::Instance().StartSocket(controlSocket);
 
 	bool keepLooping = true;
@@ -161,8 +162,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 					case ERROR_SOCKET_CLOSED:
 					{
 						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
-						keepLooping = false;
-						break;;
+						break;
 					}
 					case ERROR_MALFORMED_MESSAGE:
 					{
@@ -199,6 +199,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 		}
 	}
 
+	MessageManager::Instance().DeleteQueue(controlSocket);
 	return NULL;
 }
 

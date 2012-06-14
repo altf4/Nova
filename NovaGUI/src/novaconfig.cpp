@@ -2698,17 +2698,45 @@ void NovaConfig::on_profileEdit_editingFinished()
 	{
 		return;
 	}
-	if(!m_honeydConfig->m_profiles.empty())
+	else if(!m_currentProfile.compare("Doppelganger"))
 	{
-		GetProfileTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
-		GetProfileHsTreeWidgetItem(m_currentProfile)->setText(0,ui.profileEdit->displayText());
-		//If the name has changed we need to move it in the profile hash table and point all
-		//nodes that use the profile to the new location.
-		m_honeydConfig->RenameProfile(m_currentProfile, ui.profileEdit->displayText().toStdString());
-		SaveProfileSettings();
-		LoadProfileSettings();
-		m_loading->unlock();
-		LoadAllNodes();
+		ui.profileEdit->setText("Doppelganger");
+	}
+	else if(!m_honeydConfig->m_profiles.empty())
+	{
+		QString newName = ui.profileEdit->displayText();
+		if(newName.toStdString().compare("Doppelganger"))
+		{
+			GetProfileTreeWidgetItem(m_currentProfile)->setText(0, newName);
+			QTreeWidgetItem *item = GetProfileHsTreeWidgetItem(m_currentProfile);
+			if(item != NULL)
+			{
+				item->setText(0, newName);
+			}
+
+			//If the name has changed we need to move it in the profile hash table and point all
+			//nodes that use the profile to the new location.
+			if(m_honeydConfig->RenameProfile(m_currentProfile, newName.toStdString()))
+			{
+				m_currentProfile = newName.toStdString();
+			}
+			//If we're not simply trying to rename it to itself
+			else if(m_currentProfile.compare(newName.toStdString()))
+			{
+				LOG(ERROR, "Unable to rename profile '" + m_currentProfile+ "' to new name " + newName.toStdString() + ".", "Unable to rename profile '"
+					+ m_currentProfile+ "' to new name " + newName.toStdString() + ". Check '/usr/share/nova/nova/templates/profiles.xml'");
+			}
+			SaveProfileSettings();
+			LoadProfileSettings();
+			m_loading->unlock();
+			LoadAllNodes();
+			return;
+		}
+		else
+		{
+			LOG(ERROR, "Unable to use the reserved 'Doppelganger' name for custom profiles.", "");
+			ui.profileEdit->setText(QString(m_currentProfile.c_str()));
+		}
 	}
 	m_loading->unlock();
 }

@@ -25,6 +25,7 @@
 #include "CallbackHandler.h"
 #include "Logger.h"
 #include "Lock.h"
+#include "messaging/MessageManager.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -39,6 +40,8 @@ using namespace Nova;
 
 pthread_mutex_t suspectTableLock;
 string homePath, readPath, writePath;
+
+bool connectedToNovad = false;
 
 //General variables like tables, flags, locks, etc.
 SuspectGUIHashTable SuspectTable;
@@ -56,7 +59,7 @@ SuspectGUIHashTable SuspectTable;
 //Called when process receives a SIGINT, like if you press ctrl+c
 void sighandler(int)
 {
-	if(!CloseNovadConnection())
+	if(connectedToNovad && !CloseNovadConnection())
 	{
 		LOG(ERROR, "Did not close down connection to Novad cleanly", "CloseNovadConnection() failed");
 	}
@@ -66,6 +69,8 @@ void sighandler(int)
 NovaGUI::NovaGUI(QWidget *parent)
     : QMainWindow(parent)
 {
+	connectedToNovad = false;
+
 	signal(SIGINT, sighandler);
 	pthread_mutex_init(&suspectTableLock, NULL);
 
@@ -75,7 +80,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 	initKey--;
 	SuspectTable.set_deleted_key(initKey);
 
-	connectedToNovad = false;
 
 	m_editingSuspectList = false;
 	m_pathsFile = (char*)"/etc/nova/paths";
@@ -1155,15 +1159,20 @@ bool StartCallbackLoop(void *ptr)
 {
 	pthread_t callbackThread;
 	pthread_create(&callbackThread, NULL, CallbackLoop, ptr);
+	pthread_detach(callbackThread);
 	return true;
 }
 
 void *CallbackLoop(void *ptr)
 {
 	struct CallbackChange change;
-	while(true)
+
+	CallbackHandler callbackHandler;
+
+	bool keepLooping = true;
+	while(keepLooping)
 	{
-		change = ProcessCallbackMessage();
+		change = callbackHandler.ProcessCallbackMessage();
 		switch(change.m_type)
 		{
 			case CALLBACK_ERROR:
@@ -1175,7 +1184,8 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_HUNG_UP:
 			{
 				LOG(ERROR, "Novad hung up", "Got a callback_error message: CALLBACK_HUNG_UP");
-				return NULL;
+				keepLooping = false;
+				break;
 			}
 			case CALLBACK_NEW_SUSPECT:
 			{
@@ -1213,6 +1223,7 @@ void *CallbackLoop(void *ptr)
 			}
 		}
 	}
+
 	return NULL;
 }
 

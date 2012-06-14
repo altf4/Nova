@@ -28,20 +28,27 @@ using namespace Nova;
 
 extern int IPCSocketFD;
 
-struct CallbackChange Nova::ProcessCallbackMessage()
+CallbackHandler::CallbackHandler()
+{
+	m_socketFD = IPCSocketFD;
+}
+
+
+struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 {
 	struct CallbackChange change;
 	change.m_type = CALLBACK_ERROR;
 
 	//Wait for a callback to occur
 	//	If it comes back false, then that means the socket is dead
-	if(!MessageManager::Instance().RegisterCallback(IPCSocketFD))
+	if(!MessageManager::Instance().RegisterCallback(m_socketFD))
 	{
 		change.m_type = CALLBACK_HUNG_UP;
+		MessageManager::Instance().DeleteQueue(m_socketFD);
 		return change;
 	}
 
-	Message *message = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_UI);
+	Message *message = Message::ReadMessage(m_socketFD, DIRECTION_TO_UI);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
@@ -69,7 +76,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.m_suspect = updateMessage->m_suspect;
 
 			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK, DIRECTION_TO_UI);
-			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
+			if(!Message::WriteMessage(&callbackAck, m_socketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}
@@ -80,7 +87,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.m_type = CALLBACK_ALL_SUSPECTS_CLEARED;
 
 			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK, DIRECTION_TO_UI);
-			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
+			if(!Message::WriteMessage(&callbackAck, m_socketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}
@@ -92,7 +99,7 @@ struct CallbackChange Nova::ProcessCallbackMessage()
 			change.m_suspectIP = updateMessage->m_IPAddress;
 
 			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK, DIRECTION_TO_UI);
-			if(!Message::WriteMessage(&callbackAck, IPCSocketFD))
+			if(!Message::WriteMessage(&callbackAck, m_socketFD))
 			{
 				//TODO: log this? We failed to send the ack
 			}
