@@ -148,7 +148,6 @@ private:
 	bool m_featureEnabled[DIM];
 	bool m_editingSuspectList;
 
-	bool connectedToNovad;
 
 	//Configuration variables
 	char * m_pathsFile;

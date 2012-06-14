@@ -37,7 +37,7 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-test: test-prepare
+test: debug test-prepare
 	$(MAKE) -C NovaTest/Debug
 
 web:
@@ -53,7 +53,7 @@ honeyd-config-debug: debug
 	$(MAKE) -C HoneydHostConfig/Debug
 
 # Make debug + test
-all-test: debug test
+all-test: test
 
 
 
@@ -193,7 +193,13 @@ reinstall: uninstall-files install
 reinstall-debug: uninstall-files install-debug
 
 # Does a frest uninstall, clean, build, and install
-reset-debug: uninstall-files clean clean-test debug test install-debug
+cleanOldFiles: uninstall-files clean clean-test
+makeNewFiles: cleanOldFiles
+	$(MAKE) test
+installNewFiles: makeNewFiles
+	$(MAKE) install-debug
+
+reset-debug: installNewFiles
 reset: uninstall-files clean clean-test release test install-release
 
 

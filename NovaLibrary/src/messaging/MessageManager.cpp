@@ -47,8 +47,9 @@ MessageManager &MessageManager::Instance()
 {
 	if (m_instance == NULL)
 	{
-		LOG(ERROR, "Critical error in Message Manager", "Critical error in MessageManager: You must first initialize it with a direction"
+		LOG(CRITICAL, "Critical error in Message Manager", "Critical error in MessageManager: You must first initialize it with a direction"
 				"before calling Instance()");
+		exit(EXIT_FAILURE);
 	}
 	return *MessageManager::m_instance;
 }
