@@ -143,7 +143,6 @@ install-docs:
 install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
-	cd NovaWeb; bash install.sh
 
 
 uninstall-files:

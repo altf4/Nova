@@ -80,8 +80,8 @@ passport.use(new LocalStrategy(
 
 // Setup TLS
 var express_options = {
-key:  fs.readFileSync('../NovaWeb/serverkey.pem'),
-	  cert: fs.readFileSync('../NovaWeb/servercert.pem'),
+key:  fs.readFileSync('/usr/share/nova/NovaWeb/serverkey.pem'),
+	  cert: fs.readFileSync('/usr/share/nova/NovaWeb/servercert.pem'),
 };
 
 var app = express.createServer(express_options);
@@ -106,8 +106,7 @@ app.set('view options', {layout: false});
 //app.use(express.logger({stream: logFile}));
 
 
-console.info("Serving static GET at /var/www");
-app.use(express.static('/var/www'));
+app.use(express.static('/usr/share/nova/NovaWeb/www'));
 
 console.info("Listening on 8042");
 app.listen(8042);
