@@ -199,6 +199,8 @@ public:
 private:
     std::string m_homePath;
 
+    uint m_nodeProfileIndex;
+
     VendorMacDb m_macAddresses;
 
     //Storing these trees allow for easy modification and writing of the XML files

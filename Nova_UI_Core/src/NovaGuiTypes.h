@@ -216,6 +216,7 @@ struct Node
 	std::string sub;
 	std::string interface;
 	std::string pfile;
+	std::vector<std::string> ports;
 	std::string IP;
 	std::string MAC;
 	in_addr_t realIP;

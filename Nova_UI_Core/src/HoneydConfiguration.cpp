@@ -648,6 +648,10 @@ bool HoneydConfiguration::SaveAllTemplates()
 		pt.put<bool>("enabled", it->second.enabled);
 		pt.put<std::string>("MAC", it->second.MAC);
 		pt.put<std::string>("profile.name", it->second.pfile);
+		for(uint i = 0; i < it->second.ports.size(); i++)
+		{
+			pt.put<std::string>("profile.add.ports.port", it->second.ports[i]);
+		}
 		m_nodesTree.add_child("node",pt);
 	}
 	using boost::property_tree::ptree;
@@ -728,8 +732,10 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	}
 
 	// Start node section
-	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	m_nodeProfileIndex = 0;
+	for (NodeTable::iterator it = m_nodes.begin(); (it != m_nodes.end()) && (m_nodeProfileIndex < (uint)(~0)); it++)
 	{
+		m_nodeProfileIndex++;
 		if(!it->second.enabled)
 		{
 			continue;
@@ -744,24 +750,60 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 		else
 		{
+			//Clone a custom profile for a node
+			out << "clone " << it->second.pfile << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
+
+			//Add any custom port settings
+			for(uint i = 0; i < it->second.ports.size(); i++)
+			{
+				port prt = m_ports[it->second.ports[i]];
+				out << "add " << "CustomNodeProfile-" << m_nodeProfileIndex << " ";
+				if(!prt.type.compare("TCP"))
+				{
+					out << " tcp port ";
+				}
+				else
+				{
+					out << " udp port ";
+				}
+				out << prt.portNum << " ";
+
+				if(!(prt.behavior.compare("script")))
+				{
+					string scriptName = prt.scriptName;
+
+					if(m_scripts[scriptName].path.compare(""))
+					{
+						out << '"' << m_scripts[scriptName].path << '"'<< endl;
+					}
+					else
+					{
+						LOG(ERROR, "Error writing node port script.", "Path to script "+scriptName+" is null.");
+					}
+				}
+				else
+				{
+					out << prt.behavior << endl;
+				}
+			}
+
 			// No IP address, use DHCP
 			if(it->second.IP == "DHCP" && it->second.MAC == "RANDOM")
 			{
-				out << "dhcp " << it->second.pfile << " on " << it->second.interface << endl;
+				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.interface << endl;
 			}
 			else if(it->second.IP == "DHCP" && it->second.MAC != "RANDOM")
 			{
-				out << "dhcp " << it->second.pfile << " on " << it->second.interface << " ethernet \"" << it->second.MAC << "\"" << endl;
+				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.interface << " ethernet \"" << it->second.MAC << "\"" << endl;
 			}
 			else if(it->second.IP != "DHCP" && it->second.MAC == "RANDOM")
 			{
-				out << "bind " << it->second.IP << " " <<  it->second.pfile << endl;
+				out << "bind " << it->second.IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
 			}
 			else if(it->second.IP != "DHCP" && it->second.MAC != "RANDOM")
 			{
-				out << "clone " << it->second.pfile << it->second.IP << " " << it->second.pfile << endl;
-				out << "set " << it->second.pfile << it->second.IP << " ethernet \"" << it->second.MAC << "\"" << endl;
-				out << "bind " << it->second.IP << " " <<  it->second.pfile << it->second.IP << endl;
+				out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex << " ethernet \"" << it->second.MAC << "\"" << endl;
+				out << "bind " << it->second.IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << it->second.IP << endl;
 			}
 		}
 	}
@@ -892,6 +934,17 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 					//ptr2 = &v.second.get_child("MAC");
 					//pass 'set' subset and pointer to this profile
 					n.MAC = v.second.get<std::string>("MAC");
+				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+				try {//Conditional: has "set" values
+
+					ptree nodePorts = v.second.get_child("profile.add");
+					LoadProfileServices(&nodePorts, &p);
+
+					for(uint i = 0; i < p.ports.size(); i++)
+					{
+						n.ports.push_back(p.ports[i].first);
+					}
+
 				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 				if(!n.IP.compare(Config::Inst()->GetDoppelIp()))
