@@ -951,7 +951,7 @@ string ConstructFilterString()
 		{
 			filterString += "|| " + networkFilderBuilder.at(i);
 		}
-		filterString += ") &&";
+		filterString += ") && ";
 	}
 
 
