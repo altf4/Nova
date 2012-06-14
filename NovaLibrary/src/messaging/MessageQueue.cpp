@@ -51,6 +51,7 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 	m_forwardDirection = forwardDirection;
 	m_socketFD = socketFD;
 
+	//We will later do a pthread_join, so don't detach here
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
 }
 
@@ -59,11 +60,6 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 //	race conditions in deleting the object.
 MessageQueue::~MessageQueue()
 {
-	//Shutdown will cause the producer thread to make an ErrorMessage then quit
-	//This is probably redundant, but we do it again just to make sure
-	shutdown(m_socketFD, SHUT_RDWR);
-	close(m_socketFD);
-
 	//Wait for the producer thread to finish,
 	// We can't have his object destroyed out from underneath him
 	pthread_join(m_producerThread, NULL);
@@ -225,7 +221,6 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 			while(!gotCorrectSerial)
 			{
 				//While loop to protect against spurious wakeups
-				int n = m_callbackQueue.size();
 				while(m_callbackQueue.empty())
 				{
 					{

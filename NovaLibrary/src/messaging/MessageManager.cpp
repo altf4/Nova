@@ -32,7 +32,6 @@ MessageManager::MessageManager(enum ProtocolDirection direction)
 {
 	pthread_mutex_init(&m_queuesLock, NULL);
 	pthread_mutex_init(&m_protocolLock, NULL);
-	pthread_cond_init(&m_newQueueCondition, NULL);
 
 	m_forwardDirection = direction;
 }
@@ -57,18 +56,10 @@ MessageManager &MessageManager::Instance()
 
 Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection direction, int timeout)
 {
-	MessageQueue *queue;
-
+	MessageQueue *queue = GetQueue(socketFD);
+	if(queue == NULL)
 	{
-		Lock lock(&m_queuesLock);
-		if(m_queues.count(socketFD) > 0)
-		{
-			queue = m_queues[socketFD];
-		}
-		else
-		{
-			return new ErrorMessage(ERROR_SOCKET_CLOSED, direction);
-		}
+		return new ErrorMessage(ERROR_SOCKET_CLOSED, direction);
 	}
 
 	Message *message = queue->PopMessage(direction, timeout);
@@ -84,36 +75,19 @@ Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection directi
 	return message;
 }
 
-void MessageManager::StartSocket(int socketFD)
+MessageQueue &MessageManager::StartSocket(int socketFD)
 {
 	//Initialize the MessageQueue if it doesn't yet exist
+	Lock lock(&m_queuesLock);
+	if(m_queues.count(socketFD) == 0)
 	{
-		Lock lock(&m_queuesLock);
-		if(m_queues.count(socketFD) == 0)
-		{
-			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
-		}
-	}
-}
-
-void MessageManager::WaitForNewSocket(int socketFD)
-{
-	//Initialize the MessageQueue if it doesn't yet exist
-	{
-		Lock lock(&m_queuesLock);
-		while(m_queues.count(socketFD) > 0 )
-		{
-			pthread_cond_wait(&m_newQueueCondition, &m_queuesLock);
-		}
 		m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
 	}
+	return *(m_queues[socketFD]);
 }
 
 Lock MessageManager::UseSocket(int socketFD)
 {
-	//Creates a message queue, if one does not already exist
-	StartSocket(socketFD);
-
 	pthread_mutex_t *mutex;
 	{
 		//Initialize the protocol lock if it doesn't yet exist
@@ -128,22 +102,15 @@ Lock MessageManager::UseSocket(int socketFD)
 	}
 
 	//Increment the MessageQeueu's forward serial number
+	//But only bother if there actually is a MessageQueue already here. Don't make a new one
 	{
 		//Allows us to safely access the message queue
 		Lock protocolLock(mutex);
-
-		MessageQueue *queue;
-		//Initialize the MessageQueue if it doesn't yet exist
+		MessageQueue *queue = GetQueue(socketFD);
+		if(queue != NULL)
 		{
-			Lock lock(&m_queuesLock);
-			if(m_queues.count(socketFD) == 0)
-			{
-				m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
-			}
-			queue = m_queues[socketFD];
+			queue->NextConversation();
 		}
-
-		queue->NextConversation();
 	}
 
 	return Lock(mutex);
@@ -151,30 +118,21 @@ Lock MessageManager::UseSocket(int socketFD)
 
 void MessageManager::DeleteQueue(int socketFD)
 {
-	MessageQueue *queue = NULL;
-	{
-		Lock lock(&m_queuesLock);
 
-		if(m_queues.count(socketFD) > 0)
-		{
-			queue = m_queues[socketFD];
-		}
-		else
-		{
-			return;
-		}
+	//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
+	Lock protocolLock = UseSocket(socketFD);
+
+	MessageQueue *queue = GetQueue(socketFD);
+	if(queue == NULL)
+	{
+		return;
 	}
 
-	{
-		//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
-		Lock protocolLock = UseSocket(socketFD);
-		delete queue;
+	delete queue;
 
-		Lock lock(&m_queuesLock);
-		m_queues.erase(socketFD);
-	}
+	Lock lock(&m_queuesLock);
+	m_queues.erase(socketFD);
 
-	pthread_cond_broadcast(&m_newQueueCondition);
 }
 
 void MessageManager::CloseSocket(int socketFD)
@@ -192,19 +150,8 @@ void MessageManager::CloseSocket(int socketFD)
 
 bool MessageManager::RegisterCallback(int socketFD)
 {
-	bool foundIt = false;
-	MessageQueue *queue = NULL;
-	{
-		Lock lock(&m_queuesLock);
-
-		if(m_queues.count(socketFD) > 0)
-		{
-			foundIt = true;
-			queue = m_queues[socketFD];
-		}
-	}
-
-	if(foundIt)
+	MessageQueue *queue = GetQueue(socketFD);
+	if(queue != NULL)
 	{
 		//If register comes back false, then we have to clean up the dead MessageQueue
 		return queue->RegisterCallback();
@@ -228,20 +175,21 @@ std::vector <int>MessageManager::GetSocketList()
 
 uint32_t MessageManager::GetSerialNumber(int socketFD,  enum ProtocolDirection direction)
 {
-	StartSocket(socketFD);
+	return StartSocket(socketFD).GetSerialNumber(direction);
+}
 
-	MessageQueue *queue;
-	//Initialize the MessageQueue if it doesn't yet exist
+MessageQueue *MessageManager::GetQueue(int socketFD)
+{
+	Lock lock(&m_queuesLock);
+
+	if(m_queues.count(socketFD) > 0)
 	{
-		Lock lock(&m_queuesLock);
-		if(m_queues.count(socketFD) == 0)
-		{
-			m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
-		}
-		queue = m_queues[socketFD];
+		return m_queues[socketFD];
 	}
-
-	return queue->GetSerialNumber(direction);
+	else
+	{
+		return NULL;
+	}
 }
 
 }

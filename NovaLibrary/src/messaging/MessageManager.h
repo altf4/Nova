@@ -60,20 +60,18 @@ public:
 	//	Failing to call StartSocket prior to use will cause you to get get ErrorMessges (but not crash)
 	//TODO: Maybe make the other functions automatically check and call this function for us. So we can make this private
 	//	socketFD - The socket file descriptor for which to make the initialization
+	//	returns - A reference to the newly created MessageQueue.
+	//NOTE: In order to use the returned MessageQueue safely, you must have a lock on it before calling this
 	//NOTE: Safely does nothing if socketFD already exists in the manager
-	void StartSocket(int socketFD);
-
-	//When a new callback thread has been created, the old MessageQueue might not yet have been cleared out
-	//	We need to wait for it to be deleted.
-	//	NOTE: Blocks until MessageQueue at given socketFD has been removed
-	void WaitForNewSocket(int socketFD);
+	MessageQueue &StartSocket(int socketFD);
 
 	//Informs the message manager that you would like to use the specified socket. Locks everyone else out from the socket.
 	//	socketFD - The socket file descriptor to use
 	//NOTE: Blocking function
 	Lock UseSocket(int socketFD);
 
-	//Deletes the stupid MessageQueue
+	//Deletes the MessageQueue object to which socketFD belongs
+	//	NOTE: Does not close the underlying socket. Use CloseSocket to do that.
 	//	NOTE: Only called by callback thread
 	void DeleteQueue(int socketFD);
 
@@ -114,6 +112,11 @@ private:
 	//		DIRECTION_TO_NOVAD: We are a Nova UI
 	MessageManager(enum ProtocolDirection direction);
 
+	//Safely (with locking) returns a pointer to a MessageQueue
+	//	socketFD - The file descriptor of the MessageQueue in question
+	//	returns - The MessageQueue with the given FD, NULL otherwise
+	MessageQueue *GetQueue(int socketFD);
+
 	//Mutexes for the lock maps;
 	pthread_mutex_t m_queuesLock;		//protects m_queueLocks
 	pthread_mutex_t m_protocolLock;		//protects m_socketLocks
@@ -124,8 +127,6 @@ private:
 	std::map<int, pthread_mutex_t*> m_protocolLocks;
 
 	enum ProtocolDirection m_forwardDirection;
-
-	pthread_cond_t m_newQueueCondition;
 };
 
 }

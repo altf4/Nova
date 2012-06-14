@@ -25,6 +25,7 @@
 #include "CallbackHandler.h"
 #include "Logger.h"
 #include "Lock.h"
+#include "messaging/MessageManager.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -1155,15 +1156,20 @@ bool StartCallbackLoop(void *ptr)
 {
 	pthread_t callbackThread;
 	pthread_create(&callbackThread, NULL, CallbackLoop, ptr);
+	pthread_detach(callbackThread);
 	return true;
 }
 
 void *CallbackLoop(void *ptr)
 {
 	struct CallbackChange change;
-	while(true)
+
+	CallbackHandler callbackHandler;
+
+	bool keepLooping = true;
+	while(keepLooping)
 	{
-		change = ProcessCallbackMessage();
+		change = callbackHandler.ProcessCallbackMessage();
 		switch(change.m_type)
 		{
 			case CALLBACK_ERROR:
@@ -1175,7 +1181,8 @@ void *CallbackLoop(void *ptr)
 			case CALLBACK_HUNG_UP:
 			{
 				LOG(ERROR, "Novad hung up", "Got a callback_error message: CALLBACK_HUNG_UP");
-				return NULL;
+				keepLooping = false;
+				break;
 			}
 			case CALLBACK_NEW_SUSPECT:
 			{
@@ -1213,6 +1220,7 @@ void *CallbackLoop(void *ptr)
 			}
 		}
 	}
+
 	return NULL;
 }
 

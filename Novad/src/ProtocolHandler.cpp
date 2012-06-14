@@ -122,7 +122,8 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	int controlSocket = *socketIntPtr;
 	delete socketIntPtr;
 
-	MessageManager::Instance().WaitForNewSocket(controlSocket);
+	MessageManager::Instance().DeleteQueue(controlSocket);
+	MessageManager::Instance().StartSocket(controlSocket);
 
 	bool keepLooping = true;
 
