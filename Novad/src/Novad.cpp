@@ -918,6 +918,7 @@ string ConstructFilterString()
 		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
 	}
 
+	vector<string> networkFilderBuilder;
 	vector<string> enabledInterfaces = Config::Inst()->GetInterfaces();
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
@@ -931,10 +932,28 @@ string ConstructFilterString()
 				string interfaceIpBase = inet_ntoa(interfaceIp);
 				string interfaceMask = inet_ntoa(((sockaddr_in*)curIf->ifa_netmask)->sin_addr);
 				LOG(DEBUG, "Listening on network " + interfaceIpBase + "/" + interfaceMask, "");
-				filterString += "dst net " + interfaceIpBase + " mask " + interfaceMask + " && ";
+				networkFilderBuilder.push_back("dst net " + interfaceIpBase + " mask " + interfaceMask);
 			}
 		}
 	}
+
+	if (networkFilderBuilder.size() == 0) {
+		// Nothing to do
+	}
+	else if (networkFilderBuilder.size() == 1)
+	{
+		filterString += networkFilderBuilder.at(0) + " && ";
+	} 
+	else
+	{
+		filterString += "(" + networkFilderBuilder.at(0);
+		for (uint i = 1; i < networkFilderBuilder.size(); i++)
+		{
+			filterString += "|| " + networkFilderBuilder.at(i);
+		}
+		filterString += ") && ";
+	}
+
 
 	{
 		//Get list of interfaces and insert associated local IP's

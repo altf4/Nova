@@ -155,7 +155,6 @@ install-docs:
 install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
-	cd NovaWeb; bash install.sh
 
 install-honeyd-config: install-honeyd-config-release
 

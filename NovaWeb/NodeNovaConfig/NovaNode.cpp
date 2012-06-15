@@ -57,10 +57,12 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 
 	LOG(DEBUG, "Initializing Novad callback processing","");
 
+	CallbackHandler callbackHandler;
+
 	m_callbackRunning = true;
 	do
 	{
-		cb = ProcessCallbackMessage();
+		cb = callbackHandler.ProcessCallbackMessage();
 		//            LOG(DEBUG,"callback type " + cb.type,"");
 		switch( cb.m_type )
 		{
