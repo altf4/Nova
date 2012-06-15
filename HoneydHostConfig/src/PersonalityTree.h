@@ -60,7 +60,9 @@ public:
 
 	bool AddSubnet(subnet * add);
 
-	HoneydConfiguration * GetHHConfig();
+	HoneydConfiguration * GetHDConfig();
+
+	PersonalityNode *GetRootNode();
 
 private:
 

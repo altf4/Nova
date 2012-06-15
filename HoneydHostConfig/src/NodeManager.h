@@ -56,19 +56,26 @@ public:
 	NodeManager(PersonalityTree * persTree);
 	~NodeManager();
 
+	bool SetPersonalityTree(PersonalityTree *persTree);
+
 	PersonalityTree *m_persTree;
 
 private:
 
 	void GenerateProfileCounters();
-	void GenerateMacCounters();
-	void GeneratePortCounters();
+	MacCounter GenerateMacCounter(std::string vendor, double dist_val);
+	PortCounter GeneratePortCounter(std::string portName, double dist_val);
+
+	void RecursiveGenProfileCounter(PersonalityNode *parent);
 	std::vector<Node> GenerateNodesFromProfile(profile *prof, int numNodes);
 
-	int m_nodeCount;
-	int m_targetNodeCount;
+	unsigned int m_nodeCount;
+	unsigned int m_targetNodeCount;
+	unsigned int m_hostCount;
 	std::vector<struct ProfileCounter> m_profileCounters;
 	std::vector<Node> m_nodes;
+
+	HoneydConfiguration * m_hdconfig;
 };
 
 }
