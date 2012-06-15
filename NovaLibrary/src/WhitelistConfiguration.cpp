@@ -161,6 +161,25 @@ vector<string> WhitelistConfiguration::GetWhitelistedIps(bool getRanges)
 
 bool WhitelistConfiguration::AddEntry(std::string entry)
 {
+	// Convert ip/xx notation if need be
+	uint seperator = entry.find("/");
+	if (seperator != string::npos)
+	{
+		if (GetSubnet(entry).size() > 0 && GetSubnet(entry).size() <= 2)
+		{
+			in_addr subnetmask;
+			subnetmask.s_addr = 0;
+			int oldMask = atoi(GetSubnet(entry).c_str());
+			for (int i = 0; i < oldMask; i++)
+			{
+				subnetmask.s_addr |= subnetmask.s_addr | (1 << i);
+			}
+			char *newSubnet = inet_ntoa(subnetmask);
+			entry = GetIp(entry) + "/" + string(newSubnet);
+		}
+	}
+
+
 	ifstream ipListFileStream(Config::Inst()->GetPathWhitelistFile());
 	stringstream ipListNew;
 	bool alreadyExists = false;
