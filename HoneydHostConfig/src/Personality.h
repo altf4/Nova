@@ -52,6 +52,7 @@ public:
 	// pushed in this order: name, type, osgen, osfamily, vendor
 	// pops in this order: vendor, osfamily, osgen, type, name
 	std::vector<std::string> m_personalityClass;
+	std::string m_osclass;
 
 	// vector of MAC addresses
 	std::vector<std::string> m_macs;

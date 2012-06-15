@@ -58,9 +58,9 @@ public:
 
 	void AddAllPorts();
 
-	bool AddSubnet(subnet * add);
+	bool AddSubnet(subnet *add);
 
-	HoneydConfiguration * GetHHConfig();
+	HoneydConfiguration *GetHHConfig();
 
 private:
 
@@ -72,16 +72,16 @@ private:
 
 	std::vector<PersonalityNode *> m_to_delete;
 
-	ProfileTable * m_profiles;
+	ProfileTable *m_profiles;
 
-	HoneydConfiguration * m_hdconfig;
+	HoneydConfiguration *m_hdconfig;
 
 	ScriptsTable m_scripts;
 
-	void RecursiveToString(PersonalityNode * persNode);
-	void RecursiveGenerateDistributions(PersonalityNode * node);
-	void RecursiveAddAllPorts(PersonalityNode * node);
-	void RecursivePrintTree(PersonalityNode * node);
+	void RecursiveToString(PersonalityNode *persNode);
+	void RecursiveGenerateDistributions(PersonalityNode *node);
+	void RecursiveAddAllPorts(PersonalityNode *node);
+	void RecursivePrintTree(PersonalityNode *node);
 };
 
 }

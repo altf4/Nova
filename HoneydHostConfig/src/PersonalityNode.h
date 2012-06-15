@@ -45,6 +45,8 @@ public:
 	std::vector<std::pair<std::string, double> > m_vendor_dist;
 	std::vector<std::pair<std::string, double> > m_ports_dist;
 
+	std::string m_osclass;
+
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 	MAC_Table m_vendors;
 

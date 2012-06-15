@@ -45,13 +45,18 @@ PersonalityTree::~PersonalityTree()
 {
 }
 
-HoneydConfiguration * PersonalityTree::GetHHConfig()
+HoneydConfiguration *PersonalityTree::GetHHConfig()
 {
 	return m_hdconfig;
 }
 
 void PersonalityTree::LoadTable(PersonalityTable *persTable)
 {
+	if(persTable == NULL)
+	{
+		return;
+	}
+
 	Personality_Table *pTable = &persTable->m_personalities;
 
 	for(Personality_Table::iterator it = pTable->begin(); it != pTable->end(); it++)
@@ -66,8 +71,14 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 
 void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile, string profileName)
 {
+	if(node == NULL || parent == NULL || parentProfile == NULL)
+	{
+		return;
+	}
+
 	//Create profile object
 	node->GenerateDistributions();
+
 	profile tempProf = node->GenerateProfile(parentProfile);
 	if(m_profiles->find(tempProf.name) != m_profiles->end())
 	{
@@ -130,6 +141,11 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 
 void PersonalityTree::InsertPersonality(Personality *pers)
 {
+	if(pers == NULL)
+	{
+		return;
+	}
+
 	Personality temp = *pers;
 
 	UpdatePersonality(&temp, &m_root);
@@ -137,6 +153,11 @@ void PersonalityTree::InsertPersonality(Personality *pers)
 
 void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *parent)
 {
+	if(pers == NULL || parent == NULL)
+	{
+		return;
+	}
+
 	string cur = pers->m_personalityClass.back();
 
 	uint i = 0;
@@ -161,10 +182,13 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 	}
 	tablePair = &parent->m_children[i];
 
+	tablePair->second->m_osclass = pers->m_osclass;
+
 	//Insert or count port occurrences
 	for(PortsTable::iterator it = pers->m_ports.begin(); it != pers->m_ports.end(); it++)
 	{
 		tablePair->second->m_ports[it->first].first += it->second.first;
+		tablePair->second->m_ports[it->first].second = it->second.second;
 	}
 
 	//Insert or count MAC vendor occurrences
@@ -189,8 +213,13 @@ void PersonalityTree::ToString()
 	}
 }
 
-void PersonalityTree::RecursiveToString(PersonalityNode * persNode)
+void PersonalityTree::RecursiveToString(PersonalityNode *persNode)
 {
+	if(persNode == NULL)
+	{
+		return;
+	}
+
 	cout << persNode->ToString() << endl;
 	for(uint i = 0; i < persNode->m_children.size(); i++)
 	{
@@ -206,8 +235,13 @@ void PersonalityTree::GenerateDistributions()
 	}
 }
 
-void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode * node)
+void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode *node)
 {
+	if(node == NULL)
+	{
+		return;
+	}
+
 	node->GenerateDistributions();
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
@@ -268,8 +302,13 @@ void PersonalityTree::AddAllPorts()
 	}
 }
 
-void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
+void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 {
+	if(node == NULL)
+	{
+		return;
+	}
+
 	for(uint16_t i = 0; i < node->m_ports_dist.size(); i++)
 	{
 		port pass;
@@ -278,9 +317,101 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
 
 		boost::split(tokens, node->m_ports_dist[i].first, boost::is_any_of("_"));
 
-		pass.portName = node->m_ports_dist[i].first;
+		pass.portName = tokens[0] + "_" + tokens[1];
 		pass.portNum = tokens[0];
 		pass.type = tokens[1];
+
+		//bool endIter = false;
+
+		/*for(PortsTable::iterator it = node->m_ports.begin(); it != node->m_ports.end() && !endIter; it++)
+		{
+			if(m_scripts.GetScriptsTable().keyExists(it->second.second) && !(it->first + "_open").compare(node->m_ports_dist[i].first))
+			{
+				pass.behavior = "script";
+				pass.service = it->second.second;
+				vector<string> tokens_osclass;
+				vector<string> tokens_script_osclass;
+
+				for(uint j = 0; j < m_scripts.GetScriptsTable()[it->second.second].size(); j++)
+				{
+					uint count = 0;
+
+					boost::split(tokens_osclass, node->m_osclass, boost::is_any_of("|"));
+					boost::split(tokens_script_osclass, m_scripts.GetScriptsTable()[it->second.second][j].first, boost::is_any_of("|"));
+
+					for(uint k = 0; k < tokens_osclass.size(); k++)
+					{
+						tokens_osclass[k] = boost::trim_left_copy(tokens_osclass[k]);
+						tokens_osclass[k] = boost::trim_right_copy(tokens_osclass[k]);
+						//cout << tokens_osclass[k] << endl;
+					}
+					for(uint k = 0; k < tokens_script_osclass.size(); k++)
+					{
+						tokens_script_osclass[k] = boost::trim_left_copy(tokens_script_osclass[k]);
+						tokens_script_osclass[k] = boost::trim_right_copy(tokens_script_osclass[k]);
+						//cout << tokens_script_osclass[k] << endl;
+					}
+
+					if(tokens_osclass.size() < tokens_script_osclass.size())
+					{
+						for(uint k = tokens_osclass.size() - 1; k >= 0; k++)
+						{
+							if(!tokens_osclass[k].compare(tokens_script_osclass[k]))
+							{
+								count++;
+							}
+							else
+							{
+								count--;
+							}
+						}
+						if(count == tokens_osclass.size())
+						{
+							pass.scriptName = m_scripts.GetScriptsTable()[it->second.second][j].second;
+							pass.portName += "_" + pass.scriptName;
+							endIter = true;
+						}
+						else
+						{
+							pass.behavior = tokens[2];
+						}
+					}
+					else
+					{
+						for(uint k = 0; k < tokens_script_osclass.size(); k++)
+						{
+							if(!tokens_osclass[tokens_osclass.size() - 1 - k].compare(tokens_script_osclass[k]))
+							{
+								count++;
+							}
+							else
+							{
+								count--;
+							}
+						}
+						if(count == tokens_script_osclass.size())
+						{
+							pass.scriptName = m_scripts.GetScriptsTable()[it->second.second][j].second;
+							pass.portName += "_" + pass.scriptName;
+							endIter = true;
+						}
+						else
+						{
+							pass.behavior = tokens[2];
+						}
+					}
+				}
+
+				break;
+			}
+		}
+		if(!endIter)
+		{
+			pass.portName += "_" + tokens[2];
+			pass.behavior = tokens[2];
+		}*/
+
+		pass.portName += "_" + tokens[2];
 		pass.behavior = tokens[2];
 
 		m_hdconfig->AddPort(pass);
@@ -291,8 +422,13 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
 	}
 }
 
-void PersonalityTree::RecursivePrintTree(PersonalityNode * node)
+void PersonalityTree::RecursivePrintTree(PersonalityNode *node)
 {
+	if(node == NULL)
+	{
+		return;
+	}
+
 	cout << node->m_key << endl;
 
 	for(uint i = 0; i < node->m_children.size(); i++)
@@ -301,7 +437,7 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode * node)
 	}
 }
 
-bool PersonalityTree::AddSubnet(subnet * add)
+bool PersonalityTree::AddSubnet(subnet *add)
 {
 	return m_hdconfig->AddSubnet(add);
 }

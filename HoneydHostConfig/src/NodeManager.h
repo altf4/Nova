@@ -53,7 +53,7 @@ class NodeManager
 
 public:
 
-	NodeManager(PersonalityTree * persTree);
+	NodeManager(PersonalityTree *persTree);
 	~NodeManager();
 
 	PersonalityTree *m_persTree;

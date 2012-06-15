@@ -95,7 +95,7 @@ void PersonalityTable::ListInfo()
 }
 
 // Add a single Host
-void PersonalityTable::AddHost(Personality * add)
+void PersonalityTable::AddHost(Personality *add)
 {
 	// We've gotten to the point where we're adding a host that
 	// has personality data, so increment the number of useful
@@ -117,7 +117,7 @@ void PersonalityTable::AddHost(Personality * add)
 	{
 		// Create a copy of the pointer that exists within the table
 		// to modify.
-		Personality * cur = m_personalities[add->m_personalityClass[0]];
+		Personality *cur = m_personalities[add->m_personalityClass[0]];
 		// Since we're adding a host, just grab the single IP and MAC
 		// address that exist inside of the Personality object and
 		// increment the number of times a host has had this personality

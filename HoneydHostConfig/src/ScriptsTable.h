@@ -13,7 +13,9 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO
+// Description : Header file for the ScriptsTable class. Provides
+//               declarations of functions and member variables for
+//               the class.
 //============================================================================
 
 //Essentially a listing of scripts we currently offer and the types of operating systems they make sense for.
@@ -57,6 +59,8 @@ public:
 	//Prints out the contents of the scripts table in a nice,
 	// debug format.
 	void PrintScriptsTable();
+
+	Scripts_Table GetScriptsTable();
 
 private:
 	Scripts_Table m_scripts;

@@ -29,6 +29,7 @@ Personality::Personality()
 {
 	m_count = 1;
 	m_port_count = 0;
+	m_osclass = "";
 	m_vendors.set_empty_key("");
 	m_ports.set_empty_key("");
 }
