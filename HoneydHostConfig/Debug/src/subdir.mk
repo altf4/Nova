@@ -5,7 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/HoneydHostConfig.cpp \
-../src/NodeRandomizer.cpp \
+../src/NodeManager.cpp \
 ../src/Personality.cpp \
 ../src/PersonalityNode.cpp \
 ../src/PersonalityTable.cpp \
@@ -14,7 +14,7 @@ CPP_SRCS += \
 
 OBJS += \
 ./src/HoneydHostConfig.o \
-./src/NodeRandomizer.o \
+./src/NodeManager.o \
 ./src/Personality.o \
 ./src/PersonalityNode.o \
 ./src/PersonalityTable.o \
@@ -23,7 +23,7 @@ OBJS += \
 
 CPP_DEPS += \
 ./src/HoneydHostConfig.d \
-./src/NodeRandomizer.d \
+./src/NodeManager.d \
 ./src/Personality.d \
 ./src/PersonalityNode.d \
 ./src/PersonalityTable.d \

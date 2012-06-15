@@ -23,19 +23,15 @@ using namespace std;
 namespace Nova
 {
 
-NodeManager::NodeManager(HoneydConfiguration *hdconfig)
+NodeManager::NodeManager(PersonalityTree *persTree)
 {
-	if(hdconfig == NULL)
+	if(persTree != NULL)
 	{
-		m_hdconfig = new HoneydConfiguration();
-	}
-	else
-	{
-		m_hdconfig = hdconfig;
+		m_persTree = persTree;
 	}
 }
 
-vector<Node> NodeManager::NodeManager(profile *prof, int numNodes)
+vector<Node> NodeManager::GenerateNodesFromProfile(profile *prof, int numNodes)
 {
 	return vector<Node> {};
 }

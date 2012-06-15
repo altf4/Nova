@@ -16,10 +16,11 @@
 // Description :
 //============================================================================
 
-#include "PersonalityTree.h"
 
 #ifndef NODEMANAGER_H_
 #define NODEMANAGER_H_
+
+#include "PersonalityTree.h"
 
 namespace Nova
 {
@@ -55,14 +56,15 @@ public:
 	NodeManager(PersonalityTree * persTree);
 	~NodeManager();
 
+	PersonalityTree *m_persTree;
+
 private:
 
 	void GenerateProfileCounters();
 	void GenerateMacCounters();
 	void GeneratePortCounters();
-	void GenerateNodesFromProfile(profile *prof, int numNodes);
+	std::vector<Node> GenerateNodesFromProfile(profile *prof, int numNodes);
 
-	PersonalityTree *m_persTree;
 	int m_nodeCount;
 	int m_targetNodeCount;
 	std::vector<struct ProfileCounter> m_profileCounters;
