@@ -45,7 +45,11 @@ PersonalityTree::~PersonalityTree()
 {
 }
 
-HoneydConfiguration *PersonalityTree::GetHHConfig()
+PersonalityNode * PersonalityTree::GetRootNode()
+{
+	return &m_root;
+}
+HoneydConfiguration * PersonalityTree::GetHDConfig()
 {
 	return m_hdconfig;
 }
