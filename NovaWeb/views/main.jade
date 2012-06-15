@@ -78,11 +78,19 @@ block headerAdditions
     now.AllSuspectsCleared = function() {
       suspectGrid.store.fetch({onComplete: clearSuspects});
     }
+      
+    function pad(num) {
+        return ("0" + num).slice(-2);
+    }
 
     now.OnNewSuspect = function(suspect){
        if(!liveUpdate) {
          return;
        }
+
+      var d = new Date(suspect.GetLastPacketTime*1000);
+      var dString = pad(d.getUTCMonth()) + "/" + pad(d.getUTCDay()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds());
+      suspect.LastPacketString = dString;
       // This is probably a really bad way to do this...
       for (var i in suspect.GetFeatures) {  
         suspect[i] = suspect.GetFeatures[i];
@@ -128,8 +136,9 @@ block headerAdditions
 
     var enabledFeatures = String(#{enabledFeatures});
     var gridStructure = new Array();
-    gridStructure.push({name:"Address", field:"GetInAddr", width:"150px"});
-    gridStructure.push({name:"Classification", field:"GetClassification", width:"200px", formatter: classificationFormatter});
+    gridStructure.push({name:"Address", field:"GetInAddr", width:"125px"});
+    gridStructure.push({name:"Classification", field:"GetClassification", width:"150px", formatter: classificationFormatter});
+    gridStructure.push({name:"Last Seen", field:"LastPacketString", width: "100px"});
     gridStructure.push({name:"Hostile", field:"GetIsHostile"});
     if (enabledFeatures.charAt(0) == "1") gridStructure.push({name:"IP traffic distribution", field:"0", formatter: featureFormatter});
     if (enabledFeatures.charAt(1) == "1") gridStructure.push({name:"Port traffic distribution", field:"1", formatter: featureFormatter});
@@ -151,7 +160,8 @@ block headerAdditions
       store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
       sortInfo: -2,
       autoWidth: true,
-      structure: gridStructure
+      structure: gridStructure,
+      rowsPerPage: 20
     }, 
     "nova_suspects"
     );
