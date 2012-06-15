@@ -18,6 +18,7 @@
 
 #include "PersonalityTree.h"
 #include <boost/algorithm/string.hpp>
+#include "NodeRandomizer.h"
 
 using namespace std;
 
@@ -26,12 +27,12 @@ namespace Nova
 
 PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 {
-	hhconfig = new HoneydConfiguration();
+	m_hdconfig = new HoneydConfiguration();
 
 	m_root = PersonalityNode("default");
-	hhconfig->LoadAllTemplates();
-	m_profiles = &hhconfig->m_profiles;
-	m_scripts = ScriptTable(hhconfig->GetScriptTable());
+	m_hdconfig->LoadAllTemplates();
+	m_profiles = &m_hdconfig->m_profiles;
+	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 
 	m_scripts.PrintScriptsTable();
 
@@ -47,7 +48,7 @@ PersonalityTree::~PersonalityTree()
 
 HoneydConfiguration * PersonalityTree::GetHHConfig()
 {
-	return hhconfig;
+	return m_hdconfig;
 }
 
 void PersonalityTree::LoadTable(PersonalityTable *persTable)
@@ -60,7 +61,7 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	}
 	for(uint i = 0; i < m_root.m_children.size(); i++)
 	{
-		GenerateProfiles(m_root.m_children[i].second, &m_root, &hhconfig->m_profiles["default"], m_root.m_children[i].first);
+		GenerateProfiles(m_root.m_children[i].second, &m_root, &m_hdconfig->m_profiles["default"], m_root.m_children[i].first);
 	}
 }
 
@@ -87,7 +88,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	}
 	if(!node->m_redundant)
 	{
-		if(!hhconfig->AddProfile(&tempProf))
+		if(!m_hdconfig->AddProfile(&tempProf))
 		{
 			cout << "Error adding "<< tempProf.name << endl;
 			return;
@@ -96,7 +97,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		{
 			for(uint i = 0; i < node->m_children.size(); i++)
 			{
-				GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[tempProf.name], node->m_children[i].first);
+				GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[tempProf.name], node->m_children[i].first);
 			}
 		}
 	}
@@ -107,7 +108,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		stringstream ss;
 		string key = parentProfile->name + " " + profileName;
 		ss << i;
-		while(!hhconfig->RenameProfile(parentProfile->name, key))
+		while(!m_hdconfig->RenameProfile(parentProfile->name, key))
 		{
 			ss.str("");
 			ss << i;
@@ -115,7 +116,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		}
 		for(uint i = 0; i < node->m_children.size(); i++)
 		{
-			GenerateProfiles(node->m_children[i].second, node, &hhconfig->m_profiles[key], node->m_children[i].first);
+			GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[key], node->m_children[i].first);
 		}
 	}
 	else
@@ -246,18 +247,18 @@ void PersonalityTree::DebugPrintProfileTable()
 void PersonalityTree::ToXmlTemplate()
 {
 
-	vector<string> ret = hhconfig->GetProfileNames();
+	vector<string> ret = m_hdconfig->GetProfileNames();
 
 	AddAllPorts();
 
-	ret = hhconfig->GetProfileNames();
+	ret = m_hdconfig->GetProfileNames();
 
 	for(uint16_t i = 0; i < ret.size(); i++)
 	{
-		cout << "Profile after Clean: " << ret[i] << " has parent: " << hhconfig->GetProfile(ret[i])->parentProfile << endl;
+		cout << "Profile after Clean: " << ret[i] << " has parent: " << m_hdconfig->GetProfile(ret[i])->parentProfile << endl;
 	}
 
-	hhconfig->SaveAllTemplates();
+	m_hdconfig->SaveAllTemplates();
 }
 
 void PersonalityTree::AddAllPorts()
@@ -283,7 +284,7 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
 		pass.type = tokens[1];
 		pass.behavior = tokens[2];
 
-		hhconfig->AddPort(pass);
+		m_hdconfig->AddPort(pass);
 	}
 	for(uint16_t i = 0; i < node->m_children.size(); i++)
 	{
@@ -303,7 +304,7 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode * node)
 
 bool PersonalityTree::AddSubnet(subnet * add)
 {
-	return hhconfig->AddSubnet(add);
+	return m_hdconfig->AddSubnet(add);
 }
 
 }

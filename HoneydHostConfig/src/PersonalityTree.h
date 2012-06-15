@@ -74,7 +74,7 @@ private:
 
 	ProfileTable * m_profiles;
 
-	HoneydConfiguration * hhconfig;
+	HoneydConfiguration * m_hdconfig;
 
 	ScriptsTable m_scripts;
 
