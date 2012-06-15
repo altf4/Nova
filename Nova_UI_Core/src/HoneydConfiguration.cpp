@@ -484,22 +484,37 @@ bool HoneydConfiguration::LoadProfileChildren(string parent)
 			}
 
 
-			try {
+			try
+			{
 				ptr2 = &v.second.get_child("set");
 				LoadProfileSettings(ptr2, &prof);
-			} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
 
-			try {
+			};
+
+			try
+			{
 				ptr2 = &v.second.get_child("add");
 				LoadProfileServices(ptr2, &prof);
-			} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+
+			};
 
 			//Saves the profile
 			m_profiles[prof.name] = prof;
 
-			try {
+			try
+			{
 				LoadProfileChildren(prof.name);
-			} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+
+			};
 		}
 	}
 	catch(Nova::hashMapException &e)
@@ -539,12 +554,19 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 			{
 				s.osclass = v.second.get<std::string>("osclass");
 			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e){};
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+
+			};
+
 			try
 			{
 				s.service = v.second.get<std::string>("service");
 			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e){};
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+
+			};
 
 			s.path = v.second.get<std::string>("path");
 			m_scripts[s.name] = s;
@@ -947,12 +969,19 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 				p = m_profiles[n.pfile];
 
 				//Get mac if present
-				try {//Conditional: has "set" values
+				try //Conditional: has "set" values
+				{
 					//ptr2 = &v.second.get_child("MAC");
 					//pass 'set' subset and pointer to this profile
 					n.MAC = v.second.get<std::string>("MAC");
-				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-				try {//Conditional: has "set" values
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
+
+				};
+
+				try //Conditional: has "set" values
+				{
 
 					ptree nodePorts = v.second.get_child("profile.add");
 					LoadProfileServices(&nodePorts, &p);
@@ -962,7 +991,8 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 						n.ports.push_back(p.ports[i].first);
 					}
 
-				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 				if(!n.IP.compare(Config::Inst()->GetDoppelIp()))
 				{
@@ -1111,14 +1141,19 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 					ptr = &v.second.get_child("set");
 					//pass 'set' subset and pointer to this profile
 					LoadProfileSettings(ptr, &p);
-				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 				try //Conditional: has "add" values
 				{
 					ptr = &v.second.get_child("add");
 					//pass 'add' subset and pointer to this profile
 					LoadProfileServices(ptr, &p);
-				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
+
+				};
 
 				//Save the profile
 				m_profiles[p.name] = p;
@@ -1128,7 +1163,11 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 					//start recurisive descent down profile tree with this profile as the root
 					//pass subtree and pointer to parent
 					LoadProfileChildren(p.name);
-				} catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
+
+				};
 
 			}
 

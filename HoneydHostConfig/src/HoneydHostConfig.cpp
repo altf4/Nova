@@ -175,9 +175,9 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 						person->AddPort(port_key, port_service);
 						i++;
 					}
-					catch(exception &e)
+					catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 					{
-
+						cout << "Caught Exception : " << e.what() << endl;
 					}
 				}
 			}
@@ -211,10 +211,10 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 				}
 			}
 		}
-		catch(exception &e)
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			/*cout << "Caught Exception : " << e.what() << endl;
-			return PARSINGERROR;*/
+			cout << "Caught Exception : " << e.what() << endl;
+			//return PARSINGERROR;
 		}
 	}
 
@@ -327,15 +327,13 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> recv)
 			// contain enough data.
 			LoadNmap(file);
 		}
-		catch(exception &e)
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			/*cout << "Caught Exception : " << e.what() << endl;
-			return PARSINGERROR;*/
+			cout << "Caught Exception : " << e.what() << endl;
+			//return PARSINGERROR;
 		}
-
 		ss.str("");
 	}
-
 	return OKAY;
 }
 
