@@ -25,7 +25,7 @@
 //HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 typedef Nova::HashMap<std::string, uint16_t, std::tr1::hash<std::string>, eqstr > MAC_Table;
 
-//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
+//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count and an nmap service string pair
 typedef Nova::HashMap<std::string, std::pair<uint16_t, std::string>, std::tr1::hash<std::string>, eqstr > PortsTable;
 
 //HashMap of scripts; Key is nmap-style service name (i.e. "ssh", "http", "netbios-ssn", etc.), Value vector of pairs

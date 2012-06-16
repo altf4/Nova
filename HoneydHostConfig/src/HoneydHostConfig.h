@@ -43,7 +43,7 @@ void LoadNmap(const std::string &filename);
 // Puts the integer val into m, and shifts it
 // depending on the value of cond. Used for converting
 // a MAC address string into a uint for use with the MAC Vendor Db object.
-void Shift(u_char * m, uint cond, u_char val);
+void Shift(u_char *m, uint cond, u_char val);
 
 // Takes a <host> sub-ptree and parses it for the requisite information, placing said information
 // into a Personality object which then gets passed into the PersonalityTable object
@@ -52,10 +52,10 @@ void Shift(u_char * m, uint cond, u_char val);
 ErrCode ParseHost(boost::property_tree::ptree pt2);
 
 // Determines what interfaces are present, and the subnets that they're connected to
-//  ErrCode * errVar - ptr to an error code variable so that we can inspect it's value afterward
+//  ErrCode errVar - ptr to an error code variable so that we can inspect it's value afterward
 //   after if the vector is empty
 // Returns a vector containings strings of the subnet addresses
-std::vector<std::string> GetSubnetsToScan(ErrCode * errVar);
+std::vector<std::string> GetSubnetsToScan(ErrCode *errVar);
 
 // Prints out the subnets that're found during GetSubnetsToScan(errVar)
 //  vector<string> recv - vector of subnets found

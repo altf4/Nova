@@ -34,6 +34,7 @@ PersonalityNode::PersonalityNode(string key)
 	// get is accessing the empty key.
 	m_children.clear();
 	m_key = key;
+	m_osclass = "";
 	m_ports.set_empty_key("EMPTY");
 	m_vendors.set_empty_key("EMPTY");
 	m_ports.set_deleted_key("DELETED");

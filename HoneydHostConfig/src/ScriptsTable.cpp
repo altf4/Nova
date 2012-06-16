@@ -13,7 +13,10 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO
+// Description : Source file for the ScriptsTable class. This class will
+//               maintain a hashmap of services to <osclass, path-to-script>
+//               pairs that will be used to add scripts to ports if a script
+//               exists for that service and osclass.
 //============================================================================
 
 #include "ScriptsTable.h"
@@ -72,13 +75,17 @@ void ScriptsTable::PrintScriptsTable()
 		for(uint i = 0; i < it->second.size(); i++)
 		{
 			cout << "\tOS Class: " << it->second[i].first << endl;
-			cout << "\tPath to Script: " << it->second[i].second << endl;
+			cout << "\tName: " << it->second[i].second << endl;
 		}
 
 		cout << endl;
 	}
 }
 
+Scripts_Table ScriptsTable::GetScriptsTable()
+{
+	return m_scripts;
+}
 }
 
 

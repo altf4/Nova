@@ -51,8 +51,12 @@ vector<Subnet> subnetsToAdd;
 
 PersonalityTable personalities;
 
-void Nova::Shift(u_char * m, uint cond, u_char val)
+void Nova::Shift(u_char *m, uint cond, u_char val)
 {
+	if(m == NULL)
+	{
+		return;
+	}
 	if(cond % 3 == 0)
 	{
 		u_char b = val;
@@ -71,7 +75,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 	using boost::property_tree::ptree;
 
 	// Instantiate Personality object here, populate it from the code below
-	Personality * person = new Personality();
+	Personality *person = new Personality();
 
 	// For the personality table, increment the number of hosts found
 	// and decrement the number of hosts available, so at the end
@@ -140,7 +144,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 							}
 						}
 
-						VendorMacDb * vmd = new VendorMacDb();
+						VendorMacDb *vmd = new VendorMacDb();
 						vmd->LoadPrefixFile();
 
 						person->AddVendor(vmd->LookupVendor(passToVendor));
@@ -231,6 +235,14 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 		return NOMATCHEDPERSONALITY;
 	}
 
+
+	for(uint i = 0; i < person->m_personalityClass.size() - 1; i++)
+	{
+		person->m_osclass += person->m_personalityClass[i] + " | ";
+	}
+
+	person->m_osclass += person->m_personalityClass[person->m_personalityClass.size() - 1];
+
 	// Call AddHost() on the Personality object created at the beginning of this method
 	personalities.AddHost(person);
 
@@ -303,6 +315,8 @@ int main(int argc, char ** argv)
 
 	persTree.ToXmlTemplate();
 
+	persTree.DebugPrintProfileTable();
+
 	return errVar;
 }
 
@@ -349,12 +363,16 @@ void Nova::PrintRecv(vector<string> recv)
 	cout << endl;
 }
 
-vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
+vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar)
 {
-	struct ifaddrs * devices = NULL;
+	struct ifaddrs *devices = NULL;
 	ifaddrs *curIf = NULL;
 	stringstream ss;
 	vector<string> addresses;
+	if(errVar == NULL)
+	{
+		return addresses;
+	}
 	addresses.clear();
 	char host[NI_MAXHOST];
 	char bmhost[NI_MAXHOST];
