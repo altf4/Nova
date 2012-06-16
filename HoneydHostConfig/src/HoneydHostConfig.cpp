@@ -471,7 +471,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 
 			ss.str("");
 
-			add.vaddress = push;
+			add.m_address = push;
 			add.m_mask = string(inet_ntoa(bitmask));
 			add.m_maskBits = i;
 			add.m_base = basestruct.s_addr;

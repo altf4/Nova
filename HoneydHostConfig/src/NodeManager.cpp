@@ -59,7 +59,7 @@ void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
 
 		if(m_hdconfig->GetProfile(parent->m_key) == NULL)
 		{
-			LOG(ERROR, "Couldn't retrieve expected profile: " + parent->m_key, "");
+			LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + parent->m_key, "");
 			return;
 		}
 		pCounter.m_profile = *m_hdconfig->GetProfile(parent->m_key);
@@ -92,7 +92,7 @@ PortCounter NodeManager::GeneratePortCounter(string portName, double dist_val)
 	return ret;
 }
 
-vector<Node> NodeManager::GenerateNodesFromProfile(profile *prof, int numNodes)
+vector<Node> NodeManager::GenerateNodesFromProfile(NodeProfile *prof, int numNodes)
 {
 	return vector<Node> {};
 }

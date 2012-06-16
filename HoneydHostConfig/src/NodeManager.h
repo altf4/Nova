@@ -41,7 +41,7 @@ struct MacCounter
 
 struct ProfileCounter
 {
-	Nova::profile m_profile;
+	Nova::NodeProfile m_profile;
 	double m_maxCount;
 	double m_minCount;
 	std::vector<struct PortCounter> m_portCounters;
@@ -67,7 +67,7 @@ private:
 	PortCounter GeneratePortCounter(std::string portName, double dist_val);
 
 	void RecursiveGenProfileCounter(PersonalityNode *parent);
-	std::vector<Node> GenerateNodesFromProfile(profile *prof, int numNodes);
+	std::vector<Node> GenerateNodesFromProfile(NodeProfile *prof, int numNodes);
 
 	unsigned int m_nodeCount;
 	unsigned int m_targetNodeCount;

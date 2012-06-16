@@ -99,31 +99,31 @@ void PersonalityNode::GenerateDistributions()
 	}
 }
 
-profile PersonalityNode::GenerateProfile(profile* parentProfile)
+NodeProfile PersonalityNode::GenerateProfile(NodeProfile* parentProfile)
 {
-	profile push;
+	NodeProfile push;
 
-	push.name = m_key;
-	push.parentProfile = parentProfile->name;
+	push.m_name = m_key;
+	push.m_parentProfile = parentProfile->m_name;
 
 	m_redundant = true;
 
-	for(uint i = 0; i < (sizeof(push.inherited)/sizeof(bool)); i++)
+	for(uint i = 0; i < (sizeof(push.m_inherited)/sizeof(bool)); i++)
 	{
-		push.inherited[i] = true;
+		push.m_inherited[i] = true;
 	}
 
 	if(m_children.size() == 0)
 	{
-		push.personality = m_key;
-		push.inherited[PERSONALITY] = false;
+		push.m_personality = m_key;
+		push.m_inherited[PERSONALITY] = false;
 		m_redundant = false;
 	}
 
-	if((m_vendor_dist.size() == 1) && m_vendor_dist[0].first.compare(parentProfile->ethernet))
+	if((m_vendor_dist.size() == 1) && m_vendor_dist[0].first.compare(parentProfile->m_ethernet))
 	{
-		push.ethernet = m_vendor_dist[0].first;
-		push.inherited[ETHERNET] = false;
+		push.m_ethernet = m_vendor_dist[0].first;
+		push.m_inherited[ETHERNET] = false;
 		m_redundant = false;
 	}
 	// Go through every element of the ports distribution
@@ -136,14 +136,14 @@ profile PersonalityNode::GenerateProfile(profile* parentProfile)
 			pair<string, bool> push_port;
 			push_port.first = m_ports_dist[i].first;
 			push_port.second = false;
-			for(uint16_t i = 0; i < parentProfile->ports.size(); i++)
+			for(uint16_t i = 0; i < parentProfile->m_ports.size(); i++)
 			{
-				if(!parentProfile->ports[i].first.compare(push_port.first))
+				if(!parentProfile->m_ports[i].first.compare(push_port.first))
 				{
 					push_port.second = true;
 				}
 			}
-			push.ports.push_back(push_port);
+			push.m_ports.push_back(push_port);
 			if(!push_port.second)
 			{
 				m_redundant = false;

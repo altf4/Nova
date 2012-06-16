@@ -56,7 +56,7 @@ public:
 
 	void GenerateDistributions();
 
-	profile GenerateProfile(profile *parentProfile);
+	NodeProfile GenerateProfile(NodeProfile *parentProfile);
 };
 
 }

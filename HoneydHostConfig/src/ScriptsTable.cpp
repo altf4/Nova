@@ -40,9 +40,9 @@ ScriptsTable::ScriptsTable(ScriptTable pull)
 	for(ScriptTable::iterator it = pull.begin(); it != pull.end(); it++)
 	{
 			pair<string, string> add;
-			add.first = it->second.osclass;
-			add.second = it->second.path;
-			m_scripts[it->second.service].push_back(add);
+			add.first = it->second.m_osclass;
+			add.second = it->second.m_path;
+			m_scripts[it->second.m_service].push_back(add);
 	}
 }
 
@@ -56,9 +56,9 @@ void ScriptsTable::PopulateScriptsTable(ScriptTable pull)
 	for(ScriptTable::iterator it = pull.begin(); it != pull.end(); it++)
 	{
 			pair<string, string> add;
-			add.first = it->second.osclass;
-			add.second = it->second.path;
-			m_scripts[it->second.service].push_back(add);
+			add.first = it->second.m_osclass;
+			add.second = it->second.m_path;
+			m_scripts[it->second.m_service].push_back(add);
 	}
 }
 

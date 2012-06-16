@@ -222,6 +222,7 @@ struct Node
 	std::string m_pfile;
 	std::vector<std::string> m_ports;
 	std::string m_IP;
+	std::string m_MAC;
 	in_addr_t m_realIP;
 	bool m_enabled;
 	boost::property_tree::ptree m_tree;

@@ -68,12 +68,12 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	}
 }
 
-void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, profile *parentProfile, string profileName)
+void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, string profileName)
 {
 	//Create profile object
 	node->GenerateDistributions();
-	profile tempProf = node->GenerateProfile(parentProfile);
-	if(m_profiles->find(tempProf.name) != m_profiles->end())
+	NodeProfile tempProf = node->GenerateProfile(parentProfile);
+	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
 		uint16_t i = 1;
@@ -87,20 +87,20 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 			ss << profileName << i;
 			key = ss.str();
 		}
-		tempProf.name = key;
+		tempProf.m_name = key;
 	}
 	if(!node->m_redundant)
 	{
 		if(!m_hdconfig->AddProfile(&tempProf))
 		{
-			cout << "Error adding "<< tempProf.name << endl;
+			cout << "Error adding "<< tempProf.m_name << endl;
 			return;
 		}
 		else
 		{
 			for(uint i = 0; i < node->m_children.size(); i++)
 			{
-				GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[tempProf.name], node->m_children[i].first);
+				GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[tempProf.m_name], node->m_children[i].first);
 			}
 		}
 	}
@@ -109,13 +109,13 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		// Probably not the right way of going about this
 		uint16_t i = 1;
 		stringstream ss;
-		string key = parentProfile->name + " " + profileName;
+		string key = parentProfile->m_name + " " + profileName;
 		ss << i;
-		while(!m_hdconfig->RenameProfile(parentProfile->name, key))
+		while(!m_hdconfig->RenameProfile(parentProfile->m_name, key))
 		{
 			ss.str("");
 			ss << i;
-			key = parentProfile->name + " " + profileName + ss.str();
+			key = parentProfile->m_name + " " + profileName + ss.str();
 		}
 		for(uint i = 0; i < node->m_children.size(); i++)
 		{
@@ -258,7 +258,7 @@ void PersonalityTree::ToXmlTemplate()
 
 	for(uint16_t i = 0; i < ret.size(); i++)
 	{
-		cout << "Profile after Clean: " << ret[i] << " has parent: " << m_hdconfig->GetProfile(ret[i])->parentProfile << endl;
+		cout << "Profile after Clean: " << ret[i] << " has parent: " << m_hdconfig->GetProfile(ret[i])->m_parentProfile << endl;
 	}
 
 	m_hdconfig->SaveAllTemplates();
