@@ -73,7 +73,7 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 //Returns: the port name if successful and an empty string if unsuccessful
 string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, string scriptName, string service)
 {
-	port pr;
+	Port pr;
 	//Check the validity and assign the port number
 	if(!portNum)
 	{
@@ -82,16 +82,16 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	}
 	stringstream ss;
 	ss << portNum;
-	pr.portNum = ss.str();
+	pr.m_portNum = ss.str();
 
 	//Assign the port type (UDP or TCP)
 	if(isTCP)
 	{
-		pr.type = "TCP";
+		pr.m_type = "TCP";
 	}
 	else
 	{
-		pr.type = "UDP";
+		pr.m_type = "UDP";
 	}
 
 	//Check and assign the port behavior
@@ -99,20 +99,20 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	{
 		case BLOCK:
 		{
-			pr.behavior = "block";
+			pr.m_behavior = "block";
 			break;
 		}
 		case OPEN:
 		{
-			pr.behavior = "open";
+			pr.m_behavior = "open";
 			break;
 		}
 		case RESET:
 		{
-			pr.behavior = "reset";
-			if(!pr.type.compare("UDP"))
+			pr.m_behavior = "reset";
+			if(!pr.m_type.compare("UDP"))
 			{
-				pr.behavior = "block";
+				pr.m_behavior = "block";
 			}
 			break;
 		}
@@ -124,8 +124,8 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 				LOG(ERROR, "Cannot create port: specified script "+ scriptName +" does not exist.", "");
 				return "";
 			}
-			pr.behavior = "script";
-			pr.scriptName = scriptName;
+			pr.m_behavior = "script";
+			pr.m_scriptName = scriptName;
 			break;
 		}
 		default:
@@ -135,40 +135,40 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 		}
 	}
 
-	pr.service = service;
+	pr.m_service = service;
 
 	//	Creates the ports unique identifier these names won't collide unless the port is the same
-	if(!pr.behavior.compare("script"))
+	if(!pr.m_behavior.compare("script"))
 	{
-		pr.portName = pr.portNum + "_" + pr.type + "_" + pr.scriptName;
+		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_scriptName;
 	}
 	else
 	{
-		pr.portName = pr.portNum + "_" + pr.type + "_" + pr.behavior;
+		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_behavior;
 	}
 
 	//Checks if the port already exists
-	if(m_ports.find(pr.portName) != m_ports.end())
+	if(m_ports.find(pr.m_portName) != m_ports.end())
 	{
-		LOG(DEBUG, "Cannot create port: Specified port " + pr.portName + " already exists.", "");
-		return pr.portName;
+		LOG(DEBUG, "Cannot create port: Specified port " + pr.m_portName + " already exists.", "");
+		return pr.m_portName;
 	}
 
 	//Adds the port into the table
-	m_ports[pr.portName] = pr;
-	return pr.portName;
+	m_ports[pr.m_portName] = pr;
+	return pr.m_portName;
 }
 
-std::string HoneydConfiguration::AddPort(port pr)
+std::string HoneydConfiguration::AddPort(Port pr)
 {
-	if(m_ports.find(pr.portName) != m_ports.end())
+	if(m_ports.find(pr.m_portName) != m_ports.end())
 	{
-		return pr.portName;
+		return pr.m_portName;
 	}
 
-	m_ports[pr.portName] = pr;
+	m_ports[pr.m_portName] = pr;
 
-	return pr.portName;
+	return pr.m_portName;
 }
 
 //Calls all load functions
@@ -201,34 +201,34 @@ bool HoneydConfiguration::LoadPortsTemplate()
 
 		BOOST_FOREACH(ptree::value_type &v, m_portTree.get_child("ports"))
 		{
-			port p;
-			p.tree = v.second;
+			Port p;
+			p.m_tree = v.second;
 			//Required xml entries
-			p.portName = v.second.get<std::string>("name");
+			p.m_portName = v.second.get<std::string>("name");
 
-			if(!p.portName.compare(""))
+			if(!p.m_portName.compare(""))
 			{
 				LOG(ERROR, "Problem loading honeyd XML files.", "");
 				continue;
 			}
 
-			p.portNum = v.second.get<std::string>("number");
-			p.type = v.second.get<std::string>("type");
-			p.service = v.second.get<std::string>("service");
-			p.behavior = v.second.get<std::string>("behavior");
+			p.m_portNum = v.second.get<std::string>("number");
+			p.m_type = v.second.get<std::string>("type");
+			p.m_service = v.second.get<std::string>("service");
+			p.m_behavior = v.second.get<std::string>("behavior");
 
 			//If this port uses a script, find and assign it.
-			if(!p.behavior.compare("script") || !p.behavior.compare("internal"))
+			if(!p.m_behavior.compare("script") || !p.m_behavior.compare("internal"))
 			{
-				p.scriptName = v.second.get<std::string>("script");
+				p.m_scriptName = v.second.get<std::string>("script");
 			}
 			//If the port works as a proxy, find destination
-			else if(!p.behavior.compare("proxy"))
+			else if(!p.m_behavior.compare("proxy"))
 			{
-				p.proxyIP = v.second.get<std::string>("IP");
-				p.proxyPort = v.second.get<std::string>("Port");
+				p.m_proxyIP = v.second.get<std::string>("IP");
+				p.m_proxyPort = v.second.get<std::string>("Port");
 			}
-			m_ports[p.portName] = p;
+			m_ports[p.m_portName] = p;
 		}
 	}
 	catch(Nova::hashMapException &e)
@@ -376,7 +376,7 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *ptr, profile *p)
 bool HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 {
 	string prefix;
-	port *prt;
+	Port *prt;
 
 	try
 	{
@@ -399,14 +399,14 @@ bool HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 					for(uint i = 0; i < p->ports.size(); i++)
 					{
 						//Erase inherited port if a conflict is found
-						if(!prt->portNum.compare(m_ports[p->ports[i].first].portNum) && !prt->type.compare(m_ports[p->ports[i].first].type))
+						if(!prt->m_portNum.compare(m_ports[p->ports[i].first].portNum) && !prt->m_type.compare(m_ports[p->ports[i].first].type))
 						{
 							p->ports.erase(p->ports.begin()+i);
 						}
 					}
 					//Add specified port
 					pair<string, bool> portPair;
-					portPair.first = prt->portName;
+					portPair.first = prt->m_portName;
 					portPair.second = false;
 					if(!p->ports.size())
 					{
@@ -417,8 +417,8 @@ bool HoneydConfiguration::LoadProfileServices(ptree *ptr, profile *p)
 						uint i = 0;
 						for(i = 0; i < p->ports.size(); i++)
 						{
-							port *temp = &m_ports[p->ports[i].first];
-							if((atoi(temp->portNum.c_str())) < (atoi(prt->portNum.c_str())))
+							Port *temp = &m_ports[p->ports[i].first];
+							if((atoi(temp->m_portNum.c_str())) < (atoi(prt->m_portNum.c_str())))
 							{
 								continue;
 							}
@@ -539,12 +539,12 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 
 		BOOST_FOREACH(ptree::value_type &v, m_scriptTree.get_child("scripts"))
 		{
-			script s;
-			s.tree = v.second;
+			Script s;
+			s.m_tree = v.second;
 			//Each script consists of a name and path to that script
-			s.name = v.second.get<std::string>("name");
+			s.m_name = v.second.get<std::string>("name");
 
-			if(!s.name.compare(""))
+			if(!s.m_name.compare(""))
 			{
 				LOG(ERROR, "Problem loading honeyd XML files.","");
 				continue;
@@ -552,7 +552,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 
 			try
 			{
-				s.osclass = v.second.get<std::string>("osclass");
+				s.m_osclass = v.second.get<std::string>("osclass");
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
@@ -561,15 +561,15 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 
 			try
 			{
-				s.service = v.second.get<std::string>("service");
+				s.m_service = v.second.get<std::string>("service");
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
 
 			};
 
-			s.path = v.second.get<std::string>("path");
-			m_scripts[s.name] = s;
+			s.m_path = v.second.get<std::string>("path");
+			m_scripts[s.m_name] = s;
 		}
 	}
 	catch(Nova::hashMapException &e)
@@ -605,11 +605,11 @@ bool HoneydConfiguration::SaveAllTemplates()
 	m_scriptTree.clear();
 	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
 	{
-		pt = it->second.tree;
-		pt.put<std::string>("name", it->second.name);
-		pt.put<std::string>("service", it->second.service);
-		pt.put<std::string>("osclass", it->second.osclass);
-		pt.put<std::string>("path", it->second.path);
+		pt = it->second.m_tree;
+		pt.put<std::string>("name", it->second.m_name);
+		pt.put<std::string>("service", it->second.m_service);
+		pt.put<std::string>("osclass", it->second.m_osclass);
+		pt.put<std::string>("path", it->second.m_path);
 		m_scriptTree.add_child("scripts.script", pt);
 	}
 
@@ -617,22 +617,22 @@ bool HoneydConfiguration::SaveAllTemplates()
 	m_portTree.clear();
 	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
-		pt = it->second.tree;
-		pt.put<std::string>("name", it->second.portName);
-		pt.put<std::string>("number", it->second.portNum);
-		pt.put<std::string>("type", it->second.type);
-		pt.put<std::string>("service", it->second.service);
-		pt.put<std::string>("behavior", it->second.behavior);
+		pt = it->second.m_tree;
+		pt.put<std::string>("name", it->second.m_portName);
+		pt.put<std::string>("number", it->second.m_portNum);
+		pt.put<std::string>("type", it->second.m_type);
+		pt.put<std::string>("service", it->second.m_service);
+		pt.put<std::string>("behavior", it->second.m_behavior);
 		//If this port uses a script, save it.
-		if(!it->second.behavior.compare("script") || !it->second.behavior.compare("internal"))
+		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("internal"))
 		{
-			pt.put<std::string>("script", it->second.scriptName);
+			pt.put<std::string>("script", it->second.m_scriptName);
 		}
 		//If the port works as a proxy, save destination
-		else if(!it->second.behavior.compare("proxy"))
+		else if(!it->second.m_behavior.compare("proxy"))
 		{
-			pt.put<std::string>("IP", it->second.proxyIP);
-			pt.put<std::string>("Port", it->second.proxyPort);
+			pt.put<std::string>("IP", it->second.m_proxyIP);
+			pt.put<std::string>("Port", it->second.m_proxyPort);
 		}
 		m_portTree.add_child("ports.port", pt);
 	}
@@ -640,22 +640,22 @@ bool HoneydConfiguration::SaveAllTemplates()
 	m_subnetTree.clear();
 	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
-		pt = it->second.tree;
+		pt = it->second.m_tree;
 
 		//TODO assumes subnet is interface, need to discover and handle if virtual
-		pt.put<std::string>("name", it->second.name);
-		pt.put<bool>("enabled",it->second.enabled);
-		pt.put<bool>("isReal", it->second.isRealDevice);
+		pt.put<std::string>("name", it->second.m_name);
+		pt.put<bool>("enabled",it->second.m_enabled);
+		pt.put<bool>("isReal", it->second.m_isRealDevice);
 
 		//Remove /## format mask from the address then put it in the XML.
 		stringstream ss;
-		ss << "/" << it->second.maskBits;
+		ss << "/" << it->second.m_maskBits;
 		int i = ss.str().size();
-		string temp = it->second.address.substr(0,(it->second.address.size()-i));
+		string temp = it->second.vaddress.substr(0,(it->second.vaddress.size()-i));
 		pt.put<std::string>("IP", temp);
 
 		//Gets the mask from mask bits then put it in XML
-		in_addr_t mask = ::pow(2, 32-it->second.maskBits) - 1;
+		in_addr_t mask = ::pow(2, 32-it->second.m_maskBits) - 1;
 		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
 		mask = ~mask; //After getting the inverse of this we have the mask in host addr form.
 		//Convert to network order, put in in_addr struct
@@ -671,25 +671,25 @@ bool HoneydConfiguration::SaveAllTemplates()
 	m_nodesTree.clear();
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		pt = it->second.tree;
+		pt = it->second.m_tree;
 
 		// No need to save names besides the doppel, we can derive them
-		if(it->second.name == "Doppelganger")
+		if(it->second.m_name == "Doppelganger")
 		{
 			// Make sure the IP reflects whatever is being used right now
-			it->second.IP = Config::Inst()->GetDoppelIp();
-			pt.put<std::string>("name", it->second.name);
+			it->second.m_IP = Config::Inst()->GetDoppelIp();
+			pt.put<std::string>("name", it->second.m_name);
 		}
 
 		//Required xml entires
-		pt.put<std::string>("interface", it->second.interface);
-		pt.put<std::string>("IP", it->second.IP);
-		pt.put<bool>("enabled", it->second.enabled);
-		pt.put<std::string>("MAC", it->second.MAC);
-		pt.put<std::string>("profile.name", it->second.pfile);
-		for(uint i = 0; i < it->second.ports.size(); i++)
+		pt.put<std::string>("interface", it->second.m_interface);
+		pt.put<std::string>("IP", it->second.m_IP);
+		pt.put<bool>("enabled", it->second.m_enabled);
+		pt.put<std::string>("MAC", it->second.m_MAC);
+		pt.put<std::string>("profile.name", it->second.m_pfile);
+		for(uint i = 0; i < it->second.m_ports.size(); i++)
 		{
-			pt.put<std::string>("profile.add.ports.port", it->second.ports[i]);
+			pt.put<std::string>("profile.add.ports.port", it->second.m_ports[i]);
 		}
 		m_nodesTree.add_child("node",pt);
 	}
@@ -707,9 +707,9 @@ bool HoneydConfiguration::SaveAllTemplates()
 	m_profileTree.clear();
 	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if(it->second.parentProfile == "")
+		if(it->second.m_parentProfile == "")
 		{
-			pt = it->second.tree;
+			pt = it->second.m_tree;
 			m_profileTree.add_child("profiles.profile", pt);
 		}
 	}
@@ -732,7 +732,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if(!it->second.parentProfile.compare(""))
+		if(!it->second.m_parentProfile.compare(""))
 		{
 			string pString = ProfileToString(&it->second);
 			out << pString;
@@ -748,7 +748,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			bool parentFound = false;
 			for (uint i = 0; i < profilesParsed.size(); i++)
 			{
-				if(!it->second.parentProfile.compare(profilesParsed[i]))
+				if(!it->second.m_parentProfile.compare(profilesParsed[i]))
 				{
 					parentFound = true;
 					continue;
@@ -775,29 +775,29 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	for (NodeTable::iterator it = m_nodes.begin(); (it != m_nodes.end()) && (m_nodeProfileIndex < (uint)(~0)); it++)
 	{
 		m_nodeProfileIndex++;
-		if(!it->second.enabled)
+		if(!it->second.m_enabled)
 		{
 			continue;
 		}
 		//We write the dopp regardless of whether or not it is enabled so that it can be toggled during runtime.
-		else if(!it->second.name.compare("Doppelganger"))
+		else if(!it->second.m_name.compare("Doppelganger"))
 		{
-			string pString = DoppProfileToString(&m_profiles[it->second.pfile]);
+			string pString = DoppProfileToString(&m_profiles[it->second.m_pfile]);
 			out << endl << pString;
-			out << "bind " << it->second.IP << " DoppelgangerReservedTemplate" << endl << endl;
+			out << "bind " << it->second.m_IP << " DoppelgangerReservedTemplate" << endl << endl;
 			//Use configured or discovered loopback
 		}
 		else
 		{
 			//Clone a custom profile for a node
-			out << "clone " << it->second.pfile << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
+			out << "clone " << it->second.m_pfile << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
 
 			//Add any custom port settings
-			for(uint i = 0; i < it->second.ports.size(); i++)
+			for(uint i = 0; i < it->second.m_ports.size(); i++)
 			{
-				port prt = m_ports[it->second.ports[i]];
+				Port prt = m_ports[it->second.m_ports[i]];
 				out << "add " << "CustomNodeProfile-" << m_nodeProfileIndex << " ";
-				if(!prt.type.compare("TCP"))
+				if(!prt.m_type.compare("TCP"))
 				{
 					out << " tcp port ";
 				}
@@ -805,11 +805,11 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 				{
 					out << " udp port ";
 				}
-				out << prt.portNum << " ";
+				out << prt.m_portNum << " ";
 
-				if(!(prt.behavior.compare("script")))
+				if(!(prt.m_behavior.compare("script")))
 				{
-					string scriptName = prt.scriptName;
+					string scriptName = prt.m_scriptName;
 
 					if(m_scripts[scriptName].path.compare(""))
 					{
@@ -822,27 +822,27 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 				}
 				else
 				{
-					out << prt.behavior << endl;
+					out << prt.m_behavior << endl;
 				}
 			}
 
 			// No IP address, use DHCP
-			if(it->second.IP == "DHCP" && it->second.MAC == "RANDOM")
+			if(it->second.m_IP == "DHCP" && it->second.m_MAC == "RANDOM")
 			{
-				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.interface << endl;
+				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << endl;
 			}
-			else if(it->second.IP == "DHCP" && it->second.MAC != "RANDOM")
+			else if(it->second.m_IP == "DHCP" && it->second.m_MAC != "RANDOM")
 			{
-				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.interface << " ethernet \"" << it->second.MAC << "\"" << endl;
+				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << " ethernet \"" << it->second.m_MAC << "\"" << endl;
 			}
-			else if(it->second.IP != "DHCP" && it->second.MAC == "RANDOM")
+			else if(it->second.m_IP != "DHCP" && it->second.m_MAC == "RANDOM")
 			{
-				out << "bind " << it->second.IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
+				out << "bind " << it->second.m_IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
 			}
-			else if(it->second.IP != "DHCP" && it->second.MAC != "RANDOM")
+			else if(it->second.m_IP != "DHCP" && it->second.m_MAC != "RANDOM")
 			{
-				out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex << " ethernet \"" << it->second.MAC << "\"" << endl;
-				out << "bind " << it->second.IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << it->second.IP << endl;
+				out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex << " ethernet \"" << it->second.m_MAC << "\"" << endl;
+				out << "bind " << it->second.m_IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << it->second.m_IP << endl;
 			}
 		}
 	}
@@ -864,31 +864,31 @@ bool HoneydConfiguration::LoadSubnets(ptree *ptr)
 			//If real interface
 			if(!string(v.first.data()).compare("interface"))
 			{
-				subnet sub;
-				sub.tree = v.second;
-				sub.isRealDevice =  v.second.get<bool>("isReal");
+				Subnet sub;
+				sub.m_tree = v.second;
+				sub.m_isRealDevice =  v.second.get<bool>("isReal");
 				//Extract the data
-				sub.name = v.second.get<std::string>("name");
-				sub.address = v.second.get<std::string>("IP");
-				sub.mask = v.second.get<std::string>("mask");
-				sub.enabled = v.second.get<bool>("enabled");
+				sub.m_name = v.second.get<std::string>("name");
+				sub.vaddress = v.second.get<std::string>("IP");
+				sub.m_mask = v.second.get<std::string>("mask");
+				sub.m_enabled = v.second.get<bool>("enabled");
 
 				//Gets the IP address in uint32 form
-				in_addr_t baseTemp = ntohl(inet_addr(sub.address.c_str()));
+				in_addr_t baseTemp = ntohl(inet_addr(sub.vaddress.c_str()));
 
 				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
-				in_addr_t maskTemp = ntohl(inet_addr(sub.mask.c_str()));
-				sub.base = (baseTemp & maskTemp);
+				in_addr_t maskTemp = ntohl(inet_addr(sub.m_mask.c_str()));
+				sub.m_base = (baseTemp & maskTemp);
 				//Get the number of bits in the mask
-				sub.maskBits = GetMaskBits(maskTemp);
+				sub.m_maskBits = GetMaskBits(maskTemp);
 				//Adding the binary inversion of the mask gets the highest usable IP
-				sub.max = sub.base + ~maskTemp;
+				sub.m_max = sub.m_base + ~maskTemp;
 				stringstream ss;
-				ss << sub.address << "/" << sub.maskBits;
-				sub.address = ss.str();
+				ss << sub.vaddress << "/" << sub.m_maskBits;
+				sub.vaddress = ss.str();
 
 				//Save subnet
-				m_subnets[sub.name] = sub;
+				m_subnets[sub.m_name] = sub;
 			}
 			//If virtual honeyd subnet
 			else if(!string(v.first.data()).compare("virtual"))
@@ -953,27 +953,27 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 				uint j = 0;
 				j = ~j; // 2^32-1
 
-				n.tree = v.second;
+				n.m_tree = v.second;
 				//Required xml entires
-				n.interface = v.second.get<std::string>("interface");
-				n.IP = v.second.get<std::string>("IP");
-				n.enabled = v.second.get<bool>("enabled");
-				n.pfile = v.second.get<std::string>("profile.name");
+				n.m_interface = v.second.get<std::string>("interface");
+				n.m_IP = v.second.get<std::string>("IP");
+				n.m_enabled = v.second.get<bool>("enabled");
+				n.m_pfile = v.second.get<std::string>("profile.name");
 
-				if(!n.pfile.compare(""))
+				if(!n.m_pfile.compare(""))
 				{
 					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
 				}
 
-				p = m_profiles[n.pfile];
+				p = m_profiles[n.m_pfile];
 
 				//Get mac if present
 				try //Conditional: has "set" values
 				{
 					//ptr2 = &v.second.get_child("MAC");
 					//pass 'set' subset and pointer to this profile
-					n.MAC = v.second.get<std::string>("MAC");
+					n.m_MAC = v.second.get<std::string>("MAC");
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 				{
@@ -988,72 +988,72 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 
 					for(uint i = 0; i < p.ports.size(); i++)
 					{
-						n.ports.push_back(p.ports[i].first);
+						n.m_ports.push_back(p.ports[i].first);
 					}
 
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
-				if(!n.IP.compare(Config::Inst()->GetDoppelIp()))
+				if(!n.m_IP.compare(Config::Inst()->GetDoppelIp()))
 				{
-					n.name = "Doppelganger";
-					n.sub = n.interface;
-					n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
+					n.m_name = "Doppelganger";
+					n.m_sub = n.m_interface;
+					n.m_realIP = htonl(inet_addr(n.m_IP.c_str())); //convert ip to uint32
 					//save the node in the table
-					m_nodes[n.name] = n;
+					m_nodes[n.m_name] = n;
 
 					//Put address of saved node in subnet's list of nodes.
-					m_subnets[m_nodes[n.name].sub].nodes.push_back(n.name);
+					m_subnets[m_nodes[n.m_name].m_sub].nodes.push_back(n.m_name);
 				}
 				else
 				{
-					n.name = n.IP + " - " + n.MAC;
+					n.m_name = n.m_IP + " - " + n.m_MAC;
 
-					if(n.name == "DHCP - RANDOM")
+					if(n.m_name == "DHCP - RANDOM")
 					{
 						//Finds a unique identifier
 						uint i = 1;
-						while((m_nodes.keyExists(n.name)) && (i < j))
+						while((m_nodes.keyExists(n.m_name)) && (i < j))
 						{
 							i++;
 							ss.str("");
 							ss << "DHCP - RANDOM(" << i << ")";
-							n.name = ss.str();
+							n.m_name = ss.str();
 						}
 					}
 
-					if(n.IP != "DHCP")
+					if(n.m_IP != "DHCP")
 					{
-						n.realIP = htonl(inet_addr(n.IP.c_str())); //convert ip to uint32
-						n.sub = FindSubnet(n.realIP);
+						n.m_realIP = htonl(inet_addr(n.m_IP.c_str())); //convert ip to uint32
+						n.m_sub = FindSubnet(n.m_realIP);
 						//If we have a subnet and node is unique
-						if(n.sub != "")
+						if(n.m_sub != "")
 						{
 							//Put address of saved node in subnet's list of nodes.
-							m_subnets[n.sub].nodes.push_back(n.name);
+							m_subnets[n.m_sub].nodes.push_back(n.m_name);
 						}
 						//If no subnet found, can't use node unless it's doppelganger.
 						else
 						{
-							LOG(ERROR, "Node at IP: "+ n.IP+"is outside all valid subnet ranges.", "");
+							LOG(ERROR, "Node at IP: "+ n.m_IP+"is outside all valid subnet ranges.", "");
 						}
 					}
 					else
 					{
-						n.sub = n.interface; //TODO virtual subnets will need to be handled when implemented
+						n.m_sub = n.m_interface; //TODO virtual subnets will need to be handled when implemented
 						// If no valid subnet/interface found
-						if(!n.sub.compare(""))
+						if(!n.m_sub.compare(""))
 						{
-							LOG(ERROR, "DHCP Enabled Node with MAC: "+n.name+" is unable to resolve it's interface.","");
+							LOG(ERROR, "DHCP Enabled Node with MAC: "+n.m_name+" is unable to resolve it's interface.","");
 							continue;
 						}
 
 						//Put address of saved node in subnet's list of nodes.
-						m_subnets[n.sub].nodes.push_back(n.name);
+						m_subnets[n.m_sub].nodes.push_back(n.m_name);
 					}
 				}
 
-				if(!n.name.compare(""))
+				if(!n.m_name.compare(""))
 				{
 					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
@@ -1061,7 +1061,7 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 				else
 				{
 					//save the node in the table
-					m_nodes[n.name] = n;
+					m_nodes[n.m_name] = n;
 				}
 			}
 			else
@@ -1087,14 +1087,14 @@ string HoneydConfiguration::FindSubnet(in_addr_t ip)
 	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
 		//If node falls outside a subnets range skip it
-		if((ip < it->second.base) || (ip > it->second.max))
+		if((ip < it->second.m_base) || (ip > it->second.m_max))
 		{
 			continue;
 		}
 		//If this is the smallest range
-		if(it->second.maskBits > max)
+		if(it->second.m_maskBits > max)
 		{
-			subnet = it->second.name;
+			subnet = it->second.m_name;
 		}
 	}
 
@@ -1343,9 +1343,9 @@ std::vector<std::string> HoneydConfiguration::GetProfileChildren(std::string par
 
 	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if(it->second.parentProfile == parent)
+		if(it->second.m_parentProfile == parent)
 		{
-			childProfiles.push_back(it->second.name);
+			childProfiles.push_back(it->second.m_name);
 		}
 	}
 
@@ -1358,7 +1358,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 
 	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		childProfiles.push_back(it->second.name);
+		childProfiles.push_back(it->second.m_name);
 	}
 
 	return childProfiles;
@@ -1378,11 +1378,11 @@ Nova::profile *HoneydConfiguration::GetProfile(std::string profileName)
 	}
 }
 
-Nova::port *HoneydConfiguration::GetPort(std::string portName)
+Nova::Port *HoneydConfiguration::GetPort(std::string portName)
 {
 	if(m_ports.keyExists(portName))
 	{
-		port *p = new port();
+		Port *p = new Port();
 		*p = m_ports[portName];
 		return p;
 	}
@@ -1395,7 +1395,7 @@ std::vector<std::string> HoneydConfiguration::GetNodeNames()
 
 	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		childnodes.push_back(it->second.name);
+		childnodes.push_back(it->second.m_name);
 	}
 
 	return childnodes;
@@ -1408,7 +1408,7 @@ std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 
 	for (SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
-		childSubnets.push_back(it->second.name);
+		childSubnets.push_back(it->second.m_name);
 	}
 
 	return childSubnets;
@@ -1615,7 +1615,7 @@ bool HoneydConfiguration::IsMACUsed(std::string mac)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.MAC.compare(mac))
+		if(!it->second.m_MAC.compare(mac))
 		{
 			return true;
 		}
@@ -1627,7 +1627,7 @@ bool HoneydConfiguration::IsIPUsed(std::string ip)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.IP.compare(ip) && it->second.name.compare(ip))
+		if(!it->second.m_IP.compare(ip) && it->second.m_name.compare(ip))
 		{
 			return true;
 		}
@@ -1641,7 +1641,7 @@ bool HoneydConfiguration::IsProfileUsed(std::string profileName)
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		//if we find a node using this profile
-		if(!it->second.pfile.compare(profileName))
+		if(!it->second.m_pfile.compare(profileName))
 		{
 			return true;
 		}
@@ -1653,9 +1653,9 @@ void HoneydConfiguration::GenerateMACAddresses(string profileName)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.pfile.compare(profileName))
+		if(!it->second.m_pfile.compare(profileName))
 		{
-			it->second.MAC = GenerateUniqueMACAddress(m_profiles[profileName].ethernet);
+			it->second.m_MAC = GenerateUniqueMACAddress(m_profiles[profileName].ethernet);
 		}
 	}
 }
@@ -1698,15 +1698,15 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 		//Find all nodes who use this profile and update to the new one
 		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 		{
-			if(!it->second.pfile.compare(oldName))
+			if(!it->second.m_pfile.compare(oldName))
 			{
-				m_nodes[it->first].pfile = newName;
+				m_nodes[it->first].m_pfile = newName;
 			}
 		}
 
 		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
-			if(!it->second.parentProfile.compare(oldName))
+			if(!it->second.m_parentProfile.compare(oldName))
 			{
 				InheritProfile(it->first, newName);
 			}
@@ -1752,7 +1752,7 @@ void HoneydConfiguration::UpdateAllProfiles()
 	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		//If this is a root node
-		if(!it->second.parentProfile.compare(""))
+		if(!it->second.m_parentProfile.compare(""))
 		{
 			CreateProfileTree(it->first);
 			UpdateProfileTree(it->first, DOWN);
@@ -1769,10 +1769,10 @@ bool HoneydConfiguration::EnableNode(std::string nodeName)
 		return false;
 	}
 
-	m_nodes[nodeName].enabled = true;
+	m_nodes[nodeName].m_enabled = true;
 
 	// Enable the subnet of this node
-	m_subnets[m_nodes[nodeName].sub].enabled = true;
+	m_subnets[m_nodes[nodeName].m_sub].m_enabled = true;
 
 	return true;
 }
@@ -1787,7 +1787,7 @@ bool HoneydConfiguration::DisableNode(std::string nodeName)
 		return false;
 	}
 
-	m_nodes[nodeName].enabled = false;
+	m_nodes[nodeName].m_enabled = false;
 	return true;
 }
 
@@ -1809,12 +1809,12 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 	}
 
 	//Update the Subnet
-	subnet *s = &m_subnets[m_nodes[nodeName].sub];
-	for(uint i = 0; i < s->nodes.size(); i++)
+	Subnet *s = &m_subnets[m_nodes[nodeName].m_sub];
+	for(uint i = 0; i < s->m_nodes.size(); i++)
 	{
-		if(!s->nodes[i].compare(nodeName))
+		if(!s->m_nodes[i].compare(nodeName))
 		{
-			s->nodes.erase(s->nodes.begin()+i);
+			s->m_nodes.erase(s->m_nodes.begin()+i);
 		}
 	}
 
@@ -1846,14 +1846,14 @@ std::string HoneydConfiguration::GetNodeSubnet(std::string nodeName)
 			+ nodeName + string(" that doesn't exist"), "");
 		return "";
 	}
-	return m_nodes[nodeName].sub;
+	return m_nodes[nodeName].m_sub;
 }
 
 void HoneydConfiguration::DisableProfileNodes(std::string profileName)
 {
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.pfile.compare(profileName))
+		if(!it->second.m_pfile.compare(profileName))
 		{
 			DisableNode(it->first);
 		}
@@ -1870,9 +1870,9 @@ void HoneydConfiguration::CleanPorts()
 		found = false;
 		for(ProfileTable::iterator jt = m_profiles.begin(); (jt != m_profiles.end()) && !found; jt++)
 		{
-			for(uint i = 0; (i < jt->second.ports.size()) && !found; i++)
+			for(uint i = 0; (i < jt->second.m_ports.size()) && !found; i++)
 			{
-				if(!jt->second.ports[i].first.compare(it->first))
+				if(!jt->second.m_ports[i].first.compare(it->first))
 				{
 					found = true;
 				}
@@ -1933,27 +1933,27 @@ bool HoneydConfiguration::AddNewNodes(std::string profileName, string ipAddress,
 bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, std::string macAddress, std::string interface, std::string subnet)
 {
 	Node newNode;
-	newNode.IP = ipAddress;
-	newNode.interface = interface;
+	newNode.m_IP = ipAddress;
+	newNode.m_interface = interface;
 	cout << "Adding new node " << profileName << ipAddress << macAddress << interface << subnet <<endl;
 
-	if(newNode.IP != "DHCP")
+	if(newNode.m_IP != "DHCP")
 	{
-		newNode.realIP = htonl(inet_addr(newNode.IP.c_str()));
+		newNode.m_realIP = htonl(inet_addr(newNode.m_IP.c_str()));
 	}
 
 	// Figure out it's subnet
 	if(subnet == "")
 	{
-		if(newNode.IP == "DHCP")
+		if(newNode.m_IP == "DHCP")
 		{
-			newNode.sub = newNode.interface;
+			newNode.m_sub = newNode.m_interface;
 		}
 		else
 		{
-			newNode.sub = FindSubnet(newNode.realIP);
+			newNode.m_sub = FindSubnet(newNode.m_realIP);
 
-			if(newNode.sub == "")
+			if(newNode.m_sub == "")
 			{
 				return false;
 			}
@@ -1961,35 +1961,35 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	}
 	else
 	{
-		newNode.sub = subnet;
+		newNode.m_sub = subnet;
 	}
 
 
-	newNode.pfile = profileName;
-	newNode.enabled = true;
-	newNode.MAC = macAddress;
+	newNode.m_pfile = profileName;
+	newNode.m_enabled = true;
+	newNode.m_MAC = macAddress;
 
-	newNode.name = newNode.IP + " - " + newNode.MAC;
+	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
 
 	uint j = ~0;
 	stringstream ss;
-	if(newNode.name == "DHCP - RANDOM")
+	if(newNode.m_name == "DHCP - RANDOM")
 	{
 		//Finds a unique identifier
 		uint i = 1;
-		while((m_nodes.keyExists(newNode.name)) && (i < j))
+		while((m_nodes.keyExists(newNode.m_name)) && (i < j))
 		{
 			i++;
 			ss.str("");
 			ss << "DHCP - RANDOM(" << i << ")";
-			newNode.name = ss.str();
+			newNode.m_name = ss.str();
 		}
 	}
 
-	m_nodes[newNode.name] = newNode;
-	if(newNode.sub != "")
+	m_nodes[newNode.m_name] = newNode;
+	if(newNode.m_sub != "")
 	{
-		m_subnets[newNode.sub].nodes.push_back(newNode.name);
+		m_subnets[newNode.m_sub].nodes.push_back(newNode.m_name);
 	}
 	else
 	{
@@ -2000,15 +2000,15 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	return true;
 }
 
-bool HoneydConfiguration::AddSubnet(subnet * add)
+bool HoneydConfiguration::AddSubnet(Subnet * add)
 {
-	if(m_subnets.find(add->name) != m_subnets.end())
+	if(m_subnets.find(add->m_name) != m_subnets.end())
 	{
 		return false;
 	}
 	else
 	{
-		m_subnets[add->name] = *add;
+		m_subnets[add->m_name] = *add;
 		return true;
 	}
 }
@@ -2029,7 +2029,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		//If the profile at the iterator is a child of this profile
-		if(!it->second.parentProfile.compare(profileName))
+		if(!it->second.m_parentProfile.compare(profileName))
 		{
 			if (!DeleteProfile(it->first, false))
 			{
@@ -2043,9 +2043,9 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 	vector<string> delList;
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.pfile.compare(p.name))
+		if(!it->second.m_pfile.compare(p.name))
 		{
-			delList.push_back(it->second.name);
+			delList.push_back(it->second.m_name);
 		}
 	}
 	while(!delList.empty())
@@ -2079,10 +2079,10 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 
 			for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 			{
-				if(!it->second.parentProfile.compare(parent.name))
+				if(!it->second.m_parentProfile.compare(parent.name))
 				{
 					//Put sibiling profiles into the tree
-					pt->add_child("profile", it->second.tree);
+					pt->add_child("profile", it->second.m_tree);
 				}
 			}	//parent-copy now has the ptree of all children except deleted profile
 
@@ -2148,13 +2148,13 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
 			//If child is found
-			if(!it->second.parentProfile.compare(p.name))
+			if(!it->second.m_parentProfile.compare(p.name))
 			{
-				CreateProfileTree(it->second.name);
+				CreateProfileTree(it->second.m_name);
 				//Update the child
-				UpdateProfileTree(it->second.name, DOWN);
+				UpdateProfileTree(it->second.m_name, DOWN);
 				//Put the child in the parent's ptree
-				p.tree.add_child("profiles.profile", it->second.tree);
+				p.tree.add_child("profiles.profile", it->second.m_tree);
 			}
 		}
 		m_profiles[profileName] = p;
@@ -2174,9 +2174,9 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 		// because the ptree iterators just don't seem to work correctly and documentation is very poor
 		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
-			if(!it->second.parentProfile.compare(parent.name))
+			if(!it->second.m_parentProfile.compare(parent.name))
 			{
-				pt.add_child("profile", it->second.tree);
+				pt.add_child("profile", it->second.m_tree);
 			}
 		}
 		//Replace the parent's profiles subtree (stores all children) with the new one
@@ -2264,9 +2264,9 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 
 	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if(!it->second.parentProfile.compare(profileName))
+		if(!it->second.m_parentProfile.compare(profileName))
 		{
-			temp.add_child("profiles.profile", it->second.tree);
+			temp.add_child("profiles.profile", it->second.m_tree);
 		}
 	}
 

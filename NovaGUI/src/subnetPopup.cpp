@@ -33,13 +33,13 @@ in_addr_t subnetRealIP;
  * Construct and Initialize GUI
  ************************************************/
 
-subnetPopup::subnetPopup(QWidget *parent, Nova::subnet *s)
+subnetPopup::subnetPopup(QWidget *parent, Nova::Subnet *s)
     : QMainWindow(parent)
 {
 	ui.setupUi(this);
 	nParent = (NovaConfig*)parent;
 	m_editSubnet = *s;
-	subName = m_editSubnet.name;
+	subName = m_editSubnet.m_name;
 	m_maskEdit = new MaskSpinBox(this, s);
 	ui.maskHBox->insertWidget(0, m_maskEdit);
 	LoadSubnet();
@@ -59,8 +59,8 @@ subnetPopup::~subnetPopup()
 void subnetPopup::SaveSubnet()
 {
 	//Get subnet name and mask bits
-	m_editSubnet.name = ui.interfaceEdit->text().toStdString();
-	m_editSubnet.maskBits = m_maskEdit->value();
+	m_editSubnet.m_name = ui.interfaceEdit->text().toStdString();
+	m_editSubnet.m_maskBits = m_maskEdit->value();
 
 	//Extract IP address
 	in_addr_t temp = (ui.ipSpinBox0->value() << 24) +(ui.ipSpinBox1->value() << 16)
@@ -74,39 +74,39 @@ void subnetPopup::SaveSubnet()
 
 	//Format IP address
 	stringstream ss;
-	ss << inet_ntoa(inTemp) << '/' << m_editSubnet.maskBits;
-	m_editSubnet.address = ss.str();
+	ss << inet_ntoa(inTemp) << '/' << m_editSubnet.m_maskBits;
+	m_editSubnet.vaddress = ss.str();
 
-	m_editSubnet.mask = m_maskEdit->text().toStdString();
+	m_editSubnet.m_mask = m_maskEdit->text().toStdString();
 
-	in_addr_t maskTemp = ntohl(inet_addr(m_editSubnet.mask.c_str()));
-	m_editSubnet.base = (temp & maskTemp);
-	m_editSubnet.max = m_editSubnet.base + ~maskTemp;
+	in_addr_t maskTemp = ntohl(inet_addr(m_editSubnet.m_mask.c_str()));
+	m_editSubnet.m_base = (temp & maskTemp);
+	m_editSubnet.m_max = m_editSubnet.m_base + ~maskTemp;
 
 	vector<string> addList;
 	addList.clear();
 
 	//Search for nodes that need to reflect any changes
-	while(m_editSubnet.nodes.size())
+	while(m_editSubnet.m_nodes.size())
 	{
 		conflict = false;
-		Node tempNode = nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes.back()];
-		m_editSubnet.nodes.pop_back();
+		Node tempNode = nParent->m_honeydConfig->m_nodes[m_editSubnet.m_nodes.back()];
+		m_editSubnet.m_nodes.pop_back();
 
-		tempNode.interface = m_editSubnet.name;
-		tempNode.sub = m_editSubnet.name;
+		tempNode.m_interface = m_editSubnet.m_name;
+		tempNode.m_sub = m_editSubnet.m_name;
 
-		tempNode.realIP = (tempNode.realIP & ~maskTemp);
+		tempNode.m_realIP = (tempNode.m_realIP & ~maskTemp);
 		//If the subnet has been modified to take the IP of a current node,
 		// attempt to give the node the IP the subnet was using previously
-		if(tempNode.realIP == (subNewIP & ~maskTemp))
+		if(tempNode.m_realIP == (subNewIP & ~maskTemp))
 		{
-			tempNode.realIP = (subnetRealIP & ~maskTemp);
+			tempNode.m_realIP = (subnetRealIP & ~maskTemp);
 		}
 
-		for(uint i = 0; i < m_editSubnet.nodes.size(); i++)
+		for(uint i = 0; i < m_editSubnet.m_nodes.size(); i++)
 		{
-			if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
+			if(tempNode.m_realIP == (nParent->m_honeydConfig->m_nodes[m_editSubnet.m_nodes[i]].m_realIP & ~maskTemp))
 			{
 				conflict = true;
 			}
@@ -114,106 +114,106 @@ void subnetPopup::SaveSubnet()
 
 		for(uint i = 0; i < addList.size(); i++)
 		{
-			if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[addList[i]].realIP & ~maskTemp))
+			if(tempNode.m_realIP == (nParent->m_honeydConfig->m_nodes[addList[i]].m_realIP & ~maskTemp))
 			{
 				conflict = true;
 			}
 		}
 
-		if((tempNode.realIP == 0) || (tempNode.realIP == ~maskTemp))
+		if((tempNode.m_realIP == 0) || (tempNode.m_realIP == ~maskTemp))
 		{
 			conflict = true;
 		}
 
-		tempNode.realIP += m_editSubnet.base;
+		tempNode.m_realIP += m_editSubnet.m_base;
 
-		if((tempNode.realIP == subNewIP) || conflict)
+		if((tempNode.m_realIP == subNewIP) || conflict)
 		{
 			conflict = true;
 			// 0 == editSubnet.base & ~maskTemp
-			tempNode.realIP = 1;
-			while(conflict && (tempNode.realIP < ~maskTemp))
+			tempNode.m_realIP = 1;
+			while(conflict && (tempNode.m_realIP < ~maskTemp))
 			{
 				conflict = false;
-				if(tempNode.realIP == (subNewIP & ~maskTemp))
+				if(tempNode.m_realIP == (subNewIP & ~maskTemp))
 				{
 					conflict = true;
-					tempNode.realIP++;
+					tempNode.m_realIP++;
 					continue;
 				}
-				if((tempNode.realIP == 0) || (tempNode.realIP == ~maskTemp))
+				if((tempNode.m_realIP == 0) || (tempNode.m_realIP == ~maskTemp))
 				{
 					conflict = true;
-					tempNode.realIP++;
+					tempNode.m_realIP++;
 					continue;
 				}
-				for(uint i = 0; i < m_editSubnet.nodes.size(); i++)
+				for(uint i = 0; i < m_editSubnet.m_nodes.size(); i++)
 				{
-					if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[m_editSubnet.nodes[i]].realIP & ~maskTemp))
+					if(tempNode.m_realIP == (nParent->m_honeydConfig->m_nodes[m_editSubnet.m_nodes[i]].m_realIP & ~maskTemp))
 					{
 						conflict = true;
-						tempNode.realIP++;
+						tempNode.m_realIP++;
 						break;
 					}
 				}
 				if(!conflict) for(uint i = 0; i < addList.size(); i++)
 				{
-					if(tempNode.realIP == (nParent->m_honeydConfig->m_nodes[addList[i]].realIP & ~maskTemp))
+					if(tempNode.m_realIP == (nParent->m_honeydConfig->m_nodes[addList[i]].m_realIP & ~maskTemp))
 					{
 						conflict = true;
-						tempNode.realIP++;
+						tempNode.m_realIP++;
 						break;
 					}
 				}
 			}
 
-			tempNode.realIP += m_editSubnet.base;
+			tempNode.m_realIP += m_editSubnet.m_base;
 
 			if(conflict)
 			{
-				nParent->m_honeydConfig->m_nodes.erase(tempNode.name);
+				nParent->m_honeydConfig->m_nodes.erase(tempNode.m_name);
 				continue;
 			}
 		}
-		inTemp.s_addr = htonl(tempNode.realIP);
+		inTemp.s_addr = htonl(tempNode.m_realIP);
 
-		if (tempNode.IP != "DHCP")
+		if (tempNode.m_IP != "DHCP")
 		{
-			tempNode.IP = inet_ntoa(inTemp);
+			tempNode.m_IP = inet_ntoa(inTemp);
 		}
 
 		//If node has a static IP it's name needs to change with it's IP
 		//the only exception to this is the Doppelganger, it's name is always the same.
-		if(tempNode.name.compare("Doppelganger") && tempNode.IP.length() && tempNode.IP != "DHCP")
+		if(tempNode.m_name.compare("Doppelganger") && tempNode.m_IP.length() && tempNode.m_IP != "DHCP")
 		{
-			nParent->m_honeydConfig->m_nodes.erase(tempNode.name);
-			tempNode.name = tempNode.IP + " - " + tempNode.MAC;
+			nParent->m_honeydConfig->m_nodes.erase(tempNode.m_name);
+			tempNode.m_name = tempNode.m_IP + " - " + tempNode.m_MAC;
 		}
 
-		nParent->m_honeydConfig->m_nodes[tempNode.name] = tempNode;
+		nParent->m_honeydConfig->m_nodes[tempNode.m_name] = tempNode;
 
 
-		addList.push_back(tempNode.name);
+		addList.push_back(tempNode.m_name);
 	}
 
-	m_editSubnet.nodes = addList;
+	m_editSubnet.m_nodes = addList;
 	subnetRealIP = subNewIP;
 }
 
 //loads the selected Subnet's options
 void subnetPopup::LoadSubnet()
 {
-	m_maskEdit->setValue(m_editSubnet.maskBits);
-	ui.interfaceEdit->setText(m_editSubnet.name.c_str());
+	m_maskEdit->setValue(m_editSubnet.m_maskBits);
+	ui.interfaceEdit->setText(m_editSubnet.m_name.c_str());
 
-	in_addr_t temp = ntohl(inet_addr(m_editSubnet.address.substr(0,m_editSubnet.address.find('/',0)).c_str()));
+	in_addr_t temp = ntohl(inet_addr(m_editSubnet.vaddress.substr(0,m_editSubnet.vaddress.find('/',0)).c_str()));
 	subnetRealIP = temp;
 	ui.ipSpinBox3->setValue(temp & 255);
 	ui.ipSpinBox2->setValue((temp >> 8) & 255);
 	ui.ipSpinBox1->setValue((temp >> 16) & 255);
 	ui.ipSpinBox0->setValue((temp >> 24) & 255);
 	//number of nodes + network address, gateway and broadcast address
-	int n = m_editSubnet.nodes.size() + 3;
+	int n = m_editSubnet.m_nodes.size() + 3;
 	int count = 0;
 	while((n/=2) > 0)
 	{
@@ -248,11 +248,11 @@ void subnetPopup::PushData()
 {
 	nParent->m_loading->lock();
 	nParent->m_honeydConfig->m_subnets.erase(subName);
-	nParent->m_honeydConfig->m_subnets[m_editSubnet.name] = m_editSubnet;
+	nParent->m_honeydConfig->m_subnets[m_editSubnet.m_name] = m_editSubnet;
 	nParent->m_loading->unlock();
 
 	nParent->LoadAllNodes();
-	subName = m_editSubnet.name;
+	subName = m_editSubnet.m_name;
 }
 
 /************************************************

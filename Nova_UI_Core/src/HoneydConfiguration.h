@@ -70,11 +70,11 @@ public:
     static int GetMaskBits(in_addr_t mask);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
-    std::string ProfileToString(profile* p);
+    std::string ProfileToString(NodeProfile* p);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
     // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
-    std::string DoppProfileToString(profile* p);
+    std::string DoppProfileToString(NodeProfile* p);
 
     //Saves the current configuration information to XML files
     bool SaveAllTemplates();
@@ -96,7 +96,7 @@ public:
     //			If using a script it must exist in the script table before calling this function
     //Returns: the port name if successful and an empty string if unsuccessful
     std::string AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, std::string scriptName = "", std::string service = "");
-    std::string AddPort(port pr);
+    std::string AddPort(Port pr);
 
     // Some high level node creation methods
 
@@ -104,13 +104,13 @@ public:
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
     bool AddNewNodes(std::string profileName, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
 
-    bool AddSubnet(subnet * add);
+    bool AddSubnet(Subnet * add);
 
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
 	std::vector<std::string> GetProfileNames();
-	Nova::profile * GetProfile(std::string profileName);
-	Nova::port * GetPort(std::string portName);
+	Nova::NodeProfile * GetProfile(std::string profileName);
+	Nova::Port * GetPort(std::string portName);
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
@@ -129,7 +129,7 @@ public:
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
 	//	Returns (true) if the profile could be created, (false) if it cannot.
-	bool AddProfile(profile * profile);
+	bool AddProfile(NodeProfile * profile);
 
 	//Updates the profile with any modified information
 	//	Note: to modify inheritance use InheritProfile, just changing the parentProfile value and calling
@@ -172,14 +172,14 @@ public:
     void CleanPorts();
 
     // This is only for the Javascript UI, avoid use here
-	inline std::vector<port> GetPorts(std::string profile) {
-		std::vector<port> ret;
-		port p;
+	inline std::vector<Port> GetPorts(std::string profile) {
+		std::vector<Port> ret;
+		Port p;
 
-		for (uint i = 0; i < m_profiles[profile].ports.size(); i++)
+		for (uint i = 0; i < m_profiles[profile].m_ports.size(); i++)
 		{
-			p = m_ports[m_profiles[profile].ports.at(i).first];
-			p.isInherited = m_profiles[profile].ports.at(i).second;
+			p = m_ports[m_profiles[profile].m_ports.at(i).first];
+			p.m_isInherited = m_profiles[profile].m_ports.at(i).second;
 			ret.push_back(p);
 		}
 
@@ -226,9 +226,9 @@ private:
 
 
     //set profile configurations
-    bool LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
+    bool LoadProfileSettings(boost::property_tree::ptree *ptr, NodeProfile *p);
     //add ports or subsystems
-    bool LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
+    bool LoadProfileServices(boost::property_tree::ptree *ptr, NodeProfile *p);
     //recursive descent down profile tree
     bool LoadProfileChildren(std::string parent);
 

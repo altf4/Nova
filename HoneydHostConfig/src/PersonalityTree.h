@@ -58,7 +58,7 @@ public:
 
 	void AddAllPorts();
 
-	bool AddSubnet(subnet * add);
+	bool AddSubnet(Subnet * add);
 
 	HoneydConfiguration * GetHDConfig();
 

@@ -29,7 +29,7 @@ struct PortCounter
 {
 	double m_maxCount;
 	double m_minCount;
-	port m_port;
+	Port m_port;
 };
 
 struct MacCounter

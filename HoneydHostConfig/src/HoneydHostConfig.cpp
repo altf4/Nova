@@ -47,7 +47,7 @@ vector<uint16_t> leftoverHostspace;
 uint16_t tempHostspace;
 string localMachine;
 
-vector<subnet> subnetsToAdd;
+vector<Subnet> subnetsToAdd;
 
 PersonalityTable personalities;
 
@@ -385,7 +385,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 		// If we've found an interface that has an IPv4 address and is NOT a loopback,
 		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
-			subnet add;
+			Subnet add;
 			// start processing it to generate the subnet for the interface.
 			there = false;
 			interfaces.push_back(string(curIf->ifa_name));
@@ -471,14 +471,14 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode * errVar)
 
 			ss.str("");
 
-			add.address = push;
-			add.mask = string(inet_ntoa(bitmask));
-			add.maskBits = i;
-			add.base = basestruct.s_addr;
-			add.max = maxstruct.s_addr;
-			add.name = string(curIf->ifa_name);
-			add.enabled = (curIf->ifa_flags & IFF_UP);
-			add.isRealDevice = true;
+			add.vaddress = push;
+			add.m_mask = string(inet_ntoa(bitmask));
+			add.m_maskBits = i;
+			add.m_base = basestruct.s_addr;
+			add.m_max = maxstruct.s_addr;
+			add.m_name = string(curIf->ifa_name);
+			add.m_enabled = (curIf->ifa_flags & IFF_UP);
+			add.m_isRealDevice = true;
 
 			// If we have two interfaces that point the same subnet, we only want
 			// to scan once; so, change the "there" flag to reflect that the subnet

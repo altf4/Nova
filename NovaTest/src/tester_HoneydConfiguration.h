@@ -107,7 +107,7 @@ TEST_F(HoneydConfigurationTest, test_Port)
 TEST_F(HoneydConfigurationTest, test_Profile)
 {
 	//Create dummy profile
-	profile * p = new profile();
+	NodeProfile * p = new NodeProfile();
 	p->name = "TestProfile";
 	p->ethernet = "Dell";
 	p->icmpAction = "block";
@@ -156,7 +156,7 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 	EXPECT_TRUE(m_config->AddPort(2, (portProtocol)1, (portBehavior)1, "NA") == "2_TCP_reset");
 	EXPECT_TRUE(m_config->AddPort(3, (portProtocol)1, (portBehavior)2, "NA") == "3_TCP_open");
 
-	profile * p = new profile();
+	NodeProfile * p = new NodeProfile();
 	for (int i = 0; i < INHERITED_MAX; i++)
 	{
 		p->inherited[i] = true;
@@ -174,7 +174,7 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 // This test has been disabled because of ticket #165
 TEST_F(HoneydConfigurationTest, test_profileDeletion)
 {
-	profile *parent = new profile();
+	NodeProfile *parent = new NodeProfile();
 	parent->SetName("parent");
 	parent->SetParentProfile("default");
 	EXPECT_TRUE(m_config->AddProfile(parent));
@@ -182,7 +182,7 @@ TEST_F(HoneydConfigurationTest, test_profileDeletion)
 
 	m_config->UpdateAllProfiles();
 
-	profile *child = new profile();
+	NodeProfile *child = new NodeProfile();
 	child->SetName("child");
 	child->SetParentProfile("parent");
 	EXPECT_TRUE(m_config->AddProfile(child));

@@ -224,23 +224,23 @@ void PersonalityTree::DebugPrintProfileTable()
 	for(ProfileTable::iterator it = m_profiles->begin(); it != m_profiles->end(); it++)
 	{
 		cout << endl;
-		cout << "Profile: " << it->second.name << endl;
-		cout << "Parent: " << it->second.parentProfile << endl;
+		cout << "Profile: " << it->second.m_name << endl;
+		cout << "Parent: " << it->second.m_parentProfile << endl;
 
-		if(!it->second.personality.empty())
+		if(!it->second.m_personality.empty())
 		{
-			cout << "Personality: " << it->second.personality << endl;
+			cout << "Personality: " << it->second.m_personality << endl;
 		}
-		if(!it->second.ethernet.empty())
+		if(!it->second.m_ethernet.empty())
 		{
-			cout << "MAC vendor: " << it->second.ethernet << endl;
+			cout << "MAC vendor: " << it->second.m_ethernet << endl;
 		}
-		if(!it->second.ports.empty())
+		if(!it->second.m_ports.empty())
 		{
 			cout << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << endl;
-			for(uint16_t i = 0; i < it->second.ports.size(); i++)
+			for(uint16_t i = 0; i < it->second.m_ports.size(); i++)
 			{
-				cout << "\t" << it->second.ports[i].first << ", " << it->second.ports[i].second << endl;
+				cout << "\t" << it->second.m_ports[i].first << ", " << it->second.m_ports[i].second << endl;
 			}
 		}
 		cout << endl;
@@ -276,16 +276,16 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode * node)
 {
 	for(uint16_t i = 0; i < node->m_ports_dist.size(); i++)
 	{
-		port pass;
+		Port pass;
 
 		vector<string> tokens;
 
 		boost::split(tokens, node->m_ports_dist[i].first, boost::is_any_of("_"));
 
-		pass.portName = node->m_ports_dist[i].first;
-		pass.portNum = tokens[0];
-		pass.type = tokens[1];
-		pass.behavior = tokens[2];
+		pass.m_portName = node->m_ports_dist[i].first;
+		pass.m_portNum = tokens[0];
+		pass.m_type = tokens[1];
+		pass.m_behavior = tokens[2];
 
 		m_hdconfig->AddPort(pass);
 	}
@@ -305,7 +305,7 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode * node)
 	}
 }
 
-bool PersonalityTree::AddSubnet(subnet * add)
+bool PersonalityTree::AddSubnet(Subnet * add)
 {
 	return m_hdconfig->AddSubnet(add);
 }
