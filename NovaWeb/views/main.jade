@@ -120,9 +120,8 @@ block headerAdditions
       function classificationFormatter(d) {
         
         var bar = new dijit.ProgressBar({progress:d, maximum:1}, "bar");
+        bar._destroyOnRemove = true;
         return bar;
-        //var num = new Number(d);
-        //return (num.toFixed(6));
       }
 
       // Formatter for the floating point features
