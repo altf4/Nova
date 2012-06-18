@@ -45,11 +45,11 @@ PersonalityTree::~PersonalityTree()
 {
 }
 
-PersonalityNode * PersonalityTree::GetRootNode()
+PersonalityNode *PersonalityTree::GetRootNode()
 {
 	return &m_root;
 }
-HoneydConfiguration * PersonalityTree::GetHDConfig()
+HoneydConfiguration *PersonalityTree::GetHDConfig()
 {
 	return m_hdconfig;
 }
@@ -324,9 +324,9 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 		pass.m_portNum = tokens[0];
 		pass.m_type = tokens[1];
 
-		//bool endIter = false;
+		/*bool endIter = false;
 
-		/*for(PortsTable::iterator it = node->m_ports.begin(); it != node->m_ports.end() && !endIter; it++)
+		for(PortsTable::iterator it = node->m_ports.begin(); it != node->m_ports.end() && !endIter; it++)
 		{
 			if(m_scripts.GetScriptsTable().keyExists(it->second.second) && !(it->first + "_open").compare(node->m_ports_dist[i].first))
 			{
@@ -373,6 +373,17 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 							pass.m_scriptName = m_scripts.GetScriptsTable()[it->second.second][j].second;
 							pass.m_portName += "_" + pass.m_scriptName;
 							endIter = true;
+
+							bool stop = false;
+
+							for(uint k = 0; k < m_hdconfig->m_profiles[node->m_key].m_ports.size() && !stop; k++)
+							{
+								if((!m_hdconfig->m_profiles[node->m_key].m_ports[k].first + "_open").compare(it->first + "_open"))
+								{
+									m_hdconfig->m_profiles[node->m_key].m_ports[k].first = pass.m_scriptName;
+									stop = true;
+								}
+							}
 						}
 						else
 						{
@@ -397,6 +408,17 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 							pass.m_scriptName = m_scripts.GetScriptsTable()[it->second.second][j].second;
 							pass.m_portName += "_" + pass.m_scriptName;
 							endIter = true;
+
+							bool stop = false;
+
+							for(uint k = 0; k < m_hdconfig->m_profiles[node->m_key].m_ports.size() && !stop; k++)
+							{
+								if((!m_hdconfig->m_profiles[node->m_key].m_ports[k].first + "_open").compare(it->first + "_open"))
+								{
+									m_hdconfig->m_profiles[node->m_key].m_ports[k].first = pass.m_scriptName;
+									stop = true;
+								}
+							}
 						}
 						else
 						{
