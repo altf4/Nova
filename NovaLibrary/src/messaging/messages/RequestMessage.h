@@ -88,10 +88,10 @@ public:
 	in_addr_t m_suspectAddress;
 
 	// For uptime
-	uint32_t m_uptime;
+	uint32_t m_startTime;
 
 protected:
-	//Serializes the requestinto a char array
+	//Serializes the request into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use

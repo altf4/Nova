@@ -400,7 +400,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 		case REQUEST_UPTIME:
 		{
 			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
-			reply.m_uptime = time(NULL) - startTime;
+			reply.m_startTime = startTime;
 			Message::WriteMessage(&reply, socketFD);
 
 			break;
