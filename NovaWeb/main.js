@@ -115,8 +115,17 @@ app.listen(8042);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 
-novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+
 novadLog.on("line", function(data) {
+	try {everyone.now.newLogLine(data)} 
+	catch (err) 
+	{
+	
+	}
+});
+
+novadLog.on("error", function(data) {
+	console.log("ERROR: " + error);
 	try {everyone.now.newLogLine(data)} 
 	catch (err) 
 	{
@@ -328,7 +337,11 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
      });
 });
 
-app.get('/novadlog', ensureAuthenticated, function(req, res) {res.render('novadlog.jade');});
+app.get('/novadlog', ensureAuthenticated, function(req, res) {
+	novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+	res.render('novadlog.jade');
+});
+
 app.get('/createNewUser', ensureAuthenticated, function(req, res) {res.render('createNewUser.jade');});
 app.get('/welcome', ensureAuthenticated, function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.jade');});
