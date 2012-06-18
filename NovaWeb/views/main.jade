@@ -5,33 +5,26 @@ block topPannelAdditions
   div#nova_status unknown
   div(style="float: left") Haystack Status:&nbsp  
   div#haystack_status unknown
-
-block buttonPannelAdditions
-  button(data-dojo-type="dijit.form.Button", type="button") Start Nova
-    script(type="dojo/method", data-dojo-event="onClick") now.StartNovad();
-  br 
-  
-  button(data-dojo-type="dijit.form.Button",type="button") Stop Nova
-    script(type="dojo/method", data-dojo-event="onClick") now.StopNovad();
-  br
-  
-  br
-
-  button(data-dojo-type="dijit.form.Button",type="button") Start Haystack
-    script(type="dojo/method", data-dojo-event="onClick") now.StartHaystack();
-  br
-
-  button(data-dojo-type="dijit.form.Button",type="button") Stop Haystack
-    script(type="dojo/method", data-dojo-event="onClick") now.StopHaystack();
-  br
-
-  br
-  button(data-dojo-type="dijit.form.Button",type="button") Clear All Suspects
-    script(type="dojo/method", data-dojo-event="onClick") now.ClearAllSuspects();suspectGrid.store.fetch({onComplete: clearSuspects});
-  br
-  
+ 
 
 block content
+  h1 Nova Control Panel
+  button(type="button", style="width:160px", onClick='now.StartNovad()') Start Nova
+  button(type="button", style="width:160px", onClick='now.StopNovad()') Stop Nova
+  
+  br
+  br
+  
+  button(type="button", style="width:160px", onClick='now.StartHaystack()') Start Haystack
+  button(type="button", style="width:160px", onClick='now.StopHaystack()') Stop Haystack
+  
+  br
+  br
+  
+  button(type="button", style="width:160px", onClick='now.ClearAllSuspects(); suspectGrid.store.fetch({onComplete: clearSuspects});') Clear All Suspects
+
+  br
+
   div#nova_suspects_header
     h1 Suspect List
     button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
