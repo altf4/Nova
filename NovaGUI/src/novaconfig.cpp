@@ -2766,7 +2766,7 @@ void NovaConfig::LoadAllNodes()
 	{
 		//create the subnet item for the Haystack menu tree
 		subnetHsItem  = new QTreeWidgetItem(ui.hsNodeTreeWidget, 0);
-		subnetHsItem ->setText(0, (QString)it->second.vaddress.c_str());
+		subnetHsItem ->setText(0, (QString)it->second.m_address.c_str());
 		if(it->second.m_isRealDevice)
 		{
 			subnetHsItem ->setText(1, (QString)"Physical Device - "+it->second.m_name.c_str());
@@ -2778,7 +2778,7 @@ void NovaConfig::LoadAllNodes()
 
 		//create the subnet item for the node edit tree
 		subnetItem = new QTreeWidgetItem(ui.nodeTreeWidget, 0);
-		subnetItem->setText(0, (QString)it->second.vaddress.c_str());
+		subnetItem->setText(0, (QString)it->second.m_address.c_str());
 		if(it->second.m_isRealDevice)
 		{
 			subnetItem->setText(1, (QString)"Physical Device - "+it->second.m_name.c_str());
@@ -3053,7 +3053,7 @@ void NovaConfig::on_actionSubnetAdd_triggered()
 		m_loading->lock();
 		Subnet s = m_honeydConfig->m_subnets[m_currentSubnet];
 		s.m_name = m_currentSubnet + "-1";
-		s.vaddress = "0.0.0.0/24";
+		s.m_address = "0.0.0.0/24";
 		s.m_nodes.clear();
 		s.m_enabled = false;
 		s.m_base = 0;
