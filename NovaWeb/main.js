@@ -124,6 +124,20 @@ novadLog.on("line", function(data) {
 	}
 });
 
+
+app.get('/downloadNovadLog', ensureAuthenticated, function (req, res) {
+	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
+	  if (err) {
+		res.send(err);
+	  }
+	  else
+	  {
+		var reply = data.toString().replace(/(\r\n|\n|\r)/gm,"<br>");
+		res.send(reply);
+	  }
+	});
+});
+
 app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
      res.render('advancedOptions.jade', 
 	 {
@@ -607,7 +621,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   if(errors.length > 0)
   {
-    res.render('error.jade', { locals: {errorDetails: errors, redirectLink: "/"} });
+    res.render('error.jade', { locals: {errorDetails: errors, redirectLink: "/novaMain"} });
   }
   else
   {
@@ -619,7 +633,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 	  }
     }
     
-    res.render('saveRedirect.jade', { locals: {redirectLink: "'/'"}}) 
+    res.render('saveRedirect.jade', { locals: {redirectLink: "/novaMain"}}) 
   }
 });
 

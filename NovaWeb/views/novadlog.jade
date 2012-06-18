@@ -2,13 +2,32 @@ extends layout
 
 block content
   h1 Watching Novad Log
+  p
+    a(href="/downloadNovadLog") Download Entire Log
   div#lastLogLine
 
 block headerAdditions
   script 
     now.newLogLine = function (line) {
       var logDiv = document.getElementById("lastLogLine");
-      logDiv.insertBefore(document.createElement('br'), logDiv.firstChild);
-      logDiv.insertBefore(document.createTextNode(line), logDiv.firstChild);
-      logDiv.scrollTop = logDiv.scrollHeight;
+      
+      var logP = document.createElement("P");
+      logP.appendChild(document.createTextNode(line));
+
+      var styleString = 'margin: 0; padding: 4px;';
+      // Colorize the line a bit
+      var splitLine = line.split(' ');
+      if (splitLine.length >= 6) {
+        if (splitLine[5] == "DEBUG") {
+            styleString += 'color: green';
+        } else if (splitLine[5] == "WARNING" || splitLine[5] == "NOTICE") {
+            styleString += 'color: orange';
+        } else if (splitLine[5] == "ERROR" || splitLine[5] == "CRITICAL") {
+            styleString += 'color: red';
+        }
+      }
+
+      logP.setAttribute("style", styleString)
+
+      logDiv.insertBefore(logP, logDiv.firstChild);
     };

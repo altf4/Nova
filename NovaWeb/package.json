@@ -12,5 +12,6 @@
 		, "mysql" : "0.9.6"
 		, "validator" : "0.4.6-2"
 		, "forever" : ""
+		, "tail" : "0.2.x"
 	}
 }
