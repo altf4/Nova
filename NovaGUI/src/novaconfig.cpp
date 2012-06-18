@@ -343,18 +343,18 @@ void NovaConfig::on_actionAddPort_triggered()
 			{
 				p.ports.insert(p.ports.begin(),portPair);
 				m_honeydConfig->m_ports[pr.m_portName] = pr;
-				m_honeydConfig->m_profiles[p.name] = p;
+				m_honeydConfig->m_profiles[p.m_name] = p;
 
 				portPair.second = true;
 				vector<profile> profList;
 				for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 				{
 					profile ptemp = it->second;
-					while(ptemp.parentProfile.compare("") && ptemp.parentProfile.compare(p.name))
+					while(ptemp.parentProfile.compare("") && ptemp.parentProfile.compare(p.m_name))
 					{
 						ptemp = m_honeydConfig->m_profiles[ptemp.parentProfile];
 					}
-					if(!ptemp.parentProfile.compare(p.name))
+					if(!ptemp.parentProfile.compare(p.m_name))
 					{
 						ptemp = it->second;
 						conflict = false;
@@ -371,7 +371,7 @@ void NovaConfig::on_actionAddPort_triggered()
 							ptemp.ports.insert(ptemp.ports.begin(),portPair);
 						}
 					}
-					m_honeydConfig->m_profiles[ptemp.name] = ptemp;
+					m_honeydConfig->m_profiles[ptemp.m_name] = ptemp;
 				}
 			}
 			LoadProfileSettings();
@@ -439,13 +439,13 @@ void NovaConfig::on_actionDeletePort_triggered()
 				//Check for children with inherited port.
 				for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 				{
-					if(!it->second.m_parentProfile.compare(p->name))
+					if(!it->second.parentProfile.compare(p->m_name))
 					{
-						for(uint j = 0; j < it->second.m_ports.size(); j++)
+						for(uint j = 0; j < it->second.ports.size(); j++)
 						{
-							if(!it->second.m_ports[j].first.compare(prt->m_portName) && it->second.m_ports[j].second)
+							if(!it->second.ports[j].first.compare(prt->m_portName) && it->second.ports[j].second)
 							{
-								it->second.m_ports.erase(it->second.m_ports.begin()+j);
+								it->second.ports.erase(it->second.ports.begin()+j);
 								break;
 							}
 						}
@@ -455,7 +455,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 			}
 			if(i == p->ports.size())
 			{
-				LOG(ERROR, "Port "+prt->m_portName+" could not be found in profile " + p->name+".", "");
+				LOG(ERROR, "Port "+prt->m_portName+" could not be found in profile " + p->m_name+".", "");
 				m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_DELETE_PORT, "Port " + prt->m_portName
 					+ " cannot be found.");
 			}
@@ -817,7 +817,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 				p.ports.push_back(portPair);
 			}
 
-			m_honeydConfig->m_profiles[p.name] = p;
+			m_honeydConfig->m_profiles[p.m_name] = p;
 			//Check for children who inherit the port
 			vector<string> updateList;
 			updateList.push_back(m_currentProfile);
@@ -837,7 +837,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 					for(uint i = 0; i < updateList.size(); i++)
 					{
 						//If the parent is being updated this profile is tenatively valid
-						if(!it->second.m_parentProfile.compare(updateList[i]))
+						if(!it->second.parentProfile.compare(updateList[i]))
 						{
 							valid = true;
 						}
@@ -901,8 +901,8 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 								}
 							}
 						}
-						updateList.push_back(ptemp.name);
-						m_honeydConfig->m_profiles[ptemp.name] = ptemp;
+						updateList.push_back(ptemp.m_name);
+						m_honeydConfig->m_profiles[ptemp.m_name] = ptemp;
 						//Since we found at least one profile this iteration flag as changed
 						// so we can check for it's children
 						changed = true;
@@ -1712,7 +1712,7 @@ void NovaConfig::LoadProfileSettings()
 
 		profile *p = &m_honeydConfig->m_profiles[m_currentProfile];
 		//Set the variables of the profile
-		ui.profileEdit->setText((QString)p->name.c_str());
+		ui.profileEdit->setText((QString)p->m_name.c_str());
 		ui.profileEdit->setEnabled(true);
 		ui.ethernetEdit->setText((QString)p->ethernet.c_str());
 		ui.tcpActionComboBox->setCurrentIndex( ui.tcpActionComboBox->findText(p->tcpAction.c_str() ) );
@@ -2012,19 +2012,19 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 
 				//Asserts the name is unique, if it is not it finds a unique name
 				// up to the range of 2^32
-				string profileStr = p.name;
+				string profileStr = p.m_name;
 				stringstream ss;
 				uint i = 0, j = 0;
 				j = ~j; //2^32-1
 
-				while((m_honeydConfig->m_profiles.keyExists(p.name)) && (i < j))
+				while((m_honeydConfig->m_profiles.keyExists(p.m_name)) && (i < j))
 				{
 					ss.str("");
 					i++;
 					ss << profileStr << "-" << i;
-					p.name = ss.str();
+					p.m_name = ss.str();
 				}
-				p.tree.put<std::string>("name", p.name);
+				p.tree.put<std::string>("name", p.m_name);
 
 				p.ports.clear();
 
@@ -2045,8 +2045,8 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 				//Save the profile
-				m_honeydConfig->m_profiles[p.name] = p;
-				m_honeydConfig->UpdateProfile(p.name);
+				m_honeydConfig->m_profiles[p.m_name] = p;
+				m_honeydConfig->UpdateProfile(p.m_name);
 
 				try //Conditional: has children profiles
 				{
@@ -2054,7 +2054,7 @@ void NovaConfig::LoadProfilesFromTree(string parent)
 
 					//start recurisive descent down profile tree with this profile as the root
 					//pass subtree and pointer to parent
-					LoadProfileChildren(p.name);
+					LoadProfileChildren(p.m_name);
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 			}
@@ -2243,28 +2243,28 @@ void NovaConfig::LoadProfileChildren(string parent)
 			prof.parentProfile = parent;
 
 			//Gets name, initializes DHCP
-			prof.name = v.second.get<std::string>("name");
+			prof.m_name = v.second.get<std::string>("name");
 
 			for(uint i = 0; i < INHERITED_MAX; i++)
 			{
 				prof.inherited[i] = true;
 			}
 
-			string profileStr = prof.name;
+			string profileStr = prof.m_name;
 			stringstream ss;
 			uint i = 0, j = 0;
 			j = ~j; //2^32-1
 
 			//Asserts the name is unique, if it is not it finds a unique name
 			// up to the range of 2^32
-			while((m_honeydConfig->m_profiles.keyExists(prof.name)) && (i < j))
+			while((m_honeydConfig->m_profiles.keyExists(prof.m_name)) && (i < j))
 			{
 				ss.str("");
 				i++;
 				ss << profileStr << "-" << i;
-				prof.name = ss.str();
+				prof.m_name = ss.str();
 			}
-			prof.tree.put<std::string>("name", prof.name);
+			prof.tree.put<std::string>("name", prof.m_name);
 
 			try //Conditional: If profile has set configurations different from parent
 			{
@@ -2281,12 +2281,12 @@ void NovaConfig::LoadProfileChildren(string parent)
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
 			//Saves the profile
-			m_honeydConfig->m_profiles[prof.name] = prof;
-			m_honeydConfig->UpdateProfile(prof.name);
+			m_honeydConfig->m_profiles[prof.m_name] = prof;
+			m_honeydConfig->UpdateProfile(prof.m_name);
 
 			try //Conditional: if profile has children (not leaf)
 			{
-				LoadProfileChildren(prof.name);
+				LoadProfileChildren(prof.m_name);
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 		}
@@ -2415,11 +2415,11 @@ void NovaConfig::CreateProfileItem(string pstr)
 {
 	profile p = m_honeydConfig->m_profiles[pstr];
 	//If the profile hasn't had an item created yet
-	if(GetProfileTreeWidgetItem(p.name) == NULL)
+	if(GetProfileTreeWidgetItem(p.m_name) == NULL)
 	{
 		QTreeWidgetItem *item = NULL;
 		//get the name
-		string profileStr = p.name;
+		string profileStr = p.m_name;
 		//if the profile has no parents create the item at the top level
 		if(!p.parentProfile.compare(""))
 		{
@@ -2441,7 +2441,7 @@ void NovaConfig::CreateProfileItem(string pstr)
 			{
 				profile parent = m_honeydConfig->m_profiles[p.parentProfile];
 
-				if(GetProfileTreeWidgetItem(parent.name) == NULL)
+				if(GetProfileTreeWidgetItem(parent.m_name) == NULL)
 				{
 					//if parent has no item recursively ascend until all parents do
 					CreateProfileItem(p.parentProfile);
@@ -2452,15 +2452,15 @@ void NovaConfig::CreateProfileItem(string pstr)
 				//*NOTE*
 				//These items don't need to be deleted because the clear function
 				// and destructor of the tree widget does that already.
-				item = new QTreeWidgetItem(item = GetProfileHsTreeWidgetItem(parent.name), 0);
+				item = new QTreeWidgetItem(item = GetProfileHsTreeWidgetItem(parent.m_name), 0);
 				item->setText(0, (QString)profileStr.c_str());
 
 				//Create the profile item for the profile tree
-				item = new QTreeWidgetItem(item = GetProfileTreeWidgetItem(parent.name), 0);
+				item = new QTreeWidgetItem(item = GetProfileTreeWidgetItem(parent.m_name), 0);
 				item->setText(0, (QString)profileStr.c_str());
 			}
 		}
-		m_honeydConfig->m_profiles[p.name] = p;
+		m_honeydConfig->m_profiles[p.m_name] = p;
 	}
 }
 
@@ -2589,26 +2589,26 @@ void NovaConfig::on_actionProfileAdd_triggered()
 {
 	m_loading->lock();
 	struct profile temp;
-	temp.name = "New Profile";
+	temp.m_name = "New Profile";
 
 	stringstream ss;
 	uint i = 0, j = 0;
 	j = ~j; // 2^32-1
 
 	//Finds a unique identifier
-	while((m_honeydConfig->m_profiles.keyExists(temp.name)) && (i < j))
+	while((m_honeydConfig->m_profiles.keyExists(temp.m_name)) && (i < j))
 	{
 		i++;
 		ss.str("");
 		ss << "New Profile-" << i;
-		temp.name = ss.str();
+		temp.m_name = ss.str();
 	}
 	//If there is currently a selected profile, that profile will be the parent of the new profile
 	if(m_honeydConfig->m_profiles.keyExists(m_currentProfile))
 	{
-		string tempName = temp.name;
+		string tempName = temp.m_name;
 		temp = m_honeydConfig->m_profiles[m_currentProfile];
-		temp.name = tempName;
+		temp.m_name = tempName;
 		temp.parentProfile = m_currentProfile;
 		for(uint i = 0; i < INHERITED_MAX; i++)
 		{
@@ -2618,7 +2618,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		{
 			temp.ports[i].second = true;
 		}
-		m_currentProfile = temp.name;
+		m_currentProfile = temp.m_name;
 	}
 	//If no profile is selected the profile is a root node
 	else
@@ -2633,7 +2633,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		temp.uptimeMax = "0";
 		temp.dropRate = "0";
 		temp.ports.clear();
-		m_currentProfile = temp.name;
+		m_currentProfile = temp.m_name;
 		for(uint i = 0; i < INHERITED_MAX; i++)
 		{
 			temp.inherited[i] = false;
@@ -2670,22 +2670,22 @@ void NovaConfig::on_actionProfileClone_triggered()
 		//Since we are cloning, it will already be a duplicate
 		ss.str("");
 		ss << profileStr << "-" << i;
-		p.name = ss.str();
+		p.m_name = ss.str();
 
 		//Check for name in use, if so increase number until unique name is found
-		while((m_honeydConfig->m_profiles.keyExists(p.name)) && (i < j))
+		while((m_honeydConfig->m_profiles.keyExists(p.m_name)) && (i < j))
 		{
 			ss.str("");
 			i++;
 			ss << profileStr << "-" << i;
-			p.name = ss.str();
+			p.m_name = ss.str();
 		}
-		p.tree.put<std::string>("name",p.name);
+		p.tree.put<std::string>("name",p.m_name);
 		//Change the profile name and put in the table, update the current profile
 		//Extract all descendants, create a ptree, update with new configuration
-		m_honeydConfig->m_profiles[p.name] = p;
-		LoadProfilesFromTree(p.name);
-		m_honeydConfig->UpdateProfile(p.name);
+		m_honeydConfig->m_profiles[p.m_name] = p;
+		LoadProfilesFromTree(p.m_name);
+		m_honeydConfig->UpdateProfile(p.m_name);
 		m_loading->unlock();
 		LoadAllProfiles();
 		LoadAllNodes();
@@ -3074,7 +3074,7 @@ void NovaConfig::on_actionNodeAdd_triggered()
 	{
 		Node n;
 		n.m_sub = m_currentSubnet;
-		n.m_interface = m_honeydConfig->m_subnets[m_currentSubnet].name;
+		n.m_interface = m_honeydConfig->m_subnets[m_currentSubnet].m_name;
 		n.m_realIP = m_honeydConfig->m_subnets[m_currentSubnet].base;
 		n.m_pfile = "default";
 		nodePopup *editNode =  new nodePopup(this, &n);
