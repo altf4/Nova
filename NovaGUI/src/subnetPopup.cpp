@@ -75,7 +75,7 @@ void subnetPopup::SaveSubnet()
 	//Format IP address
 	stringstream ss;
 	ss << inet_ntoa(inTemp) << '/' << m_editSubnet.m_maskBits;
-	m_editSubnet.vaddress = ss.str();
+	m_editSubnet.m_address = ss.str();
 
 	m_editSubnet.m_mask = m_maskEdit->text().toStdString();
 
@@ -206,7 +206,7 @@ void subnetPopup::LoadSubnet()
 	m_maskEdit->setValue(m_editSubnet.m_maskBits);
 	ui.interfaceEdit->setText(m_editSubnet.m_name.c_str());
 
-	in_addr_t temp = ntohl(inet_addr(m_editSubnet.vaddress.substr(0,m_editSubnet.vaddress.find('/',0)).c_str()));
+	in_addr_t temp = ntohl(inet_addr(m_editSubnet.m_address.substr(0,m_editSubnet.m_address.find('/',0)).c_str()));
 	subnetRealIP = temp;
 	ui.ipSpinBox3->setValue(temp & 255);
 	ui.ipSpinBox2->setValue((temp >> 8) & 255);

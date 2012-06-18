@@ -95,9 +95,9 @@ public:
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     void LoadProfilesFromTree(std::string parent);
     //set profile configurations (only called in LoadProfilesFromTree)
-    void LoadProfileSettings(boost::property_tree::ptree *ptr, Nova::profile *p);
+    void LoadProfileSettings(boost::property_tree::ptree *ptr, Nova::NodeProfile *p);
     //add ports or subsystems (only called in LoadProfilesFromTree)
-    void LoadProfileServices(boost::property_tree::ptree *ptr, Nova::profile *p);
+    void LoadProfileServices(boost::property_tree::ptree *ptr, Nova::NodeProfile *p);
     //recursive descent down profile tree (only called in LoadProfilesFromTree)
     void LoadProfileChildren(std::string parent);
 

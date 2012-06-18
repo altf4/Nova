@@ -148,7 +148,7 @@ void nodePopup::LoadNode()
 {
 	m_editNode = *m_parentNode;
 	Subnet s = novaParent->m_honeydConfig->m_subnets[m_editNode.m_sub];
-	profile p = novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile];
+	NodeProfile p = novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile];
 
 	if(m_editNode.m_MAC.length() == 17)
 	{
@@ -348,7 +348,7 @@ void nodePopup::on_generateButton_clicked()
 		return;
 	}
 
-	m_editNode.m_MAC = novaParent->m_honeydConfig->GenerateUniqueMACAddress(novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile].ethernet);
+	m_editNode.m_MAC = novaParent->m_honeydConfig->GenerateUniqueMACAddress(novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile].m_ethernet);
 	QString prefixStr = QString(m_editNode.m_MAC.substr(0, 8).c_str()).toLower();
 	prefixStr = prefixStr.remove(':');
 	m_prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));
@@ -376,7 +376,7 @@ nodeConflictType nodePopup::ValidateNodeSettings()
 		if(m_editNode.m_IP != "DHCP")
 		{
 			ipConflict = novaParent->m_honeydConfig->IsIPUsed(m_editNode.m_IP);
-			if(novaParent->m_honeydConfig->m_subnets[m_editNode.m_sub].base == m_editNode.m_realIP)
+			if(novaParent->m_honeydConfig->m_subnets[m_editNode.m_sub].m_base == m_editNode.m_realIP)
 			{
 				ipConflict = true;
 			}
