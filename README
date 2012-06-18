@@ -47,72 +47,47 @@ libevent1-dev; procure this by:
 Getting the newest code
 ===============================
 
-- Assuming everything has gone well thus far, it's about time to get the
-actual code on the machine! First, go to your home directory ('cd ~/' or 'cd
-$HOME') and use the mkdir command to create a directory called Code, then cd
-into it:
 
-    mkdir Code
-    cd Code
- 
-- Once we're in the code directory, we're going to pull the code for
-honeyd and Nova off of the DataSoft Github account and place it into the Code
-directory. Type pwd to make sure that you are in the Code directory; if you are,
-use the following commands to procure the code:
+Go to the directy you wish to download the code to and run the following commands,
 
     git clone git://github.com/DataSoft/Honeyd.git
     git clone git://github.com/DataSoft/Nova.git
 
-- Make sure for these steps that, when asked in the terminal or by pop-up
-to produce your private key password and to allow the github server, you reply
-yes.
-
+This will create a "honeyd" and "Nova" folder with the source located inside. From this point on 
+they will be referred to as $HONEYD_SOURCE and $NOVA_SOURCE. 
 
 ===============================
 Building Honeyd
 ===============================
 
-- Your $HOME/Code/ directory should now have a Honeyd/ folder and a Nova/
-folder. Let's go into Honeyd and get that set up before we attempt to compile
-Nova. Use the cd command to enter Honeyd/honeyd/:
-
-    cd Honeyd/honeyd
-
-...where all of the honeyd source code should be on your machine. When inside
-the source directory, follow the next steps in sequence:
+Change directories to the $HONEYD_SOURCE folder where all of the honeyd source code should 
+be on your machine. When inside the source directory, follow the next steps to build and install.
 
     Step 1: ./autogen.sh
     Step 2: automake
     Step 3: ./configure
     Step 4: make
-    Step 5: make sudo make install
+    Step 5: sudo make install
 
 
 ===============================
 Building Nova
 ===============================
 
-- Now, onto Nova. Go back to the folder where Nova resides, eg.
+Change into the $NOVAD_SOURCE folder where the novad source code resides.
 
     cd ~/Code/Nova
 
-- It should contain directories for each of the modules the program will
-use, and if you see a file called Makefile then you're in the right place.
-
-- Now, to generate all the files that will be needed for install, use the
-command:
+To build and install run the commands,
 
     Step 1: make
     Step 2: sudo make install
 
-- Note: If either of these steps error out, it is suggested that you run
-the cleaning command before trying to run them again (i.e. if make errors
-out, use sudo make clean to clean Nova's files up before running sudo
-make all again. For sudo make install use the command sudo make uninstall.]
+- Note: If building fails for some reason, make sure you run 'make clean' before trying again.
 
 - Finally, while logged in as the user you plan to run Novad with, 
 run the following command to add your user to the 'nova' permission group
-and to set up database permissions for the web interface.
+and to set up database tables for the web interface.
 
     Step 3: sudo bash InitializeNova.sh
 
@@ -135,16 +110,19 @@ NOVA has a web interface that can be used for a GUI instead of the QT novagui.
 There is a getDependencies.sh script provided to download the required dependencies.
 
 To install,
-    Step 1: cd ~/Code/Nova/NovaWeb
+    Step 1: cd $NOVA_SOURCE/NovaWeb
     Step 2: sudo bash getDependencies.sh
     Step 3: sudo npm install -g forever
-    Step 1: cd ~/Code/Nova
-    Step 4: make web
-    Step 5: sudo make install-web
+    Step 4: cd $NOVA_SOURCE
+    Step 5: make web
+    Step 6: sudo make install-web
 
 Note that the internal web interface uses SSL. If you want to generate or use your own
 SSL certificate and private key, put them in /usr/share/nova/NovaWeb/servercert.pem and
 /usr/share/nova/NovaWeb/serverkey.pem after installation.
+
+To start the web interface, run the command "novaweb" and go to https://localhost:8042 in
+a web browser.
 
 ===============================
 Contact us
@@ -152,7 +130,7 @@ Contact us
 
 feel free to contact the authors with issues and suggestions. 
 
-Found a bug? Tell us about it on our issue tracker:
+Found a bug? Had an install problem? Tell us about it on our issue tracker:
     https://github.com/DataSoft/Nova/issues
 
 Want to chat with us? Hop on IRC: 
