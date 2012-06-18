@@ -10,7 +10,7 @@ class HoneydProfileBinding : public node::ObjectWrap {
  public:
   static void Init(v8::Handle<v8::Object> target);
   
-  Nova::profile * GetChild();
+  Nova::NodeProfile * GetChild();
 
  private:
   HoneydProfileBinding();
@@ -20,7 +20,7 @@ class HoneydProfileBinding : public node::ObjectWrap {
   static v8::Handle<v8::Value> Save(const v8::Arguments& args);
   static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
 
-  Nova::profile *m_pfile;
+  Nova::NodeProfile *m_pfile;
 };
 
 #endif

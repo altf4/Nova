@@ -11,8 +11,8 @@ class HoneydNodeJs
 
 public:
     static v8::Handle<v8::Object> WrapNode(Nova::Node* node);
-    static v8::Handle<v8::Object> WrapProfile(Nova::profile *profile);
-    static v8::Handle<v8::Object> WrapPort(Nova::port *port);
+    static v8::Handle<v8::Object> WrapProfile(Nova::NodeProfile *profile);
+    static v8::Handle<v8::Object> WrapPort(Nova::Port *port);
 
 private:
 

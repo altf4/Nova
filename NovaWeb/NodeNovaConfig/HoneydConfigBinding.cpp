@@ -162,10 +162,10 @@ Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
 
     std::string name = cvv8::CastFromJS<std::string>(args[0]);
 
-    std::vector<Nova::port> ports = obj->m_conf->GetPorts(name);
+    std::vector<Nova::Port> ports = obj->m_conf->GetPorts(name);
     v8::Local<v8::Array> portArray = v8::Array::New();
     for (uint i = 0; i < ports.size(); i++) {
-        port *copy = new port();
+        Port *copy = new Port();
         *copy = ports.at(i);
         portArray->Set(v8::Number::New(i), HoneydNodeJs::WrapPort(copy));
     }
