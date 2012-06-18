@@ -46,6 +46,8 @@ bool connectedToNovad = false;
 //General variables like tables, flags, locks, etc.
 SuspectGUIHashTable SuspectTable;
 
+static uint64_t serverStartTime;
+
 // Defines the order of components in the process list and novaComponents array
 #define COMPONENT_NOVAD 0
 #define COMPONENT_HSH 1
@@ -166,6 +168,7 @@ NovaGUI::NovaGUI(QWidget *parent)
 	pthread_t StatusUpdateThread;
 
 	pthread_create(&StatusUpdateThread, NULL, StatusUpdate, this);
+	pthread_detach(StatusUpdateThread);
 }
 
 NovaGUI::~NovaGUI()
@@ -330,6 +333,9 @@ bool NovaGUI::ConnectGuiToNovad()
 			return false;
 		}
 
+		//Get the server's uptime
+		serverStartTime = GetStartTime();
+
 		// Get the list of current suspects
 		vector<in_addr_t> *suspectIpList = GetSuspectList(SUSPECTLIST_ALL);
 
@@ -377,7 +383,7 @@ void NovaGUI::UpdateSystemStatus()
 	{
 		item->setIcon(*m_greenIcon);
 
-		int uptime = GetUptime();
+		uint64_t uptime = time(NULL) - serverStartTime;
 		int uptimeSeconds =  uptime % 60;
 		int uptimeMinutes =  uptime / 60 % 60;
 		int uptimeHours =    uptime / 60 / 60;
@@ -1150,7 +1156,7 @@ void *StatusUpdate(void *ptr)
 	{
 		((NovaGUI*)ptr)->SystemStatusRefresh();
 
-		sleep(2);
+		sleep(1);
 	}
 	return NULL;
 }

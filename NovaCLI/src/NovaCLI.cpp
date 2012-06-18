@@ -480,7 +480,7 @@ void ClearSuspectWrapper(in_addr_t address)
 void PrintUptime()
 {
 	Connect();
-	cout << "Uptime is: " << GetUptime() << endl;
+	cout << "Uptime is: " << GetStartTime() << endl;
 	CloseNovadConnection();
 }
 

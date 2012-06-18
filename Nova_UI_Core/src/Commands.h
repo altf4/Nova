@@ -123,9 +123,9 @@ bool ClearSuspect(in_addr_t suspectAddress);
 //	returns - true if all suspects have been reclassified, false on error
 bool ReclassifyAllSuspects();
 
-// Asks novad for it's uptime
-//  returns - uptime in seconds (0 if error)
-int GetUptime();
+// Asks novad for it's uptime.
+//  returns - The time (in standard unix time) when the server started. 0 on error
+uint64_t GetStartTime();
 
 }
 
