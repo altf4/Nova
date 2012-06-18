@@ -20,6 +20,8 @@ var LocalStrategy = require('passport-local').Strategy;
 var mysql = require('mysql');
 var validCheck = require('validator').check;
 var sanitizeCheck = require('validator').sanitize;
+var Tail = require('tail').Tail;
+
 
 var credDb = 'nova_credentials';
 var credTb = 'credentials'
@@ -112,6 +114,15 @@ console.info("Listening on 8042");
 app.listen(8042);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
+
+novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+novadLog.on("line", function(data) {
+	try {everyone.now.newLogLine(data)} 
+	catch (err) 
+	{
+	
+	}
+});
 
 app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
      res.render('advancedOptions.jade', 
@@ -303,6 +314,7 @@ app.get('/novaMain', ensureAuthenticated, function(req, res) {
      });
 });
 
+app.get('/novadlog', ensureAuthenticated, function(req, res) {res.render('novadlog.jade');});
 app.get('/createNewUser', ensureAuthenticated, function(req, res) {res.render('createNewUser.jade');});
 app.get('/welcome', ensureAuthenticated, function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.jade');});

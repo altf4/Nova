@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  h1 Watching Novad Log
+  div#lastLogLine
+
+block headerAdditions
+  script 
+    now.newLogLine = function (line) {
+      var logDiv = document.getElementById("lastLogLine");
+      logDiv.insertBefore(document.createElement('br'), logDiv.firstChild);
+      logDiv.insertBefore(document.createTextNode(line), logDiv.firstChild);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    };
