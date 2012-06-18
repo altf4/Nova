@@ -99,11 +99,22 @@ string Suspect::ToString()
 //Just like Consume but doesn't deallocate
 void Suspect::ReadEvidence(Evidence *&evidence)
 {
+	if (m_IpAddress.s_addr == 0)
+	{
+		m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+	}
+
 	Evidence *curEvidence = evidence, *tempEv = NULL;
 	while(curEvidence != NULL)
 	{
 		m_unsentFeatures.UpdateEvidence(curEvidence);
 		m_features.UpdateEvidence(curEvidence);
+
+		if (m_lastPacketTime < evidence->m_evidencePacket.ts)
+		{
+			m_lastPacketTime = evidence->m_evidencePacket.ts;
+		}
+
 		tempEv = curEvidence;
 		curEvidence = tempEv->m_next;
 	}
@@ -122,6 +133,12 @@ void Suspect::ConsumeEvidence(Evidence *&evidence)
 	{
 		m_unsentFeatures.UpdateEvidence(curEvidence);
 		m_features.UpdateEvidence(curEvidence);
+
+		if (m_lastPacketTime < evidence->m_evidencePacket.ts)
+		{
+			m_lastPacketTime = evidence->m_evidencePacket.ts;
+		}
+
 		tempEv = curEvidence;
 		curEvidence = tempEv->m_next;
 		delete tempEv;
@@ -149,6 +166,7 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 	SerializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
+	SerializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
@@ -212,7 +230,8 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 		+ sizeof(m_isHostile)
 		+ sizeof(m_flaggedByAlarm)
 		+ sizeof(m_isLive)
-		+ sizeof(m_hostileNeighbors);
+		+ sizeof(m_hostileNeighbors)
+		+ sizeof(m_lastPacketTime);
 	//Adds the dynamic elements to the messageSize
 	for(uint32_t i = 0; i < DIM; i++)
 	{
@@ -258,6 +277,7 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 	DeserializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
+	DeserializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
@@ -512,6 +532,7 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 {
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
+	m_lastPacketTime = rhs.m_lastPacketTime;
 	for(uint i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
@@ -565,7 +586,17 @@ bool Suspect::operator==(const Suspect &rhs) const
 	{
 		return false;
 	}
+
+	if (m_lastPacketTime != rhs.m_lastPacketTime)
+	{
+		return false;
+	}
 	return true;
+}
+
+long int Suspect::GetLastPacketTime()
+{
+	return m_lastPacketTime;
 }
 
 bool Suspect::operator !=(const Suspect &rhs) const
@@ -577,6 +608,7 @@ Suspect::Suspect(const Suspect &rhs)
 {
 	m_features = rhs.m_features;
 	m_unsentFeatures = rhs.m_unsentFeatures;
+	m_lastPacketTime = rhs.m_lastPacketTime;
 
 	for(uint i = 0; i < DIM; i++)
 	{

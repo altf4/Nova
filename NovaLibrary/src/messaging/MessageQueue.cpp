@@ -48,12 +48,11 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 	m_consecutiveTimeouts = 0;
 
 	m_isShutDown = false;
-	m_callbackDoWakeup = false;
 	m_forwardDirection = forwardDirection;
 	m_socketFD = socketFD;
 
+	//We will later do a pthread_join, so don't detach here
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
-	pthread_detach(m_producerThread);
 }
 
 //Destructor should only be called by the callback thread, and also only while
@@ -61,11 +60,6 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 //	race conditions in deleting the object.
 MessageQueue::~MessageQueue()
 {
-	//Shutdown will cause the producer thread to make an ErrorMessage then quit
-	//This is probably redundant, but we do it again just to make sure
-	shutdown(m_socketFD, SHUT_RDWR);
-	close(m_socketFD);
-
 	//Wait for the producer thread to finish,
 	// We can't have his object destroyed out from underneath him
 	pthread_join(m_producerThread, NULL);
@@ -94,6 +88,14 @@ MessageQueue::~MessageQueue()
 //blocking call
 Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 {
+	{
+		Lock lock(&m_isShutdownMutex);
+		if(m_isShutDown)
+		{
+			return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+		}
+	}
+
 	Message* retMessage;
 
 	//If indefinite read:
@@ -178,6 +180,13 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				//While loop to protect against spurious wakeups
 				while(m_forwardQueue.empty())
 				{
+					{
+						Lock lock(&m_isShutdownMutex);
+						if(m_isShutDown)
+						{
+							return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+						}
+					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
@@ -214,6 +223,13 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				//While loop to protect against spurious wakeups
 				while(m_callbackQueue.empty())
 				{
+					{
+						Lock lock(&m_isShutdownMutex);
+						if(m_isShutDown)
+						{
+							return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+						}
+					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
 					if (errCondition == ETIMEDOUT)
 					{
@@ -265,7 +281,6 @@ void MessageQueue::PushMessage(Message *message)
 		//Protection for the m_callbackDoWakeup bool
 		//Wake up anyone sleeping for a callback message!
 		Lock condLock(&m_callbackCondMutex);
-		m_callbackDoWakeup = true;
 		pthread_cond_signal(&m_callbackWakeupCondition);
 		pthread_cond_signal(&m_readWakeupCondition);
 	}
@@ -289,24 +304,15 @@ bool MessageQueue::RegisterCallback()
 
 	{
 		//Protection for the m_callbackDoWakeup bool
-		Lock condLock(&m_callbackCondMutex);
-		while(!m_callbackDoWakeup)
+		Lock condLock(&m_callbackQueueMutex);
+		while(m_callbackQueue.empty())
 		{
-			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackCondMutex);
+			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackQueueMutex);
 		}
 
-		m_callbackDoWakeup = false;
-	}
-
-	//This is the first message of the protocol. This message contains the serial number we will be expecting later
-	{
-		//Protection for the queue structure
-		Lock lockQueue(&m_callbackQueueMutex);
-		if(!m_callbackQueue.empty())
-		{
-			Message *nextMessage = m_callbackQueue.front();
-			m_expectedcallbackSerial = nextMessage->m_serialNumber;
-		}
+		//This is the first message of the protocol. This message contains the serial number we will be expecting later
+		Message *nextMessage = m_callbackQueue.front();
+		m_expectedcallbackSerial = nextMessage->m_serialNumber;
 	}
 
 	Lock shutdownLock(&m_isShutdownMutex);
@@ -344,7 +350,6 @@ void *MessageQueue::ProducerThread()
 		while( totalBytesRead < sizeof(length))
 		{
 			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
-
 			if(bytesRead <= 0)
 			{
 				//The socket died on us!

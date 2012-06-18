@@ -140,7 +140,11 @@ To install,
     Step 3: sudo npm install -g forever
     Step 1: cd ~/Code/Nova
     Step 4: make web
-    Step 5: sudo make install-web	
+    Step 5: sudo make install-web
+
+Note that the internal web interface uses SSL. If you want to generate or use your own
+SSL certificate and private key, put them in /usr/share/nova/NovaWeb/servercert.pem and
+/usr/share/nova/NovaWeb/serverkey.pem after installation.
 
 ===============================
 Contact us

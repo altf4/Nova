@@ -157,6 +157,9 @@ public:
 	// 	 d: the value you wish to set the feature accuracy to
 	void SetFeatureAccuracy(featureIndex fi, double d);
 
+	// Get the last time we saw this suspect
+	long int GetLastPacketTime();
+
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);
 	Suspect& operator*(Suspect* rhs);
@@ -186,6 +189,8 @@ private:
 	int32_t m_hostileNeighbors;
 	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
 	bool m_isHostile;
+
+	long int m_lastPacketTime;
 
 	// Has this suspect been the subject of an alarm from another Nova instance?
 	bool m_flaggedByAlarm;

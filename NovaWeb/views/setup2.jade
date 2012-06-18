@@ -7,5 +7,6 @@ block headerAdditions
 block content
   form#basicConfigForm(method="post", action="/configureNovaSave")
     include includes/basicConfigForm
-  button(onClick="document.getElementById('basicConfigForm').submit()") Submit
+  button(onClick="window.location='/'") Back
+  button(onClick="document.getElementById('basicConfigForm').submit()") Next
   

@@ -4,6 +4,8 @@
 #include <string>
 #include <arpa/inet.h>
 
+#include <iostream>
+
 using namespace v8;
 using boost::format;
 using namespace Nova;
@@ -12,6 +14,7 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
 {
     HandleScope scope;  
     // Setup the template for the type if it hasn't been already
+	//
     if( m_SuspectTemplate.IsEmpty() )
     {
         Handle<FunctionTemplate> suspectTemplate = FunctionTemplate::New();
@@ -23,6 +26,7 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
         proto->Set("ToString",     		FunctionTemplate::New(InvokeMethod<std::string, Suspect, &Suspect::ToString>) );
         proto->Set("GetInAddr", 		FunctionTemplate::New(InvokeMethod<struct ::in_addr, Suspect, &Suspect::GetInAddr>) );
         proto->Set("GetClassification", FunctionTemplate::New(InvokeMethod<double, Suspect, &Suspect::GetClassification>) );
+        proto->Set("GetLastPacketTime", FunctionTemplate::New(InvokeMethod<long int, Suspect, &Suspect::GetLastPacketTime>) );
         proto->Set("GetIsHostile", 		FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetIsHostile>) );
         proto->Set("GetFlaggedByAlarm", FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetFlaggedByAlarm>) );
 

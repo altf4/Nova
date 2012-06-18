@@ -50,8 +50,6 @@ bool ConnectToNovad()
 		return true;
 	}
 
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
-
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
 	key += "/keys";
@@ -68,10 +66,14 @@ bool ConnectToNovad()
 		return false;
 	}
 
+	MessageManager::Instance().DeleteQueue(IPCSocketFD);
+
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
 	if(connect(IPCSocketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
 		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
-		close(IPCSocketFD);
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
@@ -82,7 +84,7 @@ bool ConnectToNovad()
 	if(!Message::WriteMessage(&connectRequest, IPCSocketFD))
 	{
 		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
-		close(IPCSocketFD);
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
@@ -98,7 +100,7 @@ bool ConnectToNovad()
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
-		close(IPCSocketFD);
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
@@ -106,7 +108,7 @@ bool ConnectToNovad()
 	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 	{
 		delete connectionReply;
-		close(IPCSocketFD);
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
@@ -153,10 +155,9 @@ bool CloseNovadConnection()
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
+		success = false;
 	}
-
-	if(reply->m_messageType != CONTROL_MESSAGE)
+	else if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
 		success = false;
@@ -175,4 +176,5 @@ bool CloseNovadConnection()
 	IPCSocketFD = -1;
 	return success;
 }
+
 }
