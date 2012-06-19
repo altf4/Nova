@@ -95,7 +95,7 @@ bool IsNovadUp(bool tryToConnect)
 	return true;
 }
 
-int GetUptime()
+uint64_t GetStartTime()
 {
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
@@ -129,7 +129,7 @@ int GetUptime()
 		return 0;
 	}
 
-	int ret = requestReply->m_uptime;
+	uint64_t ret = requestReply->m_startTime;
 
 	delete requestReply;
 	return ret;
