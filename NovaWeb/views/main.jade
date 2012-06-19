@@ -73,7 +73,7 @@ block headerAdditions
     }
       
     function pad(num) {
-        return ("0" + num).slice(-2);
+        return ("0" + num.toString()).slice(-2);
     }
 
     now.OnNewSuspect = function(suspect){
@@ -82,7 +82,7 @@ block headerAdditions
        }
 
       var d = new Date(suspect.GetLastPacketTime*1000);
-      var dString = pad(d.getUTCMonth()) + "/" + pad(d.getUTCDay()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds());
+      var dString = pad(d.getMonth()) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       suspect.LastPacketString = dString;
       // This is probably a really bad way to do this...
       for (var i in suspect.GetFeatures) {  
