@@ -324,8 +324,6 @@ bool NovaGUI::ConnectGuiToNovad()
 {
 	if(TryWaitConnectToNovad(500))	//TODO: Call this asynchronously
 	{
-		connectedToNovad = true;
-
 		if(!StartCallbackLoop(this))
 		{
 			LOG(ERROR, "Couldn't listen for Novad. Is NovaGUI already running?",
@@ -365,6 +363,9 @@ bool NovaGUI::ConnectGuiToNovad()
 			this->ProcessReceivedSuspect(suspectItem, false);
 		}
 
+		DrawAllSuspects();
+
+		connectedToNovad = true;
 		return true;
 	}
 	else
@@ -452,6 +453,11 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initializatio
 
 		SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
 		address = suspectItem.suspect->GetIpAddress();
+	}
+
+	if (!initialization)
+	{
+		return;
 	}
 
 	Q_EMIT newSuspect(address);
