@@ -95,7 +95,6 @@ block headerAdditions
       }
       if( suspectStore.get(suspect.GetInAddr) ) {       
         suspectStore.put(suspect,{id: suspect.GetInAddr, overwrite: true});
-        suspectGrid.render();
       } else {
         suspectStore.add(suspect,{id: suspect.GetInAddr}); 
       }
@@ -112,6 +111,7 @@ block headerAdditions
     require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){ 
     dojo.addOnLoad(function(){
       suspectStore = new dojo.store.Memory();
+      suspectStore = dojo.store.Observable(suspectStore);
       suspectStore.idProperty="GetInAddr";
       // Formatter for the classification
       function classificationFormatter(d) {
