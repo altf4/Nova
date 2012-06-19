@@ -99,6 +99,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		}
 		tempProf.m_name = key;
 	}
+
 	if(!node->m_redundant)
 	{
 		if(!m_hdconfig->AddProfile(&tempProf))
@@ -312,26 +313,38 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 		return;
 	}
 
+	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	{
+		RecursiveAddAllPorts(node->m_children[i].second);
+	}
+
 	for(uint16_t i = 0; i < node->m_ports_dist.size(); i++)
 	{
 		Port pass;
+		Port passOpenVersion;
 
 		vector<string> tokens;
 
 		boost::split(tokens, node->m_ports_dist[i].first, boost::is_any_of("_"));
 
+		passOpenVersion.m_portName = tokens[0] + "_" + tokens[1] + "_open";
+		passOpenVersion.m_portNum = tokens[0];
+		passOpenVersion.m_type = tokens[1];
+		passOpenVersion.m_behavior = tokens[2];
+		m_hdconfig->AddPort(passOpenVersion);
+
 		pass.m_portName = tokens[0] + "_" + tokens[1];
 		pass.m_portNum = tokens[0];
 		pass.m_type = tokens[1];
 
-		/*bool endIter = false;
+		bool endIter = false;
 
 		for(PortsTable::iterator it = node->m_ports.begin(); it != node->m_ports.end() && !endIter; it++)
 		{
 			if(m_scripts.GetScriptsTable().keyExists(it->second.second) && !(it->first + "_open").compare(node->m_ports_dist[i].first))
 			{
-				pass.behavior = "script";
-				pass.service = it->second.second;
+				pass.m_behavior = "script";
+				pass.m_service = it->second.second;
 				vector<string> tokens_osclass;
 				vector<string> tokens_script_osclass;
 
@@ -374,20 +387,58 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 							pass.m_portName += "_" + pass.m_scriptName;
 							endIter = true;
 
-							bool stop = false;
+							vector<string> osclass_copy = tokens_osclass;
+							string name = "";
 
-							for(uint k = 0; k < m_hdconfig->m_profiles[node->m_key].m_ports.size() && !stop; k++)
+							//DEBUG
+							for(uint j = 0; j < osclass_copy.size(); j++)
 							{
-								if((!m_hdconfig->m_profiles[node->m_key].m_ports[k].first + "_open").compare(it->first + "_open"))
+								cout << osclass_copy[j] << endl;
+							}
+
+							if(!node->m_key.compare(osclass_copy[0]))
+							{
+								for(uint k = 0; k < m_hdconfig->GetProfile(node->m_key)->m_ports.size(); k++)
 								{
-									m_hdconfig->m_profiles[node->m_key].m_ports[k].first = pass.m_scriptName;
-									stop = true;
+									//DEBUG
+									cout << m_hdconfig->GetProfile(node->m_key)->m_ports[k].first << endl;
+
+									if(!(it->first + "_open").compare(m_hdconfig->GetProfile(node->m_key)->m_ports[k].first))
+									{
+										m_hdconfig->GetProfile(node->m_key)->m_ports[k].first = pass.m_portName;
+										//DEBUG
+										cout << m_hdconfig->GetProfile(node->m_key)->m_ports[k].first << endl;
+									}
+								}
+
+								m_hdconfig->UpdateProfile(node->m_key);
+							}
+							else
+							{
+								while(osclass_copy.size())
+								{
+									name.append(osclass_copy.back());
+									//Here we've matched the profile corresponding to the compressed osclass tokens in name
+									if(m_hdconfig->GetProfile(name) != NULL)
+									{
+										//modify profile's ports and stuff here
+										for(uint k = 0; k < m_hdconfig->GetProfile(name)->m_ports.size(); k++)
+										{
+											if(!(it->first + "_open").compare(m_hdconfig->GetProfile(name)->m_ports[k].first))
+											{
+												m_hdconfig->GetProfile(name)->m_ports[k].first = pass.m_portName;
+											}
+										}
+										name = "";
+										m_hdconfig->UpdateProfile(name);
+									}
+									else
+									{
+										name.append(" ");
+									}
+									osclass_copy.pop_back();
 								}
 							}
-						}
-						else
-						{
-							pass.m_behavior = tokens[2];
 						}
 					}
 					else
@@ -409,24 +460,61 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 							pass.m_portName += "_" + pass.m_scriptName;
 							endIter = true;
 
-							bool stop = false;
+							vector<string> osclass_copy = tokens_osclass;
+							string name = "";
 
-							for(uint k = 0; k < m_hdconfig->m_profiles[node->m_key].m_ports.size() && !stop; k++)
+							//DEBUG
+							for(uint j = 0; j < osclass_copy.size(); j++)
 							{
-								if((!m_hdconfig->m_profiles[node->m_key].m_ports[k].first + "_open").compare(it->first + "_open"))
+								cout << osclass_copy[j] << endl;
+							}
+
+							if(!node->m_key.compare(osclass_copy[0]))
+							{
+								for(uint k = 0; k < m_hdconfig->GetProfile(node->m_key)->m_ports.size(); k++)
 								{
-									m_hdconfig->m_profiles[node->m_key].m_ports[k].first = pass.m_scriptName;
-									stop = true;
+									//DEBUG
+									cout << m_hdconfig->GetProfile(node->m_key)->m_ports[k].first << endl;
+
+									if(!(it->first + "_open").compare(m_hdconfig->GetProfile(node->m_key)->m_ports[k].first))
+									{
+										m_hdconfig->GetProfile(node->m_key)->m_ports[k].first = pass.m_portName;
+										//DEBUG
+										cout << m_hdconfig->GetProfile(node->m_key)->m_ports[k].first << endl;
+									}
+								}
+
+								m_hdconfig->UpdateProfile(node->m_key);
+							}
+							else
+							{
+								while(osclass_copy.size())
+								{
+									name.append(osclass_copy.back());
+									//Here we've matched the profile corresponding to the compressed osclass tokens in name
+									if(m_hdconfig->GetProfile(name) != NULL)
+									{
+										//modify profile's ports and stuff here
+										for(uint k = 0; k < m_hdconfig->GetProfile(name)->m_ports.size(); k++)
+										{
+											if(!(it->first + "_open").compare(m_hdconfig->GetProfile(name)->m_ports[k].first))
+											{
+												m_hdconfig->GetProfile(name)->m_ports[k].first = pass.m_portName;
+											}
+										}
+										name = "";
+										m_hdconfig->UpdateProfile(name);
+									}
+									else
+									{
+										name.append(" ");
+									}
+									osclass_copy.pop_back();
 								}
 							}
 						}
-						else
-						{
-							pass.m_behavior = tokens[2];
-						}
 					}
 				}
-
 				break;
 			}
 		}
@@ -434,16 +522,9 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 		{
 			pass.m_portName += "_" + tokens[2];
 			pass.m_behavior = tokens[2];
-		}*/
-
-		pass.m_portName += "_" + tokens[2];
-		pass.m_behavior = tokens[2];
+		}
 
 		m_hdconfig->AddPort(pass);
-	}
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveAddAllPorts(node->m_children[i].second);
 	}
 }
 

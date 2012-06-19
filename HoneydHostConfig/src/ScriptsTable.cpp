@@ -44,7 +44,7 @@ ScriptsTable::ScriptsTable(ScriptTable pull)
 	{
 			pair<string, string> add;
 			add.first = it->second.m_osclass;
-			add.second = it->second.m_path;
+			add.second = it->second.m_name;
 			m_scripts[it->second.m_service].push_back(add);
 	}
 }
@@ -60,7 +60,7 @@ void ScriptsTable::PopulateScriptsTable(ScriptTable pull)
 	{
 			pair<string, string> add;
 			add.first = it->second.m_osclass;
-			add.second = it->second.m_path;
+			add.second = it->second.m_name;
 			m_scripts[it->second.m_service].push_back(add);
 	}
 }
