@@ -448,8 +448,8 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 									m_hdconfig->GetProfile(name)->m_ports[k].first = pass.m_portName;
 								}
 							}
-							name = "";
 							m_hdconfig->UpdateProfile(name);
+							name = "";
 						}
 						else
 						{
