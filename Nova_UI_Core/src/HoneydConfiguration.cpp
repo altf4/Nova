@@ -1364,27 +1364,20 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 	return childProfiles;
 }
 
-Nova::NodeProfile *HoneydConfiguration::GetProfile(std::string profileName)
+NodeProfile *HoneydConfiguration::GetProfile(std::string profileName)
 {
-	if(!m_profiles.keyExists(profileName))
+	if(m_profiles.keyExists(profileName))
 	{
-		return NULL;
+		return &m_profiles[profileName];
 	}
-	else
-	{
-		NodeProfile *ret = new NodeProfile();
-		*ret = m_profiles[profileName];
-		return ret;
-	}
+	return NULL;
 }
 
-Nova::Port *HoneydConfiguration::GetPort(std::string portName)
+Port *HoneydConfiguration::GetPort(std::string portName)
 {
 	if(m_ports.keyExists(portName))
 	{
-		Port *p = new Port();
-		*p = m_ports[portName];
-		return p;
+		return &m_ports[portName];
 	}
 	return NULL;
 }
@@ -1413,191 +1406,6 @@ std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 
 	return childSubnets;
 }
-
-
-/*std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetEthernet(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if(!m_profiles.keyExists(profile))
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].m_ethernet == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].m_parentProfile;
-	}
-
-	ret.second = m_profiles[parent].m_ethernet;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetPersonality(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if(!m_profiles.keyExists(profile))
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].m_personality == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].m_parentProfile;
-	}
-
-	ret.second = m_profiles[parent].m_personality;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionTCP(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if(!m_profiles.keyExists(profile))
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].m_tcpAction == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].m_parentProfile;
-	}
-
-	ret.second = m_profiles[parent].m_tcpAction;
-
-	return ret;
-
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionUDP(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if(!m_profiles.keyExists(profile))
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].m_udpAction == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].m_parentProfile;
-	}
-
-	ret.second = m_profiles[parent].m_udpAction;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionICMP(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if(!m_profiles.keyExists(profile))
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].m_icmpAction == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].m_parentProfile;
-	}
-
-	ret.second = m_profiles[parent].m_icmpAction;
-
-	return ret;
-
-}
-
-std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMin(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if(!m_profiles.keyExists(profile))
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].m_uptimeMin == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].m_parentProfile;
-	}
-
-	ret.second = m_profiles[parent].m_uptimeMin;
-
-	return ret;
-}
-
-std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName profile)
-{
-	pair<hdConfigReturn, string> ret;
-
-	// Make sure the input profile name exists
-	if(!m_profiles.keyExists(profile))
-	{
-		ret.first = NO_SUCH_KEY;
-		ret.second = "";
-		return ret;
-	}
-
-	ret.first = NOT_INHERITED;
-	profileName parent = profile;
-
-	while (m_profiles[parent].m_uptimeMax == "")
-	{
-		ret.first = INHERITED;
-		parent = m_profiles[parent].m_parentProfile;
-	}
-
-	ret.second = m_profiles[parent].m_uptimeMax;
-
-	return ret;
-}*/
 
 
 std::vector<std::string> HoneydConfiguration::GetScriptNames()
@@ -1826,15 +1634,11 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 Node *HoneydConfiguration::GetNode(std::string nodeName)
 {
 	// Make sure the node exists
-	if(m_nodes.find(nodeName) == m_nodes.end())
+	if(m_nodes.keyExists(nodeName))
 	{
-		LOG(ERROR, string("There was an attempt to retrieve a honeyd node (name = ")
-			+ nodeName + string(" that doesn't exist"), "");
-		return NULL;
+		return &m_nodes[nodeName];
 	}
-	Node *ret = new Node();
-	*ret = m_nodes[nodeName];
-	return ret;
+	return NULL;
 }
 
 std::string HoneydConfiguration::GetNodeSubnet(std::string nodeName)
