@@ -686,10 +686,10 @@ bool HoneydConfiguration::SaveAllTemplates()
 		pt.put<std::string>("IP", it->second.m_IP);
 		pt.put<bool>("enabled", it->second.m_enabled);
 		pt.put<std::string>("MAC", it->second.m_MAC);
-		pt.put<std::string>("profile.m_name", it->second.m_pfile);
+		pt.put<std::string>("profile.name", it->second.m_pfile);
 		for(uint i = 0; i < it->second.m_ports.size(); i++)
 		{
-			pt.put<std::string>("profile.add.m_ports.port", it->second.m_ports[i]);
+			pt.put<std::string>("profile.add.ports.port", it->second.m_ports[i]);
 		}
 		m_nodesTree.add_child("node",pt);
 	}
@@ -958,7 +958,7 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 				n.m_interface = v.second.get<std::string>("interface");
 				n.m_IP = v.second.get<std::string>("IP");
 				n.m_enabled = v.second.get<bool>("enabled");
-				n.m_pfile = v.second.get<std::string>("profile.m_name");
+				n.m_pfile = v.second.get<std::string>("profile.name");
 
 				if(!n.m_pfile.compare(""))
 				{
@@ -1374,7 +1374,7 @@ Nova::NodeProfile *HoneydConfiguration::GetProfile(std::string profileName)
 	{
 		NodeProfile *ret = new NodeProfile();
 		*ret = m_profiles[profileName];
-		return ret;
+		return  ret;
 	}
 }
 
@@ -2221,42 +2221,42 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	}
 	if(p.m_personality.compare("") && !p.m_inherited[PERSONALITY])
 	{
-		temp.put<std::string>("set.m_personality", p.m_personality);
+		temp.put<std::string>("set.personality", p.m_personality);
 	}
 	if(p.m_ethernet.compare("") && !p.m_inherited[ETHERNET])
 	{
-		temp.put<std::string>("set.m_ethernet", p.m_ethernet);
+		temp.put<std::string>("set.ethernet", p.m_ethernet);
 	}
 	if(p.m_uptimeMin.compare("") && !p.m_inherited[UPTIME])
 	{
-		temp.put<std::string>("set.m_uptimeMin", p.m_uptimeMin);
+		temp.put<std::string>("set.uptimeMin", p.m_uptimeMin);
 	}
 	if(p.m_uptimeMax.compare("") && !p.m_inherited[UPTIME])
 	{
-		temp.put<std::string>("set.m_uptimeMax", p.m_uptimeMax);
+		temp.put<std::string>("set.uptimeMax", p.m_uptimeMax);
 	}
 	if(p.m_dropRate.compare("") && !p.m_inherited[DROP_RATE])
 	{
-		temp.put<std::string>("set.m_dropRate", p.m_dropRate);
+		temp.put<std::string>("set.dropRate", p.m_dropRate);
 	}
 
 	//Populates the ports, if none are found create an empty field because it is expected.
 	ptree pt;
 	if(p.m_ports.size())
 	{
-		temp.put_child("add.m_ports",pt);
+		temp.put_child("add.ports",pt);
 		for(uint i = 0; i < p.m_ports.size(); i++)
 		{
 			//If the port isn't inherited
 			if(!p.m_ports[i].second)
 			{
-				temp.add<std::string>("add.m_ports.port", p.m_ports[i].first);
+				temp.add<std::string>("add.ports.port", p.m_ports[i].first);
 			}
 		}
 	}
 	else
 	{
-		temp.put_child("add.m_ports",pt);
+		temp.put_child("add.ports",pt);
 	}
 	//put empty ptree in profiles as well because it is expected, does not matter that it is the same
 	// as the one in add.m_ports if profile has no ports, since both are empty.

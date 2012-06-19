@@ -19,6 +19,12 @@
 		<path>bash scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
+		<name>Linux Telnet</name>
+		<service>telnet</service>
+		<osclass>Linux | Linux</osclass>
+		<path>bash scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+	</script>
+	<script>
 		<name>Windows FTP</name>
 		<service>ftp</service>
 		<osclass>Microsoft | Windows</osclass>
@@ -95,5 +101,11 @@
 		<service>squid-snmp</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash scripts/linux/squid.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+	</script>
+	<script>
+		<name>Linux Echo</name>
+		<service>echo</service>
+		<osclass>Linux | Linux</osclass>
+		<path>bash scripts/linux/echo.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 </scripts>
