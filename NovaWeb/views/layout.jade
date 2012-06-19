@@ -36,7 +36,7 @@ html(lang="en")
         div(data-dojo-type="dijit.layout.BorderContainer",data-dojo-props="design: 'sidebar'",style="height: 140px;")
           // Header center
           div(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center'")    
-            a(href="/novaMain")
+            a(href="/")
               img(src="images/novaIcon.png",class="align-left")
               h1 NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System
             block topPannelAdditions
@@ -45,43 +45,45 @@ html(lang="en")
       div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: true")
         block buttonPannelAdditions
         
+        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=all"') Classified Suspects
         br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Basic Options
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "basicOptions";
+        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=unclassified"') Unclassified Suspects
         br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Advanced Options
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "advancedOptions";
+        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=hostile"') Only Hostile Suspects
         br
-        br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Profiles
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydProfiles";
         br
 
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Nodes
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydNodes";
+        button(type="button", style="width:160px", onClick='window.location = "/novadlog"') Nova Log
+        br
+        br
+
+        button(type="button", style="width:160px", onClick='window.location = "basicOptions"') Basic Options
         br
         
-        button(data-dojo-type="dijit.form.Button",type="button") Configure IP Whitelist
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configWhitelist";
+        button(type="button", style="width:160px", onClick='window.location = "advancedOptions"') Advanced Options
+        br
+        br
+       
+        button(type="button", style="width:160px", onClick='window.location = "configHoneydProfiles"') Honeyd Profiles
         br
         
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Training Data
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "customizeTraining";
+        
+        button(type="button", style="width:160px", onClick='window.location = "configHoneydNodes"') Honeyd Nodes
+        br
+        
+        button(type="button", style="width:160px", onClick='window.location = "configWhitelist"') IP Whitelist
+        br
+        
+        button(type="button", style="width:160px", onClick='window.location = "customizeTraining"') Training Data
         br
         br
         
-        button(data-dojo-type="dijit.form.Button",type="button") Create New User
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "createNewUser";
+        button(type="button", style="width:160px", onClick='window.location = "createNewUser"') New User
+        br 
+        
+        button(type="button", style="width:160px", onClick='window.location = "editUsers"') Edit Users
         br
         
-        button(data-dojo-type="dijit.form.Button",type="button") Edit Users
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "editUsers";
-        br
-      
-        button(data-dojo-type="dijit.form.Button",type="button") Log Out
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "logout";
+        button(type="button", style="width:160px", onClick='window.location = "logout"') Log Out
         br
 

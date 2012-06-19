@@ -21,6 +21,10 @@ var mysql = require('mysql');
 var validCheck = require('validator').check;
 var sanitizeCheck = require('validator').sanitize;
 
+var Tail = require('tail').Tail;
+novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+
+
 var credDb = 'nova_credentials';
 var credTb = 'credentials'
 
@@ -112,6 +116,38 @@ console.info("Listening on 8042");
 app.listen(8042);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
+
+
+novadLog.on("line", function(data) {
+	try {everyone.now.newLogLine(data)} 
+	catch (err) 
+	{
+	
+	}
+});
+
+novadLog.on("error", function(data) {
+	console.log("ERROR: " + error);
+	try {everyone.now.newLogLine(data)} 
+	catch (err) 
+	{
+	
+	}
+});
+
+
+app.get('/downloadNovadLog', ensureAuthenticated, function (req, res) {
+	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
+	  if (err) {
+		res.send(err);
+	  }
+	  else
+	  {
+		var reply = data.toString().replace(/(\r\n|\n|\r)/gm,"<br>");
+		res.send(reply);
+	  }
+	});
+});
 
 app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
      res.render('advancedOptions.jade', 
@@ -295,12 +331,26 @@ app.get('/logout', function(req, res){
   res.redirect('/');
 });
 
-app.get('/novaMain', ensureAuthenticated, function(req, res) {
+app.get('/suspects', ensureAuthenticated, function(req, res) {
+	 var type;
+	 if (req.query["type"] == undefined) {
+	   type = 'all'; 
+	 } else {
+       type = req.query["type"];
+	 }
+
      res.render('main.jade', 
      {
          user: req.user
 	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
+		 , type: type
+
      });
+});
+
+app.get('/novadlog', ensureAuthenticated, function(req, res) {
+	novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+	res.render('novadlog.jade');
 });
 
 app.get('/createNewUser', ensureAuthenticated, function(req, res) {res.render('createNewUser.jade');});
@@ -369,7 +419,7 @@ app.get('/login', function(req, res){
 	 {
 		redirect = req.query["redirect"]; 
 	 } else {
-		redirect = "/novaMain";
+		redirect = "/suspects";
 	 }
      res.render('login.jade',
      {
@@ -385,7 +435,8 @@ app.get('/', ensureAuthenticated, function(req, res) {
      {
          user: req.user
 	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
-         , message: req.flash('error')    
+         , message: req.flash('error')
+		 , type: 'all'
      });
 });
 
@@ -398,7 +449,7 @@ app.post('/login*',
 		}
 		else
 		{
-        	res.redirect('/novaMain');
+        	res.redirect('/suspects');
 		}
 });
 
@@ -595,7 +646,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   if(errors.length > 0)
   {
-    res.render('error.jade', { locals: {errorDetails: errors, redirectLink: "/"} });
+    res.render('error.jade', { locals: {errorDetails: errors, redirectLink: "/suspects"} });
   }
   else
   {
@@ -607,7 +658,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 	  }
     }
     
-    res.render('saveRedirect.jade', { locals: {redirectLink: "'/'"}}) 
+    res.render('saveRedirect.jade', { locals: {redirectLink: "/suspects"}}) 
   }
 });
 
@@ -888,7 +939,7 @@ function objCopy(src,dst) {
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
-    if (req.url == '/' || req.url == '/novaMain') {
+    if (req.url == '/' || req.url == '/suspects') {
         client.query('SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape('nova'),
         function selectCb(err, results, fields) {
             if(!err) {

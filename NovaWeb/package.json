@@ -3,7 +3,7 @@
 	, "version" : "0.1.0"
 	, "author"	: "Datasoft"
 	, "dependencies" : {
-		"express" 		: 	"2.5.x"
+		"express" 		: 	"2.5.9"
 		, "now"			:	"0.8.x"
 		, "jade"		:	"0.25.x"
 		, "socket.io"	:	"0.9.x"
@@ -12,5 +12,6 @@
 		, "mysql" : "0.9.6"
 		, "validator" : "0.4.6-2"
 		, "forever" : ""
+		, "tail" : "0.2.x"
 	}
 }

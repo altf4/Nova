@@ -180,7 +180,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_UPTIME_REPLY:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_uptime);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -188,8 +188,8 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			}
 
 			// Deserialize the uptime
-			memcpy(&m_uptime, buffer, sizeof(m_uptime));
-			buffer += sizeof(m_uptime);
+			memcpy(&m_startTime, buffer, sizeof(m_startTime));
+			buffer += sizeof(m_startTime);
 
 			break;
 		}
@@ -372,7 +372,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		2) Request Message Type
 			//		3) The uptime
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_uptime);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -382,8 +382,8 @@ char *RequestMessage::Serialize(uint32_t *length)
 			buffer += sizeof(m_requestType);
 
 			// Serialize the uptime
-			memcpy(buffer, &m_uptime, sizeof(m_uptime));
-			buffer += sizeof(m_uptime );
+			memcpy(buffer, &m_startTime, sizeof(m_startTime));
+			buffer += sizeof(m_startTime );
 
 			break;
 		}

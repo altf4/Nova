@@ -5,33 +5,26 @@ block topPannelAdditions
   div#nova_status unknown
   div(style="float: left") Haystack Status:&nbsp  
   div#haystack_status unknown
-
-block buttonPannelAdditions
-  button(data-dojo-type="dijit.form.Button", type="button") Start Nova
-    script(type="dojo/method", data-dojo-event="onClick") now.StartNovad();
-  br 
-  
-  button(data-dojo-type="dijit.form.Button",type="button") Stop Nova
-    script(type="dojo/method", data-dojo-event="onClick") now.StopNovad();
-  br
-  
-  br
-
-  button(data-dojo-type="dijit.form.Button",type="button") Start Haystack
-    script(type="dojo/method", data-dojo-event="onClick") now.StartHaystack();
-  br
-
-  button(data-dojo-type="dijit.form.Button",type="button") Stop Haystack
-    script(type="dojo/method", data-dojo-event="onClick") now.StopHaystack();
-  br
-
-  br
-  button(data-dojo-type="dijit.form.Button",type="button") Clear All Suspects
-    script(type="dojo/method", data-dojo-event="onClick") now.ClearAllSuspects();suspectGrid.store.fetch({onComplete: clearSuspects});
-  br
-  
+ 
 
 block content
+  h1 Nova Control Panel
+  button(type="button", style="width:160px", onClick='now.StartNovad()') Start Nova
+  button(type="button", style="width:160px", onClick='now.StopNovad()') Stop Nova
+  
+  br
+  br
+  
+  button(type="button", style="width:160px", onClick='now.StartHaystack()') Start Haystack
+  button(type="button", style="width:160px", onClick='now.StopHaystack()') Stop Haystack
+  
+  br
+  br
+  
+  button(type="button", style="width:160px", onClick='now.ClearAllSuspects(); suspectGrid.store.fetch({onComplete: clearSuspects});') Clear All Suspects
+
+  br
+
   div#nova_suspects_header
     h1 Suspect List
     button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
@@ -80,16 +73,21 @@ block headerAdditions
     }
       
     function pad(num) {
-        return ("0" + num).slice(-2);
+        return ("0" + num.toString()).slice(-2);
     }
 
     now.OnNewSuspect = function(suspect){
-       if(!liveUpdate) {
-         return;
-       }
+       var type = "#{type}";
+      
+       if (type == "hostile" && !suspect.GetIsHostile) {return;}
+       if (type == "unclassified" && (suspect.GetClassification > 0)) {return;}
+       if (type == "all" && suspect.GetClassification < 0) {return;}
+
+       if(!liveUpdate) {return;}
+
 
       var d = new Date(suspect.GetLastPacketTime*1000);
-      var dString = pad(d.getUTCMonth()) + "/" + pad(d.getUTCDay()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds());
+      var dString = pad(d.getMonth()) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       suspect.LastPacketString = dString;
       // This is probably a really bad way to do this...
       for (var i in suspect.GetFeatures) {  
@@ -105,7 +103,6 @@ block headerAdditions
 
     var clearSuspects = function(items, request){
       dojo.forEach(items, function(i) {
-        console.log("Deleted item " + i.GetInAddr);
         suspectGrid.store.deleteItem(i);
         suspectStore.remove(i.GetInAddr);
       });
@@ -158,9 +155,8 @@ block headerAdditions
     {
       store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
       sortInfo: -2,
-      autoWidth: true,
       structure: gridStructure,
-      rowsPerPage: 20
+      rowsPerPage: 20,
     }, 
     "nova_suspects"
     );
