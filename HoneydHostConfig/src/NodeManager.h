@@ -29,7 +29,7 @@ struct PortCounter
 {
 	double m_maxCount;
 	double m_minCount;
-	Port m_port;
+	std::string m_portName;
 };
 
 struct MacCounter
@@ -67,7 +67,6 @@ private:
 	PortCounter GeneratePortCounter(std::string portName, double dist_val);
 
 	void RecursiveGenProfileCounter(PersonalityNode *parent);
-	std::vector<Node> GenerateNodesFromProfile(NodeProfile *prof, int numNodes);
 
 	unsigned int m_nodeCount;
 	unsigned int m_targetNodeCount;

@@ -109,8 +109,8 @@ public:
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
 	std::vector<std::string> GetProfileNames();
-	Nova::NodeProfile * GetProfile(std::string profileName);
-	Nova::Port * GetPort(std::string portName);
+	NodeProfile *GetProfile(std::string profileName);
+	Port *GetPort(std::string portName);
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
@@ -161,7 +161,7 @@ public:
 
     //Deletes a single node, called from deleteNodes();
     bool DeleteNode(std::string nodeName);
-    Node * GetNode(std::string nodeName);
+    Node *GetNode(std::string nodeName);
 
     std::string GetNodeSubnet(std::string nodeName);
     bool EnableNode(std::string nodeName);

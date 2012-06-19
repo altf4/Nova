@@ -71,7 +71,7 @@ void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
 		}
 		for(unsigned int i = 0; i < parent->m_ports_dist.size(); i++)
 		{
-			pCounter.m_portCounters.push_back(GeneratePortCounter(parent->m_vendor_dist[i].first, parent->m_vendor_dist[i].second));
+			pCounter.m_portCounters.push_back(GeneratePortCounter(parent->m_ports_dist[i].first, parent->m_ports_dist[i].second));
 		}
 	}
 	for(uint i = 0; i < parent->m_children.size(); i++)
@@ -83,17 +83,19 @@ void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
 MacCounter NodeManager::GenerateMacCounter(string vendor, double dist_val)
 {
 	struct MacCounter ret;
+	ret.m_ethVendor = vendor;
+	ret.m_maxCount = dist_val;
+	ret.m_minCount = 100 - dist_val;
 	return ret;
 }
 
 PortCounter NodeManager::GeneratePortCounter(string portName, double dist_val)
 {
 	struct PortCounter ret;
+	ret.m_portName = portName;
+	ret.m_maxCount = dist_val;
+	ret.m_minCount = 100 - dist_val;
 	return ret;
 }
 
-vector<Node> NodeManager::GenerateNodesFromProfile(NodeProfile *prof, int numNodes)
-{
-	return vector<Node> {};
-}
 }
