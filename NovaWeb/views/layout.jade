@@ -36,7 +36,7 @@ html(lang="en")
         div(data-dojo-type="dijit.layout.BorderContainer",data-dojo-props="design: 'sidebar'",style="height: 140px;")
           // Header center
           div(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center'")    
-            a(href="/novaMain")
+            a(href="/")
               img(src="images/novaIcon.png",class="align-left")
               h1 NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System
             block topPannelAdditions
@@ -45,7 +45,12 @@ html(lang="en")
       div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: true")
         block buttonPannelAdditions
         
-        button(type="button", style="width:160px", onClick='window.location = "/"') Nova Monitor
+        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=all"') Classified Suspects
+        br
+        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=unclassified"') Unclassified Suspects
+        br
+        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=hostile"') Only Hostile Suspects
+        br
         br
 
         button(type="button", style="width:160px", onClick='window.location = "/novadlog"') Nova Log

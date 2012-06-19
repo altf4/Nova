@@ -77,9 +77,16 @@ block headerAdditions
     }
 
     now.OnNewSuspect = function(suspect){
-       if(!liveUpdate) {
-         return;
-       }
+       var type = "#{type}";
+      
+       console.log("Type is " + type);
+       console.log("Classification is " + suspect.GetClassification);
+       if (type == "hostile" && !suspect.GetIsHostile) {return;}
+       if (type == "unclassified" && (suspect.GetClassification > 0)) {return;}
+       if (type == "all" && suspect.GetClassification < 0) {return;}
+
+       if(!liveUpdate) {return;}
+
 
       var d = new Date(suspect.GetLastPacketTime*1000);
       var dString = pad(d.getMonth()) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
