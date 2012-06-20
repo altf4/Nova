@@ -121,6 +121,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 					{
 						curCounter->m_count -= (1 - curCounter->m_increment);
 						curNode.m_ports.push_back(curCounter->m_portName);
+						num_ports++;
 					}
 				}
 				ret.push_back(curNode);
@@ -130,7 +131,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 	}
 	while(!ret.empty())
 	{
-		m_hdconfig->AddNewNode(ret.back().m_pfile, ret.back().m_IP, ret.back().m_MAC, "eth0", "");
+		m_hdconfig->AddNewNode(ret.back());
 		ret.pop_back();
 	}
 }
