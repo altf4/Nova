@@ -2328,4 +2328,79 @@ void Config::SetOverridePcapString(bool overridePcapString)
 	m_overridePcapString = overridePcapString;
 }
 
+vector <string> Config::GetIpAddresses(string ipListFile)
+{
+	ifstream ipListFileStream(ipListFile.data());
+	vector<string> whitelistedAddresses;
+
+	if(ipListFileStream.is_open())
+	{
+		while(ipListFileStream.good())
+		{
+			string line;
+			getline (ipListFileStream,line);
+			if(strcmp(line.c_str(), "")&& line.at(0) != '#' )
+			{
+				whitelistedAddresses.push_back(line);
+			}
+		}
+		ipListFileStream.close();
+	}
+	else
+	{
+		LOG(ERROR,"Unable to open file: " + ipListFile, "");
+	}
+
+	return whitelistedAddresses;
+}
+
+
+vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
+{
+	//Path to the main log file
+	ifstream honeydConfFile(honeyDConfigPath.c_str());
+	vector<string> retAddresses;
+
+	if( honeydConfFile == NULL)
+	{
+		LOG(ERROR, "Error opening log file. Does it exist?", "");
+		exit(EXIT_FAILURE);
+	}
+
+	string LogInputLine;
+
+	while(!honeydConfFile.eof())
+	{
+		stringstream LogInputLineStream;
+
+		//Get the next line
+		getline(honeydConfFile, LogInputLine);
+
+		//Load the line into a stringstream for easier tokenizing
+		LogInputLineStream << LogInputLine;
+		string token;
+		string honeydTemplate;
+
+		//Is the first word "bind"?
+		getline(LogInputLineStream, token, ' ');
+
+		if(token.compare( "bind" ) != 0)
+		{
+			continue;
+		}
+
+		//The next token will be the IP address
+		getline(LogInputLineStream, token, ' ');
+
+		// Get the template
+		getline(LogInputLineStream, honeydTemplate, ' ');
+
+		if (honeydTemplate != "DoppelgangerReservedTemplate")
+		{
+			retAddresses.push_back(token);
+		}
+	}
+	return retAddresses;
+}
+
 }

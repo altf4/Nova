@@ -40,6 +40,7 @@ Suspect::Suspect()
 	m_flaggedByAlarm = false;
 	m_isHostile = false;
 	m_isLive = false;
+	m_lastPacketTime = 0;
 	for(int i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = 0;

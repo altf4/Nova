@@ -80,6 +80,7 @@ NovaCLI/Debug/novacli
 /Nova_UI_Core/Debug/libNova_UI_Core.so
 /Nova_UI_Core/Debug/Nova_UI_Core
 /Nova_UI_Core/Release/libNova_UI_Core.so
+/Nova_UI_Core/Release/Nova_UI_Core
 
 #NovaTest
 /NovaTest/Debug
