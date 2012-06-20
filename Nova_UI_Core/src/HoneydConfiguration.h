@@ -131,6 +131,8 @@ public:
 	//	Returns (true) if the profile could be created, (false) if it cannot.
 	bool AddProfile(NodeProfile * profile);
 
+	bool AddGroup(std::string groupName);
+
 	//Updates the profile with any modified information
 	//	Note: to modify inheritance use InheritProfile, just changing the parentProfile value and calling
 	//		this function may leave a copy of the profile as a child of the old parent next load

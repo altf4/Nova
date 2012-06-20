@@ -33,6 +33,7 @@ NodeManager::NodeManager(PersonalityTree *persTree)
 	{
 		m_persTree = persTree;
 		m_hdconfig = m_persTree->GetHDConfig();
+		m_persTree->AddAllPorts();
 		GenerateProfileCounters();
 	}
 }

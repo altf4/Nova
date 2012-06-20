@@ -31,12 +31,12 @@ class PersonalityTree
 
 public:
 
-	PersonalityTree(PersonalityTable *persTable = NULL);
+	PersonalityTree(PersonalityTable *persTable, std::vector<Subnet> &subnetsToUse);
 	~PersonalityTree();
 
 	void LoadTable(PersonalityTable *persTable);
 
-	void GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, std::string profileName);
+	void GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const std::string &profileName);
 
 	void InsertPersonality(Personality *pers);
 
@@ -58,7 +58,7 @@ public:
 
 	void AddAllPorts();
 
-	bool AddSubnet(Subnet * add);
+	bool AddSubnet(Subnet *add);
 
 	HoneydConfiguration * GetHDConfig();
 

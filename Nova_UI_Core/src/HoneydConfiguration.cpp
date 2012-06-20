@@ -1494,6 +1494,36 @@ bool HoneydConfiguration::AddProfile(NodeProfile *profile)
 	return false;
 }
 
+bool HoneydConfiguration::AddGroup(std::string groupName)
+{
+	using boost::property_tree::ptree;
+
+	for(uint i = 0; i < m_groups.size(); i++)
+	{
+		if(!groupName.compare(m_groups[i]))
+		{
+			return false;
+		}
+	}
+	m_groups.push_back(groupName);
+	try
+	{
+		ptree newGroup, emptyTree;
+		newGroup.clear();
+		emptyTree.clear();
+		newGroup.put<std::string>("name", groupName);
+		newGroup.put_child("subnets", m_subnetTree);
+		newGroup.put_child("nodes", emptyTree);
+		m_groupTree.add_child("group", newGroup);
+	}
+	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+	{
+		LOG(ERROR, "Problem adding group ports: "+string(e.what())+".", "");
+		return false;
+	}
+	return true;
+}
+
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
 	//If item text and profile name don't match, we need to update

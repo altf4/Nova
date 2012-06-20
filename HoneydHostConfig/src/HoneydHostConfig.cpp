@@ -301,13 +301,7 @@ int main(int argc, char ** argv)
 		return errVar;
 	}
 
-	PersonalityTree persTree = PersonalityTree(&personalities);
-
-	// for each element in recv
-	for(uint i = 0; i < subnetsToAdd.size(); i++)
-	{
-		persTree.AddSubnet(&subnetsToAdd[i]);
-	}
+	PersonalityTree persTree = PersonalityTree(&personalities, subnetsToAdd);
 
 	persTree.ToString();
 

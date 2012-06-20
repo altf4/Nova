@@ -18,19 +18,30 @@
 
 #include "PersonalityTree.h"
 #include <boost/algorithm/string.hpp>
+#include "HoneydHostConfig.h"
 
 using namespace std;
 
 namespace Nova
 {
 
-PersonalityTree::PersonalityTree(PersonalityTable *persTable)
+PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& subnetsToUse)
 {
 	m_hdconfig = new HoneydConfiguration();
 
 	m_root = PersonalityNode("default");
 	m_hdconfig->LoadAllTemplates();
+
 	m_hdconfig->m_subnets.clear();
+
+	for(uint i = 0; i < subnetsToUse.size(); i++)
+	{
+		AddSubnet(&subnetsToUse[i]);
+	}
+	m_hdconfig->AddGroup("HaystackAutoConfig");
+	Config::Inst()->SetGroup("HaystackAutoConfig");
+	m_hdconfig->SaveAllTemplates();
+	m_hdconfig->LoadAllTemplates();
 	m_profiles = &m_hdconfig->m_profiles;
 	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 
@@ -77,7 +88,7 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	}
 }
 
-void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, string profileName)
+void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const string &profileName)
 {
 	if(node == NULL || parent == NULL || parentProfile == NULL)
 	{
@@ -287,12 +298,7 @@ void PersonalityTree::DebugPrintProfileTable()
 
 void PersonalityTree::ToXmlTemplate()
 {
-
 	vector<string> ret = m_hdconfig->GetProfileNames();
-
-	AddAllPorts();
-
-	ret = m_hdconfig->GetProfileNames();
 
 	for(uint16_t i = 0; i < ret.size(); i++)
 	{
