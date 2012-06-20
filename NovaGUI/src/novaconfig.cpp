@@ -1689,19 +1689,10 @@ void NovaConfig::DeleteProfile(string name)
 	LoadHaystackConfiguration();
 }
 
-void NovaConfig::RecursiveSetAssociatedNodesTreeWidget(std::string profile, std::string node)
+void NovaConfig::RecursiveSetAssociatedNodesTreeWidget(std::string profile, std::string node, bool child)
 {
 	if(m_honeydConfig->m_nodes.find(node) == m_honeydConfig->m_nodes.end())
 	{
-		return;
-	}
-
-	if(!m_honeydConfig->m_nodes[node].m_pfile.compare(profile))
-	{
-		QTreeWidgetItem *add = new QTreeWidgetItem();
-		add->setText(0, QString(m_honeydConfig->m_nodes[node].m_pfile.c_str()));
-		add->setText(1, QString(m_honeydConfig->m_nodes[node].m_name.c_str()));
-		ui.associatedNodesTreeWidget->addTopLevelItem(add);
 		return;
 	}
 	else if(!m_honeydConfig->m_profiles[profile].m_parentProfile.compare(""))
@@ -1711,7 +1702,24 @@ void NovaConfig::RecursiveSetAssociatedNodesTreeWidget(std::string profile, std:
 
 	if(profile.compare(m_currentProfile))
 	{
-		RecursiveSetAssociatedNodesTreeWidget(m_honeydConfig->m_profiles[profile].m_parentProfile, node);
+		RecursiveSetAssociatedNodesTreeWidget(m_honeydConfig->m_profiles[profile].m_parentProfile, node, true);
+	}
+	else
+	{
+		QTreeWidgetItem *add = new QTreeWidgetItem();
+
+		if(child)
+		{
+			add->setText(0, "Y");
+		}
+		else
+		{
+			add->setText(0, "N");
+		}
+
+		add->setText(1, QString(m_honeydConfig->m_nodes[node].m_pfile.c_str()));
+		add->setText(2, QString(m_honeydConfig->m_nodes[node].m_name.c_str()));
+		ui.associatedNodesTreeWidget->addTopLevelItem(add);
 	}
 }
 
@@ -1855,10 +1863,9 @@ void NovaConfig::LoadProfileSettings()
 
 		ui.associatedNodesTreeWidget->clear();
 
-		for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin();
-				it != m_honeydConfig->m_nodes.end(); it++)
+		for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin(); it != m_honeydConfig->m_nodes.end(); it++)
 		{
-			RecursiveSetAssociatedNodesTreeWidget(m_currentProfile, it->first);
+			RecursiveSetAssociatedNodesTreeWidget(it->second.m_pfile, it->first, false);
 		}
 	}
 	else

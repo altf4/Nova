@@ -2609,6 +2609,11 @@ p, li { white-space: pre-wrap; }
                    </attribute>
                    <column>
                     <property name="text">
+                     <string>Child?</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
                      <string>Profile</string>
                     </property>
                    </column>
