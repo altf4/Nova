@@ -30,6 +30,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 
 	m_root = PersonalityNode("default");
 	m_hdconfig->LoadAllTemplates();
+	m_hdconfig->m_subnets.clear();
 	m_profiles = &m_hdconfig->m_profiles;
 	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 

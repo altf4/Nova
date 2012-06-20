@@ -400,7 +400,127 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar)
 	// For every found interface, we need to do some processing.
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		// If we've found an interface that has an IPv4 address and is NOT a loopback,
+		// IF we've found a loopback address with an IPv4 address
+		if((curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			Subnet add;
+			// start processing it to generate the subnet for the interface.
+			there = false;
+			interfaces.push_back(string(curIf->ifa_name));
+
+			// Get the string representation of the interface's IP address,
+			// and put it into the host character array.
+			int s = getnameinfo(curIf->ifa_addr, sizeof(sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+			if(s != 0)
+			{
+				// If getnameinfo returned an error, stop processing for the
+				// method, assign the proper errorCode, and return an empty
+				// vector.
+				cout << "Getting Name info of Interface IP failed" << endl;
+				*errVar = GETNAMEINFOFAIL;
+				return addresses;
+			}
+
+			// Do the same thing as the above, but for the netmask of the interface
+			// as opposed to the IP address.
+			s = getnameinfo(curIf->ifa_netmask, sizeof(sockaddr_in), bmhost, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+			if(s != 0)
+			{
+				// If getnameinfo returned an error, stop processing for the
+				// method, assign the proper errorCode, and return an empty
+				// vector.
+				cout << "Getting Name info of Interface Netmask failed" << endl;
+				*errVar = GETBITMASKFAIL;
+				return addresses;
+			}
+			// Convert the bitmask and host address character arrays to strings
+			// for use later
+			string bmhost_push = string(bmhost);
+			string host_push = string(host);
+			localMachine = host_push;
+
+			// Spurious debug prints for now. May change them to be used
+			// in UI hooks later.
+			cout << "Interface: " << curIf->ifa_name << endl;
+			cout << "Address: " << host_push << endl;
+			cout << "Netmask: " << bmhost_push << endl;
+
+			// Put the network ordered address values into the
+			// address and bitmaks in_addr structs, and then
+			// convert them to host longs for use in
+			// determining how much hostspace is empty
+			// on this interface's subnet.
+			inet_aton(host_push.c_str(), &address);
+			inet_aton(bmhost_push.c_str(), &bitmask);
+			ntohl_address = ntohl(address.s_addr);
+			ntohl_bitmask = ntohl(bitmask.s_addr);
+
+			// Get the base address for the subnet
+			uint32_t base = ntohl_bitmask & ntohl_address;
+			basestruct.s_addr = htonl(base);
+
+			// and the max address
+			uint32_t max = ~(ntohl_bitmask) + base;
+			maxstruct.s_addr = htonl(max);
+
+			// and then add max - base (minus three, for the current
+			// host, the .0 address, and the .255 address)
+			// into the PersonalityTable's aggregate coutn of
+			// available host address space.
+			personalities.m_host_addrs_avail += max - base - 3;
+
+			// Find out how many bits there are to work with in
+			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
+			uint32_t mask = ~ntohl_bitmask;
+			int i = 32;
+
+			while(mask != 0)
+			{
+				mask /= 2;
+				i--;
+			}
+
+			ss << i;
+
+			// Generate a string of the form X.X.X.X/## for use in nmap scans later
+			string push = string(inet_ntoa(basestruct)) + "/" + ss.str();
+
+			ss.str("");
+
+			add.m_address = push;
+			add.m_mask = string(inet_ntoa(bitmask));
+			add.m_maskBits = i;
+			add.m_base = basestruct.s_addr;
+			add.m_max = maxstruct.s_addr;
+			add.m_name = string(curIf->ifa_name);
+			add.m_enabled = (curIf->ifa_flags & IFF_UP);
+			add.m_isRealDevice = true;
+
+			// If we have two interfaces that point the same subnet, we only want
+			// to scan once; so, change the "there" flag to reflect that the subnet
+			// exists to prevent it from being pushed again.
+			for(uint16_t j = 0; j < addresses.size() && !there; j++)
+			{
+				if(!push.compare(addresses[j]))
+				{
+					there = true;
+				}
+			}
+
+			// Want to add loopbacks to the subnets (for Doppelganger) but not to the
+			// addresses to scan vector
+			if(!there)
+			{
+				subnetsToAdd.push_back(add);
+			}
+			// Otherwise, don't do anything.
+			else
+			{
+			}
+		}
+		// If we've found an interface that has an IPv4 address and isn't a loopback
 		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
 			Subnet add;
