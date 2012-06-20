@@ -11,15 +11,16 @@
 
 using namespace v8;
 
-void InitAll(Handle<Object> target) {
-  NovaNode::Init(target);
-  NovaConfigBinding::Init(target);
-  HoneydConfigBinding::Init(target);
-  VendorMacDbBinding::Init(target);
-  OsPersonalityDbBinding::Init(target);
-  HoneydProfileBinding::Init(target);
-  CustomizeTrainingBinding::Init(target);
-  WhitelistConfigurationBinding::Init(target);
+void InitAll(Handle<Object> target)
+{
+	NovaNode::Init(target);
+	NovaConfigBinding::Init(target);
+	HoneydConfigBinding::Init(target);
+	VendorMacDbBinding::Init(target);
+	OsPersonalityDbBinding::Init(target);
+	HoneydProfileBinding::Init(target);
+	CustomizeTrainingBinding::Init(target);
+	WhitelistConfigurationBinding::Init(target);
 }
 
 NODE_MODULE(novaconfig, InitAll)

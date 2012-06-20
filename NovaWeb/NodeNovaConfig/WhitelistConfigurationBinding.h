@@ -31,17 +31,17 @@ using namespace std;
 
 class WhitelistConfigurationBinding: ObjectWrap
 {
-	private:
+private:
 
-	public:
+public:
 
-		static void Init(Handle<Object> target);
-		WhitelistConfigurationBinding();
-		~WhitelistConfigurationBinding();
-		
-		static Handle<Value> New(const Arguments& args);
-		static Persistent<FunctionTemplate> s_ct;
-		
+	static void Init(Handle<Object> target);
+	WhitelistConfigurationBinding();
+	~WhitelistConfigurationBinding();
+
+	static Handle<Value> New(const Arguments& args);
+	static Persistent<FunctionTemplate> s_ct;
+
 };
 
 
