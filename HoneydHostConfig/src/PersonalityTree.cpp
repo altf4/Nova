@@ -40,6 +40,9 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable)
 	{
 		LoadTable(persTable);
 	}
+	GetHostCount();
+
+	cout << m_root.m_count << endl;
 }
 
 PersonalityTree::~PersonalityTree()
@@ -490,6 +493,14 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode *node)
 bool PersonalityTree::AddSubnet(Subnet *add)
 {
 	return m_hdconfig->AddSubnet(add);
+}
+
+void PersonalityTree::GetHostCount()
+{
+	for(uint i = 0; i < m_root.m_children.size(); i++)
+	{
+		m_root.m_count += m_root.m_children[i].second->m_count;
+	}
 }
 
 }

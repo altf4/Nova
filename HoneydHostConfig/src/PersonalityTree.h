@@ -64,6 +64,8 @@ public:
 
 	PersonalityNode *GetRootNode();
 
+	void GetHostCount();
+
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
