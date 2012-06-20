@@ -186,6 +186,10 @@ public:
 	void SetOverridePcapString(bool overridePcapString);
 
 
+	static std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
+	static std::vector <std::string> GetIpAddresses(std::string ipListFile);
+
+
 protected:
 	Config();
 
@@ -304,6 +308,7 @@ private:
 	//	However the constructor calls LoadConfig, so we use a private version instead that doesn't include
 	//	LoadInterfaces() which is called elsewhere
 	void LoadConfig_Internal();
+
 };
 }
 
