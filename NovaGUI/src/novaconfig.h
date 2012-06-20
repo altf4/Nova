@@ -238,6 +238,7 @@ private:
     QTreeWidgetItem * GetNodeTreeWidgetItem(std::string nodeName);
     QTreeWidgetItem * GetNodeHsTreeWidgetItem(std::string nodeName);
     bool IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item);
+    void RecursiveSetAssociatedNodesTreeWidget(std::string profile, std::string node);
 
     Ui::NovaConfigClass ui;
 

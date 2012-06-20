@@ -1689,6 +1689,32 @@ void NovaConfig::DeleteProfile(string name)
 	LoadHaystackConfiguration();
 }
 
+void NovaConfig::RecursiveSetAssociatedNodesTreeWidget(std::string profile, std::string node)
+{
+	if(m_honeydConfig->m_nodes.find(node) == m_honeydConfig->m_nodes.end())
+	{
+		return;
+	}
+
+	if(!m_honeydConfig->m_nodes[node].m_pfile.compare(profile))
+	{
+		QTreeWidgetItem *add = new QTreeWidgetItem();
+		add->setText(0, QString(m_honeydConfig->m_nodes[node].m_pfile.c_str()));
+		add->setText(1, QString(m_honeydConfig->m_nodes[node].m_name.c_str()));
+		ui.associatedNodesTreeWidget->addTopLevelItem(add);
+		return;
+	}
+	else if(!m_honeydConfig->m_profiles[profile].m_parentProfile.compare(""))
+	{
+		return;
+	}
+
+	if(profile.compare(m_currentProfile))
+	{
+		RecursiveSetAssociatedNodesTreeWidget(m_honeydConfig->m_profiles[profile].m_parentProfile, node);
+	}
+}
+
 //Populates the window with the selected profile's options
 void NovaConfig::LoadProfileSettings()
 {
@@ -1749,7 +1775,7 @@ void NovaConfig::LoadProfileSettings()
 		//Populate the port table
 		for(uint i = 0; i < p->m_ports.size(); i++)
 		{
-			pr =m_honeydConfig->m_ports[p->m_ports[i].first];
+			pr = m_honeydConfig->m_ports[p->m_ports[i].first];
 
 			//These don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
@@ -1825,6 +1851,14 @@ void NovaConfig::LoadProfileSettings()
 			{
 				ui.portTreeWidget->setCurrentItem(item);
 			}
+		}
+
+		ui.associatedNodesTreeWidget->clear();
+
+		for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin();
+				it != m_honeydConfig->m_nodes.end(); it++)
+		{
+			RecursiveSetAssociatedNodesTreeWidget(m_currentProfile, it->first);
 		}
 	}
 	else

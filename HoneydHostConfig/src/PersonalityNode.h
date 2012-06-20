@@ -36,15 +36,28 @@ public:
 	//Deconstructor
 	~PersonalityNode();
 
+	// Number of hosts that have this personality
 	uint32_t m_count;
+
+	// The average number of ports that this personality has
+	uint16_t m_avgPortCount;
+
+	// Node for the node
 	std::string m_key;
+
+	// Is this something we can compress? If m_redundant == true, then yes
 	bool m_redundant;
 
+	// Vector of the child nodes to this node
 	std::vector<std::pair<std::string, PersonalityNode *> > m_children;
 
+	// Distribution vectors containing the percent occurrences of
+	// each MAC Vendor/Port.
 	std::vector<std::pair<std::string, double> > m_vendor_dist;
 	std::vector<std::pair<std::string, double> > m_ports_dist;
 
+	// String representing the osclass. Used for matching ports to
+	// scripts from the script table.
 	std::string m_osclass;
 
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type

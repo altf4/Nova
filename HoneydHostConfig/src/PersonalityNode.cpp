@@ -40,6 +40,7 @@ PersonalityNode::PersonalityNode(string key)
 	m_ports.set_deleted_key("DELETED");
 	m_vendors.set_deleted_key("DELETED");
 	m_count = 0;
+	m_avgPortCount = 0;
 	m_redundant = false;
 }
 
@@ -82,6 +83,8 @@ string PersonalityNode::ToString()
 void PersonalityNode::GenerateDistributions()
 {
 
+	uint16_t count = 0;
+
 	m_vendor_dist.clear();
 	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
@@ -93,11 +96,14 @@ void PersonalityNode::GenerateDistributions()
 
 	for(PortsTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
+		count += it->second.first;
 		pair<string, double> push_ports;
 		push_ports.first = it->first + "_open";
 		push_ports.second = (100 * (((double)it->second.first)/((double)m_count)));
 		m_ports_dist.push_back(push_ports);
 	}
+
+	m_avgPortCount = count / m_count;
 }
 
 NodeProfile PersonalityNode::GenerateProfile(NodeProfile* parentProfile)

@@ -1798,7 +1798,7 @@ p, li { white-space: pre-wrap; }
                 <enum>Qt::ClickFocus</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>2</number>
                </property>
                <widget class="QWidget" name="genTab">
                 <attribute name="title">
@@ -2564,6 +2564,60 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                   </layout>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="associatedNodesTab">
+                <attribute name="title">
+                 <string>Nodes</string>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout">
+                 <property name="margin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QTreeWidget" name="associatedNodesTreeWidget">
+                   <property name="minimumSize">
+                    <size>
+                     <width>461</width>
+                     <height>321</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>461</width>
+                     <height>321</height>
+                    </size>
+                   </property>
+                   <property name="baseSize">
+                    <size>
+                     <width>461</width>
+                     <height>321</height>
+                    </size>
+                   </property>
+                   <attribute name="headerDefaultSectionSize">
+                    <number>100</number>
+                   </attribute>
+                   <attribute name="headerStretchLastSection">
+                    <bool>true</bool>
+                   </attribute>
+                   <attribute name="headerDefaultSectionSize">
+                    <number>100</number>
+                   </attribute>
+                   <attribute name="headerStretchLastSection">
+                    <bool>true</bool>
+                   </attribute>
+                   <column>
+                    <property name="text">
+                     <string>Profile</string>
+                    </property>
+                   </column>
+                   <column>
+                    <property name="text">
+                     <string>Nodes</string>
+                    </property>
+                   </column>
+                  </widget>
                  </item>
                 </layout>
                </widget>
