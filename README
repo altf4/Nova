@@ -89,10 +89,10 @@ To build and install run the commands,
 run the following command to add your user to the 'nova' permission group
 and to set up database tables for the web interface.
 
-    Step 3: sudo bash InitializeNova.sh
+    Step 3: sudo nova_init
 
 - Your user will have to be in the "nova" group in order for nova and honeyd to
-run properly. The InitializeNova.sh script will do this, but you must log in and
+run properly. The nova_init script will do this, but you must log in and
 back out for the change to take effect.
 
     Step 4: Log out and log back in
