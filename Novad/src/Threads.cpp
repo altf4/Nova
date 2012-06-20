@@ -324,7 +324,7 @@ void *UpdateIPFilter(void *ptr)
 			{
 				honeydDHCPWatch = inotify_add_watch(honeydDHCPNotifyFd, dhcpListFile.c_str(),
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
-				haystackDhcpAddresses = GetIpAddresses(dhcpListFile);
+				haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
 				string haystackAddresses_csv = ConstructFilterString();
 
 				UpdateHaystackFeatures();

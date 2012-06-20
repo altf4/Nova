@@ -374,7 +374,7 @@ app.post('/createNewUser', ensureAuthenticated, function(req, res) {
       {
 	    
         client.query('INSERT INTO ' + credTb + ' values(' + client.escape(userName) + ', SHA1(' + client.escape(password) + '))');
-		res.render('saveRedirect.jade', { locals: {redirectLink: "'/'"}})	
+		res.render('saveRedirect.jade', { locals: {redirectLink: "/"}})	
         return;
       } 
       else
@@ -402,7 +402,7 @@ app.post('/createInitialUser', ensureAuthenticated, function(req, res) {
 	    
         client.query('INSERT INTO ' + credTb + ' values(' + client.escape(userName) + ', SHA1(' + client.escape(password) + '))');
 		client.query('DELETE FROM ' + credTb + ' WHERE user = ' + client.escape('nova'));
-		res.render('saveRedirect.jade', { locals: {redirectLink: "'setup2'"}})	
+		res.render('saveRedirect.jade', { locals: {redirectLink: "setup2"}})	
         return;
       } 
       else
@@ -461,7 +461,7 @@ app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
 	
 	trainingDb.Save();
 	
-	res.render('saveRedirect.jade', { locals: {redirectLink: "'/customizeTraining'"}})	
+	res.render('saveRedirect.jade', { locals: {redirectLink: "/customizeTraining"}})	
 });
 
 app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
@@ -485,7 +485,7 @@ app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
 	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
 	honeydConfig.SaveAllTemplates();
      
-	res.render('saveRedirect.jade', { locals: {redirectLink: "'/configHoneydNodes'"}})
+	res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 
 });
 
