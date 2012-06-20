@@ -2,29 +2,68 @@
 #The default build should be a release build
 all: release
 	
-
 #Release Target
-novad-release:
-	$(MAKE) -C NovaLibrary/Release
-	$(MAKE) -C Nova_UI_Core/Release
-	$(MAKE) -C Novad/Release
-	$(MAKE) -C NovaCLI/Release
+release:
+	$(MAKE) novalib-release
+	$(MAKE) ui_core-release
+	$(MAKE) release-helper
 
-release: novad-release
-	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI release
-	
-novad-debug:
-	$(MAKE) -C NovaLibrary/Debug
-	$(MAKE) -C Nova_UI_Core/Debug
-	$(MAKE) -C Novad/Debug
-	$(MAKE) -C NovaCLI/Debug
+release-helper: novad-release novagui-release novacli-release
 
 #Debug target
-debug: novad-debug
+debug:
+	$(MAKE) novalib-debug
+	$(MAKE) ui_core-debug
+	$(MAKE) debug-helper
+
+debug-helper: novad-debug novagui-debug novacli-debug
+
+#Nova Library
+novalib-release:
+	$(MAKE) -C NovaLibrary/Release
+
+novalib-debug:
+	$(MAKE) -C NovaLibrary/Debug
+
+#novad
+novad-release:
+	$(MAKE) -C Novad/Release
+
+novad-debug:
+	$(MAKE) -C Novad/Debug
+
+#UI_Core
+ui_core-release:
+	$(MAKE) -C Nova_UI_Core/Release
+
+ui_core-debug:
+	$(MAKE) -C Nova_UI_Core/Debug
+
+#nova CLI
+novacli-release:
+	$(MAKE) -C NovaCLI/Release
+
+novacli-debug:
+	$(MAKE) -C NovaCLI/Debug
+
+#novagui
+novagui-release:
+	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C NovaGUI release
+
+novagui-debug:
 	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
-	
+
+#Web UI
+web:
+	cd NovaWeb;npm --unsafe-perm install
+	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
+
+#Unit tests
+test: debug test-prepare
+	$(MAKE) -C NovaTest/Debug
+
 test-prepare:
 	# Make the folder if it doesn't exist
 	mkdir -p NovaTest/NovadSource
@@ -37,17 +76,8 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-test: debug test-prepare
-	$(MAKE) -C NovaTest/Debug
-
-web:
-	cd NovaWeb;npm --unsafe-perm install
-	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
-
 # Make debug + test
 all-test: test
-
-
 
 #Cleans both Release and Debug
 clean: clean-debug clean-release clean-test
@@ -76,11 +106,10 @@ clean-test:
 clean-web:
 	cd NovaWeb/NodeNovaConfig; node-waf clean
 
+#Installation (requires root)
 install: install-release
 
-#Requires root
 install-release: install-data install-docs
-
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
@@ -90,9 +119,7 @@ install-release: install-data install-docs
 	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	sh Installer/postinst
 
-#requires root
 install-debug: install-data install-docs
-
 	#The binaries themselves
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
@@ -145,6 +172,8 @@ install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
+#Uninstall
+uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
 	rm -rf $(DESTDIR)/etc/nova
@@ -163,21 +192,23 @@ uninstall-files:
 uninstall-permissions:
 	sh Installer/postrm
 
-uninstall: uninstall-files uninstall-permissions
-
 # Reinstall nova without messing up the permissions
-reinstall: uninstall-files install
-reinstall-debug: uninstall-files install-debug
+reinstall: uninstall-files
+	$(MAKE) install
 
-# Does a frest uninstall, clean, build, and install
-cleanOldFiles: uninstall-files clean clean-test
-makeNewFiles: cleanOldFiles
-	$(MAKE) test
-installNewFiles: makeNewFiles
+reinstall-debug: uninstall-files
 	$(MAKE) install-debug
 
-reset-debug: installNewFiles
-reset: uninstall-files clean clean-test release test install-release
+# Does a fresh uninstall, clean, build, and install
+reset: uninstall-files
+	$(MAKE) clean
+	$(MAKE) release
+	$(MAKE) test 
+	$(MAKE) install-release
 
-
+reset-debug: uninstall-files
+	$(MAKE) clean
+	$(MAKE) debug
+	$(MAKE) test
+	$(MAKE) install-debug
 
