@@ -27,23 +27,23 @@ namespace Nova
 
 struct PortCounter
 {
-	double m_maxCount;
-	double m_minCount;
+	double m_increment;
+	double m_count;
 	std::string m_portName;
 };
 
 struct MacCounter
 {
-	double m_maxCount;
-	double m_minCount;
+	double m_increment;
+	double m_count;
 	std::string m_ethVendor;
 };
 
 struct ProfileCounter
 {
 	Nova::NodeProfile m_profile;
-	double m_maxCount;
-	double m_minCount;
+	double m_increment;
+	double m_count;
 	std::vector<struct PortCounter> m_portCounters;
 	std::vector<struct MacCounter> m_macCounters;
 };
@@ -54,9 +54,10 @@ class NodeManager
 public:
 
 	NodeManager(PersonalityTree *persTree);
-	~NodeManager();
 
 	bool SetPersonalityTree(PersonalityTree *persTree);
+
+	void GenerateNodes(unsigned int num_nodes);
 
 	PersonalityTree *m_persTree;
 

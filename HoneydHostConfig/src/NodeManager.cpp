@@ -24,6 +24,9 @@ using namespace std;
 namespace Nova
 {
 
+//. ************ Public Methods ************ .//
+
+
 NodeManager::NodeManager(PersonalityTree *persTree)
 {
 	if(persTree != NULL)
@@ -44,6 +47,90 @@ bool NodeManager::SetPersonalityTree(PersonalityTree *persTree)
 	return true;
 }
 
+void NodeManager::GenerateNodes(unsigned int num_nodes)
+{
+	vector<Node> ret;
+	ret.clear();
+	for(unsigned int i = 0; i < num_nodes; i++)
+	{
+		for(unsigned int j = 0; j < m_profileCounters.size(); j++)
+		{
+			//If we're skipping this profile
+			if(m_profileCounters[j].m_count < 0)
+			{
+				//Update Counter
+				m_profileCounters[j].m_count += m_profileCounters[j].m_increment;
+			}
+			//If we're using this profile
+			else
+			{
+				//Update Counter
+				m_profileCounters[j].m_count -= (1 - m_profileCounters[j].m_increment);
+
+				Node curNode;
+				//Determine which mac vendor  to use
+				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
+				{
+					MacCounter *curCounter = &m_profileCounters[j].m_macCounters[k];
+					//If we're skipping this vendor
+					if(curCounter->m_count < 0)
+					{
+						curCounter->m_count += curCounter->m_increment;
+					}
+					//If we're using this vendor
+					else
+					{
+						curCounter->m_count -= (1 - curCounter->m_increment);
+						//Generate unique MAC address
+						curNode.m_IP = "DHCP";
+						curNode.m_MAC = m_hdconfig->GenerateUniqueMACAddress(curCounter->m_ethVendor);
+
+						//Update counters for remaining macs
+						for(unsigned int l = k+1; l < m_profileCounters[j].m_macCounters.size(); l++)
+						{
+							m_profileCounters[j].m_macCounters[l].m_count -= m_profileCounters[j].m_macCounters[l].m_increment;
+						}
+						break;
+					}
+				}
+				std::vector<PortCounter *> portCounters;
+				for(unsigned int index = 0; index < m_profileCounters[j].m_portCounters.size(); index++)
+				{
+					portCounters.push_back(&m_profileCounters[j].m_portCounters[index]);
+				}
+				//Determine whether or not to use a port
+				unsigned int num_ports = 0, avg_ports = 5;
+				while(!portCounters.empty() && (num_ports < avg_ports))
+				{
+					unsigned int randIndex = time(NULL) % portCounters.size();
+					PortCounter *curCounter = portCounters[randIndex];
+					portCounters.erase(portCounters.begin() + randIndex);
+
+					//If we're skipping this port
+					if(curCounter->m_count < 0)
+					{
+						curCounter->m_count += curCounter->m_increment;
+					}
+
+					//If we're using this port
+					else
+					{
+						curCounter->m_count -= (1 - curCounter->m_increment);
+						curNode.m_ports.push_back(curCounter->m_portName);
+					}
+				}
+				ret.push_back(curNode);
+			}
+		}
+	}
+	while(!ret.empty())
+	{
+		m_hdconfig->AddNewNode(ret.back().m_pfile, ret.back().m_IP, ret.back().m_MAC, "eth0", "");
+		ret.pop_back();
+	}
+}
+
+//. ************ Private Methods ************ .//
 void NodeManager::GenerateProfileCounters()
 {
 	PersonalityNode *rootNode = m_persTree->GetRootNode();
@@ -63,8 +150,9 @@ void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
 			return;
 		}
 		pCounter.m_profile = *m_hdconfig->GetProfile(parent->m_key);
-		pCounter.m_maxCount = parent->m_count/m_hostCount;
-		pCounter.m_minCount = 100 - pCounter.m_maxCount;
+		pCounter.m_increment = parent->m_count/m_hostCount;
+		pCounter.m_count = 0;
+
 		for(unsigned int i = 0; i < parent->m_vendor_dist.size(); i++)
 		{
 			pCounter.m_macCounters.push_back(GenerateMacCounter(parent->m_vendor_dist[i].first, parent->m_vendor_dist[i].second));
@@ -74,7 +162,7 @@ void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
 			pCounter.m_portCounters.push_back(GeneratePortCounter(parent->m_ports_dist[i].first, parent->m_ports_dist[i].second));
 		}
 	}
-	for(uint i = 0; i < parent->m_children.size(); i++)
+	for(unsigned int i = 0; i < parent->m_children.size(); i++)
 	{
 		RecursiveGenProfileCounter(parent->m_children[i].second);
 	}
@@ -84,8 +172,8 @@ MacCounter NodeManager::GenerateMacCounter(string vendor, double dist_val)
 {
 	struct MacCounter ret;
 	ret.m_ethVendor = vendor;
-	ret.m_maxCount = dist_val;
-	ret.m_minCount = 100 - dist_val;
+	ret.m_increment = dist_val/100;
+	ret.m_count = 0;
 	return ret;
 }
 
@@ -93,8 +181,8 @@ PortCounter NodeManager::GeneratePortCounter(string portName, double dist_val)
 {
 	struct PortCounter ret;
 	ret.m_portName = portName;
-	ret.m_maxCount = dist_val;
-	ret.m_minCount = 100 - dist_val;
+	ret.m_increment = dist_val/100;
+	ret.m_increment = 0;
 	return ret;
 }
 
