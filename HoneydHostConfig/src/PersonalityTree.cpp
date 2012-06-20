@@ -437,6 +437,9 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 						if(!(it->first + "_open").compare(m_hdconfig->GetProfile(node->m_key)->m_ports[k].first))
 						{
 							m_hdconfig->GetProfile(node->m_key)->m_ports[k].first = pass.m_portName;
+							cout << node->m_ports_dist[i].first << endl;
+							node->m_ports_dist[i].first = pass.m_portName;
+							cout << node->m_ports_dist[i].first << endl;
 						}
 					}
 
@@ -456,6 +459,9 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 								if(!(it->first + "_open").compare(m_hdconfig->GetProfile(name)->m_ports[k].first))
 								{
 									m_hdconfig->GetProfile(name)->m_ports[k].first = pass.m_portName;
+									cout << node->m_ports_dist[i].first << endl;
+									node->m_ports_dist[i].first = pass.m_portName;
+									cout << node->m_ports_dist[i].first << endl;
 								}
 							}
 							m_hdconfig->UpdateProfile(name);

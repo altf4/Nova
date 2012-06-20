@@ -102,6 +102,7 @@ public:
 
     // Add a node with static IP and static MAC
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
+    bool AddNewNode(Node node);
     bool AddNewNodes(std::string profileName, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
 
     bool AddSubnet(Subnet * add);

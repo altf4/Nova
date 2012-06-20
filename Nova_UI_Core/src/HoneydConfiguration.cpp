@@ -687,10 +687,13 @@ bool HoneydConfiguration::SaveAllTemplates()
 		pt.put<bool>("enabled", it->second.m_enabled);
 		pt.put<std::string>("MAC", it->second.m_MAC);
 		pt.put<std::string>("profile.name", it->second.m_pfile);
+		ptree newPortTree;
+		newPortTree.clear();
 		for(uint i = 0; i < it->second.m_ports.size(); i++)
 		{
-			pt.put<std::string>("profile.add.ports.port", it->second.m_ports[i]);
+			newPortTree.add<std::string>("port", it->second.m_ports[i]);
 		}
+		pt.put_child("profile.add.ports", newPortTree);
 		m_nodesTree.add_child("node",pt);
 	}
 	using boost::property_tree::ptree;
@@ -1761,6 +1764,70 @@ bool HoneydConfiguration::AddNewNodes(std::string profileName, string ipAddress,
 			sAddr++;
 		}
 	}
+	return true;
+}
+
+bool HoneydConfiguration::AddNewNode(Node node)
+{
+	Node newNode = node;
+
+	newNode.m_interface = "eth0";
+
+	cout << "Adding new node " << newNode.m_pfile << newNode.m_IP << newNode.m_MAC << newNode.m_interface << newNode.m_sub <<endl;
+
+	if(newNode.m_IP != "DHCP")
+	{
+		newNode.m_realIP = htonl(inet_addr(newNode.m_IP.c_str()));
+	}
+
+	// Figure out it's subnet
+	if(newNode.m_sub == "")
+	{
+		if(newNode.m_IP == "DHCP")
+		{
+			newNode.m_sub = newNode.m_interface;
+		}
+		else
+		{
+			newNode.m_sub = FindSubnet(newNode.m_realIP);
+
+			if(newNode.m_sub == "")
+			{
+				return false;
+			}
+		}
+	}
+
+	newNode.m_enabled = true;
+
+	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
+
+	uint j = ~0;
+	stringstream ss;
+	if(newNode.m_name == "DHCP - RANDOM")
+	{
+		//Finds a unique identifier
+		uint i = 1;
+		while((m_nodes.keyExists(newNode.m_name)) && (i < j))
+		{
+			i++;
+			ss.str("");
+			ss << "DHCP - RANDOM(" << i << ")";
+			newNode.m_name = ss.str();
+		}
+	}
+
+	m_nodes[newNode.m_name] = newNode;
+	if(newNode.m_sub != "")
+	{
+		m_subnets[newNode.m_sub].m_nodes.push_back(newNode.m_name);
+	}
+	else
+	{
+		LOG(WARNING, "No subnet was set for new node. This could make certain features unstable", "");
+	}
+
+	//TODO add error checking
 	return true;
 }
 
