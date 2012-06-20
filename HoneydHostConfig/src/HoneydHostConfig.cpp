@@ -34,7 +34,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "PersonalityTree.h"
+#include "NodeManager.h"
 #include "HoneydHostConfig.h"
 
 #define DIGIT_OFFSET 48
@@ -312,6 +312,9 @@ int main(int argc, char ** argv)
 	persTree.ToString();
 
 	persTree.DebugPrintProfileTable();
+
+	NodeManager nodeBuilder = NodeManager(&persTree);
+	nodeBuilder.GenerateNodes(10);
 
 	persTree.ToXmlTemplate();
 
