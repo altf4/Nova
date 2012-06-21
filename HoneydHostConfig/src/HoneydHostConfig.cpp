@@ -39,6 +39,7 @@
 
 #define DIGIT_OFFSET 48
 #define LOWER_OFFSET 87
+#define UPPER_OFFSET 65
 
 using namespace std;
 using namespace Nova;
@@ -51,23 +52,63 @@ vector<Subnet> subnetsToAdd;
 
 PersonalityTable personalities;
 
-void Nova::Shift(u_char *m, const uint &cond, const u_char &val)
+//Converts the first three bytes of a MAC address from a string to a unsigned int
+//	MAC: string of the MAC address you wish to conver must be at least 8 characters
+//	return: unsigned integervalue of the MAC prefix
+//	note: must be valid hex charactar pairs separated by colons, ex: '09:af:AF'
+uint Nova::AtoMACPrefix(string MAC)
 {
-	if(m == NULL)
+	if(MAC.size() < 8)
 	{
-		return;
+		return 0;
 	}
-	if(cond % 3 == 0)
+	u_char tempBuf = 0;
+	uint ret = 0;
+	for(uint i = 0; (i < MAC.length()) && (i < 8); i++)
 	{
-		u_char b = val;
-		b = b << 4;
-		*m |= b;
+		uint val = 0;
+		if(isdigit(MAC[i]) && MAC[i] != '0')
+		{
+			val = MAC[i] - DIGIT_OFFSET;
+		}
+		else if(islower(MAC[i]) && MAC[i] < 'g')
+		{
+			val = MAC[i] - LOWER_OFFSET;
+		}
+		else if(isupper(MAC[i]) && MAC[i] < 'G')
+		{
+			val = MAC[i] - UPPER_OFFSET;
+		}
+		else if(MAC[i] != ':' && MAC[i] != '0')
+		{
+			return 0;
+		}
+		switch(i%3)
+		{
+			case 0:
+			{
+				tempBuf += val;
+				tempBuf = tempBuf << 4;
+				break;
+			}
+			case 1:
+			{
+				tempBuf += val;
+				break;
+			}
+			case 2:
+			{
+				ret += tempBuf;
+				ret = ret << 8;
+				break;
+			}
+			default:
+			{
+				return 0;
+			}
+		}
 	}
-	else if(cond % 3 == 1)
-	{
-		u_char b = val;
-		*m |= b;
-	}
+	return ret;
 }
 
 ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
@@ -109,44 +150,13 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 						ifstream ifs("/sys/class/net/eth0/address");
 						char mac[18];
 						ifs.getline(mac, 18);
-						string forLoop = string(mac);
 
-						uint counter = 0;
-						person->m_macs.push_back(forLoop);
-
-						// There may be a more efficient way to do this,
-						// merely for if we absolutely have to have the MAC as a string
-						// right now.
-						// It does, however, add the profile of the host
-						// into the tree correctly.
-						uint passToVendor = 0;
-						u_char m = 0;
-						for(uint i = 0; i < forLoop.length() && counter < 3; i++)
-						{
-							if(isdigit(mac[i]) && mac[i] != '0')
-							{
-								Shift(&m, i, mac[i] - DIGIT_OFFSET);
-							}
-							else if(islower(mac[i]) && mac[i] < 'g')
-							{
-								Shift(&m, i, mac[i] - LOWER_OFFSET);
-							}
-							else if(mac[i] != ':' && mac[i] != '0')
-							{
-								cout << "Unknown character found in MAC address string" << endl;
-							}
-							if((i % 3) == 2 || i == forLoop.length() - 1)
-							{
-								uint temp = 0 | m;
-								passToVendor |= (temp << (16 - (8 * counter)));
-								m = 0;
-								counter++;
-							}
-						}
+						string macString = string(mac);
+						person->m_macs.push_back(macString);
+						uint passToVendor = AtoMACPrefix(macString);
 
 						VendorMacDb *vmd = new VendorMacDb();
 						vmd->LoadPrefixFile();
-
 						person->AddVendor(vmd->LookupVendor(passToVendor));
 					}
 				}
