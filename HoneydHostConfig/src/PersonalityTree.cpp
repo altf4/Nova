@@ -46,8 +46,6 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_profiles = &m_hdconfig->m_profiles;
 	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 
-	m_scripts.PrintScriptsTable();
-
 	if(persTable != NULL)
 	{
 		LoadTable(persTable);

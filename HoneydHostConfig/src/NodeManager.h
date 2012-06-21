@@ -67,7 +67,7 @@ private:
 	MacCounter GenerateMacCounter(const std::string &vendor, const double dist_val);
 	PortCounter GeneratePortCounter(const std::string &portName, const double dist_val);
 
-	void RecursiveGenProfileCounter(PersonalityNode *parent);
+	void RecursiveGenProfileCounter(const PersonalityNode &parent);
 
 	unsigned int m_nodeCount;
 	unsigned int m_targetNodeCount;

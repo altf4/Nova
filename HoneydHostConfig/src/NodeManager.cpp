@@ -142,37 +142,37 @@ void NodeManager::GenerateProfileCounters()
 {
 	PersonalityNode *rootNode = m_persTree->GetRootNode();
 	m_hostCount = rootNode->m_count;
-	RecursiveGenProfileCounter(rootNode);
+	RecursiveGenProfileCounter(*rootNode);
 }
 
-void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
+void NodeManager::RecursiveGenProfileCounter(const PersonalityNode &parent)
 {
-	if(parent->m_children.empty())
+	if(parent.m_children.empty())
 	{
 		struct ProfileCounter pCounter;
 
-		if(m_hdconfig->GetProfile(parent->m_key) == NULL)
+		if(m_hdconfig->GetProfile(parent.m_key) == NULL)
 		{
-			LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + parent->m_key, "");
+			LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + parent.m_key, "");
 			return;
 		}
-		pCounter.m_profile = *m_hdconfig->GetProfile(parent->m_key);
-		pCounter.m_increment = ((double)parent->m_count / (double)m_hostCount);
+		pCounter.m_profile = *m_hdconfig->GetProfile(parent.m_key);
+		pCounter.m_increment = ((double)parent.m_count / (double)m_hostCount);
 		pCounter.m_count = 0;
 
-		for(unsigned int i = 0; i < parent->m_vendor_dist.size(); i++)
+		for(unsigned int i = 0; i < parent.m_vendor_dist.size(); i++)
 		{
-			pCounter.m_macCounters.push_back(GenerateMacCounter(parent->m_vendor_dist[i].first, parent->m_vendor_dist[i].second));
+			pCounter.m_macCounters.push_back(GenerateMacCounter(parent.m_vendor_dist[i].first, parent.m_vendor_dist[i].second));
 		}
-		for(unsigned int i = 0; i < parent->m_ports_dist.size(); i++)
+		for(unsigned int i = 0; i < parent.m_ports_dist.size(); i++)
 		{
-			pCounter.m_portCounters.push_back(GeneratePortCounter(parent->m_ports_dist[i].first, parent->m_ports_dist[i].second));
+			pCounter.m_portCounters.push_back(GeneratePortCounter(parent.m_ports_dist[i].first, parent.m_ports_dist[i].second));
 		}
 		m_profileCounters.push_back(pCounter);
 	}
-	for(unsigned int i = 0; i < parent->m_children.size(); i++)
+	for(unsigned int i = 0; i < parent.m_children.size(); i++)
 	{
-		RecursiveGenProfileCounter(parent->m_children[i].second);
+		RecursiveGenProfileCounter(*parent.m_children[i].second);
 	}
 }
 
