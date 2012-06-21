@@ -1517,7 +1517,7 @@ bool HoneydConfiguration::AddGroup(std::string groupName)
 		newGroup.put<std::string>("name", groupName);
 		newGroup.put_child("subnets", m_subnetTree);
 		newGroup.put_child("nodes", emptyTree);
-		m_groupTree.add_child("group", newGroup);
+		m_groupTree.add_child("groups.group", newGroup);
 	}
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 	{

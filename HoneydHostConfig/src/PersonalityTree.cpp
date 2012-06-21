@@ -40,6 +40,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	}
 	m_hdconfig->AddGroup("HaystackAutoConfig");
 	Config::Inst()->SetGroup("HaystackAutoConfig");
+	Config::Inst()->SaveUserConfig();
 	m_hdconfig->SaveAllTemplates();
 	m_hdconfig->LoadAllTemplates();
 	m_profiles = &m_hdconfig->m_profiles;
