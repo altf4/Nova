@@ -360,7 +360,7 @@ void PrintSuspect(in_addr_t address)
 {
 	Connect();
 
-	Suspect *suspect = GetSuspect(address);
+	Suspect *suspect = GetSuspect(ntohl(address));
 
 	if (suspect != NULL)
 	{
