@@ -60,7 +60,7 @@ std::vector<std::string> GetSubnetsToScan(ErrCode *errVar);
 // Prints out the subnets that're found during GetSubnetsToScan(errVar)
 //  vector<string> recv - vector of subnets found
 // Only prints, no return value
-void PrintRecv(std::vector<std::string> recv);
+void PrintStringVector(std::vector<std::string> recv);
 
 // After the subnets are found, pass recv into this function to do the actual scanning
 // and generation of the XML files for parsing

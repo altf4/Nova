@@ -30,7 +30,7 @@ PersonalityTable::PersonalityTable()
 	m_personalities.set_empty_key("");
 	m_num_of_hosts = 0;
 	m_num_used_hosts = 0;
-	m_host_addrs_avail = 0;
+	m_numAddrsAvail = 0;
 }
 
 PersonalityTable::~PersonalityTable()

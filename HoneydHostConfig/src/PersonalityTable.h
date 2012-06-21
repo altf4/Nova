@@ -64,7 +64,7 @@ public:
 	unsigned long int m_num_used_hosts;
 
 	//Start with range of the subnets, decrement every time host is added
-	unsigned long int m_host_addrs_avail;
+	unsigned long int m_numAddrsAvail;
 
 	//HashMAP[std::string key]; key == Personality, val == ptr to Personality object
 	Personality_Table m_personalities;
