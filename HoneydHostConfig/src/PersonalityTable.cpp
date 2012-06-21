@@ -30,7 +30,7 @@ PersonalityTable::PersonalityTable()
 	m_personalities.set_empty_key("");
 	m_num_of_hosts = 0;
 	m_num_used_hosts = 0;
-	m_host_addrs_avail = 0;
+	m_numAddrsAvail = 0;
 }
 
 PersonalityTable::~PersonalityTable()
@@ -46,7 +46,7 @@ void PersonalityTable::ListInfo()
 	std::cout << std::endl;
 	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << std::endl;
 	std::cout << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << std::endl;
-	std::cout << "Hostspace left over: " << m_host_addrs_avail << " addresses." << std::endl;
+	std::cout << "Hostspace left over: " << m_numAddrsAvail << " addresses." << std::endl;
 
 	for(Personality_Table::iterator it = m_personalities.begin(); it != m_personalities.end(); it++)
 	{
