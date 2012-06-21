@@ -199,36 +199,36 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	{
 		read_xml(m_homePath+"/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
 
-		BOOST_FOREACH(ptree::value_type &v, m_portTree.get_child("ports"))
+		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
 		{
-			Port p;
-			p.m_tree = v.second;
+			Port port;
+			port.m_tree = value.second;
 			//Required xml entries
-			p.m_portName = v.second.get<std::string>("name");
+			port.m_portName = value.second.get<std::string>("name");
 
-			if(!p.m_portName.compare(""))
+			if(!port.m_portName.compare(""))
 			{
 				LOG(ERROR, "Problem loading honeyd XML files.", "");
 				continue;
 			}
 
-			p.m_portNum = v.second.get<std::string>("number");
-			p.m_type = v.second.get<std::string>("type");
-			p.m_service = v.second.get<std::string>("service");
-			p.m_behavior = v.second.get<std::string>("behavior");
+			port.m_portNum = value.second.get<std::string>("number");
+			port.m_type = value.second.get<std::string>("type");
+			port.m_service = value.second.get<std::string>("service");
+			port.m_behavior = value.second.get<std::string>("behavior");
 
 			//If this port uses a script, find and assign it.
-			if(!p.m_behavior.compare("script") || !p.m_behavior.compare("internal"))
+			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("internal"))
 			{
-				p.m_scriptName = v.second.get<std::string>("script");
+				port.m_scriptName = value.second.get<std::string>("script");
 			}
 			//If the port works as a proxy, find destination
-			else if(!p.m_behavior.compare("proxy"))
+			else if(!port.m_behavior.compare("proxy"))
 			{
-				p.m_proxyIP = v.second.get<std::string>("IP");
-				p.m_proxyPort = v.second.get<std::string>("Port");
+				port.m_proxyIP = value.second.get<std::string>("IP");
+				port.m_proxyPort = value.second.get<std::string>("Port");
 			}
-			m_ports[p.m_portName] = p;
+			m_ports[port.m_portName] = port;
 		}
 	}
 	catch(Nova::hashMapException &e)
@@ -248,28 +248,28 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	using boost::property_tree::xml_parser::trim_whitespace;
 
 	m_groupTree.clear();
-	ptree ptr;
+	ptree propTree;
 
 	try
 	{
 		read_xml(m_homePath+"/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
 		m_groups.clear();
-		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
+		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
 		{
-			m_groups.push_back(v.second.get<std::string>("name"));
+			m_groups.push_back(value.second.get<std::string>("name"));
 			//Find the specified group
-			if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
+			if(!value.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 			{
 				try //Null Check
 				{
 					//Load Subnets first, they are needed before we can load nodes
-					m_subnetTree = v.second.get_child("subnets");
+					m_subnetTree = value.second.get_child("subnets");
 					LoadSubnets(&m_subnetTree);
 
 					try //Null Check
 					{
 						//If subnets are loaded successfully, load nodes
-						m_nodesTree = v.second.get_child("nodes");
+						m_nodesTree = value.second.get_child("nodes");
 						LoadNodes(&m_nodesTree);
 					}
 					catch(Nova::hashMapException &e)
@@ -297,67 +297,67 @@ bool HoneydConfiguration::LoadNodesTemplate()
 
 
 //Sets the configuration of 'set' values for profile that called it
-bool HoneydConfiguration::LoadProfileSettings(ptree *ptr, NodeProfile *p)
+bool HoneydConfiguration::LoadProfileSettings(ptree *propTree, NodeProfile *nodeProf)
 {
-	string prefix;
+	string valueKey;
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
+		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
 		{
-			prefix = "TCP";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "TCP";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_tcpAction = v.second.data();
-				p->m_inherited[TCP_ACTION] = false;
+				nodeProf->m_tcpAction = value.second.data();
+				nodeProf->m_inherited[TCP_ACTION] = false;
 				continue;
 			}
-			prefix = "UDP";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "UDP";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_udpAction = v.second.data();
-				p->m_inherited[UDP_ACTION] = false;
+				nodeProf->m_udpAction = value.second.data();
+				nodeProf->m_inherited[UDP_ACTION] = false;
 				continue;
 			}
-			prefix = "ICMP";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "ICMP";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_icmpAction = v.second.data();
-				p->m_inherited[ICMP_ACTION] = false;
+				nodeProf->m_icmpAction = value.second.data();
+				nodeProf->m_inherited[ICMP_ACTION] = false;
 				continue;
 			}
-			prefix = "personality";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "personality";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_personality = v.second.data();
-				p->m_inherited[PERSONALITY] = false;
+				nodeProf->m_personality = value.second.data();
+				nodeProf->m_inherited[PERSONALITY] = false;
 				continue;
 			}
-			prefix = "ethernet";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "ethernet";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_ethernet = v.second.data();
-				p->m_inherited[ETHERNET] = false;
+				nodeProf->m_ethernet = value.second.data();
+				nodeProf->m_inherited[ETHERNET] = false;
 				continue;
 			}
-			prefix = "uptimeMin";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "uptimeMin";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_uptimeMin = v.second.data();
-				p->m_inherited[UPTIME] = false;
+				nodeProf->m_uptimeMin = value.second.data();
+				nodeProf->m_inherited[UPTIME] = false;
 				continue;
 			}
-			prefix = "uptimeMax";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "uptimeMax";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_uptimeMax = v.second.data();
-				p->m_inherited[UPTIME] = false;
+				nodeProf->m_uptimeMax = value.second.data();
+				nodeProf->m_inherited[UPTIME] = false;
 				continue;
 			}
-			prefix = "dropRate";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "dropRate";
+			if(!string(value.first.data()).compare(valueKey))
 			{
-				p->m_dropRate = v.second.data();
-				p->m_inherited[DROP_RATE] = false;
+				nodeProf->m_dropRate = value.second.data();
+				nodeProf->m_inherited[DROP_RATE] = false;
 				continue;
 			}
 		}
@@ -373,64 +373,64 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *ptr, NodeProfile *p)
 
 //Adds specified ports and subsystems
 // removes any previous port with same number and type to avoid conflicts
-bool HoneydConfiguration::LoadProfileServices(ptree *ptr, NodeProfile *p)
+bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *nodeProf)
 {
-	string prefix;
-	Port *prt;
+	string valueKey;
+	Port *port;
 
 	try
 	{
-		for(uint i = 0; i < p->m_ports.size(); i++)
+		for(uint i = 0; i < nodeProf->m_ports.size(); i++)
 		{
-			p->m_ports[i].second = true;
+			nodeProf->m_ports[i].second = true;
 		}
-		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
+		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
 		{
 			//Checks for ports
-			prefix = "ports";
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "ports";
+			if(!string(value.first.data()).compare(valueKey))
 			{
 				//Iterates through the ports
-				BOOST_FOREACH(ptree::value_type &v2, ptr->get_child("ports"))
+				BOOST_FOREACH(ptree::value_type &portValue, propTree->get_child("ports"))
 				{
-					prt = &m_ports[v2.second.data()];
+					port = &m_ports[portValue.second.data()];
 
 					//Checks inherited ports for conflicts
-					for(uint i = 0; i < p->m_ports.size(); i++)
+					for(uint i = 0; i < nodeProf->m_ports.size(); i++)
 					{
 						//Erase inherited port if a conflict is found
-						if(!prt->m_portNum.compare(m_ports[p->m_ports[i].first].m_portNum) && !prt->m_type.compare(m_ports[p->m_ports[i].first].m_type))
+						if(!port->m_portNum.compare(m_ports[nodeProf->m_ports[i].first].m_portNum) && !port->m_type.compare(m_ports[nodeProf->m_ports[i].first].m_type))
 						{
-							p->m_ports.erase(p->m_ports.begin()+i);
+							nodeProf->m_ports.erase(nodeProf->m_ports.begin()+i);
 						}
 					}
 					//Add specified port
 					pair<string, bool> portPair;
-					portPair.first = prt->m_portName;
+					portPair.first = port->m_portName;
 					portPair.second = false;
-					if(!p->m_ports.size())
+					if(!nodeProf->m_ports.size())
 					{
-						p->m_ports.push_back(portPair);
+						nodeProf->m_ports.push_back(portPair);
 					}
 					else
 					{
 						uint i = 0;
-						for(i = 0; i < p->m_ports.size(); i++)
+						for(i = 0; i < nodeProf->m_ports.size(); i++)
 						{
-							Port *temp = &m_ports[p->m_ports[i].first];
-							if((atoi(temp->m_portNum.c_str())) < (atoi(prt->m_portNum.c_str())))
+							Port *tempPort = &m_ports[nodeProf->m_ports[i].first];
+							if((atoi(tempPort->m_portNum.c_str())) < (atoi(port->m_portNum.c_str())))
 							{
 								continue;
 							}
 							break;
 						}
-						if(i < p->m_ports.size())
+						if(i < nodeProf->m_ports.size())
 						{
-							p->m_ports.insert(p->m_ports.begin()+i, portPair);
+							nodeProf->m_ports.insert(nodeProf->m_ports.begin()+i, portPair);
 						}
 						else
 						{
-							p->m_ports.push_back(portPair);
+							nodeProf->m_ports.push_back(portPair);
 						}
 					}
 				}
@@ -438,8 +438,8 @@ bool HoneydConfiguration::LoadProfileServices(ptree *ptr, NodeProfile *p)
 			}
 
 			//Checks for a subsystem
-			prefix = "subsystem"; //TODO
-			if(!string(v.first.data()).compare(prefix))
+			valueKey = "subsystem"; //TODO
+			if(!string(value.first.data()).compare(valueKey))
 			{
 				continue;
 			}
@@ -455,24 +455,24 @@ bool HoneydConfiguration::LoadProfileServices(ptree *ptr, NodeProfile *p)
 }
 
 //Recursive descent down a profile tree, inherits parent, sets values and continues if not leaf.
-bool HoneydConfiguration::LoadProfileChildren(string parent)
+bool HoneydConfiguration::LoadProfileChildren(string parentKey)
 {
-	ptree ptr = m_profiles[parent].m_tree;
+	ptree propTree = m_profiles[parentKey].m_tree;
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr.get_child("profiles"))
+		BOOST_FOREACH(ptree::value_type &value, propTree.get_child("profiles"))
 		{
-			ptree *ptr2;
+			ptree *childPropTree;
 
 			//Inherits parent,
-			NodeProfile prof = m_profiles[parent];
-			prof.m_tree = v.second;
-			prof.m_parentProfile = parent;
+			NodeProfile nodeProf = m_profiles[parentKey];
+			nodeProf.m_tree = value.second;
+			nodeProf.m_parentProfile = parentKey;
 
 			//Gets name, initializes DHCP
-			prof.m_name = v.second.get<std::string>("name");
+			nodeProf.m_name = value.second.get<std::string>("name");
 
-			if(!prof.m_name.compare(""))
+			if(!nodeProf.m_name.compare(""))
 			{
 				LOG(ERROR, "Problem loading honeyd XML files.", "");
 				continue;
@@ -480,40 +480,35 @@ bool HoneydConfiguration::LoadProfileChildren(string parent)
 
 			for(uint i = 0; i < INHERITED_MAX; i++)
 			{
-				prof.m_inherited[i] = true;
+				nodeProf.m_inherited[i] = true;
 			}
-
 
 			try
 			{
-				ptr2 = &v.second.get_child("set");
-				LoadProfileSettings(ptr2, &prof);
+				childPropTree = &value.second.get_child("set");
+				LoadProfileSettings(childPropTree, &nodeProf);
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-
 			};
 
 			try
 			{
-				ptr2 = &v.second.get_child("add");
-				LoadProfileServices(ptr2, &prof);
+				childPropTree = &value.second.get_child("add");
+				LoadProfileServices(childPropTree, &nodeProf);
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-
 			};
 
 			//Saves the profile
-			m_profiles[prof.m_name] = prof;
-
+			m_profiles[nodeProf.m_name] = nodeProf;
 			try
 			{
-				LoadProfileChildren(prof.m_name);
+				LoadProfileChildren(nodeProf.m_name);
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-
 			};
 		}
 	}
@@ -522,7 +517,6 @@ bool HoneydConfiguration::LoadProfileChildren(string parent)
 		LOG(ERROR, "Problem loading sub profiles: "+string(e.what())+".", "");
 		return false;
 	}
-
 	return true;
 }
 
@@ -537,14 +531,14 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	{
 		read_xml(m_homePath+"/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
-		BOOST_FOREACH(ptree::value_type &v, m_scriptTree.get_child("scripts"))
+		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
 		{
-			Script s;
-			s.m_tree = v.second;
+			Script script;
+			script.m_tree = value.second;
 			//Each script consists of a name and path to that script
-			s.m_name = v.second.get<std::string>("name");
+			script.m_name = value.second.get<std::string>("name");
 
-			if(!s.m_name.compare(""))
+			if(!script.m_name.compare(""))
 			{
 				LOG(ERROR, "Problem loading honeyd XML files.","");
 				continue;
@@ -552,24 +546,20 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 
 			try
 			{
-				s.m_osclass = v.second.get<std::string>("osclass");
+				script.m_osclass = value.second.get<std::string>("osclass");
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-
 			};
-
 			try
 			{
-				s.m_service = v.second.get<std::string>("service");
+				script.m_service = value.second.get<std::string>("service");
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-
 			};
-
-			s.m_path = v.second.get<std::string>("path");
-			m_scripts[s.m_name] = s;
+			script.m_path = value.second.get<std::string>("path");
+			m_scripts[script.m_name] = script;
 		}
 	}
 	catch(Nova::hashMapException &e)
@@ -577,7 +567,6 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 		LOG(ERROR, "Problem loading scripts: "+string(e.what())+".", "");
 		return false;
 	}
-
 	return true;
 }
 
@@ -599,112 +588,112 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 bool HoneydConfiguration::SaveAllTemplates()
 {
 	using boost::property_tree::ptree;
-	ptree pt;
+	ptree propTree;
 
 	//Scripts
 	m_scriptTree.clear();
 	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
 	{
-		pt = it->second.m_tree;
-		pt.put<std::string>("name", it->second.m_name);
-		pt.put<std::string>("service", it->second.m_service);
-		pt.put<std::string>("osclass", it->second.m_osclass);
-		pt.put<std::string>("path", it->second.m_path);
-		m_scriptTree.add_child("scripts.script", pt);
+		propTree = it->second.m_tree;
+		propTree.put<std::string>("name", it->second.m_name);
+		propTree.put<std::string>("service", it->second.m_service);
+		propTree.put<std::string>("osclass", it->second.m_osclass);
+		propTree.put<std::string>("path", it->second.m_path);
+		m_scriptTree.add_child("scripts.script", propTree);
 	}
 
 	//Ports
 	m_portTree.clear();
 	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
-		pt = it->second.m_tree;
-		pt.put<std::string>("name", it->second.m_portName);
-		pt.put<std::string>("number", it->second.m_portNum);
-		pt.put<std::string>("type", it->second.m_type);
-		pt.put<std::string>("service", it->second.m_service);
-		pt.put<std::string>("behavior", it->second.m_behavior);
+		propTree = it->second.m_tree;
+		propTree.put<std::string>("name", it->second.m_portName);
+		propTree.put<std::string>("number", it->second.m_portNum);
+		propTree.put<std::string>("type", it->second.m_type);
+		propTree.put<std::string>("service", it->second.m_service);
+		propTree.put<std::string>("behavior", it->second.m_behavior);
 		//If this port uses a script, save it.
 		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("internal"))
 		{
-			pt.put<std::string>("script", it->second.m_scriptName);
+			propTree.put<std::string>("script", it->second.m_scriptName);
 		}
 		//If the port works as a proxy, save destination
 		else if(!it->second.m_behavior.compare("proxy"))
 		{
-			pt.put<std::string>("IP", it->second.m_proxyIP);
-			pt.put<std::string>("Port", it->second.m_proxyPort);
+			propTree.put<std::string>("IP", it->second.m_proxyIP);
+			propTree.put<std::string>("Port", it->second.m_proxyPort);
 		}
-		m_portTree.add_child("ports.port", pt);
+		m_portTree.add_child("ports.port", propTree);
 	}
 
 	m_subnetTree.clear();
 	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
-		pt = it->second.m_tree;
+		propTree = it->second.m_tree;
 
 		//TODO assumes subnet is interface, need to discover and handle if virtual
-		pt.put<std::string>("name", it->second.m_name);
-		pt.put<bool>("enabled",it->second.m_enabled);
-		pt.put<bool>("isReal", it->second.m_isRealDevice);
+		propTree.put<std::string>("name", it->second.m_name);
+		propTree.put<bool>("enabled",it->second.m_enabled);
+		propTree.put<bool>("isReal", it->second.m_isRealDevice);
 
 		//Remove /## format mask from the address then put it in the XML.
 		stringstream ss;
 		ss << "/" << it->second.m_maskBits;
 		int i = ss.str().size();
-		string temp = it->second.m_address.substr(0,(it->second.m_address.size()-i));
-		pt.put<std::string>("IP", temp);
+		string addrString = it->second.m_address.substr(0,(it->second.m_address.size()-i));
+		propTree.put<std::string>("IP", addrString);
 
 		//Gets the mask from mask bits then put it in XML
-		in_addr_t mask = ::pow(2, 32-it->second.m_maskBits) - 1;
+		in_addr_t rawBitMask = ::pow(2, 32-it->second.m_maskBits) - 1;
 		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
-		mask = ~mask; //After getting the inverse of this we have the mask in host addr form.
+		rawBitMask = ~rawBitMask; //After getting the inverse of this we have the mask in host addr form.
 		//Convert to network order, put in in_addr struct
 		//call ntoa to get char * and make string
-		in_addr tempMask;
-		tempMask.s_addr = htonl(mask);
-		temp = string(inet_ntoa(tempMask));
-		pt.put<std::string>("mask", temp);
-		m_subnetTree.add_child("interface", pt);
+		in_addr netOrderMask;
+		netOrderMask.s_addr = htonl(rawBitMask);
+		addrString = string(inet_ntoa(netOrderMask));
+		propTree.put<std::string>("mask", addrString);
+		m_subnetTree.add_child("interface", propTree);
 	}
 
 	//Nodes
 	m_nodesTree.clear();
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		pt = it->second.m_tree;
+		propTree = it->second.m_tree;
 
 		// No need to save names besides the doppel, we can derive them
 		if(it->second.m_name == "Doppelganger")
 		{
 			// Make sure the IP reflects whatever is being used right now
 			it->second.m_IP = Config::Inst()->GetDoppelIp();
-			pt.put<std::string>("name", it->second.m_name);
+			propTree.put<std::string>("name", it->second.m_name);
 		}
 
 		//Required xml entires
-		pt.put<std::string>("interface", it->second.m_interface);
-		pt.put<std::string>("IP", it->second.m_IP);
-		pt.put<bool>("enabled", it->second.m_enabled);
-		pt.put<std::string>("MAC", it->second.m_MAC);
-		pt.put<std::string>("profile.name", it->second.m_pfile);
+		propTree.put<std::string>("interface", it->second.m_interface);
+		propTree.put<std::string>("IP", it->second.m_IP);
+		propTree.put<bool>("enabled", it->second.m_enabled);
+		propTree.put<std::string>("MAC", it->second.m_MAC);
+		propTree.put<std::string>("profile.name", it->second.m_pfile);
 		ptree newPortTree;
 		newPortTree.clear();
 		for(uint i = 0; i < it->second.m_ports.size(); i++)
 		{
 			newPortTree.add<std::string>("port", it->second.m_ports[i]);
 		}
-		pt.put_child("profile.add.ports", newPortTree);
-		m_nodesTree.add_child("node",pt);
+		propTree.put_child("profile.add.ports", newPortTree);
+		m_nodesTree.add_child("node",propTree);
 	}
 	using boost::property_tree::ptree;
-	BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
+	BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
 	{
 		//Find the specified group
-		if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
+		if(!value.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 		{
 			//Load Subnets first, they are needed before we can load nodes
-			v.second.put_child("subnets", m_subnetTree);
-			v.second.put_child("nodes",m_nodesTree);
+			value.second.put_child("subnets", m_subnetTree);
+			value.second.put_child("nodes",m_nodesTree);
 		}
 	}
 	m_profileTree.clear();
@@ -712,8 +701,8 @@ bool HoneydConfiguration::SaveAllTemplates()
 	{
 		if(it->second.m_parentProfile == "")
 		{
-			pt = it->second.m_tree;
-			m_profileTree.add_child("profiles.profile", pt);
+			propTree = it->second.m_tree;
+			m_profileTree.add_child("profiles.profile", propTree);
 		}
 	}
 	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
@@ -858,34 +847,34 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 
 //loads subnets from file for current group
-bool HoneydConfiguration::LoadSubnets(ptree *ptr)
+bool HoneydConfiguration::LoadSubnets(ptree *propTree)
 {
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
+		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
 		{
 			//If real interface
-			if(!string(v.first.data()).compare("interface"))
+			if(!string(value.first.data()).compare("interface"))
 			{
 				Subnet sub;
-				sub.m_tree = v.second;
-				sub.m_isRealDevice =  v.second.get<bool>("isReal");
+				sub.m_tree = value.second;
+				sub.m_isRealDevice =  value.second.get<bool>("isReal");
 				//Extract the data
-				sub.m_name = v.second.get<std::string>("name");
-				sub.m_address = v.second.get<std::string>("IP");
-				sub.m_mask = v.second.get<std::string>("mask");
-				sub.m_enabled = v.second.get<bool>("enabled");
+				sub.m_name = value.second.get<std::string>("name");
+				sub.m_address = value.second.get<std::string>("IP");
+				sub.m_mask = value.second.get<std::string>("mask");
+				sub.m_enabled = value.second.get<bool>("enabled");
 
 				//Gets the IP address in uint32 form
-				in_addr_t baseTemp = ntohl(inet_addr(sub.m_address.c_str()));
+				in_addr_t hostOrderAddr = ntohl(inet_addr(sub.m_address.c_str()));
 
 				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
-				in_addr_t maskTemp = ntohl(inet_addr(sub.m_mask.c_str()));
-				sub.m_base = (baseTemp & maskTemp);
+				in_addr_t hostOrderMask = ntohl(inet_addr(sub.m_mask.c_str()));
+				sub.m_base = (hostOrderAddr & hostOrderMask);
 				//Get the number of bits in the mask
-				sub.m_maskBits = GetMaskBits(maskTemp);
+				sub.m_maskBits = GetMaskBits(hostOrderMask);
 				//Adding the binary inversion of the mask gets the highest usable IP
-				sub.m_max = sub.m_base + ~maskTemp;
+				sub.m_max = sub.m_base + ~hostOrderMask;
 				stringstream ss;
 				ss << sub.m_address << "/" << sub.m_maskBits;
 				sub.m_address = ss.str();
@@ -894,38 +883,12 @@ bool HoneydConfiguration::LoadSubnets(ptree *ptr)
 				m_subnets[sub.m_name] = sub;
 			}
 			//If virtual honeyd subnet
-			else if(!string(v.first.data()).compare("virtual"))
+			else if(!string(value.first.data()).compare("virtual"))
 			{
-				//TODO Implement and test
-				/*subnet sub;
-				sub.m_tree = v.second;
-				sub.isRealDevice = false;
-				//Extract the data
-				sub.m_name = v.second.get<std::string>("name");
-				sub.address = v.second.get<std::string>("IP");
-				sub.mask = v.second.get<std::string>("mask");
-				sub.enabled = v.second.get<bool>("enabled");
-
-				//Gets the IP address in uint32 form
-				in_addr_t baseTemp = ntohl(inet_addr(sub.address.c_str()));
-
-				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
-				in_addr_t maskTemp = ntohl(inet_addr(sub.mask.c_str()));
-				sub.base = (baseTemp & maskTemp);
-				//Get the number of bits in the mask
-				sub.maskBits = GetMaskBits(maskTemp);
-				//Adding the binary inversion of the mask gets the highest usable IP
-				sub.max = sub.base + ~maskTemp;
-				stringstream ss;
-				ss << sub.address << "/" << sub.maskBits;
-				sub.address = ss.str();
-
-				//Save subnet
-				subnets[sub.m_name] = sub;*/
 			}
 			else
 			{
-				LOG(ERROR, "Unexpected Entry in file: "+string(v.first.data())+".", "");
+				LOG(ERROR, "Unexpected Entry in file: "+string(value.first.data())+".", "");
 				return false;
 			}
 		}
@@ -941,42 +904,40 @@ bool HoneydConfiguration::LoadSubnets(ptree *ptr)
 
 
 //loads haystack nodes from file for current group
-bool HoneydConfiguration::LoadNodes(ptree *ptr)
+bool HoneydConfiguration::LoadNodes(ptree *propTree)
 {
-	NodeProfile p;
+	NodeProfile nodeProf;
 	//ptree *ptr2;
 	try
 	{
-		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
+		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
 		{
-			if(!string(v.first.data()).compare("node"))
+			if(!string(value.first.data()).compare("node"))
 			{
-				Node n;
+				Node node;
 				stringstream ss;
 				uint j = 0;
 				j = ~j; // 2^32-1
 
-				n.m_tree = v.second;
+				node.m_tree = value.second;
 				//Required xml entires
-				n.m_interface = v.second.get<std::string>("interface");
-				n.m_IP = v.second.get<std::string>("IP");
-				n.m_enabled = v.second.get<bool>("enabled");
-				n.m_pfile = v.second.get<std::string>("profile.name");
+				node.m_interface = value.second.get<std::string>("interface");
+				node.m_IP = value.second.get<std::string>("IP");
+				node.m_enabled = value.second.get<bool>("enabled");
+				node.m_pfile = value.second.get<std::string>("profile.name");
 
-				if(!n.m_pfile.compare(""))
+				if(!node.m_pfile.compare(""))
 				{
 					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
 				}
 
-				p = m_profiles[n.m_pfile];
+				nodeProf = m_profiles[node.m_pfile];
 
 				//Get mac if present
 				try //Conditional: has "set" values
 				{
-					//ptr2 = &v.second.get_child("MAC");
-					//pass 'set' subset and pointer to this profile
-					n.m_MAC = v.second.get<std::string>("MAC");
+					node.m_MAC = value.second.get<std::string>("MAC");
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 				{
@@ -985,78 +946,76 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 
 				try //Conditional: has "set" values
 				{
+					ptree nodePorts = value.second.get_child("profile.add");
+					LoadProfileServices(&nodePorts, &nodeProf);
 
-					ptree nodePorts = v.second.get_child("profile.add");
-					LoadProfileServices(&nodePorts, &p);
-
-					for(uint i = 0; i < p.m_ports.size(); i++)
+					for(uint i = 0; i < nodeProf.m_ports.size(); i++)
 					{
-						n.m_ports.push_back(p.m_ports[i].first);
+						node.m_ports.push_back(nodeProf.m_ports[i].first);
 					}
-
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
 
-				if(!n.m_IP.compare(Config::Inst()->GetDoppelIp()))
+				if(!node.m_IP.compare(Config::Inst()->GetDoppelIp()))
 				{
-					n.m_name = "Doppelganger";
-					n.m_sub = n.m_interface;
-					n.m_realIP = htonl(inet_addr(n.m_IP.c_str())); //convert ip to uint32
+					node.m_name = "Doppelganger";
+					node.m_sub = node.m_interface;
+					node.m_realIP = htonl(inet_addr(node.m_IP.c_str())); //convert ip to uint32
 					//save the node in the table
-					m_nodes[n.m_name] = n;
+					m_nodes[node.m_name] = node;
 
 					//Put address of saved node in subnet's list of nodes.
-					m_subnets[m_nodes[n.m_name].m_sub].m_nodes.push_back(n.m_name);
+					m_subnets[m_nodes[node.m_name].m_sub].m_nodes.push_back(node.m_name);
 				}
 				else
 				{
-					n.m_name = n.m_IP + " - " + n.m_MAC;
+					node.m_name = node.m_IP + " - " + node.m_MAC;
 
-					if(n.m_name == "DHCP - RANDOM")
+					if(node.m_name == "DHCP - RANDOM")
 					{
 						//Finds a unique identifier
 						uint i = 1;
-						while((m_nodes.keyExists(n.m_name)) && (i < j))
+						while((m_nodes.keyExists(node.m_name)) && (i < j))
 						{
 							i++;
 							ss.str("");
 							ss << "DHCP - RANDOM(" << i << ")";
-							n.m_name = ss.str();
+							node.m_name = ss.str();
 						}
 					}
 
-					if(n.m_IP != "DHCP")
+					if(node.m_IP != "DHCP")
 					{
-						n.m_realIP = htonl(inet_addr(n.m_IP.c_str())); //convert ip to uint32
-						n.m_sub = FindSubnet(n.m_realIP);
+						node.m_realIP = htonl(inet_addr(node.m_IP.c_str())); //convert ip to uint32
+						node.m_sub = FindSubnet(node.m_realIP);
 						//If we have a subnet and node is unique
-						if(n.m_sub != "")
+						if(node.m_sub != "")
 						{
 							//Put address of saved node in subnet's list of nodes.
-							m_subnets[n.m_sub].m_nodes.push_back(n.m_name);
+							m_subnets[node.m_sub].m_nodes.push_back(node.m_name);
 						}
 						//If no subnet found, can't use node unless it's doppelganger.
 						else
 						{
-							LOG(ERROR, "Node at IP: "+ n.m_IP+"is outside all valid subnet ranges.", "");
+							LOG(ERROR, "Node at IP: "+ node.m_IP+"is outside all valid subnet ranges.", "");
 						}
 					}
 					else
 					{
-						n.m_sub = n.m_interface; //TODO virtual subnets will need to be handled when implemented
+						node.m_sub = node.m_interface; //TODO virtual subnets will need to be handled when implemented
 						// If no valid subnet/interface found
-						if(!n.m_sub.compare(""))
+						if(!node.m_sub.compare(""))
 						{
-							LOG(ERROR, "DHCP Enabled Node with MAC: "+n.m_name+" is unable to resolve it's interface.","");
+							LOG(ERROR, "DHCP Enabled Node with MAC: "+node.m_name+" is unable to resolve it's interface.","");
 							continue;
 						}
 
 						//Put address of saved node in subnet's list of nodes.
-						m_subnets[n.m_sub].m_nodes.push_back(n.m_name);
+						m_subnets[node.m_sub].m_nodes.push_back(node.m_name);
 					}
 				}
 
-				if(!n.m_name.compare(""))
+				if(!node.m_name.compare(""))
 				{
 					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
@@ -1064,12 +1023,12 @@ bool HoneydConfiguration::LoadNodes(ptree *ptr)
 				else
 				{
 					//save the node in the table
-					m_nodes[n.m_name] = n;
+					m_nodes[node.m_name] = node;
 				}
 			}
 			else
 			{
-				LOG(ERROR, "Unexpected Entry in file: "+string(v.first.data()), "");
+				LOG(ERROR, "Unexpected Entry in file: "+string(value.first.data()), "");
 			}
 		}
 	}
@@ -1108,80 +1067,80 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
-	ptree *ptr;
+	ptree *propTree;
 	m_profileTree.clear();
 	try
 	{
 		read_xml(m_homePath+"/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
-		BOOST_FOREACH(ptree::value_type &v, m_profileTree.get_child("profiles"))
+		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
 		{
 			//Generic profile, essentially a honeyd template
-			if(!string(v.first.data()).compare("profile"))
+			if(!string(value.first.data()).compare("profile"))
 			{
-				NodeProfile p;
+				NodeProfile nodeProf;
 				//Root profile has no parent
-				p.m_parentProfile = "";
-				p.m_tree = v.second;
+				nodeProf.m_parentProfile = "";
+				nodeProf.m_tree = value.second;
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
-				p.m_name = v.second.get<std::string>("name");
+				nodeProf.m_name = value.second.get<std::string>("name");
 
-				if(!p.m_name.compare(""))
+				if(!nodeProf.m_name.compare(""))
 				{
 					LOG(ERROR, "Problem loading honeyd XML files.", "");
 					continue;
 				}
 
-				p.m_ports.clear();
+				nodeProf.m_ports.clear();
 				for(uint i = 0; i < INHERITED_MAX; i++)
 				{
-					p.m_inherited[i] = false;
+					nodeProf.m_inherited[i] = false;
 				}
 
 				try //Conditional: has "set" values
 				{
-					ptr = &v.second.get_child("set");
+					propTree = &value.second.get_child("set");
 					//pass 'set' subset and pointer to this profile
-					LoadProfileSettings(ptr, &p);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-				try //Conditional: has "add" values
-				{
-					ptr = &v.second.get_child("add");
-					//pass 'add' subset and pointer to this profile
-					LoadProfileServices(ptr, &p);
+					LoadProfileSettings(propTree, &nodeProf);
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 				{
+				};
 
+				try //Conditional: has "add" values
+				{
+					propTree = &value.second.get_child("add");
+					//pass 'add' subset and pointer to this profile
+					LoadProfileServices(propTree, &nodeProf);
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
 				};
 
 				//Save the profile
-				m_profiles[p.m_name] = p;
+				m_profiles[nodeProf.m_name] = nodeProf;
 
 				try //Conditional: has children profiles
 				{
 					//start recurisive descent down profile tree with this profile as the root
 					//pass subtree and pointer to parent
-					LoadProfileChildren(p.m_name);
+					LoadProfileChildren(nodeProf.m_name);
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 				{
-
 				};
 
 			}
 
 			//Honeyd's implementation of switching templates based on conditions
-			else if(!string(v.first.data()).compare("dynamic"))
+			else if(!string(value.first.data()).compare("dynamic"))
 			{
 				//TODO
 			}
 			else
 			{
-				LOG(ERROR, "Invalid XML Path " +string(v.first.data())+".", "");
+				LOG(ERROR, "Invalid XML Path " +string(value.first.data())+".", "");
 			}
 		}
 	}
@@ -1190,7 +1149,6 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 		LOG(ERROR, "Problem loading Profiles: "+string(e.what())+".", "");
 		return false;
 	}
-
 	return true;
 }
 
