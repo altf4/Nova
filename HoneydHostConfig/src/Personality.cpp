@@ -39,7 +39,7 @@ Personality::~Personality()
 
 }
 
-void Personality::AddVendor(string vendor)
+void Personality::AddVendor(const string &vendor)
 {
 	// If the vendor does not exist in MAC_Table,
 	// then use the bracket operator to make a new
@@ -55,7 +55,7 @@ void Personality::AddVendor(string vendor)
 	}
 }
 
-void Personality::AddPort(string port_string, string port_service)
+void Personality::AddPort(const string &port_string, const string &port_service)
 {
 	// If the vendor does not exist in Port_Table,
 	// then use the bracket operator to make a new

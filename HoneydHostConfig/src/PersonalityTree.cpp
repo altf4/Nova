@@ -18,19 +18,30 @@
 
 #include "PersonalityTree.h"
 #include <boost/algorithm/string.hpp>
+#include "HoneydHostConfig.h"
 
 using namespace std;
 
 namespace Nova
 {
 
-PersonalityTree::PersonalityTree(PersonalityTable *persTable)
+PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& subnetsToUse)
 {
 	m_hdconfig = new HoneydConfiguration();
 
 	m_root = PersonalityNode("default");
 	m_hdconfig->LoadAllTemplates();
+
 	m_hdconfig->m_subnets.clear();
+
+	for(uint i = 0; i < subnetsToUse.size(); i++)
+	{
+		AddSubnet(&subnetsToUse[i]);
+	}
+	m_hdconfig->AddGroup("HaystackAutoConfig");
+	Config::Inst()->SetGroup("HaystackAutoConfig");
+	m_hdconfig->SaveAllTemplates();
+	m_hdconfig->LoadAllTemplates();
 	m_profiles = &m_hdconfig->m_profiles;
 	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 
@@ -77,7 +88,7 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	}
 }
 
-void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, string profileName)
+void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const string &profileName)
 {
 	if(node == NULL || parent == NULL || parentProfile == NULL)
 	{
@@ -86,7 +97,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 
 	//Create profile object
 	node->GenerateDistributions();
-	NodeProfile tempProf = node->GenerateProfile(parentProfile);
+	NodeProfile tempProf = node->GenerateProfile(*parentProfile);
 	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
@@ -287,12 +298,7 @@ void PersonalityTree::DebugPrintProfileTable()
 
 void PersonalityTree::ToXmlTemplate()
 {
-
 	vector<string> ret = m_hdconfig->GetProfileNames();
-
-	AddAllPorts();
-
-	ret = m_hdconfig->GetProfileNames();
 
 	for(uint16_t i = 0; i < ret.size(); i++)
 	{
@@ -496,7 +502,7 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode *node)
 	}
 }
 
-bool PersonalityTree::AddSubnet(Subnet *add)
+bool PersonalityTree::AddSubnet(const Subnet &add)
 {
 	return m_hdconfig->AddSubnet(add);
 }
