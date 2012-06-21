@@ -41,7 +41,7 @@ PersonalityTable::~PersonalityTable()
 void PersonalityTable::ListInfo()
 {
 	// Just a simple print method for outputting the
-	// relevent information for each element of the PersonalityTable,
+	// relevant information for each element of the PersonalityTable,
 	// as well as some information about the table itself.
 	std::cout << std::endl;
 	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << std::endl;

@@ -13,7 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO
+// Description : Source file for the PersonalityTree object. Contains a tree
+//               representation of the relationships between different personalities.
 //============================================================================
 
 #include "PersonalityTree.h"
@@ -235,23 +236,6 @@ void PersonalityTree::RecursiveToString(PersonalityNode &persNode)
 	for(uint i = 0; i < persNode.m_children.size(); i++)
 	{
 		RecursiveToString(*persNode.m_children[i].second);
-	}
-}
-
-void PersonalityTree::GenerateDistributions()
-{
-	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
-	{
-		RecursiveGenerateDistributions(*m_root.m_children[i].second);
-	}
-}
-
-void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode &node)
-{
-	node.GenerateDistributions();
-	for(uint16_t i = 0; i < node.m_children.size(); i++)
-	{
-		RecursiveGenerateDistributions(*node.m_children[i].second);
 	}
 }
 

@@ -82,7 +82,6 @@ string PersonalityNode::ToString()
 
 void PersonalityNode::GenerateDistributions()
 {
-
 	uint16_t count = 0;
 
 	m_vendor_dist.clear();
