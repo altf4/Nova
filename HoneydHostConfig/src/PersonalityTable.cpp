@@ -46,7 +46,7 @@ void PersonalityTable::ListInfo()
 	std::cout << '\n';
 	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << '\n';
 	std::cout << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << '\n';
-	std::cout << "Hostspace left over: " << m_host_addrs_avail << " addresses." << '\n';
+	std::cout << "Hostspace left over: " << m_numAddrsAvail << " addresses." << '\n';
 
 	for(Personality_Table::iterator it = m_personalities.begin(); it != m_personalities.end(); it++)
 	{
