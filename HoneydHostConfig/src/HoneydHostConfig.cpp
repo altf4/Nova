@@ -51,7 +51,7 @@ vector<Subnet> subnetsToAdd;
 
 PersonalityTable personalities;
 
-void Nova::Shift(u_char *m, uint cond, u_char val)
+void Nova::Shift(u_char *m, const uint &cond, const u_char &val)
 {
 	if(m == NULL)
 	{
@@ -303,16 +303,10 @@ int main(int argc, char ** argv)
 
 	PersonalityTree persTree = PersonalityTree(&personalities, subnetsToAdd);
 
-	persTree.ToString();
-
-	persTree.DebugPrintProfileTable();
-
 	NodeManager nodeBuilder = NodeManager(&persTree);
 	nodeBuilder.GenerateNodes(10);
 
 	persTree.ToXmlTemplate();
-
-	persTree.DebugPrintProfileTable();
 
 	return errVar;
 }

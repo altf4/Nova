@@ -60,15 +60,16 @@ public:
 
 	bool AddSubnet(const Subnet &add);
 
-	HoneydConfiguration * GetHDConfig();
+	HoneydConfiguration* GetHDConfig();
 
-	PersonalityNode *GetRootNode();
+	PersonalityNode* GetRootNode();
 
 	void GetHostCount();
 
 private:
 
 	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
+
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
 	PersonalityNode m_root;
 
@@ -82,8 +83,8 @@ private:
 
 	ScriptsTable m_scripts;
 
-	void RecursiveToString(PersonalityNode *persNode);
-	void RecursiveGenerateDistributions(PersonalityNode *node);
+	void RecursiveToString(PersonalityNode &persNode);
+	void RecursiveGenerateDistributions(PersonalityNode &node);
 	void RecursiveAddAllPorts(PersonalityNode *node);
 	void RecursivePrintTree(PersonalityNode *node);
 };

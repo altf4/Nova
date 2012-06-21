@@ -64,8 +64,8 @@ public:
 private:
 
 	void GenerateProfileCounters();
-	MacCounter GenerateMacCounter(std::string vendor, double dist_val);
-	PortCounter GeneratePortCounter(std::string portName, double dist_val);
+	MacCounter GenerateMacCounter(const std::string &vendor, const double dist_val);
+	PortCounter GeneratePortCounter(const std::string &portName, const double dist_val);
 
 	void RecursiveGenProfileCounter(PersonalityNode *parent);
 

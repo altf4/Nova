@@ -176,7 +176,7 @@ void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
 	}
 }
 
-MacCounter NodeManager::GenerateMacCounter(string vendor, double dist_val)
+MacCounter NodeManager::GenerateMacCounter(const string &vendor, const double dist_val)
 {
 	struct MacCounter ret;
 	ret.m_ethVendor = vendor;
@@ -185,7 +185,7 @@ MacCounter NodeManager::GenerateMacCounter(string vendor, double dist_val)
 	return ret;
 }
 
-PortCounter NodeManager::GeneratePortCounter(string portName, double dist_val)
+PortCounter NodeManager::GeneratePortCounter(const string &portName, const double dist_val)
 {
 	struct PortCounter ret;
 	ret.m_portName = portName;
