@@ -371,6 +371,8 @@ void PrintSuspect(in_addr_t address)
 		cout << "Error: No suspect received" << endl;
 	}
 
+	delete suspect;
+
 	CloseNovadConnection();
 }
 
@@ -406,14 +408,13 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 				}
 				cout << suspect->GetClassification() << endl;
 			}
+
+			delete suspect;
 		}
 		else
 		{
 			cout << "Error: No suspect received" << endl;
 		}
-
-		delete suspect;
-
 	}
 
 	CloseNovadConnection();

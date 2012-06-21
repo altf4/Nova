@@ -439,6 +439,7 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initializatio
 		{
 			if (!initialization)
 			{
+				delete suspectItem.suspect;
 				return;
 			}
 
