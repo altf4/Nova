@@ -85,7 +85,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 					else
 					{
 						curCounter->m_count -= (1 - curCounter->m_increment);
-						//Generate unique MAC address
+						//Generate unique MAC address and set profile name
 						curNode.m_IP = "DHCP";
 						curNode.m_MAC = m_hdconfig->GenerateUniqueMACAddress(curCounter->m_ethVendor);
 						curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
@@ -126,6 +126,9 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 					}
 				}
 				ret.push_back(curNode);
+				// Only progress the outermost for loop if we've completely generated a
+				// Node from the profile counter; this way, we get a number of nodes equal
+				// to num_nodes
 				i++;
 			}
 		}

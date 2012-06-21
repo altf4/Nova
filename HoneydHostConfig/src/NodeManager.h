@@ -13,7 +13,9 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description :
+// Description : The NodeManager class takes all of the calculations for
+//               distributions of the PersonalityNodes found so far and
+//               generates randomized nodes.
 //============================================================================
 
 
@@ -24,6 +26,10 @@
 
 namespace Nova
 {
+// The following structs are matched to a specific port, mac vendor or profile.
+// Each counter keeps track of whether the value they are bound to has been
+// used recently or not, and if not, if it should be used again at the time that
+// node generation reaches the counter.
 
 struct PortCounter
 {
@@ -53,20 +59,65 @@ class NodeManager
 
 public:
 
+	// Default constructor that assigns the m_persTree and m_hdconfig variables
+	// to values within the PersonalityTree* that's being passed. It then immediately
+	// begins generating ProfileCounters.
 	NodeManager(PersonalityTree *persTree);
 
+	// SetPersonalityTree is used to change the target PersonalityTree from the
+	// current m_persTree to the PersonalityTree* argument. If the pointer passed
+	// is null, returns false; else, perform the same actions as the constructor and
+	// return true. Can also be used in the case that you wish to instantiate the object
+	// without explicitly declaring a PersonalityTree; if the constructor receives a NULL
+	// pointer as an argument, it won't do anything, so you have to set the tree yourself
+	// using this method.
+	//  PersonalityTree *persTree - PersonalityTree pointer to shift m_persTree to.
+	// Returns a bool indicating success or failure.
 	bool SetPersonalityTree(PersonalityTree *persTree);
 
+	// GenerateNodes does exactly what it sounds like -- creates nodes. Using the
+	// ProfileCounters in the m_profileCounters variable, it will generate up to
+	// num_nodes nodes of varying profiles, macs and ports, depending on the calculated
+	// per-personality distributions.
+	//  unsigned int num_nodes - ceiling on the amount of nodes to make
+	// Returns nothing.
 	void GenerateNodes(unsigned int num_nodes);
 
 	PersonalityTree *m_persTree;
 
 private:
 
+	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter.
+	// Returns nothing, takes no arguments.
 	void GenerateProfileCounters();
+
+	// GenerateMacCounter takes in a vendor string and its corresponding distribution value
+	// and populates a MacCounter struct with these values. Used in RecursiveGenProfileCounter
+	// to add MacCounters to athe ProfileCounter's m_macCounters vector.
+	//  const std::string &vendor - const reference to a string containing a MAC Vendor
+	//  const double dist_val - a const double that contains the calculated distribution value
+	//                          in the current node's m_vendor_dist vector.
+	// Returns a MacCounter struct.
 	MacCounter GenerateMacCounter(const std::string &vendor, const double dist_val);
+
+	// GeneratePortCounter takes in a port name string and its corresponding distribution value
+	// and populates a PortCounter struct with these values. Used in RecursiveGenProfileCounter
+	// to add PortCounters to athe ProfileCounter's m_portCounters vector.
+	//  const std::string &portName - const reference to a string containing a port name of the form
+	//                          NUM_PROTOCOL_(open || SCRIPTNAME)
+	//  const double dist_val - a const double that contains the calculated distribution value
+	//                          in the current node's m_ports_dist vector.
+	// Returns a PortCounter struct.
 	PortCounter GeneratePortCounter(const std::string &portName, const double dist_val);
 
+	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
+	// randomized nodes from the profiles at the different nodes of the Personality Tree.
+	// Creates, populates and pushes a ProfileCounter struct, complete with Mac- and PortCounters
+	// for each node in the tree into the m_profileCounters member variable.
+	//  const PersonalityNode &parent - const reference to a PersonalityNode of the tree;
+	//                                  the node's information is read and placed into a complete
+	//                                  ProfileCounter struct.
+	// Returns nothing.
 	void RecursiveGenProfileCounter(const PersonalityNode &parent);
 
 	unsigned int m_nodeCount;

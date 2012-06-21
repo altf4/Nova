@@ -36,6 +36,7 @@
 
 #include "NodeManager.h"
 #include "HoneydHostConfig.h"
+#include "Logger.h"
 
 #define DIGIT_OFFSET 48
 #define LOWER_OFFSET 87
@@ -139,10 +140,18 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 				// vector for the personality object;
 				if(!v.second.get<string>("<xmlattr>.addrtype").compare("ipv4"))
 				{
+					// If we're not parsing ourself, just get the address in the
+					// <addr> tag
 					if(localMachine.compare(v.second.get<string>("<xmlattr>.addr")))
 					{
 						person->m_addresses.push_back(v.second.get<string>("<xmlattr>.addr"));
 					}
+					// If, however, we're parsing ourself, we need to do some extra work.
+					// The IP address will be in the nmap XML structure, but the MAC will not.
+					// Thus, we need to get it through other means. This will grab a string
+					// representation of the MAC address, convert the first three hex pairs into
+					// an unsigned integer, and then find the MAC vendor using the VendorMacDb class
+					// of Nova proper.
 					else
 					{
 						person->m_addresses.push_back(v.second.get<string>("<xmlattr>.addr"));
@@ -160,7 +169,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 						person->AddVendor(vmd->LookupVendor(passToVendor));
 					}
 				}
-				// if we've found the mac, add the hardware address to the MACs
+				// if we've found the MAC, add the hardware address to the MACs
 				// vector in the Personality object and then add the vendor to
 				// the MAC_Table inside the object as well.
 				else if(!v.second.get<string>("<xmlattr>.addrtype").compare("mac"))
@@ -245,7 +254,10 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree pt2)
 		return NOMATCHEDPERSONALITY;
 	}
 
-
+	// Generate OS Class strings for use later down the line; used primarily
+	// for matching open ports to scripts in the script table. So, say 22_TCP is open
+	// on a host, we'll use the m_personalityClass string to match the OS and open port
+	// to a script and then assign that script automatically.
 	for(uint i = 0; i < person->m_personalityClass.size() - 1; i++)
 	{
 		person->m_osclass += person->m_personalityClass[i] + " | ";
@@ -299,15 +311,20 @@ void Nova::LoadNmap(const string &filename)
 int main(int argc, char ** argv)
 {
 	ErrCode errVar = OKAY;
+
 	vector<string> recv = GetSubnetsToScan(&errVar);
 
-	PrintRecv(recv);
+	if(errVar != OKAY || recv.empty())
+	{
+		LOG(ERROR, "There was a problem determining the subnets to scan, or there are no interfaces to scan on. Stopping execution.", "");
+		return errVar;
+	}
 
 	errVar = LoadPersonalityTable(recv);
 
 	if(errVar != OKAY)
 	{
-		cout << "Unable to load personality table" << endl;
+		LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
 		return errVar;
 	}
 
@@ -490,6 +507,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar)
 
 			ss.str("");
 
+			// Populate the subnet struct for use in the SubnetTable of the HoneydConfiguration
+			// object.
 			add.m_address = push;
 			add.m_mask = string(inet_ntoa(bitmask));
 			add.m_maskBits = i;
