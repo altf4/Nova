@@ -36,7 +36,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 
 	for(uint i = 0; i < subnetsToUse.size(); i++)
 	{
-		AddSubnet(&subnetsToUse[i]);
+		AddSubnet(subnetsToUse[i]);
 	}
 	m_hdconfig->AddGroup("HaystackAutoConfig");
 	Config::Inst()->SetGroup("HaystackAutoConfig");

@@ -1867,6 +1867,10 @@ void NovaConfig::LoadProfileSettings()
 		{
 			RecursiveSetAssociatedNodesTreeWidget(it->second.m_pfile, it->first, false);
 		}
+
+		ui.associatedNodesTreeWidget->resizeColumnToContents(0);
+		ui.associatedNodesTreeWidget->resizeColumnToContents(1);
+		ui.associatedNodesTreeWidget->resizeColumnToContents(2);
 	}
 	else
 	{
