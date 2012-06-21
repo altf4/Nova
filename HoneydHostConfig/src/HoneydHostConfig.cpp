@@ -380,10 +380,10 @@ void Nova::PrintStringVector(vector<string> stringVector)
 {
 	// Debug method to output what subnets were found by
 	// the GetSubnetsToScan() method.
-	cout << "Subnets to be scanned: " << endl;
-	for(uint16_t i = 0; i < stringVector\.size(); i++)
+	cout << "Subnets to be scanned: " << '\n';
+	for(uint16_t i = 0; i < stringVector.size(); i++)
 	{
-		cout << stringVector\[i] << endl;
+		cout << stringVector[i] << '\n';
 	}
 	cout << endl;
 }
@@ -510,7 +510,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar)
 			ss << i;
 
 			// Generate a string of the form X.X.X.X/## for use in nmap scans later
-			string addrString = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
+			addrString = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
 
 			ss.str("");
 

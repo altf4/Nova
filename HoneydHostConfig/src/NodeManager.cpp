@@ -52,8 +52,8 @@ bool NodeManager::SetPersonalityTree(PersonalityTree *persTree)
 
 void NodeManager::GenerateNodes(unsigned int num_nodes)
 {
-	vector<Node> ret;
-	ret.clear();
+	vector<Node> nodesToAdd;
+	nodesToAdd.clear();
 
 	for(unsigned int i = 0; i < num_nodes;)
 	{
@@ -125,7 +125,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 						num_ports++;
 					}
 				}
-				ret.push_back(curNode);
+				nodesToAdd.push_back(curNode);
 				// Only progress the outermost for loop if we've completely generated a
 				// Node from the profile counter; this way, we get a number of nodes equal
 				// to num_nodes
@@ -133,10 +133,10 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 			}
 		}
 	}
-	while(!ret.empty())
+	while(!nodesToAdd.empty())
 	{
-		m_hdconfig->AddNewNode(ret.back());
-		ret.pop_back();
+		m_hdconfig->AddNewNode(nodesToAdd.back());
+		nodesToAdd.pop_back();
 	}
 }
 
