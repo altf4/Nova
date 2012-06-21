@@ -153,8 +153,8 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
      res.render('advancedOptions.jade', 
 	 {
 		locals: {
-			INTERFACES: config.ReadSetting("INTERFACE").split(" ") // will be a GetInterfaces() object in config object
-			,DEFAULT: false // should be a getDefault() method in Config object
+      INTERFACES: config.ListInterfaces().sort() // will be a GetInterfaces() object in config object
+      ,DEFAULT: config.GetUseAllInterfaces() // should be a getDefault() method in Config object
 			,HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
 			,TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
 			,TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
