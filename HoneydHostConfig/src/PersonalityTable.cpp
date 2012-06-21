@@ -43,14 +43,14 @@ void PersonalityTable::ListInfo()
 	// Just a simple print method for outputting the
 	// relevant information for each element of the PersonalityTable,
 	// as well as some information about the table itself.
-	std::cout << std::endl;
-	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << std::endl;
-	std::cout << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << std::endl;
-	std::cout << "Hostspace left over: " << m_host_addrs_avail << " addresses." << std::endl;
+	std::cout << '\n';
+	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << '\n';
+	std::cout << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << '\n';
+	std::cout << "Hostspace left over: " << m_host_addrs_avail << " addresses." << '\n';
 
 	for(Personality_Table::iterator it = m_personalities.begin(); it != m_personalities.end(); it++)
 	{
-		std::cout << std::endl;
+		std::cout << '\n';
 
 		std::cout << it->second->m_personalityClass[0] << ": ";
 
@@ -61,36 +61,38 @@ void PersonalityTable::ListInfo()
 
 		std::cout << it->second->m_personalityClass[1];
 
-		std::cout << std::endl;
+		std::cout << '\n';
 
-		std::cout << "Appeared " << it->second->m_count << " time(s) on the network" << std::endl;
+		std::cout << "Appeared " << it->second->m_count << " time(s) on the network" << '\n';
 
-		std::cout << "Associated IPs: " << std::endl;
+		std::cout << "Associated IPs: " << '\n';
 		for(uint16_t i = 0; i < it->second->m_addresses.size(); i++)
 		{
-			std::cout << "\t" << it->second->m_addresses[i] << std::endl;
+			std::cout << "\t" << it->second->m_addresses[i] << '\n';
 		}
 
-		std::cout << "Associated MACs: " << std::endl;
+		std::cout << "Associated MACs: " << '\n';
 
 		for(uint16_t j = 0; j < it->second->m_macs.size(); j++)
 		{
-			std::cout << "\t" << it->second->m_macs[j] << std::endl;
+			std::cout << "\t" << it->second->m_macs[j] << '\n';
 		}
 
-		std::cout << "All MAC vendors associated with this Personality: " << std::endl;
+		std::cout << "All MAC vendors associated with this Personality: " << '\n';
 
 		for(MAC_Table::iterator it2 = it->second->m_vendors.begin(); it2 != it->second->m_vendors.end(); it2++)
 		{
-			std::cout << "\t" << it2->first << " occurred " << it2->second << " time(s)." << std::endl;
+			std::cout << "\t" << it2->first << " occurred " << it2->second << " time(s)." << '\n';
 		}
 
-		std::cout << "Ports for this Personality: " << std::endl;
+		std::cout << "Ports for this Personality: " << '\n';
 
 		for(PortsTable::iterator it2 = it->second->m_ports.begin(); it2 != it->second->m_ports.end(); it2++)
 		{
-			std::cout << "\t" << it2->first << " occurred " << it2->second.first << " time(s)." << std::endl;
+			std::cout << "\t" << it2->first << " occurred " << it2->second.first << " time(s)." << '\n';
 		}
+
+		std::cout << std::endl;
 	}
 }
 

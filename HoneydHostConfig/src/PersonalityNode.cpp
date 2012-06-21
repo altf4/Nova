@@ -62,19 +62,19 @@ string PersonalityNode::ToString()
 	// Simple ToString for the personality node for debugging purposes.
 
 	stringstream ss;
-	ss << endl << m_key << " has " << m_count << " hosts in it's scope." << endl << endl;
-	ss << "MAC Address Vendors: <Vendor>, <Number of occurrences>" << endl;
+	ss << '\n' << m_key << " has " << m_count << " hosts in it's scope." << '\n' << '\n';
+	ss << "MAC Address Vendors: <Vendor>, <Number of occurrences>" << '\n';
 
 	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
-		ss << it->first << ", " << it->second << endl;
+		ss << it->first << ", " << it->second << '\n';
 	}
 
-	ss << endl << "Ports : <Number>_<Protocol>, <Number of occurrences>" << endl;
+	ss << '\n' << "Ports : <Number>_<Protocol>, <Number of occurrences>" << '\n';
 
 	for(PortsTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
-		ss << it->first << ", " << it->second.first << endl;
+		ss << it->first << ", " << it->second.first << '\n';
 	}
 
 	return ss.str();
@@ -107,29 +107,29 @@ void PersonalityNode::GenerateDistributions()
 
 NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 {
-	NodeProfile push;
+	NodeProfile profileToReturn;
 
-	push.m_name = m_key;
-	push.m_parentProfile = parentProfile.m_name;
+	profileToReturn.m_name = m_key;
+	profileToReturn.m_parentProfile = parentProfile.m_name;
 
 	m_redundant = true;
 
-	for(uint i = 0; i < (sizeof(push.m_inherited)/sizeof(bool)); i++)
+	for(uint i = 0; i < (sizeof(profileToReturn.m_inherited)/sizeof(bool)); i++)
 	{
-		push.m_inherited[i] = true;
+		profileToReturn.m_inherited[i] = true;
 	}
 
 	if(m_children.size() == 0)
 	{
-		push.m_personality = m_key;
-		push.m_inherited[PERSONALITY] = false;
+		profileToReturn.m_personality = m_key;
+		profileToReturn.m_inherited[PERSONALITY] = false;
 		m_redundant = false;
 	}
 
 	if((m_vendor_dist.size() == 1) && m_vendor_dist[0].first.compare(parentProfile.m_ethernet))
 	{
-		push.m_ethernet = m_vendor_dist[0].first;
-		push.m_inherited[ETHERNET] = false;
+		profileToReturn.m_ethernet = m_vendor_dist[0].first;
+		profileToReturn.m_inherited[ETHERNET] = false;
 		m_redundant = false;
 	}
 	// Go through every element of the ports distribution
@@ -139,25 +139,25 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 	{
 		if(m_ports_dist[i].second == 100)
 		{
-			pair<string, bool> push_port;
-			push_port.first = m_ports_dist[i].first;
-			push_port.second = false;
+			pair<string, bool> portToAdd;
+			portToAdd.first = m_ports_dist[i].first;
+			portToAdd.second = false;
 			for(uint16_t i = 0; i < parentProfile.m_ports.size(); i++)
 			{
-				if(!parentProfile.m_ports[i].first.compare(push_port.first))
+				if(!parentProfile.m_ports[i].first.compare(portToAdd.first))
 				{
-					push_port.second = true;
+					portToAdd.second = true;
 				}
 			}
-			push.m_ports.push_back(push_port);
-			if(!push_port.second)
+			profileToReturn.m_ports.push_back(portToAdd);
+			if(!portToAdd.second)
 			{
 				m_redundant = false;
 			}
 		}
 	}
 
-	return push;
+	return profileToReturn;
 }
 
 }

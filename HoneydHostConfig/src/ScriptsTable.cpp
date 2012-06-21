@@ -69,13 +69,13 @@ void ScriptsTable::PrintScriptsTable()
 {
 	for(Scripts_Table::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
 	{
-		cout << endl;
-		cout << "Service " << it->first << " has the following constituents:" << endl;
+		cout << '\n';
+		cout << "Service " << it->first << " has the following constituents:" << '\n';
 
 		for(uint i = 0; i < it->second.size(); i++)
 		{
-			cout << "\tOS Class: " << it->second[i].first << endl;
-			cout << "\tName: " << it->second[i].second << endl;
+			cout << "\tOS Class: " << it->second[i].first << '\n';
+			cout << "\tName: " << it->second[i].second << '\n';
 		}
 
 		cout << endl;
