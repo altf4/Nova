@@ -249,7 +249,7 @@ void PrintUsage()
 	cout << "    " << EXECUTABLE_NAME << " start nova|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
-	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign" << endl;
+	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear all" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
