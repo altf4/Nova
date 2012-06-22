@@ -10,6 +10,11 @@ using namespace std;
 NovaConfigBinding::NovaConfigBinding() {};
 NovaConfigBinding::~NovaConfigBinding() {};
 
+Config * NovaConfigBinding::GetChild()
+{
+  return m_conf;
+}
+
 void NovaConfigBinding::Init(Handle<Object> target) {
   // Prepare constructor template
   Local<FunctionTemplate> tpl = FunctionTemplate::New(New);

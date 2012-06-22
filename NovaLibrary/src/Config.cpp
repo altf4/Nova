@@ -1871,6 +1871,20 @@ void Config::SetUseAnyLoopback(bool which)
 	m_loIsDefault = which;
 }
 
+bool Config::SetUseAllInterfaces_Binding(bool which)
+{
+	Lock lock(&m_lock, false);
+	m_ifIsDefault = which;
+	return true;
+}
+
+bool Config::SetUseAnyLoopback_Binding(bool which)
+{
+	Lock lock(&m_lock, false);
+	m_loIsDefault = which;
+	return true;
+}
+
 void Config::SetClassificationThreshold(double classificationThreshold)
 {
 	Lock lock(&m_lock, false);
@@ -1990,6 +2004,64 @@ void Config::ClearInterfaces()
 	Lock lock(&m_lock, false);
 	m_interfaces.clear();
 }
+
+std::vector<std::string> Config::ListInterfaces()
+{
+	pthread_rwlock_wrlock(&m_lock);
+	struct ifaddrs * devices = NULL;
+	ifaddrs *curIf = NULL;
+	stringstream ss;
+
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+
+	// ********** ETHERNET INTERFACES ************* //
+	vector<string> interfaces;
+
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			interfaces.push_back(string(curIf->ifa_name));
+		}
+	}
+
+	freeifaddrs(devices);
+	pthread_rwlock_unlock(&m_lock);
+	return interfaces;
+}
+
+std::vector<std::string> Config::ListLoopbacks()
+{
+	pthread_rwlock_wrlock(&m_lock);
+	struct ifaddrs * devices = NULL;
+	ifaddrs *curIf = NULL;
+	stringstream ss;
+	std::vector<std::string> ret;
+
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		//If we find a valid loopback interface exit the loop early (curIf != NULL)
+		if((curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			ret.push_back(string(curIf->ifa_name));
+		}
+	}
+
+	freeifaddrs(devices);
+	pthread_rwlock_unlock(&m_lock);
+	return ret;
+}
+
 
 void Config::SetIsDmEnabled(bool isDmEnabled)
 {

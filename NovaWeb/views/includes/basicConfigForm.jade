@@ -7,6 +7,7 @@ script
       for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
       {
         document.getElementById("if" + i).disabled = true;
+        document.getElementById("DEFAULT").innerHTML = true;
       }
     }
     else
@@ -14,6 +15,7 @@ script
       for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
       {
         document.getElementById("if" + i).disabled = false;
+        document.getElementById("DEFAULT").innerHTML = false;
       }
     }
   }
@@ -76,7 +78,8 @@ table
           input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
           "default"  
           
-   hidden(id="length", value=INTERFACES.length)      
+   hidden(id="length", value=INTERFACES.length)
+   hidden(id="DEFAULT", value=DEFAULT)      
 br
 
 label Doppelganger Interface

@@ -104,8 +104,12 @@ public:
     void AddInterface(std::string interface);
     void RemoveInterface(std::string interface);
     void ClearInterfaces();
+    std::vector<std::string> ListInterfaces();
+    std::vector<std::string> ListLoopbacks();
     void SetUseAllInterfaces(bool which);
     void SetUseAnyLoopback(bool which);
+    bool SetUseAllInterfaces_Binding(bool which);
+    bool SetUseAnyLoopback_Binding(bool which);
 
     void SetClassificationThreshold(double classificationThreshold);
     void SetClassificationTimeout(int classificationTimeout);
