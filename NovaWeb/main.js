@@ -523,7 +523,7 @@ app.post('/editHoneydNodeSave', ensureAuthenticated, function(req, res) {
 
 app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACES", "HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
+	var configItems = ["DEFAULT", "INTERFACE", "HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
 		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
 		"SA_MAX_ATTEMPTS","SA_SLEEP_DURATION","USER_HONEYD_CONFIG","DOPPELGANGER_IP","DOPPELGANGER_INTERFACE","DM_ENABLED",
 		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
@@ -543,12 +543,14 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   var validator = new Validator();
   
-  var interfaces = [];
+  var interfaces = "";
   
-  for(var interfaces in )
+  for(item in req.body["INTERFACE"])
   {
-    
+    interfaces += req.body["INTERFACE"][item] + " ";
   }
+  
+  req.body["INTERFACE"] = interfaces;
   
   for(var item = 0; item < configItems.length; item++)
   {

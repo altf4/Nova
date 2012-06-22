@@ -49,12 +49,12 @@ table
         - if(INTERFACES[i] === "eth0")
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="INTERFACE", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
                 #{INTERFACES[i]}
         - else
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()", disabled=true)
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", disabled=true)
                 #{INTERFACES[i]}
       tr
         td
@@ -66,12 +66,12 @@ table
         - if(INTERFACES[i] === "eth0")
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()", checked)
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", checked)
                 #{INTERFACES[i]}
         - else
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()")
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()")
                 #{INTERFACES[i]}
       tr
         td
