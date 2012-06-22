@@ -236,8 +236,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			cout << "Caught Exception : " << e.what() << endl;
-			//return PARSINGERROR;
+			LOG(DEBUG, "Caught Exception : " + string(e.what()), "");
 		}
 	}
 

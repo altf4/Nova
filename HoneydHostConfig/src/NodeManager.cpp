@@ -89,6 +89,8 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 						curNode.m_IP = "DHCP";
 						curNode.m_MAC = m_hdconfig->GenerateUniqueMACAddress(curCounter->m_ethVendor);
 						curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
+						curNode.m_name = curNode.m_IP + " - " + curNode.m_MAC;
+						m_hdconfig->m_profiles[m_profileCounters[j].m_profile.m_name].m_nodeKeys.push_back(curNode.m_name);
 
 						//Update counters for remaining macs
 						for(unsigned int l = k+1; l < m_profileCounters[j].m_macCounters.size(); l++)

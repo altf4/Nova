@@ -139,18 +139,19 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 	{
 		if(m_ports_dist[i].second == 100)
 		{
-			pair<string, bool> portToAdd;
+			pair<string, pair<bool, double> > portToAdd;
 			portToAdd.first = m_ports_dist[i].first;
-			portToAdd.second = false;
+			portToAdd.second.first = false;
+			portToAdd.second.second = m_ports_dist[i].second;
 			for(uint16_t i = 0; i < parentProfile.m_ports.size(); i++)
 			{
 				if(!parentProfile.m_ports[i].first.compare(portToAdd.first))
 				{
-					portToAdd.second = true;
+					portToAdd.second.first = true;
 				}
 			}
 			profileToReturn.m_ports.push_back(portToAdd);
-			if(!portToAdd.second)
+			if(!portToAdd.second.first)
 			{
 				m_redundant = false;
 			}

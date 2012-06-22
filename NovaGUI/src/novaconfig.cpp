@@ -222,9 +222,9 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 			if(!p->m_ports[i].first.compare(prt->m_portName))
 			{
 				//If the port is inherited we can just make it explicit
-				if(p->m_ports[i].second)
+				if(p->m_ports[i].second.first)
 				{
-					p->m_ports[i].second = false;
+					p->m_ports[i].second.first = false;
 				}
 
 				//If the port isn't inherited and the profile has parents
@@ -239,10 +239,10 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 						if(!prt->m_portNum.compare(temp.m_portNum) && !prt->m_type.compare(temp.m_type))
 						{
 							p->m_ports[i].first = temp.m_portName;
-							p->m_ports[i].second = true;
+							p->m_ports[i].second.first = true;
 						}
 					}
-					if(!p->m_ports[i].second)
+					if(!p->m_ports[i].second.first)
 					{
 						m_loading->unlock();
 						m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_INHERIT_PORT, "The selected port cannot be inherited"
@@ -420,7 +420,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 						if((!prt->m_type.compare(m_honeydConfig->m_ports[parent->m_ports[j].first].m_type))
 								&& (!prt->m_portNum.compare(m_honeydConfig->m_ports[parent->m_ports[j].first].m_portNum)))
 						{
-							p->m_ports[i].second = true;
+							p->m_ports[i].second.first = true;
 							p->m_ports[i].first = parent->m_ports[j].first;
 							matched = true;
 						}
@@ -443,7 +443,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 					{
 						for(uint j = 0; j < it->second.m_ports.size(); j++)
 						{
-							if(!it->second.m_ports[j].first.compare(prt->m_portName) && it->second.m_ports[j].second)
+							if(!it->second.m_ports[j].first.compare(prt->m_portName) && it->second.m_ports[j].second.first)
 							{
 								it->second.m_ports.erase(it->second.m_ports.begin()+j);
 								break;
@@ -1588,7 +1588,7 @@ void NovaConfig::SaveProfileSettings()
 
 			p.m_ports[i].first = pr.m_portName;
 			m_honeydConfig->m_ports[p.m_ports[i].first] = pr;
-			p.m_ports[i].second = item->font(0).italic();
+			p.m_ports[i].second.first = item->font(0).italic();
 		}
 		m_honeydConfig->m_profiles[m_currentProfile] = p;
 		SaveInheritedProfileSettings();
@@ -1802,7 +1802,7 @@ void NovaConfig::LoadProfileSettings()
 
 			QFont tempFont;
 			tempFont = QFont(item->font(0));
-			tempFont.setItalic(p->m_ports[i].second);
+			tempFont.setItalic(p->m_ports[i].second.first);
 			item->setFont(0,tempFont);
 			item->setFont(1,tempFont);
 			item->setFont(2,tempFont);
@@ -1832,7 +1832,7 @@ void NovaConfig::LoadProfileSettings()
 			behaviorBox->setFont(tempFont);
 			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
-			if(p->m_ports[i].second)
+			if(p->m_ports[i].second.first)
 			{
 				item->setFlags(item->flags() & ~Qt::ItemIsEditable);
 			}
@@ -2203,7 +2203,7 @@ void NovaConfig::LoadProfileServices(ptree *ptr, NodeProfile *p)
 	{
 		for(uint i = 0; i < p->m_ports.size(); i++)
 		{
-			p->m_ports[i].second = true;
+			p->m_ports[i].second.first = true;
 		}
 		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
@@ -2661,7 +2661,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		}
 		for(uint i = 0; i < temp.m_ports.size(); i++)
 		{
-			temp.m_ports[i].second = true;
+			temp.m_ports[i].second.first = true;
 		}
 		m_currentProfile = temp.m_name;
 	}

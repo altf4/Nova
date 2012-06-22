@@ -260,7 +260,7 @@ void PersonalityTree::DebugPrintProfileTable()
 			cout << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << '\n';
 			for(uint16_t i = 0; i < it->second.m_ports.size(); i++)
 			{
-				cout << "\t" << it->second.m_ports[i].first << ", " << it->second.m_ports[i].second << '\n';
+				cout << "\t" << it->second.m_ports[i].first << ", " << it->second.m_ports[i].second.first << '\n';
 			}
 		}
 		cout << endl;

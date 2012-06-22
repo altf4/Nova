@@ -182,7 +182,7 @@ public:
 		for (uint i = 0; i < m_profiles[profile].m_ports.size(); i++)
 		{
 			p = m_ports[m_profiles[profile].m_ports.at(i).first];
-			p.m_isInherited = m_profiles[profile].m_ports.at(i).second;
+			p.m_isInherited = m_profiles[profile].m_ports.at(i).second.first;
 			ret.push_back(p);
 		}
 

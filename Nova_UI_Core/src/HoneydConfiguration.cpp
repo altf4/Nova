@@ -382,7 +382,7 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 	{
 		for(uint i = 0; i < nodeProf->m_ports.size(); i++)
 		{
-			nodeProf->m_ports[i].second = true;
+			nodeProf->m_ports[i].second.first = true;
 		}
 		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
 		{
@@ -405,9 +405,10 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 						}
 					}
 					//Add specified port
-					pair<string, bool> portPair;
+					pair<string, pair<bool, double> > portPair;
 					portPair.first = port->m_portName;
-					portPair.second = false;
+					portPair.second.first = false;
+					portPair.second.second = 0;
 					if(!nodeProf->m_ports.size())
 					{
 						nodeProf->m_ports.push_back(portPair);
@@ -1188,7 +1189,7 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 	for (uint i = 0; i < p->m_ports.size(); i++)
 	{
 		// Only include non-inherited ports
-		if(!p->m_ports[i].second)
+		if(!p->m_ports[i].second.first)
 		{
 			out << "add " << p->m_name;
 			if(!m_ports[p->m_ports[i].first].m_type.compare("TCP"))
@@ -1248,7 +1249,7 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 	for (uint i = 0; i < p->m_ports.size(); i++)
 	{
 		// Only include non-inherited ports
-		if(!p->m_ports[i].second)
+		if(!p->m_ports[i].second.first)
 		{
 			out << "add DoppelgangerReservedTemplate";
 			if(!m_ports[p->m_ports[i].first].m_type.compare("TCP"))
@@ -1760,6 +1761,8 @@ bool HoneydConfiguration::AddNewNode(Node node)
 
 	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
 
+	m_profiles[newNode.m_pfile].m_nodeKeys.push_back(newNode.m_name);
+
 	uint j = ~0;
 	stringstream ss;
 	if(newNode.m_name == "DHCP - RANDOM")
@@ -1829,6 +1832,8 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	newNode.m_MAC = macAddress;
 
 	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
+
+	m_profiles[newNode.m_pfile].m_nodeKeys.push_back(newNode.m_name);
 
 	uint j = ~0;
 	stringstream ss;
@@ -2107,7 +2112,7 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 		for(uint i = 0; i < p.m_ports.size(); i++)
 		{
 			//If the port isn't inherited
-			if(!p.m_ports[i].second)
+			if(!p.m_ports[i].second.first)
 			{
 				temp.add<std::string>("add.ports.port", p.m_ports[i].first);
 			}
