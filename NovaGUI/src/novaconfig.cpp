@@ -326,9 +326,10 @@ void NovaConfig::on_actionAddPort_triggered()
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
 			ui.portTreeWidget->setCurrentItem(item);
-			pair<string, bool> portPair;
+			pair<string, pair<bool, double> > portPair;
 			portPair.first = pr.m_portName;
-			portPair.second = false;
+			portPair.second.first = false;
+			portPair.second.second = 0;
 
 			bool conflict = false;
 			for(uint i = 0; i < p.m_ports.size(); i++)
@@ -345,7 +346,7 @@ void NovaConfig::on_actionAddPort_triggered()
 				m_honeydConfig->m_ports[pr.m_portName] = pr;
 				m_honeydConfig->m_profiles[p.m_name] = p;
 
-				portPair.second = true;
+				portPair.second.first = true;
 				vector<NodeProfile> profList;
 				for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 				{
@@ -756,7 +757,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		if(portName.compare(""))
 		{
 			uint index;
-			pair<string, bool> portPair;
+			pair<string, pair<bool, double> > portPair;
 
 			//Erase the old port from the current profile
 			for(index = 0; index < p.m_ports.size(); index++)
@@ -779,7 +780,8 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 					if((!(temp.m_portNum.compare(oldPrt.m_portNum))) && (!(temp.m_type.compare(oldPrt.m_type))))
 					{
 						portPair.first = temp.m_portName;
-						portPair.second = true;
+						portPair.second.first = true;
+						portPair.second.second = 0;
 						if(index < p.m_ports.size())
 						{
 							p.m_ports.insert(p.m_ports.begin() + index, portPair);
@@ -795,7 +797,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 
 			//Create the vector item for the profile
 			portPair.first = portName;
-			portPair.second = false;
+			portPair.second.first = false;
 
 			//Insert it at the numerically sorted position.
 			uint i = 0;
@@ -855,7 +857,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 						//Check if we inherited the old port, and delete it if so
 						for(uint i = 0; i < ptemp.m_ports.size(); i++)
 						{
-							if(!ptemp.m_ports[i].first.compare(oldPort) && ptemp.m_ports[i].second)
+							if(!ptemp.m_ports[i].first.compare(oldPort) && ptemp.m_ports[i].second.first)
 							{
 								ptemp.m_ports.erase(ptemp.m_ports.begin()+i);
 							}
@@ -880,7 +882,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 							if(!conflict)
 							{
 								portPair.first = pr.m_portName;
-								portPair.second = true;
+								portPair.second.first = true;
 								//Insert it at the numerically sorted position.
 								uint j = 0;
 								for(j = 0; j < ptemp.m_ports.size(); j++)
@@ -2226,9 +2228,10 @@ void NovaConfig::LoadProfileServices(ptree *ptr, NodeProfile *p)
 						}
 					}
 					//Add specified port
-					pair<string, bool> portPair;
+					pair<string, pair<bool, double> > portPair;
 					portPair.first = prt->m_portName;
-					portPair.second = false;
+					portPair.second.first = false;
+					portPair.second.second = 0;
 					if(!p->m_ports.size())
 					{
 						p->m_ports.push_back(portPair);
