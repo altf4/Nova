@@ -129,7 +129,8 @@ struct NodeProfile
 	std::string m_uptimeMax;
 	std::string m_dropRate;
 	bool m_inherited[INHERITED_MAX];
-	std::vector<std::pair<std::string, bool> > m_ports;
+	std::vector<std::pair<std::string, std::pair<bool, double> > > m_ports;
+	std::vector<std::string> m_nodeKeys;
 	std::string m_parentProfile;
 	boost::property_tree::ptree m_tree;
 
@@ -145,7 +146,7 @@ struct NodeProfile
 	inline bool SetUptimeMax(std::string uptimeMax) {this->m_uptimeMax = uptimeMax; return true;}
 	inline bool SetDropRate(std::string dropRate) {this->m_dropRate = dropRate; return true;}
 	inline bool SetParentProfile(std::string parentProfile) {this->m_parentProfile = parentProfile; return true;}
-	inline bool AddPort(std::string portName, bool inherited) {m_ports.push_back(std::pair<std::string, bool>(portName, inherited)); return true;}
+	inline bool AddPort(std::string portName, bool inherited, double distribution) {m_ports.push_back(std::pair<std::string, std::pair<bool, double> >(portName, std::pair<bool, double>(inherited, distribution))); return true;}
 
 	inline bool setTcpActionInherited(bool inherit) {m_inherited[TCP_ACTION] = inherit; return true;}
 	inline bool setUdpActionInherited(bool inherit) {m_inherited[UDP_ACTION] = inherit; return true;}
@@ -191,7 +192,7 @@ struct NodeProfile
 	inline std::vector<std::string> GetPortNames()
 	{
 		std::vector<std::string> ret;
-		for (std::vector<std::pair<std::string, bool>>::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+		for (std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 		{
 			ret.push_back(it->first);
 		}
@@ -202,9 +203,9 @@ struct NodeProfile
 	inline std::vector<bool> GetPortInheritance()
 	{
 		std::vector<bool> ret;
-		for (std::vector<std::pair<std::string, bool>>::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+		for (std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 		{
-			ret.push_back(it->second);
+			ret.push_back(it->second.first);
 		}
 		return ret;
 	}

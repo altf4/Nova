@@ -13,7 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO
+// Description : Source file for the PersonalityTree object. Contains a tree
+//               representation of the relationships between different personalities.
 //============================================================================
 
 #include "PersonalityTree.h"
@@ -46,15 +47,11 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_profiles = &m_hdconfig->m_profiles;
 	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 
-	m_scripts.PrintScriptsTable();
-
 	if(persTable != NULL)
 	{
 		LoadTable(persTable);
 	}
 	GetHostCount();
-
-	cout << m_root.m_count << endl;
 }
 
 PersonalityTree::~PersonalityTree()
@@ -229,43 +226,16 @@ void PersonalityTree::ToString()
 {
 	for(uint i = 0; i < m_root.m_children.size(); i++)
 	{
-		RecursiveToString(m_root.m_children[i].second);
+		RecursiveToString(*m_root.m_children[i].second);
 	}
 }
 
-void PersonalityTree::RecursiveToString(PersonalityNode *persNode)
+void PersonalityTree::RecursiveToString(PersonalityNode &persNode)
 {
-	if(persNode == NULL)
+	cout << persNode.ToString() << endl;
+	for(uint i = 0; i < persNode.m_children.size(); i++)
 	{
-		return;
-	}
-
-	cout << persNode->ToString() << endl;
-	for(uint i = 0; i < persNode->m_children.size(); i++)
-	{
-		RecursiveToString(persNode->m_children[i].second);
-	}
-}
-
-void PersonalityTree::GenerateDistributions()
-{
-	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
-	{
-		RecursiveGenerateDistributions(m_root.m_children[i].second);
-	}
-}
-
-void PersonalityTree::RecursiveGenerateDistributions(PersonalityNode *node)
-{
-	if(node == NULL)
-	{
-		return;
-	}
-
-	node->GenerateDistributions();
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
-	{
-		RecursiveGenerateDistributions(node->m_children[i].second);
+		RecursiveToString(*persNode.m_children[i].second);
 	}
 }
 
@@ -273,24 +243,24 @@ void PersonalityTree::DebugPrintProfileTable()
 {
 	for(ProfileTable::iterator it = m_profiles->begin(); it != m_profiles->end(); it++)
 	{
-		cout << endl;
-		cout << "Profile: " << it->second.m_name << endl;
-		cout << "Parent: " << it->second.m_parentProfile << endl;
+		cout << '\n';
+		cout << "Profile: " << it->second.m_name << '\n';
+		cout << "Parent: " << it->second.m_parentProfile << '\n';
 
 		if(!it->second.m_personality.empty())
 		{
-			cout << "Personality: " << it->second.m_personality << endl;
+			cout << "Personality: " << it->second.m_personality << '\n';
 		}
 		if(!it->second.m_ethernet.empty())
 		{
-			cout << "MAC vendor: " << it->second.m_ethernet << endl;
+			cout << "MAC vendor: " << it->second.m_ethernet << '\n';
 		}
 		if(!it->second.m_ports.empty())
 		{
-			cout << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << endl;
+			cout << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << '\n';
 			for(uint16_t i = 0; i < it->second.m_ports.size(); i++)
 			{
-				cout << "\t" << it->second.m_ports[i].first << ", " << it->second.m_ports[i].second << endl;
+				cout << "\t" << it->second.m_ports[i].first << ", " << it->second.m_ports[i].second.first << '\n';
 			}
 		}
 		cout << endl;
@@ -299,13 +269,6 @@ void PersonalityTree::DebugPrintProfileTable()
 
 void PersonalityTree::ToXmlTemplate()
 {
-	vector<string> ret = m_hdconfig->GetProfileNames();
-
-	for(uint16_t i = 0; i < ret.size(); i++)
-	{
-		cout << "Profile after Clean: " << ret[i] << " has parent: " << m_hdconfig->GetProfile(ret[i])->m_parentProfile << endl;
-	}
-
 	m_hdconfig->SaveAllTemplates();
 }
 
@@ -372,13 +335,11 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 					{
 						tokens_osclass[k] = boost::trim_left_copy(tokens_osclass[k]);
 						tokens_osclass[k] = boost::trim_right_copy(tokens_osclass[k]);
-						//cout << tokens_osclass[k] << endl;
 					}
 					for(uint k = 0; k < tokens_script_osclass.size(); k++)
 					{
 						tokens_script_osclass[k] = boost::trim_left_copy(tokens_script_osclass[k]);
 						tokens_script_osclass[k] = boost::trim_right_copy(tokens_script_osclass[k]);
-						//cout << tokens_script_osclass[k] << endl;
 					}
 
 					if(tokens_osclass.size() < tokens_script_osclass.size())
@@ -438,9 +399,7 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 						if(!(it->first + "_open").compare(m_hdconfig->GetProfile(node->m_key)->m_ports[k].first))
 						{
 							m_hdconfig->GetProfile(node->m_key)->m_ports[k].first = pass.m_portName;
-							cout << node->m_ports_dist[i].first << endl;
 							node->m_ports_dist[i].first = pass.m_portName;
-							cout << node->m_ports_dist[i].first << endl;
 						}
 					}
 
@@ -460,9 +419,7 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 								if(!(it->first + "_open").compare(m_hdconfig->GetProfile(name)->m_ports[k].first))
 								{
 									m_hdconfig->GetProfile(name)->m_ports[k].first = pass.m_portName;
-									cout << node->m_ports_dist[i].first << endl;
 									node->m_ports_dist[i].first = pass.m_portName;
-									cout << node->m_ports_dist[i].first << endl;
 								}
 							}
 							m_hdconfig->UpdateProfile(name);

@@ -222,9 +222,9 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 			if(!p->m_ports[i].first.compare(prt->m_portName))
 			{
 				//If the port is inherited we can just make it explicit
-				if(p->m_ports[i].second)
+				if(p->m_ports[i].second.first)
 				{
-					p->m_ports[i].second = false;
+					p->m_ports[i].second.first = false;
 				}
 
 				//If the port isn't inherited and the profile has parents
@@ -239,10 +239,10 @@ void NovaConfig::on_actionToggle_Inherited_triggered()
 						if(!prt->m_portNum.compare(temp.m_portNum) && !prt->m_type.compare(temp.m_type))
 						{
 							p->m_ports[i].first = temp.m_portName;
-							p->m_ports[i].second = true;
+							p->m_ports[i].second.first = true;
 						}
 					}
-					if(!p->m_ports[i].second)
+					if(!p->m_ports[i].second.first)
 					{
 						m_loading->unlock();
 						m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->CANNOT_INHERIT_PORT, "The selected port cannot be inherited"
@@ -326,9 +326,10 @@ void NovaConfig::on_actionAddPort_triggered()
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
 			ui.portTreeWidget->setCurrentItem(item);
-			pair<string, bool> portPair;
+			pair<string, pair<bool, double> > portPair;
 			portPair.first = pr.m_portName;
-			portPair.second = false;
+			portPair.second.first = false;
+			portPair.second.second = 0;
 
 			bool conflict = false;
 			for(uint i = 0; i < p.m_ports.size(); i++)
@@ -345,7 +346,7 @@ void NovaConfig::on_actionAddPort_triggered()
 				m_honeydConfig->m_ports[pr.m_portName] = pr;
 				m_honeydConfig->m_profiles[p.m_name] = p;
 
-				portPair.second = true;
+				portPair.second.first = true;
 				vector<NodeProfile> profList;
 				for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 				{
@@ -420,7 +421,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 						if((!prt->m_type.compare(m_honeydConfig->m_ports[parent->m_ports[j].first].m_type))
 								&& (!prt->m_portNum.compare(m_honeydConfig->m_ports[parent->m_ports[j].first].m_portNum)))
 						{
-							p->m_ports[i].second = true;
+							p->m_ports[i].second.first = true;
 							p->m_ports[i].first = parent->m_ports[j].first;
 							matched = true;
 						}
@@ -443,7 +444,7 @@ void NovaConfig::on_actionDeletePort_triggered()
 					{
 						for(uint j = 0; j < it->second.m_ports.size(); j++)
 						{
-							if(!it->second.m_ports[j].first.compare(prt->m_portName) && it->second.m_ports[j].second)
+							if(!it->second.m_ports[j].first.compare(prt->m_portName) && it->second.m_ports[j].second.first)
 							{
 								it->second.m_ports.erase(it->second.m_ports.begin()+j);
 								break;
@@ -756,7 +757,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		if(portName.compare(""))
 		{
 			uint index;
-			pair<string, bool> portPair;
+			pair<string, pair<bool, double> > portPair;
 
 			//Erase the old port from the current profile
 			for(index = 0; index < p.m_ports.size(); index++)
@@ -779,7 +780,8 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 					if((!(temp.m_portNum.compare(oldPrt.m_portNum))) && (!(temp.m_type.compare(oldPrt.m_type))))
 					{
 						portPair.first = temp.m_portName;
-						portPair.second = true;
+						portPair.second.first = true;
+						portPair.second.second = 0;
 						if(index < p.m_ports.size())
 						{
 							p.m_ports.insert(p.m_ports.begin() + index, portPair);
@@ -795,7 +797,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 
 			//Create the vector item for the profile
 			portPair.first = portName;
-			portPair.second = false;
+			portPair.second.first = false;
 
 			//Insert it at the numerically sorted position.
 			uint i = 0;
@@ -855,7 +857,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 						//Check if we inherited the old port, and delete it if so
 						for(uint i = 0; i < ptemp.m_ports.size(); i++)
 						{
-							if(!ptemp.m_ports[i].first.compare(oldPort) && ptemp.m_ports[i].second)
+							if(!ptemp.m_ports[i].first.compare(oldPort) && ptemp.m_ports[i].second.first)
 							{
 								ptemp.m_ports.erase(ptemp.m_ports.begin()+i);
 							}
@@ -880,7 +882,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 							if(!conflict)
 							{
 								portPair.first = pr.m_portName;
-								portPair.second = true;
+								portPair.second.first = true;
 								//Insert it at the numerically sorted position.
 								uint j = 0;
 								for(j = 0; j < ptemp.m_ports.size(); j++)
@@ -1588,7 +1590,7 @@ void NovaConfig::SaveProfileSettings()
 
 			p.m_ports[i].first = pr.m_portName;
 			m_honeydConfig->m_ports[p.m_ports[i].first] = pr;
-			p.m_ports[i].second = item->font(0).italic();
+			p.m_ports[i].second.first = item->font(0).italic();
 		}
 		m_honeydConfig->m_profiles[m_currentProfile] = p;
 		SaveInheritedProfileSettings();
@@ -1802,7 +1804,7 @@ void NovaConfig::LoadProfileSettings()
 
 			QFont tempFont;
 			tempFont = QFont(item->font(0));
-			tempFont.setItalic(p->m_ports[i].second);
+			tempFont.setItalic(p->m_ports[i].second.first);
 			item->setFont(0,tempFont);
 			item->setFont(1,tempFont);
 			item->setFont(2,tempFont);
@@ -1832,7 +1834,7 @@ void NovaConfig::LoadProfileSettings()
 			behaviorBox->setFont(tempFont);
 			connect(behaviorBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
-			if(p->m_ports[i].second)
+			if(p->m_ports[i].second.first)
 			{
 				item->setFlags(item->flags() & ~Qt::ItemIsEditable);
 			}
@@ -2203,7 +2205,7 @@ void NovaConfig::LoadProfileServices(ptree *ptr, NodeProfile *p)
 	{
 		for(uint i = 0; i < p->m_ports.size(); i++)
 		{
-			p->m_ports[i].second = true;
+			p->m_ports[i].second.first = true;
 		}
 		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
 		{
@@ -2226,9 +2228,10 @@ void NovaConfig::LoadProfileServices(ptree *ptr, NodeProfile *p)
 						}
 					}
 					//Add specified port
-					pair<string, bool> portPair;
+					pair<string, pair<bool, double> > portPair;
 					portPair.first = prt->m_portName;
-					portPair.second = false;
+					portPair.second.first = false;
+					portPair.second.second = 0;
 					if(!p->m_ports.size())
 					{
 						p->m_ports.push_back(portPair);
@@ -2661,7 +2664,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 		}
 		for(uint i = 0; i < temp.m_ports.size(); i++)
 		{
-			temp.m_ports[i].second = true;
+			temp.m_ports[i].second.first = true;
 		}
 		m_currentProfile = temp.m_name;
 	}

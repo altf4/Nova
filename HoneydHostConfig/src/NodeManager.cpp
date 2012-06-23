@@ -52,8 +52,8 @@ bool NodeManager::SetPersonalityTree(PersonalityTree *persTree)
 
 void NodeManager::GenerateNodes(unsigned int num_nodes)
 {
-	vector<Node> ret;
-	ret.clear();
+	vector<Node> nodesToAdd;
+	nodesToAdd.clear();
 
 	for(unsigned int i = 0; i < num_nodes;)
 	{
@@ -85,10 +85,12 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 					else
 					{
 						curCounter->m_count -= (1 - curCounter->m_increment);
-						//Generate unique MAC address
+						//Generate unique MAC address and set profile name
 						curNode.m_IP = "DHCP";
 						curNode.m_MAC = m_hdconfig->GenerateUniqueMACAddress(curCounter->m_ethVendor);
 						curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
+						curNode.m_name = curNode.m_IP + " - " + curNode.m_MAC;
+						m_hdconfig->m_profiles[m_profileCounters[j].m_profile.m_name].m_nodeKeys.push_back(curNode.m_name);
 
 						//Update counters for remaining macs
 						for(unsigned int l = k+1; l < m_profileCounters[j].m_macCounters.size(); l++)
@@ -125,15 +127,18 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 						num_ports++;
 					}
 				}
-				ret.push_back(curNode);
+				nodesToAdd.push_back(curNode);
+				// Only progress the outermost for loop if we've completely generated a
+				// Node from the profile counter; this way, we get a number of nodes equal
+				// to num_nodes
 				i++;
 			}
 		}
 	}
-	while(!ret.empty())
+	while(!nodesToAdd.empty())
 	{
-		m_hdconfig->AddNewNode(ret.back());
-		ret.pop_back();
+		m_hdconfig->AddNewNode(nodesToAdd.back());
+		nodesToAdd.pop_back();
 	}
 }
 
@@ -142,41 +147,41 @@ void NodeManager::GenerateProfileCounters()
 {
 	PersonalityNode *rootNode = m_persTree->GetRootNode();
 	m_hostCount = rootNode->m_count;
-	RecursiveGenProfileCounter(rootNode);
+	RecursiveGenProfileCounter(*rootNode);
 }
 
-void NodeManager::RecursiveGenProfileCounter(PersonalityNode *parent)
+void NodeManager::RecursiveGenProfileCounter(const PersonalityNode &parent)
 {
-	if(parent->m_children.empty())
+	if(parent.m_children.empty())
 	{
 		struct ProfileCounter pCounter;
 
-		if(m_hdconfig->GetProfile(parent->m_key) == NULL)
+		if(m_hdconfig->GetProfile(parent.m_key) == NULL)
 		{
-			LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + parent->m_key, "");
+			LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + parent.m_key, "");
 			return;
 		}
-		pCounter.m_profile = *m_hdconfig->GetProfile(parent->m_key);
-		pCounter.m_increment = ((double)parent->m_count / (double)m_hostCount);
+		pCounter.m_profile = *m_hdconfig->GetProfile(parent.m_key);
+		pCounter.m_increment = ((double)parent.m_count / (double)m_hostCount);
 		pCounter.m_count = 0;
 
-		for(unsigned int i = 0; i < parent->m_vendor_dist.size(); i++)
+		for(unsigned int i = 0; i < parent.m_vendor_dist.size(); i++)
 		{
-			pCounter.m_macCounters.push_back(GenerateMacCounter(parent->m_vendor_dist[i].first, parent->m_vendor_dist[i].second));
+			pCounter.m_macCounters.push_back(GenerateMacCounter(parent.m_vendor_dist[i].first, parent.m_vendor_dist[i].second));
 		}
-		for(unsigned int i = 0; i < parent->m_ports_dist.size(); i++)
+		for(unsigned int i = 0; i < parent.m_ports_dist.size(); i++)
 		{
-			pCounter.m_portCounters.push_back(GeneratePortCounter(parent->m_ports_dist[i].first, parent->m_ports_dist[i].second));
+			pCounter.m_portCounters.push_back(GeneratePortCounter(parent.m_ports_dist[i].first, parent.m_ports_dist[i].second));
 		}
 		m_profileCounters.push_back(pCounter);
 	}
-	for(unsigned int i = 0; i < parent->m_children.size(); i++)
+	for(unsigned int i = 0; i < parent.m_children.size(); i++)
 	{
-		RecursiveGenProfileCounter(parent->m_children[i].second);
+		RecursiveGenProfileCounter(*parent.m_children[i].second);
 	}
 }
 
-MacCounter NodeManager::GenerateMacCounter(string vendor, double dist_val)
+MacCounter NodeManager::GenerateMacCounter(const string &vendor, const double dist_val)
 {
 	struct MacCounter ret;
 	ret.m_ethVendor = vendor;
@@ -185,7 +190,7 @@ MacCounter NodeManager::GenerateMacCounter(string vendor, double dist_val)
 	return ret;
 }
 
-PortCounter NodeManager::GeneratePortCounter(string portName, double dist_val)
+PortCounter NodeManager::GeneratePortCounter(const string &portName, const double dist_val)
 {
 	struct PortCounter ret;
 	ret.m_portName = portName;

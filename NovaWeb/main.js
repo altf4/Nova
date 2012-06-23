@@ -153,8 +153,8 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
      res.render('advancedOptions.jade', 
 	 {
 		locals: {
-			INTERFACES: config.ReadSetting("INTERFACE").split(" ") // will be a GetInterfaces() object in config object
-			,DEFAULT: false // should be a getDefault() method in Config object
+      INTERFACES: config.ListInterfaces().sort() // will be a GetInterfaces() object in config object
+      ,DEFAULT: config.GetUseAllInterfaces() // should be a getDefault() method in Config object
 			,HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
 			,TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
 			,TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
@@ -193,10 +193,10 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 
 function renderBasicOptions(jadefile, res, req) {
      res.render(jadefile, 
-	 {
+	 { 
 		locals: {
-			INTERFACES: config.ReadSetting("INTERFACE").split(" ") // will be a GetInterfaces() object in config object
-			,DEFAULT: false // should be a getDefault() method in Config object
+      INTERFACES: config.ListInterfaces().sort() // will be a GetInterfaces() object in config object
+      ,DEFAULT: config.GetUseAllInterfaces() // should be a getDefault() method in Config object
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
@@ -523,7 +523,7 @@ app.post('/editHoneydNodeSave', ensureAuthenticated, function(req, res) {
 
 app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["INTERFACE","HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
+	var configItems = ["DEFAULT", "INTERFACE", "HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
 		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
 		"SA_MAX_ATTEMPTS","SA_SLEEP_DURATION","USER_HONEYD_CONFIG","DOPPELGANGER_IP","DOPPELGANGER_INTERFACE","DM_ENABLED",
 		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
@@ -543,6 +543,14 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   var validator = new Validator();
   
+  var interfaces = "";
+  
+  for(item in req.body["INTERFACE"])
+  {
+    interfaces += req.body["INTERFACE"][item] + " ";
+  }
+  
+  req.body["INTERFACE"] = interfaces;
   
   for(var item = 0; item < configItems.length; item++)
   {
@@ -651,11 +659,12 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   else
   {
     //if no errors, send the validated form data to the WriteSetting method
-    for(var item = 0; item < configItems.length; item++)
+    for(var item = 1; item < configItems.length; item++)
     {
-	  if (req.body[configItems[item]] != undefined) {
-      	config.WriteSetting(configItems[item], req.body[configItems[item]]);  
-	  }
+  	  if(req.body[configItems[item]] != undefined) 
+  	  {
+        	config.WriteSetting(configItems[item], req.body[configItems[item]]);  
+  	  }
     }
     
     res.render('saveRedirect.jade', { locals: {redirectLink: "/suspects"}}) 
