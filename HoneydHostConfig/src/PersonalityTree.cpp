@@ -36,7 +36,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 
 	for(uint i = 0; i < subnetsToUse.size(); i++)
 	{
-		AddSubnet(&subnetsToUse[i]);
+		AddSubnet(subnetsToUse[i]);
 	}
 	m_hdconfig->AddGroup("HaystackAutoConfig");
 	Config::Inst()->SetGroup("HaystackAutoConfig");
@@ -98,7 +98,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 
 	//Create profile object
 	node->GenerateDistributions();
-	NodeProfile tempProf = node->GenerateProfile(parentProfile);
+	NodeProfile tempProf = node->GenerateProfile(*parentProfile);
 	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
@@ -503,7 +503,7 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode *node)
 	}
 }
 
-bool PersonalityTree::AddSubnet(Subnet *add)
+bool PersonalityTree::AddSubnet(const Subnet &add)
 {
 	return m_hdconfig->AddSubnet(add);
 }

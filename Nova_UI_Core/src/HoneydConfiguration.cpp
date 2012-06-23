@@ -1901,15 +1901,15 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	return true;
 }
 
-bool HoneydConfiguration::AddSubnet(Subnet * add)
+bool HoneydConfiguration::AddSubnet(const Subnet &add)
 {
-	if(m_subnets.find(add->m_name) != m_subnets.end())
+	if(m_subnets.find(add.m_name) != m_subnets.end())
 	{
 		return false;
 	}
 	else
 	{
-		m_subnets[add->m_name] = *add;
+		m_subnets[add.m_name] = add;
 		return true;
 	}
 }

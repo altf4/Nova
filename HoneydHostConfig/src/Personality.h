@@ -35,13 +35,13 @@ public:
 	//  std::string vendor - the string representation of the vendor taken from the nmap xml
 	// Returns nothing; if the vendor is there, it increments the count, if it isn't it adds it
 	// and sets count to one.
-	void AddVendor(std::string);
+	void AddVendor(const std::string &);
 
 	// Adds a port to the m_ports member variable HashMap
 	//  std::string port - of the format <NUM>_<PROTOCOL>, to pass to the HashMap
 	// Returns nothing; if the vendor is there, it increments the count, if it isn't it adds it
 	// and sets count to one.
-	void AddPort(std::string, std::string);
+	void AddPort(const std::string &, const std::string &);
 
 	// count of the number of instances of this personality on the scanned subnets
 	unsigned int m_count;

@@ -71,7 +71,7 @@ public:
 
 	void GenerateDistributions();
 
-	NodeProfile GenerateProfile(NodeProfile *parentProfile);
+	NodeProfile GenerateProfile(const NodeProfile &parentProfile);
 };
 
 }
