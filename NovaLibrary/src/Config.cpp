@@ -1865,6 +1865,13 @@ void Config::SetUseAllInterfaces(bool which)
 	m_ifIsDefault = which;
 }
 
+bool Config::SetInterfaces(std::vector<std::string> newInterfaceList)
+{
+	Lock lock(&m_lock, false);
+	m_interfaces = newInterfaceList;
+	return true;
+}
+
 void Config::SetUseAnyLoopback(bool which)
 {
 	Lock lock(&m_lock, false);

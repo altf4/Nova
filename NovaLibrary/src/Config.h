@@ -106,6 +106,7 @@ public:
     void ClearInterfaces();
     std::vector<std::string> ListInterfaces();
     std::vector<std::string> ListLoopbacks();
+    bool SetInterfaces(std::vector<std::string> newInterfaceList);
     void SetUseAllInterfaces(bool which);
     void SetUseAnyLoopback(bool which);
     bool SetUseAllInterfacesBinding(bool which);

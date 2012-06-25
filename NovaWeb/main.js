@@ -193,11 +193,47 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 
 function renderBasicOptions(jadefile, res, req) {
     console.log("ifIsDefault = " + config.GetUseAllInterfacesBinding());
-  
+    
+    var all = config.ListInterfaces().sort();
+    var used = config.GetInterfaces().sort();
+    
+    console.log("result of config.ListInterfaces(): " + all);
+    console.log("result of config.GetInterfaces(): " + used);
+    
+    var pass = [];
+    
+    for(var i in all)
+    {
+      var checked = false;
+      
+      for(var j in used)
+      {
+        if(all[i] === used[j])
+        {
+          checked = true;
+          break;
+        }
+      }
+      
+      if(checked)
+      {
+        pass.push( { iface: all[i], checked: 1 } );
+      }
+      else
+      {
+        pass.push( { iface: all[i], checked: 0 } );
+      }
+    }
+    
+    for(var k in pass)
+    {
+      console.log("pass[" + k + "] == " + pass[k].iface + "," + pass[k].checked);
+    }
+    
      res.render(jadefile, 
 	 { 
 		locals: {
-      INTERFACES: config.ListInterfaces().sort() 
+      INTERFACES: pass 
       ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")

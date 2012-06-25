@@ -25,6 +25,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("ListLoopbacks"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::ListLoopbacks>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetInterfaces"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::GetInterfaces>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAllInterfacesBinding"),FunctionTemplate::New(InvokeWrappedMethod<std::string, NovaConfigBinding, Config, &Config::GetUseAllInterfacesBinding>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("SetIfaces"),FunctionTemplate::New(SetIfaces)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAllInterfaces"),FunctionTemplate::New(UseAllInterfaces)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAnyLoopback"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, &Config::GetUseAnyLoopback>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAnyLoopback"),FunctionTemplate::New(UseAnyLoopback)->GetFunction());
@@ -42,6 +43,28 @@ Handle<Value> NovaConfigBinding::New(const Arguments& args) {
   obj->m_conf = Config::Inst();
   obj->Wrap(args.This());
 
+  return args.This();
+}
+
+Handle<Value> NovaConfigBinding::SetIfaces(const Arguments& args)
+{
+  HandleScope scope;
+  NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+  
+  if(args.Length() < 1)
+  {
+      return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+  }
+  
+  std::vector<std::string> pass = cvv8::CastFromJS<std::vector<std::string>>(args[0]);
+  
+  for(uint i = 0; i < pass.size(); i++)
+  {
+    std::cout << "pass[" << i << "] == " << pass[i] << std::endl;
+  }
+  
+  obj->m_conf->SetInterfaces(pass);
+  
   return args.This();
 }
 
