@@ -16,9 +16,9 @@ public:
 
 private:
 
-    static v8::Persistent<v8::FunctionTemplate> m_NodeTemplate;
-    static v8::Persistent<v8::FunctionTemplate> m_profileTemplate;
-    static v8::Persistent<v8::FunctionTemplate> m_portTemplate;
+	static v8::Persistent<v8::FunctionTemplate> m_NodeTemplate;
+	static v8::Persistent<v8::FunctionTemplate> m_profileTemplate;
+	static v8::Persistent<v8::FunctionTemplate> m_portTemplate;
 
 
 };

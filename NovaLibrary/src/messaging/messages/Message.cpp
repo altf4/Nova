@@ -61,10 +61,10 @@ bool Message::WriteMessage(Message *message, int connectFD)
 	char *buffer = message->Serialize(&length);
 	
 	// Total bytes of a write() call that need to be sent
-	uint32_t bytesSoFar;
+	int32_t bytesSoFar;
 
 	// Return value of the write() call, actual bytes sent
-	uint32_t bytesWritten;
+	int32_t bytesWritten;
 
 	// Send the message length
 	bytesSoFar = 0;

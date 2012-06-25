@@ -37,45 +37,45 @@ using namespace std;
 
 class NovaNode: ObjectWrap
 {
-	private:
-		int m_count;
-		static pthread_t m_NovaCallbackThread;
-		static bool m_NovaCallbackHandlingContinue;
-		static Persistent<Function> m_CallbackFunction;
-		static Persistent<Function> m_SuspectsClearedCallback;
-		static bool m_CallbackRegistered;
-		static bool m_AllSuspectsClearedCallbackRegistered;
-		static bool m_callbackRunning;
-		static map<in_addr_t, Suspect*> m_suspects;
+private:
+	int m_count;
+	static pthread_t m_NovaCallbackThread;
+	static bool m_NovaCallbackHandlingContinue;
+	static Persistent<Function> m_CallbackFunction;
+	static Persistent<Function> m_SuspectsClearedCallback;
+	static bool m_CallbackRegistered;
+	static bool m_AllSuspectsClearedCallbackRegistered;
+	static bool m_callbackRunning;
+	static map<in_addr_t, Suspect*> m_suspects;
 
-		static void InitNovaCallbackProcessing();
-		static void CheckInitNova();
+	static void InitNovaCallbackProcessing();
+	static void CheckInitNova();
 
-		static void NovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
-		static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
-		static void HandleNewSuspect(Suspect* suspect);
-		static void HandleAllSuspectsCleared();
-		static int HandleNewSuspectOnV8Thread(eio_req* req);
-		static int HandleAllClearedOnV8Thread(eio_req*);
-		static void HandleCallbackError();
+	static void NovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
+	static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
+	static void HandleNewSuspect(Suspect* suspect);
+	static void HandleAllSuspectsCleared();
+	static int HandleNewSuspectOnV8Thread(eio_req* req);
+	static int HandleAllClearedOnV8Thread(eio_req*);
+	static void HandleCallbackError();
 
-	public:
+public:
 
-		static Persistent<FunctionTemplate> s_ct;
+	static Persistent<FunctionTemplate> s_ct;
 
-		static void Init(Handle<Object> target);
-		static Handle<Value> CheckConnection(const Arguments __attribute__((__unused__)) & args);
-		static Handle<Value> Shutdown(const Arguments __attribute__((__unused__)) & args);
-		NovaNode();
-		~NovaNode();
-		
-		static void SynchInternalList();
-		static Handle<Value> New(const Arguments& args);
-		static Handle<Value> GetFeatureNames(const Arguments& args);
-		static Handle<Value> GetDIM(const Arguments& args);
-		static Handle<Value> getSuspectList(const Arguments& args);
-		static Handle<Value> registerOnNewSuspect(const Arguments& args);
-		static Handle<Value> registerOnAllSuspectsCleared(const Arguments& args);
-		static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter);
+	static void Init(Handle<Object> target);
+	static Handle<Value> CheckConnection(const Arguments __attribute__((__unused__)) & args);
+	static Handle<Value> Shutdown(const Arguments __attribute__((__unused__)) & args);
+	NovaNode();
+	~NovaNode();
+
+	static void SynchInternalList();
+	static Handle<Value> New(const Arguments& args);
+	static Handle<Value> GetFeatureNames(const Arguments& args);
+	static Handle<Value> GetDIM(const Arguments& args);
+	static Handle<Value> getSuspectList(const Arguments& args);
+	static Handle<Value> registerOnNewSuspect(const Arguments& args);
+	static Handle<Value> registerOnAllSuspectsCleared(const Arguments& args);
+	static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter);
 };
 

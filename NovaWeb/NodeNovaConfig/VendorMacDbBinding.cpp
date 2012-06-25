@@ -15,28 +15,28 @@ VendorMacDb *VendorMacDbBinding::GetChild()
 
 void VendorMacDbBinding::Init(v8::Handle<Object> target)
 {
-  // Prepare constructor template
-  Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-  tpl->SetClassName(String::NewSymbol("VendorMacDbBinding"));
-  tpl->InstanceTemplate()->SetInternalFieldCount(1);
-  // Prototype
-  
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVendorNames"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, VendorMacDbBinding, VendorMacDb, &VendorMacDb::GetVendorNames>));
+	// Prepare constructor template
+	Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+	tpl->SetClassName(String::NewSymbol("VendorMacDbBinding"));
+	tpl->InstanceTemplate()->SetInternalFieldCount(1);
+	// Prototype
 
-  Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
-  target->Set(String::NewSymbol("VendorMacDbBinding"), constructor);
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVendorNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, VendorMacDbBinding, VendorMacDb, &VendorMacDb::GetVendorNames>));
+
+	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
+	target->Set(String::NewSymbol("VendorMacDbBinding"), constructor);
 }
 
 
 v8::Handle<Value> VendorMacDbBinding::New(const Arguments& args)
 {
-  v8::HandleScope scope;
+	v8::HandleScope scope;
 
-  VendorMacDbBinding *obj = new VendorMacDbBinding();
-  obj->m_db = new VendorMacDb();
-  obj->m_db->LoadPrefixFile();
-  obj->Wrap(args.This());
+	VendorMacDbBinding *obj = new VendorMacDbBinding();
+	obj->m_db = new VendorMacDb();
+	obj->m_db->LoadPrefixFile();
+	obj->Wrap(args.This());
 
-  return args.This();
+	return args.This();
 }
 

@@ -9,11 +9,11 @@ class NovaConfigBinding : public node::ObjectWrap {
   static void Init(v8::Handle<v8::Object> target);
   Nova::Config * GetChild();
 
- private:
-  NovaConfigBinding();
-  ~NovaConfigBinding();
+private:
+	NovaConfigBinding();
+	~NovaConfigBinding();
 
-  static v8::Handle<v8::Value> New(const v8::Arguments& args);
+	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
   static v8::Handle<v8::Value> ReadSetting(const v8::Arguments& args);
   static v8::Handle<v8::Value> WriteSetting(const v8::Arguments& args);

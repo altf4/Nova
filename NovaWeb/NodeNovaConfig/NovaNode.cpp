@@ -66,20 +66,20 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 		//            LOG(DEBUG,"callback type " + cb.type,"");
 		switch( cb.m_type )
 		{
-			case CALLBACK_NEW_SUSPECT:
-				HandleNewSuspect(cb.m_suspect);
-				break;
+		case CALLBACK_NEW_SUSPECT:
+			HandleNewSuspect(cb.m_suspect);
+			break;
 
-			case CALLBACK_ERROR:
-				HandleCallbackError();
-				break;
+		case CALLBACK_ERROR:
+			HandleCallbackError();
+			break;
 
-			case CALLBACK_ALL_SUSPECTS_CLEARED:
-				HandleAllSuspectsCleared();
-				break;
+		case CALLBACK_ALL_SUSPECTS_CLEARED:
+			HandleAllSuspectsCleared();
+			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
 	}
 	while(cb.m_type != CALLBACK_HUNG_UP);         
@@ -158,7 +158,7 @@ void NovaNode::Init(Handle<Object> target)
 	// Javascript member methods
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetFeatureNames", GetFeatureNames);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetDIM", GetDIM);
-	
+
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnAllSuspectsCleared", registerOnAllSuspectsCleared );
@@ -245,7 +245,7 @@ Handle<Value> NovaNode::Shutdown(const Arguments &)
 }
 
 NovaNode::NovaNode() :
-	m_count(0)
+			m_count(0)
 {
 }
 
@@ -332,7 +332,7 @@ Handle<Value> NovaNode::registerOnNewSuspect(const Arguments& args)
 
 	m_CallbackFunction = Persistent<Function>::New( args[0].As<Function>() );
 	m_CallbackFunction.MakeWeak(0, HandleOnNewSuspectWeakCollect);
-	
+
 
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
 	m_CallbackRegistered = true;
@@ -352,7 +352,7 @@ Handle<Value> NovaNode::registerOnAllSuspectsCleared(const Arguments& args)
 
 	m_SuspectsClearedCallback = Persistent<Function>::New( args[0].As<Function>() );
 	m_SuspectsClearedCallback.MakeWeak(0, HandleOnNewSuspectWeakCollect);
-	
+
 	m_AllSuspectsClearedCallbackRegistered = true;
 	LOG(DEBUG, "Registered callback for AllSuspectsCleared", "");
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
@@ -374,7 +374,7 @@ Persistent<FunctionTemplate> NovaNode::s_ct;
 Persistent<Function> NovaNode::m_CallbackFunction=Persistent<Function>();
 Persistent<Function> NovaNode::m_SuspectsClearedCallback=Persistent<Function>();
 
-std::map<in_addr_t, Suspect*> NovaNode::m_suspects = map<in_addr_t, Suspect*>();
+map<in_addr_t, Suspect*> NovaNode::m_suspects = map<in_addr_t, Suspect*>();
 bool NovaNode::m_CallbackRegistered=false;
 bool NovaNode::m_AllSuspectsClearedCallbackRegistered=false;
 bool NovaNode::m_callbackRunning=false;

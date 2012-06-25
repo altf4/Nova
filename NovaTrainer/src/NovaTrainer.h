@@ -30,6 +30,7 @@ namespace Nova
 	void PrintUsage();
 	void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr* pkthdr,const u_char* packet);
 	void update(const in_addr_t& key);
+	void UpdateHaystackFeatures();
 }
 
 
