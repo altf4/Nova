@@ -163,9 +163,9 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 	}
 	p->m_name = "test";
 	p->m_parentProfile = "default";
-	p->AddPort("1_TCP_block", false);
-	p->AddPort("2_TCP_reset", false);
-	p->AddPort("3_TCP_open", false);
+	p->AddPort("1_TCP_block", false, 100);
+	p->AddPort("2_TCP_reset", false, 100);
+	p->AddPort("3_TCP_open", false, 100);
 
 	EXPECT_TRUE(m_config->AddProfile(p));
 	//EXPECT_TRUE(m_config->SaveAllTemplates());
@@ -178,7 +178,6 @@ TEST_F(HoneydConfigurationTest, test_profileDeletion)
 	parent->SetName("parent");
 	parent->SetParentProfile("default");
 	EXPECT_TRUE(m_config->AddProfile(parent));
-
 
 	m_config->UpdateAllProfiles();
 
