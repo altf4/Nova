@@ -9,7 +9,15 @@ using namespace std;
 using namespace v8;
 using namespace Nova;
 
-HoneydProfileBinding::HoneydProfileBinding() {};
+HoneydProfileBinding::HoneydProfileBinding()
+{
+	m_pfile = NULL;
+}
+
+HoneydProfileBinding::~HoneydProfileBinding()
+{
+	delete m_pfile;
+}
 
 profile *HoneydProfileBinding::GetChild()
 {

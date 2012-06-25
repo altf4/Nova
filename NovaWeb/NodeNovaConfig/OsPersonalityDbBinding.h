@@ -14,6 +14,7 @@ public:
 
 private:
 	OsPersonalityDbBinding();
+	~OsPersonalityDbBinding();
 
 	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 

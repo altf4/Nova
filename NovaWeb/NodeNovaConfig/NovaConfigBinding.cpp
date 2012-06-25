@@ -7,8 +7,15 @@ using namespace v8;
 using namespace Nova;
 using namespace std;
 
-NovaConfigBinding::NovaConfigBinding() {};
-NovaConfigBinding::~NovaConfigBinding() {};
+NovaConfigBinding::NovaConfigBinding()
+{
+	m_conf = NULL;
+};
+
+NovaConfigBinding::~NovaConfigBinding()
+{
+	delete m_conf;
+};
 
 void NovaConfigBinding::Init(Handle<Object> target)
 {

@@ -8,8 +8,15 @@ using namespace v8;
 using namespace Nova;
 using namespace std;
 
-HoneydConfigBinding::HoneydConfigBinding() {};
-HoneydConfigBinding::~HoneydConfigBinding() {};
+HoneydConfigBinding::HoneydConfigBinding()
+{
+	m_conf = NULL;
+};
+
+HoneydConfigBinding::~HoneydConfigBinding()
+{
+	delete m_conf;
+};
 
 HoneydConfiguration *HoneydConfigBinding::GetChild()
 {

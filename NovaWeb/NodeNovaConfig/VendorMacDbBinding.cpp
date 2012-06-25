@@ -5,8 +5,15 @@
 using namespace std;
 using namespace v8;
 
-VendorMacDbBinding::VendorMacDbBinding() {};
-VendorMacDbBinding::~VendorMacDbBinding() {};
+VendorMacDbBinding::VendorMacDbBinding()
+{
+	m_db = NULL;
+}
+
+VendorMacDbBinding::~VendorMacDbBinding()
+{
+	delete m_db;
+}
 
 VendorMacDb *VendorMacDbBinding::GetChild()
 {

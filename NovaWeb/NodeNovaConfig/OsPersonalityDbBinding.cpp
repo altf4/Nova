@@ -5,7 +5,15 @@
 using namespace std;
 using namespace v8;
 
-OsPersonalityDbBinding::OsPersonalityDbBinding() {};
+OsPersonalityDbBinding::OsPersonalityDbBinding()
+{
+	m_db = NULL;
+}
+
+OsPersonalityDbBinding::~OsPersonalityDbBinding()
+{
+	delete m_db;
+}
 
 OsPersonalityDb *OsPersonalityDbBinding::GetChild()
 {
