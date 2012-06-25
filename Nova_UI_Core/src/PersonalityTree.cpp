@@ -19,7 +19,6 @@
 
 #include "PersonalityTree.h"
 #include <boost/algorithm/string.hpp>
-#include "HoneydHostConfig.h"
 
 using namespace std;
 
@@ -39,11 +38,18 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	{
 		AddSubnet(subnetsToUse[i]);
 	}
+
 	m_hdconfig->AddGroup("HaystackAutoConfig");
 	Config::Inst()->SetGroup("HaystackAutoConfig");
 	Config::Inst()->SaveUserConfig();
 	m_hdconfig->SaveAllTemplates();
 	m_hdconfig->LoadAllTemplates();
+
+	for(NodeTable::iterator it = m_hdconfig->m_nodes.begin(); it != m_hdconfig->m_nodes.end(); it++)
+	{
+		m_hdconfig->DeleteNode(it->first);
+	}
+
 	m_profiles = &m_hdconfig->m_profiles;
 	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 
