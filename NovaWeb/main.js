@@ -581,29 +581,33 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   var validator = new Validator();
   
-  console.log("Value of DEFAULT: " + req.body["DEFAULT"]);
-  
-  console.log("Value of INTERFACE: " + req.body["INTERFACE"]);
+  config.ClearInterfaces();
   
   var interfaces = "";
+  var oneIface = false;
+  
   if(req.body["INTERFACE"] !== undefined)
   {
-    console.log("Inside interface undefined loop")
     for(item in req.body["INTERFACE"])
     {
       if(req.body["INTERFACE"][item].length > 1)
       {
-        interfaces += req.body["INTERFACE"][item] + " ";
+        interfaces += " " + req.body["INTERFACE"][item];
+        config.AddIface(req.body["INTERFACE"][item]);
       }
       else
       {
         interfaces += req.body["INTERFACE"][item];
+        oneIface = true;
       }
     }
   
-   console.log("interfaces: " + interfaces);
-   
-   req.body["INTERFACE"] = interfaces;
+    if(oneIface)
+    {
+      config.AddIface(interfaces);
+    }
+    
+    req.body["INTERFACE"] = interfaces;
   }
   
   for(var item = 0; item < configItems.length; item++)
@@ -714,24 +718,20 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   {
     if(req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined)
     {
-      console.log("If INTERFACE isn't undefined and DEFAULT is");
       req.body["DEFAULT"] = false;
       config.UseAllInterfaces(false);
-      config.WriteSetting("INTERFACE", req.body["INTERFACE"])
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
     }
     else if(req.body["INTERFACE"] === undefined)
     {
-      console.log("If INTERFACE is undefined and DEFAULT is as well");
       req.body["DEFAULT"] = true;
       config.UseAllInterfaces(true);
-      config.WriteSetting("INTERFACE", "default")
+      config.WriteSetting("INTERFACE", "default");
     }
     else
     {  
-      console.log("If both INTERFACE and DEFAULT are defined");
-      console.log("Value of DEFAULT now: " + req.body["DEFAULT"]);
       config.UseAllInterfaces(req.body["DEFAULT"]);
-      config.WriteSetting("INTERFACE", req.body["INTERFACE"])
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
     }
 
     //if no errors, send the validated form data to the WriteSetting method
