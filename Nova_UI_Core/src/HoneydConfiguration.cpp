@@ -1732,7 +1732,6 @@ bool HoneydConfiguration::AddNewNode(Node node)
 
 	newNode.m_interface = "eth0";
 
-	cout << "Adding new node " << newNode.m_pfile << newNode.m_IP << newNode.m_MAC << newNode.m_interface << newNode.m_sub <<endl;
 
 	if(newNode.m_IP != "DHCP")
 	{
@@ -1760,6 +1759,8 @@ bool HoneydConfiguration::AddNewNode(Node node)
 	newNode.m_enabled = true;
 
 	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
+
+	cout << "Adding new node '" << newNode.m_name << "'."<< endl;
 
 	m_profiles[newNode.m_pfile].m_nodeKeys.push_back(newNode.m_name);
 
@@ -1797,7 +1798,6 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	Node newNode;
 	newNode.m_IP = ipAddress;
 	newNode.m_interface = interface;
-	cout << "Adding new node " << profileName << ipAddress << macAddress << interface << subnet <<endl;
 
 	if(newNode.m_IP != "DHCP")
 	{
@@ -1832,6 +1832,7 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	newNode.m_MAC = macAddress;
 
 	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
+	cout << "Adding new node '" << newNode.m_name << "'."<< endl;
 
 	m_profiles[newNode.m_pfile].m_nodeKeys.push_back(newNode.m_name);
 
