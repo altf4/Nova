@@ -408,8 +408,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar)
 	uint32_t hostOrderBitmask;
 	bool subnetExists = false;
 
-	cout << endl;
-
 	// If we call getifaddrs and it fails to obtain any information, no point in proceeding.
 	// Return the empty addresses vector and set the ErrorCode to AUTODETECTFAIL.
 	if(getifaddrs(&devices))

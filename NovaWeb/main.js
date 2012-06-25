@@ -150,6 +150,34 @@ app.get('/downloadNovadLog', ensureAuthenticated, function (req, res) {
 });
 
 app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
+    var all = config.ListInterfaces().sort();
+    var used = config.GetInterfaces().sort();
+    
+    var pass = [];
+    
+    for(var i in all)
+    {
+      var checked = false;
+      
+      for(var j in used)
+      {
+        if(all[i] === used[j])
+        {
+          checked = true;
+          break;
+        }
+      }
+      
+      if(checked)
+      {
+        pass.push( { iface: all[i], checked: 1 } );
+      }
+      else
+      {
+        pass.push( { iface: all[i], checked: 0 } );
+      }
+    }
+    
      res.render('advancedOptions.jade', 
 	 {
 		locals: {
@@ -192,13 +220,8 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 
 
 function renderBasicOptions(jadefile, res, req) {
-    console.log("ifIsDefault = " + config.GetUseAllInterfacesBinding());
-    
     var all = config.ListInterfaces().sort();
     var used = config.GetInterfaces().sort();
-    
-    console.log("result of config.ListInterfaces(): " + all);
-    console.log("result of config.GetInterfaces(): " + used);
     
     var pass = [];
     
@@ -223,11 +246,6 @@ function renderBasicOptions(jadefile, res, req) {
       {
         pass.push( { iface: all[i], checked: 0 } );
       }
-    }
-    
-    for(var k in pass)
-    {
-      console.log("pass[" + k + "] == " + pass[k].iface + "," + pass[k].checked);
     }
     
      res.render(jadefile, 
@@ -466,6 +484,13 @@ app.get('/login', function(req, res){
 		 , redirect: redirect
      });
 
+});
+
+app.get('/autoConfig', ensureAuthenticated, function(req, res) {
+   res.render('hhautoconfig.jade', 
+   {
+     user: req.user
+   });
 });
 
 app.get('/', ensureAuthenticated, function(req, res) {
