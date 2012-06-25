@@ -7,7 +7,7 @@ script
       for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
       {
         document.getElementById("if" + i).disabled = true;
-        document.getElementById("DEFAULT").innerHTML = true;
+        document.getElementById("DEFAULT").value = "true";
       }
     }
     else
@@ -15,7 +15,7 @@ script
       for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
       {
         document.getElementById("if" + i).disabled = false;
-        document.getElementById("DEFAULT").innerHTML = false;
+        document.getElementById("DEFAULT").value = "false";
       }
     }
   }
@@ -39,11 +39,12 @@ script
   }
 
 h2 Basic Configuration
+    
 table
   thead
     tr 
       th Interfaces
-  - if (DEFAULT)
+  - if (DEFAULT == "true")
     tbody 
       - for (var i = 0; i < INTERFACES.length; i++)
         - if(INTERFACES[i] === "eth0")
@@ -79,8 +80,8 @@ table
           "default"  
           
    hidden(id="length", value=INTERFACES.length)
-   hidden(id="DEFAULT", value=DEFAULT)      
-br
+   
+   input(type="hidden", name="DEFAULT", id="DEFAULT", value=DEFAULT)
 
 label Doppelganger Interface
 input(name="DOPPELGANGER_INTERFACE",  value=DOPPELGANGER_INTERFACE)

@@ -24,7 +24,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("ListInterfaces"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::ListInterfaces>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("ListLoopbacks"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::ListLoopbacks>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetInterfaces"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::GetInterfaces>));
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAllInterfaces"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, &Config::GetUseAllInterfaces>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAllInterfacesBinding"),FunctionTemplate::New(InvokeWrappedMethod<std::string, NovaConfigBinding, Config, &Config::GetUseAllInterfacesBinding>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAllInterfaces"),FunctionTemplate::New(UseAllInterfaces)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAnyLoopback"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, &Config::GetUseAnyLoopback>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAnyLoopback"),FunctionTemplate::New(UseAnyLoopback)->GetFunction());
@@ -55,9 +55,20 @@ Handle<Value> NovaConfigBinding::UseAllInterfaces(const Arguments& args)
         return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
     }
 
-    bool def = cvv8::CastFromJS<bool>( args[0] );
+    std::string def = cvv8::CastFromJS<std::string>( args[0] );
 
-  obj->m_conf->SetUseAllInterfaces(def);
+  std::cout << def << " is the value of def" << std::endl;
+
+  if(!def.compare("true"))
+  {
+    obj->m_conf->SetUseAllInterfaces(true);
+  }
+  else
+  {
+    obj->m_conf->SetUseAllInterfaces(false);
+  }
+  
+  std::cout << obj->m_conf->GetUseAllInterfacesBinding() << " is the new value of m_ifIsDefault" << std::endl;
 
   return args.This();
 }

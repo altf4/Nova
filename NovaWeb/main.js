@@ -153,8 +153,8 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
      res.render('advancedOptions.jade', 
 	 {
 		locals: {
-      INTERFACES: config.ListInterfaces().sort() // will be a GetInterfaces() object in config object
-      ,DEFAULT: config.GetUseAllInterfaces() // should be a getDefault() method in Config object
+      INTERFACES: config.ListInterfaces().sort() 
+      ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
 			,TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
 			,TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
@@ -192,11 +192,13 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 
 
 function renderBasicOptions(jadefile, res, req) {
+    console.log("ifIsDefault = " + config.GetUseAllInterfacesBinding());
+  
      res.render(jadefile, 
 	 { 
 		locals: {
-      INTERFACES: config.ListInterfaces().sort() // will be a GetInterfaces() object in config object
-      ,DEFAULT: config.GetUseAllInterfaces() // should be a getDefault() method in Config object
+      INTERFACES: config.ListInterfaces().sort() 
+      ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
@@ -543,20 +545,36 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   var validator = new Validator();
   
+  console.log("Value of DEFAULT: " + req.body["DEFAULT"]);
+  
+  console.log("Value of INTERFACE: " + req.body["INTERFACE"]);
+  
   var interfaces = "";
-  
-  for(item in req.body["INTERFACE"])
+  if(req.body["INTERFACE"] !== undefined)
   {
-    interfaces += req.body["INTERFACE"][item] + " ";
-  }
+    console.log("Inside interface undefined loop")
+    for(item in req.body["INTERFACE"])
+    {
+      if(req.body["INTERFACE"][item].length > 1)
+      {
+        interfaces += req.body["INTERFACE"][item] + " ";
+      }
+      else
+      {
+        interfaces += req.body["INTERFACE"][item];
+      }
+    }
   
-  req.body["INTERFACE"] = interfaces;
+   console.log("interfaces: " + interfaces);
+   
+   req.body["INTERFACE"] = interfaces;
+  }
   
   for(var item = 0; item < configItems.length; item++)
   {
     if (req.body[configItems[item]] == undefined) {
 		continue;
-	}
+	  }
     switch(configItems[item])
     {
       case "SA_SLEEP_DURATION":
@@ -658,8 +676,30 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   }
   else
   {
+    if(req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined)
+    {
+      console.log("If INTERFACE isn't undefined and DEFAULT is");
+      req.body["DEFAULT"] = false;
+      config.UseAllInterfaces(false);
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"])
+    }
+    else if(req.body["INTERFACE"] === undefined)
+    {
+      console.log("If INTERFACE is undefined and DEFAULT is as well");
+      req.body["DEFAULT"] = true;
+      config.UseAllInterfaces(true);
+      config.WriteSetting("INTERFACE", "default")
+    }
+    else
+    {  
+      console.log("If both INTERFACE and DEFAULT are defined");
+      console.log("Value of DEFAULT now: " + req.body["DEFAULT"]);
+      config.UseAllInterfaces(req.body["DEFAULT"]);
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"])
+    }
+
     //if no errors, send the validated form data to the WriteSetting method
-    for(var item = 1; item < configItems.length; item++)
+    for(var item = 2; item < configItems.length; item++)
     {
   	  if(req.body[configItems[item]] != undefined) 
   	  {

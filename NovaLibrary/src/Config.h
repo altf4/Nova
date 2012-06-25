@@ -82,7 +82,7 @@ public:
 
     bool GetUseAllInterfaces();
     bool GetUseAnyLoopback();
-
+    std::string GetUseAllInterfacesBinding();
 
     int GetClassificationTimeout();
     int GetDataTTL();
@@ -108,8 +108,8 @@ public:
     std::vector<std::string> ListLoopbacks();
     void SetUseAllInterfaces(bool which);
     void SetUseAnyLoopback(bool which);
-    bool SetUseAllInterfaces_Binding(bool which);
-    bool SetUseAnyLoopback_Binding(bool which);
+    bool SetUseAllInterfacesBinding(bool which);
+    bool SetUseAnyLoopbackBinding(bool which);
 
     void SetClassificationThreshold(double classificationThreshold);
     void SetClassificationTimeout(int classificationTimeout);
