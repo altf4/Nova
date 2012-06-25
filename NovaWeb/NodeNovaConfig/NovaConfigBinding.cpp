@@ -69,15 +69,6 @@ Handle<Value> NovaConfigBinding::AddIface(const Arguments& args)
   
   std::string pass = cvv8::CastFromJS<std::string>(args[0]);
   
-  std::cout << "SetIfaces before for loop" << std::endl;
-  
-  for(uint i = 0; i < pass.size(); i++)
-  {
-    std::cout << "pass[" << i << "] == " << pass[i] << std::endl;
-  }
-  
-  std::cout << "After for loop" << endl;
-  
   obj->m_conf->AddInterface(pass);
   
   return args.This();
@@ -88,14 +79,12 @@ Handle<Value> NovaConfigBinding::UseAllInterfaces(const Arguments& args)
   HandleScope scope;
   NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
 
-    if( args.Length() < 1 )
-    {
-        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
-    }
+  if( args.Length() < 1 )
+  {
+      return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+  }
 
-    std::string def = cvv8::CastFromJS<std::string>( args[0] );
-
-  std::cout << def << " is the value of def" << std::endl;
+  std::string def = cvv8::CastFromJS<std::string>( args[0] );
 
   if(!def.compare("true"))
   {
@@ -107,7 +96,6 @@ Handle<Value> NovaConfigBinding::UseAllInterfaces(const Arguments& args)
     obj->m_conf->SetUseAllInterfaces(false);
   }
   
-  std::cout << obj->m_conf->GetUseAllInterfacesBinding() << " is the new value of m_ifIsDefault" << std::endl;
 
   return args.This();
 }

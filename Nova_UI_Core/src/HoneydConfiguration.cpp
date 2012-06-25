@@ -121,7 +121,7 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 			//If the script does not exist
 			if(m_scripts.find(scriptName) == m_scripts.end())
 			{
-				LOG(ERROR, "Cannot create port: specified script "+ scriptName +" does not exist.", "");
+				LOG(ERROR, "Cannot create port: specified script " + scriptName + " does not exist.", "");
 				return "";
 			}
 			pr.m_behavior = "script";
@@ -197,7 +197,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	m_portTree.clear();
 	try
 	{
-		read_xml(m_homePath+"/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(m_homePath + "/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
 		{
@@ -233,7 +233,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading ports: "+string(e.what())+".", "");
+		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
 		return false;
 	}
 
@@ -252,7 +252,7 @@ bool HoneydConfiguration::LoadNodesTemplate()
 
 	try
 	{
-		read_xml(m_homePath+"/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(m_homePath + "/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
 		m_groups.clear();
 		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
 		{
@@ -274,13 +274,13 @@ bool HoneydConfiguration::LoadNodesTemplate()
 					}
 					catch(Nova::hashMapException &e)
 					{
-						LOG(ERROR, "Problem loading nodes: "+string(e.what())+".", "");
+						LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
 						return false;
 					}
 				}
 				catch(Nova::hashMapException &e)
 				{
-					LOG(ERROR, "Problem loading subnets: "+string(e.what())+".", "");
+					LOG(ERROR, "Problem loading subnets: " + string(e.what()) + ".", "");
 					return false;
 				}
 			}
@@ -288,7 +288,7 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading groups: "+Config::Inst()->GetGroup()+" - "+string(e.what()) +".", "");
+		LOG(ERROR, "Problem loading groups: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
 		return false;
 	}
 
@@ -364,7 +364,7 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *propTree, NodeProfile *node
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading profile set parameters: "+string(e.what())+".", "");
+		LOG(ERROR, "Problem loading profile set parameters: " + string(e.what()) + ".", "");
 		return false;
 	}
 
@@ -401,7 +401,7 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 						//Erase inherited port if a conflict is found
 						if(!port->m_portNum.compare(m_ports[nodeProf->m_ports[i].first].m_portNum) && !port->m_type.compare(m_ports[nodeProf->m_ports[i].first].m_type))
 						{
-							nodeProf->m_ports.erase(nodeProf->m_ports.begin()+i);
+							nodeProf->m_ports.erase(nodeProf->m_ports.begin() + i);
 						}
 					}
 					//Add specified port
@@ -427,7 +427,7 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 						}
 						if(i < nodeProf->m_ports.size())
 						{
-							nodeProf->m_ports.insert(nodeProf->m_ports.begin()+i, portPair);
+							nodeProf->m_ports.insert(nodeProf->m_ports.begin() + i, portPair);
 						}
 						else
 						{
@@ -448,7 +448,7 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading profile add parameters: "+string(e.what())+".", "");
+		LOG(ERROR, "Problem loading profile add parameters: " + string(e.what()) + ".", "");
 		return false;
 	}
 
@@ -515,7 +515,7 @@ bool HoneydConfiguration::LoadProfileChildren(string parentKey)
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading sub profiles: "+string(e.what())+".", "");
+		LOG(ERROR, "Problem loading sub profiles: " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
@@ -530,7 +530,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	m_scriptTree.clear();
 	try
 	{
-		read_xml(m_homePath+"/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(m_homePath + "/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
 		{
@@ -565,7 +565,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading scripts: "+string(e.what())+".", "");
+		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
@@ -707,10 +707,10 @@ bool HoneydConfiguration::SaveAllTemplates()
 		}
 	}
 	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
-	write_xml(m_homePath+"/scripts.xml", m_scriptTree, std::locale(), settings);
-	write_xml(m_homePath+"/templates/ports.xml", m_portTree, std::locale(), settings);
-	write_xml(m_homePath+"/templates/nodes.xml", m_groupTree, std::locale(), settings);
-	write_xml(m_homePath+"/templates/profiles.xml", m_profileTree, std::locale(), settings);
+	write_xml(m_homePath + "/scripts.xml", m_scriptTree, std::locale(), settings);
+	write_xml(m_homePath + "/templates/ports.xml", m_portTree, std::locale(), settings);
+	write_xml(m_homePath + "/templates/nodes.xml", m_groupTree, std::locale(), settings);
+	write_xml(m_homePath + "/templates/profiles.xml", m_profileTree, std::locale(), settings);
 
 	LOG(DEBUG, "Honeyd templates have been saved" ,"");
 	return true;
@@ -810,7 +810,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 					}
 					else
 					{
-						LOG(ERROR, "Error writing node port script.", "Path to script "+scriptName+" is null.");
+						LOG(ERROR, "Error writing node port script.", "Path to script " + scriptName + " is null.");
 					}
 				}
 				else
@@ -889,14 +889,14 @@ bool HoneydConfiguration::LoadSubnets(ptree *propTree)
 			}
 			else
 			{
-				LOG(ERROR, "Unexpected Entry in file: "+string(value.first.data())+".", "");
+				LOG(ERROR, "Unexpected Entry in file: " + string(value.first.data()) + ".", "");
 				return false;
 			}
 		}
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading subnets: "+string(e.what()), "");
+		LOG(ERROR, "Problem loading subnets: " + string(e.what()), "");
 		return false;
 	}
 
@@ -998,7 +998,7 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 						//If no subnet found, can't use node unless it's doppelganger.
 						else
 						{
-							LOG(ERROR, "Node at IP: "+ node.m_IP+"is outside all valid subnet ranges.", "");
+							LOG(ERROR, "Node at IP: " + node.m_IP + "is outside all valid subnet ranges.", "");
 						}
 					}
 					else
@@ -1007,7 +1007,7 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 						// If no valid subnet/interface found
 						if(!node.m_sub.compare(""))
 						{
-							LOG(ERROR, "DHCP Enabled Node with MAC: "+node.m_name+" is unable to resolve it's interface.","");
+							LOG(ERROR, "DHCP Enabled Node with MAC: " + node.m_name + " is unable to resolve it's interface.","");
 							continue;
 						}
 
@@ -1029,13 +1029,13 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 			}
 			else
 			{
-				LOG(ERROR, "Unexpected Entry in file: "+string(value.first.data()), "");
+				LOG(ERROR, "Unexpected Entry in file: " + string(value.first.data()), "");
 			}
 		}
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading nodes: "+ string(e.what()), "");
+		LOG(ERROR, "Problem loading nodes: " + string(e.what()), "");
 		return false;
 	}
 
@@ -1072,7 +1072,7 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	m_profileTree.clear();
 	try
 	{
-		read_xml(m_homePath+"/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(m_homePath + "/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
 		{
@@ -1141,13 +1141,13 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 			}
 			else
 			{
-				LOG(ERROR, "Invalid XML Path " +string(value.first.data())+".", "");
+				LOG(ERROR, "Invalid XML Path " + string(value.first.data()) + ".", "");
 			}
 		}
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading Profiles: "+string(e.what())+".", "");
+		LOG(ERROR, "Problem loading Profiles: " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
@@ -1212,7 +1212,7 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 				}
 				else
 				{
-					LOG(ERROR, "Error writing NodeProfile port script.", "Path to script "+scriptName+" is null.");
+					LOG(ERROR, "Error writing NodeProfile port script.", "Path to script " + scriptName + " is null.");
 				}
 			}
 			else
@@ -1272,7 +1272,7 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 				}
 				else
 				{
-					LOG(ERROR, "Error writing NodeProfile port script.", "Path to script "+scriptName+" is null.");
+					LOG(ERROR, "Error writing NodeProfile port script.", "Path to script " + scriptName + " is null.");
 				}
 			}
 			else
@@ -1480,7 +1480,7 @@ bool HoneydConfiguration::AddGroup(std::string groupName)
 	}
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 	{
-		LOG(ERROR, "Problem adding group ports: "+string(e.what())+".", "");
+		LOG(ERROR, "Problem adding group ports: " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
@@ -1614,7 +1614,7 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 	{
 		if(!s->m_nodes[i].compare(nodeName))
 		{
-			s->m_nodes.erase(s->m_nodes.begin()+i);
+			s->m_nodes.erase(s->m_nodes.begin() + i);
 		}
 	}
 
