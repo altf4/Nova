@@ -1865,20 +1865,27 @@ void Config::SetUseAllInterfaces(bool which)
 	m_ifIsDefault = which;
 }
 
+bool Config::SetInterfaces(std::vector<std::string> newInterfaceList)
+{
+	Lock lock(&m_lock, false);
+	m_interfaces = newInterfaceList;
+	return true;
+}
+
 void Config::SetUseAnyLoopback(bool which)
 {
 	Lock lock(&m_lock, false);
 	m_loIsDefault = which;
 }
 
-bool Config::SetUseAllInterfaces_Binding(bool which)
+bool Config::SetUseAllInterfacesBinding(bool which)
 {
 	Lock lock(&m_lock, false);
 	m_ifIsDefault = which;
 	return true;
 }
 
-bool Config::SetUseAnyLoopback_Binding(bool which)
+bool Config::SetUseAnyLoopbackBinding(bool which)
 {
 	Lock lock(&m_lock, false);
 	m_loIsDefault = which;
@@ -2032,6 +2039,18 @@ std::vector<std::string> Config::ListInterfaces()
 	freeifaddrs(devices);
 	pthread_rwlock_unlock(&m_lock);
 	return interfaces;
+}
+
+std::string Config::GetUseAllInterfacesBinding()
+{
+	if(m_ifIsDefault)
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
 }
 
 std::vector<std::string> Config::ListLoopbacks()

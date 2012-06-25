@@ -153,8 +153,8 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
      res.render('advancedOptions.jade', 
 	 {
 		locals: {
-      INTERFACES: config.ListInterfaces().sort() // will be a GetInterfaces() object in config object
-      ,DEFAULT: config.GetUseAllInterfaces() // should be a getDefault() method in Config object
+      INTERFACES: config.ListInterfaces().sort() 
+      ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
 			,TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
 			,TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
@@ -192,11 +192,49 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 
 
 function renderBasicOptions(jadefile, res, req) {
+    console.log("ifIsDefault = " + config.GetUseAllInterfacesBinding());
+    
+    var all = config.ListInterfaces().sort();
+    var used = config.GetInterfaces().sort();
+    
+    console.log("result of config.ListInterfaces(): " + all);
+    console.log("result of config.GetInterfaces(): " + used);
+    
+    var pass = [];
+    
+    for(var i in all)
+    {
+      var checked = false;
+      
+      for(var j in used)
+      {
+        if(all[i] === used[j])
+        {
+          checked = true;
+          break;
+        }
+      }
+      
+      if(checked)
+      {
+        pass.push( { iface: all[i], checked: 1 } );
+      }
+      else
+      {
+        pass.push( { iface: all[i], checked: 0 } );
+      }
+    }
+    
+    for(var k in pass)
+    {
+      console.log("pass[" + k + "] == " + pass[k].iface + "," + pass[k].checked);
+    }
+    
      res.render(jadefile, 
 	 { 
 		locals: {
-      INTERFACES: config.ListInterfaces().sort() // will be a GetInterfaces() object in config object
-      ,DEFAULT: config.GetUseAllInterfaces() // should be a getDefault() method in Config object
+      INTERFACES: pass 
+      ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
@@ -543,20 +581,40 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   var validator = new Validator();
   
+  config.ClearInterfaces();
+  
   var interfaces = "";
+  var oneIface = false;
   
-  for(item in req.body["INTERFACE"])
+  if(req.body["INTERFACE"] !== undefined)
   {
-    interfaces += req.body["INTERFACE"][item] + " ";
-  }
+    for(item in req.body["INTERFACE"])
+    {
+      if(req.body["INTERFACE"][item].length > 1)
+      {
+        interfaces += " " + req.body["INTERFACE"][item];
+        config.AddIface(req.body["INTERFACE"][item]);
+      }
+      else
+      {
+        interfaces += req.body["INTERFACE"][item];
+        oneIface = true;
+      }
+    }
   
-  req.body["INTERFACE"] = interfaces;
+    if(oneIface)
+    {
+      config.AddIface(interfaces);
+    }
+    
+    req.body["INTERFACE"] = interfaces;
+  }
   
   for(var item = 0; item < configItems.length; item++)
   {
     if (req.body[configItems[item]] == undefined) {
 		continue;
-	}
+	  }
     switch(configItems[item])
     {
       case "SA_SLEEP_DURATION":
@@ -658,8 +716,26 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   }
   else
   {
+    if(req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined)
+    {
+      req.body["DEFAULT"] = false;
+      config.UseAllInterfaces(false);
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+    }
+    else if(req.body["INTERFACE"] === undefined)
+    {
+      req.body["DEFAULT"] = true;
+      config.UseAllInterfaces(true);
+      config.WriteSetting("INTERFACE", "default");
+    }
+    else
+    {  
+      config.UseAllInterfaces(req.body["DEFAULT"]);
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+    }
+
     //if no errors, send the validated form data to the WriteSetting method
-    for(var item = 1; item < configItems.length; item++)
+    for(var item = 2; item < configItems.length; item++)
     {
   	  if(req.body[configItems[item]] != undefined) 
   	  {

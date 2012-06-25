@@ -20,6 +20,8 @@ class NovaConfigBinding : public node::ObjectWrap {
   
   static v8::Handle<v8::Value> UseAllInterfaces(const v8::Arguments& args);
   static v8::Handle<v8::Value> UseAnyLoopback(const v8::Arguments& args);
+  static v8::Handle<v8::Value> AddIface(const v8::Arguments& args);
+  static v8::Handle<v8::Value> ClearInterfaces(const v8::Arguments& args);
   
   Nova::Config *m_conf;
 };
