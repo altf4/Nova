@@ -96,5 +96,5 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
     std::string portName = cvv8::CastFromJS<std::string>( args[0] );
     bool isInherited = cvv8::CastFromJS<bool>( args[1] );
 
-	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited)));
+	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited, 0)));
 }
