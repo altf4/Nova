@@ -249,7 +249,7 @@ void PrintUsage()
 	cout << "    " << EXECUTABLE_NAME << " start nova|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
-	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign" << endl;
+	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear all" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
@@ -360,7 +360,7 @@ void PrintSuspect(in_addr_t address)
 {
 	Connect();
 
-	Suspect *suspect = GetSuspect(address);
+	Suspect *suspect = GetSuspect(ntohl(address));
 
 	if (suspect != NULL)
 	{
@@ -370,6 +370,8 @@ void PrintSuspect(in_addr_t address)
 	{
 		cout << "Error: No suspect received" << endl;
 	}
+
+	delete suspect;
 
 	CloseNovadConnection();
 }
@@ -406,14 +408,13 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 				}
 				cout << suspect->GetClassification() << endl;
 			}
+
+			delete suspect;
 		}
 		else
 		{
 			cout << "Error: No suspect received" << endl;
 		}
-
-		delete suspect;
-
 	}
 
 	CloseNovadConnection();

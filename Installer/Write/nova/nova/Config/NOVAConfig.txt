@@ -333,7 +333,7 @@ CE_SAVE_FILE CESaveFile
 # This is the address from which all Nova email alerts
 # will be sent. Should be of the form string @ string . string
 #
-SMTP_ADDR test@changethis.now
+SMTP_ADDR test@example.com
 
 ############################################
 # SMTP_PORT #
@@ -350,9 +350,9 @@ SMTP_PORT 465
 ############################################
 #
 # The name of the SMTP server that you will be connecting to.
-# Example: smtp.server.com
+# Example: smtp.example.com
 #
-SMTP_DOMAIN smtp.server.com
+SMTP_DOMAIN smtp.example.com
 
 ############################################
 # RECIPIENTS #
@@ -364,7 +364,7 @@ SMTP_DOMAIN smtp.server.com
 # RECIPIENTS first@email.send, second@email.send
 # Note: spaces after each comma
 #
-RECIPIENTS first@email.send, second@email.send
+RECIPIENTS first@example.com, second@example.com
 
 ############################################
 # SERVICE_PREFERENCES #

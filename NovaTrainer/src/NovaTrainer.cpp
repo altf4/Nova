@@ -72,6 +72,8 @@ int main(int argc, const char *argv[])
 
 	chdir(Config::Inst()->GetPathHome().c_str());
 
+	UpdateHaystackFeatures();
+
 	engine = new ClassificationEngine(suspects);
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 
@@ -124,7 +126,7 @@ namespace Nova
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-
+	cout << "  novatrainer captureInput.pcap trainingOutput.dump" << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);
@@ -187,8 +189,30 @@ void update(const in_addr_t& key)
 		trainingFileStream << fs.m_features[j] << " ";
 	}
 	trainingFileStream << "\n";
+}
 
 
+void UpdateHaystackFeatures()
+{
+	vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
+
+	// TODO Don't hard code this path
+	vector<string> haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
+
+	vector<uint32_t> haystackNodes;
+	for (uint i = 0; i < haystackAddresses.size(); i++)
+	{
+		cout << "Address is " << haystackAddresses[i] << endl;
+		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
+	}
+
+	for (uint i = 0; i < haystackDhcpAddresses.size(); i++)
+	{
+		cout << "Address is " << haystackDhcpAddresses[i] << endl;
+		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
+	}
+
+	suspects.SetHaystackNodes(haystackNodes);
 }
 
 }

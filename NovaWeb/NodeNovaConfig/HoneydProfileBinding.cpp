@@ -42,7 +42,6 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	proto->Set("setEthernetInherited",   FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setEthernetInherited>));
 	proto->Set("setUptimeInherited",     FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setUptimeInherited>));
 	proto->Set("setDropRateInherited",   FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setDropRateInherited>));
-	
 
     proto->Set(String::NewSymbol("Save"),FunctionTemplate::New(Save)->GetFunction()); 
     proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction()); 
@@ -70,7 +69,7 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 {
 	HandleScope scope;
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
-	
+
 	HoneydConfiguration *conf = new HoneydConfiguration();
 
 	conf->LoadAllTemplates();
@@ -87,14 +86,14 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 {
 	HandleScope scope;
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
-    
-	if( args.Length() != 2 )
-    {
-        return ThrowException(Exception::TypeError(String::New("Must be invoked with two parameters")));
-    }
 
-    std::string portName = cvv8::CastFromJS<std::string>( args[0] );
-    bool isInherited = cvv8::CastFromJS<bool>( args[1] );
+	if( args.Length() != 2 )
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with two parameters")));
+	}
+
+	string portName = cvv8::CastFromJS<string>( args[0] );
+	bool isInherited = cvv8::CastFromJS<bool>( args[1] );
 
 	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited, 0)));
 }
