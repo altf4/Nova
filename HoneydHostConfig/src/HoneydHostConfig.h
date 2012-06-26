@@ -32,7 +32,9 @@ enum ErrCode : int
 	GETNAMEINFOFAIL,
 	GETBITMASKFAIL,
 	NOMATCHEDPERSONALITY,
-	PARSINGERROR
+	PARSINGERROR,
+	INCORRECTNUMBERARGS,
+	NONINTEGERARG
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost

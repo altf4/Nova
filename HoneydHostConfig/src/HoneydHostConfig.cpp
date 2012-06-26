@@ -316,6 +316,22 @@ void Nova::LoadNmap(const string &filename)
 
 int main(int argc, char ** argv)
 {
+	if(argc != 2)
+	{
+		cout << "Usage: ./honeydhostconfig NUM_NODES_TO_CREATE" << endl;
+		exit(INCORRECTNUMBERARGS);
+	}
+
+	for(uint i = 0; i < sizeof(argv[1])/sizeof(char) - 1; i++)
+	{
+		cout << (uint)argv[1][i] << endl;
+		if((!isdigit(argv[1][i])) && (argv[1][i] != 0))
+		{
+			cout << "The argument for number of nodes must be an integer." << endl;
+			exit(NONINTEGERARG);
+		}
+	}
+
 	ErrCode errVar = OKAY;
 
 	vector<string> subnetNames = GetSubnetsToScan(&errVar);
@@ -337,7 +353,7 @@ int main(int argc, char ** argv)
 	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
 
 	NodeManager nodeBuilder = NodeManager(&persTree);
-	nodeBuilder.GenerateNodes(10);
+	nodeBuilder.GenerateNodes(atoi(argv[1]));
 
 	persTree.ToXmlTemplate();
 
