@@ -34,7 +34,8 @@ enum ErrCode : int
 	NOMATCHEDPERSONALITY,
 	PARSINGERROR,
 	INCORRECTNUMBERARGS,
-	NONINTEGERARG
+	NONINTEGERARG,
+	BADARGCOMBINATION
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost

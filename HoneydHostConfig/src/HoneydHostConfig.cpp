@@ -49,6 +49,8 @@ using namespace Nova;
 vector<uint16_t> leftoverHostspace;
 uint16_t tempHostspace;
 string localMachine;
+string nmapFileName;
+uint numNodes;
 
 vector<Subnet> subnetsDetected;
 
@@ -319,59 +321,230 @@ int main(int argc, char ** argv)
 {
 	ofstream lockFile("/usr/share/nova/nova/hhconfig.lock");
 
-	if(argc < 2)
+	bool badArgCombination = false;
+
+	if(argc < 3)
 	{
-		cout << "Usage: ./honeydhostconfig NUM_NODES_TO_CREATE" << endl;
+		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+		cout << "Cannot use -f and -a in conjunction" << endl;
+
+		lockFile.close();
+
+		remove("/usr/share/nova/nova/hhconfig.lock");
+
 		exit(INCORRECTNUMBERARGS);
 	}
 
-	for(uint i = 0; i < sizeof(argv[1])/sizeof(char) - 1; i++)
+	for(uint j = 1; argv[j] != NULL; j++)
 	{
-		if((!isdigit(argv[1][i])) && (argv[1][i] != 0))
+		cout << argv[j] << endl;
+
+		if(!string(argv[j]).compare("-n"))
 		{
-			cout << "The argument for number of nodes must be an integer." << endl;
-			exit(NONINTEGERARG);
+			for(uint i = 0; i < sizeof(argv[j + 1])/sizeof(char) - 1; i++)
+			{
+				if((!isdigit(argv[j + 1][i])) && (argv[j + 1][i] != 0))
+				{
+					cout << "The argument for number of nodes must be an integer." << '\n';
+					cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+					cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+					cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+					cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+					cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+					cout << "Cannot use -f and -a in conjunction" << endl;
+
+					lockFile.close();
+
+					remove("/usr/share/nova/nova/hhconfig.lock");
+
+					exit(NONINTEGERARG);
+				}
+			}
+			numNodes = atoi(argv[j + 1]);
+			j++;
 		}
+		else if(!string(argv[j]).compare("-f"))
+		{
+			if(!badArgCombination)
+			{
+				badArgCombination = true;
+			}
+			else if(badArgCombination || numNodes <= 0)
+			{
+				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+				cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+				cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+				cout << "Cannot use -f and -a in conjunction" << endl;
+
+				lockFile.close();
+
+				remove("/usr/share/nova/nova/hhconfig.lock");
+
+				exit(BADARGCOMBINATION);
+			}
+
+			nmapFileName = string(argv[j + 1]);
+
+			try
+			{
+				LoadNmap(nmapFileName);
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				cout << "Caught Exception : " << e.what() << endl;
+				//return PARSINGERROR;
+			}
+
+			ErrCode errVar = OKAY;
+
+			PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
+
+			NodeManager nodeBuilder = NodeManager(&persTree);
+			nodeBuilder.GenerateNodes(numNodes);
+
+			persTree.ToXmlTemplate();
+
+			lockFile.close();
+
+			remove("/usr/share/nova/nova/hhconfig.lock");
+
+			return errVar;
+		}
+		else if(!string(argv[j]).compare("-a"))
+		{
+			if(!badArgCombination)
+			{
+				badArgCombination = true;
+			}
+			else if(badArgCombination || numNodes <= 0)
+			{
+				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+				cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+				cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+				cout << "Cannot use -f and -a in conjunction" << endl;
+
+				lockFile.close();
+
+				remove("/usr/share/nova/nova/hhconfig.lock");
+
+				exit(BADARGCOMBINATION);
+			}
+
+			ErrCode errVar = OKAY;
+
+			vector<string> subnetNames = GetSubnetsToScan(&errVar);
+
+			vector<string> subnetsToAdd;
+
+			if(argv[j + 1] != NULL && argv[j + 1][0] != '-')
+			{
+				string csvSubnets = string(argv[j + 1]);
+
+				boost::split(subnetsToAdd, csvSubnets, boost::is_any_of(","));
+
+				for(uint k = 0; k < subnetsToAdd.size(); k++)
+				{
+					subnetNames.push_back(subnetsToAdd[k]);
+				}
+
+				for(uint k = 0; k < subnetNames.size(); k++)
+				{
+					cout << subnetNames[k] << endl;
+				}
+
+				if(errVar != OKAY || subnetNames.empty())
+				{
+					LOG(ERROR, "There was a problem determining the subnets to scan, or there are no interfaces to scan on. Stopping execution.", "");
+
+					lockFile.close();
+
+					remove("/usr/share/nova/nova/hhconfig.lock");
+
+					return errVar;
+				}
+			}
+
+			errVar = LoadPersonalityTable(subnetNames);
+
+			if(errVar != OKAY)
+			{
+				LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
+
+				lockFile.close();
+
+				remove("/usr/share/nova/nova/hhconfig.lock");
+
+				return errVar;
+			}
+
+			PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
+
+			NodeManager nodeBuilder = NodeManager(&persTree);
+			nodeBuilder.GenerateNodes(numNodes);
+
+			persTree.ToXmlTemplate();
+
+			lockFile.close();
+
+			remove("/usr/share/nova/nova/hhconfig.lock");
+
+			return errVar;
+		}
+	}
+
+	if(numNodes <= 0)
+	{
+		cout << "Either -n flag was not used, or number given was negative/not an integer." << '\n';
+		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+		cout << "Cannot use -f and -a in conjunction" << endl;
+
+		lockFile.close();
+
+		remove("/usr/share/nova/nova/hhconfig.lock");
+
+		return NONINTEGERARG;
 	}
 
 	ErrCode errVar = OKAY;
 
 	vector<string> subnetNames = GetSubnetsToScan(&errVar);
 
-	for(uint i = 2; argv[i] != NULL; i++)
-	{
-		if(argv[i] != NULL)
-		{
-			subnetNames.push_back(argv[i]);
-		}
-	}
-
-	if(errVar != OKAY || subnetNames.empty())
-	{
-		LOG(ERROR, "There was a problem determining the subnets to scan, or there are no interfaces to scan on. Stopping execution.", "");
-		return errVar;
-	}
-
 	errVar = LoadPersonalityTable(subnetNames);
 
 	if(errVar != OKAY)
 	{
 		LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
+
+		lockFile.close();
+
+		remove("/usr/share/nova/nova/hhconfig.lock");
+
 		return errVar;
 	}
 
 	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
 
 	NodeManager nodeBuilder = NodeManager(&persTree);
-	nodeBuilder.GenerateNodes(atoi(argv[1]));
+	nodeBuilder.GenerateNodes(numNodes);
+
 
 	persTree.ToXmlTemplate();
 
 	lockFile.close();
 
 	remove("/usr/share/nova/nova/hhconfig.lock");
-
-	return errVar;
 }
 
 Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)

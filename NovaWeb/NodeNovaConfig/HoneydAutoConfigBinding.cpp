@@ -5,7 +5,6 @@
 #include "v8Helper.h"
 
 using namespace v8;
-using namespace Nova;
 using namespace std;
 
 HoneydAutoConfigBinding::HoneydAutoConfigBinding()
@@ -27,7 +26,7 @@ void HoneydAutoConfigBinding::Init(Handle<Object> target)
   // tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAllInterfacesBinding"),FunctionTemplate::New(InvokeWrappedMethod<std::string, NovaConfigBinding, Config, &Config::GetUseAllInterfacesBinding>));
   // tpl->PrototypeTemplate()->Set(String::NewSymbol("AddIface"),FunctionTemplate::New(AddIface)->GetFunction());
 
-  tpl->PrototypeTemplate()->Set(String::NewSymbol(RunAutoScan),FunctionTemplate::New(RunAutoScan)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("RunAutoScan"),FunctionTemplate::New(RunAutoScan)->GetFunction());
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
   target->Set(String::NewSymbol("HoneydAutoConfigBinding"), constructor);
@@ -46,19 +45,18 @@ Handle<Value> HoneydAutoConfigBinding::New(const Arguments& args)
 Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
 {
   HandleScope scope;
-  HoneydAutoConfigBinding* obj = ObjectWrap::Unwrap<HoneydAutoConfigBinding>(args.This());
   
   if(args.Length() < 1)
   {
     return ThrowException(Exception::TypeError(String::New("Must be invoked with at least one parameter")));
   }
   
-  std::string numNodes = cvv8::CastFromJs<std::string>(args[0]);
+  std::string numNodes = cvv8::CastFromJS<std::string>(args[0]);
   std::vector<std::string> additionalSubnets;
   
-  for(uint i = 1; i < args.Length(); i++)
+  for(int i = 1; i < args.Length(); i++)
   {
-    additionalSubnets.push_back(cvv8::CastFromJs<std::string>(args[i]));
+    additionalSubnets.push_back(cvv8::CastFromJS<std::string>(args[i]));
   }
   
   std::string systemCall = "honeydhostconfig " + numNodes + " ";
