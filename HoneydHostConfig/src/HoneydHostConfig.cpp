@@ -545,6 +545,8 @@ int main(int argc, char ** argv)
 	lockFile.close();
 
 	remove("/usr/share/nova/nova/hhconfig.lock");
+
+	return errVar;
 }
 
 Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)
