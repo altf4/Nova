@@ -6,8 +6,15 @@ using namespace std;
 using namespace v8;
 using namespace Nova;
 
-CustomizeTrainingBinding::CustomizeTrainingBinding() {};
-CustomizeTrainingBinding::~CustomizeTrainingBinding() {};
+CustomizeTrainingBinding::CustomizeTrainingBinding()
+{
+	m_map = NULL;
+};
+
+CustomizeTrainingBinding::~CustomizeTrainingBinding()
+{
+	delete m_map;
+};
 
 trainingSuspectMap * CustomizeTrainingBinding::GetChild()
 {
