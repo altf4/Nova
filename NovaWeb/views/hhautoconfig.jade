@@ -57,7 +57,7 @@ block content
   h2 Haystack Autoconfig
   form(method="post", action="/scanning")
     label Number of Haystack Nodes to create: 
-    input(type="number", id="numNodes", width="4", min="0", max="511", onblur="checkIntMax(\"numNodes\")", value="0")
+    input(type="number", name="numNodes", id="numNodes", width="4", min="0", max="511", onblur="checkIntMax(\"numNodes\")", value="0")
     br
     br
     label(id="errorLabel", style="color:red;")

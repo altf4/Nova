@@ -20,6 +20,7 @@
 
 // REQUIRES NMAP 6
 
+#include <stdio.h>
 #include <netdb.h>
 #include <sstream>
 #include <fstream>
@@ -316,6 +317,8 @@ void Nova::LoadNmap(const string &filename)
 
 int main(int argc, char ** argv)
 {
+	ofstream lockFile("/usr/share/nova/nova/hhconfig.lock");
+
 	if(argc < 2)
 	{
 		cout << "Usage: ./honeydhostconfig NUM_NODES_TO_CREATE" << endl;
@@ -334,6 +337,14 @@ int main(int argc, char ** argv)
 	ErrCode errVar = OKAY;
 
 	vector<string> subnetNames = GetSubnetsToScan(&errVar);
+
+	for(uint i = 2; argv[i] != NULL; i++)
+	{
+		if(argv[i] != NULL)
+		{
+			subnetNames.push_back(argv[i]);
+		}
+	}
 
 	if(errVar != OKAY || subnetNames.empty())
 	{
@@ -355,6 +366,10 @@ int main(int argc, char ** argv)
 	nodeBuilder.GenerateNodes(atoi(argv[1]));
 
 	persTree.ToXmlTemplate();
+
+	lockFile.close();
+
+	remove("/usr/share/nova/nova/hhconfig.lock");
 
 	return errVar;
 }

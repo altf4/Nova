@@ -506,7 +506,7 @@ app.get('/', ensureAuthenticated, function(req, res) {
 app.post('/login*',
   passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
     function(req, res){
-		if (req.query["redirect"] != undefined)
+		if(req.query["redirect"] != undefined)
 		{
         	res.redirect(req.query["redirect"]);
 		}
@@ -514,6 +514,16 @@ app.post('/login*',
 		{
         	res.redirect('/suspects');
 		}
+});
+
+app.post('/scanning', ensureAuthenticated, function(req, res){
+  var numNodes = req.body["numNodes"];
+  
+  var subnetsTest = req.body["subnetToAdd"];
+  
+  console.log("Number of Nodes, Subnet Test == " + numNodes + ", " + subnetsTest);
+  
+  res.redirect('/autoConfig');
 });
 
 app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
