@@ -7,6 +7,7 @@ var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
 var trainingDb = new novaconfig.CustomizeTrainingBinding();
 var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
+var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 
 honeydConfig.LoadAllTemplates();
 
@@ -519,9 +520,9 @@ app.post('/login*',
 app.post('/scanning', ensureAuthenticated, function(req, res){
   var numNodes = req.body["numNodes"];
   
-  var subnetsTest = req.body["subnetToAdd"];
+  var subnets = req.body["subnets"];
   
-  console.log("Number of Nodes, Subnet Test == " + numNodes + ", " + subnetsTest);
+  hhconfig.RunAutoScan(numNodes, subnets);
   
   res.redirect('/autoConfig');
 });

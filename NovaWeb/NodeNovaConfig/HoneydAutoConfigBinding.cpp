@@ -1,6 +1,9 @@
 #define BUILDING_NODE_EXTENSION
 #include <node.h>
 #include <fstream>
+#include <iostream>
+#include <vector>
+#include <string>
 #include "HoneydAutoConfigBinding.h"
 #include "v8Helper.h"
 
@@ -52,21 +55,19 @@ Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
   }
   
   std::string numNodes = cvv8::CastFromJS<std::string>(args[0]);
-  std::vector<std::string> additionalSubnets;
+  std::string additionalSubnets;
   
-  for(int i = 1; i < args.Length(); i++)
+  if(args.Length() > 1)
   {
-    additionalSubnets.push_back(cvv8::CastFromJS<std::string>(args[i]));
+    additionalSubnets = cvv8::CastFromJS<std::string>(args[1]);
   }
   
-  std::string systemCall = "honeydhostconfig " + numNodes + " ";
+  std::string systemCall = "honeydhostconfig -n " + numNodes;
   
-  for(uint i = 0; i < additionalSubnets.size() - 1; i++)
+  if(args.Length() > 1)
   {
-    systemCall += additionalSubnets[i] + " ";
+    systemCall += " -a " + additionalSubnets;
   }
-  
-  systemCall += additionalSubnets[additionalSubnets.size() - 1];
   
   //system(systemCall);
   
