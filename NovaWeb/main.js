@@ -1,3 +1,5 @@
+"use strict";
+
 var novaconfig = require('novaconfig.node');
 
 var nova = new novaconfig.Instance();
@@ -22,11 +24,11 @@ var validCheck = require('validator').check;
 var sanitizeCheck = require('validator').sanitize;
 
 var Tail = require('tail').Tail;
-novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
 
 
 var credDb = 'nova_credentials';
-var credTb = 'credentials'
+var credTb = 'credentials';
 
 var select;
 var checkPass;
@@ -64,7 +66,7 @@ passport.use(new LocalStrategy(
               {
                 throw err;
               }
-              if(results[0] == undefined)
+              if(results[0] === undefined)
               {
                 switcher(err, user, false, done);
               }
@@ -85,7 +87,7 @@ passport.use(new LocalStrategy(
 // Setup TLS
 var express_options = {
 key:  fs.readFileSync('/usr/share/nova/NovaWeb/serverkey.pem'),
-	  cert: fs.readFileSync('/usr/share/nova/NovaWeb/servercert.pem'),
+	  cert: fs.readFileSync('/usr/share/nova/NovaWeb/servercert.pem')
 };
 
 var app = express.createServer(express_options);
@@ -119,15 +121,15 @@ var everyone = nowjs.initialize(app);
 
 
 novadLog.on("line", function(data) {
-	try {everyone.now.newLogLine(data)} 
-	catch (err) 
-	{
+	try {
+		everyone.now.newLogLine(data);
+	} catch (err) {
 	
 	}
 });
 
 novadLog.on("error", function(data) {
-	console.log("ERROR: " + error);
+	console.log("ERROR: " + data);
 	try {everyone.now.newLogLine(data)} 
 	catch (err) 
 	{
@@ -187,7 +189,7 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 			,SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
 			,HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
 		}
-	 })
+	 });
 });
 
 
