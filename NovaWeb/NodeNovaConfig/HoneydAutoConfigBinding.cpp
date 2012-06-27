@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unistd.h>
 #include "HoneydAutoConfigBinding.h"
 #include "v8Helper.h"
 
@@ -57,25 +58,25 @@ Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
   std::string numNodes = cvv8::CastFromJS<std::string>(args[0]);
   std::string additionalSubnets;
   
-  if(args.Length() > 1)
+  if(args.Length() > 1 && !cvv8::CastFromJS<std::string>(args[1]).empty())
   {
     additionalSubnets = cvv8::CastFromJS<std::string>(args[1]);
   }
   
   std::string systemCall = "honeydhostconfig -n " + numNodes;
   
-  if(args.Length() > 1)
+  if(args.Length() > 1 && !cvv8::CastFromJS<std::string>(args[1]).empty())
   {
     systemCall += " -a " + additionalSubnets;
   }
   
-  //system(systemCall);
-  
-  //ifstream lockFile("/usr/share/nova/nova/hhconfig.lock");
-  
-  //while(lockFile.good()) {};
-  
   std::cout << systemCall << std::endl;
+  
+  std::cout << "Scanning and node generation commencing" << '\n';
+  
+  system(systemCall.c_str());
+ 
+  std::cout << "Autoconfig utility has finished running." << std::endl;
   
   return args.This();
 }

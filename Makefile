@@ -115,6 +115,10 @@ clean-test:
 clean-web:
 	cd NovaWeb/NodeNovaConfig; node-waf clean
 
+clean-hhconfig:
+	$(MAKE) HoneydHostConfig/Debug clean
+	$(MAKE) HoneydHostConfig/Release clean
+
 #Installation (requires root)
 install: install-release
 
