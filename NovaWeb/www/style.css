@@ -24,6 +24,25 @@ button {
     font-size:1em;
 }
 
+.button {
+    border-radius:4px;
+    background-color: #E4F2FF;
+    background-position: center top;
+    background-repeat: repeat-x;
+    border: 1px solid #769DC0;
+    padding: 2px 4px 4px;
+    font-size:1em;
+	width: 135px;
+	text-align: center;
+	text-decoration: none;
+	display:inline-block;
+}
+
+.button:link { color: black;}
+.button:visited {color:black;}
+.button:hover {color:green;}
+.button:active {color:green;}
+
 input {
     -webkit-transition: background-color 0.2s linear;
     border-radius:4px;

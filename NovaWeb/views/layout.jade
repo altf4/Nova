@@ -45,45 +45,45 @@ html(lang="en")
       div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: true")
         block buttonPannelAdditions
         
-        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=all"') Classified Suspects
+        a(class="button", href='/suspects?type=all') Classified Suspects
         br
-        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=unclassified"') Unclassified Suspects
+        a(class="button", href="/suspects?type=unclassified") Unclassified Suspects
         br
-        button(type="button", style="width:160px", onClick='window.location = "/suspects?type=hostile"') Only Hostile Suspects
-        br
-        br
-
-        button(type="button", style="width:160px", onClick='window.location = "/novadlog"') Nova Log
+        a(class="button", href= "/suspects?type=hostile") Only Hostile Suspects
         br
         br
 
-        button(type="button", style="width:160px", onClick='window.location = "basicOptions"') Basic Options
+        a(class="button", href= "/novadlog") Nova Log
+        br
+        br
+
+        a(class="button", href= "basicOptions") Basic Options
         br
         
-        button(type="button", style="width:160px", onClick='window.location = "advancedOptions"') Advanced Options
+        a(class="button", href= "advancedOptions") Advanced Options
         br
         br
        
-        button(type="button", style="width:160px", onClick='window.location = "configHoneydProfiles"') Honeyd Profiles
+        a(class="button", href= "configHoneydProfiles") Honeyd Profiles
         br
         
         
-        button(type="button", style="width:160px", onClick='window.location = "configHoneydNodes"') Honeyd Nodes
+        a(class="button", href= "configHoneydNodes") Honeyd Nodes
         br
         
-        button(type="button", style="width:160px", onClick='window.location = "configWhitelist"') IP Whitelist
+        a(class="button", href= "configWhitelist") IP Whitelist
         br
         
-        button(type="button", style="width:160px", onClick='window.location = "customizeTraining"') Training Data
+        a(class="button", href= "customizeTraining") Training Data
         br
         br
         
-        button(type="button", style="width:160px", onClick='window.location = "createNewUser"') New User
+        a(class="button", href= "createNewUser") New User
         br 
         
-        button(type="button", style="width:160px", onClick='window.location = "editUsers"') Edit Users
+        a(class="button", href= "editUsers") Edit Users
         br
         
-        button(type="button", style="width:160px", onClick='window.location = "logout"') Log Out
+        a(class="button", href= "logout") Log Out
         br
 
