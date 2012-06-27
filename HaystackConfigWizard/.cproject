@@ -36,6 +36,8 @@
 			</target>
 		</buildTargets>
 	</storageModule>
+	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="org.eclipse.cdt.core.pathentry">
 		<pathentry base-path="/usr/share/qt4/include" include="" kind="inc" path="" system="true"/>
 		<pathentry base-path="/usr/share/qt4/include" include="QtDesigner" kind="inc" path="" system="true"/>
@@ -58,9 +60,16 @@
 		<pathentry base-path="/usr/share/qt4/include" include="QtScript" kind="inc" path="" system="true"/>
 		<pathentry base-path="/usr/share/qt4/include" include="QtDBus" kind="inc" path="" system="true"/>
 		<pathentry base-path="/usr/share/qt4/include" include="QtDeclarative" kind="inc" path="" system="true"/>
+		<pathentry base-path="NovaLibrary" include="src" kind="inc" path="" system="true"/>
+		<pathentry base-path="Nova_UI_Core" include="src" kind="inc" path="" system="true"/>
+		<pathentry base-ref="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO" include="/usr/local/include" kind="inc" path="" system="true"/>
+		<pathentry base-ref="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO" include="/usr/lib/gcc/i686-linux-gnu/4.4.5/include" kind="inc" path="" system="true"/>
+		<pathentry base-ref="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO" include="/usr/lib/gcc/i686-linux-gnu/4.4.5/include-fixed" kind="inc" path="" system="true"/>
+		<pathentry base-ref="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO" include="/usr/include" kind="inc" path="" system="true"/>
 		<pathentry excluding="src/" kind="src" path=""/>
 		<pathentry kind="out" path=""/>
 		<pathentry kind="src" path="src"/>
+		<pathentry kind="prj" path="/NovaLibrary"/>
+		<pathentry kind="prj" path="/Nova_UI_Core"/>
 	</storageModule>
-	<storageModule moduleId="refreshScope"/>
 </cproject>

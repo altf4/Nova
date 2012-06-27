@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : HaystackConfigWizard.cpp
+// Name        : WelcomePage.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,21 +16,18 @@
 // Description : XXX TODO XXX
 //============================================================================
 
-#include "HaystackConfigWizard.h"
-
-//Custom Pages
-#include "pages/WelcomePage.h"
-#include "pages/NetworkSelectionPage.h"
-
+#include "WelcomePage.h"
+#include "../forms/InterfaceForm.h"
 
 using namespace std;
 
-HaystackConfigWizard::HaystackConfigWizard(QWidget *parent) : QWizard(parent)
+QGridLayout * mainLayout;
+
+WelcomePage::WelcomePage(QWidget *parent) : QWizardPage(parent)
 {
-	setWindowTitle("Haystack Auto-Configuration Wizard");
-    setWizardStyle(ModernStyle);
-	addPage(new WelcomePage);
-	addPage(new NetworkSelectionPage);
-    setPixmap(QWizard::WatermarkPixmap, QPixmap("/usr/share/nova/icons/novaSplashBanner.png"));
-    setPixmap(QWizard::LogoPixmap, QPixmap("/usr/share/nova/icons/nova-icon.png").scaledToHeight(50));
+	setTitle("Welcome to the Auto-Configuration Tool");
+	setSubTitle("Please select which interfaces you wish to use.");
+	QGridLayout *mainLayout = new QGridLayout();
+	mainLayout->addWidget(new InterfaceForm(this));
+	setLayout(mainLayout);
 }
