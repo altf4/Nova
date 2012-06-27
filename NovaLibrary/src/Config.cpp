@@ -2363,7 +2363,7 @@ vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 
 	if( honeydConfFile == NULL)
 	{
-		LOG(ERROR, "Error opening log file. Does it exist?", "");
+		LOG(ERROR, string("Error opening haystack file at ") + honeyDConfigPath + ". Does it exist?", "");
 		exit(EXIT_FAILURE);
 	}
 

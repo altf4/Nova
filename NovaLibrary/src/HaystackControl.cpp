@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Haystack.cpp
+// Name        : HaystackControl.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 // Description : Controls the Honeyd Haystack and Doppelganger processes
 //============================================================================
 
-#include "Commands.h"
+#include "HaystackControl.h"
 #include "Config.h"
 
 #include <sstream>

@@ -45,17 +45,21 @@ ClassificationEngine *engine;
 EvidenceTable suspectEvidence;
 
 string trainingCapFile;
+
 string pcapFile;
+string haystackFile;
+string localFile;
 
 ofstream trainingFileStream;
 pcap_t * handle;
+
 
 
 double lastPoint[DIM];
 
 int main(int argc, const char *argv[])
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
 		PrintUsage();
 		return 0;
@@ -72,12 +76,17 @@ int main(int argc, const char *argv[])
 
 	chdir(Config::Inst()->GetPathHome().c_str());
 
+	pcapFile = string(argv[1]) + "/capture.pcap";
+	haystackFile = string(argv[1]) + "/haystackIps.txt";
+	localFile = string(argv[1]) + "/localIps.txt";
+
 	UpdateHaystackFeatures();
 
 	engine = new ClassificationEngine(suspects);
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 
-	pcapFile = argv[1];
+
+
 	trainingCapFile = argv[2];
 
 	// We suffix the training capture files with the date/time
@@ -194,22 +203,13 @@ void update(const in_addr_t& key)
 
 void UpdateHaystackFeatures()
 {
-	vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
-
-	// TODO Don't hard code this path
-	vector<string> haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
+	vector<string> haystackAddresses = Config::GetHaystackAddresses(haystackFile);
 
 	vector<uint32_t> haystackNodes;
 	for (uint i = 0; i < haystackAddresses.size(); i++)
 	{
-		cout << "Address is " << haystackAddresses[i] << endl;
+		cout << haystackAddresses[i] << " has been set as a haystack address" << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
-	}
-
-	for (uint i = 0; i < haystackDhcpAddresses.size(); i++)
-	{
-		cout << "Address is " << haystackDhcpAddresses[i] << endl;
-		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
 	}
 
 	suspects.SetHaystackNodes(haystackNodes);
