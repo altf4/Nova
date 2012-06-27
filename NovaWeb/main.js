@@ -7,6 +7,7 @@ var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
 var trainingDb = new novaconfig.CustomizeTrainingBinding();
 var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
+var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 
 honeydConfig.LoadAllTemplates();
 
@@ -506,7 +507,7 @@ app.get('/', ensureAuthenticated, function(req, res) {
 app.post('/login*',
   passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
     function(req, res){
-		if (req.query["redirect"] != undefined)
+		if(req.query["redirect"] != undefined)
 		{
         	res.redirect(req.query["redirect"]);
 		}
@@ -514,6 +515,16 @@ app.post('/login*',
 		{
         	res.redirect('/suspects');
 		}
+});
+
+app.post('/scanning', ensureAuthenticated, function(req, res){
+  var numNodes = req.body["numNodes"];
+  
+  var subnets = req.body["subnets"];
+  
+  hhconfig.RunAutoScan(numNodes, subnets);
+  
+  res.redirect('/autoConfig');
 });
 
 app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){

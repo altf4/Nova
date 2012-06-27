@@ -32,11 +32,14 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_root = PersonalityNode("default");
 	m_hdconfig->LoadAllTemplates();
 
-	m_hdconfig->m_subnets.clear();
-
-	for(uint i = 0; i < subnetsToUse.size(); i++)
+	if(!subnetsToUse.empty())
 	{
-		AddSubnet(subnetsToUse[i]);
+		m_hdconfig->m_subnets.clear();
+
+		for(uint i = 0; i < subnetsToUse.size(); i++)
+		{
+			AddSubnet(subnetsToUse[i]);
+		}
 	}
 
 	m_hdconfig->AddGroup("HaystackAutoConfig");

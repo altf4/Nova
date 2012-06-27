@@ -15,6 +15,7 @@ debug:
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
+	$(MAKE) hhconfig-debug
 
 debug-helper: novad-debug novagui-debug novacli-debug
 
@@ -60,6 +61,13 @@ web:
 	cd NovaWeb;npm --unsafe-perm install
 	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
 
+#Haystack Auto Config
+hhconfig-release:
+	$(MAKE) -C HoneydHostConfig/Release
+
+hhconfig-debug:
+	$(MAKE) -C HoneydHostConfig/Debug
+
 #Unit tests
 test: debug test-prepare
 	$(MAKE) -C NovaTest/Debug
@@ -90,6 +98,7 @@ clean-debug:
 	$(MAKE) -C NovaCLI/Debug clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
+	$(MAKE) -C HoneydHostConfig/Debug clean
 
 clean-release:
 	$(MAKE) -C NovaLibrary/Release clean
@@ -127,6 +136,7 @@ install-debug: install-data install-docs
 	install NovaCLI/Debug/novacli $(DESTDIR)/usr/bin
 	install Novad/Debug/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
+	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin
 	sh Installer/postinst
 	
 install-data:
@@ -181,6 +191,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/novagui
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
+	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
