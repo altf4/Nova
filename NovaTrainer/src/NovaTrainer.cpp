@@ -135,7 +135,7 @@ namespace Nova
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-	cout << "  novatrainer captureInput.pcap trainingOutput.dump" << endl;
+	cout << "  novatrainer novaCaptureFolder trainingOutput.dump" << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);

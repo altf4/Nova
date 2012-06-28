@@ -8,7 +8,7 @@ release:
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
 
-release-helper: novad-release novagui-release novacli-release
+release-helper: novad-release novagui-release novacli-release novatrainer-release
 
 #Debug target
 debug:
@@ -16,7 +16,7 @@ debug:
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
 
-debug-helper: novad-debug novagui-debug novacli-debug
+debug-helper: novad-debug novagui-debug novacli-debug novatrainer-debug
 
 #Nova Library
 novalib-release:
@@ -45,6 +45,13 @@ novacli-release:
 
 novacli-debug:
 	$(MAKE) -C NovaCLI/Debug
+
+# Nova trainer
+novatrainer-debug:
+	$(MAKE) -C NovaTrainer/Debug
+
+novatrainer-release:
+	$(MAKE) -C NovaTrainer/Release
 
 #novagui
 novagui-release:
@@ -88,6 +95,7 @@ clean-debug:
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
 	$(MAKE) -C NovaCLI/Debug clean
+	$(MAKE) -C NovaTrainer/Debug clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 
@@ -96,6 +104,7 @@ clean-release:
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
 	$(MAKE) -C NovaCLI/Release clean
+	$(MAKE) -C NovaTrainer/Release clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 
@@ -116,6 +125,7 @@ install-release: install-data install-docs
 	install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/Release/novacli $(DESTDIR)/usr/bin
 	install Novad/Release/novad $(DESTDIR)/usr/bin
+	install NovaTrainer/Release/novatrainer $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	sh Installer/postinst
 
@@ -126,6 +136,7 @@ install-debug: install-data install-docs
 	install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/Debug/novacli $(DESTDIR)/usr/bin
 	install Novad/Debug/novad $(DESTDIR)/usr/bin
+	install NovaTrainer/Debug/novatrainer $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	sh Installer/postinst
 	
