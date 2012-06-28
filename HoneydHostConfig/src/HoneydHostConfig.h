@@ -35,7 +35,8 @@ enum ErrCode : int
 	PARSINGERROR,
 	INCORRECTNUMBERARGS,
 	NONINTEGERARG,
-	BADARGCOMBINATION
+	BADARGCOMBINATION,
+	REQUIREDFLAGSMISSING
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost
@@ -58,7 +59,7 @@ ErrCode ParseHost(boost::property_tree::ptree pt2);
 //  ErrCode errVar - ptr to an error code variable so that we can inspect it's value afterward
 //   after if the vector is empty
 // Returns a vector containings strings of the subnet addresses
-std::vector<std::string> GetSubnetsToScan(ErrCode *errVar);
+std::vector<std::string> GetSubnetsToScan(ErrCode *errVar, std::vector<std::string> interfacesToMatch);
 
 // Prints out the subnets that're found during GetSubnetsToScan(errVar)
 //  vector<string> recv - vector of subnets found

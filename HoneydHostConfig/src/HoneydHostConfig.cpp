@@ -47,6 +47,7 @@ using namespace std;
 using namespace Nova;
 
 vector<uint16_t> leftoverHostspace;
+vector<string> interfacesToMatch;
 uint16_t tempHostspace;
 string localMachine;
 string nmapFileName;
@@ -323,9 +324,15 @@ int main(int argc, char ** argv)
 
 	bool badArgCombination = false;
 
+	bool i_flag_empty = true;
+
+	bool a_flag_empty = true;
+
 	if(argc < 3)
 	{
-		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+		cout << "\tcorresponds to a real interface on the machine." << '\n';
 		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
 		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
@@ -348,7 +355,9 @@ int main(int argc, char ** argv)
 				if((!isdigit(argv[j + 1][i])) && (argv[j + 1][i] != 0))
 				{
 					cout << "The argument for number of nodes must be an integer." << '\n';
-					cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+					cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+					cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+					cout << "\tcorresponds to a real interface on the machine." << '\n';
 					cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
 					cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 					cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
@@ -365,6 +374,24 @@ int main(int argc, char ** argv)
 			numNodes = atoi(argv[j + 1]);
 			j++;
 		}
+		else if(!string(argv[j]).compare("-i"))
+		{
+			string strToSplit = string(argv[j + 1]);
+
+			boost::split(interfacesToMatch, strToSplit, boost::is_any_of(","));
+
+			if(interfacesToMatch.empty() || interfacesToMatch[0][0] == '-')
+			{
+				i_flag_empty = true;
+				continue;
+			}
+			else
+			{
+				i_flag_empty = false;
+			}
+
+			j++;
+		}
 		else if(!string(argv[j]).compare("-f"))
 		{
 			if(!badArgCombination)
@@ -373,7 +400,9 @@ int main(int argc, char ** argv)
 			}
 			else if(badArgCombination || numNodes <= 0)
 			{
-				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+				cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+				cout << "\tcorresponds to a real interface on the machine." << '\n';
 				cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
 				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
@@ -422,7 +451,9 @@ int main(int argc, char ** argv)
 			}
 			else if(badArgCombination || numNodes <= 0)
 			{
-				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+				cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+				cout << "\tcorresponds to a real interface on the machine." << '\n';
 				cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
 				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
@@ -438,13 +469,18 @@ int main(int argc, char ** argv)
 
 			ErrCode errVar = OKAY;
 
-			vector<string> subnetNames = GetSubnetsToScan(&errVar);
+			vector<string> subnetNames;
+
+			if(!i_flag_empty)
+			{
+				subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
+			}
 
 			vector<string> subnetsToAdd;
 
 			// Need to find a better way to do this. Someone could give the -a flag and
 			// put nothing, or -a and another (possible) cli flag. These cases are
-			// taken care of. For the case where someone puits -a and incorrect data,
+			// taken care of. For the case where someone puts -a and incorrect data,
 			// things are a little different. There are controls on the UI side to force
 			// correct insertion of data, but running the autoconfig on its own provides
 			// problems if the -a flag is given incorrect inputs.
@@ -454,14 +490,19 @@ int main(int argc, char ** argv)
 
 				boost::split(subnetsToAdd, csvSubnets, boost::is_any_of(","));
 
+				if(subnetsToAdd.empty())
+				{
+					a_flag_empty = true;
+					continue;
+				}
+				else
+				{
+					a_flag_empty = false;
+				}
+
 				for(uint k = 0; k < subnetsToAdd.size(); k++)
 				{
 					subnetNames.push_back(subnetsToAdd[k]);
-				}
-
-				for(uint k = 0; k < subnetNames.size(); k++)
-				{
-					cout << subnetNames[k] << endl;
 				}
 
 				if(errVar != OKAY || subnetNames.empty())
@@ -504,10 +545,31 @@ int main(int argc, char ** argv)
 		}
 	}
 
+	if(a_flag_empty && i_flag_empty)
+	{
+		cout << "No interface or explicit subnet was selected. Cancelling execution." << '\n';
+		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+		cout << "\tcorresponds to a real interface on the machine." << '\n';
+		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+		cout << "\tCannot use -f and -a in conjunction" << endl;
+
+		lockFile.close();
+
+		remove("/usr/share/nova/nova/hhconfig.lock");
+
+		return REQUIREDFLAGSMISSING;
+	}
+
 	if(numNodes <= 0)
 	{
 		cout << "Either -n flag was not used, or number given was negative/not an integer." << '\n';
-		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+		cout << "\tcorresponds to a real interface on the machine." << '\n';
 		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
 		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
@@ -523,7 +585,30 @@ int main(int argc, char ** argv)
 
 	ErrCode errVar = OKAY;
 
-	vector<string> subnetNames = GetSubnetsToScan(&errVar);
+	vector<string> subnetNames;
+
+	if(!i_flag_empty)
+	{
+		subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
+	}
+	else
+	{
+		cout << "If not using the -a flag, -i flag must be used with at least one explicit interface string." << '\n';
+		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+		cout << "\tcorresponds to a real interface on the machine." << '\n';
+		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+		cout << "\tCannot use -f and -a in conjunction" << endl;
+
+		lockFile.close();
+
+		remove("/usr/share/nova/nova/hhconfig.lock");
+
+		return REQUIREDFLAGSMISSING;
+	}
 
 	errVar = LoadPersonalityTable(subnetNames);
 
@@ -542,7 +627,6 @@ int main(int argc, char ** argv)
 
 	NodeManager nodeBuilder = NodeManager(&persTree);
 	nodeBuilder.GenerateNodes(numNodes);
-
 
 	persTree.ToXmlTemplate();
 
@@ -596,16 +680,18 @@ void Nova::PrintStringVector(vector<string> stringVector)
 	cout << endl;
 }
 
-vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar)
+vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> interfacesToMatch)
 {
 	struct ifaddrs *devices = NULL;
 	ifaddrs *curIf = NULL;
 	stringstream ss;
 	vector<string> hostAddrStrings;
-	if(errVar == NULL)
+
+	if(errVar == NULL || interfacesToMatch.empty())
 	{
 		return hostAddrStrings;
 	}
+
 	hostAddrStrings.clear();
 	char addrBuffer[NI_MAXHOST];
 	char bitmaskBuffer[NI_MAXHOST];
@@ -756,6 +842,21 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar)
 		// If we've found an interface that has an IPv4 address and isn't a loopback
 		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
+			bool go = false;
+
+			for(uint i = 0; i < interfacesToMatch.size(); i++)
+			{
+				if(!string(curIf->ifa_name).compare(interfacesToMatch[i]))
+				{
+					go = true;
+				}
+			}
+
+			if(!go)
+			{
+				continue;
+			}
+
 			Subnet newSubnet;
 			// start processing it to generate the subnet for the interface.
 			subnetExists = false;
