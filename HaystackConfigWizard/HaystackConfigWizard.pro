@@ -2,18 +2,16 @@ TEMPLATE = app
 TARGET = haystackconfigwizard
 QT += core \
     gui
-HEADERS += src/forms/InterfaceForm.h \
+HEADERS += src/forms/ipRangeSelectionForm.h \
     src/pages/WelcomePage.h \
-    src/pages/NetworkSelectionPage.h \
     src/HaystackConfigWizard.h
-SOURCES += src/forms/InterfaceForm.cpp \
+SOURCES += src/forms/ipRangeSelectionForm.cpp \
     src/pages/WelcomePage.cpp \
-    src/pages/NetworkSelectionPage.cpp \
     src/HaystackConfigWizard.cpp \
     src/main.cpp
-FORMS += UI/InterfaceForm.ui
-INCLUDEPATH += ../NovaLibrary/src
-INCLUDEPATH += ../Nova_UI_Core/src
+FORMS += UI/ipRangeSelectionForm.ui
+INCLUDEPATH += ../NovaLibrary/src \
+../Nova_UI_Core/src
 QMAKE_CXXFLAGS += -std=c++0x
 CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
 else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a

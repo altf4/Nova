@@ -57,7 +57,7 @@
 									<listOptionValue builtIn="false" value="notify"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1743265924" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="../../Nova_UI_Core/Debug"/>
+									<listOptionValue builtIn="false" value="/Nova_UI_Core/Debug"/>
 								</option>
 								<option defaultValue="true" id="gnu.cpp.link.option.shared.1595641096" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.628944833" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -136,8 +136,7 @@
 									<listOptionValue builtIn="false" value="curl"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.435193449" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Nova_UI_Core/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Nova_UI_Core/Release/src}&quot;"/>
+									<listOptionValue builtIn="false" value="/Nova_UI_Core/Release"/>
 								</option>
 								<option id="gnu.cpp.link.option.shared.75188087" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1712191897" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

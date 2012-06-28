@@ -123,4 +123,8 @@ NovaCLI/Debug/novacli
 /HaystackConfigWizard/Makefile.Debug
 /HaystackConfigWizard/Makefile.Release
 /HaystackConfigWizard/haystackconfigwizard
+/HaystackConfigWizard/debug/moc_ipRangeSelectionForm.cpp
+/subnet0.xml
+/HaystackConfigWizard/debug/moc_WelcomePage.cpp
+/HaystackConfigWizard/UI_headers/ui_ipRangeSelectionForm.h
 /NovaWeb/NodeNovaConfig/subnet0.xml

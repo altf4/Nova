@@ -32,16 +32,6 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_root = PersonalityNode("default");
 	m_hdconfig->LoadAllTemplates();
 
-	if(!subnetsToUse.empty())
-	{
-		m_hdconfig->m_subnets.clear();
-
-		for(uint i = 0; i < subnetsToUse.size(); i++)
-		{
-			AddSubnet(subnetsToUse[i]);
-		}
-	}
-
 	m_hdconfig->AddGroup("HaystackAutoConfig");
 	Config::Inst()->SetGroup("HaystackAutoConfig");
 	Config::Inst()->SaveUserConfig();
@@ -56,6 +46,18 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 		}
 	}
 
+	if(!subnetsToUse.empty())
+	{
+		m_hdconfig->m_subnets.clear();
+
+		for(uint i = 0; i < subnetsToUse.size(); i++)
+		{
+			AddSubnet(subnetsToUse[i]);
+		}
+	}
+
+	m_hdconfig->SaveAllTemplates();
+	m_hdconfig->LoadAllTemplates();
 	m_profiles = &m_hdconfig->m_profiles;
 	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
 
@@ -108,6 +110,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	//Create profile object
 	node->GenerateDistributions();
 	NodeProfile tempProf = node->GenerateProfile(*parentProfile);
+	tempProf.m_name = profileName;
 	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
@@ -125,14 +128,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		tempProf.m_name = key;
 	}
 
-	if(!profileName.compare("default"))
-	{
-		for(uint i = 0; i < node->m_children.size(); i++)
-		{
-			GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[tempProf.m_name], node->m_children[i].first);
-		}
-	}
-	else if(!node->m_redundant)
+	if(!node->m_redundant || (parent == &m_root))
 	{
 		if(!m_hdconfig->AddProfile(&tempProf))
 		{
@@ -163,13 +159,6 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		for(uint i = 0; i < node->m_children.size(); i++)
 		{
 			GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[key], node->m_children[i].first);
-		}
-	}
-	else
-	{
-		for(uint i = 0; i < node->m_children.size(); i++)
-		{
-			GenerateProfiles(node->m_children[i].second, node, &tempProf, node->m_children[i].first);
 		}
 	}
 }

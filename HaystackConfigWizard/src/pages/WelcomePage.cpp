@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "WelcomePage.h"
-#include "../forms/InterfaceForm.h"
+#include "../forms/ipRangeSelectionForm.h"
 
 using namespace std;
 
@@ -28,6 +28,15 @@ WelcomePage::WelcomePage(QWidget *parent) : QWizardPage(parent)
 	setTitle("Welcome to the Auto-Configuration Tool");
 	setSubTitle("Please select which interfaces you wish to use.");
 	QGridLayout *mainLayout = new QGridLayout();
-	mainLayout->addWidget(new InterfaceForm(this));
+	mainLayout->addWidget(new ipRangeSelectionForm(this), 0, 0);
+	mainLayout->setVerticalSpacing(0);
+	mainLayout->setHorizontalSpacing(0);
+	mainLayout->setContentsMargins(0,0,0,0);
 	setLayout(mainLayout);
 }
+
+void WelcomePage::initializePage()
+{
+
+}
+
