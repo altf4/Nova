@@ -185,6 +185,9 @@ public:
 	bool GetOverridePcapString();
 	void SetOverridePcapString(bool overridePcapString);
 
+	std::string GetTrainingSession();
+	std::string SetTrainingSession(std::string trainingSession);
+
 
 	static std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
 	static std::vector <std::string> GetIpAddresses(std::string ipListFile);
@@ -277,6 +280,8 @@ private:
 	std::string m_pathReadFolder;
 	std::string m_pathHome;
 	std::string m_pathIcon;
+
+	std::string m_trainingSession;
 
 	char m_haystackStorage;
 	std::string m_userPath;

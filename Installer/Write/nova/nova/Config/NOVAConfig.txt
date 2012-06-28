@@ -442,3 +442,10 @@ CUSTOM_PCAP_FILTER
 CUSTOM_PCAP_MODE 0
 
 
+# TRAINING_SESSION #
+############################################
+#
+# Folder name for a training capture session
+TRAINING_SESSION trainingSession
+
+
