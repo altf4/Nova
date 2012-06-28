@@ -20,8 +20,6 @@
 
 //Custom Pages
 #include "pages/WelcomePage.h"
-#include "pages/NetworkSelectionPage.h"
-
 
 using namespace std;
 
@@ -30,7 +28,6 @@ HaystackConfigWizard::HaystackConfigWizard(QWidget *parent) : QWizard(parent)
 	setWindowTitle("Haystack Auto-Configuration Wizard");
     setWizardStyle(ModernStyle);
 	addPage(new WelcomePage);
-	addPage(new NetworkSelectionPage);
     setPixmap(QWizard::WatermarkPixmap, QPixmap("/usr/share/nova/icons/novaSplashBanner.png"));
     setPixmap(QWizard::LogoPixmap, QPixmap("/usr/share/nova/icons/nova-icon.png").scaledToHeight(50));
 }

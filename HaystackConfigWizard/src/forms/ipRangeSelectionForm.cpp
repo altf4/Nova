@@ -7,18 +7,21 @@
 
 #include "Logger.h"
 #include "Config.h"
-#include "InterfaceForm.h"
+#include "ipRangeSelectionForm.h"
 
 using namespace std;
 using namespace Nova;
 
-InterfaceForm::InterfaceForm(QWidget *parent)
+ipRangeSelectionForm::ipRangeSelectionForm(QWidget *parent)
     : QWidget(parent)
 {
 	ui.setupUi(this);
 	struct ifaddrs * devices = NULL;
 	struct ifaddrs *curIf = NULL;
 	stringstream ss;
+	MaskSpinBox *maskBox = new MaskSpinBox(this);
+	ui.bitmaskHLayout->insertWidget(1, maskBox);
+	maskBox->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 	m_interfaceCheckBoxes = new QButtonGroup(ui.interfaceGroupBox);
 	//Get a list of interfaces
 	if(getifaddrs(&devices))
@@ -50,7 +53,7 @@ InterfaceForm::InterfaceForm(QWidget *parent)
 	}
 }
 
-InterfaceForm::~InterfaceForm()
+ipRangeSelectionForm::~ipRangeSelectionForm()
 {
 
 }

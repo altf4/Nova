@@ -21,6 +21,7 @@ public:
 	WelcomePage(QWidget *parent = 0);
 
 private:
+	void initializePage();
 
 };
 
