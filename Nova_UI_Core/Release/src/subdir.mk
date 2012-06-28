@@ -8,8 +8,14 @@ CPP_SRCS += \
 ../src/Connection.cpp \
 ../src/HaystackControl.cpp \
 ../src/HoneydConfiguration.cpp \
+../src/NodeManager.cpp \
 ../src/NovadControl.cpp \
 ../src/OsPersonalityDb.cpp \
+../src/Personality.cpp \
+../src/PersonalityNode.cpp \
+../src/PersonalityTable.cpp \
+../src/PersonalityTree.cpp \
+../src/ScriptsTable.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
 ../src/VendorMacDb.cpp 
@@ -19,8 +25,14 @@ OBJS += \
 ./src/Connection.o \
 ./src/HaystackControl.o \
 ./src/HoneydConfiguration.o \
+./src/NodeManager.o \
 ./src/NovadControl.o \
 ./src/OsPersonalityDb.o \
+./src/Personality.o \
+./src/PersonalityNode.o \
+./src/PersonalityTable.o \
+./src/PersonalityTree.o \
+./src/ScriptsTable.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
 ./src/VendorMacDb.o 
@@ -30,8 +42,14 @@ CPP_DEPS += \
 ./src/Connection.d \
 ./src/HaystackControl.d \
 ./src/HoneydConfiguration.d \
+./src/NodeManager.d \
 ./src/NovadControl.d \
 ./src/OsPersonalityDb.d \
+./src/Personality.d \
+./src/PersonalityNode.d \
+./src/PersonalityTable.d \
+./src/PersonalityTree.d \
+./src/ScriptsTable.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \
 ./src/VendorMacDb.d 

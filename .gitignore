@@ -123,3 +123,4 @@ NovaCLI/Debug/novacli
 /HaystackConfigWizard/Makefile.Debug
 /HaystackConfigWizard/Makefile.Release
 /HaystackConfigWizard/haystackconfigwizard
+/HaystackConfigWizard/debug/moc_ipRangeSelectionForm.cpp

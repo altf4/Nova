@@ -15,7 +15,6 @@ debug:
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
-	$(MAKE) hhconfig-debug
 
 debug-helper: novad-debug novagui-debug novacli-debug
 
@@ -67,6 +66,12 @@ hhconfig-release:
 
 hhconfig-debug:
 	$(MAKE) -C HoneydHostConfig/Debug
+
+install-hhconfig-debug:
+	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin
+
+install-hhconfig-release:
+	install HoneydHostConfig/Release/honeydhostconfig $(DESTDIR)/usr/bin
 
 #Unit tests
 test: debug test-prepare
@@ -136,7 +141,6 @@ install-debug: install-data install-docs
 	install NovaCLI/Debug/novacli $(DESTDIR)/usr/bin
 	install Novad/Debug/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin
 	sh Installer/postinst
 	
 install-data:
