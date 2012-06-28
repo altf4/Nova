@@ -1064,6 +1064,37 @@ string HoneydConfiguration::FindSubnet(in_addr_t ip)
 	return subnet;
 }
 
+vector<string> HoneydConfiguration::GeneratedProfilesStrings()
+{
+	vector<string> ret;
+
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if(!it->second.m_name.empty())
+		{
+			string pushToReturnVector;
+
+			pushToReturnVector += "Name: " + it->second.m_name + "\n";
+			pushToReturnVector += "Personality: " + it->second.m_personality + "\n";
+			pushToReturnVector += "MAC Vendor:  " + it->second.m_ethernet + "\n";
+			pushToReturnVector += "Associated Nodes:\n";
+
+			for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
+			{
+				pushToReturnVector += "\t" + it->second.m_nodeKeys[i] + "\n";
+
+				for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); i++)
+				{
+					pushToReturnVector += "\t\t" + m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
+				}
+			}
+			ret.push_back(pushToReturnVector);
+		}
+	}
+
+	return ret;
+}
+
 bool HoneydConfiguration::LoadProfilesTemplate()
 {
 	using boost::property_tree::ptree;
@@ -1599,6 +1630,11 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 		LOG(WARNING, "Unable to delete the Doppelganger node", "");
 		return false;
 	}
+	else if(!nodeName.compare("default"))
+	{
+		LOG(WARNING, "Unable to delete the default node", "");
+		return false;
+	}
 
 	// Make sure the node exists
 	if(!m_nodes.keyExists(nodeName))
@@ -2025,7 +2061,7 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 		m_profiles[profileName] = p;
 	}
 	//If the original calling profile has a parent to update
-	if(p.m_parentProfile.compare("") && up)
+	if((p.m_parentProfile.compare("") && p.m_parentProfile.compare("default")) && up)
 	{
 		//Get the parents name and create an empty ptree
 		NodeProfile parent = m_profiles[p.m_parentProfile];

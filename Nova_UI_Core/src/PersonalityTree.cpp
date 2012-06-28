@@ -32,8 +32,6 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_root = PersonalityNode("default");
 	m_hdconfig->LoadAllTemplates();
 
-
-
 	m_hdconfig->AddGroup("HaystackAutoConfig");
 	Config::Inst()->SetGroup("HaystackAutoConfig");
 	Config::Inst()->SaveUserConfig();
@@ -42,7 +40,10 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 
 	for(NodeTable::iterator it = m_hdconfig->m_nodes.begin(); it != m_hdconfig->m_nodes.end(); it++)
 	{
-		m_hdconfig->DeleteNode(it->first);
+		if(it->first.compare("Doppelganger"))
+		{
+			m_hdconfig->DeleteNode(it->first);
+		}
 	}
 
 	if(!subnetsToUse.empty())
@@ -125,17 +126,6 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 			key = ss.str();
 		}
 		tempProf.m_name = key;
-
-		/*for(uint i = 0; i < parent->m_children.size(); i++)
-		{
-			if(!parent->m_children[i].first.compare(profileName))
-			{
-				vector<pair<string, PersonalityNode *> > childCopy = parent->m_children[i];
-				parent->m_children.erase(parent->m_children.begin()+i);
-				childCopy.first = tempProf.m_name;
-				parent->m_children.insert(childCopy, i);
-			}
-		}*/
 	}
 
 	if(!node->m_redundant || (parent == &m_root))
@@ -153,7 +143,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 			}
 		}
 	}
-	else if(parent->m_children.size() == 1)
+	else if(parent->m_children.size() == 1 && parent->m_key.compare("default"))
 	{
 		// Probably not the right way of going about this
 		uint16_t i = 1;

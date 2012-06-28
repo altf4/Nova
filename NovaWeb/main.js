@@ -136,6 +136,10 @@ novadLog.on("error", function(data) {
 	}
 });
 
+function callScan(numNodes, subnets)
+{
+  hhconfig.RunAutoScan(numNodes, subnets);
+}
 
 app.get('/downloadNovadLog', ensureAuthenticated, function (req, res) {
 	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
@@ -494,12 +498,23 @@ app.get('/autoConfig', ensureAuthenticated, function(req, res) {
    });
 });
 
+app.get('/nodeReview', ensureAuthenticated, function(req, res) {
+  
+  console.log("hhconfig.GetGeneratedNodeInfo() == \n" + hhconfig.GetGeneratedNodeInfo());
+  
+  res.render('nodereview.jade', 
+  {
+    user: req.user
+    ,nodes: hhconfig.GetGeneratedNodeInfo()
+  });
+});
+
 app.get('/', ensureAuthenticated, function(req, res) {
      res.render('main.jade', 
      {
          user: req.user
-	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
-         , message: req.flash('error')
+	       ,enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
+         ,message: req.flash('error')
 		 , type: 'all'
      });
 });
@@ -518,13 +533,20 @@ app.post('/login*',
 });
 
 app.post('/scanning', ensureAuthenticated, function(req, res){
+  
   var numNodes = req.body["numNodes"];
   
   var subnets = req.body["subnets"];
   
+  if(subnets === undefined)
+  {
+    subnets = "";
+  }
+  
+  // Need to add a waiting dialog or something
   hhconfig.RunAutoScan(numNodes, subnets);
   
-  res.redirect('/autoConfig');
+  res.redirect('/nodeReview');
 });
 
 app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){

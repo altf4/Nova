@@ -330,7 +330,7 @@ int main(int argc, char ** argv)
 		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
 		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-		cout << "Cannot use -f and -a in conjunction" << endl;
+		cout << "\tCannot use -f and -a in conjunction" << endl;
 
 		lockFile.close();
 
@@ -341,11 +341,9 @@ int main(int argc, char ** argv)
 
 	for(uint j = 1; argv[j] != NULL; j++)
 	{
-		cout << argv[j] << endl;
-
 		if(!string(argv[j]).compare("-n"))
 		{
-			for(uint i = 0; i < sizeof(argv[j + 1])/sizeof(char) - 1; i++)
+			for(uint i = 0; argv[j + 1][i] != 0; i++)
 			{
 				if((!isdigit(argv[j + 1][i])) && (argv[j + 1][i] != 0))
 				{
@@ -355,7 +353,7 @@ int main(int argc, char ** argv)
 					cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 					cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
 					cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-					cout << "Cannot use -f and -a in conjunction" << endl;
+					cout << "\tCannot use -f and -a in conjunction" << endl;
 
 					lockFile.close();
 
@@ -380,7 +378,7 @@ int main(int argc, char ** argv)
 				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
 				cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-				cout << "Cannot use -f and -a in conjunction" << endl;
+				cout << "\tCannot use -f and -a in conjunction" << endl;
 
 				lockFile.close();
 
@@ -429,7 +427,7 @@ int main(int argc, char ** argv)
 				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
 				cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-				cout << "Cannot use -f and -a in conjunction" << endl;
+				cout << "\tCannot use -f and -a in conjunction" << endl;
 
 				lockFile.close();
 
@@ -444,6 +442,12 @@ int main(int argc, char ** argv)
 
 			vector<string> subnetsToAdd;
 
+			// Need to find a better way to do this. Someone could give the -a flag and
+			// put nothing, or -a and another (possible) cli flag. These cases are
+			// taken care of. For the case where someone puits -a and incorrect data,
+			// things are a little different. There are controls on the UI side to force
+			// correct insertion of data, but running the autoconfig on its own provides
+			// problems if the -a flag is given incorrect inputs.
 			if(argv[j + 1] != NULL && argv[j + 1][0] != '-')
 			{
 				string csvSubnets = string(argv[j + 1]);
@@ -508,7 +512,7 @@ int main(int argc, char ** argv)
 		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
 		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
 		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-		cout << "Cannot use -f and -a in conjunction" << endl;
+		cout << "\tCannot use -f and -a in conjunction" << endl;
 
 		lockFile.close();
 
