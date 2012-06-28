@@ -783,7 +783,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		else
 		{
 			//Clone a custom profile for a node
-			out << "clone " << it->second.m_pfile << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
+			out << "clone " << it->second.m_pfile << " CustomNodeProfile-" << m_nodeProfileIndex << endl;
 
 			//Add any custom port settings
 			for(uint i = 0; i < it->second.m_ports.size(); i++)
