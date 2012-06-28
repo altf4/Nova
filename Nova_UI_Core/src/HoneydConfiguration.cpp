@@ -783,7 +783,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		else
 		{
 			//Clone a custom profile for a node
-			out << "clone " << it->second.m_pfile << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
+			out << "clone " << it->second.m_pfile << " CustomNodeProfile-" << m_nodeProfileIndex << endl;
 
 			//Add any custom port settings
 			for(uint i = 0; i < it->second.m_ports.size(); i++)
@@ -1630,11 +1630,6 @@ bool HoneydConfiguration::DeleteNode(std::string nodeName)
 		LOG(WARNING, "Unable to delete the Doppelganger node", "");
 		return false;
 	}
-	else if(!nodeName.compare("default"))
-	{
-		LOG(WARNING, "Unable to delete the default node", "");
-		return false;
-	}
 
 	// Make sure the node exists
 	if(!m_nodes.keyExists(nodeName))
@@ -2061,7 +2056,7 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 		m_profiles[profileName] = p;
 	}
 	//If the original calling profile has a parent to update
-	if((p.m_parentProfile.compare("") && p.m_parentProfile.compare("default")) && up)
+	if(p.m_parentProfile.compare("") && up)
 	{
 		//Get the parents name and create an empty ptree
 		NodeProfile parent = m_profiles[p.m_parentProfile];
