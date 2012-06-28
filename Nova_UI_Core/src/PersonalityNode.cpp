@@ -114,6 +114,11 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 
 	m_redundant = true;
 
+	if(!m_key.compare("default") || !parentProfile.m_name.compare("default"))
+	{
+		m_redundant = false;
+	}
+
 	for(uint i = 0; i < (sizeof(profileToReturn.m_inherited)/sizeof(bool)); i++)
 	{
 		profileToReturn.m_inherited[i] = true;

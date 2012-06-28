@@ -50,7 +50,10 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 
 	for(NodeTable::iterator it = m_hdconfig->m_nodes.begin(); it != m_hdconfig->m_nodes.end(); it++)
 	{
-		m_hdconfig->DeleteNode(it->first);
+		if(it->first.compare("Doppelganger"))
+		{
+			m_hdconfig->DeleteNode(it->first);
+		}
 	}
 
 	m_profiles = &m_hdconfig->m_profiles;
@@ -122,7 +125,14 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		tempProf.m_name = key;
 	}
 
-	if(!node->m_redundant)
+	if(!profileName.compare("default"))
+	{
+		for(uint i = 0; i < node->m_children.size(); i++)
+		{
+			GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[tempProf.m_name], node->m_children[i].first);
+		}
+	}
+	else if(!node->m_redundant)
 	{
 		if(!m_hdconfig->AddProfile(&tempProf))
 		{
@@ -137,7 +147,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 			}
 		}
 	}
-	else if(parent->m_children.size() == 1)
+	else if(parent->m_children.size() == 1 && parent->m_key.compare("default"))
 	{
 		// Probably not the right way of going about this
 		uint16_t i = 1;
@@ -157,10 +167,9 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	}
 	else
 	{
-		string keyPrefix = profileName + " ";
 		for(uint i = 0; i < node->m_children.size(); i++)
 		{
-			GenerateProfiles(node->m_children[i].second, node, parentProfile, keyPrefix + node->m_children[i].first);
+			GenerateProfiles(node->m_children[i].second, node, &tempProf, node->m_children[i].first);
 		}
 	}
 }

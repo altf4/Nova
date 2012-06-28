@@ -10,7 +10,7 @@
 class HoneydConfigBinding : public node::ObjectWrap {
 public:
 	static void Init(v8::Handle<v8::Object> target);
-	Nova::HoneydConfiguration * GetChild();
+	Nova::HoneydConfiguration* GetChild();
 
 private:
 	HoneydConfigBinding();

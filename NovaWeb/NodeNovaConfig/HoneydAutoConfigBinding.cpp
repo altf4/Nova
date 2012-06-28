@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <unistd.h>
+#include "HoneydConfiguration.h"
 #include "HoneydAutoConfigBinding.h"
 #include "v8Helper.h"
 
@@ -13,11 +14,21 @@ using namespace std;
 
 HoneydAutoConfigBinding::HoneydAutoConfigBinding()
 {
+  m_hdconfig = NULL;
 };
 
 HoneydAutoConfigBinding::~HoneydAutoConfigBinding()
 {
+  if(m_hdconfig != NULL)
+  {
+    delete m_hdconfig;
+  }
 };
+
+Nova::HoneydConfiguration* HoneydAutoConfigBinding::GetChild()
+{
+  return m_hdconfig;
+}
 
 void HoneydAutoConfigBinding::Init(Handle<Object> target) 
 {
@@ -27,10 +38,8 @@ void HoneydAutoConfigBinding::Init(Handle<Object> target)
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   
   // Prototypes
-  // tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAllInterfacesBinding"),FunctionTemplate::New(InvokeWrappedMethod<std::string, NovaConfigBinding, Config, &Config::GetUseAllInterfacesBinding>));
-  // tpl->PrototypeTemplate()->Set(String::NewSymbol("AddIface"),FunctionTemplate::New(AddIface)->GetFunction());
-
   tpl->PrototypeTemplate()->Set(String::NewSymbol("RunAutoScan"),FunctionTemplate::New(RunAutoScan)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedNodeInfo"),FunctionTemplate::New(GetGeneratedNodeInfo)->GetFunction());
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
   target->Set(String::NewSymbol("HoneydAutoConfigBinding"), constructor);
@@ -41,6 +50,10 @@ Handle<Value> HoneydAutoConfigBinding::New(const Arguments& args)
   HandleScope scope;
 
   HoneydAutoConfigBinding* obj = new HoneydAutoConfigBinding();
+
+  obj->m_hdconfig = new Nova::HoneydConfiguration();
+  obj->m_hdconfig->LoadAllTemplates();
+
   obj->Wrap(args.This());
 
   return args.This();
@@ -80,4 +93,18 @@ Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
   
   return args.This();
 }
+
+Handle<Value> HoneydAutoConfigBinding::GetGeneratedNodeInfo(const Arguments& args)
+{
+  HandleScope scope;
+  
+  HoneydAutoConfigBinding* obj = ObjectWrap::Unwrap<HoneydAutoConfigBinding>(args.This());
+  
+  Handle<Value> ret = cvv8::CastToJS(obj->m_hdconfig->GeneratedProfilesStrings());
+  
+  return scope.Close(ret);
+}
+
+
+
 
