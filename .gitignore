@@ -67,10 +67,12 @@ NovaGUI/UI_headers/
 #Novad
 Novad/Release/novad
 Novad/Debug/novad
+Novad/novad
 
 #NovaCLI
 NovaCLI/Release/novacli
 NovaCLI/Debug/novacli
+NovaCLI/novacli
 
 #NovaLib
 /NovaLibrary/.settings/org.eclipse.cdt.managedbuilder.core.prefs
