@@ -21,9 +21,11 @@ debug-helper: novad-debug novagui-debug novacli-debug
 #Nova Library
 novalib-release:
 	$(MAKE) -C NovaLibrary/Release
+	cp NovaLibrary/Release/libNovaLibrary.a NovaLibrary/
 
 novalib-debug:
 	$(MAKE) -C NovaLibrary/Debug
+	cp NovaLibrary/Debug/libNovaLibrary.a NovaLibrary/
 
 #novad
 novad-release:

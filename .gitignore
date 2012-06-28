@@ -77,6 +77,7 @@ NovaCLI/novacli
 #NovaLib
 /NovaLibrary/.settings/org.eclipse.cdt.managedbuilder.core.prefs
 /NovaLibrary/.settings/org.eclipse.cdt.codan.core.prefs
+NovaLibrary/libNovaLibrary.a
 
 #UI_Core
 /Nova_UI_Core/Debug/libNova_UI_Core.so
