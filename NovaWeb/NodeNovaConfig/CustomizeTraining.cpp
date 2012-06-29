@@ -32,6 +32,9 @@ void CustomizeTrainingBinding::Init(v8::Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetHostile"),FunctionTemplate::New(GetHostile)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SetIncluded"),FunctionTemplate::New(SetIncluded)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("Save"),FunctionTemplate::New(Save)->GetFunction());
+	
+	
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetCaptureIPs"),FunctionTemplate::New(GetCaptureIPs)->GetFunction());
 	// Prototype
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -150,4 +153,33 @@ v8::Handle<Value> CustomizeTrainingBinding::Save(const Arguments& args)
 	write.close();
 
 	return scope.Close(cvv8::CastToJS(false));
+}
+
+v8::Handle<Value> CustomizeTrainingBinding::GetCaptureIPs(const Arguments& args)
+{
+	HandleScope scope;
+	
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameters")));
+	}
+
+	string dumpFile = cvv8::CastFromJS<string>(args[0]);
+	
+	vector<string> ips;
+	Local<Value> undefined;
+
+	trainingDumpMap* map = TrainingData::ParseEngineCaptureFile(dumpFile);
+	if (map == NULL) {
+		cout << "TODODD fail to capture map with file of " << dumpFile << endl;
+		return scope.Close(undefined);
+	}
+
+	for (trainingDumpMap::iterator it = map->begin(); it != map->end(); it++)
+	{
+		ips.push_back(it->first);	
+		cout << "TODODD pushing back it->first" << endl;;
+	}
+
+	return scope.Close(cvv8::CastToJS(ips));
 }

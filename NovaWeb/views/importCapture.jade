@@ -1,0 +1,26 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", name="text/css", href="configstyle.css", media="screen")
+  
+block content
+  div
+    form(method="post", action="/importCaptureSave")
+      table(border = "1")
+        thead
+          tr
+            th Include?
+            th Hostile?
+            th UID
+            th Description
+        tbody
+          - for (var i = 0; i < ips.length; i++)
+            tr
+              td
+                input(type="checkbox", style="width:12px;", name="include_#{ips[i]}", value="1", checked)
+              td
+                input(type="checkbox", style="width: 12px", name="hostile_#{ips[i]}", value="1", checked)
+              td #{ips[i]}
+              td
+                input(type="text", name="description_#{ips[i]}", value="")
+      input(type="Submit", value="Confirm Training Data Selection")

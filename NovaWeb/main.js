@@ -13,6 +13,7 @@ var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
 honeydConfig.LoadAllTemplates();
 
 var fs = require('fs');
+var path = require('path');
 var jade = require('jade');
 var express =require('express');
 var util = require('util');
@@ -22,6 +23,8 @@ var LocalStrategy = require('passport-local').Strategy;
 var mysql = require('mysql');
 var validCheck = require('validator').check;
 var sanitizeCheck = require('validator').sanitize;
+	
+var exec = require('child_process').exec;
 
 var Tail = require('tail').Tail;
 var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
@@ -120,6 +123,8 @@ var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 
 
+var initLogWatch = function () {
+var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
 novadLog.on("line", function(data) {
 	try {
 		everyone.now.newLogLine(data);
@@ -136,6 +141,9 @@ novadLog.on("error", function(data) {
 	
 	}
 });
+}
+
+initLogWatch();
 
 
 app.get('/downloadNovadLog', ensureAuthenticated, function (req, res) {
@@ -299,6 +307,46 @@ app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
 	}})
 });
 
+app.get('/importCapture', ensureAuthenticated, function(req, res) {
+	var trainingSession = req.query["trainingSession"];
+	var trainingSession = "/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump";
+	var ips = trainingDb.GetCaptureIPs(trainingSession);
+
+	if (ips == undefined) {
+	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to read capture dump file" }});
+	} else {
+		res.render('importCapture.jade',
+		{ locals : {
+			ips: trainingDb.GetCaptureIPs(trainingSession)
+		}})
+	}
+});
+
+app.post('/importCaptureSave', ensureAuthenticated, function(req, res) {	
+	var hostileSuspects = new Array();
+  	var includedSuspects = new Array();
+	var descriptions = new Object();
+
+  	for(var id in req.body) { 
+		id = id.toString();
+		var type = id.split('_')[0];
+		var ip = id.split('_')[1];
+
+		if (type == 'include') {
+			includedSuspects.push(ip);
+		} else if (type == 'hostile') {
+			hostileSuspects.push(ip);
+		} else if (type == 'description') {
+			descriptions[ip] = req.body[id];
+		} else {
+			console.log("ERROR: Got invalid POST values for importCaptureSave");
+		}
+		
+		
+
+  	}
+});
+
 app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
 	res.render('configWhitelist.jade',
 	{ locals : {
@@ -351,7 +399,7 @@ app.get('/suspects', ensureAuthenticated, function(req, res) {
 });
 
 app.get('/novadlog', ensureAuthenticated, function(req, res) {
-	novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+	initLogWatch();
 	res.render('novadlog.jade');
 });
 
@@ -360,6 +408,7 @@ app.get('/welcome', ensureAuthenticated, function(req, res) {res.render('welcome
 app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.jade');});
 app.get('/setup2', ensureAuthenticated, function(req, res) {renderBasicOptions('setup2.jade', res, req)});
 app.get('/setup3', ensureAuthenticated, function(req, res) {res.render('setup3.jade');});
+app.get('/CaptureTrainingData', ensureAuthenticated, function(req, res) {res.render('captureTrainingData.jade');});
 
 app.post('/createNewUser', ensureAuthenticated, function(req, res) {
 	var password = req.body["password"];
@@ -675,25 +724,31 @@ everyone.now.ClearAllSuspects = function(callback)
 
 
 
-everyone.now.StartHaystack = function(callback)
+everyone.now.StartHaystack = function()
 {
-	nova.StartHaystack();
+	if (!nova.IsHaystackUp()) {
+		nova.StartHaystack();
+	}
 }
 
-everyone.now.StopHaystack = function(callback)
+everyone.now.StopHaystack = function()
 {
 	nova.StopHaystack();
 }
 
 
+everyone.now.IsNovadUp = function()
+{
+	return nova.IsNovadIp();
+}
 
-everyone.now.StartNovad = function(callback)
+everyone.now.StartNovad = function()
 {
 	nova.StartNovad();
 	nova.CheckConnection();
 }
 
-everyone.now.StopNovad = function(callback)
+everyone.now.StopNovad = function()
 {
 	nova.StopNovad();
 	nova.CloseNovadConnection();
@@ -895,7 +950,52 @@ everyone.now.SaveProfile = function(profile, ports, callback) {
 	callback();
 }
 
+everyone.now.GetCaptureSession = function (callback) {
+	var ret = config.ReadSetting("TRAINING_SESSION");
+	callback(ret);
+}
 
+everyone.now.StartTrainingCapture = function (trainingSession, callback) {
+	config.WriteSetting("IS_TRAINING", "1");
+	config.WriteSetting("TRAINING_SESSION", trainingSession.toString());
+
+	// Check if training folder already exists
+	//console.log(Object.keys(fs));
+	path.exists("/usr/share/nova/nova/Data/" + trainingSession, function(exists) {
+		if (exists) {
+			callback("Training session folder already exists for session name of '" + trainingSession + "'");
+			return;
+		} else {
+			// Start the haystack
+			if (!nova.IsHaystackUp()) {
+				nova.StartHaystack();
+			}
+
+			// (Re)start NOVA
+			nova.StopNovad();
+			nova.StartNovad();
+
+			nova.CheckConnection();
+
+			callback();
+		}
+	});
+}
+
+everyone.now.StopTrainingCapture = function (trainingSession, callback) {
+	config.WriteSetting("IS_TRAINING", "0");
+	config.WriteSetting("TRAINING_SESSION", "null");
+	nova.StopNovad();
+
+	exec('novatrainer /usr/share/nova/nova/Data/' + trainingSession + ' /usr/share/nova/nova/Data/' + trainingSession + '/capture.dump', 
+	function (error, stdout, stderr) {
+		callback(stderr);
+	});
+}
+
+everyone.now.GetCaptureIPs = function (trainingSession, callback) {
+	return trainingDb.GetCaptureIPs("/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump");
+}
 
 var distributeSuspect = function(suspect)
 {

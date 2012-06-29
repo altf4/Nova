@@ -19,6 +19,7 @@ public:
 	static v8::Handle<v8::Value> GetHostile(const v8::Arguments& args);
 	static v8::Handle<v8::Value> SetIncluded(const v8::Arguments& args);
 	static v8::Handle<v8::Value> Save(const v8::Arguments& args);
+	static v8::Handle<v8::Value> GetCaptureIPs(const v8::Arguments& args);
 
 private:
 	CustomizeTrainingBinding();
