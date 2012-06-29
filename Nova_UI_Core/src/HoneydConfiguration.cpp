@@ -1526,7 +1526,8 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)) && !(m_profiles.keyExists(newName)))
 	{
 		//Set the profile to the correct name and put the profile in the table
-		m_profiles[newName] = m_profiles[oldName];
+		NodeProfile assign = m_profiles[oldName];
+		m_profiles[newName] = assign;
 		m_profiles[newName].m_name = newName;
 
 		//Find all nodes who use this profile and update to the new one
