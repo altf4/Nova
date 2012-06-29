@@ -733,7 +733,9 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 	}
 
-	while (profilesParsed.size() < m_profiles.size())
+	//XXX what is this while loop for? it does nothing useful
+	//XXX if the previous for loop is wrong iterating over the profile table again won't help...
+	/*while (profilesParsed.size() < m_profiles.size())
 	{
 		for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
@@ -758,10 +760,9 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 				string pString = ProfileToString(&it->second);
 				out << pString;
 				profilesParsed.push_back(it->first);
-
 			}
 		}
-	}
+	}*/
 
 	// Start node section
 	m_nodeProfileIndex = 0;
@@ -1187,13 +1188,14 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 string HoneydConfiguration::ProfileToString(NodeProfile *p)
 {
 	stringstream out;
-
+	//XXX we need to remove white spaces and insert '-' wherever they occur in any written template-name
 	if(!p->m_parentProfile.compare("default") || !p->m_parentProfile.compare(""))
 	{
 		out << "create " << p->m_name << endl;
 	}
 	else
 	{
+		//XXX we need to remove white spaces and insert '-' wherever they occur in any written template-name
 		out << "clone " << p->m_parentProfile << " " << p->m_name << endl;
 	}
 
