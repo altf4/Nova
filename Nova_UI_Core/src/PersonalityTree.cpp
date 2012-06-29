@@ -70,6 +70,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 
 PersonalityTree::~PersonalityTree()
 {
+	delete m_hdconfig;
 }
 
 PersonalityNode *PersonalityTree::GetRootNode()
@@ -149,6 +150,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		stringstream ss;
 		string key = parentProfile->m_name + " " + profileName;
 		ss << i;
+
 		while(!m_hdconfig->RenameProfile(parentProfile->m_name, key))
 		{
 			ss.str("");
