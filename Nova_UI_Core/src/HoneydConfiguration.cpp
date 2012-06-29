@@ -2076,6 +2076,10 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 			}
 		}
 		//Replace the parent's profiles subtree (stores all children) with the new one
+		// XXX There's a segfault happening here; only saw it when there was more than one subtree of default
+		// that was found during scans. Goes through Linux subtree fine, hits the Windows subtree, gets the the
+		// point where profileName is "Windows 7 general purpose" (which is good) and then SIGSEGV here. Might
+		// be running out of memory, as it's not giving a bad tree path or data or anything.
 		parent.m_tree.put_child("profiles", pt);
 		m_profiles[parent.m_name] = parent;
 		//Recursively ascend to update all ancestors
