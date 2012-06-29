@@ -77,18 +77,33 @@ std::string GetLocalIP(const char *dev)
 }
 
 //Removes any instance of the specified character from the front and back of the string
-//		str - pointer to the string you want to modify
+//		str - reference to the string you want to modify
 // 		c - character you wish to remove (Whitespace by default)
 // Note: this function will result in an empty string, if every character is == c
 void Trim(std::string& str, char c)
 {
-	while((!str.empty()) && (str.at(0) == ' '))
+	while((!str.empty()) && (str.at(0) == c))
 	{
 		str = str.substr(1, str.size());
 	}
-	while((!str.empty()) && (str.at(str.size()-1) == ' '))
+	while((!str.empty()) && (str.at(str.size()-1) == c))
 	{
 		str = str.substr(0, str.size()-1);
+	}
+}
+
+//Replaces any instance of the specified character inside the string
+//		str - reference to the string you want to modify
+// 		searchChar - character you wish to replace
+//		replaceVal - character to insert into the string
+void ReplaceChar(std::string& str, char searchChar, char replaceVal)
+{
+	for(uint i = 0; i < str.length(); i++)
+	{
+		if(str.at(i) == searchChar)
+		{
+			str.at(i) = replaceVal;
+		}
 	}
 }
 
