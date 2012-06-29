@@ -74,16 +74,36 @@ block headerAdditions
       return;
     }
     
+    function checkAtLeastOne()
+    {
+      // check that there is at least one subnet or one interface selected here
+      
+      document.getElementById("submitInfo").submit();
+    }
 
 block content
 
   h2 Haystack Autoconfig
   form(id="submitInfo", method="post", action="/scanning")
+    h2 Interfaces to Scan
+    table
+      thead
+        tr 
+          th Interfaces
+      tbody 
+      - for (var i = 0; i < INTERFACES.length; i++)
+          tr 
+            td
+              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interfaces", width=10, checked)
+              #{INTERFACES[i]}
+              
+    hidden(id="length", value=INTERFACES.length)
+    br
     label Number of Haystack Nodes to create: 
     input(type="number", name="numNodes", id="numNodes", width="4", min="1", max="511", onblur="checkIntMax(\"numNodes\")", value="1")
     br
     br
-    label(id="errorLabel", style="color:red;")
+    label(id="errorLabel", style="color:red;") 
     br
     label Additional Subnets to scan:
     input(type="text", id="subnetToAdd", width="20", onkeydown="if (event.keyCode == 13){ document.getElementById('addSubnet').click(); event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.0/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.0/##\");", value="Format: XXX.XXX.XXX.0/##") 
@@ -99,5 +119,5 @@ block content
       
     br
     br
-    input(type="submit", id="startScan", value="Start Scanning", onclick="document.getElementById(\"startScan\").value='Scanning...'; document.getElementById(\"startScan\").setAttribute('disabled', 'true'); document.getElementById(\"submitInfo\").submit()")
+    input(type="submit", id="startScan", value="Start Scanning", onclick="document.getElementById(\"startScan\").value='Scanning...'; document.getElementById(\"startScan\").setAttribute('disabled', 'true'); checkAtLeastOne()")
   

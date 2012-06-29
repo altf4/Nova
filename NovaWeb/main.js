@@ -495,17 +495,18 @@ app.get('/autoConfig', ensureAuthenticated, function(req, res) {
    res.render('hhautoconfig.jade', 
    {
      user: req.user
+     ,INTERFACES: config.ListInterfaces().sort()
    });
 });
 
 app.get('/nodeReview', ensureAuthenticated, function(req, res) {
   
-  console.log("hhconfig.GetGeneratedNodeInfo() == \n" + hhconfig.GetGeneratedNodeInfo());
+  //console.log("hhconfig.GetGeneratedNodeInfo() == \n" + hhconfig.GetGeneratedNodeInfo());
   
   res.render('nodereview.jade', 
   {
     user: req.user
-    ,nodes: hhconfig.GetGeneratedNodeInfo()
+    //,nodes: hhconfig.GetGeneratedNodeInfo()
   });
 });
 
@@ -538,13 +539,22 @@ app.post('/scanning', ensureAuthenticated, function(req, res){
   
   var subnets = req.body["subnets"];
   
+  var interfaces = req.body["interfaces"];
+  
+  if(interfaces === undefined)
+  {
+    interfaces = "";
+    console.log("No interfaces selected.");
+  }
+  
   if(subnets === undefined)
   {
     subnets = "";
+    console.log("No additional subnets selected.");
   }
   
   // Need to add a waiting dialog or something
-  hhconfig.RunAutoScan(numNodes, subnets);
+  // hhconfig.RunAutoScan(numNodes, interfaces, subnets);
   
   res.redirect('/nodeReview');
 });

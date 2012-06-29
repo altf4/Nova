@@ -65,20 +65,21 @@ Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
   
   if(args.Length() < 1)
   {
-    return ThrowException(Exception::TypeError(String::New("Must be invoked with at least one parameter")));
+    return ThrowException(Exception::TypeError(String::New("Must be invoked with at least two parameters")));
   }
   
   std::string numNodes = cvv8::CastFromJS<std::string>(args[0]);
+  std::string interfaces = cvv8::CastFromJS<std::string>(args[1]);
   std::string additionalSubnets;
   
-  if(args.Length() > 1 && !cvv8::CastFromJS<std::string>(args[1]).empty())
+  if(args.Length() > 2 && !cvv8::CastFromJS<std::string>(args[2]).empty())
   {
     additionalSubnets = cvv8::CastFromJS<std::string>(args[1]);
   }
   
-  std::string systemCall = "honeydhostconfig -n " + numNodes;
+  std::string systemCall = "honeydhostconfig -n " + numNodes + " -i " + interfaces;
   
-  if(args.Length() > 1 && !cvv8::CastFromJS<std::string>(args[1]).empty())
+  if(args.Length() > 2 && !cvv8::CastFromJS<std::string>(args[2]).empty())
   {
     systemCall += " -a " + additionalSubnets;
   }
