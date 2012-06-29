@@ -789,7 +789,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			for(uint i = 0; i < it->second.m_ports.size(); i++)
 			{
 				Port prt = m_ports[it->second.m_ports[i]];
-				out << "add " << "CustomNodeProfile-" << m_nodeProfileIndex << " ";
+				out << "add CustomNodeProfile-" << m_nodeProfileIndex << " ";
 				if(!prt.m_type.compare("TCP"))
 				{
 					out << " tcp port ";
@@ -822,20 +822,20 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			// No IP address, use DHCP
 			if(it->second.m_IP == "DHCP" && it->second.m_MAC == "RANDOM")
 			{
-				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << endl;
+				out << "dhcp CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << endl;
 			}
 			else if(it->second.m_IP == "DHCP" && it->second.m_MAC != "RANDOM")
 			{
-				out << "dhcp " << "CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << " ethernet \"" << it->second.m_MAC << "\"" << endl;
+				out << "dhcp CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << " ethernet \"" << it->second.m_MAC << "\"" << endl;
 			}
 			else if(it->second.m_IP != "DHCP" && it->second.m_MAC == "RANDOM")
 			{
-				out << "bind " << it->second.m_IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << endl;
+				out << "bind " << it->second.m_IP << " CustomNodeProfile-" << m_nodeProfileIndex << endl;
 			}
 			else if(it->second.m_IP != "DHCP" && it->second.m_MAC != "RANDOM")
 			{
 				out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex << " ethernet \"" << it->second.m_MAC << "\"" << endl;
-				out << "bind " << it->second.m_IP << " "  << "CustomNodeProfile-" << m_nodeProfileIndex << it->second.m_IP << endl;
+				out << "bind " << it->second.m_IP << " CustomNodeProfile-" << m_nodeProfileIndex << it->second.m_IP << endl;
 			}
 		}
 	}
