@@ -111,6 +111,7 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 
 	profileToReturn.m_name = m_key;
 	profileToReturn.m_parentProfile = parentProfile.m_name;
+	profileToReturn.m_generated = true;
 
 	m_redundant = true;
 

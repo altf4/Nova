@@ -499,14 +499,11 @@ app.get('/autoConfig', ensureAuthenticated, function(req, res) {
    });
 });
 
-app.get('/nodeReview', ensureAuthenticated, function(req, res) {
-  
-  //console.log("hhconfig.GetGeneratedNodeInfo() == \n" + hhconfig.GetGeneratedNodeInfo());
-  
+app.get('/nodeReview', ensureAuthenticated, function(req, res) { 
   res.render('nodereview.jade', 
   {
     user: req.user
-    //,nodes: hhconfig.GetGeneratedNodeInfo()
+    ,profiles: hhconfig.GetGeneratedNodeInfo()
   });
 });
 
@@ -554,7 +551,7 @@ app.post('/scanning', ensureAuthenticated, function(req, res){
   }
   
   // Need to add a waiting dialog or something
-  // hhconfig.RunAutoScan(numNodes, interfaces, subnets);
+  hhconfig.RunAutoScan(numNodes, interfaces, subnets);
   
   res.redirect('/nodeReview');
 });

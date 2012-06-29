@@ -227,7 +227,8 @@ private:
     bool LoadProfilesTemplate();
     //load current honeyd configuration group
     bool LoadNodesTemplate();
-
+    //load the m_nodeKeys vectors for the profiles in the ProfilesTable
+    void LoadNodeKeys();
 
     //set profile configurations
     bool LoadProfileSettings(boost::property_tree::ptree *ptr, NodeProfile *p);

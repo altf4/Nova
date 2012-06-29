@@ -2,6 +2,7 @@
 <profiles>
 	<profile>
 		<name>default</name>
+		<generated>false</generated>
 		<set>
 			<TCP>block</TCP>
 			<UDP>block</UDP>
@@ -15,6 +16,7 @@
 		<profiles>
 			<profile>
 				<name>WinServer</name>
+				<generated>false</generated>
 				<set>
 					<TCP>reset</TCP>
 					<personality>Microsoft Windows 7</personality>
@@ -38,6 +40,7 @@
 			</profile>
 			<profile>
 				<name>BSDServer</name>
+				<generated>false</generated>
 				<set>
 					<TCP>reset</TCP>
 					<personality>Linux 2.6.11 - 2.6.20</personality>
@@ -58,6 +61,7 @@
 			</profile>
 			<profile>
 				<name>LinuxServer</name>
+				<generated>false</generated>
 				<set>
 					<TCP>reset</TCP>
 					<personality>Linux 2.6.11 - 2.6.20</personality>
@@ -78,6 +82,7 @@
 			</profile>
 			<profile>
 				<name>Doppelganger</name>
+				<generated>false</generated>
 				<set>
 					<TCP>reset</TCP>
 					<personality>Microsoft Windows 7</personality>

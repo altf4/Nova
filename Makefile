@@ -68,9 +68,11 @@ hhconfig-debug:
 	$(MAKE) -C HoneydHostConfig/Debug
 
 install-hhconfig-debug:
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin
 
 install-hhconfig-release:
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install HoneydHostConfig/Release/honeydhostconfig $(DESTDIR)/usr/bin
 
 #Unit tests

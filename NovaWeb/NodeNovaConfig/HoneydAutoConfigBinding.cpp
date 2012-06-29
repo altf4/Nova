@@ -51,9 +51,6 @@ Handle<Value> HoneydAutoConfigBinding::New(const Arguments& args)
 
   HoneydAutoConfigBinding* obj = new HoneydAutoConfigBinding();
 
-  obj->m_hdconfig = new Nova::HoneydConfiguration();
-  obj->m_hdconfig->LoadAllTemplates();
-
   obj->Wrap(args.This());
 
   return args.This();
@@ -100,6 +97,10 @@ Handle<Value> HoneydAutoConfigBinding::GetGeneratedNodeInfo(const Arguments& arg
   HandleScope scope;
   
   HoneydAutoConfigBinding* obj = ObjectWrap::Unwrap<HoneydAutoConfigBinding>(args.This());
+  
+  obj->m_hdconfig = new Nova::HoneydConfiguration();
+  
+  obj->m_hdconfig->LoadAllTemplates();
   
   Handle<Value> ret = cvv8::CastToJS(obj->m_hdconfig->GeneratedProfilesStrings());
   

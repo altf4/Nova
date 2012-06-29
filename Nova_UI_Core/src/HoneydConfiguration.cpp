@@ -185,7 +185,17 @@ bool HoneydConfiguration::LoadAllTemplates()
 	LoadProfilesTemplate();
 	LoadNodesTemplate();
 
+	//LoadNodeKeys();
+
 	return true;
+}
+
+void HoneydConfiguration::LoadNodeKeys()
+{
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		m_profiles[it->second.m_pfile].m_nodeKeys.push_back(it->first);
+	}
 }
 
 //Loads ports from file
@@ -469,6 +479,8 @@ bool HoneydConfiguration::LoadProfileChildren(string parentKey)
 			NodeProfile nodeProf = m_profiles[parentKey];
 			nodeProf.m_tree = value.second;
 			nodeProf.m_parentProfile = parentKey;
+
+			nodeProf.m_generated = value.second.get<bool>("generated");
 
 			//Gets name, initializes DHCP
 			nodeProf.m_name = value.second.get<std::string>("name");
@@ -1071,24 +1083,29 @@ vector<string> HoneydConfiguration::GeneratedProfilesStrings()
 
 	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if(!it->second.m_name.empty())
+		if(it->second.m_generated)
 		{
 			string pushToReturnVector;
 
 			pushToReturnVector += "Name: " + it->second.m_name + "\n";
 			pushToReturnVector += "Personality: " + it->second.m_personality + "\n";
 			pushToReturnVector += "MAC Vendor:  " + it->second.m_ethernet + "\n";
-			pushToReturnVector += "Associated Nodes:\n";
 
-			for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
+			if(!it->second.m_nodeKeys.empty())
 			{
-				pushToReturnVector += "\t" + it->second.m_nodeKeys[i] + "\n";
+				pushToReturnVector += "Associated Nodes:\n";
 
-				for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); i++)
+				for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
 				{
-					pushToReturnVector += "\t\t" + m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
+					pushToReturnVector += "\t" + it->second.m_nodeKeys[i] + "\n";
+
+					for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); i++)
+					{
+						pushToReturnVector += "\t\t" + m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
+					}
 				}
 			}
+
 			ret.push_back(pushToReturnVector);
 		}
 	}
@@ -1115,6 +1132,8 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 				//Root profile has no parent
 				nodeProf.m_parentProfile = "";
 				nodeProf.m_tree = value.second;
+
+				nodeProf.m_generated = value.second.get<bool>("generated");
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				nodeProf.m_name = value.second.get<std::string>("name");
@@ -2110,6 +2129,9 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	{
 		temp.put<std::string>("name", p.m_name);
 	}
+
+	temp.put<bool>("generated", p.m_generated);
+
 	if(p.m_tcpAction.compare("") && !p.m_inherited[TCP_ACTION])
 	{
 		temp.put<std::string>("set.TCP", p.m_tcpAction);
