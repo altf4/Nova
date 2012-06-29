@@ -128,7 +128,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		tempProf.m_name = key;
 	}
 
-	if(!node->m_redundant || (parent == &m_root))
+	if(!node->m_redundant || (parent == &m_root) || (parent->m_children.size() != 1))
 	{
 		if(!m_hdconfig->AddProfile(&tempProf))
 		{
@@ -143,9 +143,8 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 			}
 		}
 	}
-	else if(parent->m_children.size() == 1 && parent->m_key.compare("default"))
+	else
 	{
-		// Probably not the right way of going about this
 		uint16_t i = 1;
 		stringstream ss;
 		string key = parentProfile->m_name + " " + profileName;
