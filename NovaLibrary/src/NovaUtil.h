@@ -41,6 +41,8 @@ std::string GetLocalIP(const char *dev);
 // Note: this function will result in an empty string, if every character is == c
 void Trim(std::string& str, char c = ' ');
 
+void ReplaceChar(std::string& str, char searchChar, char replaceVal);
+
 }
 
 #endif /* NOVAUTIL_H_ */

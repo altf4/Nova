@@ -723,7 +723,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 	vector<string> profilesParsed;
 
-	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		if(!it->second.m_parentProfile.compare(""))
 		{
@@ -733,15 +733,13 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 	}
 
-	//XXX what is this while loop for? it does nothing useful
-	//XXX if the previous for loop is wrong iterating over the profile table again won't help...
-	/*while (profilesParsed.size() < m_profiles.size())
+	while(profilesParsed.size() < m_profiles.size())
 	{
-		for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
 			bool selfMatched = false;
 			bool parentFound = false;
-			for (uint i = 0; i < profilesParsed.size(); i++)
+			for(uint i = 0; i < profilesParsed.size(); i++)
 			{
 				if(!it->second.m_parentProfile.compare(profilesParsed[i]))
 				{
@@ -762,11 +760,11 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 				profilesParsed.push_back(it->first);
 			}
 		}
-	}*/
+	}
 
 	// Start node section
 	m_nodeProfileIndex = 0;
-	for (NodeTable::iterator it = m_nodes.begin(); (it != m_nodes.end()) && (m_nodeProfileIndex < (uint)(~0)); it++)
+	for(NodeTable::iterator it = m_nodes.begin(); (it != m_nodes.end()) && (m_nodeProfileIndex < (uint)(~0)); it++)
 	{
 		m_nodeProfileIndex++;
 		if(!it->second.m_enabled)
@@ -783,8 +781,10 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 		else
 		{
+			string profName = it->second.m_pfile;
+			ReplaceChar(profName, ' ', '-');
 			//Clone a custom profile for a node
-			out << "clone " << it->second.m_pfile << " CustomNodeProfile-" << m_nodeProfileIndex << endl;
+			out << "clone CustomNodeProfile-" << m_nodeProfileIndex << " " << profName << endl;
 
 			//Add any custom port settings
 			for(uint i = 0; i < it->second.m_ports.size(); i++)
@@ -900,7 +900,6 @@ bool HoneydConfiguration::LoadSubnets(ptree *propTree)
 		LOG(ERROR, "Problem loading subnets: " + string(e.what()), "");
 		return false;
 	}
-
 	return true;
 }
 
@@ -1092,7 +1091,6 @@ vector<string> HoneydConfiguration::GeneratedProfilesStrings()
 			ret.push_back(pushToReturnVector);
 		}
 	}
-
 	return ret;
 }
 
@@ -1188,35 +1186,38 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 string HoneydConfiguration::ProfileToString(NodeProfile *p)
 {
 	stringstream out;
-	//XXX we need to remove white spaces and insert '-' wherever they occur in any written template-name
-	if(!p->m_parentProfile.compare("default") || !p->m_parentProfile.compare(""))
+	string profName = p->m_name;
+	string parentProfName = p->m_parentProfile;
+	ReplaceChar(profName, ' ', '-');
+	ReplaceChar(parentProfName, ' ', '-');
+
+	if(!parentProfName.compare("default") || !parentProfName.compare(""))
 	{
-		out << "create " << p->m_name << endl;
+		out << "create " << profName << endl;
 	}
 	else
 	{
-		//XXX we need to remove white spaces and insert '-' wherever they occur in any written template-name
-		out << "clone " << p->m_parentProfile << " " << p->m_name << endl;
+		out << "clone " << profName << " " << parentProfName << endl;
 	}
 
-	out << "set " << p->m_name  << " default tcp action " << p->m_tcpAction << endl;
-	out << "set " << p->m_name  << " default udp action " << p->m_udpAction << endl;
-	out << "set " << p->m_name  << " default icmp action " << p->m_icmpAction << endl;
+	out << "set " << profName  << " default tcp action " << p->m_tcpAction << endl;
+	out << "set " << profName  << " default udp action " << p->m_udpAction << endl;
+	out << "set " << profName  << " default icmp action " << p->m_icmpAction << endl;
 
 	if(p->m_personality.compare(""))
 	{
-		out << "set " << p->m_name << " personality \"" << p->m_personality << '"' << endl;
+		out << "set " << profName << " personality \"" << p->m_personality << '"' << endl;
 	}
 
 	if(p->m_ethernet.compare(""))
 	{
-		out << "set " << p->m_name << " ethernet \"" << p->m_ethernet << '"' << endl;
+		out << "set " << profName << " ethernet \"" << p->m_ethernet << '"' << endl;
 	}
 
 
 	if(p->m_dropRate.compare(""))
 	{
-		out << "set " << p->m_name << " droprate in " << p->m_dropRate << endl;
+		out << "set " << profName << " droprate in " << p->m_dropRate << endl;
 	}
 
 	for (uint i = 0; i < p->m_ports.size(); i++)
@@ -1224,7 +1225,7 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 		// Only include non-inherited ports
 		if(!p->m_ports[i].second.first)
 		{
-			out << "add " << p->m_name;
+			out << "add " << profName;
 			if(!m_ports[p->m_ports[i].first].m_type.compare("TCP"))
 			{
 				out << " tcp port ";
