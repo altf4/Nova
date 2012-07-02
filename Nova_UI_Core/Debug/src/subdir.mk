@@ -11,6 +11,7 @@ CPP_SRCS += \
 ../src/OsPersonalityDb.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
+../src/TrainingDump.cpp \
 ../src/VendorMacDb.cpp 
 
 OBJS += \
@@ -21,6 +22,7 @@ OBJS += \
 ./src/OsPersonalityDb.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
+./src/TrainingDump.o \
 ./src/VendorMacDb.o 
 
 CPP_DEPS += \
@@ -31,6 +33,7 @@ CPP_DEPS += \
 ./src/OsPersonalityDb.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \
+./src/TrainingDump.d \
 ./src/VendorMacDb.d 
 
 

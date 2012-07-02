@@ -8,6 +8,7 @@
 #include "NovaNode.h"
 #include "CustomizeTraining.h"
 #include "WhitelistConfigurationBinding.h"
+#include "TrainingDumpBinding.h"
 
 using namespace v8;
 
@@ -21,6 +22,7 @@ void InitAll(Handle<Object> target)
 	HoneydProfileBinding::Init(target);
 	CustomizeTrainingBinding::Init(target);
 	WhitelistConfigurationBinding::Init(target);
+	TrainingDumpBinding::Init(target);
 }
 
 NODE_MODULE(novaconfig, InitAll)

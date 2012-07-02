@@ -27,6 +27,7 @@ block headerAdditions
                 buttonElement.disabled = true;
                 now.StopTrainingCapture(sessionNameElement.value, trainingCaptureStopped);
                 trainingStarted = false;
+
             }
         }
 
@@ -49,6 +50,7 @@ block headerAdditions
             buttonElement.disabled = false;
             statusElement.innerHTML = "Status: Capture session stopped";
             alert("Output from novatrainer:" + result);
+            window.location = "/importCapture?trainingSession=" + sessionNameElement.value;
         }
 
         require(["dojo/domReady!", "dojo/ready"], function(){

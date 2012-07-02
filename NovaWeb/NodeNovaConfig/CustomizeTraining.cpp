@@ -171,14 +171,12 @@ v8::Handle<Value> CustomizeTrainingBinding::GetCaptureIPs(const Arguments& args)
 
 	trainingDumpMap* map = TrainingData::ParseEngineCaptureFile(dumpFile);
 	if (map == NULL) {
-		cout << "TODODD fail to capture map with file of " << dumpFile << endl;
 		return scope.Close(undefined);
 	}
 
 	for (trainingDumpMap::iterator it = map->begin(); it != map->end(); it++)
 	{
 		ips.push_back(it->first);	
-		cout << "TODODD pushing back it->first" << endl;;
 	}
 
 	return scope.Close(cvv8::CastToJS(ips));

@@ -5,7 +5,7 @@ block headerAdditions
   
 block content
   div
-    form(method="post", action="/importCaptureSave")
+    form(method="post", action="/importCaptureSave?trainingSession=#{trainingSession}")
       table(border = "1")
         thead
           tr

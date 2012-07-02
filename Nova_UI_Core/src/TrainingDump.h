@@ -16,12 +16,8 @@
 // Description :
 //============================================================================
 
-// !!!WARNING!!!
-// This interface has been deprecated. Use TrainingDump.cpp instead whenever possible.
-// !!!WARNING!!!
-
-#ifndef TRAININGDATA_H_
-#define TRAININGDATA_H_
+#ifndef TRAININGDUMP_H_
+#define TRAININGDUMP_H_
 
 #include <string>
 #include <vector>
@@ -29,38 +25,42 @@
 #include "HashMapStructs.h"
 
 // Header for training data
-struct _trainingSuspect
+struct _trainingFileSuspect
 {
 	bool isHostile;
 	bool isIncluded;
 	std::string uid;
 	std::string description;
-	std::vector<std::string>* points;
+	std::vector<std::string> points;
 };
 
-typedef struct _trainingSuspect trainingSuspect;
+typedef struct _trainingFileSuspect trainingFileSuspect;
 
-typedef Nova::HashMap<std::string, trainingSuspect*, std::tr1::hash<std::string>, eqstr > trainingSuspectMap;
-typedef Nova::HashMap<std::string, std::vector<std::string>*, std::tr1::hash<std::string>, eqstr > trainingDumpMap;
+typedef Nova::HashMap<std::string, trainingFileSuspect*, std::tr1::hash<std::string>, eqstr > trainingFileSuspectMap;
 
-class TrainingData
+class TrainingDump
 {
 public:
-	// Convert CE dump to Training DB format and append it
-	static bool CaptureToTrainingDb(std::string dbFile, trainingSuspectMap* selectionOptions);
-
 	// Parse a CE dump file
-	static trainingDumpMap* ParseEngineCaptureFile(std::string captureFile);
+	TrainingDump();
 
-	// Parse a Training DB file
-	static trainingSuspectMap* ParseTrainingDb(std::string dbPath);
+	bool LoadCaptureFile(std::string pathDumpFile);
 
-	// Create a CE data file from a subset of the Training DB file
-	static std::string MakaDataFile(trainingSuspectMap& db);
+	bool SetDescription(std::string uid, std::string description);
+	bool SetIsHostile(std::string uid, bool isHostile);
+	bool SetIsIncluded(std::string uid, bool isIncluded);
+
+	bool SetAllIsIncluded(bool isIncluded);
+	bool SetAllIsHostile(bool isHostile);
+
+	bool SaveToDb(std::string dbFile);
 
 	// Removes consecutive points who's squared distance is less than a specified distance
-	static void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold);
+	void ThinTrainingPoints(double distanceThreshhold);
+
+private:
+	trainingFileSuspectMap* trainingTable;
 
 };
 
-#endif /* TRAININGDATA_H_ */
+#endif /* TRAININGDUMP_H_ */

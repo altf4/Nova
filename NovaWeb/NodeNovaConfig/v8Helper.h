@@ -68,7 +68,7 @@ v8::Handle<v8::Value> InvokeMethod(const v8::Arguments& args)
 	}
 
 	NATIVE_P1 p1 = cvv8::CastFromJS<NATIVE_P1>( args[0] );
-	NATIVE_P2 p2 = cvv8::CastFromJS<NATIVE_P2>( args[0] );
+	NATIVE_P2 p2 = cvv8::CastFromJS<NATIVE_P2>( args[1] );
 
 	Handle<v8::Value> result = cvv8::CastToJS(F(p1, p2));
 	return scope.Close(result);
@@ -218,6 +218,34 @@ struct InvokeWrappedMethod_impl_1
 		}
 };
 
+
+// Invocation of member methods,
+// two-argument version.
+template <typename NATIVE_RETURN, typename T, typename CHILD_TYPE, typename NATIVE_P1, typename NATIVE_P2, NATIVE_RETURN (CHILD_TYPE::*F)(NATIVE_P1, NATIVE_P2)> 
+struct InvokeWrappedMethod_impl_2
+{
+	static v8::Handle<v8::Value> InvokeWrappedMethod(const v8::Arguments& args)
+		{
+		using namespace v8;
+		HandleScope scope;
+		T* nativeHandler = node::ObjectWrap::Unwrap<T>(args.This());
+
+		if( args.Length() < 2 )
+		{
+			return ThrowException(Exception::TypeError(String::New("Must be invoked with two parameter")));
+		}
+
+		NATIVE_P1 p1 = cvv8::CastFromJS<NATIVE_P1>(args[0]);
+		NATIVE_P2 p2 = cvv8::CastFromJS<NATIVE_P2>(args[1]);
+
+
+		CHILD_TYPE *handler = nativeHandler->GetChild();
+
+		Handle<v8::Value> result = cvv8::CastToJS(  (  (handler)->*(F)  )(p1, p2)  );
+		return scope.Close(result);
+		}
+};
+
 // Invocation of member methods,
 // zero argument version.
 //
@@ -238,6 +266,12 @@ template <typename NATIVE_RETURN, typename T, typename CHILD_TYPE, typename NATI
 static v8::Handle<v8::Value> InvokeWrappedMethod(const v8::Arguments& args)
 {
 	return InvokeWrappedMethod_impl_1<NATIVE_RETURN, T, CHILD_TYPE, NATIVE_P1, F >::InvokeWrappedMethod(args);
+}
+
+template <typename NATIVE_RETURN, typename T, typename CHILD_TYPE, typename NATIVE_P1, typename NATIVE_P2, NATIVE_RETURN (CHILD_TYPE::*F)(NATIVE_P1, NATIVE_P2)> 
+static v8::Handle<v8::Value> InvokeWrappedMethod(const v8::Arguments& args)
+{
+	return InvokeWrappedMethod_impl_2<NATIVE_RETURN, T, CHILD_TYPE, NATIVE_P1, NATIVE_P2, F >::InvokeWrappedMethod(args);
 }
 
 

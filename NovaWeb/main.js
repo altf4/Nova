@@ -26,6 +26,7 @@ var sanitizeCheck = require('validator').sanitize;
 	
 var exec = require('child_process').exec;
 
+
 var Tail = require('tail').Tail;
 var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
 
@@ -299,6 +300,7 @@ app.get('/addHoneydProfile', ensureAuthenticated, function(req, res) {
 });
 
 app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
+	trainingDb = new novaconfig.CustomizeTrainingBinding();
 	res.render('customizeTraining.jade',
 	{ locals : {
 		desc: trainingDb.GetDescriptions()
@@ -309,7 +311,7 @@ app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
 
 app.get('/importCapture', ensureAuthenticated, function(req, res) {
 	var trainingSession = req.query["trainingSession"];
-	var trainingSession = "/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump";
+	trainingSession = "/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump";
 	var ips = trainingDb.GetCaptureIPs(trainingSession);
 
 	if (ips == undefined) {
@@ -317,7 +319,8 @@ app.get('/importCapture', ensureAuthenticated, function(req, res) {
 	} else {
 		res.render('importCapture.jade',
 		{ locals : {
-			ips: trainingDb.GetCaptureIPs(trainingSession)
+			ips: trainingDb.GetCaptureIPs(trainingSession),
+			trainingSession: req.query["trainingSession"] 
 		}})
 	}
 });
@@ -326,25 +329,73 @@ app.post('/importCaptureSave', ensureAuthenticated, function(req, res) {
 	var hostileSuspects = new Array();
   	var includedSuspects = new Array();
 	var descriptions = new Object();
+	
+	var trainingSession = req.query["trainingSession"];
+	trainingSession = "/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump";
+	
+	var trainingDump = new novaconfig.TrainingDumpBinding();
+	if (!trainingDump.LoadCaptureFile(trainingSession)) {
+	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to parse dump file " + trainingSession }});
+	}
 
-  	for(var id in req.body) { 
+	trainingDump.SetAllIsIncluded(false);
+	trainingDump.SetAllIsHostile(false);
+
+  	for(var id in req.body) {
 		id = id.toString();
 		var type = id.split('_')[0];
 		var ip = id.split('_')[1];
 
 		if (type == 'include') {
 			includedSuspects.push(ip);
+			trainingDump.SetIsIncluded(ip, true);
 		} else if (type == 'hostile') {
 			hostileSuspects.push(ip);
+			trainingDump.SetIsHostile(ip, true);
 		} else if (type == 'description') {
 			descriptions[ip] = req.body[id];
+			trainingDump.SetDescription(ip, req.body[id]);
 		} else {
 			console.log("ERROR: Got invalid POST values for importCaptureSave");
 		}
-		
-		
-
   	}
+
+	// TODO: Don't hard code this path
+	if (!trainingDump.SaveToDb("/usr/share/nova/nova/Config/training.db")) {
+	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to save to training db"}});
+	}
+
+	res.render('saveRedirect.jade', { locals: {redirectLink: "/customizeTraining"}})	
+
+});
+
+app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
+	res.render('configWhitelist.jade',
+	{ locals : {
+		whitelistedIps: whitelistConfig.GetIps(),
+		whitelistedRanges: whitelistConfig.GetIpRanges()
+	}})
+});
+
+app.get('/editUsers', ensureAuthenticated, function(req, res) {
+	var usernames = new Array();
+  client.query(
+    'SELECT user FROM ' + credTb,
+    function (err, results, fields) {
+      if(err) {
+        throw err;
+      }
+
+	var usernames = new Array();
+	for (var i in results) {
+		usernames.push(results[i].user);
+	}
+	res.render('editUsers.jade',
+	{ locals: {
+		usernames: usernames
+	}});
+    } 
+  );
 });
 
 app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
@@ -1137,4 +1188,3 @@ setInterval(function() {
 
 		}
 }, 5000);
-
