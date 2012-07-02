@@ -50,6 +50,7 @@ struct ProfileCounter
 	Nova::NodeProfile m_profile;
 	double m_increment;
 	double m_count;
+	uint m_numAvgPorts;
 	std::vector<struct PortCounter> m_portCounters;
 	std::vector<struct MacCounter> m_macCounters;
 };

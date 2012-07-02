@@ -223,6 +223,7 @@ struct Node
 	std::string m_interface;
 	std::string m_pfile;
 	std::vector<std::string> m_ports;
+	std::vector<bool> m_isPortInherited;
 	std::string m_IP;
 	std::string m_MAC;
 	in_addr_t m_realIP;

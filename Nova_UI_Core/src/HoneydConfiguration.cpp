@@ -965,6 +965,7 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 					for(uint i = 0; i < nodeProf.m_ports.size(); i++)
 					{
 						node.m_ports.push_back(nodeProf.m_ports[i].first);
+						node.m_isPortInherited.push_back(false);
 					}
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
@@ -1834,6 +1835,7 @@ bool HoneydConfiguration::AddNewNode(Node node)
 	}
 
 	m_nodes[newNode.m_name] = newNode;
+
 	if(newNode.m_sub != "")
 	{
 		m_subnets[newNode.m_sub].m_nodes.push_back(newNode.m_name);
