@@ -95,6 +95,7 @@ clean: clean-debug clean-release clean-test
 	rm -f NovaGUI/novagui
 	rm -f Novad/novad
 	rm -f Nova_UI_Core/libNova_UI_Core.so
+	rm -f NovaLibrary/libNovaLibrary.a
 
 clean-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
@@ -147,6 +148,8 @@ install-data:
 	install Installer/nova_init $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
+	mkdir -p $(DESTDIR)/etc/sysctl.d/
+	mkdir -p $(DESTDIR)/etc/bash_completion.d/
 	#Install permissions
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
