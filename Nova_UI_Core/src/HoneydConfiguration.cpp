@@ -185,7 +185,7 @@ bool HoneydConfiguration::LoadAllTemplates()
 	LoadProfilesTemplate();
 	LoadNodesTemplate();
 
-	//LoadNodeKeys();
+	LoadNodeKeys();
 
 	return true;
 }
@@ -1098,7 +1098,7 @@ vector<string> HoneydConfiguration::GeneratedProfilesStrings()
 				{
 					pushToReturnVector += "\t" + it->second.m_nodeKeys[i] + "\n";
 
-					for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); i++)
+					for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); j++)
 					{
 						pushToReturnVector += "\t\t" + m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
 					}

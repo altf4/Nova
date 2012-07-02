@@ -550,10 +550,18 @@ app.post('/scanning', ensureAuthenticated, function(req, res){
     console.log("No additional subnets selected.");
   }
   
-  // Need to add a waiting dialog or something
-  hhconfig.RunAutoScan(numNodes, interfaces, subnets);
+  console.log(subnets);
   
-  res.redirect('/nodeReview');
+  if(subnets === "" && interfaces === "")
+  {
+    res.redirect('/autoConfig');
+  }
+  else
+  {
+    hhconfig.RunAutoScan(numNodes, interfaces, subnets);
+  
+    res.redirect('/nodeReview'); 
+  }
 });
 
 app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
