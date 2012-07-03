@@ -1,0 +1,27 @@
+ #!/bin/bash
+
+set -e
+
+PACKAGE="nova-12.6"
+
+echo $PACKAGE
+
+make clean
+make clean-web
+
+#cd into the directory where the script is
+cd "$(dirname "$PACKAGE")"
+
+# copy the files
+mkdir $PACKAGE
+cp -a $(ls -1 | grep -v $PACKAGE | grep -v "debian" | grep -v "nova_package") $PACKAGE
+
+#replace the Makefile with the debian version
+cp debian/Makefile $PACKAGE
+
+#tarball it up!
+tar -zcf $PACKAGE.tar.gz $PACKAGE
+
+cd debian
+
+#dpkg-buildpackage

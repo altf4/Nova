@@ -114,3 +114,6 @@ NovaLibrary/libNovaLibrary.a
 /Installer/Write/nova/.nova/Config/data.csv
 /Novad/core
 /NovaTrainer/Debug/novatrainer
+
+#debian
+/nova-*
