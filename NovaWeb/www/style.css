@@ -10,6 +10,9 @@ body {
     background: white;
     color: #333;
 }
+p {
+	font-family:Consolas,Menlo,"Liberation Mono",Courier,monospace;
+}
 
 button {
     -webkit-transition: background-color 0.2s linear;

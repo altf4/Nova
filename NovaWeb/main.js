@@ -460,6 +460,7 @@ app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.j
 app.get('/setup2', ensureAuthenticated, function(req, res) {renderBasicOptions('setup2.jade', res, req)});
 app.get('/setup3', ensureAuthenticated, function(req, res) {res.render('setup3.jade');});
 app.get('/CaptureTrainingData', ensureAuthenticated, function(req, res) {res.render('captureTrainingData.jade');});
+app.get('/about', ensureAuthenticated, function(req, res) {res.render('about.jade');});
 
 app.post('/createNewUser', ensureAuthenticated, function(req, res) {
 	var password = req.body["password"];
