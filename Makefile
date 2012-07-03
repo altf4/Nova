@@ -133,14 +133,13 @@ clean-web:
 
 #Installation (requires root)
 install: install-data install-docs
-	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
-	install NovaTrainer/Debug/novatrainer $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
+	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	sh Installer/postinst
 	
 install-data:
