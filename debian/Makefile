@@ -8,7 +8,7 @@ release:
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
 
-release-helper: novad-release novagui-release novacli-release novatrainer-release
+release-helper: novad-release novagui-release novacli-release
 
 #Debug target
 debug:
@@ -16,7 +16,7 @@ debug:
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
 
-debug-helper: novad-debug novagui-debug novacli-debug novatrainer-debug
+debug-helper: novad-debug novagui-debug novacli-debug
 
 #Nova Library
 novalib-release:
@@ -53,15 +53,6 @@ novacli-release:
 novacli-debug:
 	$(MAKE) -C NovaCLI/Debug
 	cp NovaCLI/Debug/novacli NovaCLI/
-
-# Nova trainer
-novatrainer-debug:
-	$(MAKE) -C NovaTrainer/Debug
-	cp NovaTrainer/Debug/novatrainer NovaTrainer/novatrainer
-
-novatrainer-release:
-	$(MAKE) -C NovaTrainer/Release
-	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
 #novagui
 novagui-release:
@@ -111,7 +102,6 @@ clean-debug:
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
 	$(MAKE) -C NovaCLI/Debug clean
-	$(MAKE) -C NovaTrainer/Debug clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 	rm -f Nova_UI_Core/Debug/Nova_UI_Core
@@ -121,7 +111,6 @@ clean-release:
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
 	$(MAKE) -C NovaCLI/Release clean
-	$(MAKE) -C NovaTrainer/Release clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 	rm -f Nova_UI_Core/Release/Nova_UI_Core
@@ -150,8 +139,7 @@ install: install-data install-docs
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
-	sh debian/postinst
+	#sh debian/postinst
 
 install-data:
 	#make folder in etc with path locations to nova files
@@ -218,7 +206,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 
 uninstall-permissions:
-	sh Installer/postrm
+	#sh Installer/postrm
 
 # Reinstall nova without messing up the permissions
 reinstall: uninstall-files

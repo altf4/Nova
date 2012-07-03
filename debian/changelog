@@ -1,0 +1,8 @@
+nova (12.6-1) unstable; urgency=low
+
+  * Beta Release: 12.6, May 2012 release.
+  * Many performance improvements
+  * Upgraded messaging subsystem
+  * More featured WebUI
+
+ -- Dan Petro <dan.petro@datasoft.com>  Fri, 01 Jun 2012 10:17:16 -0700
