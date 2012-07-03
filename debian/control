@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 8.0.0)
 Standards-Version: 3.9.2
 Homepage: https://github.com/DataSoft/Nova
 
-Package: Nova
+Package: nova
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libnotify4, honeyd, libcap2-bin, mysql-server
 Description: Anti-Reconnaissance System

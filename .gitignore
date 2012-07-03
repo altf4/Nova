@@ -116,4 +116,9 @@ NovaLibrary/libNovaLibrary.a
 /NovaTrainer/Debug/novatrainer
 
 #debian
-/nova-*
+/nova_1*
+/debian/nova.postinst.debhelper
+/debian/nova.postrm.debhelper
+/debian/nova.substvars
+debian/files
+debian/nova/*

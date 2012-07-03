@@ -104,6 +104,7 @@ clean-debug:
 	$(MAKE) -C NovaCLI/Debug clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
+	rm -f Nova_UI_Core/Debug/Nova_UI_Core
 
 clean-release:
 	$(MAKE) -C NovaLibrary/Release clean
@@ -112,13 +113,23 @@ clean-release:
 	$(MAKE) -C NovaCLI/Release clean
 	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
+	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
 clean-test:
 	rm -fr NovaTest/NovadSource/*
+	rm -f NovaTest/Debug/NovadSource/*.d
+	rm -f NovaTest/Debug/NovadSource/*.o
+	rm -f NovaTest/Debug/src/NovadSource/*.d
+	rm -f NovaTest/Debug/src/NovadSource/*.o
 	$(MAKE) -C NovaTest/Debug clean
 
 clean-web:
 	cd NovaWeb/NodeNovaConfig; node-waf clean
+	rm -rf NovaWeb/node_modules/forever/node_modules/utile/node_modules/.bin/
+	rm -rf NovaWeb/node_modules/forever/node_modules/.bin
+	rm -rf NovaWeb/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
+	rm -rf NovaWeb/node_modules/.bin/
+
 
 #Installation (requires root)
 install: install-data install-docs
@@ -128,7 +139,7 @@ install: install-data install-docs
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	#sh Installer/postinst
+	#sh debian/postinst
 
 install-data:
 	#make folder in etc with path locations to nova files
@@ -142,6 +153,7 @@ install-data:
 	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
+	mkdir -p $(DESTDIR)/usr/bin
 	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
 	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
 	cp -fup  Installer/Write/nova_mailer $(DESTDIR)/usr/bin
@@ -173,6 +185,7 @@ install-docs:
 
 install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
+	mkdir -p $(DESTDIR)/usr/bin
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
 #Uninstall

@@ -2,7 +2,7 @@
 
 set -e
 
-PACKAGE="nova-12.6"
+PACKAGE="nova_12.6"
 
 echo $PACKAGE
 
@@ -13,15 +13,22 @@ make clean-web
 cd "$(dirname "$PACKAGE")"
 
 # copy the files
+rm -rf $PACKAGE
+rm -f ../$PACKAGE.orig.tar.gz
 mkdir $PACKAGE
-cp -a $(ls -1 | grep -v $PACKAGE | grep -v "debian" | grep -v "nova_package") $PACKAGE
+cp -a $(ls -1 | grep -v $PACKAGE | grep -v "debian") $PACKAGE
 
 #replace the Makefile with the debian version
 cp debian/Makefile $PACKAGE
+mv Makefile Makefile.tmp
+cp debian/Makefile .
 
 #tarball it up!
-tar -zcf $PACKAGE.tar.gz $PACKAGE
+tar -zcf ../$PACKAGE.orig.tar.gz $PACKAGE
 
-cd debian
+rm -rf $PACKAGE
 
-#dpkg-buildpackage
+dpkg-buildpackage -us -uc
+
+rm Makefile
+mv Makefile.tmp Makefile
