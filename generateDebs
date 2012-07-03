@@ -2,7 +2,12 @@
 
 set -e
 
-PACKAGE="nova_12.6"
+if [$1 = ]; then
+  echo -e "ERROR: Provide a version number as an argument. IE:\n\t./generateDebs 12.6\n"
+  exit 0
+fi
+
+PACKAGE="nova_$1"
 
 echo $PACKAGE
 
@@ -35,3 +40,4 @@ dpkg-buildpackage -us -uc
 #put the old makefile back in place
 rm Makefile
 mv Makefile.tmp Makefile
+
