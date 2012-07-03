@@ -2428,6 +2428,7 @@ string Config::SetTrainingSession(string trainingSession)
 {
 	Lock lock(&m_lock, false);
 	m_trainingSession = trainingSession;
+	return m_trainingSession;
 }
 
 

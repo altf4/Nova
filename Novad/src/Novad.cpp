@@ -227,7 +227,7 @@ int RunNovaD()
 		}
 	}
 
-	Start_Packet_Handler();
+	return Start_Packet_Handler();
 }
 
 bool LockNovad()

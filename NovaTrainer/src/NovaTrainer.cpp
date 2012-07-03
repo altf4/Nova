@@ -74,7 +74,10 @@ int main(int argc, const char *argv[])
 	Config::Inst()->SetIsDmEnabled(false);
 	Config::Inst()->SetIsTraining(true);
 
-	chdir(Config::Inst()->GetPathHome().c_str());
+	if (chdir(Config::Inst()->GetPathHome().c_str()) == -1)
+	{
+		LOG(CRITICAL, "Unable to change folder to " + Config::Inst()->GetPathHome(), "");
+	}
 
 	pcapFile = string(argv[1]) + "/capture.pcap";
 	haystackFile = string(argv[1]) + "/haystackIps.txt";
