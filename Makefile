@@ -139,7 +139,7 @@ install: install-data install-docs
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	#sh debian/postinst
+	sh debian/postinst
 
 install-data:
 	#make folder in etc with path locations to nova files
@@ -206,7 +206,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 
 uninstall-permissions:
-	#sh Installer/postrm
+	sh Installer/postrm
 
 # Reinstall nova without messing up the permissions
 reinstall: uninstall-files
