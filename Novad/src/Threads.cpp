@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 #include <sys/un.h>
 #include <net/if.h>
 #include <signal.h>

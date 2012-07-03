@@ -65,11 +65,11 @@ novatrainer-release:
 
 #novagui
 novagui-release:
-	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
+	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
 
 novagui-debug:
-	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
+	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 
 #Web UI
@@ -112,7 +112,7 @@ clean-debug:
 	$(MAKE) -C Novad/Debug clean
 	$(MAKE) -C NovaCLI/Debug clean
 	$(MAKE) -C NovaTrainer/Debug clean
-	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
+	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 
 clean-release:
@@ -121,7 +121,7 @@ clean-release:
 	$(MAKE) -C Novad/Release clean
 	$(MAKE) -C NovaCLI/Release clean
 	$(MAKE) -C NovaTrainer/Release clean
-	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
+	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 
 clean-test:

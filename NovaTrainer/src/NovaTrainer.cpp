@@ -24,6 +24,7 @@
 #include "Logger.h"
 
 #include <netinet/if_ether.h>
+#include <unistd.h>
 #include <vector>
 #include <math.h>
 #include <time.h>

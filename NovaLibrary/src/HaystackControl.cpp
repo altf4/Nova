@@ -18,7 +18,7 @@
 
 #include "HaystackControl.h"
 #include "Config.h"
-
+#include "Logger.h"
 #include <sstream>
 
 using namespace std;
@@ -57,7 +57,7 @@ bool StartHaystack()
 	ss << " -p " << Config::Inst()->GetPathReadFolder();
 	ss << "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
 
-	cout << ss.str() << endl;
+	LOG(DEBUG, "Launching haystack with command: " + ss.str(), "");
 	if(system(ss.str().c_str()) != 0)
 	{
 		return false;

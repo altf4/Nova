@@ -2,15 +2,31 @@
 
 set -e
 
+honeydPath="/usr/bin/honeyd"
+novaPath="/usr/bin/novad"
+
+
+if [ ! -f $honeydPath ]
+then
+    echo "File $honeydPath does not exist. Please ensure Honeyd is installed correctly before going on."
+    exit
+fi
+
+if [ ! -f $novaPath ]
+then
+    echo "File $novaPath does not exist. Please ensure novad was correctly installed before going on."
+    exit
+fi
+
 #Set pcap permissions
-setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip CAP_NET_BROADCAST+eip' /usr/bin/novad
-setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip CAP_NET_BROADCAST+eip' /usr/bin/honeyd
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip CAP_NET_BROADCAST+eip' $honeydPath
+setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip CAP_NET_BROADCAST+eip' $novaPath
 
 #make nova group
 groupadd -f nova
 
 #Make a honeyd log file folder that belongs to 'nobody'
-chown -R nobody:nogroup /var/log/honeyd
+chown -R nobody /var/log/honeyd
 
 # Make sure the UI_Core library gets found
 ldconfig
@@ -19,7 +35,7 @@ ldconfig
 service rsyslog restart
 
 #reload sysctl settings.
-start procps
+sysctl -p /etc/sysctl.conf
 
 # Remove the Mail pipe if it already exists
 rm -f /usr/share/nova/NovaMailPipe

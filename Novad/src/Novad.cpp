@@ -40,6 +40,7 @@
 #include <errno.h>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 #include <sys/un.h>
 #include <signal.h>
 #include <iostream>
@@ -531,8 +532,8 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 					LOG(ERROR, "Failed to update iptables.", "");
 				}
 
-				int i;
-				for(i = 0; i < Config::Inst()->GetSaMaxAttempts(); i++)
+				int j;
+				for(j = 0; j < Config::Inst()->GetSaMaxAttempts(); j++)
 				{
 					if(KnockPort(OPEN))
 					{
@@ -549,7 +550,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 							if(errno == EHOSTUNREACH)
 							{
 								//set to max attempts to hit the failed connect condition
-								i = Config::Inst()->GetSaMaxAttempts();
+								j = Config::Inst()->GetSaMaxAttempts();
 								LOG(ERROR, "Unable to connect to host to send silent alarm: "
 									+ string(strerror(errno)), "");
 								break;
@@ -562,7 +563,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 					}
 				}
 				//If connecting failed
-				if(i == Config::Inst()->GetSaMaxAttempts())
+				if(j == Config::Inst()->GetSaMaxAttempts())
 				{
 					close(sockfd);
 					ss.str("");
