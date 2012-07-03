@@ -41,6 +41,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.282357122" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
 								<option id="gnu.cpp.link.option.libs.1357746932" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
+									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 									<listOptionValue builtIn="false" value="pcap"/>
 									<listOptionValue builtIn="false" value="notify"/>
@@ -319,7 +320,7 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1990533829;cdt.managedbuild.config.gnu.exe.debug.1990533829.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.152027993;cdt.managedbuild.tool.gnu.cpp.compiler.input.193766745">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1557979740.508612721;cdt.managedbuild.config.gnu.exe.release.1557979740.508612721.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1728309878;cdt.managedbuild.tool.gnu.cpp.compiler.input.886439279">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 				<buildOutputProvider>
@@ -362,7 +363,7 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1557979740.508612721;cdt.managedbuild.config.gnu.exe.release.1557979740.508612721.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1728309878;cdt.managedbuild.tool.gnu.cpp.compiler.input.886439279">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1990533829;cdt.managedbuild.config.gnu.exe.debug.1990533829.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.152027993;cdt.managedbuild.tool.gnu.cpp.compiler.input.193766745">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 				<buildOutputProvider>
