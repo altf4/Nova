@@ -21,37 +21,47 @@ debug-helper: novad-debug novagui-debug novacli-debug novatrainer-debug
 #Nova Library
 novalib-release:
 	$(MAKE) -C NovaLibrary/Release
+	cp NovaLibrary/Release/libNovaLibrary.a NovaLibrary/
 
 novalib-debug:
 	$(MAKE) -C NovaLibrary/Debug
+	cp NovaLibrary/Debug/libNovaLibrary.a NovaLibrary/
 
 #novad
 novad-release:
 	$(MAKE) -C Novad/Release
+	cp Novad/Release/novad Novad/
 
 novad-debug:
 	$(MAKE) -C Novad/Debug
+	cp Novad/Debug/novad Novad/
 
 #UI_Core
 ui_core-release:
 	$(MAKE) -C Nova_UI_Core/Release
+	cp Nova_UI_Core/Release/libNova_UI_Core.so Nova_UI_Core/
 
 ui_core-debug:
 	$(MAKE) -C Nova_UI_Core/Debug
+	cp Nova_UI_Core/Debug/libNova_UI_Core.so Nova_UI_Core/
 
 #nova CLI
 novacli-release:
 	$(MAKE) -C NovaCLI/Release
+	cp NovaCLI/Release/novacli NovaCLI/
 
 novacli-debug:
 	$(MAKE) -C NovaCLI/Debug
+	cp NovaCLI/Debug/novacli NovaCLI/
 
 # Nova trainer
 novatrainer-debug:
 	$(MAKE) -C NovaTrainer/Debug
+	cp NovaTrainer/Debug/novatrainer NovaTrainer
 
 novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release
+	cp NovaTrainer/Release/novatrainer NovaTrainer
 
 #novagui
 novagui-release:
@@ -89,6 +99,12 @@ all-test: test
 #Cleans both Release and Debug
 clean: clean-debug clean-release clean-test
 	rm -f Installer/Read/manpages/*.gz
+	#remove binaries from staging area
+	rm -f NovaCLI/novacli
+	rm -f NovaGUI/novagui
+	rm -f Novad/novad
+	rm -f Nova_UI_Core/libNova_UI_Core.so
+	rm -f NovaLibrary/libNovaLibrary.a
 
 clean-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
@@ -116,28 +132,15 @@ clean-web:
 	cd NovaWeb/NodeNovaConfig; node-waf clean
 
 #Installation (requires root)
-install: install-release
-
-install-release: install-data install-docs
-	#The binaries themselves
+install: install-data install-docs
+	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	install NovaGUI/novagui $(DESTDIR)/usr/bin
-	install NovaCLI/Release/novacli $(DESTDIR)/usr/bin
-	install Novad/Release/novad $(DESTDIR)/usr/bin
-	install NovaTrainer/Release/novatrainer $(DESTDIR)/usr/bin
-	install Nova_UI_Core/Release/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	sh Installer/postinst
-
-install-debug: install-data install-docs
-	#The binaries themselves
-	mkdir -p $(DESTDIR)/usr/bin
-	mkdir -p $(DESTDIR)/usr/lib
-	install NovaGUI/novagui $(DESTDIR)/usr/bin
-	install NovaCLI/Debug/novacli $(DESTDIR)/usr/bin
-	install Novad/Debug/novad $(DESTDIR)/usr/bin
+	install NovaCLI/novacli $(DESTDIR)/usr/bin
+	install Novad/novad $(DESTDIR)/usr/bin
 	install NovaTrainer/Debug/novatrainer $(DESTDIR)/usr/bin
-	install Nova_UI_Core/Debug/libNova_UI_Core.so $(DESTDIR)/usr/lib
+	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	sh Installer/postinst
 	
 install-data:
@@ -158,6 +161,8 @@ install-data:
 	install Installer/nova_init $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
+	mkdir -p $(DESTDIR)/etc/sysctl.d/
+	mkdir -p $(DESTDIR)/etc/bash_completion.d/
 	#Install permissions
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
@@ -208,18 +213,18 @@ reinstall: uninstall-files
 	$(MAKE) install
 
 reinstall-debug: uninstall-files
-	$(MAKE) install-debug
+	$(MAKE) install
 
 # Does a fresh uninstall, clean, build, and install
 reset: uninstall-files
 	$(MAKE) clean
 	$(MAKE) release
 	$(MAKE) test 
-	$(MAKE) install-release
+	$(MAKE) install
 
 reset-debug: uninstall-files
 	$(MAKE) clean
 	$(MAKE) debug
 	$(MAKE) test
-	$(MAKE) install-debug
+	$(MAKE) install
 
