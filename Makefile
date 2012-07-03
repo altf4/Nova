@@ -57,11 +57,11 @@ novacli-debug:
 # Nova trainer
 novatrainer-debug:
 	$(MAKE) -C NovaTrainer/Debug
-	cp NovaTrainer/Debug/novatrainer NovaTrainer
+	cp NovaTrainer/Debug/novatrainer NovaTrainer/novatrainer
 
 novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release
-	cp NovaTrainer/Release/novatrainer NovaTrainer
+	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
 #novagui
 novagui-release:
