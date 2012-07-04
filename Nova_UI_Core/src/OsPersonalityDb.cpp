@@ -36,7 +36,7 @@ OsPersonalityDb::OsPersonalityDb()
 
 vector<string> OsPersonalityDb::GetPersonalityOptions() {
 	vector<string> options;
-	for (uint i = 0; i < m_nmapPersonalities.size(); i++)
+	for(uint i = 0; i < m_nmapPersonalities.size(); i++)
 	{
 		options.push_back(m_nmapPersonalities.at(i).first);
 	}
@@ -57,10 +57,10 @@ void OsPersonalityDb::LoadNmapPersonalitiesFromFile()
 		while(nmapPers.good())
 		{
 			getline(nmapPers, line);
-			/* From 'man strtoul'  Since strtoul() can legitimately return 0 or  LONG_MAX  (LLONG_MAX  for
-			   strtoull()) on both success and failure, the calling program should set
-			   errno to 0 before the call, and then determine if an error occurred  by
-			   checking whether errno has a nonzero value after the call. */
+			// From 'man strtoul'  Since strtoul() can legitimately return 0 or  LONG_MAX  (LLONG_MAX  for
+			// strtoull()) on both success and failure, the calling program should set
+			// errno to 0 before the call, and then determine if an error occurred  by
+			// checking whether errno has a nonzero value after the call.
 
 			//We've hit a fingerprint line
 			prefix = "Fingerprint";

@@ -64,7 +64,7 @@ public:
 
 	// Writes the list of suspects out to a file specified by outFilePath
 	//		outFilePath - path to output file
-	void WriteDataPointsToFile(std::string outFilePath, ANNkd_tree* tree);
+	void WriteDataPointsToFile(std::string outFilePath, ANNkd_tree *tree);
 
 	// Normalized a single value
 	static double Normalize(normalizationType type, double value, double min, double max);

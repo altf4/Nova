@@ -26,7 +26,7 @@ using namespace Nova;
 NovaConfig *novaParent;
 
 /************************************************
- * Construct and Initialize GUI
+  Construct and Initialize GUI
  ************************************************/
 
 nodePopup::nodePopup(QWidget *parent, Nova::Node *n, bool editingNode)
@@ -63,7 +63,7 @@ nodePopup::~nodePopup()
 
 
 /************************************************
- * Load and Save changes to the node's profile
+  Load and Save changes to the node's profile
  ************************************************/
 
 //saves the changes to a node
@@ -275,7 +275,7 @@ void nodePopup::LoadNode()
 
 
 /************************************************
- * General GUI Signal Handling
+  General GUI Signal Handling
  ************************************************/
 
 //Closes the window without saving any changes
@@ -343,7 +343,7 @@ void nodePopup::on_applyButton_clicked()
 
 void nodePopup::on_generateButton_clicked()
 {
-	if (ui.isRandomMAC->isChecked())
+	if(ui.isRandomMAC->isChecked())
 	{
 		return;
 	}

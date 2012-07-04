@@ -78,7 +78,7 @@ bool StopHaystack()
 		char buffer[1024];
 		char *line = fgets(buffer, sizeof(buffer), out);
 
-		if (line != NULL)
+		if(line != NULL)
 		{
 			string cmd = "sudo kill " + string(line);
 			if(cmd.size() > 5)
@@ -108,7 +108,7 @@ bool IsHaystackUp()
 		char buffer[1024];
 		char *line = fgets(buffer, sizeof(buffer), out);
 
-		if (line != NULL)
+		if(line != NULL)
 		{
 			retSuccess = true;
 		}

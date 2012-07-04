@@ -104,7 +104,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 	uint ai = 0;
 
 	// Do we not have enough data to classify?
-	if (fs->m_packetCount < Config::Inst()->GetMinPacketThreshold())
+	if(fs->m_packetCount < Config::Inst()->GetMinPacketThreshold())
 	{
 		suspect->SetIsHostile(false);
 		suspect->SetClassification(-2);
@@ -160,7 +160,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 	suspect->SetHostileNeighbors(0);
 
 	//Determine classification according to weight by distance
-	//	.5 + E[(1-Dist) * Class] / 2k (Where Class is -1 or 1)
+	//	.5 + E[(1-Dist)*Class] / 2k (Where Class is -1 or 1)
 	//	This will make the classification range from 0 to 1
 	double classifyCount = 0;
 
@@ -223,7 +223,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 		suspect->SetFeatureAccuracy(fi, d);
 	}
 
-	suspect->SetClassification(.5 + (classifyCount / ((2.0 * (double)k) * sqrtDIM )));
+	suspect->SetClassification(.5 + (classifyCount / ((2.0*(double)k)*sqrtDIM )));
 
 	// Fix for rounding errors caused by double's not being precise enough if DIM is something like 2
 	if(suspect->GetClassification() < 0)
@@ -307,7 +307,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	//Count the number of data points for allocation
 	if(myfile.is_open())
 	{
-		while (!myfile.eof())
+		while(!myfile.eof())
 		{
 			if(myfile.peek() == EOF)
 			{
@@ -337,7 +337,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	{
 		i = 0;
 
-		while (!myfile.eof() && (i < maxPts))
+		while(!myfile.eof() && (i < maxPts))
 		{
 			k = 0;
 
@@ -489,7 +489,7 @@ void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 	m_normalizedDataPts = annAllocPts(points.size(), Config::Inst()->GetEnabledFeatureCount());
 
 
-	for (uint i = 0; i < points.size(); i++)
+	for(uint i = 0; i < points.size(); i++)
 	{
 		m_dataPtsWithClass.push_back(new Point(Config::Inst()->GetEnabledFeatureCount()));
 
@@ -551,7 +551,7 @@ void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)
 {
 	double ret = -1;
-	switch (type)
+	switch(type)
 	{
 		case LINEAR:
 		{
@@ -590,10 +590,9 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 }
 
 
-void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree* tree)
+void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree *tree)
 {
 	ofstream myfile (outFilePath.data());
-
 	if(myfile.is_open())
 	{
 		for(int i = 0; i < tree->nPoints(); i++ )
@@ -608,9 +607,7 @@ void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree*
 	}
 	else
 	{
-		LOG(ERROR,"Classification Engine has encountered a problem",
-			"Unable to open the training data file at "+outFilePath+".");
+		LOG(ERROR, "Unable to open the training data file at "+outFilePath+".", "");
 	}
 	myfile.close();
-
 }

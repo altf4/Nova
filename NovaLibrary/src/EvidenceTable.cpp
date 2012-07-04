@@ -44,7 +44,7 @@ namespace Nova
 		m_table.clear();
 	}
 
-	void EvidenceTable::InsertEvidence(Evidence * evidence)
+	void EvidenceTable::InsertEvidence(Evidence *evidence)
 	{
 		//We use manual mutex locking instead of a lock object for performance reasons
 		pthread_mutex_lock(&m_lock);
@@ -55,7 +55,7 @@ namespace Nova
 		//Pushes the evidence and enters the conditional if it's the first piece of evidence
 		if(m_table[evidence->m_evidencePacket.ip_src]->Push(evidence))
 		{
-			Evidence * temp = new Evidence(evidence);
+			Evidence *temp = new Evidence(evidence);
 			m_processingList.Push(temp);
 			//Wake up any consumers waiting for evidence
 			pthread_cond_signal(&m_cond);
@@ -63,11 +63,11 @@ namespace Nova
 		pthread_mutex_unlock(&m_lock);
 	}
 
-	Evidence * EvidenceTable::GetEvidence()
+	Evidence *EvidenceTable::GetEvidence()
 	{
 		//We use manual mutex locking instead of a lock object for performance reasons
 		pthread_mutex_lock(&m_lock);
-		Evidence * lookup = m_processingList.Pop();
+		Evidence *lookup = m_processingList.Pop();
 		//While we are unable to get evidence (other consumers got it first)
 		while(lookup == NULL)
 		{
@@ -75,7 +75,7 @@ namespace Nova
 			pthread_cond_wait(&m_cond, &m_lock);
 			lookup = m_processingList.Pop();
 		}
-		Evidence * ret = NULL;
+		Evidence *ret = NULL;
 		//If we get any entry
 		if(lookup != NULL)
 		{

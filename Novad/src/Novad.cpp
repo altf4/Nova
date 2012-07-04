@@ -61,9 +61,9 @@ SuspectTable suspectsSinceLastSave;
 //Contains packet evidence yet to be included in a suspect
 EvidenceTable suspectEvidence;
 
-//** Silent Alarm **
+//-- Silent Alarm --
 struct sockaddr_in serv_addr;
-struct sockaddr* serv_addrPtr = (struct sockaddr *) &serv_addr;
+struct sockaddr *serv_addrPtr = (struct sockaddr *) &serv_addr;
 vector<struct sockaddr_in> hostAddrs;
 vector<uint> dropCounts;
 
@@ -88,8 +88,9 @@ vector<string> haystackDhcpAddresses;
 vector<string> whitelistIpAddresses;
 vector<string> whitelistIpRanges;
 vector<pcap_t *> handles;
-bpf_u_int32 maskp; /* subnet mask */
-bpf_u_int32 netp; /* ip          */
+
+bpf_u_int32 maskp;
+bpf_u_int32 netp;
 
 int honeydDHCPNotifyFd;
 int honeydDHCPWatch;
@@ -237,7 +238,7 @@ bool LockNovad()
 	int rc = flock(lockFile, LOCK_EX | LOCK_NB);
 	if(rc != 0)
 	{
-		if (errno == EAGAIN)
+		if(errno == EAGAIN)
 		{
 			cerr << "ERROR: Novad is already running. Please close all other instances before continuing." << endl;
 		}
@@ -333,7 +334,7 @@ void LoadStateFile()
 		expirationTime = 0;
 	}
 	uint numBytes = 0;
-	while (in.is_open() && !in.eof() && lengthLeft)
+	while(in.is_open() && !in.eof() && lengthLeft)
 	{
 		numBytes = suspects.ReadContents(&in, expirationTime);
 		if(numBytes == 0)
@@ -427,7 +428,7 @@ void RefreshStateFile()
 	lengthLeft = in.tellg();
 	in.seekg (0, ios::beg);
 
-	while (in.is_open() && !in.eof() && lengthLeft)
+	while(in.is_open() && !in.eof() && lengthLeft)
 	{
 		//If we can get the timestamp and data size
 		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
@@ -655,20 +656,17 @@ bool KnockPort(bool mode)
 bool Start_Packet_Handler()
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
-
 	string haystackAddresses_csv = "";
-
-	struct bpf_program fp;			/* The compiled filter expression */
+	struct bpf_program fp;
 	char filter_exp[64];
-	bpf_u_int32 maskp; /* subnet mask */
-	bpf_u_int32 netp; /* ip          */
+	bpf_u_int32 maskp;
+	bpf_u_int32 netp;
 
 	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
 	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
 	whitelistIpAddresses = WhitelistConfiguration::GetIps();
 	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	haystackAddresses_csv = ConstructFilterString();
-
 
 	UpdateHaystackFeatures();
 
@@ -768,7 +766,7 @@ bool Start_Packet_Handler()
 				exit(EXIT_FAILURE);
 			}
 
-			/* ask pcap for the network address and mask of the device */
+			// ask pcap for the network address and mask of the device
 			int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
 			if(ret == -1)
 			{
@@ -802,7 +800,7 @@ bool Start_Packet_Handler()
 		trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
 
 		ofstream localIpsStream(trainingFolder + "/localIps.txt");
-		for (uint i = 0; i < localIPs.size(); i++)
+		for(uint i = 0; i < localIPs.size(); i++)
 		{
 			in_addr temp;
 			temp.s_addr = ntohl(localIPs.at(i));
@@ -810,15 +808,14 @@ bool Start_Packet_Handler()
 		}
 		localIpsStream.close();
 
-
-		if (IsHaystackUp())
+		if(IsHaystackUp())
 		{
 			ofstream haystackIpStream(trainingFolder + "/haystackIps.txt");
-			for (uint i = 0; i < haystackDhcpAddresses.size(); i++)
+			for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
 			{
 				haystackIpStream << haystackDhcpAddresses.at(i) << endl;
 			}
-			for (uint i = 0; i < haystackAddresses.size(); i++)
+			for(uint i = 0; i < haystackAddresses.size(); i++)
 			{
 				haystackIpStream << haystackAddresses.at(i) << endl;
 			}
@@ -843,11 +840,11 @@ bool Start_Packet_Handler()
 	return false;
 }
 
-void Packet_Handler(u_char *index,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
 {
-	if (Config::Inst()->GetIsTraining())
+	if(Config::Inst()->GetIsTraining())
 	{
-		pcap_dump((u_char*)trainingFileStream, pkthdr, packet);
+		pcap_dump((u_char *)trainingFileStream, pkthdr, packet);
 	}
 
 	if(packet == NULL)
@@ -862,7 +859,7 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr* pkthdr,const u_char*
 		{
 
 			//Prepare Packet structure
-			Evidence * evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
+			Evidence *evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
 			if(localIPs[*index] == evidencePacket->m_evidencePacket.ip_dst)
 			{
 				//manually setting dst ip to 0.0.0.1 designates the packet was to a real host not a haystack node
@@ -913,8 +910,8 @@ void LoadConfiguration()
 string ConstructFilterString()
 {
 	string filterString = "not src host 0.0.0.0 && ";
-	if (Config::Inst()->GetCustomPcapString() != "") {
-		if (Config::Inst()->GetOverridePcapString())
+	if(Config::Inst()->GetCustomPcapString() != "") {
+		if(Config::Inst()->GetOverridePcapString())
 		{
 			filterString = Config::Inst()->GetCustomPcapString();
 			LOG(DEBUG, "Pcap filter string is "+filterString,"");
@@ -927,7 +924,7 @@ string ConstructFilterString()
 	}
 
 
-	struct ifaddrs * devices = NULL;
+	struct ifaddrs *devices = NULL;
 	struct ifaddrs *curIf = NULL;
 	stringstream ss;
 
@@ -941,7 +938,7 @@ string ConstructFilterString()
 	vector<string> enabledInterfaces = Config::Inst()->GetInterfaces();
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		for (uint i = 0; i < enabledInterfaces.size(); i++)
+		for(uint i = 0; i < enabledInterfaces.size(); i++)
 		{
 			if(!strcmp(curIf->ifa_name, enabledInterfaces[i].c_str()) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 			{
@@ -956,17 +953,17 @@ string ConstructFilterString()
 		}
 	}
 
-	if (networkFilderBuilder.size() == 0) {
+	if(networkFilderBuilder.size() == 0) {
 		// Nothing to do
 	}
-	else if (networkFilderBuilder.size() == 1)
+	else if(networkFilderBuilder.size() == 1)
 	{
 		filterString += networkFilderBuilder.at(0) + " && ";
 	} 
 	else
 	{
 		filterString += "(" + networkFilderBuilder.at(0);
-		for (uint i = 1; i < networkFilderBuilder.size(); i++)
+		for(uint i = 1; i < networkFilderBuilder.size(); i++)
 		{
 			filterString += "|| " + networkFilderBuilder.at(i);
 		}
@@ -1146,13 +1143,13 @@ void CheckForDroppedPackets()
 void UpdateHaystackFeatures()
 {
 	vector<uint32_t> haystackNodes;
-	for (uint i = 0; i < haystackAddresses.size(); i++)
+	for(uint i = 0; i < haystackAddresses.size(); i++)
 	{
 		cout << "Address is " << haystackAddresses[i] << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
 	}
 
-	for (uint i = 0; i < haystackDhcpAddresses.size(); i++)
+	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
 	{
 		cout << "Address is " << haystackDhcpAddresses[i] << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));

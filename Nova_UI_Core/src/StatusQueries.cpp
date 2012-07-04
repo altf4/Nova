@@ -55,7 +55,7 @@ bool IsNovadUp(bool tryToConnect)
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -107,7 +107,7 @@ uint64_t GetStartTime()
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -149,7 +149,7 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -194,7 +194,7 @@ Suspect *GetSuspect(in_addr_t address)
 
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);

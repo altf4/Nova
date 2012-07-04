@@ -20,7 +20,6 @@
 #ifndef GENERICQUEUE_H_
 #define GENERICQUEUE_H_
 
-
 namespace Nova
 {
 
@@ -36,9 +35,9 @@ public:
 	}
 
 
-	elementType * Pop()
+	elementType *Pop()
 	{
-		elementType * ret = m_first;
+		elementType *ret = m_first;
 		if(ret != NULL)
 		{
 			m_first = ret->m_next;
@@ -52,7 +51,7 @@ public:
 		return ret;
 	}
 
-	elementType * PopAll()
+	elementType *PopAll()
 	{
 		elementType *ret = m_first;
 		m_first = NULL;
@@ -61,7 +60,7 @@ public:
 	}
 
 	//Returns true if this is the first piece of elementType
-	bool Push(elementType * evidence)
+	bool Push(elementType *evidence)
 	{
 		//If m_last != NULL (There is evidence in the queue)
 		if(m_last != NULL)
@@ -80,11 +79,9 @@ public:
 
 private:
 
-	elementType * m_first;
-	elementType * m_last;
+	elementType *m_first;
+	elementType *m_last;
 };
-
-
 
 }
 

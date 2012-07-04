@@ -41,11 +41,11 @@ public:
 	~EvidenceTable();
 
 	//Inserts the Evidence into the table at the location specified by the destination address
-	void InsertEvidence(Evidence * packet);
+	void InsertEvidence(Evidence *packet);
 
 	// Returns the first evidence object in a Evidence linked list or NULL if no evidence for any entries
 	// After use each Evidence object must be explicitly deallocated
-	Evidence * GetEvidence();
+	Evidence *GetEvidence();
 
 private:
 

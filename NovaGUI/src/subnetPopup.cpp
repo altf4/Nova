@@ -29,9 +29,9 @@ NovaConfig *nParent;
 string subName;
 in_addr_t subnetRealIP;
 
-/************************************************
- * Construct and Initialize GUI
- ************************************************/
+/****************************
+ Construct and Initialize GUI
+ ****************************/
 
 subnetPopup::subnetPopup(QWidget *parent, Nova::subnet *s)
     : QMainWindow(parent)
@@ -51,9 +51,9 @@ subnetPopup::~subnetPopup()
 }
 
 
-/************************************************
- * Load and Save changes to the Subnet's profile
- ************************************************/
+/*********************************************
+ Load and Save changes to the Subnet's profile
+ *********************************************/
 
 //saves the changes to a Subnet
 void subnetPopup::SaveSubnet()
@@ -177,7 +177,7 @@ void subnetPopup::SaveSubnet()
 		}
 		inTemp.s_addr = htonl(tempNode.realIP);
 
-		if (tempNode.IP != "DHCP")
+		if(tempNode.IP != "DHCP")
 		{
 			tempNode.IP = inet_ntoa(inTemp);
 		}
@@ -233,9 +233,9 @@ void subnetPopup::LoadSubnet()
 	ui.maxMaskLabel->setText(QString(inet_ntoa(mask)).prepend("Maximum Mask: "));
 }
 
-/************************************************
- * Data Transfer Functions
- ************************************************/
+/***********************
+ Data Transfer Functions
+ ***********************/
 
 //Copies the data from parent novaconfig and adjusts the pointers
 void subnetPopup::PullData()
@@ -255,9 +255,9 @@ void subnetPopup::PushData()
 	subName = m_editSubnet.name;
 }
 
-/************************************************
- * General GUI Signal Handling
- ************************************************/
+/***************************
+ General GUI Signal Handling
+ ***************************/
 
 //Closes the window without saving any changes
 void subnetPopup::on_cancelButton_clicked()

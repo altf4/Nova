@@ -35,7 +35,7 @@ class HexMACSpinBox : public QSpinBox
 	Q_OBJECT
 
 public:
-	HexMACSpinBox(QWidget * parent = 0, std::string MACAddr = "", macType which = macSuffix) : QSpinBox(parent)
+	HexMACSpinBox(QWidget *parent = 0, std::string MACAddr = "", macType which = macSuffix) : QSpinBox(parent)
 	{
 		m_validator = new QRegExpValidator(QRegExp("([0-9A-Fa-f][0-9A-Fa-f][:]){0,2}[0-9A-Fa-f][0-9A-Fa-f]"
 				, Qt::CaseInsensitive, QRegExp::RegExp), this);
@@ -97,13 +97,13 @@ class nodePopup : public QMainWindow
 
 public:
 
-    DialogPrompter * m_prompter;
+    DialogPrompter *m_prompter;
 
     nodePopup(QWidget *parent = 0, Nova::Node *n  = NULL, bool editingNode = false);
     ~nodePopup();
 
-    HexMACSpinBox * m_ethernetEdit;
-    HexMACSpinBox * m_prefixEthEdit;
+    HexMACSpinBox *m_ethernetEdit;
+    HexMACSpinBox *m_prefixEthEdit;
 
     //Saves the current configuration
     void SaveNode();

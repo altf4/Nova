@@ -70,11 +70,11 @@ public:
     static int GetMaskBits(in_addr_t mask);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
-    std::string ProfileToString(profile* p);
+    std::string ProfileToString(profile *p);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
     // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
-    std::string DoppProfileToString(profile* p);
+    std::string DoppProfileToString(profile *p);
 
     //Saves the current configuration information to XML files
     bool SaveAllTemplates();
@@ -107,8 +107,8 @@ public:
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
 	std::vector<std::string> GetProfileNames();
-	Nova::profile * GetProfile(std::string profileName);
-	Nova::port * GetPort(std::string portName);
+	Nova::profile *GetProfile(std::string profileName);
+	Nova::port *GetPort(std::string portName);
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
@@ -127,7 +127,7 @@ public:
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
 	//	Returns (true) if the profile could be created, (false) if it cannot.
-	bool AddProfile(profile * profile);
+	bool AddProfile(profile *profile);
 
 	//Updates the profile with any modified information
 	//	Note: to modify inheritance use InheritProfile, just changing the parentProfile value and calling
@@ -159,7 +159,7 @@ public:
 
     //Deletes a single node, called from deleteNodes();
     bool DeleteNode(std::string nodeName);
-    Node * GetNode(std::string nodeName);
+    Node *GetNode(std::string nodeName);
 
     std::string GetNodeSubnet(std::string nodeName);
     bool EnableNode(std::string nodeName);
@@ -174,7 +174,7 @@ public:
 		std::vector<port> ret;
 		port p;
 
-		for (uint i = 0; i < m_profiles[profile].ports.size(); i++)
+		for(uint i = 0; i < m_profiles[profile].ports.size(); i++)
 		{
 			p = m_ports[m_profiles[profile].ports.at(i).first];
 			p.isInherited = m_profiles[profile].ports.at(i).second;

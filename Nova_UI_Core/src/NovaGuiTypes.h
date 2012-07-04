@@ -168,7 +168,7 @@ struct profile
 	inline std::vector<bool> GetInheritance()
 	{
 		std::vector<bool> ret;
-		for (int i = 0; i < INHERITED_MAX; i++)
+		for(int i = 0; i < INHERITED_MAX; i++)
 		{
 			ret.push_back(inherited[i]);
 		}
@@ -187,7 +187,7 @@ struct profile
 	inline std::vector<std::string> GetPortNames()
 	{
 		std::vector<std::string> ret;
-		for (std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
+		for(std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
 		{
 			ret.push_back(it->first);
 		}
@@ -198,7 +198,7 @@ struct profile
 	inline std::vector<bool> GetPortInheritance()
 	{
 		std::vector<bool> ret;
-		for (std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
+		for(std::vector<std::pair<std::string, bool>>::iterator it = ports.begin(); it != ports.end(); it++)
 		{
 			ret.push_back(it->second);
 		}

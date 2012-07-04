@@ -78,7 +78,7 @@ public:
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t Serialize(u_char * buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
+	uint32_t Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
 	// Returns an unsigned, 32 bit integer that represents the length of the
 	// Suspect to be serialized (in bytes).
@@ -90,7 +90,7 @@ public:
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	//		buf - Pointer to buffer where the serialized suspect is
 	// Returns: number of bytes read from the buffer
-	uint32_t Deserialize(u_char * buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
+	uint32_t Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
 	//Returns: Suspect's in_addr or NULL on failure
@@ -162,7 +162,7 @@ public:
 
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);
-	Suspect& operator*(Suspect* rhs);
+	Suspect& operator*(Suspect *rhs);
 
 	// Equality operator, mainly used for test cases
 	bool operator==(const Suspect &rhs) const;

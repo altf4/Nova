@@ -36,7 +36,7 @@ struct _tcpFlags
 	bool fin : 1;
 };
 
-struct _evidencePacket //* Total of 18 bytes */
+struct _evidencePacket // Total of 18 bytes
 {
 	uint16_t ip_len; 	//Length in bytes
 	uint8_t ip_p;		//Ip protocol (UDP, TCP or ICMP)

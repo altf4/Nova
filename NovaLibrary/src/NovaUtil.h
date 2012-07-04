@@ -28,7 +28,7 @@ namespace Nova{
 
 // Encrpyts/decrypts a char buffer of size 'size' depending on mode
 // TODO: Comment more on this once it's written
-void CryptBuffer(u_char * buf, uint size, bool mode);
+void CryptBuffer(u_char *buf, uint size, bool mode);
 
 // Gets local IP address for interface
 //		dev - Device name, e.g. "eth0"

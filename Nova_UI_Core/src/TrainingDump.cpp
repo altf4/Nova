@@ -35,9 +35,9 @@ TrainingDump::TrainingDump()
 
 bool TrainingDump::LoadCaptureFile(string pathDumpFile)
 {
-	if (trainingTable != NULL)
+	if(trainingTable != NULL)
 	{
-		for (trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
+		for(trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
 		{
 			delete it->second;
 		}
@@ -53,7 +53,7 @@ bool TrainingDump::LoadCaptureFile(string pathDumpFile)
 
 	if(dataFile.is_open())
 	{
-		while (dataFile.good() && getline(dataFile,line))
+		while(dataFile.good() && getline(dataFile,line))
 		{
 			uint firstDelim = line.find_first_of(' ');
 
@@ -88,7 +88,7 @@ bool TrainingDump::LoadCaptureFile(string pathDumpFile)
 
 bool TrainingDump::SetDescription(string uid, string description)
 {
-	if (!trainingTable->keyExists(uid))
+	if(!trainingTable->keyExists(uid))
 	{
 		return false;
 	}
@@ -99,7 +99,7 @@ bool TrainingDump::SetDescription(string uid, string description)
 
 bool TrainingDump::SetIsHostile(string uid, bool isHostile)
 {
-	if (!trainingTable->keyExists(uid))
+	if(!trainingTable->keyExists(uid))
 	{
 		return false;
 	}
@@ -110,7 +110,7 @@ bool TrainingDump::SetIsHostile(string uid, bool isHostile)
 
 bool TrainingDump::SetIsIncluded(string uid, bool isIncluded)
 {
-	if (!trainingTable->keyExists(uid))
+	if(!trainingTable->keyExists(uid))
 	{
 		return false;
 	}
@@ -122,7 +122,7 @@ bool TrainingDump::SetIsIncluded(string uid, bool isIncluded)
 
 bool TrainingDump::SetAllIsIncluded(bool isIncluded)
 {
-	for (trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
+	for(trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
 	{
 		it->second->isIncluded = isIncluded;
 	}
@@ -132,7 +132,7 @@ bool TrainingDump::SetAllIsIncluded(bool isIncluded)
 
 bool TrainingDump::SetAllIsHostile(bool isHostile)
 {
-	for (trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
+	for(trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
 	{
 		it->second->isHostile = isHostile;
 	}
@@ -143,7 +143,7 @@ bool TrainingDump::SaveToDb(string dbFile)
 {
 	ThinTrainingPoints(Config::Inst()->GetThinningDistance());
 
-	trainingSuspectMap* db = TrainingData::ParseTrainingDb(dbFile);
+	trainingSuspectMap *db = TrainingData::ParseTrainingDb(dbFile);
 
 	if(db == NULL)
 		return false;

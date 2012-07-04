@@ -343,18 +343,18 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_listType = msg.m_listType;
 
-			switch (msg.m_listType)
+			switch(msg.m_listType)
 			{
 				case SUSPECTLIST_ALL:
 				{
 					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
-					for (uint i = 0; i < benign.size(); i++)
+					for(uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
 					}
 
 					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
-					for (uint i = 0; i < hostile.size(); i++)
+					for(uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
 					}
@@ -363,7 +363,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				case SUSPECTLIST_HOSTILE:
 				{
 					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
-					for (uint i = 0; i < hostile.size(); i++)
+					for(uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
 					}
@@ -372,7 +372,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				case SUSPECTLIST_BENIGN:
 				{
 					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
-					for (uint i = 0; i < benign.size(); i++)
+					for(uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
 					}

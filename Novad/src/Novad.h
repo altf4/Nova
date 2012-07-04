@@ -95,7 +95,7 @@ std::string ConstructFilterString();
 //		useless - Unused
 //		pkthdr - pcap packet header
 //		packet - packet data
-void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet);
+void Packet_Handler(u_char *useless,const struct pcap_pkthdr *pkthdr,const u_char *packet);
 
 // Masks the kill signals of a thread so they will get
 // sent to the main thread's signal handler.

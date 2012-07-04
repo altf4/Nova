@@ -37,7 +37,7 @@ namespace Nova
 
 	Logger *Logger::Inst()
 	{
-		if (m_loggerInstance == NULL)
+		if(m_loggerInstance == NULL)
 			m_loggerInstance = new Logger();
 		return m_loggerInstance;
 	}
@@ -59,8 +59,8 @@ namespace Nova
 		return 1;
 	}
 
-	void Logger::Log(Nova::Levels messageLevel, const char* messageBasic,  const char* messageAdv,
-			const char* file,  const int& line)
+	void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const char *messageAdv,
+			const char *file,  const int& line)
 	{
 		Lock lock(&m_logLock, false);
 		string mask = getBitmask(messageLevel);
@@ -128,9 +128,9 @@ namespace Nova
 	    int still_running = 1;
 	    struct timeval mp_start;
 	    struct Writer counter;
-	    struct curl_slist* rcpt_list = NULL;
+	    struct curl_slist *rcpt_list = NULL;
 
-	    int MULTI_PERFORM_HANG_TIMEOUT = 60 * 1000;
+	    int MULTI_PERFORM_HANG_TIMEOUT = 60*1000;
 
 	    SetMailMessage(message);
 
@@ -223,7 +223,7 @@ namespace Nova
 				}
 				else
 				{
-					timeout.tv_usec = (curl_timeo % 1000) * 1000;
+					timeout.tv_usec = (curl_timeo % 1000)*1000;
 				}
 			}
 
@@ -259,7 +259,7 @@ namespace Nova
 	std::string Logger::GenerateDateString()
 	{
 		time_t t = time(0);
-		struct tm * now = localtime(&t);
+		struct tm *now = localtime(&t);
 
 		std::string year;
 		std::string month;
@@ -388,7 +388,7 @@ namespace Nova
 		return m_messageInfo.m_email_recipients.size();
 	}
 
-	size_t Logger::ReadCallback(void * ptr, size_t size, size_t nmemb, void * userp)
+	size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
 	{
 		struct Writer *counter = (struct Writer *)userp;
 		const char *data;
@@ -406,13 +406,11 @@ namespace Nova
 				"\n",
 				NULL};
 
-		if(size * nmemb < 1)
+		if(size *nmemb < 1)
 		{
 			return 0;
 		}
-
 		data = text[counter->count];
-
 		if(data)
 		{
 			size_t len = strlen(data);
@@ -420,7 +418,6 @@ namespace Nova
 			counter->count++;
 			return len;
 		}
-
 		return 0;
 	}
 
@@ -848,6 +845,5 @@ namespace Nova
 	{
 		delete m_loggerInstance;
 	}
-
 }
 

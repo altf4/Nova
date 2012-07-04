@@ -88,7 +88,7 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 					m_serializeError = true;
 					return;
 				}
-			} catch (Nova::serializationException &e) {
+			} catch(Nova::serializationException &e) {
 				m_serializeError = true;
 				return;
 			}

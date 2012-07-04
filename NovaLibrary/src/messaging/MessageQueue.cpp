@@ -96,7 +96,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 		}
 	}
 
-	Message* retMessage;
+	Message *retMessage;
 
 	//If indefinite read:
 	if(timeout == 0)
@@ -166,7 +166,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 		struct timeval timeval;
 		gettimeofday(&timeval, NULL);		//TODO: Check this for error return code
 	    timespec.tv_sec  = timeval.tv_sec;
-	    timespec.tv_nsec = timeval.tv_usec * 1000;
+	    timespec.tv_nsec = timeval.tv_usec*1000;
 	    timespec.tv_sec += timeout;
 
 		if(direction == m_forwardDirection)
@@ -188,7 +188,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 						}
 					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
-					if (errCondition == ETIMEDOUT)
+					if(errCondition == ETIMEDOUT)
 					{
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
@@ -231,7 +231,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 						}
 					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
-					if (errCondition == ETIMEDOUT)
+					if(errCondition == ETIMEDOUT)
 					{
 						//If we have had too many timeouts in a row, then close down the socket
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
@@ -372,7 +372,7 @@ void *MessageQueue::ProducerThread()
 		// Make sure the length appears valid
 		// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
 		memcpy(&length, buff, sizeof(length));
-		if (length == 0)
+		if(length == 0)
 		{
 			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
 			continue;
@@ -380,7 +380,7 @@ void *MessageQueue::ProducerThread()
 
 		char *buffer = (char*)malloc(length);
 
-		if (buffer == NULL)
+		if(buffer == NULL)
 		{
 			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
 			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));

@@ -35,7 +35,7 @@ struct _trainingSuspect
 	bool isIncluded;
 	std::string uid;
 	std::string description;
-	std::vector<std::string>* points;
+	std::vector<std::string> *points;
 };
 
 typedef struct _trainingSuspect trainingSuspect;
@@ -47,19 +47,19 @@ class TrainingData
 {
 public:
 	// Convert CE dump to Training DB format and append it
-	static bool CaptureToTrainingDb(std::string dbFile, trainingSuspectMap* selectionOptions);
+	static bool CaptureToTrainingDb(std::string dbFile, trainingSuspectMap *selectionOptions);
 
 	// Parse a CE dump file
-	static trainingDumpMap* ParseEngineCaptureFile(std::string captureFile);
+	static trainingDumpMap *ParseEngineCaptureFile(std::string captureFile);
 
 	// Parse a Training DB file
-	static trainingSuspectMap* ParseTrainingDb(std::string dbPath);
+	static trainingSuspectMap *ParseTrainingDb(std::string dbPath);
 
 	// Create a CE data file from a subset of the Training DB file
 	static std::string MakaDataFile(trainingSuspectMap& db);
 
 	// Removes consecutive points who's squared distance is less than a specified distance
-	static void ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold);
+	static void ThinTrainingPoints(trainingDumpMap *suspects, double distanceThreshhold);
 
 };
 

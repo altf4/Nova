@@ -49,7 +49,7 @@ bool WhitelistConfiguration::DeleteEntry(std::string entry)
 		while(ipListFileStream.good())
 		{
 			string line;
-			if (getline (ipListFileStream,line) == 0)
+			if(getline (ipListFileStream,line) == 0)
 			{
 				continue;
 			}
@@ -67,7 +67,7 @@ bool WhitelistConfiguration::DeleteEntry(std::string entry)
 	}
 
 	ofstream whitelist(Config::Inst()->GetPathWhitelistFile());
-	if (whitelist.is_open())
+	if(whitelist.is_open())
 	{
 		whitelist << ipListNew.str();
 		whitelist.close();
@@ -95,7 +95,7 @@ std::vector<std::string> WhitelistConfiguration::GetIpRanges()
 string WhitelistConfiguration::GetSubnet(string whitelistEntry)
 {
 	uint seperator = whitelistEntry.find("/");
-	if (seperator != string::npos)
+	if(seperator != string::npos)
 	{
 		return (whitelistEntry.substr(seperator + 1, string::npos));
 	}
@@ -108,7 +108,7 @@ string WhitelistConfiguration::GetSubnet(string whitelistEntry)
 string WhitelistConfiguration::GetIp(string whitelistEntry)
 {
 	uint seperator = whitelistEntry.find("/");
-	if (seperator != string::npos)
+	if(seperator != string::npos)
 	{
 		return (whitelistEntry.substr(0, seperator));
 	}
@@ -131,7 +131,7 @@ vector<string> WhitelistConfiguration::GetWhitelistedIps(bool getRanges)
 		while(ipListFileStream.good())
 		{
 			string line;
-			if (getline (ipListFileStream,line) == 0)
+			if(getline (ipListFileStream,line) == 0)
 			{
 				break;
 			}
@@ -139,11 +139,11 @@ vector<string> WhitelistConfiguration::GetWhitelistedIps(bool getRanges)
 			{
 				// Shouldn't have any spaces if it's just an IP
 				// TODO: should trim whitespace at the end of the lines
-				if (line.find("/") == string::npos && !getRanges)
+				if(line.find("/") == string::npos && !getRanges)
 				{
 					whitelistedAddresses.push_back(line);
 				}
-				else if (line.find("/") != string::npos && getRanges)
+				else if(line.find("/") != string::npos && getRanges)
 				{
 					whitelistedAddresses.push_back(line);
 				}
@@ -163,14 +163,14 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 {
 	// Convert ip/xx notation if need be
 	uint seperator = entry.find("/");
-	if (seperator != string::npos)
+	if(seperator != string::npos)
 	{
-		if (GetSubnet(entry).size() > 0 && GetSubnet(entry).size() <= 2)
+		if(GetSubnet(entry).size() > 0 && GetSubnet(entry).size() <= 2)
 		{
 			in_addr subnetmask;
 			subnetmask.s_addr = 0;
 			int oldMask = atoi(GetSubnet(entry).c_str());
-			for (int i = 0; i < oldMask; i++)
+			for(int i = 0; i < oldMask; i++)
 			{
 				subnetmask.s_addr |= subnetmask.s_addr | (1 << i);
 			}
@@ -189,7 +189,7 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 		while(ipListFileStream.good())
 		{
 			string line;
-			if (getline (ipListFileStream,line) == 0)
+			if(getline (ipListFileStream,line) == 0)
 			{
 				continue;
 			}
@@ -211,10 +211,10 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 		return false;
 	}
 
-	if (!alreadyExists)
+	if(!alreadyExists)
 	{
 		ofstream whitelist(Config::Inst()->GetPathWhitelistFile());
-		if (whitelist.is_open())
+		if(whitelist.is_open())
 		{
 			whitelist << ipListNew.str();
 			whitelist << entry;
@@ -230,5 +230,4 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 	return true;
 }
 
-
-} /* namespace Nova */
+}

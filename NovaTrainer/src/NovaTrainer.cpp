@@ -52,7 +52,7 @@ string haystackFile;
 string localFile;
 
 ofstream trainingFileStream;
-pcap_t * handle;
+pcap_t *handle;
 
 
 
@@ -60,13 +60,13 @@ double lastPoint[DIM];
 
 int main(int argc, const char *argv[])
 {
-	if (argc < 3)
+	if(argc < 3)
 	{
 		PrintUsage();
 		return 0;
 	}
 
-	for (int i = 0; i < DIM; i++)
+	for(int i = 0; i < DIM; i++)
 	{
 		lastPoint[i] = -1;
 	}
@@ -75,7 +75,7 @@ int main(int argc, const char *argv[])
 	Config::Inst()->SetIsDmEnabled(false);
 	Config::Inst()->SetIsTraining(true);
 
-	if (chdir(Config::Inst()->GetPathHome().c_str()) == -1)
+	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
 	{
 		LOG(CRITICAL, "Unable to change folder to " + Config::Inst()->GetPathHome(), "");
 	}
@@ -95,17 +95,15 @@ int main(int argc, const char *argv[])
 
 	// We suffix the training capture files with the date/time
 	char errbuf[PCAP_ERRBUF_SIZE];
-	struct bpf_program fp;			/* The compiled filter expression */
+	struct bpf_program fp;
 
 	trainingFileStream.open(trainingCapFile.data(), ios::app);
-
 	if(!trainingFileStream.is_open())
 	{
 		LOG(CRITICAL, "Unable to open the training capture file.", "Unable to open training capture file at: "+trainingCapFile);
 	}
 
 	handle = pcap_open_offline(pcapFile.c_str(), errbuf);
-
 	if(handle == NULL)
 	{
 		LOG(CRITICAL, "Unable to start packet capture.", "Couldn't open pcap file: "+pcapFile+": "+string(errbuf)+".");
@@ -145,7 +143,7 @@ void PrintUsage()
 	exit(EXIT_FAILURE);
 }
 
-void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
 {
 
 	if(packet == NULL)
@@ -159,7 +157,7 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr* pkthdr,const u
 		case ETHERTYPE_IP:
 		{
 			//Prepare Packet structure
-			Evidence * evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
+			Evidence *evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
 			suspects.ProcessEvidence(evidencePacket);
 			update(evidencePacket->m_evidencePacket.ip_src);
 
@@ -183,7 +181,7 @@ void update(const in_addr_t& key)
 	//Check that we updated correctly
 	Suspect suspectCopy = suspects.GetSuspect(foo);
 
-	if (suspects.IsEmptySuspect(&suspectCopy))
+	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		cout << "Got an empty suspect when trying to classify" << endl;
 		return;
@@ -193,11 +191,11 @@ void update(const in_addr_t& key)
 	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
 
 	FeatureSet fs = suspectCopy.GetFeatureSet(MAIN_FEATURES);
-	if (fs.m_features[0] != fs.m_features[0] )
+	if(fs.m_features[0] != fs.m_features[0] )
 	{
 		cout << "This can't be good..." << endl;
 	}
-	for (int j = 0; j < DIM; j++)
+	for(int j = 0; j < DIM; j++)
 	{
 		trainingFileStream << fs.m_features[j] << " ";
 	}
@@ -210,7 +208,7 @@ void UpdateHaystackFeatures()
 	vector<string> haystackAddresses = Config::GetHaystackAddresses(haystackFile);
 
 	vector<uint32_t> haystackNodes;
-	for (uint i = 0; i < haystackAddresses.size(); i++)
+	for(uint i = 0; i < haystackAddresses.size(); i++)
 	{
 		cout << haystackAddresses[i] << " has been set as a haystack address" << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));

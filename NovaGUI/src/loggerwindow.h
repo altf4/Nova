@@ -49,8 +49,8 @@ private:
     void AdjustColumnWidths();
     void UpdateLogDisplay();
     bool ShouldBeVisible(QString level);
-    QTreeWidgetItem * GenerateLogTabEntry(QString line);
-    QTreeWidgetItem * LogFileNotFound();
+    QTreeWidgetItem *GenerateLogTabEntry(QString line);
+    QTreeWidgetItem *LogFileNotFound();
 
 private:
     Ui::LoggerWindowClass ui;

@@ -59,7 +59,7 @@ public:
 	void ThinTrainingPoints(double distanceThreshhold);
 
 private:
-	trainingFileSuspectMap* trainingTable;
+	trainingFileSuspectMap *trainingTable;
 
 };
 
