@@ -21,6 +21,7 @@
 
 #include <vector>
 #include "string"
+#include "HaystackControl.h"
 
 #include "Suspect.h"
 #include "messaging/messages/RequestMessage.h"
@@ -34,23 +35,6 @@ namespace Nova
 //Initializes internal objects and states. MUST be run once first, before any other functions
 void InitializeUI();
 
-//************************************************************************
-//**						Process Operations							**
-//************************************************************************
-
-//Starts the Honeyd Haystack process
-//	returns - True if haystack successfully started, false on error
-//	NOTE: If the haystack is already running, this function does nothing and returns true
-bool StartHaystack();
-
-//Stops the Honeyd Haystack process
-//	returns - True if haystack successfully stopped, false on error
-//	NOTEL if the haystack is already dead, this function does nothing and returns true
-bool StopHaystack();
-
-//Returns whether the Haystack is running or not
-//	returns - True if honeyd haystack is running, false if not running
-bool IsHaystackUp();
 
 //Runs the Novad process
 //	returns - True upon successfully running the novad process, false on error

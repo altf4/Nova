@@ -10,6 +10,7 @@ CPP_SRCS += \
 ../src/Evidence.cpp \
 ../src/EvidenceTable.cpp \
 ../src/FeatureSet.cpp \
+../src/HaystackControl.cpp \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
@@ -25,6 +26,7 @@ OBJS += \
 ./src/Evidence.o \
 ./src/EvidenceTable.o \
 ./src/FeatureSet.o \
+./src/HaystackControl.o \
 ./src/Logger.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
@@ -40,6 +42,7 @@ CPP_DEPS += \
 ./src/Evidence.d \
 ./src/EvidenceTable.d \
 ./src/FeatureSet.d \
+./src/HaystackControl.d \
 ./src/Logger.d \
 ./src/NovaUtil.d \
 ./src/Point.d \

@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Haystack.cpp
+// Name        : HaystackControl.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 // Description : Controls the Honeyd Haystack and Doppelganger processes
 //============================================================================
 
-#include "Commands.h"
+#include "HaystackControl.h"
 #include "Config.h"
-
+#include "Logger.h"
 #include <sstream>
 
 using namespace std;
@@ -57,7 +57,7 @@ bool StartHaystack()
 	ss << " -p " << Config::Inst()->GetPathReadFolder();
 	ss << "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
 
-	cout << ss.str() << endl;
+	LOG(DEBUG, "Launching haystack with command: " + ss.str(), "");
 	if(system(ss.str().c_str()) != 0)
 	{
 		return false;

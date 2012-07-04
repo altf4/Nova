@@ -46,10 +46,7 @@ CONFIG(debug, debug|release):LIBS += ../NovaLibrary/Debug/libNovaLibrary.a
 else:LIBS += ../NovaLibrary/Release/libNovaLibrary.a
 CONFIG(debug, debug|release):LIBS += ../Nova_UI_Core/Debug/libNova_UI_Core.so
 else:LIBS += ../Nova_UI_Core/Release/libNova_UI_Core.so
-LIBS += /usr/lib/libboost_serialization.a \
-    /usr/lib/libapr-1.a \
-    /usr/lib/libann.a \
-    /usr/lib/libaprutil-1.a
+LIBS += /usr/lib/libann.a
 UI_DIR = UI_headers/
 QMAKE_CLEAN += $(TARGET)
 CONFIG += no_keywords

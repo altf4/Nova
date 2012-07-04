@@ -6,7 +6,6 @@
 CPP_SRCS += \
 ../src/CallbackHandler.cpp \
 ../src/Connection.cpp \
-../src/HaystackControl.cpp \
 ../src/HoneydConfiguration.cpp \
 ../src/NodeManager.cpp \
 ../src/NovadControl.cpp \
@@ -23,7 +22,6 @@ CPP_SRCS += \
 OBJS += \
 ./src/CallbackHandler.o \
 ./src/Connection.o \
-./src/HaystackControl.o \
 ./src/HoneydConfiguration.o \
 ./src/NodeManager.o \
 ./src/NovadControl.o \
@@ -40,7 +38,6 @@ OBJS += \
 CPP_DEPS += \
 ./src/CallbackHandler.d \
 ./src/Connection.d \
-./src/HaystackControl.d \
 ./src/HoneydConfiguration.d \
 ./src/NodeManager.d \
 ./src/NovadControl.d \

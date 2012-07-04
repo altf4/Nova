@@ -16,27 +16,39 @@
 // Description :
 //============================================================================
 
-// !!!WARNING!!!
-// This interface has been deprecated. Use TrainingDump.cpp instead whenever possible.
-// !!!WARNING!!!
-
 #include <fstream>
 #include <sstream>
 #include <ANN/ANN.h>
 
 #include "TrainingData.h"
+#include "TrainingDump.h"
 #include "Defines.h"
 #include "Logger.h"
 
 using namespace std;
 using namespace Nova;
 
-trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
+TrainingDump::TrainingDump()
 {
-	trainingDumpMap* trainingTable = new trainingDumpMap();
+	trainingTable = NULL;
+}
+
+bool TrainingDump::LoadCaptureFile(string pathDumpFile)
+{
+	if (trainingTable != NULL)
+	{
+		for (trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
+		{
+			delete it->second;
+		}
+	}
+	delete trainingTable;
+	trainingTable = NULL;
+
+	trainingTable = new trainingFileSuspectMap();
 	trainingTable->set_empty_key("");
 
-	ifstream dataFile(captureFile.data());
+	ifstream dataFile(pathDumpFile.data());
 	string line, ip, data;
 
 	if(dataFile.is_open())
@@ -48,7 +60,7 @@ trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 			if(firstDelim == string::npos)
 			{
 				LOG(ERROR, "Invalid or corrupt CE capture file.", "");
-				return NULL;
+				return false;
 			}
 
 			ip = line.substr(0,firstDelim);
@@ -57,97 +69,81 @@ trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 
 			if((*trainingTable)[ip] == NULL)
 			{
-				(*trainingTable)[ip] = new vector<string>();
+				(*trainingTable)[ip] = new trainingFileSuspect;
+				(*trainingTable)[ip]->description = "-";
 			}
 
-			(*trainingTable)[ip]->push_back(data);
+			(*trainingTable)[ip]->points.push_back(data);
 		}
 	}
 	else
 	{
 		LOG(ERROR, "Unable to open CE capture file for reading.", "");
-		return NULL;
+		return false;
+		// TODO: throw exception?
 	}
 	dataFile.close();
-
-	return trainingTable;
+	return true;
 }
 
-trainingSuspectMap* TrainingData::ParseTrainingDb(string dbPath)
+bool TrainingDump::SetDescription(string uid, string description)
 {
-	trainingSuspectMap* suspects = new trainingSuspectMap();
-	suspects->set_empty_key("");
-
-	string line;
-	bool getHeader = true;
-	uint delimIndex;
-
-	trainingSuspect* suspect = new trainingSuspect();
-	suspect->points = new vector<string>();
-
-	ifstream stream(dbPath.data());
-	if(stream.is_open())
+	if (!trainingTable->keyExists(uid))
 	{
-		while (stream.good() && getline(stream,line))
-		{
-			if(line.length() > 0)
-			{
-				if(getHeader)
-				{
-					delimIndex = line.find_first_of(' ');
-
-					if(delimIndex == string::npos)
-					{
-						LOG(ERROR, "Invalid or corrupt DB training file.", "");
-						return NULL;
-					}
-
-					suspect->uid = line.substr(0,delimIndex);
-					suspect->isHostile = atoi(line.substr(delimIndex + 1, 1).c_str());
-
-					// TODO: It would be nice to have the suspects used last time to generate the
-					// data file still selected as included. For now we just mark them all.
-					suspect->isIncluded = true;
-
-					delimIndex = line.find_first_of('"');
-					if(delimIndex == string::npos)
-					{
-						LOG(ERROR, "Invalid or corrupt DB training file.", "");
-						return NULL;
-					}
-
-					suspect->description = line.substr(line.find_first_of('"'), line.length());
-					getHeader = false;
-				}
-				else {
-					suspect->points->push_back(line);
-				}
-			}
-			else
-			{
-				if(!getHeader)
-				{
-					(*suspects)[suspect->uid] = suspect;
-					suspect = new trainingSuspect();
-					suspect->points = new vector<string>();
-					getHeader = true;
-				}
-			}
-		}
+		return false;
 	}
-	else
-	{
-		LOG(ERROR, "Unable to open training DB file for reading.", "");
-		return NULL;
-	}
-	stream.close();
 
-	return suspects;
+	(*trainingTable)[uid]->description = description;
+	return true;
 }
 
-bool TrainingData::CaptureToTrainingDb(string dbFile, trainingSuspectMap* entries)
+bool TrainingDump::SetIsHostile(string uid, bool isHostile)
 {
-	trainingSuspectMap* db = ParseTrainingDb(dbFile);
+	if (!trainingTable->keyExists(uid))
+	{
+		return false;
+	}
+
+	(*trainingTable)[uid]->isHostile = isHostile;
+	return true;
+}
+
+bool TrainingDump::SetIsIncluded(string uid, bool isIncluded)
+{
+	if (!trainingTable->keyExists(uid))
+	{
+		return false;
+	}
+
+
+	(*trainingTable)[uid]->isIncluded = isIncluded;
+	return true;
+}
+
+bool TrainingDump::SetAllIsIncluded(bool isIncluded)
+{
+	for (trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
+	{
+		it->second->isIncluded = isIncluded;
+	}
+	return true;
+}
+
+
+bool TrainingDump::SetAllIsHostile(bool isHostile)
+{
+	for (trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
+	{
+		it->second->isHostile = isHostile;
+	}
+	return true;
+}
+
+bool TrainingDump::SaveToDb(string dbFile)
+{
+	ThinTrainingPoints(Config::Inst()->GetThinningDistance());
+
+	trainingSuspectMap* db = TrainingData::ParseTrainingDb(dbFile);
 
 	if(db == NULL)
 		return false;
@@ -163,12 +159,12 @@ bool TrainingData::CaptureToTrainingDb(string dbFile, trainingSuspectMap* entrie
 
 	uid = max + 1;
 	ofstream out(dbFile.data(), ios::app);
-	for(trainingSuspectMap::iterator header = entries->begin(); header != entries->end(); header++)
+	for(trainingFileSuspectMap::iterator header = trainingTable->begin(); header != trainingTable->end(); header++)
 	{
 		if(header->second->isIncluded)
 		{
 			out << uid << " " << header->second->isHostile << " \"" << header->second->description << "\"" << endl;
-			for(vector<string>::iterator i = header->second->points->begin(); i != header->second->points->end(); i++)
+			for(vector<string>::iterator i = header->second->points.begin(); i != header->second->points.end(); i++)
 			{
 				out << *i << endl;
 			}
@@ -183,25 +179,9 @@ bool TrainingData::CaptureToTrainingDb(string dbFile, trainingSuspectMap* entrie
 	return true;
 }
 
-string TrainingData::MakaDataFile(trainingSuspectMap& db)
-{
-	stringstream ss;
 
-	for(trainingSuspectMap::iterator it = db.begin(); it != db.end(); it++)
-	{
-		if(it->second->isIncluded)
-		{
-			for(uint i = 0; i < it->second->points->size(); i++)
-			{
-				ss << it->second->points->at(i).substr(1, string::npos) << it->second->isHostile << endl;
-			}
-		}
-	}
-
-	return ss.str();
-}
-
-void TrainingData::ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
+// TODO: Fix this so it works with correct normalization
+void TrainingDump::ThinTrainingPoints(double distanceThreshhold)
 {
 	uint numThinned = 0, numTotal = 0;
 	double maxValues[DIM];
@@ -209,12 +189,12 @@ void TrainingData::ThinTrainingPoints(trainingDumpMap* suspects, double distance
 		maxValues[i] = 0;
 
 	// Parse out the max values for normalization
-	for(trainingDumpMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	for(trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
 	{
-		for(int p = it->second->size() - 1; p >= 0; p--)
+		for(int p = it->second->points.size() - 1; p >= 0; p--)
 		{
 			numTotal++;
-			stringstream ss(it->second->at(p));
+			stringstream ss(it->second->points.at(p));
 			for(uint d = 0; d < DIM; d++)
 			{
 				string featureString;
@@ -234,15 +214,15 @@ void TrainingData::ThinTrainingPoints(trainingDumpMap* suspects, double distance
 	ANNpoint newerPoint = annAllocPt(DIM);
 	ANNpoint olderPoint = annAllocPt(DIM);
 
-	for(trainingDumpMap::iterator it = suspects->begin(); it != suspects->end(); it++)
+	for(trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
 	{
 		// Can't trim points if there's only 1
-		if(it->second->size() < 2)
+		if(it->second->points.size() < 2)
 		{
 			continue;
 		}
 
-		stringstream ss(it->second->at(it->second->size() - 1));
+		stringstream ss(it->second->points.at(it->second->points.size() - 1));
 		for(int d = 0; d < DIM; d++)
 		{
 			string feature;
@@ -250,11 +230,11 @@ void TrainingData::ThinTrainingPoints(trainingDumpMap* suspects, double distance
 			newerPoint[d] = atof(feature.c_str()) / maxValues[d];
 		}
 
-		for(int p = it->second->size() - 2; p >= 0; p--)
+		for(int p = it->second->points.size() - 2; p >= 0; p--)
 		{
 			double distance = 0;
 
-			stringstream ss(it->second->at(p));
+			stringstream ss(it->second->points.at(p));
 			for(uint d = 0; d < DIM; d++)
 			{
 				string feature;
@@ -268,7 +248,7 @@ void TrainingData::ThinTrainingPoints(trainingDumpMap* suspects, double distance
 			// Should we throw this point away?
 			if(distance < distanceThreshhold)
 			{
-				it->second->erase(it->second->begin() + p);
+				it->second->points.erase(it->second->points.begin() + p);
 				numThinned++;
 			}
 			else

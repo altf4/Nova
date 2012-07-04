@@ -16,6 +16,9 @@
 // Description : Exposes Nova_UI_Core as a module for the node.js environment.
 //============================================================================
 
+#ifndef NOVANODE_H
+#define NOVANODE_H
+
 #include <v8.h>
 #include <node.h>
 
@@ -79,3 +82,4 @@ public:
 	static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter);
 };
 
+#endif

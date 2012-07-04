@@ -68,6 +68,7 @@ NovaGUI/UI_headers/
 Novad/Release/novad
 Novad/Debug/novad
 Novad/novad
+/Novad/core
 
 #NovaCLI
 NovaCLI/Release/novacli
@@ -88,9 +89,6 @@ NovaLibrary/libNovaLibrary.a
 #NovaTest
 /NovaTest/Debug
 /NovaTest/NovadSource/*
-/NovaWeb/build/*
-/NovaWeb/www/dojo
-/NovaWeb/.lock-wscript
 
 # NovaWeb
 /NovaWeb/www/dojo
@@ -98,26 +96,35 @@ NovaLibrary/libNovaLibrary.a
 /NovaWeb/NodeNovaConfig/build/*
 /NovaWeb/node_modules
 /NovaWeb/.lock-wscript
+/NovaWeb/NodeNovaConfig/.lock-wscript
+/NovaWeb/libv8-convert-20120219/*
+/NovaWeb/libv8-convert-20120219.tar.gz.1
+/NovaWeb/libv8-convert-20120219.tar.gz.2
+/NovaWeb/NodeNovaConfig/subnet0.xml
+/NovaWeb/build/*
+/NovaWeb/www/dojo
+/NovaWeb/.lock-wscript
 
 #MISC
 /RemoteSystemsTempFiles/.project
 /Installer/nova/Config/doppelganger.config
 /Installer/nova/Data/data.txt
 /Installer/nova/Data/training.db
-/NovaWeb/NodeNovaConfig/.lock-wscript
-/NovaWeb/libv8-convert-20120219/*
-/NovaWeb/libv8-convert-20120219.tar.gz.1
-/NovaWeb/libv8-convert-20120219.tar.gz.2
 /Installer/.nova/Config/doppelganger.config
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Data/training.db
 /Installer/Write/nova/.nova/Config/data.csv
-/Novad/core
+
+#NovaTrainer
 /NovaTrainer/Debug/novatrainer
+/NovaTrainer/novatrainer
+/NovaTrainer/Release/novatrainer
+/1
+
+#Haystack Auto Config
 /HoneydHostConfig/subnet0.xml
 /HoneydHostConfig/Debug/honeydhostconfig
 /HoneydHostConfig/Release/honeydhostconfig
-/Nova_UI_Core/Release/Nova_UI_Core
 /HoneydHostConfig/Debug/subnet0.xml
 /HoneydHostConfig/Debug/test.txt
 /HaystackConfigWizard/debug/moc_HaystackConfigWizard.cpp
@@ -130,4 +137,11 @@ NovaLibrary/libNovaLibrary.a
 /subnet0.xml
 /HaystackConfigWizard/debug/moc_WelcomePage.cpp
 /HaystackConfigWizard/UI_headers/ui_ipRangeSelectionForm.h
-/NovaWeb/NodeNovaConfig/subnet0.xml
+
+#debian
+/nova_1*
+/debian/nova.postinst.debhelper
+/debian/nova.postrm.debhelper
+/debian/nova.substvars
+debian/files
+debian/nova/*

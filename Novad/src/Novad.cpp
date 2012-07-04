@@ -24,6 +24,7 @@
 #include "SuspectTable.h"
 #include "FeatureSet.h"
 #include "NovaUtil.h"
+#include "Commands.h"
 #include "Threads.h"
 #include "Control.h"
 #include "Config.h"
@@ -32,12 +33,14 @@
 #include "Novad.h"
 
 
+#include <pcap.h>
 #include <vector>
 #include <math.h>
 #include <time.h>
 #include <errno.h>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 #include <sys/un.h>
 #include <signal.h>
 #include <iostream>
@@ -71,9 +74,11 @@ time_t lastSaveTime;
 // Time novad started, used for uptime and pcap capture names
 time_t startTime;
 
+string trainingFolder;
 string trainingCapFile;
 
-ofstream trainingFileStream;
+
+pcap_dumper_t *trainingFileStream;
 
 //HS Vars
 // TODO: Don't hard code this path. Might also be in NovaTrainer.
@@ -163,29 +168,18 @@ int RunNovaD()
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
 	{
-		// We suffix the training capture files with the date/time
-		time_t rawtime;
-		time(&rawtime);
-		struct tm *timeinfo = localtime(&rawtime);
-		char buffer[40];
-		strftime(buffer, 40, "%m-%d-%y_%H-%M-%S", timeinfo);
-
 		if(system(string("mkdir " + Config::Inst()->GetPathTrainingCapFolder()).c_str()))
 		{
 			// Not really an problem, throws compiler warning if we don't catch the system call though
 		}
-		trainingCapFile = Config::Inst()->GetPathHome() + "/"
-				+ Config::Inst()->GetPathTrainingCapFolder() + "/training" + buffer
-				+ ".dump";
 
-		trainingFileStream.open(trainingCapFile.data(), ios::app);
-
-		if(!trainingFileStream.is_open())
+		trainingFolder = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathTrainingCapFolder() + "/" + Config::Inst()->GetTrainingSession();
+		if(system(string("mkdir " + trainingFolder).c_str()))
 		{
-			LOG(CRITICAL, "Unable to open the training capture file.",
-				"Unable to open training capture file at: "+trainingCapFile);
-			exit(EXIT_FAILURE);
+			// Not really an problem, throws compiler warning if we don't catch the system call though
 		}
+
+		trainingCapFile = trainingFolder + "/capture.pcap";
 
 		if(Config::Inst()->GetReadPcap())
 		{
@@ -234,18 +228,7 @@ int RunNovaD()
 		}
 	}
 
-	Start_Packet_Handler();
-
-	if(!Config::Inst()->GetIsTraining())
-	{
-		//Shouldn't get here!
-		LOG(CRITICAL, "Main thread ended. This should never happen, something went very wrong.", "");
-		return EXIT_FAILURE;
-	}
-	else
-	{
-		return EXIT_SUCCESS;
-	}
+	return Start_Packet_Handler();
 }
 
 bool LockNovad()
@@ -485,7 +468,7 @@ void RefreshStateFile()
 
 void CloseTrainingCapture()
 {
-	trainingFileStream.close();
+	pcap_dump_close(trainingFileStream);
 }
 
 void Reload()
@@ -549,8 +532,8 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 					LOG(ERROR, "Failed to update iptables.", "");
 				}
 
-				int i;
-				for(i = 0; i < Config::Inst()->GetSaMaxAttempts(); i++)
+				int j;
+				for(j = 0; j < Config::Inst()->GetSaMaxAttempts(); j++)
 				{
 					if(KnockPort(OPEN))
 					{
@@ -567,7 +550,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 							if(errno == EHOSTUNREACH)
 							{
 								//set to max attempts to hit the failed connect condition
-								i = Config::Inst()->GetSaMaxAttempts();
+								j = Config::Inst()->GetSaMaxAttempts();
 								LOG(ERROR, "Unable to connect to host to send silent alarm: "
 									+ string(strerror(errno)), "");
 								break;
@@ -580,7 +563,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 					}
 				}
 				//If connecting failed
-				if(i == Config::Inst()->GetSaMaxAttempts())
+				if(j == Config::Inst()->GetSaMaxAttempts())
 				{
 					close(sockfd);
 					ss.str("");
@@ -692,7 +675,10 @@ bool Start_Packet_Handler()
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
-		sleep(1); //To allow time for other processes to open
+		// TODO This just segfaults, disabling until someone gets around to fixing it (or throwing it out)
+		LOG(CRITICAL, "Reading from a pcap file in novad is not currently supported. Use the novatrainer executable", "");
+		exit(EXIT_FAILURE);
+
 		handles[0] = pcap_open_offline(Config::Inst()->GetPathPcapFile().c_str(), errbuf);
 
 		if(handles[0] == NULL)
@@ -720,11 +706,11 @@ bool Start_Packet_Handler()
 
 		if(Config::Inst()->GetGotoLive()) Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
 
-		trainingFileStream.close();
 		LOG(DEBUG, "Done processing PCAP file", "");
 
 		pcap_close(handles[0]);
 	}
+
 	if(!Config::Inst()->GetReadPcap())
 	{
 		vector<string> ifList = Config::Inst()->GetInterfaces();
@@ -806,6 +792,38 @@ bool Start_Packet_Handler()
 			}
 			pcap_freecode(&fp);
 		}
+
+		if((handles.empty()) || (handles[0] == NULL))
+		{
+			LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");
+			exit(EXIT_FAILURE);
+		}
+
+		trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
+
+		ofstream localIpsStream(trainingFolder + "/localIps.txt");
+		for (uint i = 0; i < localIPs.size(); i++)
+		{
+			in_addr temp;
+			temp.s_addr = ntohl(localIPs.at(i));
+			localIpsStream << inet_ntoa(temp) << endl;
+		}
+		localIpsStream.close();
+
+
+		if (IsHaystackUp())
+		{
+			ofstream haystackIpStream(trainingFolder + "/haystackIps.txt");
+			for (uint i = 0; i < haystackDhcpAddresses.size(); i++)
+			{
+				haystackIpStream << haystackDhcpAddresses.at(i) << endl;
+			}
+			for (uint i = 0; i < haystackAddresses.size(); i++)
+			{
+				haystackIpStream << haystackAddresses.at(i) << endl;
+			}
+		}
+
 		for(u_char i = 1; i < handles.size(); i++)
 		{
 			pthread_t readThread;
@@ -813,11 +831,7 @@ bool Start_Packet_Handler()
 			pthread_create(&readThread, NULL, StartPcapLoop, &temp);
 			pthread_detach(readThread);
 		}
-		if((handles.empty()) || (handles[0] == NULL))
-		{
-			LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");
-			exit(EXIT_FAILURE);
-		}
+
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received
 		u_char index = 0;
@@ -831,6 +845,10 @@ bool Start_Packet_Handler()
 
 void Packet_Handler(u_char *index,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
+	if (Config::Inst()->GetIsTraining())
+	{
+		pcap_dump((u_char*)trainingFileStream, pkthdr, packet);
+	}
 
 	if(packet == NULL)
 	{
@@ -1060,14 +1078,6 @@ void UpdateAndStore(const in_addr_t& key)
 	{
 		return;
 	}
-
-	//Store in training file
-	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
-	for (int j = 0; j < DIM; j++)
-	{
-		trainingFileStream << suspectCopy.GetFeatureSet(MAIN_FEATURES).m_features[j] << " ";
-	}
-	trainingFileStream << "\n";
 
 	//Send to UI
 	SendSuspectToUIs(&suspectCopy);

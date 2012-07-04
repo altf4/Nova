@@ -114,7 +114,8 @@ namespace Nova
 		#endif
 		notify_notification_set_timeout(note, 3000);
 		notify_notification_show(note, NULL);
-		g_object_unref(G_OBJECT(note));
+		// Don't think this is needed. If it is, it won't compile in Fedora since it isn't defined symbol
+		// g_object_unref(G_OBJECT(note));
 	}
 
 	void Logger::LogToFile(uint16_t level, string message)

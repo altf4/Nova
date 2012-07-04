@@ -1,0 +1,43 @@
+ #!/bin/bash
+
+set -e
+
+if [$1 = ]; then
+  echo -e "ERROR: Provide a version number as an argument. IE:\n\t./generateDebs 12.6\n"
+  exit 0
+fi
+
+PACKAGE="nova_$1"
+
+echo $PACKAGE
+
+make clean
+make clean-web
+
+#cd into the directory where the script is
+cd "$(dirname "$PACKAGE")"
+
+# copy the files into a staging directory
+rm -rf $PACKAGE
+rm -f ../$PACKAGE.orig.tar.gz
+mkdir $PACKAGE
+cp -a $(ls -1 | grep -v $PACKAGE | grep -v "debian") $PACKAGE
+
+#replace the Makefile with the debian version
+cp debian/Makefile $PACKAGE
+mv Makefile Makefile.tmp
+cp debian/Makefile .
+
+#tarball it up!
+tar -zcf ../$PACKAGE.orig.tar.gz $PACKAGE
+
+#remove the staging directory
+rm -rf $PACKAGE
+
+#Produce the debian package
+dpkg-buildpackage -us -uc
+
+#put the old makefile back in place
+rm Makefile
+mv Makefile.tmp Makefile
+

@@ -72,7 +72,8 @@ string Config::m_prefixes[] =
 	"WHITELIST_FILE",
 	"MIN_PACKET_THRESHOLD",
 	"CUSTOM_PCAP_FILTER",
-	"CUSTOM_PCAP_MODE"
+	"CUSTOM_PCAP_MODE",
+	"TRAINING_SESSION"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -747,6 +748,19 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			// TRAINING_SESSION
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_trainingSession = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
 
 		}
 	}
@@ -2454,7 +2468,7 @@ vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 
 	if( honeydConfFile == NULL)
 	{
-		LOG(ERROR, "Error opening log file. Does it exist?", "");
+		LOG(ERROR, string("Error opening haystack file at ") + honeyDConfigPath + ". Does it exist?", "");
 		exit(EXIT_FAILURE);
 	}
 
@@ -2493,5 +2507,20 @@ vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 	}
 	return retAddresses;
 }
+
+
+string Config::GetTrainingSession()
+{
+	Lock lock(&m_lock, true);
+	return m_trainingSession;
+}
+
+string Config::SetTrainingSession(string trainingSession)
+{
+	Lock lock(&m_lock, false);
+	m_trainingSession = trainingSession;
+	return m_trainingSession;
+}
+
 
 }

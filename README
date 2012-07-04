@@ -42,6 +42,10 @@ libevent1-dev; procure this by:
     
     sudo apt-get install libevent1-dev
 
+- If you wish to optionally generate Debian packages for Nova, you will also require dpkg-dev:
+
+    sudo apt-get install dpkg-dev
+
 
 ===============================
 Getting the newest code
@@ -123,6 +127,13 @@ SSL certificate and private key, put them in /usr/share/nova/NovaWeb/servercert.
 
 To start the web interface, run the command "novaweb" and go to https://localhost:8042 in
 a web browser.
+
+===============================
+Debian Packages
+===============================
+To generate a Debian package, simply checkout what version of the software you like (or make what changes to it that you want) and run the generateDebs script (as a normal user). 
+
+	./generateDebs <version number>
 
 ===============================
 Contact us
