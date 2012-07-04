@@ -18,6 +18,7 @@
 
 #include "NodeManager.h"
 #include "Logger.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 
@@ -106,31 +107,114 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 					portCounters.push_back(&m_profileCounters[j].m_portCounters[index]);
 				}
 				//Determine whether or not to use a port
-				unsigned int num_ports = 0, avg_ports = 5;
+				unsigned int num_ports = 0, avg_ports = m_profileCounters[j].m_numAvgPorts;
+
+				curNode.m_ports.clear();
+
 				while(!portCounters.empty() && (num_ports < avg_ports))
 				{
 					unsigned int randIndex = time(NULL) % portCounters.size();
 					PortCounter *curCounter = portCounters[randIndex];
 					portCounters.erase(portCounters.begin() + randIndex);
+					NodeProfile* p = m_hdconfig->GetProfile(curNode.m_pfile);
 
-					//If we're skipping this port
+					//If we're closing the port
 					if(curCounter->m_count < 0)
 					{
 						curCounter->m_count += curCounter->m_increment;
+
+						vector<string> tokens;
+
+						boost::split(tokens, curCounter->m_portName, boost::is_any_of("_"));
+
+						string addPort = tokens[0] + "_" + tokens[1] + "_";
+
+						Port newPort;
+						newPort.m_portNum = tokens[0];
+						newPort.m_type = tokens[1];
+
+						// ***** TCP ****
+						if(!tokens[1].compare("TCP"))
+						{
+							//Default to reset for TCP unless we have an explicit block for the default action
+							if(p->m_tcpAction.compare("block"))
+							{
+								addPort += "reset";
+								newPort.m_behavior = "reset";
+								curNode.m_ports.push_back(addPort);
+								curNode.m_isPortInherited.push_back(false);
+								newPort.m_portName = addPort;
+
+								m_hdconfig->AddPort(newPort);
+								continue;
+							}
+						}
+						//UDP or tcp with default to block
+						addPort += "block";
+						newPort.m_behavior = "block";
+
+						curNode.m_ports.push_back(addPort);
+						curNode.m_isPortInherited.push_back(false);
+						newPort.m_portName = addPort;
+
+						m_hdconfig->AddPort(newPort);
+						continue;
 					}
 
-					//If we're using this port
-					else
-					{
-						curCounter->m_count -= (1 - curCounter->m_increment);
-						curNode.m_ports.push_back(curCounter->m_portName);
-						num_ports++;
-					}
+					//If we use the port behavior from the parent profile
+					curCounter->m_count -= (1 - curCounter->m_increment);
+					curNode.m_ports.push_back(curCounter->m_portName);
+					curNode.m_isPortInherited.push_back(true);
+					num_ports++;
 				}
-				nodesToAdd.push_back(curNode);
+				while(!portCounters.empty())
+				{
+					unsigned int randIndex = time(NULL) % portCounters.size();
+					PortCounter *curCounter = portCounters[randIndex];
+					portCounters.erase(portCounters.begin() + randIndex);
+					NodeProfile* p = m_hdconfig->GetProfile(curNode.m_pfile);
+
+					curCounter->m_count += curCounter->m_increment;
+
+					vector<string> tokens;
+
+					boost::split(tokens, curCounter->m_portName, boost::is_any_of("_"));
+
+					string addPort = tokens[0] + "_" + tokens[1] + "_";
+
+					Port newPort;
+					newPort.m_portNum = tokens[0];
+					newPort.m_type = tokens[1];
+
+					// ***** TCP ****
+					if(!tokens[1].compare("TCP"))
+					{
+						//Default to reset for TCP unless we have an explicit block for the default action
+						if(p->m_tcpAction.compare("block"))
+						{
+							addPort += "reset";
+							newPort.m_behavior = "reset";
+							newPort.m_portName = addPort;
+							m_hdconfig->AddPort(newPort);
+
+							curNode.m_ports.push_back(addPort);
+							curNode.m_isPortInherited.push_back(false);
+							continue;
+						}
+					}
+					//UDP or tcp with default to block
+					addPort += "block";
+					newPort.m_behavior = "block";
+					newPort.m_portName = addPort;
+					m_hdconfig->AddPort(newPort);
+
+					curNode.m_ports.push_back(addPort);
+					curNode.m_isPortInherited.push_back(false);
+				}
 				// Only progress the outermost for loop if we've completely generated a
 				// Node from the profile counter; this way, we get a number of nodes equal
 				// to num_nodes
+				nodesToAdd.push_back(curNode);
 				i++;
 			}
 		}
@@ -163,6 +247,7 @@ void NodeManager::RecursiveGenProfileCounter(const PersonalityNode &parent)
 		}
 		pCounter.m_profile = *m_hdconfig->GetProfile(parent.m_key);
 		pCounter.m_increment = ((double)parent.m_count / (double)m_hostCount);
+		pCounter.m_numAvgPorts = parent.m_avgPortCount;
 		pCounter.m_count = 0;
 
 		for(unsigned int i = 0; i < parent.m_vendor_dist.size(); i++)

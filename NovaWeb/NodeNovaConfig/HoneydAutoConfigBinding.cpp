@@ -51,9 +51,6 @@ Handle<Value> HoneydAutoConfigBinding::New(const Arguments& args)
 
   HoneydAutoConfigBinding* obj = new HoneydAutoConfigBinding();
 
-  obj->m_hdconfig = new Nova::HoneydConfiguration();
-  obj->m_hdconfig->LoadAllTemplates();
-
   obj->Wrap(args.This());
 
   return args.This();
@@ -63,23 +60,23 @@ Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
 {
   HandleScope scope;
   
-  if(args.Length() < 1)
+  if(args.Length() < 3)
   {
-    return ThrowException(Exception::TypeError(String::New("Must be invoked with at least two parameters")));
+    return ThrowException(Exception::TypeError(String::New("Must be invoked with at exactly three parameters")));
   }
   
   std::string numNodes = cvv8::CastFromJS<std::string>(args[0]);
   std::string interfaces = cvv8::CastFromJS<std::string>(args[1]);
-  std::string additionalSubnets;
+  std::string additionalSubnets = cvv8::CastFromJS<std::string>(args[2]);
   
-  if(args.Length() > 2 && !cvv8::CastFromJS<std::string>(args[2]).empty())
+  std::string systemCall = "honeydhostconfig -n " + numNodes;
+  
+  if(!cvv8::CastFromJS<std::string>(args[1]).empty())
   {
-    additionalSubnets = cvv8::CastFromJS<std::string>(args[1]);
+    systemCall += " -i " + interfaces;
   }
   
-  std::string systemCall = "honeydhostconfig -n " + numNodes + " -i " + interfaces;
-  
-  if(args.Length() > 2 && !cvv8::CastFromJS<std::string>(args[2]).empty())
+  if(!cvv8::CastFromJS<std::string>(args[2]).empty())
   {
     systemCall += " -a " + additionalSubnets;
   }
@@ -100,6 +97,18 @@ Handle<Value> HoneydAutoConfigBinding::GetGeneratedNodeInfo(const Arguments& arg
   HandleScope scope;
   
   HoneydAutoConfigBinding* obj = ObjectWrap::Unwrap<HoneydAutoConfigBinding>(args.This());
+  
+  obj->m_hdconfig = new Nova::HoneydConfiguration();
+  Nova::Config::Inst()->SetGroup("HaystackAutoConfig");
+  
+  cout << Nova::Config::Inst()->GetGroup() << endl;
+  
+  obj->m_hdconfig->LoadAllTemplates(); 
+  
+  for(Nova::NodeTable::iterator it = obj->m_hdconfig->m_nodes.begin(); it != obj->m_hdconfig->m_nodes.end(); it++)
+  {
+    cout << it->first << ", " << it->second.m_pfile << '\n';
+  }
   
   Handle<Value> ret = cvv8::CastToJS(obj->m_hdconfig->GeneratedProfilesStrings());
   

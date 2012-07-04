@@ -116,6 +116,18 @@ uint Nova::AtoMACPrefix(string MAC)
 	return ret;
 }
 
+void usage()
+{
+	cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
+	cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
+	cout << "\tcorresponds to a real interface on the machine." << '\n';
+	cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
+	cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
+	cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
+	cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
+	cout << "\tCannot use -f and -a in conjunction" << endl;
+}
+
 ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 {
 	using boost::property_tree::ptree;
@@ -330,14 +342,7 @@ int main(int argc, char ** argv)
 
 	if(argc < 3)
 	{
-		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-		cout << "\tcorresponds to a real interface on the machine." << '\n';
-		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-		cout << "\tCannot use -f and -a in conjunction" << endl;
+		usage();
 
 		lockFile.close();
 
@@ -354,15 +359,7 @@ int main(int argc, char ** argv)
 			{
 				if((!isdigit(argv[j + 1][i])) && (argv[j + 1][i] != 0))
 				{
-					cout << "The argument for number of nodes must be an integer." << '\n';
-					cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-					cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-					cout << "\tcorresponds to a real interface on the machine." << '\n';
-					cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-					cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-					cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-					cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-					cout << "\tCannot use -f and -a in conjunction" << endl;
+					usage();
 
 					lockFile.close();
 
@@ -400,14 +397,7 @@ int main(int argc, char ** argv)
 			}
 			else if(badArgCombination || numNodes <= 0)
 			{
-				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-				cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-				cout << "\tcorresponds to a real interface on the machine." << '\n';
-				cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-				cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-				cout << "\tCannot use -f and -a in conjunction" << endl;
+				usage();
 
 				lockFile.close();
 
@@ -451,14 +441,7 @@ int main(int argc, char ** argv)
 			}
 			else if(badArgCombination || numNodes <= 0)
 			{
-				cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-				cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-				cout << "\tcorresponds to a real interface on the machine." << '\n';
-				cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-				cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-				cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-				cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-				cout << "\tCannot use -f and -a in conjunction" << endl;
+				usage();
 
 				lockFile.close();
 
@@ -547,15 +530,7 @@ int main(int argc, char ** argv)
 
 	if(a_flag_empty && i_flag_empty)
 	{
-		cout << "No interface or explicit subnet was selected. Cancelling execution." << '\n';
-		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-		cout << "\tcorresponds to a real interface on the machine." << '\n';
-		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-		cout << "\tCannot use -f and -a in conjunction" << endl;
+		usage();
 
 		lockFile.close();
 
@@ -566,15 +541,7 @@ int main(int argc, char ** argv)
 
 	if(numNodes <= 0)
 	{
-		cout << "Either -n flag was not used, or number given was negative/not an integer." << '\n';
-		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-		cout << "\tcorresponds to a real interface on the machine." << '\n';
-		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-		cout << "\tCannot use -f and -a in conjunction" << endl;
+		usage();
 
 		lockFile.close();
 
@@ -593,15 +560,7 @@ int main(int argc, char ** argv)
 	}
 	else
 	{
-		cout << "If not using the -a flag, -i flag must be used with at least one explicit interface string." << '\n';
-		cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-		cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-		cout << "\tcorresponds to a real interface on the machine." << '\n';
-		cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-		cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-		cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-		cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-		cout << "\tCannot use -f and -a in conjunction" << endl;
+		usage();
 
 		lockFile.close();
 

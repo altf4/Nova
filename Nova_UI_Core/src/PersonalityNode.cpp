@@ -111,6 +111,7 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 
 	profileToReturn.m_name = m_key;
 	profileToReturn.m_parentProfile = parentProfile.m_name;
+	profileToReturn.m_generated = true;
 
 	m_redundant = true;
 
@@ -142,7 +143,7 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 	// profile struct for every 100% known port.
 	for(uint16_t i = 0; i < m_ports_dist.size(); i++)
 	{
-		if(m_ports_dist[i].second == 100)
+		if(m_ports_dist[i].second == 100 || m_children.size() == 0)
 		{
 			pair<string, pair<bool, double> > portToAdd;
 			portToAdd.first = m_ports_dist[i].first;

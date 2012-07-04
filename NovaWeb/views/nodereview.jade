@@ -1,3 +1,8 @@
 extends layout
 
-h2 Doop
+block content
+  h2 Profiles Generated
+  - for (var i = 0; i < profiles.length; i++)
+    label(id="profiles#{i}", name="PROFILES") #{profiles[i]}
+    br
+    br

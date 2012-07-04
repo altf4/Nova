@@ -76,9 +76,11 @@ hhconfig-debug:
 	$(MAKE) -C HoneydHostConfig/Debug
 
 install-hhconfig-debug:
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin
 
 install-hhconfig-release:
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install HoneydHostConfig/Release/honeydhostconfig $(DESTDIR)/usr/bin
 
 #Unit tests
@@ -168,6 +170,7 @@ install-data:
 	#Install permissions
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1

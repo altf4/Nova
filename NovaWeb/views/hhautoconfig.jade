@@ -76,9 +76,28 @@ block headerAdditions
     
     function checkAtLeastOne()
     {
-      // check that there is at least one subnet or one interface selected here
+      var atLeastOneChecked = false;
       
-      document.getElementById("submitInfo").submit();
+      // check that there is at least one subnet or one interface selected here
+      for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
+      {
+        if(document.getElementById("if" + i).checked)
+        {
+          atLeastOneChecked = true;
+        }
+      }
+      
+      if(document.getElementById("subnetsList").children[1].childNodes["length"] > 0)
+      {
+        atLeastOneChecked = true;
+      }
+      
+      if(!atLeastOneChecked)
+      {
+        document.getElementById("errorLabel").innerHTML = "Must select at least one interface or add one subnet.";
+      }
+      
+      return atLeastOneChecked;
     }
 
 block content
@@ -105,6 +124,7 @@ block content
     br
     label(id="errorLabel", style="color:red;") 
     br
+    br
     label Additional Subnets to scan:
     input(type="text", id="subnetToAdd", width="20", onkeydown="if (event.keyCode == 13){ document.getElementById('addSubnet').click(); event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.0/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.0/##\");", value="Format: XXX.XXX.XXX.0/##") 
     button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet
@@ -119,5 +139,5 @@ block content
       
     br
     br
-    input(type="submit", id="startScan", value="Start Scanning", onclick="document.getElementById(\"startScan\").value='Scanning...'; document.getElementById(\"startScan\").setAttribute('disabled', 'true'); checkAtLeastOne()")
+    input(type="submit", id="startScan", value="Start Scanning", onclick="if(checkAtLeastOne()){ document.getElementById(\"startScan\").value='Scanning...'; document.getElementById(\"startScan\").setAttribute('disabled', 'true'); document.getElementById(\"submitInfo\").submit(); } else{return false;}")
   
