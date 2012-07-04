@@ -117,3 +117,11 @@ NovaLibrary/libNovaLibrary.a
 /NovaTrainer/novatrainer
 /NovaTrainer/Release/novatrainer
 /1
+
+#debian
+/nova_1*
+/debian/nova.postinst.debhelper
+/debian/nova.postrm.debhelper
+/debian/nova.substvars
+debian/files
+debian/nova/*

@@ -42,10 +42,14 @@ rm -f /usr/share/nova/NovaMailPipe
 
 mkfifo /usr/share/nova/NovaMailPipe
 
-chown ${SUDO_USER} /usr/share/nova/NovaMailPipe
+#chown ${SUDO_USER} /usr/share/nova/NovaMailPipe
 
 echo "" >/usr/share/nova/emails
 
-chown ${SUDO_USER} /usr/share/nova/emails
+#chown ${SUDO_USER} /usr/share/nova/emails
 
 #bash `pwd`/NovaCron ${SUDO_USER} 
+
+chgrp -R nova /usr/share/nova
+
+if [ -x /usr/bin/update-menus ] ; then update-menus ; fi
