@@ -47,5 +47,5 @@ private:
 
 };
 
-} /* namespace Nova */
+}
 #endif /* WHITELISTCONFIGURATION_H_ */

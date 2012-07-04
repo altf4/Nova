@@ -36,7 +36,7 @@ using namespace NovaCLI;
 int main(int argc, const char *argv[])
 {
 	// Fail if no arguements
-	if (argc < 2)
+	if(argc < 2)
 	{
 		PrintUsage();
 	}
@@ -53,22 +53,22 @@ int main(int argc, const char *argv[])
 	// actual work.
 
 	// Listing suspect IP addresses
-	if (!strcmp(argv[1], "list"))
+	if(!strcmp(argv[1], "list"))
 	{
-		if (argc < 3)
+		if(argc < 3)
 		{
 			PrintUsage();
 		}
 
-		if (!strcmp(argv[2], "all"))
+		if(!strcmp(argv[2], "all"))
 		{
 			PrintSuspectList(SUSPECTLIST_ALL);
 		}
-		else if (!strcmp(argv[2], "hostile"))
+		else if(!strcmp(argv[2], "hostile"))
 		{
 			PrintSuspectList(SUSPECTLIST_HOSTILE);
 		}
-		else if (!strcmp(argv[2], "benign"))
+		else if(!strcmp(argv[2], "benign"))
 		{
 			PrintSuspectList(SUSPECTLIST_BENIGN);
 		}
@@ -79,18 +79,18 @@ int main(int argc, const char *argv[])
 	}
 
 	// Checking status of components
-	else if (!strcmp(argv[1], "status"))
+	else if(!strcmp(argv[1], "status"))
 	{
-		if (argc < 3)
+		if(argc < 3)
 		{
 			PrintUsage();
 		}
 
-		if (!strcmp(argv[2], "nova"))
+		if(!strcmp(argv[2], "nova"))
 		{
 			StatusNovaWrapper();
 		}
-		else if (!strcmp(argv[2], "haystack"))
+		else if(!strcmp(argv[2], "haystack"))
 		{
 			StatusHaystackWrapper();
 		}
@@ -101,18 +101,18 @@ int main(int argc, const char *argv[])
 	}
 
 	// Starting components
-	else if (!strcmp(argv[1], "start"))
+	else if(!strcmp(argv[1], "start"))
 	{
-		if (argc < 3)
+		if(argc < 3)
 		{
 			PrintUsage();
 		}
 
-		if (!strcmp(argv[2], "nova"))
+		if(!strcmp(argv[2], "nova"))
 		{
 			StartNovaWrapper();
 		}
-		else if (!strcmp(argv[2], "haystack"))
+		else if(!strcmp(argv[2], "haystack"))
 		{
 			StartHaystackWrapper();
 		}
@@ -123,18 +123,18 @@ int main(int argc, const char *argv[])
 	}
 
 	// Stopping components
-	else if (!strcmp(argv[1], "stop"))
+	else if(!strcmp(argv[1], "stop"))
 	{
-		if (argc < 3)
+		if(argc < 3)
 		{
 			PrintUsage();
 		}
 
-		if (!strcmp(argv[2], "nova"))
+		if(!strcmp(argv[2], "nova"))
 		{
 			StopNovaWrapper();
 		}
-		else if (!strcmp(argv[2], "haystack"))
+		else if(!strcmp(argv[2], "haystack"))
 		{
 			StopHaystackWrapper();
 		}
@@ -145,16 +145,16 @@ int main(int argc, const char *argv[])
 	}
 
 	// Getting suspect information
-	else if (!strcmp(argv[1], "get"))
+	else if(!strcmp(argv[1], "get"))
 	{
-		if (argc < 3)
+		if(argc < 3)
 		{
 			PrintUsage();
 		}
 
-		if (!strcmp(argv[2], "all"))
+		if(!strcmp(argv[2], "all"))
 		{
-			if (argc == 4 && !strcmp(argv[3], "csv"))
+			if(argc == 4 && !strcmp(argv[3], "csv"))
 			{
 				PrintAllSuspects(SUSPECTLIST_ALL, true);
 			}
@@ -163,9 +163,9 @@ int main(int argc, const char *argv[])
 				PrintAllSuspects(SUSPECTLIST_ALL, false);
 			}
 		}
-		else if (!strcmp(argv[2], "hostile"))
+		else if(!strcmp(argv[2], "hostile"))
 		{
-			if (argc == 4 && !strcmp(argv[3], "csv"))
+			if(argc == 4 && !strcmp(argv[3], "csv"))
 			{
 				PrintAllSuspects(SUSPECTLIST_HOSTILE, true);
 			}
@@ -174,9 +174,9 @@ int main(int argc, const char *argv[])
 				PrintAllSuspects(SUSPECTLIST_HOSTILE, false);
 			}
 		}
-		else if (!strcmp(argv[2], "benign"))
+		else if(!strcmp(argv[2], "benign"))
 		{
-			if (argc == 4 && !strcmp(argv[3], "csv"))
+			if(argc == 4 && !strcmp(argv[3], "csv"))
 			{
 				PrintAllSuspects(SUSPECTLIST_BENIGN, true);
 			}
@@ -189,7 +189,7 @@ int main(int argc, const char *argv[])
 		{
 			// Some early error checking for the
 			in_addr_t address;
-			if (inet_pton(AF_INET, argv[2], &address) != 1)
+			if(inet_pton(AF_INET, argv[2], &address) != 1)
 			{
 				cout << "Error: Unable to convert to IP address" << endl;
 				exit(EXIT_FAILURE);
@@ -200,14 +200,14 @@ int main(int argc, const char *argv[])
 	}
 
 	// Clearing suspect information
-	else if (!strcmp(argv[1], "clear"))
+	else if(!strcmp(argv[1], "clear"))
 	{
-		if (argc < 3)
+		if(argc < 3)
 		{
 			PrintUsage();
 		}
 
-		if (!strcmp(argv[2], "all"))
+		if(!strcmp(argv[2], "all"))
 		{
 			ClearAllSuspectsWrapper();
 		}
@@ -215,7 +215,7 @@ int main(int argc, const char *argv[])
 		{
 			// Some early error checking for the
 			in_addr_t address;
-			if (inet_pton(AF_INET, argv[2], &address) != 1)
+			if(inet_pton(AF_INET, argv[2], &address) != 1)
 			{
 				cout << "Error: Unable to convert to IP address" << endl;
 				exit(EXIT_FAILURE);
@@ -226,7 +226,7 @@ int main(int argc, const char *argv[])
 	}
 
 	// Checking status of components
-	else if (!strcmp(argv[1], "uptime"))
+	else if(!strcmp(argv[1], "uptime"))
 	{
 		PrintUptime();
 	}
@@ -260,13 +260,13 @@ void PrintUsage()
 
 void StatusNovaWrapper()
 {
-	if (!ConnectToNovad())
+	if(!ConnectToNovad())
 	{
 		cout << "Novad Status: Not running" << endl;
 	}
 	else
 	{
-		if (IsNovadUp(false))
+		if(IsNovadUp(false))
 		{
 			cout << "Novad Status: Running and responding" << endl;
 		}
@@ -281,7 +281,7 @@ void StatusNovaWrapper()
 
 void StatusHaystackWrapper()
 {
-	if (IsHaystackUp())
+	if(IsHaystackUp())
 	{
 		cout << "Haystack Status: Running" << endl;
 	}
@@ -293,9 +293,9 @@ void StatusHaystackWrapper()
 
 void StartNovaWrapper()
 {
-	if (!ConnectToNovad())
+	if(!ConnectToNovad())
 	{
-		if (StartNovad())
+		if(StartNovad())
 		{
 			cout << "Started Novad" << endl;
 		}
@@ -313,9 +313,9 @@ void StartNovaWrapper()
 
 void StartHaystackWrapper()
 {
-	if (!IsHaystackUp())
+	if(!IsHaystackUp())
 	{
-		if (StartHaystack())
+		if(StartHaystack())
 		{
 			cout << "Started Haystack" << endl;
 		}
@@ -346,7 +346,7 @@ void StopNovaWrapper()
 
 void StopHaystackWrapper()
 {
-	if (StopHaystack())
+	if(StopHaystack())
 	{
 		cout << "Haystack has been stopped" << endl;
 	}
@@ -362,7 +362,7 @@ void PrintSuspect(in_addr_t address)
 
 	Suspect *suspect = GetSuspect(ntohl(address));
 
-	if (suspect != NULL)
+	if(suspect != NULL)
 	{
 		cout << suspect->ToString() << endl;
 	}
@@ -383,26 +383,26 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 	vector<in_addr_t> *suspects;
 	suspects = GetSuspectList(listType);
 
-	if (suspects == NULL)
+	if(suspects == NULL)
 	{
 		cout << "Failed to get suspect list" << endl;
 		exit(EXIT_FAILURE);
 	}
 
-	for (uint i = 0; i < suspects->size(); i++)
+	for(uint i = 0; i < suspects->size(); i++)
 	{
 		Suspect *suspect = GetSuspect(suspects->at(i));
 
-		if (suspect != NULL)
+		if(suspect != NULL)
 		{
-			if (!csv)
+			if(!csv)
 			{
 				cout << suspect->ToString() << endl;
 			}
 			else
 			{
 				cout << suspect->GetIpString() << ",";
-				for (int i = 0; i < DIM; i++)
+				for(int i = 0; i < DIM; i++)
 				{
 					cout << suspect->GetFeatureSet().m_features[i] << ",";
 				}
@@ -429,13 +429,13 @@ void PrintSuspectList(enum SuspectListType listType)
 	suspects = GetSuspectList(listType);
 
 
-	if (suspects == NULL)
+	if(suspects == NULL)
 	{
 		cout << "Failed to get suspect list" << endl;
 		exit(EXIT_FAILURE);
 	}
 
-	for (uint i = 0; i < suspects->size(); i++)
+	for(uint i = 0; i < suspects->size(); i++)
 	{
 		in_addr tmp;
 		tmp.s_addr = suspects->at(i);
@@ -450,7 +450,7 @@ void ClearAllSuspectsWrapper()
 {
 	Connect();
 
-	if (ClearAllSuspects())
+	if(ClearAllSuspects())
 	{
 		cout << "Suspects have been cleared" << endl;
 	}
@@ -466,7 +466,7 @@ void ClearSuspectWrapper(in_addr_t address)
 {
 	Connect();
 
-	if (ClearSuspect(address))
+	if(ClearSuspect(address))
 	{
 		cout << "Suspect data has been cleared for this suspect" << endl;
 	}
@@ -487,7 +487,7 @@ void PrintUptime()
 
 void Connect()
 {
-	if (!ConnectToNovad())
+	if(!ConnectToNovad())
 	{
 		cout << "ERROR: Unable to connect to Nova" << endl;
 		exit(EXIT_FAILURE);

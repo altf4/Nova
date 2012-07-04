@@ -31,7 +31,7 @@ NovaComplexDialog::NovaComplexDialog(QWidget *parent)
 	ui.setupUi(this);
 	m_type = MACDialog;
 }
-NovaComplexDialog::NovaComplexDialog(whichDialog type,string* retval, QWidget *parent, string filter)
+NovaComplexDialog::NovaComplexDialog(whichDialog type,string *retval, QWidget *parent, string filter)
 	: QDialog(parent)
 {
 	m_retVal = retval;

@@ -67,7 +67,7 @@ void DialogPrompter::LoadDefaultActions()
 
 	if(config.is_open())
 	{
-		while (config.good())
+		while(config.good())
 		{
 			if(!getline(config, line))
 			{
@@ -104,7 +104,7 @@ void DialogPrompter::LoadDefaultActions()
 			type = (dialogType)atoi(line.substr(0, line.find_first_of(" ")).c_str());
 			description = line.substr(line.find_first_of(" ") + 1);
 
-			messageType* t = new messageType();
+			messageType *t = new messageType();
 			t->action = action;
 			t->descriptionUID = description;
 			t->type = type;
@@ -134,7 +134,7 @@ void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 
 	if(config.is_open())
 	{
-		while (config.good())
+		while(config.good())
 		{
 			if(!getline(config, line))
 			{
@@ -206,7 +206,7 @@ void DialogPrompter::SetDefaultAction(messageHandle msg, defaultChoice action)
 string DialogPrompter::MakeConfigurationLine(messageHandle msg, defaultChoice action)
 {
 	stringstream ss;
-	switch (action)
+	switch(action)
 	{
 		case CHOICE_SHOW:
 		{
@@ -278,7 +278,7 @@ defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string message
 	return action;
 }
 
-defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt, QWidget *parent /* = 0*/)
+defaultChoice DialogPrompter::DisplayPrompt(messageHandle handle, string messageTxt, QWidget *parent)
 {
 	return DisplayPrompt(handle, messageTxt, NULL, NULL, parent);
 }

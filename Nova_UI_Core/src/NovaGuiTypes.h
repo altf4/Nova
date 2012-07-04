@@ -174,7 +174,7 @@ struct NodeProfile
 	inline std::vector<bool> GetInheritance()
 	{
 		std::vector<bool> ret;
-		for (int i = 0; i < INHERITED_MAX; i++)
+		for(int i = 0; i < INHERITED_MAX; i++)
 		{
 			ret.push_back(m_inherited[i]);
 		}
@@ -193,7 +193,7 @@ struct NodeProfile
 	inline std::vector<std::string> GetPortNames()
 	{
 		std::vector<std::string> ret;
-		for (std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+		for(std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 		{
 			ret.push_back(it->first);
 		}
@@ -204,7 +204,7 @@ struct NodeProfile
 	inline std::vector<bool> GetPortInheritance()
 	{
 		std::vector<bool> ret;
-		for (std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+		for(std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 		{
 			ret.push_back(it->second.first);
 		}

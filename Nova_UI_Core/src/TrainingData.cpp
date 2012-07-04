@@ -31,9 +31,9 @@
 using namespace std;
 using namespace Nova;
 
-trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
+trainingDumpMap *TrainingData::ParseEngineCaptureFile(string captureFile)
 {
-	trainingDumpMap* trainingTable = new trainingDumpMap();
+	trainingDumpMap *trainingTable = new trainingDumpMap();
 	trainingTable->set_empty_key("");
 
 	ifstream dataFile(captureFile.data());
@@ -41,7 +41,7 @@ trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 
 	if(dataFile.is_open())
 	{
-		while (dataFile.good() && getline(dataFile,line))
+		while(dataFile.good() && getline(dataFile,line))
 		{
 			uint firstDelim = line.find_first_of(' ');
 
@@ -73,22 +73,22 @@ trainingDumpMap* TrainingData::ParseEngineCaptureFile(string captureFile)
 	return trainingTable;
 }
 
-trainingSuspectMap* TrainingData::ParseTrainingDb(string dbPath)
+trainingSuspectMap *TrainingData::ParseTrainingDb(string dbPath)
 {
-	trainingSuspectMap* suspects = new trainingSuspectMap();
+	trainingSuspectMap *suspects = new trainingSuspectMap();
 	suspects->set_empty_key("");
 
 	string line;
 	bool getHeader = true;
 	uint delimIndex;
 
-	trainingSuspect* suspect = new trainingSuspect();
+	trainingSuspect *suspect = new trainingSuspect();
 	suspect->points = new vector<string>();
 
 	ifstream stream(dbPath.data());
 	if(stream.is_open())
 	{
-		while (stream.good() && getline(stream,line))
+		while(stream.good() && getline(stream,line))
 		{
 			if(line.length() > 0)
 			{
@@ -145,9 +145,9 @@ trainingSuspectMap* TrainingData::ParseTrainingDb(string dbPath)
 	return suspects;
 }
 
-bool TrainingData::CaptureToTrainingDb(string dbFile, trainingSuspectMap* entries)
+bool TrainingData::CaptureToTrainingDb(string dbFile, trainingSuspectMap *entries)
 {
-	trainingSuspectMap* db = ParseTrainingDb(dbFile);
+	trainingSuspectMap *db = ParseTrainingDb(dbFile);
 
 	if(db == NULL)
 		return false;
@@ -201,7 +201,7 @@ string TrainingData::MakaDataFile(trainingSuspectMap& db)
 	return ss.str();
 }
 
-void TrainingData::ThinTrainingPoints(trainingDumpMap* suspects, double distanceThreshhold)
+void TrainingData::ThinTrainingPoints(trainingDumpMap *suspects, double distanceThreshhold)
 {
 	uint numThinned = 0, numTotal = 0;
 	double maxValues[DIM];

@@ -44,7 +44,7 @@ public:
 	void ClearDoppelganger();
 
 	//Initializes the base routing rules the Doppelganger needs to operate.
-	// * Note: This function will simply return without executing if the Doppelganger has
+	// Note: This function will simply return without executing if the Doppelganger has
 	// called InitDoppelganger since construction or the last ClearDoppelganger();
 	void InitDoppelganger();
 

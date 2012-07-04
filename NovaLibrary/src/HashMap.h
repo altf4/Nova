@@ -13,23 +13,23 @@ class hashMapException : public std::exception {};
 // Invalid key access exceptions cat be caught with this
 class emptyKeyException: public hashMapException
 {
-  virtual const char* what() const throw()
-  {
-    return "Unable to access empty key of google hash map";
-  }
+	virtual const char *what() const throw()
+	{
+		return "Unable to access empty key of google hash map";
+	}
 };
 
 class deleteKeyException: public hashMapException
 {
-  virtual const char* what() const throw()
-  {
-    return "Unable to access delete key of google hash map";
-  }
+	virtual const char *what() const throw()
+	{
+		return "Unable to access delete key of google hash map";
+	}
 };
 
 class emptyKeyNotSetException: public hashMapException
 {
-	virtual const char* what() const throw()
+	virtual const char *what() const throw()
 	{
 		return "An empty key was not set on this table";
 	}
@@ -39,7 +39,9 @@ class emptyKeyNotSetException: public hashMapException
 template <class KeyType, class ValueType, class HashFcn, class EqualKey>
 class HashMap
 {
+
 public:
+
 	HashMap();
 	~HashMap();
 
@@ -62,16 +64,17 @@ public:
 
 	// Expose the iterators
 	typedef typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator iterator;
+
 	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator begin();
 	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator end();
 	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator find(KeyType key);
 
 private:
+
 	google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey> m_map;
 
 	KeyType m_emptyKey;
 	KeyType m_deletedKey;
-
 
 	EqualKey m_equalityChecker;
 
@@ -88,18 +91,12 @@ HashMap<KeyType,ValueType,HashFcn,EqualKey>::HashMap()
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 HashMap<KeyType,ValueType,HashFcn,EqualKey>::~HashMap()
-{
-	// Anything we need to do on destruction goes here
-}
-
-
-
+{}
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 void HashMap<KeyType,ValueType,HashFcn,EqualKey>::set_deleted_key(KeyType key)
 {
 	m_isDeletedKeyUsed = true;
-
 	m_deletedKey = key;
 	m_map.set_deleted_key(key);
 }
@@ -112,7 +109,6 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::set_empty_key(KeyType key)
 	m_emptyKey = key;
 	m_map.set_empty_key(key);
 }
-
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::begin()
@@ -147,15 +143,15 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::resize(size_t size)
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 void HashMap<KeyType,ValueType,HashFcn,EqualKey>::erase(KeyType key)
 {
-	if (!m_isEmptyKeyUsed)
+	if(!m_isEmptyKeyUsed)
 	{
 		throw emptyKeyNotSetException();
 	}
-	else if (m_isEmptyKeyUsed && m_equalityChecker.operator()(key, m_emptyKey))
+	else if(m_isEmptyKeyUsed && m_equalityChecker.operator()(key, m_emptyKey))
 	{
 		throw emptyKeyException();
 	}
-	else if (!m_isDeletedKeyUsed || m_equalityChecker.operator()(key, m_deletedKey))
+	else if(!m_isDeletedKeyUsed || m_equalityChecker.operator()(key, m_deletedKey))
 	{
 		throw deleteKeyException();
 	}
@@ -192,15 +188,15 @@ bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::keyExists(KeyType key)
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 ValueType& HashMap<KeyType,ValueType,HashFcn,EqualKey>::operator[](KeyType key)
 {
-	if (!m_isEmptyKeyUsed)
+	if(!m_isEmptyKeyUsed)
 	{
 		throw emptyKeyNotSetException();
 	}
-	else if (m_isEmptyKeyUsed && m_equalityChecker.operator()(key, m_emptyKey))
+	else if(m_isEmptyKeyUsed && m_equalityChecker.operator()(key, m_emptyKey))
 	{
 		throw emptyKeyException();
 	}
-	else if (m_isDeletedKeyUsed && m_equalityChecker.operator()(key, m_deletedKey))
+	else if(m_isDeletedKeyUsed && m_equalityChecker.operator()(key, m_deletedKey))
 	{
 		throw deleteKeyException();
 	}

@@ -28,7 +28,7 @@ class Config {
 
 public:
 	// This is a singleton class, use this to access it
-	static Config* Inst();
+	static Config *Inst();
 
 
 	~Config();
@@ -41,7 +41,7 @@ public:
 	bool SaveUserConfig();
 
 	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
-	//	Returns: True if (after the function) the user has all necessary ~/.nova config files
+	//	Returns: True if(after the function) the user has all necessary ~/.nova config files
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
     static bool InitUserConfigs(std::string homeNovaPath);
 

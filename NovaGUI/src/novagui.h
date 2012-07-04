@@ -26,13 +26,10 @@
 struct suspectItem
 {
 	//The suspect information
-	Nova::Suspect * suspect;
+	Nova::Suspect *suspect;
 
 	//The associated item for the suspect view list
-	QListWidgetItem * item;
-
-	//We need a second item because an item can only be in one list at a time
-	QListWidgetItem * mainItem;
+	QListWidgetItem *item;
 };
 typedef Nova::HashMap<uint64_t, suspectItem, std::tr1::hash<uint64_t>, eqaddr > SuspectGUIHashTable;
 
@@ -119,7 +116,7 @@ private Q_SLOTS:
 
 	//Suspect view widgets
 	void on_clearSuspectsButton_clicked();
-	void on_suspectList_currentItemChanged(QListWidgetItem * current, QListWidgetItem * previous);
+	void on_suspectList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
 	//Custom Slots
     //Updates the UI with the latest suspect information
@@ -134,18 +131,18 @@ Q_SIGNALS:
 	void refreshSystemStatus();
 
 private:
-	const QIcon* m_greenIcon;
-	const QIcon* m_redIcon;
+	const QIcon *m_greenIcon;
+	const QIcon *m_redIcon;
 
-	QMenu * m_suspectMenu;
-	QMenu * m_systemStatMenu;
+	QMenu *m_suspectMenu;
+	QMenu *m_systemStatMenu;
 
 	bool m_featureEnabled[DIM];
 	bool m_editingSuspectList;
 
 
 	//Configuration variables
-	char * m_pathsFile;
+	char *m_pathsFile;
 };
 
 namespace Nova

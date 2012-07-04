@@ -14,7 +14,6 @@ CPP_SRCS += \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
-../src/SerializationHelper.cpp \
 ../src/Suspect.cpp \
 ../src/SuspectTable.cpp \
 ../src/WhitelistConfiguration.cpp 
@@ -30,7 +29,6 @@ OBJS += \
 ./src/Logger.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
-./src/SerializationHelper.o \
 ./src/Suspect.o \
 ./src/SuspectTable.o \
 ./src/WhitelistConfiguration.o 
@@ -46,7 +44,6 @@ CPP_DEPS += \
 ./src/Logger.d \
 ./src/NovaUtil.d \
 ./src/Point.d \
-./src/SerializationHelper.d \
 ./src/Suspect.d \
 ./src/SuspectTable.d \
 ./src/WhitelistConfiguration.d 

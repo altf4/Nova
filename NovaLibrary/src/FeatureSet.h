@@ -211,7 +211,7 @@ private:
 		+ sizeof(in_addr_t)+ sizeof(double) + 5*(sizeof(bool)) +  sizeof(int32_t) + 2*DIM*(sizeof(double)))
 		// + 2*(4x Table entry count + m_bytesTotal + m_packetCount) (could serialized two feature sets)
 		+ (2*(6*(sizeof(uint32_t)) + 4*(sizeof(time_t))))))
-		// All of the Above divided by (8 bytes per table entry) * (up to two feature sets per serialization)
+		// All of the Above divided by (8 bytes per table entry)*(up to two feature sets per serialization)
 		/(8*2));
 
 };

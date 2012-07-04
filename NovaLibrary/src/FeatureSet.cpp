@@ -150,27 +150,27 @@ void FeatureSet::CalculateAll()
 		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
 	{
 		Calculate(TCP_PERCENT_SYN);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
 	{
 		Calculate(TCP_PERCENT_FIN);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
 	{
 		Calculate(TCP_PERCENT_RST);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
 	{
 		Calculate(TCP_PERCENT_SYNACK);
 	}
 
-	if (Config::Inst()->IsFeatureEnabled(HAYSTACK_PERCENT_CONTACTED))
+	if(Config::Inst()->IsFeatureEnabled(HAYSTACK_PERCENT_CONTACTED))
 	{
 		Calculate(HAYSTACK_PERCENT_CONTACTED);
 	}
@@ -228,7 +228,7 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 
 
 				//Multiply the maximum entry with the size to get the divisor
-				portDivisor = portDivisor * ((double)m_PortTCPTable.size() + (double)m_PortUDPTable.size());
+				portDivisor = portDivisor *((double)m_PortTCPTable.size() + (double)m_PortUDPTable.size());
 				long long unsigned int temp = 0;
 				for(Port_Table::iterator it = m_PortTCPTable.begin() ; it != m_PortTCPTable.end(); it++)
 				{
@@ -339,7 +339,7 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		}
 		case HAYSTACK_PERCENT_CONTACTED:
 		{
-			if (m_HaystackIPTable.size())
+			if(m_HaystackIPTable.size())
 			{
 				m_features[HAYSTACK_PERCENT_CONTACTED] = (double)m_haystackNodesContacted / (double)m_HaystackIPTable.size();
 			}
@@ -381,7 +381,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If UDP
 		case 17:
 		{
-			if (evidence->m_evidencePacket.dst_port != 0)
+			if(evidence->m_evidencePacket.dst_port != 0)
 			{
 				m_PortUDPTable[evidence->m_evidencePacket.dst_port]++;
 			}
@@ -391,31 +391,31 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		case 6:
 		{
 			m_tcpPacketCount++;
-			if (evidence->m_evidencePacket.dst_port != 0)
+			if(evidence->m_evidencePacket.dst_port != 0)
 			{
 				m_PortTCPTable[evidence->m_evidencePacket.dst_port]++;
 			}
 
 
-			if (evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
+			if(evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
 			{
 				m_synAckCount++;
 			}
-			else if (evidence->m_evidencePacket.tcp_hdr.syn)
+			else if(evidence->m_evidencePacket.tcp_hdr.syn)
 			{
 				m_synCount++;
 			}
-			else if (evidence->m_evidencePacket.tcp_hdr.ack)
+			else if(evidence->m_evidencePacket.tcp_hdr.ack)
 			{
 				m_ackCount++;
 			}
 
-			if (evidence->m_evidencePacket.tcp_hdr.rst)
+			if(evidence->m_evidencePacket.tcp_hdr.rst)
 			{
 				m_rstCount++;
 			}
 
-			if (evidence->m_evidencePacket.tcp_hdr.fin)
+			if(evidence->m_evidencePacket.tcp_hdr.fin)
 			{
 				m_finCount++;
 			}
@@ -430,9 +430,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If untracked IP protocol or error case ignore it
 		default:
 		{
-			//LOG(DEBUG, "Dropping packet with unhandled IP protocol." , "");
 			break;
-			//return;
 		}
 	}
 
@@ -440,19 +438,11 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	m_bytesTotal += evidence->m_evidencePacket.ip_len;
 	m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 
-	/* Just some debug prints that are useful for figuring out what the haystack is according to the fs
-	cout << "Haystack IP table size is " << m_HaystackIPTable.size() << endl;
-	for (IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
-	{
-		cout << std::hex << "Ip is " << it->first << " with count of " << it->second << endl;
-	}
-	*/
-
-	if (m_HaystackIPTable.keyExists(evidence->m_evidencePacket.ip_dst))
+	if(m_HaystackIPTable.keyExists(evidence->m_evidencePacket.ip_dst))
 	{
 		m_HaystackIPTable[evidence->m_evidencePacket.ip_dst]++;
 
-		if (m_HaystackIPTable[evidence->m_evidencePacket.ip_dst] == 1)
+		if(m_HaystackIPTable[evidence->m_evidencePacket.ip_dst] == 1)
 		{
 			m_haystackNodesContacted++;
 		}
@@ -464,7 +454,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	if(m_lastTimes.keyExists(evidence->m_evidencePacket.ip_dst))
 	{
 
-		if (evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst] < 0)
+		if(evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst] < 0)
 		{
 			/*
 			// This is the case where we have out of order packets... log a message?
@@ -532,7 +522,7 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 
 	for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
 	{
-		if (!rhs.m_HaystackIPTable.keyExists(it->first))
+		if(!rhs.m_HaystackIPTable.keyExists(it->first))
 		{
 			m_HaystackIPTable[it->first] += rhs.m_HaystackIPTable[it->first];
 
@@ -567,62 +557,6 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 
 	return *this;
 }
-
-/* No longer used as of June 5th 2012,
- * Delete this at some point when we're sure it's not needed
-FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
-{
-	if(m_startTime > rhs.m_startTime)
-	{
-		m_startTime = rhs.m_startTime;
-	}
-	if(m_endTime < rhs.m_endTime)
-	{
-		m_endTime = rhs.m_endTime;
-	}
-	if(m_lastTime < rhs.m_lastTime)
-	{
-		m_lastTime = rhs.m_lastTime;
-	}
-	m_totalInterval -= rhs.m_totalInterval;
-	m_packetCount -= rhs.m_packetCount;
-	m_tcpPacketCount -= rhs.m_tcpPacketCount;
-	m_bytesTotal -= rhs.m_bytesTotal;
-
-	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
-	{
-		m_IPTable[it->first] -= rhs.m_IPTable[it->first];
-	}
-
-	for(Port_Table::iterator it = rhs.m_PortTCPTable.begin(); it != rhs.m_PortTCPTable.end(); it++)
-	{
-		m_PortTCPTable[it->first] -= rhs.m_PortTCPTable[it->first];
-	}
-
-	for(Port_Table::iterator it = rhs.m_PortUDPTable.begin(); it != rhs.m_PortUDPTable.end(); it++)
-	{
-		m_PortUDPTable[it->first] -= rhs.m_PortUDPTable[it->first];
-	}
-
-	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
-	{
-		m_packTable[it->first] -= rhs.m_packTable[it->first];
-	}
-	for(Interval_Table::iterator it = rhs.m_intervalTable.begin(); it != rhs.m_intervalTable.end(); it++)
-	{
-		m_intervalTable[it->first] -= rhs.m_intervalTable[it->first];
-	}
-
-
-	m_synCount -= rhs.m_synCount;
-	m_ackCount -= rhs.m_ackCount;
-	m_finCount -= rhs.m_finCount;
-	m_rstCount -= rhs.m_rstCount;
-	m_synAckCount -= rhs.m_synAckCount;
-
-	return *this;
-}
-*/
 
 uint32_t FeatureSet::SerializeFeatureSet(u_char *buf, uint32_t bufferSize)
 {
@@ -801,8 +735,8 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	m_haystackNodesContacted = temp;
 
 	/***************************************************************************************************
-	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
-	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
+	 For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
+	 i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
 	DeserializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, bufferSize);
 	DeserializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, bufferSize);
@@ -822,7 +756,7 @@ void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
 	// deleting all of our old data. Not worrying about it right now though.
 	m_haystackNodesContacted = 0;
 	m_HaystackIPTable.clear();
-	for (uint i = 0; i < nodes.size(); i++)
+	for(uint i = 0; i < nodes.size(); i++)
 	{
 		m_HaystackIPTable[nodes[i]] = 0;
 	}
@@ -854,23 +788,23 @@ bool FeatureSet::operator ==(const FeatureSet &rhs) const
 	{
 		return false;
 	}
-	if (m_tcpPacketCount != rhs.m_tcpPacketCount)
+	if(m_tcpPacketCount != rhs.m_tcpPacketCount)
 	{
 		return false;
 	}
-	if (m_ackCount != rhs.m_ackCount)
+	if(m_ackCount != rhs.m_ackCount)
 	{
 		return false;
 	}
-	if (m_synCount != rhs.m_synCount)
+	if(m_synCount != rhs.m_synCount)
 	{
 		return false;
 	}
-	if (m_finCount != rhs.m_finCount)
+	if(m_finCount != rhs.m_finCount)
 	{
 		return false;
 	}
-	if (m_rstCount != rhs.m_rstCount)
+	if(m_rstCount != rhs.m_rstCount)
 	{
 		return false;
 	}

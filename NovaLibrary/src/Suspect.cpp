@@ -74,7 +74,7 @@ string Suspect::ToString()
 	ss << "hostile\n";
 	ss <<  " Classification: ";
 
-	if (m_classification == -2)
+	if(m_classification == -2)
 	{
 		ss << " Not enough data\n";
 	}
@@ -86,9 +86,9 @@ string Suspect::ToString()
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
 
 
-	for (int i = 0; i < DIM; i++)
+	for(int i = 0; i < DIM; i++)
 	{
-		if (Config::Inst()->IsFeatureEnabled(i))
+		if(Config::Inst()->IsFeatureEnabled(i))
 		{
 			ss << FeatureSet::m_featureNames[i] << ": " << m_features.m_features[i] << "\n";
 		}
@@ -100,7 +100,7 @@ string Suspect::ToString()
 //Just like Consume but doesn't deallocate
 void Suspect::ReadEvidence(Evidence *&evidence)
 {
-	if (m_IpAddress.s_addr == 0)
+	if(m_IpAddress.s_addr == 0)
 	{
 		m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
 	}
@@ -111,7 +111,7 @@ void Suspect::ReadEvidence(Evidence *&evidence)
 		m_unsentFeatures.UpdateEvidence(curEvidence);
 		m_features.UpdateEvidence(curEvidence);
 
-		if (m_lastPacketTime < evidence->m_evidencePacket.ts)
+		if(m_lastPacketTime < evidence->m_evidencePacket.ts)
 		{
 			m_lastPacketTime = evidence->m_evidencePacket.ts;
 		}
@@ -124,7 +124,7 @@ void Suspect::ReadEvidence(Evidence *&evidence)
 
 void Suspect::ConsumeEvidence(Evidence *&evidence)
 {
-	if (m_IpAddress.s_addr == 0)
+	if(m_IpAddress.s_addr == 0)
 	{
 		m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
 	}
@@ -135,7 +135,7 @@ void Suspect::ConsumeEvidence(Evidence *&evidence)
 		m_unsentFeatures.UpdateEvidence(curEvidence);
 		m_features.UpdateEvidence(curEvidence);
 
-		if (m_lastPacketTime < evidence->m_evidencePacket.ts)
+		if(m_lastPacketTime < evidence->m_evidencePacket.ts)
 		{
 			m_lastPacketTime = evidence->m_evidencePacket.ts;
 		}
@@ -551,44 +551,44 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 
 bool Suspect::operator==(const Suspect &rhs) const
 {
-	if (m_features != rhs.m_features)
+	if(m_features != rhs.m_features)
 	{
 		return false;
 	}
-	if (m_IpAddress.s_addr != rhs.m_IpAddress.s_addr)
-	{
-		return false;
-	}
-
-	if (m_classification != rhs.m_classification)
+	if(m_IpAddress.s_addr != rhs.m_IpAddress.s_addr)
 	{
 		return false;
 	}
 
-	if (m_hostileNeighbors != rhs.m_hostileNeighbors)
+	if(m_classification != rhs.m_classification)
 	{
 		return false;
 	}
 
-	for (int i = 0; i < DIM; i++)
+	if(m_hostileNeighbors != rhs.m_hostileNeighbors)
 	{
-		if (m_featureAccuracy[i] != rhs.m_featureAccuracy[i])
+		return false;
+	}
+
+	for(int i = 0; i < DIM; i++)
+	{
+		if(m_featureAccuracy[i] != rhs.m_featureAccuracy[i])
 		{
 			return false;
 		}
 	}
 
-	if (m_isHostile != rhs.m_isHostile)
+	if(m_isHostile != rhs.m_isHostile)
 	{
 		return false;
 	}
 
-	if (m_flaggedByAlarm != rhs.m_flaggedByAlarm)
+	if(m_flaggedByAlarm != rhs.m_flaggedByAlarm)
 	{
 		return false;
 	}
 
-	if (m_lastPacketTime != rhs.m_lastPacketTime)
+	if(m_lastPacketTime != rhs.m_lastPacketTime)
 	{
 		return false;
 	}

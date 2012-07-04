@@ -74,15 +74,15 @@ class Logger
 {
 public:
 	// Logger is a singleton, this gets an instance of the logger
-	static Logger* Inst();
+	static Logger *Inst();
 
 	~Logger();
 
 	// This is the hub method that will take in data from the processes,
 	// use it to determine what services and levels and such need to be used, then call the private methods
 	// from there
-	void Log(Nova::Levels messageLevel, const char* messageBasic, const char* messageAdv,
-		const char* file, const int& line);
+	void Log(Nova::Levels messageLevel, const char *messageBasic, const char *messageAdv,
+		const char *file, const int& line);
 
 	// methods for assigning the log preferences from different places
 	// into the user map inside MessageOptions struct.
@@ -132,6 +132,7 @@ protected:
 	Logger();
 
 private:
+
 	// Notify makes use of the libnotify methods to produce
 	// a notification with the desired level to the desktop.
 	// args: 	uint16_t level. The level of severity to print in the
@@ -153,7 +154,6 @@ private:
 	//       	vector<std::string> recipients. Who the email will be sent to.
 	void Mail(uint16_t level, std::string message);
 
-
 	// takes in a character, and returns a Services type; for use when
 	// parsing the SERVICE_PREFERENCES std::string from the NOVAConfig.txt file.
 	Nova::Levels parseLevelFromChar(char parse);
@@ -163,19 +163,15 @@ private:
 
 	std::string getBitmask(Nova::Levels level);
 
-	static size_t ReadCallback(void * ptr, size_t size, size_t nmemb, void * userp);
+	static size_t ReadCallback(void *ptr, size_t size, size_t nmemb, void *userp);
 
 	static long tvdiff(struct timeval newer, struct timeval older)
 	{
-	  return (newer.tv_sec-older.tv_sec)*1000+
-	    (newer.tv_usec-older.tv_usec)/1000;
+	  return (newer.tv_sec-older.tv_sec)*1000+(newer.tv_usec-older.tv_usec)/1000;
 	};
 
 	static struct timeval tvnow(void)
 	{
-	  /*
-	  ** time() returns the value of time in seconds since the Epoch.
-	  */
 	  struct timeval now;
 	  now.tv_sec = (long)time(NULL);
 	  now.tv_usec = 0;
@@ -183,17 +179,11 @@ private:
 	};
 
 	std::string GenerateDateString();
-
 	std::string GetRecipient();
-
 	std::string GetMailMessage();
-
 	std::string GetSenderString();
-
 	std::string GetCcString();
-
 	void SetMailMessage(std::string message);
-
 	uint16_t GetRecipientsLength();
 
 public:

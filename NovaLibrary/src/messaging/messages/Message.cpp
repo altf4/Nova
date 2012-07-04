@@ -51,7 +51,7 @@ Message *Message::ReadMessage(int connectFD, enum ProtocolDirection direction, i
 
 bool Message::WriteMessage(Message *message, int connectFD)
 {
-	if (connectFD == -1)
+	if(connectFD == -1)
 	{
 		return false;
 	}
@@ -62,17 +62,17 @@ bool Message::WriteMessage(Message *message, int connectFD)
 	char *buffer = message->Serialize(&length);
 	
 	// Total bytes of a write() call that need to be sent
-	int32_t bytesSoFar;
+	uint32_t bytesSoFar;
 
 	// Return value of the write() call, actual bytes sent
-	int32_t bytesWritten;
+	uint32_t bytesWritten;
 
 	// Send the message length
 	bytesSoFar = 0;
-    while (bytesSoFar < sizeof(length))
+    while(bytesSoFar < sizeof(length))
 	{
 		bytesWritten = write(connectFD, &length, sizeof(length) - bytesSoFar);
-		if (bytesWritten < 0)
+		if(bytesWritten < 0)
 		{
 			free(buffer);
 			return false;
@@ -86,10 +86,10 @@ bool Message::WriteMessage(Message *message, int connectFD)
 	
 	// Send the message
 	bytesSoFar = 0;
-	while (bytesSoFar < length)
+	while(bytesSoFar < length)
 	{
 		bytesWritten = write(connectFD, buffer, length - bytesSoFar);
-		if (bytesWritten < 0)
+		if(bytesWritten < 0)
 		{
 			free(buffer);
 			return false;

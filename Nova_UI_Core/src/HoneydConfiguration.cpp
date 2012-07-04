@@ -585,12 +585,12 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 
 
 /************************************************
- * Save Honeyd XML Configuration Functions
+  Save Honeyd XML Configuration Functions
  ************************************************/
 
 //Saves the current configuration information to XML files
 
-//**Important** this function assumes that unless it is a new item (ptree pointer == NULL) then
+// Important this function assumes that unless it is a new item (ptree pointer == NULL) then
 // all required fields exist and old fields have been removed. Ex: if a port previously used a script
 // but now has a behavior of open, at that point the user should have erased the script field.
 // inverserly if a user switches to script the script field must be created.
@@ -661,7 +661,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
 		rawBitMask = ~rawBitMask; //After getting the inverse of this we have the mask in host addr form.
 		//Convert to network order, put in in_addr struct
-		//call ntoa to get char * and make string
+		//call ntoa to get char pointer and make string
 		in_addr netOrderMask;
 		netOrderMask.s_addr = htonl(rawBitMask);
 		addrString = string(inet_ntoa(netOrderMask));
@@ -1357,7 +1357,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileChildren(std::string par
 {
 	vector<std::string> childProfiles;
 
-	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		if(it->second.m_parentProfile == parent)
 		{
@@ -1372,7 +1372,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 {
 	vector<std::string> childProfiles;
 
-	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		childProfiles.push_back(it->second.m_name);
 	}
@@ -1402,7 +1402,7 @@ std::vector<std::string> HoneydConfiguration::GetNodeNames()
 {
 	vector<std::string> childnodes;
 
-	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		childnodes.push_back(it->second.m_name);
 	}
@@ -1415,14 +1415,13 @@ std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 {
 	vector<std::string> childSubnets;
 
-	for (SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
 		childSubnets.push_back(it->second.m_name);
 	}
 
 	return childSubnets;
 }
-
 
 std::vector<std::string> HoneydConfiguration::GetScriptNames()
 {
@@ -1952,7 +1951,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 		//If the profile at the iterator is a child of this profile
 		if(!it->second.m_parentProfile.compare(profileName))
 		{
-			if (!DeleteProfile(it->first, false))
+			if(!DeleteProfile(it->first, false))
 			{
 				return false;
 			}
@@ -1971,7 +1970,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 	}
 	while(!delList.empty())
 	{
-		if (!DeleteNode(delList.back()))
+		if(!DeleteNode(delList.back()))
 		{
 			LOG(DEBUG, "Failed to delete profile because child node deletion failed", "");
 			return false;
@@ -1994,9 +1993,9 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			pt->clear();
 
 			//Find all profiles still in the table that are sibilings of deleted profile
-			//* We should be using an iterator to find the original profile and erase it
-			//* but boost's iterator implementation doesn't seem to be able to access data
-			//* correctly and are frequently invalidated.
+			// We should be using an iterator to find the original profile and erase it
+			// but boost's iterator implementation doesn't seem to be able to access data
+			// correctly and are frequently invalidated.
 
 			for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 			{

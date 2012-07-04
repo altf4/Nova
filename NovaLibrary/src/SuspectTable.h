@@ -83,7 +83,7 @@ public:
 	// and (-2) if the Suspect does not exist (Key invalid or suspect was deleted)
 	// Note:  This function blocks until it can acquire a write lock on the suspect
 	// IP address must be the same as key checked out with
-	SuspectTableRet CheckIn(Suspect * suspect);
+	SuspectTableRet CheckIn(Suspect *suspect);
 
 	//Releases the lock on the suspect at key allowing another thread to check it out
 	//		key: IP address of the suspect as a uint value (host byte order)

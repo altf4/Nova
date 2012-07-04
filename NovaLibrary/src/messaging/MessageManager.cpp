@@ -47,7 +47,7 @@ void MessageManager::Initialize(enum ProtocolDirection direction)
 
 MessageManager &MessageManager::Instance()
 {
-	if (m_instance == NULL)
+	if(m_instance == NULL)
 	{
 		LOG(CRITICAL, "Critical error in Message Manager", "Critical error in MessageManager: You must first initialize it with a direction"
 				"before calling Instance()");

@@ -60,7 +60,7 @@ public:
 	//		parent - Optional parent widget
 	// Returns: true for an "okay/yes" user response, false otherwise
 	defaultChoice DisplayPrompt(messageHandle handle, std::string messageTxt,
-			QAction * defaultAction, QAction * alternativeAction, QWidget *parent = 0);
+			QAction *defaultAction, QAction *alternativeAction, QWidget *parent = 0);
 
 	// Saves a change in the default user actions for a setting in both the object state and config file
 	//		handle - Handle returned from registerDialog

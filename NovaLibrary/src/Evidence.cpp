@@ -43,7 +43,7 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 	m_evidencePacket.ts = pkthdr->ts.tv_sec;
 
 	//Copy out vals from header
-	const u_char * offset = packet_at_ip_header; // @2 - read 2
+	const u_char *offset = packet_at_ip_header; // @2 - read 2
 
 	// 00001111 mask to get the ip header length
 	uint8_t ip_hl = 15;
@@ -71,7 +71,7 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 		m_evidencePacket.dst_port = ntohs(*(uint16_t *)offset);
 	}
 
-	if (m_evidencePacket.ip_p == 6)
+	if(m_evidencePacket.ip_p == 6)
 	{
 		offset = packet_at_ip_header + ip_hl*4;
 		m_evidencePacket.tcp_hdr.ack = ((tcphdr*)offset)->ack;
@@ -83,7 +83,7 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 	}
 }
 
-Evidence::Evidence(Evidence * evidence)
+Evidence::Evidence(Evidence *evidence)
 {
 	m_evidencePacket = evidence->m_evidencePacket;
 	m_next = NULL;

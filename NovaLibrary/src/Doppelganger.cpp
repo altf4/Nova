@@ -48,7 +48,7 @@ Doppelganger::~Doppelganger()
 // *Note if the Dopp was never initialized this function initializes it.
 void Doppelganger::UpdateDoppelganger()
 {
-	if (!Config::Inst()->GetIsDmEnabled())
+	if(!Config::Inst()->GetIsDmEnabled())
 	{
 		return;
 	}
@@ -127,7 +127,7 @@ void Doppelganger::UpdateDoppelganger()
 //Clears the routing rules, this disables the doppelganger until init is called again.
 void Doppelganger::ClearDoppelganger()
 {
-	if (!Config::Inst()->GetIsDmEnabled())
+	if(!Config::Inst()->GetIsDmEnabled())
 	{
 		return;
 	}
@@ -173,11 +173,11 @@ void Doppelganger::ClearDoppelganger()
 }
 
 //Initializes the base routing rules the Doppelganger needs to operate.
-// * Note: This function will simply return without executing if the Doppelganger has
+// Note: This function will simply return without executing if the Doppelganger has
 // called InitDoppelganger since construction or the last ClearDoppelganger();
 void Doppelganger::InitDoppelganger()
 {
-	if (!Config::Inst()->GetIsDmEnabled())
+	if(!Config::Inst()->GetIsDmEnabled())
 	{
 		return;
 	}
@@ -234,7 +234,7 @@ void Doppelganger::InitDoppelganger()
 //Clears and Initializes the Doppelganger then updates the routing list from scratch.
 void Doppelganger::ResetDoppelganger()
 {
-	if (!Config::Inst()->GetIsDmEnabled())
+	if(!Config::Inst()->GetIsDmEnabled())
 	{
 		return;
 	}

@@ -33,7 +33,7 @@
 using namespace std;
 using namespace Nova;
 
-extern ClassificationEngine* engine;
+extern ClassificationEngine *engine;
 
 namespace Nova
 {
@@ -90,7 +90,7 @@ void SuspectTable::SetNeedsClassificationUpdate(uint64_t key)
 //Sets the needs classification bool
 void SuspectTable::SetNeedsClassificationUpdate_noLocking(uint64_t key)
 {
-	if (!m_suspectTable[key]->m_needsClassificationUpdate)
+	if(!m_suspectTable[key]->m_needsClassificationUpdate)
 	{
 		m_suspectTable[key]->m_needsClassificationUpdate = true;
 		m_suspectsNeedingUpdate.push_back(key);
@@ -105,7 +105,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 	//If we return false then there is no suspect at this ip address yet
 	if(suspect != NULL)
 	{
-		Suspect * suspectCopy = new Suspect(*suspect);
+		Suspect *suspectCopy = new Suspect(*suspect);
 		in_addr_t key = suspectCopy->GetIpAddress();
 		pthread_rwlock_wrlock(&m_lock);
 		if(!IsValidKey_NonBlocking(key))
@@ -193,7 +193,7 @@ bool SuspectTable::ClassifySuspect(const in_addr_t& key)
 	Lock lock(&m_lock, false);
 	if(IsValidKey_NonBlocking(key))
 	{
-		Suspect* suspect = m_suspectTable[key];
+		Suspect *suspect = m_suspectTable[key];
 		suspect->CalculateFeatures();
 		if(!Config::Inst()->GetIsTraining())
 		{
@@ -212,7 +212,7 @@ void SuspectTable::UpdateAllSuspects()
 	{
 		if(IsValidKey_NonBlocking(m_keys[i]))
 		{
-			Suspect* suspect = m_suspectTable[m_keys[i]];
+			Suspect *suspect = m_suspectTable[m_keys[i]];
 			suspect->CalculateFeatures();
 			if(!Config::Inst()->GetIsTraining())
 			{
@@ -497,9 +497,9 @@ vector<uint64_t> SuspectTable::GetKeys_of_ModifiedSuspects()
 	Lock lock(&m_lock, false);
 	Lock updateLock(&m_needsUpdateLock);
 
-	for (uint i = 0; i < m_suspectsNeedingUpdate.size(); i++)
+	for(uint i = 0; i < m_suspectsNeedingUpdate.size(); i++)
 	{
-		if (m_lockTable.keyExists(m_suspectsNeedingUpdate[i]))
+		if(m_lockTable.keyExists(m_suspectsNeedingUpdate[i]))
 		{
 			ret.push_back(m_suspectsNeedingUpdate[i]);
 			m_suspectTable[m_suspectsNeedingUpdate[i]]->m_needsClassificationUpdate = false;
@@ -663,15 +663,19 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 		uint32_t offset = 0;
 		while(offset < dataSize)
 		{
-			Suspect* newSuspect = new Suspect();
-
-			try {
+			Suspect *newSuspect = new Suspect();
+			try
+			{
 				offset += newSuspect->Deserialize(tableBuffer+ offset, dataSize - offset, ALL_FEATURE_DATA);
-			} catch (Nova::hashMapException& e) {
+			}
+			catch(Nova::hashMapException& e)
+			{
 				LOG(ERROR, "The state file may be corrupt, a hash table invalid key exception was caught during deserialization", "");
 				delete tableBuffer;
 				return 0;
-			} catch (Nova::serializationException &e) {
+			}
+			catch(Nova::serializationException &e)
+			{
 				LOG(ERROR, "The state file may be corrupt, deserialization of a suspect failed", "");
 				delete tableBuffer;
 				return 0;
@@ -812,7 +816,7 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 
 		if(readOnly)
 		{
-			Evidence * tempEv = new Evidence();
+			Evidence *tempEv = new Evidence();
 			*tempEv = *evidence;
 			tempEv->m_next = NULL;
 

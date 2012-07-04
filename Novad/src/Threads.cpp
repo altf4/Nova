@@ -55,7 +55,7 @@ extern SuspectTable suspectsSinceLastSave;
 
 extern vector<struct sockaddr_in> hostAddrs;
 
-//** Silent Alarm **
+//-- Silent Alarm --
 extern struct sockaddr_in serv_addr;
 
 extern time_t lastLoadTime;
@@ -155,7 +155,7 @@ void *TrainingLoop(void *ptr)
 		{
 			UpdateAndStore(updateKeys[i]);
 		}
-	} while (Config::Inst()->GetClassificationTimeout());
+	} while(Config::Inst()->GetClassificationTimeout());
 
 	//Shouldn't get here!
 	if(Config::Inst()->GetClassificationTimeout())
@@ -186,7 +186,7 @@ void *SilentAlarmLoop(void *ptr)
 	sendaddr.sin_addr.s_addr = INADDR_ANY;
 
 	memset(sendaddr.sin_zero, '\0', sizeof sendaddr.sin_zero);
-	struct sockaddr* sockaddrPtr = (struct sockaddr*) &sendaddr;
+	struct sockaddr *sockaddrPtr = (struct sockaddr*) &sendaddr;
 	socklen_t sendaddrSize = sizeof sendaddr;
 
 	if(::bind(sockfd, sockaddrPtr, sendaddrSize) == -1)
@@ -226,7 +226,7 @@ void *SilentAlarmLoop(void *ptr)
 	Suspect suspectCopy;
 
 	//Accept incoming Silent Alarm TCP Connections
-	while (1)
+	while(1)
 	{
 
 		bzero(buf, MAX_MSG_SIZE);
@@ -306,18 +306,18 @@ void *UpdateIPFilter(void *ptr)
 {
 	MaskKillSignals();
 
-	while (true)
+	while(true)
 	{
 		if(honeydDHCPWatch > 0)
 		{
-			int BUF_LEN = (1024 * (sizeof(struct inotify_event)) + 16);
+			int BUF_LEN = (1024 *(sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
 			char errbuf[PCAP_ERRBUF_SIZE];
 			char filter_exp[64];
 			struct bpf_program *fp = new struct bpf_program();
 
-			bpf_u_int32 maskp; /* subnet mask */
-			bpf_u_int32 netp; /* ip          */
+			bpf_u_int32 maskp;
+			bpf_u_int32 netp;
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read(honeydDHCPNotifyFd, buf, BUF_LEN);
@@ -332,7 +332,7 @@ void *UpdateIPFilter(void *ptr)
 
 				for(uint i = 0; i < handles.size(); i++)
 				{
-					/* ask pcap for the network address and mask of the device */
+					// ask pcap for the network address and mask of the device
 					int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
 					if(ret == -1)
 					{
@@ -373,18 +373,18 @@ void *UpdateWhitelistIPFilter(void *ptr)
 {
 	MaskKillSignals();
 
-	while (true)
+	while(true)
 	{
 		if(whitelistWatch > 0)
 		{
-			int BUF_LEN = (1024 * (sizeof(struct inotify_event)) + 16);
+			int BUF_LEN = (1024 *(sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
-			struct bpf_program fp; /* The compiled filter expression */
+			struct bpf_program fp;
 			char filter_exp[64];
 			char errbuf[PCAP_ERRBUF_SIZE];
 
-			bpf_u_int32 maskp; /* subnet mask */
-			bpf_u_int32 netp; /* ip          */
+			bpf_u_int32 maskp;
+			bpf_u_int32 netp;
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read(whitelistNotifyFd, buf, BUF_LEN);
@@ -420,9 +420,9 @@ void *UpdateWhitelistIPFilter(void *ptr)
 					pcap_freecode(&fp);
 
 					// Clear any suspects that were whitelisted from the GUIs
-					for (uint i = 0; i < whitelistIpAddresses.size(); i++)
+					for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 					{
-					if (suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
+					if(suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
 					{
 						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
 						msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
@@ -435,20 +435,20 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				/*
 				// TODO: Should we clear IP range whitelisted suspects? Could be a huge number of clears...
 				// This doesn't work yet.
-				for (uint i = 0; i < whitelistIpRanges.size(); i++)
+				for(uint i = 0; i < whitelistIpRanges.size(); i++)
 				{
 					uint32_t ip = htonl(inet_addr(WhitelistConfiguration::GetIp(whitelistIpRanges.at(i)).c_str()));
 
 					string netmask = WhitelistConfiguration::GetSubnet(whitelistIpRanges.at(i));
 					uint32_t mask;
-					if (netmask != "")
+					if(netmask != "")
 					{
 						mask = htonl(inet_addr(netmask.c_str()));
 					}
 
-					while (mask != ~0)
+					while(mask != ~0)
 					{
-						if (suspects.Erase(ip))
+						if(suspects.Erase(ip))
 						{
 							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
 							msg->m_IPAddress = ip;
@@ -484,7 +484,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 
 void *StartPcapLoop(void *ptr)
 {
-	u_char * index = new u_char(*(u_char *)ptr);
+	u_char *index = new u_char(*(u_char *)ptr);
 	if((*index >= handles.size()) || (handles[*index] == NULL))
 	{
 		LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");

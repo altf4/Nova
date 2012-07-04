@@ -39,7 +39,7 @@ using namespace std;
 
 vector<string> ifList;
 /************************************************
- * Construct and Initialize GUI
+  Construct and Initialize GUI
  ************************************************/
 
 NovaConfig::NovaConfig(QWidget *parent, string home)
@@ -87,11 +87,11 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	vector<string> nodeGroupOptions = m_honeydConfig->m_groups;
 	QStringList groups;
 	int selectedIndex = 0;
-	for (uint i = 0; i < nodeGroupOptions.size(); i++)
+	for(uint i = 0; i < nodeGroupOptions.size(); i++)
 	{
 		groups << QString::fromStdString(nodeGroupOptions.at(i));
 
-		if (nodeGroupOptions[i] == Config::Inst()->GetGroup())
+		if(nodeGroupOptions[i] == Config::Inst()->GetGroup())
 		{
 			selectedIndex = i;
 		}
@@ -101,7 +101,7 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 
 	m_loading->unlock();
 	// Populate the dialog menu
-	for (uint i = 0; i < m_mainwindow->m_prompter->m_registeredMessageTypes.size(); i++)
+	for(uint i = 0; i < m_mainwindow->m_prompter->m_registeredMessageTypes.size(); i++)
 	{
 		ui.msgTypeListWidget->insertItem(i, new QListWidgetItem(QString::fromStdString(
 				m_mainwindow->m_prompter->m_registeredMessageTypes[i].descriptionUID)));
@@ -121,7 +121,7 @@ NovaConfig::~NovaConfig()
 
 }
 
-void NovaConfig::interfaceCheckBoxes_buttonClicked(QAbstractButton * button)
+void NovaConfig::interfaceCheckBoxes_buttonClicked(QAbstractButton *button)
 {
 	if(m_interfaceCheckBoxes->checkedButton() == NULL)
 	{
@@ -472,7 +472,7 @@ void NovaConfig::on_msgTypeListWidget_currentRowChanged()
 	ui.defaultActionListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
 	QListWidgetItem *listItem;
 
-	switch (m_mainwindow->m_prompter->m_registeredMessageTypes[item].type)
+	switch(m_mainwindow->m_prompter->m_registeredMessageTypes[item].type)
 	{
 		case notifyPrompt:
 		case warningPrompt:
@@ -916,7 +916,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 	}
 }
 
-QListWidgetItem* NovaConfig::GetFeatureListItem(QString name, char enabled)
+QListWidgetItem *NovaConfig::GetFeatureListItem(QString name, char enabled)
 {
 	QListWidgetItem *newFeatureEntry = new QListWidgetItem();
 	name.prepend("+  ");
@@ -943,7 +943,7 @@ void NovaConfig::onFeatureClick(const QPoint & pos)
     myMenu.addAction(new QAction("Disable", this));
 
     // Figure out what the user selected
-    QAction* selectedItem = myMenu.exec(globalPos);
+    QAction *selectedItem = myMenu.exec(globalPos);
     if(selectedItem)
     {
 		if(selectedItem->text() == "Enable")
@@ -957,7 +957,7 @@ void NovaConfig::onFeatureClick(const QPoint & pos)
     }
 }
 
-void NovaConfig::UpdateFeatureListItem(QListWidgetItem* newFeatureEntry, char enabled)
+void NovaConfig::UpdateFeatureListItem(QListWidgetItem *newFeatureEntry, char enabled)
 {
 	QBrush *enabledColor = new QBrush(QColor("black"));
 	QBrush *disabledColor = new QBrush(QColor("grey"));
@@ -1014,7 +1014,7 @@ bool NovaConfig::DisplayMACPrefixWindow()
 
 void NovaConfig::LoadNovadPreferences()
 {
-	struct ifaddrs * devices = NULL;
+	struct ifaddrs *devices = NULL;
 	struct ifaddrs *curIf = NULL;
 	stringstream ss;
 	ifList.clear();
@@ -1047,7 +1047,7 @@ void NovaConfig::LoadNovadPreferences()
 			//Create radio button for each loop back
 			if(curIf->ifa_flags & IFF_LOOPBACK)
 			{
-				QRadioButton * radioButton = new QRadioButton(QString(curIf->ifa_name), ui.loopbackGroupBox);
+				QRadioButton *radioButton = new QRadioButton(QString(curIf->ifa_name), ui.loopbackGroupBox);
 				radioButton->setObjectName(QString(curIf->ifa_name));
 				m_radioButtons->addButton(radioButton);
 				ui.loopbackGroupBoxVLayout->addWidget(radioButton);
@@ -1056,7 +1056,7 @@ void NovaConfig::LoadNovadPreferences()
 			//Create check box for each interface
 			else
 			{
-				QCheckBox * checkBox = new QCheckBox(QString(curIf->ifa_name), ui.interfaceGroupBox);
+				QCheckBox *checkBox = new QCheckBox(QString(curIf->ifa_name), ui.interfaceGroupBox);
 				checkBox->setObjectName(QString(curIf->ifa_name));
 				m_interfaceCheckBoxes->addButton(checkBox);
 				ui.interfaceGroupBoxVLayout->addWidget(checkBox);
@@ -1078,7 +1078,7 @@ void NovaConfig::LoadNovadPreferences()
 	//Select the loopback
 	{
 		QString doppIf = QString::fromStdString(Config::Inst()->GetDoppelInterface());
-		QRadioButton * checkObj = ui.loopbackGroupBox->findChild<QRadioButton *>(doppIf);
+		QRadioButton *checkObj = ui.loopbackGroupBox->findChild<QRadioButton *>(doppIf);
 		if(checkObj != NULL)
 		{
 			checkObj->setChecked(true);
@@ -1087,7 +1087,7 @@ void NovaConfig::LoadNovadPreferences()
 	vector<string> ifList = Config::Inst()->GetInterfaces();
 	while(!ifList.empty())
 	{
-		QCheckBox* checkObj = ui.interfaceGroupBox->findChild<QCheckBox *>(QString::fromStdString(ifList.back()));
+		QCheckBox *checkObj = ui.interfaceGroupBox->findChild<QCheckBox *>(QString::fromStdString(ifList.back()));
 		if(checkObj != NULL)
 		{
 			checkObj->setChecked(true);
@@ -1157,7 +1157,7 @@ void NovaConfig::LoadNovadPreferences()
 		ui.featureList->clear();
 		// Populate the list, row order is based on dimension macros
 
-		for (int i = 0; i < DIM; i++)
+		for(int i = 0; i < DIM; i++)
 		{
 			ui.featureList->insertItem(i, GetFeatureListItem(QString::fromStdString(FeatureSet::m_featureNames[i]),featuresEnabled.at(i)));
 		}
@@ -1177,7 +1177,7 @@ void NovaConfig::LoadHaystackConfiguration()
 }
 
 /************************************************
- * Browse file system dialog box signals
+  Browse file system dialog box signals
  ************************************************/
 
 void NovaConfig::on_pcapButton_clicked()
@@ -1231,7 +1231,7 @@ void NovaConfig::on_hsConfigButton_clicked()
 }
 
 /************************************************
- * General Preferences GUI Signals
+  General Preferences GUI Signals
  ************************************************/
 
 //Stores all changes and closes the window
@@ -1298,7 +1298,7 @@ bool NovaConfig::SaveConfigurationToFile()
 {
 	string line, prefix;
 	stringstream ss;
-	for (uint i = 0; i < DIM; i++)
+	for(uint i = 0; i < DIM; i++)
 	{
 		char state = ui.featureList->item(i)->text().at(0).toAscii();
 		if(state == '+')
@@ -1328,7 +1328,7 @@ bool NovaConfig::SaveConfigurationToFile()
 
 	for(int i = 0; i < qButtonList.size(); i++)
 	{
-		QCheckBox * checkBoxPtr = (QCheckBox *)qButtonList.at(i);
+		QCheckBox *checkBoxPtr = (QCheckBox *)qButtonList.at(i);
 		if(checkBoxPtr->isChecked())
 		{
 			Config::Inst()->AddInterface(checkBoxPtr->text().toStdString());
@@ -1453,7 +1453,7 @@ void NovaConfig::on_menuTreeWidget_itemSelectionChanged()
 }
 
 /************************************************
- * Preference Menu Specific GUI Signals
+  Preference Menu Specific GUI Signals
  ************************************************/
 
 //Enable DM checkbox, action syncs Node displayed in haystack as disabled/enabled
@@ -1464,7 +1464,7 @@ void NovaConfig::on_dmCheckBox_stateChanged(int state)
 		return;
 	}
 
-	if (state)
+	if(state)
 	{
 		m_honeydConfig->EnableNode("Doppelganger");
 	}
@@ -1476,17 +1476,20 @@ void NovaConfig::on_dmCheckBox_stateChanged(int state)
 	m_loading->unlock();
 	LoadAllNodes();
 }
-/*************************
- * Pcap Menu GUI Signals */
 
-/* Enables or disables options specific for reading from pcap file */
+/**********************
+  Pcap Menu GUI Signals
+ **********************/
+
+// Enables or disables options specific for reading from pcap file
 void NovaConfig::on_pcapCheckBox_stateChanged(int state)
 {
 	ui.pcapGroupBox->setEnabled(state);
 }
 
 /******************************************
- * Profile Menu GUI Functions *************/
+  Profile Menu GUI Functions
+ ******************************************/
 
 //Combo box signal for changing the uptime behavior
 void NovaConfig::on_uptimeBehaviorComboBox_currentIndexChanged(int index)
@@ -2388,7 +2391,7 @@ QTreeWidgetItem *NovaConfig::GetNodeHsTreeWidgetItem(string nodeName)
 }
 
 
-bool NovaConfig::IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item)
+bool NovaConfig::IsPortTreeWidgetItem(std::string port, QTreeWidgetItem *item)
 {
 	stringstream ss;
 	ss << item->text(0).toStdString() << "_";
@@ -2525,10 +2528,11 @@ void NovaConfig::SetInputValidators()
 	// XXX ui.dmIPEdit->setValidator(noSpaceValidator);
 }
 
-/******************************************
- * Profile Menu GUI Signals ***************/
+/*************************
+  Profile Menu GUI Signals
+ *************************/
 
-/* This loads the profile config menu for the profile selected */
+// This loads the profile config menu for the profile selected
 void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 {
 	if(!m_loading->tryLock())
@@ -2750,8 +2754,9 @@ void NovaConfig::on_profileEdit_editingFinished()
 	m_loading->unlock();
 }
 
-/******************************************
- * Node Menu GUI Functions ****************/
+/************************
+ Node Menu GUI Functions
+ ************************/
 
 void NovaConfig::LoadAllNodes()
 {
@@ -2859,8 +2864,8 @@ void NovaConfig::LoadAllNodes()
 	ui.nodeTreeWidget->expandAll();
 
 	// Reselect the last selected node if need be
-	QTreeWidgetItem* nodeItem = GetNodeTreeWidgetItem(m_currentNode);
-	if (nodeItem != NULL)
+	QTreeWidgetItem *nodeItem = GetNodeTreeWidgetItem(m_currentNode);
+	if(nodeItem != NULL)
 	{
 		nodeItem->setSelected(true);
 	}
@@ -2870,7 +2875,7 @@ void NovaConfig::LoadAllNodes()
 		{
 			if(m_honeydConfig->m_subnets.keyExists(m_currentSubnet))
 			{
-				if (GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
+				if(GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
 				{
 					ui.nodeTreeWidget->setCurrentItem(GetSubnetTreeWidgetItem(m_currentSubnet));
 				}
@@ -2998,12 +3003,18 @@ void NovaConfig::DeleteNodes()
 }
 
 
+<<<<<<< HEAD
 /******************************************
  * Node Menu GUI Signals ******************/
 void NovaConfig::on_associatedNodesTreeWidget_itemSelectionChanged()
 {
 
 }
+=======
+/*********************
+ Node Menu GUI Signals
+ *********************/
+>>>>>>> master
 
 //The current selection in the node list
 void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
@@ -3043,9 +3054,15 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edit
 			if(!ui.nodeTreeWidget->selectedItems().isEmpty())
 			{
 				Node *n = &m_honeydConfig->m_nodes[item->text(0).toStdString()];
+<<<<<<< HEAD
 				oldPfile = n->m_pfile;
 				TreeItemComboBox *pfileBox = (TreeItemComboBox* )ui.nodeTreeWidget->itemWidget(item, 1);
 				n->m_pfile = pfileBox->currentText().toStdString();
+=======
+				oldPfile = n->pfile;
+				TreeItemComboBox *pfileBox = (TreeItemComboBox *)ui.nodeTreeWidget->itemWidget(item, 1);
+				n->pfile = pfileBox->currentText().toStdString();
+>>>>>>> master
 			}
 
 			m_loading->unlock();
@@ -3102,14 +3119,18 @@ void NovaConfig::on_actionNodeDelete_triggered()
 
 void NovaConfig::on_actionNodeClone_triggered()
 {
-	if (m_currentNode.compare(""))
+	if(m_currentNode.compare(""))
 	{
 		m_loading->lock();
 		Node n = m_honeydConfig->m_nodes[m_currentNode];
 		m_loading->unlock();
 
 		// Can't clone the doppelganger, only allowed one right now
+<<<<<<< HEAD
 		if (n.m_name == "Doppelganger")
+=======
+		if(n.name == "Doppelganger")
+>>>>>>> master
 		{
 			return;
 		}
@@ -3124,7 +3145,7 @@ void  NovaConfig::on_actionNodeEdit_triggered()
 	if(!m_selectedSubnet)
 	{
 		// Can't change the doppel IP here, you change it in the doppel settings
-		if (m_currentNode == "Doppelganger")
+		if(m_currentNode == "Doppelganger")
 		{
 			return;
 		}
@@ -3179,7 +3200,7 @@ void NovaConfig::on_actionNodeEnable_triggered()
 	m_loading->lock();
 	if(m_selectedSubnet)
 	{
-		if (GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
+		if(GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
 		{
 			ui.nodeTreeWidget->setCurrentItem(GetSubnetTreeWidgetItem(m_currentSubnet));
 		}
@@ -3215,7 +3236,7 @@ void NovaConfig::on_actionNodeDisable_triggered()
 	m_loading->lock();
 	if(m_selectedSubnet)
 	{
-		if (GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
+		if(GetSubnetTreeWidgetItem(m_currentSubnet) != NULL)
 		{
 			ui.nodeTreeWidget->setCurrentItem(GetSubnetTreeWidgetItem(m_currentSubnet));
 		}
@@ -3299,7 +3320,7 @@ bool NovaConfig::IsDoppelIPValid()
 //Doppelganger IP Address Spin boxes
 void NovaConfig::on_dmIPSpinBox_0_valueChanged()
 {
-	if (!IsDoppelIPValid())
+	if(!IsDoppelIPValid())
 	{
 		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
@@ -3307,7 +3328,7 @@ void NovaConfig::on_dmIPSpinBox_0_valueChanged()
 
 void NovaConfig::on_dmIPSpinBox_1_valueChanged()
 {
-	if (!IsDoppelIPValid())
+	if(!IsDoppelIPValid())
 	{
 		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
@@ -3315,7 +3336,7 @@ void NovaConfig::on_dmIPSpinBox_1_valueChanged()
 
 void NovaConfig::on_dmIPSpinBox_2_valueChanged()
 {
-	if (!IsDoppelIPValid())
+	if(!IsDoppelIPValid())
 	{
 		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}
@@ -3323,7 +3344,7 @@ void NovaConfig::on_dmIPSpinBox_2_valueChanged()
 
 void NovaConfig::on_dmIPSpinBox_3_valueChanged()
 {
-	if (!IsDoppelIPValid())
+	if(!IsDoppelIPValid())
 	{
 		LOG(WARNING, "Current IP address conflicts with a statically address Haystack node.", "");
 	}

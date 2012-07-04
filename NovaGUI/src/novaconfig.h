@@ -38,9 +38,9 @@ public:
 
 	Nova::HoneydConfiguration *m_honeydConfig;
 
-    QMutex * m_loading;
+    QMutex *m_loading;
 
-    NovaGUI * m_mainwindow;
+    NovaGUI *m_mainwindow;
 
     NovaConfig(QWidget *parent = 0, std::string homePath = "");
 
@@ -57,12 +57,12 @@ public:
     //		name - Name to be displayed, e.g. "Ports Contacted"
     //		enabled - '1' for enabled, all other disabled
     //	Returns: A Feature List Item
-    QListWidgetItem* GetFeatureListItem(QString name, char enabled);
+    QListWidgetItem *GetFeatureListItem(QString name, char enabled);
 
     // Updates the color and text of a featureList Item
     //		newFeatureEntry - Pointer to the Feature List Item
     //		enabled - '1' for enabled, all other disabled
-    void UpdateFeatureListItem(QListWidgetItem* newFeatureEntry, char enabled);
+    void UpdateFeatureListItem(QListWidgetItem *newFeatureEntry, char enabled);
 
     // Advances the currently selected item to the next one in the featureList
     void AdvanceFeatureSelection();
@@ -120,7 +120,7 @@ protected:
 
 private Q_SLOTS:
 
-void interfaceCheckBoxes_buttonClicked(QAbstractButton * button);
+void interfaceCheckBoxes_buttonClicked(QAbstractButton *button);
 
 // Right click action on a feature, we manually connect it so no need for proper prefix
 void onFeatureClick(const QPoint & pos);
@@ -228,13 +228,13 @@ private:
 
     // These replace the QT pointers that were in the data structures,
     // they all return a pointer to the QTreeWidgetItem corresponding to a table key
-    QTreeWidgetItem * GetProfileTreeWidgetItem(std::string profileName);
-    QTreeWidgetItem * GetProfileHsTreeWidgetItem(std::string profileName);
-    QTreeWidgetItem * GetSubnetTreeWidgetItem(std::string subnetName);
-    QTreeWidgetItem * GetSubnetHsTreeWidgetItem(std::string subnetName);
-    QTreeWidgetItem * GetNodeTreeWidgetItem(std::string nodeName);
-    QTreeWidgetItem * GetNodeHsTreeWidgetItem(std::string nodeName);
-    bool IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item);
+    QTreeWidgetItem *GetProfileTreeWidgetItem(std::string profileName);
+    QTreeWidgetItem *GetProfileHsTreeWidgetItem(std::string profileName);
+    QTreeWidgetItem *GetSubnetTreeWidgetItem(std::string subnetName);
+    QTreeWidgetItem *GetSubnetHsTreeWidgetItem(std::string subnetName);
+    QTreeWidgetItem *GetNodeTreeWidgetItem(std::string nodeName);
+    QTreeWidgetItem *GetNodeHsTreeWidgetItem(std::string nodeName);
+    bool IsPortTreeWidgetItem(std::string port, QTreeWidgetItem *item);
 
     bool AddNodeToProfileTable(std::string nodeName, int row);
 
@@ -246,13 +246,13 @@ private:
     std::string m_currentNode;
     std::string m_currentSubnet;
 
-    nodePopup * m_nodewindow;
-    QMenu * m_portMenu;
-    QMenu * m_profileTreeMenu;
-    QMenu * m_nodeTreeMenu;
+    nodePopup *m_nodewindow;
+    QMenu *m_portMenu;
+    QMenu *m_profileTreeMenu;
+    QMenu *m_nodeTreeMenu;
 
-    QButtonGroup * m_radioButtons;
-    QButtonGroup * m_interfaceCheckBoxes;
+    QButtonGroup *m_radioButtons;
+    QButtonGroup *m_interfaceCheckBoxes;
 
     //flag to avoid GUI signal conflicts
     bool m_editingItems;
@@ -273,7 +273,7 @@ class TreeItemComboBox : public QComboBox
 
 public:
 
-	TreeItemComboBox(NovaConfig * parent = 0, QTreeWidgetItem* buddy = 0)
+	TreeItemComboBox(NovaConfig *parent = 0, QTreeWidgetItem *buddy = 0)
 	{
 		this->m_parent = parent;
 		this->m_buddy = buddy;
@@ -284,8 +284,8 @@ public:
 	}
 	~TreeItemComboBox(){}
 
-	NovaConfig * m_parent;
-	QTreeWidgetItem * m_buddy;
+	NovaConfig *m_parent;
+	QTreeWidgetItem *m_buddy;
 
 public Q_SLOTS:
 	void setCurrentIndex(int index)
@@ -298,11 +298,11 @@ public Q_SLOTS:
 	void notifyParent(QTreeWidgetItem *item, bool edited);
 
 protected:
-	void wheelEvent(QWheelEvent * e)
+	void wheelEvent(QWheelEvent *e)
 	{
 		e->ignore();
 	}
-	void focusInEvent(QFocusEvent * e)
+	void focusInEvent(QFocusEvent *e)
 	{
 		e->ignore();
 		Q_EMIT notifyParent(m_buddy, false);

@@ -91,9 +91,9 @@ string Config::m_requiredFiles[] =
 	"/templates/nodes.xml"
 };
 
-Config* Config::m_instance = NULL;
+Config *Config::m_instance = NULL;
 
-Config* Config::Inst()
+Config *Config::Inst()
 {
 	if(m_instance == NULL)
 	{
@@ -146,7 +146,7 @@ void Config::LoadConfig_Internal()
 
 	if(config.is_open())
 	{
-		while (config.good())
+		while(config.good())
 		{
 			getline(config, line);
 			prefixIndex = 0;
@@ -979,7 +979,7 @@ bool Config::LoadPaths()
 void Config::LoadInterfaces()
 {
 	pthread_rwlock_wrlock(&m_lock);
-	struct ifaddrs * devices = NULL;
+	struct ifaddrs *devices = NULL;
 	ifaddrs *curIf = NULL;
 	stringstream ss;
 
@@ -989,7 +989,7 @@ void Config::LoadInterfaces()
 		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
 	}
 
-	// ********** LOOPBACK ADAPTER************* //
+	// --LOOPBACK ADAPTER-- //
 	//XXX need to implement qt toggling of default
 	//Choose the first loopback adapter in the default case
 	if(!m_loopbackIF.compare("default"))
@@ -1031,7 +1031,7 @@ void Config::LoadInterfaces()
 	}
 	// -------------------------------------------- //
 
-	// ********** ETHERNET INTERFACES ************* //
+	// -- ETHERNET INTERFACES-- //
 	vector<string> interfaces = m_interfaces;
 	m_interfaces.clear();
 	//Use all valid devices
@@ -1533,7 +1533,7 @@ std::string Config::ReadSetting(std::string key)
 
 	if(config.is_open())
 	{
-		while (config.good())
+		while(config.good())
 		{
 			getline(config, line);
 
@@ -1614,7 +1614,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 
 
 
-	if (error)
+	if(error)
 	{
 		LOG(ERROR, "Problem saving current configuration.", "");
 		return false;
@@ -1974,7 +1974,7 @@ void Config::EnableAllFeatures()
 	Lock lock (&m_lock, false);
 
 	char mask[DIM];
-	for (int i = 0; i < DIM; i++)
+	for(int i = 0; i < DIM; i++)
 	{
 		mask[i] = '1';
 	}
@@ -2500,7 +2500,7 @@ vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 		// Get the template
 		getline(LogInputLineStream, honeydTemplate, ' ');
 
-		if (honeydTemplate != "DoppelgangerReservedTemplate")
+		if(honeydTemplate != "DoppelgangerReservedTemplate")
 		{
 			retAddresses.push_back(token);
 		}
