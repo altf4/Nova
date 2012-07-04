@@ -15,25 +15,28 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : The main NovaGUI component, utilizes the auto-generated ui_novagui.h
 //============================================================================
+
+#include "Lock.h"
+#include "Logger.h"
 #include "novagui.h"
 #include "NovaUtil.h"
 #include "run_popup.h"
 #include "novaconfig.h"
 #include "nova_manual.h"
-#include "classifierPrompt.h"
+#include "loggerwindow.h"
 #include "nova_ui_core.h"
 #include "CallbackHandler.h"
-#include "Logger.h"
-#include "Lock.h"
+#include "classifierPrompt.h"
 #include "messaging/MessageManager.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 #include <QFileDialog>
+#include <QProcess>
 #include <signal.h>
+#include <sys/un.h>
 #include <errno.h>
 #include <QDir>
-#include <sys/un.h>
 
 using namespace std;
 using namespace Nova;

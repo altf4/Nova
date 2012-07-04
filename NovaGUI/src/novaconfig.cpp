@@ -16,19 +16,18 @@
 // Description : NOVA preferences/configuration window
 //============================================================================
 
+#include <QtGui/QRadioButton>
 #include <boost/foreach.hpp>
-#include <QRadioButton>
+#include <QtGui/QFileDialog>
 #include <netinet/in.h>
-#include <QFileDialog>
+#include <QtCore/QDir>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <errno.h>
 #include <fstream>
-#include <QDir>
 
 #include "Logger.h"
-#include "Config.h"
 #include "NovaUtil.h"
 #include "novaconfig.h"
 #include "subnetPopup.h"
@@ -38,7 +37,7 @@ using boost::property_tree::ptree;
 using namespace Nova;
 using namespace std;
 
-
+vector<string> ifList;
 /************************************************
  * Construct and Initialize GUI
  ************************************************/
@@ -377,9 +376,6 @@ void NovaConfig::on_actionAddPort_triggered()
 			}
 			LoadProfileSettings();
 			SaveProfileSettings();
-
-			// TODO QT Port fix
-			//ui.portTreeWidget->editItem(item, 0);
 		}
 		m_loading->unlock();
 	}
@@ -687,19 +683,6 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		string oldPort;
 		Port oldPrt;
 
-		//Find the port before the changes
-		//for(PortTable::iterator it = m_honeydConfig->m_ports.begin(); it != m_honeydConfig->m_ports.end(); it++)
-		//{
-		//*****************************************************
-		// Can'to do this anymore.
-		//	if(it->second.item == item)
-		//*****************************************************
-		//	{
-		//		oldPort = it->second.portName;
-		//	}
-		//}
-		//oldPort = item->text(0).toStdString() + "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
-
 		oldPort = item->text(3).toStdString();
 		oldPrt = m_honeydConfig->m_ports[oldPort];
 
@@ -916,9 +899,6 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		LoadProfileSettings();
 		SaveProfileSettings();
 		ui.portTreeWidget->setFocus(Qt::OtherFocusReason);
-
-		// TODO
-		//ui.portTreeWidget->setCurrentItem(m_honeydConfig->m_ports[prt.portName].item);
 		m_loading->unlock();
 		LoadAllProfiles();
 	}
@@ -1037,7 +1017,7 @@ void NovaConfig::LoadNovadPreferences()
 	struct ifaddrs * devices = NULL;
 	struct ifaddrs *curIf = NULL;
 	stringstream ss;
-
+	ifList.clear();
 	//Get a list of interfaces
 	if(getifaddrs(&devices))
 	{
@@ -1081,6 +1061,7 @@ void NovaConfig::LoadNovadPreferences()
 				m_interfaceCheckBoxes->addButton(checkBox);
 				ui.interfaceGroupBoxVLayout->addWidget(checkBox);
 				checkBoxes.push_back(checkBox);
+				ifList.push_back(curIf->ifa_name);
 			}
 		}
 	}
@@ -1139,12 +1120,6 @@ void NovaConfig::LoadNovadPreferences()
 			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
 			break;
 		}
-		/*case 'E': TODO Implement once we have multiple configurations
-		{
-			ui.hsSaveTypeComboBox->setCurrentIndex(1);
-			ui.hsConfigEdit->setText((QString)Config::Inst()->GetPathConfigHoneydUser().c_str());
-			break;
-		}*/
 		default:
 		{
 			ui.hsSaveTypeComboBox->setCurrentIndex(0);
@@ -1365,7 +1340,6 @@ bool NovaConfig::SaveConfigurationToFile()
 	Config::Inst()->SetUseAnyLoopback(ui.useAnyLoopbackCheckBox->isChecked());
 	for(int i = 0; i < qButtonList.size(); i++)
 	{
-		//XXX configuration for selection 'any' interface aka 'default'
 		QRadioButton * radioBtnPtr = (QRadioButton *)qButtonList.at(i);
 		if(radioBtnPtr->isChecked())
 		{
@@ -1412,7 +1386,7 @@ void NovaConfig::on_cancelButton_clicked()
 	this->close();
 }
 
-void NovaConfig::on_defaultsButton_clicked() //TODO
+void NovaConfig::on_defaultsButton_clicked()
 {
 	//Currently just restores to last save changes
 	//We should really identify default values and write those while maintaining
@@ -1691,40 +1665,6 @@ void NovaConfig::DeleteProfile(string name)
 	LoadHaystackConfiguration();
 }
 
-void NovaConfig::RecursiveSetAssociatedNodesTreeWidget(std::string profile, std::string node, bool child)
-{
-	if(m_honeydConfig->m_nodes.find(node) == m_honeydConfig->m_nodes.end())
-	{
-		return;
-	}
-	else if(!m_honeydConfig->m_profiles[profile].m_parentProfile.compare(""))
-	{
-		return;
-	}
-
-	if(profile.compare(m_currentProfile))
-	{
-		RecursiveSetAssociatedNodesTreeWidget(m_honeydConfig->m_profiles[profile].m_parentProfile, node, true);
-	}
-	else
-	{
-		QTreeWidgetItem *add = new QTreeWidgetItem();
-
-		if(child)
-		{
-			add->setText(0, "Y");
-		}
-		else
-		{
-			add->setText(0, "N");
-		}
-
-		add->setText(1, QString(m_honeydConfig->m_nodes[node].m_pfile.c_str()));
-		add->setText(2, QString(m_honeydConfig->m_nodes[node].m_name.c_str()));
-		ui.associatedNodesTreeWidget->addTopLevelItem(add);
-	}
-}
-
 //Populates the window with the selected profile's options
 void NovaConfig::LoadProfileSettings()
 {
@@ -1862,17 +1802,16 @@ void NovaConfig::LoadProfileSettings()
 				ui.portTreeWidget->setCurrentItem(item);
 			}
 		}
-
-		ui.associatedNodesTreeWidget->clear();
-
+		ui.associatedNodesTableWidget->clear();
+		int i = 0;
 		for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin(); it != m_honeydConfig->m_nodes.end(); it++)
 		{
-			RecursiveSetAssociatedNodesTreeWidget(it->second.m_pfile, it->first, false);
+			if(!it->second.m_pfile.compare(m_currentProfile))
+			{
+				AddNodeToProfileTable(it->first, i);
+				i++;
+			}
 		}
-
-		ui.associatedNodesTreeWidget->resizeColumnToContents(0);
-		ui.associatedNodesTreeWidget->resizeColumnToContents(1);
-		ui.associatedNodesTreeWidget->resizeColumnToContents(2);
 	}
 	else
 	{
@@ -2458,6 +2397,46 @@ bool NovaConfig::IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item)
 	return (ss.str() == port);
 }
 
+bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
+{
+	if(m_honeydConfig->m_nodes.keyExists(nodeName))
+	{
+		while(row >= ui.associatedNodesTableWidget->rowCount())
+		{
+			ui.associatedNodesTableWidget->insertRow(row);
+		}
+		Node curNode = m_honeydConfig->m_nodes[nodeName];
+
+		//Node name
+		QTableWidgetItem *item = new QTableWidgetItem();
+		item->setText(QString(nodeName.c_str()));
+		ui.associatedNodesTableWidget->setItem(row, 0, item);
+
+		//Interface List
+		item = new QTableWidgetItem();
+		/*TableItemComboBox *nodeIFBox = new TableItemComboBox(this, item);
+		vector<string> ifList = Config::Inst()->GetInterfaces();
+		for(uint i = 0; i > ifList.size(); i++)
+		{
+			nodeIFBox->addItem(QString(ifList[i].c_str()));
+		}
+		QObject::connect(nodeIFBox, SIGNAL(notifyParent(QTableWidgetItem *, bool)), this, SLOT(associatedNodesTreeWidget_comboBoxChanged(QTableWidgetItem *, bool)));
+		nodeIFBox->setCurrentIndex(nodeIFBox->findText(curNode.m_interface.c_str()));*/
+		item->setText(QString(curNode.m_interface.c_str()));
+		ui.associatedNodesTableWidget->setItem(row, 1, item);
+
+		//Ethernet Vendors
+		item = new QTableWidgetItem();
+		item->setText(QString(m_honeydConfig->m_profiles[curNode.m_pfile].m_ethernet.c_str()));
+		ui.associatedNodesTableWidget->setItem(row, 2, item);
+
+		//Ports
+
+		return true;
+	}
+	return false;
+}
+
 //Creates tree widget items for a profile and all ancestors if they need one.
 void NovaConfig::CreateProfileItem(string pstr)
 {
@@ -2571,12 +2550,6 @@ void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 	m_loading->unlock();
 }
 
-//Self explanatory, see deleteProfile for details
-void NovaConfig::on_deleteButton_clicked()
-{
-	Q_EMIT on_actionProfileDelete_triggered();
-}
-
 void NovaConfig::on_actionProfileDelete_triggered()
 {
 	if((!ui.profileTreeWidget->selectedItems().isEmpty()) && m_currentProfile.compare("default")
@@ -2625,12 +2598,6 @@ void NovaConfig::on_actionProfileDelete_triggered()
 	}
 	m_loading->unlock();
 	LoadAllNodes();
-}
-
-//Creates a base profile with default values seen below
-void NovaConfig::on_addButton_clicked()
-{
-	Q_EMIT on_actionProfileAdd_triggered();
 }
 
 void NovaConfig::on_actionProfileAdd_triggered()
@@ -2692,12 +2659,6 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	m_loading->unlock();
 	LoadAllProfiles();
 	LoadAllNodes();
-}
-
-//Copies a profile and all of it's descendants
-void NovaConfig::on_cloneButton_clicked()
-{
-	Q_EMIT on_actionProfileClone_triggered();
 }
 
 void NovaConfig::on_actionProfileClone_triggered()
@@ -3039,6 +3000,10 @@ void NovaConfig::DeleteNodes()
 
 /******************************************
  * Node Menu GUI Signals ******************/
+void NovaConfig::on_associatedNodesTreeWidget_itemSelectionChanged()
+{
+
+}
 
 //The current selection in the node list
 void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()

@@ -25,7 +25,6 @@
 #include <QMutex>
 #include <QWheelEvent>
 
-
 // TODO: Clean this up. At a minimum add some descriptive comments, maybe replace with enums
 #define HAYSTACK_MENU_INDEX 4
 #define NODE_INDEX 0
@@ -152,9 +151,6 @@ void on_pcapCheckBox_stateChanged(int state);
 void on_uptimeBehaviorComboBox_currentIndexChanged(int index);
 
 //GUI Signals for Profile settings
-void on_cloneButton_clicked();
-void on_addButton_clicked();
-void on_deleteButton_clicked();
 void on_profileTreeWidget_itemSelectionChanged();
 void on_profileEdit_editingFinished();
 
@@ -170,6 +166,7 @@ void on_nodeDisableButton_clicked();
 void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
+void on_associatedNodesTreeWidget_itemSelectionChanged();
 void on_dropRateSlider_valueChanged();
 
 //GUI Signals for Feature addition/removal
@@ -238,7 +235,8 @@ private:
     QTreeWidgetItem * GetNodeTreeWidgetItem(std::string nodeName);
     QTreeWidgetItem * GetNodeHsTreeWidgetItem(std::string nodeName);
     bool IsPortTreeWidgetItem(std::string port, QTreeWidgetItem* item);
-    void RecursiveSetAssociatedNodesTreeWidget(std::string profile, std::string node, bool child);
+
+    bool AddNodeToProfileTable(std::string nodeName, int row);
 
     Ui::NovaConfigClass ui;
 
@@ -298,6 +296,49 @@ public Q_SLOTS:
 
 	Q_SIGNALS:
 	void notifyParent(QTreeWidgetItem *item, bool edited);
+
+protected:
+	void wheelEvent(QWheelEvent * e)
+	{
+		e->ignore();
+	}
+	void focusInEvent(QFocusEvent * e)
+	{
+		e->ignore();
+		Q_EMIT notifyParent(m_buddy, false);
+	}
+
+};
+
+class TableItemComboBox : public QComboBox
+{
+	Q_OBJECT
+
+public:
+
+	TableItemComboBox(NovaConfig * parent = 0, QTableWidgetItem* buddy = 0)
+	{
+		this->m_parent = parent;
+		this->m_buddy = buddy;
+		this->setFocusPolicy(Qt::ClickFocus);
+		this->setContextMenuPolicy(Qt::NoContextMenu);
+		this->setAutoFillBackground(true);
+		connect(this, SIGNAL(activated(int)), this, SLOT(setCurrentIndex(int)));
+	}
+	~TableItemComboBox(){}
+
+	NovaConfig * m_parent;
+	QTableWidgetItem * m_buddy;
+
+public Q_SLOTS:
+	void setCurrentIndex(int index)
+	{
+		QComboBox::setCurrentIndex(index);
+		Q_EMIT notifyParent(m_buddy, true);
+	}
+
+	Q_SIGNALS:
+	void notifyParent(QTableWidgetItem *item, bool edited);
 
 protected:
 	void wheelEvent(QWheelEvent * e)

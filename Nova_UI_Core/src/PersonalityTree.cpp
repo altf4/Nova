@@ -17,6 +17,7 @@
 //               representation of the relationships between different personalities.
 //============================================================================
 
+#include "Config.h"
 #include "PersonalityTree.h"
 #include <boost/algorithm/string.hpp>
 

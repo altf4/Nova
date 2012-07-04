@@ -22,8 +22,9 @@
 #include "Config.h"
 
 #include <sys/ioctl.h>
+#include <string.h>
 #include <net/if.h>
-#include <string>
+#include <errno.h>
 
 using namespace std;
 
@@ -64,7 +65,7 @@ std::string GetLocalIP(const char *dev)
 
 	for(i = 0; i < nifaces; i++)
 	{
-		if( strcmp(ifreqs[i].ifr_name, dev) == 0 )
+		if(strcmp(ifreqs[i].ifr_name, dev) == 0 )
 		{
 			char ip_addr [ INET_ADDRSTRLEN ];
 			struct sockaddr_in *b = (struct sockaddr_in *) &(ifreqs[i].ifr_addr);

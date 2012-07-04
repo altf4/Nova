@@ -22,6 +22,10 @@
 #include "Config.h"
 #include "Lock.h"
 
+#include <ctime>
+#include <vector>
+#include <iostream>
+#include <stdlib.h>
 #include <fstream>
 #include <sstream>
 #include <syslog.h>

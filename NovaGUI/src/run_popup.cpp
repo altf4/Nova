@@ -16,9 +16,12 @@
 // Description : This provides a run dialog where the user can override the configuration
 //	options provided in the config file and set things like training mode/pcap file.
 //============================================================================
+
+#include "nova_ui_core.h"
 #include "run_popup.h"
 #include "novagui.h"
-#include "nova_ui_core.h"
+#include "Config.h"
+
 
 #include <QDir>
 #include <QFileDialog>
