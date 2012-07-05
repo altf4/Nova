@@ -3002,19 +3002,9 @@ void NovaConfig::DeleteNodes()
 	LoadAllNodes();
 }
 
-
-<<<<<<< HEAD
-/******************************************
- * Node Menu GUI Signals ******************/
-void NovaConfig::on_associatedNodesTreeWidget_itemSelectionChanged()
-{
-
-}
-=======
 /*********************
  Node Menu GUI Signals
  *********************/
->>>>>>> master
 
 //The current selection in the node list
 void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
@@ -3043,6 +3033,11 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 	}
 }
 
+void NovaConfig::on_associatedNodesTreeWidget_itemSelectionChanged()
+{
+
+}
+
 void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edited)
 {
 	if(m_loading->tryLock())
@@ -3054,15 +3049,9 @@ void NovaConfig::nodeTreeWidget_comboBoxChanged(QTreeWidgetItem *item, bool edit
 			if(!ui.nodeTreeWidget->selectedItems().isEmpty())
 			{
 				Node *n = &m_honeydConfig->m_nodes[item->text(0).toStdString()];
-<<<<<<< HEAD
 				oldPfile = n->m_pfile;
 				TreeItemComboBox *pfileBox = (TreeItemComboBox* )ui.nodeTreeWidget->itemWidget(item, 1);
 				n->m_pfile = pfileBox->currentText().toStdString();
-=======
-				oldPfile = n->pfile;
-				TreeItemComboBox *pfileBox = (TreeItemComboBox *)ui.nodeTreeWidget->itemWidget(item, 1);
-				n->pfile = pfileBox->currentText().toStdString();
->>>>>>> master
 			}
 
 			m_loading->unlock();
@@ -3126,11 +3115,7 @@ void NovaConfig::on_actionNodeClone_triggered()
 		m_loading->unlock();
 
 		// Can't clone the doppelganger, only allowed one right now
-<<<<<<< HEAD
 		if (n.m_name == "Doppelganger")
-=======
-		if(n.name == "Doppelganger")
->>>>>>> master
 		{
 			return;
 		}
