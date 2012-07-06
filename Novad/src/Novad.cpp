@@ -1145,13 +1145,11 @@ void UpdateHaystackFeatures()
 	vector<uint32_t> haystackNodes;
 	for(uint i = 0; i < haystackAddresses.size(); i++)
 	{
-		cout << "Address is " << haystackAddresses[i] << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
 	}
 
 	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
 	{
-		cout << "Address is " << haystackDhcpAddresses[i] << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
 	}
 

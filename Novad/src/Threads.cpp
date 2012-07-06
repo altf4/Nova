@@ -454,12 +454,10 @@ void *UpdateWhitelistIPFilter(void *ptr)
 							msg->m_IPAddress = ip;
 							NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 
-							cout << "erased" << endl;
 						}
 
 						in_addr foo;
 						foo.s_addr = ntohl(ip);
-						cout << "Attempted to erase " << inet_ntoa(foo) << endl;
 
 						ip++;
 						mask++;

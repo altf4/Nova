@@ -134,7 +134,6 @@ void classifierPrompt::on_actionCombineEntries_triggered()
 
 		if((*m_suspects)[id]->points == NULL)
 		{
-			cout << "Null points" << endl;
 			continue;
 		}
 

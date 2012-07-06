@@ -1809,7 +1809,8 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	Node newNode;
 	newNode.IP = ipAddress;
 	newNode.interface = interface;
-	cout << "Adding new node " << profileName << ipAddress << macAddress << interface << subnet <<endl;
+
+	LOG(DEBUG, "Adding new honeyd node " + profileName + " " + ipAddress + " " + macAddress + " " + interface + " " + subnet, "");
 
 	if(newNode.IP != "DHCP")
 	{
