@@ -30,8 +30,8 @@ block headerAdditions
 
     }
 
-    function errorMessageCallback(sucess, message) {
-      if(sucess != true) {
+    function errorMessageCallback(success, message) {
+      if(success != true) {
         var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
         dialog.show();
         return;
@@ -56,9 +56,8 @@ block headerAdditions
         dialog.show();
         return; 
       }
-      window.location.href = "editHoneydNode?node=" + nodeName; 
+      window.location.href = "editHoneydNode?node=" + nodeName;
     }
-
 
     require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
 
@@ -67,19 +66,29 @@ block headerAdditions
       grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
       dojo.byId("gridDiv").appendChild(grid.domNode);
     });
-  
+
   script(type="text/javascript")
-          /*set up data store*/
-          var layoutNodes = [[
-            { field: "Enabled", name: "Enabled", width: '100px' },
-            { field: "Name", name: "Name", width: '400px' },
-            { field: "Profile", name: "Profile", width: '100px' },
-            { field: "IP", name: "IP", width: '150px' },
-            { field: "MAC", name: "MAC", width: '150px' },
-          ]];
+    /*set up data store*/
+    var layoutNodes = [[
+      { field: "Enabled", name: "Enabled", width: '100px' },
+      { field: "Name", name: "Name", width: '400px' },
+      { field: "Profile", name: "Profile", width: '100px' },
+      { field: "IP", name: "IP", width: '150px' },
+      { field: "MAC", name: "MAC", width: '150px' },
+    ]];
 
 block content
   h1 Current Honeyd Nodes
+  br
+  form(id="groupChangeSelect", method="post", action="/changeGroup")
+    label Group
+      select(name="GROUP", id="GROUP", onchange="document.getElementById(\"groupChangeSelect\").submit();")
+        each g, i in groups
+          if g == currentGroup
+            option(SELECTED) #{g}
+          else
+            option #{g}
+  br
   table#nodeTable(style="display: none")
     thead
       tr

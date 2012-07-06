@@ -136,6 +136,8 @@ public:
 
 	bool AddGroup(std::string groupName);
 
+	std::vector<std::string> GetGroups();
+
 	//Updates the profile with any modified information
 	//	Note: to modify inheritance use InheritProfile, just changing the parentProfile value and calling
 	//		this function may leave a copy of the profile as a child of the old parent next load

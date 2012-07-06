@@ -1,4 +1,4 @@
-"use strict";
+//"use strict";
 
 var novaconfig = require('novaconfig.node');
 
@@ -287,7 +287,8 @@ app.get('/basicOptions', ensureAuthenticated, function(req, res) {
 app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
-	 var nodes = [];
+	 var nodes = new Array();
+	 
 	 for (var i = 0; i < nodeNames.length; i++) {
 		nodes.push(honeydConfig.GetNode(nodeNames[i]));
 	 }
@@ -296,7 +297,9 @@ app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
 	 { locals: {
 	 	profiles: honeydConfig.GetProfileNames()
 	 	,nodes: nodes
-		,subnets:  honeydConfig.GetSubnetNames() 	
+		,subnets:  honeydConfig.GetSubnetNames()
+		,groups: honeydConfig.GetGroups()
+		,currentGroup: config.GetGroup()
 	}})
 });
 
@@ -384,6 +387,14 @@ app.get('/importCapture', ensureAuthenticated, function(req, res) {
 			trainingSession: req.query["trainingSession"] 
 		}})
 	}
+});
+
+app.post('/changeGroup', ensureAuthenticated, function(req, res){
+	var selectedGroup = req.body["GROUP"];
+	
+	config.SetGroup(selectedGroup);
+	
+	res.redirect('/configHoneydNodes');
 });
 
 app.post('/importCaptureSave', ensureAuthenticated, function(req, res) {	

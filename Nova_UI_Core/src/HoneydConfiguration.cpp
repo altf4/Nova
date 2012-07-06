@@ -204,7 +204,7 @@ vector<string> HoneydConfiguration::GetGeneratedProfileNames()
 
 	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
-		if(it->second.m_generated && !it->second.m_personality.empty() && !it->second.m_ethernet.empty())
+		if(it->second.m_generated && !it->second.m_personality.empty() && !it->second.m_ethernetVendors.empty())
 		{
 			childProfiles.push_back(it->second.m_name);
 		}
@@ -1523,7 +1523,7 @@ std::vector<std::string> HoneydConfiguration::GetNodeNames()
 {
 	vector<std::string> childnodes;
 
-	Config::Inst()->SetGroup("main");
+	//Config::Inst()->SetGroup("main");
 
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
@@ -1640,6 +1640,12 @@ bool HoneydConfiguration::AddProfile(NodeProfile *profile)
 	}
 	return false;
 }
+
+std::vector<std::string> HoneydConfiguration::GetGroups()
+{
+	return m_groups;
+}
+
 
 bool HoneydConfiguration::AddGroup(std::string groupName)
 {
