@@ -44,11 +44,6 @@ enum ErrCode : int
 // Returns nothing
 void LoadNmap(const std::string &filename);
 
-// Puts the integer val into m, and shifts it
-// depending on the value of cond. Used for converting
-// a MAC address string into a uint for use with the MAC Vendor Db object.
-uint AtoMACPrefix(std::string MAC);
-
 // Takes a <host> sub-ptree and parses it for the requisite information, placing said information
 // into a Personality object which then gets passed into the PersonalityTable object
 //  ptree pt2 - <host> subtree of the highest level node in the nmap xml files

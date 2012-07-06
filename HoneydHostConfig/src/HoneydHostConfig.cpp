@@ -37,11 +37,8 @@
 
 #include "NodeManager.h"
 #include "HoneydHostConfig.h"
+#include "VendorMacDb.h"
 #include "Logger.h"
-
-#define DIGIT_OFFSET 48
-#define LOWER_OFFSET 87
-#define UPPER_OFFSET 65
 
 using namespace std;
 using namespace Nova;
@@ -56,65 +53,6 @@ uint numNodes;
 vector<Subnet> subnetsDetected;
 
 PersonalityTable personalities;
-
-//Converts the first three bytes of a MAC address from a string to a unsigned int
-//	MAC: string of the MAC address you wish to conver must be at least 8 characters
-//	return: unsigned integervalue of the MAC prefix
-//	note: must be valid hex charactar pairs separated by colons, ex: '09:af:AF'
-uint Nova::AtoMACPrefix(string MAC)
-{
-	if(MAC.size() < 8)
-	{
-		return 0;
-	}
-	u_char tempBuf = 0;
-	uint ret = 0;
-	for(uint i = 0; (i < MAC.length()) && (i < 8); i++)
-	{
-		uint val = 0;
-		if(isdigit(MAC[i]) && MAC[i] != '0')
-		{
-			val = MAC[i] - DIGIT_OFFSET;
-		}
-		else if(islower(MAC[i]) && MAC[i] < 'g')
-		{
-			val = MAC[i] - LOWER_OFFSET;
-		}
-		else if(isupper(MAC[i]) && MAC[i] < 'G')
-		{
-			val = MAC[i] - UPPER_OFFSET;
-		}
-		else if(MAC[i] != ':' && MAC[i] != '0')
-		{
-			return 0;
-		}
-		switch(i%3)
-		{
-			case 0:
-			{
-				tempBuf += val;
-				tempBuf = tempBuf << 4;
-				break;
-			}
-			case 1:
-			{
-				tempBuf += val;
-				break;
-			}
-			case 2:
-			{
-				ret += tempBuf;
-				ret = ret << 8;
-				break;
-			}
-			default:
-			{
-				return 0;
-			}
-		}
-	}
-	return ret;
-}
 
 void usage()
 {
@@ -178,10 +116,10 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 
 						string macString = string(macBuffer);
 						persObject->m_macs.push_back(macString);
-						uint rawMACPrefix = AtoMACPrefix(macString);
 
 						VendorMacDb *macVendorDB = new VendorMacDb();
 						macVendorDB->LoadPrefixFile();
+						uint rawMACPrefix = macVendorDB->AtoMACPrefix(macString);
 						persObject->AddVendor(macVendorDB->LookupVendor(rawMACPrefix));
 					}
 				}
