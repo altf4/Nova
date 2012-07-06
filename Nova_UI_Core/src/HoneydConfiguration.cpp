@@ -770,7 +770,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		propTree = it->second.m_tree;
 
 		// No need to save names besides the doppel, we can derive them
-		if(it->second.m_name == "Doppelganger")
+		if(!it->second.m_name.compare("Doppelganger"))
 		{
 			// Make sure the IP reflects whatever is being used right now
 			it->second.m_IP = Config::Inst()->GetDoppelIp();
@@ -787,7 +787,10 @@ bool HoneydConfiguration::SaveAllTemplates()
 		newPortTree.clear();
 		for(uint i = 0; i < it->second.m_ports.size(); i++)
 		{
-			newPortTree.add<std::string>("port", it->second.m_ports[i]);
+			if(!it->second.m_isPortInherited[i])
+			{
+				newPortTree.add<std::string>("port", it->second.m_ports[i]);
+			}
 		}
 		propTree.put_child("profile.add.ports", newPortTree);
 		m_nodesTree.add_child("node",propTree);
@@ -895,54 +898,72 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			//Add any custom port settings
 			for(uint i = 0; i < it->second.m_ports.size(); i++)
 			{
-				Port prt = m_ports[it->second.m_ports[i]];
-				out << "add CustomNodeProfile-" << m_nodeProfileIndex << " ";
-				if(!prt.m_type.compare("TCP"))
+				//Only write out ports that aren't inherited from parent profiles
+				if(!it->second.m_isPortInherited[i])
 				{
-					out << " tcp port ";
-				}
-				else
-				{
-					out << " udp port ";
-				}
-				out << prt.m_portNum << " ";
-
-				if(!(prt.m_behavior.compare("script")))
-				{
-					string scriptName = prt.m_scriptName;
-
-					if(m_scripts[scriptName].m_path.compare(""))
+					Port prt = m_ports[it->second.m_ports[i]];
+					//Skip past invalid port objects
+					if(!(prt.m_type.compare("")) || !(prt.m_portNum.compare("")) || !(prt.m_behavior.compare("")))
 					{
-						out << '"' << m_scripts[scriptName].m_path << '"'<< endl;
+						continue;
+					}
+
+					out << "add CustomNodeProfile-" << m_nodeProfileIndex << " ";
+					if(!prt.m_type.compare("TCP"))
+					{
+						out << " tcp port ";
 					}
 					else
 					{
-						LOG(ERROR, "Error writing node port script.", "Path to script " + scriptName + " is null.");
+						out << " udp port ";
 					}
-				}
-				else
-				{
-					out << prt.m_behavior << endl;
+
+					out << prt.m_portNum << " ";
+
+					if(!(prt.m_behavior.compare("script")))
+					{
+						string scriptName = prt.m_scriptName;
+
+						if(m_scripts[scriptName].m_path.compare(""))
+						{
+							out << '"' << m_scripts[scriptName].m_path << '"'<< endl;
+						}
+						else
+						{
+							LOG(ERROR, "Error writing node port script.", "Path to script " + scriptName + " is null.");
+						}
+					}
+					else
+					{
+						out << prt.m_behavior << endl;
+					}
 				}
 			}
 
-			// No IP address, use DHCP
-			if(it->second.m_IP == "DHCP" && it->second.m_MAC == "RANDOM")
+			//If DHCP
+			if(!it->second.m_IP.compare("DHCP"))
 			{
-				out << "dhcp CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << endl;
+				//Wrtie dhcp line
+				out << "dhcp CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface;
+				//If the node has a MAC address (not random generated)
+				if(it->second.m_MAC.compare("RANDOM"))
+				{
+					out << " ethernet \"" << it->second.m_MAC << "\"";
+				}
+				out << endl;
 			}
-			else if(it->second.m_IP == "DHCP" && it->second.m_MAC != "RANDOM")
+			//If static IP
+			else
 			{
-				out << "dhcp CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface << " ethernet \"" << it->second.m_MAC << "\"" << endl;
-			}
-			else if(it->second.m_IP != "DHCP" && it->second.m_MAC == "RANDOM")
-			{
+				//If the node has a MAC address (not random generated)
+				if(it->second.m_MAC.compare("RANDOM"))
+				{
+					//Set the MAC for the custom node profile
+					out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex;
+					out << " ethernet \"" << it->second.m_MAC << "\"" << endl;
+				}
+				//bind the node to the IP address
 				out << "bind " << it->second.m_IP << " CustomNodeProfile-" << m_nodeProfileIndex << endl;
-			}
-			else if(it->second.m_IP != "DHCP" && it->second.m_MAC != "RANDOM")
-			{
-				out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex << " ethernet \"" << it->second.m_MAC << "\"" << endl;
-				out << "bind " << it->second.m_IP << " CustomNodeProfile-" << m_nodeProfileIndex << it->second.m_IP << endl;
 			}
 		}
 	}
@@ -1041,7 +1062,8 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 
 				nodeProf = m_profiles[node.m_pfile];
 
-				//Get mac if present
+				//Get mac if present									nodeProf->m_ports.erase(nodeProf->m_ports.begin() + i);
+
 				try //Conditional: has "set" values
 				{
 					node.m_MAC = value.second.get<std::string>("MAC");
@@ -1055,11 +1077,35 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 				{
 					ptree nodePorts = value.second.get_child("profile.add");
 					LoadProfileServices(&nodePorts, &nodeProf);
-
 					for(uint i = 0; i < nodeProf.m_ports.size(); i++)
 					{
 						node.m_ports.push_back(nodeProf.m_ports[i].first);
 						node.m_isPortInherited.push_back(false);
+					}
+					//Loads inherited ports and checks for inheritance conflicts
+					if(m_profiles.keyExists(node.m_pfile))
+					{
+						vector <pair <string, pair <bool, double> > > profilePorts = m_profiles[node.m_pfile].m_ports;
+						for(uint i = 0; i < profilePorts.size(); i++)
+						{
+							bool conflict = false;
+							Port curPort = m_ports[profilePorts[i].first];
+							for(uint j = 0; j < node.m_ports.size(); j++)
+							{
+								Port nodePort = m_ports[node.m_ports[j]];
+								if(!(curPort.m_portNum.compare(nodePort.m_portNum))
+									&& !(curPort.m_type.compare(nodePort.m_type)))
+								{
+									conflict = true;
+									break;
+								}
+							}
+							if(!conflict)
+							{
+								node.m_ports.push_back(profilePorts[i].first);
+								node.m_isPortInherited.push_back(true);
+							}
+						}
 					}
 				}
 				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
@@ -1886,15 +1932,15 @@ bool HoneydConfiguration::AddNewNode(Node node)
 	newNode.m_interface = "eth0";
 
 
-	if(newNode.m_IP != "DHCP")
+	if(newNode.m_IP.compare("DHCP"))
 	{
 		newNode.m_realIP = htonl(inet_addr(newNode.m_IP.c_str()));
 	}
 
 	// Figure out it's subnet
-	if(newNode.m_sub == "")
+	if(!newNode.m_sub.compare(""))
 	{
-		if(newNode.m_IP == "DHCP")
+		if(!newNode.m_IP.compare("DHCP"))
 		{
 			newNode.m_sub = newNode.m_interface;
 		}
@@ -1902,7 +1948,7 @@ bool HoneydConfiguration::AddNewNode(Node node)
 		{
 			newNode.m_sub = FindSubnet(newNode.m_realIP);
 
-			if(newNode.m_sub == "")
+			if(!newNode.m_sub.compare(""))
 			{
 				return false;
 			}
@@ -1919,7 +1965,7 @@ bool HoneydConfiguration::AddNewNode(Node node)
 
 	uint j = ~0;
 	stringstream ss;
-	if(newNode.m_name == "DHCP - RANDOM")
+	if(newNode.m_name.compare("DHCP - RANDOM"))
 	{
 		//Finds a unique identifier
 		uint i = 1;
@@ -1931,10 +1977,11 @@ bool HoneydConfiguration::AddNewNode(Node node)
 			newNode.m_name = ss.str();
 		}
 	}
-
+	newNode.m_ports = node.m_ports;
+	newNode.m_isPortInherited = node.m_isPortInherited;
 	m_nodes[newNode.m_name] = newNode;
 
-	if(newNode.m_sub != "")
+	if(newNode.m_sub.compare(""))
 	{
 		m_subnets[newNode.m_sub].m_nodes.push_back(newNode.m_name);
 	}
@@ -1953,15 +2000,15 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	newNode.m_IP = ipAddress;
 	newNode.m_interface = interface;
 
-	if(newNode.m_IP != "DHCP")
+	if(newNode.m_IP.compare("DHCP"))
 	{
 		newNode.m_realIP = htonl(inet_addr(newNode.m_IP.c_str()));
 	}
 
 	// Figure out it's subnet
-	if(subnet == "")
+	if(!subnet.compare(""))
 	{
-		if(newNode.m_IP == "DHCP")
+		if(!newNode.m_IP.compare("DHCP"))
 		{
 			newNode.m_sub = newNode.m_interface;
 		}
@@ -1969,7 +2016,7 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 		{
 			newNode.m_sub = FindSubnet(newNode.m_realIP);
 
-			if(newNode.m_sub == "")
+			if(!newNode.m_sub.compare(""))
 			{
 				return false;
 			}
@@ -1989,6 +2036,11 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	cout << "Adding new node '" << newNode.m_name << "'."<< endl;
 
 	m_profiles[newNode.m_pfile].m_nodeKeys.push_back(newNode.m_name);
+	for(uint i = 0; i < m_profiles[newNode.m_pfile].m_ports.size(); i++)
+	{
+		newNode.m_ports.push_back(m_profiles[newNode.m_pfile].m_ports[i].first);
+		newNode.m_isPortInherited.push_back(true);
+	}
 
 	uint j = ~0;
 	stringstream ss;

@@ -130,6 +130,8 @@ struct NodeProfile
 	std::string m_dropRate;
 	bool m_inherited[INHERITED_MAX];
 	bool m_generated;
+	//XXX change this vector into two vectors, the pair of string/doubles
+	// and a separate vector of bools for inheritance
 	std::vector<std::pair<std::string, std::pair<bool, double> > > m_ports;
 	std::vector<std::string> m_nodeKeys;
 	std::string m_parentProfile;
