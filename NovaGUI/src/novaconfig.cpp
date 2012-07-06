@@ -1491,10 +1491,12 @@ void NovaConfig::on_dmCheckBox_stateChanged(int state)
 	if(state)
 	{
 		m_honeydConfig->EnableNode("Doppelganger");
+		Config::Inst()->SetIsDmEnabled(true);
 	}
 	else
 	{
 		m_honeydConfig->DisableNode("Doppelganger");
+		Config::Inst()->SetIsDmEnabled(false);
 	}
 
 	m_loading->unlock();
@@ -2835,9 +2837,9 @@ void NovaConfig::LoadAllNodes()
 			ui.nodeTreeWidget->setItemWidget(item, 1, pfileBox);
 			if(!n->name.compare("Doppelganger"))
 			{
-				ui.dmCheckBox->setChecked(n->enabled);
+				ui.dmCheckBox->setChecked(Config::Inst()->GetIsDmEnabled());
 				//Enable the loopback subnet as well if DM is enabled
-				m_honeydConfig->m_subnets[n->sub].enabled |= n->enabled;
+				m_honeydConfig->m_subnets[n->sub].enabled |= Config::Inst()->GetIsDmEnabled();
 			}
 			if(!n->enabled)
 			{
