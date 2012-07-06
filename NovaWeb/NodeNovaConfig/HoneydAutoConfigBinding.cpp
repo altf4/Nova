@@ -81,8 +81,6 @@ Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
     systemCall += " -a " + additionalSubnets;
   }
   
-  std::cout << systemCall << std::endl;
-  
   std::cout << "Scanning and node generation commencing" << '\n';
   
   system(systemCall.c_str());
@@ -100,8 +98,6 @@ Handle<Value> HoneydAutoConfigBinding::GetGeneratedNodeInfo(const Arguments& arg
   
   obj->m_hdconfig = new Nova::HoneydConfiguration();
   Nova::Config::Inst()->SetGroup("HaystackAutoConfig");
-  
-  cout << Nova::Config::Inst()->GetGroup() << endl;
   
   obj->m_hdconfig->LoadAllTemplates(); 
   

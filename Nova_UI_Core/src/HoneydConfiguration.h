@@ -112,6 +112,8 @@ public:
 	NodeProfile *GetProfile(std::string profileName);
 	Port *GetPort(std::string portName);
 	std::vector<std::string> GeneratedProfilesStrings();
+	std::vector<std::string> GetGeneratedProfileNames();
+	std::vector<std::string> GetGeneratedNodeNames();
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();

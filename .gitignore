@@ -146,3 +146,4 @@ NovaLibrary/libNovaLibrary.a
 debian/files
 debian/nova/*
 /HoneydHostConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+/NovaWeb/joyent-node*

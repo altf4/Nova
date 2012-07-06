@@ -603,11 +603,26 @@ app.get('/autoConfig', ensureAuthenticated, function(req, res) {
 });
 
 app.get('/nodeReview', ensureAuthenticated, function(req, res) { 
-  res.render('nodereview.jade', 
-  {
-    user: req.user
-    ,profiles: hhconfig.GetGeneratedNodeInfo()
-  });
+	honeydConfig.LoadAllTemplates();
+	 var profileNames = honeydConfig.GetGeneratedProfileNames();
+	 var profiles = [];
+	 for (var i = 0; i < profileNames.length; i++) {
+		profiles.push(honeydConfig.GetProfile(profileNames[i]));
+	 }
+	 
+	 var nodeNames = honeydConfig.GetGeneratedNodeNames();
+	 var nodes = [];
+	 for (var i = 0; i < nodeNames.length; i++) {
+		nodes.push(honeydConfig.GetNode(nodeNames[i]));
+	 }
+     
+	 res.render('nodereview.jade', 
+	 { locals: {
+	 	profileNames: honeydConfig.GetGeneratedProfileNames()
+	 	,profiles: profiles
+	 	,nodes: nodes
+	 	,subnets:  honeydConfig.GetSubnetNames() 
+	}})
 });
 
 app.get('/', ensureAuthenticated, function(req, res) {
@@ -652,8 +667,6 @@ app.post('/scanning', ensureAuthenticated, function(req, res){
     subnets = "";
     console.log("No additional subnets selected.");
   }
-  
-  console.log(subnets);
   
   if(subnets === "" && interfaces === "")
   {
@@ -1277,8 +1290,6 @@ function ensureAuthenticated(req, res, next) {
 }
 
 function queryCredDb(check) {
-    console.log("checkPass value before queryCredDb call: " + check);
-    
     client.query(
     'SELECT pass FROM ' + credTb + ' WHERE pass = SHA1(' + client.escape(check) + ')',
     function selectCb(err, results, fields) {
