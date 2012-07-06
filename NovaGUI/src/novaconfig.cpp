@@ -1002,12 +1002,15 @@ bool NovaConfig::DisplayMACPrefixWindow()
 		ui.ethernetEdit->setText((QString)m_retVal.c_str());
 
 		//If there is no change in vendor, nothing left to be done.
-		if(m_honeydConfig->m_profiles[m_currentProfile].m_ethernet.compare(m_retVal))
+		for(uint i = 0; i < m_honeydConfig->m_profiles[m_currentProfile].m_ethernetVendors.size(); i++)
 		{
-			return true;
+			//If we find the vendor in the existing vector
+			if(!m_honeydConfig->m_profiles[m_currentProfile].m_ethernetVendors[i].first.compare(m_retVal))
+			{
+				return true;
+			}
 		}
-
-		m_honeydConfig->GenerateMACAddresses(m_currentProfile);
+		m_honeydConfig->UpdateMacAddressesOfProfileNodes(m_currentProfile);
 	}
 	return false;
 }
@@ -1514,7 +1517,9 @@ void NovaConfig::SaveProfileSettings()
 	{
 		NodeProfile p = m_honeydConfig->m_profiles[m_currentProfile];
 		//currentProfile->name is set in updateProfile
-		p.m_ethernet = ui.ethernetEdit->displayText().toStdString();
+		//XXX implement multiple ethernet vendor support
+		p.m_ethernetVendors[0].first = ui.ethernetEdit->displayText().toStdString();
+		p.m_ethernetVendors[0].second = 100;
 		p.m_tcpAction = ui.tcpActionComboBox->currentText().toStdString();
 		p.m_udpAction = ui.udpActionComboBox->currentText().toStdString();
 		p.m_icmpAction = ui.icmpActionComboBox->currentText().toStdString();
@@ -1597,7 +1602,7 @@ void NovaConfig::SaveInheritedProfileSettings()
 	p.m_inherited[ETHERNET] = ui.ethernetCheckBox->isChecked();
 	if(ui.ethernetCheckBox->isChecked())
 	{
-		p.m_ethernet = m_honeydConfig->m_profiles[p.m_parentProfile].m_ethernet;
+		p.m_ethernetVendors = m_honeydConfig->m_profiles[p.m_parentProfile].m_ethernetVendors;
 	}
 	p.m_inherited[UPTIME] = ui.uptimeCheckBox->isChecked();
 	if(ui.uptimeCheckBox->isChecked())
@@ -1693,7 +1698,10 @@ void NovaConfig::LoadProfileSettings()
 		//Set the variables of the profile
 		ui.profileEdit->setText((QString)p->m_name.c_str());
 		ui.profileEdit->setEnabled(true);
-		ui.ethernetEdit->setText((QString)p->m_ethernet.c_str());
+
+		//XXX Support multiple ethernet Vendors
+		ui.ethernetEdit->setText((QString)p->m_ethernetVendors[0].first.c_str());
+
 		ui.tcpActionComboBox->setCurrentIndex( ui.tcpActionComboBox->findText(p->m_tcpAction.c_str() ) );
 		ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->m_udpAction.c_str() ) );
 		ui.icmpActionComboBox->setCurrentIndex( ui.icmpActionComboBox->findText(p->m_icmpAction.c_str() ) );
@@ -1805,7 +1813,7 @@ void NovaConfig::LoadProfileSettings()
 				ui.portTreeWidget->setCurrentItem(item);
 			}
 		}
-		ui.associatedNodesTableWidget->clear();
+		ui.associatedNodesTableWidget->clearContents();
 		int i = 0;
 		for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin(); it != m_honeydConfig->m_nodes.end(); it++)
 		{
@@ -1935,7 +1943,7 @@ void NovaConfig::LoadInheritedProfileSettings()
 
 	if(ui.ethernetCheckBox->isChecked())
 	{
-		p->m_ethernet = m_honeydConfig->m_profiles[p->m_parentProfile].m_ethernet;
+		p->m_ethernetVendors = m_honeydConfig->m_profiles[p->m_parentProfile].m_ethernetVendors;
 	}
 
 	if(ui.uptimeCheckBox->isChecked())
@@ -1971,319 +1979,6 @@ void NovaConfig::LoadInheritedProfileSettings()
 	if(ui.icmpCheckBox->isChecked())
 	{
 		p->m_icmpAction = m_honeydConfig->m_profiles[p->m_parentProfile].m_icmpAction;
-	}
-}
-
-
-//This is used when a profile is cloned, it allows us to copy a ptree and extract all children from it
-// it is exactly the same as novagui's xml extraction functions except that it gets the ptree from the
-// cloned profile and it asserts a profile's name is unique and changes the name if it isn't
-void NovaConfig::LoadProfilesFromTree(string parent)
-{
-	using boost::property_tree::ptree;
-	ptree *ptr, pt = m_honeydConfig->m_profiles[parent].m_tree;
-	try
-	{
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child("profiles"))
-		{
-			//Generic profile, essentially a honeyd template
-			if(!string(v.first.data()).compare("profile"))
-			{
-				NodeProfile p = m_honeydConfig->m_profiles[parent];
-				//Root profile has no parent
-				p.m_parentProfile = parent;
-				p.m_tree = v.second;
-
-				for(uint i = 0; i < INHERITED_MAX; i++)
-				{
-					p.m_inherited[i] = true;
-				}
-
-				//Asserts the name is unique, if it is not it finds a unique name
-				// up to the range of 2^32
-				string profileStr = p.m_name;
-				stringstream ss;
-				uint i = 0, j = 0;
-				j = ~j; //2^32-1
-
-				while((m_honeydConfig->m_profiles.keyExists(p.m_name)) && (i < j))
-				{
-					ss.str("");
-					i++;
-					ss << profileStr << "-" << i;
-					p.m_name = ss.str();
-				}
-				p.m_tree.put<std::string>("name", p.m_name);
-
-				p.m_ports.clear();
-
-				try //Conditional: has "set" values
-				{
-					ptr = &v.second.get_child("set");
-					//pass 'set' subset and pointer to this profile
-					LoadProfileSettings(ptr, &p);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-				try //Conditional: has "add" values
-				{
-					ptr = &v.second.get_child("add");
-					//pass 'add' subset and pointer to this profile
-					LoadProfileServices(ptr, &p);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-				//Save the profile
-				m_honeydConfig->m_profiles[p.m_name] = p;
-				m_honeydConfig->UpdateProfile(p.m_name);
-
-				try //Conditional: has children profiles
-				{
-					ptr = &v.second.get_child("profiles");
-
-					//start recurisive descent down profile tree with this profile as the root
-					//pass subtree and pointer to parent
-					LoadProfileChildren(p.m_name);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-			}
-
-			//Honeyd's implementation of switching templates based on conditions
-			else if(!string(v.first.data()).compare("dynamic"))
-			{
-				//TODO
-			}
-			else
-			{
-				LOG(ERROR, "Invalid XML Path "+string(v.first.data()), "");
-			}
-		}
-	}
-	catch(std::exception &e)
-	{
-		LOG(ERROR, "Problem loading Profiles: "+string(e.what()), "");
-		m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->HONEYD_LOAD_FAIL, "Problem loading Profiles: " + string(e.what()));
-	}
-}
-
-//Sets the configuration of 'set' values for profile that called it
-void NovaConfig::LoadProfileSettings(ptree *ptr, NodeProfile *p)
-{
-	string prefix;
-	try
-	{
-		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
-		{
-			prefix = "TCP";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_tcpAction = v.second.data();
-				p->m_inherited[TCP_ACTION] = false;
-				continue;
-			}
-			prefix = "UDP";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_udpAction = v.second.data();
-				p->m_inherited[UDP_ACTION] = false;
-				continue;
-			}
-			prefix = "ICMP";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_icmpAction = v.second.data();
-				p->m_inherited[ICMP_ACTION] = false;
-				continue;
-			}
-			prefix = "personality";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_personality = v.second.data();
-				p->m_inherited[PERSONALITY] = false;
-				continue;
-			}
-			prefix = "ethernet";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_ethernet = v.second.data();
-				p->m_inherited[ETHERNET] = false;
-				continue;
-			}
-			prefix = "uptimeMax";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_uptimeMax = v.second.data();
-				continue;
-			}
-			prefix = "uptimeMin";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_uptimeMin = v.second.data();
-				continue;
-			}
-			prefix = "dropRate";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				p->m_dropRate = v.second.data();
-				p->m_inherited[DROP_RATE] = false;
-				continue;
-			}
-		}
-	}
-	catch(std::exception &e)
-	{
-		LOG(ERROR, "Problem loading profile set parameters: "+string(e.what()), "");
-	}
-}
-
-//Adds specified ports and subsystems
-// removes any previous port with same number and type to avoid conflicts
-void NovaConfig::LoadProfileServices(ptree *ptr, NodeProfile *p)
-{
-	string prefix;
-	Port *prt;
-
-	try
-	{
-		for(uint i = 0; i < p->m_ports.size(); i++)
-		{
-			p->m_ports[i].second.first = true;
-		}
-		BOOST_FOREACH(ptree::value_type &v, ptr->get_child(""))
-		{
-			//Checks for ports
-			prefix = "ports";
-			if(!string(v.first.data()).compare(prefix))
-			{
-				//Iterates through the ports
-				BOOST_FOREACH(ptree::value_type &v2, ptr->get_child("ports"))
-				{
-					prt = &m_honeydConfig->m_ports[v2.second.data()];
-
-					//Checks inherited ports for conflicts
-					for(uint i = 0; i < p->m_ports.size(); i++)
-					{
-						//Erase inherited port if a conflict is found
-						if(!prt->m_portNum.compare(m_honeydConfig->m_ports[p->m_ports[i].first].m_portNum) && !prt->m_type.compare(m_honeydConfig->m_ports[p->m_ports[i].first].m_type))
-						{
-							p->m_ports.erase(p->m_ports.begin()+i);
-						}
-					}
-					//Add specified port
-					pair<string, pair<bool, double> > portPair;
-					portPair.first = prt->m_portName;
-					portPair.second.first = false;
-					portPair.second.second = 0;
-					if(!p->m_ports.size())
-					{
-						p->m_ports.push_back(portPair);
-					}
-					else
-					{
-						uint i = 0;
-						for(i = 0; i < p->m_ports.size(); i++)
-						{
-							Port *temp = &m_honeydConfig->m_ports[p->m_ports[i].first];
-							if((atoi(temp->m_portNum.c_str())) < (atoi(prt->m_portNum.c_str())))
-							{
-								continue;
-							}
-							break;
-						}
-						if(i < p->m_ports.size())
-						{
-							p->m_ports.insert(p->m_ports.begin()+i, portPair);
-						}
-						else
-						{
-							p->m_ports.push_back(portPair);
-						}
-					}
-				}
-				continue;
-			}
-
-			//Checks for a subsystem
-			prefix = "subsystem"; //TODO
-			if(!string(v.first.data()).compare(prefix))
-			{
-				continue;
-			}
-		}
-	}
-	catch(std::exception &e)
-	{
-		LOG(ERROR, "Problem loading profile add parameters: "+string(e.what()), "");
-	}
-}
-
-//Recurisve descent down a profile tree, inherits parent, sets values and continues if not leaf.
-void NovaConfig::LoadProfileChildren(string parent)
-{
-	ptree ptr = m_honeydConfig->m_profiles[parent].m_tree;
-	try
-	{
-		BOOST_FOREACH(ptree::value_type &v, ptr.get_child("profiles"))
-		{
-			ptree *ptr2;
-
-			//Inherits parent,
-			NodeProfile prof = m_honeydConfig->m_profiles[parent];
-			prof.m_tree = v.second;
-			prof.m_parentProfile = parent;
-
-			//Gets name, initializes DHCP
-			prof.m_name = v.second.get<std::string>("name");
-
-			for(uint i = 0; i < INHERITED_MAX; i++)
-			{
-				prof.m_inherited[i] = true;
-			}
-
-			string profileStr = prof.m_name;
-			stringstream ss;
-			uint i = 0, j = 0;
-			j = ~j; //2^32-1
-
-			//Asserts the name is unique, if it is not it finds a unique name
-			// up to the range of 2^32
-			while((m_honeydConfig->m_profiles.keyExists(prof.m_name)) && (i < j))
-			{
-				ss.str("");
-				i++;
-				ss << profileStr << "-" << i;
-				prof.m_name = ss.str();
-			}
-			prof.m_tree.put<std::string>("name", prof.m_name);
-
-			try //Conditional: If profile has set configurations different from parent
-			{
-				ptr2 = &v.second.get_child("set");
-				LoadProfileSettings(ptr2, &prof);
-			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-			try //Conditional: If profile has port or subsystems different from parent
-			{
-				ptr2 = &v.second.get_child("add");
-				LoadProfileServices(ptr2, &prof);
-			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-			//Saves the profile
-			m_honeydConfig->m_profiles[prof.m_name] = prof;
-			m_honeydConfig->UpdateProfile(prof.m_name);
-
-			try //Conditional: if profile has children (not leaf)
-			{
-				LoadProfileChildren(prof.m_name);
-			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-		}
-	}
-	catch(std::exception &e)
-	{
-		LOG(ERROR, "Problem loading sub profiles: "+string(e.what()), "");
 	}
 }
 
@@ -2430,7 +2125,8 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 
 		//Ethernet Vendors
 		item = new QTableWidgetItem();
-		item->setText(QString(m_honeydConfig->m_profiles[curNode.m_pfile].m_ethernet.c_str()));
+		//XXX support multiple ethernet vendors
+		item->setText(QString(m_honeydConfig->m_profiles[curNode.m_pfile].m_ethernetVendors[0].first.c_str()));
 		ui.associatedNodesTableWidget->setItem(row, 2, item);
 
 		//Ports
@@ -2643,7 +2339,7 @@ void NovaConfig::on_actionProfileAdd_triggered()
 	else
 	{
 		temp.m_parentProfile = "";
-		temp.m_ethernet = "";
+		temp.m_ethernetVendors.clear();
 		temp.m_personality = "";
 		temp.m_tcpAction = "reset";
 		temp.m_udpAction = "reset";
@@ -2697,7 +2393,10 @@ void NovaConfig::on_actionProfileClone_triggered()
 		//Change the profile name and put in the table, update the current profile
 		//Extract all descendants, create a ptree, update with new configuration
 		m_honeydConfig->m_profiles[p.m_name] = p;
-		LoadProfilesFromTree(p.m_name);
+		if(!(m_honeydConfig->LoadProfilesFromTree(p.m_name)))
+		{
+			m_mainwindow->m_prompter->DisplayPrompt(m_mainwindow->HONEYD_LOAD_FAIL, "Problem loading Profiles. See log for details.");
+		}
 		m_honeydConfig->UpdateProfile(p.m_name);
 		m_loading->unlock();
 		LoadAllProfiles();
@@ -3033,7 +2732,7 @@ void NovaConfig::on_nodeTreeWidget_itemSelectionChanged()
 	}
 }
 
-void NovaConfig::on_associatedNodesTreeWidget_itemSelectionChanged()
+void NovaConfig::on_associatedNodesTableWidget_itemSelectionChanged()
 {
 
 }

@@ -124,7 +124,7 @@ struct NodeProfile
 	std::string m_udpAction;
 	std::string m_icmpAction;
 	std::string m_personality;
-	std::string m_ethernet;
+	std::vector<std::pair<std::string, double>> m_ethernetVendors;
 	std::string m_uptimeMin;
 	std::string m_uptimeMax;
 	std::string m_dropRate;
@@ -142,7 +142,7 @@ struct NodeProfile
 	inline bool SetUdpAction(std::string udpAction) {this->m_udpAction = udpAction; return true;}
 	inline bool SetIcmpAction(std::string icmpAction) {this->m_icmpAction = icmpAction; return true;}
 	inline bool SetPersonality(std::string personality) {this->m_personality = personality; return true;}
-	inline bool SetEthernet(std::string ethernet) {this->m_ethernet = ethernet; return true;}
+	inline bool SetEthernet(std::string ethernet) {this->m_ethernetVendors[0].first = ethernet; return true;}
 	inline bool SetUptimeMin(std::string uptimeMin) {this->m_uptimeMin = uptimeMin; return true;}
 	inline bool SetUptimeMax(std::string uptimeMax) {this->m_uptimeMax = uptimeMax; return true;}
 	inline bool SetDropRate(std::string dropRate) {this->m_dropRate = dropRate; return true;}
@@ -165,7 +165,7 @@ struct NodeProfile
 	inline std::string GetUdpAction() {return m_udpAction;}
 	inline std::string GetIcmpAction() {return m_icmpAction;}
 	inline std::string GetPersonality() {return m_personality;}
-	inline std::string GetEthernet() {return m_ethernet;}
+	inline std::string GetEthernet() {return m_ethernetVendors[0].first;}
 	inline std::string GetUptimeMin() {return m_uptimeMin;}
 	inline std::string GetUptimeMax() {return m_uptimeMax;}
 	inline std::string GetDropRate() {return m_dropRate;}

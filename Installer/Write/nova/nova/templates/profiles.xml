@@ -7,7 +7,10 @@
 			<TCP>block</TCP>
 			<UDP>block</UDP>
 			<ICMP>block</ICMP>
-			<ethernet>Dell</ethernet>
+			<ethernet>
+				<vendor>Dell</vendor>
+				<distribution>100</distribution>
+			</ethernet>
 			<dropRate>0</dropRate>
 		</set>
 		<add>
@@ -20,7 +23,10 @@
 				<set>
 					<TCP>reset</TCP>
 					<personality>Microsoft Windows 7</personality>
-					<ethernet>Dell</ethernet>
+					<ethernet>
+						<vendor>Dell</vendor>
+						<distribution>100</distribution>
+					</ethernet>
 					<uptimeMin>1546550</uptimeMin>
 					<uptimeMax>2006550</uptimeMax>
 				</set>
@@ -44,7 +50,10 @@
 				<set>
 					<TCP>reset</TCP>
 					<personality>Linux 2.6.11 - 2.6.20</personality>
-					<ethernet>Dell</ethernet>
+					<ethernet>
+						<vendor>Dell</vendor>
+						<distribution>100</distribution>
+					</ethernet>
 					<uptimeMin>1326346</uptimeMin>
 					<uptimeMax>1326346</uptimeMax>
 				</set>
@@ -65,7 +74,10 @@
 				<set>
 					<TCP>reset</TCP>
 					<personality>Linux 2.6.11 - 2.6.20</personality>
-					<ethernet>Dell</ethernet>
+					<ethernet>
+						<vendor>Dell</vendor>
+						<distribution>100</distribution>
+					</ethernet>
 					<uptimeMin>1324350</uptimeMin>
 					<uptimeMax>1324350</uptimeMax>
 				</set>
@@ -86,7 +98,10 @@
 				<set>
 					<TCP>reset</TCP>
 					<personality>Microsoft Windows 7</personality>
-					<ethernet>Intel</ethernet>
+					<ethernet>
+						<vendor>Intel</vendor>
+						<distribution>100</distribution>
+					</ethernet>
 					<uptimeMin>1327650</uptimeMin>
 					<uptimeMax>1327650</uptimeMax>
 				</set>

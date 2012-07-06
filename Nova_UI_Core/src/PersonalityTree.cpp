@@ -260,9 +260,9 @@ void PersonalityTree::DebugPrintProfileTable()
 		{
 			cout << "Personality: " << it->second.m_personality << '\n';
 		}
-		if(!it->second.m_ethernet.empty())
+		for(uint i = 0; i < it->second.m_ethernetVendors.size(); i++)
 		{
-			cout << "MAC vendor: " << it->second.m_ethernet << '\n';
+			cout << "MAC Vendor:  " << it->second.m_ethernetVendors[i].first << " - " << it->second.m_ethernetVendors[i].second	<< "% \n";
 		}
 		if(!it->second.m_ports.empty())
 		{

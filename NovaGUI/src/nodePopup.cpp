@@ -347,8 +347,8 @@ void nodePopup::on_generateButton_clicked()
 	{
 		return;
 	}
-
-	m_editNode.m_MAC = novaParent->m_honeydConfig->GenerateUniqueMACAddress(novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile].m_ethernet);
+	//XXX Support multiple ethernet vendors
+	m_editNode.m_MAC = novaParent->m_honeydConfig->GenerateUniqueMACAddress(novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile].m_ethernetVendors[0].first);
 	QString prefixStr = QString(m_editNode.m_MAC.substr(0, 8).c_str()).toLower();
 	prefixStr = prefixStr.remove(':');
 	m_prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));

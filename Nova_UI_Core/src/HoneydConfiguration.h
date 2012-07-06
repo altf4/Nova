@@ -126,7 +126,7 @@ public:
 	bool IsProfileUsed(std::string profileName);
 
 	// Regenerates the MAC addresses for nodes of this profile
-	void GenerateMACAddresses(std::string profileName);
+	void UpdateMacAddressesOfProfileNodes(std::string profileName);
 	std::string GenerateUniqueMACAddress(std::string vendor);
 
 	//Inserts the profile into the honeyd configuration
@@ -192,6 +192,9 @@ public:
 	}
 
 	ScriptTable GetScriptTable();
+
+    //Takes a ptree and loads and sub profiles (used in clone to extract children)
+    bool LoadProfilesFromTree(std::string parent);
 
 // TODO: this should be private eventually
 public:
