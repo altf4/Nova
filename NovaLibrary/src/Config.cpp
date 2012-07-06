@@ -121,6 +121,7 @@ Config::Config()
 	SetDefaults();
 	LoadUserConfig();
 	LoadConfig_Internal();
+	LoadVersionFile();
 }
 
 Config::~Config()
@@ -131,6 +132,7 @@ Config::~Config()
 void Config::LoadConfig()
 {
 	LoadConfig_Internal();
+	LoadVersionFile();
 	LoadInterfaces();
 }
 // Loads the configuration file into the class's state data
@@ -1097,6 +1099,46 @@ void Config::LoadInterfaces()
 	}
 	freeifaddrs(devices);
 	pthread_rwlock_unlock(&m_lock);
+}
+
+bool Config::LoadVersionFile()
+{
+	ifstream versionFile((m_pathHome + "/" + VERSION_FILE_NAME).c_str());
+	string line;
+
+	if(versionFile.is_open())
+	{
+		if(versionFile.good())
+		{
+			getline(versionFile, line);
+			string temp = line.substr(line.find_first_of(".") + 1, string::npos);
+
+			m_version.versionString = line;
+			m_version.buildYear = atoi(line.substr(0, line.find_first_of(".")).c_str());
+			m_version.buildMonth = atoi(temp.substr(0, temp.find_first_of(".")).c_str());
+			m_version.minorVersion = atoi(temp.substr(temp.find_first_of(".") + 1, string::npos).c_str());
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+version Config::GetVersion()
+{
+	return m_version;
+}
+
+string Config::GetVersionString()
+{
+	return m_version.versionString;
 }
 
 string Config::ResolvePathVars(string path)

@@ -36,6 +36,9 @@ var select;
 var checkPass;
 var my_name;
 
+console.log("Starting NOVAWEB version " + config.GetVersionString());
+
+
 // TODO: Get this path from the config class
 process.chdir("/usr/share/nova/nova");
 

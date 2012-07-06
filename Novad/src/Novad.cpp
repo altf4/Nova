@@ -114,6 +114,7 @@ namespace Nova
 int RunNovaD()
 {
 	Config::Inst();
+
 	MessageManager::Initialize(DIRECTION_TO_UI);
 
 	if(!LockNovad())
@@ -159,6 +160,8 @@ int RunNovaD()
 	LoadConfiguration();
 	//Loads the configuration file
 	Config::Inst()->LoadConfig();
+
+	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
 
 	engine = new ClassificationEngine(suspects);
 
