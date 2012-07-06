@@ -616,13 +616,13 @@ app.get('/autoConfig', ensureAuthenticated, function(req, res) {
 app.get('/nodeReview', ensureAuthenticated, function(req, res) { 
 	honeydConfig.LoadAllTemplates();
 	 var profileNames = honeydConfig.GetGeneratedProfileNames();
-	 var profiles = [];
+	 var profiles = new Array();
 	 for (var i = 0; i < profileNames.length; i++) {
 		profiles.push(honeydConfig.GetProfile(profileNames[i]));
 	 }
 	 
 	 var nodeNames = honeydConfig.GetGeneratedNodeNames();
-	 var nodes = [];
+	 var nodes = new Array();
 	 for (var i = 0; i < nodeNames.length; i++) {
 		nodes.push(honeydConfig.GetNode(nodeNames[i]));
 	 }

@@ -1584,6 +1584,7 @@ std::vector<std::string> HoneydConfiguration::GetGeneratedNodeNames()
 	vector<std::string> childnodes;
 
 	Config::Inst()->SetGroup("HaystackAutoConfig");
+	LoadNodesTemplate();
 
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
