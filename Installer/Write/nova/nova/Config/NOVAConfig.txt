@@ -180,7 +180,7 @@ DOPPELGANGER_INTERFACE lo
 #
 # EXAMPLE:
 #DM_ENABLED 1
-DM_ENABLED 1
+DM_ENABLED 0
 
 ############################################
 # HS_HONEYD_CONFIG #
