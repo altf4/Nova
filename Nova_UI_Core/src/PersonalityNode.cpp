@@ -132,11 +132,24 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 		m_redundant = false;
 	}
 
-	if(m_vendor_dist.size())
+	for(uint i = 0; i < m_vendor_dist.size(); i++)
 	{
-		profileToReturn.m_ethernetVendors = m_vendor_dist;
-		profileToReturn.m_inherited[ETHERNET] = false;
-		m_redundant = false;
+		bool vendorFound = false;
+		for(uint j = 0; j < parentProfile.m_ethernetVendors.size(); j++)
+		{
+			if(!(m_vendor_dist[i].first.compare(parentProfile.m_ethernetVendors[j].first))
+				&& (m_vendor_dist[i].second == parentProfile.m_ethernetVendors[j].second))
+			{
+				vendorFound = true;
+				break;
+			}
+		}
+		if(!vendorFound)
+		{
+			profileToReturn.m_ethernetVendors = m_vendor_dist;
+			profileToReturn.m_inherited[ETHERNET] = false;
+			m_redundant = false;
+		}
 	}
 	// Go through every element of the ports distribution
 	// vector and create a pair for the ports vector in the
