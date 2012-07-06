@@ -118,8 +118,9 @@ app.set('view options', {layout: false});
 
 app.use(express.static('/usr/share/nova/NovaWeb/www'));
 
-console.info("Listening on 8042");
-app.listen(8042);
+var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
+console.info("Listening on port " + WEB_UI_PORT);
+app.listen(WEB_UI_PORT);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 

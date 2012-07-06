@@ -188,6 +188,9 @@ public:
 	std::string GetTrainingSession();
 	std::string SetTrainingSession(std::string trainingSession);
 
+	int GetWebUIPort();
+	void SetWebUIPort(int port);
+
 
 	static std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
 	static std::vector <std::string> GetIpAddresses(std::string ipListFile);
@@ -236,6 +239,7 @@ private:
 	int m_dataTTL;
 	int m_saMaxAttempts;
 	uint m_minPacketThreshold;
+	int m_webUIPort;
 
 	double m_saSleepDuration;
 	double m_eps;

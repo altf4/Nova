@@ -73,7 +73,8 @@ string Config::m_prefixes[] =
 	"MIN_PACKET_THRESHOLD",
 	"CUSTOM_PCAP_FILTER",
 	"CUSTOM_PCAP_MODE",
-	"TRAINING_SESSION"
+	"TRAINING_SESSION",
+	"WEB_UI_PORT"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -757,6 +758,20 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_trainingSession = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// WEB_UI_PORT
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(atoi(line.c_str()) > 0)
+				{
+					m_webUIPort = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -2429,6 +2444,19 @@ string Config::SetTrainingSession(string trainingSession)
 	Lock lock(&m_lock, false);
 	m_trainingSession = trainingSession;
 	return m_trainingSession;
+}
+
+
+int Config::GetWebUIPort()
+{
+	Lock lock(&m_lock, true);
+	return m_webUIPort;
+}
+
+void Config::SetWebUIPort(int port)
+{
+	Lock lock(&m_lock, false);
+	m_webUIPort = port;
 }
 
 
