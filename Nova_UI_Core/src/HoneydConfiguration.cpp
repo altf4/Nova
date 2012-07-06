@@ -2287,9 +2287,9 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 		for(uint i = 0; i < p.m_ethernetVendors.size(); i++)
 		{
 			ptree ethTemp;
-			ethTemp.put<std::string>("ethernet.vendor", p.m_ethernetVendors[i].first);
-			ethTemp.put<double>("ethernet.distribution", p.m_ethernetVendors[i].second);
-			temp.add_child("set", ethTemp);
+			ethTemp.put<std::string>("vendor", p.m_ethernetVendors[i].first);
+			ethTemp.put<double>("distribution", p.m_ethernetVendors[i].second);
+			temp.add_child("set.ethernet", ethTemp);
 		}
 	}
 	if(p.m_uptimeMin.compare("") && !p.m_inherited[UPTIME])
