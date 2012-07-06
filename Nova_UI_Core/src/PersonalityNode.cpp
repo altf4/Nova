@@ -132,9 +132,9 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 		m_redundant = false;
 	}
 
-	if((m_vendor_dist.size() == 1) && m_vendor_dist[0].first.compare(parentProfile.m_ethernet))
+	if(m_vendor_dist.size())
 	{
-		profileToReturn.m_ethernet = m_vendor_dist[0].first;
+		profileToReturn.m_ethernetVendors = m_vendor_dist;
 		profileToReturn.m_inherited[ETHERNET] = false;
 		m_redundant = false;
 	}

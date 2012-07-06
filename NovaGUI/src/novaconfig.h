@@ -91,15 +91,6 @@ public:
     //Removes a profile, all of it's children and any nodes that currently use it
     void DeleteProfile(std::string name);
 
-    //Takes a ptree and loads and sub profiles (used in clone to extract children)
-    void LoadProfilesFromTree(std::string parent);
-    //set profile configurations (only called in LoadProfilesFromTree)
-    void LoadProfileSettings(boost::property_tree::ptree *ptr, Nova::NodeProfile *p);
-    //add ports or subsystems (only called in LoadProfilesFromTree)
-    void LoadProfileServices(boost::property_tree::ptree *ptr, Nova::NodeProfile *p);
-    //recursive descent down profile tree (only called in LoadProfilesFromTree)
-    void LoadProfileChildren(std::string parent);
-
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
 
@@ -166,7 +157,7 @@ void on_nodeDisableButton_clicked();
 void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
-void on_associatedNodesTreeWidget_itemSelectionChanged();
+void on_associatedNodesTableWidget_itemSelectionChanged();
 void on_dropRateSlider_valueChanged();
 
 //GUI Signals for Feature addition/removal

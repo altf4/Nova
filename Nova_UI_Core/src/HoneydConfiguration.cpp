@@ -305,6 +305,97 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	return true;
 }
 
+//This is used when a profile is cloned, it allows us to copy a ptree and extract all children from it
+// it is exactly the same as novagui's xml extraction functions except that it gets the ptree from the
+// cloned profile and it asserts a profile's name is unique and changes the name if it isn't
+bool HoneydConfiguration::LoadProfilesFromTree(string parent)
+{
+	using boost::property_tree::ptree;
+	ptree *ptr, pt = m_profiles[parent].m_tree;
+	try
+	{
+		BOOST_FOREACH(ptree::value_type &value, pt.get_child("profiles"))
+		{
+			//Generic profile, essentially a honeyd template
+			if(!string(value.first.data()).compare("profile"))
+			{
+				NodeProfile prof = m_profiles[parent];
+				//Root profile has no parent
+				prof.m_parentProfile = parent;
+				prof.m_tree = value.second;
+
+				for(uint i = 0; i < INHERITED_MAX; i++)
+				{
+					prof.m_inherited[i] = true;
+				}
+
+				//Asserts the name is unique, if it is not it finds a unique name
+				// up to the range of 2^32
+				string profileStr = prof.m_name;
+				stringstream ss;
+				uint i = 0, j = 0;
+				j = ~j; //2^32-1
+
+				while((m_profiles.keyExists(prof.m_name)) && (i < j))
+				{
+					ss.str("");
+					i++;
+					ss << profileStr << "-" << i;
+					prof.m_name = ss.str();
+				}
+				prof.m_tree.put<std::string>("name", prof.m_name);
+
+				prof.m_ports.clear();
+
+				try //Conditional: has "set" values
+				{
+					ptr = &value.second.get_child("set");
+					//pass 'set' subset and pointer to this profile
+					LoadProfileSettings(ptr, &prof);
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+
+				try //Conditional: has "add" values
+				{
+					ptr = &value.second.get_child("add");
+					//pass 'add' subset and pointer to this profile
+					LoadProfileServices(ptr, &prof);
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+
+				//Save the profile
+				m_profiles[prof.m_name] = prof;
+				UpdateProfile(prof.m_name);
+
+				try //Conditional: has children profiles
+				{
+					ptr = &value.second.get_child("profiles");
+
+					//start recurisive descent down profile tree with this profile as the root
+					//pass subtree and pointer to parent
+					LoadProfileChildren(prof.m_name);
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
+			}
+
+			//Honeyd's implementation of switching templates based on conditions
+			else if(!string(value.first.data()).compare("dynamic"))
+			{
+				//TODO
+			}
+			else
+			{
+				LOG(ERROR, "Invalid XML Path "+string(value.first.data()), "");
+			}
+		}
+		return true;
+	}
+	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+	{
+		LOG(ERROR, "Problem loading Profiles: "+string(e.what()), "");
+		return false;
+	}
+}
 
 //Sets the configuration of 'set' values for profile that called it
 bool HoneydConfiguration::LoadProfileSettings(ptree *propTree, NodeProfile *nodeProf)
@@ -345,7 +436,10 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *propTree, NodeProfile *node
 			valueKey = "ethernet";
 			if(!string(value.first.data()).compare(valueKey))
 			{
-				nodeProf->m_ethernet = value.second.data();
+				pair<string, double> ethPair;
+				ethPair.first = value.second.get<std::string>("vendor");
+				ethPair.second = value.second.get<double>("distribution");
+				nodeProf->m_ethernetVendors.push_back(ethPair);
 				nodeProf->m_inherited[ETHERNET] = false;
 				continue;
 			}
@@ -1085,28 +1179,31 @@ vector<string> HoneydConfiguration::GeneratedProfilesStrings()
 	{
 		if(it->second.m_generated)
 		{
-			string pushToReturnVector;
+			stringstream pushToReturnVector;
 
-			pushToReturnVector += "Name: " + it->second.m_name + "\n";
-			pushToReturnVector += "Personality: " + it->second.m_personality + "\n";
-			pushToReturnVector += "MAC Vendor:  " + it->second.m_ethernet + "\n";
+			pushToReturnVector << "Name: " << it->second.m_name << "\n";
+			pushToReturnVector << "Personality: " << it->second.m_personality << "\n";
+			for(uint i = 0; i < it->second.m_ethernetVendors.size(); i++)
+			{
+				pushToReturnVector << "MAC Vendor:  " << it->second.m_ethernetVendors[i].first << " - " << it->second.m_ethernetVendors[i].second <<"% \n";
+			}
 
 			if(!it->second.m_nodeKeys.empty())
 			{
-				pushToReturnVector += "Associated Nodes:\n";
+				pushToReturnVector << "Associated Nodes:\n";
 
 				for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
 				{
-					pushToReturnVector += "\t" + it->second.m_nodeKeys[i] + "\n";
+					pushToReturnVector << "\t" << it->second.m_nodeKeys[i] << "\n";
 
 					for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); j++)
 					{
-						pushToReturnVector += "\t\t" + m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
+						pushToReturnVector << "\t\t" << m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
 					}
 				}
 			}
 
-			ret.push_back(pushToReturnVector);
+			ret.push_back(pushToReturnVector.str());
 		}
 	}
 	return ret;
@@ -1229,11 +1326,20 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 		out << "set " << profName << " personality \"" << p->m_personality << '"' << endl;
 	}
 
-	if(p->m_ethernet.compare(""))
+	string vendor = "";
+	double maxDist = 0;
+	for(uint i = 0; i < p->m_ethernetVendors.size(); i++)
 	{
-		out << "set " << profName << " ethernet \"" << p->m_ethernet << '"' << endl;
+		if(p->m_ethernetVendors[i].second > maxDist)
+		{
+			maxDist = p->m_ethernetVendors[i].second;
+			vendor = p->m_ethernetVendors[i].first;
+		}
 	}
-
+	if(vendor.compare(""))
+	{
+		out << "set " << profName << " ethernet \"" << vendor << '"' << endl;
+	}
 
 	if(p->m_dropRate.compare(""))
 	{
@@ -1472,21 +1578,14 @@ bool HoneydConfiguration::IsProfileUsed(std::string profileName)
 	return false;
 }
 
-void HoneydConfiguration::GenerateMACAddresses(string profileName)
+void HoneydConfiguration::UpdateMacAddressesOfProfileNodes(string profileName)
 {
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		if(!it->second.m_pfile.compare(profileName))
-		{
-			it->second.m_MAC = GenerateUniqueMACAddress(m_profiles[profileName].m_ethernet);
-		}
-	}
+	//XXX
 }
 
 string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
 {
 	string addrStrm;
-
 	do
 	{
 		addrStrm = m_macAddresses.GenerateRandomMAC(vendor);
@@ -2150,9 +2249,15 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	{
 		temp.put<std::string>("set.personality", p.m_personality);
 	}
-	if(p.m_ethernet.compare("") && !p.m_inherited[ETHERNET])
+	if(!p.m_inherited[ETHERNET])
 	{
-		temp.put<std::string>("set.ethernet", p.m_ethernet);
+		for(uint i = 0; i < p.m_ethernetVendors.size(); i++)
+		{
+			ptree ethTemp;
+			ethTemp.put<std::string>("ethernet.vendor", p.m_ethernetVendors[i].first);
+			ethTemp.put<double>("ethernet.distribution", p.m_ethernetVendors[i].second);
+			temp.add_child("set", ethTemp);
+		}
 	}
 	if(p.m_uptimeMin.compare("") && !p.m_inherited[UPTIME])
 	{
