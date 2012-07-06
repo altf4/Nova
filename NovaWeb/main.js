@@ -1,5 +1,3 @@
-"use strict";
-
 var novaconfig = require('novaconfig.node');
 
 var nova = new novaconfig.Instance();
