@@ -112,6 +112,8 @@ public:
 	NodeProfile *GetProfile(std::string profileName);
 	Port *GetPort(std::string portName);
 	std::vector<std::string> GeneratedProfilesStrings();
+	std::vector<std::string> GetGeneratedProfileNames();
+	std::vector<std::string> GetGeneratedNodeNames();
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
@@ -133,6 +135,8 @@ public:
 	bool AddProfile(NodeProfile * profile);
 
 	bool AddGroup(std::string groupName);
+
+	std::vector<std::string> GetGroups();
 
 	//Updates the profile with any modified information
 	//	Note: to modify inheritance use InheritProfile, just changing the parentProfile value and calling

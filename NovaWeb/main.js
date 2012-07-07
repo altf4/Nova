@@ -1,4 +1,4 @@
-"use strict";
+//"use strict";
 
 var novaconfig = require('novaconfig.node');
 
@@ -287,7 +287,8 @@ app.get('/basicOptions', ensureAuthenticated, function(req, res) {
 app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
-	 var nodes = [];
+	 var nodes = new Array();
+	 
 	 for (var i = 0; i < nodeNames.length; i++) {
 		nodes.push(honeydConfig.GetNode(nodeNames[i]));
 	 }
@@ -296,7 +297,9 @@ app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
 	 { locals: {
 	 	profiles: honeydConfig.GetProfileNames()
 	 	,nodes: nodes
-		,subnets:  honeydConfig.GetSubnetNames() 	
+		,subnets:  honeydConfig.GetSubnetNames()
+		,groups: honeydConfig.GetGroups()
+		,currentGroup: config.GetGroup()
 	}})
 });
 
@@ -384,6 +387,14 @@ app.get('/importCapture', ensureAuthenticated, function(req, res) {
 			trainingSession: req.query["trainingSession"] 
 		}})
 	}
+});
+
+app.post('/changeGroup', ensureAuthenticated, function(req, res){
+	var selectedGroup = req.body["GROUP"];
+	
+	config.SetGroup(selectedGroup);
+	
+	res.redirect('/configHoneydNodes');
 });
 
 app.post('/importCaptureSave', ensureAuthenticated, function(req, res) {	
@@ -603,11 +614,26 @@ app.get('/autoConfig', ensureAuthenticated, function(req, res) {
 });
 
 app.get('/nodeReview', ensureAuthenticated, function(req, res) { 
-  res.render('nodereview.jade', 
-  {
-    user: req.user
-    ,profiles: hhconfig.GetGeneratedNodeInfo()
-  });
+	honeydConfig.LoadAllTemplates();
+	 var profileNames = honeydConfig.GetGeneratedProfileNames();
+	 var profiles = new Array();
+	 for (var i = 0; i < profileNames.length; i++) {
+		profiles.push(honeydConfig.GetProfile(profileNames[i]));
+	 }
+	 
+	 var nodeNames = honeydConfig.GetGeneratedNodeNames();
+	 var nodes = new Array();
+	 for (var i = 0; i < nodeNames.length; i++) {
+		nodes.push(honeydConfig.GetNode(nodeNames[i]));
+	 }
+     
+	 res.render('nodereview.jade', 
+	 { locals: {
+	 	profileNames: honeydConfig.GetGeneratedProfileNames()
+	 	,profiles: profiles
+	 	,nodes: nodes
+	 	,subnets:  honeydConfig.GetSubnetNames() 
+	}})
 });
 
 app.get('/', ensureAuthenticated, function(req, res) {
@@ -652,8 +678,6 @@ app.post('/scanning', ensureAuthenticated, function(req, res){
     subnets = "";
     console.log("No additional subnets selected.");
   }
-  
-  console.log(subnets);
   
   if(subnets === "" && interfaces === "")
   {
@@ -1277,8 +1301,6 @@ function ensureAuthenticated(req, res, next) {
 }
 
 function queryCredDb(check) {
-    console.log("checkPass value before queryCredDb call: " + check);
-    
     client.query(
     'SELECT pass FROM ' + credTb + ' WHERE pass = SHA1(' + client.escape(check) + ')',
     function selectCb(err, results, fields) {

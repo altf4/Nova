@@ -198,6 +198,21 @@ void HoneydConfiguration::LoadNodeKeys()
 	}
 }
 
+vector<string> HoneydConfiguration::GetGeneratedProfileNames()
+{
+	vector<std::string> childProfiles;
+
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if(it->second.m_generated && !it->second.m_personality.empty() && !it->second.m_ethernetVendors.empty())
+		{
+			childProfiles.push_back(it->second.m_name);
+		}
+	}
+
+	return childProfiles;
+}
+
 //Loads ports from file
 bool HoneydConfiguration::LoadPortsTemplate()
 {
@@ -1519,6 +1534,8 @@ std::vector<std::string> HoneydConfiguration::GetNodeNames()
 {
 	vector<std::string> childnodes;
 
+	//Config::Inst()->SetGroup("main");
+
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		childnodes.push_back(it->second.m_name);
@@ -1527,6 +1544,23 @@ std::vector<std::string> HoneydConfiguration::GetNodeNames()
 	return childnodes;
 }
 
+std::vector<std::string> HoneydConfiguration::GetGeneratedNodeNames()
+{
+	vector<std::string> childnodes;
+
+	Config::Inst()->SetGroup("HaystackAutoConfig");
+	LoadNodesTemplate();
+
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(m_profiles[it->second.m_pfile].m_generated)
+		{
+			childnodes.push_back(it->second.m_name);
+		}
+	}
+
+	return childnodes;
+}
 
 std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 {
@@ -1618,6 +1652,12 @@ bool HoneydConfiguration::AddProfile(NodeProfile *profile)
 	}
 	return false;
 }
+
+std::vector<std::string> HoneydConfiguration::GetGroups()
+{
+	return m_groups;
+}
+
 
 bool HoneydConfiguration::AddGroup(std::string groupName)
 {
