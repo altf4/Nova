@@ -1407,41 +1407,6 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 		out << "set " << profName << " droprate in " << p->m_dropRate << endl;
 	}
 
-	for (uint i = 0; i < p->m_ports.size(); i++)
-	{
-		// Only include non-inherited ports
-		if(!p->m_ports[i].second.first)
-		{
-			out << "add " << profName;
-			if(!m_ports[p->m_ports[i].first].m_type.compare("TCP"))
-			{
-				out << " tcp port ";
-			}
-			else
-			{
-				out << " udp port ";
-			}
-			out << m_ports[p->m_ports[i].first].m_portNum << " ";
-
-			if(!(m_ports[p->m_ports[i].first].m_behavior.compare("script")))
-			{
-				string scriptName = m_ports[p->m_ports[i].first].m_scriptName;
-
-				if(m_scripts[scriptName].m_path.compare(""))
-				{
-					out << '"' << m_scripts[scriptName].m_path << '"'<< endl;
-				}
-				else
-				{
-					LOG(ERROR, "Error writing NodeProfile port script.", "Path to script " + scriptName + " is null.");
-				}
-			}
-			else
-			{
-				out << m_ports[p->m_ports[i].first].m_behavior << endl;
-			}
-		}
-	}
 	out << endl;
 	return out.str();
 }
@@ -1900,7 +1865,7 @@ void HoneydConfiguration::CleanPorts()
 {
 	vector<string> delList;
 	bool found;
-	for(PortTable::iterator it =m_ports.begin(); it != m_ports.end(); it++)
+	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		found = false;
 		for(ProfileTable::iterator jt = m_profiles.begin(); (jt != m_profiles.end()) && !found; jt++)
@@ -1908,6 +1873,16 @@ void HoneydConfiguration::CleanPorts()
 			for(uint i = 0; (i < jt->second.m_ports.size()) && !found; i++)
 			{
 				if(!jt->second.m_ports[i].first.compare(it->first))
+				{
+					found = true;
+				}
+			}
+		}
+		for(NodeTable::iterator jt = m_nodes.begin(); (jt != m_nodes.end()) && !found; jt++)
+		{
+			for(uint i = 0; (i < jt->second.m_ports.size()) && !found; i++)
+			{
+				if(!jt->second.m_ports[i].compare(it->first))
 				{
 					found = true;
 				}

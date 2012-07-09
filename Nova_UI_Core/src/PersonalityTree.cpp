@@ -287,6 +287,7 @@ void PersonalityTree::AddAllPorts()
 	{
 		RecursiveAddAllPorts(m_root.m_children[i].second);
 	}
+	m_hdconfig->SaveAllTemplates();
 }
 
 void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)

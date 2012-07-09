@@ -219,6 +219,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 			}
 		}
 	}
+	m_hdconfig->SaveAllTemplates();
 	while(!nodesToAdd.empty())
 	{
 		m_hdconfig->AddNewNode(nodesToAdd.back());
