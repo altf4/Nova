@@ -141,9 +141,14 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		testStr = string(addrBuffer);
 		i = 0;
 
-		for(j = 0; j < (6-testStr.size()); j++)
+		 if((testStr.size() % 2) == 1)
+		 {
+			 addrStrm << ":";
+		 }
+
+		for(j = 0; j < (6 - testStr.size()); j++)
 		{
-			if((!(i % 2) && i) || ((testStr.size() % 2) == 1))
+			if((!(i % 2) && i))
 			{
 				addrStrm << ":";
 			}
