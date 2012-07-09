@@ -446,6 +446,7 @@ app.get('/suspects', ensureAuthenticated, function(req, res) {
      {
          user: req.user
 	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
+		 , featureNames: nova.GetFeatureNames()
 		 , type: type
 
      });
@@ -456,6 +457,7 @@ app.get('/novadlog', ensureAuthenticated, function(req, res) {
 	res.render('novadlog.jade');
 });
 
+app.get('/', ensureAuthenticated, function(req, res) {res.redirect('/suspects');});
 app.get('/createNewUser', ensureAuthenticated, function(req, res) {res.render('createNewUser.jade');});
 app.get('/welcome', ensureAuthenticated, function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.jade');});
@@ -533,16 +535,6 @@ app.get('/login', function(req, res){
 		 , redirect: redirect
      });
 
-});
-
-app.get('/', ensureAuthenticated, function(req, res) {
-     res.render('main.jade', 
-     {
-         user: req.user
-	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
-         , message: req.flash('error')
-		 , type: 'all'
-     });
 });
 
 app.post('/login*',
@@ -1147,33 +1139,6 @@ function queryCredDb(check) {
     }
   );
 };
-
-/*function getPassHash(password, fn) {
-      client.query(
-      'SELECT SHA1(\'' + password + '\') AS pass',
-      function selectCb(err, results, fields) {
-        if(err) {
-          throw err;
-        }
-        
-        checkPass = results[0].pass;
-        
-        console.log("getPassHash results: " + checkPass);
-        
-        if(checkPass != undefined)
-        {
-          console.log("getPassHash success");
-          return fn(password);
-        }
-        else
-        {
-          console.log("getPassHash failed");
-          client.end();
-          return false;
-        }
-      }
-    );
-};*/
 
 function switcher(err, user, success, done)
 {
