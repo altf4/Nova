@@ -769,6 +769,8 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   var Validator = require('validator').Validator;
   
+  
+  //Function overrides for error functionality in the Validator class
   Validator.prototype.error = function(msg)
   {
     this._errors.push(msg);
@@ -822,17 +824,18 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
         break;
         
       case "TCP_TIMEOUT":
-        validator.check(req.body[configItems[item]]).isInt();
+        validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
         break;
         
       case "ENABLED_FEATURES":
         validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + nova.GetDIM() + 'characters long').len(nova.GetDIM(), nova.GetDIM());
-        validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
+        validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{' + nova.GetDIM() + '}');
         break;
         
       case "CLASSIFICATION_THRESHOLD":
         validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
         validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
+        validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').min(0);
         break;
         
       case "EPS":
@@ -886,18 +889,17 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
         break;
      
       case "SMTP_ADDR":
-        //  \\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)
-        validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)');
+        validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
         break;
-      /*
+      
       case "SMTP_DOMAIN":
-        validator.check(req.body[configItems[item]], 'SMTP Domain is the wrong format').regex('(([A-z]|[0-9])*\\.)+(([A-z]|[0-9])*)');
-        break;
+        validator.check(req.body[configItems[item]], 'SMTP Domain is the wrong format').regex('^(([A-z]|[0-9])+\\.)+(([A-z]|[0-9])+)$');
+        break; 
         
       case "RECIPIENTS":
-        validator.check(req.body[configItems[item]], 'Recipients list should be a comma separated list of email addresses').regex('(((([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*))\\,)*(((([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)))');
+        validator.check(req.body[configItems[item]], 'Recipients list should be a comma separated list of email addresses').regex('^(([A-z]|\d)+(\\.([A-z]|\d)+)*)\\@(([A-z]|\d)+(\\.([A-z]|\d)+)+)((\\,){1}( )?(([A-z]|\d)+(\\.([A-z]|\d)+)*)\\@(([A-z]|\d)+(\\.([A-z]|\d)+)+))*$');
         break;
-      */
+        
       case "SERVICE_PREFERENCES":
         validator.check(req.body[configItems[item]], "Service preferences string is of the wrong format").is('0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;');
         break;
@@ -912,7 +914,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   if(errors.length > 0)
   {
-    res.render('error.jade', { locals: {errorDetails: errors, redirectLink: "/suspects"} });
+    res.render('error.jade', { locals: {errorDetails: errors, redirectLink: "/basicOptions"} });
   }
   else
   {
