@@ -94,7 +94,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 						m_hdconfig->m_profiles[m_profileCounters[j].m_profile.m_name].m_nodeKeys.push_back(curNode.m_name);
 
 						//Update counters for remaining macs
-						for(unsigned int l = k+1; l < m_profileCounters[j].m_macCounters.size(); l++)
+						for(unsigned int l = k + 1; l < m_profileCounters[j].m_macCounters.size(); l++)
 						{
 							m_profileCounters[j].m_macCounters[l].m_count -= m_profileCounters[j].m_macCounters[l].m_increment;
 						}

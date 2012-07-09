@@ -102,24 +102,32 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		//Convert the first part to a string and format it for output
 		sprintf(addrBuffer, "%x", addr.first);
 		testStr = string(addrBuffer);
+
 		for(j = 0; j < (6-testStr.size()); j++)
 		{
-			if(!(i%2)&& i )
+			if(!(i % 2) && i)
 			{
 				addrStrm << ":";
 			}
+
 			addrStrm << "0";
 			i++;
 		}
+
 		j = 0;
+
 		if(testStr.size() > 6)
+		{
 			j = testStr.size() - 6;
+		}
+
 		for(; j < testStr.size(); j++)
 		{
-			if(!(i%2)&& i )
+			if(!(i % 2) && i)
 			{
 				addrStrm << ":";
 			}
+
 			addrStrm << addrBuffer[j];
 			i++;
 		}
@@ -132,21 +140,27 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		sprintf(addrBuffer, "%x", addr.second);
 		testStr = string(addrBuffer);
 		i = 0;
+
 		for(j = 0; j < (6-testStr.size()); j++)
 		{
-			if(!(i%2)&& i )
+			if((!(i % 2) && i) || ((testStr.size() % 2) == 1))
 			{
 				addrStrm << ":";
 			}
 			addrStrm << "0";
 			i++;
 		}
+
 		j = 0;
+
 		if(testStr.size() > 6)
+		{
 			j = testStr.size() - 6;
+		}
+
 		for(; j < testStr.size(); j++)
 		{
-			if(!(i%2)&& (i!=6))
+			if(!(i % 2) && (i != 6))
 			{
 				addrStrm << ":";
 			}

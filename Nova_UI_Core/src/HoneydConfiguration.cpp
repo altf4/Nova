@@ -410,6 +410,8 @@ bool HoneydConfiguration::LoadProfilesFromTree(string parent)
 		LOG(ERROR, "Problem loading Profiles: "+string(e.what()), "");
 		return false;
 	}
+
+	return false;
 }
 
 //Sets the configuration of 'set' values for profile that called it
