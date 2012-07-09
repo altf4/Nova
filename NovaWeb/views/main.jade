@@ -97,6 +97,7 @@ block headerAdditions
         suspectStore.put(suspect,{id: suspect.GetInAddr, overwrite: true});
       } else {
         suspectStore.add(suspect,{id: suspect.GetInAddr}); 
+        suspectGrid.render();
       }
     };
 
