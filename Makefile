@@ -8,7 +8,7 @@ release:
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
 
-release-helper: novad-release novagui-release novacli-release novatrainer-release
+release-helper: novad-release novagui-release novacli-release
 
 #Debug target
 debug:
@@ -16,7 +16,7 @@ debug:
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
 
-debug-helper: novad-debug novagui-debug novacli-debug novatrainer-debug
+debug-helper: novad-debug novagui-debug novacli-debug
 
 #Nova Library
 novalib-release:
@@ -54,22 +54,13 @@ novacli-debug:
 	$(MAKE) -C NovaCLI/Debug
 	cp NovaCLI/Debug/novacli NovaCLI/
 
-# Nova trainer
-novatrainer-debug:
-	$(MAKE) -C NovaTrainer/Debug
-	cp NovaTrainer/Debug/novatrainer NovaTrainer/novatrainer
-
-novatrainer-release:
-	$(MAKE) -C NovaTrainer/Release
-	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
-
 #novagui
 novagui-release:
-	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
+	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
 
 novagui-debug:
-	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
+	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 
 #Web UI
@@ -77,20 +68,14 @@ web:
 	cd NovaWeb;npm --unsafe-perm install
 	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
 
-#Haystack Auto Config
+#Honeyd HostConfig
 hhconfig-release:
 	$(MAKE) -C HoneydHostConfig/Release
+	cp HoneydHostConfig/Release/honeydhostconfig HoneydHostConfig/
 
 hhconfig-debug:
 	$(MAKE) -C HoneydHostConfig/Debug
-
-install-hhconfig-debug:
-	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin
-
-install-hhconfig-release:
-	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	install HoneydHostConfig/Release/honeydhostconfig $(DESTDIR)/usr/bin
+	cp HoneydHostConfig/Debug/honeydhostconfig HoneydHostConfig/
 
 #Unit tests
 test: debug test-prepare
@@ -126,10 +111,9 @@ clean-debug:
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
 	$(MAKE) -C NovaCLI/Debug clean
-	$(MAKE) -C NovaTrainer/Debug clean
-	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI debug-clean
 	$(MAKE) -C HoneydHostConfig/Debug clean
+	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C NovaGUI debug-clean
 	rm -f Nova_UI_Core/Debug/Nova_UI_Core
 
 clean-release:
@@ -137,8 +121,8 @@ clean-release:
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
 	$(MAKE) -C NovaCLI/Release clean
-	$(MAKE) -C NovaTrainer/Release clean
-	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C HoneydHostConfig/Release clean
+	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
@@ -158,10 +142,6 @@ clean-web:
 	rm -rf NovaWeb/node_modules/.bin/
 
 
-clean-hhconfig:
-	$(MAKE) HoneydHostConfig/Debug clean
-	$(MAKE) HoneydHostConfig/Release clean
-
 #Installation (requires root)
 install: install-data install-docs
 	mkdir -p $(DESTDIR)/usr/bin
@@ -170,8 +150,7 @@ install: install-data install-docs
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
-	sh debian/postinst
+	#sh debian/postinst
 
 install-data:
 	#make folder in etc with path locations to nova files
@@ -197,7 +176,6 @@ install-data:
 	#Install permissions
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	mkdir -p $(DESTDIR)/usr/share/man/man1
@@ -221,6 +199,14 @@ install-web:
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
+install-hhconfig-debug:
+	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
+
+install-hhconfig-release:
+	install HoneydHostConfig/Release/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
+	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440 
+
 #Uninstall
 uninstall: uninstall-files uninstall-permissions
 
@@ -235,12 +221,13 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
+	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_HHConfig
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 
 uninstall-permissions:
-	sh Installer/postrm
+	#sh Installer/postrm
 
 # Reinstall nova without messing up the permissions
 reinstall: uninstall-files
@@ -261,3 +248,4 @@ reset-debug: uninstall-files
 	$(MAKE) debug
 	$(MAKE) test
 	$(MAKE) install
+
