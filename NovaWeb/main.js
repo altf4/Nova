@@ -328,6 +328,7 @@ app.get('/editHoneydNode', ensureAuthenticated, function(req, res) {
 	res.render('editHoneydNode.jade', 
 	{ locals : {
 		oldName: nodeName
+		, INTERFACES: config.ListInterfaces().sort()
 	 	, profiles: honeydConfig.GetProfileNames()
 		, profile: node.GetProfile()
 		, ip: node.GetIP()
@@ -710,10 +711,6 @@ app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
 	} else{
 		ipAddress = req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"] + "." + req.body["ip4"];
 	}
-	/*else
-	{
-	  res.redirect('/configHoneydNodes', { locals: { message: "Invalid IP" }} );
-	}*/
 
 	var profile = req.body["profile"];
 	var intface = req.body["interface"];
