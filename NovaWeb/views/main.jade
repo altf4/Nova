@@ -53,6 +53,7 @@ block content
         - count++;
       br
       button(onClick='applyAdvancedFilter()') Apply Advanced Filters
+      button(onClick='disableAdvancedFilter()') Disable Advanced Filters
 
   div#nova_suspects
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
@@ -140,8 +141,8 @@ block headerAdditions
 
     var applyAdvancedFilter = function() {
         var patt = new RegExp("^[1234567890x\. ()<>=!&|]+$");
-        // TODO: Replace 14 with DIM
-        for (var i = 0; i < 14; i++) {
+        var featureNames = String("#{featureNames}").split(",");
+        for (var i = 0; i < featureNames.length; i++) {
             var filter = "";
             var id = "advancedFilter" + String(i);
             var element = document.getElementById(id);
@@ -149,12 +150,22 @@ block headerAdditions
                 filter = element.value;
             }
 
-            if (filter != "") {
-                if (!patt.test(filter)) {
+            if (filter == "") {
+                continue;
+            }
+
+            if (!patt.test(filter)) {
+                alert("Invalid filter: " + filter);
+                return;
+            } else {
+                // Can we evaluate the expression?
+                try {
+                    var x = 2.5;
+                    eval(filter);
+                    advancedFilters[i] = filter;
+                } catch (err) {
                     alert("Invalid filter: " + filter);
                     return;
-                } else {
-                    advancedFilters[i] = filter; 
                 }
             }
         }
@@ -163,6 +174,16 @@ block headerAdditions
         clearDataGrid();
         now.sendAllSuspects(now.OnNewSuspect);
     };
+
+    var disableAdvancedFilter = function() {
+        document.getElementById('advancedFiltering').style.display='none';
+        
+        advancedFilterEnabled = false;
+        var advancedFilters = new Object();
+        
+        clearDataGrid();
+        now.sendAllSuspects(now.OnNewSuspect);
+    }
 
     require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){ 
     dojo.addOnLoad(function(){
