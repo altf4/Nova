@@ -21,7 +21,7 @@ block content
   br
   br
   
-  button(type="button", style="width:160px", onClick='now.ClearAllSuspects(); suspectGrid.store.fetch({onComplete: clearSuspects});') Clear All Suspects
+  button(type="button", style="width:160px", onClick='now.ClearAllSuspects(); clearDataGrid();') Clear All Suspects
 
   br
 
@@ -37,8 +37,20 @@ block content
     
     label Filter by IP (supports * and ?)
     input#ipFilter(type="text", name="ipFilter", value="*", data-dojo-type="dijit.form.TextBox", intermediateChanges=true, onchange="ipFilterChange()")
-        
+    
+    h2 Advanced Filtering
     br
+    -var count = 0;
+    each feature in featureNames
+      if enabledFeatures.charAt(count) == '1'
+        label #{feature}
+        br
+        input(type="text", id="advancedFilter#{count}")
+        br
+      - count++;
+    br
+    button(onClick='applyAdvancedFilter()') Apply Advanced Filter
+
   div#nova_suspects
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
    h4 Novad is not currently connected or running. Try starting it.
@@ -48,6 +60,9 @@ block headerAdditions
     var suspectStore;
     var suspectGrid;
     var liveUpdate = true;
+
+    var advancedFilters = new Object();
+    var advancedFilterEnabled = false;
 
     require(["dijit/form/TextBox"]);
 
@@ -69,7 +84,7 @@ block headerAdditions
     };
 
     now.AllSuspectsCleared = function() {
-      suspectGrid.store.fetch({onComplete: clearSuspects});
+      clearDataGrid();
     }
       
     function pad(num) {
@@ -84,30 +99,54 @@ block headerAdditions
        if (type == "all" && suspect.GetClassification < 0) {return;}
 
        if(!liveUpdate) {return;}
-
-
+      
       var d = new Date(suspect.GetLastPacketTime*1000);
       var dString = pad(d.getMonth()) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       suspect.LastPacketString = dString;
+      
       // This is probably a really bad way to do this...
       for (var i in suspect.GetFeatures) {  
         suspect[i] = suspect.GetFeatures[i];
       }
-      if( suspectStore.get(suspect.GetInAddr) ) {       
+       
+       if (advancedFilterEnabled) {
+         for (var i in advancedFilters) {
+             var expr = String(suspect[i]) + ' ' + String(advancedFilters[i]);
+             if (!eval(expr)) {
+                return;
+             }
+         }
+       }
+
+     
+     if( suspectStore.get(suspect.GetInAddr) ) {       
         suspectStore.put(suspect,{id: suspect.GetInAddr, overwrite: true});
       } else {
         suspectStore.add(suspect,{id: suspect.GetInAddr}); 
-        suspectGrid.render();
       }
     };
+       
+    var clearDataGrid = function() {
+      suspectStore = new dojo.store.Memory();
+      suspectStore = dojo.store.Observable(suspectStore);
+      suspectStore.idProperty="GetInAddr";
+      suspectGrid.setStore(dojo.data.ObjectStore({objectStore: suspectStore, clearOnClose: true}));
+    }
 
-    var clearSuspects = function(items, request){
-      dojo.forEach(items, function(i) {
-        suspectGrid.store.deleteItem(i);
-        suspectStore.remove(i.GetInAddr);
-      });
+
+    var applyAdvancedFilter = function() {
+        for (var i = 0; i < 13; i++) {
+            var id = "advancedFilter" + String(i);
+            var filter = document.getElementById(id).value;
+
+            if (filter != "") {
+                advancedFilters[i] = filter; 
+            }
+        }
+        advancedFilterEnabled = true;
+        clearDataGrid();
+        now.sendAllSuspects(now.OnNewSuspect);
     };
-
 
     require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){ 
     dojo.addOnLoad(function(){
@@ -137,27 +176,18 @@ block headerAdditions
     gridStructure.push({name:"Classification", field:"GetClassification", width:"150px", formatter: classificationFormatter});
     gridStructure.push({name:"Last Seen", field:"LastPacketString", width: "100px"});
     gridStructure.push({name:"Hostile", field:"GetIsHostile"});
-    if (enabledFeatures.charAt(0) == "1") gridStructure.push({name:"IP traffic distribution", field:"0", formatter: featureFormatter});
-    if (enabledFeatures.charAt(1) == "1") gridStructure.push({name:"Port traffic distribution", field:"1", formatter: featureFormatter});
-    if (enabledFeatures.charAt(2) == "1") gridStructure.push({name:"Haystack event frequency", field:"2", formatter: featureFormatter});
-    if (enabledFeatures.charAt(3) == "1") gridStructure.push({name:"Packet Size Mean", field:"3", formatter: featureFormatter});
-    if (enabledFeatures.charAt(4) == "1") gridStructure.push({name:"Packet Size Deviation", field:"4", formatter: featureFormatter});
-    if (enabledFeatures.charAt(5) == "1") gridStructure.push({name:"IPs Contacted", field:"5"});
-    if (enabledFeatures.charAt(6) == "1") gridStructure.push({name:"Ports Contacted", field:"6"});
-    if (enabledFeatures.charAt(7) == "1") gridStructure.push({name:"Packet Interval Mean", field:"7", formatter: featureFormatter});
-    if (enabledFeatures.charAt(8) == "1") gridStructure.push({name:"Packet Interval Deviation", field:"8", formatter: featureFormatter});
-    if (enabledFeatures.charAt(9) == "1") gridStructure.push({name:"TCP Percent SYN", field:"9", formatter: featureFormatter});
-    if (enabledFeatures.charAt(10) == "1") gridStructure.push({name:"TCP Percent FIN", field:"10", formatter: featureFormatter});
-    if (enabledFeatures.charAt(11) == "1") gridStructure.push({name:"TCP Percent RST", field:"11", formatter: featureFormatter});
-    if (enabledFeatures.charAt(12) == "1") gridStructure.push({name:"TCP Percent SYN ACK", field:"12", formatter: featureFormatter});
-    if (enabledFeatures.charAt(13) == "1") gridStructure.push({name:"Haystack Percent Contacted", field:"13", formatter: featureFormatter});
+   
+    var featureNames = String("#{featureNames}").split(",");
+    for (var i = 0; i < featureNames.length; i++) {
+        if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], field:String(i), formatter: featureFormatter});
+    }
     
     suspectGrid = new DataGrid(
     {
-      store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore}),
+      store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore, clearOnClose: true}),
       sortInfo: -2,
       structure: gridStructure,
-      rowsPerPage: 20,
+      rowsPerPage: 20
     }, 
     "nova_suspects"
     );
