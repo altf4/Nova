@@ -73,7 +73,7 @@ bool ConnectToNovad()
 
 	if(connect(IPCSocketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
-		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
+		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
 		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
@@ -84,7 +84,7 @@ bool ConnectToNovad()
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
 	if(!Message::WriteMessage(&connectRequest, IPCSocketFD))
 	{
-		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
+		LOG(ERROR, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
 		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
@@ -100,6 +100,10 @@ bool ConnectToNovad()
 
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
+		stringstream s;
+		s << "Expected message type of CONTROL_MESSAGE but got " << reply->m_messageType;
+		LOG(ERROR, s.str(), "");
+
 		delete reply;
 		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
@@ -108,6 +112,10 @@ bool ConnectToNovad()
 	ControlMessage *connectionReply = (ControlMessage*)reply;
 	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 	{
+		stringstream s;
+		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_controlType;
+		LOG(ERROR, s.str(), "");
+
 		delete connectionReply;
 		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
