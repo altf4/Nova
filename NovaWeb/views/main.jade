@@ -35,14 +35,15 @@ block content
     br
     br
     
-    label Filter by IP (supports * and ?)
-    input#ipFilter(type="text", name="ipFilter", value="*", data-dojo-type="dijit.form.TextBox", intermediateChanges=true, onchange="ipFilterChange()")
     
     a(href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';")
       p Advanced Filtering Options
     div#advancedFiltering(style="display: none;")
       br
-      p Use 'x' to denote the feature value in your expressions. Example: "x > 0 && x != 17"
+      p Filter by IP (supports standard regular expressions. Example: "192.168.10.*|192.168.3.*")
+      input#ipFilter(type="text", name="ipFilter", value="")
+      br
+      p Use 'x' in expressions to denote the specified feature value. Example: "x > 0 && x != 17"
       -var count = 0;
       each feature in featureNames
         if enabledFeatures.charAt(count) == '1'
@@ -67,14 +68,9 @@ block headerAdditions
 
     var advancedFilters = new Object();
     var advancedFilterEnabled = false;
+    var advancedIpFilter = null;
 
     require(["dijit/form/TextBox"]);
-
-    function ipFilterChange() {
-      var filter = dijit.byId("ipFilter").value;
-      dijit.byId("nova_suspects").filter({GetInAddr: filter});
-    }
-    
 
     now.updateNovadStatus = function (isNovadUp){
       dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
@@ -120,6 +116,12 @@ block headerAdditions
              if (!eval(expr)) {
                 return;
              }
+         }
+
+         if (advancedIpFilter != null) {
+            if (!advancedIpFilter.test(suspect.GetInAddr)) {
+                return;
+            }
          }
        }
 
@@ -167,6 +169,16 @@ block headerAdditions
                     alert("Invalid filter: " + filter);
                     return;
                 }
+            }
+        }
+
+        var filter = document.getElementById("ipFilter").value;
+        if (filter != "") {
+            try {
+                advancedIpFilter = new RegExp(filter);
+            } catch (err) {
+                alert("Invalid filter: " + filter);
+                return;
             }
         }
 
