@@ -219,6 +219,7 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
 			,ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES")
+			,FEATURE_NAMES: nova.GetFeatureNames()
 			,TRAINING_CAP_FOLDER: config.ReadSetting("TRAINING_CAP_FOLDER")
 			,THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE")
 			,SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY")
@@ -267,8 +268,8 @@ function renderBasicOptions(jadefile, res, req) {
      res.render(jadefile, 
 	 { 
 		locals: {
-      INTERFACES: pass 
-      ,DEFAULT: config.GetUseAllInterfacesBinding() 
+            INTERFACES: pass 
+            ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
@@ -767,7 +768,6 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
   
   var Validator = require('validator').Validator;
   
-  
   //Function overrides for error functionality in the Validator class
   Validator.prototype.error = function(msg)
   {
@@ -824,12 +824,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
       case "TCP_TIMEOUT":
         validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
         break;
-        
-      case "ENABLED_FEATURES":
-        validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + nova.GetDIM() + 'characters long').len(nova.GetDIM(), nova.GetDIM());
-        validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{' + nova.GetDIM() + '}');
-        break;
-        
+
       case "CLASSIFICATION_THRESHOLD":
         validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
         validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
@@ -837,11 +832,11 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
         break;
         
       case "EPS":
-        validator.check(req.body[configItems[item]], 'EPS must be a number').isFloat();
+        validator.check(req.body[configItems[item]], 'EPS must be a positive number').isFloat();
         break;
         
       case "THINNING_DISTANCE":
-        validator.check(req.body[configItems[item]], 'Thinning Distance must be a number').isFloat();
+        validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
         break;
         
       case "DOPPELGANGER_IP":
@@ -899,7 +894,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
         break;
         
       case "SERVICE_PREFERENCES":
-        validator.check(req.body[configItems[item]], "Service preferences string is of the wrong format").is('0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;');
+        validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;$');
         break;
         
       default:
