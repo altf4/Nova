@@ -164,10 +164,11 @@ int RunNovaD()
 	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
 
 	engine = new ClassificationEngine(suspects);
+	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 
 	Spawn_UI_Handler();
 
-	Reload();
+
 
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())

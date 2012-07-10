@@ -40,6 +40,7 @@ normalizationType ClassificationEngine::m_normalization[] = {
 		LINEAR_SHIFT,
 		LINEAR_SHIFT,
 		LINEAR_SHIFT,
+		LINEAR_SHIFT,
 		LINEAR_SHIFT
 };
 
@@ -574,17 +575,22 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 			//If neither are 0
 			if(value && max)
 			{
-				ret = (log(value)/log(max));
+				ret = (log(value + 1)/log(max + 1));
 			}
 			break;
 		}
 		default:
 		{
+			LOG(ERROR, "Unknown normalization type", "");
 			break;
 		}
 		// TODO: A sigmoid normalization function could be very useful,
 		// especially if we could somehow use it interactively to set the center and smoothing
 		// while looking at the data visualizations to see what works best for a feature
+	}
+
+	if (ret < 0) {
+		LOG(WARNING, "Normalize returned a negative number. This is probably an error", "");
 	}
 	return ret;
 }
