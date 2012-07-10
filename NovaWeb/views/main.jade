@@ -38,18 +38,21 @@ block content
     label Filter by IP (supports * and ?)
     input#ipFilter(type="text", name="ipFilter", value="*", data-dojo-type="dijit.form.TextBox", intermediateChanges=true, onchange="ipFilterChange()")
     
-    h2 Advanced Filtering
-    br
-    -var count = 0;
-    each feature in featureNames
-      if enabledFeatures.charAt(count) == '1'
-        label #{feature}
-        br
-        input(type="text", id="advancedFilter#{count}")
-        br
-      - count++;
-    br
-    button(onClick='applyAdvancedFilter()') Apply Advanced Filter
+    a(href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';")
+      p Advanced Filtering Options
+    div#advancedFiltering(style="display: none;")
+      br
+      p Use 'x' to denote the feature value in your expressions. Example: "x > 0 && x != 17"
+      -var count = 0;
+      each feature in featureNames
+        if enabledFeatures.charAt(count) == '1'
+          label #{feature}
+          br
+          input(type="text", id="advancedFilter#{count}")
+          br
+        - count++;
+      br
+      button(onClick='applyAdvancedFilter()') Apply Advanced Filters
 
   div#nova_suspects
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
@@ -111,7 +114,8 @@ block headerAdditions
        
        if (advancedFilterEnabled) {
          for (var i in advancedFilters) {
-             var expr = String(suspect[i]) + ' ' + String(advancedFilters[i]);
+             var x = String(suspect[i]);
+             var expr = String(advancedFilters[i]);
              if (!eval(expr)) {
                 return;
              }
@@ -135,14 +139,26 @@ block headerAdditions
 
 
     var applyAdvancedFilter = function() {
-        for (var i = 0; i < 13; i++) {
+        var patt = new RegExp("^[1234567890x\. ()<>=!&|]+$");
+        // TODO: Replace 14 with DIM
+        for (var i = 0; i < 14; i++) {
+            var filter = "";
             var id = "advancedFilter" + String(i);
-            var filter = document.getElementById(id).value;
+            var element = document.getElementById(id);
+            if (element != null) {
+                filter = element.value;
+            }
 
             if (filter != "") {
-                advancedFilters[i] = filter; 
+                if (!patt.test(filter)) {
+                    alert("Invalid filter: " + filter);
+                    return;
+                } else {
+                    advancedFilters[i] = filter; 
+                }
             }
         }
+
         advancedFilterEnabled = true;
         clearDataGrid();
         now.sendAllSuspects(now.OnNewSuspect);
