@@ -39,6 +39,32 @@ block headerAdditions
       location.reload(true);
     }
 
+    function checkOnlyOne(checkedBox)
+    {
+      var forLength = document.getElementById("length").getAttribute("value");
+      
+      var checkAgainst = checkedBox.getAttribute("id");
+      
+      if(forLength == 1)
+      {
+        checkedBox.checked = true;
+        return;
+      }
+      
+      for(var i = 0; i < forLength; i++)
+      {
+        if(checkAgainst !== ("if" + i))
+        {
+          document.getElementById("if" + i).checked = false;
+        }
+      }
+      
+      if(!checkedBox.checked)
+      {
+        checkedBox.checked = true; 
+      }  
+    }
+
     function editSelectedItem() {
       var items = grid.selection.getSelected();
       if (items.length != 1)
@@ -128,9 +154,27 @@ block content
     
     br
     label Network Interface
-    // TODO: Somehow show the user valid interface options
-    input(type="text", name="interface", value="eth0")
-   
+    table
+      thead
+        tr 
+          th Interfaces
+      tbody
+      - if(INTERFACES.length == 1)
+        tr 
+          td
+            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, disabled="true")
+            #{INTERFACES[0]}
+      - else
+        tr 
+          td
+            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+            #{INTERFACES[0]}
+        - for (var i = 1; i < INTERFACES.length; i++)
+            tr 
+              td
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
+                #{INTERFACES[i]}
+    hidden(id="length", value=INTERFACES.length)
     br
     label IP Address Range Type
     select#ipType(name="ipType", onChange="ipTypeChanged()")

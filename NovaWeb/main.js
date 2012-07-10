@@ -295,7 +295,8 @@ app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
      
 	 res.render('configHoneyd.jade', 
 	 { locals: {
-	 	profiles: honeydConfig.GetProfileNames()
+	 	INTERFACES: config.ListInterfaces().sort()
+	 	,profiles: honeydConfig.GetProfileNames()
 	 	,nodes: nodes
 		,subnets:  honeydConfig.GetSubnetNames()
 		,groups: honeydConfig.GetGroups()

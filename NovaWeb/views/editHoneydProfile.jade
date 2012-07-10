@@ -221,8 +221,10 @@ block headerAdditions
     uptimeTypeChanged = function() {
         if (dojo.byId("uptimeType").selectedIndex == 0) {
             dojo.byId("uptimeMax").style.display = "none";
+            document.getElementById("uptimeLabel").innerHTML = "Uptime";
         } else {
             dojo.byId("uptimeMax").style.display = "block"; 
+            document.getElementById("uptimeLabel").innerHTML = "Uptime Range";
         }
     }
 
@@ -482,7 +484,7 @@ block content
         td
         td
         td(style="text-align:right")
-          label Uptime Range
+          label(id="uptimeLabel") Uptime Range
         td
           input#uptimeMin(type="number", name="uptimeMin", min=0)
           input#uptimeMax(type="number", name="uptimeMax", min=0)
