@@ -76,18 +76,6 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	m_radioButtons = new QButtonGroup(ui.loopbackGroupBox);
 	m_interfaceCheckBoxes = new QButtonGroup(ui.interfaceGroupBox);
 
-	ui.portTreeWidget->setLayout(new QGridLayout());
-	ui.portTreeWidget->layout()->setAlignment(Qt::AlignCenter);
-	ui.portTreeWidget->layout()->setContentsMargins(0,0,0,0);
-
-	ui.childrenProfileTreeWidget->setLayout(new QGridLayout());
-	ui.childrenProfileTreeWidget->layout()->setAlignment(Qt::AlignCenter);
-	ui.childrenProfileTreeWidget->layout()->setContentsMargins(0,0,0,0);
-
-	ui.associatedNodesTableWidget->setLayout(new QGridLayout());
-	ui.associatedNodesTableWidget->layout()->setAlignment(Qt::AlignCenter);
-	ui.associatedNodesTableWidget->layout()->setContentsMargins(0,0,0,0);
-
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
 	LoadNovadPreferences();
 	m_honeydConfig->LoadAllTemplates();
@@ -1739,7 +1727,6 @@ void NovaConfig::LoadProfileSettings()
 			item = new QTreeWidgetItem();
 			item->setText(0,(QString)pr.m_portNum.c_str());
 			item->setText(1,(QString)pr.m_type.c_str());
-			item->setTextAlignment(0, Qt::AlignCenter);
 			item->setTextAlignment(1, Qt::AlignCenter);
 			item->setTextAlignment(2, Qt::AlignCenter);
 			item->setTextAlignment(3, Qt::AlignCenter);
@@ -1805,9 +1792,7 @@ void NovaConfig::LoadProfileSettings()
 				behaviorBox->setCurrentIndex(behaviorBox->findText(pr.m_behavior.c_str()));
 			}
 
-			ui.portTreeWidget->layout()->addWidget(typeBox);
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
-			ui.portTreeWidget->layout()->addWidget(behaviorBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
 
 			QSlider *portDistribSlider = new QSlider();
@@ -1815,7 +1800,6 @@ void NovaConfig::LoadProfileSettings()
 			portDistribSlider->setOrientation(Qt::Horizontal);
 			portDistribSlider->setValue((int)p->m_ports[i].second.second);
 			ui.portTreeWidget->setItemWidget(item, 3, portDistribSlider);
-			ui.portTreeWidget->layout()->addWidget(portDistribSlider);
 
 			if(!portCurrentString.compare(pr.m_portName))
 			{
@@ -1880,14 +1864,12 @@ void NovaConfig::LoadProfileSettings()
 			{
 				QTreeWidgetItem *item = new QTreeWidgetItem();
 				item->setText(0, QString(it->first.c_str()));
-				item->setTextAlignment(0, Qt::AlignCenter);
 				QSpinBox *numNodesSpinBox = new QSpinBox();
 				numNodesSpinBox->setValue(it->second.m_nodeKeys.size());
 				numNodesSpinBox->setAlignment(Qt::AlignCenter);
 				item->setText(1, numNodesSpinBox->text());
 				item->setTextAlignment(1, Qt::AlignCenter);
 				ui.childrenProfileTreeWidget->setItemWidget(item, 1, numNodesSpinBox);
-				ui.childrenProfileTreeWidget->layout()->addWidget(numNodesSpinBox);
 				max+= numNodesSpinBox->value();
 				ui.childrenProfileTreeWidget->addTopLevelItem(item);
 			}
@@ -1900,7 +1882,6 @@ void NovaConfig::LoadProfileSettings()
 			nodeDistribSlider->setOrientation(Qt::Horizontal);
 			nodeDistribSlider->setValue((int)(item->text(1).toUInt()/max));
 			ui.childrenProfileTreeWidget->setItemWidget(item, 2, nodeDistribSlider);
-			ui.childrenProfileTreeWidget->layout()->addWidget(nodeDistribSlider);
 		}
 		for(int i = 0; i < ui.childrenProfileTreeWidget->columnCount(); i++)
 		{
@@ -2207,7 +2188,6 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 		QTableWidgetItem *item = new QTableWidgetItem();
 		item->setText(QString(nodeName.c_str()));
 		ui.associatedNodesTableWidget->setItem(row, 0, item);
-		item->setTextAlignment(Qt::AlignCenter);
 
 		//Interface List
 		vector<string> hostInterfaceList = Config::Inst()->GetIPv4HostInterfaceList();
@@ -2222,7 +2202,6 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 
 		ui.associatedNodesTableWidget->setItem(row, 1, item);
 		ui.associatedNodesTableWidget->setCellWidget(row, 1, nodeIFBox);
-		ui.associatedNodesTableWidget->layout()->addWidget(nodeIFBox);
 
 		//Ethernet Vendors
 		VendorMacDb vendDB;
@@ -2248,7 +2227,6 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 		item->setText(QString(m_honeydConfig->m_profiles[curNode.m_pfile].m_ethernetVendors[0].first.c_str()));
 		ui.associatedNodesTableWidget->setItem(row, 2, item);
 		ui.associatedNodesTableWidget->setCellWidget(row, 2, nodeEthBox);
-		ui.associatedNodesTableWidget->layout()->addWidget(nodeEthBox);
 
 		//Ports
 		for(int j = 3; j < ui.associatedNodesTableWidget->columnCount(); j++)
@@ -2269,7 +2247,6 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 			}
 			ui.associatedNodesTableWidget->setItem(row, j, item);
 			ui.associatedNodesTableWidget->setCellWidget(row, j, usePortBox);
-			ui.associatedNodesTableWidget->layout()->addWidget(usePortBox);
 		}
 		return true;
 	}

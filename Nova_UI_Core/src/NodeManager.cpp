@@ -39,6 +39,20 @@ NodeManager::NodeManager(PersonalityTree *persTree)
 	}
 }
 
+// Constructor that assigns the m_persTree and m_hdconfig variables
+// to values within the PersonalityTree* that's being passed. It then immediately
+// begins generating ProfileCounters.
+//		honeydConfig: The HoneydConfiguration to use in the NodeManager
+// Note: This function constructs a PersonalityTree from the HoneydConfiguration object passed
+NodeManager::NodeManager(HoneydConfiguration *honeydConfig)
+{
+	if(honeydConfig != NULL)
+	{
+		m_hdconfig = honeydConfig;
+		//XXX Do rest of construction here;
+	}
+}
+
 bool NodeManager::SetPersonalityTree(PersonalityTree *persTree)
 {
 	if(persTree == NULL)
