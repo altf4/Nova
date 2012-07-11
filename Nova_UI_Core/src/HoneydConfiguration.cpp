@@ -456,6 +456,11 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *propTree, NodeProfile *node
 				pair<string, double> ethPair;
 				ethPair.first = value.second.get<std::string>("vendor");
 				ethPair.second = value.second.get<double>("distribution");
+				//If we inherited ethernet vendors but have our own, clear the vector
+				if(nodeProf->m_inherited[ETHERNET] == true)
+				{
+					nodeProf->m_ethernetVendors.clear();
+				}
 				nodeProf->m_ethernetVendors.push_back(ethPair);
 				nodeProf->m_inherited[ETHERNET] = false;
 				continue;
