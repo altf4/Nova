@@ -86,7 +86,7 @@ block content
       - if(INTERFACES.length == 1)
         tr 
           td
-            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, disabled="true")
+            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
             #{INTERFACES[0]}
       - else
         tr 
