@@ -62,6 +62,8 @@ public:
     uint GetEnabledFeatureCount();
     std::string GetInterface(uint i);
     std::vector<std::string> GetInterfaces();
+    std::vector<std::string> GetIPv4HostInterfaceList();
+    std::vector<std::string> GetIPv4LoopbackInterfaceList();
     uint GetInterfaceCount();
     std::string GetPathCESaveFile();
     std::string GetPathConfigHoneydUser();

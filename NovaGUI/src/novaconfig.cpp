@@ -37,7 +37,6 @@ using boost::property_tree::ptree;
 using namespace Nova;
 using namespace std;
 
-vector<string> ifList;
 /************************************************
   Construct and Initialize GUI
  ************************************************/
@@ -72,13 +71,11 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
 	// Set up the GUI
 	ui.setupUi(this);
 
-	// for internal use only
-	ui.portTreeWidget->setColumnHidden(3, true);
-
 	SetInputValidators();
 	m_loading->lock();
 	m_radioButtons = new QButtonGroup(ui.loopbackGroupBox);
 	m_interfaceCheckBoxes = new QButtonGroup(ui.interfaceGroupBox);
+
 	//Read NOVAConfig, pull honeyd info from parent, populate GUI
 	LoadNovadPreferences();
 	m_honeydConfig->LoadAllTemplates();
@@ -683,7 +680,7 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		string oldPort;
 		Port oldPrt;
 
-		oldPort = item->text(3).toStdString();
+		oldPort = item->text(0).toStdString()+ "_" + item->text(1).toStdString() + "_" + item->text(2).toStdString();
 		oldPrt = m_honeydConfig->m_ports[oldPort];
 
 
@@ -698,8 +695,6 @@ void NovaConfig::portTreeWidget_comboBoxChanged(QTreeWidgetItem *item,  bool edi
 		// this is pulled from the recently updated hidden text and reflects any changes
 		string portName = item->text(0).toStdString() + "_" + item->text(1).toStdString()
 				+ "_" + item->text(2).toStdString();
-		item->setText(3, QString::fromStdString(portName));
-
 
 		Port prt;
 		//Locate the port in the table or create the port if it doesn't exist
@@ -1017,16 +1012,9 @@ bool NovaConfig::DisplayMACPrefixWindow()
 
 void NovaConfig::LoadNovadPreferences()
 {
-	struct ifaddrs *devices = NULL;
-	struct ifaddrs *curIf = NULL;
 	stringstream ss;
-	ifList.clear();
-	//Get a list of interfaces
-	if(getifaddrs(&devices))
-	{
-		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
-	}
 
+	//Clear old buttons
 	QList<QAbstractButton *> radioButtons = m_radioButtons->buttons();
 	while(!radioButtons.isEmpty())
 	{
@@ -1039,36 +1027,32 @@ void NovaConfig::LoadNovadPreferences()
 	}
 	delete m_radioButtons;
 	delete m_interfaceCheckBoxes;
+
+	//Set up button groups
 	m_radioButtons = new QButtonGroup(ui.loopbackGroupBox);
 	m_radioButtons->setExclusive(true);
 	m_interfaceCheckBoxes = new QButtonGroup(ui.interfaceGroupBox);
 
-	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	vector<string> loopbackList = Config::Inst()->GetIPv4LoopbackInterfaceList();
+	for(uint i = 0; i < loopbackList.size(); i++)
 	{
-		if((int)curIf->ifa_addr->sa_family == AF_INET)
-		{
-			//Create radio button for each loop back
-			if(curIf->ifa_flags & IFF_LOOPBACK)
-			{
-				QRadioButton *radioButton = new QRadioButton(QString(curIf->ifa_name), ui.loopbackGroupBox);
-				radioButton->setObjectName(QString(curIf->ifa_name));
-				m_radioButtons->addButton(radioButton);
-				ui.loopbackGroupBoxVLayout->addWidget(radioButton);
-				radioButtons.push_back(radioButton);
-			}
-			//Create check box for each interface
-			else
-			{
-				QCheckBox *checkBox = new QCheckBox(QString(curIf->ifa_name), ui.interfaceGroupBox);
-				checkBox->setObjectName(QString(curIf->ifa_name));
-				m_interfaceCheckBoxes->addButton(checkBox);
-				ui.interfaceGroupBoxVLayout->addWidget(checkBox);
-				checkBoxes.push_back(checkBox);
-				ifList.push_back(curIf->ifa_name);
-			}
-		}
+		QRadioButton *radioButton = new QRadioButton(QString(loopbackList[i].c_str()), ui.loopbackGroupBox);
+		radioButton->setObjectName(QString(loopbackList[i].c_str()));
+		m_radioButtons->addButton(radioButton);
+		ui.loopbackGroupBoxVLayout->addWidget(radioButton);
+		radioButtons.push_back(radioButton);
 	}
-	freeifaddrs(devices);
+	vector<string> hostInterfaceList = Config::Inst()->GetIPv4HostInterfaceList();
+	for(uint i = 0; i < hostInterfaceList.size(); i++)
+	{
+		QCheckBox *checkBox = new QCheckBox(QString(hostInterfaceList[i].c_str()), ui.interfaceGroupBox);
+		checkBox->setObjectName(QString(hostInterfaceList[i].c_str()));
+		m_interfaceCheckBoxes->addButton(checkBox);
+		ui.interfaceGroupBoxVLayout->addWidget(checkBox);
+		checkBoxes.push_back(checkBox);
+	}
+
+	//Set mutual exclusion for forcing at least one interface selection
 	if(checkBoxes.size() >= 1)
 	{
 		m_interfaceCheckBoxes->setExclusive(false);
@@ -1740,9 +1724,13 @@ void NovaConfig::LoadProfileSettings()
 
 			//These don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
-			item = new QTreeWidgetItem(0);
+			item = new QTreeWidgetItem();
 			item->setText(0,(QString)pr.m_portNum.c_str());
 			item->setText(1,(QString)pr.m_type.c_str());
+			item->setTextAlignment(1, Qt::AlignCenter);
+			item->setTextAlignment(2, Qt::AlignCenter);
+			item->setTextAlignment(3, Qt::AlignCenter);
+
 			if(!pr.m_behavior.compare("script"))
 			{
 				item->setText(2, (QString)pr.m_scriptName.c_str());
@@ -1766,6 +1754,7 @@ void NovaConfig::LoadProfileSettings()
 			typeBox->setItemText(0, "TCP");
 			typeBox->setItemText(1, "UDP");
 			typeBox->setFont(tempFont);
+
 			connect(typeBox, SIGNAL(notifyParent(QTreeWidgetItem *, bool)), this, SLOT(portTreeWidget_comboBoxChanged(QTreeWidgetItem *, bool)));
 
 			TreeItemComboBox *behaviorBox = new TreeItemComboBox(this, item);
@@ -1773,8 +1762,6 @@ void NovaConfig::LoadProfileSettings()
 			behaviorBox->addItem("open");
 			behaviorBox->addItem("block");
 			behaviorBox->insertSeparator(3);
-
-			item->setText(3, QString::fromStdString(p->m_ports[i].first));
 
 			vector<string> scriptNames = m_honeydConfig->GetScriptNames();
 			for(vector<string>::iterator it = scriptNames.begin(); it != scriptNames.end(); it++)
@@ -1807,13 +1794,43 @@ void NovaConfig::LoadProfileSettings()
 
 			ui.portTreeWidget->setItemWidget(item, 1, typeBox);
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
-			m_honeydConfig->m_ports[pr.m_portName] = pr;
+
+			QSlider *portDistribSlider = new QSlider();
+			portDistribSlider->setMaximum(100);
+			portDistribSlider->setOrientation(Qt::Horizontal);
+			portDistribSlider->setValue((int)p->m_ports[i].second.second);
+			ui.portTreeWidget->setItemWidget(item, 3, portDistribSlider);
+
 			if(!portCurrentString.compare(pr.m_portName))
 			{
 				ui.portTreeWidget->setCurrentItem(item);
 			}
 		}
+		for(int i = 0; i < ui.portTreeWidget->columnCount(); i++)
+		{
+			ui.portTreeWidget->resizeColumnToContents(i);
+		}
+
+		// ~~~~ ASSOCIATED NODES TABLE WIDGET ~~~~
+		//Clear the cells but not the headers
 		ui.associatedNodesTableWidget->clearContents();
+
+		//Set up port columns
+		NodeProfile *np = &m_honeydConfig->m_profiles[m_currentProfile];
+
+		//Insert each node for the profile
+		while(ui.associatedNodesTableWidget->columnCount() > 3)
+		{
+			ui.associatedNodesTableWidget->removeColumn(3);
+		}
+		for(uint i = 0; i < np->m_ports.size(); i++)
+		{
+			ui.associatedNodesTableWidget->insertColumn(ui.associatedNodesTableWidget->columnCount());
+			QTableWidgetItem * item = new QTableWidgetItem();
+			item->setText(QString(np->m_ports[i].first.c_str()));
+			item->setTextAlignment(Qt::AlignCenter);
+			ui.associatedNodesTableWidget->setHorizontalHeaderItem(ui.associatedNodesTableWidget->columnCount()-1, item);
+		}
 		int i = 0;
 		for(NodeTable::iterator it = m_honeydConfig->m_nodes.begin(); it != m_honeydConfig->m_nodes.end(); it++)
 		{
@@ -1822,6 +1839,53 @@ void NovaConfig::LoadProfileSettings()
 				AddNodeToProfileTable(it->first, i);
 				i++;
 			}
+		}
+		//Set number of nodes using profile
+		ui.numNodesSpinBox->setValue(i);
+
+		//Remove excess rows
+		while(i < ui.associatedNodesTableWidget->rowCount())
+		{
+			ui.associatedNodesTableWidget->removeRow(i);
+		}
+		for(int i = 0; i < ui.associatedNodesTableWidget->columnCount(); i++)
+		{
+			ui.associatedNodesTableWidget->resizeColumnToContents(i);
+		}
+
+		// ~~~~ CHILDREN PROFILE TREE WIDGET ~~~~
+
+		uint max = 0;
+		ui.childrenProfileTreeWidget->clear();
+
+		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
+		{
+			if(!it->second.m_parentProfile.compare(m_currentProfile))
+			{
+				QTreeWidgetItem *item = new QTreeWidgetItem();
+				item->setText(0, QString(it->first.c_str()));
+				QSpinBox *numNodesSpinBox = new QSpinBox();
+				numNodesSpinBox->setValue(it->second.m_nodeKeys.size());
+				numNodesSpinBox->setAlignment(Qt::AlignCenter);
+				item->setText(1, numNodesSpinBox->text());
+				item->setTextAlignment(1, Qt::AlignCenter);
+				ui.childrenProfileTreeWidget->setItemWidget(item, 1, numNodesSpinBox);
+				max+= numNodesSpinBox->value();
+				ui.childrenProfileTreeWidget->addTopLevelItem(item);
+			}
+		}
+		for(int i = 0; i < ui.childrenProfileTreeWidget->topLevelItemCount(); i++)
+		{
+			QTreeWidgetItem * item = ui.childrenProfileTreeWidget->topLevelItem(i);
+			QSlider *nodeDistribSlider = new QSlider();
+			nodeDistribSlider->setMaximum(100);
+			nodeDistribSlider->setOrientation(Qt::Horizontal);
+			nodeDistribSlider->setValue((int)(item->text(1).toUInt()/max));
+			ui.childrenProfileTreeWidget->setItemWidget(item, 2, nodeDistribSlider);
+		}
+		for(int i = 0; i < ui.childrenProfileTreeWidget->columnCount(); i++)
+		{
+			ui.childrenProfileTreeWidget->resizeColumnToContents(i);
 		}
 	}
 	else
@@ -1850,6 +1914,20 @@ void NovaConfig::LoadProfileSettings()
 		ui.personalityEdit->setEnabled(false);
 		ui.uptimeBehaviorComboBox->setEnabled(false);
 		ui.dropRateSlider->setEnabled(false);
+
+		//Clear childrenProfileTree
+		ui.childrenProfileTreeWidget->clear();
+
+		//Clear associated nodes table
+		ui.associatedNodesTableWidget->clearContents();
+		for(int i = 3; i < ui.associatedNodesTableWidget->columnCount(); i++)
+		{
+			ui.associatedNodesTableWidget->removeColumn(i);
+		}
+		while(ui.associatedNodesTableWidget->rowCount())
+		{
+			ui.associatedNodesTableWidget->removeRow(0);
+		}
 	}
 }
 
@@ -2104,6 +2182,7 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 			ui.associatedNodesTableWidget->insertRow(row);
 		}
 		Node curNode = m_honeydConfig->m_nodes[nodeName];
+		NodeProfile curProfile = m_honeydConfig->m_profiles[curNode.m_pfile];
 
 		//Node name
 		QTableWidgetItem *item = new QTableWidgetItem();
@@ -2111,26 +2190,64 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 		ui.associatedNodesTableWidget->setItem(row, 0, item);
 
 		//Interface List
+		vector<string> hostInterfaceList = Config::Inst()->GetIPv4HostInterfaceList();
 		item = new QTableWidgetItem();
-		/*TableItemComboBox *nodeIFBox = new TableItemComboBox(this, item);
-		vector<string> ifList = Config::Inst()->GetInterfaces();
-		for(uint i = 0; i > ifList.size(); i++)
+		TableItemComboBox *nodeIFBox = new TableItemComboBox(this, item);
+		for(uint i = 0; i < hostInterfaceList.size(); i++)
 		{
-			nodeIFBox->addItem(QString(ifList[i].c_str()));
+			nodeIFBox->addItem(QString(hostInterfaceList[i].c_str()));
 		}
-		QObject::connect(nodeIFBox, SIGNAL(notifyParent(QTableWidgetItem *, bool)), this, SLOT(associatedNodesTreeWidget_comboBoxChanged(QTableWidgetItem *, bool)));
-		nodeIFBox->setCurrentIndex(nodeIFBox->findText(curNode.m_interface.c_str()));*/
+		nodeIFBox->setCurrentIndex(nodeIFBox->findText(curNode.m_interface.c_str()));
 		item->setText(QString(curNode.m_interface.c_str()));
+
 		ui.associatedNodesTableWidget->setItem(row, 1, item);
+		ui.associatedNodesTableWidget->setCellWidget(row, 1, nodeIFBox);
 
 		//Ethernet Vendors
+		VendorMacDb vendDB;
+		vendDB.LoadPrefixFile();
 		item = new QTableWidgetItem();
-		//XXX support multiple ethernet vendors
+		TableItemComboBox *nodeEthBox = new TableItemComboBox(this, item);
+
+		for(uint i = 0; i < curProfile.m_ethernetVendors.size(); i++)
+		{
+			nodeEthBox->addItem(QString(curProfile.m_ethernetVendors[i].first.c_str()));
+		}
+
+		uint rawPrefix = vendDB.AtoMACPrefix(curNode.m_MAC);
+		string vendorString = vendDB.LookupVendor(rawPrefix);
+		Trim(vendorString);
+
+		nodeEthBox->setCurrentIndex(nodeEthBox->findText(vendorString.c_str()));
+		if(nodeEthBox->currentIndex() == -1)
+		{
+			nodeEthBox->setCurrentIndex(0);
+		}
+
 		item->setText(QString(m_honeydConfig->m_profiles[curNode.m_pfile].m_ethernetVendors[0].first.c_str()));
 		ui.associatedNodesTableWidget->setItem(row, 2, item);
+		ui.associatedNodesTableWidget->setCellWidget(row, 2, nodeEthBox);
 
 		//Ports
-
+		for(int j = 3; j < ui.associatedNodesTableWidget->columnCount(); j++)
+		{
+			item = new QTableWidgetItem();
+			QCheckBox *usePortBox = new QCheckBox();
+			usePortBox->setText("Use Port");
+			usePortBox->setChecked(false);
+			item->setText("N");
+			for(uint i = 0; i < curNode.m_ports.size(); i++)
+			{
+				if(!curNode.m_ports[i].compare(ui.associatedNodesTableWidget->horizontalHeaderItem(j)->text().toStdString()))
+				{
+					usePortBox->setChecked(true);
+					item->setText("Y");
+					break;
+				}
+			}
+			ui.associatedNodesTableWidget->setItem(row, j, item);
+			ui.associatedNodesTableWidget->setCellWidget(row, j, usePortBox);
+		}
 		return true;
 	}
 	return false;

@@ -1721,6 +1721,48 @@ vector<string> Config::GetInterfaces()
 	return m_interfaces;
 }
 
+vector<string> Config::GetIPv4HostInterfaceList()
+{
+	Lock lock(&m_lock, true);
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	vector<string> ret;
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(((int)curIf->ifa_addr->sa_family == AF_INET) && !(curIf->ifa_flags & IFF_LOOPBACK))
+		{
+			ret.push_back(curIf->ifa_name);
+		}
+	}
+	return ret;
+}
+
+vector<string> Config::GetIPv4LoopbackInterfaceList()
+{
+	Lock lock(&m_lock, true);
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	vector<string> ret;
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(((int)curIf->ifa_addr->sa_family == AF_INET) && (curIf->ifa_flags & IFF_LOOPBACK))
+		{
+			ret.push_back(curIf->ifa_name);
+		}
+	}
+	return ret;
+}
+
 uint Config::GetInterfaceCount()
 {
 	Lock lock(&m_lock, true);
