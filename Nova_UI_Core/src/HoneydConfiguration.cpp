@@ -171,6 +171,41 @@ std::string HoneydConfiguration::AddPort(Port pr)
 	return pr.m_portName;
 }
 
+bool HoneydConfiguration::CheckNotInheritingEmptyProfile(std::string parentName)
+{
+	if(m_profiles.keyExists(parentName))
+	{
+		return RecursiveCheckNotInheritingEmptyProfile(m_profiles[parentName]);
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool HoneydConfiguration::RecursiveCheckNotInheritingEmptyProfile(const NodeProfile& check)
+{
+	if(!check.m_parentProfile.compare("default"))
+	{
+		if(!check.m_personality.empty())
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else if(m_profiles.keyExists(check.m_parentProfile) && check.m_personality.empty() && check.m_inherited[PERSONALITY])
+	{
+		return RecursiveCheckNotInheritingEmptyProfile(m_profiles[check.m_parentProfile]);
+	}
+	else
+	{
+		return false;
+	}
+}
+
 //Calls all load functions
 bool HoneydConfiguration::LoadAllTemplates()
 {

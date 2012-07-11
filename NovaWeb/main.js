@@ -281,6 +281,13 @@ function renderBasicOptions(jadefile, res, req) {
 	 });
 }
 
+app.get('/error', ensureAuthenticated, function(req, res) {
+	
+	console.log(req.query);
+	
+	res.render('error.jade', { locals: { redirectLink: req.query["redirectLink"], errorDetails: req.query["errorDetails"] }});
+});
+
 app.get('/basicOptions', ensureAuthenticated, function(req, res) {
 	renderBasicOptions('basicOptions.jade', res, req);
 });
@@ -1136,8 +1143,14 @@ everyone.now.GetPorts = function (profileName, callback) {
 everyone.now.SaveProfile = function(profile, ports, callback) {
 	honeydProfile = new novaconfig.HoneydProfileBinding();
 
-	console.log("Got profile " + profile.name);
+	console.log("Got profile " + profile.name + "_" + profile.personality);
 	console.log("Got portlist " + ports.name);
+
+    if((profile.personality == undefined || profile.personality == "") && profile.isPersonalityInherited && !honeydConfig.CheckNotInheritingEmptyProfile(profile.parentProfile))
+    {
+        callback("Must select a personality, there are no inherited personalities available.");
+        return;
+    }
 
 	// Move the Javascript object values to the C++ object
 	honeydProfile.SetName(profile.name);
@@ -1176,7 +1189,7 @@ everyone.now.SaveProfile = function(profile, ports, callback) {
 	// Save the profile
 	honeydProfile.Save();
 
-	callback();
+	callback(undefined);
 }
 
 everyone.now.GetCaptureSession = function (callback) {
@@ -1320,33 +1333,6 @@ function queryCredDb(check) {
     }
   );
 };
-
-/*function getPassHash(password, fn) {
-      client.query(
-      'SELECT SHA1(\'' + password + '\') AS pass',
-      function selectCb(err, results, fields) {
-        if(err) {
-          throw err;
-        }
-        
-        checkPass = results[0].pass;
-        
-        console.log("getPassHash results: " + checkPass);
-        
-        if(checkPass != undefined)
-        {
-          console.log("getPassHash success");
-          return fn(password);
-        }
-        else
-        {
-          console.log("getPassHash failed");
-          client.end();
-          return false;
-        }
-      }
-    );
-};*/
 
 function switcher(err, user, success, done)
 {
