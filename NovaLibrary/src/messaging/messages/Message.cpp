@@ -65,7 +65,7 @@ bool Message::WriteMessage(Message *message, int connectFD)
 	uint32_t bytesSoFar;
 
 	// Return value of the write() call, actual bytes sent
-	uint32_t bytesWritten;
+	int32_t bytesWritten;
 
 	// Send the message length
 	bytesSoFar = 0;
