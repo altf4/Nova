@@ -241,7 +241,7 @@ block headerAdditions
     "nova_suspects"
     );
     suspectGrid.startup();
-    now.sendAllSuspects(now.OnNewSuspect);
+    now.ready(function() {now.sendAllSuspects(now.OnNewSuspect);});
     });
     });
 

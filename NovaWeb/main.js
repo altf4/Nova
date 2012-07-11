@@ -45,9 +45,8 @@ process.chdir("/usr/share/nova/nova");
 var client = mysql.createClient({
   user: 'root'
   , password: 'root'
+  , database: credDb
 });
-
-client.useDatabase(credDb);
 
 passport.serializeUser(function(user, done) {
   done(null, user);
