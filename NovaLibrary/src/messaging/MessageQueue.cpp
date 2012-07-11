@@ -361,7 +361,7 @@ void *MessageQueue::ProducerThread()
 				}
 				else
 				{
-					LOG(ERROR, "Socket was closed due to error" + std::string(strerror(errno)), "");
+					LOG(ERROR, "Socket was closed due to error: " + std::string(strerror(errno)), "");
 				}
 
 				//The socket died on us!

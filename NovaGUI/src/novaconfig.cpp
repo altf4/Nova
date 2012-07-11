@@ -1208,7 +1208,7 @@ void NovaConfig::on_pcapButton_clicked()
 	//Gets the current path location
 	QDir path = QDir::current();
 	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Packet Capture File"),  path.path(), tr("Pcap Files (*)"));
+	QString fileName = QFileDialog::getExistingDirectory(this, tr("Open Packet Capture"),  path.path());
 
 	//Gets the relative path using the absolute path in fileName and the current path
 	if(fileName != NULL)

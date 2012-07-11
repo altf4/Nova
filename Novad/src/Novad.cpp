@@ -677,11 +677,17 @@ bool Start_Packet_Handler()
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
-		// TODO This just segfaults, disabling until someone gets around to fixing it (or throwing it out)
-		LOG(CRITICAL, "Reading from a pcap file in novad is not currently supported. Use the novatrainer executable", "");
-		exit(EXIT_FAILURE);
+		string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
+		string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
 
-		handles[0] = pcap_open_offline(Config::Inst()->GetPathPcapFile().c_str(), errbuf);
+		handles.push_back(pcap_open_offline(pcapFilePath.c_str(), errbuf));
+
+
+		vector<string> ips = Config::GetIpAddresses(ipAddressFile);
+		for (uint i = 0; i < ips.size(); i++)
+		{
+			localIPs.push_back(inet_addr(ips.at(i).c_str()));
+		}
 
 		if(handles[0] == NULL)
 		{
@@ -689,6 +695,7 @@ bool Start_Packet_Handler()
 				"Couldn't open pcap file: "+Config::Inst()->GetPathPcapFile()+": "+string(errbuf)+".");
 			exit(EXIT_FAILURE);
 		}
+
 		if(pcap_compile(handles[0], &fp, haystackAddresses_csv.data(), 0, PCAP_NETMASK_UNKNOWN) == -1)
 		{
 			LOG(CRITICAL, "Unable to start packet capture.",
@@ -702,15 +709,30 @@ bool Start_Packet_Handler()
 				"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
 			exit(EXIT_FAILURE);
 		}
+
 		pcap_freecode(&fp);
 		//First process any packets in the file then close all the sessions
-		pcap_dispatch(handles[0], -1, Packet_Handler,NULL);
-
-		if(Config::Inst()->GetGotoLive()) Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
+		u_char index = 0;
+		pcap_loop(handles[0], -1, Packet_Handler,&index);
 
 		LOG(DEBUG, "Done processing PCAP file", "");
 
-		pcap_close(handles[0]);
+		if(Config::Inst()->GetGotoLive())
+		{
+			Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
+		}
+		else
+		{
+			pthread_t consumer;
+			pthread_create(&consumer, NULL, ConsumerLoop, NULL);
+			pthread_detach(consumer);
+
+			// Just sleep this thread forever so the UI responds still but no packet capture
+			while(true)
+			{
+				sleep(1000000);
+			}
+		}
 	}
 
 	if(!Config::Inst()->GetReadPcap())
