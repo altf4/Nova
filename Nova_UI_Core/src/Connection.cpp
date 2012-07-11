@@ -183,6 +183,7 @@ bool CloseNovadConnection()
 
 	MessageManager::Instance().CloseSocket(IPCSocketFD);
 	IPCSocketFD = -1;
+	LOG(DEBUG, "Call to CloseNovadConnection complete", "");
 	return success;
 }
 

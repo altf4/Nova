@@ -88,6 +88,7 @@ bool StopNovad()
 	bool retSuccess = killReply->m_success;
 	delete killReply;
 
+	LOG(DEBUG, "Call to StopNovad complete", "");
 	MessageManager::Instance().CloseSocket(IPCSocketFD);
 
 	return retSuccess;

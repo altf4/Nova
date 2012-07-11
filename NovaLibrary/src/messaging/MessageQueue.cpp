@@ -361,7 +361,7 @@ void *MessageQueue::ProducerThread()
 				}
 				else
 				{
-					LOG(ERROR, "Socket was closed due to error: " + std::string(strerror(errno)), "");
+					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
 				}
 
 				//The socket died on us!
@@ -409,6 +409,15 @@ void *MessageQueue::ProducerThread()
 
 			if(bytesRead <= 0)
 			{
+				if (bytesRead == 0)
+				{
+					LOG(DEBUG, "Socket was closed by peer", "");
+				}
+				else
+				{
+					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
+				}
+
 				//The socket died on us!
 				{
 					Lock shutdownLock(&m_isShutdownMutex);
