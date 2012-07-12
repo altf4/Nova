@@ -1,20 +1,20 @@
 #suspectTable {
 	table-layout:fixed;
 	border-collapse:collapse;
-	border: 1px solid black;
 }
 
 #suspectTable td, #suspectTable th 
 {
 	font-size:1em;
 	border:1px solid #d0e9fc;
-	padding:2px 0px 2px 0px;
+	padding:1px 4px 1px 4px;
 	text-align:center;
 	white-space: nowrap;
 }
 
 #suspectTable th 
 {
+	border: 1px solid black;
 	white-space: normal;
 	font-size:1.1em;
 	text-align:center;
