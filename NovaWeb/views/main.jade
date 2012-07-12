@@ -21,7 +21,7 @@ block content
   br
   br
   
-  button(type="button", style="width:160px", onClick='now.ClearAllSuspects(); clearDataGrid();') Clear All Suspects
+  button(type="button", style="width:160px", onClick='now.ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
 
   br
 
@@ -40,7 +40,7 @@ block content
       p Advanced Filtering Options
     div#advancedFiltering(style="display: none;")
       br
-      p Filter by IP (supports standard regular expressions. Example: "192.168.10.*|192.168.3.*")
+      p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
       input#ipFilter(type="text", name="ipFilter", value="")
       br
       p Use 'x' in expressions to denote the specified feature value. Example: "x > 0 && x != 17"
@@ -57,14 +57,91 @@ block content
       button(onClick='disableAdvancedFilter()') Disable Advanced Filters
 
   div#nova_suspects
+    table#suspectTable
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
    h4 Novad is not currently connected or running. Try starting it.
    
 block headerAdditions
-  script 
-    var suspectStore;
+  script
+    // Performance boost accessing local var over document lookup
+    var theDoc = document;
+
+    // Our custom grid constructor
+    var NovaGrid = function(columns, keyIndex) {
+        this.m_columns = columns;
+        this.m_keyIndex = keyIndex;
+        this.m_sortByKey = keyIndex;
+        this.m_elements = new Object();
+           
+        this.headerHTML = "";
+        this.headerHTML += '<TR>';
+        for (var c = 0; c < this.m_columns.length; c++) {
+            this.headerHTML += '<TH><A HREF="javascript:void(0)" onclick="suspectGrid.SetSortByKey(' + c + ');">' + this.m_columns[c].name + '</A></TH>';
+        }
+        this.headerHTML += '</TR>';
+    }
+
+    NovaGrid.prototype = {
+        PushEntry: function (entry) {
+            if (entry.length != this.m_columns.length) {
+                throw "Can't push entry of size " + entry.length + " into table of size " + this.m_columns.length
+            }
+            this.m_elements[entry[this.m_keyIndex]] = entry;
+        }
+
+        , GetTable: function() {
+            var innerTableString = this.headerHTML;
+        
+            var keys = Object.keys(this.m_elements);
+            var arrayRep = new Array();
+            for (var i = 0; i < keys.length; i++) {
+                arrayRep.push(this.m_elements[keys[i]]);
+            }
+
+            // work around for scoping issues
+            var so = this;
+            
+            arrayRep.sort(function(a, b) {
+                if (a[so.m_sortByKey] > b[so.m_sortByKey]) {
+                    return -1;
+                } else if (a[so.m_sortByKey] < b[so.m_sortByKey]) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+
+            for (var i = 0; i < arrayRep.length; i++) {
+                innerTableString += '<TR>';
+                for (var c = 0; c < this.m_columns.length; c++) {
+                    if (this.m_columns[c].formatter !== undefined) {
+                       innerTableString += '<TD>' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
+                    } else {
+                        innerTableString += '<TD>' + arrayRep[i][c] + '</TD>';
+                    }
+                }
+                innerTableString += '</TR>';
+            }
+
+            return innerTableString;
+        }
+
+        , SetSortByKey: function(key) {
+            this.m_sortByKey = key;
+        }
+
+        , Clear: function() {
+            this.m_elements = new Array();
+        }
+
+        , Size: function() {
+            return Object.keys(this.m_elements).length;
+        }
+    }
+
     var suspectGrid;
     var liveUpdate = true;
+    var lastNovadStatus = false;
 
     var advancedFilters = new Object();
     var advancedFilterEnabled = false;
@@ -73,6 +150,7 @@ block headerAdditions
     require(["dijit/form/TextBox"]);
 
     now.updateNovadStatus = function (isNovadUp){
+      lastNovadStatus = isNovadUp;
       dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
       dojo.byId("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
       dojo.byId("nova_suspects").style.display = isNovadUp ? "block" : "none";
@@ -84,7 +162,7 @@ block headerAdditions
     };
 
     now.AllSuspectsCleared = function() {
-      clearDataGrid();
+      suspectGrid.Clear();
     }
       
     function pad(num) {
@@ -98,21 +176,30 @@ block headerAdditions
        if (type == "unclassified" && (suspect.GetClassification > 0)) {return;}
        if (type == "all" && suspect.GetClassification < 0) {return;}
 
-       if(!liveUpdate) {return;}
+       //if(!liveUpdate) {return;}
       
       var d = new Date(suspect.GetLastPacketTime*1000);
       var dString = pad(d.getMonth()) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       suspect.LastPacketString = dString;
       
+      var row = new Array();
       // This is probably a really bad way to do this...
+      row.push(String(suspect.GetInAddr));
+      row.push(suspect.GetClassification);
+      row.push(String(suspect.LastPacketString));
+      row.push(String(suspect.GetIsHostile));
+      var enabledFeatures = String(#{enabledFeatures});
       for (var i in suspect.GetFeatures) {  
         suspect[i] = suspect.GetFeatures[i];
+        if (enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
       }
        
        if (advancedFilterEnabled) {
          for (var i in advancedFilters) {
              var x = String(suspect[i]);
              var expr = String(advancedFilters[i]);
+             console.log(expr);
+             console.log("x is " + x);
              if (!eval(expr)) {
                 return;
              }
@@ -125,21 +212,24 @@ block headerAdditions
          }
        }
 
-     
-     if( suspectStore.get(suspect.GetInAddr) ) {       
-        suspectStore.put(suspect,{id: suspect.GetInAddr, overwrite: true});
-      } else {
-        suspectStore.add(suspect,{id: suspect.GetInAddr}); 
-      }
+        suspectGrid.PushEntry(row);
     };
-       
-    var clearDataGrid = function() {
-      suspectStore = new dojo.store.Memory();
-      suspectStore = dojo.store.Observable(suspectStore);
-      suspectStore.idProperty="GetInAddr";
-      suspectGrid.setStore(dojo.data.ObjectStore({objectStore: suspectStore, clearOnClose: true}));
-    }
 
+    // This is an ugly hack which happens to double performance in Chrome for the suspect grid. No diff in firefox
+    // from here, http://blog.stevenlevithan.com/archives/faster-than-innerhtml
+    function replaceHtml(el, html) {
+        var oldEl = typeof el === "string" ? document.getElementById(el) : el;
+        /*@cc_on // Pure innerHTML is slightly faster in IE
+          oldEl.innerHTML = html;
+          return oldEl;
+          @*/
+        var newEl = oldEl.cloneNode(false);
+        newEl.innerHTML = html;
+        oldEl.parentNode.replaceChild(newEl, oldEl);
+        /* Since we just removed the old element from the DOM, return a reference
+           to the new element, which can be used to restore variable references. */
+        return newEl;
+    };
 
     var applyAdvancedFilter = function() {
         var patt = new RegExp("^[1234567890x\. ()<>=!&|]+$");
@@ -147,7 +237,7 @@ block headerAdditions
         for (var i = 0; i < featureNames.length; i++) {
             var filter = "";
             var id = "advancedFilter" + String(i);
-            var element = document.getElementById(id);
+            var element = theDoc.getElementById(id);
             if (element != null) {
                 filter = element.value;
             }
@@ -172,7 +262,7 @@ block headerAdditions
             }
         }
 
-        var filter = document.getElementById("ipFilter").value;
+        var filter = theDoc.getElementById("ipFilter").value;
         if (filter != "") {
             try {
                 advancedIpFilter = new RegExp(filter);
@@ -183,67 +273,68 @@ block headerAdditions
         }
 
         advancedFilterEnabled = true;
-        clearDataGrid();
+        suspectGrid.Clear();
         now.sendAllSuspects(now.OnNewSuspect);
     };
 
     var disableAdvancedFilter = function() {
-        document.getElementById('advancedFiltering').style.display='none';
+        theDoc.getElementById('advancedFiltering').style.display='none';
         
         advancedFilterEnabled = false;
         var advancedFilters = new Object();
         
-        clearDataGrid();
+        suspectGrid.Clear();
         now.sendAllSuspects(now.OnNewSuspect);
     }
-
-    require(["dojo/ready","dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore"], function(ready){ready(function(){ 
-    dojo.addOnLoad(function(){
-      suspectStore = new dojo.store.Memory();
-      suspectStore = dojo.store.Observable(suspectStore);
-      suspectStore.idProperty="GetInAddr";
-      // Formatter for the classification
-      function classificationFormatter(d) {
-        
-        var bar = new dijit.ProgressBar({progress:d, maximum:1}, "bar");
-        bar._destroyOnRemove = true;
-        return bar;
-      }
-
-      // Formatter for the floating point features
-      function featureFormatter(d) {
+              
+    function featureFormatter(d) {
         var num = new Number(d);
         return (num.toFixed(2));
-      }
-    
-    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!"],
-    function(DataGrid,ObjectStore){
-
-    var enabledFeatures = String(#{enabledFeatures});
-    var gridStructure = new Array();
-    gridStructure.push({name:"Address", field:"GetInAddr", width:"125px"});
-    gridStructure.push({name:"Classification", field:"GetClassification", width:"150px", formatter: classificationFormatter});
-    gridStructure.push({name:"Last Seen", field:"LastPacketString", width: "100px"});
-    gridStructure.push({name:"Hostile", field:"GetIsHostile"});
-   
-    var featureNames = String("#{featureNames}").split(",");
-    for (var i = 0; i < featureNames.length; i++) {
-        if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], field:String(i), formatter: featureFormatter});
     }
     
-    suspectGrid = new DataGrid(
-    {
-      store: dataStore = dojo.data.ObjectStore({objectStore: suspectStore, clearOnClose: true}),
-      sortInfo: -2,
-      structure: gridStructure,
-      rowsPerPage: 20
-    }, 
-    "nova_suspects"
-    );
-    suspectGrid.startup();
-    now.ready(function() {now.sendAllSuspects(now.OnNewSuspect);});
-    });
+    function Init() {
+        var enabledFeatures = String(#{enabledFeatures});
+        var gridStructure = new Array();
+        gridStructure.push({name: "Address"});
+        gridStructure.push({name: "Classification", formatter: featureFormatter});
+        gridStructure.push({name: "Last Seen"});
+        gridStructure.push({name: "Hostile"});
+   
+        var featureNames = String("#{featureNames}").split(",");
+        for (var i = 0; i < featureNames.length; i++) {
+            if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
+        }
+   
+        suspectGrid = new NovaGrid(gridStructure, 0);
+
+        // Sort by classification by default
+        suspectGrid.SetSortByKey(1);
+
+        theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+        now.sendAllSuspects(now.OnNewSuspect);
+    
+    
+        setInterval(function(){
+            if(!liveUpdate || !lastNovadStatus) {return;}
+            var start = new Date().getTime();
+
+            // Simple way (slow in Chrome, fine in FF)
+            //theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+
+            var element = theDoc.getElementById("suspectTable");
+            var table = suspectGrid.GetTable();
+            element = replaceHtml(element, table);
+            
+            var end = new Date().getTime();
+            var time = end - start;
+            console.log("Time to render grid of size " + suspectGrid.Size() + ": " + time + "ms");
+        },3000);
+    }
+
+    require(["dojo/ready", "dojo/domReady!"], function(ready){
+        ready(function() {
+            Init();
+        });
     });
 
-    }); });
 

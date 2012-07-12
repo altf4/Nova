@@ -2,6 +2,29 @@
     outline: none !important;
 }
 
+#suspectTable {
+	table-layout:fixed;
+	border-collapse:collapse;
+	border: 1px solid black;
+}
+
+#suspectTable td, #suspectTable th 
+{
+	font-size:1em;
+	border:1px solid #d0e9fc;
+	padding:3px 7px 2px 7px;
+	text-align:center;
+}
+
+#suspectTable th 
+{
+	font-size:1.1em;
+	text-align:center;
+	padding-top:5px;
+	padding-bottom:4px;
+	background-color: #d0e9fc;
+}
+
 body {
     margin: 0;
     padding: 2em;
