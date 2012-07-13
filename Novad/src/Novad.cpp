@@ -198,11 +198,6 @@ int RunNovaD()
 	}
 	else
 	{
-		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
-		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
-		pthread_detach(classificationLoopThread);
-		pthread_detach(silentAlarmListenThread);
-
 		whitelistNotifyFd = inotify_init ();
 		if(whitelistNotifyFd > 0)
 		{
@@ -677,6 +672,7 @@ bool Start_Packet_Handler()
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
+		LOG(DEBUG, "Loading PCAP file", "");
 		string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
 		string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
 
@@ -715,7 +711,9 @@ bool Start_Packet_Handler()
 		u_char index = 0;
 		pcap_loop(handles[0], -1, Packet_Handler,&index);
 
-		LOG(DEBUG, "Done processing PCAP file", "");
+		LOG(DEBUG, "Done reading PCAP file. Processing...", "");
+		ClassificationLoop(NULL);
+		LOG(DEBUG, "Done processing PCAP file.", "");
 
 		if(Config::Inst()->GetGotoLive())
 		{
@@ -723,10 +721,6 @@ bool Start_Packet_Handler()
 		}
 		else
 		{
-			pthread_t consumer;
-			pthread_create(&consumer, NULL, ConsumerLoop, NULL);
-			pthread_detach(consumer);
-
 			// Just sleep this thread forever so the UI responds still but no packet capture
 			while(true)
 			{
@@ -737,6 +731,11 @@ bool Start_Packet_Handler()
 
 	if(!Config::Inst()->GetReadPcap())
 	{
+		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
+		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
+		pthread_detach(classificationLoopThread);
+		pthread_detach(silentAlarmListenThread);
+
 		vector<string> ifList = Config::Inst()->GetInterfaces();
 		if(!Config::Inst()->GetIsTraining())
 		{
@@ -891,7 +890,17 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 				//manually setting dst ip to 0.0.0.1 designates the packet was to a real host not a haystack node
 				evidencePacket->m_evidencePacket.ip_dst = 1;
 			}
-			suspectEvidence.InsertEvidence(evidencePacket);
+
+			if (!Config::Inst()->GetReadPcap())
+			{
+				suspectEvidence.InsertEvidence(evidencePacket);
+			}
+			else
+			{
+				// If reading from pcap file no Consumer threads, so process the evidence right away
+				suspectsSinceLastSave.ProcessEvidence(evidencePacket, true);
+				suspects.ProcessEvidence(evidencePacket, false);
+			}
 			return;
 		}
 		//Ignore IPV6

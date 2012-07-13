@@ -123,7 +123,7 @@ void *ClassificationLoop(void *ptr)
 				LoadStateFile();
 			}
 		}
-	}while(Config::Inst()->GetClassificationTimeout());
+	}while(Config::Inst()->GetClassificationTimeout() && !Config::Inst()->GetReadPcap());
 
 	if(Config::Inst()->GetReadPcap())
 	{
