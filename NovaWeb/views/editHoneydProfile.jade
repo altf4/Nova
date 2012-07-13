@@ -47,88 +47,109 @@ block headerAdditions
     }
 
     sliderMoved = function(which, len) {
-        //console.log(document.getElementById(which).value);      
         var valueToReplace = document.getElementById(which).value;
+
         dojo.byId("distLabel" + which[which.length - 1]).innerHTML = valueToReplace;
         dojo.byId("distLabel" + which[which.length - 1]).setAttribute("value", valueToReplace);
         dojo.byId(which).setAttribute("value", valueToReplace);
         
         var reduction = 0;
         
-        console.log("reduction " + reduction);
-        
         for(var i = 0; i < len; i++)
         {
             reduction += parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value);
-            console.log("reduction " + reduction);
         }
         
         reduction -= 100;
         
-        var isPositive = false;
+        var sumOfOtherElements = 0;
         
-        if(reduction >= 0)
-        {
-            isPositive = true;
-        }
+        var sumOfHiddens = 0;
         
-        var modifiers = new Array();
+        var problems = [];
         
-        var modify = (Math.abs(reduction) / (len - 1)); 
-        
-        for(var i = 0; i < (len - 1); i++)
-        {
-           if(i % 2 == 0)
-           {
-              modifiers.push(Math.floor(modify)); 
-           }
-           else
-           {
-              modifiers.push(Math.ceil(modify));
-           }
-        }
-        
-        console.log("modifiers " + modifiers);
-        
-        if(isPositive)
-        {
-            var j = 0;
-            
-            for(var i = 0; i < len; i++)
-            {
-                if(dojo.byId("dist" + i) !== dojo.byId(which))
-                {
-                    document.getElementById("dist" + i).setAttribute("value", document.getElementById("distLabel" + i).value - modifiers[j]);
-                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).value - modifiers[j];
-                    document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).value - modifiers[j]);
-                    j++;
-                }
-            }
-        }
-        else
-        {
-            var j = 0;
-        
-            for(var i = 0; i < len; i++)
-            {
-                if(dojo.byId("dist" + i) !== dojo.byId(which))
-                {
-                    document.getElementById("dist" + i).setAttribute("value",document.getElementById("distLabel" + i).value + modifiers[j]);
-                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).value + modifiers[j];
-                    document.getElementById("distLabel" + i).setAttribute("value",document.getElementById("distLabel" + i).value + modifiers[j]);
-                    j++;
-                }
-            }
-        }
-        
-        var sum = 0;
+        var newValues = new Array();
         
         for(var i = 0; i < len; i++)
         {
-           sum += parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value);
+            if(dojo.byId("dist" + i) !== dojo.byId(which))
+            {
+                sumOfOtherElements += parseInt(dojo.byId("distLabel" + i).value);
+                sumOfHiddens += parseInt(dojo.byId("hide" + i).getAttribute("value"));
+                
+                if(parseInt(dojo.byId("distLabel" + i).value) == 0 || isNaN(sumOfOtherElements))
+                {
+                    problems = true;
+                }
+                else
+                {
+                    problems = false;
+                }
+            }
         }
         
-        console.log("sum " + sum)
+        for(var i = 0; i < len; i++)
+        {
+            if(dojo.byId("dist" + i) !== dojo.byId(which) && (!isNaN(sumOfOtherElements) && !problems))
+            {
+                var mult = (parseInt(dojo.byId("distLabel" + i).value) / sumOfOtherElements);
+                newValues.push(reduction * mult);
+            }
+            else if(dojo.byId("dist" + i) !== dojo.byId(which) && (isNaN(sumOfOtherElements) || problems))
+            {
+                var mult = (parseInt(dojo.byId("hide" + i).getAttribute("value"))/sumOfHiddens);
+                newValues.push(reduction * mult);
+            }
+        }
+        
+        var max = 0;
+        
+        for(var i = 0; i < newValues.length - 1; i++)
+        {
+            var roundingVal = newValues[i] + 0.5;
+            
+            if(Math.floor(roundingVal) == Math.floor(newValues[i]))
+            {
+                newValues[i] = Math.floor(roundingVal);
+                newValues[i + 1] += roundingVal % 1;
+            }
+            else
+            {
+                newValues[i] = Math.floor(roundingVal);
+                newValues[i + 1] -= roundingVal % 1;
+            }
+            
+            max += (newValues[i] / 1);
+        }
+        
+        newValues[newValues.length - 1] = reduction - max;
+        
+        var j = 0;
+        
+        for(var i = 0; i < len; i++)
+        {
+            if(dojo.byId("dist" + i) !== dojo.byId(which) && !problems)
+            {
+                document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value") - newValues[j];
+                document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).getAttribute("value") - newValues[j];
+                document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).getAttribute("value") - newValues[j]);
+                j++;
+            }
+            else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction < 0)
+            {
+                document.getElementById("dist" + i).value = 0 - newValues[j];
+                document.getElementById("distLabel" + i).innerHTML = 0 - newValues[j];
+                document.getElementById("distLabel" + i).setAttribute("value", 0 - newValues[j]);
+                j++;
+            }
+            else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction > 0)
+            {
+                document.getElementById("dist" + i).value = 0 + newValues[j];
+                document.getElementById("distLabel" + i).innerHTML = 0 + newValues[j];
+                document.getElementById("distLabel" + i).setAttribute("value", 0 + newValues[j]);
+                j++;
+            }
+        }
     }
  
     function obj() {};
@@ -354,6 +375,11 @@ block headerAdditions
 
                 for(var i in elements)
                 {
+                    var hidden = document.createElement("hidden");
+                    
+                    hidden.setAttribute("id", "hide" + i);
+                    hidden.setAttribute("value", distributions[i]);
+                
                     var add = document.createElement("input");
                     
                     add.setAttribute("id","vend" + i);
@@ -387,8 +413,8 @@ block headerAdditions
                     teed.appendChild(add);
                     teed.appendChild(distribution);
                     teed.appendChild(distLabel);
+                    teed.appendChild(hidden);
                     teer.appendChild(teed);
-                    //teer.appendChild(teed2);
                     
                     for(var j in document.getElementById("tableEditProfile").childNodes)
                     {
