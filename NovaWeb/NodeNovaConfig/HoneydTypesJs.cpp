@@ -98,6 +98,8 @@ Handle<Object> HoneydNodeJs::WrapProfile(NodeProfile *pfile)
         proto->Set("GetDropRate",       FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetDropRate>) );
         proto->Set("GetParentProfile",  FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetParentProfile>));
         proto->Set("GetVendors",       FunctionTemplate::New(InvokeMethod<std::vector<std::string>, NodeProfile, &Nova::NodeProfile::GetVendors>) );
+        proto->Set("GetVendorDistributions",       FunctionTemplate::New(InvokeMethod<std::vector<double>, NodeProfile, &Nova::NodeProfile::GetVendorDistributions>) );
+        
         
         proto->Set("isTcpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isTcpActionInherited>));
         proto->Set("isUdpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isUdpActionInherited>));

@@ -189,6 +189,15 @@ struct NodeProfile
 		}
 		return ret;
 	}
+	inline std::vector<double> GetVendorDistributions()
+	{
+		std::vector<double> ret;
+		for(uint i = 0; i < m_ethernetVendors.size(); i++)
+		{
+			ret.push_back(m_ethernetVendors[i].second);
+		}
+		return ret;
+	}
 	inline std::string GetUptimeMin() {return m_uptimeMin;}
 	inline std::string GetUptimeMax() {return m_uptimeMax;}
 	inline std::string GetDropRate() {return m_dropRate;}

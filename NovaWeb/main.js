@@ -958,7 +958,12 @@ everyone.now.ClearAllSuspects = function(callback)
 	nova.ClearAllSuspects();
 }
 
-
+everyone.now.GetInheritedEthernetList = function(parent, callback)
+{
+	var prof = honeydConfig.GetProfile(parent);
+	
+	callback(prof.GetVendors(), prof.GetVendorDistributions());
+}
 
 everyone.now.StartHaystack = function()
 {
@@ -1146,12 +1151,6 @@ everyone.now.SaveProfile = function(profile, ports, callback) {
 	console.log("Got profile " + profile.name + "_" + profile.personality);
 	console.log("Got portlist " + ports.name);
 
-    if((profile.personality == undefined || profile.personality == "") && profile.isPersonalityInherited && !honeydConfig.CheckNotInheritingEmptyProfile(profile.parentProfile))
-    {
-        callback("Must select a personality, there are no inherited personalities available.");
-        return;
-    }
-
 	// Move the Javascript object values to the C++ object
 	honeydProfile.SetName(profile.name);
 	honeydProfile.SetTcpAction(profile.tcpAction);
@@ -1189,7 +1188,7 @@ everyone.now.SaveProfile = function(profile, ports, callback) {
 	// Save the profile
 	honeydProfile.Save();
 
-	callback(undefined);
+	callback();
 }
 
 everyone.now.GetCaptureSession = function (callback) {

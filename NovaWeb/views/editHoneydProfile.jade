@@ -25,6 +25,7 @@ block headerAdditions
     var portBehaviorChanged = function() {};
     var saveChanges = function() {};
     var savedChanges = function() {};
+    var sliderMoved = function(which) {};
 
     var portIndexes = [];
     var loaded = false;
@@ -43,6 +44,91 @@ block headerAdditions
     // TODO
     if (newProfile != "true") {
         dojo.byId("saveButton").disabled = true;
+    }
+
+    sliderMoved = function(which, len) {
+        //console.log(document.getElementById(which).value);      
+        var valueToReplace = document.getElementById(which).value;
+        dojo.byId("distLabel" + which[which.length - 1]).innerHTML = valueToReplace;
+        dojo.byId("distLabel" + which[which.length - 1]).setAttribute("value", valueToReplace);
+        dojo.byId(which).setAttribute("value", valueToReplace);
+        
+        var reduction = 0;
+        
+        console.log("reduction " + reduction);
+        
+        for(var i = 0; i < len; i++)
+        {
+            reduction += parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value);
+            console.log("reduction " + reduction);
+        }
+        
+        reduction -= 100;
+        
+        var isPositive = false;
+        
+        if(reduction >= 0)
+        {
+            isPositive = true;
+        }
+        
+        var modifiers = new Array();
+        
+        var modify = (Math.abs(reduction) / (len - 1)); 
+        
+        for(var i = 0; i < (len - 1); i++)
+        {
+           if(i % 2 == 0)
+           {
+              modifiers.push(Math.floor(modify)); 
+           }
+           else
+           {
+              modifiers.push(Math.ceil(modify));
+           }
+        }
+        
+        console.log("modifiers " + modifiers);
+        
+        if(isPositive)
+        {
+            var j = 0;
+            
+            for(var i = 0; i < len; i++)
+            {
+                if(dojo.byId("dist" + i) !== dojo.byId(which))
+                {
+                    document.getElementById("dist" + i).setAttribute("value", document.getElementById("distLabel" + i).value - modifiers[j]);
+                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).value - modifiers[j];
+                    document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).value - modifiers[j]);
+                    j++;
+                }
+            }
+        }
+        else
+        {
+            var j = 0;
+        
+            for(var i = 0; i < len; i++)
+            {
+                if(dojo.byId("dist" + i) !== dojo.byId(which))
+                {
+                    document.getElementById("dist" + i).setAttribute("value",document.getElementById("distLabel" + i).value + modifiers[j]);
+                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).value + modifiers[j];
+                    document.getElementById("distLabel" + i).setAttribute("value",document.getElementById("distLabel" + i).value + modifiers[j]);
+                    j++;
+                }
+            }
+        }
+        
+        var sum = 0;
+        
+        for(var i = 0; i < len; i++)
+        {
+           sum += parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value);
+        }
+        
+        console.log("sum " + sum)
     }
  
     function obj() {};
@@ -89,15 +175,8 @@ block headerAdditions
         now.SaveProfile(pfile, ports, savedChanges);
     }
 
-    savedChanges = function(errLabel) {
-        if(errLabel == undefined)
-        {
-            window.location="configHoneydProfiles";
-        }
-        else
-        {
-            window.location="error?redirectLink=/configHoneydProfiles&errorDetails=" + errLabel;
-        }
+    savedChanges = function() {
+        window.location="configHoneydProfiles";
     }
 
     addPort = function(port) {
@@ -195,8 +274,8 @@ block headerAdditions
 
         portBehaviorChanged();
         portInheritedChange(portUID);
-    }  
-
+    }
+    
     // Disable editing if inherited
     portInheritedChange = function(portUID) {
         if (dojo.byId("portInherited" + portUID).checked) {
@@ -264,11 +343,90 @@ block headerAdditions
             dijit.byId("personality").setDisabled(false);
         }
 
-        if (dojo.byId("ethernet").disabled = dojo.byId("inheritEthernet").checked) {
+        if (dojo.byId("ethernet").disabled = dojo.byId("inheritEthernet").checked) 
+        {
             dojo.byId("ethernet").value = profile.ethernet;
             dijit.byId("ethernet").setDisabled(true);
-        } else {
+            
+            now.GetInheritedEthernetList(document.getElementById("parentName").value, 
+            function(elements, distributions){
+                document.getElementById("ethVendorLength").setAttribute("value", elements.length);
+
+                for(var i in elements)
+                {
+                    var add = document.createElement("input");
+                    
+                    add.setAttribute("id","vend" + i);
+                    add.setAttribute("value",elements[i]);
+                    add.setAttribute("type", "text");
+                    add.setAttribute("readonly","true");
+                    add.innerHTML = elements[i];
+                    
+                    var distribution = document.createElement("input");
+                    
+                    distribution.setAttribute("id", "dist" + i);
+                    distribution.setAttribute("type", "range");
+                    distribution.setAttribute("min", "0");                    
+                    distribution.setAttribute("max", "100");
+                    distribution.setAttribute("step", "1");
+                    distribution.setAttribute("value", distributions[i]);
+                    distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
+                    
+                    var distLabel = document.createElement("input");
+                    
+                    distLabel.setAttribute("id","distLabel" + i);
+                    distLabel.setAttribute("value", distributions[i]);
+                    distLabel.setAttribute("type", "text");
+                    distLabel.setAttribute("readonly","true");
+                    distLabel.innerHTML = distributions[i];
+                    
+                    var teed = document.createElement("td");
+                    var teer = document.createElement("tr");
+                    
+                    teer.setAttribute("id", "ethrow" + i);
+                    teed.appendChild(add);
+                    teed.appendChild(distribution);
+                    teed.appendChild(distLabel);
+                    teer.appendChild(teed);
+                    //teer.appendChild(teed2);
+                    
+                    for(var j in document.getElementById("tableEditProfile").childNodes)
+                    {
+                        if(document.getElementById("tableEditProfile").childNodes[j].tagName == "TBODY")
+                        {
+                            document.getElementById("tableEditProfile").childNodes[j].insertBefore(teer, document.getElementById("row4"));
+                            break;
+                        }
+                    }
+                }
+            });     
+        }
+        else 
+        {
             dijit.byId("ethernet").setDisabled(false);
+            var deletes = document.getElementById("tableEditProfile");
+            
+            for(var i in deletes.childNodes)
+            {
+                if(deletes.childNodes[i].tagName == "TBODY")
+                {
+                    var tbodyLength = deletes.childNodes[i].childNodes.length;
+                    
+                    for(var j = 0; j < tbodyLength; j++)
+                    {
+                        if(deletes.childNodes[i].childNodes[j].tagName == "TR")
+                        {
+                            var idLength = deletes.childNodes[i].childNodes[j].id.length;
+
+                            if(deletes.childNodes[i].childNodes[j].id.substr(0, idLength - 1) == "ethrow")
+                            {
+                                deletes.childNodes[i].removeChild(deletes.childNodes[i].childNodes[j]);
+                                j--;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) {
@@ -324,7 +482,7 @@ block headerAdditions
         
         uptimeTypeChanged();
     }
-
+    
     now.ready(function() {
         if (loaded) {
           return;
@@ -417,13 +575,13 @@ block content
 
   form(method="post", action="/editHoneydProfileSave")
 
-    table()
+    table(id="tableEditProfile")
       col
       col
       col(style="width:200px")
       col(style="width:300px")
       
-      tr
+      tr(id="row0")
         td
         td
         td(style="text-align:right")
@@ -431,7 +589,7 @@ block content
         td
           input#name(type="text", name="name")
       
-      tr
+      tr(id="row1")
         td
         td
         td(style="text-align:right")
@@ -440,7 +598,7 @@ block content
           input#parentName(type="text", name="name", disabled="true")
       
  
-      tr
+      tr(id="row2")
         td
           input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
         td
@@ -452,7 +610,7 @@ block content
             each os in personalities
               option(value="#{os}") #{os}
       
-      tr
+      tr(id="row3")
         td
           input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
         td
@@ -464,7 +622,9 @@ block content
             each vendor in vendors
               option(value="#{vendor}") #{vendor}
       
-      tr
+      hidden(id="ethVendorLength", value="")
+      
+      tr(id="row4")
         td
           input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
         td
@@ -475,7 +635,7 @@ block content
           input#dropRate(type="number", name="dropRate", min=0, max=100)
 
 
-      tr
+      tr(id="row5")
         td
           input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
         td
@@ -487,7 +647,7 @@ block content
             option Fixed
             option Range
         
-      tr
+      tr(id="row6")
         td
         td
         td(style="text-align:right")
@@ -496,7 +656,7 @@ block content
           input#uptimeMin(type="number", name="uptimeMin", min=0)
           input#uptimeMax(type="number", name="uptimeMax", min=0)
 
-      tr
+      tr(id="row7")
         td
           input#inheritTcpAction(type="checkbox", name="inheritTcpAction", onclick="inheritanceChanged()") 
         td
@@ -506,7 +666,7 @@ block content
         td
           mixin defaultActionBox('tcpAction')
   
-      tr
+      tr(id="row8")
         td
           input#inheritUdpAction(type="checkbox", name="inheritUdpAction", onclick="inheritanceChanged()") 
         td
@@ -515,7 +675,7 @@ block content
           label Default UDP Action
         td
           mixin defaultActionBox('udpAction')
-      tr
+      tr(id="row9")
         td
           input#inheritIcmpAction(type="checkbox", name="inheritIcmpAction", onclick="inheritanceChanged()") 
         td
@@ -526,6 +686,7 @@ block content
           mixin defaultActionBox('icmpAction')
 
     br
+    
     h3 Profile Port Configuration
     table#portTable
 
