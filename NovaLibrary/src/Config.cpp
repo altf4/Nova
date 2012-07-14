@@ -135,6 +135,16 @@ void Config::LoadConfig()
 	LoadVersionFile();
 	LoadInterfaces();
 }
+
+vector<string> Config::GetPrefixes()
+{
+	vector<string> ret;
+	for (uint i = 0; i < sizeof(Config::Inst()->m_prefixes)/sizeof(Config::Inst()->m_prefixes[0]); i++) {
+		ret.push_back(string(Config::Inst()->m_prefixes[i]));
+	}
+	return ret;
+}
+
 // Loads the configuration file into the class's state data
 void Config::LoadConfig_Internal()
 {
@@ -1621,6 +1631,23 @@ std::string Config::ReadSetting(std::string key)
 bool Config::WriteSetting(std::string key, std::string value)
 {
 	Lock lock(&m_lock, false);
+
+	bool validKey = false;
+	for (uint i = 0; i < sizeof(Config::Inst()->m_prefixes)/sizeof(Config::Inst()->m_prefixes[0]); i++)
+	{
+		if (!Config::Inst()->m_prefixes[i].compare(key))
+		{
+			validKey = true;
+			break;
+		}
+	}
+
+	if (!validKey)
+	{
+		LOG(WARNING, "WriteSetting was called with invalid setting key", "");
+		return false;
+	}
+
 	string line;
 	bool error = false;
 
