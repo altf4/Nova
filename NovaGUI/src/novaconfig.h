@@ -154,7 +154,6 @@ void on_nodeAddButton_clicked();
 void on_nodeDeleteButton_clicked();
 void on_nodeEnableButton_clicked();
 void on_nodeDisableButton_clicked();
-void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
 void on_associatedNodesTableWidget_itemSelectionChanged();
