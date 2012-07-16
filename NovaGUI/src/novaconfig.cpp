@@ -988,7 +988,7 @@ void NovaConfig::DisplayNmapPersonalityWindow()
 //Load MAC vendor prefix choices from nmap mac prefix file
 bool NovaConfig::DisplayMACPrefixWindow()
 {
-	m_retVal = "";
+	/*m_retVal = "";
 	NovaComplexDialog *MACPrefixWindow = new NovaComplexDialog(
 			MACDialog, &m_retVal, this, ui.ethernetEdit->text().toStdString());
 	MACPrefixWindow->exec();
@@ -1006,7 +1006,7 @@ bool NovaConfig::DisplayMACPrefixWindow()
 			}
 		}
 		m_honeydConfig->UpdateMacAddressesOfProfileNodes(m_currentProfile);
-	}
+	}*/
 	return false;
 }
 
@@ -1502,8 +1502,8 @@ void NovaConfig::SaveProfileSettings()
 		NodeProfile p = m_honeydConfig->m_profiles[m_currentProfile];
 		//currentProfile->name is set in updateProfile
 		//XXX implement multiple ethernet vendor support
-		p.m_ethernetVendors[0].first = ui.ethernetEdit->displayText().toStdString();
-		p.m_ethernetVendors[0].second = 100;
+		//p.m_ethernetVendors[0].first = ui.ethernetEdit->displayText().toStdString();
+		//p.m_ethernetVendors[0].second = 100;
 		p.m_tcpAction = ui.tcpActionComboBox->currentText().toStdString();
 		p.m_udpAction = ui.udpActionComboBox->currentText().toStdString();
 		p.m_icmpAction = ui.icmpActionComboBox->currentText().toStdString();
@@ -1683,12 +1683,9 @@ void NovaConfig::LoadProfileSettings()
 		ui.profileEdit->setText((QString)p->m_name.c_str());
 		ui.profileEdit->setEnabled(true);
 
-		//XXX Support multiple ethernet Vendors
-		ui.ethernetEdit->setText((QString)p->m_ethernetVendors[0].first.c_str());
-
-		ui.tcpActionComboBox->setCurrentIndex( ui.tcpActionComboBox->findText(p->m_tcpAction.c_str() ) );
-		ui.udpActionComboBox->setCurrentIndex( ui.udpActionComboBox->findText(p->m_udpAction.c_str() ) );
-		ui.icmpActionComboBox->setCurrentIndex( ui.icmpActionComboBox->findText(p->m_icmpAction.c_str() ) );
+		ui.tcpActionComboBox->setCurrentIndex(ui.tcpActionComboBox->findText(p->m_tcpAction.c_str()));
+		ui.udpActionComboBox->setCurrentIndex(ui.udpActionComboBox->findText(p->m_udpAction.c_str()));
+		ui.icmpActionComboBox->setCurrentIndex(ui.icmpActionComboBox->findText(p->m_icmpAction.c_str()));
 		ui.uptimeEdit->setText((QString)p->m_uptimeMin.c_str());
 		if(p->m_uptimeMax != p->m_uptimeMin)
 		{
@@ -1715,6 +1712,36 @@ void NovaConfig::LoadProfileSettings()
 		{
 			ui.dropRateSetting->setText("0%");
 			ui.dropRateSlider->setValue(0);
+		}
+
+		ui.ethVendorTableWidget->clearContents();
+		//Populate the Ethernet Vender Table
+		for(uint i = 0; i < p->m_ethernetVendors.size(); i++)
+		{
+			if((ui.ethVendorTableWidget->rowCount()-1) < (int)i)
+			{
+				ui.ethVendorTableWidget->insertRow(i);
+			}
+			//*WARNING - 'item' is a QTreeWidgetItem pointer in the next scope up, watch var usage
+			QTableWidgetItem *item = new QTableWidgetItem();
+			item->setText((QString)p->m_ethernetVendors[i].first.c_str());
+			ui.ethVendorTableWidget->setItem(i, 0, item);
+
+			item = new QTableWidgetItem();
+			item->setText(QString::number(((uint)(p->m_nodeKeys.size()*(p->m_ethernetVendors[i].second/((double)100)))), 10));
+			ui.ethVendorTableWidget->setItem(i, 1, item);
+
+			item = new QTableWidgetItem();
+			item->setText((QString::number((uint)p->m_ethernetVendors[i].second, 10)));
+			ui.ethVendorTableWidget->setItem(i, 2, item);
+		}
+		while(ui.ethVendorTableWidget->rowCount() > (int)p->m_ethernetVendors.size())
+		{
+			ui.ethVendorTableWidget->removeRow(ui.ethVendorTableWidget->rowCount()-1);
+		}
+		for(int i = 0; i < ui.ethVendorTableWidget->columnCount(); i++)
+		{
+			ui.ethVendorTableWidget->resizeColumnToContents(i);
 		}
 
 		//Populate the port table
@@ -1826,6 +1853,7 @@ void NovaConfig::LoadProfileSettings()
 		for(uint i = 0; i < np->m_ports.size(); i++)
 		{
 			ui.associatedNodesTableWidget->insertColumn(ui.associatedNodesTableWidget->columnCount());
+			//*WARNING - 'item' is a QTreeWidgetItem pointer in the next scope up, watch var usage
 			QTableWidgetItem * item = new QTableWidgetItem();
 			item->setText(QString(np->m_ports[i].first.c_str()));
 			item->setTextAlignment(Qt::AlignCenter);
@@ -1894,7 +1922,7 @@ void NovaConfig::LoadProfileSettings()
 
 		//Set the variables of the profile
 		ui.profileEdit->clear();
-		ui.ethernetEdit->clear();
+		//ui.ethernetEdit->clear();
 		ui.tcpActionComboBox->setCurrentIndex(0);
 		ui.udpActionComboBox->setCurrentIndex(0);
 		ui.icmpActionComboBox->setCurrentIndex(0);
@@ -1906,7 +1934,7 @@ void NovaConfig::LoadProfileSettings()
 		ui.dropRateSlider->setValue(0);
 		ui.dropRateSetting->setText("0%");
 		ui.profileEdit->setEnabled(false);
-		ui.ethernetEdit->setEnabled(false);
+		//ui.ethernetEdit->setEnabled(false);
 		ui.tcpActionComboBox->setEnabled(false);
 		ui.udpActionComboBox->setEnabled(false);
 		ui.icmpActionComboBox->setEnabled(false);
@@ -1976,12 +2004,12 @@ void NovaConfig::LoadInheritedProfileSettings()
 	ui.ethernetCheckBox->setEnabled(p->m_parentProfile.compare(""));
 	//We set again incase the checkbox was disabled (previous selection was root profile)
 	ui.ethernetCheckBox->setChecked(p->m_inherited[ETHERNET]);
-	tempFont = QFont(ui.ethernetLabel->font());
-	tempFont.setItalic(p->m_inherited[ETHERNET]);
-	ui.ethernetLabel->setFont(tempFont);
-	ui.ethernetEdit->setFont(tempFont);
-	ui.ethernetEdit->setEnabled(!p->m_inherited[ETHERNET]);
-	ui.setEthernetButton->setEnabled(!p->m_inherited[ETHERNET]);
+	//tempFont = QFont(ui.ethernetLabel->font());
+	//tempFont.setItalic(p->m_inherited[ETHERNET]);
+	//ui.ethernetLabel->setFont(tempFont);
+	//ui.ethernetEdit->setFont(tempFont);
+	//ui.ethernetEdit->setEnabled(!p->m_inherited[ETHERNET]);
+	//ui.setEthernetButton->setEnabled(!p->m_inherited[ETHERNET]);
 
 	ui.uptimeCheckBox->setChecked(p->m_inherited[UPTIME]);
 	ui.uptimeCheckBox->setEnabled(p->m_parentProfile.compare(""));
@@ -3084,11 +3112,6 @@ void NovaConfig::on_nodeEnableButton_clicked()
 void NovaConfig::on_nodeDisableButton_clicked()
 {
 	Q_EMIT on_actionNodeDisable_triggered();
-}
-
-void NovaConfig::on_setEthernetButton_clicked()
-{
-	DisplayMACPrefixWindow();
 }
 
 void NovaConfig::on_setPersonalityButton_clicked()
