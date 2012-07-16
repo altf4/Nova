@@ -1126,7 +1126,11 @@ bool Config::LoadVersionFile()
 			m_version.versionString = line;
 			m_version.buildYear = atoi(line.substr(0, line.find_first_of(".")).c_str());
 			m_version.buildMonth = atoi(temp.substr(0, temp.find_first_of(".")).c_str());
-			m_version.minorVersion = atoi(temp.substr(temp.find_first_of(".") + 1, string::npos).c_str());
+
+			if (temp.find_first_of(".") != string::npos)
+			{
+				m_version.minorVersion = atoi(temp.substr(temp.find_first_of(".") + 1, string::npos).c_str());
+			}
 		}
 		else
 		{
