@@ -26,6 +26,7 @@ block headerAdditions
     var saveChanges = function() {};
     var savedChanges = function() {};
     var sliderMoved = function(which) {};
+    var addVendor = function(vendor, len) {};
 
     var portIndexes = [];
     var loaded = false;
@@ -55,18 +56,33 @@ block headerAdditions
         
         var reduction = 0;
         
+        var checkZero = false;
+        
         for(var i = 0; i < len; i++)
         {
+            if(parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value) == 0)
+            {
+                checkZero = true;    
+            }
+        
             reduction += parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value);
+            console.log("summing reduction " + reduction);
         }
         
-        reduction -= 100;
+        if(!checkZero)
+        {
+            reduction -= 100;
+        }
+        else
+        {
+            reduction = 100 - reduction;
+        }
         
         var sumOfOtherElements = 0;
         
         var sumOfHiddens = 0;
         
-        var problems = [];
+        var problems = false;
         
         var newValues = new Array();
         
@@ -79,25 +95,24 @@ block headerAdditions
                 
                 if(parseInt(dojo.byId("distLabel" + i).value) == 0 || isNaN(sumOfOtherElements))
                 {
+                    console.log("problem is true, " + (parseInt(dojo.byId("distLabel" + i).value) == 0) + " " + isNaN(sumOfOtherElements));
                     problems = true;
-                }
-                else
-                {
-                    problems = false;
                 }
             }
         }
         
+        console.log("reduction is " + reduction + " after summing elements");
+        
         for(var i = 0; i < len; i++)
         {
-            if(dojo.byId("dist" + i) !== dojo.byId(which) && (!isNaN(sumOfOtherElements) && !problems))
+            if(dojo.byId("dist" + i) !== dojo.byId(which) && (!problems))
             {
                 var mult = (parseInt(dojo.byId("distLabel" + i).value) / sumOfOtherElements);
                 newValues.push(reduction * mult);
             }
-            else if(dojo.byId("dist" + i) !== dojo.byId(which) && (isNaN(sumOfOtherElements) || problems))
+            else if(dojo.byId("dist" + i) !== dojo.byId(which) && (problems))
             {
-                var mult = (parseInt(dojo.byId("hide" + i).getAttribute("value"))/sumOfHiddens);
+                var mult = (parseInt(dojo.byId("hide" + i).getAttribute("value")) / sumOfHiddens);
                 newValues.push(reduction * mult);
             }
         }
@@ -126,10 +141,13 @@ block headerAdditions
         
         var j = 0;
         
+        console.log("newValues after rounding " + newValues);
+        
         for(var i = 0; i < len; i++)
         {
             if(dojo.byId("dist" + i) !== dojo.byId(which) && !problems)
             {
+                console.log("no problems, dist" + i + " should be " + (document.getElementById("distLabel" + i).getAttribute("value") - newValues[j]));
                 document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value") - newValues[j];
                 document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).getAttribute("value") - newValues[j];
                 document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).getAttribute("value") - newValues[j]);
@@ -137,6 +155,7 @@ block headerAdditions
             }
             else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction < 0)
             {
+                console.log("reduction < 0, dist" + i + " should be " + (0 - newValues[j]));
                 document.getElementById("dist" + i).value = 0 - newValues[j];
                 document.getElementById("distLabel" + i).innerHTML = 0 - newValues[j];
                 document.getElementById("distLabel" + i).setAttribute("value", 0 - newValues[j]);
@@ -144,11 +163,99 @@ block headerAdditions
             }
             else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction > 0)
             {
+                console.log("reduction > 0, dist" + i + " should be " + (0 + newValues[j]));
                 document.getElementById("dist" + i).value = 0 + newValues[j];
                 document.getElementById("distLabel" + i).innerHTML = 0 + newValues[j];
                 document.getElementById("distLabel" + i).setAttribute("value", 0 + newValues[j]);
                 j++;
             }
+        }
+        
+        var sum = 0;
+        
+        for(var i = 0; i < len; i++)
+        {
+            sum += parseInt(document.getElementById("dist" + i).value);
+        }
+        
+        console.log("Sum of the elements is " + sum);
+        
+        if(sum > 100)
+        {
+            var amountToSubtract = sum - 100;
+            
+            console.log("amountToSubtract " + amountToSubtract);
+            
+            var allocate = new Array();
+            
+            for(var i = 0; amountToSubtract != 0; i++)
+            {
+                if(allocate[i % (len - 1)]  == undefined)
+                {
+                    allocate.push(1);
+                    amountToSubtract -= 1;
+                }
+                else
+                {
+                    allocate[i % (len - 1)] += 1;
+                    amountToSubtract -= 1;
+                }
+            }
+            
+            console.log("allocate " + allocate);
+            
+            for(var i = 0; i < len; i++)
+            {
+                if(dojo.byId("dist" + i) !== dojo.byId(which))
+                {
+                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value") - allocate[j];
+                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).getAttribute("value") - allocate[j];
+                    document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).getAttribute("value") - allocate[j]);
+                    j++;
+                }
+            }
+        }
+        else if(sum < 100)
+        {
+            var amountToAdd = 100 - sum;
+            
+            console.log("amountToAdd " + amountToAdd);
+            
+            var allocate = [];
+            
+            for(var i = 0; amountToAdd != 0; i++)
+            {
+                if(allocate[i % (len - 1)]  == undefined)
+                {
+                    allocate.push(1);
+                    amountToAdd -= 1;
+                }
+                else
+                {
+                    allocate[i % (len - 1)] += 1;
+                    amountToAdd -= 1;
+                }
+            }
+            
+            console.log("allocate " + allocate);
+            
+            for(var i = 0; i < len; i++)
+            {
+                if(dojo.byId("dist" + i) !== dojo.byId(which))
+                {
+                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value") + allocate[j];
+                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).getAttribute("value") + allocate[j];
+                    document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).getAttribute("value") + allocate[j]);
+                    j++;
+                }
+            }
+        }
+    }
+ 
+    addVendor = function(vendor, len) {
+        for(var i = 0; i < len; i++)
+        {
+        
         }
     }
  
@@ -373,6 +480,21 @@ block headerAdditions
             function(elements, distributions){
                 document.getElementById("ethVendorLength").setAttribute("value", elements.length);
 
+                var teed = document.createElement("td");
+                var teed2 = document.createElement("td");
+                var teed3 = document.createElement("td");
+
+                /*var vendorListStore = [];
+                
+                for(var i in vendorList)
+                {
+                    vendorListStore.push({name:vendorList[i], id:vendorList[i]});
+                }
+
+                dojo.require('dojo.store.Memory');
+
+                var store = new dojo.store.Memory({data: vendorListStore});*/
+
                 for(var i in elements)
                 {
                     var hidden = document.createElement("hidden");
@@ -380,14 +502,28 @@ block headerAdditions
                     hidden.setAttribute("id", "hide" + i);
                     hidden.setAttribute("value", distributions[i]);
                 
-                    var add = document.createElement("input");
+                    /*var add = dijit.form.FilteringSelect({
+                                id: "vend" + i,
+                                name: "ethernet",
+                                value: elements[i],
+                                store: store,
+                                searchAttr: "name"
+                            }, "vend" + i);
                     
-                    add.setAttribute("id","vend" + i);
-                    add.setAttribute("value",elements[i]);
-                    add.setAttribute("type", "text");
-                    add.setAttribute("readonly","true");
-                    add.innerHTML = elements[i];
+                    add.innerHTML = elements[i];*/
+                   
+                    var add = document.createElement("label");
+                    add.setAttribute("id", "vend" + i);
                     
+                    /*for(var i = 0; i < vendorList.length; i++)
+                    {
+                        var opt = new Option(vendorList[i], vendorList[i]);
+                        add.appendChild(opt);
+                    }*/
+                    
+                    add.setAttribute("value", elements[i]);
+                    add.setAttribute("style", "width: 10");
+                                       
                     var distribution = document.createElement("input");
                     
                     distribution.setAttribute("id", "dist" + i);
@@ -406,15 +542,16 @@ block headerAdditions
                     distLabel.setAttribute("readonly","true");
                     distLabel.innerHTML = distributions[i];
                     
-                    var teed = document.createElement("td");
                     var teer = document.createElement("tr");
                     
                     teer.setAttribute("id", "ethrow" + i);
                     teed.appendChild(add);
-                    teed.appendChild(distribution);
-                    teed.appendChild(distLabel);
+                    teed2.appendChild(distLabel);
+                    teed3.appendChild(distribution);
                     teed.appendChild(hidden);
                     teer.appendChild(teed);
+                    teer.appendChild(teed2);
+                    teer.appendChild(teed3);
                     
                     for(var j in document.getElementById("tableEditProfile").childNodes)
                     {
@@ -647,6 +784,7 @@ block content
           select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
             each vendor in vendors
               option(value="#{vendor}") #{vendor}
+              
       
       hidden(id="ethVendorLength", value="")
       
