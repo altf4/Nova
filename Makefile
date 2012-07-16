@@ -210,6 +210,9 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
+	rm -f $(DESTDIR)/usr/bin/nova_init
+	rm -f $(DESTDIR)/usr/bin/novaweb
+	rm -f $(DESTDIR)/usr/bin/novatrainer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
