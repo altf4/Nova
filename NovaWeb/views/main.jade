@@ -80,6 +80,7 @@ block headerAdditions
     now.updateNovadStatus = function (isNovadUp){
       lastNovadStatus = isNovadUp;
       dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
+      dojo.byId("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
       dojo.byId("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
       dojo.byId("nova_suspects").style.display = isNovadUp ? "block" : "none";
       dojo.byId("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
