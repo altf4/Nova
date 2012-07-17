@@ -27,7 +27,11 @@ namespace Nova
 
 //. ************ Public Methods ************ .//
 
-
+// Constructor that assigns the m_persTree and m_hdconfig variables
+// to values within the PersonalityTree* that's being passed. It then immediately
+// begins generating ProfileCounters.
+//		persTree: The Personality Tree to use in the NodeManager
+// Note: This function loads the same HoneydConfiguration nova would get if loaded from the current templates.
 NodeManager::NodeManager(PersonalityTree *persTree)
 {
 	if(persTree != NULL)
@@ -49,10 +53,23 @@ NodeManager::NodeManager(HoneydConfiguration *honeydConfig)
 	if(honeydConfig != NULL)
 	{
 		m_hdconfig = honeydConfig;
-		//XXX Do rest of construction here;
+		m_persTree = NULL;
+		if(m_hdconfig->LoadAllTemplates())
+		{
+			GenerateProfileCounters(m_hdconfig->GetProfile("default"));
+		}
 	}
 }
 
+// SetPersonalityTree is used to change the target PersonalityTree from the
+// current m_persTree to the PersonalityTree* argument. If the pointer passed
+// is null, returns false; else, perform the same actions as the constructor and
+// return true. Can also be used in the case that you wish to instantiate the object
+// without explicitly declaring a PersonalityTree; if the constructor receives a NULL
+// pointer as an argument, it won't do anything, so you have to set the tree yourself
+// using this method.
+//  PersonalityTree *persTree - PersonalityTree pointer to shift m_persTree to.
+// Returns a bool indicating success or failure.
 bool NodeManager::SetPersonalityTree(PersonalityTree *persTree)
 {
 	if(persTree == NULL)
@@ -65,6 +82,12 @@ bool NodeManager::SetPersonalityTree(PersonalityTree *persTree)
 	return true;
 }
 
+// GenerateNodes does exactly what it sounds like -- creates nodes. Using the
+// ProfileCounters in the m_profileCounters variable, it will generate up to
+// num_nodes nodes of varying profiles, macs and ports, depending on the calculated
+// per-personality distributions.
+//  unsigned int num_nodes - ceiling on the amount of nodes to make
+// Returns nothing.
 void NodeManager::GenerateNodes(unsigned int num_nodes)
 {
 	vector<Node> nodesToAdd;
@@ -242,6 +265,9 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 }
 
 //. ************ Private Methods ************ .//
+
+// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter.
+// Returns nothing, takes no arguments.
 void NodeManager::GenerateProfileCounters()
 {
 	PersonalityNode *rootNode = m_persTree->GetRootNode();
@@ -249,6 +275,14 @@ void NodeManager::GenerateProfileCounters()
 	RecursiveGenProfileCounter(*rootNode);
 }
 
+// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
+//		randomized nodes from the profiles at the different nodes of the Personality Tree.
+//		Creates, populates and pushes a ProfileCounter struct, complete with Mac- and PortCounters
+//		for each node in the tree into the m_profileCounters member variable.
+//  const PersonalityNode &parent - const reference to a PersonalityNode of the tree;
+//                                  the node's information is read and placed into a complete
+//                                  ProfileCounter struct.
+// Returns nothing.
 void NodeManager::RecursiveGenProfileCounter(const PersonalityNode &parent)
 {
 	if(parent.m_children.empty())
@@ -281,6 +315,67 @@ void NodeManager::RecursiveGenProfileCounter(const PersonalityNode &parent)
 	}
 }
 
+
+// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
+//		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
+// 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of
+//		the profile tree
+void NodeManager::GenerateProfileCounters(NodeProfile *rootProfile)
+{
+	m_hostCount = 0;
+	RecursiveGenProfileCounter(rootProfile);
+}
+
+// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
+//		randomized nodes from the profiles at the different nodes of the Personality Tree.
+//		Creates, populates and pushes a ProfileCounter struct, complete with Mac- and PortCounters
+//		for each node in the tree into the m_profileCounters member variable.
+//  NodeProfile *profile - pointer to a NodeProfile in the tree structure;
+//                         the profile's information is read and generates a ProfileCounter
+// Returns nothing.
+void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
+{
+	if(m_hdconfig->GetProfile(profile->m_name) == NULL)
+	{
+		LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + profile->m_name, "");
+		return;
+	}
+	struct ProfileCounter pCounter;
+	pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
+	pCounter.m_increment = (profile->m_distribution/((double)100));
+	int totalPorts = 0;
+	for(uint i = 0; i < profile->m_nodeKeys.size(); i++)
+	{
+		totalPorts += m_hdconfig->GetNode(profile->m_nodeKeys[i])->m_ports.size();
+	}
+	pCounter.m_numAvgPorts = (uint)((double)totalPorts)/((double)profile->m_nodeKeys.size());
+	pCounter.m_count = 0;
+
+	for(unsigned int i = 0; i < profile->m_ethernetVendors.size(); i++)
+	{
+		pCounter.m_macCounters.push_back(GenerateMacCounter(profile->m_ethernetVendors[i].first, profile->m_ethernetVendors[i].second));
+	}
+	for(unsigned int i = 0; i < profile->m_ports.size(); i++)
+	{
+		pCounter.m_portCounters.push_back(GeneratePortCounter(profile->m_ports[i].first, profile->m_ports[i].second.second));
+	}
+	m_profileCounters.push_back(pCounter);
+	for(ProfileTable::iterator it = m_hdconfig->m_profiles.begin(); it != m_hdconfig->m_profiles.end(); it++)
+	{
+		if(!it->second.m_parentProfile.compare(profile->m_name))
+		{
+			RecursiveGenProfileCounter(&m_hdconfig->m_profiles[it->first]);
+		}
+	}
+}
+
+// GenerateMacCounter takes in a vendor string and its corresponding distribution value
+// 		and populates a MacCounter struct with these values. Used in RecursiveGenProfileCounter
+//		to add MacCounters to athe ProfileCounter's m_macCounters vector.
+//  const std::string &vendor - const reference to a string containing a MAC Vendor
+//  const double dist_val - a const double that contains the calculated distribution value
+//                          in the current node's m_vendor_dist vector.
+// Returns a MacCounter struct.
 MacCounter NodeManager::GenerateMacCounter(const string &vendor, const double dist_val)
 {
 	struct MacCounter ret;
@@ -290,6 +385,14 @@ MacCounter NodeManager::GenerateMacCounter(const string &vendor, const double di
 	return ret;
 }
 
+// GeneratePortCounter takes in a port name string and its corresponding distribution value
+//		and populates a PortCounter struct with these values. Used in RecursiveGenProfileCounter
+//		to add PortCounters to athe ProfileCounter's m_portCounters vector.
+//  const std::string &portName - const reference to a string containing a port name of the form
+//                          NUM_PROTOCOL_(open || SCRIPTNAME)
+//  const double dist_val - a const double that contains the calculated distribution value
+//                          in the current node's m_ports_dist vector.
+// Returns a PortCounter struct.
 PortCounter NodeManager::GeneratePortCounter(const string &portName, const double dist_val)
 {
 	struct PortCounter ret;

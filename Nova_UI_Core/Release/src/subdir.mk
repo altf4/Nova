@@ -17,6 +17,7 @@ CPP_SRCS += \
 ../src/ScriptsTable.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
+../src/TrainingDump.cpp \
 ../src/VendorMacDb.cpp 
 
 OBJS += \
@@ -33,6 +34,7 @@ OBJS += \
 ./src/ScriptsTable.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
+./src/TrainingDump.o \
 ./src/VendorMacDb.o 
 
 CPP_DEPS += \
@@ -49,6 +51,7 @@ CPP_DEPS += \
 ./src/ScriptsTable.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \
+./src/TrainingDump.d \
 ./src/VendorMacDb.d 
 
 
