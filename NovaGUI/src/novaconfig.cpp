@@ -2692,7 +2692,7 @@ void NovaConfig::LoadAllNodes()
 			{
 				ui.dmCheckBox->setChecked(Config::Inst()->GetIsDmEnabled());
 				//Enable the loopback subnet as well if DM is enabled
-				m_honeydConfig->m_subnets[n->sub].enabled |= Config::Inst()->GetIsDmEnabled();
+				m_honeydConfig->m_subnets[n->m_sub].m_enabled |= Config::Inst()->GetIsDmEnabled();
 			}
 			if(!n->m_enabled)
 			{
