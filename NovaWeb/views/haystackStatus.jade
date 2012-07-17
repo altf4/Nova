@@ -5,6 +5,8 @@ block headerAdditions
 
 block content
   h1 Last reported honeyd DHCP node addresses
+  - if (haystackDHCPIps == '')
+    li No DHCP addresses
   each ip in haystackDHCPIps
     li= ip
   
