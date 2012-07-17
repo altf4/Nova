@@ -46,7 +46,7 @@ button {
 .button:hover {color:green;}
 .button:active {color:green;}
 
-input {
+input, span {
     -webkit-transition: background-color 0.2s linear;
     border-radius:4px;
     -moz-border-radius: 4px 4px 4px 4px;

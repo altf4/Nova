@@ -25,8 +25,9 @@ block headerAdditions
     var portBehaviorChanged = function() {};
     var saveChanges = function() {};
     var savedChanges = function() {};
-    var sliderMoved = function(which) {};
-    var addVendor = function(vendor, len) {};
+    var sliderMoved = function(which, len, cb) {};
+    var clearCell = function(which, len) {};
+    var addVendor = function(vendName) {};
 
     var portIndexes = [];
     var loaded = false;
@@ -47,11 +48,77 @@ block headerAdditions
         dojo.byId("saveButton").disabled = true;
     }
 
-    sliderMoved = function(which, len) {
+    addVendor = function(vendName) {
+        if(document.getElementById("ethDiv0") == undefined)
+        {
+            var div = createElement("div");
+            div.setAttribute("id", "ethDiv0");
+            div.setAttribute("style", "width: content_width");
+            
+            var dist;
+            
+            var hidden = document.createElement("hidden");
+            
+            hidden.setAttribute("id", "hide0");
+            hidden.setAttribute("value", 100);
+            hidden.setAttribute("style", "float:right");
+           
+            var add = document.createElement("input");
+            
+            add.setAttribute("id", "vend0");
+            add.innerHTML = vendName;
+            add.setAttribute("type", "text");
+            add.setAttribute("value", vendName);
+            add.setAttribute("style", "width: 10");
+            add.setAttribute("readonly", "true");
+            add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                               
+            var br = document.createElement("br");
+            
+            var distLabel = document.createElement("input");
+            
+            distLabel.setAttribute("id","distLabel0");
+            distLabel.setAttribute("value", "100%");
+            distLabel.innerHTML = "100%";
+            distLabel.setAttribute("type", "text");
+            distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+            distLabel.setAttribute("onchange", 'clearCell("distLabel0", ' + 1 + ')');
+
+            var deleteButton = document.createElement("button");
+            
+            deleteButton.setAttribute("type", "button");
+            deleteButton.setAttribute("onclick", "deleteAndClean(\"ethDiv0\")")
+
+        }
+    }
+
+    clearCell = function(which, len) {
+        var element = document.getElementById(which);
+        var text = element.value;
+        
+        if(text[text.length - 1] != "%")
+        {
+            element.value += "%";
+            sliderMoved("dist" + which[which.length - 1], len, text);
+        }
+        else if(document.getElementById("dist" + which[which.length - 1]).value != document.getElementById(which).value)
+        {
+            sliderMoved("dist" + which[which.length - 1], len, text);
+        }
+    }
+
+    sliderMoved = function(which, len, cb) {
+    
+        if(cb != undefined)
+        {
+            console.log("sliderMoved used as callback, cb is " + cb);
+            dojo.byId(which).setAttribute("value", valueToReplace);
+        }
+    
         var valueToReplace = document.getElementById(which).value;
 
-        dojo.byId("distLabel" + which[which.length - 1]).innerHTML = valueToReplace;
-        dojo.byId("distLabel" + which[which.length - 1]).setAttribute("value", valueToReplace);
+        dojo.byId("distLabel" + which[which.length - 1]).setAttribute("value", valueToReplace + "%");
+        dojo.byId("distLabel" + which[which.length - 1]).innerHTML = valueToReplace + "%";
         dojo.byId(which).setAttribute("value", valueToReplace);
         
         var reduction = 0;
@@ -90,12 +157,13 @@ block headerAdditions
         {
             if(dojo.byId("dist" + i) !== dojo.byId(which))
             {
-                sumOfOtherElements += parseInt(dojo.byId("distLabel" + i).value);
+            
+                sumOfOtherElements += parseInt(document.getElementById("distLabel" + i).getAttribute("value").substr(0,document.getElementById("distLabel" + i).getAttribute("value").length - 1));
                 sumOfHiddens += parseInt(dojo.byId("hide" + i).getAttribute("value"));
                 
-                if(parseInt(dojo.byId("distLabel" + i).value) == 0 || isNaN(sumOfOtherElements))
+                if(parseInt(dojo.byId("distLabel" + i).getAttribute("value").substr(0,dojo.byId("distLabel" + i).getAttribute("value").length - 1)) == 0 || isNaN(sumOfOtherElements))
                 {
-                    console.log("problem is true, " + (parseInt(dojo.byId("distLabel" + i).value) == 0) + " " + isNaN(sumOfOtherElements));
+                    //console.log("problem is true, " + (parseInt(dojo.byId("distLabel" + i).getAttribute("value").substr(0,dojo.byId("distLabel" + i).getAttribute("value").length - 1)) == 0) + " " + isNaN(sumOfOtherElements));
                     problems = true;
                 }
             }
@@ -107,7 +175,7 @@ block headerAdditions
         {
             if(dojo.byId("dist" + i) !== dojo.byId(which) && (!problems))
             {
-                var mult = (parseInt(dojo.byId("distLabel" + i).value) / sumOfOtherElements);
+                var mult = (parseInt(dojo.byId("distLabel" + i).getAttribute("value").substr(0,dojo.byId("distLabel" + i).getAttribute("value").length - 1)) / sumOfOtherElements);
                 newValues.push(reduction * mult);
             }
             else if(dojo.byId("dist" + i) !== dojo.byId(which) && (problems))
@@ -147,26 +215,27 @@ block headerAdditions
         {
             if(dojo.byId("dist" + i) !== dojo.byId(which) && !problems)
             {
-                console.log("no problems, dist" + i + " should be " + (document.getElementById("distLabel" + i).getAttribute("value") - newValues[j]));
-                document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value") - newValues[j];
-                document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).getAttribute("value") - newValues[j];
-                document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).getAttribute("value") - newValues[j]);
+                console.log("no problems, dist" + i + " should be " + (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]));
+                document.getElementById("dist" + i).value = (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]);
+                document.getElementById("distLabel" + i).innerHTML = ((document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]) + "%");
+                document.getElementById("distLabel" + i).setAttribute("value", 
+                (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]) + "%");
                 j++;
             }
             else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction < 0)
             {
                 console.log("reduction < 0, dist" + i + " should be " + (0 - newValues[j]));
-                document.getElementById("dist" + i).value = 0 - newValues[j];
-                document.getElementById("distLabel" + i).innerHTML = 0 - newValues[j];
-                document.getElementById("distLabel" + i).setAttribute("value", 0 - newValues[j]);
+                document.getElementById("dist" + i).value = (0 - newValues[j]);
+                document.getElementById("distLabel" + i).setAttribute("value", (0 - newValues[j]) + "%");
+                document.getElementById("distLabel" + i).innerHTML = ((0 - newValues[j]) + "%");
                 j++;
             }
             else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction > 0)
             {
                 console.log("reduction > 0, dist" + i + " should be " + (0 + newValues[j]));
-                document.getElementById("dist" + i).value = 0 + newValues[j];
-                document.getElementById("distLabel" + i).innerHTML = 0 + newValues[j];
-                document.getElementById("distLabel" + i).setAttribute("value", 0 + newValues[j]);
+                document.getElementById("dist" + i).value = (0 + newValues[j]);
+                document.getElementById("distLabel" + i).setAttribute("value", (0 + newValues[j]) + "%");
+                document.getElementById("distLabel" + i).innerHTML = ((0 + newValues[j]) + "%");
                 j++;
             }
         }
@@ -208,9 +277,9 @@ block headerAdditions
             {
                 if(dojo.byId("dist" + i) !== dojo.byId(which))
                 {
-                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value") - allocate[j];
-                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).getAttribute("value") - allocate[j];
-                    document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).getAttribute("value") - allocate[j]);
+                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - allocate[j];
+                    document.getElementById("distLabel" + i).setAttribute("value", (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - allocate[j]) + "%");
+                    document.getElementById("distLabel" + i).innerHTML = ((document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - allocate[j]) + "%");
                     j++;
                 }
             }
@@ -243,19 +312,12 @@ block headerAdditions
             {
                 if(dojo.byId("dist" + i) !== dojo.byId(which))
                 {
-                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value") + allocate[j];
-                    document.getElementById("distLabel" + i).innerHTML = document.getElementById("distLabel" + i).getAttribute("value") + allocate[j];
-                    document.getElementById("distLabel" + i).setAttribute("value", document.getElementById("distLabel" + i).getAttribute("value") + allocate[j]);
+                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) + allocate[j];
+                    document.getElementById("distLabel" + i).setAttribute("value", (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) + allocate[j]) + "%");
+                    document.getElementById("distLabel" + i).innerHTML = ((document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) + allocate[j]) + "%");
                     j++;
                 }
             }
-        }
-    }
- 
-    addVendor = function(vendor, len) {
-        for(var i = 0; i < len; i++)
-        {
-        
         }
     }
  
@@ -471,59 +533,73 @@ block headerAdditions
             dijit.byId("personality").setDisabled(false);
         }
 
-        if (dojo.byId("ethernet").disabled = dojo.byId("inheritEthernet").checked) 
+        if (/*dojo.byId("ethernet").disabled = */dojo.byId("inheritEthernet").checked) 
         {
-            dojo.byId("ethernet").value = profile.ethernet;
+            //dojo.byId("ethernet").value = profile.ethernet;
             dijit.byId("ethernet").setDisabled(true);
+            dojo.byId("ethSelectButton").disabled = true;
             
             now.GetInheritedEthernetList(document.getElementById("parentName").value, 
             function(elements, distributions){
                 document.getElementById("ethVendorLength").setAttribute("value", elements.length);
 
-                var teed = document.createElement("td");
-                var teed2 = document.createElement("td");
-                var teed3 = document.createElement("td");
-
-                /*var vendorListStore = [];
-                
-                for(var i in vendorList)
-                {
-                    vendorListStore.push({name:vendorList[i], id:vendorList[i]});
-                }
-
-                dojo.require('dojo.store.Memory');
-
-                var store = new dojo.store.Memory({data: vendorListStore});*/
+                var teed = document.getElementById("labelDist");
+                var teed2 = document.getElementById("ranges");
 
                 for(var i in elements)
                 {
+                    var distro = distributions[i];
+                
+                    if(Math.floor(distro + 0.5) == Math.floor(distro))
+                    {
+                        distributions[i] = Math.ceil(distro);
+                        distributions[i + 1] += distro % 1; 
+                    }
+                    else
+                    {
+                        distributions[i] = Math.floor(distro);
+                        distributions[i + 1] -= distro % 1; 
+                    }
+                
+                    var div = document.createElement("div");
+                
+                    div.setAttribute("id", "ethDiv" + i);
+                    div.setAttribute("style", "width: content_width");
+                
+                    var rangeDiv = document.createElement("div");
+                
+                    rangeDiv.setAttribute("id", "rangeDiv" + i);
+                    rangeDiv.setAttribute("style", "width: content_width");
+                
                     var hidden = document.createElement("hidden");
                     
                     hidden.setAttribute("id", "hide" + i);
                     hidden.setAttribute("value", distributions[i]);
-                
-                    /*var add = dijit.form.FilteringSelect({
-                                id: "vend" + i,
-                                name: "ethernet",
-                                value: elements[i],
-                                store: store,
-                                searchAttr: "name"
-                            }, "vend" + i);
-                    
-                    add.innerHTML = elements[i];*/
+                    hidden.setAttribute("style", "float:right");
                    
-                    var add = document.createElement("label");
+                    var add = document.createElement("input");
+                    
                     add.setAttribute("id", "vend" + i);
-                    
-                    /*for(var i = 0; i < vendorList.length; i++)
-                    {
-                        var opt = new Option(vendorList[i], vendorList[i]);
-                        add.appendChild(opt);
-                    }*/
-                    
+                    add.innerHTML = elements[i];
+                    add.setAttribute("type", "text");
                     add.setAttribute("value", elements[i]);
                     add.setAttribute("style", "width: 10");
+                    add.setAttribute("readonly", "true");
+                    add.setAttribute("style", "display: inline-block; float: left; clear: left");
                                        
+                    var br = document.createElement("br");
+                    
+                    var distLabel = document.createElement("input");
+                    
+                    distLabel.setAttribute("id","distLabel" + i);
+                    distLabel.setAttribute("value", distributions[i] + "%");
+                    distLabel.innerHTML = distributions[i] + "%";
+                    distLabel.setAttribute("type", "text");
+                    //distLabel.setAttribute("readonly","true");
+                    distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+                    distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
+                    //distLabel.setAttribute("onfocus", 'clearCell("distLabel' + i + '")');
+
                     var distribution = document.createElement("input");
                     
                     distribution.setAttribute("id", "dist" + i);
@@ -532,63 +608,56 @@ block headerAdditions
                     distribution.setAttribute("max", "100");
                     distribution.setAttribute("step", "1");
                     distribution.setAttribute("value", distributions[i]);
+                    distribution.setAttribute("style", "vertical-align: text");
                     distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
-                    
-                    var distLabel = document.createElement("input");
-                    
-                    distLabel.setAttribute("id","distLabel" + i);
-                    distLabel.setAttribute("value", distributions[i]);
-                    distLabel.setAttribute("type", "text");
-                    distLabel.setAttribute("readonly","true");
-                    distLabel.innerHTML = distributions[i];
-                    
-                    var teer = document.createElement("tr");
-                    
-                    teer.setAttribute("id", "ethrow" + i);
-                    teed.appendChild(add);
-                    teed2.appendChild(distLabel);
-                    teed3.appendChild(distribution);
-                    teed.appendChild(hidden);
-                    teer.appendChild(teed);
-                    teer.appendChild(teed2);
-                    teer.appendChild(teed3);
-                    
-                    for(var j in document.getElementById("tableEditProfile").childNodes)
-                    {
-                        if(document.getElementById("tableEditProfile").childNodes[j].tagName == "TBODY")
-                        {
-                            document.getElementById("tableEditProfile").childNodes[j].insertBefore(teer, document.getElementById("row4"));
-                            break;
-                        }
-                    }
+
+                    div.appendChild(add);
+                    div.appendChild(distLabel);
+                    div.appendChild(hidden);
+                    teed.appendChild(div);
+                    rangeDiv.appendChild(distribution);
+                    rangeDiv.appendChild(br);
+                    teed2.appendChild(rangeDiv);
                 }
             });     
         }
         else 
         {
+            dojo.byId("ethSelectButton").disabled = false;
             dijit.byId("ethernet").setDisabled(false);
-            var deletes = document.getElementById("tableEditProfile");
             
-            for(var i in deletes.childNodes)
+            var deletes = document.getElementById("row3").childNodes;
+            
+            try
             {
-                if(deletes.childNodes[i].tagName == "TBODY")
+                for(var i in deletes)
                 {
-                    var tbodyLength = deletes.childNodes[i].childNodes.length;
-                    
-                    for(var j = 0; j < tbodyLength; j++)
+                    if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "labelDist")
                     {
-                        if(deletes.childNodes[i].childNodes[j].tagName == "TR")
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
                         {
-                            var idLength = deletes.childNodes[i].childNodes[j].id.length;
-
-                            if(deletes.childNodes[i].childNodes[j].id.substr(0, idLength - 1) == "ethrow")
-                            {
-                                deletes.childNodes[i].removeChild(deletes.childNodes[i].childNodes[j]);
-                                j--;
-                            }
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
+                        }
+                    }
+                    else if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "ranges")
+                    {
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
+                        {                     
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
                         }
                     }
                 }
+            }
+            catch(err)
+            {
+                // This'll catch much the same as the nested try catch;
+                // there's some stuff inside a tag that getAttribute() 
+                // can't be called on (Object#<Comment>) but it's 
+                // easier to just let the error happen than develop logic
+                // to avoid those elements. I'll try experimenting with using
+                // tagName stuff a little bit but this'll be how it is for now.
             }
         }
 
@@ -714,7 +783,7 @@ block headerAdditions
           }
 
           dojo.byId("personality").value = profile.personality;
-          dojo.byId("ethernet").value = profile.ethernet;
+          //dojo.byId("ethernet").value = profile.ethernet;
           dojo.byId("uptimeMin").value = profile.uptimeMin;
           dojo.byId("uptimeMax").value = profile.uptimeMax;
           dojo.byId("dropRate").value = profile.dropRate;
@@ -772,21 +841,6 @@ block content
           select#personality(data-dojo-type="dijit.form.FilteringSelect", name="personality", autocomplete="true", pageSize=10)
             each os in personalities
               option(value="#{os}") #{os}
-      
-      tr(id="row3")
-        td
-          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Ethernet Vendor
-        td
-          select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
-            each vendor in vendors
-              option(value="#{vendor}") #{vendor}
-              
-      
-      hidden(id="ethVendorLength", value="")
       
       tr(id="row4")
         td
@@ -850,6 +904,26 @@ block content
           mixin defaultActionBox('icmpAction')
 
     br
+    
+    h3 Profile Ethernet Vendor Configuration
+    table(style="_min-height: 100px")
+      tr(id="row3")
+        td
+          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(id="labelDist", style="text-align:right")
+        td(id="ranges")
+          
+     div(id="ethSelectDiv")
+       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById(ethernet).getAttribute(\"value\"))") Add New Vendor
+
+       select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+         each vendor in vendors
+           option(value="#{vendor}") #{vendor}
+              
+      
+      hidden(id="ethVendorLength", value="")
     
     h3 Profile Port Configuration
     table#portTable
