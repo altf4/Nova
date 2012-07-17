@@ -28,6 +28,7 @@ block headerAdditions
     var sliderMoved = function(which, len, cb) {};
     var clearCell = function(which, len) {};
     var addVendor = function(vendName) {};
+    var deleteAndClean = function(which) {};
 
     var portIndexes = [];
     var loaded = false;
@@ -51,11 +52,28 @@ block headerAdditions
     addVendor = function(vendName) {
         if(document.getElementById("ethDiv0") == undefined)
         {
+            var teed = document.getElementById("labelDist");
+            var teed2 = document.getElementById("ranges");
+        
             var div = createElement("div");
+            
             div.setAttribute("id", "ethDiv0");
             div.setAttribute("style", "width: content_width");
             
-            var dist;
+            var rangeDiv = createElement("div");
+            
+            div.setAttribute("id", "rangeDiv0");
+            div.setAttribute("style", "width: content_width");
+            
+            var distribution = document.createElement("input");
+                    
+            distribution.setAttribute("id", "dist0");
+            distribution.setAttribute("type", "range");
+            distribution.setAttribute("min", "1");                    
+            distribution.setAttribute("max", "100");
+            distribution.setAttribute("step", "1");
+            distribution.setAttribute("value", 100);
+            distribution.setAttribute("style", "vertical-align: text");
             
             var hidden = document.createElement("hidden");
             
@@ -87,9 +105,99 @@ block headerAdditions
             var deleteButton = document.createElement("button");
             
             deleteButton.setAttribute("type", "button");
-            deleteButton.setAttribute("onclick", "deleteAndClean(\"ethDiv0\")")
+            deleteButton.setAttribute("onclick", "deleteAndClean(\"ethDiv0\")");
 
+            div.appendChild(add);
+            div.appendChild(distLabel);
+            div.appendChild(hidden);
+            teed.appendChild(div);
+            rangeDiv.appendChild(distribution);
+            rangeDiv.appendChild(br);
+            teed2.appendChild(rangeDiv);
+            
+            teed2.appendChild(deleteButton);
+            
+            document.getElementById("numCreated").value = 1;
         }
+        else
+        {
+            document.getElementById("numCreated").value += 1;
+            
+            var number = document.getElementById("numCreated").value - 1;
+            
+            console.log('number ' + number);
+            
+            var teed = document.getElementById("labelDist");
+            var teed2 = document.getElementById("ranges");
+
+            var div = createElement("div");
+            
+            div.setAttribute("id", "ethDiv" + number);
+            div.setAttribute("style", "width: content_width");
+            
+            var rangeDiv = createElement("div");
+            
+            div.setAttribute("id", "rangeDiv" + number);
+            div.setAttribute("style", "width: content_width");
+            
+            var distribution = document.createElement("input");
+                    
+            distribution.setAttribute("id", "dist" + number);
+            distribution.setAttribute("type", "range");
+            distribution.setAttribute("min", "1");                    
+            distribution.setAttribute("max", "100");
+            distribution.setAttribute("step", "1");
+            distribution.setAttribute("value", 0);
+            distribution.setAttribute("style", "vertical-align: text");
+            
+            var hidden = document.createElement("hidden");
+            
+            hidden.setAttribute("id", "hide" + number);
+            hidden.setAttribute("value", 0);
+            hidden.setAttribute("style", "float:right");
+           
+            var add = document.createElement("input");
+            
+            add.setAttribute("id", "vend" + number);
+            add.innerHTML = vendName;
+            add.setAttribute("type", "text");
+            add.setAttribute("value", vendName);
+            add.setAttribute("style", "width: 10");
+            add.setAttribute("readonly", "true");
+            add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                               
+            var br = document.createElement("br");
+            
+            var distLabel = document.createElement("input");
+            
+            distLabel.setAttribute("id","distLabel" + number);
+            distLabel.setAttribute("value", "1%");
+            distLabel.innerHTML = "1%";
+            distLabel.setAttribute("type", "text");
+            distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+            distLabel.setAttribute("onchange", 'clearCell("distLabel' + number + '", ' + (number + 1) + ')');
+
+            var deleteButton = document.createElement("button");
+            
+            deleteButton.setAttribute("type", "button");
+            deleteButton.setAttribute("onclick", 'deleteAndClean("ethDiv' + number + '")');
+
+            div.appendChild(add);
+            div.appendChild(distLabel);
+            div.appendChild(hidden);
+            teed.appendChild(div);
+            rangeDiv.appendChild(distribution);
+            rangeDiv.appendChild(br);
+            teed2.appendChild(rangeDiv);
+            
+            teed2.appendChild(deleteButton);
+        }
+    }
+
+    deleteAndClean = function(which) {
+        //var whichToDelete = which.substr(0, 6);
+        
+        console.log(which);
     }
 
     clearCell = function(which, len) {
@@ -924,6 +1032,7 @@ block content
               
       
       hidden(id="ethVendorLength", value="")
+      hidden(id="numCreated", value="0")
     
     h3 Profile Port Configuration
     table#portTable
