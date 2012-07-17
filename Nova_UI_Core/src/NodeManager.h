@@ -101,9 +101,34 @@ private:
 	// Returns nothing, takes no arguments.
 	void GenerateProfileCounters();
 
+	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
+	//		randomized nodes from the profiles at the different nodes of the Personality Tree.
+	//		Creates, populates and pushes a ProfileCounter struct, complete with Mac- and PortCounters
+	//		for each node in the tree into the m_profileCounters member variable.
+	//  const PersonalityNode &parent - const reference to a PersonalityNode of the tree;
+	//                                  the node's information is read and placed into a complete
+	//                                  ProfileCounter struct.
+	// Returns nothing.
+	void RecursiveGenProfileCounter(const PersonalityNode &parent);
+
+	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
+	//		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
+	// 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of
+	//		the profile tree
+	void GenerateProfileCounters(NodeProfile *rootProfile);
+
+	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
+	//		randomized nodes from the profiles at the different nodes of the Personality Tree.
+	//		Creates, populates and pushes a ProfileCounter struct, complete with Mac- and PortCounters
+	//		for each node in the tree into the m_profileCounters member variable.
+	//  NodeProfile *profile - pointer to a NodeProfile in the tree structure;
+	//                         the profile's information is read and generates a ProfileCounter
+	// Returns nothing.
+	void RecursiveGenProfileCounter(NodeProfile *profile);
+
 	// GenerateMacCounter takes in a vendor string and its corresponding distribution value
-	// and populates a MacCounter struct with these values. Used in RecursiveGenProfileCounter
-	// to add MacCounters to athe ProfileCounter's m_macCounters vector.
+	// 		and populates a MacCounter struct with these values. Used in RecursiveGenProfileCounter
+	//		to add MacCounters to athe ProfileCounter's m_macCounters vector.
 	//  const std::string &vendor - const reference to a string containing a MAC Vendor
 	//  const double dist_val - a const double that contains the calculated distribution value
 	//                          in the current node's m_vendor_dist vector.
@@ -111,24 +136,14 @@ private:
 	MacCounter GenerateMacCounter(const std::string &vendor, const double dist_val);
 
 	// GeneratePortCounter takes in a port name string and its corresponding distribution value
-	// and populates a PortCounter struct with these values. Used in RecursiveGenProfileCounter
-	// to add PortCounters to athe ProfileCounter's m_portCounters vector.
+	//		and populates a PortCounter struct with these values. Used in RecursiveGenProfileCounter
+	//		to add PortCounters to athe ProfileCounter's m_portCounters vector.
 	//  const std::string &portName - const reference to a string containing a port name of the form
 	//                          NUM_PROTOCOL_(open || SCRIPTNAME)
 	//  const double dist_val - a const double that contains the calculated distribution value
 	//                          in the current node's m_ports_dist vector.
 	// Returns a PortCounter struct.
 	PortCounter GeneratePortCounter(const std::string &portName, const double dist_val);
-
-	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
-	// randomized nodes from the profiles at the different nodes of the Personality Tree.
-	// Creates, populates and pushes a ProfileCounter struct, complete with Mac- and PortCounters
-	// for each node in the tree into the m_profileCounters member variable.
-	//  const PersonalityNode &parent - const reference to a PersonalityNode of the tree;
-	//                                  the node's information is read and placed into a complete
-	//                                  ProfileCounter struct.
-	// Returns nothing.
-	void RecursiveGenProfileCounter(const PersonalityNode &parent);
 
 	unsigned int m_nodeCount;
 	unsigned int m_targetNodeCount;

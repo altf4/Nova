@@ -632,6 +632,7 @@ bool HoneydConfiguration::LoadProfileChildren(string parentKey)
 			nodeProf.m_parentProfile = parentKey;
 
 			nodeProf.m_generated = value.second.get<bool>("generated");
+			nodeProf.m_distribution = value.second.get<double>("distribution");
 
 			//Gets name, initializes DHCP
 			nodeProf.m_name = value.second.get<std::string>("name");
@@ -1331,8 +1332,8 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 				//Root profile has no parent
 				nodeProf.m_parentProfile = "";
 				nodeProf.m_tree = value.second;
-
 				nodeProf.m_generated = value.second.get<bool>("generated");
+				nodeProf.m_distribution = value.second.get<double>("distribution");
 
 				//Name required, DCHP boolean intialized (set in loadProfileSet)
 				nodeProf.m_name = value.second.get<std::string>("name");
@@ -1467,7 +1468,6 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 	{
 		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->m_personality << '"' << endl;
 	}
-
 
 	if(p->m_dropRate.compare(""))
 	{
@@ -2341,6 +2341,7 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	}
 
 	temp.put<bool>("generated", p.m_generated);
+	temp.put<double>("distribution", p.m_distribution);
 
 	if(p.m_tcpAction.compare("") && !p.m_inherited[TCP_ACTION])
 	{
