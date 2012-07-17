@@ -2,12 +2,18 @@
 
 set -e
 
-if [$1 = ]; then
-  echo -e "ERROR: Provide a version number as an argument. IE:\n\t./generateDebs 12.6\n"
-  exit 0
+trap "echo stuff; exit" SIGHUP SIGINT SIGTERM
+
+echo -e "Remember to update debian/changelog with current version and notes."
+
+if [ -z $1 ]; then
+  echo -e "Using default version number in version.txt..."
+  VERSION=($(cat Installer/Write/nova/nova/version.txt))
+else
+  VERSION=$1
 fi
 
-PACKAGE="nova_$1"
+PACKAGE="nova_$VERSION"
 
 echo $PACKAGE
 

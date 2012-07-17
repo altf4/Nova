@@ -231,6 +231,36 @@ int main(int argc, const char *argv[])
 		PrintUptime();
 	}
 
+
+	else if(!strcmp(argv[1], "readsetting"))
+	{
+		if(argc < 3)
+		{
+			PrintUsage();
+		}
+
+		cout << Config::Inst()->ReadSetting(string(argv[2])) << endl;
+	}
+
+	else if(!strcmp(argv[1], "writesetting"))
+	{
+		if(argc < 4)
+		{
+			PrintUsage();
+		}
+
+		cout << Config::Inst()->WriteSetting(string(argv[2]), string(argv[3])) << endl;
+	}
+
+	else if(!strcmp(argv[1], "listsettings"))
+	{
+		vector<string> settings = Config::Inst()->GetPrefixes();
+		for (uint i = 0; i < settings.size(); i++)
+		{
+			cout << settings[i] << endl;
+		}
+	}
+
 	else
 	{
 		PrintUsage();
@@ -253,6 +283,9 @@ void PrintUsage()
 	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear all" << endl;
 	cout << "    " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
+	cout << "    " << EXECUTABLE_NAME << " writesetting SETTING VALUE" << endl;
+	cout << "    " << EXECUTABLE_NAME << " readsetting SETTING" << endl;
+	cout << "    " << EXECUTABLE_NAME << " listsettings" << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);

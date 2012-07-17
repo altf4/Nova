@@ -2057,6 +2057,8 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	newNode.m_IP = ipAddress;
 	newNode.m_interface = interface;
 
+	LOG(DEBUG, "Adding new honeyd node " + profileName + " " + ipAddress + " " + macAddress + " " + interface + " " + subnet, "");
+
 	if(newNode.m_IP.compare("DHCP"))
 	{
 		newNode.m_realIP = htonl(inet_addr(newNode.m_IP.c_str()));

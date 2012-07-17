@@ -7,7 +7,7 @@
 class NovaConfigBinding : public node::ObjectWrap {
  public:
   static void Init(v8::Handle<v8::Object> target);
-  Nova::Config * GetChild();
+	Nova::Config *GetChild();
 
 private:
 	NovaConfigBinding();

@@ -196,6 +196,8 @@ install-docs:
 
 install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
+	tar -C $(DESTDIR)/usr/share/nova/NovaWeb/www -xf NovaWeb/dojo-release-1.7.0.tar.gz
+	#mv $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
@@ -218,6 +220,9 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/novad
 	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
+	rm -f $(DESTDIR)/usr/bin/nova_init
+	rm -f $(DESTDIR)/usr/bin/novaweb
+	rm -f $(DESTDIR)/usr/bin/novatrainer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
@@ -227,7 +232,8 @@ uninstall-files:
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 
 uninstall-permissions:
-	#sh Installer/postrm
+	# TODO: Fix this, it apparently takes arguments now
+	sh debian/postrm
 
 # Reinstall nova without messing up the permissions
 reinstall: uninstall-files

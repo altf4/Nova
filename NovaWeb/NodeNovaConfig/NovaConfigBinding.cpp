@@ -17,7 +17,11 @@ NovaConfigBinding::~NovaConfigBinding()
 	delete m_conf;
 };
 
-Config * NovaConfigBinding::GetChild()
+Config* NovaConfigBinding::GetChild()
+{
+	return m_conf;
+}
+
 {
   return m_conf;
 }
@@ -41,6 +45,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAnyLoopback"),FunctionTemplate::New(UseAnyLoopback)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("ReadSetting"),FunctionTemplate::New(ReadSetting)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteSetting"),FunctionTemplate::New(WriteSetting)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVersionString"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetVersionString>));
 
   Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
   target->Set(String::NewSymbol("NovaConfigBinding"), constructor);

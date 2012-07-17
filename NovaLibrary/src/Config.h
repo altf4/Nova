@@ -24,6 +24,23 @@
 
 namespace Nova {
 
+#define VERSION_FILE_NAME "version.txt"
+
+struct version {
+	std::string versionString;
+	int buildYear;
+	int buildMonth;
+	int minorVersion;
+
+	version()
+	{
+		versionString = "VERSION NOT SET";
+		buildYear = 0;
+		buildMonth = 0;
+		minorVersion = 0;
+	}
+};
+
 class Config {
 
 public:
@@ -195,10 +212,16 @@ public:
 	std::string GetTrainingSession();
 	std::string SetTrainingSession(std::string trainingSession);
 
+	int GetWebUIPort();
+	void SetWebUIPort(int port);
+
+	version GetVersion();
+	std::string GetVersionString();
 
 	static std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
 	static std::vector <std::string> GetIpAddresses(std::string ipListFile);
 
+	std::vector<std::string> GetPrefixes();
 
 protected:
 	Config();
@@ -243,6 +266,7 @@ private:
 	int m_dataTTL;
 	int m_saMaxAttempts;
 	uint m_minPacketThreshold;
+	int m_webUIPort;
 
 	double m_saSleepDuration;
 	double m_eps;
@@ -254,6 +278,8 @@ private:
 	bool m_isDmEnabled;
 
 	bool m_overridePcapString;
+
+	version m_version;
 
 	// the SMTP server domain name for display purposes
 	std::string m_SMTPDomain;
@@ -309,6 +335,10 @@ private:
 
 	// Loads the PATH file (usually in /etc)
 	bool LoadPaths();
+
+	// Loads the version file
+	bool LoadVersionFile();
+
 
 	// Loads default values for all variables
 	void SetDefaults();

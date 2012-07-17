@@ -131,7 +131,7 @@ THINNING_DISTANCE 0.001
 #
 # EXAMPLE:
 #CLASSIFICATION_THRESHOLD .5
-CLASSIFICATION_THRESHOLD .5
+CLASSIFICATION_THRESHOLD 0.5
 
 ############################################
 # USER_HONEYD_CONFIG #
@@ -180,7 +180,7 @@ DOPPELGANGER_INTERFACE lo
 #
 # EXAMPLE:
 #DM_ENABLED 1
-DM_ENABLED 1
+DM_ENABLED 0
 
 ############################################
 # HS_HONEYD_CONFIG #
@@ -449,3 +449,10 @@ CUSTOM_PCAP_MODE 0
 TRAINING_SESSION trainingSession
 
 
+
+# WEB_UI_PORT #
+############################################
+#
+# Port for the web interface to run on
+# Note: anything < 1024 requires root to use
+WEB_UI_PORT 8080

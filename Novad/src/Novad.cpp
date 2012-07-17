@@ -114,6 +114,7 @@ namespace Nova
 int RunNovaD()
 {
 	Config::Inst();
+
 	MessageManager::Initialize(DIRECTION_TO_UI);
 
 	if(!LockNovad())
@@ -160,11 +161,14 @@ int RunNovaD()
 	//Loads the configuration file
 	Config::Inst()->LoadConfig();
 
+	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
+
 	engine = new ClassificationEngine(suspects);
+	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 
 	Spawn_UI_Handler();
 
-	Reload();
+
 
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
@@ -194,11 +198,6 @@ int RunNovaD()
 	}
 	else
 	{
-		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
-		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
-		pthread_detach(classificationLoopThread);
-		pthread_detach(silentAlarmListenThread);
-
 		whitelistNotifyFd = inotify_init ();
 		if(whitelistNotifyFd > 0)
 		{
@@ -673,11 +672,18 @@ bool Start_Packet_Handler()
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
-		// TODO This just segfaults, disabling until someone gets around to fixing it (or throwing it out)
-		LOG(CRITICAL, "Reading from a pcap file in novad is not currently supported. Use the novatrainer executable", "");
-		exit(EXIT_FAILURE);
+		LOG(DEBUG, "Loading PCAP file", "");
+		string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
+		string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
 
-		handles[0] = pcap_open_offline(Config::Inst()->GetPathPcapFile().c_str(), errbuf);
+		handles.push_back(pcap_open_offline(pcapFilePath.c_str(), errbuf));
+
+
+		vector<string> ips = Config::GetIpAddresses(ipAddressFile);
+		for (uint i = 0; i < ips.size(); i++)
+		{
+			localIPs.push_back(inet_addr(ips.at(i).c_str()));
+		}
 
 		if(handles[0] == NULL)
 		{
@@ -685,6 +691,7 @@ bool Start_Packet_Handler()
 				"Couldn't open pcap file: "+Config::Inst()->GetPathPcapFile()+": "+string(errbuf)+".");
 			exit(EXIT_FAILURE);
 		}
+
 		if(pcap_compile(handles[0], &fp, haystackAddresses_csv.data(), 0, PCAP_NETMASK_UNKNOWN) == -1)
 		{
 			LOG(CRITICAL, "Unable to start packet capture.",
@@ -698,19 +705,37 @@ bool Start_Packet_Handler()
 				"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
 			exit(EXIT_FAILURE);
 		}
+
 		pcap_freecode(&fp);
 		//First process any packets in the file then close all the sessions
-		pcap_dispatch(handles[0], -1, Packet_Handler,NULL);
+		u_char index = 0;
+		pcap_loop(handles[0], -1, Packet_Handler,&index);
 
-		if(Config::Inst()->GetGotoLive()) Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
+		LOG(DEBUG, "Done reading PCAP file. Processing...", "");
+		ClassificationLoop(NULL);
+		LOG(DEBUG, "Done processing PCAP file.", "");
 
-		LOG(DEBUG, "Done processing PCAP file", "");
-
-		pcap_close(handles[0]);
+		if(Config::Inst()->GetGotoLive())
+		{
+			Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
+		}
+		else
+		{
+			// Just sleep this thread forever so the UI responds still but no packet capture
+			while(true)
+			{
+				sleep(1000000);
+			}
+		}
 	}
 
 	if(!Config::Inst()->GetReadPcap())
 	{
+		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
+		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
+		pthread_detach(classificationLoopThread);
+		pthread_detach(silentAlarmListenThread);
+
 		vector<string> ifList = Config::Inst()->GetInterfaces();
 		if(!Config::Inst()->GetIsTraining())
 		{
@@ -865,7 +890,17 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 				//manually setting dst ip to 0.0.0.1 designates the packet was to a real host not a haystack node
 				evidencePacket->m_evidencePacket.ip_dst = 1;
 			}
-			suspectEvidence.InsertEvidence(evidencePacket);
+
+			if (!Config::Inst()->GetReadPcap())
+			{
+				suspectEvidence.InsertEvidence(evidencePacket);
+			}
+			else
+			{
+				// If reading from pcap file no Consumer threads, so process the evidence right away
+				suspectsSinceLastSave.ProcessEvidence(evidencePacket, true);
+				suspects.ProcessEvidence(evidencePacket, false);
+			}
 			return;
 		}
 		//Ignore IPV6
@@ -1145,13 +1180,11 @@ void UpdateHaystackFeatures()
 	vector<uint32_t> haystackNodes;
 	for(uint i = 0; i < haystackAddresses.size(); i++)
 	{
-		cout << "Address is " << haystackAddresses[i] << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
 	}
 
 	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
 	{
-		cout << "Address is " << haystackDhcpAddresses[i] << endl;
 		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
 	}
 

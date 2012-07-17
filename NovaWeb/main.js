@@ -1,5 +1,4 @@
 //"use strict";
-
 var novaconfig = require('novaconfig.node');
 
 var nova = new novaconfig.Instance();
@@ -39,15 +38,17 @@ var select;
 var checkPass;
 var my_name;
 
+console.log("Starting NOVAWEB version " + config.GetVersionString());
+
+
 // TODO: Get this path from the config class
 process.chdir("/usr/share/nova/nova");
 
 var client = mysql.createClient({
   user: 'root'
   , password: 'root'
+  , database: credDb
 });
-
-client.useDatabase(credDb);
 
 passport.serializeUser(function(user, done) {
   done(null, user);
@@ -119,8 +120,9 @@ app.set('view options', {layout: false});
 
 app.use(express.static('/usr/share/nova/NovaWeb/www'));
 
-console.info("Listening on 8042");
-app.listen(8042);
+var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
+console.info("Listening on port " + WEB_UI_PORT);
+app.listen(WEB_UI_PORT);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 
@@ -526,6 +528,7 @@ app.get('/suspects', ensureAuthenticated, function(req, res) {
      {
          user: req.user
 	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
+		 , featureNames: nova.GetFeatureNames()
 		 , type: type
 
      });
@@ -536,6 +539,7 @@ app.get('/novadlog', ensureAuthenticated, function(req, res) {
 	res.render('novadlog.jade');
 });
 
+app.get('/', ensureAuthenticated, function(req, res) {res.redirect('/suspects');});
 app.get('/createNewUser', ensureAuthenticated, function(req, res) {res.render('createNewUser.jade');});
 app.get('/welcome', ensureAuthenticated, function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.jade');});
@@ -644,16 +648,6 @@ app.get('/nodeReview', ensureAuthenticated, function(req, res) {
 	 	,nodes: nodes
 	 	,subnets:  honeydConfig.GetSubnetNames() 
 	}})
-});
-
-app.get('/', ensureAuthenticated, function(req, res) {
-     res.render('main.jade', 
-     {
-         user: req.user
-	       ,enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
-         ,message: req.flash('error')
-		 , type: 'all'
-     });
 });
 
 app.post('/login*',
@@ -1315,18 +1309,14 @@ function queryCredDb(check) {
         throw err;
       }
       
-      select = results[0].pass;
-      
-      console.log("queryCredDb results: " + select);
+      select = results[0].pass;      
       
       if(select === results[0].pass)
       {
-        console.log("all good");
         return true;
       }
       else
       {
-        console.log("Username password combo incorrect");
         return false;
       }
     }
