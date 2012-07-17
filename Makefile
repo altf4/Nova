@@ -197,8 +197,8 @@ install-docs:
 
 install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
-	tar -C $(DESTDIR)/usr/share/nova/NovaWeb/www -xf NovaWeb/dojo-release-1.7.3.tar.gz
-	mv $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo
+	tar -C $(DESTDIR)/usr/share/nova/NovaWeb/www -xf NovaWeb/dojo-release-1.7.0.tar.gz
+	#mv $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
