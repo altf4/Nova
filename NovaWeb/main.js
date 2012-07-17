@@ -465,6 +465,12 @@ app.get('/setup3', ensureAuthenticated, function(req, res) {res.render('setup3.j
 app.get('/CaptureTrainingData', ensureAuthenticated, function(req, res) {res.render('captureTrainingData.jade');});
 app.get('/about', ensureAuthenticated, function(req, res) {res.render('about.jade');});
 
+app.get('/haystackStatus', ensureAuthenticated, function(req, res) {
+    var dhcpIps = config.GetIpAddresses("/var/log/honeyd/ipList");
+    console.log(dhcpIps);
+    res.render('haystackStatus.jade', {locals: {haystackDHCPIps: config.GetIpAddresses("/var/log/honeyd/ipList")}});}
+);
+
 app.post('/createNewUser', ensureAuthenticated, function(req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
