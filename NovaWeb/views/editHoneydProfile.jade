@@ -42,7 +42,7 @@ block headerAdditions
       }
     }
 
-    require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
+    require(["dojo/domReady!", "dojo/ready", "dijit/registry", "dijit/form/FilteringSelect"], function() {
     
     // TODO
     if (newProfile != "true") {
@@ -52,18 +52,21 @@ block headerAdditions
     addVendor = function(vendName) {
         if(document.getElementById("ethDiv0") == undefined)
         {
+            console.log("In addVendor, if");
+        
             var teed = document.getElementById("labelDist");
             var teed2 = document.getElementById("ranges");
+            var teed3 = document.getElementById("deleteButtonHere");
         
-            var div = createElement("div");
+            var div = document.createElement("div");
             
             div.setAttribute("id", "ethDiv0");
             div.setAttribute("style", "width: content_width");
             
-            var rangeDiv = createElement("div");
+            var rangeDiv = document.createElement("div");
             
-            div.setAttribute("id", "rangeDiv0");
-            div.setAttribute("style", "width: content_width");
+            rangeDiv.setAttribute("id", "rangeDiv0");
+            rangeDiv.setAttribute("style", "width: content_width");
             
             var distribution = document.createElement("input");
                     
@@ -74,6 +77,7 @@ block headerAdditions
             distribution.setAttribute("step", "1");
             distribution.setAttribute("value", 100);
             distribution.setAttribute("style", "vertical-align: text");
+            distribution.setAttribute("onchange", 'sliderMoved("dist0", 1)');
             
             var hidden = document.createElement("hidden");
             
@@ -105,7 +109,8 @@ block headerAdditions
             var deleteButton = document.createElement("button");
             
             deleteButton.setAttribute("type", "button");
-            deleteButton.setAttribute("onclick", "deleteAndClean(\"ethDiv0\")");
+            deleteButton.setAttribute("onclick", "deleteAndClean('ethDiv0')");
+            deleteButton.innerHTML = "Delete Vendor";
 
             div.appendChild(add);
             div.appendChild(distLabel);
@@ -114,46 +119,49 @@ block headerAdditions
             rangeDiv.appendChild(distribution);
             rangeDiv.appendChild(br);
             teed2.appendChild(rangeDiv);
-            
-            teed2.appendChild(deleteButton);
+            teed3.appendChild(deleteButton);
+            teed3.appendChild(br);
             
             document.getElementById("numCreated").value = 1;
         }
         else
         {
+            console.log("In addVendor, else");
+        
             document.getElementById("numCreated").value += 1;
             
             var number = document.getElementById("numCreated").value - 1;
-            
-            console.log('number ' + number);
+            var checkAgainst = "ethDiv" + number;
             
             var teed = document.getElementById("labelDist");
             var teed2 = document.getElementById("ranges");
+            var teed3 = document.getElementById("deleteButtonHere");
 
-            var div = createElement("div");
+            var div = document.createElement("div");
             
             div.setAttribute("id", "ethDiv" + number);
             div.setAttribute("style", "width: content_width");
             
-            var rangeDiv = createElement("div");
+            var rangeDiv = document.createElement("div");
             
-            div.setAttribute("id", "rangeDiv" + number);
-            div.setAttribute("style", "width: content_width");
+            rangeDiv.setAttribute("id", "rangeDiv" + number);
+            rangeDiv.setAttribute("style", "width: content_width");
             
             var distribution = document.createElement("input");
                     
             distribution.setAttribute("id", "dist" + number);
             distribution.setAttribute("type", "range");
             distribution.setAttribute("min", "1");                    
-            distribution.setAttribute("max", "100");
+            distribution.setAttribute("max", 100 - number);
             distribution.setAttribute("step", "1");
-            distribution.setAttribute("value", 0);
+            distribution.setAttribute("value", 1);
             distribution.setAttribute("style", "vertical-align: text");
+            distribution.setAttribute("onchange", 'sliderMoved(\"dist' + number + '\", ' + (number + 1) + ')');
             
             var hidden = document.createElement("hidden");
             
             hidden.setAttribute("id", "hide" + number);
-            hidden.setAttribute("value", 0);
+            hidden.setAttribute("value", 1);
             hidden.setAttribute("style", "float:right");
            
             var add = document.createElement("input");
@@ -181,6 +189,7 @@ block headerAdditions
             
             deleteButton.setAttribute("type", "button");
             deleteButton.setAttribute("onclick", 'deleteAndClean("ethDiv' + number + '")');
+            deleteButton.innerHTML = "Delete Vendor";
 
             div.appendChild(add);
             div.appendChild(distLabel);
@@ -189,15 +198,51 @@ block headerAdditions
             rangeDiv.appendChild(distribution);
             rangeDiv.appendChild(br);
             teed2.appendChild(rangeDiv);
+            teed3.appendChild(deleteButton);
+            teed3.appendChild(br);
             
-            teed2.appendChild(deleteButton);
+            var deleteOne = true;
+            
+            for(var i = 0; i < (number + 1); i++)
+            {
+                if("ethDiv" + i !== checkAgainst)
+                {
+                    var change = document.getElementById("ethDiv" + i);
+                    var changeMax = document.getElementById("rangeDiv" + i);
+                
+                    for(var j = 0; j < change.childNodes.length; j++)
+                    {
+                        console.log("looking at " + change.childNodes[j].id);
+                    
+                        if(change.childNodes[j].id.substr(0, 9) == "distLabel")
+                        {
+                            console.log("in modify distLabel");
+                            
+                            if(((change.childNodes[j].value - 1) != 0) && (deleteOne))
+                            {
+                                change.childNodes[j].value = (change.childNodes[j].value.substr(0, change.childNodes[j].value.length - 1) - 1) + "%";
+                                change.childNodes[j].innerHTML = parseInt(change.childNodes[j].innerHTML) - 1;
+                                document.getElementById("dist" + i).setAttribute("value", document.getElementById("dist" + i).value - 1);
+                                document.getElementById("dist" + i).setAttribute("onclick", 'sliderMoved(\"dist' + i + '\", ' + (number + 1) + ')');
+                                document.getElementById("hide" + i).value -= 1;
+                                deleteOne = false;
+                                //need to modify or obviate the hidden field for user created vendors
+                            }
+                        }
+                    }
+                }
+                document.getElementById("dist" + i).max = 100 - (number);
+            }
         }
     }
 
     deleteAndClean = function(which) {
-        //var whichToDelete = which.substr(0, 6);
+        var whichToDelete = which.substr(6);
         
-        console.log(which);
+        console.log(whichToDelete);
+        // need to go through and delete the divs with whichToDelete as their last character;
+        // then, need to go to each element after the deleted one, decrement their ids, as well
+        // as modify their function calls and stuff to reflect the changed number of vendors
     }
 
     clearCell = function(which, len) {
@@ -223,6 +268,8 @@ block headerAdditions
             dojo.byId(which).setAttribute("value", valueToReplace);
         }
     
+        console.log("which == " + which);
+    
         var valueToReplace = document.getElementById(which).value;
 
         dojo.byId("distLabel" + which[which.length - 1]).setAttribute("value", valueToReplace + "%");
@@ -239,6 +286,8 @@ block headerAdditions
             {
                 checkZero = true;    
             }
+        
+            console.log("adding " + parseInt(dojo.byId(which.substr(0, which.length - 1) + i)) + " to reduction");
         
             reduction += parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value);
             console.log("summing reduction " + reduction);
@@ -1022,9 +1071,10 @@ block content
           label Inherit?
         td(id="labelDist", style="text-align:right")
         td(id="ranges")
+        td(id="deleteButtonHere")
           
      div(id="ethSelectDiv")
-       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById(ethernet).getAttribute(\"value\"))") Add New Vendor
+       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById('ethernet').getAttribute('value'))") Add New Vendor
 
        select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
          each vendor in vendors
