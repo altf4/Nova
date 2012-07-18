@@ -125,3 +125,6 @@ NovaLibrary/libNovaLibrary.a
 /debian/nova.substvars
 debian/files
 debian/nova/*
+/misc/ROCGraphGenerator/hostiles.txt
+/misc/ROCGraphGenerator/output.txt
+/Nova_UI_Core/.settings/org.eclipse.cdt.codan.core.prefs
