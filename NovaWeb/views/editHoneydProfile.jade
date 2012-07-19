@@ -123,7 +123,7 @@ block headerAdditions
             deleteDiv.appendChild(br);
             teed3.appendChild(deleteDiv);
             
-            document.getElementById("numCreated").value = 1;
+            document.getElementById("numCreated").setAttribute("value", 1);
         }
         else
         {
@@ -562,6 +562,53 @@ block headerAdditions
         var pfile = new obj();
         var ports = new obj();
         
+        var ethVendorList = [];
+        
+        var checkLength1 = parseInt(document.getElementById("ethVendorLength").getAttribute("value"));
+        var checkLength2 = parseInt(document.getElementById("numCreated").getAttribute("value"));
+        
+        if(checkLength1 == 0 && checkLength2 > 0)
+        {
+            console.log("in ethVendorList population, if ethVendorLength == 0");
+        
+            var forLength = checkLength2; 
+        
+            console.log("forLength == " + forLength);
+        
+            for(var i = 0; i < forLength; i++)
+            {
+                var element = {vendor: "", dist: ""};
+                element.vendor = document.getElementById("vend" + i).value;
+                element.dist = parseFloat(document.getElementById("dist" + i).value);
+                console.log("Adding {" + element.vendor + ", " + element.dist + "} to ethVendorList");
+                ethVendorList.push(element);
+            }
+        }
+        else if(checkLength2 == 0 && checkLength1 > 0)
+        {
+            console.log("in ethVendorList population, if numCreated == 0");
+        
+            var forLength = checkLength1; 
+        
+            console.log("forLength == " + forLength);
+        
+            for(var i = 0; i < forLength; i++)
+            {
+                var element = {vendor: "", dist: ""};
+                element.vendor = document.getElementById("vend" + i).value;
+                element.dist = parseFloat(document.getElementById("dist" + i).value);
+                console.log("Adding {" + element.vendor + ", " + element.dist + "} to ethVendorList");
+                ethVendorList.push(element);
+            }
+        }
+        else
+        {
+            console.log("No ethernet vendors selected, and none inherited. Canceling save");
+            document.getElementById("errorEthernet").value = "Must choose to either inherit ethernet vendors or select at least one";
+            document.getElementById("errorEthernet").innerHTML = "Must choose to either inherit ethernet vendors or select at least one";
+            return;
+        }
+        
         pfile.oldName = "#{oldName}";
         pfile.parentProfile = dojo.byId("parentName").value;
         pfile.name = dojo.byId("name").value;
@@ -598,7 +645,7 @@ block headerAdditions
             ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
         }
 
-        now.SaveProfile(pfile, ports, savedChanges);
+        now.SaveProfile(pfile, ports, savedChanges, ethVendorList);
     }
 
     savedChanges = function() {
@@ -795,9 +842,8 @@ block headerAdditions
             dijit.byId("personality").setDisabled(false);
         }
 
-        if (/*dojo.byId("ethernet").disabled = */dojo.byId("inheritEthernet").checked) 
+        if (dojo.byId("inheritEthernet").checked) 
         {
-            //dojo.byId("ethernet").value = profile.ethernet;
             dijit.byId("ethernet").setDisabled(true);
             dojo.byId("ethSelectButton").disabled = true;
             
@@ -861,10 +907,8 @@ block headerAdditions
                     distLabel.setAttribute("value", distributions[i] + "%");
                     distLabel.innerHTML = distributions[i] + "%";
                     distLabel.setAttribute("type", "text");
-                    //distLabel.setAttribute("readonly","true");
                     distLabel.setAttribute("style","width: 40px; float: right; clear: right");
                     distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
-                    //distLabel.setAttribute("onfocus", 'clearCell("distLabel' + i + '")');
 
                     var distribution = document.createElement("input");
                     
@@ -890,6 +934,8 @@ block headerAdditions
         {
             dojo.byId("ethSelectButton").disabled = false;
             dijit.byId("ethernet").setDisabled(false);
+            
+            dojo.byId("ethVendorLength").setAttribute("value", "0");
             
             var deletes = document.getElementById("row3").childNodes;
             
@@ -924,6 +970,90 @@ block headerAdditions
                 // to avoid those elements. I'll try experimenting with using
                 // tagName stuff a little bit but this'll be how it is for now.
             }
+            
+            now.GetVendors(document.getElementById("name").value, function(elements, distributions){
+                document.getElementById("ethVendorLength").setAttribute("value", elements.length);
+
+                document.getElementById("errorEthernet").value = "";
+                document.getElementById("errorEthernet").innerHTML = "";
+
+                var teed = document.getElementById("labelDist");
+                var teed2 = document.getElementById("ranges");
+                var teed3 = document.getElementById("deleteButtonHere");
+
+                var teedFor = teed.childNodes.length;
+                var teed2For = teed2.childNodes.length;
+                var teed3For = teed3.childNodes.length;
+
+                clearCreated();
+
+                for(var i in elements)
+                {
+                    var distro = distributions[i];
+                
+                    if(Math.floor(distro + 0.5) == Math.floor(distro))
+                    {
+                        distributions[i] = Math.ceil(distro);
+                        distributions[i + 1] += distro % 1; 
+                    }
+                    else
+                    {
+                        distributions[i] = Math.floor(distro);
+                        distributions[i + 1] -= distro % 1; 
+                    }
+                
+                    var div = document.createElement("div");
+                
+                    div.setAttribute("id", "ethDiv" + i);
+                    div.setAttribute("style", "width: content_width");
+                
+                    var rangeDiv = document.createElement("div");
+                
+                    rangeDiv.setAttribute("id", "rangeDiv" + i);
+                    rangeDiv.setAttribute("style", "width: content_width");
+                   
+                    var add = document.createElement("input");
+                    
+                    add.setAttribute("id", "vend" + i);
+                    add.innerHTML = elements[i];
+                    add.setAttribute("type", "text");
+                    add.setAttribute("value", elements[i]);
+                    add.setAttribute("style", "width: 10");
+                    add.setAttribute("readonly", "true");
+                    add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                                       
+                    var br = document.createElement("br");
+                    
+                    var distLabel = document.createElement("input");
+                    
+                    distLabel.setAttribute("id","distLabel" + i);
+                    distLabel.setAttribute("value", distributions[i] + "%");
+                    distLabel.innerHTML = distributions[i] + "%";
+                    distLabel.setAttribute("type", "text");
+                    distLabel.setAttribute("readonly", "true");
+                    distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+                    distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
+
+                    var distribution = document.createElement("input");
+                    
+                    distribution.setAttribute("id", "dist" + i);
+                    distribution.setAttribute("type", "range");
+                    distribution.setAttribute("min", "1");                    
+                    distribution.setAttribute("max", 100 - elements.length);
+                    distribution.setAttribute("step", "1");
+                    distribution.setAttribute("value", distributions[i]);
+                    distribution.setAttribute("readonly", "true");
+                    distribution.setAttribute("style", "vertical-align: text");
+                    distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
+
+                    div.appendChild(add);
+                    div.appendChild(distLabel);
+                    teed.appendChild(div);
+                    rangeDiv.appendChild(distribution);
+                    rangeDiv.appendChild(br);
+                    teed2.appendChild(rangeDiv);
+                }
+            });
         }
 
         if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) {
@@ -996,7 +1126,6 @@ block headerAdditions
            portBehaviorChanged();
         });
 
-
           now.GetProfile(currentName, function(pfile){
           profile = pfile;
         
@@ -1048,15 +1177,12 @@ block headerAdditions
           }
 
           dojo.byId("personality").value = profile.personality;
-          //dojo.byId("ethernet").value = profile.ethernet;
           dojo.byId("uptimeMin").value = profile.uptimeMin;
           dojo.byId("uptimeMax").value = profile.uptimeMax;
           dojo.byId("dropRate").value = profile.dropRate;
 
-
           inheritanceChanged();
-        });
-      
+       });
     });
     });
 

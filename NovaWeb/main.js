@@ -1107,7 +1107,7 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.udpAction = profile.GetUdpAction();
     profile.icmpAction = profile.GetIcmpAction();
     profile.personality = profile.GetPersonality();
-    profile.ethernet = profile.GetEthernet();
+   
     profile.uptimeMin = profile.GetUptimeMin();
     profile.uptimeMax = profile.GetUptimeMax();
     profile.dropRate = profile.GetDropRate();
@@ -1121,7 +1121,69 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.isUptimeInherited = profile.isUptimeInherited();
     profile.isDropRateInherited = profile.isDropRateInherited();
 
+    if(!profile.isEthernetInherited)
+    {
+      var ethVendorList = [];
+    
+      var profVendors = profile.GetVendors();
+      var profDists = profile.GetVendorDistributions();
+    
+      console.log("profVendors " + profVendors);
+
+      for(var i = 0; i < profVendors.length; i++)
+      {
+        var element = {vendor: "", dist: ""};
+        element.vendor = profVendors[i];
+        element.dist = parseFloat(profDists[i]);
+        ethVendorList.push(element);
+      }
+      
+      console.log("ethVendorList contains " + ethVendorList.length + " elements");
+   
+      for(var i = 0; i < ethVendorList.length; i++)
+      {
+        console.log("ethVendorList[" + i + "] == {" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
+      }
+      
+      profile.ethernet = ethVendorList;
+      
+      console.log("profile.ethernet " + profile.ethernet);
+    }
+
     callback(profile);
+}
+
+everyone.now.GetVendors = function(profileName, callback)
+{
+	var profile = honeydConfig.GetProfile(profileName);
+	
+	var ethVendorList = [];
+    
+    var profVendors = profile.GetVendors();
+    var profDists = profile.GetVendorDistributions();
+    
+    console.log("profVendors " + profVendors);
+      
+    for(var i = 0; i < profVendors.length; i++)
+    {
+      var element = {vendor: "", dist: ""};
+      element.vendor = profVendors[i];
+      element.dist = parseFloat(profDists[i]);
+      ethVendorList.push(element);
+    }
+      
+    console.log("ethVendorList contains " + ethVendorList.length + " elements");
+   
+    for(var i = 0; i < ethVendorList.length; i++)
+    {
+      console.log("ethVendorList[" + i + "] == {" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
+    }
+      
+    profile.ethernet = ethVendorList;
+      
+    console.log("profile.ethernet " + profile.ethernet);
+	
+    callback(profVendors, profDists);
 }
 
 everyone.now.GetPorts = function (profileName, callback) {
@@ -1139,11 +1201,12 @@ everyone.now.GetPorts = function (profileName, callback) {
 }
 
 
-everyone.now.SaveProfile = function(profile, ports, callback) {
+everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList) {
 	honeydProfile = new novaconfig.HoneydProfileBinding();
 
 	console.log("Got profile " + profile.name + "_" + profile.personality);
 	console.log("Got portlist " + ports.name);
+	console.log("Got ethVendorList " + ethVendorList);
 
 	// Move the Javascript object values to the C++ object
 	honeydProfile.SetName(profile.name);
@@ -1151,7 +1214,29 @@ everyone.now.SaveProfile = function(profile, ports, callback) {
 	honeydProfile.SetUdpAction(profile.udpAction);
 	honeydProfile.SetIcmpAction(profile.icmpAction);
 	honeydProfile.SetPersonality(profile.personality);
-	honeydProfile.SetEthernet(profile.ethernet);
+	
+	if(ethVendorList == undefined || ethVendorList == null)
+	{
+	    console.log("ethVendorList was undefined, using default value " + profile.ethernet);
+	    honeydProfile.SetEthernet(profile.ethernet);
+	}
+	else if(profile.isEthernetInherited == false)
+	{
+	    console.log("ethVendorList was populated, array is as follows: ");
+	    
+        var ethVendors = [];
+        var ethDists = [];
+    
+	    for(var i = 0; i < ethVendorList.length; i++)
+	    {
+	        console.log("{" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
+	        ethVendors.push(ethVendorList[i].vendor);
+	        ethDists.push(parseFloat(ethVendorList[i].dist));
+	    }
+	    
+	    honeydProfile.SetVendors(ethVendors, ethDists);
+	}
+	
 	honeydProfile.SetUptimeMin(profile.uptimeMin);
 	honeydProfile.SetUptimeMax(profile.uptimeMax);
 	honeydProfile.SetDropRate(profile.dropRate);

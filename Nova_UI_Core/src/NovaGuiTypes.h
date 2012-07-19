@@ -156,6 +156,11 @@ struct NodeProfile
 			return true;
 		}
 	}
+	inline bool SetVendors(std::vector<std::pair<std::string, double> > vendors)
+	{
+		m_ethernetVendors = vendors;
+		return true;
+	}
 	inline bool SetUptimeMin(std::string uptimeMin) {this->m_uptimeMin = uptimeMin; return true;}
 	inline bool SetUptimeMax(std::string uptimeMax) {this->m_uptimeMax = uptimeMax; return true;}
 	inline bool SetDropRate(std::string dropRate) {this->m_dropRate = dropRate; return true;}

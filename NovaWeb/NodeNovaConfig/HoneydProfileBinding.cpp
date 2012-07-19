@@ -42,6 +42,7 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	proto->Set("SetUptimeMax",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetUptimeMax>) );
 	proto->Set("SetDropRate",       FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetDropRate>) );
 	proto->Set("SetParentProfile",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetParentProfile>));
+	proto->Set(String::NewSymbol("SetVendors"),FunctionTemplate::New(SetVendors)->GetFunction());
 	
 	proto->Set("setTcpActionInherited",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setTcpActionInherited>));
 	proto->Set("setUdpActionInherited",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setUdpActionInherited>));
@@ -71,7 +72,41 @@ v8::Handle<Value> HoneydProfileBinding::New(const Arguments& args)
 	return args.This();
 }
 
+Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
+{ 
+  if(args.Length() != 2)
+  {
+    return ThrowException(Exception::TypeError(String::New("Must be invoked with at exactly two parameters")));
+  }
+  
+  HandleScope scope;
+  HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+  
+  std::cout << "In SetVendors" << std::endl;
+  
+  std::vector<std::string> ethVendors = cvv8::CastFromJS<std::vector<std::string> >(args[0]);
+  std::vector<double> ethDists = cvv8::CastFromJS<std::vector<double> >(args[1]);
+  
+  std::cout << "ethVendors length == " << ethVendors.size() << '\n';
+  std::cout << "ethDists length == " << ethDists.size() << std::endl;  
+  
+  std::vector<std::pair<std::string, double> > set;
+  
+  for(uint i = 0; i < ethVendors.size(); i++)
+  {
+    std::pair<std::string, double> vendorDists;
+    vendorDists.first = ethVendors[i];
+    vendorDists.second = ethDists[i];
+    set.push_back(vendorDists);
+  }
+  
+  for(uint i = 0; i < set.size(); i++)
+  {
+    std::cout << "set[" << i << "] = {" << set[i].first << ", " << set[i].second << "}\n";
+  }
 
+  return scope.Close(Boolean::New(obj->GetChild()->SetVendors(set)));
+}
 
 Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 {
