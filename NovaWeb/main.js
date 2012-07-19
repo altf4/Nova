@@ -146,15 +146,49 @@ novadLog.on("error", function(data) {
 initLogWatch();
 
 
-app.get('/downloadNovadLog', passport.authenticate('basic', { session: false }), function (req, res) {
+app.get('/downloadNovadLog.log', passport.authenticate('basic', { session: false }), function (req, res) {
+    // Hacky solution to make browsers launch a save as dialog
+    res.header('Content-Type', 'application/novaLog');
+
 	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
 	  if (err) {
 		res.send(err);
 	  }
 	  else
 	  {
-		var reply = data.toString().replace(/(\r\n|\n|\r)/gm,"<br>");
+		var reply = data.toString();
 		res.send(reply);
+	  }
+	});
+});
+
+app.get('/viewNovadLog', passport.authenticate('basic', { session: false }), function (req, res) {
+	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
+	  if (err) {
+		res.send(err);
+	  }
+	  else
+	  {
+		var reply = data.toString().split(/(\r\n|\n|\r)/gm);
+		var html = "";
+		for (var i = 0; i < reply.length; i++) {
+		  var styleString = "";
+		  var line = reply[i];
+		  var splitLine = line.split(' ');
+		  if (splitLine.length >= 6) {
+			if (splitLine[5] == "DEBUG") {
+				styleString += 'color: green';
+			} else if (splitLine[5] == "WARNING" || splitLine[5] == "NOTICE") {
+				styleString += 'color: orange';
+			} else if (splitLine[5] == "ERROR" || splitLine[5] == "CRITICAL") {
+				styleString += 'color: red';
+			}
+		  }
+
+		  html += '<P style="' + styleString + '">' + line + "<P>";
+		
+		}
+		res.send(html);
 	  }
 	});
 });
