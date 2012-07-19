@@ -17,7 +17,7 @@ var express =require('express');
 var util = require('util');
 var https = require('https');
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
+var BasicStrategy = require('passport-http').BasicStrategy;
 var mysql = require('mysql');
 var validCheck = require('validator').check;
 var sanitizeCheck = require('validator').sanitize;
@@ -56,7 +56,7 @@ passport.deserializeUser(function(user, done) {
   done(null, user);
 });
 
-passport.use(new LocalStrategy(
+passport.use(new BasicStrategy(
   function(username, password, done) 
   {
     var user = username;
@@ -97,13 +97,12 @@ key:  fs.readFileSync('/usr/share/nova/NovaWeb/serverkey.pem'),
 var app = express.createServer(express_options);
 
 app.configure(function () {
+		app.use(passport.initialize());
 		app.use(express.bodyParser());
 		app.use(express.cookieParser());
 		app.use(express.methodOverride());
-		app.use(express.session({ secret: 'nova toor' }));
-		app.use(passport.initialize());
-		app.use(passport.session());
 		app.use(app.router);
+		app.use(express.static('/usr/share/nova/NovaWeb/www'));
 });
 
 app.set('views', __dirname + '/views');
@@ -116,7 +115,6 @@ app.set('view options', {layout: false});
 //app.use(express.logger({stream: logFile}));
 
 
-app.use(express.static('/usr/share/nova/NovaWeb/www'));
 
 var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
 console.info("Listening on port " + WEB_UI_PORT);
@@ -148,7 +146,7 @@ novadLog.on("error", function(data) {
 initLogWatch();
 
 
-app.get('/downloadNovadLog', ensureAuthenticated, function (req, res) {
+app.get('/downloadNovadLog', passport.authenticate('basic', { session: false }), function (req, res) {
 	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
 	  if (err) {
 		res.send(err);
@@ -161,7 +159,7 @@ app.get('/downloadNovadLog', ensureAuthenticated, function (req, res) {
 	});
 });
 
-app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
+app.get('/advancedOptions', passport.authenticate('basic', { session: false }), function(req, res) {
      res.render('advancedOptions.jade', 
 	 {
 		locals: {
@@ -220,11 +218,11 @@ function renderBasicOptions(jadefile, res, req) {
 	 });
 }
 
-app.get('/basicOptions', ensureAuthenticated, function(req, res) {
+app.get('/basicOptions', passport.authenticate('basic', { session: false }), function(req, res) {
 	renderBasicOptions('basicOptions.jade', res, req);
 });
 
-app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
+app.get('/configHoneydNodes', passport.authenticate('basic', { session: false }), function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
 	 var nodes = [];
@@ -241,7 +239,7 @@ app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
 });
 
 
-app.get('/configHoneydProfiles', ensureAuthenticated, function(req, res) {
+app.get('/configHoneydProfiles', passport.authenticate('basic', { session: false }), function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var profileNames = honeydConfig.GetProfileNames();
 	 var profiles = [];
@@ -256,7 +254,7 @@ app.get('/configHoneydProfiles', ensureAuthenticated, function(req, res) {
 	}})
 });
 
-app.get('/editHoneydNode', ensureAuthenticated, function(req, res) {
+app.get('/editHoneydNode', passport.authenticate('basic', { session: false }), function(req, res) {
 	nodeName = req.query["node"];
 	// TODO: Error checking for bad node names
 	
@@ -271,7 +269,7 @@ app.get('/editHoneydNode', ensureAuthenticated, function(req, res) {
 	}})
 });
 
-app.get('/editHoneydProfile', ensureAuthenticated, function(req, res) {
+app.get('/editHoneydProfile', passport.authenticate('basic', { session: false }), function(req, res) {
 	profileName = req.query["profile"]; 
 
 	res.render('editHoneydProfile.jade', 
@@ -286,7 +284,7 @@ app.get('/editHoneydProfile', ensureAuthenticated, function(req, res) {
 });
 
 
-app.get('/addHoneydProfile', ensureAuthenticated, function(req, res) {
+app.get('/addHoneydProfile', passport.authenticate('basic', { session: false }), function(req, res) {
 	parentName = req.query["parent"]; 
 
 	res.render('editHoneydProfile.jade', 
@@ -300,7 +298,7 @@ app.get('/addHoneydProfile', ensureAuthenticated, function(req, res) {
 	}})
 });
 
-app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
+app.get('/customizeTraining', passport.authenticate('basic', { session: false }), function(req, res) {
 	trainingDb = new novaconfig.CustomizeTrainingBinding();
 	res.render('customizeTraining.jade',
 	{ locals : {
@@ -310,7 +308,7 @@ app.get('/customizeTraining', ensureAuthenticated, function(req, res) {
 	}})
 });
 
-app.get('/importCapture', ensureAuthenticated, function(req, res) {
+app.get('/importCapture', passport.authenticate('basic', { session: false }), function(req, res) {
 	var trainingSession = req.query["trainingSession"];
 	trainingSession = "/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump";
 	var ips = trainingDb.GetCaptureIPs(trainingSession);
@@ -326,7 +324,7 @@ app.get('/importCapture', ensureAuthenticated, function(req, res) {
 	}
 });
 
-app.post('/importCaptureSave', ensureAuthenticated, function(req, res) {	
+app.post('/importCaptureSave', passport.authenticate('basic', { session: false }), function(req, res) {	
 	var hostileSuspects = new Array();
   	var includedSuspects = new Array();
 	var descriptions = new Object();
@@ -370,7 +368,7 @@ app.post('/importCaptureSave', ensureAuthenticated, function(req, res) {
 
 });
 
-app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
+app.get('/configWhitelist', passport.authenticate('basic', { session: false }), function(req, res) {
 	res.render('configWhitelist.jade',
 	{ locals : {
 		whitelistedIps: whitelistConfig.GetIps(),
@@ -378,7 +376,7 @@ app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
 	}})
 });
 
-app.get('/editUsers', ensureAuthenticated, function(req, res) {
+app.get('/editUsers', passport.authenticate('basic', { session: false }), function(req, res) {
 	var usernames = new Array();
   client.query(
     'SELECT user FROM ' + credTb,
@@ -399,7 +397,7 @@ app.get('/editUsers', ensureAuthenticated, function(req, res) {
   );
 });
 
-app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
+app.get('/configWhitelist', passport.authenticate('basic', { session: false }), function(req, res) {
 	res.render('configWhitelist.jade',
 	{ locals : {
 		whitelistedIps: whitelistConfig.GetIps(),
@@ -407,7 +405,7 @@ app.get('/configWhitelist', ensureAuthenticated, function(req, res) {
 	}})
 });
 
-app.get('/editUsers', ensureAuthenticated, function(req, res) {
+app.get('/editUsers', passport.authenticate('basic', { session: false }), function(req, res) {
 	var usernames = new Array();
   client.query(
     'SELECT user FROM ' + credTb,
@@ -428,12 +426,13 @@ app.get('/editUsers', ensureAuthenticated, function(req, res) {
   );
 });
 
-app.get('/logout', function(req, res){
-  req.logout();
-  res.redirect('/');
-});
+// No more logout button for now
+//app.get('/logout', function(req, res){
+//  req.logout();
+//  res.redirect('/');
+//});
 
-app.get('/suspects', ensureAuthenticated, function(req, res) {
+app.get('/suspects', passport.authenticate('basic', { session: false }), function(req, res) {
 	 var type;
 	 if (req.query["type"] == undefined) {
 	   type = 'all'; 
@@ -451,27 +450,27 @@ app.get('/suspects', ensureAuthenticated, function(req, res) {
      });
 });
 
-app.get('/novadlog', ensureAuthenticated, function(req, res) {
+app.get('/novadlog', passport.authenticate('basic', { session: false }), function(req, res) {
 	initLogWatch();
 	res.render('novadlog.jade');
 });
 
-app.get('/', ensureAuthenticated, function(req, res) {res.redirect('/suspects');});
-app.get('/createNewUser', ensureAuthenticated, function(req, res) {res.render('createNewUser.jade');});
-app.get('/welcome', ensureAuthenticated, function(req, res) {res.render('welcome.jade');});
-app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.jade');});
-app.get('/setup2', ensureAuthenticated, function(req, res) {renderBasicOptions('setup2.jade', res, req)});
-app.get('/setup3', ensureAuthenticated, function(req, res) {res.render('setup3.jade');});
-app.get('/CaptureTrainingData', ensureAuthenticated, function(req, res) {res.render('captureTrainingData.jade');});
-app.get('/about', ensureAuthenticated, function(req, res) {res.render('about.jade');});
+app.get('/', passport.authenticate('basic', { session: false }), function(req, res) {res.redirect('/suspects');});
+app.get('/createNewUser', passport.authenticate('basic', { session: false }), function(req, res) {res.render('createNewUser.jade');});
+app.get('/welcome', passport.authenticate('basic', { session: false }), function(req, res) {res.render('welcome.jade');});
+app.get('/setup1', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup1.jade');});
+app.get('/setup2', passport.authenticate('basic', { session: false }), function(req, res) {renderBasicOptions('setup2.jade', res, req)});
+app.get('/setup3', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup3.jade');});
+app.get('/CaptureTrainingData', passport.authenticate('basic', { session: false }), function(req, res) {res.render('captureTrainingData.jade');});
+app.get('/about', passport.authenticate('basic', { session: false }), function(req, res) {res.render('about.jade');});
 
-app.get('/haystackStatus', ensureAuthenticated, function(req, res) {
+app.get('/haystackStatus', passport.authenticate('basic', { session: false }), function(req, res) {
     var dhcpIps = config.GetIpAddresses("/var/log/honeyd/ipList");
     console.log(dhcpIps);
     res.render('haystackStatus.jade', {locals: {haystackDHCPIps: config.GetIpAddresses("/var/log/honeyd/ipList")}});}
 );
 
-app.post('/createNewUser', ensureAuthenticated, function(req, res) {
+app.post('/createNewUser', passport.authenticate('basic', { session: false }), function(req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
 	
@@ -498,7 +497,7 @@ app.post('/createNewUser', ensureAuthenticated, function(req, res) {
 });
 
 
-app.post('/createInitialUser', ensureAuthenticated, function(req, res) {
+app.post('/createInitialUser', passport.authenticate('basic', { session: false }), function(req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
 	
@@ -543,7 +542,7 @@ app.get('/login', function(req, res){
 });
 
 app.post('/login*',
-  passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
+  passport.authenticate('basic', { failureRedirect: '/', failureFlash: true }), 
     function(req, res){
 		if (req.query["redirect"] != undefined)
 		{
@@ -555,7 +554,7 @@ app.post('/login*',
 		}
 });
 
-app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
+app.post('/customizeTrainingSave', passport.authenticate('basic', { session: false }), function(req, res){
   for(var uid in req.body)
   {
       trainingDb.SetIncluded(uid, true);
@@ -566,7 +565,7 @@ app.post('/customizeTrainingSave', ensureAuthenticated, function(req, res){
 	res.render('saveRedirect.jade', { locals: {redirectLink: "/customizeTraining"}})	
 });
 
-app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
+app.post('/editHoneydNodesSave', passport.authenticate('basic', { session: false }), function(req, res) {
 	var ipAddress;
 	if (req.body["ipType"] == "DHCP") {
 		ipAddress = "DHCP";
@@ -591,7 +590,7 @@ app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
 
 });
 
-app.post('/editHoneydNodeSave', ensureAuthenticated, function(req, res) {
+app.post('/editHoneydNodeSave', passport.authenticate('basic', { session: false }), function(req, res) {
 	var profile = req.body["profile"];
 	var intface = req.body["interface"];
 	var oldName = req.body["oldName"];
@@ -623,7 +622,7 @@ app.post('/editHoneydNodeSave', ensureAuthenticated, function(req, res) {
 	}
 });
 
-app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
+app.post('/configureNovaSave', passport.authenticate('basic', { session: false }), function(req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
 	var configItems = ["INTERFACE","HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
 		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
@@ -1090,33 +1089,6 @@ function objCopy(src,dst) {
 	}
 }
 
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    if (req.url == '/' || req.url == '/suspects') {
-        client.query('SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape('nova'),
-        function selectCb(err, results, fields) {
-            if(!err) {
-                if (results.length >= 1) {
-                    res.redirect('/welcome');
-                } else {
-                    return next();
-                }
-            }
-        });
-    } else {
-        return next();
-    }
-      
-  } else {
-	 if (req.url != "/login")
-	 {
-  		res.redirect("/login?redirect=" + req.url);
-	 } else {
-  		res.redirect('/login');
-	 }
-  }
-}
-
 function queryCredDb(check) {
     console.log("checkPass value before queryCredDb call: " + check);
     
@@ -1151,6 +1123,8 @@ function switcher(err, user, success, done)
    my_name = user;
    return done(null, user);
 }
+
+app.get('/*', passport.authenticate('basic', {session: false}));
 
 setInterval(function() {
 		try {
