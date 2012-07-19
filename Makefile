@@ -141,6 +141,12 @@ clean-web:
 	rm -rf NovaWeb/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
 	rm -rf NovaWeb/node_modules/.bin/
 
+clean-hhconfig-debug:
+	$(MAKE) -C HoneydHostConfig/Debug clean
+
+clean-hhconfig-release:
+	$(MAKE) -C HoneydHostConfig/Release clean
+
 
 #Installation (requires root)
 install: install-data install-docs
