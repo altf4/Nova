@@ -141,6 +141,12 @@ block headerAdditions
             }
             if(keepGoing)
             {
+               for(var i = 0; i < parseInt(dojo.byId("numCreated").value); i++)
+               {
+                   document.getElementById("dist" + i).removeAttribute("readonly");
+                   document.getElementById("distLabel" + i).removeAttribute("readonly");
+               }
+            
                console.log("In addVendor, else");
         
                document.getElementById("errorEthernet").value = "";
@@ -253,7 +259,7 @@ block headerAdditions
                    }
                    document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + (number + 1) + ')');
                    document.getElementById("dist" + i).max = 100 - (number);
-                   document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell("distLabel' + number + '", ' + (number + 1) + ')')
+                   document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + (number + 1) + ')')
                }
            }
            else
@@ -339,8 +345,9 @@ block headerAdditions
                 document.getElementById("delete" + i).id = ("delete" + (i - 1));
                 document.getElementById("deleteDiv" + i).id = ("deleteDiv" + (i - 1));
             }
-            else if(i != parseInt(whichToDelete))
+            else if(i < parseInt(whichToDelete))
             {
+                console.log("distLabel" + i + " should have onchange = clearCell('distLabel" + i + "', " + newNumCreated + ")");
                 document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell(\"distLabel' + i + '\", ' + newNumCreated + ')');
                 document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + newNumCreated + ')');
             }
