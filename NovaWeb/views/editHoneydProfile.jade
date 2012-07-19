@@ -29,6 +29,7 @@ block headerAdditions
     var clearCell = function(which, len) {};
     var addVendor = function(vendName) {};
     var deleteAndClean = function(which) {};
+    var clearCreated = function() {};
 
     var portIndexes = [];
     var loaded = false;
@@ -78,12 +79,6 @@ block headerAdditions
             distribution.setAttribute("value", 100);
             distribution.setAttribute("style", "vertical-align: text");
             distribution.setAttribute("onchange", 'sliderMoved("dist0", 1)');
-            
-            var hidden = document.createElement("hidden");
-            
-            hidden.setAttribute("id", "hide0");
-            hidden.setAttribute("value", 100);
-            hidden.setAttribute("style", "float:right");
            
             var add = document.createElement("input");
             
@@ -106,143 +101,293 @@ block headerAdditions
             distLabel.setAttribute("style","width: 40px; float: right; clear: right");
             distLabel.setAttribute("onchange", 'clearCell("distLabel0", ' + 1 + ')');
 
+            var deleteDiv = document.createElement("div");
+            
+            deleteDiv.setAttribute("style", "width: content_width");
+            deleteDiv.setAttribute("id", "deleteDiv0");
+
             var deleteButton = document.createElement("button");
             
+            deleteButton.setAttribute("id", "delete0");
             deleteButton.setAttribute("type", "button");
             deleteButton.setAttribute("onclick", "deleteAndClean('ethDiv0')");
             deleteButton.innerHTML = "Delete Vendor";
 
             div.appendChild(add);
             div.appendChild(distLabel);
-            div.appendChild(hidden);
             teed.appendChild(div);
             rangeDiv.appendChild(distribution);
             rangeDiv.appendChild(br);
             teed2.appendChild(rangeDiv);
-            teed3.appendChild(deleteButton);
-            teed3.appendChild(br);
+            deleteDiv.appendChild(deleteButton);
+            deleteDiv.appendChild(br);
+            teed3.appendChild(deleteDiv);
             
             document.getElementById("numCreated").value = 1;
         }
         else
         {
-            console.log("In addVendor, else");
+            var keepGoing = true;
         
-            document.getElementById("numCreated").value += 1;
-            
-            var number = document.getElementById("numCreated").value - 1;
-            var checkAgainst = "ethDiv" + number;
-            
-            var teed = document.getElementById("labelDist");
-            var teed2 = document.getElementById("ranges");
-            var teed3 = document.getElementById("deleteButtonHere");
-
-            var div = document.createElement("div");
-            
-            div.setAttribute("id", "ethDiv" + number);
-            div.setAttribute("style", "width: content_width");
-            
-            var rangeDiv = document.createElement("div");
-            
-            rangeDiv.setAttribute("id", "rangeDiv" + number);
-            rangeDiv.setAttribute("style", "width: content_width");
-            
-            var distribution = document.createElement("input");
-                    
-            distribution.setAttribute("id", "dist" + number);
-            distribution.setAttribute("type", "range");
-            distribution.setAttribute("min", "1");                    
-            distribution.setAttribute("max", 100 - number);
-            distribution.setAttribute("step", "1");
-            distribution.setAttribute("value", 1);
-            distribution.setAttribute("style", "vertical-align: text");
-            distribution.setAttribute("onchange", 'sliderMoved(\"dist' + number + '\", ' + (number + 1) + ')');
-            
-            var hidden = document.createElement("hidden");
-            
-            hidden.setAttribute("id", "hide" + number);
-            hidden.setAttribute("value", 1);
-            hidden.setAttribute("style", "float:right");
-           
-            var add = document.createElement("input");
-            
-            add.setAttribute("id", "vend" + number);
-            add.innerHTML = vendName;
-            add.setAttribute("type", "text");
-            add.setAttribute("value", vendName);
-            add.setAttribute("style", "width: 10");
-            add.setAttribute("readonly", "true");
-            add.setAttribute("style", "display: inline-block; float: left; clear: left");
-                               
-            var br = document.createElement("br");
-            
-            var distLabel = document.createElement("input");
-            
-            distLabel.setAttribute("id","distLabel" + number);
-            distLabel.setAttribute("value", "1%");
-            distLabel.innerHTML = "1%";
-            distLabel.setAttribute("type", "text");
-            distLabel.setAttribute("style","width: 40px; float: right; clear: right");
-            distLabel.setAttribute("onchange", 'clearCell("distLabel' + number + '", ' + (number + 1) + ')');
-
-            var deleteButton = document.createElement("button");
-            
-            deleteButton.setAttribute("type", "button");
-            deleteButton.setAttribute("onclick", 'deleteAndClean("ethDiv' + number + '")');
-            deleteButton.innerHTML = "Delete Vendor";
-
-            div.appendChild(add);
-            div.appendChild(distLabel);
-            div.appendChild(hidden);
-            teed.appendChild(div);
-            rangeDiv.appendChild(distribution);
-            rangeDiv.appendChild(br);
-            teed2.appendChild(rangeDiv);
-            teed3.appendChild(deleteButton);
-            teed3.appendChild(br);
-            
-            var deleteOne = true;
-            
-            for(var i = 0; i < (number + 1); i++)
+            console.log("vendName is " + vendName);
+        
+            for(var i = 0; i < parseInt(dojo.byId("numCreated").value); i++)
             {
-                if("ethDiv" + i !== checkAgainst)
+                if(vendName == document.getElementById("vend" + i).value)
                 {
-                    var change = document.getElementById("ethDiv" + i);
-                    var changeMax = document.getElementById("rangeDiv" + i);
-                
-                    for(var j = 0; j < change.childNodes.length; j++)
-                    {
-                        console.log("looking at " + change.childNodes[j].id);
-                    
-                        if(change.childNodes[j].id.substr(0, 9) == "distLabel")
-                        {
-                            console.log("in modify distLabel");
-                            
-                            if(((change.childNodes[j].value - 1) != 0) && (deleteOne))
-                            {
-                                change.childNodes[j].value = (change.childNodes[j].value.substr(0, change.childNodes[j].value.length - 1) - 1) + "%";
-                                change.childNodes[j].innerHTML = parseInt(change.childNodes[j].innerHTML) - 1;
-                                document.getElementById("dist" + i).setAttribute("value", document.getElementById("dist" + i).value - 1);
-                                document.getElementById("dist" + i).setAttribute("onclick", 'sliderMoved(\"dist' + i + '\", ' + (number + 1) + ')');
-                                document.getElementById("hide" + i).value -= 1;
-                                deleteOne = false;
-                                //need to modify or obviate the hidden field for user created vendors
-                            }
-                        }
-                    }
+                    console.log("found match, cancelling add");
+                    keepGoing = false;
                 }
-                document.getElementById("dist" + i).max = 100 - (number);
             }
+            if(keepGoing)
+            {
+               console.log("In addVendor, else");
+        
+               document.getElementById("errorEthernet").value = "";
+               document.getElementById("errorEthernet").innerHTML = "";
+        
+               document.getElementById("numCreated").value += 1;
+            
+               var number = document.getElementById("numCreated").value - 1;
+               var checkAgainst = "ethDiv" + number;
+               
+               var teed = document.getElementById("labelDist");
+               var teed2 = document.getElementById("ranges");
+               var teed3 = document.getElementById("deleteButtonHere");
+
+               var div = document.createElement("div");
+            
+               div.setAttribute("id", "ethDiv" + number);
+               div.setAttribute("style", "width: content_width");
+            
+               var rangeDiv = document.createElement("div");
+            
+               rangeDiv.setAttribute("id", "rangeDiv" + number);
+               rangeDiv.setAttribute("style", "width: content_width");
+            
+               var distribution = document.createElement("input");
+                    
+               distribution.setAttribute("id", "dist" + number);
+               distribution.setAttribute("type", "range");
+               distribution.setAttribute("min", "1");                    
+               distribution.setAttribute("max", 100 - number);
+               distribution.setAttribute("step", "1");
+               distribution.setAttribute("value", 1);
+               distribution.setAttribute("style", "vertical-align: text");
+               distribution.setAttribute("onchange", 'sliderMoved(\"dist' + number + '\", ' + (number + 1) + ')');
+           
+               var add = document.createElement("input");
+            
+               add.setAttribute("id", "vend" + number);
+               add.innerHTML = vendName;
+               add.setAttribute("type", "text");
+               add.setAttribute("value", vendName);
+               add.setAttribute("style", "width: 10");
+               add.setAttribute("readonly", "true");
+               add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                               
+               var br = document.createElement("br");
+            
+               var distLabel = document.createElement("input");
+            
+               distLabel.setAttribute("id","distLabel" + number);
+               distLabel.setAttribute("value", "1%");
+               distLabel.innerHTML = "1%";
+               distLabel.setAttribute("type", "text");
+               distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+               distLabel.setAttribute("onchange", 'clearCell("distLabel' + number + '", ' + (number + 1) + ')');
+
+               var deleteDiv = document.createElement("div");
+            
+               deleteDiv.setAttribute("style", "width: content_width");
+               deleteDiv.setAttribute("id", "deleteDiv" + number);
+
+               var deleteButton = document.createElement("button");
+            
+               deleteButton.setAttribute("id", "delete" + number);
+               deleteButton.setAttribute("type", "button");
+               deleteButton.setAttribute("onclick", 'deleteAndClean("ethDiv' + number + '")');
+               deleteButton.innerHTML = "Delete Vendor";
+
+               div.appendChild(add);
+               div.appendChild(distLabel);
+               teed.appendChild(div);
+               rangeDiv.appendChild(distribution);
+               rangeDiv.appendChild(br);
+               teed2.appendChild(rangeDiv);
+               deleteDiv.appendChild(deleteButton);
+               deleteDiv.appendChild(br);
+               teed3.appendChild(deleteDiv);
+            
+               var deleteOne = true;
+            
+               for(var i = 0; i < (number + 1); i++)
+               {
+                   if("ethDiv" + i !== checkAgainst)
+                   {
+                       var change = document.getElementById("ethDiv" + i);
+                       var changeMax = document.getElementById("rangeDiv" + i);
+                
+                       for(var j = 0; j < change.childNodes.length; j++)
+                       {
+                           console.log("looking at " + change.childNodes[j].id);
+                    
+                           if(change.childNodes[j].id.substr(0, 9) == "distLabel")
+                           {
+                               console.log("in modify distLabel");
+                            
+                               if(((change.childNodes[j].value - 1) != 0) && (deleteOne))
+                               {
+                                    var replace = ((parseInt(change.childNodes[j].value.substr(0, change.childNodes[j].value.length - 1)) - 1).toString() + "%");
+                                
+                                    console.log("replace " + replace);
+                            
+                                    change.childNodes[j].value = replace;
+                                    change.childNodes[j].innerHTML = replace;
+                                    document.getElementById("dist" + i).setAttribute("value", document.getElementById("dist" + i).value - 1);
+                                    deleteOne = false;
+                                   //need to modify or obviate the hidden field for user created vendors
+                               }
+                           }
+                       }
+                   }
+                   document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + (number + 1) + ')');
+                   document.getElementById("dist" + i).max = 100 - (number);
+                   document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell("distLabel' + number + '", ' + (number + 1) + ')')
+               }
+           }
+           else
+           {
+               document.getElementById("errorEthernet").value = "Can't add the same vendor twice";
+               document.getElementById("errorEthernet").innerHTML = "Can't add the same vendor twice";
+           }
         }
     }
 
     deleteAndClean = function(which) {
+        if(dojo.byId("numCreated").value == 1)
+        {
+            console.log("Must have at least one vendor selected, can't delete to 0");
+            return;
+        }
+    
         var whichToDelete = which.substr(6);
         
-        console.log(whichToDelete);
+        console.log("whichToDelete " + whichToDelete);
         // need to go through and delete the divs with whichToDelete as their last character;
         // then, need to go to each element after the deleted one, decrement their ids, as well
         // as modify their function calls and stuff to reflect the changed number of vendors
+        var teed = document.getElementById("labelDist");
+        var teed2 = document.getElementById("ranges");
+        var teed3 = document.getElementById("deleteButtonHere");
+        
+        var keepGoing = true;
+        
+        for(var i = 0; i < teed.childNodes.length && keepGoing; i++)
+        {
+            if(teed.childNodes[i].id == ("ethDiv" + whichToDelete))
+            {
+                teed.removeChild(teed.childNodes[i]);
+                keepGoing = false;
+            }
+        }
+        
+        keepGoing = true;
+        
+        for(var i = 0; i < teed2.childNodes.length && keepGoing; i++)
+        {
+            if(teed2.childNodes[i].id == ("rangeDiv" + whichToDelete))
+            {
+                teed2.removeChild(teed2.childNodes[i]);
+                keepGoing = false;
+            }
+        }
+        
+        keepGoing = true;
+        
+        for(var i = 0; i < teed3.childNodes.length && keepGoing; i++)
+        {
+            if(teed3.childNodes[i].id == ("deleteDiv" + whichToDelete))
+            {
+                teed3.removeChild(teed3.childNodes[i]);
+                keepGoing = false;
+            }
+        }
+        
+        
+        var numCreated = parseInt(dojo.byId("numCreated").value);
+        var newNumCreated = parseInt(dojo.byId("numCreated").value - 1);
+        
+        console.log("newNumCreated " + newNumCreated);
+        console.log("numCreated " + numCreated);
+        console.log("whichToDelete + 1 == " + (parseInt(whichToDelete) + 1));
+        console.log("whichToDelete + 1 < numCreated? " + ((parseInt(whichToDelete) + 1) < numCreated));
+        
+        for(var i = 0; i < numCreated; i++)
+        {
+            if(i >= (parseInt(whichToDelete) + 1))
+            {
+                console.log("ethDiv" + i + " should be ethDiv" + (i - 1));
+                document.getElementById("ethDiv" + i).id = ("ethDiv" + (i - 1));
+                document.getElementById("vend" + i).id = ("vend" + (i - 1));
+                document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell(\"distLabel' + (i - 1) + '\", ' + newNumCreated + ')');
+                document.getElementById("distLabel" + i).id = ("distLabel" + (i - 1));
+                document.getElementById("rangeDiv" + i).id = ("rangeDiv" + (i - 1));
+                document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + (i - 1) + '\", ' + newNumCreated + ')');
+                document.getElementById("dist" + i).id = ("dist" + (i - 1));
+                document.getElementById("delete" + i).setAttribute("onclick", 'deleteAndClean(\"ethDiv' + (i - 1) + '\")');
+                document.getElementById("delete" + i).id = ("delete" + (i - 1));
+                document.getElementById("deleteDiv" + i).id = ("deleteDiv" + (i - 1));
+            }
+            else if(i != parseInt(whichToDelete))
+            {
+                document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell(\"distLabel' + i + '\", ' + newNumCreated + ')');
+                document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + newNumCreated + ')');
+            }
+        }
+        
+        var max = {index: 0, value: dojo.byId("dist0").value};
+        var justInCase = {index: 0, value: dojo.byId("dist0").value};
+        
+        for(var i = 0; i < newNumCreated; i++)
+        {
+            if(dojo.byId("dist" + i).value > max)
+            {
+                justInCase.index = max.index;
+                justInCase.value = max.value;
+                max.index = i;
+                max.value = checkSum[i];
+            }
+        }
+        
+        if((max.value + 1) < 100)
+        {
+            max.value = parseInt(max.value) + 1;
+            document.getElementById("dist" + max.index).value = max.value;
+            document.getElementById("dist" + max.index).max = parseInt(document.getElementById("dist" + max.index).max) + 1;
+            document.getElementById("distLabel" + max.index).value = max.value.toString() + "%";
+            document.getElementById("distLabel" + max.index).innerHTML = max.value.toString() + "%";
+        }
+        else
+        {
+            justInCase.value = parseInt(justInCase.value) + 1;
+            document.getElementById("dist" + justInCase.index).value = justInCase.value;
+            document.getElementById("dist" + justInCase.index).max = parseInt(document.getElementById("dist" + justInCase.index).max) + 1;
+            document.getElementById("distLabel" + justInCase.index).value = justInCase.value.toString() + "%";
+            document.getElementById("distLabel" + justInCase.index).innerHTML = justInCase.value.toString() + "%";
+        }
+        
+        dojo.byId("numCreated").value -= 1;
+        
+        if(dojo.byId("numCreated").value == 1)
+        {
+            document.getElementById("dist0").value = 100;
+            document.getElementById("dist0").max = 100;
+            document.getElementById("distLabel0").value = "100%";
+            document.getElementById("distLabel0").innerHTML = "100%";
+            document.getElementById("distLabel0").setAttribute("readonly","true");
+            document.getElementById("dist0").setAttribute("readonly", "true");
+        }
     }
 
     clearCell = function(which, len) {
@@ -252,10 +397,15 @@ block headerAdditions
         if(text[text.length - 1] != "%")
         {
             element.value += "%";
+            
+            console.log("element.value == " + element.value);
+            
             sliderMoved("dist" + which[which.length - 1], len, text);
         }
         else if(document.getElementById("dist" + which[which.length - 1]).value != document.getElementById(which).value)
         {
+            console.log("element.value == " + element.value);
+        
             sliderMoved("dist" + which[which.length - 1], len, text);
         }
     }
@@ -265,216 +415,138 @@ block headerAdditions
         if(cb != undefined)
         {
             console.log("sliderMoved used as callback, cb is " + cb);
-            dojo.byId(which).setAttribute("value", valueToReplace);
+            dojo.byId(which).value = cb;
         }
     
         console.log("which == " + which);
+        console.log("distLabel == distLabel" + which[which.length - 1]);
+        console.log("len == " + len);
     
-        var valueToReplace = document.getElementById(which).value;
-
-        dojo.byId("distLabel" + which[which.length - 1]).setAttribute("value", valueToReplace + "%");
-        dojo.byId("distLabel" + which[which.length - 1]).innerHTML = valueToReplace + "%";
-        dojo.byId(which).setAttribute("value", valueToReplace);
+        var changeArray = [];
         
-        var reduction = 0;
+        var checkAgainst = which[which.length - 1];
         
-        var checkZero = false;
+        console.log("checkAgainst " + checkAgainst);
         
         for(var i = 0; i < len; i++)
         {
-            if(parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value) == 0)
+            changeArray.push(parseInt(document.getElementById("dist" + i).value));
+        }
+        
+        console.log("changeArray after getting values " + changeArray);
+        
+        var total = 0;
+        
+        for(var i in changeArray)
+        {
+            total += parseInt(changeArray[i]);
+        }
+        
+        console.log("total " + total);
+        
+        var reduction = 100 - total;
+        
+        console.log("reduction " + reduction);
+        
+        var sumOfOtherElements = parseInt(total - changeArray[checkAgainst]);
+        
+        console.log("sumOfOtherElements " + sumOfOtherElements);
+        
+        var modifiers = [];
+        
+        for(var i in changeArray)
+        {
+            if(i != checkAgainst)
             {
-                checkZero = true;    
-            }
-        
-            console.log("adding " + parseInt(dojo.byId(which.substr(0, which.length - 1) + i)) + " to reduction");
-        
-            reduction += parseInt(dojo.byId(which.substr(0, which.length - 1) + i).value);
-            console.log("summing reduction " + reduction);
-        }
-        
-        if(!checkZero)
-        {
-            reduction -= 100;
-        }
-        else
-        {
-            reduction = 100 - reduction;
-        }
-        
-        var sumOfOtherElements = 0;
-        
-        var sumOfHiddens = 0;
-        
-        var problems = false;
-        
-        var newValues = new Array();
-        
-        for(var i = 0; i < len; i++)
-        {
-            if(dojo.byId("dist" + i) !== dojo.byId(which))
-            {
-            
-                sumOfOtherElements += parseInt(document.getElementById("distLabel" + i).getAttribute("value").substr(0,document.getElementById("distLabel" + i).getAttribute("value").length - 1));
-                sumOfHiddens += parseInt(dojo.byId("hide" + i).getAttribute("value"));
-                
-                if(parseInt(dojo.byId("distLabel" + i).getAttribute("value").substr(0,dojo.byId("distLabel" + i).getAttribute("value").length - 1)) == 0 || isNaN(sumOfOtherElements))
-                {
-                    //console.log("problem is true, " + (parseInt(dojo.byId("distLabel" + i).getAttribute("value").substr(0,dojo.byId("distLabel" + i).getAttribute("value").length - 1)) == 0) + " " + isNaN(sumOfOtherElements));
-                    problems = true;
-                }
+                var mult = parseFloat(changeArray[i] / sumOfOtherElements);
+                modifiers.push(parseFloat(reduction * mult));
             }
         }
         
-        console.log("reduction is " + reduction + " after summing elements");
-        
-        for(var i = 0; i < len; i++)
-        {
-            if(dojo.byId("dist" + i) !== dojo.byId(which) && (!problems))
-            {
-                var mult = (parseInt(dojo.byId("distLabel" + i).getAttribute("value").substr(0,dojo.byId("distLabel" + i).getAttribute("value").length - 1)) / sumOfOtherElements);
-                newValues.push(reduction * mult);
-            }
-            else if(dojo.byId("dist" + i) !== dojo.byId(which) && (problems))
-            {
-                var mult = (parseInt(dojo.byId("hide" + i).getAttribute("value")) / sumOfHiddens);
-                newValues.push(reduction * mult);
-            }
-        }
+        console.log("modifiers " + modifiers);
         
         var max = 0;
         
-        for(var i = 0; i < newValues.length - 1; i++)
+        for(var i = 0; i < modifiers.length - 1; i++)
         {
-            var roundingVal = newValues[i] + 0.5;
+            var roundingVal = modifiers[i] + 0.5;
             
-            if(Math.floor(roundingVal) == Math.floor(newValues[i]))
+            if(Math.floor(roundingVal) == Math.floor(modifiers[i]))
             {
-                newValues[i] = Math.floor(roundingVal);
-                newValues[i + 1] += roundingVal % 1;
+                modifiers[i] = Math.floor(roundingVal);
+                modifiers[i + 1] += parseFloat(roundingVal % 1);
             }
             else
             {
-                newValues[i] = Math.floor(roundingVal);
-                newValues[i + 1] -= roundingVal % 1;
+                modifiers[i] = Math.floor(roundingVal);
+                modifiers[i + 1] -= roundingVal % 1;
             }
             
-            max += (newValues[i] / 1);
+            max += (modifiers[i] / 1);
         }
         
-        newValues[newValues.length - 1] = reduction - max;
+        modifiers[modifiers.length - 1] = (reduction - max);
+        
+        console.log("modifiers after rounding " + modifiers);
         
         var j = 0;
         
-        console.log("newValues after rounding " + newValues);
-        
-        for(var i = 0; i < len; i++)
+        for(var i in changeArray)
         {
-            if(dojo.byId("dist" + i) !== dojo.byId(which) && !problems)
+            if((i != checkAgainst) && (changeArray[i] + modifiers[j] > 0))
             {
-                console.log("no problems, dist" + i + " should be " + (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]));
-                document.getElementById("dist" + i).value = (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]);
-                document.getElementById("distLabel" + i).innerHTML = ((document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]) + "%");
-                document.getElementById("distLabel" + i).setAttribute("value", 
-                (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - newValues[j]) + "%");
+                changeArray[i] += modifiers[j];
                 j++;
             }
-            else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction < 0)
+            else if((i != checkAgainst) && !(changeArray[i] + modifiers[j] > 0))
             {
-                console.log("reduction < 0, dist" + i + " should be " + (0 - newValues[j]));
-                document.getElementById("dist" + i).value = (0 - newValues[j]);
-                document.getElementById("distLabel" + i).setAttribute("value", (0 - newValues[j]) + "%");
-                document.getElementById("distLabel" + i).innerHTML = ((0 - newValues[j]) + "%");
-                j++;
-            }
-            else if(dojo.byId("dist" + i) !== dojo.byId(which) && problems && reduction > 0)
-            {
-                console.log("reduction > 0, dist" + i + " should be " + (0 + newValues[j]));
-                document.getElementById("dist" + i).value = (0 + newValues[j]);
-                document.getElementById("distLabel" + i).setAttribute("value", (0 + newValues[j]) + "%");
-                document.getElementById("distLabel" + i).innerHTML = ((0 + newValues[j]) + "%");
+                var ltOrEqZero = parseInt(changeArray[i] + modifiers[j]);
+                
+                console.log("ltOrEqZero " + ltOrEqZero);
+                 
+                while(ltOrEqZero <= 0)
+                {
+                    modifiers[j] += 1;
+                    modifiers[j + 1] -= 1;
+                    ltOrEqZero = parseInt(changeArray[i] + modifiers[j]);
+                }
+                
+                changeArray[i] += modifiers[j];
+               
                 j++;
             }
         }
+        console.log("modifiers after l.t. 0 fixup " + modifiers);
         
-        var sum = 0;
+        console.log("changeArray after modifying " + changeArray);
         
-        for(var i = 0; i < len; i++)
+        var checkSum = 0;
+        
+        for(var i in changeArray)
         {
-            sum += parseInt(document.getElementById("dist" + i).value);
+            checkSum += parseInt(changeArray[i]);
         }
         
-        console.log("Sum of the elements is " + sum);
+        console.log("sum of elements in changeArray is " + checkSum);
         
-        if(sum > 100)
+        for(var i in changeArray)
         {
-            var amountToSubtract = sum - 100;
-            
-            console.log("amountToSubtract " + amountToSubtract);
-            
-            var allocate = new Array();
-            
-            for(var i = 0; amountToSubtract != 0; i++)
-            {
-                if(allocate[i % (len - 1)]  == undefined)
-                {
-                    allocate.push(1);
-                    amountToSubtract -= 1;
-                }
-                else
-                {
-                    allocate[i % (len - 1)] += 1;
-                    amountToSubtract -= 1;
-                }
-            }
-            
-            console.log("allocate " + allocate);
-            
-            for(var i = 0; i < len; i++)
-            {
-                if(dojo.byId("dist" + i) !== dojo.byId(which))
-                {
-                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - allocate[j];
-                    document.getElementById("distLabel" + i).setAttribute("value", (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - allocate[j]) + "%");
-                    document.getElementById("distLabel" + i).innerHTML = ((document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) - allocate[j]) + "%");
-                    j++;
-                }
-            }
+            var dist = document.getElementById("dist" + i);
+            var distLabel = document.getElementById("distLabel" + i);
+        
+            dist.value = changeArray[i];
+            distLabel.value = changeArray[i].toString() + "%";
+            distLabel.innerHTML = changeArray[i].toString() + "%";
         }
-        else if(sum < 100)
+        
+        if(dojo.byId("numCreated").value == 1)
         {
-            var amountToAdd = 100 - sum;
-            
-            console.log("amountToAdd " + amountToAdd);
-            
-            var allocate = [];
-            
-            for(var i = 0; amountToAdd != 0; i++)
-            {
-                if(allocate[i % (len - 1)]  == undefined)
-                {
-                    allocate.push(1);
-                    amountToAdd -= 1;
-                }
-                else
-                {
-                    allocate[i % (len - 1)] += 1;
-                    amountToAdd -= 1;
-                }
-            }
-            
-            console.log("allocate " + allocate);
-            
-            for(var i = 0; i < len; i++)
-            {
-                if(dojo.byId("dist" + i) !== dojo.byId(which))
-                {
-                    document.getElementById("dist" + i).value = document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) + allocate[j];
-                    document.getElementById("distLabel" + i).setAttribute("value", (document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) + allocate[j]) + "%");
-                    document.getElementById("distLabel" + i).innerHTML = ((document.getElementById("distLabel" + i).getAttribute("value").substr(0, document.getElementById("distLabel" + i).getAttribute("value").length - 1) + allocate[j]) + "%");
-                    j++;
-                }
-            }
+            document.getElementById("dist0").value = 100;
+            document.getElementById("dist0").max = 100;
+            document.getElementById("distLabel0").value = "100%";
+            document.getElementById("distLabel0").innerHTML = "100%";
+            document.getElementById("distLabel0").setAttribute("readonly","true");
+            document.getElementById("dist0").setAttribute("readonly", "true");
         }
     }
  
@@ -682,6 +754,32 @@ block headerAdditions
         }
     }
     
+    clearCreated = function() {
+        var numToDelete = document.getElementById("numCreated").value;
+        
+        if(numToDelete >= 1)
+        {
+            var labelDist = document.getElementById("labelDist");
+            var ranges = document.getElementById("ranges");
+            var deleteButtons = document.getElementById("deleteButtonHere");
+        
+            for(var i = 0; i < labelDist.childNodes.length; i++)
+            {
+                console.log("labelDist childNode[" + i + "] == " + labelDist.childNodes[i].id);
+            }
+        
+            for(var i = 0; i < numToDelete; i++)
+            {
+                console.log("need to delete ethDiv, rangeDiv, and deleteDiv at " + i);
+                labelDist.removeChild(document.getElementById("ethDiv" + i));
+                ranges.removeChild(document.getElementById("rangeDiv" + i));
+                deleteButtons.removeChild(document.getElementById("deleteDiv" + i));
+            }
+        }
+        
+        document.getElementById("numCreated").value = 0;
+    }
+    
     inheritanceChanged = function() {
         if (dojo.byId("personality").disabled = dojo.byId("inheritPersonality").checked) {
             dojo.byId("personality").value = profile.personality;
@@ -700,8 +798,18 @@ block headerAdditions
             function(elements, distributions){
                 document.getElementById("ethVendorLength").setAttribute("value", elements.length);
 
+                document.getElementById("errorEthernet").value = "";
+                document.getElementById("errorEthernet").innerHTML = "";
+
                 var teed = document.getElementById("labelDist");
                 var teed2 = document.getElementById("ranges");
+                var teed3 = document.getElementById("deleteButtonHere");
+
+                var teedFor = teed.childNodes.length;
+                var teed2For = teed2.childNodes.length;
+                var teed3For = teed3.childNodes.length;
+
+                clearCreated();
 
                 for(var i in elements)
                 {
@@ -727,12 +835,6 @@ block headerAdditions
                 
                     rangeDiv.setAttribute("id", "rangeDiv" + i);
                     rangeDiv.setAttribute("style", "width: content_width");
-                
-                    var hidden = document.createElement("hidden");
-                    
-                    hidden.setAttribute("id", "hide" + i);
-                    hidden.setAttribute("value", distributions[i]);
-                    hidden.setAttribute("style", "float:right");
                    
                     var add = document.createElement("input");
                     
@@ -761,8 +863,8 @@ block headerAdditions
                     
                     distribution.setAttribute("id", "dist" + i);
                     distribution.setAttribute("type", "range");
-                    distribution.setAttribute("min", "0");                    
-                    distribution.setAttribute("max", "100");
+                    distribution.setAttribute("min", "1");                    
+                    distribution.setAttribute("max", 100 - elements.length);
                     distribution.setAttribute("step", "1");
                     distribution.setAttribute("value", distributions[i]);
                     distribution.setAttribute("style", "vertical-align: text");
@@ -770,7 +872,6 @@ block headerAdditions
 
                     div.appendChild(add);
                     div.appendChild(distLabel);
-                    div.appendChild(hidden);
                     teed.appendChild(div);
                     rangeDiv.appendChild(distribution);
                     rangeDiv.appendChild(br);
@@ -960,7 +1061,7 @@ block content
       option block
       option open
 
-  h2 Editing Profile
+  h2 Adding Profile
 
   form(method="post", action="/editHoneydProfileSave")
 
@@ -1071,18 +1172,20 @@ block content
           label Inherit?
         td(id="labelDist", style="text-align:right")
         td(id="ranges")
-        td(id="deleteButtonHere")
-          
+        td(id="deleteButtonHere")        
+     
      div(id="ethSelectDiv")
-       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById('ethernet').getAttribute('value'))") Add New Vendor
+       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById('ethernet').value)") Add New Vendor
 
        select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
          each vendor in vendors
            option(value="#{vendor}") #{vendor}
               
       
-      hidden(id="ethVendorLength", value="")
-      hidden(id="numCreated", value="0")
+    label(id="errorEthernet", style="color:red;", value="")
+      
+    hidden(id="ethVendorLength", value="")
+    hidden(id="numCreated", value="0")
     
     h3 Profile Port Configuration
     table#portTable
