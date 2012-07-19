@@ -26,6 +26,7 @@
 #include <sstream>
 #include <syslog.h>
 #include <string.h>
+#include <curl/curl.h>
 #include <libnotify/notify.h>
 
 using namespace std;
@@ -36,7 +37,7 @@ namespace Nova
 
 	Logger *Logger::Inst()
 	{
-		if (m_loggerInstance == NULL)
+		if(m_loggerInstance == NULL)
 			m_loggerInstance = new Logger();
 		return m_loggerInstance;
 	}
@@ -44,6 +45,11 @@ namespace Nova
 // Loads the configuration file into the class's state data
 	uint16_t Logger::LoadConfiguration()
 	{
+		UpdateDateString();
+		// TODO: get Getter functions and a safe way to store
+		// the user and pass for the SMTP server
+		m_messageInfo.smtp_user = Config::Inst()->GetSMTPUser();
+		m_messageInfo.smtp_pass = Config::Inst()->GetSMTPPass();
 		m_messageInfo.smtp_addr = Config::Inst()->GetSMTPAddr();
 		m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
 		m_messageInfo.smtp_domain = Config::Inst()->GetSMTPDomain();
@@ -53,8 +59,8 @@ namespace Nova
 		return 1;
 	}
 
-	void Logger::Log(Nova::Levels messageLevel, const char* messageBasic,  const char* messageAdv,
-			const char* file,  const int& line)
+	void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const char *messageAdv,
+			const char *file,  const int& line)
 	{
 		Lock lock(&m_logLock, false);
 		string mask = getBitmask(messageLevel);
@@ -104,7 +110,8 @@ namespace Nova
 		#endif
 		notify_notification_set_timeout(note, 3000);
 		notify_notification_show(note, NULL);
-		g_object_unref(G_OBJECT(note));
+		// Don't think this is needed. If it is, it won't compile in Fedora since it isn't defined symbol
+		// g_object_unref(G_OBJECT(note));
 	}
 
 	void Logger::LogToFile(uint16_t level, string message)
@@ -116,9 +123,302 @@ namespace Nova
 
 	void Logger::Mail(uint16_t level, string message)
 	{
-		openlog("NovaMail", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(level, "%s %s", (m_levels[level].second).c_str(), message.c_str());
-		closelog();
+		CURL *curl;
+	    CURLM *mcurl;
+	    int still_running = 1;
+	    struct timeval mp_start;
+	    struct Writer counter;
+	    struct curl_slist *rcpt_list = NULL;
+
+	    int MULTI_PERFORM_HANG_TIMEOUT = 60*1000;
+
+	    SetMailMessage(message);
+
+	    counter.count = 0;
+
+	    curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	    curl = curl_easy_init();
+	    if(!curl)
+	    {
+	    	LOG(ERROR, "Curl could not initialize for Email alert", "");
+	    	return;
+	    }
+
+	    mcurl = curl_multi_init();
+	    if(!mcurl)
+	    {
+	    	LOG(ERROR, "Multi Curl could not initialize for Email alert", "");
+	    	return;
+	    }
+
+	    if(m_messageInfo.m_email_recipients.size() > 0)
+	    {
+	    	for(uint16_t i = 0; i < m_messageInfo.m_email_recipients.size(); i++)
+			{
+	    		rcpt_list = curl_slist_append(rcpt_list, ("<" + m_messageInfo.m_email_recipients[i] + ">").c_str());
+			}
+	    }
+	    else
+	    {
+	    	LOG(ERROR, "An email alert was attempted with no set recipients.", "");
+	    	return;
+	    }
+
+		std::stringstream ss;
+
+		ss << m_messageInfo.smtp_port;
+
+		std::string domain = Config::Inst()->GetSMTPDomain() + ":" + ss.str();
+
+		ss.str("");
+
+		curl_easy_setopt(curl, CURLOPT_URL, domain.c_str());
+		curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser().c_str());
+		curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass().c_str());
+		curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadCallback);
+		curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + Config::Inst()->GetSMTPAddr() + ">").c_str());
+		curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt_list);
+		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
+		curl_easy_setopt(curl, CURLOPT_READDATA, &counter);
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
+		curl_multi_add_handle(mcurl, curl);
+
+		mp_start = tvnow();
+
+		curl_multi_perform(mcurl, &still_running);
+
+		while(still_running)
+		{
+			struct timeval timeout;
+			int rc;
+
+			fd_set fdread;
+			fd_set fdwrite;
+			fd_set fdexcep;
+			int maxfd = -1;
+
+			long curl_timeo = -1;
+
+			FD_ZERO(&fdread);
+			FD_ZERO(&fdwrite);
+			FD_ZERO(&fdexcep);
+
+			timeout.tv_sec = 1;
+			timeout.tv_usec = 0;
+
+			curl_multi_timeout(mcurl, &curl_timeo);
+
+			if(curl_timeo >= 0)
+			{
+				timeout.tv_sec = curl_timeo / 1000;
+
+				if(timeout.tv_sec > 1)
+				{
+					timeout.tv_sec = 1;
+				}
+				else
+				{
+					timeout.tv_usec = (curl_timeo % 1000)*1000;
+				}
+			}
+
+			curl_multi_fdset(mcurl, &fdread, &fdwrite, &fdexcep, &maxfd);
+
+			rc = select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+
+			if(tvdiff(tvnow(), mp_start) > MULTI_PERFORM_HANG_TIMEOUT)
+			{
+				LOG(ERROR, "Email alert is hanging, are you sure your credentials for the SMTP server are correct?", "");
+				return;
+			}
+
+			switch(rc)
+			{
+				case -1:
+					std::cout << "rc == -1" << std::endl;
+					break;
+				case 0:
+				default:
+					curl_multi_perform(mcurl, &still_running);
+					break;
+			}
+		}
+
+	  curl_slist_free_all(rcpt_list);
+	  curl_multi_remove_handle(mcurl, curl);
+	  curl_multi_cleanup(mcurl);
+	  curl_easy_cleanup(curl);
+	  curl_global_cleanup();
+	}
+
+	std::string Logger::GenerateDateString()
+	{
+		time_t t = time(0);
+		struct tm *now = localtime(&t);
+
+		std::string year;
+		std::string month;
+		std::string day;
+
+		std::string ret;
+
+		std::stringstream ss;
+		ss << (now->tm_year + 1900);
+		year = ss.str();
+		ss.str("");
+
+		switch(now->tm_mon + 1)
+		{
+			case 1:
+				month = "January";
+				break;
+			case 2:
+				month = "February";
+				break;
+			case 3:
+				month = "March";
+				break;
+			case 4:
+				month = "April";
+				break;
+			case 5:
+				month = "May";
+				break;
+			case 6:
+				month = "June";
+				break;
+			case 7:
+				month = "July";
+				break;
+			case 8:
+				month = "August";
+				break;
+			case 9:
+				month = "September";
+				break;
+			case 10:
+				month = "October";
+				break;
+			case 11:
+				month = "November";
+				break;
+			case 12:
+				month = "December";
+				break;
+			default:
+				month = "";
+				break;
+		}
+
+		ss << now->tm_mday;
+		day = ss.str();
+		ss.str("");
+
+		ret = "Date: " + day + " " + month + " " + year + "\n";
+
+		return ret;
+	}
+
+	void Logger::UpdateDateString()
+	{
+		SetDateString(GenerateDateString());
+	}
+
+	void Logger::SetDateString(std::string toDate)
+	{
+		m_dateString = toDate;
+	}
+
+	std::string Logger::GetDateString()
+	{
+		return m_dateString;
+	}
+
+	std::string Logger::GetRecipient()
+	{
+		return "To: <" + m_messageInfo.m_email_recipients[0] + ">\n";
+	}
+
+	std::string Logger::GetMailMessage()
+	{
+		return m_mailMessage;
+	}
+
+	void Logger::SetMailMessage(std::string message)
+	{
+		m_mailMessage = message + "\n";
+	}
+
+	std::string Logger::GetSenderString()
+	{
+		std::string ret = "From: <" + Config::Inst()->GetSMTPAddr() + ">\n";
+		return ret;
+	}
+
+	std::string Logger::GetCcString()
+	{
+		if(m_messageInfo.m_email_recipients.size() <= 1)
+		{
+			return "\n";
+		}
+
+		std::string ret = "Cc: ";
+
+		for(uint16_t i = 1; i < m_messageInfo.m_email_recipients.size(); i++)
+		{
+			ret += "<" + m_messageInfo.m_email_recipients[i] + ">";
+
+			if((uint16_t)(i + 1) < m_messageInfo.m_email_recipients.size())
+			{
+				ret += ", ";
+			}
+		}
+
+		ret += "\n";
+		return ret;
+	}
+
+	uint16_t Logger::GetRecipientsLength()
+	{
+		return m_messageInfo.m_email_recipients.size();
+	}
+
+	size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
+	{
+		struct Writer *counter = (struct Writer *)userp;
+		const char *data;
+
+		std::string debug3 = Logger::Inst()->GetMailMessage();
+
+		const char *text[] = {
+				Logger::Inst()->GenerateDateString().c_str(),
+				Logger::Inst()->GetRecipient().c_str(),
+				Logger::Inst()->GetSenderString().c_str(),
+				"Subject: Nova Mail Alert\n",
+				Logger::Inst()->GetCcString().c_str(),
+				"\n",
+				Logger::Inst()->GetMailMessage().c_str(),
+				"\n",
+				NULL};
+
+		if(size *nmemb < 1)
+		{
+			return 0;
+		}
+		data = text[counter->count];
+		if(data)
+		{
+			size_t len = strlen(data);
+			memcpy(ptr, data, len);
+			counter->count++;
+			return len;
+		}
+		return 0;
 	}
 
 	void Logger::SetUserLogPreferences(string logPrefString)
@@ -401,6 +701,8 @@ namespace Nova
 
 	void Logger::SetEmailRecipients(std::vector<std::string> recs)
 	{
+		m_messageInfo.m_email_recipients = recs;
+
 		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
 
 		for(uint16_t i = 0; i < recs.size(); i++)
@@ -543,6 +845,5 @@ namespace Nova
 	{
 		delete m_loggerInstance;
 	}
-
 }
 

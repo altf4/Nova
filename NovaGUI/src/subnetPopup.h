@@ -35,7 +35,7 @@ class MaskSpinBox : public QSpinBox
 
 public:
 
-	MaskSpinBox(QWidget * parent = 0, Nova::subnet * s = NULL) : QSpinBox(parent)
+	MaskSpinBox(QWidget *parent = 0, Nova::subnet *s = NULL) : QSpinBox(parent)
 	{
 		this->lineEdit()->setReadOnly(true);
 		setWrapping(true);
@@ -93,7 +93,7 @@ public:
     ~subnetPopup();
 
     Nova::subnet m_editSubnet;
-    MaskSpinBox * m_maskEdit;
+    MaskSpinBox *m_maskEdit;
 
     //Saves the current configuration
     void SaveSubnet();

@@ -90,22 +90,22 @@ defaultChoice DialogPrompt::exec()
 			return CHOICE_HIDE;
 
 		case warningPreventablePrompt:
-			if (selectedButton == QMessageBox::Ok)
+			if(selectedButton == QMessageBox::Ok)
 				return CHOICE_DEFAULT;
 			else
 				return CHOICE_ALT;
 
 		case notifyActionPrompt:
 		case warningActionPrompt:
-			if (selectedButton == QMessageBox::Yes)
+			if(selectedButton == QMessageBox::Yes)
 			{
-				if (m_defaultAct != NULL)
+				if(m_defaultAct != NULL)
 					m_defaultAct->trigger();
 				return CHOICE_DEFAULT;
 			}
-			else if (selectedButton == QMessageBox::No)
+			else if(selectedButton == QMessageBox::No)
 			{
-				if (m_alternativeAct != NULL)
+				if(m_alternativeAct != NULL)
 					m_alternativeAct->trigger();
 				return CHOICE_ALT;
 			}

@@ -23,6 +23,7 @@
 
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <unistd.h>
 #include <string>
 
 using namespace std;
@@ -74,6 +75,22 @@ std::string GetLocalIP(const char *dev)
 		}
 	}
 	return string("");
+}
+
+//Removes any instance of the specified character from the front and back of the string
+//		str - pointer to the string you want to modify
+// 		c - character you wish to remove (Whitespace by default)
+// Note: this function will result in an empty string, if every character is == c
+void Trim(std::string& str, char c)
+{
+	while((!str.empty()) && (str.at(0) == ' '))
+	{
+		str = str.substr(1, str.size());
+	}
+	while((!str.empty()) && (str.at(str.size()-1) == ' '))
+	{
+		str = str.substr(0, str.size()-1);
+	}
 }
 
 }

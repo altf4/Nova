@@ -65,7 +65,7 @@ bool StopNovad()
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -88,6 +88,7 @@ bool StopNovad()
 	bool retSuccess = killReply->m_success;
 	delete killReply;
 
+	LOG(DEBUG, "Call to StopNovad complete", "");
 	MessageManager::Instance().CloseSocket(IPCSocketFD);
 
 	return retSuccess;
@@ -108,7 +109,7 @@ bool SaveAllSuspects(std::string file)
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -146,7 +147,7 @@ bool ClearAllSuspects()
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -185,7 +186,7 @@ bool ClearSuspect(in_addr_t suspectAddress)
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -223,7 +224,7 @@ bool ReclassifyAllSuspects()
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);

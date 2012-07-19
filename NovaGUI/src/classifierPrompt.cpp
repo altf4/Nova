@@ -134,7 +134,6 @@ void classifierPrompt::on_actionCombineEntries_triggered()
 
 		if((*m_suspects)[id]->points == NULL)
 		{
-			cout << "Null points" << endl;
 			continue;
 		}
 
@@ -158,16 +157,16 @@ void classifierPrompt::makeRow(trainingSuspect *header, int row)
 
 	ui.tableWidget->insertRow(row);
 
-	QTableWidgetItem* chkBoxItem = new QTableWidgetItem();
+	QTableWidgetItem *chkBoxItem = new QTableWidgetItem();
 	chkBoxItem->setFlags(chkBoxItem->flags() &= ~Qt::ItemIsEditable);
 
-	QTableWidgetItem* includeItem = new QTableWidgetItem();
+	QTableWidgetItem *includeItem = new QTableWidgetItem();
 	includeItem->setFlags(includeItem->flags() &= ~Qt::ItemIsEditable);
 
-	QTableWidgetItem* ipItem = new QTableWidgetItem();
+	QTableWidgetItem *ipItem = new QTableWidgetItem();
 	ipItem->setFlags(ipItem->flags() &= ~Qt::ItemIsEditable);
 
-	QTableWidgetItem* descriptionItem = new QTableWidgetItem();
+	QTableWidgetItem *descriptionItem = new QTableWidgetItem();
 
 	if(m_allowDescriptionEdit)
 	{
@@ -223,7 +222,7 @@ void classifierPrompt::on_tableWidget_cellChanged(int row, int col)
 		return;
 	}
 
-	trainingSuspect* header = (*m_suspects)[ui.tableWidget->item(row, 2)->text().toStdString()];
+	trainingSuspect *header = (*m_suspects)[ui.tableWidget->item(row, 2)->text().toStdString()];
 
 	switch(col)
 	{

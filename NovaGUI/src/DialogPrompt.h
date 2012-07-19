@@ -68,8 +68,8 @@ public:
     defaultChoice exec();
 
     void SetMessageType(dialogType type);
-    void SetDefaultAction(QAction * action);
-    void SetAlternativeAction(QAction * action);
+    void SetDefaultAction(QAction *action);
+    void SetAlternativeAction(QAction *action);
     dialogType GetMessageType();
     QAction *GetDefaultAction();
     QAction *GetAlternativeAction();

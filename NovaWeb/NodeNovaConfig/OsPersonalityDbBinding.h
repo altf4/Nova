@@ -7,17 +7,18 @@
 #include "OsPersonalityDb.h"
 
 class OsPersonalityDbBinding : public node::ObjectWrap {
- public:
-  static void Init(v8::Handle<v8::Object> target);
-  
-  OsPersonalityDb * GetChild();
+public:
+	static void Init(v8::Handle<v8::Object> target);
 
- private:
-  OsPersonalityDbBinding();
+	OsPersonalityDb * GetChild();
 
-  static v8::Handle<v8::Value> New(const v8::Arguments& args);
+private:
+	OsPersonalityDbBinding();
+	~OsPersonalityDbBinding();
 
-  OsPersonalityDb *m_db;
+	static v8::Handle<v8::Value> New(const v8::Arguments& args);
+
+	OsPersonalityDb *m_db;
 };
 
 #endif

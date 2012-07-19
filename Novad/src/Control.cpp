@@ -27,11 +27,12 @@ namespace Nova
 {
 void SaveAndExit(int param)
 {
-	if (Config::Inst()->GetIsTraining())
+	if(Config::Inst()->GetIsTraining())
 	{
 		CloseTrainingCapture();
 	}
-	else
+
+	if (!Config::Inst()->GetIsTraining() && !Config::Inst()->GetReadPcap())
 	{
 		AppendToStateFile();
 	}

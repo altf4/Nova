@@ -30,18 +30,18 @@ class classifierPrompt : public QDialog
 public:
     // Takes in the results of a training file capture and allows the user to select
     // which suspects to include and which are hostile, and set a description.
-    classifierPrompt(trainingDumpMap* trainingDump, QWidget *parent = 0);
+    classifierPrompt(trainingDumpMap *trainingDump, QWidget *parent = 0);
 
     // Taken in a map of suspects to display to the user. User can edit the
     // include/hostility flags.
-    classifierPrompt(trainingSuspectMap* map, QWidget *parent = 0);
+    classifierPrompt(trainingSuspectMap *map, QWidget *parent = 0);
 
-    trainingSuspectMap* getStateData();
+    trainingSuspectMap *getStateData();
 
     ~classifierPrompt();
 
 protected:
-    void contextMenuEvent(QContextMenuEvent * event);
+    void contextMenuEvent(QContextMenuEvent *event);
 
 private Q_SLOTS:
 	void on_tableWidget_cellChanged(int row, int col);
@@ -50,16 +50,16 @@ private Q_SLOTS:
 	void on_actionCombineEntries_triggered();
 
 private:
-    void updateRow(trainingSuspect* header, int row);
-    void makeRow(trainingSuspect* header, int row);
+    void updateRow(trainingSuspect *header, int row);
+    void makeRow(trainingSuspect *header, int row);
     void DisplaySuspectEntries();
 
-    QMenu * m_menu;
+    QMenu *m_menu;
     int m_groups;
 
     bool m_allowDescriptionEdit;
     bool m_updating;
-	trainingSuspectMap* m_suspects;
+	trainingSuspectMap *m_suspects;
     Ui::classifierPromptClass ui;
 };
 

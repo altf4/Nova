@@ -29,6 +29,7 @@
 #include <vector>
 #include <errno.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace Nova;
@@ -50,7 +51,7 @@ Message *Message::ReadMessage(int connectFD, enum ProtocolDirection direction, i
 
 bool Message::WriteMessage(Message *message, int connectFD)
 {
-	if (connectFD == -1)
+	if(connectFD == -1)
 	{
 		return false;
 	}
@@ -64,14 +65,14 @@ bool Message::WriteMessage(Message *message, int connectFD)
 	uint32_t bytesSoFar;
 
 	// Return value of the write() call, actual bytes sent
-	uint32_t bytesWritten;
+	int32_t bytesWritten;
 
 	// Send the message length
 	bytesSoFar = 0;
-    while (bytesSoFar < sizeof(length))
+    while(bytesSoFar < sizeof(length))
 	{
 		bytesWritten = write(connectFD, &length, sizeof(length) - bytesSoFar);
-		if (bytesWritten < 0)
+		if(bytesWritten < 0)
 		{
 			free(buffer);
 			return false;
@@ -85,10 +86,10 @@ bool Message::WriteMessage(Message *message, int connectFD)
 	
 	// Send the message
 	bytesSoFar = 0;
-	while (bytesSoFar < length)
+	while(bytesSoFar < length)
 	{
 		bytesWritten = write(connectFD, buffer, length - bytesSoFar);
-		if (bytesWritten < 0)
+		if(bytesWritten < 0)
 		{
 			free(buffer);
 			return false;
@@ -151,7 +152,7 @@ Message *Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirect
 	}
 
 	enum MessageType thisType;
-	memcpy(&thisType, buffer, MESSAGE_MIN_SIZE);
+	memcpy(&thisType, buffer, sizeof(thisType));
 
 	Message *message;
 	switch(thisType)

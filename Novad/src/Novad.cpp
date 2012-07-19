@@ -20,9 +20,11 @@
 #include "WhitelistConfiguration.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
+#include "EvidenceTable.h"
 #include "SuspectTable.h"
 #include "FeatureSet.h"
 #include "NovaUtil.h"
+#include "Commands.h"
 #include "Threads.h"
 #include "Control.h"
 #include "Config.h"
@@ -30,15 +32,19 @@
 #include "Point.h"
 #include "Novad.h"
 
+
+#include <pcap.h>
 #include <vector>
 #include <math.h>
 #include <time.h>
 #include <errno.h>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 #include <sys/un.h>
 #include <signal.h>
 #include <iostream>
+#include <ifaddrs.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -52,11 +58,14 @@ using namespace Nova;
 SuspectTable suspects;
 // Suspects not yet written to the state file
 SuspectTable suspectsSinceLastSave;
+//Contains packet evidence yet to be included in a suspect
+EvidenceTable suspectEvidence;
 
-//** Silent Alarm **
+//-- Silent Alarm --
 struct sockaddr_in serv_addr;
-struct sockaddr* serv_addrPtr = (struct sockaddr *) &serv_addr;
-struct sockaddr_in hostAddr;
+struct sockaddr *serv_addrPtr = (struct sockaddr *) &serv_addr;
+vector<struct sockaddr_in> hostAddrs;
+vector<uint> dropCounts;
 
 // Timestamps for the CE state file exiration of data
 time_t lastLoadTime;
@@ -65,26 +74,29 @@ time_t lastSaveTime;
 // Time novad started, used for uptime and pcap capture names
 time_t startTime;
 
+string trainingFolder;
 string trainingCapFile;
 
-ofstream trainingFileStream;
+
+pcap_dumper_t *trainingFileStream;
 
 //HS Vars
+// TODO: Don't hard code this path. Might also be in NovaTrainer.
 string dhcpListFile = "/var/log/honeyd/ipList";
 vector<string> haystackAddresses;
 vector<string> haystackDhcpAddresses;
 vector<string> whitelistIpAddresses;
 vector<string> whitelistIpRanges;
-pcap_t *handle;
-bpf_u_int32 maskp; /* subnet mask */
-bpf_u_int32 netp; /* ip          */
+vector<pcap_t *> handles;
+
+bpf_u_int32 maskp;
+bpf_u_int32 netp;
 
 int honeydDHCPNotifyFd;
 int honeydDHCPWatch;
 
 int whitelistNotifyFd;
 int whitelistWatch;
-
 
 ClassificationEngine *engine;
 
@@ -94,17 +106,19 @@ pthread_t silentAlarmListenThread;
 pthread_t ipUpdateThread;
 pthread_t ipWhitelistUpdateThread;
 
+vector<uint32_t> localIPs;
+
 namespace Nova
 {
 
 int RunNovaD()
 {
 	Config::Inst();
+
 	MessageManager::Initialize(DIRECTION_TO_UI);
 
-	if (!LockNovad())
+	if(!LockNovad())
 	{
-		cout << "ERROR: Novad is already running. Please close all other instances before continuing." << endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -147,40 +161,32 @@ int RunNovaD()
 	//Loads the configuration file
 	Config::Inst()->LoadConfig();
 
+	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
+
 	engine = new ClassificationEngine(suspects);
+	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 
 	Spawn_UI_Handler();
 
-	Reload();
+
 
 	//Are we Training or Classifying?
 	if(Config::Inst()->GetIsTraining())
 	{
-		// We suffix the training capture files with the date/time
-		time_t rawtime;
-		time(&rawtime);
-		struct tm *timeinfo = localtime(&rawtime);
-		char buffer[40];
-		strftime(buffer, 40, "%m-%d-%y_%H-%M-%S", timeinfo);
-
-		if (system(string("mkdir " + Config::Inst()->GetPathTrainingCapFolder()).c_str()))
+		if(system(string("mkdir " + Config::Inst()->GetPathTrainingCapFolder()).c_str()))
 		{
 			// Not really an problem, throws compiler warning if we don't catch the system call though
 		}
-		trainingCapFile = Config::Inst()->GetPathHome() + "/"
-				+ Config::Inst()->GetPathTrainingCapFolder() + "/training" + buffer
-				+ ".dump";
 
-		trainingFileStream.open(trainingCapFile.data(), ios::app);
-
-		if(!trainingFileStream.is_open())
+		trainingFolder = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathTrainingCapFolder() + "/" + Config::Inst()->GetTrainingSession();
+		if(system(string("mkdir " + trainingFolder).c_str()))
 		{
-			LOG(CRITICAL, "Unable to open the training capture file.",
-				"Unable to open training capture file at: "+trainingCapFile);
-			exit(EXIT_FAILURE);
+			// Not really an problem, throws compiler warning if we don't catch the system call though
 		}
 
-		if (Config::Inst()->GetReadPcap())
+		trainingCapFile = trainingFolder + "/capture.pcap";
+
+		if(Config::Inst()->GetReadPcap())
 		{
 			Config::Inst()->SetClassificationThreshold(0);
 			Config::Inst()->SetClassificationTimeout(0);
@@ -192,11 +198,6 @@ int RunNovaD()
 	}
 	else
 	{
-		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
-		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
-		pthread_detach(classificationLoopThread);
-		pthread_detach(silentAlarmListenThread);
-
 		whitelistNotifyFd = inotify_init ();
 		if(whitelistNotifyFd > 0)
 		{
@@ -211,7 +212,7 @@ int RunNovaD()
 	}
 
 	// If we're not reading from a pcap, monitor for IP changes in the honeyd file
-	if (!Config::Inst()->GetReadPcap())
+	if(!Config::Inst()->GetReadPcap())
 	{
 		honeydDHCPNotifyFd = inotify_init ();
 
@@ -227,28 +228,23 @@ int RunNovaD()
 		}
 	}
 
-	Start_Packet_Handler();
-
-
-	if (!Config::Inst()->GetIsTraining())
-	{
-		//Shouldn't get here!
-		LOG(CRITICAL, "Main thread ended. This should never happen, something went very wrong.", "");
-		return EXIT_FAILURE;
-	}
-	else
-	{
-		return EXIT_SUCCESS;
-	}
+	return Start_Packet_Handler();
 }
 
 bool LockNovad()
 {
 	int lockFile = open((Config::Inst()->GetPathHome() + "/novad.lock").data(), O_CREAT | O_RDWR, 0666);
 	int rc = flock(lockFile, LOCK_EX | LOCK_NB);
-	if(rc)
+	if(rc != 0)
 	{
-		// Someone else has this file open
+		if(errno == EAGAIN)
+		{
+			cerr << "ERROR: Novad is already running. Please close all other instances before continuing." << endl;
+		}
+		else
+		{
+			cerr << "ERROR: Unable to open the novad.lock file. This could be due to bad file permissions on it. Error was: " << strerror(errno) << endl;
+		}
 		return false;
 	}
 	else
@@ -337,7 +333,7 @@ void LoadStateFile()
 		expirationTime = 0;
 	}
 	uint numBytes = 0;
-	while (in.is_open() && !in.eof() && lengthLeft)
+	while(in.is_open() && !in.eof() && lengthLeft)
 	{
 		numBytes = suspects.ReadContents(&in, expirationTime);
 		if(numBytes == 0)
@@ -365,14 +361,14 @@ void LoadStateFile()
 			// Copy the file
 			stringstream copyCommand;
 			copyCommand << "mv " << Config::Inst()->GetPathCESaveFile() << " " << fileName;
-			if (system(copyCommand.str().c_str()) == -1) {
+			if(system(copyCommand.str().c_str()) == -1) {
 				LOG(ERROR, "There was a problem when attempting to move the corrupt state file. System call failed: " + copyCommand.str(), "");
 			}
 
 			// Recreate an empty file
 			stringstream touchCommand;
 			touchCommand << "touch " << Config::Inst()->GetPathCESaveFile();
-			if (system(touchCommand.str().c_str()) == -1) {
+			if(system(touchCommand.str().c_str()) == -1) {
 				LOG(ERROR, "There was a problem when attempting to recreate the state file. System call to 'touch' failed:" + touchCommand.str(), "");
 			}
 
@@ -431,7 +427,7 @@ void RefreshStateFile()
 	lengthLeft = in.tellg();
 	in.seekg (0, ios::beg);
 
-	while (in.is_open() && !in.eof() && lengthLeft)
+	while(in.is_open() && !in.eof() && lengthLeft)
 	{
 		//If we can get the timestamp and data size
 		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
@@ -472,7 +468,7 @@ void RefreshStateFile()
 
 void CloseTrainingCapture()
 {
-	trainingFileStream.close();
+	pcap_dump_close(trainingFileStream);
 }
 
 void Reload()
@@ -484,14 +480,8 @@ void Reload()
 
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 	Suspect suspectCopy;
-	vector<uint64_t> keys = suspects.GetAllKeys();
-	// Set everyone to be reclassified
-	for(uint i = 0;i < keys.size(); i++)
-	{
-		suspectCopy = suspects.CheckOut(keys[i]);
-		suspectCopy.SetNeedsClassificationUpdate(true);
-		suspects.CheckIn(&suspectCopy);
-	}
+
+	suspects.UpdateAllSuspects();
 }
 
 
@@ -499,7 +489,6 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 {
 	int sockfd = 0;
 	string commandLine;
-	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
 
 	Suspect suspectCopy = suspects.CheckOut(suspect->GetIpAddress());
 	if(suspects.IsEmptySuspect(&suspectCopy))
@@ -515,7 +504,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 	{
 		do
 		{
-			if(dataLen != suspectCopy.Serialize(serializedBuffer, UNSENT_FEATURE_DATA))
+			if(dataLen != suspectCopy.Serialize(serializedBuffer, dataLen, UNSENT_FEATURE_DATA))
 			{
 				stringstream ss;
 				ss << "Serialization of Suspect with key: " << suspectCopy.GetIpAddress();
@@ -523,7 +512,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 				LOG(ERROR, "Unable to Serialize Suspect", ss.str());
 				return;
 			}
-			suspectCopy.UpdateFeatureData(INCLUDE);
+			//suspectCopy.UpdateFeatureData(INCLUDE);
 			suspectCopy.ClearFeatureData(UNSENT_FEATURES);
 			suspects.CheckIn(&suspectCopy);
 
@@ -543,8 +532,8 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 					LOG(ERROR, "Failed to update iptables.", "");
 				}
 
-				int i;
-				for(i = 0; i < Config::Inst()->GetSaMaxAttempts(); i++)
+				int j;
+				for(j = 0; j < Config::Inst()->GetSaMaxAttempts(); j++)
 				{
 					if(KnockPort(OPEN))
 					{
@@ -561,7 +550,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 							if(errno == EHOSTUNREACH)
 							{
 								//set to max attempts to hit the failed connect condition
-								i = Config::Inst()->GetSaMaxAttempts();
+								j = Config::Inst()->GetSaMaxAttempts();
 								LOG(ERROR, "Unable to connect to host to send silent alarm: "
 									+ string(strerror(errno)), "");
 								break;
@@ -574,7 +563,7 @@ void SilentAlarm(Suspect *suspect, int oldClassification)
 					}
 				}
 				//If connecting failed
-				if(i == Config::Inst()->GetSaMaxAttempts())
+				if(j == Config::Inst()->GetSaMaxAttempts())
 				{
 					close(sockfd);
 					ss.str("");
@@ -666,384 +655,442 @@ bool KnockPort(bool mode)
 bool Start_Packet_Handler()
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
-
-	int ret;
 	string haystackAddresses_csv = "";
-
-	struct bpf_program fp;			/* The compiled filter expression */
+	struct bpf_program fp;
 	char filter_exp[64];
+	bpf_u_int32 maskp;
+	bpf_u_int32 netp;
 
-
-	haystackAddresses = GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
-	haystackDhcpAddresses = GetIpAddresses(dhcpListFile);
+	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
+	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
 	whitelistIpAddresses = WhitelistConfiguration::GetIps();
 	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	haystackAddresses_csv = ConstructFilterString();
 
+	UpdateHaystackFeatures();
+
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
-		sleep(1); //To allow time for other processes to open
-		handle = pcap_open_offline(Config::Inst()->GetPathPcapFile().c_str(), errbuf);
+		LOG(DEBUG, "Loading PCAP file", "");
+		string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
+		string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
 
-		if(handle == NULL)
+		handles.push_back(pcap_open_offline(pcapFilePath.c_str(), errbuf));
+
+
+		vector<string> ips = Config::GetIpAddresses(ipAddressFile);
+		for (uint i = 0; i < ips.size(); i++)
+		{
+			localIPs.push_back(inet_addr(ips.at(i).c_str()));
+		}
+
+		if(handles[0] == NULL)
 		{
 			LOG(CRITICAL, "Unable to start packet capture.",
 				"Couldn't open pcap file: "+Config::Inst()->GetPathPcapFile()+": "+string(errbuf)+".");
 			exit(EXIT_FAILURE);
 		}
-		if(pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-		//if(pcap_compile(handle, &fp, "dst net 192.168.10 && !dst host 192.168.10.255" , 0, maskp) == -1)
+
+		if(pcap_compile(handles[0], &fp, haystackAddresses_csv.data(), 0, PCAP_NETMASK_UNKNOWN) == -1)
 		{
 			LOG(CRITICAL, "Unable to start packet capture.",
-				"Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(handle) +".");
+				"Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
 			exit(EXIT_FAILURE);
 		}
 
-		if(pcap_setfilter(handle, &fp) == -1)
+		if(pcap_setfilter(handles[0], &fp) == -1)
 		{
 			LOG(CRITICAL, "Unable to start packet capture.",
-				"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handle) +".");
+				"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
 			exit(EXIT_FAILURE);
 		}
+
+		pcap_freecode(&fp);
 		//First process any packets in the file then close all the sessions
-		pcap_loop(handle, -1, Packet_Handler,NULL);
+		u_char index = 0;
+		pcap_loop(handles[0], -1, Packet_Handler,&index);
 
-		if(Config::Inst()->GetGotoLive()) Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
+		LOG(DEBUG, "Done reading PCAP file. Processing...", "");
+		ClassificationLoop(NULL);
+		LOG(DEBUG, "Done processing PCAP file.", "");
 
-		trainingFileStream.close();
-		LOG(DEBUG, "Done processing PCAP file", "");
+		if(Config::Inst()->GetGotoLive())
+		{
+			Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
+		}
+		else
+		{
+			// Just sleep this thread forever so the UI responds still but no packet capture
+			while(true)
+			{
+				sleep(1000000);
+			}
+		}
 	}
-
 
 	if(!Config::Inst()->GetReadPcap())
 	{
-		if (!Config::Inst()->GetIsTraining())
+		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
+		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
+		pthread_detach(classificationLoopThread);
+		pthread_detach(silentAlarmListenThread);
+
+		vector<string> ifList = Config::Inst()->GetInterfaces();
+		if(!Config::Inst()->GetIsTraining())
 		{
 			LoadStateFile();
 		}
 
-		handle = pcap_create(Config::Inst()->GetInterface().c_str(), errbuf);
-
-		if(handle == NULL)
+		for(uint i = 0; i < ifList.size(); i++)
 		{
-			LOG(ERROR, "Unable to start packet capture.",
-				"Unable to open network interface "+Config::Inst()->GetInterface()+" for live capture: "+string(errbuf));
+			dropCounts.push_back(0);
+			string ipAddr = GetLocalIP(ifList.back().c_str());
+			struct in_addr tempAddr;
+			inet_aton(ipAddr.c_str(), &tempAddr);
+			localIPs.push_back(ntohl(tempAddr.s_addr));
+			string temp = haystackAddresses_csv;
+			temp.append(" || ");
+			temp.append(ipAddr);
+			handles.push_back(pcap_create(ifList[i].c_str(), errbuf));
+
+			if(handles[i] == NULL)
+			{
+				LOG(ERROR, "Unable to start packet capture.",
+					"Unable to open network interfaces for live capture: "+string(errbuf));
+				exit(EXIT_FAILURE);
+			}
+
+			if(pcap_set_promisc(handles[i], 1) != 0)
+			{
+				LOG(ERROR, string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(handles[i]), "");
+			}
+
+			// Set a 20MB buffer
+			// TODO Make this a user configurable option. Too small will cause dropped packets under high load.
+			if(pcap_set_buffer_size(handles[i], 1024*1024) != 0)
+			{
+				LOG(ERROR, string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(handles[i]), "");
+			}
+
+			//Set a capture length of 1Kb. Should be more than enough to get the packet headers
+			// 88 == Ethernet header (14 bytes) + max IP header size (60 bytes)  + 4 bytes to extract the destination port for udp and tcp packets
+			if(pcap_set_snaplen(handles[i], 88) != 0)
+			{
+				LOG(ERROR, string("Unable to set pcap capture length due to error: ") + pcap_geterr(handles[i]), "");
+			}
+
+			if(pcap_set_timeout(handles[i], 1000) != 0)
+			{
+				LOG(ERROR, string("Unable to set pcap timeout value due to error: ") + pcap_geterr(handles[i]), "");
+			}
+
+			if(pcap_activate(handles[i]) != 0)
+			{
+				LOG(CRITICAL, string("Unable to activate packet capture due to error: ") + pcap_geterr(handles[i]), "");
+				exit(EXIT_FAILURE);
+			}
+
+			// ask pcap for the network address and mask of the device
+			int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
+			if(ret == -1)
+			{
+				LOG(ERROR, "Unable to start packet capture.",
+					"Unable to get the network address and mask: "+string(strerror(errno)));
+				exit(EXIT_FAILURE);
+			}
+
+			if(pcap_compile(handles[i], &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+			{
+				LOG(ERROR, "Unable to start packet capture.",
+					"Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(handles[i]) +".");
+				exit(EXIT_FAILURE);
+			}
+
+			if(pcap_setfilter(handles[i], &fp) == -1)
+			{
+				LOG(ERROR, "Unable to start packet capture.",
+					"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handles[i]) +".");
+				exit(EXIT_FAILURE);
+			}
+			pcap_freecode(&fp);
+		}
+
+		if((handles.empty()) || (handles[0] == NULL))
+		{
+			LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");
 			exit(EXIT_FAILURE);
 		}
 
-		if(pcap_set_promisc(handle, 1) != 0)
+		trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
+
+		ofstream localIpsStream(trainingFolder + "/localIps.txt");
+		for(uint i = 0; i < localIPs.size(); i++)
 		{
-			LOG(ERROR, string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(handle), "");
+			in_addr temp;
+			temp.s_addr = ntohl(localIPs.at(i));
+			localIpsStream << inet_ntoa(temp) << endl;
+		}
+		localIpsStream.close();
+
+		if(IsHaystackUp())
+		{
+			ofstream haystackIpStream(trainingFolder + "/haystackIps.txt");
+			for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
+			{
+				haystackIpStream << haystackDhcpAddresses.at(i) << endl;
+			}
+			for(uint i = 0; i < haystackAddresses.size(); i++)
+			{
+				haystackIpStream << haystackAddresses.at(i) << endl;
+			}
 		}
 
-		// Set a 20MB buffer
-		// TODO Make this a user configurable option. Too small will cause dropped packets under high load.
-		if (pcap_set_buffer_size(handle, 20*1024*1024) != 0)
+		for(u_char i = 1; i < handles.size(); i++)
 		{
-			LOG(ERROR, string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(handle), "");
+			pthread_t readThread;
+			u_char temp = i;
+			pthread_create(&readThread, NULL, StartPcapLoop, &temp);
+			pthread_detach(readThread);
 		}
 
-		//Set a capture length of 1Kb. Should be more than enough to get the packet headers
-		if (pcap_set_snaplen(handle, 1024) != 0)
-		{
-			LOG(ERROR, string("Unable to set pcap capture length due to error: ") + pcap_geterr(handle), "");
-		}
-
-		if (pcap_set_timeout(handle, 1000) != 0)
-		{
-			LOG(ERROR, string("Unable to set pcap timeout value due to error: ") + pcap_geterr(handle), "");
-		}
-
-		if (pcap_activate(handle) != 0)
-		{
-			LOG(CRITICAL, string("Unable to activate packet capture due to error: ") + pcap_geterr(handle), "");
-			exit(EXIT_FAILURE);
-		}
-
-
-
-		/* ask pcap for the network address and mask of the device */
-		ret = pcap_lookupnet(Config::Inst()->GetInterface().c_str(), &netp, &maskp, errbuf);
-		if(ret == -1)
-		{
-			LOG(ERROR, "Unable to start packet capture.",
-				"Unable to get the network address and mask: "+string(strerror(errno)));
-			exit(EXIT_FAILURE);
-		}
-
-		if(pcap_compile(handle, &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-		{
-			LOG(ERROR, "Unable to start packet capture.",
-				"Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(handle) +".");
-			exit(EXIT_FAILURE);
-		}
-
-		if(pcap_setfilter(handle, &fp) == -1)
-		{
-			LOG(ERROR, "Unable to start packet capture.",
-				"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handle) +".");
-			exit(EXIT_FAILURE);
-		}
 		//"Main Loop"
 		//Runs the function "Packet_Handler" every time a packet is received
-	    if(pcap_loop(handle, -1, Packet_Handler, NULL) != 0)
-	    {
-	    	LOG(ERROR, pcap_geterr(handle), pcap_geterr(handle));
-	    }
+		u_char index = 0;
+		pthread_t consumer;
+		pthread_create(&consumer, NULL, ConsumerLoop, NULL);
+		pthread_detach(consumer);
+		pcap_loop(handles[0], -1, Packet_Handler, &index);
 	}
 	return false;
 }
 
-void Packet_Handler(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
 {
-	Packet packet_info;
-	struct ether_header *ethernet;  	/* net/ethernet.h */
-	struct ip *ip_hdr; 					/* The IP header */
+	if(Config::Inst()->GetIsTraining())
+	{
+		pcap_dump((u_char *)trainingFileStream, pkthdr, packet);
+	}
 
 	if(packet == NULL)
 	{
 		LOG(ERROR, "Failed to capture packet!","");
 		return;
 	}
-
-	/* let's start with the ether header... */
-	ethernet = (struct ether_header *) packet;
-
-	/* Do a couple of checks to see what packet type we have..*/
-	if(ntohs (ethernet->ether_type) == ETHERTYPE_IP)
+	switch(ntohs(*(uint16_t *)(packet+12)))
 	{
-		ip_hdr = (struct ip*)(packet + sizeof(struct ether_header));
+		//IPv4, currently the only handled case
+		case ETHERTYPE_IP:
+		{
 
-		//Prepare Packet structure
-		packet_info.ip_hdr = *ip_hdr;
-		packet_info.pcap_header = *pkthdr;
-		//If this is to the host
-		if(packet_info.ip_hdr.ip_dst.s_addr == hostAddr.sin_addr.s_addr)
-		{
-			packet_info.fromHaystack = FROM_LTM;
-		}
-		else
-		{
-			packet_info.fromHaystack = FROM_HAYSTACK_DP;
-		}
+			//Prepare Packet structure
+			Evidence *evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
+			if(localIPs[*index] == evidencePacket->m_evidencePacket.ip_dst)
+			{
+				//manually setting dst ip to 0.0.0.1 designates the packet was to a real host not a haystack node
+				evidencePacket->m_evidencePacket.ip_dst = 1;
+			}
 
-		switch(ip_hdr->ip_p)
-		{
-			//IF UDP
-			case 17:
+			if (!Config::Inst()->GetReadPcap())
 			{
-				packet_info.udp_hdr = *(struct udphdr*) ((char *)ip_hdr + sizeof(struct ip));
-				break;
-			}
-			//IF ICMP
-			case 1:
-			{
-				packet_info.icmp_hdr = *(struct icmphdr*) ((char *)ip_hdr + sizeof(struct ip));
-				break;
-			}
-			//IF TCP
-			case 6:
-			{
-				packet_info.tcp_hdr = *(struct tcphdr*)((char*)ip_hdr + sizeof(struct ip));
-				break;
-			}
-			default:
-			{
-				break;
-			}
-		}
-		UpdateSuspect(packet_info);
-
-		// Allow for continuous classification
-		if(!Config::Inst()->GetClassificationTimeout())
-		{
-			if(!Config::Inst()->GetIsTraining())
-			{
-				UpdateAndClassify(packet_info.ip_hdr.ip_src.s_addr);
+				suspectEvidence.InsertEvidence(evidencePacket);
 			}
 			else
 			{
-				UpdateAndStore(packet_info.ip_hdr.ip_src.s_addr);
+				// If reading from pcap file no Consumer threads, so process the evidence right away
+				suspectsSinceLastSave.ProcessEvidence(evidencePacket, true);
+				suspects.ProcessEvidence(evidencePacket, false);
 			}
+			return;
 		}
-	}
-	else if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP)
-	{
-		return;
+		//Ignore IPV6
+		case ETHERTYPE_IPV6:
+		{
+			return;
+		}
+		//Ignore ARP
+		case ETHERTYPE_ARP:
+		{
+			return;
+		}
+		default:
+		{
+			//stringstream ss;
+			//ss << "Ignoring a packet with unhandled protocol #" << (uint16_t)(ntohs(((struct ether_header *)packet)->ether_type));
+			//LOG(DEBUG, ss.str(), "");
+			return;
+		}
 	}
 }
 
 void LoadConfiguration()
 {
-	string hostAddrString = GetLocalIP(Config::Inst()->GetInterface().c_str());
-
-	if(hostAddrString.size() == 0)
+	vector<string> ifList = Config::Inst()->GetInterfaces();
+	hostAddrs.clear();
+	for(uint i = 0; i < ifList.size(); i++)
 	{
-		LOG(ERROR, "Bad ethernet interface, no IP's associated!","");
-		exit(EXIT_FAILURE);
+		struct sockaddr_in hostAddr;
+		string hostAddrString = GetLocalIP(Config::Inst()->GetInterface(i).c_str());
+		if(hostAddrString.size() == 0)
+		{
+			LOG(ERROR, "Bad ethernet interface, no IP's associated!","");
+			exit(EXIT_FAILURE);
+		}
+		inet_pton(AF_INET, hostAddrString.c_str(),&(hostAddr.sin_addr));
+		hostAddrs.push_back(hostAddr);
 	}
-
-	inet_pton(AF_INET,hostAddrString.c_str(),&(hostAddr.sin_addr));
 }
 
-
+//Convert monitored ip address into a csv string
 string ConstructFilterString()
 {
-	// Whitelist local traffic
-	string filterString = "not src 0.0.0.0 && ";
+	string filterString = "not src host 0.0.0.0 && ";
+	if(Config::Inst()->GetCustomPcapString() != "") {
+		if(Config::Inst()->GetOverridePcapString())
+		{
+			filterString = Config::Inst()->GetCustomPcapString();
+			LOG(DEBUG, "Pcap filter string is "+filterString,"");
+			return filterString;
+		}
+		else
+		{
+			filterString += Config::Inst()->GetCustomPcapString() + " && ";
+		}
+	}
 
-	// Whitelist the static haystack nodes
-	for(uint i = 0; i < haystackAddresses.size(); i++)
+
+	struct ifaddrs *devices = NULL;
+	struct ifaddrs *curIf = NULL;
+	stringstream ss;
+
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
 	{
-		filterString += "not src host ";
-		filterString += haystackAddresses[i];
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
 
-		if(i+1 != haystackAddresses.size())
+	vector<string> networkFilderBuilder;
+	vector<string> enabledInterfaces = Config::Inst()->GetInterfaces();
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		for(uint i = 0; i < enabledInterfaces.size(); i++)
+		{
+			if(!strcmp(curIf->ifa_name, enabledInterfaces[i].c_str()) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+			{
+				// TODO ipv6 support
+				in_addr interfaceIp;
+				interfaceIp.s_addr = ((sockaddr_in*)curIf->ifa_addr)->sin_addr.s_addr & ((sockaddr_in*)curIf->ifa_netmask)->sin_addr.s_addr;
+				string interfaceIpBase = inet_ntoa(interfaceIp);
+				string interfaceMask = inet_ntoa(((sockaddr_in*)curIf->ifa_netmask)->sin_addr);
+				LOG(DEBUG, "Listening on network " + interfaceIpBase + "/" + interfaceMask, "");
+				networkFilderBuilder.push_back("dst net " + interfaceIpBase + " mask " + interfaceMask);
+			}
+		}
+	}
+
+	if(networkFilderBuilder.size() == 0) {
+		// Nothing to do
+	}
+	else if(networkFilderBuilder.size() == 1)
+	{
+		filterString += networkFilderBuilder.at(0) + " && ";
+	} 
+	else
+	{
+		filterString += "(" + networkFilderBuilder.at(0);
+		for(uint i = 1; i < networkFilderBuilder.size(); i++)
+		{
+			filterString += "|| " + networkFilderBuilder.at(i);
+		}
+		filterString += ") && ";
+	}
+
+
+	{
+		//Get list of interfaces and insert associated local IP's
+		vector<string> ifList = Config::Inst()->GetInterfaces();
+		while(ifList.size())
+		{
+			//Remove and add the host entry
+			filterString += "not src host ";
+			//Look up associated IP with the interface
+			filterString += GetLocalIP(ifList.back().c_str());
+			ifList.pop_back();
+
+			//If we have another local IP or there is at least one haystack/whitelist ip, add 'or' conditional
+			if(ifList.size() || haystackAddresses.size() || haystackDhcpAddresses.size()
+				|| whitelistIpRanges.size() || whitelistIpAddresses.size())
+			{
+				filterString += " && ";
+			}
+		}
+	}
+
+	//Insert static haystack IP's
+	vector<string> hsAddresses = haystackAddresses;
+	while(hsAddresses.size())
+	{
+		//Remove and add the haystack host entry
+		filterString += "not src host ";
+		filterString += hsAddresses.back();
+		hsAddresses.pop_back();
+
+		//If there is at least one more haystack/whitelist ip, add 'or' conditional
+		if(hsAddresses.size() || haystackDhcpAddresses.size() || whitelistIpRanges.size() || whitelistIpAddresses.size())
 		{
 			filterString += " && ";
 		}
 	}
 
 	// Whitelist the DHCP haystack node IP addresses
-	if(!haystackDhcpAddresses.empty() && !haystackAddresses.empty())
+	hsAddresses = haystackDhcpAddresses;
+	while(hsAddresses.size())
 	{
-		filterString += " && ";
-	}
-	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
-	{
+		//Remove and add the haystack host entry
 		filterString += "not src host ";
-		filterString += haystackDhcpAddresses[i];
+		filterString += hsAddresses.back();
+		hsAddresses.pop_back();
 
-		if(i+1 != haystackDhcpAddresses.size())
+		//If there is at least one more haystack/whitelist ip, add 'or' conditional
+		if(hsAddresses.size() || whitelistIpRanges.size() || whitelistIpAddresses.size())
 		{
 			filterString += " && ";
 		}
 	}
 
-	// Whitelist the whitelist file IP addresses
-	if(!whitelistIpAddresses.empty() && (!haystackAddresses.empty() || !haystackDhcpAddresses.empty()))
+	hsAddresses = whitelistIpAddresses;
+	while(hsAddresses.size())
 	{
-		filterString += " && ";
-	}
-	for(uint i = 0; i < whitelistIpAddresses.size(); i++)
-	{
+		//Remove and add the haystack host entry
 		filterString += "not src host ";
-		filterString += whitelistIpAddresses[i];
+		filterString += hsAddresses.back();
+		hsAddresses.pop_back();
 
-		if(i+1 != whitelistIpAddresses.size())
+		//If there is at least one more whitelist ip, add 'or' conditional
+		if(hsAddresses.size() || whitelistIpRanges.size())
 		{
 			filterString += " && ";
 		}
 	}
 
-	// Whitelist the whitelist IP address ranges
-	if(!whitelistIpRanges.empty() && (!whitelistIpAddresses.empty() || !haystackAddresses.empty() || !haystackDhcpAddresses.empty()))
-	{
-		filterString += " && ";
-	}
-	for(uint i = 0; i < whitelistIpRanges.size(); i++)
+	hsAddresses = whitelistIpRanges;
+	while(hsAddresses.size())
 	{
 		filterString += "not src net ";
-		filterString += WhitelistConfiguration::GetIp(whitelistIpRanges[i]);
+		filterString += WhitelistConfiguration::GetIp(hsAddresses.back());
 		filterString += " mask ";
-		filterString += WhitelistConfiguration::GetSubnet(whitelistIpRanges[i]);
+		filterString += WhitelistConfiguration::GetSubnet(hsAddresses.back());
+		hsAddresses.pop_back();
 
-		if(i+1 != whitelistIpRanges.size())
+		if(hsAddresses.size())
 		{
 			filterString += " && ";
 		}
 	}
 
-
-	LOG(DEBUG, "Pcap filter string changed to '" + filterString + "'","");
+	LOG(DEBUG, "Pcap filter string is "+filterString,"");
 	return filterString;
 }
-
-
-vector <string> GetIpAddresses(string ipListFile)
-{
-	ifstream ipListFileStream(ipListFile.data());
-	vector<string> whitelistedAddresses;
-
-	if(ipListFileStream.is_open())
-	{
-		while(ipListFileStream.good())
-		{
-			string line;
-			getline (ipListFileStream,line);
-			if(strcmp(line.c_str(), "")&& line.at(0) != '#' )
-			{
-				whitelistedAddresses.push_back(line);
-			}
-		}
-		ipListFileStream.close();
-	}
-	else
-	{
-		LOG(ERROR,"Unable to open file: " + ipListFile, "");
-	}
-
-	return whitelistedAddresses;
-}
-
-
-vector <string> GetHaystackAddresses(string honeyDConfigPath)
-{
-	//Path to the main log file
-	ifstream honeydConfFile(honeyDConfigPath.c_str());
-	vector <string> retAddresses;
-	retAddresses.push_back(GetLocalIP(Config::Inst()->GetInterface().c_str()));
-
-	if( honeydConfFile == NULL)
-	{
-		LOG(ERROR, "Error opening log file. Does it exist?", "");
-		exit(EXIT_FAILURE);
-	}
-
-	string LogInputLine;
-
-	while(!honeydConfFile.eof())
-	{
-		stringstream LogInputLineStream;
-
-		//Get the next line
-		getline(honeydConfFile, LogInputLine);
-
-		//Load the line into a stringstream for easier tokenizing
-		LogInputLineStream << LogInputLine;
-		string token;
-
-		//Is the first word "bind"?
-		getline(LogInputLineStream, token, ' ');
-
-		if(token.compare( "bind" ) != 0)
-		{
-			continue;
-		}
-
-		//The next token will be the IP address
-		getline(LogInputLineStream, token, ' ');
-		retAddresses.push_back(token);
-	}
-	return retAddresses;
-}
-
-void UpdateSuspect(const Packet& packet)
-{
-	//Attempt to add the evidence into the table, if it fails the suspect doesn't exist in this table
-	if(!suspects.AddEvidenceToSuspect(packet.ip_hdr.ip_src.s_addr, packet))
-	{
-		suspects.AddNewSuspect(packet);
-	}
-
-	//Attempt to add the evidence into the table, if it fails the suspect doesn't exist in this table
-	if(!Config::Inst()->GetIsTraining() && !suspectsSinceLastSave.AddEvidenceToSuspect(packet.ip_hdr.ip_src.s_addr, packet))
-	{
-		suspectsSinceLastSave.AddNewSuspect(packet);
-	}
-}
-
 
 void UpdateAndStore(const in_addr_t& key)
 {
@@ -1063,14 +1110,6 @@ void UpdateAndStore(const in_addr_t& key)
 	{
 		return;
 	}
-
-	//Store in training file
-	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
-	for (int j = 0; j < DIM; j++)
-	{
-		trainingFileStream << suspectCopy.GetFeatureSet(MAIN_FEATURES).m_features[j] << " ";
-	}
-	trainingFileStream << "\n";
 
 	//Send to UI
 	SendSuspectToUIs(&suspectCopy);
@@ -1107,7 +1146,6 @@ void UpdateAndClassify(const in_addr_t& key)
 			SilentAlarm(&suspectCopy, oldIsHostile);
 		}
 	}
-
 	//Send to UI
 	SendSuspectToUIs(&suspectCopy);
 }
@@ -1115,22 +1153,42 @@ void UpdateAndClassify(const in_addr_t& key)
 void CheckForDroppedPackets()
 {
 	// Quick check for libpcap dropping packets
-	if (handle != NULL)
+	for(uint i = 0; i < handles.size(); i++)
 	{
-		pcap_stat captureStats;
-		static uint lastDropCount = 0;
-		int result = pcap_stats(handle, &captureStats);
-		if (result == 0 && captureStats.ps_drop != lastDropCount)
+		if(handles[i] == NULL)
 		{
-			if (captureStats.ps_drop > lastDropCount)
+			continue;
+		}
+
+		pcap_stat captureStats;
+		int result = pcap_stats(handles[i], &captureStats);
+		if((result == 0) && (captureStats.ps_drop != dropCounts[i]))
+		{
+			if(captureStats.ps_drop > dropCounts[i])
 			{
 				stringstream ss;
-				ss << "Libpcap has dropped " << captureStats.ps_drop - lastDropCount << " packets. Try increasing the capture buffer." << endl;
+				ss << "Libpcap has dropped " << captureStats.ps_drop - dropCounts[i] << " packets. Try increasing the capture buffer." << endl;
 				LOG(WARNING, ss.str(), "");
 			}
-			lastDropCount = captureStats.ps_drop;
+			dropCounts[i] = captureStats.ps_drop;
 		}
 	}
+}
+
+void UpdateHaystackFeatures()
+{
+	vector<uint32_t> haystackNodes;
+	for(uint i = 0; i < haystackAddresses.size(); i++)
+	{
+		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
+	}
+
+	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
+	{
+		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
+	}
+
+	suspects.SetHaystackNodes(haystackNodes);
 }
 
 }

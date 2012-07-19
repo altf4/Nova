@@ -25,6 +25,7 @@
 #include "Config.h"
 #include "Lock.h"
 
+#include <unistd.h>
 #include <string>
 #include <cerrno>
 #include <sys/un.h>
@@ -50,8 +51,6 @@ bool ConnectToNovad()
 		return true;
 	}
 
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
-
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
 	key += "/keys";
@@ -68,10 +67,14 @@ bool ConnectToNovad()
 		return false;
 	}
 
+	MessageManager::Instance().DeleteQueue(IPCSocketFD);
+
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
 	if(connect(IPCSocketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
-		LOG(DEBUG, " connect: "+string(strerror(errno))+".", "");
-		close(IPCSocketFD);
+		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
@@ -81,14 +84,14 @@ bool ConnectToNovad()
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
 	if(!Message::WriteMessage(&connectRequest, IPCSocketFD))
 	{
-		LOG(ERROR, " Message: "+string(strerror(errno))+".", "");
-		close(IPCSocketFD);
+		LOG(ERROR, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
@@ -97,16 +100,24 @@ bool ConnectToNovad()
 
 	if(reply->m_messageType != CONTROL_MESSAGE)
 	{
+		stringstream s;
+		s << "Expected message type of CONTROL_MESSAGE but got " << reply->m_messageType;
+		LOG(ERROR, s.str(), "");
+
 		delete reply;
-		close(IPCSocketFD);
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
 	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
 	{
+		stringstream s;
+		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_controlType;
+		LOG(ERROR, s.str(), "");
+
 		delete connectionReply;
-		close(IPCSocketFD);
+		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
 	}
@@ -126,7 +137,7 @@ bool TryWaitConnectToNovad(int timeout_ms)
 	else
 	{
 		//usleep takes in microsecond argument. Convert to milliseconds
-		usleep(timeout_ms * 1000);
+		usleep(timeout_ms *1000);
 		return ConnectToNovad();
 	}
 }
@@ -149,14 +160,13 @@ bool CloseNovadConnection()
 	}
 
 	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
-	if (reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return false;
+		success = false;
 	}
-
-	if(reply->m_messageType != CONTROL_MESSAGE)
+	else if(reply->m_messageType != CONTROL_MESSAGE)
 	{
 		delete reply;
 		success = false;
@@ -173,6 +183,8 @@ bool CloseNovadConnection()
 
 	MessageManager::Instance().CloseSocket(IPCSocketFD);
 	IPCSocketFD = -1;
+	LOG(DEBUG, "Call to CloseNovadConnection complete", "");
 	return success;
 }
+
 }

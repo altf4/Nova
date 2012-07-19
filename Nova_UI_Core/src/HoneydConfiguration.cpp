@@ -238,8 +238,10 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	try
 	{
 		read_xml(m_homePath+"/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		m_groups.clear();
 		BOOST_FOREACH(ptree::value_type &v, m_groupTree.get_child("groups"))
 		{
+			m_groups.push_back(v.second.get<std::string>("name"));
 			//Find the specified group
 			if(!v.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
 			{
@@ -533,12 +535,12 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 
 
 /************************************************
- * Save Honeyd XML Configuration Functions
+  Save Honeyd XML Configuration Functions
  ************************************************/
 
 //Saves the current configuration information to XML files
 
-//**Important** this function assumes that unless it is a new item (ptree pointer == NULL) then
+// Important this function assumes that unless it is a new item (ptree pointer == NULL) then
 // all required fields exist and old fields have been removed. Ex: if a port previously used a script
 // but now has a behavior of open, at that point the user should have erased the script field.
 // inverserly if a user switches to script the script field must be created.
@@ -606,7 +608,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
 		mask = ~mask; //After getting the inverse of this we have the mask in host addr form.
 		//Convert to network order, put in in_addr struct
-		//call ntoa to get char * and make string
+		//call ntoa to get char pointer and make string
 		in_addr tempMask;
 		tempMask.s_addr = htonl(mask);
 		temp = string(inet_ntoa(tempMask));
@@ -673,7 +675,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 	vector<string> profilesParsed;
 
-	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		if(!it->second.parentProfile.compare(""))
 		{
@@ -683,13 +685,13 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 	}
 
-	while (profilesParsed.size() < m_profiles.size())
+	while(profilesParsed.size() < m_profiles.size())
 	{
-		for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
 			bool selfMatched = false;
 			bool parentFound = false;
-			for (uint i = 0; i < profilesParsed.size(); i++)
+			for(uint i = 0; i < profilesParsed.size(); i++)
 			{
 				if(!it->second.parentProfile.compare(profilesParsed[i]))
 				{
@@ -714,7 +716,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	}
 
 	// Start node section
-	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		if(!it->second.enabled)
 		{
@@ -747,6 +749,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			{
 				out << "clone " << it->second.pfile << it->second.IP << " " << it->second.pfile << endl;
 				out << "set " << it->second.pfile << it->second.IP << " ethernet \"" << it->second.MAC << "\"" << endl;
+				out << "bind " << it->second.IP << " " <<  it->second.pfile << it->second.IP << endl;
 			}
 		}
 	}
@@ -1067,7 +1070,7 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	return true;
 }
 
-string HoneydConfiguration::ProfileToString(profile* p)
+string HoneydConfiguration::ProfileToString(profile *p)
 {
 	stringstream out;
 
@@ -1100,7 +1103,7 @@ string HoneydConfiguration::ProfileToString(profile* p)
 		out << "set " << p->name << " droprate in " << p->dropRate << endl;
 	}
 
-	for (uint i = 0; i < p->ports.size(); i++)
+	for(uint i = 0; i < p->ports.size(); i++)
 	{
 		// Only include non-inherited ports
 		if(!p->ports[i].second)
@@ -1140,7 +1143,7 @@ string HoneydConfiguration::ProfileToString(profile* p)
 }
 
 //
-string HoneydConfiguration::DoppProfileToString(profile* p)
+string HoneydConfiguration::DoppProfileToString(profile *p)
 {
 	stringstream out;
 	out << "create DoppelgangerReservedTemplate" << endl;
@@ -1160,7 +1163,7 @@ string HoneydConfiguration::DoppProfileToString(profile* p)
 		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->dropRate << endl;
 	}
 
-	for (uint i = 0; i < p->ports.size(); i++)
+	for(uint i = 0; i < p->ports.size(); i++)
 	{
 		// Only include non-inherited ports
 		if(!p->ports[i].second)
@@ -1217,7 +1220,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileChildren(std::string par
 {
 	vector<std::string> childProfiles;
 
-	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		if(it->second.parentProfile == parent)
 		{
@@ -1232,7 +1235,7 @@ std::vector<std::string> HoneydConfiguration::GetProfileNames()
 {
 	vector<std::string> childProfiles;
 
-	for (ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 	{
 		childProfiles.push_back(it->second.name);
 	}
@@ -1269,7 +1272,7 @@ std::vector<std::string> HoneydConfiguration::GetNodeNames()
 {
 	vector<std::string> childnodes;
 
-	for (NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		childnodes.push_back(it->second.name);
 	}
@@ -1282,7 +1285,7 @@ std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 {
 	vector<std::string> childSubnets;
 
-	for (SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
 	{
 		childSubnets.push_back(it->second.name);
 	}
@@ -1306,7 +1309,7 @@ std::vector<std::string> HoneydConfiguration::GetSubnetNames()
 	ret.first = NOT_INHERITED;
 	profileName parent = profile;
 
-	while (m_profiles[parent].ethernet == "")
+	while(m_profiles[parent].ethernet == "")
 	{
 		ret.first = INHERITED;
 		parent = m_profiles[parent].parentProfile;
@@ -1332,7 +1335,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetPersonality(profi
 	ret.first = NOT_INHERITED;
 	profileName parent = profile;
 
-	while (m_profiles[parent].personality == "")
+	while(m_profiles[parent].personality == "")
 	{
 		ret.first = INHERITED;
 		parent = m_profiles[parent].parentProfile;
@@ -1358,7 +1361,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionTCP(profile
 	ret.first = NOT_INHERITED;
 	profileName parent = profile;
 
-	while (m_profiles[parent].tcpAction == "")
+	while(m_profiles[parent].tcpAction == "")
 	{
 		ret.first = INHERITED;
 		parent = m_profiles[parent].parentProfile;
@@ -1385,7 +1388,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionUDP(profile
 	ret.first = NOT_INHERITED;
 	profileName parent = profile;
 
-	while (m_profiles[parent].udpAction == "")
+	while(m_profiles[parent].udpAction == "")
 	{
 		ret.first = INHERITED;
 		parent = m_profiles[parent].parentProfile;
@@ -1411,7 +1414,7 @@ std::pair<hdConfigReturn, std::string> HoneydConfiguration::GetActionICMP(profil
 	ret.first = NOT_INHERITED;
 	profileName parent = profile;
 
-	while (m_profiles[parent].icmpAction == "")
+	while(m_profiles[parent].icmpAction == "")
 	{
 		ret.first = INHERITED;
 		parent = m_profiles[parent].parentProfile;
@@ -1438,7 +1441,7 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMin(profileName 
 	ret.first = NOT_INHERITED;
 	profileName parent = profile;
 
-	while (m_profiles[parent].uptimeMin == "")
+	while(m_profiles[parent].uptimeMin == "")
 	{
 		ret.first = INHERITED;
 		parent = m_profiles[parent].parentProfile;
@@ -1464,7 +1467,7 @@ std::pair<hdConfigReturn, string> HoneydConfiguration::GetUptimeMax(profileName 
 	ret.first = NOT_INHERITED;
 	profileName parent = profile;
 
-	while (m_profiles[parent].uptimeMax == "")
+	while(m_profiles[parent].uptimeMax == "")
 	{
 		ret.first = INHERITED;
 		parent = m_profiles[parent].parentProfile;
@@ -1565,18 +1568,18 @@ bool HoneydConfiguration::AddProfile(profile *profile)
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
 	//If item text and profile name don't match, we need to update
-	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)))
+	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)) && !(m_profiles.keyExists(newName)))
 	{
 		//Set the profile to the correct name and put the profile in the table
-		m_profiles[oldName].name = newName;
 		m_profiles[newName] = m_profiles[oldName];
+		m_profiles[newName].name = newName;
 
 		//Find all nodes who use this profile and update to the new one
 		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 		{
 			if(!it->second.pfile.compare(oldName))
 			{
-				it->second.pfile = newName;
+				m_nodes[it->first].pfile = newName;
 			}
 		}
 
@@ -1584,11 +1587,11 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 		{
 			if(!it->second.parentProfile.compare(oldName))
 			{
-				it->second.parentProfile = newName;
+				InheritProfile(it->first, newName);
 			}
 		}
-		DeleteProfile(oldName);
 		UpdateProfileTree(newName, ALL);
+		DeleteProfile(oldName);
 		return true;
 	}
 	return false;
@@ -1611,7 +1614,7 @@ bool HoneydConfiguration::InheritProfile(std::string child, std::string parent)
 			//If the child has an old parent
 			if((oldParent.compare("")) && (m_profiles.keyExists(oldParent)))
 			{
-				UpdateProfileTree(parent, ALL);
+				UpdateProfileTree(oldParent, ALL);
 			}
 			//Updates the child with the new inheritance and any modified values since last update
 			CreateProfileTree(child);
@@ -1806,7 +1809,8 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 	Node newNode;
 	newNode.IP = ipAddress;
 	newNode.interface = interface;
-	cout << "Adding new node " << profileName << ipAddress << macAddress << interface << subnet <<endl;
+
+	LOG(DEBUG, "Adding new honeyd node " + profileName + " " + ipAddress + " " + macAddress + " " + interface + " " + subnet, "");
 
 	if(newNode.IP != "DHCP")
 	{
@@ -1889,7 +1893,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 		//If the profile at the iterator is a child of this profile
 		if(!it->second.parentProfile.compare(profileName))
 		{
-			if (!DeleteProfile(it->first, false))
+			if(!DeleteProfile(it->first, false))
 			{
 				return false;
 			}
@@ -1908,7 +1912,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 	}
 	while(!delList.empty())
 	{
-		if (!DeleteNode(delList.back()))
+		if(!DeleteNode(delList.back()))
 		{
 			LOG(DEBUG, "Failed to delete profile because child node deletion failed", "");
 			return false;
@@ -1931,9 +1935,9 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			pt->clear();
 
 			//Find all profiles still in the table that are sibilings of deleted profile
-			//* We should be using an iterator to find the original profile and erase it
-			//* but boost's iterator implementation doesn't seem to be able to access data
-			//* correctly and are frequently invalidated.
+			// We should be using an iterator to find the original profile and erase it
+			// but boost's iterator implementation doesn't seem to be able to access data
+			// correctly and are frequently invalidated.
 
 			for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 			{

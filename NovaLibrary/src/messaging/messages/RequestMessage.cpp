@@ -18,6 +18,7 @@
 
 #include <string.h>
 
+#include "../../SerializationHelper.h"
 #include "RequestMessage.h"
 #include "../../Defines.h"
 
@@ -86,7 +87,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 			// Deserialize the list
 			m_suspectList.clear();
-			for (uint i = 0; i < m_suspectListLength; i += sizeof(in_addr_t))
+			for(uint i = 0; i < m_suspectListLength; i += sizeof(in_addr_t))
 			{
 				in_addr_t address;
 
@@ -151,8 +152,14 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 				return;
 			}
 			m_suspect = new Suspect();
-			if(m_suspect->Deserialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			try
 			{
+				if(m_suspect->Deserialize((u_char*)buffer, length, NO_FEATURE_DATA) != m_suspectLength)
+				{
+					m_serializeError = true;
+					return;
+				}
+			} catch(Nova::serializationException &e) {
 				m_serializeError = true;
 				return;
 			}
@@ -173,7 +180,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_UPTIME_REPLY:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_uptime);
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -181,8 +188,8 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			}
 
 			// Deserialize the uptime
-			memcpy(&m_uptime, buffer, sizeof(m_uptime));
-			buffer += sizeof(m_uptime);
+			memcpy(&m_startTime, buffer, sizeof(m_startTime));
+			buffer += sizeof(m_startTime);
 
 			break;
 		}
@@ -239,7 +246,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		4) Size of list
 			//		5) List of suspect IPs
 
-			m_suspectListLength = sizeof(in_addr_t) * m_suspectList.size();
+			m_suspectListLength = sizeof(in_addr_t) *m_suspectList.size();
 			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType);
 
 			buffer = (char*)malloc(messageSize);
@@ -259,7 +266,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			buffer += sizeof(m_suspectListLength);
 
 			//Suspect list buffer itself
-			for (uint i = 0; i < m_suspectList.size(); i++)
+			for(uint i = 0; i < m_suspectList.size(); i++)
 			{
 				in_addr_t address = m_suspectList.at(i);
 				memcpy(buffer, &address, sizeof(in_addr_t));
@@ -334,7 +341,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
 			buffer += sizeof(m_suspectLength );
 			// Serialize our suspect
-			if(m_suspect->Serialize((u_char*)buffer, NO_FEATURE_DATA) != m_suspectLength)
+			if(m_suspect->Serialize((u_char*)buffer, messageSize, NO_FEATURE_DATA) != m_suspectLength)
 			{
 				return NULL;
 			}
@@ -365,7 +372,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		2) Request Message Type
 			//		3) The uptime
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_uptime);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -375,8 +382,8 @@ char *RequestMessage::Serialize(uint32_t *length)
 			buffer += sizeof(m_requestType);
 
 			// Serialize the uptime
-			memcpy(buffer, &m_uptime, sizeof(m_uptime));
-			buffer += sizeof(m_uptime );
+			memcpy(buffer, &m_startTime, sizeof(m_startTime));
+			buffer += sizeof(m_startTime );
 
 			break;
 		}

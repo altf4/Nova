@@ -67,19 +67,23 @@ NovaGUI/UI_headers/
 #Novad
 Novad/Release/novad
 Novad/Debug/novad
+Novad/novad
 
 #NovaCLI
 NovaCLI/Release/novacli
 NovaCLI/Debug/novacli
+NovaCLI/novacli
 
 #NovaLib
 /NovaLibrary/.settings/org.eclipse.cdt.managedbuilder.core.prefs
 /NovaLibrary/.settings/org.eclipse.cdt.codan.core.prefs
+NovaLibrary/libNovaLibrary.a
 
 #UI_Core
 /Nova_UI_Core/Debug/libNova_UI_Core.so
 /Nova_UI_Core/Debug/Nova_UI_Core
 /Nova_UI_Core/Release/libNova_UI_Core.so
+/Nova_UI_Core/Release/Nova_UI_Core
 
 #NovaTest
 /NovaTest/Debug
@@ -104,3 +108,23 @@ NovaCLI/Debug/novacli
 /NovaWeb/libv8-convert-20120219/*
 /NovaWeb/libv8-convert-20120219.tar.gz.1
 /NovaWeb/libv8-convert-20120219.tar.gz.2
+/Installer/.nova/Config/doppelganger.config
+/Installer/.nova/Data/data.txt
+/Installer/.nova/Data/training.db
+/Installer/Write/nova/.nova/Config/data.csv
+/Novad/core
+/NovaTrainer/Debug/novatrainer
+/NovaTrainer/novatrainer
+/NovaTrainer/Release/novatrainer
+/1
+
+#debian
+/nova_1*
+/debian/nova.postinst.debhelper
+/debian/nova.postrm.debhelper
+/debian/nova.substvars
+debian/files
+debian/nova/*
+/misc/ROCGraphGenerator/hostiles.txt
+/misc/ROCGraphGenerator/output.txt
+/Nova_UI_Core/.settings/org.eclipse.cdt.codan.core.prefs

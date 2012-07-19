@@ -17,6 +17,7 @@
 //					for use in classification of the Suspect.
 //============================================================================
 
+#include "SerializationHelper.h"
 #include "FeatureSet.h"
 #include "Logger.h"
 #include "Config.h"
@@ -29,23 +30,35 @@ namespace Nova{
 
 string FeatureSet::m_featureNames[] =
 {
-		"IP_TRAFFIC_DISTRIBUTION",
-		"PORT_TRAFFIC_DISTRIBUTION",
-		"HAYSTACK_EVENT_FREQUENCY",
-		"PACKET_SIZE_MEAN",
-		"PACKET_SIZE_DEVIATION",
-		"DISTINCT_IPS",
-		"DISTINCT_PORTS",
-		"PACKET_INTERVAL_MEAN",
-		"PACKET_INTERVAL_DEVIATION"
+		"IP Traffic Distribution",
+		"Port Traffic Distribution",
+		"Haystack Event Frequency",
+		"Packet Size Mean",
+		"Packet Size Deviation",
+		"Protected IPs Contacted",
+		"Ports Contacted",
+		"Packet Interval Mean",
+		"Packet Interval Deviation",
+		"TCP Percent SYN",
+		"TCP Percent FIN",
+		"TCP Percent RST",
+		"TCP Percent SYN ACK",
+		"Haystack Percent Contacted",
 };
 
 FeatureSet::FeatureSet()
 {
 	m_IPTable.set_empty_key(0);
-	m_portTable.set_empty_key(0);
+	m_HaystackIPTable.set_empty_key(0);
+	m_PortTCPTable.set_empty_key(0);
+	m_PortUDPTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
 	m_intervalTable.set_empty_key(~0);
+	m_lastTimes.set_empty_key(0);
+
+	// This could be derrived from the m_HaystackIPTable but it saves
+	// having to iterate over it all the time
+	m_haystackNodesContacted = 0;
 
 	ClearFeatureSet();
 }
@@ -63,11 +76,21 @@ void FeatureSet::ClearFeatureSet()
 	m_totalInterval = 0;
 
 	m_IPTable.clear();
-	m_portTable.clear();
+	m_HaystackIPTable.clear();
+	m_PortTCPTable.clear();
+	m_PortUDPTable.clear();
 	m_packTable.clear();
 	m_intervalTable.clear();
+	m_lastTimes.clear();
+
+	m_rstCount = 0;
+	m_ackCount = 0;
+	m_synCount = 0;
+	m_finCount = 0;
+	m_synAckCount = 0;
 
 	m_packetCount = 0;
+	m_tcpPacketCount = 0;
 	m_bytesTotal = 0;
 	m_lastTime = 0;
 
@@ -126,6 +149,31 @@ void FeatureSet::CalculateAll()
 		}
 		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
+
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
+	{
+		Calculate(TCP_PERCENT_SYN);
+	}
+
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
+	{
+		Calculate(TCP_PERCENT_FIN);
+	}
+
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
+	{
+		Calculate(TCP_PERCENT_RST);
+	}
+
+	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
+	{
+		Calculate(TCP_PERCENT_SYNACK);
+	}
+
+	if(Config::Inst()->IsFeatureEnabled(HAYSTACK_PERCENT_CONTACTED))
+	{
+		Calculate(HAYSTACK_PERCENT_CONTACTED);
+	}
 }
 
 
@@ -157,21 +205,41 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		case PORT_TRAFFIC_DISTRIBUTION:
 		{
 			m_features[PORT_TRAFFIC_DISTRIBUTION] = 0;
-			double portMax = 0;
-			for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
+			if(m_PortTCPTable.size() || m_PortUDPTable.size())
 			{
-				if(it->second > portMax)
+				double portDivisor = 0;
+				for(Port_Table::iterator it = m_PortTCPTable.begin() ; it != m_PortTCPTable.end(); it++)
 				{
-					portMax = it->second;
+					//get the maximum port entry for normalization
+					if(it->second > portDivisor)
+					{
+						portDivisor = it->second;
+					}
 				}
-			}
-			for(Port_Table::iterator it = m_portTable.begin() ; it != m_portTable.end(); it++)
-			{
-				m_features[PORT_TRAFFIC_DISTRIBUTION] += ((double)it->second / portMax);
-			}
-			if(m_portTable.size())
-			{
-				m_features[PORT_TRAFFIC_DISTRIBUTION] = m_features[PORT_TRAFFIC_DISTRIBUTION] / (double)m_portTable.size();
+
+				for(Port_Table::iterator it = m_PortUDPTable.begin() ; it != m_PortUDPTable.end(); it++)
+				{
+					//get the maximum port entry for normalization
+					if(it->second > portDivisor)
+					{
+						portDivisor = it->second;
+					}
+				}
+
+
+				//Multiply the maximum entry with the size to get the divisor
+				portDivisor = portDivisor *((double)m_PortTCPTable.size() + (double)m_PortUDPTable.size());
+				long long unsigned int temp = 0;
+				for(Port_Table::iterator it = m_PortTCPTable.begin() ; it != m_PortTCPTable.end(); it++)
+				{
+					temp += it->second;
+				}
+
+				for(Port_Table::iterator it = m_PortUDPTable.begin() ; it != m_PortUDPTable.end(); it++)
+				{
+					temp += it->second;
+				}
+				m_features[PORT_TRAFFIC_DISTRIBUTION] = ((double)temp)/portDivisor;
 			}
 			break;
 		}
@@ -222,7 +290,7 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		/// Number of distinct ports contacted
 		case DISTINCT_PORTS:
 		{
-			m_features[DISTINCT_PORTS] =  m_portTable.size();
+			m_features[DISTINCT_PORTS] =  m_PortTCPTable.size() + m_PortUDPTable.size();
 			break;
 		}
 		///Measures the distribution of intervals between packets
@@ -247,6 +315,40 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			m_features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
 			break;
 		}
+
+		case TCP_PERCENT_SYN:
+		{
+			m_features[TCP_PERCENT_SYN] = ((double)m_synCount)/((double)m_tcpPacketCount + 1);
+			break;
+		}
+		case TCP_PERCENT_FIN:
+		{
+			m_features[TCP_PERCENT_FIN] = ((double)m_finCount)/((double)m_tcpPacketCount+ 1);
+			break;
+		}
+		case TCP_PERCENT_RST:
+		{
+			m_features[TCP_PERCENT_RST] = ((double)m_rstCount)/((double)m_tcpPacketCount + 1);
+			break;
+		}
+		case TCP_PERCENT_SYNACK:
+		{
+			//cout << "TCP stats: synCount: " << synCount << " synAckCount: " << synAckCount << " ackCount: " << ackCount << " finCount: " << finCount << " rstCount" << rstCount << endl;
+			m_features[TCP_PERCENT_SYNACK] = ((double)m_synAckCount)/((double)m_tcpPacketCount + 1);
+			break;
+		}
+		case HAYSTACK_PERCENT_CONTACTED:
+		{
+			if(m_HaystackIPTable.size())
+			{
+				m_features[HAYSTACK_PERCENT_CONTACTED] = (double)m_haystackNodesContacted / (double)m_HaystackIPTable.size();
+			}
+			else
+			{
+				m_features[HAYSTACK_PERCENT_CONTACTED] = 0;
+			}
+			break;
+		}
 		default:
 		{
 			break;
@@ -266,34 +368,58 @@ void FeatureSet::CalculateTimeInterval()
 	}
 }
 
-void FeatureSet::UpdateEvidence(const Packet& packet)
+void FeatureSet::UpdateEvidence(Evidence *evidence)
 {
 	// Ensure our assumptions about valid packet fields are true
-	if (packet.ip_hdr.ip_dst.s_addr == 0)
+	if(evidence->m_evidencePacket.ip_dst == 0)
 	{
 		LOG(DEBUG, "Got packet with invalid source IP address of 0. Skipping.", "");
 		return;
 	}
-	switch(packet.ip_hdr.ip_p)
+	switch(evidence->m_evidencePacket.ip_p)
 	{
 		//If UDP
 		case 17:
 		{
-			//Avoid empty key error
-			if(packet.udp_hdr.dest)
+			if(evidence->m_evidencePacket.dst_port != 0)
 			{
-				m_portTable[ntohs(packet.udp_hdr.dest)]++;
+				m_PortUDPTable[evidence->m_evidencePacket.dst_port]++;
 			}
 			break;
 		}
 		//If TCP
 		case 6:
 		{
-			//Avoid empty key error
-			if(packet.tcp_hdr.dest)
+			m_tcpPacketCount++;
+			if(evidence->m_evidencePacket.dst_port != 0)
 			{
-				m_portTable[ntohs(packet.tcp_hdr.dest)]++;
+				m_PortTCPTable[evidence->m_evidencePacket.dst_port]++;
 			}
+
+
+			if(evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
+			{
+				m_synAckCount++;
+			}
+			else if(evidence->m_evidencePacket.tcp_hdr.syn)
+			{
+				m_synCount++;
+			}
+			else if(evidence->m_evidencePacket.tcp_hdr.ack)
+			{
+				m_ackCount++;
+			}
+
+			if(evidence->m_evidencePacket.tcp_hdr.rst)
+			{
+				m_rstCount++;
+			}
+
+			if(evidence->m_evidencePacket.tcp_hdr.fin)
+			{
+				m_finCount++;
+			}
+
 			break;
 		}
 		//If ICMP
@@ -304,42 +430,67 @@ void FeatureSet::UpdateEvidence(const Packet& packet)
 		//If untracked IP protocol or error case ignore it
 		default:
 		{
-			//LOG(DEBUG, "Dropping packet with unhandled IP protocol." , "");
-			return;
+			break;
 		}
 	}
 
 	m_packetCount++;
-	m_bytesTotal += ntohs(packet.ip_hdr.ip_len);
+	m_bytesTotal += evidence->m_evidencePacket.ip_len;
+	m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 
-	//If from haystack
-	if(packet.fromHaystack)
+	if(m_HaystackIPTable.keyExists(evidence->m_evidencePacket.ip_dst))
 	{
-		m_IPTable[packet.ip_hdr.ip_dst.s_addr]++;
-	}
-	//If from local host, put into designated bin
-	else
-	{
-		m_IPTable[1]++;
-	}
+		m_HaystackIPTable[evidence->m_evidencePacket.ip_dst]++;
 
-	m_packTable[ntohs(packet.ip_hdr.ip_len)]++;
-
-	if(m_lastTime != 0)
-	{
-		m_intervalTable[packet.pcap_header.ts.tv_sec - m_lastTime]++;
+		if(m_HaystackIPTable[evidence->m_evidencePacket.ip_dst] == 1)
+		{
+			m_haystackNodesContacted++;
+		}
 	}
 
-	m_lastTime = packet.pcap_header.ts.tv_sec;
+	m_packTable[evidence->m_evidencePacket.ip_len]++;
+
+	//If we have already gotten a packet from the source to dest host
+	if(m_lastTimes.keyExists(evidence->m_evidencePacket.ip_dst))
+	{
+
+		if(evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst] < 0)
+		{
+			/*
+			// This is the case where we have out of order packets... log a message?
+
+			in_addr dst;
+			dst.s_addr = htonl(evidence->m_evidencePacket.ip_dst);
+			char *dstIp = inet_ntoa(dst);
+			cout << dstIp << "<-";
+
+			in_addr src;
+			src.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+			char *srcIp = inet_ntoa(src);
+			cout << srcIp << endl;
+			*/
+		}
+		else
+		{
+			//Calculate and add the interval into the feature data
+			m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
+		}
+
+	}
+	//Update or Insert the timestamp value in the table
+	m_lastTimes[evidence->m_evidencePacket.ip_dst] = evidence->m_evidencePacket.ts;
+
+
+	m_lastTime = evidence->m_evidencePacket.ts;
 
 	//Accumulate to find the lowest Start time and biggest end time.
-	if(packet.pcap_header.ts.tv_sec < m_startTime)
+	if(evidence->m_evidencePacket.ts < m_startTime)
 	{
-		m_startTime = packet.pcap_header.ts.tv_sec;
+		m_startTime = evidence->m_evidencePacket.ts;
 	}
-	if( packet.pcap_header.ts.tv_sec > m_endTime)
+	if(evidence->m_evidencePacket.ts > m_endTime)
 	{
-		m_endTime =  packet.pcap_header.ts.tv_sec;
+		m_endTime =  evidence->m_evidencePacket.ts;
 		CalculateTimeInterval();
 	}
 }
@@ -361,6 +512,7 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
+	m_tcpPacketCount += rhs.m_tcpPacketCount;
 	m_bytesTotal += rhs.m_bytesTotal;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
@@ -368,9 +520,23 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_IPTable[it->first] += rhs.m_IPTable[it->first];
 	}
 
-	for(Port_Table::iterator it = rhs.m_portTable.begin(); it != rhs.m_portTable.end(); it++)
+	for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
 	{
-		m_portTable[it->first] += rhs.m_portTable[it->first];
+		if(!rhs.m_HaystackIPTable.keyExists(it->first))
+		{
+			m_HaystackIPTable[it->first] += rhs.m_HaystackIPTable[it->first];
+
+		}
+	}
+
+	for(Port_Table::iterator it = rhs.m_PortTCPTable.begin(); it != rhs.m_PortTCPTable.end(); it++)
+	{
+		m_PortTCPTable[it->first] += rhs.m_PortTCPTable[it->first];
+	}
+
+	for(Port_Table::iterator it = rhs.m_PortUDPTable.begin(); it != rhs.m_PortUDPTable.end(); it++)
+	{
+		m_PortUDPTable[it->first] += rhs.m_PortUDPTable[it->first];
 	}
 
 	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
@@ -383,49 +549,16 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_intervalTable[it->first] += rhs.m_intervalTable[it->first];
 	}
 
-	return *this;
-}
-
-FeatureSet& FeatureSet::operator-=(FeatureSet &rhs)
-{
-	if(m_startTime > rhs.m_startTime)
-	{
-		m_startTime = rhs.m_startTime;
-	}
-	if(m_endTime < rhs.m_endTime)
-	{
-		m_endTime = rhs.m_endTime;
-	}
-	if(m_lastTime < rhs.m_lastTime)
-	{
-		m_lastTime = rhs.m_lastTime;
-	}
-	m_totalInterval -= rhs.m_totalInterval;
-	m_packetCount -= rhs.m_packetCount;
-	m_bytesTotal -= rhs.m_bytesTotal;
-
-	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
-	{
-		m_IPTable[it->first] -= rhs.m_IPTable[it->first];
-	}
-	for(Port_Table::iterator it = rhs.m_portTable.begin(); it != rhs.m_portTable.end(); it++)
-	{
-		m_portTable[it->first] -= rhs.m_portTable[it->first];
-	}
-
-	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
-	{
-		m_packTable[it->first] -= rhs.m_packTable[it->first];
-	}
-	for(Interval_Table::iterator it = rhs.m_intervalTable.begin(); it != rhs.m_intervalTable.end(); it++)
-	{
-		m_intervalTable[it->first] -= rhs.m_intervalTable[it->first];
-	}
+	m_synCount += rhs.m_synCount;
+	m_ackCount += rhs.m_ackCount;
+	m_finCount += rhs.m_finCount;
+	m_rstCount += rhs.m_rstCount;
+	m_synAckCount += rhs.m_synAckCount;
 
 	return *this;
 }
 
-uint32_t FeatureSet::SerializeFeatureSet(u_char *buf)
+uint32_t FeatureSet::SerializeFeatureSet(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
 
@@ -435,23 +568,21 @@ uint32_t FeatureSet::SerializeFeatureSet(u_char *buf)
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(buf+offset, &m_features[i], sizeof m_features[i]);
-		offset+= sizeof m_features[i];
+		SerializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
 }
 
 
-uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf)
+uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		memcpy(&m_features[i], buf+offset, sizeof m_features[i]);
-		offset+= sizeof m_features[i];
+		DeserializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
@@ -461,6 +592,7 @@ void FeatureSet::ClearFeatureData()
 {
 		m_totalInterval = 0;
 		m_packetCount = 0;
+		m_tcpPacketCount = 0;
 		m_bytesTotal = 0;
 
 		m_startTime = ~0;
@@ -469,403 +601,165 @@ void FeatureSet::ClearFeatureData()
 		m_intervalTable.clear();
 		m_packTable.clear();
 		m_IPTable.clear();
-		m_portTable.clear();
+
+		m_haystackNodesContacted = 0;
+		for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
+		{
+				m_HaystackIPTable[it->first] = 0;
+		}
+
+
+		m_PortTCPTable.clear();
+		m_PortUDPTable.clear();
+		m_lastTimes.clear();
 }
 
-uint32_t FeatureSet::SerializeFeatureData(u_char *buf)
+uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 {
-	// Uncomment this if you want to print the line, index, and size of each item deserialized
-	// This can be diffed with the DESERIALIZATION_DEBUGGING output to find offset mismatches
-    //#define SERIALIZATION_DEBUGGING true
 	uint32_t offset = 0;
-	uint32_t count = 0;
-	uint32_t table_entries = 0;
 
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 
-	memcpy(buf+offset, &m_totalInterval, sizeof m_totalInterval);
-	offset += sizeof m_totalInterval;
-#ifdef SERIALIZATION_DEBUGGING
-	int item = 0;
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
-#endif
+	SerializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_startTime, sizeof m_startTime, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_endTime, sizeof m_endTime, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_lastTime, sizeof m_lastTime, bufferSize);
 
-	memcpy(buf+offset, &m_packetCount, sizeof m_packetCount);
-	offset += sizeof m_packetCount;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_packetCount << endl;
-#endif
+	SerializeChunk(buf, &offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_haystackNodesContacted, sizeof m_haystackNodesContacted, bufferSize);
 
-	memcpy(buf+offset, &m_bytesTotal, sizeof m_bytesTotal);
-	offset += sizeof m_bytesTotal;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_bytesTotal << endl;
-#endif
+	SerializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, ~0, bufferSize);
+	SerializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, 0, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
 
-	memcpy(buf+offset, &m_startTime, sizeof m_startTime);
-	offset += sizeof m_startTime;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_startTime << endl;
-#endif
-
-	memcpy(buf+offset, &m_endTime, sizeof m_endTime);
-	offset += sizeof m_endTime;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_endTime << endl;
-#endif
-
-	memcpy(buf+offset, &m_lastTime, sizeof m_lastTime);
-	offset += sizeof m_lastTime;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_lastTime << endl;
-#endif
-
-	//These tables all just place their key followed by the data
-	uint32_t tempInt;
-
-	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
-
-	for(Interval_Table::iterator it = m_intervalTable.begin(); (it != m_intervalTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
-		}
-	}
-
-	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
-
-	for(Packet_Table::iterator it = m_packTable.begin(); (it != m_packTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
-		}
-	}
-
-	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
-
-	for(IP_Table::iterator it = m_IPTable.begin(); (it != m_IPTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
-		}
-	}
-
-	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (count < m_maxTableEntries); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-
-	//The size of the Table
-	tempInt = count - table_entries;
-	memcpy(buf+offset, &tempInt, sizeof tempInt);
-	offset += sizeof tempInt;
-#ifdef SERIALIZATION_DEBUGGING
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof tempInt << endl;
-#endif
-
-	for(Port_Table::iterator it = m_portTable.begin(); (it != m_portTable.end()) && (table_entries < count); it++)
-	{
-		if(it->second)
-		{
-			table_entries++;
-			memcpy(buf+offset, &it->first, sizeof it->first);
-			offset += sizeof it->first;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->first << endl;
-#endif
-
-			memcpy(buf+offset, &it->second, sizeof it->second);
-			offset += sizeof it->second;
-#ifdef SERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof it->second << endl;
-#endif
-		}
-	}
 	return offset;
 }
 
 uint32_t FeatureSet::GetFeatureDataLength()
 {
-	uint32_t out = 0, count = 0;
+	uint32_t out = 0;
 
 	//Vars we need to send useable Data
-	out += sizeof(m_totalInterval) + sizeof(m_packetCount) + sizeof(m_bytesTotal)
-		+ sizeof(m_startTime) + sizeof(m_endTime) + sizeof(m_lastTime)
-		//Each table has a total num entries val before it
-		+ 4*sizeof(out);
+	out += sizeof(m_totalInterval)
+			+ sizeof(m_packetCount)
+			+ sizeof(m_bytesTotal)
+			+ sizeof(m_startTime)
+			+ sizeof(m_endTime)
+			+ sizeof(m_lastTime);
 
-	for(Interval_Table::iterator it = m_intervalTable.begin();	it != m_intervalTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-	for(Packet_Table::iterator it = m_packTable.begin(); it != m_packTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-	for(IP_Table::iterator it = m_IPTable.begin(); it != m_IPTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-	//pair of uint32_t vars per entry, with 'count' number of entries
-	out += 2*sizeof(uint32_t)*count;
-	count =  0;
-	for(Port_Table::iterator it = m_portTable.begin(); it != m_portTable.end(); it++)
-	{
-		if(it->second)
-		{
-			count++;
-		}
-	}
-	out += (sizeof(uint32_t) + sizeof(in_port_t))*count;
+	out += sizeof m_rstCount
+			+ sizeof m_ackCount
+			+ sizeof m_synCount
+			+ sizeof m_finCount
+			+ sizeof m_synAckCount
+			+ sizeof m_tcpPacketCount
+			+ sizeof m_haystackNodesContacted;
+
+	out += GetSerializeHashTableLength<Interval_Table, time_t, uint32_t> (m_intervalTable, ~0);
+	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint32_t> (m_packTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_IPTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_HaystackIPTable, 0);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortTCPTable, 0);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortUDPTable, 0);
+
 	return out;
 }
 
 
-uint32_t FeatureSet::DeserializeFeatureData(u_char *buf)
+uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 {
-	// Uncomment this if you want to print the line, index, and size of each item deserialized
-	// This can be diffed with the SERIALIZATION_DEBUGGING output to find offset mismatches
-	//#define DESERIALIZATION_DEBUGGING true
-
 	uint32_t offset = 0;
 
-	//Bytes in a word, used for everything but port #'s
-	uint32_t table_size = 0;
-
 	//Temporary variables to store and track data during deserialization
-	uint32_t temp = 0;
-	time_t timeTemp;
-	uint32_t tempCount = 0;
-	in_port_t port = 0;
+	uint64_t temp = 0;
+
 
 	//Required, individual variables for calculation
-	memcpy(&temp, buf+offset, sizeof m_totalInterval);
-	m_totalInterval += temp;
-	offset += sizeof m_totalInterval;
-#ifdef DESERIALIZATION_DEBUGGING
-	int item = 0;
-	cout << __LINE__ << " " <<++item << " Size: " << sizeof m_totalInterval << endl;
-#endif
-	memcpy(&temp, buf+offset, sizeof m_packetCount);
-	m_packetCount += temp;
-	offset += sizeof m_packetCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_packetCount << endl;
-#endif
-	memcpy(&temp, buf+offset, sizeof m_bytesTotal);
-	m_bytesTotal += temp;
-	offset += sizeof m_bytesTotal;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_bytesTotal << endl;
-#endif
-	memcpy(&temp, buf+offset, sizeof m_startTime);
-	offset += sizeof m_startTime;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_startTime << endl;
-#endif
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_totalInterval, bufferSize);
+	m_totalInterval = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_packetCount, bufferSize);
+	m_packetCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_bytesTotal, bufferSize);
+	m_bytesTotal = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_startTime, bufferSize);
 	if(m_startTime > (time_t)temp)
 	{
 		m_startTime = temp;
 	}
-	memcpy(&temp, buf+offset, sizeof m_endTime);
-	offset += sizeof m_endTime;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_endTime << endl;
-#endif
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_endTime, bufferSize);
 	if(m_endTime < (time_t)temp)
 	{
 		m_endTime = temp;
 	}
-	memcpy(&temp, buf+offset, sizeof m_lastTime);
-	offset += sizeof m_lastTime;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof m_lastTime << endl;
-#endif
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_lastTime, bufferSize);
 	if(m_lastTime < (time_t)temp)
 	{
 		m_lastTime = temp;
 	}
-	/***************************************************************************************************
-	* For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
-	*  i += the # of packets in the bin, if we haven't reached packet count we know there's another item
-	****************************************************************************************************/
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
-	//Packet interval table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		memcpy(&temp, buf+offset, sizeof timeTemp);
-		offset += sizeof timeTemp;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
-		m_intervalTable[temp] += tempCount;
-		i++;
-	}
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
-	//Packet size table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		memcpy(&temp, buf+offset, sizeof temp);
-		offset += sizeof temp;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
-		m_packTable[temp] += tempCount;
-		i++;
-	}
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
-	//IP table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		memcpy(&temp, buf+offset, sizeof temp);
-		offset += sizeof temp;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof temp << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
-		m_IPTable[temp] += tempCount;
-		i++;
-	}
-	memcpy(&table_size, buf+offset, sizeof table_size);
-	offset += sizeof table_size;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof table_size << endl;
-#endif
 
-	//Port table
-	for(uint32_t i = 0; i < table_size;)
-	{
-		memcpy(&port, buf+offset, sizeof port);
-		offset += sizeof port;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof port << endl;
-#endif
-		memcpy(&tempCount, buf+offset, sizeof tempCount);
-		offset += sizeof tempCount;
-#ifdef DESERIALIZATION_DEBUGGING
-			cout << __LINE__ << " " <<++item << " Size: " << sizeof tempCount << endl;
-#endif
-		m_portTable[port] += tempCount;
-		i++;
-	}
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_rstCount, bufferSize);
+	m_rstCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_ackCount, bufferSize);
+	m_ackCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synCount, bufferSize);
+	m_synCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_finCount, bufferSize);
+	m_finCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synAckCount, bufferSize);
+	m_synAckCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_tcpPacketCount, bufferSize);
+	m_tcpPacketCount = temp;
+
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_haystackNodesContacted, bufferSize);
+	m_haystackNodesContacted = temp;
+
+	/***************************************************************************************************
+	 For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
+	 i += the # of packets in the bin, if we haven't reached packet count we know there's another item
+	****************************************************************************************************/
+	DeserializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, bufferSize);
+	DeserializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, bufferSize);
+
 	return offset;
+}
+
+void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
+{
+	// TODO (maybe)
+	// We could possibly do something a little more advanced here. If an IP was in
+	// the old list and also is in the new list, we could update the data instead of just
+	// deleting all of our old data. Not worrying about it right now though.
+	m_haystackNodesContacted = 0;
+	m_HaystackIPTable.clear();
+	for(uint i = 0; i < nodes.size(); i++)
+	{
+		m_HaystackIPTable[nodes[i]] = 0;
+	}
 }
 
 bool FeatureSet::operator ==(const FeatureSet &rhs) const
@@ -891,6 +785,26 @@ bool FeatureSet::operator ==(const FeatureSet &rhs) const
 		return false;
 	}
 	if(m_packetCount != rhs.m_packetCount)
+	{
+		return false;
+	}
+	if(m_tcpPacketCount != rhs.m_tcpPacketCount)
+	{
+		return false;
+	}
+	if(m_ackCount != rhs.m_ackCount)
+	{
+		return false;
+	}
+	if(m_synCount != rhs.m_synCount)
+	{
+		return false;
+	}
+	if(m_finCount != rhs.m_finCount)
+	{
+		return false;
+	}
+	if(m_rstCount != rhs.m_rstCount)
 	{
 		return false;
 	}

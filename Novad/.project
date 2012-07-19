@@ -3,6 +3,8 @@
 	<name>Novad</name>
 	<comment></comment>
 	<projects>
+		<project>Nova_UI_Core</project>
+		<project>NovaLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

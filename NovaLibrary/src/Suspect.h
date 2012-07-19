@@ -57,9 +57,6 @@ public:
 	// Destructor. Has to delete the FeatureSet object within.
 	~Suspect();
 
-	// Constructor from a Packet
-	//		packet - Used to set the IP address and initial evidence of the suspect
-	Suspect(const Packet& packet);
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
@@ -68,7 +65,12 @@ public:
 	std::string GetIpString();
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
-	void AddEvidence(const Packet& packet);
+	// Note: This function deallocates the linked list of Evidence objects
+	void ConsumeEvidence(Evidence *&evidence);
+
+	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
+	// Note: Unlike Consume, this function does not deallocate the evidence objects, everything else is the same as Consume.
+	void ReadEvidence(Evidence *&evidence);
 
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();
@@ -76,7 +78,7 @@ public:
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t Serialize(u_char * buf, SerializeFeatureMode whichFeatures);
+	uint32_t Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
 	// Returns an unsigned, 32 bit integer that represents the length of the
 	// Suspect to be serialized (in bytes).
@@ -88,7 +90,7 @@ public:
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	//		buf - Pointer to buffer where the serialized suspect is
 	// Returns: number of bytes read from the buffer
-	uint32_t Deserialize(u_char * buf, SerializeFeatureMode whichFeatures);
+	uint32_t Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
 	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
 	//Returns: Suspect's in_addr or NULL on failure
@@ -118,11 +120,6 @@ public:
 	//Sets the hostility bool of the suspect
 	void SetIsHostile(bool b);
 
-	//Returns the needs classification bool
-	bool GetNeedsClassificationUpdate();
-	//Sets the needs classification bool
-	void SetNeedsClassificationUpdate(bool b);
-
 	//Returns the flagged by silent alarm bool
 	bool GetFlaggedByAlarm();
 	//Sets the flagged by silent alarm bool
@@ -133,10 +130,6 @@ public:
 	//Sets the 'from live capture' bool
 	void SetIsLive(bool b);
 
-	// Includes and Excludes separately tracked data for feature set calculation
-	// include - a value of true adds unsent data into the main table
-	// 			 a value of false subtracts unsent data from the main table
-	void UpdateFeatureData(bool include);
 	//Clears the FeatureData of a suspect
 	// whichFeatures: specifies which FeatureSet's Data to clear
 	void ClearFeatureData(FeatureMode whichFeatures = MAIN_FEATURES);
@@ -152,8 +145,6 @@ public:
 
 	//Adds the feature set 'fs' to the suspect's feature set
 	void AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
-	//Subtracts the feature set 'fs' from the suspect's feature set
-	void SubtractFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
 
 
 	//Returns the accuracy double of the feature using featureIndex 'fi'
@@ -166,20 +157,26 @@ public:
 	// 	 d: the value you wish to set the feature accuracy to
 	void SetFeatureAccuracy(featureIndex fi, double d);
 
+	// Get the last time we saw this suspect
+	long int GetLastPacketTime();
+
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);
-	Suspect& operator*(Suspect* rhs);
+	Suspect& operator*(Suspect *rhs);
 
 	// Equality operator, mainly used for test cases
 	bool operator==(const Suspect &rhs) const;
 	bool operator!=(const Suspect &rhs) const;
 
-private:
+	bool m_needsClassificationUpdate;
 
 	// The main FeatureSet for this Suspect
 	FeatureSet m_features;
 	// FeatureSet containing data not yet sent through a SA
 	FeatureSet m_unsentFeatures;
+
+private:
+
 	// Array of values that represent the quality of suspect classification on each feature
 	double m_featureAccuracy[DIM];
 	// The IP address of the suspect. Serves as a unique identifier for the Suspect
@@ -192,9 +189,9 @@ private:
 	int32_t m_hostileNeighbors;
 	// Is the classification above the current threshold? IE: What conclusion has the CE come to?
 	bool m_isHostile;
-	// Does the classification need updating?
-	//	IE: Has the evidence changed since last it was calculated?
-	bool m_needsClassificationUpdate;
+
+	long int m_lastPacketTime;
+
 	// Has this suspect been the subject of an alarm from another Nova instance?
 	bool m_flaggedByAlarm;
 	// Is this a live capture or is NOVA reading from a pcap file?

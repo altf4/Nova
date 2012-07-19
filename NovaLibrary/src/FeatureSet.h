@@ -20,9 +20,10 @@
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
 
-#include "HashMap.h"
-#include "HashMapStructs.h"
 #include "Defines.h"
+#include "Evidence.h"
+#include "HashMapStructs.h"
+
 #include <pcap.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -57,9 +58,12 @@ typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<time_t>, eqtime > IP_Ta
 //Table of destination ports and a count;
 typedef Nova::HashMap<in_port_t, uint32_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<int>, eqint > Packet_Table;
+typedef Nova::HashMap<uint16_t, uint32_t, std::tr1::hash<uint16_t>, eq_uint16_t > Packet_Table;
 //Table of packet intervals and a count
 typedef Nova::HashMap<time_t, uint32_t, std::tr1::hash<time_t>, eqtime > Interval_Table;
+
+//Table of timestamps, with the dst_ip as the key. Used to track intervals between packets to a host from a particular suspect
+typedef Nova::HashMap<uint32_t, time_t, std::tr1::hash<uint32_t>, eq_uint32_t > LastTimeTable;
 
 enum featureIndex: uint8_t
 {
@@ -71,7 +75,12 @@ enum featureIndex: uint8_t
 	DISTINCT_IPS = 5,
 	DISTINCT_PORTS = 6,
 	PACKET_INTERVAL_MEAN = 7,
-	PACKET_INTERVAL_DEVIATION = 8
+	PACKET_INTERVAL_DEVIATION = 8,
+	TCP_PERCENT_SYN = 9,
+	TCP_PERCENT_FIN = 10,
+	TCP_PERCENT_RST = 11,
+	TCP_PERCENT_SYNACK = 12,
+	HAYSTACK_PERCENT_CONTACTED = 13
 };
 
 namespace Nova{
@@ -86,10 +95,11 @@ public:
 	/// The actual feature values
 	double m_features[DIM];
 
-	__attribute__ ((visibility ("hidden"))) static std::string m_featureNames[];
+	static std::string m_featureNames[];
 
 	//Number of packets total
 	uint32_t m_packetCount;
+	uint32_t m_tcpPacketCount;
 
 	FeatureSet();
 	~FeatureSet();
@@ -100,7 +110,6 @@ public:
 	void ClearFeatureData();
 
 
-	FeatureSet& operator-=(FeatureSet &rhs);
 	FeatureSet& operator+=(FeatureSet &rhs);
 	bool operator ==(const FeatureSet &rhs) const;
 	bool operator !=(const FeatureSet &rhs) const;
@@ -120,35 +129,38 @@ public:
 
 	// Processes incoming evidence before calculating the features
 	//		packet - packet headers of new packet
-	void UpdateEvidence(const Packet& packet);
+	void UpdateEvidence(Evidence *evidence);
 
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureSet(u_char *buf);
+	uint32_t SerializeFeatureSet(u_char *buf, uint32_t bufferSize);
 
 	// Deserializes the buffer into the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set resides
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureSet(u_char *buf);
+	uint32_t DeserializeFeatureSet(u_char *buf, uint32_t bufferSize);
 
 	// Reads the feature set data from a buffer originally populated by serializeFeatureData
 	// and stores it in broadcast data (the second member of uint pairs)
 	//		buf - Pointer to buffer where the serialized Feature data broadcast resides
 	// Returns: number of bytes read from the buffer
-	uint32_t DeserializeFeatureData(u_char *buf);
+	uint32_t DeserializeFeatureData(u_char *buf, uint32_t bufferSize);
 
 	// Stores the feature set data into the buffer, retrieved using deserializeFeatureData
 	// This function doesn't keep data once serialized. Used by the LocalTrafficMonitor and Haystack for sending suspect information
 	//		buf - Pointer to buffer to store serialized data in
 	// Returns: number of bytes set in the buffer
-	uint32_t SerializeFeatureData(u_char *buf);
+	uint32_t SerializeFeatureData(u_char *buf, uint32_t bufferSize);
 
 	// Method that will return the sizeof of all values in the given feature set;
 	// for use in SerializeSuspect
 	// Returns: sum of the sizeof of all elements in the feature data
 	// 			that would be serialized
 	uint32_t GetFeatureDataLength();
+
+	void SetHaystackNodes(std::vector<uint32_t> nodes);
+
 
 	//FeatureSet(const FeatureSet &rhs);
 	//FeatureSet& operator=(FeatureSet &rhs);
@@ -159,11 +171,19 @@ private:
 	Packet_Table m_packTable;
 
 	//Table of Ports and associated packet counts
-	Port_Table m_portTable;
+	Port_Table m_PortTCPTable;
+	Port_Table m_PortUDPTable;
 
 	time_t m_startTime;
 	time_t m_endTime;
 	time_t m_lastTime;
+
+	// For some TCP flag ratios and statistics
+	uint32_t m_rstCount;
+	uint32_t m_ackCount;
+	uint32_t m_synCount;
+	uint32_t m_finCount;
+	uint32_t m_synAckCount;
 
 	time_t m_totalInterval;
 
@@ -175,6 +195,11 @@ private:
 
 	//Table of IP addresses and associated packet counts
 	IP_Table m_IPTable;
+	IP_Table m_HaystackIPTable;
+	int m_haystackNodesContacted;
+
+	//Table of timestamps for the time at which a host last received a packet from this suspect
+	LastTimeTable m_lastTimes;
 
 	//XXX Temporarily using SANITY_CHECK/2, rather than that, we should serialize a total byte size before the
 	// feature data then proceed like before, this will allow Deserialized to perform a real sanity checking and
@@ -186,7 +211,7 @@ private:
 		+ sizeof(in_addr_t)+ sizeof(double) + 5*(sizeof(bool)) +  sizeof(int32_t) + 2*DIM*(sizeof(double)))
 		// + 2*(4x Table entry count + m_bytesTotal + m_packetCount) (could serialized two feature sets)
 		+ (2*(6*(sizeof(uint32_t)) + 4*(sizeof(time_t))))))
-		// All of the Above divided by (8 bytes per table entry) * (up to two feature sets per serialization)
+		// All of the Above divided by (8 bytes per table entry)*(up to two feature sets per serialization)
 		/(8*2));
 
 };

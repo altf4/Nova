@@ -6,6 +6,7 @@ html(lang="en")
     link(rel="stylesheet", type="text/css", href="/dojo/dijit/themes/claro/claro.css", media="screen")
     link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
     link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
+    link(rel="shortcut icon", href="/favicon.ico")
 
     script(type="text/javascript", src="/nowjs/now.js")
     script(type="text/javascript", src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
@@ -13,6 +14,9 @@ html(lang="en")
       require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],
         function(ready){
           dojo.addOnLoad(function(){
+            // Some logging of nowjs stuff
+            now.core.on('disconnect', function() {console.log('Warning: Disconnected from nowjs server.');});
+            
             dojo.style("appLayout", "opacity", 0);
             dojo.fadeOut({node:"splash", delay:0}).play();
             dojo.style("appLayout", "visibility", "visible");
@@ -36,38 +40,67 @@ html(lang="en")
         div(data-dojo-type="dijit.layout.BorderContainer",data-dojo-props="design: 'sidebar'",style="height: 140px;")
           // Header center
           div(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center'")    
-            a(href="/novaMain")
-              img(src="images/novaIcon.png",class="align-left")
+            a(href="/")
+              img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
               h1 NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System
             block topPannelAdditions
     
       // Left panel
       div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: true")
         block buttonPannelAdditions
-        
-        br
-
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Nova
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configNova";
-        br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Profiles
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydProfiles";
-        br
-
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Honeyd Nodes
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configHoneydNodes";
-        br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Configure IP Whitelist
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "configWhitelist";
-        br
-        
-        button(data-dojo-type="dijit.form.Button",type="button") Configure Training Data
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "customizeTraining";
-        br
-        br
       
-        button(data-dojo-type="dijit.form.Button",type="button") Log Out
-          script(type="dojo/method", data-dojo-event="onClick") window.location = "logout";
+        a(class="button", href='/about') About Nova
+        br
+        br
+        
+        a(class="button", href='/suspects?type=all') Classified Suspects
+        br
+        a(class="button", href="/suspects?type=unclassified") Unclassified Suspects
+        br
+        a(class="button", href= "/suspects?type=hostile") Only Hostile Suspects
+        br
+        a(class="button", href= "/haystackStatus") Haystack Details
+        br
+        br
+        
+       
+
+        a(class="button", href= "/novadlog") Nova Log
+        br
+        br
+
+        a(class="button", href= "basicOptions") Basic Options
+        br
+        
+        a(class="button", href= "advancedOptions") Advanced Options
+        br
+        br
+       
+        a(class="button", href= "configHoneydProfiles") Honeyd Profiles
+        br
+        
+        
+        a(class="button", href= "configHoneydNodes") Honeyd Nodes
+        br
+        
+        a(class="button", href= "configWhitelist") IP Whitelist
+        br
+        br
+        
+        
+        a(class="button", href= "/captureTrainingData") Capture Training Data
+        br
+        
+        a(class="button", href= "customizeTraining") Choose Training Data
+        br
+        br
+        
+        a(class="button", href= "createNewUser") New User
+        br 
+        
+        a(class="button", href= "editUsers") Edit Users
+        br
+        
+        //a(class="button", href= "logout") Log Out
+        //br
 

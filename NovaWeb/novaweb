@@ -1,4 +1,4 @@
 #!/bin/bash
 cd /usr/share/nova/NovaWeb
-NODE_PATH="/usr/share/nova/NovaWeb/build/Release:/usr/share/nova/NovaWeb/NodeNovaConfig/build/Release" node /usr/share/nova/NovaWeb/main.js
+NODE_PATH="/usr/share/nova/NovaWeb/build/Release:/usr/share/nova/NovaWeb/NodeNovaConfig/build/Release" forever start /usr/share/nova/NovaWeb/main.js
 

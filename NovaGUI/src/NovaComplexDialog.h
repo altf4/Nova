@@ -28,11 +28,11 @@ class NovaComplexDialog : public QDialog
     Q_OBJECT
 
 public:
-    std::string * m_retVal;
+    std::string *m_retVal;
     //Default constructor, shouldn't be used
     NovaComplexDialog(QWidget *parent = 0);
     //Standard constructor, specify which dialog type you wish to create
-    NovaComplexDialog(whichDialog type, std::string* retValue, QWidget *parent = 0, std::string filter = "");
+    NovaComplexDialog(whichDialog type, std::string *retValue, QWidget *parent = 0, std::string filter = "");
     ~NovaComplexDialog();
 
     //Draws the parsed personalities in the widget
@@ -50,7 +50,7 @@ public:
 
 private:
 
-    NovaConfig * m_novaParent;
+    NovaConfig *m_novaParent;
     whichDialog m_type;
     Ui::NovaComplexDialogClass ui;
 

@@ -54,10 +54,10 @@ void VendorMacDb::LoadPrefixFile()
 		while(MACPrefixes.good())
 		{
 			getline(MACPrefixes, prefixStr, ' ');
-			/* From 'man strtoul'  Since strtoul() can legitimately return 0 or  LONG_MAX  (LLONG_MAX  for
-		       strtoull()) on both success and failure, the calling program should set
-		       errno to 0 before the call, and then determine if an error occurred  by
-		       checking whether errno has a nonzero value after the call. */
+			// From 'man strtoul'  Since strtoul() can legitimately return 0 or  LONG_MAX  (LLONG_MAX  for
+		    // strtoull()) on both success and failure, the calling program should set
+		    // errno to 0 before the call, and then determine if an error occurred  by
+		    // checking whether errno has a nonzero value after the call.
 			errno = 0;
 			prefix = strtoul(prefixStr.c_str(), &notUsed, 16);
 			if(errno)
@@ -190,7 +190,7 @@ vector<string> VendorMacDb::SearchVendors(string partialVendorName)
 
 vector<string> VendorMacDb::GetVendorNames() {
 	vector<string> names;
-	for (VendorToMACTable::iterator it = m_vendorMACTable.begin(); it != m_vendorMACTable.end(); it++)
+	for(VendorToMACTable::iterator it = m_vendorMACTable.begin(); it != m_vendorMACTable.end(); it++)
 	{
 		names.push_back(it->first);
 	}

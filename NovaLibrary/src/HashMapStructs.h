@@ -24,53 +24,69 @@
 #include <vector>
 #include <string>
 
-/************************************************************************/
-/********** Equality operators used by hash maps *********/
-/************************************************************************/
+/************************************
+ Equality operators used by hash maps
+ ************************************/
 
 struct eqstr
 {
-  bool operator()(std::string s1, std::string s2) const
+  bool operator()(std::string k1, std::string k2) const
   {
-    return !(s1.compare(s2));
+    return !(k1.compare(k2));
   }
 };
 
 struct eqaddr
 {
-  bool operator()(in_addr_t s1, in_addr_t s2) const
+  bool operator()(in_addr_t k1, in_addr_t k2) const
   {
-    return (s1 == s2);
+    return (k1 == k2);
   }
 };
 
 struct eqport
 {
-  bool operator()(in_port_t s1, in_port_t s2) const
+  bool operator()(in_port_t k1, in_port_t k2) const
   {
-	    return (s1 == s2);
+	    return (k1 == k2);
   }
 };
 
 struct eqint
 {
-  bool operator()(int s1, int s2) const
+  bool operator()(int k1, int k2) const
   {
-	    return (s1 == s2);
+	    return (k1 == k2);
   }
 };
 
 struct eqtime
 {
-  bool operator()(time_t s1, time_t s2) const
+  bool operator()(time_t k1, time_t k2) const
   {
-	    return (s1 == s2);
+	    return (k1 == k2);
   }
 };
 
 struct eqkey
 {
 	bool operator()(uint64_t k1, uint64_t k2) const
+	{
+		return (k1 == k2);
+	}
+};
+
+struct eq_uint32_t
+{
+	bool operator()(uint32_t k1, uint32_t k2) const
+	{
+		return (k1 == k2);
+	}
+};
+
+struct eq_uint16_t
+{
+	bool operator()(uint16_t k1, uint16_t k2) const
 	{
 		return (k1 == k2);
 	}

@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
 #include <cerrno>
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,6 +123,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	int controlSocket = *socketIntPtr;
 	delete socketIntPtr;
 
+	MessageManager::Instance().DeleteQueue(controlSocket);
 	MessageManager::Instance().StartSocket(controlSocket);
 
 	bool keepLooping = true;
@@ -161,8 +163,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 					case ERROR_SOCKET_CLOSED:
 					{
 						LOG(DEBUG, "The UI hung up","UI socket closed uncleanly, exiting this thread");
-						keepLooping = false;
-						break;;
+						break;
 					}
 					case ERROR_MALFORMED_MESSAGE:
 					{
@@ -199,6 +200,7 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 		}
 	}
 
+	MessageManager::Instance().DeleteQueue(controlSocket);
 	return NULL;
 }
 
@@ -341,18 +343,18 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY, DIRECTION_TO_NOVAD);
 			reply.m_listType = msg.m_listType;
 
-			switch (msg.m_listType)
+			switch(msg.m_listType)
 			{
 				case SUSPECTLIST_ALL:
 				{
 					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
-					for (uint i = 0; i < benign.size(); i++)
+					for(uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
 					}
 
 					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
-					for (uint i = 0; i < hostile.size(); i++)
+					for(uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
 					}
@@ -361,7 +363,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				case SUSPECTLIST_HOSTILE:
 				{
 					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
-					for (uint i = 0; i < hostile.size(); i++)
+					for(uint i = 0; i < hostile.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
 					}
@@ -370,7 +372,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 				case SUSPECTLIST_BENIGN:
 				{
 					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
-					for (uint i = 0; i < benign.size(); i++)
+					for(uint i = 0; i < benign.size(); i++)
 					{
 						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
 					}
@@ -399,7 +401,7 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 		case REQUEST_UPTIME:
 		{
 			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
-			reply.m_uptime = time(NULL) - startTime;
+			reply.m_startTime = startTime;
 			Message::WriteMessage(&reply, socketFD);
 
 			break;

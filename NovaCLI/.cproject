@@ -46,6 +46,7 @@
 									<listOptionValue builtIn="false" value="notify"/>
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="curl"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.952671929" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Release/"/>
@@ -114,6 +115,7 @@
 									<listOptionValue builtIn="false" value="notify"/>
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="curl"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.143587785" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug/"/>

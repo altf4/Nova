@@ -17,6 +17,7 @@
 //	of received messages on a particular socket
 //============================================================================
 
+#include "../Logger.h"
 #include "MessageQueue.h"
 #include "MessageManager.h"
 #include "../Lock.h"
@@ -48,12 +49,11 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 	m_consecutiveTimeouts = 0;
 
 	m_isShutDown = false;
-	m_callbackDoWakeup = false;
 	m_forwardDirection = forwardDirection;
 	m_socketFD = socketFD;
 
+	//We will later do a pthread_join, so don't detach here
 	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
-	pthread_detach(m_producerThread);
 }
 
 //Destructor should only be called by the callback thread, and also only while
@@ -61,11 +61,6 @@ MessageQueue::MessageQueue(int socketFD, enum ProtocolDirection forwardDirection
 //	race conditions in deleting the object.
 MessageQueue::~MessageQueue()
 {
-	//Shutdown will cause the producer thread to make an ErrorMessage then quit
-	//This is probably redundant, but we do it again just to make sure
-	shutdown(m_socketFD, SHUT_RDWR);
-	close(m_socketFD);
-
 	//Wait for the producer thread to finish,
 	// We can't have his object destroyed out from underneath him
 	pthread_join(m_producerThread, NULL);
@@ -94,7 +89,15 @@ MessageQueue::~MessageQueue()
 //blocking call
 Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 {
-	Message* retMessage;
+	{
+		Lock lock(&m_isShutdownMutex);
+		if(m_isShutDown)
+		{
+			return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+		}
+	}
+
+	Message *retMessage;
 
 	//If indefinite read:
 	if(timeout == 0)
@@ -164,7 +167,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 		struct timeval timeval;
 		gettimeofday(&timeval, NULL);		//TODO: Check this for error return code
 	    timespec.tv_sec  = timeval.tv_sec;
-	    timespec.tv_nsec = timeval.tv_usec * 1000;
+	    timespec.tv_nsec = timeval.tv_usec*1000;
 	    timespec.tv_sec += timeout;
 
 		if(direction == m_forwardDirection)
@@ -178,11 +181,19 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				//While loop to protect against spurious wakeups
 				while(m_forwardQueue.empty())
 				{
+					{
+						Lock lock(&m_isShutdownMutex);
+						if(m_isShutDown)
+						{
+							return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+						}
+					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_forwardQueueMutex, &timespec);
-					if (errCondition == ETIMEDOUT)
+					if(errCondition == ETIMEDOUT)
 					{
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
+							LOG(DEBUG, "Too many message timeouts. Closing sockets.", "");
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -214,12 +225,20 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				//While loop to protect against spurious wakeups
 				while(m_callbackQueue.empty())
 				{
+					{
+						Lock lock(&m_isShutdownMutex);
+						if(m_isShutDown)
+						{
+							return new ErrorMessage(ERROR_SOCKET_CLOSED, DIRECTION_TO_UI);
+						}
+					}
 					int errCondition = 	pthread_cond_timedwait(&m_readWakeupCondition, &m_callbackQueueMutex, &timespec);
-					if (errCondition == ETIMEDOUT)
+					if(errCondition == ETIMEDOUT)
 					{
 						//If we have had too many timeouts in a row, then close down the socket
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
+							LOG(DEBUG, "Too many message timeouts. Closing sockets.", "");
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -265,7 +284,6 @@ void MessageQueue::PushMessage(Message *message)
 		//Protection for the m_callbackDoWakeup bool
 		//Wake up anyone sleeping for a callback message!
 		Lock condLock(&m_callbackCondMutex);
-		m_callbackDoWakeup = true;
 		pthread_cond_signal(&m_callbackWakeupCondition);
 		pthread_cond_signal(&m_readWakeupCondition);
 	}
@@ -289,24 +307,15 @@ bool MessageQueue::RegisterCallback()
 
 	{
 		//Protection for the m_callbackDoWakeup bool
-		Lock condLock(&m_callbackCondMutex);
-		while(!m_callbackDoWakeup)
+		Lock condLock(&m_callbackQueueMutex);
+		while(m_callbackQueue.empty())
 		{
-			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackCondMutex);
+			pthread_cond_wait(&m_callbackWakeupCondition, &m_callbackQueueMutex);
 		}
 
-		m_callbackDoWakeup = false;
-	}
-
-	//This is the first message of the protocol. This message contains the serial number we will be expecting later
-	{
-		//Protection for the queue structure
-		Lock lockQueue(&m_callbackQueueMutex);
-		if(!m_callbackQueue.empty())
-		{
-			Message *nextMessage = m_callbackQueue.front();
-			m_expectedcallbackSerial = nextMessage->m_serialNumber;
-		}
+		//This is the first message of the protocol. This message contains the serial number we will be expecting later
+		Message *nextMessage = m_callbackQueue.front();
+		m_expectedcallbackSerial = nextMessage->m_serialNumber;
 	}
 
 	Lock shutdownLock(&m_isShutdownMutex);
@@ -344,9 +353,17 @@ void *MessageQueue::ProducerThread()
 		while( totalBytesRead < sizeof(length))
 		{
 			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
-
 			if(bytesRead <= 0)
 			{
+				if (bytesRead == 0)
+				{
+					LOG(DEBUG, "Socket was closed by peer", "");
+				}
+				else
+				{
+					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
+				}
+
 				//The socket died on us!
 				{
 					Lock shutdownLock(&m_isShutdownMutex);
@@ -367,7 +384,7 @@ void *MessageQueue::ProducerThread()
 		// Make sure the length appears valid
 		// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
 		memcpy(&length, buff, sizeof(length));
-		if (length == 0)
+		if(length == 0)
 		{
 			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
 			continue;
@@ -375,7 +392,7 @@ void *MessageQueue::ProducerThread()
 
 		char *buffer = (char*)malloc(length);
 
-		if (buffer == NULL)
+		if(buffer == NULL)
 		{
 			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
 			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE, m_forwardDirection));
@@ -392,6 +409,15 @@ void *MessageQueue::ProducerThread()
 
 			if(bytesRead <= 0)
 			{
+				if (bytesRead == 0)
+				{
+					LOG(DEBUG, "Socket was closed by peer", "");
+				}
+				else
+				{
+					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
+				}
+
 				//The socket died on us!
 				{
 					Lock shutdownLock(&m_isShutdownMutex);

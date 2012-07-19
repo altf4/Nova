@@ -34,15 +34,15 @@ void WhitelistConfigurationBinding::Init(Handle<Object> target)
 	s_ct = Persistent<FunctionTemplate>::New(t);
 	s_ct->InstanceTemplate()->SetInternalFieldCount(1);
 	s_ct->SetClassName(String::NewSymbol("WhitelistConfigurationBinding"));
- 
+
 	// Javascript member methods
 	//
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddEntry", (InvokeMethod<bool, string, Nova::WhitelistConfiguration::AddEntry>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddIp", (InvokeMethod<bool, string, Nova::WhitelistConfiguration::AddIp>) );
-    NODE_SET_PROTOTYPE_METHOD(s_ct, "AddIpRange", (InvokeMethod<bool, string, string, Nova::WhitelistConfiguration::AddIpRange>) );
-	
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddIpRange", (InvokeMethod<bool, string, string, Nova::WhitelistConfiguration::AddIpRange>) );
+
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "DeleteEntry", (InvokeMethod<bool, string, Nova::WhitelistConfiguration::DeleteEntry>) );
-	
+
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetIps", (InvokeMethod<vector<string>, Nova::WhitelistConfiguration::GetIps>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetIpRanges", (InvokeMethod<vector<string>, Nova::WhitelistConfiguration::GetIpRanges>) );
 
