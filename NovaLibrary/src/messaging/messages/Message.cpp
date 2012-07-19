@@ -67,23 +67,6 @@ bool Message::WriteMessage(Message *message, int connectFD)
 	// Return value of the write() call, actual bytes sent
 	int32_t bytesWritten;
 
-	// Send the message length
-	bytesSoFar = 0;
-    while(bytesSoFar < sizeof(length))
-	{
-		bytesWritten = write(connectFD, &length, sizeof(length) - bytesSoFar);
-		if(bytesWritten < 0)
-		{
-			free(buffer);
-			return false;
-		}
-		else
-		{
-			bytesSoFar += bytesWritten;
-		}
-	}
-
-	
 	// Send the message
 	bytesSoFar = 0;
 	while(bytesSoFar < length)
@@ -132,8 +115,12 @@ bool Message::DeserializeHeader(char **buffer)
 	return true;
 }
 
-void Message::SerializeHeader(char **buffer)
+void Message::SerializeHeader(char **buffer, uint32_t messageSize)
 {
+	// Put the size of the message first so we know how much to read when reading
+	memcpy(*buffer, &messageSize, sizeof(messageSize));
+	*buffer += sizeof(messageSize);
+
 	memcpy(*buffer, &m_messageType, sizeof(m_messageType));
 	*buffer += sizeof(m_messageType);
 

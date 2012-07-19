@@ -390,6 +390,7 @@ void *MessageQueue::ProducerThread()
 			continue;
 		}
 
+		length -= sizeof(length);
 		char *buffer = (char*)malloc(length);
 
 		if(buffer == NULL)

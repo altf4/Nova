@@ -191,11 +191,11 @@ char *UpdateMessage::Serialize(uint32_t *length)
 				return NULL;
 			}
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength) + m_suspectLength;
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the update Message type in
 			memcpy(buffer, &m_updateType, sizeof(m_updateType));
 			buffer += sizeof(m_updateType);
@@ -213,11 +213,11 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) Message Header
 			//		2) update Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_updateType, sizeof(m_updateType));
 			buffer += sizeof(m_updateType);
@@ -228,11 +228,11 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) Message Header
 			//		2) update Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType)+ sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_updateType, sizeof(m_updateType));
 			buffer += sizeof(m_updateType);
@@ -243,11 +243,11 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) Message Header
 			//		2) update Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_updateType, sizeof(m_updateType));
 			buffer += sizeof(m_updateType);
@@ -258,11 +258,11 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) Message Header
 			//		2) update Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) +  sizeof(m_IPAddress);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) +  sizeof(m_IPAddress) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 
 			//Put the Control Message type in
 			memcpy(buffer, &m_updateType, sizeof(m_updateType));
@@ -276,11 +276,11 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) Message Header
 			//		2) Update Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_updateType, sizeof(m_updateType));
 			buffer += sizeof(m_updateType);

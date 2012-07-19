@@ -105,7 +105,7 @@ protected:
 	//Serializes the Message header into the given array
 	//	buffer: Pointer to the array where the serialized bytes will go
 	//	NOTE: Assumes there is space in *buffer for the header
-	void SerializeHeader(char **buffer);
+	void SerializeHeader(char **buffer, uint32_t messageSize);
 
 	//Used to indicate serialization error in constructors
 	//	(Since constructors can't return NULL)
