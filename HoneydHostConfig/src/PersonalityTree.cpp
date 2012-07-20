@@ -113,6 +113,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	node->GenerateDistributions();
 	NodeProfile tempProf = node->GenerateProfile(*parentProfile);
 	tempProf.m_name = profileName;
+	tempProf.m_distribution = node->m_count/parent->m_count;
 	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
@@ -224,10 +225,14 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 	}
 
 	pers->m_personalityClass.pop_back();
-	tablePair->second->m_count += pers->m_count;
+	tablePair->second->m_count = pers->m_count;
 	if(!pers->m_personalityClass.empty())
 	{
 		UpdatePersonality(pers, tablePair->second);
+	}
+	for(uint i = 0; i < tablePair->second->m_children.size(); i++)
+	{
+		tablePair->second->m_count += tablePair->second->m_children[i].second->m_count;
 	}
 }
 

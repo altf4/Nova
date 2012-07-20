@@ -164,6 +164,7 @@ private:
 	// Prints out the tree from the root node; rather esoteric and not entirely useful
 	// unless you know the expected parent/child relations within the tree. A testing tool.
 	void RecursivePrintTree(PersonalityNode *node);
+
 };
 
 }
