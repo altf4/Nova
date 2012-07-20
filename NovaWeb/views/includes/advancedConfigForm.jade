@@ -1,3 +1,43 @@
+script
+  function updateEnabledFeaturesString(whichFeature)
+  {
+    var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
+    
+    var changeTo = "";
+    
+    if(document.getElementById("feature" + whichFeature).checked)
+    {
+      for(var i in enabledMask)
+      {
+        if(i == whichFeature)
+        {
+          changeTo += "1";
+        }
+        else
+        {
+          changeTo += enabledMask[i];
+        }
+      }
+    }
+    else
+    {
+      for(var i in enabledMask)
+      {
+        if(i == whichFeature)
+        {
+          changeTo += "0";
+        }
+        else
+        {
+          changeTo += enabledMask[i];
+        }
+      }
+    }
+    
+    document.getElementById("ENABLED_FEATURES").setAttribute("value", changeTo);
+    document.getElementById("enabledFeaturesLabel").innerHTML = "Features Mask: " + changeTo;
+  }
+
 form(method="post", action="/configureNovaSave")
   h2 General Configuration
 
@@ -84,9 +124,35 @@ form(method="post", action="/configureNovaSave")
   
 
   h2 Classification Settings
-  label Features Mask
-  input(name="ENABLED_FEATURES",  value=ENABLED_FEATURES)
+  label(style="text-align:center;vertical-align:middle", id="enabledFeaturesLabel", name="ENABLED_FEATURES") Features Mask: #{ENABLED_FEATURES}
   br
+  br
+  table
+    thead
+      tr 
+        td
+          label(style="text-align:center;vertical-align:middle;font:bold;") Feature Name
+        td
+          label(style="text-align:center;vertical-align:middle;font:bold;") Enabled? 
+    tbody
+      - for(var i = 0; i < FEATURE_NAMES.length; i++)
+        - if(ENABLED_FEATURES[i] == 1)
+          tr
+            td(style="text-align:center;vertical-align:middle;") 
+              #{FEATURE_NAMES[i]}
+            td
+              input(type="checkbox", value="#{i}", id="feature#{i}", checked, onclick="updateEnabledFeaturesString(#{i})")
+        - else
+          tr
+            td(style="text-align:center;vertical-align:middle;")
+              #{FEATURE_NAMES[i]}
+            td
+              input(type="checkbox", value="#{i}", id="feature#{i}", onclick="updateEnabledFeaturesString(#{i})")
+  br
+  
+  input(type="hidden", id="ENABLED_FEATURES", name="ENABLED_FEATURES", value="#{ENABLED_FEATURES}")
+  
+  hidden(id="length", value=FEATURE_NAMES.length)
   
   label Neighbors
   input(type="number", step="1", min="1", name="K",  value=K)

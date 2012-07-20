@@ -1,5 +1,4 @@
 //"use strict";
-
 var novaconfig = require('novaconfig.node');
 
 var nova = new novaconfig.Instance();
@@ -39,15 +38,17 @@ var select;
 var checkPass;
 var my_name;
 
+console.log("Starting NOVAWEB version " + config.GetVersionString());
+
+
 // TODO: Get this path from the config class
 process.chdir("/usr/share/nova/nova");
 
 var client = mysql.createClient({
   user: 'root'
   , password: 'root'
+  , database: credDb
 });
-
-client.useDatabase(credDb);
 
 passport.serializeUser(function(user, done) {
   done(null, user);
@@ -119,8 +120,9 @@ app.set('view options', {layout: false});
 
 app.use(express.static('/usr/share/nova/NovaWeb/www'));
 
-console.info("Listening on 8042");
-app.listen(8042);
+var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
+console.info("Listening on port " + WEB_UI_PORT);
+app.listen(WEB_UI_PORT);
 var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 
@@ -219,6 +221,7 @@ app.get('/advancedOptions', ensureAuthenticated, function(req, res) {
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
 			,ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES")
+			,FEATURE_NAMES: nova.GetFeatureNames()
 			,TRAINING_CAP_FOLDER: config.ReadSetting("TRAINING_CAP_FOLDER")
 			,THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE")
 			,SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY")
@@ -267,8 +270,8 @@ function renderBasicOptions(jadefile, res, req) {
      res.render(jadefile, 
 	 { 
 		locals: {
-      INTERFACES: pass 
-      ,DEFAULT: config.GetUseAllInterfacesBinding() 
+            INTERFACES: pass 
+            ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
@@ -279,6 +282,13 @@ function renderBasicOptions(jadefile, res, req) {
 		}
 	 });
 }
+
+app.get('/error', ensureAuthenticated, function(req, res) {
+	
+	console.log(req.query);
+	
+	res.render('error.jade', { locals: { redirectLink: req.query["redirectLink"], errorDetails: req.query["errorDetails"] }});
+});
 
 app.get('/basicOptions', ensureAuthenticated, function(req, res) {
 	renderBasicOptions('basicOptions.jade', res, req);
@@ -295,7 +305,8 @@ app.get('/configHoneydNodes', ensureAuthenticated, function(req, res) {
      
 	 res.render('configHoneyd.jade', 
 	 { locals: {
-	 	profiles: honeydConfig.GetProfileNames()
+	 	INTERFACES: config.ListInterfaces().sort()
+	 	,profiles: honeydConfig.GetProfileNames()
 	 	,nodes: nodes
 		,subnets:  honeydConfig.GetSubnetNames()
 		,groups: honeydConfig.GetGroups()
@@ -327,6 +338,7 @@ app.get('/editHoneydNode', ensureAuthenticated, function(req, res) {
 	res.render('editHoneydNode.jade', 
 	{ locals : {
 		oldName: nodeName
+		, INTERFACES: config.ListInterfaces().sort()
 	 	, profiles: honeydConfig.GetProfileNames()
 		, profile: node.GetProfile()
 		, ip: node.GetIP()
@@ -516,6 +528,7 @@ app.get('/suspects', ensureAuthenticated, function(req, res) {
      {
          user: req.user
 	     , enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
+		 , featureNames: nova.GetFeatureNames()
 		 , type: type
 
      });
@@ -526,6 +539,7 @@ app.get('/novadlog', ensureAuthenticated, function(req, res) {
 	res.render('novadlog.jade');
 });
 
+app.get('/', ensureAuthenticated, function(req, res) {res.redirect('/suspects');});
 app.get('/createNewUser', ensureAuthenticated, function(req, res) {res.render('createNewUser.jade');});
 app.get('/welcome', ensureAuthenticated, function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', ensureAuthenticated, function(req, res) {res.render('setup1.jade');});
@@ -636,16 +650,6 @@ app.get('/nodeReview', ensureAuthenticated, function(req, res) {
 	}})
 });
 
-app.get('/', ensureAuthenticated, function(req, res) {
-     res.render('main.jade', 
-     {
-         user: req.user
-	       ,enabledFeatures: config.ReadSetting("ENABLED_FEATURES")
-         ,message: req.flash('error')
-		 , type: 'all'
-     });
-});
-
 app.post('/login*',
   passport.authenticate('local', { failureRedirect: '/', failureFlash: true }), 
     function(req, res){
@@ -709,10 +713,6 @@ app.post('/editHoneydNodesSave', ensureAuthenticated, function(req, res) {
 	} else{
 		ipAddress = req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"] + "." + req.body["ip4"];
 	}
-	/*else
-	{
-	  res.redirect('/configHoneydNodes', { locals: { message: "Invalid IP" }} );
-	}*/
 
 	var profile = req.body["profile"];
 	var intface = req.body["interface"];
@@ -768,7 +768,6 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
 		"SMTP_PORT","SMTP_DOMAIN","RECIPIENTS","SERVICE_PREFERENCES","HAYSTACK_STORAGE"];
   
   var Validator = require('validator').Validator;
-  
   
   //Function overrides for error functionality in the Validator class
   Validator.prototype.error = function(msg)
@@ -826,12 +825,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
       case "TCP_TIMEOUT":
         validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
         break;
-        
-      case "ENABLED_FEATURES":
-        validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + nova.GetDIM() + 'characters long').len(nova.GetDIM(), nova.GetDIM());
-        validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{' + nova.GetDIM() + '}');
-        break;
-        
+
       case "CLASSIFICATION_THRESHOLD":
         validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
         validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
@@ -839,11 +833,11 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
         break;
         
       case "EPS":
-        validator.check(req.body[configItems[item]], 'EPS must be a number').isFloat();
+        validator.check(req.body[configItems[item]], 'EPS must be a positive number').isFloat();
         break;
         
       case "THINNING_DISTANCE":
-        validator.check(req.body[configItems[item]], 'Thinning Distance must be a number').isFloat();
+        validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
         break;
         
       case "DOPPELGANGER_IP":
@@ -901,7 +895,7 @@ app.post('/configureNovaSave', ensureAuthenticated, function(req, res) {
         break;
         
       case "SERVICE_PREFERENCES":
-        validator.check(req.body[configItems[item]], "Service preferences string is of the wrong format").is('0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;');
+        validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;$');
         break;
         
       default:
@@ -958,7 +952,12 @@ everyone.now.ClearAllSuspects = function(callback)
 	nova.ClearAllSuspects();
 }
 
-
+everyone.now.GetInheritedEthernetList = function(parent, callback)
+{
+	var prof = honeydConfig.GetProfile(parent);
+	
+	callback(prof.GetVendors(), prof.GetVendorDistributions());
+}
 
 everyone.now.StartHaystack = function()
 {
@@ -1108,7 +1107,7 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.udpAction = profile.GetUdpAction();
     profile.icmpAction = profile.GetIcmpAction();
     profile.personality = profile.GetPersonality();
-    profile.ethernet = profile.GetEthernet();
+   
     profile.uptimeMin = profile.GetUptimeMin();
     profile.uptimeMax = profile.GetUptimeMax();
     profile.dropRate = profile.GetDropRate();
@@ -1122,7 +1121,69 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.isUptimeInherited = profile.isUptimeInherited();
     profile.isDropRateInherited = profile.isDropRateInherited();
 
+    if(!profile.isEthernetInherited)
+    {
+      var ethVendorList = [];
+    
+      var profVendors = profile.GetVendors();
+      var profDists = profile.GetVendorDistributions();
+    
+      console.log("profVendors " + profVendors);
+
+      for(var i = 0; i < profVendors.length; i++)
+      {
+        var element = {vendor: "", dist: ""};
+        element.vendor = profVendors[i];
+        element.dist = parseFloat(profDists[i]);
+        ethVendorList.push(element);
+      }
+      
+      console.log("ethVendorList contains " + ethVendorList.length + " elements");
+   
+      for(var i = 0; i < ethVendorList.length; i++)
+      {
+        console.log("ethVendorList[" + i + "] == {" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
+      }
+      
+      profile.ethernet = ethVendorList;
+      
+      console.log("profile.ethernet " + profile.ethernet);
+    }
+
     callback(profile);
+}
+
+everyone.now.GetVendors = function(profileName, callback)
+{
+	var profile = honeydConfig.GetProfile(profileName);
+	
+	var ethVendorList = [];
+    
+    var profVendors = profile.GetVendors();
+    var profDists = profile.GetVendorDistributions();
+    
+    console.log("profVendors " + profVendors);
+      
+    for(var i = 0; i < profVendors.length; i++)
+    {
+      var element = {vendor: "", dist: ""};
+      element.vendor = profVendors[i];
+      element.dist = parseFloat(profDists[i]);
+      ethVendorList.push(element);
+    }
+      
+    console.log("ethVendorList contains " + ethVendorList.length + " elements");
+   
+    for(var i = 0; i < ethVendorList.length; i++)
+    {
+      console.log("ethVendorList[" + i + "] == {" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
+    }
+      
+    profile.ethernet = ethVendorList;
+      
+    console.log("profile.ethernet " + profile.ethernet);
+	
+    callback(profVendors, profDists);
 }
 
 everyone.now.GetPorts = function (profileName, callback) {
@@ -1140,11 +1201,12 @@ everyone.now.GetPorts = function (profileName, callback) {
 }
 
 
-everyone.now.SaveProfile = function(profile, ports, callback) {
+everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList) {
 	honeydProfile = new novaconfig.HoneydProfileBinding();
 
-	console.log("Got profile " + profile.name);
+	console.log("Got profile " + profile.name + "_" + profile.personality);
 	console.log("Got portlist " + ports.name);
+	console.log("Got ethVendorList " + ethVendorList);
 
 	// Move the Javascript object values to the C++ object
 	honeydProfile.SetName(profile.name);
@@ -1152,7 +1214,29 @@ everyone.now.SaveProfile = function(profile, ports, callback) {
 	honeydProfile.SetUdpAction(profile.udpAction);
 	honeydProfile.SetIcmpAction(profile.icmpAction);
 	honeydProfile.SetPersonality(profile.personality);
-	honeydProfile.SetEthernet(profile.ethernet);
+	
+	if(ethVendorList == undefined || ethVendorList == null)
+	{
+	    console.log("ethVendorList was undefined, using default value " + profile.ethernet);
+	    honeydProfile.SetEthernet(profile.ethernet);
+	}
+	else if(profile.isEthernetInherited == false)
+	{
+	    console.log("ethVendorList was populated, array is as follows: ");
+	    
+        var ethVendors = [];
+        var ethDists = [];
+    
+	    for(var i = 0; i < ethVendorList.length; i++)
+	    {
+	        console.log("{" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
+	        ethVendors.push(ethVendorList[i].vendor);
+	        ethDists.push(parseFloat(ethVendorList[i].dist));
+	    }
+	    
+	    honeydProfile.SetVendors(ethVendors, ethDists);
+	}
+	
 	honeydProfile.SetUptimeMin(profile.uptimeMin);
 	honeydProfile.SetUptimeMax(profile.uptimeMax);
 	honeydProfile.SetDropRate(profile.dropRate);
@@ -1310,50 +1394,19 @@ function queryCredDb(check) {
         throw err;
       }
       
-      select = results[0].pass;
-      
-      console.log("queryCredDb results: " + select);
+      select = results[0].pass;      
       
       if(select === results[0].pass)
       {
-        console.log("all good");
         return true;
       }
       else
       {
-        console.log("Username password combo incorrect");
         return false;
       }
     }
   );
 };
-
-/*function getPassHash(password, fn) {
-      client.query(
-      'SELECT SHA1(\'' + password + '\') AS pass',
-      function selectCb(err, results, fields) {
-        if(err) {
-          throw err;
-        }
-        
-        checkPass = results[0].pass;
-        
-        console.log("getPassHash results: " + checkPass);
-        
-        if(checkPass != undefined)
-        {
-          console.log("getPassHash success");
-          return fn(password);
-        }
-        else
-        {
-          console.log("getPassHash failed");
-          client.end();
-          return false;
-        }
-      }
-    );
-};*/
 
 function switcher(err, user, success, done)
 {

@@ -11,7 +11,7 @@ class HoneydProfileBinding : public node::ObjectWrap {
   static void Init(v8::Handle<v8::Object> target);
   
   Nova::NodeProfile * GetChild();
-
+  static v8::Handle<v8::Value> SetVendors(const v8::Arguments& args);
 
 private:
 	HoneydProfileBinding();

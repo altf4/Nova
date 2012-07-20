@@ -1172,7 +1172,7 @@ void NovaConfig::on_pcapButton_clicked()
 	//Gets the current path location
 	QDir path = QDir::current();
 	//Opens a cross-platform dialog box
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Packet Capture File"),  path.path(), tr("Pcap Files (*)"));
+	QString fileName = QFileDialog::getExistingDirectory(this, tr("Open Packet Capture"),  path.path());
 
 	//Gets the relative path using the absolute path in fileName and the current path
 	if(fileName != NULL)
@@ -1454,10 +1454,12 @@ void NovaConfig::on_dmCheckBox_stateChanged(int state)
 	if(state)
 	{
 		m_honeydConfig->EnableNode("Doppelganger");
+		Config::Inst()->SetIsDmEnabled(true);
 	}
 	else
 	{
 		m_honeydConfig->DisableNode("Doppelganger");
+		Config::Inst()->SetIsDmEnabled(false);
 	}
 
 	m_loading->unlock();
@@ -2704,9 +2706,9 @@ void NovaConfig::LoadAllNodes()
 			ui.nodeTreeWidget->setItemWidget(item, 1, pfileBox);
 			if(!n->m_name.compare("Doppelganger"))
 			{
-				ui.dmCheckBox->setChecked(n->m_enabled);
+				ui.dmCheckBox->setChecked(Config::Inst()->GetIsDmEnabled());
 				//Enable the loopback subnet as well if DM is enabled
-				m_honeydConfig->m_subnets[n->m_sub].m_enabled |= n->m_enabled;
+				m_honeydConfig->m_subnets[n->m_sub].m_enabled |= Config::Inst()->GetIsDmEnabled();
 			}
 			if(!n->m_enabled)
 			{

@@ -17,6 +17,7 @@
 //	of received messages on a particular socket
 //============================================================================
 
+#include "../Logger.h"
 #include "MessageQueue.h"
 #include "MessageManager.h"
 #include "../Lock.h"
@@ -192,6 +193,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 					{
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
+							LOG(DEBUG, "Too many message timeouts. Closing sockets.", "");
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -236,6 +238,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 						//If we have had too many timeouts in a row, then close down the socket
 						if(++m_consecutiveTimeouts >= MAX_CONSECUTIVE_MSG_TIMEOUTS)
 						{
+							LOG(DEBUG, "Too many message timeouts. Closing sockets.", "");
 							MessageManager::Instance().CloseSocket(m_socketFD);
 						}
 						return new ErrorMessage(ERROR_TIMEOUT, m_forwardDirection);
@@ -352,6 +355,15 @@ void *MessageQueue::ProducerThread()
 			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
 			if(bytesRead <= 0)
 			{
+				if (bytesRead == 0)
+				{
+					LOG(DEBUG, "Socket was closed by peer", "");
+				}
+				else
+				{
+					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
+				}
+
 				//The socket died on us!
 				{
 					Lock shutdownLock(&m_isShutdownMutex);
@@ -397,6 +409,15 @@ void *MessageQueue::ProducerThread()
 
 			if(bytesRead <= 0)
 			{
+				if (bytesRead == 0)
+				{
+					LOG(DEBUG, "Socket was closed by peer", "");
+				}
+				else
+				{
+					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
+				}
+
 				//The socket died on us!
 				{
 					Lock shutdownLock(&m_isShutdownMutex);

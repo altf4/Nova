@@ -569,7 +569,6 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 	}
 
 	uint32_t ret = 0, dataSize = 0;
-	u_char tableBuffer[MAX_MSG_SIZE];
 	for(uint i = 0; i < m_keys.size(); i++)
 	{
 		if(IsValidKey_NonBlocking(m_keys[i]))
@@ -599,9 +598,15 @@ uint32_t SuspectTable::DumpContents(ofstream *out, time_t saveTime)
 				{
 					continue;
 				}
-				dataSize = suspect->Serialize(tableBuffer, MAX_MSG_SIZE, ALL_FEATURE_DATA);
+
+				int tableBufferSize = suspect->GetSerializeLength(ALL_FEATURE_DATA);
+				u_char *tableBuffer = new u_char[tableBufferSize];
+
+				dataSize = suspect->Serialize(tableBuffer, tableBufferSize, ALL_FEATURE_DATA);
 				out->write((char*) tableBuffer, dataSize);
 				ret += dataSize;
+
+				delete[] tableBuffer;
 			}
 		}
 	}

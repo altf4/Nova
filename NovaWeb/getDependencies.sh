@@ -9,6 +9,9 @@ cd joyent-node-346a3a8
 make
 make install
 
+# Install the forever daemon
+npm install -g forever
+
 # Get cvv8
 wget http://v8-juice.googlecode.com/files/libv8-convert-20120219.tar.gz
 tar -xf libv8-convert-20120219.tar.gz

@@ -73,7 +73,8 @@ string Config::m_prefixes[] =
 	"MIN_PACKET_THRESHOLD",
 	"CUSTOM_PCAP_FILTER",
 	"CUSTOM_PCAP_MODE",
-	"TRAINING_SESSION"
+	"TRAINING_SESSION",
+	"WEB_UI_PORT"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -120,6 +121,7 @@ Config::Config()
 	SetDefaults();
 	LoadUserConfig();
 	LoadConfig_Internal();
+	LoadVersionFile();
 }
 
 Config::~Config()
@@ -130,8 +132,19 @@ Config::~Config()
 void Config::LoadConfig()
 {
 	LoadConfig_Internal();
+	LoadVersionFile();
 	LoadInterfaces();
 }
+
+vector<string> Config::GetPrefixes()
+{
+	vector<string> ret;
+	for (uint i = 0; i < sizeof(Config::Inst()->m_prefixes)/sizeof(Config::Inst()->m_prefixes[0]); i++) {
+		ret.push_back(string(Config::Inst()->m_prefixes[i]));
+	}
+	return ret;
+}
+
 // Loads the configuration file into the class's state data
 void Config::LoadConfig_Internal()
 {
@@ -762,6 +775,20 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			// WEB_UI_PORT
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(atoi(line.c_str()) > 0)
+				{
+					m_webUIPort = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
 		}
 	}
 	else
@@ -1082,6 +1109,50 @@ void Config::LoadInterfaces()
 	}
 	freeifaddrs(devices);
 	pthread_rwlock_unlock(&m_lock);
+}
+
+bool Config::LoadVersionFile()
+{
+	ifstream versionFile((m_pathHome + "/" + VERSION_FILE_NAME).c_str());
+	string line;
+
+	if(versionFile.is_open())
+	{
+		if(versionFile.good())
+		{
+			getline(versionFile, line);
+			string temp = line.substr(line.find_first_of(".") + 1, string::npos);
+
+			m_version.versionString = line;
+			m_version.buildYear = atoi(line.substr(0, line.find_first_of(".")).c_str());
+			m_version.buildMonth = atoi(temp.substr(0, temp.find_first_of(".")).c_str());
+
+			if (temp.find_first_of(".") != string::npos)
+			{
+				m_version.minorVersion = atoi(temp.substr(temp.find_first_of(".") + 1, string::npos).c_str());
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+version Config::GetVersion()
+{
+	return m_version;
+}
+
+string Config::GetVersionString()
+{
+	return m_version.versionString;
 }
 
 string Config::ResolvePathVars(string path)
@@ -1564,6 +1635,23 @@ std::string Config::ReadSetting(std::string key)
 bool Config::WriteSetting(std::string key, std::string value)
 {
 	Lock lock(&m_lock, false);
+
+	bool validKey = false;
+	for (uint i = 0; i < sizeof(Config::Inst()->m_prefixes)/sizeof(Config::Inst()->m_prefixes[0]); i++)
+	{
+		if (!Config::Inst()->m_prefixes[i].compare(key))
+		{
+			validKey = true;
+			break;
+		}
+	}
+
+	if (!validKey)
+	{
+		LOG(WARNING, "WriteSetting was called with invalid setting key", "");
+		return false;
+	}
+
 	string line;
 	bool error = false;
 
@@ -2562,6 +2650,19 @@ string Config::SetTrainingSession(string trainingSession)
 	Lock lock(&m_lock, false);
 	m_trainingSession = trainingSession;
 	return m_trainingSession;
+}
+
+
+int Config::GetWebUIPort()
+{
+	Lock lock(&m_lock, true);
+	return m_webUIPort;
+}
+
+void Config::SetWebUIPort(int port)
+{
+	Lock lock(&m_lock, false);
+	m_webUIPort = port;
 }
 
 

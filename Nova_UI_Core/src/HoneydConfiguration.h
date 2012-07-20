@@ -198,6 +198,8 @@ public:
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     bool LoadProfilesFromTree(std::string parent);
 
+    bool CheckNotInheritingEmptyProfile(std::string parentName);
+
 // TODO: this should be private eventually
 public:
 	SubnetTable m_subnets;
@@ -264,6 +266,8 @@ private:
     bool CreateProfileTree(std::string profileName);
 
     std::string FindSubnet(in_addr_t ip);
+
+    bool RecursiveCheckNotInheritingEmptyProfile(const NodeProfile& check);
 };
 
 }
