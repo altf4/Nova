@@ -583,7 +583,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 
 		ui.suspectList->removeItemWidget(sItem->item);
 
-		if(ui.suspectList->count())
+		// TODO issue #266
+		// The "&& false" hack is to disable sorting. See issue #266
+		if(ui.suspectList->count() && false)
 		{
 			int step = 1;
 			int index = (int)(ui.suspectList->count()/2);
@@ -661,7 +663,9 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		sItem->item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 		sItem->item->setForeground(brush);
 
-		if(ui.suspectList->count())
+		// TODO issue #266
+		// The && false hack is to disable sorting. See issue #266
+		if(ui.suspectList->count() && false)
 		{
 			int step = 1;
 			int index = (int)(ui.suspectList->count()/2);
