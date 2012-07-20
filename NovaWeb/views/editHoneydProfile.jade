@@ -77,6 +77,7 @@ block headerAdditions
             distribution.setAttribute("max", "100");
             distribution.setAttribute("step", "1");
             distribution.setAttribute("value", 100);
+            distribution.setAttribute("readonly", "true");
             distribution.setAttribute("style", "vertical-align: text");
             distribution.setAttribute("onchange", 'sliderMoved("dist0", 1)');
            
@@ -98,6 +99,7 @@ block headerAdditions
             distLabel.setAttribute("value", "100%");
             distLabel.innerHTML = "100%";
             distLabel.setAttribute("type", "text");
+            distLabel.setAttribute("readonly", "true");
             distLabel.setAttribute("style","width: 40px; float: right; clear: right");
             distLabel.setAttribute("onchange", 'clearCell("distLabel0", ' + 1 + ')');
 
@@ -131,7 +133,7 @@ block headerAdditions
         
             console.log("vendName is " + vendName);
         
-            for(var i = 0; i < parseInt(dojo.byId("numCreated").value); i++)
+            for(var i = 0; i < parseInt(dojo.byId("numCreated").getAttribute("value")); i++)
             {
                 if(vendName == document.getElementById("vend" + i).value)
                 {
@@ -141,7 +143,7 @@ block headerAdditions
             }
             if(keepGoing)
             {
-               for(var i = 0; i < parseInt(dojo.byId("numCreated").value); i++)
+               for(var i = 0; i < parseInt(dojo.byId("numCreated").getAttribute("value")); i++)
                {
                    document.getElementById("dist" + i).removeAttribute("readonly");
                    document.getElementById("distLabel" + i).removeAttribute("readonly");
@@ -152,9 +154,11 @@ block headerAdditions
                document.getElementById("errorEthernet").value = "";
                document.getElementById("errorEthernet").innerHTML = "";
         
-               document.getElementById("numCreated").value += 1;
+               var numCreated = parseInt(document.getElementById("numCreated").getAttribute("value"));
+        
+               document.getElementById("numCreated").setAttribute("value", (numCreated + 1));
             
-               var number = document.getElementById("numCreated").value - 1;
+               var number = numCreated;
                var checkAgainst = "ethDiv" + number;
                
                var teed = document.getElementById("labelDist");
@@ -227,10 +231,14 @@ block headerAdditions
             
                var deleteOne = true;
             
+               console.log("starting for, ceiling of for is " + (number + 1));
+              
                for(var i = 0; i < (number + 1); i++)
                {
+                   console.log("at index " + i);
                    if("ethDiv" + i !== checkAgainst)
                    {
+                       console.log("not looking at the one we changed, looking at ethDiv" + i);
                        var change = document.getElementById("ethDiv" + i);
                        var changeMax = document.getElementById("rangeDiv" + i);
                 
@@ -258,7 +266,7 @@ block headerAdditions
                        }
                    }
                    document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + (number + 1) + ')');
-                   document.getElementById("dist" + i).max = 100 - (number);
+                   document.getElementById("dist" + i).setAttribute("max", (100 - number));
                    document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + (number + 1) + ')')
                }
            }
@@ -271,7 +279,7 @@ block headerAdditions
     }
 
     deleteAndClean = function(which) {
-        if(dojo.byId("numCreated").value == 1)
+        if(dojo.byId("numCreated").getAttribute("value") == 1)
         {
             console.log("Must have at least one vendor selected, can't delete to 0");
             return;
@@ -321,8 +329,8 @@ block headerAdditions
         }
         
         
-        var numCreated = parseInt(dojo.byId("numCreated").value);
-        var newNumCreated = parseInt(dojo.byId("numCreated").value - 1);
+        var numCreated = parseInt(dojo.byId("numCreated").getAttribute("value"));
+        var newNumCreated = (parseInt(dojo.byId("numCreated").getAttribute("value")) - 1);
         
         console.log("newNumCreated " + newNumCreated);
         console.log("numCreated " + numCreated);
@@ -384,9 +392,9 @@ block headerAdditions
             document.getElementById("distLabel" + justInCase.index).innerHTML = justInCase.value.toString() + "%";
         }
         
-        dojo.byId("numCreated").value -= 1;
+        dojo.byId("numCreated").setAttribute("value", newNumCreated);
         
-        if(dojo.byId("numCreated").value == 1)
+        if(parseInt(dojo.byId("numCreated").getAttribute("value")) == 1)
         {
             document.getElementById("dist0").value = 100;
             document.getElementById("dist0").max = 100;
@@ -809,7 +817,9 @@ block headerAdditions
     }
     
     clearCreated = function() {
-        var numToDelete = document.getElementById("numCreated").value;
+        var numToDelete = parseInt(document.getElementById("numCreated").getAttribute("value"));
+        
+        console.log("numToDelete " + numToDelete);
         
         if(numToDelete >= 1)
         {
@@ -827,11 +837,15 @@ block headerAdditions
                 console.log("need to delete ethDiv, rangeDiv, and deleteDiv at " + i);
                 labelDist.removeChild(document.getElementById("ethDiv" + i));
                 ranges.removeChild(document.getElementById("rangeDiv" + i));
-                deleteButtons.removeChild(document.getElementById("deleteDiv" + i));
+                
+                if(deleteButtonHere.childNodes.length > 1)
+                {
+                    deleteButtons.removeChild(document.getElementById("deleteDiv" + i));
+                }
             }
         }
         
-        document.getElementById("numCreated").value = 0;
+        document.getElementById("numCreated").setAttribute("value", "0");
     }
     
     inheritanceChanged = function() {
@@ -842,7 +856,7 @@ block headerAdditions
             dijit.byId("personality").setDisabled(false);
         }
 
-        if (dojo.byId("inheritEthernet").checked) 
+        if(dojo.byId("inheritEthernet").checked) 
         {
             dijit.byId("ethernet").setDisabled(true);
             dojo.byId("ethSelectButton").disabled = true;
@@ -970,9 +984,11 @@ block headerAdditions
                 // to avoid those elements. I'll try experimenting with using
                 // tagName stuff a little bit but this'll be how it is for now.
             }
-            
-            now.GetVendors(document.getElementById("name").value, function(elements, distributions){
-                document.getElementById("ethVendorLength").setAttribute("value", elements.length);
+            if(newProfile == "false")
+            {
+                now.GetVendors(document.getElementById("name").value, function(elements, distributions){
+                
+                document.getElementById("numCreated").setAttribute("value", elements.length);
 
                 document.getElementById("errorEthernet").value = "";
                 document.getElementById("errorEthernet").innerHTML = "";
@@ -984,8 +1000,6 @@ block headerAdditions
                 var teedFor = teed.childNodes.length;
                 var teed2For = teed2.childNodes.length;
                 var teed3For = teed3.childNodes.length;
-
-                clearCreated();
 
                 for(var i in elements)
                 {
@@ -1046,14 +1060,39 @@ block headerAdditions
                     distribution.setAttribute("style", "vertical-align: text");
                     distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
 
+                    var deleteDiv = document.createElement("div");
+            
+                    deleteDiv.setAttribute("style", "width: content_width");
+                    deleteDiv.setAttribute("id", "deleteDiv" + i);
+
+                    var deleteButton = document.createElement("button");
+            
+                    deleteButton.setAttribute("id", "delete" + i);
+                    deleteButton.setAttribute("type", "button");
+                    deleteButton.setAttribute("onclick", 'deleteAndClean("ethDiv' + i + '")');
+                    deleteButton.innerHTML = "Delete Vendor";
+
                     div.appendChild(add);
                     div.appendChild(distLabel);
                     teed.appendChild(div);
                     rangeDiv.appendChild(distribution);
                     rangeDiv.appendChild(br);
                     teed2.appendChild(rangeDiv);
+                    deleteDiv.appendChild(deleteButton);
+                    teed3.appendChild(deleteDiv);
+                }
+                
+                if(dojo.byId("numCreated").value == 1)
+                {
+                    document.getElementById("dist0").value = 100;
+                    document.getElementById("dist0").max = 100;
+                    document.getElementById("distLabel0").value = "100%";
+                    document.getElementById("distLabel0").innerHTML = "100%";
+                    document.getElementById("distLabel0").setAttribute("readonly","true");
+                    document.getElementById("dist0").setAttribute("readonly", "true");
                 }
             });
+            }
         }
 
         if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) {
