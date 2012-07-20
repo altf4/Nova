@@ -272,24 +272,17 @@ void Nova::LoadNmap(const string &filename)
 int main(int argc, char ** argv)
 {
 	ofstream lockFile("/usr/share/nova/nova/hhconfig.lock");
-
 	bool badArgCombination = false;
-
 	bool i_flag_empty = true;
-
 	bool a_flag_empty = true;
 
 	if(argc < 3)
 	{
 		usage();
-
 		lockFile.close();
-
 		remove("/usr/share/nova/nova/hhconfig.lock");
-
 		exit(INCORRECTNUMBERARGS);
 	}
-
 	for(uint j = 1; argv[j] != NULL; j++)
 	{
 		if(!string(argv[j]).compare("-n"))
@@ -299,11 +292,8 @@ int main(int argc, char ** argv)
 				if((!isdigit(argv[j + 1][i])) && (argv[j + 1][i] != 0))
 				{
 					usage();
-
 					lockFile.close();
-
 					remove("/usr/share/nova/nova/hhconfig.lock");
-
 					exit(NONINTEGERARG);
 				}
 			}
@@ -313,9 +303,7 @@ int main(int argc, char ** argv)
 		else if(!string(argv[j]).compare("-i"))
 		{
 			string strToSplit = string(argv[j + 1]);
-
 			boost::split(interfacesToMatch, strToSplit, boost::is_any_of(","));
-
 			if(interfacesToMatch.empty() || interfacesToMatch[0][0] == '-')
 			{
 				i_flag_empty = true;
@@ -325,7 +313,6 @@ int main(int argc, char ** argv)
 			{
 				i_flag_empty = false;
 			}
-
 			j++;
 		}
 		else if(!string(argv[j]).compare("-f"))
@@ -337,11 +324,8 @@ int main(int argc, char ** argv)
 			else if(badArgCombination || numNodes <= 0)
 			{
 				usage();
-
 				lockFile.close();
-
 				remove("/usr/share/nova/nova/hhconfig.lock");
-
 				exit(BADARGCOMBINATION);
 			}
 
@@ -354,20 +338,12 @@ int main(int argc, char ** argv)
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
 				cout << "Caught Exception : " << e.what() << endl;
-				//return PARSINGERROR;
 			}
 
 			ErrCode errVar = OKAY;
-
-			PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-			persTree.AddAllPorts();
-			NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
-			nodeBuilder.GenerateNodes(numNodes);
-			persTree.ToXmlTemplate();
+			GenerateConfiguration();
 			lockFile.close();
-
 			remove("/usr/share/nova/nova/hhconfig.lock");
-
 			return errVar;
 		}
 		else if(!string(argv[j]).compare("-a"))
@@ -379,16 +355,12 @@ int main(int argc, char ** argv)
 			else if(badArgCombination || numNodes <= 0)
 			{
 				usage();
-
 				lockFile.close();
-
 				remove("/usr/share/nova/nova/hhconfig.lock");
-
 				exit(BADARGCOMBINATION);
 			}
 
 			ErrCode errVar = OKAY;
-
 			vector<string> subnetNames;
 
 			if(!i_flag_empty)
@@ -427,12 +399,10 @@ int main(int argc, char ** argv)
 
 				if(errVar != OKAY || subnetNames.empty())
 				{
-					LOG(ERROR, "There was a problem determining the subnets to scan, or there are no interfaces to scan on. Stopping execution.", "");
-
+					LOG(ERROR, "There was a problem determining the subnets to scan,"
+						" or there are no interfaces to scan on. Stopping execution.", "");
 					lockFile.close();
-
 					remove("/usr/share/nova/nova/hhconfig.lock");
-
 					return errVar;
 				}
 			}
@@ -442,23 +412,14 @@ int main(int argc, char ** argv)
 			if(errVar != OKAY)
 			{
 				LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
-
 				lockFile.close();
-
 				remove("/usr/share/nova/nova/hhconfig.lock");
-
 				return errVar;
 			}
 
-			PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-			persTree.AddAllPorts();
-			NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
-			nodeBuilder.GenerateNodes(numNodes);
-			persTree.ToXmlTemplate();
+			GenerateConfiguration();
 			lockFile.close();
-
 			remove("/usr/share/nova/nova/hhconfig.lock");
-
 			return errVar;
 		}
 	}
@@ -466,29 +427,20 @@ int main(int argc, char ** argv)
 	if(a_flag_empty && i_flag_empty)
 	{
 		usage();
-
 		lockFile.close();
-
 		remove("/usr/share/nova/nova/hhconfig.lock");
-
 		return REQUIREDFLAGSMISSING;
 	}
-
 	if(numNodes <= 0)
 	{
 		usage();
-
 		lockFile.close();
-
 		remove("/usr/share/nova/nova/hhconfig.lock");
-
 		return NONINTEGERARG;
 	}
 
 	ErrCode errVar = OKAY;
-
 	vector<string> subnetNames;
-
 	if(!i_flag_empty)
 	{
 		subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
@@ -496,43 +448,28 @@ int main(int argc, char ** argv)
 	else
 	{
 		usage();
-
 		lockFile.close();
-
 		remove("/usr/share/nova/nova/hhconfig.lock");
-
 		return REQUIREDFLAGSMISSING;
 	}
 
 	errVar = LoadPersonalityTable(subnetNames);
-
 	if(errVar != OKAY)
 	{
 		LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
-
 		lockFile.close();
-
 		remove("/usr/share/nova/nova/hhconfig.lock");
-
 		return errVar;
 	}
-
-	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-	persTree.AddAllPorts();
-	NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
-	nodeBuilder.GenerateNodes(numNodes);
-	persTree.ToXmlTemplate();
+	GenerateConfiguration();
 	lockFile.close();
-
 	remove("/usr/share/nova/nova/hhconfig.lock");
-
 	return errVar;
 }
 
 Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)
 {
 	stringstream ss;
-
 	// For each element in recv (which contains strings of the subnets),
 	// do an OS fingerprinting scan and output the results into a different
 	// xml file for each subnet.
@@ -544,7 +481,6 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)
 		try
 		{
 			string file = "subnet" + ss.str() + ".xml";
-
 			// Call LoadNmap on the generated filename so that we
 			// can add hosts to the personality table, provided they
 			// contain enough data.
@@ -593,7 +529,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 	struct in_addr maxAddrInRange;
 	uint32_t hostOrderAddr;
 	uint32_t hostOrderBitmask;
-	bool subnetExists = false;
 
 	// If we call getifaddrs and it fails to obtain any information, no point in proceeding.
 	// Return the empty addresses vector and set the ErrorCode to AUTODETECTFAIL.
@@ -614,7 +549,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 		{
 			Subnet newSubnet;
 			// start processing it to generate the subnet for the interface.
-			subnetExists = false;
 			interfaces.push_back(string(curIf->ifa_name));
 
 			// Get the string representation of the interface's IP address,
@@ -692,10 +626,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 			}
 
 			ss << i;
-
 			// Generate a string of the form X.X.X.X/## for use in nmap scans later
 			addrString = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
-
 			ss.str("");
 
 			// Populate the subnet struct for use in the SubnetTable of the HoneydConfiguration
@@ -709,26 +641,11 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 			newSubnet.m_enabled = (curIf->ifa_flags & IFF_UP);
 			newSubnet.m_isRealDevice = true;
 
-			// If we have two interfaces that point the same subnet, we only want
-			// to scan once; so, change the "there" flag to reflect that the subnet
-			// exists to prevent it from being pushed again.
-			for(uint16_t j = 0; j < hostAddrStrings.size() && !subnetExists; j++)
-			{
-				if(!addrString.compare(hostAddrStrings[j]))
-				{
-					subnetExists = true;
-				}
-			}
-
 			// Want to add loopbacks to the subnets (for Doppelganger) but not to the
 			// addresses to scan vector
-			if(!subnetExists)
+			if(!CheckSubnet(hostAddrStrings, addrString))
 			{
 				subnetsDetected.push_back(newSubnet);
-			}
-			// Otherwise, don't do anything.
-			else
-			{
 			}
 		}
 		// If we've found an interface that has an IPv4 address and isn't a loopback
@@ -751,7 +668,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 
 			Subnet newSubnet;
 			// start processing it to generate the subnet for the interface.
-			subnetExists = false;
 			interfaces.push_back(string(curIf->ifa_name));
 
 			// Get the string representation of the interface's IP address,
@@ -821,18 +737,14 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
 			uint32_t mask = ~hostOrderBitmask;
 			int i = 32;
-
 			while(mask != 0)
 			{
 				mask /= 2;
 				i--;
 			}
-
-			ss << i;
-
 			// Generate a string of the form X.X.X.X/## for use in nmap scans later
+			ss << i;
 			string push = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
-
 			ss.str("");
 
 			newSubnet.m_address = push;
@@ -844,26 +756,11 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 			newSubnet.m_enabled = (curIf->ifa_flags & IFF_UP);
 			newSubnet.m_isRealDevice = true;
 
-			// If we have two interfaces that point the same subnet, we only want
-			// to scan once; so, change the "there" flag to reflect that the subnet
-			// exists to prevent it from being pushed again.
-			for(uint16_t j = 0; j < hostAddrStrings.size() && !subnetExists; j++)
-			{
-				if(!push.compare(hostAddrStrings[j]))
-				{
-					subnetExists = true;
-				}
-			}
-
 			// If the subnet isn't in the addresses vector, push it in.
-			if(!subnetExists)
+			if(!CheckSubnet(hostAddrStrings, push))
 			{
 				hostAddrStrings.push_back(push);
 				subnetsDetected.push_back(newSubnet);
-			}
-			// Otherwise, don't do anything.
-			else
-			{
 			}
 		}
 	}
@@ -872,4 +769,26 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 	// and return the vector containing the subnets from each interface.
 	freeifaddrs(devices);
 	return hostAddrStrings;
+}
+
+void Nova::GenerateConfiguration()
+{
+	personalities.CalculateDistributions();
+	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
+	persTree.AddAllPorts();
+	NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
+	nodeBuilder.GenerateNodes(numNodes);
+	persTree.GetHDConfig()->SaveAllTemplates();
+}
+
+bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
+{
+	for(uint16_t j = 0; j < hostAddrStrings.size(); j++)
+	{
+		if(!matchStr.compare(hostAddrStrings[j]))
+		{
+			return true;
+		}
+	}
+	return false;
 }

@@ -38,6 +38,7 @@ public:
 
 	// Number of hosts that have this personality
 	uint32_t m_count;
+	double m_distribution;
 
 	// The average number of ports that this personality has
 	uint16_t m_avgPortCount;

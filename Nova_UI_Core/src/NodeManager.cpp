@@ -256,7 +256,7 @@ void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 	{
 		struct ProfileCounter pCounter;
 		pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
-		pCounter.m_increment = (profile->m_distribution/((double)100));
+		pCounter.m_increment = profile->m_distribution;
 		int totalPorts = 0;
 		for(uint i = 0; i < profile->m_nodeKeys.size(); i++)
 		{

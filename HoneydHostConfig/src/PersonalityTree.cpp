@@ -31,6 +31,8 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_hdconfig = new HoneydConfiguration();
 
 	m_root = PersonalityNode("default");
+	m_root.m_count = persTable->m_num_of_hosts;
+	m_root.m_distribution = 100;
 	m_hdconfig->LoadAllTemplates();
 
 	m_hdconfig->AddGroup("HaystackAutoConfig");
@@ -66,7 +68,6 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	{
 		LoadTable(persTable);
 	}
-	GetHostCount();
 }
 
 PersonalityTree::~PersonalityTree()
@@ -96,6 +97,7 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	{
 		InsertPersonality(it->second);
 	}
+	CalculateDistributions();
 	for(uint i = 0; i < m_root.m_children.size(); i++)
 	{
 		GenerateProfiles(m_root.m_children[i].second, &m_root, &m_hdconfig->m_profiles["default"], m_root.m_children[i].first);
@@ -113,7 +115,8 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	node->GenerateDistributions();
 	NodeProfile tempProf = node->GenerateProfile(*parentProfile);
 	tempProf.m_name = profileName;
-	tempProf.m_distribution = node->m_count/parent->m_count;
+	tempProf.m_distribution = node->m_distribution;
+	cout << tempProf.m_name << " distrib: " << tempProf.m_distribution <<" count: " << node->m_count <<endl;
 	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
@@ -172,9 +175,7 @@ void PersonalityTree::InsertPersonality(Personality *pers)
 	{
 		return;
 	}
-
 	Personality temp = *pers;
-
 	UpdatePersonality(&temp, &m_root);
 }
 
@@ -204,13 +205,18 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 		tablePair = new pair<string, PersonalityNode *>();
 		tablePair->first = cur;
 		tablePair->second = new PersonalityNode(cur);
+		tablePair->second->m_distribution = pers->m_distribution;
+		tablePair->second->m_count = pers->m_count;
+		tablePair->second->m_osclass = pers->m_osclass;
 		parent->m_children.push_back(*tablePair);
 		delete tablePair;
 	}
+	else
+	{
+		parent->m_children[i].second->m_count += pers->m_count;
+	}
+
 	tablePair = &parent->m_children[i];
-
-	tablePair->second->m_osclass = pers->m_osclass;
-
 	//Insert or count port occurrences
 	for(PortsTable::iterator it = pers->m_ports.begin(); it != pers->m_ports.end(); it++)
 	{
@@ -225,14 +231,9 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 	}
 
 	pers->m_personalityClass.pop_back();
-	tablePair->second->m_count = pers->m_count;
 	if(!pers->m_personalityClass.empty())
 	{
 		UpdatePersonality(pers, tablePair->second);
-	}
-	for(uint i = 0; i < tablePair->second->m_children.size(); i++)
-	{
-		tablePair->second->m_count += tablePair->second->m_children[i].second->m_count;
 	}
 }
 
@@ -480,12 +481,24 @@ bool PersonalityTree::AddSubnet(const Subnet &add)
 	return m_hdconfig->AddSubnet(add);
 }
 
-void PersonalityTree::GetHostCount()
+void PersonalityTree::CalculateDistributions()
 {
-	for(uint i = 0; i < m_root.m_children.size(); i++)
-	{
-		m_root.m_count += m_root.m_children[i].second->m_count;
-	}
+	RecursiveCalculateDistribution(&m_root);
 }
 
+void PersonalityTree::RecursiveCalculateDistribution(PersonalityNode *node)
+{
+	for(uint i = 0; i < node->m_children.size(); i++)
+	{
+		if((node->m_children[i].second->m_count > 0) && (node->m_count > 0))
+		{
+			node->m_children[i].second->m_distribution = (((double)node->m_children[i].second->m_count)/((double)node->m_count))*100;
+		}
+		else
+		{
+			node->m_children[i].second->m_distribution = 0;
+		}
+		RecursiveCalculateDistribution(node->m_children[i].second);
+	}
+}
 }

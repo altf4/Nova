@@ -28,6 +28,7 @@ namespace Nova
 Personality::Personality()
 {
 	m_count = 1;
+	m_distribution = 100;
 	m_port_count = 0;
 	m_osclass = "";
 	m_vendors.set_empty_key("");

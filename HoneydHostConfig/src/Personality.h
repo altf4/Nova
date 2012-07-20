@@ -46,6 +46,9 @@ public:
 	// count of the number of instances of this personality on the scanned subnets
 	unsigned int m_count;
 
+	// the percentage (0-100) of total hosts seen using this personality
+	double m_distribution;
+
 	// total number of ports found for this personality on the scanned subnets
 	unsigned long long int m_port_count;
 

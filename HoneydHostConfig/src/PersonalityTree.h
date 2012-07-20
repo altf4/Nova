@@ -118,7 +118,7 @@ public:
 	// GetHostCount gets the number of hosts in each of the root node's subtrees and
 	// adds them into m_root's m_count value.
 	// Returns nothing.
-	void GetHostCount();
+	void CalculateDistributions();
 
 private:
 
@@ -164,6 +164,9 @@ private:
 	// Prints out the tree from the root node; rather esoteric and not entirely useful
 	// unless you know the expected parent/child relations within the tree. A testing tool.
 	void RecursivePrintTree(PersonalityNode *node);
+
+	void RecursiveCalculateDistribution(PersonalityNode *node);
+
 
 };
 

@@ -66,5 +66,10 @@ void PrintStringVector(std::vector<std::string> recv);
 //  vector<string> recv - vector of subnets
 // Returns an ErrCode signifying success or failure
 ErrCode LoadPersonalityTable(std::vector<std::string> recv);
+
+void GenerateConfiguration();
+
+bool CheckSubnet(std::vector<std::string> &hostAddrStrings, std::string matchStr);
+
 }
 #endif

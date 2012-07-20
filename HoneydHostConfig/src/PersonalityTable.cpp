@@ -161,4 +161,19 @@ void PersonalityTable::AddHost(Personality *add)
 	}
 }
 
+void PersonalityTable::CalculateDistributions()
+{
+	for(Personality_Table::iterator it = m_personalities.begin(); it != m_personalities.end(); it++)
+	{
+		if(m_num_of_hosts > 0)
+		{
+			it->second->m_distribution = (((double)it->second->m_count)/((double)m_num_of_hosts))*100;
+		}
+		else
+		{
+			it->second->m_distribution = 0;
+		}
+	}
+}
+
 }
