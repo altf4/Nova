@@ -28,7 +28,6 @@
 								<option id="gnu.cpp.compiler.option.other.other.1224581553" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -pthread -std=c++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.paths.732074762" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/src/"/>
-									<listOptionValue builtIn="false" value="../../Nova_UI_Core/src"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.193766745" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -97,7 +96,6 @@
 								<option id="gnu.cpp.compiler.option.other.other.253424482" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 `pkg-config --libs --cflags libnotify` -std=c++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.paths.179526128" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/src/"/>
-									<listOptionValue builtIn="false" value="../../Nova_UI_Core/src/"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.849300306" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

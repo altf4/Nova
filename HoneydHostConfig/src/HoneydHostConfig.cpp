@@ -36,6 +36,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include "NodeManager.h"
+#include "PersonalityTree.h"
 #include "HoneydHostConfig.h"
 #include "VendorMacDb.h"
 #include "Logger.h"
@@ -359,12 +360,10 @@ int main(int argc, char ** argv)
 			ErrCode errVar = OKAY;
 
 			PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-
-			NodeManager nodeBuilder = NodeManager(&persTree);
+			persTree.AddAllPorts();
+			NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
 			nodeBuilder.GenerateNodes(numNodes);
-
 			persTree.ToXmlTemplate();
-
 			lockFile.close();
 
 			remove("/usr/share/nova/nova/hhconfig.lock");
@@ -452,12 +451,10 @@ int main(int argc, char ** argv)
 			}
 
 			PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-
-			NodeManager nodeBuilder = NodeManager(&persTree);
+			persTree.AddAllPorts();
+			NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
 			nodeBuilder.GenerateNodes(numNodes);
-
 			persTree.ToXmlTemplate();
-
 			lockFile.close();
 
 			remove("/usr/share/nova/nova/hhconfig.lock");
@@ -521,12 +518,10 @@ int main(int argc, char ** argv)
 	}
 
 	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-
-	NodeManager nodeBuilder = NodeManager(&persTree);
+	persTree.AddAllPorts();
+	NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
 	nodeBuilder.GenerateNodes(numNodes);
-
 	persTree.ToXmlTemplate();
-
 	lockFile.close();
 
 	remove("/usr/share/nova/nova/hhconfig.lock");

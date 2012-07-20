@@ -22,8 +22,7 @@
 #ifndef NODEMANAGER_H_
 #define NODEMANAGER_H_
 
-#include "PersonalityTree.h"
-
+#include "HoneydConfiguration.h"
 namespace Nova
 {
 // The following structs are matched to a specific port, mac vendor or profile.
@@ -63,27 +62,9 @@ public:
 	// Constructor that assigns the m_persTree and m_hdconfig variables
 	// to values within the PersonalityTree* that's being passed. It then immediately
 	// begins generating ProfileCounters.
-	//		persTree: The Personality Tree to use in the NodeManager
-	// Note: This function loads the same HoneydConfiguration nova would get if loaded from the current templates.
-	NodeManager(PersonalityTree *persTree);
-
-	// Constructor that assigns the m_persTree and m_hdconfig variables
-	// to values within the PersonalityTree* that's being passed. It then immediately
-	// begins generating ProfileCounters.
 	//		honeydConfig: The HoneydConfiguration to use in the NodeManager
 	// Note: This function constructs a PersonalityTree from the HoneydConfiguration object passed
 	NodeManager(HoneydConfiguration *honeydConfig);
-
-	// SetPersonalityTree is used to change the target PersonalityTree from the
-	// current m_persTree to the PersonalityTree* argument. If the pointer passed
-	// is null, returns false; else, perform the same actions as the constructor and
-	// return true. Can also be used in the case that you wish to instantiate the object
-	// without explicitly declaring a PersonalityTree; if the constructor receives a NULL
-	// pointer as an argument, it won't do anything, so you have to set the tree yourself
-	// using this method.
-	//  PersonalityTree *persTree - PersonalityTree pointer to shift m_persTree to.
-	// Returns a bool indicating success or failure.
-	bool SetPersonalityTree(PersonalityTree *persTree);
 
 	// GenerateNodes does exactly what it sounds like -- creates nodes. Using the
 	// ProfileCounters in the m_profileCounters variable, it will generate up to
@@ -93,23 +74,7 @@ public:
 	// Returns nothing.
 	void GenerateNodes(unsigned int num_nodes);
 
-	PersonalityTree *m_persTree;
-
 private:
-
-	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter.
-	// Returns nothing, takes no arguments.
-	void GenerateProfileCounters();
-
-	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
-	//		randomized nodes from the profiles at the different nodes of the Personality Tree.
-	//		Creates, populates and pushes a ProfileCounter struct, complete with Mac- and PortCounters
-	//		for each node in the tree into the m_profileCounters member variable.
-	//  const PersonalityNode &parent - const reference to a PersonalityNode of the tree;
-	//                                  the node's information is read and placed into a complete
-	//                                  ProfileCounter struct.
-	// Returns nothing.
-	void RecursiveGenProfileCounter(const PersonalityNode &parent);
 
 	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
 	//		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration

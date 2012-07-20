@@ -1892,16 +1892,25 @@ void NovaConfig::LoadProfileSettings()
 		{
 			if(!it->second.m_parentProfile.compare(m_currentProfile))
 			{
+				QSpinBox *numNodesSpinBox = new QSpinBox();
+				numNodesSpinBox->setMaximum(0);
+				numNodesSpinBox->setMinimum(0);
+				numNodesSpinBox->setValue(0);
+				for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
+				{
+					if(m_honeydConfig->m_nodes.keyExists(it->second.m_nodeKeys[i]))
+					{
+						max++;
+						numNodesSpinBox->stepUp();
+					}
+				}
 				QTreeWidgetItem *item = new QTreeWidgetItem();
 				item->setText(0, QString(it->first.c_str()));
-				QSpinBox *numNodesSpinBox = new QSpinBox();
-				numNodesSpinBox->setValue(it->second.m_nodeKeys.size());
 				numNodesSpinBox->setAlignment(Qt::AlignCenter);
 				item->setText(1, numNodesSpinBox->text());
 				item->setTextAlignment(1, Qt::AlignCenter);
-				ui.childrenProfileTreeWidget->setItemWidget(item, 1, numNodesSpinBox);
-				max+= numNodesSpinBox->value();
 				ui.childrenProfileTreeWidget->addTopLevelItem(item);
+				ui.childrenProfileTreeWidget->setItemWidget(item, 1, numNodesSpinBox);
 			}
 		}
 		for(int i = 0; i < ui.childrenProfileTreeWidget->topLevelItemCount(); i++)
@@ -1910,7 +1919,14 @@ void NovaConfig::LoadProfileSettings()
 			QSlider *nodeDistribSlider = new QSlider();
 			nodeDistribSlider->setMaximum(100);
 			nodeDistribSlider->setOrientation(Qt::Horizontal);
-			nodeDistribSlider->setValue((int)(item->text(1).toUInt()/max));
+			if(max != 0)
+			{
+				nodeDistribSlider->setValue((int)(item->text(1).toUInt()/max));
+			}
+			else
+			{
+				nodeDistribSlider->setValue(0);
+			}
 			ui.childrenProfileTreeWidget->setItemWidget(item, 2, nodeDistribSlider);
 		}
 		for(int i = 0; i < ui.childrenProfileTreeWidget->columnCount(); i++)
