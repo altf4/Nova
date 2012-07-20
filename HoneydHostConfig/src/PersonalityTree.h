@@ -115,10 +115,10 @@ public:
 	// Returns m_root, takes no arguments.
 	PersonalityNode* GetRootNode();
 
-	// GetHostCount gets the number of hosts in each of the root node's subtrees and
-	// adds them into m_root's m_count value.
-	// Returns nothing.
-	void GetHostCount();
+	// Goes through the tree after the ProfileTable values have been compressed and generates a
+	// count of the total generated nodes, then goes through all of the generated profiles and
+	// sets the m_distribution value to the correct ratio of node->m_count / totalCount.
+	void AssignProfileDistributions();
 
 private:
 

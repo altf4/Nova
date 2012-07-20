@@ -66,7 +66,8 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	{
 		LoadTable(persTable);
 	}
-	GetHostCount();
+
+	AssignProfileDistributions();
 }
 
 PersonalityTree::~PersonalityTree()
@@ -96,6 +97,9 @@ void PersonalityTree::LoadTable(PersonalityTable *persTable)
 	{
 		InsertPersonality(it->second);
 	}
+
+	m_root.m_count = persTable->m_num_used_hosts;
+
 	for(uint i = 0; i < m_root.m_children.size(); i++)
 	{
 		GenerateProfiles(m_root.m_children[i].second, &m_root, &m_hdconfig->m_profiles["default"], m_root.m_children[i].first);
@@ -113,7 +117,32 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	node->GenerateDistributions();
 	NodeProfile tempProf = node->GenerateProfile(*parentProfile);
 	tempProf.m_name = profileName;
-	tempProf.m_distribution = node->m_count/parent->m_count;
+
+	// XXX A divide by 0 occurs here; default has a 0 m_count because the workflow changed and GetHostCount
+	// (which sets the m_count of default) gets called after the line below.
+
+	// XXX Another problem. Because we're extending out the table to have profiles for the osclass structure
+	// as well as the found personalities, we're getting incorrect node->m_count values.
+	// An example is as follows:
+	//    Five hosts are found. All are Linux Linux 2.6.X general purpose, but they each have different
+	//    personalities. Because of our workflow, the PersonalityNode created for the Linux vendor value
+	//    will have a count of 9 -- Linux (1), Linux (1), 2.6.X (1), general purpose (1), the personalities (5).
+	//    Combine that with the fact that the root node would only have a count of 5 -- one for each personality --
+	//    and we have a problem where a given NodeProfile can have >100% distribution values.
+
+	// There's two solutions that I can see: either we wait to generate distributions until after the Profile table
+	// stuff is collapsed, or we have to determine an accurate total count value from the PersonalityTable, which is
+	// hard because the Personality objects aren't really set up well for such a thing.
+
+	if(parent->m_count > 0)
+	{
+		tempProf.m_distribution = node->m_count/parent->m_count;
+	}
+	else
+	{
+		tempProf.m_distribution = 0;
+	}
+
 	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
@@ -480,12 +509,9 @@ bool PersonalityTree::AddSubnet(const Subnet &add)
 	return m_hdconfig->AddSubnet(add);
 }
 
-void PersonalityTree::GetHostCount()
+void PersonalityTree::AssignProfileDistributions()
 {
-	for(uint i = 0; i < m_root.m_children.size(); i++)
-	{
-		m_root.m_count += m_root.m_children[i].second->m_count;
-	}
+
 }
 
 }
