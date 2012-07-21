@@ -21,6 +21,7 @@
 #define NOVAUTIL_H_
 
 #include <string>
+#include <sstream>
 
 #include "sys/types.h"
 
@@ -40,6 +41,14 @@ std::string GetLocalIP(const char *dev);
 // 		c - character you wish to remove (Whitespace by default)
 // Note: this function will result in an empty string, if every character is == c
 void Trim(std::string& str, char c = ' ');
+
+
+inline std::string ConvertInt(int x)
+{
+	std::stringstream ss;
+	ss << x;
+	return ss.str();
+}
 
 }
 

@@ -9,6 +9,7 @@
 #include "tester_RequestMessage.h"
 #include "tester_HoneydConfiguration.h"
 #include "tester_WhitelistConfiguration.h"
+#include "tester_Database.h"
 
 int main(int argc, char **argv)
 {

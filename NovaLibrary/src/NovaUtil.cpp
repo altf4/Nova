@@ -24,6 +24,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <unistd.h>
+#include <sstream>
 #include <string>
 
 using namespace std;

@@ -30,10 +30,46 @@ else
     rm -f /tmp/sudoers.nova
 fi
 
-QUERY="CREATE DATABASE nova_credentials; USE nova_credentials; CREATE TABLE credentials(user VARCHAR(100), pass VARCHAR(50)); INSERT INTO credentials VALUE('nova', SHA1('toor'));"
+QUERY="CREATE DATABASE nova; USE nova; CREATE TABLE credentials(user VARCHAR(100), pass VARCHAR(50)); INSERT INTO credentials VALUE('nova', SHA1('toor'));"
 
-# /usr/bin/mysql --user=root --password=root <<< "DROP DATABASE nova_credentials"
+QUERY2="
+USE nova;
+
+CREATE TABLE suspect_alerts (
+	id INT NOT NULL AUTO_INCREMENT,
+	suspect VARCHAR(40),
+	timestamp TIMESTAMP,
+	statistics INT,
+	classification DOUBLE,
+
+	PRIMARY KEY(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE statistics (
+		id INT NOT NULL AUTO_INCREMENT,
+
+		ip_traffic_distribution DOUBLE,
+		port_traffic_distribution DOUBLE,
+		haystack_event_frequency DOUBLE,
+		packet_size_mean DOUBLE,
+		packet_size_deviation DOUBLE,
+		distinct_ips DOUBLE,
+		distinct_ports DOUBLE,
+		packet_interval_mean DOUBLE,
+		packet_interval_deviation DOUBLE,
+		tcp_percent_syn DOUBLE,
+		tcp_percent_fin DOUBLE,
+		tcp_percent_rst DOUBLE,
+		tcp_percent_synack DOUBLE,
+		haystack_percent_contacted DOUBLE,
+	
+		PRIMARY KEY(id)
+) ENGINE=InnoDB;
+"
+
+#/usr/bin/mysql --user=root --password=root <<< "DROP DATABASE nova"
 /usr/bin/mysql --user=root --password=root <<< $QUERY
+/usr/bin/mysql --user=root --password=root <<< $QUERY2
 
 echo "A default Nova Web UI account has been created. It is recommended that you"
 echo "delete the account after adding more users, as it doesn't possess a robust password"

@@ -29,7 +29,7 @@ var Tail = require('tail').Tail;
 var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
 
 
-var credDb = 'nova_credentials';
+var credDb = 'nova';
 var credTb = 'credentials';
 
 var select;
