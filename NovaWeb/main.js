@@ -1178,10 +1178,6 @@ everyone.now.GetVendors = function(profileName, callback)
     {
       console.log("ethVendorList[" + i + "] == {" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
     }
-      
-    profile.ethernet = ethVendorList;
-      
-    console.log("profile.ethernet " + profile.ethernet);
 	
     callback(profVendors, profDists);
 }
