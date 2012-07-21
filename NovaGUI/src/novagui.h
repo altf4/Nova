@@ -57,8 +57,7 @@ public:
     Ui::NovaGUIClass ui;
 
     ///Processes the recieved suspect in the suspect table
-    	// initialization - if initializing suspects, don't overwrite existing ones and don't use the qsignal for drawing
-    void ProcessReceivedSuspect(suspectItem suspect, bool initialization);
+    void ProcessReceivedSuspect(suspectItem suspect);
 
     void SystemStatusRefresh();
 
