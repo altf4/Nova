@@ -110,6 +110,14 @@ private:
 	// Returns a PortCounter struct.
 	PortCounter GeneratePortCounter(const std::string &portName, const double dist_val);
 
+	// NumberOfChildren takes in a const reference to a string representing the
+	// 		profile's name to check. Iterates through the profile table and
+	//		looks for any profile whose parentName is profileName, and increments the ret counter
+	//	const std::string &profileName - const reference to a string representing the profile name to check
+	//							for children
+	// Returns an unsigned integer
+	uint NumberOfChildren(const std::string &profileName);
+
 	unsigned int m_nodeCount;
 	unsigned int m_targetNodeCount;
 	unsigned int m_hostCount;

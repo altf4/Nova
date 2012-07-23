@@ -73,7 +73,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 
 				Node curNode;
 				//Determine which mac vendor to use
-				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
+				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k = ((k + 1) % m_profileCounters[j].m_macCounters.size()))
 				{
 					MacCounter *curCounter = &m_profileCounters[j].m_macCounters[k];
 					//If we're skipping this vendor
@@ -252,7 +252,7 @@ void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + profile->m_name, "");
 		return;
 	}
-	else if(profile->m_generated)
+	else if((profile->m_generated) && (NumberOfChildren(profile->m_name) == 0))
 	{
 		struct ProfileCounter pCounter;
 		pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
@@ -314,6 +314,21 @@ PortCounter NodeManager::GeneratePortCounter(const string &portName, const doubl
 	ret.m_portName = portName;
 	ret.m_increment = dist_val/100;
 	ret.m_count = 0;
+	return ret;
+}
+
+uint NodeManager::NumberOfChildren(const string &profileName)
+{
+	uint ret = 0;
+
+	for(ProfileTable::iterator it = m_hdconfig->m_profiles.begin(); it != m_hdconfig->m_profiles.end(); it++)
+	{
+		if(!it->second.m_parentProfile.compare(profileName))
+		{
+			ret++;
+		}
+	}
+
 	return ret;
 }
 
