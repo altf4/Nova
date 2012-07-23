@@ -73,7 +73,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 
 				Node curNode;
 				//Determine which mac vendor to use
-				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k = ((k + 1) % m_profileCounters[j].m_macCounters.size()))
+				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
 				{
 					MacCounter *curCounter = &m_profileCounters[j].m_macCounters[k];
 					//If we're skipping this vendor
@@ -95,8 +95,9 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 						//Update counters for remaining macs
 						for(unsigned int l = k + 1; l < m_profileCounters[j].m_macCounters.size(); l++)
 						{
-							m_profileCounters[j].m_macCounters[l].m_count -= m_profileCounters[j].m_macCounters[l].m_increment;
+							m_profileCounters[j].m_macCounters[l].m_count += m_profileCounters[j].m_macCounters[l].m_increment;
 						}
+
 						break;
 					}
 				}
@@ -214,6 +215,12 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 				// Node from the profile counter; this way, we get a number of nodes equal
 				// to num_nodes
 				nodesToAdd.push_back(curNode);
+
+				for(uint k = (j + 1); k < m_profileCounters.size(); k++)
+				{
+					m_profileCounters[k].m_count += m_profileCounters[k].m_increment;
+				}
+
 				i++;
 			}
 		}
@@ -257,12 +264,54 @@ void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		struct ProfileCounter pCounter;
 		pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
 		pCounter.m_increment = profile->m_distribution;
-		int totalPorts = 0;
-		for(uint i = 0; i < profile->m_nodeKeys.size(); i++)
+
+		// XXX I think totalPorts is always going to be 0 here. I stepped through
+		// this after seeing that all the profiles that were being created had no ports,
+		// and saw that m_numAvgPorts was always 0. I think this arises from the fact that
+		// the nodeKeys vector is always going to be empty at this point in execution due to
+		// the fact that no nodes have been created yet.
+		// The loop below is a good solution for pre-existing profiles, but for a first run of
+		// the tool it creates profiles with all blocked ports.
+		if(profile->m_nodeKeys.size() > 0)
 		{
-			totalPorts += m_hdconfig->GetNode(profile->m_nodeKeys[i])->m_ports.size();
+			int totalPorts = 0;
+
+			for(uint i = 0; i < profile->m_nodeKeys.size(); i++)
+			{
+				totalPorts += m_hdconfig->GetNode(profile->m_nodeKeys[i])->m_ports.size();
+			}
+
+			pCounter.m_numAvgPorts = (uint)((double)totalPorts)/((double)profile->m_nodeKeys.size());
 		}
-		pCounter.m_numAvgPorts = (uint)((double)totalPorts)/((double)profile->m_nodeKeys.size());
+		else
+		{
+			// I think this is an acceptable sequence for a first run, the only problem being that
+			// m_ports has no distribution value (m_ports[i].second.second == 0)
+			uint testCounter = 0;
+			uint fallBackAmount = 0;
+
+			for(uint i = 0; i < profile->m_ports.size(); i++)
+			{
+				if(profile->m_ports[i].second.second == 100)
+				{
+					testCounter++;
+				}
+				else
+				{
+					fallBackAmount++;
+				}
+			}
+
+			if(testCounter == 0)
+			{
+				pCounter.m_numAvgPorts = ((fallBackAmount / 2) + 1);
+			}
+			else
+			{
+				pCounter.m_numAvgPorts = testCounter;
+			}
+		}
+
 		pCounter.m_count = 0;
 
 		for(unsigned int i = 0; i < profile->m_ethernetVendors.size(); i++)

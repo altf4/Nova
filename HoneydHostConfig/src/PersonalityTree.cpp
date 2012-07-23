@@ -416,6 +416,7 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 						{
 							m_hdconfig->GetProfile(node->m_key)->m_ports[k].first = pass.m_portName;
 							node->m_ports_dist[i].first = pass.m_portName;
+							m_hdconfig->GetProfile(node->m_key)->m_ports[k].second.second = node->m_ports_dist[i].second;
 						}
 					}
 
@@ -436,6 +437,7 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 								{
 									m_hdconfig->GetProfile(name)->m_ports[k].first = pass.m_portName;
 									node->m_ports_dist[i].first = pass.m_portName;
+									m_hdconfig->GetProfile(name)->m_ports[k].second.second = node->m_ports_dist[i].second;
 								}
 							}
 							m_hdconfig->UpdateProfile(name);
