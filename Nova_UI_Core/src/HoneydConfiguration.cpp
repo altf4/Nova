@@ -2478,7 +2478,6 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
 {
 	vector<Subnet> ret;
-	stringstream ss;
 
 	struct ifaddrs *devices = NULL;
 	ifaddrs *curIf = NULL;
@@ -2561,15 +2560,10 @@ vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
 				tempRawMask /= 2;
 				i--;
 			}
-			stringstream ss;
-			ss << i;
-			// Generate a string of the form X.X.X.X/## for use in nmap scans later
-			addrString = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
-			ss.str("");
 
 			// Populate the subnet struct for use in the SubnetTable of the HoneydConfiguration
 			// object.
-			newSubnet.m_address = addrString;
+			newSubnet.m_address = string(inet_ntoa(minAddrInRange));
 			newSubnet.m_mask = string(inet_ntoa(netOrderBitmaskStruct));
 			newSubnet.m_maskBits = i;
 			newSubnet.m_base = minAddrInRange.s_addr;
@@ -2640,12 +2634,8 @@ vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
 				mask /= 2;
 				i--;
 			}
-			// Generate a string of the form X.X.X.X/## for use in nmap scans later
-			ss << i;
-			string push = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
-			ss.str("");
 
-			newSubnet.m_address = push;
+			newSubnet.m_address = string(inet_ntoa(minAddrInRange));
 			newSubnet.m_mask = string(inet_ntoa(netOrderBitmaskStruct));
 			newSubnet.m_maskBits = i;
 			newSubnet.m_base = minAddrInRange.s_addr;
