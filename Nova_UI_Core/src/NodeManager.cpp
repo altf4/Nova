@@ -57,7 +57,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 
 	for(unsigned int i = 0; i < num_nodes;)
 	{
-		for(unsigned int j = 0; j < m_profileCounters.size() && i < num_nodes; j++)
+		for(unsigned int j = 0; j < m_profileCounters.size(); j++)
 		{
 			//If we're skipping this profile
 			if(m_profileCounters[j].m_count < 0)
@@ -215,13 +215,12 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 				// Node from the profile counter; this way, we get a number of nodes equal
 				// to num_nodes
 				nodesToAdd.push_back(curNode);
-
-				for(uint k = (j + 1); k < m_profileCounters.size(); k++)
-				{
-					m_profileCounters[k].m_count += m_profileCounters[k].m_increment;
-				}
-
 				i++;
+				//increment the remaining counters since they were 'skipped'
+				for(j = (j+1); j < m_profileCounters.size(); j++)
+				{
+					m_profileCounters[j].m_count += m_profileCounters[j].m_increment;
+				}
 			}
 		}
 	}
