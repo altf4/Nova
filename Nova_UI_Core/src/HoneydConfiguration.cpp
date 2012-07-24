@@ -24,6 +24,15 @@
 #include <boost/foreach.hpp>
 #include <arpa/inet.h>
 #include <math.h>
+#include <ctype.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <ifaddrs.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sstream>
+#include <fstream>
 
 using namespace std;
 using namespace Nova;
@@ -48,6 +57,8 @@ HoneydConfiguration::HoneydConfiguration()
 	m_profiles.set_deleted_key("Deleted");
 	m_ports.set_deleted_key("Deleted");
 	m_scripts.set_deleted_key("Deleted");
+
+
 }
 
 int HoneydConfiguration::GetMaskBits(in_addr_t mask)
@@ -799,7 +810,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		//TODO assumes subnet is interface, need to discover and handle if virtual
 		propTree.put<std::string>("name", it->second.m_name);
 		propTree.put<bool>("enabled",it->second.m_enabled);
-		propTree.put<bool>("isReal", it->second.m_isRealDevice);
+		//propTree.put<bool>("isReal", it->second.m_isRealDevice);
 
 		//Remove /## format mask from the address then put it in the XML.
 		stringstream ss;
@@ -818,7 +829,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		netOrderMask.s_addr = htonl(rawBitMask);
 		addrString = string(inet_ntoa(netOrderMask));
 		propTree.put<std::string>("mask", addrString);
-		m_subnetTree.add_child("interface", propTree);
+		m_subnetTree.add_child("manualInterface", propTree);
 	}
 
 	//Nodes
@@ -1036,16 +1047,24 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 //loads subnets from file for current group
 bool HoneydConfiguration::LoadSubnets(ptree *propTree)
 {
+	// getifaddrs to get physical ifaces
+	std::pair<bool, int> replace;
+	replace.first = false;
+	replace.second = 0;
+    std::vector<Subnet> subnetsFound;
+
+    subnetsFound = FindPhysicalInterfaces();
+
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
 		{
 			//If real interface
-			if(!string(value.first.data()).compare("interface"))
+			if(!string(value.first.data()).compare("manualInterface"))
 			{
 				Subnet sub;
 				sub.m_tree = value.second;
-				sub.m_isRealDevice =  value.second.get<bool>("isReal");
+				//sub.m_isRealDevice =  value.second.get<bool>("isReal");
 				//Extract the data
 				sub.m_name = value.second.get<std::string>("name");
 				sub.m_address = value.second.get<std::string>("IP");
@@ -1077,6 +1096,38 @@ bool HoneydConfiguration::LoadSubnets(ptree *propTree)
 			{
 				LOG(ERROR, "Unexpected Entry in file: " + string(value.first.data()) + ".", "");
 				return false;
+			}
+		}
+
+		stringstream ss;
+
+		for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+		{
+			for(uint i = 0; i < subnetsFound.size(); i++)
+			{
+				if(subnetsFound[i].m_name.compare(it->first))
+				{
+					it->second.m_name = subnetsFound[i].m_name;
+					it->second.m_mask = subnetsFound[i].m_mask;
+					it->second.m_enabled = subnetsFound[i].m_enabled;
+					it->second.m_base = subnetsFound[i].m_base;
+					it->second.m_maskBits = subnetsFound[i].m_maskBits;
+					it->second.m_max = subnetsFound[i].m_max;
+					ss << subnetsFound[i].m_address << "/" << subnetsFound[i].m_maskBits;
+					it->second.m_address = ss.str();
+					ss.str("");
+				}
+			}
+		}
+
+		if(subnetsFound.size() > m_subnets.size())
+		{
+			for(uint i = 0; i < subnetsFound.size(); i++)
+			{
+				if(!m_subnets.keyExists(subnetsFound[i].m_name))
+				{
+					AddSubnet(subnetsFound[i]);
+				}
 			}
 		}
 	}
@@ -2419,6 +2470,192 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	m_profiles[profileName] = p;
 	return true;
 }
+
+vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
+{
+	vector<Subnet> ret;
+	stringstream ss;
+
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	char addrBuffer[NI_MAXHOST];
+	char bitmaskBuffer[NI_MAXHOST];
+	struct in_addr netOrderAddrStruct;
+	struct in_addr netOrderBitmaskStruct;
+	struct in_addr minAddrInRange;
+	struct in_addr maxAddrInRange;
+	uint32_t hostOrderAddr;
+	uint32_t hostOrderBitmask;
+
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, "Ethernet Interface Auto-Detection failed", "");
+	}
+
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		// IF we've found a loopback address with an IPv4 address
+		if((curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			Subnet newSubnet;
+			// start processing it to generate the subnet for the interface.
+			// interfaces.push_back(string(curIf->ifa_name));
+
+			// Get the string representation of the interface's IP address,
+			// and put it into the host character array.
+			int socket = getnameinfo(curIf->ifa_addr, sizeof(sockaddr_in), addrBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+			if(socket != 0)
+			{
+				// If getnameinfo returned an error, stop processing for the
+				// method, assign the proper errorCode, and return an empty
+				// vector.
+				LOG(ERROR, "Getting Name info of Interface IP failed", "");
+			}
+
+			// Do the same thing as the above, but for the netmask of the interface
+			// as opposed to the IP address.
+			socket = getnameinfo(curIf->ifa_netmask, sizeof(sockaddr_in), bitmaskBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+			if(socket != 0)
+			{
+				// If getnameinfo returned an error, stop processing for the
+				// method, assign the proper errorCode, and return an empty
+				// vector.
+				LOG(ERROR, "Getting Name info of Interface Netmask failed", "");
+			}
+			// Convert the bitmask and host address character arrays to strings
+			// for use later
+			string bitmaskString = string(bitmaskBuffer);
+			string addrString = string(addrBuffer);
+
+			// Put the network ordered address values into the
+			// address and bitmaks in_addr structs, and then
+			// convert them to host longs for use in
+			// determining how much hostspace is empty
+			// on this interface's subnet.
+			inet_aton(addrString.c_str(), &netOrderAddrStruct);
+			inet_aton(bitmaskString.c_str(), &netOrderBitmaskStruct);
+			hostOrderAddr = ntohl(netOrderAddrStruct.s_addr);
+			hostOrderBitmask = ntohl(netOrderBitmaskStruct.s_addr);
+
+			// Get the base address for the subnet
+			uint32_t hostOrderMinAddrInRange = hostOrderBitmask & hostOrderAddr;
+			minAddrInRange.s_addr = htonl(hostOrderMinAddrInRange);
+
+			// and the max address
+			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
+			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
+
+			// Find out how many bits there are to work with in
+			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
+			uint32_t tempRawMask = ~hostOrderBitmask;
+			int i = 32;
+
+			while(tempRawMask != 0)
+			{
+				tempRawMask /= 2;
+				i--;
+			}
+			stringstream ss;
+			ss << i;
+			// Generate a string of the form X.X.X.X/## for use in nmap scans later
+			addrString = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
+			ss.str("");
+
+			// Populate the subnet struct for use in the SubnetTable of the HoneydConfiguration
+			// object.
+			newSubnet.m_address = addrString;
+			newSubnet.m_mask = string(inet_ntoa(netOrderBitmaskStruct));
+			newSubnet.m_maskBits = i;
+			newSubnet.m_base = minAddrInRange.s_addr;
+			newSubnet.m_max = maxAddrInRange.s_addr;
+			newSubnet.m_name = string(curIf->ifa_name);
+			newSubnet.m_enabled = (curIf->ifa_flags & IFF_UP);
+
+			ret.push_back(newSubnet);
+		}
+		// If we've found an interface that has an IPv4 address and isn't a loopback
+		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			Subnet newSubnet;
+
+			// Get the string representation of the interface's IP address,
+			// and put it into the host character array.
+			int s = getnameinfo(curIf->ifa_addr, sizeof(sockaddr_in), addrBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+			if(s != 0)
+			{
+				// If getnameinfo returned an error, stop processing for the
+				// method, assign the proper errorCode, and return an empty
+				// vector.
+				LOG(ERROR, "Getting Name info of Interface IP failed", "");
+			}
+
+			// Do the same thing as the above, but for the netmask of the interface
+			// as opposed to the IP address.
+			s = getnameinfo(curIf->ifa_netmask, sizeof(sockaddr_in), bitmaskBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+			if(s != 0)
+			{
+				// If getnameinfo returned an error, stop processing for the
+				// method, assign the proper errorCode, and return an empty
+				// vector.
+				LOG(ERROR, "Getting Name info of Interface Netmask failed", "");
+			}
+			// Convert the bitmask and host address character arrays to strings
+			// for use later
+			string bitmaskString = string(bitmaskBuffer);
+			string addrString = string(addrBuffer);
+
+			// Put the network ordered address values into the
+			// address and bitmaks in_addr structs, and then
+			// convert them to host longs for use in
+			// determining how much hostspace is empty
+			// on this interface's subnet.
+			inet_aton(addrString.c_str(), &netOrderAddrStruct);
+			inet_aton(bitmaskString.c_str(), &netOrderBitmaskStruct);
+			hostOrderAddr = ntohl(netOrderAddrStruct.s_addr);
+			hostOrderBitmask = ntohl(netOrderBitmaskStruct.s_addr);
+
+			// Get the base address for the subnet
+			uint32_t hostOrderMinAddrInRange = hostOrderBitmask & hostOrderAddr;
+			minAddrInRange.s_addr = htonl(hostOrderMinAddrInRange);
+
+			// and the max address
+			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
+			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
+
+			// Find out how many bits there are to work with in
+			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
+			uint32_t mask = ~hostOrderBitmask;
+			int i = 32;
+
+			while(mask != 0)
+			{
+				mask /= 2;
+				i--;
+			}
+			// Generate a string of the form X.X.X.X/## for use in nmap scans later
+			ss << i;
+			string push = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
+			ss.str("");
+
+			newSubnet.m_address = push;
+			newSubnet.m_mask = string(inet_ntoa(netOrderBitmaskStruct));
+			newSubnet.m_maskBits = i;
+			newSubnet.m_base = minAddrInRange.s_addr;
+			newSubnet.m_max = maxAddrInRange.s_addr;
+			newSubnet.m_name = string(curIf->ifa_name);
+			newSubnet.m_enabled = (curIf->ifa_flags & IFF_UP);
+
+			ret.push_back(newSubnet);
+		}
+	}
+
+	return ret;
+}
+
 }
 
 

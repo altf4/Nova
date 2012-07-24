@@ -3,20 +3,18 @@
 	<group>
 		<name>main</name>
 		<subnets>
-			<interface>
+			<manualInterface>
 				<name>eth0</name>
 				<IP>192.168.10.1</IP>
 				<mask>255.255.255.0</mask>
 				<enabled>true</enabled>
-				<isReal>true</isReal>
-			</interface>
-			<interface>
+			</manualInterface>
+			<manualInterface>
 				<name>lo</name>
 				<IP>10.0.0.0</IP>
 				<mask>255.0.0.0</mask>
 				<enabled>true</enabled>
-				<isReal>true</isReal>
-			</interface>
+			</manualInterface>
 		</subnets>
 		<nodes>
 			<node>

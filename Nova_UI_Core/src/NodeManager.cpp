@@ -220,7 +220,6 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 				{
 					m_profileCounters[k].m_count += m_profileCounters[k].m_increment;
 				}
-
 				i++;
 			}
 		}
