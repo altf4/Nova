@@ -1127,8 +1127,6 @@ everyone.now.GetProfile = function(profileName, callback) {
     
       var profVendors = profile.GetVendors();
       var profDists = profile.GetVendorDistributions();
-    
-      console.log("profVendors " + profVendors);
 
       for(var i = 0; i < profVendors.length; i++)
       {
@@ -1138,16 +1136,7 @@ everyone.now.GetProfile = function(profileName, callback) {
         ethVendorList.push(element);
       }
       
-      console.log("ethVendorList contains " + ethVendorList.length + " elements");
-   
-      for(var i = 0; i < ethVendorList.length; i++)
-      {
-        console.log("ethVendorList[" + i + "] == {" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
-      }
-      
       profile.ethernet = ethVendorList;
-      
-      console.log("profile.ethernet " + profile.ethernet);
     }
 
     callback(profile);
@@ -1161,22 +1150,13 @@ everyone.now.GetVendors = function(profileName, callback)
     
     var profVendors = profile.GetVendors();
     var profDists = profile.GetVendorDistributions();
-    
-    console.log("profVendors " + profVendors);
-      
+
     for(var i = 0; i < profVendors.length; i++)
     {
       var element = {vendor: "", dist: ""};
       element.vendor = profVendors[i];
       element.dist = parseFloat(profDists[i]);
       ethVendorList.push(element);
-    }
-      
-    console.log("ethVendorList contains " + ethVendorList.length + " elements");
-   
-    for(var i = 0; i < ethVendorList.length; i++)
-    {
-      console.log("ethVendorList[" + i + "] == {" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
     }
 	
     callback(profVendors, profDists);
@@ -1213,19 +1193,15 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList) {
 	
 	if(ethVendorList == undefined || ethVendorList == null)
 	{
-	    console.log("ethVendorList was undefined, using default value " + profile.ethernet);
 	    honeydProfile.SetEthernet(profile.ethernet);
 	}
 	else if(profile.isEthernetInherited == false)
 	{
-	    console.log("ethVendorList was populated, array is as follows: ");
-	    
         var ethVendors = [];
         var ethDists = [];
     
 	    for(var i = 0; i < ethVendorList.length; i++)
 	    {
-	        console.log("{" + ethVendorList[i].vendor + ", " + ethVendorList[i].dist + "}");
 	        ethVendors.push(ethVendorList[i].vendor);
 	        ethDists.push(parseFloat(ethVendorList[i].dist));
 	    }

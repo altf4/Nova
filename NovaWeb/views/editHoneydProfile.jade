@@ -52,9 +52,7 @@ block headerAdditions
 
     addVendor = function(vendName) {
         if(document.getElementById("ethDiv0") == undefined)
-        {
-            console.log("In addVendor, if");
-        
+        {        
             var teed = document.getElementById("labelDist");
             var teed2 = document.getElementById("ranges");
             var teed3 = document.getElementById("deleteButtonHere");
@@ -131,13 +129,10 @@ block headerAdditions
         {
             var keepGoing = true;
         
-            console.log("vendName is " + vendName);
-        
             for(var i = 0; i < parseInt(dojo.byId("numCreated").getAttribute("value")); i++)
             {
                 if(vendName == document.getElementById("vend" + i).value)
                 {
-                    console.log("found match, cancelling add");
                     keepGoing = false;
                 }
             }
@@ -148,8 +143,6 @@ block headerAdditions
                    document.getElementById("dist" + i).removeAttribute("readonly");
                    document.getElementById("distLabel" + i).removeAttribute("readonly");
                }
-            
-               console.log("In addVendor, else");
         
                document.getElementById("errorEthernet").value = "";
                document.getElementById("errorEthernet").innerHTML = "";
@@ -230,34 +223,25 @@ block headerAdditions
                teed3.appendChild(deleteDiv);
             
                var deleteOne = true;
-            
-               console.log("starting for, ceiling of for is " + (number + 1));
               
                for(var i = 0; i < (number + 1); i++)
                {
-                   console.log("at index " + i);
                    if("ethDiv" + i !== checkAgainst)
                    {
-                       console.log("not looking at the one we changed, looking at ethDiv" + i);
                        var change = document.getElementById("ethDiv" + i);
                        var changeMax = document.getElementById("rangeDiv" + i);
                 
                        for(var j = 0; j < change.childNodes.length; j++)
                        {
-                           console.log("looking at " + change.childNodes[j].id);
-                    
                            if(change.childNodes[j].id.substr(0, 9) == "distLabel")
                            {
-                               console.log("in modify distLabel");
-                            
                                if(((change.childNodes[j].value - 1) != 0) && (deleteOne))
                                {
                                     var replace = ((parseInt(change.childNodes[j].value.substr(0, change.childNodes[j].value.length - 1)) - 1).toString() + "%");
-                                
-                                    console.log("replace " + replace);
                             
                                     change.childNodes[j].value = replace;
                                     change.childNodes[j].innerHTML = replace;
+                                    
                                     document.getElementById("dist" + i).setAttribute("value", document.getElementById("dist" + i).value - 1);
                                     deleteOne = false;
                                    //need to modify or obviate the hidden field for user created vendors
@@ -265,6 +249,7 @@ block headerAdditions
                            }
                        }
                    }
+                   
                    document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + (number + 1) + ')');
                    document.getElementById("dist" + i).setAttribute("max", (100 - number));
                    document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + (number + 1) + ')')
@@ -281,13 +266,13 @@ block headerAdditions
     deleteAndClean = function(which) {
         if(dojo.byId("numCreated").getAttribute("value") == 1)
         {
-            console.log("Must have at least one vendor selected, can't delete to 0");
+            document.getElementById("errorEthernet").value = "Can't delete last vendor, must have at least one";
+            document.getElementById("errorEthernet").innerHTML = "Can't delete last vendor, must have at least one";
             return;
         }
     
         var whichToDelete = which.substr(6);
         
-        console.log("whichToDelete " + whichToDelete);
         // need to go through and delete the divs with whichToDelete as their last character;
         // then, need to go to each element after the deleted one, decrement their ids, as well
         // as modify their function calls and stuff to reflect the changed number of vendors
@@ -332,16 +317,10 @@ block headerAdditions
         var numCreated = parseInt(dojo.byId("numCreated").getAttribute("value"));
         var newNumCreated = (parseInt(dojo.byId("numCreated").getAttribute("value")) - 1);
         
-        console.log("newNumCreated " + newNumCreated);
-        console.log("numCreated " + numCreated);
-        console.log("whichToDelete + 1 == " + (parseInt(whichToDelete) + 1));
-        console.log("whichToDelete + 1 < numCreated? " + ((parseInt(whichToDelete) + 1) < numCreated));
-        
         for(var i = 0; i < numCreated; i++)
         {
             if(i >= (parseInt(whichToDelete) + 1))
             {
-                console.log("ethDiv" + i + " should be ethDiv" + (i - 1));
                 document.getElementById("ethDiv" + i).id = ("ethDiv" + (i - 1));
                 document.getElementById("vend" + i).id = ("vend" + (i - 1));
                 document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell(\"distLabel' + (i - 1) + '\", ' + newNumCreated + ')');
@@ -355,7 +334,6 @@ block headerAdditions
             }
             else if(i < parseInt(whichToDelete))
             {
-                console.log("distLabel" + i + " should have onchange = clearCell('distLabel" + i + "', " + newNumCreated + ")");
                 document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell(\"distLabel' + i + '\", ' + newNumCreated + ')');
                 document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + newNumCreated + ')');
             }
@@ -400,6 +378,7 @@ block headerAdditions
             document.getElementById("dist0").max = 100;
             document.getElementById("distLabel0").value = "100%";
             document.getElementById("distLabel0").innerHTML = "100%";
+            
             document.getElementById("distLabel0").setAttribute("readonly","true");
             document.getElementById("dist0").setAttribute("readonly", "true");
         }
@@ -408,20 +387,42 @@ block headerAdditions
     clearCell = function(which, len) {
         var element = document.getElementById(which);
         var text = element.value;
+        var maxAllowed = parseInt(document.getElementById("dist" + which[which.length - 1]).getAttribute("max"));
+        var numericValue = (text[text.length - 1] == "%" ? parseInt(text.substr(0, text.length - 1)) : parseInt(text));
         
-        if(text[text.length - 1] != "%")
+        if(numericValue == 0)
         {
-            element.value += "%";
+            document.getElementById("errorEthernet").value = "Cannot have 0% distribution for a vendor";
+            document.getElementById("errorEthernet").innerHTML = "Cannot have 0% distribution for a vendor";
             
-            console.log("element.value == " + element.value);
+            var stringToReplace = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
             
-            sliderMoved("dist" + which[which.length - 1], len, text);
+            element.value = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
         }
-        else if(document.getElementById("dist" + which[which.length - 1]).value != document.getElementById(which).value)
+        else if(numericValue < 1 || numericValue > maxAllowed)
         {
-            console.log("element.value == " + element.value);
+            document.getElementById("errorEthernet").value = "Invalid value for distribution, must be an integer between 1 and " + maxAllowed;
+            document.getElementById("errorEthernet").innerHTML = "Invalid value for distribution, must be an integer between 1 and " + maxAllowed;
+            
+            var stringToReplace = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
+            
+            element.value = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
+        }
+        else
+        {
+            document.getElementById("errorEthernet").value = "";
+            document.getElementById("errorEthernet").innerHTML = "";
         
-            sliderMoved("dist" + which[which.length - 1], len, text);
+            if(text[text.length - 1] != "%")
+            {
+                element.value += "%";
+            
+                sliderMoved("dist" + which[which.length - 1], len, text);
+            }
+            else if(document.getElementById("dist" + which[which.length - 1]).value != document.getElementById(which).value)
+            {
+                sliderMoved("dist" + which[which.length - 1], len, text);
+            }
         }
     }
 
@@ -429,26 +430,17 @@ block headerAdditions
     
         if(cb != undefined)
         {
-            console.log("sliderMoved used as callback, cb is " + cb);
             dojo.byId(which).value = cb;
         }
-    
-        console.log("which == " + which);
-        console.log("distLabel == distLabel" + which[which.length - 1]);
-        console.log("len == " + len);
     
         var changeArray = [];
         
         var checkAgainst = which[which.length - 1];
         
-        console.log("checkAgainst " + checkAgainst);
-        
         for(var i = 0; i < len; i++)
         {
             changeArray.push(parseInt(document.getElementById("dist" + i).value));
         }
-        
-        console.log("changeArray after getting values " + changeArray);
         
         var total = 0;
         
@@ -457,15 +449,9 @@ block headerAdditions
             total += parseInt(changeArray[i]);
         }
         
-        console.log("total " + total);
-        
         var reduction = 100 - total;
         
-        console.log("reduction " + reduction);
-        
         var sumOfOtherElements = parseInt(total - changeArray[checkAgainst]);
-        
-        console.log("sumOfOtherElements " + sumOfOtherElements);
         
         var modifiers = [];
         
@@ -477,8 +463,6 @@ block headerAdditions
                 modifiers.push(parseFloat(reduction * mult));
             }
         }
-        
-        console.log("modifiers " + modifiers);
         
         var max = 0;
         
@@ -502,8 +486,6 @@ block headerAdditions
         
         modifiers[modifiers.length - 1] = (reduction - max);
         
-        console.log("modifiers after rounding " + modifiers);
-        
         var j = 0;
         
         for(var i in changeArray)
@@ -516,8 +498,6 @@ block headerAdditions
             else if((i != checkAgainst) && !(changeArray[i] + modifiers[j] > 0))
             {
                 var ltOrEqZero = parseInt(changeArray[i] + modifiers[j]);
-                
-                console.log("ltOrEqZero " + ltOrEqZero);
                  
                 while(ltOrEqZero <= 0)
                 {
@@ -531,9 +511,6 @@ block headerAdditions
                 j++;
             }
         }
-        console.log("modifiers after l.t. 0 fixup " + modifiers);
-        
-        console.log("changeArray after modifying " + changeArray);
         
         var checkSum = 0;
         
@@ -541,8 +518,6 @@ block headerAdditions
         {
             checkSum += parseInt(changeArray[i]);
         }
-        
-        console.log("sum of elements in changeArray is " + checkSum);
         
         for(var i in changeArray)
         {
@@ -577,41 +552,30 @@ block headerAdditions
         
         if(checkLength1 == 0 && checkLength2 > 0)
         {
-            console.log("in ethVendorList population, if ethVendorLength == 0");
-        
             var forLength = checkLength2; 
-        
-            console.log("forLength == " + forLength);
         
             for(var i = 0; i < forLength; i++)
             {
                 var element = {vendor: "", dist: ""};
                 element.vendor = document.getElementById("vend" + i).value;
                 element.dist = parseFloat(document.getElementById("dist" + i).value);
-                console.log("Adding {" + element.vendor + ", " + element.dist + "} to ethVendorList");
                 ethVendorList.push(element);
             }
         }
         else if(checkLength2 == 0 && checkLength1 > 0)
         {
-            console.log("in ethVendorList population, if numCreated == 0");
-        
-            var forLength = checkLength1; 
-        
-            console.log("forLength == " + forLength);
+                var forLength = checkLength1;
         
             for(var i = 0; i < forLength; i++)
             {
                 var element = {vendor: "", dist: ""};
                 element.vendor = document.getElementById("vend" + i).value;
                 element.dist = parseFloat(document.getElementById("dist" + i).value);
-                console.log("Adding {" + element.vendor + ", " + element.dist + "} to ethVendorList");
                 ethVendorList.push(element);
             }
         }
         else
         {
-            console.log("No ethernet vendors selected, and none inherited. Canceling save");
             document.getElementById("errorEthernet").value = "Must choose to either inherit ethernet vendors or select at least one";
             document.getElementById("errorEthernet").innerHTML = "Must choose to either inherit ethernet vendors or select at least one";
             return;
@@ -819,22 +783,14 @@ block headerAdditions
     clearCreated = function() {
         var numToDelete = parseInt(document.getElementById("numCreated").getAttribute("value"));
         
-        console.log("numToDelete " + numToDelete);
-        
         if(numToDelete >= 1)
         {
             var labelDist = document.getElementById("labelDist");
             var ranges = document.getElementById("ranges");
             var deleteButtons = document.getElementById("deleteButtonHere");
         
-            for(var i = 0; i < labelDist.childNodes.length; i++)
-            {
-                console.log("labelDist childNode[" + i + "] == " + labelDist.childNodes[i].id);
-            }
-        
             for(var i = 0; i < numToDelete; i++)
             {
-                console.log("need to delete ethDiv, rangeDiv, and deleteDiv at " + i);
                 labelDist.removeChild(document.getElementById("ethDiv" + i));
                 ranges.removeChild(document.getElementById("rangeDiv" + i));
                 
@@ -1052,8 +1008,17 @@ block headerAdditions
                     
                     distribution.setAttribute("id", "dist" + i);
                     distribution.setAttribute("type", "range");
-                    distribution.setAttribute("min", "1");                    
-                    distribution.setAttribute("max", 100 - elements.length);
+                    distribution.setAttribute("min", "1");
+                               
+                    if(elements.length > 1)
+                    {         
+                        distribution.setAttribute("max", 100 - elements.length);
+                    }
+                    else if(elements.length == 1)
+                    {
+                        distribution.setAttribute("max", "100");
+                    }
+                    
                     distribution.setAttribute("step", "1");
                     distribution.setAttribute("value", distributions[i]);
                     distribution.setAttribute("readonly", "true");
