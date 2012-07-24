@@ -18,6 +18,8 @@
 
 #include "NodeManager.h"
 #include "Logger.h"
+
+#include <math.h>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
@@ -54,7 +56,54 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 {
 	vector<Node> nodesToAdd;
 	nodesToAdd.clear();
-
+	for(NodeTable::iterator it = m_hdconfig->m_nodes.begin(); it != m_hdconfig->m_nodes.end(); it++)
+	{
+		for(unsigned int j = 0; j < m_profileCounters.size(); j++)
+		{
+			//If the node doesn't use this counter, increase the count, decrement the one it uses
+			if(it->second.m_pfile.compare(m_profileCounters[j].m_profile.m_name))
+			{
+				m_profileCounters[j].m_count += m_profileCounters[j].m_increment;
+			}
+			else
+			{
+				m_profileCounters[j].m_count -= (1 - m_profileCounters[j].m_increment);
+				uint macRawPrefix = m_hdconfig->m_macAddresses.AtoMACPrefix(it->second.m_MAC);
+				string ethVendor = m_hdconfig->m_macAddresses.LookupVendor(macRawPrefix);
+				//Determine which mac vendor to usecurCounter
+				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
+				{
+					//If we don't use this ethernet vendor
+					if(m_profileCounters[j].m_macCounters[k].m_ethVendor.compare(ethVendor))
+					{
+						m_profileCounters[j].m_macCounters[k].m_count -= (1 - m_profileCounters[j].m_macCounters[k].m_increment);
+					}
+					else
+					{
+						m_profileCounters[j].m_macCounters[k].m_count += m_profileCounters[j].m_macCounters[k].m_increment;
+					}
+				}
+				for(unsigned int k = 0; k< m_profileCounters[j].m_portCounters.size(); k++)
+				{
+					bool portFound = false;
+					for(unsigned int m = 0; m < it->second.m_ports.size(); m++)
+					{
+						//If this port exists for the node
+						if(!it->second.m_ports[m].compare(m_profileCounters[j].m_portCounters[k].m_portName))
+						{
+							m_profileCounters[j].m_portCounters[k].m_count -= (1 - m_profileCounters[j].m_portCounters[k].m_increment);
+							portFound = true;
+							break;
+						}
+					}
+					if(!portFound)
+					{
+						m_profileCounters[j].m_portCounters[k].m_count += m_profileCounters[j].m_portCounters[k].m_increment;
+					}
+				}
+			}
+		}
+	}
 	for(unsigned int i = 0; i < num_nodes;)
 	{
 		for(unsigned int j = 0; j < m_profileCounters.size() && i < num_nodes; j++)
@@ -264,54 +313,12 @@ void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
 		pCounter.m_increment = profile->m_distribution;
 
-		// XXX I think totalPorts is always going to be 0 here. I stepped through
-		// this after seeing that all the profiles that were being created had no ports,
-		// and saw that m_numAvgPorts was always 0. I think this arises from the fact that
-		// the nodeKeys vector is always going to be empty at this point in execution due to
-		// the fact that no nodes have been created yet.
-
-		// The loop below is a good solution for pre-existing profiles, but for a first run of
-		// the tool it creates profiles with all blocked ports.
-		if(profile->m_nodeKeys.size() > 0)
+		double avgPorts = 0;
+		for(uint i = 0; i < profile->m_ports.size(); i++)
 		{
-			int totalPorts = 0;
-
-			for(uint i = 0; i < profile->m_nodeKeys.size(); i++)
-			{
-				totalPorts += m_hdconfig->GetNode(profile->m_nodeKeys[i])->m_ports.size();
-			}
-
-			pCounter.m_numAvgPorts = (uint)((double)totalPorts)/((double)profile->m_nodeKeys.size());
+			avgPorts += (profile->m_ports[i].second.second/100);
 		}
-		else
-		{
-			// I think this is an acceptable sequence for a first run, the only problem being that
-			// m_ports has no distribution value (m_ports[i].second.second == 0)
-			uint testCounter = 0;
-			uint fallBackAmount = 0;
-
-			for(uint i = 0; i < profile->m_ports.size(); i++)
-			{
-				if(profile->m_ports[i].second.second == 100)
-				{
-					testCounter++;
-				}
-				else
-				{
-					fallBackAmount++;
-				}
-			}
-
-			if(testCounter == 0)
-			{
-				pCounter.m_numAvgPorts = ((fallBackAmount / 2) + 1);
-			}
-			else
-			{
-				pCounter.m_numAvgPorts = testCounter;
-			}
-		}
-
+		pCounter.m_numAvgPorts = (uint)::floor(avgPorts + 0.5);
 		pCounter.m_count = 0;
 
 		for(unsigned int i = 0; i < profile->m_ethernetVendors.size(); i++)

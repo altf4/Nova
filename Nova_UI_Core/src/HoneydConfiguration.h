@@ -209,12 +209,13 @@ public:
 
     std::vector<std::string> m_groups;
 
+    VendorMacDb m_macAddresses;
+
 private:
     std::string m_homePath;
 
     uint m_nodeProfileIndex;
 
-    VendorMacDb m_macAddresses;
 
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.
