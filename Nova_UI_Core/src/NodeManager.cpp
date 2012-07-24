@@ -57,7 +57,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 
 	for(unsigned int i = 0; i < num_nodes;)
 	{
-		for(unsigned int j = 0; j < m_profileCounters.size(); j++)
+		for(unsigned int j = 0; j < m_profileCounters.size() && i < num_nodes; j++)
 		{
 			//If we're skipping this profile
 			if(m_profileCounters[j].m_count < 0)

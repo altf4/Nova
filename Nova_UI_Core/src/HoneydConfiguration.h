@@ -268,6 +268,8 @@ private:
     std::string FindSubnet(in_addr_t ip);
 
     bool RecursiveCheckNotInheritingEmptyProfile(const NodeProfile& check);
+
+    std::vector<Subnet> FindPhysicalInterfaces();
 };
 
 }
