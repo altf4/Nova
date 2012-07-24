@@ -559,13 +559,13 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
 		{
 			//Checks for ports
-			valueKey = "ports";
+			valueKey = "port";
 			if(!string(value.first.data()).compare(valueKey))
 			{
 				//Iterates through the ports
-				BOOST_FOREACH(ptree::value_type &portValue, propTree->get_child("ports"))
+				BOOST_FOREACH(ptree::value_type &portValue, value.second.get_child("port"))
 				{
-					port = &m_ports[portValue.second.data()];
+					port = &m_ports[portValue.second.get<string>("portName")];
 
 					//Checks inherited ports for conflicts
 					for(uint i = 0; i < nodeProf->m_ports.size(); i++)
@@ -580,7 +580,7 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 					pair<string, pair<bool, double> > portPair;
 					portPair.first = port->m_portName;
 					portPair.second.first = false;
-					portPair.second.second = 0;
+					portPair.second.second = portValue.second.get<double>("distribution");
 					if(!nodeProf->m_ports.size())
 					{
 						nodeProf->m_ports.push_back(portPair);
@@ -2435,23 +2435,27 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 		temp.put<std::string>("set.dropRate", p.m_dropRate);
 	}
 
-	//Populates the ports, if none are found create an empty field because it is expected.
 	ptree pt;
+	pt.clear();
+	//Populates the ports, if none are found create an empty field because it is expected.
 	if(p.m_ports.size())
 	{
-		temp.put_child("add.ports",pt);
 		for(uint i = 0; i < p.m_ports.size(); i++)
 		{
 			//If the port isn't inherited
 			if(!p.m_ports[i].second.first)
 			{
-				temp.add<std::string>("add.ports.port", p.m_ports[i].first);
+				ptree ptemp;
+				ptemp.clear();
+				ptemp.add<std::string>("name", p.m_ports[i].first);
+				ptemp.add<double>("distribution", p.m_ports[i].second.second);
+				temp.add_child("add.port", ptemp);
 			}
 		}
 	}
 	else
 	{
-		temp.put_child("add.ports",pt);
+		temp.put_child("add",pt);
 	}
 	//put empty ptree in profiles as well because it is expected, does not matter that it is the same
 	// as the one in add.m_ports if profile has no ports, since both are empty.

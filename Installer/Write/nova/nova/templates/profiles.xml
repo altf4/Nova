@@ -14,9 +14,7 @@
 			</ethernet>
 			<dropRate>0</dropRate>
 		</set>
-		<add>
-			<ports/>
-		</add>
+		<add/>
 		<profiles>
 			<profile>
 				<name>WinServer</name>
@@ -33,16 +31,38 @@
 					<uptimeMax>2006550</uptimeMax>
 				</set>
 				<add>
-					<ports>
-						<port>20_TCP_open</port>
-						<port>21_TCP_Windows FTP</port>
-						<port>23_TCP_Telnet Router</port>
-						<port>80_TCP_Windows httpd</port>
-						<port>135_UDP_open</port>
-						<port>137_UDP_open</port>
-						<port>137_TCP_open</port>
-						<port>139_TCP_open</port>
-					</ports>
+					<port>
+						<portName>20_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>21_TCP_Windows FTP</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>23_TCP_Telnet Router</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>80_TCP_Windows httpd</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>135_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>139_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
 				</add>
 				<profiles/>
 			</profile>
@@ -61,13 +81,26 @@
 					<uptimeMax>1326346</uptimeMax>
 				</set>
 				<add>
-					<ports>
-						<port>23_TCP_Telnet Router</port>
-						<port>135_UDP_open</port>
-						<port>137_TCP_open</port>
-						<port>137_UDP_open</port>
-						<port>139_TCP_open</port>
-					</ports>
+					<port>
+						<portName>23_TCP_Telnet Router</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>135_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>139_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
 				</add>
 				<profiles/>
 			</profile>
@@ -86,13 +119,26 @@
 					<uptimeMax>1324350</uptimeMax>
 				</set>
 				<add>
-					<ports>
-						<port>80_TCP_Windows httpd</port>
-						<port>135_UDP_open</port>
-						<port>137_UDP_open</port>
-						<port>137_TCP_open</port>
-						<port>139_TCP_open</port>
-					</ports>
+					<port>
+						<portName>80_TCP_Windows httpd</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>135_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>139_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
 				</add>
 				<profiles/>
 			</profile>
@@ -111,14 +157,30 @@
 					<uptimeMax>1327650</uptimeMax>
 				</set>
 				<add>
-					<ports>
-						<port>23_TCP_Telnet Router</port>
-						<port>80_TCP_Windows httpd</port>
-						<port>135_UDP_open</port>
-						<port>137_UDP_open</port>
-						<port>137_TCP_open</port>
-						<port>139_TCP_open</port>
-					</ports>
+					<port>
+						<portName>23_TCP_Telnet Router</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>80_TCP_Windows httpd</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>135_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_UDP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>137_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
+					<port>
+						<portName>139_TCP_open</portName>
+						<distribution>100</distribution>
+					</port>
 				</add>
 				<profiles/>
 			</profile>
