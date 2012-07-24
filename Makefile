@@ -156,7 +156,7 @@ install: install-data install-docs
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	#sh debian/postinst
+	sh debian/postinst
 
 install-data:
 	#make folder in etc with path locations to nova files

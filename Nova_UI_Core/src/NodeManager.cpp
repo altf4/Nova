@@ -270,6 +270,7 @@ void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		// and saw that m_numAvgPorts was always 0. I think this arises from the fact that
 		// the nodeKeys vector is always going to be empty at this point in execution due to
 		// the fact that no nodes have been created yet.
+
 		// The loop below is a good solution for pre-existing profiles, but for a first run of
 		// the tool it creates profiles with all blocked ports.
 		if(profile->m_nodeKeys.size() > 0)
