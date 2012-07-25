@@ -501,7 +501,7 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *propTree, NodeProfile *node
 			{
 				pair<string, double> ethPair;
 				ethPair.first = value.second.get<std::string>("vendor");
-				ethPair.second = value.second.get<double>("distribution");
+				ethPair.second = value.second.get<double>("ethDistribution");
 				//If we inherited ethernet vendors but have our own, clear the vector
 				if(nodeProf->m_inherited[ETHERNET] == true)
 				{
@@ -562,58 +562,62 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 			valueKey = "port";
 			if(!string(value.first.data()).compare(valueKey))
 			{
-				//Iterates through the ports
-				BOOST_FOREACH(ptree::value_type &portValue, value.second.get_child("port"))
-				{
-					port = &m_ports[portValue.second.get<string>("portName")];
+				port = &m_ports[value.second.get<string>("portName")];
 
-					//Checks inherited ports for conflicts
-					for(uint i = 0; i < nodeProf->m_ports.size(); i++)
+				//Checks inherited ports for conflicts
+				for(uint i = 0; i < nodeProf->m_ports.size(); i++)
+				{
+					//Erase inherited port if a conflict is found
+					if(!port->m_portNum.compare(m_ports[nodeProf->m_ports[i].first].m_portNum) && !port->m_type.compare(m_ports[nodeProf->m_ports[i].first].m_type))
 					{
-						//Erase inherited port if a conflict is found
-						if(!port->m_portNum.compare(m_ports[nodeProf->m_ports[i].first].m_portNum) && !port->m_type.compare(m_ports[nodeProf->m_ports[i].first].m_type))
-						{
-							nodeProf->m_ports.erase(nodeProf->m_ports.begin() + i);
-						}
+						nodeProf->m_ports.erase(nodeProf->m_ports.begin() + i);
 					}
-					//Add specified port
-					pair<string, pair<bool, double> > portPair;
-					portPair.first = port->m_portName;
-					portPair.second.first = false;
-					portPair.second.second = portValue.second.get<double>("distribution");
-					if(!nodeProf->m_ports.size())
+				}
+				//Add specified port
+				pair<bool,double> insidePortPair;
+				pair<string, pair<bool, double> > outsidePortPair;
+				outsidePortPair.first = port->m_portName;
+				insidePortPair.first = false;
+
+				double tempVal = value.second.get<double>("portDistribution");
+				//If outside the range, set distribution to 0
+				if((tempVal < 0) ||(tempVal > 100))
+				{
+					tempVal = 0;
+				}
+
+				outsidePortPair.second = insidePortPair;
+				if(!nodeProf->m_ports.size())
+				{
+					nodeProf->m_ports.push_back(outsidePortPair);
+				}
+				else
+				{
+					uint i = 0;
+					for(i = 0; i < nodeProf->m_ports.size(); i++)
 					{
-						nodeProf->m_ports.push_back(portPair);
+						Port *tempPort = &m_ports[nodeProf->m_ports[i].first];
+						if((atoi(tempPort->m_portNum.c_str())) < (atoi(port->m_portNum.c_str())))
+						{
+							continue;
+						}
+						break;
+					}
+					if(i < nodeProf->m_ports.size())
+					{
+						nodeProf->m_ports.insert(nodeProf->m_ports.begin() + i, outsidePortPair);
 					}
 					else
 					{
-						uint i = 0;
-						for(i = 0; i < nodeProf->m_ports.size(); i++)
-						{
-							Port *tempPort = &m_ports[nodeProf->m_ports[i].first];
-							if((atoi(tempPort->m_portNum.c_str())) < (atoi(port->m_portNum.c_str())))
-							{
-								continue;
-							}
-							break;
-						}
-						if(i < nodeProf->m_ports.size())
-						{
-							nodeProf->m_ports.insert(nodeProf->m_ports.begin() + i, portPair);
-						}
-						else
-						{
-							nodeProf->m_ports.push_back(portPair);
-						}
+						nodeProf->m_ports.push_back(outsidePortPair);
 					}
 				}
-				continue;
 			}
-
 			//Checks for a subsystem
-			valueKey = "subsystem"; //TODO
+			valueKey = "subsystem";
 			if(!string(value.first.data()).compare(valueKey))
 			{
+				 //TODO - implement subsystem handling
 				continue;
 			}
 		}
@@ -2418,7 +2422,7 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 		{
 			ptree ethTemp;
 			ethTemp.put<std::string>("vendor", p.m_ethernetVendors[i].first);
-			ethTemp.put<double>("distribution", p.m_ethernetVendors[i].second);
+			ethTemp.put<double>("ethDistribution", p.m_ethernetVendors[i].second);
 			temp.add_child("set.ethernet", ethTemp);
 		}
 	}
@@ -2447,8 +2451,8 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 			{
 				ptree ptemp;
 				ptemp.clear();
-				ptemp.add<std::string>("name", p.m_ports[i].first);
-				ptemp.add<double>("distribution", p.m_ports[i].second.second);
+				ptemp.add<std::string>("portName", p.m_ports[i].first);
+				ptemp.add<double>("portDistribution", p.m_ports[i].second.second);
 				temp.add_child("add.port", ptemp);
 			}
 		}

@@ -10,7 +10,7 @@
 			<ICMP>block</ICMP>
 			<ethernet>
 				<vendor>Dell</vendor>
-				<distribution>100</distribution>
+				<ethDistribution>100</ethDistribution>
 			</ethernet>
 			<dropRate>0</dropRate>
 		</set>
@@ -25,7 +25,7 @@
 					<personality>Microsoft Windows 7</personality>
 					<ethernet>
 						<vendor>Dell</vendor>
-						<distribution>100</distribution>
+						<ethDistribution>100</ethDistribution>
 					</ethernet>
 					<uptimeMin>1546550</uptimeMin>
 					<uptimeMax>2006550</uptimeMax>
@@ -33,35 +33,35 @@
 				<add>
 					<port>
 						<portName>20_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>21_TCP_Windows FTP</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>23_TCP_Telnet Router</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>80_TCP_Windows httpd</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>135_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>139_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 				</add>
 				<profiles/>
@@ -75,7 +75,7 @@
 					<personality>Linux 2.6.11 - 2.6.20</personality>
 					<ethernet>
 						<vendor>Dell</vendor>
-						<distribution>100</distribution>
+						<ethDistribution>100</ethDistribution>
 					</ethernet>
 					<uptimeMin>1326346</uptimeMin>
 					<uptimeMax>1326346</uptimeMax>
@@ -83,23 +83,23 @@
 				<add>
 					<port>
 						<portName>23_TCP_Telnet Router</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>135_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>139_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 				</add>
 				<profiles/>
@@ -113,7 +113,7 @@
 					<personality>Linux 2.6.11 - 2.6.20</personality>
 					<ethernet>
 						<vendor>Dell</vendor>
-						<distribution>100</distribution>
+						<ethDistribution>100</ethDistribution>
 					</ethernet>
 					<uptimeMin>1324350</uptimeMin>
 					<uptimeMax>1324350</uptimeMax>
@@ -121,23 +121,23 @@
 				<add>
 					<port>
 						<portName>80_TCP_Windows httpd</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>135_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>139_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 				</add>
 				<profiles/>
@@ -151,7 +151,7 @@
 					<personality>Microsoft Windows 7</personality>
 					<ethernet>
 						<vendor>Intel</vendor>
-						<distribution>100</distribution>
+						<ethDistribution>100</ethDistribution>
 					</ethernet>
 					<uptimeMin>1327650</uptimeMin>
 					<uptimeMax>1327650</uptimeMax>
@@ -159,27 +159,27 @@
 				<add>
 					<port>
 						<portName>23_TCP_Telnet Router</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>80_TCP_Windows httpd</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>135_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_UDP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>137_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 					<port>
 						<portName>139_TCP_open</portName>
-						<distribution>100</distribution>
+						<portDistribution>100</portDistribution>
 					</port>
 				</add>
 				<profiles/>
