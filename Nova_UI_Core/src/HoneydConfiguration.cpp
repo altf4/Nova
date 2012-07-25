@@ -579,13 +579,13 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 				outsidePortPair.first = port->m_portName;
 				insidePortPair.first = false;
 
-				double tempVal = value.second.get<double>("portDistribution");
+				double tempVal = atof(value.second.get<string>("portDistribution").c_str());
 				//If outside the range, set distribution to 0
 				if((tempVal < 0) ||(tempVal > 100))
 				{
 					tempVal = 0;
 				}
-
+				insidePortPair.second = tempVal;
 				outsidePortPair.second = insidePortPair;
 				if(!nodeProf->m_ports.size())
 				{

@@ -1559,6 +1559,7 @@ void NovaConfig::SaveProfileSettings()
 			p.m_ports[i].first = pr.m_portName;
 			m_honeydConfig->m_ports[p.m_ports[i].first] = pr;
 			p.m_ports[i].second.first = item->font(0).italic();
+			p.m_ports[i].second.second = ((QSlider *)ui.portTreeWidget->itemWidget(item, 3))->value();
 		}
 		m_honeydConfig->m_profiles[m_currentProfile] = p;
 		SaveInheritedProfileSettings();
@@ -1754,6 +1755,8 @@ void NovaConfig::LoadProfileSettings()
 			//These don't need to be deleted because the clear function
 			// and destructor of the tree widget does that already.
 			item = new QTreeWidgetItem();
+			ui.portTreeWidget->insertTopLevelItem(i, item);
+
 			item->setText(0,(QString)pr.m_portNum.c_str());
 			item->setText(1,(QString)pr.m_type.c_str());
 			item->setTextAlignment(1, Qt::AlignCenter);
@@ -1768,7 +1771,6 @@ void NovaConfig::LoadProfileSettings()
 			{
 				item->setText(2,(QString)pr.m_behavior.c_str());
 			}
-			ui.portTreeWidget->insertTopLevelItem(i, item);
 
 			QFont tempFont;
 			tempFont = QFont(item->font(0));
@@ -1825,10 +1827,10 @@ void NovaConfig::LoadProfileSettings()
 			ui.portTreeWidget->setItemWidget(item, 2, behaviorBox);
 
 			QSlider *portDistribSlider = new QSlider();
-			portDistribSlider->setMaximum(100);
+			portDistribSlider->setRange(0,100);
 			portDistribSlider->setOrientation(Qt::Horizontal);
-			portDistribSlider->setValue((int)p->m_ports[i].second.second);
 			ui.portTreeWidget->setItemWidget(item, 3, portDistribSlider);
+			portDistribSlider->setValue(p->m_ports[i].second.second/1);
 
 			if(!portCurrentString.compare(pr.m_portName))
 			{
@@ -2121,10 +2123,14 @@ void NovaConfig::LoadAllProfiles()
 		// and create them if not to draw the table correctly, thus the need for the NULL pointer as a flag
 		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 		{
+			if(!m_currentProfile.compare(""))
+			{
+				m_currentProfile = it->first;
+			}
 			CreateProfileItem(it->first);
 		}
+		//ui.profileTreeWidget->setCurrentItem(ui.profileTreeWidget->find(QString(m_currentProfile.c_str())));
 		//Sets the current selection to the original selection
-		//ui.profileTreeWidget->setCurrentItem(m_honeydConfig->m_profiles[m_currentProfile].profileItem);
 		//populates the window and expand the profile heirarchy
 		ui.hsProfileTreeWidget->expandAll();
 		ui.profileTreeWidget->expandAll();
@@ -2409,6 +2415,7 @@ void NovaConfig::on_profileTreeWidget_itemSelectionChanged()
 		}
 		LoadProfileSettings();
 		m_loading->unlock();
+		return;
 	}
 	m_loading->unlock();
 }
