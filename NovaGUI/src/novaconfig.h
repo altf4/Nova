@@ -213,6 +213,8 @@ void on_hsSaveTypeComboBox_currentIndexChanged(int index);
 void on_useAllIfCheckBox_stateChanged();
 void on_useAnyLoopbackCheckBox_stateChanged();
 
+void on_numNodesSpinBox_editingFinished();
+
 private:
 	void SetInputValidators();
 

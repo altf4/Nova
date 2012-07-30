@@ -31,6 +31,7 @@
 #include "NovaUtil.h"
 #include "novaconfig.h"
 #include "subnetPopup.h"
+#include "NodeManager.h"
 #include "NovaComplexDialog.h"
 
 using boost::property_tree::ptree;
@@ -3031,9 +3032,7 @@ void NovaConfig::on_actionNodeCustomizeProfile_triggered()
 	m_currentProfile = m_honeydConfig->m_nodes[m_currentNode].m_pfile;
 	ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount()+1);
 	QTreeWidgetItem *item = ui.menuTreeWidget->topLevelItem(HAYSTACK_MENU_INDEX);
-	item = ui.menuTreeWidget->itemBelow(item);
-	item = ui.menuTreeWidget->itemBelow(item);
-	ui.menuTreeWidget->setCurrentItem(item);
+	ui.menuTreeWidget->setCurrentItem(item->child(PROFILE_INDEX));
 	ui.profileTreeWidget->setCurrentItem(GetProfileTreeWidgetItem(m_currentProfile));
 	m_loading->unlock();
 	Q_EMIT on_actionProfileAdd_triggered();
@@ -3247,6 +3246,21 @@ void NovaConfig::on_useAllIfCheckBox_stateChanged()
 void NovaConfig::on_useAnyLoopbackCheckBox_stateChanged()
 {
 	ui.loopbackGroupBox->setEnabled(!ui.useAnyLoopbackCheckBox->isChecked());
+}
+
+void  NovaConfig::on_numNodesSpinBox_editingFinished()
+{
+	m_loading->lock();
+	NodeManager nodeGen = NodeManager(m_honeydConfig);
+	NodeProfile *p = &m_honeydConfig->m_profiles[m_currentProfile];
+	p->m_generated = true;
+	nodeGen.GenerateProfileCounters(&m_honeydConfig->m_profiles[m_currentProfile]);
+	int nodeChange = ui.numNodesSpinBox->value() - m_honeydConfig->m_profiles[m_currentProfile].m_nodeKeys.size();
+	nodeGen.GenerateNodes(nodeChange);
+	p->m_generated = false;
+	SaveProfileSettings();
+	LoadProfileSettings();
+	m_loading->unlock();
 }
 
 void NovaConfig::on_haystackGroupComboBox_currentIndexChanged()
