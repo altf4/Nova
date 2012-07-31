@@ -78,7 +78,7 @@ time_t startTime;
 string trainingFolder;
 string trainingCapFile;
 
-Database db;
+Database *db;
 
 
 pcap_dumper_t *trainingFileStream;
@@ -134,7 +134,13 @@ int RunNovaD()
 		LOG(INFO, "Failed to change directory to " + Config::Inst()->GetPathHome(),"");
 	}
 
-	db.Connect();
+
+	db = new Database(Config::Inst()->GetDBHost(), Config::Inst()->GetDBUser(), Config::Inst()->GetDBPass());
+	try {
+		db->Connect();
+	} catch (Nova::DatabaseException &e) {
+		LOG(ERROR, "Unable to connect to SQL database. " + string(e.what()), "");
+	}
 
 	// Set up our signal handlers
 	signal(SIGKILL, SaveAndExit);
@@ -1152,7 +1158,7 @@ void UpdateAndClassify(const in_addr_t& key)
 		}
 
 		try {
-			db.InsertSuspectHostileAlert(&suspectCopy);
+			db->InsertSuspectHostileAlert(&suspectCopy);
 		} catch (Nova::DatabaseException &e) {
 			LOG(ERROR, "Unable to insert hostile suspect event into database. " + string(e.what()), "");
 		}

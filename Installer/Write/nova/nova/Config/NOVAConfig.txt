@@ -456,3 +456,10 @@ TRAINING_SESSION trainingSession
 # Port for the web interface to run on
 # Note: anything < 1024 requires root to use
 WEB_UI_PORT 8080
+
+
+# Database credentials
+DATABASE_HOST 127.0.0.1
+DATABASE_USER nova
+DATABASE_PASS avon
+

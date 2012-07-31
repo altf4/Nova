@@ -42,9 +42,14 @@ console.log("Starting NOVAWEB version " + config.GetVersionString());
 // TODO: Get this path from the config class
 process.chdir("/usr/share/nova/nova");
 
+var DATABASE_HOST = config.ReadSetting("DATABASE_HOST");
+var DATABASE_USER = config.ReadSetting("DATABASE_USER");
+var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
+
 var client = mysql.createClient({
-  user: 'root'
-  , password: 'root'
+  host: DATABASE_HOST
+  , user: DATABASE_USER
+  , password: DATABASE_PASS
   , database: credDb
 });
 

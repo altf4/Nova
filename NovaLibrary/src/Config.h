@@ -165,12 +165,20 @@ public:
     std::string GetSMTPUser();
     std::string GetSMTPPass();
 
+	std::string GetDBHost();
+	std::string GetDBUser();
+	std::string GetDBPass();
+
     void SetLoggerPreferences(std::string loggerPreferences);
     void SetSMTPAddr(std::string SMTPAddr);
     void SetSMTPDomain(std::string SMTPDomain);
 	void SetSMTPPort(in_port_t SMTPPort);
 	void SetSMTPUser(std::string SMTPUser);
 	void SetSMTPPass(std::string STMP_Pass);
+
+	void SetDBHost(std::string DBHost);
+	void SetDBUser(std::string DBUser);
+	void SetDBPass(std::string DBPass);
 
 	void SetSMTPSettings_FromFile();
 
@@ -287,6 +295,10 @@ private:
 	// still have it as a Config private attribute
 	std::string m_SMTPUser;
 	std::string m_SMTPPass;
+
+	std::string m_DBHost;
+	std::string m_DBUser;
+	std::string m_DBPass;
 
 	std::string m_loggerPreferences;
 	// a vector containing the email recipients; may move this into the actual classes

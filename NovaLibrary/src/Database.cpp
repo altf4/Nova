@@ -38,28 +38,6 @@ Database::Database(string host, string username, string password, string databas
 	mysql_init(&db);
 	my_bool reconnect = true;
 	mysql_options(&db, MYSQL_OPT_RECONNECT, &reconnect);
-
-	/* Example query
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	int state;
-
-
-	state = mysql_query(connection, "SELECT * FROM credentials");
-
-	if (state) {
-		cout << mysql_errno(&db);
-		return;
-	}
-
-	result = mysql_store_result(connection);
-	cout << "Rows: " << mysql_num_rows(result);
-
-	while ( ( row=mysql_fetch_row(result)) != NULL )
-	{
-		cout << "Row: " << row[0] << row[1] << endl;
-	}
-	*/
 }
 
 bool Database::Connect()
@@ -68,7 +46,7 @@ bool Database::Connect()
 
 	if (connection == NULL)
 	{
-		throw DatabaseException(ConvertInt(mysql_errno(&db)));
+		throw DatabaseException(ConvertInt(mysql_errno(&db)) + string(mysql_error(&db)));
 	}
 	else
 	{
@@ -89,7 +67,7 @@ int Database::InsertSuspectHostileAlert(Suspect *suspect)
 	int state = mysql_query(connection, ss.str().c_str());
 	if (state)
 	{
-		throw DatabaseException(ConvertInt(mysql_errno(&db)));
+		throw DatabaseException(ConvertInt(mysql_errno(&db)) + string(mysql_error(&db)));
 	}
 	else
 	{
@@ -123,7 +101,7 @@ int Database::InsertStatisticsPoint(FeatureSet *features)
 	state = mysql_query(connection, ss.str().c_str());
 	if (state)
 	{
-		throw DatabaseException(ConvertInt(mysql_errno(&db)));
+		throw DatabaseException(ConvertInt(mysql_errno(&db)) + string(mysql_error(&db)));
 	}
 	else
 	{

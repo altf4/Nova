@@ -74,7 +74,10 @@ string Config::m_prefixes[] =
 	"CUSTOM_PCAP_FILTER",
 	"CUSTOM_PCAP_MODE",
 	"TRAINING_SESSION",
-	"WEB_UI_PORT"
+	"WEB_UI_PORT",
+	"DATABASE_HOST",
+	"DATABASE_USER",
+	"DATABASE_PASS"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -784,6 +787,48 @@ void Config::LoadConfig_Internal()
 				if(atoi(line.c_str()) > 0)
 				{
 					m_webUIPort = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// DATABASE_HOST
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_DBHost = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// DATABASE_USER
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_DBUser = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// DATABASE_PASS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_DBPass = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -2262,6 +2307,25 @@ std::string Config::GetSMTPPass()
 	return m_SMTPPass;
 }
 
+std::string Config::GetDBHost()
+{
+	Lock lock(&m_lock, true);
+	return m_DBHost;
+}
+
+std::string Config::GetDBUser()
+{
+	Lock lock(&m_lock, true);
+	return m_DBUser;
+}
+
+std::string Config::GetDBPass()
+{
+	Lock lock(&m_lock, true);
+	return m_DBPass;
+}
+
+
 void Config::SetLoggerPreferences(string loggerPreferences)
 {
 	Lock lock(&m_lock, false);
@@ -2292,6 +2356,27 @@ void Config::SetSMTPDomain(string SMTPDomain)
 {
 	Lock lock(&m_lock, false);
 	m_SMTPDomain = SMTPDomain;
+
+}
+
+void Config::SetDBHost(string host)
+{
+	Lock lock(&m_lock, false);
+	m_DBHost = host;
+
+}
+
+void Config::SetDBUser(string user)
+{
+	Lock lock(&m_lock, false);
+	m_DBUser = user;
+
+}
+
+void Config::SetDBPass(string pass)
+{
+	Lock lock(&m_lock, false);
+	m_DBPass = pass;
 
 }
 
