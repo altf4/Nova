@@ -8,7 +8,7 @@ release:
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
 
-release-helper: novad-release novagui-release novacli-release novatrainer-release
+release-helper: novad-release novacli-release novatrainer-release
 
 #Debug target
 debug:
@@ -16,7 +16,7 @@ debug:
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
 
-debug-helper: novad-debug novagui-debug novacli-debug novatrainer-debug
+debug-helper: novad-debug novacli-debug novatrainer-debug
 
 #Nova Library
 novalib-release:
@@ -63,12 +63,12 @@ novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release
 	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
-#novagui
-novagui-release:
+#qtgui
+qtgui:
 	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
 
-novagui-debug:
+qtgui-debug:
 	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 
@@ -146,12 +146,14 @@ clean-web:
 install: install-data install-docs
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	sh debian/postinst
+	
+install-qtgui:
+	install NovaGUI/novagui $(DESTDIR)/usr/bin
 
 install-data:
 	#make folder in etc with path locations to nova files
