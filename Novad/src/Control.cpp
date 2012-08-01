@@ -31,7 +31,8 @@ void SaveAndExit(int param)
 	{
 		CloseTrainingCapture();
 	}
-	else
+
+	if (!Config::Inst()->GetIsTraining() && !Config::Inst()->GetReadPcap())
 	{
 		AppendToStateFile();
 	}

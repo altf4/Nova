@@ -311,11 +311,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -327,11 +327,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success)+ sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -345,11 +345,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -361,11 +361,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -380,11 +380,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_suspectAddress);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_suspectAddress) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -399,11 +399,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -417,11 +417,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -436,11 +436,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -454,11 +454,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);;
+			SerializeHeader(&buffer, messageSize);;
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -470,11 +470,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -488,11 +488,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -504,11 +504,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -522,11 +522,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
@@ -537,11 +537,11 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);

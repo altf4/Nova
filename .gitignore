@@ -89,6 +89,9 @@ NovaLibrary/libNovaLibrary.a
 #NovaTest
 /NovaTest/Debug
 /NovaTest/NovadSource/*
+/NovaWeb/build/*
+/NovaWeb/www/dojo
+/NovaWeb/.lock-wscript
 
 # NovaWeb
 /NovaWeb/www/dojo
@@ -110,12 +113,15 @@ NovaLibrary/libNovaLibrary.a
 /Installer/nova/Config/doppelganger.config
 /Installer/nova/Data/data.txt
 /Installer/nova/Data/training.db
+/NovaWeb/NodeNovaConfig/.lock-wscript
+/NovaWeb/libv8-convert-20120219/*
+/NovaWeb/libv8-convert-20120219.tar.gz.1
+/NovaWeb/libv8-convert-20120219.tar.gz.2
 /Installer/.nova/Config/doppelganger.config
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Data/training.db
 /Installer/Write/nova/.nova/Config/data.csv
-
-#NovaTrainer
+/Novad/core
 /NovaTrainer/Debug/novatrainer
 /NovaTrainer/novatrainer
 /NovaTrainer/Release/novatrainer
@@ -145,6 +151,6 @@ NovaLibrary/libNovaLibrary.a
 /debian/nova.substvars
 debian/files
 debian/nova/*
-/HoneydHostConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs
-/NovaWeb/joyent-node*
-/HoneydHostConfig/honeydhostconfig
+/misc/ROCGraphGenerator/hostiles.txt
+/misc/ROCGraphGenerator/output.txt
+/Nova_UI_Core/.settings/org.eclipse.cdt.codan.core.prefs

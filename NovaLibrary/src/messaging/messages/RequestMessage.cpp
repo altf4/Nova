@@ -247,12 +247,12 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		5) List of suspect IPs
 
 			m_suspectListLength = sizeof(in_addr_t) *m_suspectList.size();
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType) + sizeof(messageSize);
 
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
@@ -280,11 +280,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) request Message Type
 			// 		3) Type of list we want (all, hostile, benign)
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType)+ sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
@@ -301,11 +301,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 			// 		3) IP address of suspect being requested in in_addr_t format
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
@@ -328,11 +328,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 				return NULL;
 			}
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength;
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
@@ -354,11 +354,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
@@ -372,11 +372,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		2) Request Message Type
 			//		3) The uptime
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Request Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
@@ -391,11 +391,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
@@ -406,11 +406,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_requestType, sizeof(m_requestType));
 			buffer += sizeof(m_requestType);
