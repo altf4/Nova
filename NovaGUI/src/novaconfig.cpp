@@ -31,6 +31,7 @@
 #include "NovaUtil.h"
 #include "novaconfig.h"
 #include "subnetPopup.h"
+#include "NodeManager.h"
 #include "NovaComplexDialog.h"
 
 using boost::property_tree::ptree;
@@ -1716,6 +1717,7 @@ void NovaConfig::LoadProfileSettings()
 			ui.dropRateSetting->setText("0%");
 			ui.dropRateSlider->setValue(0);
 		}
+		ui.numNodesSpinBox->setValue(p->m_nodeKeys.size());
 
 		ui.ethVendorTableWidget->clearContents();
 		//Populate the Ethernet Vender Table
@@ -1731,12 +1733,24 @@ void NovaConfig::LoadProfileSettings()
 			ui.ethVendorTableWidget->setItem(i, 0, item);
 
 			item = new QTableWidgetItem();
-			item->setText(QString::number(((uint)(p->m_nodeKeys.size()*(p->m_ethernetVendors[i].second/((double)100)))), 10));
 			ui.ethVendorTableWidget->setItem(i, 1, item);
 
+			QSpinBox *numNodesSpinBox = new QSpinBox();
+			numNodesSpinBox->setMaximum(100);
+			numNodesSpinBox->setMinimum(0);
+			numNodesSpinBox->setValue(((uint)(p->m_nodeKeys.size()*(p->m_ethernetVendors[i].second/((double)100)))));
+			numNodesSpinBox->setAlignment(Qt::AlignCenter);
+			ui.ethVendorTableWidget->setCellWidget(i, 1, numNodesSpinBox);
+
 			item = new QTableWidgetItem();
-			item->setText((QString::number((uint)p->m_ethernetVendors[i].second, 10)));
 			ui.ethVendorTableWidget->setItem(i, 2, item);
+
+			QSlider *ethDistribSlider = new QSlider();
+			ethDistribSlider->setMaximum(100);
+			ethDistribSlider->setMinimum(0);
+			ethDistribSlider->setOrientation(Qt::Horizontal);
+			ethDistribSlider->setValue((uint)p->m_ethernetVendors[i].second);
+			ui.ethVendorTableWidget->setCellWidget(i, 2, ethDistribSlider);
 		}
 		while(ui.ethVendorTableWidget->rowCount() > (int)p->m_ethernetVendors.size())
 		{
@@ -1887,49 +1901,42 @@ void NovaConfig::LoadProfileSettings()
 
 		// ~~~~ CHILDREN PROFILE TREE WIDGET ~~~~
 
-		uint max = 0;
 		ui.childrenProfileTreeWidget->clear();
 
 		for(ProfileTable::iterator it = m_honeydConfig->m_profiles.begin(); it != m_honeydConfig->m_profiles.end(); it++)
 		{
 			if(!it->second.m_parentProfile.compare(m_currentProfile))
 			{
-				QSpinBox *numNodesSpinBox = new QSpinBox();
-				numNodesSpinBox->setMaximum(0);
-				numNodesSpinBox->setMinimum(0);
-				numNodesSpinBox->setValue(0);
-				for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
-				{
-					if(m_honeydConfig->m_nodes.keyExists(it->second.m_nodeKeys[i]))
-					{
-						max++;
-						numNodesSpinBox->stepUp();
-					}
-				}
+
 				QTreeWidgetItem *item = new QTreeWidgetItem();
 				item->setText(0, QString(it->first.c_str()));
-				numNodesSpinBox->setAlignment(Qt::AlignCenter);
-				item->setText(1, numNodesSpinBox->text());
-				item->setTextAlignment(1, Qt::AlignCenter);
 				ui.childrenProfileTreeWidget->addTopLevelItem(item);
+
+				QSpinBox *numNodesSpinBox = new QSpinBox();
+				numNodesSpinBox->setMaximum(100);
+				numNodesSpinBox->setMinimum(0);
+				numNodesSpinBox->setValue(it->second.m_nodeKeys.size());
+				numNodesSpinBox->setAlignment(Qt::AlignCenter);
 				ui.childrenProfileTreeWidget->setItemWidget(item, 1, numNodesSpinBox);
+
+				QSlider *nodeDistribSlider = new QSlider();
+				nodeDistribSlider->setMaximum(100);
+				nodeDistribSlider->setMinimum(0);
+				nodeDistribSlider->setOrientation(Qt::Horizontal);
+				if((it->second.m_distribution < 0) || (it->second.m_distribution > 100))
+				{
+					nodeDistribSlider->setValue(0);
+				}
+				else
+				{
+					nodeDistribSlider->setValue((int)(it->second.m_distribution/1));
+				}
+				ui.childrenProfileTreeWidget->setItemWidget(item, 2, nodeDistribSlider);
 			}
 		}
 		for(int i = 0; i < ui.childrenProfileTreeWidget->topLevelItemCount(); i++)
 		{
-			QTreeWidgetItem * item = ui.childrenProfileTreeWidget->topLevelItem(i);
-			QSlider *nodeDistribSlider = new QSlider();
-			nodeDistribSlider->setMaximum(100);
-			nodeDistribSlider->setOrientation(Qt::Horizontal);
-			if(max != 0)
-			{
-				nodeDistribSlider->setValue((int)(item->text(1).toUInt()/max));
-			}
-			else
-			{
-				nodeDistribSlider->setValue(0);
-			}
-			ui.childrenProfileTreeWidget->setItemWidget(item, 2, nodeDistribSlider);
+
 		}
 		for(int i = 0; i < ui.childrenProfileTreeWidget->columnCount(); i++)
 		{
@@ -2024,12 +2031,6 @@ void NovaConfig::LoadInheritedProfileSettings()
 	ui.ethernetCheckBox->setEnabled(p->m_parentProfile.compare(""));
 	//We set again incase the checkbox was disabled (previous selection was root profile)
 	ui.ethernetCheckBox->setChecked(p->m_inherited[ETHERNET]);
-	//tempFont = QFont(ui.ethernetLabel->font());
-	//tempFont.setItalic(p->m_inherited[ETHERNET]);
-	//ui.ethernetLabel->setFont(tempFont);
-	//ui.ethernetEdit->setFont(tempFont);
-	//ui.ethernetEdit->setEnabled(!p->m_inherited[ETHERNET]);
-	//ui.setEthernetButton->setEnabled(!p->m_inherited[ETHERNET]);
 
 	ui.uptimeCheckBox->setChecked(p->m_inherited[UPTIME]);
 	ui.uptimeCheckBox->setEnabled(p->m_parentProfile.compare(""));
@@ -2245,9 +2246,20 @@ bool NovaConfig::AddNodeToProfileTable(std::string nodeName, int row)
 		vector<string> hostInterfaceList = Config::Inst()->GetIPv4HostInterfaceList();
 		item = new QTableWidgetItem();
 		TableItemComboBox *nodeIFBox = new TableItemComboBox(this, item);
-		for(uint i = 0; i < hostInterfaceList.size(); i++)
+		if(nodeName.compare("Doppelganger"))
 		{
-			nodeIFBox->addItem(QString(hostInterfaceList[i].c_str()));
+			for(uint i = 0; i < hostInterfaceList.size(); i++)
+			{
+				nodeIFBox->addItem(QString(hostInterfaceList[i].c_str()));
+			}
+		}
+		else
+		{
+			vector<string> loopbackInterfaces = Config::Inst()->GetIPv4LoopbackInterfaceList();
+			for(uint i = 0; i < loopbackInterfaces.size(); i++)
+			{
+				nodeIFBox->addItem(QString(loopbackInterfaces[i].c_str()));
+			}
 		}
 		nodeIFBox->setCurrentIndex(nodeIFBox->findText(curNode.m_interface.c_str()));
 		item->setText(QString(curNode.m_interface.c_str()));
@@ -3020,9 +3032,7 @@ void NovaConfig::on_actionNodeCustomizeProfile_triggered()
 	m_currentProfile = m_honeydConfig->m_nodes[m_currentNode].m_pfile;
 	ui.stackedWidget->setCurrentIndex(ui.menuTreeWidget->topLevelItemCount()+1);
 	QTreeWidgetItem *item = ui.menuTreeWidget->topLevelItem(HAYSTACK_MENU_INDEX);
-	item = ui.menuTreeWidget->itemBelow(item);
-	item = ui.menuTreeWidget->itemBelow(item);
-	ui.menuTreeWidget->setCurrentItem(item);
+	ui.menuTreeWidget->setCurrentItem(item->child(PROFILE_INDEX));
 	ui.profileTreeWidget->setCurrentItem(GetProfileTreeWidgetItem(m_currentProfile));
 	m_loading->unlock();
 	Q_EMIT on_actionProfileAdd_triggered();
@@ -3236,6 +3246,21 @@ void NovaConfig::on_useAllIfCheckBox_stateChanged()
 void NovaConfig::on_useAnyLoopbackCheckBox_stateChanged()
 {
 	ui.loopbackGroupBox->setEnabled(!ui.useAnyLoopbackCheckBox->isChecked());
+}
+
+void  NovaConfig::on_numNodesSpinBox_editingFinished()
+{
+	m_loading->lock();
+	NodeManager nodeGen = NodeManager(m_honeydConfig);
+	NodeProfile *p = &m_honeydConfig->m_profiles[m_currentProfile];
+	p->m_generated = true;
+	nodeGen.GenerateProfileCounters(&m_honeydConfig->m_profiles[m_currentProfile]);
+	int nodeChange = ui.numNodesSpinBox->value() - m_honeydConfig->m_profiles[m_currentProfile].m_nodeKeys.size();
+	nodeGen.GenerateNodes(nodeChange);
+	p->m_generated = false;
+	SaveProfileSettings();
+	LoadProfileSettings();
+	m_loading->unlock();
 }
 
 void NovaConfig::on_haystackGroupComboBox_currentIndexChanged()

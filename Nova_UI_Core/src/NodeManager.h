@@ -74,13 +74,13 @@ public:
 	// Returns nothing.
 	void GenerateNodes(unsigned int num_nodes);
 
-private:
-
 	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
 	//		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
 	// 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of
 	//		the profile tree
 	void GenerateProfileCounters(NodeProfile *rootProfile);
+
+private:
 
 	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
 	//		randomized nodes from the profiles at the different nodes of the Personality Tree.

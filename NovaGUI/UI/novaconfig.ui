@@ -115,7 +115,7 @@
          <string/>
         </property>
         <property name="currentIndex">
-         <number>6</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="generalPage">
          <layout class="QVBoxLayout" name="genVertBox">
@@ -2876,7 +2876,7 @@ is inherited from a parent profile.</string>
      <x>0</x>
      <y>0</y>
      <width>839</width>
-     <height>25</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>

@@ -106,7 +106,7 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 	}
 	for(unsigned int i = 0; i < num_nodes;)
 	{
-		for(unsigned int j = 0; j < m_profileCounters.size() && i < num_nodes; j++)
+		for(unsigned int j = 0; (j < m_profileCounters.size()) && (i < num_nodes); j++)
 		{
 			//If we're skipping this profile
 			if(m_profileCounters[j].m_count < 0)
@@ -281,8 +281,6 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 	}
 }
 
-//. ************ Private Methods ************ .//
-
 // GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
 //		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
 // 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of
@@ -290,8 +288,11 @@ void NodeManager::GenerateNodes(unsigned int num_nodes)
 void NodeManager::GenerateProfileCounters(NodeProfile *rootProfile)
 {
 	m_hostCount = 0;
+	m_profileCounters.clear();
 	RecursiveGenProfileCounter(rootProfile);
 }
+
+//. ************ Private Methods ************ .//
 
 // RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
 //		randomized nodes from the profiles at the different nodes of the Personality Tree.
