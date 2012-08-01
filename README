@@ -37,7 +37,7 @@ well; you can get them using this command:
     sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
 
 
-- NOTE: Honeyd requires libevent version 2.x. If you running Ubuntu 10.10 or lower, the version of libevent available in the repos is only 1.x. So you will need to wither find a backport or build libevent 2.x from source.
+- NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the version of libevent available in the repos is only 1.x. So you will need to either find a backport or build libevent 2.x from source.
 
 - If you wish to optionally generate Debian packages for Nova, you will also require dpkg-dev:
 
