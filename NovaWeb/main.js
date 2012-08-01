@@ -7,6 +7,7 @@ var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
 var trainingDb = new novaconfig.CustomizeTrainingBinding();
 var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
+var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 
 honeydConfig.LoadAllTemplates();
 
