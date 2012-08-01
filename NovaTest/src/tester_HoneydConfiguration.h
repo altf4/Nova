@@ -109,7 +109,7 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	//Create dummy profile
 	NodeProfile * p = new NodeProfile();
 	p->m_name = "TestProfile";
-	p->m_ethernet = "Dell";
+	p->SetEthernet("Dell");
 	p->m_icmpAction = "block";
 	p->m_parentProfile = "default";
 	p->m_udpAction = "block";
