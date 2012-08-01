@@ -1150,7 +1150,7 @@ void UpdateAndClassify(const in_addr_t& key)
 	}
 
 	//Send silent alarm if needed
-	if(suspectCopy.GetIsHostile() || oldIsHostile)
+	if(suspectCopy.GetIsHostile() && !oldIsHostile)
 	{
 		if(suspectCopy.GetIsLive())
 		{
