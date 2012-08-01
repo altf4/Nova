@@ -489,6 +489,14 @@ app.get('/suspects', passport.authenticate('basic', { session: false }), functio
      });
 });
 
+app.get('/events', passport.authenticate('basic', { session: false }), function(req, res) {
+	res.render('events.jade', 
+	{
+		featureNames: nova.GetFeatureNames()
+	}	
+	);
+});
+
 app.get('/novadlog', passport.authenticate('basic', { session: false }), function(req, res) {
 	initLogWatch();
 	res.render('novadlog.jade');
@@ -1084,6 +1092,51 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 
 everyone.now.GetCaptureIPs = function (trainingSession, callback) {
 	return trainingDb.GetCaptureIPs("/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump");
+}
+
+everyone.now.GetHostileEvents = function(callback) {
+  client.query(
+    'SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,haystack_event_frequency,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics',
+	function (err, results, fields) {
+		if(err) {
+			console.log(err);
+			callback();
+			return;
+		}
+
+		callback(results);
+	} 
+  );
+}
+
+everyone.now.ClearHostileEvents = function(callback) {
+  client.query(
+    'DELETE FROM suspect_alerts',
+	function (err) {
+		if(err) {
+			console.log(err);
+			callback();
+			return;
+		}
+
+		callback("true");
+	} 
+  );
+}
+
+everyone.now.ClearHostileEvents = function(id, callback) {
+  client.query(
+    'DELETE FROM suspect_alerts',
+	function (err) {
+		if(err) {
+			console.log(err);
+			callback();
+			return;
+		}
+
+		callback("true");
+	} 
+  );
 }
 
 var distributeSuspect = function(suspect)

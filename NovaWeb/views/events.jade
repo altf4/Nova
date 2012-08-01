@@ -1,0 +1,84 @@
+extends layout
+
+block content
+  div#nova_suspects_header
+    h1 Suspect List
+    br
+    br
+    
+  div#nova_suspects
+    table#suspectTable
+  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
+   h4 Novad is not currently connected or running. Try starting it.
+   
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+  script
+    function featureFormatter(d) {
+        var num = new Number(d);
+        return (num.toFixed(2));
+    }
+
+    function classificationFormatter(d) {
+        var num = 100 * d;
+        if (num > 0) {
+            // Minor performance boost, don't bother with coloring those < than 5% hostile, barely shows anyway
+            if (num > 5) {
+                return '<div style="background: rgba(255, 0, 0, ' + d.toFixed(2) + ');">' + num.toFixed(2) + "%</div>";
+            } else {
+                return num.toFixed(2) + "%";
+            }
+        } else {
+            if (num == -100) {
+                return "Invalid";
+            } else if (num == -200) {
+                return "Not Enough Data";
+            } else {
+                return "Error";
+            }
+
+        }
+    }
+    
+    function Init() {
+        var gridStructure = new Array();
+        gridStructure.push({name: "ID"});
+        gridStructure.push({name: "Timestamp"});
+        gridStructure.push({name: "Address"});
+   
+        var featureNames = String("#{featureNames}").split(",");
+        for (var i = 0; i < featureNames.length; i++) {
+            gridStructure.push({name:featureNames[i], formatter: featureFormatter});
+        }
+   
+        suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'));
+
+        // Sort by classification by default
+        suspectGrid.SetSortByKey(1);
+
+        document.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+    
+    
+        now.GetHostileEvents(function (results) {
+            console.log(results);
+            for (var i = 0; i < results.length; i++) {
+                var row = new Array();
+                for (var j in results[0]) {
+                    row.push(results[i][j]);
+                }
+
+                suspectGrid.PushEntry(row);
+
+            } 
+            document.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+        });
+    }
+
+    require(["dojo/ready", "dojo/domReady!"], function(ready){
+        ready(function() {
+            Init();
+        });
+    });
+
+
