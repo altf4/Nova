@@ -364,7 +364,7 @@ app.get('/editHoneydProfile', ensureAuthenticated, function(req, res) {
 app.get('/addHoneydProfile', ensureAuthenticated, function(req, res) {
 	parentName = req.query["parent"]; 
 
-	res.render('editHoneydProfile.jade', 
+	res.render('addHoneydProfile.jade', 
 	{ locals : {
 		oldName: parentName
 		, parentName: parentName
@@ -683,7 +683,7 @@ app.post('/scanning', ensureAuthenticated, function(req, res){
     console.log("No additional subnets selected.");
   }
   
-  if(subnets === "" && interfaces === "")
+  if((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined))
   {
     res.redirect('/autoConfig');
   }
@@ -1164,12 +1164,14 @@ everyone.now.GetVendors = function(profileName, callback)
 
 everyone.now.GetPorts = function (profileName, callback) {
     var ports = honeydConfig.GetPorts(profileName);
+    
     for ( var i = 0; i < ports.length; i++) {
       ports[i].portName = ports[i].GetPortName();
       ports[i].portNum = ports[i].GetPortNum();
       ports[i].type = ports[i].GetType();
       ports[i].behavior = ports[i].GetBehavior();
       ports[i].scriptName = ports[i].GetScriptName();
+      ports[i].service = ports[i].GetService();
       ports[i].isInherited = ports[i].GetIsInherited();
     }
 
@@ -1177,69 +1179,76 @@ everyone.now.GetPorts = function (profileName, callback) {
 }
 
 
-everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList) {
-	honeydProfile = new novaconfig.HoneydProfileBinding();
+everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, addOrEdit) {
+        var honeydProfile = new novaconfig.HoneydProfileBinding();
 
-	console.log("Got profile " + profile.name + "_" + profile.personality);
-	console.log("Got portlist " + ports.name);
-	console.log("Got ethVendorList " + ethVendorList);
+        console.log("Got profile " + profile.name + "_" + profile.personality);
+        console.log("Got portlist " + ports.name);
+        console.log("Got ethVendorList " + ethVendorList);
 
-	// Move the Javascript object values to the C++ object
-	honeydProfile.SetName(profile.name);
-	honeydProfile.SetTcpAction(profile.tcpAction);
-	honeydProfile.SetUdpAction(profile.udpAction);
-	honeydProfile.SetIcmpAction(profile.icmpAction);
-	honeydProfile.SetPersonality(profile.personality);
-	
-	if(ethVendorList == undefined || ethVendorList == null)
-	{
-	    honeydProfile.SetEthernet(profile.ethernet);
-	}
-	else if(profile.isEthernetInherited == false)
-	{
-        var ethVendors = [];
-        var ethDists = [];
-    
-	    for(var i = 0; i < ethVendorList.length; i++)
-	    {
-	        ethVendors.push(ethVendorList[i].vendor);
-	        ethDists.push(parseFloat(ethVendorList[i].dist));
+        // Move the Javascript object values to the C++ object
+        honeydProfile.SetName(profile.name);
+        honeydProfile.SetTcpAction(profile.tcpAction);
+        honeydProfile.SetUdpAction(profile.udpAction);
+        honeydProfile.SetIcmpAction(profile.icmpAction);
+        honeydProfile.SetPersonality(profile.personality);
+
+        if(ethVendorList == undefined || ethVendorList == null)
+        {
+            honeydProfile.SetEthernet(profile.ethernet);
+        }
+        else if(profile.isEthernetInherited == false)
+        {
+            var ethVendors = [];
+            var ethDists = [];
+        
+            for(var i = 0; i < ethVendorList.length; i++)
+            {
+                ethVendors.push(ethVendorList[i].vendor);
+                ethDists.push(parseFloat(ethVendorList[i].dist));
+            }
+            
+            honeydProfile.SetVendors(ethVendors, ethDists);
+        }
+
+        honeydProfile.SetUptimeMin(profile.uptimeMin);
+        honeydProfile.SetUptimeMax(profile.uptimeMax);
+        honeydProfile.SetDropRate(profile.dropRate);
+        honeydProfile.SetParentProfile(profile.parentProfile);
+        
+        honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
+        honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
+        honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
+        honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
+        honeydProfile.setEthernetInherited(profile.isEthernetInherited);
+        honeydProfile.setUptimeInherited(profile.isUptimeInherited);
+        honeydProfile.setDropRateInherited(profile.isDropRateInherited);
+
+
+        // Add new ports
+        var portName;
+        for (var i = 0; i < ports.size; i++) {
+	        console.log("Adding port " + ports[i].portNum + " " + ports[i].type + " " + ports[i].behavior + " " + ports[i].script + " Inheritance: " + ports[i].isInherited);
+	        portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), Number(ports[i].behavior), ports[i].script);
+
+	        if (portName != "") {
+		        honeydProfile.AddPort(portName, ports[i].isInherited);
+	        }
 	    }
-	    
-	    honeydProfile.SetVendors(ethVendors, ethDists);
-	}
-	
-	honeydProfile.SetUptimeMin(profile.uptimeMin);
-	honeydProfile.SetUptimeMax(profile.uptimeMax);
-	honeydProfile.SetDropRate(profile.dropRate);
-	honeydProfile.SetParentProfile(profile.parentProfile);
 
-	honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
-	honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
-	honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
-	honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
-	honeydProfile.setEthernetInherited(profile.isEthernetInherited);
-	honeydProfile.setUptimeInherited(profile.isUptimeInherited);
-	honeydProfile.setDropRateInherited(profile.isDropRateInherited);
+        var portTest = honeydProfile.GetPortNames();
 
+        for(var i = 0; i < portTest.length; i++)
+        {
+            console.log("Port Name " + (i + 1) + ": " + portTest[i]);
+        }
 
-	// Add new ports
-	var portName;
-	for (var i = 0; i < ports.size; i++) {
-		console.log("Adding port " + ports[i].portNum + " " + ports[i].type + " " + ports[i].behavior + " " + ports[i].script + " Inheritance: " + ports[i].isInherited);
-		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), Number(ports[i].behavior), ports[i].script);
+        honeydConfig.SaveAllTemplates();
 
-		if (portName != "") {
-			honeydProfile.AddPort(portName, ports[i].isInherited);
-		}
-	}
+        // Save the profile
+        honeydProfile.Save();
 
-	honeydConfig.SaveAllTemplates();
-
-	// Save the profile
-	honeydProfile.Save();
-
-	callback();
+        callback();
 }
 
 everyone.now.GetCaptureSession = function (callback) {

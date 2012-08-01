@@ -44,6 +44,11 @@ block headerAdditions
     }
 
     require(["dojo/domReady!", "dojo/ready", "dijit/registry", "dijit/form/FilteringSelect"], function() {
+    
+    // TODO
+    if (newProfile != "true") {
+        dojo.byId("saveButton").disabled = true;
+    }
 
     addVendor = function(vendName) {
         if(document.getElementById("ethDiv0") == undefined)
@@ -612,7 +617,7 @@ block headerAdditions
             ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
         }
 
-        now.SaveProfile(pfile, ports, savedChanges, ethVendorList, false);
+        now.SaveProfile(pfile, ports, savedChanges, ethVendorList, true);
     }
 
     savedChanges = function() {
@@ -1193,7 +1198,7 @@ block content
       option block
       option open
 
-  h2 Editing Profile
+  h2 Adding Profile
 
   form(method="post", action="/editHoneydProfileSave")
 
@@ -1328,5 +1333,5 @@ block content
     br
     br
     
-    button#saveButton(type="button", onclick="saveChanges()") Save Changes
+    button#saveButton(type="button", onclick="saveChanges()") Add Profile
 
