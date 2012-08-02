@@ -48,10 +48,6 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 {
 	m_profileCounters.clear();
 	GenerateProfileCounters(rootProfile);
-	for(uint i = 0; i < m_profileCounters.size(); i++)
-	{
-		std::cout << "profile counter " << i << " is for " << m_profileCounters[i].m_profile.m_name << '\n';
-	}
 	vector<string> profList;
 	profList.push_back(rootProfile->m_name);
 	int totalNodes = rootProfile->m_nodeKeys.size();
@@ -70,18 +66,15 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 	//Delete Nodes Case
 	if(totalNodes > num_nodes)
 	{
-
+		RemoveNodes(totalNodes - num_nodes);
 	}
 	//Add Nodes Case
 	else if(totalNodes < num_nodes)
 	{
-
+		GenerateNodes(num_nodes - totalNodes);
 	}
 	//Redistribute exisiting nodes case
-	else
-	{
-
-	}
+	AdjustNodesToTargetDistributions();
 }
 
 //This function adds or subtracts nodes directly from the target profile until the desired number is matched
@@ -195,7 +188,7 @@ void NodeManager::GenerateNodes(int num_nodes)
 
 				curNode.m_ports.clear();
 				int maxPorts  = (int)(avg_ports*(log10(avg_ports)));
-				while(!portCounters.empty() && (num_ports < maxPorts));
+				while(!portCounters.empty() && (num_ports < maxPorts))
 				{
 					unsigned int randIndex = time(NULL) % portCounters.size();
 					PortCounter *curCounter = portCounters[randIndex];
@@ -912,7 +905,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 			//If the vendor is still over allocated
 			if(highPCounter->m_count < (highPCounter->m_increment - 1))
 			{
-				underPopulatedPorts.push_back(highPCounter);
+				overPopulatedPorts.push_back(highPCounter);
 			}
 		}
 	}

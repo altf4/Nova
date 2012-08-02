@@ -63,12 +63,12 @@ novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release
 	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
-#qtgui
-qtgui:
+#novagui
+novagui-release:
 	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release
 
-qtgui-debug:
+novagui-debug:
 	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug
 
@@ -169,9 +169,6 @@ install: install-data install-docs
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	sh debian/postinst
-	
-install-qtgui:
-	install NovaGUI/novagui $(DESTDIR)/usr/bin
 
 install-data:
 	#make folder in etc with path locations to nova files

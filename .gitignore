@@ -154,4 +154,3 @@ debian/nova/*
 /misc/ROCGraphGenerator/hostiles.txt
 /misc/ROCGraphGenerator/output.txt
 /Nova_UI_Core/.settings/org.eclipse.cdt.codan.core.prefs
-/HoneydHostConfig/honeydhostconfig

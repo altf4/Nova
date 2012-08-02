@@ -41,11 +41,11 @@ endif
 all: honeydhostconfig
 
 dependents:
-	-cd /home/victim/Code/Nova/NovaLibrary/Release && $(MAKE) clean all
-	-cd /home/victim/Code/Nova/Nova_UI_Core/Release && $(MAKE) clean all
+	-cd /home/addison/Code/Nova/NovaLibrary/Release && $(MAKE) clean all
+	-cd /home/addison/Code/Nova/Nova_UI_Core/Release && $(MAKE) clean all
 
 # Tool invocations
-honeydhostconfig: $(OBJS) $(USER_OBJS) /home/victim/Code/Nova/NovaLibrary/Release/libNovaLibrary.a /home/victim/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so
+honeydhostconfig: $(OBJS) $(USER_OBJS) /home/addison/Code/Nova/NovaLibrary/Release/libNovaLibrary.a /home/addison/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
 	g++ -L/Nova_UI_Core/Release -shared -o "honeydhostconfig" $(OBJS) $(USER_OBJS) $(LIBS)
@@ -59,7 +59,7 @@ clean:
 
 .PHONY: all clean dependents
 .SECONDARY:
-/home/victim/Code/Nova/NovaLibrary/Release/libNovaLibrary.a:
-/home/victim/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so:
+/home/addison/Code/Nova/NovaLibrary/Release/libNovaLibrary.a:
+/home/addison/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so:
 
 -include ../makefile.targets
