@@ -1,18 +1,16 @@
-extends loginlayout
-
-block content
+body
   form(method="post", action="/login?redirect=#{redirect}")
-    table(align="center", border="0", style="background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;")
+    table(align="center")
       tr
         td
           label Username
         td
-          input(type="text", name="username", size="20")
+          input(type="text", name="username")
       tr
         td
           label Password
         td
-          input(type="password", name="password", size="20") 
+          input(type="password", name="password") 
       tr
         td
         td

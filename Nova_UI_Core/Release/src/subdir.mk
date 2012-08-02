@@ -10,10 +10,6 @@ CPP_SRCS += \
 ../src/NodeManager.cpp \
 ../src/NovadControl.cpp \
 ../src/OsPersonalityDb.cpp \
-../src/Personality.cpp \
-../src/PersonalityNode.cpp \
-../src/PersonalityTable.cpp \
-../src/PersonalityTree.cpp \
 ../src/ScriptsTable.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
@@ -27,10 +23,6 @@ OBJS += \
 ./src/NodeManager.o \
 ./src/NovadControl.o \
 ./src/OsPersonalityDb.o \
-./src/Personality.o \
-./src/PersonalityNode.o \
-./src/PersonalityTable.o \
-./src/PersonalityTree.o \
 ./src/ScriptsTable.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
@@ -44,10 +36,6 @@ CPP_DEPS += \
 ./src/NodeManager.d \
 ./src/NovadControl.d \
 ./src/OsPersonalityDb.d \
-./src/Personality.d \
-./src/PersonalityNode.d \
-./src/PersonalityTable.d \
-./src/PersonalityTree.d \
 ./src/ScriptsTable.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \

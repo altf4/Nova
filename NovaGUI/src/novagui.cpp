@@ -362,11 +362,21 @@ bool NovaGUI::ConnectGuiToNovad()
 				continue;
 			}
 			suspectItem.item = NULL;
-			this->ProcessReceivedSuspect(suspectItem, false);
+			Lock lock(&suspectTableLock);
+			if(SuspectTable.keyExists(suspectItem.suspect->GetIpAddress()))
+			{
+				if(SuspectTable[suspectItem.suspect->GetIpAddress()].suspect != NULL)
+				{
+					delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
+				}
+				if(SuspectTable[suspectItem.suspect->GetIpAddress()].item != NULL)
+				{
+					suspectItem.item = SuspectTable[suspectItem.suspect->GetIpAddress()].item;
+				}
+			}
+			SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
 		}
-
 		DrawAllSuspects();
-
 		connectedToNovad = true;
 		return true;
 	}
@@ -431,38 +441,28 @@ void NovaGUI::UpdateSystemStatus()
   Suspect Functions
  ******************/
 
-void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initialization)
+void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem)
 {
 	in_addr_t address;
+	if(suspectItem.suspect != NULL)
 	{
-		Lock lock(&suspectTableLock);
-		//If the suspect already exists in our table
-		if(SuspectTable.keyExists(suspectItem.suspect->GetIpAddress()))
 		{
-			if(!initialization)
+			Lock lock(&suspectTableLock);
+			//If the suspect already exists in our table
+			if(SuspectTable.keyExists(suspectItem.suspect->GetIpAddress()))
 			{
-				delete suspectItem.suspect;
-				return;
+				//We point to the same item so it doesn't need to be deleted.
+				suspectItem.item = SuspectTable[suspectItem.suspect->GetIpAddress()].item;
+
+				//Delete the old Suspect since we created and pointed to a new one
+				delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
 			}
-
-			//We point to the same item so it doesn't need to be deleted.
-			suspectItem.item = SuspectTable[suspectItem.suspect->GetIpAddress()].item;
-
-			//Delete the old Suspect since we created and pointed to a new one
-			delete SuspectTable[suspectItem.suspect->GetIpAddress()].suspect;
+			//Update the entry in the table
+			SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
+			address = suspectItem.suspect->GetIpAddress();
 		}
-		//Update the entry in the table
-
-		SuspectTable[suspectItem.suspect->GetIpAddress()] = suspectItem;
-		address = suspectItem.suspect->GetIpAddress();
+		Q_EMIT newSuspect(address);
 	}
-
-	if(!initialization)
-	{
-		return;
-	}
-
-	Q_EMIT newSuspect(address);
 }
 
 /*****************
@@ -471,22 +471,23 @@ void NovaGUI::ProcessReceivedSuspect(suspectItem suspectItem, bool initializatio
 
 void NovaGUI::DrawAllSuspects()
 {
+	Lock lock(&suspectTableLock);
 	m_editingSuspectList = true;
-	ClearSuspectList();
-
+	ui.suspectList->clear();
 	QListWidgetItem *item = NULL;
 	Suspect *suspect = NULL;
 	QString str;
 	QBrush brush;
 	QColor color;
-
-	Lock lock(&suspectTableLock);
 	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
+		if(it->second.item != NULL)
+		{
+			it->second.item = NULL;
+		}
 		str = (QString) string(inet_ntoa(it->second.suspect->GetInAddr())).c_str();
 		suspect = it->second.suspect;
 		//Create the colors for the draw
-
 		if(suspect->GetClassification() < 0)
 		{
 			// In training mode, classification is never set and ends up at -1
@@ -510,25 +511,27 @@ void NovaGUI::DrawAllSuspects()
 		item = new QListWidgetItem(str,0);
 		item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 		item->setForeground(brush);
-
-		in_addr_t addr;
-		int i = 0;
-		if(ui.suspectList->count())
+		if(suspect->GetClassification() < 0)
 		{
+			ui.suspectList->addItem(item);
+		}
+		else
+		{
+			in_addr_t addr;
+			int i = 0;
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
 				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
-				if(SuspectTable[addr].suspect->GetClassification() < suspect->GetClassification())
+				if(SuspectTable[addr].suspect->GetClassification() <= suspect->GetClassification())
 				{
 					break;
 				}
 			}
+			ui.suspectList->insertItem(i, item);
 		}
-		ui.suspectList->insertItem(i, item);
 
 		//Point to the new items
 		it->second.item = item;
-		it->second.suspect = suspect;
 	}
 	UpdateSuspectWidgets();
 	m_editingSuspectList = false;
@@ -538,13 +541,13 @@ void NovaGUI::DrawAllSuspects()
 //*NOTE This slot is not thread safe, make sure you set appropriate locks before sending a signal to this slot
 void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 {
+	Lock lock(&suspectTableLock);
 	m_editingSuspectList = true;
 	QString str;
 	QBrush brush;
 	QColor color;
 	in_addr_t addr;
 
-	Lock lock(&suspectTableLock);
 	suspectItem *sItem = &SuspectTable[suspectAddr];
 	//Extract Information
 	str = (QString) string(inet_ntoa(sItem->suspect->GetInAddr())).c_str();
@@ -576,77 +579,105 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		sItem->item->setForeground(brush);
 		bool selected = false;
 		int current_row = ui.suspectList->currentRow();
-
 		//If this is our current selection flag it so we can update the selection if we change the index
 		if(current_row == ui.suspectList->row(sItem->item))
 		{
 			selected = true;
 		}
 
-		ui.suspectList->removeItemWidget(sItem->item);
+		ui.suspectList->takeItem(ui.suspectList->row(sItem->item));
 
-		if(ui.suspectList->count())
+		if(ui.suspectList->count() > 1)
 		{
 			int step = 1;
 			int index = (int)(ui.suspectList->count()/2);
 			bool indexFound = false;
 
 			double sClassification = sItem->suspect->GetClassification();
-			while(!indexFound)
+			if(sClassification < 0)
 			{
-				addr = inet_addr(ui.suspectList->item(index)->text().toStdString().c_str());
-				step++;
-
-				//If the current suspect is less hostile than us
-				if(SuspectTable[addr].suspect->GetClassification() < sClassification)
-				{
-					//If we've hit the start of the list (most hostile position)
-					if(index == 0)
-					{
-						indexFound = true;
-						break;
-					}
-					//If the suspect before this one is more hostile than us, we've found our position
-					addr = inet_addr(ui.suspectList->item(index-1)->text().toStdString().c_str());
-					if(SuspectTable[addr].suspect->GetClassification() >= sClassification)
-					{
-						indexFound = true;
-						break;
-					}
-					index -= (int)(ui.suspectList->count()/(::pow(2, step)));
-				}
-				//If the current suspect is more hostile than us
-				else if(SuspectTable[addr].suspect->GetClassification() > sClassification)
-				{
-					//If we've hit the end of the list (least hostile position)
-					if(index == ui.suspectList->count())
-					{
-						indexFound = true;
-						break;
-					}
-					//If the suspect after this one is less hostile than us, we've found our position
-					addr = inet_addr(ui.suspectList->item(index+1)->text().toStdString().c_str());
-					if(SuspectTable[addr].suspect->GetClassification() <= sClassification)
-					{
-						indexFound = true;
-						break;
-					}
-					index += (int)(ui.suspectList->count()/(::pow(2, step)));
-				}
-				//If the classification is the same we can insert immediately
-				else
-				{
-					indexFound = true;
-					break;
-				}
+				ui.suspectList->addItem(sItem->item);
 			}
+			else
+			{
+				while(!indexFound)
+				{
+					addr = inet_addr(ui.suspectList->item(index)->text().toStdString().c_str());
+					step++;
+					if(index >= ui.suspectList->count())
+					{
+						index = ui.suspectList->count();
+						indexFound = true;
+						break;
+					}
+					else if(index <= 0)
+					{
+						index = 0;
+						indexFound = true;
+						break;
+					}
 
-			ui.suspectList->insertItem(index, sItem->item);
+					//If the current suspect is less hostile than us
+					if(SuspectTable[addr].suspect->GetClassification() < sClassification)
+					{
+						//If the suspect before this one is more hostile than us, we've found our position
+						addr = inet_addr(ui.suspectList->item(index-1)->text().toStdString().c_str());
+						if(SuspectTable[addr].suspect->GetClassification() >= sClassification)
+						{
+							indexFound = true;
+							break;
+						}
+						int prev = index;
+						index -= (int)(ui.suspectList->count()/(::pow(2, step)));
+						if(prev == index)
+						{
+							index--;
+						}
+					}
+					//If the current suspect is more hostile than us
+					else if(SuspectTable[addr].suspect->GetClassification() > sClassification)
+					{
+						//If the suspect after this one is less hostile than us, we've found our position
+						addr = inet_addr(ui.suspectList->item(index+1)->text().toStdString().c_str());
+						if(SuspectTable[addr].suspect->GetClassification() <= sClassification)
+						{
+							indexFound = true;
+							break;
+						}
+						int prev = index;
+						index += (int)(ui.suspectList->count()/(::pow(2, step)));
+						if(prev == index)
+						{
+							index++;
+						}
+					}
+					//If the classification is the same we can insert immediately
+					else
+					{
+						indexFound = true;
+						break;
+					}
+				}
+				ui.suspectList->insertItem(index, sItem->item);
+			}
 
 			//If we need to update the selection
 			if(selected)
 			{
 				ui.suspectList->setCurrentRow(index);
+			}
+		}
+		else if(ui.suspectList->count() == 1)
+		{
+			double sClassification = sItem->suspect->GetClassification();
+			addr = inet_addr(ui.suspectList->item(0)->text().toStdString().c_str());
+			if((SuspectTable[addr].suspect->GetClassification() >= sClassification) || (sClassification < 0))
+			{
+				ui.suspectList->addItem(sItem->item);
+			}
+			else
+			{
+				ui.suspectList->insertItem(0, sItem->item);
 			}
 		}
 		else
@@ -663,7 +694,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		sItem->item->setTextAlignment(Qt::AlignLeft|Qt::AlignBottom);
 		sItem->item->setForeground(brush);
 
-		if(ui.suspectList->count())
+		if(ui.suspectList->count() > 1)
 		{
 			int step = 1;
 			int index = (int)(ui.suspectList->count()/2);
@@ -672,18 +703,25 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			double sClassification = sItem->suspect->GetClassification();
 			while(!indexFound)
 			{
+				if(index >= ui.suspectList->count())
+				{
+					index = ui.suspectList->count();
+					indexFound = true;
+					break;
+				}
+				else if(index <= 0)
+				{
+					index = 0;
+					indexFound = true;
+					break;
+				}
+
 				addr = inet_addr(ui.suspectList->item(index)->text().toStdString().c_str());
 				step++;
 
 				//If the current suspect is less hostile than us
 				if(SuspectTable[addr].suspect->GetClassification() < sClassification)
 				{
-					//If we've hit the start of the list (most hostile position)
-					if(index == 0)
-					{
-						indexFound = true;
-						break;
-					}
 					//If the suspect before this one is more hostile than us, we've found our position
 					addr = inet_addr(ui.suspectList->item(index-1)->text().toStdString().c_str());
 					if(SuspectTable[addr].suspect->GetClassification() >= sClassification)
@@ -691,16 +729,16 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 						indexFound = true;
 						break;
 					}
+					int prev = index;
 					index -= (int)(ui.suspectList->count()/(::pow(2, step)));
+					if(prev == index)
+					{
+						index--;
+					}
 				}
 				//If the current suspect is more hostile than us
 				else if(SuspectTable[addr].suspect->GetClassification() > sClassification)
 				{
-					//If we've hit the end of the list (least hostile position)
-					if(index == ui.suspectList->count())
-					{
-						break;
-					}
 					//If the suspect after this one is less hostile than us, we've found our position
 					addr = inet_addr(ui.suspectList->item(index+1)->text().toStdString().c_str());
 					if(SuspectTable[addr].suspect->GetClassification() <= sClassification)
@@ -708,7 +746,12 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 						indexFound = true;
 						break;
 					}
+					int prev = index;
 					index += (int)(ui.suspectList->count()/(::pow(2, step)));
+					if(prev == index)
+					{
+						index++;
+					}
 				}
 				//If the classification is the same we can insert immediately
 				else
@@ -718,6 +761,19 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 				}
 			}
 			ui.suspectList->insertItem(index, sItem->item);
+		}
+		else if(ui.suspectList->count() == 1)
+		{
+			double sClassification = sItem->suspect->GetClassification();
+			addr = inet_addr(ui.suspectList->item(0)->text().toStdString().c_str());
+			if((SuspectTable[addr].suspect->GetClassification() >= sClassification) || (sClassification < 0))
+			{
+				ui.suspectList->addItem(sItem->item);
+			}
+			else
+			{
+				ui.suspectList->insertItem(0, sItem->item);
+			}
 		}
 		else
 		{
@@ -793,8 +849,17 @@ void NovaGUI::ClearSuspectList()
 	//Since clearing permanently deletes the items we need to make sure the suspects point to null
 	for(SuspectGUIHashTable::iterator it = SuspectTable.begin() ; it != SuspectTable.end(); it++)
 	{
-		it->second.item = NULL;
+		if(it->second.item != NULL)
+		{
+			it->second.item = NULL;
+		}
+		if(it->second.suspect != NULL)
+		{
+			delete it->second.suspect;
+			it->second.suspect = NULL;
+		}
 	}
+	SuspectTable.clear();
 }
 
 /********************
@@ -844,11 +909,7 @@ void NovaGUI::on_actionClear_All_Suspects_triggered()
 {
 	m_editingSuspectList = true;
 	ClearAllSuspects();
-
-	{
-		Lock lock(&suspectTableLock);
-		SuspectTable.clear();
-	}
+	ClearSuspectList();
 
 	QFile::remove(QString::fromStdString(Config::Inst()->GetPathCESaveFile()));
 	DrawAllSuspects();
@@ -980,16 +1041,19 @@ void NovaGUI::on_actionTrainingData_triggered()
 
 void  NovaGUI::on_actionHide_Old_Suspects_triggered()
 {
+	Lock lock(&suspectTableLock);
 	m_editingSuspectList = true;
-	ClearSuspectList();
+	ui.suspectList->clear();
+	for(SuspectGUIHashTable::iterator it = SuspectTable.begin(); it != SuspectTable.end(); it++)
+	{
+		it->second.item = NULL;
+	}
 	m_editingSuspectList = false;
 }
 
 void  NovaGUI::on_actionShow_All_Suspects_triggered()
 {
-	m_editingSuspectList = true;
 	DrawAllSuspects();
-	m_editingSuspectList = false;
 }
 
 void NovaGUI::on_actionHelp_2_triggered()
@@ -1214,7 +1278,7 @@ void NovaGUI::HideSuspect(in_addr_t addr)
 		return;
 	}
 
-	ui.suspectList->removeItemWidget(sItem->item);
+	ui.suspectList->takeItem(ui.suspectList->row(sItem->item));
 	delete sItem->item;
 	sItem->item = NULL;
 	m_editingSuspectList = false;
@@ -1279,7 +1343,7 @@ void *CallbackLoop(void *ptr)
 				struct suspectItem suspectItem;
 				suspectItem.suspect = change.m_suspect;
 				suspectItem.item = NULL;
-				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem, true);
+				((NovaGUI*)ptr)->ProcessReceivedSuspect(suspectItem);
 				break;
 			}
 			case CALLBACK_ALL_SUSPECTS_CLEARED:
@@ -1289,16 +1353,23 @@ void *CallbackLoop(void *ptr)
 			}
 			case CALLBACK_SUSPECT_CLEARED:
 			{
-				((NovaGUI*)ptr)->HideSuspect(change.m_suspectIP);
+				if(change.m_suspect != NULL)
 				{
+					in_addr_t addr = change.m_suspect->GetIpAddress();
+					((NovaGUI*)ptr)->HideSuspect(addr);
 					Lock lock(&suspectTableLock);
-					try
+					if(SuspectTable.keyExists(addr))
 					{
-						SuspectTable.erase(change.m_suspectIP);
-					}
-					catch(Nova::hashMapException &s)
-					{
-						LOG(ERROR, "Error clearing suspect as commanded from GUI: " + string(s.what()), "");
+						if(SuspectTable[addr].item != NULL)
+						{
+							((NovaGUI*)ptr)->ui.suspectList->takeItem(((NovaGUI*)ptr)->ui.suspectList->row(SuspectTable[addr].item));
+							delete SuspectTable[addr].item;
+						}
+						if(SuspectTable[addr].suspect != NULL)
+						{
+							delete SuspectTable[addr].suspect;
+						}
+						SuspectTable.erase(addr);
 					}
 				}
 				break;
@@ -1309,7 +1380,6 @@ void *CallbackLoop(void *ptr)
 			}
 		}
 	}
-
 	return NULL;
 }
 

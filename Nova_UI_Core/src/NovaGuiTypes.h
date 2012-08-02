@@ -90,7 +90,8 @@ struct Port
 	inline std::string GetScriptName() {return m_scriptName;}
 	inline std::string GetProxyIP() {return m_proxyIP;}
 	inline std::string GetProxyPort() {return m_proxyPort;}
-	inline bool GetIsInherited() {return m_isInherited;};
+	inline bool GetIsInherited() {return m_isInherited;}
+	inline std::string GetService() {return m_service;}
 
 
 };
