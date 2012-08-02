@@ -66,18 +66,16 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 	//Delete Nodes Case
 	if(totalNodes > num_nodes)
 	{
-
+		RemoveNodes(totalNodes - num_nodes);
 	}
 	//Add Nodes Case
 	else if(totalNodes < num_nodes)
 	{
-		GenerateNodes(num_nodes);
+		GenerateNodes(num_nodes - totalNodes);
 	}
-	//Redistribute exisiting nodes case
-	else
-	{
 
-	}
+	//Redistribute exisiting nodes case
+	AdjustNodesToTargetDistributions();
 }
 
 //This function adds or subtracts nodes directly from the target profile until the desired number is matched
@@ -908,7 +906,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 			//If the vendor is still over allocated
 			if(highPCounter->m_count < (highPCounter->m_increment - 1))
 			{
-				underPopulatedPorts.push_back(highPCounter);
+				overPopulatedPorts.push_back(highPCounter);
 			}
 		}
 	}
