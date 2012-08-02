@@ -77,7 +77,8 @@ string Config::m_prefixes[] =
 	"WEB_UI_PORT",
 	"DATABASE_HOST",
 	"DATABASE_USER",
-	"DATABASE_PASS"
+	"DATABASE_PASS",
+	"CLEAR_AFTER_HOSTILE_EVENT"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -829,6 +830,21 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_DBPass = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+
+			// CLEAR_AFTER_HOSTILE_EVENT
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_clearAfterHostile = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -2615,6 +2631,18 @@ void Config::SetWebUIPort(int port)
 {
 	Lock lock(&m_lock, false);
 	m_webUIPort = port;
+}
+
+bool Config::GetClearAfterHostile()
+{
+	Lock lock(&m_lock, true);
+	return m_clearAfterHostile;
+}
+
+void Config::SetClearAfterHostile(bool clearAfterHostile)
+{
+	Lock lock(&m_lock, false);
+	m_clearAfterHostile = clearAfterHostile;
 }
 
 

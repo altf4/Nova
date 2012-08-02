@@ -442,6 +442,7 @@ CUSTOM_PCAP_FILTER
 CUSTOM_PCAP_MODE 0
 
 
+############################################
 # TRAINING_SESSION #
 ############################################
 #
@@ -450,6 +451,7 @@ TRAINING_SESSION trainingSession
 
 
 
+############################################
 # WEB_UI_PORT #
 ############################################
 #
@@ -458,8 +460,18 @@ TRAINING_SESSION trainingSession
 WEB_UI_PORT 8080
 
 
+############################################
 # Database credentials
+############################################
 DATABASE_HOST 127.0.0.1
 DATABASE_USER nova
 DATABASE_PASS avon
+
+############################################
+# CLEAR_AFTER_HOSTILE_EVENT #
+############################################
+# Clear suspect data when there is a hostile event
+CLEAR_AFTER_HOSTILE_EVENT 0
+
+
 

@@ -506,7 +506,7 @@ app.get('/', passport.authenticate('basic', { session: false }), function(req, r
     client.query('SELECT run FROM firstrun',
     function selectCb(err, results, fields) {
       if(err) {
-	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to access database" }});
+	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to access database: " + err}});
 		return;
       }
 
@@ -540,7 +540,7 @@ app.post('/createNewUser', passport.authenticate('basic', { session: false }), f
     client.query('SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape(userName) + '',
     function selectCb(err, results, fields) {
       if(err) {
-	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database" }});
+	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database: " + err }});
 		return;
       }
 
@@ -567,7 +567,7 @@ app.post('/createInitialUser', passport.authenticate('basic', { session: false }
     client.query('SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape(userName) + '',
     function selectCb(err, results, fields) {
       if(err) {
-	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database" }});
+	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database: " + err }});
 		return;
       }
 
@@ -1117,7 +1117,7 @@ everyone.now.WizardHasRun = function(callback) {
 
 everyone.now.GetHostileEvents = function(callback) {
   client.query(
-    'SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,haystack_event_frequency,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics',
+    'SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,haystack_event_frequency,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_interval_deviation,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics',
 	function (err, results, fields) {
 		if(err) {
 			console.log(err);
@@ -1145,9 +1145,9 @@ everyone.now.ClearHostileEvents = function(callback) {
   );
 }
 
-everyone.now.ClearHostileEvents = function(id, callback) {
+everyone.now.ClearHostileEvent = function(id, callback) {
   client.query(
-    'DELETE FROM suspect_alerts',
+    'DELETE FROM suspect_alerts where id = ' + id,
 	function (err) {
 		if(err) {
 			console.log(err);

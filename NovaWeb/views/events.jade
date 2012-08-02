@@ -2,8 +2,9 @@ extends layout
 
 block content
   div#nova_suspects_header
-    h1 Suspect List
+    h1 Hostile Events
     br
+    input(type="button", onClick="now.ClearHostileEvents(finishedClearing)", value="Clear all events")
     br
     
   div#nova_suspects
@@ -15,6 +16,14 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   script
+    function finishedClearing(result) {
+        if (result == "true") {
+            window.location.reload();
+        } else {
+            alert("There was an error when clearing the event list.");
+        }
+    }
+
     function featureFormatter(d) {
         var num = new Number(d);
         return (num.toFixed(2));
@@ -46,6 +55,7 @@ block headerAdditions
         gridStructure.push({name: "ID"});
         gridStructure.push({name: "Timestamp"});
         gridStructure.push({name: "Address"});
+        gridStructure.push({name: "Classification"});
    
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++) {

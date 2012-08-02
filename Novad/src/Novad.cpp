@@ -1149,8 +1149,9 @@ void UpdateAndClassify(const in_addr_t& key)
 		return;
 	}
 
+
 	//Send silent alarm if needed
-	if(suspectCopy.GetIsHostile() && !oldIsHostile)
+	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
 		if(suspectCopy.GetIsLive())
 		{
@@ -1163,10 +1164,30 @@ void UpdateAndClassify(const in_addr_t& key)
 			LOG(ERROR, "Unable to insert hostile suspect event into database. " + string(e.what()), "");
 		}
 
+		if (Config::Inst()->GetClearAfterHostile())
+		{
+			stringstream ss;
+			ss << "Main suspect Erase returned: " << suspects.Erase(key);
+			LOG(DEBUG, ss.str(), "");
+
+
+			stringstream ss2;
+			ss2 << "LastSave suspect Erase returned: " << suspectsSinceLastSave.Erase(key);
+			LOG(DEBUG, ss2.str(), "");
+
+			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+			msg->m_IPAddress = suspectCopy.GetIpAddress();
+			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+		}
+		else
+		{
+			//Send to UI
+			SendSuspectToUIs(&suspectCopy);
+		}
+
 		LOG(ALERT, "Detected potentially hostile traffic from " + suspectCopy.GetIpString(), "");
 	}
-	//Send to UI
-	SendSuspectToUIs(&suspectCopy);
+
 }
 
 void CheckForDroppedPackets()

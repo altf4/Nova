@@ -224,6 +224,9 @@ public:
 
 	std::vector<std::string> GetPrefixes();
 
+	bool GetClearAfterHostile();
+	void SetClearAfterHostile(bool clearAfterHostile);
+
 protected:
 	Config();
 
@@ -299,6 +302,8 @@ private:
 	std::string m_DBHost;
 	std::string m_DBUser;
 	std::string m_DBPass;
+
+	bool m_clearAfterHostile;
 
 	std::string m_loggerPreferences;
 	// a vector containing the email recipients; may move this into the actual classes
