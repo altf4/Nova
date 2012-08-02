@@ -41,6 +41,10 @@ well; you can get them using this command:
 
     http://nmap.org/download.html
 
+	OR
+
+    wget http://nmap.org/dist/nmap-6.01.tar.bz2
+
 There are instructions for manual install on the same page.
 
 

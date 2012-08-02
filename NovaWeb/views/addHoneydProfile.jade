@@ -794,7 +794,7 @@ block headerAdditions
                 labelDist.removeChild(document.getElementById("ethDiv" + i));
                 ranges.removeChild(document.getElementById("rangeDiv" + i));
                 
-                if(deleteButtonHere.childNodes.length > 1)
+                if(deleteButtons.childNodes.length > 1)
                 {
                     deleteButtons.removeChild(document.getElementById("deleteDiv" + i));
                 }
@@ -813,90 +813,105 @@ block headerAdditions
         }
 
         if(dojo.byId("inheritEthernet").checked) 
-        {
+        {       
             dijit.byId("ethernet").setDisabled(true);
             dojo.byId("ethSelectButton").disabled = true;
             
             now.GetInheritedEthernetList(document.getElementById("parentName").value, 
             function(elements, distributions){
-                document.getElementById("ethVendorLength").setAttribute("value", elements.length);
-
-                document.getElementById("errorEthernet").value = "";
-                document.getElementById("errorEthernet").innerHTML = "";
-
-                var teed = document.getElementById("labelDist");
-                var teed2 = document.getElementById("ranges");
-                var teed3 = document.getElementById("deleteButtonHere");
-
-                var teedFor = teed.childNodes.length;
-                var teed2For = teed2.childNodes.length;
-                var teed3For = teed3.childNodes.length;
-
-                clearCreated();
-
-                for(var i in elements)
+                var oldEthVendLength = parseInt(document.getElementById("ethVendorLength").value);
+                
+                if((oldEthVendLength == 0) || (oldEthVendLength != elements.length))
                 {
-                    var distro = distributions[i];
-                
-                    if(Math.floor(distro + 0.5) == Math.floor(distro))
+                    document.getElementById("ethVendorLength").value = elements.length;
+
+                    document.getElementById("errorEthernet").value = "";
+                    document.getElementById("errorEthernet").innerHTML = "";
+
+                    var teed = document.getElementById("labelDist");
+                    var teed2 = document.getElementById("ranges");
+                    var teed3 = document.getElementById("deleteButtonHere");
+
+                    var teedFor = teed.childNodes.length;
+                    var teed2For = teed2.childNodes.length;
+                    var teed3For = teed3.childNodes.length;
+
+                    clearCreated();
+
+                    for(var i in elements)
                     {
-                        distributions[i] = Math.ceil(distro);
-                        distributions[i + 1] += distro % 1; 
-                    }
-                    else
-                    {
-                        distributions[i] = Math.floor(distro);
-                        distributions[i + 1] -= distro % 1; 
-                    }
+                        var distro = distributions[i];
                 
-                    var div = document.createElement("div");
+                        if(Math.floor(distro + 0.5) == Math.floor(distro))
+                        {
+                            distributions[i] = Math.ceil(distro);
+                            distributions[i + 1] += distro % 1; 
+                        }
+                        else
+                        {
+                            distributions[i] = Math.floor(distro);
+                            distributions[i + 1] -= distro % 1; 
+                        }
                 
-                    div.setAttribute("id", "ethDiv" + i);
-                    div.setAttribute("style", "width: content_width");
+                        var div = document.createElement("div");
                 
-                    var rangeDiv = document.createElement("div");
+                        div.setAttribute("id", "ethDiv" + i);
+                        div.setAttribute("style", "width: content_width");
+                    
+                        var rangeDiv = document.createElement("div");
                 
-                    rangeDiv.setAttribute("id", "rangeDiv" + i);
-                    rangeDiv.setAttribute("style", "width: content_width");
+                        rangeDiv.setAttribute("id", "rangeDiv" + i);
+                        rangeDiv.setAttribute("style", "width: content_width");
                    
-                    var add = document.createElement("input");
+                        var add = document.createElement("input");
                     
-                    add.setAttribute("id", "vend" + i);
-                    add.innerHTML = elements[i];
-                    add.setAttribute("type", "text");
-                    add.setAttribute("value", elements[i]);
-                    add.setAttribute("style", "width: 10");
-                    add.setAttribute("readonly", "true");
-                    add.setAttribute("style", "display: inline-block; float: left; clear: left");
-                                       
-                    var br = document.createElement("br");
+                        add.setAttribute("id", "vend" + i);
+                        add.innerHTML = elements[i];
+                        add.setAttribute("type", "text");
+                        add.setAttribute("value", elements[i]);
+                        add.setAttribute("style", "width: 10");
+                        add.setAttribute("readonly", "true");
+                        add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                                           
+                        var br = document.createElement("br");
                     
-                    var distLabel = document.createElement("input");
+                        var distLabel = document.createElement("input");
                     
-                    distLabel.setAttribute("id","distLabel" + i);
-                    distLabel.setAttribute("value", distributions[i] + "%");
-                    distLabel.innerHTML = distributions[i] + "%";
-                    distLabel.setAttribute("type", "text");
-                    distLabel.setAttribute("style","width: 40px; float: right; clear: right");
-                    distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
+                        distLabel.setAttribute("id","distLabel" + i);
+                        distLabel.setAttribute("value", distributions[i] + "%");
+                        distLabel.innerHTML = distributions[i] + "%";
+                        distLabel.setAttribute("type", "text");
+                        distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+                        distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
+    
+                        var distribution = document.createElement("input");
+                    
+                        distribution.setAttribute("id", "dist" + i);
+                        distribution.setAttribute("type", "range");
+                        distribution.setAttribute("min", "1");                    
+                        distribution.setAttribute("max", 100 - elements.length);
+                        distribution.setAttribute("step", "1");
+                        distribution.setAttribute("value", distributions[i]);
+                        distribution.setAttribute("style", "vertical-align: text");
+                        distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
 
-                    var distribution = document.createElement("input");
+                        div.appendChild(add);
+                        div.appendChild(distLabel);
+                        teed.appendChild(div);
+                        rangeDiv.appendChild(distribution);
+                        rangeDiv.appendChild(br);
+                        teed2.appendChild(rangeDiv);
                     
-                    distribution.setAttribute("id", "dist" + i);
-                    distribution.setAttribute("type", "range");
-                    distribution.setAttribute("min", "1");                    
-                    distribution.setAttribute("max", 100 - elements.length);
-                    distribution.setAttribute("step", "1");
-                    distribution.setAttribute("value", distributions[i]);
-                    distribution.setAttribute("style", "vertical-align: text");
-                    distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
-
-                    div.appendChild(add);
-                    div.appendChild(distLabel);
-                    teed.appendChild(div);
-                    rangeDiv.appendChild(distribution);
-                    rangeDiv.appendChild(br);
-                    teed2.appendChild(rangeDiv);
+                        if(dojo.byId("ethVendorLength").value == 1)
+                        {
+                            document.getElementById("dist0").value = 100;
+                            document.getElementById("dist0").max = 100;
+                            document.getElementById("distLabel0").value = "100%";
+                            document.getElementById("distLabel0").innerHTML = "100%";
+                            document.getElementById("distLabel0").setAttribute("readonly","true");
+                            document.getElementById("dist0").setAttribute("readonly", "true");
+                        }
+                    }    
                 }
             });     
         }
@@ -905,7 +920,7 @@ block headerAdditions
             dojo.byId("ethSelectButton").disabled = false;
             dijit.byId("ethernet").setDisabled(false);
             
-            dojo.byId("ethVendorLength").setAttribute("value", "0");
+            dojo.byId("ethVendorLength").value = "0";
             
             var deletes = document.getElementById("row3").childNodes;
             
@@ -940,11 +955,11 @@ block headerAdditions
                 // to avoid those elements. I'll try experimenting with using
                 // tagName stuff a little bit but this'll be how it is for now.
             }
-            if(newProfile == "false")
+            if(newProfile == "false" && document.getElementById("dist0") === undefined)
             {
                 now.GetVendors(document.getElementById("name").value, function(elements, distributions){
                 
-                document.getElementById("numCreated").setAttribute("value", elements.length);
+                document.getElementById("numCreated").value = elements.length;
 
                 document.getElementById("errorEthernet").value = "";
                 document.getElementById("errorEthernet").innerHTML = "";

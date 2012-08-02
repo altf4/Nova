@@ -121,7 +121,19 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 						VendorMacDb *macVendorDB = new VendorMacDb();
 						macVendorDB->LoadPrefixFile();
 						uint rawMACPrefix = macVendorDB->AtoMACPrefix(macString);
-						persObject->AddVendor(macVendorDB->LookupVendor(rawMACPrefix));
+						string vendorString = macVendorDB->LookupVendor(rawMACPrefix);
+
+						if(!vendorString.empty())
+						{
+							try
+							{
+								persObject->AddVendor(vendorString);
+							}
+							catch(emptyKeyException e)
+							{
+								LOG(ERROR,("Couldn't determine MAC vendor type for local machine, " + e.what()), "");
+							}
+						}
 					}
 				}
 				// if we've found the MAC, add the hardware address to the MACs

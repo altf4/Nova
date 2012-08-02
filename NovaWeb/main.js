@@ -389,7 +389,7 @@ app.get('/editHoneydProfile', passport.authenticate('basic', { session: false })
 app.get('/addHoneydProfile', passport.authenticate('basic', { session: false }), function(req, res) {
 	parentName = req.query["parent"]; 
 
-	res.render('editHoneydProfile.jade', 
+	res.render('addHoneydProfile.jade', 
 	{ locals : {
 		oldName: parentName
 		, parentName: parentName
