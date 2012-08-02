@@ -66,21 +66,31 @@ public:
 	// Note: This function constructs a PersonalityTree from the HoneydConfiguration object passed
 	NodeManager(HoneydConfiguration *honeydConfig);
 
+	void SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nodes);
+
+	void SetNumNodesOnProfile(NodeProfile *targetProfile, int num_nodes);
+
+private:
+
 	// GenerateNodes does exactly what it sounds like -- creates nodes. Using the
 	// ProfileCounters in the m_profileCounters variable, it will generate up to
 	// num_nodes nodes of varying profiles, macs and ports, depending on the calculated
 	// per-personality distributions.
 	//  unsigned int num_nodes - ceiling on the amount of nodes to make
 	// Returns nothing.
-	void GenerateNodes(unsigned int num_nodes);
+	void GenerateNodes(int num_nodes);
+
+	void RemoveNodes(int num_nodes);
+
+	void GetCurrentCount();
+
+	void AdjustNodesToTargetDistributions();
 
 	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
 	//		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
 	// 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of
 	//		the profile tree
 	void GenerateProfileCounters(NodeProfile *rootProfile);
-
-private:
 
 	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
 	//		randomized nodes from the profiles at the different nodes of the Personality Tree.
@@ -120,7 +130,6 @@ private:
 
 	unsigned int m_nodeCount;
 	unsigned int m_targetNodeCount;
-	unsigned int m_hostCount;
 	std::vector<struct ProfileCounter> m_profileCounters;
 	std::vector<Node> m_nodes;
 

@@ -777,7 +777,7 @@ void Nova::GenerateConfiguration()
 	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
 	persTree.AddAllPorts();
 	NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
-	nodeBuilder.GenerateNodes(numNodes);
+	nodeBuilder.SetNumNodesOnProfileTree(&persTree.GetHDConfig()->m_profiles["default"], numNodes);
 	persTree.GetHDConfig()->SaveAllTemplates();
 }
 
