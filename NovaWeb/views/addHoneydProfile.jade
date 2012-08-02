@@ -882,6 +882,7 @@ block headerAdditions
                         distLabel.innerHTML = distributions[i] + "%";
                         distLabel.setAttribute("type", "text");
                         distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+                        distLabel.setAttribute("readonly", true);
                         distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
     
                         var distribution = document.createElement("input");
@@ -893,6 +894,7 @@ block headerAdditions
                         distribution.setAttribute("step", "1");
                         distribution.setAttribute("value", distributions[i]);
                         distribution.setAttribute("style", "vertical-align: text");
+                        distribution.setAttribute("readonly", true);
                         distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
 
                         div.appendChild(add);
