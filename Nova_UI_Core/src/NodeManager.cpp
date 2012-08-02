@@ -189,7 +189,7 @@ void NodeManager::GenerateNodes(int num_nodes)
 
 				curNode.m_ports.clear();
 				int maxPorts  = (int)(avg_ports*(log10(avg_ports)));
-				while(!portCounters.empty() && (num_ports < maxPorts));
+				while(!portCounters.empty() && (num_ports < maxPorts))
 				{
 					unsigned int randIndex = time(NULL) % portCounters.size();
 					PortCounter *curCounter = portCounters[randIndex];
