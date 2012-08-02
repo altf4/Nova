@@ -1253,6 +1253,10 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
         {
             honeydProfile.SetEthernet(profile.ethernet);
         }
+        else if(profile.isEthernetInherited)
+        {
+            honeydProfile.SetVendors([], []);
+        }
         else if(profile.isEthernetInherited == false)
         {
             var ethVendors = [];

@@ -92,20 +92,35 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
   
   std::vector<std::pair<std::string, double> > set;
   
-  for(uint i = 0; i < ethVendors.size(); i++)
+  if(ethVendors.size() == 0)
   {
-    std::pair<std::string, double> vendorDists;
-    vendorDists.first = ethVendors[i];
-    vendorDists.second = ethDists[i];
-    set.push_back(vendorDists);
+    HoneydConfiguration *conf = new HoneydConfiguration();
+    conf->LoadAllTemplates();
+    std::cout << "clearing m_ethernetVendors." << std::endl;
+  	obj->m_pfile->m_ethernetVendors.clear();
+  	std::cout << "m_ethernetVendors.size() == " << obj->m_pfile->m_ethernetVendors.size() << std::endl;
+  	conf->m_profiles[obj->m_pfile->m_name].m_ethernetVendors.clear();
+  	conf->UpdateProfile(obj->m_pfile->m_name);
+  	conf->SaveAllTemplates();
+  	return args.This();
   }
-  
-  for(uint i = 0; i < set.size(); i++)
+  else
   {
-    std::cout << "set[" << i << "] = {" << set[i].first << ", " << set[i].second << "}\n";
+  	for(uint i = 0; i < ethVendors.size(); i++)
+  	{
+	    std::pair<std::string, double> vendorDists;
+	    vendorDists.first = ethVendors[i];
+	    vendorDists.second = ethDists[i];
+	    set.push_back(vendorDists);
+  	}
+	  
+  	for(uint i = 0; i < set.size(); i++)
+  	{
+	    std::cout << "set[" << i << "] = {" << set[i].first << ", " << set[i].second << "}\n";
+  	}
+  	
+  	return scope.Close(Boolean::New(obj->GetChild()->SetVendors(set)));
   }
-
-  return scope.Close(Boolean::New(obj->GetChild()->SetVendors(set)));
 }
 
 Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
@@ -118,7 +133,7 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 	conf->LoadAllTemplates();
 	if(!conf->AddProfile(obj->m_pfile))
 	{
-		std::cout << "Updating profile tree" << '\n';
+		std::cout << "Updating profile tree for " << obj->m_pfile->m_name << '\n';
 		conf->UpdateProfile(obj->m_pfile->m_name);
 	}
 

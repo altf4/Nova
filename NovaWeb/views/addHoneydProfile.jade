@@ -547,8 +547,8 @@ block headerAdditions
         
         var ethVendorList = [];
         
-        var checkLength1 = parseInt(document.getElementById("ethVendorLength").getAttribute("value"));
-        var checkLength2 = parseInt(document.getElementById("numCreated").getAttribute("value"));
+        var checkLength1 = parseInt(document.getElementById("ethVendorLength").value;
+        var checkLength2 = parseInt(document.getElementById("numCreated").value);
         
         if(checkLength1 == 0 && checkLength2 > 0)
         {
@@ -564,7 +564,7 @@ block headerAdditions
         }
         else if(checkLength2 == 0 && checkLength1 > 0)
         {
-                var forLength = checkLength1;
+            var forLength = checkLength1;
         
             for(var i = 0; i < forLength; i++)
             {
@@ -823,6 +823,7 @@ block headerAdditions
                 
                 if((oldEthVendLength == 0) || (oldEthVendLength != elements.length))
                 {
+                	dojo.byId("numCreated").value = "0";
                     document.getElementById("ethVendorLength").value = elements.length;
 
                     document.getElementById("errorEthernet").value = "";
