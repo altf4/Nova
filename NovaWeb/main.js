@@ -502,7 +502,23 @@ app.get('/novadlog', passport.authenticate('basic', { session: false }), functio
 	res.render('novadlog.jade');
 });
 
-app.get('/', passport.authenticate('basic', { session: false }), function(req, res) {res.redirect('/suspects');});
+app.get('/', passport.authenticate('basic', { session: false }), function(req, res) {
+    client.query('SELECT run FROM firstrun',
+    function selectCb(err, results, fields) {
+      if(err) {
+	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to access database" }});
+		return;
+      }
+
+	  if (results[0] === undefined) {
+		res.redirect('/welcome');
+	  } else {
+		res.redirect('/suspects');
+	  }	
+
+	  });
+});
+
 app.get('/createNewUser', passport.authenticate('basic', { session: false }), function(req, res) {res.render('createNewUser.jade');});
 app.get('/welcome', passport.authenticate('basic', { session: false }), function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup1.jade');});
@@ -1093,6 +1109,11 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 everyone.now.GetCaptureIPs = function (trainingSession, callback) {
 	return trainingDb.GetCaptureIPs("/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump");
 }
+
+everyone.now.WizardHasRun = function(callback) {
+	client.query('INSERT INTO firstrun values(NOW())');
+}
+	
 
 everyone.now.GetHostileEvents = function(callback) {
   client.query(
