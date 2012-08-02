@@ -2391,7 +2391,6 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	{
 		return false;
 	}
-	std::cout << "in CreateProfileTree for " << profileName << std::endl;
 	NodeProfile p = m_profiles[profileName];
 	if(p.m_name.compare(""))
 	{
@@ -2419,7 +2418,6 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	}
 	if(!p.m_inherited[ETHERNET])
 	{
-		std::cout << "ethVendors.size() == " << p.m_ethernetVendors.size() << std::endl;
 		for(uint i = 0; i < p.m_ethernetVendors.size(); i++)
 		{
 			ptree ethTemp;

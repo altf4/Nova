@@ -71,7 +71,7 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 	//Add Nodes Case
 	else if(totalNodes < num_nodes)
 	{
-
+		GenerateNodes(num_nodes);
 	}
 	//Redistribute exisiting nodes case
 	else
