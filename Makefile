@@ -8,7 +8,7 @@ release:
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
 
-release-helper: novad-release qtgui novacli-release novatrainer-release
+release-helper: novad-release novacli-release novatrainer-release
 
 #Debug target
 debug:
@@ -16,7 +16,7 @@ debug:
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
 
-debug-helper: novad-debug qtgui-debug novacli-debug novatrainer-debug
+debug-helper: novad-debug novacli-debug novatrainer-debug
 
 #Nova Library
 novalib-release:
@@ -122,7 +122,7 @@ clean-debug:
 	$(MAKE) -C NovaCLI/Debug clean
 	$(MAKE) -C NovaTrainer/Debug clean
 	$(MAKE) -C HoneydHostConfig/Debug clean
-	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
+	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 	rm -f Nova_UI_Core/Debug/Nova_UI_Core
 
@@ -133,7 +133,7 @@ clean-release:
 	$(MAKE) -C NovaCLI/Release clean
 	$(MAKE) -C NovaTrainer/Release clean
 	$(MAKE) -C HoneydHostConfig/Release clean
-	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
+	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
@@ -163,7 +163,7 @@ clean-hhconfig-release:
 install: install-data install-docs
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	install NovaGUI/novagui $(DESTDIR)/usr/bin
+	-install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
