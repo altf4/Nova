@@ -102,6 +102,9 @@ block headerAdditions
 
 block content
 
+  if(SCANERROR !== undefined)
+    label(id="scanError", style="color: red;") #{SCANERROR}
+  
   h1 Haystack Autoconfig
   form(id="submitInfo", method="post", action="/scanning")
     h2(style="font-size: 1.3em") Interfaces to Scan

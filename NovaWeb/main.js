@@ -672,6 +672,7 @@ app.get('/autoConfig', passport.authenticate('basic', { session: false }), funct
    {
      user: req.user
      ,INTERFACES: config.ListInterfaces().sort()
+     ,SCANERROR: ""
    });
 });
 
@@ -712,7 +713,6 @@ app.post('/login*',
 });
 
 app.post('/scanning', passport.authenticate('basic', { session: false }), function(req, res){
-  
   var numNodes = req.body["numNodes"];
   
   var subnets = req.body["subnets"];
@@ -731,7 +731,13 @@ app.post('/scanning', passport.authenticate('basic', { session: false }), functi
     console.log("No additional subnets selected.");
   }
   
-  if((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined))
+  
+  if(!path.existsSync("/usr/bin/honeydhostconfig"))
+  {
+    console.log("HoneydHostConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
+    res.render('hhautoconfig.jade', {locals: {user: req.user, INTERFACES: config.ListInterfaces().sort(), SCANERROR: "HoneydHostConfig binary not found, scan cancelled"}});
+  }
+  else if((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined))
   {
     res.redirect('/autoConfig');
   }
