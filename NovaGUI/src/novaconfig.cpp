@@ -3251,13 +3251,13 @@ void NovaConfig::on_useAnyLoopbackCheckBox_stateChanged()
 void  NovaConfig::on_numNodesSpinBox_editingFinished()
 {
 	m_loading->lock();
-	NodeManager nodeGen = NodeManager(m_honeydConfig);
+	/*NodeManager nodeGen = NodeManager(m_honeydConfig);
 	NodeProfile *p = &m_honeydConfig->m_profiles[m_currentProfile];
 	p->m_generated = true;
 	nodeGen.GenerateProfileCounters(&m_honeydConfig->m_profiles[m_currentProfile]);
 	int nodeChange = ui.numNodesSpinBox->value() - m_honeydConfig->m_profiles[m_currentProfile].m_nodeKeys.size();
 	nodeGen.GenerateNodes(nodeChange);
-	p->m_generated = false;
+	p->m_generated = false*/;
 	SaveProfileSettings();
 	LoadProfileSettings();
 	m_loading->unlock();
