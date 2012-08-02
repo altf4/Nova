@@ -25,7 +25,6 @@
 #include <QMutex>
 #include <QWheelEvent>
 
-
 // TODO: Clean this up. At a minimum add some descriptive comments, maybe replace with enums
 #define HAYSTACK_MENU_INDEX 4
 #define NODE_INDEX 0
@@ -92,15 +91,6 @@ public:
     //Removes a profile, all of it's children and any nodes that currently use it
     void DeleteProfile(std::string name);
 
-    //Takes a ptree and loads and sub profiles (used in clone to extract children)
-    void LoadProfilesFromTree(std::string parent);
-    //set profile configurations (only called in LoadProfilesFromTree)
-    void LoadProfileSettings(boost::property_tree::ptree *ptr, Nova::profile *p);
-    //add ports or subsystems (only called in LoadProfilesFromTree)
-    void LoadProfileServices(boost::property_tree::ptree *ptr, Nova::profile *p);
-    //recursive descent down profile tree (only called in LoadProfilesFromTree)
-    void LoadProfileChildren(std::string parent);
-
     //Function called on a delete signal to delete a node or subnet
     void DeleteNodes();
 
@@ -152,9 +142,6 @@ void on_pcapCheckBox_stateChanged(int state);
 void on_uptimeBehaviorComboBox_currentIndexChanged(int index);
 
 //GUI Signals for Profile settings
-void on_cloneButton_clicked();
-void on_addButton_clicked();
-void on_deleteButton_clicked();
 void on_profileTreeWidget_itemSelectionChanged();
 void on_profileEdit_editingFinished();
 
@@ -167,9 +154,9 @@ void on_nodeAddButton_clicked();
 void on_nodeDeleteButton_clicked();
 void on_nodeEnableButton_clicked();
 void on_nodeDisableButton_clicked();
-void on_setEthernetButton_clicked();
 void on_setPersonalityButton_clicked();
 void on_nodeTreeWidget_itemSelectionChanged();
+void on_associatedNodesTableWidget_itemSelectionChanged();
 void on_dropRateSlider_valueChanged();
 
 //GUI Signals for Feature addition/removal
@@ -226,6 +213,8 @@ void on_hsSaveTypeComboBox_currentIndexChanged(int index);
 void on_useAllIfCheckBox_stateChanged();
 void on_useAnyLoopbackCheckBox_stateChanged();
 
+void on_numNodesSpinBox_editingFinished();
+
 private:
 	void SetInputValidators();
 
@@ -238,6 +227,8 @@ private:
     QTreeWidgetItem *GetNodeTreeWidgetItem(std::string nodeName);
     QTreeWidgetItem *GetNodeHsTreeWidgetItem(std::string nodeName);
     bool IsPortTreeWidgetItem(std::string port, QTreeWidgetItem *item);
+
+    bool AddNodeToProfileTable(std::string nodeName, int row);
 
     Ui::NovaConfigClass ui;
 
@@ -304,6 +295,49 @@ protected:
 		e->ignore();
 	}
 	void focusInEvent(QFocusEvent *e)
+	{
+		e->ignore();
+		Q_EMIT notifyParent(m_buddy, false);
+	}
+
+};
+
+class TableItemComboBox : public QComboBox
+{
+	Q_OBJECT
+
+public:
+
+	TableItemComboBox(NovaConfig * parent = 0, QTableWidgetItem* buddy = 0)
+	{
+		this->m_parent = parent;
+		this->m_buddy = buddy;
+		this->setFocusPolicy(Qt::ClickFocus);
+		this->setContextMenuPolicy(Qt::NoContextMenu);
+		this->setAutoFillBackground(true);
+		connect(this, SIGNAL(activated(int)), this, SLOT(setCurrentIndex(int)));
+	}
+	~TableItemComboBox(){}
+
+	NovaConfig * m_parent;
+	QTableWidgetItem * m_buddy;
+
+public Q_SLOTS:
+	void setCurrentIndex(int index)
+	{
+		QComboBox::setCurrentIndex(index);
+		Q_EMIT notifyParent(m_buddy, true);
+	}
+
+	Q_SIGNALS:
+	void notifyParent(QTableWidgetItem *item, bool edited);
+
+protected:
+	void wheelEvent(QWheelEvent * e)
+	{
+		e->ignore();
+	}
+	void focusInEvent(QFocusEvent * e)
 	{
 		e->ignore();
 		Q_EMIT notifyParent(m_buddy, false);

@@ -19,9 +19,8 @@
 #ifndef _HONEYDCONFIGURATION
 #define _HONEYDCONFIGURATION
 
-#include "Config.h"
-#include "NovaGuiTypes.h"
 #include "Defines.h"
+#include "NovaGuiTypes.h"
 #include "VendorMacDb.h"
 
 namespace Nova
@@ -70,11 +69,11 @@ public:
     static int GetMaskBits(in_addr_t mask);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
-    std::string ProfileToString(profile *p);
+    std::string ProfileToString(NodeProfile* p);
 
     //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
     // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
-    std::string DoppProfileToString(profile *p);
+    std::string DoppProfileToString(NodeProfile* p);
 
     //Saves the current configuration information to XML files
     bool SaveAllTemplates();
@@ -95,20 +94,26 @@ public:
     //	Note(s): If CleanPorts is called before using this port in a profile, it will be deleted
     //			If using a script it must exist in the script table before calling this function
     //Returns: the port name if successful and an empty string if unsuccessful
-    std::string AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, std::string scriptName = "");
+    std::string AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, std::string scriptName = "", std::string service = "");
+    std::string AddPort(Port pr);
 
     // Some high level node creation methods
 
     // Add a node with static IP and static MAC
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
+    bool AddNewNode(Node node);
     bool AddNewNodes(std::string profileName, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
 
+    bool AddSubnet(const Subnet &add);
 
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
 	std::vector<std::string> GetProfileNames();
-	Nova::profile *GetProfile(std::string profileName);
-	Nova::port *GetPort(std::string portName);
+	NodeProfile *GetProfile(std::string profileName);
+	Port *GetPort(std::string portName);
+	std::vector<std::string> GeneratedProfilesStrings();
+	std::vector<std::string> GetGeneratedProfileNames();
+	std::vector<std::string> GetGeneratedNodeNames();
 
 	std::vector<std::string> GetNodeNames();
 	std::vector<std::string> GetSubnetNames();
@@ -121,13 +126,17 @@ public:
 	bool IsProfileUsed(std::string profileName);
 
 	// Regenerates the MAC addresses for nodes of this profile
-	void GenerateMACAddresses(std::string profileName);
+	void UpdateMacAddressesOfProfileNodes(std::string profileName);
 	std::string GenerateUniqueMACAddress(std::string vendor);
 
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
 	//	Returns (true) if the profile could be created, (false) if it cannot.
-	bool AddProfile(profile *profile);
+	bool AddProfile(NodeProfile * profile);
+
+	bool AddGroup(std::string groupName);
+
+	std::vector<std::string> GetGroups();
 
 	//Updates the profile with any modified information
 	//	Note: to modify inheritance use InheritProfile, just changing the parentProfile value and calling
@@ -170,20 +179,26 @@ public:
     void CleanPorts();
 
     // This is only for the Javascript UI, avoid use here
-	inline std::vector<port> GetPorts(std::string profile) {
-		std::vector<port> ret;
-		port p;
+	inline std::vector<Port> GetPorts(std::string profile) {
+		std::vector<Port> ret;
+		Port p;
 
-		for(uint i = 0; i < m_profiles[profile].ports.size(); i++)
+		for (uint i = 0; i < m_profiles[profile].m_ports.size(); i++)
 		{
-			p = m_ports[m_profiles[profile].ports.at(i).first];
-			p.isInherited = m_profiles[profile].ports.at(i).second;
+			p = m_ports[m_profiles[profile].m_ports.at(i).first];
+			p.m_isInherited = m_profiles[profile].m_ports.at(i).second.first;
 			ret.push_back(p);
 		}
 
 		return ret;
 	}
 
+	ScriptTable GetScriptTable();
+
+    //Takes a ptree and loads and sub profiles (used in clone to extract children)
+    bool LoadProfilesFromTree(std::string parent);
+
+    bool CheckNotInheritingEmptyProfile(std::string parentName);
 
 // TODO: this should be private eventually
 public:
@@ -194,10 +209,13 @@ public:
 
     std::vector<std::string> m_groups;
 
+    VendorMacDb m_macAddresses;
+
 private:
     std::string m_homePath;
 
-    VendorMacDb m_macAddresses;
+    uint m_nodeProfileIndex;
+
 
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.
@@ -218,12 +236,13 @@ private:
     bool LoadProfilesTemplate();
     //load current honeyd configuration group
     bool LoadNodesTemplate();
-
+    //load the m_nodeKeys vectors for the profiles in the ProfilesTable
+    void LoadNodeKeys();
 
     //set profile configurations
-    bool LoadProfileSettings(boost::property_tree::ptree *ptr, profile *p);
+    bool LoadProfileSettings(boost::property_tree::ptree *ptr, NodeProfile *p);
     //add ports or subsystems
-    bool LoadProfileServices(boost::property_tree::ptree *ptr, profile *p);
+    bool LoadProfileServices(boost::property_tree::ptree *ptr, NodeProfile *p);
     //recursive descent down profile tree
     bool LoadProfileChildren(std::string parent);
 
@@ -248,6 +267,10 @@ private:
     bool CreateProfileTree(std::string profileName);
 
     std::string FindSubnet(in_addr_t ip);
+
+    bool RecursiveCheckNotInheritingEmptyProfile(const NodeProfile& check);
+
+    std::vector<Subnet> FindPhysicalInterfaces();
 };
 
 }

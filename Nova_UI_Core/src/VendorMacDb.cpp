@@ -76,6 +76,7 @@ void VendorMacDb::LoadPrefixFile()
 			}
 		}
 	}
+	MACPrefixes.close();
 }
 
 
@@ -101,24 +102,32 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		//Convert the first part to a string and format it for output
 		sprintf(addrBuffer, "%x", addr.first);
 		testStr = string(addrBuffer);
+
 		for(j = 0; j < (6-testStr.size()); j++)
 		{
-			if(!(i%2)&& i )
+			if(!(i % 2) && i)
 			{
 				addrStrm << ":";
 			}
+
 			addrStrm << "0";
 			i++;
 		}
+
 		j = 0;
+
 		if(testStr.size() > 6)
+		{
 			j = testStr.size() - 6;
+		}
+
 		for(; j < testStr.size(); j++)
 		{
-			if(!(i%2)&& i )
+			if(!(i % 2) && i)
 			{
 				addrStrm << ":";
 			}
+
 			addrStrm << addrBuffer[j];
 			i++;
 		}
@@ -131,21 +140,32 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		sprintf(addrBuffer, "%x", addr.second);
 		testStr = string(addrBuffer);
 		i = 0;
-		for(j = 0; j < (6-testStr.size()); j++)
+
+		 if((testStr.size() % 2) == 1)
+		 {
+			 addrStrm << ":";
+		 }
+
+		for(j = 0; j < (6 - testStr.size()); j++)
 		{
-			if(!(i%2)&& i )
+			if((!(i % 2) && i))
 			{
 				addrStrm << ":";
 			}
 			addrStrm << "0";
 			i++;
 		}
+
 		j = 0;
+
 		if(testStr.size() > 6)
+		{
 			j = testStr.size() - 6;
+		}
+
 		for(; j < testStr.size(); j++)
 		{
-			if(!(i%2)&& (i!=6))
+			if(!(i % 2) && (i != 6))
 			{
 				addrStrm << ":";
 			}
@@ -195,4 +215,63 @@ vector<string> VendorMacDb::GetVendorNames() {
 		names.push_back(it->first);
 	}
 	return names;
+}
+
+//Converts the first three bytes of a MAC address from a string to a unsigned int
+//	MAC: string of the MAC address you wish to convert must be at least 8 characters
+//	return: unsigned integer value of the MAC prefix
+//	note: must be valid hex character pairs separated by colons, ex: '09:af:AF'
+uint VendorMacDb::AtoMACPrefix(string MAC)
+{
+	if(MAC.size() < 8)
+	{
+		return 0;
+	}
+	u_char tempBuf = 0;
+	uint ret = 0;
+	for(uint i = 0; (i < MAC.length()) && (i < 8); i++)
+	{
+		uint val = 0;
+		if(isdigit(MAC[i]) && MAC[i] != '0')
+		{
+			val = MAC[i] - DIGIT_OFFSET;
+		}
+		else if(islower(MAC[i]) && MAC[i] < 'g')
+		{
+			val = MAC[i] - LOWER_OFFSET;
+		}
+		else if(isupper(MAC[i]) && MAC[i] < 'G')
+		{
+			val = MAC[i] - UPPER_OFFSET;
+		}
+		else if(MAC[i] != ':' && MAC[i] != '0')
+		{
+			return 0;
+		}
+		switch(i%3)
+		{
+			case 0:
+			{
+				tempBuf += val;
+				tempBuf = tempBuf << 4;
+				break;
+			}
+			case 1:
+			{
+				tempBuf += val;
+				break;
+			}
+			case 2:
+			{
+				ret += tempBuf;
+				ret = ret << 8;
+				break;
+			}
+			default:
+			{
+				return 0;
+			}
+		}
+	}
+	return ret;
 }

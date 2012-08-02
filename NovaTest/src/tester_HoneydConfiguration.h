@@ -107,15 +107,15 @@ TEST_F(HoneydConfigurationTest, test_Port)
 TEST_F(HoneydConfigurationTest, test_Profile)
 {
 	//Create dummy profile
-	profile * p = new profile();
-	p->name = "TestProfile";
-	p->ethernet = "Dell";
-	p->icmpAction = "block";
-	p->parentProfile = "default";
-	p->udpAction = "block";
-	p->tcpAction = "reset";
-	p->uptimeMax = "100";
-	p->uptimeMin = "10";
+	NodeProfile * p = new NodeProfile();
+	p->m_name = "TestProfile";
+	p->SetEthernet("Dell");
+	p->m_icmpAction = "block";
+	p->m_parentProfile = "default";
+	p->m_udpAction = "block";
+	p->m_tcpAction = "reset";
+	p->m_uptimeMax = "100";
+	p->m_uptimeMin = "10";
 
 	bool dmEn = Config::Inst()->GetIsDmEnabled();
 	Config::Inst()->SetIsDmEnabled(false);
@@ -125,8 +125,8 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") != m_config->m_profiles.end());
 
 	//Modify the test profile to add a second one.
-	p->parentProfile = "TestProfile";
-	p->name = "TestProfile2";
+	p->m_parentProfile = "TestProfile";
+	p->m_name = "TestProfile2";
 	EXPECT_TRUE(m_config->AddProfile(p));
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile2") != m_config->m_profiles.end());
 
@@ -136,11 +136,11 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile-2") != m_config->m_profiles.end());
 
 	//Test Inheriting of a profile
-	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.parentProfile.compare("default")));
-	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.parentProfile.compare("TestProfile")));
+	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("default")));
+	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("TestProfile")));
 	EXPECT_TRUE(m_config->InheritProfile("TestProfile-2", "default"));
-	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.parentProfile.compare("default")));
-	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.parentProfile.compare("TestProfile")));
+	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("default")));
+	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("TestProfile")));
 
 	//Test deleting a profile
 	EXPECT_TRUE(m_config->DeleteProfile("TestProfile"));
@@ -156,16 +156,16 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 	EXPECT_TRUE(m_config->AddPort(2, (portProtocol)1, (portBehavior)1, "NA") == "2_TCP_reset");
 	EXPECT_TRUE(m_config->AddPort(3, (portProtocol)1, (portBehavior)2, "NA") == "3_TCP_open");
 
-	profile * p = new profile();
+	NodeProfile * p = new NodeProfile();
 	for (int i = 0; i < INHERITED_MAX; i++)
 	{
-		p->inherited[i] = true;
+		p->m_inherited[i] = true;
 	}
-	p->name = "test";
-	p->parentProfile = "default";
-	p->AddPort("1_TCP_block", false);
-	p->AddPort("2_TCP_reset", false);
-	p->AddPort("3_TCP_open", false);
+	p->m_name = "test";
+	p->m_parentProfile = "default";
+	p->AddPort("1_TCP_block", false, 100);
+	p->AddPort("2_TCP_reset", false, 100);
+	p->AddPort("3_TCP_open", false, 100);
 
 	EXPECT_TRUE(m_config->AddProfile(p));
 	//EXPECT_TRUE(m_config->SaveAllTemplates());
@@ -174,15 +174,14 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 // This test has been disabled because of ticket #165
 TEST_F(HoneydConfigurationTest, test_profileDeletion)
 {
-	profile *parent = new profile();
+	NodeProfile *parent = new NodeProfile();
 	parent->SetName("parent");
 	parent->SetParentProfile("default");
 	EXPECT_TRUE(m_config->AddProfile(parent));
 
-
 	m_config->UpdateAllProfiles();
 
-	profile *child = new profile();
+	NodeProfile *child = new NodeProfile();
 	child->SetName("child");
 	child->SetParentProfile("parent");
 	EXPECT_TRUE(m_config->AddProfile(child));

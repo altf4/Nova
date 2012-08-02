@@ -1809,6 +1809,48 @@ vector<string> Config::GetInterfaces()
 	return m_interfaces;
 }
 
+vector<string> Config::GetIPv4HostInterfaceList()
+{
+	Lock lock(&m_lock, true);
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	vector<string> ret;
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(((int)curIf->ifa_addr->sa_family == AF_INET) && !(curIf->ifa_flags & IFF_LOOPBACK))
+		{
+			ret.push_back(curIf->ifa_name);
+		}
+	}
+	return ret;
+}
+
+vector<string> Config::GetIPv4LoopbackInterfaceList()
+{
+	Lock lock(&m_lock, true);
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	vector<string> ret;
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(((int)curIf->ifa_addr->sa_family == AF_INET) && (curIf->ifa_flags & IFF_LOOPBACK))
+		{
+			ret.push_back(curIf->ifa_name);
+		}
+	}
+	return ret;
+}
+
 uint Config::GetInterfaceCount()
 {
 	Lock lock(&m_lock, true);
@@ -1967,10 +2009,31 @@ void Config::SetUseAllInterfaces(bool which)
 	m_ifIsDefault = which;
 }
 
+bool Config::SetInterfaces(std::vector<std::string> newInterfaceList)
+{
+	Lock lock(&m_lock, false);
+	m_interfaces = newInterfaceList;
+	return true;
+}
+
 void Config::SetUseAnyLoopback(bool which)
 {
 	Lock lock(&m_lock, false);
 	m_loIsDefault = which;
+}
+
+bool Config::SetUseAllInterfacesBinding(bool which)
+{
+	Lock lock(&m_lock, false);
+	m_ifIsDefault = which;
+	return true;
+}
+
+bool Config::SetUseAnyLoopbackBinding(bool which)
+{
+	Lock lock(&m_lock, false);
+	m_loIsDefault = which;
+	return true;
 }
 
 void Config::SetClassificationThreshold(double classificationThreshold)
@@ -2092,6 +2155,76 @@ void Config::ClearInterfaces()
 	Lock lock(&m_lock, false);
 	m_interfaces.clear();
 }
+
+std::vector<std::string> Config::ListInterfaces()
+{
+	pthread_rwlock_wrlock(&m_lock);
+	struct ifaddrs * devices = NULL;
+	ifaddrs *curIf = NULL;
+	stringstream ss;
+
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+
+	// ********** ETHERNET INTERFACES ************* //
+	vector<string> interfaces;
+
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			interfaces.push_back(string(curIf->ifa_name));
+		}
+	}
+
+	freeifaddrs(devices);
+	pthread_rwlock_unlock(&m_lock);
+	return interfaces;
+}
+
+std::string Config::GetUseAllInterfacesBinding()
+{
+	if(m_ifIsDefault)
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
+
+std::vector<std::string> Config::ListLoopbacks()
+{
+	pthread_rwlock_wrlock(&m_lock);
+	struct ifaddrs * devices = NULL;
+	ifaddrs *curIf = NULL;
+	stringstream ss;
+	std::vector<std::string> ret;
+
+	//Get a list of interfaces
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
+	}
+
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		//If we find a valid loopback interface exit the loop early (curIf != NULL)
+		if((curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			ret.push_back(string(curIf->ifa_name));
+		}
+	}
+
+	freeifaddrs(devices);
+	pthread_rwlock_unlock(&m_lock);
+	return ret;
+}
+
 
 void Config::SetIsDmEnabled(bool isDmEnabled)
 {

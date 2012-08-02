@@ -36,6 +36,17 @@ well; you can get them using this command:
 
     sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
 
+- For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher. The current version in the apt repository is 
+5.21, so you'll have to go to the Nmap website and get 6.00. It can be found here: 
+
+    http://nmap.org/download.html
+
+	OR
+
+    wget http://nmap.org/dist/nmap-6.01.tar.bz2
+
+There are instructions for manual install on the same page.
+
 
 - NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the version of libevent available in the repos is only 1.x. So you will need to either find a backport or build libevent 2.x from source.
 
