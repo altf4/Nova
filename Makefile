@@ -170,7 +170,7 @@ install: install-data install-docs
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	sh debian/postinst
 
-install-data:
+install-data: install-hhconfig-debug
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
@@ -220,12 +220,8 @@ install-web:
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
 install-hhconfig-debug:
-	install HoneydHostConfig/Debug/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
-	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
-
-install-hhconfig-release:
-	install HoneydHostConfig/Release/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
-	install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440 
+	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
+	-install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 
 #Uninstall
 uninstall: uninstall-files uninstall-permissions
