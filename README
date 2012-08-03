@@ -45,7 +45,7 @@ well; you can get them using this command:
 
     wget http://nmap.org/dist/nmap-6.01.tar.bz2
 
-There are instructions for manual install on the same page.
+There are instructions for manual install on the same page (but are just the standard ./configure, make, and sudo make install commands).
 
 
 - NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the version of libevent available in the repos is only 1.x. So you will need to either find a backport or build libevent 2.x from source.
