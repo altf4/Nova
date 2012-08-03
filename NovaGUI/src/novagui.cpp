@@ -930,7 +930,7 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 			Lock lock(&suspectTableLock);
 			SuspectTable.erase(addr);
 		}
-		ClearSuspect(addr);
+		ClearSuspect(htonl(addr));
 	}
 }
 
