@@ -815,6 +815,32 @@ block headerAdditions
             dojo.byId("ethSelectButton").disabled = true;
             dojo.byId("numCreated").value = "0";
             
+            try
+            {
+                var deletes = document.getElementById("row3").childNodes;
+            
+                for(var i in deletes)
+                {
+                    if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "deleteButtonHere")
+                    {
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
+                        {                     
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
+                        }
+                    }
+                }
+            }
+            catch(err)
+            {
+                // This'll catch much the same as the nested try catch;
+                // there's some stuff inside a tag that getAttribute() 
+                // can't be called on (Object#<Comment>) but it's 
+                // easier to just let the error happen than develop logic
+                // to avoid those elements. I'll try experimenting with using
+                // tagName stuff a little bit but this'll be how it is for now.
+            }
+            
             now.GetInheritedEthernetList(document.getElementById("parentName").value, 
             function(elements, distributions){
                 var oldEthVendLength = parseInt(document.getElementById("ethVendorLength").value);
@@ -937,6 +963,14 @@ block headerAdditions
                         }
                     }
                     else if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "ranges")
+                    {
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
+                        {                     
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
+                        }
+                    }
+                    else if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "deleteButtonHere")
                     {
                         var forLength = deletes[i].childNodes.length;
                         for(var j = 0; j < forLength; j++)
