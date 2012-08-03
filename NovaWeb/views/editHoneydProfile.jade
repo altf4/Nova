@@ -4,6 +4,9 @@ extends layout
 block headerAdditions
   //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   script
+    var ethVendorLength = 0;
+    var numCreated = 0;
+    
     var profile;
     var portList = new function() {};
     var newProfile = "#{newProfile}";
@@ -117,14 +120,14 @@ block headerAdditions
             deleteDiv.appendChild(deleteButton);
             deleteDiv.appendChild(br);
             teed3.appendChild(deleteDiv);
-            
-            document.getElementById("numCreated").setAttribute("value", 1);
+           
+            numCreated = 1;
         }
         else
         {
             var keepGoing = true;
         
-            for(var i = 0; i < parseInt(dojo.byId("numCreated").getAttribute("value")); i++)
+            for(var i = 0; i < numCreated; i++)
             {
                 if(vendName == document.getElementById("vend" + i).value)
                 {
@@ -133,7 +136,7 @@ block headerAdditions
             }
             if(keepGoing)
             {
-               for(var i = 0; i < parseInt(dojo.byId("numCreated").getAttribute("value")); i++)
+               for(var i = 0; i < numCreated; i++)
                {
                    document.getElementById("dist" + i).removeAttribute("readonly");
                    document.getElementById("distLabel" + i).removeAttribute("readonly");
@@ -142,12 +145,10 @@ block headerAdditions
                document.getElementById("errorEthernet").value = "";
                document.getElementById("errorEthernet").innerHTML = "";
         
-               var numCreated = parseInt(document.getElementById("numCreated").getAttribute("value"));
         
-               document.getElementById("numCreated").setAttribute("value", (numCreated + 1));
-            
                var number = numCreated;
                var checkAgainst = "ethDiv" + number;
+               numCreated++;
                
                var teed = document.getElementById("labelDist");
                var teed2 = document.getElementById("ranges");
@@ -259,7 +260,7 @@ block headerAdditions
     }
 
     deleteAndClean = function(which) {
-        if(dojo.byId("numCreated").getAttribute("value") == 1)
+        if(numCreated == 1)
         {
             document.getElementById("errorEthernet").value = "Can't delete last vendor, must have at least one";
             document.getElementById("errorEthernet").innerHTML = "Can't delete last vendor, must have at least one";
@@ -309,8 +310,7 @@ block headerAdditions
         }
         
         
-        var numCreated = parseInt(dojo.byId("numCreated").getAttribute("value"));
-        var newNumCreated = (parseInt(dojo.byId("numCreated").getAttribute("value")) - 1);
+        var newNumCreated = numCreated - 1;
         
         for(var i = 0; i < numCreated; i++)
         {
@@ -365,9 +365,9 @@ block headerAdditions
             document.getElementById("distLabel" + justInCase.index).innerHTML = justInCase.value.toString() + "%";
         }
         
-        dojo.byId("numCreated").setAttribute("value", newNumCreated);
+        numCreated = newNumCreated;
         
-        if(parseInt(dojo.byId("numCreated").getAttribute("value")) == 1)
+        if(numCreated == 1)
         {
             document.getElementById("dist0").value = 100;
             document.getElementById("dist0").max = 100;
@@ -524,7 +524,7 @@ block headerAdditions
             distLabel.innerHTML = changeArray[i].toString() + "%";
         }
         
-        if(dojo.byId("numCreated").value == 1)
+        if(numCreated == 1)
         {
             document.getElementById("dist0").value = 100;
             document.getElementById("dist0").max = 100;
@@ -542,8 +542,8 @@ block headerAdditions
         
         var ethVendorList = [];
         
-        var checkLength1 = parseInt(document.getElementById("ethVendorLength").value);
-        var checkLength2 = parseInt(document.getElementById("numCreated").value);
+        var checkLength1 = ethVendorLength;
+        var checkLength2 = numCreated;
         
         console.log("checkLength1 = " + checkLength1 + " and checklength2 = " + checkLength2);
         
@@ -561,7 +561,7 @@ block headerAdditions
         }
         else if(checkLength2 == 0 && checkLength1 > 0)
         {
-                var forLength = checkLength1;
+            var forLength = checkLength1;
         
             for(var i = 0; i < forLength; i++)
             {
@@ -778,7 +778,7 @@ block headerAdditions
     }
     
     clearCreated = function() {
-        var numToDelete = parseInt(document.getElementById("numCreated").getAttribute("value"));
+        var numToDelete = numCreated;
         
         if(numToDelete >= 1)
         {
@@ -797,8 +797,8 @@ block headerAdditions
                 }
             }
         }
-        
-        document.getElementById("numCreated").setAttribute("value", "0");
+       
+        numCreated = 0;
     }
     
     inheritanceChanged = function() {
@@ -813,7 +813,7 @@ block headerAdditions
         {
             dijit.byId("ethernet").setDisabled(true);
             dojo.byId("ethSelectButton").disabled = true;
-            dojo.byId("numCreated").value = "0";
+            numCreated = 0;
             
             try
             {
@@ -843,13 +843,13 @@ block headerAdditions
             
             now.GetInheritedEthernetList(document.getElementById("parentName").value, 
             function(elements, distributions){
-                var oldEthVendLength = parseInt(document.getElementById("ethVendorLength").value);
+                var oldEthVendLength = ethVendorLength
                 
                 console.log("oldEthVendLength " + oldEthVendLength);
                 
                 if((oldEthVendLength === 0) || (oldEthVendLength != elements.length))
                 {
-                    document.getElementById("ethVendorLength").value = elements.length;
+                    ethVendorLength = elements.length;
 
                     document.getElementById("errorEthernet").value = "";
                     document.getElementById("errorEthernet").innerHTML = "";
@@ -928,7 +928,7 @@ block headerAdditions
                         rangeDiv.appendChild(br);
                         teed2.appendChild(rangeDiv);
                     
-                        if(dojo.byId("ethVendorLength").value == 1)
+                        if(ethVendorLength == 1)
                         {
                             document.getElementById("dist0").value = 100;
                             document.getElementById("dist0").max = 100;
@@ -946,7 +946,7 @@ block headerAdditions
             dojo.byId("ethSelectButton").disabled = false;
             dijit.byId("ethernet").setDisabled(false);
             
-            dojo.byId("ethVendorLength").value = "0";
+            ethVendorLength = 0;
             
             var deletes = document.getElementById("row3").childNodes;
             
@@ -993,7 +993,7 @@ block headerAdditions
             {
                 now.GetVendors(document.getElementById("name").value, function(elements, distributions){
                 
-                document.getElementById("numCreated").setAttribute("value", elements.length);
+                numCreated = elements.length;
 
                 document.getElementById("errorEthernet").value = "";
                 document.getElementById("errorEthernet").innerHTML = "";
@@ -1096,7 +1096,7 @@ block headerAdditions
                     teed3.appendChild(deleteDiv);
                 }
                 
-                if(dojo.byId("numCreated").value == 1)
+                if(numCreated == 1)
                 {
                     document.getElementById("dist0").value = 100;
                     document.getElementById("dist0").max = 100;
@@ -1370,8 +1370,6 @@ block content
       
     label(id="errorEthernet", style="color:red;", value="")
       
-    hidden(id="ethVendorLength", value="")
-    hidden(id="numCreated", value="0")
     
     h3 Profile Port Configuration
     table#portTable
@@ -1382,5 +1380,5 @@ block content
     br
     br
     
-    button#saveButton(type="button", onclick="saveChanges()", disabled=true) Save Changes
+    button#saveButton(type="button", onclick="saveChanges()") Save Changes
 

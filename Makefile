@@ -7,6 +7,7 @@ release:
 	$(MAKE) novalib-release
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
+	$(MAKE) hhconfig-release
 
 release-helper: novad-release novacli-release novatrainer-release
 
@@ -15,6 +16,7 @@ debug:
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
+	$(MAKE) hhconfig-debug
 
 debug-helper: novad-debug novacli-debug novatrainer-debug
 
@@ -170,7 +172,7 @@ install: install-data install-docs
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	sh debian/postinst
 
-install-data: install-hhconfig-debug
+install-data: install-hhconfig
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
@@ -219,7 +221,7 @@ install-web:
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
-install-hhconfig-debug:
+install-hhconfig:
 	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
 	-install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 
