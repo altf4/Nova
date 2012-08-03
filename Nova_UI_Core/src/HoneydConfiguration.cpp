@@ -643,14 +643,25 @@ bool HoneydConfiguration::LoadProfileChildren(string parentKey)
 
 			//Inherits parent,
 			NodeProfile nodeProf = m_profiles[parentKey];
-			nodeProf.m_tree = value.second;
-			nodeProf.m_parentProfile = parentKey;
 
-			nodeProf.m_generated = value.second.get<bool>("generated");
-			nodeProf.m_distribution = value.second.get<double>("distribution");
+			try
+			{
+				nodeProf.m_tree = value.second;
+				nodeProf.m_parentProfile = parentKey;
 
-			//Gets name, initializes DHCP
-			nodeProf.m_name = value.second.get<std::string>("name");
+				nodeProf.m_generated = value.second.get<bool>("generated");
+				nodeProf.m_distribution = value.second.get<double>("distribution");
+
+				//Gets name, initializes DHCP
+				nodeProf.m_name = value.second.get<std::string>("name");
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				// Can't get name, generated, or some needed field
+				// Skip this profile
+				LOG(ERROR, "Profile XML file contained invalid profile. Skipping", "");
+				continue;
+			};
 
 			if(!nodeProf.m_name.compare(""))
 			{
@@ -1384,14 +1395,24 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 			if(!string(value.first.data()).compare("profile"))
 			{
 				NodeProfile nodeProf;
-				//Root profile has no parent
-				nodeProf.m_parentProfile = "";
-				nodeProf.m_tree = value.second;
-				nodeProf.m_generated = value.second.get<bool>("generated");
-				nodeProf.m_distribution = value.second.get<double>("distribution");
+				try
+				{
+					//Root profile has no parent
+					nodeProf.m_parentProfile = "";
+					nodeProf.m_tree = value.second;
+					nodeProf.m_generated = value.second.get<bool>("generated");
+					nodeProf.m_distribution = value.second.get<double>("distribution");
 
-				//Name required, DCHP boolean intialized (set in loadProfileSet)
-				nodeProf.m_name = value.second.get<std::string>("name");
+					//Name required, DCHP boolean intialized (set in loadProfileSet)
+					nodeProf.m_name = value.second.get<std::string>("name");
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
+					// Can't get name, generated, or some needed field
+					// Skip this profile
+					LOG(ERROR, "Profile XML file contained invalid profile. Skipping", "");
+					continue;
+				};
 
 				if(!nodeProf.m_name.compare(""))
 				{
