@@ -19,8 +19,7 @@ HoneydProfileBinding::~HoneydProfileBinding()
 	delete m_pfile;
 }
 
-profile *HoneydProfileBinding::GetChild()
-{
+NodeProfile *HoneydProfileBinding::GetChild() {
 	return m_pfile;
 }
 
@@ -33,28 +32,28 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	// Prototype
 	Local<Template> proto = tpl->PrototypeTemplate();
 
-	proto->Set("SetName",           FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetName>) );
-	proto->Set("SetTcpAction",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetTcpAction>) );
-	proto->Set("SetUdpAction",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetUdpAction>) );
-	proto->Set("SetIcmpAction",     FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetIcmpAction>) );
-	proto->Set("SetPersonality",    FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetPersonality>) );
-	proto->Set("SetEthernet",       FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetEthernet>) );
-	proto->Set("SetUptimeMin",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetUptimeMin>) );
-	proto->Set("SetUptimeMax",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetUptimeMax>) );
-	proto->Set("SetDropRate",       FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetDropRate>) );
-	proto->Set("SetParentProfile",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, string, &Nova::profile::SetParentProfile>));
+	proto->Set("SetName",           FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetName>));
+	proto->Set("SetTcpAction",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetTcpAction>));
+	proto->Set("SetUdpAction",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetUdpAction>));
+	proto->Set("SetIcmpAction",     FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetIcmpAction>));
+	proto->Set("SetPersonality",    FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetPersonality>));
+	proto->Set("SetEthernet",       FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetEthernet>));
+	proto->Set("SetUptimeMin",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetUptimeMin>));
+	proto->Set("SetUptimeMax",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetUptimeMax>));
+	proto->Set("SetDropRate",       FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetDropRate>));
+	proto->Set("SetParentProfile",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetParentProfile>));
+	proto->Set(String::NewSymbol("SetVendors"),FunctionTemplate::New(SetVendors)->GetFunction());
+	
+	proto->Set("setTcpActionInherited",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setTcpActionInherited>));
+	proto->Set("setUdpActionInherited",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setUdpActionInherited>));
+	proto->Set("setIcmpActionInherited", FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setIcmpActionInherited>));
+	proto->Set("setPersonalityInherited",FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setPersonalityInherited>));
+	proto->Set("setEthernetInherited",   FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setEthernetInherited>));
+	proto->Set("setUptimeInherited",     FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setUptimeInherited>));
+	proto->Set("setDropRateInherited",   FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setDropRateInherited>));
 
-	proto->Set("setTcpActionInherited",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, bool, &Nova::profile::setTcpActionInherited>));
-	proto->Set("setUdpActionInherited",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, bool, &Nova::profile::setUdpActionInherited>));
-	proto->Set("setIcmpActionInherited", FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, bool, &Nova::profile::setIcmpActionInherited>));
-	proto->Set("setPersonalityInherited",FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, bool, &Nova::profile::setPersonalityInherited>));
-	proto->Set("setEthernetInherited",   FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, bool, &Nova::profile::setEthernetInherited>));
-	proto->Set("setUptimeInherited",     FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, bool, &Nova::profile::setUptimeInherited>));
-	proto->Set("setDropRateInherited",   FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, profile, bool, &Nova::profile::setDropRateInherited>));
-
-
-	proto->Set(String::NewSymbol("Save"),FunctionTemplate::New(Save)->GetFunction());
-	proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
+    proto->Set(String::NewSymbol("Save"),FunctionTemplate::New(Save)->GetFunction()); 
+    proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction()); 
 
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -67,13 +66,62 @@ v8::Handle<Value> HoneydProfileBinding::New(const Arguments& args)
 	v8::HandleScope scope;
 
 	HoneydProfileBinding* obj = new HoneydProfileBinding();
-	obj->m_pfile = new profile();
+	obj->m_pfile = new NodeProfile();
 	obj->Wrap(args.This());
 
 	return args.This();
 }
 
-
+Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
+{ 
+  if(args.Length() != 2)
+  {
+    return ThrowException(Exception::TypeError(String::New("Must be invoked with at exactly two parameters")));
+  }
+  
+  HandleScope scope;
+  HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+  
+  std::cout << "In SetVendors" << std::endl;
+  
+  std::vector<std::string> ethVendors = cvv8::CastFromJS<std::vector<std::string> >(args[0]);
+  std::vector<double> ethDists = cvv8::CastFromJS<std::vector<double> >(args[1]);
+  
+  std::cout << "ethVendors length == " << ethVendors.size() << '\n';
+  std::cout << "ethDists length == " << ethDists.size() << std::endl;  
+  
+  std::vector<std::pair<std::string, double> > set;
+  
+  if(ethVendors.size() == 0)
+  {
+    HoneydConfiguration *conf = new HoneydConfiguration();
+    conf->LoadAllTemplates();
+    std::cout << "clearing m_ethernetVendors." << std::endl;
+  	obj->m_pfile->m_ethernetVendors.clear();
+  	std::cout << "m_ethernetVendors.size() == " << obj->m_pfile->m_ethernetVendors.size() << std::endl;
+  	conf->m_profiles[obj->m_pfile->m_name].m_ethernetVendors.clear();
+  	conf->UpdateProfile(obj->m_pfile->m_name);
+  	conf->SaveAllTemplates();
+  	return args.This();
+  }
+  else
+  {
+  	for(uint i = 0; i < ethVendors.size(); i++)
+  	{
+	    std::pair<std::string, double> vendorDists;
+	    vendorDists.first = ethVendors[i];
+	    vendorDists.second = ethDists[i];
+	    set.push_back(vendorDists);
+  	}
+	  
+  	for(uint i = 0; i < set.size(); i++)
+  	{
+	    std::cout << "set[" << i << "] = {" << set[i].first << ", " << set[i].second << "}\n";
+  	}
+  	
+  	return scope.Close(Boolean::New(obj->GetChild()->SetVendors(set)));
+  }
+}
 
 Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 {
@@ -83,7 +131,58 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 	HoneydConfiguration *conf = new HoneydConfiguration();
 
 	conf->LoadAllTemplates();
-	conf->AddProfile(obj->m_pfile);
+	
+	if(!conf->AddProfile(obj->m_pfile))
+	{
+		std::cout << "Updating profile tree for " << obj->m_pfile->m_name << '\n';
+		conf->m_profiles[obj->m_pfile->m_name].SetName(obj->m_pfile->m_name);
+		conf->m_profiles[obj->m_pfile->m_name].SetTcpAction(obj->m_pfile->m_tcpAction);
+		conf->m_profiles[obj->m_pfile->m_name].SetUdpAction(obj->m_pfile->m_udpAction);
+		conf->m_profiles[obj->m_pfile->m_name].SetIcmpAction(obj->m_pfile->m_icmpAction);
+		conf->m_profiles[obj->m_pfile->m_name].SetPersonality(obj->m_pfile->m_personality);
+		
+		conf->m_profiles[obj->m_pfile->m_name].SetUptimeMin(obj->m_pfile->m_uptimeMin);
+		conf->m_profiles[obj->m_pfile->m_name].SetUptimeMax(obj->m_pfile->m_uptimeMax);
+		
+		conf->m_profiles[obj->m_pfile->m_name].SetDropRate(obj->m_pfile->m_dropRate);
+		conf->m_profiles[obj->m_pfile->m_name].SetParentProfile(obj->m_pfile->m_parentProfile);
+		
+		conf->m_profiles[obj->m_pfile->m_name].SetVendors(obj->m_pfile->m_ethernetVendors);
+		
+		conf->m_profiles[obj->m_pfile->m_name].setTcpActionInherited(obj->m_pfile->isTcpActionInherited());
+		conf->m_profiles[obj->m_pfile->m_name].setUdpActionInherited(obj->m_pfile->isUdpActionInherited());
+		conf->m_profiles[obj->m_pfile->m_name].setIcmpActionInherited(obj->m_pfile->isIcmpActionInherited());
+		conf->m_profiles[obj->m_pfile->m_name].setPersonalityInherited(obj->m_pfile->isPersonalityInherited());
+		conf->m_profiles[obj->m_pfile->m_name].setEthernetInherited(obj->m_pfile->isEthernetInherited());
+		conf->m_profiles[obj->m_pfile->m_name].setUptimeInherited(obj->m_pfile->isUptimeInherited());
+		conf->m_profiles[obj->m_pfile->m_name].setDropRateInherited(obj->m_pfile->isDropRateInherited());
+		
+		conf->m_profiles[obj->m_pfile->m_name].m_generated = obj->m_pfile->m_generated;
+		conf->m_profiles[obj->m_pfile->m_name].m_distribution = obj->m_pfile->m_distribution;
+	
+		std::vector<std::string> portNames = conf->m_profiles[obj->m_pfile->m_name].GetPortNames();
+	
+		for(uint i = 0; i < obj->m_pfile->m_ports.size(); i++)
+		{
+			bool push = true;
+		
+			for(uint j = 0; j < portNames.size(); j++)
+			{
+				if(!portNames[j].compare(obj->m_pfile->m_ports[i].first))
+				{
+					push = false;
+				}
+			}
+			
+			if(push)
+			{
+				conf->m_profiles[obj->m_pfile->m_name].m_ports.push_back(obj->m_pfile->m_ports[i]);
+				push = false;
+			}
+		}
+		
+		conf->UpdateProfile(obj->m_pfile->m_name);
+	}
 
 	conf->SaveAllTemplates();
 
@@ -105,5 +204,5 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	string portName = cvv8::CastFromJS<string>( args[0] );
 	bool isInherited = cvv8::CastFromJS<bool>( args[1] );
 
-	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited)));
+	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited, 0)));
 }

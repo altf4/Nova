@@ -1,0 +1,81 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+
+  script
+    var grid;
+    var grid2;
+    
+    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+
+    function(DataGrid,ObjectStore){
+      var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
+      grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
+      dojo.byId("gridDiv").appendChild(grid.domNode);
+    });
+    
+    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+
+    function(DataGrid,ObjectStore){
+      var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
+      grid2 = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
+      dojo.byId("gridDiv2").appendChild(grid2.domNode);
+    });
+  
+  script(type="text/javascript")
+          /*set up data store*/
+          var layoutNodes = [[
+            { field: "Enabled", name: "Enabled", width: '100px' },
+            { field: "Name", name: "Name", width: '400px' },
+            { field: "Profile", name: "Profile", width: '100px' },
+            { field: "IP", name: "IP", width: '150px' },
+            { field: "MAC", name: "MAC", width: '150px' },
+          ]];
+  script(type="text/javascript")
+          /*set up data store*/
+          var layoutProfiles = [[
+            { field: "Name", name: "Profile Name", width: '300px' },
+            { field: "Personality", name: "Operating System Emulation", width: '300px' },
+            { field: "Ethernet", name: "Ethernet Vendor Emulation", width: '300px' }
+          ]];
+
+block content
+  h1 Profiles Generated
+  table#profileTable(style="display: none")
+    thead
+      tr
+        th Name
+        th Personality
+        th Ethernet
+    tbody
+      each profile, i in profiles
+        tr
+          td #{profile.GetName()}
+          td #{profile.GetPersonality()}
+          td #{profile.GetEthernet()}
+ 
+  div(style="height: 200px;")
+    div#gridDiv(style="height: 200px")
+  br
+          
+  h1 Generated Honeyd Nodes
+  table#nodeTable(style="display: none")
+    thead
+      tr
+        th Enabled
+        th Name
+        th Profile
+        th IP
+        th MAC
+    tbody
+      each node, i in nodes
+        tr
+          td #{node.IsEnabled()}
+          td #{node.GetName()}
+          td #{node.GetProfile()}
+          td #{node.GetIP()}
+          td #{node.GetMAC()}
+          
+  div(style="height: 200px;")
+    div#gridDiv2(style="height: 200px")

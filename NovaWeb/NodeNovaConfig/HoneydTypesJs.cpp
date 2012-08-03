@@ -43,79 +43,84 @@ Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 }
 
 
-Handle<Object> HoneydNodeJs::WrapPort(port *port)
+Handle<Object> HoneydNodeJs::WrapPort(Port *port)
 {
-	HandleScope scope;
+    HandleScope scope;  
 
-	// Setup the template for the type if it hasn't been already
-	if( m_portTemplate.IsEmpty() )
-	{
-		Handle<FunctionTemplate> nodeTemplate = FunctionTemplate::New();
-		nodeTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-		m_portTemplate = Persistent<FunctionTemplate>::New(nodeTemplate);
+    // Setup the template for the type if it hasn't been already
+    if( m_portTemplate.IsEmpty() )
+    {
+        Handle<FunctionTemplate> nodeTemplate = FunctionTemplate::New();
+        nodeTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+        m_portTemplate = Persistent<FunctionTemplate>::New(nodeTemplate);
 
-		// Javascript methods
-		Local<Template> proto = m_portTemplate->PrototypeTemplate();
-		proto->Set("GetPortName",    FunctionTemplate::New(InvokeMethod<string, Nova::port, &Nova::port::GetPortName>) );
-		proto->Set("GetPortNum",     FunctionTemplate::New(InvokeMethod<string, Nova::port, &Nova::port::GetPortNum>) );
-		proto->Set("GetType",        FunctionTemplate::New(InvokeMethod<string, Nova::port, &Nova::port::GetType>) );
-		proto->Set("GetBehavior",    FunctionTemplate::New(InvokeMethod<string, Nova::port, &Nova::port::GetBehavior>) );
-		proto->Set("GetScriptName",  FunctionTemplate::New(InvokeMethod<string, Nova::port, &Nova::port::GetScriptName>) );
-		proto->Set("GetIsInherited",  FunctionTemplate::New(InvokeMethod<bool, Nova::port, &Nova::port::GetIsInherited>) );
-	}
+        // Javascript methods
+        Local<Template> proto = m_portTemplate->PrototypeTemplate();
+        proto->Set("GetPortName",    FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetPortName>) );
+        proto->Set("GetPortNum",     FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetPortNum>) );
+        proto->Set("GetType",        FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetType>) );
+        proto->Set("GetBehavior",    FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetBehavior>) );
+        proto->Set("GetScriptName",  FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetScriptName>) );
+        proto->Set("GetService",  FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetService>) );
+        proto->Set("GetIsInherited",  FunctionTemplate::New(InvokeMethod<bool, Nova::Port, &Nova::Port::GetIsInherited>) );
+    }
 
-	// Get the constructor from the template
-	Handle<Function> ctor = m_portTemplate->GetFunction();
-	// Instantiate the object with the constructor
-	Handle<Object> result = ctor->NewInstance();
-	// Wrap the native object in an handle and set it in the internal field to get at later.
-	Handle<External> portPtr = External::New(port);
-	result->SetInternalField(0,portPtr);
+    // Get the constructor from the template
+    Handle<Function> ctor = m_portTemplate->GetFunction();
+    // Instantiate the object with the constructor
+    Handle<Object> result = ctor->NewInstance();
+    // Wrap the native object in an handle and set it in the internal field to get at later.
+    Handle<External> portPtr = External::New(port);
+    result->SetInternalField(0,portPtr);
 
-	return scope.Close(result);
+    return scope.Close(result);
 }
 
-Handle<Object> HoneydNodeJs::WrapProfile(profile *pfile)
+Handle<Object> HoneydNodeJs::WrapProfile(NodeProfile *pfile)
 {
-	HandleScope scope;
-	// Setup the template for the type if it hasn't been already
-	if( m_profileTemplate.IsEmpty() )
-	{
-		Handle<FunctionTemplate> nodeTemplate = FunctionTemplate::New();
-		nodeTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-		m_profileTemplate = Persistent<FunctionTemplate>::New(nodeTemplate);
+    HandleScope scope;  
+    // Setup the template for the type if it hasn't been already
+    if( m_profileTemplate.IsEmpty() )
+    {
+        Handle<FunctionTemplate> nodeTemplate = FunctionTemplate::New();
+        nodeTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+        m_profileTemplate = Persistent<FunctionTemplate>::New(nodeTemplate);
 
-		// Javascript methods
-		Local<Template> proto = m_profileTemplate->PrototypeTemplate();
-		proto->Set("GetName",           FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetName>) );
-		proto->Set("GetTcpAction",      FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetTcpAction>) );
-		proto->Set("GetUdpAction",      FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetUdpAction>) );
-		proto->Set("GetIcmpAction",     FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetIcmpAction>) );
-		proto->Set("GetPersonality",    FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetPersonality>) );
-		proto->Set("GetEthernet",       FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetEthernet>) );
-		proto->Set("GetUptimeMin",      FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetUptimeMin>) );
-		proto->Set("GetUptimeMax",      FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetUptimeMax>) );
-		proto->Set("GetDropRate",       FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetDropRate>) );
-		proto->Set("GetParentProfile",  FunctionTemplate::New(InvokeMethod<string, profile, &Nova::profile::GetParentProfile>));
+        // Javascript methods
+        Local<Template> proto = m_profileTemplate->PrototypeTemplate();
+        proto->Set("GetName",           FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetName>));
+        proto->Set("GetPortNames",		FunctionTemplate::New(InvokeMethod<std::vector<std::string>, NodeProfile, &Nova::NodeProfile::GetPortNames>));
+        proto->Set("GetTcpAction",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetTcpAction>));
+        proto->Set("GetUdpAction",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUdpAction>));
+        proto->Set("GetIcmpAction",     FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetIcmpAction>));
+        proto->Set("GetPersonality",    FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetPersonality>));
+        proto->Set("GetEthernet",       FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetEthernet>));
+        proto->Set("GetUptimeMin",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUptimeMin>));
+        proto->Set("GetUptimeMax",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUptimeMax>));
+        proto->Set("GetDropRate",       FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetDropRate>));
+        proto->Set("GetParentProfile",  FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetParentProfile>));
+        proto->Set("GetVendors",        FunctionTemplate::New(InvokeMethod<std::vector<std::string>, NodeProfile, &Nova::NodeProfile::GetVendors>));
+        proto->Set("GetVendorDistributions",       FunctionTemplate::New(InvokeMethod<std::vector<double>, NodeProfile, &Nova::NodeProfile::GetVendorDistributions>));
+        
+        
+        proto->Set("isTcpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isTcpActionInherited>));
+        proto->Set("isUdpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isUdpActionInherited>));
+        proto->Set("isIcmpActionInherited", FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isIcmpActionInherited>));
+        proto->Set("isPersonalityInherited",FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isPersonalityInherited>));
+        proto->Set("isEthernetInherited",   FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isEthernetInherited>));
+        proto->Set("isUptimeInherited",     FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isUptimeInherited>));
+        proto->Set("isDropRateInherited",   FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isDropRateInherited>));
+    }
 
-		proto->Set("isTcpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, profile, &Nova::profile::isTcpActionInherited>));
-		proto->Set("isUdpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, profile, &Nova::profile::isUdpActionInherited>));
-		proto->Set("isIcmpActionInherited", FunctionTemplate::New(InvokeMethod<bool, profile, &Nova::profile::isIcmpActionInherited>));
-		proto->Set("isPersonalityInherited",FunctionTemplate::New(InvokeMethod<bool, profile, &Nova::profile::isPersonalityInherited>));
-		proto->Set("isEthernetInherited",   FunctionTemplate::New(InvokeMethod<bool, profile, &Nova::profile::isEthernetInherited>));
-		proto->Set("isUptimeInherited",     FunctionTemplate::New(InvokeMethod<bool, profile, &Nova::profile::isUptimeInherited>));
-		proto->Set("isDropRateInherited",   FunctionTemplate::New(InvokeMethod<bool, profile, &Nova::profile::isDropRateInherited>));
-	}
+    // Get the constructor from the template
+    Handle<Function> ctor = m_profileTemplate->GetFunction();
+    // Instantiate the object with the constructor
+    Handle<Object> result = ctor->NewInstance();
+    // Wrap the native object in an handle and set it in the internal field to get at later.
+    Handle<External> profilePtr = External::New(pfile);
+    result->SetInternalField(0,profilePtr);
 
-	// Get the constructor from the template
-	Handle<Function> ctor = m_profileTemplate->GetFunction();
-	// Instantiate the object with the constructor
-	Handle<Object> result = ctor->NewInstance();
-	// Wrap the native object in an handle and set it in the internal field to get at later.
-	Handle<External> profilePtr = External::New(pfile);
-	result->SetInternalField(0,profilePtr);
-
-	return scope.Close(result);
+    return scope.Close(result);
 }
 
 Persistent<FunctionTemplate> HoneydNodeJs::m_NodeTemplate;

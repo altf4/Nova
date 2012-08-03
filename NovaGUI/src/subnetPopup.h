@@ -35,19 +35,19 @@ class MaskSpinBox : public QSpinBox
 
 public:
 
-	MaskSpinBox(QWidget *parent = 0, Nova::subnet *s = NULL) : QSpinBox(parent)
+	MaskSpinBox(QWidget * parent = 0, Nova::Subnet * s = NULL) : QSpinBox(parent)
 	{
 		this->lineEdit()->setReadOnly(true);
 		setWrapping(true);
 		//Num nodes + interface itself = num of addressable IP's required
-		int n = s->nodes.size() +1;
+		int n = s->m_nodes.size() +1;
 		int count = 0;
 		while((n/=2) > 0)
 		{
 			count++;
 		}
 		setRange(0, 32-count);
-		setValue(s->maskBits);
+		setValue(s->m_maskBits);
 	}
 
 protected:
@@ -89,11 +89,11 @@ class subnetPopup : public QMainWindow
 
 public:
 
-    subnetPopup(QWidget *parent = 0, Nova::subnet *s  = NULL);
+    subnetPopup(QWidget *parent = 0, Nova::Subnet *s  = NULL);
     ~subnetPopup();
 
-    Nova::subnet m_editSubnet;
-    MaskSpinBox *m_maskEdit;
+    Nova::Subnet m_editSubnet;
+    MaskSpinBox * m_maskEdit;
 
     //Saves the current configuration
     void SaveSubnet();

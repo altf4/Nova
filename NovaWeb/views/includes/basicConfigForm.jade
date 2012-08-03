@@ -7,6 +7,7 @@ script
       for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
       {
         document.getElementById("if" + i).disabled = true;
+        document.getElementById("DEFAULT").value = "true";
       }
     }
     else
@@ -14,6 +15,7 @@ script
       for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
       {
         document.getElementById("if" + i).disabled = false;
+        document.getElementById("DEFAULT").value = "false";
       }
     }
   }
@@ -37,23 +39,24 @@ script
   }
 
 h2 Basic Configuration
+    
 table
   thead
     tr 
       th Interfaces
-  - if (DEFAULT)
+  - if (DEFAULT == "true")
     tbody 
       - for (var i = 0; i < INTERFACES.length; i++)
-        - if(INTERFACES[i] === "eth0")
+        - if(INTERFACES[i].checked == 1)
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
-                #{INTERFACES[i]}
+                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
+                #{INTERFACES[i].iface}
         - else
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()", disabled=true)
-                #{INTERFACES[i]}
+                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", disabled=true)
+                #{INTERFACES[i].iface}
       tr
         td
           input(type="checkbox", value="default", id="default", width=10, onclick="changeDisabled()", checked)
@@ -61,23 +64,24 @@ table
   - else
     tbody 
       - for (var i = 0; i < INTERFACES.length; i++)
-        - if(INTERFACES[i] === "eth0")
+        - if(INTERFACES[i].checked == 1)
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()", checked)
-                #{INTERFACES[i]}
+                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", checked)
+                #{INTERFACES[i].iface}
         - else
             tr 
               td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", width=10, onclick="checkAtLeastOne()")
-                #{INTERFACES[i]}
+                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()")
+                #{INTERFACES[i].iface}
       tr
         td
           input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
           "default"  
           
-   hidden(id="length", value=INTERFACES.length)      
-br
+   hidden(id="length", value=INTERFACES.length)
+   
+   input(type="hidden", name="DEFAULT", id="DEFAULT", value=DEFAULT)
 
 label Doppelganger Interface
 input(name="DOPPELGANGER_INTERFACE",  value=DOPPELGANGER_INTERFACE)

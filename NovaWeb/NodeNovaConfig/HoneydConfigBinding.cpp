@@ -36,16 +36,17 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::LoadAllTemplates>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::SaveAllTemplates>));
 
-
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetProfileNames>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGeneratedProfileNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNodeNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetNodeNames>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGroups"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGroups>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedNodeNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGeneratedNodeNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSubnetNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetSubnetNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScriptNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetScriptNames>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteNode>));
-
-
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("CheckNotInheritingEmptyProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::CheckNotInheritingEmptyProfile>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
@@ -140,6 +141,7 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 	}
 
 	string name = cvv8::CastFromJS<string>(args[0]);
+	
 	return scope.Close(HoneydNodeJs::WrapNode(obj->m_conf->GetNode(name)));
 }
 
@@ -170,13 +172,13 @@ Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
 
 	string name = cvv8::CastFromJS<string>(args[0]);
 
-	vector<Nova::port> ports = obj->m_conf->GetPorts(name);
-	v8::Local<v8::Array> portArray = v8::Array::New();
-	for (uint i = 0; i < ports.size(); i++) {
-		port *copy = new port();
-		*copy = ports.at(i);
-		portArray->Set(v8::Number::New(i), HoneydNodeJs::WrapPort(copy));
-	}
+    vector<Nova::Port> ports = obj->m_conf->GetPorts(name);
+    v8::Local<v8::Array> portArray = v8::Array::New();
+    for (uint i = 0; i < ports.size(); i++) {
+        Port *copy = new Port();
+        *copy = ports.at(i);
+        portArray->Set(v8::Number::New(i), HoneydNodeJs::WrapPort(copy));
+    }
 
 	return scope.Close(portArray);
 }

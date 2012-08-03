@@ -22,22 +22,31 @@ Config* NovaConfigBinding::GetChild()
 	return m_conf;
 }
 
-void NovaConfigBinding::Init(Handle<Object> target)
-{
-	// Prepare constructor template
-	Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-	tpl->SetClassName(String::NewSymbol("NovaConfigBinding"));
-	tpl->InstanceTemplate()->SetInternalFieldCount(1);
-	// Prototype
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("ReadSetting"),FunctionTemplate::New(ReadSetting)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteSetting"),FunctionTemplate::New(WriteSetting)->GetFunction());
+void NovaConfigBinding::Init(Handle<Object> target) {
+  // Prepare constructor template
+  Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+  tpl->SetClassName(String::NewSymbol("NovaConfigBinding"));
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  // Prototype
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("ListInterfaces"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::ListInterfaces>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGroup"),FunctionTemplate::New(InvokeWrappedMethod<std::string, NovaConfigBinding, Config, &Config::GetGroup>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("ListLoopbacks"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::ListLoopbacks>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetInterfaces"),FunctionTemplate::New(InvokeWrappedMethod<std::vector<std::string>, NovaConfigBinding, Config, &Config::GetInterfaces>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAllInterfacesBinding"),FunctionTemplate::New(InvokeWrappedMethod<std::string, NovaConfigBinding, Config, &Config::GetUseAllInterfacesBinding>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("AddIface"),FunctionTemplate::New(AddIface)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("ClearInterfaces"),FunctionTemplate::New(ClearInterfaces)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAllInterfaces"),FunctionTemplate::New(UseAllInterfaces)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAnyLoopback"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, &Config::GetUseAnyLoopback>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("SetGroup"),FunctionTemplate::New(SetGroup)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAnyLoopback"),FunctionTemplate::New(UseAnyLoopback)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("ReadSetting"),FunctionTemplate::New(ReadSetting)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteSetting"),FunctionTemplate::New(WriteSetting)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVersionString"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetVersionString>));
 	
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetIpAddresses"),FunctionTemplate::New(InvokeMethod<std::vector<std::string>, std::string, Config::GetIpAddresses>));
 
-
-	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
-	target->Set(String::NewSymbol("NovaConfigBinding"), constructor);
+  Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
+  target->Set(String::NewSymbol("NovaConfigBinding"), constructor);
 }
 
 Handle<Value> NovaConfigBinding::New(const Arguments& args)
@@ -49,6 +58,95 @@ Handle<Value> NovaConfigBinding::New(const Arguments& args)
 	obj->Wrap(args.This());
 
 	return args.This();
+}
+
+Handle<Value> NovaConfigBinding::SetGroup(const Arguments& args)
+{
+	HandleScope scope;
+	
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+	}
+	
+	NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+	
+	std::string selectedGroup = cvv8::CastFromJS<std::string>(args[0]);
+	
+	obj->m_conf->SetGroup(selectedGroup);
+	//obj->m_conf->SaveUserConfig();
+	
+	return args.This();
+}
+
+Handle<Value> NovaConfigBinding::ClearInterfaces(const Arguments& args)
+{
+  HandleScope scope;
+  NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+
+  obj->m_conf->ClearInterfaces();
+
+  return args.This();
+}
+
+Handle<Value> NovaConfigBinding::AddIface(const Arguments& args)
+{
+  HandleScope scope;
+  NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+  
+  if(args.Length() < 1)
+  {
+      return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+  }
+  
+  std::string pass = cvv8::CastFromJS<std::string>(args[0]);
+  
+  obj->m_conf->AddInterface(pass);
+  
+  return args.This();
+}
+
+Handle<Value> NovaConfigBinding::UseAllInterfaces(const Arguments& args) 
+{
+  HandleScope scope;
+  NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+
+  if( args.Length() < 1 )
+  {
+      return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+  }
+
+  std::string def = cvv8::CastFromJS<std::string>( args[0] );
+
+  if(!def.compare("true"))
+  {
+    obj->m_conf->SetUseAllInterfaces(true);
+    obj->m_conf->SetInterfaces(obj->m_conf->ListInterfaces());
+  }
+  else
+  {
+    obj->m_conf->SetUseAllInterfaces(false);
+  }
+  
+
+  return args.This();
+}
+
+Handle<Value> NovaConfigBinding::UseAnyLoopback(const Arguments& args) 
+{
+  HandleScope scope;
+  NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+
+    if( args.Length() < 1 )
+    {
+        return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+    }
+
+    bool def = cvv8::CastFromJS<bool>( args[0] );
+
+  obj->m_conf->SetUseAnyLoopback(def);
+
+  return args.This();
 }
 
 Handle<Value> NovaConfigBinding::ReadSetting(const Arguments& args) 

@@ -19,14 +19,9 @@
 #define NOVAGUI_H
 
 #include "DialogPrompter.h"
-#include "NovaGuiTypes.h"
 #include "ui_novagui.h"
 #include "Suspect.h"
-#include "loggerwindow.h"
-#include "Config.h"
 #include "HoneydConfiguration.h"
-
-#include <QProcess>
 
 struct suspectItem
 {
