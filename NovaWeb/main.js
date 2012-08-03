@@ -650,23 +650,6 @@ app.post('/createInitialUser', passport.authenticate('basic', { session: false }
 	  });
 });
 
-app.get('/login', function(req, res){
-	 var redirect;
-	 if (req.query["redirect"] != undefined)
-	 {
-		redirect = req.query["redirect"]; 
-	 } else {
-		redirect = "/suspects";
-	 }
-     res.render('login.jade',
-     {
-         user: req.user
-         , message: req.flash('error')  
-		 , redirect: redirect
-     });
-
-});
-
 app.get('/autoConfig', passport.authenticate('basic', { session: false }), function(req, res) {
    res.render('hhautoconfig.jade', 
    {
@@ -697,19 +680,6 @@ app.get('/nodeReview', passport.authenticate('basic', { session: false }), funct
 	 	,nodes: nodes
 	 	,subnets:  honeydConfig.GetSubnetNames() 
 	}})
-});
-
-app.post('/login*',
-  passport.authenticate('basic', { failureRedirect: '/', failureFlash: true }), 
-    function(req, res){
-		if (req.query["redirect"] != undefined)
-		{
-        	res.redirect(req.query["redirect"]);
-		}
-		else
-		{
-        	res.redirect('/suspects');
-		}
 });
 
 app.post('/scanning', passport.authenticate('basic', { session: false }), function(req, res){
