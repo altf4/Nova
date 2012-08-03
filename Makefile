@@ -263,9 +263,14 @@ reset: uninstall-files
 	$(MAKE) test 
 	$(MAKE) install
 
-reset-debug: uninstall-files
+reset-debug: 
+	$(MAKE) uninstall-files
 	$(MAKE) clean
 	$(MAKE) debug
+	$(MAKE) novagui-debug
+	$(MAKE) hhconfig-debug
+	$(MAKE) novaweb
 	$(MAKE) test
 	$(MAKE) install
+	$(MAKE) install-web
 
