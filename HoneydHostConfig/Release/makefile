@@ -4,12 +4,12 @@
 
 -include ../makefile.init
 
-RM := rm
+RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include src/subdir.mk
 -include subdir.mk
+-include src/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -41,14 +41,14 @@ endif
 all: honeydhostconfig
 
 dependents:
-	-cd /home/addison/Code/Nova/NovaLibrary/Release && $(MAKE) clean all
-	-cd /home/addison/Code/Nova/Nova_UI_Core/Release && $(MAKE) clean all
+	-cd /home/david/Code/Nova/NovaLibrary/Release && $(MAKE) clean all
+	-cd /home/david/Code/Nova/Nova_UI_Core/Release && $(MAKE) clean all
 
 # Tool invocations
-honeydhostconfig: $(OBJS) $(USER_OBJS) /home/addison/Code/Nova/NovaLibrary/Release/libNovaLibrary.a /home/addison/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so
+honeydhostconfig: $(OBJS) $(USER_OBJS) /home/david/Code/Nova/NovaLibrary/Release/libNovaLibrary.a /home/david/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/Nova_UI_Core/Release -shared -o "honeydhostconfig" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../Nova_UI_Core/Release -shared -o "honeydhostconfig" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -59,7 +59,7 @@ clean:
 
 .PHONY: all clean dependents
 .SECONDARY:
-/home/addison/Code/Nova/NovaLibrary/Release/libNovaLibrary.a:
-/home/addison/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so:
+/home/david/Code/Nova/NovaLibrary/Release/libNovaLibrary.a:
+/home/david/Code/Nova/Nova_UI_Core/Release/libNova_UI_Core.so:
 
 -include ../makefile.targets
