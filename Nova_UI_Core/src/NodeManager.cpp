@@ -537,7 +537,7 @@ void NodeManager::GetCurrentCount()
 
 void NodeManager::AdjustNodesToTargetDistributions()
 {
-	GenerateProfileCounters(&m_hdconfig->m_profiles["Default"]);
+	GenerateProfileCounters(&m_hdconfig->m_profiles["default"]);
 	GetCurrentCount();
 
 	vector<ProfileCounter *> underPopulatedProfiles;
@@ -939,7 +939,15 @@ void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 	{
 		struct ProfileCounter pCounter;
 		pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
-		pCounter.m_increment = profile->m_distribution;
+		pCounter.m_increment = profile->m_distribution/100;
+		string tempStr = profile->m_parentProfile;
+		NodeProfile *parentProf = m_hdconfig->GetProfile(tempStr);
+		while(parentProf != NULL)
+		{
+			pCounter.m_increment = pCounter.m_increment*(parentProf->m_distribution/100);
+			tempStr = parentProf->m_parentProfile;
+			parentProf = m_hdconfig->GetProfile(tempStr);
+		}
 
 		double avgPorts = 0;
 		for(uint i = 0; i < profile->m_ports.size(); i++)
