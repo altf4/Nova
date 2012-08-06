@@ -750,6 +750,7 @@ app.post('/editHoneydNodesSave', passport.authenticate('basic', { session: false
 	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
 	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
 	honeydConfig.SaveAllTemplates();
+	honeydConfig.WriteHoneydConfiguration(config.GetPathConfigHoneydHS());
      
 	res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 
