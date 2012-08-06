@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "sys/types.h"
 
@@ -42,6 +43,13 @@ std::string GetLocalIP(const char *dev);
 // Note: this function will result in an empty string, if every character is == c
 void Trim(std::string& str, char c = ' ');
 
+
+inline std::string ConvertInt(int x)
+{
+	std::stringstream ss;
+	ss << x;
+	return ss.str();
+}
 //Replaces all instances of the search character in the addressed string with the character specified
 //	str: the string to modify
 //	searchChar: the character to replace
