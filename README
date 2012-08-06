@@ -27,7 +27,7 @@ required to compile Nova correctly. Make sure to watch the terminals at the
 beginning of the install process, and be sure to type 'Y' when asked to do so.
 Install the libraries with the following command:
 
-    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev libnotify-dev mysql-server libcurl3 libcurl4-gnutls-dev
+    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev libnotify-dev mysql-server libcurl3 libcurl4-gnutls-dev unzip iptables
 
 
 - Now, we'll have to take a quick detour to get another integral component
@@ -36,11 +36,19 @@ well; you can get them using this command:
 
     sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
 
+- For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher. The current version in the apt repository is 
+5.21, so you'll have to go to the Nmap website and get 6.00. It can be found here: 
 
-- If you're running Ubuntu 11.10 or higher, you will also need the library
-libevent1-dev; procure this by:
-    
-    sudo apt-get install libevent1-dev
+    http://nmap.org/download.html
+
+	OR
+
+    wget http://nmap.org/dist/nmap-6.01.tar.bz2
+
+There are instructions for manual install on the same page (but are just the standard ./configure, make, and sudo make install commands).
+
+
+- NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the version of libevent available in the repos is only 1.x. So you will need to either find a backport or build libevent 2.x from source.
 
 - If you wish to optionally generate Debian packages for Nova, you will also require dpkg-dev:
 
@@ -102,9 +110,22 @@ back out for the change to take effect.
     Step 4: Log out and log back in
 
 - After these steps are completed without errors, Nova is set up on your
-system. You can use the command 'novagui' To start the QT GUI.
+system. You'll probably want to install a GUI for nova, either the QT based or web based GUI.
+Instructions for installing the GUIs follow below.
 
 Refer to the Help tab in the GUI and the Nova wiki for more information.
+
+===============================
+ QT Interface
+===============================
+
+The QT GUI (novagui) is a simple C++/QT interface for accessing nova and it's configuration on 
+the same machine you're running it on. To build and install,
+    Step 1: cd $NOVA_SOURCE
+    Step 2: make qtgui
+    Step 3: make install-qtgui
+
+Launch with the command "novagui".
 
 ===============================
  Web Interface
@@ -126,7 +147,10 @@ SSL certificate and private key, put them in /usr/share/nova/NovaWeb/servercert.
 /usr/share/nova/NovaWeb/serverkey.pem after installation.
 
 To start the web interface, run the command "novaweb" and go to https://localhost:8042 in
-a web browser.
+a web browser. "novaweb -debug" may provide more information if there are problems. Novaweb
+launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
+The command "forever list" can be useful for seeing the current status, and it can be stopped with
+"forever stop index (usually 0)". See the forever documentation for more information.
 
 ===============================
 Debian Packages

@@ -20,7 +20,7 @@
 
 #include "ui_nodePopup.h"
 #include "NovaGuiTypes.h"
-#include "novagui.h"
+#include "DialogPrompter.h"
 
 #include <QtGui/QSpinBox>
 #include <math.h>

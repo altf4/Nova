@@ -4,6 +4,9 @@ extends layout
 block headerAdditions
   //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   script
+    var ethVendorLength = 0;
+    var numCreated = 0;
+    
     var profile;
     var portList = new function() {};
     var newProfile = "#{newProfile}";
@@ -25,6 +28,11 @@ block headerAdditions
     var portBehaviorChanged = function() {};
     var saveChanges = function() {};
     var savedChanges = function() {};
+    var sliderMoved = function(which, len, cb) {};
+    var clearCell = function(which, len) {};
+    var addVendor = function(vendName) {};
+    var deleteAndClean = function(which) {};
+    var clearCreated = function() {};
 
     var portIndexes = [];
     var loaded = false;
@@ -38,17 +46,537 @@ block headerAdditions
       }
     }
 
-    require(["dojo/domReady!", "dojo/ready", "dijit/form/FilteringSelect"], function() {
+    require(["dojo/domReady!", "dojo/ready", "dijit/registry", "dijit/form/FilteringSelect"], function() {
+
+    addVendor = function(vendName) {
+        if(document.getElementById("ethDiv0") == undefined)
+        {        
+            var teed = document.getElementById("labelDist");
+            var teed2 = document.getElementById("ranges");
+            var teed3 = document.getElementById("deleteButtonHere");
+        
+            var div = document.createElement("div");
+            
+            div.setAttribute("id", "ethDiv0");
+            div.setAttribute("style", "width: content_width");
+            
+            var rangeDiv = document.createElement("div");
+            
+            rangeDiv.setAttribute("id", "rangeDiv0");
+            rangeDiv.setAttribute("style", "width: content_width");
+            
+            var distribution = document.createElement("input");
+                    
+            distribution.setAttribute("id", "dist0");
+            distribution.setAttribute("type", "range");
+            distribution.setAttribute("min", "1");                    
+            distribution.setAttribute("max", "100");
+            distribution.setAttribute("step", "1");
+            distribution.setAttribute("value", 100);
+            distribution.setAttribute("readonly", "true");
+            distribution.setAttribute("style", "vertical-align: text");
+            distribution.setAttribute("onchange", 'sliderMoved("dist0", 1)');
+           
+            var add = document.createElement("input");
+            
+            add.setAttribute("id", "vend0");
+            add.innerHTML = vendName;
+            add.setAttribute("type", "text");
+            add.setAttribute("value", vendName);
+            add.setAttribute("style", "width: 10");
+            add.setAttribute("readonly", "true");
+            add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                               
+            var br = document.createElement("br");
+            
+            var distLabel = document.createElement("input");
+            
+            distLabel.setAttribute("id","distLabel0");
+            distLabel.setAttribute("value", "100%");
+            distLabel.innerHTML = "100%";
+            distLabel.setAttribute("type", "text");
+            distLabel.setAttribute("readonly", "true");
+            distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+            distLabel.setAttribute("onchange", 'clearCell("distLabel0", ' + 1 + ')');
+
+            var deleteDiv = document.createElement("div");
+            
+            deleteDiv.setAttribute("style", "width: content_width");
+            deleteDiv.setAttribute("id", "deleteDiv0");
+
+            var deleteButton = document.createElement("button");
+            
+            deleteButton.setAttribute("id", "delete0");
+            deleteButton.setAttribute("type", "button");
+            deleteButton.setAttribute("onclick", "deleteAndClean('ethDiv0')");
+            deleteButton.innerHTML = "Delete Vendor";
+
+            div.appendChild(add);
+            div.appendChild(distLabel);
+            teed.appendChild(div);
+            rangeDiv.appendChild(distribution);
+            rangeDiv.appendChild(br);
+            teed2.appendChild(rangeDiv);
+            deleteDiv.appendChild(deleteButton);
+            deleteDiv.appendChild(br);
+            teed3.appendChild(deleteDiv);
+           
+            numCreated = 1;
+        }
+        else
+        {
+            var keepGoing = true;
+        
+            for(var i = 0; i < numCreated; i++)
+            {
+                if(vendName == document.getElementById("vend" + i).value)
+                {
+                    keepGoing = false;
+                }
+            }
+            if(keepGoing)
+            {
+               for(var i = 0; i < numCreated; i++)
+               {
+                   document.getElementById("dist" + i).removeAttribute("readonly");
+                   document.getElementById("distLabel" + i).removeAttribute("readonly");
+               }
+        
+               document.getElementById("errorEthernet").value = "";
+               document.getElementById("errorEthernet").innerHTML = "";
+        
+        
+               var number = numCreated;
+               var checkAgainst = "ethDiv" + number;
+               numCreated++;
+               
+               var teed = document.getElementById("labelDist");
+               var teed2 = document.getElementById("ranges");
+               var teed3 = document.getElementById("deleteButtonHere");
+
+               var div = document.createElement("div");
+            
+               div.setAttribute("id", "ethDiv" + number);
+               div.setAttribute("style", "width: content_width");
+            
+               var rangeDiv = document.createElement("div");
+            
+               rangeDiv.setAttribute("id", "rangeDiv" + number);
+               rangeDiv.setAttribute("style", "width: content_width");
+            
+               var distribution = document.createElement("input");
+                    
+               distribution.setAttribute("id", "dist" + number);
+               distribution.setAttribute("type", "range");
+               distribution.setAttribute("min", "1");                    
+               distribution.setAttribute("max", 100 - number);
+               distribution.setAttribute("step", "1");
+               distribution.setAttribute("value", 1);
+               distribution.setAttribute("style", "vertical-align: text");
+               distribution.setAttribute("onchange", 'sliderMoved(\"dist' + number + '\", ' + (number + 1) + ')');
+           
+               var add = document.createElement("input");
+            
+               add.setAttribute("id", "vend" + number);
+               add.innerHTML = vendName;
+               add.setAttribute("type", "text");
+               add.setAttribute("value", vendName);
+               add.setAttribute("style", "width: 10");
+               add.setAttribute("readonly", "true");
+               add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                               
+               var br = document.createElement("br");
+            
+               var distLabel = document.createElement("input");
+            
+               distLabel.setAttribute("id","distLabel" + number);
+               distLabel.setAttribute("value", "1%");
+               distLabel.innerHTML = "1%";
+               distLabel.setAttribute("type", "text");
+               distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+               distLabel.setAttribute("onchange", 'clearCell("distLabel' + number + '", ' + (number + 1) + ')');
+
+               var deleteDiv = document.createElement("div");
+            
+               deleteDiv.setAttribute("style", "width: content_width");
+               deleteDiv.setAttribute("id", "deleteDiv" + number);
+
+               var deleteButton = document.createElement("button");
+            
+               deleteButton.setAttribute("id", "delete" + number);
+               deleteButton.setAttribute("type", "button");
+               deleteButton.setAttribute("onclick", 'deleteAndClean("ethDiv' + number + '")');
+               deleteButton.innerHTML = "Delete Vendor";
+
+               div.appendChild(add);
+               div.appendChild(distLabel);
+               teed.appendChild(div);
+               rangeDiv.appendChild(distribution);
+               rangeDiv.appendChild(br);
+               teed2.appendChild(rangeDiv);
+               deleteDiv.appendChild(deleteButton);
+               deleteDiv.appendChild(br);
+               teed3.appendChild(deleteDiv);
+            
+               var deleteOne = true;
+              
+               for(var i = 0; i < (number + 1); i++)
+               {
+                   if("ethDiv" + i !== checkAgainst)
+                   {
+                       var change = document.getElementById("ethDiv" + i);
+                       var changeMax = document.getElementById("rangeDiv" + i);
+                
+                       for(var j = 0; j < change.childNodes.length; j++)
+                       {
+                           if(change.childNodes[j].id.substr(0, 9) == "distLabel")
+                           {
+                               if(((change.childNodes[j].value - 1) != 0) && (deleteOne))
+                               {
+                                    var replace = ((parseInt(change.childNodes[j].value.substr(0, change.childNodes[j].value.length - 1)) - 1).toString() + "%");
+                            
+                                    change.childNodes[j].value = replace;
+                                    change.childNodes[j].innerHTML = replace;
+                                    
+                                    document.getElementById("dist" + i).setAttribute("value", document.getElementById("dist" + i).value - 1);
+                                    deleteOne = false;
+                                   //need to modify or obviate the hidden field for user created vendors
+                               }
+                           }
+                       }
+                   }
+                   
+                   document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + (number + 1) + ')');
+                   document.getElementById("dist" + i).setAttribute("max", (100 - number));
+                   document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + (number + 1) + ')')
+               }
+           }
+           else
+           {
+               document.getElementById("errorEthernet").value = "Can't add the same vendor twice";
+               document.getElementById("errorEthernet").innerHTML = "Can't add the same vendor twice";
+           }
+        }
+    }
+
+    deleteAndClean = function(which) {
+        if(numCreated == 1)
+        {
+            document.getElementById("errorEthernet").value = "Can't delete last vendor, must have at least one";
+            document.getElementById("errorEthernet").innerHTML = "Can't delete last vendor, must have at least one";
+            return;
+        }
     
-    // TODO
-    if (newProfile != "true") {
-        dojo.byId("saveButton").disabled = true;
+        var whichToDelete = which.substr(6);
+        
+        // need to go through and delete the divs with whichToDelete as their last character;
+        // then, need to go to each element after the deleted one, decrement their ids, as well
+        // as modify their function calls and stuff to reflect the changed number of vendors
+        var teed = document.getElementById("labelDist");
+        var teed2 = document.getElementById("ranges");
+        var teed3 = document.getElementById("deleteButtonHere");
+        
+        var keepGoing = true;
+        
+        for(var i = 0; i < teed.childNodes.length && keepGoing; i++)
+        {
+            if(teed.childNodes[i].id == ("ethDiv" + whichToDelete))
+            {
+                teed.removeChild(teed.childNodes[i]);
+                keepGoing = false;
+            }
+        }
+        
+        keepGoing = true;
+        
+        for(var i = 0; i < teed2.childNodes.length && keepGoing; i++)
+        {
+            if(teed2.childNodes[i].id == ("rangeDiv" + whichToDelete))
+            {
+                teed2.removeChild(teed2.childNodes[i]);
+                keepGoing = false;
+            }
+        }
+        
+        keepGoing = true;
+        
+        for(var i = 0; i < teed3.childNodes.length && keepGoing; i++)
+        {
+            if(teed3.childNodes[i].id == ("deleteDiv" + whichToDelete))
+            {
+                teed3.removeChild(teed3.childNodes[i]);
+                keepGoing = false;
+            }
+        }
+        
+        
+        var newNumCreated = numCreated - 1;
+        
+        for(var i = 0; i < numCreated; i++)
+        {
+            if(i >= (parseInt(whichToDelete) + 1))
+            {
+                document.getElementById("ethDiv" + i).id = ("ethDiv" + (i - 1));
+                document.getElementById("vend" + i).id = ("vend" + (i - 1));
+                document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell(\"distLabel' + (i - 1) + '\", ' + newNumCreated + ')');
+                document.getElementById("distLabel" + i).id = ("distLabel" + (i - 1));
+                document.getElementById("rangeDiv" + i).id = ("rangeDiv" + (i - 1));
+                document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + (i - 1) + '\", ' + newNumCreated + ')');
+                document.getElementById("dist" + i).id = ("dist" + (i - 1));
+                document.getElementById("delete" + i).setAttribute("onclick", 'deleteAndClean(\"ethDiv' + (i - 1) + '\")');
+                document.getElementById("delete" + i).id = ("delete" + (i - 1));
+                document.getElementById("deleteDiv" + i).id = ("deleteDiv" + (i - 1));
+            }
+            else if(i < parseInt(whichToDelete))
+            {
+                document.getElementById("distLabel" + i).setAttribute("onchange", 'clearCell(\"distLabel' + i + '\", ' + newNumCreated + ')');
+                document.getElementById("dist" + i).setAttribute("onchange", 'sliderMoved(\"dist' + i + '\", ' + newNumCreated + ')');
+            }
+        }
+        
+        var max = {index: 0, value: dojo.byId("dist0").value};
+        var justInCase = {index: 0, value: dojo.byId("dist0").value};
+        
+        for(var i = 0; i < newNumCreated; i++)
+        {
+            if(dojo.byId("dist" + i).value > max)
+            {
+                justInCase.index = max.index;
+                justInCase.value = max.value;
+                max.index = i;
+                max.value = checkSum[i];
+            }
+        }
+        
+        if((max.value + 1) < 100)
+        {
+            max.value = parseInt(max.value) + 1;
+            document.getElementById("dist" + max.index).value = max.value;
+            document.getElementById("dist" + max.index).max = parseInt(document.getElementById("dist" + max.index).max) + 1;
+            document.getElementById("distLabel" + max.index).value = max.value.toString() + "%";
+            document.getElementById("distLabel" + max.index).innerHTML = max.value.toString() + "%";
+        }
+        else
+        {
+            justInCase.value = parseInt(justInCase.value) + 1;
+            document.getElementById("dist" + justInCase.index).value = justInCase.value;
+            document.getElementById("dist" + justInCase.index).max = parseInt(document.getElementById("dist" + justInCase.index).max) + 1;
+            document.getElementById("distLabel" + justInCase.index).value = justInCase.value.toString() + "%";
+            document.getElementById("distLabel" + justInCase.index).innerHTML = justInCase.value.toString() + "%";
+        }
+        
+        numCreated = newNumCreated;
+        
+        if(numCreated == 1)
+        {
+            document.getElementById("dist0").value = 100;
+            document.getElementById("dist0").max = 100;
+            document.getElementById("distLabel0").value = "100%";
+            document.getElementById("distLabel0").innerHTML = "100%";
+            
+            document.getElementById("distLabel0").setAttribute("readonly","true");
+            document.getElementById("dist0").setAttribute("readonly", "true");
+        }
+    }
+
+    clearCell = function(which, len) {
+        var element = document.getElementById(which);
+        var text = element.value;
+        var maxAllowed = parseInt(document.getElementById("dist" + which[which.length - 1]).getAttribute("max"));
+        var numericValue = (text[text.length - 1] == "%" ? parseInt(text.substr(0, text.length - 1)) : parseInt(text));
+        
+        if(numericValue == 0)
+        {
+            document.getElementById("errorEthernet").value = "Cannot have 0% distribution for a vendor";
+            document.getElementById("errorEthernet").innerHTML = "Cannot have 0% distribution for a vendor";
+            
+            var stringToReplace = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
+            
+            element.value = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
+        }
+        else if(numericValue < 1 || numericValue > maxAllowed)
+        {
+            document.getElementById("errorEthernet").value = "Invalid value for distribution, must be an integer between 1 and " + maxAllowed;
+            document.getElementById("errorEthernet").innerHTML = "Invalid value for distribution, must be an integer between 1 and " + maxAllowed;
+            
+            var stringToReplace = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
+            
+            element.value = (document.getElementById("dist" + which[which.length - 1]).value).toString() + "%";
+        }
+        else
+        {
+            document.getElementById("errorEthernet").value = "";
+            document.getElementById("errorEthernet").innerHTML = "";
+        
+            if(text[text.length - 1] != "%")
+            {
+                element.value += "%";
+            
+                sliderMoved("dist" + which[which.length - 1], len, text);
+            }
+            else if(document.getElementById("dist" + which[which.length - 1]).value != document.getElementById(which).value)
+            {
+                sliderMoved("dist" + which[which.length - 1], len, text);
+            }
+        }
+    }
+
+    sliderMoved = function(which, len, cb) {
+    
+        if(cb != undefined)
+        {
+            dojo.byId(which).value = cb;
+        }
+    
+        var changeArray = [];
+        
+        var checkAgainst = which[which.length - 1];
+        
+        for(var i = 0; i < len; i++)
+        {
+            changeArray.push(parseInt(document.getElementById("dist" + i).value));
+        }
+        
+        var total = 0;
+        
+        for(var i in changeArray)
+        {
+            total += parseInt(changeArray[i]);
+        }
+        
+        var reduction = 100 - total;
+        
+        var sumOfOtherElements = parseInt(total - changeArray[checkAgainst]);
+        
+        var modifiers = [];
+        
+        for(var i in changeArray)
+        {
+            if(i != checkAgainst)
+            {
+                var mult = parseFloat(changeArray[i] / sumOfOtherElements);
+                modifiers.push(parseFloat(reduction * mult));
+            }
+        }
+        
+        var max = 0;
+        
+        for(var i = 0; i < modifiers.length - 1; i++)
+        {
+            var roundingVal = modifiers[i] + 0.5;
+            
+            if(Math.floor(roundingVal) == Math.floor(modifiers[i]))
+            {
+                modifiers[i] = Math.floor(roundingVal);
+                modifiers[i + 1] += parseFloat(roundingVal % 1);
+            }
+            else
+            {
+                modifiers[i] = Math.floor(roundingVal);
+                modifiers[i + 1] -= roundingVal % 1;
+            }
+            
+            max += (modifiers[i] / 1);
+        }
+        
+        modifiers[modifiers.length - 1] = (reduction - max);
+        
+        var j = 0;
+        
+        for(var i in changeArray)
+        {
+            if((i != checkAgainst) && (changeArray[i] + modifiers[j] > 0))
+            {
+                changeArray[i] += modifiers[j];
+                j++;
+            }
+            else if((i != checkAgainst) && !(changeArray[i] + modifiers[j] > 0))
+            {
+                var ltOrEqZero = parseInt(changeArray[i] + modifiers[j]);
+                 
+                while(ltOrEqZero <= 0)
+                {
+                    modifiers[j] += 1;
+                    modifiers[j + 1] -= 1;
+                    ltOrEqZero = parseInt(changeArray[i] + modifiers[j]);
+                }
+                
+                changeArray[i] += modifiers[j];
+               
+                j++;
+            }
+        }
+        
+        var checkSum = 0;
+        
+        for(var i in changeArray)
+        {
+            checkSum += parseInt(changeArray[i]);
+        }
+        
+        for(var i in changeArray)
+        {
+            var dist = document.getElementById("dist" + i);
+            var distLabel = document.getElementById("distLabel" + i);
+        
+            dist.value = changeArray[i];
+            distLabel.value = changeArray[i].toString() + "%";
+            distLabel.innerHTML = changeArray[i].toString() + "%";
+        }
+        
+        if(numCreated == 1)
+        {
+            document.getElementById("dist0").value = 100;
+            document.getElementById("dist0").max = 100;
+            document.getElementById("distLabel0").value = "100%";
+            document.getElementById("distLabel0").innerHTML = "100%";
+            document.getElementById("distLabel0").setAttribute("readonly","true");
+            document.getElementById("dist0").setAttribute("readonly", "true");
+        }
     }
  
     function obj() {};
     saveChanges = function() {
         var pfile = new obj();
         var ports = new obj();
+        
+        var ethVendorList = [];
+        
+        var checkLength1 = ethVendorLength;
+        var checkLength2 = numCreated;
+        
+        console.log("checkLength1 = " + checkLength1 + " and checklength2 = " + checkLength2);
+        
+        if(checkLength1 == 0 && checkLength2 > 0)
+        {
+            var forLength = checkLength2; 
+        
+            for(var i = 0; i < forLength; i++)
+            {
+                var element = {vendor: "", dist: ""};
+                element.vendor = document.getElementById("vend" + i).value;
+                element.dist = parseFloat(document.getElementById("dist" + i).value);
+                ethVendorList.push(element);
+            }
+        }
+        else if(checkLength2 == 0 && checkLength1 > 0)
+        {
+            var forLength = checkLength1;
+        
+            for(var i = 0; i < forLength; i++)
+            {
+                var element = {vendor: "", dist: ""};
+                element.vendor = document.getElementById("vend" + i).value;
+                element.dist = parseFloat(document.getElementById("dist" + i).value);
+                ethVendorList.push(element);
+            }
+        }
+        else
+        {
+            document.getElementById("errorEthernet").value = "Must choose to either inherit ethernet vendors or select at least one";
+            document.getElementById("errorEthernet").innerHTML = "Must choose to either inherit ethernet vendors or select at least one";
+            return;
+        }
         
         pfile.oldName = "#{oldName}";
         pfile.parentProfile = dojo.byId("parentName").value;
@@ -86,7 +614,7 @@ block headerAdditions
             ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
         }
 
-        now.SaveProfile(pfile, ports, savedChanges);
+        now.SaveProfile(pfile, ports, savedChanges, ethVendorList, false);
     }
 
     savedChanges = function() {
@@ -188,8 +716,8 @@ block headerAdditions
 
         portBehaviorChanged();
         portInheritedChange(portUID);
-    }  
-
+    }
+    
     // Disable editing if inherited
     portInheritedChange = function(portUID) {
         if (dojo.byId("portInherited" + portUID).checked) {
@@ -221,8 +749,10 @@ block headerAdditions
     uptimeTypeChanged = function() {
         if (dojo.byId("uptimeType").selectedIndex == 0) {
             dojo.byId("uptimeMax").style.display = "none";
+            document.getElementById("uptimeLabel").innerHTML = "Uptime";
         } else {
             dojo.byId("uptimeMax").style.display = "block"; 
+            document.getElementById("uptimeLabel").innerHTML = "Uptime Range";
         }
     }
 
@@ -247,6 +777,30 @@ block headerAdditions
         }
     }
     
+    clearCreated = function() {
+        var numToDelete = numCreated;
+        
+        if(numToDelete >= 1)
+        {
+            var labelDist = document.getElementById("labelDist");
+            var ranges = document.getElementById("ranges");
+            var deleteButtons = document.getElementById("deleteButtonHere");
+        
+            for(var i = 0; i < numToDelete; i++)
+            {
+                labelDist.removeChild(document.getElementById("ethDiv" + i));
+                ranges.removeChild(document.getElementById("rangeDiv" + i));
+                
+                if(deleteButtons.childNodes.length > 1)
+                {
+                    deleteButtons.removeChild(document.getElementById("deleteDiv" + i));
+                }
+            }
+        }
+       
+        numCreated = 0;
+    }
+    
     inheritanceChanged = function() {
         if (dojo.byId("personality").disabled = dojo.byId("inheritPersonality").checked) {
             dojo.byId("personality").value = profile.personality;
@@ -255,11 +809,304 @@ block headerAdditions
             dijit.byId("personality").setDisabled(false);
         }
 
-        if (dojo.byId("ethernet").disabled = dojo.byId("inheritEthernet").checked) {
-            dojo.byId("ethernet").value = profile.ethernet;
+        if(dojo.byId("inheritEthernet").checked) 
+        {
             dijit.byId("ethernet").setDisabled(true);
-        } else {
+            dojo.byId("ethSelectButton").disabled = true;
+            numCreated = 0;
+            
+            try
+            {
+                var deletes = document.getElementById("row3").childNodes;
+            
+                for(var i in deletes)
+                {
+                    if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "deleteButtonHere")
+                    {
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
+                        {                     
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
+                        }
+                    }
+                }
+            }
+            catch(err)
+            {
+                // This'll catch much the same as the nested try catch;
+                // there's some stuff inside a tag that getAttribute() 
+                // can't be called on (Object#<Comment>) but it's 
+                // easier to just let the error happen than develop logic
+                // to avoid those elements. I'll try experimenting with using
+                // tagName stuff a little bit but this'll be how it is for now.
+            }
+            
+            now.GetInheritedEthernetList(document.getElementById("parentName").value, 
+            function(elements, distributions){
+                var oldEthVendLength = ethVendorLength
+                
+                console.log("oldEthVendLength " + oldEthVendLength);
+                
+                if((oldEthVendLength === 0) || (oldEthVendLength != elements.length))
+                {
+                    ethVendorLength = elements.length;
+
+                    document.getElementById("errorEthernet").value = "";
+                    document.getElementById("errorEthernet").innerHTML = "";
+
+                    var teed = document.getElementById("labelDist");
+                    var teed2 = document.getElementById("ranges");
+                    var teed3 = document.getElementById("deleteButtonHere");
+
+                    var teedFor = teed.childNodes.length;
+                    var teed2For = teed2.childNodes.length;
+                    var teed3For = teed3.childNodes.length;
+
+                    clearCreated();
+
+                    for(var i in elements)
+                    {
+                        var distro = distributions[i];
+                
+                        if(Math.floor(distro + 0.5) == Math.floor(distro))
+                        {
+                            distributions[i] = Math.ceil(distro);
+                            distributions[i + 1] += distro % 1; 
+                        }
+                        else
+                        {
+                            distributions[i] = Math.floor(distro);
+                            distributions[i + 1] -= distro % 1; 
+                        }
+                
+                        var div = document.createElement("div");
+                
+                        div.setAttribute("id", "ethDiv" + i);
+                        div.setAttribute("style", "width: content_width");
+                    
+                        var rangeDiv = document.createElement("div");
+                
+                        rangeDiv.setAttribute("id", "rangeDiv" + i);
+                        rangeDiv.setAttribute("style", "width: content_width");
+                   
+                        var add = document.createElement("input");
+                    
+                        add.setAttribute("id", "vend" + i);
+                        add.innerHTML = elements[i];
+                        add.setAttribute("type", "text");
+                        add.setAttribute("value", elements[i]);
+                        add.setAttribute("style", "width: 10");
+                        add.setAttribute("readonly", "true");
+                        add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                                           
+                        var br = document.createElement("br");
+                    
+                        var distLabel = document.createElement("input");
+                    
+                        distLabel.setAttribute("id","distLabel" + i);
+                        distLabel.setAttribute("value", distributions[i] + "%");
+                        distLabel.innerHTML = distributions[i] + "%";
+                        distLabel.setAttribute("type", "text");
+                        distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+                        distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
+    
+                        var distribution = document.createElement("input");
+                    
+                        distribution.setAttribute("id", "dist" + i);
+                        distribution.setAttribute("type", "range");
+                        distribution.setAttribute("min", "1");                    
+                        distribution.setAttribute("max", 100 - elements.length);
+                        distribution.setAttribute("step", "1");
+                        distribution.setAttribute("value", distributions[i]);
+                        distribution.setAttribute("style", "vertical-align: text");
+                        distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
+
+                        div.appendChild(add);
+                        div.appendChild(distLabel);
+                        teed.appendChild(div);
+                        rangeDiv.appendChild(distribution);
+                        rangeDiv.appendChild(br);
+                        teed2.appendChild(rangeDiv);
+                    
+                        if(ethVendorLength == 1)
+                        {
+                            document.getElementById("dist0").value = 100;
+                            document.getElementById("dist0").max = 100;
+                            document.getElementById("distLabel0").value = "100%";
+                            document.getElementById("distLabel0").innerHTML = "100%";
+                            document.getElementById("distLabel0").setAttribute("readonly","true");
+                            document.getElementById("dist0").setAttribute("readonly", "true");
+                        }
+                    }    
+                }
+            });     
+        }
+        else 
+        {
+            dojo.byId("ethSelectButton").disabled = false;
             dijit.byId("ethernet").setDisabled(false);
+            
+            ethVendorLength = 0;
+            
+            var deletes = document.getElementById("row3").childNodes;
+            
+            try
+            {
+                for(var i in deletes)
+                {
+                    if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "labelDist")
+                    {
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
+                        {
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
+                        }
+                    }
+                    else if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "ranges")
+                    {
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
+                        {                     
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
+                        }
+                    }
+                    else if(deletes[i].tagName == "TD" && deletes[i].getAttribute("id") == "deleteButtonHere")
+                    {
+                        var forLength = deletes[i].childNodes.length;
+                        for(var j = 0; j < forLength; j++)
+                        {                     
+                            deletes[i].removeChild(deletes[i].childNodes[0]);
+                        }
+                    }
+                }
+            }
+            catch(err)
+            {
+                // This'll catch much the same as the nested try catch;
+                // there's some stuff inside a tag that getAttribute() 
+                // can't be called on (Object#<Comment>) but it's 
+                // easier to just let the error happen than develop logic
+                // to avoid those elements. I'll try experimenting with using
+                // tagName stuff a little bit but this'll be how it is for now.
+            }
+            if(newProfile == "false")
+            {
+                now.GetVendors(document.getElementById("name").value, function(elements, distributions){
+                
+                numCreated = elements.length;
+
+                document.getElementById("errorEthernet").value = "";
+                document.getElementById("errorEthernet").innerHTML = "";
+
+                var teed = document.getElementById("labelDist");
+                var teed2 = document.getElementById("ranges");
+                var teed3 = document.getElementById("deleteButtonHere");
+
+                var teedFor = teed.childNodes.length;
+                var teed2For = teed2.childNodes.length;
+                var teed3For = teed3.childNodes.length;
+
+                for(var i in elements)
+                {
+                    var distro = distributions[i];
+                
+                    if(Math.floor(distro + 0.5) == Math.floor(distro))
+                    {
+                        distributions[i] = Math.ceil(distro);
+                        distributions[i + 1] += distro % 1; 
+                    }
+                    else
+                    {
+                        distributions[i] = Math.floor(distro);
+                        distributions[i + 1] -= distro % 1; 
+                    }
+                
+                    var div = document.createElement("div");
+                
+                    div.setAttribute("id", "ethDiv" + i);
+                    div.setAttribute("style", "width: content_width");
+                
+                    var rangeDiv = document.createElement("div");
+                
+                    rangeDiv.setAttribute("id", "rangeDiv" + i);
+                    rangeDiv.setAttribute("style", "width: content_width");
+                   
+                    var add = document.createElement("input");
+                    
+                    add.setAttribute("id", "vend" + i);
+                    add.innerHTML = elements[i];
+                    add.setAttribute("type", "text");
+                    add.setAttribute("value", elements[i]);
+                    add.setAttribute("style", "width: 10");
+                    add.setAttribute("readonly", "true");
+                    add.setAttribute("style", "display: inline-block; float: left; clear: left");
+                                       
+                    var br = document.createElement("br");
+                    
+                    var distLabel = document.createElement("input");
+                    
+                    distLabel.setAttribute("id","distLabel" + i);
+                    distLabel.setAttribute("value", distributions[i] + "%");
+                    distLabel.innerHTML = distributions[i] + "%";
+                    distLabel.setAttribute("type", "text");
+                    distLabel.setAttribute("readonly", "true");
+                    distLabel.setAttribute("style","width: 40px; float: right; clear: right");
+                    distLabel.setAttribute("onchange", 'clearCell("distLabel' + i + '", ' + elements.length + ')');
+
+                    var distribution = document.createElement("input");
+                    
+                    distribution.setAttribute("id", "dist" + i);
+                    distribution.setAttribute("type", "range");
+                    distribution.setAttribute("min", "1");
+                               
+                    if(elements.length > 1)
+                    {         
+                        distribution.setAttribute("max", 100 - elements.length);
+                    }
+                    else if(elements.length == 1)
+                    {
+                        distribution.setAttribute("max", "100");
+                    }
+                    
+                    distribution.setAttribute("step", "1");
+                    distribution.setAttribute("value", distributions[i]);
+                    distribution.setAttribute("readonly", "true");
+                    distribution.setAttribute("style", "vertical-align: text");
+                    distribution.setAttribute("onchange", 'sliderMoved("dist' + i + '", ' + elements.length + ')');
+
+                    var deleteDiv = document.createElement("div");
+            
+                    deleteDiv.setAttribute("style", "width: content_width");
+                    deleteDiv.setAttribute("id", "deleteDiv" + i);
+
+                    var deleteButton = document.createElement("button");
+            
+                    deleteButton.setAttribute("id", "delete" + i);
+                    deleteButton.setAttribute("type", "button");
+                    deleteButton.setAttribute("onclick", 'deleteAndClean("ethDiv' + i + '")');
+                    deleteButton.innerHTML = "Delete Vendor";
+
+                    div.appendChild(add);
+                    div.appendChild(distLabel);
+                    teed.appendChild(div);
+                    rangeDiv.appendChild(distribution);
+                    rangeDiv.appendChild(br);
+                    teed2.appendChild(rangeDiv);
+                    deleteDiv.appendChild(deleteButton);
+                    teed3.appendChild(deleteDiv);
+                }
+                
+                if(numCreated == 1)
+                {
+                    document.getElementById("dist0").value = 100;
+                    document.getElementById("dist0").max = 100;
+                    document.getElementById("distLabel0").value = "100%";
+                    document.getElementById("distLabel0").innerHTML = "100%";
+                    document.getElementById("distLabel0").setAttribute("readonly","true");
+                    document.getElementById("dist0").setAttribute("readonly", "true");
+                }
+            });
+            }
         }
 
         if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) {
@@ -315,7 +1162,7 @@ block headerAdditions
         
         uptimeTypeChanged();
     }
-
+    
     now.ready(function() {
         if (loaded) {
           return;
@@ -331,7 +1178,6 @@ block headerAdditions
             }
            portBehaviorChanged();
         });
-
 
           now.GetProfile(currentName, function(pfile){
           profile = pfile;
@@ -384,15 +1230,12 @@ block headerAdditions
           }
 
           dojo.byId("personality").value = profile.personality;
-          dojo.byId("ethernet").value = profile.ethernet;
           dojo.byId("uptimeMin").value = profile.uptimeMin;
           dojo.byId("uptimeMax").value = profile.uptimeMax;
           dojo.byId("dropRate").value = profile.dropRate;
 
-
           inheritanceChanged();
-        });
-      
+       });
     });
     });
 
@@ -408,13 +1251,13 @@ block content
 
   form(method="post", action="/editHoneydProfileSave")
 
-    table()
+    table(id="tableEditProfile")
       col
       col
       col(style="width:200px")
       col(style="width:300px")
       
-      tr
+      tr(id="row0")
         td
         td
         td(style="text-align:right")
@@ -422,7 +1265,7 @@ block content
         td
           input#name(type="text", name="name")
       
-      tr
+      tr(id="row1")
         td
         td
         td(style="text-align:right")
@@ -431,7 +1274,7 @@ block content
           input#parentName(type="text", name="name", disabled="true")
       
  
-      tr
+      tr(id="row2")
         td
           input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
         td
@@ -443,19 +1286,7 @@ block content
             each os in personalities
               option(value="#{os}") #{os}
       
-      tr
-        td
-          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Ethernet Vendor
-        td
-          select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
-            each vendor in vendors
-              option(value="#{vendor}") #{vendor}
-      
-      tr
+      tr(id="row4")
         td
           input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
         td
@@ -466,7 +1297,7 @@ block content
           input#dropRate(type="number", name="dropRate", min=0, max=100)
 
 
-      tr
+      tr(id="row5")
         td
           input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
         td
@@ -478,16 +1309,16 @@ block content
             option Fixed
             option Range
         
-      tr
+      tr(id="row6")
         td
         td
         td(style="text-align:right")
-          label Uptime Range
+          label(id="uptimeLabel") Uptime Range
         td
           input#uptimeMin(type="number", name="uptimeMin", min=0)
           input#uptimeMax(type="number", name="uptimeMax", min=0)
 
-      tr
+      tr(id="row7")
         td
           input#inheritTcpAction(type="checkbox", name="inheritTcpAction", onclick="inheritanceChanged()") 
         td
@@ -497,7 +1328,7 @@ block content
         td
           mixin defaultActionBox('tcpAction')
   
-      tr
+      tr(id="row8")
         td
           input#inheritUdpAction(type="checkbox", name="inheritUdpAction", onclick="inheritanceChanged()") 
         td
@@ -506,7 +1337,7 @@ block content
           label Default UDP Action
         td
           mixin defaultActionBox('udpAction')
-      tr
+      tr(id="row9")
         td
           input#inheritIcmpAction(type="checkbox", name="inheritIcmpAction", onclick="inheritanceChanged()") 
         td
@@ -517,6 +1348,29 @@ block content
           mixin defaultActionBox('icmpAction')
 
     br
+    
+    h3 Profile Ethernet Vendor Configuration
+    table(style="_min-height: 100px")
+      tr(id="row3")
+        td
+          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(id="labelDist", style="text-align:right")
+        td(id="ranges")
+        td(id="deleteButtonHere")        
+     
+     div(id="ethSelectDiv")
+       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById('ethernet').value)") Add New Vendor
+
+       select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+         each vendor in vendors
+           option(value="#{vendor}") #{vendor}
+              
+      
+    label(id="errorEthernet", style="color:red;", value="")
+      
+    
     h3 Profile Port Configuration
     table#portTable
 

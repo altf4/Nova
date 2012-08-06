@@ -30,13 +30,39 @@ block headerAdditions
 
     }
 
-    function errorMessageCallback(sucess, message) {
-      if(sucess != true) {
+    function errorMessageCallback(success, message) {
+      if(success != true) {
         var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
         dialog.show();
         return;
       }
       location.reload(true);
+    }
+
+    function checkOnlyOne(checkedBox)
+    {
+      var forLength = document.getElementById("length").getAttribute("value");
+      
+      var checkAgainst = checkedBox.getAttribute("id");
+      
+      if(forLength == 1)
+      {
+        checkedBox.checked = true;
+        return;
+      }
+      
+      for(var i = 0; i < forLength; i++)
+      {
+        if(checkAgainst !== ("if" + i))
+        {
+          document.getElementById("if" + i).checked = false;
+        }
+      }
+      
+      if(!checkedBox.checked)
+      {
+        checkedBox.checked = true; 
+      }  
     }
 
     function editSelectedItem() {
@@ -56,9 +82,8 @@ block headerAdditions
         dialog.show();
         return; 
       }
-      window.location.href = "editHoneydNode?node=" + nodeName; 
+      window.location.href = "editHoneydNode?node=" + nodeName;
     }
-
 
     require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
 
@@ -67,19 +92,29 @@ block headerAdditions
       grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
       dojo.byId("gridDiv").appendChild(grid.domNode);
     });
-  
+
   script(type="text/javascript")
-          /*set up data store*/
-          var layoutNodes = [[
-            { field: "Enabled", name: "Enabled", width: '100px' },
-            { field: "Name", name: "Name", width: '400px' },
-            { field: "Profile", name: "Profile", width: '100px' },
-            { field: "IP", name: "IP", width: '150px' },
-            { field: "MAC", name: "MAC", width: '150px' },
-          ]];
+    /*set up data store*/
+    var layoutNodes = [[
+      { field: "Enabled", name: "Enabled", width: '100px' },
+      { field: "Name", name: "Name", width: '400px' },
+      { field: "Profile", name: "Profile", width: '100px' },
+      { field: "IP", name: "IP", width: '150px' },
+      { field: "MAC", name: "MAC", width: '150px' },
+    ]];
 
 block content
   h1 Current Honeyd Nodes
+  br
+  form(id="groupChangeSelect", method="post", action="/changeGroup")
+    label Group
+      select(name="GROUP", id="GROUP", onchange="document.getElementById(\"groupChangeSelect\").submit();")
+        each g, i in groups
+          if g == currentGroup
+            option(SELECTED) #{g}
+          else
+            option #{g}
+  br
   table#nodeTable(style="display: none")
     thead
       tr
@@ -119,9 +154,27 @@ block content
     
     br
     label Network Interface
-    // TODO: Somehow show the user valid interface options
-    input(type="text", name="interface", value="eth0")
-   
+    table
+      thead
+        tr 
+          th Interfaces
+      tbody
+      - if(INTERFACES.length == 1)
+        tr 
+          td
+            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+            #{INTERFACES[0]}
+      - else
+        tr 
+          td
+            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+            #{INTERFACES[0]}
+        - for (var i = 1; i < INTERFACES.length; i++)
+            tr 
+              td
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
+                #{INTERFACES[i]}
+    hidden(id="length", value=INTERFACES.length)
     br
     label IP Address Range Type
     select#ipType(name="ipType", onChange="ipTypeChanged()")

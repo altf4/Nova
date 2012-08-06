@@ -43,8 +43,8 @@ nodePopup::nodePopup(QWidget *parent, Nova::Node *n, bool editingNode)
 	m_editingNode = editingNode;
 
 	//init and display MAC editing Spin boxes
-	m_ethernetEdit = new HexMACSpinBox(this, m_editNode.MAC, macSuffix);
-	m_prefixEthEdit = new HexMACSpinBox(this, m_editNode.MAC, macPrefix);
+	m_ethernetEdit = new HexMACSpinBox(this, m_editNode.m_MAC, macSuffix);
+	m_prefixEthEdit = new HexMACSpinBox(this, m_editNode.m_MAC, macPrefix);
 
 	vector<string> profiles = novaParent->m_honeydConfig->GetProfileNames();
 	while(!profiles.empty())
@@ -52,7 +52,7 @@ nodePopup::nodePopup(QWidget *parent, Nova::Node *n, bool editingNode)
 		ui.nodeProfileComboBox->addItem(QString::fromStdString(profiles.back()));
 		profiles.pop_back();
 	}
-	ui.nodeProfileComboBox->setCurrentIndex(ui.nodeProfileComboBox->findText(QString(m_parentNode->pfile.c_str())));
+	ui.nodeProfileComboBox->setCurrentIndex(ui.nodeProfileComboBox->findText(QString(m_parentNode->m_pfile.c_str())));
 	LoadNode();
 }
 
@@ -69,29 +69,29 @@ nodePopup::~nodePopup()
 //saves the changes to a node
 void nodePopup::SaveNode()
 {
-	m_editNode.pfile = ui.nodeProfileComboBox->currentText().toStdString();
+	m_editNode.m_pfile = ui.nodeProfileComboBox->currentText().toStdString();
 
 	if(ui.isDHCP->isChecked())
 	{
-		m_editNode.IP = "DHCP";
+		m_editNode.m_IP = "DHCP";
 	}
 	else
 	{
-		m_editNode.realIP = (ui.ipSpinBox0->value() << 24) + (ui.ipSpinBox1->value() << 16)
+		m_editNode.m_realIP = (ui.ipSpinBox0->value() << 24) + (ui.ipSpinBox1->value() << 16)
 				+ (ui.ipSpinBox2->value() << 8) + (ui.ipSpinBox3->value());
 		in_addr inTemp;
-		inTemp.s_addr = htonl(m_editNode.realIP);
-		m_editNode.IP = inet_ntoa(inTemp);
+		inTemp.s_addr = htonl(m_editNode.m_realIP);
+		m_editNode.m_IP = inet_ntoa(inTemp);
 	}
 	if(ui.isRandomMAC->isChecked())
 	{
-		m_editNode.MAC = "RANDOM";
+		m_editNode.m_MAC = "RANDOM";
 	}
 	else
 	{
-		m_editNode.MAC = m_prefixEthEdit->text().toStdString() + ":"+ m_ethernetEdit->text().toStdString();
+		m_editNode.m_MAC = m_prefixEthEdit->text().toStdString() + ":"+ m_ethernetEdit->text().toStdString();
 	}
-	m_editNode.name = m_editNode.IP + " - " + m_editNode.MAC;
+	m_editNode.m_name = m_editNode.m_IP + " - " + m_editNode.m_MAC;
 }
 
 void nodePopup::on_isDHCP_stateChanged()
@@ -147,16 +147,16 @@ void nodePopup::on_isRandomMAC_stateChanged()
 void nodePopup::LoadNode()
 {
 	m_editNode = *m_parentNode;
-	subnet s = novaParent->m_honeydConfig->m_subnets[m_editNode.sub];
-	profile p = novaParent->m_honeydConfig->m_profiles[m_editNode.pfile];
+	Subnet s = novaParent->m_honeydConfig->m_subnets[m_editNode.m_sub];
+	NodeProfile p = novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile];
 
-	if(m_editNode.MAC.length() == 17)
+	if(m_editNode.m_MAC.length() == 17)
 	{
-		QString prefixStr = QString(m_editNode.MAC.substr(0, 8).c_str()).toLower();
+		QString prefixStr = QString(m_editNode.m_MAC.substr(0, 8).c_str()).toLower();
 		prefixStr = prefixStr.remove(':');
 		m_prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));
 
-		QString suffixStr = QString(m_editNode.MAC.substr(9, 8).c_str()).toLower();
+		QString suffixStr = QString(m_editNode.m_MAC.substr(9, 8).c_str()).toLower();
 		suffixStr = suffixStr.remove(':');
 		m_ethernetEdit->setValue(suffixStr.toInt(NULL, 16));
 	}
@@ -167,7 +167,7 @@ void nodePopup::LoadNode()
 	}
 
 	//See if we're using a random mac and update the window to reflect which case it is
-	ui.isRandomMAC->setChecked(!m_editNode.MAC.compare("RANDOM"));
+	ui.isRandomMAC->setChecked(!m_editNode.m_MAC.compare("RANDOM"));
 	if(ui.isRandomMAC->isChecked())
 	{
 		ui.ethernetHBox->removeWidget(ui.generateButton);
@@ -182,17 +182,17 @@ void nodePopup::LoadNode()
 	}
 
 	int count = 0;
-	int numBits = 32 - s.maskBits;
+	int numBits = 32 - s.m_maskBits;
 
 	in_addr_t base = ::pow(2, numBits);
 	in_addr_t flatConst = ::pow(2,32)- base;
 
-	flatConst = flatConst & s.base;
+	flatConst = flatConst & s.m_base;
 	in_addr_t flatBase = flatConst;
-	count = s.maskBits/8;
+	count = s.m_maskBits/8;
 
 	//See if we're using dhcp and update the window to reflect which case it is
-	ui.isDHCP->setChecked(!m_editNode.IP.compare("DHCP"));
+	ui.isDHCP->setChecked(!m_editNode.m_IP.compare("DHCP"));
 	if(ui.isDHCP->isChecked())
 	{
 		ui.ipHBox->removeWidget(ui.ipSpinBox0);
@@ -204,7 +204,7 @@ void nodePopup::LoadNode()
 		ui.ipSpinBox2->setVisible(false);
 		ui.ipSpinBox3->setVisible(false);
 		//We take the previous 'realIP' and apply the subnets mask to assert the ip is within the subnet
-		m_editNode.realIP = (m_editNode.realIP & (base-1)) + flatBase;
+		m_editNode.m_realIP = (m_editNode.m_realIP & (base-1)) + flatBase;
 	}
 
 	while(count < 4)
@@ -267,10 +267,10 @@ void nodePopup::LoadNode()
 		count++;
 	}
 
-	ui.ipSpinBox3->setValue(m_editNode.realIP & 255);
-	ui.ipSpinBox2->setValue((m_editNode.realIP >> 8) & 255);
-	ui.ipSpinBox1->setValue((m_editNode.realIP >> 16) & 255);
-	ui.ipSpinBox0->setValue((m_editNode.realIP >> 24) & 255);
+	ui.ipSpinBox3->setValue(m_editNode.m_realIP & 255);
+	ui.ipSpinBox2->setValue((m_editNode.m_realIP >> 8) & 255);
+	ui.ipSpinBox1->setValue((m_editNode.m_realIP >> 16) & 255);
+	ui.ipSpinBox0->setValue((m_editNode.m_realIP >> 24) & 255);
 }
 
 
@@ -311,17 +311,17 @@ void nodePopup::on_applyButton_clicked()
 			if(m_editingNode)
 			{
 				//If we have a new name, clean up the old node
-				if(!m_editNode.name.compare(m_parentNode->name))
+				if(!m_editNode.m_name.compare(m_parentNode->m_name))
 				{
-					novaParent->m_honeydConfig->m_nodes[m_editNode.name] = m_editNode;
+					novaParent->m_honeydConfig->m_nodes[m_editNode.m_name] = m_editNode;
 					break;
 				}
-				novaParent->m_honeydConfig->DeleteNode(m_parentNode->name);
+				novaParent->m_honeydConfig->DeleteNode(m_parentNode->m_name);
 			}
-			novaParent->m_honeydConfig->AddNewNode(m_editNode.pfile, m_editNode.IP, m_editNode.MAC, m_editNode.interface, m_editNode.sub);
+			novaParent->m_honeydConfig->AddNewNode(m_editNode.m_pfile, m_editNode.m_IP, m_editNode.m_MAC, m_editNode.m_interface, m_editNode.m_sub);
 
 			// Make our new node the current selection
-			novaParent->SetSelectedNode(m_editNode.name);
+			novaParent->SetSelectedNode(m_editNode.m_name);
 
 			break;
 		}
@@ -347,13 +347,13 @@ void nodePopup::on_generateButton_clicked()
 	{
 		return;
 	}
-
-	m_editNode.MAC = novaParent->m_honeydConfig->GenerateUniqueMACAddress(novaParent->m_honeydConfig->m_profiles[m_editNode.pfile].ethernet);
-	QString prefixStr = QString(m_editNode.MAC.substr(0, 8).c_str()).toLower();
+	//XXX Support multiple ethernet vendors
+	m_editNode.m_MAC = novaParent->m_honeydConfig->GenerateUniqueMACAddress(novaParent->m_honeydConfig->m_profiles[m_editNode.m_pfile].m_ethernetVendors[0].first);
+	QString prefixStr = QString(m_editNode.m_MAC.substr(0, 8).c_str()).toLower();
 	prefixStr = prefixStr.remove(':');
 	m_prefixEthEdit->setValue(prefixStr.toInt(NULL, 16));
 
-	QString suffixStr = QString(m_editNode.MAC.substr(9, 8).c_str()).toLower();
+	QString suffixStr = QString(m_editNode.m_MAC.substr(9, 8).c_str()).toLower();
 	suffixStr = suffixStr.remove(':');
 	m_ethernetEdit->setValue(suffixStr.toInt(NULL, 16));
 }
@@ -370,24 +370,24 @@ nodeConflictType nodePopup::ValidateNodeSettings()
 	// and 2. We are editing a Node, not creating one.
 
 	//If were editing the node and the IP hasn't changed that's ok.
-	if(!m_editingNode || m_editNode.IP.compare(m_parentNode->IP))
+	if(!m_editingNode || m_editNode.m_IP.compare(m_parentNode->m_IP))
 	{
 		//If the IP is DHCP we don't care if theres a conflict
-		if(m_editNode.IP != "DHCP")
+		if(m_editNode.m_IP != "DHCP")
 		{
-			ipConflict = novaParent->m_honeydConfig->IsIPUsed(m_editNode.IP);
-			if(novaParent->m_honeydConfig->m_subnets[m_editNode.sub].base == m_editNode.realIP)
+			ipConflict = novaParent->m_honeydConfig->IsIPUsed(m_editNode.m_IP);
+			if(novaParent->m_honeydConfig->m_subnets[m_editNode.m_sub].m_base == m_editNode.m_realIP)
 			{
 				ipConflict = true;
 			}
 		}
 	}
 	//If were editing the node and the MAC hasn't changed that's ok.
-	if(!m_editingNode || m_editNode.MAC.compare(m_parentNode->MAC))
+	if(!m_editingNode || m_editNode.m_MAC.compare(m_parentNode->m_MAC))
 	{
-		if(m_editNode.MAC != "RANDOM")
+		if(m_editNode.m_MAC != "RANDOM")
 		{
-			macConflict = novaParent->m_honeydConfig->IsMACUsed(m_editNode.MAC);
+			macConflict = novaParent->m_honeydConfig->IsMACUsed(m_editNode.m_MAC);
 		}
 	}
 

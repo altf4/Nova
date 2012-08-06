@@ -251,10 +251,23 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_CLEAR_SUSPECT_REQUEST:
 		{
-			suspects.Erase(controlMessage.m_suspectAddress);
-			suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
+			bool result;
 
-			RefreshStateFile();
+			result = suspects.Erase(controlMessage.m_suspectAddress);
+
+			if (!result)
+			{
+				LOG(DEBUG, "Failed to Erase suspect from the main suspect table.", "");
+			}
+
+			result = suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
+			if (!result)
+			{
+				LOG(DEBUG, "Failed to Erase suspect from the main suspect table.", "");
+			}
+
+
+			//RefreshStateFile();
 
 			//TODO: Should check for errors here and return result
 			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY, DIRECTION_TO_NOVAD);

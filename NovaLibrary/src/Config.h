@@ -79,6 +79,8 @@ public:
     uint GetEnabledFeatureCount();
     std::string GetInterface(uint i);
     std::vector<std::string> GetInterfaces();
+    std::vector<std::string> GetIPv4HostInterfaceList();
+    std::vector<std::string> GetIPv4LoopbackInterfaceList();
     uint GetInterfaceCount();
     std::string GetPathCESaveFile();
     std::string GetPathConfigHoneydUser();
@@ -99,7 +101,7 @@ public:
 
     bool GetUseAllInterfaces();
     bool GetUseAnyLoopback();
-
+    std::string GetUseAllInterfacesBinding();
 
     int GetClassificationTimeout();
     int GetDataTTL();
@@ -121,8 +123,13 @@ public:
     void AddInterface(std::string interface);
     void RemoveInterface(std::string interface);
     void ClearInterfaces();
+    std::vector<std::string> ListInterfaces();
+    std::vector<std::string> ListLoopbacks();
+    bool SetInterfaces(std::vector<std::string> newInterfaceList);
     void SetUseAllInterfaces(bool which);
     void SetUseAnyLoopback(bool which);
+    bool SetUseAllInterfacesBinding(bool which);
+    bool SetUseAnyLoopbackBinding(bool which);
 
     void SetClassificationThreshold(double classificationThreshold);
     void SetClassificationTimeout(int classificationTimeout);

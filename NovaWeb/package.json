@@ -8,7 +8,7 @@
 		, "jade"		:	"0.25.x"
 		, "socket.io"	:	"0.9.x"
 		, "passport"	:	"0.1.8"
-		, "passport-local"	:	"0.1.2"
+		, "passport-http"	:	""
 		, "mysql" : "0.9.6"
 		, "validator" : "0.4.6-2"
 		, "forever" : ""

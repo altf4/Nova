@@ -90,11 +90,11 @@ char *ErrorMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ErrorMessage Type
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_errorType);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_errorType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
-			SerializeHeader(&buffer);
+			SerializeHeader(&buffer, messageSize);
 			//Put the Control Message type in
 			memcpy(buffer, &m_errorType, sizeof(m_errorType));
 			buffer += sizeof(m_errorType);

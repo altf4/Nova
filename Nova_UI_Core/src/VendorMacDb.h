@@ -25,6 +25,10 @@
 #include <string>
 #include <vector>
 
+#define DIGIT_OFFSET 48
+#define LOWER_OFFSET 87
+#define UPPER_OFFSET 65
+
 typedef Nova::HashMap<uint, std::string, std::tr1::hash<uint>, eqint> MACToVendorTable;
 typedef Nova::HashMap<std::string, std::vector<uint> *,  std::tr1::hash<std::string>, eqstr > VendorToMACTable;
 
@@ -57,7 +61,10 @@ public:
 	// Checks if a vendor name is known
 	bool IsVendorValid(std::string vendor);
 
-
+	// Puts the integer val into m, and shifts it
+	// depending on the value of cond. Used for converting
+	// a MAC address string into a uint for use with the MAC Vendor Db object.
+	uint AtoMACPrefix(std::string MAC);
 
 
 private:

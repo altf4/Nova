@@ -7,6 +7,7 @@ var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
 var trainingDb = new novaconfig.CustomizeTrainingBinding();
 var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
+var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 
 honeydConfig.LoadAllTemplates();
 
@@ -114,8 +115,6 @@ app.set('view options', {layout: false});
 //var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
 //app.use(express.logger({stream: logFile}));
 
-
-
 var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
 console.info("Listening on port " + WEB_UI_PORT);
 app.listen(WEB_UI_PORT);
@@ -146,25 +145,87 @@ novadLog.on("error", function(data) {
 initLogWatch();
 
 
-app.get('/downloadNovadLog', passport.authenticate('basic', { session: false }), function (req, res) {
+app.get('/downloadNovadLog.log', passport.authenticate('basic', { session: false }), function (req, res) {
+    // Hacky solution to make browsers launch a save as dialog
+    res.header('Content-Type', 'application/novaLog');
+
 	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
 	  if (err) {
 		res.send(err);
 	  }
 	  else
 	  {
-		var reply = data.toString().replace(/(\r\n|\n|\r)/gm,"<br>");
+		var reply = data.toString();
 		res.send(reply);
 	  }
 	});
 });
 
+app.get('/viewNovadLog', passport.authenticate('basic', { session: false }), function (req, res) {
+	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
+	  if (err) {
+		res.send(err);
+	  }
+	  else
+	  {
+		var reply = data.toString().split(/(\r\n|\n|\r)/gm);
+		var html = "";
+		for (var i = 0; i < reply.length; i++) {
+		  var styleString = "";
+		  var line = reply[i];
+		  var splitLine = line.split(' ');
+		  if (splitLine.length >= 6) {
+			if (splitLine[5] == "DEBUG") {
+				styleString += 'color: green';
+			} else if (splitLine[5] == "WARNING" || splitLine[5] == "NOTICE") {
+				styleString += 'color: orange';
+			} else if (splitLine[5] == "ERROR" || splitLine[5] == "CRITICAL") {
+				styleString += 'color: red';
+			}
+		  }
+
+		  html += '<P style="' + styleString + '">' + line + "<P>";
+		
+		}
+		res.send(html);
+	  }
+	});
+});
+
 app.get('/advancedOptions', passport.authenticate('basic', { session: false }), function(req, res) {
+    var all = config.ListInterfaces().sort();
+    var used = config.GetInterfaces().sort();
+    
+    var pass = [];
+    
+    for(var i in all)
+    {
+      var checked = false;
+      
+      for(var j in used)
+      {
+        if(all[i] === used[j])
+        {
+          checked = true;
+          break;
+        }
+      }
+      
+      if(checked)
+      {
+        pass.push( { iface: all[i], checked: 1 } );
+      }
+      else
+      {
+        pass.push( { iface: all[i], checked: 0 } );
+      }
+    }
+
      res.render('advancedOptions.jade', 
 	 {
 		locals: {
-			INTERFACES: config.ReadSetting("INTERFACE").split(" ") // will be a GetInterfaces() object in config object
-			,DEFAULT: false // should be a getDefault() method in Config object
+      INTERFACES: config.ListInterfaces().sort() 
+      ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
 			,TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
 			,TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
@@ -185,6 +246,7 @@ app.get('/advancedOptions', passport.authenticate('basic', { session: false }), 
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
 			,ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES")
+			,FEATURE_NAMES: nova.GetFeatureNames()
 			,TRAINING_CAP_FOLDER: config.ReadSetting("TRAINING_CAP_FOLDER")
 			,THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE")
 			,SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY")
@@ -202,11 +264,39 @@ app.get('/advancedOptions', passport.authenticate('basic', { session: false }), 
 
 
 function renderBasicOptions(jadefile, res, req) {
+    var all = config.ListInterfaces().sort();
+    var used = config.GetInterfaces().sort();
+    
+    var pass = [];
+    
+    for(var i in all)
+    {
+      var checked = false;
+      
+      for(var j in used)
+      {
+        if(all[i] === used[j])
+        {
+          checked = true;
+          break;
+        }
+      }
+      
+      if(checked)
+      {
+        pass.push( { iface: all[i], checked: 1 } );
+      }
+      else
+      {
+        pass.push( { iface: all[i], checked: 0 } );
+      }
+    }
+    
      res.render(jadefile, 
 	 {
 		locals: {
-			INTERFACES: config.ReadSetting("INTERFACE").split(" ") // will be a GetInterfaces() object in config object
-			,DEFAULT: false // should be a getDefault() method in Config object
+            INTERFACES: pass 
+            ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
 			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
@@ -218,6 +308,13 @@ function renderBasicOptions(jadefile, res, req) {
 	 });
 }
 
+app.get('/error',passport.authenticate('basic', {session: false}), function(req, res) {
+	
+	console.log(req.query);
+	
+	res.render('error.jade', { locals: { redirectLink: req.query["redirectLink"], errorDetails: req.query["errorDetails"] }});
+});
+
 app.get('/basicOptions', passport.authenticate('basic', { session: false }), function(req, res) {
 	renderBasicOptions('basicOptions.jade', res, req);
 });
@@ -225,16 +322,20 @@ app.get('/basicOptions', passport.authenticate('basic', { session: false }), fun
 app.get('/configHoneydNodes', passport.authenticate('basic', { session: false }), function(req, res) {
 	honeydConfig.LoadAllTemplates();
 	 var nodeNames = honeydConfig.GetNodeNames();
-	 var nodes = [];
+	 var nodes = new Array();
+	 
 	 for (var i = 0; i < nodeNames.length; i++) {
 		nodes.push(honeydConfig.GetNode(nodeNames[i]));
 	 }
      
 	 res.render('configHoneyd.jade', 
 	 { locals: {
-	 	profiles: honeydConfig.GetProfileNames()
+	 	INTERFACES: config.ListInterfaces().sort()
+	 	,profiles: honeydConfig.GetProfileNames()
 	 	,nodes: nodes
-		,subnets:  honeydConfig.GetSubnetNames() 	
+		,subnets:  honeydConfig.GetSubnetNames()
+		,groups: honeydConfig.GetGroups()
+		,currentGroup: config.GetGroup()
 	}})
 });
 
@@ -262,6 +363,7 @@ app.get('/editHoneydNode', passport.authenticate('basic', { session: false }), f
 	res.render('editHoneydNode.jade', 
 	{ locals : {
 		oldName: nodeName
+		, INTERFACES: config.ListInterfaces().sort()
 	 	, profiles: honeydConfig.GetProfileNames()
 		, profile: node.GetProfile()
 		, ip: node.GetIP()
@@ -287,7 +389,7 @@ app.get('/editHoneydProfile', passport.authenticate('basic', { session: false })
 app.get('/addHoneydProfile', passport.authenticate('basic', { session: false }), function(req, res) {
 	parentName = req.query["parent"]; 
 
-	res.render('editHoneydProfile.jade', 
+	res.render('addHoneydProfile.jade', 
 	{ locals : {
 		oldName: parentName
 		, parentName: parentName
@@ -322,6 +424,14 @@ app.get('/importCapture', passport.authenticate('basic', { session: false }), fu
 			trainingSession: req.query["trainingSession"] 
 		}})
 	}
+});
+
+app.post('/changeGroup', passport.authenticate('basic', {session: false}), function(req, res){
+	var selectedGroup = req.body["GROUP"];
+	
+	config.SetGroup(selectedGroup);
+	
+	res.redirect('/configHoneydNodes');
 });
 
 app.post('/importCaptureSave', passport.authenticate('basic', { session: false }), function(req, res) {	
@@ -455,7 +565,23 @@ app.get('/novadlog', passport.authenticate('basic', { session: false }), functio
 	res.render('novadlog.jade');
 });
 
-app.get('/', passport.authenticate('basic', { session: false }), function(req, res) {res.redirect('/suspects');});
+app.get('/', passport.authenticate('basic', { session: false }), function(req, res) {
+    client.query('SELECT run FROM firstrun',
+    function selectCb(err, results, fields) {
+      if(err) {
+	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to access database" }});
+		return;
+      }
+
+	  if (results[0] === undefined) {
+		res.redirect('/welcome');
+	  } else {
+		res.redirect('/suspects');
+	  }	
+
+	  });
+});
+
 app.get('/createNewUser', passport.authenticate('basic', { session: false }), function(req, res) {res.render('createNewUser.jade');});
 app.get('/welcome', passport.authenticate('basic', { session: false }), function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup1.jade');});
@@ -524,34 +650,73 @@ app.post('/createInitialUser', passport.authenticate('basic', { session: false }
 	  });
 });
 
-app.get('/login', function(req, res){
-	 var redirect;
-	 if (req.query["redirect"] != undefined)
-	 {
-		redirect = req.query["redirect"]; 
-	 } else {
-		redirect = "/suspects";
-	 }
-     res.render('login.jade',
-     {
-         user: req.user
-         , message: req.flash('error')  
-		 , redirect: redirect
-     });
-
+app.get('/autoConfig', passport.authenticate('basic', { session: false }), function(req, res) {
+   res.render('hhautoconfig.jade', 
+   {
+     user: req.user
+     ,INTERFACES: config.ListInterfaces().sort()
+     ,SCANERROR: ""
+   });
 });
 
-app.post('/login*',
-  passport.authenticate('basic', { failureRedirect: '/', failureFlash: true }), 
-    function(req, res){
-		if (req.query["redirect"] != undefined)
-		{
-        	res.redirect(req.query["redirect"]);
-		}
-		else
-		{
-        	res.redirect('/suspects');
-		}
+app.get('/nodeReview', passport.authenticate('basic', { session: false }), function(req, res) { 
+	honeydConfig.LoadAllTemplates();
+	 var profileNames = honeydConfig.GetGeneratedProfileNames();
+	 var profiles = new Array();
+	 for (var i = 0; i < profileNames.length; i++) {
+		profiles.push(honeydConfig.GetProfile(profileNames[i]));
+	 }
+	 
+	 var nodeNames = honeydConfig.GetGeneratedNodeNames();
+	 var nodes = new Array();
+	 for (var i = 0; i < nodeNames.length; i++) {
+		nodes.push(honeydConfig.GetNode(nodeNames[i]));
+	 }
+     
+	 res.render('nodereview.jade', 
+	 { locals: {
+	 	profileNames: honeydConfig.GetGeneratedProfileNames()
+	 	,profiles: profiles
+	 	,nodes: nodes
+	 	,subnets:  honeydConfig.GetSubnetNames() 
+	}})
+});
+
+app.post('/scanning', passport.authenticate('basic', { session: false }), function(req, res){
+  var numNodes = req.body["numNodes"];
+  
+  var subnets = req.body["subnets"];
+  
+  var interfaces = req.body["interfaces"];
+  
+  if(interfaces === undefined)
+  {
+    interfaces = "";
+    console.log("No interfaces selected.");
+  }
+  
+  if(subnets === undefined)
+  {
+    subnets = "";
+    console.log("No additional subnets selected.");
+  }
+  
+  
+  if(!path.existsSync("/usr/bin/honeydhostconfig"))
+  {
+    console.log("HoneydHostConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
+    res.render('hhautoconfig.jade', {locals: {user: req.user, INTERFACES: config.ListInterfaces().sort(), SCANERROR: "HoneydHostConfig binary not found, scan cancelled"}});
+  }
+  else if((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined))
+  {
+    res.redirect('/autoConfig');
+  }
+  else
+  {
+    hhconfig.RunAutoScan(numNodes, interfaces, subnets);
+  
+    res.redirect('/nodeReview'); 
+  }
 });
 
 app.post('/customizeTrainingSave', passport.authenticate('basic', { session: false }), function(req, res){
@@ -624,7 +789,7 @@ app.post('/editHoneydNodeSave', passport.authenticate('basic', { session: false 
 
 app.post('/configureNovaSave', passport.authenticate('basic', { session: false }), function(req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["INTERFACE","HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
+	var configItems = ["DEFAULT", "INTERFACE", "HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
 		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
 		"SA_MAX_ATTEMPTS","SA_SLEEP_DURATION","USER_HONEYD_CONFIG","DOPPELGANGER_IP","DOPPELGANGER_INTERFACE","DM_ENABLED",
 		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
@@ -644,7 +809,35 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
   
   var validator = new Validator();
   
+     config.ClearInterfaces();
   
+  var interfaces = "";
+  var oneIface = false;
+  
+  if(req.body["INTERFACE"] !== undefined)
+  {
+    for(item in req.body["INTERFACE"])
+    {
+      if(req.body["INTERFACE"][item].length > 1)
+      {
+        interfaces += " " + req.body["INTERFACE"][item];
+        config.AddIface(req.body["INTERFACE"][item]);
+      }
+      else
+      {
+        interfaces += req.body["INTERFACE"][item];
+        oneIface = true;
+      }
+    }
+  
+    if(oneIface)
+    {
+      config.AddIface(interfaces);
+    }
+    
+    req.body["INTERFACE"] = interfaces;
+  } 
+ 
   for(var item = 0; item < configItems.length; item++)
   {
     if (req.body[configItems[item]] == undefined) {
@@ -657,7 +850,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
         break;
         
       case "TCP_TIMEOUT":
-        validator.check(req.body[configItems[item]]).isInt();
+        validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
         break;
         
       case "ENABLED_FEATURES":
@@ -668,14 +861,15 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
       case "CLASSIFICATION_THRESHOLD":
         validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
         validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
+        validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').min(0);
         break;
         
       case "EPS":
-        validator.check(req.body[configItems[item]], 'EPS must be a number').isFloat();
+        validator.check(req.body[configItems[item]], 'EPS must be a positive number').isFloat();
         break;
         
       case "THINNING_DISTANCE":
-        validator.check(req.body[configItems[item]], 'Thinning Distance must be a number').isFloat();
+        validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
         break;
         
       case "DOPPELGANGER_IP":
@@ -721,20 +915,19 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
         break;
      
       case "SMTP_ADDR":
-        //  \\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)
-        validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)');
+        validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
         break;
       /*
       case "SMTP_DOMAIN":
-        validator.check(req.body[configItems[item]], 'SMTP Domain is the wrong format').regex('(([A-z]|[0-9])*\\.)+(([A-z]|[0-9])*)');
-        break;
+        validator.check(req.body[configItems[item]], 'SMTP Domain is the wrong format').regex('^(([A-z]|[0-9])+\\.)+(([A-z]|[0-9])+)$');
+        break; 
         
       case "RECIPIENTS":
-        validator.check(req.body[configItems[item]], 'Recipients list should be a comma separated list of email addresses').regex('(((([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*))\\,)*(((([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)))');
+        validator.check(req.body[configItems[item]], 'Recipients list should be a comma separated list of email addresses').regex('^(([A-z]|\d)+(\\.([A-z]|\d)+)*)\\@(([A-z]|\d)+(\\.([A-z]|\d)+)+)((\\,){1}( )?(([A-z]|\d)+(\\.([A-z]|\d)+)*)\\@(([A-z]|\d)+(\\.([A-z]|\d)+)+))*$');
         break;
       */
       case "SERVICE_PREFERENCES":
-        validator.check(req.body[configItems[item]], "Service preferences string is of the wrong format").is('0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;');
+        validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;$');
         break;
         
       default:
@@ -751,12 +944,31 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
   }
   else
   {
-    //if no errors, send the validated form data to the WriteSetting method
-    for(var item = 0; item < configItems.length; item++)
+    if(req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined)
     {
-	  if (req.body[configItems[item]] != undefined) {
-      	config.WriteSetting(configItems[item], req.body[configItems[item]]);  
-	  }
+      req.body["DEFAULT"] = false;
+      config.UseAllInterfaces(false);
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+    }
+    else if(req.body["INTERFACE"] === undefined)
+    {
+      req.body["DEFAULT"] = true;
+      config.UseAllInterfaces(true);
+      config.WriteSetting("INTERFACE", "default");
+    }
+    else
+    {  
+      config.UseAllInterfaces(req.body["DEFAULT"]);
+      config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+    }
+
+    //if no errors, send the validated form data to the WriteSetting method
+    for(var item = 2; item < configItems.length; item++)
+    {
+  	  if(req.body[configItems[item]] != undefined) 
+  	  {
+        	config.WriteSetting(configItems[item], req.body[configItems[item]]);  
+  	  }
     }
     
     res.render('saveRedirect.jade', { locals: {redirectLink: "/suspects"}}) 
@@ -772,7 +984,12 @@ everyone.now.ClearAllSuspects = function(callback)
 	nova.ClearAllSuspects();
 }
 
-
+everyone.now.GetInheritedEthernetList = function(parent, callback)
+{
+	var prof = honeydConfig.GetProfile(parent);
+	
+	callback(prof.GetVendors(), prof.GetVendorDistributions());
+}
 
 everyone.now.StartHaystack = function()
 {
@@ -922,7 +1139,7 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.udpAction = profile.GetUdpAction();
     profile.icmpAction = profile.GetIcmpAction();
     profile.personality = profile.GetPersonality();
-    profile.ethernet = profile.GetEthernet();
+   
     profile.uptimeMin = profile.GetUptimeMin();
     profile.uptimeMax = profile.GetUptimeMax();
     profile.dropRate = profile.GetDropRate();
@@ -936,17 +1153,57 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.isUptimeInherited = profile.isUptimeInherited();
     profile.isDropRateInherited = profile.isDropRateInherited();
 
+    if(!profile.isEthernetInherited)
+    {
+      var ethVendorList = [];
+    
+      var profVendors = profile.GetVendors();
+      var profDists = profile.GetVendorDistributions();
+
+      for(var i = 0; i < profVendors.length; i++)
+      {
+        var element = {vendor: "", dist: ""};
+        element.vendor = profVendors[i];
+        element.dist = parseFloat(profDists[i]);
+        ethVendorList.push(element);
+      }
+      
+      profile.ethernet = ethVendorList;
+    }
+
     callback(profile);
+}
+
+everyone.now.GetVendors = function(profileName, callback)
+{
+	var profile = honeydConfig.GetProfile(profileName);
+	
+	var ethVendorList = [];
+    
+    var profVendors = profile.GetVendors();
+    var profDists = profile.GetVendorDistributions();
+
+    for(var i = 0; i < profVendors.length; i++)
+    {
+      var element = {vendor: "", dist: ""};
+      element.vendor = profVendors[i];
+      element.dist = parseFloat(profDists[i]);
+      ethVendorList.push(element);
+    }
+	
+    callback(profVendors, profDists);
 }
 
 everyone.now.GetPorts = function (profileName, callback) {
     var ports = honeydConfig.GetPorts(profileName);
+    
     for ( var i = 0; i < ports.length; i++) {
       ports[i].portName = ports[i].GetPortName();
       ports[i].portNum = ports[i].GetPortNum();
       ports[i].type = ports[i].GetType();
       ports[i].behavior = ports[i].GetBehavior();
       ports[i].scriptName = ports[i].GetScriptName();
+      ports[i].service = ports[i].GetService();
       ports[i].isInherited = ports[i].GetIsInherited();
     }
 
@@ -954,32 +1211,54 @@ everyone.now.GetPorts = function (profileName, callback) {
 }
 
 
-everyone.now.SaveProfile = function(profile, ports, callback) {
-	honeydProfile = new novaconfig.HoneydProfileBinding();
+everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, addOrEdit) {
+        var honeydProfile = new novaconfig.HoneydProfileBinding();
 
-	console.log("Got profile " + profile.name);
-	console.log("Got portlist " + ports.name);
+        console.log("Got profile " + profile.name + "_" + profile.personality);
+        console.log("Got portlist " + ports.name);
+        console.log("Got ethVendorList " + ethVendorList);
 
-	// Move the Javascript object values to the C++ object
-	honeydProfile.SetName(profile.name);
-	honeydProfile.SetTcpAction(profile.tcpAction);
-	honeydProfile.SetUdpAction(profile.udpAction);
-	honeydProfile.SetIcmpAction(profile.icmpAction);
-	honeydProfile.SetPersonality(profile.personality);
-	honeydProfile.SetEthernet(profile.ethernet);
-	honeydProfile.SetUptimeMin(profile.uptimeMin);
-	honeydProfile.SetUptimeMax(profile.uptimeMax);
-	honeydProfile.SetDropRate(profile.dropRate);
-	honeydProfile.SetParentProfile(profile.parentProfile);
+        // Move the Javascript object values to the C++ object
+        honeydProfile.SetName(profile.name);
+        honeydProfile.SetTcpAction(profile.tcpAction);
+        honeydProfile.SetUdpAction(profile.udpAction);
+        honeydProfile.SetIcmpAction(profile.icmpAction);
+        honeydProfile.SetPersonality(profile.personality);
 
-	honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
-	honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
-	honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
-	honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
-	honeydProfile.setEthernetInherited(profile.isEthernetInherited);
-	honeydProfile.setUptimeInherited(profile.isUptimeInherited);
-	honeydProfile.setDropRateInherited(profile.isDropRateInherited);
+        if(ethVendorList == undefined || ethVendorList == null)
+        {
+            honeydProfile.SetEthernet(profile.ethernet);
+        }
+        else if(profile.isEthernetInherited)
+        {
+            honeydProfile.SetVendors([], []);
+        }
+        else if(profile.isEthernetInherited == false)
+        {
+            var ethVendors = [];
+            var ethDists = [];
+        
+            for(var i = 0; i < ethVendorList.length; i++)
+            {
+                ethVendors.push(ethVendorList[i].vendor);
+                ethDists.push(parseFloat(ethVendorList[i].dist));
+            }
+            
+            honeydProfile.SetVendors(ethVendors, ethDists);
+        }
 
+        honeydProfile.SetUptimeMin(profile.uptimeMin);
+        honeydProfile.SetUptimeMax(profile.uptimeMax);
+        honeydProfile.SetDropRate(profile.dropRate);
+        honeydProfile.SetParentProfile(profile.parentProfile);
+        
+        honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
+        honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
+        honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
+        honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
+        honeydProfile.setEthernetInherited(profile.isEthernetInherited);
+        honeydProfile.setUptimeInherited(profile.isUptimeInherited);
+        honeydProfile.setDropRateInherited(profile.isDropRateInherited);
 
 	// Add new ports
 	var portName;
@@ -1045,6 +1324,10 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 
 everyone.now.GetCaptureIPs = function (trainingSession, callback) {
 	return trainingDb.GetCaptureIPs("/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump");
+}
+
+everyone.now.WizardHasRun = function(callback) {
+	client.query('INSERT INTO firstrun values(NOW())');
 }
 
 var distributeSuspect = function(suspect)

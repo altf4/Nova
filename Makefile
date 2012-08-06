@@ -7,16 +7,18 @@ release:
 	$(MAKE) novalib-release
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
+	$(MAKE) hhconfig-release
 
-release-helper: novad-release novagui-release novacli-release novatrainer-release
+release-helper: novad-release novacli-release novatrainer-release
 
 #Debug target
 debug:
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
+	$(MAKE) hhconfig-debug
 
-debug-helper: novad-debug novagui-debug novacli-debug novatrainer-debug
+debug-helper: novad-debug novacli-debug novatrainer-debug
 
 #Nova Library
 novalib-release:
@@ -77,6 +79,15 @@ web:
 	cd NovaWeb;npm --unsafe-perm install
 	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
 
+#Honeyd HostConfig
+hhconfig-release:
+	$(MAKE) -C HoneydHostConfig/Release
+	cp HoneydHostConfig/Release/honeydhostconfig HoneydHostConfig/
+
+hhconfig-debug:
+	$(MAKE) -C HoneydHostConfig/Debug
+	cp HoneydHostConfig/Debug/honeydhostconfig HoneydHostConfig/
+
 #Unit tests
 test: debug test-prepare
 	$(MAKE) -C NovaTest/Debug
@@ -112,7 +123,8 @@ clean-debug:
 	$(MAKE) -C Novad/Debug clean
 	$(MAKE) -C NovaCLI/Debug clean
 	$(MAKE) -C NovaTrainer/Debug clean
-	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C HoneydHostConfig/Debug clean
+	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI debug-clean
 	rm -f Nova_UI_Core/Debug/Nova_UI_Core
 
@@ -122,7 +134,8 @@ clean-release:
 	$(MAKE) -C Novad/Release clean
 	$(MAKE) -C NovaCLI/Release clean
 	$(MAKE) -C NovaTrainer/Release clean
-	cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C HoneydHostConfig/Release clean
+	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
 	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
@@ -141,19 +154,25 @@ clean-web:
 	rm -rf NovaWeb/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
 	rm -rf NovaWeb/node_modules/.bin/
 
+clean-hhconfig-debug:
+	$(MAKE) -C HoneydHostConfig/Debug clean
+
+clean-hhconfig-release:
+	$(MAKE) -C HoneydHostConfig/Release clean
+
 
 #Installation (requires root)
 install: install-data install-docs
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	install NovaGUI/novagui $(DESTDIR)/usr/bin
+	-install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	sh debian/postinst
 
-install-data:
+install-data: install-hhconfig
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/etc/nova
 	install Installer/Read/paths $(DESTDIR)/etc/nova
@@ -202,6 +221,10 @@ install-web:
 	mkdir -p $(DESTDIR)/usr/bin
 	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
+install-hhconfig:
+	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
+	-install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
+
 #Uninstall
 uninstall: uninstall-files uninstall-permissions
 
@@ -211,6 +234,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/novagui
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
+	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/bin/nova_init
 	rm -f $(DESTDIR)/usr/bin/novaweb
@@ -218,6 +242,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
+	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_HHConfig
 	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
@@ -240,9 +265,14 @@ reset: uninstall-files
 	$(MAKE) test 
 	$(MAKE) install
 
-reset-debug: uninstall-files
+reset-debug: 
+	$(MAKE) uninstall-files
 	$(MAKE) clean
 	$(MAKE) debug
+	$(MAKE) novagui-debug
+	$(MAKE) hhconfig-debug
+	$(MAKE) novaweb
 	$(MAKE) test
 	$(MAKE) install
+	$(MAKE) install-web
 
