@@ -20,6 +20,7 @@
 #include "Config.h"
 #include "PersonalityTree.h"
 #include <boost/algorithm/string.hpp>
+#include "Logger.h"
 
 using namespace std;
 
@@ -124,7 +125,9 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	NodeProfile tempProf = node->GenerateProfile(*parentProfile);
 	tempProf.m_name = profileName;
 	tempProf.m_distribution = node->m_distribution;
-	cout << tempProf.m_name << " distrib: " << tempProf.m_distribution <<" count: " << node->m_count <<endl;
+	stringstream ss;
+	ss << tempProf.m_name << " distrib: " << tempProf.m_distribution << " count: " << node->m_count;
+	LOG(DEBUG, ss.str(), "");
 	if(m_profiles->find(tempProf.m_name) != m_profiles->end())
 	{
 		// Probably not the right way of going about this
@@ -146,7 +149,7 @@ void PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 	{
 		if(!m_hdconfig->AddProfile(&tempProf))
 		{
-			cout << "Error adding "<< tempProf.m_name << endl;
+			LOG(ERROR, "Error adding " + tempProf.m_name, "");
 			return;
 		}
 		else
@@ -255,7 +258,7 @@ void PersonalityTree::ToString()
 
 void PersonalityTree::RecursiveToString(PersonalityNode &persNode)
 {
-	cout << persNode.ToString() << endl;
+	LOG(DEBUG, persNode.ToString(), "");
 	for(uint i = 0; i < persNode.m_children.size(); i++)
 	{
 		RecursiveToString(*persNode.m_children[i].second);
@@ -476,7 +479,7 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode *node)
 		return;
 	}
 
-	cout << node->m_key << endl;
+	LOG(DEBUG, node->m_key, "");
 
 	for(uint i = 0; i < node->m_children.size(); i++)
 	{

@@ -55,6 +55,8 @@ vector<Subnet> subnetsDetected;
 
 PersonalityTable personalities;
 
+string lockFilePath;
+
 void usage()
 {
 	cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
@@ -67,7 +69,7 @@ void usage()
 	cout << "\tCannot use -f and -a in conjunction" << endl;
 }
 
-ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
+HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 {
 	using boost::property_tree::ptree;
 
@@ -217,7 +219,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 	// Just return and let the scoping take care of deallocating the object.
 	if(persObject->m_personalityClass.empty())
 	{
-		return NOMATCHEDPERSONALITY;
+		return HHC_CODE_NO_MATCHED_PERSONALITY;
 	}
 
 	// Generate OS Class strings for use later down the line; used primarily
@@ -234,7 +236,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 	// Call AddHost() on the Personality object created at the beginning of this method
 	personalities.AddHost(persObject);
 
-	return OKAY;
+	return HHC_CODE_OKAY;
 }
 
 void Nova::LoadNmap(const string &filename)
@@ -257,14 +259,14 @@ void Nova::LoadNmap(const string &filename)
 			{
 				// Output for alerting user that a found host had incomplete
 				// personality data, and thus was not added to the PersonalityTable.
-				case NOMATCHEDPERSONALITY:
+				case HHC_CODE_NO_MATCHED_PERSONALITY:
 				{
 					LOG(WARNING, "Unable to obtain personality data for host "
 						+ tempPropTree.get<std::string>("address.<xmlattr>.addr") + ".", "");
 					break;
 				}
 				// Everything parsed fine, don't output anything.
-				case OKAY:
+				case HHC_CODE_OKAY:
 				{
 					break;
 				}
@@ -283,7 +285,10 @@ void Nova::LoadNmap(const string &filename)
 
 int main(int argc, char ** argv)
 {
-	ofstream lockFile("/usr/share/nova/nova/hhconfig.lock");
+	LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
+	lockFilePath = Config::Inst()->GetPathHome() + "/hhconfig.lock";
+	ofstream lockFile(lockFilePath);
+
 	bool badArgCombination = false;
 	bool i_flag_empty = true;
 	bool a_flag_empty = true;
@@ -292,8 +297,8 @@ int main(int argc, char ** argv)
 	{
 		usage();
 		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		exit(INCORRECTNUMBERARGS);
+		remove(lockFilePath.c_str());
+		exit(HHC_CODE_INCORRECT_NUMBER_ARGS);
 	}
 	for(uint j = 1; argv[j] != NULL; j++)
 	{
@@ -305,8 +310,8 @@ int main(int argc, char ** argv)
 				{
 					usage();
 					lockFile.close();
-					remove("/usr/share/nova/nova/hhconfig.lock");
-					exit(NONINTEGERARG);
+					remove(lockFilePath.c_str());
+					exit(HHC_CODE_NON_INTEGER_ARG);
 				}
 			}
 			numNodes = atoi(argv[j + 1]);
@@ -337,8 +342,8 @@ int main(int argc, char ** argv)
 			{
 				usage();
 				lockFile.close();
-				remove("/usr/share/nova/nova/hhconfig.lock");
-				exit(BADARGCOMBINATION);
+				remove(lockFilePath.c_str());
+				exit(HHC_CODE_BAD_ARG_COMBINATION);
 			}
 
 			nmapFileName = string(argv[j + 1]);
@@ -349,13 +354,13 @@ int main(int argc, char ** argv)
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-				cout << "Caught Exception : " << e.what() << endl;
+				LOG(DEBUG, string("Caught Exception : ") + e.what(), "");
 			}
 
-			ErrCode errVar = OKAY;
+			HHC_ERR_CODE errVar = HHC_CODE_OKAY;
 			GenerateConfiguration();
 			lockFile.close();
-			remove("/usr/share/nova/nova/hhconfig.lock");
+			remove(lockFilePath.c_str());
 			return errVar;
 		}
 		else if(!string(argv[j]).compare("-a"))
@@ -368,11 +373,11 @@ int main(int argc, char ** argv)
 			{
 				usage();
 				lockFile.close();
-				remove("/usr/share/nova/nova/hhconfig.lock");
-				exit(BADARGCOMBINATION);
+				remove(lockFilePath.c_str());
+				exit(HHC_CODE_BAD_ARG_COMBINATION);
 			}
 
-			ErrCode errVar = OKAY;
+			HHC_ERR_CODE errVar = HHC_CODE_OKAY;
 			vector<string> subnetNames;
 
 			if(!i_flag_empty)
@@ -409,29 +414,29 @@ int main(int argc, char ** argv)
 					subnetNames.push_back(subnetsToAdd[k]);
 				}
 
-				if(errVar != OKAY || subnetNames.empty())
+				if(errVar != HHC_CODE_OKAY || subnetNames.empty())
 				{
 					LOG(ERROR, "There was a problem determining the subnets to scan,"
 						" or there are no interfaces to scan on. Stopping execution.", "");
 					lockFile.close();
-					remove("/usr/share/nova/nova/hhconfig.lock");
+					remove(lockFilePath.c_str());
 					return errVar;
 				}
 			}
 
 			errVar = LoadPersonalityTable(subnetNames);
 
-			if(errVar != OKAY)
+			if(errVar != HHC_CODE_OKAY)
 			{
 				LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
 				lockFile.close();
-				remove("/usr/share/nova/nova/hhconfig.lock");
+				remove(lockFilePath.c_str());
 				return errVar;
 			}
 
 			GenerateConfiguration();
 			lockFile.close();
-			remove("/usr/share/nova/nova/hhconfig.lock");
+			remove(lockFilePath.c_str());
 			return errVar;
 		}
 	}
@@ -440,18 +445,18 @@ int main(int argc, char ** argv)
 	{
 		usage();
 		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		return REQUIREDFLAGSMISSING;
+		remove(lockFilePath.c_str());
+		return HHC_CODE_REQUIRED_FLAGS_MISSING;
 	}
 	if(numNodes <= 0)
 	{
 		usage();
 		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		return NONINTEGERARG;
+		remove(lockFilePath.c_str());
+		return HHC_CODE_NON_INTEGER_ARG;
 	}
 
-	ErrCode errVar = OKAY;
+	HHC_ERR_CODE errVar = HHC_CODE_OKAY;
 	vector<string> subnetNames;
 	if(!i_flag_empty)
 	{
@@ -461,25 +466,25 @@ int main(int argc, char ** argv)
 	{
 		usage();
 		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		return REQUIREDFLAGSMISSING;
+		remove(lockFilePath.c_str());
+		return HHC_CODE_REQUIRED_FLAGS_MISSING;
 	}
 
 	errVar = LoadPersonalityTable(subnetNames);
-	if(errVar != OKAY)
+	if(errVar != HHC_CODE_OKAY)
 	{
 		LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
 		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
+		remove(lockFilePath.c_str());
 		return errVar;
 	}
 	GenerateConfiguration();
 	lockFile.close();
-	remove("/usr/share/nova/nova/hhconfig.lock");
+	remove(lockFilePath.c_str());
 	return errVar;
 }
 
-Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)
+Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 {
 	stringstream ss;
 	// For each element in recv (which contains strings of the subnets),
@@ -500,27 +505,28 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			cout << "Caught Exception : " << e.what() << endl;
+			LOG(DEBUG, string("Caught Exception : ") + e.what(), "");
 			//return PARSINGERROR;
 		}
 		ss.str("");
 	}
-	return OKAY;
+	return HHC_CODE_OKAY;
 }
 
 void Nova::PrintStringVector(vector<string> stringVector)
 {
 	// Debug method to output what subnets were found by
 	// the GetSubnetsToScan() method.
-	cout << "Subnets to be scanned: " << '\n';
+	stringstream ss;
+	ss << "Subnets to be scanned: ";
 	for(uint16_t i = 0; i < stringVector.size(); i++)
 	{
-		cout << stringVector[i] << '\n';
+		ss <<  stringVector[i] << " & ";
 	}
-	cout << endl;
+	LOG(DEBUG, ss.str(), "");
 }
 
-vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> interfacesToMatch)
+vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string> interfacesToMatch)
 {
 	struct ifaddrs *devices = NULL;
 	ifaddrs *curIf = NULL;
@@ -546,8 +552,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 	// Return the empty addresses vector and set the ErrorCode to AUTODETECTFAIL.
 	if(getifaddrs(&devices))
 	{
-		cout << "Ethernet Interface Auto-Detection failed" << endl;
-		*errVar = AUTODETECTFAIL;
+		LOG(ERROR, "Ethernet Interface Auto-Detection failed" , "");
+		*errVar = HHC_CODE_AUTODETECT_FAIL;
 		return hostAddrStrings;
 	}
 
@@ -572,8 +578,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface IP failed" << endl;
-				*errVar = GETNAMEINFOFAIL;
+				LOG(DEBUG, "Getting Name info of Interface IP failed", "");
+				*errVar = HHC_CODE_GET_NAMEINFO_FAIL;
 				return hostAddrStrings;
 			}
 
@@ -586,8 +592,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface Netmask failed" << endl;
-				*errVar = GETBITMASKFAIL;
+				LOG(DEBUG, "Getting Name info of Interface Netmask failed", "");
+				*errVar = HHC_CODE_GET_BITMASK_FAIL;
 				return hostAddrStrings;
 			}
 			// Convert the bitmask and host address character arrays to strings
@@ -598,9 +604,9 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 
 			// Spurious debug prints for now. May change them to be used
 			// in UI hooks later.
-			cout << "Interface: " << curIf->ifa_name << endl;
-			cout << "Address: " << addrString << endl;
-			cout << "Netmask: " << bitmaskString << endl;
+			//cout << "Interface: " << curIf->ifa_name << endl;
+			//cout << "Address: " << addrString << endl;
+			//cout << "Netmask: " << bitmaskString << endl;
 
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
@@ -691,8 +697,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface IP failed" << endl;
-				*errVar = GETNAMEINFOFAIL;
+				LOG(DEBUG, "Getting Name info of Interface IP failed", "");
+				*errVar = HHC_CODE_GET_NAMEINFO_FAIL;
 				return hostAddrStrings;
 			}
 
@@ -705,8 +711,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface Netmask failed" << endl;
-				*errVar = GETBITMASKFAIL;
+				LOG(DEBUG, "Getting Name info of Interface Netmask failed", "");
+				*errVar = HHC_CODE_GET_BITMASK_FAIL;
 				return hostAddrStrings;
 			}
 			// Convert the bitmask and host address character arrays to strings
@@ -717,9 +723,9 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 
 			// Spurious debug prints for now. May change them to be used
 			// in UI hooks later.
-			cout << "Interface: " << curIf->ifa_name << endl;
-			cout << "Address: " << addrString << endl;
-			cout << "Netmask: " << bitmaskString << endl;
+			//cout << "Interface: " << curIf->ifa_name << endl;
+			//cout << "Address: " << addrString << endl;
+			//cout << "Netmask: " << bitmaskString << endl;
 
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
