@@ -25,6 +25,7 @@
 #include <string.h>
 #include <net/if.h>
 #include <errno.h>
+#include <sstream>
 #include <math.h>
 
 using namespace std;

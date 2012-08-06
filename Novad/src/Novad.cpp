@@ -25,6 +25,7 @@
 #include "FeatureSet.h"
 #include "NovaUtil.h"
 #include "Commands.h"
+#include "Database.h"
 #include "Threads.h"
 #include "Control.h"
 #include "Config.h"
@@ -77,6 +78,8 @@ time_t startTime;
 string trainingFolder;
 string trainingCapFile;
 
+Database *db;
+
 
 pcap_dumper_t *trainingFileStream;
 
@@ -115,12 +118,12 @@ int RunNovaD()
 {
 	Config::Inst();
 
-	MessageManager::Initialize(DIRECTION_TO_UI);
-
 	if(!LockNovad())
 	{
 		exit(EXIT_FAILURE);
 	}
+
+	MessageManager::Initialize(DIRECTION_TO_UI);
 
 	// Let the logger initialize before we have multiple threads going
 	Logger::Inst();
@@ -129,6 +132,14 @@ int RunNovaD()
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
 	{
 		LOG(INFO, "Failed to change directory to " + Config::Inst()->GetPathHome(),"");
+	}
+
+
+	db = new Database(Config::Inst()->GetDBHost(), Config::Inst()->GetDBUser(), Config::Inst()->GetDBPass());
+	try {
+		db->Connect();
+	} catch (Nova::DatabaseException &e) {
+		LOG(ERROR, "Unable to connect to SQL database. " + string(e.what()), "");
 	}
 
 	// Set up our signal handlers
@@ -1138,16 +1149,45 @@ void UpdateAndClassify(const in_addr_t& key)
 		return;
 	}
 
+
 	//Send silent alarm if needed
-	if(suspectCopy.GetIsHostile() || oldIsHostile)
+	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
 		if(suspectCopy.GetIsLive())
 		{
 			SilentAlarm(&suspectCopy, oldIsHostile);
 		}
+
+		try {
+			db->InsertSuspectHostileAlert(&suspectCopy);
+		} catch (Nova::DatabaseException &e) {
+			LOG(ERROR, "Unable to insert hostile suspect event into database. " + string(e.what()), "");
+		}
+
+		if (Config::Inst()->GetClearAfterHostile())
+		{
+			stringstream ss;
+			ss << "Main suspect Erase returned: " << suspects.Erase(key);
+			LOG(DEBUG, ss.str(), "");
+
+
+			stringstream ss2;
+			ss2 << "LastSave suspect Erase returned: " << suspectsSinceLastSave.Erase(key);
+			LOG(DEBUG, ss2.str(), "");
+
+			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+			msg->m_IPAddress = suspectCopy.GetIpAddress();
+			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+		}
+		else
+		{
+			//Send to UI
+			SendSuspectToUIs(&suspectCopy);
+		}
+
+		LOG(ALERT, "Detected potentially hostile traffic from " + suspectCopy.GetIpString(), "");
 	}
-	//Send to UI
-	SendSuspectToUIs(&suspectCopy);
+
 }
 
 void CheckForDroppedPackets()

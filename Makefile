@@ -271,7 +271,7 @@ reset-debug:
 	$(MAKE) debug
 	$(MAKE) novagui-debug
 	$(MAKE) hhconfig-debug
-	$(MAKE) novaweb
+	$(MAKE) web
 	$(MAKE) test
 	$(MAKE) install
 	$(MAKE) install-web
