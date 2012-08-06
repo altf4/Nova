@@ -125,14 +125,22 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
 
 Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 {
+
+    if(args.Length() != 1)
+    {
+      return ThrowException(Exception::TypeError(String::New("Must be invoked with at exactly one parameter")));
+    }
+    
 	HandleScope scope;
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+
+	std::string oldName = cvv8::CastFromJS<std::string>(args[0]);
 
 	HoneydConfiguration *conf = new HoneydConfiguration();
 
 	conf->LoadAllTemplates();
 	
-	if(!conf->AddProfile(obj->m_pfile))
+	if(conf->m_profiles.keyExists(oldName) || conf->m_profiles.keyExists(obj->m_pfile->m_name))
 	{
 		std::cout << "Updating profile tree for " << obj->m_pfile->m_name << '\n';
 		conf->m_profiles[obj->m_pfile->m_name].SetName(obj->m_pfile->m_name);
@@ -181,7 +189,11 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 			}
 		}
 		
-		conf->UpdateProfile(obj->m_pfile->m_name);
+		conf->RenameProfile(oldName, obj->m_pfile->m_name);
+	}
+	else
+	{
+		conf->AddProfile(obj->m_pfile);
 	}
 
 	conf->SaveAllTemplates();

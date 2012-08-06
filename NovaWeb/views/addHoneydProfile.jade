@@ -6,7 +6,7 @@ block headerAdditions
   script
     var ethVendorLength = 0;
     var numCreated = 0;
-    
+    var loadedName;
     var profile;
     var portList = new function() {};
     var newProfile = "#{newProfile}";
@@ -14,9 +14,11 @@ block headerAdditions
     var currentName;
     if (newProfile == "true") {
         currentName = "#{parentName}";
+        loadedName = currentName;
         console.log("Creating child of profile " + currentName);
     } else {
         currentName = "#{oldName}";
+        loadedName = currentName;
         console.log("Editing profile " + currentName);
     }
 
@@ -549,6 +551,8 @@ block headerAdditions
         
         var checkLength1 = ethVendorLength;
         var checkLength2 = numCreated;
+        
+        console.log("oldName " + loadedName);
         
         console.log("checkLength1 = " + checkLength1 + " and checklength2 = " + checkLength2);
         

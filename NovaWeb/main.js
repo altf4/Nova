@@ -1274,7 +1274,7 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	honeydConfig.SaveAllTemplates();
 
 	// Save the profile
-	honeydProfile.Save();
+	honeydProfile.Save(profile.oldName);
 
 	callback();
 }
