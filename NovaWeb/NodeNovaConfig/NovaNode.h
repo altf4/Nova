@@ -46,8 +46,10 @@ private:
 	static bool m_NovaCallbackHandlingContinue;
 	static Persistent<Function> m_CallbackFunction;
 	static Persistent<Function> m_SuspectsClearedCallback;
+	static Persistent<Function> m_SuspectClearedCallback;
 	static bool m_CallbackRegistered;
 	static bool m_AllSuspectsClearedCallbackRegistered;
+	static bool m_SuspectClearedCallbackRegistered;
 	static bool m_callbackRunning;
 	static map<in_addr_t, Suspect*> m_suspects;
 
@@ -58,8 +60,10 @@ private:
 	static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
 	static void HandleNewSuspect(Suspect* suspect);
 	static void HandleAllSuspectsCleared();
+	static void HandleSuspectCleared(Suspect*);
 	static int HandleNewSuspectOnV8Thread(eio_req* req);
 	static int HandleAllClearedOnV8Thread(eio_req*);
+	static int HandleSuspectClearedOnV8Thread(eio_req*);
 	static void HandleCallbackError();
 
 public:
@@ -79,6 +83,7 @@ public:
 	static Handle<Value> getSuspectList(const Arguments& args);
 	static Handle<Value> registerOnNewSuspect(const Arguments& args);
 	static Handle<Value> registerOnAllSuspectsCleared(const Arguments& args);
+	static Handle<Value> registerOnSuspectCleared(const Arguments& args);
 	static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter);
 };
 

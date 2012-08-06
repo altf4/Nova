@@ -78,6 +78,10 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 			HandleAllSuspectsCleared();
 			break;
 
+		case CALLBACK_SUSPECT_CLEARED:
+			cout << "Got suspect clear on callback for " << cb.m_suspect->GetIpString() << endl;
+			HandleSuspectCleared(cb.m_suspect);
+
 		default:
 			break;
 		}
@@ -108,6 +112,21 @@ void NovaNode::HandleNewSuspect(Suspect* suspect)
 	}
 }
 
+void NovaNode::HandleSuspectCleared(Suspect *suspect)
+{
+	if (m_suspects.count(suspect->GetIpAddress()) == 0)
+	{
+		delete m_suspects[suspect->GetIpAddress()];
+	}	
+
+	if( m_SuspectClearedCallbackRegistered )
+	{
+		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
+		req->data = (void*) suspect;
+		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleSuspectClearedOnV8Thread, suspect);
+	}
+}
+
 void NovaNode::HandleAllSuspectsCleared()
 {
 	for (map<in_addr_t, Suspect*>::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
@@ -129,6 +148,15 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 	HandleScope scope;
 	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
 	m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+	return 0;
+}
+
+int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
+{
+	Suspect* suspect = static_cast<Suspect*>(req->data);
+	HandleScope scope;
+	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
+	m_SuspectClearedCallback->Call(m_SuspectClearedCallback, 1, argv);
 	return 0;
 }
 
@@ -162,6 +190,7 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnAllSuspectsCleared", registerOnAllSuspectsCleared );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnSuspectCleared", registerOnSuspectCleared );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "CheckConnection", CheckConnection );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "CloseNovadConnection", (InvokeMethod<bool, Nova::CloseNovadConnection>) );
@@ -178,7 +207,7 @@ void NovaNode::Init(Handle<Object> target)
 	//              
 	//              NODE_SET_PROTOTYPE_METHOD(s_ct, "SaveAllSuspects", (InvokeMethod<Boolean, bool, Nova::SaveAllSuspects>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", (InvokeMethod<bool, Nova::ClearAllSuspects>) );
-	//NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", (InvokeMethod<bool, Nova::ClearSuspect>) )
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", (InvokeMethod<bool, std::string, Nova::ClearSuspect>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ReclassifyAllSuspects", (InvokeMethod<bool, Nova::ReclassifyAllSuspects>) );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "Shutdown", Shutdown );
@@ -359,6 +388,26 @@ Handle<Value> NovaNode::registerOnAllSuspectsCleared(const Arguments& args)
 	return scope.Close(result);      
 }
 
+Handle<Value> NovaNode::registerOnSuspectCleared(const Arguments& args)
+{
+	HandleScope scope;
+
+	if( ! args[0]->IsFunction() )
+	{
+		LOG(DEBUG, 
+				"Attempted to register OnSuspectCleared with non-function, excepting","");
+		return ThrowException(Exception::TypeError(String::New("Argument must be a function")));
+	}
+
+	m_SuspectClearedCallback = Persistent<Function>::New( args[0].As<Function>() );
+	m_SuspectClearedCallback.MakeWeak(0, HandleOnNewSuspectWeakCollect);
+
+	m_SuspectClearedCallbackRegistered = true;
+	LOG(DEBUG, "Registered callback for SuspectCleared", "");
+	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+	return scope.Close(result);      
+}
+
 // Invoked when the only one referring to an OnNewSuspect handler is us, i.e. no JS objects
 // are holding onto it.  So it's up to us to decide what to do about it.
 void NovaNode::HandleOnNewSuspectWeakCollect(Persistent<Value> , void *)
@@ -373,10 +422,12 @@ Persistent<FunctionTemplate> NovaNode::s_ct;
 
 Persistent<Function> NovaNode::m_CallbackFunction=Persistent<Function>();
 Persistent<Function> NovaNode::m_SuspectsClearedCallback=Persistent<Function>();
+Persistent<Function> NovaNode::m_SuspectClearedCallback=Persistent<Function>();
 
 map<in_addr_t, Suspect*> NovaNode::m_suspects = map<in_addr_t, Suspect*>();
 bool NovaNode::m_CallbackRegistered=false;
 bool NovaNode::m_AllSuspectsClearedCallbackRegistered=false;
+bool NovaNode::m_SuspectClearedCallbackRegistered=false;
 bool NovaNode::m_callbackRunning=false;
 pthread_t NovaNode::m_NovaCallbackThread=0;
 

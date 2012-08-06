@@ -172,6 +172,12 @@ bool ClearAllSuspects()
 	return retSuccess;
 }
 
+bool ClearSuspect(std::string suspectAddress)
+{
+	in_addr_t suspect = htonl(inet_addr(suspectAddress.c_str()));
+	return ClearSuspect(suspect);
+}
+
 bool ClearSuspect(in_addr_t suspectAddress)
 {
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);

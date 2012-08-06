@@ -263,7 +263,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			result = suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
 			if (!result)
 			{
-				LOG(DEBUG, "Failed to Erase suspect from the main suspect table.", "");
+				LOG(DEBUG, "Failed to Erase suspect from the unsaved suspect table.", "");
 			}
 
 

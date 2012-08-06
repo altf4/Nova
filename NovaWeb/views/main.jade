@@ -95,6 +95,26 @@ block headerAdditions
     now.AllSuspectsCleared = function() {
       suspectGrid.Clear();
     }
+    
+    now.SuspectCleared = function(suspect) {
+        console.log("Cleared suspect " + suspect.GetInAddr);
+        now.OnNewSuspect(suspect);
+        suspectGrid.Render();
+        return;
+      var row = new Array();
+      // This is probably a really bad way to do this...
+      row.push(String("<button onClick='now.ClearSuspect(" + '"' + suspect.GetInAddr + '"' + ")'>Clear</button>"))
+      row.push(String(suspect.GetInAddr));
+      row.push(suspect.GetClassification);
+      row.push(String(suspect.LastPacketString));
+      row.push(String(suspect.GetIsHostile));
+      var enabledFeatures = String(#{enabledFeatures});
+      for (var i in suspect.GetFeatures) {  
+        suspect[i] = suspect.GetFeatures[i];
+        if (enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
+      }
+      suspectGrid.PushEntry(row);
+    }
       
     function pad(num) {
         return ("0" + num.toString()).slice(-2);
@@ -115,6 +135,7 @@ block headerAdditions
       
       var row = new Array();
       // This is probably a really bad way to do this...
+      row.push(String("<button onClick='now.ClearSuspect(" + '"' + suspect.GetInAddr + '"' + ")'>Clear</button>"))
       row.push(String(suspect.GetInAddr));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
@@ -230,6 +251,7 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = String(#{enabledFeatures});
         var gridStructure = new Array();
+        gridStructure.push({name: "Clear"});
         gridStructure.push({name: "Address"});
         gridStructure.push({name: "Classification", formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen"});
@@ -243,7 +265,7 @@ block headerAdditions
         suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'));
 
         // Sort by classification by default
-        suspectGrid.SetSortByKey(1);
+        suspectGrid.SetSortByKey(2);
 
         theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
         now.sendAllSuspects(now.OnNewSuspect);
