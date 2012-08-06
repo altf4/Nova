@@ -185,6 +185,23 @@ int main(int argc, const char *argv[])
 				PrintAllSuspects(SUSPECTLIST_BENIGN, false);
 			}
 		}
+		else if (!strcmp(argv[2], "data"))
+		{
+			if (argc != 4)
+			{
+				PrintUsage();
+			}
+
+			in_addr_t address;
+			if(inet_pton(AF_INET, argv[3], &address) != 1)
+			{
+				cout << "Error: Unable to convert to IP address" << endl;
+				exit(EXIT_FAILURE);
+			}
+
+			PrintSuspectData(address);
+
+		}
 		else
 		{
 			// Some early error checking for the
@@ -407,6 +424,39 @@ void PrintSuspect(in_addr_t address)
 	delete suspect;
 
 	CloseNovadConnection();
+}
+
+void PrintSuspectData(in_addr_t address)
+{
+	Connect();
+
+	Suspect *suspect = GetSuspectWithData(ntohl(address));
+
+	if (suspect != NULL)
+	{
+		cout << suspect->ToString() << endl;
+
+
+		cout << "Details follow" << endl;
+
+		cout << "TCP RST Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_rstCount << endl;
+		cout << "TCP ACK Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_ackCount << endl;
+		cout << "TCP SYN Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_synCount << endl;
+		cout << "TCP FIN Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_finCount << endl;
+		cout << "TCP SYN ACK Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_synAckCount << endl;
+
+		cout << "Total bytes in IP packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_bytesTotal << endl;
+	}
+	else
+	{
+		cout << "Error: No suspect received" << endl;
+	}
+
+	delete suspect;
+
+	CloseNovadConnection();
+
+
 }
 
 void PrintAllSuspects(enum SuspectListType listType, bool csv)

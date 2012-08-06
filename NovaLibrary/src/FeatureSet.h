@@ -164,7 +164,7 @@ public:
 
 	//FeatureSet(const FeatureSet &rhs);
 	//FeatureSet& operator=(FeatureSet &rhs);
-private:
+//private:
 	//Temporary variables used to calculate Features
 
 	//Table of Packet sizes and counts for variance calc

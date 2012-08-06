@@ -411,6 +411,15 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 
 			break;
 		}
+		case REQUEST_SUSPECT_WITHDATA:
+		{
+			RequestMessage reply(REQUEST_SUSPECT_WITHDATA_REPLY, DIRECTION_TO_NOVAD);
+			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
+			reply.m_suspect = &tempSuspect;
+			Message::WriteMessage(&reply, socketFD);
+
+			break;
+		}
 		case REQUEST_UPTIME:
 		{
 			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);

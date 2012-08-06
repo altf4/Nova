@@ -222,4 +222,50 @@ Suspect *GetSuspect(in_addr_t address)
 
 	return returnSuspect;
 }
+
+Suspect *GetSuspectWithData(in_addr_t address)
+{
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
+	RequestMessage request(REQUEST_SUSPECT_WITHDATA, DIRECTION_TO_NOVAD);
+	request.m_suspectAddress = address;
+
+
+	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	{
+		//There was an error in sending the message
+		return NULL;
+	}
+
+
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return NULL;
+	}
+
+	if(reply->m_messageType != REQUEST_MESSAGE)
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return NULL;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_requestType != REQUEST_SUSPECT_WITHDATA_REPLY)
+	{
+		//Received the wrong kind of control message
+		delete requestReply;
+		return NULL;
+	}
+
+	Suspect *returnSuspect = new Suspect();
+	*returnSuspect = *requestReply->m_suspect;
+	delete requestReply;
+
+	return returnSuspect;
+}
+
 }

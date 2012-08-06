@@ -166,6 +166,57 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			break;
 		}
 
+
+		case REQUEST_SUSPECT_WITHDATA:
+		{
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress);
+			if(length != expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			// Deserialize the address of the suspect being requested
+			memcpy(&m_suspectAddress, buffer, sizeof(m_suspectAddress));
+			buffer += sizeof(m_suspectAddress);
+
+			break;
+		}
+
+		case REQUEST_SUSPECT_WITHDATA_REPLY:
+		{
+			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
+			if(length < expectedSize)
+			{
+				m_serializeError = true;
+				return;
+			}
+
+			// DeSerialize the size of the suspect
+			memcpy(&m_suspectLength, buffer, sizeof(m_suspectLength));
+			buffer += sizeof(m_suspectLength );
+
+			expectedSize += m_suspectLength;
+			if(expectedSize != length)
+			{
+				m_serializeError = true;
+				return;
+			}
+			m_suspect = new Suspect();
+			try
+			{
+				if(m_suspect->Deserialize((u_char*)buffer, length, MAIN_FEATURE_DATA) != m_suspectLength)
+				{
+					m_serializeError = true;
+					return;
+				}
+			} catch(Nova::serializationException &e) {
+				m_serializeError = true;
+				return;
+			}
+			break;
+		}
+
 		case REQUEST_UPTIME:
 		{
 			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
@@ -342,6 +393,59 @@ char *RequestMessage::Serialize(uint32_t *length)
 			buffer += sizeof(m_suspectLength );
 			// Serialize our suspect
 			if(m_suspect->Serialize((u_char*)buffer, messageSize, NO_FEATURE_DATA) != m_suspectLength)
+			{
+				return NULL;
+			}
+			buffer += m_suspectLength;
+			break;
+		}
+
+		case REQUEST_SUSPECT_WITHDATA:
+		{
+			//Uses: 1) UI_Message Header
+			//		2) Request Message Type
+			// 		3) IP address of suspect being requested in in_addr_t format
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress) + sizeof(messageSize);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			SerializeHeader(&buffer, messageSize);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
+
+			// Serialize our IP
+			memcpy(buffer, &m_suspectAddress, sizeof(m_suspectAddress));
+			buffer += sizeof(m_suspectAddress);
+			break;
+		}
+		case REQUEST_SUSPECT_WITHDATA_REPLY:
+		{
+			//Uses: 1) UI_Message Header
+			//		2) Request Message Type
+			//		3) Size of the requested suspect
+			// 		4) The requested suspect
+
+			m_suspectLength = m_suspect->GetSerializeLength(MAIN_FEATURE_DATA);
+			if(m_suspectLength == 0)
+			{
+				return NULL;
+			}
+
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
+			buffer = (char*)malloc(messageSize);
+			originalBuffer = buffer;
+
+			SerializeHeader(&buffer, messageSize);
+			//Put the Request Message type in
+			memcpy(buffer, &m_requestType, sizeof(m_requestType));
+			buffer += sizeof(m_requestType);
+
+			// Serialize the size of the suspect
+			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
+			buffer += sizeof(m_suspectLength );
+			// Serialize our suspect
+			if(m_suspect->Serialize((u_char*)buffer, messageSize, MAIN_FEATURE_DATA) != m_suspectLength)
 			{
 				return NULL;
 			}

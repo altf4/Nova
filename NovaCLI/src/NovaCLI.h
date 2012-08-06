@@ -40,6 +40,7 @@ void StopNovaWrapper();
 void StopHaystackWrapper();
 
 void PrintSuspect(in_addr_t address);
+void PrintSuspectData(in_addr_t address);
 void PrintAllSuspects(enum SuspectListType listType, bool csv);
 
 void ClearSuspectWrapper(in_addr_t address);
