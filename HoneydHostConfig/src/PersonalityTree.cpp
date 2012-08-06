@@ -368,7 +368,7 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 
 					if(tokens_osclass.size() < tokens_script_osclass.size())
 					{
-						for(uint k = tokens_osclass.size() - 1; k >= 0; k++)
+						for(int k = (int)tokens_osclass.size() - 1; k >= 0; k--)
 						{
 							if(!tokens_osclass[k].compare(tokens_script_osclass[k]))
 							{
