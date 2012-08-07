@@ -140,35 +140,34 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 
 	conf->LoadAllTemplates();
 	
-	if(conf->m_profiles.keyExists(oldName) || conf->m_profiles.keyExists(obj->m_pfile->m_name))
+	if(conf->m_profiles.keyExists(oldName))
 	{
-		std::cout << "Updating profile tree for " << obj->m_pfile->m_name << '\n';
-		conf->m_profiles[obj->m_pfile->m_name].SetName(obj->m_pfile->m_name);
-		conf->m_profiles[obj->m_pfile->m_name].SetTcpAction(obj->m_pfile->m_tcpAction);
-		conf->m_profiles[obj->m_pfile->m_name].SetUdpAction(obj->m_pfile->m_udpAction);
-		conf->m_profiles[obj->m_pfile->m_name].SetIcmpAction(obj->m_pfile->m_icmpAction);
-		conf->m_profiles[obj->m_pfile->m_name].SetPersonality(obj->m_pfile->m_personality);
+		//conf->m_profiles[oldName].SetName(obj->m_pfile->m_name);
+		conf->m_profiles[oldName].SetTcpAction(obj->m_pfile->m_tcpAction);
+		conf->m_profiles[oldName].SetUdpAction(obj->m_pfile->m_udpAction);
+		conf->m_profiles[oldName].SetIcmpAction(obj->m_pfile->m_icmpAction);
+		conf->m_profiles[oldName].SetPersonality(obj->m_pfile->m_personality);
 		
-		conf->m_profiles[obj->m_pfile->m_name].SetUptimeMin(obj->m_pfile->m_uptimeMin);
-		conf->m_profiles[obj->m_pfile->m_name].SetUptimeMax(obj->m_pfile->m_uptimeMax);
+		conf->m_profiles[oldName].SetUptimeMin(obj->m_pfile->m_uptimeMin);
+		conf->m_profiles[oldName].SetUptimeMax(obj->m_pfile->m_uptimeMax);
 		
-		conf->m_profiles[obj->m_pfile->m_name].SetDropRate(obj->m_pfile->m_dropRate);
-		conf->m_profiles[obj->m_pfile->m_name].SetParentProfile(obj->m_pfile->m_parentProfile);
+		conf->m_profiles[oldName].SetDropRate(obj->m_pfile->m_dropRate);
+		conf->m_profiles[oldName].SetParentProfile(obj->m_pfile->m_parentProfile);
 		
-		conf->m_profiles[obj->m_pfile->m_name].SetVendors(obj->m_pfile->m_ethernetVendors);
+		conf->m_profiles[oldName].SetVendors(obj->m_pfile->m_ethernetVendors);
 		
-		conf->m_profiles[obj->m_pfile->m_name].setTcpActionInherited(obj->m_pfile->isTcpActionInherited());
-		conf->m_profiles[obj->m_pfile->m_name].setUdpActionInherited(obj->m_pfile->isUdpActionInherited());
-		conf->m_profiles[obj->m_pfile->m_name].setIcmpActionInherited(obj->m_pfile->isIcmpActionInherited());
-		conf->m_profiles[obj->m_pfile->m_name].setPersonalityInherited(obj->m_pfile->isPersonalityInherited());
-		conf->m_profiles[obj->m_pfile->m_name].setEthernetInherited(obj->m_pfile->isEthernetInherited());
-		conf->m_profiles[obj->m_pfile->m_name].setUptimeInherited(obj->m_pfile->isUptimeInherited());
-		conf->m_profiles[obj->m_pfile->m_name].setDropRateInherited(obj->m_pfile->isDropRateInherited());
+		conf->m_profiles[oldName].setTcpActionInherited(obj->m_pfile->isTcpActionInherited());
+		conf->m_profiles[oldName].setUdpActionInherited(obj->m_pfile->isUdpActionInherited());
+		conf->m_profiles[oldName].setIcmpActionInherited(obj->m_pfile->isIcmpActionInherited());
+		conf->m_profiles[oldName].setPersonalityInherited(obj->m_pfile->isPersonalityInherited());
+		conf->m_profiles[oldName].setEthernetInherited(obj->m_pfile->isEthernetInherited());
+		conf->m_profiles[oldName].setUptimeInherited(obj->m_pfile->isUptimeInherited());
+		conf->m_profiles[oldName].setDropRateInherited(obj->m_pfile->isDropRateInherited());
 		
-		conf->m_profiles[obj->m_pfile->m_name].m_generated = obj->m_pfile->m_generated;
-		conf->m_profiles[obj->m_pfile->m_name].m_distribution = obj->m_pfile->m_distribution;
+		conf->m_profiles[oldName].SetGenerated(obj->m_pfile->m_generated);
+		conf->m_profiles[oldName].SetDistribution(obj->m_pfile->m_distribution);
 	
-		std::vector<std::string> portNames = conf->m_profiles[obj->m_pfile->m_name].GetPortNames();
+		std::vector<std::string> portNames = conf->m_profiles[oldName].GetPortNames();
 	
 		for(uint i = 0; i < obj->m_pfile->m_ports.size(); i++)
 		{
@@ -184,12 +183,17 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 			
 			if(push)
 			{
-				conf->m_profiles[obj->m_pfile->m_name].m_ports.push_back(obj->m_pfile->m_ports[i]);
+				conf->m_profiles[oldName].m_ports.push_back(obj->m_pfile->m_ports[i]);
 				push = false;
 			}
 		}
 		
-		conf->RenameProfile(oldName, obj->m_pfile->m_name);
+		conf->UpdateProfile("default");
+		
+		if(!conf->RenameProfile(oldName, obj->m_pfile->m_name))
+		{
+			std::cout << "Couldn't rename profile " << oldName << " to " << obj->m_pfile->m_name << std::endl;
+		}
 	}
 	else
 	{

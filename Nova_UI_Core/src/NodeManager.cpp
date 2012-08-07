@@ -55,7 +55,7 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 	{
 		for(ProfileTable::iterator it = m_hdconfig->m_profiles.begin(); it != m_hdconfig->m_profiles.end(); it++)
 		{
-			if(!it->second.m_parentProfile.compare(profList[i]))
+			if(!it->second.m_parentProfile.compare(profList[i]) && it->second.m_generated)
 			{
 				profList.push_back(it->first);
 				totalNodes += it->second.m_nodeKeys.size();
@@ -71,7 +71,6 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 	//Add Nodes Case
 	else if(totalNodes < num_nodes)
 	{
-		// Always num_nodes - 1; thus, "-n 1" gives 0 nodes
 		GenerateNodes(num_nodes - totalNodes);
 	}
 	//Redistribute exisiting nodes case

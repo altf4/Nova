@@ -1833,8 +1833,15 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 				InheritProfile(it->first, newName);
 			}
 		}
-		UpdateProfileTree(newName, ALL);
-		DeleteProfile(oldName);
+
+		if(!UpdateProfileTree(newName, ALL))
+		{
+			LOG(ERROR, string("Couldn't update " + oldName + "'s profile tree."), "");
+		}
+		if(!DeleteProfile(oldName))
+		{
+			LOG(ERROR, string("Couldn't delete profile " + oldName), "");
+		}
 		return true;
 	}
 	return false;
@@ -2243,6 +2250,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			}
 		}
 	}
+
 	NodeProfile p = m_profiles[profileName];
 
 	//Delete any nodes using the profile
@@ -2263,6 +2271,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 		}
 		delList.pop_back();
 	}
+
 	m_profiles.erase(profileName);
 
 	//If it is not the original profile to be deleted skip this part
@@ -2372,7 +2381,6 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 		NodeProfile parent = m_profiles[p.m_parentProfile];
 		ptree pt;
 		pt.clear();
-		pt.add_child("profile", p.m_tree);
 
 		//Find all children of the parent and put them in the empty ptree
 		// Ideally we could just replace the individual child but the data structure doesn't seem
@@ -2386,15 +2394,29 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 			}
 		}
 		//Replace the parent's profiles subtree (stores all children) with the new one
-		// XXX There's a segfault happening here; only saw it when there was more than one subtree of default
-		// that was found during scans. Goes through Linux subtree fine, hits the Windows subtree, gets the the
-		// point where profileName is "Windows 7 general purpose" (which is good) and then SIGSEGV here. Might
-		// be running out of memory, as it's not giving a bad tree path or data or anything.
 		parent.m_tree.put_child("profiles", pt);
 		m_profiles[parent.m_name] = parent;
 		//Recursively ascend to update all ancestors
 		CreateProfileTree(parent.m_name);
 		UpdateProfileTree(parent.m_name, UP);
+	}
+	else if(!p.m_name.compare("default") && up)
+	{
+		NodeProfile defaultProfile = m_profiles[p.m_name];
+		ptree pt;
+		pt.clear();
+
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		{
+			if(!it->second.m_parentProfile.compare(p.m_name))
+			{
+				pt.add_child("profile", it->second.m_tree);
+			}
+		}
+
+		p.m_tree.put_child("profiles", pt);
+		m_profiles[p.m_name] = defaultProfile;
+		CreateProfileTree(p.m_name);
 	}
 	return true;
 }
