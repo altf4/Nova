@@ -126,23 +126,28 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
 Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 {
 
-    if(args.Length() != 1)
+    if(args.Length() != 2)
     {
-      return ThrowException(Exception::TypeError(String::New("Must be invoked with at exactly one parameter")));
+      return ThrowException(Exception::TypeError(String::New("Must be invoked with at exactly two parameters")));
     }
     
 	HandleScope scope;
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
 
 	std::string oldName = cvv8::CastFromJS<std::string>(args[0]);
+	
+	bool addOrEdit = cvv8::CastFromJS<bool>(args[1]);
 
 	HoneydConfiguration *conf = new HoneydConfiguration();
 
 	conf->LoadAllTemplates();
 	
-	if(conf->m_profiles.keyExists(oldName))
+	if(addOrEdit)
 	{
-		//conf->m_profiles[oldName].SetName(obj->m_pfile->m_name);
+		conf->AddProfile(obj->m_pfile);
+	}
+	else
+	{
 		conf->m_profiles[oldName].SetTcpAction(obj->m_pfile->m_tcpAction);
 		conf->m_profiles[oldName].SetUdpAction(obj->m_pfile->m_udpAction);
 		conf->m_profiles[oldName].SetIcmpAction(obj->m_pfile->m_icmpAction);
@@ -195,14 +200,11 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 			std::cout << "Couldn't rename profile " << oldName << " to " << obj->m_pfile->m_name << std::endl;
 		}
 	}
-	else
-	{
-		conf->AddProfile(obj->m_pfile);
-	}
-
+	
 	conf->SaveAllTemplates();
 
 	delete conf;
+	
 	return scope.Close(Boolean::New(true));
 }
 

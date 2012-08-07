@@ -2287,7 +2287,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			ptree *pt = &parent.m_tree.get_child("profiles");
 			pt->clear();
 
-			//Find all profiles still in the table that are sibilings of deleted profile
+			//Find all profiles still in the table that are siblings of deleted profile
 			// We should be using an iterator to find the original profile and erase it
 			// but boost's iterator implementation doesn't seem to be able to access data
 			// correctly and are frequently invalidated.
@@ -2296,7 +2296,7 @@ bool HoneydConfiguration::DeleteProfile(std::string profileName, bool originalCa
 			{
 				if(!it->second.m_parentProfile.compare(parent.m_name))
 				{
-					//Put sibiling profiles into the tree
+					//Put sibling profiles into the tree
 					pt->add_child("profile", it->second.m_tree);
 				}
 			}	//parent-copy now has the ptree of all children except deleted profile
@@ -2400,7 +2400,7 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 		CreateProfileTree(parent.m_name);
 		UpdateProfileTree(parent.m_name, UP);
 	}
-	else if(!p.m_name.compare("default") && up)
+	else if(!p.m_name.compare("default"))
 	{
 		NodeProfile defaultProfile = m_profiles[p.m_name];
 		ptree pt;
