@@ -75,7 +75,9 @@ fi
 
 
 sqlite3 "/usr/share/nova/database.db" <<< $QUERY
-sqlite3 "/usr/share/nova/database.db" <<< "INSERT INTO credentials VALUES('nova', '\$4\$nova\$h36yyW3noGPSWnx5JCalQCPoo74\$');"
+#sqlite3 "/usr/share/nova/database.db" <<< "INSERT INTO credentials VALUES('nova', '\$4\$nova\$h36yyW3noGPSWnx5JCalQCPoo74\$');"
 
+chgrp nova /usr/share/nova/database.db
+chmod g+rw /usr/share/nova/database.db
 
 echo "SQL schema has been set up for nova."
