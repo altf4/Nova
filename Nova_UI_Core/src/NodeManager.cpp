@@ -546,7 +546,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 	for(unsigned int i = 0; i < m_profileCounters.size(); i++)
 	{
 		//If this profile fewer nodes than expected
-		if(m_profileCounters[i].m_count < (m_profileCounters[i].m_increment - 1))
+		if(m_profileCounters[i].m_count < (-m_profileCounters[i].m_increment))
 		{
 			underPopulatedProfiles.push_back(&m_profileCounters[i]);
 		}
@@ -729,7 +729,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		}
 
 		//If the profile is still under allocated
-		if(lowCounter->m_count < (lowCounter->m_increment - 1))
+		if(lowCounter->m_count < (-lowCounter->m_increment))
 		{
 			underPopulatedProfiles.push_back(lowCounter);
 		}
@@ -748,7 +748,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		for(unsigned int j = 0; j < curCounter->m_macCounters.size(); j++)
 		{
 			//If the vendor is under allocated
-			if(curCounter->m_macCounters[j].m_count < (curCounter->m_macCounters[j].m_increment - 1))
+			if(curCounter->m_macCounters[j].m_count < (-curCounter->m_macCounters[j].m_increment))
 			{
 				underPopulatedVendors.push_back(&curCounter->m_macCounters[j]);
 			}
@@ -799,7 +799,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 				}
 			}
 			//If the vendor is still under allocated
-			if(lowVCounter->m_count < (lowVCounter->m_increment - 1))
+			if(lowVCounter->m_count < (-lowVCounter->m_increment))
 			{
 				underPopulatedVendors.push_back(lowVCounter);
 			}
@@ -817,7 +817,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		for(unsigned int j = 0; j < curCounter->m_portCounters.size(); j++)
 		{
 			//If the port is under allocated
-			if(curCounter->m_portCounters[j].m_count < (curCounter->m_portCounters[j].m_increment - 1))
+			if(curCounter->m_portCounters[j].m_count < (-curCounter->m_portCounters[j].m_increment))
 			{
 				underPopulatedPorts.push_back(&curCounter->m_portCounters[j]);
 			}
@@ -866,7 +866,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 				}
 			}
 			//If the vendor is still under allocated
-			if(lowPCounter->m_count < (lowPCounter->m_increment - 1))
+			if(lowPCounter->m_count < (-lowPCounter->m_increment))
 			{
 				underPopulatedPorts.push_back(lowPCounter);
 			}
