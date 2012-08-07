@@ -294,7 +294,7 @@ void NodeManager::GenerateNodes(int num_nodes)
 				nodesToAdd.push_back(curNode);
 				i++;
 				//increment the remaining counters since they were 'skipped'
-				for(unsigned int k = (j+1); j < m_profileCounters.size(); k++)
+				for(unsigned int k = (j+1); k < m_profileCounters.size(); k++)
 				{
 					m_profileCounters[k].m_count += m_profileCounters[k].m_increment;
 				}
