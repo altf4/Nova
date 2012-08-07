@@ -98,6 +98,8 @@ Handle<Object> HoneydNodeJs::WrapProfile(NodeProfile *pfile)
         proto->Set("GetUptimeMin",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUptimeMin>));
         proto->Set("GetUptimeMax",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUptimeMax>));
         proto->Set("GetDropRate",       FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetDropRate>));
+        proto->Set("GetGenerated",       FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::GetGenerated>));
+        proto->Set("GetDistribution",       FunctionTemplate::New(InvokeMethod<double, NodeProfile, &Nova::NodeProfile::GetDistribution>));
         proto->Set("GetParentProfile",  FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetParentProfile>));
         proto->Set("GetVendors",        FunctionTemplate::New(InvokeMethod<std::vector<std::string>, NodeProfile, &Nova::NodeProfile::GetVendors>));
         proto->Set("GetVendorDistributions",       FunctionTemplate::New(InvokeMethod<std::vector<double>, NodeProfile, &Nova::NodeProfile::GetVendorDistributions>));
