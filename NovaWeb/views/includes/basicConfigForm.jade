@@ -37,6 +37,28 @@ script
       document.getElementById("if0").checked = true;
     }
   }
+  
+  function checkOnlyOne(which)
+  {
+    var numNotChecked = 0;
+    
+    for(var i = 0; i < document.getElementById("doppel_length").getAttribute("value"); i++)
+    {
+      if(!document.getElementById("dif" + i).checked)
+      {
+        numNotChecked++;
+      }
+      else if(document.getElementById("dif" + i).checked && ("dif" + i) !== which)
+      {
+        document.getElementById("dif" + i).checked = false;
+      }
+    }
+    
+    if(numNotChecked == document.getElementById("doppel_length").getAttribute("value"))
+    {
+      document.getElementById("dif0").checked = true;
+    }
+  }
 
 h2 Basic Configuration
     
@@ -83,8 +105,26 @@ table
    
    input(type="hidden", name="DEFAULT", id="DEFAULT", value=DEFAULT)
 
-label Doppelganger Interface
-input(name="DOPPELGANGER_INTERFACE",  value=DOPPELGANGER_INTERFACE)
+br
+br
+table
+  thead 
+    tr
+      th Doppelganger Interface
+  tbody 
+    - for (var i = 0; i < DOPPELGANGER_INTERFACE.length; i++)
+      - if(DOPPELGANGER_INTERFACE[i].checked == 1)
+        tr 
+          td
+            input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')", checked) 
+            #{DOPPELGANGER_INTERFACE[i].iface}
+      - else
+        tr 
+          td
+            input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')") 
+            #{DOPPELGANGER_INTERFACE[i].iface}
+          
+   hidden(id="doppel_length", value=DOPPELGANGER_INTERFACE.length)
 br
 
 label Doppelganger Enabled?
