@@ -29,7 +29,7 @@ var exec = require('child_process').exec;
 var Tail = require('tail').Tail;
 var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
 
-
+ 
 var credDb = 'nova';
 var credTb = 'credentials';
 
@@ -1166,6 +1166,9 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.isEthernetInherited = profile.isEthernetInherited();
     profile.isUptimeInherited = profile.isUptimeInherited();
     profile.isDropRateInherited = profile.isDropRateInherited();
+    
+    profile.generated = profile.GetGenerated();
+    profile.distribution = profile.GetDistribution();
 
     if(!profile.isEthernetInherited)
     {
@@ -1288,7 +1291,7 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	honeydConfig.SaveAllTemplates();
 
 	// Save the profile
-	honeydProfile.Save();
+	honeydProfile.Save(profile.oldName);
 
 	callback();
 }
