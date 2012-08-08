@@ -4,7 +4,7 @@
 #include <node.h>
 #include <v8.h>
 #include "v8Helper.h"
-#include "VendorMacDb.h"
+#include "HoneydConfiguration/VendorMacDb.h"
 
 class VendorMacDbBinding : public node::ObjectWrap {
 public:

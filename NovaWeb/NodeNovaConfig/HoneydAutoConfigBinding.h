@@ -2,7 +2,7 @@
 #define HHAUTOCONFIGBINDING_H
 
 #include <node.h>
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 #include "Config.h"
 
 class HoneydAutoConfigBinding : public node::ObjectWrap {

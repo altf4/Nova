@@ -4,7 +4,7 @@
 #include <node.h>
 #include <v8.h>
 #include "v8Helper.h"
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 
 
 class HoneydConfigBinding : public node::ObjectWrap {
