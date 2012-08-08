@@ -163,7 +163,7 @@ public:
 	// 	Returns: (true) if successful and (false) if the profile could not be found
 	bool DeleteProfile(std::string profileName)
     {
-    	return DeleteProfile(profileName, true);
+    	return Nova::HoneydConfiguration::DeleteProfile(profileName, true);
     }
 
     //Deletes a single node, called from deleteNodes();

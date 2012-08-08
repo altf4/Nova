@@ -26,4 +26,5 @@ SUBDIRS := \
 src/messaging/messages \
 src/messaging \
 src \
+src/HoneydConfiguration \
 
