@@ -35,14 +35,15 @@ enum HHC_ERR_CODE : int
 	HHC_CODE_PARSING_ERROR,
 	HHC_CODE_INCORRECT_NUMBER_ARGS,
 	HHC_CODE_NON_INTEGER_ARG,
-	HHC_CODE_BAD_ARG_COMBINATION,
-	HHC_CODE_REQUIRED_FLAGS_MISSING
+	HHC_CODE_BAD_ARG_VALUE,
+	HHC_CODE_REQUIRED_FLAGS_MISSING,
+	HHC_CODE_BAD_FUNCTION_PARAM
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost
 //  const std::string &filename - string of the xml filename to read
 // Returns nothing
-void LoadNmap(const std::string &filename);
+bool LoadNmapXML(const std::string &filename);
 
 // Takes a <host> sub-ptree and parses it for the requisite information, placing said information
 // into a Personality object which then gets passed into the PersonalityTable object

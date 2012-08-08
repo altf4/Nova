@@ -13,7 +13,7 @@ usermod -a -G nova $SUDO_USER
 
 # Add /etc/sudoers.d to the sudoers file if needed
 if grep -q "#includedir /etc/sudoers.d" /etc/sudoers; then
-    echo "Note: sudoers.d is arleady included in /etc/sudoers"
+    echo "Note: sudoers.d is already included in /etc/sudoers"
 else
     echo "No sudoers.d included in /etc/sudoers; attempting to add it";
 
