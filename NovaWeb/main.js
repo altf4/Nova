@@ -330,7 +330,7 @@ function renderBasicOptions(jadefile, res, req) {
     
     var doppelPass = [];
     //all = config.ListLoopbacks().sort();
-    all = config.ListLoopbacks.sort();
+    all = config.ListLoopbacks().sort();
     used = config.GetDoppelInterface();
     
     for(var i in all)
