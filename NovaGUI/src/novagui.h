@@ -21,7 +21,7 @@
 #include "DialogPrompter.h"
 #include "ui_novagui.h"
 #include "Suspect.h"
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 
 struct suspectItem
 {

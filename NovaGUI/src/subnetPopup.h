@@ -19,9 +19,9 @@
 #define SUBNETPOPUP_H
 
 #include "ui_subnetPopup.h"
-#include "NovaGuiTypes.h"
+#include "HoneydConfiguration/HoneydConfigTypes.h"
 #include "NovaUtil.h"
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 
 #include <QtGui/QSpinBox>
 #include <arpa/inet.h>

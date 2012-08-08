@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "gtest/gtest.h"
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 
 using namespace Nova;
 

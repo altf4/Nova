@@ -12,11 +12,14 @@ CPP_SRCS += \
 ../src/EvidenceTable.cpp \
 ../src/FeatureSet.cpp \
 ../src/HaystackControl.cpp \
+../src/HoneydConfiguration.cpp \
 ../src/Logger.cpp \
+../src/NodeManager.cpp \
 ../src/NovaUtil.cpp \
 ../src/Point.cpp \
 ../src/Suspect.cpp \
 ../src/SuspectTable.cpp \
+../src/VendorMacDb.cpp \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
@@ -28,11 +31,14 @@ OBJS += \
 ./src/EvidenceTable.o \
 ./src/FeatureSet.o \
 ./src/HaystackControl.o \
+./src/HoneydConfiguration.o \
 ./src/Logger.o \
+./src/NodeManager.o \
 ./src/NovaUtil.o \
 ./src/Point.o \
 ./src/Suspect.o \
 ./src/SuspectTable.o \
+./src/VendorMacDb.o \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
@@ -44,11 +50,14 @@ CPP_DEPS += \
 ./src/EvidenceTable.d \
 ./src/FeatureSet.d \
 ./src/HaystackControl.d \
+./src/HoneydConfiguration.d \
 ./src/Logger.d \
+./src/NodeManager.d \
 ./src/NovaUtil.d \
 ./src/Point.d \
 ./src/Suspect.d \
 ./src/SuspectTable.d \
+./src/VendorMacDb.d \
 ./src/WhitelistConfiguration.d 
 
 

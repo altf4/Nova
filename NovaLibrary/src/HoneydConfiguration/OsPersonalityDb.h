@@ -20,7 +20,7 @@
 #ifndef OSPERSONALITYDB_H_
 #define OSPERSONALITYDB_H_
 
-#include "HashMapStructs.h"
+#include "../HashMapStructs.h"
 
 #include <string>
 #include <vector>

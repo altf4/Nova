@@ -23,7 +23,7 @@
 
 #include "PersonalityNode.h"
 #include "PersonalityTable.h"
-#include "ScriptsTable.h"
+#include "HoneydConfiguration/ScriptsTable.h"
 
 namespace Nova
 {

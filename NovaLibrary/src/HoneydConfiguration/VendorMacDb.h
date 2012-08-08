@@ -20,7 +20,7 @@
 #ifndef MACADDRESSDB_H_
 #define MACADDRESSDB_H_
 
-#include "HashMapStructs.h"
+#include "../HashMapStructs.h"
 
 #include <string>
 #include <vector>

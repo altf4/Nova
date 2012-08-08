@@ -19,7 +19,7 @@
 #define NODEPOPUP_H
 
 #include "ui_nodePopup.h"
-#include "NovaGuiTypes.h"
+#include "HoneydConfiguration/HoneydConfigTypes.h"
 #include "DialogPrompter.h"
 
 #include <QtGui/QSpinBox>

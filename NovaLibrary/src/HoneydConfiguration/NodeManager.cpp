@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "NodeManager.h"
-#include "Logger.h"
+#include "../Logger.h"
 
 #include <math.h>
 #include <boost/algorithm/string.hpp>

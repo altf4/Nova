@@ -29,7 +29,7 @@
 #define SCRIPTSTABLE_H_
 
 #include "AutoConfigHashMaps.h"
-#include "NovaGuiTypes.h"
+#include "HoneydConfigTypes.h"
 
 namespace Nova
 {

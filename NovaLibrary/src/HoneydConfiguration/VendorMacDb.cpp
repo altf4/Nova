@@ -17,8 +17,8 @@
 //============================================================================
 
 #include "VendorMacDb.h"
-#include "NovaUtil.h"
-#include "Config.h"
+#include "../NovaUtil.h"
+#include "../Config.h"
 
 #include <errno.h>
 #include <fstream>

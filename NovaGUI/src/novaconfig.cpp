@@ -31,7 +31,7 @@
 #include "NovaUtil.h"
 #include "novaconfig.h"
 #include "subnetPopup.h"
-#include "NodeManager.h"
+#include "HoneydConfiguration/NodeManager.h"
 #include "NovaComplexDialog.h"
 
 using boost::property_tree::ptree;

@@ -17,8 +17,8 @@
 //============================================================================
 
 #include "HoneydConfiguration.h"
-#include "NovaUtil.h"
-#include "Logger.h"
+#include "../NovaUtil.h"
+#include "../Logger.h"
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
