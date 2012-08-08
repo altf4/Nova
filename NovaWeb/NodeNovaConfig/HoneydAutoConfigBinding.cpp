@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <unistd.h>
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 #include "HoneydAutoConfigBinding.h"
 #include "v8Helper.h"
 

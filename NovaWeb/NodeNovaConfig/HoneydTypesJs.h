@@ -3,7 +3,7 @@
 
 #include <v8.h>
 #include "v8Helper.h"
-#include "NovaGuiTypes.h"
+#include "HoneydConfiguration/HoneydConfigTypes.h"
 #include "FeatureSet.h"
 
 class HoneydNodeJs
