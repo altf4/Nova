@@ -24,6 +24,12 @@
 namespace Nova
 {
 
+enum lockType
+{
+	WRITE_LOCK,
+	READ_LOCK
+};
+
 class Lock
 {
 
@@ -35,17 +41,21 @@ public:
 		pthread_mutex_lock(m_mutex);
 	}
 
-	Lock(pthread_rwlock_t *lock, bool isReadLock)
+	Lock(pthread_rwlock_t *lock, bool lockType)
 	{
 		isMutex = false;
 		m_rwlock = lock;
-		if(isReadLock)
+		if(lockType == READ_LOCK)
 		{
 			pthread_rwlock_rdlock(m_rwlock);
 		}
-		else
+		else if (lockType == WRITE_LOCK)
 		{
 			pthread_rwlock_wrlock(m_rwlock);
+		}
+		else
+		{
+			// Unsupported lock type
 		}
 	}
 

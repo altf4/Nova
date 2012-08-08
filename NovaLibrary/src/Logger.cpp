@@ -66,7 +66,7 @@ namespace Nova
 	void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const char *messageAdv,
 			const char *file,  const int& line)
 	{
-		Lock lock(&m_logLock, false);
+		Lock lock(&m_logLock, WRITE_LOCK);
 		string mask = getBitmask(messageLevel);
 		string tempStr = (string)messageAdv;
 		stringstream ss;
