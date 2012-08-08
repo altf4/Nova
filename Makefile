@@ -295,7 +295,6 @@ uninstall-files:
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 
 uninstall-permissions:
-	# TODO: Fix this, it apparently takes arguments now
 	sh debian/postrm
 
 # Reinstall nova without messing up the permissions
