@@ -19,23 +19,22 @@ var util = require('util');
 var https = require('https');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
-var mysql = require('mysql');
+var sql = require('sqlite3');
 var validCheck = require('validator').check;
 var sanitizeCheck = require('validator').sanitize;
-	
+var crypto = require('crypto');	
 var exec = require('child_process').exec;
-
+var nowjs = require("now");
+var Validator = require('validator').Validator;
 
 var Tail = require('tail').Tail;
 var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
 
-
-var credDb = 'nova_credentials';
-var credTb = 'credentials';
-
-var select;
-var checkPass;
-var my_name;
+var HashPassword = function(password) {
+	var shasum = crypto.createHash('sha1');
+	shasum.update(password);
+	return shasum.digest('hex');
+}
 
 console.log("Starting NOVAWEB version " + config.GetVersionString());
 
@@ -43,11 +42,37 @@ console.log("Starting NOVAWEB version " + config.GetVersionString());
 // TODO: Get this path from the config class
 process.chdir("/usr/share/nova/nova");
 
-var client = mysql.createClient({
-  user: 'root'
-  , password: 'root'
-  , database: credDb
-});
+var DATABASE_HOST = config.ReadSetting("DATABASE_HOST");
+var DATABASE_USER = config.ReadSetting("DATABASE_USER");
+var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
+
+var databaseOpenResult = function(err) {
+	if (err == null) {
+		console.log("Opened sqlite3 database file.");
+	} else {
+		console.log("Error opening sqlite3 database file: " + err);
+	}
+}
+
+var db = new sql.Database("/usr/share/nova/database.db", sql.OPEN_READWRITE, databaseOpenResult);
+
+
+
+// Prepare query statements
+var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
+var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
+var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
+var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
+var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ? WHERE user = ?');
+var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?)');
+var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
+
+var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
+var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
+
+var dbqSuspectAlertsGet = db.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,haystack_event_frequency,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_interval_deviation,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+var dbqSuspectAlertsDeleteAll = db.prepare('DELETE FROM suspect_alerts');
+var dbqSuspectAlertsDeleteAlert = db.prepare('DELETE FROM suspect_alerts where id = ?');
 
 passport.serializeUser(function(user, done) {
   done(null, user);
@@ -61,30 +86,42 @@ passport.use(new BasicStrategy(
   function(username, password, done) 
   {
     var user = username;
-    process.nextTick(function()
-    {
-         client.query(
-            'SELECT user, pass FROM ' + credTb + ' WHERE pass = SHA1(' + client.escape(password) + ')',
-            function selectCb(err, results, fields, fn)
-            {
-              if(err) 
-              {
-                throw err;
-              }
-              if(results[0] === undefined)
-              {
-                switcher(err, user, false, done);
-              }
-              else if(user === results[0].user)
-              {
-                switcher(err, user, true, done);
-              }
-              else
-              {
-                switcher(err, user, false, done);
-              }
-            }
-          );
+    process.nextTick(function() {
+
+		dbqCredentialsRowCount.all(function(err, rowcount) {
+			if (err) {
+				console.log(err);
+			}
+
+			// If there are no users, add default nova and log in
+			if (rowcount[0].rows == 0) {
+				console.log("Now users in user database. Creating default user.");
+				dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function(err) {
+					if (err) {
+                		throw err;
+					}
+
+					switcher(err, user, true, done);
+
+				});
+			} else {
+				dbqCredentialsCheckLogin.all(user, HashPassword(password),
+					function selectCb(err, results) {
+						if(err) {
+							console.log(err);
+						}
+
+						if(results[0] === undefined) {
+							switcher(err, user, false, done);
+						} else if(user === results[0].user) {
+							switcher(err, user, true, done);
+						} else {
+							switcher(err, user, false, done);
+						}
+					}
+				);
+			}
+		});
     });
   }
 ));
@@ -118,7 +155,6 @@ app.set('view options', {layout: false});
 var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
 console.info("Listening on port " + WEB_UI_PORT);
 app.listen(WEB_UI_PORT);
-var nowjs = require("now");
 var everyone = nowjs.initialize(app);
 
 
@@ -292,13 +328,49 @@ function renderBasicOptions(jadefile, res, req) {
       }
     }
     
+    var doppelPass = [];
+    //all = config.ListLoopbacks().sort();
+    all = ["lo", "lo0"];
+    used = config.GetDoppelInterface();
+    
+    for(var i in all)
+    {
+      var checked = false;
+      
+      for(var j in used)
+      {
+        if(all[i] === used[j])
+        {
+          checked = true;
+          break;
+        }
+        else if(used[j].length == 1 && used.length > 1)
+        {
+            if(all[i] === used)
+            {
+                checked = true;
+                break;
+            }
+        }
+      }
+      
+      if(checked)
+      {
+        doppelPass.push( { iface: all[i], checked: 1 } );
+      }
+      else
+      {
+        doppelPass.push( { iface: all[i], checked: 0 } );
+      }
+    }
+    
      res.render(jadefile, 
 	 {
 		locals: {
             INTERFACES: pass 
             ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
-			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
+			,DOPPELGANGER_INTERFACE: doppelPass
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
 			,SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
 			,SMTP_PORT: config.ReadSetting("SMTP_PORT")
@@ -488,9 +560,8 @@ app.get('/configWhitelist', passport.authenticate('basic', { session: false }), 
 
 app.get('/editUsers', passport.authenticate('basic', { session: false }), function(req, res) {
 	var usernames = new Array();
-  client.query(
-    'SELECT user FROM ' + credTb,
-    function (err, results, fields) {
+  dbqCredentialsGetUsers.all(
+    function (err, results) {
       if(err) {
         throw err;
       }
@@ -515,33 +586,6 @@ app.get('/configWhitelist', passport.authenticate('basic', { session: false }), 
 	}})
 });
 
-app.get('/editUsers', passport.authenticate('basic', { session: false }), function(req, res) {
-	var usernames = new Array();
-  client.query(
-    'SELECT user FROM ' + credTb,
-    function (err, results, fields) {
-      if(err) {
-        throw err;
-      }
-
-	var usernames = new Array();
-	for (var i in results) {
-		usernames.push(results[i].user);
-	}
-	res.render('editUsers.jade',
-	{ locals: {
-		usernames: usernames
-	}});
-    } 
-  );
-});
-
-// No more logout button for now
-//app.get('/logout', function(req, res){
-//  req.logout();
-//  res.redirect('/');
-//});
-
 app.get('/suspects', passport.authenticate('basic', { session: false }), function(req, res) {
 	 var type;
 	 if (req.query["type"] == undefined) {
@@ -560,20 +604,28 @@ app.get('/suspects', passport.authenticate('basic', { session: false }), functio
      });
 });
 
+app.get('/events', passport.authenticate('basic', { session: false }), function(req, res) {
+	res.render('events.jade', 
+	{
+		featureNames: nova.GetFeatureNames()
+	}	
+	);
+});
+
 app.get('/novadlog', passport.authenticate('basic', { session: false }), function(req, res) {
 	initLogWatch();
 	res.render('novadlog.jade');
 });
 
 app.get('/', passport.authenticate('basic', { session: false }), function(req, res) {
-    client.query('SELECT run FROM firstrun',
-    function selectCb(err, results, fields) {
+    dbqFirstrunCount.all(
+    function (err, results) {
       if(err) {
-	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to access database" }});
+	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to access database: " + err}});
 		return;
       }
 
-	  if (results[0] === undefined) {
+	  if (results[0].rows == 0) {
 		res.redirect('/welcome');
 	  } else {
 		res.redirect('/suspects');
@@ -599,19 +651,18 @@ app.get('/haystackStatus', passport.authenticate('basic', { session: false }), f
 app.post('/createNewUser', passport.authenticate('basic', { session: false }), function(req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
-	
-    client.query('SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape(userName) + '',
+	dbqCredentialsGetUser.all(userName,	
     function selectCb(err, results, fields) {
       if(err) {
-	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database" }});
+	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database: " + err }});
 		return;
       }
 
       if(results[0] == undefined)
       {
-	    
-        client.query('INSERT INTO ' + credTb + ' values(' + client.escape(userName) + ', SHA1(' + client.escape(password) + '))');
-		res.render('saveRedirect.jade', { locals: {redirectLink: "/"}})	
+		dbqCredentialsInsertUser.run(userName, HashPassword(password), function() { 
+		res.render('saveRedirect.jade', { locals: {redirectLink: "/"}});
+		});
         return;
       } 
       else
@@ -626,19 +677,18 @@ app.post('/createNewUser', passport.authenticate('basic', { session: false }), f
 app.post('/createInitialUser', passport.authenticate('basic', { session: false }), function(req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
-	
-    client.query('SELECT user FROM ' + credTb + ' WHERE user = ' + client.escape(userName) + '',
-    function selectCb(err, results, fields) {
+
+	dbqCredentialsGetUser.all(userName,
+    function selectCb(err, results) {
       if(err) {
-	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database" }});
+	  	res.render('error.jade', { locals: { redirectLink: "/createNewUser", errorDetails: "Unable to access authentication database: " + err }});
 		return;
       }
 
       if(results[0] == undefined)
       {
-	    
-        client.query('INSERT INTO ' + credTb + ' values(' + client.escape(userName) + ', SHA1(' + client.escape(password) + '))');
-		client.query('DELETE FROM ' + credTb + ' WHERE user = ' + client.escape('nova'));
+	   	dbqCredentialsInsertUser.run(userName, HashPassword(password));
+		dbqCredentialsDeleteUser.run('nova');
 		res.render('saveRedirect.jade', { locals: {redirectLink: "setup2"}})	
         return;
       } 
@@ -750,6 +800,7 @@ app.post('/editHoneydNodesSave', passport.authenticate('basic', { session: false
 	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
 	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
 	honeydConfig.SaveAllTemplates();
+	honeydConfig.WriteHoneydConfiguration(config.GetPathConfigHoneydHS());
      
 	res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 
@@ -795,7 +846,6 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
 		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
 		"SMTP_PORT","SMTP_DOMAIN","RECIPIENTS","SERVICE_PREFERENCES","HAYSTACK_STORAGE"];
   
-  var Validator = require('validator').Validator;
   
   Validator.prototype.error = function(msg)
   {
@@ -813,6 +863,11 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
   
   var interfaces = "";
   var oneIface = false;
+  
+  if(req.body["DOPPELGANGER_INTERFACE"] !== undefined)
+  {
+    config.SetDoppelInterface(req.body["DOPPELGANGER_INTERFACE"]);
+  }
   
   if(req.body["INTERFACE"] !== undefined)
   {
@@ -975,7 +1030,6 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
   }
 });
 
-// Functions to be called by clients
 everyone.now.ClearAllSuspects = function(callback)
 {
 	console.log("Attempting to clear all suspects in main.js");
@@ -1043,19 +1097,21 @@ everyone.now.deleteUserEntry = function(usernamesToDelete, callback)
 	var username;
 	for (var i = 0; i < usernamesToDelete.length; i++) {
 		username = String(usernamesToDelete[i]);
-		var query = 'DELETE FROM ' + credTb + ' WHERE user = ' + client.escape(username);
- 		client.query(query);
+		dbqCredentialsDeleteUser.run(username, function(err) {
+			if (err) {
+				console.log(err);
+				callback(false);
+				return;
+			} else {
+				callback(true);
+			}
+		});
 	}
-
-	// TODO: Error handling? Bit of a pain async. could change to single SQL query and 
-	// put the callback in the callback for .query.
-	callback(true);
 }
 
-everyone.now.updateUserPassword = function (username, newPassword, callback) {
-	var query = 'UPDATE ' + credTb + ' SET pass = SHA1(' + client.escape(String(newPassword)) + ') WHERE user = ' + client.escape(String(username));
- 	client.query(query,
-    function selectCb(err, results, fields) {
+everyone.now.updateUserPassword = function (username, newPassword, callback) {	
+	dbqCredentialsChangePassword.run(HashPassword(newPassword), username,
+    function selectCb(err, results) {
     	if(err) {
         	callback(false, "Unable to access user database: " + err);
 			return;
@@ -1162,6 +1218,9 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.isEthernetInherited = profile.isEthernetInherited();
     profile.isUptimeInherited = profile.isUptimeInherited();
     profile.isDropRateInherited = profile.isDropRateInherited();
+    
+    profile.generated = profile.GetGenerated();
+    profile.distribution = profile.GetDistribution();
 
     if(!profile.isEthernetInherited)
     {
@@ -1284,7 +1343,7 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	honeydConfig.SaveAllTemplates();
 
 	// Save the profile
-	honeydProfile.Save();
+	honeydProfile.Save(profile.oldName, addOrEdit);
 
 	callback();
 }
@@ -1337,7 +1396,50 @@ everyone.now.GetCaptureIPs = function (trainingSession, callback) {
 }
 
 everyone.now.WizardHasRun = function(callback) {
-	client.query('INSERT INTO firstrun values(NOW())');
+	dbqFirstrunInsert.run(callback);
+}
+	
+
+everyone.now.GetHostileEvents = function(callback) {
+  dbqSuspectAlertsGet.all(
+	function (err, results) {
+		if(err) {
+			console.log(err);
+			callback();
+			return;
+		}
+
+		callback(results);
+	} 
+  );
+}
+
+everyone.now.ClearHostileEvents = function(callback) {
+  dbqSuspectAlertsDeleteAll.run(
+	function (err) {
+		if(err) {
+			console.log(err);
+			callback();
+			return;
+		}
+
+		callback("true");
+	} 
+  );
+}
+
+everyone.now.ClearHostileEvent = function(id, callback) {
+  dbqSuspectAlertsDeleteAlert(id,
+	function (err) {
+		if(err) {
+			console.log(err);
+			callback();
+			return;
+		}
+
+		callback("true");
+	} 
+  );
 }
 
 var distributeSuspect = function(suspect)
@@ -1365,7 +1467,6 @@ nova.registerOnNewSuspect(distributeSuspect);
 
 
 process.on('SIGINT', function() {
-  client.destroy();
 	nova.Shutdown();
 	process.exit();
 });
@@ -1389,38 +1490,9 @@ function objCopy(src,dst) {
 	}
 }
 
-function queryCredDb(check) {
-    console.log("checkPass value before queryCredDb call: " + check);
-    
-    client.query(
-    'SELECT pass FROM ' + credTb + ' WHERE pass = SHA1(' + client.escape(check) + ')',
-    function selectCb(err, results, fields) {
-      if(err) {
-        throw err;
-      }
-      
-      select = results[0].pass;
-      
-      console.log("queryCredDb results: " + select);
-      
-      if(select === results[0].pass)
-      {
-        console.log("all good");
-        return true;
-      }
-      else
-      {
-        console.log("Username password combo incorrect");
-        return false;
-      }
-    }
-  );
-};
-
 function switcher(err, user, success, done)
 {
    if(!success) { return done(null, false, { message: 'Username/password combination is incorrect' }); }
-   my_name = user;
    return done(null, user);
 }
 

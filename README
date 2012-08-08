@@ -27,7 +27,7 @@ required to compile Nova correctly. Make sure to watch the terminals at the
 beginning of the install process, and be sure to type 'Y' when asked to do so.
 Install the libraries with the following command:
 
-    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev libnotify-dev mysql-server libcurl3 libcurl4-gnutls-dev unzip iptables
+    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev libnotify-dev sqlite3 libcurl3 libcurl4-gnutls-dev unzip iptables
 
 
 - Now, we'll have to take a quick detour to get another integral component
@@ -45,7 +45,7 @@ well; you can get them using this command:
 
     wget http://nmap.org/dist/nmap-6.01.tar.bz2
 
-There are instructions for manual install on the same page.
+There are instructions for manual install on the same page (but are just the standard ./configure, make, and sudo make install commands).
 
 
 - NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the version of libevent available in the repos is only 1.x. So you will need to either find a backport or build libevent 2.x from source.

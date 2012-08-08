@@ -2,9 +2,16 @@
 # This is a quick install script for nodejs and cvv8 headers
 
 # Get nodejs
-wget https://github.com/joyent/node/zipball/v0.6.12
-unzip v0.6.12
-cd joyent-node-346a3a8
+
+# Old version
+#wget https://github.com/joyent/node/zipball/v0.6.12
+#unzip v0.6.12
+#cd joyent-node-346a3a8
+
+wget http://nodejs.org/dist/v0.8.5/node-v0.8.5.tar.gz
+tar -xf node-v0.8.5.tar.gz
+cd node-v0.8.5
+
 ./configure
 make
 make install
