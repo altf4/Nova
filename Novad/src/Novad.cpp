@@ -135,7 +135,7 @@ int RunNovaD()
 	}
 
 
-	db = new Database(Config::Inst()->GetDBHost(), Config::Inst()->GetDBUser(), Config::Inst()->GetDBPass());
+	db = new Database();
 	try {
 		db->Connect();
 	} catch (Nova::DatabaseException &e) {

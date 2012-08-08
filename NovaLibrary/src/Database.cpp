@@ -19,6 +19,7 @@
 #include "Config.h"
 #include "Database.h"
 #include "NovaUtil.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <sstream>
@@ -29,24 +30,34 @@ using namespace std;
 namespace Nova
 {
 
-Database::Database(string host, string username, string password, string database):
-		m_host(host)
-		, m_username(username)
-		, m_password(password)
-		, m_database(database)
+int Database::callback(void *NotUsed, int argc, char **argv, char **azColName){
+	int i;
+	for(i=0; i<argc; i++){
+		cout << azColName[i] << "=" << (argv[i] ? argv[i] : "NULL") << endl;
+	}
+	cout << endl;
+	return 0;
+}
+
+
+Database::Database(std::string databaseFile)
 {
-	mysql_init(&db);
-	my_bool reconnect = true;
-	mysql_options(&db, MYSQL_OPT_RECONNECT, &reconnect);
+	if (databaseFile == "")
+	{
+		databaseFile = Config::Inst()->GetPathHome() + "/../database.db";
+	}
+	m_databaseFile = databaseFile;
 }
 
 bool Database::Connect()
 {
-	connection = mysql_real_connect(&db, m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str(), 0,0,0);
+	LOG(DEBUG, "Opening database " + m_databaseFile, "");
+	int rc;
+	rc = sqlite3_open(m_databaseFile.c_str(), &db);
 
-	if (connection == NULL)
+	if (rc)
 	{
-		throw DatabaseException(ConvertInt(mysql_errno(&db)) + string(mysql_error(&db)));
+		throw DatabaseException(string(sqlite3_errmsg(db)));
 	}
 	else
 	{
@@ -54,31 +65,10 @@ bool Database::Connect()
 	}
 }
 
-int Database::InsertSuspectHostileAlert(Suspect *suspect)
+void Database::InsertSuspectHostileAlert(Suspect *suspect)
 {
-	FeatureSet f = suspect->GetFeatureSet(MAIN_FEATURES);
-	int featureSetId = InsertStatisticsPoint(&f);
+	FeatureSet features = suspect->GetFeatureSet(MAIN_FEATURES);
 
-	stringstream ss;
-	ss << "INSERT INTO suspect_alerts VALUES (NULL, '";
-	ss << suspect->GetIpString() << "', " << "CURRENT_TIMESTAMP" << ",";
-	ss << featureSetId << "," << suspect->GetClassification() << ")";
-
-	int state = mysql_query(connection, ss.str().c_str());
-	if (state)
-	{
-		throw DatabaseException(ConvertInt(mysql_errno(&db)) + string(mysql_error(&db)));
-	}
-	else
-	{
-		return mysql_insert_id(&db);
-	}
-}
-
-
-int Database::InsertStatisticsPoint(FeatureSet *features)
-{
-	int state;
 	stringstream ss;
 	ss << "INSERT INTO statistics VALUES (NULL";
 
@@ -88,24 +78,28 @@ int Database::InsertStatisticsPoint(FeatureSet *features)
 
 		if (Config::Inst()->IsFeatureEnabled(i))
 		{
-			ss << features->m_features[i];
+			ss << features.m_features[i];
 		}
 		else
 		{
 			ss << "NULL";
 		}
 	}
+	ss << ");";
 
-	ss << ")";
 
-	state = mysql_query(connection, ss.str().c_str());
-	if (state)
+	ss << "INSERT INTO suspect_alerts VALUES (NULL, '";
+	ss << suspect->GetIpString() << "', " << "datetime('now')" << ",";
+	ss << "last_insert_rowid()" << "," << suspect->GetClassification() << ")";
+
+	cout << "Query is: " << ss.str() << endl;
+	char *zErrMsg = 0;
+	int state = sqlite3_exec(db, ss.str().c_str(), callback, 0, &zErrMsg);
+	if (state != SQLITE_OK)
 	{
-		throw DatabaseException(ConvertInt(mysql_errno(&db)) + string(mysql_error(&db)));
-	}
-	else
-	{
-		return mysql_insert_id(&db);
+		string errorMessage(zErrMsg);
+		sqlite3_free(zErrMsg);
+		throw DatabaseException(string(errorMessage));
 	}
 }
 

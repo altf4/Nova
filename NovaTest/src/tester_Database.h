@@ -51,18 +51,6 @@ protected:
 // Tests go here. Multiple small tests are better than one large test, as each test
 // will get a pass/fail and debugging information associated with it.
 
-// Check that someMethod functions
-TEST_F(DatabaseTest, testInsertStatisticsPoint)
-{
-	FeatureSet f;
-	for (int i = 0; i < DIM; i++)
-	{
-		f.m_features[i] = i;
-	}
-
-	EXPECT_NE(-1, testObject.InsertStatisticsPoint(&f));
-}
-
 TEST_F(DatabaseTest, testInsertHostileSuspectEvent)
 {
 	FeatureSet f;

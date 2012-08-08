@@ -23,7 +23,7 @@
 #include "FeatureSet.h"
 
 #include <string>
-#include <mysql/mysql.h>
+#include <sqlite3.h>
 
 
 namespace Nova
@@ -40,20 +40,18 @@ public:
 class Database
 {
 public:
-	Database(std::string host = "127.0.0.1", std::string username = "root", std::string password = "root", std::string database = "nova");
+	Database(std::string databaseFile = "");
 	bool Connect();
 
-	int InsertSuspectHostileAlert(Suspect *suspect);
-	int InsertStatisticsPoint(FeatureSet *features);
+	void InsertSuspectHostileAlert(Suspect *suspect);
+
+	static int callback(void *NotUsed, int argc, char **argv, char **azColName);
 
 
 private:
-	std::string m_host;
-	std::string m_username;
-	std::string m_password;
-	std::string m_database;
+	std::string m_databaseFile;
 
-	MYSQL *connection, db;
+	sqlite3 *db;
 };
 
 } /* namespace Nova */
