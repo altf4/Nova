@@ -30,7 +30,7 @@
 									<listOptionValue builtIn="false" value="../../Novad/src"/>
 									<listOptionValue builtIn="false" value="../../Nova_UI_Core/src"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.other.other.269114170" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -pthread -std=c++0x" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.269114170" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -pthread -std=c++0x  -fprofile-arcs -ftest-coverage" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1009339384" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.279049378" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -52,8 +52,9 @@
 									<listOptionValue builtIn="false" value="gtest"/>
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="sqlite3"/>
+									<listOptionValue builtIn="false" value="gcov"/>
 								</option>
-								<option id="gnu.cpp.link.option.flags.162266494" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.162266494" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread -fprofile-arcs -ftest-coverage" valueType="string"/>
 								<option id="gnu.cpp.link.option.paths.226558368" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug"/>
 									<listOptionValue builtIn="false" value="../../Nova_UI_Core/Debug"/>

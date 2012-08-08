@@ -9,6 +9,9 @@
 *.a
 *.d
 *.out
+*.gcno
+*.gcna
+*.gcda
 
 # Packages #
 ############
