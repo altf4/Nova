@@ -19,8 +19,8 @@
 #ifndef _HONEYDCONFIGURATION
 #define _HONEYDCONFIGURATION
 
-#include "Defines.h"
-#include "NovaGuiTypes.h"
+#include "../Defines.h"
+#include "HoneydConfigTypes.h"
 #include "VendorMacDb.h"
 
 namespace Nova

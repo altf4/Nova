@@ -17,9 +17,9 @@
 //============================================================================
 
 #include "OsPersonalityDb.h"
-#include "NovaUtil.h"
-#include "Config.h"
-#include "Logger.h"
+#include "../NovaUtil.h"
+#include "../Config.h"
+#include "../Logger.h"
 
 #include <errno.h>
 #include <fstream>

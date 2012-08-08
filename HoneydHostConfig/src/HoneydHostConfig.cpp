@@ -36,10 +36,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "NodeManager.h"
+#include "HoneydConfiguration/NodeManager.h"
 #include "PersonalityTree.h"
 #include "HoneydHostConfig.h"
-#include "VendorMacDb.h"
+#include "HoneydConfiguration/VendorMacDb.h"
 #include "Logger.h"
 
 using namespace std;

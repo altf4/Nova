@@ -16,8 +16,8 @@
 // Description : Provides dialogs for MAC and personality selection
 //============================================================================
 #include "NovaComplexDialog.h"
-#include "NovaGuiTypes.h"
-#include "OsPersonalityDb.h"
+#include "HoneydConfiguration/HoneydConfigTypes.h"
+#include "HoneydConfiguration/OsPersonalityDb.h"
 
 using namespace std;
 

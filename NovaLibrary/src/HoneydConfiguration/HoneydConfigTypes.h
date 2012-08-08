@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : NovaGuiTypes.h
+// Name        : HoneydConfigTypes.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #ifndef NOVAGUITYPES_H_
 #define NOVAGUITYPES_H_
 
-#include "HashMapStructs.h"
+#include "../HashMapStructs.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <arpa/inet.h>

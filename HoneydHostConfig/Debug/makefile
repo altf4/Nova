@@ -44,7 +44,7 @@ all: honeydhostconfig
 honeydhostconfig: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L../../Nova_UI_Core/Debug/ -o "honeydhostconfig" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../NovaLibrary/Debug/ -o "honeydhostconfig" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -19,8 +19,8 @@
 #ifndef PERSONALITYNODE_H_
 #define PERSONALITYNODE_H_
 
-#include "HoneydConfiguration.h"
-#include "AutoConfigHashMaps.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
+#include "HoneydConfiguration/AutoConfigHashMaps.h"
 
 namespace Nova
 {

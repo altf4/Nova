@@ -10,6 +10,7 @@ RM := rm -rf
 -include sources.mk
 -include src/messaging/messages/subdir.mk
 -include src/messaging/subdir.mk
+-include src/HoneydConfiguration/subdir.mk
 -include src/subdir.mk
 -include subdir.mk
 -include objects.mk
