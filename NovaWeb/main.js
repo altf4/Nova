@@ -95,7 +95,7 @@ passport.use(new BasicStrategy(
 
 			// If there are no users, add default nova and log in
 			if (rowcount[0].rows == 0) {
-				console.log("Now users in user database. Creating default user.");
+				console.log("No users in user database. Creating default user.");
 				dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function(err) {
 					if (err) {
                 		throw err;
@@ -330,7 +330,7 @@ function renderBasicOptions(jadefile, res, req) {
     
     var doppelPass = [];
     //all = config.ListLoopbacks().sort();
-    all = ["lo", "lo0"];
+    all = config.ListLoopbacks.sort();
     used = config.GetDoppelInterface();
     
     for(var i in all)
