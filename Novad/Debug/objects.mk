@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lNovaLibrary -lpcap -lcurl -lnotify -lann -lpthread -lmysqlclient
+LIBS := -lNovaLibrary -lpcap -lcurl -lnotify -lann -lpthread -lsqlite3
 

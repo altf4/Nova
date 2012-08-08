@@ -30,47 +30,26 @@ else
     rm -f /tmp/sudoers.nova
 fi
 
-echo "Creating a new mysql user for NOVA. Please enter new password for user 'nova': "
-read novapassword
-
-novacli writesetting DATABASE_PASS $novapassword
-
-DROP_QUERY="
-DROP DATABASE nova;
-DROP USER 'nova'@'localhost';
-"
-
 QUERY="
-CREATE DATABASE nova;
-USE nova;
-
-CREATE USER 'nova'@'localhost' IDENTIFIED BY '$novapassword';
-GRANT INSERT, SELECT, UPDATE, CREATE, DELETE, EXECUTE on nova.* to 'nova'@'localhost';
-FLUSH PRIVILEGES;
-
 CREATE TABLE firstrun(
-	run TIMESTAMP,
-
-	PRIMARY KEY(run)
-) ENGINE=InnoDB;
+	run TIMESTAMP PRIMARY KEY
+);
 
 CREATE TABLE credentials(
 	user VARCHAR(100),
-	pass VARCHAR(50)
-) ENGINE=InnoDB;
+	pass VARCHAR(100)
+);
 
 CREATE TABLE suspect_alerts (
-	id INT NOT NULL AUTO_INCREMENT,
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	suspect VARCHAR(40),
 	timestamp TIMESTAMP,
 	statistics INT,
-	classification DOUBLE,
-
-	PRIMARY KEY(id)
-) ENGINE=InnoDB;
+	classification DOUBLE
+);
 
 CREATE TABLE statistics (
-		id INT NOT NULL AUTO_INCREMENT,
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
 
 		ip_traffic_distribution DOUBLE,
 		port_traffic_distribution DOUBLE,
@@ -85,24 +64,20 @@ CREATE TABLE statistics (
 		tcp_percent_fin DOUBLE,
 		tcp_percent_rst DOUBLE,
 		tcp_percent_synack DOUBLE,
-		haystack_percent_contacted DOUBLE,
-	
-		PRIMARY KEY(id)
-) ENGINE=InnoDB;
-
-
-
-INSERT INTO credentials VALUE('nova', SHA1('toor'));
-"
+		haystack_percent_contacted DOUBLE
+);"
 
 if [[ $1 == "reset" ]]; then
 	echo "You chose the reset option. This will clear all database data!"
-	echo "You will now be prompted for your MYSQL root password. This will not be saved and is only used once for deleting exisiting tables"
-	/usr/bin/mysql --user=root -p <<< $DROP_QUERY
+	rm -fr /usr/share/nova/database.db
 fi
 
 
-echo "You will now be prompted for your MYSQL root password. This will not be saved and is only used once for creating an initial user and tables."
-/usr/bin/mysql --user=root -p <<< $QUERY
 
-echo "Mysql schema has been set up for nova."
+sqlite3 "/usr/share/nova/database.db" <<< $QUERY
+#sqlite3 "/usr/share/nova/database.db" <<< "INSERT INTO credentials VALUES('nova', '\$4\$nova\$h36yyW3noGPSWnx5JCalQCPoo74\$');"
+
+chgrp nova /usr/share/nova/database.db
+chmod g+rw /usr/share/nova/database.db
+
+echo "SQL schema has been set up for nova."

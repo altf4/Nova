@@ -9,7 +9,7 @@
 		, "socket.io"	:	"0.9.x"
 		, "passport"	:	"0.1.8"
 		, "passport-http"	:	""
-		, "mysql" : "0.9.6"
+		, "sqlite3" : ""
 		, "validator" : "0.4.6-2"
 		, "forever" : ""
 		, "tail" : "0.2.x"
