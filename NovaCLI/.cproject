@@ -122,6 +122,7 @@
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug/"/>
 									<listOptionValue builtIn="false" value="../../Nova_UI_Core/Debug"/>
 								</option>
+								<option id="gnu.cpp.link.option.flags.1723639153" superClass="gnu.cpp.link.option.flags" value="-fprofile-arcs" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1157310475" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>

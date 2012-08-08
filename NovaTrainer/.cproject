@@ -117,11 +117,13 @@
 									<listOptionValue builtIn="false" value="notify"/>
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="gcov"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.143587785" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug/"/>
 									<listOptionValue builtIn="false" value="../../Nova_UI_Core/Debug"/>
 								</option>
+								<option id="gnu.cpp.link.option.flags.1555993433" superClass="gnu.cpp.link.option.flags" value="-fprofile-arcs" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1157310475" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
