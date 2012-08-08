@@ -144,6 +144,8 @@ struct NodeProfile
 	inline bool SetUdpAction(std::string udpAction) {this->m_udpAction = udpAction; return true;}
 	inline bool SetIcmpAction(std::string icmpAction) {this->m_icmpAction = icmpAction; return true;}
 	inline bool SetPersonality(std::string personality) {this->m_personality = personality; return true;}
+	inline bool SetGenerated(bool generated) {this->m_generated = generated; return true;}
+	inline bool SetDistribution(bool distribution) {this->m_distribution = distribution; return true;}
 	inline bool SetEthernet(std::string ethernet)
 	{
 		if(!this->m_ethernetVendors.empty())
@@ -207,6 +209,9 @@ struct NodeProfile
 	inline std::string GetUptimeMax() {return m_uptimeMax;}
 	inline std::string GetDropRate() {return m_dropRate;}
 	inline std::string GetParentProfile() {return m_parentProfile;}
+
+	inline bool GetGenerated() {return m_generated;}
+	inline double GetDistribution() {return m_distribution;}
 
 	inline std::vector<bool> GetInheritance()
 	{

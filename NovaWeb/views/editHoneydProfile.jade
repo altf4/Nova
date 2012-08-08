@@ -1173,7 +1173,7 @@ block headerAdditions
         now.GetPorts(currentName, function(ports) {
             for (var i = 0; i < ports.length; i++) {
                 portList[ports[i].portNum] = ports[i];
-                ports[i].isInherited = true;
+                //ports[i].isInherited = true;
                 addPort(ports[i]);
             }
            portBehaviorChanged();

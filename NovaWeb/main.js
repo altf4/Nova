@@ -328,13 +328,49 @@ function renderBasicOptions(jadefile, res, req) {
       }
     }
     
+    var doppelPass = [];
+    //all = config.ListLoopbacks().sort();
+    all = ["lo", "lo0"];
+    used = config.GetDoppelInterface();
+    
+    for(var i in all)
+    {
+      var checked = false;
+      
+      for(var j in used)
+      {
+        if(all[i] === used[j])
+        {
+          checked = true;
+          break;
+        }
+        else if(used[j].length == 1 && used.length > 1)
+        {
+            if(all[i] === used)
+            {
+                checked = true;
+                break;
+            }
+        }
+      }
+      
+      if(checked)
+      {
+        doppelPass.push( { iface: all[i], checked: 1 } );
+      }
+      else
+      {
+        doppelPass.push( { iface: all[i], checked: 0 } );
+      }
+    }
+    
      res.render(jadefile, 
 	 {
 		locals: {
             INTERFACES: pass 
             ,DEFAULT: config.GetUseAllInterfacesBinding() 
 			,DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
-			,DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
+			,DOPPELGANGER_INTERFACE: doppelPass
 			,DM_ENABLED: config.ReadSetting("DM_ENABLED")
 			,SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
 			,SMTP_PORT: config.ReadSetting("SMTP_PORT")
@@ -828,6 +864,11 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
   var interfaces = "";
   var oneIface = false;
   
+  if(req.body["DOPPELGANGER_INTERFACE"] !== undefined)
+  {
+    config.SetDoppelInterface(req.body["DOPPELGANGER_INTERFACE"]);
+  }
+  
   if(req.body["INTERFACE"] !== undefined)
   {
     for(item in req.body["INTERFACE"])
@@ -1167,6 +1208,9 @@ everyone.now.GetProfile = function(profileName, callback) {
     profile.isEthernetInherited = profile.isEthernetInherited();
     profile.isUptimeInherited = profile.isUptimeInherited();
     profile.isDropRateInherited = profile.isDropRateInherited();
+    
+    profile.generated = profile.GetGenerated();
+    profile.distribution = profile.GetDistribution();
 
     if(!profile.isEthernetInherited)
     {
@@ -1289,7 +1333,7 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	honeydConfig.SaveAllTemplates();
 
 	// Save the profile
-	honeydProfile.Save();
+	honeydProfile.Save(profile.oldName, addOrEdit);
 
 	callback();
 }

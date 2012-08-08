@@ -104,6 +104,49 @@ TEST_F(HoneydConfigurationTest, test_Port)
 	}
 }
 
+TEST_F(HoneydConfigurationTest, test_RenameProfile)
+{
+	//Create dummy profile
+	NodeProfile * p = new NodeProfile();
+	p->m_name = "TestProfile";
+	p->SetEthernet("Dell");
+	p->m_icmpAction = "block";
+	p->m_parentProfile = "default";
+	p->m_udpAction = "block";
+	p->m_tcpAction = "reset";
+	p->m_uptimeMax = "100";
+	p->m_uptimeMin = "10";
+
+	// Delete the profile if it already exists
+	m_config->DeleteProfile("TestProfile-renamed");
+	m_config->DeleteProfile("TestProfile");
+
+	//Test adding a profile
+	EXPECT_TRUE(m_config->AddProfile(p));
+	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") != m_config->m_profiles.end());
+
+	//Test renaming a profile
+	EXPECT_TRUE(m_config->RenameProfile("TestProfile", "TestProfile-renamed"));
+
+	m_config->UpdateAllProfiles();
+
+	// Save and delete object
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+	delete m_config;
+
+	// Reload from the config file
+	m_config = new HoneydConfiguration();
+	EXPECT_TRUE(m_config != NULL);
+	EXPECT_TRUE(m_config->LoadAllTemplates());
+
+	EXPECT_TRUE(m_config->m_profiles.find("TestProfile-renamed") != m_config->m_profiles.end());
+	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") == m_config->m_profiles.end());
+
+
+	EXPECT_TRUE(m_config->DeleteProfile("TestProfile-renamed"));
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+}
+
 TEST_F(HoneydConfigurationTest, test_Profile)
 {
 	//Create dummy profile
@@ -119,6 +162,11 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 
 	bool dmEn = Config::Inst()->GetIsDmEnabled();
 	Config::Inst()->SetIsDmEnabled(false);
+
+	// Delete the profile if it already exists
+	m_config->DeleteProfile("TestProfile-renamed");
+	m_config->DeleteProfile("TestProfile");
+
 
 	//Test adding a profile
 	EXPECT_TRUE(m_config->AddProfile(p));

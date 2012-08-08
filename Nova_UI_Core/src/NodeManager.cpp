@@ -55,7 +55,7 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 	{
 		for(ProfileTable::iterator it = m_hdconfig->m_profiles.begin(); it != m_hdconfig->m_profiles.end(); it++)
 		{
-			if(!it->second.m_parentProfile.compare(profList[i]))
+			if(!it->second.m_parentProfile.compare(profList[i]) && it->second.m_generated)
 			{
 				profList.push_back(it->first);
 				totalNodes += it->second.m_nodeKeys.size();
@@ -294,9 +294,9 @@ void NodeManager::GenerateNodes(int num_nodes)
 				nodesToAdd.push_back(curNode);
 				i++;
 				//increment the remaining counters since they were 'skipped'
-				for(j = (j+1); j < m_profileCounters.size(); j++)
+				for(unsigned int k = (j+1); k < m_profileCounters.size(); k++)
 				{
-					m_profileCounters[j].m_count += m_profileCounters[j].m_increment;
+					m_profileCounters[k].m_count += m_profileCounters[k].m_increment;
 				}
 			}
 		}
@@ -537,6 +537,9 @@ void NodeManager::GetCurrentCount()
 
 void NodeManager::AdjustNodesToTargetDistributions()
 {
+	//TODO: This is a horribly broken function. Do not enable it until it is fully and totally tested
+	return;
+
 	GenerateProfileCounters(&m_hdconfig->m_profiles["default"]);
 	GetCurrentCount();
 
@@ -545,15 +548,15 @@ void NodeManager::AdjustNodesToTargetDistributions()
 
 	for(unsigned int i = 0; i < m_profileCounters.size(); i++)
 	{
-		//If this profile fewer nodes than expected
-		if(m_profileCounters[i].m_count < (m_profileCounters[i].m_increment - 1))
-		{
-			underPopulatedProfiles.push_back(&m_profileCounters[i]);
-		}
 		//If this profile more nodes than expected
-		else if(m_profileCounters[i].m_count > (1 - m_profileCounters[i].m_increment))
+		if(m_profileCounters[i].m_count < (1 - m_profileCounters[i].m_increment))
 		{
 			overPopulatedProfiles.push_back(&m_profileCounters[i]);
+		}
+		//If this profile fewer nodes than expected
+		else if(m_profileCounters[i].m_count > m_profileCounters[i].m_increment)
+		{
+			underPopulatedProfiles.push_back(&m_profileCounters[i]);
 		}
 	}
 
@@ -577,7 +580,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 			int indexOfHighVendor = 0;
 			for(unsigned int i = 1; i < highCounter->m_macCounters.size(); i++)
 			{
-				if(highCounter->m_macCounters[i].m_count > highCounter->m_macCounters[indexOfHighVendor].m_count)
+				if(highCounter->m_macCounters[i].m_count < highCounter->m_macCounters[indexOfHighVendor].m_count)
 				{
 					indexOfHighVendor = i;
 				}
@@ -610,23 +613,8 @@ void NodeManager::AdjustNodesToTargetDistributions()
 				{
 					//Change the profile
 					curNode->m_pfile = lowProf->m_name;
-					highCounter->m_count -= highCounter->m_increment;
-					lowCounter->m_count += (1- lowCounter->m_increment);
-					lowCounter->m_count += lowCounter->m_increment;
-					highCounter->m_count -= (1 -highCounter->m_increment);
-					for(unsigned int j = 0; j < m_profileCounters.size(); j++)
-					{
-						//If this counter isn't the high counter
-						if(highCounter->m_profile.m_name.compare(m_profileCounters[j].m_profile.m_name))
-						{
-							highCounter->m_count += (1 - highCounter->m_increment);
-						}
-						//If this counter isn't the low counter
-						if(lowCounter->m_profile.m_name.compare(m_profileCounters[j].m_profile.m_name))
-						{
-							lowCounter->m_count -= (1 - lowCounter->m_increment);
-						}
-					}
+					highCounter->m_count++;
+					lowCounter->m_count--;
 
 					//Generate a new MAC
 					curNode->m_MAC = m_hdconfig->m_macAddresses.GenerateRandomMAC(lowVendor);
@@ -635,23 +623,20 @@ void NodeManager::AdjustNodesToTargetDistributions()
 					highCounter->m_macCounters[indexOfHighVendor].m_count += highCounter->m_macCounters[indexOfHighVendor].m_increment;
 					for(unsigned int j = 0; j < highCounter->m_macCounters.size(); j++)
 					{
-						MacCounter *curCounter = &highCounter->m_macCounters[j];
-						//If this counter isn't the high vendor
-						if(highCounter->m_macCounters[indexOfHighVendor].m_ethVendor.compare(curCounter->m_ethVendor))
+						//If not the selected mac for the high profile
+						if(highCounter->m_macCounters[j].m_ethVendor.compare(highCounter->m_macCounters[indexOfHighVendor].m_ethVendor))
 						{
-							curCounter->m_count += (1 - highCounter->m_macCounters[indexOfHighVendor].m_increment);
+							highCounter->m_macCounters[j].m_count -= (1 - highCounter->m_macCounters[j].m_increment);
 						}
 					}
-
 					//Adjust the counters for the low mac vendor
-					lowCounter->m_macCounters[indexOfLowVendor].m_count += lowCounter->m_macCounters[indexOfLowVendor].m_increment;
+					lowCounter->m_macCounters[indexOfLowVendor].m_count -= (1 - lowCounter->m_macCounters[indexOfLowVendor].m_increment);
 					for(unsigned int j = 0; j < lowCounter->m_macCounters.size(); j++)
 					{
-						MacCounter *curCounter = &lowCounter->m_macCounters[j];
-						//If this counter isn't the low vendor
-						if(lowCounter->m_macCounters[indexOfLowVendor].m_ethVendor.compare(curCounter->m_ethVendor))
+						//If not the selected mac for the low profile
+						if(lowCounter->m_macCounters[j].m_ethVendor.compare(lowCounter->m_macCounters[indexOfLowVendor].m_ethVendor))
 						{
-							curCounter->m_count -= (1 - lowCounter->m_macCounters[indexOfLowVendor].m_increment);
+							lowCounter->m_macCounters[j].m_count += lowCounter->m_macCounters[j].m_increment;
 						}
 					}
 
@@ -669,12 +654,12 @@ void NodeManager::AdjustNodesToTargetDistributions()
 								//If the node used this port
 								if(!curPort->m_portName.compare(curNode->m_ports[k]))
 								{
-									lowCounter->m_portCounters[j].m_count -= lowCounter->m_portCounters[j].m_increment;
+									lowCounter->m_portCounters[j].m_count += (1 - lowCounter->m_portCounters[j].m_increment);
 								}
 								//Else if the node closed this port
 								else
 								{
-									lowCounter->m_portCounters[j].m_count += (1 - lowCounter->m_portCounters[j].m_increment);
+									lowCounter->m_portCounters[j].m_count -= lowCounter->m_portCounters[j].m_increment;
 								}
 							}
 						}
@@ -685,15 +670,15 @@ void NodeManager::AdjustNodesToTargetDistributions()
 					{
 						Port *curPort = &m_hdconfig->m_ports[highCounter->m_portCounters[j].m_portName];
 						//If we're adding the port
-						if(highCounter->m_portCounters[j].m_count < 0)
+						if(highCounter->m_portCounters[j].m_count > 0)
 						{
-							highCounter->m_portCounters[j].m_count -= (1 - highCounter->m_increment);
+							highCounter->m_portCounters[j].m_count -= (1 - highCounter->m_portCounters[j].m_increment);
 							curNode->m_ports.push_back(curPort->m_portName);
 							curNode->m_isPortInherited.push_back(true);
 						}
 						else
 						{
-							highCounter->m_portCounters[j].m_count += highCounter->m_increment;
+							highCounter->m_portCounters[j].m_count += highCounter->m_portCounters[j].m_increment;
 							string portString = curPort->m_portNum + "_" + curPort->m_type + "_";
 							string portAction = "block";
 
@@ -728,13 +713,13 @@ void NodeManager::AdjustNodesToTargetDistributions()
 			return;
 		}
 
-		//If the profile is still under allocated
-		if(lowCounter->m_count < (lowCounter->m_increment - 1))
+		//Is still over allocated
+		if(lowCounter->m_count > (1 - lowCounter->m_increment))
 		{
 			underPopulatedProfiles.push_back(lowCounter);
 		}
-		//Is still over allocated
-		if(highCounter->m_count > (1 - highCounter->m_increment))
+		//If the profile is still under allocated
+		if(highCounter->m_count < (-highCounter->m_increment))
 		{
 			overPopulatedProfiles.push_back(highCounter);
 		}
@@ -748,12 +733,12 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		for(unsigned int j = 0; j < curCounter->m_macCounters.size(); j++)
 		{
 			//If the vendor is under allocated
-			if(curCounter->m_macCounters[j].m_count < (curCounter->m_macCounters[j].m_increment - 1))
+			if(curCounter->m_macCounters[j].m_count > (1-curCounter->m_macCounters[j].m_increment))
 			{
 				underPopulatedVendors.push_back(&curCounter->m_macCounters[j]);
 			}
 			//If the vendor is over allocated
-			else if(curCounter->m_macCounters[j].m_count > (1 - curCounter->m_macCounters[j].m_increment))
+			else if(curCounter->m_macCounters[j].m_count < (-curCounter->m_macCounters[j].m_increment))
 			{
 				overPopulatedVendors.push_back(&curCounter->m_macCounters[j]);
 			}
@@ -778,28 +763,13 @@ void NodeManager::AdjustNodesToTargetDistributions()
 				if(!vendor.compare(highVCounter->m_ethVendor))
 				{
 					//Remove the overpopulated counter values
-					highVCounter->m_count -= highVCounter->m_increment;
-					lowVCounter->m_count += (1 - lowVCounter->m_increment);
-					lowVCounter->m_count += lowVCounter->m_increment;
-					highVCounter->m_count -= (1 - highVCounter->m_increment);
-					for(unsigned int k = 0; k < curCounter->m_macCounters.size(); k++)
-					{
-						//If this isn't the high vendor, add back in the count adjustment
-						if(curCounter->m_macCounters[k].m_ethVendor.compare(highVCounter->m_ethVendor))
-						{
-							curCounter->m_macCounters[k].m_count += (1 - curCounter->m_macCounters[k].m_increment);
-						}
-						//If this isn't the low vendor, make the count adjustment for adding it in the low one
-						if(curCounter->m_macCounters[k].m_ethVendor.compare(lowVCounter->m_ethVendor))
-						{
-							curCounter->m_macCounters[k].m_count -= (1 - curCounter->m_macCounters[k].m_increment);
-						}
-					}
+					highVCounter->m_count++;
+					lowVCounter->m_count--;
 					curNode->m_MAC = m_hdconfig->m_macAddresses.GenerateRandomMAC(lowVCounter->m_ethVendor);
 				}
 			}
 			//If the vendor is still under allocated
-			if(lowVCounter->m_count < (lowVCounter->m_increment - 1))
+			if(lowVCounter->m_count < (-lowVCounter->m_increment))
 			{
 				underPopulatedVendors.push_back(lowVCounter);
 			}
@@ -817,12 +787,12 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		for(unsigned int j = 0; j < curCounter->m_portCounters.size(); j++)
 		{
 			//If the port is under allocated
-			if(curCounter->m_portCounters[j].m_count < (curCounter->m_portCounters[j].m_increment - 1))
+			if(curCounter->m_portCounters[j].m_count > (1 - curCounter->m_portCounters[j].m_increment))
 			{
 				underPopulatedPorts.push_back(&curCounter->m_portCounters[j]);
 			}
 			//If the port is over allocated
-			else if(curCounter->m_portCounters[j].m_count > (1 - curCounter->m_portCounters[j].m_increment))
+			else if(curCounter->m_portCounters[j].m_count < (-curCounter->m_portCounters[j].m_increment))
 			{
 				overPopulatedPorts.push_back(&curCounter->m_portCounters[j]);
 			}
@@ -860,13 +830,13 @@ void NodeManager::AdjustNodesToTargetDistributions()
 						}
 						curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
 						curNode->m_isPortInherited[k] = false;
-						// += m_increment for port addition, += (1-m_increment) for removing a blocking port
-						lowPCounter->m_count += 1;
+						// -= 1 - m_increment for port addition, -= m_increment for removing a blocked port
+						lowPCounter->m_count--;
 					}
 				}
 			}
 			//If the vendor is still under allocated
-			if(lowPCounter->m_count < (lowPCounter->m_increment - 1))
+			if(lowPCounter->m_count < (-lowPCounter->m_increment))
 			{
 				underPopulatedPorts.push_back(lowPCounter);
 			}
@@ -897,13 +867,13 @@ void NodeManager::AdjustNodesToTargetDistributions()
 						}
 						curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
 						curNode->m_isPortInherited[k] = false;
-						// -= m_increment for port removal, -= (1-m_increment) for a blocking port
-						highPCounter->m_count -= 1;
+						// += m_increment for blocking port , += (1-m_increment) for removing a used port
+						highPCounter->m_count++;
 					}
 				}
 			}
 			//If the vendor is still over allocated
-			if(highPCounter->m_count < (highPCounter->m_increment - 1))
+			if(highPCounter->m_count > (1 - highPCounter->m_increment))
 			{
 				overPopulatedPorts.push_back(highPCounter);
 			}
