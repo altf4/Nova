@@ -537,9 +537,6 @@ void NodeManager::GetCurrentCount()
 
 void NodeManager::AdjustNodesToTargetDistributions()
 {
-	//TODO: This is a horribly broken function. Do not enable it until it is fully and totally tested
-	return;
-
 	GenerateProfileCounters(&m_hdconfig->m_profiles["default"]);
 	GetCurrentCount();
 
