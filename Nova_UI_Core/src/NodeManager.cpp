@@ -294,7 +294,7 @@ void NodeManager::GenerateNodes(int num_nodes)
 				nodesToAdd.push_back(curNode);
 				i++;
 				//increment the remaining counters since they were 'skipped'
-				for(unsigned int k = (j+1); j < m_profileCounters.size(); k++)
+				for(unsigned int k = (j+1); k < m_profileCounters.size(); k++)
 				{
 					m_profileCounters[k].m_count += m_profileCounters[k].m_increment;
 				}
@@ -540,6 +540,12 @@ void NodeManager::AdjustNodesToTargetDistributions()
 	GenerateProfileCounters(&m_hdconfig->m_profiles["default"]);
 	GetCurrentCount();
 
+	int targetNodeCount = 0;
+	for(unsigned int i = 0; i < m_profileCounters.size(); i++)
+	{
+		targetNodeCount += m_profileCounters[i].m_profile.m_nodeKeys.size();
+	}
+
 	vector<ProfileCounter *> underPopulatedProfiles;
 	vector<ProfileCounter *> overPopulatedProfiles;
 
@@ -548,12 +554,37 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		//If this profile more nodes than expected
 		if(m_profileCounters[i].m_count < (1 - m_profileCounters[i].m_increment))
 		{
-			overPopulatedProfiles.push_back(&m_profileCounters[i]);
+			if(!m_profileCounters[i].m_profile.m_nodeKeys.size())
+			{
+				continue;
+			}
+			unsigned int j = 0;
+			for(; j < overPopulatedProfiles.size(); j++)
+			{
+				if(overPopulatedProfiles[j]->m_count > m_profileCounters[i].m_count)
+				{
+					break;
+				}
+			}
+			overPopulatedProfiles.insert(overPopulatedProfiles.begin() + j, &m_profileCounters[i]);
 		}
 		//If this profile fewer nodes than expected
 		else if(m_profileCounters[i].m_count > m_profileCounters[i].m_increment)
 		{
-			underPopulatedProfiles.push_back(&m_profileCounters[i]);
+			double expectedNodes = m_profileCounters[i].m_increment * targetNodeCount;
+			if(expectedNodes < 1)
+			{
+				continue;
+			}
+			unsigned int j = 0;
+			for(; j < underPopulatedProfiles.size(); j++)
+			{
+				if(underPopulatedProfiles[j]->m_count < m_profileCounters[i].m_count)
+				{
+					break;
+				}
+			}
+			underPopulatedProfiles.insert(underPopulatedProfiles.begin() + j, &m_profileCounters[i]);
 		}
 	}
 
@@ -604,7 +635,8 @@ void NodeManager::AdjustNodesToTargetDistributions()
 				curNode = &m_hdconfig->m_nodes[highProf->m_nodeKeys[i]];
 
 				//Lookup and try to match the mac vendor
-				string nodeVendor = m_hdconfig->m_macAddresses.LookupVendor(m_hdconfig->m_macAddresses.AtoMACPrefix(curNode->m_MAC));
+				uint macPrefix = m_hdconfig->m_macAddresses.AtoMACPrefix(curNode->m_MAC);
+				string nodeVendor = m_hdconfig->m_macAddresses.LookupVendor(macPrefix);
 
 				if(!highVendor.compare(nodeVendor))
 				{
@@ -617,7 +649,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 					curNode->m_MAC = m_hdconfig->m_macAddresses.GenerateRandomMAC(lowVendor);
 
 					//Adjust the counters for the high mac vendor
-					highCounter->m_macCounters[indexOfHighVendor].m_count += highCounter->m_macCounters[indexOfHighVendor].m_increment;
+					highCounter->m_macCounters[indexOfHighVendor].m_count += (1 - highCounter->m_macCounters[indexOfHighVendor].m_increment);
 					for(unsigned int j = 0; j < highCounter->m_macCounters.size(); j++)
 					{
 						//If not the selected mac for the high profile
@@ -713,12 +745,35 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		//Is still over allocated
 		if(lowCounter->m_count > (1 - lowCounter->m_increment))
 		{
-			underPopulatedProfiles.push_back(lowCounter);
+			double expectedNodes = lowCounter->m_increment * targetNodeCount;
+			if(expectedNodes >= 1)
+			{
+				unsigned int j = 0;
+				for(; j < underPopulatedProfiles.size(); j++)
+				{
+					if(underPopulatedProfiles[j]->m_count < lowCounter->m_count)
+					{
+						break;
+					}
+				}
+				underPopulatedProfiles.insert(underPopulatedProfiles.begin() + j, lowCounter);
+			}
 		}
 		//If the profile is still under allocated
 		if(highCounter->m_count < (-highCounter->m_increment))
 		{
-			overPopulatedProfiles.push_back(highCounter);
+			if(!highCounter->m_profile.m_nodeKeys.size())
+			{
+				unsigned int j = 0;
+				for(; j < overPopulatedProfiles.size(); j++)
+				{
+					if(overPopulatedProfiles[j]->m_count < highCounter->m_count)
+					{
+						break;
+					}
+				}
+				overPopulatedProfiles.insert(overPopulatedProfiles.begin() + j, highCounter);
+			}
 		}
 	}
 	//Shift any macs or ports that are needed
@@ -727,6 +782,7 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		ProfileCounter *curCounter = &m_profileCounters[i];
 		vector<MacCounter*> underPopulatedVendors;
 		vector<MacCounter*> overPopulatedVendors;
+
 		for(unsigned int j = 0; j < curCounter->m_macCounters.size(); j++)
 		{
 			//If the vendor is under allocated
@@ -752,6 +808,10 @@ void NodeManager::AdjustNodesToTargetDistributions()
 
 			//Get the profile and search for a node using the overpopulated vendor
 			NodeProfile * curProfile = &m_hdconfig->m_profiles[curCounter[i].m_profile.m_name];
+			if(curProfile->m_nodeKeys.empty())
+			{
+				break;
+			}
 			for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
 			{
 				Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[i]];
@@ -810,6 +870,10 @@ void NodeManager::AdjustNodesToTargetDistributions()
 
 			Port *lowPort = &m_hdconfig->m_ports[lowPCounter->m_portName];
 			NodeProfile * curProfile = &m_hdconfig->m_profiles[curCounter->m_profile.m_name];
+			if(curProfile->m_nodeKeys.empty())
+			{
+				break;
+			}
 			for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
 			{
 				Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
@@ -847,6 +911,10 @@ void NodeManager::AdjustNodesToTargetDistributions()
 			Port *highPort = &m_hdconfig->m_ports[highPCounter->m_portName];
 
 			NodeProfile * curProfile = &m_hdconfig->m_profiles[curCounter->m_profile.m_name];
+			if(curProfile->m_nodeKeys.empty())
+			{
+				break;
+			}
 			for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
 			{
 				Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
