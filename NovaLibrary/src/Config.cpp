@@ -2045,8 +2045,6 @@ string Config::GetGroup()
 
 void Config::SetSMTPSettings_FromFile()
 {
-	Lock lock(&m_lock, WRITE_LOCK);
-
 	std::string debugPath = m_pathHome + "/Config/smtp.txt";
 
 	std::ifstream ifs(m_pathHome + "/Config/smtp.txt");
@@ -2161,7 +2159,7 @@ void Config::SetEnabledFeatures(string enabledFeatureMask)
 
 void Config::EnableAllFeatures()
 {
-	Lock lock (&m_lock, false);
+	Lock lock (&m_lock, WRITE_LOCK);
 
 	char mask[DIM];
 	for(int i = 0; i < DIM; i++)

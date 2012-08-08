@@ -41,15 +41,15 @@ public:
 		pthread_mutex_lock(m_mutex);
 	}
 
-	Lock(pthread_rwlock_t *lock, bool lockType)
+	Lock(pthread_rwlock_t *lock, lockType type)
 	{
 		isMutex = false;
 		m_rwlock = lock;
-		if(lockType == READ_LOCK)
+		if(type == READ_LOCK)
 		{
 			pthread_rwlock_rdlock(m_rwlock);
 		}
-		else if (lockType == WRITE_LOCK)
+		else if (type == WRITE_LOCK)
 		{
 			pthread_rwlock_wrlock(m_rwlock);
 		}
