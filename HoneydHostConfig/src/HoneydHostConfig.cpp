@@ -61,173 +61,180 @@ string lockFilePath;
 
 int main(int argc, char ** argv)
 {
-	namespace po = boost::program_options;
-	po::options_description desc("Command line options");
-	desc.add_options()
-			("help,h", "Show command line options")
-			("num-nodes,n", po::value<uint>(&numNodes)->default_value(0), "Number of nodes to create.")
-			("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
-			("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
-			("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
-	;
-
-	po::variables_map vm;
-	po::store(po::parse_command_line(argc, argv, desc), vm);
-	po::notify(vm);
-
-	lockFilePath = Config::Inst()->GetPathHome() + "/hhconfig.lock";
-	ofstream lockFile(lockFilePath);
-
-	bool i_flag_empty = true;
-	bool a_flag_empty = true;
-	bool f_flag_set = false;
-
-	if(vm.count("help"))
+	try
 	{
-		cout << desc << endl;
-		return HHC_CODE_OKAY;
-	}
-	if(vm.count("num-nodes"))
-	{
-		cout << "num-nodes selected is " << numNodes << '\n';
-	}
-	if(vm.count("interface"))
-	{
-		vector<string> interfaces_flag = vm["interface"].as< vector<string> >();
+		namespace po = boost::program_options;
+		po::options_description desc("Command line options");
+		desc.add_options()
+				("help,h", "Show command line options")
+				("num-nodes,n", po::value<uint>(&numNodes)->default_value(0), "Number of nodes to create.")
+				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
+				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
+				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
+		;
 
-		for(uint i = 0; i < interfaces_flag.size(); i++)
+		po::variables_map vm;
+		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::notify(vm);
+
+		lockFilePath = Config::Inst()->GetPathHome() + "/hhconfig.lock";
+		ofstream lockFile(lockFilePath);
+
+		bool i_flag_empty = true;
+		bool a_flag_empty = true;
+		bool f_flag_set = false;
+
+		if(vm.count("help"))
 		{
-			if(interfaces_flag[i].find(",") != string::npos)
-			{
-				vector<string> splitInterfacesFlagI;
-				string split = interfaces_flag[i];
-				boost::split(splitInterfacesFlagI, split, boost::is_any_of(","));
+			cout << desc << endl;
+			return HHC_CODE_OKAY;
+		}
+		if(vm.count("num-nodes"))
+		{
+			cout << "num-nodes selected is " << numNodes << '\n';
+		}
+		if(vm.count("interface"))
+		{
+			vector<string> interfaces_flag = vm["interface"].as< vector<string> >();
 
-				for(uint j = 0; j < splitInterfacesFlagI.size(); j++)
+			for(uint i = 0; i < interfaces_flag.size(); i++)
+			{
+				if(interfaces_flag[i].find(",") != string::npos)
 				{
-					if(!splitInterfacesFlagI[j].empty())
+					vector<string> splitInterfacesFlagI;
+					string split = interfaces_flag[i];
+					boost::split(splitInterfacesFlagI, split, boost::is_any_of(","));
+
+					for(uint j = 0; j < splitInterfacesFlagI.size(); j++)
 					{
-						interfacesToMatch.push_back(splitInterfacesFlagI[j]);
+						if(!splitInterfacesFlagI[j].empty())
+						{
+							interfacesToMatch.push_back(splitInterfacesFlagI[j]);
+						}
 					}
 				}
-			}
-			else
-			{
-				interfacesToMatch.push_back(interfaces_flag[i]);
-			}
-		}
-		i_flag_empty = false;
-	}
-	if(vm.count("additional-subnet"))
-	{
-		vector<string> addsubnets_flag = vm["additional-subnet"].as< vector<string> >();
-
-		for(uint i = 0; i < addsubnets_flag.size(); i++)
-		{
-			if(addsubnets_flag[i].find(",") != string::npos)
-			{
-				vector<string> splitSubnetsFlagI;
-				string split = addsubnets_flag[i];
-				boost::split(splitSubnetsFlagI, split, boost::is_any_of(","));
-
-				for(uint j = 0; j < splitSubnetsFlagI.size(); j++)
+				else
 				{
-					if(!splitSubnetsFlagI[j].empty())
-					{
-						subnetsToAdd.push_back(splitSubnetsFlagI[j]);
-					}
+					interfacesToMatch.push_back(interfaces_flag[i]);
 				}
 			}
-			else
+			i_flag_empty = false;
+		}
+		if(vm.count("additional-subnet"))
+		{
+			vector<string> addsubnets_flag = vm["additional-subnet"].as< vector<string> >();
+
+			for(uint i = 0; i < addsubnets_flag.size(); i++)
 			{
-				subnetsToAdd.push_back(addsubnets_flag[i]);
+				if(addsubnets_flag[i].find(",") != string::npos)
+				{
+					vector<string> splitSubnetsFlagI;
+					string split = addsubnets_flag[i];
+					boost::split(splitSubnetsFlagI, split, boost::is_any_of(","));
+
+					for(uint j = 0; j < splitSubnetsFlagI.size(); j++)
+					{
+						if(!splitSubnetsFlagI[j].empty())
+						{
+							subnetsToAdd.push_back(splitSubnetsFlagI[j]);
+						}
+					}
+				}
+				else
+				{
+					subnetsToAdd.push_back(addsubnets_flag[i]);
+				}
 			}
+
+			a_flag_empty = false;
 		}
-
-		a_flag_empty = false;
-	}
-	if(vm.count("nmap-xml"))
-	{
-		cout << "file to parse is " << vm["nmap-xml"].as< string >() << endl;
-		nmapFileName = vm["nmap-xml"].as<string>();
-		f_flag_set = true;
-	}
-
-	if(numNodes < 0)
-	{
-		lockFile.close();
-		remove(lockFilePath.c_str());
-		LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
-		exit(HHC_CODE_BAD_ARG_VALUE);
-	}
-
-	HHC_ERR_CODE errVar = HHC_CODE_OKAY;
-
-	// Arg parsing done, moving onto execution items
-	if(f_flag_set)
-	{
-		LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
-		if(!LoadNmapXML(nmapFileName))
+		if(vm.count("nmap-xml"))
 		{
-			LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
-			lockFile.close();
-			remove(lockFilePath.c_str());
-			exit(HHC_CODE_PARSING_ERROR);
+			cout << "file to parse is " << vm["nmap-xml"].as< string >() << endl;
+			nmapFileName = vm["nmap-xml"].as<string>();
+			f_flag_set = true;
 		}
 
-		GenerateConfiguration();
-		lockFile.close();
-		remove(lockFilePath.c_str());
-		LOG(INFO, "Honeyd profile and node configuration completed.", "");
-		return errVar;
-	}
-	else if(a_flag_empty && i_flag_empty)
-	{
-		errVar = HHC_CODE_REQUIRED_FLAGS_MISSING;
-		lockFile.close();
-		remove(lockFilePath.c_str());
-		LOG(ERROR, "Must designate an Nmap XML file to parse, or provide either an interface or a subnet to scan. Aborting...", "");
-		return errVar;
-	}
-	else
-	{
-		LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
-		vector<string> subnetNames;
-
-		if(!i_flag_empty)
-		{
-			subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
-		}
-		if(!a_flag_empty)
-		{
-			for(uint i = 0; i < subnetsToAdd.size(); i++)
-			{
-				subnetNames.push_back(subnetsToAdd[i]);
-			}
-		}
-
-		cout << "Scanning following subnets: " << endl;
-		for(uint i = 0; i < subnetNames.size(); i++)
-		{
-			cout << "\t" << subnetNames[i] << endl;
-		}
-		cout << endl;
-
-		errVar = LoadPersonalityTable(subnetNames);
-
-		if(errVar != HHC_CODE_OKAY)
+		if(numNodes < 0)
 		{
 			lockFile.close();
 			remove(lockFilePath.c_str());
-			LOG(ERROR, "There was a problem loading the PersonalityTable. Aborting...", "");
+			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
+			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
+
+		HHC_ERR_CODE errVar = HHC_CODE_OKAY;
+
+		// Arg parsing done, moving onto execution items
+		if(f_flag_set)
+		{
+			LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
+			if(!LoadNmapXML(nmapFileName))
+			{
+				LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
+				lockFile.close();
+				remove(lockFilePath.c_str());
+				exit(HHC_CODE_PARSING_ERROR);
+			}
+
+			GenerateConfiguration();
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(INFO, "Honeyd profile and node configuration completed.", "");
 			return errVar;
 		}
+		else if(a_flag_empty && i_flag_empty)
+		{
+			errVar = HHC_CODE_REQUIRED_FLAGS_MISSING;
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(ERROR, "Must designate an Nmap XML file to parse, or provide either an interface or a subnet to scan. Aborting...", "");
+			return errVar;
+		}
+		else
+		{
+			LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
+			vector<string> subnetNames;
 
-		GenerateConfiguration();
-		lockFile.close();
-		remove(lockFilePath.c_str());
-		LOG(INFO, "Honeyd profile and node configuration completed.", "");
-		return errVar;
+			if(!i_flag_empty)
+			{
+				subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
+			}
+			if(!a_flag_empty)
+			{
+				for(uint i = 0; i < subnetsToAdd.size(); i++)
+				{
+					subnetNames.push_back(subnetsToAdd[i]);
+				}
+			}
+
+			cout << "Scanning following subnets: " << endl;
+			for(uint i = 0; i < subnetNames.size(); i++)
+			{
+				cout << "\t" << subnetNames[i] << endl;
+			}
+			cout << endl;
+
+			errVar = LoadPersonalityTable(subnetNames);
+
+			if(errVar != HHC_CODE_OKAY)
+			{
+				lockFile.close();
+				remove(lockFilePath.c_str());
+				LOG(ERROR, "There was a problem loading the PersonalityTable. Aborting...", "");
+				return errVar;
+			}
+
+			GenerateConfiguration();
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(INFO, "Honeyd profile and node configuration completed.", "");
+			return errVar;
+		}
+	}
+	catch(exception &e)
+	{
+		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
 	}
 }
 
@@ -464,11 +471,6 @@ bool Nova::LoadNmapXML(const string &filename)
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_data> > &e)
 	{
 		LOG(DEBUG, "Couldn't parse XML file (bad data): " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch(exception &e)
-	{
-		LOG(ERROR, "Unknown exception (parsing XML): " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
