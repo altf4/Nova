@@ -91,7 +91,7 @@ int main(int argc, char ** argv)
 		}
 		if(vm.count("num-nodes"))
 		{
-			cout << "num-nodes selected is " << numNodes << '\n';
+			cout << "Number of nodes to create: " << numNodes << '\n';
 		}
 		if(vm.count("interface"))
 		{
@@ -491,8 +491,41 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 	for(uint16_t i = 0; i < subnetNames.size(); i++)
 	{
 		ss << i;
-		string executionString = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + subnetNames[i] + " >/dev/null";
-		while(system(executionString.c_str()));
+		string executionString = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + subnetNames[i];
+
+		//popen here for stdout of nmap
+		for(uint j = 0; j < 3; j++)
+		{
+			stringstream s2;
+			s2 << (j + 1);
+			LOG(INFO, "Attempt " + s2.str() + " to start Nmap scan.", "");
+			s2.str("");
+
+			FILE* nmap = popen(executionString.c_str(), "r");
+
+			if(nmap == NULL)
+			{
+				LOG(ERROR, "Couldn't start Nmap.", "");
+				continue;
+			}
+			else
+			{
+				char buffer[256];
+				while(!feof(nmap))
+				{
+					if(fgets(buffer, 256, nmap) != NULL)
+					{
+						// Would avoid using endl, but need it for what this line is being used for (printing nmap output to Web UI)
+						cout << string(buffer) << endl;
+					}
+				}
+			}
+
+			pclose(nmap);
+			LOG(INFO, "Nmap scan complete.", "");
+			j = 3;
+		}
+
 		try
 		{
 			string file = "subnet" + ss.str() + ".xml";
