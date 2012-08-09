@@ -90,6 +90,11 @@ hhconfig-debug:
 	$(MAKE) -C HoneydHostConfig/Debug
 	cp HoneydHostConfig/Debug/honeydhostconfig HoneydHostConfig/
 
+coverageTests: test-prepare
+	$(MAKE) -C NovaLibrary/Coverage
+	$(MAKE) -C Nova_UI_Core/Coverage
+	$(MAKE) -C NovaTest/Coverage
+
 #Unit tests
 test: debug test-prepare
 	$(MAKE) -C NovaTest/Debug
@@ -129,7 +134,7 @@ clean-novad-debug:
 clean-novad-release:
 	$(MAKE) -C Novad/Release clean
 
-clean-ui-core: clean-ui-core-debug clean-ui-core-release
+clean-ui-core: clean-ui-core-debug clean-ui-core-release clean-ui-core-coverage
 
 clean-ui-core-debug:
 	$(MAKE) -C Nova_UI_Core/Debug clean
@@ -139,13 +144,20 @@ clean-ui-core-release:
 	$(MAKE) -C Nova_UI_Core/Release clean
 	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
-clean-lib: clean-lib-debug clean-lib-release
+clean-ui-core-coverage:
+	$(MAKE) -C Nova_UI_Core/Coverage clean
+	rm -f Nova_UI_Core/Coverage/Nova_UI_Core
+
+clean-lib: clean-lib-debug clean-lib-release clean-lib-coverage
 	
 clean-lib-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
 
 clean-lib-release:
 	$(MAKE) -C NovaLibrary/Release clean
+
+clean-lib-coverage:
+	$(MAKE) -C NovaLibrary/Coverage clean
 
 clean-cli: clean-cli-debug clean-cli-release
 
