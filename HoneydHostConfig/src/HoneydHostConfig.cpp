@@ -458,7 +458,7 @@ bool Nova::LoadNmapXML(const string &filename)
 	}
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::xml_parser::xml_parser_error> > &e)
 	{
-		LOG(ERROR, "Couldn't parse from file (parser error)" + filename + ": " + string(e.what()) + ".", "");
+		LOG(ERROR, "Couldn't parse from file (parser error) " + filename + ": " + string(e.what()) + ".", "");
 		return false;
 	}
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_data> > &e)
