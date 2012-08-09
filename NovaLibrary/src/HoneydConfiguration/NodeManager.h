@@ -66,9 +66,9 @@ public:
 	// Note: This function constructs a PersonalityTree from the HoneydConfiguration object passed
 	NodeManager(HoneydConfiguration *honeydConfig);
 
-	void SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nodes);
+	bool SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nodes);
 
-	void SetNumNodesOnProfile(NodeProfile *targetProfile, int num_nodes);
+	bool SetNumNodesOnProfile(NodeProfile *targetProfile, int num_nodes);
 
 private:
 
@@ -77,20 +77,20 @@ private:
 	// num_nodes nodes of varying profiles, macs and ports, depending on the calculated
 	// per-personality distributions.
 	//  unsigned int num_nodes - ceiling on the amount of nodes to make
-	// Returns nothing.
-	void GenerateNodes(int num_nodes);
+	// Returns true if succeded and failed if not.
+	bool GenerateNodes(int num_nodes);
 
-	void RemoveNodes(int num_nodes);
+	bool RemoveNodes(int num_nodes);
 
-	void GetCurrentCount();
+	bool GetCurrentCount();
 
-	void AdjustNodesToTargetDistributions();
+	bool AdjustNodesToTargetDistributions();
 
 	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
 	//		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
 	// 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of
 	//		the profile tree
-	void GenerateProfileCounters(NodeProfile *rootProfile);
+	bool GenerateProfileCounters(NodeProfile *rootProfile);
 
 	// RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
 	//		randomized nodes from the profiles at the different nodes of the Personality Tree.
@@ -99,7 +99,7 @@ private:
 	//  NodeProfile *profile - pointer to a NodeProfile in the tree structure;
 	//                         the profile's information is read and generates a ProfileCounter
 	// Returns nothing.
-	void RecursiveGenProfileCounter(NodeProfile *profile);
+	bool RecursiveGenProfileCounter(NodeProfile *profile);
 
 	// GenerateMacCounter takes in a vendor string and its corresponding distribution value
 	// 		and populates a MacCounter struct with these values. Used in RecursiveGenProfileCounter

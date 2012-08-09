@@ -44,10 +44,19 @@ NodeManager::NodeManager(HoneydConfiguration *honeydConfig)
 }
 
 //This function adds or subtracts nodes from the parent profile and it's children until the desired number is matched
-void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nodes)
+bool NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nodes)
 {
 	m_profileCounters.clear();
-	GenerateProfileCounters(rootProfile);
+	if(rootProfile == NULL)
+	{
+		LOG(ERROR, "Passed pointer to NodeProfile parameter is NULL!", "");
+		return false;
+	}
+	if(!GenerateProfileCounters(rootProfile))
+	{
+		LOG(ERROR, "Unable to generate profile counters.", "");
+		return false;
+	}
 	vector<string> profList;
 	profList.push_back(rootProfile->m_name);
 	int totalNodes = rootProfile->m_nodeKeys.size();
@@ -66,19 +75,32 @@ void NodeManager::SetNumNodesOnProfileTree(NodeProfile *rootProfile, int num_nod
 	//Delete Nodes Case
 	if(totalNodes > num_nodes)
 	{
-		RemoveNodes(totalNodes - num_nodes);
+		if(!RemoveNodes(totalNodes - num_nodes))
+		{
+			LOG(ERROR, "Unable to remove nodes.", "");
+			return false;
+		}
 	}
 	//Add Nodes Case
 	else if(totalNodes < num_nodes)
 	{
-		GenerateNodes(num_nodes - totalNodes);
+		if(!GenerateNodes(num_nodes - totalNodes))
+		{
+			LOG(ERROR, "Unable to generate nodes.", "");
+			return false;
+		}
 	}
-	//Redistribute exisiting nodes case
-	AdjustNodesToTargetDistributions();
+	//Redistribute Ports and MAC vendors if needed
+	if(!AdjustNodesToTargetDistributions())
+	{
+		LOG(ERROR, "Unable to auto adjust nodes to target distributions.", "");
+		return false;
+	}
+	return true;
 }
 
 //This function adds or subtracts nodes directly from the target profile until the desired number is matched
-void NodeManager::SetNumNodesOnProfile(NodeProfile *targetProfile, int num_nodes)
+bool NodeManager::SetNumNodesOnProfile(NodeProfile *targetProfile, int num_nodes)
 {
 	int totalNodes = targetProfile->m_nodeKeys.size();
 	struct ProfileCounter pCounter;
@@ -106,16 +128,28 @@ void NodeManager::SetNumNodesOnProfile(NodeProfile *targetProfile, int num_nodes
 	//Delete Nodes Case
 	if(totalNodes > num_nodes)
 	{
-		RemoveNodes(totalNodes - num_nodes);
+		if(!RemoveNodes(totalNodes - num_nodes))
+		{
+			LOG(ERROR, "Unable to remove nodes.", "");
+			return false;
+		}
 	}
 	//Add Nodes Case
 	else if(totalNodes < num_nodes)
 	{
-		GenerateNodes(num_nodes - totalNodes);
+		if(!GenerateNodes(num_nodes - totalNodes))
+		{
+			LOG(ERROR, "Unable to generate nodes.", "");
+			return false;
+		}
 	}
-
 	//Redistribute Ports and MAC vendors if needed
-	AdjustNodesToTargetDistributions();
+	if(!AdjustNodesToTargetDistributions())
+	{
+		LOG(ERROR, "Unable to auto adjust nodes to target distributions.", "");
+		return false;
+	}
+	return true;
 }
 
 //. ************ Private Methods ************ .//
@@ -126,11 +160,15 @@ void NodeManager::SetNumNodesOnProfile(NodeProfile *targetProfile, int num_nodes
 // per-personality distributions.
 //  unsigned int num_nodes - ceiling on the amount of nodes to make
 // Returns nothing.
-void NodeManager::GenerateNodes(int num_nodes)
+bool NodeManager::GenerateNodes(int num_nodes)
 {
 	vector<Node> nodesToAdd;
 	nodesToAdd.clear();
-	GetCurrentCount();
+	if(!GetCurrentCount())
+	{
+		LOG(ERROR, "Unable to get the current status of the HoneyD configuration.", "");
+		return false;
+	}
 	for(int i = 0; i < num_nodes;)
 	{
 		for(unsigned int j = 0; (j < m_profileCounters.size()) && (i < num_nodes); j++)
@@ -173,7 +211,6 @@ void NodeManager::GenerateNodes(int num_nodes)
 						{
 							m_profileCounters[j].m_macCounters[l].m_count += m_profileCounters[j].m_macCounters[l].m_increment;
 						}
-
 						break;
 					}
 				}
@@ -194,6 +231,10 @@ void NodeManager::GenerateNodes(int num_nodes)
 					PortCounter *curCounter = portCounters[randIndex];
 					portCounters.erase(portCounters.begin() + randIndex);
 					NodeProfile* p = m_hdconfig->GetProfile(curNode.m_pfile);
+					if(p == NULL)
+					{
+						LOG(ERROR, "Unable to find expected NodeProfile '" + curNode.m_pfile + "'.", "");
+					}
 
 					//If we're closing the port
 					if(curCounter->m_count < 0)
@@ -301,22 +342,33 @@ void NodeManager::GenerateNodes(int num_nodes)
 			}
 		}
 	}
-	m_hdconfig->SaveAllTemplates();
+	if(!m_hdconfig->SaveAllTemplates())
+	{
+		LOG(ERROR, "Unable to save HoneyD configuration templates.", "");
+		return false;
+	}
 	while(!nodesToAdd.empty())
 	{
 		m_hdconfig->AddNewNode(nodesToAdd.back());
 		nodesToAdd.pop_back();
 	}
+	if(!m_hdconfig->SaveAllTemplates())
+	{
+		LOG(ERROR, "Unable to save HoneyD configuration templates.", "");
+		return false;
+	}
+	return true;
 }
 
-void NodeManager::RemoveNodes(int num_nodes)
+bool NodeManager::RemoveNodes(int num_nodes)
 {
 	vector<Node> nodesToDelete;
 	for(int i = 0; i < num_nodes; i++)
 	{
 		if(m_profileCounters.empty())
 		{
-			return;
+			LOG(ERROR, "Unable to remove nodes because there are no profile counters in the NodeManager object.", "");
+			return false;
 		}
 
 		unsigned int indexOfCounter = 0;
@@ -365,7 +417,7 @@ void NodeManager::RemoveNodes(int num_nodes)
 				if(curPort == NULL)
 				{
 					LOG(ERROR, "Unable to find expected Port " + lastNode->m_ports[j] + ".", "");
-					continue;
+					return false;
 				}
 				for(unsigned int k = 0; k < pCounter->m_portCounters.size(); k++)
 				{
@@ -373,7 +425,7 @@ void NodeManager::RemoveNodes(int num_nodes)
 					if(comparePort == NULL)
 					{
 						LOG(ERROR, "Unable to find expected Port " + pCounter->m_portCounters[k].m_portName + ".", "");
-						continue;
+						return false;
 					}
 					//If both the port number and protocol are the same
 					if((!comparePort->m_portNum.compare(curPort->m_portNum))
@@ -414,13 +466,19 @@ void NodeManager::RemoveNodes(int num_nodes)
 				if(!it->second.m_pfile.compare(pCounter->m_profile.m_name))
 				{
 					//If we match the mac vendor with the node
-					string macVendor = m_hdconfig->m_macAddresses.LookupVendor(m_hdconfig->m_macAddresses.AtoMACPrefix(it->second.m_MAC));
+					uint macPrefix = m_hdconfig->m_macAddresses.AtoMACPrefix(it->second.m_MAC);
+					string macVendor = m_hdconfig->m_macAddresses.LookupVendor(macPrefix);
 					if(!macVendor.compare(pCounter->m_macCounters[indexOfCounter].m_ethVendor))
 					{
 						nodesToDelete.push_back(it->second);
 						pCounter->m_count += (1 - pCounter->m_increment);
 						pCounter->m_macCounters[indexOfCounter].m_count += (1 - pCounter->m_macCounters[indexOfCounter].m_increment);
 						break;
+					}
+					else if(!macVendor.compare(""))
+					{
+						LOG(ERROR, "Unable to lookup mac vendor for ethernet address " + it->second.m_MAC, "");
+						return false;
 					}
 				}
 			}
@@ -481,9 +539,10 @@ void NodeManager::RemoveNodes(int num_nodes)
 			continue;
 		}
 	}
+	return true;
 }
 
-void NodeManager::GetCurrentCount()
+bool NodeManager::GetCurrentCount()
 {
 	for(NodeTable::iterator it = m_hdconfig->m_nodes.begin(); it != m_hdconfig->m_nodes.end(); it++)
 	{
@@ -499,6 +558,11 @@ void NodeManager::GetCurrentCount()
 				m_profileCounters[j].m_count -= (1 - m_profileCounters[j].m_increment);
 				uint macRawPrefix = m_hdconfig->m_macAddresses.AtoMACPrefix(it->second.m_MAC);
 				string ethVendor = m_hdconfig->m_macAddresses.LookupVendor(macRawPrefix);
+				if(!ethVendor.compare(""))
+				{
+					LOG(ERROR, "Unable to lookup mac vendor for ethernet address " + it->second.m_MAC, "");
+					return false;
+				}
 				//Determine which mac vendor to usecurCounter
 				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
 				{
@@ -533,12 +597,19 @@ void NodeManager::GetCurrentCount()
 			}
 		}
 	}
+	return true;
 }
 
-void NodeManager::AdjustNodesToTargetDistributions()
+bool NodeManager::AdjustNodesToTargetDistributions()
 {
-	GenerateProfileCounters(&m_hdconfig->m_profiles["default"]);
-	GetCurrentCount();
+	if(!GenerateProfileCounters(&m_hdconfig->m_profiles["default"]))
+	{
+		return false;
+	}
+	if(!GetCurrentCount())
+	{
+		return false;
+	}
 
 	int targetNodeCount = 0;
 	for(unsigned int i = 0; i < m_profileCounters.size(); i++)
@@ -734,12 +805,12 @@ void NodeManager::AdjustNodesToTargetDistributions()
 		else if(!lowCounter->m_macCounters.empty())
 		{
 			LOG(ERROR, "Unable to manage the MAC addresses for generated nodes on the '" + highProf->m_name + "' profile!", "");
-			return;
+			return false;
 		}
 		else
 		{
 			LOG(ERROR, "Unable to manage the MAC addresses for generated nodes on the '" + lowProf->m_name + "' profile!", "");
-			return;
+			return false;
 		}
 
 		//Is still over allocated
@@ -944,16 +1015,17 @@ void NodeManager::AdjustNodesToTargetDistributions()
 			}
 		}
 	}
+	return true;
 }
 
 // GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
 //		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
 // 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of
 //		the profile tree
-void NodeManager::GenerateProfileCounters(NodeProfile *rootProfile)
+bool NodeManager::GenerateProfileCounters(NodeProfile *rootProfile)
 {
 	m_profileCounters.clear();
-	RecursiveGenProfileCounter(rootProfile);
+	return RecursiveGenProfileCounter(rootProfile);
 }
 
 // RecursiveGenProfileCounter recurses through the m_persTree member variable and generates
@@ -963,12 +1035,12 @@ void NodeManager::GenerateProfileCounters(NodeProfile *rootProfile)
 //  NodeProfile *profile - pointer to a NodeProfile in the tree structure;
 //                         the profile's information is read and generates a ProfileCounter
 // Returns nothing.
-void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
+bool NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 {
 	if(m_hdconfig->GetProfile(profile->m_name) == NULL)
 	{
 		LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + profile->m_name, "");
-		return;
+		return false;
 	}
 	else if((profile->m_generated) && (NumberOfChildren(profile->m_name) == 0))
 	{
@@ -1006,9 +1078,13 @@ void NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 	{
 		if(!it->second.m_parentProfile.compare(profile->m_name) && (it->second.m_generated))
 		{
-			RecursiveGenProfileCounter(&m_hdconfig->m_profiles[it->first]);
+			if(!RecursiveGenProfileCounter(&m_hdconfig->m_profiles[it->first]))
+			{
+				return false;
+			}
 		}
 	}
+	return true;
 }
 
 // GenerateMacCounter takes in a vendor string and its corresponding distribution value
