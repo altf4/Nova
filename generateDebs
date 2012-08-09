@@ -2,15 +2,19 @@
 
 set -e
 
-trap "echo stuff; exit" SIGHUP SIGINT SIGTERM
+#Assert root user
+if [ $USER != "root" ]; then
+	echo "Execute with root privileges: sudo $0"
+	exit 1
+fi
 
 echo -e "Remember to update debian/changelog with current version and notes."
 
 if [ -z $1 ]; then
-  echo -e "Using default version number in version.txt..."
-  VERSION=($(cat Installer/Write/nova/nova/version.txt))
+	echo -e "Using default version number in version.txt..."
+	VERSION=$(cat Installer/Write/nova/nova/version.txt)
 else
-  VERSION=$1
+	VERSION=$1
 fi
 
 PACKAGE="nova_$VERSION"
