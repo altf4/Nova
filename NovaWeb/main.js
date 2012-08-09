@@ -1345,9 +1345,9 @@ everyone.now.GetCaptureSession = function (callback) {
 
 everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback, route) {
 	var executionString = 'honeydhostconfig';
-	var nFlag = '-n ';
-	var iFlag = '-i ';
-	var aFlag = '-a ';
+	var nFlag = '-n';
+	var iFlag = '-i';
+	var aFlag = '-a';
 	
 	var hhconfigArgs = new Array();
 	
@@ -1358,17 +1358,17 @@ everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback, 
 	if(numNodes !== undefined && parseInt(numNodes) >= 0)
 	{
 	    hhconfigArgs.push(nFlag);
-	    hhconfigArgs.push(numNodes + " ");
+	    hhconfigArgs.push(numNodes);
 	}
 	if(interfaces !== undefined && interfaces.length > 0)
 	{
 	    hhconfigArgs.push(iFlag);
-	    hhconfigArgs.push(interfaces + " ");
+	    hhconfigArgs.push(interfaces);
 	}
 	if(subnets !== undefined && subnets.length > 0)
 	{
 	    hhconfigArgs.push(aFlag);
-	    hhconfigArgs.push(subnets + " ");
+	    hhconfigArgs.push(subnets);
 	}
 	
     //console.log("SAC hhconfigArgs " + hhconfigArgs);
@@ -1376,6 +1376,7 @@ everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback, 
     //console.log("calling " + executionString + " " + hhconfigArgs.join(""));
 
     var util = require('util');
+    var exec = require('child_process').exec;
     var spawn = require('child_process').spawn;
 	    
 	var autoconfig = spawn(executionString.toString(), hhconfigArgs);
@@ -1394,7 +1395,7 @@ everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback, 
 	
 	autoconfig.on('exit', function(code) {
 		console.log("autoconfig exited with code " + code);
-		//route("/nodeReview");
+		route("/nodeReview");
 	});
 }
 
