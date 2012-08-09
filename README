@@ -27,7 +27,7 @@ required to compile Nova correctly. Make sure to watch the terminals at the
 beginning of the install process, and be sure to type 'Y' when asked to do so.
 Install the libraries with the following command:
 
-    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev libnotify-dev sqlite3 libcurl3 libcurl4-gnutls-dev unzip iptables
+    sudo apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libcurl3 libcurl4-gnutls-dev unzip iptables
 
 
 - Now, we'll have to take a quick detour to get another integral component
