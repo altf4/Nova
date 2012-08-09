@@ -86,6 +86,12 @@ private:
 
 	bool AdjustNodesToTargetDistributions();
 
+	bool AdjustProfiles(int targetNodeCount);
+
+	bool AdjustMACVendors(ProfileCounter *targetProfile);
+
+	bool AdjustPortsOnNodes(ProfileCounter *targetProfile);
+
 	// GenerateProfileCounters serves as the starting point for RecursiveGenProfileCounter when loading
 	//		a Honeyd Configuration rather than an nmap scan, used mainly by the UI's for user configuration
 	// 	NodeProfile *rootProfile: This usually corresponds to the 'Default' NodeProfile and is the top of

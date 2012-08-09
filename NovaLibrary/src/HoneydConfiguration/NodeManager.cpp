@@ -166,7 +166,7 @@ bool NodeManager::GenerateNodes(int num_nodes)
 	nodesToAdd.clear();
 	if(!GetCurrentCount())
 	{
-		LOG(ERROR, "Unable to get the current status of the HoneyD configuration.", "");
+		LOG(ERROR, "Unable to get the current status of the Honeyd configuration.", "");
 		return false;
 	}
 	for(int i = 0; i < num_nodes;)
@@ -344,7 +344,7 @@ bool NodeManager::GenerateNodes(int num_nodes)
 	}
 	if(!m_hdconfig->SaveAllTemplates())
 	{
-		LOG(ERROR, "Unable to save HoneyD configuration templates.", "");
+		LOG(ERROR, "Unable to save Honeyd configuration templates.", "");
 		return false;
 	}
 	while(!nodesToAdd.empty())
@@ -354,7 +354,7 @@ bool NodeManager::GenerateNodes(int num_nodes)
 	}
 	if(!m_hdconfig->SaveAllTemplates())
 	{
-		LOG(ERROR, "Unable to save HoneyD configuration templates.", "");
+		LOG(ERROR, "Unable to save Honeyd configuration templates.", "");
 		return false;
 	}
 	return true;
@@ -604,10 +604,12 @@ bool NodeManager::AdjustNodesToTargetDistributions()
 {
 	if(!GenerateProfileCounters(&m_hdconfig->m_profiles["default"]))
 	{
+		LOG(ERROR, "Unable to generate profile counters using the 'default' profile.", "");
 		return false;
 	}
 	if(!GetCurrentCount())
 	{
+		LOG(ERROR, "Unable to get the current status of the Honeyd Configuration.", "");
 		return false;
 	}
 
@@ -616,7 +618,33 @@ bool NodeManager::AdjustNodesToTargetDistributions()
 	{
 		targetNodeCount += m_profileCounters[i].m_profile.m_nodeKeys.size();
 	}
+	if(!AdjustProfiles(targetNodeCount))
+	{
+		LOG(ERROR, "Unable to adjust Honeyd node profiles.", "");
+		return false;
+	}
 
+
+	//Shift any macs or ports that are needed
+	for(unsigned int i = 0; i < m_profileCounters.size(); i++)
+	{
+		ProfileCounter *curCounter = &m_profileCounters[i];
+		if(!AdjustMACVendors(curCounter))
+		{
+			LOG(ERROR, "Unable to adjust Honeyd node MAC Vendors.", "");
+			return false;
+		}
+		if(!AdjustPortsOnNodes(curCounter))
+		{
+			LOG(ERROR, "Unable to adjust Honeyd node MAC Vendors.", "");
+			return false;
+		}
+	}
+	return true;
+}
+
+bool NodeManager::AdjustProfiles(int targetNodeCount)
+{
 	vector<ProfileCounter *> underPopulatedProfiles;
 	vector<ProfileCounter *> overPopulatedProfiles;
 
@@ -847,172 +875,176 @@ bool NodeManager::AdjustNodesToTargetDistributions()
 			}
 		}
 	}
-	//Shift any macs or ports that are needed
-	for(unsigned int i = 0; i < m_profileCounters.size(); i++)
+	return true;
+}
+
+bool NodeManager::AdjustMACVendors(ProfileCounter *targetProfile)
+{
+	vector<MacCounter*> underPopulatedVendors;
+	vector<MacCounter*> overPopulatedVendors;
+
+	for(unsigned int j = 0; j < targetProfile->m_macCounters.size(); j++)
 	{
-		ProfileCounter *curCounter = &m_profileCounters[i];
-		vector<MacCounter*> underPopulatedVendors;
-		vector<MacCounter*> overPopulatedVendors;
-
-		for(unsigned int j = 0; j < curCounter->m_macCounters.size(); j++)
+		//If the vendor is under allocated
+		if(targetProfile->m_macCounters[j].m_count > (1-targetProfile->m_macCounters[j].m_increment))
 		{
-			//If the vendor is under allocated
-			if(curCounter->m_macCounters[j].m_count > (1-curCounter->m_macCounters[j].m_increment))
+			underPopulatedVendors.push_back(&targetProfile->m_macCounters[j]);
+		}
+		//If the vendor is over allocated
+		else if(targetProfile->m_macCounters[j].m_count < (-targetProfile->m_macCounters[j].m_increment))
+		{
+			overPopulatedVendors.push_back(&targetProfile->m_macCounters[j]);
+		}
+	}
+
+	//If we have vendors that need adjustment on the profile
+	while(!underPopulatedVendors.empty() && !overPopulatedVendors.empty())
+	{
+		//Get the first pairing
+		MacCounter *lowVCounter = underPopulatedVendors.back();
+		MacCounter *highVCounter = overPopulatedVendors.back();
+		underPopulatedVendors.pop_back();
+		overPopulatedVendors.pop_back();
+
+		//Get the profile and search for a node using the overpopulated vendor
+		NodeProfile * curProfile = &m_hdconfig->m_profiles[targetProfile->m_profile.m_name];
+		if(curProfile->m_nodeKeys.empty())
+		{
+			break;
+		}
+		for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
+		{
+			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
+			string vendor = m_hdconfig->m_macAddresses.LookupVendor(m_hdconfig->m_macAddresses.AtoMACPrefix(curNode->m_MAC));
+
+			if(!vendor.compare(highVCounter->m_ethVendor))
 			{
-				underPopulatedVendors.push_back(&curCounter->m_macCounters[j]);
-			}
-			//If the vendor is over allocated
-			else if(curCounter->m_macCounters[j].m_count < (-curCounter->m_macCounters[j].m_increment))
-			{
-				overPopulatedVendors.push_back(&curCounter->m_macCounters[j]);
+				//Remove the overpopulated counter values
+				highVCounter->m_count++;
+				lowVCounter->m_count--;
+				curNode->m_MAC = m_hdconfig->m_macAddresses.GenerateRandomMAC(lowVCounter->m_ethVendor);
 			}
 		}
-
-		//If we have vendors that need adjustment on the profile
-		while(!underPopulatedVendors.empty() && !overPopulatedVendors.empty())
+		//If the vendor is still under allocated
+		if(lowVCounter->m_count < (-lowVCounter->m_increment))
 		{
-			//Get the first pairing
-			MacCounter *lowVCounter = underPopulatedVendors.back();
-			MacCounter *highVCounter = overPopulatedVendors.back();
-			underPopulatedVendors.pop_back();
-			overPopulatedVendors.pop_back();
+			underPopulatedVendors.push_back(lowVCounter);
+		}
+		//If the vendor is still over allocated
+		else if(highVCounter->m_count > (1 - highVCounter->m_increment))
+		{
+			overPopulatedVendors.push_back(highVCounter);
+		}
+	}
+	return true;
+}
 
-			//Get the profile and search for a node using the overpopulated vendor
-			NodeProfile * curProfile = &m_hdconfig->m_profiles[curCounter[i].m_profile.m_name];
-			if(curProfile->m_nodeKeys.empty())
-			{
-				break;
-			}
-			for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
-			{
-				Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[i]];
-				string vendor = m_hdconfig->m_macAddresses.LookupVendor(m_hdconfig->m_macAddresses.AtoMACPrefix(curNode->m_MAC));
+bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
+{
+	vector<PortCounter*> underPopulatedPorts;
+	vector<PortCounter*> overPopulatedPorts;
 
-				if(!vendor.compare(highVCounter->m_ethVendor))
+	//Check for over or under allocated
+	for(unsigned int j = 0; j < targetProfile->m_portCounters.size(); j++)
+	{
+		//If the port is under allocated
+		if(targetProfile->m_portCounters[j].m_count > (1 - targetProfile->m_portCounters[j].m_increment))
+		{
+			underPopulatedPorts.push_back(&targetProfile->m_portCounters[j]);
+		}
+		//If the port is over allocated
+		else if(targetProfile->m_portCounters[j].m_count < (-targetProfile->m_portCounters[j].m_increment))
+		{
+			overPopulatedPorts.push_back(&targetProfile->m_portCounters[j]);
+		}
+	}
+
+	//Get the avg number of ports per node to prevent adding to many ports to a single node
+	double avg_ports = 0;
+	for(unsigned int j = 0; j < targetProfile->m_profile.m_ports.size(); j++)
+	{
+		avg_ports += targetProfile->m_profile.m_ports[j].second.second;
+	}
+
+	//If we have ports that need adjustment on the profile
+	while(!underPopulatedPorts.empty())
+	{
+		PortCounter *lowPCounter = underPopulatedPorts.back();
+		underPopulatedPorts.pop_back();
+
+		Port *lowPort = &m_hdconfig->m_ports[lowPCounter->m_portName];
+		NodeProfile * curProfile = &m_hdconfig->m_profiles[targetProfile->m_profile.m_name];
+		if(curProfile->m_nodeKeys.empty())
+		{
+			break;
+		}
+		for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
+		{
+			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
+			for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
+			{
+				Port *nodePort = &m_hdconfig->m_ports[curNode->m_ports[k]];
+
+				//If this port is a match
+				if(!curNode->m_ports[k].compare(lowPort->m_portName))
 				{
-					//Remove the overpopulated counter values
-					highVCounter->m_count++;
-					lowVCounter->m_count--;
-					curNode->m_MAC = m_hdconfig->m_macAddresses.GenerateRandomMAC(lowVCounter->m_ethVendor);
-				}
-			}
-			//If the vendor is still under allocated
-			if(lowVCounter->m_count < (-lowVCounter->m_increment))
-			{
-				underPopulatedVendors.push_back(lowVCounter);
-			}
-			//If the vendor is still over allocated
-			else if(highVCounter->m_count > (1 - highVCounter->m_increment))
-			{
-				overPopulatedVendors.push_back(highVCounter);
-			}
-		}
-
-		vector<PortCounter*> underPopulatedPorts;
-		vector<PortCounter*> overPopulatedPorts;
-
-		//Check for over or under allocated
-		for(unsigned int j = 0; j < curCounter->m_portCounters.size(); j++)
-		{
-			//If the port is under allocated
-			if(curCounter->m_portCounters[j].m_count > (1 - curCounter->m_portCounters[j].m_increment))
-			{
-				underPopulatedPorts.push_back(&curCounter->m_portCounters[j]);
-			}
-			//If the port is over allocated
-			else if(curCounter->m_portCounters[j].m_count < (-curCounter->m_portCounters[j].m_increment))
-			{
-				overPopulatedPorts.push_back(&curCounter->m_portCounters[j]);
-			}
-		}
-
-		//Get the avg number of ports per node to prevent adding to many ports to a single node
-		double avg_ports = 0;
-		for(unsigned int j = 0; j < curCounter->m_profile.m_ports.size(); j++)
-		{
-			avg_ports += curCounter->m_profile.m_ports[j].second.second;
-		}
-
-		//If we have ports that need adjustment on the profile
-		while(!underPopulatedPorts.empty())
-		{
-			PortCounter *lowPCounter = underPopulatedPorts.back();
-			underPopulatedPorts.pop_back();
-
-			Port *lowPort = &m_hdconfig->m_ports[lowPCounter->m_portName];
-			NodeProfile * curProfile = &m_hdconfig->m_profiles[curCounter->m_profile.m_name];
-			if(curProfile->m_nodeKeys.empty())
-			{
-				break;
-			}
-			for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
-			{
-				Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
-				for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
-				{
-					Port *nodePort = &m_hdconfig->m_ports[curNode->m_ports[k]];
-
-					//If this port is a match
-					if(!curNode->m_ports[k].compare(lowPort->m_portName))
+					string behaviorStr = "block";
+					if((!nodePort->m_type.compare("TCP")) && (!curProfile->m_tcpAction.compare("reset")))
 					{
-						string behaviorStr = "block";
-						if((!nodePort->m_type.compare("TCP")) && (!curProfile->m_tcpAction.compare("reset")))
-						{
-							behaviorStr = "reset";
-						}
-						curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
-						curNode->m_isPortInherited[k] = false;
-						// -= 1 - m_increment for port addition, -= m_increment for removing a blocked port
-						lowPCounter->m_count--;
+						behaviorStr = "reset";
 					}
+					curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
+					curNode->m_isPortInherited[k] = false;
+					// -= 1 - m_increment for port addition, -= m_increment for removing a blocked port
+					lowPCounter->m_count--;
 				}
-			}
-			//If the vendor is still under allocated
-			if(lowPCounter->m_count < (-lowPCounter->m_increment))
-			{
-				underPopulatedPorts.push_back(lowPCounter);
 			}
 		}
-		while(!overPopulatedPorts.empty())
+		//If the vendor is still under allocated
+		if(lowPCounter->m_count < (-lowPCounter->m_increment))
 		{
-			//Get the first pairing
-			PortCounter *highPCounter = overPopulatedPorts.back();
-			overPopulatedPorts.pop_back();
+			underPopulatedPorts.push_back(lowPCounter);
+		}
+	}
+	while(!overPopulatedPorts.empty())
+	{
+		//Get the first pairing
+		PortCounter *highPCounter = overPopulatedPorts.back();
+		overPopulatedPorts.pop_back();
 
-			Port *highPort = &m_hdconfig->m_ports[highPCounter->m_portName];
+		Port *highPort = &m_hdconfig->m_ports[highPCounter->m_portName];
 
-			NodeProfile * curProfile = &m_hdconfig->m_profiles[curCounter->m_profile.m_name];
-			if(curProfile->m_nodeKeys.empty())
+		NodeProfile * curProfile = &m_hdconfig->m_profiles[targetProfile->m_profile.m_name];
+		if(curProfile->m_nodeKeys.empty())
+		{
+			break;
+		}
+		for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
+		{
+			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
+			for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
 			{
-				break;
-			}
-			for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
-			{
-				Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
-				for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
+				Port *nodePort = &m_hdconfig->m_ports[curNode->m_ports[k]];
+
+				//If this port is a match
+				if(!curNode->m_ports[k].compare(highPort->m_portName))
 				{
-					Port *nodePort = &m_hdconfig->m_ports[curNode->m_ports[k]];
-
-					//If this port is a match
-					if(!curNode->m_ports[k].compare(highPort->m_portName))
+					string behaviorStr = "block";
+					if((!nodePort->m_type.compare("TCP")) && (!curProfile->m_tcpAction.compare("reset")))
 					{
-						string behaviorStr = "block";
-						if((!nodePort->m_type.compare("TCP")) && (!curProfile->m_tcpAction.compare("reset")))
-						{
-							behaviorStr = "reset";
-						}
-						curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
-						curNode->m_isPortInherited[k] = false;
-						// += m_increment for blocking port , += (1-m_increment) for removing a used port
-						highPCounter->m_count++;
+						behaviorStr = "reset";
 					}
+					curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
+					curNode->m_isPortInherited[k] = false;
+					// += m_increment for blocking port , += (1-m_increment) for removing a used port
+					highPCounter->m_count++;
 				}
 			}
-			//If the vendor is still over allocated
-			if(highPCounter->m_count > (1 - highPCounter->m_increment))
-			{
-				overPopulatedPorts.push_back(highPCounter);
-			}
+		}
+		//If the vendor is still over allocated
+		if(highPCounter->m_count > (1 - highPCounter->m_increment))
+		{
+			overPopulatedPorts.push_back(highPCounter);
 		}
 	}
 	return true;
