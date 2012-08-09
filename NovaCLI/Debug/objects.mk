@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lNovaLibrary -lNova_UI_Core -lpcap -lnotify -lann -lpthread -lcurl -lgcov
+LIBS := -lNovaLibrary -lNova_UI_Core -lpcap -lnotify -lann -lpthread -lcurl
 
