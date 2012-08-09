@@ -230,7 +230,6 @@ install-data: install-hhconfig
 	mkdir -p $(DESTDIR)/usr/bin
 	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
 	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
-	cp -fup  Installer/Write/nova_mailer $(DESTDIR)/usr/bin
 	install Installer/nova_init $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
