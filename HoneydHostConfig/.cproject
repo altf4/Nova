@@ -133,6 +133,7 @@
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="notify"/>
+									<listOptionValue builtIn="false" value="gcov"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1469888546" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Release/"/>

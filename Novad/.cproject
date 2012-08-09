@@ -50,6 +50,7 @@
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="sqlite3"/>
+									<listOptionValue builtIn="false" value="gcov"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.909663843" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.463108494" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
