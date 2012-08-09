@@ -1,6 +1,21 @@
- #!/bin/bash
+#!/bin/bash
+
+cleanup()
+{
+	echo "Quitting debian package generation..."
+	if [ -f Makefile.tmp ]
+	then
+		echo "Fixing Makefile..."
+		rm -f Makefile
+		mv Makefile.tmp Makefile
+	fi
+	echo "Finished"
+	exit 0
+}
 
 set -e
+
+trap cleanup SIGINT
 
 #Assert root user
 if [ $USER != "root" ]; then
