@@ -205,12 +205,12 @@ int main(int argc, char ** argv)
 			}
 		}
 
-		cout << "Scanning following subnets: " << '\n';
+		cout << "Scanning following subnets: " << endl;
 		for(uint i = 0; i < subnetNames.size(); i++)
 		{
-			cout << "\t" << subnetNames[i] << '\n';
+			cout << "\t" << subnetNames[i] << endl;
 		}
-		cout << '\n';
+		cout << endl;
 
 		errVar = LoadPersonalityTable(subnetNames);
 

@@ -329,8 +329,8 @@ function renderBasicOptions(jadefile, res, req) {
     }
     
     var doppelPass = [];
-    //all = config.ListLoopbacks().sort();
-    all = config.ListLoopbacks.sort();
+    
+    all = config.ListLoopbacks().sort();
     used = config.GetDoppelInterface();
     
     for(var i in all)
@@ -732,7 +732,7 @@ app.get('/nodeReview', passport.authenticate('basic', { session: false }), funct
 	}})
 });
 
-app.post('/scanning', passport.authenticate('basic', { session: false }), function(req, res){
+/*app.post('/scanning', passport.authenticate('basic', { session: false }), function(req, res){
   var numNodes = req.body["numNodes"];
   
   var subnets = req.body["subnets"];
@@ -751,10 +751,10 @@ app.post('/scanning', passport.authenticate('basic', { session: false }), functi
     console.log("No additional subnets selected.");
   }
   
-  
+  // should probably find this better
   if(!path.existsSync("/usr/bin/honeydhostconfig"))
   {
-    console.log("HoneydHostConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
+    console.log("HoneydHostConfig binary not found. Redirect to /autoConfig.");
     res.render('hhautoconfig.jade', {locals: {user: req.user, INTERFACES: config.ListInterfaces().sort(), SCANERROR: "HoneydHostConfig binary not found, scan cancelled"}});
   }
   else if((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined))
@@ -763,11 +763,11 @@ app.post('/scanning', passport.authenticate('basic', { session: false }), functi
   }
   else
   {
-    hhconfig.RunAutoScan(numNodes, interfaces, subnets);
+    //hhconfig.RunAutoScan(numNodes, interfaces, subnets);  
   
     res.redirect('/nodeReview'); 
   }
-});
+});*/
 
 app.post('/customizeTrainingSave', passport.authenticate('basic', { session: false }), function(req, res){
   for(var uid in req.body)
@@ -1416,6 +1416,47 @@ everyone.now.ClearHostileEvents = function(callback) {
 		callback("true");
 	} 
   );
+}
+
+everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback) {
+	var iFlag = "-i";
+	var aFlag = "-a";
+	var nFlag = "-n";
+	
+	var hhconfigArgs = new Array();
+	
+	var syscall = "honeydhostconfig ";
+	if(numNodes !== undefined && parseInt(numNodes) >= 0)
+	{
+		syscall += "-n " + numNodes + " ";
+		hhconfigArgs.push(nFlag);
+		hhconfigArgs.push(numNodes);
+	}
+	if(interfaces !== undefined && interfaces.length > 0)
+	{
+		syscall += "-i " + interfaces + " ";
+		hhconfigArgs.push(iFlag);
+		hhconfigArgs.push(interfaces);
+	}
+	if(subnets !== undefined && subnets.length > 0)
+	{
+		syscall += "-a " + subnets + " ";
+		hhconfigArgs.push(aFlag);
+		hhconfigArgs.push(subnets);
+	}
+	console.log(syscall + " is what would be sent to hhconfig.RunAutoScan");
+
+    var sys = require('sys'),
+        spawn = require('child_process').spawn;
+	
+	console.log("hhconfigArgs: " + hhconfigArgs);
+	
+    var test = spawn('honeydhostconfig', hhconfigArgs);
+
+    test.stdout.on('data', function(data){
+    	//every time stdout gets new info, calls callback again
+    	callback("stdout: " + data);
+    });
 }
 
 everyone.now.ClearHostileEvent = function(id, callback) {
