@@ -190,6 +190,11 @@ bool NodeManager::GenerateNodes(int num_nodes)
 				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
 				{
 					MacCounter *curCounter = &m_profileCounters[j].m_macCounters[k];
+					if(curCounter == NULL)
+					{
+						LOG(ERROR, "Unable to retrieve expected MacCounter.", "");
+						return false;
+					}
 					//If we're skipping this vendor
 					if(curCounter->m_count < 0)
 					{
@@ -229,6 +234,12 @@ bool NodeManager::GenerateNodes(int num_nodes)
 				{
 					unsigned int randIndex = time(NULL) % portCounters.size();
 					PortCounter *curCounter = portCounters[randIndex];
+					if(curCounter == NULL)
+					{
+						LOG(ERROR, "Unable to retrieve expected PortCounter.", "");
+						return false;
+					}
+
 					portCounters.erase(portCounters.begin() + randIndex);
 					NodeProfile* p = m_hdconfig->GetProfile(curNode.m_pfile);
 					if(p == NULL)
@@ -289,8 +300,18 @@ bool NodeManager::GenerateNodes(int num_nodes)
 				{
 					unsigned int randIndex = time(NULL) % portCounters.size();
 					PortCounter *curCounter = portCounters[randIndex];
+					if(curCounter == NULL)
+					{
+						LOG(ERROR, "Unable to retrieve expected PortCounter.", "");
+						return false;
+					}
 					portCounters.erase(portCounters.begin() + randIndex);
 					NodeProfile* p = m_hdconfig->GetProfile(curNode.m_pfile);
+					if(p == NULL)
+					{
+						LOG(ERROR, "Unable to retrieve expected NodeProfile '" + curNode.m_pfile + "'.", "");
+						return false;
+					}
 
 					curCounter->m_count += curCounter->m_increment;
 
@@ -384,6 +405,11 @@ bool NodeManager::RemoveNodes(int num_nodes)
 			}
 		}
 		ProfileCounter *pCounter = &m_profileCounters[indexOfCounter];
+		if(pCounter == NULL)
+		{
+			LOG(ERROR, "Unable to retrieve expected ProfileCounter.", "");
+			return false;
+		}
 
 		//If we have no macCounters
 		if(pCounter->m_macCounters.empty())
@@ -410,6 +436,12 @@ bool NodeManager::RemoveNodes(int num_nodes)
 			}
 
 			Node *lastNode = &nodesToDelete.back();
+			if(lastNode == NULL)
+			{
+				LOG(ERROR, "Unable to retrieve expected Node for deletion.", "");
+				return false;
+			}
+
 			//Track ports
 			for(unsigned int j = 0; j < lastNode->m_ports.size(); j++)
 			{
@@ -503,6 +535,11 @@ bool NodeManager::RemoveNodes(int num_nodes)
 			}
 
 			Node *lastNode = &nodesToDelete.back();
+			if(lastNode == NULL)
+			{
+				LOG(ERROR, "Unable to retrieve expected Node for deletion.", "");
+				continue;
+			}
 			//Track ports
 			for(unsigned int j = 0; j < lastNode->m_ports.size(); j++)
 			{
@@ -629,6 +666,11 @@ bool NodeManager::AdjustNodesToTargetDistributions()
 	for(unsigned int i = 0; i < m_profileCounters.size(); i++)
 	{
 		ProfileCounter *curCounter = &m_profileCounters[i];
+		if(curCounter == NULL)
+		{
+			LOG(ERROR, "Unable to retrieve valid profile counter.", "");
+			return false;
+		}
 		if(!AdjustMACVendors(curCounter))
 		{
 			LOG(ERROR, "Unable to adjust Honeyd node MAC Vendors.", "");
@@ -698,8 +740,17 @@ bool NodeManager::AdjustProfiles(int targetNodeCount)
 
 		//Grab a pointer to the real profile for modification
 		NodeProfile *lowProf = &m_hdconfig->m_profiles[lowCounter->m_profile.m_name];
+		if(lowProf == NULL)
+		{
+			LOG(ERROR, "Unable to retrieve expected profile '" +lowCounter->m_profile.m_name + "'.", "");
+			return false;
+		}
 		NodeProfile *highProf = &m_hdconfig->m_profiles[highCounter->m_profile.m_name];
-
+		if(highProf == NULL)
+		{
+			LOG(ERROR, "Unable to retrieve expected profile '" + highCounter->m_profile.m_name + "'.", "");
+			return false;
+		}
 		//If we have at least one eth vendor
 		if(!highCounter->m_macCounters.empty() && !lowCounter->m_macCounters.empty())
 		{
@@ -732,6 +783,11 @@ bool NodeManager::AdjustProfiles(int targetNodeCount)
 			for(unsigned int i = 0; i < highProf->m_nodeKeys.size(); i++)
 			{
 				curNode = &m_hdconfig->m_nodes[highProf->m_nodeKeys[i]];
+				if(curNode == NULL)
+				{
+					LOG(ERROR, "Unable to retrieve expected node in node profile '" + highProf->m_nodeKeys[i] + "'.", "");
+					return false;
+				}
 
 				//Lookup and try to match the mac vendor
 				uint macPrefix = m_hdconfig->m_macAddresses.AtoMACPrefix(curNode->m_MAC);
@@ -772,9 +828,19 @@ bool NodeManager::AdjustProfiles(int targetNodeCount)
 					for(unsigned int j = 0; j < lowCounter->m_portCounters.size(); j++)
 					{
 						Port *lowPort = &m_hdconfig->m_ports[lowCounter->m_portCounters[j].m_portName];
+						if(lowPort == NULL)
+						{
+							LOG(ERROR, "Unable to retrieve expected port '" + lowCounter->m_portCounters[j].m_portName + "'.", "");
+							return false;
+						}
 						for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
 						{
 							Port *curPort = &m_hdconfig->m_ports[curNode->m_ports[k]];
+							if(curPort == NULL)
+							{
+								LOG(ERROR, "Unable to retrieve expected port '" + curNode->m_ports[k] + "'.", "");
+								return false;
+							}
 
 							//If the current node port is the same protocol and number as the counter
 							if((!curPort->m_type.compare(lowPort->m_type)) && (!curPort->m_portNum.compare(lowPort->m_portNum)))
@@ -797,6 +863,11 @@ bool NodeManager::AdjustProfiles(int targetNodeCount)
 					for(unsigned int j = 0; j < highCounter->m_portCounters.size(); j++)
 					{
 						Port *curPort = &m_hdconfig->m_ports[highCounter->m_portCounters[j].m_portName];
+						if(curPort == NULL)
+						{
+							LOG(ERROR, "Unable to retrieve expected port '" + highCounter->m_portCounters[j].m_portName + "'.", "");
+							return false;
+						}
 						//If we're adding the port
 						if(highCounter->m_portCounters[j].m_count > 0)
 						{
@@ -908,6 +979,11 @@ bool NodeManager::AdjustMACVendors(ProfileCounter *targetProfile)
 
 		//Get the profile and search for a node using the overpopulated vendor
 		NodeProfile * curProfile = &m_hdconfig->m_profiles[targetProfile->m_profile.m_name];
+		if(curProfile == NULL)
+		{
+			LOG(ERROR, "Unable to retrieve expected profile '" + targetProfile->m_profile.m_name + "'.", "");
+			return false;
+		}
 		if(curProfile->m_nodeKeys.empty())
 		{
 			break;
@@ -915,6 +991,11 @@ bool NodeManager::AdjustMACVendors(ProfileCounter *targetProfile)
 		for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
 		{
 			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
+			if(curNode == NULL)
+			{
+				LOG(ERROR, "Unable to retrieve expected node in target profile '" + targetProfile->m_profile.m_name + "'.", "");
+				return false;
+			}
 			string vendor = m_hdconfig->m_macAddresses.LookupVendor(m_hdconfig->m_macAddresses.AtoMACPrefix(curNode->m_MAC));
 
 			if(!vendor.compare(highVCounter->m_ethVendor))
