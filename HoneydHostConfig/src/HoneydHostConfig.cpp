@@ -169,6 +169,7 @@ int main(int argc, char ** argv)
 		LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
 		if(!LoadNmapXML(nmapFileName))
 		{
+			LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			exit(HHC_CODE_PARSING_ERROR);
@@ -452,12 +453,22 @@ bool Nova::LoadNmapXML(const string &filename)
 	}
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 	{
-		LOG(DEBUG, "Couldn't parse XML file : " + string(e.what()) + ".", "");
+		LOG(ERROR, "Couldn't parse XML file (bad path): " + string(e.what()) + ".", "");
 		return false;
 	}
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::xml_parser::xml_parser_error> > &e)
 	{
-		LOG(ERROR, "Couldn't parse from file " + filename + ": " + string(e.what()) + ".", "");
+		LOG(ERROR, "Couldn't parse from file (parser error)" + filename + ": " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_data> > &e)
+	{
+		LOG(DEBUG, "Couldn't parse XML file (bad data): " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch(exception &e)
+	{
+		LOG(ERROR, "Unknown exception (parsing XML): " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
@@ -491,7 +502,12 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
 			LOG(DEBUG, string("Caught Exception : ") + e.what(), "");
-			//return PARSINGERROR;
+			return HHC_CODE_PARSING_ERROR;
+		}
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_data> > &e)
+		{
+			LOG(DEBUG, string("Caught Exception : ") + e.what(), "");
+			return HHC_CODE_PARSING_ERROR;
 		}
 		ss.str("");
 	}
