@@ -123,10 +123,7 @@ block headerAdditions
         { 
             document.getElementById("startScan").value='Scanning...'; 
             document.getElementById("startScan").setAttribute('disabled', 'true');
-            GetNumNodes();
-            GetInterfaces();
-            GetSubnets(); 
-            now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb); 
+            now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
         } 
         else
         {
@@ -185,8 +182,12 @@ block headerAdditions
 
     function autoscancb(text)
     {
-        // write text out to html
         console.log(text);
+    }
+    
+    function routeToReview(redirect)
+    {
+        window.location = redirect.toString();
     }
 
 block content
