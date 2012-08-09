@@ -18,7 +18,7 @@
 //               for the Personality object.
 //============================================================================
 
-#include "AutoConfigHashMaps.h"
+#include "HoneydConfiguration/AutoConfigHashMaps.h"
 
 namespace Nova
 {

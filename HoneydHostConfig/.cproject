@@ -49,16 +49,16 @@
 							</tool>
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.base.1147952141" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.libs.1472934550" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="pcap"/>
 									<listOptionValue builtIn="false" value="boost_program_options"/>
-									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="notify"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1743265924" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="../../Nova_UI_Core/Debug/"/>
+									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug/"/>
 								</option>
 								<option defaultValue="true" id="gnu.cpp.link.option.shared.1595641096" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.628944833" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -128,14 +128,14 @@
 								<option id="gnu.cpp.link.option.libs.850481936" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="pcap"/>
 									<listOptionValue builtIn="false" value="boost_program_options"/>
-									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
+									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="notify"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1469888546" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="../../Nova_UI_Core/Release/"/>
+									<listOptionValue builtIn="false" value="../../NovaLibrary/Release/"/>
 								</option>
 								<option defaultValue="true" id="gnu.cpp.link.option.shared.881770940" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.251743673" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

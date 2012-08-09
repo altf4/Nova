@@ -10,6 +10,13 @@
 *.d
 *.out
 
+
+# gcov coverage report files
+*.gcno
+*.gcna
+*.gcda
+
+
 # Packages #
 ############
 # it's better to unpack these files and commit the raw source
@@ -155,3 +162,4 @@ debian/nova/*
 /misc/ROCGraphGenerator/output.txt
 /Nova_UI_Core/.settings/org.eclipse.cdt.codan.core.prefs
 /HoneydHostConfig/honeydhostconfig
+/HoneydHostConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs

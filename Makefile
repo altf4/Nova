@@ -1,24 +1,26 @@
 
 #The default build should be a release build
 all: release
-	
+
+all-the-things: release 
+	$(MAKE) novagui-release 
+	$(MAKE) web
+
 #Release Target
 release:
 	$(MAKE) novalib-release
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
-	$(MAKE) hhconfig-release
 
-release-helper: novad-release novacli-release novatrainer-release
+release-helper: novad-release novacli-release novatrainer-release hhconfig-release
 
 #Debug target
 debug:
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
-	$(MAKE) hhconfig-debug
 
-debug-helper: novad-debug novacli-debug novatrainer-debug
+debug-helper: novad-debug novacli-debug novatrainer-debug hhconfig-debug
 
 #Nova Library
 novalib-release:
@@ -88,6 +90,11 @@ hhconfig-debug:
 	$(MAKE) -C HoneydHostConfig/Debug
 	cp HoneydHostConfig/Debug/honeydhostconfig HoneydHostConfig/
 
+coverageTests: test-prepare
+	$(MAKE) -C NovaLibrary/Coverage
+	$(MAKE) -C Nova_UI_Core/Coverage
+	$(MAKE) -C NovaTest/Coverage
+
 #Unit tests
 test: debug test-prepare
 	$(MAKE) -C NovaTest/Debug
@@ -104,40 +111,71 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-# Make debug + test
-all-test: test
+clean: clean-lib clean-ui-core clean-novad clean-novagui clean-test clean-hhconfig clean-web clean-novatrainer clean-staging
+	
 
-#Cleans both Release and Debug
-clean: clean-debug clean-release clean-test
-	rm -f Installer/Read/manpages/*.gz
-	#remove binaries from staging area
+#remove binaries from staging area
+clean-staging:
 	rm -f NovaCLI/novacli
 	rm -f NovaGUI/novagui
 	rm -f Novad/novad
 	rm -f Nova_UI_Core/libNova_UI_Core.so
 	rm -f NovaLibrary/libNovaLibrary.a
 
-clean-debug:
-	$(MAKE) -C NovaLibrary/Debug clean
-	$(MAKE) -C Nova_UI_Core/Debug clean
+#Removes created man pages
+clean-man:
+	rm -f Installer/Read/manpages/*.gz
+
+clean-novad: clean-novad-debug clean-novad-release
+
+clean-novad-debug:
 	$(MAKE) -C Novad/Debug clean
-	$(MAKE) -C NovaCLI/Debug clean
-	$(MAKE) -C NovaTrainer/Debug clean
-	$(MAKE) -C HoneydHostConfig/Debug clean
-	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI debug-clean
+
+clean-novad-release:
+	$(MAKE) -C Novad/Release clean
+
+clean-ui-core: clean-ui-core-debug clean-ui-core-release clean-ui-core-coverage
+
+clean-ui-core-debug:
+	$(MAKE) -C Nova_UI_Core/Debug clean
 	rm -f Nova_UI_Core/Debug/Nova_UI_Core
 
-clean-release:
-	$(MAKE) -C NovaLibrary/Release clean
+clean-ui-core-release:
 	$(MAKE) -C Nova_UI_Core/Release clean
-	$(MAKE) -C Novad/Release clean
+	rm -f Nova_UI_Core/Release/Nova_UI_Core
+
+clean-ui-core-coverage:
+	$(MAKE) -C Nova_UI_Core/Coverage clean
+	rm -f Nova_UI_Core/Coverage/Nova_UI_Core
+
+clean-lib: clean-lib-debug clean-lib-release clean-lib-coverage
+	
+clean-lib-debug:
+	$(MAKE) -C NovaLibrary/Debug clean
+
+clean-lib-release:
+	$(MAKE) -C NovaLibrary/Release clean
+
+clean-lib-coverage:
+	$(MAKE) -C NovaLibrary/Coverage clean
+
+clean-cli: clean-cli-debug clean-cli-release
+
+clean-cli-debug:
+	$(MAKE) -C NovaCLI/Debug clean
+
+clean-cli-release:
 	$(MAKE) -C NovaCLI/Release clean
-	$(MAKE) -C NovaTrainer/Release clean
-	$(MAKE) -C HoneydHostConfig/Release clean
+
+clean-novagui: clean-novagui-debug clean-novagui-release
+
+clean-novagui-debug:
+	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
+	$(MAKE) -C NovaGUI debug-clean
+
+clean-novagui-release:
 	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
 	$(MAKE) -C NovaGUI release-clean
-	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
 clean-test:
 	rm -fr NovaTest/NovadSource/*
@@ -148,12 +186,14 @@ clean-test:
 	$(MAKE) -C NovaTest/Debug clean
 
 clean-web:
-	cd NovaWeb/NodeNovaConfig; node-waf clean
+	-cd NovaWeb/NodeNovaConfig; node-waf clean
 	rm -rf NovaWeb/node_modules/forever/node_modules/utile/node_modules/.bin/
 	rm -rf NovaWeb/node_modules/forever/node_modules/.bin
 	rm -rf NovaWeb/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
 	rm -rf NovaWeb/node_modules/.bin/
 
+clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
+	
 clean-hhconfig-debug:
 	$(MAKE) -C HoneydHostConfig/Debug clean
 
@@ -161,15 +201,18 @@ clean-hhconfig-release:
 	$(MAKE) -C HoneydHostConfig/Release clean
 
 
+clean-novatrainer: clean-novatrainer-debug clean-novatrainer-release
+
+clean-novatrainer-debug:
+	$(MAKE) -C NovaTrainer/Debug clean
+
+clean-novatrainer-release:
+	$(MAKE) -C NovaTrainer/Release clean
+
 #Installation (requires root)
-install: install-data install-docs
+install: install-data install-docs install-cli install-novad install-ui-core install-hhconfig install-novagui install-novatrainer
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	-install NovaGUI/novagui $(DESTDIR)/usr/bin
-	install NovaCLI/novacli $(DESTDIR)/usr/bin
-	install Novad/novad $(DESTDIR)/usr/bin
-	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 	sh debian/postinst
 
 install-data: install-hhconfig
@@ -225,6 +268,22 @@ install-hhconfig:
 	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
 	-install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 
+install-novad:
+	install Novad/novad $(DESTDIR)/usr/bin
+
+install-ui-core:
+	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
+
+install-cli:
+	install NovaCLI/novacli $(DESTDIR)/usr/bin
+
+install-novagui:
+	-install NovaGUI/novagui $(DESTDIR)/usr/bin
+
+install-novatrainer:
+	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
+
+
 #Uninstall
 uninstall: uninstall-files uninstall-permissions
 
@@ -248,7 +307,6 @@ uninstall-files:
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 
 uninstall-permissions:
-	# TODO: Fix this, it apparently takes arguments now
 	sh debian/postrm
 
 # Reinstall nova without messing up the permissions

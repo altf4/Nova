@@ -6,41 +6,26 @@
 CPP_SRCS += \
 ../src/CallbackHandler.cpp \
 ../src/Connection.cpp \
-../src/HoneydConfiguration.cpp \
-../src/NodeManager.cpp \
 ../src/NovadControl.cpp \
-../src/OsPersonalityDb.cpp \
-../src/ScriptsTable.cpp \
 ../src/StatusQueries.cpp \
 ../src/TrainingData.cpp \
-../src/TrainingDump.cpp \
-../src/VendorMacDb.cpp 
+../src/TrainingDump.cpp 
 
 OBJS += \
 ./src/CallbackHandler.o \
 ./src/Connection.o \
-./src/HoneydConfiguration.o \
-./src/NodeManager.o \
 ./src/NovadControl.o \
-./src/OsPersonalityDb.o \
-./src/ScriptsTable.o \
 ./src/StatusQueries.o \
 ./src/TrainingData.o \
-./src/TrainingDump.o \
-./src/VendorMacDb.o 
+./src/TrainingDump.o 
 
 CPP_DEPS += \
 ./src/CallbackHandler.d \
 ./src/Connection.d \
-./src/HoneydConfiguration.d \
-./src/NodeManager.d \
 ./src/NovadControl.d \
-./src/OsPersonalityDb.d \
-./src/ScriptsTable.d \
 ./src/StatusQueries.d \
 ./src/TrainingData.d \
-./src/TrainingDump.d \
-./src/VendorMacDb.d 
+./src/TrainingDump.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

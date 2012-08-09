@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include "HoneydProfileBinding.h"
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 
 using namespace std;
 using namespace v8;

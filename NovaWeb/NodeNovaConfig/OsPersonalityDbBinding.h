@@ -4,7 +4,7 @@
 #include <node.h>
 #include <v8.h>
 #include "v8Helper.h"
-#include "OsPersonalityDb.h"
+#include "HoneydConfiguration/OsPersonalityDb.h"
 
 class OsPersonalityDbBinding : public node::ObjectWrap {
 public:

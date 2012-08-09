@@ -5,7 +5,7 @@
 #include <QtGui/QSpinBox>
 #include <QtGui/QLineEdit>
 #include "ui_ipRangeSelectionForm.h"
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 
 class MaskSpinBox : public QSpinBox
 {

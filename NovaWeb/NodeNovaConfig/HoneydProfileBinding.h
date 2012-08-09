@@ -4,7 +4,7 @@
 #include <node.h>
 #include <v8.h>
 #include "v8Helper.h"
-#include "NovaGuiTypes.h"
+#include "HoneydConfiguration/HoneydConfigTypes.h"
 
 class HoneydProfileBinding : public node::ObjectWrap {
  public:
