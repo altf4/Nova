@@ -2025,7 +2025,7 @@ void HoneydConfiguration::CleanPorts()
 	}
 }
 
-ScriptTable HoneydConfiguration::GetScriptTable()
+ScriptTable &HoneydConfiguration::GetScriptTable()
 {
 	return m_scripts;
 }

@@ -62,10 +62,10 @@ public:
 	std::string m_osclass;
 
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
-	MAC_Table m_vendors;
+	MACVendorMap m_vendors;
 
 	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
-	PortsTable m_ports;
+	PortServiceMap m_ports;
 
 	//returns a string representation of node, does not print anything about the children
 	std::string ToString();

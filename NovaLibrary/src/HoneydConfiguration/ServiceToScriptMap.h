@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Header file for the ScriptsTable class. Provides
+// Description : Header file for the ServiceToScriptMap class. Provides
 //               declarations of functions and member variables for
 //               the class.
 //============================================================================
@@ -25,45 +25,44 @@
  * with appropriate scripts versus just an open port
 */
 
-#ifndef SCRIPTSTABLE_H_
-#define SCRIPTSTABLE_H_
+#ifndef ServiceToScriptMap_H_
+#define ServiceToScriptMap_H_
 
 #include "AutoConfigHashMaps.h"
-#include "HoneydConfigTypes.h"
 
 namespace Nova
 {
-class ScriptsTable
+class ServiceToScriptMap
 {
 public:
 
 	//Default constructor. Just sets the empty and deleted
 	// key for the m_scripts member HashMap.
-	ScriptsTable();
+	ServiceToScriptMap();
 
 	//This constructor is meant to take a HoneydConfiguration object's
 	// ScriptTable (after it's read from the XML) and using select values
 	// in the script structs within the table, populate the m_scripts
 	// member variable.
-	ScriptsTable(ScriptTable pull);
+	ServiceToScriptMap(ScriptTable *targetScriptTable);
 
 	//Deconstructor. Does nothing special right now.
-	~ScriptsTable();
+	~ServiceToScriptMap();
 
 	//This method will essentially do what the second constructor
 	// will do, but any time you want. Mainly used for cases
-	// where you've instantiated the ScriptsTable object but
+	// where you've instantiated the ServiceToScriptMap object but
 	// used the default constructor instead of the second one.
-	void PopulateScriptsTable(ScriptTable pull);
+	bool PopulateServiceToScriptMap(ScriptTable *targetScriptTable);
 
 	//Prints out the contents of the scripts table in a nice,
 	// debug format.
-	void PrintScriptsTable();
+	std::string ToString();
 
-	Scripts_Table GetScriptsTable();
+	std::vector<Nova::Script> GetScripts(std::string);
 
 private:
-	Scripts_Table m_scripts;
+	ServiceTable m_serviceMap;
 
 };
 }

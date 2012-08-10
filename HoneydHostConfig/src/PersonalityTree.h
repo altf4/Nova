@@ -23,7 +23,7 @@
 
 #include "PersonalityNode.h"
 #include "PersonalityTable.h"
-#include "HoneydConfiguration/ScriptsTable.h"
+#include "HoneydConfiguration/ServiceToScriptMap.h"
 
 namespace Nova
 {
@@ -77,20 +77,20 @@ public:
 
 	// Prints each child of the root node in the tree as a string
 	// Returns nothing, takes no arguments.
-	void ToString();
+	std::string DebugString();
 
 	// ToXmlTemplate calls m_hdconfig->SaveAllTemplates().
 	// Returns nothing, takes no arguments.
-	void ToXmlTemplate();
+	bool ToXmlTemplate();
 
 	// Just iterates through m_hdconfig's ProfileTable and prints out the
 	// relevant information. Used for debugging.
 	// Returns nothing, takes no arguments.
-	void DebugPrintProfileTable();
+	std::string ToString();
 
 	// AddAllPorts serves as the starting point for RecursiveAddAllPorts.
 	// Returns nothing, takes no arguments.
-	void AddAllPorts();
+	bool AddAllPorts();
 
 	// AddSubnet acts to pass a subnet to m_hdconfig's AddSubnet method for
 	// classes outsides of PersonalityTree that wish to update its m_hdconfig
@@ -145,21 +145,21 @@ private:
 
 	HoneydConfiguration *m_hdconfig;
 
-	ScriptsTable m_scripts;
+	ServiceToScriptMap m_serviceMap;
 
 	// Recursively prints out the tree structure.
 	//  PersonalityNode &persNode - the node to call toString on and
 	//                       whose children to recurse to next.
 	// Returns nothing.
-	void RecursiveToString(PersonalityNode &persNode);
+	std::string RecursiveToString(PersonalityNode &persNode);
 
 	// RecursiveAddAllPorts, at each node, will add an open version and a script
 	// specific version of each found port for the node.
 	//  PersonalityNode *node - the node whose ports to look at, and change if a script
-	//                      is found in the ScriptsTable that matches the services for
+	//                      is found in the ServiceToScriptMap that matches the services for
 	//                      those ports.
 	// Returns nothing.
-	void RecursiveAddAllPorts(PersonalityNode *node);
+	bool RecursiveAddAllPorts(PersonalityNode *node);
 
 	// Prints out the tree from the root node; rather esoteric and not entirely useful
 	// unless you know the expected parent/child relations within the tree. A testing tool.

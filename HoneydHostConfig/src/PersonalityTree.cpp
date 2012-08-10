@@ -71,7 +71,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_hdconfig->SaveAllTemplates();
 	m_hdconfig->LoadAllTemplates();
 	m_profiles = &m_hdconfig->m_profiles;
-	m_scripts = ScriptTable(m_hdconfig->GetScriptTable());
+	m_serviceMap = ServiceToScriptMap(&m_hdconfig->GetScriptTable());
 
 	if(persTable != NULL)
 	{
@@ -229,14 +229,14 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 
 	tablePair = &parent->m_children[i];
 	//Insert or count port occurrences
-	for(PortsTable::iterator it = pers->m_ports.begin(); it != pers->m_ports.end(); it++)
+	for(PortServiceMap::iterator it = pers->m_ports.begin(); it != pers->m_ports.end(); it++)
 	{
 		tablePair->second->m_ports[it->first].first += it->second.first;
 		tablePair->second->m_ports[it->first].second = it->second.second;
 	}
 
 	//Insert or count MAC vendor occurrences
-	for(MAC_Table::iterator it = pers->m_vendors.begin(); it != pers->m_vendors.end(); it++)
+	for(MACVendorMap::iterator it = pers->m_vendors.begin(); it != pers->m_vendors.end(); it++)
 	{
 		tablePair->second->m_vendors[it->first] += it->second;
 	}
@@ -248,185 +248,198 @@ void PersonalityTree::UpdatePersonality(Personality *pers, PersonalityNode *pare
 	}
 }
 
-void PersonalityTree::ToString()
+string PersonalityTree::ToString()
 {
+	stringstream ss;
 	for(uint i = 0; i < m_root.m_children.size(); i++)
 	{
-		RecursiveToString(*m_root.m_children[i].second);
+		ss << RecursiveToString(*m_root.m_children[i].second);
 	}
+	return ss.str();
 }
 
-void PersonalityTree::RecursiveToString(PersonalityNode &persNode)
+string PersonalityTree::RecursiveToString(PersonalityNode &persNode)
 {
-	LOG(DEBUG, persNode.ToString(), "");
+	stringstream ss;
+	ss << persNode.ToString();
 	for(uint i = 0; i < persNode.m_children.size(); i++)
 	{
-		RecursiveToString(*persNode.m_children[i].second);
+		ss << RecursiveToString(*persNode.m_children[i].second);
 	}
+	return ss.str();
 }
 
-void PersonalityTree::DebugPrintProfileTable()
+string PersonalityTree::DebugString()
 {
+	stringstream ss;
 	for(ProfileTable::iterator it = m_profiles->begin(); it != m_profiles->end(); it++)
 	{
-		cout << '\n';
-		cout << "Profile: " << it->second.m_name << '\n';
-		cout << "Parent: " << it->second.m_parentProfile << '\n';
+		ss << '\n';
+		ss << "Profile: " << it->second.m_name << '\n';
+		ss << "Parent: " << it->second.m_parentProfile << '\n';
 
 		if(!it->second.m_personality.empty())
 		{
-			cout << "Personality: " << it->second.m_personality << '\n';
+			ss << "Personality: " << it->second.m_personality << '\n';
 		}
 		for(uint i = 0; i < it->second.m_ethernetVendors.size(); i++)
 		{
-			cout << "MAC Vendor:  " << it->second.m_ethernetVendors[i].first << " - " << it->second.m_ethernetVendors[i].second	<< "% \n";
+			ss << "MAC Vendor:  " << it->second.m_ethernetVendors[i].first << " - " << it->second.m_ethernetVendors[i].second	<< "% \n";
 		}
 		if(!it->second.m_ports.empty())
 		{
-			cout << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << '\n';
+			ss << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << '\n';
 			for(uint16_t i = 0; i < it->second.m_ports.size(); i++)
 			{
 				cout << "\t" << it->second.m_ports[i].first << ", " << it->second.m_ports[i].second.first << '\n';
 			}
 		}
-		cout << endl;
+		ss << '\n';
 	}
+	return ss.str();
 }
 
-void PersonalityTree::ToXmlTemplate()
+bool PersonalityTree::ToXmlTemplate()
 {
-	m_hdconfig->SaveAllTemplates();
+	return m_hdconfig->SaveAllTemplates();
 }
 
-void PersonalityTree::AddAllPorts()
+bool PersonalityTree::AddAllPorts()
 {
 	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
 	{
-		RecursiveAddAllPorts(m_root.m_children[i].second);
+		if(!RecursiveAddAllPorts(m_root.m_children[i].second))
+		{
+			return false;
+		}
 	}
-	m_hdconfig->SaveAllTemplates();
+	return m_hdconfig->SaveAllTemplates();
 }
 
-void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
+bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 {
 	if(node == NULL)
 	{
-		return;
+		LOG(ERROR, "NULL PersonalityNode passed as paremeter!", "");
+		return false;
 	}
 
-	for(uint16_t i = 0; i < node->m_children.size(); i++)
+	for(unsigned int i = 0; i < node->m_children.size(); i++)
 	{
-		RecursiveAddAllPorts(node->m_children[i].second);
-	}
-
-	for(uint16_t i = 0; i < node->m_ports_dist.size(); i++)
-	{
-		Port pass;
-		Port passOpenVersion;
-
-		vector<string> tokens;
-
-		boost::split(tokens, node->m_ports_dist[i].first, boost::is_any_of("_"));
-
-		passOpenVersion.m_portName = tokens[0] + "_" + tokens[1] + "_open";
-		passOpenVersion.m_portNum = tokens[0];
-		passOpenVersion.m_type = tokens[1];
-		passOpenVersion.m_behavior = tokens[2];
-		m_hdconfig->AddPort(passOpenVersion);
-
-		pass.m_portName = tokens[0] + "_" + tokens[1];
-		pass.m_portNum = tokens[0];
-		pass.m_type = tokens[1];
-
-		bool endIter = false;
-
-		vector<pair<string, uint> > find_closest_match;
-
-		for(PortsTable::iterator it = node->m_ports.begin(); it != node->m_ports.end() && !endIter; it++)
+		if(!RecursiveAddAllPorts(node->m_children[i].second))
 		{
-			if(m_scripts.GetScriptsTable().keyExists(it->second.second) && !(it->first + "_open").compare(node->m_ports_dist[i].first))
+			return false;
+		}
+	}
+
+	for(unsigned int  i = 0; i < node->m_ports_dist.size(); i++)
+	{
+		Port scriptedPort;
+		Port openPort;
+
+		vector<string> portTokens;
+
+		boost::split(portTokens, node->m_ports_dist[i].first, boost::is_any_of("_"));
+
+		openPort.m_portName = portTokens[0] + "_" + portTokens[1] + "_open";
+		openPort.m_portNum = portTokens[0];
+		openPort.m_type = portTokens[1];
+		openPort.m_behavior = portTokens[2];
+		m_hdconfig->AddPort(openPort);
+
+		scriptedPort.m_portName = portTokens[0] + "_" + portTokens[1];
+		scriptedPort.m_portNum = portTokens[0];
+		scriptedPort.m_type = portTokens[1];
+
+		vector<pair<string, uint> > potentialMatches;
+
+		for(PortServiceMap::iterator it = node->m_ports.begin(); it != node->m_ports.end(); it++)
+		{
+			if(!m_serviceMap.GetScripts(it->second.second).empty() && !(it->first + "_open").compare(node->m_ports_dist[i].first))
 			{
-				pass.m_behavior = "script";
-				pass.m_service = it->second.second;
-				vector<string> tokens_osclass;
-				vector<string> tokens_script_osclass;
+				scriptedPort.m_behavior = "script";
+				scriptedPort.m_service = it->second.second;
 
-				for(uint j = 0; j < m_scripts.GetScriptsTable()[it->second.second].size(); j++)
+				vector<string> nodeOSClasses;
+				vector<string> scriptOSClasses;
+
+				vector<Script> potentialScripts = m_serviceMap.GetScripts(it->second.second);
+				for(uint j = 0; j < potentialScripts.size(); j++)
 				{
-					uint count = 0;
+					uint depthOfMatch = 0;
 
-					boost::split(tokens_osclass, node->m_osclass, boost::is_any_of("|"));
-					boost::split(tokens_script_osclass, m_scripts.GetScriptsTable()[it->second.second][j].first, boost::is_any_of("|"));
+					boost::split(nodeOSClasses, node->m_osclass, boost::is_any_of("|"));
+					boost::split(scriptOSClasses, potentialScripts[j].m_osclass, boost::is_any_of("|"));
 
-					for(uint k = 0; k < tokens_osclass.size(); k++)
+					for(uint k = 0; k < nodeOSClasses.size(); k++)
 					{
-						tokens_osclass[k] = boost::trim_left_copy(tokens_osclass[k]);
-						tokens_osclass[k] = boost::trim_right_copy(tokens_osclass[k]);
+						nodeOSClasses[k] = boost::trim_left_copy(nodeOSClasses[k]);
+						nodeOSClasses[k] = boost::trim_right_copy(nodeOSClasses[k]);
 					}
-					for(uint k = 0; k < tokens_script_osclass.size(); k++)
+					for(uint k = 0; k < scriptOSClasses.size(); k++)
 					{
-						tokens_script_osclass[k] = boost::trim_left_copy(tokens_script_osclass[k]);
-						tokens_script_osclass[k] = boost::trim_right_copy(tokens_script_osclass[k]);
+						scriptOSClasses[k] = boost::trim_left_copy(scriptOSClasses[k]);
+						scriptOSClasses[k] = boost::trim_right_copy(scriptOSClasses[k]);
 					}
 
-					if(tokens_osclass.size() < tokens_script_osclass.size())
+					if(nodeOSClasses.size() < scriptOSClasses.size())
 					{
-						for(int k = (int)tokens_osclass.size() - 1; k >= 0; k--)
+						for(int k = (int)nodeOSClasses.size() - 1; k >= 0; k--)
 						{
-							if(!tokens_osclass[k].compare(tokens_script_osclass[k]))
+							if(!nodeOSClasses[k].compare(scriptOSClasses[k]))
 							{
-								count++;
+								depthOfMatch++;
 							}
 						}
 
-						pair<string, uint> push;
-						push.first = m_scripts.GetScriptsTable()[it->second.second][j].second;
-						push.second = count;
-						find_closest_match.push_back(push);
+						pair<string, uint> potentialMatch;
+						potentialMatch.first = potentialScripts[j].m_name;
+						potentialMatch.second = depthOfMatch;
+						potentialMatches.push_back(potentialMatch);
 					}
 					else
 					{
-						for(uint k = 0; k < tokens_script_osclass.size(); k++)
+						for(uint k = 0; k < scriptOSClasses.size(); k++)
 						{
-							if(!tokens_osclass[tokens_osclass.size() - 1 - k].compare(tokens_script_osclass[k]))
+							if(!nodeOSClasses[nodeOSClasses.size() - 1 - k].compare(scriptOSClasses[k]))
 							{
-								count++;
+								depthOfMatch++;
 							}
 						}
 
-						pair<string, uint> push;
-						push.first = m_scripts.GetScriptsTable()[it->second.second][j].second;
-						push.second = count;
-						find_closest_match.push_back(push);
+						pair<string, uint> potentialMatch;
+						potentialMatch.first = potentialScripts[j].m_name;
+						potentialMatch.second = depthOfMatch;
+						potentialMatches.push_back(potentialMatch);
 					}
 				}
 
-				string closestMatch = find_closest_match[0].first;
-				uint max = find_closest_match[0].second;
+				string closestMatch = potentialMatches[0].first;
+				uint highestMatchDepth = potentialMatches[0].second;
 
-				for(uint k = 1; k < find_closest_match.size(); k++)
+				for(uint k = 1; k < potentialMatches.size(); k++)
 				{
-					if(find_closest_match[k].second > max)
+					if(potentialMatches[k].second > highestMatchDepth)
 					{
-						max = find_closest_match[k].second;
-						closestMatch = find_closest_match[k].first;
+						highestMatchDepth = potentialMatches[k].second;
+						closestMatch = potentialMatches[k].first;
 					}
 				}
 
-				pass.m_scriptName = closestMatch;
-				pass.m_portName += "_" + pass.m_scriptName;
+				scriptedPort.m_scriptName = closestMatch;
+				scriptedPort.m_portName += "_" + scriptedPort.m_scriptName;
 
-				vector<string> osclass_copy = tokens_osclass;
-				string name = "";
+				vector<string> nodeOSClassesCopy = nodeOSClasses;
+				string profileName = "";
 
-				if(!node->m_key.compare(osclass_copy[0]))
+				if(!node->m_key.compare(nodeOSClassesCopy[0]))
 				{
 					for(uint k = 0; k < m_hdconfig->GetProfile(node->m_key)->m_ports.size(); k++)
 					{
 						if(!(it->first + "_open").compare(m_hdconfig->GetProfile(node->m_key)->m_ports[k].first))
 						{
-							m_hdconfig->GetProfile(node->m_key)->m_ports[k].first = pass.m_portName;
-							node->m_ports_dist[i].first = pass.m_portName;
+							m_hdconfig->GetProfile(node->m_key)->m_ports[k].first = scriptedPort.m_portName;
+							node->m_ports_dist[i].first = scriptedPort.m_portName;
 						}
 					}
 
@@ -434,42 +447,40 @@ void PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 				}
 				else
 				{
-					while(osclass_copy.size())
+					while(nodeOSClassesCopy.size())
 					{
-						name.append(osclass_copy.back());
+						profileName.append(nodeOSClassesCopy.back());
 						//Here we've matched the profile corresponding to the compressed osclass tokens in name
-						if(m_hdconfig->GetProfile(name) != NULL)
+						if(m_hdconfig->GetProfile(profileName) != NULL)
 						{
 							//modify profile's ports and stuff here
-							for(uint k = 0; k < m_hdconfig->GetProfile(name)->m_ports.size(); k++)
+							for(uint k = 0; k < m_hdconfig->GetProfile(profileName)->m_ports.size(); k++)
 							{
-								if(!(it->first + "_open").compare(m_hdconfig->GetProfile(name)->m_ports[k].first))
+								if(!(it->first + "_open").compare(m_hdconfig->GetProfile(profileName)->m_ports[k].first))
 								{
-									m_hdconfig->GetProfile(name)->m_ports[k].first = pass.m_portName;
-									node->m_ports_dist[i].first = pass.m_portName;
+									m_hdconfig->GetProfile(profileName)->m_ports[k].first = scriptedPort.m_portName;
+									node->m_ports_dist[i].first = scriptedPort.m_portName;
 								}
 							}
-							m_hdconfig->UpdateProfile(name);
-							name = "";
+							m_hdconfig->UpdateProfile(profileName);
+							profileName = "";
 						}
 						else
 						{
-							name.append(" ");
+							profileName.append(" ");
 						}
-						osclass_copy.pop_back();
+						nodeOSClassesCopy.pop_back();
 					}
 				}
-				endIter = true;
+				m_hdconfig->AddPort(scriptedPort);
+				return true;
 			}
 		}
-		if(!endIter)
-		{
-			pass.m_portName += "_" + tokens[2];
-			pass.m_behavior = tokens[2];
-		}
-
-		m_hdconfig->AddPort(pass);
+		scriptedPort.m_portName += "_" + portTokens[2];
+		scriptedPort.m_behavior = portTokens[2];
+		m_hdconfig->AddPort(scriptedPort);
 	}
+	return true;
 }
 
 void PersonalityTree::RecursivePrintTree(PersonalityNode *node)

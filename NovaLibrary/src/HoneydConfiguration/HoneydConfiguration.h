@@ -193,7 +193,7 @@ public:
 		return ret;
 	}
 
-	ScriptTable GetScriptTable();
+	ScriptTable &GetScriptTable();
 
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     bool LoadProfilesFromTree(std::string parent);
