@@ -667,9 +667,11 @@ block headerAdditions
         row += "</select></td>";
 
         row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>"; 
-        options = ["closed", "reset", "open", "script"];
+        options = ["Closed: Drop packet and do not reply", "Reset: Respond with TCP RST or UDP Port Error", "Open: Accept connections", "Script: Emulate service"];
+        var shortOptions = ["closed", "reset", "open", "script"];
         for (j = 0; j < options.length; j++) {
-            if (port.behavior == options[j]) {
+            console.log(port.behavior);
+            if (port.behavior == shortOptions[j]) {
                 row += "<option value='" + j + "' SELECTED>" + options[j] + "</option>";
             } else {
                 row += "<option value='" + j + "'>" + options[j] + "</option>";
@@ -1243,9 +1245,9 @@ block headerAdditions
 block content
   mixin defaultActionBox(i)
     select(id=i)
-      option reset
-      option block
-      option open
+      option Reset: Respond with TCP RST or UDP Port Error
+      option Closed: Drop packet and do not reply
+      option Open: Accept connections
 
   h2 Editing Profile
 

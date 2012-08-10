@@ -214,6 +214,7 @@ install: install-data install-docs install-cli install-novad install-ui-core ins
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	sh debian/postinst
+	-bash Installer/createDatabase.sh
 
 install-data: install-hhconfig
 	#make folder in etc with path locations to nova files
