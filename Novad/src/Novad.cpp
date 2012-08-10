@@ -1187,6 +1187,10 @@ void UpdateAndClassify(const in_addr_t& key)
 
 		LOG(ALERT, "Detected potentially hostile traffic from " + suspectCopy.GetIpString(), "");
 	}
+	else
+	{
+		SendSuspectToUIs(&suspectCopy);
+	}
 
 }
 
