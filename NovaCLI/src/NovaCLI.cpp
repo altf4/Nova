@@ -213,15 +213,7 @@ int main(int argc, const char *argv[])
 		}
 		else
 		{
-			// Some early error checking for the
-			in_addr_t address;
-			if(inet_pton(AF_INET, argv[2], &address) != 1)
-			{
-				cout << "Error: Unable to convert to IP address" << endl;
-				exit(EXIT_FAILURE);
-			}
-
-			ClearSuspectWrapper(address);
+			ClearSuspectWrapper(argv[2]);
 		}
 	}
 
@@ -471,8 +463,8 @@ void PrintSuspectList(enum SuspectListType listType)
 	for(uint i = 0; i < suspects->size(); i++)
 	{
 		in_addr tmp;
-		tmp.s_addr = suspects->at(i);
-		char *address = inet_ntoa(tmp);
+		tmp.s_addr = htonl(suspects->at(i));
+		char *address = inet_ntoa((tmp));
 		cout << address << endl;
 	}
 
@@ -495,7 +487,7 @@ void ClearAllSuspectsWrapper()
 	CloseNovadConnection();
 }
 
-void ClearSuspectWrapper(in_addr_t address)
+void ClearSuspectWrapper(string address)
 {
 	Connect();
 
@@ -505,7 +497,7 @@ void ClearSuspectWrapper(in_addr_t address)
 	}
 	else
 	{
-		cout << "There was an errer when trying to clear the suspect data for this suspect" << endl;
+		cout << "There was an error when trying to clear the suspect data for this suspect" << endl;
 	}
 
 	CloseNovadConnection();

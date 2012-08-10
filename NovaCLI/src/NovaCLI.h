@@ -42,7 +42,7 @@ void StopHaystackWrapper();
 void PrintSuspect(in_addr_t address);
 void PrintAllSuspects(enum SuspectListType listType, bool csv);
 
-void ClearSuspectWrapper(in_addr_t address);
+void ClearSuspectWrapper(std::string address);
 void ClearAllSuspectsWrapper();
 
 void PrintSuspectList(enum SuspectListType listType);

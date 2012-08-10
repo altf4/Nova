@@ -95,6 +95,14 @@ block headerAdditions
     now.AllSuspectsCleared = function() {
       suspectGrid.Clear();
     }
+    
+    now.SuspectCleared = function(suspect) {
+        console.log("Cleared suspect ");
+        console.log(suspect);
+        suspectGrid.DeleteRow(suspect.GetIpString);
+        suspectGrid.Render();
+        return;
+    }
       
     function pad(num) {
         return ("0" + num.toString()).slice(-2);
@@ -115,7 +123,13 @@ block headerAdditions
       
       var row = new Array();
       // This is probably a really bad way to do this...
-      row.push(String(suspect.GetInAddr));
+      var clearButton = "<button onClick='now.ClearSuspect(";
+      clearButton += '"' + suspect.GetIpString + '"';
+      clearButton += "); suspectGrid.DeleteRow(";
+      clearButton += '"' + suspect.GetIpString + '"';
+      clearButton += ");'>Clear</button>";
+      row.push(clearButton);
+      row.push(String(suspect.GetIpString));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
       row.push(String(suspect.GetIsHostile));
@@ -135,7 +149,7 @@ block headerAdditions
          }
 
          if (advancedIpFilter != null) {
-            if (!advancedIpFilter.test(suspect.GetInAddr)) {
+            if (!advancedIpFilter.test(suspect.GetIpString)) {
                 return;
             }
          }
@@ -230,6 +244,7 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = String(#{enabledFeatures});
         var gridStructure = new Array();
+        gridStructure.push({name: "Clear"});
         gridStructure.push({name: "Address"});
         gridStructure.push({name: "Classification", formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen"});
@@ -240,10 +255,10 @@ block headerAdditions
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'));
+        suspectGrid = new NovaGrid(gridStructure, 1, document.getElementById('suspectTable'));
 
         // Sort by classification by default
-        suspectGrid.SetSortByKey(1);
+        suspectGrid.SetSortByKey(2);
 
         theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
         now.sendAllSuspects(now.OnNewSuspect);

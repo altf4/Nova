@@ -53,21 +53,24 @@ Suspect::~Suspect()
 
 string Suspect::GetIpString()
 {
-	return string(inet_ntoa(m_IpAddress));
+	// Not thread safe! inet_ntoa puts result string in global static buffer.
+	//in_addr temp;
+	//temp.s_addr = htonl(m_IpAddress.s_addr);
+	//return string(inet_ntoa(temp));
+
+	stringstream ss;
+	ss << ((m_IpAddress.s_addr & 0xFF000000) >> 24) << ".";
+	ss << ((m_IpAddress.s_addr & 0x00FF0000) >> 16) << ".";
+	ss << ((m_IpAddress.s_addr & 0x0000FF00) >> 8) << ".";
+	ss << ((m_IpAddress.s_addr & 0x000000FF) >> 0);
+	return ss.str();
+
 }
 
 string Suspect::ToString()
 {
 	stringstream ss;
-	if(&m_IpAddress != NULL)
-	{
-		ss << "Suspect: "<< inet_ntoa(m_IpAddress) << "\n";
-	}
-	else
-	{
-		ss << "Suspect: Null IP\n\n";
-	}
-
+	ss << "Suspect: "<< GetIpString() << "\n";
 	ss << " Suspect is ";
 	if(!m_isHostile)
 		ss << "not ";
@@ -102,7 +105,7 @@ void Suspect::ReadEvidence(Evidence *&evidence)
 {
 	if(m_IpAddress.s_addr == 0)
 	{
-		m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+		m_IpAddress.s_addr = evidence->m_evidencePacket.ip_src;
 	}
 
 	Evidence *curEvidence = evidence, *tempEv = NULL;
@@ -126,7 +129,7 @@ void Suspect::ConsumeEvidence(Evidence *&evidence)
 {
 	if(m_IpAddress.s_addr == 0)
 	{
-		m_IpAddress.s_addr = htonl(evidence->m_evidencePacket.ip_src);
+		m_IpAddress.s_addr = evidence->m_evidencePacket.ip_src;
 	}
 
 	Evidence *curEvidence = evidence, *tempEv = NULL;

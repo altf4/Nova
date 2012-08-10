@@ -1038,6 +1038,16 @@ everyone.now.ClearAllSuspects = function(callback)
 	nova.ClearAllSuspects();
 }
 
+everyone.now.ClearSuspect = function(suspect, callback)
+{
+	console.log("Attempting to clear a suspect in main.js");
+
+	nova.CheckConnection();
+	var result = nova.ClearSuspect(suspect);
+
+	if (callback != undefined) {callback(result);}
+}
+
 everyone.now.GetInheritedEthernetList = function(parent, callback)
 {
 	var prof = honeydConfig.GetProfile(parent);
@@ -1445,7 +1455,16 @@ var distributeAllSuspectsCleared = function()
 	everyone.now.AllSuspectsCleared();
 }
 
+var distributeSuspectCleared = function(suspect)
+{
+	var s = new Object;
+	s['GetIpString'] = suspect.GetIpString();
+	console.log("Distribute clear suspect called in main.js: " + suspect.GetIpString());
+	everyone.now.SuspectCleared(s);
+}
+
 nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
+nova.registerOnSuspectCleared(distributeSuspectCleared);
 nova.registerOnNewSuspect(distributeSuspect);
 
 

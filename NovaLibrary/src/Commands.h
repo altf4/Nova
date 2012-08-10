@@ -103,6 +103,8 @@ bool ClearAllSuspects();
 //	returns - true is suspect has been cleared successfully, false on error
 bool ClearSuspect(in_addr_t suspectAddress);
 
+bool ClearSuspect(std::string suspectAddress);
+
 //Asks Novad to reclassify all suspects
 //	returns - true if all suspects have been reclassified, false on error
 bool ReclassifyAllSuspects();

@@ -29,6 +29,7 @@
 #include "SuspectTable.h"
 #include "Lock.h"
 
+#include <sstream>
 #include "pthread.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -253,6 +254,10 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			bool result;
 
+			stringstream ss;
+			ss << "Got a command to erase suspect " << hex << controlMessage.m_suspectAddress;
+			LOG(DEBUG, ss.str(), "");
+
 			result = suspects.Erase(controlMessage.m_suspectAddress);
 
 			if (!result)
@@ -263,7 +268,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			result = suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
 			if (!result)
 			{
-				LOG(DEBUG, "Failed to Erase suspect from the main suspect table.", "");
+				LOG(DEBUG, "Failed to Erase suspect from the unsaved suspect table.", "");
 			}
 
 
@@ -282,6 +287,9 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
 			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
+			stringstream ss2;
+			ss2 << "Sending suspect cleared notification for " << hex << updateMessage->m_IPAddress << endl;
+			LOG(DEBUG, ss2.str(), "");
 			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, socketFD);
 
 			break;
@@ -451,7 +459,7 @@ void SendSuspectToUIs(Suspect *suspect)
 		suspectUpdate.m_suspect = suspect;
 		if(!Message::WriteMessage(&suspectUpdate, sockets[i]))
 		{
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
 
@@ -459,18 +467,18 @@ void SendSuspectToUIs(Suspect *suspect)
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			delete suspectReply;
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
 		if(suspectCallback->m_updateType != UPDATE_SUSPECT_ACK)
 		{
 			delete suspectCallback;
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
 		delete suspectCallback;
-		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+		LOG(DEBUG, string("Sent a suspect to the UI: ")+suspect->GetIpString(), "");
 	}
 }
 

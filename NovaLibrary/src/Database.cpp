@@ -92,7 +92,6 @@ void Database::InsertSuspectHostileAlert(Suspect *suspect)
 	ss << suspect->GetIpString() << "', " << "datetime('now')" << ",";
 	ss << "last_insert_rowid()" << "," << suspect->GetClassification() << ")";
 
-	cout << "Query is: " << ss.str() << endl;
 	char *zErrMsg = 0;
 	int state = sqlite3_exec(db, ss.str().c_str(), callback, 0, &zErrMsg);
 	if (state != SQLITE_OK)
