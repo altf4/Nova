@@ -188,7 +188,7 @@ void update(const in_addr_t& key)
 	}
 
 	//Store in training file if needed
-	trainingFileStream << string(inet_ntoa(suspectCopy.GetInAddr())) << " ";
+	trainingFileStream << suspectCopy.GetIpString() << " ";
 
 	FeatureSet fs = suspectCopy.GetFeatureSet(MAIN_FEATURES);
 	if(fs.m_features[0] != fs.m_features[0] )

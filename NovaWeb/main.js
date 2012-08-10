@@ -1457,8 +1457,10 @@ var distributeAllSuspectsCleared = function()
 
 var distributeSuspectCleared = function(suspect)
 {
-	console.log("Distribute clear suspect called in main.js: " + suspect.GetInAddr());
-	everyone.now.SuspectCleared(suspect);
+	var s = new Object;
+	s['GetIpString'] = suspect.GetIpString();
+	console.log("Distribute clear suspect called in main.js: " + suspect.GetIpString());
+	everyone.now.SuspectCleared(s);
 }
 
 nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);

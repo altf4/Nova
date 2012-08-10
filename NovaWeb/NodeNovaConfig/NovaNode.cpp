@@ -62,6 +62,7 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 	m_callbackRunning = true;
 	do
 	{
+		Suspect *s;
 		cb = callbackHandler.ProcessCallbackMessage();
 		//            LOG(DEBUG,"callback type " + cb.type,"");
 		switch( cb.m_type )
@@ -79,8 +80,10 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 			break;
 
 		case CALLBACK_SUSPECT_CLEARED:
-			cout << "Got suspect clear on callback for " << cb.m_suspect->GetIpString() << endl;
-			HandleSuspectCleared(cb.m_suspect);
+			cout << "Got suspect clear on callback for " << cb.m_suspectIP << endl;
+			s = new Suspect();
+			s->SetIpAddress(cb.m_suspectIP);
+			HandleSuspectCleared(s);
 
 		default:
 			break;
@@ -188,6 +191,7 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetDIM", GetDIM);
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", ClearAllSuspects);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnAllSuspectsCleared", registerOnAllSuspectsCleared );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnSuspectCleared", registerOnSuspectCleared );
@@ -206,7 +210,6 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "IsHaystackUp", (InvokeMethod<bool, Nova::IsHaystackUp>) );
 	//              
 	//              NODE_SET_PROTOTYPE_METHOD(s_ct, "SaveAllSuspects", (InvokeMethod<Boolean, bool, Nova::SaveAllSuspects>) );
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", (InvokeMethod<bool, Nova::ClearAllSuspects>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", (InvokeMethod<bool, std::string, Nova::ClearSuspect>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ReclassifyAllSuspects", (InvokeMethod<bool, Nova::ReclassifyAllSuspects>) );
 
@@ -237,6 +240,17 @@ Handle<Value> NovaNode::GetFeatureNames(const Arguments &)
 	}
 
 	return scope.Close(cvv8::CastToJS(featureNames));
+}
+
+Handle<Value> NovaNode::ClearAllSuspects(const Arguments &)
+{
+	HandleScope scope;
+	
+	HandleAllSuspectsCleared();
+	Nova::ClearAllSuspects();
+
+	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+	return scope.Close(result);
 }
 
 Handle<Value> NovaNode::GetDIM(const Arguments &)

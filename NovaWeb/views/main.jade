@@ -97,23 +97,11 @@ block headerAdditions
     }
     
     now.SuspectCleared = function(suspect) {
-        console.log("Cleared suspect " + suspect.GetInAddr);
-        now.OnNewSuspect(suspect);
+        console.log("Cleared suspect ");
+        console.log(suspect);
+        suspectGrid.DeleteRow(suspect.GetIpString);
         suspectGrid.Render();
         return;
-      var row = new Array();
-      // This is probably a really bad way to do this...
-      row.push(String("<button onClick='now.ClearSuspect(" + '"' + suspect.GetInAddr + '"' + ")'>Clear</button>"))
-      row.push(String(suspect.GetInAddr));
-      row.push(suspect.GetClassification);
-      row.push(String(suspect.LastPacketString));
-      row.push(String(suspect.GetIsHostile));
-      var enabledFeatures = String(#{enabledFeatures});
-      for (var i in suspect.GetFeatures) {  
-        suspect[i] = suspect.GetFeatures[i];
-        if (enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
-      }
-      suspectGrid.PushEntry(row);
     }
       
     function pad(num) {
@@ -135,8 +123,13 @@ block headerAdditions
       
       var row = new Array();
       // This is probably a really bad way to do this...
-      row.push(String("<button onClick='now.ClearSuspect(" + '"' + suspect.GetInAddr + '"' + ")'>Clear</button>"))
-      row.push(String(suspect.GetInAddr));
+      var clearButton = "<button onClick='now.ClearSuspect(";
+      clearButton += '"' + suspect.GetIpString + '"';
+      clearButton += "); suspectGrid.DeleteRow(";
+      clearButton += '"' + suspect.GetIpString + '"';
+      clearButton += ");'>Clear</button>";
+      row.push(clearButton);
+      row.push(String(suspect.GetIpString));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
       row.push(String(suspect.GetIsHostile));
@@ -156,7 +149,7 @@ block headerAdditions
          }
 
          if (advancedIpFilter != null) {
-            if (!advancedIpFilter.test(suspect.GetInAddr)) {
+            if (!advancedIpFilter.test(suspect.GetIpString)) {
                 return;
             }
          }
@@ -262,7 +255,7 @@ block headerAdditions
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'));
+        suspectGrid = new NovaGrid(gridStructure, 1, document.getElementById('suspectTable'));
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(2);
