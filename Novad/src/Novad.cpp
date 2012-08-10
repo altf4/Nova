@@ -700,35 +700,36 @@ bool Start_Packet_Handler()
 		{
 			LOG(CRITICAL, "Unable to start packet capture.",
 				"Couldn't open pcap file: "+Config::Inst()->GetPathPcapFile()+": "+string(errbuf)+".");
-			exit(EXIT_FAILURE);
 		}
-
-		if(pcap_compile(handles[0], &fp, haystackAddresses_csv.data(), 0, PCAP_NETMASK_UNKNOWN) == -1)
+		else
 		{
-			LOG(CRITICAL, "Unable to start packet capture.",
-				"Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
-			exit(EXIT_FAILURE);
+			if(pcap_compile(handles[0], &fp, haystackAddresses_csv.data(), 0, PCAP_NETMASK_UNKNOWN) == -1)
+			{
+				LOG(CRITICAL, "Unable to start packet capture.",
+					"Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
+			}
+
+			if(pcap_setfilter(handles[0], &fp) == -1)
+			{
+				LOG(CRITICAL, "Unable to start packet capture.",
+					"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
+			}
+
+			pcap_freecode(&fp);
+			//First process any packets in the file then close all the sessions
+			u_char index = 0;
+			pcap_loop(handles[0], -1, Packet_Handler,&index);
+
+			LOG(DEBUG, "Done reading PCAP file. Processing...", "");
+			ClassificationLoop(NULL);
+			LOG(DEBUG, "Done processing PCAP file.", "");
 		}
 
-		if(pcap_setfilter(handles[0], &fp) == -1)
-		{
-			LOG(CRITICAL, "Unable to start packet capture.",
-				"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handles[0]) +".");
-			exit(EXIT_FAILURE);
-		}
-
-		pcap_freecode(&fp);
-		//First process any packets in the file then close all the sessions
-		u_char index = 0;
-		pcap_loop(handles[0], -1, Packet_Handler,&index);
-
-		LOG(DEBUG, "Done reading PCAP file. Processing...", "");
-		ClassificationLoop(NULL);
-		LOG(DEBUG, "Done processing PCAP file.", "");
 
 		if(Config::Inst()->GetGotoLive())
 		{
 			Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
+			handles.clear();
 		}
 		else
 		{

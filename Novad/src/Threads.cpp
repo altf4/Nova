@@ -175,10 +175,8 @@ void *SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(CRITICAL, "Unable to create the silent alarm socket.",
-				"Unable to create the silent alarm socket: "+string(strerror(errno)));
-		close(sockfd);
-		exit(EXIT_FAILURE);
+		LOG(CRITICAL, "Unable to create the silent alarm socket: "+string(strerror(errno)), "");
+		return NULL;
 	}
 
 	sendaddr.sin_family = AF_INET;
@@ -191,10 +189,9 @@ void *SilentAlarmLoop(void *ptr)
 
 	if(::bind(sockfd, sockaddrPtr, sendaddrSize) == -1)
 	{
-		LOG(CRITICAL, "Unable to bind to the silent alarm socket.",
-			"Unable to bind to the silent alarm socket: "+string(strerror(errno)));
+		LOG(CRITICAL, "Unable to bind to the silent alarm socket: "+string(strerror(errno)), "");
 		close(sockfd);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	stringstream ss;
@@ -219,7 +216,7 @@ void *SilentAlarmLoop(void *ptr)
 		LOG(CRITICAL, "Unable to listen on the silent alarm socket.",
 			"Unable to listen on the silent alarm socket.: "+string(strerror(errno)));
 		close(sockfd);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	int connectionSocket, bytesRead;
@@ -336,23 +333,24 @@ void *UpdateIPFilter(void *ptr)
 					int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
 					if(ret == -1)
 					{
-						LOG(ERROR, "Unable to start packet capture.",
+						LOG(ERROR, "Unable to update IP filter.",
 							"Unable to get the network address and mask: "+string(strerror(errno)));
-						exit(EXIT_FAILURE);
 					}
-
-					if(pcap_compile(handles[i], fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+					else
 					{
-						LOG(ERROR, "Unable to enable packet capture.",
-							"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+						if(pcap_compile(handles[i], fp, haystackAddresses_csv.data(), 0, maskp) == -1)
+						{
+							LOG(ERROR, "Unable to update IP filter.",
+								"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+						}
+						if(pcap_setfilter(handles[i], fp) == -1)
+						{
+							LOG(ERROR, "Unable to update IP filter.",
+								"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+						}
+						//Free the compiled filter program after assignment, it is no longer needed after set filter
+						pcap_freecode(fp);
 					}
-					if(pcap_setfilter(handles[i], fp) == -1)
-					{
-						LOG(ERROR, "Unable to enable packet capture.",
-							"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
-					}
-					//Free the compiled filter program after assignment, it is no longer needed after set filter
-					pcap_freecode(fp);
 				}
 			}
 			delete fp;
@@ -402,22 +400,23 @@ void *UpdateWhitelistIPFilter(void *ptr)
 					int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
 					if(ret == -1)
 					{
-						LOG(ERROR, "Unable to start packet capture.",
+						LOG(ERROR, "Unable to update IP filter.",
 							"Unable to get the network address and mask: "+string(strerror(errno)));
-						exit(EXIT_FAILURE);
 					}
-
-					if(pcap_compile(handles[i], &fp, filterString.data(), 0, maskp) == -1)
+					else
 					{
-						LOG(ERROR, "Unable to enable packet capture.",
-							"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+						if(pcap_compile(handles[i], &fp, filterString.data(), 0, maskp) == -1)
+						{
+							LOG(ERROR, "Unable to update IP filter.",
+								"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+						}
+						if(pcap_setfilter(handles[i], &fp) == -1)
+						{
+							LOG(ERROR, "Unable to update IP filter.",
+								"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
+						}
+						pcap_freecode(&fp);
 					}
-					if(pcap_setfilter(handles[i], &fp) == -1)
-					{
-						LOG(ERROR, "Unable to enable packet capture.",
-							"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
-					}
-					pcap_freecode(&fp);
 
 					// Clear any suspects that were whitelisted from the GUIs
 					for(uint i = 0; i < whitelistIpAddresses.size(); i++)
@@ -486,7 +485,7 @@ void *StartPcapLoop(void *ptr)
 	if((*index >= handles.size()) || (handles[*index] == NULL))
 	{
 		LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 	pthread_t consumer;
 	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
