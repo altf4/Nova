@@ -168,22 +168,22 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 					}
 					case ERROR_MALFORMED_MESSAGE:
 					{
-						LOG(NOTICE, "There was an error reading a message from the UI", "Got a message but it was not deserialized correctly");
+						LOG(DEBUG, "There was an error reading a message from the UI", "Got a message but it was not deserialized correctly");
 						break;
 					}
 					case ERROR_UNKNOWN_MESSAGE_TYPE:
 					{
-						LOG(NOTICE, "There was an error reading a message from the UI", "Received an unknown message type.");
+						LOG(DEBUG, "There was an error reading a message from the UI", "Received an unknown message type.");
 						break;
 					}
 					case ERROR_PROTOCOL_MISTAKE:
 					{
-						LOG(NOTICE, "We sent a bad message to the UI", "Received an ERROR_PROTOCOL_MISTAKE.");
+						LOG(DEBUG, "We sent a bad message to the UI", "Received an ERROR_PROTOCOL_MISTAKE.");
 						break;
 					}
 					default:
 					{
-						LOG(NOTICE, "There was an error reading a message from the UI", "Unknown error type. Should see this!");
+						LOG(DEBUG, "There was an error reading a message from the UI", "Unknown error type. Should see this!");
 						break;
 					}
 				}
@@ -343,7 +343,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			MessageManager::Instance().CloseSocket(socketFD);
 
-			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
+			LOG(DEBUG, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
 
 			break;
 		}
@@ -527,7 +527,7 @@ void *NotifyUIsHelper(void *ptr)
 
 		if(!Message::WriteMessage(arguments->m_updateMessage, sockets[i]))
 		{
-			LOG(NOTICE, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
+			LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
 			continue;
 		}
 
@@ -535,14 +535,14 @@ void *NotifyUIsHelper(void *ptr)
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			delete suspectReply;
-			LOG(NOTICE, "Failed to send message to UI", "Got the wrong message type in response after sending a Clear All Suspects Notify");
+			LOG(DEBUG, "Failed to send message to UI", "Got the wrong message type in response after sending a Clear All Suspects Notify");
 			continue;
 		}
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
 		if(suspectCallback->m_updateType != arguments->m_ackType)
 		{
 			delete suspectCallback;
-			LOG(NOTICE, "Failed to send message to UI", "Got the wrong UpdateMessage subtype in response after sending a Clear All Suspects Notify");
+			LOG(DEBUG, "Failed to send message to UI", "Got the wrong UpdateMessage subtype in response after sending a Clear All Suspects Notify");
 			continue;
 		}
 		delete suspectCallback;
