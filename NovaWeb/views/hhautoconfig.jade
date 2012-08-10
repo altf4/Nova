@@ -138,12 +138,15 @@ block headerAdditions
                 shadow: false,
                 hwaccel: false,
                 className: 'spinner',
-                zIndex: 1002,
+                zIndex: 1003,
                 top: 20,
                 left: 'auto'
             };
             
             var spinner = new Spinner(opts).spin(document.getElementById('spinnerDiv'));
+            document.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
+            var divWidth = document.getElementById('lightbox').scrollWidth;
+            document.getElementById('appendText').style.width = divWidth + 'px';
             now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
         } 
         else
@@ -207,6 +210,8 @@ block headerAdditions
         p.value = text;
         p.innerHTML = text;
         document.getElementById('appendText').appendChild(p);
+        //document.getElementById('appendText').style.height = document.getElementById('appendText').scrollHeight;
+        document.getElementById('appendText').scrollTop = document.getElementById('appendText').scrollHeight;
     }
     
     function routeToReview(redirect)
@@ -261,6 +266,6 @@ block content
   
   div(id="lightbox", class="white_content")
     label(style="font-size: 1.2em;") Scan Commencing...
-    div(id='spinnerDiv', stlye="height: 30px; position: absolute")
-    div(id='appendText', style="position: absolute; overflow-y: scroll; overflow-x: hidden")
+    div(id='spinnerDiv', style="height: 30px; padding-botton: 30px;")
+    div(id='appendText', style="height: 60%; width: auto; overflow-y: scroll; overflow-x: hidden")
   
