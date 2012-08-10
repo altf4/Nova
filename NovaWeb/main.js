@@ -1361,10 +1361,6 @@ everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback, 
 	
 	var hhconfigArgs = new Array();
 	
-	//console.log("SAC numNodes " + numNodes);
-	//console.log("SAC interfaces " + interfaces);
-	//console.log("SAC subnets " + subnets);
-	
 	if(numNodes !== undefined && parseInt(numNodes) >= 0)
 	{
 	    hhconfigArgs.push(nFlag);
@@ -1380,19 +1376,14 @@ everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback, 
 	    hhconfigArgs.push(aFlag);
 	    hhconfigArgs.push(subnets);
 	}
-	
-    //console.log("SAC hhconfigArgs " + hhconfigArgs);
-
-    //console.log("calling " + executionString + " " + hhconfigArgs.join(""));
 
     var util = require('util');
-    var exec = require('child_process').exec;
     var spawn = require('child_process').spawn;
 	    
 	var autoconfig = spawn(executionString.toString(), hhconfigArgs);
 	    
 	autoconfig.stdout.on('data', function(data) {
-		callback('stdout: ' + data);
+		callback('' + data);
 	});
 	
 	autoconfig.stderr.on('data', function(data) {

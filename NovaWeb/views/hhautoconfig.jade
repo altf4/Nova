@@ -1,6 +1,7 @@
 extends layout
 
 block headerAdditions
+  script(src="scripts/spin.js")
   script
     var subnetsLength = parseInt("0");
     var Interfaces = "#{INTERFACES}";
@@ -123,6 +124,26 @@ block headerAdditions
         { 
             document.getElementById("startScan").value='Scanning...'; 
             document.getElementById("startScan").setAttribute('disabled', 'true');
+            document.getElementById("lightbox").style.display='block';
+            var opts = {
+                lines: 17,
+                length: 0,
+                width: 4,
+                radius: 27,
+                corners: 0.6,
+                rotate: 0,
+                color: '#E8A02F',
+                speed: 1,
+                trail: 34,
+                shadow: false,
+                hwaccel: false,
+                className: 'spinner',
+                zIndex: 1002,
+                top: 20,
+                left: 'auto'
+            };
+            
+            var spinner = new Spinner(opts).spin(document.getElementById('spinnerDiv'));
             now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
         } 
         else
@@ -182,7 +203,10 @@ block headerAdditions
 
     function autoscancb(text)
     {
-        console.log(text);
+        var p = document.createElement('p');
+        p.value = text;
+        p.innerHTML = text;
+        document.getElementById('appendText').appendChild(p);
     }
     
     function routeToReview(redirect)
@@ -234,4 +258,9 @@ block content
   br
   br
   input(type="submit", id="startScan", value="Start Scanning", onclick="RunScan()")
+  
+  div(id="lightbox", class="white_content")
+    label(style="font-size: 1.2em;") Scan Commencing...
+    div(id='spinnerDiv', stlye="height: 30px; position: absolute")
+    div(id='appendText', style="position: absolute; overflow-y: scroll; overflow-x: hidden")
   
