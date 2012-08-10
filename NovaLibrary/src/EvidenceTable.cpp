@@ -18,6 +18,7 @@
 //============================================================================/*
 
 #include "EvidenceTable.h"
+#include "Lock.h"
 #include <pthread.h>
 
 using namespace std;
@@ -46,8 +47,7 @@ namespace Nova
 
 	void EvidenceTable::InsertEvidence(Evidence *evidence)
 	{
-		//We use manual mutex locking instead of a lock object for performance reasons
-		pthread_mutex_lock(&m_lock);
+		Lock lock(&m_lock);
 		if(m_table.find(evidence->m_evidencePacket.ip_src) == m_table.end())
 		{
 			m_table[evidence->m_evidencePacket.ip_src] = new GenericQueue<Evidence>();
@@ -60,13 +60,12 @@ namespace Nova
 			//Wake up any consumers waiting for evidence
 			pthread_cond_signal(&m_cond);
 		}
-		pthread_mutex_unlock(&m_lock);
 	}
 
 	Evidence *EvidenceTable::GetEvidence()
 	{
 		//We use manual mutex locking instead of a lock object for performance reasons
-		pthread_mutex_lock(&m_lock);
+		Lock lock(&m_lock);
 		Evidence *lookup = m_processingList.Pop();
 		//While we are unable to get evidence (other consumers got it first)
 		while(lookup == NULL)
@@ -83,7 +82,6 @@ namespace Nova
 			ret = m_table[lookup->m_evidencePacket.ip_src]->PopAll();
 			delete lookup;
 		}
-		pthread_mutex_unlock(&m_lock);
 		return ret;
 	}
 
