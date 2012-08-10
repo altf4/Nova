@@ -175,10 +175,8 @@ void *SilentAlarmLoop(void *ptr)
 
 	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(CRITICAL, "Unable to create the silent alarm socket.",
-				"Unable to create the silent alarm socket: "+string(strerror(errno)));
-		close(sockfd);
-		exit(EXIT_FAILURE);
+		LOG(CRITICAL, "Unable to create the silent alarm socket: "+string(strerror(errno)), "");
+		return NULL;
 	}
 
 	sendaddr.sin_family = AF_INET;
@@ -191,10 +189,9 @@ void *SilentAlarmLoop(void *ptr)
 
 	if(::bind(sockfd, sockaddrPtr, sendaddrSize) == -1)
 	{
-		LOG(CRITICAL, "Unable to bind to the silent alarm socket.",
-			"Unable to bind to the silent alarm socket: "+string(strerror(errno)));
+		LOG(CRITICAL, "Unable to bind to the silent alarm socket: "+string(strerror(errno)), "");
 		close(sockfd);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	stringstream ss;
@@ -219,7 +216,7 @@ void *SilentAlarmLoop(void *ptr)
 		LOG(CRITICAL, "Unable to listen on the silent alarm socket.",
 			"Unable to listen on the silent alarm socket.: "+string(strerror(errno)));
 		close(sockfd);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	int connectionSocket, bytesRead;
