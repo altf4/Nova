@@ -92,10 +92,12 @@ NovaLibrary/libNovaLibrary.a
 /Nova_UI_Core/Debug/Nova_UI_Core
 /Nova_UI_Core/Release/libNova_UI_Core.so
 /Nova_UI_Core/Release/Nova_UI_Core
+/Nova_UI_Core/.settings/org.eclipse.cdt.codan.core.prefs
 
 #NovaTest
 /NovaTest/Debug
 /NovaTest/NovadSource/*
+/NovaTest/Coverage/NovaTest
 /NovaWeb/build/*
 /NovaWeb/www/dojo
 /NovaWeb/.lock-wscript
@@ -114,6 +116,8 @@ NovaLibrary/libNovaLibrary.a
 /NovaWeb/build/*
 /NovaWeb/www/dojo
 /NovaWeb/.lock-wscript
+/NovaWeb/joyent-node-346a3a8/
+/NovaWeb/v0.6.*
 
 #MISC
 /RemoteSystemsTempFiles/.project
@@ -135,6 +139,8 @@ NovaLibrary/libNovaLibrary.a
 /1
 
 #Haystack Auto Config
+/HoneydHostConfig/honeydhostconfig
+/HoneydHostConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs
 /HoneydHostConfig/subnet0.xml
 /HoneydHostConfig/Debug/honeydhostconfig
 /HoneydHostConfig/Release/honeydhostconfig
@@ -160,6 +166,3 @@ debian/files
 debian/nova/*
 /misc/ROCGraphGenerator/hostiles.txt
 /misc/ROCGraphGenerator/output.txt
-/Nova_UI_Core/.settings/org.eclipse.cdt.codan.core.prefs
-/HoneydHostConfig/honeydhostconfig
-/HoneydHostConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs

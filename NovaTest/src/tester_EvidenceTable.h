@@ -30,7 +30,10 @@ protected:
 	EvidenceTable m_evidenceTable;
 	Evidence *m_ev1, *m_ev2;
 
-	EvidenceTableTest() {}
+	EvidenceTableTest() {
+		m_ev1 = NULL;
+		m_ev2 = NULL;
+	}
 
 	bool InitEvidence()
 	{
