@@ -111,6 +111,10 @@ NovaGrid.prototype = {
 		this.Render();
 	}
 
+	, DeleteRow: function(key) {
+		delete this.m_elements[key];
+	}
+
     // Returns the number of rows in the table
 	, Size: function() {
 		return Object.keys(this.m_elements).length;

@@ -24,6 +24,7 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
 		// Javascript methods
 		Local<Template> proto = m_SuspectTemplate->PrototypeTemplate();
 		proto->Set("ToString",     		FunctionTemplate::New(InvokeMethod<string, Suspect, &Suspect::ToString>) );
+		proto->Set("GetIpString",     		FunctionTemplate::New(InvokeMethod<string, Suspect, &Suspect::GetIpString>) );
 		proto->Set("GetInAddr", 		FunctionTemplate::New(InvokeMethod<struct ::in_addr, Suspect, &Suspect::GetInAddr>) );
 		proto->Set("GetClassification", FunctionTemplate::New(InvokeMethod<double, Suspect, &Suspect::GetClassification>) );
 		proto->Set("GetLastPacketTime", FunctionTemplate::New(InvokeMethod<long int, Suspect, &Suspect::GetLastPacketTime>) );

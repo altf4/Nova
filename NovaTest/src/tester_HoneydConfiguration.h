@@ -219,7 +219,6 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 	//EXPECT_TRUE(m_config->SaveAllTemplates());
 }
 
-// This test has been disabled because of ticket #165
 TEST_F(HoneydConfigurationTest, test_profileDeletion)
 {
 	NodeProfile *parent = new NodeProfile();
@@ -250,4 +249,3 @@ TEST_F(HoneydConfigurationTest, test_profileDeletion)
 	EXPECT_TRUE(m_config->LoadAllTemplates());
 	EXPECT_TRUE(m_config->m_profiles.find("parent") == m_config->m_profiles.end());
 }
-

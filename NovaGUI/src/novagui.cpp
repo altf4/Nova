@@ -485,7 +485,7 @@ void NovaGUI::DrawAllSuspects()
 		{
 			it->second.item = NULL;
 		}
-		str = (QString) string(inet_ntoa(it->second.suspect->GetInAddr())).c_str();
+		str =QString::fromStdString(it->second.suspect->GetIpString());
 		suspect = it->second.suspect;
 		//Create the colors for the draw
 		if(suspect->GetClassification() < 0)
@@ -521,7 +521,7 @@ void NovaGUI::DrawAllSuspects()
 			int i = 0;
 			for(i = 0; i < ui.suspectList->count(); i++)
 			{
-				addr = inet_addr(ui.suspectList->item(i)->text().toStdString().c_str());
+				addr = inet_network(ui.suspectList->item(i)->text().toStdString().c_str());
 				if(SuspectTable[addr].suspect->GetClassification() <= suspect->GetClassification())
 				{
 					break;
@@ -550,7 +550,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 
 	suspectItem *sItem = &SuspectTable[suspectAddr];
 	//Extract Information
-	str = (QString) string(inet_ntoa(sItem->suspect->GetInAddr())).c_str();
+	str = (QString) QString::fromStdString(sItem->suspect->GetIpString());
 
 	//Create the colors for the draw
 	if(sItem->suspect->GetClassification() < 0)
@@ -602,7 +602,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 			{
 				while(!indexFound)
 				{
-					addr = inet_addr(ui.suspectList->item(index)->text().toStdString().c_str());
+					addr = inet_network(ui.suspectList->item(index)->text().toStdString().c_str());
 					step++;
 					if(index >= ui.suspectList->count())
 					{
@@ -621,7 +621,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 					if(SuspectTable[addr].suspect->GetClassification() < sClassification)
 					{
 						//If the suspect before this one is more hostile than us, we've found our position
-						addr = inet_addr(ui.suspectList->item(index-1)->text().toStdString().c_str());
+						addr = inet_network(ui.suspectList->item(index-1)->text().toStdString().c_str());
 						if(SuspectTable[addr].suspect->GetClassification() >= sClassification)
 						{
 							indexFound = true;
@@ -638,7 +638,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 					else if(SuspectTable[addr].suspect->GetClassification() > sClassification)
 					{
 						//If the suspect after this one is less hostile than us, we've found our position
-						addr = inet_addr(ui.suspectList->item(index+1)->text().toStdString().c_str());
+						addr = inet_network(ui.suspectList->item(index+1)->text().toStdString().c_str());
 						if(SuspectTable[addr].suspect->GetClassification() <= sClassification)
 						{
 							indexFound = true;
@@ -670,7 +670,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		else if(ui.suspectList->count() == 1)
 		{
 			double sClassification = sItem->suspect->GetClassification();
-			addr = inet_addr(ui.suspectList->item(0)->text().toStdString().c_str());
+			addr = inet_network(ui.suspectList->item(0)->text().toStdString().c_str());
 			if((SuspectTable[addr].suspect->GetClassification() >= sClassification) || (sClassification < 0))
 			{
 				ui.suspectList->addItem(sItem->item);
@@ -716,14 +716,14 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 					break;
 				}
 
-				addr = inet_addr(ui.suspectList->item(index)->text().toStdString().c_str());
+				addr = inet_network(ui.suspectList->item(index)->text().toStdString().c_str());
 				step++;
 
 				//If the current suspect is less hostile than us
 				if(SuspectTable[addr].suspect->GetClassification() < sClassification)
 				{
 					//If the suspect before this one is more hostile than us, we've found our position
-					addr = inet_addr(ui.suspectList->item(index-1)->text().toStdString().c_str());
+					addr = inet_network(ui.suspectList->item(index-1)->text().toStdString().c_str());
 					if(SuspectTable[addr].suspect->GetClassification() >= sClassification)
 					{
 						indexFound = true;
@@ -740,7 +740,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 				else if(SuspectTable[addr].suspect->GetClassification() > sClassification)
 				{
 					//If the suspect after this one is less hostile than us, we've found our position
-					addr = inet_addr(ui.suspectList->item(index+1)->text().toStdString().c_str());
+					addr = inet_network(ui.suspectList->item(index+1)->text().toStdString().c_str());
 					if(SuspectTable[addr].suspect->GetClassification() <= sClassification)
 					{
 						indexFound = true;
@@ -765,7 +765,7 @@ void NovaGUI::DrawSuspect(in_addr_t suspectAddr)
 		else if(ui.suspectList->count() == 1)
 		{
 			double sClassification = sItem->suspect->GetClassification();
-			addr = inet_addr(ui.suspectList->item(0)->text().toStdString().c_str());
+			addr = inet_network(ui.suspectList->item(0)->text().toStdString().c_str());
 			if((SuspectTable[addr].suspect->GetClassification() >= sClassification) || (sClassification < 0))
 			{
 				ui.suspectList->addItem(sItem->item);
@@ -926,13 +926,13 @@ void NovaGUI::on_actionClear_Suspect_triggered()
 	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
 	{
 		string suspectStr = list->currentItem()->text().toStdString();
-		in_addr_t addr = inet_addr(suspectStr.c_str());
+		in_addr_t addr = inet_network(suspectStr.c_str());
 		HideSuspect(addr);
 		{
 			Lock lock(&suspectTableLock);
 			SuspectTable.erase(addr);
 		}
-		ClearSuspect(htonl(addr));
+		ClearSuspect(suspectStr);
 	}
 }
 
@@ -945,7 +945,7 @@ void NovaGUI::on_actionHide_Suspect_triggered()
 	}
 	if(list->currentItem() != NULL && list->isItemSelected(list->currentItem()))
 	{
-		in_addr_t addr = inet_addr(list->currentItem()->text().toStdString().c_str());
+		in_addr_t addr = inet_network(list->currentItem()->text().toStdString().c_str());
 		HideSuspect(addr);
 	}
 }
@@ -1199,7 +1199,7 @@ void NovaGUI::on_suspectList_currentItemChanged(QListWidgetItem *current, QListW
 		Lock lock(&suspectTableLock);
 		if((ui.suspectList->currentItem() == current) && (current != NULL) && (current != previous))
 		{
-			in_addr_t addr = inet_addr(current->text().toStdString().c_str());
+			in_addr_t addr = inet_network(current->text().toStdString().c_str());
 			ui.suspectFeaturesEdit->setText(QString(SuspectTable[addr].suspect->ToString().c_str()));
 			SetFeatureDistances(SuspectTable[addr].suspect);
 		}
@@ -1353,9 +1353,12 @@ void *CallbackLoop(void *ptr)
 			}
 			case CALLBACK_SUSPECT_CLEARED:
 			{
+				stringstream ss;
+				ss << "Got notification that suspect was cleared:  " << hex << change.m_suspectIP;
+				LOG(DEBUG, ss.str(), "");
 				if(change.m_suspect != NULL)
 				{
-					in_addr_t addr = change.m_suspect->GetIpAddress();
+					in_addr_t addr = change.m_suspectIP;
 					((NovaGUI*)ptr)->HideSuspect(addr);
 					Lock lock(&suspectTableLock);
 					if(SuspectTable.keyExists(addr))
