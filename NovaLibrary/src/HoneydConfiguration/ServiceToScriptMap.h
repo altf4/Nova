@@ -59,10 +59,10 @@ public:
 	// debug format.
 	std::string ToString();
 
-	std::vector<Nova::Script> GetScripts(std::string);
+	std::vector<Nova::Script> GetScripts(std::string targetService);
 
 private:
-	ServiceTable m_serviceMap;
+	ServiceMap m_serviceMap;
 
 };
 }

@@ -30,6 +30,6 @@ typedef Nova::HashMap<std::string, std::pair<uint16_t, std::string>, std::tr1::h
 
 //HashMap of scripts; Key is nmap-style service name (i.e. "ssh", "http", "netbios-ssn", etc.), Value vector of pairs
 // of osclass and path to script
-typedef Nova::HashMap<std::string, std::vector<Nova::Script>, std::tr1::hash<std::string>, eqstr> ServiceTable;
+typedef Nova::HashMap<std::string, std::vector<Nova::Script>, std::tr1::hash<std::string>, eqstr> ServiceMap;
 
 #endif /* AUTOCONFIGHASHMAPS_H_ */

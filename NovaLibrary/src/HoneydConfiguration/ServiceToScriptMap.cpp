@@ -66,7 +66,7 @@ bool ServiceToScriptMap::PopulateServiceToScriptMap(ScriptTable *targetScriptTab
 std::string ServiceToScriptMap::ToString()
 {
 	stringstream ss;
-	for(ServiceTable::iterator it = m_serviceMap.begin(); it != m_serviceMap.end(); it++)
+	for(ServiceMap::iterator it = m_serviceMap.begin(); it != m_serviceMap.end(); it++)
 	{
 		ss << '\n';
 		ss << "Service " << it->first << " has the following constituents:" << '\n';

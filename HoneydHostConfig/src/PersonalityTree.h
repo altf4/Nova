@@ -53,7 +53,7 @@ public:
 	//  PersonalityTable *persTable - personalityTable to use for populating the ProfileTable
 	//                           in the m_hdconfig object's m_profiles HashMap.
 	// Returns nothing.
-	void LoadTable(PersonalityTable *persTable);
+	bool LoadTable(PersonalityTable *persTable);
 
 	// GenerateProfiles will recurse through the tree structure and create NodeProfile objects
 	// from each PersonalityNode in the tree. Also performs compression in the profile table;
@@ -68,16 +68,16 @@ public:
 	//  NodeProfile *parentProfile - used for renaming
 	//  const std::string &profileName - also used for a different renaming case
 	// Returns nothing.
-	void GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const std::string &profileName);
+	bool GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const std::string &profileName);
 
 	// InsertPersonality serves as the starting point for UpdatePersonality.
 	//  Personality *pers - the Personality to Insert/Update
 	// Returns nothing.
-	void InsertPersonality(Personality *pers);
+	bool InsertPersonality(Personality *pers);
 
 	// Prints each child of the root node in the tree as a string
 	// Returns nothing, takes no arguments.
-	std::string DebugString();
+	std::string ToDebugString();
 
 	// ToXmlTemplate calls m_hdconfig->SaveAllTemplates().
 	// Returns nothing, takes no arguments.
@@ -118,7 +118,7 @@ public:
 	// GetHostCount gets the number of hosts in each of the root node's subtrees and
 	// adds them into m_root's m_count value.
 	// Returns nothing.
-	void CalculateDistributions();
+	bool CalculateDistributions();
 
 private:
 
@@ -132,7 +132,7 @@ private:
 	//  PersonalityNode *parent - the parent node of the current node to be created or
 	//                      modified.
 	// Returns nothing.
-	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
+	bool UpdatePersonality(Personality *pers, PersonalityNode *parent);
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
 	PersonalityNode m_root;
@@ -165,7 +165,7 @@ private:
 	// unless you know the expected parent/child relations within the tree. A testing tool.
 	void RecursivePrintTree(PersonalityNode *node);
 
-	void RecursiveCalculateDistribution(PersonalityNode *node);
+	bool RecursiveCalculateDistribution(PersonalityNode *node);
 
 
 };
