@@ -142,8 +142,17 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 	}
 
 	string name = cvv8::CastFromJS<string>(args[0]);
-	
-	return scope.Close(HoneydNodeJs::WrapNode(obj->m_conf->GetNode(name)));
+
+	Nova::Node *ret = obj->m_conf->GetNode(name);
+
+	if (ret != NULL)
+	{
+		return scope.Close(HoneydNodeJs::WrapNode(ret));
+	}
+	else
+	{
+		return scope.Close( Null() );
+	}		
 }
 
 Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
@@ -157,7 +166,17 @@ Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
 	}
 
 	string name = cvv8::CastFromJS<string>(args[0]);
-	return scope.Close(HoneydNodeJs::WrapProfile(obj->m_conf->GetProfile(name)));
+	Nova::NodeProfile *ret = obj->m_conf->GetProfile(name);
+
+	if (ret != NULL)
+	{
+		return scope.Close(HoneydNodeJs::WrapProfile(ret));
+	}
+	else
+	{	
+		return scope.Close( Null() );
+	}
+
 }
 
 

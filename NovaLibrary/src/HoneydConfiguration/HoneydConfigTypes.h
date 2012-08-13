@@ -180,13 +180,14 @@ struct NodeProfile
 
 
 
-	// This is for the Javascript bindings in the web m_interface
+	// This is for the Javascript bindings in the web interface
 	inline std::string GetName() {return m_name;}
 	inline std::string GetTcpAction() {return m_tcpAction;}
 	inline std::string GetUdpAction() {return m_udpAction;}
 	inline std::string GetIcmpAction() {return m_icmpAction;}
 	inline std::string GetPersonality() {return m_personality;}
 	inline std::string GetEthernet() {return m_ethernetVendors[0].first;}
+
 	inline std::vector<std::string> GetVendors()
 	{
 		std::vector<std::string> ret;
@@ -196,6 +197,8 @@ struct NodeProfile
 		}
 		return ret;
 	}
+
+
 	inline std::vector<double> GetVendorDistributions()
 	{
 		std::vector<double> ret;

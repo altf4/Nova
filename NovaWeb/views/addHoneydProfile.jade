@@ -852,6 +852,12 @@ block headerAdditions
             
             now.GetInheritedEthernetList(document.getElementById("parentName").value, 
             function(elements, distributions){
+                if (elements == null || distributions == null) {
+                    alert("Unable to get the ethernet list. Is this profile name invalid?");
+                    window.location = "configHoneydProfiles";
+                    return;
+                }
+
                 var oldEthVendLength = ethVendorLength
                 
                 console.log("oldEthVendLength " + oldEthVendLength);
@@ -1003,6 +1009,11 @@ block headerAdditions
             if(newProfile == "false" && document.getElementById("dist0") === undefined)
             {
                 now.GetVendors(document.getElementById("name").value, function(elements, distributions){
+                if (elements == null || distributions == null) {
+                    alert("Unable to get the ethernet list. Is this profile name invalid?");
+                    window.location = "configHoneydProfiles";
+                    return;
+                }
                 
                 numCreated = elements.length;
 
@@ -1191,6 +1202,18 @@ block headerAdditions
         });
 
           now.GetProfile(currentName, function(pfile){
+
+          if (pfile == undefined)
+          {
+            alert("ERROR: Unable to fetch the requested profile information.");
+            window.location="configHoneydProfiles";
+          }
+          else
+          {
+            console.log(pfile);
+
+          }
+
           profile = pfile;
         
         if (newProfile == "true") {
