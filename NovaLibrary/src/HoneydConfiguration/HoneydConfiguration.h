@@ -59,20 +59,33 @@ class HoneydConfiguration
 {
 
 public:
+
+	//Basic constructor for the Honeyd Configuration object
+	// Initializes the MAC vendor database and hash tables
+	// *Note: To populate the object from the file system you must call LoadAllTemplates();
     HoneydConfiguration();
 
-    //XML Read Functions
-    //calls main load functions
+    //Attempts to populate the HoneydConfiguration object with the xml templates.
+    // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
+    // Returns true if successful, false if loading failed.
     bool LoadAllTemplates();
 
-    // Returns the number of bits used in the mask when given in in_addr_t form
+    // This function takes in the raw byte form of a network mask and converts it to the number of bits
+    // 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
+    // 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
+    // Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
     static int GetMaskBits(in_addr_t mask);
 
-    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
+    //Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
+    // p: pointer to the profile you wish to create a Honeyd template for
+    // Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
     std::string ProfileToString(NodeProfile* p);
 
-    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
-    // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
+    //Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
+    // p: pointer to the profile you wish to create a Honeyd template for
+    // Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
+    // *Note: This function differs from ProfileToString in that it omits values incompatible with the loopback
+    //  interface and is used primarily for the Doppelganger node
     std::string DoppProfileToString(NodeProfile* p);
 
     //Saves the current configuration information to XML files
@@ -236,8 +249,10 @@ private:
     bool LoadProfilesTemplate();
     //load current honeyd configuration group
     bool LoadNodesTemplate();
-    //load the m_nodeKeys vectors for the profiles in the ProfilesTable
-    void LoadNodeKeys();
+
+    //Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
+    // Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
+    bool LoadNodeKeys();
 
     //set profile configurations
     bool LoadProfileSettings(boost::property_tree::ptree *ptr, NodeProfile *p);

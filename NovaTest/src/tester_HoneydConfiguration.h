@@ -64,6 +64,7 @@ TEST_F(HoneydConfigurationTest, test_getMaskBits)
 	EXPECT_EQ(24, m_config->GetMaskBits(~0 - 255));
 	EXPECT_EQ(31, m_config->GetMaskBits(~0 -1));
 	EXPECT_EQ(32, m_config->GetMaskBits(~0));
+	EXPECT_EQ(-1, m_config->GetMaskBits(240));
 }
 
 TEST_F(HoneydConfigurationTest, test_Port)

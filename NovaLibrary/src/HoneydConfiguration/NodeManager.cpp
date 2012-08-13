@@ -39,7 +39,14 @@ NodeManager::NodeManager(HoneydConfiguration *honeydConfig)
 	if(honeydConfig != NULL)
 	{
 		m_hdconfig = honeydConfig;
-		m_hdconfig->LoadAllTemplates();
+	}
+	else
+	{
+		m_hdconfig = new HoneydConfiguration();
+	}
+	if(!m_hdconfig->LoadAllTemplates())
+	{
+		LOG(ERROR, "Unable to load Honeyd Configuration templates!", "");
 	}
 }
 

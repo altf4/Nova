@@ -42,10 +42,12 @@ using boost::property_tree::xml_parser::trim_whitespace;
 namespace Nova
 {
 
+//Basic constructor for the Honeyd Configuration object
+// Initializes the MAC vendor database and hash tables
+// *Note: To populate the object from the file system you must call LoadAllTemplates();
 HoneydConfiguration::HoneydConfiguration()
 {
 	m_macAddresses.LoadPrefixFile();
-
 	m_homePath = Config::Inst()->GetPathHome();
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
@@ -57,20 +59,199 @@ HoneydConfiguration::HoneydConfiguration()
 	m_profiles.set_deleted_key("Deleted");
 	m_ports.set_deleted_key("Deleted");
 	m_scripts.set_deleted_key("Deleted");
-
-
 }
 
+//Attempts to populate the HoneydConfiguration object with the xml templates.
+// The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
+// Returns true if successful, false if loading failed.
+bool HoneydConfiguration::LoadAllTemplates()
+{
+	m_scripts.clear_no_resize();
+	m_ports.clear_no_resize();
+	m_profiles.clear_no_resize();
+	m_nodes.clear_no_resize();
+	m_subnets.clear_no_resize();
+
+	if(!LoadScriptsTemplate())
+	{
+		LOG(ERROR, "Unable to load Script templates!", "");
+		return false;
+	}
+	if(!LoadPortsTemplate())
+	{
+		LOG(ERROR, "Unable to load Port templates!", "");
+		return false;
+	}
+	if(!LoadProfilesTemplate())
+	{
+		LOG(ERROR, "Unable to load NodeProfile templates!", "");
+		return false;
+	}
+	if(!LoadNodesTemplate())
+	{
+		LOG(ERROR, "Unable to load Nodes templates!", "");
+		return false;
+	}
+	if(!LoadNodeKeys())
+	{
+		LOG(ERROR, "Unable to load Node Keys!", "");
+		return false;
+	}
+	return true;
+}
+
+// This function takes in the raw byte form of a network mask and converts it to the number of bits
+// 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
+// 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
+// Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
 int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 {
 	mask = ~mask;
 	int i = 32;
 	while(mask != 0)
 	{
+		if((mask % 2) != 1)
+		{
+			LOG(ERROR, "Invalid mask passed in as a parameter!", "");
+			return -1;
+		}
 		mask = mask/2;
 		i--;
 	}
 	return i;
+}
+
+//Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
+// p: pointer to the profile you wish to create a Honeyd template for
+// Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
+string HoneydConfiguration::ProfileToString(NodeProfile *p)
+{
+	if(p == NULL)
+	{
+		LOG(ERROR, "NULL NodeProfile passed as parameter!", "");
+		return "";
+	}
+
+	stringstream out;
+	string profName = p->m_name;
+	string parentProfName = p->m_parentProfile;
+
+	//XXX This is just a temporary band-aid on a larger wound, we cannot allow whitespaces in profile names.
+	ReplaceChar(profName, ' ', '-');
+	ReplaceChar(parentProfName, ' ', '-');
+
+	if(!parentProfName.compare("default") || !parentProfName.compare(""))
+	{
+		out << "create " << profName << endl;
+	}
+	else
+	{
+		out << "clone " << profName << " " << parentProfName << endl;
+	}
+
+	out << "set " << profName  << " default tcp action " << p->m_tcpAction << endl;
+	out << "set " << profName  << " default udp action " << p->m_udpAction << endl;
+	out << "set " << profName  << " default icmp action " << p->m_icmpAction << endl;
+
+	if(p->m_personality.compare(""))
+	{
+		out << "set " << profName << " personality \"" << p->m_personality << '"' << endl;
+	}
+
+	string vendor = "";
+	double maxDist = 0;
+	for(uint i = 0; i < p->m_ethernetVendors.size(); i++)
+	{
+		if(p->m_ethernetVendors[i].second > maxDist)
+		{
+			maxDist = p->m_ethernetVendors[i].second;
+			vendor = p->m_ethernetVendors[i].first;
+		}
+	}
+	if(vendor.compare(""))
+	{
+		out << "set " << profName << " ethernet \"" << vendor << '"' << endl;
+	}
+
+	if(p->m_dropRate.compare(""))
+	{
+		out << "set " << profName << " droprate in " << p->m_dropRate << endl;
+	}
+
+	out << endl;
+	return out.str();
+}
+
+//Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
+// p: pointer to the profile you wish to create a Honeyd template for
+// Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
+// *Note: This function differs from ProfileToString in that it omits values incompatible with the loopback
+//  interface and is used strictly for the Doppelganger node
+string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
+{
+	if(p == NULL)
+	{
+		LOG(ERROR, "NULL NodeProfile passed as parameter!", "");
+		return "";
+	}
+
+	stringstream out;
+	out << "create DoppelgangerReservedTemplate" << endl;
+
+	out << "set DoppelgangerReservedTemplate default tcp action " << p->m_tcpAction << endl;
+	out << "set DoppelgangerReservedTemplate default udp action " << p->m_udpAction << endl;
+	out << "set DoppelgangerReservedTemplate default icmp action " << p->m_icmpAction << endl;
+
+	if(p->m_personality.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->m_personality << '"' << endl;
+	}
+
+	if(p->m_dropRate.compare(""))
+	{
+		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->m_dropRate << endl;
+	}
+
+	for (uint i = 0; i < p->m_ports.size(); i++)
+	{
+		// Only include non-inherited ports
+		if(!p->m_ports[i].second.first)
+		{
+			Port *portPtr = &m_ports[p->m_ports[i].first];
+			if(portPtr == NULL)
+			{
+				LOG(ERROR, "Unable to retrieve expected port '" + p->m_ports[i].first + "'!", "");
+				return "";
+			}
+			out << "add DoppelgangerReservedTemplate";
+			if(!portPtr->m_type.compare("TCP"))
+			{
+				out << " tcp port ";
+			}
+			else
+			{
+				out << " udp port ";
+			}
+			out << portPtr->m_portNum << " ";
+			if(!(portPtr->m_behavior.compare("script")))
+			{
+				string scriptName = m_ports[p->m_ports[i].first].m_scriptName;
+				Script *scriptPtr = &m_scripts[scriptName];
+				if(scriptPtr == NULL)
+				{
+					LOG(ERROR, "Unable to lookup script with name '" + scriptName + "'!", "");
+					return "";
+				}
+				out << '"' << scriptPtr->m_path << '"'<< endl;
+			}
+			else
+			{
+				out << portPtr->m_behavior << endl;
+			}
+		}
+	}
+	out << endl;
+	return out.str();
 }
 
 //Adds a port with the specified configuration into the port table
@@ -217,33 +398,6 @@ bool HoneydConfiguration::RecursiveCheckNotInheritingEmptyProfile(const NodeProf
 	}
 }
 
-//Calls all load functions
-bool HoneydConfiguration::LoadAllTemplates()
-{
-	m_scripts.clear_no_resize();
-	m_ports.clear_no_resize();
-	m_profiles.clear_no_resize();
-	m_nodes.clear_no_resize();
-	m_subnets.clear_no_resize();
-
-	LoadScriptsTemplate();
-	LoadPortsTemplate();
-	LoadProfilesTemplate();
-	LoadNodesTemplate();
-
-	LoadNodeKeys();
-
-	return true;
-}
-
-void HoneydConfiguration::LoadNodeKeys()
-{
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		m_profiles[it->second.m_pfile].m_nodeKeys.push_back(it->first);
-	}
-}
-
 vector<string> HoneydConfiguration::GetGeneratedProfileNames()
 {
 	vector<std::string> childProfiles;
@@ -257,6 +411,27 @@ vector<string> HoneydConfiguration::GetGeneratedProfileNames()
 	}
 
 	return childProfiles;
+}
+
+//Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
+// Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
+bool HoneydConfiguration::LoadNodeKeys()
+{
+	if(m_nodes.begin() == m_nodes.end())
+	{
+		LOG(WARNING, "Unable to locate any nodes in the configuration object.", "");
+	}
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		NodeProfile * p = &m_profiles[it->second.m_pfile];
+		if(p == NULL)
+		{
+			LOG(ERROR, "Unable to locate node profile '" + it->second.m_pfile + "'!", "");
+			return false;
+		}
+		p->m_nodeKeys.push_back(it->first);
+	}
+	return true;
 }
 
 //Loads ports from file
@@ -1092,8 +1267,14 @@ bool HoneydConfiguration::LoadSubnets(ptree *propTree)
 				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
 				in_addr_t hostOrderMask = ntohl(inet_addr(sub.m_mask.c_str()));
 				sub.m_base = (hostOrderAddr & hostOrderMask);
+
 				//Get the number of bits in the mask
-				sub.m_maskBits = GetMaskBits(hostOrderMask);
+				if((sub.m_maskBits = GetMaskBits(hostOrderMask)) == -1)
+				{
+					LOG(ERROR, "Invalid subnet mask '" + sub.m_mask + "' parsed from xml templates!", "");
+					return false;
+				}
+
 				//Adding the binary inversion of the mask gets the highest usable IP
 				sub.m_max = sub.m_base + ~hostOrderMask;
 				stringstream ss;
@@ -1478,115 +1659,6 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 		return false;
 	}
 	return true;
-}
-
-string HoneydConfiguration::ProfileToString(NodeProfile *p)
-{
-	stringstream out;
-	string profName = p->m_name;
-	string parentProfName = p->m_parentProfile;
-	ReplaceChar(profName, ' ', '-');
-	ReplaceChar(parentProfName, ' ', '-');
-
-	if(!parentProfName.compare("default") || !parentProfName.compare(""))
-	{
-		out << "create " << profName << endl;
-	}
-	else
-	{
-		out << "clone " << profName << " " << parentProfName << endl;
-	}
-
-	out << "set " << profName  << " default tcp action " << p->m_tcpAction << endl;
-	out << "set " << profName  << " default udp action " << p->m_udpAction << endl;
-	out << "set " << profName  << " default icmp action " << p->m_icmpAction << endl;
-
-	if(p->m_personality.compare(""))
-	{
-		out << "set " << profName << " personality \"" << p->m_personality << '"' << endl;
-	}
-
-	string vendor = "";
-	double maxDist = 0;
-	for(uint i = 0; i < p->m_ethernetVendors.size(); i++)
-	{
-		if(p->m_ethernetVendors[i].second > maxDist)
-		{
-			maxDist = p->m_ethernetVendors[i].second;
-			vendor = p->m_ethernetVendors[i].first;
-		}
-	}
-	if(vendor.compare(""))
-	{
-		out << "set " << profName << " ethernet \"" << vendor << '"' << endl;
-	}
-
-	if(p->m_dropRate.compare(""))
-	{
-		out << "set " << profName << " droprate in " << p->m_dropRate << endl;
-	}
-
-	out << endl;
-	return out.str();
-}
-
-//
-string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
-{
-	stringstream out;
-	out << "create DoppelgangerReservedTemplate" << endl;
-
-	out << "set DoppelgangerReservedTemplate default tcp action " << p->m_tcpAction << endl;
-	out << "set DoppelgangerReservedTemplate default udp action " << p->m_udpAction << endl;
-	out << "set DoppelgangerReservedTemplate default icmp action " << p->m_icmpAction << endl;
-
-	if(p->m_personality.compare(""))
-	{
-		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->m_personality << '"' << endl;
-	}
-
-	if(p->m_dropRate.compare(""))
-	{
-		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->m_dropRate << endl;
-	}
-
-	for (uint i = 0; i < p->m_ports.size(); i++)
-	{
-		// Only include non-inherited ports
-		if(!p->m_ports[i].second.first)
-		{
-			out << "add DoppelgangerReservedTemplate";
-			if(!m_ports[p->m_ports[i].first].m_type.compare("TCP"))
-			{
-				out << " tcp port ";
-			}
-			else
-			{
-				out << " udp port ";
-			}
-			out << m_ports[p->m_ports[i].first].m_portNum << " ";
-
-			if(!(m_ports[p->m_ports[i].first].m_behavior.compare("script")))
-			{
-				string scriptName = m_ports[p->m_ports[i].first].m_scriptName;
-
-				if(m_scripts[scriptName].m_path.compare(""))
-				{
-					out << '"' << m_scripts[scriptName].m_path << '"'<< endl;
-				}
-				else
-				{
-					LOG(ERROR, "Error writing NodeProfile port script.", "Path to script " + scriptName + " is null.");
-				}
-			}
-			else
-			{
-				out << m_ports[p->m_ports[i].first].m_behavior << endl;
-			}
-		}
-	}
-	out << endl;
-	return out.str();
 }
 
 //Setter for the directory to read from and write to
