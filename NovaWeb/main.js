@@ -1360,7 +1360,22 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	var portName;
 	for (var i = 0; i < ports.size; i++) {
 		console.log("Adding port " + ports[i].portNum + " " + ports[i].type + " " + ports[i].behavior + " " + ports[i].script + " Inheritance: " + ports[i].isInherited);
-		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), Number(ports[i].behavior), ports[i].script);
+		console.log("Adding port with behavior: " + ports[i].behavior);
+
+		// Convert the string to the proper enum number in HoneydConfiguration.h
+		var behavior = ports[i].behavior;
+		var behaviorEnumValue = new Number();
+		if (behavior == "block") {
+			behaviorEnumValue = 0;
+		} else if (behavior == "reset") {
+			behaviorEnumValue = 1;
+		} else if (behavior == "open") {
+			behaviorEnumValue = 2;
+		} else if (behavior == "script") {
+			behaviorEnumValue = 3;
+		}
+
+		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), behaviorEnumValue, ports[i].script);
 
 		if (portName != "") {
 			honeydProfile.AddPort(portName, ports[i].isInherited);

@@ -121,10 +121,6 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 		case RESET:
 		{
 			pr.m_behavior = "reset";
-			if(!pr.m_type.compare("UDP"))
-			{
-				pr.m_behavior = "block";
-			}
 			break;
 		}
 		case SCRIPT:

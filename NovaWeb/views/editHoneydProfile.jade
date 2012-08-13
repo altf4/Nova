@@ -608,7 +608,13 @@ block headerAdditions
         for (var i = 0; i < portIndexes.length; i++) {
             ports[i] = new obj();
             ports[i].portNum = dojo.byId("portNum" + portIndexes[i]).value;
-            ports[i].behavior = dojo.byId("portBehavior" + portIndexes[i]).value;
+            switch (Number(dojo.byId("portBehavior" + portIndexes[i]).value)) {
+                case 0: ports[i].behavior = "reset"; break; 
+                case 1: ports[i].behavior = "block"; break;
+                case 2: ports[i].behavior = "open"; break;
+                case 3: ports[i].behavior = "script"; break;
+            }
+
             ports[i].type = dojo.byId("portType" + portIndexes[i]).value;
             ports[i].script = dojo.byId("portScriptDrop" + portIndexes[i]).value;
             ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
@@ -667,12 +673,13 @@ block headerAdditions
         row += "</select></td>";
 
         row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>"; 
-        options = ["closed", "reset", "open", "script"];
+        options = ["reset", "block", "open", "script"];
+        longOptions = ["Closed: Respond with TCP RST or ICMP Port Error", "Filter: Drop packets and do not respond", "Open: Establish incoming connections", "Script: Emulate a service"];
         for (j = 0; j < options.length; j++) {
             if (port.behavior == options[j]) {
-                row += "<option value='" + j + "' SELECTED>" + options[j] + "</option>";
+                row += "<option value='" + j + "' SELECTED>" + longOptions[j] + "</option>";
             } else {
-                row += "<option value='" + j + "'>" + options[j] + "</option>";
+                row += "<option value='" + j + "'>" + longOptions[j] + "</option>";
             }
         }
         row += "</select></td>";
@@ -728,9 +735,9 @@ block headerAdditions
             
             selectItemByValue(dojo.byId("portScriptDrop" + portUID), "NA");
 
-            if (behavior == "closed") {
+            if (behavior == "reset") {
                 dojo.byId("portBehavior" + portUID).value = 0;
-            } else if (behavior == "reset") {
+            } else if (behavior == "block") {
                 dojo.byId("portBehavior" + portUID).value = 1;
             } else if (behavior == "open") {
                 dojo.byId("portBehavior" + portUID).value = 2;
