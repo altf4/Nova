@@ -1,5 +1,8 @@
 var novaconfig = require('novaconfig.node');
 
+var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
+segvhandler.registerHandler();
+
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
@@ -428,23 +431,28 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', { session: false
 });
 
 app.get('/editHoneydNode', passport.authenticate('basic', { session: false }), function(req, res) {
-	nodeName = req.query["node"];
-	// TODO: Error checking for bad node names
-	
-	node = honeydConfig.GetNode(nodeName); 
-	res.render('editHoneydNode.jade', 
-	{ locals : {
-		oldName: nodeName
-		, INTERFACES: config.ListInterfaces().sort()
-	 	, profiles: honeydConfig.GetProfileNames()
-		, profile: node.GetProfile()
-		, ip: node.GetIP()
-		, mac: node.GetMAC()
-	}})
+	var nodeName = req.query["node"];
+	var node = honeydConfig.GetNode(nodeName); 
+
+	if (node == null) {	
+	  	res.render('error.jade', { locals: { redirectLink: "/configHoneydNodes", errorDetails: "Node does not exist" }});
+	} else {
+		res.render('editHoneydNode.jade', 
+		{ locals : {
+			oldName: nodeName
+			, INTERFACES: config.ListInterfaces().sort()
+			, profiles: honeydConfig.GetProfileNames()
+			, profile: node.GetProfile()
+			, ip: node.GetIP()
+			, mac: node.GetMAC()
+		}})
+	}
 });
 
 app.get('/editHoneydProfile', passport.authenticate('basic', { session: false }), function(req, res) {
 	profileName = req.query["profile"]; 
+
+
 
 	res.render('editHoneydProfile.jade', 
 	{ locals : {
@@ -1051,8 +1059,14 @@ everyone.now.ClearSuspect = function(suspect, callback)
 everyone.now.GetInheritedEthernetList = function(parent, callback)
 {
 	var prof = honeydConfig.GetProfile(parent);
+
+	if (prof == null) {
+		console.log("ERROR Getting profile " + parent);
+		callback(null);
+	} else {
+		callback(prof.GetVendors(), prof.GetVendorDistributions());
+	}
 	
-	callback(prof.GetVendors(), prof.GetVendorDistributions());
 }
 
 everyone.now.StartHaystack = function()
@@ -1198,6 +1212,12 @@ everyone.now.deleteWhitelistEntry = function(whitelistEntryNames, callback)
 everyone.now.GetProfile = function(profileName, callback) {
 	console.log("Fetching profile " + profileName);
 	var profile = honeydConfig.GetProfile(profileName);
+
+	if (profile == null) {
+		console.log("Returning null since error fetting profile: " + profileName);
+		callback(null);
+		return;
+	}
 	
     // Nowjs can't pass the object with methods, they need to be member vars
     profile.name = profile.GetName();
@@ -1246,6 +1266,13 @@ everyone.now.GetProfile = function(profileName, callback) {
 everyone.now.GetVendors = function(profileName, callback)
 {
 	var profile = honeydConfig.GetProfile(profileName);
+	
+	if (profile == null) {
+		console.log("ERROR Getting profile " + profileName);
+		callback(null);
+		return;
+	}
+	
 	
 	var ethVendorList = [];
     
@@ -1419,7 +1446,7 @@ everyone.now.ClearHostileEvents = function(callback) {
 	function (err) {
 		if(err) {
 			console.log(err);
-			callback();
+			callback(null);
 			return;
 		}
 
@@ -1433,7 +1460,7 @@ everyone.now.ClearHostileEvent = function(id, callback) {
 	function (err) {
 		if(err) {
 			console.log(err);
-			callback();
+			callback(null);
 			return;
 		}
 
