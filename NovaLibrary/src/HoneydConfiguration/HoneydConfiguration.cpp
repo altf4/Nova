@@ -946,7 +946,13 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 			valueKey = "port";
 			if(!string(value.first.data()).compare(valueKey))
 			{
-				port = &m_ports[value.second.get<string>("portName")];
+				string portName = value.second.get<string>("portName");
+				port = &m_ports[portName];
+				if(port == NULL)
+				{
+					LOG(ERROR, "Invalid port '" + portName + "' in NodeProfile '" + nodeProf->m_name + "'.","");
+					return false;
+				}
 
 				//Checks inherited ports for conflicts
 				for(uint i = 0; i < nodeProf->m_ports.size(); i++)
