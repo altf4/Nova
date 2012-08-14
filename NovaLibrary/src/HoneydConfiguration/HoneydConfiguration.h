@@ -78,8 +78,10 @@ public:
     // Returns true if successful and false if the save fails
     bool SaveAllTemplates();
 
-    //Writes the current configuration to honeyd configs
-    bool WriteHoneydConfiguration(std::string path);
+    //Writes out the current HoneydConfiguration object to the Honeyd configuration file in the expected format
+    // path: path in the file system to the desired HoneydConfiguration file
+    // Returns true if successful and false if not
+    bool WriteHoneydConfiguration(std::string path = "");
 
     // This function takes in the raw byte form of a network mask and converts it to the number of bits
     // 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24

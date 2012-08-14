@@ -257,6 +257,16 @@ bool HoneydConfiguration::SaveAllTemplates()
 // Returns true if successful and false if not
 bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 {
+	if(!path.compare(""))
+	{
+		if(!Config::Inst()->GetPathConfigHoneydHS().compare(""))
+		{
+			LOG(ERROR, "Invalid path given to Honeyd configuration file!", "");
+			return false;
+		}
+		return WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
+	}
+
 	stringstream out;
 	vector<string> profilesParsed;
 
@@ -1168,11 +1178,6 @@ bool HoneydConfiguration::LoadPortsTemplate()
 			}
 
 			port.m_service = value.second.get<std::string>("service");
-			if(!port.m_service.compare(""))
-			{
-				LOG(ERROR, "Unable to parse valid port service from xml file!", "");
-				return false;
-			}
 
 			port.m_behavior = value.second.get<std::string>("behavior");
 			if(!port.m_behavior.compare(""))
