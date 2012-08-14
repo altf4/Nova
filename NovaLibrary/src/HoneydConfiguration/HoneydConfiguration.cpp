@@ -100,6 +100,322 @@ bool HoneydConfiguration::LoadAllTemplates()
 	return true;
 }
 
+/************************************************
+  Save Honeyd XML Configuration Functions
+ ************************************************/
+
+//This function takes the current values in the HoneydConfiguration and Config objects
+// 		and translates them into an xml format for persistent storage that can be
+// 		loaded at a later time by any HoneydConfiguration object
+// Returns true if successful and false if the save fails
+bool HoneydConfiguration::SaveAllTemplates()
+{
+	using boost::property_tree::ptree;
+	ptree propTree;
+
+	//Scripts
+	m_scriptTree.clear();
+	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	{
+		propTree = it->second.m_tree;
+		propTree.put<std::string>("name", it->second.m_name);
+		propTree.put<std::string>("service", it->second.m_service);
+		propTree.put<std::string>("osclass", it->second.m_osclass);
+		propTree.put<std::string>("path", it->second.m_path);
+		m_scriptTree.add_child("scripts.script", propTree);
+	}
+
+	//Ports
+	m_portTree.clear();
+	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+	{
+		//Put in required values
+		propTree = it->second.m_tree;
+		propTree.put<std::string>("name", it->second.m_portName);
+		propTree.put<std::string>("number", it->second.m_portNum);
+		propTree.put<std::string>("type", it->second.m_type);
+		propTree.put<std::string>("service", it->second.m_service);
+		propTree.put<std::string>("behavior", it->second.m_behavior);
+
+		//If this port uses a script, save it.
+		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("internal"))
+		{
+			propTree.put<std::string>("script", it->second.m_scriptName);
+		}
+
+		//If the port works as a proxy, save destination
+		else if(!it->second.m_behavior.compare("proxy"))
+		{
+			propTree.put<std::string>("IP", it->second.m_proxyIP);
+			propTree.put<std::string>("Port", it->second.m_proxyPort);
+		}
+		//Add the child to the tree
+		m_portTree.add_child("ports.port", propTree);
+	}
+
+	m_subnetTree.clear();
+	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
+	{
+		propTree = it->second.m_tree;
+		propTree.put<std::string>("name", it->second.m_name);
+		propTree.put<bool>("enabled",it->second.m_enabled);
+
+		//Remove /## format mask from the address then put it in the XML.
+		stringstream ss;
+		ss << "/" << it->second.m_maskBits;
+		int i = ss.str().size();
+		string addrString = it->second.m_address.substr(0,(it->second.m_address.size()-i));
+		propTree.put<std::string>("IP", addrString);
+
+		//Gets the mask from mask bits then put it in XML
+		in_addr_t rawBitMask = ::pow(2, 32-it->second.m_maskBits) - 1;
+
+		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
+		rawBitMask = ~rawBitMask; //After getting the inverse of this we have the mask in host addr form.
+
+		//Convert to network order, put in in_addr struct
+		//call ntoa to get char pointer and make string
+		in_addr netOrderMask;
+		netOrderMask.s_addr = htonl(rawBitMask);
+		addrString = string(inet_ntoa(netOrderMask));
+		propTree.put<std::string>("mask", addrString);
+		m_subnetTree.add_child("manualInterface", propTree);
+	}
+
+	//Nodes
+	m_nodesTree.clear();
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		propTree = it->second.m_tree;
+
+		// No need to save names besides the doppel, we can derive them
+		if(!it->second.m_name.compare("Doppelganger"))
+		{
+			// Make sure the IP reflects whatever is being used right now
+			it->second.m_IP = Config::Inst()->GetDoppelIp();
+			propTree.put<std::string>("name", it->second.m_name);
+		}
+
+		//Required xml entires
+		propTree.put<std::string>("interface", it->second.m_interface);
+		propTree.put<std::string>("IP", it->second.m_IP);
+		propTree.put<bool>("enabled", it->second.m_enabled);
+		propTree.put<std::string>("MAC", it->second.m_MAC);
+		propTree.put<std::string>("profile.name", it->second.m_pfile);
+		ptree newPortTree;
+		newPortTree.clear();
+		for(uint i = 0; i < it->second.m_ports.size(); i++)
+		{
+			if(!it->second.m_isPortInherited[i])
+			{
+				newPortTree.add<std::string>("port", it->second.m_ports[i]);
+			}
+		}
+		propTree.put_child("profile.add.ports", newPortTree);
+		m_nodesTree.add_child("node",propTree);
+	}
+
+	BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
+	{
+		//Find the specified group
+		if(!value.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
+		{
+			//Load Subnets first, they are needed before we can load nodes
+			value.second.put_child("subnets", m_subnetTree);
+			value.second.put_child("nodes",m_nodesTree);
+		}
+	}
+	m_profileTree.clear();
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if(it->second.m_parentProfile == "")
+		{
+			propTree = it->second.m_tree;
+			m_profileTree.add_child("profiles.profile", propTree);
+		}
+	}
+	try
+	{
+		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
+		write_xml(m_homePath + "/scripts.xml", m_scriptTree, std::locale(), settings);
+		write_xml(m_homePath + "/templates/ports.xml", m_portTree, std::locale(), settings);
+		write_xml(m_homePath + "/templates/nodes.xml", m_groupTree, std::locale(), settings);
+		write_xml(m_homePath + "/templates/profiles.xml", m_profileTree, std::locale(), settings);
+	}
+	catch(boost::property_tree::xml_parser_error &e)
+	{
+		LOG(ERROR, "Unable to right to xml files, caught except " + string(e.what()), "");
+		return false;
+	}
+
+	LOG(DEBUG, "Honeyd templates have been saved" ,"");
+	return true;
+}
+
+//Writes out the current HoneydConfiguration object to the Honeyd configuration file in the expected format
+// path: path in the file system to the desired HoneydConfiguration file
+// Returns true if successful and false if not
+bool HoneydConfiguration::WriteHoneydConfiguration(string path)
+{
+	stringstream out;
+	vector<string> profilesParsed;
+
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if(!it->second.m_parentProfile.compare(""))
+		{
+			string pString = ProfileToString(&it->second);
+			if(!pString.compare(""))
+			{
+				LOG(ERROR, "Unable to convert expected profile '" + it->first + "' into a valid Honeyd configuration string!", "");
+				return false;
+			}
+			out << pString;
+			profilesParsed.push_back(it->first);
+		}
+	}
+
+	while(profilesParsed.size() < m_profiles.size())
+	{
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		{
+			bool selfMatched = false;
+			bool parentFound = false;
+			for(uint i = 0; i < profilesParsed.size(); i++)
+			{
+				if(!it->second.m_parentProfile.compare(profilesParsed[i]))
+				{
+					parentFound = true;
+					continue;
+				}
+				if(!it->first.compare(profilesParsed[i]))
+				{
+					selfMatched = true;
+					break;
+				}
+			}
+
+			if(!selfMatched && parentFound)
+			{
+				string pString = ProfileToString(&it->second);
+				if(!pString.compare(""))
+				{
+					LOG(ERROR, "Unable to convert expected profile '" + it->first + "' into a valid Honeyd configuration string!", "");
+					return false;
+				}
+				out << pString;
+				profilesParsed.push_back(it->first);
+			}
+		}
+	}
+
+	// Start node section
+	m_nodeProfileIndex = 0;
+	for(NodeTable::iterator it = m_nodes.begin(); (it != m_nodes.end()) && (m_nodeProfileIndex < (uint)(~0)); it++)
+	{
+		m_nodeProfileIndex++;
+		if(!it->second.m_enabled)
+		{
+			continue;
+		}
+		//We write the dopp regardless of whether or not it is enabled so that it can be toggled during runtime.
+		else if(!it->second.m_name.compare("Doppelganger"))
+		{
+			string pString = DoppProfileToString(&m_profiles[it->second.m_pfile]);
+			if(!pString.compare(""))
+			{
+				LOG(ERROR, "Unable to convert expected profile '" + it->second.m_pfile + "' into a valid Honeyd configuration string!", "");
+				return false;
+			}
+			out << '\n' << pString;
+			out << "bind " << it->second.m_IP << " DoppelgangerReservedTemplate" << '\n' << '\n';
+			//Use configured or discovered loopback
+		}
+		else
+		{
+			string profName = it->second.m_pfile;
+			ReplaceChar(profName, ' ', '-');
+			//Clone a custom profile for a node
+			out << "clone CustomNodeProfile-" << m_nodeProfileIndex << " " << profName << '\n';
+
+			//Add any custom port settings
+			for(uint i = 0; i < it->second.m_ports.size(); i++)
+			{
+				//Only write out ports that aren't inherited from parent profiles
+				if(!it->second.m_isPortInherited[i])
+				{
+					Port prt = m_ports[it->second.m_ports[i]];
+					//Skip past invalid port objects
+					if(!(prt.m_type.compare("")) || !(prt.m_portNum.compare("")) || !(prt.m_behavior.compare("")))
+					{
+						continue;
+					}
+
+					out << "add CustomNodeProfile-" << m_nodeProfileIndex << " ";
+					if(!prt.m_type.compare("TCP"))
+					{
+						out << " tcp port ";
+					}
+					else
+					{
+						out << " udp port ";
+					}
+
+					out << prt.m_portNum << " ";
+
+					if(!(prt.m_behavior.compare("script")))
+					{
+						string scriptName = prt.m_scriptName;
+
+						if(m_scripts[scriptName].m_path.compare(""))
+						{
+							out << '"' << m_scripts[scriptName].m_path << '"'<< '\n';
+						}
+						else
+						{
+							LOG(ERROR, "Error writing node port script.", "Path to script " + scriptName + " is null.");
+						}
+					}
+					else
+					{
+						out << prt.m_behavior << '\n';
+					}
+				}
+			}
+
+			//If DHCP
+			if(!it->second.m_IP.compare("DHCP"))
+			{
+				//Wrtie dhcp line
+				out << "dhcp CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface;
+				//If the node has a MAC address (not random generated)
+				if(it->second.m_MAC.compare("RANDOM"))
+				{
+					out << " ethernet \"" << it->second.m_MAC << "\"";
+				}
+				out << '\n';
+			}
+			//If static IP
+			else
+			{
+				//If the node has a MAC address (not random generated)
+				if(it->second.m_MAC.compare("RANDOM"))
+				{
+					//Set the MAC for the custom node profile
+					out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex;
+					out << " ethernet \"" << it->second.m_MAC << "\"" << '\n';
+				}
+				//bind the node to the IP address
+				out << "bind " << it->second.m_IP << " CustomNodeProfile-" << m_nodeProfileIndex << '\n';
+			}
+		}
+	}
+	ofstream outFile(path);
+	outFile << out.str() << '\n';
+	outFile.close();
+	return true;
+}
+
 // This function takes in the raw byte form of a network mask and converts it to the number of bits
 // 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
 // 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
@@ -142,20 +458,20 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 
 	if(!parentProfName.compare("default") || !parentProfName.compare(""))
 	{
-		out << "create " << profName << endl;
+		out << "create " << profName << '\n';
 	}
 	else
 	{
-		out << "clone " << profName << " " << parentProfName << endl;
+		out << "clone " << profName << " " << parentProfName << '\n';
 	}
 
-	out << "set " << profName  << " default tcp action " << p->m_tcpAction << endl;
-	out << "set " << profName  << " default udp action " << p->m_udpAction << endl;
-	out << "set " << profName  << " default icmp action " << p->m_icmpAction << endl;
+	out << "set " << profName  << " default tcp action " << p->m_tcpAction << '\n';
+	out << "set " << profName  << " default udp action " << p->m_udpAction << '\n';
+	out << "set " << profName  << " default icmp action " << p->m_icmpAction << '\n';
 
 	if(p->m_personality.compare(""))
 	{
-		out << "set " << profName << " personality \"" << p->m_personality << '"' << endl;
+		out << "set " << profName << " personality \"" << p->m_personality << '"' << '\n';
 	}
 
 	string vendor = "";
@@ -170,15 +486,15 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 	}
 	if(vendor.compare(""))
 	{
-		out << "set " << profName << " ethernet \"" << vendor << '"' << endl;
+		out << "set " << profName << " ethernet \"" << vendor << '"' << '\n';
 	}
 
 	if(p->m_dropRate.compare(""))
 	{
-		out << "set " << profName << " droprate in " << p->m_dropRate << endl;
+		out << "set " << profName << " droprate in " << p->m_dropRate << '\n';
 	}
 
-	out << endl;
+	out << '\n';
 	return out.str();
 }
 
@@ -196,20 +512,20 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 	}
 
 	stringstream out;
-	out << "create DoppelgangerReservedTemplate" << endl;
+	out << "create DoppelgangerReservedTemplate" << '\n';
 
-	out << "set DoppelgangerReservedTemplate default tcp action " << p->m_tcpAction << endl;
-	out << "set DoppelgangerReservedTemplate default udp action " << p->m_udpAction << endl;
-	out << "set DoppelgangerReservedTemplate default icmp action " << p->m_icmpAction << endl;
+	out << "set DoppelgangerReservedTemplate default tcp action " << p->m_tcpAction << '\n';
+	out << "set DoppelgangerReservedTemplate default udp action " << p->m_udpAction << '\n';
+	out << "set DoppelgangerReservedTemplate default icmp action " << p->m_icmpAction << '\n';
 
 	if(p->m_personality.compare(""))
 	{
-		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->m_personality << '"' << endl;
+		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->m_personality << '"' << '\n';
 	}
 
 	if(p->m_dropRate.compare(""))
 	{
-		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->m_dropRate << endl;
+		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->m_dropRate << '\n';
 	}
 
 	for (uint i = 0; i < p->m_ports.size(); i++)
@@ -242,15 +558,15 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 					LOG(ERROR, "Unable to lookup script with name '" + scriptName + "'!", "");
 					return "";
 				}
-				out << '"' << scriptPtr->m_path << '"'<< endl;
+				out << '"' << scriptPtr->m_path << '"'<< '\n';
 			}
 			else
 			{
-				out << portPtr->m_behavior << endl;
+				out << portPtr->m_behavior << '\n';
 			}
 		}
 	}
-	out << endl;
+	out << '\n';
 	return out.str();
 }
 
@@ -411,134 +727,6 @@ vector<string> HoneydConfiguration::GetGeneratedProfileNames()
 	}
 
 	return childProfiles;
-}
-
-//Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
-// Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
-bool HoneydConfiguration::LoadNodeKeys()
-{
-	if(m_nodes.begin() == m_nodes.end())
-	{
-		LOG(WARNING, "Unable to locate any nodes in the configuration object.", "");
-	}
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		NodeProfile * p = &m_profiles[it->second.m_pfile];
-		if(p == NULL)
-		{
-			LOG(ERROR, "Unable to locate node profile '" + it->second.m_pfile + "'!", "");
-			return false;
-		}
-		p->m_nodeKeys.push_back(it->first);
-	}
-	return true;
-}
-
-//Loads ports from file
-bool HoneydConfiguration::LoadPortsTemplate()
-{
-	using boost::property_tree::ptree;
-	using boost::property_tree::xml_parser::trim_whitespace;
-
-	m_portTree.clear();
-	try
-	{
-		read_xml(m_homePath + "/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
-
-		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
-		{
-			Port port;
-			port.m_tree = value.second;
-			//Required xml entries
-			port.m_portName = value.second.get<std::string>("name");
-
-			if(!port.m_portName.compare(""))
-			{
-				LOG(ERROR, "Problem loading honeyd XML files.", "");
-				continue;
-			}
-
-			port.m_portNum = value.second.get<std::string>("number");
-			port.m_type = value.second.get<std::string>("type");
-			port.m_service = value.second.get<std::string>("service");
-			port.m_behavior = value.second.get<std::string>("behavior");
-
-			//If this port uses a script, find and assign it.
-			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("internal"))
-			{
-				port.m_scriptName = value.second.get<std::string>("script");
-			}
-			//If the port works as a proxy, find destination
-			else if(!port.m_behavior.compare("proxy"))
-			{
-				port.m_proxyIP = value.second.get<std::string>("IP");
-				port.m_proxyPort = value.second.get<std::string>("Port");
-			}
-			m_ports[port.m_portName] = port;
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
-		return false;
-	}
-
-	return true;
-}
-
-
-//Loads the subnets and nodes from file for the currently specified group
-bool HoneydConfiguration::LoadNodesTemplate()
-{
-	using boost::property_tree::ptree;
-	using boost::property_tree::xml_parser::trim_whitespace;
-
-	m_groupTree.clear();
-	ptree propTree;
-
-	try
-	{
-		read_xml(m_homePath + "/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
-		m_groups.clear();
-		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
-		{
-			m_groups.push_back(value.second.get<std::string>("name"));
-			//Find the specified group
-			if(!value.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
-			{
-				try //Null Check
-				{
-					//Load Subnets first, they are needed before we can load nodes
-					m_subnetTree = value.second.get_child("subnets");
-					LoadSubnets(&m_subnetTree);
-
-					try //Null Check
-					{
-						//If subnets are loaded successfully, load nodes
-						m_nodesTree = value.second.get_child("nodes");
-						LoadNodes(&m_nodesTree);
-					}
-					catch(Nova::hashMapException &e)
-					{
-						LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
-						return false;
-					}
-				}
-				catch(Nova::hashMapException &e)
-				{
-					LOG(ERROR, "Problem loading subnets: " + string(e.what()) + ".", "");
-					return false;
-				}
-			}
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading groups: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
-		return false;
-	}
-
-	return true;
 }
 
 //This is used when a profile is cloned, it allows us to copy a ptree and extract all children from it
@@ -886,8 +1074,10 @@ bool HoneydConfiguration::LoadProfileChildren(string parentKey)
 	return true;
 }
 
+// ******************* Private Methods **************************
 
-//Loads scripts from file
+//Loads scripts from the xml template located relative to the currently set home path
+// Returns true if successful, false if not.
 bool HoneydConfiguration::LoadScriptsTemplate()
 {
 	using boost::property_tree::ptree;
@@ -906,8 +1096,8 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 
 			if(!script.m_name.compare(""))
 			{
-				LOG(ERROR, "Problem loading honeyd XML files.","");
-				continue;
+				LOG(ERROR, "Unable to a valid script from the templates!", "");
+				return false;
 			}
 
 			try
@@ -916,6 +1106,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
+				LOG(DEBUG, "No OS class found for script '" + script.m_name + "'.", "");
 			};
 			try
 			{
@@ -923,6 +1114,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
+				LOG(DEBUG, "No service found for script '" + script.m_name + "'.", "");
 			};
 			script.m_path = value.second.get<std::string>("path");
 			m_scripts[script.m_name] = script;
@@ -936,303 +1128,261 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	return true;
 }
 
-
-/************************************************
-  Save Honeyd XML Configuration Functions
- ************************************************/
-
-//Saves the current configuration information to XML files
-
-// Important this function assumes that unless it is a new item (ptree pointer == NULL) then
-// all required fields exist and old fields have been removed. Ex: if a port previously used a script
-// but now has a behavior of open, at that point the user should have erased the script field.
-// inverserly if a user switches to script the script field must be created.
-
-//To summarize this function only populates the xml data for the values it contains unless it is a new item,
-// it does not clean up, and only creates if it's a new item and then only for the fields that are needed.
-// it does not track profile inheritance either, that should be created when the heirarchy is modified.
-bool HoneydConfiguration::SaveAllTemplates()
+//Loads Ports from the xml template located relative to the currently set home path
+// Returns true if successful, false if not.
+bool HoneydConfiguration::LoadPortsTemplate()
 {
 	using boost::property_tree::ptree;
-	ptree propTree;
+	using boost::property_tree::xml_parser::trim_whitespace;
 
-	//Scripts
-	m_scriptTree.clear();
-	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
-	{
-		propTree = it->second.m_tree;
-		propTree.put<std::string>("name", it->second.m_name);
-		propTree.put<std::string>("service", it->second.m_service);
-		propTree.put<std::string>("osclass", it->second.m_osclass);
-		propTree.put<std::string>("path", it->second.m_path);
-		m_scriptTree.add_child("scripts.script", propTree);
-	}
-
-	//Ports
 	m_portTree.clear();
-	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+	try
 	{
-		propTree = it->second.m_tree;
-		propTree.put<std::string>("name", it->second.m_portName);
-		propTree.put<std::string>("number", it->second.m_portNum);
-		propTree.put<std::string>("type", it->second.m_type);
-		propTree.put<std::string>("service", it->second.m_service);
-		propTree.put<std::string>("behavior", it->second.m_behavior);
-		//If this port uses a script, save it.
-		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("internal"))
+		read_xml(m_homePath + "/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
+
+		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
 		{
-			propTree.put<std::string>("script", it->second.m_scriptName);
-		}
-		//If the port works as a proxy, save destination
-		else if(!it->second.m_behavior.compare("proxy"))
-		{
-			propTree.put<std::string>("IP", it->second.m_proxyIP);
-			propTree.put<std::string>("Port", it->second.m_proxyPort);
-		}
-		m_portTree.add_child("ports.port", propTree);
-	}
+			Port port;
+			port.m_tree = value.second;
+			//Required xml entries
+			port.m_portName = value.second.get<std::string>("name");
 
-	m_subnetTree.clear();
-	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
-	{
-		propTree = it->second.m_tree;
-
-		//TODO assumes subnet is interface, need to discover and handle if virtual
-		propTree.put<std::string>("name", it->second.m_name);
-		propTree.put<bool>("enabled",it->second.m_enabled);
-		//propTree.put<bool>("isReal", it->second.m_isRealDevice);
-
-		//Remove /## format mask from the address then put it in the XML.
-		stringstream ss;
-		ss << "/" << it->second.m_maskBits;
-		int i = ss.str().size();
-		string addrString = it->second.m_address.substr(0,(it->second.m_address.size()-i));
-		propTree.put<std::string>("IP", addrString);
-
-		//Gets the mask from mask bits then put it in XML
-		in_addr_t rawBitMask = ::pow(2, 32-it->second.m_maskBits) - 1;
-		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
-		rawBitMask = ~rawBitMask; //After getting the inverse of this we have the mask in host addr form.
-		//Convert to network order, put in in_addr struct
-		//call ntoa to get char pointer and make string
-		in_addr netOrderMask;
-		netOrderMask.s_addr = htonl(rawBitMask);
-		addrString = string(inet_ntoa(netOrderMask));
-		propTree.put<std::string>("mask", addrString);
-		m_subnetTree.add_child("manualInterface", propTree);
-	}
-
-	//Nodes
-	m_nodesTree.clear();
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		propTree = it->second.m_tree;
-
-		// No need to save names besides the doppel, we can derive them
-		if(!it->second.m_name.compare("Doppelganger"))
-		{
-			// Make sure the IP reflects whatever is being used right now
-			it->second.m_IP = Config::Inst()->GetDoppelIp();
-			propTree.put<std::string>("name", it->second.m_name);
-		}
-
-		//Required xml entires
-		propTree.put<std::string>("interface", it->second.m_interface);
-		propTree.put<std::string>("IP", it->second.m_IP);
-		propTree.put<bool>("enabled", it->second.m_enabled);
-		propTree.put<std::string>("MAC", it->second.m_MAC);
-		propTree.put<std::string>("profile.name", it->second.m_pfile);
-		ptree newPortTree;
-		newPortTree.clear();
-		for(uint i = 0; i < it->second.m_ports.size(); i++)
-		{
-			if(!it->second.m_isPortInherited[i])
+			if(!port.m_portName.compare(""))
 			{
-				newPortTree.add<std::string>("port", it->second.m_ports[i]);
+				LOG(ERROR, "Unable to parse valid port name from xml file!", "");
+				return false;
 			}
-		}
-		propTree.put_child("profile.add.ports", newPortTree);
-		m_nodesTree.add_child("node",propTree);
-	}
-	using boost::property_tree::ptree;
-	BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
-	{
-		//Find the specified group
-		if(!value.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
-		{
-			//Load Subnets first, they are needed before we can load nodes
-			value.second.put_child("subnets", m_subnetTree);
-			value.second.put_child("nodes",m_nodesTree);
-		}
-	}
-	m_profileTree.clear();
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		if(it->second.m_parentProfile == "")
-		{
-			propTree = it->second.m_tree;
-			m_profileTree.add_child("profiles.profile", propTree);
-		}
-	}
-	boost::property_tree::xml_writer_settings<char> settings('\t', 1);
-	write_xml(m_homePath + "/scripts.xml", m_scriptTree, std::locale(), settings);
-	write_xml(m_homePath + "/templates/ports.xml", m_portTree, std::locale(), settings);
-	write_xml(m_homePath + "/templates/nodes.xml", m_groupTree, std::locale(), settings);
-	write_xml(m_homePath + "/templates/profiles.xml", m_profileTree, std::locale(), settings);
 
-	LOG(DEBUG, "Honeyd templates have been saved" ,"");
+			port.m_portNum = value.second.get<std::string>("number");
+			if(!port.m_portNum.compare(""))
+			{
+				LOG(ERROR, "Unable to parse valid port number from xml file!", "");
+				return false;
+			}
+
+			port.m_type = value.second.get<std::string>("type");
+			if(!port.m_type.compare(""))
+			{
+				LOG(ERROR, "Unable to parse valid port type from xml file!", "");
+				return false;
+			}
+
+			port.m_service = value.second.get<std::string>("service");
+			if(!port.m_service.compare(""))
+			{
+				LOG(ERROR, "Unable to parse valid port service from xml file!", "");
+				return false;
+			}
+
+			port.m_behavior = value.second.get<std::string>("behavior");
+			if(!port.m_behavior.compare(""))
+			{
+				LOG(ERROR, "Unable to parse valid port behavior from xml file!", "");
+				return false;
+			}
+
+			//If this port uses a script, find and assign it.
+			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("internal"))
+			{
+				port.m_scriptName = value.second.get<std::string>("script");
+			}
+			//If the port works as a proxy, find destination
+			else if(!port.m_behavior.compare("proxy"))
+			{
+				port.m_proxyIP = value.second.get<std::string>("IP");
+				port.m_proxyPort = value.second.get<std::string>("Port");
+			}
+			m_ports[port.m_portName] = port;
+		}
+	}
+	catch(Nova::hashMapException &e)
+	{
+		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
+		return false;
+	}
 	return true;
 }
 
-//Writes the current configuration to honeyd configs
-bool HoneydConfiguration::WriteHoneydConfiguration(string path)
+//Loads NodeProfiles from the xml template located relative to the currently set home path
+// Returns true if successful, false if not.
+bool HoneydConfiguration::LoadProfilesTemplate()
 {
-	stringstream out;
-
-	vector<string> profilesParsed;
-
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+	ptree *propTree;
+	m_profileTree.clear();
+	try
 	{
-		if(!it->second.m_parentProfile.compare(""))
-		{
-			string pString = ProfileToString(&it->second);
-			out << pString;
-			profilesParsed.push_back(it->first);
-		}
-	}
+		read_xml(m_homePath + "/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
-	while(profilesParsed.size() < m_profiles.size())
-	{
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
 		{
-			bool selfMatched = false;
-			bool parentFound = false;
-			for(uint i = 0; i < profilesParsed.size(); i++)
+			//Generic profile, essentially a honeyd template
+			if(!string(value.first.data()).compare("profile"))
 			{
-				if(!it->second.m_parentProfile.compare(profilesParsed[i]))
+				NodeProfile nodeProf;
+				try
 				{
-					parentFound = true;
-					continue;
+					//Root profile has no parent
+					nodeProf.m_parentProfile = "";
+					nodeProf.m_tree = value.second;
+					nodeProf.m_generated = value.second.get<bool>("generated");
+					nodeProf.m_distribution = value.second.get<double>("distribution");
+					nodeProf.m_name = value.second.get<std::string>("name");
 				}
-				if(!it->first.compare(profilesParsed[i]))
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 				{
-					selfMatched = true;
-					break;
+					LOG(ERROR, "Unable to parse required values for the NodeProfiles!", "");
+					return false;
+				};
+
+				if(!nodeProf.m_name.compare(""))
+				{
+					LOG(ERROR, "Profile XML file contained invalid profile name!", "");
+					return false;
 				}
-			}
 
-			if(!selfMatched && parentFound)
-			{
-				string pString = ProfileToString(&it->second);
-				out << pString;
-				profilesParsed.push_back(it->first);
-			}
-		}
-	}
-
-	// Start node section
-	m_nodeProfileIndex = 0;
-	for(NodeTable::iterator it = m_nodes.begin(); (it != m_nodes.end()) && (m_nodeProfileIndex < (uint)(~0)); it++)
-	{
-		m_nodeProfileIndex++;
-		if(!it->second.m_enabled)
-		{
-			continue;
-		}
-		//We write the dopp regardless of whether or not it is enabled so that it can be toggled during runtime.
-		else if(!it->second.m_name.compare("Doppelganger"))
-		{
-			string pString = DoppProfileToString(&m_profiles[it->second.m_pfile]);
-			out << endl << pString;
-			out << "bind " << it->second.m_IP << " DoppelgangerReservedTemplate" << endl << endl;
-			//Use configured or discovered loopback
-		}
-		else
-		{
-			string profName = it->second.m_pfile;
-			ReplaceChar(profName, ' ', '-');
-			//Clone a custom profile for a node
-			out << "clone CustomNodeProfile-" << m_nodeProfileIndex << " " << profName << endl;
-
-			//Add any custom port settings
-			for(uint i = 0; i < it->second.m_ports.size(); i++)
-			{
-				//Only write out ports that aren't inherited from parent profiles
-				if(!it->second.m_isPortInherited[i])
+				nodeProf.m_ports.clear();
+				for(uint i = 0; i < INHERITED_MAX; i++)
 				{
-					Port prt = m_ports[it->second.m_ports[i]];
-					//Skip past invalid port objects
-					if(!(prt.m_type.compare("")) || !(prt.m_portNum.compare("")) || !(prt.m_behavior.compare("")))
-					{
-						continue;
-					}
+					nodeProf.m_inherited[i] = false;
+				}
 
-					out << "add CustomNodeProfile-" << m_nodeProfileIndex << " ";
-					if(!prt.m_type.compare("TCP"))
+				//Conditional: if has "set" values
+				try
+				{
+					propTree = &value.second.get_child("set");
+					if(!LoadProfileSettings(propTree, &nodeProf))
 					{
-						out << " tcp port ";
-					}
-					else
-					{
-						out << " udp port ";
-					}
-
-					out << prt.m_portNum << " ";
-
-					if(!(prt.m_behavior.compare("script")))
-					{
-						string scriptName = prt.m_scriptName;
-
-						if(m_scripts[scriptName].m_path.compare(""))
-						{
-							out << '"' << m_scripts[scriptName].m_path << '"'<< endl;
-						}
-						else
-						{
-							LOG(ERROR, "Error writing node port script.", "Path to script " + scriptName + " is null.");
-						}
-					}
-					else
-					{
-						out << prt.m_behavior << endl;
+						LOG(ERROR, "Unable to load profile settings subtree from xml template!", "");
+						return false;
 					}
 				}
-			}
-
-			//If DHCP
-			if(!it->second.m_IP.compare("DHCP"))
-			{
-				//Wrtie dhcp line
-				out << "dhcp CustomNodeProfile-" << m_nodeProfileIndex << " on " << it->second.m_interface;
-				//If the node has a MAC address (not random generated)
-				if(it->second.m_MAC.compare("RANDOM"))
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 				{
-					out << " ethernet \"" << it->second.m_MAC << "\"";
+					LOG(DEBUG, "No profile settings found for NodeProfile '" + nodeProf.m_name + "'.", "");
+				};
+
+				//Conditional: if has "add" values
+				try
+				{
+					propTree = &value.second.get_child("add");
+					if(!LoadProfileServices(propTree, &nodeProf))
+					{
+						LOG(ERROR, "Unable to load profile settings subtree from xml template!", "");
+						return false;
+					}
 				}
-				out << endl;
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
+					LOG(DEBUG, "No profile ports or services found for NodeProfile '" + nodeProf.m_name + "'.", "");
+				};
+
+				//Save the profile
+				m_profiles[nodeProf.m_name] = nodeProf;
+
+				if(!LoadProfileChildren(nodeProf.m_name))
+				{
+					LOG(DEBUG, "Unable to load any children for the NodeProfile '" + nodeProf.m_name + "'.", "");
+				}
 			}
-			//If static IP
 			else
 			{
-				//If the node has a MAC address (not random generated)
-				if(it->second.m_MAC.compare("RANDOM"))
-				{
-					//Set the MAC for the custom node profile
-					out << "set " << "CustomNodeProfile-" << m_nodeProfileIndex;
-					out << " ethernet \"" << it->second.m_MAC << "\"" << endl;
-				}
-				//bind the node to the IP address
-				out << "bind " << it->second.m_IP << " CustomNodeProfile-" << m_nodeProfileIndex << endl;
+				LOG(ERROR, "Invalid XML Path " + string(value.first.data()) + ".", "");
 			}
 		}
 	}
-	ofstream outFile(path);
-	outFile << out.str() << endl;
-	outFile.close();
-
+	catch(Nova::hashMapException &e)
+	{
+		LOG(ERROR, "Problem loading Profiles: " + string(e.what()) + ".", "");
+		return false;
+	}
 	return true;
 }
 
+//Loads Nodes from the xml template located relative to the currently set home path
+// Returns true if successful, false if not.
+bool HoneydConfiguration::LoadNodesTemplate()
+{
+	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+
+	m_groupTree.clear();
+	ptree propTree;
+
+	try
+	{
+		read_xml(m_homePath + "/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		m_groups.clear();
+		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
+		{
+			m_groups.push_back(value.second.get<std::string>("name"));
+
+			//Find the specified group
+			if(!value.second.get<std::string>("name").compare(Config::Inst()->GetGroup()))
+			{
+				try
+				{
+					//Load Subnets first, they are needed before we can load nodes
+					m_subnetTree = value.second.get_child("subnets");
+					if(!LoadSubnets(&m_subnetTree))
+					{
+						LOG(ERROR, "Unable to load subnets from xml templates!", "");
+						return false;
+					}
+
+					try
+					{
+						//If subnets are loaded successfully, load nodes
+						m_nodesTree = value.second.get_child("nodes");
+						if(!LoadNodes(&m_nodesTree))
+						{
+							LOG(ERROR, "Unable to load nodes from xml templates!", "");
+							return false;
+						}
+					}
+					catch(Nova::hashMapException &e)
+					{
+						LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
+						return false;
+					}
+				}
+				catch(Nova::hashMapException &e)
+				{
+					LOG(ERROR, "Problem loading subnets: " + string(e.what()) + ".", "");
+					return false;
+				}
+			}
+		}
+	}
+	catch(Nova::hashMapException &e)
+	{
+		LOG(ERROR, "Problem loading groups: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
+		return false;
+	}
+	return true;
+}
+
+//Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
+// Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
+bool HoneydConfiguration::LoadNodeKeys()
+{
+	if(m_nodes.begin() == m_nodes.end())
+	{
+		LOG(WARNING, "Unable to locate any nodes in the configuration object.", "");
+	}
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		NodeProfile * p = &m_profiles[it->second.m_pfile];
+		if(p == NULL)
+		{
+			LOG(ERROR, "Unable to locate node profile '" + it->second.m_pfile + "'!", "");
+			return false;
+		}
+		p->m_nodeKeys.push_back(it->first);
+	}
+	return true;
+}
 
 //loads subnets from file for current group
 bool HoneydConfiguration::LoadSubnets(ptree *propTree)
@@ -1558,107 +1708,6 @@ vector<string> HoneydConfiguration::GeneratedProfilesStrings()
 		}
 	}
 	return ret;
-}
-
-bool HoneydConfiguration::LoadProfilesTemplate()
-{
-	using boost::property_tree::ptree;
-	using boost::property_tree::xml_parser::trim_whitespace;
-	ptree *propTree;
-	m_profileTree.clear();
-	try
-	{
-		read_xml(m_homePath + "/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
-
-		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
-		{
-			//Generic profile, essentially a honeyd template
-			if(!string(value.first.data()).compare("profile"))
-			{
-				NodeProfile nodeProf;
-				try
-				{
-					//Root profile has no parent
-					nodeProf.m_parentProfile = "";
-					nodeProf.m_tree = value.second;
-					nodeProf.m_generated = value.second.get<bool>("generated");
-					nodeProf.m_distribution = value.second.get<double>("distribution");
-
-					//Name required, DCHP boolean intialized (set in loadProfileSet)
-					nodeProf.m_name = value.second.get<std::string>("name");
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-					// Can't get name, generated, or some needed field
-					// Skip this profile
-					LOG(ERROR, "Profile XML file contained invalid profile. Skipping", "");
-					continue;
-				};
-
-				if(!nodeProf.m_name.compare(""))
-				{
-					LOG(ERROR, "Problem loading honeyd XML files.", "");
-					continue;
-				}
-
-				nodeProf.m_ports.clear();
-				for(uint i = 0; i < INHERITED_MAX; i++)
-				{
-					nodeProf.m_inherited[i] = false;
-				}
-
-				try //Conditional: has "set" values
-				{
-					propTree = &value.second.get_child("set");
-					//pass 'set' subset and pointer to this profile
-					LoadProfileSettings(propTree, &nodeProf);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-				};
-
-				try //Conditional: has "add" values
-				{
-					propTree = &value.second.get_child("add");
-					//pass 'add' subset and pointer to this profile
-					LoadProfileServices(propTree, &nodeProf);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-				};
-
-				//Save the profile
-				m_profiles[nodeProf.m_name] = nodeProf;
-
-				try //Conditional: has children profiles
-				{
-					//start recurisive descent down profile tree with this profile as the root
-					//pass subtree and pointer to parent
-					LoadProfileChildren(nodeProf.m_name);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-				};
-
-			}
-
-			//Honeyd's implementation of switching templates based on conditions
-			else if(!string(value.first.data()).compare("dynamic"))
-			{
-				//TODO
-			}
-			else
-			{
-				LOG(ERROR, "Invalid XML Path " + string(value.first.data()) + ".", "");
-			}
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading Profiles: " + string(e.what()) + ".", "");
-		return false;
-	}
-	return true;
 }
 
 //Setter for the directory to read from and write to
@@ -2171,7 +2220,7 @@ bool HoneydConfiguration::AddNewNode(Node node)
 
 	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
 
-	cout << "Adding new node '" << newNode.m_name << "'."<< endl;
+	cout << "Adding new node '" << newNode.m_name << "'."<< '\n';
 
 	m_profiles[newNode.m_pfile].m_nodeKeys.push_back(newNode.m_name);
 
@@ -2206,50 +2255,75 @@ bool HoneydConfiguration::AddNewNode(Node node)
 	return true;
 }
 
-bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, std::string macAddress, std::string interface, std::string subnet)
+//This function creates a new Honeyd node based on the parameters given
+//	profileName: name of the existing NodeProfile the node should use
+//	ipAddress: string form of the IP address or the string "DHCP" if it should acquire an address using DHCP
+//	macAddress: string form of a MAC address or the string "RANDOM" if one should be generated each time Honeyd is run
+//	interface: the name of the physical or virtual interface the Honeyd node should be deployed on.
+//	subnet: the name of the subnet object the node is associated with for organizational reasons.
+//	Returns true if successful and false if not
+bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, string macAddress, string interface, string subnet)
 {
 	Node newNode;
+	if(ipAddress.compare(""))
+	{
+		LOG(ERROR, "No ip address string given!", "");
+		return false;
+	}
 	newNode.m_IP = ipAddress;
-	newNode.m_interface = interface;
 
-	LOG(DEBUG, "Adding new honeyd node " + profileName + " " + ipAddress + " " + macAddress + " " + interface + " " + subnet, "");
+	if(interface.compare(""))
+	{
+		LOG(ERROR, "No interface string given!", "");
+		return false;
+	}
+	newNode.m_interface = interface;
 
 	if(newNode.m_IP.compare("DHCP"))
 	{
-		newNode.m_realIP = htonl(inet_addr(newNode.m_IP.c_str()));
+		uint retVal = inet_addr(newNode.m_IP.c_str());
+		if(retVal == INADDR_NONE)
+		{
+			LOG(ERROR, "Invalid node IP address '" + newNode.m_IP + "' given!", "");
+			return false;
+		}
+		newNode.m_realIP = htonl(retVal);
 	}
 
 	// Figure out it's subnet
-	if(!subnet.compare(""))
-	{
-		if(!newNode.m_IP.compare("DHCP"))
-		{
-			newNode.m_sub = newNode.m_interface;
-		}
-		else
-		{
-			newNode.m_sub = FindSubnet(newNode.m_realIP);
-
-			if(!newNode.m_sub.compare(""))
-			{
-				return false;
-			}
-		}
-	}
-	else
+	if(m_subnets.keyExists(subnet))
 	{
 		newNode.m_sub = subnet;
 	}
-
+	else if(!newNode.m_IP.compare("DHCP"))
+	{
+		newNode.m_sub = newNode.m_interface;
+	}
+	else
+	{
+		newNode.m_sub = FindSubnet(newNode.m_realIP);
+		if(!newNode.m_sub.compare(""))
+		{
+			LOG(ERROR, "Unable to find a valid subnet for new node with IP '" + ipAddress + "'.", "");
+			return false;
+		}
+	}
 
 	newNode.m_pfile = profileName;
 	newNode.m_enabled = true;
 	newNode.m_MAC = macAddress;
-
 	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
-	cout << "Adding new node '" << newNode.m_name << "'."<< endl;
 
-	m_profiles[newNode.m_pfile].m_nodeKeys.push_back(newNode.m_name);
+	NodeProfile *p = &m_profiles[newNode.m_pfile];
+	if(p == NULL)
+	{
+		LOG(ERROR, "Unable to find expected NodeProfile '" + newNode.m_pfile + "'.", "");
+		return false;
+	}
+
+	LOG(DEBUG, "Adding new node '" + newNode.m_name + "'.", "");
+
+	p->m_nodeKeys.push_back(newNode.m_name);
 	for(uint i = 0; i < m_profiles[newNode.m_pfile].m_ports.size(); i++)
 	{
 		newNode.m_ports.push_back(m_profiles[newNode.m_pfile].m_ports[i].first);
@@ -2271,17 +2345,20 @@ bool HoneydConfiguration::AddNewNode(std::string profileName, string ipAddress, 
 		}
 	}
 
-	m_nodes[newNode.m_name] = newNode;
-	if(newNode.m_sub != "")
+	if(m_nodes.keyExists(newNode.m_name))
 	{
-		m_subnets[newNode.m_sub].m_nodes.push_back(newNode.m_name);
-	}
-	else
-	{
-		LOG(WARNING, "No subnet was set for new node. This could make certain features unstable", "");
+		LOG(ERROR, "Unable to generate valid identifier for new node!", "");
+		return false;
 	}
 
-	//TODO add error checking
+	m_nodes[newNode.m_name] = newNode;
+	Subnet *subPtr = &m_subnets[newNode.m_sub];
+	if(subPtr == NULL)
+	{
+		LOG(ERROR, "Unable to retrieve expected subnet '" + newNode.m_sub + "' for node '" + newNode.m_name + "'!", "");
+		return false;
+	}
+	subPtr->m_nodes.push_back(newNode.m_name);
 	return true;
 }
 
