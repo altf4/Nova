@@ -357,8 +357,8 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 		else
 		{
-			string profName = it->second.m_pfile;
-			ReplaceChar(profName, ' ', '-');
+			string profName = HoneydConfiguration::SanitizeProfileName(it->second.m_pfile);
+
 			//Clone a custom profile for a node
 			out << "clone CustomNodeProfile-" << m_nodeProfileIndex << " " << profName << '\n';
 
@@ -473,12 +473,10 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 	}
 
 	stringstream out;
-	string profName = p->m_name;
-	string parentProfName = p->m_parentProfile;
 
 	//XXX This is just a temporary band-aid on a larger wound, we cannot allow whitespaces in profile names.
-	ReplaceChar(profName, ' ', '-');
-	ReplaceChar(parentProfName, ' ', '-');
+	string profName = HoneydConfiguration::SanitizeProfileName(p->m_name);
+	string parentProfName = HoneydConfiguration::SanitizeProfileName(p->m_parentProfile);
 
 	if(!parentProfName.compare("default") || !parentProfName.compare(""))
 	{
@@ -2848,6 +2846,19 @@ vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
 	}
 
 	return ret;
+}
+
+string HoneydConfiguration::SanitizeProfileName(std::string oldName)
+{
+	if (!oldName.compare("default") || !oldName.compare(""))
+	{
+		return oldName;
+	}
+
+	string newname = "pfile" + oldName;
+	ReplaceChar(newname, ' ', '-');
+	ReplaceChar(newname, ',', '-');
+	return newname;
 }
 
 }

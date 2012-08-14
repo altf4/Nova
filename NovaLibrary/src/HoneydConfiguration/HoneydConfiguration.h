@@ -235,6 +235,8 @@ public:
 
     bool CheckNotInheritingEmptyProfile(std::string parentName);
 
+    static std::string SanitizeProfileName(std::string pfilename);
+
 	SubnetTable m_subnets;
 	PortTable m_ports;
 	ProfileTable m_profiles;
