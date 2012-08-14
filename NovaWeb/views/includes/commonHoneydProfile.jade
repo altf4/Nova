@@ -671,40 +671,124 @@ script
 
                         portIndexes.push(portUID);
 
-                        var row = "<tr id='portRow" + portUID + "'>";
+                        //var row = "<tr id='portRow" + portUID + "'>";
+                        var row = document.createElement("tr");
+                        row.id = "portRow" + portUID;
+
 
                         if (!port.isInherited)
                         {
-                                row += "<td><input disabled='true' type='checkbox' id='portInherited" + portUID + "'> Inherited? </td>";
-                                row += "<td><input id='portNum" + portUID + "' type='number' min=1 max=65535 value=" + port.portNum + "> </td>";
-                                row += "<td><select id ='portType";
+                                //row += "<td><input disabled='true' type='checkbox' id='portInherited" + portUID + "'> Inherited? </td>";
+                                var boxContainer = document.createElement("td");
+                                boxContainer.innerHTML = 'Inherited?';
+                                var boxInput = document.createElement("input");
+                                boxInput.type = 'checkbox';
+                                boxInput.id = 'portInherited' + portUID;
+                                boxInput.disabled = true;
+                                boxContainer.appendChild(boxInput);
+                                row.appendChild(boxContainer);
+                                
+                                //row += "<td><input id='portNum" + portUID + "' type='number' min=1 max=65535 value=" + port.portNum + "> </td>";
+                                var numContainer = document.createElement("td");
+                                var numInput = document.createElement("input");
+                                numInput.type = 'number';
+                                numInput.id = 'portNum' + portUID;
+                                numInput.min = 1;
+                                numInput.max = 65535;
+                                numInput.value = port.portNum;
+                                numContainer.appendChild(numInput);
+                                row.appendChild(numContainer);
+                                
+                                //row += "<td><select id ='portType";
+                                var typeContainer = document.createElement("td");
+                                var typeSelect = document.createElement("select");
+                                typeSelect.id = 'portType' + portUID;
+                                
+                                options = ["UDP", "TCP"];
+                                for(j = 0; j < options.length; j++)
+                                {
+                                  if(port.type == options[j])
+                                  {
+                                    var option = document.createElement("option");
+                                    option.value = j;
+                                    option.selected = true;
+                                    option.innerHTML = options[j];
+                                    typeSelect.appendChild(option);
+                                  }
+                                  else
+                                  {
+                                    var option = document.createElement("option");
+                                    option.value = j;
+                                    option.innerHTML = options[j];
+                                    typeSelect.appendChild(option);
+                                  }
+                                }
+                                
+                                typeContainer.appendChild(typeSelect);
+                                row.appendChild(typeContainer);
                         } 
                         else 
                         {
-                                row += "<td><input type='checkbox' id='portInherited" + portUID + "' onchange='portInheritedChange(" + portUID + ")' CHECKED> Inherited? </td>";
-                                row += "<td><input id='portNum" + portUID + "' type='number' disabled='true' min=1 max=65535 value=" + port.portNum + "> </td>";
-                                row += "<td><select disabled='true' id ='portType";
-                        }
-
-                        row += portUID;
-                        row += "'>";
-                        options = ["UDP", "TCP"];
-
-                        for (j = 0; j < options.length; j++) 
-                        {
-                                if (port.type == options[j]) 
+                                //row += "<td><input type='checkbox' id='portInherited" + portUID + "' onchange='portInheritedChange(" + portUID + ")' CHECKED> Inherited? </td>";
+                                var boxContainer = document.createElement("td");
+                                boxContainer.innerHTML = 'Inherited?';
+                                var boxInput = document.createElement("input");
+                                boxInput.type = 'checkbox';
+                                boxInput.id = 'portInherited' + portUID;
+                                boxInput.onchange = 'portInheritedChange(' + portUID + ')'; 
+                                boxInput.checked = true;
+                                boxContainer.appendChild(boxInput);
+                                row.appendChild(boxContainer);
+                                
+                                //row += "<td><input id='portNum" + portUID + "' type='number' disabled='true' min=1 max=65535 value=" + port.portNum + "> </td>";
+                                var numContainer = document.createElement("td");
+                                var numInput = document.createElement("input");
+                                numInput.type = 'number';
+                                numInput.id = 'portNum' + portUID;
+                                numInput.disabled = true;
+                                numInput.min = 1;
+                                numInput.max = 65535;
+                                numInput.value = port.portNum;
+                                numContainer.appendChild(numInput);
+                                row.appendChild(numContainer);
+                                
+                                //row += "<td><select disabled='true' id ='portType";
+                                var typeContainer = document.createElement("td");
+                                var typeSelect = document.createElement("select");
+                                typeSelect.id = 'portType' + portUID;
+                                typeSelect.disabled = true;
+                                
+                                options = ["UDP", "TCP"];
+                                for(j = 0; j < options.length; j++)
                                 {
-                                        row += "<option value='" + j + "' SELECTED>" + options[j] + "</option>";
-                                } 
-                                else    
-                                {
-                                        row += "<option value='" + j + "'>" + options[j] + "</option>";
+                                  if(port.type == options[j])
+                                  {
+                                    var option = document.createElement("option");
+                                    option.value = j;
+                                    option.selected = true;
+                                    option.innerHTML = options[j];
+                                    typeSelect.appendChild(option);
+                                  }
+                                  else
+                                  {
+                                    var option = document.createElement("option");
+                                    option.value = j;
+                                    option.innerHTML = options[j];
+                                    typeSelect.appendChild(option);
+                                  }
                                 }
+                                
+                                typeContainer.appendChild(typeSelect);
+                                row.appendChild(typeContainer);
                         }
 
-                        row += "</select></td>";
-
-                        row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>"; 
+                        //row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>";
+                        var behaviorContainer = document.createElement("td");
+                        var behaviorSelect = document.createElement("select");
+                        behaviorSelect.id = 'portBehavior' + portUID;
+                        behaviorSelect.onchange = 'portBehaviorChanged()';
+                        
+                         
                         options = ["reset", "block", "open", "script"];
                         longOptions = ["Closed: Respond with TCP RST or ICMP Port Error", "Filter: Drop packets and do not respond", "Open: Establish incoming connections", "Script: Emulate a service"];
                         
@@ -712,21 +796,36 @@ script
                         {
                                 if (port.behavior == options[j]) 
                                 {
-                                        row += "<option value='" + j + "' SELECTED>" + longOptions[j] + "</option>";
+                                        //row += "<option value='" + j + "' SELECTED>" + longOptions[j] + "</option>";
+                                        var option = document.createElement("option");
+                                        option.value = j;
+                                        option.selected = true;
+                                        option.innerHTML = longOptions[j];
+                                        behaviorSelect.appendChild(option);
                                 } 
                                 else 
                                 {
-                                        row += "<option value='" + j + "'>" + longOptions[j] + "</option>";
+                                        //row += "<option value='" + j + "'>" + longOptions[j] + "</option>";
+                                        var option = document.createElement("option");
+                                        option.value = j;
+                                        option.innerHTML = longOptions[j];
+                                        behaviorSelect.appendChild(option);
                                 }
                         }
 
-                        row += "</select></td>";
+                        //row += "</select></td>";
+                        behaviorContainer.appendChild(behaviorSelect);
+                        row.appendChild(behaviorContainer);
 
 
 
-                        row += "<td><select id='portScriptDrop";
-                        row += portUID;
-                        row += "'>"; 
+                        var scriptContainer = document.createElement("td");
+                        var scriptSelect = document.createElement("select");
+                        scriptSelect.id = 'portScriptDrop' + portUID;
+
+                        //row += "<td><select id='portScriptDrop";
+                        //row += portUID;
+                        //row += "'>"; 
                         var scripts = "#{scripts}";
                         options = scripts.split(",");
                         matchingScriptFound = false;
@@ -735,40 +834,73 @@ script
                         {
                                 if (port.scriptName == options[j]) 
                                 {
-                                        row += "<option SELECTED>" + options[j] + "</option>";
+                                        //row += "<option SELECTED>" + options[j] + "</option>";
+                                        var option = document.createElement("option");
+                                        option.selected = true;
+                                        option.innerHTML = options[j];
+                                        scriptSelect.appendChild(option);
                                         matchingScriptFound = true;
                                 } 
                                 else 
                                 {
-                                        row += "<option>" + options[j] + "</option>";
+                                        //row += "<option>" + options[j] + "</option>";
+                                        var option = document.createElement("option");
+                                        option.innerHTML = options[j];
+                                        scriptSelect.appendChild(option);
                                 }
                         }
 
                         // Have a blank option if no script is selected
                         if (!matchingScriptFound) 
                         {
-                                row += "<option disabled='true' SELECTED>NA</option>";
+                                //row += "<option disabled='true' SELECTED>NA</option>";
+                                var option = document.createElement("option");
+                                option.disabled = true;
+                                option.selected = true;
+                                option.innerHTML = 'NA';
+                                scriptSelect.appendChild(option);
                         } 
                         else 
                         {
-                                row += "<option disabled='true'>NA</option>";
+                                //row += "<option disabled='true'>NA</option>";
+                                var option = document.createElement("option");
+                                option.disabled = true;
+                                option.innerHTML = 'NA';
+                                scriptSelect.appendChild(option);
                         }
-                        row += "</td></select>"; 
-
+                        
+                        scriptContainer.appendChild(scriptSelect);
+                        row.appendChild(scriptContainer);
+                        
+                        //row += "</td></select>"; 
 
                         // Delete button 
                         if (port.isInherited) 
                         {
-                                row += "<td><button type='button' disabled = 'true'/> Inherited </td>";
+                                //row += "<td><button type='button' disabled = 'true'/> Inherited </td>";
+                                var buttonContainer = document.createElement("td");
+                                var inheritedDisabled = document.createElement("button");
+                                inheritedDisabled.type = 'button';
+                                inheritedDisabled.disabled = true;
+                                inheritedDisabled.innerHTML = 'Inherited';
+                                buttonContainer.appendChild(inheritedDisabled);
+                                row.appendChild(buttonContainer);
                         } 
                         else 
                         {
-                                row += "<td><button type='button' onClick='deletePort(" + portUID + ")'/> Delete </td>";
+                                //row += "<td><button type='button' onClick='deletePort(" + portUID + ")'/> Delete </td>";
+                                var buttonContainer = document.createElement("td");
+                                var deleteButton = document.createElement("button");
+                                deleteButton.type = 'button';
+                                deleteButton.onclick = 'deletePort(' + portUID + ')';
+                                deleteButton.innerHTML = 'Delete';
+                                buttonContainer.appendChild(deleteButton);
+                                row.appendChild(buttonContainer);
                         }
 
-                        row += "</tr>";
+                        //row += "</tr>";
 
-                        dojo.byId("portTable").innerHTML += row;
+                        dojo.byId("portTable").appendChild(row);
 
                         portBehaviorChanged();
                         portInheritedChange(portUID);
