@@ -77,7 +77,7 @@ TEST_F(HoneydConfigurationTest, test_Port)
 	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(1, TCP, OPEN, ""))));
 	ss.str("65535_UDP_block");
 	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, RESET, ""))));
+	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, BLOCK, ""))));
 	ss.str("65535_TCP_reset");
 	expectedPorts.push_back(ss.str());
 	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, TCP, RESET, ""))));
