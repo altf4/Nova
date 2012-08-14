@@ -357,8 +357,8 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 		else
 		{
-			string profName = it->second.m_pfile;
-			ReplaceChar(profName, ' ', '-');
+			string profName = HoneydConfiguration::SanitizeProfileName(it->second.m_pfile);
+
 			//Clone a custom profile for a node
 			out << "clone CustomNodeProfile-" << m_nodeProfileIndex << " " << profName << '\n';
 
@@ -473,12 +473,10 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 	}
 
 	stringstream out;
-	string profName = p->m_name;
-	string parentProfName = p->m_parentProfile;
 
 	//XXX This is just a temporary band-aid on a larger wound, we cannot allow whitespaces in profile names.
-	ReplaceChar(profName, ' ', '-');
-	ReplaceChar(parentProfName, ' ', '-');
+	string profName = HoneydConfiguration::SanitizeProfileName(p->m_name);
+	string parentProfName = HoneydConfiguration::SanitizeProfileName(p->m_parentProfile);
 
 	if(!parentProfName.compare("default") || !parentProfName.compare(""))
 	{
@@ -948,7 +946,13 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 			valueKey = "port";
 			if(!string(value.first.data()).compare(valueKey))
 			{
-				port = &m_ports[value.second.get<string>("portName")];
+				string portName = value.second.get<string>("portName");
+				port = &m_ports[portName];
+				if(port == NULL)
+				{
+					LOG(ERROR, "Invalid port '" + portName + "' in NodeProfile '" + nodeProf->m_name + "'.","");
+					return false;
+				}
 
 				//Checks inherited ports for conflicts
 				for(uint i = 0; i < nodeProf->m_ports.size(); i++)
@@ -2848,6 +2852,19 @@ vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
 	}
 
 	return ret;
+}
+
+string HoneydConfiguration::SanitizeProfileName(std::string oldName)
+{
+	if (!oldName.compare("default") || !oldName.compare(""))
+	{
+		return oldName;
+	}
+
+	string newname = "pfile" + oldName;
+	ReplaceChar(newname, ' ', '-');
+	ReplaceChar(newname, ',', '-');
+	return newname;
 }
 
 }

@@ -68,6 +68,13 @@ Go to the directy you wish to download the code to and run the following command
 This will create a "honeyd" and "Nova" folder with the source located inside. From this point on 
 they will be referred to as $HONEYD_SOURCE and $NOVA_SOURCE. 
 
+This will default to the "master" branch, which is the latest stable release. If you want to use
+the latest unstable version of NOVA, cd to the $NOVA_SOURCE folder and run the following,
+
+	git checkout integration
+
+Beware that the integration branch changes often on a daily basis.
+
 ===============================
 Building Honeyd
 ===============================
@@ -125,8 +132,8 @@ Getting dependencies for the QT GUI,
 The QT GUI (novagui) is a simple C++/QT interface for accessing nova and it's configuration on 
 the same machine you're running it on. To build and install,
     Step 1: cd $NOVA_SOURCE
-    Step 2: make qtgui
-    Step 3: make install-qtgui
+    Step 2: make novagui-release
+    Step 3: make install
 
 Launch with the command "novagui".
 
@@ -149,8 +156,9 @@ Note that the internal web interface uses SSL. If you want to generate or use yo
 SSL certificate and private key, put them in /usr/share/nova/NovaWeb/servercert.pem and
 /usr/share/nova/NovaWeb/serverkey.pem after installation.
 
-To start the web interface, run the command "novaweb" and go to https://localhost:8042 in
-a web browser. "novaweb -debug" may provide more information if there are problems. Novaweb
+To start the web interface, run the command "novaweb" and go to https://localhost:8080 in
+a web browser (default login is username "nova" and password "toor"). 
+"novaweb -debug" may provide more information if there are problems. Novaweb
 launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
 The command "forever list" can be useful for seeing the current status, and it can be stopped with
 "forever stop index (usually 0)". See the forever documentation for more information.
