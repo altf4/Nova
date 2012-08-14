@@ -61,6 +61,20 @@ HoneydConfiguration::HoneydConfiguration()
 	m_scripts.set_deleted_key("Deleted");
 }
 
+//This function sets the home directory from which the templates are relative to
+//	homePath: file system path to the directory you wish to use
+void HoneydConfiguration::SetHomePath(std::string homePath)
+{
+	m_homePath = homePath;
+}
+
+//This function returns the home path from which it is currently reading and writing from
+// Returns: the local file system path in string form to the current home directory
+std::string HoneydConfiguration::GetHomePath()
+{
+	return m_homePath;
+}
+
 //Attempts to populate the HoneydConfiguration object with the xml templates.
 // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
 // Returns true if successful, false if loading failed.
@@ -592,12 +606,14 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, string scriptName, string service)
 {
 	Port pr;
+
 	//Check the validity and assign the port number
 	if(!portNum)
 	{
 		LOG(ERROR, "Cannot create port: Port Number of 0 is Invalid.", "");
 		return string("");
 	}
+
 	stringstream ss;
 	ss << portNum;
 	pr.m_portNum = ss.str();
@@ -628,10 +644,6 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 		case RESET:
 		{
 			pr.m_behavior = "reset";
-			if(!pr.m_type.compare("UDP"))
-			{
-				pr.m_behavior = "block";
-			}
 			break;
 		}
 		case SCRIPT:
@@ -668,7 +680,7 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	//Checks if the port already exists
 	if(m_ports.find(pr.m_portName) != m_ports.end())
 	{
-		LOG(DEBUG, "Cannot create port: Specified port " + pr.m_portName + " already exists.", "");
+		LOG(WARNING, "Cannot create port: Specified port " + pr.m_portName + " already exists.", "");
 		return pr.m_portName;
 	}
 
@@ -677,15 +689,16 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	return pr.m_portName;
 }
 
+//This function inserts a pre-created port into the HoneydConfiguration object
+//	pr: Port object you wish to add into the table
+//	Returns a string containing the name of the port or an empty string if it fails
 std::string HoneydConfiguration::AddPort(Port pr)
 {
 	if(m_ports.find(pr.m_portName) != m_ports.end())
 	{
 		return pr.m_portName;
 	}
-
 	m_ports[pr.m_portName] = pr;
-
 	return pr.m_portName;
 }
 
@@ -1714,20 +1727,6 @@ vector<string> HoneydConfiguration::GeneratedProfilesStrings()
 	}
 	return ret;
 }
-
-//Setter for the directory to read from and write to
-void HoneydConfiguration::SetHomePath(std::string homePath)
-{
-	m_homePath = homePath;
-}
-
-//Getter for the directory to read from and write to
-std::string HoneydConfiguration::GetHomePath()
-{
-	return m_homePath;
-}
-
-
 
 std::vector<std::string> HoneydConfiguration::GetProfileChildren(std::string parent)
 {

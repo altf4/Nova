@@ -67,6 +67,14 @@ public:
 	// *Note: To populate the object from the file system you must call LoadAllTemplates();
     HoneydConfiguration();
 
+    //This function sets the home directory from which the templates are relative to
+    //	homePath: file system path to the directory you wish to use
+    void SetHomePath(std::string homePath);
+
+    //This function returns the home path from which it is currently reading and writing from
+    // Returns: the local file system path in string form to the current home directory
+    std::string GetHomePath();
+
     //Attempts to populate the HoneydConfiguration object with the xml templates.
     // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
     // Returns true if successful, false if loading failed.
@@ -100,12 +108,6 @@ public:
     // *Note: This function differs from ProfileToString in that it omits values incompatible with the loopback
     //  interface and is used primarily for the Doppelganger node
     std::string DoppProfileToString(NodeProfile* p);
-    //***************** TO HERE *****************//
-
-    //Setter for the directory to read from and write to
-    void SetHomePath(std::string homePath);
-    //Getter for the directory to read from and write to
-    std::string GetHomePath();
 
     //Adds a port with the specified configuration into the port table
     //	portNum: Must be a valid port number (1-65535)
@@ -117,9 +119,11 @@ public:
     //			If using a script it must exist in the script table before calling this function
     //Returns: the port name if successful and an empty string if unsuccessful
     std::string AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, std::string scriptName = "", std::string service = "");
-    std::string AddPort(Port pr);
 
-    //***************** REFACTORED FROM HERE *****************//
+    //This function inserts a pre-created port into the HoneydConfiguration object
+    //	pr: Port object you wish to add into the table
+    //	Returns: the port name if successful and an empty string if unsuccessful
+    std::string AddPort(Port pr);
 
     //This function creates a new Honeyd node based on the parameters given
     //	profileName: name of the existing NodeProfile the node should use
