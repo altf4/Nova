@@ -905,6 +905,12 @@ bool HoneydConfiguration::SaveAllTemplates()
 	return true;
 }
 
+bool HoneydConfiguration::WriteHoneydConfiguration()
+{
+	return WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
+
+}
+
 //Writes the current configuration to honeyd configs
 bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 {

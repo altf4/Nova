@@ -79,6 +79,7 @@ public:
     bool SaveAllTemplates();
     //Writes the current configuration to honeyd configs
     bool WriteHoneydConfiguration(std::string path);
+    bool WriteHoneydConfiguration();
 
     //Setter for the directory to read from and write to
     void SetHomePath(std::string homePath);

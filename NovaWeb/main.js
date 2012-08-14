@@ -807,8 +807,7 @@ app.post('/editHoneydNodesSave', passport.authenticate('basic', { session: false
 
 	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
 	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
-	honeydConfig.SaveAllTemplates();
-	honeydConfig.WriteHoneydConfiguration(config.GetPathConfigHoneydHS());
+	honeydConfig.SaveAll();
      
 	res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 
@@ -841,7 +840,7 @@ app.post('/editHoneydNodeSave', passport.authenticate('basic', { session: false 
 	}
 	else
 	{
-	  honeydConfig.SaveAllTemplates();
+	  honeydConfig.SaveAll();
 	  res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 	}
 });
@@ -1148,7 +1147,7 @@ everyone.now.deleteNodes = function(nodeNames, callback)
 			return;
 		}
 
-		if (!honeydConfig.SaveAllTemplates())
+		if (!honeydConfig.SaveAll())
 		{
 			callback(false, "Failed to save XML templates");
 			return;
@@ -1170,7 +1169,7 @@ everyone.now.deleteProfiles = function(profileNames, callback)
 		}
 	
 	
-		if (!honeydConfig.SaveAllTemplates()) {
+		if (!honeydConfig.SaveAll()) {
 			callback(false, "Failed to save XML templates");
 			return;
 		}
@@ -1382,7 +1381,7 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 		}
 	}
 
-	honeydConfig.SaveAllTemplates();
+	honeydConfig.SaveAll();
 
 	// Save the profile
 	honeydProfile.Save(profile.oldName, addOrEdit);
