@@ -102,6 +102,7 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
   	conf->m_profiles[obj->m_pfile->m_name].m_ethernetVendors.clear();
   	conf->UpdateProfile(obj->m_pfile->m_name);
   	conf->SaveAllTemplates();
+	conf->WriteHoneydConfiguration();
   	return args.This();
   }
   else

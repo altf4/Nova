@@ -1,7 +1,8 @@
 var novaconfig = require('novaconfig.node');
 
-var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
-segvhandler.registerHandler();
+// Used for debugging. Download the node-segfault-handler to use
+//var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
+//segvhandler.registerHandler();
 
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
