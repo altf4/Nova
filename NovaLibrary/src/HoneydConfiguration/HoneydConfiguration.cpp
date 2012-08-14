@@ -2269,14 +2269,14 @@ bool HoneydConfiguration::AddNewNode(Node node)
 bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, string macAddress, string interface, string subnet)
 {
 	Node newNode;
-	if(ipAddress.compare(""))
+	if(!ipAddress.compare(""))
 	{
 		LOG(ERROR, "No ip address string given!", "");
 		return false;
 	}
 	newNode.m_IP = ipAddress;
 
-	if(interface.compare(""))
+	if(!interface.compare(""))
 	{
 		LOG(ERROR, "No interface string given!", "");
 		return false;
