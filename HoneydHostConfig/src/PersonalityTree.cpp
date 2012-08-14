@@ -499,7 +499,7 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 					}
 				}
 				m_hdconfig->AddPort(scriptedPort);
-				return true;
+				continue;
 			}
 		}
 		scriptedPort.m_portName += "_" + portTokens[2];
