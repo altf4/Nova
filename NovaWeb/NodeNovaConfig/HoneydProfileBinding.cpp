@@ -175,23 +175,12 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 	
 		std::vector<std::string> portNames = conf->m_profiles[oldName].GetPortNames();
 	
+		// Delete old ports
+		conf->m_profiles[oldName].m_ports.clear();
+
 		for(uint i = 0; i < newProfile->m_pfile->m_ports.size(); i++)
 		{
-			bool push = true;
-		
-			for(uint j = 0; j < portNames.size(); j++)
-			{
-				if(!portNames[j].compare(newProfile->m_pfile->m_ports[i].first))
-				{
-					push = false;
-				}
-			}
-			
-			if(push)
-			{
-				conf->m_profiles[oldName].m_ports.push_back(newProfile->m_pfile->m_ports[i]);
-				push = false;
-			}
+			conf->m_profiles[oldName].m_ports.push_back(newProfile->m_pfile->m_ports[i]);
 		}
 		
 		conf->UpdateProfile("default");
