@@ -3,11 +3,11 @@
 	, "version" : "0.1.0"
 	, "author"	: "Datasoft"
 	, "dependencies" : {
-		"express" 		: 	"2.5.9"
+		"express" 		: 	"2.5.x"
 		, "now"			:	"0.8.x"
 		, "jade"		:	"0.25.x"
 		, "socket.io"	:	"0.9.x"
-		, "passport"	:	"0.1.8"
+		, "passport"	:	"0.1.x"
 		, "passport-http"	:	""
 		, "sqlite3" : ""
 		, "validator" : "0.4.6-2"

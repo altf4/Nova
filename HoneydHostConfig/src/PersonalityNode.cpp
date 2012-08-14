@@ -65,14 +65,14 @@ string PersonalityNode::ToString()
 	ss << '\n' << m_key << " has " << m_count << " hosts in it's scope." << '\n' << '\n';
 	ss << "MAC Address Vendors: <Vendor>, <Number of occurrences>" << '\n';
 
-	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
+	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
 		ss << it->first << ", " << it->second << '\n';
 	}
 
 	ss << '\n' << "Ports : <Number>_<Protocol>, <Number of occurrences>" << '\n';
 
-	for(PortsTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+	for(PortServiceMap::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		ss << it->first << ", " << it->second.first << '\n';
 	}
@@ -85,7 +85,7 @@ void PersonalityNode::GenerateDistributions()
 	uint16_t count = 0;
 
 	m_vendor_dist.clear();
-	for(MAC_Table::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
+	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
 	{
 		pair<string, double> push_vendor;
 		push_vendor.first = it->first;
@@ -93,7 +93,7 @@ void PersonalityNode::GenerateDistributions()
 		m_vendor_dist.push_back(push_vendor);
 	}
 
-	for(PortsTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
+	for(PortServiceMap::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
 		count += it->second.first;
 		pair<string, double> push_ports;

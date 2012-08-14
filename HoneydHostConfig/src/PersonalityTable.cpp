@@ -85,14 +85,14 @@ void PersonalityTable::ListInfo()
 
 		ss << "All MAC vendors associated with this Personality: " << '\n';
 
-		for(MAC_Table::iterator it2 = it->second->m_vendors.begin(); it2 != it->second->m_vendors.end(); it2++)
+		for(MACVendorMap::iterator it2 = it->second->m_vendors.begin(); it2 != it->second->m_vendors.end(); it2++)
 		{
 			ss << "\t" << it2->first << " occurred " << it2->second << " time(s)." << '\n';
 		}
 
 		ss << "Ports for this Personality: " << '\n';
 
-		for(PortsTable::iterator it2 = it->second->m_ports.begin(); it2 != it->second->m_ports.end(); it2++)
+		for(PortServiceMap::iterator it2 = it->second->m_ports.begin(); it2 != it->second->m_ports.end(); it2++)
 		{
 			ss << "\t" << it2->first << " occurred " << it2->second.first << " time(s)." << '\n';
 		}
@@ -137,7 +137,7 @@ void PersonalityTable::AddHost(Personality *add)
 
 		// Iterate through the Port_Table in the copy and update the
 		// counts for the occurrence of each port
-		for(PortsTable::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)
+		for(PortServiceMap::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)
 		{
 			if(cur->m_ports.find(it->first) == cur->m_ports.end())
 			{
@@ -151,7 +151,7 @@ void PersonalityTable::AddHost(Personality *add)
 			cur->m_port_count++;
 		}
 		// and do the same for the MAC vendors in the MAC_Table.
-		for(MAC_Table::iterator it = add->m_vendors.begin(); it != add->m_vendors.end(); it++)
+		for(MACVendorMap::iterator it = add->m_vendors.begin(); it != add->m_vendors.end(); it++)
 		{
 			if(cur->m_vendors.find(it->first) == cur->m_vendors.end())
 			{

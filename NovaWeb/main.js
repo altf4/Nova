@@ -1,5 +1,9 @@
 var novaconfig = require('novaconfig.node');
 
+// Used for debugging. Download the node-segfault-handler to use
+//var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
+//segvhandler.registerHandler();
+
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
@@ -428,23 +432,28 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', { session: false
 });
 
 app.get('/editHoneydNode', passport.authenticate('basic', { session: false }), function(req, res) {
-	nodeName = req.query["node"];
-	// TODO: Error checking for bad node names
-	
-	node = honeydConfig.GetNode(nodeName); 
-	res.render('editHoneydNode.jade', 
-	{ locals : {
-		oldName: nodeName
-		, INTERFACES: config.ListInterfaces().sort()
-	 	, profiles: honeydConfig.GetProfileNames()
-		, profile: node.GetProfile()
-		, ip: node.GetIP()
-		, mac: node.GetMAC()
-	}})
+	var nodeName = req.query["node"];
+	var node = honeydConfig.GetNode(nodeName); 
+
+	if (node == null) {	
+	  	res.render('error.jade', { locals: { redirectLink: "/configHoneydNodes", errorDetails: "Node does not exist" }});
+	} else {
+		res.render('editHoneydNode.jade', 
+		{ locals : {
+			oldName: nodeName
+			, INTERFACES: config.ListInterfaces().sort()
+			, profiles: honeydConfig.GetProfileNames()
+			, profile: node.GetProfile()
+			, ip: node.GetIP()
+			, mac: node.GetMAC()
+		}})
+	}
 });
 
 app.get('/editHoneydProfile', passport.authenticate('basic', { session: false }), function(req, res) {
 	profileName = req.query["profile"]; 
+
+
 
 	res.render('editHoneydProfile.jade', 
 	{ locals : {
@@ -799,8 +808,7 @@ app.post('/editHoneydNodesSave', passport.authenticate('basic', { session: false
 
 	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
 	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
-	honeydConfig.SaveAllTemplates();
-	honeydConfig.WriteHoneydConfiguration(config.GetPathConfigHoneydHS());
+	honeydConfig.SaveAll();
      
 	res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 
@@ -833,7 +841,7 @@ app.post('/editHoneydNodeSave', passport.authenticate('basic', { session: false 
 	}
 	else
 	{
-	  honeydConfig.SaveAllTemplates();
+	  honeydConfig.SaveAll();
 	  res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 	}
 });
@@ -1051,8 +1059,14 @@ everyone.now.ClearSuspect = function(suspect, callback)
 everyone.now.GetInheritedEthernetList = function(parent, callback)
 {
 	var prof = honeydConfig.GetProfile(parent);
+
+	if (prof == null) {
+		console.log("ERROR Getting profile " + parent);
+		callback(null);
+	} else {
+		callback(prof.GetVendors(), prof.GetVendorDistributions());
+	}
 	
-	callback(prof.GetVendors(), prof.GetVendorDistributions());
 }
 
 everyone.now.StartHaystack = function()
@@ -1134,7 +1148,7 @@ everyone.now.deleteNodes = function(nodeNames, callback)
 			return;
 		}
 
-		if (!honeydConfig.SaveAllTemplates())
+		if (!honeydConfig.SaveAll())
 		{
 			callback(false, "Failed to save XML templates");
 			return;
@@ -1156,7 +1170,7 @@ everyone.now.deleteProfiles = function(profileNames, callback)
 		}
 	
 	
-		if (!honeydConfig.SaveAllTemplates()) {
+		if (!honeydConfig.SaveAll()) {
 			callback(false, "Failed to save XML templates");
 			return;
 		}
@@ -1198,6 +1212,12 @@ everyone.now.deleteWhitelistEntry = function(whitelistEntryNames, callback)
 everyone.now.GetProfile = function(profileName, callback) {
 	console.log("Fetching profile " + profileName);
 	var profile = honeydConfig.GetProfile(profileName);
+
+	if (profile == null) {
+		console.log("Returning null since error fetting profile: " + profileName);
+		callback(null);
+		return;
+	}
 	
     // Nowjs can't pass the object with methods, they need to be member vars
     profile.name = profile.GetName();
@@ -1246,6 +1266,13 @@ everyone.now.GetProfile = function(profileName, callback) {
 everyone.now.GetVendors = function(profileName, callback)
 {
 	var profile = honeydConfig.GetProfile(profileName);
+	
+	if (profile == null) {
+		console.log("ERROR Getting profile " + profileName);
+		callback(null);
+		return;
+	}
+	
 	
 	var ethVendorList = [];
     
@@ -1333,14 +1360,29 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	var portName;
 	for (var i = 0; i < ports.size; i++) {
 		console.log("Adding port " + ports[i].portNum + " " + ports[i].type + " " + ports[i].behavior + " " + ports[i].script + " Inheritance: " + ports[i].isInherited);
-		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), Number(ports[i].behavior), ports[i].script);
+		console.log("Adding port with behavior: " + ports[i].behavior);
+
+		// Convert the string to the proper enum number in HoneydConfiguration.h
+		var behavior = ports[i].behavior;
+		var behaviorEnumValue = new Number();
+		if (behavior == "block") {
+			behaviorEnumValue = 0;
+		} else if (behavior == "reset") {
+			behaviorEnumValue = 1;
+		} else if (behavior == "open") {
+			behaviorEnumValue = 2;
+		} else if (behavior == "script") {
+			behaviorEnumValue = 3;
+		}
+
+		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), behaviorEnumValue, ports[i].script);
 
 		if (portName != "") {
 			honeydProfile.AddPort(portName, ports[i].isInherited);
 		}
 	}
 
-	honeydConfig.SaveAllTemplates();
+	honeydConfig.SaveAll();
 
 	// Save the profile
 	honeydProfile.Save(profile.oldName, addOrEdit);
@@ -1466,7 +1508,7 @@ everyone.now.ClearHostileEvents = function(callback) {
 	function (err) {
 		if(err) {
 			console.log(err);
-			callback();
+			callback(null);
 			return;
 		}
 
@@ -1480,7 +1522,7 @@ everyone.now.ClearHostileEvent = function(id, callback) {
 	function (err) {
 		if(err) {
 			console.log(err);
-			callback();
+			callback(null);
 			return;
 		}
 

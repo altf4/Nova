@@ -55,6 +55,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -72,7 +73,7 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
 	return args.This();
 }
 
-Handle<Value> HoneydConfigBinding::AddPort(const Arguments& args) 
+Handle<Value> HoneydConfigBinding::AddPort(const Arguments& args)
 {
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
@@ -92,7 +93,7 @@ Handle<Value> HoneydConfigBinding::AddPort(const Arguments& args)
 	return scope.Close(String::New(obj->m_conf->AddPort(portNum, isTCP, portBehavior, script).c_str()));
 }
 
-Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args) 
+Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args)
 {
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
@@ -112,7 +113,7 @@ Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args)
 }
 
 
-Handle<Value> HoneydConfigBinding::AddNewNode(const Arguments& args) 
+Handle<Value> HoneydConfigBinding::AddNewNode(const Arguments& args)
 {
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
@@ -142,8 +143,17 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 	}
 
 	string name = cvv8::CastFromJS<string>(args[0]);
-	
-	return scope.Close(HoneydNodeJs::WrapNode(obj->m_conf->GetNode(name)));
+
+	Nova::Node *ret = obj->m_conf->GetNode(name);
+
+	if (ret != NULL)
+	{
+		return scope.Close(HoneydNodeJs::WrapNode(ret));
+	}
+	else
+	{
+		return scope.Close( Null() );
+	}
 }
 
 Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
@@ -157,7 +167,17 @@ Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
 	}
 
 	string name = cvv8::CastFromJS<string>(args[0]);
-	return scope.Close(HoneydNodeJs::WrapProfile(obj->m_conf->GetProfile(name)));
+	Nova::NodeProfile *ret = obj->m_conf->GetProfile(name);
+
+	if (ret != NULL)
+	{
+		return scope.Close(HoneydNodeJs::WrapProfile(ret));
+	}
+	else
+	{
+		return scope.Close( Null() );
+	}
+
 }
 
 
@@ -182,4 +202,26 @@ Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
     }
 
 	return scope.Close(portArray);
+}
+
+Handle<Value> HoneydConfigBinding::SaveAll(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	bool success = true;
+
+
+	if (!obj->m_conf->SaveAllTemplates())
+	{
+		cout << "ERROR saving honeyd templates " << endl;
+		success = false;
+	}
+
+	if (!obj->m_conf->WriteHoneydConfiguration()) {
+		cout << "ERROR saving honeyd templates " << endl;
+		success = false;
+	}
+
+	return scope.Close(Boolean::New(success));
 }

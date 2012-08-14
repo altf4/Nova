@@ -102,6 +102,7 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
   	conf->m_profiles[obj->m_pfile->m_name].m_ethernetVendors.clear();
   	conf->UpdateProfile(obj->m_pfile->m_name);
   	conf->SaveAllTemplates();
+	conf->WriteHoneydConfiguration();
   	return args.This();
   }
   else
@@ -222,5 +223,5 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	string portName = cvv8::CastFromJS<string>( args[0] );
 	bool isInherited = cvv8::CastFromJS<bool>( args[1] );
 
-	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited, 0)));
+	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited, 100)));
 }

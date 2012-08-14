@@ -64,6 +64,7 @@ TEST_F(HoneydConfigurationTest, test_getMaskBits)
 	EXPECT_EQ(24, m_config->GetMaskBits(~0 - 255));
 	EXPECT_EQ(31, m_config->GetMaskBits(~0 -1));
 	EXPECT_EQ(32, m_config->GetMaskBits(~0));
+	EXPECT_EQ(-1, m_config->GetMaskBits(240));
 }
 
 TEST_F(HoneydConfigurationTest, test_Port)
@@ -77,7 +78,7 @@ TEST_F(HoneydConfigurationTest, test_Port)
 	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(1, TCP, OPEN, ""))));
 	ss.str("65535_UDP_block");
 	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, RESET, ""))));
+	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, BLOCK, ""))));
 	ss.str("65535_TCP_reset");
 	expectedPorts.push_back(ss.str());
 	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, TCP, RESET, ""))));

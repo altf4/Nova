@@ -20,7 +20,6 @@
 
 #include "ui_subnetPopup.h"
 #include "HoneydConfiguration/HoneydConfigTypes.h"
-#include "NovaUtil.h"
 #include "HoneydConfiguration/HoneydConfiguration.h"
 
 #include <QtGui/QSpinBox>

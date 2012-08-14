@@ -23,7 +23,7 @@
 
 #include "PersonalityNode.h"
 #include "PersonalityTable.h"
-#include "HoneydConfiguration/ScriptsTable.h"
+#include "HoneydConfiguration/ServiceToScriptMap.h"
 
 namespace Nova
 {
@@ -53,7 +53,7 @@ public:
 	//  PersonalityTable *persTable - personalityTable to use for populating the ProfileTable
 	//                           in the m_hdconfig object's m_profiles HashMap.
 	// Returns nothing.
-	void LoadTable(PersonalityTable *persTable);
+	bool LoadTable(PersonalityTable *persTable);
 
 	// GenerateProfiles will recurse through the tree structure and create NodeProfile objects
 	// from each PersonalityNode in the tree. Also performs compression in the profile table;
@@ -68,29 +68,29 @@ public:
 	//  NodeProfile *parentProfile - used for renaming
 	//  const std::string &profileName - also used for a different renaming case
 	// Returns nothing.
-	void GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const std::string &profileName);
+	bool GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const std::string &profileName);
 
 	// InsertPersonality serves as the starting point for UpdatePersonality.
 	//  Personality *pers - the Personality to Insert/Update
 	// Returns nothing.
-	void InsertPersonality(Personality *pers);
+	bool InsertPersonality(Personality *pers);
 
 	// Prints each child of the root node in the tree as a string
 	// Returns nothing, takes no arguments.
-	void ToString();
+	std::string ToDebugString();
 
 	// ToXmlTemplate calls m_hdconfig->SaveAllTemplates().
 	// Returns nothing, takes no arguments.
-	void ToXmlTemplate();
+	bool ToXmlTemplate();
 
 	// Just iterates through m_hdconfig's ProfileTable and prints out the
 	// relevant information. Used for debugging.
 	// Returns nothing, takes no arguments.
-	void DebugPrintProfileTable();
+	std::string ToString();
 
 	// AddAllPorts serves as the starting point for RecursiveAddAllPorts.
 	// Returns nothing, takes no arguments.
-	void AddAllPorts();
+	bool AddAllPorts();
 
 	// AddSubnet acts to pass a subnet to m_hdconfig's AddSubnet method for
 	// classes outsides of PersonalityTree that wish to update its m_hdconfig
@@ -118,7 +118,7 @@ public:
 	// GetHostCount gets the number of hosts in each of the root node's subtrees and
 	// adds them into m_root's m_count value.
 	// Returns nothing.
-	void CalculateDistributions();
+	bool CalculateDistributions();
 
 private:
 
@@ -132,7 +132,7 @@ private:
 	//  PersonalityNode *parent - the parent node of the current node to be created or
 	//                      modified.
 	// Returns nothing.
-	void UpdatePersonality(Personality *pers, PersonalityNode *parent);
+	bool UpdatePersonality(Personality *pers, PersonalityNode *parent);
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
 	PersonalityNode m_root;
@@ -145,27 +145,27 @@ private:
 
 	HoneydConfiguration *m_hdconfig;
 
-	ScriptsTable m_scripts;
+	ServiceToScriptMap m_serviceMap;
 
 	// Recursively prints out the tree structure.
 	//  PersonalityNode &persNode - the node to call toString on and
 	//                       whose children to recurse to next.
 	// Returns nothing.
-	void RecursiveToString(PersonalityNode &persNode);
+	std::string RecursiveToString(PersonalityNode &persNode);
 
 	// RecursiveAddAllPorts, at each node, will add an open version and a script
 	// specific version of each found port for the node.
 	//  PersonalityNode *node - the node whose ports to look at, and change if a script
-	//                      is found in the ScriptsTable that matches the services for
+	//                      is found in the ServiceToScriptMap that matches the services for
 	//                      those ports.
 	// Returns nothing.
-	void RecursiveAddAllPorts(PersonalityNode *node);
+	bool RecursiveAddAllPorts(PersonalityNode *node);
 
 	// Prints out the tree from the root node; rather esoteric and not entirely useful
 	// unless you know the expected parent/child relations within the tree. A testing tool.
 	void RecursivePrintTree(PersonalityNode *node);
 
-	void RecursiveCalculateDistribution(PersonalityNode *node);
+	bool RecursiveCalculateDistribution(PersonalityNode *node);
 
 
 };

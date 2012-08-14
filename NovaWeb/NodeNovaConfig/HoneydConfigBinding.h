@@ -28,6 +28,8 @@ private:
 
 	static v8::Handle<v8::Value> GetPorts(const v8::Arguments& args);
 	static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
+
+	static v8::Handle<v8::Value> SaveAll(const v8::Arguments& args);
 };
 
 #endif

@@ -59,26 +59,48 @@ class HoneydConfiguration
 {
 
 public:
+
+    //***************** REFACTORED FROM HERE *****************//
+
+	//Basic constructor for the Honeyd Configuration object
+	// Initializes the MAC vendor database and hash tables
+	// *Note: To populate the object from the file system you must call LoadAllTemplates();
     HoneydConfiguration();
 
-    //XML Read Functions
-    //calls main load functions
+    //Attempts to populate the HoneydConfiguration object with the xml templates.
+    // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
+    // Returns true if successful, false if loading failed.
     bool LoadAllTemplates();
 
-    // Returns the number of bits used in the mask when given in in_addr_t form
+    //This function takes the current values in the HoneydConfiguration and Config objects
+    // 		and translates them into an xml format for persistent storage that can be
+    // 		loaded at a later time by any HoneydConfiguration object
+    // Returns true if successful and false if the save fails
+    bool SaveAllTemplates();
+
+    //Writes out the current HoneydConfiguration object to the Honeyd configuration file in the expected format
+    // path: path in the file system to the desired HoneydConfiguration file
+    // Returns true if successful and false if not
+    bool WriteHoneydConfiguration(std::string path = "");
+
+    // This function takes in the raw byte form of a network mask and converts it to the number of bits
+    // 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
+    // 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
+    // Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
     static int GetMaskBits(in_addr_t mask);
 
-    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
+    //Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
+    // p: pointer to the profile you wish to create a Honeyd template for
+    // Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
     std::string ProfileToString(NodeProfile* p);
 
-    //Outputs the profile in a string formatted for direct insertion to a honeyd configuration file.
-    // This function differs from ProfileToString in that it omits values incompatible with the loopback interface
+    //Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
+    // p: pointer to the profile you wish to create a Honeyd template for
+    // Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
+    // *Note: This function differs from ProfileToString in that it omits values incompatible with the loopback
+    //  interface and is used primarily for the Doppelganger node
     std::string DoppProfileToString(NodeProfile* p);
-
-    //Saves the current configuration information to XML files
-    bool SaveAllTemplates();
-    //Writes the current configuration to honeyd configs
-    bool WriteHoneydConfiguration(std::string path);
+    //***************** TO HERE *****************//
 
     //Setter for the directory to read from and write to
     void SetHomePath(std::string homePath);
@@ -97,11 +119,20 @@ public:
     std::string AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, std::string scriptName = "", std::string service = "");
     std::string AddPort(Port pr);
 
-    // Some high level node creation methods
+    //***************** REFACTORED FROM HERE *****************//
 
-    // Add a node with static IP and static MAC
+    //This function creates a new Honeyd node based on the parameters given
+    //	profileName: name of the existing NodeProfile the node should use
+    //	ipAddress: string form of the IP address or the string "DHCP" if it should acquire an address using DHCP
+    //	macAddress: string form of a MAC address or the string "RANDOM" if one should be generated each time Honeyd is run
+    //	interface: the name of the physical or virtual interface the Honeyd node should be deployed on.
+    //	subnet: the name of the subnet object the node is associated with for organizational reasons.
+    //	Returns true if successful and false if not
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
+    //***************** TO HERE *****************//
+
     bool AddNewNode(Node node);
+
     bool AddNewNodes(std::string profileName, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
 
     bool AddSubnet(const Subnet &add);
@@ -179,7 +210,8 @@ public:
     void CleanPorts();
 
     // This is only for the Javascript UI, avoid use here
-	inline std::vector<Port> GetPorts(std::string profile) {
+	inline std::vector<Port> GetPorts(std::string profile)
+	{
 		std::vector<Port> ret;
 		Port p;
 
@@ -189,19 +221,16 @@ public:
 			p.m_isInherited = m_profiles[profile].m_ports.at(i).second.first;
 			ret.push_back(p);
 		}
-
 		return ret;
 	}
 
-	ScriptTable GetScriptTable();
+	ScriptTable &GetScriptTable();
 
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     bool LoadProfilesFromTree(std::string parent);
 
     bool CheckNotInheritingEmptyProfile(std::string parentName);
 
-// TODO: this should be private eventually
-public:
 	SubnetTable m_subnets;
 	PortTable m_ports;
 	ProfileTable m_profiles;
@@ -228,16 +257,31 @@ private:
 
     ScriptTable m_scripts;
 
-    //load all scripts
+    // ******************* Private Methods **************************
+    //***************** REFACTORED FROM HERE *****************//
+
+
+    //Loads Scripts from the xml template located relative to the currently set home path
+    // Returns true if successful, false if not.
     bool LoadScriptsTemplate();
-    //load all ports
+
+    //Loads Ports from the xml template located relative to the currently set home path
+    // Returns true if successful, false if not.
     bool LoadPortsTemplate();
-    //load all profiles
+
+    //Loads NodeProfiles from the xml template located relative to the currently set home path
+    // Returns true if successful, false if not.
     bool LoadProfilesTemplate();
-    //load current honeyd configuration group
+
+    //Loads Nodes from the xml template located relative to the currently set home path
+    // Returns true if successful, false if not.
     bool LoadNodesTemplate();
-    //load the m_nodeKeys vectors for the profiles in the ProfilesTable
-    void LoadNodeKeys();
+
+    //Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
+    // Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
+    bool LoadNodeKeys();
+
+    //***************** TO HERE *****************//
 
     //set profile configurations
     bool LoadProfileSettings(boost::property_tree::ptree *ptr, NodeProfile *p);

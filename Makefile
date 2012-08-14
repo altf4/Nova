@@ -210,10 +210,11 @@ clean-novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release clean
 
 #Installation (requires root)
-install: install-data install-docs install-cli install-novad install-ui-core install-hhconfig install-novagui install-novatrainer
+install: install-data install-docs install-cli install-novad install-ui-core install-hhconfig install-novagui install-novatrainer install-web
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
 	sh debian/postinst
+	-bash Installer/createDatabase.sh
 
 install-data: install-hhconfig
 	#make folder in etc with path locations to nova files
@@ -261,7 +262,7 @@ install-web:
 	tar -C $(DESTDIR)/usr/share/nova/NovaWeb/www -xf NovaWeb/dojo-release-1.7.0.tar.gz
 	#mv $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo
 	mkdir -p $(DESTDIR)/usr/bin
-	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
+	-install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
 install-hhconfig:
 	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
