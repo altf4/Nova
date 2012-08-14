@@ -118,6 +118,7 @@ public:
     std::string AddPort(Port pr);
 
     //***************** REFACTORED FROM HERE *****************//
+
     //This function creates a new Honeyd node based on the parameters given
     //	profileName: name of the existing NodeProfile the node should use
     //	ipAddress: string form of the IP address or the string "DHCP" if it should acquire an address using DHCP

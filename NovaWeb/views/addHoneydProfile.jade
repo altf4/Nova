@@ -590,9 +590,25 @@ block headerAdditions
         pfile.oldName = "#{oldName}";
         pfile.parentProfile = dojo.byId("parentName").value;
         pfile.name = dojo.byId("name").value;
-        pfile.tcpAction = dojo.byId("tcpAction").value;
-        pfile.udpAction = dojo.byId("udpAction").value;
-        pfile.icmpAction = dojo.byId("icmpAction").value;
+
+        switch (dojo.byId("tcpAction").selectedIndex) {
+            case 0: pfile.tcpAction = "reset"; break;
+            case 1: pfile.tcpAction = "block"; break;
+            case 2: pfile.tcpAction = "open"; break;
+        
+        }
+        switch (dojo.byId("udpAction").selectedIndex) {
+            case 0: pfile.udpAction = "reset"; break;
+            case 1: pfile.udpAction = "block"; break;
+            case 2: pfile.udpAction = "open"; break;
+        }
+
+        switch (dojo.byId("icmpAction").selectedIndex) {
+            case 0: pfile.icmpAction = "block"; break;
+            case 1: pfile.icmpAction = "open"; break;
+        }
+
+        
         pfile.personality = dojo.byId("personality").value;
         pfile.ethernet = dojo.byId("ethernet").value;
         pfile.dropRate = dojo.byId("dropRate").value;
@@ -617,7 +633,13 @@ block headerAdditions
         for (var i = 0; i < portIndexes.length; i++) {
             ports[i] = new obj();
             ports[i].portNum = dojo.byId("portNum" + portIndexes[i]).value;
-            ports[i].behavior = dojo.byId("portBehavior" + portIndexes[i]).value;
+            switch (Number(dojo.byId("portBehavior" + portIndexes[i]).value)) {
+                case 0: ports[i].behavior = "reset"; break; 
+                case 1: ports[i].behavior = "block"; break;
+                case 2: ports[i].behavior = "open"; break;
+                case 3: ports[i].behavior = "script"; break;
+            }
+
             ports[i].type = dojo.byId("portType" + portIndexes[i]).value;
             ports[i].script = dojo.byId("portScriptDrop" + portIndexes[i]).value;
             ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
@@ -676,12 +698,13 @@ block headerAdditions
         row += "</select></td>";
 
         row += "<td><select onchange='portBehaviorChanged()' id='portBehavior" + portUID + "'>"; 
-        options = ["closed", "reset", "open", "script"];
+        options = ["reset", "block", "open", "script"];
+        longOptions = ["Closed: Respond with TCP RST or ICMP Port Error", "Filter: Drop packets and do not respond", "Open: Establish incoming connections", "Script: Emulate a service"];
         for (j = 0; j < options.length; j++) {
             if (port.behavior == options[j]) {
-                row += "<option value='" + j + "' SELECTED>" + options[j] + "</option>";
+                row += "<option value='" + j + "' SELECTED>" + longOptions[j] + "</option>";
             } else {
-                row += "<option value='" + j + "'>" + options[j] + "</option>";
+                row += "<option value='" + j + "'>" + longOptions[j] + "</option>";
             }
         }
         row += "</select></td>";
@@ -737,9 +760,9 @@ block headerAdditions
             
             selectItemByValue(dojo.byId("portScriptDrop" + portUID), "NA");
 
-            if (behavior == "closed") {
+            if (behavior == "reset") {
                 dojo.byId("portBehavior" + portUID).value = 0;
-            } else if (behavior == "reset") {
+            } else if (behavior == "block") {
                 dojo.byId("portBehavior" + portUID).value = 1;
             } else if (behavior == "open") {
                 dojo.byId("portBehavior" + portUID).value = 2;
@@ -1172,15 +1195,13 @@ block headerAdditions
         }
         
         if (dojo.byId("icmpAction").disabled = dojo.byId("inheritIcmpAction").checked) {
-            if (profile.icmpAction == "reset") {
+            if (profile.icmpAction == "block") {
                 dojo.byId("icmpAction").selectedIndex = 0;
-            } else if (profile.icmpAction == "block") {
-                dojo.byId("icmpAction").selectedIndex = 1;
             } else if (profile.icmpAction == "open") {
-                dojo.byId("icmpAction").selectedIndex = 2;
+                dojo.byId("icmpAction").selectedIndex = 1;
             }
         }
-        
+
         
         uptimeTypeChanged();
     }
@@ -1255,12 +1276,10 @@ block headerAdditions
             dojo.byId("udpAction").selectedIndex = 2;
           }
          
-          if (profile.icmpAction == "reset") {
+          if (profile.icmpAction == "block") {
             dojo.byId("icmpAction").selectedIndex = 0;
-          } else if (profile.icmpAction == "block") {
-            dojo.byId("icmpAction").selectedIndex = 1;
           } else if (profile.icmpAction == "open") {
-            dojo.byId("icmpAction").selectedIndex = 2;
+            dojo.byId("icmpAction").selectedIndex = 1;
           }
 
           dojo.byId("personality").value = profile.personality;
@@ -1275,12 +1294,6 @@ block headerAdditions
 
 
 block content
-  mixin defaultActionBox(i)
-    select(id=i)
-      option reset
-      option block
-      option open
-
   h2 Adding Profile
 
   form(method="post", action="/editHoneydProfileSave")
@@ -1360,7 +1373,11 @@ block content
         td(style="text-align:right")
           label Default TCP Action
         td
-          mixin defaultActionBox('tcpAction')
+          select(id='tcpAction')
+            option Reset: Respond with RST
+            option Filter: Drop packet and do not respond
+            option Open: Respond with SYN/ACK
+
   
       tr(id="row8")
         td
@@ -1370,7 +1387,11 @@ block content
         td(style="text-align:right")
           label Default UDP Action
         td
-          mixin defaultActionBox('udpAction')
+          select(id='udpAction')
+            option Reset: Respond with ICMP Port Error
+            option Filter: Drop packet and do not respond
+            option Open: Do nothing
+
       tr(id="row9")
         td
           input#inheritIcmpAction(type="checkbox", name="inheritIcmpAction", onclick="inheritanceChanged()") 
@@ -1379,7 +1400,9 @@ block content
         td(style="text-align:right")
           label Default ICMP Action
         td
-          mixin defaultActionBox('icmpAction')
+          select(id='icmpAction')
+            option Filter: Drop packet and do not respond
+            option Open: Respond to ICMP Packets
 
     br
     

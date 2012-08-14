@@ -1,7 +1,8 @@
 var novaconfig = require('novaconfig.node');
 
-var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
-segvhandler.registerHandler();
+// Used for debugging. Download the node-segfault-handler to use
+//var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
+//segvhandler.registerHandler();
 
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
@@ -807,8 +808,7 @@ app.post('/editHoneydNodesSave', passport.authenticate('basic', { session: false
 
 	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
 	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
-	honeydConfig.SaveAllTemplates();
-	honeydConfig.WriteHoneydConfiguration(config.GetPathConfigHoneydHS());
+	honeydConfig.SaveAll();
      
 	res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 
@@ -841,7 +841,7 @@ app.post('/editHoneydNodeSave', passport.authenticate('basic', { session: false 
 	}
 	else
 	{
-	  honeydConfig.SaveAllTemplates();
+	  honeydConfig.SaveAll();
 	  res.render('saveRedirect.jade', { locals: {redirectLink: "/configHoneydNodes"}})
 	}
 });
@@ -1148,7 +1148,7 @@ everyone.now.deleteNodes = function(nodeNames, callback)
 			return;
 		}
 
-		if (!honeydConfig.SaveAllTemplates())
+		if (!honeydConfig.SaveAll())
 		{
 			callback(false, "Failed to save XML templates");
 			return;
@@ -1170,7 +1170,7 @@ everyone.now.deleteProfiles = function(profileNames, callback)
 		}
 	
 	
-		if (!honeydConfig.SaveAllTemplates()) {
+		if (!honeydConfig.SaveAll()) {
 			callback(false, "Failed to save XML templates");
 			return;
 		}
@@ -1360,14 +1360,29 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	var portName;
 	for (var i = 0; i < ports.size; i++) {
 		console.log("Adding port " + ports[i].portNum + " " + ports[i].type + " " + ports[i].behavior + " " + ports[i].script + " Inheritance: " + ports[i].isInherited);
-		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), Number(ports[i].behavior), ports[i].script);
+		console.log("Adding port with behavior: " + ports[i].behavior);
+
+		// Convert the string to the proper enum number in HoneydConfiguration.h
+		var behavior = ports[i].behavior;
+		var behaviorEnumValue = new Number();
+		if (behavior == "block") {
+			behaviorEnumValue = 0;
+		} else if (behavior == "reset") {
+			behaviorEnumValue = 1;
+		} else if (behavior == "open") {
+			behaviorEnumValue = 2;
+		} else if (behavior == "script") {
+			behaviorEnumValue = 3;
+		}
+
+		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), behaviorEnumValue, ports[i].script);
 
 		if (portName != "") {
 			honeydProfile.AddPort(portName, ports[i].isInherited);
 		}
 	}
 
-	honeydConfig.SaveAllTemplates();
+	honeydConfig.SaveAll();
 
 	// Save the profile
 	honeydProfile.Save(profile.oldName, addOrEdit);
