@@ -2347,21 +2347,13 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 	Subnet *subPtr = &m_subnets[nodePtr->m_sub];
 	// Make sure the subnet exists
 	if(subPtr == NULL)
-<<<<<<< HEAD
 	{
 		LOG(ERROR, "Unable to locate expected subnet '" +nodePtr->m_sub + "'.","");
 		return false;
 	}
+
 	for(uint i = 0; i < subPtr->m_nodes.size(); i++)
 	{
-=======
-	{
-		LOG(ERROR, "Unable to locate expected subnet '" +nodePtr->m_sub + "'.","");
-		return false;
-	}
-	for(uint i = 0; i < subPtr->m_nodes.size(); i++)
-	{
->>>>>>> integration
 		if(!subPtr->m_nodes[i].compare(nodeName))
 		{
 			subPtr->m_nodes.erase(subPtr->m_nodes.begin() + i);
