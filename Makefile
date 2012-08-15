@@ -210,44 +210,47 @@ clean-novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release clean
 
 #Installation (requires root)
-install: install-data install-docs install-cli install-novad install-ui-core install-hhconfig install-novagui install-novatrainer install-web
-	mkdir -p $(DESTDIR)/usr/bin
-	mkdir -p $(DESTDIR)/usr/lib
+install: install-data
+	$(MAKE) install-helper
+
+install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novagui install-novatrainer install-web
 	sh debian/postinst
 	-bash Installer/createDatabase.sh
 
-install-data: install-hhconfig
+install-data:
 	#make folder in etc with path locations to nova files
+	mkdir -p $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/lib
 	mkdir -p $(DESTDIR)/etc/nova
-	install Installer/Read/paths $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/usr/share/applications
-	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
-	#Copy the hidden directories and files
-	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
-	#Copy the scripts and logs
 	mkdir -p $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/usr/bin
-	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
-	install Installer/nova_init $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	mkdir -p $(DESTDIR)/etc/sysctl.d/
 	mkdir -p $(DESTDIR)/etc/bash_completion.d/
-	#Install permissions
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	mkdir -p $(DESTDIR)/usr/share/man/man1
+	
+	install Installer/Read/paths $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
+	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
+	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
+	#Copy the hidden directories and files
+	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
+	#Copy the scripts and logs
+	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
+	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
+	install Installer/nova_init $(DESTDIR)/usr/bin
+	#Install permissions
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
 	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
 	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
-	mkdir -p $(DESTDIR)/usr/share/man/man1
 	# Copy the bash completion files
 	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
 
 install-pcap-debug:
 	#debug sudoers file that allows sudo gdb to pcap without password prompt
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	install Installer/Read/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
 
 install-docs:
@@ -261,7 +264,6 @@ install-web:
 	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
 	tar -C $(DESTDIR)/usr/share/nova/NovaWeb/www -xf NovaWeb/dojo-release-1.7.0.tar.gz
 	#mv $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo
-	mkdir -p $(DESTDIR)/usr/bin
 	-install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
 
 install-hhconfig:

@@ -1382,11 +1382,10 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 			honeydProfile.AddPort(portName, ports[i].isInherited);
 		}
 	}
-
-	honeydConfig.SaveAll();
-
+	
 	// Save the profile
 	honeydProfile.Save(profile.oldName, addOrEdit);
+	honeydConfig.SaveAll();
 
 	callback();
 }
