@@ -228,6 +228,13 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						break;
 					}
 				}
+
+				if (curNode.m_MAC == "")
+				{
+					LOG(ERROR, "TODO: Fix this bug. Skipping generation of node with no m_MAC", "");
+					continue;
+				}
+
 				std::vector<PortCounter *> portCounters;
 				for(unsigned int index = 0; index < m_profileCounters[j].m_portCounters.size(); index++)
 				{
