@@ -367,15 +367,16 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 
 		boost::split(portTokens, node->m_ports_dist[i].first, boost::is_any_of("_"));
 
-		openPort.m_portName = portTokens[0] + "_" + portTokens[1] + "_open";
+		openPort.m_portName = portTokens[0] + "_" + portTokens[1] + "_reset";
 		openPort.m_portNum = portTokens[0];
 		openPort.m_type = portTokens[1];
-		openPort.m_behavior = portTokens[2];
+		openPort.m_behavior = "reset";
 		m_hdconfig->AddPort(openPort);
 
 		scriptedPort.m_portName = portTokens[0] + "_" + portTokens[1];
 		scriptedPort.m_portNum = portTokens[0];
 		scriptedPort.m_type = portTokens[1];
+		scriptedPort.m_behavior = "script";
 
 		vector<pair<string, uint> > potentialMatches;
 
@@ -383,7 +384,6 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 		{
 			if(!m_serviceMap.GetScripts(it->second.second).empty() && !(it->first + "_open").compare(node->m_ports_dist[i].first))
 			{
-				scriptedPort.m_behavior = "script";
 				scriptedPort.m_service = it->second.second;
 
 				vector<string> nodeOSClasses;
@@ -501,10 +501,10 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 				m_hdconfig->AddPort(scriptedPort);
 				continue;
 			}
+			scriptedPort.m_portName += "_open";
+			scriptedPort.m_behavior = "open";
+			m_hdconfig->AddPort(scriptedPort);
 		}
-		scriptedPort.m_portName += "_" + portTokens[2];
-		scriptedPort.m_behavior = portTokens[2];
-		m_hdconfig->AddPort(scriptedPort);
 	}
 	return true;
 }
