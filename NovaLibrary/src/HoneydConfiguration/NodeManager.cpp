@@ -218,7 +218,11 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						//Generate unique MAC address and set profile name
 						curNode.m_MAC = m_hdconfig->GenerateUniqueMACAddress(curCounter->m_ethVendor);
 						curNode.m_name = curNode.m_IP + " - " + curNode.m_MAC;
-						m_hdconfig->m_profiles[m_profileCounters[j].m_profile.m_name].m_nodeKeys.push_back(curNode.m_name);
+						curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
+						curNode.m_enabled = true;
+						curNode.m_interface = Config::Inst()->GetInterface(0);
+						curNode.m_sub = curNode.m_interface;
+						curNode.m_realIP = 0;
 
 						//Update counters for remaining macs
 						for(unsigned int l = k + 1; l < m_profileCounters[j].m_macCounters.size(); l++)
@@ -390,7 +394,7 @@ bool NodeManager::GenerateNodes(int num_nodes)
 	}
 	while(!nodesToAdd.empty())
 	{
-		m_hdconfig->AddNewNode(nodesToAdd.back());
+		m_hdconfig->AddPreGeneratedNode(nodesToAdd.back());
 		nodesToAdd.pop_back();
 	}
 	if(!m_hdconfig->SaveAllTemplates())
