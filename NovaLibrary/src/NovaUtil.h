@@ -55,6 +55,7 @@ inline std::string ConvertInt(int x)
 //	searchChar: the character to replace
 //	replaceVal: the replacement character
 void ReplaceChar(std::string& str, char searchChar, char replaceVal);
+void ReplaceString(std::string& str, const std::string& oldStr, const std::string& newStr);
 
 //Takes the input vector of doubles, and changes the double at the index to the target value, then shifts
 // all other values in the vector proportionally such that the entire vector sums to 100
