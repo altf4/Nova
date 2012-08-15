@@ -1168,7 +1168,7 @@ bool NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + profile->m_name, "");
 		return false;
 	}
-	else if((profile->m_generated) && (NumberOfChildren(profile->m_name) == 0))
+	else if((profile->m_generated) && (NumberOfChildren(profile->m_name) == 0) && !profile->m_ethernetVendors.empty())
 	{
 		struct ProfileCounter pCounter;
 		pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
@@ -1198,6 +1198,7 @@ bool NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		{
 			pCounter.m_portCounters.push_back(GeneratePortCounter(profile->m_ports[i].first, profile->m_ports[i].second.second));
 		}
+
 		m_profileCounters.push_back(pCounter);
 	}
 	for(ProfileTable::iterator it = m_hdconfig->m_profiles.begin(); it != m_hdconfig->m_profiles.end(); it++)
