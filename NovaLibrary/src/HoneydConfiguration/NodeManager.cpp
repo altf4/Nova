@@ -193,6 +193,10 @@ bool NodeManager::GenerateNodes(int num_nodes)
 				m_profileCounters[j].m_count -= (1 - m_profileCounters[j].m_increment);
 
 				Node curNode;
+				curNode.m_IP = "DHCP";
+				curNode.m_name = curNode.m_IP + " - " + curNode.m_MAC;
+				curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
+
 				//Determine which mac vendor to use
 				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
 				{
@@ -212,9 +216,7 @@ bool NodeManager::GenerateNodes(int num_nodes)
 					{
 						curCounter->m_count -= (1 - curCounter->m_increment);
 						//Generate unique MAC address and set profile name
-						curNode.m_IP = "DHCP";
 						curNode.m_MAC = m_hdconfig->GenerateUniqueMACAddress(curCounter->m_ethVendor);
-						curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
 						curNode.m_name = curNode.m_IP + " - " + curNode.m_MAC;
 						m_hdconfig->m_profiles[m_profileCounters[j].m_profile.m_name].m_nodeKeys.push_back(curNode.m_name);
 
@@ -262,6 +264,10 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						vector<string> tokens;
 
 						boost::split(tokens, curCounter->m_portName, boost::is_any_of("_"));
+						if (tokens.size() < 2)
+						{
+							LOG(ERROR, "Unable to parse port name " + curCounter->m_portName, "");
+						}
 
 						string addPort = tokens[0] + "_" + tokens[1] + "_";
 
@@ -270,7 +276,7 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						newPort.m_type = tokens[1];
 
 						// ***** TCP ****
-						if(!tokens[1].compare("TCP"))
+						if(!newPort.m_type.compare("TCP"))
 						{
 							//Default to reset for TCP unless we have an explicit block for the default action
 							if(p->m_tcpAction.compare("block"))
