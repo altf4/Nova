@@ -193,6 +193,10 @@ bool NodeManager::GenerateNodes(int num_nodes)
 				m_profileCounters[j].m_count -= (1 - m_profileCounters[j].m_increment);
 
 				Node curNode;
+				curNode.m_IP = "DHCP";
+				curNode.m_name = curNode.m_IP + " - " + curNode.m_MAC;
+				curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
+
 				//Determine which mac vendor to use
 				for(unsigned int k = 0; k < m_profileCounters[j].m_macCounters.size(); k++)
 				{
@@ -212,7 +216,6 @@ bool NodeManager::GenerateNodes(int num_nodes)
 					{
 						curCounter->m_count -= (1 - curCounter->m_increment);
 						//Generate unique MAC address and set profile name
-						curNode.m_IP = "DHCP";
 						curNode.m_MAC = m_hdconfig->GenerateUniqueMACAddress(curCounter->m_ethVendor);
 						curNode.m_name = curNode.m_IP + " - " + curNode.m_MAC;
 						curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
@@ -229,6 +232,13 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						break;
 					}
 				}
+
+				if (curNode.m_MAC == "")
+				{
+					LOG(ERROR, "TODO: Fix this bug. Skipping generation of node with no m_MAC", "");
+					continue;
+				}
+
 				std::vector<PortCounter *> portCounters;
 				for(unsigned int index = 0; index < m_profileCounters[j].m_portCounters.size(); index++)
 				{
@@ -265,6 +275,10 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						vector<string> tokens;
 
 						boost::split(tokens, curCounter->m_portName, boost::is_any_of("_"));
+						if (tokens.size() < 2)
+						{
+							LOG(ERROR, "Unable to parse port name " + curCounter->m_portName, "");
+						}
 
 						string addPort = tokens[0] + "_" + tokens[1] + "_";
 
@@ -273,7 +287,7 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						newPort.m_type = tokens[1];
 
 						// ***** TCP ****
-						if(!tokens[1].compare("TCP"))
+						if(!newPort.m_type.compare("TCP"))
 						{
 							//Default to reset for TCP unless we have an explicit block for the default action
 							if(p->m_tcpAction.compare("block"))
@@ -1165,7 +1179,7 @@ bool NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		LOG(ERROR, "Couldn't retrieve expected NodeProfile: " + profile->m_name, "");
 		return false;
 	}
-	else if((profile->m_generated) && (NumberOfChildren(profile->m_name) == 0))
+	else if((profile->m_generated) && (NumberOfChildren(profile->m_name) == 0) && !profile->m_ethernetVendors.empty())
 	{
 		struct ProfileCounter pCounter;
 		pCounter.m_profile = *m_hdconfig->GetProfile(profile->m_name);
@@ -1195,6 +1209,7 @@ bool NodeManager::RecursiveGenProfileCounter(NodeProfile *profile)
 		{
 			pCounter.m_portCounters.push_back(GeneratePortCounter(profile->m_ports[i].first, profile->m_ports[i].second.second));
 		}
+
 		m_profileCounters.push_back(pCounter);
 	}
 	for(ProfileTable::iterator it = m_hdconfig->m_profiles.begin(); it != m_hdconfig->m_profiles.end(); it++)

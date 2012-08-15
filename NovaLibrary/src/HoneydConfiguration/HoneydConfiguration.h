@@ -264,6 +264,8 @@ public:
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     bool LoadProfilesFromTree(std::string parent);
 
+    static std::string SanitizeProfileName(std::string pfilename);
+
 	SubnetTable m_subnets;
 	PortTable m_ports;
 	ProfileTable m_profiles;
@@ -328,6 +330,11 @@ private:
     //Load stored honeyd nodes ptr
     bool LoadNodes(boost::property_tree::ptree *ptr);
 
+    //Removes a profile and all associated nodes from the Honeyd configuration
+    //	profileName: name of the profile you wish to delete
+    //	originalCall: used internally to designate the recursion's base condition, can old be set with
+    //		private access. Behavior is undefined if the first DeleteProfile call has originalCall == false
+    // 	Returns: (true) if successful and (false) if the profile could not be found
     bool DeleteProfile(std::string profileName, bool originalCall);
 
 	//Recreates the profile tree of ancestors, children or both

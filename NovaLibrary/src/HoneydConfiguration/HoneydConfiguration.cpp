@@ -357,8 +357,8 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		}
 		else
 		{
-			string profName = it->second.m_pfile;
-			ReplaceChar(profName, ' ', '-');
+			string profName = HoneydConfiguration::SanitizeProfileName(it->second.m_pfile);
+
 			//Clone a custom profile for a node
 			out << "clone CustomNodeProfile-" << m_nodeProfileIndex << " " << profName << '\n';
 
@@ -473,12 +473,10 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 	}
 
 	stringstream out;
-	string profName = p->m_name;
-	string parentProfName = p->m_parentProfile;
 
 	//XXX This is just a temporary band-aid on a larger wound, we cannot allow whitespaces in profile names.
-	ReplaceChar(profName, ' ', '-');
-	ReplaceChar(parentProfName, ' ', '-');
+	string profName = HoneydConfiguration::SanitizeProfileName(p->m_name);
+	string parentProfName = HoneydConfiguration::SanitizeProfileName(p->m_parentProfile);
 
 	if(!parentProfName.compare("default") || !parentProfName.compare(""))
 	{
@@ -1330,7 +1328,13 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 			valueKey = "port";
 			if(!string(value.first.data()).compare(valueKey))
 			{
-				port = &m_ports[value.second.get<string>("portName")];
+				string portName = value.second.get<string>("portName");
+				port = &m_ports[portName];
+				if(port == NULL)
+				{
+					LOG(ERROR, "Invalid port '" + portName + "' in NodeProfile '" + nodeProf->m_name + "'.","");
+					return false;
+				}
 
 				//Checks inherited ports for conflicts
 				for(uint i = 0; i < nodeProf->m_ports.size(); i++)
@@ -2343,12 +2347,21 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 	Subnet *subPtr = &m_subnets[nodePtr->m_sub];
 	// Make sure the subnet exists
 	if(subPtr == NULL)
+<<<<<<< HEAD
 	{
 		LOG(ERROR, "Unable to locate expected subnet '" +nodePtr->m_sub + "'.","");
 		return false;
 	}
 	for(uint i = 0; i < subPtr->m_nodes.size(); i++)
 	{
+=======
+	{
+		LOG(ERROR, "Unable to locate expected subnet '" +nodePtr->m_sub + "'.","");
+		return false;
+	}
+	for(uint i = 0; i < subPtr->m_nodes.size(); i++)
+	{
+>>>>>>> integration
 		if(!subPtr->m_nodes[i].compare(nodeName))
 		{
 			subPtr->m_nodes.erase(subPtr->m_nodes.begin() + i);
@@ -2921,6 +2934,21 @@ vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
 	}
 
 	return ret;
+}
+
+string HoneydConfiguration::SanitizeProfileName(std::string oldName)
+{
+	if (!oldName.compare("default") || !oldName.compare(""))
+	{
+		return oldName;
+	}
+
+	string newname = "pfile" + oldName;
+	ReplaceString(newname, " ", "-");
+	ReplaceString(newname, ",", "COMMA");
+	ReplaceString(newname, ";", "COLON");
+	ReplaceString(newname, "@", "AT");
+	return newname;
 }
 
 //This internal function recurses upward to determine whether or not the given profile has a personality

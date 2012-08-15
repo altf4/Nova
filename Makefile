@@ -333,5 +333,4 @@ reset-debug:
 	$(MAKE) web
 	$(MAKE) test
 	$(MAKE) install
-	$(MAKE) install-web
 
