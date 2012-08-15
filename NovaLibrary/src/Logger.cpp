@@ -707,7 +707,7 @@ namespace Nova
 	{
 		m_messageInfo.m_email_recipients = recs;
 
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out | ios::trunc);
 
 		for(uint16_t i = 0; i < recs.size(); i++)
 		{
@@ -720,7 +720,7 @@ namespace Nova
 
 	void Logger::AppendEmailRecipients(std::vector<std::string> recs)
 	{
-		fstream repeat("/usr/share/nova/emails", ios::in | ios::out);
+		fstream repeat(m_pathEmailFile, ios::in | ios::out);
 		std::vector<std::string> check;
 
 		while(repeat.good())
@@ -743,7 +743,7 @@ namespace Nova
 				}
 		}
 
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::app);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out | ios::app);
 
 		if(!recipients.fail())
 		{
@@ -767,7 +767,7 @@ namespace Nova
 		//check through the vector; if an email is in the vector and present in the file,
 		// do not rewrite to the new emails file. If and email isn't there, don't do anything.
 		// If an email in the vector doesn't correspond to any email in the file, do nothing.
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out);
 		std::vector<std::string> check;
 		bool print = true;
 
@@ -780,7 +780,7 @@ namespace Nova
 
 		recipients.close();
 
-		fstream writer("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+		fstream writer(m_pathEmailFile, ios::in | ios::out | ios::trunc);
 
 		for(uint16_t i = 0; i < check.size(); i++)
 		{
@@ -807,13 +807,15 @@ namespace Nova
 	void Logger::ClearEmailRecipients()
 	{
 		//open the file with ios::trunc and then close it
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out | ios::trunc);
 		recipients.close();
 	}
 
 	Logger::Logger()
 	{
 		pthread_rwlock_init(&m_logLock, NULL);
+
+		m_pathEmailFile = Config::Inst()->GetPathHome() + "/../emails";
 
 		for(uint16_t i = 0; i < 8; i++)
 		{

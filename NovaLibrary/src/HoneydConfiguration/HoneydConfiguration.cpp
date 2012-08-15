@@ -281,6 +281,8 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		return WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
 	}
 
+	LOG(DEBUG, "Writing honeyd configuration to " + path, "");
+
 	stringstream out;
 	vector<string> profilesParsed;
 
