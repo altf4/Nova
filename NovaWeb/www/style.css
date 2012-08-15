@@ -117,5 +117,18 @@ html, body {
     height: 550px;
 }
 
+.white_content{
+	display: none;
+	position: absolute;
+	top: 25%;
+	left: 0%;
+	width: 75%;
+	height: 60%;
+	padding: 16px;
+	border: 16px outset #E8A02F;
+	background-color: white;
+	z-index: 1002;
+	overflow: hidden;
+}
 
 .align-left {float:left; margin: 0 15px 15px 0;}

@@ -333,7 +333,7 @@ function renderBasicOptions(jadefile, res, req) {
     }
     
     var doppelPass = [];
-    //all = config.ListLoopbacks().sort();
+    
     all = config.ListLoopbacks().sort();
     used = config.GetDoppelInterface();
     
@@ -1393,6 +1393,53 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 everyone.now.GetCaptureSession = function (callback) {
 	var ret = config.ReadSetting("TRAINING_SESSION");
 	callback(ret);
+}
+
+everyone.now.ShowAutoConfig = function(numNodes, interfaces, subnets, callback, route) {
+	var executionString = 'honeydhostconfig';
+	var nFlag = '-n';
+	var iFlag = '-i';
+	var aFlag = '-a';
+	
+	var hhconfigArgs = new Array();
+	
+	if(numNodes !== undefined && parseInt(numNodes) >= 0)
+	{
+	    hhconfigArgs.push(nFlag);
+	    hhconfigArgs.push(numNodes);
+	}
+	if(interfaces !== undefined && interfaces.length > 0)
+	{
+	    hhconfigArgs.push(iFlag);
+	    hhconfigArgs.push(interfaces);
+	}
+	if(subnets !== undefined && subnets.length > 0)
+	{
+	    hhconfigArgs.push(aFlag);
+	    hhconfigArgs.push(subnets);
+	}
+
+    var util = require('util');
+    var spawn = require('child_process').spawn;
+	    
+	var autoconfig = spawn(executionString.toString(), hhconfigArgs);
+	    
+	autoconfig.stdout.on('data', function(data) {
+		callback('' + data);
+	});
+	
+	autoconfig.stderr.on('data', function(data) {
+		if(/^execvp\(\)/.test(data))
+		{
+		    console.log("honeydhostconfig failed to start.");
+		    route("/nodeReview");
+		}
+	});
+	
+	autoconfig.on('exit', function(code) {
+		console.log("autoconfig exited with code " + code);
+		route("/nodeReview");
+	});
 }
 
 everyone.now.StartTrainingCapture = function (trainingSession, callback) {
