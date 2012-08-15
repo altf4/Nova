@@ -713,6 +713,11 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 	uint macPrefix = m_macAddresses.AtoMACPrefix(macAddress);
 	string vendor = m_macAddresses.LookupVendor(macPrefix);
 
+	//Finish populating the node
+	newNode.m_interface = interface;
+	newNode.m_pfile = profileName;
+	newNode.m_enabled = true;
+
 	//Check the IP  and MAC address
 	if(ipAddress.compare("DHCP"))
 	{
@@ -775,6 +780,7 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 	//Iterate over the interface list and try to find one.
 	for(uint i = 0; i < interfaces.size(); i++)
 	{
+		cout << interfaces.at(i) << endl;
 		if(!interfaces[i].compare(newNode.m_interface))
 		{
 			break;
@@ -868,11 +874,6 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 		LOG(ERROR, "Unable to retrieve expected subnet '" + newNode.m_sub + "' for node '" + newNode.m_name + "'!", "");
 		return false;
 	}
-
-	//Finish populating the node
-	newNode.m_interface = interface;
-	newNode.m_pfile = profileName;
-	newNode.m_enabled = true;
 
 	//Assign all the values
 	subPtr->m_nodes.push_back(newNode.m_name);
