@@ -133,28 +133,59 @@ public:
     //	subnet: the name of the subnet object the node is associated with for organizational reasons.
     //	Returns true if successful and false if not
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress, std::string interface, std::string subnet);
-    //***************** TO HERE *****************//
 
-    bool AddNewNode(Node node);
+    //This function adds a new node to the configuration based on the existing node.
+    // Note* this function does not perform robust validation and is used primarily by the NodeManager,
+    //	avoid using this otherwise
+    bool AddPreGeneratedNode(Node &node);
 
-    bool AddNewNodes(std::string profileName, std::string ipAddress,std::string interface, std::string subnet, int numberOfNodes);
+    //This function allows us to add many nodes of the same type easily
+    // *Note this function is very limited, for configuring large numbers of nodes you should use the NodeManager
+    bool AddNewNodes(std::string profileName, std::string ipAddress, std::string interface, std::string subnet, int numberOfNodes);
 
+    //Just a basic function for added a subnet into the configuration, may not be needed anymore.
     bool AddSubnet(const Subnet &add);
 
+    //This allows easy access to all children profiles of the parent
+    // Returns a vector of strings containing the names of the children profile
 	std::vector<std::string> GetProfileChildren(std::string parent);
 
+	//This function allows easy access to all profiles
+	// Returns a vector of strings containing the names of all profiles
 	std::vector<std::string> GetProfileNames();
-	NodeProfile *GetProfile(std::string profileName);
-	Port *GetPort(std::string portName);
-	std::vector<std::string> GeneratedProfilesStrings();
-	std::vector<std::string> GetGeneratedProfileNames();
-	std::vector<std::string> GetGeneratedNodeNames();
 
+	//This function allows easy access to all nodes
+	// Returns a vector of strings containing the names of all nodes
 	std::vector<std::string> GetNodeNames();
+
+	//This function allows easy access to all subnets
+	// Returns a vector of strings containing the names of all subnets
 	std::vector<std::string> GetSubnetNames();
 
-	// Returns list of all available scripts
+	//This function allows easy access to all scripts
+	// Returns a vector of strings containing the names of all scripts
 	std::vector<std::string> GetScriptNames();
+
+	//This function allows easy access to all generated profiles
+	// Returns a vector of strings containing the names of all generated profiles
+	std::vector<std::string> GetGeneratedProfileNames();
+
+	//This function allows easy access to debug strings of all generated profiles
+	// Returns a vector of strings containing debug outputs of all generated profiles
+	std::vector<std::string> GeneratedProfilesStrings();
+
+    //This function determines whether or not the given profile is empty
+    // targetProfileKey: The name of the profile being inherited
+    // Returns true, if valid parent and false if not
+    // *Note: Used by auto configuration? may not be needed.
+    bool CheckNotInheritingEmptyProfile(std::string parentName);
+
+    //***************** TO HERE *****************//
+
+	std::vector<std::string> GetGeneratedNodeNames();
+
+	NodeProfile *GetProfile(std::string profileName);
+	Port *GetPort(std::string portName);
 
 	bool IsMACUsed(std::string mac);
 	bool IsIPUsed(std::string ip);
@@ -232,8 +263,6 @@ public:
 
     //Takes a ptree and loads and sub profiles (used in clone to extract children)
     bool LoadProfilesFromTree(std::string parent);
-
-    bool CheckNotInheritingEmptyProfile(std::string parentName);
 
 	SubnetTable m_subnets;
 	PortTable m_ports;
@@ -316,9 +345,17 @@ private:
 
     std::string FindSubnet(in_addr_t ip);
 
-    bool RecursiveCheckNotInheritingEmptyProfile(const NodeProfile& check);
 
     std::vector<Subnet> FindPhysicalInterfaces();
+
+    //***************** REFACTORED BELOW  HERE *****************//
+
+    //This internal function recurses upward to determine whether or not the given profile has a personality
+    // check: Reference to the profile to check
+    // Returns true if there is a personality defined, false if not
+    // *Note: Used by auto configuration? shouldn't be needed.
+    bool RecursiveCheckNotInheritingEmptyProfile(const NodeProfile& check);
+
 };
 
 }
