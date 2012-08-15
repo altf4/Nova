@@ -780,7 +780,6 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 	//Iterate over the interface list and try to find one.
 	for(uint i = 0; i < interfaces.size(); i++)
 	{
-		cout << interfaces.at(i) << endl;
 		if(!interfaces[i].compare(newNode.m_interface))
 		{
 			break;
