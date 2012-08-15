@@ -373,9 +373,13 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 		openPort.m_behavior = "reset";
 		m_hdconfig->AddPort(openPort);
 
-		scriptedPort.m_portName = portTokens[0] + "_" + portTokens[1];
 		scriptedPort.m_portNum = portTokens[0];
 		scriptedPort.m_type = portTokens[1];
+		scriptedPort.m_portName = scriptedPort.m_portNum + "_" + scriptedPort.m_type + "_open";
+		scriptedPort.m_behavior = "open";
+		m_hdconfig->AddPort(scriptedPort);
+
+		scriptedPort.m_portName = portTokens[0] + "_" + portTokens[1];
 		scriptedPort.m_behavior = "script";
 
 		vector<pair<string, uint> > potentialMatches;
@@ -453,7 +457,7 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 				}
 
 				scriptedPort.m_scriptName = closestMatch;
-				scriptedPort.m_portName += "_" + scriptedPort.m_scriptName;
+				scriptedPort.m_portName = scriptedPort.m_portNum + "_" + scriptedPort.m_type + "_" + scriptedPort.m_scriptName;
 
 				vector<string> nodeOSClassesCopy = nodeOSClasses;
 				string profileName = "";
@@ -501,9 +505,6 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 				m_hdconfig->AddPort(scriptedPort);
 				continue;
 			}
-			scriptedPort.m_portName += "_open";
-			scriptedPort.m_behavior = "open";
-			m_hdconfig->AddPort(scriptedPort);
 		}
 	}
 	return true;
