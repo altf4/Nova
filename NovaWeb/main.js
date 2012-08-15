@@ -379,6 +379,7 @@ function renderBasicOptions(jadefile, res, req) {
 			,SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
 			,SMTP_PORT: config.ReadSetting("SMTP_PORT")
 			,SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN")
+			,SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
 			,RECIPIENTS: config.ReadSetting("RECIPIENTS")
 		}
 	 });
