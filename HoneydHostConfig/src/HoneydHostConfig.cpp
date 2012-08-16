@@ -270,6 +270,7 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 					// <addr> tag
 					if(localMachine.compare(value.second.get<string>("<xmlattr>.addr")))
 					{
+						cout << "address " << value.second.get<string>("<xmlattr>.addr") << endl;
 						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 					}
 					// If, however, we're parsing ourself, we need to do some extra work.
@@ -670,7 +671,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			// for use later
 			string bitmaskString = string(bitmaskBuffer);
 			string addrString = string(addrBuffer);
-			localMachine = addrString;
 
 			// Spurious debug prints for now. May change them to be used
 			// in UI hooks later.
@@ -789,7 +789,10 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			// for use later
 			string bitmaskString = string(bitmaskBuffer);
 			string addrString = string(addrBuffer);
-			localMachine = addrString;
+			if(localMachine.empty())
+			{
+				localMachine = addrString;
+			}
 
 			// Spurious debug prints for now. May change them to be used
 			// in UI hooks later.
