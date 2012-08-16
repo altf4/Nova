@@ -148,6 +148,19 @@ TEST_F(HoneydConfigurationTest, test_RenameProfile)
 	EXPECT_TRUE(m_config->SaveAllTemplates());
 }
 
+TEST_F(HoneydConfigurationTest, test_errorCases)
+{
+	EXPECT_FALSE(m_config->DeleteProfile(""));
+	EXPECT_FALSE(m_config->DeleteProfile("aoeustnhaoesnuhaosenuht"));
+	EXPECT_FALSE(m_config->DeleteNode(""));
+	EXPECT_FALSE(m_config->DeleteNode("aoeuhaonsehuaonsehu"));
+	EXPECT_EQ(NULL, m_config->GetProfile(""));
+	EXPECT_EQ(NULL, m_config->GetProfile("aouhaosnuheaonstuh"));
+	EXPECT_EQ(NULL, m_config->GetNode(""));
+	EXPECT_EQ(NULL, m_config->GetNode("aouhaosnuheaonstuh"));
+
+}
+
 TEST_F(HoneydConfigurationTest, test_Profile)
 {
 	//Create dummy profile
@@ -167,7 +180,6 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	// Delete the profile if it already exists
 	m_config->DeleteProfile("TestProfile-renamed");
 	m_config->DeleteProfile("TestProfile");
-
 
 	//Test adding a profile
 	EXPECT_TRUE(m_config->AddProfile(p));
