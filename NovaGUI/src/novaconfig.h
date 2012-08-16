@@ -42,7 +42,7 @@ public:
 
     NovaGUI *m_mainwindow;
 
-    NovaConfig(QWidget *parent = 0, std::string homePath = "");
+    NovaConfig(QWidget *parent = 0);
 
     ~NovaConfig();
 
@@ -253,7 +253,6 @@ private:
 
     //Value set by dialog windows
     std::string m_retVal;
-    std::string m_homePath;
 
 	// Reference to the dialog prompter initialized in novagui
 	DialogPrompter *m_prompter;

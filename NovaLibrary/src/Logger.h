@@ -196,6 +196,7 @@ private:
 	std::string m_dateString;
 	std::string m_mailMessage;
 	std::vector<std::string> m_mailFormat;
+	std::string m_pathEmailFile;
 };
 
 }

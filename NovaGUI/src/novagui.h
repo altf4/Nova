@@ -138,10 +138,6 @@ private:
 
 	bool m_featureEnabled[DIM];
 	bool m_editingSuspectList;
-
-
-	//Configuration variables
-	char *m_pathsFile;
 };
 
 namespace Nova
