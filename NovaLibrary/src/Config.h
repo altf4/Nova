@@ -245,7 +245,7 @@ private:
 	std::string m_loopbackIF;
 	bool m_loIsDefault;
 	bool m_ifIsDefault;
-	std::vector<std::string>m_interfaces;
+	std::vector<std::string> m_interfaces;
 
 	// Enabled feature stuff, we provide a few formats and helpers
 	std::string m_enabledFeatureMask;

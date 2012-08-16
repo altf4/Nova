@@ -1,7 +1,23 @@
 extends layout
 
 block headerAdditions
+  script(src="scripts/spin.js")
   script
+    var subnetsLength = parseInt("0");
+    var Interfaces = "#{INTERFACES}";
+   
+    var interfaceList = Interfaces.split(',');
+    
+    var interfaceLength;
+    if(interfaceList[0].length == 1)
+    {
+        interfaceLength = parseInt("1");
+    }
+    else if(interfaceList[0].length > 1)
+    {
+        interfaceLength = parseInt(interfaceList.length);
+    }
+  
     function watermark(id, text)
     {
       var element = document.getElementById(id);
@@ -41,7 +57,7 @@ block headerAdditions
         
         var input = document.createElement("input");
         input.setAttribute("type", "text");
-        input.setAttribute("id", "subnets");
+        input.setAttribute("id", "subnets" + subnetsLength);
         input.setAttribute("readonly", "true");
         input.setAttribute("name", "subnets");
         input.setAttribute("value", toValidate);
@@ -51,8 +67,10 @@ block headerAdditions
         tr.appendChild(td);
         document.getElementById(dest).children[1].appendChild(tr);
         
-        document.getElementById(id).value = '';
+        document.getElementById(id).value = 'Format: XXX.XXX.XXX.XXX/##';
         document.getElementById(id).blur();
+        
+        subnetsLength += 1;
       }
       else
       {
@@ -100,49 +118,154 @@ block headerAdditions
       return atLeastOneChecked;
     }
 
+    function RunScan()
+    {
+        if(checkAtLeastOne())
+        { 
+            document.getElementById("startScan").value='Scanning...'; 
+            document.getElementById("startScan").setAttribute('disabled', 'true');
+            document.getElementById("lightbox").style.display='block';
+            var opts = {
+                lines: 17,
+                length: 0,
+                width: 4,
+                radius: 27,
+                corners: 0.6,
+                rotate: 0,
+                color: '#E8A02F',
+                speed: 1,
+                trail: 34,
+                shadow: false,
+                hwaccel: false,
+                className: 'spinner',
+                zIndex: 1003,
+                top: 20,
+                left: 'auto'
+            };
+            
+            var spinner = new Spinner(opts).spin(document.getElementById('spinnerDiv'));
+            document.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
+            var divWidth = document.getElementById('lightbox').scrollWidth;
+            document.getElementById('appendText').style.width = divWidth + 'px';
+            now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+        } 
+        else
+        {
+            return false;
+        }
+    }
+
+    function GetNumNodes()
+    {
+        console.log("GetNumNodes returning " + document.getElementById("numNodes").value);
+        return parseInt(document.getElementById("numNodes").value);
+    }
+    
+    function GetInterfaces()
+    {
+        var length = interfaceLength;
+        console.log("GetInterfaces length == " + length);
+        
+        var returnString = "";
+        
+        for(var i = 0; i < length; i++)
+        {
+            if(document.getElementById("if" + i).checked)
+            {
+                returnString += document.getElementById("if" + i).value;
+                if(i != (length - 1))
+                {
+                    returnString += ",";
+                }
+            }
+        }
+        
+        console.log("GetInterfaces returning " + returnString);
+        return returnString;
+    }
+    
+    function GetSubnets()
+    {
+        var length = subnetsLength;
+        console.log("GetSubnets length == " + length);
+        
+        var returnString = "";
+        
+        for(var i = 0; i < length; i++)
+        {
+            returnString += document.getElementById("subnets" + i).value;
+            if(i != (length - 1))
+            {
+                returnString += ",";
+            }
+        }       
+        
+        console.log("GetSubnets returning " + returnString);
+        return returnString;
+    }
+
+    function autoscancb(text)
+    {
+        var p = document.createElement('p');
+        p.value = text;
+        p.innerHTML = text;
+        document.getElementById('appendText').appendChild(p);
+        //document.getElementById('appendText').style.height = document.getElementById('appendText').scrollHeight;
+        document.getElementById('appendText').scrollTop = document.getElementById('appendText').scrollHeight;
+    }
+    
+    function routeToReview(redirect)
+    {
+        window.location = redirect.toString();
+    }
+
 block content
 
   if(SCANERROR !== undefined)
     label(id="scanError", style="color: red;") #{SCANERROR}
   
   h1 Haystack Autoconfig
-  form(id="submitInfo", method="post", action="/scanning")
-    h2(style="font-size: 1.3em") Interfaces to Scan
-    p The interfaces shown below are the interfaces currently connected to the server. Selecting one of these will result in a scan against the entire subnet that that interface represents.
-    table
-      thead
+  h2(style="font-size: 1.3em") Interfaces to Scan
+  p The interfaces shown below are the interfaces currently connected to the server. Selecting one of these will result in a scan against the entire subnet that that interface represents.
+  table
+    thead
+      tr 
+        th Interfaces
+    tbody 
+    - for (var i = 0; i < INTERFACES.length; i++)
         tr 
-          th Interfaces
-      tbody 
-      - for (var i = 0; i < INTERFACES.length; i++)
-          tr 
-            td
-              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interfaces", width=10, checked)
-              #{INTERFACES[i]}
-              
-    hidden(id="length", value=INTERFACES.length)
-    br
-    label Number of Haystack Nodes to create: 
-    input(type="number", name="numNodes", id="numNodes", width="4", min="1", max="511", onblur="checkIntMax(\"numNodes\")", value="1")
-    br
-    br
-    label(id="errorLabel", style="color:red;") 
-    br
-    br
-    p Below, you can add subnets of the given format to a list that will be scanned during the autoconfiguration process. Right now the input only recognizes strings of the format that is watermarked within the input box. To scan a specific host, put their IPv4 address in the input and append "/32" to the end. 
-    label Additional Subnets to scan:
-    input(type="text", id="subnetToAdd", width="20", onkeydown="if (event.keyCode == 13){ document.getElementById('addSubnet').click(); event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.0/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.0/##\");", value="Format: XXX.XXX.XXX.0/##") 
-    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet
-    br
-    br
-    table(id="subnetsList")
-      thead
-        tr
-          th
-            label Subnets
-      tbody
-      
-    br
-    br
-    input(type="submit", id="startScan", value="Start Scanning", onclick="if(checkAtLeastOne()){ document.getElementById(\"startScan\").value='Scanning...'; document.getElementById(\"startScan\").setAttribute('disabled', 'true'); document.getElementById(\"submitInfo\").submit(); } else{return false;}")
+          td
+            input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interfaces", width=10, checked)
+            #{INTERFACES[i]}
+            
+  hidden(id="length", value=INTERFACES.length)
+  br
+  label Number of Haystack Nodes to create: 
+  input(type="number", name="numNodes", id="numNodes", width="4", min="1", max="511", onblur="checkIntMax(\"numNodes\")", value="1")
+  br
+  br
+  label(id="errorLabel", style="color:red;") 
+  br
+  br
+  p Below, you can add subnets of the given format to a list that will be scanned during the autoconfiguration process. Right now the input only recognizes strings of the format that is watermarked within the input box. To scan a specific host, put their IPv4 address in the input and append "/32" to the end. 
+  label Additional Subnets to scan:
+  input(type="text", id="subnetToAdd", width="20", onkeydown="if (event.keyCode == 13){ document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: XXX.XXX.XXX.XXX/##'; event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", value="Format: XXX.XXX.XXX.XXX/##") 
+  button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet
+  br
+  br
+  table(id="subnetsList")
+    thead
+      tr
+        th
+          label Subnets
+    tbody
+    
+  br
+  br
+  input(type="submit", id="startScan", value="Start Scanning", onclick="RunScan()")
+  
+  div(id="lightbox", class="white_content")
+    label(style="font-size: 1.2em;") Scan Commencing...
+    div(id='spinnerDiv', style="height: 30px; padding-botton: 30px;")
+    div(id='appendText', style="height: 60%; width: auto; overflow-y: scroll; overflow-x: hidden")
   

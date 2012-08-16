@@ -240,7 +240,6 @@ install-data:
 	#Copy the scripts and logs
 	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
 	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
-	cp -fup  Installer/Write/nova_mailer $(DESTDIR)/usr/bin
 	install Installer/nova_init $(DESTDIR)/usr/bin
 	#Install permissions
 	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440

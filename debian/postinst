@@ -38,19 +38,6 @@ service rsyslog restart
 #reload sysctl settings.
 sysctl -p /etc/sysctl.conf
 
-# Remove the Mail pipe if it already exists
-rm -f "$novaHomePath/NovaMailPipe"
-
-mkfifo "$novaHomePath/NovaMailPipe"
-
-#chown ${SUDO_USER} /usr/share/nova/NovaMailPipe
-
-echo "" > "$novaHomePath/emails"
-
-#chown ${SUDO_USER} /usr/share/nova/emails
-
-#bash `pwd`/NovaCron ${SUDO_USER} 
-
 chgrp -R nova $novaHomePath
 
 if [ -x /usr/bin/update-menus ] ; then update-menus ; fi

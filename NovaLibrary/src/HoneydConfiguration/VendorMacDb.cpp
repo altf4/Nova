@@ -215,7 +215,7 @@ uint VendorMacDb::AtoMACPrefix(string MAC)
 		{
 			return 0;
 		}
-		switch(i%3)
+		switch(i % 3)
 		{
 			case 0:
 			{

@@ -1,5 +1,8 @@
 
 script
+  var servicePrefs = '#{SERVICE_PREFERENCES}';
+  var loaded = false;
+  
   function changeDisabled()
   {
     if(document.getElementById("default").checked)
@@ -59,6 +62,245 @@ script
       document.getElementById("dif0").checked = true;
     }
   }
+
+  function setServicePreferences()
+  {
+    document.getElementById("sp").value = servicePrefs;
+  }
+  
+  function fillServicePrefDiv()
+  {
+    var arr = [];
+    arr = servicePrefs.split(':');
+    
+    var syslogLevel = arr[1][0];
+    var libnotifyLevel = arr[2][0];
+    var emailLevel = arr[3][0];
+    var sysMod = ((arr[1][1] == "-" || arr[1][1] == "+") ? arr[1][1] : "");
+    var notifyMod = ((arr[2][1] == "-" || arr[2][1] == "+") ? arr[2][1] : "");
+    var emailMod = ((arr[3][1] == "-" || arr[3][1] == "+") ? arr[3][1] : "");
+    
+    var syslogSection = document.createElement("div");
+    syslogSection.id = "syslogDiv";
+    
+    var syslogLabel = document.createElement("label");
+    syslogLabel.value = "Syslog";
+    syslogLabel.innerHTML = "Syslog at";
+    
+    var syslogLevelSelect = document.createElement("select");
+    syslogLevelSelect.id = "syslogLevelSelect";
+    syslogLevelSelect.setAttribute('onchange', 'onValueChange()');
+    
+    var syslogModSelect = document.createElement("select");
+    syslogModSelect.id = 'syslogModSelect';
+    syslogModSelect.setAttribute('onchange', 'onValueChange()');
+    
+    var options = ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL", "ALERT", "EMERGENCY"];
+    var mods = ["", "+", "-"];
+    
+    for(var i = 0; i < options.length; i++)
+    {
+      var option = document.createElement("option");
+      option.value = i;
+      option.id = options[i];
+      option.innerHTML = options[i];
+      
+      if(i == syslogLevel)
+      {
+        option.selected = true;
+      }
+      
+      syslogLevelSelect.appendChild(option);
+    }
+    
+    for(var i = 0; i < mods.length; i++)
+    {
+      var option = document.createElement("option");
+      option.value = mods[i];
+      option.id = mods[i];
+      
+      switch(mods[i])
+      {
+        case '': option.innerHTML = "only";
+                 option.id = "NA";
+                 break;
+        case '+': option.innerHTML = "or higher";
+                  break;
+        case '-': option.innerHTML = "or lower";
+                  break;
+      }
+      
+      if(mods[i] == sysMod)
+      {
+        option.selected = true;
+      }
+      
+      syslogModSelect.appendChild(option);
+    }
+    
+    syslogSection.appendChild(syslogLabel);
+    syslogSection.appendChild(syslogLevelSelect);
+    syslogSection.appendChild(syslogModSelect);
+    
+    var notifySection = document.createElement("div");
+    notifySection.id = "notifyDiv";
+    
+    var notifyLabel = document.createElement("label");
+    notifyLabel.value = "notify";
+    notifyLabel.innerHTML = "Libnotify at";
+    
+    var notifyLevelSelect = document.createElement("select");
+    notifyLevelSelect.id = "notifyLevelSelect";
+    notifyLevelSelect.setAttribute('onchange', 'onValueChange()');
+    
+    var notifyModSelect = document.createElement("select");
+    notifyModSelect.id = 'notifyModSelect';
+    notifyModSelect.setAttribute('onchange', 'onValueChange()');
+    
+    for(var i = 0; i < options.length; i++)
+    {
+      var option = document.createElement("option");
+      option.value = i;
+      option.id = options[i];
+      option.innerHTML = options[i];
+      
+      if(i == libnotifyLevel)
+      {
+        option.selected = true;
+      }
+      
+     notifyLevelSelect.appendChild(option);
+    }
+    
+    for(var i = 0; i < mods.length; i++)
+    {
+      var option = document.createElement("option");
+      option.value = mods[i];
+      option.id = mods[i];
+      
+      switch(mods[i])
+      {
+        case '': option.innerHTML = "only";
+                 option.id = "NA";
+                 break;
+        case '+': option.innerHTML = "or higher";
+                  break;
+        case '-': option.innerHTML = "or lower";
+                  break;
+      }
+      
+      if(mods[i] == notifyMod)
+      {
+        option.selected = true;
+      }
+      
+      notifyModSelect.appendChild(option);
+    }
+    
+    notifySection.appendChild(notifyLabel);
+    notifySection.appendChild(notifyLevelSelect);
+    notifySection.appendChild(notifyModSelect);
+    
+    var emailSection = document.createElement("div");
+    emailSection.id = "emailDiv";
+    
+    var emailLabel = document.createElement("label");
+    emailLabel.value = "email";
+    emailLabel.innerHTML = "Email alerts at";
+    
+    var emailLevelSelect = document.createElement("select");
+    emailLevelSelect.id = "emailLevelSelect";
+    emailLevelSelect.setAttribute('onchange', 'onValueChange()');
+    
+    var emailModSelect = document.createElement("select");
+    emailModSelect.id = 'emailModSelect';
+    emailModSelect.setAttribute('onchange', 'onValueChange()');
+    
+    for(var i = 0; i < options.length; i++)
+    {
+      var option = document.createElement("option");
+      option.value = i;
+      option.id = options[i];
+      option.innerHTML = options[i];
+      
+      if(i == emailLevel)
+      {
+        option.selected = true;
+      }
+      
+     emailLevelSelect.appendChild(option);
+    }
+    
+    for(var i = 0; i < mods.length; i++)
+    {
+      var option = document.createElement("option");
+      option.value = mods[i];
+      option.id = mods[i];
+      
+      switch(mods[i])
+      {
+        case '': option.innerHTML = "only";
+                 option.id = "NA";
+                 break;
+        case '+': option.innerHTML = "or higher";
+                  break;
+        case '-': option.innerHTML = "or lower";
+                  break;
+      }
+      
+      if(mods[i] == emailMod)
+      {
+        option.selected = true;
+      }
+      
+      emailModSelect.appendChild(option);
+    }
+    
+    emailSection.appendChild(emailLabel);
+    emailSection.appendChild(emailLevelSelect);
+    emailSection.appendChild(emailModSelect);
+    
+    document.getElementById("servicePrefs").appendChild(syslogSection);
+    document.getElementById("servicePrefs").appendChild(notifySection);
+    document.getElementById("servicePrefs").appendChild(emailSection);
+  }
+  
+  function onValueChange()
+  {
+    var newServicePrefString = "0:";
+    newServicePrefString += document.getElementById("syslogLevelSelect").value;
+    var checkSysMod = document.getElementById("syslogModSelect").value;
+    newServicePrefString += (checkSysMod != "NA" ? checkSysMod : "");
+    newServicePrefString += ";1:";
+    newServicePrefString += document.getElementById("notifyLevelSelect").value;
+    var checkNotifyMod = document.getElementById("notifyModSelect").value;
+    newServicePrefString += (checkNotifyMod != "NA" ? checkNotifyMod : "");
+    newServicePrefString += ";2:";
+    newServicePrefString += document.getElementById("emailLevelSelect").value;
+    var checkEmailMod = document.getElementById("emailModSelect").value;
+    newServicePrefString += (checkEmailMod != "NA" ? checkEmailMod : "");
+    newServicePrefString += ";";
+    servicePrefs = newServicePrefString;
+    setServicePreferences();
+  }
+  
+  now.ready(function()
+  {
+    if(loaded)
+    {
+      return;
+    }
+    else
+    {
+      loaded = true;
+    }
+    
+    if(document.getElementById("sp") !== undefined)
+    {
+      setServicePreferences();
+      fillServicePrefDiv();
+    }
+  });
 
 h2 Basic Configuration
     
@@ -161,6 +403,11 @@ br
 label Email Recipients
 input(name="RECIPIENTS",  value=RECIPIENTS)
   br
+br
+
+h2 Logger Settings
+div(id="servicePrefs")
+  input(id="sp", name="SERVICE_PREFERENCES", value="", readonly=true, type="hidden")
 br
 
 
