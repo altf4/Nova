@@ -180,20 +180,45 @@ public:
     // *Note: Used by auto configuration? may not be needed.
     bool CheckNotInheritingEmptyProfile(std::string parentName);
 
-    //***************** TO HERE *****************//
-
+    //This function allows easy access to all auto-generated nodes.
+    // Returns a vector of node names for each node on a generated profile.
 	std::vector<std::string> GetGeneratedNodeNames();
 
+	//This function allows access to NodeProfile objects by their name
+	// profileName: the name or key of the NodeProfile
+	// Returns a pointer to the NodeProfile object or NULL if the key doesn't
 	NodeProfile *GetProfile(std::string profileName);
+
+	//This function allows access to Port objects by their name
+	// portName: the name or key of the Port
+	// Returns a pointer to the Port object or NULL if the key doesn't exist
 	Port *GetPort(std::string portName);
 
+	//This function allows the caller to find out if the given MAC string is taken by a node
+	// mac: the string representation of the MAC address
+	// Returns true if the MAC is in use and false if it is not.
+	// *Note this function may have poor performance when there are a large number of nodes
 	bool IsMACUsed(std::string mac);
+
+	//This function allows the caller to find out if the given IP string is taken by a node
+	// ip: the string representation of the IP address
+	// Returns true if the IP is in use and false if it is not.
+	// *Note this function may have poor performance when there are a large number of nodes
 	bool IsIPUsed(std::string ip);
+
+	//This function allows the caller to find out if the given profile is being used by a node
+	// profileName: the name or key of the profile
+	// Returns true if the profile is in use and false if it is not.
+	// *Note this function may have poor performance when there are a large number of nodes
+	// TODO - change this to check the m_nodeKeys vector in the NodeProfile objects to avoid table iteration
 	bool IsProfileUsed(std::string profileName);
 
-	// Regenerates the MAC addresses for nodes of this profile
-	void UpdateMacAddressesOfProfileNodes(std::string profileName);
+	//This function generates a MAC address that is currently not in use by any other node
+	// vendor: string name of the MAC vendor from which to choose a MAC range from
+	// Returns a string representation of MAC address or an empty string if the vendor is not valid
 	std::string GenerateUniqueMACAddress(std::string vendor);
+
+    //***************** TO HERE *****************//
 
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
