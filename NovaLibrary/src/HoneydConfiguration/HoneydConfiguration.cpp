@@ -1133,6 +1133,115 @@ bool HoneydConfiguration::CheckNotInheritingEmptyProfile(string targetProfileKey
 	}
 }
 
+//This function allows easy access to all auto-generated nodes.
+// Returns a vector of node names for each node on a generated profile.
+vector<string> HoneydConfiguration::GetGeneratedNodeNames()//XXX Needed?
+{
+	vector<string> childnodes;
+	Config::Inst()->SetGroup("HaystackAutoConfig");
+	LoadNodesTemplate();
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(m_profiles[it->second.m_pfile].m_generated)
+		{
+			childnodes.push_back(it->second.m_name);
+		}
+	}
+	return childnodes;
+}
+
+//This function allows access to NodeProfile objects by their name
+// profileName: the name or key of the NodeProfile
+// Returns a pointer to the NodeProfile object or NULL if the key doesn't exist
+NodeProfile *HoneydConfiguration::GetProfile(string profileName)
+{
+	if(m_profiles.keyExists(profileName))
+	{
+		return &m_profiles[profileName];
+	}
+	return NULL;
+}
+
+//This function allows access to Port objects by their name
+// portName: the name or key of the Port
+// Returns a pointer to the Port object or NULL if the key doesn't exist
+Port *HoneydConfiguration::GetPort(string portName)
+{
+	if(m_ports.keyExists(portName))
+	{
+		return &m_ports[portName];
+	}
+	return NULL;
+}
+
+//This function allows the caller to find out if the given MAC string is taken by a node
+// mac: the string representation of the MAC address
+// Returns true if the MAC is in use and false if it is not.
+// *Note this function may have poor performance when there are a large number of nodes
+bool HoneydConfiguration::IsMACUsed(string mac)
+{
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(!it->second.m_MAC.compare(mac))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+//This function allows the caller to find out if the given IP string is taken by a node
+// ip: the string representation of the IP address
+// Returns true if the IP is in use and false if it is not.
+// *Note this function may have poor performance when there are a large number of nodes
+bool HoneydConfiguration::IsIPUsed(string ip)
+{
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(!it->second.m_IP.compare(ip) && it->second.m_name.compare(ip))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+//This function allows the caller to find out if the given profile is being used by a node
+// profileName: the name or key of the profile
+// Returns true if the profile is in use and false if it is not.
+// *Note this function may have poor performance when there are a large number of nodes
+// TODO - change this to check the m_nodeKeys vector in the NodeProfile objects to avoid table iteration
+bool HoneydConfiguration::IsProfileUsed(string profileName)
+{
+	//Find out if any nodes use this profile
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		//if we find a node using this profile
+		if(!it->second.m_pfile.compare(profileName))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+//This function generates a MAC address that is currently not in use by any other node
+// vendor: string name of the MAC vendor from which to choose a MAC range from
+// Returns a string representation of MAC address or an empty string if the vendor is not valid
+string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
+{
+	if(!m_macAddresses.IsVendorValid(vendor))
+	{
+		LOG(ERROR, "Unable to generate MAC address because vendor '" + vendor + "' is not a valid key.", "");
+		return "";
+	}
+	string macAddress = m_macAddresses.GenerateRandomMAC(vendor);
+	while(IsMACUsed(macAddress))
+	{
+		macAddress = m_macAddresses.GenerateRandomMAC(vendor);
+	}
+	return macAddress;
+}
 
 //This is used when a profile is cloned, it allows us to copy a ptree and extract all children from it
 // it is exactly the same as novagui's xml extraction functions except that it gets the ptree from the
@@ -2078,93 +2187,6 @@ string HoneydConfiguration::FindSubnet(in_addr_t ip)
 	return subnet;
 }
 
-NodeProfile *HoneydConfiguration::GetProfile(string profileName)
-{
-	if(m_profiles.keyExists(profileName))
-	{
-		return &m_profiles[profileName];
-	}
-	return NULL;
-}
-
-Port *HoneydConfiguration::GetPort(string portName)
-{
-	if(m_ports.keyExists(portName))
-	{
-		return &m_ports[portName];
-	}
-	return NULL;
-}
-
-
-vector<string> HoneydConfiguration::GetGeneratedNodeNames()//XXX Needed?
-{
-	vector<string> childnodes;
-	Config::Inst()->SetGroup("HaystackAutoConfig");
-	LoadNodesTemplate();
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		if(m_profiles[it->second.m_pfile].m_generated)
-		{
-			childnodes.push_back(it->second.m_name);
-		}
-	}
-	return childnodes;
-}
-
-bool HoneydConfiguration::IsMACUsed(string mac)
-{
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		if(!it->second.m_MAC.compare(mac))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool HoneydConfiguration::IsIPUsed(string ip)
-{
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		if(!it->second.m_IP.compare(ip) && it->second.m_name.compare(ip))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool HoneydConfiguration::IsProfileUsed(string profileName)
-{
-	//Find out if any nodes use this profile
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		//if we find a node using this profile
-		if(!it->second.m_pfile.compare(profileName))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-void HoneydConfiguration::UpdateMacAddressesOfProfileNodes(string profileName)
-{
-	//XXX
-}
-
-string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
-{
-	string addrStrm;
-	do
-	{
-		addrStrm = m_macAddresses.GenerateRandomMAC(vendor);
-	}while(IsMACUsed(addrStrm));
-
-	return addrStrm;
-}
 //Inserts the profile into the honeyd configuration
 //	profile: pointer to the profile you wish to add
 //	Returns (true) if the profile could be created, (false) if it cannot.
