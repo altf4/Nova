@@ -5,7 +5,7 @@ cd /usr/share/nova/NovaWeb
 
 if (($# == 1)); then
 	echo "$#"
-	if [[ "$1" == "-debug" ]]; then
+	if [[ "$1" == "--debug" ]] || [[ "$1" == "-d" ]]; then
 		echo "Debug mode: Running novaweb without forever"
 		NODE_PATH="/usr/share/nova/NovaWeb/build/Release:/usr/share/nova/NovaWeb/NodeNovaConfig/build/Release" node /usr/share/nova/NovaWeb/main.js
 		exit

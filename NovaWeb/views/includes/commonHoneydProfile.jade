@@ -735,7 +735,7 @@ script
                                 var boxInput = document.createElement("input");
                                 boxInput.type = 'checkbox';
                                 boxInput.id = 'portInherited' + portUID;
-                                boxInput.onchange = 'portInheritedChange(' + portUID + ')'; 
+                                boxInput.setAttribute('onchange', 'portInheritedChange(' + portUID + ')'); 
                                 boxInput.checked = true;
                                 boxContainer.appendChild(boxInput);
                                 row.appendChild(boxContainer);
@@ -880,7 +880,7 @@ script
                                 //row += "<td><button type='button' disabled = 'true'/> Inherited </td>";
                                 var buttonContainer = document.createElement("td");
                                 var inheritedDisabled = document.createElement("button");
-                                inheritedDisabled.type = 'button';
+                                inheritedDisabled.setAttribute('type','button');
                                 inheritedDisabled.disabled = true;
                                 inheritedDisabled.innerHTML = 'Inherited';
                                 buttonContainer.appendChild(inheritedDisabled);
@@ -891,8 +891,8 @@ script
                                 //row += "<td><button type='button' onClick='deletePort(" + portUID + ")'/> Delete </td>";
                                 var buttonContainer = document.createElement("td");
                                 var deleteButton = document.createElement("button");
-                                deleteButton.type = 'button';
-                                deleteButton.onclick = 'deletePort(' + portUID + ')';
+                                deleteButton.setAttribute('type', 'button');
+                                deleteButton.setAttribute('onclick', 'deletePort(' + portUID + ')');
                                 deleteButton.innerHTML = 'Delete';
                                 buttonContainer.appendChild(deleteButton);
                                 row.appendChild(buttonContainer);
@@ -1028,6 +1028,7 @@ script
                         {
                                 dijit.byId("ethernet").setDisabled(true);
                                 dojo.byId("ethSelectButton").disabled = true;
+                                clearCreated();
                                 numCreated = 0;
 
                                 try
@@ -1466,6 +1467,10 @@ script
                                 else 
                                 {
                                         dojo.byId("name").value = profile.name;
+                                        if(profile.name == "default")
+                                        {
+                                          dojo.byId("name").readonly = true;
+                                        }
                                         dojo.byId("parentName").value = profile.parentProfile;
                                         dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
                                         dojo.byId("inheritEthernet").checked = profile.isEthernetInherited;

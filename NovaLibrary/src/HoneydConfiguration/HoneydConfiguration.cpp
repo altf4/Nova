@@ -938,19 +938,22 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 
 	//Choose most highly distributed mac vendor or RANDOM
 	uint max = 0;
-	string macVendor = "RANDOM";
+	string macAddressPass = "RANDOM";
+	string macVendor = "";
 	for(unsigned int i = 0; i < profPtr->m_ethernetVendors.size(); i++)
 	{
 		if(profPtr->m_ethernetVendors[i].second > max)
 		{
 			max = profPtr->m_ethernetVendors[i].second;
 			macVendor = profPtr->m_ethernetVendors[i].first;
+			macAddressPass = m_macAddresses.GenerateRandomMAC(macVendor);
 		}
 	}
 	if(macVendor.compare("RANDOM") && !m_macAddresses.IsVendorValid(macVendor))
 	{
 		LOG(WARNING, "Unable to resolve profile MAC vendor '" + macVendor + "', using RANDOM instead.", "");
 		macVendor = "RANDOM";
+		macAddressPass = "RANDOM";
 	}
 
 	//Add nodes in the DHCP case
@@ -958,7 +961,7 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 	{
 		for(int i = 0; i < numberOfNodes; i++)
 		{
-			if(!AddNewNode(profileName, ipAddress, macVendor, interface, subnet))
+			if(!AddNewNode(profileName, ipAddress, macAddressPass, interface, subnet))
 			{
 				LOG(ERROR, "Adding new nodes failed during node creation!", "");
 				return false;
@@ -982,7 +985,7 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 	for(int i = 0; i < numberOfNodes; i++)
 	{
 		currentAddr.s_addr = htonl(sAddr);
-		if(!AddNewNode(profileName, string(inet_ntoa(currentAddr)), macVendor, interface, subnet))
+		if(!AddNewNode(profileName, string(inet_ntoa(currentAddr)), macAddressPass, interface, subnet))
 		{
 			LOG(ERROR, "Adding new nodes failed during node creation!", "");
 			return false;
@@ -2359,23 +2362,42 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 		LOG(WARNING, "Unable to delete the Doppelganger node", "");
 		return false;
 	}
-	Node *nodePtr = &m_nodes[nodeName];
+
 	// Make sure the node exists
+	Node *nodePtr = NULL;
+	try
+	{
+		nodePtr = &m_nodes[nodeName];
+	}
+	catch(hashMapException &e)
+	{
+		LOG(WARNING, "Unable to locate expected node '" + nodeName + "'.","");
+		return false;
+	}
 	if(nodePtr == NULL)
 	{
-		LOG(ERROR, "Unable to locate expected node '" + nodeName + "'.","");
+		LOG(WARNING, "Unable to locate expected node '" + nodeName + "'.","");
 		return false;
 	}
 
-	//Update the Subnet
-	Subnet *subPtr = &m_subnets[nodePtr->m_sub];
 	// Make sure the subnet exists
+	Subnet *subPtr = NULL;
+	try
+	{
+		subPtr = &m_subnets[nodePtr->m_sub];
+	}
+	catch(hashMapException &e)
+	{
+		LOG(ERROR, "Unable to locate expected subnet '" + nodePtr->m_sub + "'.","");
+		return false;
+	}
 	if(subPtr == NULL)
 	{
 		LOG(ERROR, "Unable to locate expected subnet '" +nodePtr->m_sub + "'.","");
 		return false;
 	}
 
+	//Update the Subnet
 	for(uint i = 0; i < subPtr->m_nodes.size(); i++)
 	{
 		if(!subPtr->m_nodes[i].compare(nodeName))
@@ -2384,13 +2406,23 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 		}
 	}
 
-	NodeProfile *profPtr = &m_profiles[nodePtr->m_pfile];
 	// Make sure the profile exists
+	NodeProfile *profPtr = NULL;
+	try
+	{
+		profPtr = &m_profiles[nodePtr->m_pfile];
+	}
+	catch(hashMapException &e)
+	{
+		LOG(ERROR, "Unable to locate expected profile '" + nodePtr->m_pfile + "'.","");
+		return false;
+	}
 	if(profPtr == NULL)
 	{
 		LOG(ERROR, "Unable to locate expected profile '" + nodePtr->m_pfile + "'.","");
 		return false;
 	}
+
 	for(uint i = 0; i < profPtr->m_nodeKeys.size(); i++)
 	{
 		if(!profPtr->m_nodeKeys[i].compare(nodeName))

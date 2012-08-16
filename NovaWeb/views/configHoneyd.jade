@@ -32,9 +32,7 @@ block headerAdditions
 
     function errorMessageCallback(success, message) {
       if(success != true) {
-        var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
-        dialog.show();
-        return;
+        alert("Unable to complete operation due to error: " + message);
       }
       location.reload(true);
     }
