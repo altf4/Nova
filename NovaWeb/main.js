@@ -229,7 +229,8 @@ app.get('/viewNovadLog', passport.authenticate('basic', { session: false }), fun
 		  html += '<P style="' + styleString + '">' + line + "<P>";
 		
 		}
-		res.send(html);
+
+		res.render('viewLog.jade', { locals: { log: html}});
 	  }
 	});
 });
