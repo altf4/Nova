@@ -50,6 +50,20 @@ inline std::string ConvertInt(int x)
 	ss << x;
 	return ss.str();
 }
+
+inline std::string GetEnvVariable( const std::string & var ) {
+     const char * val = ::getenv( var.c_str() );
+     if ( val == 0 )
+     {
+         return "";
+     }
+     else
+     {
+         return val;
+     }
+}
+
+
 //Replaces all instances of the search character in the addressed string with the character specified
 //	str: the string to modify
 //	searchChar: the character to replace

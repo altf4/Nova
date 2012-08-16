@@ -50,8 +50,6 @@
 //From the Local Traffic Monitor
 #define FROM_LTM false
 
-#define PATHS_FILE "/etc/nova/paths"
-
 /// Simple define for the ORing of these two integer values. Used for syslog.
 #define SYSL_ERR (LOG_ERR | LOG_AUTHPRIV)
 #define SYSL_INFO (LOG_INFO | LOG_AUTHPRIV)

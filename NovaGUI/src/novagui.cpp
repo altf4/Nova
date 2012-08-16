@@ -42,7 +42,6 @@ using namespace std;
 using namespace Nova;
 
 pthread_mutex_t suspectTableLock;
-string homePath, readPath, writePath;
 
 bool connectedToNovad = false;
 
@@ -87,7 +86,6 @@ NovaGUI::NovaGUI(QWidget *parent)
 
 
 	m_editingSuspectList = false;
-	m_pathsFile = (char*)"/etc/nova/paths";
 
 	ui.setupUi(this);
 
@@ -284,16 +282,7 @@ void NovaGUI::InitConfiguration()
 
 void NovaGUI::InitPaths()
 {
-	homePath = Config::Inst()->GetPathHome();
-	readPath = Config::Inst()->GetPathReadFolder();
-	writePath = Config::Inst()->GetPathWriteFolder();
-
-	if((homePath == "") || (readPath == "") || (writePath == ""))
-	{
-		::exit(EXIT_FAILURE);
-	}
-
-	QDir::setCurrent((QString)homePath.c_str());
+	QDir::setCurrent(QString::fromStdString(Config::Inst()->GetPathHome()));
 }
 
 void NovaGUI::SystemStatusRefresh()
@@ -303,9 +292,8 @@ void NovaGUI::SystemStatusRefresh()
 
 void NovaGUI::InitiateSystemStatus()
 {
-	// Pull in the icons now that homePath is set
-	string greenPath = "/usr/share/nova/icons/greendot.png";
-	string redPath = "/usr/share/nova/icons/reddot.png";
+	string greenPath = Config::Inst()->GetPathHome() + "/../icons/greendot.png";
+	string redPath = Config::Inst()->GetPathHome() + "/../icons/reddot.png";
 
 	m_greenIcon = new QIcon(QPixmap(QString::fromStdString(greenPath)));
 	m_redIcon = new QIcon(QPixmap(QString::fromStdString(redPath)));
@@ -895,7 +883,7 @@ void NovaGUI::on_actionStopNova_triggered()
 
 void NovaGUI::on_actionConfigure_triggered()
 {
-	NovaConfig *w = new NovaConfig(this, homePath);
+	NovaConfig *w = new NovaConfig(this);
 	w->setWindowModality(Qt::WindowModal);
 	w->show();
 }

@@ -3,7 +3,8 @@
 set -e
 
 honeydPath="/usr/bin/honeyd"
-novaPath="/usr/bin/novad"
+novaPath="$DESTDIR/usr/bin/novad"
+novaHomePath="$DESTDIR/usr/share/nova"
 
 
 if [ ! -f $honeydPath ]
@@ -38,18 +39,18 @@ service rsyslog restart
 sysctl -p /etc/sysctl.conf
 
 # Remove the Mail pipe if it already exists
-rm -f /usr/share/nova/NovaMailPipe
+rm -f "$novaHomePath/NovaMailPipe"
 
-mkfifo /usr/share/nova/NovaMailPipe
+mkfifo "$novaHomePath/NovaMailPipe"
 
 #chown ${SUDO_USER} /usr/share/nova/NovaMailPipe
 
-echo "" >/usr/share/nova/emails
+echo "" > "$novaHomePath/emails"
 
 #chown ${SUDO_USER} /usr/share/nova/emails
 
 #bash `pwd`/NovaCron ${SUDO_USER} 
 
-chgrp -R nova /usr/share/nova
+chgrp -R nova $novaHomePath
 
 if [ -x /usr/bin/update-menus ] ; then update-menus ; fi
