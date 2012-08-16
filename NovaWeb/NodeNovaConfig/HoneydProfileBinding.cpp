@@ -184,14 +184,17 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 		}
 		
 		conf->UpdateProfile("default");
-		
-		if(!conf->RenameProfile(oldName, newProfile->m_pfile->m_name))
-		{
-			std::cout << "Couldn't rename profile " << oldName << " to " << newProfile->m_pfile->m_name << std::endl;
+	
+		if (oldName != newProfile->m_pfile->m_name) {
+			if(!conf->RenameProfile(oldName, newProfile->m_pfile->m_name))
+			{
+				std::cout << "Couldn't rename profile " << oldName << " to " << newProfile->m_pfile->m_name << std::endl;
+			}
 		}
 	}
 	
 	conf->SaveAllTemplates();
+	conf->WriteHoneydConfiguration();
 
 	delete conf;
 	

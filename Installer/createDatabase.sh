@@ -37,17 +37,19 @@ CREATE TABLE statistics (
 		haystack_percent_contacted DOUBLE
 );"
 
+dbFilePath="$DESTDIR/usr/share/nova/database.db"
+
 if [[ $1 == "reset" ]]; then
 	echo "You chose the reset option. This will clear all database data!"
-	rm -fr /usr/share/nova/database.db
+	rm -fr $dbFilePath
 fi
 
 
 
-sqlite3 "/usr/share/nova/database.db" <<< $QUERY
+sqlite3 $dbFilePath <<< $QUERY
 #sqlite3 "/usr/share/nova/database.db" <<< "INSERT INTO credentials VALUES('nova', '\$4\$nova\$h36yyW3noGPSWnx5JCalQCPoo74\$');"
 
-chgrp nova /usr/share/nova/database.db
-chmod g+rw /usr/share/nova/database.db
+chgrp nova $dbFilePath
+chmod g+rw $dbFilePath
 
 echo "SQL schema has been set up for nova."

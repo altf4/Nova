@@ -197,8 +197,6 @@ public:
     void SetSMTPEmailRecipients(std::string SMTPEmailRecipients);
 
     // Getters for the paths stored in /etc
-    std::string GetPathBinaries();
-    std::string GetPathWriteFolder();
     std::string GetPathReadFolder();
     std::string GetPathHome();
     std::string GetPathIcon();
@@ -292,6 +290,8 @@ private:
 
 	version m_version;
 
+	static std::string m_pathsFile;
+
 	// the SMTP server domain name for display purposes
 	std::string m_SMTPDomain;
 	// the email address that will be set as sender
@@ -325,8 +325,6 @@ private:
 	std::string m_userConfigFilePath;
 
 	// Options from the PATHS file (currently /etc/nova/paths)
-	std::string m_pathBinaries;
-	std::string m_pathWriteFolder;
 	std::string m_pathReadFolder;
 	std::string m_pathHome;
 	std::string m_pathIcon;
@@ -335,6 +333,8 @@ private:
 
 	char m_haystackStorage;
 	std::string m_userPath;
+
+	static std::string m_pathPrefix;
 
 	pthread_rwlock_t m_lock;
 
