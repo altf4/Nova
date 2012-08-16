@@ -85,7 +85,7 @@ block content
           label Default TCP Action
         td
           select(id='tcpAction')
-            option Reset: Respond with RST
+            option Closed: Respond with RST
             option Filter: Drop packet and do not respond
             option Open: Respond with SYN/ACK
 
@@ -99,7 +99,7 @@ block content
           label Default UDP Action
         td
           select(id='udpAction')
-            option Reset: Respond with ICMP Port Error
+            option Closed: Respond with ICMP Port Error
             option Filter: Drop packet and do not respond
             option Open: Do nothing
 
