@@ -270,7 +270,6 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 					// <addr> tag
 					if(localMachine.compare(value.second.get<string>("<xmlattr>.addr")))
 					{
-						cout << "address " << value.second.get<string>("<xmlattr>.addr") << endl;
 						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 					}
 					// If, however, we're parsing ourself, we need to do some extra work.
@@ -284,12 +283,13 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 
 						string vendorString = "";
+						string macString = "";
 
 						int s;
 						struct ifreq buffer;
 						vector<string> interfacesFromConfig = Config::Inst()->ListInterfaces();
 
-						for(uint j = 0; j < interfacesFromConfig.size() && !vendorString.empty(); j++)
+						for(uint j = 0; j < interfacesFromConfig.size() && macString.empty(); j++)
 						{
 							s = socket(PF_INET, SOCK_DGRAM, 0);
 
@@ -301,25 +301,34 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 							char macPair[3];
 
 							stringstream ss;
+							string zeroCheck;
 
 							for(s = 0; s < 6; s++)
 							{
 								sprintf(macPair, "%2x", (unsigned char)buffer.ifr_hwaddr.sa_data[s]);
-								cout << "macPair from " << s << " is " << macPair << endl;
-								ss << macPair;
+								zeroCheck = string(macPair);
+
+								zeroCheck = boost::trim_left_copy(zeroCheck);
+								zeroCheck = boost::trim_right_copy(zeroCheck);
+
+								if(!zeroCheck.compare("0"))
+								{
+									ss << zeroCheck << "0";
+								}
+								else
+								{
+									ss << macPair;
+								}
 								if(s != 5)
 								{
 									ss << ":";
 								}
-								cout << "ss now has " << ss.str() << endl;
 							}
+
+							macString = ss.str();
+							ss.str("");
 						}
 
-						ifstream ifs("/sys/class/net/eth0/address");
-						char macBuffer[18];
-						ifs.getline(macBuffer, 18);
-
-						string macString = string(macBuffer);
 						persObject->m_macs.push_back(macString);
 
 						VendorMacDb *macVendorDB = new VendorMacDb();
