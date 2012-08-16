@@ -938,19 +938,22 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 
 	//Choose most highly distributed mac vendor or RANDOM
 	uint max = 0;
-	string macVendor = "RANDOM";
+	string macAddressPass = "RANDOM";
+	string macVendor = "";
 	for(unsigned int i = 0; i < profPtr->m_ethernetVendors.size(); i++)
 	{
 		if(profPtr->m_ethernetVendors[i].second > max)
 		{
 			max = profPtr->m_ethernetVendors[i].second;
 			macVendor = profPtr->m_ethernetVendors[i].first;
+			macAddressPass = m_macAddresses.GenerateRandomMAC(macVendor);
 		}
 	}
 	if(macVendor.compare("RANDOM") && !m_macAddresses.IsVendorValid(macVendor))
 	{
 		LOG(WARNING, "Unable to resolve profile MAC vendor '" + macVendor + "', using RANDOM instead.", "");
 		macVendor = "RANDOM";
+		macAddressPass = "RANDOM";
 	}
 
 	//Add nodes in the DHCP case
@@ -958,7 +961,7 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 	{
 		for(int i = 0; i < numberOfNodes; i++)
 		{
-			if(!AddNewNode(profileName, ipAddress, macVendor, interface, subnet))
+			if(!AddNewNode(profileName, ipAddress, macAddressPass, interface, subnet))
 			{
 				LOG(ERROR, "Adding new nodes failed during node creation!", "");
 				return false;
@@ -982,7 +985,7 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 	for(int i = 0; i < numberOfNodes; i++)
 	{
 		currentAddr.s_addr = htonl(sAddr);
-		if(!AddNewNode(profileName, string(inet_ntoa(currentAddr)), macVendor, interface, subnet))
+		if(!AddNewNode(profileName, string(inet_ntoa(currentAddr)), macAddressPass, interface, subnet))
 		{
 			LOG(ERROR, "Adding new nodes failed during node creation!", "");
 			return false;
