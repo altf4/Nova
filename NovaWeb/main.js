@@ -33,6 +33,7 @@ var Validator = require('validator').Validator;
 
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
+var novadLogPath = NovaHomePath + "/../Logs/Nova.log";
 var novadLog = new Tail(NovaHomePath + "/../Nova.log");
 
 var HashPassword = function(password) {
@@ -164,7 +165,6 @@ var everyone = nowjs.initialize(app);
 
 
 var initLogWatch = function () {
-var novadLogPath = NovaHomePath + "/../Logs/Nova.log";
 var novadLog = new Tail(novadLogPath);
 novadLog.on("line", function(data) {
 	try {
