@@ -1316,6 +1316,7 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
         console.log("Got profile " + profile.name + "_" + profile.personality);
         console.log("Got portlist " + ports.name);
         console.log("Got ethVendorList " + ethVendorList);
+        console.log("addOrEdit is " + addOrEdit);
 
         // Move the Javascript object values to the C++ object
         honeydProfile.SetName(profile.name);
@@ -1386,6 +1387,15 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 	}
 
 	honeydConfig.SaveAll();
+
+  if(addOrEdit == "true")
+  {
+    addOrEdit = true;
+  }
+  else
+  {
+    addOrEdit = false;
+  }
 
 	// Save the profile
 	honeydProfile.Save(profile.oldName, addOrEdit);
