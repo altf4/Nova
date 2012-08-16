@@ -49,11 +49,8 @@ html(lang="en")
       div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: true")
         block buttonPannelAdditions
       
-        a(class="button", href='/about') About Nova
-        br
-        br
-        
-        
+       
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Status
         a(class="button", href='/events') Hostile Events
         br
         a(class="button", href='/suspects?type=all') Classified Suspects
@@ -65,13 +62,15 @@ html(lang="en")
         a(class="button", href= "/haystackStatus") Haystack Details
         br
         br
-        
-       
 
+        
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Logs
         a(class="button", href= "/novadlog") Nova Log
         br
         br
-
+        
+       
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Configuration
         a(class="button", href= "basicOptions") Basic Options
         br
         
@@ -79,13 +78,13 @@ html(lang="en")
         br
         br
        
-        a(class="button", href= "configHoneydProfiles") Honeyd Profiles
+        a(class="button", href= "configHoneydProfiles") Haystack Profiles
+        br
+         
+        a(class="button", href= "configHoneydNodes") Haystack Nodes
         br
         
-        a(class="button", href= "autoConfig") Honeyd Autoconfiguration
-        br
-        
-        a(class="button", href= "configHoneydNodes") Honeyd Nodes
+        a(class="button", href= "autoConfig") Haystack Autoconfiguration
         br
         
         a(class="button", href= "configWhitelist") IP Whitelist
@@ -93,6 +92,7 @@ html(lang="en")
         br
         
         
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Training
         a(class="button", href= "/captureTrainingData") Capture Training Data
         br
         
@@ -100,11 +100,19 @@ html(lang="en")
         br
         br
         
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Users
         a(class="button", href= "createNewUser") New User
         br 
         
         a(class="button", href= "editUsers") Edit Users
         br
+        br
+        
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Documentation
+        a(class="button", href='/about') About Nova
+        br
+        br
+        
         
         //a(class="button", href= "logout") Log Out
         //br
