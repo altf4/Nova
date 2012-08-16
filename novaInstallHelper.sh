@@ -2,7 +2,7 @@
 
 mkdir -p ~/Code
 
-apt-get install libann-dev libpcap0.8-dev build-essential g++ git libqt4-dev libsparsehash-dev libghc6-zlib-dev libapr1-dev libaprutil1-dev libcap2-bin libboost-serialization-dev libnotify-dev mysql-server libcurl3 libcurl4-gnutls-dev unzip iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
+apt-get install git build-essential libann-dev libpcap0.8-dev libsparsehash-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake
 
 cd ~/Code
 git clone git://github.com/DataSoft/Honeyd.git
@@ -16,8 +16,8 @@ make
 make install
 
 cd ~/Code/Nova
+git checkout -f integration
 make
-make install
 
 cd ~/Code/Nova/NovaWeb
 bash getDependencies.sh
@@ -25,7 +25,7 @@ npm install -g forever
 
 cd ~/Code/Nova
 make web
-make install-web
+make install
 
 bash ~/Code/Nova/Installer/nova_init
 
