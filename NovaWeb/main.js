@@ -32,7 +32,9 @@ var nowjs = require("now");
 var Validator = require('validator').Validator;
 
 var Tail = require('tail').Tail;
-var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+var NovaHomePath = config.GetPathHome();
+var novadLogPath = NovaHomePath + "/../Logs/Nova.log";
+var novadLog = new Tail(NovaHomePath + "/../Nova.log");
 
 var HashPassword = function(password) {
 	var shasum = crypto.createHash('sha1');
@@ -44,7 +46,7 @@ console.log("Starting NOVAWEB version " + config.GetVersionString());
 
 
 // TODO: Get this path from the config class
-process.chdir("/usr/share/nova/nova");
+process.chdir(NovaHomePath);
 
 var DATABASE_HOST = config.ReadSetting("DATABASE_HOST");
 var DATABASE_USER = config.ReadSetting("DATABASE_USER");
@@ -58,7 +60,7 @@ var databaseOpenResult = function(err) {
 	}
 }
 
-var db = new sql.Database("/usr/share/nova/database.db", sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + "/../database.db", sql.OPEN_READWRITE, databaseOpenResult);
 
 
 
@@ -132,8 +134,8 @@ passport.use(new BasicStrategy(
 
 // Setup TLS
 var express_options = {
-key:  fs.readFileSync('/usr/share/nova/NovaWeb/serverkey.pem'),
-	  cert: fs.readFileSync('/usr/share/nova/NovaWeb/servercert.pem')
+key:  fs.readFileSync(NovaHomePath + '/../NovaWeb/serverkey.pem'),
+	  cert: fs.readFileSync(NovaHomePath + '/../NovaWeb/servercert.pem')
 };
 
 var app = express.createServer(express_options);
@@ -144,7 +146,7 @@ app.configure(function () {
 		app.use(express.cookieParser());
 		app.use(express.methodOverride());
 		app.use(app.router);
-		app.use(express.static('/usr/share/nova/NovaWeb/www'));
+		app.use(express.static(NovaHomePath + '/../NovaWeb/www'));
 });
 
 app.set('views', __dirname + '/views');
@@ -163,7 +165,7 @@ var everyone = nowjs.initialize(app);
 
 
 var initLogWatch = function () {
-var novadLog = new Tail("/usr/share/nova/Logs/Nova.log");
+var novadLog = new Tail(novadLogPath);
 novadLog.on("line", function(data) {
 	try {
 		everyone.now.newLogLine(data);
@@ -189,7 +191,7 @@ app.get('/downloadNovadLog.log', passport.authenticate('basic', { session: false
     // Hacky solution to make browsers launch a save as dialog
     res.header('Content-Type', 'application/novaLog');
 
-	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
+	fs.readFile(novadLogPath, 'utf8', function (err,data) {
 	  if (err) {
 		res.send(err);
 	  }
@@ -202,7 +204,7 @@ app.get('/downloadNovadLog.log', passport.authenticate('basic', { session: false
 });
 
 app.get('/viewNovadLog', passport.authenticate('basic', { session: false }), function (req, res) {
-	fs.readFile('/usr/share/nova/Logs/Nova.log', 'utf8', function (err,data) {
+	fs.readFile(novadLogPath, 'utf8', function (err,data) {
 	  if (err) {
 		res.send(err);
 	  }
@@ -493,7 +495,7 @@ app.get('/customizeTraining', passport.authenticate('basic', { session: false })
 
 app.get('/importCapture', passport.authenticate('basic', { session: false }), function(req, res) {
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = "/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump";
+	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/capture.dump";
 	var ips = trainingDb.GetCaptureIPs(trainingSession);
 
 	if (ips == undefined) {
@@ -521,7 +523,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', { session: false }
 	var descriptions = new Object();
 	
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = "/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump";
+	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/capture.dump";
 	
 	var trainingDump = new novaconfig.TrainingDumpBinding();
 	if (!trainingDump.LoadCaptureFile(trainingSession)) {
@@ -551,7 +553,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', { session: false }
   	}
 
 	// TODO: Don't hard code this path
-	if (!trainingDump.SaveToDb("/usr/share/nova/nova/Config/training.db")) {
+	if (!trainingDump.SaveToDb(NovaHomePath + "/Config/training.db")) {
 	  	res.render('error.jade', { locals: { redirectLink: "/", errorDetails: "Unable to save to training db"}});
 	}
 
@@ -1381,10 +1383,11 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
 			honeydProfile.AddPort(portName, ports[i].isInherited);
 		}
 	}
-	
+
+	honeydConfig.SaveAll();
+
 	// Save the profile
 	honeydProfile.Save(profile.oldName, addOrEdit);
-	honeydConfig.SaveAll();
 
 	callback();
 }
@@ -1400,7 +1403,7 @@ everyone.now.StartTrainingCapture = function (trainingSession, callback) {
 
 	// Check if training folder already exists
 	//console.log(Object.keys(fs));
-	path.exists("/usr/share/nova/nova/Data/" + trainingSession, function(exists) {
+	path.exists(NovaHomePath + "/Data/" + trainingSession, function(exists) {
 		if (exists) {
 			callback("Training session folder already exists for session name of '" + trainingSession + "'");
 			return;
@@ -1426,14 +1429,14 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 	config.WriteSetting("TRAINING_SESSION", "null");
 	nova.StopNovad();
 
-	exec('novatrainer /usr/share/nova/nova/Data/' + trainingSession + ' /usr/share/nova/nova/Data/' + trainingSession + '/capture.dump', 
+	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/capture.dump', 
 	function (error, stdout, stderr) {
 		callback(stderr);
 	});
 }
 
 everyone.now.GetCaptureIPs = function (trainingSession, callback) {
-	return trainingDb.GetCaptureIPs("/usr/share/nova/nova/Data/" + trainingSession + "/capture.dump");
+	return trainingDb.GetCaptureIPs(NovaHomePath + "/Data/" + trainingSession + "/capture.dump");
 }
 
 everyone.now.WizardHasRun = function(callback) {
