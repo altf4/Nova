@@ -2356,12 +2356,20 @@ bool HoneydConfiguration::DisableNode(string nodeName)
 
 bool HoneydConfiguration::DeleteNode(string nodeName)
 {
+
+	if (!m_nodes.keyExists(nodeName))
+	{
+		LOG(ERROR, "Attempting to delete node that doesn't exist: " + nodeName, "");
+		return false;
+	}
+
 	// We don't delete the doppelganger node, only edit it
 	if(!nodeName.compare("Doppelganger"))
 	{
 		LOG(WARNING, "Unable to delete the Doppelganger node", "");
 		return false;
 	}
+
 	Node *nodePtr = &m_nodes[nodeName];
 	// Make sure the node exists
 	if(nodePtr == NULL)
