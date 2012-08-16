@@ -2356,13 +2356,6 @@ bool HoneydConfiguration::DisableNode(string nodeName)
 
 bool HoneydConfiguration::DeleteNode(string nodeName)
 {
-
-	if (!m_nodes.keyExists(nodeName))
-	{
-		LOG(ERROR, "Attempting to delete node that doesn't exist: " + nodeName, "");
-		return false;
-	}
-
 	// We don't delete the doppelganger node, only edit it
 	if(!nodeName.compare("Doppelganger"))
 	{
@@ -2370,23 +2363,41 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 		return false;
 	}
 
-	Node *nodePtr = &m_nodes[nodeName];
 	// Make sure the node exists
+	Node *nodePtr = NULL;
+	try
+	{
+		nodePtr = &m_nodes[nodeName];
+	}
+	catch(hashMapException &e)
+	{
+		LOG(WARNING, "Unable to locate expected node '" + nodeName + "'.","");
+		return false;
+	}
 	if(nodePtr == NULL)
 	{
-		LOG(ERROR, "Unable to locate expected node '" + nodeName + "'.","");
+		LOG(WARNING, "Unable to locate expected node '" + nodeName + "'.","");
 		return false;
 	}
 
-	//Update the Subnet
-	Subnet *subPtr = &m_subnets[nodePtr->m_sub];
 	// Make sure the subnet exists
+	Subnet *subPtr = NULL;
+	try
+	{
+		subPtr = &m_subnets[nodePtr->m_sub];
+	}
+	catch(hashMapException &e)
+	{
+		LOG(ERROR, "Unable to locate expected subnet '" + nodePtr->m_sub + "'.","");
+		return false;
+	}
 	if(subPtr == NULL)
 	{
 		LOG(ERROR, "Unable to locate expected subnet '" +nodePtr->m_sub + "'.","");
 		return false;
 	}
 
+	//Update the Subnet
 	for(uint i = 0; i < subPtr->m_nodes.size(); i++)
 	{
 		if(!subPtr->m_nodes[i].compare(nodeName))
@@ -2395,13 +2406,23 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 		}
 	}
 
-	NodeProfile *profPtr = &m_profiles[nodePtr->m_pfile];
 	// Make sure the profile exists
+	NodeProfile *profPtr = NULL;
+	try
+	{
+		profPtr = &m_profiles[nodePtr->m_pfile];
+	}
+	catch(hashMapException &e)
+	{
+		LOG(ERROR, "Unable to locate expected profile '" + nodePtr->m_pfile + "'.","");
+		return false;
+	}
 	if(profPtr == NULL)
 	{
 		LOG(ERROR, "Unable to locate expected profile '" + nodePtr->m_pfile + "'.","");
 		return false;
 	}
+
 	for(uint i = 0; i < profPtr->m_nodeKeys.size(); i++)
 	{
 		if(!profPtr->m_nodeKeys[i].compare(nodeName))
