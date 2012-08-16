@@ -45,6 +45,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteSetting"),FunctionTemplate::New(WriteSetting)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVersionString"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetVersionString>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathConfigHoneydHS"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathConfigHoneydHS>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathHome"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathHome>));
 	
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetIpAddresses"),FunctionTemplate::New(InvokeMethod<std::vector<std::string>, std::string, Config::GetIpAddresses>));
 

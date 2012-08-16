@@ -3,7 +3,8 @@
 set -e
 
 honeydPath="/usr/bin/honeyd"
-novaPath="/usr/bin/novad"
+novaPath="$DESTDIR/usr/bin/novad"
+novaHomePath="$DESTDIR/usr/share/nova"
 
 
 if [ ! -f $honeydPath ]
@@ -37,6 +38,6 @@ service rsyslog restart
 #reload sysctl settings.
 sysctl -p /etc/sysctl.conf
 
-chgrp -R nova /usr/share/nova
+chgrp -R nova $novaHomePath
 
 if [ -x /usr/bin/update-menus ] ; then update-menus ; fi

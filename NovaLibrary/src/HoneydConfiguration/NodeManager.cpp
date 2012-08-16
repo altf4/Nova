@@ -1083,6 +1083,7 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 		{
 			break;
 		}
+		bool foundMatch = false;
 		for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
 		{
 			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
@@ -1093,20 +1094,17 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 				//If this port is a match
 				if(!curNode->m_ports[k].compare(lowPort->m_portName))
 				{
-					string behaviorStr = "block";
-					if((!nodePort->m_type.compare("TCP")) && (!curProfile->m_tcpAction.compare("reset")))
-					{
-						behaviorStr = "reset";
-					}
+					string behaviorStr = "reset";
 					curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
 					curNode->m_isPortInherited[k] = false;
 					// -= 1 - m_increment for port addition, -= m_increment for removing a blocked port
 					lowPCounter->m_count--;
+					foundMatch = true;
 				}
 			}
 		}
 		//If the vendor is still under allocated
-		if(lowPCounter->m_count < (-lowPCounter->m_increment))
+		if((lowPCounter->m_count < (-lowPCounter->m_increment)) && foundMatch)
 		{
 			underPopulatedPorts.push_back(lowPCounter);
 		}
@@ -1124,6 +1122,7 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 		{
 			break;
 		}
+		bool foundMatch = false;
 		for(unsigned int j = 0; j < curProfile->m_nodeKeys.size(); j++)
 		{
 			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
@@ -1143,11 +1142,12 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 					curNode->m_isPortInherited[k] = false;
 					// += m_increment for blocking port , += (1-m_increment) for removing a used port
 					highPCounter->m_count++;
+					foundMatch = true;
 				}
 			}
 		}
 		//If the vendor is still over allocated
-		if(highPCounter->m_count > (1 - highPCounter->m_increment))
+		if((highPCounter->m_count > (1 - highPCounter->m_increment)) && foundMatch)
 		{
 			overPopulatedPorts.push_back(highPCounter);
 		}

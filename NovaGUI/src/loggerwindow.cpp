@@ -50,7 +50,7 @@ void LoggerWindow::InitializeRecipientsList()
 
 	QListWidgetItem *item = new QListWidgetItem("Emails file is empty, or does not exist...");
 	item->setFlags(Qt::NoItemFlags);
-	QFile file("/usr/share/nova/emails");
+	QFile file(QString::fromStdString(Config::Inst()->GetPathHome() + "/../emails"));
 
 	if(!file.open(QIODevice::ReadOnly))
 	{
@@ -89,7 +89,7 @@ void LoggerWindow::InitializeRecipientsList()
 
 void LoggerWindow::InitializeLoggingWindow()
 {
-	QFile file("/usr/share/nova/Logs/Nova.log");
+	QFile file(QString::fromStdString(Config::Inst()->GetPathHome() + "/../Logs/Nova.log"));
 
 	if(!file.open(QIODevice::ReadOnly))
 	{
@@ -130,7 +130,7 @@ void LoggerWindow::InitializeLoggingWindow()
 
 void LoggerWindow::UpdateLogDisplay()
 {
-	QFile file("/usr/share/nova/Logs/Nova.log");
+	QFile file(QString::fromStdString(Config::Inst()->GetPathHome() + "/../Logs/Nova.log"));
 	uint16_t i = 0;
 
 	if(!file.open(QIODevice::ReadOnly))

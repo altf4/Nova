@@ -19,6 +19,7 @@
 #include "VendorMacDb.h"
 #include "../NovaUtil.h"
 #include "../Config.h"
+#include "../Logger.h"
 
 #include <errno.h>
 #include <fstream>
@@ -84,105 +85,71 @@ void VendorMacDb::LoadPrefixFile()
 // *note conflicts are only checked for locally, weird things may happen if the address is already being used.
 string VendorMacDb::GenerateRandomMAC(string vendor)
 {
-	char addrBuffer[8];
-	stringstream addrStrm;
-	pair<uint32_t,uint32_t> addr;
-	VendorToMACTable::iterator it;
-	string testStr;
-
+	stringstream suffixStr;
+	stringstream tempStr;
+	char charBuffer[3];
+	bzero(charBuffer, 3);
+	VendorToMACTable::iterator it = m_vendorMACTable.find(vendor);
 	//If we can resolve the vendor to a range
-	if((it = m_vendorMACTable.find(vendor)) != m_vendorMACTable.end())
+	if(it != m_vendorMACTable.end())
 	{
-		//Randomly select one of the ranges
-		uint j;
-		uint i = rand() % it->second->size();
-		addr.first = it->second->at(i);
-		i = 0;
+		unsigned char randByte = (unsigned char)(rand() % (int)(pow(2, 8)));
+		sprintf(charBuffer, "%02x", randByte);
+		tempStr << charBuffer[0] << charBuffer[1];
+		suffixStr << tempStr.str();
+		suffixStr << ":";
 
-		//Convert the first part to a string and format it for output
-		sprintf(addrBuffer, "%x", addr.first);
-		testStr = string(addrBuffer);
+		tempStr.str("");
+		bzero(charBuffer, 3);
+		randByte = (unsigned char)(rand() % (int)(pow(2, 8)));
+		sprintf(charBuffer, "%02x", randByte);
+		tempStr << charBuffer[0] << charBuffer[1];
+		suffixStr << tempStr.str();
+		suffixStr << ":";
 
-		for(j = 0; j < (6-testStr.size()); j++)
+		tempStr.str("");
+		bzero(charBuffer, 3);
+		randByte = (unsigned char)(rand() % (int)(pow(2, 8)));
+		sprintf(charBuffer, "%02x", randByte);
+		tempStr << charBuffer[0] << charBuffer[1];
+		suffixStr << tempStr.str();
+
+		tempStr.str("");
+		vector<uint> prefixes = *m_vendorMACTable[vendor];
+		uint index = (rand() % prefixes.size());
+		uint selectedPrefix = prefixes[index];
+		char prefixBuffer[7];
+		bzero(prefixBuffer, 7);
+		sprintf(prefixBuffer, "%06x", selectedPrefix);
+		string prefixString(prefixBuffer);
+		tempStr << prefixBuffer[0] << prefixBuffer[1] << ":";
+		tempStr << prefixBuffer[2] << prefixBuffer[3] << ":";
+		tempStr << prefixBuffer[4] << prefixBuffer[5] << ":";
+		tempStr << suffixStr.str();
+
+		uint macPrefix = AtoMACPrefix(tempStr.str());
+		if(LookupVendor(macPrefix).compare(vendor))
 		{
-			if(!(i % 2) && i)
-			{
-				addrStrm << ":";
-			}
-
-			addrStrm << "0";
-			i++;
+			LOG(ERROR, "Random MAC Generation failed! " + tempStr.str() , "");
+			return "";
 		}
-
-		j = 0;
-
-		if(testStr.size() > 6)
-		{
-			j = testStr.size() - 6;
-		}
-
-		for(; j < testStr.size(); j++)
-		{
-			if(!(i % 2) && i)
-			{
-				addrStrm << ":";
-			}
-
-			addrStrm << addrBuffer[j];
-			i++;
-		}
-
-		//Randomly generate the remaining portion
-		addr.second = ((uint)rand() & (uint)(pow(2.0,24)-1));
-
-		//Convert the second part to a string and format it for output
-		bzero(addrBuffer, 8);
-		sprintf(addrBuffer, "%x", addr.second);
-		testStr = string(addrBuffer);
-		i = 0;
-
-		 if((testStr.size() % 2) == 1)
-		 {
-			 addrStrm << ":";
-		 }
-
-		for(j = 0; j < (6 - testStr.size()); j++)
-		{
-			if((!(i % 2) && i))
-			{
-				addrStrm << ":";
-			}
-			addrStrm << "0";
-			i++;
-		}
-
-		j = 0;
-
-		if(testStr.size() > 6)
-		{
-			j = testStr.size() - 6;
-		}
-
-		for(; j < testStr.size(); j++)
-		{
-			if(!(i % 2) && (i != 6))
-			{
-				addrStrm << ":";
-			}
-			addrStrm << addrBuffer[j];
-			i++;
-		}
+		return tempStr.str();
 	}
-	return addrStrm.str();
+	LOG(ERROR, "Random MAC Generation failed!", "");
+	return "";
 }
 
 //Resolve the first 3 bytes of a MAC Address to a MAC vendor that owns the range, returns the vendor string
 string VendorMacDb::LookupVendor(uint MACPrefix)
 {
-	if(m_MACVendorTable.keyExists((uint)(MACPrefix)))
-		return m_MACVendorTable[(uint)(MACPrefix)];
+	if(m_MACVendorTable.keyExists(MACPrefix))
+	{
+		return m_MACVendorTable[MACPrefix];
+	}
 	else
+	{
 		return "";
+	}
 }
 
 bool VendorMacDb::IsVendorValid(string vendor)
@@ -264,6 +231,7 @@ uint VendorMacDb::AtoMACPrefix(string MAC)
 			case 2:
 			{
 				ret += tempBuf;
+				tempBuf = 0;
 				ret = ret << 8;
 				break;
 			}
@@ -273,5 +241,6 @@ uint VendorMacDb::AtoMACPrefix(string MAC)
 			}
 		}
 	}
+	ret += tempBuf;
 	return ret;
 }

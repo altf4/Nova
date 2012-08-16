@@ -90,5 +90,5 @@ TEST_F(VendorMacDbTest, test_MACGeneration)
 	string macString = m_ethVendors.GenerateRandomMAC("Dell");
 	EXPECT_TRUE(macString.compare(""));
 	uint macPrefix = m_ethVendors.AtoMACPrefix(macString);
-	EXPECT_FALSE(!m_ethVendors.LookupVendor(macPrefix).compare("Dell"));
+	EXPECT_TRUE(!m_ethVendors.LookupVendor(macPrefix).compare("Dell"));
 }

@@ -35,6 +35,9 @@ using namespace std;
 namespace Nova
 {
 
+string Config::m_pathsFile = "/etc/nova/paths";
+string Config::m_pathPrefix = "";
+
 string Config::m_prefixes[] =
 {
 	"INTERFACE",
@@ -112,6 +115,8 @@ Config::Config()
 {
 	pthread_rwlock_init(&m_lock, NULL);
 
+	m_pathPrefix = GetEnvVariable("NOVA_PATH_PREFIX");
+	cout << "Using prefix '" + m_pathPrefix + "' on paths" << endl;
 	LoadPaths();
 
 	if(!InitUserConfigs(m_pathHome))
@@ -1009,7 +1014,7 @@ bool Config::LoadPaths()
 	Lock lock(&m_lock, WRITE_LOCK);
 
 	//Get locations of nova files
-	ifstream *paths =  new ifstream(PATHS_FILE);
+	ifstream *paths =  new ifstream(m_pathPrefix + Config::m_pathsFile);
 	string prefix, line;
 
 	if(paths->is_open())
@@ -1022,7 +1027,7 @@ bool Config::LoadPaths()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				m_pathHome = ResolvePathVars(line);
+				m_pathHome = m_pathPrefix + ResolvePathVars(line);
 				continue;
 			}
 
@@ -1030,23 +1035,7 @@ bool Config::LoadPaths()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				m_pathReadFolder = ResolvePathVars(line);
-				continue;
-			}
-
-			prefix = "NOVA_WR";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				m_pathWriteFolder = ResolvePathVars(line);
-				continue;
-			}
-
-			prefix = "NOVA_BIN";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				m_pathBinaries = ResolvePathVars(line);
+				m_pathReadFolder = m_pathPrefix + ResolvePathVars(line);
 				continue;
 			}
 
@@ -1054,7 +1043,7 @@ bool Config::LoadPaths()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				m_pathIcon = ResolvePathVars(line);
+				m_pathIcon = m_pathPrefix + ResolvePathVars(line);
 				continue;
 			}
 		}
@@ -1567,7 +1556,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 			string fullPath = homeNovaPath + Config::m_requiredFiles[i];
 			if(stat (fullPath.c_str(), &fileAttr ) != 0)
 			{
-				string defaultLocation = "/etc/nova/nova" + Config::m_requiredFiles[i];
+				string defaultLocation = m_pathPrefix + "/etc/nova/nova" + Config::m_requiredFiles[i];
 				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
 
 				cout << "The required file " << fullPath << " does not exist. Copying it from the defaults folder." << endl;
@@ -1582,9 +1571,12 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	else
 	{
 		//TODO: Do this command programmatically. Not by calling system()
-		if(system("cp -rf /etc/nova/nova /usr/share/nova") == -1)
+		string fromPath = m_pathPrefix + "/etc/nova/nova";
+		string toPath = m_pathPrefix + "/usr/share/nova";
+		string copyString = "cp -rf " + fromPath + " " + toPath;
+		if(system(copyString.c_str()) == -1)
 		{
-			cout << "Was unable to create directory /usr/share/nova/nova" << endl;
+			cout << "Was unable to create directory " << toPath << endl;
 			returnValue = false;
 		}
 
@@ -1595,7 +1587,7 @@ bool Config::InitUserConfigs(string homeNovaPath)
 		}
 		else
 		{
-			cout << "Was unable to create directory /usr/share/nova/nova" << endl;
+			cout << "Was unable to create directory " << homeNovaPath << endl;
 			returnValue = false;
 		}
 	}
@@ -2559,18 +2551,6 @@ void Config::SetSMTPPort(in_port_t SMTPPort)
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_SMTPPort = SMTPPort;
 
-}
-
-string Config::GetPathBinaries()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathBinaries;
-}
-
-string Config::GetPathWriteFolder()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathWriteFolder;
 }
 
 string Config::GetPathReadFolder()

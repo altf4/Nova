@@ -42,7 +42,7 @@ using namespace std;
   Construct and Initialize GUI
  ************************************************/
 
-NovaConfig::NovaConfig(QWidget *parent, string home)
+NovaConfig::NovaConfig(QWidget *parent)
     : QMainWindow(parent)
 {
 	m_portMenu = new QMenu(this);
@@ -61,9 +61,6 @@ NovaConfig::NovaConfig(QWidget *parent, string home)
     m_editingItems = false;
     m_selectedSubnet = false;
     m_loadingDefaultActions = false;
-
-	//store current directory / base path for Nova
-	m_homePath = home;
 
 	//Store parent and load UI
 	m_mainwindow = (NovaGUI*)parent;
@@ -2618,7 +2615,7 @@ void NovaConfig::on_profileEdit_editingFinished()
 			else if(m_currentProfile.compare(newName.toStdString()))
 			{
 				LOG(ERROR, "Unable to rename profile '" + m_currentProfile+ "' to new name " + newName.toStdString() + ".", "Unable to rename profile '"
-					+ m_currentProfile+ "' to new name " + newName.toStdString() + ". Check '/usr/share/nova/nova/templates/profiles.xml'");
+					+ m_currentProfile+ "' to new name " + newName.toStdString() + ". Check 'profiles.xml'");
 			}
 			SaveProfileSettings();
 			LoadProfileSettings();
