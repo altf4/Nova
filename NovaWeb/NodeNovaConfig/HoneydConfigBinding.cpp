@@ -195,6 +195,13 @@ Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
 
     vector<Nova::Port> ports = obj->m_conf->GetPorts(name);
     v8::Local<v8::Array> portArray = v8::Array::New();
+    if(ports.empty() && name.compare("default"))
+    {
+      Port *nullSub = new Port();
+      nullSub->m_portNum = "0";
+      portArray->Set(v8::Number::New(0), HoneydNodeJs::WrapPort(nullSub));
+      return scope.Close(portArray);
+    }
     for (uint i = 0; i < ports.size(); i++) {
         Port *copy = new Port();
         *copy = ports.at(i);

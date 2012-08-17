@@ -221,16 +221,15 @@ install-data:
 	#make folder in etc with path locations to nova files
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	mkdir -p $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/usr/share/applications
 	mkdir -p $(DESTDIR)/usr/share/nova
-	mkdir -p $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/share/man/man1
 	mkdir -p $(DESTDIR)/var/log/honeyd
+	mkdir -p $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	mkdir -p $(DESTDIR)/etc/sysctl.d/
 	mkdir -p $(DESTDIR)/etc/bash_completion.d/
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
-	mkdir -p $(DESTDIR)/usr/share/man/man1
 	
 	install Installer/Read/paths $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova

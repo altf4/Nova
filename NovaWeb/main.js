@@ -459,9 +459,7 @@ app.get('/editHoneydNode', passport.authenticate('basic', { session: false }), f
 });
 
 app.get('/editHoneydProfile', passport.authenticate('basic', { session: false }), function(req, res) {
-	profileName = req.query["profile"]; 
-
-
+	profileName = req.query["profile"];
 
 	res.render('editHoneydProfile.jade', 
 	{ locals : {
@@ -1225,7 +1223,7 @@ everyone.now.GetProfile = function(profileName, callback) {
 	var profile = honeydConfig.GetProfile(profileName);
 
 	if (profile == null) {
-		console.log("Returning null since error fetting profile: " + profileName);
+		console.log("Returning null since error fetching profile: " + profileName);
 		callback(null);
 		return;
 	}
@@ -1303,6 +1301,13 @@ everyone.now.GetVendors = function(profileName, callback)
 
 everyone.now.GetPorts = function (profileName, callback) {
     var ports = honeydConfig.GetPorts(profileName);
+    
+    if((ports[0] == undefined || ports[0].portNum == "0") && profileName != "default")
+    {
+      console.log("ERROR Getting ports for profile '" + profileName + "'");
+      callback(null);
+      return;
+    }
     
     for ( var i = 0; i < ports.length; i++) {
       ports[i].portName = ports[i].GetPortName();

@@ -1429,6 +1429,12 @@ script
 
                         now.GetPorts(currentName, function(ports) 
                         {
+                                if(currentName != "default" && ports[0].portNum == "0")
+                                {
+                                  window.location = "configHoneydProfiles";
+                                  return;
+                                }
+                                
                                 for (var i = 0; i < ports.length; i++) 
                                 {
                                         portList[ports[i].portNum] = ports[i];
@@ -1444,6 +1450,7 @@ script
                                 {
                                         alert("ERROR: Unable to fetch the requested profile information.");
                                         window.location="configHoneydProfiles";
+                                        return;
                                 }
                                 else
                                 {
