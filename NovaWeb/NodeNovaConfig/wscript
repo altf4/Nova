@@ -12,6 +12,6 @@ def build(bld):
   obj = bld.new_task_gen("cxx", "shlib", "node_addon")
   obj.cxxflags = ["-g", "-D_FILE_OFFSET_BITS=64", "-D_LARGEFILE_SOURCE", "-Wall", "-W", "-std=c++0x", "-D_REENTRANT", "-pipe", "-pthread"]
   obj.includes = ["../", "../../Nova_UI_Core/src", "../../NovaLibrary/src", "/usr/include/cvv8/"]  
-  obj.libs = ["Nova_UI_Core","ann","NovaLibrary","notify"]
+  obj.libs = ["Nova_UI_Core","ann","NovaLibrary","notify","curl"]
   obj.target = "novaconfig"
   obj.source = "NovaNode.cpp NovaConfig.cpp NovaConfigBinding.cpp HoneydConfigBinding.cpp HoneydTypesJs.cpp VendorMacDbBinding.cpp OsPersonalityDbBinding.cpp SuspectJs.cpp HoneydProfileBinding.cpp CustomizeTraining.cpp WhitelistConfigurationBinding.cpp HoneydAutoConfigBinding.cpp TrainingDumpBinding.cpp"
