@@ -533,7 +533,7 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 	for(uint16_t i = 0; i < subnetNames.size(); i++)
 	{
 		ss << i;
-		string executionString = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + subnetNames[i];
+		string executionString = "sudo nmap -O --osscan-guess --stats-every 1s -oX subnet" + ss.str() + ".xml " + subnetNames[i];
 
 		//popen here for stdout of nmap
 		for(uint j = 0; j < 3; j++)
