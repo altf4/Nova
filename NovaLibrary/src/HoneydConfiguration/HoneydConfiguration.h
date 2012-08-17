@@ -275,6 +275,11 @@ public:
 		std::vector<Port> ret;
 		Port p;
 
+		if(!m_profiles.keyExists(profile))
+		{
+			return ret;
+		}
+
 		for (uint i = 0; i < m_profiles[profile].m_ports.size(); i++)
 		{
 			p = m_ports[m_profiles[profile].m_ports.at(i).first];
