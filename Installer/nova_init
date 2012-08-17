@@ -3,7 +3,7 @@
 set -e
 
 # Check if we are root
-if [ -z "$SUDO_USER" ]; then
+if [[ -z "$SUDO_USER" ]] && [[ `whoami` = "root" ]]; then
     echo "You are running this as root; if you wish to run nova as a regular user,"
     echo "add that user manually to the \"nova\" group"
 else
