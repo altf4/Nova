@@ -17,7 +17,8 @@ make install
 
 cd ~/Code/Nova
 git checkout -f integration
-make
+make debug
+make novagui-debug
 
 cd ~/Code/Nova/NovaWeb
 bash getDependencies.sh
