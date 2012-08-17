@@ -1476,9 +1476,27 @@ script
                                         dojo.byId("name").value = profile.name;
                                         if(profile.name == "default")
                                         {
-                                          dojo.byId("name").readonly = true;
+                                          dojo.byId("name").setAttribute('readonly', true);
+                                          var hide = dojo.byId("row1").childNodes;
+                                          var forLength = hide.length;
+                                          for(var j = 0; j < forLength - 1; j++)
+                                          {
+                                            var secondSet = hide[j].childNodes;
+                                            if(secondSet.childNodes == undefined || secondSet.childNodes[0].tagName != "INPUT")
+                                            {
+                                              console.log("Deleting found " + hide[j].tagName + " with " + secondSet.childNodes + " childNodes");
+                                              dojo.byId("row1").removeChild(hide[j]);
+                                            }
+                                            forLength = hide.length;
+                                            j--;
+                                          }
+                                          dojo.byId("parentName").value = "";
+                                          dojo.byId("parentName").setAttribute('type', 'hidden');
                                         }
-                                        dojo.byId("parentName").value = profile.parentProfile;
+                                        else
+                                        {
+                                          dojo.byId("parentName").value = profile.parentProfile;
+                                        }
                                         dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
                                         dojo.byId("inheritEthernet").checked = profile.isEthernetInherited;
                                         dojo.byId("inheritDropRate").checked = profile.isDropRateInherited;
