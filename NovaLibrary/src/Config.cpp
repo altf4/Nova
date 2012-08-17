@@ -865,7 +865,7 @@ void Config::LoadConfig_Internal()
 
 	config.close();
 
-	SetSMTPSettings_FromFile();
+	GetSMTPSettings_FromFile();
 
 	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
@@ -2035,11 +2035,18 @@ string Config::GetGroup()
 	return m_group;
 }
 
-void Config::SetSMTPSettings_FromFile()
+bool Config::GetSMTPSettings_FromFile()
 {
-	std::string debugPath = m_pathHome + "/Config/smtp.txt";
+	string debugPath = m_pathHome + "/Config/smtp.txt";
 
-	std::ifstream ifs(m_pathHome + "/Config/smtp.txt");
+	ifstream ifs(m_pathHome + "/Config/smtp.txt");
+
+	if (!ifs.is_open())
+	{
+		// Note: This needs to be cout since the logger isn't initialized yet
+		cout << "Unable to open SMTP settings file at " << debugPath << endl;
+		return false;
+	}
 
 	char user[256];
 	char pass[256];
@@ -2051,6 +2058,25 @@ void Config::SetSMTPSettings_FromFile()
 	m_SMTPPass = std::string(pass);
 
 	ifs.close();
+	return true;
+}
+
+bool Config::SaveSMTPSettings()
+{
+	string debugPath = m_pathHome + "/Config/smtp.txt";
+	ofstream out(debugPath.c_str());
+
+	if (!out.is_open())
+	{
+		cout << "ERROR: Unable to open SMTP settings file at " << debugPath << endl;
+		return false;
+	}
+
+	out << m_SMTPUser << endl;
+	out << m_SMTPPass << endl;
+
+	out.close();
+	return true;
 }
 
 void Config::SetUseAllInterfaces(bool which)
@@ -2468,16 +2494,18 @@ void Config::SetLoggerPreferences(string loggerPreferences)
 
 }
 
-void Config::SetSMTPUser(std::string SMTPUser)
+bool Config::SetSMTPUser(std::string SMTPUser)
 {
 	Lock lock(&m_lock, READ_LOCK);
 	m_SMTPUser = SMTPUser;
+	return SaveSMTPSettings();
 }
 
-void Config::SetSMTPPass(std::string SMTP_Pass)
+bool Config::SetSMTPPass(std::string SMTP_Pass)
 {
 	Lock lock(&m_lock, READ_LOCK);
 	m_SMTPPass = SMTP_Pass;
+	return SaveSMTPSettings();
 }
 
 void Config::SetSMTPAddr(string SMTPAddr)

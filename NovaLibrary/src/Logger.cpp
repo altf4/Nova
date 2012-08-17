@@ -187,7 +187,11 @@ namespace Nova
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
 		curl_easy_setopt(curl, CURLOPT_READDATA, &counter);
+
+		// Use this for verbose output from curl
+		//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+
 		curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
 		curl_multi_add_handle(mcurl, curl);

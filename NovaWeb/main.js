@@ -298,6 +298,8 @@ app.get('/advancedOptions', passport.authenticate('basic', { session: false }), 
 			,SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
 			,SMTP_PORT: config.ReadSetting("SMTP_PORT")
 			,SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN")
+                        ,SMTP_USER: config.GetSMTPUser()
+                        ,SMTP_PASS: config.GetSMTPPass()
 			,RECIPIENTS: config.ReadSetting("RECIPIENTS")
 			,SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
 			,HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
@@ -382,6 +384,8 @@ function renderBasicOptions(jadefile, res, req) {
 			,SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
 			,SMTP_PORT: config.ReadSetting("SMTP_PORT")
 			,SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN")
+                        ,SMTP_USER: config.GetSMTPUser()
+                        ,SMTP_PASS: config.GetSMTPPass()
 			,SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
 			,RECIPIENTS: config.ReadSetting("RECIPIENTS")
 		}
@@ -852,7 +856,7 @@ app.post('/editHoneydNodeSave', passport.authenticate('basic', { session: false 
 
 app.post('/configureNovaSave', passport.authenticate('basic', { session: false }), function(req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
+        var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG","TCP_TIMEOUT","TCP_CHECK_FREQ","READ_PCAP","PCAP_FILE",
 		"GO_TO_LIVE","CLASSIFICATION_TIMEOUT","SILENT_ALARM_PORT","K","EPS","IS_TRAINING","CLASSIFICATION_THRESHOLD","DATAFILE",
 		"SA_MAX_ATTEMPTS","SA_SLEEP_DURATION","USER_HONEYD_CONFIG","DOPPELGANGER_IP","DOPPELGANGER_INTERFACE","DM_ENABLED",
 		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
@@ -1029,8 +1033,11 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
       config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
     }
 
+    if (req.body["SMTP_USER"] !== undefined) {config.SetSMTPUser(req.body["SMTP_USER"]);}
+    if (req.body["SMTP_PASS"] !== undefined) {config.SetSMTPPass(req.body["SMTP_PASS"]);}
+
     //if no errors, send the validated form data to the WriteSetting method
-    for(var item = 2; item < configItems.length; item++)
+    for(var item = 4; item < configItems.length; item++)
     {
   	  if(req.body[configItems[item]] != undefined) 
   	  {

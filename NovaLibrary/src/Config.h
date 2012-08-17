@@ -180,14 +180,15 @@ public:
     void SetSMTPAddr(std::string SMTPAddr);
     void SetSMTPDomain(std::string SMTPDomain);
 	void SetSMTPPort(in_port_t SMTPPort);
-	void SetSMTPUser(std::string SMTPUser);
-	void SetSMTPPass(std::string STMP_Pass);
+	bool SetSMTPUser(std::string SMTPUser);
+	bool SetSMTPPass(std::string STMP_Pass);
 
 	void SetDBHost(std::string DBHost);
 	void SetDBUser(std::string DBUser);
 	void SetDBPass(std::string DBPass);
 
-	void SetSMTPSettings_FromFile();
+	bool GetSMTPSettings_FromFile();
+	bool SaveSMTPSettings();
 
 	double GetSqurtEnabledFeatures();
 

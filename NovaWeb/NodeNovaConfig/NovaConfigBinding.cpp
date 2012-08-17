@@ -46,6 +46,12 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVersionString"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetVersionString>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathConfigHoneydHS"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathConfigHoneydHS>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathHome"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathHome>));
+
+
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("SetSMTPUser"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, std::string, &Config::SetSMTPUser>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("SetSMTPPass"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, std::string, &Config::SetSMTPPass>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPUser"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetSMTPUser>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPPass"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetSMTPPass>));
 	
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetIpAddresses"),FunctionTemplate::New(InvokeMethod<std::vector<std::string>, std::string, Config::GetIpAddresses>));
 
