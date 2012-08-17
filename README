@@ -60,7 +60,7 @@ Getting the newest code
 ===============================
 
 
-Go to the directy you wish to download the code to and run the following commands,
+Go to the directory you wish to download the code to and run the following commands,
 
     git clone git://github.com/DataSoft/Honeyd.git
     git clone git://github.com/DataSoft/Nova.git
