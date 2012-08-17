@@ -961,6 +961,7 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 	{
 		for(int i = 0; i < numberOfNodes; i++)
 		{
+			macAddressPass = m_macAddresses.GenerateRandomMAC(macVendor);
 			if(!AddNewNode(profileName, ipAddress, macAddressPass, interface, subnet))
 			{
 				LOG(ERROR, "Adding new nodes failed during node creation!", "");
@@ -985,6 +986,7 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 	for(int i = 0; i < numberOfNodes; i++)
 	{
 		currentAddr.s_addr = htonl(sAddr);
+		macAddressPass = m_macAddresses.GenerateRandomMAC(macVendor);
 		if(!AddNewNode(profileName, string(inet_ntoa(currentAddr)), macAddressPass, interface, subnet))
 		{
 			LOG(ERROR, "Adding new nodes failed during node creation!", "");
