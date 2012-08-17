@@ -653,7 +653,7 @@ app.get('/createNewUser', passport.authenticate('basic', { session: false }), fu
 app.get('/welcome', passport.authenticate('basic', { session: false }), function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup1.jade');});
 app.get('/setup2', passport.authenticate('basic', { session: false }), function(req, res) {renderBasicOptions('setup2.jade', res, req)});
-app.get('/setup3', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup3.jade');});
+app.get('/setup3', passport.authenticate('basic', { session: false }), function(req, res) {res.render('hhautoconfig.jade', {user: req.user, INTERFACES: config.ListInterfaces().sort(), SCANERROR: "" });});
 app.get('/CaptureTrainingData', passport.authenticate('basic', { session: false }), function(req, res) {res.render('captureTrainingData.jade');});
 app.get('/about', passport.authenticate('basic', { session: false }), function(req, res) {res.render('about.jade');});
 
@@ -692,6 +692,16 @@ app.post('/createNewUser', passport.authenticate('basic', { session: false }), f
 app.post('/createInitialUser', passport.authenticate('basic', { session: false }), function(req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
+  var route = req.body["route"];
+
+  if(route == 'manconfig')
+  {
+    route = 'setup2';
+  }
+  else
+  {
+    route = 'setup3';
+  }
 
 	dbqCredentialsGetUser.all(userName,
     function selectCb(err, results) {
@@ -704,7 +714,7 @@ app.post('/createInitialUser', passport.authenticate('basic', { session: false }
       {
 	   	dbqCredentialsInsertUser.run(userName, HashPassword(password));
 		dbqCredentialsDeleteUser.run('nova');
-		res.render('saveRedirect.jade', { locals: {redirectLink: "setup2"}})	
+		res.render('saveRedirect.jade', { locals: {redirectLink: route}})	
         return;
       } 
       else
