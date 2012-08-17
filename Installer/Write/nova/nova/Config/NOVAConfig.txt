@@ -352,7 +352,7 @@ SMTP_PORT 465
 # The name of the SMTP server that you will be connecting to.
 # Example: smtp.example.com
 #
-SMTP_DOMAIN smtp.example.com
+SMTP_DOMAIN smtps://smtp.example.com
 
 ############################################
 # RECIPIENTS #
