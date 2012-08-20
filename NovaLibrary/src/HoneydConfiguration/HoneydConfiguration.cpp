@@ -819,53 +819,8 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 	//Assign Ports
 	for(uint i = 0; i < p->m_ports.size(); i++)
 	{
-		uint randVal = rand() % 100;
-		//If our random value allows us to use the NodeProfile's port
-		if(p->m_ports[i].second.second > randVal )
-		{
-			newNode.m_ports.push_back(p->m_ports[i].first);
-			newNode.m_isPortInherited.push_back(true);
-		}
-		else
-		{
-			//Look up the port
-			Port *portPtr = &m_ports[p->m_ports[i].first];
-			if(portPtr == NULL)
-			{
-				LOG(ERROR, "Unable to retrieve expected port '" + p->m_ports[i].first + "'!", "");
-				return false;
-			}
-
-			string portName = portPtr->m_portNum + "_" + portPtr->m_type + "_";
-
-			//Grab the default action for the profile depending on the type
-			string action = p->m_udpAction;
-			if(portPtr->m_type.compare("TCP"))
-			{
-				action = p->m_tcpAction;
-			}
-
-			//Validate or choose the default action for a closed port
-			if((!action.compare("block")) || (!action.compare("open")) || (!action.compare("reset")))
-			{
-				portName.append(action);
-			}
-			else
-			{
-				portName.append("reset");
-			}
-
-			//If the port exists
-			if(!m_ports.keyExists(portName))
-			{
-				LOG(ERROR, "No port '" + portName + "' exists in the HoneydConfiguration object!", "");
-				return false;
-			}
-
-			//Push back the closed or default action port
-			newNode.m_ports.push_back(portName);
-			newNode.m_isPortInherited.push_back(false);
-		}
+		newNode.m_ports.push_back(p->m_ports[i].first);
+		newNode.m_isPortInherited.push_back(false);
 	}
 
 	//Check validity of subnet
