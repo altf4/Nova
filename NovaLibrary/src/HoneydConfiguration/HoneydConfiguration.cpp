@@ -2603,6 +2603,9 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 	}
 	if(down)
 	{
+		ptree pt;
+		pt.clear();
+		p.m_tree.put_child("profiles", pt);
 		//Find all children
 		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{

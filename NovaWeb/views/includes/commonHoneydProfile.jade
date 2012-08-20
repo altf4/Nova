@@ -637,6 +637,7 @@ script
                         }
 
                         pfile.distribution = dojo.byId("profDist").value;
+                        pfile.generated = dojo.byId("generated").value;
 
                         //need conditional here for add vs. edit, false == edit, true == add
                         now.SaveProfile(pfile, ports, savedChanges, ethVendorList, newProfile);
@@ -1460,6 +1461,10 @@ script
                                 }
 
                                 profile = pfile;
+
+                                console.log("generated == " + profile.generated);
+
+                                dojo.byId("generated").value = profile.generated;
 
                                 if (newProfile == "true") 
                                 {
