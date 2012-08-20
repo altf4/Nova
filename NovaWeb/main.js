@@ -1585,6 +1585,10 @@ everyone.now.ClearHostileEvent = function(id, callback) {
   );
 }
 
+everyone.now.GetLocalIP = function(interface, callback) {
+	callback(nova.GetLocalIP(interface));
+}
+
 var distributeSuspect = function(suspect)
 {
 	var s = new Object();

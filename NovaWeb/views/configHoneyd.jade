@@ -39,6 +39,7 @@ block headerAdditions
 
     function checkOnlyOne(checkedBox)
     {
+      console.log(checkedBox);
       var forLength = document.getElementById("length").getAttribute("value");
       
       var checkAgainst = checkedBox.getAttribute("id");
@@ -60,7 +61,26 @@ block headerAdditions
       if(!checkedBox.checked)
       {
         checkedBox.checked = true; 
-      }  
+      }
+
+      var checkedInterface = checkedBox.value;
+      var ip = now.GetLocalIP(checkedInterface, UpdateIpField);
+    }
+
+    function UpdateIpField(ip) {
+      if (ip != undefined) {
+        var ipParts = ip.split(".");
+        document.getElementById("ip1").value = ipParts[0];
+        document.getElementById("ip2").value = ipParts[1];
+        document.getElementById("ip3").value = ipParts[2];
+        document.getElementById("ip4").value = ipParts[3];
+      } else {
+        document.getElementById("ip1").value = 0;
+        document.getElementById("ip2").value = 0;
+        document.getElementById("ip3").value = 0;
+        document.getElementById("ip4").value = 0;
+      }
+
     }
 
     function editSelectedItem() {
@@ -89,6 +109,7 @@ block headerAdditions
       var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
       grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
       dojo.byId("gridDiv").appendChild(grid.domNode);
+      checkOnlyOne(if0);
     });
 
   script(type="text/javascript")
@@ -181,10 +202,10 @@ block content
 
     br
     label Starting IP address
-    input.ip#ip1(type="number", name="ip1", min="0", max="255", value="192", disabled="disabled")
-    input.ip#ip2(type="number", name="ip2", min="0", max="255", value="168", disabled="disabled")
+    input.ip#ip1(type="number", name="ip1", min="0", max="255", value="0", disabled="disabled")
+    input.ip#ip2(type="number", name="ip2", min="0", max="255", value="0", disabled="disabled")
     input.ip#ip3(type="number", name="ip3", min="0", max="255", value="0", disabled="disabled")
-    input.ip#ip4(type="number", name="ip4", min="0", max="255", value="1", disabled="disabled")
+    input.ip#ip4(type="number", name="ip4", min="0", max="255", value="0", disabled="disabled")
    
     br
     br
