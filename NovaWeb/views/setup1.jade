@@ -1,20 +1,10 @@
 extends layout
 
-block headerAdditions
-  script
-   var route = "";
-
-    function setRoute(which)
-    {
-     route = which;
-     document.getElementById("route").setAttribute('value', route);
-    }
-
 block content
   div(style="text-align:center")
     h2 Create New User Account
     p Note that this new account will replace the default username and password.
-    form(id="postRoute", method="post", action="/createInitialUser", autocomplete="off")
+    form(method="post", action="/createInitialUser", autocomplete="off")
       table(align="center", border="0", style="background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;")
         tr
           td
@@ -29,7 +19,5 @@ block content
         tr
           td
           td
-      input(id="route", name="route", type='hidden', value="route")
       button(type="button", onClick="location.href='/welcome'") Back
-      input(id="autoconfigButton", type="button", onclick='setRoute("autoconfig"); document.getElementById("postRoute").submit();', value="Autoconfigure Haystack")
-      input(id="manconfigButton", type="button", onclick='setRoute("manconfig"); document.getElementById("postRoute").submit();', value="Manually configure Haystack")
+      input(id="nextButton", type="submit", value="Continue to Basic Options")

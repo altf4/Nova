@@ -546,33 +546,33 @@ script
 
                         if(checkLength1 == 0 && checkLength2 > 0)
                         {
-                        var forLength = checkLength2; 
-
-                        for(var i = 0; i < forLength; i++)
-                        {
-                        var element = {vendor: "", dist: ""};
-                        element.vendor = document.getElementById("vend" + i).value;
-                        element.dist = parseFloat(document.getElementById("dist" + i).value);
-                        ethVendorList.push(element);
-                        }
+                          var forLength = checkLength2; 
+  
+                          for(var i = 0; i < forLength; i++)
+                          {
+                            var element = {vendor: "", dist: ""};
+                            element.vendor = document.getElementById("vend" + i).value;
+                            element.dist = parseFloat(document.getElementById("dist" + i).value);
+                            ethVendorList.push(element);
+                          }
                         }
                         else if(checkLength2 == 0 && checkLength1 > 0)
                         {
-                        var forLength = checkLength1;
-
-                        for(var i = 0; i < forLength; i++)
-                        {
-                        var element = {vendor: "", dist: ""};
-                        element.vendor = document.getElementById("vend" + i).value;
-                        element.dist = parseFloat(document.getElementById("dist" + i).value);
-                        ethVendorList.push(element);
-                        }
+                          var forLength = checkLength1;
+  
+                          for(var i = 0; i < forLength; i++)
+                          {
+                            var element = {vendor: "", dist: ""};
+                            element.vendor = document.getElementById("vend" + i).value;
+                            element.dist = parseFloat(document.getElementById("dist" + i).value);
+                            ethVendorList.push(element);
+                          }
                         }
                         else
                         {
-                        document.getElementById("errorEthernet").value = "Must choose to either inherit ethernet vendors or select at least one";
-                        document.getElementById("errorEthernet").innerHTML = "Must choose to either inherit ethernet vendors or select at least one";
-                        return;
+                          document.getElementById("errorEthernet").value = "Must choose to either inherit ethernet vendors or select at least one";
+                          document.getElementById("errorEthernet").innerHTML = "Must choose to either inherit ethernet vendors or select at least one";
+                          return;
                         }
 
                         pfile.oldName = "#{oldName}";
@@ -635,6 +635,9 @@ script
                                 ports[i].script = dojo.byId("portScriptDrop" + portIndexes[i]).value;
                                 ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
                         }
+
+                        pfile.distribution = dojo.byId("profDist").value;
+                        pfile.generated = dojo.byId("generated").value;
 
                         //need conditional here for add vs. edit, false == edit, true == add
                         now.SaveProfile(pfile, ports, savedChanges, ethVendorList, newProfile);
@@ -1459,6 +1462,10 @@ script
 
                                 profile = pfile;
 
+                                console.log("generated == " + profile.generated);
+
+                                dojo.byId("generated").value = profile.generated;
+
                                 if (newProfile == "true") 
                                 {
                                         dojo.byId("name").value = "New Profile";
@@ -1469,7 +1476,8 @@ script
                                         dojo.byId("inheritUptime").checked = true; 
                                         dojo.byId("inheritTcpAction").checked = true; 
                                         dojo.byId("inheritUdpAction").checked = true; 
-                                        dojo.byId("inheritIcmpAction").checked = true;  
+                                        dojo.byId("inheritIcmpAction").checked = true;
+                                        dojo.byId("profDist").value = "0";
                                 } 
                                 else 
                                 {
@@ -1504,6 +1512,7 @@ script
                                         dojo.byId("inheritTcpAction").checked = profile.isTcpActionInherited;
                                         dojo.byId("inheritUdpAction").checked = profile.isUdpActionInherited;
                                         dojo.byId("inheritIcmpAction").checked = profile.isIcmpActionInherited;
+                                        dojo.byId("profDist").value = profile.distribution;
                                 }
 
 

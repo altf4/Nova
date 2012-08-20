@@ -42,6 +42,8 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	proto->Set("SetUptimeMax",      FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetUptimeMax>));
 	proto->Set("SetDropRate",       FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetDropRate>));
 	proto->Set("SetParentProfile",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, std::string, &Nova::NodeProfile::SetParentProfile>));
+	proto->Set("SetDistribution",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, double, &Nova::NodeProfile::SetDistribution>));
+	proto->Set("SetGenerated",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::SetGenerated>));
 	proto->Set(String::NewSymbol("SetVendors"),FunctionTemplate::New(SetVendors)->GetFunction());
 	
 	proto->Set("setTcpActionInherited",  FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, NodeProfile, bool, &Nova::NodeProfile::setTcpActionInherited>));
@@ -185,12 +187,17 @@ Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
 		
 		conf->UpdateProfile("default");
 	
-		if (oldName != newProfile->m_pfile->m_name) {
+		if(oldName.compare(newProfile->m_pfile->m_name)) 
+		{
 			if(!conf->RenameProfile(oldName, newProfile->m_pfile->m_name))
 			{
 				std::cout << "Couldn't rename profile " << oldName << " to " << newProfile->m_pfile->m_name << std::endl;
 			}
 		}
+		
+		conf->UpdateNodeMacs(newProfile->m_pfile->m_name);
+		
+		conf->UpdateProfile(newProfile->m_pfile->m_parentProfile);
 	}
 	
 	conf->SaveAllTemplates();
