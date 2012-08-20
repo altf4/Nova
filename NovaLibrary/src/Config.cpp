@@ -24,6 +24,7 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>
+#include <iostream>
 
 #include "Config.h"
 #include "Logger.h"
