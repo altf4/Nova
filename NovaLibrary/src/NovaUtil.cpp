@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <sstream>
 #include <math.h>
+#include <unistd.h>
 
 using namespace std;
 
