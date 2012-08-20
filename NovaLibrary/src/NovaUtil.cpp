@@ -38,6 +38,11 @@ void CryptBuffer(u_char *buf, uint size, bool mode)
 	//TODO
 }
 
+std::string GetLocalIP(string dev)
+{
+	return GetLocalIP(dev.c_str());
+}
+
 std::string GetLocalIP(const char *dev)
 {
 	static struct ifreq ifreqs[20];
