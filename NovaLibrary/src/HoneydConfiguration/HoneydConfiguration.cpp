@@ -2330,7 +2330,7 @@ bool HoneydConfiguration::EnableNode(string nodeName)
 	// Make sure the node exists
 	if(!m_nodes.keyExists(nodeName))
 	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + nodeName + " that doesn't exist", "");
+		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + nodeName + ") that doesn't exist", "");
 		return false;
 	}
 
@@ -2348,7 +2348,7 @@ bool HoneydConfiguration::DisableNode(string nodeName)
 	if(!m_nodes.keyExists(nodeName))
 	{
 		LOG(ERROR, string("There was an attempt to disable a honeyd node (name = ")
-			+ nodeName + string(" that doesn't exist"), "");
+			+ nodeName + string(") that doesn't exist"), "");
 		return false;
 	}
 
@@ -2999,6 +2999,47 @@ string HoneydConfiguration::SanitizeProfileName(std::string oldName)
 	ReplaceString(newname, ";", "COLON");
 	ReplaceString(newname, "@", "AT");
 	return newname;
+}
+
+bool HoneydConfiguration::UpdateNodeMacs(std::string profileName)
+{
+	if(!m_profiles.keyExists(profileName) || !profileName.compare("") || !profileName.compare("default"))
+	{
+		LOG(WARNING, "Profile '" + profileName + "' is not a valid profile for updating node MACs.", "");
+		return false;
+	}
+
+	NodeProfile updateNodes = m_profiles[profileName];
+
+	vector<string> nodesToUpdate = updateNodes.m_nodeKeys;
+
+	for(uint i = 0; i < nodesToUpdate.size(); i++)
+	{
+		if(m_nodes.keyExists(nodesToUpdate[i]))
+		{
+			Node update = m_nodes[nodesToUpdate[i]];
+			update.m_MAC = m_macAddresses.GenerateRandomMAC(updateNodes.GetRandomVendor());
+			update.m_name = update.m_IP + " - " + update.m_MAC;
+
+			if(!m_nodes.keyExists(update.m_name))
+			{
+				m_nodes.erase(nodesToUpdate[i]);
+				m_nodes[update.m_name] = update;
+				nodesToUpdate.erase(nodesToUpdate.begin() + i);
+				nodesToUpdate.insert(nodesToUpdate.begin() + i, update.m_name);
+			}
+			else
+			{
+				// need to just make it try again.
+				LOG(ERROR, "A node with the name " + update.m_name + " already exists.", "");
+				return false;
+			}
+		}
+	}
+
+	updateNodes.m_nodeKeys = nodesToUpdate;
+
+	return true;
 }
 
 //This internal function recurses upward to determine whether or not the given profile has a personality
