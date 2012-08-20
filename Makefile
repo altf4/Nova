@@ -257,6 +257,7 @@ install-docs:
 	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
 	gzip -c Installer/Read/manpages/novagui.1 > Installer/Read/manpages/novagui.1.gz
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
+	gzip -c Installer/Read/manpages/novaweb.1 > Installer/Read/manpages/novaweb.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
 install-web:
@@ -329,7 +330,6 @@ reset-debug:
 	$(MAKE) clean
 	$(MAKE) debug
 	$(MAKE) novagui-debug
-	$(MAKE) hhconfig-debug
 	$(MAKE) web
 	$(MAKE) test
 	$(MAKE) install
