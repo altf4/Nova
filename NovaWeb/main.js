@@ -1391,7 +1391,15 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
         honeydProfile.setEthernetInherited(profile.isEthernetInherited);
         honeydProfile.setUptimeInherited(profile.isUptimeInherited);
         honeydProfile.setDropRateInherited(profile.isDropRateInherited);
-        honeydProfile.SetDistribution(profile.distribution);
+        if(profile.generated == "true")
+        {
+          honeydProfile.SetGenerated(true);
+        }
+        else
+        {
+          honeydProfile.SetGenerated(false);
+        }
+        honeydProfile.SetDistribution(parseFloat(profile.distribution));
 
 	// Add new ports
 	var portName;
