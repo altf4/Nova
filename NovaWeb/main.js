@@ -1170,11 +1170,12 @@ everyone.now.deleteNodes = function(nodeNames, callback)
 			return;
 		}
 
-		if (!honeydConfig.SaveAll())
-		{
-			callback(false, "Failed to save XML templates");
-			return;
-		}
+	}
+	
+	if (!honeydConfig.SaveAll())
+	{
+		callback(false, "Failed to save XML templates");
+		return;
 	}
 	
 	callback(true, "");
