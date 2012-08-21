@@ -2200,6 +2200,11 @@ bool HoneydConfiguration::AddGroup(string groupName)
 
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
+	if (!oldName.compare("default") || !newName.compare("default"))
+	{
+		LOG(ERROR, "RenameProfile called with 'default' as an argument.", "");
+	}
+
 	//If item text and profile name don't match, we need to update
 	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)) && !(m_profiles.keyExists(newName)))
 	{
