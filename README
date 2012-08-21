@@ -60,7 +60,7 @@ Getting the newest code
 ===============================
 
 
-Go to the directy you wish to download the code to and run the following commands,
+Go to the directory you wish to download the code to and run the following commands,
 
     git clone git://github.com/DataSoft/Honeyd.git
     git clone git://github.com/DataSoft/Nova.git
@@ -69,7 +69,7 @@ This will create a "honeyd" and "Nova" folder with the source located inside. Fr
 they will be referred to as $HONEYD_SOURCE and $NOVA_SOURCE. 
 
 This will default to the "master" branch, which is the latest stable release. If you want to use
-the latest unstable version of NOVA, cd to the $NOVA_SOURCE folder and run the following,
+the latest unstable version of Nova, cd to the $NOVA_SOURCE folder and run the following,
 
 	git checkout integration
 
@@ -140,7 +140,7 @@ Launch with the command "novagui".
 ===============================
  Web Interface
 ===============================
-NOVA has a web interface that can be used for a GUI instead of the QT novagui.
+Nova has a web interface that can be used for a GUI instead of the QT novagui.
 
 There is a getDependencies.sh script provided to download the required dependencies.
 

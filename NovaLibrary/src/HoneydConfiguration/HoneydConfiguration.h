@@ -296,6 +296,14 @@ public:
 
     static std::string SanitizeProfileName(std::string pfilename);
 
+    // When a profile's ethernet vendor is changed, we need to update the MAC addresses
+    // for any node that uses that profile to reflect the change. This method will take
+    // in a profile's name, find it in the hashmap and then look at all of the nodes that
+    // it spawned and update the MAC address fields.
+    //	  profileName: name of the profile whose nodes need updating.
+    // Returns a bool indicating whether the update was successful or not.
+    bool UpdateNodeMacs(std::string profileName);
+
 	SubnetTable m_subnets;
 	PortTable m_ports;
 	ProfileTable m_profiles;

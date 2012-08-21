@@ -819,53 +819,8 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 	//Assign Ports
 	for(uint i = 0; i < p->m_ports.size(); i++)
 	{
-		uint randVal = rand() % 100;
-		//If our random value allows us to use the NodeProfile's port
-		if(p->m_ports[i].second.second > randVal )
-		{
-			newNode.m_ports.push_back(p->m_ports[i].first);
-			newNode.m_isPortInherited.push_back(true);
-		}
-		else
-		{
-			//Look up the port
-			Port *portPtr = &m_ports[p->m_ports[i].first];
-			if(portPtr == NULL)
-			{
-				LOG(ERROR, "Unable to retrieve expected port '" + p->m_ports[i].first + "'!", "");
-				return false;
-			}
-
-			string portName = portPtr->m_portNum + "_" + portPtr->m_type + "_";
-
-			//Grab the default action for the profile depending on the type
-			string action = p->m_udpAction;
-			if(portPtr->m_type.compare("TCP"))
-			{
-				action = p->m_tcpAction;
-			}
-
-			//Validate or choose the default action for a closed port
-			if((!action.compare("block")) || (!action.compare("open")) || (!action.compare("reset")))
-			{
-				portName.append(action);
-			}
-			else
-			{
-				portName.append("reset");
-			}
-
-			//If the port exists
-			if(!m_ports.keyExists(portName))
-			{
-				LOG(ERROR, "No port '" + portName + "' exists in the HoneydConfiguration object!", "");
-				return false;
-			}
-
-			//Push back the closed or default action port
-			newNode.m_ports.push_back(portName);
-			newNode.m_isPortInherited.push_back(false);
-		}
+		newNode.m_ports.push_back(p->m_ports[i].first);
+		newNode.m_isPortInherited.push_back(false);
 	}
 
 	//Check validity of subnet
@@ -1329,6 +1284,7 @@ bool HoneydConfiguration::LoadProfilesFromTree(string parent)
 			else
 			{
 				LOG(ERROR, "Invalid XML Path "+string(value.first.data()), "");
+				return false;
 			}
 		}
 		return true;
@@ -1649,6 +1605,9 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	{
 		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
 		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
+		return false;
 	}
 	return true;
 }
@@ -1719,7 +1678,11 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	{
 		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
 		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
+		return false;
 	}
+
 	return true;
 }
 
@@ -1816,6 +1779,9 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	{
 		LOG(ERROR, "Problem loading Profiles: " + string(e.what()) + ".", "");
 		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
+		return false;
 	}
 	return true;
 }
@@ -1877,7 +1843,10 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading groups: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
+		LOG(ERROR, "Problem loading node group: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
+		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
@@ -1893,7 +1862,7 @@ bool HoneydConfiguration::LoadNodeKeys()
 	}
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		NodeProfile * p = &m_profiles[it->second.m_pfile];
+		NodeProfile *p = &m_profiles[it->second.m_pfile];
 		if(p == NULL)
 		{
 			LOG(ERROR, "Unable to locate node profile '" + it->second.m_pfile + "'!", "");
@@ -2245,6 +2214,11 @@ bool HoneydConfiguration::AddGroup(string groupName)
 
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
+	if (!oldName.compare("default") || !newName.compare("default"))
+	{
+		LOG(ERROR, "RenameProfile called with 'default' as an argument.", "");
+	}
+
 	//If item text and profile name don't match, we need to update
 	if(oldName.compare(newName) && (m_profiles.keyExists(oldName)) && !(m_profiles.keyExists(newName)))
 	{
@@ -2330,7 +2304,7 @@ bool HoneydConfiguration::EnableNode(string nodeName)
 	// Make sure the node exists
 	if(!m_nodes.keyExists(nodeName))
 	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + nodeName + " that doesn't exist", "");
+		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + nodeName + ") that doesn't exist", "");
 		return false;
 	}
 
@@ -2348,7 +2322,7 @@ bool HoneydConfiguration::DisableNode(string nodeName)
 	if(!m_nodes.keyExists(nodeName))
 	{
 		LOG(ERROR, string("There was an attempt to disable a honeyd node (name = ")
-			+ nodeName + string(" that doesn't exist"), "");
+			+ nodeName + string(") that doesn't exist"), "");
 		return false;
 	}
 
@@ -2648,6 +2622,9 @@ bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirecti
 	}
 	if(down)
 	{
+		ptree pt;
+		pt.clear();
+		p.m_tree.put_child("profiles", pt);
 		//Find all children
 		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
 		{
@@ -2999,6 +2976,47 @@ string HoneydConfiguration::SanitizeProfileName(std::string oldName)
 	ReplaceString(newname, ";", "COLON");
 	ReplaceString(newname, "@", "AT");
 	return newname;
+}
+
+bool HoneydConfiguration::UpdateNodeMacs(std::string profileName)
+{
+	if(!m_profiles.keyExists(profileName) || !profileName.compare("") || !profileName.compare("default"))
+	{
+		LOG(WARNING, "Profile '" + profileName + "' is not a valid profile for updating node MACs.", "");
+		return false;
+	}
+
+	NodeProfile updateNodes = m_profiles[profileName];
+
+	vector<string> nodesToUpdate = updateNodes.m_nodeKeys;
+
+	for(uint i = 0; i < nodesToUpdate.size(); i++)
+	{
+		if(m_nodes.keyExists(nodesToUpdate[i]))
+		{
+			Node update = m_nodes[nodesToUpdate[i]];
+			update.m_MAC = m_macAddresses.GenerateRandomMAC(updateNodes.GetRandomVendor());
+			update.m_name = update.m_IP + " - " + update.m_MAC;
+
+			if(!m_nodes.keyExists(update.m_name))
+			{
+				m_nodes.erase(nodesToUpdate[i]);
+				m_nodes[update.m_name] = update;
+				nodesToUpdate.erase(nodesToUpdate.begin() + i);
+				nodesToUpdate.insert(nodesToUpdate.begin() + i, update.m_name);
+			}
+			else
+			{
+				// need to just make it try again.
+				LOG(ERROR, "A node with the name " + update.m_name + " already exists.", "");
+				return false;
+			}
+		}
+	}
+
+	updateNodes.m_nodeKeys = nodesToUpdate;
+
+	return true;
 }
 
 //This internal function recurses upward to determine whether or not the given profile has a personality

@@ -653,7 +653,7 @@ app.get('/createNewUser', passport.authenticate('basic', { session: false }), fu
 app.get('/welcome', passport.authenticate('basic', { session: false }), function(req, res) {res.render('welcome.jade');});
 app.get('/setup1', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup1.jade');});
 app.get('/setup2', passport.authenticate('basic', { session: false }), function(req, res) {renderBasicOptions('setup2.jade', res, req)});
-app.get('/setup3', passport.authenticate('basic', { session: false }), function(req, res) {res.render('setup3.jade');});
+app.get('/setup3', passport.authenticate('basic', { session: false }), function(req, res) {res.render('hhautoconfig.jade', {user: req.user, INTERFACES: config.ListInterfaces().sort(), SCANERROR: "" });});
 app.get('/CaptureTrainingData', passport.authenticate('basic', { session: false }), function(req, res) {res.render('captureTrainingData.jade');});
 app.get('/about', passport.authenticate('basic', { session: false }), function(req, res) {res.render('about.jade');});
 
@@ -704,7 +704,7 @@ app.post('/createInitialUser', passport.authenticate('basic', { session: false }
       {
 	   	dbqCredentialsInsertUser.run(userName, HashPassword(password));
 		dbqCredentialsDeleteUser.run('nova');
-		res.render('saveRedirect.jade', { locals: {redirectLink: "setup2"}})	
+		res.render('saveRedirect.jade', { locals: {redirectLink: "/setup2"}});	
         return;
       } 
       else
@@ -859,7 +859,6 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
 		"SA_MAX_ATTEMPTS","SA_SLEEP_DURATION","USER_HONEYD_CONFIG","DOPPELGANGER_IP","DOPPELGANGER_INTERFACE","DM_ENABLED",
 		"ENABLED_FEATURES","TRAINING_CAP_FOLDER","THINNING_DISTANCE","SAVE_FREQUENCY","DATA_TTL","CE_SAVE_FILE","SMTP_ADDR",
 		"SMTP_PORT","SMTP_DOMAIN","RECIPIENTS","SERVICE_PREFERENCES","HAYSTACK_STORAGE"];
-  
   
   Validator.prototype.error = function(msg)
   {
@@ -1043,7 +1042,21 @@ app.post('/configureNovaSave', passport.authenticate('basic', { session: false }
   	  }
     }
     
-    res.render('saveRedirect.jade', { locals: {redirectLink: "/suspects"}}) 
+    var route = "/suspects";
+    if(req.body['route'] != undefined)
+    {
+      route = req.body['route'];
+      if(route == 'manconfig')
+      {
+        route = 'configHoneydProfiles';
+      }
+      else
+      {
+        route = 'autoConfig';
+      }
+    }
+    
+    res.render('saveRedirect.jade', { locals: {redirectLink: route}}) 
   }
 });
 
@@ -1157,11 +1170,12 @@ everyone.now.deleteNodes = function(nodeNames, callback)
 			return;
 		}
 
-		if (!honeydConfig.SaveAll())
-		{
-			callback(false, "Failed to save XML templates");
-			return;
-		}
+	}
+	
+	if (!honeydConfig.SaveAll())
+	{
+		callback(false, "Failed to save XML templates");
+		return;
 	}
 	
 	callback(true, "");
@@ -1329,7 +1343,6 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
         console.log("Got profile " + profile.name + "_" + profile.personality);
         console.log("Got portlist " + ports.name);
         console.log("Got ethVendorList " + ethVendorList);
-        console.log("addOrEdit is " + addOrEdit);
 
         // Move the Javascript object values to the C++ object
         honeydProfile.SetName(profile.name);
@@ -1361,7 +1374,14 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
         }
 
         honeydProfile.SetUptimeMin(profile.uptimeMin);
-        honeydProfile.SetUptimeMax(profile.uptimeMax);
+        if(profile.uptimeMax != undefined)
+        {
+          honeydProfile.SetUptimeMax(profile.uptimeMax);
+        }
+        else
+        {
+          honeydProfile.SetUptimeMax(profile.uptimeMin);
+        }
         honeydProfile.SetDropRate(profile.dropRate);
         honeydProfile.SetParentProfile(profile.parentProfile);
         
@@ -1372,6 +1392,15 @@ everyone.now.SaveProfile = function(profile, ports, callback, ethVendorList, add
         honeydProfile.setEthernetInherited(profile.isEthernetInherited);
         honeydProfile.setUptimeInherited(profile.isUptimeInherited);
         honeydProfile.setDropRateInherited(profile.isDropRateInherited);
+        if(profile.generated == "true")
+        {
+          honeydProfile.SetGenerated(true);
+        }
+        else
+        {
+          honeydProfile.SetGenerated(false);
+        }
+        honeydProfile.SetDistribution(parseFloat(profile.distribution));
 
 	// Add new ports
 	var portName;
@@ -1555,6 +1584,10 @@ everyone.now.ClearHostileEvent = function(id, callback) {
 		callback("true");
 	} 
   );
+}
+
+everyone.now.GetLocalIP = function(interface, callback) {
+	callback(nova.GetLocalIP(interface));
 }
 
 var distributeSuspect = function(suspect)

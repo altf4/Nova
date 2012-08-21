@@ -144,7 +144,12 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 				break;
 			}
 		}
-		if(!vendorFound)
+		if(!parentProfile.m_name.compare("default"))
+		{
+			profileToReturn.m_ethernetVendors = m_vendor_dist;
+			profileToReturn.m_inherited[ETHERNET] = false;
+		}
+		else if(!vendorFound)
 		{
 			profileToReturn.m_ethernetVendors = m_vendor_dist;
 			profileToReturn.m_inherited[ETHERNET] = false;
@@ -167,6 +172,7 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 				if(!parentProfile.m_ports[i].first.compare(portToAdd.first))
 				{
 					portToAdd.second.first = true;
+					break;
 				}
 			}
 			profileToReturn.m_ports.push_back(portToAdd);

@@ -24,6 +24,7 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>
+#include <iostream>
 
 #include "Config.h"
 #include "Logger.h"
@@ -116,7 +117,10 @@ Config::Config()
 	pthread_rwlock_init(&m_lock, NULL);
 
 	m_pathPrefix = GetEnvVariable("NOVA_PATH_PREFIX");
-	cout << "Using prefix '" + m_pathPrefix + "' on paths" << endl;
+	if (m_pathPrefix.compare(""))
+	{
+		cout << "Using prefix '" + m_pathPrefix + "' on paths" << endl;
+	}
 	LoadPaths();
 
 	if(!InitUserConfigs(m_pathHome))

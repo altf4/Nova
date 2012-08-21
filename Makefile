@@ -257,6 +257,7 @@ install-docs:
 	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
 	gzip -c Installer/Read/manpages/novagui.1 > Installer/Read/manpages/novagui.1.gz
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
+	gzip -c Installer/Read/manpages/novaweb.1 > Installer/Read/manpages/novaweb.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
 install-web:
@@ -316,6 +317,7 @@ reinstall: uninstall-files
 
 reinstall-debug: uninstall-files
 	$(MAKE) install
+	novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
 # Does a fresh uninstall, clean, build, and install
 reset: uninstall-files
@@ -325,12 +327,10 @@ reset: uninstall-files
 	$(MAKE) install
 
 reset-debug: 
-	$(MAKE) uninstall-files
 	$(MAKE) clean
 	$(MAKE) debug
 	$(MAKE) novagui-debug
-	$(MAKE) hhconfig-debug
 	$(MAKE) web
 	$(MAKE) test
-	$(MAKE) install
+	$(MAKE) reinstall-debug
 
