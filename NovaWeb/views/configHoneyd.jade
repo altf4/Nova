@@ -43,6 +43,9 @@ block headerAdditions
       
       var checkAgainst = checkedBox.getAttribute("id");
       
+      var checkedInterface = checkedBox.value;
+      var ip = now.GetLocalIP(checkedInterface, UpdateIpField);
+      
       if(forLength == 1)
       {
         checkedBox.checked = true;
@@ -61,9 +64,6 @@ block headerAdditions
       {
         checkedBox.checked = true; 
       }
-
-      var checkedInterface = checkedBox.value;
-      var ip = now.GetLocalIP(checkedInterface, UpdateIpField);
     }
 
     function UpdateIpField(ip) {
