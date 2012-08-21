@@ -317,7 +317,7 @@ reinstall: uninstall-files
 
 reinstall-debug: uninstall-files
 	$(MAKE) install
-	novacli write_setting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
+	novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
 # Does a fresh uninstall, clean, build, and install
 reset: uninstall-files
