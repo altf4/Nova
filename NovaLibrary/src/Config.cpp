@@ -117,7 +117,7 @@ Config::Config()
 	pthread_rwlock_init(&m_lock, NULL);
 
 	m_pathPrefix = GetEnvVariable("NOVA_PATH_PREFIX");
-	if (!m_pathPrefix.compare(""))
+	if (m_pathPrefix.compare(""))
 	{
 		cout << "Using prefix '" + m_pathPrefix + "' on paths" << endl;
 	}
