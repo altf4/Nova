@@ -1862,7 +1862,7 @@ bool HoneydConfiguration::LoadNodeKeys()
 	}
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		NodeProfile * p = &m_profiles[it->second.m_pfile];
+		NodeProfile *p = &m_profiles[it->second.m_pfile];
 		if(p == NULL)
 		{
 			LOG(ERROR, "Unable to locate node profile '" + it->second.m_pfile + "'!", "");
