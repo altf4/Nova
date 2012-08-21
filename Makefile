@@ -317,6 +317,7 @@ reinstall: uninstall-files
 
 reinstall-debug: uninstall-files
 	$(MAKE) install
+	novacli write_setting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
 # Does a fresh uninstall, clean, build, and install
 reset: uninstall-files
@@ -326,11 +327,10 @@ reset: uninstall-files
 	$(MAKE) install
 
 reset-debug: 
-	$(MAKE) uninstall-files
 	$(MAKE) clean
 	$(MAKE) debug
 	$(MAKE) novagui-debug
 	$(MAKE) web
 	$(MAKE) test
-	$(MAKE) install
+	$(MAKE) reinstall-debug
 
