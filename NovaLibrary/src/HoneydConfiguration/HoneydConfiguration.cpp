@@ -1284,6 +1284,7 @@ bool HoneydConfiguration::LoadProfilesFromTree(string parent)
 			else
 			{
 				LOG(ERROR, "Invalid XML Path "+string(value.first.data()), "");
+				return false;
 			}
 		}
 		return true;
@@ -1604,6 +1605,9 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	{
 		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
 		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
+		return false;
 	}
 	return true;
 }
@@ -1674,7 +1678,11 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	{
 		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
 		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
+		return false;
 	}
+
 	return true;
 }
 
@@ -1771,6 +1779,9 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	{
 		LOG(ERROR, "Problem loading Profiles: " + string(e.what()) + ".", "");
 		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
+		return false;
 	}
 	return true;
 }
@@ -1832,7 +1843,10 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading groups: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
+		LOG(ERROR, "Problem loading node group: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
+		return false;
+	} catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
