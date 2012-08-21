@@ -789,7 +789,7 @@ script
                         var behaviorContainer = document.createElement("td");
                         var behaviorSelect = document.createElement("select");
                         behaviorSelect.id = 'portBehavior' + portUID;
-                        behaviorSelect.onchange = 'portBehaviorChanged()';
+                        behaviorSelect.onchange = portBehaviorChanged;
                         
                          
                         options = ["reset", "block", "open", "script"];
