@@ -39,7 +39,6 @@ block headerAdditions
 
     function checkOnlyOne(checkedBox)
     {
-      console.log(checkedBox);
       var forLength = document.getElementById("length").getAttribute("value");
       
       var checkAgainst = checkedBox.getAttribute("id");
@@ -106,10 +105,12 @@ block headerAdditions
     require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
 
     function(DataGrid,ObjectStore){
-      var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
-      grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
-      dojo.byId("gridDiv").appendChild(grid.domNode);
-      checkOnlyOne(if0);
+        var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
+        grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
+        dojo.byId("gridDiv").appendChild(grid.domNode);
+      now.ready(function() {
+        checkOnlyOne(if0);
+      });
     });
 
   script(type="text/javascript")
