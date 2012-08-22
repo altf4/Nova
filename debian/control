@@ -17,7 +17,7 @@ Description: Anti-Reconnaissance System
  Nova comes in two main halves: novad and its user interfaces. novad is a 
  network daemon which listens to network traffic and classifies suspects
  using the k-NN statistical classification algorithm. User interfaces can 
- take several forms, including novaweb (a web interface), novagui (a local Qt 
- interface), and novacli (a command line interface).
+ take several forms, including novaweb (a web interface), and novacli (a 
+ command line interface).
  .
  Nova is Free Software written primarily in C++

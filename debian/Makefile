@@ -8,7 +8,7 @@ release:
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
 
-release-helper: novad-release novagui-release novacli-release
+release-helper: novad-release novacli-release
 
 #Debug target
 debug:
@@ -16,7 +16,7 @@ debug:
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
 
-debug-helper: novad-debug novagui-debug novacli-debug
+debug-helper: novad-debug novacli-debug
 
 #Nova Library
 novalib-release:
@@ -54,15 +54,6 @@ novacli-debug:
 	$(MAKE) -C NovaCLI/Debug
 	cp NovaCLI/Debug/novacli NovaCLI/
 
-#novagui
-novagui-release:
-	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI release
-
-novagui-debug:
-	cd NovaGUI; qmake -recursive CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI debug
-
 #Web UI
 web:
 	cd NovaWeb;npm --unsafe-perm install
@@ -92,7 +83,6 @@ clean: clean-debug clean-release clean-test
 	rm -f Installer/Read/manpages/*.gz
 	#remove binaries from staging area
 	rm -f NovaCLI/novacli
-	rm -f NovaGUI/novagui
 	rm -f Novad/novad
 	rm -f Nova_UI_Core/libNova_UI_Core.so
 	rm -f NovaLibrary/libNovaLibrary.a
@@ -102,8 +92,6 @@ clean-debug:
 	$(MAKE) -C Nova_UI_Core/Debug clean
 	$(MAKE) -C Novad/Debug clean
 	$(MAKE) -C NovaCLI/Debug clean
-	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI debug-clean
 	rm -f Nova_UI_Core/Debug/Nova_UI_Core
 
 clean-release:
@@ -111,8 +99,6 @@ clean-release:
 	$(MAKE) -C Nova_UI_Core/Release clean
 	$(MAKE) -C Novad/Release clean
 	$(MAKE) -C NovaCLI/Release clean
-	cd NovaGUI; qmake -nodepend CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI release-clean
 	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
 clean-test:
@@ -135,7 +121,6 @@ clean-web:
 install: install-data install-docs
 	mkdir -p $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/usr/lib
-	install NovaGUI/novagui $(DESTDIR)/usr/bin
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 	install Novad/novad $(DESTDIR)/usr/bin
 	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
@@ -148,7 +133,6 @@ install-data:
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/usr/share/applications
-	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
@@ -179,7 +163,6 @@ install-pcap-debug:
 install-docs:
 	# TODO: Combine man pages
 	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
-	gzip -c Installer/Read/manpages/novagui.1 > Installer/Read/manpages/novagui.1.gz
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
@@ -194,14 +177,12 @@ uninstall: uninstall-files uninstall-permissions
 uninstall-files:
 	rm -rf $(DESTDIR)/etc/nova
 	rm -rf $(DESTDIR)/usr/share/nova
-	rm -f $(DESTDIR)/usr/bin/novagui
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
-	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 

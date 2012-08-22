@@ -61,16 +61,6 @@ Thumbs.db
 # Nova Specific Files #
 #######################
 
-#NovaGUI
-NovaGUI/.settings/
-NovaGUI/Makefile
-NovaGUI/Makefile.Debug
-NovaGUI/Makefile.Release
-NovaGUI/novagui
-NovaGUI/debug/
-NovaGUI/release/
-NovaGUI/UI_headers/
-
 #Novad
 Novad/Release/novad
 Novad/Debug/novad

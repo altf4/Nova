@@ -125,24 +125,9 @@ Instructions for installing the GUIs follow below.
 Refer to the Help tab in the GUI and the Nova wiki for more information.
 
 ===============================
- QT Interface
-===============================
-
-Getting dependencies for the QT GUI,
-	sudo apt-get install libqt4-dev
-
-The QT GUI (novagui) is a simple C++/QT interface for accessing nova and it's configuration on 
-the same machine you're running it on. To build and install,
-    Step 1: cd $NOVA_SOURCE
-    Step 2: make novagui-release
-    Step 3: make install
-
-Launch with the command "novagui".
-
-===============================
  Web Interface
 ===============================
-Nova has a web interface that can be used for a GUI instead of the QT novagui.
+Nova's main GUI is a web interface run with a nodejs web server.
 
 There is a getDependencies.sh script provided to download the required dependencies.
 
