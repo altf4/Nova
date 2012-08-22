@@ -99,7 +99,7 @@ Change into the $NOVAD_SOURCE folder where the novad source code resides.
 
 To build and install run the commands,
 
-    Step 1: automake
+    Step 1: autoconf
     Step 2: ./configure
     Step 3: make
     Step 4: sudo make install
