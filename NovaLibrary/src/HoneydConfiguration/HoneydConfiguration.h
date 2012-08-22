@@ -192,7 +192,7 @@ public:
 	//This function allows access to Port objects by their name
 	// portName: the name or key of the Port
 	// Returns a pointer to the Port object or NULL if the key doesn't exist
-	Port *GetPort(std::string portName);
+	Port GetPort(std::string portName);
 
 	//This function allows the caller to find out if the given MAC string is taken by a node
 	// mac: the string representation of the MAC address

@@ -143,6 +143,11 @@ bool HoneydConfiguration::SaveAllTemplates()
 	m_portTree.clear();
 	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
 	{
+		if (!it->second.m_portName.compare(""))
+		{
+			LOG(ERROR, "Empty port in the ptree. Not being written out: " + it->first, "");
+			continue;
+		}
 		//Put in required values
 		propTree = it->second.m_tree;
 		propTree.put<string>("name", it->second.m_portName);
@@ -694,6 +699,18 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 //	Returns a string containing the name of the port or an empty string if it fails
 string HoneydConfiguration::AddPort(Port pr)
 {
+	if (!pr.m_portName.compare(""))
+	{
+		LOG(ERROR, "Unable to add port with empty port name!", "");
+		return "";
+	}
+
+	if (!pr.m_portNum.compare(""))
+	{
+		LOG(ERROR, "Unable to add port with empty port number!", "");
+		return "";
+	}
+
 	if(m_ports.find(pr.m_portName) != m_ports.end())
 	{
 		return pr.m_portName;
@@ -1125,13 +1142,15 @@ NodeProfile *HoneydConfiguration::GetProfile(string profileName)
 //This function allows access to Port objects by their name
 // portName: the name or key of the Port
 // Returns a pointer to the Port object or NULL if the key doesn't exist
-Port *HoneydConfiguration::GetPort(string portName)
+Port HoneydConfiguration::GetPort(string portName)
 {
 	if(m_ports.keyExists(portName))
 	{
-		return &m_ports[portName];
+		return m_ports[portName];
 	}
-	return NULL;
+
+	Port p;
+	return p;
 }
 
 //This function allows the caller to find out if the given MAC string is taken by a node
