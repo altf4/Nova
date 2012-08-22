@@ -145,7 +145,7 @@ SSL certificate and private key, put them in /usr/share/nova/NovaWeb/servercert.
 
 To start the web interface, run the command "novaweb" and go to https://localhost:8080 in
 a web browser (default login is username "nova" and password "toor"). 
-"novaweb -debug" may provide more information if there are problems. Novaweb
+"novaweb --debug" may provide more information if there are problems. Novaweb
 launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
 The command "forever list" can be useful for seeing the current status, and it can be stopped with
 "forever stop index (usually 0)". See the forever documentation for more information.
