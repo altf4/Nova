@@ -5,7 +5,6 @@ block headerAdditions
 
   script
     var grid;
-    var names = [];
     
     function ipTypeChanged() {
       var ipEditEnabled;
@@ -21,13 +20,18 @@ block headerAdditions
      }
     
     function deleteSelectedItems() {
-      //var items = grid.selection.getSelected();
+      // This still isn't working properly, but I wanted to revert it to
+      // it's last point nonetheless. I have a question posted in stack overflow
+      // about it, if that doesn't bear any fruit than we may have to 
+      // move away from a DataGrid and try something else.
+      var items = grid.selection.getSelected();
+      var names = [];
       
-      /*dojo.forEach(items, function(selectedItem) {
+      dojo.forEach(items, function(selectedItem) {
         names.push(grid.store.getValues(selectedItem, "Name"));
-      });*/
+      });
      
-      //now.deleteNodes(names, errorMessageCallback);
+      now.deleteNodes(names, errorMessageCallback);
     }
 
     function errorMessageCallback(success, message) {
@@ -106,8 +110,8 @@ block headerAdditions
 
     function(DataGrid,ObjectStore){
         var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
-        grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
-        dojo.connect(grid, "onSelected", grid, function(idx){
+        grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:100, autoWidth:true});
+        /*dojo.connect(grid, "onSelected", grid, function(idx){
           names.length = 0;
           if(!grid.store.isItemLoaded(grid.getItem(idx)))
           {
@@ -116,7 +120,7 @@ block headerAdditions
           }
           names.push(grid.store.getValues(grid.getItem(idx), "Name"));
           console.log("after select: " + names);
-        });
+        });*/
         dojo.byId("gridDiv").appendChild(grid.domNode);
       now.ready(function() {
         checkOnlyOne(if0);
@@ -173,6 +177,7 @@ block content
   br
   form(method="post", action="/editHoneydNodesSave")
     h2 Create Honeyd Nodes
+    //input(type='hidden', name='subnet', id='subnet', value='')
     label Profile
     select(name="profile")
       each profile, i in profiles

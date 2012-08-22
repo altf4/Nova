@@ -45,7 +45,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSubnetNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetSubnetNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScriptNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetScriptNames>));
 
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
+	//tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteNode>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("CheckNotInheritingEmptyProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::CheckNotInheritingEmptyProfile>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UpdateNodeMacs"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::UpdateNodeMacs>));
@@ -57,6 +57,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -72,6 +73,29 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
 	obj->Wrap(args.This());
 
 	return args.This();
+}
+
+Handle<Value> HoneydConfigBinding::DeleteProfile(const Arguments& args)
+{
+  HandleScope scope;
+  HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+  
+  if(args.Length() != 1)
+  {
+    return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter")));
+  }
+  
+  std::string profileToDelete = cvv8::CastFromJS<string>(args[0]);
+  bool otherwise = true;
+  
+  if(obj->m_conf->m_profiles.keyExists(profileToDelete))
+  {
+    return scope.Close(Boolean::New(obj->m_conf->DeleteProfile(profileToDelete)));
+  }
+  else
+  {
+    return scope.Close(Boolean::New(otherwise));
+  }
 }
 
 Handle<Value> HoneydConfigBinding::AddPort(const Arguments& args)
