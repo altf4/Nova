@@ -100,7 +100,7 @@ TEST_F(HoneydConfigurationTest, test_Port)
 	}
 	while(!expectedPorts.empty())
 	{
-		EXPECT_TRUE(m_config->GetPort(expectedPorts.back()) != NULL);
+		EXPECT_TRUE(m_config->GetPort(expectedPorts.back()).m_portName.compare(""));
 		expectedPorts.pop_back();
 	}
 }

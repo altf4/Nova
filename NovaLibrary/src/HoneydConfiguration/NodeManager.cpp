@@ -469,26 +469,26 @@ bool NodeManager::RemoveNodes(int num_nodes)
 			//Track ports
 			for(unsigned int j = 0; j < lastNode->m_ports.size(); j++)
 			{
-				Port *curPort = m_hdconfig->GetPort(lastNode->m_ports[j]);
-				if(curPort == NULL)
+				Port curPort = m_hdconfig->GetPort(lastNode->m_ports[j]);
+				if(!curPort.m_portName.compare(""))
 				{
 					LOG(ERROR, "Unable to find expected Port " + lastNode->m_ports[j] + ".", "");
 					return false;
 				}
 				for(unsigned int k = 0; k < pCounter->m_portCounters.size(); k++)
 				{
-					Port *comparePort = m_hdconfig->GetPort(pCounter->m_portCounters[k].m_portName);
-					if(comparePort == NULL)
+					Port comparePort = m_hdconfig->GetPort(pCounter->m_portCounters[k].m_portName);
+					if(!comparePort.m_portName.compare(""))
 					{
 						LOG(ERROR, "Unable to find expected Port " + pCounter->m_portCounters[k].m_portName + ".", "");
 						return false;
 					}
 					//If both the port number and protocol are the same
-					if((!comparePort->m_portNum.compare(curPort->m_portNum))
-					&& (!comparePort->m_type.compare(curPort->m_type)))
+					if((!comparePort.m_portNum.compare(curPort.m_portNum))
+					&& (!comparePort.m_type.compare(curPort.m_type)))
 					{
 						//If the port is the same
-						if(!comparePort->m_portName.compare(curPort->m_portName))
+						if(!comparePort.m_portName.compare(curPort.m_portName))
 						{
 							pCounter->m_portCounters[k].m_count += (1 - pCounter->m_portCounters[k].m_increment);
 						}
@@ -567,26 +567,26 @@ bool NodeManager::RemoveNodes(int num_nodes)
 			//Track ports
 			for(unsigned int j = 0; j < lastNode->m_ports.size(); j++)
 			{
-				Port *curPort = m_hdconfig->GetPort(lastNode->m_ports[j]);
-				if(curPort == NULL)
+				Port curPort = m_hdconfig->GetPort(lastNode->m_ports[j]);
+				if(!curPort.m_portName.compare(""))
 				{
 					LOG(ERROR, "Unable to find expected Port " + lastNode->m_ports[j] + ".", "");
 					continue;
 				}
 				for(unsigned int k = 0; k < pCounter->m_portCounters.size(); k++)
 				{
-					Port *comparePort = m_hdconfig->GetPort(pCounter->m_portCounters[k].m_portName);
-					if(comparePort == NULL)
+					Port comparePort = m_hdconfig->GetPort(pCounter->m_portCounters[k].m_portName);
+					if(!comparePort.m_portName.compare(""))
 					{
 						LOG(ERROR, "Unable to find expected Port " + pCounter->m_portCounters[k].m_portName + ".", "");
 						continue;
 					}
 					//If both the port number and protocol are the same
-					if((!comparePort->m_portNum.compare(curPort->m_portNum))
-					&& (!comparePort->m_type.compare(curPort->m_type)))
+					if((!comparePort.m_portNum.compare(curPort.m_portNum))
+					&& (!comparePort.m_type.compare(curPort.m_type)))
 					{
 						//If the port is the same
-						if(!comparePort->m_portName.compare(curPort->m_portName))
+						if(!comparePort.m_portName.compare(curPort.m_portName))
 						{
 							pCounter->m_portCounters[k].m_count += (1 - pCounter->m_portCounters[k].m_increment);
 						}
@@ -851,26 +851,26 @@ bool NodeManager::AdjustProfiles(int targetNodeCount)
 					//Recalculate the ports
 					for(unsigned int j = 0; j < lowCounter->m_portCounters.size(); j++)
 					{
-						Port *lowPort = &m_hdconfig->m_ports[lowCounter->m_portCounters[j].m_portName];
-						if(lowPort == NULL)
+						Port lowPort = m_hdconfig->GetPort(lowCounter->m_portCounters[j].m_portName);
+						if(!lowPort.m_portName.compare(""))
 						{
 							LOG(ERROR, "Unable to retrieve expected port '" + lowCounter->m_portCounters[j].m_portName + "'.", "");
 							return false;
 						}
 						for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
 						{
-							Port *curPort = &m_hdconfig->m_ports[curNode->m_ports[k]];
-							if(curPort == NULL)
+							Port curPort = m_hdconfig->GetPort(curNode->m_ports[k]);
+							if(!curPort.m_portName.compare(""))
 							{
 								LOG(ERROR, "Unable to retrieve expected port '" + curNode->m_ports[k] + "'.", "");
 								return false;
 							}
 
 							//If the current node port is the same protocol and number as the counter
-							if((!curPort->m_type.compare(lowPort->m_type)) && (!curPort->m_portNum.compare(lowPort->m_portNum)))
+							if((!curPort.m_type.compare(lowPort.m_type)) && (!curPort.m_portNum.compare(lowPort.m_portNum)))
 							{
 								//If the node used this port
-								if(!curPort->m_portName.compare(curNode->m_ports[k]))
+								if(!curPort.m_portName.compare(curNode->m_ports[k]))
 								{
 									lowCounter->m_portCounters[j].m_count += (1 - lowCounter->m_portCounters[j].m_increment);
 								}
@@ -886,8 +886,8 @@ bool NodeManager::AdjustProfiles(int targetNodeCount)
 					curNode->m_isPortInherited.clear();
 					for(unsigned int j = 0; j < highCounter->m_portCounters.size(); j++)
 					{
-						Port *curPort = &m_hdconfig->m_ports[highCounter->m_portCounters[j].m_portName];
-						if(curPort == NULL)
+						Port curPort = m_hdconfig->GetPort(highCounter->m_portCounters[j].m_portName);
+						if(!curPort.m_portName.compare(""))
 						{
 							LOG(ERROR, "Unable to retrieve expected port '" + highCounter->m_portCounters[j].m_portName + "'.", "");
 							return false;
@@ -896,25 +896,25 @@ bool NodeManager::AdjustProfiles(int targetNodeCount)
 						if(highCounter->m_portCounters[j].m_count > 0)
 						{
 							highCounter->m_portCounters[j].m_count -= (1 - highCounter->m_portCounters[j].m_increment);
-							curNode->m_ports.push_back(curPort->m_portName);
+							curNode->m_ports.push_back(curPort.m_portName);
 							curNode->m_isPortInherited.push_back(true);
 						}
 						else
 						{
 							highCounter->m_portCounters[j].m_count += highCounter->m_portCounters[j].m_increment;
-							string portString = curPort->m_portNum + "_" + curPort->m_type + "_";
+							string portString = curPort.m_portNum + "_" + curPort.m_type + "_";
 							string portAction = "block";
 
 							NodeProfile *curNodeProf = &m_hdconfig->m_profiles[curNode->m_pfile];
-							if((!curPort->m_type.compare("TCP")) && (!curNodeProf->m_tcpAction.compare("reset")))
+							if((!curPort.m_type.compare("TCP")) && (!curNodeProf->m_tcpAction.compare("reset")))
 							{
 								portAction = "reset";
 							}
-							if(m_hdconfig->GetPort(portString+portAction) == NULL)
+							if(!m_hdconfig->GetPort(portString+portAction).m_portName.compare(""))
 							{
-								Port newPort = *curPort;
-								curPort->m_portName = portString+portAction;
-								curPort->m_behavior = portAction;
+								Port newPort = curPort;
+								curPort.m_portName = portString+portAction;
+								curPort.m_behavior = portAction;
 								m_hdconfig->AddPort(newPort);
 							}
 							curNode->m_ports.push_back(portString+portAction);
@@ -1077,7 +1077,7 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 		PortCounter *lowPCounter = underPopulatedPorts.back();
 		underPopulatedPorts.pop_back();
 
-		Port *lowPort = &m_hdconfig->m_ports[lowPCounter->m_portName];
+		Port lowPort = m_hdconfig->GetPort(lowPCounter->m_portName);
 		NodeProfile * curProfile = &m_hdconfig->m_profiles[targetProfile->m_profile.m_name];
 		if(curProfile->m_nodeKeys.empty())
 		{
@@ -1089,13 +1089,13 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
 			for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
 			{
-				Port *nodePort = &m_hdconfig->m_ports[curNode->m_ports[k]];
+				Port nodePort = m_hdconfig->GetPort(curNode->m_ports[k]);
 
 				//If this port is a match
-				if(!curNode->m_ports[k].compare(lowPort->m_portName))
+				if(!curNode->m_ports[k].compare(lowPort.m_portName))
 				{
 					string behaviorStr = "reset";
-					curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
+					curNode->m_ports[k] = nodePort.m_portNum + "_" + nodePort.m_type + "_" + behaviorStr;
 					curNode->m_isPortInherited[k] = false;
 					// -= 1 - m_increment for port addition, -= m_increment for removing a blocked port
 					lowPCounter->m_count--;
@@ -1115,7 +1115,7 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 		PortCounter *highPCounter = overPopulatedPorts.back();
 		overPopulatedPorts.pop_back();
 
-		Port *highPort = &m_hdconfig->m_ports[highPCounter->m_portName];
+		Port highPort = m_hdconfig->GetPort(highPCounter->m_portName);
 
 		NodeProfile * curProfile = &m_hdconfig->m_profiles[targetProfile->m_profile.m_name];
 		if(curProfile->m_nodeKeys.empty())
@@ -1128,17 +1128,17 @@ bool NodeManager::AdjustPortsOnNodes(ProfileCounter *targetProfile)
 			Node *curNode = &m_hdconfig->m_nodes[curProfile->m_nodeKeys[j]];
 			for(unsigned int k = 0; k < curNode->m_ports.size(); k++)
 			{
-				Port *nodePort = &m_hdconfig->m_ports[curNode->m_ports[k]];
+				Port nodePort = m_hdconfig->GetPort(curNode->m_ports[k]);
 
 				//If this port is a match
-				if(!curNode->m_ports[k].compare(highPort->m_portName))
+				if(!curNode->m_ports[k].compare(highPort.m_portName))
 				{
 					string behaviorStr = "block";
-					if((!nodePort->m_type.compare("TCP")) && (!curProfile->m_tcpAction.compare("reset")))
+					if((!nodePort.m_type.compare("TCP")) && (!curProfile->m_tcpAction.compare("reset")))
 					{
 						behaviorStr = "reset";
 					}
-					curNode->m_ports[k] = nodePort->m_portNum + "_" + nodePort->m_type + "_" + behaviorStr;
+					curNode->m_ports[k] = nodePort.m_portNum + "_" + nodePort.m_type + "_" + behaviorStr;
 					curNode->m_isPortInherited[k] = false;
 					// += m_increment for blocking port , += (1-m_increment) for removing a used port
 					highPCounter->m_count++;
