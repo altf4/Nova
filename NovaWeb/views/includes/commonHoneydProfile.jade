@@ -1430,23 +1430,6 @@ script
                                 loaded = true;
                         }
 
-                        now.GetPorts(currentName, function(ports) 
-                        {
-                                if(currentName != "default" && ports[0].portNum == "0")
-                                {
-                                  window.location = "configHoneydProfiles";
-                                  return;
-                                }
-                                
-                                for (var i = 0; i < ports.length; i++) 
-                                {
-                                        portList[ports[i].portNum] = ports[i];
-                                        //ports[i].isInherited = true;
-                                        addPort(ports[i]);
-                                }
-                                portBehaviorChanged();
-                        });
-
                         now.GetProfile(currentName, function(pfile)
                         {
                                 if (pfile == undefined)
@@ -1557,6 +1540,22 @@ script
                                 dojo.byId("dropRate").value = profile.dropRate;
 
                                 inheritanceChanged();
+                        });
+                        
+                        now.GetPorts(currentName, function(ports) 
+                        {
+                                if(currentName != "default" && ports[0].portNum == "0")
+                                {
+                                  return;
+                                }
+                                
+                                for (var i = 0; i < ports.length; i++) 
+                                {
+                                        portList[ports[i].portNum] = ports[i];
+                                        //ports[i].isInherited = true;
+                                        addPort(ports[i]);
+                                }
+                                portBehaviorChanged();
                         });
                 });
         });

@@ -84,13 +84,8 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
   HandleScope scope;
   HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
   
-  std::cout << "In SetVendors" << std::endl;
-  
   std::vector<std::string> ethVendors = cvv8::CastFromJS<std::vector<std::string> >(args[0]);
   std::vector<double> ethDists = cvv8::CastFromJS<std::vector<double> >(args[1]);
-  
-  std::cout << "ethVendors length == " << ethVendors.size() << '\n';
-  std::cout << "ethDists length == " << ethDists.size() << std::endl;  
   
   std::vector<std::pair<std::string, double> > set;
   
