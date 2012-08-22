@@ -21,14 +21,13 @@ block headerAdditions
      }
     
     function deleteSelectedItems() {
-      /*var items = grid.selection.getSelected();
+      //var items = grid.selection.getSelected();
       
-      dojo.forEach(items, function(selectedItem) {
+      /*dojo.forEach(items, function(selectedItem) {
         names.push(grid.store.getValues(selectedItem, "Name"));
       });*/
      
       //now.deleteNodes(names, errorMessageCallback);
-
     }
 
     function errorMessageCallback(success, message) {
@@ -109,7 +108,12 @@ block headerAdditions
         var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
         grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
         dojo.connect(grid, "onSelected", grid, function(idx){
-          names = [];
+          names.length = 0;
+          if(!grid.store.isItemLoaded(grid.getItem(idx)))
+          {
+            console.log("Found unloaded item");
+            grid.store.loadItem(grid.getItem(idx));
+          }
           names.push(grid.store.getValues(grid.getItem(idx), "Name"));
           console.log("after select: " + names);
         });
