@@ -166,3 +166,9 @@ debian/files
 debian/nova/*
 /misc/ROCGraphGenerator/hostiles.txt
 /misc/ROCGraphGenerator/output.txt
+/configure
+/config.status
+/config.h
+/autom4te.cache/output.0
+/autom4te.cache/requests
+/autom4te.cache/traces.0
