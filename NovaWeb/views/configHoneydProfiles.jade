@@ -74,8 +74,9 @@ block headerAdditions
           /*set up data store*/
           var layoutProfiles = [[
             { field: "Name", name: "Profile Name", width: '300px' },
-            { field: "Personality", name: "Operating System Emulation", width: '300px' },
-            { field: "Ethernet", name: "Ethernet Vendor Emulation", width: '300px' },
+            { field: "Parent", name: "Parent Name", width: '200px' },
+            { field: "Personality", name: "Operating System Emulation", width: '500px' },
+            { field: "Ethernet", name: "Ethernet Vendor Emulation", width: '200px' },
           ]];
 
 block content
@@ -84,12 +85,14 @@ block content
     thead
       tr
         th Name
+        th Parent
         th Personality
         th Ethernet
     tbody
       each profile, i in profiles
         tr
           td #{profile.GetName()}
+          td #{profile.GetParentProfile()}
           td #{profile.GetPersonality()}
           td #{profile.GetVendors().sort()}
  
