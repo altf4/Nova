@@ -13,7 +13,9 @@ var trainingDb = new novaconfig.CustomizeTrainingBinding();
 var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
 var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 
-honeydConfig.LoadAllTemplates();
+if (!honeydConfig.LoadAllTemplates()) {
+	console.log("ERROR: Call to initial LoadAllTemplates failed!");
+}
 
 var fs = require('fs');
 var path = require('path');
@@ -35,6 +37,19 @@ var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
 var novadLogPath = NovaHomePath + "/../Logs/Nova.log";
 var novadLog = new Tail(NovaHomePath + "/../Nova.log");
+
+var RenderError = function (res, err, link) {
+	// Redirect them to the main page if no link was set
+	link = typeof link !== 'undefined' ? link : "/";
+
+	console.log("Reported Client Error: " + err);
+	res.render('error.jade', {
+		locals: {
+			redirectLink: link
+			, errorDetails: err
+		}
+	});
+}
 
 var HashPassword = function (password) {
 	var shasum = crypto.createHash('sha1');
@@ -96,7 +111,7 @@ function (username, password, done) {
 
 		dbqCredentialsRowCount.all(function (err, rowcount) {
 			if (err) {
-				console.log(err);
+				console.log("Database error: " + err);
 			}
 
 			// If there are no users, add default nova and log in
@@ -115,7 +130,7 @@ function (username, password, done) {
 
 				function selectCb(err, results) {
 					if (err) {
-						console.log(err);
+						console.log("Database error: " + err);
 					}
 
 					if (results[0] === undefined) {
@@ -189,13 +204,13 @@ initLogWatch();
 
 
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
-	// Hacky solution to make browsers launch a save as dialog
-	res.header('Content-Type', 'application/novaLog');
-
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
 		if (err) {
-			res.send(err);
+			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
+			return;
 		} else {
+			// Hacky solution to make browsers launch a save as dialog
+			res.header('Content-Type', 'application/novaLog');
 			var reply = data.toString();
 			res.send(reply);
 		}
@@ -205,7 +220,8 @@ app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}
 app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
 		if (err) {
-			res.send(err);
+			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
+			return;
 		} else {
 			var reply = data.toString().split(/(\r\n|\n|\r)/gm);
 			var html = "";
@@ -389,15 +405,8 @@ function renderBasicOptions(jadefile, res, req) {
 }
 
 app.get('/error', passport.authenticate('basic', {session: false}), function (req, res) {
-
-	console.log(req.query);
-
-	res.render('error.jade', {
-		locals: {
-			redirectLink: req.query["redirectLink"],
-			errorDetails: req.query["errorDetails"]
-		}
-	});
+	RenderError(res, req.query["errorDetails"], req.query["redirectLink"]);
+	return;
 });
 
 app.get('/basicOptions', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -405,7 +414,11 @@ app.get('/basicOptions', passport.authenticate('basic', {session: false}), funct
 });
 
 app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), function (req, res) {
-	honeydConfig.LoadAllTemplates();
+	if (!honeydConfig.LoadAllTemplates()) {
+		RenderError(res, "Unable to load honeyd configuration XML files")
+		return;
+	}
+
 	var nodeNames = honeydConfig.GetNodeNames();
 	var nodes = new Array();
 
@@ -427,7 +440,11 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 
 
 app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}), function (req, res) {
-	honeydConfig.LoadAllTemplates();
+	if (!honeydConfig.LoadAllTemplates()) {
+		RenderError(res, "Unable to load honeyd configuration XML files")
+		return;
+	}
+	
 	var profileNames = honeydConfig.GetProfileNames();
 	var profiles = [];
 	for (var i = 0; i < profileNames.length; i++) {
@@ -443,31 +460,35 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}
 });
 
 app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.query["node"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/configHoneydNodes");
+		return;
+	}
+	
 	var nodeName = req.query["node"];
 	var node = honeydConfig.GetNode(nodeName);
 
 	if (node == null) {
-		res.render('error.jade', {
-			locals: {
-				redirectLink: "/configHoneydNodes",
-				errorDetails: "Node does not exist"
-			}
-		});
-	} else {
-		res.render('editHoneydNode.jade', {
-			locals: {
-				oldName: nodeName,
-				INTERFACES: config.ListInterfaces().sort(),
-				profiles: honeydConfig.GetProfileNames(),
-				profile: node.GetProfile(),
-				ip: node.GetIP(),
-				mac: node.GetMAC()
-			}
-		})
+		RenderError(res, "Unable to fetch node: " + nodeName, "/configHoneydNodes");
+		return;
 	}
+	res.render('editHoneydNode.jade', {
+		locals: {
+			oldName: nodeName,
+			INTERFACES: config.ListInterfaces().sort(),
+			profiles: honeydConfig.GetProfileNames(),
+			profile: node.GetProfile(),
+			ip: node.GetIP(),
+			mac: node.GetMAC()
+		}
+	})
 });
 
 app.get('/editHoneydProfile', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.query["profile"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/configHoneydNodes");
+		return;
+	}
 	profileName = req.query["profile"];
 
 	res.render('editHoneydProfile.jade', {
@@ -484,6 +505,10 @@ app.get('/editHoneydProfile', passport.authenticate('basic', {session: false}), 
 
 
 app.get('/addHoneydProfile', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.query["parent"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/configHoneydNodes");
+		return;
+	}
 	parentName = req.query["parent"];
 
 	res.render('addHoneydProfile.jade', {
@@ -510,17 +535,18 @@ app.get('/customizeTraining', passport.authenticate('basic', {session: false}), 
 });
 
 app.get('/importCapture', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.query["trainingSession"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.");
+		return;
+	}
+
 	var trainingSession = req.query["trainingSession"];
 	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/capture.dump";
 	var ips = trainingDb.GetCaptureIPs(trainingSession);
 
-	if (ips == undefined) {
-		res.render('error.jade', {
-			locals: {
-				redirectLink: "/",
-				errorDetails: "Unable to read capture dump file"
-			}
-		});
+	if (ips === undefined) {
+		RenderError(res, "Unable to read capture dump file");
+		return;
 	} else {
 		res.render('importCapture.jade', {
 			locals: {
@@ -532,6 +558,10 @@ app.get('/importCapture', passport.authenticate('basic', {session: false}), func
 });
 
 app.post('/changeGroup', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.query["GROUP"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.");
+		return;
+	}
 	var selectedGroup = req.body["GROUP"];
 
 	config.SetGroup(selectedGroup);
@@ -549,12 +579,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', {session: false}),
 
 	var trainingDump = new novaconfig.TrainingDumpBinding();
 	if (!trainingDump.LoadCaptureFile(trainingSession)) {
-		res.render('error.jade', {
-			locals: {
-				redirectLink: "/",
-				errorDetails: "Unable to parse dump file " + trainingSession
-			}
-		});
+		ReadSetting(res, "Unable to parse dump file: " + trainingSession);
 	}
 
 	trainingDump.SetAllIsIncluded(false);
@@ -581,12 +606,8 @@ app.post('/importCaptureSave', passport.authenticate('basic', {session: false}),
 
 	// TODO: Don't hard code this path
 	if (!trainingDump.SaveToDb(NovaHomePath + "/Config/training.db")) {
-		res.render('error.jade', {
-			locals: {
-				redirectLink: "/",
-				errorDetails: "Unable to save to training db"
-			}
-		});
+		RenderError(res, "Unable to save to training db");
+		return;
 	}
 
 	res.render('saveRedirect.jade', {
@@ -612,7 +633,8 @@ app.get('/editUsers', passport.authenticate('basic', {session: false}), function
 
 	function (err, results) {
 		if (err) {
-			throw err;
+			RenderError(res, "Database Error: " + err);
+			return;
 		}
 
 		var usernames = new Array();
@@ -669,12 +691,7 @@ app.get('/', passport.authenticate('basic', {session: false}), function (req, re
 
 	function (err, results) {
 		if (err) {
-			res.render('error.jade', {
-				locals: {
-					redirectLink: "/",
-					errorDetails: "Unable to access database: " + err
-				}
-			});
+			RenderError(res, "Database Error: " + err);
 			return;
 		}
 
@@ -719,7 +736,6 @@ app.get('/about', passport.authenticate('basic', {session: false}), function (re
 
 app.get('/haystackStatus', passport.authenticate('basic', {session: false}), function (req, res) {
 	var dhcpIps = config.GetIpAddresses("/var/log/honeyd/ipList");
-	console.log(dhcpIps);
 	res.render('haystackStatus.jade', {
 		locals: {
 			haystackDHCPIps: config.GetIpAddresses("/var/log/honeyd/ipList")
@@ -734,12 +750,7 @@ app.post('/createNewUser', passport.authenticate('basic', {session: false}), fun
 
 	function selectCb(err, results, fields) {
 		if (err) {
-			res.render('error.jade', {
-				locals: {
-					redirectLink: "/createNewUser",
-					errorDetails: "Unable to access authentication database: " + err
-				}
-			});
+			RenderError(res, "Database Error: " + err, "/createNewUser");
 			return;
 		}
 
@@ -753,12 +764,7 @@ app.post('/createNewUser', passport.authenticate('basic', {session: false}), fun
 			});
 			return;
 		} else {
-			res.render('error.jade', {
-				locals: {
-					redirectLink: "/createNewUser",
-					errorDetails: "Username you entered already exists. Please choose another."
-				}
-			});
+			RenderError(res, "Username you entered already exists. Please choose another.", "/createNewUser");
 			return;
 		}
 	});
@@ -773,12 +779,7 @@ app.post('/createInitialUser', passport.authenticate('basic', {session: false}),
 
 	function selectCb(err, results) {
 		if (err) {
-			res.render('error.jade', {
-				locals: {
-					redirectLink: "/createNewUser",
-					errorDetails: "Unable to access authentication database: " + err
-				}
-			});
+			RenderError(res, "Database Error: " + err);
 			return;
 		}
 
@@ -792,12 +793,7 @@ app.post('/createInitialUser', passport.authenticate('basic', {session: false}),
 			});
 			return;
 		} else {
-			res.render('error.jade', {
-				locals: {
-					redirectLink: "/setup1",
-					errorDetails: "Username you entered already exists. Please choose another."
-				}
-			});
+			RenderError(res, "Username already exists. Please choose another", "/setup1");
 			return;
 		}
 	});
@@ -812,7 +808,11 @@ app.get('/autoConfig', passport.authenticate('basic', {session: false}), functio
 });
 
 app.get('/nodeReview', passport.authenticate('basic', {session: false}), function (req, res) {
-	honeydConfig.LoadAllTemplates();
+	if (!honeydConfig.LoadAllTemplates()) {
+		RenderError("Unable to load honeyd configuration XML files")
+		return;
+	}
+	
 	var profileNames = honeydConfig.GetGeneratedProfileNames();
 	var profiles = new Array();
 	for (var i = 0; i < profileNames.length; i++) {
@@ -836,10 +836,13 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 });
 
 app.post('/scanning', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.body["numNodes"] === undefined) {
+		RenderError(res, "Invalid arguements to /scanning. You most likely tried to refresh a page that you shouldn't");
+		return;
+	}
+
 	var numNodes = req.body["numNodes"];
-
 	var subnets = req.body["subnets"];
-
 	var interfaces = req.body["interfaces"];
 
 	if (interfaces === undefined) {
@@ -915,6 +918,10 @@ app.post('/editHoneydNodesSave', passport.authenticate('basic', {session: false}
 });
 
 app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.body["profile"] === undefined || req.body["interface"] === undefined || req.body["oldName"] === undefined) {
+		RenderError(res, "Invalid POST to /editHoneydNodeSave. Most likely caused by refreshing a page you shouldn't");
+		return;
+	}
 	var profile = req.body["profile"];
 	var intface = req.body["interface"];
 	var oldName = req.body["oldName"];
@@ -936,12 +943,8 @@ app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false})
 	// Delete the old node and then add the new one	
 	honeydConfig.DeleteNode(oldName);
 	if (!honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet)) {
-		res.render('error.jade', {
-			locals: {
-				redirectLink: "/configHoneydNodes",
-				errorDetails: "AddNewNode failed"
-			}
-		});
+		RenderError(res, "AddNewNode failed", "/configHoneydNodes");
+		return;
 	} else {
 		honeydConfig.SaveAll();
 		res.render('saveRedirect.jade', {
@@ -1084,12 +1087,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	var errors = validator.getErrors();
 
 	if (errors.length > 0) {
-		res.render('error.jade', {
-			locals: {
-				errorDetails: errors,
-				redirectLink: "/suspects"
-			}
-		});
+		RenderError(res, errors, "/suspects");
 	} else {
 		if (req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined) {
 			req.body["DEFAULT"] = false;
@@ -1137,15 +1135,11 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 });
 
 everyone.now.ClearAllSuspects = function (callback) {
-	console.log("Attempting to clear all suspects in main.js");
-
 	nova.CheckConnection();
 	nova.ClearAllSuspects();
 }
 
 everyone.now.ClearSuspect = function (suspect, callback) {
-	console.log("Attempting to clear a suspect in main.js");
-
 	nova.CheckConnection();
 	var result = nova.ClearSuspect(suspect);
 
@@ -1203,7 +1197,7 @@ everyone.now.deleteUserEntry = function (usernamesToDelete, callback) {
 		username = String(usernamesToDelete[i]);
 		dbqCredentialsDeleteUser.run(username, function (err) {
 			if (err) {
-				console.log(err);
+				console.log("Database error: " + err);
 				callback(false);
 				return;
 			} else {
@@ -1593,7 +1587,8 @@ everyone.now.GetHostileEvents = function (callback) {
 
 	function (err, results) {
 		if (err) {
-			console.log(err);
+			console.log("Database error: " + err);
+			// TODO implement better error handling callbacks
 			callback();
 			return;
 		}
@@ -1607,8 +1602,8 @@ everyone.now.ClearHostileEvents = function (callback) {
 
 	function (err) {
 		if (err) {
-			console.log(err);
-			callback(null);
+			console.log("Database error: " + err);
+			// TODO implement better error handling callbacks
 			return;
 		}
 
@@ -1621,8 +1616,8 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 
 	function (err) {
 		if (err) {
-			console.log(err);
-			callback(null);
+			console.log("Database error: " + err);
+			// TODO implement better error handling callbacks
 			return;
 		}
 
