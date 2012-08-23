@@ -136,16 +136,7 @@ NovaLibrary/libNovaLibrary.a
 /HoneydHostConfig/Release/honeydhostconfig
 /HoneydHostConfig/Debug/subnet0.xml
 /HoneydHostConfig/Debug/test.txt
-/HaystackConfigWizard/debug/moc_HaystackConfigWizard.cpp
-/HaystackConfigWizard/debug/moc_NetworkSelectionPage.cpp
-/HaystackConfigWizard/Makefile
-/HaystackConfigWizard/Makefile.Debug
-/HaystackConfigWizard/Makefile.Release
-/HaystackConfigWizard/haystackconfigwizard
-/HaystackConfigWizard/debug/moc_ipRangeSelectionForm.cpp
 /subnet0.xml
-/HaystackConfigWizard/debug/moc_WelcomePage.cpp
-/HaystackConfigWizard/UI_headers/ui_ipRangeSelectionForm.h
 
 #debian
 /nova_1*
