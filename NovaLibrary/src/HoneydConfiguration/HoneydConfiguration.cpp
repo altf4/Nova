@@ -1624,7 +1624,13 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	{
 		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
 		return false;
-	} catch (boost::property_tree::xml_parser_error &e) {
+	}
+	catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch (boost::property_tree::ptree_error &e)
+	{
 		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
 		return false;
 	}
@@ -1697,7 +1703,13 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	{
 		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
 		return false;
-	} catch (boost::property_tree::xml_parser_error &e) {
+	}
+	catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch (boost::property_tree::ptree_error &e)
+	{
 		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
 		return false;
 	}
@@ -1796,9 +1808,15 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading Profiles: " + string(e.what()) + ".", "");
+		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
 		return false;
-	} catch (boost::property_tree::xml_parser_error &e) {
+	}
+	catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch (boost::property_tree::ptree_error &e)
+	{
 		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
 		return false;
 	}
@@ -1864,7 +1882,13 @@ bool HoneydConfiguration::LoadNodesTemplate()
 	{
 		LOG(ERROR, "Problem loading node group: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
 		return false;
-	} catch (boost::property_tree::xml_parser_error &e) {
+	}
+	catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch (boost::property_tree::ptree_error &e)
+	{
 		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
 		return false;
 	}
@@ -1998,7 +2022,6 @@ bool HoneydConfiguration::LoadSubnets(ptree *propTree)
 bool HoneydConfiguration::LoadNodes(ptree *propTree)
 {
 	NodeProfile nodeProf;
-	//ptree *ptr2;
 	try
 	{
 		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
