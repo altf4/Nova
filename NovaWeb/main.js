@@ -1394,6 +1394,15 @@ everyone.now.GetPorts = function (profileName, callback) {
 
 
 everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, addOrEdit) {
+	// Check input
+	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
+	var match = profileNameRegexp.exec(profile.name);
+	if (match == null) {
+		var err = "ERROR: Attempt to save a profile with an invalid name. Must be alphanumeric and not begin with a number.";
+		callback(err);
+		return;
+	}
+
 	var honeydProfile = new novaconfig.HoneydProfileBinding();
 
 	console.log("Got profile " + profile.name + "_" + profile.personality);

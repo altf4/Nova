@@ -643,9 +643,14 @@ script
                         now.SaveProfile(pfile, ports, savedChanges, ethVendorList, newProfile);
                 }
 
-                savedChanges = function() 
+                savedChanges = function(err) 
                 {
+                    if (err == null)
+                    {
                         window.location="configHoneydProfiles";
+                    } else {
+                        alert("Unable to save profile: " + err);
+                    }
                 }
 
                 addPort = function(port) 
