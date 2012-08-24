@@ -101,7 +101,7 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-web clean-novatrainer clean-staging
+clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-web clean-novatrainer clean-staging clean-cli
 	
 
 #remove binaries from staging area
