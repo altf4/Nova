@@ -627,7 +627,7 @@ namespace Nova
 				j++;
 			}
 
-			delete tokens;
+			delete[] tokens;
 		}
 		else
 		{
