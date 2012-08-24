@@ -37,8 +37,15 @@ UpdateMessage::~UpdateMessage()
 
 }
 
+void UpdateMessage::DeleteContents()
+{
+	delete m_suspect;
+	m_suspect = NULL;
+}
+
 UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 {
+	m_suspect = NULL;
 	if( length < UPDATE_MSG_MIN_SIZE )
 	{
 		m_serializeError = true;

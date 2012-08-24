@@ -94,7 +94,7 @@ bool ConnectToNovad()
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		delete reply;
 		return false;
 	}
 
@@ -104,6 +104,7 @@ bool ConnectToNovad()
 		s << "Expected message type of CONTROL_MESSAGE but got " << reply->m_messageType;
 		LOG(ERROR, s.str(), "");
 
+		reply->DeleteContents();
 		delete reply;
 		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
@@ -116,7 +117,8 @@ bool ConnectToNovad()
 		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_controlType;
 		LOG(ERROR, s.str(), "");
 
-		delete connectionReply;
+		reply->DeleteContents();
+		delete reply;
 		MessageManager::Instance().CloseSocket(IPCSocketFD);
 		IPCSocketFD = -1;
 		return false;
@@ -163,11 +165,13 @@ bool CloseNovadConnection()
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		success = false;
 	}
 	else if(reply->m_messageType != CONTROL_MESSAGE)
 	{
+		reply->DeleteContents();
 		delete reply;
 		success = false;
 	}
@@ -176,6 +180,7 @@ bool CloseNovadConnection()
 		ControlMessage *connectionReply = (ControlMessage*)reply;
 		if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
 		{
+			connectionReply->DeleteContents();
 			delete connectionReply;
 			success = false;
 		}

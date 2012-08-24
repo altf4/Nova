@@ -58,11 +58,13 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 		}
 		//TODO: Do we care about the other error message types here?
 
+		errorMessage->DeleteContents();
 		delete errorMessage;
 		return change;
 	}
 	if( message->m_messageType != UPDATE_MESSAGE)
 	{
+		message->DeleteContents();
 		delete message;
 		return change;
 	}
