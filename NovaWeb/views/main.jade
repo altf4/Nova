@@ -275,7 +275,9 @@ block headerAdditions
 
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
-            Init();
+            now.ready(function() {
+              Init();
+            });
         });
     });
 
