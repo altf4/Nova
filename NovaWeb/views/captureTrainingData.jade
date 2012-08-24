@@ -9,7 +9,12 @@ block headerAdditions
         var sessionNameElement;
 
         var toggleTrainingCapture = function() {
+          try {
             now.GetCaptureSession(function(ret) {console.log(ret)} );
+          } catch(err) {
+            alert("Action failed! Unable to connect to server. Try refreshing the page.");
+            console.log("Caught error was: " + err);
+          }
             
             if (sessionNameElement.value == "") {
                 alert("Training session name can not be blank");
@@ -20,12 +25,23 @@ block headerAdditions
                 statusElement.innerHTML = "Status: Starting data capture...";
                 buttonElement.disabled = true;
 
-                now.StartTrainingCapture(sessionNameElement.value, trainingCaptureStarted); 
+                try {
+                    now.StartTrainingCapture(sessionNameElement.value, trainingCaptureStarted); 
+                } catch(err) {
+                    alert("Action failed! Unable to connect to server. Try refreshing the page.");
+                    console.log("Caught error was: " + err);
+                }
                 trainingStarted = true;
             } else {
                 statusElement.innerHTML = "Status: Stopping data capture...";
                 buttonElement.disabled = true;
-                now.StopTrainingCapture(sessionNameElement.value, trainingCaptureStopped);
+          
+                try {
+                    now.StopTrainingCapture(sessionNameElement.value, trainingCaptureStopped);
+                } catch(err) {
+                    alert("Action failed! Unable to connect to server. Try refreshing the page.");
+                    console.log("Caught error was: " + err);
+                }
                 trainingStarted = false;
 
             }
@@ -60,6 +76,7 @@ block headerAdditions
             sessionNameElement = document.getElementById("sessionName");
             
             now.ready( function() {
+                try {
                 now.GetCaptureSession( function(ret) {
                     if (ret != "null" && ret != "undefined" && ret != "") {
                         buttonElement.innerHTML = "Stop Training Capture";
@@ -69,6 +86,11 @@ block headerAdditions
                         sessionNameElement.value = ret;
                     }
                 });
+
+                } catch(err) {
+                    alert("Action failed! Unable to connect to server. Try refreshing the page.");
+                    console.log("Caught error was: " + err);
+                }
             });
 
 

@@ -31,7 +31,12 @@ block headerAdditions
         names.push(grid.store.getValues(selectedItem, "Name"));
       });
      
-      now.deleteNodes(names, errorMessageCallback);
+      try {
+        now.deleteNodes(names, errorMessageCallback);
+      } catch(err) {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }   
     }
 
     function errorMessageCallback(success, message) {
@@ -48,7 +53,12 @@ block headerAdditions
       var checkAgainst = checkedBox.getAttribute("id");
       
       var checkedInterface = checkedBox.value;
-      var ip = now.GetLocalIP(checkedInterface, UpdateIpField);
+      try {
+          var ip = now.GetLocalIP(checkedInterface, UpdateIpField);
+      } catch(err) {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }   
       
       if(forLength == 1)
       {

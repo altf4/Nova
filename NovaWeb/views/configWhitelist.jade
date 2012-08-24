@@ -13,7 +13,12 @@ block headerAdditions
         names.push(grid.store.getValues(selectedItem, "whitelistedIp")); 
       });
       
-      now.deleteWhitelistEntry(names, errorMessageCallback);
+      try {
+        now.deleteWhitelistEntry(names, errorMessageCallback);
+      } catch(err) {
+        alert("Action failed! Unable to connect to server. Try refreshing the page.");
+        console.log("Caught error was: " + err);
+      }
     }
 
     function addNewItem()
@@ -31,17 +36,33 @@ block headerAdditions
         // only add the value to the ipWhitelist if value is either an individual IP or a subnet-style ip "range"
         if(individualIp.test(value))
         {
-          now.addWhitelistEntry(value, errorMessageCallback);
+          try {
+            now.addWhitelistEntry(value, errorMessageCallback);
+          } catch(err) {
+            alert("Action failed! Unable to connect to server. Try refreshing the page.");
+            console.log("Caught error was: " + err);
+          }
+      }
           document.getElementById("errorLabel").innerHTML = "Valid IP found!";
         }
         else if(subnetRangeIp.test(value))
         {
-          now.addWhitelistEntry(value, errorMessageCallback);
+          try {
+            now.addWhitelistEntry(value, errorMessageCallback);
+          } catch(err) {
+            alert("Action failed! Unable to connect to server. Try refreshing the page.");
+            console.log("Caught error was: " + err);
+          }
           document.getElementById("errorLabel").innerHTML = "Valid IP range found!";
         }
         else if(slashSubnetMaskIp.test(value))
         {
-          now.addWhitelistEntry(value, errorMessageCallback);
+          try {
+            now.addWhitelistEntry(value, errorMessageCallback);
+          } catch(err) {
+            alert("Action failed! Unable to connect to server. Try refreshing the page.");
+            console.log("Caught error was: " + err);
+          }
           document.getElementById("errorLabel").innerHTML = "Valid IP range found!";
         }
         else

@@ -640,7 +640,12 @@ script
                         pfile.generated = dojo.byId("generated").value;
 
                         //need conditional here for add vs. edit, false == edit, true == add
-                        now.SaveProfile(pfile, ports, savedChanges, ethVendorList, newProfile);
+                        try {
+                            now.SaveProfile(pfile, ports, savedChanges, ethVendorList, newProfile);
+                        } catch (err) {
+                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                            console.log("err was: " + err);
+                        }   
                 }
 
                 savedChanges = function(err) 
@@ -1064,8 +1069,9 @@ script
                                         // to avoid those elements. I'll try experimenting with using
                                         // tagName stuff a little bit but this'll be how it is for now.
                                 }
-
-                                now.GetInheritedEthernetList(document.getElementById("parentName").value, 
+                                
+                                try {
+                                    now.GetInheritedEthernetList(document.getElementById("parentName").value, 
                                 function(elements, distributions)
                                 {
                                         if (elements == null || distributions == null) 
@@ -1174,6 +1180,10 @@ script
                                                 }    
                                         }
                                 });     
+                                } catch(err) {
+                                    alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                                    console.log("err was: " + err);
+                                }   
                         }
                         else 
                         {
@@ -1225,6 +1235,7 @@ script
                                 }
                                 if(newProfile == "false" && document.getElementById("dist0") == undefined)
                                 {
+                                        try {
                                         now.GetVendors(document.getElementById("name").value, function(elements, distributions)
                                         {
                                                 if (elements == null || distributions == null) 
@@ -1347,6 +1358,10 @@ script
                                                         document.getElementById("dist0").setAttribute("readonly", "true");
                                                 }
                                         });
+                                        } catch (err) {
+                                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                                            console.log("err was: " + err);
+                                        }   
                                 }
                         }
 
@@ -1434,7 +1449,8 @@ script
                         {
                                 loaded = true;
                         }
-
+                        
+                        try {
                         now.GetProfile(currentName, function(pfile)
                         {
                                 if (pfile == undefined)
@@ -1562,6 +1578,11 @@ script
                                 }
                                 portBehaviorChanged();
                         });
+
+                        } catch(err) {
+                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                            console.log("err was: " + err);
+                        }  
                 });
         });
 

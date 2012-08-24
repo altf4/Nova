@@ -148,7 +148,12 @@ block headerAdditions
             document.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
             var divWidth = document.getElementById('lightbox').scrollWidth;
             document.getElementById('appendText').style.width = divWidth + 'px';
-            now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+            try {
+                now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+            } catch (err) {
+                alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                console.log("err was: " + err);
+            }   
         } 
         else
         {

@@ -25,8 +25,13 @@ block headerAdditions
       dojo.forEach(items, function(selectedItem) {
         names.push(grid.store.getValues(selectedItem, "Name")); 
       });
-      
-      now.deleteProfiles(names, errorMessageCallback);
+     
+      try {
+        now.deleteProfiles(names, errorMessageCallback);
+       } catch(err) {
+         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+         console.log("err was: " + err);
+        }   
     }
 
     

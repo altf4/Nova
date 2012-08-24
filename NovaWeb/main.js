@@ -1641,7 +1641,9 @@ everyone.now.GetLocalIP = function (interface, callback) {
 var distributeSuspect = function (suspect) {
 	var s = new Object();
 	objCopy(suspect, s);
-	everyone.now.OnNewSuspect(s)
+	try {
+		everyone.now.OnNewSuspect(s)
+	} catch (err) {};
 };
 
 var distributeAllSuspectsCleared = function () {

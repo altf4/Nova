@@ -20,7 +20,12 @@ block headerAdditions
         names.push(grid.store.getValues(selectedItem, "users")); 
       });
       
-      now.deleteUserEntry(names, errorMessageCallback);
+      try {
+        now.deleteUserEntry(names, errorMessageCallback);
+      } catch(err) {
+        alert("Action failed! Unable to connect to server. Try refreshing the page.");
+        console.log("Caught error was: " + err);
+      }
     }
 
     function updateUserPass()
@@ -35,7 +40,12 @@ block headerAdditions
         
         var user = grid.store.getValues(items[0], "users"); 
         var password = dojo.byId("newPassword").value;
-        now.updateUserPassword(user, password, errorMessageCallback);
+        try {
+            now.updateUserPassword(user, password, errorMessageCallback);
+         } catch(err) {
+           alert("Action failed! Unable to connect to server. Try refreshing the page.");
+           console.log("Caught error was: " + err);
+         }
     }
 
     
