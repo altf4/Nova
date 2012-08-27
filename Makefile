@@ -191,6 +191,9 @@ clean-novatrainer-release:
 #Installation (requires root)
 install: install-data
 	$(MAKE) install-helper
+	# Give read/write permissions to the nova group
+	-chmod -R g+rw /usr/share/nova
+	-chmod -R g+rw /var/log/honeyd
 
 install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-web
 	sh debian/postinst

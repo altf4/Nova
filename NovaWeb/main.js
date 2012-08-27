@@ -319,6 +319,7 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 			RECIPIENTS: config.ReadSetting("RECIPIENTS"),
 			SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES"),
 			HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
+			,CAPTURE_BUFFER_SIZE: config.ReadSetting("CAPTURE_BUFFER_SIZE")
 		}
 	});
 });
@@ -398,7 +399,6 @@ function renderBasicOptions(jadefile, res, req) {
 			SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN"),
 			SMTP_USER: config.GetSMTPUser(),
 			SMTP_PASS: config.GetSMTPPass(),
-			SMTP_USEAUTH: config.GetSMTPUseAuth(),
 			SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES"),
 			RECIPIENTS: config.ReadSetting("RECIPIENTS")
 		}
@@ -958,7 +958,7 @@ app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false})
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);

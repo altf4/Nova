@@ -235,6 +235,9 @@ public:
 	bool GetClearAfterHostile();
 	void SetClearAfterHostile(bool clearAfterHostile);
 
+	int GetCaptureBufferSize();
+	void SetCaptureBufferSize(int bufferSize);
+
 protected:
 	Config();
 
@@ -279,6 +282,8 @@ private:
 	int m_saMaxAttempts;
 	uint m_minPacketThreshold;
 	int m_webUIPort;
+
+	int m_captureBufferSize;
 
 	double m_saSleepDuration;
 	double m_eps;
