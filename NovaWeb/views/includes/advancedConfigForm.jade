@@ -122,6 +122,10 @@ form(method="post", action="/configureNovaSave")
     br
   br
   
+  label Packet Capture Buffer Size (in bytes)
+  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
+  br
+  
 
   h2 Classification Settings
   label(style="text-align:center;vertical-align:middle", id="enabledFeaturesLabel", name="ENABLED_FEATURES") Features Mask: #{ENABLED_FEATURES}

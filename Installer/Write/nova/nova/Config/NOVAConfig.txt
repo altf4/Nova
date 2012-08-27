@@ -474,4 +474,11 @@ DATABASE_PASS avon
 CLEAR_AFTER_HOSTILE_EVENT 0
 
 
+############################################
+# CAPTURE_BUFFER_SIZE #
+############################################
+# Size in bytes of the packet capture buffer. 
+# If you get warnings about dropped packets
+# during high load, try increasing this.
+CAPTURE_BUFFER_SIZE 1048576
 
