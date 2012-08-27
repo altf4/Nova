@@ -82,7 +82,8 @@ string Config::m_prefixes[] =
 	"DATABASE_HOST",
 	"DATABASE_USER",
 	"DATABASE_PASS",
-	"CLEAR_AFTER_HOSTILE_EVENT"
+	"CLEAR_AFTER_HOSTILE_EVENT",
+	"CAPTURE_BUFFER_SIZE"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -859,6 +860,20 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			// CAPTURE_BUFFER_SIZE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_captureBufferSize = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
 		}
 	}
 	else
@@ -1480,6 +1495,14 @@ bool Config::SaveConfig()
 				*out << endl;
 				continue;
 			}
+
+			prefix = "CAPTURE_BUFFER_SIZE";
+			if(!line.substr(0,prefix.size()).compare(prefix))
+			{
+				*out << prefix << " " <<  GetCaptureBufferSize() << endl;
+				continue;
+			}
+
 			*out << line << endl;
 		}
 	}
@@ -2782,6 +2805,18 @@ void Config::SetClearAfterHostile(bool clearAfterHostile)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_clearAfterHostile = clearAfterHostile;
+}
+
+int Config::GetCaptureBufferSize()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_captureBufferSize;
+}
+
+void Config::SetCaptureBufferSize(int bufferSize)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_captureBufferSize = bufferSize;
 }
 
 

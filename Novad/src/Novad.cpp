@@ -778,9 +778,9 @@ bool Start_Packet_Handler()
 				LOG(ERROR, string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(handles[i]), "");
 			}
 
-			// Set a 20MB buffer
-			// TODO Make this a user configurable option. Too small will cause dropped packets under high load.
-			if(pcap_set_buffer_size(handles[i], 1024*1024) != 0)
+
+			// Set the packet capture buffer size
+			if(pcap_set_buffer_size(handles[i], Config::Inst()->GetCaptureBufferSize()) != 0)
 			{
 				LOG(ERROR, string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(handles[i]), "");
 			}
