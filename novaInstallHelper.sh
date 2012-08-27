@@ -1,42 +1,91 @@
-#bash
+#!/bin/bash
 
-mkdir -p ~/Code
+PWD=`pwd`
+BUILDDIR=$PWD/nova-build
 
-apt-get -y install git build-essential libann-dev libpcap0.8-dev libsparsehash-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake
+check_err() {
+	ERR=$?
+	if [ "$ERR" -ne "0" ] ; then
+		echo "Error occurred during build process; terminating script!"
+		exit $ERR
+	fi
+}
 
-cd ~/Code
+mkdir -p ${BUILDDIR}
+
+echo "##############################################################################"
+echo "#                          NOVA DEPENDENCY CHECK                             #"
+echo "##############################################################################"
+apt-get -y install git build-essential libann-dev libpcap0.8-dev libsparsehash-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libqt4-dev qt4-qmake libcap2-bin
+check_err
+
+echo "##############################################################################"
+echo "#                         DOWNLOADING NOVA FROM GIT                          #"
+echo "##############################################################################"
+cd ${BUILDDIR}
 git clone git://github.com/DataSoft/Honeyd.git
+check_err
 git clone git://github.com/DataSoft/Nova.git
+check_err
 
-cd ~/Code/Honeyd
+echo "##############################################################################"
+echo "#                              BUILDING HONEYD                               #"
+echo "##############################################################################"
+cd ${BUILDDIR}/Honeyd
 ./autogen.sh
+check_err
 automake
+check_err
 ./configure
+check_err
 make
+check_err
 make install
+check_err
 
-cd ~/Code/Nova
+echo "##############################################################################"
+echo "#                               BUILDING NOVA                                #"
+echo "##############################################################################"
+cd ${BUILDDIR}/Nova
 git checkout -f integration
+check_err
 make debug
+check_err
 make novagui-debug
+check_err
 
-cd ~/Code/Nova/NovaWeb
+echo "##############################################################################"
+echo "#                             BUILDING NOVAWEB                               #"
+echo "##############################################################################"
+cd ${BUILDDIR}/Nova/NovaWeb
 bash getDependencies.sh
 npm install -g forever
+check_err
 
-cd ~/Code/Nova
+cd ${BUILDDIR}/Nova
 make web
+check_err
 make install
+check_err
 
-bash ~/Code/Nova/Installer/nova_init
+bash ${BUILDDIR}/Nova/Installer/nova_init
 
-cd ~/Code
+echo "##############################################################################"
+echo "#                             FETCHING NMAP 6                                #"
+echo "##############################################################################"
+cd ${BUILDDIR}
 wget http://nmap.org/dist/nmap-6.01.tar.bz2
+check_err
 tar -xf nmap-6.01.tar.bz2
+check_err
 cd nmap-6.01
 ./configure
+check_err
 make
+check_err
 make install
+check_err
 
-
-
+echo "##############################################################################"
+echo "#                                    DONE                                    #"
+echo "##############################################################################"
