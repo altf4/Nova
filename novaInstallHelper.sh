@@ -21,7 +21,7 @@ mkdir -p ${BUILDDIR}
 echo "##############################################################################"
 echo "#                          NOVA DEPENDENCY CHECK                             #"
 echo "##############################################################################"
-apt-get -y install git build-essential libann-dev libpcap0.8-dev libsparsehash-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libqt4-dev qt4-qmake libcap2-bin
+apt-get -y install git build-essential libann-dev libpcap0.8-dev libsparsehash-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libcap2-bin
 check_err
 
 echo "##############################################################################"
@@ -43,7 +43,7 @@ automake
 check_err
 ./configure
 check_err
-make
+make -j2
 check_err
 make install
 check_err
@@ -54,9 +54,7 @@ echo "##########################################################################
 cd ${BUILDDIR}/Nova
 git checkout -f integration
 check_err
-make debug
-check_err
-make novagui-debug
+make -j2 debug
 check_err
 
 echo "##############################################################################"
@@ -86,7 +84,7 @@ check_err
 cd nmap-6.01
 ./configure
 check_err
-make
+make -j2
 check_err
 make install
 check_err
