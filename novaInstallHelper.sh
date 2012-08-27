@@ -1,7 +1,12 @@
 #!/bin/bash
 
 PWD=`pwd`
-BUILDDIR=$PWD/nova-build
+
+if [ -z $BUILDDIR ]; then
+	BUILDDIR=$PWD/nova-build
+fi
+
+echo "Build Dir is $BUILDDIR"
 
 check_err() {
 	ERR=$?
