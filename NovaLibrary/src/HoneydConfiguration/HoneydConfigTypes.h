@@ -145,7 +145,7 @@ struct NodeProfile
 	inline bool SetIcmpAction(std::string icmpAction) {this->m_icmpAction = icmpAction; return true;}
 	inline bool SetPersonality(std::string personality) {this->m_personality = personality; return true;}
 	inline bool SetGenerated(bool generated) {this->m_generated = generated; return true;}
-	inline bool SetDistribution(bool distribution) {this->m_distribution = distribution; return true;}
+	inline bool SetDistribution(double distribution) {this->m_distribution = distribution; return true;}
 	inline bool SetEthernet(std::string ethernet)
 	{
 		if(!this->m_ethernetVendors.empty())
@@ -178,7 +178,26 @@ struct NodeProfile
 	inline bool setUptimeInherited(bool inherit) {m_inherited[UPTIME] = inherit; return true;}
 	inline bool setDropRateInherited(bool inherit) {m_inherited[DROP_RATE] = inherit; return true;}
 
+	inline std::string GetRandomVendor()
+	{
+		srand(time(NULL));
+		int randDist = rand() % 100;
+		int breakEven = (rand() % m_ethernetVendors.size()) + 1;
+		double max = 0;
+		std::string ret = m_ethernetVendors[0].first;
 
+		for(uint i = 0; i < m_ethernetVendors.size() && breakEven > 0; i++)
+		{
+			if(m_ethernetVendors[i].second > max && m_ethernetVendors[i].second < randDist)
+			{
+				max = m_ethernetVendors[i].second;
+				ret = m_ethernetVendors[i].first;
+				breakEven--;
+			}
+		}
+
+		return ret;
+	}
 
 	// This is for the Javascript bindings in the web interface
 	inline std::string GetName() {return m_name;}

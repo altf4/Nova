@@ -466,6 +466,7 @@ void SendSuspectToUIs(Suspect *suspect)
 		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
+			suspectReply->DeleteContents();
 			delete suspectReply;
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
@@ -473,7 +474,8 @@ void SendSuspectToUIs(Suspect *suspect)
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
 		if(suspectCallback->m_updateType != UPDATE_SUSPECT_ACK)
 		{
-			delete suspectCallback;
+			suspectReply->DeleteContents();
+			delete suspectReply;
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
@@ -534,6 +536,7 @@ void *NotifyUIsHelper(void *ptr)
 		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
+			suspectReply->DeleteContents();
 			delete suspectReply;
 			LOG(DEBUG, "Failed to send message to UI", "Got the wrong message type in response after sending a Clear All Suspects Notify");
 			continue;
@@ -541,7 +544,8 @@ void *NotifyUIsHelper(void *ptr)
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
 		if(suspectCallback->m_updateType != arguments->m_ackType)
 		{
-			delete suspectCallback;
+			suspectReply->DeleteContents();
+			delete suspectReply;
 			LOG(DEBUG, "Failed to send message to UI", "Got the wrong UpdateMessage subtype in response after sending a Clear All Suspects Notify");
 			continue;
 		}

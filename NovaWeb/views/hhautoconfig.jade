@@ -39,7 +39,7 @@ block headerAdditions
     {
       var toValidate = document.getElementById(id).value;
     
-      var regex = new RegExp("^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\/[1-3]?[0-9]$");
+      var regex = new RegExp("^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\/[2-3]?[4-9]$");
     
       if((toValidate[toValidate.length - 2] >= 3 && toValidate[toValidate.length - 1] > 2)
         || (toValidate[toValidate.length - 3] != '/' && toValidate[toValidate.length - 2] != '/'))
@@ -125,6 +125,7 @@ block headerAdditions
             document.getElementById("startScan").value='Scanning...'; 
             document.getElementById("startScan").setAttribute('disabled', 'true');
             document.getElementById("lightbox").style.display='block';
+            document.getElementById("setup").style.display='none';
             var opts = {
                 lines: 17,
                 length: 0,
@@ -147,7 +148,12 @@ block headerAdditions
             document.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
             var divWidth = document.getElementById('lightbox').scrollWidth;
             document.getElementById('appendText').style.width = divWidth + 'px';
-            now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+            try {
+                now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+            } catch (err) {
+                alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                console.log("err was: " + err);
+            }   
         } 
         else
         {
@@ -220,52 +226,52 @@ block headerAdditions
     }
 
 block content
-
   if(SCANERROR !== undefined)
     label(id="scanError", style="color: red;") #{SCANERROR}
-  
-  h1 Haystack Autoconfig
-  h2(style="font-size: 1.3em") Interfaces to Scan
-  p The interfaces shown below are the interfaces currently connected to the server. Selecting one of these will result in a scan against the entire subnet that that interface represents.
-  table
-    thead
-      tr 
-        th Interfaces
-    tbody 
-    - for (var i = 0; i < INTERFACES.length; i++)
-        tr 
-          td
-            input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interfaces", width=10, checked)
-            #{INTERFACES[i]}
-            
-  hidden(id="length", value=INTERFACES.length)
-  br
-  label Number of Haystack Nodes to create: 
-  input(type="number", name="numNodes", id="numNodes", width="4", min="1", max="511", onblur="checkIntMax(\"numNodes\")", value="1")
-  br
-  br
-  label(id="errorLabel", style="color:red;") 
-  br
-  br
-  p Below, you can add subnets of the given format to a list that will be scanned during the autoconfiguration process. Right now the input only recognizes strings of the format that is watermarked within the input box. To scan a specific host, put their IPv4 address in the input and append "/32" to the end. 
-  label Additional Subnets to scan:
-  input(type="text", id="subnetToAdd", width="20", onkeydown="if (event.keyCode == 13){ document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: XXX.XXX.XXX.XXX/##'; event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", value="Format: XXX.XXX.XXX.XXX/##") 
-  button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet
-  br
-  br
-  table(id="subnetsList")
-    thead
-      tr
-        th
-          label Subnets
-    tbody
     
-  br
-  br
-  input(type="submit", id="startScan", value="Start Scanning", onclick="RunScan()")
-  
+  h1 Haystack Autoconfig
+  div#setup
+    h2(style="font-size: 1.3em") Interfaces to Scan
+    p The interfaces shown below are the interfaces currently connected to the server. Selecting one of these will result in a scan against the entire subnet that that interface represents.
+    table
+      thead
+        tr 
+          th Interfaces
+      tbody 
+      - for (var i = 0; i < INTERFACES.length; i++)
+          tr 
+            td
+              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interfaces", width=10, checked)
+              #{INTERFACES[i]}
+              
+    hidden(id="length", value=INTERFACES.length)
+    br
+    label Number of Haystack Nodes to create: 
+    input(type="number", name="numNodes", id="numNodes", width="4", min="1", max="511", onblur="checkIntMax(\"numNodes\")", value="1")
+    br
+    br
+    label(id="errorLabel", style="color:red;") 
+    br
+    br
+    p Below, you can add subnets of the given format to a list that will be scanned during the autoconfiguration process. Right now the input only recognizes strings of the format that is watermarked within the input box. To scan a specific host, put their IPv4 address in the input and append "/32" to the end. It is not suggested to add subnets with a mask less than '/24' (i.e. /16, etc.) due to nmap OS scan restrictions.
+    label Additional Subnets to scan:
+    input(type="text", id="subnetToAdd", width="20", onkeydown="if (event.keyCode == 13){ document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: XXX.XXX.XXX.XXX/##'; event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", value="Format: XXX.XXX.XXX.XXX/##") 
+    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet
+    br
+    br
+    table(id="subnetsList")
+      thead
+        tr
+          th
+            label Subnets
+      tbody
+      
+    br
+    br
+    input(type="submit", id="startScan", value="Start Scanning", onclick="RunScan()")
+    
   div(id="lightbox", class="white_content")
     label(style="font-size: 1.2em;") Scan Commencing...
     div(id='spinnerDiv', style="height: 30px; padding-botton: 30px;")
     div(id='appendText', style="height: 60%; width: auto; overflow-y: scroll; overflow-x: hidden")
-  
+    

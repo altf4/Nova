@@ -192,7 +192,7 @@ public:
 	//This function allows access to Port objects by their name
 	// portName: the name or key of the Port
 	// Returns a pointer to the Port object or NULL if the key doesn't exist
-	Port *GetPort(std::string portName);
+	Port GetPort(std::string portName);
 
 	//This function allows the caller to find out if the given MAC string is taken by a node
 	// mac: the string representation of the MAC address
@@ -295,6 +295,14 @@ public:
     bool LoadProfilesFromTree(std::string parent);
 
     static std::string SanitizeProfileName(std::string pfilename);
+
+    // When a profile's ethernet vendor is changed, we need to update the MAC addresses
+    // for any node that uses that profile to reflect the change. This method will take
+    // in a profile's name, find it in the hashmap and then look at all of the nodes that
+    // it spawned and update the MAC address fields.
+    //	  profileName: name of the profile whose nodes need updating.
+    // Returns a bool indicating whether the update was successful or not.
+    bool UpdateNodeMacs(std::string profileName);
 
 	SubnetTable m_subnets;
 	PortTable m_ports;

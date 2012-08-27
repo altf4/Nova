@@ -61,16 +61,6 @@ Thumbs.db
 # Nova Specific Files #
 #######################
 
-#NovaGUI
-NovaGUI/.settings/
-NovaGUI/Makefile
-NovaGUI/Makefile.Debug
-NovaGUI/Makefile.Release
-NovaGUI/novagui
-NovaGUI/debug/
-NovaGUI/release/
-NovaGUI/UI_headers/
-
 #Novad
 Novad/Release/novad
 Novad/Debug/novad
@@ -146,16 +136,7 @@ NovaLibrary/libNovaLibrary.a
 /HoneydHostConfig/Release/honeydhostconfig
 /HoneydHostConfig/Debug/subnet0.xml
 /HoneydHostConfig/Debug/test.txt
-/HaystackConfigWizard/debug/moc_HaystackConfigWizard.cpp
-/HaystackConfigWizard/debug/moc_NetworkSelectionPage.cpp
-/HaystackConfigWizard/Makefile
-/HaystackConfigWizard/Makefile.Debug
-/HaystackConfigWizard/Makefile.Release
-/HaystackConfigWizard/haystackconfigwizard
-/HaystackConfigWizard/debug/moc_ipRangeSelectionForm.cpp
 /subnet0.xml
-/HaystackConfigWizard/debug/moc_WelcomePage.cpp
-/HaystackConfigWizard/UI_headers/ui_ipRangeSelectionForm.h
 
 #debian
 /nova_1*
@@ -166,3 +147,9 @@ debian/files
 debian/nova/*
 /misc/ROCGraphGenerator/hostiles.txt
 /misc/ROCGraphGenerator/output.txt
+/configure
+/config.status
+/config.h
+/autom4te.cache/output.0
+/autom4te.cache/requests
+/autom4te.cache/traces.0

@@ -69,7 +69,7 @@ This will create a "honeyd" and "Nova" folder with the source located inside. Fr
 they will be referred to as $HONEYD_SOURCE and $NOVA_SOURCE. 
 
 This will default to the "master" branch, which is the latest stable release. If you want to use
-the latest unstable version of NOVA, cd to the $NOVA_SOURCE folder and run the following,
+the latest unstable version of Nova, cd to the $NOVA_SOURCE folder and run the following,
 
 	git checkout integration
 
@@ -99,8 +99,10 @@ Change into the $NOVAD_SOURCE folder where the novad source code resides.
 
 To build and install run the commands,
 
-    Step 1: make
-    Step 2: sudo make install
+    Step 1: autoconf
+    Step 2: ./configure
+    Step 3: make
+    Step 4: sudo make install
 
 - Note: If building fails for some reason, make sure you run 'make clean' before trying again.
 
@@ -123,24 +125,9 @@ Instructions for installing the GUIs follow below.
 Refer to the Help tab in the GUI and the Nova wiki for more information.
 
 ===============================
- QT Interface
-===============================
-
-Getting dependencies for the QT GUI,
-	sudo apt-get install libqt4-dev
-
-The QT GUI (novagui) is a simple C++/QT interface for accessing nova and it's configuration on 
-the same machine you're running it on. To build and install,
-    Step 1: cd $NOVA_SOURCE
-    Step 2: make novagui-release
-    Step 3: make install
-
-Launch with the command "novagui".
-
-===============================
  Web Interface
 ===============================
-NOVA has a web interface that can be used for a GUI instead of the QT novagui.
+Nova's main GUI is a web interface run with a nodejs web server.
 
 There is a getDependencies.sh script provided to download the required dependencies.
 
@@ -158,7 +145,7 @@ SSL certificate and private key, put them in /usr/share/nova/NovaWeb/servercert.
 
 To start the web interface, run the command "novaweb" and go to https://localhost:8080 in
 a web browser (default login is username "nova" and password "toor"). 
-"novaweb -debug" may provide more information if there are problems. Novaweb
+"novaweb --debug" may provide more information if there are problems. Novaweb
 launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
 The command "forever list" can be useful for seeing the current status, and it can be stopped with
 "forever stop index (usually 0)". See the forever documentation for more information.

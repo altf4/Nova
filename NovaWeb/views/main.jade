@@ -8,19 +8,19 @@ block topPannelAdditions
 
 block content
   h1 Nova Control Panel
-  button(type="button", style="width:160px", onClick='now.StartNovad()') Start Nova
-  button(type="button", style="width:160px", onClick='now.StopNovad()') Stop Nova
+  button(type="button", style="width:160px", onClick='StartNovad()') Start Nova
+  button(type="button", style="width:160px", onClick='StopNovad()') Stop Nova
   
   br
   br
   
-  button(type="button", style="width:160px", onClick='now.StartHaystack()') Start Haystack
-  button(type="button", style="width:160px", onClick='now.StopHaystack()') Stop Haystack
+  button(type="button", style="width:160px", onClick='StartHaystack()') Start Haystack
+  button(type="button", style="width:160px", onClick='StopHaystack()') Stop Haystack
   
   br
   br
   
-  button(type="button", style="width:160px", onClick='now.ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
+  button(type="button", style="width:160px", onClick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
 
   br
 
@@ -76,6 +76,53 @@ block headerAdditions
     var advancedIpFilter = null;
 
     require(["dijit/form/TextBox"]);
+
+
+    // Wrappers for now.js calls with some try/catches
+    var StartNovad = function() {
+        try {
+            now.StartNovad();
+          } catch(err) {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        } 
+    }
+    var StopNovad = function() {
+        try {
+            now.StopNovad();
+          } catch(err) {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        } 
+    }
+
+    var StartHaystack = function() {
+        try {
+            now.StartHaystack();
+          } catch(err) {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        } 
+    }
+
+    var StopHaystack = function() {
+        try {
+            now.StopHaystack();
+          } catch(err) {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        } 
+    }
+
+
+    var ClearAllSuspects = function() {
+        try {
+            now.ClearAllSuspects();
+          } catch(err) {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        } 
+    }
 
     now.updateNovadStatus = function (isNovadUp){
       if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
@@ -201,7 +248,12 @@ block headerAdditions
 
         advancedFilterEnabled = true;
         suspectGrid.Clear();
-        now.sendAllSuspects(now.OnNewSuspect);
+        try {
+            now.sendAllSuspects(now.OnNewSuspect);
+        } catch(err) {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        }   
     };
 
     var disableAdvancedFilter = function() {
@@ -211,7 +263,12 @@ block headerAdditions
         var advancedFilters = new Object();
         
         suspectGrid.Clear();
-        now.sendAllSuspects(now.OnNewSuspect);
+        try {
+            now.sendAllSuspects(now.OnNewSuspect);
+        } catch(err) {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        }   
     }
               
     function featureFormatter(d) {
@@ -261,7 +318,12 @@ block headerAdditions
         suspectGrid.SetSortByKey(2);
 
         theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
-        now.sendAllSuspects(now.OnNewSuspect);
+        try {
+          now.sendAllSuspects(now.OnNewSuspect);
+         } catch(err) {
+           alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+           console.log("err was: " + err);
+         }   
     
     
         setInterval(function(){
@@ -275,7 +337,9 @@ block headerAdditions
 
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
-            Init();
+            now.ready(function() {
+              Init();
+            });
         });
     });
 

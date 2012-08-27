@@ -69,25 +69,30 @@ block headerAdditions
 
         document.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
     
-    
-        now.GetHostileEvents(function (results) {
-            console.log(results);
-            for (var i = 0; i < results.length; i++) {
-                var row = new Array();
-                for (var j in results[0]) {
-                    row.push(results[i][j]);
-                }
+        try { 
+          now.GetHostileEvents(function (results) {
+              for (var i = 0; i < results.length; i++) {
+                  var row = new Array();
+                  for (var j in results[0]) {
+                      row.push(results[i][j]);
+                  }
 
-                suspectGrid.PushEntry(row);
+                  suspectGrid.PushEntry(row);
 
-            } 
-            document.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
-        });
+              } 
+              document.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+          });
+        } catch(err) {
+          alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+          console.log("err was: " + err);
+        }   
     }
 
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
-            Init();
+            now.ready(function() {
+                Init();
+            });
         });
     });
 

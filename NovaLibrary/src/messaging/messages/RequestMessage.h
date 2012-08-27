@@ -63,6 +63,7 @@ public:
 
 	RequestMessage(enum RequestType requestType, enum ProtocolDirection direction);
 	~RequestMessage();
+	virtual void DeleteContents();
 
 	//Deserialization constructor
 	//	buffer - pointer to array in memory where serialized RequestMessage resides

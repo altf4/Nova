@@ -546,33 +546,33 @@ script
 
                         if(checkLength1 == 0 && checkLength2 > 0)
                         {
-                        var forLength = checkLength2; 
-
-                        for(var i = 0; i < forLength; i++)
-                        {
-                        var element = {vendor: "", dist: ""};
-                        element.vendor = document.getElementById("vend" + i).value;
-                        element.dist = parseFloat(document.getElementById("dist" + i).value);
-                        ethVendorList.push(element);
-                        }
+                          var forLength = checkLength2; 
+  
+                          for(var i = 0; i < forLength; i++)
+                          {
+                            var element = {vendor: "", dist: ""};
+                            element.vendor = document.getElementById("vend" + i).value;
+                            element.dist = parseFloat(document.getElementById("dist" + i).value);
+                            ethVendorList.push(element);
+                          }
                         }
                         else if(checkLength2 == 0 && checkLength1 > 0)
                         {
-                        var forLength = checkLength1;
-
-                        for(var i = 0; i < forLength; i++)
-                        {
-                        var element = {vendor: "", dist: ""};
-                        element.vendor = document.getElementById("vend" + i).value;
-                        element.dist = parseFloat(document.getElementById("dist" + i).value);
-                        ethVendorList.push(element);
-                        }
+                          var forLength = checkLength1;
+  
+                          for(var i = 0; i < forLength; i++)
+                          {
+                            var element = {vendor: "", dist: ""};
+                            element.vendor = document.getElementById("vend" + i).value;
+                            element.dist = parseFloat(document.getElementById("dist" + i).value);
+                            ethVendorList.push(element);
+                          }
                         }
                         else
                         {
-                        document.getElementById("errorEthernet").value = "Must choose to either inherit ethernet vendors or select at least one";
-                        document.getElementById("errorEthernet").innerHTML = "Must choose to either inherit ethernet vendors or select at least one";
-                        return;
+                          document.getElementById("errorEthernet").value = "Must choose to either inherit ethernet vendors or select at least one";
+                          document.getElementById("errorEthernet").innerHTML = "Must choose to either inherit ethernet vendors or select at least one";
+                          return;
                         }
 
                         pfile.oldName = "#{oldName}";
@@ -636,13 +636,26 @@ script
                                 ports[i].isInherited = dojo.byId("portInherited" + portIndexes[i]).checked;
                         }
 
+                        pfile.distribution = dojo.byId("profDist").value;
+                        pfile.generated = dojo.byId("generated").value;
+
                         //need conditional here for add vs. edit, false == edit, true == add
-                        now.SaveProfile(pfile, ports, savedChanges, ethVendorList, newProfile);
+                        try {
+                            now.SaveProfile(pfile, ports, savedChanges, ethVendorList, newProfile);
+                        } catch (err) {
+                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                            console.log("err was: " + err);
+                        }   
                 }
 
-                savedChanges = function() 
+                savedChanges = function(err) 
                 {
+                    if (err == null)
+                    {
                         window.location="configHoneydProfiles";
+                    } else {
+                        alert("Unable to save profile: " + err);
+                    }
                 }
 
                 addPort = function(port) 
@@ -786,7 +799,7 @@ script
                         var behaviorContainer = document.createElement("td");
                         var behaviorSelect = document.createElement("select");
                         behaviorSelect.id = 'portBehavior' + portUID;
-                        behaviorSelect.onchange = 'portBehaviorChanged()';
+                        behaviorSelect.onchange = portBehaviorChanged;
                         
                          
                         options = ["reset", "block", "open", "script"];
@@ -1056,8 +1069,9 @@ script
                                         // to avoid those elements. I'll try experimenting with using
                                         // tagName stuff a little bit but this'll be how it is for now.
                                 }
-
-                                now.GetInheritedEthernetList(document.getElementById("parentName").value, 
+                                
+                                try {
+                                    now.GetInheritedEthernetList(document.getElementById("parentName").value, 
                                 function(elements, distributions)
                                 {
                                         if (elements == null || distributions == null) 
@@ -1166,6 +1180,10 @@ script
                                                 }    
                                         }
                                 });     
+                                } catch(err) {
+                                    alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                                    console.log("err was: " + err);
+                                }   
                         }
                         else 
                         {
@@ -1217,6 +1235,7 @@ script
                                 }
                                 if(newProfile == "false" && document.getElementById("dist0") == undefined)
                                 {
+                                        try {
                                         now.GetVendors(document.getElementById("name").value, function(elements, distributions)
                                         {
                                                 if (elements == null || distributions == null) 
@@ -1339,6 +1358,10 @@ script
                                                         document.getElementById("dist0").setAttribute("readonly", "true");
                                                 }
                                         });
+                                        } catch (err) {
+                                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                                            console.log("err was: " + err);
+                                        }   
                                 }
                         }
 
@@ -1426,24 +1449,8 @@ script
                         {
                                 loaded = true;
                         }
-
-                        now.GetPorts(currentName, function(ports) 
-                        {
-                                if(currentName != "default" && ports[0].portNum == "0")
-                                {
-                                  window.location = "configHoneydProfiles";
-                                  return;
-                                }
-                                
-                                for (var i = 0; i < ports.length; i++) 
-                                {
-                                        portList[ports[i].portNum] = ports[i];
-                                        //ports[i].isInherited = true;
-                                        addPort(ports[i]);
-                                }
-                                portBehaviorChanged();
-                        });
-
+                        
+                        try {
                         now.GetProfile(currentName, function(pfile)
                         {
                                 if (pfile == undefined)
@@ -1459,6 +1466,10 @@ script
 
                                 profile = pfile;
 
+                                console.log("generated == " + profile.generated);
+
+                                dojo.byId("generated").value = profile.generated;
+
                                 if (newProfile == "true") 
                                 {
                                         dojo.byId("name").value = "New Profile";
@@ -1469,7 +1480,8 @@ script
                                         dojo.byId("inheritUptime").checked = true; 
                                         dojo.byId("inheritTcpAction").checked = true; 
                                         dojo.byId("inheritUdpAction").checked = true; 
-                                        dojo.byId("inheritIcmpAction").checked = true;  
+                                        dojo.byId("inheritIcmpAction").checked = true;
+                                        dojo.byId("profDist").value = "10";
                                 } 
                                 else 
                                 {
@@ -1504,6 +1516,7 @@ script
                                         dojo.byId("inheritTcpAction").checked = profile.isTcpActionInherited;
                                         dojo.byId("inheritUdpAction").checked = profile.isUdpActionInherited;
                                         dojo.byId("inheritIcmpAction").checked = profile.isIcmpActionInherited;
+                                        dojo.byId("profDist").value = profile.distribution;
                                 }
 
 
@@ -1549,6 +1562,27 @@ script
 
                                 inheritanceChanged();
                         });
+                        
+                        now.GetPorts(currentName, function(ports) 
+                        {
+                                if(currentName != "default" && ports[0].portNum == "0")
+                                {
+                                  return;
+                                }
+                                
+                                for (var i = 0; i < ports.length; i++) 
+                                {
+                                        portList[ports[i].portNum] = ports[i];
+                                        //ports[i].isInherited = true;
+                                        addPort(ports[i]);
+                                }
+                                portBehaviorChanged();
+                        });
+
+                        } catch(err) {
+                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                            console.log("err was: " + err);
+                        }  
                 });
         });
 

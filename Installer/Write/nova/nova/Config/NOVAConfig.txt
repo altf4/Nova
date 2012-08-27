@@ -387,7 +387,7 @@ RECIPIENTS first@example.com, second@example.com
 #          If you want to use a particular service for just one level,
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
-SERVICE_PREFERENCES 0:0+;1:5+;2:6+;
+SERVICE_PREFERENCES 0:1+;1:5+;2:6+;
 
 ############################################
 # HAYSTACK_STORAGE #

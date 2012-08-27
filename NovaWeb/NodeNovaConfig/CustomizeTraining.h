@@ -12,7 +12,7 @@ class CustomizeTrainingBinding : public node::ObjectWrap
 {
 public:
 	static void Init(v8::Handle<v8::Object> target);
-	trainingSuspectMap * GetChild();
+	Nova::trainingSuspectMap * GetChild();
 	static v8::Handle<v8::Value> ReturnAString(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetDescriptions(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetUIDs(const v8::Arguments& args);
@@ -27,7 +27,7 @@ private:
 
 	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
-	trainingSuspectMap * m_map;
+	Nova::trainingSuspectMap * m_map;
 };
 
 #endif

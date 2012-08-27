@@ -68,38 +68,16 @@ void OsPersonalityDb::LoadNmapPersonalitiesFromFile()
 			{
 				//Remove 'Fingerprint ' prefix.
 				line = line.substr(prefix.size()+1,line.size());
-				//If there are multiple fingerprints on this line, locate the end of the first.
-				size_t i = line.find(" or", 0);
-				size_t j = line.find(";", 0);
-
-				//trim the line down to the first fingerprint
-				if((i != string::npos) && (j != string::npos))
-				{
-					if(i < j)
-					{
-						fprint = line.substr(0, i);
-					}
-					else
-					{
-						fprint = line.substr(0, j);
-					}
-				}
-				else if(i != string::npos)
-				{
-					fprint = line.substr(0, i);
-				}
-				else if(j != string::npos)
-				{
-					fprint = line.substr(0, j);
-				}
-				else
-				{
-					fprint = line;
-				}
+				fprint = line;
 
 				//All fingerprint lines are followed by one or more class lines, get the first class line
 				getline(nmapPers, line);
 				prefix = "Class";
+
+				// TODO This could actually have more than one class line. However,
+				// the nmap-os-db fingerprint line currently isn't machine parsable.
+				// Mulitple device names can be split up with or, semicolon, or other thing.
+				// Might fix if nmap ever makes the formatting of the Fingerprint lines better for mult devices
 				if(!line.substr(0, prefix.size()).compare(prefix))
 				{
 					printClass = line.substr(prefix.size()+1, line.size());

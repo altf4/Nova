@@ -36,6 +36,7 @@ void CryptBuffer(u_char *buf, uint size, bool mode);
 //		dev - Device name, e.g. "eth0"
 // Returns: IP addresses
 std::string GetLocalIP(const char *dev);
+std::string GetLocalIP(std::string dev);
 
 //Removes any instance of the specified character from the front and back of the string
 //		str - pointer to the string you want to modify

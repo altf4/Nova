@@ -26,6 +26,7 @@
 
 /* Nova headers */
 #include "nova_ui_core.h"
+#include "NovaUtil.h"
 #include "Suspect.h"
 #include "Logger.h"
 

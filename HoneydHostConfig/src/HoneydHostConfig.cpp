@@ -385,32 +385,73 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 				}
 			}
 			// If we've found the <os> tags in the <host> xml node
-			else if(!value.first.compare("os"))
+			else if(!value.first.compare("os") && persObject->m_personalityClass.empty())
 			{
 				// try to get the name, type, osgen, osfamily and vendor for the most
 				// accurate guess by nmap. This will (provided the xml is structured correctly)
 				// push back the values in the following form:
 				// personality_name, type, osgen, osfamily, vendor
 				// This order must be properly maintained for use in the PersonalityTree class.
-				if(propTree.get<string>("os.osmatch.<xmlattr>.name").compare(""))
+				BOOST_FOREACH(ptree::value_type &osValue, value.second.get_child(""))
 				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.<xmlattr>.name"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.type").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.type"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osgen").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osgen"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osfamily").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osfamily"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.vendor").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.vendor"));
+					if(!osValue.first.compare("osmatch") && persObject->m_personalityClass.empty())
+					{
+						try
+						{
+							if(osValue.second.get<string>("<xmlattr>.name").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("<xmlattr>.name"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+						/*try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.type").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.type"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}*/
+						try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osgen"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+						try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.osfamily").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osfamily"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+						try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.vendor").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.vendor"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+					}
 				}
 			}
 		}
@@ -533,7 +574,7 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 	for(uint16_t i = 0; i < subnetNames.size(); i++)
 	{
 		ss << i;
-		string executionString = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + subnetNames[i];
+		string executionString = "sudo nmap -O --osscan-guess --stats-every 1s -oX subnet" + ss.str() + ".xml " + subnetNames[i];
 
 		//popen here for stdout of nmap
 		for(uint j = 0; j < 3; j++)

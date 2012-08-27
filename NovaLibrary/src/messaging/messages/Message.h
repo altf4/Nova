@@ -59,6 +59,11 @@ public:
 	Message();
 	virtual ~Message();
 
+	// This is called to delete any contents that the message is wrapping.
+	// It is assumed the destructor will leave the contents alone, so the Message
+	// can be safely deleted while what it wraps can continue to be used.
+	virtual void DeleteContents();
+
 	//Reads a Message from the given socket
 	//	NOTE: Blocking call, will wait until message appears
 	//	connectFD - A valid socket

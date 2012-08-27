@@ -73,6 +73,7 @@ bool StopNovad()
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -81,7 +82,8 @@ bool StopNovad()
 	if( killReply->m_controlType != CONTROL_EXIT_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
-		delete killReply;
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	bool retSuccess = killReply->m_success;
@@ -110,12 +112,14 @@ bool SaveAllSuspects(std::string file)
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -124,6 +128,7 @@ bool SaveAllSuspects(std::string file)
 	if( saveReply->m_controlType != CONTROL_SAVE_SUSPECTS_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
+		saveReply->DeleteContents();
 		delete saveReply;
 		return false;
 	}
@@ -147,12 +152,14 @@ bool ClearAllSuspects()
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -161,7 +168,8 @@ bool ClearAllSuspects()
 	if( clearReply->m_controlType != CONTROL_CLEAR_ALL_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
-		delete clearReply;
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	bool retSuccess = clearReply->m_success;
@@ -191,12 +199,14 @@ bool ClearSuspect(in_addr_t suspectAddress)
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -205,7 +215,8 @@ bool ClearSuspect(in_addr_t suspectAddress)
 	if( clearReply->m_controlType != CONTROL_CLEAR_SUSPECT_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
-		delete clearReply;
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	bool retSuccess = clearReply->m_success;
@@ -228,13 +239,15 @@ bool ReclassifyAllSuspects()
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
 		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -243,7 +256,8 @@ bool ReclassifyAllSuspects()
 	if( reclassifyReply->m_controlType != CONTROL_RECLASSIFY_ALL_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
-		delete reclassifyReply;
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	bool retSuccess = reclassifyReply->m_success;

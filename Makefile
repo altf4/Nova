@@ -3,7 +3,6 @@
 all: release
 
 all-the-things: release 
-	$(MAKE) novagui-release 
 	$(MAKE) web
 
 #Release Target
@@ -67,15 +66,6 @@ novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release
 	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
-#novagui
-novagui-release:
-	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI release
-
-novagui-debug:
-	cd NovaGUI; qmake-qt4 -recursive CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI debug
-
 #Web UI
 web:
 	cd NovaWeb;npm --unsafe-perm install
@@ -111,13 +101,12 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-clean: clean-lib clean-ui-core clean-novad clean-novagui clean-test clean-hhconfig clean-web clean-novatrainer clean-staging
+clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-web clean-novatrainer clean-staging clean-cli
 	
 
 #remove binaries from staging area
 clean-staging:
 	rm -f NovaCLI/novacli
-	rm -f NovaGUI/novagui
 	rm -f Novad/novad
 	rm -f Nova_UI_Core/libNova_UI_Core.so
 	rm -f NovaLibrary/libNovaLibrary.a
@@ -167,16 +156,6 @@ clean-cli-debug:
 clean-cli-release:
 	$(MAKE) -C NovaCLI/Release clean
 
-clean-novagui: clean-novagui-debug clean-novagui-release
-
-clean-novagui-debug:
-	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI debug-clean
-
-clean-novagui-release:
-	-cd NovaGUI; qmake-qt4 -nodepend CONFIG+=debug_and_release novagui.pro
-	$(MAKE) -C NovaGUI release-clean
-
 clean-test:
 	rm -fr NovaTest/NovadSource/*
 	rm -f NovaTest/Debug/NovadSource/*.d
@@ -213,7 +192,7 @@ clean-novatrainer-release:
 install: install-data
 	$(MAKE) install-helper
 
-install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novagui install-novatrainer install-web
+install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-web
 	sh debian/postinst
 	-bash Installer/createDatabase.sh
 
@@ -234,7 +213,6 @@ install-data:
 	install Installer/Read/paths $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
 	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
-	install Installer/Read/Nova.desktop  $(DESTDIR)/usr/share/applications
 	#Copy the hidden directories and files
 	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
 	#Copy the scripts and logs
@@ -255,8 +233,8 @@ install-pcap-debug:
 install-docs:
 	# TODO: Combine man pages
 	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
-	gzip -c Installer/Read/manpages/novagui.1 > Installer/Read/manpages/novagui.1.gz
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
+	gzip -c Installer/Read/manpages/novaweb.1 > Installer/Read/manpages/novaweb.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
 install-web:
@@ -278,9 +256,6 @@ install-ui-core:
 install-cli:
 	install NovaCLI/novacli $(DESTDIR)/usr/bin
 
-install-novagui:
-	-install NovaGUI/novagui $(DESTDIR)/usr/bin
-
 install-novatrainer:
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 
@@ -291,7 +266,6 @@ uninstall: uninstall-files uninstall-permissions
 uninstall-files:
 	rm -rf $(DESTDIR)/etc/nova
 	rm -rf $(DESTDIR)/usr/share/nova
-	rm -f $(DESTDIR)/usr/bin/novagui
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad
 	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
@@ -303,7 +277,6 @@ uninstall-files:
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_HHConfig
-	rm -f $(DESTDIR)/usr/share/applications/Nova.desktop
 	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
 	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
 
@@ -316,6 +289,7 @@ reinstall: uninstall-files
 
 reinstall-debug: uninstall-files
 	$(MAKE) install
+	novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
 # Does a fresh uninstall, clean, build, and install
 reset: uninstall-files
@@ -325,12 +299,9 @@ reset: uninstall-files
 	$(MAKE) install
 
 reset-debug: 
-	$(MAKE) uninstall-files
 	$(MAKE) clean
 	$(MAKE) debug
-	$(MAKE) novagui-debug
-	$(MAKE) hhconfig-debug
 	$(MAKE) web
 	$(MAKE) test
-	$(MAKE) install
+	$(MAKE) reinstall-debug
 

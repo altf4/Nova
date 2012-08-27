@@ -1,4 +1,2 @@
 ?package(nova):needs="X11|text|vc|wm" section="Applications/Network/Monitoring"\
   title="novad" command="/usr/bin/novad"
-?package(nova):needs="X11|text|vc|wm" section="Applications/Network/Monitoring"\
-  title="novagui" command="/usr/bin/novagui"

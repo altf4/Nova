@@ -24,6 +24,8 @@
 
 #include "HashMapStructs.h"
 
+namespace Nova {
+
 // Header for training data
 struct _trainingFileSuspect
 {
@@ -62,5 +64,7 @@ private:
 	trainingFileSuspectMap *trainingTable;
 
 };
+
+}
 
 #endif /* TRAININGDUMP_H_ */

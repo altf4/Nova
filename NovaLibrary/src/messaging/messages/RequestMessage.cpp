@@ -27,6 +27,7 @@ namespace Nova
 
 RequestMessage::RequestMessage(enum RequestType requestType, enum ProtocolDirection direction)
 {
+	m_suspect = NULL;
 	m_messageType = REQUEST_MESSAGE;
 	m_suspectListLength = 0;
 	m_requestType = requestType;
@@ -38,8 +39,16 @@ RequestMessage::~RequestMessage()
 
 }
 
+void RequestMessage::DeleteContents()
+{
+	delete m_suspect;
+	m_suspect = NULL;
+}
+
 RequestMessage::RequestMessage(char *buffer, uint32_t length)
 {
+	m_suspect = NULL;
+
 	if( length < REQUEST_MSG_MIN_SIZE )
 	{
 		m_serializeError = true;
