@@ -70,6 +70,7 @@ string Config::m_prefixes[] =
 	"SMTP_ADDR",
 	"SMTP_PORT",
 	"SMTP_DOMAIN",
+	"SMTP_USEAUTH",
 	"RECIPIENTS",
 	"SERVICE_PREFERENCES",
 	"HAYSTACK_STORAGE",
@@ -632,6 +633,23 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_SMTPDomain = line;
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SMTP_USEAUTH
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					m_SMTPUseAuth = atoi(line.c_str());
+					cout << "m_SMTPUseAuth is " << m_SMTPUseAuth << endl;
 					isValid[prefixIndex] = true;
 				}
 
@@ -2784,5 +2802,16 @@ void Config::SetClearAfterHostile(bool clearAfterHostile)
 	m_clearAfterHostile = clearAfterHostile;
 }
 
+void Config::SetSMTPUseAuth(bool useAuth)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_SMTPUseAuth = useAuth;
+}
+
+bool Config::GetSMTPUseAuth()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_SMTPUseAuth;
+}
 
 }

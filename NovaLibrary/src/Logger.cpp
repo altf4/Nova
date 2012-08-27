@@ -178,22 +178,30 @@ namespace Nova
 		ss.str("");
 
 		curl_easy_setopt(curl, CURLOPT_URL, domain.c_str());
-		curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser().c_str());
-		curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass().c_str());
 		curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadCallback);
 		curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + Config::Inst()->GetSMTPAddr() + ">").c_str());
 		curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt_list);
-		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
+
+		// If GetSMTPUseAuth is true, curl will first attempt to establish an SSL/TLS connection.
+		// If this fails, it rollsback to the simpler AUTH mechanisms.
+		// If this in turn fails, mail alert will not be sent
+		if(Config::Inst()->GetSMTPUseAuth())
+		{
+			curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser().c_str());
+			curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass().c_str());
+			curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_TRY);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
+			curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
+			curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
+		}
+
 		curl_easy_setopt(curl, CURLOPT_READDATA, &counter);
 
 		// Use this for verbose output from curl
 		//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
 
-		curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
-		curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
 		curl_multi_add_handle(mcurl, curl);
 
 		mp_start = tvnow();

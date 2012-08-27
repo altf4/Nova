@@ -171,12 +171,14 @@ public:
     in_port_t GetSMTPPort();
     std::string GetSMTPUser();
     std::string GetSMTPPass();
+    bool GetSMTPUseAuth();
 
 	std::string GetDBHost();
 	std::string GetDBUser();
 	std::string GetDBPass();
 
     void SetLoggerPreferences(std::string loggerPreferences);
+    void SetSMTPUseAuth(bool useAuth);
     void SetSMTPAddr(std::string SMTPAddr);
     void SetSMTPDomain(std::string SMTPDomain);
 	void SetSMTPPort(in_port_t SMTPPort);
@@ -306,6 +308,8 @@ private:
 	// still have it as a Config private attribute
 	std::string m_SMTPUser;
 	std::string m_SMTPPass;
+
+	bool m_SMTPUseAuth;
 
 	std::string m_DBHost;
 	std::string m_DBUser;

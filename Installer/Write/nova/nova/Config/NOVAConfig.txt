@@ -355,6 +355,16 @@ SMTP_PORT 465
 SMTP_DOMAIN smtps://smtp.example.com
 
 ############################################
+# SMTP_USEAUTH
+############################################
+#
+# Boolean of whether to use authentication parameters
+# for the email alerts or not (basically, using port 25 without
+# username/passwd or using SSL/TLS)
+#
+SMTP_USEAUTH 1
+
+############################################
 # RECIPIENTS #
 ############################################
 #

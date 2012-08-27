@@ -2,6 +2,7 @@
 script
   var servicePrefs = '#{SERVICE_PREFERENCES}';
   var loaded = false;
+  var USEAUTH = "#{SMTP_USEAUTH}";
   
   function changeDisabled()
   {
@@ -284,6 +285,41 @@ script
     setServicePreferences();
   }
   
+  function changeSMTPAuth()
+  {
+    if(document.getElementById("SMTP_USEAUTH").checked)
+    {
+      document.getElementById("SMTP_USEAUTH").value = "1";
+      document.getElementById("SMTP_PORT").value = "#{SMTP_PORT}";
+      if(document.getElementById("SMTP_DOMAIN").value.substring(0,4) == "smtp")
+      {
+        var newString = document.getElementById("SMTP_DOMAIN").value.substring(0,4);
+        newString += "s";
+        newString += document.getElementById("SMTP_DOMAIN").value.substring(4);
+        document.getElementById("SMTP_DOMAIN").value = newString;
+      }
+      document.getElementById("SMTP_USER").removeAttribute('readonly');
+      document.getElementById("SMTP_USER").removeAttribute('style');
+      document.getElementById("SMTP_PASS").removeAttribute('readonly');
+      document.getElementById("SMTP_PASS").removeAttribute('style');
+    }
+    else
+    {
+      document.getElementById("SMTP_USEAUTH").value = "0";
+      document.getElementById("SMTP_PORT").value = "25";
+      if(document.getElementById("SMTP_DOMAIN").value.substring(0,5) == "smtps")
+      {
+        var newString = document.getElementById("SMTP_DOMAIN").value.substring(0,4);
+        newString += document.getElementById("SMTP_DOMAIN").value.substring(5);
+        document.getElementById("SMTP_DOMAIN").value = newString;
+      }
+      document.getElementById("SMTP_USER").setAttribute('readonly', true);
+      document.getElementById("SMTP_PASS").setAttribute('readonly', true);
+      document.getElementById("SMTP_USER").setAttribute('style', 'font-style: italic; color: grey');
+      document.getElementById("SMTP_PASS").setAttribute('style', 'font-style: italic; color: grey');
+    }
+  }
+  
   now.ready(function()
   {
     if(loaded)
@@ -299,6 +335,7 @@ script
     {
       setServicePreferences();
       fillServicePrefDiv();
+      changeSMTPAuth();
     }
   });
 
@@ -388,28 +425,39 @@ else
 br
 
 h2 Email Notifications
+if(SMTP_USEAUTH == "true")
+  Use SMTP Authentication?
+  input(type="checkbox", id="SMTP_USEAUTH", name="SMTP_USEAUTH", value=SMTP_USEAUTH, onclick="changeSMTPAuth()", checked)
+  br
+  br
+else
+  Use SMTP Authentication?
+  input(type="checkbox", id="SMTP_USEAUTH", name="SMTP_USEAUTH", value=SMTP_USEAUTH, onclick="changeSMTPAuth()")
+  br
+  br
+
 label SMTP Address
-input(name="SMTP_ADDR",  value=SMTP_ADDR)
+input(name="SMTP_ADDR", value=SMTP_ADDR)
 br
 
 label SMTP Port
-input(type="number", min="0", max="65536", name="SMTP_PORT",  value=SMTP_PORT)
+input(type="number", min="0", max="65536", name="SMTP_PORT", id="SMTP_PORT", value=SMTP_PORT)
 br
 
 label SMTP Domain
-input(name="SMTP_DOMAIN",  value=SMTP_DOMAIN)
+input(name="SMTP_DOMAIN", id="SMTP_DOMAIN", value=SMTP_DOMAIN)
 br
 
 label SMTP Username
-input(name="SMTP_USER",  value=SMTP_USER)
+input(name="SMTP_USER",  id="SMTP_USER", value=SMTP_USER)
 br
 
 label SMTP Password
-input(type="password", name="SMTP_PASS",  value=SMTP_PASS)
+input(type="password", name="SMTP_PASS", id="SMTP_PASS", value=SMTP_PASS)
 br
 
 label Email Recipients
-input(name="RECIPIENTS",  value=RECIPIENTS)
+input(name="RECIPIENTS", value=RECIPIENTS)
   br
 br
 
