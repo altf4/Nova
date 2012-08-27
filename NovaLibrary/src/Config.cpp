@@ -640,6 +640,22 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			//SMTP_USEAUTH
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					m_SMTPUseAuth = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
 			//RECIPIENTS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
