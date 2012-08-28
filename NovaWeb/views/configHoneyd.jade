@@ -120,7 +120,8 @@ block headerAdditions
 
     function(DataGrid,ObjectStore){
         var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
-        grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:100, autoWidth:true});
+        var gridSize = #{nodes.length};
+        grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:gridSize, autoWidth:true});
         /*dojo.connect(grid, "onSelected", grid, function(idx){
           names.length = 0;
           if(!grid.store.isItemLoaded(grid.getItem(idx)))
