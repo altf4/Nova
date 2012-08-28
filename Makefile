@@ -3,7 +3,7 @@
 all: release
 
 all-the-things: release 
-	$(MAKE) web
+	$(MAKE) quasar
 
 #Release Target
 release:
@@ -67,9 +67,9 @@ novatrainer-release:
 	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
 #Web UI
-web:
-	cd NovaWeb;npm --unsafe-perm install
-	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
+quasar:
+	cd Quasar;npm --unsafe-perm install
+	cd Quasar/NodeNovaConfig;npm --unsafe-perm install
 
 #Honeyd HostConfig
 hhconfig-release:
@@ -101,7 +101,7 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-web clean-novatrainer clean-staging clean-cli
+clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli
 	
 
 #remove binaries from staging area
@@ -164,12 +164,12 @@ clean-test:
 	rm -f NovaTest/Debug/src/NovadSource/*.o
 	$(MAKE) -C NovaTest/Debug clean
 
-clean-web:
-	-cd NovaWeb/NodeNovaConfig; node-waf clean
-	rm -rf NovaWeb/node_modules/forever/node_modules/utile/node_modules/.bin/
-	rm -rf NovaWeb/node_modules/forever/node_modules/.bin
-	rm -rf NovaWeb/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
-	rm -rf NovaWeb/node_modules/.bin/
+clean-quasar:
+	-cd Quasar/NodeNovaConfig; node-waf clean
+	rm -rf Quasar/node_modules/forever/node_modules/utile/node_modules/.bin/
+	rm -rf Quasar/node_modules/forever/node_modules/.bin
+	rm -rf Quasar/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
+	rm -rf Quasar/node_modules/.bin/
 
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	
@@ -195,7 +195,7 @@ install: install-data
 	-chmod -R g+rw /usr/share/nova
 	-chmod -R g+rw /var/log/honeyd
 
-install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-web
+install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar
 	sh debian/postinst
 	-bash Installer/createDatabase.sh
 
@@ -237,14 +237,14 @@ install-docs:
 	# TODO: Combine man pages
 	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
-	gzip -c Installer/Read/manpages/novaweb.1 > Installer/Read/manpages/novaweb.1.gz
+	gzip -c Installer/Read/manpages/quasar.1 > Installer/Read/manpages/quasar.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
-install-web:
-	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
-	tar -C $(DESTDIR)/usr/share/nova/NovaWeb/www -xf NovaWeb/dojo-release-1.7.0.tar.gz
-	#mv $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/NovaWeb/www/dojo
-	-install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
+install-quasar:
+	cp -frup Quasar $(DESTDIR)/usr/share/nova
+	tar -C $(DESTDIR)/usr/share/nova/Quasar/www -xf Quasar/dojo-release-1.7.0.tar.gz
+	#mv $(DESTDIR)/usr/share/nova/Quasar/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/Quasar/www/dojo
+	-install Quasar/quasar $(DESTDIR)/usr/bin/quasar
 
 install-hhconfig:
 	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
@@ -274,7 +274,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/bin/nova_init
-	rm -f $(DESTDIR)/usr/bin/novaweb
+	rm -f $(DESTDIR)/usr/bin/quasar
 	rm -f $(DESTDIR)/usr/bin/novatrainer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
@@ -304,7 +304,7 @@ reset: uninstall-files
 reset-debug: 
 	$(MAKE) clean
 	$(MAKE) debug
-	$(MAKE) web
+	$(MAKE) quasar
 	$(MAKE) test
 	$(MAKE) reinstall-debug
 

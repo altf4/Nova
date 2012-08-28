@@ -55,9 +55,9 @@ novacli-debug:
 	cp NovaCLI/Debug/novacli NovaCLI/
 
 #Web UI
-web:
-	cd NovaWeb;npm --unsafe-perm install
-	cd NovaWeb/NodeNovaConfig;npm --unsafe-perm install
+quasar:
+	cd Quasar;npm --unsafe-perm install
+	cd Quasar/NodeNovaConfig;npm --unsafe-perm install
 
 #Unit tests
 test: debug test-prepare
@@ -109,12 +109,12 @@ clean-test:
 	rm -f NovaTest/Debug/src/NovadSource/*.o
 	$(MAKE) -C NovaTest/Debug clean
 
-clean-web:
-	cd NovaWeb/NodeNovaConfig; node-waf clean
-	rm -rf NovaWeb/node_modules/forever/node_modules/utile/node_modules/.bin/
-	rm -rf NovaWeb/node_modules/forever/node_modules/.bin
-	rm -rf NovaWeb/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
-	rm -rf NovaWeb/node_modules/.bin/
+clean-quasar:
+	cd Quasar/NodeNovaConfig; node-waf clean
+	rm -rf Quasar/node_modules/forever/node_modules/utile/node_modules/.bin/
+	rm -rf Quasar/node_modules/forever/node_modules/.bin
+	rm -rf Quasar/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
+	rm -rf Quasar/node_modules/.bin/
 
 
 #Installation (requires root)
@@ -140,7 +140,6 @@ install-data:
 	mkdir -p $(DESTDIR)/usr/bin
 	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
 	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
-	cp -fup  Installer/Write/nova_mailer $(DESTDIR)/usr/bin
 	install Installer/nova_init $(DESTDIR)/usr/bin
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
@@ -166,10 +165,10 @@ install-docs:
 	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
 	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
-install-web:
-	cp -frup NovaWeb $(DESTDIR)/usr/share/nova
+install-quasar:
+	cp -frup Quasar $(DESTDIR)/usr/share/nova
 	mkdir -p $(DESTDIR)/usr/bin
-	install NovaWeb/novaweb $(DESTDIR)/usr/bin/novaweb
+	install Quasar/quasar $(DESTDIR)/usr/bin/quasar
 
 #Uninstall
 uninstall: uninstall-files uninstall-permissions

@@ -1,0 +1,152 @@
+extends layout
+block headerAdditions
+  //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  
+  include includes/commonHoneydProfile
+
+block content
+  h2 Adding Child Profile
+
+  form(method="post", action="/editHoneydProfileSave")
+
+    table(id="tableEditProfile")
+      col
+      col
+      col(style="width:200px")
+      col(style="width:300px")
+      
+      tr(id="row0")
+        td
+        td
+        td(style="text-align:right")
+          label Profile Name
+        td
+          input#name(type="text", name="name")
+      
+      tr(id="row1")
+        td
+        td
+        td(style="text-align:right")
+          label Parent Profile
+        td
+          input#parentName(type="text", name="name", disabled="true")
+      
+ 
+      tr(id="row2")
+        td
+          input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Operating System Personality
+        td
+          select#personality(data-dojo-type="dijit.form.FilteringSelect", name="personality", autocomplete="true", pageSize=10)
+            each os in personalities
+              option(value="#{os}") #{os}
+      
+      tr(id="row4")
+        td
+          input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Packet Drop Percentage
+        td
+          input#dropRate(type="number", name="dropRate", min=0, max=100)
+
+
+      tr(id="row5")
+        td
+          input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Fixed uptime or uptime range?
+        td
+          select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
+            option Fixed
+            option Range
+        
+      tr(id="row6")
+        td
+        td
+        td(style="text-align:right")
+          label(id="uptimeLabel") Uptime Range
+        td
+          input#uptimeMin(type="number", name="uptimeMin", min=0)
+          input#uptimeMax(type="number", name="uptimeMax", min=0)
+
+      tr(id="row7")
+        td
+          input#inheritTcpAction(type="checkbox", name="inheritTcpAction", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default TCP Action
+        td
+          select(id='tcpAction')
+            option Reset: Respond with RST
+            option Filter: Drop packet and do not respond
+            option Open: Respond with SYN/ACK
+
+  
+      tr(id="row8")
+        td
+          input#inheritUdpAction(type="checkbox", name="inheritUdpAction", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default UDP Action
+        td
+          select(id='udpAction')
+            option Reset: Respond with ICMP Port Error
+            option Filter: Drop packet and do not respond
+            option Open: Do nothing
+
+      tr(id="row9")
+        td
+          input#inheritIcmpAction(type="checkbox", name="inheritIcmpAction", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(style="text-align:right")
+          label Default ICMP Action
+        td
+          select(id='icmpAction')
+            option Filter: Drop packet and do not respond
+            option Open: Respond to ICMP Packets
+
+    br
+    
+    h3 Profile Ethernet Vendor Configuration
+    table(style="_min-height: 100px")
+      tr(id="row3")
+        td
+          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
+        td
+          label Inherit?
+        td(id="labelDist", style="text-align:right")
+        td(id="ranges")
+        td(id="deleteButtonHere")        
+     
+     div(id="ethSelectDiv")
+       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById('ethernet').value)") Add New Vendor
+
+       select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+         each vendor in vendors
+           option(value="#{vendor}") #{vendor}
+              
+      
+    label(id="errorEthernet", style="color:red;", value="")
+    input(type='hidden', id='profDist', value='')
+    input(type='hidden', id='generated', value='')
+    
+    h3 Profile Port Configuration
+    table#portTable
+
+    button(type="button", onClick="addPort()") Add New Port
+
+    br
+    br
+    br
+
+    button#saveButton(type="button", onclick="saveChanges()") Add Profile
