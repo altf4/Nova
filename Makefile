@@ -10,6 +10,7 @@ release:
 	$(MAKE) novalib-release
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
+	$(MAKE) quasar
 
 release-helper: novad-release novacli-release novatrainer-release hhconfig-release
 
@@ -18,6 +19,7 @@ debug:
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
+	$(MAKE) quasar
 
 debug-helper: novad-debug novacli-debug novatrainer-debug hhconfig-debug
 
