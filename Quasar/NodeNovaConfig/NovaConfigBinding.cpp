@@ -36,6 +36,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAllInterfacesBinding"),FunctionTemplate::New(InvokeWrappedMethod<std::string, NovaConfigBinding, Config, &Config::GetUseAllInterfacesBinding>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("SetDoppelInterface"),FunctionTemplate::New(SetDoppelInterface)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("AddIface"),FunctionTemplate::New(AddIface)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("SetSMTPUseAuth"),FunctionTemplate::New(SetSMTPUseAuth)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("ClearInterfaces"),FunctionTemplate::New(ClearInterfaces)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAllInterfaces"),FunctionTemplate::New(UseAllInterfaces)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetUseAnyLoopback"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, &Config::GetUseAnyLoopback>));
@@ -69,6 +70,34 @@ Handle<Value> NovaConfigBinding::New(const Arguments& args)
 	obj->Wrap(args.This());
 
 	return args.This();
+}
+
+Handle<Value> NovaConfigBinding::SetSMTPUseAuth(const Arguments& args)
+{
+  HandleScope scope;
+  
+  if(args.Length() != 1)
+  {
+    return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+  }
+  
+  NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+  std::string set = cvv8::CastFromJS<std::string>(args[0]);
+  
+  if(!set.compare("true"))
+  {
+    obj->m_conf->SetSMTPUseAuth(true);
+  }
+  else if(!set.compare("false"))
+  {
+    obj->m_conf->SetSMTPUseAuth(false);
+  }
+  else
+  {
+    cout << "Invalid parameter for SetSMTPUseAuth()" << endl;
+  }
+  
+  return args.This();
 }
 
 Handle<Value> NovaConfigBinding::SetDoppelInterface(const Arguments& args)

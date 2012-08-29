@@ -2,7 +2,8 @@
 script
   var servicePrefs = '#{SERVICE_PREFERENCES}';
   var loaded = false;
-  var USEAUTH = "#{SMTP_USEAUTH}";
+  
+  
   
   function changeDisabled()
   {
@@ -291,13 +292,6 @@ script
     {
       document.getElementById("SMTP_USEAUTH").value = "1";
       document.getElementById("SMTP_PORT").value = "#{SMTP_PORT}";
-      if(document.getElementById("SMTP_DOMAIN").value.substring(0,4) == "smtp")
-      {
-        var newString = document.getElementById("SMTP_DOMAIN").value.substring(0,4);
-        newString += "s";
-        newString += document.getElementById("SMTP_DOMAIN").value.substring(4);
-        document.getElementById("SMTP_DOMAIN").value = newString;
-      }
       document.getElementById("SMTP_USER").removeAttribute('readonly');
       document.getElementById("SMTP_USER").removeAttribute('style');
       document.getElementById("SMTP_PASS").removeAttribute('readonly');
@@ -307,12 +301,6 @@ script
     {
       document.getElementById("SMTP_USEAUTH").value = "0";
       document.getElementById("SMTP_PORT").value = "25";
-      if(document.getElementById("SMTP_DOMAIN").value.substring(0,5) == "smtps")
-      {
-        var newString = document.getElementById("SMTP_DOMAIN").value.substring(0,4);
-        newString += document.getElementById("SMTP_DOMAIN").value.substring(5);
-        document.getElementById("SMTP_DOMAIN").value = newString;
-      }
       document.getElementById("SMTP_USER").setAttribute('readonly', true);
       document.getElementById("SMTP_PASS").setAttribute('readonly', true);
       document.getElementById("SMTP_USER").setAttribute('style', 'font-style: italic; color: grey');

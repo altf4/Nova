@@ -399,6 +399,7 @@ function renderBasicOptions(jadefile, res, req) {
 			SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN"),
 			SMTP_USER: config.GetSMTPUser(),
 			SMTP_PASS: config.GetSMTPPass(),
+			SMTP_USEAUTH: config.GetSMTPUseAuth().toString(),
 			SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES"),
 			RECIPIENTS: config.ReadSetting("RECIPIENTS")
 		}
@@ -975,10 +976,12 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
   if(req.body["SMTP_USEAUTH"] == undefined)
   {
     req.body["SMTP_USEAUTH"] = "0";
+    config.SetSMTPUseAuth("false");
   }
   else
   {
     req.body["SMTP_USEAUTH"] = "1";
+    config.SetSMTPUseAuth("true");
   }
 
 	var interfaces = "";
