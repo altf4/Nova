@@ -97,17 +97,17 @@ script
     syslogModSelect.id = 'syslogModSelect';
     syslogModSelect.setAttribute('onchange', 'onValueChange()');
     
-    var options = ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL", "ALERT", "EMERGENCY"];
+    var options = ["EMERGENCY", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"];
     var mods = ["", "+", "-"];
     
     for(var i = 0; i < options.length; i++)
     {
       var option = document.createElement("option");
-      option.value = i;
+      option.value = (options.length - i - 1);
       option.id = options[i];
       option.innerHTML = options[i];
       
-      if(i == syslogLevel)
+      if((options.length - i - 1) == syslogLevel)
       {
         option.selected = true;
       }
@@ -162,11 +162,11 @@ script
     for(var i = 0; i < options.length; i++)
     {
       var option = document.createElement("option");
-      option.value = i;
+      option.value = (options.length - i - 1);
       option.id = options[i];
       option.innerHTML = options[i];
       
-      if(i == libnotifyLevel)
+      if((options.length - i - 1) == libnotifyLevel)
       {
         option.selected = true;
       }
@@ -221,11 +221,11 @@ script
     for(var i = 0; i < options.length; i++)
     {
       var option = document.createElement("option");
-      option.value = i;
+      option.value = (options.length - i - 1);
       option.id = options[i];
       option.innerHTML = options[i];
       
-      if(i == emailLevel)
+      if((options.length - i - 1) == emailLevel)
       {
         option.selected = true;
       }
