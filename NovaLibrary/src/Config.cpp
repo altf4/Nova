@@ -927,7 +927,7 @@ bool Config::SaveUserConfig()
 	string copyCommand = "cp -f " + m_userConfigFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
-		LOG(ERROR, "Problem saving current configuration.","System Call "+copyCommand+" has failed.");
+		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
 	}
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
@@ -967,6 +967,11 @@ bool Config::SaveUserConfig()
 	out->close();
 	delete in;
 	delete out;
+
+	if(system("rm -f Config/NOVAConfig.txt.tmp") != 0)
+	{
+		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/NOVAConfig.txt.tmp has failed.");
+	}
 
 	return true;
 }
@@ -1294,7 +1299,7 @@ bool Config::SaveConfig()
 	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
-		LOG(ERROR, "Problem saving current configuration.","System Call "+copyCommand+" has failed.");
+		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
 	}
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
@@ -1538,9 +1543,9 @@ bool Config::SaveConfig()
 	out->close();
 	delete in;
 	delete out;
-	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
+	if(system("rm -f Config/NOVAConfig.txt.tmp") != 0)
 	{
-		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
+		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/NOVAConfig.txt.tmp has failed.");
 	}
 
 	return true;
@@ -1756,7 +1761,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
-		LOG(ERROR, "Problem saving current configuration.","System Call "+copyCommand+" has failed.");
+		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
 	}
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
@@ -1791,9 +1796,9 @@ bool Config::WriteSetting(std::string key, std::string value)
 	delete in;
 	delete out;
 
-	if(system("rm -f Config/.NOVAConfig.tmp") != 0)
+	if(system("rm -f Config/NOVAConfig.txt.tmp") != 0)
 	{
-		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/.NOVAConfig.tmp has failed.");
+		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/NOVAConfig.txt.tmp has failed.");
 	}
 
 
