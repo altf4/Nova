@@ -36,13 +36,15 @@ block headerAdditions
         // only add the value to the ipWhitelist if value is either an individual IP or a subnet-style ip "range"
         if(individualIp.test(value))
         {
-          try {
+          try 
+          {
             now.addWhitelistEntry(value, errorMessageCallback);
-          } catch(err) {
+          } 
+          catch(err) 
+          {
             alert("Action failed! Unable to connect to server. Try refreshing the page.");
             console.log("Caught error was: " + err);
           }
-      }
           document.getElementById("errorLabel").innerHTML = "Valid IP found!";
         }
         else if(subnetRangeIp.test(value))
