@@ -101,11 +101,11 @@ double ClassificationEngine::Classify(Suspect *suspect)
 
 	//Allocate the ANNpoint;
 	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
-	FeatureSet *fs = &suspect->m_features;
+	FeatureSet fs = suspect->m_features;
 	uint ai = 0;
 
 	// Do we not have enough data to classify?
-	if(fs->m_packetCount < Config::Inst()->GetMinPacketThreshold())
+	if(fs.m_packetCount < Config::Inst()->GetMinPacketThreshold())
 	{
 		suspect->SetIsHostile(false);
 		suspect->SetClassification(-2);
@@ -117,17 +117,17 @@ double ClassificationEngine::Classify(Suspect *suspect)
 	{
 		if(Config::Inst()->IsFeatureEnabled(i))
 		{
-			if(fs->m_features[i] > m_maxFeatureValues[ai])
+			if(fs.m_features[i] > m_maxFeatureValues[ai])
 			{
-				fs->m_features[i] = m_maxFeatureValues[ai];
+				fs.m_features[i] = m_maxFeatureValues[ai];
 			}
-			else if(fs->m_features[i] < m_minFeatureValues[ai])
+			else if(fs.m_features[i] < m_minFeatureValues[ai])
 			{
-				fs->m_features[i] = m_minFeatureValues[ai];
+				fs.m_features[i] = m_minFeatureValues[ai];
 			}
 			if(m_maxFeatureValues[ai] != 0)
 			{
-				aNN[ai] = Normalize(m_normalization[i], fs->m_features[i],
+				aNN[ai] = Normalize(m_normalization[i], fs.m_features[i],
 					m_minFeatureValues[ai], m_maxFeatureValues[ai]);
 			}
 			else
