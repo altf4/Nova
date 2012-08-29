@@ -1227,11 +1227,17 @@ void UpdateHaystackFeatures()
 	{
 		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
 	}
+	stringstream ss;
+	ss << "Currently monitoring " << haystackAddresses.size() << " static honeypot IP addresses";
+	LOG(DEBUG, ss.str(), "");
 
 	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
 	{
 		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
 	}
+	stringstream ss2;
+	ss2 << "Currently monitoring " << haystackDhcpAddresses.size() << " DHCP honeypot IP addresses";
+	LOG(DEBUG, ss2.str(), "");
 
 	suspects.SetHaystackNodes(haystackNodes);
 }
