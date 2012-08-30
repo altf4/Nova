@@ -151,6 +151,14 @@ The command "forever list" can be useful for seeing the current status, and it c
 "forever stop index (usually 0)". See the forever documentation for more information.
 
 ===============================
+Unit Tests
+===============================
+
+If you're a developer interested in using the unit tests in NovaTest, you can find instructions at,
+
+https://github.com/DataSoft/Nova/wiki/Unit-Testing
+
+===============================
 Debian Packages
 ===============================
 To generate a Debian package, simply checkout what version of the software you like (or make what changes to it that you want) and run the generateDebs script (as a normal user). 
