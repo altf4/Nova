@@ -754,11 +754,6 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 		}
 		newNode.m_realIP = htonl(retVal);
 	}
-	else if(!m_macAddresses.IsVendorValid(vendor))
-	{
-		LOG(ERROR, "Unable to use DHCP without a valid MAC, unable to use given address '" + macAddress + "'.", "");
-		return false;
-	}
 	else
 	{
 		newNode.m_sub = newNode.m_interface;
