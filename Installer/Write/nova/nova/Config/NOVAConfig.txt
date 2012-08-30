@@ -457,7 +457,7 @@ CUSTOM_PCAP_MODE 0
 ############################################
 #
 # Folder name for a training capture session
-TRAINING_SESSION trainingSession
+TRAINING_SESSION null
 
 
 
