@@ -48,25 +48,20 @@ check_err
 make install
 check_err
 
-echo "##############################################################################"
-echo "#                               BUILDING NOVA                                #"
-echo "##############################################################################"
 cd ${BUILDDIR}/Nova
 git checkout -f integration
 check_err
-make -j2 debug
-check_err
 
 echo "##############################################################################"
-echo "#                             BUILDING NOVAWEB                               #"
+echo "#                             BUILDING NOVA                                  #"
 echo "##############################################################################"
-cd ${BUILDDIR}/Nova/NovaWeb
+cd ${BUILDDIR}/Nova/Quasar
 bash getDependencies.sh
 npm install -g forever
 check_err
 
 cd ${BUILDDIR}/Nova
-make web
+make debug
 check_err
 make install
 check_err
