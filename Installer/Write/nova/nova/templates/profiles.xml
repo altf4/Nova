@@ -5,9 +5,9 @@
 		<generated>false</generated>
 		<distribution>100</distribution>
 		<set>
-			<TCP>reset</TCP>
-			<UDP>reset</UDP>
-			<ICMP>open</ICMP>
+			<TCP>block</TCP>
+			<UDP>block</UDP>
+			<ICMP>block</ICMP>
 			<ethernet>
 				<vendor>Dell</vendor>
 				<ethDistribution>100</ethDistribution>
@@ -88,11 +88,11 @@
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
-						<portName>137_TCP_open</portName>
+						<portName>137_UDP_open</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
-						<portName>137_UDP_open</portName>
+						<portName>137_TCP_open</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
@@ -138,11 +138,11 @@
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
-						<portName>137_TCP_open</portName>
+						<portName>137_UDP_open</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
-						<portName>137_UDP_open</portName>
+						<portName>137_TCP_open</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
