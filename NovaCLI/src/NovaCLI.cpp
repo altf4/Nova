@@ -114,7 +114,22 @@ int main(int argc, const char *argv[])
 		}
 		else if(!strcmp(argv[2], "haystack"))
 		{
-			StartHaystackWrapper();
+			if (argc > 3)
+			{
+				if (!strcmp(argv[3], "debug"))
+				{
+					StartHaystackWrapper(true);
+				}
+				else
+				{
+					PrintUsage();
+				}
+			}
+			else
+			{
+				StartHaystackWrapper(false);
+			}
+
 		}
 		else
 		{
@@ -268,7 +283,7 @@ void PrintUsage()
 {
 	cout << "Usage:" << endl;
 	cout << "    " << EXECUTABLE_NAME << " status nova|haystack" << endl;
-	cout << "    " << EXECUTABLE_NAME << " start nova|haystack" << endl;
+	cout << "    " << EXECUTABLE_NAME << " start nova|haystack [debug]" << endl;
 	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
@@ -336,11 +351,11 @@ void StartNovaWrapper()
 	}
 }
 
-void StartHaystackWrapper()
+void StartHaystackWrapper(bool debug)
 {
 	if(!IsHaystackUp())
 	{
-		if(StartHaystack())
+		if(StartHaystack(debug))
 		{
 			cout << "Started Haystack" << endl;
 		}

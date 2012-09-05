@@ -1175,7 +1175,7 @@ everyone.now.GetInheritedEthernetList = function (parent, callback) {
 
 everyone.now.StartHaystack = function () {
 	if (!nova.IsHaystackUp()) {
-		nova.StartHaystack();
+		nova.StartHaystack(false);
 	}
 }
 
@@ -1569,7 +1569,7 @@ everyone.now.StartTrainingCapture = function (trainingSession, callback) {
 		} else {
 			// Start the haystack
 			if (!nova.IsHaystackUp()) {
-				nova.StartHaystack();
+				nova.StartHaystack(false);
 			}
 
 			// (Re)start NOVA

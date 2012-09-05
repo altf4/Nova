@@ -31,7 +31,7 @@ namespace NovaCLI
 void Connect();
 
 void StartNovaWrapper();
-void StartHaystackWrapper();
+void StartHaystackWrapper(bool debug);
 
 void StatusNovaWrapper();
 void StatusHaystackWrapper();

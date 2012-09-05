@@ -25,7 +25,7 @@ namespace Nova
 //Starts the Honeyd Haystack process
 //	returns - True if haystack successfully started, false on error
 //	NOTE: If the haystack is already running, this function does nothing and returns true
-bool StartHaystack();
+bool StartHaystack(bool blocking = false);
 
 //Stops the Honeyd Haystack process
 //	returns - True if haystack successfully stopped, false on error

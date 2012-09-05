@@ -24,10 +24,10 @@
 using namespace std;
 namespace Nova
 {
-bool StartHaystack()
+bool StartHaystack(bool blocking)
 {
 	stringstream ss;
-	ss << "nohup sudo honeyd ";
+	ss << "sudo honeyd ";
 	vector<string> ifList = Config::Inst()->GetInterfaces();
 	while(!ifList.empty())
 	{
@@ -55,7 +55,12 @@ bool StartHaystack()
 	}
 
 	ss << " -p " << Config::Inst()->GetPathReadFolder();
-	ss << "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
+	ss << "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+
+	if (blocking)
+	{
+		ss << " -d";
+	}
 
 	LOG(DEBUG, "Launching haystack with command: " + ss.str(), "");
 	if(system(ss.str().c_str()) != 0)
