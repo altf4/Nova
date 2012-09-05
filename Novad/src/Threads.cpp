@@ -20,6 +20,7 @@
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
 #include "EvidenceTable.h"
+#include "PacketCapture.h"
 #include "SuspectTable.h"
 #include "FeatureSet.h"
 #include "NovaUtil.h"
@@ -70,7 +71,7 @@ extern string dhcpListFile;
 extern vector<string> haystackDhcpAddresses;
 extern vector<string> whitelistIpAddresses;
 extern vector<string> whitelistIpRanges;
-extern vector<pcap_t *> handles;
+extern vector<PacketCapture*> packetCaptures;
 
 extern int honeydDHCPNotifyFd;
 extern int honeydDHCPWatch;
@@ -309,12 +310,6 @@ void *UpdateIPFilter(void *ptr)
 		{
 			int BUF_LEN = (1024 *(sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
-			char errbuf[PCAP_ERRBUF_SIZE];
-			char filter_exp[64];
-			struct bpf_program *fp = new struct bpf_program();
-
-			bpf_u_int32 maskp;
-			bpf_u_int32 netp;
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read(honeydDHCPNotifyFd, buf, BUF_LEN);
@@ -323,37 +318,21 @@ void *UpdateIPFilter(void *ptr)
 				honeydDHCPWatch = inotify_add_watch(honeydDHCPNotifyFd, dhcpListFile.c_str(),
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 				haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
-				string haystackAddresses_csv = ConstructFilterString();
+				string captureFilterString = ConstructFilterString();
 
 				UpdateHaystackFeatures();
 
-				for(uint i = 0; i < handles.size(); i++)
+				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
-					// ask pcap for the network address and mask of the device
-					int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
-					if(ret == -1)
-					{
-						LOG(ERROR, "Unable to update IP filter.",
-							"Unable to get the network address and mask: "+string(strerror(errno)));
+					try {
+						packetCaptures.at(i)->SetFilter(captureFilterString);
 					}
-					else
+					catch (Nova::PacketCaptureException &e)
 					{
-						if(pcap_compile(handles[i], fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-						{
-							LOG(ERROR, "Unable to update IP filter.",
-								"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
-						}
-						if(pcap_setfilter(handles[i], fp) == -1)
-						{
-							LOG(ERROR, "Unable to update IP filter.",
-								"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
-						}
-						//Free the compiled filter program after assignment, it is no longer needed after set filter
-						pcap_freecode(fp);
+						LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
 					}
 				}
 			}
-			delete fp;
 		}
 		else
 		{
@@ -377,12 +356,6 @@ void *UpdateWhitelistIPFilter(void *ptr)
 		{
 			int BUF_LEN = (1024 *(sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
-			struct bpf_program fp;
-			char filter_exp[64];
-			char errbuf[PCAP_ERRBUF_SIZE];
-
-			bpf_u_int32 maskp;
-			bpf_u_int32 netp;
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
 			int readLen = read(whitelistNotifyFd, buf, BUF_LEN);
@@ -392,43 +365,27 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 				whitelistIpAddresses = WhitelistConfiguration::GetIps();
 				whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
-				string filterString = ConstructFilterString();
-				for(uint i = 0; i < handles.size(); i++)
+				string captureFilterString = ConstructFilterString();
+
+				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
-
-					/* ask pcap for the network address and mask of the device */
-					int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
-					if(ret == -1)
-					{
-						LOG(ERROR, "Unable to update IP filter.",
-							"Unable to get the network address and mask: "+string(strerror(errno)));
+					try {
+						packetCaptures.at(i)->SetFilter(captureFilterString);
 					}
-					else
+					catch (Nova::PacketCaptureException &e)
 					{
-						if(pcap_compile(handles[i], &fp, filterString.data(), 0, maskp) == -1)
-						{
-							LOG(ERROR, "Unable to update IP filter.",
-								"Couldn't parse pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
-						}
-						if(pcap_setfilter(handles[i], &fp) == -1)
-						{
-							LOG(ERROR, "Unable to update IP filter.",
-								"Couldn't install pcap filter: "+ string(filter_exp) + " " + pcap_geterr(handles[i]));
-						}
-						pcap_freecode(&fp);
+						LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
 					}
-
-					// Clear any suspects that were whitelisted from the GUIs
-					for(uint i = 0; i < whitelistIpAddresses.size(); i++)
-					{
+				}
+				// Clear any suspects that were whitelisted from the GUIs
+				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
+				{
 					if(suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
 					{
 						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
 						msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
 						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 					}
-				}
-
 				}
 
 				/*
@@ -476,21 +433,6 @@ void *UpdateWhitelistIPFilter(void *ptr)
 		}
 	}
 
-	return NULL;
-}
-
-void *StartPcapLoop(void *ptr)
-{
-	u_char *index = new u_char(*(u_char *)ptr);
-	if((*index >= handles.size()) || (handles[*index] == NULL))
-	{
-		LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");
-		return NULL;
-	}
-	pthread_t consumer;
-	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
-	pthread_detach(consumer);
-	pcap_loop(handles[*index], -1, Packet_Handler, index);
 	return NULL;
 }
 

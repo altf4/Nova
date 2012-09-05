@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : InterfacePacketCapture.h
+// Name        : FilePacketCapture.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,25 +16,24 @@
 // Description : 
 //============================================================================/*
 
-#ifndef INTERFACEPACKETCAPTURE_H_
-#define INTERFACEPACKETCAPTURE_H_
+#ifndef FILEPACKETCAPTURE_H_
+#define FILEPACKETCAPTURE_H_
 
 #include "PacketCapture.h"
-#include <string>
-#include <pcap.h>
 
 namespace Nova
 {
 
-class InterfacePacketCapture : public PacketCapture
+class FilePacketCapture: public Nova::PacketCapture
 {
 public:
-	InterfacePacketCapture(std::string interface);
+	FilePacketCapture(std::string pcapFilePath);
 	void Init();
 
 private:
-	std::string m_interface;
+	std::string m_pcapFilePath;
+
 };
 
 } /* namespace Nova */
-#endif /* INTERFACEPACKETCAPTURE_H_ */
+#endif /* FILEPACKETCAPTURE_H_ */

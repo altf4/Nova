@@ -17,40 +17,16 @@
 //============================================================================/*
 
 #include "InterfacePacketCapture.h"
+#include "Config.h"
 
 using namespace std;
 
 namespace Nova
 {
 
-InterfacePacketCapture::InterfacePacketCapture(string interface, string filter)
+InterfacePacketCapture::InterfacePacketCapture(string interface)
 {
 	m_interface = interface;
-	m_filter = filter;
-}
-
-bool InterfacePacketCapture::StartCapture()
-{
-	 return (pthread_create(&m_thread, NULL, InternalThreadEntryFunc, this) == 0);
-}
-
-void InterfacePacketCapture::SetFilter(string filter)
-{
-	m_filter = filter;
-
-	struct bpf_program fp;
-
-	if(pcap_compile(m_handle, &fp, filter, 0, PCAP_NETMASK_UNKNOWN) == -1)
-	{
-		throw new PacketCaptureException("Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(m_handle) +".");
-	}
-
-	if(pcap_setfilter(m_handle, &fp) == -1)
-	{
-		throw new PacketCaptureException("Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(m_handle) +".");
-	}
-
-	pcap_freecode(&fp);
 }
 
 void InterfacePacketCapture::Init()
@@ -59,38 +35,36 @@ void InterfacePacketCapture::Init()
 
 	if(m_handle == NULL)
 	{
-		throw new PacketCaptureException("Unable to open network interfaces for live capture: "+string(errbuf));
+		throw PacketCaptureException("Unable to open network interfaces for live capture: "+string(m_errorbuf));
 	}
 
 	if(pcap_set_promisc(m_handle, 1) != 0)
 	{
-		throw new PacketCaptureException(string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(m_handle));
+		throw PacketCaptureException(string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(m_handle));
 	}
 
 	// Set the packet capture buffer size
 	if(pcap_set_buffer_size(m_handle, Config::Inst()->GetCaptureBufferSize()) != 0)
 	{
-		throw new PacketCaptureException(string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(m_handle));
+		throw PacketCaptureException(string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(m_handle));
 	}
 
 	//Set a capture length of 1Kb. Should be more than enough to get the packet headers
 	// 88 == Ethernet header (14 bytes) + max IP header size (60 bytes)  + 4 bytes to extract the destination port for udp and tcp packets
 	if(pcap_set_snaplen(m_handle, 88) != 0)
 	{
-		throw new PacketCaptureException(string("Unable to set pcap capture length due to error: ") + pcap_geterr(m_handle));
+		throw PacketCaptureException(string("Unable to set pcap capture length due to error: ") + pcap_geterr(m_handle));
 	}
 
 	if(pcap_set_timeout(m_handle, 1000) != 0)
 	{
-		throw new PacketCaptureException(string("Unable to set pcap timeout value due to error: ") + pcap_geterr(m_handle));
+		throw PacketCaptureException(string("Unable to set pcap timeout value due to error: ") + pcap_geterr(m_handle));
 	}
 
 	if(pcap_activate(m_handle) != 0)
 	{
-		throw new PacketCaptureException(string("Unable to activate packet capture due to error: ") + pcap_geterr(m_handle));
+		throw PacketCaptureException(string("Unable to activate packet capture due to error: ") + pcap_geterr(m_handle));
 	}
-
-	SetFilter(m_filter);
 }
 
 } /* namespace Nova */

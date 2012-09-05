@@ -19,19 +19,39 @@
 #ifndef PACKETCAPTURE_H_
 #define PACKETCAPTURE_H_
 
+#include <string>
+#include <pcap.h>
+
 namespace Nova
 {
 
 class PacketCapture
 {
-	std::function packetCb;
-
 public:
-	void SetPacketCb(std::function<void(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)> cb)
-	{
-		packetCb = cb;
-	}
+	PacketCapture();
 
+	void SetPacketCb(void (*cb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet));
+	void SetFilter(std::string filter);
+
+	bool StartCapture();
+	bool StartCaptureBlocking();
+
+	int GetDroppedPackets();
+
+protected:
+	void (*m_packetCb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet);
+	pcap_t *m_handle;
+	pthread_t m_thread;
+	char m_errorbuf[PCAP_ERRBUF_SIZE];
+
+
+	void InternalThreadEntry();
+
+	// Work around for conversion of class method to C style function pointer for pcap
+	static void * InternalThreadEntryFunc(void * This) {
+		((PacketCapture*)This)->InternalThreadEntry();
+		return NULL;
+	}
 };
 
 
@@ -39,6 +59,7 @@ class PacketCaptureException : public std::exception {
 public:
 	std::string s;
 	PacketCaptureException(std::string ss) : s(ss) {}
+	~PacketCaptureException() throw () {}
 
 	const char* what() const throw()
 	{
