@@ -18,8 +18,10 @@
 
 #include "messaging/MessageManager.h"
 #include "WhitelistConfiguration.h"
+#include "InterfacePacketCapture.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
+#include "PacketCapture.h"
 #include "EvidenceTable.h"
 #include "SuspectTable.h"
 #include "FeatureSet.h"
@@ -92,8 +94,7 @@ vector<string> whitelistIpAddresses;
 vector<string> whitelistIpRanges;
 vector<pcap_t *> handles;
 
-bpf_u_int32 maskp;
-bpf_u_int32 netp;
+vector<PacketCapture*> packetCaps;
 
 int honeydDHCPNotifyFd;
 int honeydDHCPWatch;
@@ -669,8 +670,6 @@ bool Start_Packet_Handler()
 	string haystackAddresses_csv = "";
 	struct bpf_program fp;
 	char filter_exp[64];
-	bpf_u_int32 maskp;
-	bpf_u_int32 netp;
 
 	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
 	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
@@ -764,74 +763,9 @@ bool Start_Packet_Handler()
 			string temp = haystackAddresses_csv;
 			temp.append(" || ");
 			temp.append(ipAddr);
-			handles.push_back(pcap_create(ifList[i].c_str(), errbuf));
 
-			if(handles[i] == NULL)
-			{
-				LOG(ERROR, "Unable to start packet capture.",
-					"Unable to open network interfaces for live capture: "+string(errbuf));
-				exit(EXIT_FAILURE);
-			}
+			InterfacePacketCapture cap = new InterfacePacketCapture(ifList[i].c_str(), haystackAddresses_csv.data());
 
-			if(pcap_set_promisc(handles[i], 1) != 0)
-			{
-				LOG(ERROR, string("Unable to set interface mode to promisc due to error: ") + pcap_geterr(handles[i]), "");
-			}
-
-
-			// Set the packet capture buffer size
-			if(pcap_set_buffer_size(handles[i], Config::Inst()->GetCaptureBufferSize()) != 0)
-			{
-				LOG(ERROR, string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(handles[i]), "");
-			}
-
-			//Set a capture length of 1Kb. Should be more than enough to get the packet headers
-			// 88 == Ethernet header (14 bytes) + max IP header size (60 bytes)  + 4 bytes to extract the destination port for udp and tcp packets
-			if(pcap_set_snaplen(handles[i], 88) != 0)
-			{
-				LOG(ERROR, string("Unable to set pcap capture length due to error: ") + pcap_geterr(handles[i]), "");
-			}
-
-			if(pcap_set_timeout(handles[i], 1000) != 0)
-			{
-				LOG(ERROR, string("Unable to set pcap timeout value due to error: ") + pcap_geterr(handles[i]), "");
-			}
-
-			if(pcap_activate(handles[i]) != 0)
-			{
-				LOG(CRITICAL, string("Unable to activate packet capture due to error: ") + pcap_geterr(handles[i]), "");
-				exit(EXIT_FAILURE);
-			}
-
-			// ask pcap for the network address and mask of the device
-			int ret = pcap_lookupnet(Config::Inst()->GetInterface(i).c_str(), &netp, &maskp, errbuf);
-			if(ret == -1)
-			{
-				LOG(ERROR, "Unable to start packet capture.",
-					"Unable to get the network address and mask: "+string(strerror(errno)));
-				exit(EXIT_FAILURE);
-			}
-
-			if(pcap_compile(handles[i], &fp, haystackAddresses_csv.data(), 0, maskp) == -1)
-			{
-				LOG(ERROR, "Unable to start packet capture.",
-					"Couldn't parse filter: "+string(filter_exp)+ " " + pcap_geterr(handles[i]) +".");
-				exit(EXIT_FAILURE);
-			}
-
-			if(pcap_setfilter(handles[i], &fp) == -1)
-			{
-				LOG(ERROR, "Unable to start packet capture.",
-					"Couldn't install filter: "+string(filter_exp)+ " " + pcap_geterr(handles[i]) +".");
-				exit(EXIT_FAILURE);
-			}
-			pcap_freecode(&fp);
-		}
-
-		if((handles.empty()) || (handles[0] == NULL))
-		{
-			LOG(CRITICAL, "Invalid pcap handle provided, unable to start pcap loop!", "");
-			exit(EXIT_FAILURE);
 		}
 
 		trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
