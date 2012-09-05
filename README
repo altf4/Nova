@@ -97,7 +97,12 @@ Change into the $NOVAD_SOURCE folder where the novad source code resides.
 
     cd ~/Code/Nova
 
-To build and install run the commands,
+To get the dependencies for the Quasar web UI (nodejs, npm's forever, and cvv8) you can either 
+install them manually or get them by running the following script,
+
+    sudo bash getDependencies.sh
+
+To build and install Nova run the commands,
 
     Step 1: autoconf
     Step 2: ./configure
@@ -110,13 +115,13 @@ To build and install run the commands,
 run the following command to add your user to the 'nova' permission group
 and to set up database tables for the web interface.
 
-    Step 3: sudo nova_init
+    Step 5: sudo nova_init
 
 - Your user will have to be in the "nova" group in order for nova and honeyd to
 run properly. The nova_init script will do this, but you must log in and
 back out for the change to take effect.
 
-    Step 4: Log out and log back in
+    Step 6: Log out and log back in
 
 - After these steps are completed without errors, Nova is set up on your
 system. You'll probably want to install a GUI for nova, either the QT based or web based GUI.
@@ -128,16 +133,6 @@ Refer to the Help tab in the GUI and the Nova wiki for more information.
  Web Interface
 ===============================
 Nova's main GUI, Quasar, is a web interface run with a nodejs web server.
-
-There is a getDependencies.sh script provided to download the required dependencies.
-
-To install,
-    Step 1: cd $NOVA_SOURCE/Quasar
-    Step 2: sudo bash getDependencies.sh
-    Step 3: sudo npm install -g forever
-    Step 4: cd $NOVA_SOURCE
-    Step 5: make quasar
-    Step 6: sudo make install-quasar
 
 Note that the internal web interface uses SSL. If you want to generate or use your own
 SSL certificate and private key, put them in /usr/share/nova/Quasar/servercert.pem and
