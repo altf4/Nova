@@ -104,7 +104,7 @@ test-prepare:
 	rm -f NovaTest/NovadSource/Main.cpp
 
 clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli
-	
+
 
 #remove binaries from staging area
 clean-staging:
@@ -168,10 +168,9 @@ clean-test:
 
 clean-quasar:
 	-cd Quasar/NodeNovaConfig; node-waf clean
-	rm -rf Quasar/node_modules/forever/node_modules/utile/node_modules/.bin/
-	rm -rf Quasar/node_modules/forever/node_modules/.bin
-	rm -rf Quasar/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
-	rm -rf Quasar/node_modules/.bin/
+
+clean-quasar-modules:
+	-rm -rf Quasar/node_modules
 
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	
