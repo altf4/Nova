@@ -165,7 +165,7 @@ block headerAdditions
        //if(!liveUpdate) {return;}
       
       var d = new Date(suspect.GetLastPacketTime*1000);
-      var dString = pad(d.getMonth()) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+      var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       suspect.LastPacketString = dString;
       
       var row = new Array();
