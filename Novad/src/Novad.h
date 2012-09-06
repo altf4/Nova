@@ -60,10 +60,7 @@ bool Start_Packet_Handler();
 
 void StartCapture();
 void StopCapture();
-
-// Loads configuration variables
-//		configFilePath - Location of configuration file
-void LoadConfiguration();
+void StopCapture_noLocking();
 
 // Append to state file
 void AppendToStateFile();

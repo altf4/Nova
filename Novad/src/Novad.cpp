@@ -64,8 +64,6 @@ SuspectTable suspectsSinceLastSave;
 //Contains packet evidence yet to be included in a suspect
 EvidenceTable suspectEvidence;
 
-vector<struct sockaddr_in> hostAddrs;
-
 pthread_mutex_t packetCapturesLock;
 vector<PacketCapture*> packetCaptures;
 vector<int> dropCounts;
@@ -100,7 +98,6 @@ int whitelistWatch;
 ClassificationEngine *engine;
 
 pthread_t classificationLoopThread;
-pthread_t silentAlarmListenThread;
 pthread_t ipUpdateThread;
 pthread_t ipWhitelistUpdateThread;
 pthread_t consumer;
@@ -168,7 +165,7 @@ int RunNovaD()
 
 	//Need to load the configuration before making the Classification Engine for setting up the DM
 	//Reload requires a CE object so we do a partial config load here.
-	LoadConfiguration();
+
 	//Loads the configuration file
 	Config::Inst()->LoadConfig();
 
@@ -468,8 +465,6 @@ void RefreshStateFile()
 
 void Reload()
 {
-	LoadConfiguration();
-
 	// Reload the configuration file
 	Config::Inst()->LoadConfig();
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
@@ -479,9 +474,11 @@ void Reload()
 
 void StartCapture()
 {
-	StopCapture();
-
 	Lock lock(&packetCapturesLock);
+	StopCapture_noLocking();
+
+	Reload();
+
 	string captureFilterString = ConstructFilterString();
 
 	//If we're reading from a packet capture file
@@ -557,6 +554,11 @@ void StartCapture()
 void StopCapture()
 {
 	Lock lock(&packetCapturesLock);
+	StopCapture_noLocking();
+}
+
+void StopCapture_noLocking()
+{
 	for (uint i = 0; i < packetCaptures.size(); i++)
 	{
 		packetCaptures.at(i)->StopCapture();
@@ -615,24 +617,6 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 			//LOG(DEBUG, ss.str(), "");
 			return;
 		}
-	}
-}
-
-void LoadConfiguration()
-{
-	vector<string> ifList = Config::Inst()->GetInterfaces();
-	hostAddrs.clear();
-	for(uint i = 0; i < ifList.size(); i++)
-	{
-		struct sockaddr_in hostAddr;
-		string hostAddrString = GetLocalIP(Config::Inst()->GetInterface(i).c_str());
-		if(hostAddrString.size() == 0)
-		{
-			LOG(ERROR, "Bad ethernet interface, no IP's associated!","");
-			exit(EXIT_FAILURE);
-		}
-		inet_pton(AF_INET, hostAddrString.c_str(),&(hostAddr.sin_addr));
-		hostAddrs.push_back(hostAddr);
 	}
 }
 
