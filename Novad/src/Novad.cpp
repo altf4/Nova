@@ -75,9 +75,6 @@ time_t lastSaveTime;
 // Time novad started, used for uptime and pcap capture names
 time_t startTime;
 
-string trainingFolder;
-string trainingCapFile;
-
 Database *db;
 
 
@@ -111,6 +108,7 @@ namespace Nova
 int RunNovaD()
 {
 	Config::Inst();
+	Logger::Inst();
 
 	if(!LockNovad())
 	{
@@ -118,9 +116,6 @@ int RunNovaD()
 	}
 
 	MessageManager::Initialize(DIRECTION_TO_UI);
-
-	// Let the logger initialize before we have multiple threads going
-	Logger::Inst();
 
 	// Change our working folder into the config folder so our relative paths are correct
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
@@ -145,20 +140,8 @@ int RunNovaD()
 
 	localIPs.set_empty_key(0);
 
-	lastLoadTime = time(NULL);
+	lastLoadTime = lastSaveTime = startTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
-	{
-		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
-	}
-
-	lastSaveTime = time(NULL);
-	if(lastSaveTime == ((time_t)-1))
-	{
-		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
-	}
-
-	startTime = time(NULL);
-	if(startTime == ((time_t)-1))
 	{
 		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
 	}
@@ -676,7 +659,7 @@ string ConstructFilterString()
 		hsAddresses.pop_back();
 	}
 
-	LOG(DEBUG, "Pcap filter string is: "+filterString,"");
+	LOG(DEBUG, "Pcap filter string is "+filterString,"");
 	return filterString;
 }
 

@@ -60,10 +60,6 @@ extern vector<struct sockaddr_in> hostAddrs;
 extern time_t lastLoadTime;
 extern time_t lastSaveTime;
 
-//Commented out to suppress unused warnings.
-//extern string trainingCapFile;
-//extern ofstream trainingFileStream;
-
 //HS Vars
 extern string dhcpListFile;
 extern vector<string> haystackDhcpAddresses;
