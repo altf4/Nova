@@ -113,6 +113,10 @@ bool ReclassifyAllSuspects();
 //  returns - The time (in standard unix time) when the server started. 0 on error
 uint64_t GetStartTime();
 
+// Command nova to start or stop live packet capture
+bool StartPacketCapture();
+bool StopPacketCapture();
+
 }
 
 

@@ -347,6 +347,23 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			break;
 		}
+		case CONTROL_START_CAPTURE:
+		{
+			ControlMessage ack(CONTROL_START_CAPTURE_ACK, DIRECTION_TO_NOVAD);
+			Message::WriteMessage(&ack, socketFD);
+
+			StartCapture();
+			break;
+		}
+		case CONTROL_STOP_CAPTURE:
+		{
+			ControlMessage ack(CONTROL_STOP_CAPTURE_ACK, DIRECTION_TO_NOVAD);
+			Message::WriteMessage(&ack, socketFD);
+
+			StopCapture();
+
+			break;
+		}
 		default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message","Got an unexpected ControlMessage type");

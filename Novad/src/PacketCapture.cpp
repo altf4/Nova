@@ -17,6 +17,10 @@
 //============================================================================/*
 
 #include "PacketCapture.h"
+#include "Logger.h"
+
+#include <pthread.h>
+#include <signal.h>
 
 using namespace Nova;
 using namespace std;
@@ -75,10 +79,21 @@ bool PacketCapture::StartCaptureBlocking()
 	 return (pcap_loop(m_handle, -1, m_packetCb, 0) == 0);
 }
 
+void PacketCapture::StopCapture()
+{
+	// Kill and wait for the child thread to exit
+	pcap_breakloop(m_handle);
+	pthread_join(m_thread, NULL);
+
+	pcap_close(m_handle);
+	m_handle = NULL;
+}
+
 
 void PacketCapture::InternalThreadEntry()
 {
 	pcap_loop(m_handle, -1, m_packetCb, 0);
+	LOG(DEBUG, "Dropped out of pcap loop", "");
 }
 
 

@@ -30,6 +30,7 @@
 #include "Config.h"
 #include "Point.h"
 #include "Novad.h"
+#include "Lock.h"
 
 #include <vector>
 #include <math.h>
@@ -56,9 +57,6 @@ extern SuspectTable suspectsSinceLastSave;
 
 extern vector<struct sockaddr_in> hostAddrs;
 
-//-- Silent Alarm --
-extern struct sockaddr_in serv_addr;
-
 extern time_t lastLoadTime;
 extern time_t lastSaveTime;
 
@@ -79,6 +77,8 @@ extern int honeydDHCPWatch;
 extern int whitelistNotifyFd;
 extern int whitelistWatch;
 
+extern pthread_mutex_t packetCapturesLock;
+
 extern ClassificationEngine *engine;
 extern EvidenceTable suspectEvidence;
 
@@ -87,10 +87,6 @@ namespace Nova
 void *ClassificationLoop(void *ptr)
 {
 	MaskKillSignals();
-
-	//Builds the Silent Alarm Network address
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(Config::Inst()->GetSaPort());
 
 	//Classification Loop
 	do
@@ -140,166 +136,6 @@ void *ClassificationLoop(void *ptr)
 	return NULL;
 }
 
-void *TrainingLoop(void *ptr)
-{
-	MaskKillSignals();
-
-	//Training Loop
-	do
-	{
-		sleep(Config::Inst()->GetClassificationTimeout());
-
-		// Get list of Suspects that need a classification and feature update
-		vector<uint64_t> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
-		suspects.UpdateAllSuspects();
-		for(uint i = 0; i < updateKeys.size(); i++)
-		{
-			UpdateAndStore(updateKeys[i]);
-		}
-	} while(Config::Inst()->GetClassificationTimeout());
-
-	//Shouldn't get here!
-	if(Config::Inst()->GetClassificationTimeout())
-	{
-		LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
-	}
-	return NULL;
-}
-
-void *SilentAlarmLoop(void *ptr)
-{
-	MaskKillSignals();
-
-	int sockfd;
-	u_char buf[MAX_MSG_SIZE];
-	struct sockaddr_in sendaddr;
-
-	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-	{
-		LOG(CRITICAL, "Unable to create the silent alarm socket: "+string(strerror(errno)), "");
-		return NULL;
-	}
-
-	sendaddr.sin_family = AF_INET;
-	sendaddr.sin_port = htons(Config::Inst()->GetSaPort());
-	sendaddr.sin_addr.s_addr = INADDR_ANY;
-
-	memset(sendaddr.sin_zero, '\0', sizeof sendaddr.sin_zero);
-	struct sockaddr *sockaddrPtr = (struct sockaddr*) &sendaddr;
-	socklen_t sendaddrSize = sizeof sendaddr;
-
-	if(::bind(sockfd, sockaddrPtr, sendaddrSize) == -1)
-	{
-		LOG(CRITICAL, "Unable to bind to the silent alarm socket: "+string(strerror(errno)), "");
-		close(sockfd);
-		return NULL;
-	}
-
-	stringstream ss;
-	ss << "sudo iptables -A INPUT -p udp --dport "
-			<< Config::Inst()->GetSaPort() << " -j REJECT"
-					" --reject-with icmp-port-unreachable";
-	if(system(ss.str().c_str()) == -1)
-	{
-		LOG(ERROR, "Failed to update iptables.", "");
-	}
-	ss.str("");
-	ss << "sudo iptables -A INPUT -p tcp --dport "
-			<< Config::Inst()->GetSaPort()
-			<< " -j REJECT --reject-with tcp-reset";
-	if(system(ss.str().c_str()) == -1)
-	{
-		LOG(ERROR, "Failed to update iptables.", "");
-	}
-
-	if(listen(sockfd, SOCKET_QUEUE_SIZE) == -1)
-	{
-		LOG(CRITICAL, "Unable to listen on the silent alarm socket.",
-			"Unable to listen on the silent alarm socket.: "+string(strerror(errno)));
-		close(sockfd);
-		return NULL;
-	}
-
-	int connectionSocket, bytesRead;
-	Suspect suspectCopy;
-
-	//Accept incoming Silent Alarm TCP Connections
-	while(1)
-	{
-
-		bzero(buf, MAX_MSG_SIZE);
-
-		//Blocking call
-		if((connectionSocket = accept(sockfd, sockaddrPtr, &sendaddrSize)) == -1)
-		{
-			LOG(CRITICAL, "Problem while accepting incoming silent alarm connection.",
-				"Problem while accepting incoming silent alarm connection: "+string(strerror(errno)));
-			continue;
-		}
-
-		if((bytesRead = recv(connectionSocket, buf, MAX_MSG_SIZE, MSG_WAITALL))== -1)
-		{
-			LOG(CRITICAL, "Problem while receiving incoming silent alarm connection.",
-				"Problem while receiving incoming silent alarm connection: "+string(strerror(errno)));
-			close(connectionSocket);
-			continue;
-		}
-
-		for(uint i = 0; i < hostAddrs.size(); i++)
-		{
-			//If this is from ourselves, then drop it.
-			if(hostAddrs[i].sin_addr.s_addr == sendaddr.sin_addr.s_addr)
-			{
-				close(connectionSocket);
-				continue;
-			}
-		}
-
-		CryptBuffer(buf, bytesRead, DECRYPT);
-
-		in_addr_t addr = 0;
-		memcpy(&addr, buf, 4);
-		uint64_t key = addr;
-		Suspect *newSuspect = new Suspect();
-		if(newSuspect->Deserialize(buf, MAX_MSG_SIZE, MAIN_FEATURE_DATA) == 0)
-		{
-			close(connectionSocket);
-			continue;
-		}
-		//If this suspect exists, update the information
-		if(suspects.IsValidKey(key))
-		{
-			suspectCopy = suspects.CheckOut(key);
-			suspectCopy.SetFlaggedByAlarm(true);
-			FeatureSet fs = newSuspect->GetFeatureSet(MAIN_FEATURES);
-			suspectCopy.AddFeatureSet(&fs, MAIN_FEATURES);
-			suspects.CheckIn(&suspectCopy);
-
-			// TODO: This looks like it may be a memory leak of newSuspect
-		}
-		//If this is a new suspect put it in the table
-		else
-		{
-			newSuspect->SetIsHostile(false);
-			newSuspect->SetFlaggedByAlarm(true);
-			//We set isHostile to false so that when we classify the first time
-			// the suspect will go from benign to hostile and be sent to the doppelganger module
-			suspects.AddNewSuspect(newSuspect);
-		}
-
-		LOG(CRITICAL, string("Got a silent alarm!. Suspect: "+ newSuspect->ToString()), "");
-		if(!Config::Inst()->GetClassificationTimeout())
-		{
-			UpdateAndClassify(newSuspect->GetIpAddress());
-		}
-
-		close(connectionSocket);
-	}
-	close(sockfd);
-	LOG(CRITICAL, "The code should never get here, something went very wrong.", "");
-	return NULL;
-}
-
 void *UpdateIPFilter(void *ptr)
 {
 	MaskKillSignals();
@@ -322,6 +158,7 @@ void *UpdateIPFilter(void *ptr)
 
 				UpdateHaystackFeatures();
 
+				Lock *lock = new Lock(&packetCapturesLock);
 				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
 					try {
@@ -332,6 +169,7 @@ void *UpdateIPFilter(void *ptr)
 						LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
 					}
 				}
+				delete lock;
 			}
 		}
 		else
@@ -367,6 +205,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 				string captureFilterString = ConstructFilterString();
 
+				Lock *lock = new Lock(&packetCapturesLock);
 				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
 					try {
@@ -377,6 +216,9 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
 					}
 				}
+				delete lock;
+
+
 				// Clear any suspects that were whitelisted from the GUIs
 				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
@@ -387,40 +229,6 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 					}
 				}
-
-				/*
-				// TODO: Should we clear IP range whitelisted suspects? Could be a huge number of clears...
-				// This doesn't work yet.
-				for(uint i = 0; i < whitelistIpRanges.size(); i++)
-				{
-					uint32_t ip = htonl(inet_addr(WhitelistConfiguration::GetIp(whitelistIpRanges.at(i)).c_str()));
-
-					string netmask = WhitelistConfiguration::GetSubnet(whitelistIpRanges.at(i));
-					uint32_t mask;
-					if(netmask != "")
-					{
-						mask = htonl(inet_addr(netmask.c_str()));
-					}
-
-					while(mask != ~0)
-					{
-						if(suspects.Erase(ip))
-						{
-							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
-							msg->m_IPAddress = ip;
-							NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
-
-						}
-
-						in_addr foo;
-						foo.s_addr = ntohl(ip);
-
-						ip++;
-						mask++;
-					}
-
-				}
-				*/
 			}
 		}
 		else

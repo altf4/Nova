@@ -64,11 +64,9 @@ SuspectTable suspectsSinceLastSave;
 //Contains packet evidence yet to be included in a suspect
 EvidenceTable suspectEvidence;
 
-//-- Silent Alarm --
-struct sockaddr_in serv_addr;
-struct sockaddr *serv_addrPtr = (struct sockaddr *) &serv_addr;
 vector<struct sockaddr_in> hostAddrs;
 
+pthread_mutex_t packetCapturesLock;
 vector<PacketCapture*> packetCaptures;
 vector<int> dropCounts;
 
@@ -102,10 +100,10 @@ int whitelistWatch;
 ClassificationEngine *engine;
 
 pthread_t classificationLoopThread;
-pthread_t trainingLoopThread;
 pthread_t silentAlarmListenThread;
 pthread_t ipUpdateThread;
 pthread_t ipWhitelistUpdateThread;
+pthread_t consumer;
 
 typedef HashMap<uint32_t, uint32_t, std::tr1::hash<uint32_t>, eqkey> LocalIPTable;
 LocalIPTable localIPs;
@@ -133,6 +131,7 @@ int RunNovaD()
 		LOG(INFO, "Failed to change directory to " + Config::Inst()->GetPathHome(),"");
 	}
 
+	pthread_mutex_init(&packetCapturesLock, NULL);
 
 	db = new Database();
 	try {
@@ -180,45 +179,24 @@ int RunNovaD()
 
 	Spawn_UI_Handler();
 
+	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
+	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
+	whitelistIpAddresses = WhitelistConfiguration::GetIps();
+	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
+	UpdateHaystackFeatures();
 
+	LoadStateFile();
 
-	//Are we Training or Classifying?
-	if(Config::Inst()->GetIsTraining())
+	whitelistNotifyFd = inotify_init ();
+	if(whitelistNotifyFd > 0)
 	{
-		if(system(string("mkdir " + Config::Inst()->GetPathTrainingCapFolder()).c_str()))
-		{
-			// Not really an problem, throws compiler warning if we don't catch the system call though
-		}
-
-		trainingFolder = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathTrainingCapFolder() + "/" + Config::Inst()->GetTrainingSession();
-		if(system(string("mkdir " + trainingFolder).c_str()))
-		{
-			// Not really an problem, throws compiler warning if we don't catch the system call though
-		}
-
-		if(Config::Inst()->GetReadPcap())
-		{
-			Config::Inst()->SetClassificationThreshold(0);
-			Config::Inst()->SetClassificationTimeout(0);
-		}
-		else
-		{
-			pthread_create(&trainingLoopThread,NULL,TrainingLoop,NULL);
-		}
+		whitelistWatch = inotify_add_watch (whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+		pthread_create(&ipWhitelistUpdateThread, NULL, UpdateWhitelistIPFilter,NULL);
+		pthread_detach(ipWhitelistUpdateThread);
 	}
 	else
 	{
-		whitelistNotifyFd = inotify_init ();
-		if(whitelistNotifyFd > 0)
-		{
-			whitelistWatch = inotify_add_watch (whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
-			pthread_create(&ipWhitelistUpdateThread, NULL, UpdateWhitelistIPFilter,NULL);
-			pthread_detach(ipWhitelistUpdateThread);
-		}
-		else
-		{
-			LOG(ERROR, "Unable to set up file watcher for the Whitelist IP file.","");
-		}
+		LOG(ERROR, "Unable to set up file watcher for the Whitelist IP file.","");
 	}
 
 	// If we're not reading from a pcap, monitor for IP changes in the honeyd file
@@ -238,7 +216,19 @@ int RunNovaD()
 		}
 	}
 
-	return Start_Packet_Handler();
+	pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
+	//pthread_detach(classificationLoopThread);
+
+	// TODO: Figure out if having multiple ConsumerLoops has a performance benefit
+	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
+	pthread_detach(consumer);
+
+	StartCapture();
+
+	while (1)
+	{
+		sleep(1000);
+	}
 }
 
 bool LockNovad()
@@ -482,192 +472,17 @@ void Reload()
 
 	// Reload the configuration file
 	Config::Inst()->LoadConfig();
-
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
-	Suspect suspectCopy;
 
 	suspects.UpdateAllSuspects();
 }
 
-
-void SilentAlarm(Suspect *suspect, int oldClassification)
+void StartCapture()
 {
-	int sockfd = 0;
-	string commandLine;
+	StopCapture();
 
-	Suspect suspectCopy = suspects.CheckOut(suspect->GetIpAddress());
-	if(suspects.IsEmptySuspect(&suspectCopy))
-	{
-		LOG(WARNING, "Attempted to broadcast Silent Alarm for an Invalid suspect","");
-		return;
-	}
-
-	uint32_t dataLen = suspectCopy.GetSerializeLength(UNSENT_FEATURE_DATA);
-	u_char serializedBuffer[dataLen];
-
-	if(suspectCopy.GetFeatureSet(UNSENT_FEATURES).m_packetCount)
-	{
-		do
-		{
-			if(dataLen != suspectCopy.Serialize(serializedBuffer, dataLen, UNSENT_FEATURE_DATA))
-			{
-				stringstream ss;
-				ss << "Serialization of Suspect with key: " << suspectCopy.GetIpAddress();
-				ss << " returned a size != " << dataLen;
-				LOG(ERROR, "Unable to Serialize Suspect", ss.str());
-				return;
-			}
-			//suspectCopy.UpdateFeatureData(INCLUDE);
-			suspectCopy.ClearFeatureData(UNSENT_FEATURES);
-			suspects.CheckIn(&suspectCopy);
-
-			//Update other Nova Instances with latest suspect Data
-			for(uint i = 0; i < Config::Inst()->GetNeighbors().size(); i++)
-			{
-				serv_addr.sin_addr.s_addr = Config::Inst()->GetNeighbors()[i];
-
-				stringstream ss;
-				string commandLine;
-
-				ss << "sudo iptables -I INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
-				commandLine = ss.str();
-
-				if(system(commandLine.c_str()) == -1)
-				{
-					LOG(ERROR, "Failed to update iptables.", "");
-				}
-
-				int j;
-				for(j = 0; j < Config::Inst()->GetSaMaxAttempts(); j++)
-				{
-					if(KnockPort(OPEN))
-					{
-						//Send Silent Alarm to other Nova Instances with feature Data
-						if((sockfd = socket(AF_INET,SOCK_STREAM,6)) == -1)
-						{
-							LOG(ERROR, "Unable to open socket to send silent alarm: "+ string(strerror(errno)), "");
-							close(sockfd);
-							continue;
-						}
-						if(connect(sockfd, serv_addrPtr, sizeof(serv_addr)) == -1)
-						{
-							//If the host isn't up we stop trying
-							if(errno == EHOSTUNREACH)
-							{
-								//set to max attempts to hit the failed connect condition
-								j = Config::Inst()->GetSaMaxAttempts();
-								LOG(ERROR, "Unable to connect to host to send silent alarm: "
-									+ string(strerror(errno)), "");
-								break;
-							}
-							LOG(ERROR, "Unable to open socket to send silent alarm: "+ string(strerror(errno)), "");
-							close(sockfd);
-							continue;
-						}
-						break;
-					}
-				}
-				//If connecting failed
-				if(j == Config::Inst()->GetSaMaxAttempts())
-				{
-					close(sockfd);
-					ss.str("");
-					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
-					commandLine = ss.str();
-					if(system(commandLine.c_str()) == -1)
-					{
-						LOG(ERROR, "Failed to update iptables.", "");
-					}
-					continue;
-				}
-
-				if( send(sockfd, serializedBuffer, dataLen, 0) == -1)
-				{
-					LOG(ERROR, "Error in TCP Send of silent alarm: "+string(strerror(errno)), "");
-
-					close(sockfd);
-					ss.str("");
-					ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
-					commandLine = ss.str();
-					if(system(commandLine.c_str()) == -1)
-					{
-						LOG(ERROR, "Failed to update iptables.", "");
-					}
-					continue;
-				}
-				close(sockfd);
-				KnockPort(CLOSE);
-				ss.str("");
-				ss << "sudo iptables -D INPUT -s " << string(inet_ntoa(serv_addr.sin_addr)) << " -p tcp -j ACCEPT";
-				commandLine = ss.str();
-				if(system(commandLine.c_str()) == -1)
-				{
-					LOG(ERROR, "Failed to update iptables.", "");
-				}
-			}
-		}while(dataLen == MORE_DATA);
-	}
-}
-
-
-bool KnockPort(bool mode)
-{
-	int sockfd;
-	stringstream ss;
-	ss << Config::Inst()->GetKey();
-
-	//mode == OPEN (true)
-	if(mode)
-	{
-		ss << "OPEN";
-	}
-
-	//mode == CLOSE (false)
-	else
-	{
-		ss << "SHUT";
-	}
-
-	uint keyDataLen = Config::Inst()->GetKey().size() + 4;
-	u_char keyBuf[1024];
-	bzero(keyBuf, 1024);
-	memcpy(keyBuf, ss.str().c_str(), ss.str().size());
-
-	CryptBuffer(keyBuf, keyDataLen, ENCRYPT);
-
-	//Send Port knock to other Nova Instances
-	if((sockfd = socket(AF_INET, SOCK_DGRAM, 17)) == -1)
-	{
-			LOG(ERROR, "Error in port knocking. Can't create socket: "+string(strerror(errno)), "");
-
-		close(sockfd);
-		return false;
-	}
-
-	if(sendto(sockfd,keyBuf,keyDataLen, 0,serv_addrPtr, sizeof(serv_addr)) == -1)
-	{
-		LOG(ERROR, "Error in UDP Send for port knocking: "+string(strerror(errno)), "");
-		close(sockfd);
-		return false;
-	}
-
-	close(sockfd);
-	sleep(Config::Inst()->GetSaSleepDuration());
-	return true;
-}
-
-
-bool Start_Packet_Handler()
-{
-	string captureFilterString = "";
-
-	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
-	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
-	whitelistIpAddresses = WhitelistConfiguration::GetIps();
-	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
-	captureFilterString = ConstructFilterString();
-
-	UpdateHaystackFeatures();
+	Lock lock(&packetCapturesLock);
+	string captureFilterString = ConstructFilterString();
 
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
@@ -704,16 +519,7 @@ bool Start_Packet_Handler()
 
 	if(!Config::Inst()->GetReadPcap())
 	{
-		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
-		pthread_create(&silentAlarmListenThread,NULL,SilentAlarmLoop, NULL);
-		pthread_detach(classificationLoopThread);
-		pthread_detach(silentAlarmListenThread);
-
 		vector<string> ifList = Config::Inst()->GetInterfaces();
-		if(!Config::Inst()->GetIsTraining())
-		{
-			LoadStateFile();
-		}
 
 		//trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
 
@@ -744,44 +550,19 @@ bool Start_Packet_Handler()
 			{
 				LOG(ERROR, string("Exception when starting packet capture: ") + e.what(), "");
 			}
-
-			// TODO: Figurue out if having multiple ConsumerLoops is actually worth it
-			// TODO: Probably don't create the consumer loops here
-			pthread_t consumer;
-			pthread_create(&consumer, NULL, ConsumerLoop, NULL);
-			pthread_detach(consumer);
-		}
-
-
-
-		ofstream localIpsStream(trainingFolder + "/localIps.txt");
-		for (LocalIPTable::iterator it = localIPs.begin(); it != localIPs.end(); it++)
-		{
-			in_addr temp;
-			temp.s_addr = ntohl(it->first);
-			localIpsStream << inet_ntoa(temp) << endl;
-		}
-		localIpsStream.close();
-
-		if(IsHaystackUp())
-		{
-			ofstream haystackIpStream(trainingFolder + "/haystackIps.txt");
-			for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
-			{
-				haystackIpStream << haystackDhcpAddresses.at(i) << endl;
-			}
-			for(uint i = 0; i < haystackAddresses.size(); i++)
-			{
-				haystackIpStream << haystackAddresses.at(i) << endl;
-			}
-		}
-
-		while(1)
-		{
-			sleep (1000);
 		}
 	}
-	return false;
+}
+
+void StopCapture()
+{
+	Lock lock(&packetCapturesLock);
+	for (uint i = 0; i < packetCaptures.size(); i++)
+	{
+		packetCaptures.at(i)->StopCapture();
+		delete packetCaptures.at(i);
+	}
+	packetCaptures.clear();
 }
 
 void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
@@ -871,75 +652,6 @@ string ConstructFilterString()
 			filterString += " && " + Config::Inst()->GetCustomPcapString();
 		}
 	}
-
-	/* There's really no reason to filter on local IP and network, could be adapater on mirror port with no IP
-	struct ifaddrs *devices = NULL;
-	struct ifaddrs *curIf = NULL;
-	stringstream ss;
-
-	//Get a list of interfaces
-	if(getifaddrs(&devices))
-	{
-		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
-	}
-
-	vector<string> networkFilderBuilder;
-	vector<string> enabledInterfaces = Config::Inst()->GetInterfaces();
-	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
-	{
-		for(uint i = 0; i < enabledInterfaces.size(); i++)
-		{
-			if(!strcmp(curIf->ifa_name, enabledInterfaces[i].c_str()) && ((int)curIf->ifa_addr->sa_family == AF_INET))
-			{
-				// TODO ipv6 support
-				in_addr interfaceIp;
-				interfaceIp.s_addr = ((sockaddr_in*)curIf->ifa_addr)->sin_addr.s_addr & ((sockaddr_in*)curIf->ifa_netmask)->sin_addr.s_addr;
-				string interfaceIpBase = inet_ntoa(interfaceIp);
-				string interfaceMask = inet_ntoa(((sockaddr_in*)curIf->ifa_netmask)->sin_addr);
-				LOG(DEBUG, "Listening on network " + interfaceIpBase + "/" + interfaceMask, "");
-				networkFilderBuilder.push_back("dst net " + interfaceIpBase + " mask " + interfaceMask);
-			}
-		}
-	}
-
-	if(networkFilderBuilder.size() == 0) {
-		// Nothing to do
-	}
-	else if(networkFilderBuilder.size() == 1)
-	{
-		filterString += networkFilderBuilder.at(0) + " && ";
-	} 
-	else
-	{
-		filterString += "(" + networkFilderBuilder.at(0);
-		for(uint i = 1; i < networkFilderBuilder.size(); i++)
-		{
-			filterString += "|| " + networkFilderBuilder.at(i);
-		}
-		filterString += ") && ";
-	}
-
-
-	{
-		//Get list of interfaces and insert associated local IP's
-		vector<string> ifList = Config::Inst()->GetInterfaces();
-		while(ifList.size())
-		{
-			//Remove and add the host entry
-			filterString += "not src host ";
-			//Look up associated IP with the interface
-			filterString += GetLocalIP(ifList.back().c_str());
-			ifList.pop_back();
-
-			//If we have another local IP or there is at least one haystack/whitelist ip, add 'or' conditional
-			if(ifList.size() || haystackAddresses.size() || haystackDhcpAddresses.size()
-				|| whitelistIpRanges.size() || whitelistIpAddresses.size())
-			{
-				filterString += " && ";
-			}
-		}
-	}
-	*/
 
 	//Insert static haystack IP's
 	vector<string> hsAddresses = haystackAddresses;
@@ -1034,11 +746,6 @@ void UpdateAndClassify(const in_addr_t& key)
 	//Send silent alarm if needed
 	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
-		if(suspectCopy.GetIsLive())
-		{
-			SilentAlarm(&suspectCopy, oldIsHostile);
-		}
-
 		try {
 			db->InsertSuspectHostileAlert(&suspectCopy);
 		} catch (Nova::DatabaseException &e) {
@@ -1077,6 +784,7 @@ void UpdateAndClassify(const in_addr_t& key)
 
 void CheckForDroppedPackets()
 {
+	Lock lock(&packetCapturesLock);
 	// Quick check for libpcap dropping packets
 	for(uint i = 0; i < packetCaptures.size(); i++)
 	{

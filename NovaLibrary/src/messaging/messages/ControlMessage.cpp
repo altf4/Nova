@@ -68,6 +68,10 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		case CONTROL_DISCONNECT_ACK:
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		case CONTROL_CONNECT_REQUEST:
+		case CONTROL_START_CAPTURE:
+		case CONTROL_START_CAPTURE_ACK:
+		case CONTROL_STOP_CAPTURE:
+		case CONTROL_STOP_CAPTURE_ACK:
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
@@ -167,6 +171,10 @@ char *ControlMessage::Serialize(uint32_t *length)
 		case CONTROL_DISCONNECT_ACK:
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		case CONTROL_CONNECT_REQUEST:
+		case CONTROL_START_CAPTURE:
+		case CONTROL_START_CAPTURE_ACK:
+		case CONTROL_STOP_CAPTURE:
+		case CONTROL_STOP_CAPTURE_ACK:
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type

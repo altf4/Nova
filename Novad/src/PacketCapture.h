@@ -36,22 +36,26 @@ public:
 	bool StartCapture();
 	bool StartCaptureBlocking();
 
+	void StopCapture();
+
 	int GetDroppedPackets();
 
 protected:
-	void (*m_packetCb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet);
 	pcap_t *m_handle;
+
+	// This is so we can run blocking pcap_loop in it's own thread
 	pthread_t m_thread;
 	char m_errorbuf[PCAP_ERRBUF_SIZE];
-
 
 	void InternalThreadEntry();
 
 	// Work around for conversion of class method to C style function pointer for pcap
+	void (*m_packetCb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet);
 	static void * InternalThreadEntryFunc(void * This) {
 		((PacketCapture*)This)->InternalThreadEntry();
 		return NULL;
 	}
+
 };
 
 

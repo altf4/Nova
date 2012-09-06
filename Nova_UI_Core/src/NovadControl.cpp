@@ -264,4 +264,69 @@ bool ReclassifyAllSuspects()
 	delete reclassifyReply;
 	return retSuccess;
 }
+
+bool StartPacketCapture()
+{
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
+	ControlMessage request(CONTROL_START_CAPTURE, DIRECTION_TO_NOVAD);
+	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	{
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
+		return false;
+	}
+
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
+	if(controlReply == NULL || controlReply->m_controlType != CONTROL_START_CAPTURE_ACK )
+	{
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+
+	delete reply;
+	return true;
+}
+
+bool StopPacketCapture()
+{
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
+	ControlMessage request(CONTROL_STOP_CAPTURE, DIRECTION_TO_NOVAD);
+	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	{
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
+		return false;
+	}
+
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
+	if(controlReply == NULL || controlReply->m_controlType != CONTROL_STOP_CAPTURE_ACK )
+	{
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+
+	delete reply;
+	return true;
+}
+
 }
