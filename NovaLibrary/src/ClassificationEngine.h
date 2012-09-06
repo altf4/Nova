@@ -91,6 +91,8 @@ private:
 	ANNpointArray m_normalizedDataPts;	//normalized data points
 	ANNkd_tree*	m_kdTree;					// search structure
 
+	pthread_rwlock_t m_lock;
+
 	// Used for data normalization
 	double m_maxFeatureValues[DIM];
 	double m_minFeatureValues[DIM];
