@@ -32,12 +32,14 @@ void Connect();
 
 void StartNovaWrapper();
 void StartHaystackWrapper(bool debug);
+void StartCaptureWrapper();
 
 void StatusNovaWrapper();
 void StatusHaystackWrapper();
 
 void StopNovaWrapper();
 void StopHaystackWrapper();
+void StopCaptureWrapper();
 
 void PrintSuspect(in_addr_t address);
 void PrintAllSuspects(enum SuspectListType listType, bool csv);

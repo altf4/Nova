@@ -47,7 +47,11 @@ enum ControlType: char
 	CONTROL_CONNECT_REQUEST,		//Request to connect to Novad from UI
 	CONTROL_CONNECT_REPLY,			//Reply from Novad with success
 	CONTROL_DISCONNECT_NOTICE,		//Notice to Novad that the UI is closing
-	CONTROL_DISCONNECT_ACK,			//Acknowledgment of the disconnect notice
+	CONTROL_DISCONNECT_ACK,
+	CONTROL_START_CAPTURE,			// Start packet capture on configured interfaces
+	CONTROL_START_CAPTURE_ACK,
+	CONTROL_STOP_CAPTURE,			// Stop packet capture on configured interfaces
+	CONTROL_STOP_CAPTURE_ACK,
 	CONTROL_INVALID
 };
 
