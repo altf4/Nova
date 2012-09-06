@@ -207,7 +207,7 @@ initLogWatch();
 ////////////////////////////////////////
 // Get these from file, should be a key (name) and an ip address corresponding
 // to the slave node location for adjudication. 
-
+/*
 var middleman = express.createServer();
 
 middleman.configure(function()
@@ -221,10 +221,11 @@ middleman.configure(function()
 
 middleman.listen(8081);
 
-var io = require('socket.io').listen(middleman);
+var socketio = require('socket.io').listen(middleman);
+var me = 'failbox';
 
-io.configure(function(){
-  io.set('transports', ['websocket']);
+socketio.configure(function(){
+  socketio.set('transports', ['websocket']);
 });
 
 // Thoughts: Probably going to need a global variable for the socket.io connection to
@@ -236,29 +237,180 @@ io.configure(function(){
 // If it's a problem, it can probably be turned off.
 // Need to turn off log messages
 
-io.sockets.on('connection', function(socket){
-  socket.on('startNovad', function(){
-    nova.StartNovad();
-    nova.CheckConnection();
-  });
-  socket.on('stopNovad', function(){
-    nova.StopNovad();
-    nova.CloseNovadConnection();    
-  });
-  socket.on('startHaystack', function(){
-    if(!nova.IsHaystackUp())
+socketio.sockets.on('connection', function(socket){
+  socket.on('startNovad', function(json){
+    var check = JSON.parse(json);
+    if(check.recv == me)
     {
-      nova.StartHaystack(false);
+      console.log("Recv matched for startNovad");
+      nova.StartNovad();
+      nova.CheckConnection();
+    }
+    else
+    {
+      console.log("received startNovad for someone else");
     }
   });
-  socket.on('stopHaystack', function(){
-    nova.StopHaystack();
+  socket.on('stopNovad', function(json){
+    var check = JSON.parse(json);
+    if(check.recv == me)
+    {
+      console.log("Recv matched for stopNovad");
+      nova.StopNovad();
+      nova.CloseNovadConnection();
+    }
+    else
+    {
+      console.log("received stopNovad for someone else");
+    }    
+  });
+  socket.on('startHaystack', function(json){
+    var check = JSON.parse(json);
+    if(check.recv == me)
+    {
+      console.log("Recv matched for startHaystack");
+      if(!nova.IsHaystackUp())
+      {
+        nova.StartHaystack(false);
+      }
+    }
+    else
+    {
+      console.log("received startHaystack for someone else");
+    }
+  });
+  socket.on('stopHaystack', function(json){
+    var check = JSON.parse(json);
+    if(check.recv == me)
+    {
+      console.log("Recv matched for stopHaystack");
+      nova.StopHaystack();
+    }
+    else
+    {
+      console.log("received stopHaystack for someone else");
+    }
+  });
+  socket.on('writeSetting', function(args){
+    var JSON_Args = JSON.parse(args);
+    if(JSON_Args.recv == me)
+    {
+      console.log("Recv matched for writeSetting");
+      var setting = JSON_Args.arg0;
+      var value = JSON_Args.arg1;
+      console.log("setting == " + setting);
+      console.log("value == " + value);
+    } 
+    else
+    {
+      console.log("received writeSetting for someone else");
+    }
   });
   socket.on('disconnect', function(){
-    console.log('Disconnect');
+    console.log('Disconnected');
+  });
+});
+*/
+/*
+var wss = require('websocket').server;
+var http = require('http');
+
+var httpServer = http.createServer(function(request, response){
+  console.log('Recieved request for url ' + request.url);
+  response.writeHead(404);
+  response.end();
+});
+
+httpServer.listen(8081, function(){
+  console.log('server up');
+});
+
+var wsServer = new WebSocketServer({
+  httpServer: httpServer
+});
+
+var novaClients = new Object();
+
+wsServer.on('request', function(request){
+  console.log('Connection accepted');
+    var connection = request.accept(null, request.origin);
+  connection.on('message', function(message){
+    if(message.type === 'utf8')
+    {
+      var json_args = JSON.parse(message.utf8Data);
+      if(json_args != undefined)
+      {
+        switch(json_args.type)
+        {
+          case 'startNovad':
+            nova.StartNovad();
+            nova.CheckConnection();
+            break;
+          default:
+            break;
+        }
+      }
+      else
+      {
+        console.log("Bad message received");
+      }
+    }
   });
 });
 
+wsServer.on('close', function(connection, reason, description){
+  console.log('Closed connection: ' + description);
+});
+*/
+
+
+var connected = '10.10.1.1:8081';
+
+var WebSocketClient = require('websocket').client;
+var client = new WebSocketClient();
+var clientId = 'failbox';
+var mothership;
+
+client.on('connectFailed', function(error)
+{
+  console.log('Connect error: ' + error.toString())
+});
+
+client.on('connect', function(connection){
+  mothership = connection;
+  var quick = {};
+  quick.type = 'addId';
+  quick.id = 'failbox';
+  mothership.sendUTF(JSON.stringify(quick));
+  
+  connection.on('message', function(message)
+  {
+    if(message.type === 'utf8')
+    {
+      var json_args = JSON.parse(message.utf8Data);
+      if(json_args != undefined)
+      {
+        switch(json_args.type)
+         {
+            case 'startNovad':
+              nova.StartNovad();
+              nova.CheckConnection();
+              break;            
+            default:
+              break;
+         }
+      }
+    }
+  });
+  connection.on('close', function(){
+    console.log('closed');
+  });
+  connection.on('error', function(error){
+    console.log('Error: ' + error.toString());
+  });
+});
+
+client.connect('ws://' + connected, null);
 //
 ////////////////////////////////////////
 
