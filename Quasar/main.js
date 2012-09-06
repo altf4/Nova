@@ -179,7 +179,6 @@ console.info("Listening on port " + WEB_UI_PORT);
 app.listen(WEB_UI_PORT);
 var everyone = nowjs.initialize(app);
 
-
 var initLogWatch = function () {
 	var novadLog = new Tail(novadLogPath);
 	novadLog.on("line", function (data) {
@@ -202,6 +201,66 @@ var initLogWatch = function () {
 
 initLogWatch();
 
+
+////////////////////////////////////////
+// SOCKET STUFF FOR MOTHERSHIP TESTING
+////////////////////////////////////////
+// Get these from file, should be a key (name) and an ip address corresponding
+// to the slave node location for adjudication. 
+
+var middleman = express.createServer();
+
+middleman.configure(function()
+{  
+  middleman.use(express.bodyParser());
+  middleman.use(express.cookieParser());
+  middleman.use(express.methodOverride());
+  middleman.use(middleman.router); 
+  middleman.use(express.static(NovaHomePath + '/../Quasar/www'));
+});
+
+middleman.listen(8081);
+
+var io = require('socket.io').listen(middleman);
+
+io.configure(function(){
+  io.set('transports', ['websocket']);
+});
+
+// Thoughts: Probably going to need a global variable for the socket.io connection to
+// the mothership; an emit needs to be made to the mothership in certain circumstances,
+// such as recieving a hostile suspect, so having that be accessible to the nowjs methods
+// is ideal. Also need to find a way to maintain IP address of Mothership and any needed
+// credentials for restarts, etc. 
+// Connection seems to have an automatic keep-alive that occurs for socket.io, which is nice.
+// If it's a problem, it can probably be turned off.
+// Need to turn off log messages
+
+io.sockets.on('connection', function(socket){
+  socket.on('startNovad', function(){
+    nova.StartNovad();
+    nova.CheckConnection();
+  });
+  socket.on('stopNovad', function(){
+    nova.StopNovad();
+    nova.CloseNovadConnection();    
+  });
+  socket.on('startHaystack', function(){
+    if(!nova.IsHaystackUp())
+    {
+      nova.StartHaystack(false);
+    }
+  });
+  socket.on('stopHaystack', function(){
+    nova.StopHaystack();
+  });
+  socket.on('disconnect', function(){
+    console.log('Disconnect');
+  });
+});
+
+//
+////////////////////////////////////////
 
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
