@@ -676,7 +676,7 @@ string ConstructFilterString()
 		hsAddresses.pop_back();
 	}
 
-	LOG(DEBUG, "Pcap filter string is "+filterString,"");
+	LOG(DEBUG, "Pcap filter string is: "+filterString,"");
 	return filterString;
 }
 

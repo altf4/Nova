@@ -41,7 +41,7 @@ public:
 	int GetDroppedPackets();
 
 protected:
-	std::string identifier;
+	std::string m_identifier;
 	pcap_t *m_handle;
 
 	// This is so we can run blocking pcap_loop in it's own thread

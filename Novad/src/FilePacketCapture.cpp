@@ -26,7 +26,7 @@ namespace Nova
 FilePacketCapture::FilePacketCapture(string pcapFilePath)
 {
 	m_pcapFilePath = pcapFilePath;
-	identifier = pcapFilePath;
+	m_identifier = pcapFilePath;
 }
 
 void FilePacketCapture::Init()

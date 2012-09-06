@@ -27,7 +27,7 @@ namespace Nova
 InterfacePacketCapture::InterfacePacketCapture(string interface)
 {
 	m_interface = interface;
-	identifier = interface;
+	m_identifier = interface;
 }
 
 void InterfacePacketCapture::Init()

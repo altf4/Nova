@@ -71,13 +71,13 @@ int PacketCapture::GetDroppedPackets()
 
 bool PacketCapture::StartCapture()
 {
-	LOG(DEBUG, "Starting packet capture on: " + identifier, "");
+	LOG(DEBUG, "Starting packet capture on: " + m_identifier, "");
 	return (pthread_create(&m_thread, NULL, InternalThreadEntryFunc, this) == 0);
 }
 
 bool PacketCapture::StartCaptureBlocking()
 {
-	LOG(DEBUG, "Starting packet capture on: " + identifier, "");
+	LOG(DEBUG, "Starting packet capture on: " + m_identifier, "");
 	return (pcap_loop(m_handle, -1, m_packetCb, 0) == 0);
 }
 
@@ -95,7 +95,7 @@ void PacketCapture::StopCapture()
 void PacketCapture::InternalThreadEntry()
 {
 	pcap_loop(m_handle, -1, m_packetCb, 0);
-	LOG(DEBUG, "Dropped out of pcap loop", "");
+	LOG(DEBUG, "Dropped out of pcap loop for packet capture: " + m_identifier, "");
 }
 
 
