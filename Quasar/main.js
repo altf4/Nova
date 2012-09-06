@@ -228,14 +228,16 @@ app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), funct
 			for (var i = 0; i < reply.length; i++) {
 				var styleString = "";
 				var line = reply[i];
-				var splitLine = line.split(' ');
+        		var splitLine = line.split(/[\s]+/);
 				if (splitLine.length >= 6) {
-					if (splitLine[5] == "DEBUG") {
+					if (splitLine[5] == "DEBUG" || splitLine[5] == "INFO") {
 						styleString += 'color: green';
 					} else if (splitLine[5] == "WARNING" || splitLine[5] == "NOTICE") {
 						styleString += 'color: orange';
 					} else if (splitLine[5] == "ERROR" || splitLine[5] == "CRITICAL") {
 						styleString += 'color: red';
+					} else {
+						styleString += 'color: blue';
 					}
 				}
 
