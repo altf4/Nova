@@ -1173,29 +1173,7 @@ void Config::LoadInterfaces()
 			//Pop an interface name
 			string temp = interfaces.back();
 			interfaces.pop_back();
-
-			for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
-			{
-				//If we match the interface exit the loop early (curIf != NULL)
-				if(!(curIf->ifa_flags & IFF_LOOPBACK) && (!temp.compare(string(curIf->ifa_name)))
-					&& ((int)curIf->ifa_addr->sa_family == AF_INET))
-				{
-					m_interfaces.push_back(temp);
-					break;
-				}
-			}
-
-			//If we couldn't match every interface notify the user and exit the while loop
-			if(curIf == NULL)
-			{
-				ss.str("");
-				ss << "ERROR File: " << __FILE__ << "at line: " << __LINE__
-					<< "Configuration option 'INTERFACE' is invalid.";
-				::openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
-				syslog(ERROR, "%s %s", "ERROR", ss.str().c_str());
-				closelog();
-				break;
-			}
+			m_interfaces.push_back(temp);
 		}
 	}
 	freeifaddrs(devices);

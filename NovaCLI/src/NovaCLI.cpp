@@ -131,6 +131,10 @@ int main(int argc, const char *argv[])
 			}
 
 		}
+		else if (!strcmp(argv[2], "capture"))
+		{
+			StartCaptureWrapper();
+		}
 		else
 		{
 			PrintUsage();
@@ -152,6 +156,10 @@ int main(int argc, const char *argv[])
 		else if(!strcmp(argv[2], "haystack"))
 		{
 			StopHaystackWrapper();
+		}
+		else if (!strcmp(argv[2], "capture"))
+		{
+			StopCaptureWrapper();
 		}
 		else
 		{
@@ -283,8 +291,8 @@ void PrintUsage()
 {
 	cout << "Usage:" << endl;
 	cout << "    " << EXECUTABLE_NAME << " status nova|haystack" << endl;
-	cout << "    " << EXECUTABLE_NAME << " start nova|haystack [debug]" << endl;
-	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
+	cout << "    " << EXECUTABLE_NAME << " start nova|capture|haystack [debug]" << endl;
+	cout << "    " << EXECUTABLE_NAME << " stop nova|capture|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
@@ -394,6 +402,18 @@ void StopHaystackWrapper()
 	{
 		cout << "There was a problem stopping the Haystack" << endl;
 	}
+}
+
+void StartCaptureWrapper()
+{
+	Connect();
+	StartPacketCapture();
+}
+
+void StopCaptureWrapper()
+{
+	Connect();
+	StopPacketCapture();
 }
 
 void PrintSuspect(in_addr_t address)

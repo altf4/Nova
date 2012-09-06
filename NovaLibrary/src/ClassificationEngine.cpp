@@ -19,6 +19,7 @@
 #include "ClassificationEngine.h"
 #include "SuspectTable.h"
 #include "Config.h"
+#include "Lock.h"
 
 #include <sstream>
 
@@ -46,6 +47,8 @@ normalizationType ClassificationEngine::m_normalization[] = {
 
 ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
 {
+	pthread_rwlock_init(&m_lock, NULL);
+
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
 
@@ -91,6 +94,7 @@ void ClassificationEngine::FormKdTree()
 
 double ClassificationEngine::Classify(Suspect *suspect)
 {
+	Lock lock(&m_lock, READ_LOCK);
 	double sqrtDIM = Config::Inst()->GetSqurtEnabledFeatures();
 	int k = Config::Inst()->GetK();
 	double d;
@@ -266,6 +270,7 @@ void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 
 void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 {
+	Lock lock(&m_lock, WRITE_LOCK);
 	ifstream myfile (inFilePath.data());
 	string line;
 
@@ -457,6 +462,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 
 void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 {
+	Lock lock(&m_lock, WRITE_LOCK);
 	// Clear max and min values
 	for(int i = 0; i < DIM; i++)
 	{
