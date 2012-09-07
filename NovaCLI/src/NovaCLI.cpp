@@ -465,14 +465,7 @@ void PrintSuspectData(in_addr_t address)
 
 
 		cout << "Details follow" << endl;
-
-		cout << "TCP RST Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_rstCount << endl;
-		cout << "TCP ACK Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_ackCount << endl;
-		cout << "TCP SYN Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_synCount << endl;
-		cout << "TCP FIN Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_finCount << endl;
-		cout << "TCP SYN ACK Packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_synAckCount << endl;
-
-		cout << "Total bytes in IP packets: " << suspect->GetFeatureSet(MAIN_FEATURES).m_bytesTotal << endl;
+		cout << suspect->GetFeatureSet(MAIN_FEATURES).toString() << endl;
 	}
 	else
 	{

@@ -463,6 +463,23 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}
 	})
 });
 
+app.get('/GetSuspectDetails', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.query["suspect"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/");
+		return;
+	}
+	
+	var suspectId = req.query["suspect"];
+	var suspectString = nova.GetSuspectDetailsString(suspectId);
+
+	res.render('suspectDetails.jade', {
+		locals: {
+			suspect: suspectId
+			, details: suspectString
+		}
+	})
+});
+
 app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), function (req, res) {
 	if (req.query["node"] === undefined) {
 		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/configHoneydNodes");
@@ -746,6 +763,7 @@ app.get('/haystackStatus', passport.authenticate('basic', {session: false}), fun
 		}
 	});
 });
+
 
 app.post('/createNewUser', passport.authenticate('basic', {session: false}), function (req, res) {
 	var password = req.body["password"];

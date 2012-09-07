@@ -21,7 +21,10 @@
 #include "FeatureSet.h"
 #include "Logger.h"
 #include "Config.h"
+
+#include <time.h>
 #include <math.h>
+#include <sstream>
 #include <sys/un.h>
 
 using namespace std;
@@ -66,6 +69,52 @@ FeatureSet::FeatureSet()
 
 FeatureSet::~FeatureSet()
 {
+}
+
+string FeatureSet::toString()
+{
+	stringstream ss;
+
+	time_t start = m_startTime;
+	time_t end = m_endTime;
+	ss << "First packet seen at: " << ctime(&start) << endl;
+	ss << "Last packet seen at: " << ctime(&end) << endl;
+	ss << endl;
+	ss << "Total bytes in IP packets: " << m_bytesTotal << endl;
+	ss << "Packets seen: " << m_packetCount << endl;
+	ss << "TCP Packet Seen: " << m_tcpPacketCount << endl;
+	ss << endl;
+	ss << "TCP RST Packets: " << m_rstCount << endl;
+	ss << "TCP ACK Packets: " << m_ackCount << endl;
+	ss << "TCP SYN Packets: " << m_synCount << endl;
+	ss << "TCP FIN Packets: " << m_finCount << endl;
+	ss << "TCP SYN ACK Packets: " << m_synAckCount << endl;
+	ss << endl;
+
+	ss << "IPs contacted and number of packets to IP: " << endl;
+	for (IP_Table::iterator it = m_IPTable.begin(); it != m_IPTable.end(); it++)
+	{
+		in_addr t;
+		t.s_addr = ntohl(it->first);
+		ss << "    " << inet_ntoa(t) << "    " << it->second << endl;
+	}
+	ss << endl;
+
+	ss << "TCP Ports contacted and number of packets to port: " << endl;
+	for (Port_Table::iterator it = m_PortTCPTable.begin(); it != m_PortTCPTable.end(); it++)
+	{
+		ss << "    " << it->first << "    " << it->second << endl;
+	}
+	ss << endl;
+
+	ss << "UDP Ports contacted and number of packets to port: " << endl;
+	for (Port_Table::iterator it = m_PortUDPTable.begin(); it != m_PortUDPTable.end(); it++)
+	{
+		ss << "    " << it->first << "    " << it->second << endl;
+	}
+	ss << endl;
+
+	return ss.str();
 }
 
 void FeatureSet::ClearFeatureSet()
