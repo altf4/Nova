@@ -34,6 +34,7 @@ bool StartHaystack(bool blocking)
 		ss << " -i " << ifList.back();
 		ifList.pop_back();
 	}
+	ss << " --disable-webserver";
 	ss << " -i " << Config::Inst()->GetDoppelInterface();
 	ss << " -f " << Config::Inst()->GetPathHome() <<  '/';
 	switch(Config::Inst()->GetHaystackStorage())

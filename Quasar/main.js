@@ -975,72 +975,55 @@ app.post('/customizeTrainingSave', passport.authenticate('basic', {session: fals
 	})
 });
 
-app.post('/editHoneydNodesSave', passport.authenticate('basic', {session: false}), function (req, res) {
+everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, interface, subnet, count, callback) {
 	var ipAddress;
-	if (req.body["ipType"] == "DHCP") {
+	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
 	} else {
-		ipAddress = req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"] + "." + req.body["ip4"];
+		ipAddress = ip1 + "." + ip2 + "." + ip3 + "." + ip4;
 	}
-	/*else
-	{
-	  res.redirect('/configHoneydNodes', { locals: { message: "Invalid IP" }} );
-	}*/
 
-	var profile = req.body["profile"];
-	var intface = req.body["interface"];
-	var subnet = "";
-	var count = Number(req.body["nodeCount"]);
-
-	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
-	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
-	honeydConfig.SaveAll();
-
-	res.render('saveRedirect.jade', {
-		locals: {
-			redirectLink: "/configHoneydNodes"
-		}
-	})
-
-});
-
-app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
-	if (req.body["profile"] === undefined || req.body["interface"] === undefined || req.body["oldName"] === undefined) {
-		RenderError(res, "Invalid POST to /editHoneydNodeSave. Most likely caused by refreshing a page you shouldn't");
-		return;
+	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + interface + " " + count);
+	var result = null;
+	if (!honeydConfig.AddNewNodes(profile, ipAddress, interface, subnet, Number(count))) {
+		result = "Unable to create new nodes";	
 	}
-	var profile = req.body["profile"];
-	var intface = req.body["interface"];
-	var oldName = req.body["oldName"];
+
+	if (!honeydConfig.SaveAll()) {
+		result = "Unable to save honeyd configuration";
+	}
+
+	callback(result);
+};
+
+everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macType, ip, mac, callback) {
+//app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
+	console.log("Saving: " + profile + ":" + intface + ":" + ipType + ":" + ip + ":" + mac + ":");
 	var subnet = "";
 
-	var ipAddress;
-	if (req.body["ipType"] == "DHCP") {
+	var ipAddress = ip;
+	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
-	} else {
-		ipAddress = req.body["ip0"] + "." + req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"];
 	}
 
-	var macAddress;
-	if (req.body["macType"] == "RANDOM") {
+	var macAddress = mac;
+	if (macType == "RANDOM") {
 		macAddress = "RANDOM";
-	} else {
-		macAddress = req.body["mac0"] + ":" + req.body["mac1"] + ":" + req.body["mac2"] + ":" + req.body["mac3"] + ":" + req.body["mac4"] + ":" + req.body["mac5"];
 	}
+	
 	// Delete the old node and then add the new one	
 	honeydConfig.DeleteNode(oldName);
 	if (!honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet)) {
-		RenderError(res, "AddNewNode failed", "/configHoneydNodes");
+		callback("AddNewNode Failed");
 		return;
 	} else {
-		honeydConfig.SaveAll();
-		res.render('saveRedirect.jade', {
-			locals: {
-				redirectLink: "/configHoneydNodes"
-			}
-		})
+		if (!honeydConfig.SaveAll()) {
+			callback("Unable to save honeyd configuration");
+		} else {
+			callback(null);
+		}
 	}
-});
+};
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
