@@ -39,16 +39,18 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 	struct CallbackChange change;
 	change.m_type = CALLBACK_ERROR;
 
+	Ticket ticket;
+
 	//Wait for a callback to occur
 	//	If it comes back false, then that means the socket is dead
-	if(!MessageManager::Instance().RegisterCallback(m_socketFD))
+	if(!MessageManager::Instance().RegisterCallback(m_socketFD, ticket))
 	{
 		change.m_type = CALLBACK_HUNG_UP;
 		MessageManager::Instance().DeleteEndpoint(m_socketFD);
 		return change;
 	}
 
-	Message *message = Message::ReadMessage(m_socketFD, DIRECTION_TO_UI);
+	Message *message = MessageManager::Instance().ReadMessage(ticket);
 	if( message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
@@ -77,8 +79,8 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 			change.m_type = CALLBACK_NEW_SUSPECT;
 			change.m_suspect = updateMessage->m_suspect;
 
-			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK, DIRECTION_TO_UI);
-			if(!Message::WriteMessage(&callbackAck, m_socketFD))
+			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK);
+			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
 				//TODO: log this? We failed to send the ack
 			}
@@ -88,8 +90,8 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 		{
 			change.m_type = CALLBACK_ALL_SUSPECTS_CLEARED;
 
-			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK, DIRECTION_TO_UI);
-			if(!Message::WriteMessage(&callbackAck, m_socketFD))
+			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK);
+			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
 				//TODO: log this? We failed to send the ack
 			}
@@ -100,8 +102,8 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 			change.m_type = CALLBACK_SUSPECT_CLEARED;
 			change.m_suspectIP = updateMessage->m_IPAddress;
 
-			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK, DIRECTION_TO_UI);
-			if(!Message::WriteMessage(&callbackAck, m_socketFD))
+			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK);
+			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
 				//TODO: log this? We failed to send the ack
 			}

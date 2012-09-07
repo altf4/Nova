@@ -35,7 +35,7 @@ using namespace NovaCLI;
 
 int main(int argc, const char *argv[])
 {
-	// Fail if no arguements
+	// Fail if no arguments
 	if(argc < 2)
 	{
 		PrintUsage();
@@ -46,7 +46,6 @@ int main(int argc, const char *argv[])
 	// Disable notifications and email in the CLI
 	Logger::Inst()->SetUserLogPreferences(LIBNOTIFY, EMERGENCY, '+');
 	Logger::Inst()->SetUserLogPreferences(EMAIL, EMERGENCY, '+');
-	InitializeUI();
 
 	// We parse the input arguments here,
 	// but refer to other functions to do any

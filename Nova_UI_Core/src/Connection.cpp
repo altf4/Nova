@@ -39,11 +39,6 @@ int IPCSocketFD = -1;
 namespace Nova
 {
 
-void InitializeUI()
-{
-	MessageManager::Initialize(DIRECTION_TO_NOVAD);
-}
-
 bool ConnectToNovad()
 {
 	if(IsNovadUp(false))
@@ -69,8 +64,6 @@ bool ConnectToNovad()
 
 	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
 
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
-
 	if(connect(IPCSocketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
 		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
@@ -80,9 +73,10 @@ bool ConnectToNovad()
 	}
 
 	MessageManager::Instance().StartSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&connectRequest, IPCSocketFD))
+	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
+	if(!MessageManager::Instance().WriteMessage(ticket, &connectRequest))
 	{
 		LOG(ERROR, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
 		MessageManager::Instance().CloseSocket(IPCSocketFD);
@@ -90,7 +84,7 @@ bool ConnectToNovad()
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -146,7 +140,7 @@ bool TryWaitConnectToNovad(int timeout_ms)
 
 bool CloseNovadConnection()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	if(IPCSocketFD == -1)
 	{
@@ -155,13 +149,13 @@ bool CloseNovadConnection()
 
 	bool success = true;
 
-	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&disconnectNotice, IPCSocketFD))
+	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
+	if(!MessageManager::Instance().WriteMessage(ticket, &disconnectNotice))
 	{
 		success = false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");

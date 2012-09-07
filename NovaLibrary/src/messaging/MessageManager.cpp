@@ -120,17 +120,12 @@ void MessageManager::StartSocket(int socketFD)
 Ticket MessageManager::StartConversation(int socketFD)
 {
 	{
-		//Initialize the MessageEndpoint if it doesn't yet exist
 		Lock lock(&m_endpointsMutex);
+
+		//If the endpoint doesn't exist, then it was closed. Just exit with failure
 		if(m_endpoints.count(socketFD) == 0)
 		{
-			pthread_rwlock_t *rwLock = new pthread_rwlock_t;
-			pthread_rwlock_init(rwLock, NULL);
-
-			//Now go ahead and read-lock the endpoint, since we're going to use it
-			pthread_rwlock_rdlock(rwLock);
-
-			m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>( new MessageEndpoint(socketFD), rwLock);
+			return Ticket();
 		}
 		else
 		{
@@ -141,7 +136,7 @@ Ticket MessageManager::StartConversation(int socketFD)
 	//Just because we got a read-lock doesn't mean the MessageEndpoint exists. It could have been closed and deleted before we got here
 	if(m_endpoints[socketFD].first == NULL)
 	{
-		m_endpoints[socketFD].first = new MessageEndpoint(socketFD);
+		return Ticket();
 	}
 
 	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0, false, false, m_endpoints[socketFD].second, socketFD);

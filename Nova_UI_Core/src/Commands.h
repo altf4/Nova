@@ -29,12 +29,8 @@
 namespace Nova
 {
 //************************************************************************
-//**						Initialization								**
+//**						Status Queries								**
 //************************************************************************
-
-//Initializes internal objects and states. MUST be run once first, before any other functions
-void InitializeUI();
-
 
 //Runs the Novad process
 //	returns - True upon successfully running the novad process, false on error

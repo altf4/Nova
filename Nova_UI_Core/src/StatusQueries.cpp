@@ -45,16 +45,16 @@ bool IsNovadUp(bool tryToConnect)
 		}
 	}
 
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	RequestMessage ping(REQUEST_PING, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&ping, IPCSocketFD) )
+	RequestMessage ping(REQUEST_PING);
+	if(!MessageManager::Instance().WriteMessage(ticket, &ping))
 	{
 		//There was an error in sending the message
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -100,16 +100,16 @@ bool IsNovadUp(bool tryToConnect)
 
 uint64_t GetStartTime()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	RequestMessage request(REQUEST_UPTIME, DIRECTION_TO_NOVAD);
+	RequestMessage request(REQUEST_UPTIME);
 
-	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
 		return 0;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -143,18 +143,18 @@ uint64_t GetStartTime()
 
 vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	RequestMessage request(REQUEST_SUSPECTLIST, DIRECTION_TO_NOVAD);
+	RequestMessage request(REQUEST_SUSPECTLIST);
 	request.m_listType = listType;
 
-	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
 		//There was an error in sending the message
 		return NULL;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -188,20 +188,18 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 
 Suspect *GetSuspect(in_addr_t address)
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	RequestMessage request(REQUEST_SUSPECT, DIRECTION_TO_NOVAD);
+	RequestMessage request(REQUEST_SUSPECT);
 	request.m_suspectAddress = address;
 
-
-	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
 		//There was an error in sending the message
 		return NULL;
 	}
 
-
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
