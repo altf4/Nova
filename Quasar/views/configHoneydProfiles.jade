@@ -31,7 +31,7 @@ block headerAdditions
        } catch(err) {
          alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
          console.log("err was: " + err);
-        }   
+        }
     }
 
     
@@ -41,6 +41,19 @@ block headerAdditions
         dialog.show();
         return;
       }
+
+     now.IsHaystackUp(checkIfRestartNeeded); 
+    }
+
+    function checkIfRestartNeeded(haystackUp) {
+      if (haystackUp) {
+        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        if (restartHaystack) {
+          now.StopHaystack();
+          now.StartHaystack();
+        }
+      }
+
       location.reload(true);
     }
 

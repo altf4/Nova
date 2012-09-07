@@ -1268,9 +1268,12 @@ everyone.now.StopHaystack = function () {
 	nova.StopHaystack();
 }
 
+everyone.now.IsHaystackUp = function (callback) {
+	callback(nova.IsHaystackUp());
+}
 
-everyone.now.IsNovadUp = function () {
-	return nova.IsNovadIp();
+everyone.now.IsNovadUp = function (callback) {
+	callback(nova.IsNovadUp());
 }
 
 everyone.now.StartNovad = function () {

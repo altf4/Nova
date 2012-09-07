@@ -43,6 +43,18 @@ block headerAdditions
       if(success != true) {
         alert("Unable to complete operation due to error: " + message);
       }
+     now.IsHaystackUp(checkIfRestartNeeded); 
+    }
+
+    function checkIfRestartNeeded(haystackUp) {
+      if (haystackUp) {
+        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        if (restartHaystack) {
+          now.StopHaystack();
+          now.StartHaystack();
+        }
+      }
+
       location.reload(true);
     }
 
