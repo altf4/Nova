@@ -49,20 +49,15 @@ string Config::m_prefixes[] =
 	"PCAP_FILE",
 	"GO_TO_LIVE",
 	"CLASSIFICATION_TIMEOUT",
-	"SILENT_ALARM_PORT",
 	"K",
 	"EPS",
-	"IS_TRAINING",
 	"CLASSIFICATION_THRESHOLD",
 	"DATAFILE",
-	"SA_MAX_ATTEMPTS",
-	"SA_SLEEP_DURATION",
 	"USER_HONEYD_CONFIG",
 	"DOPPELGANGER_IP",
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
 	"ENABLED_FEATURES",
-	"TRAINING_CAP_FOLDER",
 	"THINNING_DISTANCE",
 	"SAVE_FREQUENCY",
 	"DATA_TTL",
@@ -80,9 +75,6 @@ string Config::m_prefixes[] =
 	"CUSTOM_PCAP_MODE",
 	"TRAINING_SESSION",
 	"WEB_UI_PORT",
-	"DATABASE_HOST",
-	"DATABASE_USER",
-	"DATABASE_PASS",
 	"CLEAR_AFTER_HOSTILE_EVENT",
 	"CAPTURE_BUFFER_SIZE"
 };
@@ -328,26 +320,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-			// SILENT_ALARM_PORT
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				if(line.size() == prefix.size())
-				{
-					line += " ";
-				}
-
-				line = line.substr(prefix.size() + 1, line.size());
-
-				if(atoi(line.c_str()) > 0)
-				{
-					m_saPort = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
 			// K
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -371,20 +343,6 @@ void Config::LoadConfig_Internal()
 				if(atof(line.c_str()) >= 0)
 				{
 					m_eps = atof(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// IS_TRAINING
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					m_isTraining = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -414,34 +372,6 @@ void Config::LoadConfig_Internal()
 						line.size()).compare(".txt"))
 				{
 					m_pathTrainingFile = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// SA_MAX_ATTEMPTS
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_saMaxAttempts = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// SA_SLEEP_DURATION
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atof(line.c_str()) >= 0)
-				{
-					m_saSleepDuration = atof(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -518,20 +448,6 @@ void Config::LoadConfig_Internal()
 				}
 				continue;
 
-			}
-
-			// TRAINING_CAP_FOLDER
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_pathTrainingCapFolder = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
 			}
 
 			// THINNING_DISTANCE
@@ -815,48 +731,6 @@ void Config::LoadConfig_Internal()
 				if(atoi(line.c_str()) > 0)
 				{
 					m_webUIPort = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// DATABASE_HOST
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_DBHost = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// DATABASE_USER
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_DBUser = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// DATABASE_PASS
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_DBPass = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -1306,20 +1180,6 @@ bool Config::SaveConfig()
 				continue;
 			}
 
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(GetIsTraining())
-				{
-					*out << "IS_TRAINING 1"<< endl;
-				}
-				else
-				{
-					*out << "IS_TRAINING 0"<<endl;
-				}
-				continue;
-			}
-
 			prefix = "INTERFACE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -1343,27 +1203,6 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				*out << prefix << " " << GetPathTrainingFile() << endl;
-				continue;
-			}
-
-			prefix = "SA_SLEEP_DURATION";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetSaSleepDuration() << endl;
-				continue;
-			}
-
-			prefix = "SA_MAX_ATTEMPTS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetSaMaxAttempts() << endl;
-				continue;
-			}
-
-			prefix = "SILENT_ALARM_PORT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetSaPort() << endl;
 				continue;
 			}
 
@@ -1539,7 +1378,6 @@ void Config::SetDefaults()
 	m_pathTrainingFile 	= "Config/data.txt";
 	m_pathWhitelistFile = "Config/whitelist.txt";
 	m_pathConfigHoneydUser	= "Config/doppelganger.config";
-	m_pathTrainingCapFolder = "Data";
 	m_pathCESaveFile = "ceStateSave";
 
 	m_tcpTimout = 7;
@@ -1549,13 +1387,9 @@ void Config::SetDefaults()
 	m_isDmEnabled = true;
 
 	m_classificationTimeout = 3;
-	m_saPort = 12024;
 	m_k = 3;
 	m_eps = 0.01;
-	m_isTraining = 0;
 	m_classificationThreshold = .5;
-	m_saMaxAttempts = 3;
-	m_saSleepDuration = .5;
 	m_doppelIp = "10.0.0.1";
 	m_loopbackIF = "lo";
 	m_enabledFeatureMask = "111111111";
@@ -1645,26 +1479,21 @@ string Config::ToString()
 	ss << "GetPathConfigHoneydDm() " << GetPathConfigHoneydUser() << endl;
 	ss << "GetPathConfigHoneydHs() " << GetPathConfigHoneydHS() << endl;
 	ss << "GetPathPcapFile() " << GetPathPcapFile() << endl;
-	ss << "GetPathTrainingCapFolder() " << GetPathTrainingCapFolder() << endl;
 	ss << "GetPathTrainingFile() " << GetPathTrainingFile() << endl;
 
 	ss << "GetReadPcap() " << GetReadPcap() << endl;
 	ss << "GetIsDmEnabled() " << GetIsDmEnabled() << endl;
-	ss << "GetIsTraining() " << GetIsTraining() << endl;
 	ss << "GetGotoLive() " << GetGotoLive() << endl;
 
 	ss << "GetClassificationTimeout() " << GetClassificationTimeout() << endl;
 	ss << "GetDataTTL() " << GetDataTTL() << endl;
 	ss << "GetK() " << GetK() << endl;
-	ss << "GetSaMaxAttempts() " << GetSaMaxAttempts() << endl;
-	ss << "GetSaPort() " << GetSaPort() << endl;
 	ss << "GetSaveFreq() " << GetSaveFreq() << endl;
 	ss << "GetTcpCheckFreq() " << GetTcpCheckFreq() << endl;
 	ss << "GetTcpTimout() " << GetTcpTimout() << endl;
 	ss << "GetThinningDistance() " << GetThinningDistance() << endl;
 
 	ss << "GetClassificationThreshold() " << GetClassificationThreshold() << endl;
-	ss << "GetSaSleepDuration() " << GetSaSleepDuration() << endl;
 	ss << "GetEps() " << GetEps() << endl;
 
 
@@ -1942,12 +1771,6 @@ bool Config::GetIsDmEnabled()
 	return m_isDmEnabled;
 }
 
-bool Config::GetIsTraining()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_isTraining;
-}
-
 int Config::GetK()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -1978,12 +1801,6 @@ string Config::GetPathPcapFile()
 	return m_pathPcapFile;
 }
 
-string Config::GetPathTrainingCapFolder()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathTrainingCapFolder;
-}
-
 string Config::GetPathTrainingFile()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -2000,24 +1817,6 @@ bool Config::GetReadPcap()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_readPcap;
-}
-
-int Config::GetSaMaxAttempts()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_saMaxAttempts;
-}
-
-int Config::GetSaPort()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_saPort;
-}
-
-double Config::GetSaSleepDuration()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_saSleepDuration;
 }
 
 int Config::GetSaveFreq()
@@ -2332,12 +2131,6 @@ void Config::SetIsDmEnabled(bool isDmEnabled)
 	m_isDmEnabled = isDmEnabled;
 }
 
-void Config::SetIsTraining(bool isTraining)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_isTraining = isTraining;
-}
-
 void Config::SetK(int k)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2368,12 +2161,6 @@ void Config::SetPathPcapFile(string pathPcapFile)
 	m_pathPcapFile = pathPcapFile;
 }
 
-void Config::SetPathTrainingCapFolder(string pathTrainingCapFolder)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathTrainingCapFolder = pathTrainingCapFolder;
-}
-
 void Config::SetPathTrainingFile(string pathTrainingFile)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2391,24 +2178,6 @@ void Config::SetReadPcap(bool readPcap)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_readPcap = readPcap;
-}
-
-void Config::SetSaMaxAttempts(int saMaxAttempts)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_saMaxAttempts = saMaxAttempts;
-}
-
-void Config::SetSaPort(int saPort)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_saPort = saPort;
-}
-
-void Config::SetSaSleepDuration(double saSleepDuration)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_saSleepDuration = saSleepDuration;
 }
 
 void Config::SetSaveFreq(int saveFreq)
@@ -2495,25 +2264,6 @@ std::string Config::GetSMTPPass()
 	return m_SMTPPass;
 }
 
-std::string Config::GetDBHost()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_DBHost;
-}
-
-std::string Config::GetDBUser()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_DBUser;
-}
-
-std::string Config::GetDBPass()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_DBPass;
-}
-
-
 void Config::SetLoggerPreferences(string loggerPreferences)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2546,27 +2296,6 @@ void Config::SetSMTPDomain(string SMTPDomain)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_SMTPDomain = SMTPDomain;
-
-}
-
-void Config::SetDBHost(string host)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_DBHost = host;
-
-}
-
-void Config::SetDBUser(string user)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_DBUser = user;
-
-}
-
-void Config::SetDBPass(string pass)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_DBPass = pass;
 
 }
 

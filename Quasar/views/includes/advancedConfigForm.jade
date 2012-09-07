@@ -41,19 +41,6 @@ script
 form(method="post", action="/configureNovaSave")
   h2 General Configuration
 
-  h2 Silent Alarm
-  label Port
-  input(type="number", step="1", min="1025", max="65535", name="SILENT_ALARM_PORT",  value=SILENT_ALARM_PORT)
-  br
-  
-  label Max Connection Attempts
-  input(type="number", step="1", min="0", name="SA_MAX_ATTEMPTS", value=SA_MAX_ATTEMPTS)
-  br
-  
-  label Sleep Duration
-  input(type="text", name="SA_SLEEP_DURATION",  value=SA_SLEEP_DURATION)
-  br
-
   h2 File Paths
   label Path to state save file
   input(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
@@ -178,26 +165,6 @@ form(method="post", action="/configureNovaSave")
   label Training mode?
   br
 
-  if IS_TRAINING != "0"
-    |Yes
-    input(type="radio", name="IS_TRAINING", value="1", checked)
-    br
-    |No
-    input(type="radio", name="IS_TRAINING", value="0")
-    br
-  else
-    |Yes
-    input(type="radio", name="IS_TRAINING", value="1")
-    br
-    |No
-    input(type="radio", name="IS_TRAINING", value="0", checked)
-    br
-  br
-  
-  label Training Capture folder
-  input(name="TRAINING_CAP_FOLDER",  value=TRAINING_CAP_FOLDER)
-  br
-  
   label Thinning Distance
   input(name="THINNING_DISTANCE",  value=THINNING_DISTANCE)
   br

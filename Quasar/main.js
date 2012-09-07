@@ -355,21 +355,16 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 			PCAP_FILE: config.ReadSetting("PCAP_FILE"),
 			GO_TO_LIVE: config.ReadSetting("GO_TO_LIVE"),
 			CLASSIFICATION_TIMEOUT: config.ReadSetting("CLASSIFICATION_TIMEOUT"),
-			SILENT_ALARM_PORT: config.ReadSetting("SILENT_ALARM_PORT"),
 			K: config.ReadSetting("K"),
 			EPS: config.ReadSetting("EPS"),
-			IS_TRAINING: config.ReadSetting("IS_TRAINING"),
 			CLASSIFICATION_THRESHOLD: config.ReadSetting("CLASSIFICATION_THRESHOLD"),
 			DATAFILE: config.ReadSetting("DATAFILE"),
-			SA_MAX_ATTEMPTS: config.ReadSetting("SA_MAX_ATTEMPTS"),
-			SA_SLEEP_DURATION: config.ReadSetting("SA_SLEEP_DURATION"),
 			USER_HONEYD_CONFIG: config.ReadSetting("USER_HONEYD_CONFIG"),
 			DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP"),
 			DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE"),
 			DM_ENABLED: config.ReadSetting("DM_ENABLED"),
 			ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES"),
 			FEATURE_NAMES: nova.GetFeatureNames(),
-			TRAINING_CAP_FOLDER: config.ReadSetting("TRAINING_CAP_FOLDER"),
 			THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE"),
 			SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY"),
 			DATA_TTL: config.ReadSetting("DATA_TTL"),
@@ -1027,7 +1022,7 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1082,10 +1077,6 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			continue;
 		}
 		switch (configItems[item]) {
-		case "SA_SLEEP_DURATION":
-			validator.check(req.body[configItems[item]], 'Must be a nonnegative integer or floating point number').isFloat();
-			break;
-
 		case "TCP_TIMEOUT":
 			validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
 			break;
@@ -1627,8 +1618,12 @@ everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback,
 	});
 }
 
+// TODO: Fix training
 everyone.now.StartTrainingCapture = function (trainingSession, callback) {
-	config.WriteSetting("IS_TRAINING", "1");
+	callback("Training mode is currently not supported");
+	return;
+
+	//config.WriteSetting("IS_TRAINING", "1");
 	config.WriteSetting("TRAINING_SESSION", trainingSession.toString());
 
 	// Check if training folder already exists
@@ -1654,9 +1649,12 @@ everyone.now.StartTrainingCapture = function (trainingSession, callback) {
 	});
 }
 
+// TODO: Fix training
 everyone.now.StopTrainingCapture = function (trainingSession, callback) {
-	config.WriteSetting("IS_TRAINING", "0");
-	config.WriteSetting("TRAINING_SESSION", "null");
+	callback("Training mode is currently not supported");
+	return;
+	//config.WriteSetting("IS_TRAINING", "0");
+	//config.WriteSetting("TRAINING_SESSION", "null");
 	nova.StopNovad();
 
 	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/capture.dump',

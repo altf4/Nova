@@ -28,17 +28,6 @@ INTERFACE default
 DATAFILE Config/data.txt
 
 ############################################
-# SILENT_ALARM_PORT #
-############################################
-#
-# Port for Nova instances to communicate 
-# silent alarm notifications between eachother.
-#
-# EXAMPLE:
-#SILENT_ALARM_PORT 4242
-SILENT_ALARM_PORT 4242
-
-############################################
 # K #
 ############################################
 #
@@ -76,30 +65,6 @@ EPS 0.01
 # EXAMPLE:
 #CLASSIFICATION_TIMEOUT 5
 CLASSIFICATION_TIMEOUT 1
-
-############################################
-# IS_TRAINING #
-############################################
-#
-# Set training mode or classification mode.
-# 	0: Classification mode
-# 	1: Training mode
-#
-# EXAMPLE:
-#IS_TRAINING 0
-IS_TRAINING 0
-
-
-############################################
-# TRAINING_CAP_FOLDER #
-############################################
-# 
-# Folder where classification engine training
-# capture files will be stored.
-# 
-# EXAMPLE
-# TRAINING_CAP_FOLDER Data
-TRAINING_CAP_FOLDER Data
 
 ############################################
 # THINNING_DISTANCE #
@@ -249,34 +214,6 @@ PCAP_FILE ../masterPcap
 # EXAMPLE:
 #GO_TO_LIVE 1
 GO_TO_LIVE 1
-
-############################################
-# SA_MAX_ATTEMPTS #
-############################################
-#
-# This is the number of times nova will try to connect to another 
-# instance of nova when sending a silent alarm. The time between
-# attempts is set in 
-#
-# 3 attempts by default
-#
-# EXAMPLE:
-#SA_MAX_ATTEMPTS 3
-SA_MAX_ATTEMPTS 3
-
-############################################
-# SA_SLEEP_DURATION #
-############################################
-#
-# This is time in seconds that nova will sleep between attempts
-# to form a tcp connection to another instance of nova when
-# sending a silent alarm
-#
-# 0.5 seconds by default
-#
-# EXAMPLE:
-#SA_SLEEP_DURATION 0.5
-SA_SLEEP_DURATION 0.5
 
 ############################################
 # ENABLED_FEATURES #
@@ -469,13 +406,6 @@ TRAINING_SESSION null
 # Note: anything < 1024 requires root to use
 WEB_UI_PORT 8080
 
-
-############################################
-# Database credentials
-############################################
-DATABASE_HOST 127.0.0.1
-DATABASE_USER nova
-DATABASE_PASS avon
 
 ############################################
 # CLEAR_AFTER_HOSTILE_EVENT #
