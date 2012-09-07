@@ -19,6 +19,9 @@
 //============================================================================
 
 #include "PersonalityTable.h"
+#include "Logger.h"
+
+#include <sstream>
 
 using namespace std;
 
@@ -43,56 +46,60 @@ void PersonalityTable::ListInfo()
 	// Just a simple print method for outputting the
 	// relevant information for each element of the PersonalityTable,
 	// as well as some information about the table itself.
-	std::cout << '\n';
-	std::cout << "Number of hosts found: " << m_num_of_hosts << "." << '\n';
-	std::cout << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << '\n';
-	std::cout << "Hostspace left over: " << m_numAddrsAvail << " addresses." << '\n';
+
+	stringstream ss;
+	ss << '\n';
+	ss << "Number of hosts found: " << m_num_of_hosts << "." << '\n';
+	ss << "Number of hosts that yielded personalities: " << m_num_used_hosts << "." << '\n';
+	ss << "Hostspace left over: " << m_numAddrsAvail << " addresses." << '\n';
 
 	for(Personality_Table::iterator it = m_personalities.begin(); it != m_personalities.end(); it++)
 	{
-		std::cout << '\n';
+		ss << '\n';
 
-		std::cout << it->second->m_personalityClass[0] << ": ";
+		ss << it->second->m_personalityClass[0] << ": ";
 
 		for(uint16_t i = it->second->m_personalityClass.size() - 1; i > 1 ; i--)
 		{
-			std::cout << it->second->m_personalityClass[i] << " | ";
+			ss << it->second->m_personalityClass[i] << " | ";
 		}
 
-		std::cout << it->second->m_personalityClass[1];
+		ss << it->second->m_personalityClass[1];
 
-		std::cout << '\n';
+		ss << '\n';
 
-		std::cout << "Appeared " << it->second->m_count << " time(s) on the network" << '\n';
+		ss << "Appeared " << it->second->m_count << " time(s) on the network" << '\n';
 
-		std::cout << "Associated IPs: " << '\n';
+		ss << "Associated IPs: " << '\n';
 		for(uint16_t i = 0; i < it->second->m_addresses.size(); i++)
 		{
-			std::cout << "\t" << it->second->m_addresses[i] << '\n';
+			ss << "\t" << it->second->m_addresses[i] << '\n';
 		}
 
-		std::cout << "Associated MACs: " << '\n';
+		ss << "Associated MACs: " << '\n';
 
 		for(uint16_t j = 0; j < it->second->m_macs.size(); j++)
 		{
-			std::cout << "\t" << it->second->m_macs[j] << '\n';
+			ss << "\t" << it->second->m_macs[j] << '\n';
 		}
 
-		std::cout << "All MAC vendors associated with this Personality: " << '\n';
+		ss << "All MAC vendors associated with this Personality: " << '\n';
 
-		for(MAC_Table::iterator it2 = it->second->m_vendors.begin(); it2 != it->second->m_vendors.end(); it2++)
+		for(MACVendorMap::iterator it2 = it->second->m_vendors.begin(); it2 != it->second->m_vendors.end(); it2++)
 		{
-			std::cout << "\t" << it2->first << " occurred " << it2->second << " time(s)." << '\n';
+			ss << "\t" << it2->first << " occurred " << it2->second << " time(s)." << '\n';
 		}
 
-		std::cout << "Ports for this Personality: " << '\n';
+		ss << "Ports for this Personality: " << '\n';
 
-		for(PortsTable::iterator it2 = it->second->m_ports.begin(); it2 != it->second->m_ports.end(); it2++)
+		for(PortServiceMap::iterator it2 = it->second->m_ports.begin(); it2 != it->second->m_ports.end(); it2++)
 		{
-			std::cout << "\t" << it2->first << " occurred " << it2->second.first << " time(s)." << '\n';
+			ss << "\t" << it2->first << " occurred " << it2->second.first << " time(s)." << '\n';
 		}
 
-		std::cout << std::endl;
+		ss << std::endl;
+
+		LOG(DEBUG, ss.str(), "");
 	}
 }
 
@@ -130,7 +137,7 @@ void PersonalityTable::AddHost(Personality *add)
 
 		// Iterate through the Port_Table in the copy and update the
 		// counts for the occurrence of each port
-		for(PortsTable::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)
+		for(PortServiceMap::iterator it = add->m_ports.begin(); it != add->m_ports.end(); it++)
 		{
 			if(cur->m_ports.find(it->first) == cur->m_ports.end())
 			{
@@ -144,7 +151,7 @@ void PersonalityTable::AddHost(Personality *add)
 			cur->m_port_count++;
 		}
 		// and do the same for the MAC vendors in the MAC_Table.
-		for(MAC_Table::iterator it = add->m_vendors.begin(); it != add->m_vendors.end(); it++)
+		for(MACVendorMap::iterator it = add->m_vendors.begin(); it != add->m_vendors.end(); it++)
 		{
 			if(cur->m_vendors.find(it->first) == cur->m_vendors.end())
 			{

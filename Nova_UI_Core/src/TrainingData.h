@@ -28,6 +28,8 @@
 
 #include "HashMapStructs.h"
 
+namespace Nova {
+
 // Header for training data
 struct _trainingSuspect
 {
@@ -40,8 +42,8 @@ struct _trainingSuspect
 
 typedef struct _trainingSuspect trainingSuspect;
 
-typedef Nova::HashMap<std::string, trainingSuspect*, std::tr1::hash<std::string>, eqstr > trainingSuspectMap;
-typedef Nova::HashMap<std::string, std::vector<std::string>*, std::tr1::hash<std::string>, eqstr > trainingDumpMap;
+typedef HashMap<std::string, trainingSuspect*, std::tr1::hash<std::string>, eqstr > trainingSuspectMap;
+typedef HashMap<std::string, std::vector<std::string>*, std::tr1::hash<std::string>, eqstr > trainingDumpMap;
 
 class TrainingData
 {
@@ -62,5 +64,8 @@ public:
 	static void ThinTrainingPoints(trainingDumpMap *suspects, double distanceThreshhold);
 
 };
+
+}
+
 
 #endif /* TRAININGDATA_H_ */

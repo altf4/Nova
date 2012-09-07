@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "sys/types.h"
 
@@ -35,6 +36,7 @@ void CryptBuffer(u_char *buf, uint size, bool mode);
 //		dev - Device name, e.g. "eth0"
 // Returns: IP addresses
 std::string GetLocalIP(const char *dev);
+std::string GetLocalIP(std::string dev);
 
 //Removes any instance of the specified character from the front and back of the string
 //		str - pointer to the string you want to modify
@@ -42,11 +44,33 @@ std::string GetLocalIP(const char *dev);
 // Note: this function will result in an empty string, if every character is == c
 void Trim(std::string& str, char c = ' ');
 
+
+inline std::string ConvertInt(int x)
+{
+	std::stringstream ss;
+	ss << x;
+	return ss.str();
+}
+
+inline std::string GetEnvVariable( const std::string & var ) {
+     const char * val = ::getenv( var.c_str() );
+     if ( val == 0 )
+     {
+         return "";
+     }
+     else
+     {
+         return val;
+     }
+}
+
+
 //Replaces all instances of the search character in the addressed string with the character specified
 //	str: the string to modify
 //	searchChar: the character to replace
 //	replaceVal: the replacement character
 void ReplaceChar(std::string& str, char searchChar, char replaceVal);
+void ReplaceString(std::string& str, const std::string& oldStr, const std::string& newStr);
 
 //Takes the input vector of doubles, and changes the double at the index to the target value, then shifts
 // all other values in the vector proportionally such that the entire vector sums to 100

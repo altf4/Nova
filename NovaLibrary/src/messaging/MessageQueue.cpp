@@ -68,11 +68,13 @@ MessageQueue::~MessageQueue()
 	//Delete any straggling messages in the queues
 	while(!m_forwardQueue.empty())
 	{
+		m_forwardQueue.front()->DeleteContents();
 		delete m_forwardQueue.front();
 		m_forwardQueue.pop();
 	}
 	while(!m_callbackQueue.empty())
 	{
+		m_callbackQueue.front()->DeleteContents();
 		delete m_callbackQueue.front();
 		m_callbackQueue.pop();
 	}
@@ -125,7 +127,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				else
 				{
 					//Discard this message and get a new one
-					//TODO: Must clear this message's internals or it will leak!
+					retMessage->DeleteContents();
 					delete retMessage;
 				}
 			}
@@ -153,7 +155,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				else
 				{
 					//Discard this message and get a new one
-					//TODO: Must clear this message's internals or it will leak!
+					retMessage->DeleteContents();
 					delete retMessage;
 				}
 			}
@@ -209,7 +211,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				else
 				{
 					//Discard this message and get a new one
-					//TODO: Must clear this message's internals or it will leak!
+					retMessage->DeleteContents();
 					delete retMessage;
 				}
 			}
@@ -254,7 +256,7 @@ Message *MessageQueue::PopMessage(enum ProtocolDirection direction, int timeout)
 				else
 				{
 					//Discard this message and get a new one
-					//TODO: Must clear this message's internals or it will leak!
+					retMessage->DeleteContents();
 					delete retMessage;
 				}
 			}

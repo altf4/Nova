@@ -29,6 +29,7 @@
 #include "SuspectTable.h"
 #include "Lock.h"
 
+#include <sstream>
 #include "pthread.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -167,22 +168,22 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 					}
 					case ERROR_MALFORMED_MESSAGE:
 					{
-						LOG(NOTICE, "There was an error reading a message from the UI", "Got a message but it was not deserialized correctly");
+						LOG(DEBUG, "There was an error reading a message from the UI", "Got a message but it was not deserialized correctly");
 						break;
 					}
 					case ERROR_UNKNOWN_MESSAGE_TYPE:
 					{
-						LOG(NOTICE, "There was an error reading a message from the UI", "Received an unknown message type.");
+						LOG(DEBUG, "There was an error reading a message from the UI", "Received an unknown message type.");
 						break;
 					}
 					case ERROR_PROTOCOL_MISTAKE:
 					{
-						LOG(NOTICE, "We sent a bad message to the UI", "Received an ERROR_PROTOCOL_MISTAKE.");
+						LOG(DEBUG, "We sent a bad message to the UI", "Received an ERROR_PROTOCOL_MISTAKE.");
 						break;
 					}
 					default:
 					{
-						LOG(NOTICE, "There was an error reading a message from the UI", "Unknown error type. Should see this!");
+						LOG(DEBUG, "There was an error reading a message from the UI", "Unknown error type. Should see this!");
 						break;
 					}
 				}
@@ -253,6 +254,10 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			bool result;
 
+			stringstream ss;
+			ss << "Got a command to erase suspect " << hex << controlMessage.m_suspectAddress;
+			LOG(DEBUG, ss.str(), "");
+
 			result = suspects.Erase(controlMessage.m_suspectAddress);
 
 			if (!result)
@@ -263,7 +268,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			result = suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
 			if (!result)
 			{
-				LOG(DEBUG, "Failed to Erase suspect from the main suspect table.", "");
+				LOG(DEBUG, "Failed to Erase suspect from the unsaved suspect table.", "");
 			}
 
 
@@ -282,6 +287,9 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
 			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
+			stringstream ss2;
+			ss2 << "Sending suspect cleared notification for " << hex << updateMessage->m_IPAddress << endl;
+			LOG(DEBUG, ss2.str(), "");
 			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, socketFD);
 
 			break;
@@ -335,7 +343,24 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 
 			MessageManager::Instance().CloseSocket(socketFD);
 
-			LOG(NOTICE, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
+			LOG(DEBUG, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
+
+			break;
+		}
+		case CONTROL_START_CAPTURE:
+		{
+			ControlMessage ack(CONTROL_START_CAPTURE_ACK, DIRECTION_TO_NOVAD);
+			Message::WriteMessage(&ack, socketFD);
+
+			StartCapture();
+			break;
+		}
+		case CONTROL_STOP_CAPTURE:
+		{
+			ControlMessage ack(CONTROL_STOP_CAPTURE_ACK, DIRECTION_TO_NOVAD);
+			Message::WriteMessage(&ack, socketFD);
+
+			StopCapture();
 
 			break;
 		}
@@ -460,26 +485,28 @@ void SendSuspectToUIs(Suspect *suspect)
 		suspectUpdate.m_suspect = suspect;
 		if(!Message::WriteMessage(&suspectUpdate, sockets[i]))
 		{
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
 
 		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
+			suspectReply->DeleteContents();
 			delete suspectReply;
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
 		if(suspectCallback->m_updateType != UPDATE_SUSPECT_ACK)
 		{
-			delete suspectCallback;
-			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+			suspectReply->DeleteContents();
+			delete suspectReply;
+			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
 		delete suspectCallback;
-		LOG(DEBUG, string("Sent a suspect to the UI: ")+ inet_ntoa(suspect->GetInAddr()), "");
+		LOG(DEBUG, string("Sent a suspect to the UI: ")+suspect->GetIpString(), "");
 	}
 }
 
@@ -528,22 +555,24 @@ void *NotifyUIsHelper(void *ptr)
 
 		if(!Message::WriteMessage(arguments->m_updateMessage, sockets[i]))
 		{
-			LOG(NOTICE, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
+			LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
 			continue;
 		}
 
 		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
+			suspectReply->DeleteContents();
 			delete suspectReply;
-			LOG(NOTICE, "Failed to send message to UI", "Got the wrong message type in response after sending a Clear All Suspects Notify");
+			LOG(DEBUG, "Failed to send message to UI", "Got the wrong message type in response after sending a Clear All Suspects Notify");
 			continue;
 		}
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
 		if(suspectCallback->m_updateType != arguments->m_ackType)
 		{
-			delete suspectCallback;
-			LOG(NOTICE, "Failed to send message to UI", "Got the wrong UpdateMessage subtype in response after sending a Clear All Suspects Notify");
+			suspectReply->DeleteContents();
+			delete suspectReply;
+			LOG(DEBUG, "Failed to send message to UI", "Got the wrong UpdateMessage subtype in response after sending a Clear All Suspects Notify");
 			continue;
 		}
 		delete suspectCallback;

@@ -58,7 +58,8 @@ bool IsNovadUp(bool tryToConnect)
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 
@@ -80,6 +81,7 @@ bool IsNovadUp(bool tryToConnect)
 	if(reply->m_messageType != REQUEST_MESSAGE )
 	{
 		//Received the wrong kind of message
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -88,6 +90,7 @@ bool IsNovadUp(bool tryToConnect)
 	if(pong->m_requestType != REQUEST_PONG)
 	{
 		//Received the wrong kind of control message
+		pong->DeleteContents();
 		delete pong;
 		return false;
 	}
@@ -110,13 +113,15 @@ uint64_t GetStartTime()
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return 0;
 	}
 
 	if(reply->m_messageType != REQUEST_MESSAGE )
 	{
 		//Received the wrong kind of message
+		reply->DeleteContents();
 		delete reply;
 		return 0;
 	}
@@ -125,6 +130,7 @@ uint64_t GetStartTime()
 	if(requestReply->m_requestType != REQUEST_UPTIME_REPLY)
 	{
 		//Received the wrong kind of control message
+		requestReply->DeleteContents();
 		delete requestReply;
 		return 0;
 	}
@@ -160,6 +166,7 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 	{
 		//Received the wrong kind of message
 		delete reply;
+		reply->DeleteContents();
 		return NULL;
 	}
 
@@ -167,7 +174,8 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 	if(requestReply->m_requestType != REQUEST_SUSPECTLIST_REPLY)
 	{
 		//Received the wrong kind of control message
-		delete requestReply;
+		reply->DeleteContents();
+		delete reply;
 		return NULL;
 	}
 
@@ -197,13 +205,15 @@ Suspect *GetSuspect(in_addr_t address)
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return NULL;
 	}
 
 	if(reply->m_messageType != REQUEST_MESSAGE)
 	{
 		//Received the wrong kind of message
+		reply->DeleteContents();
 		delete reply;
 		return NULL;
 	}
@@ -212,6 +222,7 @@ Suspect *GetSuspect(in_addr_t address)
 	if(requestReply->m_requestType != REQUEST_SUSPECT_REPLY)
 	{
 		//Received the wrong kind of control message
+		reply->DeleteContents();
 		delete requestReply;
 		return NULL;
 	}

@@ -58,9 +58,9 @@ bool KnockPort(bool mode);
 // Returns: false if any sort of error
 bool Start_Packet_Handler();
 
-// Loads configuration variables
-//		configFilePath - Location of configuration file
-void LoadConfiguration();
+void StartCapture();
+void StopCapture();
+void StopCapture_noLocking();
 
 // Append to state file
 void AppendToStateFile();

@@ -2,13 +2,16 @@
 
 
 #include "tester_Config.h"
+#include "tester_EvidenceTable.h"
 #include "tester_FeatureSet.h"
 #include "tester_Suspect.h"
 #include "tester_SuspectTable.h"
 #include "tester_ClassificationEngine.h"
 #include "tester_RequestMessage.h"
+#include "tester_VendorMacDb.h"
 #include "tester_HoneydConfiguration.h"
 #include "tester_WhitelistConfiguration.h"
+#include "tester_Database.h"
 
 int main(int argc, char **argv)
 {

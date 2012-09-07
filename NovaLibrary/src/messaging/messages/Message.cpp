@@ -44,6 +44,12 @@ Message::~Message()
 
 }
 
+void Message::DeleteContents()
+{
+
+}
+
+
 Message *Message::ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout)
 {
 	return MessageManager::Instance().PopMessage(connectFD, direction, timeout);

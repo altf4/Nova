@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "gtest/gtest.h"
-#include "HoneydConfiguration.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 
 using namespace Nova;
 
@@ -64,6 +64,7 @@ TEST_F(HoneydConfigurationTest, test_getMaskBits)
 	EXPECT_EQ(24, m_config->GetMaskBits(~0 - 255));
 	EXPECT_EQ(31, m_config->GetMaskBits(~0 -1));
 	EXPECT_EQ(32, m_config->GetMaskBits(~0));
+	EXPECT_EQ(-1, m_config->GetMaskBits(240));
 }
 
 TEST_F(HoneydConfigurationTest, test_Port)
@@ -77,7 +78,7 @@ TEST_F(HoneydConfigurationTest, test_Port)
 	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(1, TCP, OPEN, ""))));
 	ss.str("65535_UDP_block");
 	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, RESET, ""))));
+	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, BLOCK, ""))));
 	ss.str("65535_TCP_reset");
 	expectedPorts.push_back(ss.str());
 	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, TCP, RESET, ""))));
@@ -99,9 +100,65 @@ TEST_F(HoneydConfigurationTest, test_Port)
 	}
 	while(!expectedPorts.empty())
 	{
-		EXPECT_TRUE(m_config->GetPort(expectedPorts.back()) != NULL);
+		EXPECT_TRUE(m_config->GetPort(expectedPorts.back()).m_portName.compare(""));
 		expectedPorts.pop_back();
 	}
+}
+
+TEST_F(HoneydConfigurationTest, test_RenameProfile)
+{
+	//Create dummy profile
+	NodeProfile * p = new NodeProfile();
+	p->m_name = "TestProfile";
+	p->SetEthernet("Dell");
+	p->m_icmpAction = "block";
+	p->m_parentProfile = "default";
+	p->m_udpAction = "block";
+	p->m_tcpAction = "reset";
+	p->m_uptimeMax = "100";
+	p->m_uptimeMin = "10";
+
+	// Delete the profile if it already exists
+	m_config->DeleteProfile("TestProfile-renamed");
+	m_config->DeleteProfile("TestProfile");
+
+	//Test adding a profile
+	EXPECT_TRUE(m_config->AddProfile(p));
+	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") != m_config->m_profiles.end());
+
+	//Test renaming a profile
+	EXPECT_TRUE(m_config->RenameProfile("TestProfile", "TestProfile-renamed"));
+
+	m_config->UpdateAllProfiles();
+
+	// Save and delete object
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+	delete m_config;
+
+	// Reload from the config file
+	m_config = new HoneydConfiguration();
+	EXPECT_TRUE(m_config != NULL);
+	EXPECT_TRUE(m_config->LoadAllTemplates());
+
+	EXPECT_TRUE(m_config->m_profiles.find("TestProfile-renamed") != m_config->m_profiles.end());
+	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") == m_config->m_profiles.end());
+
+
+	EXPECT_TRUE(m_config->DeleteProfile("TestProfile-renamed"));
+	EXPECT_TRUE(m_config->SaveAllTemplates());
+}
+
+TEST_F(HoneydConfigurationTest, test_errorCases)
+{
+	EXPECT_FALSE(m_config->DeleteProfile(""));
+	EXPECT_FALSE(m_config->DeleteProfile("aoeustnhaoesnuhaosenuht"));
+	EXPECT_FALSE(m_config->DeleteNode(""));
+	EXPECT_FALSE(m_config->DeleteNode("aoeuhaonsehuaonsehu"));
+	EXPECT_EQ(NULL, m_config->GetProfile(""));
+	EXPECT_EQ(NULL, m_config->GetProfile("aouhaosnuheaonstuh"));
+	EXPECT_EQ(NULL, m_config->GetNode(""));
+	EXPECT_EQ(NULL, m_config->GetNode("aouhaosnuheaonstuh"));
+
 }
 
 TEST_F(HoneydConfigurationTest, test_Profile)
@@ -119,6 +176,10 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 
 	bool dmEn = Config::Inst()->GetIsDmEnabled();
 	Config::Inst()->SetIsDmEnabled(false);
+
+	// Delete the profile if it already exists
+	m_config->DeleteProfile("TestProfile-renamed");
+	m_config->DeleteProfile("TestProfile");
 
 	//Test adding a profile
 	EXPECT_TRUE(m_config->AddProfile(p));
@@ -171,7 +232,6 @@ TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 	//EXPECT_TRUE(m_config->SaveAllTemplates());
 }
 
-// This test has been disabled because of ticket #165
 TEST_F(HoneydConfigurationTest, test_profileDeletion)
 {
 	NodeProfile *parent = new NodeProfile();
@@ -202,4 +262,3 @@ TEST_F(HoneydConfigurationTest, test_profileDeletion)
 	EXPECT_TRUE(m_config->LoadAllTemplates());
 	EXPECT_TRUE(m_config->m_profiles.find("parent") == m_config->m_profiles.end());
 }
-

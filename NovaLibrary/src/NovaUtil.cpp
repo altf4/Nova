@@ -25,7 +25,9 @@
 #include <string.h>
 #include <net/if.h>
 #include <errno.h>
+#include <sstream>
 #include <math.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -34,6 +36,11 @@ namespace Nova{
 void CryptBuffer(u_char *buf, uint size, bool mode)
 {
 	//TODO
+}
+
+std::string GetLocalIP(string dev)
+{
+	return GetLocalIP(dev.c_str());
 }
 
 std::string GetLocalIP(const char *dev)
@@ -107,6 +114,16 @@ void ReplaceChar(std::string& str, char searchChar, char replaceVal)
 			str.at(i) = replaceVal;
 		}
 	}
+}
+
+void ReplaceString(std::string& str, const std::string& oldStr, const std::string& newStr)
+{
+  size_t pos = 0;
+  while((pos = str.find(oldStr, pos)) != std::string::npos)
+  {
+     str.replace(pos, oldStr.length(), newStr);
+     pos += newStr.length();
+  }
 }
 
 vector<double> ShiftDistribution(vector<double> inputDoubles, double targetValue, uint targetIndex)

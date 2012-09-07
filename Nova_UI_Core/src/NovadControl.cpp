@@ -59,8 +59,7 @@ bool StopNovad()
 	ControlMessage killRequest(CONTROL_EXIT_REQUEST, DIRECTION_TO_NOVAD);
 	if(!Message::WriteMessage(&killRequest, IPCSocketFD) )
 	{
-		//There was an error in sending the message
-		//TODO: Log this fact
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_EXIT_REQUEST)", "");
 		return false;
 	}
 
@@ -73,7 +72,8 @@ bool StopNovad()
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
-		//Received the wrong kind of message
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -81,8 +81,9 @@ bool StopNovad()
 	ControlMessage *killReply = (ControlMessage*)reply;
 	if( killReply->m_controlType != CONTROL_EXIT_REPLY )
 	{
-		//Received the wrong kind of control message
-		delete killReply;
+		LOG(ERROR, "Received the wrong kind of control message", "");
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	bool retSuccess = killReply->m_success;
@@ -103,8 +104,7 @@ bool SaveAllSuspects(std::string file)
 
 	if(!Message::WriteMessage(&saveRequest, IPCSocketFD) )
 	{
-		//There was an error in sending the message
-		//TODO: Log this fact
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_SAVE_SUSPECTS_REQUEST)", "");
 		return false;
 	}
 
@@ -112,12 +112,14 @@ bool SaveAllSuspects(std::string file)
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
-		//Received the wrong kind of message
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -125,7 +127,8 @@ bool SaveAllSuspects(std::string file)
 	ControlMessage *saveReply = (ControlMessage*)reply;
 	if( saveReply->m_controlType != CONTROL_SAVE_SUSPECTS_REPLY )
 	{
-		//Received the wrong kind of control message
+		LOG(ERROR, "Received the wrong kind of control message", "");
+		saveReply->DeleteContents();
 		delete saveReply;
 		return false;
 	}
@@ -141,8 +144,7 @@ bool ClearAllSuspects()
 	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST, DIRECTION_TO_NOVAD);
 	if(!Message::WriteMessage(&clearRequest, IPCSocketFD) )
 	{
-		//There was an error in sending the message
-		//TODO: Log this fact
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_CLEAR_ALL_REQUEST)", "");
 		return false;
 	}
 
@@ -150,12 +152,14 @@ bool ClearAllSuspects()
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
-		//Received the wrong kind of message
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -163,13 +167,20 @@ bool ClearAllSuspects()
 	ControlMessage *clearReply = (ControlMessage*)reply;
 	if( clearReply->m_controlType != CONTROL_CLEAR_ALL_REPLY )
 	{
-		//Received the wrong kind of control message
-		delete clearReply;
+		LOG(ERROR, "Received the wrong kind of control message", "");
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	bool retSuccess = clearReply->m_success;
 	delete clearReply;
 	return retSuccess;
+}
+
+bool ClearSuspect(std::string suspectAddress)
+{
+	in_addr_t suspect = htonl(inet_addr(suspectAddress.c_str()));
+	return ClearSuspect(suspect);
 }
 
 bool ClearSuspect(in_addr_t suspectAddress)
@@ -180,8 +191,7 @@ bool ClearSuspect(in_addr_t suspectAddress)
 	clearRequest.m_suspectAddress = suspectAddress;
 	if(!Message::WriteMessage(&clearRequest, IPCSocketFD) )
 	{
-		//There was an error in sending the message
-		//TODO: Log this fact
+		LOG(ERROR, "Unable to send CONTROL_CLEAR_SUSPECT_REQUEST to NOVAD" ,"");
 		return false;
 	}
 
@@ -189,12 +199,14 @@ bool ClearSuspect(in_addr_t suspectAddress)
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	if(reply->m_messageType != CONTROL_MESSAGE )
 	{
-		//Received the wrong kind of message
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
@@ -202,8 +214,9 @@ bool ClearSuspect(in_addr_t suspectAddress)
 	ControlMessage *clearReply = (ControlMessage*)reply;
 	if( clearReply->m_controlType != CONTROL_CLEAR_SUSPECT_REPLY )
 	{
-		//Received the wrong kind of control message
-		delete clearReply;
+		LOG(ERROR, "Received the wrong kind of control message", "");
+		reply->DeleteContents();
+		delete reply;
 		return false;
 	}
 	bool retSuccess = clearReply->m_success;
@@ -218,8 +231,48 @@ bool ReclassifyAllSuspects()
 	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST, DIRECTION_TO_NOVAD);
 	if(!Message::WriteMessage(&reclassifyRequest, IPCSocketFD) )
 	{
-		//There was an error in sending the message
-		//TODO: Log this fact
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_RECLASSIFY_ALL_REQUEST)", "");
+		return false;
+	}
+
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+
+	if(reply->m_messageType != CONTROL_MESSAGE )
+	{
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+
+	ControlMessage *reclassifyReply = (ControlMessage*)reply;
+	if( reclassifyReply->m_controlType != CONTROL_RECLASSIFY_ALL_REPLY )
+	{
+		LOG(ERROR, "Received the wrong kind of control message", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+	bool retSuccess = reclassifyReply->m_success;
+	delete reclassifyReply;
+	return retSuccess;
+}
+
+bool StartPacketCapture()
+{
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
+	ControlMessage request(CONTROL_START_CAPTURE, DIRECTION_TO_NOVAD);
+	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	{
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
 		return false;
 	}
 
@@ -231,22 +284,49 @@ bool ReclassifyAllSuspects()
 		return false;
 	}
 
-	if(reply->m_messageType != CONTROL_MESSAGE )
+	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
+	if(controlReply == NULL || controlReply->m_controlType != CONTROL_START_CAPTURE_ACK )
 	{
-		//Received the wrong kind of message
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
 
-	ControlMessage *reclassifyReply = (ControlMessage*)reply;
-	if( reclassifyReply->m_controlType != CONTROL_RECLASSIFY_ALL_REPLY )
+	delete reply;
+	return true;
+}
+
+bool StopPacketCapture()
+{
+	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+
+	ControlMessage request(CONTROL_STOP_CAPTURE, DIRECTION_TO_NOVAD);
+	if(!Message::WriteMessage(&request, IPCSocketFD) )
 	{
-		//Received the wrong kind of control message
-		delete reclassifyReply;
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
 		return false;
 	}
-	bool retSuccess = reclassifyReply->m_success;
-	delete reclassifyReply;
-	return retSuccess;
+
+	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
+	if(controlReply == NULL || controlReply->m_controlType != CONTROL_STOP_CAPTURE_ACK )
+	{
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+
+	delete reply;
+	return true;
 }
+
 }

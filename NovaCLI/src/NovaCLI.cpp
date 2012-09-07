@@ -114,7 +114,26 @@ int main(int argc, const char *argv[])
 		}
 		else if(!strcmp(argv[2], "haystack"))
 		{
-			StartHaystackWrapper();
+			if (argc > 3)
+			{
+				if (!strcmp(argv[3], "debug"))
+				{
+					StartHaystackWrapper(true);
+				}
+				else
+				{
+					PrintUsage();
+				}
+			}
+			else
+			{
+				StartHaystackWrapper(false);
+			}
+
+		}
+		else if (!strcmp(argv[2], "capture"))
+		{
+			StartCaptureWrapper();
 		}
 		else
 		{
@@ -137,6 +156,10 @@ int main(int argc, const char *argv[])
 		else if(!strcmp(argv[2], "haystack"))
 		{
 			StopHaystackWrapper();
+		}
+		else if (!strcmp(argv[2], "capture"))
+		{
+			StopCaptureWrapper();
 		}
 		else
 		{
@@ -230,15 +253,7 @@ int main(int argc, const char *argv[])
 		}
 		else
 		{
-			// Some early error checking for the
-			in_addr_t address;
-			if(inet_pton(AF_INET, argv[2], &address) != 1)
-			{
-				cout << "Error: Unable to convert to IP address" << endl;
-				exit(EXIT_FAILURE);
-			}
-
-			ClearSuspectWrapper(address);
+			ClearSuspectWrapper(argv[2]);
 		}
 	}
 
@@ -293,8 +308,8 @@ void PrintUsage()
 {
 	cout << "Usage:" << endl;
 	cout << "    " << EXECUTABLE_NAME << " status nova|haystack" << endl;
-	cout << "    " << EXECUTABLE_NAME << " start nova|haystack" << endl;
-	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
+	cout << "    " << EXECUTABLE_NAME << " start nova|capture|haystack [debug]" << endl;
+	cout << "    " << EXECUTABLE_NAME << " stop nova|capture|haystack" << endl;
 	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
 	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
@@ -361,11 +376,11 @@ void StartNovaWrapper()
 	}
 }
 
-void StartHaystackWrapper()
+void StartHaystackWrapper(bool debug)
 {
 	if(!IsHaystackUp())
 	{
-		if(StartHaystack())
+		if(StartHaystack(debug))
 		{
 			cout << "Started Haystack" << endl;
 		}
@@ -404,6 +419,18 @@ void StopHaystackWrapper()
 	{
 		cout << "There was a problem stopping the Haystack" << endl;
 	}
+}
+
+void StartCaptureWrapper()
+{
+	Connect();
+	StartPacketCapture();
+}
+
+void StopCaptureWrapper()
+{
+	Connect();
+	StopPacketCapture();
 }
 
 void PrintSuspect(in_addr_t address)
@@ -521,8 +548,8 @@ void PrintSuspectList(enum SuspectListType listType)
 	for(uint i = 0; i < suspects->size(); i++)
 	{
 		in_addr tmp;
-		tmp.s_addr = suspects->at(i);
-		char *address = inet_ntoa(tmp);
+		tmp.s_addr = htonl(suspects->at(i));
+		char *address = inet_ntoa((tmp));
 		cout << address << endl;
 	}
 
@@ -545,7 +572,7 @@ void ClearAllSuspectsWrapper()
 	CloseNovadConnection();
 }
 
-void ClearSuspectWrapper(in_addr_t address)
+void ClearSuspectWrapper(string address)
 {
 	Connect();
 
@@ -555,7 +582,7 @@ void ClearSuspectWrapper(in_addr_t address)
 	}
 	else
 	{
-		cout << "There was an errer when trying to clear the suspect data for this suspect" << endl;
+		cout << "There was an error when trying to clear the suspect data for this suspect" << endl;
 	}
 
 	CloseNovadConnection();

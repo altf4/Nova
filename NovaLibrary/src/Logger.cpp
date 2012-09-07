@@ -66,7 +66,7 @@ namespace Nova
 	void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const char *messageAdv,
 			const char *file,  const int& line)
 	{
-		Lock lock(&m_logLock, false);
+		Lock lock(&m_logLock, WRITE_LOCK);
 		string mask = getBitmask(messageLevel);
 		string tempStr = (string)messageAdv;
 		stringstream ss;
@@ -178,18 +178,30 @@ namespace Nova
 		ss.str("");
 
 		curl_easy_setopt(curl, CURLOPT_URL, domain.c_str());
-		curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser().c_str());
-		curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass().c_str());
 		curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadCallback);
 		curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + Config::Inst()->GetSMTPAddr() + ">").c_str());
 		curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt_list);
-		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
+
+		// If GetSMTPUseAuth is true, curl will first attempt to establish an SSL/TLS connection.
+		// If this fails, it rollsback to the simpler AUTH mechanisms.
+		// If this in turn fails, mail alert will not be sent
+		if(Config::Inst()->GetSMTPUseAuth())
+		{
+			curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser().c_str());
+			curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass().c_str());
+			curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_TRY);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
+			curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
+			curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
+		}
+
 		curl_easy_setopt(curl, CURLOPT_READDATA, &counter);
+
+		// Use this for verbose output from curl
+		//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-		curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
-		curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
+
 		curl_multi_add_handle(mcurl, curl);
 
 		mp_start = tvnow();
@@ -623,7 +635,7 @@ namespace Nova
 				j++;
 			}
 
-			delete tokens;
+			delete[] tokens;
 		}
 		else
 		{
@@ -707,7 +719,7 @@ namespace Nova
 	{
 		m_messageInfo.m_email_recipients = recs;
 
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out | ios::trunc);
 
 		for(uint16_t i = 0; i < recs.size(); i++)
 		{
@@ -720,7 +732,7 @@ namespace Nova
 
 	void Logger::AppendEmailRecipients(std::vector<std::string> recs)
 	{
-		fstream repeat("/usr/share/nova/emails", ios::in | ios::out);
+		fstream repeat(m_pathEmailFile, ios::in | ios::out);
 		std::vector<std::string> check;
 
 		while(repeat.good())
@@ -743,7 +755,7 @@ namespace Nova
 				}
 		}
 
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::app);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out | ios::app);
 
 		if(!recipients.fail())
 		{
@@ -767,7 +779,7 @@ namespace Nova
 		//check through the vector; if an email is in the vector and present in the file,
 		// do not rewrite to the new emails file. If and email isn't there, don't do anything.
 		// If an email in the vector doesn't correspond to any email in the file, do nothing.
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out);
 		std::vector<std::string> check;
 		bool print = true;
 
@@ -780,7 +792,7 @@ namespace Nova
 
 		recipients.close();
 
-		fstream writer("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+		fstream writer(m_pathEmailFile, ios::in | ios::out | ios::trunc);
 
 		for(uint16_t i = 0; i < check.size(); i++)
 		{
@@ -807,13 +819,15 @@ namespace Nova
 	void Logger::ClearEmailRecipients()
 	{
 		//open the file with ios::trunc and then close it
-		fstream recipients("/usr/share/nova/emails", ios::in | ios::out | ios::trunc);
+		fstream recipients(m_pathEmailFile, ios::in | ios::out | ios::trunc);
 		recipients.close();
 	}
 
 	Logger::Logger()
 	{
 		pthread_rwlock_init(&m_logLock, NULL);
+
+		m_pathEmailFile = Config::Inst()->GetPathHome() + "/../emails";
 
 		for(uint16_t i = 0; i < 8; i++)
 		{

@@ -20,28 +20,52 @@
 		<name>137_TCP_open</name>
 		<number>137</number>
 		<type>TCP</type>
-		<service></service>
+		<service/>
 		<behavior>open</behavior>
+	</port>
+	<port>
+		<name>80_TCP_Linux httpd</name>
+		<number>80</number>
+		<type>TCP</type>
+		<service/>
+		<behavior>script</behavior>
+		<script>Linux httpd</script>
 	</port>
 	<port>
 		<name>135_UDP_open</name>
 		<number>135</number>
 		<type>UDP</type>
-		<service></service>
+		<service/>
 		<behavior>open</behavior>
 	</port>
 	<port>
 		<name>20_TCP_open</name>
 		<number>20</number>
 		<type>TCP</type>
-		<service></service>
+		<service/>
 		<behavior>open</behavior>
+	</port>
+	<port>
+		<name>23_TCP_Windows Telnet</name>
+		<number>23</number>
+		<type>TCP</type>
+		<service/>
+		<behavior>script</behavior>
+		<script>Windows Telnet</script>
+	</port>
+	<port>
+		<name>22_TCP_Linux SSH</name>
+		<number>22</number>
+		<type>TCP</type>
+		<service/>
+		<behavior>script</behavior>
+		<script>Linux SSH</script>
 	</port>
 	<port>
 		<name>137_UDP_open</name>
 		<number>137</number>
 		<type>UDP</type>
-		<service></service>
+		<service/>
 		<behavior>open</behavior>
 	</port>
 	<port>
@@ -56,7 +80,7 @@
 		<name>139_TCP_open</name>
 		<number>139</number>
 		<type>TCP</type>
-		<service></service>
+		<service/>
 		<behavior>open</behavior>
 	</port>
 </ports>

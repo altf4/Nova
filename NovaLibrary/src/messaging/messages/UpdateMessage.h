@@ -46,6 +46,7 @@ public:
 
 	UpdateMessage(enum UpdateType updateType, enum ProtocolDirection direction);
 	~UpdateMessage();
+	virtual void DeleteContents();
 
 	//Deserialization constructor
 	//	buffer - pointer to array in memory where serialized UpdateMessage resides

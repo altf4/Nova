@@ -32,13 +32,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <boost/foreach.hpp>
+#include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "NodeManager.h"
+#include "HoneydConfiguration/NodeManager.h"
 #include "PersonalityTree.h"
 #include "HoneydHostConfig.h"
-#include "VendorMacDb.h"
+#include "HoneydConfiguration/VendorMacDb.h"
 #include "Logger.h"
 
 using namespace std;
@@ -46,6 +47,7 @@ using namespace Nova;
 
 vector<uint16_t> leftoverHostspace;
 vector<string> interfacesToMatch;
+vector<string> subnetsToAdd;
 uint16_t tempHostspace;
 string localMachine;
 string nmapFileName;
@@ -55,19 +57,188 @@ vector<Subnet> subnetsDetected;
 
 PersonalityTable personalities;
 
-void usage()
+string lockFilePath;
+
+int main(int argc, char ** argv)
 {
-	cout << "usage: honeydhostconfig -n NUM_NODES_TO_CREATE -i IFACE1,IFACE2,... (-f NMAP_SCAN_TO_PARSE | -a ADD_SUBNET1,ADD_SUBNET2,...)" << '\n';
-	cout << "\t-i IFACE1,IFACE2,... If not using -a, must have at least one entry in the -i flag that" << '\n';
-	cout << "\tcorresponds to a real interface on the machine." << '\n';
-	cout << "Required Flags:\n\t-n NUM_NODES_TO_CREATE. Must be at least one." << '\n';
-	cout << "Optional Flags:\n\t-f NMAP_SCAN_TO_PARSE\n\t-a ADD_SUBNET1,ADD_SUBNET2,..." << '\n';
-	cout << "\tNMAP_SCAN_TO_PARSE must be an Nmap 6 XML formatted output file." << '\n';
-	cout << "\tADD_SUBNET[1...] must be strings of the format XXX.XXX.XXX.0/##. ## is an integer in the range [0..31]." << '\n';
-	cout << "\tCannot use -f and -a in conjunction" << endl;
+	try
+	{
+		namespace po = boost::program_options;
+		po::options_description desc("Command line options");
+		desc.add_options()
+				("help,h", "Show command line options")
+				("num-nodes,n", po::value<uint>(&numNodes)->default_value(0), "Number of nodes to create.")
+				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
+				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
+				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
+		;
+
+		po::variables_map vm;
+		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::notify(vm);
+
+		lockFilePath = Config::Inst()->GetPathHome() + "/hhconfig.lock";
+		ofstream lockFile(lockFilePath);
+
+		bool i_flag_empty = true;
+		bool a_flag_empty = true;
+		bool f_flag_set = false;
+
+		if(vm.count("help"))
+		{
+			cout << desc << endl;
+			return HHC_CODE_OKAY;
+		}
+		if(vm.count("num-nodes"))
+		{
+			cout << "Number of nodes to create: " << numNodes << '\n';
+		}
+		if(vm.count("interface"))
+		{
+			vector<string> interfaces_flag = vm["interface"].as< vector<string> >();
+
+			for(uint i = 0; i < interfaces_flag.size(); i++)
+			{
+				if(interfaces_flag[i].find(",") != string::npos)
+				{
+					vector<string> splitInterfacesFlagI;
+					string split = interfaces_flag[i];
+					boost::split(splitInterfacesFlagI, split, boost::is_any_of(","));
+
+					for(uint j = 0; j < splitInterfacesFlagI.size(); j++)
+					{
+						if(!splitInterfacesFlagI[j].empty())
+						{
+							interfacesToMatch.push_back(splitInterfacesFlagI[j]);
+						}
+					}
+				}
+				else
+				{
+					interfacesToMatch.push_back(interfaces_flag[i]);
+				}
+			}
+			i_flag_empty = false;
+		}
+		if(vm.count("additional-subnet"))
+		{
+			vector<string> addsubnets_flag = vm["additional-subnet"].as< vector<string> >();
+
+			for(uint i = 0; i < addsubnets_flag.size(); i++)
+			{
+				if(addsubnets_flag[i].find(",") != string::npos)
+				{
+					vector<string> splitSubnetsFlagI;
+					string split = addsubnets_flag[i];
+					boost::split(splitSubnetsFlagI, split, boost::is_any_of(","));
+
+					for(uint j = 0; j < splitSubnetsFlagI.size(); j++)
+					{
+						if(!splitSubnetsFlagI[j].empty())
+						{
+							subnetsToAdd.push_back(splitSubnetsFlagI[j]);
+						}
+					}
+				}
+				else
+				{
+					subnetsToAdd.push_back(addsubnets_flag[i]);
+				}
+			}
+
+			a_flag_empty = false;
+		}
+		if(vm.count("nmap-xml"))
+		{
+			cout << "file to parse is " << vm["nmap-xml"].as< string >() << endl;
+			nmapFileName = vm["nmap-xml"].as<string>();
+			f_flag_set = true;
+		}
+
+		if(numNodes < 0)
+		{
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
+			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
+
+		HHC_ERR_CODE errVar = HHC_CODE_OKAY;
+
+		// Arg parsing done, moving onto execution items
+		if(f_flag_set)
+		{
+			LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
+			if(!LoadNmapXML(nmapFileName))
+			{
+				LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
+				lockFile.close();
+				remove(lockFilePath.c_str());
+				exit(HHC_CODE_PARSING_ERROR);
+			}
+
+			GenerateConfiguration();
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(INFO, "Honeyd profile and node configuration completed.", "");
+			return errVar;
+		}
+		else if(a_flag_empty && i_flag_empty)
+		{
+			errVar = HHC_CODE_REQUIRED_FLAGS_MISSING;
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(ERROR, "Must designate an Nmap XML file to parse, or provide either an interface or a subnet to scan. Aborting...", "");
+			return errVar;
+		}
+		else
+		{
+			LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
+			vector<string> subnetNames;
+
+			if(!i_flag_empty)
+			{
+				subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
+			}
+			if(!a_flag_empty)
+			{
+				for(uint i = 0; i < subnetsToAdd.size(); i++)
+				{
+					subnetNames.push_back(subnetsToAdd[i]);
+				}
+			}
+
+			cout << "Scanning following subnets: " << endl;
+			for(uint i = 0; i < subnetNames.size(); i++)
+			{
+				cout << "\t" << subnetNames[i] << endl;
+			}
+			cout << endl;
+
+			errVar = LoadPersonalityTable(subnetNames);
+
+			if(errVar != HHC_CODE_OKAY)
+			{
+				lockFile.close();
+				remove(lockFilePath.c_str());
+				LOG(ERROR, "There was a problem loading the PersonalityTable. Aborting...", "");
+				return errVar;
+			}
+
+			GenerateConfiguration();
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(INFO, "Honeyd profile and node configuration completed.", "");
+			return errVar;
+		}
+	}
+	catch(exception &e)
+	{
+		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
+	}
 }
 
-ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
+HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 {
 	using boost::property_tree::ptree;
 
@@ -111,17 +282,59 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 					{
 						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 
-						ifstream ifs("/sys/class/net/eth0/address");
-						char macBuffer[18];
-						ifs.getline(macBuffer, 18);
+						string vendorString = "";
+						string macString = "";
 
-						string macString = string(macBuffer);
+						int s;
+						struct ifreq buffer;
+						vector<string> interfacesFromConfig = Config::Inst()->ListInterfaces();
+
+						for(uint j = 0; j < interfacesFromConfig.size() && macString.empty(); j++)
+						{
+							s = socket(PF_INET, SOCK_DGRAM, 0);
+
+							memset(&buffer, 0x00, sizeof(buffer));
+							strcpy(buffer.ifr_name, interfacesFromConfig[j].c_str());
+							ioctl(s, SIOCGIFHWADDR, &buffer);
+							close(s);
+
+							char macPair[3];
+
+							stringstream ss;
+							string zeroCheck;
+
+							for(s = 0; s < 6; s++)
+							{
+								sprintf(macPair, "%2x", (unsigned char)buffer.ifr_hwaddr.sa_data[s]);
+								zeroCheck = string(macPair);
+
+								zeroCheck = boost::trim_left_copy(zeroCheck);
+								zeroCheck = boost::trim_right_copy(zeroCheck);
+
+								if(!zeroCheck.compare("0"))
+								{
+									ss << zeroCheck << "0";
+								}
+								else
+								{
+									ss << macPair;
+								}
+								if(s != 5)
+								{
+									ss << ":";
+								}
+							}
+
+							macString = ss.str();
+							ss.str("");
+						}
+
 						persObject->m_macs.push_back(macString);
 
 						VendorMacDb *macVendorDB = new VendorMacDb();
 						macVendorDB->LoadPrefixFile();
 						uint rawMACPrefix = macVendorDB->AtoMACPrefix(macString);
-						string vendorString = macVendorDB->LookupVendor(rawMACPrefix);
+						vendorString = macVendorDB->LookupVendor(rawMACPrefix);
 
 						if(!vendorString.empty())
 						{
@@ -172,32 +385,73 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 				}
 			}
 			// If we've found the <os> tags in the <host> xml node
-			else if(!value.first.compare("os"))
+			else if(!value.first.compare("os") && persObject->m_personalityClass.empty())
 			{
 				// try to get the name, type, osgen, osfamily and vendor for the most
 				// accurate guess by nmap. This will (provided the xml is structured correctly)
 				// push back the values in the following form:
 				// personality_name, type, osgen, osfamily, vendor
 				// This order must be properly maintained for use in the PersonalityTree class.
-				if(propTree.get<string>("os.osmatch.<xmlattr>.name").compare(""))
+				BOOST_FOREACH(ptree::value_type &osValue, value.second.get_child(""))
 				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.<xmlattr>.name"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.type").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.type"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osgen").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osgen"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osfamily").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.osfamily"));
-				}
-				if(propTree.get<string>("os.osmatch.osclass.<xmlattr>.vendor").compare(""))
-				{
-					persObject->m_personalityClass.push_back(propTree.get<string>("os.osmatch.osclass.<xmlattr>.vendor"));
+					if(!osValue.first.compare("osmatch") && persObject->m_personalityClass.empty())
+					{
+						try
+						{
+							if(osValue.second.get<string>("<xmlattr>.name").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("<xmlattr>.name"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+						/*try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.type").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.type"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}*/
+						try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osgen"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+						try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.osfamily").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osfamily"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+						try
+						{
+							if(osValue.second.get<string>("osclass.<xmlattr>.vendor").compare(""))
+							{
+								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.vendor"));
+							}
+						}
+						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+						{
+							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+						}
+					}
 				}
 			}
 		}
@@ -217,7 +471,7 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 	// Just return and let the scoping take care of deallocating the object.
 	if(persObject->m_personalityClass.empty())
 	{
-		return NOMATCHEDPERSONALITY;
+		return HHC_CODE_NO_MATCHED_PERSONALITY;
 	}
 
 	// Generate OS Class strings for use later down the line; used primarily
@@ -234,253 +488,85 @@ ErrCode Nova::ParseHost(boost::property_tree::ptree propTree)
 	// Call AddHost() on the Personality object created at the beginning of this method
 	personalities.AddHost(persObject);
 
-	return OKAY;
+	return HHC_CODE_OKAY;
 }
 
-void Nova::LoadNmap(const string &filename)
+bool Nova::LoadNmapXML(const string &filename)
 {
 	using boost::property_tree::ptree;
 	ptree propTree;
 
+	if(filename.empty())
+	{
+		LOG(ERROR, "Empty string passed to LoadNmapXml", "");
+		return false;
+	}
 	// Read the nmap xml output file (given by the filename parameter) into a boost
 	// property tree for parsing of the found hosts.
-	read_xml(filename, propTree);
-
-	BOOST_FOREACH(ptree::value_type &host, propTree.get_child("nmaprun"))
+	try
 	{
-		if(!host.first.compare("host"))
-		{
-			ptree tempPropTree = host.second;
+		read_xml(filename, propTree);
 
-			// Call ParseHost on the <host> subtree within the xml file.
-			switch(ParseHost(tempPropTree))
+		BOOST_FOREACH(ptree::value_type &host, propTree.get_child("nmaprun"))
+		{
+			if(!host.first.compare("host"))
 			{
-				// Output for alerting user that a found host had incomplete
-				// personality data, and thus was not added to the PersonalityTable.
-				case NOMATCHEDPERSONALITY:
+				ptree tempPropTree = host.second;
+
+				// Call ParseHost on the <host> subtree within the xml file.
+				switch(ParseHost(tempPropTree))
 				{
-					LOG(WARNING, "Unable to obtain personality data for host "
-						+ tempPropTree.get<std::string>("address.<xmlattr>.addr") + ".", "");
-					break;
-				}
-				// Everything parsed fine, don't output anything.
-				case OKAY:
-				{
-					break;
-				}
-				// Execution should never get here; if you're adding ErrCodes
-				// that could occur in ParseHost, add a case for it
-				// with an appropriate output detailing what went wrong.
-				default:
-				{
-					LOG(ERROR, "Unknown return value.", "");
-					break;
+					// Output for alerting user that a found host had incomplete
+					// personality data, and thus was not added to the PersonalityTable.
+					case HHC_CODE_NO_MATCHED_PERSONALITY:
+					{
+						LOG(WARNING, "Unable to obtain personality data for host "
+							+ tempPropTree.get<std::string>("address.<xmlattr>.addr") + ".", "");
+						break;
+					}
+					// Everything parsed fine, don't output anything.
+					case HHC_CODE_OKAY:
+					{
+						break;
+					}
+					// Execution should never get here; if you're adding ErrCodes
+					// that could occur in ParseHost, add a case for it
+					// with an appropriate output detailing what went wrong.
+					default:
+					{
+						LOG(ERROR, "Unknown return value.", "");
+						break;
+					}
 				}
 			}
 		}
 	}
+	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+	{
+		LOG(ERROR, "Couldn't parse XML file (bad path): " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::xml_parser::xml_parser_error> > &e)
+	{
+		LOG(ERROR, "Couldn't parse from file (parser error) " + filename + ": " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_data> > &e)
+	{
+		LOG(DEBUG, "Couldn't parse XML file (bad data): " + string(e.what()) + ".", "");
+		return false;
+	}
+	return true;
 }
 
-int main(int argc, char ** argv)
+Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 {
-	ofstream lockFile("/usr/share/nova/nova/hhconfig.lock");
-	bool badArgCombination = false;
-	bool i_flag_empty = true;
-	bool a_flag_empty = true;
-
-	if(argc < 3)
+	if(subnetNames.empty())
 	{
-		usage();
-		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		exit(INCORRECTNUMBERARGS);
-	}
-	for(uint j = 1; argv[j] != NULL; j++)
-	{
-		if(!string(argv[j]).compare("-n"))
-		{
-			for(uint i = 0; argv[j + 1][i] != 0; i++)
-			{
-				if((!isdigit(argv[j + 1][i])) && (argv[j + 1][i] != 0))
-				{
-					usage();
-					lockFile.close();
-					remove("/usr/share/nova/nova/hhconfig.lock");
-					exit(NONINTEGERARG);
-				}
-			}
-			numNodes = atoi(argv[j + 1]);
-			j++;
-		}
-		else if(!string(argv[j]).compare("-i"))
-		{
-			string strToSplit = string(argv[j + 1]);
-			boost::split(interfacesToMatch, strToSplit, boost::is_any_of(","));
-			if(interfacesToMatch.empty() || interfacesToMatch[0][0] == '-')
-			{
-				i_flag_empty = true;
-				continue;
-			}
-			else
-			{
-				i_flag_empty = false;
-			}
-			j++;
-		}
-		else if(!string(argv[j]).compare("-f"))
-		{
-			if(!badArgCombination)
-			{
-				badArgCombination = true;
-			}
-			else if(badArgCombination || numNodes <= 0)
-			{
-				usage();
-				lockFile.close();
-				remove("/usr/share/nova/nova/hhconfig.lock");
-				exit(BADARGCOMBINATION);
-			}
-
-			nmapFileName = string(argv[j + 1]);
-
-			try
-			{
-				LoadNmap(nmapFileName);
-			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-			{
-				cout << "Caught Exception : " << e.what() << endl;
-			}
-
-			ErrCode errVar = OKAY;
-			GenerateConfiguration();
-			lockFile.close();
-			remove("/usr/share/nova/nova/hhconfig.lock");
-			return errVar;
-		}
-		else if(!string(argv[j]).compare("-a"))
-		{
-			if(!badArgCombination)
-			{
-				badArgCombination = true;
-			}
-			else if(badArgCombination || numNodes <= 0)
-			{
-				usage();
-				lockFile.close();
-				remove("/usr/share/nova/nova/hhconfig.lock");
-				exit(BADARGCOMBINATION);
-			}
-
-			ErrCode errVar = OKAY;
-			vector<string> subnetNames;
-
-			if(!i_flag_empty)
-			{
-				subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
-			}
-
-			vector<string> subnetsToAdd;
-
-			// Need to find a better way to do this. Someone could give the -a flag and
-			// put nothing, or -a and another (possible) cli flag. These cases are
-			// taken care of. For the case where someone puts -a and incorrect data,
-			// things are a little different. There are controls on the UI side to force
-			// correct insertion of data, but running the autoconfig on its own provides
-			// problems if the -a flag is given incorrect inputs.
-			if(argv[j + 1] != NULL && argv[j + 1][0] != '-')
-			{
-				string csvSubnets = string(argv[j + 1]);
-
-				boost::split(subnetsToAdd, csvSubnets, boost::is_any_of(","));
-
-				if(subnetsToAdd.empty())
-				{
-					a_flag_empty = true;
-					continue;
-				}
-				else
-				{
-					a_flag_empty = false;
-				}
-
-				for(uint k = 0; k < subnetsToAdd.size(); k++)
-				{
-					subnetNames.push_back(subnetsToAdd[k]);
-				}
-
-				if(errVar != OKAY || subnetNames.empty())
-				{
-					LOG(ERROR, "There was a problem determining the subnets to scan,"
-						" or there are no interfaces to scan on. Stopping execution.", "");
-					lockFile.close();
-					remove("/usr/share/nova/nova/hhconfig.lock");
-					return errVar;
-				}
-			}
-
-			errVar = LoadPersonalityTable(subnetNames);
-
-			if(errVar != OKAY)
-			{
-				LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
-				lockFile.close();
-				remove("/usr/share/nova/nova/hhconfig.lock");
-				return errVar;
-			}
-
-			GenerateConfiguration();
-			lockFile.close();
-			remove("/usr/share/nova/nova/hhconfig.lock");
-			return errVar;
-		}
+		LOG(ERROR, "Passed empty vector of subnet names to LoadPersonalityTable.", "");
+		return HHC_CODE_BAD_FUNCTION_PARAM;
 	}
 
-	if(a_flag_empty && i_flag_empty)
-	{
-		usage();
-		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		return REQUIREDFLAGSMISSING;
-	}
-	if(numNodes <= 0)
-	{
-		usage();
-		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		return NONINTEGERARG;
-	}
-
-	ErrCode errVar = OKAY;
-	vector<string> subnetNames;
-	if(!i_flag_empty)
-	{
-		subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
-	}
-	else
-	{
-		usage();
-		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		return REQUIREDFLAGSMISSING;
-	}
-
-	errVar = LoadPersonalityTable(subnetNames);
-	if(errVar != OKAY)
-	{
-		LOG(ERROR, "There was a problem loading the personality table. Stopping execution.", "");
-		lockFile.close();
-		remove("/usr/share/nova/nova/hhconfig.lock");
-		return errVar;
-	}
-	GenerateConfiguration();
-	lockFile.close();
-	remove("/usr/share/nova/nova/hhconfig.lock");
-	return errVar;
-}
-
-Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)
-{
 	stringstream ss;
 	// For each element in recv (which contains strings of the subnets),
 	// do an OS fingerprinting scan and output the results into a different
@@ -488,51 +574,92 @@ Nova::ErrCode Nova::LoadPersonalityTable(vector<string> subnetNames)
 	for(uint16_t i = 0; i < subnetNames.size(); i++)
 	{
 		ss << i;
-		string executionString = "sudo nmap -O --osscan-guess -oX subnet" + ss.str() + ".xml " + subnetNames[i] + " >/dev/null";
-		while(system(executionString.c_str()));
+		string executionString = "sudo nmap -O --osscan-guess --stats-every 1s -oX subnet" + ss.str() + ".xml " + subnetNames[i];
+
+		//popen here for stdout of nmap
+		for(uint j = 0; j < 3; j++)
+		{
+			stringstream s2;
+			s2 << (j + 1);
+			LOG(INFO, "Attempt " + s2.str() + " to start Nmap scan.", "");
+			s2.str("");
+
+			FILE* nmap = popen(executionString.c_str(), "r");
+
+			if(nmap == NULL)
+			{
+				LOG(ERROR, "Couldn't start Nmap.", "");
+				continue;
+			}
+			else
+			{
+				char buffer[256];
+				while(!feof(nmap))
+				{
+					if(fgets(buffer, 256, nmap) != NULL)
+					{
+						// Would avoid using endl, but need it for what this line is being used for (printing nmap output to Web UI)
+						cout << string(buffer) << endl;
+					}
+				}
+			}
+
+			pclose(nmap);
+			LOG(INFO, "Nmap scan complete.", "");
+			j = 3;
+		}
+
 		try
 		{
 			string file = "subnet" + ss.str() + ".xml";
 			// Call LoadNmap on the generated filename so that we
 			// can add hosts to the personality table, provided they
 			// contain enough data.
-			LoadNmap(file);
+			LoadNmapXML(file);
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			cout << "Caught Exception : " << e.what() << endl;
-			//return PARSINGERROR;
+			LOG(DEBUG, string("Caught Exception : ") + e.what(), "");
+			return HHC_CODE_PARSING_ERROR;
+		}
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_data> > &e)
+		{
+			LOG(DEBUG, string("Caught Exception : ") + e.what(), "");
+			return HHC_CODE_PARSING_ERROR;
 		}
 		ss.str("");
 	}
-	return OKAY;
+	return HHC_CODE_OKAY;
 }
 
 void Nova::PrintStringVector(vector<string> stringVector)
 {
 	// Debug method to output what subnets were found by
 	// the GetSubnetsToScan() method.
-	cout << "Subnets to be scanned: " << '\n';
+	stringstream ss;
+	ss << "Subnets to be scanned: ";
 	for(uint16_t i = 0; i < stringVector.size(); i++)
 	{
-		cout << stringVector[i] << '\n';
+		ss <<  stringVector[i] << " & ";
 	}
-	cout << endl;
+	LOG(DEBUG, ss.str(), "");
 }
 
-vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> interfacesToMatch)
+vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string> interfacesToMatch)
 {
-	struct ifaddrs *devices = NULL;
-	ifaddrs *curIf = NULL;
-	stringstream ss;
 	vector<string> hostAddrStrings;
+	hostAddrStrings.clear();
 
 	if(errVar == NULL || interfacesToMatch.empty())
 	{
+		LOG(ERROR, "errVar is NULL or empty vector of interfaces passed to GetSubnetsToScan", "");
 		return hostAddrStrings;
 	}
 
-	hostAddrStrings.clear();
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	stringstream ss;
+
 	char addrBuffer[NI_MAXHOST];
 	char bitmaskBuffer[NI_MAXHOST];
 	struct in_addr netOrderAddrStruct;
@@ -546,8 +673,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 	// Return the empty addresses vector and set the ErrorCode to AUTODETECTFAIL.
 	if(getifaddrs(&devices))
 	{
-		cout << "Ethernet Interface Auto-Detection failed" << endl;
-		*errVar = AUTODETECTFAIL;
+		LOG(ERROR, "Ethernet Interface Auto-Detection failed" , "");
+		*errVar = HHC_CODE_AUTODETECT_FAIL;
 		return hostAddrStrings;
 	}
 
@@ -572,8 +699,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface IP failed" << endl;
-				*errVar = GETNAMEINFOFAIL;
+				LOG(WARNING, "Getting Name info of Interface IP failed", "");
+				*errVar = HHC_CODE_GET_NAMEINFO_FAIL;
 				return hostAddrStrings;
 			}
 
@@ -586,21 +713,20 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface Netmask failed" << endl;
-				*errVar = GETBITMASKFAIL;
+				LOG(WARNING, "Getting Name info of Interface Netmask failed", "");
+				*errVar = HHC_CODE_GET_BITMASK_FAIL;
 				return hostAddrStrings;
 			}
 			// Convert the bitmask and host address character arrays to strings
 			// for use later
 			string bitmaskString = string(bitmaskBuffer);
 			string addrString = string(addrBuffer);
-			localMachine = addrString;
 
 			// Spurious debug prints for now. May change them to be used
 			// in UI hooks later.
-			cout << "Interface: " << curIf->ifa_name << endl;
-			cout << "Address: " << addrString << endl;
-			cout << "Netmask: " << bitmaskString << endl;
+			//cout << "Interface: " << curIf->ifa_name << endl;
+			//cout << "Address: " << addrString << endl;
+			//cout << "Netmask: " << bitmaskString << endl;
 
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
@@ -691,8 +817,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface IP failed" << endl;
-				*errVar = GETNAMEINFOFAIL;
+				LOG(WARNING, "Getting Name info of Interface IP failed", "");
+				*errVar = HHC_CODE_GET_NAMEINFO_FAIL;
 				return hostAddrStrings;
 			}
 
@@ -705,21 +831,24 @@ vector<string> Nova::GetSubnetsToScan(Nova::ErrCode *errVar, vector<string> inte
 				// If getnameinfo returned an error, stop processing for the
 				// method, assign the proper errorCode, and return an empty
 				// vector.
-				cout << "Getting Name info of Interface Netmask failed" << endl;
-				*errVar = GETBITMASKFAIL;
+				LOG(WARNING, "Getting Name info of Interface Netmask failed", "");
+				*errVar = HHC_CODE_GET_BITMASK_FAIL;
 				return hostAddrStrings;
 			}
 			// Convert the bitmask and host address character arrays to strings
 			// for use later
 			string bitmaskString = string(bitmaskBuffer);
 			string addrString = string(addrBuffer);
-			localMachine = addrString;
+			if(localMachine.empty())
+			{
+				localMachine = addrString;
+			}
 
 			// Spurious debug prints for now. May change them to be used
 			// in UI hooks later.
-			cout << "Interface: " << curIf->ifa_name << endl;
-			cout << "Address: " << addrString << endl;
-			cout << "Netmask: " << bitmaskString << endl;
+			//cout << "Interface: " << curIf->ifa_name << endl;
+			//cout << "Address: " << addrString << endl;
+			//cout << "Netmask: " << bitmaskString << endl;
 
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
@@ -795,6 +924,12 @@ void Nova::GenerateConfiguration()
 
 bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
 {
+	if(!hostAddrStrings.empty() || matchStr.empty())
+	{
+		LOG(ERROR, "Empty vector of host address strings or empty string to match passed to CheckSubnet.", "");
+		return false;
+	}
+
 	for(uint16_t j = 0; j < hostAddrStrings.size(); j++)
 	{
 		if(!matchStr.compare(hostAddrStrings[j]))

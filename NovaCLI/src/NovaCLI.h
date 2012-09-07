@@ -31,19 +31,21 @@ namespace NovaCLI
 void Connect();
 
 void StartNovaWrapper();
-void StartHaystackWrapper();
+void StartHaystackWrapper(bool debug);
+void StartCaptureWrapper();
 
 void StatusNovaWrapper();
 void StatusHaystackWrapper();
 
 void StopNovaWrapper();
 void StopHaystackWrapper();
+void StopCaptureWrapper();
 
 void PrintSuspect(in_addr_t address);
 void PrintSuspectData(in_addr_t address);
 void PrintAllSuspects(enum SuspectListType listType, bool csv);
 
-void ClearSuspectWrapper(in_addr_t address);
+void ClearSuspectWrapper(std::string address);
 void ClearAllSuspectsWrapper();
 
 void PrintSuspectList(enum SuspectListType listType);

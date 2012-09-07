@@ -27,6 +27,7 @@ namespace Nova
 
 RequestMessage::RequestMessage(enum RequestType requestType, enum ProtocolDirection direction)
 {
+	m_suspect = NULL;
 	m_messageType = REQUEST_MESSAGE;
 	m_suspectListLength = 0;
 	m_requestType = requestType;
@@ -38,8 +39,16 @@ RequestMessage::~RequestMessage()
 
 }
 
+void RequestMessage::DeleteContents()
+{
+	delete m_suspect;
+	m_suspect = NULL;
+}
+
 RequestMessage::RequestMessage(char *buffer, uint32_t length)
 {
+	m_suspect = NULL;
+
 	if( length < REQUEST_MSG_MIN_SIZE )
 	{
 		m_serializeError = true;
@@ -217,18 +226,6 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			break;
 		}
 
-		case REQUEST_UPTIME:
-		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			break;
-		}
-
 		case REQUEST_UPTIME_REPLY:
 		{
 			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
@@ -244,20 +241,9 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 			break;
 		}
+
+		case REQUEST_UPTIME:
 		case REQUEST_PING:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			break;
-		}
 		case REQUEST_PONG:
 		{
 			//Uses: 1) UI_Message Header
@@ -453,23 +439,6 @@ char *RequestMessage::Serialize(uint32_t *length)
 			break;
 		}
 
-		case REQUEST_UPTIME:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) Request Message Type
-
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			break;
-		}
-
 		case REQUEST_UPTIME_REPLY:
 		{
 			//Uses: 1) UI_Message Type
@@ -491,21 +460,9 @@ char *RequestMessage::Serialize(uint32_t *length)
 
 			break;
 		}
+
+		case REQUEST_UPTIME:
 		case REQUEST_PING:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Control Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			break;
-		}
 		case REQUEST_PONG:
 		{
 			//Uses: 1) UI_Message Header

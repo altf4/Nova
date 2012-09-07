@@ -352,7 +352,17 @@ SMTP_PORT 465
 # The name of the SMTP server that you will be connecting to.
 # Example: smtp.example.com
 #
-SMTP_DOMAIN smtp.example.com
+SMTP_DOMAIN smtps://smtp.example.com
+
+############################################
+# SMTP_USEAUTH
+############################################
+#
+# Boolean of whether to use authentication parameters
+# for the email alerts or not (basically, using port 25 without
+# username/passwd or using SSL/TLS)
+#
+SMTP_USEAUTH 1
 
 ############################################
 # RECIPIENTS #
@@ -387,7 +397,7 @@ RECIPIENTS first@example.com, second@example.com
 #          If you want to use a particular service for just one level,
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
-SERVICE_PREFERENCES 0:0+;1:5+;2:6+;
+SERVICE_PREFERENCES 0:1+;1:5+;2:6+;
 
 ############################################
 # HAYSTACK_STORAGE #
@@ -442,17 +452,43 @@ CUSTOM_PCAP_FILTER
 CUSTOM_PCAP_MODE 0
 
 
+############################################
 # TRAINING_SESSION #
 ############################################
 #
 # Folder name for a training capture session
-TRAINING_SESSION trainingSession
+TRAINING_SESSION null
 
 
 
+############################################
 # WEB_UI_PORT #
 ############################################
 #
 # Port for the web interface to run on
 # Note: anything < 1024 requires root to use
 WEB_UI_PORT 8080
+
+
+############################################
+# Database credentials
+############################################
+DATABASE_HOST 127.0.0.1
+DATABASE_USER nova
+DATABASE_PASS avon
+
+############################################
+# CLEAR_AFTER_HOSTILE_EVENT #
+############################################
+# Clear suspect data when there is a hostile event
+CLEAR_AFTER_HOSTILE_EVENT 0
+
+
+############################################
+# CAPTURE_BUFFER_SIZE #
+############################################
+# Size in bytes of the packet capture buffer. 
+# If you get warnings about dropped packets
+# during high load, try increasing this.
+CAPTURE_BUFFER_SIZE 1048576
+

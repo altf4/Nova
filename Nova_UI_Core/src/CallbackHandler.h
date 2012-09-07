@@ -23,6 +23,8 @@
 
 #include "Suspect.h"
 
+namespace Nova {
+
 enum CallbackChangeType: char
 {
 	CALLBACK_ERROR = 0,				//There was an error in receiving the callback message
@@ -38,9 +40,6 @@ struct CallbackChange
 	Nova::Suspect *m_suspect;			//Used in type: CALLBACK_NEW_SUSPECT
 	in_addr_t m_suspectIP;				//Used in CALLBACK_SUSPECT_CLEARED
 };
-
-namespace Nova
-{
 
 class CallbackHandler
 {

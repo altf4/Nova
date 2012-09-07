@@ -25,36 +25,37 @@
 
 namespace Nova
 {
-enum ErrCode : int
+enum HHC_ERR_CODE : int
 {
-	OKAY = 0,
-	AUTODETECTFAIL,
-	GETNAMEINFOFAIL,
-	GETBITMASKFAIL,
-	NOMATCHEDPERSONALITY,
-	PARSINGERROR,
-	INCORRECTNUMBERARGS,
-	NONINTEGERARG,
-	BADARGCOMBINATION,
-	REQUIREDFLAGSMISSING
+	HHC_CODE_OKAY = 0,
+	HHC_CODE_AUTODETECT_FAIL,
+	HHC_CODE_GET_NAMEINFO_FAIL,
+	HHC_CODE_GET_BITMASK_FAIL,
+	HHC_CODE_NO_MATCHED_PERSONALITY,
+	HHC_CODE_PARSING_ERROR,
+	HHC_CODE_INCORRECT_NUMBER_ARGS,
+	HHC_CODE_NON_INTEGER_ARG,
+	HHC_CODE_BAD_ARG_VALUE,
+	HHC_CODE_REQUIRED_FLAGS_MISSING,
+	HHC_CODE_BAD_FUNCTION_PARAM
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost
 //  const std::string &filename - string of the xml filename to read
 // Returns nothing
-void LoadNmap(const std::string &filename);
+bool LoadNmapXML(const std::string &filename);
 
 // Takes a <host> sub-ptree and parses it for the requisite information, placing said information
 // into a Personality object which then gets passed into the PersonalityTable object
 //  ptree pt2 - <host> subtree of the highest level node in the nmap xml files
 // Returns ErrCode to determine what went wrong
-ErrCode ParseHost(boost::property_tree::ptree pt2);
+HHC_ERR_CODE ParseHost(boost::property_tree::ptree pt2);
 
 // Determines what interfaces are present, and the subnets that they're connected to
 //  ErrCode errVar - ptr to an error code variable so that we can inspect it's value afterward
 //   after if the vector is empty
 // Returns a vector containings strings of the subnet addresses
-std::vector<std::string> GetSubnetsToScan(ErrCode *errVar, std::vector<std::string> interfacesToMatch);
+std::vector<std::string> GetSubnetsToScan(HHC_ERR_CODE *errVar, std::vector<std::string> interfacesToMatch);
 
 // Prints out the subnets that're found during GetSubnetsToScan(errVar)
 //  vector<string> recv - vector of subnets found
@@ -65,7 +66,7 @@ void PrintStringVector(std::vector<std::string> recv);
 // and generation of the XML files for parsing
 //  vector<string> recv - vector of subnets
 // Returns an ErrCode signifying success or failure
-ErrCode LoadPersonalityTable(std::vector<std::string> recv);
+HHC_ERR_CODE LoadPersonalityTable(std::vector<std::string> recv);
 
 void GenerateConfiguration();
 

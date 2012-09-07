@@ -5,9 +5,9 @@
 		<generated>false</generated>
 		<distribution>100</distribution>
 		<set>
-			<TCP>block</TCP>
-			<UDP>block</UDP>
-			<ICMP>block</ICMP>
+			<TCP>reset</TCP>
+			<UDP>reset</UDP>
+			<ICMP>open</ICMP>
 			<ethernet>
 				<vendor>Dell</vendor>
 				<ethDistribution>100</ethDistribution>
@@ -17,62 +17,12 @@
 		<add/>
 		<profiles>
 			<profile>
-				<name>WinServer</name>
-				<generated>false</generated>
-				<distribution>25</distribution>
-				<set>
-					<TCP>reset</TCP>
-					<personality>Microsoft Windows 7</personality>
-					<ethernet>
-						<vendor>Dell</vendor>
-						<ethDistribution>100</ethDistribution>
-					</ethernet>
-					<uptimeMin>1546550</uptimeMin>
-					<uptimeMax>2006550</uptimeMax>
-				</set>
-				<add>
-					<port>
-						<portName>20_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>21_TCP_Windows FTP</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>23_TCP_Telnet Router</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>80_TCP_Windows httpd</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>135_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>139_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-				</add>
-				<profiles/>
-			</profile>
-			<profile>
 				<name>BSDServer</name>
 				<generated>false</generated>
 				<distribution>25</distribution>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Linux 2.6.11 - 2.6.20</personality>
+					<personality>FreeBSD 8.2-STABLE</personality>
 					<ethernet>
 						<vendor>Dell</vendor>
 						<ethDistribution>100</ethDistribution>
@@ -82,23 +32,11 @@
 				</set>
 				<add>
 					<port>
+						<portName>22_TCP_Linux SSH</portName>
+						<portDistribution>100</portDistribution>
+					</port>
+					<port>
 						<portName>23_TCP_Telnet Router</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>135_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>139_TCP_open</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 				</add>
@@ -110,7 +48,7 @@
 				<distribution>25</distribution>
 				<set>
 					<TCP>reset</TCP>
-					<personality>Linux 2.6.11 - 2.6.20</personality>
+					<personality>Linux 3.0 - 3.1</personality>
 					<ethernet>
 						<vendor>Dell</vendor>
 						<ethDistribution>100</ethDistribution>
@@ -120,23 +58,11 @@
 				</set>
 				<add>
 					<port>
-						<portName>80_TCP_Windows httpd</portName>
+						<portName>22_TCP_Linux SSH</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
-						<portName>135_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>139_TCP_open</portName>
+						<portName>80_TCP_Linux httpd</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 				</add>
@@ -145,7 +71,7 @@
 			<profile>
 				<name>Doppelganger</name>
 				<generated>false</generated>
-				<distribution>25</distribtuion>
+				<distribution>25</distribution>
 				<set>
 					<TCP>reset</TCP>
 					<personality>Microsoft Windows 7</personality>
@@ -158,7 +84,49 @@
 				</set>
 				<add>
 					<port>
-						<portName>23_TCP_Telnet Router</portName>
+						<portName>135_UDP_open</portName>
+						<portDistribution>100</portDistribution>
+					</port>
+					<port>
+						<portName>137_TCP_open</portName>
+						<portDistribution>100</portDistribution>
+					</port>
+					<port>
+						<portName>137_UDP_open</portName>
+						<portDistribution>100</portDistribution>
+					</port>
+					<port>
+						<portName>139_TCP_open</portName>
+						<portDistribution>100</portDistribution>
+					</port>
+				</add>
+				<profiles/>
+			</profile>
+			<profile>
+				<name>WinServer</name>
+				<generated>false</generated>
+				<distribution>25</distribution>
+				<set>
+					<TCP>reset</TCP>
+					<personality>Microsoft Windows Server 2003 SP1 or SP2</personality>
+					<ethernet>
+						<vendor>Dell</vendor>
+						<ethDistribution>100</ethDistribution>
+					</ethernet>
+					<uptimeMin>1546550</uptimeMin>
+					<uptimeMax>1546550</uptimeMax>
+				</set>
+				<add>
+					<port>
+						<portName>20_TCP_open</portName>
+						<portDistribution>100</portDistribution>
+					</port>
+					<port>
+						<portName>21_TCP_Windows FTP</portName>
+						<portDistribution>100</portDistribution>
+					</port>
+					<port>
+						<portName>23_TCP_Windows Telnet</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
@@ -170,11 +138,11 @@
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
-						<portName>137_UDP_open</portName>
+						<portName>137_TCP_open</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>
-						<portName>137_TCP_open</portName>
+						<portName>137_UDP_open</portName>
 						<portDistribution>100</portDistribution>
 					</port>
 					<port>

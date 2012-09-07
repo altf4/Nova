@@ -171,15 +171,26 @@ public:
     in_port_t GetSMTPPort();
     std::string GetSMTPUser();
     std::string GetSMTPPass();
+    bool GetSMTPUseAuth();
+
+	std::string GetDBHost();
+	std::string GetDBUser();
+	std::string GetDBPass();
 
     void SetLoggerPreferences(std::string loggerPreferences);
+    void SetSMTPUseAuth(bool useAuth);
     void SetSMTPAddr(std::string SMTPAddr);
     void SetSMTPDomain(std::string SMTPDomain);
 	void SetSMTPPort(in_port_t SMTPPort);
-	void SetSMTPUser(std::string SMTPUser);
-	void SetSMTPPass(std::string STMP_Pass);
+	bool SetSMTPUser(std::string SMTPUser);
+	bool SetSMTPPass(std::string STMP_Pass);
 
-	void SetSMTPSettings_FromFile();
+	void SetDBHost(std::string DBHost);
+	void SetDBUser(std::string DBUser);
+	void SetDBPass(std::string DBPass);
+
+	bool GetSMTPSettings_FromFile();
+	bool SaveSMTPSettings();
 
 	double GetSqurtEnabledFeatures();
 
@@ -189,8 +200,6 @@ public:
     void SetSMTPEmailRecipients(std::string SMTPEmailRecipients);
 
     // Getters for the paths stored in /etc
-    std::string GetPathBinaries();
-    std::string GetPathWriteFolder();
     std::string GetPathReadFolder();
     std::string GetPathHome();
     std::string GetPathIcon();
@@ -223,6 +232,12 @@ public:
 
 	std::vector<std::string> GetPrefixes();
 
+	bool GetClearAfterHostile();
+	void SetClearAfterHostile(bool clearAfterHostile);
+
+	int GetCaptureBufferSize();
+	void SetCaptureBufferSize(int bufferSize);
+
 protected:
 	Config();
 
@@ -236,7 +251,7 @@ private:
 	std::string m_loopbackIF;
 	bool m_loIsDefault;
 	bool m_ifIsDefault;
-	std::vector<std::string>m_interfaces;
+	std::vector<std::string> m_interfaces;
 
 	// Enabled feature stuff, we provide a few formats and helpers
 	std::string m_enabledFeatureMask;
@@ -268,6 +283,8 @@ private:
 	uint m_minPacketThreshold;
 	int m_webUIPort;
 
+	int m_captureBufferSize;
+
 	double m_saSleepDuration;
 	double m_eps;
 	double m_classificationThreshold;
@@ -280,6 +297,8 @@ private:
 	bool m_overridePcapString;
 
 	version m_version;
+
+	static std::string m_pathsFile;
 
 	// the SMTP server domain name for display purposes
 	std::string m_SMTPDomain;
@@ -295,6 +314,14 @@ private:
 	std::string m_SMTPUser;
 	std::string m_SMTPPass;
 
+	bool m_SMTPUseAuth;
+
+	std::string m_DBHost;
+	std::string m_DBUser;
+	std::string m_DBPass;
+
+	bool m_clearAfterHostile;
+
 	std::string m_loggerPreferences;
 	// a vector containing the email recipients; may move this into the actual classes
 	// as opposed to being in this struct
@@ -308,8 +335,6 @@ private:
 	std::string m_userConfigFilePath;
 
 	// Options from the PATHS file (currently /etc/nova/paths)
-	std::string m_pathBinaries;
-	std::string m_pathWriteFolder;
 	std::string m_pathReadFolder;
 	std::string m_pathHome;
 	std::string m_pathIcon;
@@ -318,6 +343,8 @@ private:
 
 	char m_haystackStorage;
 	std::string m_userPath;
+
+	static std::string m_pathPrefix;
 
 	pthread_rwlock_t m_lock;
 
