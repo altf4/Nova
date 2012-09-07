@@ -30,7 +30,7 @@ namespace NovaCLI
 // Connect to Novad if we can, otherwise print error and exit
 void Connect();
 
-void StartNovaWrapper();
+void StartNovaWrapper(bool debug);
 void StartHaystackWrapper(bool debug);
 void StartCaptureWrapper();
 

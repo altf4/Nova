@@ -39,7 +39,7 @@ void InitializeUI();
 //Runs the Novad process
 //	returns - True upon successfully running the novad process, false on error
 //	NOTE: This function will return true if Novad was already running
-bool StartNovad();
+bool StartNovad(bool blocking = false);
 
 //Kills the Novad process
 //	returns - True upon successfully stopping the novad process, false on error

@@ -35,20 +35,35 @@ extern int IPCSocketFD;
 
 namespace Nova
 {
-bool StartNovad()
+bool StartNovad(bool blocking)
 {
 	if(IsNovadUp(false))
 	{
 		return true;
 	}
 
-	if(system("nohup novad > /dev/null&") != 0)
+	if (!blocking)
 	{
-		return false;
+		if(system("nohup novad > /dev/null&") != 0)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
 	else
 	{
-		return true;
+		if(system("novad") != 0)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+
 	}
 }
 

@@ -1209,7 +1209,7 @@ everyone.now.IsNovadUp = function () {
 }
 
 everyone.now.StartNovad = function () {
-	nova.StartNovad();
+	nova.StartNovad(false);
 	nova.CheckConnection();
 }
 
@@ -1594,7 +1594,7 @@ everyone.now.StartTrainingCapture = function (trainingSession, callback) {
 
 			// (Re)start NOVA
 			nova.StopNovad();
-			nova.StartNovad();
+			nova.StartNovad(false);
 
 			nova.CheckConnection();
 
