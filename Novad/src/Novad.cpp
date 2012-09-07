@@ -123,8 +123,6 @@ int RunNovaD()
 		exit(EXIT_FAILURE);
 	}
 
-	MessageManager::Initialize(DIRECTION_TO_UI);
-
 	// Let the logger initialize before we have multiple threads going
 	Logger::Inst();
 
@@ -1176,7 +1174,7 @@ void UpdateAndClassify(const in_addr_t& key)
 			ss2 << "LastSave suspect Erase returned: " << suspectsSinceLastSave.Erase(key);
 			LOG(DEBUG, ss2.str(), "");
 
-			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
 			msg->m_IPAddress = suspectCopy.GetIpAddress();
 			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 		}

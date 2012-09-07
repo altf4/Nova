@@ -26,6 +26,7 @@
 #include "messaging/messages/RequestMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/MessageManager.h"
+#include "messaging/Ticket.h"
 #include "SuspectTable.h"
 #include "Lock.h"
 
@@ -133,26 +134,27 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	{
 		//Wait for a callback to occur
 		//If register comes back false, then the socket was closed. So exit the thread
-		if(!MessageManager::Instance().RegisterCallback(controlSocket))
+		Ticket ticket;
+		if(!MessageManager::Instance().RegisterCallback(controlSocket, ticket))
 		{
 			keepLooping = false;
 			continue;
 		}
 
-		Message *message = Message::ReadMessage(controlSocket, DIRECTION_TO_NOVAD);
+		Message *message = MessageManager::Instance().ReadMessage(ticket);
 		switch(message->m_messageType)
 		{
 			case CONTROL_MESSAGE:
 			{
 				ControlMessage *controlMessage = (ControlMessage*)message;
-				HandleControlMessage(*controlMessage, controlSocket);
+				HandleControlMessage(*controlMessage, ticket);
 				delete controlMessage;
 				break;
 			}
 			case REQUEST_MESSAGE:
 			{
 				RequestMessage *msg = (RequestMessage*)message;
-				HandleRequestMessage(*msg, controlSocket);
+				HandleRequestMessage(*msg, ticket);
 				delete msg;
 				break;
 			}
@@ -205,17 +207,17 @@ void *Handle_UI_Thread(void *socketVoidPtr)
 	return NULL;
 }
 
-void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
+void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 {
 	switch(controlMessage.m_controlType)
 	{
 		case CONTROL_EXIT_REQUEST:
 		{
 			//TODO: Check for any reason why might not want to exit
-			ControlMessage exitReply(CONTROL_EXIT_REPLY, DIRECTION_TO_NOVAD);
+			ControlMessage exitReply(CONTROL_EXIT_REPLY);
 			exitReply.m_success = true;
 
-			Message::WriteMessage(&exitReply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &exitReply);
 
 			LOG(NOTICE, "Quitting: Got an exit request from the UI. Goodbye!",
 					"Got a CONTROL_EXIT_REQUEST, quitting.");
@@ -235,17 +237,17 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				successResult = false;
 			}
 
-			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY, DIRECTION_TO_NOVAD);
+			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY);
 			clearAllSuspectsReply.m_success = successResult;
-			Message::WriteMessage(&clearAllSuspectsReply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &clearAllSuspectsReply);
 
 			if(successResult)
 			{
 				LOG(DEBUG, "Cleared all suspects due to UI request",
 						"Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.");
 
-				UpdateMessage *updateMessage = new UpdateMessage(UPDATE_ALL_SUSPECTS_CLEARED, DIRECTION_TO_UI);
-				NotifyUIs(updateMessage, UPDATE_ALL_SUSPECTS_CLEARED_ACK, socketFD);
+				UpdateMessage *updateMessage = new UpdateMessage(UPDATE_ALL_SUSPECTS_CLEARED);
+				NotifyUIs(updateMessage, UPDATE_ALL_SUSPECTS_CLEARED_ACK, ticket.m_socketFD);
 			}
 
 			break;
@@ -275,9 +277,9 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			//RefreshStateFile();
 
 			//TODO: Should check for errors here and return result
-			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
+			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY);
 			clearSuspectReply.m_success = true;
-			Message::WriteMessage(&clearSuspectReply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &clearSuspectReply);
 
 			struct in_addr suspectAddress;
 			suspectAddress.s_addr = controlMessage.m_suspectAddress;
@@ -285,12 +287,12 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			LOG(DEBUG, "Cleared a suspect due to UI request",
 					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+".");
 
-			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
 			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
 			stringstream ss2;
 			ss2 << "Sending suspect cleared notification for " << hex << updateMessage->m_IPAddress << endl;
 			LOG(DEBUG, ss2.str(), "");
-			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, socketFD);
+			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, ticket.m_socketFD);
 
 			break;
 		}
@@ -309,9 +311,9 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 				//TODO: Should check for errors here and return result
 			}
 
-			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY, DIRECTION_TO_NOVAD);
+			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY);
 			saveSuspectsReply.m_success = true;
-			Message::WriteMessage(&saveSuspectsReply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &saveSuspectsReply);
 
 			LOG(DEBUG, "Saved suspects to file due to UI request",
 				"Got a CONTROL_SAVE_SUSPECTS_REQUEST, saved all suspects.");
@@ -321,9 +323,9 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			Reload(); //TODO: Should check for errors here and return result
 
-			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY, DIRECTION_TO_NOVAD);
+			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY);
 			reclassifyAllReply.m_success = true;
-			Message::WriteMessage(&reclassifyAllReply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &reclassifyAllReply);
 
 			LOG(DEBUG, "Reclassified all suspects due to UI request",
 				"Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.");
@@ -331,17 +333,17 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		}
 		case CONTROL_CONNECT_REQUEST:
 		{
-			ControlMessage connectReply(CONTROL_CONNECT_REPLY, DIRECTION_TO_NOVAD);
+			ControlMessage connectReply(CONTROL_CONNECT_REPLY);
 			connectReply.m_success = true;
-			Message::WriteMessage(&connectReply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &connectReply);
 			break;
 		}
 		case CONTROL_DISCONNECT_NOTICE:
 		{
-			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK, DIRECTION_TO_NOVAD);
-			Message::WriteMessage(&disconnectReply, socketFD);
+			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK);
+			MessageManager::Instance().WriteMessage(ticket, &disconnectReply);
 
-			MessageManager::Instance().CloseSocket(socketFD);
+			MessageManager::Instance().CloseSocket(ticket.m_socketFD);
 
 			LOG(DEBUG, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
 
@@ -355,13 +357,13 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 	}
 }
 
-void HandleRequestMessage(RequestMessage &msg, int socketFD)
+void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 {
 	switch(msg.m_requestType)
 	{
 		case REQUEST_SUSPECTLIST:
 		{
-			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY, DIRECTION_TO_NOVAD);
+			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY);
 			reply.m_listType = msg.m_listType;
 
 			switch(msg.m_listType)
@@ -407,30 +409,30 @@ void HandleRequestMessage(RequestMessage &msg, int socketFD)
 			}
 
 
-			Message::WriteMessage(&reply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &reply);
 			break;
 		}
 		case REQUEST_SUSPECT:
 		{
-			RequestMessage reply(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
+			RequestMessage reply(REQUEST_SUSPECT_REPLY);
 			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
 			reply.m_suspect = &tempSuspect;
-			Message::WriteMessage(&reply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &reply);
 
 			break;
 		}
 		case REQUEST_UPTIME:
 		{
-			RequestMessage reply(REQUEST_UPTIME_REPLY, DIRECTION_TO_NOVAD);
+			RequestMessage reply(REQUEST_UPTIME_REPLY);
 			reply.m_startTime = startTime;
-			Message::WriteMessage(&reply, socketFD);
+			MessageManager::Instance().WriteMessage(ticket, &reply);
 
 			break;
 		}
 		case REQUEST_PING:
 		{
-			RequestMessage connectReply(REQUEST_PONG, DIRECTION_TO_NOVAD);
-			Message::WriteMessage(&connectReply, socketFD);
+			RequestMessage connectReply(REQUEST_PONG);
+			MessageManager::Instance().WriteMessage(ticket, &connectReply);
 
 			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
 			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
@@ -453,17 +455,17 @@ void SendSuspectToUIs(Suspect *suspect)
 
 	for(uint i = 0; i < sockets.size(); ++i)
 	{
-		Lock lock = MessageManager::Instance().UseSocket(sockets[i]);
+		Ticket ticket = MessageManager::Instance().StartConversation(sockets[i]);
 
-		UpdateMessage suspectUpdate(UPDATE_SUSPECT, DIRECTION_TO_UI);
+		UpdateMessage suspectUpdate(UPDATE_SUSPECT);
 		suspectUpdate.m_suspect = suspect;
-		if(!Message::WriteMessage(&suspectUpdate, sockets[i]))
+		if(!MessageManager::Instance().WriteMessage(ticket, &suspectUpdate))
 		{
 			LOG(DEBUG, string("Failed to send a suspect to the UI: ")+ suspect->GetIpString(), "");
 			continue;
 		}
 
-		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
+		Message *suspectReply = MessageManager::Instance().ReadMessage(ticket);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			suspectReply->DeleteContents();
@@ -527,13 +529,15 @@ void *NotifyUIsHelper(void *ptr)
 			continue;
 		}
 
-		if(!Message::WriteMessage(arguments->m_updateMessage, sockets[i]))
+		Ticket ticket = MessageManager::Instance().StartConversation(sockets[i]);
+
+		if(!MessageManager::Instance().WriteMessage(ticket, arguments->m_updateMessage))
 		{
 			LOG(DEBUG, "Failed to send message to UI", "Failed to send a Clear All Suspects message to a UI");
 			continue;
 		}
 
-		Message *suspectReply = Message::ReadMessage(sockets[i], DIRECTION_TO_UI);
+		Message *suspectReply = MessageManager::Instance().ReadMessage(ticket);
 		if(suspectReply->m_messageType != UPDATE_MESSAGE)
 		{
 			suspectReply->DeleteContents();
@@ -552,6 +556,7 @@ void *NotifyUIsHelper(void *ptr)
 		delete suspectCallback;
 	}
 
+	arguments->m_updateMessage->DeleteContents();
 	delete arguments->m_updateMessage;
 	delete arguments;
 	return NULL;

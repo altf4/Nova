@@ -52,7 +52,7 @@ public:
 	//	NOTE: Will automatically call CloseSocket() for you if the message returned happens to be an ERROR_MESSAGE
 	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
-	Nova::Message *ReadMessage(Ticket &ticket, int timeout);
+	Nova::Message *ReadMessage(Ticket &ticket, int timeout = REPLY_TIMEOUT);
 
 	//Writes a given Message to the provided socket
 	//	ticket - Ticket object holding all the necessary conversation info to send this message
