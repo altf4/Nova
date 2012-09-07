@@ -45,7 +45,7 @@ class ErrorMessage : public Message
 
 public:
 
-	ErrorMessage(enum ErrorType errorType, enum ProtocolDirection direction);
+	ErrorMessage(enum ErrorType errorType);
 	~ErrorMessage();
 
 	//Deserialization constructor

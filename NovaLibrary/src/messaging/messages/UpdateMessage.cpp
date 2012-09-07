@@ -24,12 +24,11 @@
 namespace Nova
 {
 
-UpdateMessage::UpdateMessage(enum UpdateType updateType, enum ProtocolDirection direction)
+UpdateMessage::UpdateMessage(enum UpdateType updateType)
 {
 	m_suspect = NULL;
 	m_messageType = UPDATE_MESSAGE;
 	m_updateType = updateType;
-	m_protocolDirection = direction;
 }
 
 UpdateMessage::~UpdateMessage()

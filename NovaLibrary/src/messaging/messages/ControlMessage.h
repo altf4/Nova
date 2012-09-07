@@ -60,7 +60,7 @@ class ControlMessage : public Message
 public:
 
 	//Empty constructor
-	ControlMessage(enum ControlType controlType, enum ProtocolDirection direction);
+	ControlMessage(enum ControlType controlType);
 
 	virtual ~ControlMessage();
 

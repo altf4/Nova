@@ -27,11 +27,10 @@ using namespace std;
 namespace Nova
 {
 
-ControlMessage::ControlMessage(enum ControlType controlType, enum ProtocolDirection direction)
+ControlMessage::ControlMessage(enum ControlType controlType)
 {
 	m_messageType = CONTROL_MESSAGE;
 	m_controlType = controlType;
-	m_protocolDirection = direction;
 }
 
 ControlMessage::~ControlMessage()

@@ -67,7 +67,7 @@ bool ConnectToNovad()
 		return false;
 	}
 
-	MessageManager::Instance().DeleteQueue(IPCSocketFD);
+	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
 
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 

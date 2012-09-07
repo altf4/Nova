@@ -44,7 +44,7 @@ class UpdateMessage : public Message
 
 public:
 
-	UpdateMessage(enum UpdateType updateType, enum ProtocolDirection direction);
+	UpdateMessage(enum UpdateType updateType);
 	~UpdateMessage();
 	virtual void DeleteContents();
 

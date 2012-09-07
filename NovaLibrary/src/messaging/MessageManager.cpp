@@ -29,112 +29,135 @@ namespace Nova
 
 MessageManager *MessageManager::m_instance = NULL;
 
-MessageManager::MessageManager(enum ProtocolDirection direction)
+MessageManager::MessageManager()
 {
-	pthread_mutex_init(&m_queuesLock, NULL);
-	pthread_mutex_init(&m_protocolLock, NULL);
-
-	m_forwardDirection = direction;
-}
-
-void MessageManager::Initialize(enum ProtocolDirection direction)
-{
-	if(m_instance == NULL)
-	{
-		m_instance = new MessageManager(direction);
-	}
+	pthread_mutex_init(&m_endpointsMutex, NULL);
 }
 
 MessageManager &MessageManager::Instance()
 {
 	if(m_instance == NULL)
 	{
-		LOG(CRITICAL, "Critical error in Message Manager", "Critical error in MessageManager: You must first initialize it with a direction"
-				"before calling Instance()");
-		exit(EXIT_FAILURE);
+		m_instance = new MessageManager();
 	}
 	return *MessageManager::m_instance;
 }
 
-Message *MessageManager::PopMessage(int socketFD, enum ProtocolDirection direction, int timeout)
+Message *MessageManager::ReadMessage(Ticket &ticket, int timeout)
 {
-	MessageQueue *queue = GetQueue(socketFD);
-	if(queue == NULL)
+	//Read lock the Endpoint (so it can't get deleted from us while we're using it)
+	MessageEndpointLock endpointLock = GetEndpoint(ticket.m_socketFD);
+
+	if(endpointLock.m_endpoint == NULL)
 	{
-		return new ErrorMessage(ERROR_SOCKET_CLOSED, direction);
+		return new ErrorMessage(ERROR_SOCKET_CLOSED);
 	}
 
-	Message *message = queue->PopMessage(direction, timeout);
+	Message *message = endpointLock.m_endpoint->PopMessage(ticket, timeout);
 	if(message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
-			CloseSocket(socketFD);
+			CloseSocket(ticket.m_socketFD);
 		}
 	}
 
 	return message;
 }
 
-MessageQueue &MessageManager::StartSocket(int socketFD)
+bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 {
-	//Initialize the MessageQueue if it doesn't yet exist
-	Lock lock(&m_queuesLock);
-	if(m_queues.count(socketFD) == 0)
+	if(ticket.m_socketFD == -1)
 	{
-		m_queues[socketFD] = new MessageQueue(socketFD, m_forwardDirection);
+		return false;
 	}
-	return *(m_queues[socketFD]);
-}
 
-Lock MessageManager::UseSocket(int socketFD)
-{
-	pthread_mutex_t *mutex;
+	message->m_ourSerialNumber = ticket.m_ourSerialNum;
+
+	uint32_t length;
+	char *buffer = message->Serialize(&length);
+
+	// Total bytes of a write() call that need to be sent
+	uint32_t bytesSoFar;
+
+	// Return value of the write() call, actual bytes sent
+	int32_t bytesWritten;
+
+	// Send the message
+	bytesSoFar = 0;
+	while(bytesSoFar < length)
 	{
-		//Initialize the protocol lock if it doesn't yet exist
-		Lock lock(&m_protocolLock);
-		if(m_protocolLocks.count(socketFD) == 0)
+		bytesWritten = write(ticket.m_socketFD, buffer, length - bytesSoFar);
+		if(bytesWritten < 0)
 		{
-			//If there is no lock object here yet, initialize it
-			m_protocolLocks[socketFD] = new pthread_mutex_t;
-			pthread_mutex_init(m_protocolLocks[socketFD], NULL);
+			free(buffer);
+			return false;
 		}
-		mutex =  m_protocolLocks[socketFD];
-	}
-
-	//Increment the MessageQeueu's forward serial number
-	//But only bother if there actually is a MessageQueue already here. Don't make a new one
-	{
-		//Allows us to safely access the message queue
-		Lock protocolLock(mutex);
-		MessageQueue *queue = GetQueue(socketFD);
-		if(queue != NULL)
+		else
 		{
-			queue->NextConversation();
+			bytesSoFar += bytesWritten;
 		}
 	}
 
-	return Lock(mutex);
+	free(buffer);
+	return true;
 }
 
-void MessageManager::DeleteQueue(int socketFD)
+void MessageManager::StartSocket(int socketFD)
 {
-
-	//Deleting the message queue requires that nobody else is using it! So lock the protocol mutex for this queue
-	Lock protocolLock = UseSocket(socketFD);
-
-	MessageQueue *queue = GetQueue(socketFD);
-	if(queue == NULL)
+	//Initialize the MessageEndpoint if it doesn't yet exist
+	Lock lock(&m_endpointsMutex);
+	if(m_endpoints.count(socketFD) == 0)
 	{
-		return;
+		pthread_rwlock_t *rwLock = new pthread_rwlock_t;
+		pthread_rwlock_init(rwLock, NULL);
+
+		m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>( new MessageEndpoint(socketFD), rwLock);
+	}
+}
+
+Ticket MessageManager::StartConversation(int socketFD)
+{
+	{
+		//Initialize the MessageEndpoint if it doesn't yet exist
+		Lock lock(&m_endpointsMutex);
+		if(m_endpoints.count(socketFD) == 0)
+		{
+			pthread_rwlock_t *rwLock = new pthread_rwlock_t;
+			pthread_rwlock_init(rwLock, NULL);
+
+			//Now go ahead and read-lock the endpoint, since we're going to use it
+			pthread_rwlock_rdlock(rwLock);
+
+			m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>( new MessageEndpoint(socketFD), rwLock);
+		}
+		else
+		{
+			pthread_rwlock_rdlock(m_endpoints[socketFD].second);
+		}
 	}
 
-	delete queue;
+	//Just because we got a read-lock doesn't mean the MessageEndpoint exists. It could have been closed and deleted before we got here
+	if(m_endpoints[socketFD].first == NULL)
+	{
+		m_endpoints[socketFD].first = new MessageEndpoint(socketFD);
+	}
 
-	Lock lock(&m_queuesLock);
-	m_queues.erase(socketFD);
+	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0, false, false, m_endpoints[socketFD].second, socketFD);
+}
 
+void MessageManager::DeleteEndpoint(int socketFD)
+{
+	//Deleting the message endpoint requires that nobody else is using it!
+	Lock lock(&m_endpointsMutex);
+
+	if(m_endpoints.count(socketFD) > 0)
+	{
+		Lock lock(m_endpoints[socketFD].second, WRITE_LOCK);
+		delete m_endpoints[socketFD].first;
+		m_endpoints[socketFD].first = NULL;
+	}
 }
 
 void MessageManager::CloseSocket(int socketFD)
@@ -150,24 +173,25 @@ void MessageManager::CloseSocket(int socketFD)
 	}
 }
 
-bool MessageManager::RegisterCallback(int socketFD)
+bool MessageManager::RegisterCallback(int socketFD, Ticket &outTicket)
 {
-	MessageQueue *queue = GetQueue(socketFD);
-	if(queue != NULL)
+	MessageEndpointLock endpointLock = GetEndpoint(socketFD);
+
+	if(endpointLock.m_endpoint != NULL)
 	{
-		//If register comes back false, then we have to clean up the dead MessageQueue
-		return queue->RegisterCallback();
+		return endpointLock.m_endpoint->RegisterCallback(outTicket);
 	}
+
 	return false;
 }
 
 std::vector <int>MessageManager::GetSocketList()
 {
-	Lock lock(&m_queuesLock);
+	Lock lock(&m_endpointsMutex);
 	std::vector<int> sockets;
 
-	std::map<int, MessageQueue*>::iterator it;
-	for(it = m_queues.begin(); it != m_queues.end(); ++it)
+	std::map<int, std::pair<MessageEndpoint*, pthread_rwlock_t*>>::iterator it;
+	for(it = m_endpoints.begin(); it != m_endpoints.end(); ++it)
 	{
 		sockets.push_back(it->first);
 	}
@@ -175,22 +199,17 @@ std::vector <int>MessageManager::GetSocketList()
 	return sockets;
 }
 
-uint32_t MessageManager::GetSerialNumber(int socketFD,  enum ProtocolDirection direction)
+MessageEndpointLock MessageManager::GetEndpoint(int socketFD)
 {
-	return StartSocket(socketFD).GetSerialNumber(direction);
-}
+	Lock lock(&m_endpointsMutex);
 
-MessageQueue *MessageManager::GetQueue(int socketFD)
-{
-	Lock lock(&m_queuesLock);
-
-	if(m_queues.count(socketFD) > 0)
+	if(m_endpoints.count(socketFD) > 0)
 	{
-		return m_queues[socketFD];
+		return MessageEndpointLock(m_endpoints[socketFD].first, m_endpoints[socketFD].second, READ_LOCK);
 	}
 	else
 	{
-		return NULL;
+		return MessageEndpointLock();
 	}
 }
 
