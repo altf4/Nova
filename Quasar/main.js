@@ -36,7 +36,10 @@ var Validator = require('validator').Validator;
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
 var novadLogPath = NovaHomePath + "/../Logs/Nova.log";
-var novadLog = new Tail(NovaHomePath + "/../Nova.log");
+var novadLog = new Tail(novadLogPath);
+
+var honeydLogPath = NovaHomePath + "/../Logs/Honeyd.log";
+var honeydLog = new Tail(honeydLogPath);
 
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
@@ -198,6 +201,25 @@ var initLogWatch = function () {
 
 		}
 	});
+
+
+	var honeydLog = new Tail(honeydLogPath);
+	honeydLog.on("line", function (data) {
+		try {
+			everyone.now.newHoneydLogLine(data);
+		} catch (err) {
+
+		}
+	});
+
+	honeydLog.on("error", function (data) {
+		console.log("ERROR: " + data);
+		try {
+			everyone.now.newHoneydLogLine(data)
+		} catch (err) {
+
+		}
+	});
 }
 
 initLogWatch();
@@ -211,6 +233,20 @@ app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}
 		} else {
 			// Hacky solution to make browsers launch a save as dialog
 			res.header('Content-Type', 'application/novaLog');
+			var reply = data.toString();
+			res.send(reply);
+		}
+	});
+});
+
+app.get('/downloadHoneydLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
+	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
+		if (err) {
+			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
+			return;
+		} else {
+			// Hacky solution to make browsers launch a save as dialog
+			res.header('Content-Type', 'application/honeydLog');
 			var reply = data.toString();
 			res.send(reply);
 		}
@@ -254,6 +290,31 @@ app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), funct
 	});
 });
 
+app.get('/viewHoneydLog', passport.authenticate('basic', {session: false}), function (req, res) {
+	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
+		if (err) {
+			RenderError(res, "Unable to open HONEYD log file for reading due to error: " + err);
+			return;
+		} else {
+			var reply = data.toString().split(/(\r\n|\n|\r)/gm);
+			var html = "";
+			for (var i = 0; i < reply.length; i++) {
+				var styleString = "";
+				var line = reply[i];
+				styleString += 'color: blue';
+
+				html += '<P style="' + styleString + '">' + line + "<P>";
+
+			}
+
+			res.render('viewLog.jade', {
+				locals: {
+					log: html
+				}
+			});
+		}
+	});
+});
 app.get('/advancedOptions', passport.authenticate('basic', {session: false}), function (req, res) {
 	var all = config.ListInterfaces().sort();
 	var used = config.GetInterfaces().sort();
@@ -703,8 +764,12 @@ app.get('/events', passport.authenticate('basic', {session: false}), function (r
 });
 
 app.get('/novadlog', passport.authenticate('basic', {session: false}), function (req, res) {
-	initLogWatch();
+	//initLogWatch();
 	res.render('novadlog.jade');
+});
+
+app.get('/honeydlog', passport.authenticate('basic', {session: false}), function (req, res) {
+	res.render('honeydlog.jade');
 });
 
 app.get('/', passport.authenticate('basic', {session: false}), function (req, res) {
