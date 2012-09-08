@@ -41,6 +41,12 @@ script
 form(method="post", action="/configureNovaSave")
   h2 General Configuration
 
+  h2 Web Interface
+
+  label Web interface port
+  input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
+  br
+
   h2 File Paths
   label Path to state save file
   input(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
@@ -159,6 +165,50 @@ form(method="post", action="/configureNovaSave")
 
   label Classification Threshold
   input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
+  br
+
+  label Packets Needed Before Classification
+  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
+  br
+
+  label Clear data after suspect logged as hostile?
+  br
+  if CLEAR_AFTER_HOSTILE_EVENT != "0"
+    |Yes
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
+    br
+    |No
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
+    br
+    |No
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
+    br
+  br
+
+  label Custom PCAP Filter String
+  input(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
+  br
+  
+  label Custom PCAP Filter String Mode
+  br
+  if CUSTOM_PCAP_MODE != "0"
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    br
+  else
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    br
   br
 
   h2 Training Mode Settings

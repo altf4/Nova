@@ -346,38 +346,44 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 
 	res.render('advancedOptions.jade', {
 		locals: {
-			INTERFACES: config.ListInterfaces().sort(),
-			DEFAULT: config.GetUseAllInterfacesBinding(),
-			HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG"),
-			TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT"),
-			TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ"),
-			READ_PCAP: config.ReadSetting("READ_PCAP"),
-			PCAP_FILE: config.ReadSetting("PCAP_FILE"),
-			GO_TO_LIVE: config.ReadSetting("GO_TO_LIVE"),
-			CLASSIFICATION_TIMEOUT: config.ReadSetting("CLASSIFICATION_TIMEOUT"),
-			K: config.ReadSetting("K"),
-			EPS: config.ReadSetting("EPS"),
-			CLASSIFICATION_THRESHOLD: config.ReadSetting("CLASSIFICATION_THRESHOLD"),
-			DATAFILE: config.ReadSetting("DATAFILE"),
-			USER_HONEYD_CONFIG: config.ReadSetting("USER_HONEYD_CONFIG"),
-			DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP"),
-			DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE"),
-			DM_ENABLED: config.ReadSetting("DM_ENABLED"),
-			ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES"),
-			FEATURE_NAMES: nova.GetFeatureNames(),
-			THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE"),
-			SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY"),
-			DATA_TTL: config.ReadSetting("DATA_TTL"),
-			CE_SAVE_FILE: config.ReadSetting("CE_SAVE_FILE"),
-			SMTP_ADDR: config.ReadSetting("SMTP_ADDR"),
-			SMTP_PORT: config.ReadSetting("SMTP_PORT"),
-			SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN"),
-			SMTP_USER: config.GetSMTPUser(),
-			SMTP_PASS: config.GetSMTPPass(),
-			RECIPIENTS: config.ReadSetting("RECIPIENTS"),
-			SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES"),
-			HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
-			,CAPTURE_BUFFER_SIZE: config.ReadSetting("CAPTURE_BUFFER_SIZE")
+			INTERFACES: config.ListInterfaces().sort()
+			, DEFAULT: config.GetUseAllInterfacesBinding()
+			, HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
+			, TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
+			, TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
+			, READ_PCAP: config.ReadSetting("READ_PCAP")
+			, PCAP_FILE: config.ReadSetting("PCAP_FILE")
+			, GO_TO_LIVE: config.ReadSetting("GO_TO_LIVE")
+			, CLASSIFICATION_TIMEOUT: config.ReadSetting("CLASSIFICATION_TIMEOUT")
+			, K: config.ReadSetting("K")
+			, EPS: config.ReadSetting("EPS")
+			, CLASSIFICATION_THRESHOLD: config.ReadSetting("CLASSIFICATION_THRESHOLD")
+			, DATAFILE: config.ReadSetting("DATAFILE")
+			, USER_HONEYD_CONFIG: config.ReadSetting("USER_HONEYD_CONFIG")
+			, DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
+			, DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
+			, DM_ENABLED: config.ReadSetting("DM_ENABLED")
+			, ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES")
+			, FEATURE_NAMES: nova.GetFeatureNames()
+			, THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE")
+			, SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY")
+			, DATA_TTL: config.ReadSetting("DATA_TTL")
+			, CE_SAVE_FILE: config.ReadSetting("CE_SAVE_FILE")
+			, SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
+			, SMTP_PORT: config.ReadSetting("SMTP_PORT")
+			, SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN")
+			, SMTP_USER: config.GetSMTPUser()
+			, SMTP_PASS: config.GetSMTPPass()
+			, RECIPIENTS: config.ReadSetting("RECIPIENTS")
+			, SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
+			, HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
+			, CAPTURE_BUFFER_SIZE: config.ReadSetting("CAPTURE_BUFFER_SIZE")
+			, MIN_PACKET_THRESHOLD: config.ReadSetting("MIN_PACKET_THRESHOLD")
+			, CUSTOM_PCAP_FILTER: config.ReadSetting("CUSTOM_PCAP_FILTER")
+			, CUSTOM_PCAP_MODE: config.ReadSetting("CUSTOM_PCAP_MODE")
+			, WEB_UI_PORT: config.ReadSetting("WEB_UI_PORT")
+			, CLEAR_AFTER_HOSTILE_EVENT: config.ReadSetting("CLEAR_AFTER_HOSTILE_EVENT")
+
 		}
 	});
 });
@@ -1022,7 +1028,7 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1078,6 +1084,10 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		}
 		switch (configItems[item]) {
 		case "TCP_TIMEOUT":
+			validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
+			break;
+
+		case "WEB_UI_PORT":
 			validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
 			break;
 
