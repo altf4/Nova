@@ -73,7 +73,6 @@ int main(int argc, const char *argv[])
 
 	Config::Inst();
 	Config::Inst()->SetIsDmEnabled(false);
-	Config::Inst()->SetIsTraining(true);
 
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
 	{
