@@ -227,205 +227,118 @@ initLogWatch();
 ////////////////////////////////////////
 // SOCKET STUFF FOR MOTHERSHIP TESTING
 ////////////////////////////////////////
-// Get these from file, should be a key (name) and an ip address corresponding
-// to the slave node location for adjudication. 
-/*
-var middleman = express.createServer();
-
-middleman.configure(function()
-{  
-  middleman.use(express.bodyParser());
-  middleman.use(express.cookieParser());
-  middleman.use(express.methodOverride());
-  middleman.use(middleman.router); 
-  middleman.use(express.static(NovaHomePath + '/../Quasar/www'));
-});
-
-middleman.listen(8081);
-
-var socketio = require('socket.io').listen(middleman);
-var me = 'failbox';
-
-socketio.configure(function(){
-  socketio.set('transports', ['websocket']);
-});
-
-// Thoughts: Probably going to need a global variable for the socket.io connection to
+// Thoughts: Probably going to need a global variable for the websocket connection to
 // the mothership; an emit needs to be made to the mothership in certain circumstances,
 // such as recieving a hostile suspect, so having that be accessible to the nowjs methods
 // is ideal. Also need to find a way to maintain IP address of Mothership and any needed
-// credentials for restarts, etc. 
-// Connection seems to have an automatic keep-alive that occurs for socket.io, which is nice.
-// If it's a problem, it can probably be turned off.
-// Need to turn off log messages
+// credentials for reboots, etc. 
 
-socketio.sockets.on('connection', function(socket){
-  socket.on('startNovad', function(json){
-    var check = JSON.parse(json);
-    if(check.recv == me)
-    {
-      console.log("Recv matched for startNovad");
-      nova.StartNovad();
-      nova.CheckConnection();
-    }
-    else
-    {
-      console.log("received startNovad for someone else");
-    }
-  });
-  socket.on('stopNovad', function(json){
-    var check = JSON.parse(json);
-    if(check.recv == me)
-    {
-      console.log("Recv matched for stopNovad");
-      nova.StopNovad();
-      nova.CloseNovadConnection();
-    }
-    else
-    {
-      console.log("received stopNovad for someone else");
-    }    
-  });
-  socket.on('startHaystack', function(json){
-    var check = JSON.parse(json);
-    if(check.recv == me)
-    {
-      console.log("Recv matched for startHaystack");
-      if(!nova.IsHaystackUp())
-      {
-        nova.StartHaystack(false);
-      }
-    }
-    else
-    {
-      console.log("received startHaystack for someone else");
-    }
-  });
-  socket.on('stopHaystack', function(json){
-    var check = JSON.parse(json);
-    if(check.recv == me)
-    {
-      console.log("Recv matched for stopHaystack");
-      nova.StopHaystack();
-    }
-    else
-    {
-      console.log("received stopHaystack for someone else");
-    }
-  });
-  socket.on('writeSetting', function(args){
-    var JSON_Args = JSON.parse(args);
-    if(JSON_Args.recv == me)
-    {
-      console.log("Recv matched for writeSetting");
-      var setting = JSON_Args.arg0;
-      var value = JSON_Args.arg1;
-      console.log("setting == " + setting);
-      console.log("value == " + value);
-    } 
-    else
-    {
-      console.log("received writeSetting for someone else");
-    }
-  });
-  socket.on('disconnect', function(){
-    console.log('Disconnected');
-  });
-});
-*/
-/*
-var wss = require('websocket').server;
-var http = require('http');
-
-var httpServer = http.createServer(function(request, response){
-  console.log('Recieved request for url ' + request.url);
-  response.writeHead(404);
-  response.end();
-});
-
-httpServer.listen(8081, function(){
-  console.log('server up');
-});
-
-var wsServer = new WebSocketServer({
-  httpServer: httpServer
-});
-
-var novaClients = new Object();
-
-wsServer.on('request', function(request){
-  console.log('Connection accepted');
-    var connection = request.accept(null, request.origin);
-  connection.on('message', function(message){
-    if(message.type === 'utf8')
-    {
-      var json_args = JSON.parse(message.utf8Data);
-      if(json_args != undefined)
-      {
-        switch(json_args.type)
-        {
-          case 'startNovad':
-            nova.StartNovad();
-            nova.CheckConnection();
-            break;
-          default:
-            break;
-        }
-      }
-      else
-      {
-        console.log("Bad message received");
-      }
-    }
-  });
-});
-
-wsServer.on('close', function(connection, reason, description){
-  console.log('Closed connection: ' + description);
-});
-*/
-
-
+// Should eventually be a value stored within the Config file
 var connected = '10.10.1.1:8081';
 
 var WebSocketClient = require('websocket').client;
 var client = new WebSocketClient();
+// as should this
 var clientId = 'failbox';
 var mothership;
 
+// If the connection fails, print an error message
 client.on('connectFailed', function(error)
 {
   console.log('Connect error: ' + error.toString())
 });
 
+// If we successfully connect to the mothership, perform event-based actions here.
+// The interface for websockets is a little less nice than socket.io, simply because
+// you cannot name your own events, everything has to be done within the message
+// directive; it's only one more level of indirection, however, so no big deal
 client.on('connect', function(connection){
+  // When the connection is established, we save the connection variable
+  // to the mothership global so that actions can be taken on the connection
+  // outside of this callback if needed (hostile suspect, etc.)
   mothership = connection;
   var quick = {};
   quick.type = 'addId';
   quick.id = 'failbox';
+  // I don't know that we HAVE to use UTF8 here, there's a send() method as 
+  // well as a 'data' member inside the message objects instead of utf8Data.
+  // But, as it was in the Websockets tutorial Pherric found, we'll use it for now
   mothership.sendUTF(JSON.stringify(quick));
-  
+
   connection.on('message', function(message)
   {
     if(message.type === 'utf8')
     {
+      // We send the messages as JSON, so we have to parse it out
       var json_args = JSON.parse(message.utf8Data);
       if(json_args != undefined)
       {
+        // the various actions to take when a message is received
         switch(json_args.type)
-         {
-            case 'startNovad':
-              nova.StartNovad();
-              nova.CheckConnection();
-              break;            
-            default:
-              break;
-         }
+        {
+           case 'startNovad':
+             nova.StartNovad(false);
+             nova.CheckConnection();
+             var response = {};
+             response.type = 'response';
+             response.response_message = 'Novad is being started';
+             mothership.sendUTF(JSON.stringify(response));
+             break;
+           case 'stopNovad':
+             nova.StopNovad();
+             nova.CloseNovadConnection();
+             var response = {};
+             response.type = 'response';
+             response.response_message = 'Novad is being stopped';
+             mothership.sendUTF(JSON.stringify(response));
+             break;
+           case 'startHaystack':
+             if(!nova.IsHaystackUp())
+             {
+               nova.StartHaystack(false);
+               var response = {};
+               response.type = 'response';
+               response.response_message = 'Haystack is being started';
+               mothership.sendUTF(JSON.stringify(response));
+             }
+             else
+             {
+               var response = {};
+               response.type = 'response';
+               response.response_message = 'Haystack is already up, doing nothing';
+               mothership.sendUTF(JSON.stringify(response));
+             }
+             break;
+           case 'stopHaystack':
+             nova.StopHaystack();
+             var response = {};
+             response.type = 'response';
+             response.response_message = 'Haystack is being stopped';
+             mothership.sendUTF(JSON.stringify(response));
+             break;
+           case 'writeSetting':
+             // The nice thing about using JSON for the message passing is we
+             // can name the object literal members whatever we want, allowing for
+             // implicit specificity when creating and parsing the object
+             var setting = json_args.setting;
+             var value = json_args.value;
+             config.WriteSetting(setting, value);
+             var response = {};
+             response.type = 'response';
+             response.response_message = setting + ' is now ' + value;
+             mothership.sendUTF(JSON.stringify(response));
+             break;
+           default:
+             console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
+             break;
+        }
       }
     }
   });
   connection.on('close', function(){
-    console.log('closed');
+     // If the connection gets closed, we want to try to reconnect; we will use
+     // the stored IP of the Mothership to make the reconnect attempts
+    console.log('closed, attempting reconnect 5 times over 5 minutes');
   });
   connection.on('error', function(error){
     console.log('Error: ' + error.toString());
