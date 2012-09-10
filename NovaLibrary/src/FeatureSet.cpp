@@ -35,7 +35,6 @@ string FeatureSet::m_featureNames[] =
 {
 		"IP Traffic Distribution",
 		"Port Traffic Distribution",
-		"Haystack Event Frequency",
 		"Packet Size Mean",
 		"Packet Size Deviation",
 		"Protected IPs Contacted",
@@ -162,10 +161,6 @@ void FeatureSet::CalculateAll()
 	{
 			Calculate(PORT_TRAFFIC_DISTRIBUTION);
 	}
-	if(Config::Inst()->IsFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
-	{
-			Calculate(HAYSTACK_EVENT_FREQUENCY);
-	}
 	if(Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
 	{
 			Calculate(PACKET_SIZE_MEAN);
@@ -289,23 +284,6 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 					temp += it->second;
 				}
 				m_features[PORT_TRAFFIC_DISTRIBUTION] = ((double)temp)/portDivisor;
-			}
-			break;
-		}
-		///Number of ScanEvents that the suspect is responsible for per second
-		case HAYSTACK_EVENT_FREQUENCY:
-		{
-			double haystack_events = m_packetCount - m_IPTable[1];
-			// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
-			if(m_totalInterval)
-			{
-				//Packet count - local host contacts == haystack events
-				m_features[HAYSTACK_EVENT_FREQUENCY] = haystack_events / ((double)m_totalInterval);
-			}
-			else
-			{
-				//If interval is 0, no time based information, use a default of 1 for the interval
-				m_features[HAYSTACK_EVENT_FREQUENCY] = haystack_events;
 			}
 			break;
 		}

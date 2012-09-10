@@ -91,7 +91,6 @@ TEST_F(FeatureSetTest, test_Calculate)
 {
 	EXPECT_EQ(fset.m_features[IP_TRAFFIC_DISTRIBUTION], 1);
 	EXPECT_EQ(fset.m_features[PORT_TRAFFIC_DISTRIBUTION], 1);
-	EXPECT_EQ(fset.m_features[HAYSTACK_EVENT_FREQUENCY], 0.1);
 	EXPECT_EQ(fset.m_features[PACKET_SIZE_DEVIATION], 0);
 	EXPECT_EQ(fset.m_features[PACKET_SIZE_MEAN], 256);
 	EXPECT_EQ(fset.m_features[DISTINCT_IPS], 2);
