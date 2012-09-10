@@ -224,9 +224,9 @@ var initLogWatch = function () {
 initLogWatch();
 
 
-////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SOCKET STUFF FOR MOTHERSHIP TESTING
-////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Thoughts: Probably going to need a global variable for the websocket connection to
 // the mothership; an emit needs to be made to the mothership in certain circumstances,
 // such as recieving a hostile suspect, so having that be accessible to the nowjs methods
@@ -241,11 +241,19 @@ var client = new WebSocketClient();
 // as should this
 var clientId = 'failbox';
 var mothership;
+var reconnecting = false;
+var clearReconnect;
 
 // If the connection fails, print an error message
 client.on('connectFailed', function(error)
 {
-  console.log('Connect error: ' + error.toString())
+  console.log('Connect to Mothership error: ' + error.toString());
+  if(!reconnecting)
+  {
+    console.log('No current attempts to reconnect, starting reconnect attempts every 30 seconds.');
+    clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 30000);
+    reconnecting = true;
+  }
 });
 
 // If we successfully connect to the mothership, perform event-based actions here.
@@ -256,6 +264,8 @@ client.on('connect', function(connection){
   // When the connection is established, we save the connection variable
   // to the mothership global so that actions can be taken on the connection
   // outside of this callback if needed (hostile suspect, etc.)
+  reconnecting = false;
+  clearInterval(clearReconnect);
   mothership = connection;
   var quick = {};
   quick.type = 'addId';
@@ -264,6 +274,8 @@ client.on('connect', function(connection){
   // well as a 'data' member inside the message objects instead of utf8Data.
   // But, as it was in the Websockets tutorial Pherric found, we'll use it for now
   mothership.sendUTF(JSON.stringify(quick));
+
+  console.log('successfully connected to mothership');
 
   connection.on('message', function(message)
   {
@@ -332,22 +344,42 @@ client.on('connect', function(connection){
              console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
              break;
         }
+        // DEBUG: Remove this after MessageSend integration is in OnNewSuspect and tested
+        /*
+        var suspect = {};
+        suspect.type = 'hostileSuspect';
+        suspect.string = 'doooop';
+        suspect.ip = '10.10.1.1';
+        suspect.classification = '1.00';
+        suspect.lastpacket = '5';
+        suspect.ishostile = 'true';
+        suspect.client = clientId;
+        mothership.sendUTF(JSON.stringify(suspect));
+        */
+        // DEBUG_END
       }
     }
   });
   connection.on('close', function(){
      // If the connection gets closed, we want to try to reconnect; we will use
      // the stored IP of the Mothership to make the reconnect attempts
-    console.log('closed, attempting reconnect 5 times over 5 minutes');
+    mothership = undefined;
+    if(!reconnecting)
+    {
+      console.log('closed, beginning reconnect attempts every 30 seconds');
+      clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 30000);
+      reconnecting = true;
+    }
   });
   connection.on('error', function(error){
     console.log('Error: ' + error.toString());
   });
 });
 
-client.connect('ws://' + connected, null);
+client.connect('wss://' + connected, null);
+
 //
-////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
@@ -1850,6 +1882,16 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 	});
 }
 
+everyone.now.SendHostileEventToMothership = function(suspect) {
+  suspect.client = clientId;
+  suspect.type = 'hostileSuspect';
+  console.log(JSON.stringify(suspect));
+  if(mothership != undefined)
+  {
+    mothership.sendUTF(JSON.stringify(suspect));
+  }
+};
+
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
 }
@@ -1858,7 +1900,7 @@ var distributeSuspect = function (suspect) {
 	var s = new Object();
 	objCopy(suspect, s);
 	try {
-		everyone.now.OnNewSuspect(s)
+		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
 };
 
