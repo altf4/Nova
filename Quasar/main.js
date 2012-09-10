@@ -344,19 +344,6 @@ client.on('connect', function(connection){
              console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
              break;
         }
-        // DEBUG: Remove this after MessageSend integration is in OnNewSuspect and tested
-        /*
-        var suspect = {};
-        suspect.type = 'hostileSuspect';
-        suspect.string = 'doooop';
-        suspect.ip = '10.10.1.1';
-        suspect.classification = '1.00';
-        suspect.lastpacket = '5';
-        suspect.ishostile = 'true';
-        suspect.client = clientId;
-        mothership.sendUTF(JSON.stringify(suspect));
-        */
-        // DEBUG_END
       }
     }
   });
