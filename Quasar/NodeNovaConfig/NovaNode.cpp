@@ -200,7 +200,7 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "CloseNovadConnection", (InvokeMethod<bool, Nova::CloseNovadConnection>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ConnectToNovad", (InvokeMethod<bool, Nova::ConnectToNovad>) );
 
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<bool, Nova::StartNovad>) );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<bool, bool, Nova::StartNovad>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "StopNovad", (InvokeMethod<bool, Nova::StopNovad>) );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "StartHaystack", (InvokeMethod<bool, bool, Nova::StartHaystack>) );
@@ -216,6 +216,8 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetLocalIP", (InvokeMethod<std::string, std::string, Nova::GetLocalIP>) );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "Shutdown", Shutdown );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetSuspectDetailsString", GetSuspectDetailsString );
+
 
 	// Javascript object constructor
 	target->Set(String::NewSymbol("Instance"),
@@ -230,10 +232,31 @@ void NovaNode::Init(Handle<Object> target)
 }
 
 
+Handle<Value> NovaNode::GetSuspectDetailsString(const Arguments &args) {
+	HandleScope scope;
+
+	string suspectIp = cvv8::CastFromJS<string>(args[0]);
+	in_addr_t address;
+	inet_pton(AF_INET, suspectIp.c_str(), &address);
+
+	string details;
+	Suspect *suspect = GetSuspectWithData(ntohl(address));
+	if (suspect != NULL) {
+		details = suspect->GetFeatureSet().toString();
+		delete suspect;
+	} else {
+		details = "Unable to complete request";
+	}
+
+	return scope.Close(cvv8::CastToJS(details));
+}
+
 // Figure out what the names of features are in the featureset
 Handle<Value> NovaNode::GetFeatureNames(const Arguments &)
 {
 	HandleScope scope;
+
+	
 
 	vector<string> featureNames;
 	for (int i = 0; i < DIM; i++)

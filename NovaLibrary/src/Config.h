@@ -86,7 +86,6 @@ public:
     std::string GetPathConfigHoneydUser();
     std::string GetPathConfigHoneydHS();
     std::string GetPathPcapFile();
-    std::string GetPathTrainingCapFolder();
     std::string GetPathTrainingFile();
     std::string GetPathWhitelistFile();
     std::string GetKey();
@@ -95,7 +94,6 @@ public:
     bool GetReadPcap();
     bool GetUseTerminals();
     bool GetIsDmEnabled();
-    bool GetIsTraining();
     bool GetGotoLive();
     bool IsFeatureEnabled(uint i);
 
@@ -106,15 +104,12 @@ public:
     int GetClassificationTimeout();
     int GetDataTTL();
     int GetK();
-    int GetSaMaxAttempts();
-    int GetSaPort();
     int GetSaveFreq();
     int GetTcpCheckFreq();
     int GetTcpTimout();
     double GetThinningDistance();
 
     double GetClassificationThreshold();
-    double GetSaSleepDuration();
     double GetEps();
 
     std::string GetGroup();
@@ -142,19 +137,14 @@ public:
     void SetEps(double eps);
     void SetGotoLive(bool gotoLive);
     void SetIsDmEnabled(bool isDmEnabled);
-    void SetIsTraining(bool isTraining);
     void SetK(int k);
     void SetPathCESaveFile(std::string pathCESaveFile);
     void SetPathConfigHoneydUser(std::string pathConfigHoneydUser);
     void SetPathConfigHoneydHs(std::string pathConfigHoneydHs);
     void SetPathPcapFile(std::string pathPcapFile);
-    void SetPathTrainingCapFolder(std::string pathTrainingCapFolder);
     void SetPathTrainingFile(std::string pathTrainingFile);
     void SetPathWhitelistFile(std::string pathWhitelistFile);
     void SetReadPcap(bool readPcap);
-    void SetSaMaxAttempts(int saMaxAttempts);
-    void SetSaPort(int saPort);
-    void SetSaSleepDuration(double saSleepDuration);
     void SetSaveFreq(int saveFreq);
     void SetTcpCheckFreq(int tcpCheckFreq);
     void SetTcpTimout(int tcpTimout);
@@ -173,10 +163,6 @@ public:
     std::string GetSMTPPass();
     bool GetSMTPUseAuth();
 
-	std::string GetDBHost();
-	std::string GetDBUser();
-	std::string GetDBPass();
-
     void SetLoggerPreferences(std::string loggerPreferences);
     void SetSMTPUseAuth(bool useAuth);
     void SetSMTPAddr(std::string SMTPAddr);
@@ -184,10 +170,6 @@ public:
 	void SetSMTPPort(in_port_t SMTPPort);
 	bool SetSMTPUser(std::string SMTPUser);
 	bool SetSMTPPass(std::string STMP_Pass);
-
-	void SetDBHost(std::string DBHost);
-	void SetDBUser(std::string DBUser);
-	void SetDBPass(std::string DBPass);
 
 	bool GetSMTPSettings_FromFile();
 	bool SaveSMTPSettings();
@@ -220,7 +202,6 @@ public:
 
 	std::string GetTrainingSession();
 	std::string SetTrainingSession(std::string trainingSession);
-
 	int GetWebUIPort();
 	void SetWebUIPort(int port);
 
@@ -264,7 +245,6 @@ private:
 	std::string m_pathPcapFile;
 	std::string m_pathTrainingFile;
 	std::string m_pathWhitelistFile;
-	std::string m_pathTrainingCapFolder;
 	std::string m_pathCESaveFile;
 
 	std::string m_customPcapString;
@@ -274,24 +254,20 @@ private:
 	int m_tcpTimout;
 	int m_tcpCheckFreq;
 	int m_classificationTimeout;
-	int m_saPort;
 	int m_k;
 	double m_thinningDistance;
 	int m_saveFreq;
 	int m_dataTTL;
-	int m_saMaxAttempts;
 	uint m_minPacketThreshold;
 	int m_webUIPort;
 
 	int m_captureBufferSize;
 
-	double m_saSleepDuration;
 	double m_eps;
 	double m_classificationThreshold;
 
 	bool m_readPcap;
 	bool m_gotoLive;
-	bool m_isTraining;
 	bool m_isDmEnabled;
 
 	bool m_overridePcapString;
@@ -315,10 +291,6 @@ private:
 	std::string m_SMTPPass;
 
 	bool m_SMTPUseAuth;
-
-	std::string m_DBHost;
-	std::string m_DBUser;
-	std::string m_DBPass;
 
 	bool m_clearAfterHostile;
 

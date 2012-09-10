@@ -32,6 +32,7 @@ script
         var addVendor = function(vendName) {};
         var deleteAndClean = function(which) {};
         var clearCreated = function() {};
+        var checkIfRestartNeeded = function() {};
 
         var portIndexes = [];
         var loaded = false;
@@ -653,9 +654,23 @@ script
                     if (err == null)
                     {
                         window.location="configHoneydProfiles";
+                        now.IsHaystackUp(checkIfRestartNeeded); 
                     } else {
                         alert("Unable to save profile: " + err);
                     }
+                }
+
+
+                 checkIfRestartNeeded = function(haystackUp) {
+                    if (haystackUp) {
+                        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+                        if (restartHaystack) {
+                            now.StopHaystack();
+                            now.StartHaystack();
+                        }
+                    }
+
+                    location.reload(true);
                 }
 
                 addPort = function(port) 

@@ -41,17 +41,10 @@ script
 form(method="post", action="/configureNovaSave")
   h2 General Configuration
 
-  h2 Silent Alarm
-  label Port
-  input(type="number", step="1", min="1025", max="65535", name="SILENT_ALARM_PORT",  value=SILENT_ALARM_PORT)
-  br
-  
-  label Max Connection Attempts
-  input(type="number", step="1", min="0", name="SA_MAX_ATTEMPTS", value=SA_MAX_ATTEMPTS)
-  br
-  
-  label Sleep Duration
-  input(type="text", name="SA_SLEEP_DURATION",  value=SA_SLEEP_DURATION)
+  h2 Web Interface
+
+  label Web interface port
+  input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
   br
 
   h2 File Paths
@@ -174,30 +167,52 @@ form(method="post", action="/configureNovaSave")
   input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
   br
 
-  h2 Training Mode Settings
-  label Training mode?
+  label Packets Needed Before Classification
+  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
   br
 
-  if IS_TRAINING != "0"
+  label Clear data after suspect logged as hostile?
+  br
+  if CLEAR_AFTER_HOSTILE_EVENT != "0"
     |Yes
-    input(type="radio", name="IS_TRAINING", value="1", checked)
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
     br
     |No
-    input(type="radio", name="IS_TRAINING", value="0")
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
     br
   else
     |Yes
-    input(type="radio", name="IS_TRAINING", value="1")
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
     br
     |No
-    input(type="radio", name="IS_TRAINING", value="0", checked)
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
     br
   br
-  
-  label Training Capture folder
-  input(name="TRAINING_CAP_FOLDER",  value=TRAINING_CAP_FOLDER)
+
+  label Custom PCAP Filter String
+  input(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
   br
   
+  label Custom PCAP Filter String Mode
+  br
+  if CUSTOM_PCAP_MODE != "0"
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    br
+  else
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    br
+  br
+
+  h2 Training Mode Settings
+
   label Thinning Distance
   input(name="THINNING_DISTANCE",  value=THINNING_DISTANCE)
   br

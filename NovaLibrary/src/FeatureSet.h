@@ -104,6 +104,8 @@ public:
 	FeatureSet();
 	~FeatureSet();
 
+	std::string toString();
+
 	// Clears out the current values, and also any temp variables used to calculate them
 	void ClearFeatureSet();
 
@@ -164,7 +166,7 @@ public:
 
 	//FeatureSet(const FeatureSet &rhs);
 	//FeatureSet& operator=(FeatureSet &rhs);
-private:
+//private:
 	//Temporary variables used to calculate Features
 
 	//Table of Packet sizes and counts for variance calc

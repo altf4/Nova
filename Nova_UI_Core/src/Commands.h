@@ -39,7 +39,7 @@ void InitializeUI();
 //Runs the Novad process
 //	returns - True upon successfully running the novad process, false on error
 //	NOTE: This function will return true if Novad was already running
-bool StartNovad();
+bool StartNovad(bool blocking = false);
 
 //Kills the Novad process
 //	returns - True upon successfully stopping the novad process, false on error
@@ -89,6 +89,9 @@ std::vector<in_addr_t> *GetSuspectList(enum SuspectListType listType);
 // address: IP address of the suspect
 // Returns: Pointer to the suspect
 Suspect *GetSuspect(in_addr_t address);
+
+// Same as GetSuspect but returns all the featureset data
+Suspect *GetSuspectWithData(in_addr_t address);
 
 //Asks Novad to save the suspect list to persistent storage
 //	returns - true if saved correctly, false on error

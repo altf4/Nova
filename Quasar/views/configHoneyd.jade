@@ -5,6 +5,39 @@ block headerAdditions
 
   script
     var grid;
+    var currentInterface;
+
+    function createNodes() {
+        var ipType = document.getElementById("ipType").value;
+        var ip1 = document.getElementById("ip1").value;
+        var ip2 = document.getElementById("ip2").value;
+        var ip3 = document.getElementById("ip3").value;
+        var ip4 = document.getElementById("ip4").value;
+        var profile = document.getElementById("profile").value;
+        var count = document.getElementById("nodeCount").value;
+        var interface = currentInterface;
+
+        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, interface, "", count, createNodesCallback);
+    }
+
+    function createNodesCallback(err) {
+        if (err) {
+            alert("Unable to create nodes due to error: " + err);
+        } else {
+            now.IsHaystackUp(checkIfRestartNeeded); 
+        }
+    }
+
+    function checkIfRestartNeeded(haystackUp) {
+      if (haystackUp) {
+        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        if (restartHaystack) {
+          now.StopHaystack();
+          now.StartHaystack();
+        }
+      }
+      location.reload(true);
+    }
     
     function ipTypeChanged() {
       var ipEditEnabled;
@@ -42,7 +75,21 @@ block headerAdditions
     function errorMessageCallback(success, message) {
       if(success != true) {
         alert("Unable to complete operation due to error: " + message);
+        location.reload(true);
+        return;
       }
+     now.IsHaystackUp(checkIfRestartNeeded); 
+    }
+
+    function checkIfRestartNeeded(haystackUp) {
+      if (haystackUp) {
+        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        if (restartHaystack) {
+          now.StopHaystack();
+          now.StartHaystack();
+        }
+      }
+
       location.reload(true);
     }
 
@@ -53,6 +100,7 @@ block headerAdditions
       var checkAgainst = checkedBox.getAttribute("id");
       
       var checkedInterface = checkedBox.value;
+      currentInterface = checkedBox.value;
       try {
           var ip = now.GetLocalIP(checkedInterface, UpdateIpField);
       } catch(err) {
@@ -122,16 +170,6 @@ block headerAdditions
         var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
         var gridSize = #{nodes.length};
         grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:100, autoWidth:true});
-        /*dojo.connect(grid, "onSelected", grid, function(idx){
-          names.length = 0;
-          if(!grid.store.isItemLoaded(grid.getItem(idx)))
-          {
-            console.log("Found unloaded item");
-            grid.store.loadItem(grid.getItem(idx));
-          }
-          names.push(grid.store.getValues(grid.getItem(idx), "Name"));
-          console.log("after select: " + names);
-        });*/
         dojo.byId("gridDiv").appendChild(grid.domNode);
       now.ready(function() {
         checkOnlyOne(if0);
@@ -186,54 +224,52 @@ block content
 
   br
   br
-  form(method="post", action="/editHoneydNodesSave")
-    h2 Create Honeyd Nodes
-    //input(type='hidden', name='subnet', id='subnet', value='')
-    label Profile
-    select(name="profile")
-      each profile, i in profiles
-        option #{profile}
-    br
+  h2 Create Honeyd Nodes
+  label Profile
+  select#profile(name="profile")
+    each profile, i in profiles
+      option #{profile}
+  br
 
-    label Number of nodes to create
-    input(type="number", name="nodeCount", min="1", value="1")
-    
-    br
-    label Network Interface
-    table
-      thead
-        tr 
-          th Interfaces
-      tbody
-      - if(INTERFACES.length == 1)
-        tr 
-          td
-            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
-            #{INTERFACES[0]}
-      - else
-        tr 
-          td
-            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
-            #{INTERFACES[0]}
-        - for (var i = 1; i < INTERFACES.length; i++)
-            tr 
-              td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
-                #{INTERFACES[i]}
-    hidden(id="length", value=INTERFACES.length)
-    br
-    label IP Address Range Type
-    select#ipType(name="ipType", onChange="ipTypeChanged()")
-      option DHCP
-      option IP Range
+  label Number of nodes to create
+  input#nodeCount(type="number", name="nodeCount", min="1", value="1")
+  
+  br
+  label Network Interface
+  table
+    thead
+      tr 
+        th Interfaces
+    tbody
+    - if(INTERFACES.length == 1)
+      tr 
+        td
+          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+          #{INTERFACES[0]}
+    - else
+      tr 
+        td
+          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+          #{INTERFACES[0]}
+      - for (var i = 1; i < INTERFACES.length; i++)
+          tr 
+            td
+              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
+              #{INTERFACES[i]}
+  hidden(id="length", value=INTERFACES.length)
+  br
+  label IP Address Range Type
+  select#ipType(name="ipType", onChange="ipTypeChanged()")
+    option DHCP
+    option IP Range
 
-    br
-    label Starting IP address
-    input.ip#ip1(type="number", name="ip1", min="0", max="255", value="0", disabled="disabled")
-    input.ip#ip2(type="number", name="ip2", min="0", max="255", value="0", disabled="disabled")
-    input.ip#ip3(type="number", name="ip3", min="0", max="255", value="0", disabled="disabled")
-    input.ip#ip4(type="number", name="ip4", min="0", max="255", value="0", disabled="disabled")
-   
-    br
-    br
-    input(type="Submit",value="Create New Nodes")
+  br
+  label Starting IP address
+  input.ip#ip1(type="number", name="ip1", min="0", max="255", value="0", disabled="disabled")
+  input.ip#ip2(type="number", name="ip2", min="0", max="255", value="0", disabled="disabled")
+  input.ip#ip3(type="number", name="ip3", min="0", max="255", value="0", disabled="disabled")
+  input.ip#ip4(type="number", name="ip4", min="0", max="255", value="0", disabled="disabled")
+  
+  br
+  br
+  input(type="Submit",value="Create New Nodes", onclick="createNodes()")

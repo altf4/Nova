@@ -36,7 +36,10 @@ var Validator = require('validator').Validator;
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
 var novadLogPath = NovaHomePath + "/../Logs/Nova.log";
-var novadLog = new Tail(NovaHomePath + "/../Nova.log");
+var novadLog = new Tail(novadLogPath);
+
+var honeydLogPath = NovaHomePath + "/../Logs/Honeyd.log";
+var honeydLog = new Tail(honeydLogPath);
 
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
@@ -193,6 +196,25 @@ var initLogWatch = function () {
 		console.log("ERROR: " + data);
 		try {
 			everyone.now.newLogLine(data)
+		} catch (err) {
+
+		}
+	});
+
+
+	var honeydLog = new Tail(honeydLogPath);
+	honeydLog.on("line", function (data) {
+		try {
+			everyone.now.newHoneydLogLine(data);
+		} catch (err) {
+
+		}
+	});
+
+	honeydLog.on("error", function (data) {
+		console.log("ERROR: " + data);
+		try {
+			everyone.now.newHoneydLogLine(data)
 		} catch (err) {
 
 		}
@@ -428,6 +450,20 @@ app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}
 	});
 });
 
+app.get('/downloadHoneydLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
+	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
+		if (err) {
+			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
+			return;
+		} else {
+			// Hacky solution to make browsers launch a save as dialog
+			res.header('Content-Type', 'application/honeydLog');
+			var reply = data.toString();
+			res.send(reply);
+		}
+	});
+});
+
 app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
 		if (err) {
@@ -439,14 +475,16 @@ app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), funct
 			for (var i = 0; i < reply.length; i++) {
 				var styleString = "";
 				var line = reply[i];
-				var splitLine = line.split(' ');
+        		var splitLine = line.split(/[\s]+/);
 				if (splitLine.length >= 6) {
-					if (splitLine[5] == "DEBUG") {
+					if (splitLine[5] == "DEBUG" || splitLine[5] == "INFO") {
 						styleString += 'color: green';
 					} else if (splitLine[5] == "WARNING" || splitLine[5] == "NOTICE") {
 						styleString += 'color: orange';
 					} else if (splitLine[5] == "ERROR" || splitLine[5] == "CRITICAL") {
 						styleString += 'color: red';
+					} else {
+						styleString += 'color: blue';
 					}
 				}
 
@@ -463,6 +501,31 @@ app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), funct
 	});
 });
 
+app.get('/viewHoneydLog', passport.authenticate('basic', {session: false}), function (req, res) {
+	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
+		if (err) {
+			RenderError(res, "Unable to open HONEYD log file for reading due to error: " + err);
+			return;
+		} else {
+			var reply = data.toString().split(/(\r\n|\n|\r)/gm);
+			var html = "";
+			for (var i = 0; i < reply.length; i++) {
+				var styleString = "";
+				var line = reply[i];
+				styleString += 'color: blue';
+
+				html += '<P style="' + styleString + '">' + line + "<P>";
+
+			}
+
+			res.render('viewLog.jade', {
+				locals: {
+					log: html
+				}
+			});
+		}
+	});
+});
 app.get('/advancedOptions', passport.authenticate('basic', {session: false}), function (req, res) {
 	var all = config.ListInterfaces().sort();
 	var used = config.GetInterfaces().sort();
@@ -494,43 +557,44 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 
 	res.render('advancedOptions.jade', {
 		locals: {
-			INTERFACES: config.ListInterfaces().sort(),
-			DEFAULT: config.GetUseAllInterfacesBinding(),
-			HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG"),
-			TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT"),
-			TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ"),
-			READ_PCAP: config.ReadSetting("READ_PCAP"),
-			PCAP_FILE: config.ReadSetting("PCAP_FILE"),
-			GO_TO_LIVE: config.ReadSetting("GO_TO_LIVE"),
-			CLASSIFICATION_TIMEOUT: config.ReadSetting("CLASSIFICATION_TIMEOUT"),
-			SILENT_ALARM_PORT: config.ReadSetting("SILENT_ALARM_PORT"),
-			K: config.ReadSetting("K"),
-			EPS: config.ReadSetting("EPS"),
-			IS_TRAINING: config.ReadSetting("IS_TRAINING"),
-			CLASSIFICATION_THRESHOLD: config.ReadSetting("CLASSIFICATION_THRESHOLD"),
-			DATAFILE: config.ReadSetting("DATAFILE"),
-			SA_MAX_ATTEMPTS: config.ReadSetting("SA_MAX_ATTEMPTS"),
-			SA_SLEEP_DURATION: config.ReadSetting("SA_SLEEP_DURATION"),
-			USER_HONEYD_CONFIG: config.ReadSetting("USER_HONEYD_CONFIG"),
-			DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP"),
-			DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE"),
-			DM_ENABLED: config.ReadSetting("DM_ENABLED"),
-			ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES"),
-			FEATURE_NAMES: nova.GetFeatureNames(),
-			TRAINING_CAP_FOLDER: config.ReadSetting("TRAINING_CAP_FOLDER"),
-			THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE"),
-			SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY"),
-			DATA_TTL: config.ReadSetting("DATA_TTL"),
-			CE_SAVE_FILE: config.ReadSetting("CE_SAVE_FILE"),
-			SMTP_ADDR: config.ReadSetting("SMTP_ADDR"),
-			SMTP_PORT: config.ReadSetting("SMTP_PORT"),
-			SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN"),
-			SMTP_USER: config.GetSMTPUser(),
-			SMTP_PASS: config.GetSMTPPass(),
-			RECIPIENTS: config.ReadSetting("RECIPIENTS"),
-			SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES"),
-			HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
-			,CAPTURE_BUFFER_SIZE: config.ReadSetting("CAPTURE_BUFFER_SIZE")
+			INTERFACES: config.ListInterfaces().sort()
+			, DEFAULT: config.GetUseAllInterfacesBinding()
+			, HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
+			, TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
+			, TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
+			, READ_PCAP: config.ReadSetting("READ_PCAP")
+			, PCAP_FILE: config.ReadSetting("PCAP_FILE")
+			, GO_TO_LIVE: config.ReadSetting("GO_TO_LIVE")
+			, CLASSIFICATION_TIMEOUT: config.ReadSetting("CLASSIFICATION_TIMEOUT")
+			, K: config.ReadSetting("K")
+			, EPS: config.ReadSetting("EPS")
+			, CLASSIFICATION_THRESHOLD: config.ReadSetting("CLASSIFICATION_THRESHOLD")
+			, DATAFILE: config.ReadSetting("DATAFILE")
+			, USER_HONEYD_CONFIG: config.ReadSetting("USER_HONEYD_CONFIG")
+			, DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
+			, DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
+			, DM_ENABLED: config.ReadSetting("DM_ENABLED")
+			, ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES")
+			, FEATURE_NAMES: nova.GetFeatureNames()
+			, THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE")
+			, SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY")
+			, DATA_TTL: config.ReadSetting("DATA_TTL")
+			, CE_SAVE_FILE: config.ReadSetting("CE_SAVE_FILE")
+			, SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
+			, SMTP_PORT: config.ReadSetting("SMTP_PORT")
+			, SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN")
+			, SMTP_USER: config.GetSMTPUser()
+			, SMTP_PASS: config.GetSMTPPass()
+			, RECIPIENTS: config.ReadSetting("RECIPIENTS")
+			, SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
+			, HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
+			, CAPTURE_BUFFER_SIZE: config.ReadSetting("CAPTURE_BUFFER_SIZE")
+			, MIN_PACKET_THRESHOLD: config.ReadSetting("MIN_PACKET_THRESHOLD")
+			, CUSTOM_PCAP_FILTER: config.ReadSetting("CUSTOM_PCAP_FILTER")
+			, CUSTOM_PCAP_MODE: config.ReadSetting("CUSTOM_PCAP_MODE")
+			, WEB_UI_PORT: config.ReadSetting("WEB_UI_PORT")
+			, CLEAR_AFTER_HOSTILE_EVENT: config.ReadSetting("CLEAR_AFTER_HOSTILE_EVENT")
+
 		}
 	});
 });
@@ -668,6 +732,23 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}
 		locals: {
 			profileNames: honeydConfig.GetProfileNames(),
 			profiles: profiles
+		}
+	})
+});
+
+app.get('/GetSuspectDetails', passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.query["suspect"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/");
+		return;
+	}
+	
+	var suspectId = req.query["suspect"];
+	var suspectString = nova.GetSuspectDetailsString(suspectId);
+
+	res.render('suspectDetails.jade', {
+		locals: {
+			suspect: suspectId
+			, details: suspectString
 		}
 	})
 });
@@ -895,8 +976,12 @@ app.get('/events', passport.authenticate('basic', {session: false}), function (r
 });
 
 app.get('/novadlog', passport.authenticate('basic', {session: false}), function (req, res) {
-	initLogWatch();
+	//initLogWatch();
 	res.render('novadlog.jade');
+});
+
+app.get('/honeydlog', passport.authenticate('basic', {session: false}), function (req, res) {
+	res.render('honeydlog.jade');
 });
 
 app.get('/', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -955,6 +1040,7 @@ app.get('/haystackStatus', passport.authenticate('basic', {session: false}), fun
 		}
 	});
 });
+
 
 app.post('/createNewUser', passport.authenticate('basic', {session: false}), function (req, res) {
 	var password = req.body["password"];
@@ -1101,76 +1187,59 @@ app.post('/customizeTrainingSave', passport.authenticate('basic', {session: fals
 	})
 });
 
-app.post('/editHoneydNodesSave', passport.authenticate('basic', {session: false}), function (req, res) {
+everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, interface, subnet, count, callback) {
 	var ipAddress;
-	if (req.body["ipType"] == "DHCP") {
+	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
 	} else {
-		ipAddress = req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"] + "." + req.body["ip4"];
+		ipAddress = ip1 + "." + ip2 + "." + ip3 + "." + ip4;
 	}
-	/*else
-	{
-	  res.redirect('/configHoneydNodes', { locals: { message: "Invalid IP" }} );
-	}*/
 
-	var profile = req.body["profile"];
-	var intface = req.body["interface"];
-	var subnet = "";
-	var count = Number(req.body["nodeCount"]);
-
-	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + intface + " " + count);
-	honeydConfig.AddNewNodes(profile, ipAddress, intface, subnet, count);
-	honeydConfig.SaveAll();
-
-	res.render('saveRedirect.jade', {
-		locals: {
-			redirectLink: "/configHoneydNodes"
-		}
-	})
-
-});
-
-app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
-	if (req.body["profile"] === undefined || req.body["interface"] === undefined || req.body["oldName"] === undefined) {
-		RenderError(res, "Invalid POST to /editHoneydNodeSave. Most likely caused by refreshing a page you shouldn't");
-		return;
+	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + interface + " " + count);
+	var result = null;
+	if (!honeydConfig.AddNewNodes(profile, ipAddress, interface, subnet, Number(count))) {
+		result = "Unable to create new nodes";	
 	}
-	var profile = req.body["profile"];
-	var intface = req.body["interface"];
-	var oldName = req.body["oldName"];
+
+	if (!honeydConfig.SaveAll()) {
+		result = "Unable to save honeyd configuration";
+	}
+
+	callback(result);
+};
+
+everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macType, ip, mac, callback) {
+//app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
+	console.log("Saving: " + profile + ":" + intface + ":" + ipType + ":" + ip + ":" + mac + ":");
 	var subnet = "";
 
-	var ipAddress;
-	if (req.body["ipType"] == "DHCP") {
+	var ipAddress = ip;
+	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
-	} else {
-		ipAddress = req.body["ip0"] + "." + req.body["ip1"] + "." + req.body["ip2"] + "." + req.body["ip3"];
 	}
 
-	var macAddress;
-	if (req.body["macType"] == "RANDOM") {
+	var macAddress = mac;
+	if (macType == "RANDOM") {
 		macAddress = "RANDOM";
-	} else {
-		macAddress = req.body["mac0"] + ":" + req.body["mac1"] + ":" + req.body["mac2"] + ":" + req.body["mac3"] + ":" + req.body["mac4"] + ":" + req.body["mac5"];
 	}
+	
 	// Delete the old node and then add the new one	
 	honeydConfig.DeleteNode(oldName);
 	if (!honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet)) {
-		RenderError(res, "AddNewNode failed", "/configHoneydNodes");
+		callback("AddNewNode Failed");
 		return;
 	} else {
-		honeydConfig.SaveAll();
-		res.render('saveRedirect.jade', {
-			locals: {
-				redirectLink: "/configHoneydNodes"
-			}
-		})
+		if (!honeydConfig.SaveAll()) {
+			callback("Unable to save honeyd configuration");
+		} else {
+			callback(null);
+		}
 	}
-});
+};
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "SILENT_ALARM_PORT", "K", "EPS", "IS_TRAINING", "CLASSIFICATION_THRESHOLD", "DATAFILE", "SA_MAX_ATTEMPTS", "SA_SLEEP_DURATION", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "TRAINING_CAP_FOLDER", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1225,11 +1294,11 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			continue;
 		}
 		switch (configItems[item]) {
-		case "SA_SLEEP_DURATION":
-			validator.check(req.body[configItems[item]], 'Must be a nonnegative integer or floating point number').isFloat();
+		case "TCP_TIMEOUT":
+			validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
 			break;
 
-		case "TCP_TIMEOUT":
+		case "WEB_UI_PORT":
 			validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
 			break;
 
@@ -1394,13 +1463,16 @@ everyone.now.StopHaystack = function () {
 	nova.StopHaystack();
 }
 
+everyone.now.IsHaystackUp = function (callback) {
+	callback(nova.IsHaystackUp());
+}
 
-everyone.now.IsNovadUp = function () {
-	return nova.IsNovadIp();
+everyone.now.IsNovadUp = function (callback) {
+	callback(nova.IsNovadUp());
 }
 
 everyone.now.StartNovad = function () {
-	nova.StartNovad();
+	nova.StartNovad(false);
 	nova.CheckConnection();
 }
 
@@ -1767,8 +1839,12 @@ everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback,
 	});
 }
 
+// TODO: Fix training
 everyone.now.StartTrainingCapture = function (trainingSession, callback) {
-	config.WriteSetting("IS_TRAINING", "1");
+	callback("Training mode is currently not supported");
+	return;
+
+	//config.WriteSetting("IS_TRAINING", "1");
 	config.WriteSetting("TRAINING_SESSION", trainingSession.toString());
 
 	// Check if training folder already exists
@@ -1785,7 +1861,7 @@ everyone.now.StartTrainingCapture = function (trainingSession, callback) {
 
 			// (Re)start NOVA
 			nova.StopNovad();
-			nova.StartNovad();
+			nova.StartNovad(false);
 
 			nova.CheckConnection();
 
@@ -1794,9 +1870,12 @@ everyone.now.StartTrainingCapture = function (trainingSession, callback) {
 	});
 }
 
+// TODO: Fix training
 everyone.now.StopTrainingCapture = function (trainingSession, callback) {
-	config.WriteSetting("IS_TRAINING", "0");
-	config.WriteSetting("TRAINING_SESSION", "null");
+	callback("Training mode is currently not supported");
+	return;
+	//config.WriteSetting("IS_TRAINING", "0");
+	//config.WriteSetting("TRAINING_SESSION", "null");
 	nova.StopNovad();
 
 	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/capture.dump',

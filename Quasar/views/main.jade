@@ -176,7 +176,9 @@ block headerAdditions
       clearButton += '"' + suspect.GetIpString + '"';
       clearButton += ");'>Clear</button>";
       row.push(clearButton);
-      row.push(String(suspect.GetIpString));
+
+      var suspectLink = "<a href='/GetSuspectDetails?suspect=" + String(suspect.GetIpString) + "'> " + String(suspect.GetIpString) + "</a>";
+      row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
       row.push(String(suspect.GetIsHostile));

@@ -305,7 +305,6 @@ reset: uninstall-files
 reset-debug: 
 	$(MAKE) clean
 	$(MAKE) debug
-	$(MAKE) quasar
 	$(MAKE) test
 	$(MAKE) reinstall-debug
 

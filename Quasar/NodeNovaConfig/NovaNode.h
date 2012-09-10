@@ -86,6 +86,7 @@ public:
 	static Handle<Value> registerOnNewSuspect(const Arguments& args);
 	static Handle<Value> registerOnAllSuspectsCleared(const Arguments& args);
 	static Handle<Value> registerOnSuspectCleared(const Arguments& args);
+	static Handle<Value> GetSuspectDetailsString(const Arguments& args);
 	static void HandleOnNewSuspectWeakCollect(Persistent<Value> __attribute__((__unused__)) OnNewSuspectCallback, void __attribute__((__unused__)) * parameter);
 };
 

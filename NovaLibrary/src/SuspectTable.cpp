@@ -195,10 +195,7 @@ bool SuspectTable::ClassifySuspect(const in_addr_t& key)
 	{
 		Suspect *suspect = m_suspectTable[key];
 		suspect->CalculateFeatures();
-		if(!Config::Inst()->GetIsTraining())
-		{
-			engine->Classify(suspect);
-		}
+		engine->Classify(suspect);
 		return true;
 	}
 	return false;
@@ -214,10 +211,7 @@ void SuspectTable::UpdateAllSuspects()
 		{
 			Suspect *suspect = m_suspectTable[m_keys[i]];
 			suspect->CalculateFeatures();
-			if(!Config::Inst()->GetIsTraining())
-			{
-				engine->Classify(suspect);
-			}
+			engine->Classify(suspect);
 
 		}
 	}
