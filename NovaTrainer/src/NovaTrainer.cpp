@@ -16,7 +16,10 @@
 // Description : Command line interface for Nova
 //============================================================================
 
+#include "InterfacePacketCapture.h"
 #include "ClassificationEngine.h"
+#include "FilePacketCapture.h"
+#include "HaystackControl.h"
 #include "EvidenceTable.h"
 #include "SuspectTable.h"
 #include "NovaTrainer.h"
@@ -26,12 +29,11 @@
 #include <netinet/if_ether.h>
 #include <unistd.h>
 #include <vector>
-#include <math.h>
-#include <time.h>
 #include <errno.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <signal.h>
 
 
 using namespace std;
@@ -40,92 +42,47 @@ using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
-//Contains packet evidence yet to be included in a suspect
 
 ClassificationEngine *engine;
 EvidenceTable suspectEvidence;
 
-string trainingCapFile;
-
-string pcapFile;
-string haystackFile;
-string localFile;
+pcap_dumper_t *pcapDumpStream;
 
 ofstream trainingFileStream;
-pcap_t *handle;
 
+trainingMode mode;
+string captureFolder;
 
-
-double lastPoint[DIM];
 
 int main(int argc, const char *argv[])
 {
-	if(argc < 3)
+	if(argc < 2)
 	{
 		PrintUsage();
-		return 0;
 	}
 
-	for(int i = 0; i < DIM; i++)
+    signal(SIGKILL, SaveAndExit);
+    signal(SIGINT, SaveAndExit);
+    signal(SIGTERM, SaveAndExit);
+    signal(SIGPIPE, SIG_IGN);
+
+
+	if (string(argv[1]) == "--capture")
 	{
-		lastPoint[i] = -1;
+		mode = trainingMode_capture;
+		captureFolder = string(argv[2]);
+		CaptureData(captureFolder, "eth0");
 	}
-
-	Config::Inst();
-	Config::Inst()->SetIsDmEnabled(false);
-
-	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
+	else if (string(argv[1]) == "--convert")
 	{
-		LOG(CRITICAL, "Unable to change folder to " + Config::Inst()->GetPathHome(), "");
+		mode = trainingMode_convert;
+		captureFolder = string(argv[1]);
+		ConvertCaptureToDump(captureFolder);
 	}
-
-	pcapFile = string(argv[1]) + "/capture.pcap";
-	haystackFile = string(argv[1]) + "/haystackIps.txt";
-	localFile = string(argv[1]) + "/localIps.txt";
-
-	UpdateHaystackFeatures();
-
-	engine = new ClassificationEngine(suspects);
-	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
-
-
-
-	trainingCapFile = argv[2];
-
-	// We suffix the training capture files with the date/time
-	char errbuf[PCAP_ERRBUF_SIZE];
-	struct bpf_program fp;
-
-	trainingFileStream.open(trainingCapFile.data(), ios::app);
-	if(!trainingFileStream.is_open())
+	else
 	{
-		LOG(CRITICAL, "Unable to open the training capture file.", "Unable to open training capture file at: "+trainingCapFile);
+		PrintUsage();
 	}
-
-	handle = pcap_open_offline(pcapFile.c_str(), errbuf);
-	if(handle == NULL)
-	{
-		LOG(CRITICAL, "Unable to start packet capture.", "Couldn't open pcap file: "+pcapFile+": "+string(errbuf)+".");
-	}
-
-	if(pcap_compile(handle, &fp, "not src host 0.0.0.0", 0, PCAP_NETMASK_UNKNOWN) == -1)
-	{
-		LOG(CRITICAL, "Unable to start packet capture.", string("Couldn't parse filter: ") + pcap_geterr(handle) +".");
-	}
-
-	if(pcap_setfilter(handle, &fp) == -1)
-	{
-		LOG(CRITICAL, "Unable to start packet capture.", string("Couldn't install filter: ") + pcap_geterr(handle) +".");
-	}
-
-	pcap_freecode(&fp);
-	//First process any packets in the file then close all the sessions
-	pcap_dispatch(handle, -1, Nova::HandleTrainingPacket,NULL);
-
-	trainingFileStream.close();
-	LOG(DEBUG, "Done processing PCAP file", "");
-
-	pcap_close(handle);
 
 	return EXIT_SUCCESS;
 }
@@ -136,15 +93,25 @@ namespace Nova
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-	cout << "  novatrainer novaCaptureFolder trainingOutput.dump" << endl;
+	cout << "  novatrainer --convert novaCaptureFolder" << endl;
+	cout << "  novatrainer --capture novaCaptureFolder" << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);
 }
 
+void SaveAndExit(int param)
+{
+	if (mode == trainingMode_capture)
+	{
+		pcap_dump_close(pcapDumpStream);
+	}
+
+	exit(EXIT_SUCCESS);
+}
+
 void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
 {
-
 	if(packet == NULL)
 	{
 		LOG(ERROR, "Failed to capture packet!","");
@@ -164,9 +131,6 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 		}
 		default:
 		{
-			//stringstream ss;
-			//ss << "Ignoring a packet with unhandled protocol #" << (uint16_t)(ntohs(((struct ether_header *)packet)->ether_type));
-			//LOG(DEBUG, ss.str(), "");
 			return;
 		}
 	}
@@ -202,9 +166,9 @@ void update(const in_addr_t& key)
 }
 
 
-void UpdateHaystackFeatures()
+void UpdateHaystackFeatures(string haystackFilePath)
 {
-	vector<string> haystackAddresses = Config::GetHaystackAddresses(haystackFile);
+	vector<string> haystackAddresses = Config::GetHaystackAddresses(haystackFilePath);
 
 	vector<uint32_t> haystackNodes;
 	for(uint i = 0; i < haystackAddresses.size(); i++)
@@ -214,6 +178,85 @@ void UpdateHaystackFeatures()
 	}
 
 	suspects.SetHaystackNodes(haystackNodes);
+}
+
+
+void ConvertCaptureToDump(std::string captureFolder)
+{
+	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
+	{
+		LOG(CRITICAL, "Unable to change folder to " + Config::Inst()->GetPathHome(), "");
+	}
+
+
+	engine = new ClassificationEngine(suspects);
+	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
+
+	string dumpFile = captureFolder + "/nova.dump";
+	string pcapFile = captureFolder + "/capture.pcap";
+
+	trainingFileStream.open(dumpFile, ios::app);
+	if(!trainingFileStream.is_open())
+	{
+		LOG(CRITICAL, "Unable to open the training capture file.", "Unable to open training capture file at: "+dumpFile);
+	}
+
+	FilePacketCapture *capture = new FilePacketCapture(pcapFile);
+	capture->SetPacketCb(HandleTrainingPacket);
+	capture->Init();
+	capture->StartCaptureBlocking();
+
+
+	LOG(DEBUG, "Done processing PCAP file.", "");
+
+	trainingFileStream.close();
+}
+
+void CaptureData(std::string captureFolder, std::string interface)
+{
+	LOG(DEBUG, "Starting data capture", "");
+
+    // Write out the state of the haystack at capture
+    if(IsHaystackUp())
+    {
+    	string haystackFile = captureFolder + "/haystackIps.txt";
+        vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathConfigHoneydHS());
+        vector<string> haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
+
+        ofstream haystackIpStream(haystackFile);
+        for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
+        {
+            haystackIpStream << haystackDhcpAddresses.at(i) << endl;
+        }
+        for(uint i = 0; i < haystackAddresses.size(); i++)
+        {
+            haystackIpStream << haystackAddresses.at(i) << endl;
+        }
+
+        haystackIpStream.close();
+    }
+
+    // Prepare for packet capture
+	string trainingCapFile = captureFolder + "/capture.pcap";
+
+    if(system(string("mkdir " + captureFolder).c_str()))
+    {
+        // Not really an problem, throws compiler warning if we don't catch the system call though
+    }
+
+    InterfacePacketCapture *capture = new InterfacePacketCapture(interface);
+    capture->Init();
+    capture->SetPacketCb(SavePacket);
+
+    pcap_t *handle = capture->GetPcapHandle();
+    pcapDumpStream = pcap_dump_open(handle, trainingCapFile.c_str());
+
+    capture->StartCaptureBlocking();
+}
+
+void SavePacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
+{
+	 pcap_dump((u_char *)pcapDumpStream, pkthdr, packet);
 }
 
 }

@@ -27,10 +27,24 @@
 
 namespace Nova
 {
+	enum trainingMode {
+		trainingMode_capture,
+		trainingMode_convert
+	};
 	void PrintUsage();
+
+	void ConvertCaptureToDump(std::string captureFolder);
+
+	void CaptureData(std::string captureFolder, std::string interface);
+	void SavePacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet);
+
+	void SaveAndExit(int param);
+
+
 	void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet);
 	void update(const in_addr_t& key);
 	void UpdateHaystackFeatures();
+	void UpdateAndStore(const in_addr_t& key);
 }
 
 #endif /* NOVATRAINER_H_ */
