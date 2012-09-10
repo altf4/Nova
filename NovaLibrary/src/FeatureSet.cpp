@@ -39,7 +39,7 @@ string FeatureSet::m_featureNames[] =
 		"Packet Size Deviation",
 		"Protected IPs Contacted",
 		"Ports Contacted",
-		"Packet Interval Mean",
+		"Packets Per Second",
 		"Packet Interval Deviation",
 		"TCP Percent SYN",
 		"TCP Percent FIN",
@@ -181,15 +181,15 @@ void FeatureSet::CalculateAll()
 	{
 			Calculate(DISTINCT_PORTS);
 	}
-	if(Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
+	if(Config::Inst()->IsFeatureEnabled(PACKETS_PER_SECOND))
 	{
-			Calculate(PACKET_INTERVAL_MEAN);
+			Calculate(PACKETS_PER_SECOND);
 	}
 	if(Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
 	{
-		if(!Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
+		if(!Config::Inst()->IsFeatureEnabled(PACKETS_PER_SECOND))
 		{
-			Calculate(PACKET_INTERVAL_MEAN);
+			Calculate(PACKETS_PER_SECOND);
 		}
 		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
@@ -321,20 +321,20 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			break;
 		}
 		///Measures the distribution of intervals between packets
-		case PACKET_INTERVAL_MEAN:
+		case PACKETS_PER_SECOND:
 		{
 			if(m_intervalTable.size() == 0)
 			{
-				m_features[PACKET_INTERVAL_MEAN] = 0;
+				m_features[PACKETS_PER_SECOND] = 0;
 				break;
 			}
-			m_features[PACKET_INTERVAL_MEAN] = (((double)m_totalInterval)/((double)(m_intervalTable.size())));
+			m_features[PACKETS_PER_SECOND] = (((double)m_totalInterval)/((double)(m_packetCount - 1)));
 			break;
 		}
 		///Measures the distribution of intervals between packets
 		case PACKET_INTERVAL_DEVIATION:
 		{
-			double mean = m_features[PACKET_INTERVAL_MEAN], variance = 0, totalCount = m_intervalTable.size();
+			double mean = m_features[PACKETS_PER_SECOND], variance = 0, totalCount = m_intervalTable.size();
 			for(Interval_Table::iterator it = m_intervalTable.begin() ; it != m_intervalTable.end(); it++)
 			{
 				variance += it->second*(pow((it->first - mean), 2)/totalCount);

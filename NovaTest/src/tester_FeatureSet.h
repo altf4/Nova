@@ -95,6 +95,6 @@ TEST_F(FeatureSetTest, test_Calculate)
 	EXPECT_EQ(fset.m_features[PACKET_SIZE_MEAN], 256);
 	EXPECT_EQ(fset.m_features[DISTINCT_IPS], 2);
 	EXPECT_EQ(fset.m_features[DISTINCT_PORTS], 2);
-	EXPECT_EQ(fset.m_features[PACKET_INTERVAL_MEAN], 0);
+	EXPECT_EQ(fset.m_features[PACKETS_PER_SECOND], 0);
 	EXPECT_EQ(fset.m_features[PACKET_INTERVAL_DEVIATION], 0);
 }
