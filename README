@@ -131,25 +131,47 @@ back out for the change to take effect.
 
 Refer to the Nova wiki on github for more information.
 
+
 ===============================
+High Level Nova Components
+===============================
+
+Haystack: Active honeypots
+	- The Haystack is the collection of honeypots which emulate machines on the network.
+	The haystack is created using the Honeyd daemon and runs in it's own executable. Configuration
+	for Honeyd is auto generated at /usr/share/nova/nova/Config/haystack_honeyd.config.
+
+Novad: Classification tool
+	- The Novad executable is the daemon that monitors and classifies network traffic to 
+	identify hostile looking traffic. Novad will listen promiscuously on the configured 
+	network interfaces and keep track of various statistics such as IPs contacted, ports contacted,
+	honeypots contacted, and other details. Novad is can be configured manually via the
+	configuration file /usr/share/nova/nova/Config/NOVAConfig.txt, but it is recommended that
+	you use the GUI (Quasar) unless you know what you're doing.
+
+NovaCLI: Nova Command line Interface
+	- NovaCLI provides a simple interface for accessing some of the Novad functionality. 
+	Usage for the tool can be gotten by running "novacli --help".
+
 Quasar: Nova Web Interface
-===============================
-- Nova's main GUI, Quasar, is a web interface run with a nodejs web server.
+	- Nova's main GUI, Quasar, is a web interface run with a nodejs web server.
+	
+	- To start the web interface, run the command "quasar" and go to https://localhost:8080 in
+	a web browser.
 
-- Note that the internal web interface uses SSL. If you want to generate or use your own
-SSL certificate and private key, put them in /usr/share/nova/Quasar/servercert.pem and
-/usr/share/nova/Quasar/serverkey.pem after installation.
+	Default username: nova
+	Default password: toor
+	
+	- "quasar --debug" may provide more information if there are problems. Quasar
+	launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
+	The command "forever list" can be useful for seeing the current status, and it can be stopped 
+	with "forever stop index (usually 0)". See the forever documentation for more information.
+	
+	- Note that the internal web interface uses SSL. If you want to generate or use your own
+	SSL certificate and private key, put them in /usr/share/nova/Quasar/servercert.pem and
+	/usr/share/nova/Quasar/serverkey.pem after installation.
 
-- To start the web interface, run the command "quasar" and go to https://localhost:8080 in
-a web browser (default login is username "nova" and password "toor"). 
-"quasar --debug" may provide more information if there are problems. Quasar
-launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
-The command "forever list" can be useful for seeing the current status, and it can be stopped with
-"forever stop index (usually 0)". See the forever documentation for more information.
-
-===============================
-Unit Tests
-===============================
+NovaTest: Unit Tests
 
 - If you're a developer interested in using the unit tests in NovaTest, you can find instructions at,
 
@@ -163,6 +185,86 @@ Debian Packages
 what changes to it that you want) and run the generateDebs script (as a normal user). 
 
 	./generateDebs <version number>
+
+
+
+===============================
+Tips for debugging problems
+===============================
+
+	= General problems =
+	 
+	 To enable verbose debug log messages, run the command,
+
+		novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
+
+	  If the above fails for some reason, you can also change the logging settings manually
+	  in the /usr/share/nova/nova/Config/NOVAConfig.txt file under the SERVICE_PREFERENCES setting.
+
+	= Permission Problems =
+
+	  You should be able to run quasar/novad/honeyd without needing explicit root permissions. One
+	  requirement for this is that the user you're running with is in the "nova" group and has
+	  run the nova_init script located in Installer/. This script adds the user to the group
+	  and also configures sudo (via adding a file to /etc/sudoers.d). Logging out and back in
+	  is required for the group addition to work.
+
+	  If you're seeing permission related errors, you can try the following commands,
+
+	  	sudo chmod -R g+rw /usr/share/nova 
+	  	sudo chgrp -R nova /usr/share/nova
+
+	= Web interface problems =
+	 
+	 If you can't access the web interface, try stopping it if it's running in 'forever' and 
+	  manually running it as a foreground process with the commands,
+
+	  	forever stopall
+		quasal --debug
+
+      This should provide more verbose output and show if it is crashing rather than running it
+	  as a background daemon process.
+
+
+	  = Novad Problems =
+
+	  If Novad appears to be having problems, try to start it manually instead of as a background
+	  process with the command
+	  	
+		novacli start nova debug
+
+
+	  = Haystack Problems =
+
+	  If the Haystack appears to be having problems, try to start it manually instead of as a
+	  background process with the command,
+
+	  	novacli start haystack debug
+	
+	= Reinstalling =
+
+	  If something gets messed up to the point you want to start over, you can do so with the
+	  commands,
+
+		cd $NOVA_SOURCE
+		sudo make reinstall
+
+	  Note that this will remove any configuration changes that you made.
+
+	 = Building with debugging symbols =
+
+	  If you're seeing novad crash, it might be helpful to compile with debugging symbols and 
+	  get a stack trace. 
+
+	    cd $NOVA_SOURCE
+		make clean
+		make debug
+		make reinstall
+
+		gdb novad
+		run
+		backtrack
+
 
 ===============================
 Contact us
