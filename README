@@ -100,7 +100,7 @@ Change into the $NOVAD_SOURCE folder where the novad source code resides.
 To get the dependencies for the Quasar web UI (nodejs, npm's forever, and cvv8) you can either 
 install them manually or get them by running the following script,
 
-    sudo bash getDependencies.sh
+    sudo bash Quasar/getDependencies.sh
 
 To build and install Nova run the commands,
 
