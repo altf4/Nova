@@ -23,7 +23,6 @@ CREATE TABLE statistics (
 
 		ip_traffic_distribution DOUBLE,
 		port_traffic_distribution DOUBLE,
-		haystack_event_frequency DOUBLE,
 		packet_size_mean DOUBLE,
 		packet_size_deviation DOUBLE,
 		distinct_ips DOUBLE,

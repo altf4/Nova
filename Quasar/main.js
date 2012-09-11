@@ -94,7 +94,7 @@ var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = 
 var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
 var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
 
-var dbqSuspectAlertsGet = db.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,haystack_event_frequency,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_interval_deviation,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+var dbqSuspectAlertsGet = db.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_interval_deviation,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
 var dbqSuspectAlertsDeleteAll = db.prepare('DELETE FROM suspect_alerts');
 var dbqSuspectAlertsDeleteAlert = db.prepare('DELETE FROM suspect_alerts where id = ?');
 
