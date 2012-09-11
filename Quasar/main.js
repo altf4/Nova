@@ -341,6 +341,9 @@ client.on('connect', function(connection){
              response.response_message = setting + ' is now ' + value;
              mothership.sendUTF(JSON.stringify(response));
              break;
+           case 'getHostileSuspects':
+             nova.getSuspectList(distributeSuspect);
+             break;
            default:
              console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
              break;
@@ -1413,7 +1416,6 @@ everyone.now.StopNovad = function () {
 	nova.StopNovad();
 	nova.CloseNovadConnection();
 }
-
 
 everyone.now.sendAllSuspects = function (callback) {
 	nova.getSuspectList(callback);
