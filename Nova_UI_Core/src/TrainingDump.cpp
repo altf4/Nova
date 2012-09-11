@@ -47,6 +47,7 @@ bool TrainingDump::LoadCaptureFile(string pathDumpFile)
 
 	trainingTable = new trainingFileSuspectMap();
 	trainingTable->set_empty_key("");
+	trainingTable->set_deleted_key(" ");
 
 	ifstream dataFile(pathDumpFile.data());
 	string line, ip, data;
@@ -179,6 +180,69 @@ bool TrainingDump::SaveToDb(string dbFile)
 	return true;
 }
 
+bool TrainingDump::MergeIPs(vector<string> idsToMerge, string newName)
+{
+    // Return if less than 2 entries are trying to be combined
+    if(idsToMerge.size() < 2)
+    {
+        return false;
+    }
+
+    string rootuid = newName;
+    (*trainingTable)[rootuid] = new _trainingFileSuspect();
+    (*trainingTable)[rootuid]->points = vector<string>();
+    (*trainingTable)[rootuid]->isIncluded = true;
+    (*trainingTable)[rootuid]->isHostile = true;
+    (*trainingTable)[rootuid]->uid = rootuid;
+    (*trainingTable)[rootuid]->description = rootuid;
+
+    for(uint i = 0; i < idsToMerge.size(); i++)
+    {
+        string id = idsToMerge.at(i);
+
+        if (!trainingTable->keyExists(id))
+        {
+        	continue;
+        }
+
+        // Append all the old suspect's points to our new group entry
+        for(uint j = 0; j < (*trainingTable)[id]->points.size(); j++)
+        {
+            (*trainingTable)[rootuid]->points.push_back((*trainingTable)[id]->points.at(j));
+        }
+
+        delete trainingTable->get(id);
+        trainingTable->erase(id);
+    }
+
+    return true;
+}
+
+bool TrainingDump::MergeBenign(std::string newName)
+{
+	vector<string> benignIps;
+	for (trainingFileSuspectMap::iterator it = trainingTable->begin(); it != trainingTable->end(); it++)
+	{
+		if (!it->second->isHostile)
+		{
+			benignIps.push_back(it->first);
+		}
+	}
+
+	bool error = false;
+	if (!MergeIPs(benignIps, newName))
+	{
+		error = true;
+	}
+
+	if (!SetIsHostile(newName, false))
+	{
+		error = true;
+		LOG(ERROR, "Unable to set new Merged Benign group to benighn!", "");
+	}
+
+	return error;
+}
 
 // TODO: Fix this so it works with correct normalization
 void TrainingDump::ThinTrainingPoints(double distanceThreshhold)

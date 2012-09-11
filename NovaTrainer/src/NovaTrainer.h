@@ -29,9 +29,12 @@ namespace Nova
 {
 	enum trainingMode {
 		trainingMode_capture,
-		trainingMode_convert
+		trainingMode_convert,
+		trainingMode_save
 	};
 	void PrintUsage();
+
+	void SaveToDatabaseFile(std::string captureFolder, std::string databaseFile);
 
 	void ConvertCaptureToDump(std::string captureFolder);
 

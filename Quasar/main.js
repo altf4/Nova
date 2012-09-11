@@ -624,7 +624,7 @@ app.get('/importCapture', passport.authenticate('basic', {session: false}), func
 	}
 
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/capture.dump";
+	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/nova.dump";
 	var ips = trainingDb.GetCaptureIPs(trainingSession);
 
 	if (ips === undefined) {
@@ -658,7 +658,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', {session: false}),
 	var descriptions = new Object();
 
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/capture.dump";
+	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/nova.dump";
 
 	var trainingDump = new novaconfig.TrainingDumpBinding();
 	if (!trainingDump.LoadCaptureFile(trainingSession)) {
@@ -1667,7 +1667,7 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 	//config.WriteSetting("TRAINING_SESSION", "null");
 	nova.StopNovad();
 
-	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/capture.dump',
+	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/nova.dump',
 
 	function (error, stdout, stderr) {
 		callback(stderr);
@@ -1675,7 +1675,7 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 }
 
 everyone.now.GetCaptureIPs = function (trainingSession, callback) {
-	return trainingDb.GetCaptureIPs(NovaHomePath + "/Data/" + trainingSession + "/capture.dump");
+	return trainingDb.GetCaptureIPs(NovaHomePath + "/Data/" + trainingSession + "/nova.dump");
 }
 
 everyone.now.WizardHasRun = function (callback) {

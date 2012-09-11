@@ -23,6 +23,7 @@
 #include "EvidenceTable.h"
 #include "SuspectTable.h"
 #include "NovaTrainer.h"
+#include "TrainingDump.h"
 #include "Evidence.h"
 #include "Logger.h"
 
@@ -38,7 +39,6 @@
 
 using namespace std;
 using namespace Nova;
-
 
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
@@ -71,13 +71,24 @@ int main(int argc, const char *argv[])
 	{
 		mode = trainingMode_capture;
 		captureFolder = string(argv[2]);
-		CaptureData(captureFolder, "eth0");
+		string interface = string(argv[3]);
+
+		CaptureData(captureFolder, interface);
 	}
 	else if (string(argv[1]) == "--convert")
 	{
 		mode = trainingMode_convert;
-		captureFolder = string(argv[1]);
+		captureFolder = string(argv[2]);
+
 		ConvertCaptureToDump(captureFolder);
+	}
+	else if (string(argv[1]) == "--save")
+	{
+		mode = trainingMode_save;
+		captureFolder = string(argv[2]);
+		string databaseFile = string(argv[3]);
+
+		SaveToDatabaseFile(captureFolder, databaseFile);
 	}
 	else
 	{
@@ -93,8 +104,10 @@ namespace Nova
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
+	// TODO
+	cout << "  novatrainer --writeToDatabase novaCaptureFolder databaseFile.db" << endl;
 	cout << "  novatrainer --convert novaCaptureFolder" << endl;
-	cout << "  novatrainer --capture novaCaptureFolder" << endl;
+	cout << "  novatrainer --capture novaCaptureFolder interface" << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);
@@ -195,6 +208,9 @@ void ConvertCaptureToDump(std::string captureFolder)
 	string dumpFile = captureFolder + "/nova.dump";
 	string pcapFile = captureFolder + "/capture.pcap";
 
+   	string haystackFile = captureFolder + "/haystackIps.txt";
+	UpdateHaystackFeatures(haystackFile);
+
 	trainingFileStream.open(dumpFile, ios::app);
 	if(!trainingFileStream.is_open())
 	{
@@ -258,5 +274,32 @@ void SavePacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *pac
 {
 	 pcap_dump((u_char *)pcapDumpStream, pkthdr, packet);
 }
+
+void SaveToDatabaseFile(string captureFolder, string databaseFile)
+{
+	string hostilesFile = captureFolder + "/hostiles.txt";
+	vector<string> hostileIps = Config::GetIpAddresses(hostilesFile);
+
+
+	string dumpFile = captureFolder + "/nova.dump";
+
+	TrainingDump dump;
+	dump.LoadCaptureFile(dumpFile);
+	dump.SetAllIsHostile(false);
+	dump.SetAllIsIncluded(true);
+
+	for (vector<string>::iterator it = hostileIps.begin(); it != hostileIps.end(); it++)
+	{
+		if (!dump.SetIsHostile(*it, true))
+		{
+			LOG(ERROR, "hostiles.txt specifies IP " + (*it) + " as hostile, but it does not exist in the capture file.", "");
+		}
+	}
+
+	dump.MergeIPs(hostileIps, "Hostile IPs from capture: " + captureFolder);
+	dump.MergeBenign("Benign IPs from capture: " + captureFolder);
+	dump.SaveToDb(databaseFile);
+}
+
 
 }
