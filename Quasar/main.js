@@ -233,12 +233,12 @@ initLogWatch();
 // is ideal. Also need to find a way to maintain IP address of Mothership and any needed
 // credentials for reboots, etc. 
 
-// Should eventually be a value stored within the Config file
+// TODO: Make configurable
 var connected = '10.10.1.1:8081';
 
 var WebSocketClient = require('websocket').client;
 var client = new WebSocketClient();
-// as should this
+// TODO: Make configurable
 var clientId = 'failbox';
 var mothership;
 var reconnecting = false;
@@ -251,6 +251,7 @@ client.on('connectFailed', function(error)
   if(!reconnecting)
   {
     console.log('No current attempts to reconnect, starting reconnect attempts every 5 seconds.');
+    // TODO: Don't have static lengths for reconnect interval; make configurable
     clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 5000);
     reconnecting = true;
   }
