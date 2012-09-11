@@ -270,7 +270,7 @@ client.on('connect', function(connection){
   mothership = connection;
   var quick = {};
   quick.type = 'addId';
-  quick.id = 'failbox';
+  quick.id = clientId;
   // I don't know that we HAVE to use UTF8 here, there's a send() method as 
   // well as a 'data' member inside the message objects instead of utf8Data.
   // But, as it was in the Websockets tutorial Pherric found, we'll use it for now
@@ -1889,6 +1889,19 @@ var distributeSuspect = function (suspect) {
 	try {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
+  if(String(suspect.GetIsHostile()) == 'true')
+  {
+    var d = new Date(suspect.GetLastPacketTime() * 1000);
+    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+    var send = {};
+    send.string = suspect.ToString();
+    send.ip = suspect.GetIpString();
+    send.classification = String(suspect.GetClassification());
+    send.lastpacket = dString;
+    send.ishostile = String(suspect.GetIsHostile());
+    
+    everyone.now.SendHostileEventToMothership(send);
+  }
 };
 
 var distributeAllSuspectsCleared = function () {
@@ -1936,6 +1949,10 @@ function switcher(err, user, success, done) {
 		});
 	}
 	return done(null, user);
+}
+
+function pad(num) {
+    return ("0" + num.toString()).slice(-2);
 }
 
 app.get('/*', passport.authenticate('basic', {session: false}));

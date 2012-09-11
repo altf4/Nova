@@ -205,18 +205,6 @@ block headerAdditions
        }
 
       suspectGrid.PushEntry(row);
-      
-      if(String(suspect.GetIsHostile) == 'true')
-      {
-        var send = {};
-        send.string = suspect.ToString;
-        send.ip = suspect.GetIpString;
-        send.classification = String(suspect.GetClassification);
-        send.lastpacket = dString;
-        send.ishostile = String(suspect.GetIsHostile);
-        
-        now.SendHostileEventToMothership(send);
-      }
     };
 
     var applyAdvancedFilter = function() {
