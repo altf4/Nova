@@ -250,8 +250,8 @@ client.on('connectFailed', function(error)
   console.log('Connect to Mothership error: ' + error.toString());
   if(!reconnecting)
   {
-    console.log('No current attempts to reconnect, starting reconnect attempts every 30 seconds.');
-    clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 30000);
+    console.log('No current attempts to reconnect, starting reconnect attempts every 5 seconds.');
+    clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 5000);
     reconnecting = true;
   }
 });
@@ -353,8 +353,8 @@ client.on('connect', function(connection){
     mothership = undefined;
     if(!reconnecting)
     {
-      console.log('closed, beginning reconnect attempts every 30 seconds');
-      clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 30000);
+      console.log('closed, beginning reconnect attempts every 5 seconds');
+      clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 5000);
       reconnecting = true;
     }
   });
