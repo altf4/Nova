@@ -1872,7 +1872,6 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 everyone.now.SendHostileEventToMothership = function(suspect) {
   suspect.client = clientId;
   suspect.type = 'hostileSuspect';
-  console.log(JSON.stringify(suspect));
   if(mothership != undefined)
   {
     mothership.sendUTF(JSON.stringify(suspect));
