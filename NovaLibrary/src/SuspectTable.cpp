@@ -72,6 +72,7 @@ SuspectTable::~SuspectTable()
 	for(SuspectHashTable::iterator it = m_suspectTable.begin(); it != m_suspectTable.end(); it++)
 	{
 		delete m_suspectTable[it->first];
+		m_suspectTable[it->first] = NULL;
 	}
 	m_suspectTable.clear();
 	for(SuspectLockTable::iterator it = m_lockTable.begin(); it != m_lockTable.end(); it++)
@@ -385,6 +386,7 @@ bool SuspectTable::Erase(const in_addr_t& key)
 		if(m_suspectTable.keyExists(key))
 		{
 			delete m_suspectTable[key];
+			m_suspectTable[key] = NULL;
 			m_suspectTable.erase(key);
 		}
 
@@ -420,6 +422,7 @@ void SuspectTable::EraseAllSuspects()
 	for(SuspectHashTable::iterator it = m_suspectTable.begin(); it != m_suspectTable.end(); it++)
 	{
 		delete m_suspectTable[it->first];
+		m_suspectTable[it->first] = NULL;
 	}
 	m_suspectTable.clear();
 }
@@ -670,13 +673,13 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			catch(Nova::hashMapException& e)
 			{
 				LOG(ERROR, "The state file may be corrupt, a hash table invalid key exception was caught during deserialization", "");
-				delete tableBuffer;
+				delete[] tableBuffer;
 				return 0;
 			}
 			catch(Nova::serializationException &e)
 			{
 				LOG(ERROR, "The state file may be corrupt, deserialization of a suspect failed", "");
-				delete tableBuffer;
+				delete[] tableBuffer;
 				return 0;
 			}
 
@@ -688,6 +691,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 				LOG(WARNING,"Discarding invalid suspect.",
 					"A suspect containing no evidence was detected and discarded");
 				delete newSuspect;
+				newSuspect = NULL;
 				continue;
 			}
 
@@ -699,6 +703,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 				SetNeedsClassificationUpdate(key);
 				UnlockSuspect(key);
 				delete newSuspect;
+				newSuspect = NULL;
 				continue;
 			}
 			else
@@ -763,7 +768,7 @@ bool SuspectTable::IsEmptySuspect(Suspect *suspect)
 //				of the linked list.
 // Note: Every evidence object contained in the list is deallocated after use, invalidating the pointers,
 //		this is a specialized function designed only for use by Consumer threads.
-void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
+void SuspectTable::ProcessEvidence(Evidence *evidence, bool readOnly)
 {
 	// ~~~ Write lock ~~~
 	Lock lock (&m_lock, WRITE_LOCK);
@@ -786,52 +791,26 @@ void SuspectTable::ProcessEvidence(Evidence *&evidence, bool readOnly)
 
 	//Consume and deallocate all the evidence
 	//If a suspect already exists
-	if(m_suspectTable.keyExists(key))
-	{
-		//If we don't want to deallocate the Evidence
-		if(readOnly)
-		{
-			m_suspectTable[key]->ReadEvidence(evidence);
-		}
-		//If we do
-		else
-		{
-			m_suspectTable[key]->ConsumeEvidence(evidence);
-		}
-		SetNeedsClassificationUpdate(key);
-	}
-	//If it needs to be allocated
-	else
+	if(!m_suspectTable.keyExists(key))
 	{
 		m_keys.push_back(key);
-		//If we don't want to deallocate the Evidence
-		// TODO Think this is outdated with the consuming function that doesn't delete evidence
-
 		m_suspectTable[key] = new Suspect();
-
 
 		m_suspectTable[key]->m_features.SetHaystackNodes(m_haystackNodesCached);
 		m_suspectTable[key]->m_unsentFeatures.SetHaystackNodes(m_haystackNodesCached);
-
-		if(readOnly)
-		{
-			Evidence *tempEv = new Evidence();
-			*tempEv = *evidence;
-			tempEv->m_next = NULL;
-
-			if(evidence->m_next != NULL)
-			{
-				m_suspectTable[key]->ReadEvidence(evidence->m_next);
-			}
-		}
-		//If we do
-		else
-		{
-			m_suspectTable[key]->ConsumeEvidence(evidence);
-
-		    SetNeedsClassificationUpdate(key);
-		}
 	}
+
+	//If we don't want to deallocate the Evidence
+	if(readOnly)
+	{
+		m_suspectTable[key]->ReadEvidence(evidence);
+	}
+	//If we do
+	else
+	{
+		m_suspectTable[key]->ConsumeEvidence(evidence);
+	}
+	SetNeedsClassificationUpdate(key);
 
 	//Unlock the suspect (CheckIn)
 	UnlockSuspect(key);

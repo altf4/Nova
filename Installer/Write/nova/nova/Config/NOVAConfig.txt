@@ -224,7 +224,7 @@ GO_TO_LIVE 1
 # 	0: Disabled
 #	1: Enabled
 #
-ENABLED_FEATURES 11111111111111
+ENABLED_FEATURES 1111111111111
 
 ############################################
 # SAVE_FREQUENCY #

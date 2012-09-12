@@ -94,7 +94,7 @@ var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = 
 var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
 var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
 
-var dbqSuspectAlertsGet = db.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,haystack_event_frequency,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_interval_deviation,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+var dbqSuspectAlertsGet = db.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_ports,packet_interval_mean,packet_interval_deviation,packet_size_deviation,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
 var dbqSuspectAlertsDeleteAll = db.prepare('DELETE FROM suspect_alerts');
 var dbqSuspectAlertsDeleteAlert = db.prepare('DELETE FROM suspect_alerts where id = ?');
 
@@ -771,7 +771,7 @@ app.get('/importCapture', passport.authenticate('basic', {session: false}), func
 	}
 
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/capture.dump";
+	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/nova.dump";
 	var ips = trainingDb.GetCaptureIPs(trainingSession);
 
 	if (ips === undefined) {
@@ -805,7 +805,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', {session: false}),
 	var descriptions = new Object();
 
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/capture.dump";
+	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/nova.dump";
 
 	var trainingDump = new novaconfig.TrainingDumpBinding();
 	if (!trainingDump.LoadCaptureFile(trainingSession)) {
@@ -1813,7 +1813,7 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 	//config.WriteSetting("TRAINING_SESSION", "null");
 	nova.StopNovad();
 
-	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/capture.dump',
+	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/nova.dump',
 
 	function (error, stdout, stderr) {
 		callback(stderr);
@@ -1821,7 +1821,7 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 }
 
 everyone.now.GetCaptureIPs = function (trainingSession, callback) {
-	return trainingDb.GetCaptureIPs(NovaHomePath + "/Data/" + trainingSession + "/capture.dump");
+	return trainingDb.GetCaptureIPs(NovaHomePath + "/Data/" + trainingSession + "/nova.dump");
 }
 
 everyone.now.WizardHasRun = function (callback) {

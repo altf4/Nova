@@ -51,7 +51,11 @@ void PacketCapture::SetFilter(string filter)
 	}
 
 	pcap_freecode(&fp);
+}
 
+pcap_t* PacketCapture::GetPcapHandle()
+{
+	return m_handle;
 }
 
 int PacketCapture::GetDroppedPackets()

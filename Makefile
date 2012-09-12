@@ -3,7 +3,6 @@
 all: release
 
 all-the-things: release 
-	$(MAKE) quasar
 
 #Release Target
 release:
@@ -304,7 +303,6 @@ reset: uninstall-files
 
 reset-debug: 
 	$(MAKE) clean
-	$(MAKE) debug
 	$(MAKE) test
 	$(MAKE) reinstall-debug
 

@@ -66,11 +66,11 @@ public:
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
 	// Note: This function deallocates the linked list of Evidence objects
-	void ConsumeEvidence(Evidence *&evidence);
+	void ConsumeEvidence(Evidence *evidence);
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
 	// Note: Unlike Consume, this function does not deallocate the evidence objects, everything else is the same as Consume.
-	void ReadEvidence(Evidence *&evidence);
+	void ReadEvidence(Evidence *evidence);
 
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();

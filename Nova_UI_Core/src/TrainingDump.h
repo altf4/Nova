@@ -57,6 +57,9 @@ public:
 
 	bool SaveToDb(std::string dbFile);
 
+	bool MergeIPs(std::vector<std::string> idsToMerge, std::string newName);
+	bool MergeBenign(std::string newName);
+
 	// Removes consecutive points who's squared distance is less than a specified distance
 	void ThinTrainingPoints(double distanceThreshhold);
 

@@ -35,12 +35,11 @@ string FeatureSet::m_featureNames[] =
 {
 		"IP Traffic Distribution",
 		"Port Traffic Distribution",
-		"Haystack Event Frequency",
 		"Packet Size Mean",
 		"Packet Size Deviation",
 		"Protected IPs Contacted",
 		"Ports Contacted",
-		"Packet Interval Mean",
+		"Packets Per Second",
 		"Packet Interval Deviation",
 		"TCP Percent SYN",
 		"TCP Percent FIN",
@@ -162,10 +161,6 @@ void FeatureSet::CalculateAll()
 	{
 			Calculate(PORT_TRAFFIC_DISTRIBUTION);
 	}
-	if(Config::Inst()->IsFeatureEnabled(HAYSTACK_EVENT_FREQUENCY))
-	{
-			Calculate(HAYSTACK_EVENT_FREQUENCY);
-	}
 	if(Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
 	{
 			Calculate(PACKET_SIZE_MEAN);
@@ -186,15 +181,15 @@ void FeatureSet::CalculateAll()
 	{
 			Calculate(DISTINCT_PORTS);
 	}
-	if(Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
+	if(Config::Inst()->IsFeatureEnabled(PACKETS_PER_SECOND))
 	{
-			Calculate(PACKET_INTERVAL_MEAN);
+			Calculate(PACKETS_PER_SECOND);
 	}
 	if(Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
 	{
-		if(!Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_MEAN))
+		if(!Config::Inst()->IsFeatureEnabled(PACKETS_PER_SECOND))
 		{
-			Calculate(PACKET_INTERVAL_MEAN);
+			Calculate(PACKETS_PER_SECOND);
 		}
 		Calculate(PACKET_INTERVAL_DEVIATION);
 	}
@@ -292,23 +287,6 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			}
 			break;
 		}
-		///Number of ScanEvents that the suspect is responsible for per second
-		case HAYSTACK_EVENT_FREQUENCY:
-		{
-			double haystack_events = m_packetCount - m_IPTable[1];
-			// if > 0, .second is a time_t(uint) sum of all intervals across all nova instances
-			if(m_totalInterval)
-			{
-				//Packet count - local host contacts == haystack events
-				m_features[HAYSTACK_EVENT_FREQUENCY] = haystack_events / ((double)m_totalInterval);
-			}
-			else
-			{
-				//If interval is 0, no time based information, use a default of 1 for the interval
-				m_features[HAYSTACK_EVENT_FREQUENCY] = haystack_events;
-			}
-			break;
-		}
 		///Measures the distribution of packet sizes
 		case PACKET_SIZE_MEAN:
 		{
@@ -343,20 +321,20 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			break;
 		}
 		///Measures the distribution of intervals between packets
-		case PACKET_INTERVAL_MEAN:
+		case PACKETS_PER_SECOND:
 		{
 			if(m_intervalTable.size() == 0)
 			{
-				m_features[PACKET_INTERVAL_MEAN] = 0;
+				m_features[PACKETS_PER_SECOND] = 0;
 				break;
 			}
-			m_features[PACKET_INTERVAL_MEAN] = (((double)m_totalInterval)/((double)(m_intervalTable.size())));
+			m_features[PACKETS_PER_SECOND] = (((double)m_totalInterval)/((double)(m_packetCount - 1)));
 			break;
 		}
 		///Measures the distribution of intervals between packets
 		case PACKET_INTERVAL_DEVIATION:
 		{
-			double mean = m_features[PACKET_INTERVAL_MEAN], variance = 0, totalCount = m_intervalTable.size();
+			double mean = m_features[PACKETS_PER_SECOND], variance = 0, totalCount = m_intervalTable.size();
 			for(Interval_Table::iterator it = m_intervalTable.begin() ; it != m_intervalTable.end(); it++)
 			{
 				variance += it->second*(pow((it->first - mean), 2)/totalCount);

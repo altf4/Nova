@@ -66,6 +66,7 @@ ClassificationEngine::~ClassificationEngine()
 void ClassificationEngine::FormKdTree()
 {
 	delete m_kdTree;
+	m_kdTree = NULL;
 	//Normalize the data points
 	//Foreach data point
 	for(uint j = 0;j < Config::Inst()->GetEnabledFeatureCount();j++)
