@@ -136,9 +136,11 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 		case ETHERTYPE_IP:
 		{
 			//Prepare Packet structure
-			Evidence *evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
-			suspects.ProcessEvidence(evidencePacket);
-			update(evidencePacket->m_evidencePacket.ip_src);
+			Evidence evidencePacket(packet + sizeof(struct ether_header), pkthdr);
+			uint32_t ipSrc = evidencePacket.m_evidencePacket.ip_src;
+
+			suspects.ProcessEvidence(&evidencePacket, true);
+			update(ipSrc);
 
 			return;
 		}
@@ -181,7 +183,7 @@ void update(const in_addr_t& key)
 
 void UpdateHaystackFeatures(string haystackFilePath)
 {
-	vector<string> haystackAddresses = Config::GetHaystackAddresses(haystackFilePath);
+	vector<string> haystackAddresses = Config::GetIpAddresses(haystackFilePath);
 
 	vector<uint32_t> haystackNodes;
 	for(uint i = 0; i < haystackAddresses.size(); i++)
@@ -205,22 +207,24 @@ void ConvertCaptureToDump(std::string captureFolder)
 	engine = new ClassificationEngine(suspects);
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 
+
 	string dumpFile = captureFolder + "/nova.dump";
 	string pcapFile = captureFolder + "/capture.pcap";
 
    	string haystackFile = captureFolder + "/haystackIps.txt";
 	UpdateHaystackFeatures(haystackFile);
 
-	trainingFileStream.open(dumpFile, ios::app);
+
+	trainingFileStream.open(dumpFile);
 	if(!trainingFileStream.is_open())
 	{
 		LOG(CRITICAL, "Unable to open the training capture file.", "Unable to open training capture file at: "+dumpFile);
 	}
 
-	FilePacketCapture *capture = new FilePacketCapture(pcapFile);
-	capture->SetPacketCb(HandleTrainingPacket);
-	capture->Init();
-	capture->StartCaptureBlocking();
+	FilePacketCapture capture(pcapFile);
+	capture.SetPacketCb(HandleTrainingPacket);
+	capture.Init();
+	capture.StartCaptureBlocking();
 
 
 	LOG(DEBUG, "Done processing PCAP file.", "");
