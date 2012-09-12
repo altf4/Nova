@@ -28,6 +28,10 @@ var NovaGrid = function(columns, keyIndex, tableElement) {
     this.m_sortDescending = true;
 	this.m_tableElement = tableElement;
 	this.m_elements = new Object();
+	this.m_renderCallback = function() {};
+	
+	this.m_currentPage = 0;
+	this.m_rowsPerPage = Number.MAX_VALUE;
 
 	this.GenerateTableHeader();
 }
@@ -57,6 +61,41 @@ NovaGrid.prototype = {
 		this.headerHTML += '</TR>';
 	}
 
+	, GetRenderCallback: function() {return this.m_renderCallback;}
+	, SetRenderCallback: function(cb) {this.m_renderCallback = cb;}
+	, GetRowsPerPage: function() {return this.m_rowsPerPage;}
+	, SetRowsPerPage: function(rows) {this.m_rowsPerPage = rows;}
+	, GetCurrentPage: function() {return this.m_currentPage;}
+
+	, SetCurrentPage: function(page) {
+		if (page >= 0 && page < this.GetNumberOfPages()) {
+			this.m_currentPage = page;
+			this.Render();
+		}
+	}
+
+	, NextPage: function() {
+		if (this.GetNumberOfPages() == 1) {return};
+		if (this.m_currentPage + 1 >= this.GetNumberOfPages()) {
+			this.SetCurrentPage(0);
+		} else {
+			this.SetCurrentPage(this.m_currentPage + 1);
+		}
+	}
+
+	, PreviousPage: function() {
+		if (this.GetNumberOfPages() == 1) {return};
+		if (this.m_currentPage - 1 <= 0) {
+			this.SetCurrentPage(this.GetNumberOfPages() - 1);
+		} else {
+			this.SetCurrentPage(this.m_currentPage - 1);
+		}
+	}
+
+	, GetNumberOfPages: function() {
+		return Math.ceil(Object.keys(this.m_elements).length/this.m_rowsPerPage);
+	}
+
     // Returns the HTML for the table
 	, GetTable: function() {
 		var innerTableString = this.headerHTML;
@@ -80,7 +119,11 @@ NovaGrid.prototype = {
 			}
 		});
 
-		for (var i = 0; i < arrayRep.length; i++) {
+		if (arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
+			return innerTableString;	
+		}
+
+		for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
 			innerTableString += '<TR>';
 			for (var c = 0; c < this.m_columns.length; c++) {
 				if (this.m_columns[c].formatter !== undefined) {
@@ -126,6 +169,7 @@ NovaGrid.prototype = {
 		//theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
 		
 		this.m_tableElement = replaceHtml(this.m_tableElement, this.GetTable());
+		this.m_renderCallback();
 	}
 }
 

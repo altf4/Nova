@@ -54,6 +54,8 @@ block content
       br
       button(onClick='applyAdvancedFilter()') Apply Advanced Filters
       button(onClick='disableAdvancedFilter()') Disable Advanced Filters
+    div#tablePages
+    br
 
   div#nova_suspects
     table#suspectTable
@@ -298,6 +300,46 @@ block headerAdditions
 
         }
     }
+
+    function onGridRendered() {
+       var gridSize = suspectGrid.GetNumberOfPages();
+       var currentPage = suspectGrid.GetCurrentPage();
+
+       var temp = document.createElement('a');
+       document.getElementById("tablePages").innerHTML = "";
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'suspectGrid.PreviousPage();');
+       var pageLinkText = document.createTextNode(" <-- ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
+
+       for (var i = 0; i < gridSize; i++) {
+           var pageLink = document.createElement('a');
+           pageLink.setAttribute('href', '#');
+           pageLink.setAttribute('onclick', 'suspectGrid.SetCurrentPage( ' + i + ');');
+
+           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
+           pageLink.appendChild(pageLinkText);
+
+           if (i == currentPage) {
+               var boldTag = document.createElement('b');
+               boldTag.appendChild(pageLink);
+
+               document.getElementById("tablePages").appendChild(boldTag);
+           } else {
+               document.getElementById("tablePages").appendChild(pageLink);
+           }    
+       }
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'suspectGrid.NextPage();');
+       var pageLinkText = document.createTextNode(" --> ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
+    }
     
     function Init() {
         theDoc = document;
@@ -310,10 +352,7 @@ block headerAdditions
         gridStructure.push({name: "Hostile"});
    
         var featureNames = String("#{featureNames}").split(",");
-        console.log("Enabled features is " + enabledFeatures);
         for (var i = 0; i < featureNames.length; i++) {
-            console.log("Checking feature named " + featureNames[i]);
-            console.log("Enabled value is " + enabledFeatures.charAt(i));
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
         }
    
@@ -321,8 +360,9 @@ block headerAdditions
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(2);
+        suspectGrid.SetRowsPerPage(100);
+        suspectGrid.SetRenderCallback(onGridRendered);
 
-        theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
         try {
           now.sendAllSuspects(now.OnNewSuspect);
          } catch(err) {
