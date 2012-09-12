@@ -6,7 +6,7 @@ block content
   label(style='font-weight: bold') Set Client Target
   br
   br
-  div(id='ipUsed')   
+  div(id='clientList')   
   br
 
   button(id='button0', style='width: 160px', onclick='startNovad();', disabled=true) Start Novad
@@ -135,7 +135,7 @@ block headerAdditions
                 label.innerHTML = clients[i];
                 div.appendChild(check);
                 div.appendChild(label);
-                document.getElementById('ipUsed').appendChild(div);
+                document.getElementById('clientList').appendChild(div);
             }
         }
     }

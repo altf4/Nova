@@ -283,7 +283,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     configSend.type = 'registerConfig';
     configSend.id = clientId;
     configSend.filename = 'NOVAConfig@' + clientId + '.txt';
-    configSend.file = fs.readFileSync(NovaHomePath + '/Config/NOVAConfig.txt');
+    configSend.file = fs.readFileSync(NovaHomePath + '/Config/NOVAConfig.txt', 'utf8');
     mothership.sendUTF(JSON.stringify(configSend));
     console.log('Registering NOVAConfig with mothership');
   

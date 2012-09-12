@@ -1,6 +1,52 @@
 extends layout
+        
+block content
+    h1 Connected Clients
+    div(id='clientList')
+
+    h1 Configuration Options
+    label TCP Timeout
+    input(type='number', name='TCP_TIMEOUT', step='1', min='0', value=TCP_TIMEOUT)    
+    br
+    label TCP Timeout Check Frequency
+    input(type='number', name='TCP_CHECK_FREQ', step='1', min='0', value=TCP_CHECK_FREQ)
 
 block headerAdditions
+    script
+        var clients = "#{CLIENTS}".split(':');
 
-block content
-	
+        function setTarget(source, target)
+        {
+            if(document.getElementById(source).checked)
+            {
+                message.id += target + ':';
+            }
+            else
+            {
+                // If unselected, remove target from message.id
+                console.log(source + ' is not checked, can not do anything until target client is set');
+            }
+        }
+
+        function setUpSelect()
+        {       
+            for(var i = 0; i < clients.length; i++)
+            {
+                if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
+                {
+                    var div = document.createElement('div');
+                    var check = document.createElement('input');
+                    check.type = 'checkbox';
+                    check.id = 'check' + i;
+                    check.name = 'check' + i;
+                    check.value = clients[i];
+                    check.setAttribute('onchange', 'setTarget(("check" + '+i+'), clients['+i+'].toString())');
+                    var label = document.createElement('label');
+                    label.value = clients[i];
+                    label.innerHTML = clients[i];
+                    div.appendChild(check);
+                    div.appendChild(label);
+                    document.getElementById('clientList').appendChild(div);
+                }
+            }
+        }

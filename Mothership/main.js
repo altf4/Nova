@@ -1,3 +1,5 @@
+var novaconfig = require('novaconfig.node');
+
 // TODO: Need to make fallback code, in case a connection
 // doesn't/can't accept websocket connections (for whatever reason)
 // Problem not a problem now, but definitely will be later
@@ -5,12 +7,17 @@ var express = require('express');
 var app = require('express').createServer();
 var nowjs = require('now');
 var fs = require('fs');
+var nova = new novaconfig.Instance();
+var config = new novaconfig.NovaConfigBinding();
+
+var NovaHomePath = config.GetPathHome();
 
 // Configure the express server to use the 
 // bodyParser so that we can view and use the 
 // contents of the req variable in the get/post
 // directives
-app.configure(function(){
+app.configure(function()
+{
 	app.use(express.bodyParser());
 	app.use(app.router);
 });
@@ -18,6 +25,7 @@ app.configure(function(){
 // Initailize the object that will store the connections from the various
 // Quasar clients
 var novaClients = new Object();
+var fileAssociations = new Array();
 
 // Set the various view options, as well as the listening port
 // and the directory for the server and the jade files to look for 
@@ -26,7 +34,7 @@ app.set('view options', { layout: false });
 app.set('views', __dirname + '/views');
 // TODO: Make port configurable
 app.listen(8080);
-app.use(express.static('www/'));
+app.use(express.static(NovaHomePath + '/../Quasar/www'));
 
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
@@ -34,7 +42,8 @@ var everyone = nowjs.initialize(app);
 // Generic message sending method; can be called from the jade files
 // as well as on the server side. Parsing for messages sent from here
 // is handled on the Quasar side.
-everyone.now.MessageSend = function(message) {
+everyone.now.MessageSend = function(message) 
+{
     var targets = message.id.split(':');
     for(var i in targets)
     {
@@ -69,7 +78,8 @@ var options = {
 // dealing directly with http, we should let websockets do the work. We may want to 
 // look into https as a fallback, however, in case websockets is unsupported/firewalled
 // etc.
-var httpsServer = https.createServer(options, function(request, response){
+var httpsServer = https.createServer(options, function(request, response)
+{
 	console.log('Recieved request for url ' + request.url);
 	response.writeHead(404);
 	response.end();
@@ -79,8 +89,9 @@ var httpsServer = https.createServer(options, function(request, response){
 // server, or else it'll catch all the messages that express is meant to get
 // and lead to some undesirable behavior
 // TODO: Make this port configurable
-httpsServer.listen(8081, function(){
-	console.log('server up');
+httpsServer.listen(8081, function()
+{
+	console.log('Mothership Server is listening on 8081');
 });
 
 // Initialize the WebSocketServer to use the httpsServer as the 
@@ -95,7 +106,8 @@ var wsServer = new WebSocketServer({
 // with wss:// but bad certs, which didn't work either (double good). I think there's 
 // a lot of back-end warlockery that happens to moderate authentication, but we may want
 // to find an explicit way to manage it purely for code readability's sake.
-wsServer.on('request', function(request){
+wsServer.on('request', function(request)
+{
 	console.log('connection accepted');
 	var connection = request.accept(null, request.origin);
     // The most important directive, if we have a message, we need to parse it out
@@ -156,8 +168,15 @@ wsServer.on('request', function(request){
 						break;
 					case 'registerConfig':
 						console.log('Nova Configuration received from ' + json_args.id);
-						fs.writeFileSync(json_args.filename, json_args.file);
+						// TODO: Check for existing client to add new file association to, extend the .file 
+						//       part of the push object literal
+						var push = {};
+						push.client = json_args.id;
+						push.file = (NovaHomePath + '/../Mothership/ClientConfigs/' + json_args.filename);
+						fileAssociations.push(push);
+						fs.writeFileSync(push.file, json_args.file);
 						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
+						break;
 					// If we've found a message type that we weren't expecting, or don't have a case
                     // for, log this message to the console and do nothing.
 					default:
@@ -165,7 +184,7 @@ wsServer.on('request', function(request){
 						break;
 				}
 			}
-            // TODO: Account for non-UTF here
+            // TODO: Account for non-UTF8 here
             else
             {
 
@@ -180,7 +199,8 @@ wsServer.on('request', function(request){
 // from novaClients when this action is hit; since we don't have the client id to use,
 // however, it may be tough. Have to look and see if the connection passed in can be matched
 // to elements in the object and bound that way
-wsServer.on('close', function(connection, reason, description){
+wsServer.on('close', function(connection, reason, description)
+{
 	console.log('Closed connection: ' + description);
     for(var i in novaClients)
     {
@@ -210,12 +230,41 @@ function getClients()
 }
 
 // Going to need to do passport for these soon, I think.
-app.get('/', function(req, res) {
+app.get('/', function(req, res) 
+{
 	res.render('main.jade', {locals:{
 		clients: getClients()
 	}});
 });
 
-app.get('/about', function(req, res) {
+app.get('/about', function(req, res) 
+{
     res.render('about.jade');
+});
+
+app.get('/config', function(req, res) 
+{
+	res.render('config.jade', {locals:{
+		CLIENTS: getClients()
+		, TCP_TIMEOUT: config.ReadSetting('TCP_TIMEOUT')
+		, TCP_CHECK_FREQ: config.ReadSetting('TCP_CHECK_FREQ')
+		, READ_PCAP: config.ReadSetting('READ_PCAP')
+		, GO_TO_LIVE: config.ReadSetting('GO_TO_LIVE')
+		, CLASSIFICATION_TIMEOUT: config.ReadSetting('CLASSIFICATION_TIMEOUT')
+		, K: config.ReadSetting('TK')
+		, EPS: config.ReadSetting('EPS')
+		, CLASSIFICATION_THRESHOLD: config.ReadSetting('CLASSIFICATION_THRESHOLD')
+		, DM_ENABLED: config.ReadSetting('DM_ENABLED')
+		, ENABLED_FEATURES: config.ReadSetting('ENABLED_FEATURES')
+		, FEATURE_NAMES: nova.GetFeatureNames()
+		, THINNING_DISTANCE: config.ReadSetting('THINNING_DISTANCE')
+		, SAVE_FREQUENCY: config.ReadSetting('SAVE_FREQUENCY')
+		, DATA_TTL: config.ReadSetting('DATA_TTL')
+		, SERVICE_PREFERENCES: config.ReadSetting('SERVICE_PREFERENCES')
+		, CAPTURE_BUFFER_SIZE: config.ReadSetting('CAPTURE_BUFFER_SIZE')
+		, MIN_PACKET_THRESHOLD: config.ReadSetting('MIN_PACKET_THRESHOLD')
+		, CUSTOM_PCAP_FILTER: config.ReadSetting('CUSTOM_PCAP_FILTER')
+		, CUSTOM_PCAP_MODE: config.ReadSetting('CUSTOM_PCAP_MODE')
+		, CLEAR_AFTER_HOSTILE_EVENT: config.ReadSetting('CLEAR_AFTER_HOSTILE_EVENT')
+	}});
 });
