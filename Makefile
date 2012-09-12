@@ -74,6 +74,10 @@ quasar: nodejsmodule
 nodejsmodule:
 	cd NodejsModule;npm --unsafe-perm install	
 
+#Mothership
+mothership:
+	cd Mothership; npm --unsafe-perm install
+
 #Honeyd HostConfig
 hhconfig-release:
 	$(MAKE) -C HoneydHostConfig/Release
@@ -175,6 +179,9 @@ clean-quasar: clean-nodejsmodule
 clean-quasar-modules:
 	-rm -rf Quasar/node_modules
 
+clean-mothership-modules:
+	-rm -rf Mothership/node_modules
+
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	
 clean-hhconfig-debug:
@@ -251,6 +258,10 @@ install-quasar:
 	#mv $(DESTDIR)/usr/share/nova/Quasar/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/Quasar/www/dojo
 	-install Quasar/quasar $(DESTDIR)/usr/bin/quasar
 
+install-mothership:
+	cp -frup Mothership $(DESTDIR)/usr/share/nova
+	-install Mothership/mothership $(DESTDIR)/usr/bin/mothership
+
 install-hhconfig:
 	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
 	-install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
@@ -283,6 +294,7 @@ uninstall-files:
 	rm -f $(DESTDIR)/usr/bin/nova_mailer
 	rm -f $(DESTDIR)/usr/bin/nova_init
 	rm -f $(DESTDIR)/usr/bin/quasar
+	rm -f $(DESTDIR)/usr/bin/mothership
 	rm -f $(DESTDIR)/usr/bin/novatrainer
 	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
 	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
