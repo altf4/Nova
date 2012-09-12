@@ -396,8 +396,6 @@ CUSTOM_PCAP_MODE 0
 # Folder name for a training capture session
 TRAINING_SESSION null
 
-
-
 ############################################
 # WEB_UI_PORT #
 ############################################
@@ -439,7 +437,7 @@ MASTER_UI_IP 0.0.0.0
 # MASTER_UI_RECONNECT_TIME
 ############################################
 # Time between connection attempts in case
-# of lost connection
+# of lost connection (in seconds)
 MASTER_UI_RECONNECT_TIME 5
 
 ############################################

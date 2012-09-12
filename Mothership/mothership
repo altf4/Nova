@@ -1,3 +1,21 @@
 #!/bin/bash
 
-node main.js
+cd /usr/share/nova/Mothership
+
+NODE_PATH="/usr/share/nova/Mothership/build/Release:/usr/share/nova/Quasar/NodeNovaConfig/build/Release"
+
+if (($# == 1)); then
+	if [[ "$1" == "--debug" ]] || [[ "$1" == "-d" ]]; then
+		echo "Debug mode: Running mothership without forever"
+		node /usr/share/nova/Mothership/main.js
+		exit
+	else
+		echo "Unkown argument. Usage: mothership [-d (--debug)]"
+		echo "  -d (--debug) Run node directly and show ouput in stdout instead of using forever to daemonize."
+		exit
+	fi
+fi
+
+echo "Starting the Mothership with the forever daemon"
+forever start /usr/share/nova/Mothership/main.js
+exit
