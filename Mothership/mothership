@@ -2,7 +2,7 @@
 
 cd /usr/share/nova/Mothership
 
-NODE_PATH="/usr/share/nova/Mothership/build/Release:/usr/share/nova/Quasar/NodeNovaConfig/build/Release"
+NODE_PATH="/usr/share/nova/NodejsModule"
 
 if (($# == 1)); then
 	if [[ "$1" == "--debug" ]] || [[ "$1" == "-d" ]]; then
