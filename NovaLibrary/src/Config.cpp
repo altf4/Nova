@@ -2484,7 +2484,7 @@ void Config::SetOverridePcapString(bool overridePcapString)
 
 vector <string> Config::GetIpAddresses(string ipListFile)
 {
-	ifstream ipListFileStream(ipListFile.data());
+	ifstream ipListFileStream(ipListFile.c_str());
 	vector<string> whitelistedAddresses;
 
 	if(ipListFileStream.is_open())
@@ -2492,8 +2492,8 @@ vector <string> Config::GetIpAddresses(string ipListFile)
 		while(ipListFileStream.good())
 		{
 			string line;
-			getline (ipListFileStream,line);
-			if(strcmp(line.c_str(), "")&& line.at(0) != '#' )
+			getline(ipListFileStream,line);
+			if(line != "" && line.at(0) != '#' )
 			{
 				whitelistedAddresses.push_back(line);
 			}

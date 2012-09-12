@@ -101,7 +101,7 @@ string Suspect::ToString()
 }
 
 //Just like Consume but doesn't deallocate
-void Suspect::ReadEvidence(Evidence *&evidence)
+void Suspect::ReadEvidence(Evidence *evidence)
 {
 	if(m_IpAddress.s_addr == 0)
 	{
@@ -125,7 +125,7 @@ void Suspect::ReadEvidence(Evidence *&evidence)
 	m_isLive = (Config::Inst()->GetReadPcap());
 }
 
-void Suspect::ConsumeEvidence(Evidence *&evidence)
+void Suspect::ConsumeEvidence(Evidence *evidence)
 {
 	if(m_IpAddress.s_addr == 0)
 	{

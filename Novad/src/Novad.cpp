@@ -663,29 +663,6 @@ string ConstructFilterString()
 	return filterString;
 }
 
-void UpdateAndStore(const in_addr_t& key)
-{
-	//Check for a valid suspect
-	Suspect suspectCopy = suspects.GetSuspect(key);
-	if(suspects.IsEmptySuspect(&suspectCopy))
-	{
-		return;
-	}
-
-	//Classify
-	suspects.ClassifySuspect(key);
-
-	//Check that we updated correctly
-	suspectCopy = suspects.GetSuspect(key);
-	if(suspects.IsEmptySuspect(&suspectCopy))
-	{
-		return;
-	}
-
-	//Send to UI
-	SendSuspectToUIs(&suspectCopy);
-}
-
 
 void UpdateAndClassify(const in_addr_t& key)
 {

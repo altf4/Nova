@@ -33,6 +33,8 @@ public:
 	void SetPacketCb(void (*cb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet));
 	void SetFilter(std::string filter);
 
+	pcap_t* GetPcapHandle();
+
 	bool StartCapture();
 	bool StartCaptureBlocking();
 

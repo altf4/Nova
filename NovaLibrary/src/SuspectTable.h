@@ -176,7 +176,7 @@ public:
 	//				of the linked list.
 	// Note: Every evidence object contained in the list is deallocated after use, invalidating the pointers,
 	//		this is a specialized function designed only for use by Consumer threads.
-	void ProcessEvidence(Evidence *&evidence, bool readOnly = false);
+	void ProcessEvidence(Evidence *evidence, bool readOnly = false);
 
 	Suspect m_emptySuspect;
 

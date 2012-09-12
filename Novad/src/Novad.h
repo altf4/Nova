@@ -101,9 +101,6 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr *pkthdr,const u_cha
 // sent to the main thread's signal handler.
 void MaskKillSignals();
 
-// Updates suspect and stores it as a training data point
-void UpdateAndStore(const in_addr_t& key);
-
 // Updates data and classification for a suspect
 void UpdateAndClassify(const in_addr_t& key);
 

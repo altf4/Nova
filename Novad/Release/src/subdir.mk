@@ -5,31 +5,22 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/Control.cpp \
-../src/FilePacketCapture.cpp \
-../src/InterfacePacketCapture.cpp \
 ../src/Main.cpp \
 ../src/Novad.cpp \
-../src/PacketCapture.cpp \
 ../src/ProtocolHandler.cpp \
 ../src/Threads.cpp 
 
 OBJS += \
 ./src/Control.o \
-./src/FilePacketCapture.o \
-./src/InterfacePacketCapture.o \
 ./src/Main.o \
 ./src/Novad.o \
-./src/PacketCapture.o \
 ./src/ProtocolHandler.o \
 ./src/Threads.o 
 
 CPP_DEPS += \
 ./src/Control.d \
-./src/FilePacketCapture.d \
-./src/InterfacePacketCapture.d \
 ./src/Main.d \
 ./src/Novad.d \
-./src/PacketCapture.d \
 ./src/ProtocolHandler.d \
 ./src/Threads.d 
 
