@@ -182,7 +182,7 @@ block headerAdditions
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
       row.push(String(suspect.GetIsHostile));
-      var enabledFeatures = String(#{enabledFeatures});
+      var enabledFeatures = "#{enabledFeatures}";
       for (var i in suspect.GetFeatures) {  
         suspect[i] = suspect.GetFeatures[i];
         if (enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
@@ -301,7 +301,7 @@ block headerAdditions
     
     function Init() {
         theDoc = document;
-        var enabledFeatures = String(#{enabledFeatures});
+        var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = new Array();
         gridStructure.push({name: "Clear"});
         gridStructure.push({name: "Address"});
@@ -310,7 +310,10 @@ block headerAdditions
         gridStructure.push({name: "Hostile"});
    
         var featureNames = String("#{featureNames}").split(",");
+        console.log("Enabled features is " + enabledFeatures);
         for (var i = 0; i < featureNames.length; i++) {
+            console.log("Checking feature named " + featureNames[i]);
+            console.log("Enabled value is " + enabledFeatures.charAt(i));
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
         }
    
