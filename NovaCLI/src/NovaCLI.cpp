@@ -295,7 +295,14 @@ int main(int argc, const char *argv[])
 			PrintUsage();
 		}
 
-		cout << Config::Inst()->WriteSetting(string(argv[2]), string(argv[3])) << endl;
+		if(Config::Inst()->WriteSetting(string(argv[2]), string(argv[3])))
+		{
+			LOG(DEBUG, "Finished writing setting to configuration file", "");
+		}
+		else
+		{
+			LOG(ERROR, "Unable to write setting to configuration file.", "");
+		}
 	}
 
 	else if(!strcmp(argv[1], "listsettings"))
