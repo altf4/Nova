@@ -68,9 +68,11 @@ novatrainer-release:
 	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
 #Web UI
-quasar:
+quasar: nodejsmodule
 	cd Quasar;npm --unsafe-perm install
-	cd Quasar/NodeNovaConfig;npm --unsafe-perm install
+
+nodejsmodule:
+	cd NodejsModule;npm --unsafe-perm install	
 
 #Honeyd HostConfig
 hhconfig-release:
@@ -165,8 +167,10 @@ clean-test:
 	rm -f NovaTest/Debug/src/NovadSource/*.o
 	$(MAKE) -C NovaTest/Debug clean
 
-clean-quasar:
-	-cd Quasar/NodeNovaConfig; node-waf clean
+clean-nodejsmodule:
+	-cd NodejsModule; node-waf clean
+
+clean-quasar: clean-nodejsmodule
 
 clean-quasar-modules:
 	-rm -rf Quasar/node_modules
@@ -195,7 +199,7 @@ install: install-data
 	-chmod -R g+rw /usr/share/nova
 	-chmod -R g+rw /var/log/honeyd
 
-install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar
+install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar install-nodejsmodule
 	sh debian/postinst
 	-bash Installer/createDatabase.sh
 
@@ -205,6 +209,7 @@ install-data:
 	mkdir -p $(DESTDIR)/usr/lib
 	mkdir -p $(DESTDIR)/usr/share/applications
 	mkdir -p $(DESTDIR)/usr/share/nova
+	mkdir -p $(DESTDIR)/usr/share/nova/NodejsModule
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	mkdir -p $(DESTDIR)/var/log/honeyd
 	mkdir -p $(DESTDIR)/etc/nova
@@ -261,6 +266,9 @@ install-cli:
 
 install-novatrainer:
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
+
+install-nodejsmodule:
+	install NodejsModule/build/Release/novaconfig.node $(DESTDIR)/usr/share/nova/NodejsModule/
 
 
 #Uninstall
