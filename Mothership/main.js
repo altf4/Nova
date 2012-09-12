@@ -1,5 +1,6 @@
 // TODO: Need to make fallback code, in case a connection
 // doesn't/can't accept websocket connections (for whatever reason)
+// Problem not a problem now, but definitely will be later
 var express = require('express');
 var app = require('express').createServer();
 var nowjs = require('now');
@@ -118,6 +119,7 @@ wsServer.on('request', function(request){
                     // essentially binds their client id to the connection that has
                     // has been created for future reference and connection management
 					case 'addId':
+						// TODO: Check that id doesn't exist before adding
 						novaClients[json_args.id.toString()] = connection;
 						console.log('Connected clients: ');
 						for(var i in novaClients)
@@ -152,7 +154,11 @@ wsServer.on('request', function(request){
 						suspect.client = json_args.client;
 						everyone.now.OnNewSuspect(suspect);
 						break;
-                    // If we've found a message type that we weren't expecting, or don't have a case
+					case 'registerConfig':
+						console.log('Nova Configuration received from ' + json_args.id);
+						fs.writeFileSync(json_args.filename, json_args.file);
+						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
+					// If we've found a message type that we weren't expecting, or don't have a case
                     // for, log this message to the console and do nothing.
 					default:
 						console.log('Unexpected/Unknown message type ' + json_args.type + ' received, doing nothing');
