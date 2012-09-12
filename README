@@ -108,7 +108,8 @@ install them manually or get them by running the following script,
 
     sudo bash Quasar/getDependencies.sh
 
-- To build and install Nova run the commands,
+
+To build and install Nova run the commands,
 
     Step 1: autoconf
     Step 2: ./configure
@@ -140,7 +141,6 @@ Haystack: Active honeypots
 	- The Haystack is the collection of honeypots which emulate machines on the network.
 	The haystack is created using the Honeyd daemon and runs in it's own executable. Configuration
 	for Honeyd is auto generated at /usr/share/nova/nova/Config/haystack_honeyd.config.
-
 Novad: Classification tool
 	- The Novad executable is the daemon that monitors and classifies network traffic to 
 	identify hostile looking traffic. Novad will listen promiscuously on the configured 
@@ -148,7 +148,6 @@ Novad: Classification tool
 	honeypots contacted, and other details. Novad is can be configured manually via the
 	configuration file /usr/share/nova/nova/Config/NOVAConfig.txt, but it is recommended that
 	you use the GUI (Quasar) unless you know what you're doing.
-
 NovaCLI: Nova Command line Interface
 	- NovaCLI provides a simple interface for accessing some of the Novad functionality. 
 	Usage for the tool can be gotten by running "novacli --help".
