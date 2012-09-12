@@ -316,6 +316,11 @@ private:
 	char m_haystackStorage;
 	std::string m_userPath;
 
+	bool m_masterUIEnabled;
+	int m_masterUIReconnectTime;
+	std::string m_masterUIIP;
+	std::string m_masterUIClientID;
+
 	static std::string m_pathPrefix;
 
 	pthread_rwlock_t m_lock;

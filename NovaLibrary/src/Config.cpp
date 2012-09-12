@@ -76,7 +76,11 @@ string Config::m_prefixes[] =
 	"TRAINING_SESSION",
 	"WEB_UI_PORT",
 	"CLEAR_AFTER_HOSTILE_EVENT",
-	"CAPTURE_BUFFER_SIZE"
+	"CAPTURE_BUFFER_SIZE",
+	"MASTER_UI_IP",
+	"MASTER_UI_RECONNECT_TIME",
+	"MASTER_UI_CLIENT_ID",
+	"MASTER_UI_ENABLED"
 };
 
 // Files we need to run (that will be loaded with defaults if deleted)
@@ -760,6 +764,62 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_captureBufferSize = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_IP
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIIP = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_RECONNECT_TIME
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIReconnectTime = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_CLIENT_ID
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIClientID = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_ENABLED
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIEnabled = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -2559,5 +2619,6 @@ bool Config::GetSMTPUseAuth()
 	Lock lock(&m_lock, READ_LOCK);
 	return m_SMTPUseAuth;
 }
+
 
 }

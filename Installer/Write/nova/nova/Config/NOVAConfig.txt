@@ -422,3 +422,31 @@ CLEAR_AFTER_HOSTILE_EVENT 0
 # during high load, try increasing this.
 CAPTURE_BUFFER_SIZE 1048576
 
+
+############################################
+# MASTER_UI_ENABLED
+############################################
+# Enable attempting to connect to the master UI
+MASTER_UI_ENABLED 0
+
+############################################
+# MASTER_UI_IP
+############################################
+# IP address of the master UI
+MASTER_UI_IP 0.0.0.0
+
+############################################
+# MASTER_UI_RECONNECT_TIME
+############################################
+# Time between connection attempts in case
+# of lost connection
+MASTER_UI_RECONNECT_TIME 5
+
+############################################
+# MASTER_UI_CLIENT_ID
+############################################
+# Client ID. This is the label that will
+# be given to this machine in the master UI
+MASTER_UI_CLIENT_ID nova1
+
+
