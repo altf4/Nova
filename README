@@ -187,7 +187,6 @@ what changes to it that you want) and run the generateDebs script (as a normal u
 	./generateDebs <version number>
 
 
-
 ===============================
 Tips for debugging problems
 ===============================
