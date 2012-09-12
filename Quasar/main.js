@@ -243,6 +243,7 @@ var clientId = 'failbox';
 var mothership;
 var reconnecting = false;
 var clearReconnect;
+var reconnectTimer = 5000;
 
 // If the connection fails, print an error message
 client.on('connectFailed', function(error)
@@ -250,9 +251,9 @@ client.on('connectFailed', function(error)
   console.log('Connect to Mothership error: ' + error.toString());
   if(!reconnecting)
   {
-    console.log('No current attempts to reconnect, starting reconnect attempts every 5 seconds.');
+    console.log('No current attempts to reconnect, starting reconnect attempts every ', (reconnectTimer / 1000) ,' seconds.');
     // TODO: Don't have static lengths for reconnect interval; make configurable
-    clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 5000);
+    clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, reconnectTimer);
     reconnecting = true;
   }
 });
@@ -357,8 +358,8 @@ client.on('connect', function(connection){
     mothership = undefined;
     if(!reconnecting)
     {
-      console.log('closed, beginning reconnect attempts every 5 seconds');
-      clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, 5000);
+      console.log('closed, beginning reconnect attempts every ', (reconnectTimer / 1000) ,' seconds');
+      clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, reconnectTimer);
       reconnecting = true;
     }
   });
