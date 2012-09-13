@@ -6,6 +6,8 @@ block headerAdditions
     var clientCount = 0;
     var groups = !{GROUPS};
   
+    var maintainGroups = new Array();
+  
     function setUpSelect()
     {     
         if(clients == '' || clients.length == 0)
@@ -67,6 +69,7 @@ block headerAdditions
       {
         if(groupList[i] != '')
         {
+          maintainGroups.push(groupList[i]);
           var tr = document.createElement('tr');
           tr.id = 'group' + i;
           
@@ -153,6 +156,17 @@ block headerAdditions
     {
       if(members != undefined && group != undefined)
       {
+        for(var i in maintainGroups)
+        {
+          if(group == maintainGroups[i])
+          {
+            alert('Cannot have identical group names');
+            return;
+          }
+        }
+        
+        maintainGroups.push(group);
+       
         now.AddGroup(group, members);
         
         var ah = document.getElementById('appendHook');
