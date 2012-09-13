@@ -92,6 +92,9 @@ private:
 	//	Thread quits as soon as read fails (returns <= 0). This can be made to happen through a CloseSocket() call from MessageManager
 	void *ProducerThread();
 
+	//Shuts down all MessageQueues for this Endpoint, also wakes up any reading threads
+	void Shutdown();
+
 	MessageQueueBimap m_queues;
 
 	//The next serial number that will be given to a conversation

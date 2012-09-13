@@ -33,7 +33,7 @@ public:
 
 	Ticket();
 
-	Ticket(uint32_t, uint32_t, bool, bool, pthread_rwlock_t*, int);
+	Ticket(uint32_t, uint32_t, bool, bool, int);
 
 	~Ticket();
 
@@ -41,7 +41,6 @@ public:
 	uint32_t m_theirSerialNum;
 	bool m_isCallback;
 	bool m_hasInit;
-	pthread_rwlock_t *m_rwMQlock;
 	int m_socketFD;
 
 };

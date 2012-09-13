@@ -30,28 +30,19 @@ Ticket::Ticket()
 	m_theirSerialNum = 0;
 	m_isCallback = true;
 	m_hasInit = false;
-	m_rwMQlock = NULL;
 	m_socketFD = -1;
 }
 
-Ticket::Ticket(uint32_t ourSerial, uint32_t theirSerial, bool isCallback, bool hasInit, pthread_rwlock_t *rwLock, int socketFD)
+Ticket::Ticket(uint32_t ourSerial, uint32_t theirSerial, bool isCallback, bool hasInit, int socketFD)
 {
 	m_ourSerialNum = ourSerial;
 	m_theirSerialNum = theirSerial;
 	m_isCallback = isCallback;
 	m_hasInit = hasInit;
-	m_rwMQlock = rwLock;
-	m_socketFD = socketFD;
-
-	pthread_rwlock_rdlock(m_rwMQlock);
-}
+	m_socketFD = socketFD;}
 
 Ticket::~Ticket()
 {
-	if(m_rwMQlock != NULL)
-	{
-		pthread_rwlock_unlock(m_rwMQlock);
-	}
 	//TODO: Delete the MessageQueue this ticket used
 }
 

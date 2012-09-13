@@ -151,6 +151,21 @@ void MessageQueueBimap::RemoveQueue(uint32_t ourSerial)
 	m_theirQueues.erase(theirSerial);
 }
 
+std::vector<uint32_t> MessageQueueBimap::GetUsedSerials()
+{
+	Lock lock(&m_queuesMutex);
+	std::vector<uint32_t> serials;
+	std::map<uint32_t, MessageQueue*>::iterator it;
+
+	for(it = m_ourQueues.begin(); it != m_ourQueues.end(); ++it)
+	{
+		serials.push_back(it->first);
+	}
+
+	return serials;
+}
+
+
 }
 
 

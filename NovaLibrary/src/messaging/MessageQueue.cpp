@@ -35,6 +35,7 @@ MessageQueue::MessageQueue()
 	pthread_cond_init(&m_popWakeupCondition, NULL);
 
 	m_theirSerialNum = 0;
+	isShutdown = false;
 }
 
 MessageQueue::~MessageQueue()
@@ -65,9 +66,13 @@ Message *MessageQueue::PopMessage(int timeout)
 		Lock lock(&m_queueMutex);
 
 		//While loop to protect against spurious wakeups
-		while(m_queue.empty())
+		while(m_queue.empty() && !isShutdown)
 		{
 			pthread_cond_wait(&m_popWakeupCondition, &m_queueMutex);
+		}
+		if(isShutdown)
+		{
+			return new ErrorMessage(ERROR_SOCKET_CLOSED);
 		}
 
 		retMessage = m_queue.front();
@@ -87,12 +92,16 @@ Message *MessageQueue::PopMessage(int timeout)
 		Lock lock(&m_queueMutex);
 
 		//While loop to protect against spurious wakeups
-		while(m_queue.empty())
+		while(m_queue.empty() && !isShutdown)
 		{
 			if(pthread_cond_timedwait(&m_popWakeupCondition, &m_queueMutex, &timespec) == ETIMEDOUT)
 			{
 				return new ErrorMessage(ERROR_TIMEOUT);
 			}
+		}
+		if(isShutdown)
+		{
+			return new ErrorMessage(ERROR_SOCKET_CLOSED);
 		}
 
 		retMessage = m_queue.front();
@@ -149,6 +158,12 @@ void MessageQueue::SetTheirSerialNum(uint32_t serial)
 {
 	Lock lock(&m_theirSerialNumMutex);
 	m_theirSerialNum = serial;
+}
+
+void MessageQueue::Shutdown()
+{
+	isShutdown = true;
+	pthread_cond_signal(&m_popWakeupCondition);
 }
 
 }

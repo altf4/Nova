@@ -57,6 +57,9 @@ public:
 	//NOTE: Safely does nothing is no MessageQueue exists at ourSerial
 	void RemoveQueue(uint32_t ourSerial);
 
+	//
+	std::vector<uint32_t> GetUsedSerials();
+
 private:
 
 	//Message queues, uniquely identified by their serial number

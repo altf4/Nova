@@ -42,6 +42,9 @@ public:
 
 	uint32_t GetTheirSerialNum();
 
+	//Shuts down MessageQueue, also wakes up any reading threads
+	void Shutdown();
+
 private:
 
 	void SetTheirSerialNum(uint32_t serial);
@@ -53,6 +56,8 @@ private:
 
 	uint32_t m_theirSerialNum;
 	pthread_mutex_t m_theirSerialNumMutex;
+
+	bool isShutdown;
 
 };
 

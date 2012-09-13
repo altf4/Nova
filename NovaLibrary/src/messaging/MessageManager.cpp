@@ -140,7 +140,7 @@ Ticket MessageManager::StartConversation(int socketFD)
 		return Ticket();
 	}
 
-	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0, false, false, m_endpoints[socketFD].second, socketFD);
+	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0, false, false, socketFD);
 }
 
 void MessageManager::DeleteEndpoint(int socketFD)

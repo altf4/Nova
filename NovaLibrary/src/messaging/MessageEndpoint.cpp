@@ -283,12 +283,7 @@ void *MessageEndpoint::ProducerThread()
 				}
 
 				//The socket died on us!
-				{
-					Lock shutdownLock(&m_isShutdownMutex);
-					//Mark the queue as closed, put an error message on the queue, and quit reading
-					m_isShutDown = true;
-				}
-				pthread_cond_signal(&m_callbackWakeupCondition);
+				Shutdown();
 				return NULL;
 			}
 			else
@@ -333,12 +328,7 @@ void *MessageEndpoint::ProducerThread()
 				}
 
 				//The socket died on us!
-				{
-					Lock shutdownLock(&m_isShutdownMutex);
-					//Mark the queue as closed, put an error message on the queue, and quit reading
-					m_isShutDown = true;
-				}
-				pthread_cond_signal(&m_callbackWakeupCondition);
+				Shutdown();
 				free(buffer);
 				return NULL;
 			}
@@ -362,6 +352,27 @@ void *MessageEndpoint::ProducerThread()
 	}
 
 	return NULL;
+}
+
+void MessageEndpoint::Shutdown()
+{
+	{
+		Lock shutdownLock(&m_isShutdownMutex);
+		m_isShutDown = true;
+	}
+
+	//Shut down each MessageQueue
+	std::vector<uint32_t> serials = m_queues.GetUsedSerials();
+	for(uint i = 0; i < serials.size(); i++)
+	{
+		MessageQueue *queue = m_queues.GetByOurSerial(serials[i]);
+		if(queue != NULL)
+		{
+			queue->Shutdown();
+		}
+	}
+
+	pthread_cond_signal(&m_callbackWakeupCondition);
 }
 
 }
