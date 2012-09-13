@@ -57,6 +57,7 @@ block headerAdditions
                     var label = document.createElement('label');
                     label.value = clients[i];
                     label.innerHTML = clients[i];
+                    label.setAttribute('style', 'text-align: center');
                     div.appendChild(check);
                     div.appendChild(label);
                     document.getElementById('clientList').appendChild(div);

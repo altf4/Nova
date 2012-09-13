@@ -67,7 +67,10 @@ everyone.now.RemoveGroup = function(group)
 
 everyone.now.UpdateGroup = function(group, newMembers)
 {
-  console.log('Updating group ' + group + ' to have members ' + newMembers);
+  if(group != 'all')
+  {
+    console.log('Updating group ' + group + ' to have members ' + newMembers);
+  }
   var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
   var regex = group + ".+?;";
   var replaceWithNull = new RegExp(regex, "g");
@@ -177,11 +180,12 @@ wsServer.on('request', function(request)
 						{
 							console.log('client ' + i);
 						}
-                        // TODO: Get hostile suspects from connected client
-                        var getHostile = {};
-                        getHostile.type = 'getHostileSuspects';
-                        getHostile.id = json_args.id + ':';
-                        everyone.now.MessageSend(getHostile);
+            // TODO: Get hostile suspects from connected client
+            var getHostile = {};
+            getHostile.type = 'getHostileSuspects';
+            getHostile.id = json_args.id + ':';
+            everyone.now.MessageSend(getHostile);
+            everyone.now.UpdateConnectionsList(json_args.id, 'add');
 						break;
                     // This case is reserved for response from the clients;
                     // we should figure out a standard format for the responses 
@@ -195,7 +199,7 @@ wsServer.on('request', function(request)
                     // Might be able to get away with just sending the JSON object, my intent
                     // was to validate the message here with conditionals, just isn't done yet.
 					case 'hostileSuspect':
-                        console.log('suspect received');
+            console.log('suspect received');
 						var suspect = {};
 						suspect.string = json_args.string;
 						suspect.ip = json_args.ip;
@@ -216,18 +220,20 @@ wsServer.on('request', function(request)
 						fs.writeFileSync(push.file, json_args.file);
 						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
 						break;
-					// If we've found a message type that we weren't expecting, or don't have a case
+					  // If we've found a message type that we weren't expecting, or don't have a case
                     // for, log this message to the console and do nothing.
 					default:
 						console.log('Unexpected/Unknown message type ' + json_args.type + ' received, doing nothing');
 						break;
 				}
 			}
-            // TODO: Account for non-UTF8 here
-            else
-            {
+      // TODO: Account for non-UTF8 here
+      else
+      {
+          var check = document.createElement('input');
+          check.type = 'checkbox';
 
-            }
+      }
 		}	
 	});
 });
@@ -245,6 +251,7 @@ wsServer.on('close', function(connection, reason, description)
     {
         if(novaClients[i] === connection)
         {
+            everyone.now.UpdateConnectionsList(i, 'remove');
             delete novaClients[i];
         }
     }

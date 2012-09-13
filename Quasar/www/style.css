@@ -117,6 +117,13 @@ html, body {
     height: 550px;
 }
 
+#clientsList {
+    border: 2px solid;
+    border-radius: 12px;
+    background: #E8A02F;
+    width: 250px;
+}
+
 .white_content{
 	display: none;
 	position: absolute;

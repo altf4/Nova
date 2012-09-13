@@ -3,6 +3,11 @@ extends layout
 block headerAdditions
   script
     var clients = "#{CLIENTS}".split(':');
+    if(clients[0] == '')
+    {
+      clients.length = 0;
+      clients = new Array();
+    }
     var clientCount = 0;
     var groups = !{GROUPS};
   
@@ -31,15 +36,18 @@ block headerAdditions
             if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
             {
                 var div = document.createElement('div');
+                div.id = clients[i];
                 var check = document.createElement('input');
                 check.type = 'checkbox';
                 check.id = 'check' + i;
                 check.name = 'check' + i;
                 check.value = clients[i];
                 check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+                check.setAttribute('style', 'padding-left: 50px');
                 var label = document.createElement('label');
                 label.value = clients[i];
                 label.innerHTML = clients[i];
+                label.setAttribute('style', 'font-weight: bold; padding-left: 50px');
                 div.appendChild(check);
                 div.appendChild(label);
                 document.getElementById('clientsList').appendChild(div);
@@ -69,7 +77,7 @@ block headerAdditions
       {
         if(groupList[i] != '')
         {
-          maintainGroups.push(groupList[i]);
+          maintainGroups.push({group:groupList[i],idx:i});
           var tr = document.createElement('tr');
           tr.id = 'group' + i;
           
@@ -83,6 +91,10 @@ block headerAdditions
           var input = document.createElement('input');
           input.id = 'members' + i;
           input.value = memberList[i];
+          if(groupList[i] == 'all')
+          {
+            input.setAttribute('readonly', 'true');
+          }
           
           td1.appendChild(label);
           td2.appendChild(input);
@@ -150,6 +162,15 @@ block headerAdditions
     function updateGroup(group, newMembers)
     {
       now.UpdateGroup(group, newMembers);
+      var idx = 0;
+      for(var i in maintainGroups)
+      {
+        if(group == maintainGroups[i].group)
+        {
+          idx = maintainGroups[i].idx;
+        }
+      }
+      document.getElementById('members' + idx).value = newMembers;
     }
 
     function addGroup(group, members)
@@ -158,16 +179,18 @@ block headerAdditions
       {
         for(var i in maintainGroups)
         {
-          if(group == maintainGroups[i])
+          if(group == maintainGroups[i].group)
           {
             alert('Cannot have identical group names');
             return;
           }
         }
         
-        maintainGroups.push(group);
+        maintainGroups.push({group:group,idx:parseInt(clientCount) + 1});
        
         now.AddGroup(group, members);
+        
+        document.getElementById('groupName').value = '';
         
         var ah = document.getElementById('appendHook');
         
@@ -215,9 +238,90 @@ block headerAdditions
       }
     }
 
+    now.UpdateConnectionsList = function(clientId, action) {
+      var divClientList = document.getElementById('clientsList');
+      
+      switch(action)
+      {
+        case 'add':
+          var deleteMe = document.getElementById('noClients');
+          if(deleteMe != undefined)
+          {
+              divClientList.removeChild(deleteMe);
+          }
+          for(var i = 0; i < clientCount; i++)
+          {
+            if(document.getElementById('groupLabel' + i).value == clientId)
+            {
+              console.log(clientId + ' needlessly attempting to re-establish connection, doing nothing');
+              return;
+            }
+          }
+          var div = document.createElement('div');
+          div.id = clientId;
+          var check = document.createElement('input');
+          check.type = 'checkbox';
+          check.id = 'check' + (parseInt(clientCount) + 1);
+          check.name = 'check' + (parseInt(clientCount) + 1);
+          check.value = clientId;
+          check.setAttribute('onchange', 'setTarget(("check" + ' + (parseInt(clientCount) + 1) + '), clients[' + (parseInt(clientCount) + 1) + '].toString())');
+          check.setAttribute('style', 'padding-left: 50px');
+          var label = document.createElement('label');
+          label.value = clientId;
+          label.innerHTML = clientId;
+          label.setAttribute('style', 'font-weight: bold; padding-left: 50px');
+          div.appendChild(check);
+          div.appendChild(label);
+          divClientList.appendChild(div);
+          clientCount++;
+          
+          clients.push(clientId);
+          
+          updateGroup('all', clients.join());
+          break;
+        case 'remove':
+          divClientList.removeChild(document.getElementById(clientId));
+          clientCount--;
+          for(var i in clients)
+          {
+            if(clients[i] == clientId)
+            {
+              clients.splice(i, 1);
+            }
+          }
+          if(clientCount == 0)
+          {
+            
+            var label = document.createElement('label');
+            label.id = 'noClients';
+            label.value = 'noClients';
+            label.innerHTML = 'There are no clients currently connected';
+            document.getElementById('clientsList').appendChild(label);
+          } 
+          updateGroup('all', clients.join());
+          break;
+        default:
+          console.log('UpdateConnectionsList called with invalid action, doing nothing');
+          break;
+      }
+    }
+
     now.ready(function(){
       setUpSelect();
       setUpGroups();
+      
+      var members = '';
+      
+      for(var i = 0; i < clientCount; i++)
+      {
+        members += clients[i] + ',';
+      }
+      if(members[members.length - 1] == ',')
+      {
+        members = members.substr(0, members.length - 1);
+      }
+      
+      updateGroup('all', members);
     });
 
 block content
