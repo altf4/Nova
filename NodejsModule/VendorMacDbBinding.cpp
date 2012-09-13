@@ -29,6 +29,7 @@ void VendorMacDbBinding::Init(v8::Handle<Object> target)
 	// Prototype
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVendorNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, VendorMacDbBinding, VendorMacDb, &VendorMacDb::GetVendorNames>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GenerateRandomMAC"),FunctionTemplate::New(InvokeWrappedMethod<string, VendorMacDbBinding, VendorMacDb, string, &VendorMacDb::GenerateRandomMAC>));
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("VendorMacDbBinding"), constructor);

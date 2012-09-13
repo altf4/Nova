@@ -81,7 +81,6 @@ var databaseOpenResult = function (err) {
 var db = new sql.Database(NovaHomePath + "/../database.db", sql.OPEN_READWRITE, databaseOpenResult);
 
 
-
 // Prepare query statements
 var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
 var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
@@ -1729,6 +1728,11 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
 }
+
+everyone.now.GenerateMACForVendor = function(vendor, callback) {
+	callback(vendorToMacDb.GenerateRandomMAC(vendor));
+}
+
 
 var distributeSuspect = function (suspect) {
 	var s = new Object();

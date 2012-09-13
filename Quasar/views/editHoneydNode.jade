@@ -18,7 +18,21 @@ block headerAdditions
 
         now.SaveHoneydNode(profile, intface, oldName, ipType, macType, ip, mac, saveNodeCallback);
     }
-    
+
+    function populateVendorList(profile) {
+        document.getElementById("vendorList").innerHTML = "";
+        for (var vendor in profile.ethernet) {
+            var v = profile.ethernet[vendor].vendor;
+            var option = document.createElement('option');
+            option.innerHTML = v;
+            document.getElementById("vendorList").appendChild(option);
+        }
+    }
+
+    function profileChanged() {
+        now.GetProfile(document.getElementById("profile").value, populateVendorList);
+    }
+
     function saveNodeCallback(err) {
       if(err != null) {
         alert("Unable to complete operation due to error: " + err);
@@ -93,10 +107,30 @@ block headerAdditions
         checkedBox.checked = true; 
       }  
     }
+
+    function GenerateMac() {
+        var vendor = document.getElementById("vendorList").value;
+        now.GenerateMACForVendor(vendor, MACAddressCb);
+    }
+
+    function MACAddressCb(mac) {
+        if (mac == null) {
+            alert("Unable to get MAC Address");
+            return;
+        }
+
+        var splitMac = mac.split(":");
+        for (var i = 0; i < 6; i++) {
+            document.getElementById("mac" + i).value = splitMac[i];
+        }
+    }
     
     require(["dojo/domReady!"],
     function(){
-        checkOnlyOne(if0);
+        now.ready( function() {
+            checkOnlyOne(if0);
+            profileChanged();
+        });
     });
     
 
@@ -108,7 +142,7 @@ block content
   input(type="hidden", name="oldName", value="#{oldName}")
 
   label Profile
-  select#profile(name="profile")
+  select#profile(name="profile", onChange="profileChanged()")
     each p, i in profiles
       if p == profile
         option(SELECTED) #{p}
@@ -178,6 +212,14 @@ block content
       option RANDOM
     else
       option(SELECTED) RANDOM
+  
+  br
+  label &nbsp
+  a(class="button", href="#", onclick="GenerateMac()") Generate new MAC
+
+  br
+  label Ethernet Vendor
+  select#vendorList(name"vendorList")
 
   br
   label MAC Address
