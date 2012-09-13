@@ -54,10 +54,12 @@ block content
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
+  script(type="text/javascript", src="scripts/ConnectionManagement.js")
   script
     // Performance boost accessing local var over document lookup
     var theDoc = document;
 
+    var clientCount = 0;
     var suspectGrid;
     var liveUpdate = true;
     var lastNovadStatus = "unknown";
@@ -119,7 +121,7 @@ block headerAdditions
 
     function setUpSelect()
     {       
-        if(clients.length == 0 && document.getElementById('noClients') == undefined)
+        if(clients == '' && document.getElementById('noClients') == undefined)
         {
             var label = document.createElement('label');
             label.id = 'noClients';
@@ -127,29 +129,34 @@ block headerAdditions
             document.getElementById('clientsList').appendChild(label);
             return;
         }  
-        for(var i = 0; i < clients.length; i++)
+        else
         {
-            var deleteMe = document.getElementById('noClients');
-            if(deleteMe != undefined)
-            {
-                document.getElementById('clientsList').removeChild(deleteMe);
-            }
-            if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
-            {
-                var div = document.createElement('div');
-                var check = document.createElement('input');
-                check.type = 'checkbox';
-                check.id = 'check' + i;
-                check.name = 'check' + i;
-                check.value = clients[i];
-                check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
-                var label = document.createElement('label');
-                label.value = clients[i];
-                label.innerHTML = clients[i];
-                div.appendChild(check);
-                div.appendChild(label);
-                document.getElementById('clientsList').appendChild(div);
-            }
+          for(var i = 0; i < clients.length; i++)
+          {
+              var deleteMe = document.getElementById('noClients');
+              if(deleteMe != undefined)
+              {
+                  document.getElementById('clientsList').removeChild(deleteMe);
+              }
+              if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
+              {
+                  var div = document.createElement('div');
+                  div.id = clients[i];
+                  var check = document.createElement('input');
+                  check.type = 'checkbox';
+                  check.id = 'check' + i;
+                  check.name = 'check' + i;
+                  check.value = clients[i];
+                  check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+                  var label = document.createElement('label');
+                  label.value = clients[i];
+                  label.innerHTML = clients[i];
+                  div.appendChild(check);
+                  div.appendChild(label);
+                  document.getElementById('clientsList').appendChild(div);
+                  clientCount++;
+              }
+          }
         }
     }
 

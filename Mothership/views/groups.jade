@@ -277,7 +277,10 @@ block headerAdditions
           
           clients.push(clientId);
           
-          updateGroup('all', clients.join());
+          if(typeof updateGroup == 'function')
+          {
+            updateGroup('all', clients.join());
+          }
           break;
         case 'remove':
           divClientList.removeChild(document.getElementById(clientId));
@@ -298,7 +301,10 @@ block headerAdditions
             label.innerHTML = 'There are no clients currently connected';
             document.getElementById('clientsList').appendChild(label);
           } 
-          updateGroup('all', clients.join());
+          if(typeof updateGroup == 'function')
+          {
+            updateGroup('all', clients.join());
+          }
           break;
         default:
           console.log('UpdateConnectionsList called with invalid action, doing nothing');
