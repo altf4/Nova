@@ -42,6 +42,8 @@ Ticket::Ticket(uint32_t ourSerial, uint32_t theirSerial, bool isCallback, bool h
 	m_hasInit = hasInit;
 	m_rwMQlock = rwLock;
 	m_socketFD = socketFD;
+
+	pthread_rwlock_rdlock(m_rwMQlock);
 }
 
 Ticket::~Ticket()

@@ -74,7 +74,7 @@ MessageEndpoint::~MessageEndpoint()
 }
 
 //blocking call
-Message *MessageEndpoint::PopMessage(Ticket ticket, int timeout)
+Message *MessageEndpoint::PopMessage(Ticket &ticket, int timeout)
 {
 	Message *ret;
 

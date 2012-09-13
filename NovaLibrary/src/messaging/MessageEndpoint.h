@@ -60,7 +60,7 @@ public:
 	//	NOTE: Will automatically call CloseSocket() for you if the message returned happens to be an ERROR_MESSAGE
 	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
-	Message *PopMessage(Ticket ticket, int timeout);
+	Message *PopMessage(Ticket &ticket, int timeout);
 
 	//Blocks until a new callback conversation has been started
 	//	outTicket - Reference to an output Ticket object that will be set to the appropriate values to start a conversation

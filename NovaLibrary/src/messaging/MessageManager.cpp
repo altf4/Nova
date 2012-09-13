@@ -127,24 +127,16 @@ void MessageManager::StartSocket(int socketFD)
 
 Ticket MessageManager::StartConversation(int socketFD)
 {
-	{
-		Lock lock(&m_endpointsMutex);
+	Lock lock(&m_endpointsMutex);
 
-		//If the endpoint doesn't exist, then it was closed. Just exit with failure
-		if(m_endpoints.count(socketFD) == 0)
-		{
-			return Ticket();
-		}
-		else
-		{
-			pthread_rwlock_rdlock(m_endpoints[socketFD].second);
-		}
+	//If the endpoint doesn't exist, then it was closed. Just exit with failure
+	if(m_endpoints.count(socketFD) == 0)
+	{
+		return Ticket();
 	}
 
-	//Just because we got a read-lock doesn't mean the MessageEndpoint exists. It could have been closed and deleted before we got here
 	if(m_endpoints[socketFD].first == NULL)
 	{
-		pthread_rwlock_unlock(m_endpoints[socketFD].second);
 		return Ticket();
 	}
 
@@ -179,7 +171,6 @@ void MessageManager::CloseSocket(int socketFD)
 bool MessageManager::RegisterCallback(int socketFD, Ticket &outTicket)
 {
 	MessageEndpointLock endpointLock = GetEndpoint(socketFD);
-
 	if(endpointLock.m_endpoint != NULL)
 	{
 		return endpointLock.m_endpoint->RegisterCallback(outTicket);
@@ -196,7 +187,11 @@ std::vector <int>MessageManager::GetSocketList()
 	std::map<int, std::pair<MessageEndpoint*, pthread_rwlock_t*>>::iterator it;
 	for(it = m_endpoints.begin(); it != m_endpoints.end(); ++it)
 	{
-		sockets.push_back(it->first);
+		//If the MessageEndpoint is NULL, don't count it
+		if(it->second.first != NULL)
+		{
+			sockets.push_back(it->first);
+		}
 	}
 
 	return sockets;
