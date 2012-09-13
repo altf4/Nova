@@ -53,7 +53,7 @@ block headerAdditions
                     check.id = 'check' + i;
                     check.name = 'check' + i;
                     check.value = clients[i];
-                    check.setAttribute('onchange', 'setTarget(("check" + '+i+'), clients['+i+'].toString())');
+                    check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
                     var label = document.createElement('label');
                     label.value = clients[i];
                     label.innerHTML = clients[i];

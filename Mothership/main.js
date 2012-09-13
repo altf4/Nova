@@ -77,9 +77,9 @@ everyone.now.UpdateGroup = function(group, newMembers)
 
 everyone.now.AddGroup = function(group, members)
 {
-  console.log('Adding group ' + group + ' with members ' + newMembers);
+  console.log('Adding group ' + group + ' with members ' + members);
   var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
-  groupFile += '\n' + group + ":" + newMembers + ";";
+  groupFile += '\n' + group + ":" + members + ";";
   fs.writeFileSync(NovaHomePath + '/../Mothership/client_groups.txt', groupFile);
 }
 

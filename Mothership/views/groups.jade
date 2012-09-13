@@ -3,20 +3,24 @@ extends layout
 block headerAdditions
   script
     var clients = "#{CLIENTS}".split(':');
+    var clientCount = 0;
     var groups = !{GROUPS};
   
     function setUpSelect()
     {     
-        if(clients.length == 0)
+        if(clients == '' || clients.length == 0)
         {
-            var label = document.createElement('label');
-            label.id = 'noClients';
-            label.innerHTML = 'There are no clients currently connected';
-            document.getElementById('clientsList').appendChild(label);
-            return;
+          
+          var label = document.createElement('label');
+          label.id = 'noClients';
+          label.value = 'noClients';
+          label.innerHTML = 'There are no clients currently connected';
+          document.getElementById('clientsList').appendChild(label);
         }  
-        for(var i = 0; i < clients.length; i++)
+        else
         {
+          for(var i = 0; i < clients.length; i++)
+          {
             var deleteMe = document.getElementById('noClients');
             if(deleteMe != undefined)
             {
@@ -30,14 +34,16 @@ block headerAdditions
                 check.id = 'check' + i;
                 check.name = 'check' + i;
                 check.value = clients[i];
-                check.setAttribute('onchange', 'setTarget(("check" + '+i+'), clients['+i+'].toString())');
+                check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
                 var label = document.createElement('label');
                 label.value = clients[i];
                 label.innerHTML = clients[i];
                 div.appendChild(check);
                 div.appendChild(label);
-                document.getElementById('clientList').appendChild(div);
+                document.getElementById('clientsList').appendChild(div);
+                clientCount++;
             }
+          }
         }
     }
 
@@ -104,14 +110,38 @@ block headerAdditions
     
     function getMembers()
     {
-      
+      if(clients == '' || clients.length == 0)
+      {
+        return undefined;
+      }
+      else
+      {
+        var members = '';
+        for(var i = 0; i < clientCount; i++)
+        {
+          if(document.getElementById('check' + i) != null && document.getElementById('check' + i).checked)
+          {
+            members += document.getElementById('check' + i).value + ','
+          }
+        }
+        if(members[members.length - 1] == ',')
+        {
+          members = members.substr(0, members.length - 1);
+        }
+        if(members == '')
+        {
+          return undefined;
+        }
+        
+        return members;
+      }
     }
     
     function removeGroup(group)
     {
       var groupToRemove = document.getElementById(group).value;
       now.RemoveGroup(groupToRemove);
-      document.getElementById('appendHook').removeChild(document.getElementById(group));
+      document.getElementById('appendHook').removeChild(document.getElementById('group' + group.substr(10)));
     }
 
     function updateGroup(group, newMembers)
@@ -121,7 +151,54 @@ block headerAdditions
 
     function addGroup(group, members)
     {
-      now.AddGroup(group, members);
+      if(members != undefined && group != undefined)
+      {
+        now.AddGroup(group, members);
+        
+        var ah = document.getElementById('appendHook');
+        
+        var tr = document.createElement('tr');
+        tr.id = 'group' + (parseInt(clientCount) + 1);
+        
+        var td1 = document.createElement('td');
+        var td2 = document.createElement('td');
+        
+        var label = document.createElement('label');
+        label.id = 'groupLabel' + (parseInt(clientCount) + 1);
+        label.innerHTML = group;
+        label.value = group;
+        var input = document.createElement('input');
+        input.id = 'members' + (parseInt(clientCount) + 1);
+        input.value = members;
+        
+        td1.appendChild(label);
+        td2.appendChild(input);
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        
+        if(group != 'all')
+        {
+          var td3 = document.createElement('td');
+          var deleteButton = document.createElement('button');
+          deleteButton.setAttribute('onclick', 'removeGroup("groupLabel' + (parseInt(clientCount) + 1) + '")');
+          deleteButton.innerHTML = 'Delete';
+          td3.appendChild(deleteButton);
+          tr.appendChild(td3);
+          
+          var td4 = document.createElement('td');
+          var updateButton = document.createElement('button');
+          updateButton.setAttribute('onclick', 'updateGroup(document.getElementById("groupLabel' + (parseInt(clientCount) + 1) + '").value, document.getElementById("members' + (parseInt(clientCount) + 1) + '").value)');
+          updateButton.innerHTML = 'Update';
+          td4.appendChild(updateButton);
+          tr.appendChild(td4);
+        }
+        
+        ah.appendChild(tr);
+      }
+      else
+      {
+        alert('To add a group, at least one client must be checked and a group name must be entered!');
+      }
     }
 
     now.ready(function(){
@@ -136,8 +213,8 @@ block content
   br
   h1 Add Group
   label New Group Name: 
-  input(id='groupName')
-  button(id='addGroup', onclick='addGroup(document.getElementById(groupName).value, getMembers())')
+  input(id='groupName', value='')
+  button(id='addGroup', onclick='addGroup(document.getElementById("groupName").value, getMembers())') Add Group
   h1 Current Groups
   table(id='groupsList')
     thead
