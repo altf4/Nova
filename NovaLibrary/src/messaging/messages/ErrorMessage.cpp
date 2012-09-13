@@ -28,6 +28,13 @@ ErrorMessage::ErrorMessage(enum ErrorType errorType)
 	m_errorType = errorType;
 }
 
+ErrorMessage::ErrorMessage(enum ErrorType errorType, uint32_t ourSerial)
+{
+	m_messageType = ERROR_MESSAGE;
+	m_errorType = errorType;
+	m_ourSerialNumber = ourSerial;
+}
+
 ErrorMessage::~ErrorMessage()
 {
 

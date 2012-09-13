@@ -38,7 +38,7 @@ public:
 
 	//Functions for pushing and popping messages off the Message queue
 	Message *PopMessage(int timeout);
-	void PushMessage(Message *message);
+	bool PushMessage(Message *message);
 
 	uint32_t GetTheirSerialNum();
 

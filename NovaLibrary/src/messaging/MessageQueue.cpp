@@ -102,11 +102,11 @@ Message *MessageQueue::PopMessage(int timeout)
 	return retMessage;
 }
 
-void MessageQueue::PushMessage(Message *message)
+bool MessageQueue::PushMessage(Message *message)
 {
 	if(message == NULL)
 	{
-		return;
+		return false;
 	}
 
 	uint32_t theirSerial = GetTheirSerialNum();
@@ -124,7 +124,7 @@ void MessageQueue::PushMessage(Message *message)
 		{
 			message->DeleteContents();
 			delete message;
-			return;
+			return false;
 		}
 	}
 
@@ -136,6 +136,7 @@ void MessageQueue::PushMessage(Message *message)
 
 	//Wake up anyone sleeping for a message
 	pthread_cond_signal(&m_popWakeupCondition);
+	return true;
 }
 
 uint32_t MessageQueue::GetTheirSerialNum()

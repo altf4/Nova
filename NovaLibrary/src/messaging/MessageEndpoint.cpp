@@ -27,7 +27,6 @@
 #include <sys/socket.h>
 #include "unistd.h"
 #include "string.h"
-#include "stdio.h"
 #include <sys/time.h>
 #include "errno.h"
 
@@ -87,6 +86,19 @@ Message *MessageEndpoint::PopMessage(Ticket ticket, int timeout)
 		return new ErrorMessage(ERROR_PROTOCOL_MISTAKE);
 	}
 
+	//TODO: This is not quite right. We should keep returning valid messages as long as
+	//	we have them. We should ask the MessageQueue for a new message (maybe peek?)
+	//	and only return a shutdown message if one doesn't exist there.
+
+	//If we're shut down, then return a shutdown message
+	{
+		Lock shutdownLock(&m_isShutdownMutex);
+		if(m_isShutDown)
+		{
+			return new ErrorMessage(ERROR_SOCKET_CLOSED);
+		}
+	}
+
 	ret = queue->PopMessage(timeout);
 
 	if(ret->m_messageType == ERROR_MESSAGE)
@@ -120,6 +132,9 @@ void *MessageEndpoint::StaticThreadHelper(void *ptr)
 
 bool MessageEndpoint::PushMessage(Message *message)
 {
+	uint32_t ourSerial;
+	bool isNewCallback = false;
+
 	if(message == NULL)
 	{
 		return false;
@@ -136,13 +151,14 @@ bool MessageEndpoint::PushMessage(Message *message)
 	//If this is a new conversation from the endpoint (new callback conversation)
 	if(message->m_theirSerialNumber == 0)
 	{
+		isNewCallback = true;
 		//Look up to see if there's a MessageQueue for this serial
 		MessageQueue *queue = m_queues.GetByTheirSerial(message->m_ourSerialNumber);
 
 		//If this is a brand new callback message
 		if(queue == NULL)
 		{
-			uint32_t ourSerial = GetNextOurSerialNum();
+			ourSerial = GetNextOurSerialNum();
 			m_queues.AddQueue(ourSerial, message->m_ourSerialNumber);
 
 			queue = m_queues.GetByOurSerial(ourSerial);
@@ -154,8 +170,22 @@ bool MessageEndpoint::PushMessage(Message *message)
 				return false;
 			}
 		}
-		queue->PushMessage(message);
-		return true;
+		if(queue->PushMessage(message))
+		{
+			if(isNewCallback)
+			{
+				{
+					Lock lock(&m_availableCBsMutex);
+					m_availableCBs.push(ourSerial);
+				}
+				pthread_cond_signal(&m_callbackWakeupCondition);
+			}
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	//If we got here, the message should be for an existing conversation
@@ -169,8 +199,7 @@ bool MessageEndpoint::PushMessage(Message *message)
 		delete message;
 		return false;
 	}
-	queue->PushMessage(message);
-	return true;
+	return queue->PushMessage(message);
 }
 
 bool MessageEndpoint::RegisterCallback(Ticket &outTicket)
@@ -182,11 +211,17 @@ bool MessageEndpoint::RegisterCallback(Ticket &outTicket)
 		{
 			//Protection for the m_callbackDoWakeup bool
 			Lock condLock(&m_availableCBsMutex);
-			while(m_availableCBs.empty())
+
+			//TODO: Unprotected read of byte value m_isShutdown. Probably safe though.
+			while(m_availableCBs.empty() && !m_isShutDown)
 			{
 				pthread_cond_wait(&m_callbackWakeupCondition, &m_availableCBsMutex);
 			}
 
+			if(m_isShutDown)
+			{
+				return false;
+			}
 			//This is the first message of the protocol. This message contains the serial number we will be expecting later
 			nextSerial = m_availableCBs.front();
 			m_availableCBs.pop();
@@ -253,9 +288,7 @@ void *MessageEndpoint::ProducerThread()
 					//Mark the queue as closed, put an error message on the queue, and quit reading
 					m_isShutDown = true;
 				}
-				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
-				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
-				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
+				pthread_cond_signal(&m_callbackWakeupCondition);
 				return NULL;
 			}
 			else
@@ -269,7 +302,6 @@ void *MessageEndpoint::ProducerThread()
 		memcpy(&length, buff, sizeof(length));
 		if(length == 0)
 		{
-			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE));
 			continue;
 		}
 
@@ -279,7 +311,6 @@ void *MessageEndpoint::ProducerThread()
 		if(buffer == NULL)
 		{
 			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
-			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE));
 			free(buffer);
 			continue;
 		}
@@ -290,7 +321,6 @@ void *MessageEndpoint::ProducerThread()
 		while(totalBytesRead < length)
 		{
 			bytesRead = read(m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
-
 			if(bytesRead <= 0)
 			{
 				if (bytesRead == 0)
@@ -308,9 +338,7 @@ void *MessageEndpoint::ProducerThread()
 					//Mark the queue as closed, put an error message on the queue, and quit reading
 					m_isShutDown = true;
 				}
-				//Push an ERROR_SOCKET_CLOSED message into both queues. So that everyone knows we're closed
-				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
-				PushMessage(new ErrorMessage(ERROR_SOCKET_CLOSED));
+				pthread_cond_signal(&m_callbackWakeupCondition);
 				free(buffer);
 				return NULL;
 			}
@@ -323,10 +351,10 @@ void *MessageEndpoint::ProducerThread()
 
 		if(length < MESSAGE_MIN_SIZE)
 		{
-			PushMessage(new ErrorMessage(ERROR_MALFORMED_MESSAGE));
 			free(buffer);
 			continue;
 		}
+
 
 		PushMessage(Message::Deserialize(buffer, length));
 		free(buffer);

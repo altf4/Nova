@@ -74,6 +74,7 @@ bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 	}
 
 	message->m_ourSerialNumber = ticket.m_ourSerialNum;
+	message->m_theirSerialNumber = ticket.m_theirSerialNum;
 
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
@@ -115,6 +116,13 @@ void MessageManager::StartSocket(int socketFD)
 
 		m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>( new MessageEndpoint(socketFD), rwLock);
 	}
+	else
+	{
+		if(m_endpoints[socketFD].first == NULL)
+		{
+			m_endpoints[socketFD].first = new MessageEndpoint(socketFD);
+		}
+	}
 }
 
 Ticket MessageManager::StartConversation(int socketFD)
@@ -136,6 +144,7 @@ Ticket MessageManager::StartConversation(int socketFD)
 	//Just because we got a read-lock doesn't mean the MessageEndpoint exists. It could have been closed and deleted before we got here
 	if(m_endpoints[socketFD].first == NULL)
 	{
+		pthread_rwlock_unlock(m_endpoints[socketFD].second);
 		return Ticket();
 	}
 
@@ -146,7 +155,6 @@ void MessageManager::DeleteEndpoint(int socketFD)
 {
 	//Deleting the message endpoint requires that nobody else is using it!
 	Lock lock(&m_endpointsMutex);
-
 	if(m_endpoints.count(socketFD) > 0)
 	{
 		Lock lock(m_endpoints[socketFD].second, WRITE_LOCK);

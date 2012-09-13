@@ -50,7 +50,7 @@ Ticket::~Ticket()
 	{
 		pthread_rwlock_unlock(m_rwMQlock);
 	}
-	//MessageManager::CloseConversation(this);
+	//TODO: Delete the MessageQueue this ticket used
 }
 
 
