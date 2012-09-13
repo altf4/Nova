@@ -54,6 +54,45 @@ everyone.now.MessageSend = function(message)
     }
 };
 
+everyone.now.RemoveGroup = function(group)
+{
+  console.log('Removing group ' + group + ' from the client groups file');
+  var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
+  var regex = group + ".+?;";
+  var replaceWithNull = new RegExp(regex, "g");
+  groupFile = groupFile.replace(replaceWithNull, '');
+  groupFile = trimNewlines(groupFile);
+  fs.writeFileSync(NovaHomePath + '/../Mothership/client_groups.txt', groupFile);
+};
+
+everyone.now.UpdateGroup = function(group, newMembers)
+{
+  console.log('Updating group ' + group + ' to have members ' + newMembers);
+  var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
+  var regex = group + ".+?;";
+  var replaceWithNull = new RegExp(regex, "g");
+  groupFile = groupFile.replace(replaceWithNull, group + ":" + newMembers + ";");
+  fs.writeFileSync(NovaHomePath + '/../Mothership/client_groups.txt', groupFile);
+}
+
+everyone.now.AddGroup = function(group, members)
+{
+  console.log('Adding group ' + group + ' with members ' + newMembers);
+  var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
+  groupFile += '\n' + group + ":" + newMembers + ";";
+  fs.writeFileSync(NovaHomePath + '/../Mothership/client_groups.txt', groupFile);
+}
+
+function trimNewlines(string)
+{
+  var ret = string;
+  if(string[0] == '\n')
+  {
+    ret = string.substr(1);
+  }
+  return ret;
+}
+
 // Begin setup of websocket server. Going to have an 
 // https base server so that we can use wss:// connections
 // instead of basic ws://
@@ -229,6 +268,37 @@ function getClients()
 	return ret;
 }
 
+
+// A function that reads the file client_groups.txt that contains user-created groups names
+// that have an associated list of last-known clientIds. 
+function getGroups()
+{
+  var group = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'ascii');
+  if(group == '')
+  {
+    console.log('client groups file is empty');
+  }
+  else
+  {
+    var clientGroups = group.split(';');
+    var ret = {};
+    ret.groups = '';
+    ret.members = '';
+    
+    for(var i = 0; i < clientGroups.length; i++)
+    {
+      if(clientGroups[i] != '' && clientGroups[i].length > 1)
+      {
+        var members = clientGroups[i].split(':');
+        ret.groups += members[0].replace(/(\r\n|\n|\r)/gm,"") + ':';
+        ret.members += members[1] + '|';
+      }
+    }
+  }
+  
+  return JSON.stringify(ret);
+}
+
 // Going to need to do passport for these soon, I think.
 app.get('/', function(req, res) 
 {
@@ -267,4 +337,11 @@ app.get('/config', function(req, res)
 		, CUSTOM_PCAP_MODE: config.ReadSetting('CUSTOM_PCAP_MODE')
 		, CLEAR_AFTER_HOSTILE_EVENT: config.ReadSetting('CLEAR_AFTER_HOSTILE_EVENT')
 	}});
+});
+
+app.get('/groups', function(req, res){
+  res.render('groups.jade', {locals:{
+    CLIENTS: getClients()
+    , GROUPS: getGroups()
+  }});
 });
