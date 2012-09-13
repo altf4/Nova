@@ -119,8 +119,21 @@ block headerAdditions
 
     function setUpSelect()
     {       
+        if(clients.length == 0 && document.getElementById('noClients') == undefined)
+        {
+            var label = document.createElement('label');
+            label.id = 'noClients';
+            label.innerHTML = 'There are no clients currently connected';
+            document.getElementById('clientsList').appendChild(label);
+            return;
+        }  
         for(var i = 0; i < clients.length; i++)
         {
+            var deleteMe = document.getElementById('noClients');
+            if(deleteMe != undefined)
+            {
+                document.getElementById('clientsList').removeChild(deleteMe);
+            }
             if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
             {
                 var div = document.createElement('div');
