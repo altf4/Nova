@@ -34,7 +34,7 @@ app.set('view options', { layout: false });
 app.set('views', __dirname + '/views');
 // TODO: Make port configurable
 app.listen(8080);
-app.use(express.static(NovaHomePath + '/../Quasar/www'));
+app.use(express.static(NovaHomePath + '/../Mothership/www'));
 
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
@@ -310,7 +310,7 @@ function getGroups()
 app.get('/', function(req, res) 
 {
 	res.render('main.jade', {locals:{
-		clients: getClients()
+		CLIENTS: getClients()
 	}});
 });
 

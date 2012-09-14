@@ -1,3 +1,47 @@
+    var clientCount = 0;
+            
+    function setUpSelect()
+    {     
+        if(clients == '' || clients.length == 0)
+        {
+            var label = document.createElement('label');
+            label.id = 'noClients';
+            label.value = 'noClients';
+            label.innerHTML = 'There are no clients currently connected';
+            document.getElementById('clientsList').appendChild(label);
+        }  
+        else
+        {
+          for(var i = 0; i < clients.length; i++)
+          {
+              var deleteMe = document.getElementById('noClients');
+              if(deleteMe != undefined)
+              {
+                  document.getElementById('clientsList').removeChild(deleteMe);
+              }
+              if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
+              {
+                  var div = document.createElement('div');
+                  div.id = clients[i];
+                  var check = document.createElement('input');
+                  check.type = 'checkbox';
+                  check.id = 'check' + i;
+                  check.name = 'check' + i;
+                  check.value = clients[i];
+                  check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+                  var label = document.createElement('label');
+                  label.value = clients[i];
+                  label.innerHTML = clients[i];
+                  label.setAttribute('style', 'text-align: center');
+                  div.appendChild(check);
+                  div.appendChild(label);
+                  document.getElementById('clientsList').appendChild(div);
+                  clientCount++;
+              }
+          }
+        }
+    }
+    
     now.UpdateConnectionsList = function(clientId, action) {
       var divClientList = document.getElementById('clientsList');
       

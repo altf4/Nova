@@ -260,6 +260,7 @@ install-quasar:
 
 install-mothership:
 	cp -frup Mothership $(DESTDIR)/usr/share/nova
+	tar -C $(DESTDIR)/usr/share/nova/Mothership/www -xf Mothership/dojo-release-1.7.0.tar.gz
 	-install Mothership/mothership $(DESTDIR)/usr/bin/mothership
 
 install-hhconfig:
