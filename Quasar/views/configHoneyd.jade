@@ -164,6 +164,19 @@ block headerAdditions
       window.location.href = "editHoneydNode?node=" + nodeName;
     }
 
+    function changeGroup() {
+        try {
+           now.changeGroup(document.getElementById("GROUP").value, function() {
+             window.location.reload();
+           });
+        } catch (err) {
+            console.log(err);
+            alert("ERROR: Unable to contact server!");
+            return;
+        }
+    }
+
+
     require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
 
     function(DataGrid,ObjectStore){
@@ -189,14 +202,13 @@ block headerAdditions
 block content
   h1 Current Honeyd Nodes
   br
-  form(id="groupChangeSelect", method="post", action="/changeGroup")
-    label Group
-      select(name="GROUP", id="GROUP", onchange="document.getElementById(\"groupChangeSelect\").submit();")
-        each g, i in groups
-          if g == currentGroup
-            option(SELECTED) #{g}
-          else
-            option #{g}
+  label Group
+    select#GROUP(name="GROUP", onchange="changeGroup()")
+      each g, i in groups
+        if g == currentGroup
+          option(SELECTED) #{g}
+        else
+          option #{g}
   br
   table#nodeTable(style="display: none")
     thead
