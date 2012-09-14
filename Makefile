@@ -198,6 +198,7 @@ install: install-data
 	# Give read/write permissions to the nova group
 	-chmod -R g+rw /usr/share/nova
 	-chmod -R g+rw /var/log/honeyd
+	-chmod g+rwx /var/log/nova
 
 install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar install-nodejsmodule
 	sh debian/postinst
@@ -215,6 +216,7 @@ install-data:
 	mkdir -p $(DESTDIR)/etc/sysctl.d/
 	mkdir -p $(DESTDIR)/etc/bash_completion.d/
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	mkdir -p $(DESTDIR)/var/log/nova
 	
 	
 	cp -frup Installer/sharedFiles $(DESTDIR)/usr/share/nova/sharedFiles
