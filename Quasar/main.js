@@ -639,17 +639,9 @@ app.get('/importCapture', passport.authenticate('basic', {session: false}), func
 	}
 });
 
-app.post('/changeGroup', passport.authenticate('basic', {session: false}), function (req, res) {
-	if (req.query["GROUP"] === undefined) {
-		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.");
-		return;
-	}
-	var selectedGroup = req.body["GROUP"];
-
-	config.SetGroup(selectedGroup);
-
-	res.redirect('/configHoneydNodes');
-});
+everyone.now.changeGroup = function(group, callback) {
+	callback(config.SetGroup(group));
+}
 
 app.post('/importCaptureSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	var hostileSuspects = new Array();
