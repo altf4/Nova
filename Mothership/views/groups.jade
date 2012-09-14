@@ -19,7 +19,7 @@ block headerAdditions
       
     }
 
-    function setUpGroups()
+    function setUpGroups(bodyId)
     {
       if(groups == undefined)
       {
@@ -28,7 +28,7 @@ block headerAdditions
       
       var groupList = groups.groups.split(':');
       var memberList = groups.members.split('|');
-      var ah = document.getElementById('appendHook');
+      var ah = document.getElementById(bodyId);
       
       for(var i in groupList)
       {
@@ -196,8 +196,8 @@ block headerAdditions
     }
 
     now.ready(function(){
-      setUpSelect();
-      setUpGroups();
+      setUpSelect('clientsList');
+      setUpGroups('appendHook');
       
       var members = '';
       

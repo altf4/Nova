@@ -44,6 +44,8 @@ var everyone = nowjs.initialize(app);
 // is handled on the Quasar side.
 everyone.now.MessageSend = function(message) 
 {
+  //TODO: Check for duped targets s.t. we don't send multiple messages to the 
+  //      same client
     var targets = message.id.split(':');
     for(var i in targets)
     {
@@ -311,6 +313,7 @@ app.get('/', function(req, res)
 {
 	res.render('main.jade', {locals:{
 		CLIENTS: getClients()
+		, GROUPS: getGroups()
 	}});
 });
 
@@ -323,6 +326,7 @@ app.get('/config', function(req, res)
 {
 	res.render('config.jade', {locals:{
 		CLIENTS: getClients()
+		, GROUPS: getGroups()
 		, TCP_TIMEOUT: config.ReadSetting('TCP_TIMEOUT')
 		, TCP_CHECK_FREQ: config.ReadSetting('TCP_CHECK_FREQ')
 		, READ_PCAP: config.ReadSetting('READ_PCAP')

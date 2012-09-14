@@ -3,11 +3,17 @@ extends layout
 block content
   h1 Nova Control Panel
   
-  label(style='font-weight: bold') Set Client Target
-  br
-  br
-  div(id='clientsList')   
-  br
+  table
+    thead
+      tr
+        th Connected Clients
+        th Groups
+    tbody
+      tr
+        td
+          div(id='clientsList')
+        td
+          div(id='groupsList')
 
   button(id='button0', style='width: 160px', onclick='startNovad();', disabled=true) Start Novad
   button(id='button1', style='width: 160px',  onclick='stopNovad();', disabled=true) Stop Novad
@@ -72,6 +78,7 @@ block headerAdditions
     message.id = '';
 
     var clients = "#{CLIENTS}".split(':');
+    var groups = !{GROUPS};
 
     function startNovad()
     {
@@ -249,7 +256,8 @@ block headerAdditions
         ready(function() {
             now.ready(function() {
               Init();
-              setUpSelect();
+              setUpSelect('clientsList');
+              setUpGrouplist('groupsList');
             });
         });
     });

@@ -117,11 +117,20 @@ html, body {
     height: 550px;
 }
 
-#clientsList {
+#clientsList{
     border: 2px solid;
     border-radius: 12px;
     background: #E8A02F;
     width: 250px;
+    text-align: center;
+}
+
+#groupsList{
+    border: 2px solid;
+    border-radius: 12px;
+    background: #E8A02F;
+    width: 250px;
+    text-align: center;
 }
 
 .white_content{
