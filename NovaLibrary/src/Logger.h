@@ -57,10 +57,8 @@ struct MessageOptions
 	// the port for SMTP send; normally 25 if I'm not mistaken, may take this out
 	in_port_t smtp_port;
 	userMap m_service_preferences;
-	// a vector containing the email recipients; may move this into the actual classes
-	// as opposed to being in this struct
+
 	std::vector<std::string> m_email_recipients;
-	// string for sending date to recipient
 };
 
 struct Writer
@@ -97,27 +95,6 @@ public:
 	//               just wanting to change the level, and not the range modifier, you have to put the
 	//               range modifier that's present in the NOVAConfig.txt file as the argument.
 	void SetUserLogPreferences(Nova::Services services, Nova::Levels messageLevel, char upDown = '0');
-
-	//This will clear the emails file and place the argument vector's strings
-	// into it as the emails content.
-	// args: std::vector<std::string> recs: vector of email strings
-	void SetEmailRecipients(std::vector<std::string> recs);
-
-	//This will merely append the argument vector's strings to the emails file
-	// args: std::vector<std::string> recs: vector of email strings
-	void AppendEmailRecipients(std::vector<std::string> recs);
-
-	//Don't know about this yet, may not end up being in the final cut
-	//void ModifyEmailRecipients(std::vector<std::string> remove, std::vector<std::string> append);
-
-	//This function will parse through the file and remove each email that's found in the
-	// argument vector
-	// args: std::vector<std::string> recs: vector of email strings
-	void RemoveEmailRecipients(std::vector<std::string> recs);
-
-	//This method just clears the emails file; if it's empty the
-	// mailer script won't run
-	void ClearEmailRecipients();
 
 	// updates the date string to reflect the current month, day, year
 	void UpdateDateString();
@@ -196,7 +173,6 @@ private:
 	std::string m_dateString;
 	std::string m_mailMessage;
 	std::vector<std::string> m_mailFormat;
-	std::string m_pathEmailFile;
 };
 
 }

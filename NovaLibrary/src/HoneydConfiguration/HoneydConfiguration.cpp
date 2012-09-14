@@ -48,7 +48,6 @@ namespace Nova
 HoneydConfiguration::HoneydConfiguration()
 {
 	m_macAddresses.LoadPrefixFile();
-	m_homePath = Config::Inst()->GetPathHome();
 	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
 	m_nodes.set_empty_key("");
@@ -59,20 +58,6 @@ HoneydConfiguration::HoneydConfiguration()
 	m_profiles.set_deleted_key("Deleted");
 	m_ports.set_deleted_key("Deleted");
 	m_scripts.set_deleted_key("Deleted");
-}
-
-//This function sets the home directory from which the templates are relative to
-//	homePath: file system path to the directory you wish to use
-void HoneydConfiguration::SetHomePath(string homePath)
-{
-	m_homePath = homePath;
-}
-
-//This function returns the home path from which it is currently reading and writing from
-// Returns: the local file system path in string form to the current home directory
-string HoneydConfiguration::GetHomePath()
-{
-	return m_homePath;
 }
 
 //Attempts to populate the HoneydConfiguration object with the xml templates.
@@ -256,10 +241,11 @@ bool HoneydConfiguration::SaveAllTemplates()
 	try
 	{
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
-		write_xml(m_homePath + "/scripts.xml", m_scriptTree, locale(), settings);
-		write_xml(m_homePath + "/templates/ports.xml", m_portTree, locale(), settings);
-		write_xml(m_homePath + "/templates/nodes.xml", m_groupTree, locale(), settings);
-		write_xml(m_homePath + "/templates/profiles.xml", m_profileTree, locale(), settings);
+		string homePath = Config::Inst()->GetPathHome();
+		write_xml(homePath + "/config/templates/scripts.xml", m_scriptTree, locale(), settings);
+		write_xml(homePath + "/config/templates/ports.xml", m_portTree, locale(), settings);
+		write_xml(homePath + "/config/templates/nodes.xml", m_groupTree, locale(), settings);
+		write_xml(homePath + "/config/templates/profiles.xml", m_profileTree, locale(), settings);
 	}
 	catch(boost::property_tree::xml_parser_error &e)
 	{
@@ -1580,7 +1566,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	m_scriptTree.clear();
 	try
 	{
-		read_xml(m_homePath + "/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
 		{
@@ -1642,7 +1628,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	m_portTree.clear();
 	try
 	{
-		read_xml(m_homePath + "/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
 		{
@@ -1722,7 +1708,7 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	m_profileTree.clear();
 	try
 	{
-		read_xml(m_homePath + "/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
 		{
@@ -1830,7 +1816,7 @@ bool HoneydConfiguration::LoadNodesTemplate()
 
 	try
 	{
-		read_xml(m_homePath + "/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
 		m_groups.clear();
 		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
 		{

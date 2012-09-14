@@ -77,7 +77,7 @@ int main(int argc, char ** argv)
 		po::store(po::parse_command_line(argc, argv, desc), vm);
 		po::notify(vm);
 
-		lockFilePath = Config::Inst()->GetPathHome() + "/hhconfig.lock";
+		lockFilePath = Config::Inst()->GetPathHome() + "/data/hhconfig.lock";
 		ofstream lockFile(lockFilePath);
 
 		bool i_flag_empty = true;

@@ -60,7 +60,7 @@ public:
 	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 	//	Returns: True if(after the function) the user has all necessary ~/.nova config files
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
-    static bool InitUserConfigs(std::string homeNovaPath);
+    bool InitUserConfigs();
 
     // These are generic static getters/setters for the web interface
     // Use of these should be minimized. Instead, use the specific typesafe getter/setter
@@ -338,9 +338,6 @@ private:
 	// Loads the version file
 	bool LoadVersionFile();
 
-
-	// Loads default values for all variables
-	void SetDefaults();
 
 	bool LoadUserConfig();
 

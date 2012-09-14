@@ -67,14 +67,6 @@ public:
 	// *Note: To populate the object from the file system you must call LoadAllTemplates();
     HoneydConfiguration();
 
-    //This function sets the home directory from which the templates are relative to
-    //	homePath: file system path to the directory you wish to use
-    void SetHomePath(std::string homePath);
-
-    //This function returns the home path from which it is currently reading and writing from
-    // Returns: the local file system path in string form to the current home directory
-    std::string GetHomePath();
-
     //Attempts to populate the HoneydConfiguration object with the xml templates.
     // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
     // Returns true if successful, false if loading failed.
@@ -314,8 +306,6 @@ public:
     VendorMacDb m_macAddresses;
 
 private:
-    std::string m_homePath;
-
     uint m_nodeProfileIndex;
 
 

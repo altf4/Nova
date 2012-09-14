@@ -16,15 +16,19 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================
 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <ifaddrs.h>
+#include <unistd.h>
 #include <net/if.h>
 #include <sys/un.h>
 #include <syslog.h>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <math.h>
-#include <iostream>
+#include <pwd.h>
+
 
 #include "Config.h"
 #include "Logger.h"
@@ -36,7 +40,7 @@ using namespace std;
 namespace Nova
 {
 
-string Config::m_pathsFile = "/etc/nova/paths";
+string Config::m_pathsFile = "/usr/share/nova/sharedFiles/paths";
 string Config::m_pathPrefix = "";
 
 string Config::m_prefixes[] =
@@ -117,15 +121,14 @@ Config::Config()
 	}
 	LoadPaths();
 
-	if(!InitUserConfigs(m_pathHome))
+	if(!InitUserConfigs())
 	{
 		// Do not call LOG here, Config and logger are not yet initialized
 		cout << "CRITICAL ERROR: InitUserConfigs failed" << endl;
 	}
 
-	m_configFilePath = m_pathHome + string("/Config/NOVAConfig.txt");
-	m_userConfigFilePath = m_pathHome + string("/settings");
-	SetDefaults();
+	m_configFilePath = m_pathHome + string("/config/NOVAConfig.txt");
+	m_userConfigFilePath = m_pathHome + string("/config/settings");
 	LoadUserConfig();
 	LoadConfig_Internal();
 	LoadVersionFile();
@@ -631,7 +634,7 @@ void Config::LoadConfig_Internal()
 						case 'I':
 						{
 							m_haystackStorage = 'I';
-							m_userPath = m_pathHome + "/Config/haystack_honeyd.config";
+							m_userPath = m_pathHome + "/config/haystack_honeyd.config";
 							isValid[prefixIndex] = true;
 							break;
 						}
@@ -798,7 +801,7 @@ bool Config::SaveUserConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_userConfigFilePath + ".tmp";
-	string copyCommand = "cp -f " + m_userConfigFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp " + m_userConfigFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
@@ -928,6 +931,21 @@ bool Config::LoadPaths()
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 
+	// Try getting the $HOME env var
+	char *homePath = getenv("HOME");
+	if (homePath != NULL)
+	{
+		m_pathHome = string(homePath);
+	}
+	// Resort to checking the passwd file
+	else
+	{
+		struct passwd *pw = getpwuid(getuid());
+		m_pathHome = string(pw->pw_dir);
+	}
+
+	m_pathHome += "/.config/nova";
+
 	//Get locations of nova files
 	ifstream *paths =  new ifstream(m_pathPrefix + Config::m_pathsFile);
 	string prefix, line;
@@ -937,14 +955,6 @@ bool Config::LoadPaths()
 		while(paths->good())
 		{
 			getline(*paths,line);
-
-			prefix = "NOVA_HOME";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				m_pathHome = m_pathPrefix + ResolvePathVars(line);
-				continue;
-			}
 
 			prefix = "NOVA_RD";
 			if(!line.substr(0,prefix.size()).compare(prefix))
@@ -1055,7 +1065,7 @@ void Config::LoadInterfaces()
 
 bool Config::LoadVersionFile()
 {
-	ifstream versionFile((m_pathHome + "/" + VERSION_FILE_NAME).c_str());
+	ifstream versionFile((m_pathHome + "/config/" + VERSION_FILE_NAME).c_str());
 	string line;
 
 	if(versionFile.is_open())
@@ -1148,7 +1158,7 @@ bool Config::SaveConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
-	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
@@ -1368,39 +1378,9 @@ bool Config::SaveConfig()
 	return true;
 }
 
-
-
-void Config::SetDefaults()
-{
-	m_interfaces.push_back("default");
-	m_pathConfigHoneydHs 	= "Config/haystack.config";
-	m_pathPcapFile 		= "../pcapfile";
-	m_pathTrainingFile 	= "Config/data.txt";
-	m_pathWhitelistFile = "Config/whitelist.txt";
-	m_pathConfigHoneydUser	= "Config/doppelganger.config";
-	m_pathCESaveFile = "ceStateSave";
-
-	m_tcpTimout = 7;
-	m_tcpCheckFreq = 3;
-	m_readPcap = false;
-	m_gotoLive = true;
-	m_isDmEnabled = true;
-
-	m_classificationTimeout = 3;
-	m_k = 3;
-	m_eps = 0.01;
-	m_classificationThreshold = .5;
-	m_doppelIp = "10.0.0.1";
-	m_loopbackIF = "lo";
-	m_enabledFeatureMask = "111111111";
-	m_thinningDistance = 0;
-	m_saveFreq = 1440;
-	m_dataTTL = 0;
-}
-
 //	Returns: True if(after the function) the user has all necessary nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
-bool Config::InitUserConfigs(string homeNovaPath)
+bool Config::InitUserConfigs()
 {
 	bool returnValue = true;
 	struct stat fileAttr;
@@ -1409,46 +1389,25 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	// This is called before the logger is initialized. Calling LOG here will likely result in a crash. Just use cout instead.
 
 	//check for home folder
-	if(stat(homeNovaPath.c_str(), &fileAttr ) == 0)
+	if(!stat(m_pathHome.c_str(), &fileAttr ) == 0)
 	{
-		// Do all of the important files exist?
-		for(uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
-		{
-			string fullPath = homeNovaPath + Config::m_requiredFiles[i];
-			if(stat (fullPath.c_str(), &fileAttr ) != 0)
-			{
-				string defaultLocation = m_pathPrefix + "/etc/nova/nova" + Config::m_requiredFiles[i];
-				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
+		string fromPath = m_pathPrefix + "/usr/share/nova/userFiles";
+		string toPath = m_pathHome;
+		string copyString = "cp -rfp " + fromPath + " " + toPath;
 
-				cout << "The required file " << fullPath << " does not exist. Copying it from the defaults folder." << endl;
-				if(system(copyCommand.c_str()) != 0)
-				{
-					cout << "Unable to load defaults from " << defaultLocation << "System Command " << copyCommand <<" has failed." << endl;
-					returnValue = false;
-				}
-			}
-		}
-	}
-	else
-	{
-		//TODO: Do this command programmatically. Not by calling system()
-		string fromPath = m_pathPrefix + "/etc/nova/nova";
-		string toPath = m_pathPrefix + "/usr/share/nova";
-		string copyString = "cp -rf " + fromPath + " " + toPath;
-		if(system(copyString.c_str()) == -1)
+		if(system(copyString.c_str()) != 0)
 		{
-			cout << "Was unable to create directory " << toPath << endl;
-			returnValue = false;
+			cout << "Error copying files to user's HOME folder. Failed copy command was: " + copyString << endl;
 		}
 
 		//Check the nova dir again
-		if(stat(homeNovaPath.c_str(), &fileAttr) == 0)
+		if(stat(m_pathHome.c_str(), &fileAttr) == 0)
 		{
 			return returnValue;
 		}
 		else
 		{
-			cout << "Was unable to create directory " << homeNovaPath << endl;
+			cout << "Was unable to create directory " << m_pathHome << endl;
 			returnValue = false;
 		}
 	}
@@ -1565,7 +1524,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
-	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
@@ -1863,9 +1822,9 @@ string Config::GetGroup()
 
 bool Config::GetSMTPSettings_FromFile()
 {
-	string debugPath = m_pathHome + "/Config/smtp.txt";
+	string debugPath = m_pathHome + "/config/smtp.txt";
 
-	ifstream ifs(m_pathHome + "/Config/smtp.txt");
+	ifstream ifs(m_pathHome + "/config/smtp.txt");
 
 	if (!ifs.is_open())
 	{
@@ -1889,7 +1848,7 @@ bool Config::GetSMTPSettings_FromFile()
 
 bool Config::SaveSMTPSettings()
 {
-	string debugPath = m_pathHome + "/Config/smtp.txt";
+	string debugPath = m_pathHome + "/config/smtp.txt";
 	ofstream out(debugPath.c_str());
 
 	if (!out.is_open())

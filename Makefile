@@ -116,7 +116,7 @@ clean-staging:
 
 #Removes created man pages
 clean-man:
-	rm -f Installer/Read/manpages/*.gz
+	rm -f Installer/miscFiles/manpages/*.gz
 
 clean-novad: clean-novad-debug clean-novad-release
 
@@ -209,51 +209,47 @@ install-data:
 	mkdir -p $(DESTDIR)/usr/lib
 	mkdir -p $(DESTDIR)/usr/share/applications
 	mkdir -p $(DESTDIR)/usr/share/nova
-	mkdir -p $(DESTDIR)/usr/share/nova/NodejsModule
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	mkdir -p $(DESTDIR)/var/log/honeyd
-	mkdir -p $(DESTDIR)/etc/nova
 	mkdir -p $(DESTDIR)/etc/rsyslog.d/
 	mkdir -p $(DESTDIR)/etc/sysctl.d/
 	mkdir -p $(DESTDIR)/etc/bash_completion.d/
 	mkdir -p $(DESTDIR)/etc/sudoers.d/
 	
-	install Installer/Read/paths $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
-	#Copy the hidden directories and files
-	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
+	
+	cp -frup Installer/sharedFiles $(DESTDIR)/usr/share/nova/sharedFiles
+	cp -frup Installer/userFiles $(DESTDIR)/usr/share/nova/userFiles
+	cp -frup Installer/nova_init $(DESTDIR)/usr/share/nova
+	cp -frup Installer/createDatabase.sh $(DESTDIR)/usr/share/nova
+
 	#Copy the scripts and logs
-	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
 	install Installer/nova_init $(DESTDIR)/usr/bin
 	#Install permissions
-	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
-	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
+	install Installer/miscFiles/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/miscFiles/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
+	install Installer/miscFiles/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
 	# Copy the bash completion files
-	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
+	install Installer/miscFiles/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
 
 install-pcap-debug:
 	#debug sudoers file that allows sudo gdb to pcap without password prompt
-	install Installer/Read/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/miscFiles/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
 
 install-docs:
 	# TODO: Combine man pages
-	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
-	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
-	gzip -c Installer/Read/manpages/quasar.1 > Installer/Read/manpages/quasar.1.gz
-	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	gzip -c Installer/miscFiles/manpages/novad.1 > Installer/miscFiles/manpages/novad.1.gz
+	gzip -c Installer/miscFiles/manpages/novacli.1 > Installer/miscFiles/manpages/novacli.1.gz
+	gzip -c Installer/miscFiles/manpages/quasar.1 > Installer/miscFiles/manpages/quasar.1.gz
+	install Installer/miscFiles/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
 
 install-quasar:
-	cp -frup Quasar $(DESTDIR)/usr/share/nova
-	tar -C $(DESTDIR)/usr/share/nova/Quasar/www -xf Quasar/dojo-release-1.7.0.tar.gz
-	#mv $(DESTDIR)/usr/share/nova/Quasar/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/Quasar/www/dojo
+	cp -frup Quasar $(DESTDIR)/usr/share/nova/sharedFiles
+	tar -C $(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Quasar/quasar $(DESTDIR)/usr/bin/quasar
 
 install-hhconfig:
 	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
-	-install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	-install Installer/miscFiles/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
 
 install-novad:
 	install Novad/novad $(DESTDIR)/usr/bin
@@ -268,14 +264,15 @@ install-novatrainer:
 	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
 
 install-nodejsmodule:
-	install NodejsModule/build/Release/novaconfig.node $(DESTDIR)/usr/share/nova/NodejsModule/
+	mkdir -p $(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule
+	install NodejsModule/build/Release/novaconfig.node $(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/
 
 
 #Uninstall
 uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
-	rm -rf $(DESTDIR)/etc/nova
+	rm -rf ~/.config/nova
 	rm -rf $(DESTDIR)/usr/share/nova
 	rm -f $(DESTDIR)/usr/bin/novacli
 	rm -f $(DESTDIR)/usr/bin/novad

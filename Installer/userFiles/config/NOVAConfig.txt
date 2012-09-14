@@ -24,8 +24,8 @@ INTERFACE default
 # the data points file can by located.
 #
 # EXAMPLE:
-#DATAFILE Config/data.txt
-DATAFILE Config/data.txt
+#DATAFILE config/data.txt
+DATAFILE config/data.txt
 
 ############################################
 # K #
@@ -106,8 +106,8 @@ CLASSIFICATION_THRESHOLD 0.5
 # configuration file resides.
 #
 # EXAMPLE:
-#USER_HONEYD_CONFIG Config/user_honeyd.config
-USER_HONEYD_CONFIG Config/user_honeyd.config
+#USER_HONEYD_CONFIG config/user_honeyd.config
+USER_HONEYD_CONFIG config/user_honeyd.config
 
 ############################################
 # DOPPELGANGER_IP #
@@ -156,8 +156,8 @@ DM_ENABLED 0
 # be parsed for used IP addresses. 
 # 
 # EXAMPLE:
-#HS_HONEYD_CONFIG Config/haystack_honeyd.config
-HS_HONEYD_CONFIG Config/haystack_honeyd.config
+#HS_HONEYD_CONFIG config/haystack_honeyd.config
+HS_HONEYD_CONFIG config/haystack_honeyd.config
 
 ############################################
 # TCP_TIMEOUT #
@@ -342,7 +342,7 @@ SERVICE_PREFERENCES 0:1+;1:5+;2:6+;
 #
 # Specifies the way Nova loads and saves the haystack
 # ( 'I' | 'M [path]' )
-# I - (Internal - Default) Store haystack at /usr/share/nova/nova/Config
+# I - (Internal - Default) Store haystack at /usr/share/nova/nova/config
 # M [path] - (Manual) Run honeyd using the configuration in the file specified instead of Nova's configuration
 #
 # HAYSTACK_STORAGE I
@@ -355,7 +355,7 @@ HAYSTACK_STORAGE I
 #
 # File containing whitelisted IP addresses
 #
-WHITELIST_FILE Config/whitelist.txt
+WHITELIST_FILE config/whitelist.txt
 
 
 ############################################

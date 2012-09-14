@@ -57,8 +57,8 @@ namespace Nova
 bool Spawn_UI_Handler()
 {
 	int len;
-	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
-	string outKeyPath = Config::Inst()->GetPathHome() + "/keys" + UI_LISTEN_FILENAME;
+	string inKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + NOVAD_LISTEN_FILENAME;
+	string outKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + UI_LISTEN_FILENAME;
 
     if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
