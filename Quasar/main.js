@@ -1384,7 +1384,6 @@ everyone.now.GetProfile = function (profileName, callback) {
 	profile.uptimeMax = profile.GetUptimeMax();
 	profile.dropRate = profile.GetDropRate();
 	profile.parentProfile = profile.GetParentProfile();
-	profile.childrenProfiles = profile.GetChildrenProfiles();
 
 	profile.isTcpActionInherited = profile.isTcpActionInherited();
 	profile.isUdpActionInherited = profile.isUdpActionInherited();
