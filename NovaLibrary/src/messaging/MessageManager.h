@@ -114,6 +114,8 @@ private:
 	std::map<int, std::pair<MessageEndpoint*, pthread_rwlock_t*>> m_endpoints;
 	pthread_mutex_t m_endpointsMutex;
 
+	pthread_mutex_t m_deleteEndpointMutex;;
+
 };
 
 }

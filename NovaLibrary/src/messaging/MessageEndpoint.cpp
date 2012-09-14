@@ -240,8 +240,7 @@ bool MessageEndpoint::RegisterCallback(Ticket &outTicket)
 		outTicket.m_theirSerialNum = queue->GetTheirSerialNum();
 	}
 
-	Lock shutdownLock(&m_isShutdownMutex);
-	return !m_isShutDown;
+	return true;
 }
 
 uint32_t MessageEndpoint::GetNextOurSerialNum()

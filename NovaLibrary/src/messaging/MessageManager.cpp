@@ -32,6 +32,7 @@ MessageManager *MessageManager::m_instance = NULL;
 MessageManager::MessageManager()
 {
 	pthread_mutex_init(&m_endpointsMutex, NULL);
+	pthread_mutex_init(&m_deleteEndpointMutex, NULL);
 }
 
 MessageManager &MessageManager::Instance()
@@ -145,12 +146,25 @@ Ticket MessageManager::StartConversation(int socketFD)
 
 void MessageManager::DeleteEndpoint(int socketFD)
 {
+	//Ensure that only one thread can be deleting an Endpoint at a time
+	Lock functionLock(&m_deleteEndpointMutex);
+
 	//Deleting the message endpoint requires that nobody else is using it!
 	Lock lock(&m_endpointsMutex);
 	if(m_endpoints.count(socketFD) > 0)
 	{
 		Lock lock(m_endpoints[socketFD].second, WRITE_LOCK);
+
+		//We can't hold the endpointsMutex while doing a delete here, or else we get a deadlock race condition.
+		//	The destructor does a join on a thread that can grab the mutex.
+		//	So we need to release this lock just for the duration of the delete.
+		//	Note that this is safe because no changes are made to the m_endpoints variable itself. Just the data
+		//	pointed to by a variable in it. Furthermore, we hold the Endpoint's write lock, so we're allowed.
+		pthread_mutex_unlock(&m_endpointsMutex);
 		delete m_endpoints[socketFD].first;
+		pthread_mutex_lock(&m_endpointsMutex);
+
+		//This command, however does make a change to the m_endpoints map, so we need to have a lock on the mutex
 		m_endpoints[socketFD].first = NULL;
 	}
 }
@@ -199,16 +213,24 @@ std::vector <int>MessageManager::GetSocketList()
 
 MessageEndpointLock MessageManager::GetEndpoint(int socketFD)
 {
-	Lock lock(&m_endpointsMutex);
+	pthread_rwlock_t *endpointLock;
 
-	if(m_endpoints.count(socketFD) > 0)
+	//get the rw lock for the endpoint
 	{
-		return MessageEndpointLock(m_endpoints[socketFD].first, m_endpoints[socketFD].second, READ_LOCK);
+		Lock lock(&m_endpointsMutex);
+
+		if(m_endpoints.count(socketFD) > 0)
+		{
+			endpointLock = m_endpoints[socketFD].second;
+		}
+		else
+		{
+			return MessageEndpointLock();
+		}
 	}
-	else
-	{
-		return MessageEndpointLock();
-	}
+
+	pthread_rwlock_rdlock(endpointLock);
+	return MessageEndpointLock( m_endpoints[socketFD].first, endpointLock);
 }
 
 }

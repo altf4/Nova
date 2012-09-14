@@ -38,20 +38,10 @@ public:
 		m_rwLock = NULL;
 	}
 
-	MessageEndpointLock(MessageEndpoint *endpoint, pthread_rwlock_t *rwLock, enum lockType read_write)
+	MessageEndpointLock(MessageEndpoint *endpoint, pthread_rwlock_t *rwLock)
 	{
 		m_endpoint = endpoint;
 		m_rwLock = rwLock;
-
-		if(read_write == READ_LOCK)
-		{
-			pthread_rwlock_rdlock(m_rwLock);
-		}
-		else if(read_write == WRITE_LOCK)
-		{
-			pthread_rwlock_wrlock(m_rwLock);
-		}
-
 	}
 	~MessageEndpointLock()
 	{
@@ -59,7 +49,6 @@ public:
 		{
 			pthread_rwlock_unlock(m_rwLock);
 		}
-
 	}
 
 	MessageEndpoint *m_endpoint;
