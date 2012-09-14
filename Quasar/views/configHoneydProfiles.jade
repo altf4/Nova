@@ -3,9 +3,51 @@ extends layout
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
 
+  style(type="text/css")
+    a.selectedProfile, a.unselectedProfile {
+        display: block;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid black;
+        padding: 2px;
+        margin: 5px;
+        height: 100%;
+    }
+
+    a.unselectedProfile:hover {
+        background-color: rgba(255,0,0,0.2);
+        clear: both;
+    }
+
+    a.selectedProfile {
+        background-color: rgba(255,0,0,0.8);
+    }
+
+    a.unselectedProfile {
+        background-color: rgba(255,0,0,0,0.8);
+    }
+
+    ul {
+        margin-bottom: 20px;
+        display: block; 
+        list-style-type:disc;
+    }
+
+    #treeDiv {
+        display: inline-block;
+        padding: 2px;
+        border-style: solid;
+        border-color: black;
+    }
+
+    li {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+    }
+
   script
-    var grid;
-    
+    var profilesArray = {};
+
     function ipTypeChanged() {
       var ipEditEnabled;
       if (document.getElementById("ipType").value == "DHCP") {
@@ -20,11 +62,7 @@ block headerAdditions
      }
     
     function deleteSelectedItems() {
-      var items = grid.selection.getSelected();
-      var names = [];
-      dojo.forEach(items, function(selectedItem) {
-        names.push(grid.store.getValues(selectedItem, "Name")); 
-      });
+      var names = GetSelectedProfiles();
      
       try {
         now.deleteProfiles(names, errorMessageCallback);
@@ -58,44 +96,118 @@ block headerAdditions
     }
 
     function editSelectedItem() {
-      var items = grid.selection.getSelected();
+      var items = GetSelectedProfiles();
       if (items.length != 1)
       {
         var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for editing"});
         dialog.show();
         return;
       }
-      window.location.href = "editHoneydProfile?profile=" + grid.store.getValues(items[0], "Name");
+      window.location.href = "editHoneydProfile?profile=" + items[0];
     }
 
     function addChildSelectedItem() {
-      var items = grid.selection.getSelected();
+      var items = GetSelectedProfiles();
       if (items.length != 1)
       {
         var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for parenting"});
         dialog.show();
         return;
       }
-      window.location.href = "addHoneydProfile?parent=" + grid.store.getValues(items[0], "Name");
+      window.location.href = "addHoneydProfile?parent=" + items[0];
+    }
+
+    function SetHighlighted(element) {
+        element.className = "selectedProfile";
+    }
+
+    function UnsetHighlighted(element) {
+        element.className = "unselectedProfile";
+    }
+
+    function GetSelectedProfiles() {
+        var selected = new Array();
+        for (profile in profilesArray) {
+            if (profilesArray[profile].isSelected) {
+                selected.push(profile);
+            }
+        }
+        return selected;
+    }
+
+    function onProfileClicked(profile) {
+        if (!event.ctrlKey) {
+            for (entry in profilesArray) {
+                profilesArray[entry].isSelected = false;
+                UnsetHighlighted(profilesArray[entry].listElement);
+            }
+
+        } else {
+
+        }
+
+        profilesArray[profile].isSelected = !profilesArray[profile].isSelected;
+        if (profilesArray[profile].isSelected) {
+            SetHighlighted(profilesArray[profile].listElement);
+        } else {
+            UnsetHighlighted(profilesArray[profile].listElement);
+        }
     }
 
 
-    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+    require(["dojo/domReady!", "dijit/Dialog"],
 
-    function(DataGrid,ObjectStore){
-      var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
-      grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
-      dojo.byId("gridDiv").appendChild(grid.domNode);
+    function(){
+        var children = document.getElementById("profileTableBody").children;
+
+        for (var i = 0; i < children.length; i++) {
+            var profile = {};
+            profile.name = children[i].children[0].innerHTML;
+            profile.parent = children[i].children[1].innerHTML;
+            profile.children = new Array();
+            profile.isSelected = false
+            profile.listElement = null;
+            profilesArray[profile.name] = profile;
+        }
+       
+        // build it into a tree
+        for (i in profilesArray) {
+            for (j in profilesArray) {
+                if (profilesArray[j].parent == profilesArray[i].name) {
+                    profilesArray[i].children.push(profilesArray[j].name);
+                }
+             }
+        }
+        
+        var treeDiv = document.getElementById("treeDiv");
+
+        var drawNode = function(profile, parentDOMNode) {
+            var li = document.createElement('li');
+            var a = document.createElement('a');
+            profilesArray[profile].listElement = a;
+            a.innerHTML = profile;
+            a.className = "unselectedProfile";
+            a.setAttribute("onclick", "onProfileClicked('" + profile + "')");
+            
+            li.appendChild(a); 
+            parentDOMNode.appendChild(li);
+           
+            if (profilesArray[profile].children.length) {
+                var ul = document.createElement('ul'); 
+                li.appendChild(ul);
+            }
+
+            for (var i = 0; i < profilesArray[profile].children.length; i++) {
+               drawNode(profilesArray[profilesArray[profile].children[i]].name, ul);
+            }
+
+
+
+        }
+
+        drawNode("default", treeDiv);
     });
   
-  script(type="text/javascript")
-          /*set up data store*/
-          var layoutProfiles = [[
-            { field: "Name", name: "Profile Name", width: '300px' },
-            { field: "Parent", name: "Parent Name", width: '200px' },
-            { field: "Personality", name: "Operating System Emulation", width: '500px' },
-            { field: "Ethernet", name: "Ethernet Vendor Emulation", width: '200px' },
-          ]];
 
 block content
   h1 Current Honeyd Profiles
@@ -104,18 +216,14 @@ block content
       tr
         th Name
         th Parent
-        th Personality
-        th Ethernet
-    tbody
+    tbody#profileTableBody
       each profile, i in profiles
         tr
           td #{profile.GetName()}
           td #{profile.GetParentProfile()}
-          td #{profile.GetPersonality()}
-          td #{profile.GetVendors().sort()}
- 
-  div(style="height: 250px;")
-    div#gridDiv(style="height: 250px")
+
+  div#treeDiv
+  br
  
 
   button(onClick="deleteSelectedItems()") Delete Selected Profiles 

@@ -511,9 +511,9 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}
 	}
 	
 	var profileNames = honeydConfig.GetProfileNames();
-	var profiles = [];
+	var profiles = {};
 	for (var i = 0; i < profileNames.length; i++) {
-		profiles.push(honeydConfig.GetProfile(profileNames[i]));
+		profiles[profileNames[i]] = honeydConfig.GetProfile(profileNames[i]);
 	}
 
 	res.render('configHoneydProfiles.jade', {
@@ -1392,6 +1392,7 @@ everyone.now.GetProfile = function (profileName, callback) {
 	profile.uptimeMax = profile.GetUptimeMax();
 	profile.dropRate = profile.GetDropRate();
 	profile.parentProfile = profile.GetParentProfile();
+	profile.childrenProfiles = profile.GetChildrenProfiles();
 
 	profile.isTcpActionInherited = profile.isTcpActionInherited();
 	profile.isUdpActionInherited = profile.isUdpActionInherited();
