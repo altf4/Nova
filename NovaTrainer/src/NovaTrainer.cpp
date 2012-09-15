@@ -240,7 +240,7 @@ void CaptureData(std::string captureFolder, std::string interface)
     if(IsHaystackUp())
     {
     	string haystackFile = captureFolder + "/haystackIps.txt";
-        vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + "/config/" + Config::Inst()->GetPathConfigHoneydHS());
+        vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + Config::Inst()->GetPathConfigHoneydHS());
         vector<string> haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
 
         ofstream haystackIpStream(haystackFile);

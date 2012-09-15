@@ -184,6 +184,11 @@ public:
     // Getters for the paths stored in /etc
     std::string GetPathReadFolder();
     std::string GetPathHome();
+
+    inline std::string GetPathShared() {
+    	return m_pathPrefix + "/usr/share/nova/sharedFiles";
+    }
+
     std::string GetPathIcon();
 
     char GetHaystackStorage();

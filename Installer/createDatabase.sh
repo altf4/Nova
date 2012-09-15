@@ -36,7 +36,7 @@ CREATE TABLE statistics (
 		haystack_percent_contacted DOUBLE
 );"
 
-dbFilePath="$DESTDIR/usr/share/nova/sharedFiles/database.db"
+dbFilePath="$DESTDIR/usr/share/nova/userFiles/data/database.db"
 
 if [[ $1 == "reset" ]]; then
 	echo "You chose the reset option. This will clear all database data!"

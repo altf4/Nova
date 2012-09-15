@@ -49,7 +49,7 @@ vector<string> OsPersonalityDb::GetPersonalityOptions() {
 
 void OsPersonalityDb::LoadNmapPersonalitiesFromFile()
 {
-	string NMapFile = Config::Inst()->GetPathReadFolder() + "/nmap-os-db";
+	string NMapFile = Config::Inst()->GetPathShared() + "/nmap-os-db";
 	ifstream nmapPers(NMapFile.c_str());
 	string line, fprint, prefix, printClass;
 	if(nmapPers.is_open())

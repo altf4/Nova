@@ -1566,7 +1566,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	m_scriptTree.clear();
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
 		{

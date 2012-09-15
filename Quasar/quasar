@@ -1,12 +1,15 @@
 #!/bin/bash
 
+SHARED_PATH="/usr/share/nova/sharedFiles"
+MAIN_PATH="$SHARED_PATH/Quasar/main.js"
+MODULE_PATH="$SHARED_PATH/NodejsModule"
 
-cd /usr/share/nova/Quasar
+cd "$SHARED_PATH/Quasar"
 
 if (($# == 1)); then
 	if [[ "$1" == "--debug" ]] || [[ "$1" == "-d" ]]; then
 		echo "Debug mode: Running quasar without forever"
-		NODE_PATH="/usr/share/nova/NodejsModule" node /usr/share/nova/Quasar/main.js
+		NODE_PATH="$MODULE_PATH" node $MAIN_PATH
 		exit
 	else
 		echo "Unknown arguement. Usage: quasar [-d (--debug)]"
@@ -16,6 +19,6 @@ if (($# == 1)); then
 fi
 
 echo "Starting quasar with the forever daemon"
-NODE_PATH="/usr/share/nova/NodejsModule" forever start /usr/share/nova/Quasar/main.js
+NODE_PATH="$MODULE_PATH" forever start $MAIN_PATH
 exit
 
