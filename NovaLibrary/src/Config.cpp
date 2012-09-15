@@ -1393,7 +1393,7 @@ bool Config::InitUserConfigs()
 	{
 		string fromPath = m_pathPrefix + "/usr/share/nova/userFiles";
 		string toPath = m_pathHome;
-		string copyString = "cp -rfp " + fromPath + " " + toPath;
+		string copyString = "cp -rfp \"" + fromPath + "\" \"" + toPath + "\"";
 
 		if(system(copyString.c_str()) != 0)
 		{
