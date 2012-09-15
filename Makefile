@@ -196,78 +196,78 @@ clean-novatrainer-release:
 install: install-data
 	$(MAKE) install-helper
 	# Give read/write permissions to the nova group
-	-chmod -R g+rw /usr/share/nova
-	-chmod -R g+rw /var/log/honeyd
-	-chmod g+rwx /var/log/nova
+	-chmod -R g+rw "$(DESTDIR)/usr/share/nova"
+	-chmod -R g+rw "$(DESTDIR)/var/log/honeyd"
+	-chmod g+rwx "$(DESTDIR)/var/log/nova"
 
 install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar install-nodejsmodule
-	sh debian/postinst
+	-sh debian/postinst
 	-bash Installer/createDatabase.sh
 
 install-data:
 	#make folder in etc with path locations to nova files
-	mkdir -p $(DESTDIR)/usr/bin
-	mkdir -p $(DESTDIR)/usr/lib
-	mkdir -p $(DESTDIR)/usr/share/applications
-	mkdir -p $(DESTDIR)/usr/share/nova
-	mkdir -p $(DESTDIR)/usr/share/man/man1
-	mkdir -p $(DESTDIR)/var/log/honeyd
-	mkdir -p $(DESTDIR)/etc/rsyslog.d/
-	mkdir -p $(DESTDIR)/etc/sysctl.d/
-	mkdir -p $(DESTDIR)/etc/bash_completion.d/
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
-	mkdir -p $(DESTDIR)/var/log/nova
+	mkdir -p "$(DESTDIR)/usr/bin"
+	mkdir -p "$(DESTDIR)/usr/lib"
+	mkdir -p "$(DESTDIR)/usr/share/applications"
+	mkdir -p "$(DESTDIR)/usr/share/nova"
+	mkdir -p "$(DESTDIR)/usr/share/man/man1"
+	mkdir -p "$(DESTDIR)/var/log/honeyd"
+	mkdir -p "$(DESTDIR)/etc/rsyslog.d/"
+	mkdir -p "$(DESTDIR)/etc/sysctl.d/"
+	mkdir -p "$(DESTDIR)/etc/bash_completion.d/"
+	mkdir -p "$(DESTDIR)/etc/sudoers.d/"
+	mkdir -p "$(DESTDIR)/var/log/nova"
 	
 	
-	cp -frup Installer/sharedFiles $(DESTDIR)/usr/share/nova/sharedFiles
-	cp -frup Installer/userFiles $(DESTDIR)/usr/share/nova/userFiles
-	cp -frup Installer/nova_init $(DESTDIR)/usr/share/nova
-	cp -frup Installer/createDatabase.sh $(DESTDIR)/usr/share/nova
+	cp -frup Installer/sharedFiles "$(DESTDIR)/usr/share/nova/sharedFiles"
+	cp -frup Installer/userFiles "$(DESTDIR)/usr/share/nova/userFiles"
+	cp -frup Installer/nova_init "$(DESTDIR)/usr/share/nova"
+	cp -frup Installer/createDatabase.sh "$(DESTDIR)/usr/share/nova"
 
 	#Copy the scripts and logs
-	install Installer/nova_init $(DESTDIR)/usr/bin
+	install Installer/nova_init "$(DESTDIR)/usr/bin"
 	#Install permissions
-	install Installer/miscFiles/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	install Installer/miscFiles/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
-	install Installer/miscFiles/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
+	install Installer/miscFiles/sudoers_nova "$(DESTDIR)/etc/sudoers.d/" --mode=0440
+	install Installer/miscFiles/40-nova.conf "$(DESTDIR)/etc/rsyslog.d/" --mode=664
+	install Installer/miscFiles/30-novactl.conf "$(DESTDIR)/etc/sysctl.d/" --mode=0440
 	# Copy the bash completion files
-	install Installer/miscFiles/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
+	install Installer/miscFiles/novacli "$(DESTDIR)/etc/bash_completion.d/" --mode=755
 
 install-pcap-debug:
 	#debug sudoers file that allows sudo gdb to pcap without password prompt
-	install Installer/miscFiles/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/miscFiles/sudoers_nova_debug "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-docs:
 	# TODO: Combine man pages
 	gzip -c Installer/miscFiles/manpages/novad.1 > Installer/miscFiles/manpages/novad.1.gz
 	gzip -c Installer/miscFiles/manpages/novacli.1 > Installer/miscFiles/manpages/novacli.1.gz
 	gzip -c Installer/miscFiles/manpages/quasar.1 > Installer/miscFiles/manpages/quasar.1.gz
-	install Installer/miscFiles/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	install Installer/miscFiles/manpages/*.1.gz "$(DESTDIR)/usr/share/man/man1"
 
 install-quasar:
-	cp -frup Quasar $(DESTDIR)/usr/share/nova/sharedFiles
-	tar -C $(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www -xf Quasar/dojo-release-1.7.0.tar.gz
-	-install Quasar/quasar $(DESTDIR)/usr/bin/quasar
+	cp -frup Quasar "$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
+	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
 install-hhconfig:
-	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
-	-install Installer/miscFiles/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	-install HoneydHostConfig/honeydhostconfig "$(DESTDIR)/usr/bin/honeydhostconfig"
+	-install Installer/miscFiles/sudoers_HHConfig "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-novad:
-	install Novad/novad $(DESTDIR)/usr/bin
+	install Novad/novad "$(DESTDIR)/usr/bin"
 
 install-ui-core:
-	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
+	install Nova_UI_Core/libNova_UI_Core.so "$(DESTDIR)/usr/lib"
 
 install-cli:
-	install NovaCLI/novacli $(DESTDIR)/usr/bin
+	install NovaCLI/novacli "$(DESTDIR)/usr/bin"
 
 install-novatrainer:
-	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
+	install NovaTrainer/novatrainer "$(DESTDIR)/usr/bin"
 
 install-nodejsmodule:
-	mkdir -p $(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule
-	install NodejsModule/build/Release/novaconfig.node $(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/
+	mkdir -p "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule"
+	install NodejsModule/build/Release/novaconfig.node "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/"
 
 
 #Uninstall
@@ -275,20 +275,20 @@ uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
 	rm -rf ~/.config/nova
-	rm -rf $(DESTDIR)/usr/share/nova
-	rm -f $(DESTDIR)/usr/bin/novacli
-	rm -f $(DESTDIR)/usr/bin/novad
-	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
-	rm -f $(DESTDIR)/usr/bin/nova_mailer
-	rm -f $(DESTDIR)/usr/bin/nova_init
-	rm -f $(DESTDIR)/usr/bin/quasar
-	rm -f $(DESTDIR)/usr/bin/novatrainer
-	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_HHConfig
-	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
-	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
+	rm -rf "$(DESTDIR)/usr/share/nova"
+	rm -f "$(DESTDIR)/usr/bin/novacli"
+	rm -f "$(DESTDIR)/usr/bin/novad"
+	rm -f "$(DESTDIR)/usr/bin/honeydhostconfig"
+	rm -f "$(DESTDIR)/usr/bin/nova_mailer"
+	rm -f "$(DESTDIR)/usr/bin/nova_init"
+	rm -f "$(DESTDIR)/usr/bin/quasar"
+	rm -f "$(DESTDIR)/usr/bin/novatrainer"
+	rm -f "$(DESTDIR)/usr/lib/libNova_UI_Core.so"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova_debug"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_HHConfig"
+	rm -f "$(DESTDIR)/etc/rsyslog.d/40-nova.conf"
+	rm -f "$(DESTDIR)/etc/sysctl.d/30-novactl.conf"
 
 uninstall-permissions:
 	sh debian/postrm
