@@ -161,6 +161,13 @@ clean-cli-release:
 
 clean-test:
 	rm -fr NovaTest/NovadSource/*
+	rm -f NovaTest/Coverage/NovadSource/*.d
+	rm -f NovaTest/Coverage/NovadSource/*.o
+	rm -f NovaTest/Coverage/src/NovadSource/*.d
+	rm -f NovaTest/Coverage/src/NovadSource/*.o
+	$(MAKE) -C NovaTest/Coverage clean
+
+	rm -fr NovaTest/NovadSource/*
 	rm -f NovaTest/Debug/NovadSource/*.d
 	rm -f NovaTest/Debug/NovadSource/*.o
 	rm -f NovaTest/Debug/src/NovadSource/*.d
@@ -254,20 +261,20 @@ install-hhconfig:
 	-install Installer/miscFiles/sudoers_HHConfig "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-novad:
-	install Novad/novad "$(DESTDIR)/usr/bin"
+	-install Novad/novad "$(DESTDIR)/usr/bin"
 
 install-ui-core:
-	install Nova_UI_Core/libNova_UI_Core.so "$(DESTDIR)/usr/lib"
+	-install Nova_UI_Core/libNova_UI_Core.so "$(DESTDIR)/usr/lib"
 
 install-cli:
-	install NovaCLI/novacli "$(DESTDIR)/usr/bin"
+	-install NovaCLI/novacli "$(DESTDIR)/usr/bin"
 
 install-novatrainer:
-	install NovaTrainer/novatrainer "$(DESTDIR)/usr/bin"
+	-install NovaTrainer/novatrainer "$(DESTDIR)/usr/bin"
 
 install-nodejsmodule:
 	mkdir -p "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule"
-	install NodejsModule/build/Release/novaconfig.node "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/"
+	-install NodejsModule/build/Release/novaconfig.node "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/"
 
 
 #Uninstall
