@@ -199,13 +199,13 @@ Common Problems and solutions
 	  fast enough to handle all of the ARP requests nmap is doing. The solution is to increase the size
 	  by adding the following lines to /etc/sysctl.conf,
 
-	  	net.ipv4.neigh.default.gc_thresh1 = 1024
+		net.ipv4.neigh.default.gc_thresh1 = 1024
 		net.ipv4.neigh.default.gc_thresh2 = 4096
 		net.ipv4.neigh.default.gc_thresh3 = 65536
 
 	  Then run the command,
 
-	  	sysctl -p
+		sysctl -p
 	
 	  And try running the Haystack autoconfig tool again.
 
@@ -233,15 +233,15 @@ Tips for debugging problems
 
 	  If you're seeing permission related errors, you can try the following commands,
 
-	  	sudo chmod -R g+rw /usr/share/nova 
-	  	sudo chgrp -R nova /usr/share/nova
+		sudo chmod -R g+rw /usr/share/nova 
+		sudo chgrp -R nova /usr/share/nova
 
 	=================== Web interface problems ===================
 	  
 	  If you can't access the web interface, try stopping it if it's running in 'forever' and 
 	  manually running it as a foreground process with the commands,
 
-	  	forever stopall
+		forever stopall
 		quasal --debug
 
 	  This should provide more verbose output and show if it is crashing rather than running it
@@ -252,7 +252,7 @@ Tips for debugging problems
 
 	  If Novad appears to be having problems, try to start it manually instead of as a background
 	  process with the command
-	  	
+		
 		novacli start nova debug
 
 
@@ -261,7 +261,7 @@ Tips for debugging problems
 	    If the Haystack appears to be having problems, try to start it manually instead of as a
 	    background process with the command,
 
-	  	novacli start haystack debug
+		novacli start haystack debug
 	
 	  =================== Reinstalling ===================
 
@@ -278,7 +278,7 @@ Tips for debugging problems
 	    If you're seeing novad crash, it might be helpful to compile with debugging symbols and 
 	    get a stack trace. 
 
-	    	cd $NOVA_SOURCE
+		cd $NOVA_SOURCE
 		make clean
 		make debug
 		make reinstall
