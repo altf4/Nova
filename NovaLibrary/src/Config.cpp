@@ -16,6 +16,7 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================
 
+#include <boost/algorithm/string.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ifaddrs.h>
@@ -28,7 +29,6 @@
 #include <sstream>
 #include <math.h>
 #include <pwd.h>
-
 
 #include "Config.h"
 #include "Logger.h"
@@ -80,22 +80,8 @@ string Config::m_prefixes[] =
 	"TRAINING_SESSION",
 	"WEB_UI_PORT",
 	"CLEAR_AFTER_HOSTILE_EVENT",
-	"CAPTURE_BUFFER_SIZE"
-};
-
-// Files we need to run (that will be loaded with defaults if deleted)
-string Config::m_requiredFiles[] =
-{
-	"/settings",
-	"/Config",
-	"/keys",
-	"/templates",
-	"/Config/NOVAConfig.txt",
-	"/scripts.xml",
-	"/templates/ports.xml",
-	"/templates/profiles.xml",
-	"/templates/routes.xml",
-	"/templates/nodes.xml"
+	"CAPTURE_BUFFER_SIZE",
+	"FEATURE_WEIGHTS"
 };
 
 Config *Config::m_instance = NULL;
@@ -764,6 +750,32 @@ void Config::LoadConfig_Internal()
 				{
 					m_captureBufferSize = atoi(line.c_str());
 					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// FEATURE_WEIGHTS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+
+					istringstream is(line);
+					m_featureWeights.clear();
+					double n;
+					while (is >> n)
+					{
+						m_featureWeights.push_back(n);
+					}
+
+					if (m_featureWeights.size() == DIM)
+					{
+						isValid[prefixIndex] = true;
+					}
+
 				}
 				continue;
 			}
@@ -2517,6 +2529,11 @@ bool Config::GetSMTPUseAuth()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_SMTPUseAuth;
+}
+
+vector<double> Config::GetFeatureWeights() {
+	Lock lock(&m_lock, READ_LOCK);
+	return m_featureWeights;
 }
 
 }

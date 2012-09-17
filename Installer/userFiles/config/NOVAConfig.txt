@@ -422,3 +422,9 @@ CLEAR_AFTER_HOSTILE_EVENT 0
 # during high load, try increasing this.
 CAPTURE_BUFFER_SIZE 1048576
 
+
+############################################
+# FEATURE_WEIGHTS #
+############################################
+FEATURE_WEIGHTS 0.5 0.5 0.5 0.5 1 1 0.5 0.5 1 1 1 1 1
+

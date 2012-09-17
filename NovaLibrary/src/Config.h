@@ -224,6 +224,8 @@ public:
 	int GetCaptureBufferSize();
 	void SetCaptureBufferSize(int bufferSize);
 
+	std::vector<double> GetFeatureWeights();
+
 protected:
 	Config();
 
@@ -231,7 +233,6 @@ private:
 	static Config *m_instance;
 
 	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
-	__attribute__ ((visibility ("hidden"))) static std::string m_requiredFiles[];
 
 	std::string m_doppelIp;
 	std::string m_loopbackIF;
@@ -321,7 +322,10 @@ private:
 	char m_haystackStorage;
 	std::string m_userPath;
 
+	std::vector<double> m_featureWeights;
+
 	static std::string m_pathPrefix;
+
 
 	pthread_rwlock_t m_lock;
 

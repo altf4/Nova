@@ -151,9 +151,6 @@ int RunNovaD()
 	//Need to load the configuration before making the Classification Engine for setting up the DM
 	//Reload requires a CE object so we do a partial config load here.
 
-	//Loads the configuration file
-	Config::Inst()->LoadConfig();
-
 	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
 
 	doppel = new Doppelganger(suspects);
