@@ -127,13 +127,16 @@ NovaLibrary/libNovaLibrary.a
 /1
 
 #Haystack Auto Config
-/HoneydHostConfig/honeydhostconfig
-/HoneydHostConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs
-/HoneydHostConfig/subnet0.xml
-/HoneydHostConfig/Debug/honeydhostconfig
-/HoneydHostConfig/Release/honeydhostconfig
-/HoneydHostConfig/Debug/subnet0.xml
-/HoneydHostConfig/Debug/test.txt
+/HaystackAutoConfig/haystackautoconfig
+/HaystackAutoConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+/HaystackAutoConfig/subnet0.xml
+/HaystackAutoConfig/Debug/haystackautoconfig
+/HaystackAutoConfig/Release/haystackautoconfig
+/HaystackAutoConfig/Debug/subnet0.xml
+/HaystackAutoConfig/Debug/test.txt
+/HaystackAutoConfig/.settings/org.eclipse.cdt.codan.core.prefs
+/HaystackAutoConfig/.settings/org.eclipse.cdt.core.prefs
+/HaystackAutoConfig/.settings/org.eclipse.ltk.core.refactoring.prefs
 /subnet0.xml
 
 #debian

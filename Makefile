@@ -74,14 +74,14 @@ quasar: nodejsmodule
 nodejsmodule:
 	cd NodejsModule;npm --unsafe-perm install	
 
-#Honeyd HostConfig
+#Honeyd AutoConfig
 hhconfig-release:
-	$(MAKE) -C HoneydHostConfig/Release
-	cp HoneydHostConfig/Release/honeydhostconfig HoneydHostConfig/
+	$(MAKE) -C HaystackAutoConfig/Release
+	cp HaystackAutoConfig/Release/haystackautoconfig HaystackAutoConfig/
 
 hhconfig-debug:
-	$(MAKE) -C HoneydHostConfig/Debug
-	cp HoneydHostConfig/Debug/honeydhostconfig HoneydHostConfig/
+	$(MAKE) -C HaystackAutoConfig/Debug
+	cp HaystackAutoConfig/Debug/haystackautoconfig HaystackAutoConfig/
 
 coverageTests: test-prepare
 	$(MAKE) -C NovaLibrary/Coverage
@@ -185,10 +185,10 @@ clean-quasar-modules:
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	
 clean-hhconfig-debug:
-	$(MAKE) -C HoneydHostConfig/Debug clean
+	$(MAKE) -C HaystackAutoConfig/Debug clean
 
 clean-hhconfig-release:
-	$(MAKE) -C HoneydHostConfig/Release clean
+	$(MAKE) -C HaystackAutoConfig/Release clean
 
 
 clean-novatrainer: clean-novatrainer-debug clean-novatrainer-release
@@ -257,7 +257,7 @@ install-quasar:
 	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
 install-hhconfig:
-	-install HoneydHostConfig/honeydhostconfig "$(DESTDIR)/usr/bin/honeydhostconfig"
+	-install HaystackAutoConfig/haystackautoconfig "$(DESTDIR)/usr/bin/haystackautoconfig"
 	-install Installer/miscFiles/sudoers_HHConfig "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-novad:
@@ -285,7 +285,7 @@ uninstall-files:
 	rm -rf "$(DESTDIR)/usr/share/nova"
 	rm -f "$(DESTDIR)/usr/bin/novacli"
 	rm -f "$(DESTDIR)/usr/bin/novad"
-	rm -f "$(DESTDIR)/usr/bin/honeydhostconfig"
+	rm -f "$(DESTDIR)/usr/bin/haystackautoconfig"
 	rm -f "$(DESTDIR)/usr/bin/nova_mailer"
 	rm -f "$(DESTDIR)/usr/bin/nova_init"
 	rm -f "$(DESTDIR)/usr/bin/quasar"

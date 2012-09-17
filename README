@@ -172,6 +172,11 @@ Quasar: Nova Web Interface
 	SSL certificate and private key, put them in /usr/share/nova/Quasar/servercert.pem and
 	/usr/share/nova/Quasar/serverkey.pem after installation.
 
+Haystack Auto Configuration Tool: Generates honeyd configurations based off of nmap scans
+
+	- This tool can scan your network with nmap and then generate honeypot configurations
+	that are based on the operating systems and ethernet vendors that it finds.
+
 NovaTest: Unit Tests
 
 - If you're a developer interested in using the unit tests in NovaTest, you can find instructions at,

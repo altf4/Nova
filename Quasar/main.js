@@ -936,13 +936,13 @@ app.post('/scanning', passport.authenticate('basic', {session: false}), function
 	}
 
 
-	if (!path.existsSync("/usr/bin/honeydhostconfig")) {
-		console.log("HoneydHostConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
+	if (!path.existsSync("/usr/bin/haystackautoconfig")) {
+		console.log("HaystackAutoConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
 		res.render('hhautoconfig.jade', {
 			locals: {
 				user: req.user,
 				INTERFACES: config.ListInterfaces().sort(),
-				SCANERROR: "HoneydHostConfig binary not found, scan cancelled"
+				SCANERROR: "HaystackAutoConfig binary not found, scan cancelled"
 			}
 		});
 	} else if ((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined)) {
@@ -1578,7 +1578,7 @@ everyone.now.GetCaptureSession = function (callback) {
 }
 
 everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback, route) {
-	var executionString = 'honeydhostconfig';
+	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
 	var iFlag = '-i';
 	var aFlag = '-a';
@@ -1609,7 +1609,7 @@ everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback,
 
 	autoconfig.stderr.on('data', function (data) {
 		if (/^execvp\(\)/.test(data)) {
-			console.log("honeydhostconfig failed to start.");
+			console.log("haystackautoconfig failed to start.");
 			route("/nodeReview");
 		}
 	});
