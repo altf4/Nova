@@ -25,7 +25,7 @@ INTERFACE default
 #
 # EXAMPLE:
 #DATAFILE config/data.txt
-DATAFILE config/data.txt
+DATAFILE config/training/data.txt
 
 ############################################
 # K #
