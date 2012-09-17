@@ -227,7 +227,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			suspects.EraseAllSuspects();
 			suspectsSinceLastSave.EraseAllSuspects();
-			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
+			string delString = "rm -f \"" + Config::Inst()->GetPathCESaveFile() + "\"";
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
 			{

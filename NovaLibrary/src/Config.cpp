@@ -801,7 +801,7 @@ bool Config::SaveUserConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_userConfigFilePath + ".tmp";
-	string copyCommand = "cp -fp " + m_userConfigFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp \"" + m_userConfigFilePath + "\" \"" + configurationBackup + "\"";
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
@@ -1158,7 +1158,7 @@ bool Config::SaveConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
-	string copyCommand = "cp -fp " + m_configFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp \"" + m_configFilePath + "\" \"" + configurationBackup + "\"";
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");

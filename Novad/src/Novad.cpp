@@ -340,14 +340,14 @@ void LoadStateFile()
 
 			// Copy the file
 			stringstream copyCommand;
-			copyCommand << "mv " << Config::Inst()->GetPathCESaveFile() << " " << fileName;
+			copyCommand << "mv \"" << Config::Inst()->GetPathCESaveFile() << "\" \"" << fileName << "\"";
 			if(system(copyCommand.str().c_str()) == -1) {
 				LOG(ERROR, "There was a problem when attempting to move the corrupt state file. System call failed: " + copyCommand.str(), "");
 			}
 
 			// Recreate an empty file
 			stringstream touchCommand;
-			touchCommand << "touch " << Config::Inst()->GetPathCESaveFile();
+			touchCommand << "touch \"" << Config::Inst()->GetPathCESaveFile() << "\"";
 			if(system(touchCommand.str().c_str()) == -1) {
 				LOG(ERROR, "There was a problem when attempting to recreate the state file. System call to 'touch' failed:" + touchCommand.str(), "");
 			}
@@ -379,7 +379,7 @@ void RefreshStateFile()
 	{
 		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
 	}
-	if(system(string("cp -f -p "+ceFile+" "+tmpFile).c_str()) != 0)
+	if(system(string("cp -f -p \""+ceFile+"\" \""+tmpFile + "\"").c_str()) != 0)
 	{
 		LOG(ERROR, "Unable to refresh CE State File.",
 				string("Unable to refresh CE State File: cp -f -p "+ceFile+" "+tmpFile+ " failed."));
