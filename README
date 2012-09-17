@@ -141,6 +141,7 @@ Haystack: Active honeypots
 	- The Haystack is the collection of honeypots which emulate machines on the network.
 	The haystack is created using the Honeyd daemon and runs in it's own executable. Configuration
 	for Honeyd is auto generated at /usr/share/nova/nova/Config/haystack_honeyd.config.
+
 Novad: Classification tool
 	- The Novad executable is the daemon that monitors and classifies network traffic to 
 	identify hostile looking traffic. Novad will listen promiscuously on the configured 
@@ -148,6 +149,7 @@ Novad: Classification tool
 	honeypots contacted, and other details. Novad is can be configured manually via the
 	configuration file /usr/share/nova/nova/Config/NOVAConfig.txt, but it is recommended that
 	you use the GUI (Quasar) unless you know what you're doing.
+
 NovaCLI: Nova Command line Interface
 	- NovaCLI provides a simple interface for accessing some of the Novad functionality. 
 	Usage for the tool can be gotten by running "novacli --help".
@@ -185,21 +187,43 @@ what changes to it that you want) and run the generateDebs script (as a normal u
 
 	./generateDebs <version number>
 
+===============================
+Common Problems and solutions
+===============================
+	
+	================== Haystack Autoconfig nmap fails on large networks ==================
+	  
+	  Nmap will often fail when scanning networks of size greater than 1024 IPs with the error
+	  "nexthost: failed to determine route" or "Strange connect error(105): No buffer space available".
+	  This is usually caused by the kernel ARP table running out of space and not being garbaged collected
+	  fast enough to handle all of the ARP requests nmap is doing. The solution is to increase the size
+	  by adding the following lines to /etc/sysctl.conf,
+
+	  	net.ipv4.neigh.default.gc_thresh1 = 1024
+		net.ipv4.neigh.default.gc_thresh2 = 4096
+		net.ipv4.neigh.default.gc_thresh3 = 65536
+
+	  Then run the command,
+
+	  	sysctl -p
+	
+	  And try running the Haystack autoconfig tool again.
+
 
 ===============================
 Tips for debugging problems
 ===============================
 
-	= General problems =
+	================== General problems ==================
 	 
-	 To enable verbose debug log messages, run the command,
+	  To enable verbose debug log messages, run the command,
 
 		novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
 	  If the above fails for some reason, you can also change the logging settings manually
 	  in the /usr/share/nova/nova/Config/NOVAConfig.txt file under the SERVICE_PREFERENCES setting.
 
-	= Permission Problems =
+	=================== Permission Problems ===================
 
 	  You should be able to run quasar/novad/honeyd without needing explicit root permissions. One
 	  requirement for this is that the user you're running with is in the "nova" group and has
@@ -212,19 +236,19 @@ Tips for debugging problems
 	  	sudo chmod -R g+rw /usr/share/nova 
 	  	sudo chgrp -R nova /usr/share/nova
 
-	= Web interface problems =
-	 
-	 If you can't access the web interface, try stopping it if it's running in 'forever' and 
+	=================== Web interface problems ===================
+	  
+	  If you can't access the web interface, try stopping it if it's running in 'forever' and 
 	  manually running it as a foreground process with the commands,
 
 	  	forever stopall
 		quasal --debug
 
-      This should provide more verbose output and show if it is crashing rather than running it
+	  This should provide more verbose output and show if it is crashing rather than running it
 	  as a background daemon process.
 
 
-	  = Novad Problems =
+	  =================== Novad Problems ===================
 
 	  If Novad appears to be having problems, try to start it manually instead of as a background
 	  process with the command
@@ -232,29 +256,29 @@ Tips for debugging problems
 		novacli start nova debug
 
 
-	  = Haystack Problems =
+	  =================== Haystack Problems ===================
 
-	  If the Haystack appears to be having problems, try to start it manually instead of as a
-	  background process with the command,
+	    If the Haystack appears to be having problems, try to start it manually instead of as a
+	    background process with the command,
 
 	  	novacli start haystack debug
 	
-	= Reinstalling =
+	  =================== Reinstalling ===================
 
-	  If something gets messed up to the point you want to start over, you can do so with the
-	  commands,
+	    If something gets messed up to the point you want to start over, you can do so with the
+	    commands,
 
 		cd $NOVA_SOURCE
 		sudo make reinstall
 
-	  Note that this will remove any configuration changes that you made.
+	    Note that this will remove any configuration changes that you made.
 
-	 = Building with debugging symbols =
+	  =================== Building with debugging symbols ===================
 
-	  If you're seeing novad crash, it might be helpful to compile with debugging symbols and 
-	  get a stack trace. 
+	    If you're seeing novad crash, it might be helpful to compile with debugging symbols and 
+	    get a stack trace. 
 
-	    cd $NOVA_SOURCE
+	    	cd $NOVA_SOURCE
 		make clean
 		make debug
 		make reinstall
