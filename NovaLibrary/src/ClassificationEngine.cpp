@@ -51,11 +51,6 @@ ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
 
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
-
-	// TODO: Put the doppelganger somewhere else...
-	// Doesn't really belong in the CE
-	m_dopp = new Doppelganger(suspects);
-	m_dopp->InitDoppelganger();
 }
 
 ClassificationEngine::~ClassificationEngine()

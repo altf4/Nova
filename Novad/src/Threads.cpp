@@ -78,6 +78,8 @@ extern pthread_mutex_t packetCapturesLock;
 extern ClassificationEngine *engine;
 extern EvidenceTable suspectEvidence;
 
+extern Doppelganger *doppel;
+
 namespace Nova
 {
 void *ClassificationLoop(void *ptr)
@@ -96,7 +98,7 @@ void *ClassificationLoop(void *ptr)
 		{
 			UpdateAndClassify(updateKeys[i]);
 		}
-		engine->m_dopp->UpdateDoppelganger();
+		doppel->UpdateDoppelganger();
 
 		if(Config::Inst()->GetSaveFreq() > 0)
 		{

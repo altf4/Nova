@@ -68,6 +68,8 @@ pthread_mutex_t packetCapturesLock;
 vector<PacketCapture*> packetCaptures;
 vector<int> dropCounts;
 
+Doppelganger *doppel;
+
 // Timestamps for the CE state file exiration of data
 time_t lastLoadTime;
 time_t lastSaveTime;
@@ -153,6 +155,9 @@ int RunNovaD()
 	Config::Inst()->LoadConfig();
 
 	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
+
+	doppel = new Doppelganger(suspects);
+	doppel->InitDoppelganger();
 
 	engine = new ClassificationEngine(suspects);
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
@@ -341,6 +346,7 @@ void LoadStateFile()
 			// Copy the file
 			stringstream copyCommand;
 			copyCommand << "mv \"" << Config::Inst()->GetPathCESaveFile() << "\" \"" << fileName << "\"";
+
 			if(system(copyCommand.str().c_str()) == -1) {
 				LOG(ERROR, "There was a problem when attempting to move the corrupt state file. System call failed: " + copyCommand.str(), "");
 			}

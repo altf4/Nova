@@ -74,8 +74,6 @@ public:
 	//		p 	- ANN point to print
 	void PrintPt(std::ostream &out, ANNpoint p);
 
-	Doppelganger *m_dopp;
-
 private:
 	// Disable the empty constructor, we need the logger/config/suspect table to do anything
 	ClassificationEngine();
